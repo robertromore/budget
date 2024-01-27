@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "d3fc41dc-3b32-4df5-8c47-fd8e28b4d449",
+  "id": "d90d8afe-203b-476f-8dda-eb21141a49de",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -57,6 +57,111 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "date_opened": {
+          "name": "date_opened",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "categories": {
+      "name": "categories",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date_created": {
+          "name": "date_created",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "categories_parent_id_categories_id_fk": {
+          "name": "categories_parent_id_categories_id_fk",
+          "tableFrom": "categories",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "payee": {
+      "name": "payee",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date_created": {
+          "name": "date_created",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {},
@@ -70,17 +175,23 @@
         "id": {
           "name": "id",
           "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "parentId": {
-          "name": "parentId",
+        "parent_id": {
+          "name": "parent_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": -1
+          "autoincrement": false
         },
         "status": {
           "name": "status",
@@ -90,8 +201,8 @@
           "autoincrement": false,
           "default": false
         },
-        "payeeId": {
-          "name": "payeeId",
+        "payee_id": {
+          "name": "payee_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
@@ -105,8 +216,8 @@
           "autoincrement": false,
           "default": 0
         },
-        "categoryId": {
-          "name": "categoryId",
+        "category_id": {
+          "name": "category_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
@@ -121,28 +232,56 @@
         },
         "date": {
           "name": "date",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {
-        "relations_user_idx": {
-          "name": "relations_user_idx",
+        "relations_transaction_account_idx": {
+          "name": "relations_transaction_account_idx",
           "columns": [
-            "id"
+            "account_id"
+          ],
+          "isUnique": false
+        },
+        "relations_transaction_payee_idx": {
+          "name": "relations_transaction_payee_idx",
+          "columns": [
+            "payee_id"
+          ],
+          "isUnique": false
+        },
+        "relations_transaction_category_idx": {
+          "name": "relations_transaction_category_idx",
+          "columns": [
+            "category_id"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "transaction_id_account_id_fk": {
-          "name": "transaction_id_account_id_fk",
+        "transaction_account_id_account_id_fk": {
+          "name": "transaction_account_id_account_id_fk",
           "tableFrom": "transaction",
           "tableTo": "account",
           "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
             "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "transaction_parent_id_transaction_id_fk": {
+          "name": "transaction_parent_id_transaction_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "transaction",
+          "columnsFrom": [
+            "parent_id"
           ],
           "columnsTo": [
             "id"
@@ -150,12 +289,25 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "transaction_parentId_transaction_id_fk": {
-          "name": "transaction_parentId_transaction_id_fk",
+        "transaction_payee_id_payee_id_fk": {
+          "name": "transaction_payee_id_payee_id_fk",
           "tableFrom": "transaction",
-          "tableTo": "transaction",
+          "tableTo": "payee",
           "columnsFrom": [
-            "parentId"
+            "payee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_category_id_categories_id_fk": {
+          "name": "transaction_category_id_categories_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
           ],
           "columnsTo": [
             "id"

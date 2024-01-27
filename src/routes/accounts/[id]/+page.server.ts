@@ -9,4 +9,6 @@ type AccountPageRouteParams = RouteParams & {
 
 export const load = (async (event) => ({
 	account: await createCaller(await createContext(event)).accountRoutes.load({ id: event.params.id }),
+  payees: await createCaller(await createContext(event)).payeeRoutes.all(),
+  categories: await createCaller(await createContext(event)).categoriesRoutes.all(),
 })) satisfies PageServerLoad;

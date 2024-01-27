@@ -1,14 +1,14 @@
+/**
+ * Seeders are used to generate default data.
+ */
+
 import type { TableConfig } from 'drizzle-orm/mysql-core';
 import { db } from '..';
 import * as schema from '../../../schema';
 
-import { accountSeeder } from './accounts';
-
 import { Glob } from 'bun';
 import * as path from 'node:path';
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
-
-await accountSeeder();
 
 const glob = new Glob('*.json');
 const seeders_path = './src/lib/server/db/seeders/';

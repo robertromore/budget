@@ -12,7 +12,6 @@
 	import type { FormResult } from "sveltekit-superforms/client";
 	import { trpc } from "$lib/trpc/client";
 	import { currencyFormatter } from "$lib/helpers/formatters";
-  import { cn } from "$lib/utils";
 
   type AccountPageData = PageData & {
     form: SuperValidated<InsertAccountSchema>,

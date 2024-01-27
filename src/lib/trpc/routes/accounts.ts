@@ -12,11 +12,20 @@ export const accountRoutes = t.router({
     return (await ctx.db.query.accounts.findMany({
       where: eq(accounts.id, input.id),
       with: {
-        transactions: true
+        transactions: {
+          with: {
+            payee: true,
+            category: true
+          }
+        }
       },
     }))[0];
 	}),
-	add: publicProcedure.input(insertAccountSchema).mutation(async ({ ctx, input }) => {
+	save: publicProcedure.input(insertAccountSchema).mutation(async ({ ctx, input }) => {
+    if (input.id) {
+      return (await ctx.db.update(accounts).set(input).where(eq(accounts.id, input.id)).returning())[0];
+    }
+
     const defaults = {
       slug: slugify(input.name)
     };

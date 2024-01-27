@@ -2,7 +2,7 @@ import { formInsertAccountSchema, removeAccountSchema } from "$lib/schema";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";
-import type { Actions, PageServerLoad } from "../$types";
+import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
 
 export const load = (async (event) => ({
@@ -20,7 +20,7 @@ export const actions: Actions = {
 			});
 		}
 
-		const entity = await createCaller(await createContext(event)).accountRoutes.add(form.data);
+		const entity = await createCaller(await createContext(event)).accountRoutes.save(form.data);
     return {
       form,
       entity
@@ -39,10 +39,5 @@ export const actions: Actions = {
       form
     };
   }
-};
+} satisfies Actions;
 
-// export const actions = {
-// 	'add-account': validateForm(insertAccountSchema, async (event) => {
-// 		return await createCaller(await createContext(event)).accountRoutes.add(event.parsedData.data);
-// 	}, { debug: true }),
-// } satisfies Actions;

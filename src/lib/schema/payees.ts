@@ -2,15 +2,19 @@
 // from one account to another. Transactions can be "split" into multiple
 // transactions. Split transactions have the same parent transaction.
 
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
 import { createSelectSchema } from 'drizzle-zod';
-import { transactions } from '../schema/transactions';
+import { transactions } from './transactions';
 // import { z } from 'zod';
 
 export const payees = sqliteTable('payee', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	name: text('name')
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name'),
+  notes: text('notes'),
+  dateCreated: text('date_created')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`)
 });
 
 export const payeesRelations = relations(payees, ({ many }) => ({
