@@ -27,6 +27,7 @@
   import Kbd from '$lib/components/Kbd.svelte';
   import { trpc } from "$lib/trpc/client";
   import { Input } from "$lib/components/ui/input";
+  import * as Pagination from "$lib/components/ui/pagination";
 
   let { data } = $props<{ data: PageData }>();
   let account: Account = data.account;
@@ -279,7 +280,7 @@
   const { headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } = table.createViewModel(columns);
   const { filterValue } = pluginStates.filter;
   const { filterValues } = pluginStates.colFilter;
-  const { hasNextPage, hasPreviousPage, pageIndex } = pluginStates.page;
+  const { hasNextPage, hasPreviousPage, pageIndex, pageSize, pageCount } = pluginStates.page;
   const { selectedDataIds } = pluginStates.select;
 
   let filterBy = $state({ payees: true, categories: true });
@@ -425,17 +426,39 @@
     </Table.Body>
   </Table.Root>
 </div>
+
 <div class="flex items-center justify-end space-x-2 py-4">
-  <Button
-    variant="outline"
-    size="sm"
-    on:click={() => ($pageIndex = $pageIndex - 1)}
-    disabled={!$hasPreviousPage}>Previous</Button
-  >
-  <Button
-    variant="outline"
-    size="sm"
-    disabled={!$hasNextPage}
-    on:click={() => ($pageIndex = $pageIndex + 1)}>Next</Button
-  >
+  <Pagination.Root class="w-auto mx-0 flex-row" count={transactions_formatted.length} perPage={$pageSize} siblingCount={1} let:pages let:currentPage let:range>
+    <p class="text-[13px] text-muted-foreground mr-2">
+      Showing {range.start + 1} - {range.end} of {transactions_formatted.length}
+    </p>
+
+    <Pagination.Content>
+      <Pagination.Item>
+        <Pagination.PrevButton disabled={!$hasPreviousPage} onclick={() => ($pageIndex = $pageIndex - 1)}>
+          <Icon icon="lucide:chevron-left" class="h-4 w-4" />
+          <span class="hidden sm:block">Previous</span>
+        </Pagination.PrevButton>
+      </Pagination.Item>
+      {#each pages as page (page.key)}
+        {#if page.type === "ellipsis"}
+          <Pagination.Item>
+            <Pagination.Ellipsis />
+          </Pagination.Item>
+        {:else}
+          <Pagination.Item>
+            <Pagination.Link {page} isActive={currentPage == page.value} onclick={() => ($pageIndex = page.value - 1)}>
+              {page.value}
+            </Pagination.Link>
+          </Pagination.Item>
+        {/if}
+      {/each}
+      <Pagination.Item>
+        <Pagination.NextButton disabled={!$hasNextPage} onclick={() => ($pageIndex = $pageIndex + 1)}>
+          <span class="hidden sm:block">Next</span>
+          <Icon icon="lucide:chevron-right" class="h-4 w-4" />
+        </Pagination.NextButton>
+      </Pagination.Item>
+    </Pagination.Content>
+  </Pagination.Root>
 </div>
