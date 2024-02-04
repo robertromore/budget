@@ -86,10 +86,10 @@
       <Form.Validation />
     </Form.Item>
   </Form.Field>
+  <Form.Button disabled={submitting}>Save</Form.Button>
   {#if payeeId}
     <Button variant="destructive" onclick={() => alertDialogOpen = true}>Delete</Button>
   {/if}
-  <Form.Button disabled={submitting}>Save</Form.Button>
 </Form.Root>
 
 <AlertDialog.Root bind:open={alertDialogOpen}>

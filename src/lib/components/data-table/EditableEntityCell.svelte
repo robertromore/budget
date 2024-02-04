@@ -48,6 +48,7 @@
   const onSave = (new_entity: EditableItem, is_new: boolean) => {
     if (is_new) {
       entities.push({ value: new_entity.id.toString(), label: new_entity.name } as SelectableEditableEntity);
+      value = { id: new_entity?.id, name: new_entity?.name } as EditableItem;
     }
     else {
       for (let i = 0; i < entities.length; i++) {
@@ -57,6 +58,8 @@
         }
       }
     }
+    managingId = 0;
+    manage = false;
   };
   const onDelete = (id: number) => {
     let position = null;
@@ -69,6 +72,8 @@
     if (position) {
       entities.splice(position, 1);
     }
+    managingId = 0;
+    manage = false;
   }
 
   let search = $state('');
