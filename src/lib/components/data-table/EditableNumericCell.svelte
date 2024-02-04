@@ -14,9 +14,6 @@
   }>();
 
   let open = $state(false);
-  const handleCancel = () => {
-    open = false;
-  };
   const handleSubmit = () => {
     open = false;
     if (row.isData()) {

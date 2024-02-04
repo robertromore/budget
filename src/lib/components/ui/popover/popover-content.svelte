@@ -5,7 +5,6 @@
 	type $$Props = PopoverPrimitive.ContentProps;
 
 	let className: $$Props["class"] = undefined;
-  export let el: $$Props["el"] = undefined;
 	export let transition: $$Props["transition"] = flyAndScale;
 	export let transitionConfig: $$Props["transitionConfig"] = undefined;
 	export let align: $$Props["align"] = "center";
@@ -14,7 +13,6 @@
 </script>
 
 <PopoverPrimitive.Content
-  bind:el
 	{transition}
 	{transitionConfig}
 	{align}

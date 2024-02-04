@@ -2,9 +2,12 @@
 <script lang="ts">
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Button } from "$lib/components/ui/button";
-    import Icon from "@iconify/svelte";
+  import Icon from "@iconify/svelte";
 
-  export let id: string;
+  let { id, actions } = $props<{
+    id: number,
+    actions: { [action: string]: () => void }
+  }>();
 </script>
 
 <DropdownMenu.Root>
@@ -21,14 +24,16 @@
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Group>
-      <DropdownMenu.Label>Actions</DropdownMenu.Label>
-      <DropdownMenu.Item on:click={() => navigator.clipboard.writeText(id)}>
-        Copy payment ID
+      <DropdownMenu.Item onclick={actions.edit}>
+        Edit
+      </DropdownMenu.Item>
+      <DropdownMenu.Item>
+        Delete
+      </DropdownMenu.Item>
+      <DropdownMenu.Item>
+        Archive
       </DropdownMenu.Item>
     </DropdownMenu.Group>
-    <DropdownMenu.Separator />
-    <DropdownMenu.Item>View customer</DropdownMenu.Item>
-    <DropdownMenu.Item>View payment details</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>
 

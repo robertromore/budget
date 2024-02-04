@@ -53,22 +53,6 @@
     <Button on:click={handleSubmit}>Save</Button>
   </Popover.Content>
 </Popover.Root>
-<!--
-<div class="text-ellipsis">
-  {#if !isEditing}
-    <Button
-      on:click={() => (isEditing = true)}
-    >
-      {value}
-    </Button>
-  {:else}
-    <form on:submit|preventDefault={handleSubmit}>
-      <input bind:this={inputElement} type="text" bind:value />
-      <button type="submit">✅</button>
-      <button on:click={handleCancel}>❌</button>
-    </form>
-  {/if}
-</div> -->
 
 <style>
   form {

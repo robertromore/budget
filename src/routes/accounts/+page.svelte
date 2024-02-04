@@ -83,17 +83,17 @@
 </Dialog.Root>
 
 <div class="grid grid-cols-4 gap-4 mt-4">
-{#each accounts as account}
+{#each accounts as { id, name, balance, notes }}
   <Card.Root>
     <Card.Header>
-      <Card.Title><a href="/accounts/{account.id}">{account.name}</a></Card.Title>
-      <Card.Description>{account.notes?.length > 100 ? account.notes?.substring(0, 100) + '...' : account.notes}</Card.Description>
+      <Card.Title><a href="/accounts/{id}">{name}</a></Card.Title>
+      <Card.Description>{notes?.length || 0 > 100 ? notes?.substring(0, 100) + '...' : notes}</Card.Description>
     </Card.Header>
     <Card.Content>
-      <strong>Balance:</strong> {currencyFormatter.format(account.balance ?? 0)}
+      <strong>Balance:</strong> {currencyFormatter.format(balance ?? 0)}
     </Card.Content>
     <Card.Footer>
-      <Button onclick={() => deleteAccount(account.id)} class={buttonVariants({ variant: "secondary" })}>Delete</Button>
+      <Button onclick={() => deleteAccount(id)} class={buttonVariants({ variant: "secondary" })}>Delete</Button>
     </Card.Footer>
   </Card.Root>
 {/each}

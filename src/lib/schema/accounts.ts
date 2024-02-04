@@ -19,7 +19,7 @@ export const accounts = sqliteTable('account', {
   closed: integer('closed', { mode: 'boolean' }).default(false),
   // @todo decide if it's better to calculate and store this value or aggregate
   // the value based on the transaction rows.
-  balance: real('balance').default(0.0),
+  balance: real('balance').default(0.0).notNull(),
   notes: text('notes'),
   dateOpened: text('date_opened')
     .notNull()

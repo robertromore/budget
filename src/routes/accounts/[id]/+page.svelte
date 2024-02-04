@@ -1,9 +1,9 @@
-<script context="module" lang="ts">
+<!-- <script context="module" lang="ts">
   export function getPageTitle(data: any) {
     return data.data.account?.name;
   }
   // export const pageTitle = false;
-</script>
+</script> -->
 
 <script lang="ts">
   import { page } from "$app/stores";
@@ -28,10 +28,12 @@
   import { trpc } from "$lib/trpc/client";
   import { Input } from "$lib/components/ui/input";
   import * as Pagination from "$lib/components/ui/pagination";
+  import * as Dialog from "$lib/components/ui/dialog";
+  import NewTransactionForm from "$lib/components/forms/NewTransactionForm.svelte";
 
   let { data } = $props<{ data: PageData }>();
   let account: Account = data.account;
-  let accountBalance = $state(account.balance);
+  let accountBalance: number = $state(account.balance);
   let payees: Payee[] = data.payees;
   let categories: Category[] = data.categories;
 
@@ -65,7 +67,6 @@
       newValue = parseFloat(newValue as string);
       newAccountBalance -= account.transactions[rowDataId].amount - newValue;
     }
-    console.log(accountBalance, newAccountBalance);
     await trpc($page).transactionRoutes.save.mutate(
       Object.assign(
         {},
@@ -140,7 +141,13 @@
   const table = createTable(writable(transactions_formatted), {
     filter: addTableFilter({
       fn: ({ filterValue, value }) => {
-        return value.toLowerCase().includes(filterValue.toLowerCase())
+        if (filterBySettings === 'startsWith') {
+          return value.toLowerCase().startsWith(filterValue.toLowerCase());
+        }
+        if (filterBySettings === 'endsWith') {
+          return value.toLowerCase().endsWith(filterValue.toLowerCase());
+        }
+        return value.toLowerCase().includes(filterValue.toLowerCase());
       }
     }),
     colFilter: addColumnFilters(),
@@ -265,7 +272,11 @@
       accessor: ({ id }) => id,
       header: "",
       cell: ({ value }) => {
-        return createRender(DataTableActions, { id: value });
+        return createRender(DataTableActions, { id: value, actions: {
+          edit: () => {
+            console.log('edit');
+          }
+        } });
       },
       plugins: {
         sort: {
@@ -284,6 +295,7 @@
   const { selectedDataIds } = pluginStates.select;
 
   let filterBy = $state({ payees: true, categories: true });
+  let filterBySettings = $state('contains');
   let filterText: string = $state('');
   let filterdDisabled = $state(false);
   $effect(() => {
@@ -311,45 +323,40 @@
   }
 
   let quickaction: string | undefined = $state();
+
+  let addTransactionDialogOpen: boolean = $state(false);
 </script>
 
 <div class="flex items-center mb-2">
-  <h1 class="text-3xl mr-5">{account.name}</h1>
+  <h1 class="text-3xl mr-5">{@html account.name}</h1>
   <span class="text-sm text-muted-foreground"><strong>Balance:</strong> {currencyFormatter.format(accountBalance ?? 0)}</span>
   <!-- <Button variant="outline" size="icon" class="ml-2" onclick={refreshAccountBalance}>
     <Icon icon="lucide:refresh-cw" class="w-4 h-4"/>
   </Button> -->
 </div>
 
-<p class="text-sm text-muted-foreground mb-2">{account.notes}</p>
+<p class="text-sm text-muted-foreground mb-2">{@html account.notes}</p>
+
+<Dialog.Root bind:open={addTransactionDialogOpen}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Add Transaction</Dialog.Title>
+      <Dialog.Description>
+        <NewTransactionForm accountId={account.id}/>
+      </Dialog.Description>
+    </Dialog.Header>
+  </Dialog.Content>
+</Dialog.Root>
 
 <div class="flex items-center py-4">
-  <DropdownMenu.Root closeOnItemClick={false}>
-    <DropdownMenu.Trigger asChild let:builder>
-      <Button variant="outline" size="icon" builders={[builder]} class="mr-1" title="Filter by">
-        <Icon icon="lucide:filter" class="w-4 h-4" />
-      </Button>
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Content class="w-40">
-      <DropdownMenu.Group>
-        <DropdownMenu.CheckboxItem bind:checked={filterBy['payees']}>
-          Payees
-        </DropdownMenu.CheckboxItem>
-        <DropdownMenu.CheckboxItem bind:checked={filterBy['categories']}>
-          Categories
-        </DropdownMenu.CheckboxItem>
-      </DropdownMenu.Group>
-    </DropdownMenu.Content>
-  </DropdownMenu.Root>
-
-  <Input
-    class="max-w-sm"
-    placeholder="Filter..."
-    type="text"
-    bind:value={filterText}
-    onkeyup={filter}
-    disabled={filterdDisabled}
-  />
+  <Button class="mx-1" onclick={() => addTransactionDialogOpen=true}>
+    <Icon icon="lucide:plus" class="mr-2 w-4 h-4"/>
+    Add
+  </Button>
+  <Button variant="outline" class="mx-1">
+    <Icon icon="lucide:import" class="mr-2 w-4 h-4"/>
+    Import
+  </Button>
 
   <div class="grow"></div>
 
@@ -380,6 +387,58 @@
       </DropdownMenu.Group>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
+</div>
+
+<div class="flex items-center py-0">
+  <DropdownMenu.Root closeOnItemClick={false}>
+    <DropdownMenu.Trigger asChild let:builder>
+      <Button variant="outline" size="icon" builders={[builder]} class="mr-1" title="Filter by">
+        <Icon icon="lucide:filter" class="w-4 h-4" />
+      </Button>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content class="w-40">
+      <DropdownMenu.Group>
+        <DropdownMenu.CheckboxItem bind:checked={filterBy['payees']}>
+          Payees
+        </DropdownMenu.CheckboxItem>
+        <DropdownMenu.CheckboxItem bind:checked={filterBy['categories']}>
+          Categories
+        </DropdownMenu.CheckboxItem>
+      </DropdownMenu.Group>
+    </DropdownMenu.Content>
+  </DropdownMenu.Root>
+
+  <DropdownMenu.Root closeOnItemClick={false}>
+    <DropdownMenu.Trigger asChild let:builder>
+      <Button variant="outline" size="icon" builders={[builder]} class="mr-1" title="Filter settings">
+        <Icon icon="lucide:settings-2" class="w-4 h-4" />
+      </Button>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content class="w-40">
+      <DropdownMenu.RadioGroup bind:value={filterBySettings}>
+        <DropdownMenu.RadioItem value="contains">
+          Contains
+        </DropdownMenu.RadioItem>
+        <DropdownMenu.RadioItem value="startsWith">
+          Starts with
+        </DropdownMenu.RadioItem>
+        <DropdownMenu.RadioItem value="endsWith">
+          Ends with
+        </DropdownMenu.RadioItem>
+      </DropdownMenu.RadioGroup>
+    </DropdownMenu.Content>
+  </DropdownMenu.Root>
+
+  <Input
+    class="max-w-sm"
+    placeholder="Filter..."
+    type="text"
+    bind:value={filterText}
+    onkeyup={filter}
+    disabled={filterdDisabled}
+  />
+
+  <div class="grow"></div>
 </div>
 
 <div class="rounded-md border mt-4">

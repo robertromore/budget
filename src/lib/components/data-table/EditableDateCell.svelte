@@ -30,19 +30,14 @@
     <Button
       variant="outline"
       class={cn(
-        "w-58 justify-start text-left font-normal",
-        !value && "text-muted-foreground"
+        "w-58 justify-start text-left font-normal"
       )}
       builders={[builder]}
     >
       <CalendarIcon class="mr-2 h-4 w-4" />
-      {value ? df.format(value.toDate(getLocalTimeZone())) : "Pick a date"}
     </Button>
   </Popover.Trigger>
   <Popover.Content class="w-auto p-0" align="start">
-    <Calendar bind:value onValueChange={handleSubmit} />
+    <Calendar bind:value onValueChange={handleSubmit} initialFocus />
   </Popover.Content>
 </Popover.Root>
-
-<style>
-</style>

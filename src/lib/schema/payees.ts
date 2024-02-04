@@ -4,9 +4,9 @@
 
 import { relations, sql } from 'drizzle-orm';
 import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
-import { createSelectSchema } from 'drizzle-zod';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { transactions } from './transactions';
-// import { z } from 'zod';
+import { z } from 'zod';
 
 export const payees = sqliteTable('payee', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -22,5 +22,18 @@ export const payeesRelations = relations(payees, ({ many }) => ({
 }));
 
 export const selectPayeeSchema = createSelectSchema(payees);
+export const insertPayeeSchema = createInsertSchema(payees);
+export const formInsertPayeeSchema = createInsertSchema(payees, {
+  name: z
+    .string()
+    .min(1, {
+      message: 'required'
+    })
+    .max(30)
+});
+export const removePayeeSchema = z.object({ id: z.number().nonnegative() });
 
 export type Payee = typeof payees.$inferSelect;
+export type NewPayee = typeof payees.$inferInsert;
+export type FormInsertPayeeSchema = typeof formInsertPayeeSchema;
+export type RemovePayeeSchema = typeof removePayeeSchema;
