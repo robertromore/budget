@@ -2,7 +2,7 @@
   import * as Dialog from "./ui/dialog";
 	import * as Menubar from "./ui/menubar";
 
-  let aboutDialogOpen = false;
+  let aboutDialogOpen = $state(false);
 </script>
 
 <Menubar.Root class="rounded-none border-b border-none px-2 lg:px-4">

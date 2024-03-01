@@ -19,7 +19,7 @@ export const transactionFactory = async (
         amount: faker.number.float({
           max: 1000,
           min: -1000,
-          precision: 0.01
+          fractionDigits: 2
         }),
         notes: faker.lorem.text(),
         accountId: account?.id,

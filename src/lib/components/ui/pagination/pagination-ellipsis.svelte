@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { cn } from "$lib/utils";
-	import { DotsHorizontal } from "radix-icons-svelte";
 	import type { HTMLAttributes } from "svelte/elements";
 
 	type $$Props = HTMLAttributes<HTMLSpanElement>;
@@ -14,6 +13,6 @@
 	class={cn("flex h-9 w-9 items-center justify-center", className)}
 	{...$$restProps}
 >
-	<DotsHorizontal class="h-4 w-4" />
+	<span class="icon-[radix-icons--dots-horizontal] h-4 w-4" />
 	<span class="sr-only">More pages</span>
 </span>

@@ -1,43 +1,59 @@
-import { formInsertAccountSchema, removeAccountSchema } from "$lib/schema";
+import { formInsertAccountSchema, formInsertTransactionSchema, removeAccountSchema } from "$lib/schema";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
+import { zod } from "sveltekit-superforms/adapters";
 
-export const load = (async (event) => ({
+export const load: PageServerLoad = (async (event) => ({
 	accounts: await createCaller(await createContext(event)).accountRoutes.all(),
-  form: await superValidate(formInsertAccountSchema),
-  // deleteForm: await superValidate(removeAccountSchema)
-})) satisfies PageServerLoad;
+  form: await superValidate(zod(formInsertAccountSchema)),
+  deleteForm: await superValidate(zod(removeAccountSchema))
+}));
 
 export const actions: Actions = {
-	'add-account': async (event) => {
-		const form = await superValidate(event, formInsertAccountSchema);
-		if (!form.valid) {
-			return fail(400, {
-				form
-			});
-		}
+  'add-account': async (event) => {
+    const form = await superValidate(event, zod(formInsertAccountSchema));
+    if (!form.valid) {
+      return fail(400, {
+        form
+      });
+    }
 
-		const entity = await createCaller(await createContext(event)).accountRoutes.save(form.data);
+    const entity = await createCaller(await createContext(event)).accountRoutes.save(form.data);
     return {
       form,
       entity
     };
-	},
+  },
   'delete-account': async (event) => {
-    const form = await superValidate(event, removeAccountSchema);
-		if (!form.valid) {
-			return fail(400, {
-				form
-			});
-		}
+    const form = await superValidate(event, zod(removeAccountSchema));
+    if (!form.valid) {
+      return fail(400, {
+        form
+      });
+    }
 
     await createCaller(await createContext(event)).accountRoutes.remove(form.data);
     return {
       form
     };
+  },
+  'add-transaction': async (event) => {
+    const form = await superValidate(event, zod(formInsertTransactionSchema));
+    console.log(event, form);
+    if (!form.valid) {
+      return fail(400, {
+        form
+      });
+    }
+
+    const entity = await createCaller(await createContext(event)).transactionRoutes.save(form.data);
+    return {
+      form,
+      entity
+    };
   }
-} satisfies Actions;
+};
 

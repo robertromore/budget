@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "d90d8afe-203b-476f-8dda-eb21141a49de",
+  "id": "9c4cf0b5-6e8c-4477-a39b-1d77245dc2a9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -47,7 +47,7 @@
           "name": "balance",
           "type": "real",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false,
           "default": 0
         },

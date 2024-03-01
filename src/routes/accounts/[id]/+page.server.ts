@@ -1,14 +1,19 @@
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
+import { superValidate } from "sveltekit-superforms";
 import type { PageServerLoad } from "../$types";
-import type { RouteParams } from "./$types";
+import { zod } from 'sveltekit-superforms/adapters';
+import { insertTransactionSchema } from "$lib/schema";
 
-type AccountPageRouteParams = RouteParams & {
-  id: number
-};
+export const load: PageServerLoad = (async (event) => {
+  event.depends('account');
 
-export const load = (async (event) => ({
-	account: await createCaller(await createContext(event)).accountRoutes.load({ id: event.params.id }),
-  payees: await createCaller(await createContext(event)).payeeRoutes.all(),
-  categories: await createCaller(await createContext(event)).categoriesRoutes.all(),
-})) satisfies PageServerLoad;
+  return {
+    // data
+    account: await createCaller(await createContext(event)).accountRoutes.load({ id: event.params.id }),
+    payees: await createCaller(await createContext(event)).payeeRoutes.all(),
+    categories: await createCaller(await createContext(event)).categoriesRoutes.all(),
+    // forms
+    manageTransactionForm: await superValidate(zod(insertTransactionSchema))
+  };
+});

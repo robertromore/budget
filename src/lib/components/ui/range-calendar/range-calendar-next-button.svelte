@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { RangeCalendar as RangeCalendarPrimitive } from "bits-ui";
-	import { ChevronRight } from "radix-icons-svelte";
+	import ChevronRight from "svelte-radix/ChevronRight.svelte";
 	import { buttonVariants } from "$lib/components/ui/button";
 	import { cn } from "$lib/utils";
 

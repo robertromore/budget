@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { page } from '$app/stores';
   import Menu from "$lib/components/Menu.svelte";
   import Sidebar from "$lib/components/Sidebar.svelte";
-  import { Breadcrumbs } from "svelte-breadcrumbs";
   import "../app.pcss";
 </script>
 

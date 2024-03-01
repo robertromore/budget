@@ -1,9 +1,14 @@
 import { fontFamily } from "tailwindcss/defaultTheme";
+import { addDynamicIconSelectors } from "@iconify/tailwind";
 
 /** @type {import('tailwindcss').Config} */
 const config = {
 	darkMode: ["class"],
 	content: ["./src/**/*.{html,js,svelte,ts}"],
+  plugins: [
+    // Iconify plugin
+    addDynamicIconSelectors(),
+  ],
   safelist: ["dark"],
 	theme: {
 		container: {

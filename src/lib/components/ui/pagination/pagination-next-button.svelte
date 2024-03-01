@@ -2,7 +2,6 @@
 	import { Pagination as PaginationPrimitive } from "bits-ui";
 	import { Button } from "$lib/components/ui/button";
 	import { cn } from "$lib/utils";
-	import { ChevronRight } from "radix-icons-svelte";
 
 	type $$Props = PaginationPrimitive.NextButtonProps;
 	type $$Events = PaginationPrimitive.NextButtonEvents;
@@ -21,7 +20,7 @@
 	>
 		<slot>
 			<span>Next</span>
-			<ChevronRight class="h-4 w-4" />
+			<span class="icon-[lucide--chevron-right] h-4 w-4" />
 		</slot>
 	</Button>
 </PaginationPrimitive.NextButton>

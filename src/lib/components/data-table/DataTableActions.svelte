@@ -2,11 +2,10 @@
 <script lang="ts">
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Button } from "$lib/components/ui/button";
-  import Icon from "@iconify/svelte";
 
   let { id, actions } = $props<{
     id: number,
-    actions: { [action: string]: () => void }
+    actions: { [action: string]: (id: number) => void }
   }>();
 </script>
 
@@ -19,15 +18,15 @@
       class="relative w-8 h-8 p-0"
     >
       <span class="sr-only">Open menu</span>
-      <Icon icon="lucide:more-horizontal" class="w-4 h-4" />
+      <span class="icon-[lucide--more-horizontal] size-4"></span>
     </Button>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Group>
-      <DropdownMenu.Item onclick={actions.edit}>
+      <DropdownMenu.Item onclick={() => actions.edit(id)}>
         Edit
       </DropdownMenu.Item>
-      <DropdownMenu.Item>
+      <DropdownMenu.Item onclick={() => actions.delete(id)}>
         Delete
       </DropdownMenu.Item>
       <DropdownMenu.Item>

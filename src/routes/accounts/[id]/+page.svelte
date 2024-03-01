@@ -1,144 +1,161 @@
-<!-- <script context="module" lang="ts">
-  export function getPageTitle(data: any) {
-    return data.data.account?.name;
-  }
-  // export const pageTitle = false;
-</script> -->
-
 <script lang="ts">
-  import { page } from "$app/stores";
-  import { currencyFormatter } from '$lib/helpers/formatters';
-  import { type Account, type Payee, type Transaction, type Category } from '$lib/schema';
+  import { page } from '$app/stores';
+  import { currencyFormatter, transactionFormatter } from '$lib/helpers/formatters';
   import { writable } from 'svelte/store';
   import type { PageData } from './$types';
-  import { createRender, createTable, Render, Subscribe, type DataLabel } from 'svelte-headless-table';
+  import {
+    createRender,
+    createTable,
+    Render,
+    Subscribe,
+    type DataLabel
+  } from 'svelte-headless-table';
   import * as Table from '$lib/components/ui/table';
   import EditableCell from '$lib/components/data-table/EditableCell.svelte';
   import EditableDateCell from '$lib/components/data-table/EditableDateCell.svelte';
   import EditableEntityCell from '$lib/components/data-table/EditableEntityCell.svelte';
-  import { addColumnFilters, addPagination, addSelectedRows, addSortBy, addTableFilter, type AnyPlugins } from 'svelte-headless-table/plugins';
-  import { type DateValue, CalendarDate } from '@internationalized/date';
+  import {
+    addColumnFilters,
+    addPagination,
+    addSelectedRows,
+    addSortBy,
+    addTableFilter,
+    type AnyPlugins
+  } from 'svelte-headless-table/plugins';
   import EditableNumericCell from '$lib/components/data-table/EditableNumericCell.svelte';
   import DataTableActions from '$lib/components/data-table/DataTableActions.svelte';
   import DataTableCheckbox from '$lib/components/data-table/DataTableCheckbox.svelte';
   import { Button } from '$lib/components/ui/button';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import Icon from '@iconify/svelte';
   import Kbd from '$lib/components/Kbd.svelte';
-  import { trpc } from "$lib/trpc/client";
-  import { Input } from "$lib/components/ui/input";
-  import * as Pagination from "$lib/components/ui/pagination";
-  import * as Dialog from "$lib/components/ui/dialog";
-  import NewTransactionForm from "$lib/components/forms/NewTransactionForm.svelte";
+  import { trpc } from '$lib/trpc/client';
+  import { Input } from '$lib/components/ui/input';
+  import * as Pagination from '$lib/components/ui/pagination';
+  import type {
+    EditableEntityItem,
+    EditableNumericItem,
+    TransactionsFormat
+  } from '$lib/components/types';
+  import AddTransactionDialog from '$lib/components/dialogs/AddTransactionDialog.svelte';
+  import { setContext } from 'svelte';
+  import { cn } from '$lib/utils';
+  import { invalidate, invalidateAll } from '$app/navigation';
+  import type { Transaction } from '$lib/schema';
+  import DeleteTransactionDialog from '$lib/components/dialogs/DeleteTransactionDialog.svelte';
+    import { TRPCError } from '@trpc/server';
+    import { savable } from '$lib/helpers/savable';
 
   let { data } = $props<{ data: PageData }>();
-  let account: Account = data.account;
-  let accountBalance: number = $state(account.balance);
-  let payees: Payee[] = data.payees;
-  let categories: Category[] = data.categories;
+  // $inspect(data);
 
-  type TransactionsFormat = {
-    id: number;
-    amount: number | string;
-    date: DateValue | undefined;
-    payee: Payee | null;
-    notes: string | null;
-    category: Category | null;
-  };
+  setContext('payees', data.payees);
+  setContext('categories', data.categories);
 
-  const transactions_formatted: TransactionsFormat[] = account.transactions.map(
-    (transaction: Transaction): TransactionsFormat => {
-      const transaction_date = new Date(transaction.date);
-      return {
-        id: transaction.id,
-        amount: currencyFormatter.format(Number(transaction.amount)),
-        date: new CalendarDate(transaction_date.getFullYear(), transaction_date.getMonth(), transaction_date.getDate()),
-        payee: transaction.payee,
-        category: transaction.category,
-        notes: transaction.notes
-      };
-    }
+  let transactions = $state(data.account.transactions);
+  let transactions_formatted: TransactionsFormat[] = transactionFormatter(
+    transactions
   );
+  let transactions_formatted_store = writable(transactions_formatted);
 
-  const updateData = async(rowDataId: number, columnId: string, newValue: unknown) => {
-    let newAccountBalance = accountBalance;
-
-    if (columnId == 'amount' && newAccountBalance) {
-      newValue = parseFloat(newValue as string);
-      newAccountBalance -= account.transactions[rowDataId].amount - newValue;
-    }
-    await trpc($page).transactionRoutes.save.mutate(
-      Object.assign(
-        {},
-        account.transactions[rowDataId],
-        {
-          [columnId]: newValue,
-          newAccountBalance: newAccountBalance || 0
-        }
-      )
-    ).then(() => accountBalance = newAccountBalance);
+  let onTransactionAdded = (new_entity: Transaction) => {
+    invalidate('account');
+    $transactions_formatted_store.push(...transactionFormatter([new_entity]));
+    $transactions_formatted_store = $transactions_formatted_store;
   };
 
-  const EditableDateCellLabel: DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined> | undefined = ({ column, row, value }) => {
+  let onTransactionDeleted = (entity: Transaction) => {
+    invalidate('account');
+    $transactions_formatted_store = $transactions_formatted_store.filter((value: TransactionsFormat) => {
+      return value.id != entity.id;
+    })
+  }
+
+  const updateData = async (rowDataId: number, columnId: string, newValue: unknown) => {
+    const new_data = {
+      [columnId]: newValue
+    };
+    if (columnId == 'amount') {
+      new_data[columnId] = (newValue as EditableNumericItem).value as number;
+      new_data['newAccountBalance'] =
+        data.account.balance -
+        ((data.account.transactions[rowDataId].amount || 0) - (new_data[columnId] as number));
+    }
+
+    const updateData = Object.assign({}, data.account.transactions[rowDataId], new_data);
+    console.log(updateData);
+    try {
+      await trpc($page).transactionRoutes.save.mutate(
+        savable(updateData)
+      );
+    } catch (err) {
+      if (err instanceof TRPCError) {
+        console.log(JSON.parse(err.message));
+      } else {
+        throw err;
+      }
+    }
+
+    await invalidate('account');
+  };
+
+  const EditableDateCellLabel:
+    | DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined>
+    | undefined = ({ column, row, value }) => {
     return createRender(EditableDateCell, {
       row,
       column,
       value,
-      onUpdateValue: updateData,
+      onUpdateValue: updateData
     });
   };
 
-  const EditablePayeeCellLabel: DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined> | undefined = ({ column, row, value }) => {
+  const EditablePayeeCellLabel:
+    | DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined>
+    | undefined = ({ column, row, value }) => {
     return createRender(EditableEntityCell, {
       row,
       column,
-      value,
+      value: value as unknown as EditableEntityItem,
       onUpdateValue: updateData,
-      entities: payees.map((payee) => {
-        return {
-          value: payee.id.toString(),
-          label: payee.name || ''
-        }
-      }),
       entityLabel: 'payees'
     });
   };
 
-  const EditableCategoryCellLabel: DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined> | undefined = ({ column, row, value }) => {
+  const EditableCategoryCellLabel:
+    | DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined>
+    | undefined = ({ column, row, value }) => {
     return createRender(EditableEntityCell, {
       row,
       column,
-      value,
+      value: value as unknown as EditableEntityItem,
       onUpdateValue: updateData,
-      entities: categories.map((category) => {
-        return {
-          value: category.id.toString(),
-          label: category.name || ''
-        }
-      }),
       entityLabel: 'categories'
     });
   };
 
-  const EditableNumericCellLabel: DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined> | undefined = ({ column, row, value }) => {
+  const EditableNumericCellLabel:
+    | DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined>
+    | undefined = ({ column, row, value }) => {
     return createRender(EditableNumericCell, {
       row,
       column,
       value,
-      onUpdateValue: updateData,
+      onUpdateValue: updateData
     });
   };
 
-  const EditableCellLabel: DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined> | undefined = ({ column, row, value }) => {
+  const EditableCellLabel:
+    | DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined>
+    | undefined = ({ column, row, value }) => {
     return createRender(EditableCell, {
       row,
       column,
       value,
-      onUpdateValue: updateData,
+      onUpdateValue: updateData
     });
   };
 
-  const table = createTable(writable(transactions_formatted), {
+  const table = createTable(transactions_formatted_store, {
     filter: addTableFilter({
       fn: ({ filterValue, value }) => {
         if (filterBySettings === 'startsWith') {
@@ -155,7 +172,7 @@
       initialPageSize: 25
     }),
     select: addSelectedRows(),
-    sort: addSortBy(),
+    sort: addSortBy()
   });
 
   const columns = table.createColumns([
@@ -166,7 +183,7 @@
           checked: allPageRowsSelected
         });
       },
-      accessor: "id",
+      accessor: 'id',
       cell: ({ row }, { pluginStates }) => {
         const { getRowState } = pluginStates.select;
         const { isSelected } = getRowState(row);
@@ -193,7 +210,7 @@
           exclude: true
         },
         sort: {
-          getSortValue: (value): string | number | (string|number)[] => {
+          getSortValue: (value): string | number | (string | number)[] => {
             return value.toDate();
           }
         }
@@ -206,17 +223,17 @@
       plugins: {
         colFilter: {
           fn: ({ filterValue, value }) => {
-            return value.name.toLowerCase().includes(filterValue.toLowerCase())
+            return value?.name.toLowerCase().includes(filterValue.toLowerCase());
           }
         },
         filter: {
           getFilterValue: (value) => {
-            return value.name;
+            return value?.name;
           }
         },
         sort: {
-          getSortValue: (value): string | number | (string|number)[] => {
-            return value.name;
+          getSortValue: (value): string | number | (string | number)[] => {
+            return value?.name;
           }
         }
       }
@@ -238,17 +255,17 @@
       plugins: {
         colFilter: {
           fn: ({ filterValue, value }) => {
-            return value.name.toLowerCase().includes(filterValue.toLowerCase())
+            return value?.name.toLowerCase().includes(filterValue.toLowerCase());
           }
         },
         filter: {
           getFilterValue: (value) => {
-            return value.name;
+            return value?.name;
           }
         },
         sort: {
-          getSortValue: (value): string | number | (string|number)[] => {
-            return value.name;
+          getSortValue: (value): string | number | (string | number)[] => {
+            return value?.name;
           }
         }
       }
@@ -262,21 +279,28 @@
           exclude: true
         },
         sort: {
-          getSortValue: (value): string | number | (string|number)[] => {
-            return parseFloat(value.replace('$', ''));
+          getSortValue: (value): string | number | (string | number)[] => {
+            return value.value;
           }
         }
       }
     }),
     table.column({
       accessor: ({ id }) => id,
-      header: "",
+      header: '',
       cell: ({ value }) => {
-        return createRender(DataTableActions, { id: value, actions: {
-          edit: () => {
-            console.log('edit');
+        return createRender(DataTableActions, {
+          id: value,
+          actions: {
+            edit: () => {
+              console.log('edit');
+            },
+            delete: (id: number) => {
+              deleteAccountId = id;
+              deleteTransactionDialogOpen = true;
+            }
           }
-        } });
+        });
       },
       plugins: {
         sort: {
@@ -288,24 +312,25 @@
       }
     })
   ]);
-  const { headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } = table.createViewModel(columns);
+
+  const { headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
+    table.createViewModel(columns);
   const { filterValue } = pluginStates.filter;
   const { filterValues } = pluginStates.colFilter;
-  const { hasNextPage, hasPreviousPage, pageIndex, pageSize, pageCount } = pluginStates.page;
+  const { hasNextPage, hasPreviousPage, pageIndex, pageSize } = pluginStates.page;
   const { selectedDataIds } = pluginStates.select;
 
   let filterBy = $state({ payees: true, categories: true });
   let filterBySettings = $state('contains');
   let filterText: string = $state('');
-  let filterdDisabled = $state(false);
+  let filterDisabled: boolean = $state(false);
   $effect(() => {
-    filterdDisabled = !filterBy['payees'] && !filterBy['categories'];
+    filterDisabled = !filterBy['payees'] && !filterBy['categories'];
   });
   const filter = () => {
     if (filterBy['payees'] && filterBy['categories']) {
       $filterValue = filterText;
-    }
-    else {
+    } else {
       if (filterBy['payees']) {
         $filterValues.payee = filterText;
       }
@@ -313,48 +338,56 @@
         $filterValues.category = filterText;
       }
     }
-  }
+  };
 
-  const refreshAccountBalance = async() => {
-    const amount = account.transactions.reduce((total, current) => total + current.amount!, 0);
-    account.balance = amount;
-    accountBalance = amount;
-    await trpc($page).accountRoutes.save.mutate(account);
-  }
+  const refreshAccountBalance = async () => {
+    const amount = data.account.transactions.reduce(
+      (total: number, current: Transaction) => total + current.amount!,
+      0
+    );
+    data.account.balance = amount;
+    await trpc($page).accountRoutes.save.mutate(data.account);
+  };
 
   let quickaction: string | undefined = $state();
-
   let addTransactionDialogOpen: boolean = $state(false);
+
+  let deleteAccountId: number | null = $state(null);
+  let deleteTransactionDialogOpen = $state(false);
 </script>
 
-<div class="flex items-center mb-2">
-  <h1 class="text-3xl mr-5">{@html account.name}</h1>
-  <span class="text-sm text-muted-foreground"><strong>Balance:</strong> {currencyFormatter.format(accountBalance ?? 0)}</span>
-  <!-- <Button variant="outline" size="icon" class="ml-2" onclick={refreshAccountBalance}>
-    <Icon icon="lucide:refresh-cw" class="w-4 h-4"/>
-  </Button> -->
+<div class="mb-2 flex items-center">
+  <h1 class="mr-5 text-3xl">{data.account.name}</h1>
+  <span class="text-sm text-muted-foreground"
+    ><strong>Balance:</strong> {currencyFormatter.format(data.account.balance ?? 0)}</span
+  >
+  <Button variant="outline" size="icon" class="ml-2" onclick={refreshAccountBalance}>
+    <span class="s-4 icon-[lucide--refresh-cw]" />
+  </Button>
 </div>
 
-<p class="text-sm text-muted-foreground mb-2">{@html account.notes}</p>
+<p class="mb-2 text-sm text-muted-foreground">{data.account.notes}</p>
 
-<Dialog.Root bind:open={addTransactionDialogOpen}>
-  <Dialog.Content>
-    <Dialog.Header>
-      <Dialog.Title>Add Transaction</Dialog.Title>
-      <Dialog.Description>
-        <NewTransactionForm accountId={account.id}/>
-      </Dialog.Description>
-    </Dialog.Header>
-  </Dialog.Content>
-</Dialog.Root>
+<AddTransactionDialog
+  account={data.account}
+  bind:dialogOpen={addTransactionDialogOpen}
+  {onTransactionAdded}
+  dataForm={data.manageTransactionForm}
+/>
+
+<DeleteTransactionDialog
+  bind:account={deleteAccountId!}
+  bind:dialogOpen={deleteTransactionDialogOpen}
+  {onTransactionDeleted}
+/>
 
 <div class="flex items-center py-4">
-  <Button class="mx-1" onclick={() => addTransactionDialogOpen=true}>
-    <Icon icon="lucide:plus" class="mr-2 w-4 h-4"/>
+  <Button class="mx-1" onclick={() => (addTransactionDialogOpen = true)}>
+    <span class="icon-[lucide--plus] mr-2 size-4"></span>
     Add
   </Button>
   <Button variant="outline" class="mx-1">
-    <Icon icon="lucide:import" class="mr-2 w-4 h-4"/>
+    <span class="icon-[lucide--import] mr-2 size-4"></span>
     Import
   </Button>
 
@@ -362,8 +395,12 @@
 
   <DropdownMenu.Root>
     <DropdownMenu.Trigger asChild let:builder>
-      <Button variant="outline" builders={[builder]} disabled={Object.keys($selectedDataIds).length === 0}>
-        <Icon icon="lucide:chevron-down" class="mr-2 w-4 h-4" />
+      <Button
+        variant="outline"
+        builders={[builder]}
+        disabled={Object.keys($selectedDataIds).length === 0}
+      >
+        <span class="icon-[lucide--chevron-down] mr-2 size-4"></span>
         {Object.keys($selectedDataIds).length} selected
       </Button>
     </DropdownMenu.Trigger>
@@ -371,18 +408,16 @@
       <DropdownMenu.Group>
         <DropdownMenu.Item>
           Archive
-          <Kbd keys={['A']}/>
+          <Kbd keys={['A']} />
         </DropdownMenu.Item>
-        <DropdownMenu.Item>
-          Duplicate
-        </DropdownMenu.Item>
+        <DropdownMenu.Item>Duplicate</DropdownMenu.Item>
         <DropdownMenu.Item>
           Delete
-          <Kbd keys={['D']}/>
+          <Kbd keys={['D']} />
         </DropdownMenu.Item>
         <DropdownMenu.Item>
           Edit
-          <Kbd keys={['E']}/>
+          <Kbd keys={['E']} />
         </DropdownMenu.Item>
       </DropdownMenu.Group>
     </DropdownMenu.Content>
@@ -393,7 +428,7 @@
   <DropdownMenu.Root closeOnItemClick={false}>
     <DropdownMenu.Trigger asChild let:builder>
       <Button variant="outline" size="icon" builders={[builder]} class="mr-1" title="Filter by">
-        <Icon icon="lucide:filter" class="w-4 h-4" />
+        <span class="icon-[lucide--filter] size-4"></span>
       </Button>
     </DropdownMenu.Trigger>
     <DropdownMenu.Content class="w-40">
@@ -410,21 +445,21 @@
 
   <DropdownMenu.Root closeOnItemClick={false}>
     <DropdownMenu.Trigger asChild let:builder>
-      <Button variant="outline" size="icon" builders={[builder]} class="mr-1" title="Filter settings">
-        <Icon icon="lucide:settings-2" class="w-4 h-4" />
+      <Button
+        variant="outline"
+        size="icon"
+        builders={[builder]}
+        class="mr-1"
+        title="Filter settings"
+      >
+        <span class="icon-[lucide--settings-2] size-4"></span>
       </Button>
     </DropdownMenu.Trigger>
     <DropdownMenu.Content class="w-40">
       <DropdownMenu.RadioGroup bind:value={filterBySettings}>
-        <DropdownMenu.RadioItem value="contains">
-          Contains
-        </DropdownMenu.RadioItem>
-        <DropdownMenu.RadioItem value="startsWith">
-          Starts with
-        </DropdownMenu.RadioItem>
-        <DropdownMenu.RadioItem value="endsWith">
-          Ends with
-        </DropdownMenu.RadioItem>
+        <DropdownMenu.RadioItem value="contains">Contains</DropdownMenu.RadioItem>
+        <DropdownMenu.RadioItem value="startsWith">Starts with</DropdownMenu.RadioItem>
+        <DropdownMenu.RadioItem value="endsWith">Ends with</DropdownMenu.RadioItem>
       </DropdownMenu.RadioGroup>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
@@ -435,13 +470,13 @@
     type="text"
     bind:value={filterText}
     onkeyup={filter}
-    disabled={filterdDisabled}
+    disabled={filterDisabled}
   />
 
   <div class="grow"></div>
 </div>
 
-<div class="rounded-md border mt-4">
+<div class="mt-4 rounded-md border">
   <Table.Root {...$tableAttrs}>
     <Table.Header>
       {#each $headerRows as headerRow}
@@ -450,13 +485,22 @@
             {#each headerRow.cells as cell (cell.id)}
               <Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
                 <Table.Head {...attrs}>
-                  {#if cell.id == 'id' || cell.id == '' || cell.id == 'notes'}
+                  {#if cell.id == ''}{:else if cell.id == 'id' || cell.id == 'notes'}
                     <Render of={cell.render()} />
                   {:else}
-                  <Button variant="ghost" on:click={props.sort.toggle}>
-                    <Render of={cell.render()} />
-                    <Icon icon="{props.sort.order == 'asc' ? 'lucide:arrow-up' : (props.sort.order == 'desc' ? 'lucide:arrow-down' : 'lucide:arrow-down-up')}" class={"ml-2 h-4 w-4"} />
-                  </Button>
+                    <Button variant="ghost" on:click={props.sort.toggle}>
+                      <Render of={cell.render()} />
+                      <span
+                        class={cn(
+                          props.sort.order == 'asc'
+                            ? 'icon-[lucide--arrow-up]'
+                            : props.sort.order == 'desc'
+                              ? 'icon-[lucide--arrow-down]'
+                              : 'icon-[lucide--arrow-down-up]',
+                          'ml-2 size-4'
+                        )}
+                      ></span>
+                    </Button>
                   {/if}
                 </Table.Head>
               </Subscribe>
@@ -468,9 +512,10 @@
     <Table.Body {...$tableBodyAttrs}>
       {#each $pageRows as row (row.id)}
         <Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-          <Table.Row {...rowAttrs}
+          <Table.Row
             {...rowAttrs}
-            data-state={$selectedDataIds[row.id] && "selected"}
+            {...rowAttrs}
+            data-state={$selectedDataIds[row.id] && 'selected'}
           >
             {#each row.cells as cell (cell.id)}
               <Subscribe attrs={cell.attrs()} let:attrs>
@@ -487,35 +532,53 @@
 </div>
 
 <div class="flex items-center justify-end space-x-2 py-4">
-  <Pagination.Root class="w-auto mx-0 flex-row" count={transactions_formatted.length} perPage={$pageSize} siblingCount={1} let:pages let:currentPage let:range>
-    <p class="text-[13px] text-muted-foreground mr-2">
+  <Pagination.Root
+    class="mx-0 w-auto flex-row"
+    count={transactions_formatted.length}
+    perPage={$pageSize}
+    siblingCount={1}
+    let:pages
+    let:currentPage
+    let:range
+  >
+    <p class="mr-2 text-[13px] text-muted-foreground">
       Showing {range.start + 1} - {range.end} of {transactions_formatted.length}
     </p>
 
     <Pagination.Content>
       <Pagination.Item>
-        <Pagination.PrevButton disabled={!$hasPreviousPage} onclick={() => ($pageIndex = $pageIndex - 1)}>
-          <Icon icon="lucide:chevron-left" class="h-4 w-4" />
+        <Pagination.PrevButton
+          disabled={!$hasPreviousPage}
+          onclick={() => ($pageIndex = $pageIndex - 1)}
+        >
+          <span class="icon-[lucide--chevron-left] size-4"></span>
           <span class="hidden sm:block">Previous</span>
         </Pagination.PrevButton>
       </Pagination.Item>
       {#each pages as page (page.key)}
-        {#if page.type === "ellipsis"}
+        {#if page.type === 'ellipsis'}
           <Pagination.Item>
             <Pagination.Ellipsis />
           </Pagination.Item>
         {:else}
           <Pagination.Item>
-            <Pagination.Link {page} isActive={currentPage == page.value} onclick={() => ($pageIndex = page.value - 1)}>
+            <Pagination.Link
+              {page}
+              isActive={currentPage == page.value}
+              onclick={() => ($pageIndex = page.value - 1)}
+            >
               {page.value}
             </Pagination.Link>
           </Pagination.Item>
         {/if}
       {/each}
       <Pagination.Item>
-        <Pagination.NextButton disabled={!$hasNextPage} onclick={() => ($pageIndex = $pageIndex + 1)}>
+        <Pagination.NextButton
+          disabled={!$hasNextPage}
+          onclick={() => ($pageIndex = $pageIndex + 1)}
+        >
           <span class="hidden sm:block">Next</span>
-          <Icon icon="lucide:chevron-right" class="h-4 w-4" />
+          <span class="icon-[lucide--chevron-right] size-4"></span>
         </Pagination.NextButton>
       </Pagination.Item>
     </Pagination.Content>

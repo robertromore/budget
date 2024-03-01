@@ -61,6 +61,7 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
 
 export const selectTransactionSchema = createSelectSchema(transactions);
 export const insertTransactionSchema = createInsertSchema(transactions);
+export const formInsertTransactionSchema = createInsertSchema(transactions);
 
 type TransactionExtraFields = {
   payee: Payee | null;

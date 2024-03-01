@@ -39,7 +39,7 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
     .string({
       required_error: 'Required.'
     })
-    // .min(2)
+    .min(2)
     .max(30),
   balance: z.coerce.number().optional()
 }).pick({

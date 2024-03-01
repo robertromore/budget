@@ -1,6 +1,5 @@
 <script lang="ts" generics="EditableItem">
   import { Textarea } from '../ui/textarea';
-  import { Pencil2 } from 'radix-icons-svelte';
   import { cn } from '$lib/utils';
   import { Button } from '../ui/button';
   import * as Popover from '../ui/popover';
@@ -44,7 +43,7 @@
       )}
       builders={[builder]}
     >
-      <Pencil2 class="mr-2 h-4 w-4 inline-block align-top" />
+      <span class="icon-[radix-icons--pencil-2] mr-2 h-4 w-4 inline-block align-top" />
       {value ? value : ""}
     </Button>
   </Popover.Trigger>

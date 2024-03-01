@@ -4,7 +4,7 @@ CREATE TABLE `account` (
 	`name` text NOT NULL,
 	`slug` text,
 	`closed` integer DEFAULT false,
-	`balance` real DEFAULT 0,
+	`balance` real DEFAULT 0 NOT NULL,
 	`notes` text,
 	`date_opened` text DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
