@@ -3,12 +3,12 @@
   import NumericInput from '../input/NumericInput.svelte';
   import { BodyRow, DataColumn } from 'svelte-headless-table';
 
-  let { row, column, value, onUpdateValue } = $props<{
+  let { row, column, value, onUpdateValue }: {
     row: BodyRow<EditableNumericItem>;
     column: DataColumn<EditableNumericItem>;
     value: EditableNumericItem | undefined;
     onUpdateValue: (rowDataId: number, columnId: string, newValue: unknown) => void;
-  }>();
+  } = $props();
 
   let open = $state(false);
   const handleSubmit = () => {

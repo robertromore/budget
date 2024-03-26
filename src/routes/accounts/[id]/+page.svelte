@@ -8,7 +8,9 @@
     createTable,
     Render,
     Subscribe,
-    type DataLabel
+    type DataLabel,
+    BodyRow,
+    DataColumn
   } from 'svelte-headless-table';
   import * as Table from '$lib/components/ui/table';
   import EditableCell from '$lib/components/data-table/EditableCell.svelte';
@@ -27,7 +29,6 @@
   import DataTableCheckbox from '$lib/components/data-table/DataTableCheckbox.svelte';
   import { Button } from '$lib/components/ui/button';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import Kbd from '$lib/components/Kbd.svelte';
   import { trpc } from '$lib/trpc/client';
   import { Input } from '$lib/components/ui/input';
   import * as Pagination from '$lib/components/ui/pagination';
@@ -37,25 +38,40 @@
     TransactionsFormat
   } from '$lib/components/types';
   import AddTransactionDialog from '$lib/components/dialogs/AddTransactionDialog.svelte';
-  import { setContext } from 'svelte';
   import { cn } from '$lib/utils';
-  import { invalidate, invalidateAll } from '$app/navigation';
-  import type { Transaction } from '$lib/schema';
+  import { invalidate } from '$app/navigation';
+  import { type Transaction } from '$lib/schema';
   import DeleteTransactionDialog from '$lib/components/dialogs/DeleteTransactionDialog.svelte';
-    import { TRPCError } from '@trpc/server';
-    import { savable } from '$lib/helpers/savable';
+  import { savable } from '$lib/helpers/savable';
+  import type { DateValue } from '@internationalized/date';
+  import { setTransactionState } from '$lib/states/TransactionState.svelte';
+  import { setCategoryState } from '$lib/states/CategoryState.svelte';
+  import { setPayeeState } from '$lib/states/PayeeState.svelte';
 
-  let { data } = $props<{ data: PageData }>();
+  let { data }: { data: PageData } = $props();
   // $inspect(data);
 
-  setContext('payees', data.payees);
-  setContext('categories', data.categories);
+  const transactionState = setTransactionState({
+    transactions: data.account.transactions,
+    manageTransactionForm: data.manageTransactionForm,
+    deleteTransactionForm: data.deleteTransactionForm
+  });
 
-  let transactions = $state(data.account.transactions);
-  let transactions_formatted: TransactionsFormat[] = transactionFormatter(
-    transactions
-  );
-  let transactions_formatted_store = writable(transactions_formatted);
+  const categoryState = setCategoryState({
+    categories: data.categories,
+    manageCategoryForm: data.manageCategoryForm,
+    deleteCategoryForm: data.deleteCategoryForm
+  });
+
+  const payeeState = setPayeeState({
+    payees: data.payees,
+    managePayeeForm: data.managePayeeForm,
+    deletePayeeForm: data.deletePayeeForm
+  });
+
+  // let transactions = transactionState.transactions;
+  // let transactions_formatted: TransactionsFormat[] = transactionFormatter(transactions);
+  let transactions_formatted_store = writable(transactionState.formatted);
 
   let onTransactionAdded = (new_entity: Transaction) => {
     invalidate('account');
@@ -63,12 +79,15 @@
     $transactions_formatted_store = $transactions_formatted_store;
   };
 
-  let onTransactionDeleted = (entity: Transaction) => {
+  let onTransactionDeleted = (entities: Transaction[]) => {
     invalidate('account');
-    $transactions_formatted_store = $transactions_formatted_store.filter((value: TransactionsFormat) => {
-      return value.id != entity.id;
-    })
-  }
+    const entity_ids = entities.map((entity) => entity.id);
+    $transactions_formatted_store = $transactions_formatted_store.filter(
+      (value: TransactionsFormat) => {
+        return !entity_ids.includes(value.id);
+      }
+    );
+  };
 
   const updateData = async (rowDataId: number, columnId: string, newValue: unknown) => {
     const new_data = {
@@ -76,24 +95,10 @@
     };
     if (columnId == 'amount') {
       new_data[columnId] = (newValue as EditableNumericItem).value as number;
-      new_data['newAccountBalance'] =
-        data.account.balance -
-        ((data.account.transactions[rowDataId].amount || 0) - (new_data[columnId] as number));
     }
 
     const updateData = Object.assign({}, data.account.transactions[rowDataId], new_data);
-    console.log(updateData);
-    try {
-      await trpc($page).transactionRoutes.save.mutate(
-        savable(updateData)
-      );
-    } catch (err) {
-      if (err instanceof TRPCError) {
-        console.log(JSON.parse(err.message));
-      } else {
-        throw err;
-      }
-    }
+    await trpc($page).transactionRoutes.save.mutate(savable(updateData));
 
     await invalidate('account');
   };
@@ -102,9 +107,9 @@
     | DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined>
     | undefined = ({ column, row, value }) => {
     return createRender(EditableDateCell, {
-      row,
-      column,
-      value,
+      row: row as BodyRow<DateValue, AnyPlugins>,
+      column: column as DataColumn<DateValue, AnyPlugins, any, any>,
+      value: value as DateValue | undefined,
       onUpdateValue: updateData
     });
   };
@@ -113,11 +118,11 @@
     | DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined>
     | undefined = ({ column, row, value }) => {
     return createRender(EditableEntityCell, {
-      row,
-      column,
+      row: row as BodyRow<EditableEntityItem, AnyPlugins>,
+      column: column as DataColumn<EditableEntityItem, AnyPlugins, any, any>,
       value: value as unknown as EditableEntityItem,
       onUpdateValue: updateData,
-      entityLabel: 'payees'
+      entityLabel: 'payees',
     });
   };
 
@@ -125,11 +130,11 @@
     | DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined>
     | undefined = ({ column, row, value }) => {
     return createRender(EditableEntityCell, {
-      row,
-      column,
+      row: row as BodyRow<EditableEntityItem, AnyPlugins>,
+      column: column as DataColumn<EditableEntityItem, AnyPlugins, any, any>,
       value: value as unknown as EditableEntityItem,
       onUpdateValue: updateData,
-      entityLabel: 'categories'
+      entityLabel: 'categories',
     });
   };
 
@@ -137,9 +142,9 @@
     | DataLabel<TransactionsFormat | unknown, AnyPlugins, string | undefined>
     | undefined = ({ column, row, value }) => {
     return createRender(EditableNumericCell, {
-      row,
-      column,
-      value,
+      row: row as BodyRow<EditableNumericItem, AnyPlugins>,
+      column: column as DataColumn<EditableNumericItem, AnyPlugins, any, any>,
+      value: value as EditableNumericItem | undefined,
       onUpdateValue: updateData
     });
   };
@@ -290,13 +295,10 @@
       header: '',
       cell: ({ value }) => {
         return createRender(DataTableActions, {
-          id: value,
+          ids: [value],
           actions: {
-            edit: () => {
-              console.log('edit');
-            },
-            delete: (id: number) => {
-              deleteAccountId = id;
+            delete: (ids: number[]) => {
+              deleteTransactions = transactionState.transactions.filter((tx: Transaction) => ids.includes(tx.id));
               deleteTransactionDialogOpen = true;
             }
           }
@@ -352,7 +354,7 @@
   let quickaction: string | undefined = $state();
   let addTransactionDialogOpen: boolean = $state(false);
 
-  let deleteAccountId: number | null = $state(null);
+  let deleteTransactions: Transaction[] | null = $state(null);
   let deleteTransactionDialogOpen = $state(false);
 </script>
 
@@ -361,9 +363,9 @@
   <span class="text-sm text-muted-foreground"
     ><strong>Balance:</strong> {currencyFormatter.format(data.account.balance ?? 0)}</span
   >
-  <Button variant="outline" size="icon" class="ml-2" onclick={refreshAccountBalance}>
+  <!-- <Button variant="outline" size="icon" class="ml-2" onclick={refreshAccountBalance}>
     <span class="s-4 icon-[lucide--refresh-cw]" />
-  </Button>
+  </Button> -->
 </div>
 
 <p class="mb-2 text-sm text-muted-foreground">{data.account.notes}</p>
@@ -372,12 +374,13 @@
   account={data.account}
   bind:dialogOpen={addTransactionDialogOpen}
   {onTransactionAdded}
-  dataForm={data.manageTransactionForm}
 />
 
 <DeleteTransactionDialog
-  bind:account={deleteAccountId!}
+  bind:transactions={deleteTransactions!}
   bind:dialogOpen={deleteTransactionDialogOpen}
+  bind:accountId={data.account.id}
+  bind:accountBalance={data.account.balance}
   {onTransactionDeleted}
 />
 
@@ -408,17 +411,24 @@
       <DropdownMenu.Group>
         <DropdownMenu.Item>
           Archive
-          <Kbd keys={['A']} />
+          <DropdownMenu.Shortcut>⇧⌘A</DropdownMenu.Shortcut>
         </DropdownMenu.Item>
-        <DropdownMenu.Item>Duplicate</DropdownMenu.Item>
-        <DropdownMenu.Item>
+        <!-- <DropdownMenu.Item>Duplicate</DropdownMenu.Item> -->
+        <DropdownMenu.Item
+          onclick={() => {
+            deleteTransactions = Object.keys($selectedDataIds).map(
+              (id) => transactionState.transactions[parseInt(id)]
+            );
+            deleteTransactionDialogOpen = true;
+          }}
+        >
           Delete
-          <Kbd keys={['D']} />
+          <DropdownMenu.Shortcut>⇧⌘D</DropdownMenu.Shortcut>
         </DropdownMenu.Item>
-        <DropdownMenu.Item>
+        <!-- <DropdownMenu.Item>
           Edit
-          <Kbd keys={['E']} />
-        </DropdownMenu.Item>
+          <DropdownMenu.Shortcut>⇧⌘E</DropdownMenu.Shortcut>
+        </DropdownMenu.Item> -->
       </DropdownMenu.Group>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
@@ -534,7 +544,7 @@
 <div class="flex items-center justify-end space-x-2 py-4">
   <Pagination.Root
     class="mx-0 w-auto flex-row"
-    count={transactions_formatted.length}
+    count={transactionState.formatted.length}
     perPage={$pageSize}
     siblingCount={1}
     let:pages
@@ -542,7 +552,7 @@
     let:range
   >
     <p class="mr-2 text-[13px] text-muted-foreground">
-      Showing {range.start + 1} - {range.end} of {transactions_formatted.length}
+      Showing {range.start + 1} - {range.end} of {transactionState.formatted.length}
     </p>
 
     <Pagination.Content>

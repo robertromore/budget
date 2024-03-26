@@ -4,7 +4,7 @@
 
 import { createId } from '@paralleldrive/cuid2';
 import { relations, sql } from 'drizzle-orm';
-import { sqliteTable, integer, real, text } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { transactions } from './transactions';
 import type { Transaction } from './transactions';
@@ -19,7 +19,7 @@ export const accounts = sqliteTable('account', {
   closed: integer('closed', { mode: 'boolean' }).default(false),
   // @todo decide if it's better to calculate and store this value or aggregate
   // the value based on the transaction rows.
-  balance: real('balance').default(0.0).notNull(),
+  // balance: real('balance').default(0.0).notNull(),
   notes: text('notes'),
   dateOpened: text('date_opened')
     .notNull()
@@ -42,18 +42,19 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
     .min(2)
     .max(30),
   balance: z.coerce.number().optional()
-}).pick({
-  name: true,
-  balance: true
 });
 export const removeAccountSchema = z.object({ id: z.number().nonnegative() });
 
-type AccountExtraFields = {
+type WithTransactions = {
   transactions: Transaction[];
 };
+type WithBalance = {
+  balance: number;
+};
+interface AccountExtraFields extends WithTransactions, WithBalance {};
 
 export type Account = typeof accounts.$inferSelect & AccountExtraFields;
 export type NewAccount = typeof accounts.$inferInsert;
-export type InsertAccountSchema = typeof insertAccountSchema & AccountExtraFields;
+export type InsertAccountSchema = typeof insertAccountSchema;
 export type FormInsertAccountSchema = typeof formInsertAccountSchema;
 export type RemoveAccountSchema = typeof removeAccountSchema;

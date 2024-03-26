@@ -4,12 +4,12 @@
   import DateInput from '$lib/components/input/DateInput.svelte';
   import type { EditableDateItem } from '../types';
 
-  let { row, column, value, onUpdateValue } = $props<{
+  let { row, column, value, onUpdateValue }: {
     row: BodyRow<EditableDateItem>;
     column: DataColumn<EditableDateItem>;
     value: DateValue | undefined;
     onUpdateValue: (rowDataId: number, columnId: string, newValue: unknown) => void;
-  }>();
+  } = $props();
 
   const handleSubmit = (new_value: DateValue | DateValue[] | undefined) => {
     if (row.isData() && new_value) {

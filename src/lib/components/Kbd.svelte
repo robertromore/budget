@@ -1,7 +1,7 @@
 <script lang="ts">
-  let { keys } = $props<{
+  let { keys }: {
     keys: string[]
-  }>();
+  } = $props();
 </script>
 
 <div class="ml-auto flex items-center gap-px">

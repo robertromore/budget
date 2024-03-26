@@ -3,16 +3,18 @@
   import * as Dialog from '$lib/components/ui/dialog';
   import * as Form from '$lib/components/ui/form';
   import { Input } from '$lib/components/ui/input';
-  import { type FormInsertAccountSchema, formInsertAccountSchema } from '$lib/schema';
-  import { type SuperValidated, type Infer, superForm, numberProxy } from 'sveltekit-superforms';
+  import { formInsertAccountSchema } from '$lib/schema';
+  import { getAccountState } from '$lib/states/AccountState.svelte';
+  import SuperDebug, { superForm, numberProxy } from 'sveltekit-superforms';
   import { zodClient } from 'sveltekit-superforms/adapters';
 
-  let { dataForm, dialogOpen } = $props<{
-    dataForm: SuperValidated<Infer<FormInsertAccountSchema>>;
+  let { dialogOpen }: {
     dialogOpen?: boolean;
-  }>();
+  } = $props();
 
-  const form = superForm(dataForm, {
+  const data = getAccountState();
+
+  const form = superForm(data.manageAccountForm, {
     validators: zodClient(formInsertAccountSchema),
     onResult: () => {
       dialogOpen = false;
@@ -50,6 +52,7 @@
           </Form.Field>
           <Form.Button disabled={$submitting}>Submit</Form.Button>
         </form>
+        <SuperDebug data={$formData} />
       </Dialog.Description>
     </Dialog.Header>
   </Dialog.Content>

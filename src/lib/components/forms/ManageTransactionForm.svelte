@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as Form from "$lib/components/ui/form";
-  import { formInsertTransactionSchema, type Transaction } from "$lib/schema";
-  import { superForm } from "sveltekit-superforms/client";
+  import { insertTransactionSchema, type InsertTransactionSchema, type Transaction } from "$lib/schema";
+  import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms/client";
   import { today, getLocalTimeZone } from "@internationalized/date";
   import type { EditableDateItem, EditableEntityItem, EditableNumericItem } from "../types";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
@@ -9,22 +9,24 @@
   import DateInput from "$lib/components/input/DateInput.svelte";
   import EntityInput from "$lib/components/input/EntityInput.svelte";
   import NumericInput from "$lib/components/input/NumericInput.svelte";
-  import SuperDebug from "sveltekit-superforms";
+    import { getTransactionState } from "$lib/states/TransactionState.svelte";
 
-  let { accountId, onDelete, onSave, dataForm } = $props<{
+  let { accountId, onDelete, onSave }: {
     accountId: number,
     onDelete?: (id: number) => void,
     onSave?: (new_entity: Transaction) => void,
-    dataForm
-  }>();
+  } = $props();
+
+  const data = getTransactionState();
 
   const form = superForm(
-    dataForm,
+    data.manageTransactionForm,
     {
-      validators: zodClient(formInsertTransactionSchema),
+      validators: zodClient(insertTransactionSchema),
       onResult: async({ result }) => {
-        if (onSave)
+        if (onSave) {
           onSave(result.data.entity);
+        }
       },
     }
   );
@@ -51,7 +53,7 @@
     $formData.amount = numericAmount.value;
     $formData.payeeId = payee.id;
     $formData.categoryId = category.id;
-  })
+  });
 </script>
 
 <form method="post" action="/accounts?/add-transaction" use:enhance class="grid grid-cols-2 gap-2">

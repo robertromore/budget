@@ -5,12 +5,12 @@
   import * as Popover from '../ui/popover';
   import { BodyRow, DataColumn } from 'svelte-headless-table';
 
-  let { row, column, value, onUpdateValue } = $props<{
+  let { row, column, value, onUpdateValue }: {
     row: BodyRow<EditableItem>;
     column: DataColumn<EditableItem>;
     value: unknown;
     onUpdateValue: (rowDataId: number, columnId: string, newValue: unknown) => void;
-  }>();
+  } = $props();
 
   let open = $state(false);
 

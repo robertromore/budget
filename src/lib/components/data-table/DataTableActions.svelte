@@ -3,10 +3,10 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Button } from "$lib/components/ui/button";
 
-  let { id, actions } = $props<{
-    id: number,
-    actions: { [action: string]: (id: number) => void }
-  }>();
+  let { ids, actions }: {
+    ids: number[],
+    actions: { [action: string]: (ids: number[]) => void }
+  } = $props();
 </script>
 
 <DropdownMenu.Root>
@@ -23,14 +23,14 @@
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Group>
-      <DropdownMenu.Item onclick={() => actions.edit(id)}>
+      <!-- <DropdownMenu.Item onclick={() => actions.edit(ids)}>
         Edit
-      </DropdownMenu.Item>
-      <DropdownMenu.Item onclick={() => actions.delete(id)}>
-        Delete
-      </DropdownMenu.Item>
+      </DropdownMenu.Item> -->
       <DropdownMenu.Item>
         Archive
+      </DropdownMenu.Item>
+      <DropdownMenu.Item onclick={() => actions.delete(ids)}>
+        Delete
       </DropdownMenu.Item>
     </DropdownMenu.Group>
   </DropdownMenu.Content>

@@ -1,23 +1,21 @@
 <script lang="ts">
+  import type { Category, Payee } from '$lib/schema';
+  import { getPayeeState } from '$lib/states/PayeeState.svelte';
+  import { getCategoryState } from '$lib/states/CategoryState.svelte';
   import { cn } from '$lib/utils';
   import ManagePayeeForm from '../forms/ManagePayeeForm.svelte';
   import { Button } from '$lib/components/ui/button';
   import * as Command from '$lib/components/ui/command';
   import * as Popover from '$lib/components/ui/popover';
   import type { EditableEntityItem } from '../types';
-  import { getContext } from 'svelte';
 
-  let {
-    entityLabel,
-    value,
-    handleSubmit
-  } = $props<{
+  let { entityLabel = $bindable(), value = $bindable(), handleSubmit }: {
     entityLabel: string;
     value?: EditableEntityItem;
     handleSubmit?: (selected: EditableEntityItem) => void;
-  }>();
+  } = $props();
 
-  let entities: EditableEntityItem[] = $state(getContext(entityLabel));
+  let entities: Category[] | Payee[] = entityLabel === 'categories' ? getCategoryState().categories : getPayeeState().payees;
 
   const findCurrentEntity = () => entities.find((entity) => entity.id == value?.id);
   let label = $state(findCurrentEntity()?.name);
@@ -36,12 +34,12 @@
       managingId = 0;
     }
   };
+
   const onSave = (new_entity: EditableEntityItem, is_new: boolean) => {
     if (is_new) {
       entities.push(new_entity);
       value = new_entity;
-    }
-    else {
+    } else {
       for (let i = 0; i < entities.length; i++) {
         if (entities[i].id === new_entity.id) {
           entities[i].name = new_entity.name;
@@ -52,6 +50,7 @@
     managingId = 0;
     manage = false;
   };
+
   const onDelete = (id: number) => {
     let position = null;
     for (let i = 0; i < entities.length; i++) {
@@ -66,6 +65,7 @@
     managingId = 0;
     manage = false;
   };
+
   const addNew = (event: MouseEvent) => {
     managingId = 0;
     toggleManageScreen(event);
@@ -86,12 +86,12 @@
       <Button
         variant="outline"
         class={cn(
-          "w-full justify-start text-left font-normal text-ellipsis overflow-hidden whitespace-nowrap block",
-          !value && "text-muted-foreground"
+          'block w-full justify-start overflow-hidden text-ellipsis whitespace-nowrap text-left font-normal',
+          !value && 'text-muted-foreground'
         )}
         builders={[builder]}
       >
-        <span class="icon-[carbon--user-avatar] mr-2 h-4 w-4 inline-block align-top"></span>
+        <span class="icon-[carbon--user-avatar] mr-2 inline-block h-4 w-4 align-top"></span>
         {label}
       </Button>
     </Popover.Trigger>
@@ -100,7 +100,11 @@
         <Command.Root>
           <div class="flex">
             <Command.Input placeholder="Search {entityLabel}..." bind:value={search} />
-            <Button size="icon" class="rounded-none h-11 w-12 border-b shadow-none" onclick={addNew}>
+            <Button
+              size="icon"
+              class="h-11 w-12 rounded-none border-b shadow-none"
+              onclick={addNew}
+            >
               <span class="icon-[lucide--plus]"></span>
             </Button>
           </div>
@@ -110,7 +114,7 @@
               {#each entities as entity}
                 <Command.Item
                   value={entity.id + ''}
-                  class={cn(value?.id == entity.id && "bg-muted")}
+                  class={cn(value?.id == entity.id && 'bg-muted')}
                   onSelect={() => {
                     value = entity;
                     if (handleSubmit) {
@@ -120,17 +124,22 @@
                 >
                   <span
                     class={cn(
-                      "icon-[lucide--check] mr-2 size-4",
-                      value?.id != entity.id && "text-transparent"
+                      'icon-[lucide--check] mr-2 size-4',
+                      value?.id != entity.id && 'text-transparent'
                     )}
                   />
                   <div class="flex-grow">
                     {entity.name}
                   </div>
-                  <Button variant="outline" size="icon" class="mr-1 p-1 text-xs" onclick={(e: MouseEvent) => {
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    class="mr-1 p-1 text-xs"
+                    onclick={(e: MouseEvent) => {
                     managingId = entity.id;
                     toggleManageScreen(e);
-                  }}>
+                  }}
+                  >
                     <span class="icon-[radix-icons--pencil-2]" />
                   </Button>
                 </Command.Item>
@@ -144,9 +153,13 @@
             <span class="icon-[lucide--move-left] size-4"></span>
           </Button>
           {#if managingId > 0}
-            <ManagePayeeForm payeeId={managingId} onSave={onSave} onDelete={onDelete} />
+            <ManagePayeeForm
+              payeeId={managingId}
+              {onSave}
+              {onDelete}
+            />
           {:else}
-            <ManagePayeeForm name={search} onSave={onSave} />
+            <ManagePayeeForm name={search} {onSave} />
           {/if}
         </div>
       {/if}

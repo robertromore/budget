@@ -5,10 +5,10 @@
   import { page } from '$app/stores';
   import { invalidateAll } from '$app/navigation';
 
-  let { deleteDialogId, deleteDialogOpen } = $props<{
+  let { deleteDialogId = $bindable(), deleteDialogOpen = $bindable() }: {
     deleteDialogId: number | null,
     deleteDialogOpen: boolean
-  }>();
+  } = $props();
 
   const confirmDeleteAccount = async () => {
     deleteDialogOpen = false;

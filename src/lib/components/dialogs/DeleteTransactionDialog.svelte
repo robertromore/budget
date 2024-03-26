@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { invalidate, invalidateAll } from "$app/navigation";
   import { page } from "$app/stores";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { buttonVariants } from "$lib/components/ui/button";
@@ -7,18 +6,29 @@
   import { trpc } from "$lib/trpc/client";
 
   let {
-    account,
-    dialogOpen,
+    transactions = $bindable(),
+    accountId = $bindable(),
+    accountBalance = $bindable(),
+    dialogOpen = $bindable(),
     onTransactionDeleted
-  } = $props<{
-    account: number;
+  }: {
+    transactions: Transaction[];
+    accountId: number;
+    accountBalance: number;
     dialogOpen: boolean;
-    onTransactionDeleted: (entity: Transaction) => void;
-  }>();
+    onTransactionDeleted: (entities: Transaction[]) => void;
+  } = $props();
 
   let confirmDeleteTransaction = async() => {
-    let entity: Transaction[] = await trpc($page).transactionRoutes.delete.mutate(account);
-    onTransactionDeleted(entity[0]);
+    let total = 0;
+    transactions.forEach((tx: Transaction) => {
+      total += tx.amount || 0;
+    });
+    const entities: Transaction[] = await trpc($page).transactionRoutes.delete.mutate({
+      entities: transactions.map((transaction) => transaction.id),
+      accountId
+    });
+    onTransactionDeleted(entities);
   };
 </script>
 

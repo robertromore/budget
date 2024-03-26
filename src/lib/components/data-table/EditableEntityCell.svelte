@@ -1,15 +1,16 @@
-<script lang="ts">
+<script lang="ts" generics="T extends Schema, S extends Zod.ZodTypeAny">
   import { BodyRow, DataColumn } from 'svelte-headless-table';
   import type { EditableEntityItem } from '../types';
-  import EntityManager from '$lib/components/input/EntityInput.svelte';
+  import EntityInput from '$lib/components/input/EntityInput.svelte';
+  import type { Schema } from 'sveltekit-superforms';
 
-  let { row, column, value, onUpdateValue, entityLabel } = $props<{
+  let { row, column, value, onUpdateValue, entityLabel }: {
     row: BodyRow<EditableEntityItem>;
     column: DataColumn<EditableEntityItem>;
     value: EditableEntityItem | undefined;
     onUpdateValue: (rowDataId: number, columnId: string, newValue: unknown) => void;
-    entityLabel: string
-  }>();
+    entityLabel: string;
+  } = $props();
 
   const handleSubmit = (entity: EditableEntityItem) => {
     if (row.isData()) {
@@ -18,7 +19,7 @@
   };
 </script>
 
-<EntityManager
+<EntityInput
   bind:entityLabel
   bind:value
   {handleSubmit}

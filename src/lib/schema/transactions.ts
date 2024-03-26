@@ -15,6 +15,7 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { categories, type Category } from './categories';
 import { payees, type Payee } from './payees';
 import { accounts } from './accounts';
+import { z } from 'zod';
 
 export const transactions = sqliteTable(
   'transaction',
@@ -61,7 +62,11 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
 
 export const selectTransactionSchema = createSelectSchema(transactions);
 export const insertTransactionSchema = createInsertSchema(transactions);
-export const formInsertTransactionSchema = createInsertSchema(transactions);
+// export const formInsertTransactionSchema = createInsertSchema(transactions);
+export const removeTransactionsSchema = z.object({
+  entities: z.array(z.number()),
+  accountId: z.number(),
+});
 
 type TransactionExtraFields = {
   payee: Payee | null;
@@ -70,3 +75,5 @@ type TransactionExtraFields = {
 
 export type Transaction = typeof transactions.$inferSelect & TransactionExtraFields;
 export type NewTransaction = typeof transactions.$inferInsert;
+export type InsertTransactionSchema = typeof insertTransactionSchema;
+export type RemoveTransactionSchema = typeof removeTransactionsSchema;

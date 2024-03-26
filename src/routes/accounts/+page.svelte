@@ -3,20 +3,27 @@
   import * as Card from '$lib/components/ui/card';
   import type { Infer, SuperValidated } from 'sveltekit-superforms';
   import type { PageData } from './$types';
-  import { type Account, type InsertAccountSchema, type RemoveAccountSchema } from '$lib/schema';
+  import { type Account, type FormInsertAccountSchema, type RemoveAccountSchema } from '$lib/schema';
   import { currencyFormatter } from '$lib/helpers/formatters';
   import AddAccountDialog from '$lib/components/dialogs/AddAccountDialog.svelte';
   import DeleteAccountDialog from '$lib/components/dialogs/DeleteAccountDialog.svelte';
+  import { setAccountState } from '$lib/states/AccountState.svelte';
 
   type AccountPageData = PageData & {
-    form: SuperValidated<Infer<InsertAccountSchema>>;
-    deleteForm: SuperValidated<Infer<RemoveAccountSchema>>;
+    addAccountForm: SuperValidated<Infer<FormInsertAccountSchema>>;
+    deleteAccountForm: SuperValidated<Infer<RemoveAccountSchema>>;
     accounts: Account[];
   };
 
   let {
     data,
   } = $props<{ data: AccountPageData; }>();
+
+  setAccountState({
+    accounts: data.accounts,
+    manageAccountForm: data.manageAccountForm,
+    deleteAccountForm: data.deleteAccountForm
+  });
 
   let deleteDialogId: number | null = $state(null);
   let deleteDialogOpen: boolean = $state(false);
@@ -27,7 +34,7 @@
   };
 </script>
 
-<AddAccountDialog dataForm={data.form} />
+<AddAccountDialog />
 
 <div class="mt-4 grid grid-cols-4 gap-4">
   {#each data.accounts as { id, name, balance, notes }}

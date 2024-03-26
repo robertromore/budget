@@ -6,11 +6,11 @@
   import { cn } from '$lib/utils';
   import type { EditableNumericItem } from '../types';
 
-  let { amount, onSubmit, open } = $props<{
+  let { amount = $bindable(), onSubmit, open = $bindable() }: {
     amount?: EditableNumericItem,
     onSubmit?: () => void,
     open?: boolean
-  }>();
+  } = $props();
 
   let dialogOpen = $state(open || false);
   let new_amount = $state(amount?.formatted?.replace('$', '') || '0');
@@ -33,23 +33,28 @@
 
   const valueWellFormatted = () => new_amount?.match(/\d+?\.\d{2}/) !== null;
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (new_amount?.includes('.') && event.key === '.') {
-      event.preventDefault();
-    }
-    /*console.log(e.key);
-    if (
-      !valueWellFormatted() && e.key in Array.from({length: 10}, (_, i) => i)
-      || !new_value.includes('.') && e.key === '.'
-    ) {
-      new_value += e.key;
-    }
-    else if (new_value && e.key == 'Backspace') {
-      // new_value = new_value.substring(0, new_value.length - 1);
-      // backspace();
-    }
-    else */
-    if (new_amount && event.key == 'Enter') {
-      submit();
+    if (dialogOpen) {
+      if (new_amount?.includes('.') && event.key === '.') {
+        event.preventDefault();
+      }
+      if (valueWellFormatted() && event.key in [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]) {
+        event.preventDefault();
+      }
+      /*console.log(e.key);
+      if (
+        !valueWellFormatted() && e.key in Array.from({length: 10}, (_, i) => i)
+        || !new_value.includes('.') && e.key === '.'
+      ) {
+        new_value += e.key;
+      }
+      else if (new_value && e.key == 'Backspace') {
+        // new_value = new_value.substring(0, new_value.length - 1);
+        // backspace();
+      }
+      else */
+      if (new_amount && event.key == 'Enter') {
+        submit();
+      }
     }
   }
 </script>

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { publicProcedure, t } from '../t';
-import { accounts, categories, formInsertTransactionSchema, payees, transactions } from '$lib/schema';
+import { categories, removeTransactionsSchema, insertTransactionSchema, payees, transactions } from '$lib/schema';
 import { eq, sql } from 'drizzle-orm';
 
 export const transactionRoutes = t.router({
@@ -13,27 +13,18 @@ export const transactionRoutes = t.router({
     .query(async ({ ctx: { db } }) => {
       return await db.select();
     }),
-  delete: publicProcedure.input(z.array(z.number())).mutation(async ({ input, ctx: { db } }) => {
-    return await db.delete(transactions).where(sql`${transactions.id} in ${input}`).returning();
+  delete: publicProcedure.input(removeTransactionsSchema).mutation(async ({ input: { entities }, ctx: { db } }) => {
+    return await db.delete(transactions).where(sql`${transactions.id} in ${entities}`).returning();
   }),
   save: publicProcedure
-    .input(formInsertTransactionSchema.extend({ newAccountBalance: z.number().optional() }))
+    .input(insertTransactionSchema)
     .mutation(
       async ({
-        input: { id, payeeId, amount, categoryId, notes, date, accountId, newAccountBalance },
+        input: { id, payeeId, amount, categoryId, notes, date, accountId },
         ctx: { db }
       }) => {
         if (!accountId) {
           return;
-        }
-
-        if (newAccountBalance && accountId) {
-          await db
-            .update(accounts)
-            .set({
-              balance: newAccountBalance
-            })
-            .where(eq(accounts.id, accountId));
         }
 
         let entity;
@@ -45,7 +36,6 @@ export const transactionRoutes = t.router({
               amount,
               categoryId,
               notes,
-              // date: toCalendarDateTime(date as DateValue).toString()
               date
             })
             .where(eq(transactions.id, id))

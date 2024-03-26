@@ -2,14 +2,15 @@
   import { getLocalTimeZone, type DateValue, today } from '@internationalized/date';
   import { cn } from '$lib/utils';
   import { Button, buttonVariants } from '$lib/components/ui/button';
-  import { Calendar } from "bits-ui";
+  // import { Calendar } from "bits-ui";
+  import { Calendar } from "$lib/components/ui/calendar";
   import * as Popover from '$lib/components/ui/popover';
   import { dateFormatter } from '$lib/helpers/formatters';
 
-  let { value, handleSubmit } = $props<{
+  let { value = $bindable(), handleSubmit }: {
     value?: DateValue,
     handleSubmit?: (value: DateValue | DateValue[] | undefined) => void
-  }>();
+  } = $props();
 </script>
 
 <Popover.Root>
@@ -26,7 +27,8 @@
     </Button>
   </Popover.Trigger>
   <Popover.Content class="w-auto p-0" align="start">
-    <Calendar.Root
+    <Calendar bind:value initialFocus />
+    <!-- <Calendar.Root
       bind:value
       onValueChange={handleSubmit}
       initialFocus
@@ -103,6 +105,6 @@
           </Calendar.Grid>
         {/each}
       </div>
-    </Calendar.Root>
+    </Calendar.Root> -->
   </Popover.Content>
 </Popover.Root>
