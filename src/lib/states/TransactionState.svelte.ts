@@ -35,6 +35,9 @@ export class TransactionState {
     this.writableStore = writable(this.formatted);
     this.manageTransactionForm = init.manageTransactionForm;
     this.deleteTransactionForm = init.deleteTransactionForm;
+    $effect(() => {
+      this.formatted = transactionFormatter(this.transactions);
+    });
   }
 }
 

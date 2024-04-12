@@ -1,21 +1,16 @@
 <script lang="ts">
   import type { EditableNumericItem } from '../types';
   import NumericInput from '../input/NumericInput.svelte';
-  import { BodyRow, DataColumn } from 'svelte-headless-table';
 
-  let { row, column, value, onUpdateValue }: {
-    row: BodyRow<EditableNumericItem>;
-    column: DataColumn<EditableNumericItem>;
+  let { value, onUpdateValue }: {
     value: EditableNumericItem | undefined;
-    onUpdateValue: (rowDataId: number, columnId: string, newValue: unknown) => void;
+    onUpdateValue: (newValue: unknown) => void;
   } = $props();
 
   let open = $state(false);
   const handleSubmit = () => {
     open = false;
-    if (row.isData()) {
-      onUpdateValue(parseInt(row.dataId), column.id, value);
-    }
+    onUpdateValue(value);
   };
 </script>
 

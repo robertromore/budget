@@ -8,6 +8,7 @@
   import * as Command from '$lib/components/ui/command';
   import * as Popover from '$lib/components/ui/popover';
   import type { EditableEntityItem } from '../types';
+    import ManageCategoryForm from '../forms/ManageCategoryForm.svelte';
 
   let { entityLabel = $bindable(), value = $bindable(), handleSubmit }: {
     entityLabel: string;
@@ -153,13 +154,19 @@
             <span class="icon-[lucide--move-left] size-4"></span>
           </Button>
           {#if managingId > 0}
-            <ManagePayeeForm
-              payeeId={managingId}
+            <svelte:component
+              this={entityLabel === 'categories' ? ManageCategoryForm : ManagePayeeForm}
+              payeeId={entityLabel === 'categories' ? undefined : managingId}
+              categoryId={entityLabel === 'categories' ? managingId : undefined}
               {onSave}
               {onDelete}
             />
           {:else}
-            <ManagePayeeForm name={search} {onSave} />
+            <svelte:component
+              this={entityLabel === 'categories' ? ManageCategoryForm : ManagePayeeForm}
+              name={search}
+              {onSave}
+            />
           {/if}
         </div>
       {/if}

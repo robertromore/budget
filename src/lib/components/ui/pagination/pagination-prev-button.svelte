@@ -19,7 +19,7 @@
 		{...$$restProps}
 	>
 		<slot>
-			<span class="icon-[lucide--chevron-left] h-4 w-4" />
+			<span class="icon-[lucide--chevron-left] size-4" />
 			<span>Previous</span>
 		</slot>
 	</Button>

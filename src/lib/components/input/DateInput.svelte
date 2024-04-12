@@ -1,8 +1,7 @@
 <script lang="ts">
   import { getLocalTimeZone, type DateValue, today } from '@internationalized/date';
   import { cn } from '$lib/utils';
-  import { Button, buttonVariants } from '$lib/components/ui/button';
-  // import { Calendar } from "bits-ui";
+  import { Button } from '$lib/components/ui/button';
   import { Calendar } from "$lib/components/ui/calendar";
   import * as Popover from '$lib/components/ui/popover';
   import { dateFormatter } from '$lib/helpers/formatters';
@@ -27,84 +26,6 @@
     </Button>
   </Popover.Trigger>
   <Popover.Content class="w-auto p-0" align="start">
-    <Calendar bind:value initialFocus />
-    <!-- <Calendar.Root
-      bind:value
-      onValueChange={handleSubmit}
-      initialFocus
-      let:months
-      let:weekdays
-      weekdayFormat="short"
-      fixedWeeks={true}
-    >
-      <Calendar.Header class="flex items-center justify-between">
-        <Calendar.PrevButton
-          class="inline-flex size-10 items-center justify-center rounded-9px bg-background hover:bg-muted active:scale-98 active:transition-all rounded-tl-md"
-        >
-          <span class="icon-[lucide--chevron-left] size-6"></span>
-        </Calendar.PrevButton>
-        <Calendar.Heading class="text-[15px] font-medium" />
-        <Calendar.NextButton
-          class="inline-flex size-10 items-center justify-center rounded-9px bg-background hover:bg-muted active:scale-98 active:transition-all rounded-tr-md"
-        >
-          <span class="icon-[lucide--chevron-right] size-6"></span>
-        </Calendar.NextButton>
-      </Calendar.Header>
-      <div
-        class="flex flex-col space-y-4 pt-4 sm:flex-row sm:space-x-4 sm:space-y-0"
-      >
-        {#each months as month, i (i)}
-          <Calendar.Grid class="w-full border-collapse select-none space-y-1">
-            <Calendar.GridHead>
-              <Calendar.GridRow class="mb-1 flex w-full justify-between">
-                {#each weekdays as day}
-                  <Calendar.HeadCell
-                    class="w-10 rounded-md text-xs !font-normal text-muted-foreground text-center"
-                  >
-                    <div>{day.slice(0, 2)}</div>
-                  </Calendar.HeadCell>
-                {/each}
-              </Calendar.GridRow>
-            </Calendar.GridHead>
-            <Calendar.GridBody>
-              {#each month.weeks as weekDates}
-                <Calendar.GridRow class="flex w-full">
-                  {#each weekDates as date}
-                    <Calendar.Cell
-                      {date}
-                      class="relative size-10 !p-0 text-center text-sm"
-                    >
-                      <Calendar.Day
-                        {date}
-                        month={month.value}
-                        class={cn(
-                          buttonVariants({ variant: "ghost" }),
-                          "h-8 w-8 p-0 font-normal",
-                          // Today
-                          "[&[data-today]:not([data-selected])]:bg-accent [&[data-today]:not([data-selected])]:text-accent-foreground",
-                          // Selected
-                          "data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[selected]:hover:bg-primary data-[selected]:hover:text-primary-foreground data-[selected]:focus:bg-primary data-[selected]:focus:text-primary-foreground data-[selected]:opacity-100",
-                          // Disabled
-                          "data-[disabled]:text-muted-foreground data-[disabled]:opacity-50",
-                          // Unavailable
-                          "data-[unavailable]:line-through data-[unavailable]:text-destructive-foreground",
-                          // Outside months
-                          "data-[outside-month]:text-muted-foreground data-[outside-month]:opacity-50 [&[data-outside-month][data-selected]]:bg-accent/50 [&[data-outside-month][data-selected]]:text-muted-foreground [&[data-outside-month][data-selected]]:opacity-30 data-[outside-month]:pointer-events-none",
-                        )}
-                      >
-                        <div
-                          class="absolute top-[5px] hidden size-1 rounded-full bg-foreground group-data-[today]:block group-data-[selected]:bg-background"
-                        />
-                        {date.day}
-                      </Calendar.Day>
-                    </Calendar.Cell>
-                  {/each}
-                </Calendar.GridRow>
-              {/each}
-            </Calendar.GridBody>
-          </Calendar.Grid>
-        {/each}
-      </div>
-    </Calendar.Root> -->
+    <Calendar bind:value initialFocus onValueChange={handleSubmit} />
   </Popover.Content>
 </Popover.Root>

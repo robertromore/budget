@@ -20,7 +20,7 @@
 	>
 		<slot>
 			<span>Next</span>
-			<span class="icon-[lucide--chevron-right] h-4 w-4" />
+			<span class="icon-[lucide--chevron-right] size-4" />
 		</slot>
 	</Button>
 </PaginationPrimitive.NextButton>

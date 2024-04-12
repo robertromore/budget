@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { EditableEntityItem } from "../types";
-  import { insertPayeeSchema, type Payee } from "$lib/schema";
-  import { getPayeeState } from "$lib/states/PayeeState.svelte";
+  import { insertCategorySchema, type Category } from "$lib/schema";
+  import { getCategoryState } from "$lib/states/CategoryState.svelte";
   import { page } from "$app/stores";
   import * as Form from "$lib/components/ui/form";
   import { trpc } from "$lib/trpc/client";
@@ -12,19 +12,20 @@
   import Input from "../ui/input/input.svelte";
   import { Textarea } from "../ui/textarea";
 
-  let { payeeId, onDelete, onSave }: {
-    payeeId?: number | undefined;
+  let { categoryId, onDelete, onSave }: {
+    categoryId?: number | undefined;
     onDelete?: (id: number) => void;
-    onSave?: (new_payee: EditableEntityItem) => void;
+    onSave?: (new_category: EditableEntityItem) => void;
   } = $props();
 
-  const data = getPayeeState();
+  const data = getCategoryState();
 
   const form = superForm(
-    data.managePayeeForm,
+    data.manageCategoryForm,
     {
-      validators: zodClient(insertPayeeSchema),
+      validators: zodClient(insertCategorySchema),
       onResult: async({ result }) => {
+        console.log(result);
         if (result.data.status === 200 && onSave)
           onSave(result.data.entity);
       },
@@ -32,17 +33,17 @@
   );
 
   const { form: formData, enhance } = form;
-  if (payeeId) {
-    const payee: Payee = data.payees.filter((payeeEntity: Payee) => payeeEntity.id === payeeId)[0];
-    $formData.name = payee.name;
-    $formData.notes = payee.notes;
+  if (categoryId) {
+    const category: Category = data.categories.filter((categoryEntity: Category) => categoryEntity.id === categoryId)[0];
+    $formData.name = category.name;
+    $formData.notes = category.notes;
   }
 
   let alertDialogOpen = $state(false);
-  const deletePayee = async(id: number) => {
+  const deleteCategory = async(id: number) => {
     alertDialogOpen = false;
-    if (payeeId) {
-      await trpc($page).payeeRoutes.remove.mutate({ id: payeeId });
+    if (categoryId) {
+      await trpc($page).categoriesRoutes.remove.mutate({ id: categoryId });
       if (onDelete) {
         onDelete(id);
       }
@@ -50,9 +51,9 @@
   }
 </script>
 
-<form method="post" action="/payees?/save-payee" use:enhance class="grid grid-cols-2 gap-2">
-  {#if payeeId}
-    <input type="hidden" name="id" value={payeeId}/>
+<form method="post" action="/categories?/save-category" use:enhance class="grid grid-cols-2 gap-2">
+  {#if categoryId}
+    <input type="hidden" name="id" value={categoryId}/>
   {/if}
   <Form.Field {form} name="name">
     <Form.Control let:attrs>
@@ -69,7 +70,7 @@
     </Form.Control>
   </Form.Field>
   <Form.Button>save</Form.Button>
-  {#if payeeId}
+  {#if categoryId}
     <Button variant="destructive" onclick={() => alertDialogOpen = true}>delete</Button>
   {/if}
 </form>
@@ -79,12 +80,12 @@
     <AlertDialog.Header>
       <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
       <AlertDialog.Description>
-        This action cannot be undone. This will permanently delete this payee.
+        This action cannot be undone. This will permanently delete this category.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action onclick={() => deletePayee(payeeId!)} class={buttonVariants({ variant: "destructive" })}>Continue</AlertDialog.Action>
+      <AlertDialog.Action onclick={() => deleteCategory(categoryId!)} class={buttonVariants({ variant: "destructive" })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

@@ -1,15 +1,12 @@
-<script lang="ts" generics="EditableItem">
+<script lang="ts">
   import { Textarea } from '../ui/textarea';
   import { cn } from '$lib/utils';
   import { Button } from '../ui/button';
   import * as Popover from '../ui/popover';
-  import { BodyRow, DataColumn } from 'svelte-headless-table';
 
-  let { row, column, value, onUpdateValue }: {
-    row: BodyRow<EditableItem>;
-    column: DataColumn<EditableItem>;
+  let { value, onUpdateValue }: {
     value: unknown;
-    onUpdateValue: (rowDataId: number, columnId: string, newValue: unknown) => void;
+    onUpdateValue: (newValue: unknown) => void;
   } = $props();
 
   let open = $state(false);
@@ -22,9 +19,7 @@
   const handleSubmit = () => {
     open = false;
     value = newValue;
-    if (row.isData()) {
-      onUpdateValue(parseInt(row.dataId), column.id, value);
-    }
+    onUpdateValue(value);
   };
 </script>
 
@@ -52,16 +47,3 @@
     <Button on:click={handleSubmit}>Save</Button>
   </Popover.Content>
 </Popover.Root>
-
-<style>
-  form {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  button {
-    padding: 0;
-    border: none;
-    background: transparent;
-  }
-</style>
