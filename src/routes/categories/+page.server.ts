@@ -16,7 +16,7 @@ export const load: PageServerLoad = async (event) => ({
 });
 
 export const actions: Actions = {
-  'add-category': async (event) => {
+  'save-category': async (event) => {
     const form = await superValidate(event, zod(insertCategorySchema));
     if (!form.valid) {
       return fail(400, {

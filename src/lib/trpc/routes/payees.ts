@@ -35,10 +35,10 @@ export const payeeRoutes = t.router({
             .where(eq(payees.id, id))
             .returning();
         }
-        return await db.insert(payees).values({
+        return (await db.insert(payees).values({
           name,
           notes
-        }).returning();
+        }).returning())[0];
       }
     )
 });

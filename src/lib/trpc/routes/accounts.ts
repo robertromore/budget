@@ -34,19 +34,14 @@ export const accountRoutes = t.router({
       await ctx.db.query.accounts.findMany({
         where: eq(accounts.id, input.id),
         with: {
-          transactions: {
-            with: {
-              payee: true,
-              category: true
-            }
-          }
+          transactions: true
         }
       })
     )[0];
     return Object.assign(record, {
       balance:
         record.transactions
-          .map((tx: Transaction) => tx.amount)
+          .map((tx) => tx.amount)
           .reduce((prev, cur) => (prev || 0) + (cur || 0), 0) || 0
     });
   }),

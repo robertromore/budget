@@ -2,19 +2,21 @@
   import type { EditableEntityItem } from '../types';
   import EntityInput from '$lib/components/input/EntityInput.svelte';
 
-  let { value, onUpdateValue, entityLabel }: {
-    value: EditableEntityItem | undefined;
+  let { value, onUpdateValue, entityLabel, entities }: {
+    value?: EditableEntityItem;
     onUpdateValue: (newValue: unknown) => void;
     entityLabel: string;
+    entities: EditableEntityItem[];
   } = $props();
 
-  const handleSubmit = (entity: EditableEntityItem) => {
-    onUpdateValue(entity.id);
+  const handleSubmit = (entity?: EditableEntityItem) => {
+    onUpdateValue(entity?.id);
   };
 </script>
 
 <EntityInput
   bind:entityLabel
   bind:value
+  bind:entities
   {handleSubmit}
 />

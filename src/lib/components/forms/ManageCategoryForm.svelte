@@ -15,7 +15,7 @@
   let { categoryId, onDelete, onSave }: {
     categoryId?: number | undefined;
     onDelete?: (id: number) => void;
-    onSave?: (new_category: EditableEntityItem) => void;
+    onSave?: (new_value: EditableEntityItem, is_new: boolean) => void;
   } = $props();
 
   const data = getCategoryState();
@@ -25,9 +25,8 @@
     {
       validators: zodClient(insertCategorySchema),
       onResult: async({ result }) => {
-        console.log(result);
         if (result.data.status === 200 && onSave)
-          onSave(result.data.entity);
+          onSave(result.data.entity, categoryId !== void 0);
       },
     }
   );

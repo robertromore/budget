@@ -9,7 +9,6 @@ export const currencyFormatter = new Intl.NumberFormat('en-US', {
 });
 
 export const transactionFormatter = (transactions: Transaction[]) => {
-  // console.log(transactions);
   return transactions.map((transaction: Transaction): TransactionsFormat => {
     return {
       id: transaction.id,
@@ -21,7 +20,9 @@ export const transactionFormatter = (transactions: Transaction[]) => {
       date: toCalendarDate(fromDate(new Date(transaction.date), getLocalTimeZone())),
       payee: transaction.payee,
       category: transaction.category,
-      notes: transaction.notes
+      notes: transaction.notes,
+      payeeId: transaction.payeeId,
+      categoryId: transaction.categoryId
     };
   });
 };

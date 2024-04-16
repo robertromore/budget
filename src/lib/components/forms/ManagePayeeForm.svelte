@@ -15,7 +15,7 @@
   let { payeeId, onDelete, onSave }: {
     payeeId?: number | undefined;
     onDelete?: (id: number) => void;
-    onSave?: (new_payee: EditableEntityItem) => void;
+    onSave?: (new_payee: EditableEntityItem, is_new: boolean) => void;
   } = $props();
 
   const data = getPayeeState();
@@ -25,8 +25,8 @@
     {
       validators: zodClient(insertPayeeSchema),
       onResult: async({ result }) => {
-        if (result.data.status === 200 && onSave)
-          onSave(result.data.entity);
+        if (result.status == 200 && onSave)
+          onSave(result.data.entity, payeeId === void 0);
       },
     }
   );

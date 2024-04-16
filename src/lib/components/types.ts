@@ -18,7 +18,9 @@ export type TransactionsFormat = {
   id: number;
   amount: EditableNumericItem;
   date: DateValue | undefined;
+  payeeId: number | null;
   payee: Payee | null;
   notes: string | null;
   category: Category | null;
+  categoryId: number | null;
 };

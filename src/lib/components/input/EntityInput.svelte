@@ -1,28 +1,26 @@
 <script lang="ts">
-  import type { Category, Payee } from '$lib/schema';
-  import { getPayeeState } from '$lib/states/PayeeState.svelte';
-  import { getCategoryState } from '$lib/states/CategoryState.svelte';
-  import { cn } from '$lib/utils';
-  import ManagePayeeForm from '../forms/ManagePayeeForm.svelte';
   import { Button } from '$lib/components/ui/button';
+  import { cn, keyBy } from '$lib/utils';
   import * as Command from '$lib/components/ui/command';
   import * as Popover from '$lib/components/ui/popover';
+  import ManageCategoryForm from '../forms/ManageCategoryForm.svelte';
+  import ManagePayeeForm from '../forms/ManagePayeeForm.svelte';
   import type { EditableEntityItem } from '../types';
-    import ManageCategoryForm from '../forms/ManageCategoryForm.svelte';
 
-  let { entityLabel = $bindable(), value = $bindable(), handleSubmit }: {
+  let { entityLabel = $bindable(), entities = $bindable(), value = $bindable(), handleSubmit }: {
     entityLabel: string;
+    entities: EditableEntityItem[];
     value?: EditableEntityItem;
-    handleSubmit?: (selected: EditableEntityItem) => void;
+    handleSubmit?: (selected?: EditableEntityItem) => void;
   } = $props();
 
-  let entities: Category[] | Payee[] = entityLabel === 'categories' ? getCategoryState().categories : getPayeeState().payees;
-
   const findCurrentEntity = () => entities.find((entity) => entity.id == value?.id);
-  let label = $state(findCurrentEntity()?.name);
+  let label = $state(value?.name);
   $effect(() => {
-    label = findCurrentEntity()?.name;
+    label = value?.name || '';
   });
+
+  let selected = $derived(findCurrentEntity());
 
   let open = $state(false);
   let manage = $state(false);
@@ -43,13 +41,15 @@
     } else {
       for (let i = 0; i < entities.length; i++) {
         if (entities[i].id === new_entity.id) {
-          entities[i].name = new_entity.name;
+          entities[i] = new_entity;
           break;
         }
       }
     }
     managingId = 0;
     manage = false;
+    if (handleSubmit)
+      handleSubmit(new_entity);
   };
 
   const onDelete = (id: number) => {
@@ -65,12 +65,21 @@
     }
     managingId = 0;
     manage = false;
+    if (handleSubmit)
+      handleSubmit(undefined);
   };
 
   const addNew = (event: MouseEvent) => {
     managingId = 0;
-    toggleManageScreen(event);
+    manage = true;
   };
+
+  const searchEntities = $derived(keyBy(entities.map((entity) => {
+    return {
+      id: entity.id,
+      name: entity.name
+    }
+  }), 'id'));
 </script>
 
 <div class="flex items-center space-x-4">
@@ -98,9 +107,12 @@
     </Popover.Trigger>
     <Popover.Content class="p-0" align="start">
       {#if !manage}
-        <Command.Root>
+        <Command.Root filter={(value, search) => {
+          if (value && searchEntities[value] && searchEntities[value].name.toLowerCase().includes(search)) return 1;
+          return 0;
+        }}>
           <div class="flex">
-            <Command.Input placeholder="Search {entityLabel}..." bind:value={search} />
+            <Command.Input placeholder="Search {entityLabel}..." />
             <Button
               size="icon"
               class="h-11 w-12 rounded-none border-b shadow-none"
@@ -126,7 +138,7 @@
                   <span
                     class={cn(
                       'icon-[lucide--check] mr-2 size-4',
-                      value?.id != entity.id && 'text-transparent'
+                      selected?.id != entity.id && 'text-transparent'
                     )}
                   />
                   <div class="flex-grow">
@@ -164,7 +176,6 @@
           {:else}
             <svelte:component
               this={entityLabel === 'categories' ? ManageCategoryForm : ManagePayeeForm}
-              name={search}
               {onSave}
             />
           {/if}

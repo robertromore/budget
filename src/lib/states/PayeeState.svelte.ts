@@ -23,6 +23,10 @@ export class PayeeState {
     Infer<typeof removePayeeSchema>
   >;
 
+  getById(id: number) {
+    return this.payees.find((payee) => payee.id === id);
+  }
+
   constructor(init: SetPayeeState) {
     this.payees = init.payees;
     this.managePayeeForm = init.managePayeeForm;

@@ -23,6 +23,10 @@ export class CategoryState {
     Infer<typeof removeCategorySchema>
   >;
 
+  getById(id: number) {
+    return this.categories.find((category) => category.id === id);
+  }
+
   constructor(init: SetCategoryState) {
     this.categories = init.categories;
     this.manageCategoryForm = init.manageCategoryForm;

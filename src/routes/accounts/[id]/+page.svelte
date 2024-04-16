@@ -41,14 +41,14 @@
   import AddTransactionDialog from '$lib/components/dialogs/AddTransactionDialog.svelte';
   import { cn, compareAlphanumeric } from '$lib/utils';
   import { invalidate } from '$app/navigation';
-  import { type Transaction } from '$lib/schema';
+  import { payees, type Payee, type Transaction } from '$lib/schema';
   import DeleteTransactionDialog from '$lib/components/dialogs/DeleteTransactionDialog.svelte';
   import { savable } from '$lib/helpers/savable';
   import { getLocalTimeZone, type DateValue } from '@internationalized/date';
   import { setTransactionState } from '$lib/states/TransactionState.svelte';
   import { setCategoryState } from '$lib/states/CategoryState.svelte';
   import { setPayeeState } from '$lib/states/PayeeState.svelte';
-  import { getCoreRowModel, type ColumnDef, type TableOptions, createSvelteTable, FlexRender, renderComponent, Header, type SortingState, type Updater, getSortedRowModel, getPaginationRowModel, type PaginationState, type SortingFn, type Row, type SortingFnOption, sortingFns } from '$lib/components/tanstack-svelte-table';
+  import { getCoreRowModel, type ColumnDef, type TableOptions, createSvelteTable, FlexRender, renderComponent, Header, type SortingState, type Updater, getSortedRowModel, getPaginationRowModel, type PaginationState } from '$lib/components/tanstack-svelte-table';
 
   let { data }: { data: PageData } = $props();
 
@@ -70,8 +70,7 @@
     deletePayeeForm: data.deletePayeeForm
   });
 
-  const updateData = async (rowDataId: number, columnId: string, newValue: unknown) => {
-    console.log(rowDataId, columnId, newValue);
+  const updateData = async (rowDataId: number, columnId: string, newValue?: unknown) => {
     const new_data = {
       [columnId]: newValue
     };
@@ -82,15 +81,19 @@
       new_data[columnId] = dateFormatter.format((newValue as EditableDateItem).toDate(getLocalTimeZone()));
     }
 
-    const updatedData = Object.assign({}, transactionState.transactions.find(el => el.id === rowDataId), new_data);
-    await trpc($page).transactionRoutes.save.mutate(savable(updatedData));
+    const idx = transactionState.transactions.map(el => el.id).indexOf(rowDataId);
+    const updatedData = Object.assign({}, transactionState.transactions[idx], new_data);
+
+    const updated_transaction = await trpc($page).transactionRoutes.save.mutate(savable(updatedData));
+    if (updated_transaction)
+      transactionState.transactions[idx] = updated_transaction;
   };
 
   const defaultColumns: ColumnDef<TransactionsFormat>[] = [
     {
       accessorKey: 'id',
       cell: info => info.getValue(),
-      header: ({ header }) => renderComponent(Header, { label: 'ID', header }),
+      header: header => renderComponent(Header, { label: 'ID', header }),
       sortingFn: 'alphanumeric',
     },
     {
@@ -104,12 +107,13 @@
       sortingFn: 'datetime',
     },
     {
-      accessorFn: row => row.payee,
+      accessorFn: row => row.payeeId,
       id: 'payee',
       cell: info => renderComponent(EditableEntityCell, {
-        value: info.getValue() as EditableEntityItem,
+        value: payeeState.getById(info.getValue() as number) as EditableEntityItem,
         entityLabel: 'payee',
-        onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'payeeId', new_value)
+        onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'payeeId', new_value),
+        entities: payeeState.payees as EditableEntityItem[],
       }),
       header: ({ header }) => renderComponent(Header, { label: 'Payee', header }),
       sortingFn: (rowA, rowB) => {
@@ -127,12 +131,13 @@
       enableSorting: false
     },
     {
-      accessorFn: row => row.category,
+      accessorFn: row => row.categoryId,
       id: 'category',
       cell: info => renderComponent(EditableEntityCell, {
-        value: info.getValue() as EditableEntityItem,
+        value: categoryState.getById(info.getValue() as number) as EditableEntityItem,
         entityLabel: 'categories',
-        onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'categoryId', new_value)
+        onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'categoryId', new_value),
+        entities: categoryState.categories as EditableEntityItem[],
       }),
       header: ({ header }) => renderComponent(Header, { label: 'Category', header }),
       sortingFn: (rowA, rowB) => {
@@ -168,7 +173,6 @@
     } else pagination = updater
   };
 
-
   let options: TableOptions<TransactionsFormat> = {
     data: transactionState.formatted,
     columns: defaultColumns,
@@ -190,12 +194,13 @@
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getRowId: (originalRow, index, parent) => originalRow.id.toString()
+    getRowId: (originalRow) => originalRow.id.toString()
   };
 
   let table = $state(createSvelteTable(options));
 
   $effect(() => {
+    // Needed to update table when navigating to different account.
     transactionState.transactions = data.account.transactions;
     options.data = transactionState.formatted;
     table = createSvelteTable(options);

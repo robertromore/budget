@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { publicProcedure, t } from '../t';
-import { categories, removeTransactionsSchema, insertTransactionSchema, payees, transactions } from '$lib/schema';
+import { categories, removeTransactionsSchema, insertTransactionSchema, payees, transactions, type Transaction } from '$lib/schema';
 import { eq, sql } from 'drizzle-orm';
 
 export const transactionRoutes = t.router({
@@ -53,26 +53,27 @@ export const transactionRoutes = t.router({
             })
             .returning();
         }
-        if (entity[0].categoryId && !entity[0].category) {
-          const categoriesResult = await db
-            .select()
-            .from(categories)
-            .where(eq(categories.id, entity[0].categoryId));
-          if (categoriesResult[0]) {
-            entity[0].category = categoriesResult[0];
-          }
-        }
-        if (entity[0].payeeId && !entity[0].payee) {
-          const payeesResult = await db
-            .select()
-            .from(payees)
-            .where(eq(payees.id, entity[0].payeeId));
-          if (payeesResult[0]) {
-            entity[0].payee = payeesResult[0];
-          }
-        }
+        const ent = entity[0] as Transaction;
+        // if (ent.categoryId && !ent.category) {
+        //   const categoriesResult = await db
+        //     .select()
+        //     .from(categories)
+        //     .where(eq(categories.id, ent.categoryId));
+        //   if (categoriesResult[0]) {
+        //     ent.category = categoriesResult[0];
+        //   }
+        // }
+        // if (ent.payeeId && !ent.payee) {
+        //   const payeesResult = await db
+        //     .select()
+        //     .from(payees)
+        //     .where(eq(payees.id, ent.payeeId));
+        //   if (payeesResult[0]) {
+        //     ent.payee = payeesResult[0];
+        //   }
+        // }
 
-        return entity[0];
+        return ent;
       }
     )
 });
