@@ -5,8 +5,10 @@ import type {
   RemoveTransactionSchema,
   Transaction,
   insertTransactionSchema,
-  removeTransactionsSchema,
+  removeTransactionsSchema
 } from '$lib/schema';
+import { trpc } from '$lib/trpc/client';
+import { without } from '$lib/utils';
 import { getContext, setContext } from 'svelte';
 import { writable, type Writable } from 'svelte/store';
 import type { Infer, SuperValidated } from 'sveltekit-superforms';
@@ -23,11 +25,19 @@ export class TransactionState {
   transactions: Transaction[] = $state() as Transaction[];
   formatted: TransactionsFormat[] = $state() as TransactionsFormat[];
   writableStore: Writable<TransactionsFormat[]> = $state() as Writable<TransactionsFormat[]>;
-  manageTransactionForm: SuperValidated<Infer<InsertTransactionSchema>> = $state() as SuperValidated<
-    Infer<typeof insertTransactionSchema>
-  >;
+  manageTransactionForm: SuperValidated<Infer<InsertTransactionSchema>> =
+    $state() as SuperValidated<Infer<typeof insertTransactionSchema>>;
   deleteTransactionForm: SuperValidated<Infer<RemoveTransactionSchema>> =
     $state() as SuperValidated<Infer<typeof removeTransactionsSchema>>;
+
+  async deleteTransactions(accountId: number, transactions: number[]) {
+    // eslint-disable-next-line drizzle/enforce-delete-with-where
+    await trpc().transactionRoutes.delete.mutate({
+      entities: transactions,
+      accountId
+    });
+    without(this.transactions, (transaction: Transaction) => !transactions.includes(transaction.id));
+  }
 
   constructor(init: SetTransactionState) {
     this.transactions = init.transactions;
@@ -41,7 +51,7 @@ export class TransactionState {
   }
 }
 
-const Transaction_CTX = Symbol("Transaction_ctx");
+const Transaction_CTX = Symbol('Transaction_ctx');
 
 export function setTransactionState(init: SetTransactionState) {
   const transactionState = new TransactionState(init);

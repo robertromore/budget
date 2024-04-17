@@ -1,32 +1,13 @@
-<script lang="ts" generics="TData">
+<script lang="ts">
+  import { Checkbox } from '$lib/components/ui/checkbox';
   import { page } from '$app/stores';
-  import { currencyFormatter, dateFormatter, transactionFormatter } from '$lib/helpers/formatters';
-  import { writable } from 'svelte/store';
+  import { currencyFormatter, dateFormatter } from '$lib/helpers/formatters';
   import type { PageData } from './$types';
-  import {
-    createRender,
-    createTable,
-    Render,
-    Subscribe,
-    type DataLabel,
-    BodyRow,
-    DataColumn
-  } from 'svelte-headless-table';
   import * as Table from '$lib/components/ui/table';
   import EditableCell from '$lib/components/data-table/EditableCell.svelte';
   import EditableDateCell from '$lib/components/data-table/EditableDateCell.svelte';
   import EditableEntityCell from '$lib/components/data-table/EditableEntityCell.svelte';
-  import {
-    addColumnFilters,
-    addPagination,
-    addSelectedRows,
-    addSortBy,
-    addTableFilter,
-    type AnyPlugins
-  } from 'svelte-headless-table/plugins';
   import EditableNumericCell from '$lib/components/data-table/EditableNumericCell.svelte';
-  import DataTableActions from '$lib/components/data-table/DataTableActions.svelte';
-  import DataTableCheckbox from '$lib/components/data-table/DataTableCheckbox.svelte';
   import { Button } from '$lib/components/ui/button';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import { trpc } from '$lib/trpc/client';
@@ -39,16 +20,14 @@
     TransactionsFormat
   } from '$lib/components/types';
   import AddTransactionDialog from '$lib/components/dialogs/AddTransactionDialog.svelte';
-  import { cn, compareAlphanumeric } from '$lib/utils';
-  import { invalidate } from '$app/navigation';
-  import { payees, type Payee, type Transaction } from '$lib/schema';
+  import { compareAlphanumeric } from '$lib/utils';
   import DeleteTransactionDialog from '$lib/components/dialogs/DeleteTransactionDialog.svelte';
   import { savable } from '$lib/helpers/savable';
   import { getLocalTimeZone, type DateValue } from '@internationalized/date';
   import { setTransactionState } from '$lib/states/TransactionState.svelte';
   import { setCategoryState } from '$lib/states/CategoryState.svelte';
   import { setPayeeState } from '$lib/states/PayeeState.svelte';
-  import { getCoreRowModel, type ColumnDef, type TableOptions, createSvelteTable, FlexRender, renderComponent, Header, type SortingState, type Updater, getSortedRowModel, getPaginationRowModel, type PaginationState } from '$lib/components/tanstack-svelte-table';
+  import { getCoreRowModel, type ColumnDef, type TableOptions, createSvelteTable, FlexRender, renderComponent, Header, type SortingState, type Updater, getSortedRowModel, getPaginationRowModel, type PaginationState, type RowSelectionState } from '$lib/components/tanstack-svelte-table';
 
   let { data }: { data: PageData } = $props();
 
@@ -90,6 +69,18 @@
   };
 
   const defaultColumns: ColumnDef<TransactionsFormat>[] = [
+    {
+      id: 'select-col',
+      header: ({ table }) => renderComponent(Checkbox, {
+        checked: table.getIsAllRowsSelected() ? true : (table.getIsSomeRowsSelected() ? 'indeterminate' : false),
+        onclick: (e) => table.getToggleAllPageRowsSelectedHandler()(e)
+      }),
+      cell: ({ row }) => renderComponent(Checkbox, {
+        checked: row.getIsSelected(),
+        disabled: !row.getCanSelect(),
+        onclick: (e) => row.getToggleSelectedHandler()(e)
+      }),
+    },
     {
       accessorKey: 'id',
       cell: info => info.getValue(),
@@ -173,6 +164,13 @@
     } else pagination = updater
   };
 
+  let selection = $state<RowSelectionState>({});
+  function setSelection(updater: Updater<RowSelectionState>) {
+    if (updater instanceof Function) {
+      selection = updater(selection);
+    } else selection = updater
+  };
+
   let options: TableOptions<TransactionsFormat> = {
     data: transactionState.formatted,
     columns: defaultColumns,
@@ -182,6 +180,9 @@
       },
       get pagination() {
         return pagination;
+      },
+      get rowSelection() {
+        return selection;
       }
     },
     initialState: {
@@ -191,6 +192,7 @@
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
+    onRowSelectionChange: setSelection,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -198,6 +200,9 @@
   };
 
   let table = $state(createSvelteTable(options));
+  let addTransactionDialogOpen: boolean = $state(false);
+  let selectedTransactions: number[] = $derived(Object.keys(table.getSelectedRowModel().rowsById).map(id => parseInt(id)));
+  let deleteTransactionDialogOpen = $state(false);
 
   $effect(() => {
     // Needed to update table when navigating to different account.
@@ -215,6 +220,60 @@
 </div>
 
 <p class="mb-2 text-sm text-muted-foreground">{data.account.notes}</p>
+
+<AddTransactionDialog
+  account={data.account}
+  bind:dialogOpen={addTransactionDialogOpen}
+/>
+
+<DeleteTransactionDialog
+  transactions={selectedTransactions}
+  bind:dialogOpen={deleteTransactionDialogOpen}
+  bind:accountId={data.account.id}
+  onDelete={() => table.resetRowSelection()}
+/>
+
+<div class="flex items-center py-4">
+  <Button class="mx-1" onclick={() => (addTransactionDialogOpen = true)}>
+    <span class="icon-[lucide--plus] mr-2 size-4"></span>
+    Add
+  </Button>
+  <Button variant="outline" class="mx-1">
+    <span class="icon-[lucide--import] mr-2 size-4"></span>
+    Import
+  </Button>
+
+  <div class="grow"></div>
+
+  <DropdownMenu.Root>
+    <DropdownMenu.Trigger asChild let:builder>
+      <Button
+        variant="outline"
+        builders={[builder]}
+        disabled={selectedTransactions.length === 0}
+      >
+        <span class="icon-[lucide--chevron-down] mr-2 size-4"></span>
+        {table.getSelectedRowModel().rows.length} selected
+      </Button>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content class="w-40">
+      <DropdownMenu.Group>
+        <DropdownMenu.Item>
+          Archive
+          <DropdownMenu.Shortcut>⇧⌘A</DropdownMenu.Shortcut>
+        </DropdownMenu.Item>
+        <DropdownMenu.Item
+          onclick={() => {
+            deleteTransactionDialogOpen = true;
+          }}
+        >
+          Delete
+          <DropdownMenu.Shortcut>⇧⌘D</DropdownMenu.Shortcut>
+        </DropdownMenu.Item>
+      </DropdownMenu.Group>
+    </DropdownMenu.Content>
+  </DropdownMenu.Root>
+</div>
 
 <div class="p-2">
   <Table.Root>

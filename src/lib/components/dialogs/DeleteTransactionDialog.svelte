@@ -1,34 +1,29 @@
 <script lang="ts">
-  import { page } from "$app/stores";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { buttonVariants } from "$lib/components/ui/button";
-  import type { Transaction } from "$lib/schema";
-  import { trpc } from "$lib/trpc/client";
+  import { getTransactionState } from "$lib/states/TransactionState.svelte";
 
   let {
-    transactions = $bindable(),
+    transactions,
     accountId = $bindable(),
-    accountBalance = $bindable(),
     dialogOpen = $bindable(),
-    onTransactionDeleted
+    onDelete,
   }: {
-    transactions: Transaction[];
+    transactions?: number[];
     accountId: number;
-    accountBalance: number;
     dialogOpen: boolean;
-    onTransactionDeleted: (entities: Transaction[]) => void;
+    onDelete?: () => void;
   } = $props();
 
+  const transactionState = getTransactionState();
+
   let confirmDeleteTransaction = async() => {
-    let total = 0;
-    transactions.forEach((tx: Transaction) => {
-      total += tx.amount || 0;
-    });
-    const entities: Transaction[] = await trpc($page).transactionRoutes.delete.mutate({
-      entities: transactions.map((transaction) => transaction.id),
-      accountId
-    });
-    onTransactionDeleted(entities);
+    if (transactions) {
+      transactionState.deleteTransactions(accountId, transactions);
+    }
+    if (onDelete) {
+      onDelete();
+    }
   };
 </script>
 

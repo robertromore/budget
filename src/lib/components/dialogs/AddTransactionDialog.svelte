@@ -3,15 +3,13 @@
   import ManageTransactionForm from "$lib/components/forms/ManageTransactionForm.svelte";
   import type { Account, Transaction } from "$lib/schema";
 
-  let { account, dialogOpen = $bindable(), onTransactionAdded }: {
+  let { account, dialogOpen = $bindable() }: {
     account: Account,
     dialogOpen: boolean,
-    onTransactionAdded: (new_entity: Transaction) => void
   } = $props();
 
   const onSave = async(new_entity: Transaction) => {
     dialogOpen = false;
-    onTransactionAdded(new_entity);
   };
 </script>
 

@@ -9,7 +9,9 @@
   import DateInput from "$lib/components/input/DateInput.svelte";
   import EntityInput from "$lib/components/input/EntityInput.svelte";
   import NumericInput from "$lib/components/input/NumericInput.svelte";
-    import { getTransactionState } from "$lib/states/TransactionState.svelte";
+  import { getTransactionState } from "$lib/states/TransactionState.svelte";
+  import { getPayeeState } from "$lib/states/PayeeState.svelte";
+  import { getCategoryState } from "$lib/states/CategoryState.svelte";
 
   let { accountId, onDelete, onSave }: {
     accountId: number,
@@ -18,6 +20,8 @@
   } = $props();
 
   const data = getTransactionState();
+  const payees = getPayeeState().payees;
+  const categories = getCategoryState().categories;
 
   const form = superForm(
     data.manageTransactionForm,
@@ -77,7 +81,7 @@
   <Form.Field {form} name="payeeId">
     <Form.Control let:attrs>
       <Form.Label>Payee</Form.Label>
-      <EntityInput {...attrs} entityLabel="payees" bind:value={payee} />
+      <EntityInput {...attrs} entityLabel="payees" entities={payees as EditableEntityItem[]} bind:value={payee} />
       <Form.FieldErrors />
       <input hidden value={$formData.payeeId} name={attrs.name} />
     </Form.Control>
@@ -85,7 +89,7 @@
   <Form.Field {form} name="categoryId">
     <Form.Control let:attrs>
       <Form.Label>Category</Form.Label>
-      <EntityInput {...attrs} entityLabel="categories" bind:value={category} />
+      <EntityInput {...attrs} entityLabel="categories" entities={categories as EditableEntityItem[]} bind:value={category} />
       <Form.FieldErrors />
       <input hidden value={$formData.categoryId} name={attrs.name} />
     </Form.Control>

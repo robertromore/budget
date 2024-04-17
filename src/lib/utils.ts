@@ -123,3 +123,8 @@ export const keyBy = <T extends AnyObject>(
     {} as Record<string, T>
   );
 };
+
+export const without = <T>(array: T[], fn: (element: T) => boolean): void => {
+  const filtered = array.filter(fn);
+  array.splice(0, array.length, ...filtered);
+}

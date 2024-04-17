@@ -2,12 +2,13 @@
 	import { Checkbox as CheckboxPrimitive } from "bits-ui";
 	import { cn } from "$lib/utils";
 
-	type $$Props = CheckboxPrimitive.Props;
+	type $$Props = CheckboxPrimitive.Props & { onclick: undefined | ((ev: Event) => void) };
 	type $$Events = CheckboxPrimitive.Events;
 
 	let className: $$Props["class"] = undefined;
 	export let checked: $$Props["checked"] = false;
 	export { className as class };
+  export let onclick: $$Props["onclick"] = undefined;
 </script>
 
 <CheckboxPrimitive.Root
@@ -17,6 +18,7 @@
 	)}
 	bind:checked
 	on:click
+  {onclick}
 	{...$$restProps}
 >
 	<CheckboxPrimitive.Indicator
