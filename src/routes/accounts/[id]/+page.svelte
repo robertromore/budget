@@ -84,8 +84,9 @@
     {
       accessorKey: 'id',
       cell: info => info.getValue(),
-      header: header => renderComponent(Header, { label: 'ID', header }),
+      header: ({ header }) => renderComponent(ColumnHeader, { label: 'ID', header }),
       sortingFn: 'alphanumeric',
+      enableColumnFilter: false,
     },
     {
       accessorFn: row => row.date,
@@ -94,8 +95,9 @@
         value: info.getValue() as DateValue,
         onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'date', new_value)
       }),
-      header: ({ header }) => renderComponent(Header, { label: 'Date', header }),
+      header: ({ header }) => renderComponent(ColumnHeader, { label: 'Date', header }),
       sortingFn: 'datetime',
+      enableColumnFilter: false,
     },
     {
       accessorFn: row => row.payeeId,
@@ -106,7 +108,7 @@
         onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'payeeId', new_value),
         entities: payeeState.payees as EditableEntityItem[],
       }),
-      header: ({ header }) => renderComponent(Header, { label: 'Payee', header }),
+      header: ({ header }) => renderComponent(ColumnHeader, { label: 'Payee', header }),
       sortingFn: (rowA, rowB) => {
         return compareAlphanumeric(rowA.original.payee?.name || '', rowB.original.payee?.name || '');
       },
@@ -118,8 +120,7 @@
         value: info.getValue(),
         onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'notes', new_value)
       }),
-      header: ({ header }) => renderComponent(Header, { label: 'Notes', header }),
-      enableSorting: false
+      header: ({ header }) => renderComponent(ColumnHeader, { label: 'Notes', header }),
     },
     {
       accessorFn: row => row.categoryId,
@@ -130,7 +131,7 @@
         onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'categoryId', new_value),
         entities: categoryState.categories as EditableEntityItem[],
       }),
-      header: ({ header }) => renderComponent(Header, { label: 'Category', header }),
+      header: ({ header }) => renderComponent(ColumnHeader, { label: 'Category', header }),
       sortingFn: (rowA, rowB) => {
         return compareAlphanumeric(rowA.original.category?.name || '', rowB.original.category?.name || '');
       },
@@ -142,8 +143,7 @@
         value: info.getValue() as EditableNumericItem,
         onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'amount', new_value)
       }),
-      header: ({ header }) => renderComponent(Header, { label: 'Amount', header }),
-      sortingFn: 'alphanumeric'
+      header: ({ header }) => renderComponent(ColumnHeader, { label: 'Amount', header }),
     },
   ];
 
