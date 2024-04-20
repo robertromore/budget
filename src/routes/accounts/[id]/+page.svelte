@@ -27,7 +27,8 @@
   import { setTransactionState } from '$lib/states/TransactionState.svelte';
   import { setCategoryState } from '$lib/states/CategoryState.svelte';
   import { setPayeeState } from '$lib/states/PayeeState.svelte';
-  import { getCoreRowModel, type ColumnDef, type TableOptions, createSvelteTable, FlexRender, renderComponent, Header, type SortingState, type Updater, getSortedRowModel, getPaginationRowModel, type PaginationState, type RowSelectionState } from '$lib/components/tanstack-svelte-table';
+  import { getCoreRowModel, type ColumnDef, type TableOptions, createSvelteTable, FlexRender, renderComponent, ColumnHeader, type SortingState, type Updater, getSortedRowModel, getPaginationRowModel, type PaginationState, type RowSelectionState, getFilteredRowModel, type FilterFn, type ColumnFiltersState } from '$lib/components/tanstack-svelte-table';
+  import { rankItem, type RankItemOptions } from '@tanstack/match-sorter-utils';
 
   let { data }: { data: PageData } = $props();
 
@@ -80,6 +81,7 @@
         disabled: !row.getCanSelect(),
         onclick: (e) => row.getToggleSelectedHandler()(e)
       }),
+      enableColumnFilter: false,
     },
     {
       accessorKey: 'id',
@@ -112,6 +114,7 @@
       sortingFn: (rowA, rowB) => {
         return compareAlphanumeric(rowA.original.payee?.name || '', rowB.original.payee?.name || '');
       },
+      enableColumnFilter: true,
     },
     {
       accessorFn: row => row.notes,
@@ -121,6 +124,8 @@
         onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'notes', new_value)
       }),
       header: ({ header }) => renderComponent(ColumnHeader, { label: 'Notes', header }),
+      enableSorting: false,
+      enableColumnFilter: false,
     },
     {
       accessorFn: row => row.categoryId,
@@ -135,6 +140,7 @@
       sortingFn: (rowA, rowB) => {
         return compareAlphanumeric(rowA.original.category?.name || '', rowB.original.category?.name || '');
       },
+      enableColumnFilter: false,
     },
     {
       accessorFn: row => row.amount,
@@ -144,6 +150,7 @@
         onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'amount', new_value)
       }),
       header: ({ header }) => renderComponent(ColumnHeader, { label: 'Amount', header }),
+      enableColumnFilter: false,
     },
   ];
 
@@ -171,7 +178,42 @@
     } else selection = updater
   };
 
-  let options: TableOptions<TransactionsFormat> = {
+  let filtering = $state<ColumnFiltersState>([]);
+  function setFiltering(updater: Updater<ColumnFiltersState>) {
+    if (updater instanceof Function) {
+      filtering = updater(filtering);
+    } else filtering = updater
+  };
+
+  let globalFilter = $state('');
+  const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+    const opts: RankItemOptions = {
+      accessors: undefined
+    };
+    if (columnId === 'payee') {
+      opts['accessors'] = [(item) => { return $state.snapshot(payeeState.payees.find((payee) => payee.id === item))?.name + ''; }];
+    }
+    if (columnId === 'category') {
+      opts['accessors'] = [(item) => { return $state.snapshot(categoryState.categories.find((category) => category.id === item))?.name + '' }];
+    }
+
+    // Rank the item
+    const itemRank = rankItem(row.getValue(columnId), value, opts);
+
+    // Store the itemRank info
+    addMeta({ itemRank });
+
+    // Return if the item should be filtered in/out
+    return itemRank.passed;
+  };
+
+  function setGlobalFilter(updater: Updater<string>) {
+    if (updater instanceof Function) {
+      globalFilter = updater(globalFilter)
+    } else globalFilter = updater
+  };
+
+  let options: TableOptions<TransactionsFormat> = $state({
     data: transactionState.formatted,
     columns: defaultColumns,
     state: {
@@ -183,32 +225,44 @@
       },
       get rowSelection() {
         return selection;
-      }
+      },
+      get columnFilters() {
+        return filtering;
+      },
+      get globalFilter() {
+        return globalFilter
+      },
     },
     initialState: {
       columnVisibility: {
         id: false
       }
     },
+    filterFns: {
+      fuzzy: fuzzyFilter,
+    },
+    onColumnFiltersChange: setFiltering,
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
     onRowSelectionChange: setSelection,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getRowId: (originalRow) => originalRow.id.toString()
-  };
+    getRowId: (originalRow) => originalRow.id.toString(),
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: fuzzyFilter,
+    getFilteredRowModel: getFilteredRowModel(),
+  });
 
-  let table = $state(createSvelteTable(options));
+  const table = createSvelteTable(options);
+
   let addTransactionDialogOpen: boolean = $state(false);
   let selectedTransactions: number[] = $derived(Object.keys(table.getSelectedRowModel().rowsById).map(id => parseInt(id)));
   let deleteTransactionDialogOpen = $state(false);
 
   $effect(() => {
-    // Needed to update table when navigating to different account.
     transactionState.transactions = data.account.transactions;
     options.data = transactionState.formatted;
-    table = createSvelteTable(options);
   });
 </script>
 
@@ -275,6 +329,17 @@
   </DropdownMenu.Root>
 </div>
 
+<div class="flex items-center py-0">
+  <Input
+    class="max-w-sm"
+    placeholder="Filter..."
+    type="text"
+    bind:value={globalFilter}
+  />
+
+  <div class="grow"></div>
+</div>
+
 <div class="p-2">
   <Table.Root>
     <Table.Header>
@@ -324,7 +389,7 @@
       {/each}
     </tfoot>
   </Table.Root>
-  <div class="h-4" />
+  <div class="h-4"></div>
 </div>
 
 <div class="flex items-center justify-end space-x-2 py-4">
