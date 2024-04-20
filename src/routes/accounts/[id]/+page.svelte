@@ -112,7 +112,7 @@
       }),
       header: ({ header }) => renderComponent(ColumnHeader, { label: 'Payee', header }),
       sortingFn: (rowA, rowB) => {
-        return compareAlphanumeric(rowA.original.payee?.name || '', rowB.original.payee?.name || '');
+        return compareAlphanumeric(payeeState.getById(rowA.getValue('payee'))?.name || '', payeeState.getById(rowB.getValue('payee'))?.name || '');
       },
       enableColumnFilter: true,
     },
@@ -138,7 +138,7 @@
       }),
       header: ({ header }) => renderComponent(ColumnHeader, { label: 'Category', header }),
       sortingFn: (rowA, rowB) => {
-        return compareAlphanumeric(rowA.original.category?.name || '', rowB.original.category?.name || '');
+        return compareAlphanumeric(categoryState.getById(rowA.getValue('category'))?.name || '', categoryState.getById(rowB.getValue('category'))?.name || '');
       },
       enableColumnFilter: false,
     },
@@ -150,6 +150,9 @@
         onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'amount', new_value)
       }),
       header: ({ header }) => renderComponent(ColumnHeader, { label: 'Amount', header }),
+      sortingFn: (rowA, rowB) => {
+        return ((rowA.getValue('amount') as EditableNumericItem).value || 0) - ((rowB.getValue('amount') as EditableNumericItem).value || 0);
+      },
       enableColumnFilter: false,
     },
   ];
