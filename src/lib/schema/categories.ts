@@ -25,8 +25,10 @@ export const categoriesRelations = relations(categories, ({ one }) => ({
 export const selectCategorySchema = createSelectSchema(categories);
 export const insertCategorySchema = createInsertSchema(categories);
 export const removeCategorySchema = z.object({ id: z.number().nonnegative() });
+export const removeCategoriesSchema = z.object({ entities: z.array(z.number().nonnegative()) });
 
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type InsertCategorySchema = typeof insertCategorySchema;
 export type RemoveCategorySchema = typeof removeCategorySchema;
+export type RemoveCategoriesSchema = typeof removeCategoriesSchema;

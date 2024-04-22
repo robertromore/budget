@@ -35,17 +35,6 @@
   };
 
   const onSave = (new_entity: EditableEntityItem, is_new: boolean) => {
-    if (is_new) {
-      entities.push(new_entity);
-      value = new_entity;
-    } else {
-      for (let i = 0; i < entities.length; i++) {
-        if (entities[i].id === new_entity.id) {
-          entities[i] = new_entity;
-          break;
-        }
-      }
-    }
     managingId = 0;
     manage = false;
     if (handleSubmit)
@@ -53,16 +42,6 @@
   };
 
   const onDelete = (id: number) => {
-    let position = null;
-    for (let i = 0; i < entities.length; i++) {
-      if (entities[i].id === id) {
-        position = i;
-        break;
-      }
-    }
-    if (position) {
-      entities.splice(position, 1);
-    }
     managingId = 0;
     manage = false;
     if (handleSubmit)
@@ -140,7 +119,7 @@
                       'icon-[lucide--check] mr-2 size-4',
                       selected?.id != entity.id && 'text-transparent'
                     )}
-                  />
+                  ></span>
                   <div class="flex-grow">
                     {entity.name}
                   </div>
@@ -153,7 +132,7 @@
                     toggleManageScreen(e);
                   }}
                   >
-                    <span class="icon-[radix-icons--pencil-2]" />
+                    <span class="icon-[radix-icons--pencil-2]"></span>
                   </Button>
                 </Command.Item>
               {/each}

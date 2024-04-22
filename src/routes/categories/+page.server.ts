@@ -9,8 +9,8 @@ import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
 import { zod } from 'sveltekit-superforms/adapters';
 
-export const load: PageServerLoad = async (event) => ({
-  categories: await createCaller(await createContext(event)).categoriesRoutes.all(),
+export const load: PageServerLoad = async () => ({
+  categories: await createCaller(await createContext()).categoriesRoutes.all(),
   form: await superValidate(zod(insertCategorySchema)),
   deleteForm: await superValidate(zod(removeCategorySchema))
 });
@@ -24,7 +24,7 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext(event)).categoriesRoutes.save(form.data);
+    const entity = await createCaller(await createContext()).categoriesRoutes.save(form.data);
     return {
       form,
       entity
@@ -38,7 +38,7 @@ export const actions: Actions = {
       });
     }
 
-    await createCaller(await createContext(event)).categoriesRoutes.remove(form.data);
+    await createCaller(await createContext()).categoriesRoutes.remove(form.data);
     return {
       form
     };

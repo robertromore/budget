@@ -10,13 +10,11 @@ import type {
 import { trpc } from '$lib/trpc/client';
 import { without } from '$lib/utils';
 import { getContext, setContext } from 'svelte';
-import { writable, type Writable } from 'svelte/store';
 import type { Infer, SuperValidated } from 'sveltekit-superforms';
 
 type SetTransactionState = {
   transactions: Transaction[];
   formatted?: TransactionsFormat[];
-  writableStore?: Writable<TransactionsFormat[]>;
   manageTransactionForm: SuperValidated<Infer<InsertTransactionSchema>>;
   deleteTransactionForm: SuperValidated<Infer<RemoveTransactionSchema>>;
 };
@@ -24,11 +22,14 @@ type SetTransactionState = {
 export class TransactionState {
   transactions: Transaction[] = $state() as Transaction[];
   formatted: TransactionsFormat[] = $state() as TransactionsFormat[];
-  writableStore: Writable<TransactionsFormat[]> = $state() as Writable<TransactionsFormat[]>;
   manageTransactionForm: SuperValidated<Infer<InsertTransactionSchema>> =
     $state() as SuperValidated<Infer<typeof insertTransactionSchema>>;
   deleteTransactionForm: SuperValidated<Infer<RemoveTransactionSchema>> =
     $state() as SuperValidated<Infer<typeof removeTransactionsSchema>>;
+
+  addTransaction(transaction: Transaction) {
+    this.transactions.push(transaction);
+  }
 
   async deleteTransactions(accountId: number, transactions: number[]) {
     // eslint-disable-next-line drizzle/enforce-delete-with-where
@@ -39,10 +40,13 @@ export class TransactionState {
     without(this.transactions, (transaction: Transaction) => !transactions.includes(transaction.id));
   }
 
+  async deleteTransaction(accountId: number, transaction: number) {
+    return this.deleteTransactions(accountId, [transaction]);
+  }
+
   constructor(init: SetTransactionState) {
     this.transactions = init.transactions;
     this.formatted = transactionFormatter(this.transactions);
-    this.writableStore = writable(this.formatted);
     this.manageTransactionForm = init.manageTransactionForm;
     this.deleteTransactionForm = init.deleteTransactionForm;
     $effect(() => {

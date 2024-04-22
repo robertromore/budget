@@ -26,9 +26,11 @@
   const form = superForm(
     data.manageTransactionForm,
     {
+      id: 'transaction-form',
       validators: zodClient(insertTransactionSchema),
       onResult: async({ result }) => {
         if (onSave) {
+          console.log(result);
           onSave(result.data.entity);
         }
       },
@@ -67,7 +69,7 @@
       <Form.Label>Date</Form.Label>
       <DateInput {...attrs} bind:value={dateValue}/>
       <Form.FieldErrors />
-      <input hidden value={$formData.date} name={attrs.name} />
+      <input hidden bind:value={$formData.date} name={attrs.name} />
     </Form.Control>
   </Form.Field>
   <Form.Field {form} name="amount">
@@ -75,7 +77,7 @@
       <Form.Label>Amount</Form.Label>
       <NumericInput {...attrs} bind:amount={numericAmount} />
       <Form.FieldErrors />
-      <input hidden value={$formData.amount} name={attrs.name} />
+      <input hidden bind:value={$formData.amount} name={attrs.name} />
     </Form.Control>
   </Form.Field>
   <Form.Field {form} name="payeeId">
@@ -83,7 +85,7 @@
       <Form.Label>Payee</Form.Label>
       <EntityInput {...attrs} entityLabel="payees" entities={payees as EditableEntityItem[]} bind:value={payee} />
       <Form.FieldErrors />
-      <input hidden value={$formData.payeeId} name={attrs.name} />
+      <input hidden bind:value={$formData.payeeId} name={attrs.name} />
     </Form.Control>
   </Form.Field>
   <Form.Field {form} name="categoryId">
@@ -91,7 +93,7 @@
       <Form.Label>Category</Form.Label>
       <EntityInput {...attrs} entityLabel="categories" entities={categories as EditableEntityItem[]} bind:value={category} />
       <Form.FieldErrors />
-      <input hidden value={$formData.categoryId} name={attrs.name} />
+      <input hidden bind:value={$formData.categoryId} name={attrs.name} />
     </Form.Control>
   </Form.Field>
   <Form.Field {form} name="notes" class="col-span-full">

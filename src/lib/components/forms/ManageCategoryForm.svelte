@@ -20,16 +20,7 @@
 
   const data = getCategoryState();
 
-  const form = superForm(
-    data.manageCategoryForm,
-    {
-      validators: zodClient(insertCategorySchema),
-      onResult: async({ result }) => {
-        if (result.data.status === 200 && onSave)
-          onSave(result.data.entity, categoryId !== void 0);
-      },
-    }
-  );
+  const form = data.manageCategorySuperForm(onSave);
 
   const { form: formData, enhance } = form;
   if (categoryId) {
@@ -41,11 +32,9 @@
   let alertDialogOpen = $state(false);
   const deleteCategory = async(id: number) => {
     alertDialogOpen = false;
-    if (categoryId) {
-      await trpc($page).categoriesRoutes.remove.mutate({ id: categoryId });
-      if (onDelete) {
-        onDelete(id);
-      }
+    data.deleteCategory(id);
+    if (onDelete) {
+      onDelete(id);
     }
   }
 </script>

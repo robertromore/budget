@@ -124,7 +124,16 @@ export const keyBy = <T extends AnyObject>(
   );
 };
 
-export const without = <T>(array: T[], fn: (element: T) => boolean): void => {
-  const filtered = array.filter(fn);
-  array.splice(0, array.length, ...filtered);
+export const without = <T>(array: T[], fn: (element: T) => boolean): T[] => {
+  const keep: T[] = [];
+  const remove: T[] = [];
+  array.forEach((value: T) => {
+    if (fn(value)) {
+      remove.push(value);
+    } else {
+      keep.push(value);
+    }
+  })
+  array.splice(0, array.length, ...keep);
+  return remove;
 }

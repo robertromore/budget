@@ -157,7 +157,10 @@
     },
   ];
 
-  let sorting = $state<SortingState>([]);
+  let sorting = $state<SortingState>([{
+    id: 'id',
+    desc: true
+  }]);
   function setSorting(updater: Updater<SortingState>) {
     if (updater instanceof Function) {
       sorting = updater(sorting);
@@ -239,7 +242,7 @@
     initialState: {
       columnVisibility: {
         id: false
-      }
+      },
     },
     filterFns: {
       fuzzy: fuzzyFilter,

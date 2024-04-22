@@ -32,8 +32,10 @@ export const formInsertPayeeSchema = createInsertSchema(payees, {
     .max(30)
 });
 export const removePayeeSchema = z.object({ id: z.number().nonnegative() });
+export const removePayeesSchema = z.object({ entities: z.array(z.number().nonnegative()) });
 
 export type Payee = typeof payees.$inferSelect;
 export type NewPayee = typeof payees.$inferInsert;
 export type FormInsertPayeeSchema = typeof formInsertPayeeSchema;
 export type RemovePayeeSchema = typeof removePayeeSchema;
+export type RemovePayesSchema = typeof removePayeesSchema;

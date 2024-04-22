@@ -20,20 +20,11 @@
 
   const data = getPayeeState();
 
-  const form = superForm(
-    data.managePayeeForm,
-    {
-      validators: zodClient(insertPayeeSchema),
-      onResult: async({ result }) => {
-        if (result.status == 200 && onSave)
-          onSave(result.data.entity, payeeId === void 0);
-      },
-    }
-  );
+  const form = data.managePayeeSuperForm(onSave);
 
   const { form: formData, enhance } = form;
   if (payeeId) {
-    const payee: Payee = data.payees.filter((payeeEntity: Payee) => payeeEntity.id === payeeId)[0];
+    const payee: Payee = data.getById(payeeId)!;
     $formData.name = payee.name;
     $formData.notes = payee.notes;
   }
@@ -41,11 +32,9 @@
   let alertDialogOpen = $state(false);
   const deletePayee = async(id: number) => {
     alertDialogOpen = false;
-    if (payeeId) {
-      await trpc($page).payeeRoutes.remove.mutate({ id: payeeId });
-      if (onDelete) {
-        onDelete(id);
-      }
+    data.deletePayee(id);
+    if (onDelete) {
+      onDelete(id);
     }
   }
 </script>
