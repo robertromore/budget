@@ -196,8 +196,8 @@
         }),
       sortingFn: (rowA, rowB) => {
         return compareAlphanumeric(
-          payeeState.getById(rowA.getValue('payee'))?.name || '',
-          payeeState.getById(rowB.getValue('payee'))?.name || ''
+          (rowA.getValue('payee') as Payee).name || '',
+          (rowB.getValue('payee') as Payee).name || ''
         );
       },
       enableColumnFilter: true,
