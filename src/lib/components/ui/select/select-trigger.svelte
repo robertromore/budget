@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Select as SelectPrimitive } from "bits-ui";
-	import { cn } from "$lib/utils";
+	import CaretSort from "svelte-radix/CaretSort.svelte";
+	import { cn } from "$lib/utils.js";
 
 	type $$Props = SelectPrimitive.TriggerProps;
 	type $$Events = SelectPrimitive.TriggerEvents;
@@ -18,6 +19,6 @@
 >
 	<slot />
 	<div>
-		<span class="icon-[radix-icons--caret-sort] h-4 w-4 opacity-50" />
+		<CaretSort class="h-4 w-4 opacity-50" />
 	</div>
 </SelectPrimitive.Trigger>

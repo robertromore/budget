@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { RadioGroup as RadioGroupPrimitive } from "bits-ui";
-	import { cn } from "$lib/utils";
+	import Check from "svelte-radix/Check.svelte";
+	import { cn } from "$lib/utils.js";
 
 	type $$Props = RadioGroupPrimitive.ItemProps & {
 		value: string;
@@ -23,7 +24,7 @@
 >
 	<div class="flex items-center justify-center">
 		<RadioGroupPrimitive.ItemIndicator>
-			<span class="icon-[lucide--check] h-3.5 w-3.5 fill-primary" />
+			<Check class="h-3.5 w-3.5 fill-primary" />
 		</RadioGroupPrimitive.ItemIndicator>
 	</div>
 </RadioGroupPrimitive.Item>
