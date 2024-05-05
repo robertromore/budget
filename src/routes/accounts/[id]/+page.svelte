@@ -511,53 +511,55 @@
   <div class="h-4"></div>
 </div>
 
-<div class="flex items-center justify-end space-x-2 py-4">
-  <Pagination.Root
-    class="mx-0 w-auto flex-row"
-    count={table.getRowCount()}
-    perPage={table.getState().pagination.pageSize}
-    siblingCount={1}
-    let:pages
-    let:currentPage
-    let:range
-  >
-    <p class="mr-2 text-[13px] text-muted-foreground">
-      Showing {range.start + 1} - {range.end} of {table.getRowCount()}
-    </p>
+{#if table.getRowCount() > 0}
+  <div class="flex items-center justify-end space-x-2 py-4">
+    <Pagination.Root
+      class="mx-0 w-auto flex-row"
+      count={table.getRowCount()}
+      perPage={table.getState().pagination.pageSize}
+      siblingCount={1}
+      let:pages
+      let:currentPage
+      let:range
+    >
+      <p class="mr-2 text-[13px] text-muted-foreground">
+        Showing {range.start + 1} - {range.end} of {table.getRowCount()}
+      </p>
 
-    <Pagination.Content>
-      <Pagination.Item>
-        <Pagination.PrevButton
-          disabled={!table.getCanPreviousPage()}
-          on:click={() => table.previousPage()}
-        >
-          <span class="icon-[lucide--chevron-left] size-4"></span>
-          <span class="hidden sm:block">Previous</span>
-        </Pagination.PrevButton>
-      </Pagination.Item>
-      {#each pages as page (page.key)}
-        {#if page.type === 'ellipsis'}
-          <Pagination.Item>
-            <Pagination.Ellipsis />
-          </Pagination.Item>
-        {:else}
-          <Pagination.Item>
-            <Pagination.Link
-              {page}
-              isActive={currentPage == page.value}
-              onclick={() => table.setPageIndex(page.value - 1)}
-            >
-              {page.value}
-            </Pagination.Link>
-          </Pagination.Item>
-        {/if}
-      {/each}
-      <Pagination.Item>
-        <Pagination.NextButton disabled={!table.getCanNextPage()} on:click={() => table.nextPage()}>
-          <span class="hidden sm:block">Next</span>
-          <span class="icon-[lucide--chevron-right] size-4"></span>
-        </Pagination.NextButton>
-      </Pagination.Item>
-    </Pagination.Content>
-  </Pagination.Root>
-</div>
+      <Pagination.Content>
+        <Pagination.Item>
+          <Pagination.PrevButton
+            disabled={!table.getCanPreviousPage()}
+            on:click={() => table.previousPage()}
+          >
+            <span class="icon-[lucide--chevron-left] size-4"></span>
+            <span class="hidden sm:block">Previous</span>
+          </Pagination.PrevButton>
+        </Pagination.Item>
+        {#each pages as page (page.key)}
+          {#if page.type === 'ellipsis'}
+            <Pagination.Item>
+              <Pagination.Ellipsis />
+            </Pagination.Item>
+          {:else}
+            <Pagination.Item>
+              <Pagination.Link
+                {page}
+                isActive={currentPage == page.value}
+                onclick={() => table.setPageIndex(page.value - 1)}
+              >
+                {page.value}
+              </Pagination.Link>
+            </Pagination.Item>
+          {/if}
+        {/each}
+        <Pagination.Item>
+          <Pagination.NextButton disabled={!table.getCanNextPage()} on:click={() => table.nextPage()}>
+            <span class="hidden sm:block">Next</span>
+            <span class="icon-[lucide--chevron-right] size-4"></span>
+          </Pagination.NextButton>
+        </Pagination.Item>
+      </Pagination.Content>
+    </Pagination.Root>
+  </div>
+{/if}
