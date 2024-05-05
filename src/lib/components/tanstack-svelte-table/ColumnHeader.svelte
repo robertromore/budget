@@ -96,13 +96,8 @@
                     class={cn(filterManager.size >= 1 ? 'col-span-6' : 'col-span-7')}
                     {...filterManager.getFilterProps(filterManager.selectedOperators[index].operator!)}
                     changeFilterValue={(new_value: unknown) => {
-                      // if (!Array.isArray(new_value)) {
-                      //   new_value = [new_value];
-                      // }
-
                       filterManager.updateSelectedOperator({ value: new_value }, index);
                       filterValues[index] = new_value;
-
                       column?.setFilterValue({
                         context: filterManager,
                         cb: filterManager.passes

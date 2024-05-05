@@ -215,10 +215,13 @@
         renderComponent(ColumnHeader, {
           label: 'Notes',
           header,
-          column: header.column
+          column: header.column,
+          filterManager: new FilterManager([
+            new TextFilter()
+          ])
         }),
       enableSorting: false,
-      enableColumnFilter: false
+      filterFn: delegateFilter
     },
     {
       accessorFn: (row) => row.categoryId,

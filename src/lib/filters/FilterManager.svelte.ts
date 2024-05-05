@@ -55,7 +55,7 @@ export class FilterManager {
         const [filter_id] = operator['operator'].split(':');
         const actualOperator: FilterOperator =
           this.availableOperators[filter_id][operator['operator']];
-        if (actualOperator.passes && operator.value) {
+        if (actualOperator.passes && operator.value !== undefined) {
           return actualOperator.passes(row, columnId, value, operator.value);
         }
       }

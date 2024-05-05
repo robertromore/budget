@@ -14,7 +14,7 @@ export type EntityFilterType = FilterType;
 export class TextFilter extends BaseFilter {
   id: string = 'string';
   label: string = 'String';
-  props: ComponentProps<SvelteComponent<Record<string, any>>>;
+  props: ComponentProps<SvelteComponent<Record<string, any>>> = {};
 
   availableOperators: Record<string, FilterOperator> = {
     contains: {
@@ -31,8 +31,11 @@ export class TextFilter extends BaseFilter {
           new_value = [new_value];
         }
 
-        value = this.accessorFn(row.getValue(columnId));
-        if (new_value && new_value[0]) {
+        value =
+          this.accessorFn.length > 0
+            ? this.accessorFn(row.getValue(columnId))
+            : row.getValue(columnId);
+        if (value && new_value && new_value[0]) {
           return (value as string)
             .toLowerCase()
             .includes((new_value[0] as unknown as string).toLowerCase());
@@ -54,8 +57,11 @@ export class TextFilter extends BaseFilter {
           new_value = [new_value];
         }
 
-        value = this.accessorFn(row.getValue(columnId));
-        if (new_value && new_value[0]) {
+        value =
+          this.accessorFn.length > 0
+            ? this.accessorFn(row.getValue(columnId))
+            : row.getValue(columnId);
+        if (value && new_value && new_value[0]) {
           return !(value as string)
             .toLowerCase()
             .includes((new_value[0] as unknown as string).toLowerCase());
@@ -77,8 +83,11 @@ export class TextFilter extends BaseFilter {
           new_value = [new_value];
         }
 
-        value = this.accessorFn(row.getValue(columnId));
-        if (new_value && new_value[0]) {
+        value =
+          this.accessorFn.length > 0
+            ? this.accessorFn(row.getValue(columnId))
+            : row.getValue(columnId);
+        if (value !== undefined && new_value && new_value[0]) {
           return (value as string)
             .toLowerCase()
             .startsWith((new_value[0] as unknown as string).toLowerCase());
@@ -100,8 +109,11 @@ export class TextFilter extends BaseFilter {
           new_value = [new_value];
         }
 
-        value = this.accessorFn(row.getValue(columnId));
-        if (new_value && new_value[0]) {
+        value =
+          this.accessorFn.length > 0
+            ? this.accessorFn(row.getValue(columnId))
+            : row.getValue(columnId);
+        if (value && new_value && new_value[0]) {
           return (value as string)
             .toLowerCase()
             .endsWith((new_value[0] as unknown as string).toLowerCase());
@@ -112,11 +124,15 @@ export class TextFilter extends BaseFilter {
   };
 
   constructor(
-    props: ComponentProps<SvelteComponent<Record<string, any>>>,
-    accessorFn: (row: any) => any
+    props?: ComponentProps<SvelteComponent<Record<string, any>>>,
+    accessorFn?: (row: any) => any
   ) {
     super();
-    this.props = props;
-    this.accessorFn = accessorFn;
+    if (props) {
+      this.props = props;
+    }
+    if (accessorFn) {
+      this.accessorFn = accessorFn;
+    }
   }
 }

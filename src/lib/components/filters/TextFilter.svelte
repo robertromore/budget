@@ -14,4 +14,6 @@
   }: Props = $props();
 </script>
 
-<Input class={className} bind:value={value} onchange={changeFilterValue(value)} />
+<Input class={className} bind:value={value} onkeyup={() => {
+  changeFilterValue(value);
+}} />
