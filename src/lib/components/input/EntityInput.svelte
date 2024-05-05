@@ -7,11 +7,13 @@
   import ManagePayeeForm from '../forms/ManagePayeeForm.svelte';
   import type { EditableEntityItem } from '../types';
 
-  let { entityLabel = $bindable(), entities = $bindable(), value = $bindable(), handleSubmit }: {
+  let { entityLabel = $bindable(), entities = $bindable(), value = $bindable(), handleSubmit, class: className, enableManagement = false }: {
     entityLabel: string;
     entities: EditableEntityItem[];
     value?: EditableEntityItem;
     handleSubmit?: (selected?: EditableEntityItem) => void;
+    class?: string;
+    enableManagement?: boolean;
   } = $props();
 
   const findCurrentEntity = () => entities.find((entity) => entity.id == value?.id);
@@ -61,7 +63,7 @@
   }), 'id'));
 </script>
 
-<div class="flex items-center space-x-4">
+<div class={cn("flex items-center space-x-4", className)}>
   <Popover.Root
     bind:open
     let:ids
@@ -92,13 +94,15 @@
         }}>
           <div class="flex">
             <Command.Input placeholder="Search {entityLabel}..." />
-            <Button
-              size="icon"
-              class="h-11 w-12 rounded-none border-b shadow-none"
-              onclick={addNew}
-            >
-              <span class="icon-[lucide--plus]"></span>
-            </Button>
+            {#if enableManagement}
+              <Button
+                size="icon"
+                class="h-11 w-12 rounded-none border-b shadow-none"
+                onclick={addNew}
+              >
+                <span class="icon-[lucide--plus]"></span>
+              </Button>
+            {/if}
           </div>
           <Command.List>
             <Command.Empty>No results found.</Command.Empty>
@@ -123,17 +127,19 @@
                   <div class="flex-grow">
                     {entity.name}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    class="mr-1 p-1 text-xs"
-                    onclick={(e: MouseEvent) => {
-                    managingId = entity.id;
-                    toggleManageScreen(e);
-                  }}
-                  >
-                    <span class="icon-[radix-icons--pencil-2]"></span>
-                  </Button>
+                  {#if enableManagement}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      class="mr-1 p-1 text-xs"
+                      onclick={(e: MouseEvent) => {
+                      managingId = entity.id;
+                      toggleManageScreen(e);
+                    }}
+                    >
+                      <span class="icon-[radix-icons--pencil-2]"></span>
+                    </Button>
+                  {/if}
                 </Command.Item>
               {/each}
             </Command.Group>
