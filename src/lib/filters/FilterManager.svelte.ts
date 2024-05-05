@@ -1,0 +1,99 @@
+import { mergeObjects } from "$lib/utils";
+import type { Row } from "@tanstack/table-core";
+import type { FilterOperator, FilterType, SelectedFilterOperator } from "./BaseFilter.svelte";
+import type { TransactionsFormat } from "$lib/components/types";
+
+export class FilterManager {
+  filters: FilterType[] | undefined = $state([]);
+  selectedOperators: SelectedFilterOperator[] = $state([
+    {
+      operator: undefined,
+      value: undefined
+    }
+  ]);
+  idx: number = $state(0);
+
+  getFilter(filter_id: string) {
+    return this.filters?.find((filter: FilterType) => filter.id === filter_id);
+  }
+
+  setSelectedOperator(operator: SelectedFilterOperator, idx: number | undefined = undefined) {
+    if (typeof idx === 'undefined') {
+      idx = this.idx;
+    }
+    this.selectedOperators[idx] = operator;
+  }
+
+  addSelectedOperator() {
+    this.selectedOperators[++this.idx] = {
+      operator: undefined,
+      value: undefined
+    };
+  }
+
+  removeSelectedOperator(idx: number | undefined) {
+    if (typeof idx === 'undefined') {
+      idx = this.idx;
+    }
+    this.selectedOperators.splice(idx, 1);
+    --this.idx;
+  }
+
+  updateSelectedOperator(
+    partial: Partial<SelectedFilterOperator>,
+    idx: number | undefined = undefined
+  ) {
+    if (typeof idx === 'undefined') {
+      idx = this.idx;
+    }
+    this.selectedOperators[idx] = Object.assign({}, this.selectedOperators[idx], partial);
+  }
+
+  passes(row: Row<TransactionsFormat>, columnId: string, value: unknown): boolean {
+    return this.selectedOperators.every((operator: SelectedFilterOperator) => {
+      if (operator['operator']) {
+        const [filter_id] = operator['operator'].split(':');
+        const actualOperator: FilterOperator =
+          this.availableOperators[filter_id][operator['operator']];
+        if (actualOperator.passes && operator.value) {
+          return actualOperator.passes(row, columnId, value, operator.value);
+        }
+      }
+      return false;
+    });
+  }
+
+  get size(): number {
+    return this.idx;
+  }
+
+  get availableOperators() {
+    const allAvailable = this.filters?.reduce((all, next) => Object.assign(all, { [next.id]: next.availableOperators }), {});
+    let merged: Record<string, Record<string, FilterOperator>> = {};
+    if (allAvailable) {
+      Object.entries(allAvailable).map(([id, ops]: [string, Record<string, FilterOperator> | unknown]) => {
+        merged[id] = merged[id] || {};
+        if (ops) {
+          Object.keys(ops).map((key: string) => {
+            merged[id][id + ':' + key] = ops[key as keyof typeof ops];
+          })
+        }
+      });
+    }
+    return merged;
+  }
+
+  getFilterComponent(id: string) {
+    const [filter_id, operator_id] = id.split(':');
+    return this.filters?.find((value: FilterType) => value.id === filter_id)?.availableOperators[operator_id].component;
+  }
+
+  getFilterProps(id: string) {
+    const [filter_id] = id.split(':');
+    return this.filters?.find((value: FilterType) => value.id === filter_id)?.props;
+  }
+
+  constructor(filters: FilterType[] | undefined) {
+    this.filters = filters;
+  }
+}

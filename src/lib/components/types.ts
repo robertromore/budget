@@ -5,6 +5,7 @@ export type EditableDateItem = DateValue;
 export type EditableEntityItem = {
   id: number;
   name: string;
+  [key: string]: unknown;
 };
 export type EditableNumericItem = {
   value: number | null;
