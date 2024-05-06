@@ -14,9 +14,9 @@
 
 
   let dialogOpen = $state(open || false);
-  let new_amount = $state(amount?.value?.toString() || '0');
+  let new_amount = $state((amount?.value || 0).toFixed(2));
   $effect(() => {
-    new_amount = amount?.value?.toString() || '0';
+    new_amount = (amount?.value || 0).toFixed(2);
   });
 
   const select = (num: string) => () => {
