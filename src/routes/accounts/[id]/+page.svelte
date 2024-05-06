@@ -110,7 +110,7 @@
   };
 
   const delegateFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
-    return value['cb'].apply(value['context'], [row, columnId, value]);
+    return value['cb'].apply(value['context'], [row, columnId, value, addMeta]);
   };
 
   const defaultColumns: ColumnDef<TransactionsFormat>[] = [

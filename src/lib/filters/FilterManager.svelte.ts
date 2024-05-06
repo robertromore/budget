@@ -1,5 +1,5 @@
 import { mergeObjects } from "$lib/utils";
-import type { Row } from "@tanstack/table-core";
+import type { FilterMeta, Row } from "@tanstack/table-core";
 import type { FilterOperator, FilterType, SelectedFilterOperator } from "./BaseFilter.svelte";
 import type { TransactionsFormat } from "$lib/components/types";
 
@@ -49,16 +49,22 @@ export class FilterManager {
     this.selectedOperators[idx] = Object.assign({}, this.selectedOperators[idx], partial);
   }
 
-  passes(row: Row<TransactionsFormat>, columnId: string, value: unknown): boolean {
+  passes(
+    row: Row<TransactionsFormat>,
+    columnId: string,
+    value: unknown,
+    addMeta: (meta: FilterMeta) => void
+  ): boolean {
     return this.selectedOperators.every((operator: SelectedFilterOperator) => {
       if (operator['operator']) {
         if (operator.value === undefined) {
           return true;
         }
         const [filter_id] = operator['operator'].split(':');
-        const actualOperator: FilterOperator = this.availableOperators[filter_id][operator['operator']];
+        const actualOperator: FilterOperator =
+          this.availableOperators[filter_id][operator['operator']];
         if (actualOperator.passes && operator.value !== undefined) {
-          return actualOperator.passes(row, columnId, value, operator.value);
+          return actualOperator.passes(row, columnId, value, operator.value, addMeta);
         }
       }
       return false;

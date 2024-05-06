@@ -2,7 +2,7 @@ import type EntityFilter from '$lib/components/filters/EntityFilter.svelte';
 import type TextFilter from "$lib/components/filters/TextFilter.svelte";
 import type MultipleEntityFilter from "$lib/components/filters/MultipleEntityFilter.svelte";
 import type { ComponentProps, SvelteComponent } from 'svelte';
-import type { Row } from '@tanstack/table-core';
+import type { FilterMeta, Row } from '@tanstack/table-core';
 import type { TransactionsFormat } from '$lib/components/types';
 import type DateFilter from '$lib/components/filters/DateFilter.svelte';
 import type DateRangeFilter from '$lib/components/filters/DateRangeFilter.svelte';
@@ -23,7 +23,8 @@ export interface FilterOperator {
     row: Row<TransactionsFormat>,
     columnId: string,
     value: unknown,
-    new_value: ({ value: any }) | ({ value: any }[])
+    new_value: { value: any } | { value: any }[],
+    addMeta?: (meta: FilterMeta) => void
   ) => boolean;
 }
 

@@ -6,8 +6,9 @@ import {
 } from './BaseFilter.svelte';
 import type { ComponentProps, SvelteComponent } from 'svelte';
 import TextFilterComponent from '$lib/components/filters/TextFilter.svelte';
-import type { Row } from '@tanstack/table-core';
+import type { FilterMeta, Row } from '@tanstack/table-core';
 import type { TransactionsFormat } from '$lib/components/types';
+import { rankItem } from '@tanstack/match-sorter-utils';
 
 export type TextFilterType = FilterType;
 
@@ -17,6 +18,38 @@ export class TextFilter extends BaseFilter {
   props: ComponentProps<SvelteComponent<Record<string, any>>> = {};
 
   availableOperators: Record<string, FilterOperator> = {
+    fuzzy: {
+      value: 'fuzzy',
+      label: 'fuzzy',
+      component: TextFilterComponent,
+      passes: (
+        row: Row<TransactionsFormat>,
+        columnId: string,
+        value: unknown,
+        new_value: { value: any } | { value: any }[],
+        addMeta?: (meta: FilterMeta) => void
+      ) => {
+        if (!Array.isArray(new_value)) {
+          new_value = [new_value];
+        }
+
+        const rowValue = row.getValue(columnId);
+        if (rowValue) {
+          value =
+            this.accessorFn.length > 0
+              ? this.accessorFn(rowValue)
+              : rowValue;
+
+          // Rank the item
+          const itemRank = rankItem(value, new_value[0] as unknown as string);
+          if (addMeta) {
+            addMeta({ itemRank });
+          }
+          return itemRank.passed;
+        }
+        return true;
+      }
+    },
     contains: {
       value: 'contains',
       label: 'contains',
