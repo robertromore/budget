@@ -9,7 +9,7 @@ import TextFilterComponent from '$lib/components/filters/TextFilter.svelte';
 import type { Row } from '@tanstack/table-core';
 import type { TransactionsFormat } from '$lib/components/types';
 
-export type EntityFilterType = FilterType;
+export type TextFilterType = FilterType;
 
 export class TextFilter extends BaseFilter {
   id: string = 'string';
