@@ -52,6 +52,7 @@
   import { FilterManager } from '$lib/filters/FilterManager.svelte';
   import { TextFilter } from '$lib/filters/TextFilter.svelte';
   import { DateFilter } from '$lib/filters/DateFilter.svelte';
+  import { NumberFilter } from '$lib/filters/NumberFilter.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -271,7 +272,10 @@
         renderComponent(ColumnHeader, {
           label: 'Amount',
           header,
-          column: header.column
+          column: header.column,
+          filterManager: new FilterManager([
+            new NumberFilter()
+          ])
         }),
       sortingFn: (rowA, rowB) => {
         return (
@@ -279,7 +283,7 @@
           ((rowB.getValue('amount') as EditableNumericItem).value || 0)
         );
       },
-      enableColumnFilter: false
+      filterFn: delegateFilter
     }
   ];
 
