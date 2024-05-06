@@ -68,9 +68,14 @@
               <div class="grid grid-cols-12 items-center gap-1">
                 <Select.Root bind:selected={selectedOperators[index]} onSelectedChange={(new_operator: Selected<string> | undefined) => {
                   if (new_operator) {
-                    filterManager.updateSelectedOperator({ operator: new_operator.value }, index);
+                    filterManager.updateSelectedOperator({ operator: new_operator.value, value: undefined }, index);
+                    filterValues[index] = undefined;
                     let [group, id] = new_operator.value.split(':');
                     selectedOperators[index] = filterManager.availableOperators[group][id] as Selected<string>;
+                    column?.setFilterValue({
+                      context: filterManager,
+                      cb: filterManager.passes
+                    });
                   }
                 }}>
                   <Select.Trigger class="col-span-5">

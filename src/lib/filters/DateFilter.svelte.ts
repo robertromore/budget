@@ -7,7 +7,7 @@ import DateRangeFilterComponent from '$lib/components/filters/DateRangeFilter.sv
 import type { DateValue } from '@internationalized/date';
 import type { DateRange } from 'bits-ui';
 
-export type EntityFilterType = FilterType;
+export type DateFilterType = FilterType;
 
 export class DateFilter extends BaseFilter {
   id: string = 'date';

@@ -52,9 +52,11 @@ export class FilterManager {
   passes(row: Row<TransactionsFormat>, columnId: string, value: unknown): boolean {
     return this.selectedOperators.every((operator: SelectedFilterOperator) => {
       if (operator['operator']) {
+        if (operator.value === undefined) {
+          return true;
+        }
         const [filter_id] = operator['operator'].split(':');
-        const actualOperator: FilterOperator =
-          this.availableOperators[filter_id][operator['operator']];
+        const actualOperator: FilterOperator = this.availableOperators[filter_id][operator['operator']];
         if (actualOperator.passes && operator.value !== undefined) {
           return actualOperator.passes(row, columnId, value, operator.value);
         }

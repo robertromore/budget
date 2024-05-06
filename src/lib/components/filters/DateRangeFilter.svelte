@@ -34,12 +34,10 @@
         )}
         builders={[builder]}
       >
-        <span class="icon-[lucide--calendar-days] mr-2 size-4"></span>
+        <span class="icon-[lucide--calendar-range] mr-2 size-4"></span>
         {#if value && value.start}
           {#if value.end}
-            {dateFormatter.format(value.start.toDate(getLocalTimeZone()))} - {dateFormatter.format(
-              value.end.toDate(getLocalTimeZone())
-            )}
+            {dateFormatter.formatRange(value.start.toDate(getLocalTimeZone()), value.end.toDate(getLocalTimeZone()))}
           {:else}
             {dateFormatter.format(value.start.toDate(getLocalTimeZone()))}
           {/if}
