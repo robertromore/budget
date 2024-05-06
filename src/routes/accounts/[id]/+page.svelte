@@ -48,7 +48,7 @@
   } from '$lib/components/tanstack-svelte-table';
   import { rankItem, type RankItemOptions } from '@tanstack/match-sorter-utils';
   import { EntityFilter } from '$lib/filters/EntityFilter.svelte';
-  import type { Payee } from '$lib/schema';
+  import type { Category, Payee } from '$lib/schema';
   import { FilterManager } from '$lib/filters/FilterManager.svelte';
   import { TextFilter } from '$lib/filters/TextFilter.svelte';
   import { DateFilter } from '$lib/filters/DateFilter.svelte';
@@ -189,7 +189,7 @@
                   return { value: payee.id, label: payee.name };
                 })
               },
-              (value: Payee) => value.id
+              (value: Payee) => value ? value.id : null
             ),
             new TextFilter({}, (value: Payee) => value.name)
           ])
@@ -224,12 +224,12 @@
       filterFn: delegateFilter
     },
     {
-      accessorFn: (row) => row.categoryId,
+      accessorFn: (row) => categoryState.getById(row.categoryId!),
       id: 'category',
       cell: (info) =>
         renderComponent(EditableEntityCell, {
-          value: categoryState.getById(info.getValue() as number) as EditableEntityItem,
-          entityLabel: 'categories',
+          value: info.getValue() as EditableEntityItem,
+          entityLabel: 'category',
           onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'categoryId', new_value),
           entities: categoryState.categories as EditableEntityItem[],
           enableManagement: true
@@ -238,15 +238,26 @@
         renderComponent(ColumnHeader, {
           label: 'Category',
           header,
-          column: header.column
+          column: header.column,
+          filterManager: new FilterManager([
+            new EntityFilter(
+              {
+                items: categoryState.categories.map((category: Category) => {
+                  return { value: category.id, label: category.name };
+                })
+              },
+              (value: Category) => value ? value.id : null
+            ),
+            new TextFilter({}, (value: Category) => value.name)
+          ])
         }),
       sortingFn: (rowA, rowB) => {
         return compareAlphanumeric(
-          categoryState.getById(rowA.getValue('category'))?.name || '',
-          categoryState.getById(rowB.getValue('category'))?.name || ''
+          (rowA.getValue('category') as Category).name || '',
+          (rowB.getValue('category') as Category).name || ''
         );
       },
-      enableColumnFilter: false
+      filterFn: delegateFilter
     },
     {
       accessorFn: (row) => row.amount,
