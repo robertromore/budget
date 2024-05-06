@@ -1,41 +1,45 @@
 <script lang="ts">
-  import * as Form from "$lib/components/ui/form";
-  import { insertTransactionSchema, type InsertTransactionSchema, type Transaction } from "$lib/schema";
-  import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms/client";
-  import { today, getLocalTimeZone } from "@internationalized/date";
-  import type { EditableDateItem, EditableEntityItem, EditableNumericItem } from "../types";
-  import Textarea from "$lib/components/ui/textarea/textarea.svelte";
-  import { zodClient } from "sveltekit-superforms/adapters";
-  import DateInput from "$lib/components/input/DateInput.svelte";
-  import EntityInput from "$lib/components/input/EntityInput.svelte";
-  import NumericInput from "$lib/components/input/NumericInput.svelte";
-  import { getTransactionState } from "$lib/states/TransactionState.svelte";
-  import { getPayeeState } from "$lib/states/PayeeState.svelte";
-  import { getCategoryState } from "$lib/states/CategoryState.svelte";
+  import * as Form from '$lib/components/ui/form';
+  import {
+    insertTransactionSchema,
+    type InsertTransactionSchema,
+    type Transaction
+  } from '$lib/schema';
+  import { superForm, type Infer, type SuperValidated } from 'sveltekit-superforms/client';
+  import { today, getLocalTimeZone } from '@internationalized/date';
+  import type { EditableDateItem, EditableEntityItem, EditableNumericItem } from '../types';
+  import Textarea from '$lib/components/ui/textarea/textarea.svelte';
+  import { zodClient } from 'sveltekit-superforms/adapters';
+  import DateInput from '$lib/components/input/DateInput.svelte';
+  import EntityInput from '$lib/components/input/EntityInput.svelte';
+  import NumericInput from '$lib/components/input/NumericInput.svelte';
+  import { getTransactionState } from '$lib/states/TransactionState.svelte';
+  import { getPayeeState } from '$lib/states/PayeeState.svelte';
+  import { getCategoryState } from '$lib/states/CategoryState.svelte';
 
-  let { accountId, onDelete, onSave }: {
-    accountId: number,
-    onDelete?: (id: number) => void,
-    onSave?: (new_entity: Transaction) => void,
+  let {
+    accountId,
+    onDelete,
+    onSave
+  }: {
+    accountId: number;
+    onDelete?: (id: number) => void;
+    onSave?: (new_entity: Transaction) => void;
   } = $props();
 
   const data = getTransactionState();
   const payees = getPayeeState().payees;
   const categories = getCategoryState().categories;
 
-  const form = superForm(
-    data.manageTransactionForm,
-    {
-      id: 'transaction-form',
-      validators: zodClient(insertTransactionSchema),
-      onResult: async({ result }) => {
-        if (onSave) {
-          console.log(result);
-          onSave(result.data.entity);
-        }
-      },
+  const form = superForm(data.manageTransactionForm, {
+    id: 'transaction-form',
+    validators: zodClient(insertTransactionSchema),
+    onResult: async ({ result }) => {
+      if (onSave) {
+        onSave(result.data.entity);
+      }
     }
-  );
+  });
 
   const { form: formData, enhance } = form;
 
@@ -48,17 +52,21 @@
   });
   let payee: EditableEntityItem = $state({
     id: 0,
-    name: '',
+    name: ''
   });
   let category: EditableEntityItem = $state({
     id: 0,
-    name: '',
+    name: ''
   });
   $effect(() => {
+    // const date = untrack(() => data.entity.date);
+    // const amount = untrack(() => data.entity.amount);
+    // const payee_id = untrack(() => data.entity.payeeId);
+    // const category_id = untrack(() => data.entity.categoryId);
     $formData.date = dateValue.toString();
     $formData.amount = numericAmount.value;
     $formData.payeeId = payee.id;
-    $formData.categoryId = category.id;
+    // $formData.categoryId = category.id;
   });
 </script>
 
@@ -67,7 +75,7 @@
   <Form.Field {form} name="date">
     <Form.Control let:attrs>
       <Form.Label>Date</Form.Label>
-      <DateInput {...attrs} bind:value={dateValue}/>
+      <DateInput {...attrs} bind:value={dateValue} />
       <Form.FieldErrors />
       <input hidden bind:value={$formData.date} name={attrs.name} />
     </Form.Control>
@@ -83,7 +91,12 @@
   <Form.Field {form} name="payeeId">
     <Form.Control let:attrs>
       <Form.Label>Payee</Form.Label>
-      <EntityInput {...attrs} entityLabel="payees" entities={payees as EditableEntityItem[]} bind:value={payee} />
+      <EntityInput
+        {...attrs}
+        entityLabel="payees"
+        entities={payees as EditableEntityItem[]}
+        bind:value={payee}
+      />
       <Form.FieldErrors />
       <input hidden bind:value={$formData.payeeId} name={attrs.name} />
     </Form.Control>
@@ -91,7 +104,12 @@
   <Form.Field {form} name="categoryId">
     <Form.Control let:attrs>
       <Form.Label>Category</Form.Label>
-      <EntityInput {...attrs} entityLabel="categories" entities={categories as EditableEntityItem[]} bind:value={category} />
+      <EntityInput
+        {...attrs}
+        entityLabel="categories"
+        entities={categories as EditableEntityItem[]}
+        bind:value={category}
+      />
       <Form.FieldErrors />
       <input hidden bind:value={$formData.categoryId} name={attrs.name} />
     </Form.Control>

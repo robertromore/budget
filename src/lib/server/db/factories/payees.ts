@@ -11,7 +11,7 @@ export const payeeFactory = async (
       .insert(payees)
       .values({
         name: faker.company.name(),
-        notes: faker.lorem.text(),
+        notes: faker.lorem.text()
       })
       .returning();
     payees_collection.push(new_payee[0]);

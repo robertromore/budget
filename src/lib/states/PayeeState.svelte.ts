@@ -4,7 +4,7 @@ import {
   type RemovePayeeSchema,
   type Payee,
   insertPayeeSchema,
-  type removePayeeSchema,
+  type removePayeeSchema
 } from '$lib/schema';
 import { trpc } from '$lib/trpc/client';
 import { without } from '$lib/utils';
@@ -86,7 +86,7 @@ export class PayeeState {
   }
 }
 
-const PAYEE_CTX = Symbol("PAYEE_ctx");
+const PAYEE_CTX = Symbol('PAYEE_ctx');
 
 export function setPayeeState(init: SetPayeeState) {
   const payeeState = new PayeeState(init);

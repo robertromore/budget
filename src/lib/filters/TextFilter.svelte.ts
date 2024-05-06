@@ -35,10 +35,7 @@ export class TextFilter extends BaseFilter {
 
         const rowValue = row.getValue(columnId);
         if (rowValue) {
-          value =
-            this.accessorFn.length > 0
-              ? this.accessorFn(rowValue)
-              : rowValue;
+          value = this.accessorFn.length > 0 ? this.accessorFn(rowValue) : rowValue;
 
           // Rank the item
           const itemRank = rankItem(value, new_value[0] as unknown as string);

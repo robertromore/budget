@@ -1,8 +1,4 @@
-import {
-  BaseFilter,
-  type FilterType,
-  type FilterOperator
-} from './BaseFilter.svelte';
+import { BaseFilter, type FilterType, type FilterOperator } from './BaseFilter.svelte';
 import type { ComponentProps, SvelteComponent } from 'svelte';
 import NumberFilterComponent from '$lib/components/filters/NumberFilter.svelte';
 import type { Row } from '@tanstack/table-core';

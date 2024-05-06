@@ -24,16 +24,13 @@ export class AccountState {
   >;
 
   constructor(init: SetAccountState) {
-    if (init.accounts)
-      this.accounts = init.accounts;
-    if (init.manageAccountForm)
-      this.manageAccountForm = init.manageAccountForm;
-    if (init.deleteAccountForm)
-      this.deleteAccountForm = init.deleteAccountForm;
+    if (init.accounts) this.accounts = init.accounts;
+    if (init.manageAccountForm) this.manageAccountForm = init.manageAccountForm;
+    if (init.deleteAccountForm) this.deleteAccountForm = init.deleteAccountForm;
   }
 }
 
-const ACCOUNT_CTX = Symbol("account_ctx");
+const ACCOUNT_CTX = Symbol('account_ctx');
 
 export function setAccountState(init: SetAccountState) {
   const accountState = new AccountState(init);

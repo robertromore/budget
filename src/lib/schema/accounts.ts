@@ -51,7 +51,7 @@ type WithTransactions = {
 type WithBalance = {
   balance: number;
 };
-interface AccountExtraFields extends WithTransactions, WithBalance {};
+interface AccountExtraFields extends WithTransactions, WithBalance {}
 
 export type Account = typeof accounts.$inferSelect & AccountExtraFields;
 export type NewAccount = typeof accounts.$inferInsert;

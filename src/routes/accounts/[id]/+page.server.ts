@@ -1,9 +1,16 @@
-import { superValidate } from "sveltekit-superforms";
-import type { PageServerLoad } from "../$types";
+import { superValidate } from 'sveltekit-superforms';
+import type { PageServerLoad } from '../$types';
 import { zod } from 'sveltekit-superforms/adapters';
-import { formInsertPayeeSchema, insertCategorySchema, insertTransactionSchema, removeCategorySchema, removePayeeSchema, removeTransactionsSchema } from "$lib/schema";
+import {
+  formInsertPayeeSchema,
+  insertCategorySchema,
+  insertTransactionSchema,
+  removeCategorySchema,
+  removePayeeSchema,
+  removeTransactionsSchema
+} from '$lib/schema';
 
-export const load: PageServerLoad = (async ({ depends }) => {
+export const load: PageServerLoad = async ({ depends }) => {
   depends('account');
 
   return {
@@ -15,4 +22,4 @@ export const load: PageServerLoad = (async ({ depends }) => {
     managePayeeForm: await superValidate(zod(formInsertPayeeSchema)),
     deletePayeeForm: await superValidate(zod(removePayeeSchema))
   };
-});
+};

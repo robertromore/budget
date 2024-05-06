@@ -15,14 +15,11 @@
     column?: Column<any, unknown>;
     filterManager?: FilterManager;
   };
-  const {
-    label,
-    header,
-    column,
-    filterManager,
-  }: Props = $props();
+  const { label, header, column, filterManager }: Props = $props();
 
-  let operators: Record<string, Record<string, FilterOperator>> | undefined = $derived(filterManager?.availableOperators);
+  let operators: Record<string, Record<string, FilterOperator>> | undefined = $derived(
+    filterManager?.availableOperators
+  );
   let selectedOperators: Selected<string>[] = $state([]);
   let filterValues: unknown[] = $state([]);
 </script>
@@ -66,7 +63,9 @@
           {#if filterManager && operators}
             {#each filterManager.selectedOperators as _, index}
               <div class="grid grid-cols-12 items-center gap-1">
-                <Select.Root bind:selected={selectedOperators[index]} onSelectedChange={(new_operator: Selected<string> | undefined) => {
+                <Select.Root
+                  bind:selected={selectedOperators[index]}
+                  onSelectedChange={(new_operator: Selected<string> | undefined) => {
                   if (new_operator) {
                     filterManager.updateSelectedOperator({ operator: new_operator.value, value: undefined }, index);
                     filterValues[index] = undefined;
@@ -77,7 +76,8 @@
                       cb: filterManager.passes
                     });
                   }
-                }}>
+                }}
+                >
                   <Select.Trigger class="col-span-5">
                     <Select.Value placeholder="Filter type" />
                   </Select.Trigger>
@@ -111,13 +111,15 @@
                     bind:value={filterValues[index]}
                   />
                 {:else}
-                  <div class={cn(filterManager.size >= 1 ? 'col-span-6' : 'col-span-7', 'h-8')}></div>
+                  <div
+                    class={cn(filterManager.size >= 1 ? 'col-span-6' : 'col-span-7', 'h-8')}
+                  ></div>
                 {/if}
 
                 {#if filterManager.size >= 1}
                   <Button
                     variant="outline"
-                    class={cn('col-span-1 cursor-pointer select-none px-2 py-0 h-7')}
+                    class={cn('col-span-1 h-7 cursor-pointer select-none px-2 py-0')}
                     onclick={() => {
                       filterManager.removeSelectedOperator(index);
                       selectedOperators.splice(index, 1);

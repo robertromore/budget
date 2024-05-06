@@ -1,11 +1,17 @@
-import type { TransactionsFormat } from "$lib/components/types";
-import type { Transaction } from "$lib/schema";
-import { CalendarDate, DateFormatter, fromDate, getLocalTimeZone, toCalendarDate } from "@internationalized/date";
+import type { TransactionsFormat } from '$lib/components/types';
+import type { Transaction } from '$lib/schema';
+import {
+  CalendarDate,
+  DateFormatter,
+  fromDate,
+  getLocalTimeZone,
+  toCalendarDate
+} from '@internationalized/date';
 
 // @todo change to user's preferred locale
 export const currencyFormatter = new Intl.NumberFormat('en-US', {
-	style: 'currency',
-	currency: 'USD'
+  style: 'currency',
+  currency: 'USD'
 });
 
 export const transactionFormatter = (transactions: Transaction[]) => {

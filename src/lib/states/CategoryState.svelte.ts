@@ -4,7 +4,7 @@ import {
   type RemoveCategorySchema,
   type Category,
   insertCategorySchema,
-  type removeCategorySchema,
+  type removeCategorySchema
 } from '$lib/schema';
 import { trpc } from '$lib/trpc/client';
 import { without } from '$lib/utils';
@@ -43,7 +43,7 @@ export class CategoryState {
           this.updateCategory(result.data.entity);
         }
         onSave?.(result.data.entity as EditableEntityItem, is_new);
-      },
+      }
     });
   }
 
@@ -69,7 +69,9 @@ export class CategoryState {
     await trpc().categoriesRoutes.delete.mutate({
       entities: categories
     });
-    const removed = without(this.categories, (category: Category) => categories.includes(category.id));
+    const removed = without(this.categories, (category: Category) =>
+      categories.includes(category.id)
+    );
     if (cb) {
       cb(removed);
     }
@@ -86,7 +88,7 @@ export class CategoryState {
   }
 }
 
-const CATEGORY_CTX = Symbol("CATEGORY_ctx");
+const CATEGORY_CTX = Symbol('CATEGORY_ctx');
 
 export function setCategoryState(init: SetCategoryState) {
   const categoryState = new CategoryState(init);

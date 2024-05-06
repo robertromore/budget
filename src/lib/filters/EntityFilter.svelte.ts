@@ -1,8 +1,4 @@
-import {
-  BaseFilter,
-  type FilterType,
-  type FilterOperator,
-} from './BaseFilter.svelte';
+import { BaseFilter, type FilterType, type FilterOperator } from './BaseFilter.svelte';
 import type { ComponentProps, SvelteComponent } from 'svelte';
 import EntityFilterComponent from '$lib/components/filters/EntityFilter.svelte';
 import MultipleEntityFilter from '$lib/components/filters/MultipleEntityFilter.svelte';

@@ -4,7 +4,10 @@
   import { Button } from '../ui/button';
   import * as Popover from '../ui/popover';
 
-  let { value, onUpdateValue }: {
+  let {
+    value,
+    onUpdateValue
+  }: {
     value: unknown;
     onUpdateValue: (newValue: unknown) => void;
   } = $props();
@@ -33,17 +36,21 @@
     <Button
       variant="outline"
       class={cn(
-        "w-48 justify-start text-left font-normal text-ellipsis overflow-hidden whitespace-nowrap block",
-        !value && "text-muted-foreground"
+        'block w-48 justify-start overflow-hidden text-ellipsis whitespace-nowrap text-left font-normal',
+        !value && 'text-muted-foreground'
       )}
       builders={[builder]}
     >
-      <span class="icon-[radix-icons--pencil-2] mr-2 h-4 w-4 inline-block align-top" />
-      {value ? value : ""}
+      <span class="icon-[radix-icons--pencil-2] mr-2 inline-block h-4 w-4 align-top" />
+      {value ? value : ''}
     </Button>
   </Popover.Trigger>
-  <Popover.Content class="w-auto p-2 grid gap-2" align="start">
-    <Textarea placeholder="" value={value?.toString()} on:change={(e) => newValue = (e.target as HTMLTextAreaElement).value } />
+  <Popover.Content class="grid w-auto gap-2 p-2" align="start">
+    <Textarea
+      placeholder=""
+      value={value?.toString()}
+      on:change={(e) => newValue = (e.target as HTMLTextAreaElement).value}
+    />
     <Button on:click={handleSubmit}>Save</Button>
   </Popover.Content>
 </Popover.Root>

@@ -44,7 +44,7 @@
     getFilteredRowModel,
     type FilterFn,
     type ColumnFiltersState,
-    type Row,
+    type Row
   } from '$lib/components/tanstack-svelte-table';
   import { rankItem, type RankItemOptions } from '@tanstack/match-sorter-utils';
   import { EntityFilter } from '$lib/filters/EntityFilter.svelte';
@@ -190,7 +190,7 @@
                   return { value: payee.id, label: payee.name };
                 })
               },
-              (value: Payee) => value ? value.id : null
+              (value: Payee) => (value ? value.id : null)
             ),
             new TextFilter({}, (value: Payee) => value.name)
           ])
@@ -217,9 +217,7 @@
           label: 'Notes',
           header,
           column: header.column,
-          filterManager: new FilterManager([
-            new TextFilter()
-          ])
+          filterManager: new FilterManager([new TextFilter()])
         }),
       enableSorting: false,
       filterFn: delegateFilter
@@ -247,7 +245,7 @@
                   return { value: category.id, label: category.name };
                 })
               },
-              (value: Category) => value ? value.id : null
+              (value: Category) => (value ? value.id : null)
             ),
             new TextFilter({}, (value: Category) => value.name)
           ])
@@ -273,9 +271,7 @@
           label: 'Amount',
           header,
           column: header.column,
-          filterManager: new FilterManager([
-            new NumberFilter()
-          ])
+          filterManager: new FilterManager([new NumberFilter()])
         }),
       sortingFn: (rowA, rowB) => {
         return (
@@ -572,7 +568,10 @@
           {/if}
         {/each}
         <Pagination.Item>
-          <Pagination.NextButton disabled={!table.getCanNextPage()} on:click={() => table.nextPage()}>
+          <Pagination.NextButton
+            disabled={!table.getCanNextPage()}
+            on:click={() => table.nextPage()}
+          >
             <span class="hidden sm:block">Next</span>
             <span class="icon-[lucide--chevron-right] size-4"></span>
           </Pagination.NextButton>

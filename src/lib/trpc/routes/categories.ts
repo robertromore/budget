@@ -1,4 +1,10 @@
-import { categories, insertCategorySchema, removeCategoriesSchema, removeCategorySchema, type Category } from '$lib/schema';
+import {
+  categories,
+  insertCategorySchema,
+  removeCategoriesSchema,
+  removeCategorySchema,
+  type Category
+} from '$lib/schema';
 import { eq, sql } from 'drizzle-orm';
 import { publicProcedure, t } from '../t';
 import { z } from 'zod';

@@ -1,7 +1,7 @@
-import { mergeObjects } from "$lib/utils";
-import type { FilterMeta, Row } from "@tanstack/table-core";
-import type { FilterOperator, FilterType, SelectedFilterOperator } from "./BaseFilter.svelte";
-import type { TransactionsFormat } from "$lib/components/types";
+import { mergeObjects } from '$lib/utils';
+import type { FilterMeta, Row } from '@tanstack/table-core';
+import type { FilterOperator, FilterType, SelectedFilterOperator } from './BaseFilter.svelte';
+import type { TransactionsFormat } from '$lib/components/types';
 
 export class FilterManager {
   filters: FilterType[] | undefined = $state([]);
@@ -76,24 +76,31 @@ export class FilterManager {
   }
 
   get availableOperators() {
-    const allAvailable = this.filters?.reduce((all, next) => Object.assign(all, { [next.id]: next.availableOperators }), {});
+    const allAvailable = this.filters?.reduce(
+      (all, next) => Object.assign(all, { [next.id]: next.availableOperators }),
+      {}
+    );
     let merged: Record<string, Record<string, FilterOperator>> = {};
     if (allAvailable) {
-      Object.entries(allAvailable).map(([id, ops]: [string, Record<string, FilterOperator> | unknown]) => {
-        merged[id] = merged[id] || {};
-        if (ops) {
-          Object.keys(ops).map((key: string) => {
-            merged[id][id + ':' + key] = ops[key as keyof typeof ops];
-          })
+      Object.entries(allAvailable).map(
+        ([id, ops]: [string, Record<string, FilterOperator> | unknown]) => {
+          merged[id] = merged[id] || {};
+          if (ops) {
+            Object.keys(ops).map((key: string) => {
+              merged[id][id + ':' + key] = ops[key as keyof typeof ops];
+            });
+          }
         }
-      });
+      );
     }
     return merged;
   }
 
   getFilterComponent(id: string) {
     const [filter_id, operator_id] = id.split(':');
-    return this.filters?.find((value: FilterType) => value.id === filter_id)?.availableOperators[operator_id].component;
+    return this.filters?.find((value: FilterType) => value.id === filter_id)?.availableOperators[
+      operator_id
+    ].component;
   }
 
   getFilterProps(id: string) {

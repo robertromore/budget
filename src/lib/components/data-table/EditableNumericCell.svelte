@@ -2,7 +2,10 @@
   import type { EditableNumericItem } from '../types';
   import NumericInput from '../input/NumericInput.svelte';
 
-  let { value, onUpdateValue }: {
+  let {
+    value,
+    onUpdateValue
+  }: {
     value: EditableNumericItem | undefined;
     onUpdateValue: (newValue: unknown) => void;
   } = $props();

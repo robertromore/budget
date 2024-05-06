@@ -18,7 +18,7 @@ export const payees = sqliteTable('payee', {
 });
 
 export const payeesRelations = relations(payees, ({ many }) => ({
-  transactions: many(transactions),
+  transactions: many(transactions)
 }));
 
 export const selectPayeeSchema = createSelectSchema(payees);

@@ -1,16 +1,16 @@
-import { formInsertAccountSchema, insertTransactionSchema, removeAccountSchema } from "$lib/schema";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
-import { superValidate } from "sveltekit-superforms/client";
-import type { Actions, PageServerLoad } from "./$types";
-import { fail } from "@sveltejs/kit";
-import { zod } from "sveltekit-superforms/adapters";
+import { formInsertAccountSchema, insertTransactionSchema, removeAccountSchema } from '$lib/schema';
+import { createContext } from '$lib/trpc/context';
+import { createCaller } from '$lib/trpc/router';
+import { superValidate } from 'sveltekit-superforms/client';
+import type { Actions, PageServerLoad } from './$types';
+import { fail } from '@sveltejs/kit';
+import { zod } from 'sveltekit-superforms/adapters';
 
-export const load: PageServerLoad = (async () => ({
-	accounts: await createCaller(await createContext()).accountRoutes.all(),
+export const load: PageServerLoad = async () => ({
+  accounts: await createCaller(await createContext()).accountRoutes.all(),
   manageAccountForm: await superValidate(zod(formInsertAccountSchema)),
   deleteAccountForm: await superValidate(zod(removeAccountSchema))
-}));
+});
 
 export const actions: Actions = {
   'add-account': async (event) => {
@@ -55,4 +55,3 @@ export const actions: Actions = {
     };
   }
 };
-

@@ -44,7 +44,7 @@ export function createSvelteTable<TData extends RowData>(options: TableOptions<T
         options: Partial<TableOptions<TData>>
       ) => {
         return mergeObjects(defaultOptions, options);
-      },
+      }
     },
     options
   );

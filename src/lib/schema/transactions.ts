@@ -65,7 +65,7 @@ export const insertTransactionSchema = createInsertSchema(transactions);
 // export const formInsertTransactionSchema = createInsertSchema(transactions);
 export const removeTransactionsSchema = z.object({
   entities: z.array(z.number().nonnegative()),
-  accountId: z.number(),
+  accountId: z.number()
 });
 
 type TransactionExtraFields = {

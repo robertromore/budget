@@ -2,7 +2,10 @@
   import { type DateValue } from '@internationalized/date';
   import DateInput from '$lib/components/input/DateInput.svelte';
 
-  let { value = $bindable(), onUpdateValue }: {
+  let {
+    value = $bindable(),
+    onUpdateValue
+  }: {
     value: DateValue | undefined;
     onUpdateValue?: (newValue: unknown) => void;
   } = $props();
@@ -14,4 +17,4 @@
   };
 </script>
 
-<DateInput bind:value {handleSubmit}/>
+<DateInput bind:value {handleSubmit} />

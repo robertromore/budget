@@ -1,4 +1,12 @@
-import { accounts, removeAccountSchema, type Account, type Transaction, transactions, type NewTransaction, formInsertAccountSchema } from '$lib/schema';
+import {
+  accounts,
+  removeAccountSchema,
+  type Account,
+  type Transaction,
+  transactions,
+  type NewTransaction,
+  formInsertAccountSchema
+} from '$lib/schema';
 import { z } from 'zod';
 import { publicProcedure, t } from '../t';
 import { eq } from 'drizzle-orm';

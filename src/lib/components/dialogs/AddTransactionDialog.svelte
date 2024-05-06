@@ -1,14 +1,17 @@
 <script lang="ts">
-  import * as Dialog from "$lib/components/ui/dialog";
-  import ManageTransactionForm from "$lib/components/forms/ManageTransactionForm.svelte";
-  import type { Account, Transaction } from "$lib/schema";
+  import * as Dialog from '$lib/components/ui/dialog';
+  import ManageTransactionForm from '$lib/components/forms/ManageTransactionForm.svelte';
+  import type { Account, Transaction } from '$lib/schema';
 
-  let { account, dialogOpen = $bindable() }: {
-    account: Account,
-    dialogOpen: boolean,
+  let {
+    account,
+    dialogOpen = $bindable()
+  }: {
+    account: Account;
+    dialogOpen: boolean;
   } = $props();
 
-  const onSave = async(new_entity: Transaction) => {
+  const onSave = async (new_entity: Transaction) => {
     dialogOpen = false;
   };
 </script>

@@ -1,7 +1,4 @@
-import {
-  insertCategorySchema,
-  removeCategorySchema
-} from '$lib/schema';
+import { insertCategorySchema, removeCategorySchema } from '$lib/schema';
 import { createContext } from '$lib/trpc/context';
 import { createCaller } from '$lib/trpc/router';
 import { superValidate } from 'sveltekit-superforms/client';
@@ -42,5 +39,5 @@ export const actions: Actions = {
     return {
       form
     };
-  },
+  }
 };

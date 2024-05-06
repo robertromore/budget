@@ -1,5 +1,5 @@
-import type { Category, Payee } from "$lib/schema";
-import type { DateValue } from "@internationalized/date";
+import type { Category, Payee } from '$lib/schema';
+import type { DateValue } from '@internationalized/date';
 
 export type EditableDateItem = DateValue;
 export type EditableEntityItem = {

@@ -3,10 +3,10 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 // import { z } from 'zod';
 
 export const user = sqliteTable('movies', {
-	id: integer('id').primaryKey(),
-	name: text('name'),
-	password: text('password'),
-  email: text('email'),
+  id: integer('id').primaryKey(),
+  name: text('name'),
+  password: text('password'),
+  email: text('email')
 });
 
 export const selectUserSchema = createSelectSchema(user);

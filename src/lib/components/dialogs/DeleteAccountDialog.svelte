@@ -5,15 +5,17 @@
   import { page } from '$app/stores';
   import { invalidateAll } from '$app/navigation';
 
-  let { deleteDialogId = $bindable(), deleteDialogOpen = $bindable() }: {
-    deleteDialogId: number | null,
-    deleteDialogOpen: boolean
+  let {
+    deleteDialogId = $bindable(),
+    deleteDialogOpen = $bindable()
+  }: {
+    deleteDialogId: number | null;
+    deleteDialogOpen: boolean;
   } = $props();
 
   const confirmDeleteAccount = async () => {
     deleteDialogOpen = false;
-    await trpc($page)
-      .accountRoutes.remove.mutate({ id: deleteDialogId! })
+    await trpc($page).accountRoutes.remove.mutate({ id: deleteDialogId! });
     await invalidateAll();
   };
 </script>

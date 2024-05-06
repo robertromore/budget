@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Menu from "$lib/components/Menu.svelte";
-  import Sidebar from "$lib/components/Sidebar.svelte";
-  import { setAccountState } from "$lib/states/AccountState.svelte";
-  import "../app.pcss";
+  import Menu from '$lib/components/Menu.svelte';
+  import Sidebar from '$lib/components/Sidebar.svelte';
+  import { setAccountState } from '$lib/states/AccountState.svelte';
+  import '../app.pcss';
 
   let { data, children } = $props();
 
@@ -11,7 +11,7 @@
   });
 </script>
 
-<Menu/>
+<Menu />
 <div class="border-t">
   <div class="bg-background">
     <div class="grid lg:grid-cols-5">

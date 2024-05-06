@@ -2,7 +2,13 @@
   import type { EditableEntityItem } from '../types';
   import EntityInput from '$lib/components/input/EntityInput.svelte';
 
-  let { value, onUpdateValue, entityLabel, entities, enableManagement = false }: {
+  let {
+    value,
+    onUpdateValue,
+    entityLabel,
+    entities,
+    enableManagement = false
+  }: {
     value?: EditableEntityItem;
     onUpdateValue: (newValue: unknown) => void;
     entityLabel: string;
@@ -15,10 +21,4 @@
   };
 </script>
 
-<EntityInput
-  bind:entityLabel
-  bind:value
-  bind:entities
-  {handleSubmit}
-  {enableManagement}
-/>
+<EntityInput bind:entityLabel bind:value bind:entities {handleSubmit} {enableManagement} />

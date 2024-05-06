@@ -7,7 +7,14 @@
   import ManagePayeeForm from '../forms/ManagePayeeForm.svelte';
   import type { EditableEntityItem } from '../types';
 
-  let { entityLabel = $bindable(), entities = $bindable(), value = $bindable(), handleSubmit, class: className, enableManagement = false }: {
+  let {
+    entityLabel = $bindable(),
+    entities = $bindable(),
+    value = $bindable(),
+    handleSubmit,
+    class: className,
+    enableManagement = false
+  }: {
     entityLabel: string;
     entities: EditableEntityItem[];
     value?: EditableEntityItem;
@@ -39,15 +46,13 @@
   const onSave = (new_entity: EditableEntityItem, is_new: boolean) => {
     managingId = 0;
     manage = false;
-    if (handleSubmit)
-      handleSubmit(new_entity);
+    if (handleSubmit) handleSubmit(new_entity);
   };
 
   const onDelete = (id: number) => {
     managingId = 0;
     manage = false;
-    if (handleSubmit)
-      handleSubmit(undefined);
+    if (handleSubmit) handleSubmit(undefined);
   };
 
   const addNew = (event: MouseEvent) => {
@@ -55,15 +60,20 @@
     manage = true;
   };
 
-  const searchEntities = $derived(keyBy(entities.map((entity) => {
-    return {
-      id: entity.id,
-      name: entity.name
-    }
-  }), 'id'));
+  const searchEntities = $derived(
+    keyBy(
+      entities.map((entity) => {
+        return {
+          id: entity.id,
+          name: entity.name
+        };
+      }),
+      'id'
+    )
+  );
 </script>
 
-<div class={cn("flex items-center space-x-4", className)}>
+<div class={cn('flex items-center space-x-4', className)}>
   <Popover.Root
     bind:open
     let:ids
@@ -88,10 +98,17 @@
     </Popover.Trigger>
     <Popover.Content class="p-0" align="start">
       {#if !manage}
-        <Command.Root filter={(value, search) => {
-          if (value && searchEntities[value] && searchEntities[value].name.toLowerCase().includes(search)) return 1;
-          return 0;
-        }}>
+        <Command.Root
+          filter={(value, search) => {
+            if (
+              value &&
+              searchEntities[value] &&
+              searchEntities[value].name.toLowerCase().includes(search)
+            )
+              return 1;
+            return 0;
+          }}
+        >
           <div class="flex">
             <Command.Input placeholder="Search {entityLabel}..." />
             {#if enableManagement}

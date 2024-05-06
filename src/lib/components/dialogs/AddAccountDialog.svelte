@@ -8,7 +8,9 @@
   import SuperDebug, { superForm, numberProxy } from 'sveltekit-superforms';
   import { zodClient } from 'sveltekit-superforms/adapters';
 
-  let { dialogOpen }: {
+  let {
+    dialogOpen
+  }: {
     dialogOpen?: boolean;
   } = $props();
 

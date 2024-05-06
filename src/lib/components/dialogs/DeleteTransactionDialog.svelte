@@ -1,13 +1,13 @@
 <script lang="ts">
-  import * as AlertDialog from "$lib/components/ui/alert-dialog";
-  import { buttonVariants } from "$lib/components/ui/button";
-  import { getTransactionState } from "$lib/states/TransactionState.svelte";
+  import * as AlertDialog from '$lib/components/ui/alert-dialog';
+  import { buttonVariants } from '$lib/components/ui/button';
+  import { getTransactionState } from '$lib/states/TransactionState.svelte';
 
   let {
     transactions,
     accountId = $bindable(),
     dialogOpen = $bindable(),
-    onDelete,
+    onDelete
   }: {
     transactions?: number[];
     accountId: number;
@@ -17,7 +17,7 @@
 
   const transactionState = getTransactionState();
 
-  let confirmDeleteTransaction = async() => {
+  let confirmDeleteTransaction = async () => {
     if (transactions) {
       transactionState.deleteTransactions(accountId, transactions);
     }

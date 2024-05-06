@@ -3,7 +3,11 @@
   import * as Card from '$lib/components/ui/card';
   import type { Infer, SuperValidated } from 'sveltekit-superforms';
   import type { PageData } from './$types';
-  import { type Account, type FormInsertAccountSchema, type RemoveAccountSchema } from '$lib/schema';
+  import {
+    type Account,
+    type FormInsertAccountSchema,
+    type RemoveAccountSchema
+  } from '$lib/schema';
   import { currencyFormatter } from '$lib/helpers/formatters';
   import AddAccountDialog from '$lib/components/dialogs/AddAccountDialog.svelte';
   import DeleteAccountDialog from '$lib/components/dialogs/DeleteAccountDialog.svelte';
@@ -15,9 +19,7 @@
     accounts: Account[];
   };
 
-  let {
-    data,
-  } = $props<{ data: AccountPageData; }>();
+  let { data } = $props<{ data: AccountPageData }>();
 
   setAccountState({
     accounts: data.accounts,
@@ -58,4 +60,4 @@
   {/each}
 </div>
 
-<DeleteAccountDialog bind:deleteDialogId={deleteDialogId} bind:deleteDialogOpen={deleteDialogOpen} />
+<DeleteAccountDialog bind:deleteDialogId bind:deleteDialogOpen />

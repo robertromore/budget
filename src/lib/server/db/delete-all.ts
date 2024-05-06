@@ -1,7 +1,7 @@
 /* eslint-disable drizzle/enforce-delete-with-where */
-import { sql } from "drizzle-orm";
-import { db } from ".";
-import * as schema from "../../schema";
+import { sql } from 'drizzle-orm';
+import { db } from '.';
+import * as schema from '../../schema';
 import { parseArgs } from 'util';
 
 const { values } = parseArgs({

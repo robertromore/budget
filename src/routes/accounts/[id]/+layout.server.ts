@@ -7,6 +7,6 @@ export const load: PageServerLoad = async ({ params }) => {
     // data
     account: await createCaller(await createContext()).accountRoutes.load({ id: params.id }),
     payees: await createCaller(await createContext()).payeeRoutes.all(),
-    categories: await createCaller(await createContext()).categoriesRoutes.all(),
+    categories: await createCaller(await createContext()).categoriesRoutes.all()
   };
 };

@@ -7,9 +7,9 @@ import { categories } from '../schema/categories';
 // import { z } from 'zod';
 
 export const categoryGroups = sqliteTable('category_group', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	name: text('name'),
-	notes: text('notes')
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name'),
+  notes: text('notes')
 });
 
 export const categoryGroupsRelations = relations(categoryGroups, ({ many }) => ({

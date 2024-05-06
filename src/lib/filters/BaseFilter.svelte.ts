@@ -1,6 +1,6 @@
 import type EntityFilter from '$lib/components/filters/EntityFilter.svelte';
-import type TextFilter from "$lib/components/filters/TextFilter.svelte";
-import type MultipleEntityFilter from "$lib/components/filters/MultipleEntityFilter.svelte";
+import type TextFilter from '$lib/components/filters/TextFilter.svelte';
+import type MultipleEntityFilter from '$lib/components/filters/MultipleEntityFilter.svelte';
 import type { ComponentProps, SvelteComponent } from 'svelte';
 import type { FilterMeta, Row } from '@tanstack/table-core';
 import type { TransactionsFormat } from '$lib/components/types';
@@ -18,7 +18,12 @@ export interface FilterOperator {
   /**
    * The UI component associated with this FilterOperator.
    */
-  component: typeof EntityFilter | typeof MultipleEntityFilter | typeof TextFilter | typeof DateFilter | typeof DateRangeFilter;
+  component:
+    | typeof EntityFilter
+    | typeof MultipleEntityFilter
+    | typeof TextFilter
+    | typeof DateFilter
+    | typeof DateRangeFilter;
   passes?: (
     row: Row<TransactionsFormat>,
     columnId: string,
@@ -31,7 +36,7 @@ export interface FilterOperator {
 export interface SelectedFilterOperator extends Object {
   operator: string | undefined;
   value: unknown;
-};
+}
 
 export abstract class BaseFilter {
   abstract id: string;
