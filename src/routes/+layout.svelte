@@ -4,7 +4,7 @@
   import { setAccountState } from "$lib/states/AccountState.svelte";
   import "../app.pcss";
 
-  let { data } = $props();
+  let { data, children } = $props();
 
   setAccountState({
     accounts: data.accounts
@@ -18,7 +18,7 @@
       <Sidebar className="hidden lg:block" />
       <div class="col-span-3 lg:col-span-4 lg:border-l">
         <div class="h-full px-4 py-6 lg:px-8">
-          <slot/>
+          {@render children()}
         </div>
       </div>
     </div>
