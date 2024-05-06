@@ -12,8 +12,12 @@
     open?: boolean
   } = $props();
 
+
   let dialogOpen = $state(open || false);
-  let new_amount = $state(amount?.formatted?.replace('$', '') || '0');
+  let new_amount = $state(amount?.value?.toString() || '0');
+  $effect(() => {
+    new_amount = amount?.value?.toString() || '0';
+  });
 
   const select = (num: string) => () => {
     new_amount += num;
