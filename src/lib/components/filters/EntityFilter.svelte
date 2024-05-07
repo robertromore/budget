@@ -51,10 +51,10 @@
         bind:value
         onClear={() => {
           value = {
-            value: undefined,
-            label: undefined
+            value: '',
+            label: ''
           };
-          changeFilterValue({ value: undefined });
+          changeFilterValue(undefined);
         }}
       />
     </div>
