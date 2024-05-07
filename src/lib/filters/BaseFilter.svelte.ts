@@ -48,6 +48,22 @@ export abstract class BaseFilter {
   abstract availableOperators: Record<string, FilterOperator>;
 
   accessorFn: (row: any) => any = () => {};
+
+  static massageValues(
+    row: Row<TransactionsFormat>,
+    columnId: string,
+    value: unknown,
+    new_value: { value: any } | { value: any }[],
+    accessorFn?: (row: any) => any
+  ): [any, any[]] {
+    if (!Array.isArray(new_value)) {
+      new_value = [new_value];
+    }
+
+    value = accessorFn?.length ? accessorFn(row.getValue(columnId)) : row.getValue(columnId);
+
+    return [value, new_value];
+  }
 }
 
 export type FilterType = {

@@ -22,14 +22,14 @@ export class NumberFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
 
-        value =
-          this.accessorFn.length > 0
-            ? this.accessorFn(row.getValue(columnId))
-            : row.getValue(columnId);
         if (value && new_value && new_value[0]) {
           return (
             parseFloat((value as EditableNumericItem).value as unknown as string) ===
@@ -49,14 +49,14 @@ export class NumberFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
 
-        value =
-          this.accessorFn.length > 0
-            ? this.accessorFn(row.getValue(columnId))
-            : row.getValue(columnId);
         if (value && new_value && new_value[0]) {
           return (
             parseFloat((value as EditableNumericItem).value as unknown as string) <
@@ -76,14 +76,14 @@ export class NumberFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
 
-        value =
-          this.accessorFn.length > 0
-            ? this.accessorFn(row.getValue(columnId))
-            : row.getValue(columnId);
         if (value && new_value && new_value[0]) {
           return (
             parseFloat((value as EditableNumericItem).value as unknown as string) >

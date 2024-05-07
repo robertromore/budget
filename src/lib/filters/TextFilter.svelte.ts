@@ -1,8 +1,7 @@
 import {
   BaseFilter,
   type FilterType,
-  type FilterOperator,
-  type SelectedFilterOperator
+  type FilterOperator
 } from './BaseFilter.svelte';
 import type { ComponentProps, SvelteComponent } from 'svelte';
 import TextFilterComponent from '$lib/components/filters/TextFilter.svelte';
@@ -57,15 +56,17 @@ export class TextFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
-
-        value =
-          this.accessorFn.length > 0
-            ? this.accessorFn(row.getValue(columnId))
-            : row.getValue(columnId);
-        if (value && new_value && new_value[0]) {
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
+        if (new_value && new_value[0]) {
+          if (!value) {
+            return false;
+          }
           return (value as string)
             .toLowerCase()
             .includes((new_value[0] as unknown as string).toLowerCase());
@@ -83,15 +84,17 @@ export class TextFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
-
-        value =
-          this.accessorFn.length > 0
-            ? this.accessorFn(row.getValue(columnId))
-            : row.getValue(columnId);
-        if (value && new_value && new_value[0]) {
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
+        if (new_value && new_value[0]) {
+          if (!value) {
+            return false;
+          }
           return !(value as string)
             .toLowerCase()
             .includes((new_value[0] as unknown as string).toLowerCase());
@@ -109,15 +112,17 @@ export class TextFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
-
-        value =
-          this.accessorFn.length > 0
-            ? this.accessorFn(row.getValue(columnId))
-            : row.getValue(columnId);
-        if (value !== undefined && new_value && new_value[0]) {
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
+        if (new_value && new_value[0]) {
+          if (!value) {
+            return false;
+          }
           return (value as string)
             .toLowerCase()
             .startsWith((new_value[0] as unknown as string).toLowerCase());
@@ -135,15 +140,17 @@ export class TextFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
-
-        value =
-          this.accessorFn.length > 0
-            ? this.accessorFn(row.getValue(columnId))
-            : row.getValue(columnId);
-        if (value && new_value && new_value[0]) {
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
+        if (new_value && new_value[0]) {
+          if (!value) {
+            return false;
+          }
           return (value as string)
             .toLowerCase()
             .endsWith((new_value[0] as unknown as string).toLowerCase());

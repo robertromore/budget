@@ -192,7 +192,7 @@
               },
               (value: Payee) => (value ? value.id : null)
             ),
-            new TextFilter({}, (value: Payee) => value.name)
+            new TextFilter({}, (value: Payee) => value?.name)
           ])
         }),
       sortingFn: (rowA, rowB) => {
@@ -247,7 +247,7 @@
               },
               (value: Category) => (value ? value.id : null)
             ),
-            new TextFilter({}, (value: Category) => value.name)
+            new TextFilter({}, (value: Category) => value?.name)
           ])
         }),
       sortingFn: (rowA, rowB) => {

@@ -23,13 +23,15 @@ export class DateFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: any } | { value: any }[],
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
-
-        value = this.accessorFn(row.getValue(columnId));
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
         if (new_value && new_value[0]) {
           return (value as DateValue).compare(new_value[0] as unknown as DateValue) < 0;
         }
@@ -46,11 +48,13 @@ export class DateFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
-
-        value = this.accessorFn(row.getValue(columnId));
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
         if (new_value && new_value[0]) {
           return (value as DateValue).compare(new_value[0] as unknown as DateValue) > 0;
         }
@@ -67,11 +71,13 @@ export class DateFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
-
-        value = this.accessorFn(row.getValue(columnId));
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
         if (new_value && new_value[0]) {
           const range = new_value[0] as unknown as DateRange;
           if (range.start && range.end) {

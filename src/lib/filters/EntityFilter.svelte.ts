@@ -23,11 +23,14 @@ export class EntityFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
 
-        value = this.accessorFn(row.getValue(columnId));
         if (new_value && new_value[0].value) {
           return value === new_value[0].value;
         }
@@ -44,11 +47,14 @@ export class EntityFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
 
-        value = this.accessorFn(row.getValue(columnId));
         if (new_value) {
           return value !== new_value[0].value;
         }
@@ -65,11 +71,14 @@ export class EntityFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
 
-        value = this.accessorFn(row.getValue(columnId));
         if (!new_value.length) {
           return true;
         }
@@ -89,11 +98,14 @@ export class EntityFilter extends BaseFilter {
         value: unknown,
         new_value: { value: any } | { value: any }[]
       ) => {
-        if (!Array.isArray(new_value)) {
-          new_value = [new_value];
-        }
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
 
-        value = this.accessorFn(row.getValue(columnId));
         if (new_value) {
           return !new_value.map((fv) => fv.value).includes(value as string);
         }
