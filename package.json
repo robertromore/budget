@@ -27,7 +27,7 @@
     "@iconify-json/carbon": "^1.1.31",
     "@iconify-json/lucide": "^1.1.177",
     "@iconify-json/radix-icons": "^1.1.14",
-    "@iconify/tailwind": "^0.1.4",
+    "@iconify/tailwind": "^1.0.1",
     "@playwright/test": "^1.42.1",
     "@sveltejs/adapter-auto": "^3.1.1",
     "@sveltejs/kit": "^2.5.4",
@@ -66,21 +66,19 @@
     "@tanstack/table-core": "^8.14.0",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
-    "bits-ui": "^0.21.3",
+    "bits-ui": "^0.21.4",
     "clsx": "^2.1.0",
     "cmdk-sv": "^0.0.17",
     "drizzle-orm": "^0.30.4",
     "drizzle-zod": "^0.5.1",
     "formsnap": "^1.0.0",
     "shadcn-svelte": "^0.10.3",
-    "svelte-breadcrumbs": "^1.2.7",
-    "svelte-headless-table": "^0.18.2",
     "svelte-radix": "^1.1.0",
-    "sveltekit-superforms": "^2.11.0",
+    "sveltekit-superforms": "^2.12.5",
     "tailwind-merge": "^2.2.2",
     "tailwind-variants": "^0.2.1",
     "trpc-sveltekit": "^3.6.1",
     "trpc-transformer": "^3.2.1",
-    "zod": "^3.22.4"
+    "zod": "^3.23.3"
   }
 }
