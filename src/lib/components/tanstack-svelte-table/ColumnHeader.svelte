@@ -1,13 +1,15 @@
 <script lang="ts" generics="TValue">
+  import { type DateValue } from '@internationalized/date';
   import type { FilterManager } from '$lib/filters/FilterManager.svelte';
-  import type { FilterOperator, FilterType } from '$lib/filters/BaseFilter.svelte';
-  import type { Selected } from 'bits-ui';
+  import type { FilterOperator, FilterType, FilterWidget } from '$lib/filters/BaseFilter.svelte';
+  import type { DateRange, Selected } from 'bits-ui';
   import { cn } from '$lib/utils';
   import type { TransactionsFormat } from '../types';
   import { Button } from '$lib/components/ui/button';
   import * as Popover from '$lib/components/ui/popover';
   import * as Select from '$lib/components/ui/select';
   import { type Column, type Header } from './index';
+  import FilterWidgetChanger from '../filters/FilterWidgetChanger.svelte';
 
   type Props = {
     label?: string;
@@ -22,6 +24,8 @@
   );
   let selectedOperators: Selected<string>[] = $state([]);
   let filterValues: unknown[] = $state([]);
+  let selectedWidget: FilterWidget | undefined = $state();
+  let widgetValue: string = $state('');
 </script>
 
 {label ?? header.column.id}
@@ -59,7 +63,7 @@
           <h4 class="font-medium leading-none">Filter</h4>
           <p class="text-sm text-muted-foreground">Set the filters for this column.</p>
         </div>
-        <div class="grid gap-2">
+        <div class="grid gap-2 relative">
           {#if filterManager && operators}
             {#each filterManager.selectedOperators as _, index}
               <div class="grid grid-cols-12 items-center gap-1">
@@ -96,20 +100,41 @@
                 </Select.Root>
 
                 {#if filterManager.selectedOperators && filterManager.selectedOperators[index].operator}
-                  <svelte:component
-                    this={filterManager.getFilterComponent(filterManager.selectedOperators[index].operator!)}
-                    class={cn(filterManager.size >= 1 ? 'col-span-6' : 'col-span-7')}
-                    {...filterManager.getFilterProps(filterManager.selectedOperators[index].operator!)}
-                    changeFilterValue={(new_value: unknown) => {
-                      filterManager.updateSelectedOperator({ value: new_value }, index);
-                      filterValues[index] = new_value;
-                      column?.setFilterValue({
-                        context: filterManager,
-                        cb: filterManager.passes
-                      });
-                    }}
-                    bind:value={filterValues[index]}
-                  />
+                  {@const widgets = filterManager.getFilterWidgets(filterManager.selectedOperators[index].operator!)}
+                  {#if widgets?.length}
+                    {#if widgets?.length > 1}
+                      <FilterWidgetChanger {widgets} bind:value={widgetValue} />
+                    {/if}
+
+                    <svelte:component
+                      this={selectedWidget?.component}
+                      class={cn(filterManager.size >= 1 ? 'col-span-6' : 'col-span-7')}
+                      changeFilterValue={(new_value: unknown) => {
+                        filterManager.updateSelectedOperator({ value: new_value }, index);
+                        // filterValues[index] = new_value;
+                        column?.setFilterValue({
+                          context: filterManager,
+                          cb: filterManager.passes
+                        });
+                      }}
+                      bind:value={filterValues[index] as (Selected<string | undefined> & Selected<string | undefined>[] & (String & DateValue & DateRange)) | undefined}
+                    />
+                  {:else}
+                    <svelte:component
+                      this={filterManager.getFilterComponent(filterManager.selectedOperators[index].operator!)}
+                      class={cn(filterManager.size >= 1 ? 'col-span-6' : 'col-span-7')}
+                      {...filterManager.getFilterProps(filterManager.selectedOperators[index].operator!)}
+                      changeFilterValue={(new_value: unknown) => {
+                        filterManager.updateSelectedOperator({ value: new_value }, index);
+                        // filterValues[index] = new_value;
+                        column?.setFilterValue({
+                          context: filterManager,
+                          cb: filterManager.passes
+                        });
+                      }}
+                      bind:value={filterValues[index]}
+                    />
+                  {/if}
                 {:else}
                   <div
                     class={cn(filterManager.size >= 1 ? 'col-span-6' : 'col-span-7', 'h-8')}

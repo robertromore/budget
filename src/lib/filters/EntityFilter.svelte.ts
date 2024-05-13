@@ -4,6 +4,8 @@ import EntityFilterComponent from '$lib/components/filters/EntityFilter.svelte';
 import MultipleEntityFilter from '$lib/components/filters/MultipleEntityFilter.svelte';
 import type { Row } from '@tanstack/table-core';
 import type { TransactionsFormat } from '$lib/components/types';
+import EntitySelectWidget from './widgets/EntitySelectWidget';
+import EntityTextWidget from './widgets/EntityTextWidget';
 
 export type EntityFilterType = FilterType;
 
@@ -17,6 +19,7 @@ export class EntityFilter extends BaseFilter {
       value: 'is',
       label: 'is',
       component: EntityFilterComponent,
+      widgets: [EntitySelectWidget, EntityTextWidget],
       passes: (
         row: Row<TransactionsFormat>,
         columnId: string,

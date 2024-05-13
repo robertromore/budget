@@ -103,6 +103,13 @@ export class FilterManager {
     ].component;
   }
 
+  getFilterWidgets(id: string) {
+    const [filter_id, operator_id] = id.split(':');
+    return this.filters?.find((value: FilterType) => value.id === filter_id)?.availableOperators[
+      operator_id
+    ].widgets;
+  }
+
   getFilterProps(id: string) {
     const [filter_id] = id.split(':');
     return this.filters?.find((value: FilterType) => value.id === filter_id)?.props;
