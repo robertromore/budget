@@ -11,6 +11,8 @@
     value: Selected<string | undefined> | undefined;
     class?: string;
     changeFilterValue: (new_value: unknown) => any;
+    label?: string;
+    pluralLabel?: string;
   };
 
   let {
@@ -19,7 +21,9 @@
     touchedInput = $bindable(false),
     value = $bindable(),
     class: className,
-    changeFilterValue
+    changeFilterValue,
+    label,
+    pluralLabel
   }: Props = $props();
 
   let filteredItems = $state() as SelectValue[];
@@ -46,8 +50,8 @@
   >
     <div class="relative w-full">
       <Combobox.Input
-        placeholder="Search entities"
-        aria-label="Search entities"
+        placeholder="Search {pluralLabel}"
+        aria-label="Search {pluralLabel}"
         bind:value
         onClear={() => {
           value = {

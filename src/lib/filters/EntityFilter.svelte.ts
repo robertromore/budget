@@ -121,5 +121,8 @@ export class EntityFilter extends BaseFilter {
     super();
     this.props = props;
     this.accessorFn = accessorFn;
+
+    // Set the label to the value of props.label.
+    this.label = props.label || 'Entity';
   }
 }

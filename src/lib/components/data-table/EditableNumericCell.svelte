@@ -3,7 +3,7 @@
   import NumericInput from '../input/NumericInput.svelte';
 
   let {
-    value,
+    value = $bindable(),
     onUpdateValue
   }: {
     value: EditableNumericItem | undefined;

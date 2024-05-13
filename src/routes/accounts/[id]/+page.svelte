@@ -188,7 +188,9 @@
               {
                 items: payeeState.payees.map((payee: Payee) => {
                   return { value: payee.id, label: payee.name };
-                })
+                }),
+                label: 'Payee',
+                pluralLabel: 'payees',
               },
               (value: Payee) => (value ? value.id : null)
             ),
@@ -231,7 +233,7 @@
           entityLabel: 'category',
           onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'categoryId', new_value),
           entities: categoryState.categories as EditableEntityItem[],
-          enableManagement: true
+          enableManagement: true,
         }),
       header: ({ header }) =>
         renderComponent(ColumnHeader, {
@@ -243,7 +245,9 @@
               {
                 items: categoryState.categories.map((category: Category) => {
                   return { value: category.id, label: category.name };
-                })
+                }),
+                label: 'Category',
+                pluralLabel: 'categories',
               },
               (value: Category) => (value ? value.id : null)
             ),

@@ -56,7 +56,11 @@ export class FilterManager {
     addMeta: (meta: FilterMeta) => void
   ): boolean {
     return this.selectedOperators.every((operator: SelectedFilterOperator) => {
-      if (operator['operator']) {
+      if (operator.operator === undefined && operator.value === undefined) {
+        return true;
+      }
+
+      if (operator.operator) {
         if (operator.value === undefined) {
           return true;
         }
