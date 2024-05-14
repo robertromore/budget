@@ -15,6 +15,29 @@ export class DateFilter extends BaseFilter {
   props: ComponentProps<SvelteComponent<Record<string, any>>>;
 
   availableOperators: Record<string, FilterOperator> = {
+    on: {
+      value: 'on',
+      label: 'On',
+      component: DateFilterComponent,
+      passes: (
+        row: Row<TransactionsFormat>,
+        columnId: string,
+        value: unknown,
+        new_value: { value: any } | { value: any }[]
+      ) => {
+        [value, new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
+        if (new_value && new_value[0]) {
+          return (value as DateValue).compare(new_value[0] as unknown as DateValue) === 0;
+        }
+        return true;
+      }
+    },
     before: {
       value: 'before',
       label: 'Before',
@@ -23,7 +46,7 @@ export class DateFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[],
+        new_value: { value: any } | { value: any }[]
       ) => {
         [value, new_value] = BaseFilter.massageValues(
           row,
