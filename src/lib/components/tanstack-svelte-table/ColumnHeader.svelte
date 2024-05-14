@@ -62,7 +62,7 @@
         <div class="grid gap-2">
           {#if filterManager && operators}
             {#each filterManager.selectedOperators as _, index}
-              <div class="grid grid-cols-12 items-center gap-1">
+              <div class="grid grid-cols-12 items-start gap-1">
                 <Select.Root
                   bind:selected={selectedOperators[index]}
                   onSelectedChange={(new_operator: Selected<string> | undefined) => {
