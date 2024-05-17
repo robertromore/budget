@@ -6,11 +6,13 @@
 
   type Props = ComboboxPrimitive.InputProps & {
     useBadge?: boolean;
-    onClear?: () => {};
+    onClear?: () => void;
+    inputClass?: string;
   };
 
   let {
     class: className,
+    inputClass,
     value = $bindable(),
     useBadge = false,
     onClear,
@@ -54,7 +56,7 @@
 >
   <span class="icon-[lucide--search] size-4 shrink-0 opacity-50"></span>
   <ComboboxPrimitive.Input
-    class="flex h-9 w-full rounded-md bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+    class={cn("flex h-9 w-full rounded-md bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50", inputClass)}
     {...restProps}
     bind:value={displayValue}
   />
