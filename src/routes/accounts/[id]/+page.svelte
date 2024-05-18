@@ -178,7 +178,7 @@
           entities: payeeState.payees as EditableEntityItem[],
           enableManagement: true
         }),
-      header: ({ header }) =>
+      header: ({ header, column, table }) =>
         renderComponent(ColumnHeader, {
           label: 'Payee',
           header,
@@ -186,7 +186,13 @@
           filterManager: new FilterManager([
             new EntityFilter(
               {
-                items: payeeState.payees.map((payee: Payee) => {
+                items: transactionState.formatted.map((transaction: TransactionsFormat) => {
+                  if (transaction.payeeId) {
+                    const payeeEntity = payeeState.getById(transaction.payeeId);
+                    return { value: transaction.payeeId, label: payeeEntity?.name };
+                  }
+                }),
+                allItems: payeeState.payees.map((payee: Payee) => {
                   return { value: payee.id, label: payee.name };
                 }),
                 label: 'Payee',
@@ -243,7 +249,13 @@
           filterManager: new FilterManager([
             new EntityFilter(
               {
-                items: categoryState.categories.map((category: Category) => {
+                items: transactionState.formatted.map((transaction: TransactionsFormat) => {
+                  if (transaction.payeeId) {
+                    const categoryEntity = categoryState.getById(transaction.categoryId || 0);
+                    return { value: transaction.categoryId, label: categoryEntity?.name };
+                  }
+                }),
+                allItems: categoryState.categories.map((category: Category) => {
                   return { value: category.id, label: category.name };
                 }),
                 label: 'Category',
