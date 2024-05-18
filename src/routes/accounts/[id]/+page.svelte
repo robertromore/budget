@@ -44,7 +44,9 @@
     getFilteredRowModel,
     type FilterFn,
     type ColumnFiltersState,
-    type Row
+    type Row,
+    type FilterMeta,
+    type FilterFnOption
   } from '$lib/components/tanstack-svelte-table';
   import { rankItem, type RankItemOptions } from '@tanstack/match-sorter-utils';
   import { EntityFilter } from '$lib/filters/EntityFilter.svelte';
@@ -82,10 +84,10 @@
     const new_data = {
       [columnId]: newValue
     };
-    if (columnId == 'amount') {
+    if (columnId === 'amount') {
       new_data[columnId] = (newValue as EditableNumericItem).value as number;
     }
-    if (columnId == 'date') {
+    if (columnId === 'date') {
       new_data[columnId] = dateFormatter.format(
         (newValue as EditableDateItem).toDate(getLocalTimeZone())
       );
@@ -103,14 +105,14 @@
   const entityFilter: FilterFn<TransactionsFormat> = (
     row: Row<TransactionsFormat>,
     columnId: string,
-    filterValue: any,
-    addMeta: (meta: any) => void
+    filterValue: unknown,
+    addMeta: (meta: FilterMeta) => void
   ): boolean => {
     return row.getValue(columnId) === filterValue;
   };
 
-  const delegateFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
-    return value['cb'].apply(value['context'], [row, columnId, value, addMeta]);
+  const delegateFilter: FilterFnOption<TransactionsFormat> = (row, columnId, value, addMeta) => {
+    return value.cb.apply(value.context, [row, columnId, value, addMeta]);
   };
 
   const defaultColumns: ColumnDef<TransactionsFormat>[] = [
@@ -151,7 +153,7 @@
       cell: (info) =>
         renderComponent(EditableDateCell, {
           value: info.getValue() as DateValue,
-          onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'date', new_value)
+          onUpdateValue: (new_value) => updateData(Number.parseInt(info.row.id), 'date', new_value)
         }),
       header: ({ header }) =>
         renderComponent(ColumnHeader, {
@@ -168,13 +170,13 @@
       filterFn: delegateFilter
     },
     {
-      accessorFn: (row) => payeeState.getById(row.payeeId!),
+      accessorFn: (row) => payeeState.getById(row.payeeId || 0),
       id: 'payee',
       cell: (info) =>
         renderComponent(EditableEntityCell, {
           value: info.getValue() as EditableEntityItem,
           entityLabel: 'payee',
-          onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'payeeId', new_value),
+          onUpdateValue: (new_value) => updateData(Number.parseInt(info.row.id), 'payeeId', new_value),
           entities: payeeState.payees as EditableEntityItem[],
           enableManagement: true
         }),
@@ -212,7 +214,7 @@
       cell: (info) =>
         renderComponent(EditableCell, {
           value: info.getValue(),
-          onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'notes', new_value)
+          onUpdateValue: (new_value) => updateData(Number.parseInt(info.row.id), 'notes', new_value)
         }),
       header: ({ header }) =>
         renderComponent(ColumnHeader, {
@@ -225,13 +227,13 @@
       filterFn: delegateFilter
     },
     {
-      accessorFn: (row) => categoryState.getById(row.categoryId!),
+      accessorFn: (row) => categoryState.getById(row.categoryId || 0),
       id: 'category',
       cell: (info) =>
         renderComponent(EditableEntityCell, {
           value: info.getValue() as EditableEntityItem,
           entityLabel: 'category',
-          onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'categoryId', new_value),
+          onUpdateValue: (new_value) => updateData(Number.parseInt(info.row.id), 'categoryId', new_value),
           entities: categoryState.categories as EditableEntityItem[],
           enableManagement: true,
         }),
@@ -268,7 +270,7 @@
       cell: (info) =>
         renderComponent(EditableNumericCell, {
           value: info.getValue() as EditableNumericItem,
-          onUpdateValue: (new_value) => updateData(parseInt(info.row.id), 'amount', new_value)
+          onUpdateValue: (new_value) => updateData(Number.parseInt(info.row.id), 'amount', new_value)
         }),
       header: ({ header }) =>
         renderComponent(ColumnHeader, {
@@ -324,23 +326,23 @@
   }
 
   let globalFilter = $state('');
-  const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+  const fuzzyFilter: FilterFnOption<TransactionsFormat> = (row, columnId, value, addMeta) => {
     const opts: RankItemOptions = {
       accessors: undefined
     };
     if (columnId === 'payee') {
-      opts['accessors'] = [
+      opts.accessors = [
         (item) => {
-          return $state.snapshot(payeeState.payees.find((payee) => payee.id === item))?.name + '';
+          return `${$state.snapshot(payeeState.payees.find((payee) => payee.id === item))?.name}`;
         }
       ];
     }
     if (columnId === 'category') {
-      opts['accessors'] = [
+      opts.accessors = [
         (item) => {
           return (
-            $state.snapshot(categoryState.categories.find((category) => category.id === item))
-              ?.name + ''
+            `${$state.snapshot(categoryState.categories.find((category) => category.id === item))
+              ?.name}`
           );
         }
       ];
@@ -408,7 +410,7 @@
 
   let addTransactionDialogOpen: boolean = $state(false);
   let selectedTransactions: number[] = $derived(
-    Object.keys(table.getSelectedRowModel().rowsById).map((id) => parseInt(id))
+    Object.keys(table.getSelectedRowModel().rowsById).map((id) => Number.parseInt(id))
   );
   let deleteTransactionDialogOpen = $state(false);
 

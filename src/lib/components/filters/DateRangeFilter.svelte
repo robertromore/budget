@@ -12,7 +12,7 @@
     value?: DateRange;
     startValue?: DateValue;
     class?: string;
-    changeFilterValue: (new_value: unknown) => any;
+    changeFilterValue: (new_value: unknown) => unknown;
   };
 
   let {

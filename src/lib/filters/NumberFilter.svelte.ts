@@ -1,28 +1,28 @@
 import { BaseFilter, type FilterType, type FilterOperator } from './BaseFilter.svelte';
 import type { ComponentProps, SvelteComponent } from 'svelte';
-import NumberFilterComponent from '$lib/components/filters/NumberFilter.svelte';
+import NumberTextFilterComponent from '$lib/components/filters/NumberTextFilter.svelte';
 import type { Row } from '@tanstack/table-core';
 import type { EditableNumericItem, TransactionsFormat } from '$lib/components/types';
 
 export type NumberFilterType = FilterType;
 
 export class NumberFilter extends BaseFilter {
-  id: string = 'number';
-  label: string = 'Number';
-  props: ComponentProps<SvelteComponent<Record<string, any>>> = {};
+  id = 'number';
+  label = 'Number';
+  props: ComponentProps<SvelteComponent<Record<string, unknown>>> = {};
 
   availableOperators: Record<string, FilterOperator> = {
     equals: {
       value: 'equals',
       label: 'equals',
-      component: NumberFilterComponent,
+      component: NumberTextFilterComponent,
       passes: (
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
@@ -30,10 +30,10 @@ export class NumberFilter extends BaseFilter {
           this.accessorFn
         );
 
-        if (value && new_value && new_value[0]) {
+        if (massaged_value && massaged_new_value && massaged_new_value[0]) {
           return (
-            parseFloat((value as EditableNumericItem).value as unknown as string) ===
-            parseFloat(new_value[0] as unknown as string)
+            Number.parseFloat((massaged_value as EditableNumericItem).value as unknown as string) ===
+            Number.parseFloat(massaged_new_value[0] as unknown as string)
           );
         }
         return true;
@@ -42,14 +42,14 @@ export class NumberFilter extends BaseFilter {
     less_than: {
       value: 'less_than',
       label: 'less than',
-      component: NumberFilterComponent,
+      component: NumberTextFilterComponent,
       passes: (
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
@@ -57,10 +57,10 @@ export class NumberFilter extends BaseFilter {
           this.accessorFn
         );
 
-        if (value && new_value && new_value[0]) {
+        if (massaged_value && massaged_new_value && massaged_new_value[0]) {
           return (
-            parseFloat((value as EditableNumericItem).value as unknown as string) <
-            parseFloat(new_value[0] as unknown as string)
+            Number.parseFloat((massaged_value as EditableNumericItem).value as unknown as string) <
+            Number.parseFloat(massaged_new_value[0] as unknown as string)
           );
         }
         return true;
@@ -69,14 +69,14 @@ export class NumberFilter extends BaseFilter {
     greater_than: {
       value: 'greater_than',
       label: 'greater than',
-      component: NumberFilterComponent,
+      component: NumberTextFilterComponent,
       passes: (
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
@@ -84,10 +84,10 @@ export class NumberFilter extends BaseFilter {
           this.accessorFn
         );
 
-        if (value && new_value && new_value[0]) {
+        if (massaged_value && massaged_new_value && massaged_new_value[0]) {
           return (
-            parseFloat((value as EditableNumericItem).value as unknown as string) >
-            parseFloat(new_value[0] as unknown as string)
+            Number.parseFloat((massaged_value as EditableNumericItem).value as unknown as string) >
+            Number.parseFloat(massaged_new_value[0] as unknown as string)
           );
         }
         return true;
@@ -96,8 +96,8 @@ export class NumberFilter extends BaseFilter {
   };
 
   constructor(
-    props?: ComponentProps<SvelteComponent<Record<string, any>>>,
-    accessorFn?: (row: any) => any
+    props?: ComponentProps<SvelteComponent<Record<string, unknown>>>,
+    accessorFn?: (row: unknown) => unknown
   ) {
     super();
     if (props) {

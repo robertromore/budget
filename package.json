@@ -23,6 +23,7 @@
     "db:restart": "bun run db:drop && bun run db:generate && bun run db:migrate && bun run db:seed"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.7.3",
     "@faker-js/faker": "^8.4.1",
     "@iconify-json/carbon": "^1.1.31",
     "@iconify-json/lucide": "^1.1.177",

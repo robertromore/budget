@@ -12,9 +12,9 @@ import { rankItem } from '@tanstack/match-sorter-utils';
 export type TextFilterType = FilterType;
 
 export class TextFilter extends BaseFilter {
-  id: string = 'string';
-  label: string = 'String';
-  props: ComponentProps<SvelteComponent<Record<string, any>>> = {};
+  id = 'string';
+  label = 'String';
+  props: ComponentProps<SvelteComponent<Record<string, unknown>>> = {};
 
   availableOperators: Record<string, FilterOperator> = {
     fuzzy: {
@@ -25,7 +25,7 @@ export class TextFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[],
+        new_value: { value: unknown } | { value: unknown }[],
         addMeta?: (meta: FilterMeta) => void
       ) => {
         if (!Array.isArray(new_value)) {
@@ -54,22 +54,22 @@ export class TextFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
           new_value,
           this.accessorFn
         );
-        if (new_value && new_value[0]) {
-          if (!value) {
+        if (massaged_new_value?.[0]) {
+          if (!massaged_value) {
             return false;
           }
-          return (value as string)
+          return (massaged_value as string)
             .toLowerCase()
-            .includes((new_value[0] as unknown as string).toLowerCase());
+            .includes((massaged_new_value[0] as unknown as string).toLowerCase());
         }
         return true;
       }
@@ -82,22 +82,22 @@ export class TextFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
           new_value,
           this.accessorFn
         );
-        if (new_value && new_value[0]) {
-          if (!value) {
+        if (massaged_new_value?.[0]) {
+          if (!massaged_value) {
             return false;
           }
-          return !(value as string)
+          return !(massaged_value as string)
             .toLowerCase()
-            .includes((new_value[0] as unknown as string).toLowerCase());
+            .includes((massaged_new_value[0] as unknown as string).toLowerCase());
         }
         return true;
       }
@@ -110,22 +110,22 @@ export class TextFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
           new_value,
           this.accessorFn
         );
-        if (new_value && new_value[0]) {
-          if (!value) {
+        if (massaged_new_value?.[0]) {
+          if (!massaged_value) {
             return false;
           }
-          return (value as string)
+          return (massaged_value as string)
             .toLowerCase()
-            .startsWith((new_value[0] as unknown as string).toLowerCase());
+            .startsWith((massaged_new_value[0] as unknown as string).toLowerCase());
         }
         return true;
       }
@@ -138,22 +138,22 @@ export class TextFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
           new_value,
           this.accessorFn
         );
-        if (new_value && new_value[0]) {
-          if (!value) {
+        if (massaged_new_value?.[0]) {
+          if (!massaged_value) {
             return false;
           }
-          return (value as string)
+          return (massaged_value as string)
             .toLowerCase()
-            .endsWith((new_value[0] as unknown as string).toLowerCase());
+            .endsWith((massaged_new_value[0] as unknown as string).toLowerCase());
         }
         return true;
       }
@@ -161,8 +161,8 @@ export class TextFilter extends BaseFilter {
   };
 
   constructor(
-    props?: ComponentProps<SvelteComponent<Record<string, any>>>,
-    accessorFn?: (row: any) => any
+    props?: ComponentProps<SvelteComponent<Record<string, unknown>>>,
+    accessorFn?: (row: unknown) => unknown
   ) {
     super();
     if (props) {

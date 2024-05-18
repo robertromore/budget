@@ -9,7 +9,7 @@
   type Props = {
     value?: DateValue;
     class?: string;
-    changeFilterValue: (new_value: unknown) => any;
+    changeFilterValue: (new_value: unknown) => unknown;
   };
 
   let { value = $bindable(), class: className, changeFilterValue }: Props = $props();

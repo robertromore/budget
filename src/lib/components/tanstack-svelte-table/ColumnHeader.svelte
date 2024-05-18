@@ -7,12 +7,12 @@
   import { Button } from '$lib/components/ui/button';
   import * as Popover from '$lib/components/ui/popover';
   import * as Select from '$lib/components/ui/select';
-  import { type Column, type Header } from './index';
+  import type { Column, Header } from './index';
 
   type Props = {
     label?: string;
     header: Header<TransactionsFormat, TValue>;
-    column?: Column<any, unknown>;
+    column?: Column<TransactionsFormat, unknown>;
     filterManager?: FilterManager;
   };
   const { label, header, column, filterManager }: Props = $props();
