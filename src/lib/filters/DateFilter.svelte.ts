@@ -10,9 +10,9 @@ import type { DateRange } from 'bits-ui';
 export type DateFilterType = FilterType;
 
 export class DateFilter extends BaseFilter {
-  id: string = 'date';
-  label: string = 'Date';
-  props: ComponentProps<SvelteComponent<Record<string, any>>>;
+  id = 'date';
+  label = 'Date';
+  props: ComponentProps<SvelteComponent<Record<string, unknown>>>;
 
   availableOperators: Record<string, FilterOperator> = {
     on: {
@@ -23,17 +23,17 @@ export class DateFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
           new_value,
           this.accessorFn
         );
-        if (new_value && new_value[0]) {
-          return (value as DateValue).compare(new_value[0] as unknown as DateValue) === 0;
+        if (massaged_new_value?.[0]) {
+          return (massaged_value as DateValue).compare(massaged_new_value[0] as unknown as DateValue) === 0;
         }
         return true;
       }
@@ -46,17 +46,17 @@ export class DateFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
           new_value,
           this.accessorFn
         );
-        if (new_value && new_value[0]) {
-          return (value as DateValue).compare(new_value[0] as unknown as DateValue) < 0;
+        if (massaged_new_value?.[0]) {
+          return (massaged_value as DateValue).compare(massaged_new_value[0] as unknown as DateValue) < 0;
         }
         return true;
       }
@@ -69,17 +69,17 @@ export class DateFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
           new_value,
           this.accessorFn
         );
-        if (new_value && new_value[0]) {
-          return (value as DateValue).compare(new_value[0] as unknown as DateValue) > 0;
+        if (massaged_new_value?.[0]) {
+          return (massaged_value as DateValue).compare(massaged_new_value[0] as unknown as DateValue) > 0;
         }
         return true;
       }
@@ -92,21 +92,21 @@ export class DateFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
           new_value,
           this.accessorFn
         );
-        if (new_value && new_value[0]) {
-          const range = new_value[0] as unknown as DateRange;
+        if (massaged_new_value?.[0]) {
+          const range = massaged_new_value[0] as unknown as DateRange;
           if (range.start && range.end) {
             return (
-              (value as DateValue).compare(range.start as unknown as DateValue) > 0 &&
-              (value as DateValue).compare(range.end as unknown as DateValue) < 0
+              (massaged_value as DateValue).compare(range.start as unknown as DateValue) > 0 &&
+              (massaged_value as DateValue).compare(range.end as unknown as DateValue) < 0
             );
           }
         }
@@ -116,8 +116,8 @@ export class DateFilter extends BaseFilter {
   };
 
   constructor(
-    props: ComponentProps<SvelteComponent<Record<string, any>>>,
-    accessorFn: (row: any) => any
+    props: ComponentProps<SvelteComponent<Record<string, unknown>>>,
+    accessorFn: (row: unknown) => unknown
   ) {
     super();
     this.props = props;

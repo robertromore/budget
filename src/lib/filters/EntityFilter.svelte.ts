@@ -8,9 +8,9 @@ import type { TransactionsFormat } from '$lib/components/types';
 export type EntityFilterType = FilterType;
 
 export class EntityFilter extends BaseFilter {
-  id: string = 'entity';
-  label: string = 'Entity';
-  props: ComponentProps<SvelteComponent<Record<string, any>>>;
+  id = 'entity';
+  label = 'Entity';
+  props: ComponentProps<SvelteComponent<Record<string, unknown>>>;
 
   availableOperators: Record<string, FilterOperator> = {
     is: {
@@ -21,9 +21,9 @@ export class EntityFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
@@ -31,8 +31,8 @@ export class EntityFilter extends BaseFilter {
           this.accessorFn
         );
 
-        if (new_value && new_value[0].value) {
-          return value === new_value[0].value;
+        if (massaged_new_value?.[0]) {
+          return massaged_value === massaged_new_value[0].value;
         }
         return true;
       }
@@ -45,9 +45,9 @@ export class EntityFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
@@ -55,8 +55,8 @@ export class EntityFilter extends BaseFilter {
           this.accessorFn
         );
 
-        if (new_value) {
-          return value !== new_value[0].value;
+        if (massaged_new_value) {
+          return value !== massaged_new_value[0].value;
         }
         return true;
       }
@@ -69,9 +69,9 @@ export class EntityFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
@@ -79,11 +79,11 @@ export class EntityFilter extends BaseFilter {
           this.accessorFn
         );
 
-        if (!new_value.length) {
+        if (!massaged_new_value.length) {
           return true;
         }
-        if (new_value) {
-          return new_value.map((fv) => fv.value).includes(value as string);
+        if (massaged_new_value) {
+          return massaged_new_value.map((fv) => fv.value).includes(value as string);
         }
         return true;
       }
@@ -96,9 +96,9 @@ export class EntityFilter extends BaseFilter {
         row: Row<TransactionsFormat>,
         columnId: string,
         value: unknown,
-        new_value: { value: any } | { value: any }[]
+        new_value: { value: unknown } | { value: unknown }[]
       ) => {
-        [value, new_value] = BaseFilter.massageValues(
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
           row,
           columnId,
           value,
@@ -106,8 +106,8 @@ export class EntityFilter extends BaseFilter {
           this.accessorFn
         );
 
-        if (new_value) {
-          return !new_value.map((fv) => fv.value).includes(value as string);
+        if (massaged_new_value) {
+          return !massaged_new_value.map((fv) => fv.value).includes(value as string);
         }
         return true;
       }
@@ -115,14 +115,14 @@ export class EntityFilter extends BaseFilter {
   };
 
   constructor(
-    props: ComponentProps<SvelteComponent<Record<string, any>>>,
-    accessorFn: (row: any) => any
+    props: ComponentProps<SvelteComponent<Record<string, unknown>>>,
+    accessorFn: (row: unknown) => unknown
   ) {
     super();
     this.props = props;
     this.accessorFn = accessorFn;
 
     // Set the label to the value of props.label.
-    this.label = props.label || 'Entity';
+    this.label = props.label as string || 'Entity';
   }
 }

@@ -30,12 +30,12 @@ export interface FilterOperator {
     row: Row<TransactionsFormat>,
     columnId: string,
     value: unknown,
-    new_value: { value: any } | { value: any }[],
+    new_value: { value: unknown } | { value: unknown }[],
     addMeta?: (meta: FilterMeta) => void
   ) => boolean;
 }
 
-export interface SelectedFilterOperator extends Object {
+export interface SelectedFilterOperator extends Record<string, unknown> {
   operator: string | undefined;
   value: unknown;
 }
@@ -49,22 +49,19 @@ export abstract class BaseFilter {
    */
   abstract availableOperators: Record<string, FilterOperator>;
 
-  accessorFn: (row: any) => any = () => {};
+  accessorFn: (row: unknown) => unknown = () => {};
 
   static massageValues(
     row: Row<TransactionsFormat>,
     columnId: string,
     value: unknown,
-    new_value: { value: any } | { value: any }[],
-    accessorFn?: (row: any) => any
-  ): [any, any[]] {
-    if (!Array.isArray(new_value)) {
-      new_value = [new_value];
-    }
-
-    value = accessorFn?.length ? accessorFn(row.getValue(columnId)) : row.getValue(columnId);
-
-    return [value, new_value];
+    new_value: { value: unknown } | { value: unknown }[],
+    accessorFn?: (row: unknown) => unknown
+  ): [unknown, unknown[]] {
+    return [
+      accessorFn?.length ? accessorFn(row.getValue(columnId)) : row.getValue(columnId),
+      !Array.isArray(new_value) ? [new_value] : new_value
+    ];
   }
 }
 
@@ -73,5 +70,5 @@ export type FilterType = {
   label: string;
   availableOperators: Record<string, FilterOperator>;
   props: ComponentProps<SvelteComponent<Record<string, FilterOperator>>>;
-  accessorFn: (value: any) => any;
+  accessorFn: (value: unknown) => unknown;
 };

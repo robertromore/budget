@@ -31,8 +31,7 @@ export class TransactionState {
     this.transactions.push(transaction);
   }
 
-  async deleteTransactions(accountId: number, transactions: number[], cb?: (id: Payee[]) => void) {
-    // eslint-disable-next-line drizzle/enforce-delete-with-where
+  async deleteTransactions(accountId: number, transactions: number[], cb?: (id: Transaction[]) => void) {
     await trpc().transactionRoutes.delete.mutate({
       entities: transactions,
       accountId

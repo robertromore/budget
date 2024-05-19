@@ -34,7 +34,7 @@ export const flyAndScale = (
   const styleToString = (style: Record<string, number | string | undefined>): string => {
     return Object.keys(style).reduce((str, key) => {
       if (style[key] === undefined) return str;
-      return str + `${key}:${style[key]};`;
+      return `${str}${key}:${style[key]};`;
     }, '');
   };
 
@@ -68,13 +68,13 @@ export function compareAlphanumeric(aStr: string, bStr: string) {
     const aa = a.shift()!;
     const bb = b.shift()!;
 
-    const an = parseInt(aa, 10);
-    const bn = parseInt(bb, 10);
+    const an = Number.parseInt(aa, 10);
+    const bn = Number.parseInt(bb, 10);
 
     const combo = [an, bn].sort();
 
     // Both are string
-    if (isNaN(combo[0]!)) {
+    if (Number.isNaN(combo[0]!)) {
       if (aa > bb) {
         return 1;
       }
@@ -85,8 +85,8 @@ export function compareAlphanumeric(aStr: string, bStr: string) {
     }
 
     // One is a string, one is a number
-    if (isNaN(combo[1]!)) {
-      return isNaN(an) ? -1 : 1;
+    if (Number.isNaN(combo[1]!)) {
+      return Number.isNaN(an) ? -1 : 1;
     }
 
     // Both are numbers
