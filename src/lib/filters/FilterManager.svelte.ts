@@ -17,10 +17,7 @@ export class FilterManager {
     return this.filters?.find((filter: FilterType) => filter.id === filter_id);
   }
 
-  setSelectedOperator(operator: SelectedFilterOperator, idx: number | undefined = undefined) {
-    if (typeof idx === 'undefined') {
-      idx = this.idx;
-    }
+  setSelectedOperator(operator: SelectedFilterOperator, idx: number | undefined = this.idx) {
     this.selectedOperators[idx] = operator;
   }
 
@@ -31,21 +28,15 @@ export class FilterManager {
     };
   }
 
-  removeSelectedOperator(idx: number | undefined) {
-    if (typeof idx === 'undefined') {
-      idx = this.idx;
-    }
+  removeSelectedOperator(idx: number | undefined = this.idx) {
     this.selectedOperators.splice(idx, 1);
     --this.idx;
   }
 
   updateSelectedOperator(
     partial: Partial<SelectedFilterOperator>,
-    idx: number | undefined = undefined
+    idx: number | undefined = this.idx
   ) {
-    if (typeof idx === 'undefined') {
-      idx = this.idx;
-    }
     this.selectedOperators[idx] = Object.assign({}, this.selectedOperators[idx], partial);
   }
 
@@ -64,9 +55,9 @@ export class FilterManager {
         if (operator.value === undefined) {
           return true;
         }
-        const [filter_id] = operator['operator'].split(':');
+        const [filter_id] = operator.operator.split(':');
         const actualOperator: FilterOperator =
-          this.availableOperators[filter_id][operator['operator']];
+          this.availableOperators[filter_id][operator.operator];
         if (actualOperator.passes && operator.value !== undefined) {
           return actualOperator.passes(row, columnId, value, operator.value, addMeta);
         }
@@ -84,14 +75,14 @@ export class FilterManager {
       (all, next) => Object.assign(all, { [next.id]: next.availableOperators }),
       {}
     );
-    let merged: Record<string, Record<string, FilterOperator>> = {};
+    const merged: Record<string, Record<string, FilterOperator>> = {};
     if (allAvailable) {
       Object.entries(allAvailable).map(
         ([id, ops]: [string, Record<string, FilterOperator> | unknown]) => {
           merged[id] = merged[id] || {};
           if (ops) {
             Object.keys(ops).map((key: string) => {
-              merged[id][id + ':' + key] = ops[key as keyof typeof ops];
+              merged[id][`${id}:${key}`] = ops[key as keyof typeof ops];
             });
           }
         }
