@@ -4,10 +4,10 @@
   import { Button } from '../ui/button';
 
   type Props = {
-    value?: String;
+    value?: string;
     class?: string;
-    changeFilterValue: (new_value: unknown) => any;
-    onClear?: () => {};
+    changeFilterValue: (new_value: unknown) => void;
+    onClear?: () => void;
   };
 
   let { value = $bindable(), class: className, changeFilterValue, onClear }: Props = $props();

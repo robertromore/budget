@@ -6,6 +6,7 @@ import type { FilterMeta, Row } from '@tanstack/table-core';
 import type { TransactionsFormat } from '$lib/components/types';
 import type DateFilter from '$lib/components/filters/DateFilter.svelte';
 import type DateRangeFilter from '$lib/components/filters/DateRangeFilter.svelte';
+import type NumberTextFilter from '$lib/components/filters/NumberTextFilter.svelte';
 
 export type Selected<Value> = {
   value: Value;
@@ -23,7 +24,8 @@ export interface FilterOperator {
     | typeof MultipleEntityFilter
     | typeof TextFilter
     | typeof DateFilter
-    | typeof DateRangeFilter;
+    | typeof DateRangeFilter
+    | typeof NumberTextFilter;
   passes?: (
     row: Row<TransactionsFormat>,
     columnId: string,

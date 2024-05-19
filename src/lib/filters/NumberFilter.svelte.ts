@@ -1,6 +1,6 @@
 import { BaseFilter, type FilterType, type FilterOperator } from './BaseFilter.svelte';
 import type { ComponentProps, SvelteComponent } from 'svelte';
-import NumberFilterComponent from '$lib/components/filters/NumberFilter.svelte';
+import NumberTextFilterComponent from '$lib/components/filters/NumberTextFilter.svelte';
 import type { Row } from '@tanstack/table-core';
 import type { EditableNumericItem, TransactionsFormat } from '$lib/components/types';
 
@@ -15,7 +15,7 @@ export class NumberFilter extends BaseFilter {
     equals: {
       value: 'equals',
       label: 'equals',
-      component: NumberFilterComponent,
+      component: NumberTextFilterComponent,
       passes: (
         row: Row<TransactionsFormat>,
         columnId: string,
@@ -42,7 +42,7 @@ export class NumberFilter extends BaseFilter {
     less_than: {
       value: 'less_than',
       label: 'less than',
-      component: NumberFilterComponent,
+      component: NumberTextFilterComponent,
       passes: (
         row: Row<TransactionsFormat>,
         columnId: string,
@@ -69,7 +69,7 @@ export class NumberFilter extends BaseFilter {
     greater_than: {
       value: 'greater_than',
       label: 'greater than',
-      component: NumberFilterComponent,
+      component: NumberTextFilterComponent,
       passes: (
         row: Row<TransactionsFormat>,
         columnId: string,
