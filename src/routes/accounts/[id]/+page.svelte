@@ -42,10 +42,7 @@
     type PaginationState,
     type RowSelectionState,
     getFilteredRowModel,
-    type FilterFn,
     type ColumnFiltersState,
-    type Row,
-    type FilterMeta,
     type FilterFnOption
   } from '$lib/components/tanstack-svelte-table';
   import { rankItem, type RankItemOptions } from '@tanstack/match-sorter-utils';
@@ -55,25 +52,22 @@
   import { TextFilter } from '$lib/filters/TextFilter.svelte';
   import { DateFilter } from '$lib/filters/DateFilter.svelte';
   import { NumberFilter } from '$lib/filters/NumberFilter.svelte';
+  import DataTableActions from '$lib/components/data-table/DataTableActions.svelte';
 
   let { data }: { data: PageData } = $props();
 
-  // @ts-ignore
   const transactionState = setTransactionState({
     transactions: data.account.transactions,
     manageTransactionForm: data.manageTransactionForm,
     deleteTransactionForm: data.deleteTransactionForm
   });
 
-  // @todo resolve "Type instantiation is excessively deep and possibly infinite."
-  // @ts-ignore
   const categoryState = setCategoryState({
     categories: data.categories,
     manageCategoryForm: data.manageCategoryForm,
     deleteCategoryForm: data.deleteCategoryForm
   });
 
-  // @ts-ignore
   const payeeState = setPayeeState({
     payees: data.payees,
     managePayeeForm: data.managePayeeForm,
@@ -100,15 +94,6 @@
       savable(updatedData)
     );
     if (updated_transaction) transactionState.transactions[idx] = updated_transaction;
-  };
-
-  const entityFilter: FilterFn<TransactionsFormat> = (
-    row: Row<TransactionsFormat>,
-    columnId: string,
-    filterValue: unknown,
-    addMeta: (meta: FilterMeta) => void
-  ): boolean => {
-    return row.getValue(columnId) === filterValue;
   };
 
   const delegateFilter: FilterFnOption<TransactionsFormat> = (row, columnId, value, addMeta) => {
@@ -180,7 +165,7 @@
           entities: payeeState.payees as EditableEntityItem[],
           enableManagement: true
         }),
-      header: ({ header, column, table }) =>
+      header: ({ header }) =>
         renderComponent(ColumnHeader, {
           label: 'Payee',
           header,
@@ -298,7 +283,16 @@
         );
       },
       filterFn: delegateFilter
-    }
+    },
+    {
+      id: 'actions',
+      accessorFn: (row) => row.id,
+      header: '',
+      cell: (info) =>
+        renderComponent(DataTableActions, { id: info.getValue() as number }),
+      enableColumnFilter: false,
+      enableSorting: false
+    },
   ];
 
   let sorting = $state<SortingState>([
@@ -402,8 +396,7 @@
       }
     },
     filterFns: {
-      fuzzy: fuzzyFilter,
-      entityFilter
+      fuzzy: fuzzyFilter
     },
     onColumnFiltersChange: setFiltering,
     onSortingChange: setSorting,

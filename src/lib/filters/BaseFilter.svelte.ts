@@ -69,6 +69,6 @@ export type FilterType = {
   id: string;
   label: string;
   availableOperators: Record<string, FilterOperator>;
-  props: ComponentProps<SvelteComponent<Record<string, FilterOperator>>>;
+  props: ComponentProps<SvelteComponent<Record<string, unknown>>>;
   accessorFn: (value: unknown) => unknown;
 };

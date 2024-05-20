@@ -19,7 +19,6 @@
 
   let {
     accountId,
-    onDelete,
     onSave
   }: {
     accountId: number;
@@ -59,10 +58,6 @@
     name: ''
   });
   $effect(() => {
-    // const date = untrack(() => data.entity.date);
-    // const amount = untrack(() => data.entity.amount);
-    // const payee_id = untrack(() => data.entity.payeeId);
-    // const category_id = untrack(() => data.entity.categoryId);
     $formData.date = dateValue.toString();
     $formData.amount = numericAmount.value;
     $formData.payeeId = payee.id;
