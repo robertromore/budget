@@ -7,7 +7,6 @@ import { fail } from '@sveltejs/kit';
 import { zod } from 'sveltekit-superforms/adapters';
 
 export const load: PageServerLoad = async () => ({
-  accounts: await createCaller(await createContext()).accountRoutes.all(),
   manageAccountForm: await superValidate(zod(formInsertAccountSchema)),
   deleteAccountForm: await superValidate(zod(removeAccountSchema))
 });

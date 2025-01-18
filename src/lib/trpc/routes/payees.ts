@@ -30,14 +30,16 @@ export const payeeRoutes = t.router({
     .input(insertPayeeSchema)
     .mutation(async ({ input: { id, name, notes }, ctx: { db } }) => {
       if (id) {
-        return await db
-          .update(payees)
-          .set({
-            name,
-            notes
-          })
-          .where(eq(payees.id, id))
-          .returning();
+        return (
+          await db
+            .update(payees)
+            .set({
+              name,
+              notes
+            })
+            .where(eq(payees.id, id))
+            .returning()
+        )[0];
       }
       return (
         await db

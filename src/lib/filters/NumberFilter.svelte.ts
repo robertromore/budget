@@ -3,6 +3,7 @@ import type { ComponentProps, SvelteComponent } from 'svelte';
 import NumberTextFilterComponent from '$lib/components/filters/NumberTextFilter.svelte';
 import type { Row } from '@tanstack/table-core';
 import type { EditableNumericItem, TransactionsFormat } from '$lib/components/types';
+import NumberSliderFilter from '$lib/components/filters/NumberSliderFilter.svelte';
 
 export type NumberFilterType = FilterType;
 
@@ -32,8 +33,9 @@ export class NumberFilter extends BaseFilter {
 
         if (massaged_value && massaged_new_value && massaged_new_value[0]) {
           return (
-            Number.parseFloat((massaged_value as EditableNumericItem).value as unknown as string) ===
-            Number.parseFloat(massaged_new_value[0] as unknown as string)
+            Number.parseFloat(
+              (massaged_value as EditableNumericItem).value as unknown as string
+            ) === Number.parseFloat(massaged_new_value[0] as unknown as string)
           );
         }
         return true;
@@ -42,7 +44,7 @@ export class NumberFilter extends BaseFilter {
     less_than: {
       value: 'less_than',
       label: 'less than',
-      component: NumberTextFilterComponent,
+      component: NumberSliderFilter,
       passes: (
         row: Row<TransactionsFormat>,
         columnId: string,
@@ -69,7 +71,7 @@ export class NumberFilter extends BaseFilter {
     greater_than: {
       value: 'greater_than',
       label: 'greater than',
-      component: NumberTextFilterComponent,
+      component: NumberSliderFilter,
       passes: (
         row: Row<TransactionsFormat>,
         columnId: string,
@@ -88,6 +90,38 @@ export class NumberFilter extends BaseFilter {
           return (
             Number.parseFloat((massaged_value as EditableNumericItem).value as unknown as string) >
             Number.parseFloat(massaged_new_value[0] as unknown as string)
+          );
+        }
+        return true;
+      }
+    },
+    between: {
+      value: 'between',
+      label: 'between',
+      component: NumberSliderFilter,
+      transformProps: (props) => {
+        return Object.assign({}, props, { useRange: true });
+      },
+      passes: (
+        row: Row<TransactionsFormat>,
+        columnId: string,
+        value: unknown,
+        new_value: { value: unknown } | { value: unknown }[]
+      ) => {
+        const [massaged_value, massaged_new_value] = BaseFilter.massageValues(
+          row,
+          columnId,
+          value,
+          new_value,
+          this.accessorFn
+        );
+
+        if (massaged_value && massaged_new_value && massaged_new_value[0]) {
+          return (
+            Number.parseFloat((massaged_value as EditableNumericItem).value as unknown as string) >
+              Number.parseFloat(massaged_new_value[0] as unknown as string) &&
+            Number.parseFloat((massaged_value as EditableNumericItem).value as unknown as string) <
+              Number.parseFloat(massaged_new_value[1] as unknown as string)
           );
         }
         return true;

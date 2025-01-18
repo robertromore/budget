@@ -15,7 +15,7 @@ export const categories = sqliteTable('categories', {
     .default(sql`CURRENT_TIMESTAMP`)
 });
 
-export const categoriesRelations = relations(categories, ({ one }) => ({
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
   parent: one(categories, {
     fields: [categories.parentId],
     references: [categories.id]
@@ -32,3 +32,6 @@ export type NewCategory = typeof categories.$inferInsert;
 export type InsertCategorySchema = typeof insertCategorySchema;
 export type RemoveCategorySchema = typeof removeCategorySchema;
 export type RemoveCategoriesSchema = typeof removeCategoriesSchema;
+export type HasCategories = {
+  categories?: Category[];
+};

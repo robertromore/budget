@@ -1,39 +1,52 @@
 <script lang="ts">
-  import { getAccountState } from '$lib/states/AccountState.svelte';
-  import { cn } from '$lib/utils';
-  import { Button } from './ui/button';
+  import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+  import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+  import Ellipsis from 'lucide-svelte/icons/ellipsis';
+  import Plus from 'lucide-svelte/icons/plus';
+  import { page } from '$app/state';
 
-  let {
-    className
-  }: {
-    className: string | null | undefined;
-  } = $props();
-
-  const data = getAccountState();
+  const { data: { accounts } } = $derived(page);
 </script>
 
-<div class={cn('pb-12', className)}>
-  <div class="space-y-4 py-4">
-    <div class="py-2">
-      <h2 class="relative px-7 text-lg font-semibold tracking-tight">Accounts</h2>
-      <div class="px-1">
-        <div class="space-y-1 p-2">
-          <Button variant="ghost" class="w-full justify-start font-normal" href="/accounts">
-            Overview
-          </Button>
-          {#if data.accounts}
-            {#each data.accounts as account}
-              <Button
-                variant="ghost"
-                class="w-full justify-start font-normal"
-                href="/accounts/{account.id}"
-              >
-                {account.name}
-              </Button>
-            {/each}
-          {/if}
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<Sidebar.Root>
+  <Sidebar.Content>
+    <Sidebar.Group>
+      <Sidebar.GroupLabel>Accounts</Sidebar.GroupLabel>
+      <Sidebar.GroupAction title="Add Account">
+        <Plus /> <span class="sr-only">Add Account</span>
+      </Sidebar.GroupAction>
+      <Sidebar.GroupContent>
+        <Sidebar.Menu>
+          {#each accounts as account}
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton>
+                {#snippet child({ props })}
+                  <a href="/accounts/{account.id}" {...props}>
+                    <span>{account.name}</span>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                  {#snippet child({ props })}
+                    <Sidebar.MenuAction {...props}>
+                      <Ellipsis />
+                    </Sidebar.MenuAction>
+                  {/snippet}
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content side="right" align="start">
+                  <DropdownMenu.Item>
+                    <span>Edit</span>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item>
+                    <span>Delete</span>
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </Sidebar.MenuItem>
+          {/each}
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+  </Sidebar.Content>
+</Sidebar.Root>

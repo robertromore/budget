@@ -15,8 +15,11 @@ export const transactionRoutes = t.router({
         id: z.number()
       })
     )
-    .query(async ({ ctx: { db } }) => {
-      return await db.select();
+    .query(async ({ ctx: { db }, input }) => {
+      const records = await db.query.transactions.findMany({
+        where: eq(transactions.id, input.id)
+      });
+      return records;
     }),
   delete: publicProcedure
     .input(removeTransactionsSchema)
@@ -63,9 +66,7 @@ export const transactionRoutes = t.router({
             })
             .returning();
         }
-        const ent = entity[0] as Transaction;
-
-        return ent;
+        return entity.shift() as Transaction;
       }
     )
 });

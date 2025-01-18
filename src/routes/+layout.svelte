@@ -1,32 +1,30 @@
 <script lang="ts">
-  import Menu from '$lib/components/Menu.svelte';
+  import * as ShadSidebar from "$lib/components/ui/sidebar/index.js";
   import Sidebar from '$lib/components/Sidebar.svelte';
-  import { setAccountState } from '$lib/states/AccountState.svelte';
   import '../app.pcss';
+  import type { LayoutData } from "./$types";
+  import type { Snippet } from "svelte";
+  import { categoriesContext, CategoriesState } from "$lib/states/categories.svelte";
+  import { payeesContext, PayeesState } from "$lib/states/payees.svelte";
 
-  let { data, children } = $props();
-
-  setAccountState({
-    accounts: data.accounts
-  });
+  let { data, children }: { data: LayoutData, children: Snippet } = $props();
+  const { accounts, payees, categories } = $derived(data);
+  categoriesContext.set(new CategoriesState((() => categories)()));
+  payeesContext.set(new PayeesState((() => payees)()));
 </script>
 
-<Menu />
-<div class="border-t">
-  <div class="bg-background">
-    <div class="grid lg:grid-cols-5">
-      <Sidebar className="hidden lg:block" />
-      <div class="col-span-3 lg:col-span-4 lg:border-l">
-        <div class="h-full px-4 py-6 lg:px-8">
-          {@render children()}
+<div class="bg-background">
+  <div class="grid">
+    <ShadSidebar.Provider>
+      <Sidebar />
+      <main>
+        <ShadSidebar.Trigger />
+        <div class="col-span-3 lg:col-span-4">
+          <div class="h-full px-4 py-6 lg:px-8">
+            {@render children?.()}
+          </div>
         </div>
-      </div>
-    </div>
+      </main>
+    </ShadSidebar.Provider>
   </div>
 </div>
-
-<style lang="postcss">
-  /* #breadcrumbs {
-    @apply mb-4 flex items-center space-x-1 text-sm text-muted-foreground;
-  } */
-</style>

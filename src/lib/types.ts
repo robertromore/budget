@@ -1,0 +1,48 @@
+import type { Category, Payee } from '$lib/schema';
+import type { DateValue } from '@internationalized/date';
+import type { Component } from 'svelte';
+
+export type EditableBooleanItem = {
+  value: boolean;
+};
+export type EditableDateItem = DateValue;
+export type EditableEntityItem = {
+  id: number;
+  name: string | null;
+  [key: string]: unknown;
+};
+export type EditableNumericItem = {
+  value: number | null;
+  formatted: string | null;
+};
+export type SelectableEditableEntity = {
+  value: string;
+  label: string;
+};
+export type TransactionsFormat = {
+  id: number;
+  amount: number;
+  date: DateValue | undefined;
+  payeeId: number | null;
+  payee: Payee | null;
+  notes: string | null;
+  category: Category | null;
+  categoryId: number | null;
+  status: 'cleared' | 'pending' | 'scheduled' | null;
+  accountId: number;
+  parentId: number | null;
+};
+
+export type AvailableFiltersEntry = {
+  id: string;
+  label: string;
+};
+export type AvailableFilters = Array<AvailableFiltersEntry>;
+
+export type UpdateDataFn = (value: unknown) => void;
+
+export type ViewFilter = {
+  column: string;
+  value: string[];
+  component: Component;
+};

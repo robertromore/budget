@@ -7,6 +7,7 @@ import type { TransactionsFormat } from '$lib/components/types';
 import type DateFilter from '$lib/components/filters/DateFilter.svelte';
 import type DateRangeFilter from '$lib/components/filters/DateRangeFilter.svelte';
 import type NumberTextFilter from '$lib/components/filters/NumberTextFilter.svelte';
+import type NumberSliderFilter from '$lib/components/filters/NumberSliderFilter.svelte';
 
 export type Selected<Value> = {
   value: Value;
@@ -25,7 +26,11 @@ export interface FilterOperator {
     | typeof TextFilter
     | typeof DateFilter
     | typeof DateRangeFilter
+    | typeof NumberSliderFilter
     | typeof NumberTextFilter;
+  transformProps?: (
+    props: ComponentProps<SvelteComponent<Record<string, unknown>>>
+  ) => ComponentProps<SvelteComponent<Record<string, unknown>>>;
   passes?: (
     row: Row<TransactionsFormat>,
     columnId: string,

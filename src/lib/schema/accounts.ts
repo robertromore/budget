@@ -9,12 +9,14 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { transactions } from './transactions';
 import type { Transaction } from './transactions';
 import { z } from 'zod';
+import type { Category } from './categories';
+import type { Payee } from './payees';
 
 export const accounts = sqliteTable('account', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   cuid: text('cuid').$defaultFn(() => createId()),
   name: text('name').notNull(),
-  slug: text('slug'),
+  slug: text('slug').notNull(),
   // @todo maybe change to enum to allow for archiving?
   closed: integer('closed', { mode: 'boolean' }).default(false),
   // @todo decide if it's better to calculate and store this value or aggregate
@@ -40,8 +42,7 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       required_error: 'Required.'
     })
     .min(2)
-    .max(30),
-  balance: z.coerce.number().optional()
+    .max(30)
 });
 export const removeAccountSchema = z.object({ id: z.number().nonnegative() });
 
@@ -51,6 +52,7 @@ type WithTransactions = {
 type WithBalance = {
   balance: number;
 };
+
 interface AccountExtraFields extends WithTransactions, WithBalance {}
 
 export type Account = typeof accounts.$inferSelect & AccountExtraFields;

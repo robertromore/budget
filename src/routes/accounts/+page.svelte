@@ -1,28 +1,15 @@
 <script lang="ts">
   import { Button, buttonVariants } from '$lib/components/ui/button';
   import * as Card from '$lib/components/ui/card';
-  import type { Infer, SuperValidated } from 'sveltekit-superforms';
   import type { PageData } from './$types';
-  import {
-    type Account,
-    type FormInsertAccountSchema,
-    type RemoveAccountSchema
-  } from '$lib/schema';
   import { currencyFormatter } from '$lib/helpers/formatters';
-  import AddAccountDialog from '$lib/components/dialogs/AddAccountDialog.svelte';
-  import DeleteAccountDialog from '$lib/components/dialogs/DeleteAccountDialog.svelte';
-  import { setAccountState } from '$lib/states/AccountState.svelte';
+  import AddAccountDialog from '$lib/components/dialogs/add-account-dialog.svelte';
+  import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
+  import { setFormsState } from '$lib/states/forms.svelte';
 
-  type AccountPageData = PageData & {
-    addAccountForm: SuperValidated<Infer<FormInsertAccountSchema>>;
-    deleteAccountForm: SuperValidated<Infer<RemoveAccountSchema>>;
-    accounts: Account[];
-  };
+  let { data } = $props<{ data: PageData }>();
 
-  let { data } = $props<{ data: AccountPageData }>();
-
-  setAccountState({
-    accounts: data.accounts,
+  setFormsState({
     manageAccountForm: data.manageAccountForm,
     deleteAccountForm: data.deleteAccountForm
   });
@@ -43,18 +30,14 @@
     <Card.Root>
       <Card.Header>
         <Card.Title><a href="/accounts/{id}">{name}</a></Card.Title>
-        <Card.Description
-          >{notes?.length || 0 > 100 ? notes?.substring(0, 100) + '...' : notes}</Card.Description
-        >
+        <Card.Description>{notes?.length || 0 > 100 ? notes?.substring(0, 100) + '...' : notes}</Card.Description>
       </Card.Header>
       <Card.Content>
         <strong>Balance:</strong>
         {currencyFormatter.format(balance ?? 0)}
       </Card.Content>
       <Card.Footer>
-        <Button onclick={() => deleteAccount(id)} class={buttonVariants({ variant: 'secondary' })}
-          >Delete</Button
-        >
+        <Button onclick={() => deleteAccount(id)} class={buttonVariants({ variant: 'secondary' })}>Delete</Button>
       </Card.Footer>
     </Card.Root>
   {/each}

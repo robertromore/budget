@@ -99,8 +99,11 @@ export class FilterManager {
   }
 
   getFilterProps(id: string) {
-    const [filter_id] = id.split(':');
-    return this.filters?.find((value: FilterType) => value.id === filter_id)?.props;
+    const [filter_id, operator_id] = id.split(':');
+    const filter = this.filters?.find((value: FilterType) => value.id === filter_id);
+    const operator = this.filters?.find((value: FilterType) => value.id === filter_id)
+      ?.availableOperators[operator_id];
+    return operator?.transformProps ? operator?.transformProps(filter?.props) : filter?.props;
   }
 
   constructor(filters: FilterType[] | undefined) {

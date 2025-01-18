@@ -9,7 +9,7 @@
   <Menubar.Menu>
     <Menubar.Trigger class="font-bold">Budget</Menubar.Trigger>
     <Menubar.Content>
-      <Menubar.Item on:click={() => (aboutDialogOpen = true)}>About Budget</Menubar.Item>
+      <Menubar.Item onclick={() => (aboutDialogOpen = true)}>About Budget</Menubar.Item>
       <Menubar.Separator />
       <Menubar.Item>
         Preferences... <Menubar.Shortcut>⌘,</Menubar.Shortcut>

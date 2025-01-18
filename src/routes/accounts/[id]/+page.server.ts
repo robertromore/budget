@@ -1,5 +1,5 @@
 import { superValidate } from 'sveltekit-superforms';
-import type { PageServerLoad } from '../$types';
+import type { PageServerLoad } from './$types';
 import { zod } from 'sveltekit-superforms/adapters';
 import {
   formInsertPayeeSchema,
@@ -10,11 +10,12 @@ import {
   removeTransactionsSchema
 } from '$lib/schema';
 
-export const load: PageServerLoad = async ({ depends }) => {
-  depends('account');
+export const load: PageServerLoad = async ({ params, parent }) => {
+  const { accounts } = await parent();
 
   return {
-    // forms
+    accountId: parseInt(params.id),
+    account: accounts.find((account) => account.id === parseInt(params.id)),
     manageTransactionForm: await superValidate(zod(insertTransactionSchema)),
     deleteTransactionForm: await superValidate(zod(removeTransactionsSchema)),
     manageCategoryForm: await superValidate(zod(insertCategorySchema)),

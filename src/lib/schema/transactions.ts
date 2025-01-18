@@ -20,14 +20,14 @@ import { z } from 'zod';
 export const transactions = sqliteTable(
   'transaction',
   {
-    id: integer('id').primaryKey(),
-    accountId: integer('account_id').references(() => accounts.id, { onDelete: 'cascade' }),
+    id: integer('id').primaryKey().notNull(),
+    accountId: integer('account_id')
+      .references(() => accounts.id, { onDelete: 'cascade' })
+      .notNull(),
     parentId: integer('parent_id').references((): AnySQLiteColumn => transactions.id),
-    // false = pending, true = cleared
-    // @todo maybe switch to enum and add scheduled as status
-    status: integer('status', { mode: 'boolean' }).default(false),
+    status: text('status', { enum: ['cleared', 'pending', 'scheduled'] }).default('pending'),
     payeeId: integer('payee_id').references(() => payees.id),
-    amount: real('amount').default(0),
+    amount: real('amount').default(0).notNull(),
     categoryId: integer('category_id').references(() => categories.id),
     notes: text('notes'),
     date: text('date')
@@ -41,7 +41,7 @@ export const transactions = sqliteTable(
   })
 );
 
-export const transactionsRelations = relations(transactions, ({ one }) => ({
+export const transactionsRelations = relations(transactions, ({ many, one }) => ({
   parent: one(transactions, {
     fields: [transactions.parentId],
     references: [transactions.id]
@@ -77,3 +77,9 @@ export type Transaction = typeof transactions.$inferSelect & TransactionExtraFie
 export type NewTransaction = typeof transactions.$inferInsert;
 export type InsertTransactionSchema = typeof insertTransactionSchema;
 export type RemoveTransactionSchema = typeof removeTransactionsSchema;
+export enum TransactionStatuses {
+  CLEARED = 'cleared',
+  PENDING = 'pending',
+  SCHEDULED = 'scheduled'
+}
+export type TransactionStatus = keyof TransactionStatuses;

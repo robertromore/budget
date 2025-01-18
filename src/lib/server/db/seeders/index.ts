@@ -21,9 +21,12 @@ for await (const file of glob.scan(seeders_path)) {
   }
   const table = tables[table_name] as unknown as SQLiteTable<TableConfig>;
   const data = await Bun.file(seeders_path + file).json();
+  let count = 0;
   for (const records of data.values()) {
+    count++;
     await db.insert(table).values(records);
   }
+  console.log('Seeded ' + table + ' with ' + count + ' records.');
 }
 
 console.log('Seeding complete.');

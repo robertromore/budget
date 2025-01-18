@@ -39,3 +39,6 @@ export type NewPayee = typeof payees.$inferInsert;
 export type FormInsertPayeeSchema = typeof formInsertPayeeSchema;
 export type RemovePayeeSchema = typeof removePayeeSchema;
 export type RemovePayesSchema = typeof removePayeesSchema;
+export type HasPayees = {
+  payees?: Payee[];
+};
