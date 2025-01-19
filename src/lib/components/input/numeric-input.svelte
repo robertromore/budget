@@ -38,11 +38,21 @@
       if (new_amount?.includes('.') && event.key === '.') {
         event.preventDefault();
       }
-      if (valueWellFormatted() && event.key in [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]) {
-        event.preventDefault();
-      }
+      const target = event.target as HTMLInputElement;
+      const start = target?.selectionStart || 0;
+      const end = target?.selectionEnd || target?.value.length;
+      const numkeys = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
       if (new_amount && event.key == 'Enter') {
         submit();
+      }
+      else if (
+        event.key in numkeys
+        && valueWellFormatted()
+        && parseFloat(new_amount) != 0
+        && start === end
+        || !(event.key in numkeys)
+      ) {
+        event.preventDefault();
       }
     }
   };
@@ -66,7 +76,7 @@
         </Button>
       {/snippet}
     </Popover.Trigger>
-    <Popover.Content class="p-0" align="start">
+    <Popover.Content class="p-0" align="start" onEscapeKeydown={() => new_amount = amount!.toString()}>
       <div class="p-2">
         <Input bind:value={new_amount} class="mb-2" />
         <div class="keypad grid grid-cols-3 grid-rows-3 gap-2">
