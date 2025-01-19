@@ -19,13 +19,17 @@
   let dialogOpen = $state(open || false);
   let new_amount = $state((amount || 0).toFixed(2));
 
+  let input: HTMLInputElement | undefined | null = $state(null);
   const select = (num: string) => () => {
     new_amount += num;
   };
   const backspace = () => {
     new_amount = new_amount?.substring(0, new_amount.length - 1);
   };
-  const clear = () => (new_amount = '');
+  const clear = () => {
+    new_amount = '';
+    input?.focus();
+  }
   const submit = () => {
     amount = parseFloat(new_amount);
     dialogOpen = false;
@@ -41,18 +45,33 @@
       const target = event.target as HTMLInputElement;
       const start = target?.selectionStart || 0;
       const end = target?.selectionEnd || target?.value.length;
-      const numkeys = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
-      if (new_amount && event.key == 'Enter') {
-        submit();
-      }
-      else if (
-        event.key in numkeys
-        && valueWellFormatted()
-        && parseFloat(new_amount) != 0
-        && start === end
-        || !(event.key in numkeys)
-      ) {
-        event.preventDefault();
+      switch (event.key) {
+        case 'Enter':
+          if (new_amount) {
+            submit();
+          }
+          break;
+
+        case 'Backspace':
+          break;
+
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+          if (valueWellFormatted() && parseFloat(new_amount) != 0 && start === end) {
+            event.preventDefault();
+          }
+          break;
+
+        default:
+          event.preventDefault();
       }
     }
   };
@@ -78,7 +97,7 @@
     </Popover.Trigger>
     <Popover.Content class="p-0" align="start" onEscapeKeydown={() => new_amount = amount!.toString()}>
       <div class="p-2">
-        <Input bind:value={new_amount} class="mb-2" />
+        <Input bind:value={new_amount} class="mb-2" bind:ref={input} />
         <div class="keypad grid grid-cols-3 grid-rows-3 gap-2">
           {#each Array.from({ length: 9 }, (_, i) => i + 1) as i}
             <Button
