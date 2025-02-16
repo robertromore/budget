@@ -53,12 +53,14 @@
       _currentViews.remove(-1).setActive(newView);
     }}>
     {#each _currentViews.viewsStates.values() as currentView}
+      {#if currentView.view.id !== -1}
       <ToggleGroup.Item value={currentView.view.id.toString()} aria-label={currentView.view.name}>
         {currentView.view.name}
         {#if currentView.view.dirty}
           <Asterisk class="-ml-1"/>
         {/if}
       </ToggleGroup.Item>
+      {/if}
     {/each}
   </ToggleGroup.Root>
 
