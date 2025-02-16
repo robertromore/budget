@@ -31,6 +31,8 @@
   });
 
   const _currentViews = $derived(currentViews.get());
+  const firstViewId = $derived(_currentViews.viewsStates.values().next().value?.view.id!);
+  let currentViewValue = $state((() => firstViewId)().toString());
 </script>
 
 <div class="flex text-sm">
@@ -38,10 +40,17 @@
     type="single"
     size="sm"
     class="justify-start items-start"
-    value={_currentViews.activeViewId.toString()}
+    bind:value={currentViewValue}
     onValueChange={value => {
       newViewForm = false;
-      _currentViews.remove(-1).setActive(parseInt(value));
+      let newView: number;
+      if (!value) {
+        newView = firstViewId;
+        currentViewValue = newView.toString();
+      } else {
+        newView = parseInt(value);
+      }
+      _currentViews.remove(-1).setActive(newView);
     }}>
     {#each _currentViews.viewsStates.values() as currentView}
       <ToggleGroup.Item value={currentView.view.id.toString()} aria-label={currentView.view.name}>
