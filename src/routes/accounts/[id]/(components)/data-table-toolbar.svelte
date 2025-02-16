@@ -47,7 +47,7 @@
       <ToggleGroup.Item value={currentView.view.id.toString()} aria-label={currentView.view.name}>
         {currentView.view.name}
         {#if currentView.view.dirty}
-          <Asterisk class="size-3"/>
+          <Asterisk class="-ml-1"/>
         {/if}
       </ToggleGroup.Item>
     {/each}
