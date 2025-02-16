@@ -13,9 +13,16 @@
   import { currentAccount, CurrentAccountState } from '$lib/states/current-account.svelte';
   import { categoriesContext } from '$lib/states/categories.svelte';
   import { payeesContext } from '$lib/states/payees.svelte';
+  import type { Account } from '$lib/schema';
 
   let { data } = $props();
-  const account: CurrentAccountState = $derived(currentAccount.set(new CurrentAccountState(data.account!)));
+  const account: Account | undefined = $derived(data.account);
+  const currentAccountState: CurrentAccountState = $derived(new CurrentAccountState(data.account!));
+
+  $effect.pre(() => {
+    currentAccount.set(currentAccountState);
+  });
+
   const categories = categoriesContext.get();
   const payees = payeesContext.get();
 
@@ -27,9 +34,9 @@
 
 <div class="mb-2 flex items-center">
   <h1 class="mr-5 text-3xl">{account?.name}</h1>
-  <span class="text-sm text-muted-foreground"
-    ><strong>Balance:</strong> {account.balance}</span
-  >
+  <span class="text-sm text-muted-foreground">
+    <strong>Balance:</strong> {account?.balance}
+  </span>
 </div>
 
 <p class="mb-2 text-sm text-muted-foreground">{account?.notes}</p>
@@ -91,7 +98,7 @@
 </div> -->
 
 <DataTable
-  columns={columns(categories, payees, account.updateTransaction)}
-  transactions={account.formatted}
+  columns={columns(categories, payees, currentAccountState.updateTransaction)}
+  transactions={currentAccountState.formatted}
   bind:table={table}
 />
