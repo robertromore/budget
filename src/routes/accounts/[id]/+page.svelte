@@ -58,29 +58,29 @@
 
   <DropdownMenu.Root>
     <DropdownMenu.Trigger>
-      <Button variant="outline" disabled={selectedTransactions.length === 0} class="h-8 p-2">
-        <ChevronDown class="mr-1 size-4" />
-        {selectedTransactions.length} selected
-      </Button>
+      {#snippet child({ props })}
+        <Button {...props} variant="outline" disabled={selectedTransactions.length === 0} class="h-8 p-2">
+          <ChevronDown class="mr-1 size-4" />
+          {selectedTransactions.length} selected
+        </Button>
+      {/snippet}
     </DropdownMenu.Trigger>
-    {#if selectedTransactions.length > 0}
-      <DropdownMenu.Content class="w-40">
-        <DropdownMenu.Group>
-          <DropdownMenu.Item>
-            Archive
-            <DropdownMenu.Shortcut>⇧⌘A</DropdownMenu.Shortcut>
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            onclick={() => {
-              deleteTransactionDialogOpen = true;
-            }}
-          >
-            Delete
-            <DropdownMenu.Shortcut>⇧⌘D</DropdownMenu.Shortcut>
-          </DropdownMenu.Item>
-        </DropdownMenu.Group>
-      </DropdownMenu.Content>
-    {/if}
+    <DropdownMenu.Content class="w-40">
+      <DropdownMenu.Group>
+        <DropdownMenu.Item>
+          Archive
+          <DropdownMenu.Shortcut>⇧⌘A</DropdownMenu.Shortcut>
+        </DropdownMenu.Item>
+        <DropdownMenu.Item
+          onclick={() => {
+            deleteTransactionDialogOpen = true;
+          }}
+        >
+          Delete
+          <DropdownMenu.Shortcut>⇧⌘D</DropdownMenu.Shortcut>
+        </DropdownMenu.Item>
+      </DropdownMenu.Group>
+    </DropdownMenu.Content>
   </DropdownMenu.Root>
 </div>
 
