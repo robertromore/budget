@@ -6,12 +6,18 @@
   import type { Snippet } from "svelte";
   import { categoriesContext, CategoriesState } from "$lib/states/categories.svelte";
   import { payeesContext, PayeesState } from "$lib/states/payees.svelte";
+  import { dev } from '$app/environment';
+	import { RenderScan } from 'svelte-render-scan';
 
   let { data, children }: { data: LayoutData, children: Snippet } = $props();
   const { accounts, payees, categories } = $derived(data);
   categoriesContext.set(new CategoriesState((() => categories)()));
   payeesContext.set(new PayeesState((() => payees)()));
 </script>
+
+{#if dev}
+	<RenderScan />
+{/if}
 
 <div class="bg-background">
   <div class="grid">
