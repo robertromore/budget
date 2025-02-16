@@ -113,9 +113,8 @@
             ) ? 1 : 0;
           }}
         >
-        <!-- <Command.Root> -->
           <div class="flex">
-            <Command.Input placeholder="Search {entityLabel}..." wrapperClass="w-full" />
+            <Command.Input placeholder="Search {entityLabel}..." />
             {#if management?.enable}
               <Button
                 size="icon"
