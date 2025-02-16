@@ -4,12 +4,14 @@ import { payeeRoutes } from '$lib/trpc/routes/payees';
 import { transactionRoutes } from '$lib/trpc/routes/transactions';
 import { t } from '$lib/trpc/t';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
+import { viewsRoutes } from './routes/views';
 
 export const router = t.router({
   accountRoutes,
   categoriesRoutes,
   payeeRoutes,
-  transactionRoutes
+  transactionRoutes,
+  viewsRoutes
 });
 
 export const createCaller = t.createCallerFactory(router);

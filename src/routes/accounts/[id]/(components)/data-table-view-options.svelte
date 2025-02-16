@@ -16,7 +16,7 @@
 		})}
 	>
 		<MixerHorizontal class="mr-2 size-4" />
-		View
+		Display
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content>
 		<DropdownMenu.Group>

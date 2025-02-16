@@ -45,11 +45,11 @@
 {/if}
 
 <div class="flex items-center py-4">
-  <Button class="mx-1" onclick={() => (addTransactionDialogOpen = true)}>
+  <Button class="mx-1 h-8" onclick={() => (addTransactionDialogOpen = true)}>
     <Plus class="size-4"/>
     Add
   </Button>
-  <Button variant="outline" class="mx-1">
+  <Button variant="outline" class="mx-1 h-8">
     <Import class="size-4"/>
     Import
   </Button>
@@ -58,8 +58,8 @@
 
   <DropdownMenu.Root>
     <DropdownMenu.Trigger>
-      <Button variant="outline" disabled={selectedTransactions.length === 0}>
-        <ChevronDown class="mr-2 size-4" />
+      <Button variant="outline" disabled={selectedTransactions.length === 0} class="h-8 p-2">
+        <ChevronDown class="mr-1 size-4" />
         {selectedTransactions.length} selected
       </Button>
     </DropdownMenu.Trigger>

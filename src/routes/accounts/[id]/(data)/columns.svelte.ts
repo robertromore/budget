@@ -1,7 +1,13 @@
 import type { EditableEntityItem, EditableNumericItem, TransactionsFormat } from '$lib/types';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import { renderComponent } from '$lib/components/ui/data-table';
-import type { ColumnDef, FilterFnOption } from '@tanstack/table-core';
+import type {
+  CellContext,
+  Column,
+  ColumnDef,
+  ExpandedState,
+  FilterFnOption
+} from '@tanstack/table-core';
 import DataTableColumnHeader from '../(components)/data-table-column-header.svelte';
 import EditableDateCell from '$lib/components/data-table/editable-date-cell.svelte';
 import { getLocalTimeZone, type DateValue } from '@internationalized/date';
@@ -16,12 +22,54 @@ import ManagePayeeForm from '$lib/components/forms/manage-payee-form.svelte';
 import ManageCategoryForm from '$lib/components/forms/manage-category-form.svelte';
 import type { CategoriesState } from '$lib/states/categories.svelte';
 import type { PayeesState } from '$lib/states/payees.svelte';
+import DataTableFacetedFilterStatus from '../(components)/(facets)/data-table-faceted-filter-status.svelte';
+import DataTableFacetedFilterCategory from '../(components)/(facets)/data-table-faceted-filter-category.svelte';
+import DataTableFacetedFilterPayee from '../(components)/(facets)/data-table-faceted-filter-payee.svelte';
+import DataTableFacetedFilterDate from '../(components)/(facets)/data-table-faceted-filter-date.svelte';
+import CalendarDays from 'lucide-svelte/icons/calendar-days';
+import HandCoins from 'lucide-svelte/icons/hand-coins';
+import SquareMousePointer from 'lucide-svelte/icons/square-mouse-pointer';
+import CircleCheckBig from 'lucide-svelte/icons/circle-check-big';
+import { Plusbox } from '$lib/components/ui/plusbox';
+import { currencyFormatter } from '$lib/helpers/formatters';
 
 export const columns = (
   categories: CategoriesState,
   payees: PayeesState,
   updateData: (id: number, columnId: string, newValue?: unknown) => Promise<void>
 ): ColumnDef<TransactionsFormat>[] => {
+  const updateHandler = (
+    info: CellContext<TransactionsFormat, unknown>,
+    columnId: string,
+    new_value: unknown,
+    value_transformer: (value: unknown) => unknown = (value) => value
+  ) => {
+    if (info.row.getIsGrouped() && info.row.depth === 0) {
+      // Expanded state gets lost after updating values, so keep track
+      // of the currently expanded rows to re-expand them after updating.
+      const expanded: ExpandedState = info.table.getState().expanded;
+      return Promise.all(
+        info.row.getLeafRows().map((row) => {
+          return updateData(row.original.id, columnId, value_transformer(new_value));
+        })
+      ).then(() => {
+        // If the expanded value was a boolean, apply that.
+        // if (typeof expanded === 'boolean') {
+        //   info.table.setExpanded(expanded);
+        // } else {
+        //   // Find the old value and replace it with the new.
+        //   const oldKey = info.column.id + ':' + info.row.groupingValue;
+        //   const newKey = info.column.id + ':' + new_value;
+        //   expanded[newKey] = true;
+        //   delete expanded[oldKey];
+        //   info.table.setExpanded(expanded);
+        // }
+      });
+    } else {
+      return updateData(info.row.original.id, columnId, value_transformer(new_value));
+    }
+  };
+
   return [
     {
       id: 'select-col',
@@ -41,18 +89,59 @@ export const columns = (
           controlledChecked: true,
           'aria-label': 'Select row'
         }),
-      enableColumnFilter: false
+      aggregatedCell: ({ row }) =>
+        renderComponent(Checkbox, {
+          checked: row.getIsSelected(),
+          disabled: !row.getCanSelect(),
+          onCheckedChange: (value) => row.toggleSelected(!!value),
+          controlledChecked: true,
+          'aria-label': 'Select row'
+        }),
+      enableColumnFilter: false,
+      enableGrouping: false,
+      enableSorting: false
+    },
+    {
+      id: 'expand-contract-col',
+      header: ({ table }) =>
+        table.getCanSomeRowsExpand()
+          ? renderComponent(Plusbox, {
+              checked: table.getIsAllRowsExpanded(),
+              // disabled: table.getCanSomeRowsExpand(),
+              onCheckedChange: table.getToggleAllRowsExpandedHandler(),
+              controlledChecked: true,
+              'aria-label': 'Expand/contract all'
+            })
+          : '',
+      aggregatedCell: ({ row }) =>
+        row.getCanExpand()
+          ? renderComponent(Plusbox, {
+              checked: row.getIsExpanded(),
+              disabled: !row.getCanExpand(),
+              onCheckedChange: row.getToggleExpandedHandler(),
+              controlledChecked: true,
+              'aria-label': 'Expand/contract row'
+            })
+          : '',
+      enableColumnFilter: false,
+      enableGrouping: false,
+      enableSorting: false
     },
     {
       accessorKey: 'id',
       cell: (info) => info.getValue(),
+      aggregatedCell: () => {},
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
           title: 'ID'
         }),
       sortingFn: 'alphanumeric',
-      enableColumnFilter: false
+      enableColumnFilter: false,
+      enableGrouping: false,
+      meta: {
+        label: 'ID'
+      }
     },
     {
       accessorKey: 'date',
@@ -60,13 +149,12 @@ export const columns = (
       cell: (info) =>
         renderComponent(EditableDateCell, {
           value: info.getValue() as DateValue,
-          onUpdateValue: (new_value) =>
-            updateData(
-              info.row.original.id,
-              'date',
+          onUpdateValue: (new_value: unknown) =>
+            updateHandler(info, 'date', new_value, (new_value) =>
               (new_value as DateValue)?.toDate(getLocalTimeZone()).toString()
             )
         }),
+      aggregatedCell: () => {},
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           title: 'Date',
@@ -75,6 +163,18 @@ export const columns = (
       sortingFn: 'datetime',
       filterFn: 'dateAfter' as FilterFnOption<TransactionsFormat>,
       meta: {
+        label: 'Date',
+        facetedFilter: (column: Column<TransactionsFormat, unknown>) => {
+          return {
+            name: 'Date',
+            icon: CalendarDays,
+            column,
+            component: () =>
+              renderComponent(DataTableFacetedFilterDate<TransactionsFormat, unknown>, {
+                column
+              })
+          };
+        },
         availableFilters: [
           {
             id: 'dateOn',
@@ -98,7 +198,7 @@ export const columns = (
         renderComponent(EditableEntityCell, {
           value: payees.getById(info.getValue() as number) as EditableEntityItem,
           entityLabel: 'payee',
-          onUpdateValue: (new_value) => updateData(info.row.original.id, 'payeeId', new_value),
+          onUpdateValue: (new_value) => updateHandler(info, 'payeeId', new_value),
           entities: payees.payees as EditableEntityItem[],
           management: {
             enable: true,
@@ -115,6 +215,7 @@ export const columns = (
             }
           }
         }),
+      aggregatedCell: () => {},
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
@@ -129,6 +230,19 @@ export const columns = (
       enableColumnFilter: true,
       filterFn: 'entityIsFilter' as FilterFnOption<TransactionsFormat>,
       meta: {
+        label: 'Payee',
+        facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
+          return {
+            name: 'Payee',
+            icon: HandCoins,
+            column,
+            value,
+            component: () =>
+              renderComponent(DataTableFacetedFilterPayee<TransactionsFormat, unknown>, {
+                column
+              })
+          };
+        },
         availableFilters: [
           {
             id: 'entityIsFilter',
@@ -149,12 +263,14 @@ export const columns = (
           value: info.getValue(),
           onUpdateValue: (new_value: string) => updateData(info.row.original.id, 'notes', new_value)
         }),
+      aggregatedCell: () => {},
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
           title: 'Notes'
         }),
-      enableSorting: false
+      enableSorting: false,
+      enableGrouping: false
     },
     {
       accessorKey: 'categoryId',
@@ -163,7 +279,7 @@ export const columns = (
         renderComponent(EditableEntityCell, {
           value: categories.getById(info.getValue() as number) as EditableEntityItem,
           entityLabel: 'category',
-          onUpdateValue: (new_value) => updateData(info.row.original.id, 'categoryId', new_value),
+          onUpdateValue: (new_value) => updateHandler(info, 'categoryId', new_value),
           entities: categories.categories as EditableEntityItem[],
           management: {
             enable: true,
@@ -181,6 +297,7 @@ export const columns = (
             }
           }
         }),
+      aggregatedCell: () => {},
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
@@ -194,6 +311,18 @@ export const columns = (
       },
       filterFn: 'entityIsFilter' as FilterFnOption<TransactionsFormat>,
       meta: {
+        label: 'Category',
+        facetedFilter: (column: Column<TransactionsFormat, unknown>) => {
+          return {
+            name: 'Category',
+            icon: SquareMousePointer,
+            column,
+            component: () =>
+              renderComponent(DataTableFacetedFilterCategory<TransactionsFormat, unknown>, {
+                column
+              })
+          };
+        },
         availableFilters: [
           {
             id: 'entityIsFilter',
@@ -214,16 +343,17 @@ export const columns = (
           value: info.getValue() as number,
           onUpdateValue: (new_value) => updateData(info.row.original.id, 'amount', new_value)
         }),
+      aggregatedCell: (info) => currencyFormatter.format(info.getValue() as number),
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
           title: 'Amount'
         }),
-      sortingFn: (rowA, rowB) => {
-        return (
-          ((rowA.getValue('amount') as EditableNumericItem).value || 0) -
-          ((rowB.getValue('amount') as EditableNumericItem).value || 0)
-        );
+      sortingFn: (rowA, rowB) =>
+        ((rowA.getValue('amount') as number) || 0) - ((rowB.getValue('amount') as number) || 0),
+      enableGrouping: false,
+      meta: {
+        label: 'Amount'
       }
     },
     {
@@ -232,11 +362,26 @@ export const columns = (
       cell: (info) =>
         renderComponent(DataTableEditableStatusCell, {
           value: info.getValue() as string,
-          onUpdateValue: (new_value) => updateData(info.row.original.id, 'status', new_value)
+          onUpdateValue: (new_value) => updateHandler(info, 'status', new_value)
         }),
+      aggregatedCell: () => {},
       header: '',
       filterFn: 'equalsString' as FilterFnOption<TransactionsFormat>,
       meta: {
+        label: 'Status',
+        facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
+          return {
+            name: 'Status',
+            icon: CircleCheckBig,
+            column,
+            value,
+            component: () => {
+              return renderComponent(DataTableFacetedFilterStatus<TransactionsFormat, unknown>, {
+                column
+              });
+            }
+          };
+        },
         availableFilters: [
           {
             id: 'equalsString',
@@ -252,10 +397,12 @@ export const columns = (
     {
       id: 'actions',
       accessorFn: (row) => row.id,
+      aggregatedCell: () => {},
       header: '',
       cell: (info) => renderComponent(DataTableActions, { id: info.getValue() as number }),
       enableColumnFilter: false,
-      enableSorting: false
+      enableSorting: false,
+      enableGrouping: false
     }
   ];
 };

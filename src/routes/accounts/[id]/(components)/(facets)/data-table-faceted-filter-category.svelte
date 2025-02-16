@@ -6,6 +6,7 @@
   import type { Component } from 'svelte';
   import { page } from '$app/state';
   import type { Category, Transaction } from '$lib/schema';
+  import { currentViews } from '$lib/states/current-views.svelte';
 
   type Props<TData, TValue> = {
 		column: Column<TData, TValue>;
@@ -15,7 +16,12 @@
 
   const { data } = $derived(page);
   const account = $derived(data.account);
-  const categories = $derived(account.transactions.map((transaction: Transaction) => transaction.category));
+
+  const activeView = $derived(currentViews.get().activeView);
+  const activeViewModel = $derived(activeView.view);
+  const selectedValues = $derived(activeViewModel.getFilterValue(column.id));
+
+  const categories = $derived(account.transactions.map((transaction: Transaction) => transaction.category).concat(selectedValues));
   const allCategories = $derived(data.categories);
 
   const categoryOptions = $derived(categories?.map((category: Category) => {

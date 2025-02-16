@@ -17,7 +17,7 @@
   <div class="grid">
     <ShadSidebar.Provider>
       <Sidebar />
-      <main>
+      <main class="w-full">
         <ShadSidebar.Trigger />
         <div class="col-span-3 lg:col-span-4">
           <div class="h-full px-4 py-6 lg:px-8">

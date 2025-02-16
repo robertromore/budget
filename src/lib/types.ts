@@ -1,6 +1,9 @@
 import type { Category, Payee } from '$lib/schema';
 import type { DateValue } from '@internationalized/date';
 import type { Component } from 'svelte';
+import type { RenderComponentConfig } from './components/ui/data-table/render-helpers';
+import type { Column, ExpandedState, GroupingState, SortingState } from '@tanstack/table-core';
+import type { SvelteSet } from 'svelte/reactivity';
 
 export type EditableBooleanItem = {
   value: boolean;
@@ -43,6 +46,25 @@ export type UpdateDataFn = (value: unknown) => void;
 
 export type ViewFilter = {
   column: string;
-  value: string[];
-  component: Component;
+  filter: string;
+  value: unknown[];
+};
+
+export type ViewFilterWithSet = ViewFilter & {
+  value: SvelteSet<unknown>;
+};
+
+export type FilterInputOption<T> = {
+  name: string;
+  icon?: Component;
+  component: () => RenderComponentConfig<Component<{}, {}, ''>>;
+  column: Column<T, unknown>;
+  value: unknown[];
+};
+
+export type ViewDisplayState = {
+  [key: string]: any;
+  grouping?: GroupingState;
+  sort?: SortingState;
+  expanded?: ExpandedState;
 };

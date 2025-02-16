@@ -1,28 +1,33 @@
 <script lang="ts" generics="TValue">
   import {
     type ColumnDef,
-    type ColumnFiltersState,
-    type PaginationState,
-    type RowSelectionState,
-    type SortingState,
-    type VisibilityState,
-    type Updater,
     getCoreRowModel,
+    getExpandedRowModel,
     getFacetedRowModel,
     getFacetedUniqueValues,
     getFilteredRowModel,
+    getGroupedRowModel,
     getPaginationRowModel,
     getSortedRowModel,
-    type FilterFn,
-    type Row,
     type Table as TTable
   } from "@tanstack/table-core";
   import { createSvelteTable, FlexRender } from "$lib/components/ui/data-table";
   import * as Table from "$lib/components/ui/table";
   import type { TransactionsFormat } from '$lib/types';
   import { DataTablePagination, DataTableToolbar } from ".";
-  import { rankItem, type RankItemOptions } from "@tanstack/match-sorter-utils";
-  import { getLocalTimeZone, parseDate, today, type DateValue } from "@internationalized/date";
+  import { getLocalTimeZone, today } from "@internationalized/date";
+  import { filtering, filters, setFiltering, setGlobalFilter } from "../(data)/filters.svelte";
+  import { pagination, setPagination } from "../(data)/pagination.svelte";
+  import { selection, setSelection } from "../(data)/selection.svelte";
+  import { setSorting, sorting } from "../(data)/sorts.svelte";
+  import { visibility, setVisibility } from "../(data)/visibility.svelte";
+  import { grouping, setGrouping } from "../(data)/groups.svelte";
+  import { expanded, setExpanded } from "../(data)/expanded.svelte";
+  import { pinning, setPinning } from "../(data)/pinning.svelte";
+  import type { View } from "$lib/schema";
+  import { CurrentViewState } from "$lib/states/current-view.svelte";
+  import { page } from "$app/state";
+  import { currentViews, CurrentViewsState } from "$lib/states/current-views.svelte";
 
   let {
     columns,
@@ -34,152 +39,7 @@
     table?: TTable<TransactionsFormat>;
   } = $props();
 
-  let filtering = $state<ColumnFiltersState>([]);
-  function setFiltering(updater: Updater<ColumnFiltersState>) {
-    if (updater instanceof Function) {
-      filtering = updater(filtering);
-    } else filtering = updater;
-  }
-
-  let globalFilter = $state('');
-  function setGlobalFilter(updater: Updater<string>) {
-    if (updater instanceof Function) {
-      globalFilter = updater(globalFilter);
-    } else globalFilter = updater;
-  }
-  // const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
-  //   const opts: RankItemOptions = {
-  //     accessors: undefined
-  //   };
-  //   if (columnId === 'payee') {
-  //     opts.accessors = [
-  //       (item) => {
-  //         return `${$state.snapshot(payees.get().payees?.find((payee) => payee.id === item))?.name}`;
-  //       }
-  //     ];
-  //   }
-  //   if (columnId === 'category') {
-  //     opts.accessors = [
-  //       (item) => {
-  //         return `${
-  //           $state.snapshot(categories.get().categories?.find((category) => category.id === item))?.name
-  //         }`;
-  //       }
-  //     ];
-  //   }
-
-  //   // Rank the item
-  //   const itemRank = rankItem(row.getValue(columnId), value, opts);
-
-  //   // Store the itemRank info
-  //   addMeta({ itemRank });
-
-  //   // Return if the item should be filtered in/out
-  //   return itemRank.passed;
-  // };
-
-  const filters = {
-    entityIsFilter: (
-      row: Row<TransactionsFormat>,
-      columnId: string,
-      filterValue: string[] | number[],
-      addMeta: (meta: any) => void
-    ) => {
-      type validType = { [key: string]: any };
-      return filterValue.some(
-        (el: number | string) =>
-          parseInt(el as string) === (row.original as validType)[columnId + 'Id']
-      );
-    },
-    entityIsNotFilter: (
-      row: Row<TransactionsFormat>,
-      columnId: string,
-      filterValue: string[] | number[],
-      addMeta: (meta: any) => void
-    ) => {
-      type validType = { [key: string]: any };
-      return !filterValue.some(
-        (el: number | string) =>
-          parseInt(el as string) === (row.original as validType)[columnId + 'Id']
-      );
-    },
-    dateBefore: (
-      row: Row<TransactionsFormat>,
-      columnId: string,
-      filterValue: string[],
-      addMeta: (meta: any) => void
-    ) => {
-      return (row.original.date?.compare(parseDate(filterValue[0])) || 0) < 0;
-    },
-    dateAfter: (
-      row: Row<TransactionsFormat>,
-      columnId: string,
-      filterValue: string[],
-      addMeta: (meta: any) => void
-    ) => {
-      return (row.original.date?.compare(parseDate(filterValue[0])) || 0) > 0;
-    },
-    dateOn: (
-      row: Row<TransactionsFormat>,
-      columnId: string,
-      filterValue: string[],
-      addMeta: (meta: any) => void
-    ) => {
-      return (row.original.date?.compare(parseDate(filterValue[0])) || 0) === 0;
-    },
-    equalsString: (
-      row: Row<TransactionsFormat>,
-      columnId: string,
-      filterValue: string[],
-      addMeta: (meta: any) => void
-    ) => {
-      return row.original[columnId as keyof TransactionsFormat] == filterValue[0];
-    },
-    doesntEqualString: (
-      row: Row<TransactionsFormat>,
-      columnId: string,
-      filterValue: string[],
-      addMeta: (meta: any) => void
-    ) => {
-      return row.original[columnId as keyof TransactionsFormat] != filterValue[0];
-    },
-  };
-
-  let pagination = $state<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25
-  });
-  function setPagination(updater: Updater<PaginationState>) {
-    if (updater instanceof Function) {
-      pagination = updater(pagination);
-    } else pagination = updater;
-  }
-
-  let selection = $state<RowSelectionState>({});
-  function setSelection(updater: Updater<RowSelectionState>) {
-    if (updater instanceof Function) {
-      selection = updater(selection);
-    } else selection = updater;
-  }
-
-  let sorting = $state<SortingState>([
-    {
-      id: 'id',
-      desc: true
-    }
-  ]);
-  function setSorting(updater: Updater<SortingState>) {
-    if (updater instanceof Function) {
-      sorting = updater(sorting);
-    } else sorting = updater;
-  }
-
-  let visibility = $state<VisibilityState>({});
-  function setVisibility(updater: Updater<VisibilityState>) {
-    if (updater instanceof Function) {
-      visibility = updater(visibility);
-    } else visibility = updater;
-  }
+  let _dateMapCache: Map<string, Map<string, string>> = new Map();
 
   table = createSvelteTable<TransactionsFormat>({
     get data() {
@@ -187,24 +47,36 @@
     },
     state: {
       get sorting() {
-        return sorting;
+        return sorting();
       },
       get columnVisibility() {
-        return visibility;
+        return visibility();
       },
       get rowSelection() {
-        return selection;
+        return selection();
       },
       get columnFilters() {
-        return filtering;
+        return filtering();
       },
       get pagination() {
-        return pagination;
+        return pagination();
       },
+      get grouping() {
+        return grouping()
+      },
+      get expanded() {
+        return expanded()
+      },
+      get columnPinning() {
+        return pinning()
+      }
     },
     initialState: {
       columnVisibility: {
         id: false
+      },
+      columnPinning: {
+        right: ['select-col']
       }
     },
     columns,
@@ -215,14 +87,24 @@
     onColumnVisibilityChange: setVisibility,
     onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
+    onGroupingChange: setGrouping,
+    onExpandedChange: setExpanded,
+    onColumnPinningChange: setPinning,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     getFacetedUniqueValues: (table: TTable<TransactionsFormat>, columnId: string) => () => {
       const rows = table.getGlobalFacetedRowModel().flatRows;
       if (columnId === 'date') {
+        // const filterFnName = table.getColumn(columnId)?.getFilterFn()?.toString();
+        // if (filterFnName && _dateMapCache.has(filterFnName)) {
+        //   return _dateMapCache.get(filterFnName) as Map<string, string>;
+        // }
+
         const newmap = new Map();
         const thisday = today(getLocalTimeZone());
         const dates = [
@@ -241,27 +123,29 @@
             }
           }
         }
+        // _dateMapCache.set(filterFnName!, newmap);
         return newmap;
       }
-      // else if (columnId === 'status') {
-      //   // console.log(map, rows)
-      //   const newmap = new Map();
-      //   map.forEach((value, key) => {
-      //     newmap.set(key as string, value);
-      //   });
-      //   return newmap;
-      // }
-      const map = getFacetedUniqueValues<TransactionsFormat>()(table, columnId)();
-      return map;
+
+      return getFacetedUniqueValues<TransactionsFormat>()(table, columnId)();
     },
     // globalFilterFn: fuzzyFilter,
-    filterFns: {...filters}
+    filterFns: {...filters},
+    groupedColumnMode: 'reorder',
+    autoResetExpanded: false
   });
+
+  const views: View[] = page.data.views;
+
+  const _currentViewStates: CurrentViewState<TransactionsFormat>[] = views.map((view: View) => new CurrentViewState<TransactionsFormat>(view, table));
+  currentViews.set(new CurrentViewsState<TransactionsFormat>(
+    _currentViewStates
+  ));
 </script>
 
 <div class="space-y-4">
   <DataTableToolbar {table} />
-  <div class="rounded-md border">
+  <div class="rounded-md border w-full">
     <Table.Root>
       <Table.Header>
         {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
@@ -283,12 +167,23 @@
         {#each table.getRowModel().rows as row (row.id)}
           <Table.Row data-state={row.getIsSelected() && "selected"}>
             {#each row.getVisibleCells() as cell (cell.id)}
-              <Table.Cell>
-                <FlexRender
-                  content={cell.column.columnDef.cell}
-                  context={cell.getContext()}
-                />
-              </Table.Cell>
+              {#if cell.getIsAggregated()}
+                <Table.Cell>
+                  <FlexRender
+                    content={cell.column.columnDef.aggregatedCell}
+                    context={cell.getContext()}
+                  />
+                </Table.Cell>
+              {:else if cell.getIsPlaceholder()}
+                <Table.Cell></Table.Cell>
+              {:else}
+                <Table.Cell>
+                  <FlexRender
+                    content={cell.column.columnDef.cell}
+                    context={cell.getContext()}
+                  />
+                </Table.Cell>
+              {/if}
             {/each}
           </Table.Row>
         {:else}

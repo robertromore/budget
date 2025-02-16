@@ -8,7 +8,8 @@
 	import type { WithoutChildren } from "bits-ui";
 	import { cn } from "$lib/utils.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-  import Button from "$lib/components/ui/button/button.svelte";
+  import Button, { buttonVariants } from "$lib/components/ui/button/button.svelte";
+  import { currentViews } from "$lib/states/current-views.svelte";
 
 	type Props = HTMLAttributes<HTMLDivElement> & {
 		column: Column<TData, TValue>;
@@ -16,10 +17,13 @@
 	};
 
 	let { column, class: className, title, ...restProps }: WithoutChildren<Props> = $props();
+
+  const currentView = $derived(currentViews.get().activeView);
+  const sortState = $derived(currentView.view.getSorting().find(sorter => sorter.id === column.id));
 </script>
 
 {#if !column?.getCanSort()}
-	<div class={className} {...restProps}>
+	<div class={cn(buttonVariants({ variant: "ghost", size: "sm" }), className)} {...restProps}>
 		{title}
 	</div>
 {:else}
@@ -36,9 +40,9 @@
 						<span>
 							{title}
 						</span>
-						{#if column.getIsSorted() === "desc"}
+						{#if sortState && sortState.desc}
 							<ArrowDown class="ml-2 size-4" />
-						{:else if column.getIsSorted() === "asc"}
+						{:else if sortState && !sortState.desc}
 							<ArrowUp class="ml-2 size-4" />
 						{:else}
 							<CaretSort class="ml-2 size-4" />
@@ -47,11 +51,11 @@
 				{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content align="start">
-				<DropdownMenu.Item onclick={() => column.toggleSorting(false)}>
+				<DropdownMenu.Item onclick={() => currentView.updateTableSorter(column.id, false)}>
 					<ArrowUp class="text-muted-foreground/70 mr-2 size-3.5" />
 					Asc
 				</DropdownMenu.Item>
-				<DropdownMenu.Item onclick={() => column.toggleSorting(true)}>
+				<DropdownMenu.Item onclick={() => currentView.updateTableSorter(column.id, true)}>
 					<ArrowDown class="text-muted-foreground/70 mr-2 size-3.5" />
 					Desc
 				</DropdownMenu.Item>

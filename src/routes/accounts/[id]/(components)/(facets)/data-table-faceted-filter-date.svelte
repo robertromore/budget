@@ -4,8 +4,9 @@
   import UsersRound from 'lucide-svelte/icons/users-round';
   import type { Component } from 'svelte';
   import { getLocalTimeZone, today } from '@internationalized/date';
+  import type { HTMLAttributes } from 'svelte/elements';
 
-  type Props<TData, TValue> = {
+  type Props<TData, TValue> = HTMLAttributes<HTMLDivElement> & {
 		column: Column<TData, TValue>;
 	};
 

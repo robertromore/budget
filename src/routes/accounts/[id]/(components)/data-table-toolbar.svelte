@@ -1,55 +1,111 @@
-<script lang="ts" generics="TData">
+<script lang="ts">
   import type { Table } from "@tanstack/table-core";
-  import { DataTableViewOptions } from "./";
   import * as ToggleGroup from "$lib/components/ui/toggle-group";
-  import { page } from "$app/state";
-  import type { View } from "$lib/schema/view";
-  import type { ViewFilter } from "$lib/types";
+  import type { FilterInputOption, TransactionsFormat } from "$lib/types";
+  import { Separator } from "$lib/components/ui/separator";
+  import CirclePlus from "lucide-svelte/icons/circle-plus";
+  import Layers from "lucide-svelte/icons/layers";
+  import PencilLine from "lucide-svelte/icons/pencil-line";
+  import Toggle from "$lib/components/ui/toggle/toggle.svelte";
+  import ManageViewForm from "$lib/components/forms/manage-view-form.svelte";
+  import FilterInput from "$lib/components/input/filter-input.svelte";
+  import { currentViews } from "$lib/states/current-views.svelte";
+  import DisplayInput from "$lib/components/input/display-input.svelte";
+  import Asterisk from "lucide-svelte/icons/asterisk";
+  import { Button } from "$lib/components/ui/button";
 
   let {
     table,
   }: {
-    table: Table<TData>,
+    table: Table<TransactionsFormat>;
   } = $props();
 
-  const views: View[] = $derived<View[]>(page.data.views);
+  let newViewForm = $state(false);
+  let filterComponents: FilterInputOption<TransactionsFormat>[] = $derived.by(() => {
+    const columns = table.getAllColumns();
+    return columns
+      .filter(column => column && column.getIsVisible() && column.columnDef.meta?.facetedFilter)
+      .map(column => {
+        return column.columnDef.meta?.facetedFilter(column);
+      });
+  });
 
-  let currentView = $state('upcoming');
-  let currentViewFilters: ViewFilter[] = $derived<ViewFilter[]>(views.find(view => view.name === currentView)?.filters as ViewFilter[]);
-  const updateViewFilters = () => {
-    if (currentViewFilters.length === 0) {
-      table.resetColumnFilters();
-    }
-    currentViewFilters.forEach(filter => {
-      table.getColumn(filter.column)?.setFilterValue(filter.value);
-    });
-  };
-  updateViewFilters();
+  const _currentViews = $derived(currentViews.get());
 </script>
 
-<ToggleGroup.Root
-  type="single"
-  class="justify-start items-start"
-  value={currentView}
-  onValueChange={value => {
-    currentView = value;
-    updateViewFilters();
-  }}>
-  {#each views as view}
-    <ToggleGroup.Item value={view.name} aria-label={view.label}>
-      {view.label}
-    </ToggleGroup.Item>
-  {/each}
-</ToggleGroup.Root>
-
-<div class="flex items-center justify-between">
-  <div class="flex flex-1 items-center space-x-2">
-      {#each currentViewFilters as filter}
-        {@const column = table.getColumn(filter.column)}
-        {#if column?.getIsVisible()}
-          <filter.component {column} value={filter.value}/>
+<div class="flex text-sm">
+  <ToggleGroup.Root
+    type="single"
+    size="sm"
+    class="justify-start items-start"
+    value={_currentViews.activeViewId.toString()}
+    onValueChange={value => {
+      newViewForm = false;
+      _currentViews.remove(-1).setActive(parseInt(value));
+    }}>
+    {#each _currentViews.viewsStates.values() as currentView}
+      <ToggleGroup.Item value={currentView.view.id.toString()} aria-label={currentView.view.name}>
+        {currentView.view.name}
+        {#if currentView.view.dirty}
+          <Asterisk class="size-3"/>
         {/if}
-      {/each}
+      </ToggleGroup.Item>
+    {/each}
+  </ToggleGroup.Root>
+
+  <Separator orientation="vertical" class="mx-4"/>
+
+  <Toggle variant="outline" size="sm" bind:pressed={
+    () => newViewForm,
+    (value) => {
+      newViewForm = value;
+      if (value) {
+        _currentViews.addTemporaryView(table);
+      } else {
+        _currentViews.removeTemporaryView();
+      }
+    }
+  } disabled={newViewForm}>
+    {#if newViewForm}
+      <Layers class="size-4 mr-2" /> New view <PencilLine class="size-4 ml-2" />
+    {:else}
+      <CirclePlus class="size-4"/>
+    {/if}
+  </Toggle>
+</div>
+
+<Separator/>
+
+{#if newViewForm}
+  <ManageViewForm availableFilters={filterComponents} onCancel={() => newViewForm = false} />
+{:else}
+  <div class="flex">
+    <FilterInput availableFilters={filterComponents} />
+
+    <div class="flex-grow"></div>
+
+    <div class="gap-1 flex">
+      <DisplayInput />
+      {#if _currentViews.activeView.view.dirty}
+        <Button variant="outline" size="sm" onclick={() => _currentViews.activeView.resetToInitialState()}>Clear</Button>
+        <Button size="sm" onclick={() => _currentViews.activeView.view.saveView()}>Save</Button>
+      {/if}
+    </div>
+  </div>
+{/if}
+
+  <!-- <div class="flex flex-1 items-center space-x-2">
+    {#each currentViewFilters as filter}
+      {@const column = table.getColumn(filter.column)}
+      {#if column?.getIsVisible()}
+        <filter.component {column} value={filter.value}/>
+      {/if}
+    {/each}
+
+    <Button variant="ghost">
+      <ListFilterPlus/>
+    </Button> -->
+
     <!-- <Input
       placeholder="Filter tasks..."
       value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
@@ -92,7 +148,6 @@
         column={statusCol}
       />
     {/if} -->
-  </div>
+  <!-- </div> -->
 
-  <DataTableViewOptions {table} />
-</div>
+  <!-- <DataTableViewOptions {table} /> -->

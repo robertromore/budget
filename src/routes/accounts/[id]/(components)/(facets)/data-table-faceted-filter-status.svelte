@@ -5,20 +5,24 @@
   import UsersRound from 'lucide-svelte/icons/users-round';
   import type { Component } from 'svelte';
   import { page } from '$app/state';
-  import { TransactionStatuses, type Category, type Transaction, type TransactionStatus } from '$lib/schema';
+  import { TransactionStatuses, type Transaction } from '$lib/schema';
   import { SvelteSet } from 'svelte/reactivity';
+  import { currentViews } from '$lib/states/current-views.svelte';
 
   type Props<TData, TValue> = {
-    id: number;
 		column: Column<TData, TValue>;
-    value: TValue;
 	};
 
-	let { id, column, value }: Props<TData, TValue> = $props();
+	let { column }: Props<TData, TValue> = $props();
 
   const { data } = $derived(page);
   const account = $derived(data.account);
-  const statuses = $derived([...new SvelteSet<TransactionStatuses>(account.transactions.map((transaction: Transaction) => transaction.status))]);
+
+  const activeView = $derived(currentViews.get().activeView);
+  const activeViewModel = $derived(activeView.view);
+  const selectedValues = $derived(activeViewModel.getFilterValue(column.id));
+
+  const statuses: TransactionStatuses[] = $derived([...new SvelteSet<TransactionStatuses>(account.transactions.map((transaction: Transaction) => transaction.status)).union(selectedValues)] as TransactionStatuses[]);
   const allStatuses = $derived(Object.values(TransactionStatuses));
 
   const statusOptions = $derived(statuses?.map((status: TransactionStatuses) => {
@@ -44,5 +48,4 @@
   options={statusOptions}
   allOptions={allStatusOptions}
   allIcon={UsersRound as unknown as Component}
-  {value}
 />
