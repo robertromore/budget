@@ -35,7 +35,7 @@
 <div class="mb-2 flex items-center">
   <h1 class="mr-5 text-3xl">{account?.name}</h1>
   <span class="text-sm text-muted-foreground">
-    <strong>Balance:</strong> {account?.balance}
+    <strong>Balance:</strong> {currentAccountState?.balance}
   </span>
 </div>
 
