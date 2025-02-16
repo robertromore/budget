@@ -1,6 +1,6 @@
 <script lang="ts">
-  import * as ShadSidebar from "$lib/components/ui/sidebar/index.js";
-  import Sidebar from '$lib/components/Sidebar.svelte';
+  import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+  import AppSidebar from '$lib/components/app-sidebar.svelte';
   import '../app.pcss';
   import type { LayoutData } from "./$types";
   import type { Snippet } from "svelte";
@@ -15,22 +15,22 @@
   payeesContext.set(new PayeesState((() => payees)()));
 </script>
 
-{#if dev}
+<!-- {#if dev}
 	<RenderScan />
-{/if}
+{/if} -->
 
 <div class="bg-background">
   <div class="grid">
-    <ShadSidebar.Provider>
-      <Sidebar />
+    <Sidebar.Provider>
+      <AppSidebar />
       <main class="w-full">
-        <ShadSidebar.Trigger />
+        <Sidebar.Trigger />
         <div class="col-span-3 lg:col-span-4">
           <div class="h-full px-4 py-6 lg:px-8">
             {@render children?.()}
           </div>
         </div>
       </main>
-    </ShadSidebar.Provider>
+    </Sidebar.Provider>
   </div>
 </div>
