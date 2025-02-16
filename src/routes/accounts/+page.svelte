@@ -5,14 +5,8 @@
   import { currencyFormatter } from '$lib/helpers/formatters';
   import AddAccountDialog from '$lib/components/dialogs/add-account-dialog.svelte';
   import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
-  import { setFormsState } from '$lib/states/forms.svelte';
 
   let { data } = $props<{ data: PageData }>();
-
-  setFormsState({
-    manageAccountForm: data.manageAccountForm,
-    deleteAccountForm: data.deleteAccountForm
-  });
 
   let deleteDialogId: number | null = $state(null);
   let deleteDialogOpen: boolean = $state(false);
