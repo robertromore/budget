@@ -12,7 +12,7 @@
     handleSubmit
   }: {
     value?: DateValue;
-    handleSubmit?: (value: DateValue | DateValue[] | undefined) => void;
+    handleSubmit?: (value: DateValue | undefined) => void;
   } = $props();
 </script>
 

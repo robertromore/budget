@@ -10,7 +10,7 @@
     onUpdateValue?: (newValue: unknown) => void;
   } = $props();
 
-  const handleSubmit = (new_value: DateValue | DateValue[] | undefined) => {
+  const handleSubmit = (new_value: DateValue | undefined) => {
     if (onUpdateValue) {
       onUpdateValue(new_value);
     }
