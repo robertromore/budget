@@ -30,7 +30,7 @@ import CalendarDays from 'lucide-svelte/icons/calendar-days';
 import HandCoins from 'lucide-svelte/icons/hand-coins';
 import SquareMousePointer from 'lucide-svelte/icons/square-mouse-pointer';
 import CircleCheckBig from 'lucide-svelte/icons/circle-check-big';
-import { Plusbox } from '$lib/components/ui/plusbox';
+import { ExpandToggle } from '$lib/components/ui/expand-toggle';
 import { currencyFormatter } from '$lib/helpers/formatters';
 
 export const columns = (
@@ -105,7 +105,7 @@ export const columns = (
       id: 'expand-contract-col',
       header: ({ table }) =>
         table.getCanSomeRowsExpand()
-          ? renderComponent(Plusbox, {
+          ? renderComponent(ExpandToggle, {
               checked: table.getIsAllRowsExpanded(),
               // disabled: table.getCanSomeRowsExpand(),
               onCheckedChange: table.getToggleAllRowsExpandedHandler(),
@@ -115,7 +115,7 @@ export const columns = (
           : '',
       aggregatedCell: ({ row }) =>
         row.getCanExpand()
-          ? renderComponent(Plusbox, {
+          ? renderComponent(ExpandToggle, {
               checked: row.getIsExpanded(),
               disabled: !row.getCanExpand(),
               onCheckedChange: row.getToggleExpandedHandler(),
