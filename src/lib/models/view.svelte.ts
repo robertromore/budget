@@ -250,4 +250,8 @@ export default class View {
       )
     );
   }
+
+  async deleteView() {
+    await trpc().viewsRoutes.delete.mutate({ entities: [this.view.id] });
+  }
 }

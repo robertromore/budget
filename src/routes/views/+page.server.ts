@@ -13,7 +13,7 @@ export const load: PageServerLoad = async () => ({
 });
 
 export const actions: Actions = {
-  'add-view': async (event) => {
+  'save-view': async (event) => {
     const form = await superValidate(event, zod(insertViewSchema));
     if (!form.valid) {
       return fail(400, {

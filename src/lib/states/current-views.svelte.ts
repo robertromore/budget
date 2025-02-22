@@ -34,11 +34,25 @@ export class CurrentViewsState<T> {
     return this;
   }
 
-  remove(viewState: CurrentViewState<T> | number) {
-    if (typeof viewState === 'number') {
+  get(id: number | number[]) {
+    if (Array.isArray(id)) {
+      return this.viewsStates
+        .values()
+        .filter((viewState) => id.includes(viewState.view.id))
+        .toArray();
+    }
+    return this.viewsStates.values().find((viewState) => viewState.view.id === id);
+  }
+
+  remove(viewState: CurrentViewState<T> | number, setFirstToActive: boolean = true) {
+    if (typeof viewState === "number") {
       this.viewsStates.delete(viewState);
     } else {
       this.viewsStates.delete((viewState as CurrentViewState<T>).view.id);
+    }
+
+    if (setFirstToActive) {
+      this.setActive(this.viewsStates.values().next().value!);
     }
     return this;
   }

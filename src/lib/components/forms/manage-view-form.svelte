@@ -1,31 +1,34 @@
 <script lang="ts">
-  import * as Form from '$lib/components/ui/form';
-  import {
-    insertViewSchema,
-    type Transaction
-  } from '$lib/schema';
-  import { superForm } from 'sveltekit-superforms/client';
-  import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-  import { zodClient } from 'sveltekit-superforms/adapters';
   import { page } from '$app/state';
-  import { Input } from '../ui/input';
-  import FilterInput from '../input/filter-input.svelte';
-  import type { FilterInputOption, TransactionsFormat, ViewFilter } from '$lib/types';
-  import DisplayInput from '../input/display-input.svelte';
-  import { Button, buttonVariants } from '../ui/button';
+  import * as Form from '$lib/components/ui/form';
+  import Textarea from '$lib/components/ui/textarea/textarea.svelte';
+  import {
+      insertViewSchema,
+      type View
+  } from '$lib/schema';
+  import type { CurrentViewState } from '$lib/states/current-view.svelte';
   import { currentViews } from '$lib/states/current-views.svelte';
-    import SuperDebug from 'sveltekit-superforms';
+  import type { FilterInputOption, TransactionsFormat } from '$lib/types';
+  import { zodClient } from 'sveltekit-superforms/adapters';
+  import { superForm } from 'sveltekit-superforms/client';
+  import DeleteViewDialog from '../dialogs/delete-view-dialog.svelte';
+  import DisplayInput from '../input/display-input.svelte';
+  import FilterInput from '../input/filter-input.svelte';
+  import { Button, buttonVariants } from '../ui/button';
+  import { Input } from '../ui/input';
 
   let {
     onCancel,
+    onDelete,
     onSave,
     availableFilters,
-    // filters,
+    viewId = $bindable(),
   }: {
     onCancel?: () => {},
-    onSave?: (new_entity: Transaction) => void;
+    onDelete?: () => void,
+    onSave?: (new_entity: View) => void;
     availableFilters: FilterInputOption<TransactionsFormat>[];
-    // filters?: ViewFilter[];
+    viewId?: number;
   } = $props();
 
   const { data: { manageViewForm } } = page;
@@ -45,21 +48,32 @@
 
   const { form: formData, enhance, errors } = form;
 
-  const _currentViews = currentViews.get();
-  const activeView = _currentViews.activeView;
+  const _currentViews = $derived(currentViews.get());
+  const activeView = $derived(viewId && viewId > 0 ? _currentViews.get(viewId) : _currentViews.activeView) as CurrentViewState<TransactionsFormat>;
 
-  // const filters = $derived(activeView.filters);
+  let alertDialogOpen = $state(false);
+
   $effect(() => {
-    $formData.filters = Array.from(activeView.view.getAllFilterValues());
+    $formData.id = viewId;
+    $formData.name = activeView?.view.name;
+    $formData.description = activeView?.view.description;
+    $formData.filters = activeView?.view.getAllFilterValues();
     $formData.display = {
-      grouping: activeView.view.getGrouping(),
-      sorting: activeView.view.getSorting(),
-      expanded: activeView.view.getExpanded()
+      grouping: activeView?.view.getGrouping(),
+      sorting: activeView?.view.getSorting(),
+      expanded: activeView?.view.getExpanded()
     };
   });
 </script>
 
-<form method="post" action="/views?/add-view" use:enhance class="border p-4 rounded-sm">
+<DeleteViewDialog bind:dialogOpen={alertDialogOpen} views={[$formData.id]} onDelete={() => {
+  if (onDelete) {
+    onDelete();
+  }
+  activeView?.view.deleteView();
+}}/>
+
+<form method="post" action="/views?/save-view" use:enhance class="border p-4 rounded-sm">
   <!-- <Form.Field {form} name="icon">
     <Form.Control>
       {#snippet children({ props })}
@@ -77,18 +91,18 @@
         {#snippet children({ props })}
           <Input {...props} bind:value={$formData.name} name={props.name} placeholder="View name" />
           <Form.FieldErrors />
-          <!-- <input hidden bind:value={$formData.name} name={props.name} /> -->
         {/snippet}
       </Form.Control>
     </Form.Field>
     <div class="min-w-max">
-      <Button variant="destructive" size="default" onclick={() => {
+      <Form.Button class={buttonVariants({ size: "default" })}>save</Form.Button>
+      <Button variant="outline" size="default" onclick={() => {
         if (onCancel) {
           onCancel();
         }
         _currentViews.removeTemporaryView();
       }}>cancel</Button>
-      <Form.Button class={buttonVariants({ size: "default" })}>save</Form.Button>
+      <Button variant="destructive" size="default" onclick={() => alertDialogOpen = true}>delete</Button>
     </div>
   </div>
 
@@ -97,7 +111,6 @@
       {#snippet children({ props })}
         <Textarea {...props} bind:value={$formData.description} name={props.name} placeholder="Description (optional)" />
         <Form.FieldErrors />
-        <!-- <input hidden bind:value={$formData.description} name={props.name} /> -->
       {/snippet}
     </Form.Control>
   </Form.Field>
