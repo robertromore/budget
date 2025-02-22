@@ -88,6 +88,20 @@ export default class View {
     return this;
   }
 
+  updateSorter = (column: string, value: boolean) => {
+    this.view.display = this.view.display || {};
+    this.view.display.sort =
+      this.view.display.sort?.map((sorter) => {
+        if (sorter.id !== column) {
+          return sorter;
+        }
+        return Object.assign({}, sorter, { desc: value });
+      }) || [];
+    if (!this.view.display.sort?.find((sorter) => sorter.id === column)) {
+      this.view.display.sort = this.view.display.sort?.concat({ id: column, desc: false });
+    }
+  };
+
   getExpanded(): ExpandedState {
     return this.view.display?.expanded || {};
   }

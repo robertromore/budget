@@ -147,20 +147,8 @@ export class CurrentViewState<TData> {
   }
 
   updateTableSorter = (column: string, value: boolean) => {
-    // this.view.display = this.view.display || {};
-    // this.view.display.sort = this.view.display.sort?.map((sorter) => {
-    //   if (sorter.id !== column) {
-    //     return sorter;
-    //   }
-    //   return Object.assign({}, sorter, { desc: value });
-    // });
-    // if (!this.view.display.sort?.find((sorter) => sorter.id === column)) {
-    //   this.view.display.sort = this.view.display.sort?.concat({ id: column, desc: false });
-    // }
-    // if (this.view.display.sort) {
-    //   this.table.setSorting(this.view.display.sort);
-    // }
-    // this.dirty = !this.isClean();
+    this.view.updateSorter(column, value);
+    this.table.setSorting(this.view.getSorting());
   };
 }
 
