@@ -34,11 +34,11 @@ export const transactions = sqliteTable(
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`)
   },
-  (table) => ({
-    account: index('relations_transaction_account_idx').on(table.accountId),
-    payee: index('relations_transaction_payee_idx').on(table.payeeId),
-    category: index('relations_transaction_category_idx').on(table.categoryId)
-  })
+  (table) => [
+    index('relations_transaction_account_idx').on(table.accountId),
+    index('relations_transaction_payee_idx').on(table.payeeId),
+    index('relations_transaction_category_idx').on(table.categoryId)
+  ]
 );
 
 export const transactionsRelations = relations(transactions, ({ many, one }) => ({
@@ -62,7 +62,6 @@ export const transactionsRelations = relations(transactions, ({ many, one }) => 
 
 export const selectTransactionSchema = createSelectSchema(transactions);
 export const insertTransactionSchema = createInsertSchema(transactions);
-// export const formInsertTransactionSchema = createInsertSchema(transactions);
 export const removeTransactionsSchema = z.object({
   entities: z.array(z.number().nonnegative()),
   accountId: z.number()
