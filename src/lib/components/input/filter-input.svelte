@@ -18,7 +18,13 @@
   const currentView = $derived(currentViews.get().activeView);
   // const _selectedColumnValues = $derived(new SvelteMap<string, SvelteSet<unknown>>([...currentView.filters.values()].map(selectedFilter => [selectedFilter.column, selectedFilter.value])));
   // const _selectedColumnValues = $derived(currentView.view.getAllFilterValues());
-  const _selectedFilters = $derived(currentView.view.getAllFilteredColumns().map(selectedFilter => availableFilters.find((availableFilter) => availableFilter.column.id === selectedFilter)));
+  const _selectedFilters = $derived(
+    currentView.view
+      .getAllFilteredColumns()
+      .map((selectedFilter) =>
+        availableFilters.find((availableFilter) => availableFilter.column.id === selectedFilter)
+      )
+  );
 
   // $effect(() => {
   //   value = _selectedFilters.map(_selectedFilter => {
@@ -30,7 +36,12 @@
   //   });
   // })
 
-  let selectableFilters = $derived(availableFilters.filter((availableFilter) => _selectedFilters.toArray().findIndex(filter => filter?.name === availableFilter.name) < 0));
+  let selectableFilters = $derived(
+    availableFilters.filter(
+      (availableFilter) =>
+        _selectedFilters.toArray().findIndex((filter) => filter?.name === availableFilter.name) < 0
+    )
+  );
 
   // $effect(() => {
   //   _selectedFilters.forEach(availableFilter => availableFilter.column.setFilterValue(availableFilter.value));
@@ -54,20 +65,23 @@
   {/each}
 
   <DropdownMenu.Root>
-    <DropdownMenu.Trigger class={cn(buttonVariants({ variant: "outline" }), 'h-8')}>
+    <DropdownMenu.Trigger class={cn(buttonVariants({ variant: "outline" }), "h-8")}>
       <ListFilterPlus />
       Filter
     </DropdownMenu.Trigger>
     <DropdownMenu.Content>
       <DropdownMenu.Group>
         {#each selectableFilters as selectableFilter}
-          <DropdownMenu.Item onSelect={() => currentView.addFilter({
-            column: selectableFilter.column.id,
-            value: selectableFilter.value,
-            filter: selectableFilter.column.columnDef.filterFn?.toString() || ''
-          })}>
+          <DropdownMenu.Item
+            onSelect={() =>
+              currentView.addFilter({
+                column: selectableFilter.column.id,
+                value: selectableFilter.value,
+                filter: selectableFilter.column.columnDef.filterFn?.toString() || "",
+              })}
+          >
             {#if selectableFilter.icon}
-              <selectableFilter.icon/>
+              <selectableFilter.icon />
             {/if}
             <span>{selectableFilter.name}</span>
           </DropdownMenu.Item>

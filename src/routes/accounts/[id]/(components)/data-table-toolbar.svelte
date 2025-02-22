@@ -12,14 +12,11 @@
   import { currentViews } from "$lib/states/current-views.svelte";
   import DisplayInput from "$lib/components/input/display-input.svelte";
   import Asterisk from "lucide-svelte/icons/asterisk";
-  import { Button, buttonVariants } from "$lib/components/ui/button";
-  import GripVertical from "lucide-svelte/icons/grip-vertical";
+  import { Button } from "$lib/components/ui/button";
   import Pencil from "lucide-svelte/icons/pencil";
   import Settings2 from "lucide-svelte/icons/settings-2";
   import { cn } from "$lib/utils";
-    import { de } from "@faker-js/faker";
-    import { views } from "$lib/schema";
-    import { CurrentViewState } from "$lib/states/current-view.svelte";
+  import { CurrentViewState } from "$lib/states/current-view.svelte";
 
   let {
     table,
@@ -34,8 +31,8 @@
   let filterComponents: FilterInputOption<TransactionsFormat>[] = $derived.by(() => {
     const columns = table.getAllColumns();
     return columns
-      .filter(column => column && column.getIsVisible() && column.columnDef.meta?.facetedFilter)
-      .map(column => {
+      .filter((column) => column && column.getIsVisible() && column.columnDef.meta?.facetedFilter)
+      .map((column) => {
         return column.columnDef.meta?.facetedFilter(column);
       });
   });
@@ -44,18 +41,24 @@
   const firstViewId = $derived(_currentViews.viewsStates.values().next().value?.view.id!);
   let currentViewValue = $state((() => firstViewId)().toString());
 
-  const editableViews = $derived(_currentViews.viewsStates.values().filter(viewState => viewState.view.id > 0).toArray());
-  // const editableViewsLength = $derived(editableViews.toArray().length);
-  const nonEditableViews = $derived(_currentViews.viewsStates.values().filter(viewState => viewState.view.id < -1));
+  const editableViews = $derived(
+    _currentViews.viewsStates
+      .values()
+      .filter((viewState) => viewState.view.id > 0)
+      .toArray()
+  );
+  const nonEditableViews = $derived(
+    _currentViews.viewsStates.values().filter((viewState) => viewState.view.id < -1)
+  );
 </script>
 
 <div class="flex text-sm">
   <ToggleGroup.Root
     type="single"
     size="sm"
-    class="justify-start items-start"
+    class="items-start justify-start"
     bind:value={currentViewValue}
-    onValueChange={value => {
+    onValueChange={(value) => {
       manageViewForm = false;
       let newView: number;
       if (!value) {
@@ -65,23 +68,28 @@
         newView = parseInt(value);
       }
       _currentViews.remove(-1).setActive(newView);
-    }}>
+    }}
+  >
     {#each nonEditableViews as viewState}
-      <div class={cn(viewState.view.id >= 0 && editViewsMode ? "flex border rounded-md" : "")}>
+      <div class={cn(viewState.view.id >= 0 && editViewsMode ? "flex rounded-md border" : "")}>
         <ToggleGroup.Item value={viewState.view.id.toString()} aria-label={viewState.view.name}>
           {viewState.view.name}
         </ToggleGroup.Item>
       </div>
     {/each}
 
-    <Separator orientation="vertical" class="mx-1"/>
+    <Separator orientation="vertical" class="mx-1" />
 
     {#each editableViews as viewState}
-      <div class={cn(editViewsMode ? "flex border rounded-md" : "")}>
-        <ToggleGroup.Item value={viewState.view.id.toString()} aria-label={viewState.view.name} class={cn(editViewsMode ? "rounded-r-none" : "")}>
+      <div class={cn(editViewsMode ? "flex rounded-md border" : "")}>
+        <ToggleGroup.Item
+          value={viewState.view.id.toString()}
+          aria-label={viewState.view.name}
+          class={cn(editViewsMode ? "rounded-r-none" : "")}
+        >
           {viewState.view.name}
           {#if viewState.view.dirty}
-            <Asterisk class="-ml-1"/>
+            <Asterisk class="-ml-1" />
           {/if}
         </ToggleGroup.Item>
 
@@ -93,84 +101,110 @@
               </Button>
             {/if} -->
 
-            <Toggle variant="outline" class={cn("px-2 rounded-l-none h-8 border-none")} bind:pressed={
-              () => manageViewForm && viewState.view.id === editViewId,
-              (value) => {
-                currentViewValue = viewState.view.id.toString();
-                _currentViews.setActive(viewState.view.id);
-                editViewId = value ? viewState.view.id : -1;
-                manageViewForm = value;
+            <Toggle
+              variant="outline"
+              class={cn("h-8 rounded-l-none border-none px-2")}
+              bind:pressed={
+                () => manageViewForm && viewState.view.id === editViewId,
+                (value) => {
+                  currentViewValue = viewState.view.id.toString();
+                  _currentViews.setActive(viewState.view.id);
+                  editViewId = value ? viewState.view.id : -1;
+                  manageViewForm = value;
+                }
               }
-            }>
+            >
               <Pencil />
-          </Toggle>
+            </Toggle>
           </div>
         {/if}
       </div>
     {/each}
   </ToggleGroup.Root>
 
-  <Toggle variant="outline" size="sm" class="ml-2" bind:pressed={
-    () => editViewsMode,
-    (value) => {
-      editViewsMode = value;
-      manageViewForm = false;
-      if (!value) {
-        editViewId = -1;
-      }
-  }}>
-    <Settings2/>
-  </Toggle>
-
-  <Toggle variant="outline" size="sm" class="ml-2" bind:pressed={
-    () => manageViewForm,
-    (value) => {
-      manageViewForm = value;
-      editViewsMode = false;
-      if (value) {
-        _currentViews.addTemporaryView(table);
-      } else {
-        _currentViews.removeTemporaryView();
+  <Toggle
+    variant="outline"
+    size="sm"
+    class="ml-2"
+    bind:pressed={
+      () => editViewsMode,
+      (value) => {
+        editViewsMode = value;
+        manageViewForm = false;
+        if (!value) {
+          editViewId = -1;
+        }
       }
     }
-  } disabled={manageViewForm}>
+  >
+    <Settings2 />
+  </Toggle>
+
+  <Toggle
+    variant="outline"
+    size="sm"
+    class="ml-2"
+    bind:pressed={
+      () => manageViewForm,
+      (value) => {
+        manageViewForm = value;
+        editViewsMode = false;
+        if (value) {
+          _currentViews.addTemporaryView(table);
+        } else {
+          _currentViews.removeTemporaryView();
+        }
+      }
+    }
+    disabled={manageViewForm}
+  >
     {#if manageViewForm && editViewId === -1}
-      <Layers class="size-4 mr-2" /> New view <PencilLine class="size-4 ml-2" />
+      <Layers class="mr-2 size-4" /> New view <PencilLine class="ml-2 size-4" />
     {:else}
-      <CirclePlus class="size-4"/>
+      <CirclePlus class="size-4" />
     {/if}
   </Toggle>
 </div>
 
-<Separator/>
+<Separator />
 
 {#if manageViewForm}
-  <ManageViewForm availableFilters={filterComponents} onCancel={() => manageViewForm = false} onDelete={() => {
-    manageViewForm = false;
-    _currentViews.remove(editViewId);
-    currentViewValue = _currentViews.activeView.view.id.toString();
-  }} onSave={(new_entity) => {
-    manageViewForm = false;
-    const viewState = new CurrentViewState(new_entity, table);
-    _currentViews.add(viewState, true);
-  }} bind:viewId={editViewId} />
+  <ManageViewForm
+    availableFilters={filterComponents}
+    onCancel={() => (manageViewForm = false)}
+    onDelete={() => {
+      manageViewForm = false;
+      _currentViews.remove(editViewId);
+      currentViewValue = _currentViews.activeView.view.id.toString();
+    }}
+    onSave={(new_entity) => {
+      manageViewForm = false;
+      const viewState = new CurrentViewState(new_entity, table);
+      _currentViews.add(viewState, true);
+    }}
+    bind:viewId={editViewId}
+  />
 {:else}
   <div class="flex">
     <FilterInput availableFilters={filterComponents} />
 
     <div class="flex-grow"></div>
 
-    <div class="gap-1 flex">
+    <div class="flex gap-1">
       <DisplayInput />
       {#if _currentViews.activeView.view.dirty && parseInt(currentViewValue) >= 0}
-        <Button variant="outline" size="sm" onclick={() => _currentViews.activeView.resetToInitialState()}>Clear</Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => _currentViews.activeView.resetToInitialState()}>Clear</Button
+        >
         <Button size="sm" onclick={() => _currentViews.activeView.view.saveView()}>Save</Button>
       {/if}
     </div>
   </div>
 {/if}
 
-  <!-- <div class="flex flex-1 items-center space-x-2">
+<!-- <div class="flex flex-1 items-center space-x-2">
     {#each currentViewFilters as filter}
       {@const column = table.getColumn(filter.column)}
       {#if column?.getIsVisible()}
@@ -182,7 +216,7 @@
       <ListFilterPlus/>
     </Button> -->
 
-    <!-- <Input
+<!-- <Input
       placeholder="Filter tasks..."
       value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
       oninput={(e) => {
@@ -193,7 +227,7 @@
       }}
       class="h-8 w-[150px] lg:w-[250px]"
     /> -->
-    <!-- {#if payeeCol?.getIsVisible()}
+<!-- {#if payeeCol?.getIsVisible()}
       <DataTableFacetedFilterPayee
         column={payeeCol}
       />
@@ -219,11 +253,11 @@
         <Cross2 class="ml-2 size-4" />
       </Button>
     {/if} -->
-    <!-- {#if statusCol?.getIsVisible()}
+<!-- {#if statusCol?.getIsVisible()}
       <DataTableFacetedFilterStatus
         column={statusCol}
       />
     {/if} -->
-  <!-- </div> -->
+<!-- </div> -->
 
-  <!-- <DataTableViewOptions {table} /> -->
+<!-- <DataTableViewOptions {table} /> -->

@@ -1,12 +1,14 @@
 <script lang="ts">
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-  import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-  import Ellipsis from 'lucide-svelte/icons/ellipsis';
-  import Plus from 'lucide-svelte/icons/plus';
-  import { page } from '$app/state';
-  import { newAccountDialog } from '$lib/states/global.svelte';
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
+  import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+  import Ellipsis from "lucide-svelte/icons/ellipsis";
+  import Plus from "lucide-svelte/icons/plus";
+  import { page } from "$app/state";
+  import { newAccountDialog } from "$lib/states/global.svelte";
 
-  const { data: { accounts } } = $derived(page);
+  const {
+    data: { accounts },
+  } = $derived(page);
   const dialogOpen = $derived(newAccountDialog.get());
 </script>
 
@@ -14,7 +16,7 @@
   <Sidebar.Content>
     <Sidebar.Group>
       <Sidebar.GroupLabel><a href="/accounts">Accounts</a></Sidebar.GroupLabel>
-      <Sidebar.GroupAction title="Add Account" onclick={() => dialogOpen.current = true}>
+      <Sidebar.GroupAction title="Add Account" onclick={() => (dialogOpen.current = true)}>
         <Plus /> <span class="sr-only">Add Account</span>
       </Sidebar.GroupAction>
       <Sidebar.GroupContent>

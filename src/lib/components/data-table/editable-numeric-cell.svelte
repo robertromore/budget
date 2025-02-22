@@ -1,9 +1,9 @@
 <script lang="ts">
-  import NumericInput from '../input/numeric-input.svelte';
+  import NumericInput from "../input/numeric-input.svelte";
 
   let {
     value = $bindable(),
-    onUpdateValue
+    onUpdateValue,
   }: {
     value: number | undefined;
     onUpdateValue: (newValue: unknown) => void;

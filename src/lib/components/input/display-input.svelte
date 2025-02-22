@@ -16,25 +16,30 @@
 
   const currentView = $derived(currentViews.get().activeView);
   const table = $derived(currentView.table);
-  const groupableColumns = $derived(table.getAllColumns().filter(column => column.getCanGroup()));
-  const sortableColumns = $derived(table.getAllColumns().filter(column => column.getCanSort()));
+  const groupableColumns = $derived(table.getAllColumns().filter((column) => column.getCanGroup()));
+  const sortableColumns = $derived(table.getAllColumns().filter((column) => column.getCanSort()));
 
   const grouping = $derived(currentView.view.getGrouping());
   const sorting = $derived(currentView.view.getSorting());
 </script>
 
 <Popover.Root>
-  <Popover.Trigger class={cn(buttonVariants({ variant: "outline" }), 'h-8')}>
-    <SlidersHorizontal/>
+  <Popover.Trigger class={cn(buttonVariants({ variant: "outline" }), "h-8")}>
+    <SlidersHorizontal />
     Display
   </Popover.Trigger>
   <Popover.Content class="w-80">
     <div class="grid gap-2">
       <div class="grid grid-cols-3 items-center gap-4">
         <Label for="grouping">Grouping</Label>
-        <Select.Root type="multiple" name="grouping" value={currentView.view.getGrouping()} onValueChange={(value) => {
-          currentView.updateTableGrouping(value);
-        }}>
+        <Select.Root
+          type="multiple"
+          name="grouping"
+          value={currentView.view.getGrouping()}
+          onValueChange={(value) => {
+            currentView.updateTableGrouping(value);
+          }}
+        >
           <Select.Trigger class="w-[180px]">
             {#if grouping.length === 0}
               <Badge variant="secondary">none selected</Badge>
@@ -45,7 +50,7 @@
                     {grouping.length} selected
                   </Badge>
                 {:else}
-                  {#each groupableColumns.filter(column => grouping.includes(column.id)) as groupableColumn}
+                  {#each groupableColumns.filter( (column) => grouping.includes(column.id) ) as groupableColumn}
                     <Badge variant="secondary" class="rounded-sm px-1 font-normal">
                       {groupableColumn.columnDef.meta?.label}
                     </Badge>
@@ -68,9 +73,11 @@
       <div class="grid grid-cols-3 items-center gap-4">
         <Label>Sorting</Label>
         <DropdownMenu.Root>
-          <DropdownMenu.Trigger class={cn(
-            "w-[180px] border-input ring-offset-background text-muted-foreground focus:ring-ring flex h-9 items-center justify-between whitespace-nowrap rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
-          )}>
+          <DropdownMenu.Trigger
+            class={cn(
+              "flex h-9 w-[180px] items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
+            )}
+          >
             {#if sorting.length === 0}
               <Badge variant="secondary">none selected</Badge>
             {:else}
@@ -81,14 +88,14 @@
                   </Badge>
                 {:else}
                   {#each sorting as sort}
-                    {@const col = sortableColumns.find(column => sort.id === column.id)}
+                    {@const col = sortableColumns.find((column) => sort.id === column.id)}
                     {#if col}
                       <Badge variant="secondary" class="rounded-sm px-1 text-xs font-semibold">
                         {col.columnDef.meta?.label}
                         {#if sort.desc}
-                          <CircleChevronDown class="size-4 ml-1" />
+                          <CircleChevronDown class="ml-1 size-4" />
                         {:else}
-                          <CircleChevronUp class="size-4 ml-1" />
+                          <CircleChevronUp class="ml-1 size-4" />
                         {/if}
                       </Badge>
                     {/if}
@@ -101,32 +108,37 @@
           <DropdownMenu.Content>
             <DropdownMenu.Group>
               {#each sortableColumns as column}
-                <DropdownMenu.Item onSelect={() => {
-                  let newState = currentView.view.getSorting();
-                  if (!sorting.find(sorter => sorter.id === column.id)) {
-                    newState.push({
-                      id: column.id,
-                      desc: false
-                    });
-                  } else {
-                    newState = newState.map(sorter => {
-                      if (sorter.id !== column.id) {
-                        return sorter;
-                      }
-                      if (sorter.desc === true) {
-                        return false;
-                      }
-                      if (sorter.desc === false) {
-                        return Object.assign({}, sorter, { desc: true });
-                      }
-                      return {
+                <DropdownMenu.Item
+                  onSelect={() => {
+                    let newState = currentView.view.getSorting();
+                    if (!sorting.find((sorter) => sorter.id === column.id)) {
+                      newState.push({
                         id: column.id,
-                        desc: false
-                      };
-                    }).filter(Boolean) as SortingState;
-                  }
-                  currentView.updateTableSorting(newState);
-                }} closeOnSelect={false}>
+                        desc: false,
+                      });
+                    } else {
+                      newState = newState
+                        .map((sorter) => {
+                          if (sorter.id !== column.id) {
+                            return sorter;
+                          }
+                          if (sorter.desc === true) {
+                            return false;
+                          }
+                          if (sorter.desc === false) {
+                            return Object.assign({}, sorter, { desc: true });
+                          }
+                          return {
+                            id: column.id,
+                            desc: false,
+                          };
+                        })
+                        .filter(Boolean) as SortingState;
+                    }
+                    currentView.updateTableSorting(newState);
+                  }}
+                  closeOnSelect={false}
+                >
                   {column.columnDef.meta?.label}
                   {@const sorter = sorting.find((sort) => sort.id === column.id)}
                   {#if sorter && sorter.desc}
@@ -141,13 +153,20 @@
         </DropdownMenu.Root>
       </div>
     </div>
-    <div class="flex justify-start mt-4">
-      <Switch id="expand-all" checked={typeof currentView.view.getExpanded() === 'boolean' && currentView.view.getExpanded() as boolean} onCheckedChange={(checked) => {
-        currentView.updateTableAllRowsExpanded(checked ? true : {});
-      }} aria-labelledby="Expand all rows" disabled={grouping.length === 0} />
+    <div class="mt-4 flex justify-start">
+      <Switch
+        id="expand-all"
+        checked={typeof currentView.view.getExpanded() === "boolean" &&
+          (currentView.view.getExpanded() as boolean)}
+        onCheckedChange={(checked) => {
+          currentView.updateTableAllRowsExpanded(checked ? true : {});
+        }}
+        aria-labelledby="Expand all rows"
+        disabled={grouping.length === 0}
+      />
       <Label
         for="expand-all"
-        class="text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ml-1"
+        class="ml-1 text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
       >
         Expand All
       </Label>

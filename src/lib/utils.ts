@@ -1,5 +1,5 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -177,7 +177,7 @@ function isOfType<T extends Primitive | Function>(type: string) {
  * Checks if the value is a JavaScript function.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
-export const isFunction = isOfType<Function>('function');
+export const isFunction = isOfType<Function>("function");
 
 /**
  * Check if the value is null.
@@ -190,20 +190,20 @@ export const isNull = (value: unknown): value is null => {
  * Checks if the input is a regular expression.
  */
 export const isRegex = (value: unknown): value is RegExp => {
-  return Object.prototype.toString.call(value).slice(8, -1) === 'RegExp';
+  return Object.prototype.toString.call(value).slice(8, -1) === "RegExp";
 };
 
 /**
  * Checks if the value is an object.
  */
 export const isObject = (value: unknown): value is AnyObject => {
-  return !isUndefined(value) && !isNull(value) && (isFunction(value) || typeof value === 'object');
+  return !isUndefined(value) && !isNull(value) && (isFunction(value) || typeof value === "object");
 };
 
 /**
  * Checks if the value is undefined.
  */
-export const isUndefined = isOfType<undefined>('undefined');
+export const isUndefined = isOfType<undefined>("undefined");
 
 /**
  * Checks if two values are equal.

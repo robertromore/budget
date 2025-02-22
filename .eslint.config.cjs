@@ -2,44 +2,44 @@
 module.exports = {
   root: true,
   extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:svelte/recommended',
-    'prettier',
-    'plugin:drizzle/recommended'
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:svelte/recommended",
+    "prettier",
+    "plugin:drizzle/recommended",
   ],
-  parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint', 'drizzle'],
+  parser: "@typescript-eslint/parser",
+  plugins: ["@typescript-eslint", "drizzle"],
   parserOptions: {
-    sourceType: 'module',
+    sourceType: "module",
     ecmaVersion: 2020,
-    extraFileExtensions: ['.svelte']
+    extraFileExtensions: [".svelte"],
   },
   env: {
     browser: true,
     es2017: true,
-    node: true
+    node: true,
   },
   overrides: [
     {
-      files: ['*.svelte'],
-      parser: 'svelte-eslint-parser',
+      files: ["*.svelte"],
+      parser: "svelte-eslint-parser",
       parserOptions: {
-        parser: '@typescript-eslint/parser'
-      }
-    }
+        parser: "@typescript-eslint/parser",
+      },
+    },
   ],
   ignorePatterns: [
-    '.DS_Store',
-    'node_modules',
-    '/build',
-    '/.svelte-kit',
-    '/package',
-    '.env',
-    '.env.*',
-    '!.env.example',
-    'pnpm-lock.yaml',
-    'package-lock.json',
-    'yarn.lock',
-  ]
+    ".DS_Store",
+    "node_modules",
+    "/build",
+    "/.svelte-kit",
+    "/package",
+    ".env",
+    ".env.*",
+    "!.env.example",
+    "pnpm-lock.yaml",
+    "package-lock.json",
+    "yarn.lock",
+  ],
 };

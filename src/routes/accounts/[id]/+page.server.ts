@@ -1,6 +1,6 @@
-import { superValidate } from 'sveltekit-superforms';
-import type { PageServerLoad } from './$types';
-import { zod } from 'sveltekit-superforms/adapters';
+import { superValidate } from "sveltekit-superforms";
+import type { PageServerLoad } from "./$types";
+import { zod } from "sveltekit-superforms/adapters";
 import {
   formInsertPayeeSchema,
   insertCategorySchema,
@@ -9,67 +9,67 @@ import {
   removeCategorySchema,
   removePayeeSchema,
   removeTransactionsSchema,
-  type View
-} from '$lib/schema';
-import { createContext } from '$lib/trpc/context';
-import { createCaller } from '$lib/trpc/router';
+  type View,
+} from "$lib/schema";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
 
 export const load: PageServerLoad = async ({ params, parent }) => {
   const { accounts } = await parent();
   const defaultViews = [
     {
       id: -4,
-      name: 'All Transactions',
-      description: 'All transactions for this account',
+      name: "All Transactions",
+      description: "All transactions for this account",
       filters: [],
       display: {
         grouping: [],
         sort: [
           {
-            id: 'id',
-            desc: false
-          }
-        ]
+            id: "id",
+            desc: false,
+          },
+        ],
       },
-      icon: '',
-      dirty: false
+      icon: "",
+      dirty: false,
     },
     {
       id: -3,
-      name: 'Cleared',
-      description: 'Cleared transactions for this account',
+      name: "Cleared",
+      description: "Cleared transactions for this account",
       filters: [
         {
-          column: 'status',
-          filter: 'entityIsFilter',
-          value: ['cleared']
-        }
+          column: "status",
+          filter: "entityIsFilter",
+          value: ["cleared"],
+        },
       ],
       display: {
         grouping: [],
-        sort: []
+        sort: [],
       },
-      icon: '',
-      dirty: false
+      icon: "",
+      dirty: false,
     },
     {
       id: -2,
-      name: 'Upcoming',
-      description: 'Upcoming transactions for this account',
+      name: "Upcoming",
+      description: "Upcoming transactions for this account",
       filters: [
         {
-          column: 'status',
-          filter: 'entityIsFilter',
-          value: ['pending']
-        }
+          column: "status",
+          filter: "entityIsFilter",
+          value: ["pending"],
+        },
       ],
       display: {
         grouping: [],
-        sort: []
+        sort: [],
       },
-      icon: '',
-      dirty: false
-    }
+      icon: "",
+      dirty: false,
+    },
   ] as View[];
 
   return {
@@ -82,6 +82,6 @@ export const load: PageServerLoad = async ({ params, parent }) => {
     managePayeeForm: await superValidate(zod(formInsertPayeeSchema)),
     deletePayeeForm: await superValidate(zod(removePayeeSchema)),
     manageViewForm: await superValidate(zod(insertViewSchema)),
-    views: defaultViews.concat(await createCaller(await createContext()).viewsRoutes.all())
+    views: defaultViews.concat(await createCaller(await createContext()).viewsRoutes.all()),
   };
 };

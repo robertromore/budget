@@ -1,8 +1,8 @@
 <script lang="ts">
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import { Button } from '$lib/components/ui/button';
-  import MoreHorizontal from 'lucide-svelte/icons/more-horizontal';
-  import DeleteTransactionDialog from '$lib/components/dialogs/delete-transaction-dialog.svelte';
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import { Button } from "$lib/components/ui/button";
+  import MoreHorizontal from "lucide-svelte/icons/more-horizontal";
+  import DeleteTransactionDialog from "$lib/components/dialogs/delete-transaction-dialog.svelte";
 
   let {
     id,
@@ -18,7 +18,7 @@
     {#snippet child({ props })}
       <Button variant="ghost" size="icon" class="relative size-8 p-0" {...props}>
         <span class="sr-only">Open menu</span>
-        <MoreHorizontal class="size-4"/>
+        <MoreHorizontal class="size-4" />
       </Button>
     {/snippet}
   </DropdownMenu.Trigger>
@@ -28,11 +28,11 @@
         Edit
       </DropdownMenu.Item> -->
       <DropdownMenu.Item>Archive</DropdownMenu.Item>
-      <DropdownMenu.Item onSelect={() => deleteOpen = true}>Delete</DropdownMenu.Item>
+      <DropdownMenu.Item onSelect={() => (deleteOpen = true)}>Delete</DropdownMenu.Item>
     </DropdownMenu.Group>
   </DropdownMenu.Content>
 </DropdownMenu.Root>
 
 {#if deleteOpen}
-  <DeleteTransactionDialog transactions={[id]} bind:dialogOpen={deleteOpen}/>
+  <DeleteTransactionDialog transactions={[id]} bind:dialogOpen={deleteOpen} />
 {/if}

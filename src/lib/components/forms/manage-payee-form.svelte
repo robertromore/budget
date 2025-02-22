@@ -1,37 +1,39 @@
 <script lang="ts">
-  import type { EditableEntityItem } from '$lib/types';
-  import { insertPayeeSchema, type Payee } from '$lib/schema';
-  import { page } from '$app/state';
-  import * as Form from '$lib/components/ui/form';
-  import * as AlertDialog from '$lib/components/ui/alert-dialog';
-  import { Button, buttonVariants } from '$lib/components/ui/button';
-  import Input from '../ui/input/input.svelte';
-  import { Textarea } from '../ui/textarea';
-  import { superForm } from 'sveltekit-superforms';
-  import { zodClient } from 'sveltekit-superforms/adapters';
-  import { payeesContext } from '$lib/states/payees.svelte';
+  import type { EditableEntityItem } from "$lib/types";
+  import { insertPayeeSchema, type Payee } from "$lib/schema";
+  import { page } from "$app/state";
+  import * as Form from "$lib/components/ui/form";
+  import * as AlertDialog from "$lib/components/ui/alert-dialog";
+  import { Button, buttonVariants } from "$lib/components/ui/button";
+  import Input from "../ui/input/input.svelte";
+  import { Textarea } from "../ui/textarea";
+  import { superForm } from "sveltekit-superforms";
+  import { zodClient } from "sveltekit-superforms/adapters";
+  import { payeesContext } from "$lib/states/payees.svelte";
 
   let {
     id,
     onDelete,
-    onSave
+    onSave,
   }: {
     id?: number | undefined;
     onDelete?: (id: number) => void;
     onSave?: (new_payee: EditableEntityItem, is_new: boolean) => void;
   } = $props();
 
-  const { data: { managePayeeForm } } = page;
+  const {
+    data: { managePayeeForm },
+  } = page;
   const form = superForm(managePayeeForm, {
-    id: 'payee-form',
+    id: "payee-form",
     validators: zodClient(insertPayeeSchema),
     onResult: async ({ result }) => {
       if (onSave) {
-        if (result.type === 'success' && result.data) {
+        if (result.type === "success" && result.data) {
           onSave(result.data.entity, (id ?? 0) === 0);
         }
       }
-    }
+    },
   });
 
   const { form: formData, enhance } = form;
@@ -91,7 +93,7 @@
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={() => deletePayee(id!)}
-        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action
+        class={buttonVariants({ variant: "destructive" })}>Continue</AlertDialog.Action
       >
     </AlertDialog.Footer>
   </AlertDialog.Content>

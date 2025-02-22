@@ -3,7 +3,7 @@
 
   let {
     value = $bindable(),
-    onUpdateValue
+    onUpdateValue,
   }: {
     value: number | undefined;
     onUpdateValue: (newValue: unknown) => void;

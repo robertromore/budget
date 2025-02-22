@@ -1,21 +1,21 @@
-import { BaseFilter, type FilterType, type FilterOperator } from './BaseFilter.svelte';
-import type { ComponentProps, SvelteComponent } from 'svelte';
-import EntityFilterComponent from '$lib/components/filters/EntityFilter.svelte';
-import MultipleEntityFilter from '$lib/components/filters/MultipleEntityFilter.svelte';
-import type { Row } from '@tanstack/table-core';
-import type { TransactionsFormat } from '$lib/components/types';
+import { BaseFilter, type FilterType, type FilterOperator } from "./BaseFilter.svelte";
+import type { ComponentProps, SvelteComponent } from "svelte";
+import EntityFilterComponent from "$lib/components/filters/EntityFilter.svelte";
+import MultipleEntityFilter from "$lib/components/filters/MultipleEntityFilter.svelte";
+import type { Row } from "@tanstack/table-core";
+import type { TransactionsFormat } from "$lib/components/types";
 
 export type EntityFilterType = FilterType;
 
 export class EntityFilter extends BaseFilter {
-  id = 'entity';
-  label = 'Entity';
+  id = "entity";
+  label = "Entity";
   props: ComponentProps<SvelteComponent<Record<string, unknown>>>;
 
   availableOperators: Record<string, FilterOperator> = {
     is: {
-      value: 'is',
-      label: 'is',
+      value: "is",
+      label: "is",
       component: EntityFilterComponent,
       passes: (
         row: Row<TransactionsFormat>,
@@ -35,11 +35,11 @@ export class EntityFilter extends BaseFilter {
           return massaged_value === massaged_new_value[0].value;
         }
         return true;
-      }
+      },
     },
     is_not: {
-      value: 'is_not',
-      label: 'is not',
+      value: "is_not",
+      label: "is not",
       component: EntityFilterComponent,
       passes: (
         row: Row<TransactionsFormat>,
@@ -59,11 +59,11 @@ export class EntityFilter extends BaseFilter {
           return value !== massaged_new_value[0].value;
         }
         return true;
-      }
+      },
     },
     one_of: {
-      value: 'one_of',
-      label: 'one of',
+      value: "one_of",
+      label: "one of",
       component: MultipleEntityFilter,
       passes: (
         row: Row<TransactionsFormat>,
@@ -86,11 +86,11 @@ export class EntityFilter extends BaseFilter {
           return massaged_new_value.map((fv) => fv.value).includes(value as string);
         }
         return true;
-      }
+      },
     },
     not_one_of: {
-      value: 'not_one_of',
-      label: 'not one of',
+      value: "not_one_of",
+      label: "not one of",
       component: MultipleEntityFilter,
       passes: (
         row: Row<TransactionsFormat>,
@@ -110,8 +110,8 @@ export class EntityFilter extends BaseFilter {
           return !massaged_new_value.map((fv) => fv.value).includes(value as string);
         }
         return true;
-      }
-    }
+      },
+    },
   };
 
   constructor(
@@ -123,6 +123,6 @@ export class EntityFilter extends BaseFilter {
     this.accessorFn = accessorFn;
 
     // Set the label to the value of props.label.
-    this.label = props.label as string || 'Entity';
+    this.label = (props.label as string) || "Entity";
   }
 }

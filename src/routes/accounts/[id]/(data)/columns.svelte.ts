@@ -1,37 +1,37 @@
-import type { EditableEntityItem, EditableNumericItem, TransactionsFormat } from '$lib/types';
-import { Checkbox } from '$lib/components/ui/checkbox';
-import { renderComponent } from '$lib/components/ui/data-table';
+import type { EditableEntityItem, EditableNumericItem, TransactionsFormat } from "$lib/types";
+import { Checkbox } from "$lib/components/ui/checkbox";
+import { renderComponent } from "$lib/components/ui/data-table";
 import type {
   CellContext,
   Column,
   ColumnDef,
   ExpandedState,
-  FilterFnOption
-} from '@tanstack/table-core';
-import DataTableColumnHeader from '../(components)/data-table-column-header.svelte';
-import EditableDateCell from '$lib/components/data-table/editable-date-cell.svelte';
-import { getLocalTimeZone, type DateValue } from '@internationalized/date';
-import EditableEntityCell from '$lib/components/data-table/editable-entity-cell.svelte';
-import DataTableEditableCell from '../(components)/(cells)/data-table-editable-cell.svelte';
-import EditableNumericCell from '$lib/components/data-table/editable-numeric-cell.svelte';
-import DataTableActions from '../(components)/data-table-actions.svelte';
-import { compareAlphanumeric } from '$lib/utils';
-import type { Category, Payee } from '$lib/schema';
-import DataTableEditableStatusCell from '../(components)/(cells)/data-table-editable-status-cell.svelte';
-import ManagePayeeForm from '$lib/components/forms/manage-payee-form.svelte';
-import ManageCategoryForm from '$lib/components/forms/manage-category-form.svelte';
-import type { CategoriesState } from '$lib/states/categories.svelte';
-import type { PayeesState } from '$lib/states/payees.svelte';
-import DataTableFacetedFilterStatus from '../(components)/(facets)/data-table-faceted-filter-status.svelte';
-import DataTableFacetedFilterCategory from '../(components)/(facets)/data-table-faceted-filter-category.svelte';
-import DataTableFacetedFilterPayee from '../(components)/(facets)/data-table-faceted-filter-payee.svelte';
-import DataTableFacetedFilterDate from '../(components)/(facets)/data-table-faceted-filter-date.svelte';
-import CalendarDays from 'lucide-svelte/icons/calendar-days';
-import HandCoins from 'lucide-svelte/icons/hand-coins';
-import SquareMousePointer from 'lucide-svelte/icons/square-mouse-pointer';
-import CircleCheckBig from 'lucide-svelte/icons/circle-check-big';
-import { ExpandToggle } from '$lib/components/ui/expand-toggle';
-import { currencyFormatter } from '$lib/helpers/formatters';
+  FilterFnOption,
+} from "@tanstack/table-core";
+import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
+import EditableDateCell from "$lib/components/data-table/editable-date-cell.svelte";
+import { getLocalTimeZone, type DateValue } from "@internationalized/date";
+import EditableEntityCell from "$lib/components/data-table/editable-entity-cell.svelte";
+import DataTableEditableCell from "../(components)/(cells)/data-table-editable-cell.svelte";
+import EditableNumericCell from "$lib/components/data-table/editable-numeric-cell.svelte";
+import DataTableActions from "../(components)/data-table-actions.svelte";
+import { compareAlphanumeric } from "$lib/utils";
+import type { Category, Payee } from "$lib/schema";
+import DataTableEditableStatusCell from "../(components)/(cells)/data-table-editable-status-cell.svelte";
+import ManagePayeeForm from "$lib/components/forms/manage-payee-form.svelte";
+import ManageCategoryForm from "$lib/components/forms/manage-category-form.svelte";
+import type { CategoriesState } from "$lib/states/categories.svelte";
+import type { PayeesState } from "$lib/states/payees.svelte";
+import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-faceted-filter-status.svelte";
+import DataTableFacetedFilterCategory from "../(components)/(facets)/data-table-faceted-filter-category.svelte";
+import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-faceted-filter-payee.svelte";
+import DataTableFacetedFilterDate from "../(components)/(facets)/data-table-faceted-filter-date.svelte";
+import CalendarDays from "lucide-svelte/icons/calendar-days";
+import HandCoins from "lucide-svelte/icons/hand-coins";
+import SquareMousePointer from "lucide-svelte/icons/square-mouse-pointer";
+import CircleCheckBig from "lucide-svelte/icons/circle-check-big";
+import { ExpandToggle } from "$lib/components/ui/expand-toggle";
+import { currencyFormatter } from "$lib/helpers/formatters";
 
 export const columns = (
   categories: CategoriesState,
@@ -72,14 +72,14 @@ export const columns = (
 
   return [
     {
-      id: 'select-col',
+      id: "select-col",
       header: ({ table }) =>
         renderComponent(Checkbox, {
           checked: table.getIsAllPageRowsSelected(),
           indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
           onCheckedChange: (value) => table.toggleAllPageRowsSelected(!!value),
           controlledChecked: true,
-          'aria-label': 'Select all'
+          "aria-label": "Select all",
         }),
       cell: ({ row }) =>
         renderComponent(Checkbox, {
@@ -87,7 +87,7 @@ export const columns = (
           disabled: !row.getCanSelect(),
           onCheckedChange: (value) => row.toggleSelected(!!value),
           controlledChecked: true,
-          'aria-label': 'Select row'
+          "aria-label": "Select row",
         }),
       aggregatedCell: ({ row }) =>
         renderComponent(Checkbox, {
@@ -95,14 +95,14 @@ export const columns = (
           disabled: !row.getCanSelect(),
           onCheckedChange: (value) => row.toggleSelected(!!value),
           controlledChecked: true,
-          'aria-label': 'Select row'
+          "aria-label": "Select row",
         }),
       enableColumnFilter: false,
       enableGrouping: false,
-      enableSorting: false
+      enableSorting: false,
     },
     {
-      id: 'expand-contract-col',
+      id: "expand-contract-col",
       header: ({ table }) =>
         table.getCanSomeRowsExpand()
           ? renderComponent(ExpandToggle, {
@@ -110,9 +110,9 @@ export const columns = (
               // disabled: table.getCanSomeRowsExpand(),
               onCheckedChange: table.getToggleAllRowsExpandedHandler(),
               controlledChecked: true,
-              'aria-label': 'Expand/contract all'
+              "aria-label": "Expand/contract all",
             })
-          : '',
+          : "",
       aggregatedCell: ({ row }) =>
         row.getCanExpand()
           ? renderComponent(ExpandToggle, {
@@ -120,85 +120,85 @@ export const columns = (
               disabled: !row.getCanExpand(),
               onCheckedChange: row.getToggleExpandedHandler(),
               controlledChecked: true,
-              'aria-label': 'Expand/contract row'
+              "aria-label": "Expand/contract row",
             })
-          : '',
+          : "",
       enableColumnFilter: false,
       enableGrouping: false,
-      enableSorting: false
+      enableSorting: false,
     },
     {
-      accessorKey: 'id',
+      accessorKey: "id",
       cell: (info) => info.getValue(),
       aggregatedCell: () => {},
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
-          title: 'ID'
+          title: "ID",
         }),
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: false,
       enableGrouping: false,
       meta: {
-        label: 'ID'
-      }
+        label: "ID",
+      },
     },
     {
-      accessorKey: 'date',
-      id: 'date',
+      accessorKey: "date",
+      id: "date",
       cell: (info) =>
         renderComponent(EditableDateCell, {
           value: info.getValue() as DateValue,
           onUpdateValue: (new_value: unknown) =>
-            updateHandler(info, 'date', new_value, (new_value) =>
+            updateHandler(info, "date", new_value, (new_value) =>
               (new_value as DateValue)?.toDate(getLocalTimeZone()).toString()
-            )
+            ),
         }),
       aggregatedCell: () => {},
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
-          title: 'Date',
-          column
+          title: "Date",
+          column,
         }),
-      sortingFn: 'datetime',
-      filterFn: 'dateAfter' as FilterFnOption<TransactionsFormat>,
+      sortingFn: "datetime",
+      filterFn: "dateAfter" as FilterFnOption<TransactionsFormat>,
       meta: {
-        label: 'Date',
+        label: "Date",
         facetedFilter: (column: Column<TransactionsFormat, unknown>) => {
           return {
-            name: 'Date',
+            name: "Date",
             icon: CalendarDays,
             column,
             component: () =>
               renderComponent(DataTableFacetedFilterDate<TransactionsFormat, unknown>, {
-                column
-              })
+                column,
+              }),
           };
         },
         availableFilters: [
           {
-            id: 'dateOn',
-            label: 'on'
+            id: "dateOn",
+            label: "on",
           },
           {
-            id: 'dateBefore',
-            label: 'before'
+            id: "dateBefore",
+            label: "before",
           },
           {
-            id: 'dateAfter',
-            label: 'after'
-          }
-        ]
-      }
+            id: "dateAfter",
+            label: "after",
+          },
+        ],
+      },
     },
     {
-      accessorKey: 'payeeId',
-      id: 'payee',
+      accessorKey: "payeeId",
+      id: "payee",
       cell: (info) =>
         renderComponent(EditableEntityCell, {
           value: payees.getById(info.getValue() as number) as EditableEntityItem,
-          entityLabel: 'payee',
-          onUpdateValue: (new_value) => updateHandler(info, 'payeeId', new_value),
+          entityLabel: "payee",
+          onUpdateValue: (new_value) => updateHandler(info, "payeeId", new_value),
           entities: payees.payees as EditableEntityItem[],
           management: {
             enable: true,
@@ -212,80 +212,80 @@ export const columns = (
             },
             onDelete: (id: number) => {
               payees.deletePayee(id);
-            }
-          }
+            },
+          },
         }),
       aggregatedCell: () => {},
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
-          title: 'Payee'
+          title: "Payee",
         }),
       sortingFn: (rowA, rowB) => {
         return compareAlphanumeric(
-          payees.getById(rowA.getValue('payee'))?.name || '',
-          payees.getById(rowB.getValue('payee'))?.name || ''
+          payees.getById(rowA.getValue("payee"))?.name || "",
+          payees.getById(rowB.getValue("payee"))?.name || ""
         );
       },
       enableColumnFilter: true,
-      filterFn: 'entityIsFilter' as FilterFnOption<TransactionsFormat>,
+      filterFn: "entityIsFilter" as FilterFnOption<TransactionsFormat>,
       meta: {
-        label: 'Payee',
+        label: "Payee",
         facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
           return {
-            name: 'Payee',
+            name: "Payee",
             icon: HandCoins,
             column,
             value,
             component: () =>
               renderComponent(DataTableFacetedFilterPayee<TransactionsFormat, unknown>, {
-                column
-              })
+                column,
+              }),
           };
         },
         availableFilters: [
           {
-            id: 'entityIsFilter',
-            label: 'is'
+            id: "entityIsFilter",
+            label: "is",
           },
           {
-            id: 'entityIsNotFilter',
-            label: 'is not'
-          }
-        ]
-      }
+            id: "entityIsNotFilter",
+            label: "is not",
+          },
+        ],
+      },
     },
     {
-      accessorKey: 'notes',
-      id: 'notes',
+      accessorKey: "notes",
+      id: "notes",
       cell: (info) =>
         renderComponent(DataTableEditableCell, {
           value: info.getValue(),
-          onUpdateValue: (new_value: string) => updateData(info.row.original.id, 'notes', new_value)
+          onUpdateValue: (new_value: string) =>
+            updateData(info.row.original.id, "notes", new_value),
         }),
       aggregatedCell: () => {},
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
-          title: 'Notes'
+          title: "Notes",
         }),
       enableSorting: false,
-      enableGrouping: false
+      enableGrouping: false,
     },
     {
-      accessorKey: 'categoryId',
-      id: 'category',
+      accessorKey: "categoryId",
+      id: "category",
       cell: (info) =>
         renderComponent(EditableEntityCell, {
           value: categories.getById(info.getValue() as number) as EditableEntityItem,
-          entityLabel: 'category',
-          onUpdateValue: (new_value) => updateHandler(info, 'categoryId', new_value),
+          entityLabel: "category",
+          onUpdateValue: (new_value) => updateHandler(info, "categoryId", new_value),
           entities: categories.categories as EditableEntityItem[],
           management: {
             enable: true,
             component: ManageCategoryForm,
             onSave: (new_value: EditableEntityItem, is_new: boolean) => {
-              console.log('save', new_value);
               if (is_new) {
                 categories.addCategory(new_value as Category);
               } else {
@@ -294,115 +294,115 @@ export const columns = (
             },
             onDelete: (id: number) => {
               categories.deleteCategory(id);
-            }
-          }
+            },
+          },
         }),
       aggregatedCell: () => {},
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
-          title: 'Category'
+          title: "Category",
         }),
       sortingFn: (rowA, rowB) => {
         return compareAlphanumeric(
-          categories.getById(rowA.getValue('category'))?.name || '',
-          categories.getById(rowB.getValue('category'))?.name || ''
+          categories.getById(rowA.getValue("category"))?.name || "",
+          categories.getById(rowB.getValue("category"))?.name || ""
         );
       },
-      filterFn: 'entityIsFilter' as FilterFnOption<TransactionsFormat>,
+      filterFn: "entityIsFilter" as FilterFnOption<TransactionsFormat>,
       meta: {
-        label: 'Category',
+        label: "Category",
         facetedFilter: (column: Column<TransactionsFormat, unknown>) => {
           return {
-            name: 'Category',
+            name: "Category",
             icon: SquareMousePointer,
             column,
             component: () =>
               renderComponent(DataTableFacetedFilterCategory<TransactionsFormat, unknown>, {
-                column
-              })
+                column,
+              }),
           };
         },
         availableFilters: [
           {
-            id: 'entityIsFilter',
-            label: 'is'
+            id: "entityIsFilter",
+            label: "is",
           },
           {
-            id: 'entityIsNotFilter',
-            label: 'is not'
-          }
-        ]
-      }
+            id: "entityIsNotFilter",
+            label: "is not",
+          },
+        ],
+      },
     },
     {
-      accessorKey: 'amount',
-      id: 'amount',
+      accessorKey: "amount",
+      id: "amount",
       cell: (info) =>
         renderComponent(EditableNumericCell, {
           value: info.getValue() as number,
-          onUpdateValue: (new_value) => updateData(info.row.original.id, 'amount', new_value)
+          onUpdateValue: (new_value) => updateData(info.row.original.id, "amount", new_value),
         }),
       aggregatedCell: (info) => currencyFormatter.format(info.getValue() as number),
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
-          title: 'Amount'
+          title: "Amount",
         }),
       sortingFn: (rowA, rowB) =>
-        ((rowA.getValue('amount') as number) || 0) - ((rowB.getValue('amount') as number) || 0),
+        ((rowA.getValue("amount") as number) || 0) - ((rowB.getValue("amount") as number) || 0),
       enableGrouping: false,
       meta: {
-        label: 'Amount'
-      }
+        label: "Amount",
+      },
     },
     {
-      accessorKey: 'status',
-      id: 'status',
+      accessorKey: "status",
+      id: "status",
       cell: (info) =>
         renderComponent(DataTableEditableStatusCell, {
           value: info.getValue() as string,
-          onUpdateValue: (new_value) => updateHandler(info, 'status', new_value)
+          onUpdateValue: (new_value) => updateHandler(info, "status", new_value),
         }),
       aggregatedCell: () => {},
-      header: '',
-      filterFn: 'equalsString' as FilterFnOption<TransactionsFormat>,
+      header: "",
+      filterFn: "equalsString" as FilterFnOption<TransactionsFormat>,
       meta: {
-        label: 'Status',
+        label: "Status",
         facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
           return {
-            name: 'Status',
+            name: "Status",
             icon: CircleCheckBig,
             column,
             value,
             component: () => {
               return renderComponent(DataTableFacetedFilterStatus<TransactionsFormat, unknown>, {
-                column
+                column,
               });
-            }
+            },
           };
         },
         availableFilters: [
           {
-            id: 'equalsString',
-            label: 'is'
+            id: "equalsString",
+            label: "is",
           },
           {
-            id: 'doesntEqualString',
-            label: 'is not'
-          }
-        ]
-      }
+            id: "doesntEqualString",
+            label: "is not",
+          },
+        ],
+      },
     },
     {
-      id: 'actions',
+      id: "actions",
       accessorFn: (row) => row.id,
       aggregatedCell: () => {},
-      header: '',
+      header: "",
       cell: (info) => renderComponent(DataTableActions, { id: info.getValue() as number }),
       enableColumnFilter: false,
       enableSorting: false,
-      enableGrouping: false
-    }
+      enableGrouping: false,
+    },
   ];
 };

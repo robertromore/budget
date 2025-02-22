@@ -1,10 +1,10 @@
-import type { TransactionsFormat } from '$lib/types';
-import { currencyFormatter, transactionFormatter } from '$lib/helpers/formatters';
-import type { Category, Payee, Transaction } from '$lib/schema';
-import type { Account } from '$lib/schema/accounts';
-import { trpc } from '$lib/trpc/client';
-import { without } from '$lib/utils';
-import { Context } from 'runed';
+import type { TransactionsFormat } from "$lib/types";
+import { currencyFormatter, transactionFormatter } from "$lib/helpers/formatters";
+import type { Category, Payee, Transaction } from "$lib/schema";
+import type { Account } from "$lib/schema/accounts";
+import { trpc } from "$lib/trpc/client";
+import { without } from "$lib/utils";
+import { Context } from "runed";
 
 export class CurrentAccountState {
   account: Account = $state() as Account;
@@ -54,11 +54,11 @@ export class CurrentAccountState {
 
   updateTransaction = async (id: number, columnId: string, newValue?: unknown) => {
     const new_data = {
-      [columnId as keyof Transaction]: newValue
+      [columnId as keyof Transaction]: newValue,
     };
 
     let [idx, original] = this.getRawTransaction(id);
-    if (columnId === 'amount') {
+    if (columnId === "amount") {
       this.account.balance += (newValue as number) - (original?.amount as number);
     }
     const updatedData = Object.assign({}, original, new_data) as Transaction;
@@ -69,7 +69,7 @@ export class CurrentAccountState {
   async deleteTransactions(transactions: number[], cb?: (id: Transaction[]) => void) {
     await trpc().transactionRoutes.delete.mutate({
       entities: transactions,
-      accountId: this.id
+      accountId: this.id,
     });
     const [kept, removed] = without(this.transactions ?? [], (transaction: Transaction) =>
       transactions.includes(transaction.id)
@@ -93,4 +93,4 @@ export class CurrentAccountState {
   }
 }
 
-export const currentAccount = new Context<CurrentAccountState>('current_account');
+export const currentAccount = new Context<CurrentAccountState>("current_account");

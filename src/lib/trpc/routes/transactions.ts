@@ -1,23 +1,23 @@
-import { z } from 'zod';
-import { publicProcedure, t } from '../t';
+import { z } from "zod";
+import { publicProcedure, t } from "../t";
 import {
   removeTransactionsSchema,
   insertTransactionSchema,
   transactions,
-  type Transaction
-} from '$lib/schema';
-import { eq, sql } from 'drizzle-orm';
+  type Transaction,
+} from "$lib/schema";
+import { eq, sql } from "drizzle-orm";
 
 export const transactionRoutes = t.router({
   forAccount: publicProcedure
     .input(
       z.object({
-        id: z.number()
+        id: z.number(),
       })
     )
     .query(async ({ ctx: { db }, input }) => {
       const records = await db.query.transactions.findMany({
-        where: eq(transactions.id, input.id)
+        where: eq(transactions.id, input.id),
       });
       return records;
     }),
@@ -34,7 +34,7 @@ export const transactionRoutes = t.router({
     .mutation(
       async ({
         input: { id, payeeId, amount, categoryId, notes, date, accountId },
-        ctx: { db }
+        ctx: { db },
       }) => {
         if (!accountId) {
           return;
@@ -49,7 +49,7 @@ export const transactionRoutes = t.router({
               amount,
               categoryId,
               notes,
-              date
+              date,
             })
             .where(eq(transactions.id, id))
             .returning();
@@ -62,11 +62,11 @@ export const transactionRoutes = t.router({
               categoryId,
               notes,
               date,
-              accountId
+              accountId,
             })
             .returning();
         }
         return entity.shift() as Transaction;
       }
-    )
+    ),
 });

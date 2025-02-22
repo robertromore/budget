@@ -1,15 +1,15 @@
-import { mergeObjects } from '$lib/utils';
-import type { FilterMeta, Row } from '@tanstack/table-core';
-import type { FilterOperator, FilterType, SelectedFilterOperator } from './BaseFilter.svelte';
-import type { TransactionsFormat } from '$lib/components/types';
+import { mergeObjects } from "$lib/utils";
+import type { FilterMeta, Row } from "@tanstack/table-core";
+import type { FilterOperator, FilterType, SelectedFilterOperator } from "./BaseFilter.svelte";
+import type { TransactionsFormat } from "$lib/components/types";
 
 export class FilterManager {
   filters: FilterType[] | undefined = $state([]);
   selectedOperators: SelectedFilterOperator[] = $state([
     {
       operator: undefined,
-      value: undefined
-    }
+      value: undefined,
+    },
   ]);
   idx: number = $state(0);
 
@@ -24,7 +24,7 @@ export class FilterManager {
   addSelectedOperator() {
     this.selectedOperators[++this.idx] = {
       operator: undefined,
-      value: undefined
+      value: undefined,
     };
   }
 
@@ -55,7 +55,7 @@ export class FilterManager {
         if (operator.value === undefined) {
           return true;
         }
-        const [filter_id] = operator.operator.split(':');
+        const [filter_id] = operator.operator.split(":");
         const actualOperator: FilterOperator =
           this.availableOperators[filter_id][operator.operator];
         if (actualOperator.passes && operator.value !== undefined) {
@@ -92,14 +92,14 @@ export class FilterManager {
   }
 
   getFilterComponent(id: string) {
-    const [filter_id, operator_id] = id.split(':');
+    const [filter_id, operator_id] = id.split(":");
     return this.filters?.find((value: FilterType) => value.id === filter_id)?.availableOperators[
       operator_id
     ].component;
   }
 
   getFilterProps(id: string) {
-    const [filter_id, operator_id] = id.split(':');
+    const [filter_id, operator_id] = id.split(":");
     const filter = this.filters?.find((value: FilterType) => value.id === filter_id);
     const operator = this.filters?.find((value: FilterType) => value.id === filter_id)
       ?.availableOperators[operator_id];

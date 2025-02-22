@@ -1,4 +1,4 @@
-import type { ExpandedState, Updater } from '@tanstack/table-core';
+import type { ExpandedState, Updater } from "@tanstack/table-core";
 
 let _expanded = $state<ExpandedState>(true);
 export let expanded = () => _expanded;

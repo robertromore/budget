@@ -1,37 +1,39 @@
 <script lang="ts">
-  import type { EditableEntityItem } from '$lib/types';
-  import { insertCategorySchema, type Category } from '$lib/schema';
-  import { page } from '$app/state';
-  import * as Form from '$lib/components/ui/form';
-  import * as AlertDialog from '$lib/components/ui/alert-dialog';
-  import { Button, buttonVariants } from '$lib/components/ui/button';
-  import Input from '../ui/input/input.svelte';
-  import { Textarea } from '../ui/textarea';
-  import { superForm } from 'sveltekit-superforms';
-  import { zodClient } from 'sveltekit-superforms/adapters';
-  import { categoriesContext } from '$lib/states/categories.svelte';
+  import type { EditableEntityItem } from "$lib/types";
+  import { insertCategorySchema, type Category } from "$lib/schema";
+  import { page } from "$app/state";
+  import * as Form from "$lib/components/ui/form";
+  import * as AlertDialog from "$lib/components/ui/alert-dialog";
+  import { Button, buttonVariants } from "$lib/components/ui/button";
+  import Input from "../ui/input/input.svelte";
+  import { Textarea } from "../ui/textarea";
+  import { superForm } from "sveltekit-superforms";
+  import { zodClient } from "sveltekit-superforms/adapters";
+  import { categoriesContext } from "$lib/states/categories.svelte";
 
   let {
     id,
     onDelete,
-    onSave
+    onSave,
   }: {
     id?: number | undefined;
     onDelete?: (id: number) => void;
     onSave?: (new_category: EditableEntityItem, is_new: boolean) => void;
   } = $props();
 
-  const { data: { manageCategoryForm } } = page;
+  const {
+    data: { manageCategoryForm },
+  } = page;
   const form = superForm(manageCategoryForm, {
-    id: 'category-form',
+    id: "category-form",
     validators: zodClient(insertCategorySchema),
     onResult: async ({ result }) => {
       if (onSave) {
-        if (result.type === 'success' && result.data) {
+        if (result.type === "success" && result.data) {
           onSave(result.data.entity, (id ?? 0) === 0);
         }
       }
-    }
+    },
   });
 
   const { form: formData, enhance } = form;
@@ -44,7 +46,6 @@
   let alertDialogOpen = $state(false);
   const deleteCategory = async (id: number) => {
     alertDialogOpen = false;
-    // data.deleteCategory(id);
     if (onDelete) {
       onDelete(id);
     }
@@ -91,7 +92,7 @@
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={() => deleteCategory(id!)}
-        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action
+        class={buttonVariants({ variant: "destructive" })}>Continue</AlertDialog.Action
       >
     </AlertDialog.Footer>
   </AlertDialog.Content>

@@ -1,13 +1,13 @@
-import type EntityFilter from '$lib/components/filters/EntityFilter.svelte';
-import type TextFilter from '$lib/components/filters/TextFilter.svelte';
-import type MultipleEntityFilter from '$lib/components/filters/MultipleEntityFilter.svelte';
-import type { ComponentProps, SvelteComponent } from 'svelte';
-import type { FilterMeta, Row } from '@tanstack/table-core';
-import type { TransactionsFormat } from '$lib/components/types';
-import type DateFilter from '$lib/components/filters/DateFilter.svelte';
-import type DateRangeFilter from '$lib/components/filters/DateRangeFilter.svelte';
-import type NumberTextFilter from '$lib/components/filters/NumberTextFilter.svelte';
-import type NumberSliderFilter from '$lib/components/filters/NumberSliderFilter.svelte';
+import type EntityFilter from "$lib/components/filters/EntityFilter.svelte";
+import type TextFilter from "$lib/components/filters/TextFilter.svelte";
+import type MultipleEntityFilter from "$lib/components/filters/MultipleEntityFilter.svelte";
+import type { ComponentProps, SvelteComponent } from "svelte";
+import type { FilterMeta, Row } from "@tanstack/table-core";
+import type { TransactionsFormat } from "$lib/components/types";
+import type DateFilter from "$lib/components/filters/DateFilter.svelte";
+import type DateRangeFilter from "$lib/components/filters/DateRangeFilter.svelte";
+import type NumberTextFilter from "$lib/components/filters/NumberTextFilter.svelte";
+import type NumberSliderFilter from "$lib/components/filters/NumberSliderFilter.svelte";
 
 export type Selected<Value> = {
   value: Value;
@@ -65,7 +65,7 @@ export abstract class BaseFilter {
   ): [unknown, unknown[]] {
     return [
       accessorFn?.length ? accessorFn(row.getValue(columnId)) : row.getValue(columnId),
-      !Array.isArray(new_value) ? [new_value] : new_value
+      !Array.isArray(new_value) ? [new_value] : new_value,
     ];
   }
 }

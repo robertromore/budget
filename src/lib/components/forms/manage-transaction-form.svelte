@@ -1,40 +1,39 @@
 <script lang="ts">
-  import * as Form from '$lib/components/ui/form';
-  import {
-    insertTransactionSchema,
-    type Transaction
-  } from '$lib/schema';
-  import { superForm } from 'sveltekit-superforms/client';
-  import { today, getLocalTimeZone } from '@internationalized/date';
-  import type { EditableDateItem, EditableEntityItem } from '$lib/types';
-  import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-  import { zodClient } from 'sveltekit-superforms/adapters';
-  import DateInput from '$lib/components/input/date-input.svelte';
-  import EntityInput from '$lib/components/input/entity-input.svelte';
-  import NumericInput from '$lib/components/input/numeric-input.svelte';
-  import { page } from '$app/state';
+  import * as Form from "$lib/components/ui/form";
+  import { insertTransactionSchema, type Transaction } from "$lib/schema";
+  import { superForm } from "sveltekit-superforms/client";
+  import { today, getLocalTimeZone } from "@internationalized/date";
+  import type { EditableDateItem, EditableEntityItem } from "$lib/types";
+  import Textarea from "$lib/components/ui/textarea/textarea.svelte";
+  import { zodClient } from "sveltekit-superforms/adapters";
+  import DateInput from "$lib/components/input/date-input.svelte";
+  import EntityInput from "$lib/components/input/entity-input.svelte";
+  import NumericInput from "$lib/components/input/numeric-input.svelte";
+  import { page } from "$app/state";
 
   let {
     accountId,
-    onSave
+    onSave,
   }: {
     accountId: number;
     onDelete?: (id: number) => void;
     onSave?: (new_entity: Transaction) => void;
   } = $props();
 
-  const { data: { payees, categories, manageTransactionForm } } = page;
+  const {
+    data: { payees, categories, manageTransactionForm },
+  } = page;
 
   const form = superForm(manageTransactionForm, {
-    id: 'transaction-form',
+    id: "transaction-form",
     validators: zodClient(insertTransactionSchema),
     onResult: async ({ result }) => {
       if (onSave) {
-        if (result.type === 'success' && result.data) {
+        if (result.type === "success" && result.data) {
           onSave(result.data.entity);
         }
       }
-    }
+    },
   });
 
   const { form: formData, enhance } = form;
@@ -45,11 +44,11 @@
   let amount: number = $state<number>(0);
   let payee: EditableEntityItem = $state({
     id: 0,
-    name: ''
+    name: "",
   });
   let category: EditableEntityItem = $state({
     id: 0,
-    name: ''
+    name: "",
   });
   $effect(() => {
     $formData.date = dateValue.toString();
@@ -75,7 +74,7 @@
     <Form.Control>
       {#snippet children({ props })}
         <Form.Label>Amount</Form.Label>
-        <NumericInput {...props} bind:amount={amount} />
+        <NumericInput {...props} bind:amount />
         <Form.FieldErrors />
         <input hidden bind:value={$formData.amount} name={props.name} />
       {/snippet}

@@ -1,7 +1,7 @@
-import { type Payee } from '$lib/schema';
-import { trpc } from '$lib/trpc/client';
-import { without } from '$lib/utils';
-import { Context } from 'runed';
+import { type Payee } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { without } from "$lib/utils";
+import { Context } from "runed";
 
 export class PayeesState {
   payees: Payee[] = $state() as Payee[];
@@ -25,7 +25,7 @@ export class PayeesState {
 
   async deletePayees(payees: number[], cb?: (id: Payee[]) => void) {
     await trpc().payeeRoutes.delete.mutate({
-      entities: payees
+      entities: payees,
     });
     const [, removed] = without(this.payees, (payee: Payee) => payees.includes(payee.id));
     if (cb) {
@@ -42,4 +42,4 @@ export class PayeesState {
   }
 }
 
-export const payeesContext = new Context<PayeesState>('payees');
+export const payeesContext = new Context<PayeesState>("payees");

@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import Input from '$lib/components/ui/input/input.svelte';
-  import * as Popover from '$lib/components/ui/popover';
-  import { currencyFormatter } from '$lib/helpers/formatters';
-  import { cn } from '$lib/utils';
-  import Delete from 'lucide-svelte/icons/delete';
+  import { Button } from "$lib/components/ui/button";
+  import Input from "$lib/components/ui/input/input.svelte";
+  import * as Popover from "$lib/components/ui/popover";
+  import { currencyFormatter } from "$lib/helpers/formatters";
+  import { cn } from "$lib/utils";
+  import Delete from "lucide-svelte/icons/delete";
 
   let {
     amount = $bindable(),
     onSubmit,
-    open = $bindable()
+    open = $bindable(),
   }: {
     amount?: number;
     onSubmit?: () => void;
@@ -27,9 +27,9 @@
     new_amount = new_amount?.substring(0, new_amount.length - 1);
   };
   const clear = () => {
-    new_amount = '';
+    new_amount = "";
     input?.focus();
-  }
+  };
   const submit = () => {
     amount = parseFloat(new_amount);
     dialogOpen = false;
@@ -39,32 +39,32 @@
   const valueWellFormatted = () => new_amount?.match(/\d+?\.\d{2}/) !== null;
   const handleKeyDown = (event: KeyboardEvent) => {
     if (dialogOpen) {
-      if (new_amount?.includes('.') && event.key === '.') {
+      if (new_amount?.includes(".") && event.key === ".") {
         event.preventDefault();
       }
       const target = event.target as HTMLInputElement;
       const start = target?.selectionStart || 0;
       const end = target?.selectionEnd || target?.value.length;
       switch (event.key) {
-        case 'Enter':
+        case "Enter":
           if (new_amount) {
             submit();
           }
           break;
 
-        case 'Backspace':
+        case "Backspace":
           break;
 
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
+        case "0":
+        case "1":
+        case "2":
+        case "3":
+        case "4":
+        case "5":
+        case "6":
+        case "7":
+        case "8":
+        case "9":
           if (valueWellFormatted() && parseFloat(new_amount) != 0 && start === end) {
             event.preventDefault();
           }
@@ -87,33 +87,34 @@
           {...props}
           variant="outline"
           class={cn(
-            'w-[240px] justify-start text-left font-normal',
-            !new_amount && 'text-muted-foreground'
+            "w-[240px] justify-start text-left font-normal",
+            !new_amount && "text-muted-foreground"
           )}
         >
           {currencyFormatter.format(parseFloat(new_amount) || 0)}
         </Button>
       {/snippet}
     </Popover.Trigger>
-    <Popover.Content class="p-0" align="start" onEscapeKeydown={() => new_amount = amount!.toString()}>
+    <Popover.Content
+      class="p-0"
+      align="start"
+      onEscapeKeydown={() => (new_amount = amount!.toString())}
+    >
       <div class="p-2">
         <Input bind:value={new_amount} class="mb-2" bind:ref={input} />
         <div class="keypad grid grid-cols-3 grid-rows-3 gap-2">
           {#each Array.from({ length: 9 }, (_, i) => i + 1) as i}
-            <Button
-              variant="outline"
-              disabled={valueWellFormatted()}
-              onclick={select(i.toString())}>{i}</Button
+            <Button variant="outline" disabled={valueWellFormatted()} onclick={select(i.toString())}
+              >{i}</Button
             >
           {/each}
 
-          <Button variant="outline" disabled={new_amount?.includes('.')} onclick={select('.')}
+          <Button variant="outline" disabled={new_amount?.includes(".")} onclick={select(".")}
             >.</Button
           >
-          <Button variant="outline" disabled={valueWellFormatted()} onclick={select('0')}>0</Button
-          >
+          <Button variant="outline" disabled={valueWellFormatted()} onclick={select("0")}>0</Button>
           <Button variant="outline" disabled={!new_amount} onclick={backspace}>
-            <Delete/>
+            <Delete />
           </Button>
 
           <Button variant="outline" disabled={!new_amount} onclick={clear}>clear</Button>

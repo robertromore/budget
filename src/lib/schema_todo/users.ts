@@ -1,12 +1,12 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 // import { z } from 'zod';
 
-export const user = sqliteTable('movies', {
-  id: integer('id').primaryKey(),
-  name: text('name'),
-  password: text('password'),
-  email: text('email')
+export const user = sqliteTable("movies", {
+  id: integer("id").primaryKey(),
+  name: text("name"),
+  password: text("password"),
+  email: text("email"),
 });
 
 export const selectUserSchema = createSelectSchema(user);

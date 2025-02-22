@@ -1,13 +1,13 @@
-import { eq, sql } from 'drizzle-orm';
-import { publicProcedure, t } from '../t';
-import { z } from 'zod';
+import { eq, sql } from "drizzle-orm";
+import { publicProcedure, t } from "../t";
+import { z } from "zod";
 import {
   insertViewSchema,
   removeViewSchema,
   removeViewsSchema,
   views,
-  type View
-} from '$lib/schema';
+  type View,
+} from "$lib/schema";
 
 export const viewsRoutes = t.router({
   all: publicProcedure.query(async ({ ctx }) => {
@@ -21,7 +21,7 @@ export const viewsRoutes = t.router({
   load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
     return (
       await ctx.db.query.views.findMany({
-        where: eq(views.id, input.id)
+        where: eq(views.id, input.id),
       })
     )[0];
   }),
@@ -52,7 +52,7 @@ export const viewsRoutes = t.router({
             description,
             icon,
             filters,
-            display
+            display,
           })
           .where(eq(views.id, id))
           .returning();
@@ -64,12 +64,12 @@ export const viewsRoutes = t.router({
             description,
             icon,
             filters,
-            display
+            display,
           })
           .returning();
       }
       const entity = entities[0] as View;
       // entity.is_new = !!id;
       return entity;
-    })
+    }),
 });

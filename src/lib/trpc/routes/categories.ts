@@ -3,11 +3,11 @@ import {
   insertCategorySchema,
   removeCategoriesSchema,
   removeCategorySchema,
-  type Category
-} from '$lib/schema';
-import { eq, sql } from 'drizzle-orm';
-import { publicProcedure, t } from '../t';
-import { z } from 'zod';
+  type Category,
+} from "$lib/schema";
+import { eq, sql } from "drizzle-orm";
+import { publicProcedure, t } from "../t";
+import { z } from "zod";
 
 export const categoriesRoutes = t.router({
   all: publicProcedure.query(async ({ ctx }) => {
@@ -16,7 +16,7 @@ export const categoriesRoutes = t.router({
   load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
     return (
       await ctx.db.query.categories.findMany({
-        where: eq(categories.id, input.id)
+        where: eq(categories.id, input.id),
       })
     )[0];
   }),
@@ -41,7 +41,7 @@ export const categoriesRoutes = t.router({
           .update(categories)
           .set({
             name,
-            notes
+            notes,
           })
           .where(eq(categories.id, id))
           .returning();
@@ -50,12 +50,12 @@ export const categoriesRoutes = t.router({
           .insert(categories)
           .values({
             name,
-            notes
+            notes,
           })
           .returning();
       }
       const entity = entities[0] as Category;
       entity.is_new = !!id;
       return entity;
-    })
+    }),
 });

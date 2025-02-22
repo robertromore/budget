@@ -1,6 +1,6 @@
-import { categories, type Category } from '../../../schema';
-import { db } from '..';
-import { faker } from '@faker-js/faker';
+import { categories, type Category } from "../../../schema";
+import { db } from "..";
+import { faker } from "@faker-js/faker";
 
 export const categoryFactory = async (
   count: number = faker.number.int({ min: 1, max: 10 })
@@ -12,9 +12,9 @@ export const categoryFactory = async (
       .values({
         name: faker.lorem.words({
           min: 1,
-          max: 3
+          max: 3,
         }),
-        notes: faker.lorem.text()
+        notes: faker.lorem.text(),
       })
       .returning();
     categories_collection.push(new_category[0]);

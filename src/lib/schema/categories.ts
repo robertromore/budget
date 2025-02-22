@@ -1,25 +1,25 @@
 // A "category" is a
 
-import { relations, sql } from 'drizzle-orm';
-import { sqliteTable, integer, text, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { z } from 'zod';
+import { relations, sql } from "drizzle-orm";
+import { sqliteTable, integer, text, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 
-export const categories = sqliteTable('categories', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  parentId: integer('parent_id').references((): AnySQLiteColumn => categories.id),
-  name: text('name'),
-  notes: text('notes'),
-  dateCreated: text('date_created')
+export const categories = sqliteTable("categories", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  parentId: integer("parent_id").references((): AnySQLiteColumn => categories.id),
+  name: text("name"),
+  notes: text("notes"),
+  dateCreated: text("date_created")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`)
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
   parent: one(categories, {
     fields: [categories.parentId],
-    references: [categories.id]
-  })
+    references: [categories.id],
+  }),
 }));
 
 export const selectCategorySchema = createSelectSchema(categories);

@@ -1,8 +1,8 @@
-import { trpc } from '$lib/trpc/client';
-import { without } from '$lib/utils';
-import { Context } from 'runed';
-import type { EditableEntityItem } from '$lib/types';
-import type { Category } from '$lib/schema';
+import { trpc } from "$lib/trpc/client";
+import { without } from "$lib/utils";
+import { Context } from "runed";
+import type { EditableEntityItem } from "$lib/types";
+import type { Category } from "$lib/schema";
 
 export class EditableEntityState<T extends EditableEntityItem> {
   entities: T[] = $state() as T[];
@@ -26,7 +26,7 @@ export class EditableEntityState<T extends EditableEntityItem> {
 
   async delete(entities: number[], cb?: (id: T[]) => void) {
     await trpc().entityRoutes.delete.mutate({
-      entities: entities
+      entities: entities,
     });
     const [, removed] = without(this.entities, (entity: T) => entities.includes(entity.id));
     if (cb) {
@@ -43,4 +43,4 @@ export class EditableEntityState<T extends EditableEntityItem> {
   }
 }
 
-export const entitiesContext = new Context<EditableEntityState<Category>>('categories');
+export const entitiesContext = new Context<EditableEntityState<Category>>("categories");

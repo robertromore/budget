@@ -9,11 +9,11 @@
     getGroupedRowModel,
     getPaginationRowModel,
     getSortedRowModel,
-    type Table as TTable
+    type Table as TTable,
   } from "@tanstack/table-core";
   import { createSvelteTable, FlexRender } from "$lib/components/ui/data-table";
   import * as Table from "$lib/components/ui/table";
-  import type { TransactionsFormat } from '$lib/types';
+  import type { TransactionsFormat } from "$lib/types";
   import { DataTablePagination, DataTableToolbar } from ".";
   import { getLocalTimeZone, today } from "@internationalized/date";
   import { filtering, filters, setFiltering, setGlobalFilter } from "../(data)/filters.svelte";
@@ -32,7 +32,7 @@
   let {
     columns,
     transactions,
-    table = $bindable()
+    table = $bindable(),
   }: {
     columns: ColumnDef<TransactionsFormat, TValue>[];
     transactions?: TransactionsFormat[];
@@ -62,22 +62,22 @@
         return pagination();
       },
       get grouping() {
-        return grouping()
+        return grouping();
       },
       get expanded() {
-        return expanded()
+        return expanded();
       },
       get columnPinning() {
-        return pinning()
-      }
+        return pinning();
+      },
     },
     initialState: {
       columnVisibility: {
-        id: false
+        id: false,
       },
       columnPinning: {
-        right: ['select-col']
-      }
+        right: ["select-col"],
+      },
     },
     columns,
     enableRowSelection: true,
@@ -99,7 +99,7 @@
     getExpandedRowModel: getExpandedRowModel(),
     getFacetedUniqueValues: (table: TTable<TransactionsFormat>, columnId: string) => () => {
       const rows = table.getGlobalFacetedRowModel().flatRows;
-      if (columnId === 'date') {
+      if (columnId === "date") {
         // const filterFnName = table.getColumn(columnId)?.getFilterFn()?.toString();
         // if (filterFnName && _dateMapCache.has(filterFnName)) {
         //   return _dateMapCache.get(filterFnName) as Map<string, string>;
@@ -114,11 +114,16 @@
           thisday.subtract({ months: 1 }),
           thisday.subtract({ months: 3 }),
           thisday.subtract({ months: 6 }),
-          thisday.subtract({ years: 1 })
+          thisday.subtract({ years: 1 }),
         ];
         for (const date of dates) {
           for (const row of rows) {
-            if (table.getColumn(columnId)?.getFilterFn()?.call({} as any, row, columnId, [date.toString()], () => {})) {
+            if (
+              table
+                .getColumn(columnId)
+                ?.getFilterFn()
+                ?.call({} as any, row, columnId, [date.toString()], () => {})
+            ) {
               newmap.set(date.toString(), (newmap.get(date.toString()) ?? 0) + 1);
             }
           }
@@ -130,22 +135,22 @@
       return getFacetedUniqueValues<TransactionsFormat>()(table, columnId)();
     },
     // globalFilterFn: fuzzyFilter,
-    filterFns: {...filters},
-    groupedColumnMode: 'reorder',
-    autoResetExpanded: false
+    filterFns: { ...filters },
+    groupedColumnMode: "reorder",
+    autoResetExpanded: false,
   });
 
   const views: View[] = page.data.views;
 
-  const _currentViewStates: CurrentViewState<TransactionsFormat>[] = views.map((view: View) => new CurrentViewState<TransactionsFormat>(view, table));
-  currentViews.set(new CurrentViewsState<TransactionsFormat>(
-    _currentViewStates
-  ));
+  const _currentViewStates: CurrentViewState<TransactionsFormat>[] = views.map(
+    (view: View) => new CurrentViewState<TransactionsFormat>(view, table)
+  );
+  currentViews.set(new CurrentViewsState<TransactionsFormat>(_currentViewStates));
 </script>
 
 <div class="space-y-4">
   <DataTableToolbar {table} />
-  <div class="rounded-md border w-full">
+  <div class="w-full rounded-md border">
     <Table.Root>
       <Table.Header>
         {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
@@ -178,19 +183,14 @@
                 <Table.Cell></Table.Cell>
               {:else}
                 <Table.Cell>
-                  <FlexRender
-                    content={cell.column.columnDef.cell}
-                    context={cell.getContext()}
-                  />
+                  <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
                 </Table.Cell>
               {/if}
             {/each}
           </Table.Row>
         {:else}
           <Table.Row>
-            <Table.Cell colspan={columns.length} class="h-24 text-center">
-              No results.
-            </Table.Cell>
+            <Table.Cell colspan={columns.length} class="h-24 text-center">No results.</Table.Cell>
           </Table.Row>
         {/each}
       </Table.Body>

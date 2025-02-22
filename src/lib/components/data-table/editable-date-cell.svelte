@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { type DateValue } from '@internationalized/date';
-  import DateInput from '$lib/components/input/date-input.svelte';
+  import { type DateValue } from "@internationalized/date";
+  import DateInput from "$lib/components/input/date-input.svelte";
 
   let {
     value = $bindable(),
-    onUpdateValue
+    onUpdateValue,
   }: {
     value: DateValue | undefined;
     onUpdateValue?: (newValue: unknown) => void;

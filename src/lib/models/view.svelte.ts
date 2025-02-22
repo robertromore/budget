@@ -1,9 +1,9 @@
-import type { View as ViewSchema } from '$lib/schema';
-import { trpc } from '$lib/trpc/client';
-import type { ViewFilter, ViewFilterWithSet } from '$lib/types';
-import deeplyEqual, { equalArray } from '$lib/utils';
-import type { ExpandedState, GroupingState, SortingState } from '@tanstack/table-core';
-import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+import type { View as ViewSchema } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import type { ViewFilter, ViewFilterWithSet } from "$lib/types";
+import deeplyEqual, { equalArray } from "$lib/utils";
+import type { ExpandedState, GroupingState, SortingState } from "@tanstack/table-core";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 export default class View {
   view: ViewSchema = $state() as ViewSchema;
@@ -50,17 +50,17 @@ export default class View {
     this.view.display = this.view.display || {
       grouping: [],
       sort: [],
-      expanded: {}
+      expanded: {},
     };
 
     this.initial = view;
     this.#filterValues = new SvelteMap<string, ViewFilterWithSet>(
-      (this.view.filters as Array<Omit<ViewFilterWithSet, 'view'> & { view?: Array<unknown> }>).map(
+      (this.view.filters as Array<Omit<ViewFilterWithSet, "view"> & { view?: Array<unknown> }>).map(
         (filter) => [
           filter.column,
           Object.assign({}, filter, {
-            value: new SvelteSet(filter.value || [])
-          })
+            value: new SvelteSet(filter.value || []),
+          }),
         ]
       )
     );
@@ -107,7 +107,7 @@ export default class View {
     }
 
     const newFilter: ViewFilterWithSet = Object.assign({}, filter, {
-      value: new SvelteSet(filter.value)
+      value: new SvelteSet(filter.value),
     });
 
     this.#filterValues.set(filter.column, newFilter);
@@ -130,7 +130,7 @@ export default class View {
             {},
             this.#filterValues.get(filter.column),
             Object.assign({}, filter, {
-              value: new SvelteSet(filter.value)
+              value: new SvelteSet(filter.value),
             })
           )
     );
@@ -217,12 +217,12 @@ export default class View {
       this.view = this.initial;
       this.#filterValues = new SvelteMap<string, ViewFilterWithSet>(
         (
-          this.view.filters as Array<Omit<ViewFilterWithSet, 'view'> & { view?: Array<unknown> }>
+          this.view.filters as Array<Omit<ViewFilterWithSet, "view"> & { view?: Array<unknown> }>
         ).map((filter) => [
           filter.column,
           Object.assign({}, filter, {
-            value: new SvelteSet(filter.value || [])
-          })
+            value: new SvelteSet(filter.value || []),
+          }),
         ])
       );
     }
@@ -235,17 +235,17 @@ export default class View {
       filters:
         this.view.filters?.map((filter) => ({
           ...filter,
-          value: Array.from(filter.value)
-        })) || null
+          value: Array.from(filter.value),
+        })) || null,
     });
     this.initial = $state.snapshot(this.view);
     this.#filterValues = new SvelteMap<string, ViewFilterWithSet>(
-      (this.view.filters as Array<Omit<ViewFilterWithSet, 'view'> & { view?: Array<unknown> }>).map(
+      (this.view.filters as Array<Omit<ViewFilterWithSet, "view"> & { view?: Array<unknown> }>).map(
         (filter) => [
           filter.column,
           Object.assign({}, filter, {
-            value: new SvelteSet(filter.value || [])
-          })
+            value: new SvelteSet(filter.value || []),
+          }),
         ]
       )
     );

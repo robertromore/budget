@@ -3,11 +3,11 @@ import type {
   FormInsertAccountSchema,
   RemoveAccountSchema,
   insertAccountSchema,
-  removeAccountSchema
-} from '$lib/schema';
-import { getContext, setContext } from 'svelte';
-import type { Infer, SuperValidated } from 'sveltekit-superforms';
-import { SvelteSet } from 'svelte/reactivity';
+  removeAccountSchema,
+} from "$lib/schema";
+import { getContext, setContext } from "svelte";
+import type { Infer, SuperValidated } from "sveltekit-superforms";
+import { SvelteSet } from "svelte/reactivity";
 
 type SetAccountsState = {
   accounts?: Account[];
@@ -39,7 +39,7 @@ export class AccountsState {
   }
 }
 
-const ACCOUNT_CTX = Symbol('accounts_ctx');
+const ACCOUNT_CTX = Symbol("accounts_ctx");
 
 export function setAccountsState(init: SetAccountsState) {
   const accountState = new AccountsState(init);

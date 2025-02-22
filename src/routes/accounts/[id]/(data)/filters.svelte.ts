@@ -1,6 +1,6 @@
-import type { TransactionsFormat } from '$lib/types';
-import { parseDate } from '@internationalized/date';
-import type { ColumnFiltersState, Row, Updater } from '@tanstack/table-core';
+import type { TransactionsFormat } from "$lib/types";
+import { parseDate } from "@internationalized/date";
+import type { ColumnFiltersState, Row, Updater } from "@tanstack/table-core";
 
 export const filters = {
   entityIsFilter: (
@@ -10,7 +10,7 @@ export const filters = {
     addMeta: (meta: any) => void
   ) => {
     type validType = { [key: string]: any };
-    return filterValue.has((row.original as validType)[columnId + 'Id'].toString());
+    return filterValue.has((row.original as validType)[columnId + "Id"].toString());
   },
   entityIsNotFilter: (
     row: Row<TransactionsFormat>,
@@ -19,7 +19,7 @@ export const filters = {
     addMeta: (meta: any) => void
   ) => {
     type validType = { [key: string]: any };
-    return !filterValue.has((row.original as validType)[columnId + 'Id'].toString());
+    return !filterValue.has((row.original as validType)[columnId + "Id"].toString());
   },
   dateBefore: (
     row: Row<TransactionsFormat>,
@@ -79,7 +79,7 @@ export const filters = {
     addMeta: (meta: any) => void
   ) => {
     return !filterValue.has(row.original[columnId as keyof TransactionsFormat] as string);
-  }
+  },
 };
 
 let _filtering = $state<ColumnFiltersState>([]);
@@ -90,7 +90,7 @@ export function setFiltering(updater: Updater<ColumnFiltersState>) {
   } else _filtering = updater;
 }
 
-let _globalFilter = $state('');
+let _globalFilter = $state("");
 export let globalFilter = () => _globalFilter;
 export function setGlobalFilter(updater: Updater<string>) {
   if (updater instanceof Function) {

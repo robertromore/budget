@@ -1,16 +1,16 @@
-import type { TransactionsFormat } from '$lib/components/types';
-import { transactionFormatter } from '$lib/helpers/formatters';
+import type { TransactionsFormat } from "$lib/components/types";
+import { transactionFormatter } from "$lib/helpers/formatters";
 import type {
   InsertTransactionSchema,
   RemoveTransactionSchema,
   Transaction,
   insertTransactionSchema,
-  removeTransactionsSchema
-} from '$lib/schema';
-import { trpc } from '$lib/trpc/client';
-import { without } from '$lib/utils';
-import { getContext, setContext } from 'svelte';
-import type { Infer, SuperValidated } from 'sveltekit-superforms';
+  removeTransactionsSchema,
+} from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { without } from "$lib/utils";
+import { getContext, setContext } from "svelte";
+import type { Infer, SuperValidated } from "sveltekit-superforms";
 
 type SetTransactionState = {
   transactions: Transaction[];
@@ -38,7 +38,7 @@ export class TransactionsState {
   ) {
     await trpc().transactionRoutes.delete.mutate({
       entities: transactions,
-      accountId
+      accountId,
     });
     const removed = without(this.transactions ?? [], (transaction: Transaction) =>
       transactions.includes(transaction.id)
@@ -78,7 +78,7 @@ export class TransactionsState {
   }
 }
 
-const Transaction_CTX = Symbol('Transaction_ctx');
+const Transaction_CTX = Symbol("Transaction_ctx");
 
 export function setTransactionState(init: SetTransactionState) {
   const transactionState = new TransactionState(init);

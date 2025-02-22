@@ -1,6 +1,6 @@
-import Root from './expand-toggle.svelte';
+import Root from "./expand-toggle.svelte";
 export {
   Root,
   //
-  Root as ExpandToggle
+  Root as ExpandToggle,
 };

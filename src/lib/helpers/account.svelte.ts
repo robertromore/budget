@@ -1,6 +1,6 @@
-import type { Account, Transaction } from '$lib/schema';
-import { trpc } from '$lib/trpc/client';
-import { without } from '$lib/utils';
+import type { Account, Transaction } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { without } from "$lib/utils";
 
 export const deleteTransactions = async (
   account: Account,
@@ -9,7 +9,7 @@ export const deleteTransactions = async (
 ) => {
   await trpc().transactionRoutes.delete.mutate({
     entities: transactions,
-    accountId: account.id
+    accountId: account.id,
   });
   const removed = without(account.transactions ?? [], (transaction: Transaction) =>
     transactions.includes(transaction.id)

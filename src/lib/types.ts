@@ -1,9 +1,9 @@
-import type { Category, Payee } from '$lib/schema';
-import type { DateValue } from '@internationalized/date';
-import type { Component } from 'svelte';
-import type { RenderComponentConfig } from './components/ui/data-table/render-helpers';
-import type { Column, ExpandedState, GroupingState, SortingState } from '@tanstack/table-core';
-import type { SvelteSet } from 'svelte/reactivity';
+import type { Category, Payee } from "$lib/schema";
+import type { DateValue } from "@internationalized/date";
+import type { Component } from "svelte";
+import type { RenderComponentConfig } from "./components/ui/data-table/render-helpers";
+import type { Column, ExpandedState, GroupingState, SortingState } from "@tanstack/table-core";
+import type { SvelteSet } from "svelte/reactivity";
 
 export type EditableBooleanItem = {
   value: boolean;
@@ -31,7 +31,7 @@ export type TransactionsFormat = {
   notes: string | null;
   category: Category | null;
   categoryId: number | null;
-  status: 'cleared' | 'pending' | 'scheduled' | null;
+  status: "cleared" | "pending" | "scheduled" | null;
   accountId: number;
   parentId: number | null;
 };
@@ -57,7 +57,7 @@ export type ViewFilterWithSet = ViewFilter & {
 export type FilterInputOption<T> = {
   name: string;
   icon?: Component;
-  component: () => RenderComponentConfig<Component<{}, {}, ''>>;
+  component: () => RenderComponentConfig<Component<{}, {}, "">>;
   column: Column<T, unknown>;
   value: unknown[];
 };

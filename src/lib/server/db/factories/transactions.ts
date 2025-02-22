@@ -1,9 +1,9 @@
-import { db } from '..';
-import { transactions, type Category, type NewTransaction } from '../../../schema';
-import { faker } from '@faker-js/faker';
-import { payeeFactory } from './payees';
-import type { Payee } from '$lib/schema/payees';
-import { categoryFactory } from './categories';
+import { db } from "..";
+import { transactions, type Category, type NewTransaction } from "../../../schema";
+import { faker } from "@faker-js/faker";
+import { payeeFactory } from "./payees";
+import type { Payee } from "$lib/schema/payees";
+import { categoryFactory } from "./categories";
 
 export const transactionFactory = async (
   account?: { id: number },
@@ -19,12 +19,12 @@ export const transactionFactory = async (
         amount: faker.number.float({
           max: 1000,
           min: -1000,
-          fractionDigits: 2
+          fractionDigits: 2,
         }),
         notes: faker.lorem.text(),
         accountId: account?.id,
         payeeId: new_payee.id,
-        categoryId: new_category.id
+        categoryId: new_category.id,
       })
       .returning();
     transactions_collection.push(new_transaction[0]);

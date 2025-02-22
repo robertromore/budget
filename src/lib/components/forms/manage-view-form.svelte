@@ -1,21 +1,18 @@
 <script lang="ts">
-  import { page } from '$app/state';
-  import * as Form from '$lib/components/ui/form';
-  import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-  import {
-      insertViewSchema,
-      type View
-  } from '$lib/schema';
-  import type { CurrentViewState } from '$lib/states/current-view.svelte';
-  import { currentViews } from '$lib/states/current-views.svelte';
-  import type { FilterInputOption, TransactionsFormat } from '$lib/types';
-  import { zodClient } from 'sveltekit-superforms/adapters';
-  import { superForm } from 'sveltekit-superforms/client';
-  import DeleteViewDialog from '../dialogs/delete-view-dialog.svelte';
-  import DisplayInput from '../input/display-input.svelte';
-  import FilterInput from '../input/filter-input.svelte';
-  import { Button, buttonVariants } from '../ui/button';
-  import { Input } from '../ui/input';
+  import { page } from "$app/state";
+  import * as Form from "$lib/components/ui/form";
+  import Textarea from "$lib/components/ui/textarea/textarea.svelte";
+  import { insertViewSchema, type View } from "$lib/schema";
+  import type { CurrentViewState } from "$lib/states/current-view.svelte";
+  import { currentViews } from "$lib/states/current-views.svelte";
+  import type { FilterInputOption, TransactionsFormat } from "$lib/types";
+  import { zodClient } from "sveltekit-superforms/adapters";
+  import { superForm } from "sveltekit-superforms/client";
+  import DeleteViewDialog from "../dialogs/delete-view-dialog.svelte";
+  import DisplayInput from "../input/display-input.svelte";
+  import FilterInput from "../input/filter-input.svelte";
+  import { Button, buttonVariants } from "../ui/button";
+  import { Input } from "../ui/input";
 
   let {
     onCancel,
@@ -24,32 +21,36 @@
     availableFilters,
     viewId = $bindable(),
   }: {
-    onCancel?: () => {},
-    onDelete?: () => void,
+    onCancel?: () => {};
+    onDelete?: () => void;
     onSave?: (new_entity: View) => void;
     availableFilters: FilterInputOption<TransactionsFormat>[];
     viewId?: number;
   } = $props();
 
-  const { data: { manageViewForm } } = page;
+  const {
+    data: { manageViewForm },
+  } = page;
 
   const form = superForm(manageViewForm, {
-    id: 'views-form',
-    dataType: 'json',
+    id: "views-form",
+    dataType: "json",
     validators: zodClient(insertViewSchema),
     onResult: async ({ result }) => {
       if (onSave) {
-        if (result.type === 'success' && result.data) {
+        if (result.type === "success" && result.data) {
           onSave(result.data.entity);
         }
       }
-    }
+    },
   });
 
   const { form: formData, enhance, errors } = form;
 
   const _currentViews = $derived(currentViews.get());
-  const activeView = $derived(viewId && viewId > 0 ? _currentViews.get(viewId) : _currentViews.activeView) as CurrentViewState<TransactionsFormat>;
+  const activeView = $derived(
+    viewId && viewId > 0 ? _currentViews.get(viewId) : _currentViews.activeView
+  ) as CurrentViewState<TransactionsFormat>;
 
   let alertDialogOpen = $state(false);
 
@@ -61,19 +62,23 @@
     $formData.display = {
       grouping: activeView?.view.getGrouping(),
       sorting: activeView?.view.getSorting(),
-      expanded: activeView?.view.getExpanded()
+      expanded: activeView?.view.getExpanded(),
     };
   });
 </script>
 
-<DeleteViewDialog bind:dialogOpen={alertDialogOpen} views={[$formData.id]} onDelete={() => {
-  if (onDelete) {
-    onDelete();
-  }
-  activeView?.view.deleteView();
-}}/>
+<DeleteViewDialog
+  bind:dialogOpen={alertDialogOpen}
+  views={[$formData.id]}
+  onDelete={() => {
+    if (onDelete) {
+      onDelete();
+    }
+    activeView?.view.deleteView();
+  }}
+/>
 
-<form method="post" action="/views?/save-view" use:enhance class="border p-4 rounded-sm">
+<form method="post" action="/views?/save-view" use:enhance class="rounded-sm border p-4">
   <!-- <Form.Field {form} name="icon">
     <Form.Control>
       {#snippet children({ props })}
@@ -96,20 +101,31 @@
     </Form.Field>
     <div class="min-w-max">
       <Form.Button class={buttonVariants({ size: "default" })}>save</Form.Button>
-      <Button variant="outline" size="default" onclick={() => {
-        if (onCancel) {
-          onCancel();
-        }
-        _currentViews.removeTemporaryView();
-      }}>cancel</Button>
-      <Button variant="destructive" size="default" onclick={() => alertDialogOpen = true}>delete</Button>
+      <Button
+        variant="outline"
+        size="default"
+        onclick={() => {
+          if (onCancel) {
+            onCancel();
+          }
+          _currentViews.removeTemporaryView();
+        }}>cancel</Button
+      >
+      <Button variant="destructive" size="default" onclick={() => (alertDialogOpen = true)}
+        >delete</Button
+      >
     </div>
   </div>
 
   <Form.Field {form} name="description">
     <Form.Control>
       {#snippet children({ props })}
-        <Textarea {...props} bind:value={$formData.description} name={props.name} placeholder="Description (optional)" />
+        <Textarea
+          {...props}
+          bind:value={$formData.description}
+          name={props.name}
+          placeholder="Description (optional)"
+        />
         <Form.FieldErrors />
       {/snippet}
     </Form.Control>

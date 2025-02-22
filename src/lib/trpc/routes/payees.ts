@@ -1,7 +1,7 @@
-import { insertPayeeSchema, payees, removePayeeSchema, removePayeesSchema } from '$lib/schema';
-import { z } from 'zod';
-import { publicProcedure, t } from '../t';
-import { eq, sql } from 'drizzle-orm';
+import { insertPayeeSchema, payees, removePayeeSchema, removePayeesSchema } from "$lib/schema";
+import { z } from "zod";
+import { publicProcedure, t } from "../t";
+import { eq, sql } from "drizzle-orm";
 
 export const payeeRoutes = t.router({
   all: publicProcedure.query(async ({ ctx }) => {
@@ -10,7 +10,7 @@ export const payeeRoutes = t.router({
   load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
     return (
       await ctx.db.query.payees.findMany({
-        where: eq(payees.id, input.id)
+        where: eq(payees.id, input.id),
       })
     )[0];
   }),
@@ -35,7 +35,7 @@ export const payeeRoutes = t.router({
             .update(payees)
             .set({
               name,
-              notes
+              notes,
             })
             .where(eq(payees.id, id))
             .returning()
@@ -46,9 +46,9 @@ export const payeeRoutes = t.router({
           .insert(payees)
           .values({
             name,
-            notes
+            notes,
           })
           .returning()
       )[0];
-    })
+    }),
 });

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import * as AlertDialog from '$lib/components/ui/alert-dialog';
-  import { buttonVariants } from '$lib/components/ui/button';
-  import { trpc } from '$lib/trpc/client';
-  import { page } from '$app/state';
-  import { invalidateAll } from '$app/navigation';
+  import * as AlertDialog from "$lib/components/ui/alert-dialog";
+  import { buttonVariants } from "$lib/components/ui/button";
+  import { trpc } from "$lib/trpc/client";
+  import { page } from "$app/state";
+  import { invalidateAll } from "$app/navigation";
 
   let {
     deleteDialogId = $bindable(),
-    deleteDialogOpen = $bindable()
+    deleteDialogOpen = $bindable(),
   }: {
     deleteDialogId: number | null;
     deleteDialogOpen: boolean;
@@ -33,7 +33,7 @@
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={confirmDeleteAccount}
-        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action
+        class={buttonVariants({ variant: "destructive" })}>Continue</AlertDialog.Action
       >
     </AlertDialog.Footer>
   </AlertDialog.Content>

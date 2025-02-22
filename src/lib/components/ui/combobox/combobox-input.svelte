@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Combobox as ComboboxPrimitive } from 'bits-ui';
-  import { cn } from '$lib/utils.js';
-  import Badge from '../badge/badge.svelte';
-  import Button from '../button/button.svelte';
+  import { Combobox as ComboboxPrimitive } from "bits-ui";
+  import { cn } from "$lib/utils.js";
+  import Badge from "../badge/badge.svelte";
+  import Button from "../button/button.svelte";
 
   type Props = ComboboxPrimitive.InputProps & {
     useBadge?: boolean;
@@ -24,7 +24,7 @@
 
   $effect(() => {
     if (Array.isArray(value)) {
-      displayValue = value.map((v) => v.label).join(', ');
+      displayValue = value.map((v) => v.label).join(", ");
       if (useBadge) {
         badgeCount = value.length;
       }
@@ -32,7 +32,7 @@
       if (value) {
         displayValue = value.label;
       } else {
-        displayValue = '';
+        displayValue = "";
       }
       if (useBadge) {
         badgeCount = value ? 1 : 0;
@@ -50,13 +50,16 @@
 
 <div
   class={cn(
-    'flex h-9 items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
+    "flex h-9 items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
     className
   )}
 >
   <span class="icon-[lucide--search] size-4 shrink-0 opacity-50"></span>
   <ComboboxPrimitive.Input
-    class={cn("flex h-9 w-full rounded-md bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50", inputClass)}
+    class={cn(
+      "flex h-9 w-full rounded-md bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+      inputClass
+    )}
     {...restProps}
     bind:value={displayValue}
   />

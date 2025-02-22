@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { z, type SafeParseSuccess, type ZodSchema } from 'zod';
-import type { RequestEvent } from '../../../routes/$types';
-import { fail, type MaybePromise } from '@sveltejs/kit';
+import { z, type SafeParseSuccess, type ZodSchema } from "zod";
+import type { RequestEvent } from "../../../routes/$types";
+import { fail, type MaybePromise } from "@sveltejs/kit";
 
 export interface ValidatedFormEvent extends RequestEvent {
   parsedData: SafeParseSuccess<any>;
@@ -25,18 +25,18 @@ export function validateForm(
   return async (event: RequestEvent) => {
     const form = await event.request.formData();
     const object = Object.fromEntries(form.entries());
-    if (options?.debug) logData('v IN DATA v', object);
+    if (options?.debug) logData("v IN DATA v", object);
 
     const res = schema.safeParse(object);
-    if (options?.debug) logData('v PARSE RESULT v', res);
+    if (options?.debug) logData("v PARSE RESULT v", res);
 
     if (!res.success) {
       return fail(422, {
         object,
-        errors: res.error.issues
+        errors: res.error.issues,
       });
     }
-    if (options?.debug) logData('v OUT DATA v', res.data);
+    if (options?.debug) logData("v OUT DATA v", res.data);
 
     return await callback({ ...event, parsedData: res });
   };
@@ -60,14 +60,14 @@ export function validateNumericId(
     if (!idRes.success) {
       return fail(422, {
         object,
-        errors: idRes.error.issues
+        errors: idRes.error.issues,
       });
     }
 
     if (!objectRes.success) {
       return fail(422, {
         object,
-        errors: objectRes.error.issues
+        errors: objectRes.error.issues,
       });
     }
 

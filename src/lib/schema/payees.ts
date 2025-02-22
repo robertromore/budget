@@ -2,23 +2,23 @@
 // from one account to another. Transactions can be "split" into multiple
 // transactions. Split transactions have the same parent transaction.
 
-import { relations, sql } from 'drizzle-orm';
-import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { transactions } from './transactions';
-import { z } from 'zod';
+import { relations, sql } from "drizzle-orm";
+import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { transactions } from "./transactions";
+import { z } from "zod";
 
-export const payees = sqliteTable('payee', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  name: text('name'),
-  notes: text('notes'),
-  dateCreated: text('date_created')
+export const payees = sqliteTable("payee", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name"),
+  notes: text("notes"),
+  dateCreated: text("date_created")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`)
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const payeesRelations = relations(payees, ({ many }) => ({
-  transactions: many(transactions)
+  transactions: many(transactions),
 }));
 
 export const selectPayeeSchema = createSelectSchema(payees);
@@ -27,9 +27,9 @@ export const formInsertPayeeSchema = createInsertSchema(payees, {
   name: z
     .string()
     .min(1, {
-      message: 'required'
+      message: "required",
     })
-    .max(30)
+    .max(30),
 });
 export const removePayeeSchema = z.object({ id: z.number().nonnegative() });
 export const removePayeesSchema = z.object({ entities: z.array(z.number().nonnegative()) });

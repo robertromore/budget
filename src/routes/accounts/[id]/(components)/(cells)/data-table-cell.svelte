@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { HTMLAttributes } from "svelte/elements";
+  import type { HTMLAttributes } from "svelte/elements";
 
-	let { children, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
+  let { children, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
 </script>
 
 <div {...restProps}>
-	{@render children?.()}
+  {@render children?.()}
 </div>

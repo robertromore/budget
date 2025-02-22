@@ -1,8 +1,8 @@
-import { SvelteMap } from 'svelte/reactivity';
-import { CurrentViewState } from './current-view.svelte';
-import { Context } from 'runed';
-import type { TransactionsFormat } from '$lib/types';
-import type { Table } from '@tanstack/table-core';
+import { SvelteMap } from "svelte/reactivity";
+import { CurrentViewState } from "./current-view.svelte";
+import { Context } from "runed";
+import type { TransactionsFormat } from "$lib/types";
+import type { Table } from "@tanstack/table-core";
 
 /**
  * A state class representing multiple active views.
@@ -21,7 +21,6 @@ export class CurrentViewsState<T> {
       this.viewsStates = new SvelteMap(
         viewsStates.map((viewsState) => [viewsState.view.id, viewsState])
       );
-      // viewsStates.forEach((viewState) => this.add(viewState));
       this.activeViewId = viewsStates[0].view.id;
     }
   }
@@ -58,7 +57,7 @@ export class CurrentViewsState<T> {
   }
 
   setActive(viewState: CurrentViewState<T> | number) {
-    if (typeof viewState === 'number') {
+    if (typeof viewState === "number") {
       this.activeViewId = viewState;
     } else {
       this.activeViewId = (viewState as CurrentViewState<T>).view.id;
@@ -75,12 +74,12 @@ export class CurrentViewsState<T> {
       new CurrentViewState(
         {
           id: -1,
-          name: 'New view',
-          description: '',
+          name: "",
+          description: "",
           icon: null,
           filters: [],
           display: {},
-          dirty: true
+          dirty: true,
         },
         table
       )
@@ -96,4 +95,4 @@ export class CurrentViewsState<T> {
   };
 }
 
-export const currentViews = new Context<CurrentViewsState<TransactionsFormat>>('current_views');
+export const currentViews = new Context<CurrentViewsState<TransactionsFormat>>("current_views");

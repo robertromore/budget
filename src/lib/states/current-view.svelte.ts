@@ -1,17 +1,17 @@
-import type { View } from '$lib/schema';
-import { default as ViewModel } from '$lib/models/view.svelte';
-import { trpc } from '$lib/trpc/client';
-import type { TransactionsFormat, ViewFilter } from '$lib/types';
-import deeplyEqual, { equalArray } from '$lib/utils';
+import type { View } from "$lib/schema";
+import { default as ViewModel } from "$lib/models/view.svelte";
+import { trpc } from "$lib/trpc/client";
+import type { TransactionsFormat, ViewFilter } from "$lib/types";
+import deeplyEqual, { equalArray } from "$lib/utils";
 import type {
   ExpandedState,
   FilterFnOption,
   GroupingState,
   SortingState,
-  Table
-} from '@tanstack/table-core';
-import { Context } from 'runed';
-import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+  Table,
+} from "@tanstack/table-core";
+import { Context } from "runed";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 /**
  * A state class representing the currently active view.
@@ -86,7 +86,7 @@ export class CurrentViewState<TData> {
 
     const column = this.table.getColumn(filter);
     if (column) {
-      column.setFilterValue('');
+      column.setFilterValue("");
     }
   }
 
@@ -164,4 +164,4 @@ export class CurrentViewState<TData> {
   };
 }
 
-export const currentView = new Context<CurrentViewState<TransactionsFormat>>('current_view');
+export const currentView = new Context<CurrentViewState<TransactionsFormat>>("current_view");

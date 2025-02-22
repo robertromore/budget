@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { page } from '$app/state';
-  import * as Dialog from '$lib/components/ui/dialog';
-  import * as Form from '$lib/components/ui/form';
-  import { Input } from '$lib/components/ui/input';
-  import { formInsertAccountSchema } from '$lib/schema';
-  import { newAccountDialog } from '$lib/states/global.svelte';
-  import { superForm } from 'sveltekit-superforms';
-  import { zodClient } from 'sveltekit-superforms/adapters';
+  import { page } from "$app/state";
+  import * as Dialog from "$lib/components/ui/dialog";
+  import * as Form from "$lib/components/ui/form";
+  import { Input } from "$lib/components/ui/input";
+  import { formInsertAccountSchema } from "$lib/schema";
+  import { newAccountDialog } from "$lib/states/global.svelte";
+  import { superForm } from "sveltekit-superforms";
+  import { zodClient } from "sveltekit-superforms/adapters";
 
   const dialogOpen = $derived(newAccountDialog.get());
   let { data } = page;
@@ -15,7 +15,7 @@
     validators: zodClient(formInsertAccountSchema),
     onResult: () => {
       dialogOpen.current = false;
-    }
+    },
   });
 
   const { form: formData, enhance, submitting } = form;
@@ -33,7 +33,9 @@
               {#snippet children({ props })}
                 <Form.Label>Account Name</Form.Label>
                 <Input {...props} bind:value={$formData.name} />
-                <Form.Description>An account name like "Checking", "Savings Account", "401k", etc.</Form.Description>
+                <Form.Description
+                  >An account name like "Checking", "Savings Account", "401k", etc.</Form.Description
+                >
                 <Form.FieldErrors />
               {/snippet}
             </Form.Control>
