@@ -32,7 +32,7 @@
   const selectedTransactions = $derived(Object.values(table?.getSelectedRowModel().rowsById ?? {}).map((row) => row.original.id));
 </script>
 
-<div class="mb-2 flex items-center">
+<div class="mb-2 items-center">
   <h1 class="mr-5 text-3xl">{account?.name}</h1>
   <span class="text-sm text-muted-foreground">
     <strong>Balance:</strong> {currentAccountState?.balance}
