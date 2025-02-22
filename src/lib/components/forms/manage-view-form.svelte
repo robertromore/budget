@@ -111,9 +111,11 @@
           _currentViews.removeTemporaryView();
         }}>cancel</Button
       >
-      <Button variant="destructive" size="default" onclick={() => (alertDialogOpen = true)}
-        >delete</Button
-      >
+      {#if viewId !== -1}
+        <Button variant="destructive" size="default" onclick={() => (alertDialogOpen = true)}
+          >delete</Button
+        >
+      {/if}
     </div>
   </div>
 
