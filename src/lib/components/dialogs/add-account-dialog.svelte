@@ -1,20 +1,20 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { buttonVariants } from '$lib/components/ui/button';
   import * as Dialog from '$lib/components/ui/dialog';
   import * as Form from '$lib/components/ui/form';
   import { Input } from '$lib/components/ui/input';
   import { formInsertAccountSchema } from '$lib/schema';
-  import SuperDebug, { superForm } from 'sveltekit-superforms';
+  import { newAccountDialog } from '$lib/states/global.svelte';
+  import { superForm } from 'sveltekit-superforms';
   import { zodClient } from 'sveltekit-superforms/adapters';
 
-  let dialogOpen: boolean = false;
+  const dialogOpen = $derived(newAccountDialog.get());
   let { data } = page;
 
   const form = superForm(data.manageAccountForm, {
     validators: zodClient(formInsertAccountSchema),
     onResult: () => {
-      dialogOpen = false;
+      dialogOpen.current = false;
     }
   });
 
@@ -22,8 +22,7 @@
   // const balanceProxy = numberProxy(form, 'balance');
 </script>
 
-<Dialog.Root bind:open={dialogOpen}>
-  <Dialog.Trigger class={buttonVariants({ variant: 'default' })}>Add Account</Dialog.Trigger>
+<Dialog.Root bind:open={dialogOpen.current}>
   <Dialog.Content>
     <Dialog.Header>
       <Dialog.Title>Add Account</Dialog.Title>
@@ -51,7 +50,6 @@
           </Form.Field> -->
           <Form.Button disabled={$submitting}>Submit</Form.Button>
         </form>
-        <SuperDebug data={$formData} />
       </Dialog.Description>
     </Dialog.Header>
   </Dialog.Content>

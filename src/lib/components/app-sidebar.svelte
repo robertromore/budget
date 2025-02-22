@@ -4,15 +4,17 @@
   import Ellipsis from 'lucide-svelte/icons/ellipsis';
   import Plus from 'lucide-svelte/icons/plus';
   import { page } from '$app/state';
+  import { newAccountDialog } from '$lib/states/global.svelte';
 
   const { data: { accounts } } = $derived(page);
+  const dialogOpen = $derived(newAccountDialog.get());
 </script>
 
 <Sidebar.Root>
   <Sidebar.Content>
     <Sidebar.Group>
-      <Sidebar.GroupLabel>Accounts</Sidebar.GroupLabel>
-      <Sidebar.GroupAction title="Add Account">
+      <Sidebar.GroupLabel><a href="/accounts">Accounts</a></Sidebar.GroupLabel>
+      <Sidebar.GroupAction title="Add Account" onclick={() => dialogOpen.current = true}>
         <Plus /> <span class="sr-only">Add Account</span>
       </Sidebar.GroupAction>
       <Sidebar.GroupContent>

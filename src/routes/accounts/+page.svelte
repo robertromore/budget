@@ -3,8 +3,8 @@
   import * as Card from '$lib/components/ui/card';
   import type { PageData } from './$types';
   import { currencyFormatter } from '$lib/helpers/formatters';
-  import AddAccountDialog from '$lib/components/dialogs/add-account-dialog.svelte';
   import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
+  import { newAccountDialog } from '$lib/states/global.svelte';
 
   let { data } = $props<{ data: PageData }>();
 
@@ -15,9 +15,11 @@
     deleteDialogId = id;
     deleteDialogOpen = true;
   };
+
+  const dialogOpen = $derived(newAccountDialog.get());
 </script>
 
-<AddAccountDialog />
+<Button onclick={() => dialogOpen.current = true}>Add Account</Button>
 
 <div class="mt-4 grid grid-cols-4 gap-4">
   {#each data.accounts as { id, name, balance, notes }}
