@@ -8,8 +8,8 @@ import { Context } from "runed";
 
 export class CurrentAccountState {
   account: Account = $state() as Account;
-  balance = $derived(currencyFormatter.format(this.account.balance));
-  transactions: Transaction[] = $derived(this.account.transactions) as Transaction[];
+  balance = $derived(currencyFormatter.format(this.account?.balance));
+  transactions: Transaction[] = $derived(this.account?.transactions) as Transaction[];
   formatted: TransactionsFormat[] = $derived(transactionFormatter.format(this.transactions) ?? []);
   categories?: Category[] = $derived.by(() => {
     return (
@@ -25,6 +25,13 @@ export class CurrentAccountState {
         .filter((payee) => payee !== null) || []
     );
   });
+
+  constructor(account?: Account) {
+    if (account) {
+      this.account = account;
+    }
+    return this;
+  }
 
   get id() {
     return this.account.id;
@@ -85,11 +92,6 @@ export class CurrentAccountState {
 
   async deleteTransaction(transaction: number) {
     return this.deleteTransactions([transaction]);
-  }
-
-  constructor(account: Account) {
-    this.account = account;
-    return this;
   }
 }
 
