@@ -2,7 +2,13 @@ import type { Category, Payee } from "$lib/schema";
 import type { DateValue } from "@internationalized/date";
 import type { Component } from "svelte";
 import type { RenderComponentConfig } from "./components/ui/data-table/render-helpers";
-import type { Column, ExpandedState, GroupingState, SortingState } from "@tanstack/table-core";
+import type {
+  Column,
+  ExpandedState,
+  GroupingState,
+  SortingState,
+  VisibilityState,
+} from "@tanstack/table-core";
 import type { SvelteSet } from "svelte/reactivity";
 
 export type EditableBooleanItem = {
@@ -67,4 +73,5 @@ export type ViewDisplayState = {
   grouping?: GroupingState;
   sort?: SortingState;
   expanded?: ExpandedState;
+  visibility?: VisibilityState;
 };
