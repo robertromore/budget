@@ -5,7 +5,7 @@
   import * as Popover from "$lib/components/ui/popover";
   import type { EditableEntityItem } from "$lib/types";
   import Plus from "lucide-svelte/icons/plus";
-  import { Pencil2 } from "svelte-radix";
+  import Pencil from "lucide-svelte/icons/pencil";
   import MoveLeft from "lucide-svelte/icons/move-left";
   import Check from "lucide-svelte/icons/check";
   import type { Component as ComponentType } from "svelte";
@@ -154,7 +154,7 @@
                         toggleManageScreen(e);
                       }}
                     >
-                      <Pencil2 />
+                      <Pencil />
                     </Button>
                   {/if}
                 </Command.Item>

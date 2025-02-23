@@ -1,8 +1,8 @@
 <script lang="ts" generics="TData, TValue">
-  import EyeNone from "svelte-radix/EyeNone.svelte";
-  import ArrowDown from "svelte-radix/ArrowDown.svelte";
-  import ArrowUp from "svelte-radix/ArrowUp.svelte";
-  import CaretSort from "svelte-radix/CaretSort.svelte";
+  import EyeNone from "lucide-svelte/icons/eye-off";
+  import ArrowDown from "lucide-svelte/icons/arrow-down";
+  import ArrowUp from "lucide-svelte/icons/arrow-up";
+  import ArrowUpDown from "lucide-svelte/icons/arrow-up-down";
   import type { HTMLAttributes } from "svelte/elements";
   import type { Column } from "@tanstack/table-core";
   import type { WithoutChildren } from "bits-ui";
@@ -48,7 +48,7 @@
               {:else if sortState && !sortState.desc}
                 <ArrowUp class="ml-2 size-4" />
               {:else}
-                <CaretSort class="ml-2 size-4" />
+                <ArrowUpDown class="ml-2 size-4" />
               {/if}
             {/if}
           </Button>

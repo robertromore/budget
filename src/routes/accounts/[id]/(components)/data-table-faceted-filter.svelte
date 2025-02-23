@@ -1,5 +1,5 @@
 <script lang="ts" generics="TData, TValue">
-  import Check from "svelte-radix/Check.svelte";
+  import Check from "lucide-svelte/icons/check";
   import type { Column, FilterFns } from "@tanstack/table-core";
   import type { Component } from "svelte";
   import * as Command from "$lib/components/ui/command";

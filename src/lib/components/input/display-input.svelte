@@ -9,7 +9,7 @@
   import { currentViews } from "$lib/states/current-views.svelte";
   import { Badge } from "../ui/badge";
   import type { SortingState, VisibilityState } from "@tanstack/table-core";
-  import { CaretSort } from "svelte-radix";
+  import ChevronDown from "lucide-svelte/icons/chevron-down";
   import CircleChevronUp from "lucide-svelte/icons/chevron-up";
   import CircleChevronDown from "lucide-svelte/icons/chevron-down";
   import { Switch } from "$lib/components/ui/switch";
@@ -106,7 +106,7 @@
                 {/if}
               </div>
             {/if}
-            <CaretSort class="size-4 opacity-50" />
+            <ChevronDown class="size-4 opacity-50" />
           </DropdownMenu.Trigger>
           <DropdownMenu.Content>
             <DropdownMenu.Group>
@@ -174,7 +174,7 @@
             currentView.updateTableVisibility(visibility);
           }}
         >
-          <Select.Trigger class="w-[180px]">
+          <Select.Trigger class="w-[180px] text-muted-foreground">
             {#if visibleColumns.length === 0}
               <Badge variant="secondary">none selected</Badge>
             {:else}

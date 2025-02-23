@@ -3,7 +3,7 @@
   import * as Popover from "$lib/components/ui/popover";
   import { Textarea } from "$lib/components/ui/textarea";
   import { cn } from "$lib/utils";
-  import { Pencil2 } from "svelte-radix";
+  import SquarePen from "lucide-svelte/icons/square-pen";
 
   let { value, onUpdateValue } = $props();
   let open = $state(false);
@@ -31,7 +31,7 @@
           !value && "text-muted-foreground"
         )}
       >
-        <Pencil2 class="mr-1 inline-block size-4 align-top" />
+        <SquarePen class="mr-1 inline-block size-4 align-top" />
         {value}
       </Button>
     {/snippet}

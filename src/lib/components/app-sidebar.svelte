@@ -9,6 +9,7 @@
   const {
     data: { accounts },
   } = $derived(page);
+
   const dialogOpen = $derived(newAccountDialog.get());
 </script>
 

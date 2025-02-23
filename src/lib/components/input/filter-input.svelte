@@ -26,34 +26,12 @@
       )
   );
 
-  // $effect(() => {
-  //   value = _selectedFilters.map(_selectedFilter => {
-  //     return {
-  //       column: _selectedFilter!.column.id,
-  //       filter: _selectedFilter!.name,
-  //       value: _selectedFilter!.value
-  //     }
-  //   });
-  // })
-
   let selectableFilters = $derived(
     availableFilters.filter(
       (availableFilter) =>
         _selectedFilters.toArray().findIndex((filter) => filter?.name === availableFilter.name) < 0
     )
   );
-
-  // $effect(() => {
-  //   _selectedFilters.forEach(availableFilter => availableFilter.column.setFilterValue(availableFilter.value));
-  // });
-
-  // $effect(() => {
-  //   selectedFilters = _selectedFilters.values().toArray().map(filter => {
-  //     const filterId = filter.column.columnDef.meta?.availableFilters.find((availableFilter: AvailableFiltersEntry) => availableFilter.id === filter.column.getFilterFn()?.name)?.id || '';
-  //     const filterValue = filter.column.getFilterValue() || '';
-  //     return [filterId, filterValue] as [string, unknown];
-  //   });
-  // })
 </script>
 
 <div class="flex gap-2">

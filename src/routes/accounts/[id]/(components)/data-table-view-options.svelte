@@ -1,5 +1,5 @@
 <script lang="ts" generics="TData">
-  import MixerHorizontal from "svelte-radix/MixerHorizontal.svelte";
+  import SlidersHorizontal from "lucide-svelte/icons/sliders-horizontal";
   import type { Table } from "@tanstack/table-core";
   import { buttonVariants } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -15,7 +15,7 @@
       class: "ml-auto hidden h-8 lg:flex",
     })}
   >
-    <MixerHorizontal class="mr-2 size-4" />
+    <SlidersHorizontal class="mr-2 size-4" />
     Display
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>

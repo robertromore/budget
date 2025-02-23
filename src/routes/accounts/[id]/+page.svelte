@@ -17,7 +17,7 @@
 
   let { data } = $props();
   const account: Account | undefined = $derived(data.account);
-  const currentAccountState: CurrentAccountState = $derived(new CurrentAccountState(data.account!));
+  const currentAccountState: CurrentAccountState = $derived(new CurrentAccountState(data.account));
 
   $effect.pre(() => {
     currentAccount.set(currentAccountState);
