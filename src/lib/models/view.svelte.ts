@@ -251,7 +251,17 @@ export default class View {
 
   reset() {
     if (this.initial) {
-      this.view = this.initial;
+      // Setting `this.view = this.initial` seems to break the state resulting
+      // in missing "views" in the toolbar.
+      this.view.name = this.initial.name;
+      this.view.description = this.initial.description;
+      this.view.display = this.initial.display || {};
+      this.view.display.grouping = this.initial.display?.grouping;
+      this.view.display.sort = this.initial.display?.sort;
+      this.view.display.expanded = this.initial.display?.expanded;
+      this.view.display.visibility = this.initial.display?.visibility;
+      this.view.filters = this.initial.filters;
+      this.view.dirty = false;
       this.#filterValues = new SvelteMap<string, ViewFilterWithSet>(
         (
           this.view.filters as Array<Omit<ViewFilterWithSet, "view"> & { view?: Array<unknown> }>

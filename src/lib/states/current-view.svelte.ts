@@ -29,7 +29,6 @@ export class CurrentViewState<TData> {
   }
 
   updateTableState() {
-    // this.table.setColumnFilters(this.view.getAllFilterValues())
     this.table.setGrouping(this.view.getGrouping());
     this.table.setSorting(this.view.getSorting());
     this.table.setExpanded(this.view.getExpanded());

@@ -16,6 +16,11 @@ export class CurrentViewsState<T> {
   activeView: CurrentViewState<T> = $derived(this.viewsStates.get(this.activeViewId))!;
   previousViewId?: number = $state();
 
+  editableViews = $derived(this.viewsStates.values().filter((viewState) => viewState.view.id > 0));
+  nonEditableViews = $derived(
+    this.viewsStates.values().filter((viewState) => viewState.view.id < -1)
+  );
+
   constructor(viewsStates: CurrentViewState<T>[] | null) {
     if (viewsStates) {
       this.viewsStates = new SvelteMap(
@@ -87,7 +92,7 @@ export class CurrentViewsState<T> {
   };
 
   removeTemporaryView = () => {
-    this.remove(-1);
+    this.remove(-1, false);
     if (this.previousViewId) {
       this.setActive(this.previousViewId);
       this.previousViewId = undefined;

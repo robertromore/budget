@@ -41,15 +41,8 @@
   const firstViewId = $derived(_currentViews.viewsStates.values().next().value?.view.id!);
   let currentViewValue = $state((() => firstViewId)().toString());
 
-  const editableViews = $derived(
-    _currentViews.viewsStates
-      .values()
-      .filter((viewState) => viewState.view.id > 0)
-      .toArray()
-  );
-  const nonEditableViews = $derived(
-    _currentViews.viewsStates.values().filter((viewState) => viewState.view.id < -1)
-  );
+  const editableViews = $derived(_currentViews.editableViews.toArray());
+  const nonEditableViews = $derived(_currentViews.nonEditableViews.toArray());
 </script>
 
 <div class="flex text-sm">
@@ -67,15 +60,13 @@
       } else {
         newView = parseInt(value);
       }
-      _currentViews.remove(-1).setActive(newView);
+      _currentViews.remove(-1, false).setActive(newView);
     }}
   >
     {#each nonEditableViews as viewState}
-      <div class={cn(viewState.view.id >= 0 && editViewsMode ? "flex rounded-md border" : "")}>
-        <ToggleGroup.Item value={viewState.view.id.toString()} aria-label={viewState.view.name}>
-          {viewState.view.name}
-        </ToggleGroup.Item>
-      </div>
+      <ToggleGroup.Item value={viewState.view.id.toString()} aria-label={viewState.view.name}>
+        {viewState.view.name}
+      </ToggleGroup.Item>
     {/each}
 
     <Separator orientation="vertical" class="mx-1" />
@@ -171,7 +162,10 @@
 {#if manageViewForm}
   <ManageViewForm
     availableFilters={filterComponents}
-    onCancel={() => (manageViewForm = false)}
+    onCancel={() => {
+      manageViewForm = false;
+      _currentViews.activeView.resetToInitialState();
+    }}
     onDelete={() => {
       manageViewForm = false;
       _currentViews.remove(editViewId);
@@ -196,7 +190,9 @@
         <Button
           variant="outline"
           size="sm"
-          onclick={() => _currentViews.activeView.resetToInitialState()}>Clear</Button
+          onclick={() => {
+            _currentViews.activeView.resetToInitialState();
+          }}>Clear</Button
         >
         <Button size="sm" onclick={() => _currentViews.activeView.view.saveView()}>Save</Button>
       {/if}

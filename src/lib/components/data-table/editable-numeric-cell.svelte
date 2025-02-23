@@ -12,7 +12,6 @@
   let open = $state(false);
   const handleSubmit = () => {
     open = false;
-    console.log(value);
     onUpdateValue(value);
   };
 </script>

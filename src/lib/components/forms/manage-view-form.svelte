@@ -21,7 +21,7 @@
     availableFilters,
     viewId = $bindable(),
   }: {
-    onCancel?: () => {};
+    onCancel?: () => void;
     onDelete?: () => void;
     onSave?: (new_entity: View) => void;
     availableFilters: FilterInputOption<TransactionsFormat>[];
@@ -112,7 +112,12 @@
         }}>cancel</Button
       >
       {#if viewId !== -1}
-        <Button variant="destructive" size="default" onclick={() => (alertDialogOpen = true)}
+        <Button variant="destructive" size="default" onclick={() => {
+          if (onDelete) {
+            onDelete();
+          }
+          alertDialogOpen = true;
+        }}
           >delete</Button
         >
       {/if}
