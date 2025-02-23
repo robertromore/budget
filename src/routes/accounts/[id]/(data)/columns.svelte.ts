@@ -100,6 +100,7 @@ export const columns = (
       enableColumnFilter: false,
       enableGrouping: false,
       enableSorting: false,
+      enableHiding: false,
     },
     {
       id: "expand-contract-col",
@@ -126,6 +127,7 @@ export const columns = (
       enableColumnFilter: false,
       enableGrouping: false,
       enableSorting: false,
+      enableHiding: false,
     },
     {
       accessorKey: "id",
@@ -272,6 +274,9 @@ export const columns = (
         }),
       enableSorting: false,
       enableGrouping: false,
+      meta: {
+        label: "Notes",
+      },
     },
     {
       accessorKey: "categoryId",
@@ -403,6 +408,7 @@ export const columns = (
       enableColumnFilter: false,
       enableSorting: false,
       enableGrouping: false,
+      enableHiding: false,
     },
   ];
 };

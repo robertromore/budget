@@ -24,7 +24,7 @@
   );
 </script>
 
-{#if !column?.getCanSort()}
+{#if !column?.getCanSort() && !column?.getCanHide()}
   <div class={cn(buttonVariants({ variant: "ghost", size: "sm" }), className)} {...restProps}>
     {title}
   </div>
@@ -42,27 +42,31 @@
             <span>
               {title}
             </span>
-            {#if sortState && sortState.desc}
-              <ArrowDown class="ml-2 size-4" />
-            {:else if sortState && !sortState.desc}
-              <ArrowUp class="ml-2 size-4" />
-            {:else}
-              <CaretSort class="ml-2 size-4" />
+            {#if column.getCanSort()}
+              {#if sortState && sortState.desc}
+                <ArrowDown class="ml-2 size-4" />
+              {:else if sortState && !sortState.desc}
+                <ArrowUp class="ml-2 size-4" />
+              {:else}
+                <CaretSort class="ml-2 size-4" />
+              {/if}
             {/if}
           </Button>
         {/snippet}
       </DropdownMenu.Trigger>
       <DropdownMenu.Content align="start">
-        <DropdownMenu.Item onclick={() => currentView.updateTableSorter(column.id, false)}>
-          <ArrowUp class="mr-2 size-3.5 text-muted-foreground/70" />
-          Asc
-        </DropdownMenu.Item>
-        <DropdownMenu.Item onclick={() => currentView.updateTableSorter(column.id, true)}>
-          <ArrowDown class="mr-2 size-3.5 text-muted-foreground/70" />
-          Desc
-        </DropdownMenu.Item>
-        <DropdownMenu.Separator />
-        <DropdownMenu.Item onclick={() => column.toggleVisibility(false)}>
+        {#if column.getCanSort()}
+          <DropdownMenu.Item onclick={() => currentView.updateTableSorter(column.id, false)}>
+            <ArrowUp class="mr-2 size-3.5 text-muted-foreground/70" />
+            Asc
+          </DropdownMenu.Item>
+          <DropdownMenu.Item onclick={() => currentView.updateTableSorter(column.id, true)}>
+            <ArrowDown class="mr-2 size-3.5 text-muted-foreground/70" />
+            Desc
+          </DropdownMenu.Item>
+          <DropdownMenu.Separator />
+        {/if}
+        <DropdownMenu.Item onclick={() => currentView.updateColumnVisibility(column.id, false)}>
           <EyeNone class="mr-2 size-3.5 text-muted-foreground/70" />
           Hide
         </DropdownMenu.Item>

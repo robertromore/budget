@@ -9,6 +9,7 @@ import type {
   GroupingState,
   SortingState,
   Table,
+  VisibilityState,
 } from "@tanstack/table-core";
 import { Context } from "runed";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
@@ -32,6 +33,7 @@ export class CurrentViewState<TData> {
     this.table.setGrouping(this.view.getGrouping());
     this.table.setSorting(this.view.getSorting());
     this.table.setExpanded(this.view.getExpanded());
+    this.table.setColumnVisibility(this.view.getVisibility());
   }
 
   resetToInitialState() {
@@ -150,6 +152,20 @@ export class CurrentViewState<TData> {
     this.view.updateSorter(column, value);
     this.table.setSorting(this.view.getSorting());
   };
+
+  updateTableVisibility(visibility: VisibilityState) {
+    this.view.setVisibility(visibility);
+    this.table.setColumnVisibility(visibility);
+  }
+
+  updateColumnVisibility(column: string, visible: boolean) {
+    this.view.updateVisibility(column, visible);
+    this.table.setColumnVisibility(this.view.getVisibility());
+  }
+
+  toggleColumnVisibility(column: string) {
+    this.updateColumnVisibility(column, this.view.getVisibility()[column]);
+  }
 }
 
 export const currentView = new Context<CurrentViewState<TransactionsFormat>>("current_view");

@@ -2,7 +2,12 @@ import type { View as ViewSchema } from "$lib/schema";
 import { trpc } from "$lib/trpc/client";
 import type { ViewFilter, ViewFilterWithSet } from "$lib/types";
 import deeplyEqual, { equalArray } from "$lib/utils";
-import type { ExpandedState, GroupingState, SortingState } from "@tanstack/table-core";
+import type {
+  ExpandedState,
+  GroupingState,
+  SortingState,
+  VisibilityState,
+} from "@tanstack/table-core";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 export default class View {
@@ -17,6 +22,7 @@ export default class View {
       !equalArray(this.view.display?.grouping || [], this.initial.display?.grouping || []) ||
       !equalArray(this.view.display?.sort || [], this.initial.display?.sort || []) ||
       !deeplyEqual(this.view.display?.expanded, this.initial.display?.expanded) ||
+      !deeplyEqual(this.view.display?.visibility, this.initial.display?.visibility) ||
       // Same filter count?
       this.#filterValues.size !== this.initial.filters?.length ||
       // Same filters?
@@ -51,6 +57,7 @@ export default class View {
       grouping: [],
       sort: [],
       expanded: {},
+      visibility: {},
     };
 
     this.initial = view;
@@ -109,6 +116,22 @@ export default class View {
   setExpanded(expanded: ExpandedState) {
     this.view.display!.expanded = expanded;
     return this;
+  }
+
+  getVisibility(): VisibilityState {
+    return this.view.display?.visibility || {};
+  }
+
+  setVisibility(visibility: VisibilityState) {
+    this.view.display!.visibility = visibility;
+    return this;
+  }
+
+  updateVisibility(column: string, visible: boolean) {
+    this.view.display = this.view.display || {};
+    this.view.display.visibility = Object.assign({}, this.view.display?.visibility || {}, {
+      [column]: visible,
+    });
   }
 
   getFilter(filter: string) {
