@@ -32,6 +32,7 @@ import SquareMousePointer from "lucide-svelte/icons/square-mouse-pointer";
 import CircleCheckBig from "lucide-svelte/icons/circle-check-big";
 import { ExpandToggle } from "$lib/components/ui/expand-toggle";
 import { currencyFormatter } from "$lib/helpers/formatters";
+import type { Component } from "svelte";
 
 export const columns = (
   categories: CategoriesState,
@@ -202,6 +203,7 @@ export const columns = (
           entityLabel: "payee",
           onUpdateValue: (new_value) => updateHandler(info, "payeeId", new_value),
           entities: payees.payees as EditableEntityItem[],
+          icon: HandCoins as unknown as Component,
           management: {
             enable: true,
             component: ManagePayeeForm,
@@ -287,6 +289,7 @@ export const columns = (
           entityLabel: "category",
           onUpdateValue: (new_value) => updateHandler(info, "categoryId", new_value),
           entities: categories.categories as EditableEntityItem[],
+          icon: SquareMousePointer as unknown as Component,
           management: {
             enable: true,
             component: ManageCategoryForm,

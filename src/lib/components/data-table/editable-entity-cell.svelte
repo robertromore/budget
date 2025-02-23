@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { EditableEntityItem } from "$lib/types";
   import EntityInput from "$lib/components/input/entity-input.svelte";
-  import type { Component } from "svelte";
+  import type { Component as ComponentType } from "svelte";
 
   let {
     value,
@@ -9,6 +9,7 @@
     entityLabel,
     entities,
     management,
+    icon,
   }: {
     value?: EditableEntityItem;
     onUpdateValue: (newValue: unknown) => void;
@@ -16,10 +17,11 @@
     entities: EditableEntityItem[];
     management: {
       enable: boolean;
-      component: Component;
+      component: ComponentType;
       onSave: (new_value: EditableEntityItem, is_new: boolean) => void;
       onDelete: (id: number) => void;
     };
+    icon: ComponentType;
   } = $props();
 
   const handleSubmit = (entity?: EditableEntityItem) => {
@@ -27,4 +29,4 @@
   };
 </script>
 
-<EntityInput bind:entityLabel bind:value bind:entities {handleSubmit} {management} />
+<EntityInput bind:entityLabel bind:value bind:entities {icon} {handleSubmit} {management} />

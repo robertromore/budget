@@ -4,7 +4,6 @@
   import * as Command from "$lib/components/ui/command";
   import * as Popover from "$lib/components/ui/popover";
   import type { EditableEntityItem } from "$lib/types";
-  import CircleUserRound from "lucide-svelte/icons/circle-user-round";
   import Plus from "lucide-svelte/icons/plus";
   import { Pencil2 } from "svelte-radix";
   import MoveLeft from "lucide-svelte/icons/move-left";
@@ -18,6 +17,7 @@
     handleSubmit,
     class: className,
     management,
+    icon: Icon,
   }: {
     entityLabel: string;
     entities: EditableEntityItem[];
@@ -30,6 +30,7 @@
       onSave: (new_value: EditableEntityItem, is_new: boolean) => void;
       onDelete: (id: number) => void;
     };
+    icon: ComponentType;
   } = $props();
 
   const findCurrentEntity = () => entities.find((entity) => entity.id == value?.id);
@@ -97,7 +98,7 @@
             !value && "text-muted-foreground"
           )}
         >
-          <CircleUserRound class="-mt-1 mr-1 inline-block size-4" />
+          <Icon class="-mt-1 mr-1 inline-block size-4"></Icon>
           {label}
         </Button>
       {/snippet}
