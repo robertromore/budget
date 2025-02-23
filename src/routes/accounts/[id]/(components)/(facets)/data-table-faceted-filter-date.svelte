@@ -5,6 +5,8 @@
   import type { Component } from "svelte";
   import { getLocalTimeZone, today } from "@internationalized/date";
   import type { HTMLAttributes } from "svelte/elements";
+  import type { FacetedFilterOption } from "$lib/types";
+  import { SvelteMap } from "svelte/reactivity";
 
   type Props<TData, TValue> = HTMLAttributes<HTMLDivElement> & {
     column: Column<TData, TValue>;
@@ -13,38 +15,38 @@
   let { column }: Props<TData, TValue> = $props();
 
   const thisday = today(getLocalTimeZone());
-  const allOptions = [
-    {
+  const allOptions = new SvelteMap<number, FacetedFilterOption>([
+    [0, {
       value: thisday.subtract({ days: 1 }).toString(),
       label: "1 day ago",
-    },
-    {
+    }],
+    [1, {
       value: thisday.subtract({ days: 3 }).toString(),
       label: "3 days ago",
-    },
-    {
+    }],
+    [2, {
       value: thisday.subtract({ weeks: 1 }).toString(),
       label: "1 week ago",
-    },
-    {
+    }],
+    [3, {
       value: thisday.subtract({ months: 1 }).toString(),
       label: "1 month ago",
-    },
-    {
+    }],
+    [4, {
       value: thisday.subtract({ months: 3 }).toString(),
       label: "3 months ago",
-    },
-    {
+    }],
+    [5, {
       value: thisday.subtract({ months: 6 }).toString(),
       label: "6 months ago",
-    },
-    {
+    }],
+    [6, {
       value: thisday.subtract({ years: 1 }).toString(),
       label: "1 year ago",
-    },
-  ];
+    }],
+  ]);
 
-  const options = allOptions.filter(Boolean);
+  const options = allOptions;
 </script>
 
 <DataTableFacetedFilter

@@ -1,13 +1,13 @@
 <script lang="ts" generics="TData, TValue">
   import type { Column } from "@tanstack/table-core";
   import { DataTableFacetedFilter } from "..";
-  import CircleUserRound from "lucide-svelte/icons/circle-user-round";
-  import UsersRound from "lucide-svelte/icons/users-round";
   import type { Component } from "svelte";
   import { page } from "$app/state";
   import type { Category, Transaction } from "$lib/schema";
   import { currentViews } from "$lib/states/current-views.svelte";
   import SquareMousePointer from "lucide-svelte/icons/square-mouse-pointer";
+  import type { FacetedFilterOption } from "$lib/types";
+  import { SvelteMap } from "svelte/reactivity";
 
   type Props<TData, TValue> = {
     column: Column<TData, TValue>;
@@ -30,23 +30,35 @@
   const allCategories = $derived(data.categories);
 
   const categoryOptions = $derived(
-    categories?.map((category: Category) => {
-      return {
-        label: category.name || "",
-        value: category.id + "",
-          icon: SquareMousePointer as unknown as Component,
-      };
-    })
+    new SvelteMap<number, FacetedFilterOption>(
+      categories
+        ?.filter((category: Category) => category.id !== undefined)
+        .map((category: Category) => {
+          return [
+            category.id,
+            {
+              label: category.name || "",
+              value: category.id + "",
+              icon: SquareMousePointer as unknown as Component,
+            },
+          ];
+        })
+    )
   );
 
   const allCategoryOptions = $derived(
-    allCategories?.map((category: Category) => {
-      return {
-        label: category.name || "",
-        value: category.id + "",
-          icon: SquareMousePointer as unknown as Component,
-      };
-    })
+    new SvelteMap<number, FacetedFilterOption>(
+      allCategories?.map((category: Category) => {
+        return [
+          category.id,
+          {
+            label: category.name || "",
+            value: category.id + "",
+            icon: SquareMousePointer as unknown as Component,
+          },
+        ];
+      })
+    )
   );
 </script>
 

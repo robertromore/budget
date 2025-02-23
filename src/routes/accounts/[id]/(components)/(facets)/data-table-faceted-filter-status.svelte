@@ -6,8 +6,9 @@
   import type { Component } from "svelte";
   import { page } from "$app/state";
   import { TransactionStatuses, type Transaction } from "$lib/schema";
-  import { SvelteSet } from "svelte/reactivity";
+  import { SvelteMap, SvelteSet } from "svelte/reactivity";
   import { currentViews } from "$lib/states/current-views.svelte";
+  import type { FacetedFilterOption } from "$lib/types";
 
   type Props<TData, TValue> = {
     column: Column<TData, TValue>;
@@ -30,23 +31,27 @@
   const allStatuses = $derived(Object.values(TransactionStatuses));
 
   const statusOptions = $derived(
-    statuses?.map((status: TransactionStatuses) => {
-      return {
-        label: status,
-        value: status,
-        icon: CircleUserRound as unknown as Component,
-      };
-    })
+    new SvelteMap<string, FacetedFilterOption>(
+      statuses?.map((status: TransactionStatuses) => {
+        return [status, {
+          label: status,
+          value: status,
+          icon: CircleUserRound as unknown as Component,
+        }];
+      })
+    )
   );
 
   const allStatusOptions = $derived(
-    allStatuses?.map((status: TransactionStatuses) => {
-      return {
-        label: status,
-        value: status,
-        icon: CircleUserRound as unknown as Component,
-      };
-    })
+    new SvelteMap<string, FacetedFilterOption>(
+      allStatuses?.map((status: TransactionStatuses) => {
+        return [status, {
+          label: status,
+          value: status,
+          icon: CircleUserRound as unknown as Component,
+        }];
+      })
+    )
   );
 </script>
 

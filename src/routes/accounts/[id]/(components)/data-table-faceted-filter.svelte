@@ -8,20 +8,15 @@
   import { cn } from "$lib/utils.js";
   import { Badge } from "$lib/components/ui/badge";
   import X from "lucide-svelte/icons/x";
-  import type { AvailableFilters } from "$lib/types";
+  import type { AvailableFilters, FacetedFilterOption } from "$lib/types";
   import { currentViews } from "$lib/states/current-views.svelte";
-
-  type Option = {
-    label: string;
-    value: string;
-    icon?: Component;
-  };
+  import type { SvelteMap } from "svelte/reactivity";
 
   type Props<TData, TValue> = {
     column: Column<TData, TValue>;
     title: string;
-    options?: Option[];
-    allOptions?: Option[];
+    options?: SvelteMap<string | number, FacetedFilterOption>;
+    allOptions?: SvelteMap<string | number, FacetedFilterOption>;
     allIcon?: Component;
   };
 
@@ -33,15 +28,15 @@
   let showAll = $state(false);
   let activeOperator = $state<string>(column.getFilterFn()?.name as keyof FilterFns);
 
-  const optionsValues = $derived(options?.map((opt) => opt.value));
-  const showOptions: Option[] = $derived(
+  const optionsValues = $derived(options?.values().toArray().map((opt) => opt.value));
+  const showOptions: FacetedFilterOption[] = $derived(
     (showAll
-      ? options?.concat(
-          allOptions?.filter((option) => !optionsValues?.includes(option.value)) || []
+      ? options?.values().toArray().concat(
+          allOptions?.values().toArray().filter((option) => !optionsValues?.includes(option.value)) || []
         )
-      : options) || []
+      : options?.values().toArray()) || []
   );
-  const notIn = $derived((allOptions?.length || 0) - (options?.length || 0));
+  const notIn = $derived((allOptions?.size || 0) - (options?.size || 0));
 
   const activeView = $derived(currentViews.get().activeView);
   const activeViewModel = $derived(activeView.view);
@@ -114,7 +109,7 @@
                   {selectedValues.size} selected
                 </Badge>
               {:else}
-                {#each allOptions!.filter((opt) => selectedValues.has(opt.value)) as option}
+                {#each allOptions!.values().filter((opt) => selectedValues.has(opt.value)) as option}
                   <Badge variant="secondary" class="rounded-sm px-1 font-normal">
                     {option.label}
                   </Badge>
@@ -164,7 +159,7 @@
                 {/if}
               </Command.Item>
             {/each}
-            {#if allOptions?.length && notIn > 0}
+            {#if allOptions?.size && notIn > 0}
               <Command.Item onSelect={() => (showAll = !showAll)}>
                 {#if allIcon}
                   {@const AllIcon = allIcon}

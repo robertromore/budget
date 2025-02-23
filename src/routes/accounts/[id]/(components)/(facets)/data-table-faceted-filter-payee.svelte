@@ -1,13 +1,13 @@
 <script lang="ts" generics="TData, TValue">
   import type { Column } from "@tanstack/table-core";
   import { DataTableFacetedFilter } from "..";
-  import CircleUserRound from "lucide-svelte/icons/circle-user-round";
-  import UsersRound from "lucide-svelte/icons/users-round";
   import type { Component } from "svelte";
   import { page } from "$app/state";
   import type { Transaction, Payee } from "$lib/schema";
   import { currentViews } from "$lib/states/current-views.svelte";
   import HandCoins from "lucide-svelte/icons/hand-coins";
+  import { SvelteMap } from "svelte/reactivity";
+  import type { FacetedFilterOption } from "$lib/types";
 
   type Props<TData, TValue> = {
     column: Column<TData, TValue>;
@@ -28,24 +28,38 @@
   const allPayees = $derived(data.payees);
 
   const payeeOptions = $derived(
-    payees?.map((payee: Payee) => {
-      return {
-        label: payee.name || "",
-        value: payee.id + "",
-          icon: HandCoins as unknown as Component,
-      };
-    })
+    new SvelteMap<number, FacetedFilterOption>(
+      payees
+        ?.filter((payee: Payee) => payee.id !== undefined)
+        .map((payee: Payee) => {
+          return [
+            payee.id,
+            {
+              label: payee.name || "",
+              value: payee.id + "",
+              icon: HandCoins as unknown as Component,
+            },
+          ];
+        })
+    )
   );
 
   const allPayeeOptions = $derived(
-    allPayees?.map((payee: Payee) => {
-      return {
-        label: payee.name || "",
-        value: payee.id + "",
-          icon: HandCoins as unknown as Component,
-      };
-    })
+    new SvelteMap<number, FacetedFilterOption>(
+      allPayees?.map((payee: Payee) => {
+        return [
+          payee.id,
+          {
+            label: payee.name || "",
+            value: payee.id + "",
+            icon: HandCoins as unknown as Component,
+          },
+        ];
+      })
+    )
   );
+
+  $inspect(payeeOptions);
 </script>
 
 <DataTableFacetedFilter
