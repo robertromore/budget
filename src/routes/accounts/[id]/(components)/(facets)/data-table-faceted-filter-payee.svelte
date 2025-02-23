@@ -7,6 +7,7 @@
   import { page } from "$app/state";
   import type { Transaction, Payee } from "$lib/schema";
   import { currentViews } from "$lib/states/current-views.svelte";
+  import HandCoins from "lucide-svelte/icons/hand-coins";
 
   type Props<TData, TValue> = {
     column: Column<TData, TValue>;
@@ -31,7 +32,7 @@
       return {
         label: payee.name || "",
         value: payee.id + "",
-        icon: CircleUserRound as unknown as Component,
+          icon: HandCoins as unknown as Component,
       };
     })
   );
@@ -41,7 +42,7 @@
       return {
         label: payee.name || "",
         value: payee.id + "",
-        icon: CircleUserRound as unknown as Component,
+          icon: HandCoins as unknown as Component,
       };
     })
   );
@@ -52,5 +53,5 @@
   title="Payee"
   options={payeeOptions}
   allOptions={allPayeeOptions}
-  allIcon={UsersRound as unknown as Component}
+  allIcon={HandCoins as unknown as Component}
 />

@@ -7,6 +7,7 @@
   import { page } from "$app/state";
   import type { Category, Transaction } from "$lib/schema";
   import { currentViews } from "$lib/states/current-views.svelte";
+  import SquareMousePointer from "lucide-svelte/icons/square-mouse-pointer";
 
   type Props<TData, TValue> = {
     column: Column<TData, TValue>;
@@ -33,7 +34,7 @@
       return {
         label: category.name || "",
         value: category.id + "",
-        icon: CircleUserRound as unknown as Component,
+          icon: SquareMousePointer as unknown as Component,
       };
     })
   );
@@ -43,7 +44,7 @@
       return {
         label: category.name || "",
         value: category.id + "",
-        icon: CircleUserRound as unknown as Component,
+          icon: SquareMousePointer as unknown as Component,
       };
     })
   );
@@ -54,5 +55,5 @@
   title="Category"
   options={categoryOptions}
   allOptions={allCategoryOptions}
-  allIcon={UsersRound as unknown as Component}
+  allIcon={SquareMousePointer as unknown as Component}
 />
