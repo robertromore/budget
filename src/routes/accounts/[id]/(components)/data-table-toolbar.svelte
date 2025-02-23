@@ -186,15 +186,17 @@
 
     <div class="flex gap-1">
       <DisplayInput />
-      {#if _currentViews.activeView.view.dirty && parseInt(currentViewValue) >= 0}
+      {#if _currentViews.activeView.view.dirty}
         <Button
           variant="outline"
           size="sm"
           onclick={() => {
             _currentViews.activeView.resetToInitialState();
-          }}>Clear</Button
+          }}>Reset</Button
         >
-        <Button size="sm" onclick={() => _currentViews.activeView.view.saveView()}>Save</Button>
+        {#if parseInt(currentViewValue) >= 0}
+          <Button size="sm" onclick={() => _currentViews.activeView.view.saveView()}>Save</Button>
+        {/if}
       {/if}
     </div>
   </div>
