@@ -8,7 +8,7 @@
   import { Label } from "../ui/label";
   import { currentViews } from "$lib/states/current-views.svelte";
   import { Badge } from "../ui/badge";
-  import type { SortingState } from "@tanstack/table-core";
+  import type { SortingState, VisibilityState } from "@tanstack/table-core";
   import { CaretSort } from "svelte-radix";
   import CircleChevronUp from "lucide-svelte/icons/chevron-up";
   import CircleChevronDown from "lucide-svelte/icons/chevron-down";
@@ -18,9 +18,12 @@
   const table = $derived(currentView.table);
   const groupableColumns = $derived(table.getAllColumns().filter((column) => column.getCanGroup()));
   const sortableColumns = $derived(table.getAllColumns().filter((column) => column.getCanSort()));
+  const visiableColumns = $derived(table.getAllColumns().filter((column) => column.getCanHide()));
 
   const grouping = $derived(currentView.view.getGrouping());
   const sorting = $derived(currentView.view.getSorting());
+  const visibility = $derived(currentView.view.getVisibility());
+  const visibleColumns = $derived(visiableColumns.filter(column => !Object.keys(visibility).includes(column.id) || visibility[column.id] === true))
 </script>
 
 <Popover.Root>
@@ -151,6 +154,55 @@
             </DropdownMenu.Group>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
+      </div>
+      <div class="grid grid-cols-3 items-center gap-4">
+        <Label>Visibility</Label>
+        <Select.Root
+          type="multiple"
+          name="visibility"
+          value={visibleColumns.map(visibleColumn => visibleColumn.id)}
+          onValueChange={(value) => {
+            const visibility = Object.assign(
+              {},
+              ...visiableColumns.map(column => {
+                return {[column.id as string]: false};
+              }),
+              ...value.map(id => {
+                return {[id as string]: true};
+              })
+            ) as VisibilityState;
+            currentView.updateTableVisibility(visibility);
+          }}
+        >
+          <Select.Trigger class="w-[180px]">
+            {#if visibleColumns.length === 0}
+              <Badge variant="secondary">none selected</Badge>
+            {:else}
+              <div class="hidden space-x-1 lg:flex">
+                {#if visibleColumns.length > 2}
+                  <Badge variant="secondary" class="rounded-sm px-1 font-normal">
+                    {visibleColumns.length} selected
+                  </Badge>
+                {:else}
+                  {#each visibleColumns as visibleColumn}
+                    <Badge variant="secondary" class="rounded-sm px-1 font-normal">
+                      {visibleColumn.columnDef.meta?.label}
+                    </Badge>
+                  {/each}
+                {/if}
+              </div>
+            {/if}
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Group>
+              {#each visiableColumns as column}
+                <Select.Item value={column.id} label={column.columnDef.meta?.label}>
+                  {column.columnDef.meta?.label}
+                </Select.Item>
+              {/each}
+            </Select.Group>
+          </Select.Content>
+        </Select.Root>
       </div>
     </div>
     <div class="mt-4 flex justify-start">
