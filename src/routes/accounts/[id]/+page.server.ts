@@ -41,7 +41,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
       filters: [
         {
           column: "status",
-          filter: "entityIsFilter",
+          filter: "equalsString",
           value: ["cleared"],
         },
       ],
@@ -59,7 +59,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
       filters: [
         {
           column: "status",
-          filter: "entityIsFilter",
+          filter: "equalsString",
           value: ["pending"],
         },
       ],
