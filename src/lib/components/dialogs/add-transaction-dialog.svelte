@@ -28,7 +28,7 @@
     <Dialog.Header>
       <Dialog.Title>Add Transaction</Dialog.Title>
       <Dialog.Description>
-        <ManageTransactionForm accountId={account?.id || -1} {onSave} />
+        <ManageTransactionForm accountId={account?.id || 0} {onSave} />
       </Dialog.Description>
     </Dialog.Header>
   </Dialog.Content>

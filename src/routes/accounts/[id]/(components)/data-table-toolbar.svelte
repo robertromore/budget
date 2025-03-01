@@ -25,7 +25,7 @@
   } = $props();
 
   let manageViewForm = $state(false);
-  let editViewId = $state(-1);
+  let editViewId = $state(0);
   let editViewsMode = $state(false);
 
   let filterComponents: FilterInputOption<TransactionsFormat>[] = $derived.by(() => {
@@ -60,7 +60,7 @@
       } else {
         newView = parseInt(value);
       }
-      _currentViews.remove(-1, false).setActive(newView);
+      _currentViews.remove(0, false).setActive(newView);
     }}
   >
     {#each nonEditableViews as viewState}
@@ -100,7 +100,7 @@
                 (value) => {
                   currentViewValue = viewState.view.id.toString();
                   _currentViews.setActive(viewState.view.id);
-                  editViewId = value ? viewState.view.id : -1;
+                  editViewId = value ? viewState.view.id : 0;
                   manageViewForm = value;
                 }
               }
@@ -123,7 +123,7 @@
         editViewsMode = value;
         manageViewForm = false;
         if (!value) {
-          editViewId = -1;
+          editViewId = 0;
         }
       }
     }
@@ -149,7 +149,7 @@
     }
     disabled={manageViewForm}
   >
-    {#if manageViewForm && editViewId === -1}
+    {#if manageViewForm && editViewId === 0}
       <Layers class="mr-2 size-4" /> New view <PencilLine class="ml-2 size-4" />
     {:else}
       <CirclePlus class="size-4" />

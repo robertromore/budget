@@ -18,7 +18,7 @@ export class CurrentViewsState<T> {
 
   editableViews = $derived(this.viewsStates.values().filter((viewState) => viewState.view.id > 0));
   nonEditableViews = $derived(
-    this.viewsStates.values().filter((viewState) => viewState.view.id < -1)
+    this.viewsStates.values().filter((viewState) => viewState.view.id < 0)
   );
 
   constructor(viewsStates: CurrentViewState<T>[] | null) {
@@ -78,7 +78,7 @@ export class CurrentViewsState<T> {
     this.add(
       new CurrentViewState(
         {
-          id: -1,
+          id: 0,
           name: "",
           description: "",
           icon: null,
@@ -88,11 +88,11 @@ export class CurrentViewsState<T> {
         },
         table
       )
-    ).setActive(-1);
+    ).setActive(0);
   };
 
   removeTemporaryView = () => {
-    this.remove(-1, false);
+    this.remove(0, false);
     if (this.previousViewId) {
       this.setActive(this.previousViewId);
       this.previousViewId = undefined;

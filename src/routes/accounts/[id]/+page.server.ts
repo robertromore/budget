@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
   const { accounts } = await parent();
   const defaultViews = [
     {
-      id: -4,
+      id: -3,
       name: "All Transactions",
       description: "All transactions for this account",
       filters: [],
@@ -35,7 +35,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
       dirty: false,
     },
     {
-      id: -3,
+      id: -2,
       name: "Cleared",
       description: "Cleared transactions for this account",
       filters: [
@@ -53,7 +53,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
       dirty: false,
     },
     {
-      id: -2,
+      id: -1,
       name: "Upcoming",
       description: "Upcoming transactions for this account",
       filters: [

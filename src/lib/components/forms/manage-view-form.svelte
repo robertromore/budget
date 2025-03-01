@@ -111,7 +111,7 @@
           _currentViews.removeTemporaryView();
         }}>cancel</Button
       >
-      {#if viewId !== -1}
+      {#if viewId !== 0}
         <Button variant="destructive" size="default" onclick={() => {
           if (onDelete) {
             onDelete();
