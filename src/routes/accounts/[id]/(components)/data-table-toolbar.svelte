@@ -28,8 +28,8 @@
   let editViewId = $state(0);
   let editViewsMode = $state(false);
 
+  const columns = table.getAllColumns();
   let filterComponents: FilterInputOption<TransactionsFormat>[] = $derived.by(() => {
-    const columns = table.getAllColumns();
     return columns
       .filter((column) => column && column.getIsVisible() && column.columnDef.meta?.facetedFilter)
       .map((column) => {
@@ -41,8 +41,8 @@
   const firstViewId = $derived(_currentViews.viewsStates.values().next().value?.view.id!);
   let currentViewValue = $state((() => firstViewId)().toString());
 
-  const editableViews = $derived(_currentViews.editableViews.toArray());
-  const nonEditableViews = $derived(_currentViews.nonEditableViews.toArray());
+  const editableViews = $derived(_currentViews.editableViews);
+  const nonEditableViews = $derived(_currentViews.nonEditableViews);
 </script>
 
 <div class="flex text-sm">

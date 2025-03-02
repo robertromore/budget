@@ -141,9 +141,8 @@
     <Form.Field {form} name="filters">
       <Form.Control>
         {#snippet children({ props })}
-          <FilterInput {...props} {availableFilters} />
+          <FilterInput {...props} {availableFilters} bind:value={$formData.filters} />
           <Form.FieldErrors />
-          <input hidden bind:value={$formData.filters} name={props.name} />
         {/snippet}
       </Form.Control>
     </Form.Field>
@@ -158,6 +157,3 @@
     </Form.Field>
   </div>
 </form>
-
-<!-- <SuperDebug data={$formData}/>
-<SuperDebug data={$errors}/> -->

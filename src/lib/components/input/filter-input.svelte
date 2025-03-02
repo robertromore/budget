@@ -4,7 +4,6 @@
   import ListFilterPlus from "lucide-svelte/icons/list-filter-plus";
   import { cn } from "$lib/utils";
   import type { FilterInputOption, TransactionsFormat, ViewFilter } from "$lib/types";
-  import { SvelteMap, SvelteSet } from "svelte/reactivity";
   import { currentViews } from "$lib/states/current-views.svelte";
 
   let {
@@ -16,8 +15,6 @@
   } = $props();
 
   const currentView = $derived(currentViews.get().activeView);
-  // const _selectedColumnValues = $derived(new SvelteMap<string, SvelteSet<unknown>>([...currentView.filters.values()].map(selectedFilter => [selectedFilter.column, selectedFilter.value])));
-  // const _selectedColumnValues = $derived(currentView.view.getAllFilterValues());
   const _selectedFilters = $derived(
     currentView.view
       .getAllFilteredColumns()
@@ -29,7 +26,7 @@
   let selectableFilters = $derived(
     availableFilters.filter(
       (availableFilter) =>
-        _selectedFilters.toArray().findIndex((filter) => filter?.name === availableFilter.name) < 0
+        _selectedFilters.findIndex((filter) => filter?.name === availableFilter.name) < 0
     )
   );
 </script>
@@ -51,12 +48,14 @@
       <DropdownMenu.Group>
         {#each selectableFilters as selectableFilter}
           <DropdownMenu.Item
-            onSelect={() =>
+            onSelect={() => {
               currentView.addFilter({
                 column: selectableFilter.column.id,
                 value: selectableFilter.value,
                 filter: selectableFilter.column.columnDef.filterFn?.toString() || "",
-              })}
+              });
+              value = currentView.view.getAllFilterValues();
+            }}
           >
             {#if selectableFilter.icon}
               <selectableFilter.icon />

@@ -1,8 +1,6 @@
 import type { View } from "$lib/schema";
 import { default as ViewModel } from "$lib/models/view.svelte";
-import { trpc } from "$lib/trpc/client";
 import type { TransactionsFormat, ViewFilter } from "$lib/types";
-import deeplyEqual, { equalArray } from "$lib/utils";
 import type {
   ExpandedState,
   FilterFnOption,
@@ -12,7 +10,6 @@ import type {
   VisibilityState,
 } from "@tanstack/table-core";
 import { Context } from "runed";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 /**
  * A state class representing the currently active view.
@@ -37,34 +34,12 @@ export class CurrentViewState<TData> {
 
   resetToInitialState() {
     this.view.reset();
-    // this.view.filters = this.initialState?.filters || [];
     this.updateTableFilters();
     this.updateTableState();
-
-    // this.view.display = this.view.display || {};
-    // this.view.display.grouping =
-    //   this.initialState?.display?.grouping || this.table.initialState.grouping || [];
-    // this.view.display.sort =
-    //   this.initialState?.display?.sort || this.table.initialState.sorting || [];
-    // this.view.display.expandAll =
-    //   this.initialState?.display?.expandAll || this.table.initialState.expanded || {};
-    // this.updateTableState();
   }
 
   addFilter(filter: ViewFilter) {
     this.view.addFilter(filter);
-    // this.updateFilter(filter);
-    // if (this.view.filters?.find(existingFilter => existingFilter.column === filter.column)) {
-    //   this.updateFilter(filter);
-    // }
-
-    // this.view.filters = this.view.filters?.concat(filter) || [];
-    // this.filters.set(
-    //   filter.column,
-    //   Object.assign({}, filter, { temporary: true, value: new SvelteSet(filter.value) })
-    // );
-
-    // this.dirty = !this.isClean();
   }
 
   updateFilter(filter: Partial<ViewFilter>, replace: boolean = false) {
@@ -117,7 +92,6 @@ export class CurrentViewState<TData> {
 
   clearTableFilters() {
     this.table.setColumnFilters([]);
-    // this.table.getAllColumns().forEach((column) => column.setFilterValue(undefined));
   }
 
   updateTableFilters() {
@@ -126,6 +100,10 @@ export class CurrentViewState<TData> {
       .getVisibleFlatColumns()
       .filter((column) => column.getCanFilter())
       .forEach((column) => {
+        const filterFn = this.view.getFilterFn(column.id);
+        if (filterFn) {
+          column.columnDef.filterFn = filterFn as FilterFnOption<TData>;
+        }
         if (this.view.getFilterValue(column.id).size > 0) {
           column.setFilterValue(this.view.getFilterValue(column.id));
         }

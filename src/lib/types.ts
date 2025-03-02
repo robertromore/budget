@@ -60,6 +60,12 @@ export type ViewFilterWithSet = ViewFilter & {
   value: SvelteSet<unknown>;
 };
 
+export type FacetedFilterOption = {
+  label: string;
+  value: string;
+  icon?: Component;
+};
+
 export type FilterInputOption<T> = {
   name: string;
   icon?: Component;

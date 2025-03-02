@@ -16,6 +16,8 @@ export default class View {
   #filterValues: SvelteMap<string, ViewFilterWithSet> = $state(new SvelteMap());
   dirty: boolean = $derived.by(() => {
     this.#filterValues;
+    this.view.filters;
+    this.initial?.filters;
     return (
       this.view.name !== this.initial?.name ||
       this.view.description !== this.initial.description ||
@@ -30,9 +32,20 @@ export default class View {
         this.#filterValues.keys().toArray(),
         this.initial.filters.map((filter) => filter.column)
       ) ||
+      !equalArray(
+        this.#filterValues
+          .values()
+          .toArray()
+          .map((filterValue) => filterValue.filter),
+        this.view.filters?.map((filter) => filter.filter) || []
+      ) ||
       this.#filterValues.values().some(({ column, value }) => {
-        return value.isDisjointFrom(
-          new Set(this.initial?.filters?.find((filter) => filter.column === column)?.value)
+        const initialFilters = this.initial?.filters?.find(
+          (filter) => filter.column === column
+        )?.value;
+        return (
+          !(value.size === 0 && (initialFilters?.length || 0) === 0) &&
+          value.isDisjointFrom(new Set(initialFilters))
         );
       })
     );
@@ -166,9 +179,15 @@ export default class View {
         : Object.assign(
             {},
             this.#filterValues.get(filter.column),
-            Object.assign({}, filter, {
-              value: new SvelteSet(filter.value),
-            })
+            Object.assign(
+              {},
+              filter,
+              filter.value
+                ? {
+                    value: new SvelteSet(filter.value),
+                  }
+                : {}
+            )
           )
     );
   }
@@ -177,16 +196,22 @@ export default class View {
     this.#filterValues.delete(filter);
   }
 
+  getFilterFn(column: string) {
+    return this.#filterValues.get(column)?.filter;
+  }
+
   getFilterValue(column: string) {
     return this.#filterValues.get(column)?.value || new Set();
   }
 
   getAllFilteredColumns() {
-    return this.#filterValues.keys();
+    return this.#filterValues.keys().toArray();
   }
 
   getAllFilterValues() {
-    return Array.from(this.#filterValues.values());
+    return Array.from(this.#filterValues.values()).map((filter) =>
+      Object.assign({}, filter, { value: Array.from(filter.value) })
+    );
   }
 
   getAllFilterValuesSet() {
@@ -276,26 +301,15 @@ export default class View {
   }
 
   async saveView() {
-    // id, name, description, icon, filters, display;
-    await trpc().viewsRoutes.save.mutate({
-      ...this.view,
-      filters:
-        this.view.filters?.map((filter) => ({
-          ...filter,
-          value: Array.from(filter.value),
-        })) || null,
-    });
+    this.view.filters = $state
+      .snapshot(this.#filterValues)
+      .values()
+      .toArray()
+      .map((filter) => {
+        return Object.assign({}, filter, { value: Array.from(filter.value) });
+      });
     this.initial = $state.snapshot(this.view);
-    this.#filterValues = new SvelteMap<string, ViewFilterWithSet>(
-      (this.view.filters as Array<Omit<ViewFilterWithSet, "view"> & { view?: Array<unknown> }>).map(
-        (filter) => [
-          filter.column,
-          Object.assign({}, filter, {
-            value: new SvelteSet(filter.value || []),
-          }),
-        ]
-      )
-    );
+    await trpc().viewsRoutes.save.mutate(this.view);
   }
 
   async deleteView() {

@@ -49,11 +49,16 @@ export class CurrentViewsState<T> {
   }
 
   remove(viewState: CurrentViewState<T> | number, setFirstToActive: boolean = true) {
+    let _viewState;
     if (typeof viewState === "number") {
+      _viewState = this.viewsStates.get(viewState);
       this.viewsStates.delete(viewState);
     } else {
+      _viewState = viewState;
       this.viewsStates.delete((viewState as CurrentViewState<T>).view.id);
     }
+
+    _viewState?.view.deleteView();
 
     if (setFirstToActive) {
       this.setActive(this.viewsStates.values().next().value!);

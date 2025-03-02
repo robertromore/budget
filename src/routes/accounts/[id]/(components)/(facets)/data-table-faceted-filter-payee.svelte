@@ -58,8 +58,6 @@
       })
     )
   );
-
-  $inspect(payeeOptions);
 </script>
 
 <DataTableFacetedFilter
