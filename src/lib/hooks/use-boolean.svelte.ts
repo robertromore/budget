@@ -1,4 +1,5 @@
-/** A hook for easy use of boolean values
+/**
+ * A hook for easy use of boolean values
  *
  * ## Usage
  * ```svelte

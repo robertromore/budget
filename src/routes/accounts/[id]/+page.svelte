@@ -27,7 +27,7 @@
   const payees = payeesContext.get();
 
   let addTransactionDialogOpen: boolean = $state(false);
-  let deleteTransactionDialogOpen = $state(false);
+  let deleteTransactionDialogOpen: boolean = $state(false);
   let table: Table<TransactionsFormat> | undefined = $state();
   const selectedTransactions = $derived(
     Object.values(table?.getSelectedRowModel().rowsById ?? {}).map((row) => row.original.id)

@@ -1,26 +1,21 @@
 <script lang="ts">
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { buttonVariants } from "$lib/components/ui/button";
-  import { trpc } from "$lib/trpc/client";
-  import { page } from "$app/state";
-  import { invalidateAll } from "$app/navigation";
+  import { goto } from "$app/navigation";
+  import { deleteAccountDialog, deleteAccountId } from "$lib/states/global.svelte";
+  import { accountsContext } from "$lib/states/accounts.svelte";
 
-  let {
-    deleteDialogId = $bindable(),
-    deleteDialogOpen = $bindable(),
-  }: {
-    deleteDialogId: number | null;
-    deleteDialogOpen: boolean;
-  } = $props();
-
+  const _deleteAccountDialog = $derived(deleteAccountDialog);
+  const _deleteAccountId = $derived(deleteAccountId);
+  const accountsState = accountsContext.get();
   const confirmDeleteAccount = async () => {
-    deleteDialogOpen = false;
-    await trpc(page).accountRoutes.remove.mutate({ id: deleteDialogId! });
-    await invalidateAll();
+    _deleteAccountDialog.current = false;
+    accountsState.deleteAccount(_deleteAccountId.current);
+    await goto('/accounts');
   };
 </script>
 
-<AlertDialog.Root bind:open={deleteDialogOpen}>
+<AlertDialog.Root bind:open={() => _deleteAccountDialog.current, (newOpen) => _deleteAccountDialog.current = newOpen}>
   <AlertDialog.Content>
     <AlertDialog.Header>
       <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>

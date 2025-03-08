@@ -11,6 +11,8 @@
   import { newAccountDialog } from "$lib/states/global.svelte";
   import { UseBoolean } from "$lib/hooks/use-boolean.svelte";
   import AddAccountDialog from "$lib/components/dialogs/add-account-dialog.svelte";
+import { accountsContext, AccountsState } from "$lib/states/accounts.svelte";
+  import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const { payees, categories } = $derived(data);
@@ -24,7 +26,8 @@
 	<RenderScan />
 {/if} -->
 
-<AddAccountDialog />
+<AddAccountDialog/>
+<DeleteAccountDialog/>
 
 <div class="bg-background">
   <div class="grid">
