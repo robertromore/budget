@@ -33,8 +33,10 @@ import { accountsContext, AccountsState } from "$lib/states/accounts.svelte";
   <div class="grid">
     <Sidebar.Provider>
       <AppSidebar />
-      <main class="max-w-fit">
+      <main class="w-full">
+        <div class="fixed">
         <Sidebar.Trigger />
+        </div>
         <div class="col-span-3 lg:col-span-4">
           <div class="h-full px-4 py-6 lg:px-8">
             {@render children?.()}

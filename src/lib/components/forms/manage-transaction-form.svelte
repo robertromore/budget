@@ -10,6 +10,9 @@
   import EntityInput from "$lib/components/input/entity-input.svelte";
   import NumericInput from "$lib/components/input/numeric-input.svelte";
   import { page } from "$app/state";
+  import HandCoins from "lucide-svelte/icons/hand-coins";
+  import type { Component } from "svelte";
+  import SquareMousePointer from "lucide-svelte/icons/square-mouse-pointer";
 
   let {
     accountId,
@@ -89,6 +92,7 @@
           entityLabel="payees"
           entities={payees as EditableEntityItem[]}
           bind:value={payee}
+          icon={HandCoins as unknown as Component}
         />
         <Form.FieldErrors />
         <input hidden bind:value={$formData.payeeId} name={props.name} />
@@ -104,6 +108,7 @@
           entityLabel="categories"
           entities={categories as EditableEntityItem[]}
           bind:value={category}
+          icon={SquareMousePointer as unknown as Component}
         />
         <Form.FieldErrors />
         <input hidden bind:value={$formData.categoryId} name={props.name} />
