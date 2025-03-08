@@ -40,9 +40,6 @@ export const viewsRoutes = t.router({
   save: publicProcedure
     .input(insertViewSchema)
     .mutation(async ({ input: { id, name, description, icon, filters, display }, ctx: { db } }) => {
-      filters = (filters || []).map((filter) =>
-        Object.assign({}, filter, { value: Array.from(filter.value) })
-      );
       let entities;
       if (id) {
         entities = await db
@@ -68,6 +65,7 @@ export const viewsRoutes = t.router({
           })
           .returning();
       }
+      // console.log(entities);
       const entity = entities[0] as View;
       // entity.is_new = !!id;
       return entity;
