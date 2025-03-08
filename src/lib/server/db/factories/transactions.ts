@@ -10,6 +10,11 @@ export const transactionFactory = async (
   count: number = faker.number.int({ min: 1, max: 50 })
 ): Promise<NewTransaction[]> => {
   const transactions_collection: NewTransaction[] = [];
+  const random_dates = faker.date.betweens({
+    from: faker.date.past({ years: 5 }).toDateString(),
+    to: faker.date.recent(),
+    count,
+  });
   for (let i = 0; i < count; i++) {
     const payees: Payee[] = [];
     const categories: Category[] = [];
@@ -42,6 +47,7 @@ export const transactionFactory = async (
         accountId: account?.id,
         payeeId: new_payee.id,
         categoryId: new_category.id,
+        date: random_dates[i].toDateString(),
       })
       .returning();
     transactions_collection.push(new_transaction[0]);
