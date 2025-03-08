@@ -1,52 +1,30 @@
-import type {
-  Account,
-  FormInsertAccountSchema,
-  RemoveAccountSchema,
-  insertAccountSchema,
-  removeAccountSchema,
-} from "$lib/schema";
-import { getContext, setContext } from "svelte";
-import type { Infer, SuperValidated } from "sveltekit-superforms";
-import { SvelteSet } from "svelte/reactivity";
-
-type SetAccountsState = {
-  accounts?: Account[];
-  manageAccountForm?: SuperValidated<Infer<FormInsertAccountSchema>>;
-  deleteAccountForm?: SuperValidated<Infer<RemoveAccountSchema>>;
-};
+import type { Account } from "$lib/schema";
+import { SvelteMap } from "svelte/reactivity";
+import { Context } from "runed";
+import { trpc } from "$lib/trpc/client";
+import { page } from "$app/state";
 
 export class AccountsState {
-  accounts: SvelteSet<Account> = $state() as SvelteSet<Account>;
-  manageAccountForm: SuperValidated<Infer<FormInsertAccountSchema>> = $state() as SuperValidated<
-    Infer<typeof insertAccountSchema>
-  >;
-  deleteAccountForm: SuperValidated<Infer<RemoveAccountSchema>> = $state() as SuperValidated<
-    Infer<typeof removeAccountSchema>
-  >;
+  accounts: SvelteMap<number, Account> = $state() as SvelteMap<number, Account>;
 
-  constructor(init: SetAccountsState) {
-    if (init.accounts) this.accounts = new SvelteSet(init.accounts);
-    if (init.manageAccountForm) this.manageAccountForm = init.manageAccountForm;
-    if (init.deleteAccountForm) this.deleteAccountForm = init.deleteAccountForm;
+  constructor(accounts: Account[]) {
+    this.accounts = new SvelteMap(accounts.map((account) => [account.id, account]));
   }
 
   getById(id: number): Account {
-    return [...this.accounts]
-      .filter((account: Account) => {
-        return account.id == id;
-      })
-      .shift()!;
+    return this.accounts.values().find((account: Account) => {
+      return account.id == id;
+    })!;
+  }
+
+  addAccount(account: Account) {
+    this.accounts.set(account.id, account);
+  }
+
+  async deleteAccount(id: number) {
+    this.accounts.delete(id);
+    await trpc(page).accountRoutes.remove.mutate({ id: id });
   }
 }
 
-const ACCOUNT_CTX = Symbol("accounts_ctx");
-
-export function setAccountsState(init: SetAccountsState) {
-  const accountState = new AccountsState(init);
-  setContext<AccountsState>(ACCOUNT_CTX, accountState);
-  return accountState;
-}
-
-export function getAccountsState() {
-  return getContext<AccountsState>(ACCOUNT_CTX);
-}
+export const accountsContext = new Context<AccountsState>("accounts");
