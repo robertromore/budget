@@ -113,23 +113,25 @@
     {/each}
   </ToggleGroup.Root>
 
-  <Toggle
-    variant="outline"
-    size="sm"
-    class="ml-2"
-    bind:pressed={
-      () => editViewsMode,
-      (value) => {
-        editViewsMode = value;
-        manageViewForm = false;
-        if (!value) {
-          editViewId = 0;
+  {#if editableViews.toArray().length > 0}
+    <Toggle
+      variant="outline"
+      size="sm"
+      class="ml-2"
+      bind:pressed={
+        () => editViewsMode,
+        (value) => {
+          editViewsMode = value;
+          manageViewForm = false;
+          if (!value) {
+            editViewId = 0;
+          }
         }
       }
-    }
-  >
-    <Settings2 />
-  </Toggle>
+    >
+      <Settings2 />
+    </Toggle>
+  {/if}
 
   <Toggle
     variant="outline"
