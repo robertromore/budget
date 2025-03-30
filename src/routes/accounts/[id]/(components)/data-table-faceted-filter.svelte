@@ -1,7 +1,7 @@
 <script lang="ts" generics="TData, TValue">
   import Check from "lucide-svelte/icons/check";
   import type { Column, FilterFns } from "@tanstack/table-core";
-  import type { Component } from "svelte";
+  import type { Component, Snippet } from "svelte";
   import * as Command from "$lib/components/ui/command";
   import * as Popover from "$lib/components/ui/popover";
   import { Button } from "$lib/components/ui/button";
@@ -18,9 +18,10 @@
     options?: SvelteMap<string | number, FacetedFilterOption>;
     allOptions?: SvelteMap<string | number, FacetedFilterOption>;
     allIcon?: Component;
+    customValueSnippet?: Snippet;
   };
 
-  let { column, title, options, allOptions, allIcon }: Props<TData, TValue> = $props();
+  let { column, title, options, allOptions, allIcon, customValueSnippet }: Props<TData, TValue> = $props();
 
   const facets = $derived(column?.getFacetedUniqueValues());
   const operators = $derived<AvailableFilters>(column?.columnDef.meta?.availableFilters || []);
@@ -172,6 +173,14 @@
               </Command.Item>
             {/if}
           </Command.Group>
+
+          {#if customValueSnippet}
+            <Command.Separator />
+            <Command.Group>
+              {@render customValueSnippet()}
+            </Command.Group>
+          {/if}
+
           {#if selectedValues.size > 0}
             <Command.Separator />
             <Command.Group>

@@ -15,7 +15,7 @@
   import * as Table from "$lib/components/ui/table";
   import type { TransactionsFormat } from "$lib/types";
   import { DataTablePagination, DataTableToolbar } from ".";
-  import { getLocalTimeZone, today } from "@internationalized/date";
+  import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
   import { filtering, filters, setFiltering, setGlobalFilter } from "../(data)/filters.svelte";
   import { pagination, setPagination } from "../(data)/pagination.svelte";
   import { selection, setSelection } from "../(data)/selection.svelte";
@@ -28,6 +28,7 @@
   import { CurrentViewState } from "$lib/states/current-view.svelte";
   import { page } from "$app/state";
   import { currentViews, CurrentViewsState } from "$lib/states/current-views.svelte";
+    import { getSpecialDateValue } from "$lib/utils";
 
   let {
     columns,
@@ -97,43 +98,43 @@
     getFacetedRowModel: getFacetedRowModel(),
     getGroupedRowModel: getGroupedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
-    getFacetedUniqueValues: (table: TTable<TransactionsFormat>, columnId: string) => () => {
-      const rows = table.getGlobalFacetedRowModel().flatRows;
-      if (columnId === "date") {
-        // const filterFnName = table.getColumn(columnId)?.getFilterFn()?.toString();
-        // if (filterFnName && _dateMapCache.has(filterFnName)) {
-        //   return _dateMapCache.get(filterFnName) as Map<string, string>;
-        // }
+    // getFacetedUniqueValues: (table: TTable<TransactionsFormat>, columnId: string) => () => {
+    //   const rows = table.getGlobalFacetedRowModel().flatRows;
+    //   if (columnId === "date") {
+    //     // const filterFnName = table.getColumn(columnId)?.getFilterFn()?.toString();
+    //     // if (filterFnName && _dateMapCache.has(filterFnName)) {
+    //     //   return _dateMapCache.get(filterFnName) as Map<string, string>;
+    //     // }
 
-        const newmap = new Map();
-        const thisday = today(getLocalTimeZone());
-        const dates = [
-          thisday.subtract({ days: 1 }),
-          thisday.subtract({ days: 3 }),
-          thisday.subtract({ weeks: 1 }),
-          thisday.subtract({ months: 1 }),
-          thisday.subtract({ months: 3 }),
-          thisday.subtract({ months: 6 }),
-          thisday.subtract({ years: 1 }),
-        ];
-        for (const date of dates) {
-          for (const row of rows) {
-            if (
-              table
-                .getColumn(columnId)
-                ?.getFilterFn()
-                ?.call({} as any, row, columnId, [date.toString()], () => {})
-            ) {
-              newmap.set(date.toString(), (newmap.get(date.toString()) ?? 0) + 1);
-            }
-          }
-        }
-        // _dateMapCache.set(filterFnName!, newmap);
-        return newmap;
-      }
+    //     const newmap = new Map();
+    //     const thisday = today(getLocalTimeZone());
+    //     const dates = [
+    //       thisday.subtract({ days: 1 }),
+    //       thisday.subtract({ days: 3 }),
+    //       thisday.subtract({ weeks: 1 }),
+    //       thisday.subtract({ months: 1 }),
+    //       thisday.subtract({ months: 3 }),
+    //       thisday.subtract({ months: 6 }),
+    //       thisday.subtract({ years: 1 }),
+    //     ];
+    //     for (const date of dates) {
+    //       for (const row of rows) {
+    //         if (
+    //           table
+    //             .getColumn(columnId)
+    //             ?.getFilterFn()
+    //             ?.call({} as any, row, columnId, [date.toString()], () => {})
+    //         ) {
+    //           newmap.set(date.toString(), (newmap.get(date.toString()) ?? 0) + 1);
+    //         }
+    //       }
+    //     }
+    //     // _dateMapCache.set(filterFnName!, newmap);
+    //     return newmap;
+    //   }
 
-      return getFacetedUniqueValues<TransactionsFormat>()(table, columnId)();
-    },
+    //   return getFacetedUniqueValues<TransactionsFormat>()(table, columnId)();
+    // },
     // globalFilterFn: fuzzyFilter,
     filterFns: { ...filters },
     groupedColumnMode: "reorder",
@@ -146,6 +147,57 @@
     (view: View) => new CurrentViewState<TransactionsFormat>(view, table)
   );
   currentViews.set(new CurrentViewsState<TransactionsFormat>(_currentViewStates));
+
+  const currentView = $derived(currentViews.get().activeView);
+  const customDateValues: CalendarDate[] = $derived(
+    currentView.view.getAllFilterValues()
+      .filter(filter => filter.column === 'date')
+      .map(filter => filter.value)
+      .flat()
+      .filter(filterValue => typeof filterValue === 'string' && filterValue.includes(':'))
+  ) as CalendarDate[];
+
+  table.options.getFacetedUniqueValues = (table: TTable<TransactionsFormat>, columnId: string) => () => {
+    const rows = table.getGlobalFacetedRowModel().flatRows;
+    if (columnId === "date") {
+      // const filterFnName = table.getColumn(columnId)?.getFilterFn()?.toString();
+      // if (filterFnName && _dateMapCache.has(filterFnName)) {
+      //   return _dateMapCache.get(filterFnName) as Map<string, string>;
+      // }
+
+      const newmap = new Map();
+      const thisday = today(getLocalTimeZone());
+      let dates = [
+        thisday.subtract({ days: 1 }),
+        thisday.subtract({ days: 3 }),
+        thisday.subtract({ weeks: 1 }),
+        thisday.subtract({ months: 1 }),
+        thisday.subtract({ months: 3 }),
+        thisday.subtract({ months: 6 }),
+        thisday.subtract({ years: 1 }),
+      ];
+
+      dates = dates.concat(customDateValues);
+
+      for (const date of dates) {
+        for (const row of rows) {
+          if (
+            table
+              .getColumn(columnId)
+              ?.getFilterFn()
+              ?.call({} as any, row, columnId, [date.toString()], () => {})
+          ) {
+            newmap.set(date.toString(), (newmap.get(date.toString()) ?? 0) + 1);
+          }
+        }
+      }
+      // _dateMapCache.set(filterFnName!, newmap);
+      return newmap;
+    }
+
+    return getFacetedUniqueValues<TransactionsFormat>()(table, columnId)();
+  };
+  table.setOptions(table.options);
 </script>
 
 <div class="space-y-4">

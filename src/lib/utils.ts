@@ -1,3 +1,11 @@
+import {
+  CalendarDate,
+  DateFormatter,
+  getLocalTimeZone,
+  parseDate,
+  today,
+  type DateValue,
+} from "@internationalized/date";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -275,4 +283,61 @@ export default function deeplyEqual(left: unknown, right: unknown) {
   }
 
   return left === right;
+}
+
+const currentDate = today(getLocalTimeZone());
+
+const monthFmt = new DateFormatter("en-US", {
+  month: "long",
+});
+const monthYearFmt = new DateFormatter("en-US", {
+  month: "short",
+  year: "numeric",
+});
+
+const monthOptions = Array.from({ length: 12 }, (_, i) => {
+  const month = currentDate.set({ month: i + 1 });
+  return monthFmt.format(month.toDate(getLocalTimeZone()));
+}) as ReadonlyArray<string>;
+
+export type Month = (typeof monthOptions)[number];
+
+export type SpecialDateValue = ["day" | "month" | "quarter" | "year", string];
+export function getSpecialDateValue(date: string): SpecialDateValue {
+  return date.split(":") as SpecialDateValue;
+}
+
+export function getSpecialDateValueAsLabel(date: string): string {
+  const [type, value] = getSpecialDateValue(date);
+  switch (type) {
+    case "quarter":
+      return `Q${value}`;
+      break;
+
+    case "month":
+    default:
+      return monthYearFmt.format(parseDate(value).toDate(getLocalTimeZone()));
+  }
+}
+
+export function compareSpecialDateValueWithOperator(
+  originalDate: DateValue,
+  sdv: SpecialDateValue,
+  operator: string
+) {
+  const [range, date] = sdv;
+  if (range === "month") {
+    let d_date = parseDate(date);
+    if (operator === "after") {
+      d_date = d_date.add({ months: 1 });
+    }
+    return originalDate.compare(d_date);
+  } else if (range === "quarter") {
+    const quarter = parseInt(date, 10);
+    if (operator === "after") {
+      return originalDate.compare(originalDate.set({ month: quarter * 3 + 1 }));
+    } else {
+      return originalDate.compare(originalDate.set({ month: quarter * 3 }));
+    }
+  }
 }
