@@ -87,7 +87,7 @@
           {...props}
           variant="outline"
           class={cn(
-            "w-[240px] justify-start text-left font-normal",
+            "w-36 justify-start text-left font-normal",
             !new_amount && "text-muted-foreground"
           )}
         >

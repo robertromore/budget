@@ -94,7 +94,7 @@
           {...props}
           variant="outline"
           class={cn(
-            "block w-full justify-start overflow-hidden text-ellipsis whitespace-nowrap text-left font-normal",
+            "block w-48 justify-start overflow-hidden text-ellipsis whitespace-nowrap text-left font-normal",
             !value && "text-muted-foreground"
           )}
         >
