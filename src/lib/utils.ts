@@ -59,6 +59,8 @@ export function compareAlphanumeric(aStr: string, bStr: string) {
   return a.length - b.length;
 }
 
+export type AnyObject = Record<string, unknown>;
+
 export const without = <T>(array: T[], fn: (element: T) => boolean): [T[], T[]] => {
   const keep: T[] = [];
   const remove: T[] = [];
