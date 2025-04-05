@@ -29,13 +29,14 @@
   let showAll = $state(false);
   let activeOperator = $state<string>(column.getFilterFn()?.name as keyof FilterFns);
 
-  const optionsValues = $derived(options?.values().toArray().map((opt) => opt.value));
+  const optionsValues = $derived(options?.values().toArray());
+  const optionsRawValues = $derived(optionsValues?.map((opt) => opt.value));
   const showOptions: FacetedFilterOption[] = $derived(
     (showAll
-      ? options?.values().toArray().concat(
-          allOptions?.values().toArray().filter((option) => !optionsValues?.includes(option.value)) || []
+      ? optionsValues?.concat(
+          allOptions?.values().toArray().filter((option) => !optionsRawValues?.includes(option.value)) || []
         )
-      : options?.values().toArray()) || []
+      : optionsValues) || []
   );
   const notIn = $derived((allOptions?.size || 0) - (options?.size || 0));
 

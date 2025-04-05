@@ -13,9 +13,10 @@ import {
 } from "$lib/schema";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
+import { getSpecialDateValueAsLabel } from "$lib/utils";
 
 export const load: PageServerLoad = async ({ params, parent }) => {
-  const { accounts } = await parent();
+  const { accounts, dates: defaultDates } = await parent();
   const defaultViews = [
     {
       id: -3,
@@ -72,6 +73,20 @@ export const load: PageServerLoad = async ({ params, parent }) => {
     },
   ] as View[];
 
+  const views = await createCaller(await createContext()).viewsRoutes.all();
+  const dates = defaultDates.concat(
+    views
+      .map((view) => view.filters)
+      .flat()
+      .filter((filter) => filter?.column === "date")
+      .map((filter) => filter?.value)
+      .flat()
+      .map((date) => ({
+        value: date as string,
+        label: getSpecialDateValueAsLabel(date as string),
+      }))
+  );
+
   return {
     accountId: parseInt(params.id),
     account: accounts.find((account) => account.id === parseInt(params.id)),
@@ -82,6 +97,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
     managePayeeForm: await superValidate(zod(formInsertPayeeSchema)),
     deletePayeeForm: await superValidate(zod(removePayeeSchema)),
     manageViewForm: await superValidate(zod(insertViewSchema)),
-    views: defaultViews.concat(await createCaller(await createContext()).viewsRoutes.all()),
+    views: defaultViews.concat(views),
+    dates,
   };
 };

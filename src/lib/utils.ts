@@ -302,7 +302,7 @@ const monthOptions = Array.from({ length: 12 }, (_, i) => {
 
 export type Month = (typeof monthOptions)[number];
 
-export type SpecialDateValue = ["day" | "month" | "quarter" | "year", string];
+export type SpecialDateValue = ["day" | "month" | "quarter" | "year" | "half-year", string];
 export function getSpecialDateValue(date: string): SpecialDateValue {
   return date.split(":") as SpecialDateValue;
 }
@@ -312,7 +312,14 @@ export function getSpecialDateValueAsLabel(date: string): string {
   switch (type) {
     case "quarter":
       return `Q${value}`;
-      break;
+
+    case "half-year":
+      const date = parseDate(value);
+      const half = date.month > 6 ? "2" : "1";
+      return `H${half} ${date.year}`;
+
+    case "year":
+      return parseDate(value).year.toString();
 
     case "month":
     default:
@@ -333,11 +340,22 @@ export function compareSpecialDateValueWithOperator(
     }
     return originalDate.compare(d_date);
   } else if (range === "quarter") {
-    const quarter = parseInt(date, 10);
+    let d_date = parseDate(date);
     if (operator === "after") {
-      return originalDate.compare(originalDate.set({ month: quarter * 3 + 1 }));
-    } else {
-      return originalDate.compare(originalDate.set({ month: quarter * 3 }));
+      d_date = d_date.add({ months: 3 });
     }
+    return originalDate.compare(d_date);
+  } else if (range === "half-year") {
+    let d_date = parseDate(date);
+    if (operator === "after") {
+      d_date = d_date.add({ months: 6 });
+    }
+    return originalDate.compare(d_date);
+  } else if (range === "year") {
+    let d_date = parseDate(date);
+    if (operator === "after") {
+      d_date = d_date.add({ years: 1 });
+    }
+    return originalDate.compare(d_date);
   }
 }

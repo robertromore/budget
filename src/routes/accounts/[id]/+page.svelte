@@ -14,13 +14,16 @@
   import { categoriesContext } from "$lib/states/categories.svelte";
   import { payeesContext } from "$lib/states/payees.svelte";
   import type { Account } from "$lib/schema";
+  import { dateFiltersContext, DateFiltersState } from "$lib/states/date-filters.svelte";
 
   let { data } = $props();
   const account: Account | undefined = $derived(data.account);
   const currentAccountState: CurrentAccountState = $derived(new CurrentAccountState(data.account));
+  const dateFiltersState: DateFiltersState = $derived(new DateFiltersState(data.dates));
 
   $effect.pre(() => {
     currentAccount.set(currentAccountState);
+    dateFiltersContext.set(dateFiltersState);
   });
 
   const categories = categoriesContext.get();
