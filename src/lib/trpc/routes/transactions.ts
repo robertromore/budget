@@ -33,7 +33,7 @@ export const transactionRoutes = t.router({
     .input(insertTransactionSchema)
     .mutation(
       async ({
-        input: { id, payeeId, amount, categoryId, notes, date, accountId },
+        input: { id, payeeId, amount, categoryId, notes, date, accountId, status },
         ctx: { db },
       }) => {
         if (!accountId) {
@@ -50,6 +50,7 @@ export const transactionRoutes = t.router({
               categoryId,
               notes,
               date,
+              status: status as "cleared" | "pending" | "scheduled" | null | undefined,
             })
             .where(eq(transactions.id, id))
             .returning();
@@ -63,9 +64,11 @@ export const transactionRoutes = t.router({
               notes,
               date,
               accountId,
+              status,
             })
             .returning();
         }
+        console.log(entity);
         return entity.shift() as Transaction;
       }
     ),

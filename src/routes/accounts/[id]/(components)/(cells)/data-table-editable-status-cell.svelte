@@ -20,8 +20,8 @@
 </script>
 
 {#if value === "cleared" || value === "pending"}
-  <Button onclick={() => handleSubmit(value === "cleared" ? "pending" : "cleared")} variant="ghost">
-    <CircleCheckBig class={cn(value === "cleared" ? "text-green-500" : "text-gray-400")} size="14" />
+  <Button onclick={() => handleSubmit(value == "cleared" ? "pending" : "cleared")} variant="ghost">
+    <CircleCheckBig class={cn(value === "cleared" ? "text-green-700" : "text-gray-400")} size="14" />
   </Button>
 {:else}
   <CalendarClock color="gray" size="14" />
