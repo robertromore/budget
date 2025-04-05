@@ -15,7 +15,6 @@
   import * as Table from "$lib/components/ui/table";
   import type { TransactionsFormat } from "$lib/types";
   import { DataTablePagination, DataTableToolbar } from ".";
-  import { getLocalTimeZone, today } from "@internationalized/date";
   import { filtering, filters, setFiltering, setGlobalFilter } from "../(data)/filters.svelte";
   import { pagination, setPagination } from "../(data)/pagination.svelte";
   import { selection, setSelection } from "../(data)/selection.svelte";
@@ -28,6 +27,7 @@
   import { CurrentViewState } from "$lib/states/current-view.svelte";
   import { page } from "$app/state";
   import { currentViews, CurrentViewsState } from "$lib/states/current-views.svelte";
+  import { dateFiltersContext, DateFiltersState } from "$lib/states/date-filters.svelte";
 
   let {
     columns,
@@ -39,7 +39,11 @@
     table?: TTable<TransactionsFormat>;
   } = $props();
 
-  let _dateMapCache: Map<string, Map<string, string>> = new Map();
+  let dateFiltersState: DateFiltersState | undefined = $state();
+  $effect(() => {
+    dateFiltersState = dateFiltersContext.get();
+  });
+  const allDates = $derived(dateFiltersState?.dateFilters);
 
   table = createSvelteTable<TransactionsFormat>({
     get data() {
@@ -100,23 +104,8 @@
     getFacetedUniqueValues: (table: TTable<TransactionsFormat>, columnId: string) => () => {
       const rows = table.getGlobalFacetedRowModel().flatRows;
       if (columnId === "date") {
-        // const filterFnName = table.getColumn(columnId)?.getFilterFn()?.toString();
-        // if (filterFnName && _dateMapCache.has(filterFnName)) {
-        //   return _dateMapCache.get(filterFnName) as Map<string, string>;
-        // }
-
         const newmap = new Map();
-        const thisday = today(getLocalTimeZone());
-        const dates = [
-          thisday.subtract({ days: 1 }),
-          thisday.subtract({ days: 3 }),
-          thisday.subtract({ weeks: 1 }),
-          thisday.subtract({ months: 1 }),
-          thisday.subtract({ months: 3 }),
-          thisday.subtract({ months: 6 }),
-          thisday.subtract({ years: 1 }),
-        ];
-        for (const date of dates) {
+        for (const { value: date } of allDates || []) {
           for (const row of rows) {
             if (
               table
@@ -128,7 +117,7 @@
             }
           }
         }
-        // _dateMapCache.set(filterFnName!, newmap);
+
         return newmap;
       }
 
