@@ -1,3 +1,11 @@
+import {
+  CalendarDate,
+  DateFormatter,
+  getLocalTimeZone,
+  parseDate,
+  today,
+  type DateValue,
+} from "@internationalized/date";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -275,4 +283,79 @@ export default function deeplyEqual(left: unknown, right: unknown) {
   }
 
   return left === right;
+}
+
+const currentDate = today(getLocalTimeZone());
+
+const monthFmt = new DateFormatter("en-US", {
+  month: "long",
+});
+const monthYearFmt = new DateFormatter("en-US", {
+  month: "short",
+  year: "numeric",
+});
+
+const monthOptions = Array.from({ length: 12 }, (_, i) => {
+  const month = currentDate.set({ month: i + 1 });
+  return monthFmt.format(month.toDate(getLocalTimeZone()));
+}) as ReadonlyArray<string>;
+
+export type Month = (typeof monthOptions)[number];
+
+export type SpecialDateValue = ["day" | "month" | "quarter" | "year" | "half-year", string];
+export function getSpecialDateValue(date: string): SpecialDateValue {
+  return date.split(":") as SpecialDateValue;
+}
+
+export function getSpecialDateValueAsLabel(date: string): string {
+  const [type, value] = getSpecialDateValue(date);
+  switch (type) {
+    case "quarter":
+      return `Q${value}`;
+
+    case "half-year":
+      const date = parseDate(value);
+      const half = date.month > 6 ? "2" : "1";
+      return `H${half} ${date.year}`;
+
+    case "year":
+      return parseDate(value).year.toString();
+
+    case "month":
+    default:
+      return monthYearFmt.format(parseDate(value).toDate(getLocalTimeZone()));
+  }
+}
+
+export function compareSpecialDateValueWithOperator(
+  originalDate: DateValue,
+  sdv: SpecialDateValue,
+  operator: string
+) {
+  const [range, date] = sdv;
+  if (range === "month") {
+    let d_date = parseDate(date);
+    if (operator === "after") {
+      d_date = d_date.add({ months: 1 });
+    }
+    return originalDate.compare(d_date);
+  } else if (range === "quarter") {
+    let d_date = parseDate(date);
+    if (operator === "after") {
+      d_date = d_date.add({ months: 3 });
+    }
+    return originalDate.compare(d_date);
+  } else if (range === "half-year") {
+    let d_date = parseDate(date);
+    if (operator === "after") {
+      d_date = d_date.add({ months: 6 });
+    }
+    return originalDate.compare(d_date);
+  } else if (range === "year") {
+    let d_date = parseDate(date);
+    if (operator === "after") {
+      d_date = d_date.add({ years: 1 });
+    }
+    return originalDate.compare(d_date);
+  }
 }
