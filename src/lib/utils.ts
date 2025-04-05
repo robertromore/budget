@@ -59,22 +59,6 @@ export function compareAlphanumeric(aStr: string, bStr: string) {
   return a.length - b.length;
 }
 
-export type AnyObject = Record<string, unknown>;
-export const keyBy = <T extends AnyObject>(
-  collection: T[] | Record<string, T>,
-  key: keyof T | null | undefined
-): Record<string, T> => {
-  const isArray = Array.isArray(collection);
-  const entries = isArray ? (collection as T[]) : Object.values(collection as Record<string, T>);
-  return entries.reduce(
-    (result, item) => {
-      const keyValue = key ? item[key] : item;
-      return { ...result, [String(keyValue)]: item };
-    },
-    {} as Record<string, T>
-  );
-};
-
 export const without = <T>(array: T[], fn: (element: T) => boolean): [T[], T[]] => {
   const keep: T[] = [];
   const remove: T[] = [];
