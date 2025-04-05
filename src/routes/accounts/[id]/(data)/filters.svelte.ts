@@ -1,4 +1,5 @@
 import type { TransactionsFormat } from "$lib/types";
+import { compareSpecialDateValueWithOperator, getSpecialDateValue } from "$lib/utils";
 import { parseDate } from "@internationalized/date";
 import type { ColumnFiltersState, Row, Updater } from "@tanstack/table-core";
 
@@ -29,11 +30,17 @@ export const filters = {
   ) => {
     return filterValue.size === 0
       ? true
-      : filterValue
-          .values()
-          .some((date) => (row.original.date?.compare(parseDate(date)) || -1) < 0);
-    // return new Set([row.original.date]).isSubsetOf(filterValue);
-    // return (row.original.date?.compare(parseDate(filterValue[0])) || 0) < 0;
+      : filterValue.values().some((date) => {
+          if (row.original.date) {
+            return date.includes(":")
+              ? (compareSpecialDateValueWithOperator(
+                  row.original.date,
+                  getSpecialDateValue(date),
+                  "before"
+                ) || -1) < 0
+              : (row.original.date?.compare(parseDate(date)) || -1) < 0;
+          }
+        });
   },
   dateAfter: (
     row: Row<TransactionsFormat>,
@@ -43,11 +50,17 @@ export const filters = {
   ) => {
     return filterValue.size === 0
       ? true
-      : filterValue
-          .values()
-          .some((date) => (row.original.date?.compare(parseDate(date)) || -1) > 0);
-    // return !new Set([row.original.date]).isSubsetOf(filterValue);
-    // return (row.original.date?.compare(parseDate(filterValue[0])) || 0) > 0;
+      : filterValue.values().some((date) => {
+          if (row.original.date) {
+            return date.includes(":")
+              ? (compareSpecialDateValueWithOperator(
+                  row.original.date,
+                  getSpecialDateValue(date),
+                  "after"
+                ) || -1) > 0
+              : (row.original.date?.compare(parseDate(date)) || -1) > 0;
+          }
+        });
   },
   dateOn: (
     row: Row<TransactionsFormat>,
@@ -57,10 +70,35 @@ export const filters = {
   ) => {
     return filterValue.size === 0
       ? true
-      : filterValue
-          .values()
-          .some((date) => (row.original.date?.compare(parseDate(date)) || -1) === 0);
-    // return (row.original.date?.compare(parseDate(filterValue[0])) || 0) === 0;
+      : filterValue.values().some((date) => {
+          if (row.original.date) {
+            return date.includes(":")
+              ? (compareSpecialDateValueWithOperator(
+                  row.original.date,
+                  getSpecialDateValue(date),
+                  "on"
+                ) || -1) === 0
+              : (row.original.date?.compare(parseDate(date)) || -1) === 0;
+          }
+        });
+  },
+  dateIn: (
+    row: Row<TransactionsFormat>,
+    columnId: string,
+    filterValue: Set<string>,
+    addMeta: (meta: any) => void
+  ) => {
+    return filterValue.size === 0
+      ? true
+      : filterValue.values().some((date) => {
+          return typeof row.original.date === "string"
+            ? (compareSpecialDateValueWithOperator(
+                parseDate(row.original.date),
+                getSpecialDateValue(date),
+                "in"
+              ) || -1) < 0
+            : (row.original.date?.compare(parseDate(date)) || -1) < 0;
+        });
   },
   equalsString: (
     row: Row<TransactionsFormat>,

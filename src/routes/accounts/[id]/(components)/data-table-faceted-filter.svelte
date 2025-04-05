@@ -1,7 +1,7 @@
 <script lang="ts" generics="TData, TValue">
   import Check from "lucide-svelte/icons/check";
   import type { Column, FilterFns } from "@tanstack/table-core";
-  import type { Component } from "svelte";
+  import type { Component, Snippet } from "svelte";
   import * as Command from "$lib/components/ui/command";
   import * as Popover from "$lib/components/ui/popover";
   import { Button } from "$lib/components/ui/button";
@@ -18,9 +18,10 @@
     options?: SvelteMap<string | number, FacetedFilterOption>;
     allOptions?: SvelteMap<string | number, FacetedFilterOption>;
     allIcon?: Component;
+    customValueSnippet?: Snippet;
   };
 
-  let { column, title, options, allOptions, allIcon }: Props<TData, TValue> = $props();
+  let { column, title, options, allOptions, allIcon, customValueSnippet }: Props<TData, TValue> = $props();
 
   const facets = $derived(column?.getFacetedUniqueValues());
   const operators = $derived<AvailableFilters>(column?.columnDef.meta?.availableFilters || []);
@@ -28,13 +29,14 @@
   let showAll = $state(false);
   let activeOperator = $state<string>(column.getFilterFn()?.name as keyof FilterFns);
 
-  const optionsValues = $derived(options?.values().toArray().map((opt) => opt.value));
+  const optionsValues = $derived(options?.values().toArray());
+  const optionsRawValues = $derived(optionsValues?.map((opt) => opt.value));
   const showOptions: FacetedFilterOption[] = $derived(
     (showAll
-      ? options?.values().toArray().concat(
-          allOptions?.values().toArray().filter((option) => !optionsValues?.includes(option.value)) || []
+      ? optionsValues?.concat(
+          allOptions?.values().toArray().filter((option) => !optionsRawValues?.includes(option.value)) || []
         )
-      : options?.values().toArray()) || []
+      : optionsValues) || []
   );
   const notIn = $derived((allOptions?.size || 0) - (options?.size || 0));
 
@@ -172,6 +174,14 @@
               </Command.Item>
             {/if}
           </Command.Group>
+
+          {#if customValueSnippet}
+            <Command.Separator />
+            <Command.Group>
+              {@render customValueSnippet()}
+            </Command.Group>
+          {/if}
+
           {#if selectedValues.size > 0}
             <Command.Separator />
             <Command.Group>
