@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
-  import { cn, keyBy } from "$lib/utils";
+  import { cn } from "$lib/utils";
   import * as Command from "$lib/components/ui/command";
   import * as Popover from "$lib/components/ui/popover";
   import type { EditableEntityItem } from "$lib/types";
@@ -9,6 +9,7 @@
   import MoveLeft from "lucide-svelte/icons/move-left";
   import Check from "lucide-svelte/icons/check";
   import type { Component as ComponentType } from "svelte";
+  import Fuse from 'fuse.js';
 
   let {
     entityLabel = $bindable(),
@@ -66,17 +67,17 @@
     manage = true;
   };
 
-  const searchEntities = $derived(
-    keyBy(
-      entities.map((entity) => {
-        return {
-          id: entity.id,
-          name: entity.name,
-        };
-      }),
-      "id"
-    )
-  );
+  let searchValue = $state("");
+  const fused = $derived(new Fuse(entities, { keys: ["name"], includeScore: true }));
+
+  let visibleEntities = $state(entities);
+  $effect(() => {
+    if (searchValue) {
+      visibleEntities = fused.search(searchValue).map((result) => result.item);
+    } else {
+      visibleEntities = entities;
+    }
+  });
 </script>
 
 <div class={cn("flex items-center space-x-4", className)}>
@@ -105,17 +106,9 @@
     </Popover.Trigger>
     <Popover.Content class="p-0" align="start">
       {#if !manage}
-        <Command.Root
-          filter={(value, search) => {
-            return value &&
-              searchEntities[value] &&
-              searchEntities[value].name?.toLowerCase().includes(search)
-              ? 1
-              : 0;
-          }}
-        >
+        <Command.Root shouldFilter={false}>
           <div class="flex">
-            <Command.Input placeholder="Search {entityLabel}..." />
+            <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} />
             {#if management?.enable}
               <Button
                 size="icon"
@@ -129,7 +122,7 @@
           <Command.List>
             <Command.Empty>No results found.</Command.Empty>
             <Command.Group>
-              {#each entities as entity}
+              {#each visibleEntities as entity}
                 <Command.Item
                   value={entity.id + ""}
                   class={cn(value?.id == entity.id && "bg-muted")}
