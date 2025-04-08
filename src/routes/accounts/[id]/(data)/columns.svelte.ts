@@ -349,7 +349,7 @@ export const columns = (
       cell: (info) =>
         renderComponent(EditableNumericCell, {
           value: info.getValue() as number,
-          onUpdateValue: (new_value) => updateData(info.row.original.id, "amount", new_value),
+          onUpdateValue: (new_value) => updateHandler(info, "amount", new_value),
         }),
       aggregatedCell: (info) => currencyFormatter.format(info.getValue() as number),
       header: ({ column }) =>
