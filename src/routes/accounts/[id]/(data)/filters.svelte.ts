@@ -1,9 +1,8 @@
 import type { TransactionsFormat } from "$lib/types";
-import { getSpecialDateValue, type SpecialDateValue } from "$lib/utils";
-import { getLocalTimeZone, parseDate, type DateValue } from "@internationalized/date";
+import { getSpecialDateValue } from "$lib/utils";
+import { getLocalTimeZone, type DateValue } from "@internationalized/date";
 import type { ColumnFiltersState, Row, Updater } from "@tanstack/table-core";
 import {
-  areIntervalsOverlapping,
   differenceInDays,
   differenceInMonths,
   differenceInQuarters,
