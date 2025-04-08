@@ -1,7 +1,71 @@
 import type { TransactionsFormat } from "$lib/types";
-import { compareSpecialDateValueWithOperator, getSpecialDateValue } from "$lib/utils";
-import { parseDate } from "@internationalized/date";
+import { getSpecialDateValue, type SpecialDateValue } from "$lib/utils";
+import { getLocalTimeZone, parseDate, type DateValue } from "@internationalized/date";
 import type { ColumnFiltersState, Row, Updater } from "@tanstack/table-core";
+import {
+  areIntervalsOverlapping,
+  differenceInDays,
+  differenceInMonths,
+  differenceInQuarters,
+  differenceInYears,
+  isSameDay,
+  isSameMonth,
+  isSameQuarter,
+  isSameYear,
+  parseISO,
+} from "date-fns";
+
+function compareDate(originalDate: DateValue, compareDate: string) {
+  // @todo? cache results so comparison is only done once
+  const [range, stringDate] = compareDate.includes(":")
+    ? getSpecialDateValue(compareDate)
+    : ["day", compareDate];
+  const date = parseISO(stringDate);
+  const og = originalDate.toString();
+  switch (range) {
+    case "month":
+      return differenceInMonths(og, date);
+
+    case "quarter":
+      return differenceInQuarters(og, date);
+
+    case "half-year":
+      return Math.floor(differenceInMonths(og, date) / 6);
+
+    case "year":
+      return differenceInYears(og, date);
+
+    case "day":
+    default:
+      return differenceInDays(og, date);
+  }
+}
+
+function compareDateInterval(originalDate: DateValue, compareDate: string) {
+  // @todo? cache results so comparison is only done once
+  const [range, stringDate] = compareDate.includes(":")
+    ? getSpecialDateValue(compareDate)
+    : ["day", compareDate];
+  const date = parseISO(stringDate);
+  const og = originalDate.toDate(getLocalTimeZone());
+  switch (range) {
+    case "month":
+      return isSameMonth(og, date);
+
+    case "quarter":
+      return isSameQuarter(og, date);
+
+    case "half-year":
+      return null;
+
+    case "year":
+      return isSameYear(og, date);
+
+    case "day":
+    default:
+      return isSameDay(og, date);
+  }
+}
 
 export const filters = {
   entityIsFilter: (
@@ -31,15 +95,7 @@ export const filters = {
     return filterValue.size === 0
       ? true
       : filterValue.values().some((date) => {
-          if (row.original.date) {
-            return date.includes(":")
-              ? (compareSpecialDateValueWithOperator(
-                  row.original.date,
-                  getSpecialDateValue(date),
-                  "before"
-                ) || -1) < 0
-              : (row.original.date?.compare(parseDate(date)) || -1) < 0;
-          }
+          return (compareDate(row.original.date, date) || 0) < 0;
         });
   },
   dateAfter: (
@@ -51,15 +107,7 @@ export const filters = {
     return filterValue.size === 0
       ? true
       : filterValue.values().some((date) => {
-          if (row.original.date) {
-            return date.includes(":")
-              ? (compareSpecialDateValueWithOperator(
-                  row.original.date,
-                  getSpecialDateValue(date),
-                  "after"
-                ) || -1) > 0
-              : (row.original.date?.compare(parseDate(date)) || -1) > 0;
-          }
+          return (compareDate(row.original.date, date) || 0) > 0;
         });
   },
   dateOn: (
@@ -71,15 +119,7 @@ export const filters = {
     return filterValue.size === 0
       ? true
       : filterValue.values().some((date) => {
-          if (row.original.date) {
-            return date.includes(":")
-              ? (compareSpecialDateValueWithOperator(
-                  row.original.date,
-                  getSpecialDateValue(date),
-                  "on"
-                ) || -1) === 0
-              : (row.original.date?.compare(parseDate(date)) || -1) === 0;
-          }
+          return compareDateInterval(row.original.date, date);
         });
   },
   dateIn: (
@@ -91,13 +131,7 @@ export const filters = {
     return filterValue.size === 0
       ? true
       : filterValue.values().some((date) => {
-          return typeof row.original.date === "string"
-            ? (compareSpecialDateValueWithOperator(
-                parseDate(row.original.date),
-                getSpecialDateValue(date),
-                "in"
-              ) || -1) < 0
-            : (row.original.date?.compare(parseDate(date)) || -1) < 0;
+          return compareDateInterval(row.original.date, date);
         });
   },
   equalsString: (
