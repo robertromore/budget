@@ -180,8 +180,8 @@ export const columns = (
         },
         availableFilters: [
           {
-            id: "dateOn",
-            label: "on",
+            id: "dateIn",
+            label: "in",
           },
           {
             id: "dateBefore",
