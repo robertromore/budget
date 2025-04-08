@@ -31,7 +31,7 @@ export type SelectableEditableEntity = {
 export type TransactionsFormat = {
   id: number;
   amount: number;
-  date: DateValue | undefined;
+  date: DateValue;
   payeeId: number | null;
   payee: Payee | null;
   notes: string | null;
