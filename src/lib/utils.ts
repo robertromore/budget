@@ -312,36 +312,3 @@ export function getSpecialDateValueAsLabel(date: string): string {
       return monthYearFmt.format(parseDate(value).toDate(getLocalTimeZone()));
   }
 }
-
-export function compareSpecialDateValueWithOperator(
-  originalDate: DateValue,
-  sdv: SpecialDateValue,
-  operator: string
-) {
-  const [range, date] = sdv;
-  if (range === "month") {
-    let d_date = parseDate(date);
-    if (operator === "after") {
-      d_date = d_date.add({ months: 1 });
-    }
-    return originalDate.compare(d_date);
-  } else if (range === "quarter") {
-    let d_date = parseDate(date);
-    if (operator === "after") {
-      d_date = d_date.add({ months: 3 });
-    }
-    return originalDate.compare(d_date);
-  } else if (range === "half-year") {
-    let d_date = parseDate(date);
-    if (operator === "after") {
-      d_date = d_date.add({ months: 6 });
-    }
-    return originalDate.compare(d_date);
-  } else if (range === "year") {
-    let d_date = parseDate(date);
-    if (operator === "after") {
-      d_date = d_date.add({ years: 1 });
-    }
-    return originalDate.compare(d_date);
-  }
-}
