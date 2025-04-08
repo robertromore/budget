@@ -42,6 +42,7 @@
   let currentViewValue = $state((() => firstViewId)().toString());
 
   const editableViews = $derived(_currentViews.editableViews);
+  const editableViewsSize = $derived(editableViews.length);
   const nonEditableViews = $derived(_currentViews.nonEditableViews);
 </script>
 
@@ -113,7 +114,7 @@
     {/each}
   </ToggleGroup.Root>
 
-  {#if editableViews.toArray().length > 0}
+  {#if editableViewsSize > 0}
     <Toggle
       variant="outline"
       size="sm"

@@ -16,7 +16,12 @@ export class CurrentViewsState<T> {
   activeView: CurrentViewState<T> = $derived(this.viewsStates.get(this.activeViewId))!;
   previousViewId?: number = $state();
 
-  editableViews = $derived(this.viewsStates.values().filter((viewState) => viewState.view.id > 0));
+  editableViews = $derived(
+    this.viewsStates
+      .values()
+      .filter((viewState) => viewState.view.id > 0)
+      .toArray()
+  );
   nonEditableViews = $derived(
     this.viewsStates.values().filter((viewState) => viewState.view.id < 0)
   );
