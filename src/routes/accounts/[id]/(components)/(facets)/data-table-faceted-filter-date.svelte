@@ -8,7 +8,7 @@
   import { SvelteMap } from "svelte/reactivity";
   import * as Command from "$lib/components/ui/command";
   import AdvancedDateDialog from "$lib/components/dialogs/advanced-date-dialog.svelte";
-  import { DateFiltersState, dateFiltersContext } from "$lib/states/date-filters.svelte";
+  import { DateFiltersState } from "$lib/states/date-filters.svelte";
 
   type Props<TData, TValue> = HTMLAttributes<HTMLDivElement> & {
     column: Column<TData, TValue>;
@@ -16,10 +16,7 @@
 
   let { column }: Props<TData, TValue> = $props();
 
-  let dateFiltersState: DateFiltersState | undefined = $state();
-  $effect(() => {
-    dateFiltersState = dateFiltersContext.get();
-  });
+  let dateFiltersState: DateFiltersState = DateFiltersState.get();
   const allDates = $derived(dateFiltersState?.dateFilters);
 
   const faceted = $derived(column.getFacetedUniqueValues());
