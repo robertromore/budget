@@ -10,10 +10,12 @@
     amount = $bindable(),
     onSubmit,
     open = $bindable(),
+    buttonClass,
   }: {
     amount?: number;
     onSubmit?: () => void;
     open?: boolean;
+    buttonClass?: string;
   } = $props();
 
   let dialogOpen = $state(open || false);
@@ -36,7 +38,7 @@
     onSubmit ? onSubmit() : null;
   };
 
-  const valueWellFormatted = () => new_amount?.match(/\d+?\.\d{2}/) !== null;
+  const valueWellFormatted = () => new_amount?.match(/\-?\d+?\.\d{2}/) !== null && new_amount !== '0.00';
   const handleKeyDown = (event: KeyboardEvent) => {
     if (dialogOpen) {
       if (new_amount?.includes(".") && event.key === ".") {
@@ -44,7 +46,7 @@
       }
       const target = event.target as HTMLInputElement;
       const start = target?.selectionStart || 0;
-      const end = target?.selectionEnd || target?.value.length;
+      const end = target?.selectionEnd || target?.value?.length;
       switch (event.key) {
         case "Enter":
           if (new_amount) {
@@ -70,9 +72,25 @@
           }
           break;
 
+        case "-":
+          if ((new_amount.length > 0 && new_amount !== '0.00') || new_amount?.startsWith("-")) {
+            event.preventDefault();
+          }
+          break;
+
         default:
           event.preventDefault();
       }
+    }
+  };
+
+  const changeSign = () => {
+    if (new_amount && new_amount !== '0.00' && new_amount !== '-') {
+      new_amount = (parseFloat(new_amount) * -1).toString();
+    } else if (new_amount === '-') {
+      new_amount = '';
+    } else {
+      new_amount = '-';
     }
   };
 </script>
@@ -88,7 +106,8 @@
           variant="outline"
           class={cn(
             "w-36 justify-start text-left font-normal",
-            !new_amount && "text-muted-foreground"
+            !new_amount && "text-muted-foreground",
+            buttonClass
           )}
         >
           {currencyFormatter.format(parseFloat(new_amount) || 0)}
@@ -117,8 +136,15 @@
             <Delete />
           </Button>
 
+          <Button variant="outline" onclick={changeSign}>
+            {#if !new_amount || parseFloat(new_amount) >= 0}
+              -
+            {:else}
+              +
+            {/if}
+          </Button>
           <Button variant="outline" disabled={!new_amount} onclick={clear}>clear</Button>
-          <Button class="col-span-2" disabled={!new_amount} onclick={submit}>submit</Button>
+          <Button disabled={!new_amount || new_amount === '-'} onclick={submit}>submit</Button>
         </div>
       </div>
     </Popover.Content>

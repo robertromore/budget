@@ -17,6 +17,7 @@
     value = $bindable(),
     handleSubmit,
     class: className,
+    buttonClass,
     management,
     icon: Icon,
   }: {
@@ -25,6 +26,7 @@
     value?: EditableEntityItem;
     handleSubmit?: (selected?: EditableEntityItem) => void;
     class?: string;
+    buttonClass?: string;
     management?: {
       enable: boolean;
       component: ComponentType;
@@ -96,7 +98,8 @@
           variant="outline"
           class={cn(
             "block w-48 justify-start overflow-hidden text-ellipsis whitespace-nowrap text-left font-normal",
-            !value && "text-muted-foreground"
+            !value && "text-muted-foreground",
+            buttonClass
           )}
         >
           <Icon class="-mt-1 mr-1 inline-block size-4"></Icon>
@@ -108,7 +111,7 @@
       {#if !manage}
         <Command.Root shouldFilter={false}>
           <div class="flex">
-            <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} />
+            <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} wrapperClass={cn(management?.enable ? "" : "w-full")} />
             {#if management?.enable}
               <Button
                 size="icon"
