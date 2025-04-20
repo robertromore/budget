@@ -365,6 +365,23 @@ export const columns = (
       },
     },
     {
+      accessorKey: "balance",
+      id: "balance",
+      header: ({ column }) =>
+        renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
+          column,
+          title: "Balance",
+        }),
+      cell: (info) => currencyFormatter.format(info.getValue() as number),
+      aggregatedCell: (info) => currencyFormatter.format(info.getValue() as number),
+      enableColumnFilter: false,
+      enableGrouping: false,
+      enableSorting: false,
+      meta: {
+        label: "Balance",
+      },
+    },
+    {
       accessorKey: "status",
       id: "status",
       cell: (info) =>
