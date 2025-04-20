@@ -45,30 +45,7 @@ export const columns = (
     new_value: unknown,
     value_transformer: (value: unknown) => unknown = (value) => value
   ) => {
-    if (info.row.getIsGrouped() && info.row.depth === 0) {
-      // Expanded state gets lost after updating values, so keep track
-      // of the currently expanded rows to re-expand them after updating.
-      const expanded: ExpandedState = info.table.getState().expanded;
-      return Promise.all(
-        info.row.getLeafRows().map((row) => {
-          return updateData(row.original.id, columnId, value_transformer(new_value));
-        })
-      ).then(() => {
-        // If the expanded value was a boolean, apply that.
-        // if (typeof expanded === 'boolean') {
-        //   info.table.setExpanded(expanded);
-        // } else {
-        //   // Find the old value and replace it with the new.
-        //   const oldKey = info.column.id + ':' + info.row.groupingValue;
-        //   const newKey = info.column.id + ':' + new_value;
-        //   expanded[newKey] = true;
-        //   delete expanded[oldKey];
-        //   info.table.setExpanded(expanded);
-        // }
-      });
-    } else {
-      return updateData(info.row.original.id, columnId, value_transformer(new_value));
-    }
+    return updateData(info.row.original.id, columnId, value_transformer(new_value));
   };
 
   return [

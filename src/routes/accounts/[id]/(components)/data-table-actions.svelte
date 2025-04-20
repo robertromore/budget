@@ -23,11 +23,16 @@
     {/snippet}
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
+    <!-- <DropdownMenu.Group>
+      <DropdownMenu.Sub>
+        <DropdownMenu.SubTrigger>Open Sub Menu</DropdownMenu.SubTrigger>
+        <DropdownMenu.SubContent>
+          <DropdownMenu.Item>Sub Item 1</DropdownMenu.Item>
+          <DropdownMenu.Item>Sub Item 2</DropdownMenu.Item>
+        </DropdownMenu.SubContent>
+      </DropdownMenu.Sub>
+    </DropdownMenu.Group> -->
     <DropdownMenu.Group>
-      <!-- <DropdownMenu.Item onclick={() => actions.edit(ids)}>
-        Edit
-      </DropdownMenu.Item> -->
-      <DropdownMenu.Item>Archive</DropdownMenu.Item>
       <DropdownMenu.Item onSelect={() => (deleteOpen = true)}>Delete</DropdownMenu.Item>
     </DropdownMenu.Group>
   </DropdownMenu.Content>
