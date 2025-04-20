@@ -70,6 +70,7 @@ export const removeTransactionsSchema = z.object({
 type TransactionExtraFields = {
   payee: Payee | null;
   category: Category | null;
+  balance: number;
 };
 
 export type Transaction = typeof transactions.$inferSelect & TransactionExtraFields;

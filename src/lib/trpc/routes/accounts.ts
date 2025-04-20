@@ -29,11 +29,13 @@ export const accountRoutes = t.router({
       },
     });
     return records.map((record) => {
+      let balance = 0;
+      record.transactions = record.transactions.map((tx) => {
+        balance += tx.amount;
+        return Object.assign(tx, { balance });
+      });
       return Object.assign(record, {
-        balance:
-          record.transactions
-            .map((tx: TransactionOnlyAmount) => tx.amount)
-            .reduce((prev, cur) => (prev || 0) + (cur || 0), 0) || 0,
+        balance,
       });
     }) as Account[];
   }),
@@ -52,12 +54,15 @@ export const accountRoutes = t.router({
       })
     )[0];
 
-    // Add a total balance to the account.
+    // Add a running balance to each transaction and a total balance to the
+    // account.
+    let balance = 0;
+    record.transactions = record.transactions.map((tx) => {
+      balance += tx.amount;
+      return Object.assign(tx, { balance });
+    });
     record = Object.assign(record, {
-      balance:
-        record.transactions
-          .map((tx) => tx.amount)
-          .reduce((prev, cur) => (prev || 0) + (cur || 0), 0) || 0,
+      balance,
     });
 
     return record;

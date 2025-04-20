@@ -42,6 +42,17 @@
   const dateFiltersState: DateFiltersState = DateFiltersState.get();
   const allDates = $derived(dateFiltersState?.dateFilters);
 
+  // Intercept visibility state to hide balance column when sorting by columns
+  // other than id or date.
+  const columnVisibility = () => {
+    let visibleColumns = visibility();
+    const sortingState = sorting();
+    if (sortingState.length > 0 && (sortingState[0].id !== 'id' && sortingState[0].id !== 'date')) {
+      visibleColumns = Object.assign({}, visibleColumns, { balance: false });
+    }
+    return visibleColumns;
+  };
+
   table = createSvelteTable<TransactionsFormat>({
     get data() {
       return transactions || [];
@@ -51,7 +62,7 @@
         return sorting();
       },
       get columnVisibility() {
-        return visibility();
+        return columnVisibility();
       },
       get rowSelection() {
         return selection();
@@ -70,14 +81,6 @@
       },
       get columnPinning() {
         return pinning();
-      },
-    },
-    initialState: {
-      columnVisibility: {
-        id: false,
-      },
-      columnPinning: {
-        right: ["select-col"],
       },
     },
     columns,
