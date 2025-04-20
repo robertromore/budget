@@ -53,6 +53,7 @@
     id: 0,
     name: "",
   });
+
   $effect(() => {
     $formData.date = dateValue.toString();
     $formData.amount = amount;
@@ -77,7 +78,7 @@
     <Form.Control>
       {#snippet children({ props })}
         <Form.Label>Amount</Form.Label>
-        <NumericInput {...props} bind:amount />
+        <NumericInput {...props} bind:amount buttonClass="w-full" />
         <Form.FieldErrors />
         <input hidden bind:value={$formData.amount} name={props.name} />
       {/snippet}
@@ -93,6 +94,7 @@
           entities={payees as EditableEntityItem[]}
           bind:value={payee}
           icon={HandCoins as unknown as Component}
+          buttonClass="w-full"
         />
         <Form.FieldErrors />
         <input hidden bind:value={$formData.payeeId} name={props.name} />
@@ -109,6 +111,7 @@
           entities={categories as EditableEntityItem[]}
           bind:value={category}
           icon={SquareMousePointer as unknown as Component}
+          buttonClass="w-full"
         />
         <Form.FieldErrors />
         <input hidden bind:value={$formData.categoryId} name={props.name} />

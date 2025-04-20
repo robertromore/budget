@@ -10,16 +10,18 @@
   let {
     value = $bindable(),
     handleSubmit,
+    buttonClass,
   }: {
     value?: DateValue;
     handleSubmit?: (value: DateValue | undefined) => void;
+    buttonClass?: string;
   } = $props();
 </script>
 
 <Popover.Root>
   <Popover.Trigger>
     {#snippet child({ props })}
-      <Button {...props} variant="outline" class={cn("w-full justify-start text-left font-normal")}>
+      <Button {...props} variant="outline" class={cn("w-full justify-start text-left font-normal", buttonClass)}>
         <CalendarDays class="-mt-1 mr-1 inline-block size-4" />
         {dateFormatter.format(
           value
