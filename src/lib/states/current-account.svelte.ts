@@ -4,7 +4,9 @@ import type { Category, Payee, Transaction } from "$lib/schema";
 import type { Account } from "$lib/schema/accounts";
 import { trpc } from "$lib/trpc/client";
 import { without } from "$lib/utils";
-import { Context } from "runed";
+import { getContext, setContext } from "svelte";
+
+const KEY = Symbol("current_account");
 
 export class CurrentAccountState {
   account: Account = $state() as Account;
@@ -30,7 +32,12 @@ export class CurrentAccountState {
     if (account) {
       this.account = account;
     }
+    setContext(KEY, this);
     return this;
+  }
+
+  static get() {
+    return getContext<CurrentAccountState>(KEY);
   }
 
   get id() {
@@ -67,6 +74,11 @@ export class CurrentAccountState {
     let [idx, original] = this.getRawTransaction(id);
     if (columnId === "amount") {
       this.account.balance += (newValue as number) - (original?.amount as number);
+      this.account.transactions
+        .filter((transaction) => transaction.id >= id)
+        .forEach((transaction) => {
+          transaction.balance += (newValue as number) - (original?.amount as number);
+        });
     }
     const updatedData = Object.assign({}, original, new_data) as Transaction;
     await trpc().transactionRoutes.save.mutate(updatedData);
@@ -82,9 +94,12 @@ export class CurrentAccountState {
       transactions.includes(transaction.id)
     );
     this.account.transactions = kept;
-    this.account.balance = kept
-      .map((transaction: Transaction) => transaction.amount)
-      .reduce((prev, curr) => prev + curr);
+    this.account.balance =
+      kept.length > 0
+        ? kept
+            .map((transaction: Transaction) => transaction.amount)
+            .reduce((prev, curr) => prev + curr)
+        : 0;
     if (cb) {
       cb(removed);
     }
@@ -94,5 +109,3 @@ export class CurrentAccountState {
     return this.deleteTransactions([transaction]);
   }
 }
-
-export const currentAccount = new Context<CurrentAccountState>("current_account");

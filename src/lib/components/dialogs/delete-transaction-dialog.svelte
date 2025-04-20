@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { buttonVariants } from "$lib/components/ui/button";
-  import { currentAccount, CurrentAccountState } from "$lib/states/current-account.svelte";
+  import { CurrentAccountState } from "$lib/states/current-account.svelte";
 
   let {
     transactions,
@@ -13,10 +13,7 @@
     onDelete?: () => void;
   } = $props();
 
-  let account: CurrentAccountState | undefined = $state();
-  $effect(() => {
-    account = currentAccount.get();
-  });
+  let account: CurrentAccountState = CurrentAccountState.get();
 
   let confirmDeleteTransaction = async () => {
     if (transactions) {

@@ -10,20 +10,22 @@
   import type { Table } from "@tanstack/table-core";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import ChevronDown from "lucide-svelte/icons/chevron-down";
-  import { currentAccount, CurrentAccountState } from "$lib/states/current-account.svelte";
+  import { CurrentAccountState } from "$lib/states/current-account.svelte";
   import { categoriesContext } from "$lib/states/categories.svelte";
   import { payeesContext } from "$lib/states/payees.svelte";
   import type { Account } from "$lib/schema";
-  import { dateFiltersContext, DateFiltersState } from "$lib/states/date-filters.svelte";
+  import { DateFiltersState } from "$lib/states/date-filters.svelte";
 
   let { data } = $props();
   const account: Account | undefined = $derived(data.account);
-  const currentAccountState: CurrentAccountState = $derived(new CurrentAccountState(data.account));
-  const dateFiltersState: DateFiltersState = $derived(new DateFiltersState(data.dates));
 
-  $effect.pre(() => {
-    currentAccount.set(currentAccountState);
-    dateFiltersContext.set(dateFiltersState);
+  const currentAccountState = new CurrentAccountState(data.account);
+  new DateFiltersState(data.dates);
+
+  $effect(() => {
+    if (data.account) {
+      currentAccountState.account = data.account;
+    }
   });
 
   const categories = categoriesContext.get();
@@ -85,10 +87,6 @@
     </DropdownMenu.Trigger>
     <DropdownMenu.Content class="w-40">
       <DropdownMenu.Group>
-        <DropdownMenu.Item>
-          Archive
-          <DropdownMenu.Shortcut>⇧⌘A</DropdownMenu.Shortcut>
-        </DropdownMenu.Item>
         <DropdownMenu.Item
           onclick={() => {
             deleteTransactionDialogOpen = true;

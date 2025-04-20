@@ -27,7 +27,7 @@
   import { CurrentViewState } from "$lib/states/current-view.svelte";
   import { page } from "$app/state";
   import { currentViews, CurrentViewsState } from "$lib/states/current-views.svelte";
-  import { dateFiltersContext, DateFiltersState } from "$lib/states/date-filters.svelte";
+  import { DateFiltersState } from "$lib/states/date-filters.svelte";
 
   let {
     columns,
@@ -39,10 +39,7 @@
     table?: TTable<TransactionsFormat>;
   } = $props();
 
-  let dateFiltersState: DateFiltersState | undefined = $state();
-  $effect(() => {
-    dateFiltersState = dateFiltersContext.get();
-  });
+  const dateFiltersState: DateFiltersState = DateFiltersState.get();
   const allDates = $derived(dateFiltersState?.dateFilters);
 
   table = createSvelteTable<TransactionsFormat>({

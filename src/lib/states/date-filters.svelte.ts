@@ -1,11 +1,18 @@
 import type { FacetedFilterOption } from "$lib/types";
-import { Context } from "runed";
+import { getContext, setContext } from "svelte";
+
+const KEY = Symbol("date_filters");
 
 export class DateFiltersState {
   dateFilters: FacetedFilterOption[] = $state() as FacetedFilterOption[];
 
   constructor(date_filters: FacetedFilterOption[]) {
     this.dateFilters = date_filters;
+    setContext(KEY, this);
+  }
+
+  static get() {
+    return getContext<DateFiltersState>(KEY);
   }
 
   add(dateFilter: FacetedFilterOption) {
@@ -25,5 +32,3 @@ export class DateFiltersState {
     }
   }
 }
-
-export const dateFiltersContext = new Context<DateFiltersState>("date_filters");

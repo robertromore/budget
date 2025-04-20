@@ -2,7 +2,7 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import ManageTransactionForm from "$lib/components/forms/manage-transaction-form.svelte";
   import type { Transaction } from "$lib/schema";
-  import { currentAccount, CurrentAccountState } from "$lib/states/current-account.svelte";
+  import { CurrentAccountState } from "$lib/states/current-account.svelte";
 
   let {
     // account,
@@ -12,10 +12,7 @@
     dialogOpen: boolean;
   } = $props();
 
-  let account: CurrentAccountState | undefined = $state();
-  $effect(() => {
-    account = currentAccount.get();
-  });
+  let account: CurrentAccountState = CurrentAccountState.get();
 
   const onSave = async (new_entity: Transaction) => {
     dialogOpen = false;
