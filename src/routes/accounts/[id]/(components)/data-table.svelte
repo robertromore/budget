@@ -126,6 +126,7 @@
     // globalFilterFn: fuzzyFilter,
     filterFns: { ...filters },
     groupedColumnMode: "reorder",
+    autoResetPageIndex: false,
     autoResetExpanded: false,
   });
 
