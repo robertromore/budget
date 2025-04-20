@@ -7,6 +7,7 @@ import {
   type Transaction,
 } from "$lib/schema";
 import { eq, sql } from "drizzle-orm";
+import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
 
 export const transactionRoutes = t.router({
   forAccount: publicProcedure
@@ -55,6 +56,10 @@ export const transactionRoutes = t.router({
             .where(eq(transactions.id, id))
             .returning();
         } else {
+          if (date && parseDate(date) > today(getLocalTimeZone())) {
+            status = "scheduled";
+          }
+
           entity = await db
             .insert(transactions)
             .values({
@@ -64,11 +69,11 @@ export const transactionRoutes = t.router({
               notes,
               date,
               accountId,
-              status,
+              status: status ?? "pending",
             })
             .returning();
         }
-        console.log(entity);
+
         return entity.shift() as Transaction;
       }
     ),
