@@ -15,14 +15,14 @@
 </script>
 
 <FormPrimitive.FieldErrors
-  class={cn("text-[0.8rem] font-medium text-destructive", className)}
+  class={cn("text-destructive text-[0.8rem] font-medium", className)}
   {...restProps}
 >
   {#snippet children({ errors, errorProps })}
     {#if childrenProp}
       {@render childrenProp({ errors, errorProps })}
     {:else}
-      {#each errors as error}
+      {#each errors as error (error)}
         <div {...errorProps} class={cn(errorClasses)}>{error}</div>
       {/each}
     {/if}
