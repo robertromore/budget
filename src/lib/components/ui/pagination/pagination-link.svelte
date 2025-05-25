@@ -1,6 +1,9 @@
 <script lang="ts">
   import { Pagination as PaginationPrimitive, type WithoutChild } from "bits-ui";
-  import { type Props as ButtonProps, buttonVariants } from "$lib/components/ui/button/index.js";
+  import {
+    type Props as ButtonProps,
+    buttonVariants,
+  } from "$lib/components/ui/button/index.js";
   import { cn } from "$lib/utils.js";
 
   type Props = WithoutChild<PaginationPrimitive.PageProps> &
