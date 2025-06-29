@@ -4,14 +4,16 @@ import { faker } from "@faker-js/faker";
 import { payeeFactory } from "./payees";
 import type { Payee } from "$lib/schema/payees";
 import { categoryFactory } from "./categories";
+import { rawDateFormatter } from "$lib/helpers/formatters";
+import { CalendarDate } from "@internationalized/date";
 
 export const transactionFactory = async (
-  account?: { id: number },
+  account: { id: number },
   count: number = faker.number.int({ min: 1, max: 50 })
 ): Promise<NewTransaction[]> => {
   const transactions_collection: NewTransaction[] = [];
   const random_dates = faker.date.betweens({
-    from: faker.date.past({ years: 5 }).toDateString(),
+    from: faker.date.past({ years: 5 }),
     to: faker.date.recent(),
     count,
   });
@@ -47,7 +49,11 @@ export const transactionFactory = async (
         accountId: account?.id,
         payeeId: new_payee.id,
         categoryId: new_category.id,
-        date: random_dates[i].toDateString(),
+        date: new CalendarDate(
+          random_dates[i].getFullYear(),
+          random_dates[i].getMonth() + 1,
+          random_dates[i].getDate()
+        ).toString(),
       })
       .returning();
     transactions_collection.push(new_transaction[0]);

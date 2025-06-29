@@ -3,18 +3,18 @@
   import * as ToggleGroup from "$lib/components/ui/toggle-group";
   import type { FilterInputOption, TransactionsFormat } from "$lib/types";
   import { Separator } from "$lib/components/ui/separator";
-  import CirclePlus from "lucide-svelte/icons/circle-plus";
-  import Layers from "lucide-svelte/icons/layers";
-  import PencilLine from "lucide-svelte/icons/pencil-line";
+  import CirclePlus from "@lucide/svelte/icons/circle-plus";
+  import Layers from "@lucide/svelte/icons/layers";
+  import PencilLine from "@lucide/svelte/icons/pencil-line";
   import Toggle from "$lib/components/ui/toggle/toggle.svelte";
   import ManageViewForm from "$lib/components/forms/manage-view-form.svelte";
   import FilterInput from "$lib/components/input/filter-input.svelte";
   import { currentViews } from "$lib/states/current-views.svelte";
   import DisplayInput from "$lib/components/input/display-input.svelte";
-  import Asterisk from "lucide-svelte/icons/asterisk";
+  import Asterisk from "@lucide/svelte/icons/asterisk";
   import { Button } from "$lib/components/ui/button";
-  import Pencil from "lucide-svelte/icons/pencil";
-  import Settings2 from "lucide-svelte/icons/settings-2";
+  import Pencil from "@lucide/svelte/icons/pencil";
+  import Settings2 from "@lucide/svelte/icons/settings-2";
   import { cn } from "$lib/utils";
   import { CurrentViewState } from "$lib/states/current-view.svelte";
 
@@ -130,7 +130,7 @@
         }
       }
     >
-      <Settings2 />
+      <Settings2 /> Edit views
     </Toggle>
   {/if}
 
@@ -155,7 +155,7 @@
     {#if manageViewForm && editViewId === 0}
       <Layers class="mr-2 size-4" /> New view <PencilLine class="ml-2 size-4" />
     {:else}
-      <CirclePlus class="size-4" />
+      <CirclePlus class="size-4" /> New view
     {/if}
   </Toggle>
 </div>

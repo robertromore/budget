@@ -4,16 +4,16 @@ import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
-import { zod } from "sveltekit-superforms/adapters";
+import { zod4 } from "sveltekit-superforms/adapters";
 
 export const load: PageServerLoad = async () => ({
-  manageAccountForm: await superValidate(zod(formInsertAccountSchema)),
-  deleteAccountForm: await superValidate(zod(removeAccountSchema)),
+  manageAccountForm: await superValidate(zod4(formInsertAccountSchema)),
+  deleteAccountForm: await superValidate(zod4(removeAccountSchema)),
 });
 
 export const actions: Actions = {
   "add-account": async (event) => {
-    const form = await superValidate(event, zod(formInsertAccountSchema));
+    const form = await superValidate(event, zod4(formInsertAccountSchema));
     if (!form.valid) {
       return fail(400, {
         form,
@@ -27,7 +27,7 @@ export const actions: Actions = {
     };
   },
   "delete-account": async (event) => {
-    const form = await superValidate(event, zod(removeAccountSchema));
+    const form = await superValidate(event, zod4(removeAccountSchema));
     if (!form.valid) {
       return fail(400, {
         form,
@@ -40,7 +40,7 @@ export const actions: Actions = {
     };
   },
   "add-transaction": async (event) => {
-    const form = await superValidate(event, zod(insertTransactionSchema));
+    const form = await superValidate(event, zod4(insertTransactionSchema));
     if (!form.valid) {
       return fail(400, {
         form,

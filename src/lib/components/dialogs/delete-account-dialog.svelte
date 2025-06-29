@@ -3,11 +3,11 @@
   import { buttonVariants } from "$lib/components/ui/button";
   import { goto } from "$app/navigation";
   import { deleteAccountDialog, deleteAccountId } from "$lib/states/global.svelte";
-  import { accountsContext } from "$lib/states/accounts.svelte";
+  import { AccountsState } from "$lib/states/accounts.svelte";
 
   const _deleteAccountDialog = $derived(deleteAccountDialog);
   const _deleteAccountId = $derived(deleteAccountId);
-  const accountsState = accountsContext.get();
+  const accountsState = AccountsState.get();
   const confirmDeleteAccount = async () => {
     _deleteAccountDialog.current = false;
     accountsState.deleteAccount(_deleteAccountId.current);

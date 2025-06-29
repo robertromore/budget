@@ -1,6 +1,6 @@
 import { superValidate } from "sveltekit-superforms";
 import type { PageServerLoad } from "./$types";
-import { zod } from "sveltekit-superforms/adapters";
+import { zod4 } from "sveltekit-superforms/adapters";
 import {
   formInsertPayeeSchema,
   insertCategorySchema,
@@ -90,13 +90,13 @@ export const load: PageServerLoad = async ({ params, parent }) => {
   return {
     accountId: parseInt(params.id),
     account: accounts.find((account) => account.id === parseInt(params.id)),
-    manageTransactionForm: await superValidate(zod(insertTransactionSchema)),
-    deleteTransactionForm: await superValidate(zod(removeTransactionsSchema)),
-    manageCategoryForm: await superValidate(zod(insertCategorySchema)),
-    deleteCategoryForm: await superValidate(zod(removeCategorySchema)),
-    managePayeeForm: await superValidate(zod(formInsertPayeeSchema)),
-    deletePayeeForm: await superValidate(zod(removePayeeSchema)),
-    manageViewForm: await superValidate(zod(insertViewSchema)),
+    manageTransactionForm: await superValidate(zod4(insertTransactionSchema)),
+    deleteTransactionForm: await superValidate(zod4(removeTransactionsSchema)),
+    manageCategoryForm: await superValidate(zod4(insertCategorySchema)),
+    deleteCategoryForm: await superValidate(zod4(removeCategorySchema)),
+    managePayeeForm: await superValidate(zod4(formInsertPayeeSchema)),
+    deletePayeeForm: await superValidate(zod4(removePayeeSchema)),
+    manageViewForm: await superValidate(zod4(insertViewSchema)),
     views: defaultViews.concat(views),
     dates,
   };

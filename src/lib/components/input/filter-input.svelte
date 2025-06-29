@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { buttonVariants } from "$lib/components/ui/button/index.js";
-  import ListFilterPlus from "lucide-svelte/icons/list-filter-plus";
+  import ListFilterPlus from "@lucide/svelte/icons/list-filter-plus";
   import { cn } from "$lib/utils";
   import type { FilterInputOption, TransactionsFormat, ViewFilter } from "$lib/types";
   import { currentViews } from "$lib/states/current-views.svelte";

@@ -1,18 +1,24 @@
 <script lang="ts">
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-  import Ellipsis from "lucide-svelte/icons/ellipsis";
-  import Plus from "lucide-svelte/icons/plus";
-  import { deleteAccountDialog, deleteAccountId, managingAccountId, newAccountDialog } from "$lib/states/global.svelte";
-  import { accountsContext } from "$lib/states/accounts.svelte";
+  import Ellipsis from "@lucide/svelte/icons/ellipsis";
+  import Plus from "@lucide/svelte/icons/plus";
+  import { deleteAccountDialog, deleteAccountId, managingAccountId, newAccountDialog, newScheduleDialog, managingScheduleId } from "$lib/states/global.svelte";
+  import { AccountsState } from "$lib/states/accounts.svelte";
+    import { SchedulesState } from "$lib/states/schedules.svelte";
 
-  const accountsState = $derived(accountsContext.get());
+  const accountsState = $derived(AccountsState.get());
   const accounts = $derived(accountsState.accounts.values());
   const _newAccountDialog = $derived(newAccountDialog);
   const _managingAccountId = $derived(managingAccountId);
 
   const _deleteAccountDialog = $derived(deleteAccountDialog);
   const _deleteAccountId = $derived(deleteAccountId);
+
+  const schedulesState = $derived(SchedulesState.get());
+  const schedules = $derived(schedulesState.schedules.values());
+  const _newScheduleDialog = $derived(newScheduleDialog);
+  const _managingScheduleId = $derived(managingScheduleId);
 </script>
 
 <Sidebar.Root>
@@ -57,6 +63,54 @@
                   }}>
                     <span>Delete</span>
                   </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </Sidebar.MenuItem>
+          {/each}
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+
+    <Sidebar.Group>
+      <Sidebar.GroupLabel><a href="/schedules">Schedules</a></Sidebar.GroupLabel>
+      <Sidebar.GroupAction title="Add Schedule" onclick={() => {
+        _managingScheduleId.current = 0;
+        _newScheduleDialog.setTrue();
+      }}>
+        <Plus /> <span class="sr-only">Add Schedule</span>
+      </Sidebar.GroupAction>
+      <Sidebar.GroupContent>
+        <Sidebar.Menu>
+          {#each schedules as schedule}
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton>
+                {#snippet child({ props })}
+                  <a href="/schedules/{schedule.id}" {...props}>
+                    <span>{schedule.name}</span>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                  {#snippet child({ props })}
+                    <Sidebar.MenuAction {...props}>
+                      <Ellipsis />
+                    </Sidebar.MenuAction>
+                  {/snippet}
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content side="right" align="start">
+                  <DropdownMenu.Item onclick={() => {
+                    _managingScheduleId.current = schedule.id;
+                    _newScheduleDialog.setTrue();
+                  }}>
+                    <span>Edit</span>
+                  </DropdownMenu.Item>
+                  <!-- <DropdownMenu.Item onclick={() => {
+                    _deleteAccountId.current = schedule.id;
+                    _deleteAccountDialog.setTrue();
+                  }}>
+                    <span>Delete</span>
+                  </DropdownMenu.Item> -->
                 </DropdownMenu.Content>
               </DropdownMenu.Root>
             </Sidebar.MenuItem>

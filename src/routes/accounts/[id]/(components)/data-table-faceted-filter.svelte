@@ -1,5 +1,5 @@
 <script lang="ts" generics="TData, TValue">
-  import Check from "lucide-svelte/icons/check";
+  import Check from "@lucide/svelte/icons/check";
   import type { Column, FilterFns } from "@tanstack/table-core";
   import type { Component, Snippet } from "svelte";
   import * as Command from "$lib/components/ui/command";
@@ -7,7 +7,7 @@
   import { Button } from "$lib/components/ui/button";
   import { cn } from "$lib/utils.js";
   import { Badge } from "$lib/components/ui/badge";
-  import X from "lucide-svelte/icons/x";
+  import X from "@lucide/svelte/icons/x";
   import type { AvailableFilters, FacetedFilterOption } from "$lib/types";
   import { currentViews } from "$lib/states/current-views.svelte";
   import type { SvelteMap } from "svelte/reactivity";

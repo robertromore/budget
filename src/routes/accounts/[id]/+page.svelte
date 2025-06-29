@@ -4,12 +4,12 @@
   import type { TransactionsFormat } from "$lib/types";
   import AddTransactionDialog from "$lib/components/dialogs/add-transaction-dialog.svelte";
   import { Button } from "$lib/components/ui/button";
-  import Plus from "lucide-svelte/icons/plus";
-  import Import from "lucide-svelte/icons/import";
+  import Plus from "@lucide/svelte/icons/plus";
+  import Import from "@lucide/svelte/icons/import";
   import DeleteTransactionDialog from "$lib/components/dialogs/delete-transaction-dialog.svelte";
   import type { Table } from "@tanstack/table-core";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-  import ChevronDown from "lucide-svelte/icons/chevron-down";
+  import ChevronDown from "@lucide/svelte/icons/chevron-down";
   import { CurrentAccountState } from "$lib/states/current-account.svelte";
   import { categoriesContext } from "$lib/states/categories.svelte";
   import { payeesContext } from "$lib/states/payees.svelte";

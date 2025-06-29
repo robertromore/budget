@@ -26,10 +26,10 @@ import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-fa
 import DataTableFacetedFilterCategory from "../(components)/(facets)/data-table-faceted-filter-category.svelte";
 import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-faceted-filter-payee.svelte";
 import DataTableFacetedFilterDate from "../(components)/(facets)/data-table-faceted-filter-date.svelte";
-import CalendarDays from "lucide-svelte/icons/calendar-days";
-import HandCoins from "lucide-svelte/icons/hand-coins";
-import SquareMousePointer from "lucide-svelte/icons/square-mouse-pointer";
-import CircleCheckBig from "lucide-svelte/icons/circle-check-big";
+import CalendarDays from "@lucide/svelte/icons/calendar-days";
+import HandCoins from "@lucide/svelte/icons/hand-coins";
+import SquareMousePointer from "@lucide/svelte/icons/square-mouse-pointer";
+import CircleCheckBig from "@lucide/svelte/icons/circle-check-big";
 import { ExpandToggle } from "$lib/components/ui/expand-toggle";
 import { currencyFormatter } from "$lib/helpers/formatters";
 import type { Component } from "svelte";

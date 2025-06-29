@@ -5,14 +5,14 @@
   import { today, getLocalTimeZone } from "@internationalized/date";
   import type { EditableDateItem, EditableEntityItem } from "$lib/types";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
-  import { zodClient } from "sveltekit-superforms/adapters";
+  import { zod4Client } from "sveltekit-superforms/adapters";
   import DateInput from "$lib/components/input/date-input.svelte";
   import EntityInput from "$lib/components/input/entity-input.svelte";
   import NumericInput from "$lib/components/input/numeric-input.svelte";
   import { page } from "$app/state";
-  import HandCoins from "lucide-svelte/icons/hand-coins";
+  import HandCoins from "@lucide/svelte/icons/hand-coins";
   import type { Component } from "svelte";
-  import SquareMousePointer from "lucide-svelte/icons/square-mouse-pointer";
+  import SquareMousePointer from "@lucide/svelte/icons/square-mouse-pointer";
 
   let {
     accountId,
@@ -29,7 +29,7 @@
 
   const form = superForm(manageTransactionForm, {
     id: "transaction-form",
-    validators: zodClient(insertTransactionSchema),
+    validators: zod4Client(insertTransactionSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {

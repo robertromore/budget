@@ -8,7 +8,7 @@
   import Input from "../ui/input/input.svelte";
   import { Textarea } from "../ui/textarea";
   import { superForm } from "sveltekit-superforms";
-  import { zodClient } from "sveltekit-superforms/adapters";
+  import { zod4Client } from "sveltekit-superforms/adapters";
   import { payeesContext } from "$lib/states/payees.svelte";
 
   let {
@@ -26,7 +26,7 @@
   } = page;
   const form = superForm(managePayeeForm, {
     id: "payee-form",
-    validators: zodClient(insertPayeeSchema),
+    validators: zod4Client(insertPayeeSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {

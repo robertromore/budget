@@ -5,7 +5,7 @@
   import { page } from "$app/state";
   import type { Category, Transaction } from "$lib/schema";
   import { currentViews } from "$lib/states/current-views.svelte";
-  import SquareMousePointer from "lucide-svelte/icons/square-mouse-pointer";
+  import SquareMousePointer from "@lucide/svelte/icons/square-mouse-pointer";
   import type { FacetedFilterOption } from "$lib/types";
   import { SvelteMap } from "svelte/reactivity";
 

@@ -22,3 +22,7 @@ export const transactionFormatter = {
 export const dateFormatter = new DateFormatter("en-US", {
   dateStyle: "long",
 });
+
+export const rawDateFormatter = new DateFormatter("en-US", {
+  dateStyle: "short",
+});

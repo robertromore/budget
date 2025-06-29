@@ -9,12 +9,15 @@
   import { dev } from '$app/environment';
   import { RenderScan } from 'svelte-render-scan';
   import AddAccountDialog from "$lib/components/dialogs/add-account-dialog.svelte";
-  import { accountsContext, AccountsState } from "$lib/states/accounts.svelte";
+  import { AccountsState } from "$lib/states/accounts.svelte";
   import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
+  import AddScheduleDialog from "$lib/components/dialogs/add-schedule-dialog.svelte";
+    import { SchedulesState } from "$lib/states/schedules.svelte";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
-  const { accounts, payees, categories } = $derived(data);
-  accountsContext.set(new AccountsState((() => accounts)()));
+  const { accounts, payees, categories, schedules } = $derived(data);
+  AccountsState.set((() => accounts)());
+  SchedulesState.set((() => schedules)());
   categoriesContext.set(new CategoriesState((() => categories)()));
   payeesContext.set(new PayeesState((() => payees)()));
 </script>
@@ -24,6 +27,7 @@
 {/if}
 
 <AddAccountDialog/>
+<AddScheduleDialog/>
 <DeleteAccountDialog/>
 
 <div class="bg-background">
