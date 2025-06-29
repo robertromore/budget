@@ -3,7 +3,7 @@
 import { relations, sql } from "drizzle-orm";
 import { sqliteTable, integer, text, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 export const categories = sqliteTable("categories", {
   id: integer("id").primaryKey({ autoIncrement: true }),

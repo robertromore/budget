@@ -1,17 +1,20 @@
-import {
-  CalendarDate,
-  DateFormatter,
-  getLocalTimeZone,
-  parseDate,
-  today,
-  type DateValue,
-} from "@internationalized/date";
+import { DateFormatter, getLocalTimeZone, parseDate, today } from "@internationalized/date";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { dateFormatter } from "./helpers/formatters";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type WithoutChild<T> = T extends { child?: any } ? Omit<T, "child"> : T;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, "children"> : T;
+export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
+export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & {
+  ref?: U | null;
+};
 
 export const reSplitAlphaNumeric = /([0-9]+)/gm;
 
@@ -273,6 +276,11 @@ export default function deeplyEqual(left: unknown, right: unknown) {
 
 const currentDate = today(getLocalTimeZone());
 
+const dayFmt = new DateFormatter("en-US", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
 const monthFmt = new DateFormatter("en-US", {
   month: "long",
 });
@@ -294,6 +302,10 @@ export function getSpecialDateValue(date: string): SpecialDateValue {
 }
 
 export function getSpecialDateValueAsLabel(date: string): string {
+  if (!date.includes(":")) {
+    return dayFmt.format(parseDate(date).toDate(getLocalTimeZone()));
+  }
+
   const [type, value] = getSpecialDateValue(date);
   switch (type) {
     case "quarter":

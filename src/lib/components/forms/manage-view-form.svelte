@@ -6,7 +6,7 @@
   import type { CurrentViewState } from "$lib/states/current-view.svelte";
   import { currentViews } from "$lib/states/current-views.svelte";
   import type { FilterInputOption, TransactionsFormat } from "$lib/types";
-  import { zodClient } from "sveltekit-superforms/adapters";
+  import { zod4Client } from "sveltekit-superforms/adapters";
   import { superForm } from "sveltekit-superforms/client";
   import DeleteViewDialog from "../dialogs/delete-view-dialog.svelte";
   import DisplayInput from "../input/display-input.svelte";
@@ -35,7 +35,7 @@
   const form = superForm(manageViewForm, {
     id: "views-form",
     dataType: "json",
-    validators: zodClient(insertViewSchema),
+    validators: zod4Client(insertViewSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {

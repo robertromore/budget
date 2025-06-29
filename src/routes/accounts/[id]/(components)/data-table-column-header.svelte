@@ -1,8 +1,8 @@
 <script lang="ts" generics="TData, TValue">
-  import EyeNone from "lucide-svelte/icons/eye-off";
-  import ArrowDown from "lucide-svelte/icons/arrow-down";
-  import ArrowUp from "lucide-svelte/icons/arrow-up";
-  import ArrowUpDown from "lucide-svelte/icons/arrow-up-down";
+  import EyeNone from "@lucide/svelte/icons/eye-off";
+  import ArrowDown from "@lucide/svelte/icons/arrow-down";
+  import ArrowUp from "@lucide/svelte/icons/arrow-up";
+  import ArrowUpDown from "@lucide/svelte/icons/arrow-up-down";
   import type { HTMLAttributes } from "svelte/elements";
   import type { Column } from "@tanstack/table-core";
   import type { WithoutChildren } from "bits-ui";

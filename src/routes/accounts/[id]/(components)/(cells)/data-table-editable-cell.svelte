@@ -3,7 +3,7 @@
   import * as Popover from "$lib/components/ui/popover";
   import { Textarea } from "$lib/components/ui/textarea";
   import { cn } from "$lib/utils";
-  import SquarePen from "lucide-svelte/icons/square-pen";
+  import SquarePen from "@lucide/svelte/icons/square-pen";
 
   let { value, onUpdateValue } = $props();
   let open = $state(false);

@@ -3,18 +3,18 @@ import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
-import { zod } from "sveltekit-superforms/adapters";
+import { zod4 } from "sveltekit-superforms/adapters";
 import { insertViewSchema, removeViewSchema } from "$lib/schema/views";
 
 export const load: PageServerLoad = async () => ({
   views: await createCaller(await createContext()).viewsRoutes.all(),
-  form: await superValidate(zod(insertViewSchema)),
-  deleteForm: await superValidate(zod(removeViewSchema)),
+  form: await superValidate(zod4(insertViewSchema)),
+  deleteForm: await superValidate(zod4(removeViewSchema)),
 });
 
 export const actions: Actions = {
   "save-view": async (event) => {
-    const form = await superValidate(event, zod(insertViewSchema));
+    const form = await superValidate(event, zod4(insertViewSchema));
     if (!form.valid) {
       return fail(400, {
         form,
@@ -28,7 +28,7 @@ export const actions: Actions = {
     };
   },
   "delete-view": async (event) => {
-    const form = await superValidate(event, zod(removeViewSchema));
+    const form = await superValidate(event, zod4(removeViewSchema));
     if (!form.valid) {
       return fail(400, {
         form,

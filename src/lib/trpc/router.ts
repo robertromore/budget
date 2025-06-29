@@ -5,11 +5,13 @@ import { transactionRoutes } from "$lib/trpc/routes/transactions";
 import { t } from "$lib/trpc/t";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { viewsRoutes } from "./routes/views";
+import { scheduleRoutes } from "./routes/schedules";
 
 export const router = t.router({
   accountRoutes,
   categoriesRoutes,
   payeeRoutes,
+  scheduleRoutes,
   transactionRoutes,
   viewsRoutes,
 });

@@ -15,7 +15,8 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { categories, type Category } from "./categories";
 import { payees, type Payee } from "./payees";
 import { accounts } from "./accounts";
-import { z } from "zod";
+import { z } from "zod/v4";
+import { schedules } from "./schedules";
 
 export const transactions = sqliteTable(
   "transaction",
@@ -33,11 +34,13 @@ export const transactions = sqliteTable(
     date: text("date")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
+    scheduleId: integer("schedule_id").references(() => schedules.id),
   },
   (table) => [
     index("relations_transaction_account_idx").on(table.accountId),
     index("relations_transaction_payee_idx").on(table.payeeId),
     index("relations_transaction_category_idx").on(table.categoryId),
+    index("relations_transaction_schedule_idx").on(table.scheduleId),
   ]
 );
 
@@ -57,6 +60,10 @@ export const transactionsRelations = relations(transactions, ({ many, one }) => 
   payee: one(payees, {
     fields: [transactions.payeeId],
     references: [payees.id],
+  }),
+  schedule: one(schedules, {
+    fields: [transactions.scheduleId],
+    references: [schedules.id],
   }),
 }));
 

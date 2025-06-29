@@ -8,9 +8,7 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { transactions } from "./transactions";
 import type { Transaction } from "./transactions";
-import { z } from "zod";
-import type { Category } from "./categories";
-import type { Payee } from "./payees";
+import { z } from "zod/v4";
 
 export const accounts = sqliteTable("account", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -37,12 +35,7 @@ export const accountsRelations = relations(accounts, ({ many }) => ({
 export const selectAccountSchema = createSelectSchema(accounts);
 export const insertAccountSchema = createInsertSchema(accounts);
 export const formInsertAccountSchema = createInsertSchema(accounts, {
-  name: z
-    .string({
-      required_error: "Required.",
-    })
-    .min(2)
-    .max(30),
+  name: (schema) => schema.min(2).max(30),
 });
 export const removeAccountSchema = z.object({ id: z.number().nonnegative() });
 

@@ -5,7 +5,7 @@
   import { Calendar } from "$lib/components/ui/calendar";
   import * as Popover from "$lib/components/ui/popover";
   import { dateFormatter } from "$lib/helpers/formatters";
-  import CalendarDays from "lucide-svelte/icons/calendar-days";
+  import CalendarDays from "@lucide/svelte/icons/calendar-days";
 
   let {
     value = $bindable(),

@@ -4,7 +4,7 @@
   import * as Popover from "$lib/components/ui/popover";
   import { currencyFormatter } from "$lib/helpers/formatters";
   import { cn } from "$lib/utils";
-  import Delete from "lucide-svelte/icons/delete";
+  import Delete from "@lucide/svelte/icons/delete";
 
   let {
     amount = $bindable(),

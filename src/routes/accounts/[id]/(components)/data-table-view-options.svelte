@@ -1,5 +1,5 @@
 <script lang="ts" generics="TData">
-  import SlidersHorizontal from "lucide-svelte/icons/sliders-horizontal";
+  import SlidersHorizontal from "@lucide/svelte/icons/sliders-horizontal";
   import type { Table } from "@tanstack/table-core";
   import { buttonVariants } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";

@@ -6,7 +6,7 @@ import { relations, sql } from "drizzle-orm";
 import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { transactions } from "./transactions";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 export const payees = sqliteTable("payee", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -24,12 +24,12 @@ export const payeesRelations = relations(payees, ({ many }) => ({
 export const selectPayeeSchema = createSelectSchema(payees);
 export const insertPayeeSchema = createInsertSchema(payees);
 export const formInsertPayeeSchema = createInsertSchema(payees, {
-  name: z
-    .string()
-    .min(1, {
-      message: "required",
-    })
-    .max(30),
+  name: (schema) =>
+    schema
+      .min(1, {
+        message: "required",
+      })
+      .max(30),
 });
 export const removePayeeSchema = z.object({ id: z.number().nonnegative() });
 export const removePayeesSchema = z.object({ entities: z.array(z.number().nonnegative()) });

@@ -12,7 +12,7 @@
 <Dialog.Root bind:open={() => dialogOpen.current, (newOpen) => dialogOpen.current = newOpen}>
   <Dialog.Content>
     <Dialog.Header>
-      <Dialog.Title>Manage Account</Dialog.Title>
+      <Dialog.Title>{#if accountId.current === 0}Add{:else}Manage{/if} Account</Dialog.Title>
       <Dialog.Description>
         <ManageAccountForm accountId={accountId.current} onSave={() => dialogOpen.current = false} />
       </Dialog.Description>

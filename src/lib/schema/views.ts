@@ -1,7 +1,7 @@
 import type { ViewFilter, ViewDisplayState } from "$lib/types";
 import { integer, text, sqliteTable } from "drizzle-orm/sqlite-core";
 import { createSelectSchema, createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 export const views = sqliteTable("views", {
   id: integer("id").primaryKey({ autoIncrement: true }),

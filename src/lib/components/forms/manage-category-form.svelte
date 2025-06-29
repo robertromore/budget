@@ -8,7 +8,7 @@
   import Input from "../ui/input/input.svelte";
   import { Textarea } from "../ui/textarea";
   import { superForm } from "sveltekit-superforms";
-  import { zodClient } from "sveltekit-superforms/adapters";
+  import { zod4Client } from "sveltekit-superforms/adapters";
   import { categoriesContext } from "$lib/states/categories.svelte";
 
   let {
@@ -26,7 +26,7 @@
   } = page;
   const form = superForm(manageCategoryForm, {
     id: "category-form",
-    validators: zodClient(insertCategorySchema),
+    validators: zod4Client(insertCategorySchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {

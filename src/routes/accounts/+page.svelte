@@ -4,9 +4,9 @@
   import { currencyFormatter } from "$lib/helpers/formatters";
   import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
   import { deleteAccountDialog, deleteAccountId, managingAccountId, newAccountDialog } from "$lib/states/global.svelte";
-  import { accountsContext } from "$lib/states/accounts.svelte";
+  import { AccountsState } from "$lib/states/accounts.svelte";
 
-  const accountsState = $derived(accountsContext.get());
+  const accountsState = $derived(AccountsState.get());
   const accounts = $derived(accountsState.accounts.values());
 
   let deleteDialogId = $derived(deleteAccountId);
