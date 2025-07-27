@@ -1,14 +1,15 @@
-import { insertScheduleSchema, removeScheduleSchema } from "$lib/schema";
+import { formInsertScheduleSchema, insertScheduleSchema, removeScheduleSchema } from "$lib/schema";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
+import { insertFormSchema } from "./schema";
 
 export const load: PageServerLoad = async () => ({
   schedules: await createCaller(await createContext()).scheduleRoutes.all(),
-  form: await superValidate(zod4(insertScheduleSchema)),
+  form: await superValidate(zod4(insertFormSchema)),
   deleteForm: await superValidate(zod4(removeScheduleSchema)),
 });
 

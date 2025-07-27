@@ -9,14 +9,14 @@
   import type { Component } from "svelte";
   import { zod4Client } from "sveltekit-superforms/adapters";
   import { superForm } from "sveltekit-superforms/client";
-  import EntityInput from "../input/entity-input.svelte";
+  import EntityInput from "$lib/components/input/entity-input.svelte";
   import SuperDebug from "sveltekit-superforms";
-  import MultiNumericInput from "../input/multi-numeric-input.svelte";
-  import DateInput from "../input/date-input.svelte";
+  import MultiNumericInput from "$lib/components/input/multi-numeric-input.svelte";
+  import DateInput from "$lib/components/input/date-input.svelte";
   import { getLocalTimeZone, today, type CalendarDate } from "@internationalized/date";
-  import Checkbox from "../ui/checkbox/checkbox.svelte";
-  import { Label } from "../ui/label";
-  import * as Select from "../ui/select";
+  import Checkbox from "$lib/components/ui/checkbox/checkbox.svelte";
+  import { Label } from "$lib/components/ui/label";
+  import * as Select from "$lib/components/ui/select";
 
   // Props
   let {
