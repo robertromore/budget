@@ -14,6 +14,7 @@
   let {
     entityLabel = $bindable(),
     entities = $bindable(),
+    defaultValue,
     value = $bindable(),
     handleSubmit,
     class: className,
@@ -24,6 +25,7 @@
     entityLabel: string;
     entities: EditableEntityItem[];
     value?: EditableEntityItem;
+    defaultValue?: number | unknown;
     handleSubmit?: (selected?: EditableEntityItem) => void;
     class?: string;
     buttonClass?: string;
@@ -42,6 +44,13 @@
   let open = $state(false);
   let manage = $state(false);
   let managingId: number = $state(0);
+
+  if (defaultValue) {
+    const defaultEntity = entities.find((entity) => entity.id === defaultValue);
+    if (defaultEntity) {
+      value = defaultEntity;
+    }
+  }
 
   const toggleManageScreen = (event: MouseEvent) => {
     manage = !manage;
@@ -111,7 +120,7 @@
       {#if !manage}
         <Command.Root shouldFilter={false}>
           <div class="flex">
-            <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} wrapperClass={cn(management?.enable ? "" : "w-full")} />
+            <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} />
             {#if management?.enable}
               <Button
                 size="icon"
