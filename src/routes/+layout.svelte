@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import AppSidebar from "$lib/components/app-sidebar.svelte";
-  import "../app.pcss";
+  import "../app.css";
   import type { LayoutData } from "./$types";
   import type { Snippet } from "svelte";
   import { categoriesContext, CategoriesState } from "$lib/states/categories.svelte";
@@ -12,7 +12,7 @@
   import { AccountsState } from "$lib/states/accounts.svelte";
   import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
   import AddScheduleDialog from "$lib/components/dialogs/add-schedule-dialog.svelte";
-    import { SchedulesState } from "$lib/states/schedules.svelte";
+  import { SchedulesState } from "$lib/states/schedules.svelte";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const { accounts, payees, categories, schedules } = $derived(data);

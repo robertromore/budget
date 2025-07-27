@@ -5,7 +5,7 @@
     value = $bindable(),
     onUpdateValue,
   }: {
-    value: number | undefined;
+    value: number;
     onUpdateValue: (newValue: unknown) => void;
   } = $props();
 
@@ -16,4 +16,4 @@
   };
 </script>
 
-<NumericInput bind:amount={value} onSubmit={handleSubmit} bind:open />
+<NumericInput bind:value={value} onSubmit={handleSubmit} bind:open />

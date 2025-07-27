@@ -16,4 +16,4 @@
   };
 </script>
 
-<NumericInput bind:amount={value} onSubmit={handleSubmit} bind:open />
+<NumericInput bind:value={value} onSubmit={handleSubmit} bind:open />

@@ -78,7 +78,7 @@
     <Form.Control>
       {#snippet children({ props })}
         <Form.Label>Amount</Form.Label>
-        <NumericInput {...props} bind:amount buttonClass="w-full" />
+        <NumericInput {...props} bind:value={amount} buttonClass="w-full" />
         <Form.FieldErrors />
         <input hidden bind:value={$formData.amount} name={props.name} />
       {/snippet}

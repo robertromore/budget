@@ -1,4 +1,5 @@
 <script lang="ts">
+  // --- Imports ---
   import { Button } from "$lib/components/ui/button";
   import Input from "$lib/components/ui/input/input.svelte";
   import * as Popover from "$lib/components/ui/popover";
@@ -6,22 +7,25 @@
   import { cn } from "$lib/utils";
   import Delete from "@lucide/svelte/icons/delete";
 
+  // --- Props ---
   let {
-    amount = $bindable(),
+    value = $bindable(),
     onSubmit,
     open = $bindable(),
-    buttonClass,
+    buttonClass
   }: {
-    amount?: number;
+    value: number;
     onSubmit?: () => void;
     open?: boolean;
     buttonClass?: string;
   } = $props();
 
+  // --- State ---
   let dialogOpen = $state(open || false);
-  let new_amount = $state((amount || 0).toFixed(2));
-
+  let new_amount = $state((value || 0).toFixed(2));
   let input: HTMLInputElement | undefined | null = $state(null);
+
+  // --- Functions: Numeric Input Logic ---
   const select = (num: string) => () => {
     new_amount += num;
   };
@@ -33,72 +37,64 @@
     input?.focus();
   };
   const submit = () => {
-    amount = parseFloat(new_amount);
+    value = parseFloat(new_amount);
     dialogOpen = false;
-    onSubmit ? onSubmit() : null;
+    onSubmit?.();
   };
-
-  const valueWellFormatted = () => new_amount?.match(/\-?\d+?\.\d{2}/) !== null && new_amount !== '0.00';
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (dialogOpen) {
-      if (new_amount?.includes(".") && event.key === ".") {
-        event.preventDefault();
-      }
-      const target = event.target as HTMLInputElement;
-      const start = target?.selectionStart || 0;
-      const end = target?.selectionEnd || target?.value?.length;
-      switch (event.key) {
-        case "Enter":
-          if (new_amount) {
-            submit();
-          }
-          break;
-
-        case "Backspace":
-          break;
-
-        case "0":
-        case "1":
-        case "2":
-        case "3":
-        case "4":
-        case "5":
-        case "6":
-        case "7":
-        case "8":
-        case "9":
-          if (valueWellFormatted() && parseFloat(new_amount) != 0 && start === end) {
-            event.preventDefault();
-          }
-          break;
-
-        case "-":
-          if ((new_amount.length > 0 && new_amount !== '0.00') || new_amount?.startsWith("-")) {
-            event.preventDefault();
-          }
-          break;
-
-        default:
-          event.preventDefault();
-      }
+  const valueWellFormatted = () =>
+    new_amount?.match(/\-?\d+?\.\d{2}/) !== null && new_amount !== "0.00";
+  const changeSign = () => {
+    if (new_amount && new_amount !== "0.00" && new_amount !== "-") {
+      new_amount = (parseFloat(new_amount) * -1).toString();
+    } else if (new_amount === "-") {
+      new_amount = "";
+    } else {
+      new_amount = "-";
     }
   };
 
-  const changeSign = () => {
-    if (new_amount && new_amount !== '0.00' && new_amount !== '-') {
-      new_amount = (parseFloat(new_amount) * -1).toString();
-    } else if (new_amount === '-') {
-      new_amount = '';
-    } else {
-      new_amount = '-';
+  // --- Functions: Keyboard Handling ---
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (!dialogOpen) return;
+    if (new_amount?.includes(".") && event.key === ".") {
+      event.preventDefault();
+    }
+    const target = event.target as HTMLInputElement;
+    const start = target?.selectionStart || 0;
+    const end = target?.selectionEnd || target?.value?.length;
+    switch (event.key) {
+      case "Enter":
+        if (new_amount) submit();
+        break;
+      case "Backspace":
+        break;
+      case "0": case "1": case "2": case "3": case "4":
+      case "5": case "6": case "7": case "8": case "9":
+        if (valueWellFormatted() && parseFloat(new_amount) != 0 && start === end) {
+          event.preventDefault();
+        }
+        break;
+      case "-":
+        if ((new_amount.length > 0 && new_amount !== "0.00") || new_amount?.startsWith("-")) {
+          event.preventDefault();
+        }
+        break;
+      default:
+        event.preventDefault();
     }
   };
 </script>
 
-<svelte:window onkeydown={handleKeyDown} />
+<svelte:window on:keydown={handleKeyDown} />
 
+<!-- --- UI --- -->
 <div class="flex items-center space-x-4">
-  <Popover.Root bind:open={dialogOpen}>
+  <!-- Numeric Input Popover -->
+  <Popover.Root bind:open={dialogOpen} onOpenChange={(open) => {
+    if (open && parseFloat(new_amount) == 0) {
+      new_amount = '';
+    }
+  }}>
     <Popover.Trigger>
       {#snippet child({ props })}
         <Button
@@ -117,20 +113,19 @@
     <Popover.Content
       class="p-0"
       align="start"
-      onEscapeKeydown={() => (new_amount = amount!.toString())}
+      onEscapeKeydown={() => (new_amount = value!.toString())}
     >
       <div class="p-2">
-        <Input bind:value={new_amount} class="mb-2" bind:ref={input} />
+        <Input bind:value={new_amount} class="mb-2" bind:ref={input} placeholder="0.00" />
+
         <div class="keypad grid grid-cols-3 grid-rows-3 gap-2">
           {#each Array.from({ length: 9 }, (_, i) => i + 1) as i}
-            <Button variant="outline" disabled={valueWellFormatted()} onclick={select(i.toString())}
-              >{i}</Button
-            >
+            <Button variant="outline" disabled={valueWellFormatted()} onclick={select(i.toString())}>
+              {i}
+            </Button>
           {/each}
 
-          <Button variant="outline" disabled={new_amount?.includes(".")} onclick={select(".")}
-            >.</Button
-          >
+          <Button variant="outline" disabled={new_amount?.includes(".")} onclick={select(".")}>.</Button>
           <Button variant="outline" disabled={valueWellFormatted()} onclick={select("0")}>0</Button>
           <Button variant="outline" disabled={!new_amount} onclick={backspace}>
             <Delete />
