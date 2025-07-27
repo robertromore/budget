@@ -81,3 +81,21 @@ export type ViewDisplayState = {
   expanded?: ExpandedState;
   visibility?: VisibilityState;
 };
+
+export enum MoveToWeekday {
+  None = "none",
+  NextWeekday = "next_weekday",
+  PreviousWeekday = "previous_weekday",
+}
+
+export type RepeatingDate = {
+  start: DateValue;
+  end?: DateValue | null; // if null, it means it continues indefinitely
+  frequency?: "daily" | "weekly" | "monthly" | "yearly";
+  interval?: number; // if frequency is 'weekly', 'monthly', or 'yearly', this indicates the interval (e.g., every 2 weeks, every 3 months)
+  limit?: number; // maximum number of occurrences, if applicable
+  move_weekends?: MoveToWeekday;
+  move_holidays?: MoveToWeekday;
+  // holidays?: DateValue[]; // list of specific holidays
+  specific_dates?: DateValue[]; // list of specific dates
+};
