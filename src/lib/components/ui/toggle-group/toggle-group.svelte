@@ -12,8 +12,7 @@
 
 <script lang="ts">
   import { ToggleGroup as ToggleGroupPrimitive } from "bits-ui";
-  import { cn } from "$lib/utils.js";
-
+  import { cn } from "$lib/utils";
   let {
     ref = $bindable(null),
     value = $bindable(),
@@ -36,6 +35,12 @@ get along, so we shut typescript up by casting `value` to `never`.
 <ToggleGroupPrimitive.Root
   bind:value={value as never}
   bind:ref
-  class={cn("flex items-center justify-center gap-1", className)}
+  data-slot="toggle-group"
+  data-variant={variant}
+  data-size={size}
+  class={cn(
+    "group/toggle-group data-[variant=outline]:shadow-xs flex w-fit items-center rounded-md",
+    className
+  )}
   {...restProps}
 />
