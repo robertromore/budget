@@ -29,7 +29,7 @@
 
 <script lang="ts">
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
-  import { cn } from "$lib/utils.js";
+  import { cn } from "$lib/utils";
   import { mergeProps, type WithElementRef, type WithoutChildrenOrChild } from "bits-ui";
   import type { ComponentProps, Snippet } from "svelte";
   import type { HTMLAttributes } from "svelte/elements";

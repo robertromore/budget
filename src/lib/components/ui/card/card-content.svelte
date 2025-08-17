@@ -1,8 +1,6 @@
 <script lang="ts">
-  import type { WithElementRef } from "bits-ui";
   import type { HTMLAttributes } from "svelte/elements";
-  import { cn } from "$lib/utils.js";
-
+  import { cn, type WithElementRef } from "$lib/utils";
   let {
     ref = $bindable(null),
     class: className,
@@ -10,7 +8,6 @@
     ...restProps
   }: WithElementRef<HTMLAttributes<HTMLDivElement>> = $props();
 </script>
-
-<div bind:this={ref} class={cn("p-6", className)} {...restProps}>
+<div bind:this={ref} data-slot="card-content" class={cn("px-6", className)} {...restProps}>
   {@render children?.()}
 </div>

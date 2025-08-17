@@ -1,28 +1,28 @@
 <script lang="ts">
-	import { Calendar as CalendarPrimitive } from "bits-ui";
-	import ChevronLeft from "@lucide/svelte/icons/chevron-left";
-	import { buttonVariants } from "$lib/components/ui/button/index.js";
-	import { cn } from "$lib/utils.js";
-
-	let {
-		ref = $bindable(null),
-		class: className,
-		children,
-		...restProps
-	}: CalendarPrimitive.PrevButtonProps = $props();
+  import { Calendar as CalendarPrimitive } from "bits-ui";
+  import ChevronLeftIcon from "@lucide/svelte/icons/chevron-left";
+  import { buttonVariants, type ButtonVariant } from "$lib/components/ui/button/index.js";
+  import { cn } from "$lib/utils";
+  let {
+    ref = $bindable(null),
+    class: className,
+    children,
+    variant = "ghost",
+    ...restProps
+  }: CalendarPrimitive.PrevButtonProps & {
+    variant?: ButtonVariant;
+  } = $props();
 </script>
-
 {#snippet Fallback()}
-	<ChevronLeft />
+  <ChevronLeftIcon class="size-4" />
 {/snippet}
-
 <CalendarPrimitive.PrevButton
-	bind:ref
-	class={cn(
-		buttonVariants({ variant: "outline" }),
-		"size-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-		className
-	)}
-	{...restProps}
-	children={children || Fallback}
+  bind:ref
+  class={cn(
+    buttonVariants({ variant }),
+    "size-(--cell-size) select-none bg-transparent p-0 disabled:opacity-50 rtl:rotate-180",
+    className
+  )}
+  children={children || Fallback}
+  {...restProps}
 />
