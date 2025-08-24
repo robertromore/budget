@@ -12,20 +12,15 @@
   import EntityInput from "../input/entity-input.svelte";
   import SuperDebug from "sveltekit-superforms";
   import MultiNumericInput from "../input/multi-numeric-input.svelte";
-  import DateInput from "../input/date-input.svelte";
-  import { getLocalTimeZone, today, type CalendarDate } from "@internationalized/date";
-  import Checkbox from "../ui/checkbox/checkbox.svelte";
-  import { Label } from "../ui/label";
-  import * as Select from "../ui/select";
+  import RepeatingDateInput from "$lib/components/input/repeating-date-input.svelte";
+  import RepeatingDateInputModel from "$lib/models/repeating_date.svelte";
 
   // Props
   let {
     scheduleId,
     onSave,
-    onDelete
   }: {
     scheduleId?: number;
-    onDelete?: (id: number) => void;
     onSave?: (new_entity: Schedule) => void;
   } = $props();
 
@@ -39,6 +34,7 @@
 
   let payee: EditableEntityItem = $state({ id: 0, name: "" });
   let account: EditableEntityItem = $state({ id: 0, name: "" });
+  let repeating_date = $state(new RepeatingDateInputModel());
 
   // Form
   const form = superForm(manageScheduleForm, {
@@ -55,12 +51,10 @@
   const { form: formData, enhance } = form;
 
   let amount: number[] = $state([0, 0]);
-  let date: CalendarDate = $state(today(getLocalTimeZone()));
   let defaultPayee = $state();
   let defaultAccount = $state();
 
   $formData.amount_type = "exact";
-  $formData.repeating = false;
 
   // Initialize form data if editing
   if (scheduleId && scheduleId > 0) {
@@ -166,13 +160,23 @@
       </Form.Control>
     </Form.Field>
 
-    <fieldset class="flex flex-col gap-2">
+    <Form.Field {form} name="repeating_date">
+      <Form.Control>
+        {#snippet children({ props })}
+          <RepeatingDateInput
+            {...props}
+            bind:value={repeating_date}
+          />
+        {/snippet}
+      </Form.Control>
+    </Form.Field>
+
+    <!-- <fieldset class="flex flex-col gap-2">
       <legend class="text-sm font-medium">Date</legend>
 
       <Form.Field {form} name="date">
         <Form.Control>
-          {#snippet children({ props })}
-            <!-- <Form.Label>Starting Date</Form.Label> -->
+          {#snippet children({ props })}=
             <DateInput
               {...props}
               bind:value={date}
@@ -187,25 +191,71 @@
       <Form.Field {form} name="repeating">
         <Form.Control>
           {#snippet children({ props })}
-            <Checkbox {...props} bind:checked={$formData.repeating} />
-            <Label for={props.id}>Repeating</Label>
+            <Label
+              class="hover:bg-accent/50 flex items-start gap-3 rounded-lg border p-3 has-[[aria-checked=true]]:border-blue-600 has-[[aria-checked=true]]:bg-blue-50 dark:has-[[aria-checked=true]]:border-blue-900 dark:has-[[aria-checked=true]]:bg-blue-950"
+            >
+              <Checkbox {...props} bind:checked={$formData.repeating} class="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700" />
+              <div class="grid gap-1.5 font-normal">
+                <p class="text-sm font-medium leading-none">Repeat</p>
+                <p class="text-muted-foreground text-sm">
+                  Repeat the schedule on a regular basis.
+                </p>
+              </div>
+            </Label>
           {/snippet}
         </Form.Control>
       </Form.Field>
 
       {#if $formData.repeating}
-        <div class="flex flex-row">
-          <span>Repeat every</span>
-          <Form.Field {form} name="repeat_every">
-            <Form.Control>
-              {#snippet children({ props })}
-                <Input {...props} class="w-20" type="number" min="1" bind:value={$formData.repeat_every} />
-              {/snippet}
-            </Form.Control>
-            <Form.FieldErrors />
-          </Form.Field>
+        <Tabs.Root bind:value={$formData.repeating_unit} class="w-[400px]">
+          <Tabs.List>
+            <Tabs.Trigger value="daily">Daily</Tabs.Trigger>
+            <Tabs.Trigger value="weekly">Weekly</Tabs.Trigger>
+            <Tabs.Trigger value="monthly">Monthly</Tabs.Trigger>
+            <Tabs.Trigger value="yearly">Yearly</Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Content value="daily">
+            <Form.Fieldset {form} name="type" class="space-y-3">
+              <Card.Root>
+                <Card.Header>
+                  <Card.Title>Daily</Card.Title>
+                </Card.Header>
+                <Card.Content class="grid gap-6">
+                  <RadioGroup.Root
+                    bind:value={$formData.daily_type}
+                    class="flex flex-col space-y-1"
+                    name="type"
+                  >
+                    <div class="flex items-center space-x-3 space-y-0">
+                      <Form.Control>
+                        {#snippet children({ props })}
+                          <RadioGroup.Item value="every" {...props} />
+                          <Form.Label class="font-normal">Every</Form.Label>
+                        {/snippet}
+                      </Form.Control>
+                    </div>
+                    <div class="flex items-center space-x-3 space-y-0">
+                      <Form.Control>
+                        {#snippet children({ props })}
+                          <RadioGroup.Item value="business" {...props} />
+                          <Form.Label class="font-normal">Every business day</Form.Label>
+                        {/snippet}
+                      </Form.Control>
+                    </div>
+                  </RadioGroup.Root>
+                </Card.Content>
+              </Card.Root>
+            </Form.Fieldset>
+          </Tabs.Content>
+          <Tabs.Content value="weekly">
 
-          <Form.Field {form} name="email">
+          </Tabs.Content>
+        </Tabs.Root> -->
+
+        <!-- <div class="flex flex-row gap-2 items-center">
+          <div class="block h-7">Repeat</div>
+
+          <Form.Field {form} name="repeating_unit">
             <Form.Control>
               {#snippet children({ props })}
                 <Select.Root
@@ -214,23 +264,109 @@
                   name={props.name}
                 >
                   <Select.Trigger {...props}>
-                    {$formData.repeating_unit ?? 'day(s)'}
+                    {$formData.repeating_unit ?? 'daily'}
                   </Select.Trigger>
                   <Select.Content>
-                    <Select.Item value="day" label="day(s)" />
-                    <Select.Item value="week" label="week(s)" />
-                    <Select.Item value="month" label="month(s)" />
-                    <Select.Item value="year" label="year(s)" />
+                    <Select.Item value="daily" label="daily" />
+                    <Select.Item value="weekly" label="weekly" />
+                    <Select.Item value="monthly" label="monthly" />
+                    <Select.Item value="yearly" label="yearly" />
                   </Select.Content>
                 </Select.Root>
               {/snippet}
             </Form.Control>
             <Form.FieldErrors />
           </Form.Field>
-        </div>
-      {/if}
 
-    </fieldset>
+          {#if $formData.repeating_unit !== "daily"}
+            <Form.Field {form} name="repeating_interval_type">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Select.Root
+                    type="single"
+                    bind:value={$formData.repeating_interval_type}
+                    name={props.name}
+                  >
+                    <Select.Trigger {...props}>
+                      {$formData.repeating_interval_type ?? 'every'}
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="every" label="every" />
+                      {#if $formData.repeating_unit === "monthly" || $formData.repeating_unit === "yearly"}
+                        <Select.Item value="on" label="on" />
+                      {/if}
+                    </Select.Content>
+                  </Select.Root>
+                {/snippet}
+              </Form.Control>
+              <Form.FieldErrors />
+            </Form.Field>
+
+            <Form.Field {form} name="repeat_every">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Select.Root
+                    type="single"
+                    bind:value={$formData.repeat_every}
+                    name={props.name}
+                  >
+                    <Select.Trigger {...props}>
+                      {$formData.repeat_every ?? 'monday'}
+                    </Select.Trigger>
+                    <Select.Content>
+                      {#if $formData.repeating_unit === "weekly" && $formData.repeating_interval_type === "every"}
+                        <Select.Item value="sunday" label="sunday" />
+                        <Select.Item value="monday" label="monday" />
+                        <Select.Item value="tuesday" label="tuesday" />
+                        <Select.Item value="wednesday" label="wednesday" />
+                        <Select.Item value="thursday" label="thursday" />
+                        <Select.Item value="friday" label="friday" />
+                        <Select.Item value="saturday" label="saturday" />
+                      {:else}
+                        <Select.Item value="1st" label="1st" />
+                        <Select.Item value="2nd" label="2nd" />
+                        <Select.Item value="3rd" label="3rd" />
+                        <Select.Item value="4th" label="4th" />
+                        <Select.Item value="5th" label="5th" />
+                        <Select.Item value="6th" label="6th" />
+                        <Select.Item value="7th" label="7th" />
+                        <Select.Item value="8th" label="8th" />
+                        <Select.Item value="9th" label="9th" />
+                        <Select.Item value="10th" label="10th" />
+                        <Select.Item value="11th" label="11th" />
+                        <Select.Item value="12th" label="12th" />
+                        <Select.Item value="13th" label="13th" />
+                        <Select.Item value="14th" label="14th" />
+                        <Select.Item value="15th" label="15th" />
+                        <Select.Item value="16th" label="16th" />
+                        <Select.Item value="17th" label="17th" />
+                        <Select.Item value="18th" label="18th" />
+                        <Select.Item value="19th" label="19th" />
+                        <Select.Item value="20th" label="20th" />
+                        <Select.Item value="21st" label="21st" />
+                        <Select.Item value="22nd" label="22nd" />
+                        <Select.Item value="23rd" label="23rd" />
+                        <Select.Item value="24th" label="24th" />
+                        <Select.Item value="25th" label="25th" />
+                        <Select.Item value="26th" label="26th" />
+                        <Select.Item value="27th" label="27th" />
+                        <Select.Item value="28th" label="28th" />
+                        <Select.Item value="29th" label="29th" />
+                        <Select.Item value="30th" label="30th" />
+                        <Select.Item value="31st" label="31st" />
+                        <Select.Item value="last" label="last" />
+                      {/if}
+                    </Select.Content>
+                  </Select.Root>
+                {/snippet}
+              </Form.Control>
+              <Form.FieldErrors />
+            </Form.Field>
+          {/if}
+        </div> -->
+      <!-- {/if}
+
+    </fieldset> -->
     <!-- <Form.Field {form} name="date">
       <Form.Control>
         {#snippet children({ props })}

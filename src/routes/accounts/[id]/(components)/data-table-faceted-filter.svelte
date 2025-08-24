@@ -5,7 +5,7 @@
   import * as Command from "$lib/components/ui/command";
   import * as Popover from "$lib/components/ui/popover";
   import { Button } from "$lib/components/ui/button";
-  import { cn } from "$lib/utils.js";
+  import { cn } from "$lib/utils";
   import { Badge } from "$lib/components/ui/badge";
   import X from "@lucide/svelte/icons/x";
   import type { AvailableFilters, FacetedFilterOption } from "$lib/types";

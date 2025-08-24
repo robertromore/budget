@@ -1,6 +1,6 @@
 import type { TransactionsFormat } from "$lib/types";
 import type { Transaction } from "$lib/schema";
-import { DateFormatter, parseDate, toCalendarDate } from "@internationalized/date";
+import { parseDate, toCalendarDate } from "@internationalized/date";
 
 // @todo change to user's preferred locale
 export const currencyFormatter = new Intl.NumberFormat("en-US", {
@@ -18,11 +18,3 @@ export const transactionFormatter = {
     });
   },
 };
-
-export const dateFormatter = new DateFormatter("en-US", {
-  dateStyle: "long",
-});
-
-export const rawDateFormatter = new DateFormatter("en-US", {
-  dateStyle: "short",
-});
