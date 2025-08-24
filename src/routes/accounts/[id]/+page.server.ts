@@ -13,7 +13,7 @@ import {
 } from "$lib/schema";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
-import { getSpecialDateValueAsLabel } from "$lib/utils";
+import { getSpecialDateValueAsLabel } from "$lib/utils/date-formatters";
 
 export const load: PageServerLoad = async ({ params, parent }) => {
   const { accounts, dates: defaultDates } = await parent();

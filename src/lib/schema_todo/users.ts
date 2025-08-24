@@ -2,7 +2,7 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 // import { z } from 'zod';
 
-export const user = sqliteTable("movies", {
+export const user = sqliteTable("users", {
   id: integer("id").primaryKey(),
   name: text("name"),
   password: text("password"),

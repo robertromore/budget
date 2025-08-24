@@ -3,7 +3,6 @@
   import {
     CalendarDate,
     DateFormatter,
-    type DateValue,
     getLocalTimeZone,
     today
   } from "@internationalized/date";
@@ -114,7 +113,7 @@
   });
 </script>
 
-<ToggleGroup.Root type="single" bind:value={dateType} class="items-start justify-start mb-2 mt-1.5">
+<ToggleGroup.Root type="single" bind:value={dateType} class="items-start justify-start mb-2 mt-1.5" variant="outline" size="default">
   <ToggleGroup.Item value="day" aria-label="Day">
     Day
   </ToggleGroup.Item>
@@ -148,7 +147,7 @@
     {/each}
   </ToggleGroup.Root>
 {:else if dateType === 'quarter'}
-  <ToggleGroup.Root type="single" bind:value={selectedQuarter} onValueChange={(new_value) => value = _dateCache.quarter.get(new_value)} class="items-start justify-start grid grid-cols-1 h-[360px] overflow-auto">
+  <ToggleGroup.Root type="single" bind:value={selectedQuarter} onValueChange={(new_value) => value = _dateCache.quarter.get(new_value)} class="items-stretch justify-start grid grid-cols-2 h-[360px] overflow-auto">
     {#each yearOptions as year (year)}
       <div>
         <Label class="my-2">{year.label}</Label>

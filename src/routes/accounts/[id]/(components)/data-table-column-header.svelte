@@ -6,7 +6,7 @@
   import type { HTMLAttributes } from "svelte/elements";
   import type { Column } from "@tanstack/table-core";
   import type { WithoutChildren } from "bits-ui";
-  import { cn } from "$lib/utils.js";
+  import { cn } from "$lib/utils";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import Button, { buttonVariants } from "$lib/components/ui/button/button.svelte";
   import { currentViews } from "$lib/states/current-views.svelte";

@@ -3,7 +3,7 @@
   import { Button } from "$lib/components/ui/button";
   import Input from "$lib/components/ui/input/input.svelte";
   import * as Popover from "$lib/components/ui/popover";
-  import { currencyFormatter } from "$lib/helpers/formatters";
+  import { currencyFormatter } from "$lib/utils/formatters";
   import { cn } from "$lib/utils";
   import Delete from "@lucide/svelte/icons/delete";
 
@@ -12,7 +12,7 @@
     value = $bindable(),
     onSubmit,
     open = $bindable(),
-    buttonClass
+    buttonClass,
   }: {
     value: number;
     onSubmit?: () => void;
@@ -68,8 +68,16 @@
         break;
       case "Backspace":
         break;
-      case "0": case "1": case "2": case "3": case "4":
-      case "5": case "6": case "7": case "8": case "9":
+      case "0":
+      case "1":
+      case "2":
+      case "3":
+      case "4":
+      case "5":
+      case "6":
+      case "7":
+      case "8":
+      case "9":
         if (valueWellFormatted() && parseFloat(new_amount) != 0 && start === end) {
           event.preventDefault();
         }
@@ -90,11 +98,14 @@
 <!-- --- UI --- -->
 <div class="flex items-center space-x-4">
   <!-- Numeric Input Popover -->
-  <Popover.Root bind:open={dialogOpen} onOpenChange={(open) => {
-    if (open && parseFloat(new_amount) == 0) {
-      new_amount = '';
-    }
-  }}>
+  <Popover.Root
+    bind:open={dialogOpen}
+    onOpenChange={(open) => {
+      if (open && parseFloat(new_amount) == 0) {
+        new_amount = "";
+      }
+    }}
+  >
     <Popover.Trigger>
       {#snippet child({ props })}
         <Button
@@ -120,12 +131,18 @@
 
         <div class="keypad grid grid-cols-3 grid-rows-3 gap-2">
           {#each Array.from({ length: 9 }, (_, i) => i + 1) as i}
-            <Button variant="outline" disabled={valueWellFormatted()} onclick={select(i.toString())}>
+            <Button
+              variant="outline"
+              disabled={valueWellFormatted()}
+              onclick={select(i.toString())}
+            >
               {i}
             </Button>
           {/each}
 
-          <Button variant="outline" disabled={new_amount?.includes(".")} onclick={select(".")}>.</Button>
+          <Button variant="outline" disabled={new_amount?.includes(".")} onclick={select(".")}
+            >.</Button
+          >
           <Button variant="outline" disabled={valueWellFormatted()} onclick={select("0")}>0</Button>
           <Button variant="outline" disabled={!new_amount} onclick={backspace}>
             <Delete />
@@ -139,7 +156,7 @@
             {/if}
           </Button>
           <Button variant="outline" disabled={!new_amount} onclick={clear}>clear</Button>
-          <Button disabled={!new_amount || new_amount === '-'} onclick={submit}>submit</Button>
+          <Button disabled={!new_amount || new_amount === "-"} onclick={submit}>submit</Button>
         </div>
       </div>
     </Popover.Content>

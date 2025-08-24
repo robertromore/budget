@@ -1,4 +1,3 @@
-import { DateFormatter, getLocalTimeZone, parseDate, today } from "@internationalized/date";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -15,7 +14,7 @@ export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & {
   ref?: U | null;
 };
 
-export const reSplitAlphaNumeric = /([0-9]+)/gm;
+const reSplitAlphaNumeric = /([0-9]+)/gm;
 
 export function compareAlphanumeric(aStr: string, bStr: string) {
   // Split on number groups, but keep the delimiter
@@ -61,7 +60,7 @@ export function compareAlphanumeric(aStr: string, bStr: string) {
   return a.length - b.length;
 }
 
-export type AnyObject = Record<string, unknown>;
+type AnyObject = Record<string, unknown>;
 
 export const without = <T>(array: T[], fn: (element: T) => boolean): [T[], T[]] => {
   const keep: T[] = [];
@@ -273,53 +272,4 @@ export default function deeplyEqual(left: unknown, right: unknown) {
   return left === right;
 }
 
-const currentDate = today(getLocalTimeZone());
-
-const dayFmt = new DateFormatter("en-US", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-});
-const monthFmt = new DateFormatter("en-US", {
-  month: "long",
-});
-const monthYearFmt = new DateFormatter("en-US", {
-  month: "short",
-  year: "numeric",
-});
-
-const monthOptions = Array.from({ length: 12 }, (_, i) => {
-  const month = currentDate.set({ month: i + 1 });
-  return monthFmt.format(month.toDate(getLocalTimeZone()));
-}) as ReadonlyArray<string>;
-
-export type Month = (typeof monthOptions)[number];
-
-export type SpecialDateValue = ["day" | "month" | "quarter" | "year" | "half-year", string];
-export function getSpecialDateValue(date: string): SpecialDateValue {
-  return date.split(":") as SpecialDateValue;
-}
-
-export function getSpecialDateValueAsLabel(date: string): string {
-  if (!date.includes(":")) {
-    return dayFmt.format(parseDate(date).toDate(getLocalTimeZone()));
-  }
-
-  const [type, value] = getSpecialDateValue(date);
-  switch (type) {
-    case "quarter":
-      return `Q${value}`;
-
-    case "half-year":
-      const date = parseDate(value);
-      const half = date.month > 6 ? "2" : "1";
-      return `H${half} ${date.year}`;
-
-    case "year":
-      return parseDate(value).year.toString();
-
-    case "month":
-    default:
-      return monthYearFmt.format(parseDate(value).toDate(getLocalTimeZone()));
-  }
-}
+export * from "./dates";

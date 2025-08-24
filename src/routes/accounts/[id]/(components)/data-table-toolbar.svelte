@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Table } from "@tanstack/table-core";
-  import * as ToggleGroup from "$lib/components/ui/toggle-group";
   import type { FilterInputOption, TransactionsFormat } from "$lib/types";
   import { Separator } from "$lib/components/ui/separator";
   import CirclePlus from "@lucide/svelte/icons/circle-plus";
@@ -17,6 +16,7 @@
   import Settings2 from "@lucide/svelte/icons/settings-2";
   import { cn } from "$lib/utils";
   import { CurrentViewState } from "$lib/states/current-view.svelte";
+  import * as Tabs from "$lib/components/ui/tabs";
 
   let {
     table,
@@ -47,10 +47,7 @@
 </script>
 
 <div class="flex text-sm">
-  <ToggleGroup.Root
-    type="single"
-    size="sm"
-    class="items-start justify-start"
+  <Tabs.Root
     bind:value={currentViewValue}
     onValueChange={(value) => {
       manageViewForm = false;
@@ -64,38 +61,47 @@
       _currentViews.remove(0, false).setActive(newView);
     }}
   >
-    {#each nonEditableViews as viewState}
-      <ToggleGroup.Item value={viewState.view.id.toString()} aria-label={viewState.view.name}>
-        {viewState.view.name}
-      </ToggleGroup.Item>
-    {/each}
+    <Tabs.List>
+      {#each nonEditableViews as viewState}
+        <Tabs.Trigger value={viewState.view.id.toString()} aria-label={viewState.view.name}>
+          {viewState.view.name}
+        </Tabs.Trigger>
+      {/each}
+    </Tabs.List>
+    <Tabs.Content value="account">
+    </Tabs.Content>
+  </Tabs.Root>
 
-    <Separator orientation="vertical" class="mx-1" />
+  <Separator orientation="vertical" class="mx-1"/>
 
-    {#each editableViews as viewState}
-      <div class={cn(editViewsMode ? "flex rounded-md border" : "")}>
-        <ToggleGroup.Item
-          value={viewState.view.id.toString()}
-          aria-label={viewState.view.name}
-          class={cn(editViewsMode ? "rounded-r-none" : "")}
-        >
+  <Tabs.Root
+    bind:value={currentViewValue}
+    onValueChange={(value) => {
+      manageViewForm = false;
+      let newView: number;
+      if (!value) {
+        newView = firstViewId;
+        currentViewValue = newView.toString();
+      } else {
+        newView = parseInt(value);
+      }
+      _currentViews.remove(0, false).setActive(newView);
+    }}
+  >
+    <Tabs.List>
+      {#each editableViews as viewState}
+        <Tabs.Trigger value={viewState.view.id.toString()} aria-label={viewState.view.name}>
           {viewState.view.name}
           {#if viewState.view.dirty}
             <Asterisk class="-ml-1" />
           {/if}
-        </ToggleGroup.Item>
+        </Tabs.Trigger>
 
         {#if editViewsMode}
           <div class="flex gap-0">
-            <!-- {#if editableViews.length > 1}
-              <Button variant="ghost" class="px-2 h-8 rounded-l-none rounded-r-none cursor-move">
-                <GripVertical />
-              </Button>
-            {/if} -->
-
             <Toggle
               variant="outline"
-              class={cn("h-8 rounded-l-none border-none px-2")}
+              class={cn("h-8 rounded-none border-none shadow-none")}
               bind:pressed={
                 () => manageViewForm && viewState.view.id === editViewId,
                 (value) => {
@@ -110,14 +116,15 @@
             </Toggle>
           </div>
         {/if}
-      </div>
-    {/each}
-  </ToggleGroup.Root>
+      {/each}
+    </Tabs.List>
+    <Tabs.Content value="account">
+    </Tabs.Content>
+  </Tabs.Root>
 
   {#if editableViewsSize > 0}
     <Toggle
       variant="outline"
-      size="sm"
       class="ml-2"
       bind:pressed={
         () => editViewsMode,
@@ -136,7 +143,6 @@
 
   <Toggle
     variant="outline"
-    size="sm"
     class="ml-2"
     bind:pressed={
       () => manageViewForm,
