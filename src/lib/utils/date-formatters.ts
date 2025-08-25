@@ -61,7 +61,7 @@ const suffixMap = {
 const pr = new Intl.PluralRules("en-US", { type: "ordinal" });
 
 /** Formats a `Date` as “{short month}. {day}, {year}” e.g. “Aug. 1st, 2023” */
-export const formatStartDate = (d: Date): string => {
+export const formatDate = (d: Date): string => {
   // month abbreviation (e.g. "Aug")
   const monthAbbr = new Intl.DateTimeFormat("en-US", { month: "short" }).format(d);
   const monthWithDot = `${monthAbbr}.`;
