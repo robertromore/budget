@@ -507,6 +507,7 @@
             onPlaceholderChange={(newValue) => {
               value.placeholder = newValue;
             }}
+            captionLayout="dropdown"
           >
             {#snippet day({ day, outsideMonth })}
               {@const dayDate = day.toDate(getLocalTimeZone())}
