@@ -150,11 +150,7 @@ export default class RepeatingDateInput {
       const specificDates = this.value.specific_dates || [];
       upcomingDates.push(...specificDates);
 
-      // Filter to only include dates on or after the start date
-      const filteredDates = upcomingDates.filter((date) => date.compare(this.value.start) >= 0);
-
-      // Sort and return unique dates
-      return this.sortAndDeduplicateDates(filteredDates);
+      return upcomingDates;
     } catch (error) {
       console.warn("Error generating upcoming dates:", error);
       return [];
