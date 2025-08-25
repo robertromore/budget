@@ -95,15 +95,10 @@
     return dateFormatter.format(date.toDate(getLocalTimeZone()));
   };
 
-  const isUpcomingDate = (date: Date) => {
+  const isUpcomingDate = (date: DateValue) => {
     // Only highlight dates that are part of the recurring pattern AND on/after start date
     return value.upcoming.some((d) => {
-      const dDate = d.toDate(getLocalTimeZone());
-      return (
-        dDate.getFullYear() === date.getFullYear() &&
-        dDate.getMonth() === date.getMonth() &&
-        dDate.getDate() === date.getDate()
-      );
+      return d.year === date.year && d.month === date.month && d.day === date.day;
     });
   };
 
