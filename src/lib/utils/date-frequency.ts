@@ -1,24 +1,97 @@
 // $lib/utils/frequency.ts
-import { CalendarDate, today, type DateValue } from "@internationalized/date";
+import { CalendarDate, type DateValue, startOfWeek } from "@internationalized/date";
 import { getDayOfWeek, getNextWeekdayFlexible, getNthWeekdayOfMonth, timezone } from "./dates";
+
+/**
+ * Configuration options for date generation functions
+ */
+interface DateGenerationOptions {
+  start: DateValue;
+  end?: DateValue | null;
+  interval: number;
+  limit?: number;
+}
+
+/**
+ * Result of date generation with metadata
+ */
+interface DateGenerationResult {
+  dates: DateValue[];
+  truncated: boolean;
+  totalGenerated: number;
+}
+
+/**
+ * Maximum safety limit to prevent infinite loops
+ */
+const MAX_SAFETY_LIMIT = 50;
+
+/**
+ * Generate dates with either end date or limit constraint
+ */
+function generateDatesWithConstraints(
+  generator: () => DateValue | null,
+  options: DateGenerationOptions
+): DateGenerationResult {
+  const { start, end, limit } = options;
+  const dates: DateValue[] = [];
+  let totalGenerated = 0;
+  let truncated = false;
+
+  // Determine the effective limit
+  const effectiveLimit = Math.min(limit || MAX_SAFETY_LIMIT, MAX_SAFETY_LIMIT);
+
+  while (totalGenerated < effectiveLimit) {
+    const nextDate = generator();
+
+    if (!nextDate) break;
+
+    // Check if we've exceeded the end date
+    if (end && nextDate > end) break;
+
+    // Only include dates on or after the start date
+    if (nextDate.compare(start) >= 0) {
+      dates.push(nextDate);
+
+      // If we have an end date, don't apply limit
+      if (!end && dates.length >= effectiveLimit) {
+        truncated = true;
+        break;
+      }
+    }
+
+    totalGenerated++;
+
+    // Safety check to prevent infinite loops when all dates are before start
+    if (totalGenerated > MAX_SAFETY_LIMIT * 2) {
+      break;
+    }
+  }
+
+  return { dates, truncated, totalGenerated };
+}
 
 /**
  * ----------  DAILY ----------
  */
 export function nextDaily(
   start: DateValue,
-  end: DateValue,
+  end: DateValue | null,
   interval: number,
   limit: number
 ): DateValue[] {
-  const dates: DateValue[] = [];
-  let cursor = start;
+  if (interval <= 0) return [];
 
-  while (cursor >= start && cursor <= end && dates.length < limit) {
-    dates.push(cursor);
+  let cursor = start;
+  const options: DateGenerationOptions = { start, end, interval, limit };
+
+  const generator = () => {
+    const current = cursor;
     cursor = cursor.add({ days: interval });
-  }
-  return dates;
+    return current;
+  };
+
+  return generateDatesWithConstraints(generator, options).dates;
 }
 
 /**
@@ -26,77 +99,136 @@ export function nextDaily(
  */
 export function nextWeekly(
   start: DateValue,
-  end: DateValue,
+  end: DateValue | null,
   interval: number,
   weekDays: number[],
   limit: number
 ): DateValue[] {
-  const dates: DateValue[] = [];
-  let cursor = start;
+  if (interval <= 0) return [];
 
-  while (cursor >= start && cursor <= end && dates.length < limit) {
-    if (weekDays.length > 0) {
-      weekDays.forEach((wday) => {
-        const nextDay = getNextWeekdayFlexible(cursor, wday, true);
-        dates.push(nextDay);
-      });
-    } else {
-      const nextDay = getNextWeekdayFlexible(cursor, getDayOfWeek(start, timezone), true);
-      dates.push(nextDay);
+  const normalizedWeekDays = weekDays.length > 0 ? weekDays : [getDayOfWeek(start, timezone)];
+  let weekCursor = start;
+  let dayIndex = 0;
+  let isFirstWeek = true;
+
+  const options: DateGenerationOptions = { start, end, interval, limit };
+
+  const generator = () => {
+    // If we've processed all days for this week, move to next interval
+    if (dayIndex >= normalizedWeekDays.length) {
+      // Only advance by interval weeks after the first week
+      if (!isFirstWeek) {
+        weekCursor = weekCursor.add({ weeks: interval });
+      } else {
+        isFirstWeek = false;
+      }
+      dayIndex = 0;
     }
-    cursor = cursor.add({ weeks: interval });
-  }
 
-  return dates;
+    if (dayIndex < normalizedWeekDays.length) {
+      const targetWeekday = normalizedWeekDays[dayIndex];
+
+      // For the first week, find dates that could be before the start date
+      // but are still in the expanded calendar view
+      let nextDate;
+      if (isFirstWeek || dayIndex === 0) {
+        // Find the next occurrence of this weekday from the current week cursor
+        nextDate = getNextWeekdayFlexible(weekCursor, targetWeekday, true);
+
+        // If this is the first week and we haven't found our start point yet,
+        // we might need to go back to catch earlier dates in the week
+        if (isFirstWeek && nextDate.compare(start) > 0) {
+          const weekStart = startOfWeek(weekCursor, "en-us", "sun");
+          const candidateDate = getNextWeekdayFlexible(weekStart, targetWeekday, true);
+          if (candidateDate.compare(nextDate) <= 0) {
+            nextDate = candidateDate;
+          }
+        }
+      } else {
+        nextDate = getNextWeekdayFlexible(weekCursor, targetWeekday, true);
+      }
+
+      dayIndex++;
+      return nextDate;
+    }
+
+    return null;
+  };
+
+  return generateDatesWithConstraints(generator, options).dates;
 }
 
 /**
  * ----------  MONTHLY ----------
- * * if `onDay` is set – use that day of the month
- * * otherwise, use the “on the nth weekday” pattern
+ * * if `days` is set – use that day of the month
+ * * otherwise, use the "on the nth weekday" pattern
  */
 export function nextMonthly(
   start: DateValue,
-  end: DateValue,
+  end: DateValue | null,
   interval: number,
   days: number | null,
   weeks: number[],
   weekDays: number[],
   limit: number
 ): DateValue[] {
-  const dates: DateValue[] = [];
+  if (interval <= 0) return [];
+
   let cursor = start;
+  let weekIndex = 0;
+  let dayIndex = 0;
 
-  while (cursor >= start && cursor <= end && dates.length < limit) {
+  const options: DateGenerationOptions = { start, end, interval, limit };
+
+  const generator = () => {
+    // Fixed day of month
     if (days && days > 0) {
-      const nextDate = cursor.set({ day: days });
-      dates.push(nextDate);
-    } else if (weeks.length > 0 && weekDays.length > 0) {
-      weeks.forEach((week) => {
-        weekDays.forEach((weekDay) => {
-          const candidateDate = getNthWeekdayOfMonth(cursor.year, cursor.month, week, weekDay);
+      try {
+        const nextDate = cursor.set({ day: Math.min(days, getDaysInMonth(cursor)) });
+        cursor = cursor.add({ months: interval });
+        return nextDate;
+      } catch {
+        cursor = cursor.add({ months: interval });
+        return null;
+      }
+    }
 
-          if (candidateDate) {
-            dates.push(candidateDate);
-          }
-        });
-      });
-    } else {
+    // Nth weekday of month
+    if (weeks.length > 0 && weekDays.length > 0) {
+      if (weekIndex >= weeks.length) {
+        cursor = cursor.add({ months: interval });
+        weekIndex = 0;
+        dayIndex = 0;
+      }
+
+      if (dayIndex >= weekDays.length) {
+        weekIndex++;
+        dayIndex = 0;
+        return generator(); // Recursive call to handle next week/day combination
+      }
+
+      if (weekIndex < weeks.length && dayIndex < weekDays.length) {
+        const week = weeks[weekIndex];
+        const weekDay = weekDays[dayIndex];
+        const candidateDate = getNthWeekdayOfMonth(cursor.year, cursor.month, week, weekDay);
+
+        dayIndex++;
+        return candidateDate;
+      }
+    }
+
+    // Fallback: same day as start date
+    try {
       const nextDate = cursor.set({ day: start.day });
-      dates.push(nextDate);
+      cursor = cursor.add({ months: interval });
+      return nextDate;
+    } catch {
+      cursor = cursor.add({ months: interval });
+      return null;
     }
+  };
 
-    // Move to next occurrence (add interval months)
-    cursor = cursor.add({ months: interval });
-
-    // Safety check to prevent infinite loops
-    if (cursor.year > end.year + 10) {
-      break;
-    }
-  }
-
-  // Sort dates chronologically and limit results
-  return dates;
+  return generateDatesWithConstraints(generator, options).dates.sort((a, b) => a.compare(b));
 }
 
 /**
@@ -105,41 +237,53 @@ export function nextMonthly(
 export function nextYearly(
   actualStart: DateValue,
   start: DateValue,
-  end: DateValue,
+  end: DateValue | null,
   interval: number,
   limit: number
 ): DateValue[] {
-  const dates: DateValue[] = [];
+  if (interval <= 0) return [];
 
-  // Start from the first candidate >= calendar start
   let cursor = actualStart;
 
-  // If actualStart is before the view, advance cursor to the first occurrence >= start
+  // Advance to first occurrence >= start
   while (cursor < start) {
-    cursor = cursor.add({ years: interval });
+    cursor = getNextYearlyDate(cursor, actualStart, interval);
   }
 
-  while (cursor >= start && cursor <= end && dates.length < limit) {
-    dates.push(cursor);
+  const options: DateGenerationOptions = { start, end, interval, limit };
 
-    let next = cursor.add({ years: interval });
+  const generator = () => {
+    const current = cursor;
+    cursor = getNextYearlyDate(cursor, actualStart, interval);
+    return current;
+  };
 
-    // Try to preserve same month/day as actualStart
-    try {
-      next = next.set({ month: actualStart.month, day: actualStart.day });
-    } catch {
-      // Handle invalid dates (e.g., Feb 29 on non-leap years)
-      const lastDayOfMonth = new CalendarDate(next.year, actualStart.month, 1)
-        .add({ months: 1 })
-        .subtract({ days: 1 });
-      next = lastDayOfMonth;
-    }
+  return generateDatesWithConstraints(generator, options).dates;
+}
 
-    cursor = next;
+/**
+ * Helper function to get the next yearly occurrence
+ */
+function getNextYearlyDate(current: DateValue, template: DateValue, interval: number): DateValue {
+  let next = current.add({ years: interval });
 
-    // Safety break
-    if (cursor.year > end.year + 100) break;
+  try {
+    // Try to preserve same month/day as template
+    next = next.set({ month: template.month, day: template.day });
+  } catch {
+    // Handle invalid dates (e.g., Feb 29 on non-leap years)
+    const lastDayOfMonth = new CalendarDate(next.year, template.month, 1)
+      .add({ months: 1 })
+      .subtract({ days: 1 });
+    next = lastDayOfMonth;
   }
 
-  return dates;
+  return next;
+}
+
+/**
+ * Helper function to get days in a month
+ */
+function getDaysInMonth(date: DateValue): number {
+  return date.set({ day: 1 }).add({ months: 1 }).subtract({ days: 1 }).day;
 }
