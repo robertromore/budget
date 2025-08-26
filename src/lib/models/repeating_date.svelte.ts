@@ -76,6 +76,12 @@ export default class RepeatingDateInput {
         limit: 1000, // Large number, won't be used
         hasEndDate: true,
       };
+    } else if (this.value.end_type === "limit" && this.value.limit) {
+      return {
+        end: null,
+        limit: this.value.limit,
+        hasEndDate: true,
+      };
     }
 
     return {
@@ -150,7 +156,11 @@ export default class RepeatingDateInput {
       const specificDates = this.value.specific_dates || [];
       upcomingDates.push(...specificDates);
 
-      return upcomingDates;
+      // Apply weekend adjustments
+      const adjustedDates = this.applyWeekendAdjustments(upcomingDates);
+
+      // Sort and deduplicate after adjustments
+      return this.sortAndDeduplicateDates(adjustedDates);
     } catch (error) {
       console.warn("Error generating upcoming dates:", error);
       return [];
@@ -314,6 +324,54 @@ export default class RepeatingDateInput {
   }
 
   /**
+   * Check if a date falls on a weekend (Saturday or Sunday)
+   */
+  private isWeekend(date: DateValue): boolean {
+    const dayOfWeek = date.toDate(timezone).getDay();
+    return dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
+  }
+
+  /**
+   * Adjust a date if it falls on a weekend according to the move_weekends setting
+   */
+  private adjustForWeekend(date: DateValue): DateValue {
+    if (!this.isWeekend(date) || this.value.move_weekends === MoveToWeekday.None) {
+      return date;
+    }
+
+    const dayOfWeek = date.toDate(timezone).getDay();
+
+    if (this.value.move_weekends === MoveToWeekday.NextWeekday) {
+      // Move to next weekday (Monday)
+      if (dayOfWeek === 0) {
+        // Sunday -> Monday
+        return date.add({ days: 1 });
+      } else if (dayOfWeek === 6) {
+        // Saturday -> Monday
+        return date.add({ days: 2 });
+      }
+    } else if (this.value.move_weekends === MoveToWeekday.PreviousWeekday) {
+      // Move to previous weekday (Friday)
+      if (dayOfWeek === 0) {
+        // Sunday -> Friday
+        return date.subtract({ days: 2 });
+      } else if (dayOfWeek === 6) {
+        // Saturday -> Friday
+        return date.subtract({ days: 1 });
+      }
+    }
+
+    return date;
+  }
+
+  /**
+   * Apply weekend adjustments to an array of dates
+   */
+  private applyWeekendAdjustments(dates: DateValue[]): DateValue[] {
+    return dates.map((date) => this.adjustForWeekend(date));
+  }
+
+  /**
    * Sort dates and remove duplicates
    */
   private sortAndDeduplicateDates(dates: DateValue[]): DateValue[] {
@@ -382,15 +440,24 @@ export default class RepeatingDateInput {
    * Generate suffix for formatted string (until date or limit)
    */
   private generateSuffix(): string {
+    const parts: string[] = [];
+
     if (this.value.end_type === "limit") {
-      return `for ${this.value.limit} times`;
+      parts.push(`for ${this.value.limit} times`);
     }
 
     if (this.value.end_type === "until" && this.value.end) {
-      return `until ${formatDate(this.value.end.toDate(timezone))}`;
+      parts.push(`until ${formatDate(this.value.end.toDate(timezone))}`);
     }
 
-    return "";
+    // Add weekend handling information
+    if (this.value.move_weekends === MoveToWeekday.NextWeekday) {
+      parts.push("(weekends moved to Monday)");
+    } else if (this.value.move_weekends === MoveToWeekday.PreviousWeekday) {
+      parts.push("(weekends moved to Friday)");
+    }
+
+    return parts.join(" ");
   }
 
   /**
