@@ -146,7 +146,7 @@
     }
   };
 
-  $inspect(value);
+  $inspect(value.end_type);
 </script>
 
 <div class={cn("space-y-6", className)}>
@@ -365,6 +365,35 @@
 
           <Separator />
 
+          <!-- Weekend Handling -->
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <Label class="text-sm font-medium">Weekend Handling</Label>
+              <p class="text-muted-foreground text-xs">
+                Adjust dates that fall on weekends
+              </p>
+            </div>
+
+            <RadioGroup.Root bind:value={value.moveWeekends} {disabled}>
+              <div class="space-y-2">
+                <div class="flex items-center space-x-2">
+                  <RadioGroup.Item value="none" />
+                  <Label class="text-sm">No adjustment</Label>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <RadioGroup.Item value="next_weekday" />
+                  <Label class="text-sm">Move to next weekday (Monday)</Label>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <RadioGroup.Item value="previous_weekday" />
+                  <Label class="text-sm">Move to previous weekday (Friday)</Label>
+                </div>
+              </div>
+            </RadioGroup.Root>
+          </div>
+
+          <Separator />
+
           <!-- End Condition -->
           <div class="space-y-4">
             <Label
@@ -372,6 +401,11 @@
             >
               <Checkbox
                 bind:checked={hasEndCondition}
+                onCheckedChange={(checked) => {
+                  if (!checked) {
+                    value.end_type = null;
+                  }
+                }}
                 {disabled}
                 class="data-[state=checked]:border-primary data-[state=checked]:bg-primary"
               />
@@ -414,7 +448,7 @@
                     <Popover.Trigger>
                       <Button
                         variant="outline"
-                        class="w-full justify-start text-left font-normal"
+                        class="ml-1 w-full justify-start text-left font-normal"
                         {disabled}
                       >
                         <CalendarDays class="mr-2 h-4 w-4" />
@@ -467,56 +501,20 @@
           <p class="bg-muted/50 rounded p-2 text-sm">{value.formatted}</p>
         </div>
 
-        <!-- Date Range Info -->
-        {#if value.upcoming.length > 0}
-          <div class="space-y-2">
-            <Label class="text-muted-foreground text-xs font-medium">
-              Found {value.upcoming.length} occurrence{value.upcoming.length > 1 ? "s" : ""} (from start
-              date onwards)
-            </Label>
-            <div class="bg-muted/30 rounded p-2 text-xs">
-              Range: {formatDate(value.upcoming[0])} → {formatDate(
-                value.upcoming[value.upcoming.length - 1]
-              )}
-            </div>
-          </div>
-        {/if}
-
-        <!-- Upcoming Dates -->
-        {#if upcomingDatesPreview.length > 0}
-          <div class="space-y-2">
-            <Label class="text-muted-foreground text-xs font-medium">Next occurrences:</Label>
-            <div class="flex flex-wrap gap-1">
-              {#each upcomingDatesPreview as date}
-                <Badge variant="outline" class="text-xs">
-                  {formatDate(date)}
-                </Badge>
-              {/each}
-            </div>
-          </div>
-        {/if}
-
         <!-- Calendar Preview -->
         <div class="space-y-2">
           <Label class="text-muted-foreground text-xs font-medium">Calendar preview:</Label>
           <Calendar.Calendar
             type="single"
             value={value.start}
-            class="rounded-md border"
+            class="rounded-md border [--cell-size:--spacing(11)] md:[--cell-size:--spacing(9.75)]"
             readonly
-            onPlaceholderChange={(newValue) => {
-              value.placeholder = newValue;
-            }}
+            bind:placeholder={value.placeholder}
             captionLayout="dropdown"
           >
             {#snippet day({ day, outsideMonth })}
-              {@const dayDate = day.toDate(getLocalTimeZone())}
-              {@const isStartDate =
-                value.start &&
-                dayDate.getFullYear() === value.start.year &&
-                dayDate.getMonth() === value.start.month - 1 &&
-                dayDate.getDate() === value.start.day}
-              {@const isRecurring = isUpcomingDate(dayDate)}
+              {@const isStartDate = value.start && day === value.start}
+              {@const isRecurring = isUpcomingDate(day)}
 
               <Calendar.Day
                 class={cn(
@@ -541,10 +539,6 @@
         <div class="space-y-2">
           <Label class="text-muted-foreground text-xs font-medium">Legend:</Label>
           <div class="flex flex-wrap gap-3 text-xs">
-            <div class="flex items-center gap-1">
-              <div class="h-3 w-3 rounded bg-green-500 ring-1 ring-green-300"></div>
-              <span>Start date</span>
-            </div>
             <div class="flex items-center gap-1">
               <div class="bg-primary h-3 w-3 rounded"></div>
               <span>Recurring dates</span>
