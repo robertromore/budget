@@ -26,7 +26,7 @@ export const categories = sqliteTable("categories", {
   index("category_deleted_at_idx").on(table.deletedAt),
 ]);
 
-export const categoriesRelations = relations(categories, ({ one, many }) => ({
+export const categoriesRelations = relations(categories, ({ one }) => ({
   parent: one(categories, {
     fields: [categories.parentId],
     references: [categories.id],
