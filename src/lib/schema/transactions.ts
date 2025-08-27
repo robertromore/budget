@@ -35,12 +35,24 @@ export const transactions = sqliteTable(
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
     scheduleId: integer("schedule_id").references(() => schedules.id),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    deletedAt: text("deleted_at"),
   },
   (table) => [
     index("relations_transaction_account_idx").on(table.accountId),
     index("relations_transaction_payee_idx").on(table.payeeId),
     index("relations_transaction_category_idx").on(table.categoryId),
     index("relations_transaction_schedule_idx").on(table.scheduleId),
+    index("transaction_account_date_idx").on(table.accountId, table.date, table.id),
+    index("transaction_date_idx").on(table.date),
+    index("transaction_status_idx").on(table.status),
+    index("transaction_parent_idx").on(table.parentId),
+    index("transaction_deleted_at_idx").on(table.deletedAt),
   ]
 );
 

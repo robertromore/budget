@@ -4,7 +4,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, integer, text, index } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { transactions } from "./transactions";
 import type { Transaction } from "./transactions";
@@ -26,7 +26,19 @@ export const accounts = sqliteTable("account", {
     .default(sql`CURRENT_TIMESTAMP`),
   // @todo only useful if allowing account archival?
   // dateClosed: integer('date_closed', { mode: 'timestamp' })
-});
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  deletedAt: text("deleted_at"),
+}, (table) => [
+  index("account_name_idx").on(table.name),
+  index("account_slug_idx").on(table.slug),
+  index("account_closed_idx").on(table.closed),
+  index("account_deleted_at_idx").on(table.deletedAt),
+]);
 
 export const accountsRelations = relations(accounts, ({ many }) => ({
   transactions: many(transactions),

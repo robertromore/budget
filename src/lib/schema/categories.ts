@@ -1,7 +1,7 @@
 // A "category" is a
 
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, integer, text, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+import { sqliteTable, integer, text, type AnySQLiteColumn, index } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -13,7 +13,18 @@ export const categories = sqliteTable("categories", {
   dateCreated: text("date_created")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
-});
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  deletedAt: text("deleted_at"),
+}, (table) => [
+  index("category_name_idx").on(table.name),
+  index("category_parent_idx").on(table.parentId),
+  index("category_deleted_at_idx").on(table.deletedAt),
+]);
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
   parent: one(categories, {

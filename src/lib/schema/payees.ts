@@ -3,7 +3,7 @@
 // transactions. Split transactions have the same parent transaction.
 
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, integer, text, index } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { transactions } from "./transactions";
 import { z } from "zod/v4";
@@ -15,7 +15,17 @@ export const payees = sqliteTable("payee", {
   dateCreated: text("date_created")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
-});
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  deletedAt: text("deleted_at"),
+}, (table) => [
+  index("payee_name_idx").on(table.name),
+  index("payee_deleted_at_idx").on(table.deletedAt),
+]);
 
 export const payeesRelations = relations(payees, ({ many }) => ({
   transactions: many(transactions),

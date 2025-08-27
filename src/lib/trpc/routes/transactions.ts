@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { publicProcedure, t } from "../t";
+import { TRPCError } from "@trpc/server";
 import {
   removeTransactionsSchema,
   insertTransactionSchema,
@@ -18,7 +19,7 @@ export const transactionRoutes = t.router({
     )
     .query(async ({ ctx: { db }, input }) => {
       const records = await db.query.transactions.findMany({
-        where: eq(transactions.id, input.id),
+        where: sql`${transactions.id} = ${input.id} AND ${transactions.deletedAt} IS NULL`,
       });
       return records;
     }),
@@ -26,7 +27,8 @@ export const transactionRoutes = t.router({
     .input(removeTransactionsSchema)
     .mutation(async ({ input: { entities }, ctx: { db } }) => {
       return await db
-        .delete(transactions)
+        .update(transactions)
+        .set({ deletedAt: sql`CURRENT_TIMESTAMP` })
         .where(sql`${transactions.id} in ${entities}`)
         .returning();
     }),
@@ -38,7 +40,10 @@ export const transactionRoutes = t.router({
         ctx: { db },
       }) => {
         if (!accountId) {
-          return;
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Account ID is required for transaction",
+          });
         }
 
         let entity;
@@ -74,7 +79,14 @@ export const transactionRoutes = t.router({
             .returning();
         }
 
-        return entity.shift() as Transaction;
+        const result = entity[0];
+        if (!result) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to save transaction",
+          });
+        }
+        return result;
       }
     ),
 });

@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   sqliteTable,
   integer,
@@ -35,11 +35,20 @@ export const schedules = sqliteTable(
     accountId: integer("account_id")
       .notNull()
       .references(() => accounts.id),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
     index("relations_schedule_schedule_date_idx").on(table.dateId),
     index("relations_schedule_account_idx").on(table.accountId),
     index("relations_schedule_payee_idx").on(table.payeeId),
+    index("schedule_status_idx").on(table.status),
+    index("schedule_name_idx").on(table.name),
+    index("schedule_slug_idx").on(table.slug),
   ]
 );
 

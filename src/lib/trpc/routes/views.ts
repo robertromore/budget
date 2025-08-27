@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { publicProcedure, t } from "../t";
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import {
   insertViewSchema,
   removeViewSchema,
@@ -19,15 +20,32 @@ export const viewsRoutes = t.router({
     // });
   }),
   load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
-    return (
-      await ctx.db.query.views.findMany({
-        where: eq(views.id, input.id),
-      })
-    )[0];
+    const result = await ctx.db.query.views.findMany({
+      where: eq(views.id, input.id),
+    });
+    if (!result[0]) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "View not found",
+      });
+    }
+    return result[0];
   }),
   remove: publicProcedure.input(removeViewSchema).mutation(async ({ ctx, input }) => {
-    if (!input) throw new Error("id can't be null when deleting a view");
-    return (await ctx.db.delete(views).where(eq(views.id, input.id)).returning())[0];
+    if (!input) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "View ID is required for deletion",
+      });
+    }
+    const result = await ctx.db.delete(views).where(eq(views.id, input.id)).returning();
+    if (!result[0]) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "View not found or could not be deleted",
+      });
+    }
+    return result[0];
   }),
   delete: publicProcedure
     .input(removeViewsSchema)
@@ -65,9 +83,13 @@ export const viewsRoutes = t.router({
           })
           .returning();
       }
-      // console.log(entities);
-      const entity = entities[0] as View;
-      // entity.is_new = !!id;
+      if (!entities[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to save view",
+        });
+      }
+      const entity = entities[0];
       return entity;
     }),
 });
