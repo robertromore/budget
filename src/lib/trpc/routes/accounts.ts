@@ -1,5 +1,6 @@
 import {
   accounts,
+  transactions,
   removeAccountSchema,
   type Account,
   type Transaction,
@@ -19,114 +20,45 @@ export interface AccountRecordWithTransactionAmounts extends AccountRecord {
 
 export const accountRoutes = t.router({
   all: publicProcedure.query(async ({ ctx }) => {
-    // Use raw SQL for better performance with window functions
-    const accountsWithBalances = await ctx.db.execute(sql`
-      SELECT 
-        a.id,
-        a.name,
-        a.slug,
-        a.notes,
-        COALESCE(SUM(t.amount), 0) as balance,
-        COUNT(CASE WHEN t.id IS NOT NULL THEN 1 END) as transaction_count
-      FROM accounts a
-      LEFT JOIN transactions t ON a.id = t.account_id AND t.deleted_at IS NULL
-      WHERE a.deleted_at IS NULL
-      GROUP BY a.id, a.name, a.slug, a.notes
-      ORDER BY a.name
-    `);
-
-    // Get transactions with running balances for each account
-    const accountsWithTransactions = await Promise.all(
-      accountsWithBalances.map(async (account) => {
-        const transactions = await ctx.db.execute(sql`
-          SELECT 
-            t.*,
-            p.name as payee_name,
-            c.name as category_name,
-            SUM(t2.amount) OVER (
-              PARTITION BY t.account_id 
-              ORDER BY t.date, t.id 
-              ROWS UNBOUNDED PRECEDING
-            ) as balance
-          FROM transactions t
-          LEFT JOIN payees p ON t.payee_id = p.id
-          LEFT JOIN categories c ON t.category_id = c.id
-          LEFT JOIN transactions t2 ON t2.account_id = t.account_id 
-            AND (t2.date < t.date OR (t2.date = t.date AND t2.id <= t.id))
-            AND t2.deleted_at IS NULL
-          WHERE t.account_id = ${account.id} AND t.deleted_at IS NULL
-          ORDER BY t.date DESC, t.id DESC
-        `);
-
-        return {
-          ...account,
-          transactions: transactions.map(tx => ({
-            ...tx,
-            payee: tx.payee_name ? { name: tx.payee_name } : null,
-            category: tx.category_name ? { name: tx.category_name } : null
-          }))
-        };
-      })
-    );
-
-    return accountsWithTransactions as Account[];
+    // Simplified query using standard Drizzle methods
+    return await ctx.db.query.accounts.findMany({
+      where: isNull(accounts.deletedAt),
+      with: {
+        transactions: {
+          where: isNull(transactions.deletedAt),
+          with: {
+            payee: true,
+            category: true,
+          },
+          orderBy: [desc(transactions.date), desc(transactions.id)],
+        },
+      },
+      orderBy: [accounts.name],
+    }) as Account[];
   }),
   load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
-    // Get account info with total balance
-    const accountResult = await ctx.db.execute(sql`
-      SELECT 
-        a.id,
-        a.name,
-        a.slug,
-        a.notes,
-        COALESCE(SUM(t.amount), 0) as balance
-      FROM accounts a
-      LEFT JOIN transactions t ON a.id = t.account_id AND t.deleted_at IS NULL
-      WHERE a.id = ${input.id} AND a.deleted_at IS NULL
-      GROUP BY a.id, a.name, a.slug, a.notes
-    `);
+    const account = await ctx.db.query.accounts.findFirst({
+      where: sql`${accounts.id} = ${input.id} AND ${accounts.deletedAt} IS NULL`,
+      with: {
+        transactions: {
+          where: isNull(transactions.deletedAt),
+          with: {
+            payee: true,
+            category: true,
+          },
+          orderBy: [transactions.date, transactions.id],
+        },
+      },
+    });
 
-    if (!accountResult.length) {
-      return null;
-    }
-
-    if (!accountResult[0]) {
+    if (!account) {
       throw new TRPCError({
         code: "NOT_FOUND",
         message: "Account not found",
       });
     }
-    const account = accountResult[0];
 
-    // Get transactions with running balances using window function
-    const transactions = await ctx.db.execute(sql`
-      SELECT 
-        t.*,
-        p.name as payee_name,
-        c.name as category_name,
-        SUM(t2.amount) OVER (
-          PARTITION BY t.account_id 
-          ORDER BY t.date, t.id 
-          ROWS UNBOUNDED PRECEDING
-        ) as balance
-      FROM transactions t
-      LEFT JOIN payees p ON t.payee_id = p.id
-      LEFT JOIN categories c ON t.category_id = c.id
-      LEFT JOIN transactions t2 ON t2.account_id = t.account_id 
-        AND (t2.date < t.date OR (t2.date = t.date AND t2.id <= t.id))
-        AND t2.deleted_at IS NULL
-      WHERE t.account_id = ${input.id} AND t.deleted_at IS NULL
-      ORDER BY t.date, t.id
-    `);
-
-    return {
-      ...account,
-      transactions: transactions.map(tx => ({
-        ...tx,
-        payee: tx.payee_name ? { name: tx.payee_name } : null,
-        category: tx.category_name ? { name: tx.category_name } : null
-      }))
-    };
+    return account as Account;
   }),
   save: publicProcedure.input(formInsertAccountSchema).mutation(async ({ ctx, input }) => {
     if (input.id) {

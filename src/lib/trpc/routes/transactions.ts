@@ -5,7 +5,6 @@ import {
   removeTransactionsSchema,
   insertTransactionSchema,
   transactions,
-  type Transaction,
 } from "$lib/schema";
 import { eq, sql } from "drizzle-orm";
 import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
