@@ -13,6 +13,7 @@
   import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
   import AddScheduleDialog from "$lib/components/dialogs/add-schedule-dialog.svelte";
   import { SchedulesState } from "$lib/states/schedules.svelte";
+  import QueryProvider from "$lib/components/query-provider.svelte";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const { accounts, payees, categories, schedules } = $derived(data);
@@ -30,20 +31,22 @@
 <AddScheduleDialog/>
 <DeleteAccountDialog/>
 
-<div class="bg-background">
-  <div class="grid">
-    <Sidebar.Provider>
-      <AppSidebar />
-      <main class="w-full">
-        <div class="fixed">
-          <Sidebar.Trigger />
-        </div>
-        <div class="col-span-3 lg:col-span-4">
-          <div class="h-full px-4 py-6 lg:px-8">
-            {@render children?.()}
+<QueryProvider>
+  <div class="bg-background">
+    <div class="grid">
+      <Sidebar.Provider>
+        <AppSidebar />
+        <main class="w-full">
+          <div class="fixed">
+            <Sidebar.Trigger />
           </div>
-        </div>
-      </main>
-    </Sidebar.Provider>
+          <div class="col-span-3 lg:col-span-4">
+            <div class="h-full px-4 py-6 lg:px-8">
+              {@render children?.()}
+            </div>
+          </div>
+        </main>
+      </Sidebar.Provider>
+    </div>
   </div>
-</div>
+</QueryProvider>
