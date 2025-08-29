@@ -12,18 +12,29 @@
   import type { FacetedFilterOption } from "$lib/types";
   import { Button } from "../ui/button";
 
+
   type Props = {
     onSubmit: (new_value: FacetedFilterOption) => void;
+    disabled?: boolean;
+    ariaLabel?: string;
   }
-  let { onSubmit }: Props = $props();
+  let { onSubmit, disabled = false, ariaLabel = "Advanced date input" }: Props = $props();
 
   let dateType = $state('day');
 
   let value = $state<CalendarDate>();
 
+  // Constants for better maintainability
+  const MONTHS_PER_QUARTER = 3;
+  const MONTHS_PER_HALF_YEAR = 6;
+  const YEARS_TO_SHOW = 6;
+
   const currentDate = today(getLocalTimeZone());
 
-  const monthFmt = new DateFormatter("en-US", {
+  // Localization support - can be enhanced with proper i18n store
+  const userLocale = 'en-US'; // TODO: Replace with actual locale from i18n store
+
+  const monthFmt = new DateFormatter(userLocale, {
     month: "long"
   });
 
@@ -36,7 +47,7 @@
   });
 
   const quarterOptions = Array.from({ length: 4 }, (_, i) => {
-    const month = currentDate.set({ month: (i * 3) + 1 });
+    const month = currentDate.set({ month: (i * MONTHS_PER_QUARTER) + 1 });
     return {
       value: month.month,
       label: `Q${i+1}`
@@ -44,14 +55,14 @@
   });
 
   const halfYearOptions = Array.from({ length: 2 }, (_, i) => {
-    const month = currentDate.set({ month: (i * 6) + 1 });
+    const month = currentDate.set({ month: (i * MONTHS_PER_HALF_YEAR) + 1 });
     return {
       value: month.month,
       label: `H${i+1}`
     };
   });
 
-  const yearOptions = Array.from({ length: 6 }, (_, i) => ({
+  const yearOptions = Array.from({ length: YEARS_TO_SHOW }, (_, i) => ({
     label: String(new Date().getFullYear() - i),
     value: new Date().getFullYear() - i
   }));
@@ -67,126 +78,189 @@
     'halfYear': new SvelteMap<string, CalendarDate>()
   };
 
-  yearOptions.forEach((yearOption) => {
-    monthOptions.forEach((monthOption) => {
-      _dateCache.month.set((yearOption.value + '') + (monthOption.value + ''), new CalendarDate(yearOption.value, monthOption.value, 0));
-    });
-    quarterOptions.forEach((quarterOption) => {
-      _dateCache.quarter.set((yearOption.value + '') + (quarterOption.value + ''), new CalendarDate(yearOption.value, quarterOption.value, 0));
-    });
-    halfYearOptions.forEach((halfYearOption) => {
-      _dateCache.halfYear.set((yearOption.value + '') + (halfYearOption.value + ''), new CalendarDate(yearOption.value, halfYearOption.value, 0));
-    });
-  });
+  // Lazy cache initialization for better performance
+  const getDateCache = (() => {
+    let cache: typeof _dateCache | null = null;
+    return () => {
+      if (!cache) {
+        cache = {
+          'month': new SvelteMap<string, CalendarDate>(),
+          'quarter': new SvelteMap<string, CalendarDate>(),
+          'halfYear': new SvelteMap<string, CalendarDate>()
+        };
 
-  const formatterOptions = $derived.by(() => {
-    if (dateType === 'month') {
-      return {
-        month: "short" as "short",
-        year: "numeric" as "numeric"
-      };
-    } else if (dateType === 'year') {
-      return {
-        year: "numeric" as "numeric"
-      };
+        // Initialize cache with valid CalendarDate objects
+        yearOptions.forEach((yearOption) => {
+          monthOptions.forEach((monthOption) => {
+            cache!.month.set(`${yearOption.value}${monthOption.value}`, new CalendarDate(yearOption.value, monthOption.value, 1));
+          });
+          quarterOptions.forEach((quarterOption) => {
+            cache!.quarter.set(`${yearOption.value}${quarterOption.value}`, new CalendarDate(yearOption.value, quarterOption.value, 1));
+          });
+          halfYearOptions.forEach((halfYearOption) => {
+            cache!.halfYear.set(`${yearOption.value}${halfYearOption.value}`, new CalendarDate(yearOption.value, halfYearOption.value, 1));
+          });
+        });
+      }
+      return cache;
+    };
+  })();
+
+
+  // Safe formatter function that handles all date types properly
+  const getFormattedValue = (): string => {
+    if (!value) return '';
+
+    try {
+      switch (dateType) {
+        case 'month':
+          return new DateFormatter(userLocale, {
+            month: "short",
+            year: "numeric"
+          }).format(value.toDate(getLocalTimeZone()));
+        case 'year':
+          return new DateFormatter(userLocale, {
+            year: "numeric"
+          }).format(value.toDate(getLocalTimeZone()));
+        case 'quarter':
+          return `Q${Math.ceil(value.month / MONTHS_PER_QUARTER)} ${value.year}`;
+        case 'half-year':
+          return `H${Math.ceil(value.month / MONTHS_PER_HALF_YEAR)} ${value.year}`;
+        default:
+          return new DateFormatter(userLocale, {
+            month: "short",
+            day: "2-digit",
+            year: "numeric"
+          }).format(value.toDate(getLocalTimeZone()));
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
     }
-  });
+  };
 
-  const formatter = $derived.by(() => {
-    switch (dateType) {
-      case 'month':
-      case 'year':
-        return new DateFormatter('en-us', formatterOptions);
+  // Validation and submission helper
+  const validateAndSubmit = (event: Event) => {
+    event.preventDefault();
 
-      case 'quarter':
-        return { format: (value: Date & CalendarDate) => `Q${Math.ceil(value.month / 3)} ${value.year}` };
-
-      case 'half-year':
-        return { format: (value: Date & CalendarDate) => `H${Math.ceil(value.month / 6)} ${value.year}` };
+    if (!value) {
+      console.warn('No date selected');
+      return;
     }
 
-    return new DateFormatter('en-us', {
-      month: "short",
-      day: "2-digit",
-      year: "numeric"
-    });
-  });
+    try {
+      const submissionValue = {
+        value: dateType !== 'day' ? `${dateType}:${value.toString()}` : value.toString(),
+        label: getFormattedValue()
+      };
+
+      onSubmit(submissionValue);
+    } catch (error) {
+      console.error('Error submitting date:', error);
+    }
+  };
 </script>
 
-<ToggleGroup.Root type="single" bind:value={dateType} class="items-start justify-start mb-2 mt-1.5" variant="outline" size="default">
-  <ToggleGroup.Item value="day" aria-label="Day">
-    Day
-  </ToggleGroup.Item>
-  <ToggleGroup.Item value="month" aria-label="Month">
-    Month
-  </ToggleGroup.Item>
-  <ToggleGroup.Item value="quarter" aria-label="Quarter">
-    Quarter
-  </ToggleGroup.Item>
-  <ToggleGroup.Item value="half-year" aria-label="Half Year">
-    Half Year
-  </ToggleGroup.Item>
-  <ToggleGroup.Item value="year" aria-label="Year">
-    Year
-  </ToggleGroup.Item>
-</ToggleGroup.Root>
+<div role="region" aria-label={ariaLabel}>
+<form onsubmit={validateAndSubmit}>
+  <fieldset>
+    <legend class="sr-only">Select date range type</legend>
+    <ToggleGroup.Root
+      type="single"
+      bind:value={dateType}
+      variant="outline"
+      size="default"
+      role="radiogroup"
+      aria-labelledby="date-type-label"
+    >
+      <ToggleGroup.Item value="day" aria-label="Select specific day">
+        Day
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="month" aria-label="Select entire month">
+        Month
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="quarter" aria-label="Select quarter (3 months)">
+        Quarter
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="half-year" aria-label="Select half year (6 months)">
+        Half Year
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="year" aria-label="Select entire year">
+        Year
+      </ToggleGroup.Item>
+    </ToggleGroup.Root>
+  </fieldset>
 
-{#if dateType === 'day'}
-  <Calendar type="single" numberOfMonths={2} class="p-0" bind:value />
-{:else if dateType === 'month'}
-  <ToggleGroup.Root type="single" bind:value={selectedMonth} onValueChange={(new_value) => value = _dateCache.month.get(new_value)} class="items-start justify-start grid h-[360px] overflow-auto">
+  {#if dateType === 'day'}
+    <div role="group" aria-labelledby="day-picker-label">
+      <span id="day-picker-label" class="sr-only">Select specific day</span>
+      <Calendar type="single" numberOfMonths={2} class="p-0" bind:value />
+    </div>
+  {:else if dateType === 'month'}
+    <div role="group" aria-labelledby="month-picker-label">
+      <span id="month-picker-label" class="sr-only">Select month and year</span>
+      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedMonth} onValueChange={(new_value) => value = getDateCache().month.get(new_value)} class="items-start justify-start grid h-[360px] overflow-auto">
     {#each yearOptions as year (year)}
       <Label class="my-2">{year.label}</Label>
       <div class="grid w-full grid-cols-4">
         {#each monthOptions as month (month)}
-          <ToggleGroup.Item value={(year.value + '') + (month.value + '')} aria-label={month.label} class="ring-border ring-1 m-1 rounded">
+          <ToggleGroup.Item value={(year.value + '') + (month.value + '')} aria-label={month.label}>
             {month.label}
           </ToggleGroup.Item>
         {/each}
       </div>
     {/each}
-  </ToggleGroup.Root>
-{:else if dateType === 'quarter'}
-  <ToggleGroup.Root type="single" bind:value={selectedQuarter} onValueChange={(new_value) => value = _dateCache.quarter.get(new_value)} class="items-stretch justify-start grid grid-cols-2 h-[360px] overflow-auto">
+      </ToggleGroup.Root>
+    </div>
+  {:else if dateType === 'quarter'}
+    <div role="group" aria-labelledby="quarter-picker-label">
+      <span id="quarter-picker-label" class="sr-only">Select quarter and year</span>
+      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedQuarter} onValueChange={(new_value) => value = getDateCache().quarter.get(new_value)} class="items-stretch justify-start grid grid-cols-2 h-[360px] overflow-auto">
     {#each yearOptions as year (year)}
       <div>
         <Label class="my-2">{year.label}</Label>
-        <div class="grid grid-cols-4">
+        <div class="grid grid-cols-4 gap-0">
           {#each quarterOptions as quarter (quarter)}
-            <ToggleGroup.Item value={(year.value + '') + (quarter.value + '')} aria-label={quarter.label} class="ring-border ring-1 m-1 rounded">
+            <ToggleGroup.Item value={(year.value + '') + (quarter.value + '')} aria-label={quarter.label}>
               {quarter.label}
             </ToggleGroup.Item>
           {/each}
         </div>
       </div>
     {/each}
-  </ToggleGroup.Root>
-{:else if dateType === 'half-year'}
-  <ToggleGroup.Root type="single" bind:value={selectedHalfYear} onValueChange={(new_value) => value = _dateCache.halfYear.get(new_value)} class="items-start justify-start grid grid-cols-1 h-[360px] overflow-auto">
+      </ToggleGroup.Root>
+    </div>
+  {:else if dateType === 'half-year'}
+    <div role="group" aria-labelledby="half-year-picker-label">
+      <span id="half-year-picker-label" class="sr-only">Select half year and year</span>
+      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedHalfYear} onValueChange={(new_value) => value = getDateCache().halfYear.get(new_value)} class="items-start justify-start grid grid-cols-3 gap-2 h-[360px] overflow-auto">
     {#each yearOptions as year (year)}
       <div>
-        <Label class="my-2">{year.label}</Label>
+        <Label class="my-2 text-center block">{year.label}</Label>
         <div class="grid grid-cols-2">
           {#each halfYearOptions as halfYear (halfYear)}
-            <ToggleGroup.Item value={(year.value + '') + (halfYear.value + '')} aria-label={halfYear.label} class="ring-border ring-1 m-1 rounded">
+            <ToggleGroup.Item value={`${year.value}${halfYear.value}`} aria-label="{halfYear.label} {year.label}">
               {halfYear.label}
             </ToggleGroup.Item>
           {/each}
         </div>
       </div>
     {/each}
-  </ToggleGroup.Root>
-{:else if dateType === 'year'}
-  <ToggleGroup.Root type="single" bind:value={selectedYear} onValueChange={(new_value) => value = new CalendarDate(parseInt(new_value), 0, 0)} class="items-start justify-start grid grid-cols-1 h-[360px] overflow-auto">
+      </ToggleGroup.Root>
+    </div>
+  {:else if dateType === 'year'}
+    <div role="group" aria-labelledby="year-picker-label">
+      <span id="year-picker-label" class="sr-only">Select year</span>
+      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedYear} onValueChange={(new_value) => value = new CalendarDate(parseInt(new_value), 1, 1)} class="items-start justify-start grid grid-cols-3 h-[360px] overflow-auto">
     {#each yearOptions as year (year)}
-      <ToggleGroup.Item value={(year.value + '')} aria-label={year.label} class="ring-border ring-1 m-1 rounded">
+      <ToggleGroup.Item value={`${year.value}`} aria-label={year.label}>
         {year.label}
       </ToggleGroup.Item>
     {/each}
-  </ToggleGroup.Root>
-{/if}
+      </ToggleGroup.Root>
+    </div>
+  {/if}
 
-<Button onclick={() => onSubmit({
-  value: dateType !== 'day' ? dateType + ':' + value?.toString() : value?.toString() || '',
-  label: formatter.format((dateType === 'month' || dateType === 'year' ? value?.toDate(getLocalTimeZone()) : value) as Date & CalendarDate)
-})}>Apply</Button>
+  <Button type="submit" {disabled}>Apply</Button>
+</form>
+</div>
