@@ -14,6 +14,8 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  checks: write
+  actions: read
 
 jobs:
   automated-review:
@@ -47,11 +49,9 @@ jobs:
         run: |
           # Get the diff for changed files
           git diff origin/${{ github.event.pull_request.base.ref }}..HEAD \
-            --name-only \
-            ${{ steps.changed-files.outputs.all_changed_files }} > changed_files.txt
+            --name-only > changed_files.txt
           
-          git diff origin/${{ github.event.pull_request.base.ref }}..HEAD \
-            ${{ steps.changed-files.outputs.all_changed_files }} > pr_diff.txt
+          git diff origin/${{ github.event.pull_request.base.ref }}..HEAD > pr_diff.txt
           
           echo "changed_files_count=$(wc -l < changed_files.txt)" >> $GITHUB_OUTPUT
 
