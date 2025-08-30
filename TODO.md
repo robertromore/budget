@@ -1,26 +1,77 @@
 # Budget App Development TODO
 
-## Current State
-- Codebase reset to earlier stable point
-- Using incremental development with specialized agents
-- Following version control best practices
+## Current State Assessment ✅
+- **App Status**: Successfully running on http://localhost:5174
+- **Architecture**: Clean 3-layer structure (services → query → UI)
+- **Database**: SQLite with Drizzle ORM, migrations working
+- **Frontend**: SvelteKit 5 with Shadcn-Svelte components
+- **Backend**: tRPC API with type-safe endpoints
 
-## Immediate Tasks
-- [ ] Clean up git working directory
-- [ ] Assess current codebase structure and functionality
-- [ ] Identify next priority features to implement
+### Existing Features
+- ✅ Database schema: accounts, categories, payees, transactions, schedules
+- ✅ Account management with data table interface
+- ✅ Sidebar navigation with sidebar UI components
+- ✅ Transaction viewing/editing with faceted filtering
+- ✅ Schedule management functionality
+- ✅ State management with context pattern
+
+### Tech Stack
+- **Frontend**: Svelte 5, SvelteKit, Shadcn-Svelte, Tailwind CSS
+- **Backend**: tRPC, Drizzle ORM, SQLite
+- **Dev Tools**: Bun, TypeScript, Prettier, ESLint
+
+## Next Priority Tasks
+- [ ] Identify missing features or UI improvements needed
+- [ ] Review data table functionality for enhancements
+- [ ] Add transaction creation/editing workflows
+- [ ] Implement filtering and search improvements
+- [ ] Add reporting/analytics features
 
 ## Agent Assignments
-- **backend-api-architect**: tRPC routes, database operations, authentication
-- **frontend-ui-specialist**: Shadcn Svelte components, UI/UX, styling
-- **query-layer-specialist**: Query/mutation definitions, cache management, error handling
+- **backend-api-architect**: `src/lib/trpc/`, `src/lib/server/db/`, `src/lib/schema/`
+- **frontend-ui-specialist**: `src/lib/components/ui/`, UI components, styling
+- **query-layer-specialist**: Query/mutation patterns, error handling, cache management
 
 ## Completed Tasks
 - [x] Set up agent definitions in `.claude/agents/`
 - [x] Created TODO.md for project tracking
+- [x] Cleaned up git working directory
+- [x] Assessed current codebase structure
+- [x] Verified app functionality (runs successfully)
 
-## Notes
+## Development Guidelines
 - Focus on one feature at a time
 - Make small, incremental changes
 - Use proper version control practices
+- Test changes before committing
 - Update this TODO.md as work progresses
+
+## Component Organization Policy 🏗️
+**Long-standing preference for component structure:**
+
+### Global Components (`src/lib/components/`)
+- Components used in multiple routes/pages
+- Reusable UI primitives beyond shadcn-svelte
+- App-wide components (e.g., `app-sidebar.svelte`)
+- `ui/` folder contains shadcn-svelte components
+
+### Route-Specific Components
+- Components specific to certain routes should be in their route's `(components)` subfolder
+- Configuration files should be in `(config)` subfolder
+- Data definitions should be in `(data)` subfolder
+- Other logical groupings use `(name)` convention
+
+**Example Structure:**
+```
+src/routes/accounts/[id]/
+├── (components)/
+│   ├── data-table.svelte
+│   ├── (cells)/
+│   │   ├── data-table-cell.svelte
+│   │   └── data-table-editable-cell.svelte
+│   └── (facets)/
+│       └── data-table-faceted-filter.svelte
+├── (config)/
+│   └── table-columns.ts
+└── +page.svelte
+```

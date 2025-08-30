@@ -8,11 +8,11 @@
   import type { FilterInputOption, TransactionsFormat } from "$lib/types";
   import { zod4Client } from "sveltekit-superforms/adapters";
   import { superForm } from "sveltekit-superforms/client";
-  import DeleteViewDialog from "../dialogs/delete-view-dialog.svelte";
-  import DisplayInput from "../input/display-input.svelte";
-  import FilterInput from "../input/filter-input.svelte";
-  import { Button, buttonVariants } from "../ui/button";
-  import { Input } from "../ui/input";
+  import DeleteViewDialog from "$lib/components/dialogs/delete-view-dialog.svelte";
+  import DisplayInput from "$lib/components/input/display-input.svelte";
+  import FilterInput from "$lib/components/input/filter-input.svelte";
+  import { Button, buttonVariants } from "$lib/components/ui/button";
+  import { Input } from "$lib/components/ui/input";
 
   let {
     onCancel,
