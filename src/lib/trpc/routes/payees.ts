@@ -1,7 +1,7 @@
-import { insertPayeeSchema, payees, removePayeeSchema, removePayeesSchema } from "$lib/schema";
+import { formInsertPayeeSchema, payees, removePayeeSchema, removePayeesSchema } from "$lib/schema";
 import { z } from "zod";
-import { publicProcedure, t } from "../t";
-import { eq, sql, isNull } from "drizzle-orm";
+import { publicProcedure, rateLimitedProcedure, t } from "../t";
+import { eq, isNull, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 export const payeeRoutes = t.router({
@@ -10,7 +10,8 @@ export const payeeRoutes = t.router({
   }),
   load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
     const result = await ctx.db.query.payees.findMany({
-      where: sql`${payees.id} = ${input.id} AND ${payees.deletedAt} IS NULL`,
+      where: (payees, { eq, and, isNull }) =>
+        and(eq(payees.id, input.id), isNull(payees.deletedAt)),
     });
     if (!result[0]) {
       throw new TRPCError({
@@ -20,15 +21,16 @@ export const payeeRoutes = t.router({
     }
     return result[0];
   }),
-  remove: publicProcedure.input(removePayeeSchema).mutation(async ({ ctx, input }) => {
+  remove: rateLimitedProcedure.input(removePayeeSchema).mutation(async ({ ctx, input }) => {
     if (!input) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Payee ID is required for deletion",
       });
     }
-    const result = await ctx.db.update(payees)
-      .set({ deletedAt: sql`CURRENT_TIMESTAMP` })
+    const result = await ctx.db
+      .update(payees)
+      .set({ deletedAt: new Date().toISOString() })
       .where(eq(payees.id, input.id))
       .returning();
     if (!result[0]) {
@@ -39,17 +41,17 @@ export const payeeRoutes = t.router({
     }
     return result[0];
   }),
-  delete: publicProcedure
+  delete: rateLimitedProcedure
     .input(removePayeesSchema)
     .mutation(async ({ input: { entities }, ctx: { db } }) => {
       return await db
         .update(payees)
-        .set({ deletedAt: sql`CURRENT_TIMESTAMP` })
-        .where(sql`${payees.id} in ${entities}`)
+        .set({ deletedAt: new Date().toISOString() })
+        .where(inArray(payees.id, entities))
         .returning();
     }),
-  save: publicProcedure
-    .input(insertPayeeSchema)
+  save: rateLimitedProcedure
+    .input(formInsertPayeeSchema)
     .mutation(async ({ input: { id, name, notes }, ctx: { db } }) => {
       if (id) {
         const result = await db

@@ -1,12 +1,12 @@
 import {
   categories,
-  insertCategorySchema,
+  formInsertCategorySchema,
   removeCategoriesSchema,
   removeCategorySchema,
   type Category,
 } from "$lib/schema";
-import { eq, sql, isNull } from "drizzle-orm";
-import { publicProcedure, t } from "../t";
+import { eq, isNull, inArray } from "drizzle-orm";
+import { publicProcedure, rateLimitedProcedure, t } from "../t";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
@@ -16,7 +16,8 @@ export const categoriesRoutes = t.router({
   }),
   load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
     const result = await ctx.db.query.categories.findMany({
-      where: sql`${categories.id} = ${input.id} AND ${categories.deletedAt} IS NULL`,
+      where: (categories, { eq, and, isNull }) =>
+        and(eq(categories.id, input.id), isNull(categories.deletedAt)),
     });
     if (!result[0]) {
       throw new TRPCError({
@@ -26,15 +27,16 @@ export const categoriesRoutes = t.router({
     }
     return result[0];
   }),
-  remove: publicProcedure.input(removeCategorySchema).mutation(async ({ ctx, input }) => {
+  remove: rateLimitedProcedure.input(removeCategorySchema).mutation(async ({ ctx, input }) => {
     if (!input) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Category ID is required for deletion",
       });
     }
-    const result = await ctx.db.update(categories)
-      .set({ deletedAt: sql`CURRENT_TIMESTAMP` })
+    const result = await ctx.db
+      .update(categories)
+      .set({ deletedAt: new Date().toISOString() })
       .where(eq(categories.id, input.id))
       .returning();
     if (!result[0]) {
@@ -45,17 +47,17 @@ export const categoriesRoutes = t.router({
     }
     return result[0];
   }),
-  delete: publicProcedure
+  delete: rateLimitedProcedure
     .input(removeCategoriesSchema)
     .mutation(async ({ input: { entities }, ctx: { db } }) => {
       return await db
         .update(categories)
-        .set({ deletedAt: sql`CURRENT_TIMESTAMP` })
-        .where(sql`${categories.id} in ${entities}`)
+        .set({ deletedAt: new Date().toISOString() })
+        .where(inArray(categories.id, entities))
         .returning();
     }),
-  save: publicProcedure
-    .input(insertCategorySchema)
+  save: rateLimitedProcedure
+    .input(formInsertCategorySchema)
     .mutation(async ({ input: { id, name, notes }, ctx: { db } }) => {
       let entities;
       if (id) {

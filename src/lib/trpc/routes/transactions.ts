@@ -1,12 +1,8 @@
 import { z } from "zod";
-import { publicProcedure, t } from "../t";
+import { publicProcedure, rateLimitedProcedure, t } from "../t";
 import { TRPCError } from "@trpc/server";
-import {
-  removeTransactionsSchema,
-  insertTransactionSchema,
-  transactions,
-} from "$lib/schema";
-import { eq, sql } from "drizzle-orm";
+import { removeTransactionsSchema, formInsertTransactionSchema, transactions } from "$lib/schema";
+import { eq, inArray } from "drizzle-orm";
 import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
 
 export const transactionRoutes = t.router({
@@ -18,21 +14,22 @@ export const transactionRoutes = t.router({
     )
     .query(async ({ ctx: { db }, input }) => {
       const records = await db.query.transactions.findMany({
-        where: sql`${transactions.id} = ${input.id} AND ${transactions.deletedAt} IS NULL`,
+        where: (transactions, { eq, and, isNull }) =>
+          and(eq(transactions.id, input.id), isNull(transactions.deletedAt)),
       });
       return records;
     }),
-  delete: publicProcedure
+  delete: rateLimitedProcedure
     .input(removeTransactionsSchema)
     .mutation(async ({ input: { entities }, ctx: { db } }) => {
       return await db
         .update(transactions)
-        .set({ deletedAt: sql`CURRENT_TIMESTAMP` })
-        .where(sql`${transactions.id} in ${entities}`)
+        .set({ deletedAt: new Date().toISOString() })
+        .where(inArray(transactions.id, entities))
         .returning();
     }),
-  save: publicProcedure
-    .input(insertTransactionSchema)
+  save: rateLimitedProcedure
+    .input(formInsertTransactionSchema)
     .mutation(
       async ({
         input: { id, payeeId, amount, categoryId, notes, date, accountId, status },
