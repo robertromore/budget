@@ -8,24 +8,28 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { transactions } from "./transactions";
 import { z } from "zod/v4";
 
-export const payees = sqliteTable("payee", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name"),
-  notes: text("notes"),
-  dateCreated: text("date_created")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  deletedAt: text("deleted_at"),
-}, (table) => [
-  index("payee_name_idx").on(table.name),
-  index("payee_deleted_at_idx").on(table.deletedAt),
-]);
+export const payees = sqliteTable(
+  "payee",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name"),
+    notes: text("notes"),
+    dateCreated: text("date_created")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    deletedAt: text("deleted_at"),
+  },
+  (table) => [
+    index("payee_name_idx").on(table.name),
+    index("payee_deleted_at_idx").on(table.deletedAt),
+  ]
+);
 
 export const payeesRelations = relations(payees, ({ many }) => ({
   transactions: many(transactions),
@@ -36,10 +40,11 @@ export const insertPayeeSchema = createInsertSchema(payees);
 export const formInsertPayeeSchema = createInsertSchema(payees, {
   name: (schema) =>
     schema
-      .min(1, {
-        message: "required",
-      })
-      .max(30),
+      .min(1, "Payee name is required")
+      .max(50, "Payee name must be less than 50 characters")
+      .regex(/^[a-zA-Z0-9\s\-_&']+$/, "Payee name contains invalid characters"),
+  notes: (schema) =>
+    schema.max(500, "Notes must be less than 500 characters").optional().nullable(),
 });
 export const removePayeeSchema = z.object({ id: z.number().nonnegative() });
 export const removePayeesSchema = z.object({ entities: z.array(z.number().nonnegative()) });

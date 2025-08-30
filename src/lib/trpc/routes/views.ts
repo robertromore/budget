@@ -1,5 +1,5 @@
-import { eq, sql } from "drizzle-orm";
-import { publicProcedure, t } from "../t";
+import { eq, inArray } from "drizzle-orm";
+import { publicProcedure, rateLimitedProcedure, t } from "../t";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
@@ -31,7 +31,7 @@ export const viewsRoutes = t.router({
     }
     return result[0];
   }),
-  remove: publicProcedure.input(removeViewSchema).mutation(async ({ ctx, input }) => {
+  remove: rateLimitedProcedure.input(removeViewSchema).mutation(async ({ ctx, input }) => {
     if (!input) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -47,15 +47,12 @@ export const viewsRoutes = t.router({
     }
     return result[0];
   }),
-  delete: publicProcedure
+  delete: rateLimitedProcedure
     .input(removeViewsSchema)
     .mutation(async ({ input: { entities }, ctx: { db } }) => {
-      return await db
-        .delete(views)
-        .where(sql`${views.id} in ${entities}`)
-        .returning();
+      return await db.delete(views).where(inArray(views.id, entities)).returning();
     }),
-  save: publicProcedure
+  save: rateLimitedProcedure
     .input(insertViewSchema)
     .mutation(async ({ input: { id, name, description, icon, filters, display }, ctx: { db } }) => {
       let entities;

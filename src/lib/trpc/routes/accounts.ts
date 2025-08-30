@@ -7,8 +7,8 @@ import {
   formInsertAccountSchema,
 } from "$lib/schema";
 import { z } from "zod";
-import { publicProcedure, t } from "../t";
-import { eq, sql, desc, isNull } from "drizzle-orm";
+import { publicProcedure, rateLimitedProcedure, t } from "../t";
+import { eq, desc, isNull } from "drizzle-orm";
 import slugify from "@sindresorhus/slugify";
 import { TRPCError } from "@trpc/server";
 
@@ -21,7 +21,7 @@ export interface AccountRecordWithTransactionAmounts extends AccountRecord {
 export const accountRoutes = t.router({
   all: publicProcedure.query(async ({ ctx }) => {
     // Simplified query using standard Drizzle methods
-    return await ctx.db.query.accounts.findMany({
+    return (await ctx.db.query.accounts.findMany({
       where: isNull(accounts.deletedAt),
       with: {
         transactions: {
@@ -34,11 +34,12 @@ export const accountRoutes = t.router({
         },
       },
       orderBy: [accounts.name],
-    }) as Account[];
+    })) as Account[];
   }),
   load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
     const account = await ctx.db.query.accounts.findFirst({
-      where: sql`${accounts.id} = ${input.id} AND ${accounts.deletedAt} IS NULL`,
+      where: (accounts, { eq, and, isNull }) =>
+        and(eq(accounts.id, input.id), isNull(accounts.deletedAt)),
       with: {
         transactions: {
           where: isNull(transactions.deletedAt),
@@ -60,9 +61,13 @@ export const accountRoutes = t.router({
 
     return account as Account;
   }),
-  save: publicProcedure.input(formInsertAccountSchema).mutation(async ({ ctx, input }) => {
+  save: rateLimitedProcedure.input(formInsertAccountSchema).mutation(async ({ ctx, input }) => {
     if (input.id) {
-      const result = await ctx.db.update(accounts).set(input).where(eq(accounts.id, input.id)).returning();
+      const result = await ctx.db
+        .update(accounts)
+        .set(input)
+        .where(eq(accounts.id, input.id))
+        .returning();
       if (!result[0]) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -96,15 +101,16 @@ export const accountRoutes = t.router({
     // }
     return new_account;
   }),
-  remove: publicProcedure.input(removeAccountSchema).mutation(async ({ ctx, input }) => {
+  remove: rateLimitedProcedure.input(removeAccountSchema).mutation(async ({ ctx, input }) => {
     if (!input) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Account ID is required for deletion",
       });
     }
-    const result = await ctx.db.update(accounts)
-      .set({ deletedAt: sql`CURRENT_TIMESTAMP` })
+    const result = await ctx.db
+      .update(accounts)
+      .set({ deletedAt: new Date().toISOString() })
       .where(eq(accounts.id, input.id))
       .returning();
     if (!result[0]) {
