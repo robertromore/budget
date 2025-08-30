@@ -42,8 +42,9 @@
 ## Development Guidelines
 - Focus on one feature at a time
 - Make small, incremental changes
-- Use proper version control practices
-- Test changes before committing
+- **Use feature branches**: Create new branches for each feature/task (never commit directly to main)
+- Test changes before committing (run build, check dev server)
+- Write descriptive commit messages with context
 - Update this TODO.md as work progresses
 
 ## Component Organization Policy 🏗️
