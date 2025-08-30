@@ -26,7 +26,7 @@
   import type { View } from "$lib/schema";
   import { CurrentViewState } from "$lib/stores/app/current-view.svelte";
   import { page } from "$app/state";
-  import { currentViews, CurrentViewsState } from "$lib/stores/app/current-views.svelte";
+  import { currentViews, CurrentViewsState } from "$lib/stores/ui/current-views.svelte";
   import { DateFiltersState } from "$lib/stores/ui/date-filters.svelte";
 
   let {

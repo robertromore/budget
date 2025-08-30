@@ -9,7 +9,7 @@
   import { cn } from "$lib/utils";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import Button, { buttonVariants } from "$lib/components/ui/button/button.svelte";
-  import { currentViews } from "$lib/stores/app/current-views.svelte";
+  import { currentViews } from "$lib/stores/ui/current-views.svelte";
 
   type Props = HTMLAttributes<HTMLDivElement> & {
     column: Column<TData, TValue>;

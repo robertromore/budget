@@ -4,7 +4,7 @@
   import ListFilterPlus from "@lucide/svelte/icons/list-filter-plus";
   import { cn } from "$lib/utils";
   import type { FilterInputOption, TransactionsFormat, ViewFilter } from "$lib/types";
-  import { currentViews } from "$lib/stores/app/current-views.svelte";
+  import { currentViews } from "$lib/stores/ui/current-views.svelte";
 
   let {
     value = $bindable(),

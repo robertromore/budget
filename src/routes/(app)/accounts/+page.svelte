@@ -26,12 +26,15 @@
   const managingAccount = $derived(managingAccountId);
 </script>
 
-<Button
-  onclick={() => {
-    managingAccount.current = 0;
-    dialogOpen.current = true;
-  }}>Add Account</Button
->
+<div class="flex items-center justify-between py-4">
+  <h1 class="text-3xl font-bold">Accounts</h1>
+  <Button
+    onclick={() => {
+      managingAccount.current = 0;
+      dialogOpen.current = true;
+    }}>Add Account</Button
+  >
+</div>
 
 <div class="mt-4 grid grid-cols-4 gap-4">
   {#each accounts as { id, name, balance, notes }}

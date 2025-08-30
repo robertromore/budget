@@ -7,7 +7,7 @@
   import { page } from "$app/state";
   import { TransactionStatuses, type Transaction } from "$lib/schema";
   import { SvelteMap, SvelteSet } from "svelte/reactivity";
-  import { currentViews } from "$lib/stores/app/current-views.svelte";
+  import { currentViews } from "$lib/stores/ui/current-views.svelte";
   import type { FacetedFilterOption } from "$lib/types";
 
   type Props<TData, TValue> = {
