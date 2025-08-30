@@ -69,10 +69,28 @@ The application uses a clean 3-layer architecture:
 
 ## Contributing
 
-1. Create a feature branch from `main`
-2. Make focused, incremental changes
-3. Test thoroughly before committing
-4. Write clear commit messages
-5. Update relevant documentation
+### 🚨 Critical: Always Use Feature Branches
 
-For detailed guidelines, see [Development Guide](docs/development-guide.md).
+**Before making any changes:**
+
+1. **Check you're on `main`**: `git branch --show-current`
+2. **Create feature branch**: `git checkout -b feature/descriptive-name`
+3. **Never work directly on `main`** - every change needs its own branch
+
+### Development Workflow
+
+1. **Branch Creation**: Use descriptive names (`feature/add-auth`, `fix/table-bug`)
+2. **Focused Changes**: Keep commits small and atomic
+3. **Testing**: Run `bun run build` and test functionality
+4. **Clear Messages**: Write descriptive commit messages with context
+5. **Documentation**: Update relevant docs when adding features
+
+### Branch Naming Convention
+
+- `feature/` - New functionality
+- `fix/` - Bug fixes
+- `docs/` - Documentation updates
+- `refactor/` - Code refactoring
+- `perf/` - Performance improvements
+
+**For complete guidelines, see [Development Guide](docs/development-guide.md).**
