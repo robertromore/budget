@@ -1,0 +1,948 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "083d12e0-0a9b-42cf-875f-1d1f0d006c66",
+  "prevId": "e46eee55-e3b6-4f63-9c80-5fb9a27216b6",
+  "tables": {
+    "account": {
+      "name": "account",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "cuid": {
+          "name": "cuid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "closed": {
+          "name": "closed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date_opened": {
+          "name": "date_opened",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "account_name_idx": {
+          "name": "account_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        },
+        "account_slug_idx": {
+          "name": "account_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": false
+        },
+        "account_closed_idx": {
+          "name": "account_closed_idx",
+          "columns": [
+            "closed"
+          ],
+          "isUnique": false
+        },
+        "account_deleted_at_idx": {
+          "name": "account_deleted_at_idx",
+          "columns": [
+            "deleted_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "categories": {
+      "name": "categories",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date_created": {
+          "name": "date_created",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "category_name_idx": {
+          "name": "category_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        },
+        "category_parent_idx": {
+          "name": "category_parent_idx",
+          "columns": [
+            "parent_id"
+          ],
+          "isUnique": false
+        },
+        "category_deleted_at_idx": {
+          "name": "category_deleted_at_idx",
+          "columns": [
+            "deleted_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "categories_parent_id_categories_id_fk": {
+          "name": "categories_parent_id_categories_id_fk",
+          "tableFrom": "categories",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "filter": {
+      "name": "filter",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "operator": {
+          "name": "operator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "payee": {
+      "name": "payee",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date_created": {
+          "name": "date_created",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "payee_name_idx": {
+          "name": "payee_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        },
+        "payee_deleted_at_idx": {
+          "name": "payee_deleted_at_idx",
+          "columns": [
+            "deleted_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "schedules": {
+      "name": "schedules",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "amount": {
+          "name": "amount",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "amount_2": {
+          "name": "amount_2",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "amount_type": {
+          "name": "amount_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'exact'"
+        },
+        "recurring": {
+          "name": "recurring",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "auto_add": {
+          "name": "auto_add",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "schedule_date_id": {
+          "name": "schedule_date_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payee_id": {
+          "name": "payee_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "relations_schedule_schedule_date_idx": {
+          "name": "relations_schedule_schedule_date_idx",
+          "columns": [
+            "schedule_date_id"
+          ],
+          "isUnique": false
+        },
+        "relations_schedule_account_idx": {
+          "name": "relations_schedule_account_idx",
+          "columns": [
+            "account_id"
+          ],
+          "isUnique": false
+        },
+        "relations_schedule_payee_idx": {
+          "name": "relations_schedule_payee_idx",
+          "columns": [
+            "payee_id"
+          ],
+          "isUnique": false
+        },
+        "schedule_status_idx": {
+          "name": "schedule_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "schedule_name_idx": {
+          "name": "schedule_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        },
+        "schedule_slug_idx": {
+          "name": "schedule_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "schedules_schedule_date_id_schedule_dates_id_fk": {
+          "name": "schedules_schedule_date_id_schedule_dates_id_fk",
+          "tableFrom": "schedules",
+          "tableTo": "schedule_dates",
+          "columnsFrom": [
+            "schedule_date_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "schedules_payee_id_payee_id_fk": {
+          "name": "schedules_payee_id_payee_id_fk",
+          "tableFrom": "schedules",
+          "tableTo": "payee",
+          "columnsFrom": [
+            "payee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "schedules_account_id_account_id_fk": {
+          "name": "schedules_account_id_account_id_fk",
+          "tableFrom": "schedules",
+          "tableTo": "account",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "transaction": {
+      "name": "transaction",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "payee_id": {
+          "name": "payee_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "relations_transaction_account_idx": {
+          "name": "relations_transaction_account_idx",
+          "columns": [
+            "account_id"
+          ],
+          "isUnique": false
+        },
+        "relations_transaction_payee_idx": {
+          "name": "relations_transaction_payee_idx",
+          "columns": [
+            "payee_id"
+          ],
+          "isUnique": false
+        },
+        "relations_transaction_category_idx": {
+          "name": "relations_transaction_category_idx",
+          "columns": [
+            "category_id"
+          ],
+          "isUnique": false
+        },
+        "relations_transaction_schedule_idx": {
+          "name": "relations_transaction_schedule_idx",
+          "columns": [
+            "schedule_id"
+          ],
+          "isUnique": false
+        },
+        "transaction_account_date_idx": {
+          "name": "transaction_account_date_idx",
+          "columns": [
+            "account_id",
+            "date",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "transaction_date_idx": {
+          "name": "transaction_date_idx",
+          "columns": [
+            "date"
+          ],
+          "isUnique": false
+        },
+        "transaction_status_idx": {
+          "name": "transaction_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "transaction_parent_idx": {
+          "name": "transaction_parent_idx",
+          "columns": [
+            "parent_id"
+          ],
+          "isUnique": false
+        },
+        "transaction_deleted_at_idx": {
+          "name": "transaction_deleted_at_idx",
+          "columns": [
+            "deleted_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "transaction_account_id_account_id_fk": {
+          "name": "transaction_account_id_account_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "account",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "transaction_parent_id_transaction_id_fk": {
+          "name": "transaction_parent_id_transaction_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "transaction",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_payee_id_payee_id_fk": {
+          "name": "transaction_payee_id_payee_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "payee",
+          "columnsFrom": [
+            "payee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_category_id_categories_id_fk": {
+          "name": "transaction_category_id_categories_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_schedule_id_schedules_id_fk": {
+          "name": "transaction_schedule_id_schedules_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "schedules",
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "views": {
+      "name": "views",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "filters": {
+          "name": "filters",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "display": {
+          "name": "display",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "dirty": {
+          "name": "dirty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "schedule_dates": {
+      "name": "schedule_dates",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "frequency": {
+          "name": "frequency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "interval": {
+          "name": "interval",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 1
+        },
+        "limit": {
+          "name": "limit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "move_weekends": {
+          "name": "move_weekends",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'none'"
+        },
+        "move_holidays": {
+          "name": "move_holidays",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'none'"
+        },
+        "specific_dates": {
+          "name": "specific_dates",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'{}'"
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "relations_schedule_date_schedule_idx": {
+          "name": "relations_schedule_date_schedule_idx",
+          "columns": [
+            "schedule_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "schedule_dates_schedule_id_schedules_id_fk": {
+          "name": "schedule_dates_schedule_id_schedules_id_fk",
+          "tableFrom": "schedule_dates",
+          "tableTo": "schedules",
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
