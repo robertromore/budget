@@ -1,5 +1,5 @@
 <script lang="ts">
-  import DataTable from "./(components)/data-table.svelte";
+  import DataTable from "$lib/components/business/transactions/table/data-table.svelte";
   import { columns } from "./(data)/columns.svelte";
   import type { TransactionsFormat } from "$lib/types";
   import AddTransactionDialog from "$lib/components/dialogs/add-transaction-dialog.svelte";
