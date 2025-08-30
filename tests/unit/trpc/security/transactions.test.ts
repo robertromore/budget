@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { createCaller } from "../../../../src/lib/trpc/router";
 import { createContext } from "../../../../src/lib/trpc/context";
 import { TRPCError } from "@trpc/server";
@@ -8,7 +8,7 @@ describe("Transaction Security - Unit Tests", () => {
 
   beforeEach(async () => {
     const ctx = await createContext();
-    caller = createCaller(ctx);
+    caller = createCaller({ ...ctx, isTest: true });
   });
 
   describe("Amount Validation", () => {
@@ -145,21 +145,16 @@ describe("Transaction Security - Unit Tests", () => {
     });
   });
 
-  describe("HTML Sanitization", () => {
-    it("should sanitize HTML in notes fields", async () => {
-      try {
-        await caller.transactionRoutes.save({
+  describe("HTML Rejection", () => {
+    it("should reject HTML in notes fields", async () => {
+      await expect(
+        caller.transactionRoutes.save({
           amount: 100.00,
           accountId: 1,
           date: "2024-01-01",
           notes: "Payment for <script>alert('xss')</script>",
-        });
-      } catch (error) {
-        // Should not contain script tags regardless of other errors
-        if (error instanceof Error) {
-          expect(error.message).not.toContain("<script>");
-        }
-      }
+        })
+      ).rejects.toThrow("Notes cannot contain HTML tags");
     });
   });
 

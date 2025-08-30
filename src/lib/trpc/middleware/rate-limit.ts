@@ -28,6 +28,11 @@ export const rateLimit = (options: RateLimitOptions) => {
   const { windowMs, maxRequests, keyGenerator = defaultKeyGenerator } = options;
 
   return t.middleware(async ({ ctx, next, type }) => {
+    // Skip rate limiting for tests
+    if ((ctx as any).isTest) {
+      return next({ ctx });
+    }
+    
     // Only apply rate limiting to mutations
     if (type !== "mutation") {
       return next({ ctx });
