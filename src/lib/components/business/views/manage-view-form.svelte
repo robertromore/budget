@@ -3,8 +3,8 @@
   import * as Form from "$lib/components/ui/form";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
   import { insertViewSchema, type View } from "$lib/schema";
-  import type { CurrentViewState } from "$lib/states/current-view.svelte";
-  import { currentViews } from "$lib/states/current-views.svelte";
+  import type { CurrentViewState } from "$lib/stores/app/current-view.svelte";
+  import { currentViews } from "$lib/stores/app/current-views.svelte";
   import type { FilterInputOption, TransactionsFormat } from "$lib/types";
   import { zod4Client } from "sveltekit-superforms/adapters";
   import { superForm } from "sveltekit-superforms/client";

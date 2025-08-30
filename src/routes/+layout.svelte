@@ -4,15 +4,15 @@
   import "../app.css";
   import type { LayoutData } from "./$types";
   import type { Snippet } from "svelte";
-  import { categoriesContext, CategoriesState } from "$lib/states/categories.svelte";
-  import { payeesContext, PayeesState } from "$lib/states/payees.svelte";
+  import { categoriesContext, CategoriesState } from "$lib/stores/entities/categories.svelte";
+  import { payeesContext, PayeesState } from "$lib/stores/entities/payees.svelte";
   import { dev } from '$app/environment';
   import { RenderScan } from 'svelte-render-scan';
   import AddAccountDialog from "$lib/components/dialogs/add-account-dialog.svelte";
-  import { AccountsState } from "$lib/states/accounts.svelte";
+  import { AccountsState } from "$lib/stores/entities/accounts.svelte";
   import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
   import AddScheduleDialog from "$lib/components/dialogs/add-schedule-dialog.svelte";
-  import { SchedulesState } from "$lib/states/schedules.svelte";
+  import { SchedulesState } from "$lib/stores/entities/schedules.svelte";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const { accounts, payees, categories, schedules } = $derived(data);

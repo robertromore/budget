@@ -9,7 +9,7 @@
   import { Textarea } from "../ui/textarea";
   import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
-  import { payeesContext } from "$lib/states/payees.svelte";
+  import { payeesContext } from "$lib/stores/entities/payees.svelte";
 
   let {
     id,

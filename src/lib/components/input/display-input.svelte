@@ -6,7 +6,7 @@
   import SlidersHorizontal from "@lucide/svelte/icons/sliders-horizontal";
   import { cn } from "$lib/utils";
   import { Label } from "../ui/label";
-  import { currentViews } from "$lib/states/current-views.svelte";
+  import { currentViews } from "$lib/stores/app/current-views.svelte";
   import { Badge } from "../ui/badge";
   import type { SortingState, VisibilityState } from "@tanstack/table-core";
   import ChevronDown from "@lucide/svelte/icons/chevron-down";

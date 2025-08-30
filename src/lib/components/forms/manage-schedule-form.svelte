@@ -3,7 +3,7 @@
   import * as Form from "$lib/components/ui/form";
   import Input from "$lib/components/ui/input/input.svelte";
   import { insertScheduleSchema, type Schedule } from "$lib/schema/schedules";
-  import { SchedulesState } from "$lib/states/schedules.svelte";
+  import { SchedulesState } from "$lib/stores/entities/schedules.svelte";
   import type { EditableEntityItem } from "$lib/types";
   import HandCoins from "@lucide/svelte/icons/hand-coins";
   import type { Component } from "svelte";

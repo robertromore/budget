@@ -10,11 +10,11 @@
   import type { Table } from "@tanstack/table-core";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
-  import { CurrentAccountState } from "$lib/states/current-account.svelte";
-  import { categoriesContext } from "$lib/states/categories.svelte";
-  import { payeesContext } from "$lib/states/payees.svelte";
+  import { CurrentAccountState } from "$lib/stores/app/current-account.svelte";
+  import { categoriesContext } from "$lib/stores/entities/categories.svelte";
+  import { payeesContext } from "$lib/stores/entities/payees.svelte";
   import type { Account } from "$lib/schema";
-  import { DateFiltersState } from "$lib/states/date-filters.svelte";
+  import { DateFiltersState } from "$lib/stores/ui/date-filters.svelte";
 
   let { data } = $props();
   const account: Account | undefined = $derived(data.account);

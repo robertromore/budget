@@ -24,10 +24,10 @@
   import { expanded, setExpanded } from "../(data)/expanded.svelte";
   import { pinning, setPinning } from "../(data)/pinning.svelte";
   import type { View } from "$lib/schema";
-  import { CurrentViewState } from "$lib/states/current-view.svelte";
+  import { CurrentViewState } from "$lib/stores/app/current-view.svelte";
   import { page } from "$app/state";
-  import { currentViews, CurrentViewsState } from "$lib/states/current-views.svelte";
-  import { DateFiltersState } from "$lib/states/date-filters.svelte";
+  import { currentViews, CurrentViewsState } from "$lib/stores/app/current-views.svelte";
+  import { DateFiltersState } from "$lib/stores/ui/date-filters.svelte";
 
   let {
     columns,
