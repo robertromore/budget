@@ -101,8 +101,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const status = '${{ steps.ai-review.outcome }}' === 'success' ? 'completed' : 'failed';
-            const conclusion = '${{ steps.ai-review.outputs.approval-status }}' || 'neutral';
+            const reviewOutcome = '${{ steps.ai-review.outcome }}';
+            const status = reviewOutcome === 'success' ? 'completed' : 'completed';
+            const conclusion = reviewOutcome === 'success' ? 'success' : 'failure';
             
             // Create a check run for the review
             await github.rest.checks.create({
