@@ -1,38 +1,79 @@
-# create-svelte
+# Budget Manager
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+A personal finance management application built with SvelteKit, featuring transaction tracking, budget categorization, and financial reporting.
 
-## Creating a project
+## 🏗️ Architecture
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Frontend**: SvelteKit + Svelte 5 + TypeScript
+- **Backend**: oRPC procedures + SQLite + Drizzle ORM  
+- **UI**: Tailwind CSS + shadcn-svelte components
+- **State**: Svelte stores + reactive runes
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
-
-# create a new project in my-app
-npm create svelte@latest my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## 🚀 Getting Started
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
 
-# or start the server and open the app in a new browser tab
+# Open in browser
 npm run dev -- --open
 ```
 
-## Building
+## 📁 Project Structure
 
-To create a production version of your app:
+```
+src/
+├── lib/
+│   ├── components/     # UI components organized by domain
+│   ├── orpc/          # API layer (procedures & client)
+│   ├── states/        # Reactive state management
+│   ├── schema/        # Database schema & validation
+│   └── utils/         # Utility functions
+├── routes/            # SvelteKit pages & API routes
+└── docs/              # Documentation & guides
+```
+
+## 🧭 Navigation
+
+- **📖 [Architecture Guide](./docs/ARCHITECTURE.md)** - System overview & patterns
+- **🗺️ [Navigation Guide](./docs/NAVIGATION_GUIDE.md)** - Find files quickly  
+- **🔄 [Refactoring Plan](./docs/REFACTORING_PLAN.md)** - Improvement roadmap
+
+## ⚡ Core Features
+
+- **Account Management**: Multiple bank accounts with balance tracking
+- **Transaction Tracking**: Income, expenses, transfers with categorization
+- **Recurring Schedules**: Automated recurring transaction management
+- **Advanced Filtering**: Date ranges, categories, payees with custom views
+- **Data Tables**: Sortable, filterable transaction tables with inline editing
+
+## 🛠️ Development
 
 ```bash
+# Run tests
+npm test
+
+# Type checking
+npm run check
+
+# Linting
+npm run lint
+
+# Build production
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+## 📊 Database
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+Uses SQLite with Drizzle ORM. Schema files in `/src/lib/schema/`.
+
+```bash
+# Database migrations
+npm run db:migrate
+
+# Reset database  
+npm run db:reset
+```
