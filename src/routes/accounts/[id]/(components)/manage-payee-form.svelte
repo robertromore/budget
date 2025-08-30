@@ -1,15 +1,15 @@
 <script lang="ts">
   import type { EditableEntityItem } from "$lib/types";
-  import { insertCategorySchema, type Category } from "$lib/schema";
+  import { insertPayeeSchema, type Payee } from "$lib/schema";
   import { page } from "$app/state";
   import * as Form from "$lib/components/ui/form";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button, buttonVariants } from "$lib/components/ui/button";
-  import Input from "../ui/input/input.svelte";
-  import { Textarea } from "../ui/textarea";
+  import Input from "$lib/components/ui/input/input.svelte";
+  import { Textarea } from "$lib/components/ui/textarea";
   import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
-  import { categoriesContext } from "$lib/states/categories.svelte";
+  import { payeesContext } from "$lib/states/payees.svelte";
 
   let {
     id,
@@ -18,15 +18,15 @@
   }: {
     id?: number | undefined;
     onDelete?: (id: number) => void;
-    onSave?: (new_category: EditableEntityItem, is_new: boolean) => void;
+    onSave?: (new_payee: EditableEntityItem, is_new: boolean) => void;
   } = $props();
 
   const {
-    data: { manageCategoryForm },
+    data: { managePayeeForm },
   } = page;
-  const form = superForm(manageCategoryForm, {
-    id: "category-form",
-    validators: zod4Client(insertCategorySchema),
+  const form = superForm(managePayeeForm, {
+    id: "payee-form",
+    validators: zod4Client(insertPayeeSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {
@@ -38,21 +38,22 @@
 
   const { form: formData, enhance } = form;
   if (id) {
-    const category: Category = categoriesContext.get().getById(id)!;
-    $formData.name = category.name;
-    $formData.notes = category.notes;
+    const payee: Payee = payeesContext.get().getById(id)!;
+    $formData.name = payee.name;
+    $formData.notes = payee.notes;
   }
 
   let alertDialogOpen = $state(false);
-  const deleteCategory = async (id: number) => {
+  const deletePayee = async (id: number) => {
     alertDialogOpen = false;
+    // data.deletePayee(id);
     if (onDelete) {
       onDelete(id);
     }
   };
 </script>
 
-<form method="post" action="/categories?/save-category" use:enhance>
+<form method="post" action="/payees?/save-payee" use:enhance>
   {#if id}
     <input type="hidden" name="id" value={id} />
   {/if}
@@ -85,13 +86,13 @@
     <AlertDialog.Header>
       <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
       <AlertDialog.Description>
-        This action cannot be undone. This will permanently delete this category.
+        This action cannot be undone. This will permanently delete this payee.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
-        onclick={() => deleteCategory(id!)}
+        onclick={() => deletePayee(id!)}
         class={buttonVariants({ variant: "destructive" })}>Continue</AlertDialog.Action
       >
     </AlertDialog.Footer>

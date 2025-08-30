@@ -6,7 +6,7 @@
   import Layers from "@lucide/svelte/icons/layers";
   import PencilLine from "@lucide/svelte/icons/pencil-line";
   import Toggle from "$lib/components/ui/toggle/toggle.svelte";
-  import ManageViewForm from "$lib/components/forms/manage-view-form.svelte";
+  import ManageViewForm from "./manage-view-form.svelte";
   import FilterInput from "$lib/components/input/filter-input.svelte";
   import { currentViews } from "$lib/states/current-views.svelte";
   import DisplayInput from "$lib/components/input/display-input.svelte";
