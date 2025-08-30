@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { publicProcedure, rateLimitedProcedure, t } from "../t";
 import { TRPCError } from "@trpc/server";
-import { removeTransactionsSchema, formInsertTransactionSchema, transactions } from "$lib/schema";
+import { removeTransactionsSchema, formInsertTransactionSchema, transactions, accounts } from "$lib/schema";
 import { eq, inArray } from "drizzle-orm";
 import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
 
@@ -39,6 +39,19 @@ export const transactionRoutes = t.router({
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Account ID is required for transaction",
+          });
+        }
+
+        // Verify the account exists
+        const accountExists = await db.query.accounts.findFirst({
+          where: (accounts, { eq, isNull, and }) => 
+            and(eq(accounts.id, accountId), isNull(accounts.deletedAt))
+        });
+
+        if (!accountExists) {
+          throw new TRPCError({
+            code: "NOT_FOUND", 
+            message: "Account not found",
           });
         }
 
