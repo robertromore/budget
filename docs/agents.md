@@ -8,6 +8,7 @@ Specialized agents for different aspects of the codebase, each with specific exp
 - **frontend-ui-specialist**: `src/lib/components/ui/`, UI components, styling
 - **query-layer-specialist**: Query/mutation patterns, error handling, cache management
 - **documentation-specialist**: README files, documentation, markdown formatting
+- **code-review-specialist**: Pull request reviews, code quality, security analysis
 
 ## Agent Descriptions
 
@@ -26,3 +27,7 @@ Manages the reactive layer between services and UI components. Handles TanStack 
 ### Documentation Specialist
 
 Maintains all project documentation following Google's style guide. Handles README files, technical docs, and markdown formatting best practices.
+
+### Code Review Specialist
+
+Conducts comprehensive code reviews for pull requests with expertise in code quality, security analysis, and best practices. Evaluates architecture, performance, maintainability, and adherence to project standards across the entire technology stack.
