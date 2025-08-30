@@ -1,7 +1,6 @@
 import type { Schedule } from "$lib/schema";
 import { SvelteMap } from "svelte/reactivity";
 import { trpc } from "$lib/trpc/client";
-import { page } from "$app/state";
 import { getContext, setContext } from "svelte";
 
 const KEY = Symbol("schedules");
@@ -33,6 +32,6 @@ export class SchedulesState {
 
   async deleteSchedule(id: number) {
     this.schedules.delete(id);
-    await trpc(page).scheduleRoutes.remove.mutate({ id: id });
+    await trpc().scheduleRoutes.remove.mutate({ id: id });
   }
 }

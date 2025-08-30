@@ -1,15 +1,18 @@
 # Refactoring Plan
 
-## Phase 1: API Consolidation (Week 1)
-**Goal**: Single source of truth for API calls
+## Phase 1: tRPC Cleanup & Consolidation (Week 1)
+**Goal**: Clean up and optimize existing tRPC implementation
+
+⚠️ **Discovery**: oRPC system doesn't exist yet - we need to clean up tRPC first
 
 ### Tasks:
-- [ ] **Remove tRPC**: Delete `/lib/trpc/` completely
-- [ ] **Centralize oRPC**: Ensure all components use oRPC client
-- [ ] **Update imports**: Replace any remaining tRPC imports
-- [ ] **Test API coverage**: Verify all CRUD operations work
+- [ ] **Audit tRPC usage**: Document all current tRPC dependencies
+- [ ] **Consolidate tRPC patterns**: Standardize how tRPC is used across the app
+- [ ] **Remove unused tRPC code**: Clean up any dead code or redundant patterns
+- [ ] **Document tRPC architecture**: Create clear docs for current API layer
+- [ ] **Prepare for future oRPC migration**: Structure code for easier future migration
 
-**Impact**: 🔥 High - Eliminates major confusion source
+**Impact**: 🔥 High - Eliminates confusion and sets foundation for future migration
 
 ---
 

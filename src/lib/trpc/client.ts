@@ -11,9 +11,3 @@ export function trpc(init?: TRPCClientInit) {
   return client;
 }
 
-// export function trpc(init?: TRPCClientInit) {
-//   if (typeof window === 'undefined' || !init)
-//     return createTRPCClient<Router>({ init, transformer });
-//   if (!defaultBrowserClient) defaultBrowserClient = createTRPCClient<Router>({ transformer });
-//   return defaultBrowserClient;
-// }
