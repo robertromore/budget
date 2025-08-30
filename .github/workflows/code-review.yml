@@ -60,7 +60,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: ./.github/actions/claude-review
         with:
-          openai-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
           pr-title: ${{ github.event.pull_request.title }}
           pr-description: ${{ github.event.pull_request.body }}
           changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
