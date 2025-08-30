@@ -1,5 +1,5 @@
 import { SvelteMap } from "svelte/reactivity";
-import { CurrentViewState } from "./current-view.svelte";
+import { CurrentViewState } from "../app/current-view.svelte";
 import { Context } from "runed";
 import type { TransactionsFormat } from "$lib/types";
 import type { Table } from "@tanstack/table-core";

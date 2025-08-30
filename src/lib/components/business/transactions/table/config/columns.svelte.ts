@@ -4,7 +4,7 @@ import { renderComponent } from "$lib/components/ui/data-table";
 import type { CellContext, Column, ColumnDef, FilterFnOption } from "@tanstack/table-core";
 import DataTableColumnHeader from "$lib/components/business/transactions/table/data-table-column-header.svelte";
 import EditableDateCell from "$lib/components/shared/table/editable-date-cell.svelte";
-import { getLocalTimeZone, type DateValue } from "@internationalized/date";
+import { type DateValue } from "@internationalized/date";
 import EditableEntityCell from "$lib/components/shared/table/editable-entity-cell.svelte";
 import DataTableEditableCell from "$lib/components/business/transactions/table/cells/data-table-editable-cell.svelte";
 import EditableNumericCell from "$lib/components/shared/table/editable-numeric-cell.svelte";

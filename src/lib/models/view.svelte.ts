@@ -1,5 +1,5 @@
 import type { View as ViewSchema } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
+import { orpc } from "$lib/rpc/client";
 import type { ViewFilter, ViewFilterWithSet } from "$lib/types";
 import deeplyEqual, { equalArray } from "$lib/utils";
 import type {
@@ -309,10 +309,10 @@ export default class View {
         return Object.assign({}, filter, { value: Array.from(filter.value) });
       });
     this.initial = $state.snapshot(this.view);
-    await trpc().viewsRoutes.save.mutate(this.view);
+    await orpc().views.save(this.view);
   }
 
   async deleteView() {
-    await trpc().viewsRoutes.delete.mutate({ entities: [this.view.id] });
+    await orpc().views.removeMany({ entities: [this.view.id] });
   }
 }

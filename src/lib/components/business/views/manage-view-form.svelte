@@ -2,17 +2,18 @@
   import { page } from "$app/state";
   import * as Form from "$lib/components/ui/form";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
-  import { insertViewSchema, type View } from "$lib/schema";
+  import { viewFormSchema } from "$lib/schema/forms";
+  import { type View } from "$lib/schema";
   import type { CurrentViewState } from "$lib/stores/app/current-view.svelte";
   import { currentViews } from "$lib/stores/ui/current-views.svelte";
   import type { FilterInputOption, TransactionsFormat } from "$lib/types";
   import { zod4Client } from "sveltekit-superforms/adapters";
   import { superForm } from "sveltekit-superforms/client";
-  import DeleteViewDialog from "../dialogs/delete-view-dialog.svelte";
-  import DisplayInput from "../input/display-input.svelte";
-  import FilterInput from "../input/filter-input.svelte";
-  import { Button, buttonVariants } from "../ui/button";
-  import { Input } from "../ui/input";
+  import DeleteViewDialog from "$lib/components/dialogs/delete-view-dialog.svelte";
+  import DisplayInput from "$lib/components/input/display-input.svelte";
+  import FilterInput from "$lib/components/input/filter-input.svelte";
+  import { Button, buttonVariants } from "$lib/components/ui/button";
+  import { Input } from "$lib/components/ui/input";
 
   let {
     onCancel,
@@ -35,7 +36,6 @@
   const form = superForm(manageViewForm, {
     id: "views-form",
     dataType: "json",
-    validators: zod4Client(insertViewSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {

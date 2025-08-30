@@ -1,6 +1,7 @@
 <script lang="ts">
   import * as Form from "$lib/components/ui/form";
-  import { insertAccountSchema, type Account } from "$lib/schema";
+  import { accountFormSchema } from "$lib/schema/forms";
+  import { type Account } from "$lib/schema";
   import { superForm } from "sveltekit-superforms/client";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
   import { zod4Client } from "sveltekit-superforms/adapters";
@@ -25,7 +26,6 @@
 
   const form = superForm(manageAccountForm, {
     id: "account-form",
-    validators: zod4Client(insertAccountSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {

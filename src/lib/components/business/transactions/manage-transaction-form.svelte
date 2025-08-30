@@ -1,6 +1,7 @@
 <script lang="ts">
   import * as Form from "$lib/components/ui/form";
-  import { insertTransactionSchema, type Transaction } from "$lib/schema";
+  import { transactionFormSchema } from "$lib/schema/forms";
+  import { type Transaction } from "$lib/schema";
   import { superForm } from "sveltekit-superforms/client";
   import { today, getLocalTimeZone } from "@internationalized/date";
   import type { EditableDateItem, EditableEntityItem } from "$lib/types";
@@ -29,7 +30,6 @@
 
   const form = superForm(manageTransactionForm, {
     id: "transaction-form",
-    validators: zod4Client(insertTransactionSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {

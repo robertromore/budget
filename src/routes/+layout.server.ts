@@ -1,10 +1,10 @@
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms";
 import type { LayoutServerLoad } from "./$types";
 import { zod4 } from "sveltekit-superforms/adapters";
-import { formInsertAccountSchema, formInsertScheduleSchema } from "$lib/schema";
+import { accountFormSchema, scheduleFormSchema } from "$lib/schema/forms";
 import { getLocalTimeZone, today } from "@internationalized/date";
+import { createContext } from "$lib/server/rpc/context";
+import { createCaller } from "$lib/server/rpc/caller";
 
 const thisday = today(getLocalTimeZone());
 export const load: LayoutServerLoad = async () => {
@@ -12,12 +12,12 @@ export const load: LayoutServerLoad = async () => {
   const caller = createCaller(ctx);
 
   return {
-    accounts: await caller.accountRoutes.all(),
-    payees: await caller.payeeRoutes.all(),
-    categories: await caller.categoriesRoutes.all(),
-    schedules: await caller.scheduleRoutes.all(),
-    manageAccountForm: await superValidate(zod4(formInsertAccountSchema)),
-    manageScheduleForm: await superValidate(zod4(formInsertScheduleSchema)),
+    accounts: await caller.accounts.all(),
+    payees: await caller.payees.all(),
+    categories: await caller.categories.all(),
+    schedules: await caller.schedules.all(),
+    manageAccountForm: await superValidate(zod4(accountFormSchema)),
+    manageScheduleForm: await superValidate(zod4(scheduleFormSchema)),
     dates: [
       {
         value: thisday.subtract({ days: 1 }).toString(),

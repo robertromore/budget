@@ -1,12 +1,13 @@
 <script lang="ts">
   import type { EditableEntityItem } from "$lib/types";
-  import { insertCategorySchema, type Category } from "$lib/schema";
+  import { categoryFormSchema } from "$lib/schema/forms";
+  import { type Category } from "$lib/schema";
   import { page } from "$app/state";
   import * as Form from "$lib/components/ui/form";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button, buttonVariants } from "$lib/components/ui/button";
-  import Input from "../ui/input/input.svelte";
-  import { Textarea } from "../ui/textarea";
+  import Input from "$lib/components/ui/input/input.svelte";
+  import { Textarea } from "$lib/components/ui/textarea";
   import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
   import { categoriesContext } from "$lib/stores/entities/categories.svelte";
@@ -26,7 +27,6 @@
   } = page;
   const form = superForm(manageCategoryForm, {
     id: "category-form",
-    validators: zod4Client(insertCategorySchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {

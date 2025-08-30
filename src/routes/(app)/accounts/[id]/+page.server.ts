@@ -2,17 +2,17 @@ import { superValidate } from "sveltekit-superforms";
 import type { PageServerLoad } from "./$types";
 import { zod4 } from "sveltekit-superforms/adapters";
 import {
-  formInsertPayeeSchema,
-  insertCategorySchema,
-  insertTransactionSchema,
-  insertViewSchema,
-  removeCategorySchema,
-  removePayeeSchema,
-  removeTransactionsSchema,
-  type View,
-} from "$lib/schema";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
+  transactionFormSchema,
+  categoryFormSchema,
+  payeeFormSchema,
+  viewFormSchema,
+  removeCategoryFormSchema,
+  removePayeeFormSchema,
+  removeTransactionsFormSchema,
+} from "$lib/schema/forms";
+import { type View } from "$lib/schema";
+import { createContext } from "$lib/server/rpc/context";
+import { createCaller } from "$lib/server/rpc/caller";
 import { getSpecialDateValueAsLabel } from "$lib/utils/date-formatters";
 
 export const load: PageServerLoad = async ({ params, parent }) => {
@@ -73,7 +73,9 @@ export const load: PageServerLoad = async ({ params, parent }) => {
     },
   ] as View[];
 
-  const views = await createCaller(await createContext()).viewsRoutes.all();
+  const ctx = await createContext();
+  const caller = createCaller(ctx);
+  const views = await caller.views.all();
   const dates = defaultDates.concat(
     views
       .map((view) => view.filters)
@@ -90,13 +92,13 @@ export const load: PageServerLoad = async ({ params, parent }) => {
   return {
     accountId: parseInt(params.id),
     account: accounts.find((account) => account.id === parseInt(params.id)),
-    manageTransactionForm: await superValidate(zod4(insertTransactionSchema)),
-    deleteTransactionForm: await superValidate(zod4(removeTransactionsSchema)),
-    manageCategoryForm: await superValidate(zod4(insertCategorySchema)),
-    deleteCategoryForm: await superValidate(zod4(removeCategorySchema)),
-    managePayeeForm: await superValidate(zod4(formInsertPayeeSchema)),
-    deletePayeeForm: await superValidate(zod4(removePayeeSchema)),
-    manageViewForm: await superValidate(zod4(insertViewSchema)),
+    manageTransactionForm: await superValidate(zod4(transactionFormSchema)),
+    deleteTransactionForm: await superValidate(zod4(removeTransactionsFormSchema)),
+    manageCategoryForm: await superValidate(zod4(categoryFormSchema)),
+    deleteCategoryForm: await superValidate(zod4(removeCategoryFormSchema)),
+    managePayeeForm: await superValidate(zod4(payeeFormSchema)),
+    deletePayeeForm: await superValidate(zod4(removePayeeFormSchema)),
+    manageViewForm: await superValidate(zod4(viewFormSchema)),
     views: defaultViews.concat(views),
     dates,
   };

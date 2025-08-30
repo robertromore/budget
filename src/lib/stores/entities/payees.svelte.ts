@@ -1,5 +1,5 @@
 import { type Payee } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
+import { orpc } from "$lib/rpc/client";
 import { without } from "$lib/utils";
 import { Context } from "runed";
 
@@ -24,7 +24,7 @@ export class PayeesState {
   }
 
   async deletePayees(payees: number[], cb?: (id: Payee[]) => void) {
-    await trpc().payeeRoutes.delete.mutate({
+    await orpc().payees.removeMany({
       entities: payees,
     });
     const [, removed] = without(this.payees, (payee: Payee) => payees.includes(payee.id));

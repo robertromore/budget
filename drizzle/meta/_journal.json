@@ -1,12 +1,12 @@
 {
-  "version": "5",
+  "version": "7",
   "dialect": "sqlite",
   "entries": [
     {
       "idx": 0,
       "version": "6",
-      "when": 1752928154757,
-      "tag": "0000_secret_karma",
+      "when": 1756516372858,
+      "tag": "0000_graceful_longshot",
       "breakpoints": true
     }
   ]

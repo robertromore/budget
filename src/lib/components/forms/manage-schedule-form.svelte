@@ -2,7 +2,8 @@
   import { page } from "$app/state";
   import * as Form from "$lib/components/ui/form";
   import Input from "$lib/components/ui/input/input.svelte";
-  import { insertScheduleSchema, type Schedule } from "$lib/schema/schedules";
+  import { scheduleFormSchema } from "$lib/schema/forms";
+  import { type Schedule } from "$lib/schema/schedules";
   import { SchedulesState } from "$lib/stores/entities/schedules.svelte";
   import type { EditableEntityItem } from "$lib/types";
   import HandCoins from "@lucide/svelte/icons/hand-coins";
@@ -39,7 +40,6 @@
   // Form
   const form = superForm(manageScheduleForm, {
     id: "schedule-form",
-    validators: zod4Client(insertScheduleSchema),
     onResult: async ({ result }) => {
       if (onSave && result.type === "success" && result.data) {
         schedules.addSchedule(result.data.entity);

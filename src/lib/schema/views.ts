@@ -40,8 +40,8 @@ export const insertViewSchema = createInsertSchema(views, {
             })
           )
         ),
-        expanded: z.literal(true).default(true).or(z.record(z.string(), z.boolean())),
-        visibility: z.literal(true).default(true).or(z.record(z.string(), z.boolean())),
+        expanded: z.optional(z.record(z.string(), z.boolean())),
+        visibility: z.optional(z.record(z.string(), z.boolean())),
       })
       .or(z.null())
   ),

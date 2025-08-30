@@ -1,0 +1,6 @@
+[
+  {
+    "type": "sqlite",
+    "path": "/Users/robert/Projects/JS/SvelteKit/budget/drizzle/db/sqlite.db"
+  }
+]

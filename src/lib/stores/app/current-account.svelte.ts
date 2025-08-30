@@ -2,7 +2,7 @@ import type { TransactionsFormat } from "$lib/types";
 import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
 import type { Category, Payee, Transaction } from "$lib/schema";
 import type { Account } from "$lib/schema/accounts";
-import { trpc } from "$lib/trpc/client";
+import { orpc } from "$lib/rpc/client";
 import { without } from "$lib/utils";
 import { getContext, setContext } from "svelte";
 
@@ -81,12 +81,12 @@ export class CurrentAccountState {
         });
     }
     const updatedData = Object.assign({}, original, new_data) as Transaction;
-    await trpc().transactionRoutes.save.mutate(updatedData);
+    await orpc().transactions.save(updatedData);
     this.transactions[idx] = updatedData;
   };
 
   async deleteTransactions(transactions: number[], cb?: (id: Transaction[]) => void) {
-    await trpc().transactionRoutes.delete.mutate({
+    await orpc().transactions.removeMany({
       entities: transactions,
       accountId: this.id,
     });

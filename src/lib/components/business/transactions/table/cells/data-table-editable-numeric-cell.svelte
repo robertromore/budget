@@ -2,10 +2,10 @@
   import NumericInput from "$lib/components/input/numeric-input.svelte";
 
   let {
-    value = $bindable(),
+    value = $bindable(0),
     onUpdateValue,
   }: {
-    value: number | undefined;
+    value: number;
     onUpdateValue: (newValue: unknown) => void;
   } = $props();
 
