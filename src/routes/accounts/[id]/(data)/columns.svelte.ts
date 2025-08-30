@@ -125,7 +125,7 @@ export const columns = (
           value: info.getValue() as DateValue,
           onUpdateValue: (new_value: unknown) =>
             updateHandler(info, "date", new_value, (new_value) =>
-              (new_value as DateValue)?.toDate(getLocalTimeZone()).toString()
+              (new_value as DateValue)?.toString()
             ),
         }),
       aggregatedCell: () => {},

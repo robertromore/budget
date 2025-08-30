@@ -41,6 +41,7 @@ export const schedules = sqliteTable(
     updatedAt: text("updated_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
+    deletedAt: text("deleted_at"),
   },
   (table) => [
     index("relations_schedule_schedule_date_idx").on(table.dateId),

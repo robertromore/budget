@@ -8,6 +8,7 @@ import type { DateValue } from "@internationalized/date";
 export type TransactionsFormat = {
   id: number;
   amount: number;
+  balance: number;
   date: DateValue;
   payeeId: number | null;
   payee: Payee | null;

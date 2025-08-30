@@ -12,7 +12,7 @@ export class CurrentAccountState {
   account: Account = $state() as Account;
   balance = $derived(currencyFormatter.format(this.account?.balance));
   transactions: Transaction[] = $derived(this.account?.transactions) as Transaction[];
-  formatted: TransactionsFormat[] = $derived(transactionFormatter.format(this.transactions) ?? []);
+  formatted: TransactionsFormat[] = $derived(transactionFormatter.format(this.transactions, 0) ?? []);
   categories?: Category[] = $derived.by(() => {
     return (
       (this.formatted?.filter(Boolean) as TransactionsFormat[])
