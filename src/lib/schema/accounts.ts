@@ -10,35 +10,39 @@ import { transactions } from "./transactions";
 import type { Transaction } from "./transactions";
 import { z } from "zod/v4";
 
-export const accounts = sqliteTable("account", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  cuid: text("cuid").$defaultFn(() => createId()),
-  name: text("name").notNull(),
-  slug: text("slug").notNull(),
-  // @todo maybe change to enum to allow for archiving?
-  closed: integer("closed", { mode: "boolean" }).default(false),
-  // @todo decide if it's better to calculate and store this value or aggregate
-  // the value based on the transaction rows.
-  // balance: real('balance').default(0.0).notNull(),
-  notes: text("notes"),
-  dateOpened: text("date_opened")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  // @todo only useful if allowing account archival?
-  // dateClosed: integer('date_closed', { mode: 'timestamp' })
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  deletedAt: text("deleted_at"),
-}, (table) => [
-  index("account_name_idx").on(table.name),
-  index("account_slug_idx").on(table.slug),
-  index("account_closed_idx").on(table.closed),
-  index("account_deleted_at_idx").on(table.deletedAt),
-]);
+export const accounts = sqliteTable(
+  "account",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    cuid: text("cuid").$defaultFn(() => createId()),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    // @todo maybe change to enum to allow for archiving?
+    closed: integer("closed", { mode: "boolean" }).default(false),
+    // @todo decide if it's better to calculate and store this value or aggregate
+    // the value based on the transaction rows.
+    // balance: real('balance').default(0.0).notNull(),
+    notes: text("notes"),
+    dateOpened: text("date_opened")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    // @todo only useful if allowing account archival?
+    // dateClosed: integer('date_closed', { mode: 'timestamp' })
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    deletedAt: text("deleted_at"),
+  },
+  (table) => [
+    index("account_name_idx").on(table.name),
+    index("account_slug_idx").on(table.slug),
+    index("account_closed_idx").on(table.closed),
+    index("account_deleted_at_idx").on(table.deletedAt),
+  ]
+);
 
 export const accountsRelations = relations(accounts, ({ many }) => ({
   transactions: many(transactions),
@@ -47,7 +51,19 @@ export const accountsRelations = relations(accounts, ({ many }) => ({
 export const selectAccountSchema = createSelectSchema(accounts);
 export const insertAccountSchema = createInsertSchema(accounts);
 export const formInsertAccountSchema = createInsertSchema(accounts, {
-  name: (schema) => schema.min(2).max(30),
+  name: (schema) =>
+    schema
+      .min(2, "Account name must be at least 2 characters")
+      .max(50, "Account name must be less than 50 characters")
+      .regex(/^[a-zA-Z0-9\s\-_]+$/, "Account name contains invalid characters"),
+  slug: (schema) =>
+    schema
+      .min(2, "Slug must be at least 2 characters")
+      .max(30, "Slug must be less than 30 characters")
+      .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens")
+      .optional(),
+  notes: (schema) =>
+    schema.max(500, "Notes must be less than 500 characters").optional().nullable(),
 });
 export const removeAccountSchema = z.object({ id: z.number().nonnegative() });
 
