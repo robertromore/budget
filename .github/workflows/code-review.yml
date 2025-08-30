@@ -1,0 +1,119 @@
+name: Automated Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    # Skip draft PRs and certain paths
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  automated-review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Get both base and head commits for proper diff
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            **/*.{ts,tsx,js,jsx,svelte,sql}
+            **/package.json
+            **/tsconfig.json
+            **/vite.config.ts
+            **/tailwind.config.ts
+          separator: ","
+
+      - name: Get PR diff
+        id: pr-diff
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          # Get the diff for changed files
+          git diff origin/${{ github.event.pull_request.base.ref }}..HEAD \
+            --name-only \
+            ${{ steps.changed-files.outputs.all_changed_files }} > changed_files.txt
+          
+          git diff origin/${{ github.event.pull_request.base.ref }}..HEAD \
+            ${{ steps.changed-files.outputs.all_changed_files }} > pr_diff.txt
+          
+          echo "changed_files_count=$(wc -l < changed_files.txt)" >> $GITHUB_OUTPUT
+
+      - name: AI Code Review
+        id: ai-review
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: ./.github/actions/claude-review
+        with:
+          openai-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          pr-title: ${{ github.event.pull_request.title }}
+          pr-description: ${{ github.event.pull_request.body }}
+          changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
+          diff-content: pr_diff.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post review comment
+        if: steps.ai-review.outputs.review-content != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const review = `${{ steps.ai-review.outputs.review-content }}`;
+            const labels = `${{ steps.ai-review.outputs.labels }}`.split(',').filter(l => l.length > 0);
+            
+            // Post review comment
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              body: review,
+              event: 'COMMENT'
+            });
+            
+            // Apply labels
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+            }
+
+      - name: Update PR status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const status = '${{ steps.ai-review.outcome }}' === 'success' ? 'completed' : 'failed';
+            const conclusion = '${{ steps.ai-review.outputs.approval-status }}' || 'neutral';
+            
+            // Create a check run for the review
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'AI Code Review',
+              head_sha: context.payload.pull_request.head.sha,
+              status: status,
+              conclusion: conclusion,
+              output: {
+                title: 'Automated Code Review Complete',
+                summary: `Review completed for ${context.payload.pull_request.changed_files} changed files`
+              }
+            });

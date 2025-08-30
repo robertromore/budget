@@ -1,0 +1,34 @@
+name: 'Claude Code Review'
+description: 'Use Claude AI to review pull requests with our specialized code-review-specialist agent'
+
+inputs:
+  anthropic-api-key:
+    description: 'Anthropic API key for Claude'
+    required: true
+  pr-title:
+    description: 'Pull request title'
+    required: true
+  pr-description:
+    description: 'Pull request description'
+    required: true
+  changed-files:
+    description: 'Comma-separated list of changed files'
+    required: true
+  diff-content:
+    description: 'Path to file containing the PR diff'
+    required: true
+  github-token:
+    description: 'GitHub token for API calls'
+    required: true
+
+outputs:
+  review-content:
+    description: 'The generated code review content'
+  labels:
+    description: 'Comma-separated list of labels to apply'
+  approval-status:
+    description: 'Review status: approved, changes_requested, or neutral'
+
+runs:
+  using: 'node20'
+  main: 'index.js'
