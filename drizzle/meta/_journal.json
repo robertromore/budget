@@ -8,6 +8,13 @@
       "when": 1752928154757,
       "tag": "0000_secret_karma",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1756573383468,
+      "tag": "0001_slim_gunslinger",
+      "breakpoints": true
     }
   ]
 }

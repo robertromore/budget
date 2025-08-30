@@ -1,6 +1,6 @@
 import { schedules, removeScheduleSchema, formInsertScheduleSchema } from "$lib/schema";
 import { z } from "zod";
-import { publicProcedure, t } from "../t";
+import { publicProcedure, rateLimitedProcedure, t } from "../t";
 import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
@@ -28,9 +28,13 @@ export const scheduleRoutes = t.router({
     }
     return result[0];
   }),
-  save: publicProcedure.input(formInsertScheduleSchema).mutation(async ({ ctx, input }) => {
+  save: rateLimitedProcedure.input(formInsertScheduleSchema).mutation(async ({ ctx, input }) => {
     if (input.id) {
-      const result = await ctx.db.update(schedules).set(input).where(eq(schedules.id, input.id)).returning();
+      const result = await ctx.db
+        .update(schedules)
+        .set(input)
+        .where(eq(schedules.id, input.id))
+        .returning();
       if (!result[0]) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -51,7 +55,7 @@ export const scheduleRoutes = t.router({
 
     return new_schedule;
   }),
-  remove: publicProcedure.input(removeScheduleSchema).mutation(async ({ ctx, input }) => {
+  remove: rateLimitedProcedure.input(removeScheduleSchema).mutation(async ({ ctx, input }) => {
     if (!input) {
       throw new TRPCError({
         code: "BAD_REQUEST",

@@ -5,26 +5,30 @@ import { sqliteTable, integer, text, type AnySQLiteColumn, index } from "drizzle
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const categories = sqliteTable("categories", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  parentId: integer("parent_id").references((): AnySQLiteColumn => categories.id),
-  name: text("name"),
-  notes: text("notes"),
-  dateCreated: text("date_created")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  deletedAt: text("deleted_at"),
-}, (table) => [
-  index("category_name_idx").on(table.name),
-  index("category_parent_idx").on(table.parentId),
-  index("category_deleted_at_idx").on(table.deletedAt),
-]);
+export const categories = sqliteTable(
+  "categories",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    parentId: integer("parent_id").references((): AnySQLiteColumn => categories.id),
+    name: text("name"),
+    notes: text("notes"),
+    dateCreated: text("date_created")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    deletedAt: text("deleted_at"),
+  },
+  (table) => [
+    index("category_name_idx").on(table.name),
+    index("category_parent_idx").on(table.parentId),
+    index("category_deleted_at_idx").on(table.deletedAt),
+  ]
+);
 
 export const categoriesRelations = relations(categories, ({ one }) => ({
   parent: one(categories, {
@@ -35,12 +39,22 @@ export const categoriesRelations = relations(categories, ({ one }) => ({
 
 export const selectCategorySchema = createSelectSchema(categories);
 export const insertCategorySchema = createInsertSchema(categories);
+export const formInsertCategorySchema = createInsertSchema(categories, {
+  name: (schema) =>
+    schema
+      .min(1, "Category name is required")
+      .max(50, "Category name must be less than 50 characters")
+      .regex(/^[a-zA-Z0-9\s\-_&]+$/, "Category name contains invalid characters"),
+  notes: (schema) =>
+    schema.max(500, "Notes must be less than 500 characters").optional().nullable(),
+});
 export const removeCategorySchema = z.object({ id: z.number().nonnegative() });
 export const removeCategoriesSchema = z.object({ entities: z.array(z.number().nonnegative()) });
 
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type InsertCategorySchema = typeof insertCategorySchema;
+export type FormInsertCategorySchema = typeof formInsertCategorySchema;
 export type RemoveCategorySchema = typeof removeCategorySchema;
 export type RemoveCategoriesSchema = typeof removeCategoriesSchema;
 export type HasCategories = {
