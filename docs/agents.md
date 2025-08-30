@@ -31,3 +31,5 @@ Maintains all project documentation following Google's style guide. Handles READ
 ### Code Review Specialist
 
 Conducts comprehensive code reviews for pull requests with expertise in code quality, security analysis, and best practices. Evaluates architecture, performance, maintainability, and adherence to project standards across the entire technology stack.
+
+**Automated Integration:** This agent is integrated into our GitHub Actions workflow to provide automated code reviews on all pull requests. See [Automated Code Review](automated-code-review.md) for setup and usage details.
