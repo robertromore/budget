@@ -99,11 +99,23 @@ export const accountRoutes = t.router({
       orderBy: [accounts.name],
     });
     
-    // Calculate balance for each account
-    return accountsData.map(account => ({
-      ...account,
-      balance: account.transactions.reduce((sum, transaction) => sum + transaction.amount, 0)
-    })) as Account[];
+    // Calculate balance for each account and running balance for each transaction
+    return accountsData.map(account => {
+      let runningBalance = 0;
+      const transactionsWithBalance = account.transactions.map(transaction => {
+        runningBalance += transaction.amount;
+        return {
+          ...transaction,
+          balance: runningBalance
+        };
+      });
+      
+      return {
+        ...account,
+        balance: runningBalance,
+        transactions: transactionsWithBalance
+      };
+    }) as Account[];
   }),
   load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
     const account = await ctx.db.query.accounts.findFirst({
@@ -128,10 +140,20 @@ export const accountRoutes = t.router({
       });
     }
 
-    // Calculate balance
+    // Calculate running balance for each transaction
+    let runningBalance = 0;
+    const transactionsWithBalance = account.transactions.map(transaction => {
+      runningBalance += transaction.amount;
+      return {
+        ...transaction,
+        balance: runningBalance
+      };
+    });
+
     const accountWithBalance = {
       ...account,
-      balance: account.transactions.reduce((sum, transaction) => sum + transaction.amount, 0)
+      balance: runningBalance,
+      transactions: transactionsWithBalance
     };
 
     return accountWithBalance as Account;

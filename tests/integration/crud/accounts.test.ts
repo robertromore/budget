@@ -238,6 +238,158 @@ describe("Accounts CRUD Integration Tests", () => {
     });
   });
 
+  describe("Balance Calculation Validation", () => {
+    it("should ensure account balance is never NaN and always a valid number", async () => {
+      const accounts = await caller.accountRoutes.all();
+      
+      accounts.forEach((account, index) => {
+        // Account balance should be defined
+        expect(account.balance).toBeDefined();
+        
+        // Account balance should be a number
+        expect(typeof account.balance).toBe("number");
+        
+        // Account balance should not be NaN
+        expect(Number.isNaN(account.balance)).toBe(false);
+        
+        // Account balance should be finite (not Infinity/-Infinity)
+        expect(Number.isFinite(account.balance)).toBe(true);
+        
+        // Log account balance for verification
+        console.log(`Account ${index + 1} (${account.name}): balance = $${account.balance}`);
+      });
+    });
+
+    it("should ensure transaction balances are never NaN and always valid numbers", async () => {
+      const accounts = await caller.accountRoutes.all();
+      const accountsWithTransactions = accounts.filter(a => a.transactions.length > 0);
+      
+      expect(accountsWithTransactions.length).toBeGreaterThan(0);
+      
+      accountsWithTransactions.forEach((account) => {
+        account.transactions.forEach((transaction, index) => {
+          // Transaction balance should be defined
+          expect(transaction.balance).toBeDefined();
+          
+          // Transaction balance should be a number
+          expect(typeof transaction.balance).toBe("number");
+          
+          // Transaction balance should not be NaN
+          expect(Number.isNaN(transaction.balance)).toBe(false);
+          
+          // Transaction balance should be finite
+          expect(Number.isFinite(transaction.balance)).toBe(true);
+          
+          // Transaction amount should also be valid
+          expect(typeof transaction.amount).toBe("number");
+          expect(Number.isNaN(transaction.amount)).toBe(false);
+          expect(Number.isFinite(transaction.amount)).toBe(true);
+          
+          console.log(`  Transaction ${index + 1}: amount = $${transaction.amount}, running balance = $${transaction.balance}`);
+        });
+      });
+    });
+
+    it("should correctly calculate running balances for transactions", async () => {
+      const accounts = await caller.accountRoutes.all();
+      const accountWithTransactions = accounts.find(a => a.transactions.length > 0);
+      
+      expect(accountWithTransactions).toBeDefined();
+      
+      if (accountWithTransactions) {
+        let expectedRunningBalance = 0;
+        
+        accountWithTransactions.transactions.forEach((transaction, index) => {
+          expectedRunningBalance += transaction.amount;
+          
+          // Each transaction's balance should equal the running sum up to that point
+          expect(transaction.balance).toBe(expectedRunningBalance);
+          
+          console.log(`Transaction ${index + 1}: amount = $${transaction.amount}, expected = $${expectedRunningBalance}, actual = $${transaction.balance}`);
+        });
+        
+        // Final running balance should match account balance
+        expect(accountWithTransactions.balance).toBe(expectedRunningBalance);
+      }
+    });
+
+    it("should handle edge cases for balance calculations", async () => {
+      // Create account with zero balance (no transactions)
+      const emptyAccount = await caller.accountRoutes.save({
+        name: "Edge Case Empty Account",
+        slug: "edge-case-empty",
+        notes: "Testing balance calculation edge cases"
+      });
+      
+      // Load the account to get calculated balance
+      const loadedAccount = await caller.accountRoutes.load({ id: emptyAccount.id });
+      
+      // Balance should be 0, not NaN
+      expect(loadedAccount.balance).toBe(0);
+      expect(Number.isNaN(loadedAccount.balance)).toBe(false);
+      expect(Number.isFinite(loadedAccount.balance)).toBe(true);
+      
+      // Transactions array should be empty but defined
+      expect(loadedAccount.transactions).toBeDefined();
+      expect(Array.isArray(loadedAccount.transactions)).toBe(true);
+      expect(loadedAccount.transactions).toHaveLength(0);
+      
+      console.log(`Empty account balance: $${loadedAccount.balance}`);
+    });
+
+    it("should validate balance consistency between account.all and account.load", async () => {
+      const allAccounts = await caller.accountRoutes.all();
+      
+      for (const account of allAccounts) {
+        const loadedAccount = await caller.accountRoutes.load({ id: account.id });
+        
+        // Balance should be consistent
+        expect(loadedAccount.balance).toBe(account.balance);
+        
+        // Transaction count should match
+        expect(loadedAccount.transactions.length).toBe(account.transactions.length);
+        
+        // Both should have valid, non-NaN balances
+        expect(Number.isNaN(account.balance)).toBe(false);
+        expect(Number.isNaN(loadedAccount.balance)).toBe(false);
+        
+        console.log(`Account ${account.name}: all() balance = $${account.balance}, load() balance = $${loadedAccount.balance}`);
+      }
+    });
+
+    it("should handle accounts with complex transaction scenarios", async () => {
+      // Get account and verify it has mixed positive/negative transactions for better testing
+      const accounts = await caller.accountRoutes.all();
+      const accountWithTransactions = accounts.find(a => a.transactions.length > 1);
+      
+      if (accountWithTransactions) {
+        const hasPositive = accountWithTransactions.transactions.some(t => t.amount > 0);
+        const hasNegative = accountWithTransactions.transactions.some(t => t.amount < 0);
+        
+        console.log(`Testing complex scenario: account has ${accountWithTransactions.transactions.length} transactions`);
+        console.log(`Has positive amounts: ${hasPositive}, Has negative amounts: ${hasNegative}`);
+        
+        // Verify all balances are valid regardless of transaction mix
+        accountWithTransactions.transactions.forEach((transaction, index) => {
+          expect(Number.isNaN(transaction.balance)).toBe(false);
+          expect(Number.isFinite(transaction.balance)).toBe(true);
+          
+          // Balance can be positive, negative, or zero, but never NaN
+          expect(typeof transaction.balance).toBe("number");
+          
+          console.log(`  Complex transaction ${index + 1}: amount = $${transaction.amount}, balance = $${transaction.balance}`);
+        });
+        
+        // Final balance should equal sum of all amounts
+        const calculatedBalance = accountWithTransactions.transactions.reduce((sum, t) => sum + t.amount, 0);
+        expect(accountWithTransactions.balance).toBe(calculatedBalance);
+        expect(Number.isNaN(calculatedBalance)).toBe(false);
+        
+        console.log(`Final calculated balance: $${calculatedBalance}`);
+      }
+    });
+  });
+
   describe("Complex CRUD Workflows", () => {
     it("should handle complete account lifecycle", async () => {
       // Create

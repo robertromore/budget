@@ -10,7 +10,10 @@ const KEY = Symbol("current_account");
 
 export class CurrentAccountState {
   account: Account = $state() as Account;
-  balance = $derived(currencyFormatter.format(this.account?.balance));
+  balance = $derived(() => {
+    const balance = this.account?.balance ?? 0;
+    return currencyFormatter.format(isNaN(balance) ? 0 : balance);
+  });
   transactions: Transaction[] = $derived(this.account?.transactions) as Transaction[];
   formatted: TransactionsFormat[] = $derived(transactionFormatter.format(this.transactions) ?? []);
   categories?: Category[] = $derived.by(() => {
@@ -53,8 +56,10 @@ export class CurrentAccountState {
   }
 
   addTransaction(transaction: Transaction) {
-    this.transactions?.push(transaction);
     this.account.balance += transaction.amount;
+    // Set the running balance for the new transaction
+    transaction.balance = this.account.balance;
+    this.transactions?.push(transaction);
   }
 
   getTransaction(id: number) {
@@ -73,11 +78,14 @@ export class CurrentAccountState {
 
     let [idx, original] = this.getRawTransaction(id);
     if (columnId === "amount") {
-      this.account.balance += (newValue as number) - (original?.amount as number);
+      const amountDifference = (newValue as number) - (original?.amount as number);
+      this.account.balance += amountDifference;
+      
+      // Update running balance for this transaction and all subsequent transactions
       this.account.transactions
-        .filter((transaction) => transaction.id >= id)
+        .filter((_, index) => index >= idx)
         .forEach((transaction) => {
-          transaction.balance += (newValue as number) - (original?.amount as number);
+          transaction.balance = (transaction.balance ?? 0) + amountDifference;
         });
     }
     const updatedData = Object.assign({}, original, new_data) as Transaction;
