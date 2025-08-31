@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { EditableEntityItem } from "$lib/types";
-  import EntityInput from "$lib/components/input/entity-input.svelte";
+  import EntityInput from "$lib/components/inputs/entity-input.svelte";
   import type { Component as ComponentType } from "svelte";
 
   let {

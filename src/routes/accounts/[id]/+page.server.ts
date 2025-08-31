@@ -2,15 +2,17 @@ import { superValidate } from "sveltekit-superforms";
 import type { PageServerLoad } from "./$types";
 import { zod4 } from "sveltekit-superforms/adapters";
 import {
-  formInsertPayeeSchema,
-  insertCategorySchema,
-  insertTransactionSchema,
-  insertViewSchema,
   removeCategorySchema,
   removePayeeSchema,
   removeTransactionsSchema,
   type View,
 } from "$lib/schema";
+import {
+  superformInsertPayeeSchema,
+  superformInsertCategorySchema,
+  superformInsertTransactionSchema,
+  superformInsertViewSchema,
+} from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { getSpecialDateValueAsLabel } from "$lib/utils/date-formatters";
@@ -90,13 +92,13 @@ export const load: PageServerLoad = async ({ params, parent }) => {
   return {
     accountId: parseInt(params.id),
     account: accounts.find((account) => account.id === parseInt(params.id)),
-    manageTransactionForm: await superValidate(zod4(insertTransactionSchema)),
+    manageTransactionForm: await superValidate(zod4(superformInsertTransactionSchema)),
     deleteTransactionForm: await superValidate(zod4(removeTransactionsSchema)),
-    manageCategoryForm: await superValidate(zod4(insertCategorySchema)),
+    manageCategoryForm: await superValidate(zod4(superformInsertCategorySchema)),
     deleteCategoryForm: await superValidate(zod4(removeCategorySchema)),
-    managePayeeForm: await superValidate(zod4(formInsertPayeeSchema)),
+    managePayeeForm: await superValidate(zod4(superformInsertPayeeSchema)),
     deletePayeeForm: await superValidate(zod4(removePayeeSchema)),
-    manageViewForm: await superValidate(zod4(insertViewSchema)),
+    manageViewForm: await superValidate(zod4(superformInsertViewSchema)),
     views: defaultViews.concat(views),
     dates,
   };

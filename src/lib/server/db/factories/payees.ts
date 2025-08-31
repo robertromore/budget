@@ -1,4 +1,4 @@
-import { payees, type Payee } from "../../../schema";
+import { payees, type Payee } from "$lib/schema";
 import { db } from "..";
 import { faker } from "@faker-js/faker";
 

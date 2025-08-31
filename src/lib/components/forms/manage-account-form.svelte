@@ -1,12 +1,13 @@
 <script lang="ts">
   import * as Form from "$lib/components/ui/form";
-  import { insertAccountSchema, type Account } from "$lib/schema";
+  import { type Account } from "$lib/schema";
+  import { superformInsertAccountSchema } from "$lib/schema/superforms";
   import { superForm } from "sveltekit-superforms/client";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
   import { zod4Client } from "sveltekit-superforms/adapters";
   import { page } from "$app/state";
   import Input from "$lib/components/ui/input/input.svelte";
-  import { AccountsState } from "$lib/states/accounts.svelte";
+  import { AccountsState } from "$lib/states/entities/accounts.svelte";
 
   let {
     accountId,
@@ -25,7 +26,7 @@
 
   const form = superForm(manageAccountForm, {
     id: "account-form",
-    validators: zod4Client(insertAccountSchema),
+    validators: zod4Client(superformInsertAccountSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {

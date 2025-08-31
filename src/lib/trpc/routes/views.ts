@@ -3,12 +3,12 @@ import { publicProcedure, rateLimitedProcedure, t } from "../t";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
-  insertViewSchema,
   removeViewSchema,
   removeViewsSchema,
   views,
   type View,
 } from "$lib/schema";
+import { superformInsertViewSchema } from "$lib/schema/superforms";
 
 export const viewsRoutes = t.router({
   all: publicProcedure.query(async ({ ctx }) => {
@@ -53,7 +53,7 @@ export const viewsRoutes = t.router({
       return await db.delete(views).where(inArray(views.id, entities)).returning();
     }),
   save: rateLimitedProcedure
-    .input(insertViewSchema)
+    .input(superformInsertViewSchema)
     .mutation(async ({ input: { id, name, description, icon, filters, display }, ctx: { db } }) => {
       let entities;
       if (id) {

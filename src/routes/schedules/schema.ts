@@ -1,4 +1,4 @@
-import { insertScheduleSchema } from "$lib/schema";
+import { superformInsertScheduleSchema } from "$lib/schema/superforms";
 import { z } from "zod/v4";
 
 export const insertFormSchema = z.object({});

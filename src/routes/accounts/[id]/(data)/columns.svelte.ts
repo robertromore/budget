@@ -14,8 +14,8 @@ import type { Category, Payee } from "$lib/schema";
 import DataTableEditableStatusCell from "../(components)/(cells)/data-table-editable-status-cell.svelte";
 import ManagePayeeForm from "../(components)/manage-payee-form.svelte";
 import ManageCategoryForm from "../(components)/manage-category-form.svelte";
-import type { CategoriesState } from "$lib/states/categories.svelte";
-import type { PayeesState } from "$lib/states/payees.svelte";
+import type { CategoriesState } from "$lib/states/entities/categories.svelte";
+import type { PayeesState } from "$lib/states/entities/payees.svelte";
 import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-faceted-filter-status.svelte";
 import DataTableFacetedFilterCategory from "../(components)/(facets)/data-table-faceted-filter-category.svelte";
 import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-faceted-filter-payee.svelte";
@@ -173,7 +173,7 @@ export const columns = (
           value: payees.getById(info.getValue() as number) as EditableEntityItem,
           entityLabel: "payee",
           onUpdateValue: (new_value) => updateHandler(info, "payeeId", new_value),
-          entities: payees.payees as EditableEntityItem[],
+          entities: payees.all as EditableEntityItem[],
           icon: HandCoins as unknown as Component,
           management: {
             enable: true,
@@ -259,7 +259,7 @@ export const columns = (
           value: categories.getById(info.getValue() as number) as EditableEntityItem,
           entityLabel: "category",
           onUpdateValue: (new_value) => updateHandler(info, "categoryId", new_value),
-          entities: categories.categories as EditableEntityItem[],
+          entities: categories.all as EditableEntityItem[],
           icon: SquareMousePointer as unknown as Component,
           management: {
             enable: true,

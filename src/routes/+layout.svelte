@@ -1,25 +1,25 @@
 <script lang="ts">
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-  import AppSidebar from "$lib/components/app-sidebar.svelte";
+  import AppSidebar from "$lib/components/layout/app-sidebar.svelte";
   import "../app.css";
   import type { LayoutData } from "./$types";
   import type { Snippet } from "svelte";
-  import { categoriesContext, CategoriesState } from "$lib/states/categories.svelte";
-  import { payeesContext, PayeesState } from "$lib/states/payees.svelte";
+  import { CategoriesState } from "$lib/states/entities/categories.svelte";
+  import { PayeesState } from "$lib/states/entities/payees.svelte";
   import { dev } from '$app/environment';
   import { RenderScan } from 'svelte-render-scan';
   import AddAccountDialog from "$lib/components/dialogs/add-account-dialog.svelte";
-  import { AccountsState } from "$lib/states/accounts.svelte";
+  import { AccountsState } from "$lib/states/entities/accounts.svelte";
   import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
   import AddScheduleDialog from "$lib/components/dialogs/add-schedule-dialog.svelte";
-  import { SchedulesState } from "$lib/states/schedules.svelte";
+  import { SchedulesState } from "$lib/states/entities/schedules.svelte";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const { accounts, payees, categories, schedules } = $derived(data);
   AccountsState.set((() => accounts)());
   SchedulesState.set((() => schedules)());
-  categoriesContext.set(new CategoriesState((() => categories)()));
-  payeesContext.set(new PayeesState((() => payees)()));
+  CategoriesState.set((() => categories)());
+  PayeesState.set((() => payees)());
 </script>
 
 {#if dev}

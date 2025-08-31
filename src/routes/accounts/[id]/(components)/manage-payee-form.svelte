@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { EditableEntityItem } from "$lib/types";
-  import { insertPayeeSchema, type Payee } from "$lib/schema";
+  import { type Payee } from "$lib/schema";
+  import { superformInsertPayeeSchema } from "$lib/schema/superforms";
   import { page } from "$app/state";
   import * as Form from "$lib/components/ui/form";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
@@ -9,7 +10,7 @@
   import { Textarea } from "$lib/components/ui/textarea";
   import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
-  import { payeesContext } from "$lib/states/payees.svelte";
+  import { PayeesState } from "$lib/states/entities/payees.svelte";
 
   let {
     id,
@@ -26,7 +27,7 @@
   } = page;
   const form = superForm(managePayeeForm, {
     id: "payee-form",
-    validators: zod4Client(insertPayeeSchema),
+    validators: zod4Client(superformInsertPayeeSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {
@@ -38,7 +39,7 @@
 
   const { form: formData, enhance } = form;
   if (id) {
-    const payee: Payee = payeesContext.get().getById(id)!;
+    const payee: Payee = PayeesState.get().getById(id)!;
     $formData.name = payee.name;
     $formData.notes = payee.notes;
   }
