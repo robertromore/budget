@@ -39,7 +39,7 @@ function generateDatesWithConstraints(
   let truncated = false;
 
   // Determine the effective limit
-  const effectiveLimit = Math.min(limit || MAX_SAFETY_LIMIT, MAX_SAFETY_LIMIT);
+  const effectiveLimit = Math.min(limit ?? MAX_SAFETY_LIMIT, MAX_SAFETY_LIMIT);
 
   while (totalGenerated < effectiveLimit) {
     const nextDate = generator();
@@ -167,7 +167,7 @@ export function nextMonthly(
   start: DateValue,
   end: DateValue | null,
   interval: number,
-  days: number | null,
+  days: number[] | number | null,
   weeks: number[],
   weekDays: number[],
   limit: number
@@ -177,19 +177,31 @@ export function nextMonthly(
   let cursor = start;
   let weekIndex = 0;
   let dayIndex = 0;
+  let monthDayIndex = 0;
 
   const options: DateGenerationOptions = { start, end, interval, limit };
 
+  // Normalize days to array format
+  const normalizedDays = days === null ? null : Array.isArray(days) ? days : [days];
+
   const generator = () => {
-    // Fixed day of month
-    if (days && days > 0) {
-      try {
-        const nextDate = cursor.set({ day: Math.min(days, getDaysInMonth(cursor)) });
+    // Fixed day(s) of month
+    if (normalizedDays && normalizedDays.length > 0) {
+      // Handle multiple days per month
+      if (monthDayIndex >= normalizedDays.length) {
         cursor = cursor.add({ months: interval });
-        return nextDate;
-      } catch {
-        cursor = cursor.add({ months: interval });
-        return null;
+        monthDayIndex = 0;
+      }
+      
+      if (monthDayIndex < normalizedDays.length) {
+        const targetDay = normalizedDays[monthDayIndex];
+        monthDayIndex++;
+        
+        try {
+          return cursor.set({ day: Math.min(targetDay, getDaysInMonth(cursor)) });
+        } catch {
+          return null;
+        }
       }
     }
 
