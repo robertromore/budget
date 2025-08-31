@@ -2,7 +2,7 @@
   import { Button, buttonVariants } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { currencyFormatter } from "$lib/utils/formatters";
-  import DeleteAccountDialog from "$lib/components/business/accounts/account-delete-dialog.svelte";
+  import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
   import {
     deleteAccountDialog,
     deleteAccountId,
