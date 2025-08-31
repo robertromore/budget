@@ -73,6 +73,31 @@ test.describe("Individual Account Views and Displays", () => {
       }
     });
 
+    test("should display balance as valid currency amount", async ({ page }) => {
+      // Find the balance display in the header
+      const balanceSection = page.locator("text=/Balance:/");
+      await expect(balanceSection).toBeVisible();
+      
+      // Extract just the balance amount from the text
+      const balanceText = await balanceSection.textContent();
+      const balanceMatch = balanceText?.match(/\$(-?\d+(?:,\d{3})*\.\d{2})/);
+      
+      // Should find a properly formatted currency amount
+      expect(balanceMatch).not.toBeNull();
+      expect(balanceMatch![1]).toBeTruthy();
+      
+      // Parse the amount to ensure it's a valid number
+      const amountString = balanceMatch![1].replace(/,/g, ''); // Remove commas
+      const amount = parseFloat(amountString);
+      
+      // Should be a valid finite number
+      expect(Number.isFinite(amount)).toBe(true);
+      expect(Number.isNaN(amount)).toBe(false);
+      
+      // Balance should be within reasonable bounds for test data
+      expect(Math.abs(amount)).toBeLessThan(1000000); // Less than $1M
+    });
+
     test("should display account metadata in organized layout", async ({ page }) => {
       // Check for account creation/opened date
       const createdDate = page.locator("[data-testid='account-created']") ||
