@@ -3,9 +3,9 @@
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import Ellipsis from "@lucide/svelte/icons/ellipsis";
   import Plus from "@lucide/svelte/icons/plus";
-  import { deleteAccountDialog, deleteAccountId, managingAccountId, newAccountDialog, newScheduleDialog, managingScheduleId } from "$lib/states/global.svelte";
-  import { AccountsState } from "$lib/states/accounts.svelte";
-    import { SchedulesState } from "$lib/states/schedules.svelte";
+  import { deleteAccountDialog, deleteAccountId, managingAccountId, newAccountDialog, newScheduleDialog, managingScheduleId } from "$lib/states/ui/global.svelte";
+  import { AccountsState } from "$lib/states/entities/accounts.svelte";
+    import { SchedulesState } from "$lib/states/entities/schedules.svelte";
 
   const accountsState = $derived(AccountsState.get());
   const accounts = $derived(accountsState.accounts.values());

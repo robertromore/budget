@@ -1,6 +1,7 @@
 // $lib/utils/frequency.ts
 import { CalendarDate, type DateValue, startOfWeek } from "@internationalized/date";
 import { getDayOfWeek, getNextWeekdayFlexible, getNthWeekdayOfMonth, timezone } from "./dates";
+import { DATABASE_LIMITS } from "$lib/constants/api";
 
 /**
  * Configuration options for date generation functions
@@ -24,7 +25,7 @@ interface DateGenerationResult {
 /**
  * Maximum safety limit to prevent infinite loops
  */
-const MAX_SAFETY_LIMIT = 50;
+const MAX_SAFETY_LIMIT = DATABASE_LIMITS.MAX_SAFETY_LIMIT;
 
 /**
  * Generate dates with either end date or limit constraint

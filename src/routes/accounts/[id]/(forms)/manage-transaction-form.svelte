@@ -6,9 +6,9 @@
   import type { EditableDateItem, EditableEntityItem } from "$lib/types";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
   import { zod4Client } from "sveltekit-superforms/adapters";
-  import DateInput from "$lib/components/input/date-input.svelte";
-  import EntityInput from "$lib/components/input/entity-input.svelte";
-  import NumericInput from "$lib/components/input/numeric-input.svelte";
+  import DateInput from "$lib/components/inputs/date/date-input.svelte";
+  import EntityInput from "$lib/components/inputs/entity-input.svelte";
+  import NumericInput from "$lib/components/inputs/numeric/numeric-input.svelte";
   import { page } from "$app/state";
   import HandCoins from "@lucide/svelte/icons/hand-coins";
   import type { Component } from "svelte";

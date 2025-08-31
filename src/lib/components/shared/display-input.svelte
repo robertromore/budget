@@ -5,9 +5,9 @@
   import { buttonVariants } from "$lib/components/ui/button";
   import SlidersHorizontal from "@lucide/svelte/icons/sliders-horizontal";
   import { cn } from "$lib/utils";
-  import { Label } from "../ui/label";
-  import { currentViews } from "$lib/states/current-views.svelte";
-  import { Badge } from "../ui/badge";
+  import { Label } from "$lib/components/ui/label";
+  import { currentViews } from "$lib/states/views/current-views.svelte";
+  import { Badge } from "$lib/components/ui/badge";
   import type { SortingState, VisibilityState } from "@tanstack/table-core";
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
   import CircleChevronUp from "@lucide/svelte/icons/chevron-up";

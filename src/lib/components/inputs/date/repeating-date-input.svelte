@@ -6,7 +6,7 @@
   Example Usage:
   ```svelte
   <script>
-    import RepeatingDateInput from "$lib/components/input/repeating-date-input.svelte";
+    import RepeatingDateInput from "$lib/components/inputs/date/repeating-date-input.svelte";
     import RepeatingDateInputModel from "$lib/models/repeating_date.svelte";
 
     let recurringDate = new RepeatingDateInputModel();
@@ -146,7 +146,6 @@
     }
   };
 
-  $inspect(value.end_type);
 </script>
 
 <div class={cn("space-y-6", className)}>

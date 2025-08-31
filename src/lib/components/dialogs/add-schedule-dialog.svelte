@@ -1,8 +1,8 @@
 <script lang="ts">
   import * as Sheet from "$lib/components/ui/sheet";
-  import type { UseBoolean } from "$lib/hooks/use-boolean.svelte";
-  import type { UseNumber } from "$lib/hooks/use-number.svelte";
-  import { managingScheduleId, newScheduleDialog } from "$lib/states/global.svelte";
+  import type { UseBoolean } from "$lib/hooks/ui/use-boolean.svelte";
+  import type { UseNumber } from "$lib/hooks/ui/use-number.svelte";
+  import { managingScheduleId, newScheduleDialog } from "$lib/states/ui/global.svelte";
   import ManageScheduleForm from "../forms/manage-schedule-form.svelte";
 
   const dialogOpen: UseBoolean = $derived(newScheduleDialog);

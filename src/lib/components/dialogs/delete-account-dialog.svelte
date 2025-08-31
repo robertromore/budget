@@ -2,8 +2,8 @@
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { buttonVariants } from "$lib/components/ui/button";
   import { goto } from "$app/navigation";
-  import { deleteAccountDialog, deleteAccountId } from "$lib/states/global.svelte";
-  import { AccountsState } from "$lib/states/accounts.svelte";
+  import { deleteAccountDialog, deleteAccountId } from "$lib/states/ui/global.svelte";
+  import { AccountsState } from "$lib/states/entities/accounts.svelte";
 
   const _deleteAccountDialog = $derived(deleteAccountDialog);
   const _deleteAccountId = $derived(deleteAccountId);
