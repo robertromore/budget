@@ -4,7 +4,6 @@ import { faker } from "@faker-js/faker";
 import { payeeFactory } from "./payees";
 import type { Payee } from "$lib/schema/payees";
 import { categoryFactory } from "./categories";
-import { rawDateFormatter } from "$lib/helpers/formatters";
 import { CalendarDate } from "@internationalized/date";
 
 export const transactionFactory = async (
