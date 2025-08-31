@@ -28,8 +28,9 @@ export function getSpecialDateValue(date: string): SpecialDateValue {
  * const dayOfWeek = getDayOfWeek(today);
  */
 export function getDayOfWeek(date: DateValue, timeZone: string = "UTC"): number {
-  // Convert DateValue → native JS Date in given timezone
-  const jsDate = date.toDate(timeZone);
+  // Use standard Date constructor which is more reliable than toDate()
+  // month - 1 because Date constructor expects 0-indexed months
+  const jsDate = new Date(date.year, date.month - 1, date.day);
   return jsDate.getDay(); // 0=Sunday … 6=Saturday
 }
 

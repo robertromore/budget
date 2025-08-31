@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { CalendarDate } from "@internationalized/date";
 import { nextMonthly } from "./date-frequency";
 
@@ -50,11 +50,12 @@ describe("nextMonthly", () => {
       const end = new CalendarDate(2024, 4, 30);
       const result = nextMonthly(start, end, 1, [30], [], [], 4);
 
-      // Should get Jan 30, Mar 30, Apr 30 (skip Feb 30 as invalid)
-      expect(result).toHaveLength(3);
+      // Should get Jan 30, Feb 29 (adjusted), Mar 30, Apr 30
+      expect(result).toHaveLength(4);
       expect(result[0].toString()).toBe("2024-01-30");
-      expect(result[1].toString()).toBe("2024-03-30");
-      expect(result[2].toString()).toBe("2024-04-30");
+      expect(result[1].toString()).toBe("2024-02-29");
+      expect(result[2].toString()).toBe("2024-03-30");
+      expect(result[3].toString()).toBe("2024-04-30");
     });
 
     it("should handle leap year February", () => {
@@ -179,10 +180,12 @@ describe("nextMonthly", () => {
       const end = new CalendarDate(2024, 4, 30);
       const result = nextMonthly(start, end, 1, null, [], [], 4);
 
-      // Should get Jan 31, Mar 31 (skip Feb as it doesn't have 31 days)
-      expect(result).toHaveLength(2);
+      // Should get Jan 31, Feb 29 (adjusted), Mar 31, Apr 30 (adjusted)
+      expect(result).toHaveLength(4);
       expect(result[0].toString()).toBe("2024-01-31");
-      expect(result[1].toString()).toBe("2024-03-31");
+      expect(result[1].toString()).toBe("2024-02-29");
+      expect(result[2].toString()).toBe("2024-03-31");
+      expect(result[3].toString()).toBe("2024-04-30");
     });
   });
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { CalendarDate } from "@internationalized/date";
 import {
   getNextWeekday,
@@ -285,48 +285,48 @@ describe("Weekday utility functions", () => {
 
   describe("getFirstWeekdayInMonth", () => {
     it("should find first Monday of January 2024", () => {
-      // January 1, 2024 is a Sunday, so first Monday is January 2nd
+      // January 1, 2024 is a Monday, so first Monday is January 1st
       const firstMonday = getFirstSpecifiedWeekdayInMonth(2024, 1, 1); // 1 = Monday
 
       expect(firstMonday.year).toBe(2024);
       expect(firstMonday.month).toBe(1);
-      expect(firstMonday.day).toBe(2);
+      expect(firstMonday.day).toBe(1);
     });
 
     it("should find first Saturday of August 2025", () => {
-      // First Saturday of August 2025 should be August 3rd
+      // August 1, 2025 is Friday, so first Saturday is August 2nd
       const firstSaturday = getFirstSpecifiedWeekdayInMonth(2025, 8, 6); // 6 = Saturday
 
       expect(firstSaturday.year).toBe(2025);
       expect(firstSaturday.month).toBe(8);
-      expect(firstSaturday.day).toBe(3);
+      expect(firstSaturday.day).toBe(2);
     });
 
     it("should find first Saturday of September 2025", () => {
-      // First Saturday of September 2025 should be September 7th
+      // September 1, 2025 is Monday, so first Saturday is September 6th
       const firstSaturday = getFirstSpecifiedWeekdayInMonth(2025, 9, 6); // 6 = Saturday
 
       expect(firstSaturday.year).toBe(2025);
       expect(firstSaturday.month).toBe(9);
-      expect(firstSaturday.day).toBe(7);
+      expect(firstSaturday.day).toBe(6);
     });
 
     it("should find first Sunday of February 2024", () => {
-      // First Sunday of February 2024 should be February 5th
+      // February 1, 2024 is Thursday, so first Sunday is February 4th
       const firstSunday = getFirstSpecifiedWeekdayInMonth(2024, 2, 0); // 0 = Sunday
 
       expect(firstSunday.year).toBe(2024);
       expect(firstSunday.month).toBe(2);
-      expect(firstSunday.day).toBe(5);
+      expect(firstSunday.day).toBe(4);
     });
 
     it("should find first Wednesday of March 2024", () => {
-      // First Wednesday of March 2024 should be March 7th
+      // March 1, 2024 is Friday, so first Wednesday is March 6th
       const firstWednesday = getFirstSpecifiedWeekdayInMonth(2024, 3, 3); // 3 = Wednesday
 
       expect(firstWednesday.year).toBe(2024);
       expect(firstWednesday.month).toBe(3);
-      expect(firstWednesday.day).toBe(7);
+      expect(firstWednesday.day).toBe(6);
     });
 
     it("should handle all weekdays correctly", () => {
@@ -337,14 +337,14 @@ describe("Weekday utility functions", () => {
         results.push(getFirstSpecifiedWeekdayInMonth(2024, 1, weekday));
       }
 
-      // Sunday (0) = Jan 1, Monday (1) = Jan 2, Tuesday (2) = Jan 3, etc.
-      expect(results[0].day).toBe(1); // First Sunday
-      expect(results[1].day).toBe(2); // First Monday
-      expect(results[2].day).toBe(3); // First Tuesday
-      expect(results[3].day).toBe(4); // First Wednesday
-      expect(results[4].day).toBe(5); // First Thursday
-      expect(results[5].day).toBe(6); // First Friday
-      expect(results[6].day).toBe(7); // First Saturday
+      // January 1, 2024 is Monday, so: Sunday (0) = Jan 7, Monday (1) = Jan 1, Tuesday (2) = Jan 2, etc.
+      expect(results[0].day).toBe(7); // First Sunday
+      expect(results[1].day).toBe(1); // First Monday
+      expect(results[2].day).toBe(2); // First Tuesday
+      expect(results[3].day).toBe(3); // First Wednesday
+      expect(results[4].day).toBe(4); // First Thursday
+      expect(results[5].day).toBe(5); // First Friday
+      expect(results[6].day).toBe(6); // First Saturday
     });
 
     it("should work with different timezones", () => {
@@ -359,12 +359,12 @@ describe("Weekday utility functions", () => {
 
     it("should handle user's specific example: August 23, 2025 Saturday → First Saturday of September", () => {
       // August 23, 2025 is a Saturday (weekday 6)
-      // First Saturday of September 2025 should be September 7th
+      // First Saturday of September 2025 should be September 6th
       const firstSaturdayOfSeptember = getFirstSpecifiedWeekdayInMonth(2025, 9, 6);
 
       expect(firstSaturdayOfSeptember.year).toBe(2025);
       expect(firstSaturdayOfSeptember.month).toBe(9);
-      expect(firstSaturdayOfSeptember.day).toBe(7);
+      expect(firstSaturdayOfSeptember.day).toBe(6);
     });
   });
 });
