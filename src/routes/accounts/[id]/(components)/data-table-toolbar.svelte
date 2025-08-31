@@ -74,55 +74,55 @@
 
   <Separator orientation="vertical" class="mx-1"/>
 
-  <Tabs.Root
-    bind:value={currentViewValue}
-    onValueChange={(value) => {
-      manageViewForm = false;
-      let newView: number;
-      if (!value) {
-        newView = firstViewId;
-        currentViewValue = newView.toString();
-      } else {
-        newView = parseInt(value);
-      }
-      _currentViews.remove(0, false).setActive(newView);
-    }}
-  >
-    <Tabs.List>
-      {#each editableViews as viewState}
-        <Tabs.Trigger value={viewState.view.id.toString()} aria-label={viewState.view.name}>
-          {viewState.view.name}
-          {#if viewState.view.dirty}
-            <Asterisk class="-ml-1" />
-          {/if}
-        </Tabs.Trigger>
-
-        {#if editViewsMode}
-          <div class="flex gap-0">
-            <Toggle
-              variant="outline"
-              class={cn("h-8 rounded-none border-none shadow-none")}
-              bind:pressed={
-                () => manageViewForm && viewState.view.id === editViewId,
-                (value) => {
-                  currentViewValue = viewState.view.id.toString();
-                  _currentViews.setActive(viewState.view.id);
-                  editViewId = value ? viewState.view.id : 0;
-                  manageViewForm = value;
-                }
-              }
-            >
-              <Pencil />
-            </Toggle>
-          </div>
-        {/if}
-      {/each}
-    </Tabs.List>
-    <Tabs.Content value="account">
-    </Tabs.Content>
-  </Tabs.Root>
-
   {#if editableViewsSize > 0}
+    <Tabs.Root
+      bind:value={currentViewValue}
+      onValueChange={(value) => {
+        manageViewForm = false;
+        let newView: number;
+        if (!value) {
+          newView = firstViewId;
+          currentViewValue = newView.toString();
+        } else {
+          newView = parseInt(value);
+        }
+        _currentViews.remove(0, false).setActive(newView);
+      }}
+    >
+      <Tabs.List>
+        {#each editableViews as viewState}
+          <Tabs.Trigger value={viewState.view.id.toString()} aria-label={viewState.view.name}>
+            {viewState.view.name}
+            {#if viewState.view.dirty}
+              <Asterisk class="-ml-1" />
+            {/if}
+          </Tabs.Trigger>
+
+          {#if editViewsMode}
+            <div class="flex gap-0">
+              <Toggle
+                variant="outline"
+                class={cn("h-8 rounded-none border-none shadow-none")}
+                bind:pressed={
+                  () => manageViewForm && viewState.view.id === editViewId,
+                  (value) => {
+                    currentViewValue = viewState.view.id.toString();
+                    _currentViews.setActive(viewState.view.id);
+                    editViewId = value ? viewState.view.id : 0;
+                    manageViewForm = value;
+                  }
+                }
+              >
+                <Pencil />
+              </Toggle>
+            </div>
+          {/if}
+        {/each}
+      </Tabs.List>
+      <Tabs.Content value="account">
+      </Tabs.Content>
+    </Tabs.Root>
+
     <Toggle
       variant="outline"
       class="ml-2"
