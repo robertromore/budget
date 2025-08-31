@@ -43,7 +43,7 @@
   <h1 class="mr-5 text-3xl">{account?.name}</h1>
   <span class="text-sm text-muted-foreground">
     <strong>Balance:</strong>
-    {currentAccountState?.balance}
+    {currentAccountState?.balance()}
   </span>
 </div>
 
