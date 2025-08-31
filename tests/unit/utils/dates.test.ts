@@ -6,7 +6,7 @@ import {
   getNextWeekdayByLabel,
   getFirstWeekday,
   getFirstSpecifiedWeekdayInMonth,
-} from "./dates";
+} from "../../../src/lib/utils/dates";
 
 describe("Weekday utility functions", () => {
   describe("getNextWeekday", () => {
