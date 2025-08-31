@@ -45,6 +45,62 @@ This is a SvelteKit budget management application with:
 - Easier refactoring and maintenance
 - Avoids relative path complexity
 
+## Comment and Documentation Standards
+
+**NEVER reference previous work, changes, or transitions in comments or documentation.**
+
+### Comment Principles
+- ❌ `// Now uses the new validation system`
+- ✅ `// Validates input using comprehensive sanitization`
+- ❌ `// Changed from repository pattern to service layer`
+- ✅ `// Service layer handles business logic and validation`
+- ❌ `// TODO: Implement after refactoring is complete`
+- ✅ `// TODO: Add transaction loading functionality`
+- ❌ `// Updated to use the latest middleware`
+- ✅ `// Uses tRPC middleware for authentication and rate limiting`
+
+### Documentation Standards
+- Document code and architecture as it currently exists
+- Focus on what the code does, not what it replaced
+- Avoid temporal references like "now", "updated", "changed from"
+- Write comments as if this is the first implementation
+- Use present tense to describe current functionality
+- Remove transitional TODO comments that reference previous states
+
+### Rationale
+- Creates timeless documentation that doesn't become outdated
+- Focuses on current architecture rather than historical changes
+- Improves code readability for new developers
+- Maintains professional documentation standards
+- Prevents confusion about what is "old" vs "new" code
+
+## Markdown Documentation Standards
+
+**ALWAYS follow Google's documentation style guidelines and run markdownlint when creating or editing markdown content.**
+
+### Style Guidelines
+- Follow [Google's documentation style guide](https://google.github.io/styleguide/docguide/style.html)
+- Use markdownlint to validate markdown syntax and formatting
+- Ensure proper heading hierarchy (H1 → H2 → H3)
+- Add language specifications to fenced code blocks
+- Include proper blank lines around headings and lists
+- End files with a single trailing newline
+
+### Markdown Quality Standards
+- ✅ Use language tags: ```typescript, ```bash, ```text
+- ✅ Proper heading structure with blank lines
+- ✅ Consistent list formatting with proper spacing
+- ✅ Professional tone following Google's style principles
+- ❌ Bare URLs without proper link formatting
+- ❌ Missing language specifications in code blocks
+- ❌ Inconsistent heading spacing
+
+### Rationale
+- Ensures consistent, professional documentation quality
+- Improves readability and maintainability of documentation
+- Follows industry-standard documentation practices
+- Enables automated quality checking and validation
+
 ## Development Commands
 
 - **Dev server**: `bun run dev`

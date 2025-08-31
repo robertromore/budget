@@ -1,12 +1,16 @@
 # Architecture Overview
 
-This document provides a comprehensive overview of the SvelteKit budget management application architecture, which implements a domain-driven design pattern with clear separation between frontend and backend concerns.
+This document provides a comprehensive overview of the SvelteKit budget
+management application architecture, which implements a domain-driven design
+pattern with clear separation between frontend and backend concerns.
 
 [TOC]
 
 ## System Architecture
 
-The application follows a modern full-stack architecture built on SvelteKit with TypeScript throughout. The system is organized into distinct domains with well-defined boundaries and responsibilities.
+The application follows a modern full-stack architecture built on SvelteKit
+with TypeScript throughout. The system is organized into distinct domains with
+well-defined boundaries and responsibilities.
 
 ### Core Technologies
 
@@ -18,7 +22,7 @@ The application follows a modern full-stack architecture built on SvelteKit with
 
 ### High-Level Architecture Diagram
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Frontend Layer                           │
 ├─────────────────┬─────────────────┬─────────────────────────────┤
@@ -48,13 +52,14 @@ The application follows a modern full-stack architecture built on SvelteKit with
 
 ## Domain-Driven Design
 
-The application implements domain-driven design principles with clear domain boundaries and consistent patterns across all business entities.
+The application implements domain-driven design principles with clear domain
+boundaries and consistent patterns across all business entities.
 
 ### Domain Organization
 
 Each business domain follows a consistent structure:
 
-```
+```text
 src/lib/server/domains/{domain}/
 ├── index.ts          # Domain exports
 ├── repository.ts     # Data access layer
@@ -166,7 +171,7 @@ Comprehensive testing strategy covering all application layers:
 
 ### Test Organization
 
-```
+```text
 tests/
 ├── unit/           # Unit tests for utilities and business logic
 ├── integration/    # API and database integration tests
@@ -208,6 +213,6 @@ The architecture is designed to scale both in complexity and performance:
 ## See Also
 
 - [Frontend Architecture](frontend-architecture.md)
-- [Backend Architecture](backend-architecture.md)
+- [Test Architecture](test-architecture.md)
 - [Development Guidelines](development-guidelines.md)
 - [Project Standards](project-standards.md)

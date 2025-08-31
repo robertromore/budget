@@ -76,7 +76,7 @@ import type { CreateAccountInput } from './types';
 
 #### Directory Structure
 
-```
+```text
 src/lib/
 ├── components/
 │   ├── dialogs/          # Modal components
@@ -223,6 +223,7 @@ Use Tailwind utility classes primarily, with BEM methodology for custom classes:
 ### Table and Column Names
 
 #### Table Names
+
 - Use lowercase snake_case
 - Use plural nouns
 - Be descriptive and consistent
@@ -240,6 +241,7 @@ CREATE TABLE schedule (...);
 ```
 
 #### Column Names
+
 - Use lowercase snake_case
 - Be descriptive
 - Use consistent naming patterns
@@ -467,6 +469,7 @@ export class BusinessRuleError extends DomainError {
 ### Error Messages
 
 Error messages should be:
+
 - Clear and actionable
 - User-friendly for client-facing errors
 - Detailed for development/logging
@@ -486,7 +489,7 @@ throw new Error('Invalid input');
 
 ### Test File Organization
 
-```
+```text
 tests/
 ├── unit/                    # Unit tests
 │   ├── utils/              # Utility function tests
@@ -790,7 +793,7 @@ export const config = {
 
 Follow Conventional Commits specification:
 
-```
+```text
 type(scope): description
 
 [optional body]
@@ -810,7 +813,7 @@ type(scope): description
 
 #### Examples
 
-```
+```text
 feat(accounts): add balance calculation service
 
 Implement service for calculating account balances including
@@ -846,4 +849,4 @@ slug uniqueness validation.
 - [Architecture Overview](architecture-overview.md)
 - [Development Guidelines](development-guidelines.md)
 - [Frontend Architecture](frontend-architecture.md)
-- [Backend Architecture](backend-architecture.md)
+- [Test Architecture](test-architecture.md)

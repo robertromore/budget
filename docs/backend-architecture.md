@@ -12,7 +12,7 @@ The backend architecture follows domain-driven design principles with a clear se
 
 ### Domain-Driven Organization
 
-```
+```text
 src/lib/server/domains/
 ├── accounts/           # Account management domain (fully implemented)
 │   ├── index.ts       # Domain exports
@@ -29,7 +29,7 @@ src/lib/server/domains/
 
 ### Shared Infrastructure
 
-```
+```text
 src/lib/server/shared/
 ├── database/         # Database abstractions and utilities
 ├── middleware/       # tRPC middleware components
@@ -40,7 +40,7 @@ src/lib/server/shared/
 
 ### Configuration Management
 
-```
+```text
 src/lib/server/config/
 ├── auth.ts          # Authentication configuration
 ├── database.ts      # Database settings and limits
