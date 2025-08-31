@@ -1,6 +1,6 @@
 <script lang="ts">
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-  import AppSidebar from "$lib/components/app-sidebar.svelte";
+  import AppSidebar from "$lib/components/layout/app-sidebar.svelte";
   import "../app.css";
   import type { LayoutData } from "./$types";
   import type { Snippet } from "svelte";
