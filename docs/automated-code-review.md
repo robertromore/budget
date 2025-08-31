@@ -1,10 +1,12 @@
 # Automated Code Review System
 
-This project uses an automated code review system powered by Claude AI that provides consistent, thorough code reviews for all pull requests.
+This project uses an automated code review system powered by Claude AI that
+provides consistent, thorough code reviews for all pull requests.
 
 ## Overview
 
-The automated review system uses our specialized `code-review-specialist` agent to analyze pull requests and provide structured feedback on:
+The automated review system uses our specialized `code-review-specialist`
+agent to analyze pull requests and provide structured feedback on:
 
 - **Code Quality**: Readability, maintainability, and best practices
 - **Security**: Vulnerability detection and security anti-patterns
@@ -17,11 +19,13 @@ The automated review system uses our specialized `code-review-specialist` agent 
 ### Triggering Reviews
 
 The automated review system triggers on:
+
 - New pull requests (`opened`)
 - Updates to existing pull requests (`synchronize`)
 - Reopened pull requests (`reopened`)
 
 **Excluded from review:**
+
 - Draft pull requests
 - Documentation-only changes (`.md` files in docs folder)
 - Configuration files (`.gitignore`, `LICENSE`)
@@ -36,18 +40,21 @@ The automated review system triggers on:
 ### Review Categories
 
 #### 🔴 Blocking Issues
+
 - Security vulnerabilities
 - Breaking changes without migration paths
 - Critical bugs or data corruption risks
 - Performance regressions
 
 #### 🟡 Important Suggestions  
+
 - Code quality improvements
 - Performance optimizations
 - Maintainability concerns
 - Testing gaps
 
 #### 🟢 Minor Suggestions
+
 - Style preferences
 - Alternative approaches
 - Future optimizations
@@ -81,6 +88,7 @@ Add the following secrets to your GitHub repository:
 ### Permissions
 
 The workflow requires these permissions:
+
 - `contents: read` - Access repository code
 - `pull-requests: write` - Post review comments
 - `issues: write` - Apply labels to PRs
@@ -90,19 +98,24 @@ The workflow requires these permissions:
 The automated review provides:
 
 ### Summary
+
 Brief overview of the pull request and key findings
 
 ### Positive Feedback
+
 Highlights of well-implemented code and good practices
 
 ### Categorized Findings
+
 Structured feedback organized by:
+
 - **Category**: Security, Performance, Code Quality, etc.
 - **Severity**: Blocking, Important, or Minor
 - **File Location**: Specific files where issues were found
 - **Actionable Suggestions**: Concrete steps to address issues
 
 ### Overall Recommendation
+
 Final assessment and recommended next steps
 
 ## Integration with Human Reviews
@@ -117,11 +130,13 @@ The automated review **complements** rather than replaces human code review:
 ## Best Practices
 
 ### For Authors
+
 - Address blocking issues before requesting human review
 - Consider important suggestions for code quality improvements
 - Use minor suggestions as learning opportunities
 
 ### For Reviewers
+
 - Review the automated feedback before conducting manual review
 - Focus human review on business logic, requirements, and architecture
 - Override AI suggestions when context requires different approaches
@@ -131,12 +146,14 @@ The automated review **complements** rather than replaces human code review:
 ### Modifying Review Criteria
 
 The review agent can be customized by editing:
+
 - `.github/actions/claude-review/index.js` - Core review logic
 - Agent prompt in the JavaScript file - Review focus areas and standards
 
 ### Adjusting Triggers
 
 Modify `.github/workflows/code-review.yml` to:
+
 - Change trigger conditions
 - Add/remove file types for review
 - Adjust permissions and workflow steps
@@ -144,11 +161,13 @@ Modify `.github/workflows/code-review.yml` to:
 ## Monitoring and Maintenance
 
 ### Viewing Review Results
+
 - Check the "Actions" tab for workflow execution logs
 - Review comments appear automatically on pull requests
 - Labels are applied based on findings
 
 ### Troubleshooting
+
 - Ensure `ANTHROPIC_API_KEY` is correctly set
 - Check workflow logs for API errors or parsing issues
 - Verify repository permissions for the GitHub token
@@ -163,6 +182,7 @@ Modify `.github/workflows/code-review.yml` to:
 ## Future Enhancements
 
 Potential improvements for the review system:
+
 - **File-specific reviews** for targeted feedback
 - **Integration with CI/CD** for automated fixes
 - **Custom rule sets** for different code areas

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button/index.js';
   import type { Schedule } from '$lib/schema/schedules.js';
-  import { managingScheduleId, newScheduleDialog } from '$lib/states/global.svelte.js';
+  import { managingScheduleId, newScheduleDialog } from '$lib/states/ui/global.svelte';
 
   let { data } = $props();
   const schedules: Schedule[] | undefined = $derived(data.schedules);

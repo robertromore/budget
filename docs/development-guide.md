@@ -19,7 +19,8 @@ Every change, no matter how small, requires its own feature branch.
 
 - Focus on one feature at a time
 - Make small, incremental changes
-- **Use feature branches**: Create new branches for each feature/task (never commit directly to main)
+- **Use feature branches**: Create new branches for each feature/task
+  (never commit directly to main)
 - Test changes before committing (run build, check dev server)
 - Write descriptive commit messages with context
 - Update project documentation as work progresses
@@ -75,7 +76,8 @@ Before every commit:
 
 ### Route-Specific Components
 
-- Components specific to certain routes should be in their route's `(components)` subfolder
+- Components specific to certain routes should be in their route's
+  `(components)` subfolder
 - Configuration files should be in `(config)` subfolder
 - Data definitions should be in `(data)` subfolder
 - Other logical groupings use `(name)` convention

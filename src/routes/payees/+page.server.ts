@@ -1,20 +1,21 @@
-import { insertPayeeSchema, removePayeeSchema } from "$lib/schema";
+import { removePayeeSchema } from "$lib/schema";
+import { superformInsertPayeeSchema } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
-import { zod } from "sveltekit-superforms/adapters";
+import { zod4 } from "sveltekit-superforms/adapters";
 
 export const load: PageServerLoad = async () => ({
   payees: await createCaller(await createContext()).payeeRoutes.all(),
-  form: await superValidate(zod(insertPayeeSchema)),
-  deleteForm: await superValidate(zod(removePayeeSchema)),
+  form: await superValidate(zod4(superformInsertPayeeSchema)),
+  deleteForm: await superValidate(zod4(removePayeeSchema)),
 });
 
 export const actions: Actions = {
   "save-payee": async (event) => {
-    const form = await superValidate(event, zod(insertPayeeSchema));
+    const form = await superValidate(event, zod4(superformInsertPayeeSchema));
     if (!form.valid) {
       return fail(400, {
         form,
@@ -28,7 +29,7 @@ export const actions: Actions = {
     };
   },
   "delete-payee": async (event) => {
-    const form = await superValidate(event, zod(removePayeeSchema));
+    const form = await superValidate(event, zod4(removePayeeSchema));
     if (!form.valid) {
       return fail(400, {
         form,

@@ -4,7 +4,7 @@
 
 import type { TableConfig } from "drizzle-orm/mysql-core";
 import { db } from "..";
-import * as schema from "../../../schema";
+import * as schema from "$lib/schema";
 
 import { Glob } from "bun";
 import * as path from "node:path";

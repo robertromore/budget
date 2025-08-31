@@ -1,4 +1,5 @@
-import { formInsertAccountSchema, insertTransactionSchema, removeAccountSchema } from "$lib/schema";
+import { removeAccountSchema } from "$lib/schema";
+import { superformInsertAccountSchema, superformInsertTransactionSchema } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";
@@ -7,13 +8,13 @@ import { fail } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
 
 export const load: PageServerLoad = async () => ({
-  manageAccountForm: await superValidate(zod4(formInsertAccountSchema)),
+  manageAccountForm: await superValidate(zod4(superformInsertAccountSchema)),
   deleteAccountForm: await superValidate(zod4(removeAccountSchema)),
 });
 
 export const actions: Actions = {
   "add-account": async (event) => {
-    const form = await superValidate(event, zod4(formInsertAccountSchema));
+    const form = await superValidate(event, zod4(superformInsertAccountSchema));
     if (!form.valid) {
       return fail(400, {
         form,
@@ -40,7 +41,7 @@ export const actions: Actions = {
     };
   },
   "add-transaction": async (event) => {
-    const form = await superValidate(event, zod4(insertTransactionSchema));
+    const form = await superValidate(event, zod4(superformInsertTransactionSchema));
     if (!form.valid) {
       return fail(400, {
         form,
