@@ -11,8 +11,8 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
   import { CurrentAccountState } from "$lib/states/views/current-account.svelte";
-  import { categoriesContext } from "$lib/states/entities/categories.svelte";
-  import { payeesContext } from "$lib/states/entities/payees.svelte";
+  import { CategoriesState } from "$lib/states/entities/categories.svelte";
+  import { PayeesState } from "$lib/states/entities/payees.svelte";
   import type { Account } from "$lib/schema";
   import { DateFiltersState } from "$lib/states/ui/date-filters.svelte";
 
@@ -28,8 +28,8 @@
     }
   });
 
-  const categories = categoriesContext.get();
-  const payees = payeesContext.get();
+  const categories = CategoriesState.get();
+  const payees = PayeesState.get();
 
   let addTransactionDialogOpen: boolean = $state(false);
   let deleteTransactionDialogOpen: boolean = $state(false);

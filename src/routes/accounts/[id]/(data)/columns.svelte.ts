@@ -173,7 +173,7 @@ export const columns = (
           value: payees.getById(info.getValue() as number) as EditableEntityItem,
           entityLabel: "payee",
           onUpdateValue: (new_value) => updateHandler(info, "payeeId", new_value),
-          entities: payees.payees as EditableEntityItem[],
+          entities: payees.all as EditableEntityItem[],
           icon: HandCoins as unknown as Component,
           management: {
             enable: true,
@@ -259,7 +259,7 @@ export const columns = (
           value: categories.getById(info.getValue() as number) as EditableEntityItem,
           entityLabel: "category",
           onUpdateValue: (new_value) => updateHandler(info, "categoryId", new_value),
-          entities: categories.categories as EditableEntityItem[],
+          entities: categories.all as EditableEntityItem[],
           icon: SquareMousePointer as unknown as Component,
           management: {
             enable: true,

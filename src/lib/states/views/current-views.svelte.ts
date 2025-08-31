@@ -72,14 +72,22 @@ export class CurrentViewsState<T> {
   }
 
   setActive(viewState: CurrentViewState<T> | number) {
+    let targetViewState: CurrentViewState<T>;
+    
     if (typeof viewState === "number") {
       this.activeViewId = viewState;
+      targetViewState = this.viewsStates.get(viewState)!;
     } else {
       this.activeViewId = (viewState as CurrentViewState<T>).view.id;
+      targetViewState = viewState as CurrentViewState<T>;
     }
 
-    this.activeView.updateTableFilters();
-    this.activeView.updateTableState();
+    // Use setTimeout to break the reactive loop by deferring table updates
+    setTimeout(() => {
+      targetViewState.updateTableFilters();
+      targetViewState.updateTableState();
+    }, 0);
+    
     return this;
   }
 

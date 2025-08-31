@@ -4,8 +4,8 @@
   import "../app.css";
   import type { LayoutData } from "./$types";
   import type { Snippet } from "svelte";
-  import { categoriesContext, CategoriesState } from "$lib/states/entities/categories.svelte";
-  import { payeesContext, PayeesState } from "$lib/states/entities/payees.svelte";
+  import { CategoriesState } from "$lib/states/entities/categories.svelte";
+  import { PayeesState } from "$lib/states/entities/payees.svelte";
   import { dev } from '$app/environment';
   import { RenderScan } from 'svelte-render-scan';
   import AddAccountDialog from "$lib/components/dialogs/add-account-dialog.svelte";
@@ -18,8 +18,8 @@
   const { accounts, payees, categories, schedules } = $derived(data);
   AccountsState.set((() => accounts)());
   SchedulesState.set((() => schedules)());
-  categoriesContext.set(new CategoriesState((() => categories)()));
-  payeesContext.set(new PayeesState((() => payees)()));
+  CategoriesState.set((() => categories)());
+  PayeesState.set((() => payees)());
 </script>
 
 {#if dev}
