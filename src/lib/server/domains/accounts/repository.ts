@@ -99,14 +99,14 @@ export class AccountRepository extends BaseRepository<
    */
   async findWithTransactions(id: number): Promise<AccountWithTransactions | null> {
     try {
-      // For now, just return the account without transactions
-      // In a real implementation, you'd join with transactions table
       const account = await this.findById(id);
       if (!account) return null;
 
+      // Returns account with empty transactions array as baseline
+      // Transaction loading requires transactions domain implementation
       return {
         ...account,
-        transactions: [] // TODO: Implement transaction loading
+        transactions: []
       };
     } catch (error) {
       throw new Error(`Failed to find account with transactions: ${error}`);
