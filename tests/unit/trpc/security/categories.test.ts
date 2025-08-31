@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { createCaller } from "../../../../src/lib/trpc/router";
 import { createContext } from "../../../../src/lib/trpc/context";
 import { TRPCError } from "@trpc/server";
@@ -8,7 +8,7 @@ describe("Category Security - Unit Tests", () => {
 
   beforeEach(async () => {
     const ctx = await createContext();
-    caller = createCaller(ctx);
+    caller = createCaller({ ...ctx, isTest: true });
   });
 
   describe("Input Validation", () => {
@@ -67,24 +67,22 @@ describe("Category Security - Unit Tests", () => {
     });
   });
 
-  describe("HTML Sanitization", () => {
-    it("should sanitize HTML in category names", async () => {
-      const result = await caller.categoriesRoutes.save({
-        name: "Entertainment & Fun",
-      });
-      
-      expect(result.name).not.toContain("<script>");
-      expect(result.name).toBe("Entertainment & Fun");
+  describe("HTML Rejection", () => {
+    it("should reject category names with HTML", async () => {
+      await expect(
+        caller.categoriesRoutes.save({
+          name: "Test <script>alert('xss')</script>",
+        })
+      ).rejects.toThrow();
     });
 
-    it("should sanitize HTML in notes fields", async () => {
-      const result = await caller.categoriesRoutes.save({
-        name: "Test Category",
-        notes: "Notes with <b>HTML</b> tags",
-      });
-      
-      // HTML tags should be stripped or escaped
-      expect(result.notes).not.toContain("<b>");
+    it("should reject HTML in notes fields", async () => {
+      await expect(
+        caller.categoriesRoutes.save({
+          name: "Test Category",
+          notes: "Notes with <b>HTML</b> tags",
+        })
+      ).rejects.toThrow("Notes cannot contain HTML tags");
     });
   });
 
