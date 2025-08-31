@@ -1,5 +1,5 @@
 import { db } from "..";
-import { transactions, type Category, type NewTransaction } from "../../../schema";
+import { transactions, type Category, type NewTransaction } from "$lib/schema";
 import { faker } from "@faker-js/faker";
 import { payeeFactory } from "./payees";
 import type { Payee } from "$lib/schema/payees";
