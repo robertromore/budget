@@ -9,7 +9,7 @@
   import { Badge } from "$lib/components/ui/badge";
   import X from "@lucide/svelte/icons/x";
   import type { AvailableFilters, FacetedFilterOption } from "$lib/types";
-  import { currentViews } from "$lib/states/current-views.svelte";
+  import { currentViews } from "$lib/states/views/current-views.svelte";
   import type { SvelteMap } from "svelte/reactivity";
 
   type Props<TData, TValue> = {
