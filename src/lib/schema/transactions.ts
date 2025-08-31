@@ -17,6 +17,7 @@ import { payees, type Payee } from "./payees";
 import { accounts } from "./accounts";
 import { z } from "zod/v4";
 import { schedules } from "./schedules";
+import validator from "validator";
 
 export const transactions = sqliteTable(
   "transaction",
@@ -82,13 +83,26 @@ export const transactionsRelations = relations(transactions, ({ many, one }) => 
 export const selectTransactionSchema = createSelectSchema(transactions);
 export const insertTransactionSchema = createInsertSchema(transactions);
 export const formInsertTransactionSchema = createInsertSchema(transactions, {
-  amount: (schema) =>
-    schema
-      .min(-999999.99, "Amount cannot be less than -$999,999.99")
-      .max(999999.99, "Amount cannot exceed $999,999.99")
-      .multipleOf(0.01, "Amount must be a valid currency value"),
+  amount: z.number({
+    required_error: "Amount is required",
+    invalid_type_error: "Amount must be a number"
+  })
+    .min(-999999.99, "Amount cannot be less than -$999,999.99")
+    .max(999999.99, "Amount cannot exceed $999,999.99")
+    .multipleOf(0.01, "Amount must be a valid currency value"),
   notes: (schema) =>
-    schema.max(500, "Notes must be less than 500 characters").optional().nullable(),
+    schema
+      .max(500, "Notes must be less than 500 characters")
+      .refine((val) => {
+        if (!val) return true; // Allow empty/null values
+        // Reject any HTML tags
+        if (validator.contains(val, '<') || validator.contains(val, '>')) {
+          return false;
+        }
+        return true;
+      }, "Notes cannot contain HTML tags")
+      .optional()
+      .nullable(),
   status: (schema) =>
     schema
       .refine((val) => !val || ["cleared", "pending", "scheduled"].includes(val), {
@@ -100,7 +114,7 @@ export const removeTransactionsSchema = z.object({
   entities: z
     .array(z.number().nonnegative())
     .max(100, "Too many transactions selected for deletion"),
-  accountId: z.number(),
+  accountId: z.number().positive("Account ID must be positive"),
 });
 
 type TransactionExtraFields = {

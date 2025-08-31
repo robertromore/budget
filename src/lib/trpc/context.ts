@@ -12,4 +12,6 @@ export async function createContext() {
 //   return { ...locals, db };
 // };
 
-export type Context = Awaited<ReturnType<typeof createContext>>;
+export type Context = Awaited<ReturnType<typeof createContext>> & {
+  isTest?: boolean;
+};
