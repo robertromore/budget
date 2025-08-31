@@ -96,7 +96,7 @@ export const accountRoutes = t.router({
           orderBy: [desc(transactions.date), desc(transactions.id)],
         },
       },
-      orderBy: [accounts.id],
+      orderBy: [accounts.name],
     });
     
     // Calculate balance for each account and running balance for each transaction
