@@ -1,47 +1,126 @@
 import { type Category } from "$lib/schema";
 import { trpc } from "$lib/trpc/client";
-import { without } from "$lib/utils";
-import { Context } from "runed";
+import { SvelteMap } from "svelte/reactivity";
+import { getContext, setContext } from "svelte";
+
+const KEY = Symbol("categories");
 
 export class CategoriesState {
-  categories: Category[] = $state() as Category[];
+  categories = $state(new SvelteMap<number, Category>()) as SvelteMap<number, Category>;
 
-  getById(id: number) {
-    return this.categories.find((category) => category.id === id);
+  constructor(categories?: Category[]) {
+    if (categories) {
+      this.init(categories);
+    }
   }
 
+  // Initialize/reinitialize the store with new data
+  init(categories: Category[]) {
+    this.categories.clear();
+    categories.forEach((category) => this.categories.set(category.id, category));
+  }
+
+  // Context management
+  static get() {
+    return getContext<CategoriesState>(KEY);
+  }
+
+  static set(categories: Category[]) {
+    return setContext(KEY, new CategoriesState(categories));
+  }
+
+  // Getters
+  get all(): Category[] {
+    return this.categories.values().toArray();
+  }
+
+  get count(): number {
+    return this.categories.size;
+  }
+
+  // Find operations
+  getById(id: number): Category | undefined {
+    return this.categories.get(id);
+  }
+
+  findBy(predicate: (category: Category) => boolean): Category | undefined {
+    return this.categories.values().find(predicate);
+  }
+
+  filterBy(predicate: (category: Category) => boolean): Category[] {
+    return this.categories.values().filter(predicate).toArray();
+  }
+
+  // Domain-specific methods
+  getByName(name: string): Category | undefined {
+    return this.findBy(category => category.name === name);
+  }
+
+  getActiveCategories(): Category[] {
+    return this.filterBy(category => !category.deletedAt);
+  }
+
+  getParentCategories(): Category[] {
+    return this.filterBy(category => !category.parentId);
+  }
+
+  getChildCategories(parentId: number): Category[] {
+    return this.filterBy(category => category.parentId === parentId);
+  }
+
+  // CRUD operations
   addCategory(category: Category) {
-    this.categories.push(category);
+    this.categories.set(category.id, category);
   }
 
   updateCategory(category: Category) {
-    const index = this.categories.findIndex((c) => c.id === category.id);
-    if (index !== -1) {
-      this.categories[index] = category;
-    } else {
-      this.addCategory(category);
-    }
+    this.categories.set(category.id, category);
   }
 
-  async deleteCategories(categories: number[], cb?: (id: Category[]) => void) {
-    await trpc().categoriesRoutes.delete.mutate({
-      entities: categories,
+  removeCategory(id: number): Category | undefined {
+    const category = this.categories.get(id);
+    if (category) {
+      this.categories.delete(id);
+      return category;
+    }
+    return undefined;
+  }
+
+  removeCategories(ids: number[]): Category[] {
+    const removed: Category[] = [];
+    ids.forEach(id => {
+      const category = this.categories.get(id);
+      if (category) {
+        this.categories.delete(id);
+        removed.push(category);
+      }
     });
-    const [, removed] = without(this.categories, (category: Category) =>
-      categories.includes(category.id)
-    );
-    if (cb) {
-      cb(removed);
-    }
+    return removed;
   }
 
-  async deleteCategory(category: number, cb?: (id: Category[]) => void) {
-    return this.deleteCategories([category], cb);
+  // API operations
+  async saveCategory(category: Category): Promise<Category> {
+    const result = await trpc().categoriesRoutes.save.mutate(category);
+    this.addCategory(result);
+    return result;
   }
 
-  constructor(categories: Category[]) {
-    this.categories = categories;
+  async deleteCategory(id: number): Promise<void> {
+    await trpc().categoriesRoutes.delete.mutate({ entities: [id] });
+    this.removeCategory(id);
+  }
+
+  async deleteCategories(ids: number[]): Promise<void> {
+    await trpc().categoriesRoutes.delete.mutate({ entities: ids });
+    this.removeCategories(ids);
+  }
+
+  // Utility methods
+  has(id: number): boolean {
+    return this.categories.has(id);
+  }
+
+  clear(): void {
+    this.categories.clear();
   }
 }
-
-export const categoriesContext = new Context<CategoriesState>("categories");

@@ -1,4 +1,5 @@
-import { formInsertScheduleSchema, insertScheduleSchema, removeScheduleSchema } from "$lib/schema";
+import { removeScheduleSchema } from "$lib/schema";
+import { superformInsertScheduleSchema } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { superValidate } from "sveltekit-superforms/client";
@@ -15,7 +16,7 @@ export const load: PageServerLoad = async () => ({
 
 export const actions: Actions = {
   "save-schedule": async (event) => {
-    const form = await superValidate(event, zod4(insertScheduleSchema));
+    const form = await superValidate(event, zod4(superformInsertScheduleSchema));
     if (!form.valid) {
       return fail(400, {
         form,

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { EditableEntityItem } from "$lib/types";
-  import { insertCategorySchema, type Category } from "$lib/schema";
+  import { type Category } from "$lib/schema";
+  import { superformInsertCategorySchema } from "$lib/schema/superforms";
   import { page } from "$app/state";
   import * as Form from "$lib/components/ui/form";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
@@ -9,7 +10,7 @@
   import { Textarea } from "$lib/components/ui/textarea";
   import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
-  import { categoriesContext } from "$lib/states/entities/categories.svelte";
+  import { CategoriesState } from "$lib/states/entities/categories.svelte";
 
   let {
     id,
@@ -26,7 +27,7 @@
   } = page;
   const form = superForm(manageCategoryForm, {
     id: "category-form",
-    validators: zod4Client(insertCategorySchema),
+    validators: zod4Client(superformInsertCategorySchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {
@@ -38,7 +39,7 @@
 
   const { form: formData, enhance } = form;
   if (id) {
-    const category: Category = categoriesContext.get().getById(id)!;
+    const category: Category = CategoriesState.get().getById(id)!;
     $formData.name = category.name;
     $formData.notes = category.notes;
   }

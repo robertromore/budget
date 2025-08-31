@@ -2,11 +2,12 @@
   import { page } from "$app/state";
   import * as Form from "$lib/components/ui/form";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
-  import { insertViewSchema, type View } from "$lib/schema";
+  import { type View } from "$lib/schema";
+  import { superformInsertViewSchema } from "$lib/schema/superforms/views";
   import type { CurrentViewState } from "$lib/states/views/current-view.svelte";
   import { currentViews } from "$lib/states/views/current-views.svelte";
   import type { FilterInputOption, TransactionsFormat } from "$lib/types";
-  import { zod4Client } from "sveltekit-superforms/adapters";
+  import { zodClient } from "sveltekit-superforms/adapters";
   import { superForm } from "sveltekit-superforms/client";
   import DeleteViewDialog from "../(dialogs)/delete-view-dialog.svelte";
   import DisplayInput from "$lib/components/shared/display-input.svelte";
@@ -35,7 +36,7 @@
   const form = superForm(manageViewForm, {
     id: "views-form",
     dataType: "json",
-    validators: zod4Client(insertViewSchema),
+    validators: zodClient(superformInsertViewSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {
