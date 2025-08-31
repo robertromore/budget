@@ -1,4 +1,4 @@
-import { categories, type Category } from "../../../schema";
+import { categories, type Category } from "$lib/schema";
 import { db } from "..";
 import { faker } from "@faker-js/faker";
 
