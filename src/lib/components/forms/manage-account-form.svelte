@@ -6,7 +6,7 @@
   import { zod4Client } from "sveltekit-superforms/adapters";
   import { page } from "$app/state";
   import Input from "$lib/components/ui/input/input.svelte";
-  import { AccountsState } from "$lib/states/accounts.svelte";
+  import { AccountsState } from "$lib/states/entities/accounts.svelte";
 
   let {
     accountId,

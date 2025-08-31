@@ -8,8 +8,8 @@
     deleteAccountId,
     managingAccountId,
     newAccountDialog,
-  } from "$lib/states/global.svelte";
-  import { AccountsState } from "$lib/states/accounts.svelte";
+  } from "$lib/states/ui/global.svelte";
+  import { AccountsState } from "$lib/states/entities/accounts.svelte";
 
   const accountsState = $derived(AccountsState.get());
   const accounts = $derived(accountsState.accounts.values());

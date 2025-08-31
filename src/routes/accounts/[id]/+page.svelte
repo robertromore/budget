@@ -2,19 +2,19 @@
   import DataTable from "./(components)/data-table.svelte";
   import { columns } from "./(data)/columns.svelte";
   import type { TransactionsFormat } from "$lib/types";
-  import AddTransactionDialog from "$lib/components/dialogs/add-transaction-dialog.svelte";
+  import AddTransactionDialog from "./(dialogs)/add-transaction-dialog.svelte";
   import { Button } from "$lib/components/ui/button";
   import Plus from "@lucide/svelte/icons/plus";
   import Import from "@lucide/svelte/icons/import";
-  import DeleteTransactionDialog from "$lib/components/dialogs/delete-transaction-dialog.svelte";
+  import DeleteTransactionDialog from "./(dialogs)/delete-transaction-dialog.svelte";
   import type { Table } from "@tanstack/table-core";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
-  import { CurrentAccountState } from "$lib/states/current-account.svelte";
-  import { categoriesContext } from "$lib/states/categories.svelte";
-  import { payeesContext } from "$lib/states/payees.svelte";
+  import { CurrentAccountState } from "$lib/states/views/current-account.svelte";
+  import { categoriesContext } from "$lib/states/entities/categories.svelte";
+  import { payeesContext } from "$lib/states/entities/payees.svelte";
   import type { Account } from "$lib/schema";
-  import { DateFiltersState } from "$lib/states/date-filters.svelte";
+  import { DateFiltersState } from "$lib/states/ui/date-filters.svelte";
 
   let { data } = $props();
   const account: Account | undefined = $derived(data.account);

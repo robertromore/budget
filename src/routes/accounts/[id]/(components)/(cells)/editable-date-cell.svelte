@@ -1,6 +1,6 @@
 <script lang="ts">
   import { type DateValue } from "@internationalized/date";
-  import DateInput from "$lib/components/input/date-input.svelte";
+  import DateInput from "$lib/components/inputs/date/date-input.svelte";
 
   let {
     value = $bindable(),

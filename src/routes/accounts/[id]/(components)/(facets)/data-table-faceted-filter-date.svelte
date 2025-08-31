@@ -7,8 +7,8 @@
   import type { FacetedFilterOption } from "$lib/types";
   import { SvelteMap } from "svelte/reactivity";
   import * as Command from "$lib/components/ui/command";
-  import AdvancedDateDialog from "$lib/components/dialogs/advanced-date-dialog.svelte";
-  import { DateFiltersState } from "$lib/states/date-filters.svelte";
+  import AdvancedDateDialog from "$lib/components/inputs/date/advanced-date-dialog.svelte";
+  import { DateFiltersState } from "$lib/states/ui/date-filters.svelte";
 
   type Props<TData, TValue> = HTMLAttributes<HTMLDivElement> & {
     column: Column<TData, TValue>;

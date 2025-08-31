@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { initTRPC } from "@trpc/server";
 import type { Context } from "../context";
+import { RATE_LIMIT } from "$lib/constants/api";
 
 // Simple in-memory rate limiter - in production, use Redis or similar
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -73,16 +74,16 @@ export const rateLimit = (options: RateLimitOptions) => {
 
 // Predefined rate limiters for different operation types
 export const mutationRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  maxRequests: 30, // 30 mutations per minute
+  windowMs: RATE_LIMIT.WINDOW_MS,
+  maxRequests: RATE_LIMIT.MUTATION_MAX_REQUESTS,
 });
 
 export const bulkOperationRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  maxRequests: 10, // 10 bulk operations per minute
+  windowMs: RATE_LIMIT.WINDOW_MS,
+  maxRequests: RATE_LIMIT.BULK_OPERATION_MAX_REQUESTS,
 });
 
 export const strictRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  maxRequests: 5, // 5 operations per minute
+  windowMs: RATE_LIMIT.WINDOW_MS,
+  maxRequests: RATE_LIMIT.STRICT_MAX_REQUESTS,
 });

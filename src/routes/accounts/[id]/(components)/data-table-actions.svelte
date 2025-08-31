@@ -2,7 +2,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Button } from "$lib/components/ui/button";
   import MoreHorizontal from "@lucide/svelte/icons/more-horizontal";
-  import DeleteTransactionDialog from "$lib/components/dialogs/delete-transaction-dialog.svelte";
+  import DeleteTransactionDialog from "../(dialogs)/delete-transaction-dialog.svelte";
 
   let {
     id,

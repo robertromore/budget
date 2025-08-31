@@ -3,14 +3,14 @@
   import * as Form from "$lib/components/ui/form";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
   import { insertViewSchema, type View } from "$lib/schema";
-  import type { CurrentViewState } from "$lib/states/current-view.svelte";
-  import { currentViews } from "$lib/states/current-views.svelte";
+  import type { CurrentViewState } from "$lib/states/views/current-view.svelte";
+  import { currentViews } from "$lib/states/views/current-views.svelte";
   import type { FilterInputOption, TransactionsFormat } from "$lib/types";
   import { zod4Client } from "sveltekit-superforms/adapters";
   import { superForm } from "sveltekit-superforms/client";
-  import DeleteViewDialog from "$lib/components/dialogs/delete-view-dialog.svelte";
-  import DisplayInput from "$lib/components/input/display-input.svelte";
-  import FilterInput from "$lib/components/input/filter-input.svelte";
+  import DeleteViewDialog from "../(dialogs)/delete-view-dialog.svelte";
+  import DisplayInput from "$lib/components/shared/display-input.svelte";
+  import FilterInput from "$lib/components/shared/filter-input.svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
 

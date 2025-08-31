@@ -4,7 +4,7 @@
   import type { Component } from "svelte";
   import { page } from "$app/state";
   import type { Transaction, Payee } from "$lib/schema";
-  import { currentViews } from "$lib/states/current-views.svelte";
+  import { currentViews } from "$lib/states/views/current-views.svelte";
   import HandCoins from "@lucide/svelte/icons/hand-coins";
   import { SvelteMap } from "svelte/reactivity";
   import type { FacetedFilterOption } from "$lib/types";
