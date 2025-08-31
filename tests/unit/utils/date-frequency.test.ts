@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { CalendarDate } from "@internationalized/date";
-import { nextMonthly } from "./date-frequency";
+import { nextMonthly } from "../../../src/lib/utils/date-frequency";
 
 describe("nextMonthly", () => {
   describe("Specific day of month pattern", () => {
