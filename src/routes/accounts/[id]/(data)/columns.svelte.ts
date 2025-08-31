@@ -322,7 +322,10 @@ export const columns = (
           value: info.getValue() as number,
           onUpdateValue: (new_value) => updateHandler(info, "amount", new_value),
         }),
-      aggregatedCell: (info) => currencyFormatter.format(info.getValue() as number),
+      aggregatedCell: (info) => {
+        const value = info.getValue() as number;
+        return currencyFormatter.format(isNaN(value) ? 0 : (value ?? 0));
+      },
       header: ({ column }) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
@@ -343,8 +346,14 @@ export const columns = (
           column,
           title: "Balance",
         }),
-      cell: (info) => currencyFormatter.format(info.getValue() as number),
-      aggregatedCell: (info) => currencyFormatter.format(info.getValue() as number),
+      cell: (info) => {
+        const value = info.getValue() as number;
+        return currencyFormatter.format(isNaN(value) ? 0 : (value ?? 0));
+      },
+      aggregatedCell: (info) => {
+        const value = info.getValue() as number;
+        return currencyFormatter.format(isNaN(value) ? 0 : (value ?? 0));
+      },
       enableColumnFilter: false,
       enableGrouping: false,
       enableSorting: false,
