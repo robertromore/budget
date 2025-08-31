@@ -1,6 +1,7 @@
 # Development Guidelines
 
-This document outlines the development guidelines, conventions, and best practices for contributing to the SvelteKit budget management application.
+This document outlines the development guidelines, conventions, and best
+practices for contributing to the SvelteKit budget management application.
 
 [TOC]
 
@@ -44,7 +45,7 @@ bun run dev
 
 Follow conventional commit format:
 
-```
+```text
 type(scope): description
 
 Types: feat, fix, docs, style, refactor, test, chore
@@ -219,7 +220,8 @@ import { validateAccount } from './validation';
 #### Adding a New Domain
 
 1. **Create domain structure**:
-   ```
+
+   ```text
    src/lib/server/domains/new-domain/
    ├── index.ts
    ├── repository.ts
@@ -229,6 +231,7 @@ import { validateAccount } from './validation';
    ```
 
 2. **Repository pattern**:
+
    ```typescript
    export class NewDomainRepository extends BaseRepository<
      typeof newDomainTable,
@@ -248,6 +251,7 @@ import { validateAccount } from './validation';
    ```
 
 3. **Service layer**:
+
    ```typescript
    export class NewDomainService {
      constructor(private repository: NewDomainRepository) {}
@@ -263,6 +267,7 @@ import { validateAccount } from './validation';
    ```
 
 4. **tRPC routes**:
+
    ```typescript
    export const newDomainRoutes = router({
      create: rateLimitedProcedure

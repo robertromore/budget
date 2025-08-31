@@ -4,7 +4,7 @@ Current state and technical overview of the budget application.
 
 ## Current State Assessment ✅
 
-- **App Status**: Successfully running on <http://localhost:5173>
+- **App Status**: Successfully running on [http://localhost:5173](http://localhost:5173)
 - **Architecture**: Clean 3-layer structure (services → query → UI)
 - **Database**: SQLite with Drizzle ORM, migrations working
 - **Frontend**: SvelteKit 5 with Shadcn-Svelte components

@@ -10,7 +10,7 @@ The frontend architecture is built on SvelteKit with a focus on type safety, mai
 
 ## Project Structure
 
-```
+```text
 src/
 ├── lib/
 │   ├── components/        # UI components organized by category
@@ -65,7 +65,7 @@ These components provide the foundation for all UI elements and maintain consist
 
 Specialized input components for form handling:
 
-```
+```text
 inputs/
 ├── date/                 # Date-related inputs
 │   ├── date-input.svelte
@@ -312,7 +312,7 @@ export const actions = {
 
 Routes follow domain-based organization:
 
-```
+```text
 routes/
 ├── +layout.svelte         # Root layout
 ├── +page.svelte          # Dashboard/home

@@ -139,7 +139,7 @@ bun run test:playwright:ui
 
 ### Directory Structure
 
-```
+```text
 tests/
 ├── unit/                    # Fast Bun-native unit tests
 │   ├── balance-calculation.test.ts

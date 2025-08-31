@@ -1,6 +1,7 @@
 # Development Agents
 
-Specialized agents for different aspects of the codebase, each with specific expertise and responsibilities.
+Specialized agents for different aspects of the codebase, each with specific
+expertise and responsibilities.
 
 ## Agent Assignments
 
@@ -14,22 +15,31 @@ Specialized agents for different aspects of the codebase, each with specific exp
 
 ### Backend API Architect
 
-Handles tRPC backend development, database operations with Drizzle ORM, and API route design. Focuses on type-safe endpoints and server-side architecture.
+Handles tRPC backend development, database operations with Drizzle ORM, and
+API route design. Focuses on type-safe endpoints and server-side architecture.
 
 ### Frontend UI Specialist
 
-Specializes in Shadcn Svelte components, UI/UX design, and styling with Tailwind CSS. Handles component architecture and user interface development.
+Specializes in Shadcn Svelte components, UI/UX design, and styling with
+Tailwind CSS. Handles component architecture and user interface development.
 
 ### Query Layer Specialist
 
-Manages the reactive layer between services and UI components. Handles TanStack Query patterns, error transformations, and cache management.
+Manages the reactive layer between services and UI components. Handles TanStack
+Query patterns, error transformations, and cache management.
 
 ### Documentation Specialist
 
-Maintains all project documentation following Google's style guide. Handles README files, technical docs, and markdown formatting best practices.
+Maintains all project documentation following Google's style guide. Handles
+README files, technical docs, and markdown formatting best practices.
 
 ### Code Review Specialist
 
-Conducts comprehensive code reviews for pull requests with expertise in code quality, security analysis, and best practices. Evaluates architecture, performance, maintainability, and adherence to project standards across the entire technology stack.
+Conducts comprehensive code reviews for pull requests with expertise in code
+quality, security analysis, and best practices. Evaluates architecture,
+performance, maintainability, and adherence to project standards across the
+entire technology stack.
 
-**Automated Integration:** This agent is integrated into our GitHub Actions workflow to provide automated code reviews on all pull requests. See [Automated Code Review](automated-code-review.md) for setup and usage details.
+**Automated Integration:** This agent is integrated into our GitHub Actions
+workflow to provide automated code reviews on all pull requests. See
+[Automated Code Review](automated-code-review.md) for setup and usage details.
