@@ -111,11 +111,19 @@
                   {selectedValues.size} selected
                 </Badge>
               {:else}
-                {#each allOptions!.values().filter((opt) => selectedValues.has(opt.value)) as option}
+                {@const matchingOptions = allOptions?.values().toArray().filter((opt) => selectedValues.has(opt.value)) || []}
+                {#if matchingOptions.length > 0}
+                  {#each matchingOptions as option}
+                    <Badge variant="secondary" class="rounded-sm px-1 font-normal">
+                      {option.label}
+                    </Badge>
+                  {/each}
+                {:else}
+                  <!-- Fallback: if no matching options found in allOptions, show count -->
                   <Badge variant="secondary" class="rounded-sm px-1 font-normal">
-                    {option.label}
+                    {selectedValues.size} selected
                   </Badge>
-                {/each}
+                {/if}
               {/if}
             </div>
           {/if}
