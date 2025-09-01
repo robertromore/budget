@@ -33,11 +33,18 @@
   }}>Add Account</Button
 >
 
-<div class="mt-4 grid grid-cols-4 gap-4">
+<div class="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
   {#each accounts as { id, name, balance, notes }}
     <Card.Root>
       <Card.Header>
-        <Card.Title><a href="/accounts/{id}">{name}</a></Card.Title>
+        <Card.Title>
+          <a 
+            href="/accounts/{id}" 
+            class="text-foreground hover:text-primary focus:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+          >
+            {name}
+          </a>
+        </Card.Title>
         <Card.Description
           >{(notes?.length || 0) > 100 ? notes?.substring(0, 100) + "..." : notes}</Card.Description
         >
