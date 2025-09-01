@@ -5,10 +5,11 @@
   import Plus from "@lucide/svelte/icons/plus";
   import { deleteAccountDialog, deleteAccountId, managingAccountId, newAccountDialog, newScheduleDialog, managingScheduleId } from "$lib/states/ui/global.svelte";
   import { AccountsState } from "$lib/states/entities/accounts.svelte";
-    import { SchedulesState } from "$lib/states/entities/schedules.svelte";
+  import { SchedulesState } from "$lib/states/entities/schedules.svelte";
+  import AccountSortDropdown from "$lib/components/shared/account-sort-dropdown.svelte";
 
   const accountsState = $derived(AccountsState.get());
-  const accounts = $derived(accountsState.accounts.values());
+  const accounts = $derived(accountsState.sorted);
   const _newAccountDialog = $derived(newAccountDialog);
   const _managingAccountId = $derived(managingAccountId);
 
@@ -25,12 +26,15 @@
   <Sidebar.Content>
     <Sidebar.Group>
       <Sidebar.GroupLabel><a href="/accounts">Accounts</a></Sidebar.GroupLabel>
-      <Sidebar.GroupAction title="Add Account" onclick={() => {
-        _managingAccountId.current = 0;
-        _newAccountDialog.setTrue();
-      }}>
-        <Plus /> <span class="sr-only">Add Account</span>
-      </Sidebar.GroupAction>
+      <div class="flex items-center gap-1">
+        <AccountSortDropdown size="icon" variant="ghost" />
+        <Sidebar.GroupAction title="Add Account" onclick={() => {
+          _managingAccountId.current = 0;
+          _newAccountDialog.setTrue();
+        }}>
+          <Plus /> <span class="sr-only">Add Account</span>
+        </Sidebar.GroupAction>
+      </div>
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           {#each accounts as account}
@@ -38,7 +42,7 @@
               <Sidebar.MenuButton>
                 {#snippet child({ props })}
                   <a href="/accounts/{account.id}" {...props}>
-                    <span>{account.name}</span>
+                    <span data-testid="account-name">{account.name}</span>
                   </a>
                 {/snippet}
               </Sidebar.MenuButton>
