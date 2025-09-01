@@ -74,7 +74,9 @@ export const filters = {
     addMeta: (meta: any) => void
   ) => {
     type validType = { [key: string]: any };
-    return filterValue.has((row.original as validType)[columnId + "Id"].toString());
+    const entityId = (row.original as validType)[columnId + "Id"];
+    const entityIdStr = entityId === null ? "null" : entityId.toString();
+    return filterValue.has(entityIdStr);
   },
   entityIsNotFilter: (
     row: Row<TransactionsFormat>,
@@ -83,7 +85,9 @@ export const filters = {
     addMeta: (meta: any) => void
   ) => {
     type validType = { [key: string]: any };
-    return !filterValue.has((row.original as validType)[columnId + "Id"].toString());
+    const entityId = (row.original as validType)[columnId + "Id"];
+    const entityIdStr = entityId === null ? "null" : entityId.toString();
+    return !filterValue.has(entityIdStr);
   },
   dateBefore: (
     row: Row<TransactionsFormat>,
