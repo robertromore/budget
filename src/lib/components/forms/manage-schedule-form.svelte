@@ -60,13 +60,13 @@
   if (scheduleId && scheduleId > 0) {
     $formData.id = scheduleId;
     const schedule = schedules.getById(scheduleId);
-    $formData.name = schedule.name;
-    $formData.payeeId = defaultPayee = schedule.payeeId;
-    $formData.accountId = defaultAccount = schedule.accountId;
-    $formData.amount_type = schedule.amount_type;
+    $formData.name = schedule?.name;
+    $formData.payeeId = defaultPayee = schedule?.payeeId;
+    $formData.accountId = defaultAccount = schedule?.accountId;
+    $formData.amount_type = schedule?.amount_type;
     (() => {
-      amount[0] = schedule.amount;
-      amount[1] = schedule.amount_2;
+      amount[0] = schedule?.amount || 0;
+      amount[1] = schedule?.amount_2 || 0;
     })();
   }
 
