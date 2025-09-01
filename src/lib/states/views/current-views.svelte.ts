@@ -82,11 +82,9 @@ export class CurrentViewsState<T> {
       targetViewState = viewState as CurrentViewState<T>;
     }
 
-    // Use setTimeout to break the reactive loop by deferring table updates
-    setTimeout(() => {
-      targetViewState.updateTableFilters();
-      targetViewState.updateTableState();
-    }, 0);
+    // Apply table updates synchronously to ensure filter UI displays correctly
+    targetViewState.updateTableFilters();
+    targetViewState.updateTableState();
     
     return this;
   }
