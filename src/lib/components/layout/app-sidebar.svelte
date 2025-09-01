@@ -26,15 +26,13 @@
   <Sidebar.Content>
     <Sidebar.Group>
       <Sidebar.GroupLabel><a href="/accounts">Accounts</a></Sidebar.GroupLabel>
-      <div class="flex items-center gap-1">
-        <AccountSortDropdown size="icon" variant="ghost" />
-        <Sidebar.GroupAction title="Add Account" onclick={() => {
-          _managingAccountId.current = 0;
-          _newAccountDialog.setTrue();
-        }}>
-          <Plus /> <span class="sr-only">Add Account</span>
-        </Sidebar.GroupAction>
-      </div>
+      <AccountSortDropdown size="default" variant="outline" />
+      <Sidebar.GroupAction title="Add Account" onclick={() => {
+        _managingAccountId.current = 0;
+        _newAccountDialog.setTrue();
+      }}>
+        <Plus /> <span class="sr-only">Add Account</span>
+      </Sidebar.GroupAction>
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           {#each accounts as account}

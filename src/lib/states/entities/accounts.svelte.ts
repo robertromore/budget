@@ -42,9 +42,7 @@ export class AccountsState {
     return this.accounts.values().toArray();
   }
 
-  get sorted(): Account[] {
-    return this.sortAccounts(this.all, this.sortField, this.sortDirection);
-  }
+  sorted = $derived(this.sortAccounts(this.all, this.sortField, this.sortDirection));
 
   get count(): number {
     return this.accounts.size;
@@ -100,9 +98,20 @@ export class AccountsState {
 
   // API operations
   async saveAccount(account: Account): Promise<Account> {
-    const result = await trpc().accountRoutes.save.mutate(account);
-    this.addAccount(result);
-    return result;
+    // Convert null to undefined for the mutation
+    const accountForMutation = {
+      ...account,
+      closed: account.closed ?? undefined,
+    };
+    const result = await trpc().accountRoutes.save.mutate(accountForMutation);
+    // Add missing fields that the API response doesn't include
+    const accountWithDefaults: Account = {
+      ...result,
+      transactions: [], // Will be loaded separately if needed
+      balance: 0, // Will be calculated from transactions
+    };
+    this.addAccount(accountWithDefaults);
+    return accountWithDefaults;
   }
 
   async deleteAccount(id: number): Promise<void> {

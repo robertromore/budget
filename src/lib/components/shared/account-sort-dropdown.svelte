@@ -28,8 +28,8 @@
     { field: "createdAt", label: "Date Created", description: "Sort by creation date" },
   ];
 
-  const getSortIcon = (direction: SortDirection) => {
-    return direction === "asc" ? ArrowUp : ArrowDown;
+  const getCurrentSortIcon = () => {
+    return currentSortDirection === "asc" ? ArrowUp : ArrowDown;
   };
 
   const handleSort = (field: AccountSortField, direction: SortDirection) => {
@@ -38,8 +38,7 @@
 
   const getCurrentSortLabel = () => {
     const option = sortOptions.find(opt => opt.field === currentSortField);
-    const directionText = currentSortDirection === "asc" ? "↑" : "↓";
-    return `${option?.label || "Name"} ${directionText}`;
+    return `Sorting by: ${option?.label || "Name"}`;
   };
 </script>
 
@@ -47,12 +46,13 @@
   <DropdownMenu.Trigger 
     class={cn(
       buttonVariants({ variant, size }), 
-      "gap-1 data-[state=open]:bg-accent",
+      "gap-1 data-[state=open]:bg-accent w-auto",
       size === "icon" ? "w-8 h-8" : "px-2"
     )}
-    title="Sort accounts"
+    title={`${getCurrentSortLabel()} (${currentSortDirection === "asc" ? "Ascending" : "Descending"})`}
   >
-    <ArrowUpDown class="h-4 w-4" />
+    {@const SortIcon = getCurrentSortIcon()}
+    <SortIcon class="h-4 w-4" />
     {#if size !== "icon"}
       <span class="sr-only sm:not-sr-only sm:whitespace-nowrap text-xs">
         {getCurrentSortLabel()}
