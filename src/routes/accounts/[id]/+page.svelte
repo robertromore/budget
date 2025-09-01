@@ -20,7 +20,7 @@
   const account: Account | undefined = $derived(data.account);
 
   const currentAccountState = new CurrentAccountState(data.account);
-  new DateFiltersState(data.dates);
+  DateFiltersState.set(data.dates);
 
   $effect(() => {
     if (data.account) {
