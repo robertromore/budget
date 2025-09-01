@@ -34,6 +34,25 @@
     });
   }
 
+  // --- Functions: Range Logic ---
+  function handleTypeChange(newType: "exact" | "approximate" | "range") {
+    if (newType === "range" && type !== "range") {
+      // When switching to range, set max to min + 0.01 if max is not already set
+      if (value[1] === 0 || value[1] <= value[0]) {
+        value[1] = value[0] + 0.01;
+      }
+    }
+    type = newType;
+  }
+
+  // --- Reactive Effects ---
+  $effect(() => {
+    // Ensure max is always at least min + 0.01 in range mode
+    if (type === "range" && value[1] <= value[0]) {
+      value[1] = value[0] + 0.01;
+    }
+  });
+
   $inspect(value);
 </script>
 
@@ -61,7 +80,7 @@
               <Command.Item
                 value={availableType.label}
                 onSelect={() => {
-                  type = availableType.value as "exact" | "approximate" | "range";
+                  handleTypeChange(availableType.value as "exact" | "approximate" | "range");
                   closeAndFocusTrigger();
                 }}
               >
