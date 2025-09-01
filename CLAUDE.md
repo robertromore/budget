@@ -7,6 +7,7 @@ This file contains configuration and preferences for Claude Code agents working 
 **ALWAYS use `bun` commands instead of `npm` commands in this project.**
 
 ### Command Mappings
+
 - ❌ `npm install` → ✅ `bun install`
 - ❌ `npm run dev` → ✅ `bun run dev`
 - ❌ `npm run build` → ✅ `bun run build`
@@ -14,7 +15,8 @@ This file contains configuration and preferences for Claude Code agents working 
 - ❌ `npm add package` → ✅ `bun add package`
 - ❌ `npm remove package` → ✅ `bun remove package`
 
-### Rationale
+### Benefits
+
 - Faster package installation and script execution
 - Better performance for development workflows
 - Consistent with project setup and team preferences
@@ -22,6 +24,7 @@ This file contains configuration and preferences for Claude Code agents working 
 ## Project Context
 
 This is a SvelteKit budget management application with:
+
 - **Frontend**: SvelteKit with Svelte 5, TypeScript, Tailwind CSS, shadcn-svelte
 - **Backend**: tRPC, Drizzle ORM, Better Auth, domain-driven architecture
 - **Database**: SQLite (with migrations via Drizzle)
@@ -32,6 +35,7 @@ This is a SvelteKit budget management application with:
 **ALWAYS use the `$lib` alias when importing from the `src/lib` folder.**
 
 ### Import Mappings
+
 - ❌ `import { Component } from '../../../lib/components/ui/button'`
 - ✅ `import { Component } from '$lib/components/ui/button'`
 - ❌ `import { db } from '../../lib/server/db'`
@@ -39,7 +43,8 @@ This is a SvelteKit budget management application with:
 - ❌ `import type { Account } from '../lib/schema/accounts'`
 - ✅ `import type { Account } from '$lib/schema/accounts'`
 
-### Rationale
+### Import Benefits
+
 - Cleaner, more readable imports
 - Consistent with SvelteKit conventions
 - Easier refactoring and maintenance
@@ -50,6 +55,7 @@ This is a SvelteKit budget management application with:
 **NEVER reference previous work, changes, or transitions in comments or documentation.**
 
 ### Comment Principles
+
 - ❌ `// Now uses the new validation system`
 - ✅ `// Validates input using comprehensive sanitization`
 - ❌ `// Changed from repository pattern to service layer`
@@ -60,6 +66,7 @@ This is a SvelteKit budget management application with:
 - ✅ `// Uses tRPC middleware for authentication and rate limiting`
 
 ### Documentation Standards
+
 - Document code and architecture as it currently exists
 - Focus on what the code does, not what it replaced
 - Avoid temporal references like "now", "updated", "changed from"
@@ -67,7 +74,8 @@ This is a SvelteKit budget management application with:
 - Use present tense to describe current functionality
 - Remove transitional TODO comments that reference previous states
 
-### Rationale
+### Documentation Benefits
+
 - Creates timeless documentation that doesn't become outdated
 - Focuses on current architecture rather than historical changes
 - Improves code readability for new developers
@@ -79,6 +87,7 @@ This is a SvelteKit budget management application with:
 **ALWAYS follow Google's documentation style guidelines and run markdownlint when creating or editing markdown content.**
 
 ### Style Guidelines
+
 - Follow [Google's documentation style guide](https://google.github.io/styleguide/docguide/style.html)
 - Use markdownlint to validate markdown syntax and formatting
 - Ensure proper heading hierarchy (H1 → H2 → H3)
@@ -87,7 +96,8 @@ This is a SvelteKit budget management application with:
 - End files with a single trailing newline
 
 ### Markdown Quality Standards
-- ✅ Use language tags: ```typescript, ```bash, ```text
+
+- ✅ Use language tags: ```typescript,```bash, ```text
 - ✅ Proper heading structure with blank lines
 - ✅ Consistent list formatting with proper spacing
 - ✅ Professional tone following Google's style principles
@@ -95,7 +105,8 @@ This is a SvelteKit budget management application with:
 - ❌ Missing language specifications in code blocks
 - ❌ Inconsistent heading spacing
 
-### Rationale
+### Markdown Benefits
+
 - Ensures consistent, professional documentation quality
 - Improves readability and maintainability of documentation
 - Follows industry-standard documentation practices
@@ -104,20 +115,206 @@ This is a SvelteKit budget management application with:
 ## Development Commands
 
 - **Dev server**: `bun run dev`
-- **Build**: `bun run build` 
+- **Build**: `bun run build`
 - **Test**: `bun run test` (if available)
 - **Lint**: `bun run lint` (if available)
 - **Type check**: `bun run typecheck` (if available)
 
+## Form Handling Standards
+
+**ALWAYS use SvelteKit Superforms for form handling and validation.**
+
+### SvelteKit Superforms Best Practices
+
+- Use `superForm()` for client-side form management with proper validation adapters
+- Implement server-side validation with Zod schemas in form actions
+- Handle form errors gracefully with proper error display
+- Use `enhance` for progressive enhancement of forms
+- Implement proper loading states and form submission feedback
+- Follow the validation flow: client validation → server validation → success/error handling
+
+### Form Implementation Pattern
+
+```typescript
+// Client-side form setup
+const form = superForm(data.form, {
+  validators: zod4Client(validationSchema),
+  onResult: ({ result }) => {
+    if (result.type === 'success') {
+      // Handle success
+    }
+  }
+});
+
+// Server-side action
+const formSchema = z.object({
+  field: z.string().min(1)
+});
+
+export const actions = {
+  default: async ({ request }) => {
+    const form = await superValidate(request, zod4Server(formSchema));
+    if (!form.valid) return fail(400, { form });
+    // Process valid form data
+    return { form };
+  }
+};
+```
+
+### Form Benefits
+
+- Provides comprehensive form validation and error handling
+- Ensures consistent form behavior across the application  
+- Integrates seamlessly with SvelteKit's form handling
+- Reduces boilerplate code for common form patterns
+
+## Code Style Standards
+
+**ALWAYS use object method shorthand syntax when defining object methods.**
+
+### Method Definition Style
+
+- ✅ `const obj = { method() { return 'value'; } }`
+- ❌ `const obj = { method: function() { return 'value'; } }`
+- ✅ `const obj = { async method() { return await promise; } }`
+- ❌ `const obj = { method: async function() { return await promise; } }`
+
+### Style Benefits
+
+- More concise and readable code
+- Consistent with modern JavaScript/TypeScript standards
+- Better performance characteristics
+- Cleaner syntax for method definitions
+
+## Error Handling and Validation
+
+**ALWAYS implement comprehensive error handling with proper user feedback.**
+
+### Error Handling Patterns
+
+- Use proper error boundaries and fallback UI components
+- Implement graceful degradation for failed network requests
+- Provide meaningful error messages to users
+- Log errors appropriately for debugging while protecting sensitive data
+- Handle edge cases and unexpected input gracefully
+
+### Validation Strategy
+
+- Validate data at multiple layers: client, server, and database
+- Use TypeScript for compile-time type safety
+- Implement runtime validation for user inputs and API responses
+- Sanitize user inputs to prevent security vulnerabilities
+
+## Performance and Accessibility
+
+**ALWAYS prioritize performance and accessibility in component design.**
+
+### Performance Guidelines
+
+- Use Svelte's reactive features efficiently with proper state management
+- Implement lazy loading for large datasets and images
+- Optimize bundle size with proper code splitting
+- Use appropriate caching strategies for API calls
+
+### Accessibility Standards
+
+- Ensure proper semantic HTML structure
+- Include appropriate ARIA labels and descriptions
+- Implement keyboard navigation support
+- Maintain proper color contrast and focus indicators
+- Test with screen readers and accessibility tools
+
+## Testing Standards
+
+**ALWAYS write comprehensive tests for new functionality and bug fixes.**
+
+### Testing Strategy
+
+- Write unit tests for business logic and utility functions
+- Create integration tests for API endpoints and database operations
+- Implement component tests for UI functionality
+- Add end-to-end tests for critical user workflows
+- Test error conditions and edge cases thoroughly
+
+### Test Organization
+
+- Unit tests: `tests/unit/` - Fast, isolated tests for pure functions
+- Integration tests: `tests/integration/` - Database and API testing
+- Component tests: `tests/components/` - UI component behavior
+- E2E tests: `tests/e2e/` - Full user journey testing
+
+## Security Practices
+
+**ALWAYS implement security best practices at every layer.**
+
+### Input Validation
+
+- Validate all user inputs on both client and server sides
+- Use type-safe validation schemas (Zod) for API endpoints
+- Sanitize HTML content to prevent XSS attacks
+- Implement proper CSRF protection for forms
+- Rate limit API endpoints to prevent abuse
+
+### Authentication & Authorization
+
+- Use secure session management with Better Auth
+- Implement proper role-based access control
+- Validate permissions on every protected route
+- Use HTTPS in production environments
+- Implement secure password policies
+
+## Git and Development Workflow
+
+**ALWAYS follow consistent Git practices for clean project history.**
+
+### Commit Standards
+
+- Use conventional commit format: `type(scope): description`
+- Write clear, concise commit messages
+- Keep commits focused on single changes
+- Include issue references where applicable
+- Use present tense in commit messages
+
+### Branch Strategy
+
+- Create feature branches for new functionality
+- Use descriptive branch names (e.g., `feature/user-authentication`)
+- Keep branches small and focused
+- Delete branches after merging
+- Use pull requests for code review
+
+## Code Review Guidelines
+
+**ALWAYS conduct thorough code reviews before merging.**
+
+### Review Checklist
+
+- Verify code follows project standards and conventions
+- Check for proper error handling and edge cases
+- Ensure tests cover new functionality
+- Validate security considerations
+- Confirm documentation is updated
+- Test functionality manually if needed
+
+### Review Feedback
+
+- Provide constructive, specific feedback
+- Explain the reasoning behind suggestions
+- Focus on code quality and maintainability
+- Be respectful and collaborative
+- Address all feedback before approving
+
 ## Architecture Notes
 
 ### Frontend Organization
+
 - States: `entities/`, `ui/`, `views/`
 - Components: Domain-organized with index.ts exports
 - Hooks: UI-focused in `hooks/ui/`
 - Constants: Centralized in `constants/`
 
 ### Backend Organization  
+
 - Domains: `server/domains/` with repository → service → routes pattern
 - Shared: Common utilities in `server/shared/`
 - Config: Centralized configuration in `server/config/`
