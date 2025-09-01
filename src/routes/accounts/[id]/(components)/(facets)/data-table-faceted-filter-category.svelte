@@ -28,38 +28,61 @@
       .concat(selectedValues)
   );
   const allCategories = $derived(data.categories);
-
-  const categoryOptions = $derived(
-    new SvelteMap<number, FacetedFilterOption>(
-      categories
-        ?.filter((category: Category) => category.id !== undefined)
-        .map((category: Category) => {
-          return [
-            category.id,
-            {
-              label: category.name || "",
-              value: category.id + "",
-              icon: SquareMousePointer as unknown as Component,
-            },
-          ];
-        })
-    )
+  
+  // Check if there are any transactions with null categories
+  const hasNullCategories = $derived(
+    account.transactions.some((transaction: Transaction) => transaction.categoryId === null)
   );
 
-  const allCategoryOptions = $derived(
-    new SvelteMap<number, FacetedFilterOption>(
-      allCategories?.map((category: Category) => {
-        return [
-          category.id,
-          {
-            label: category.name || "",
-            value: category.id + "",
-            icon: SquareMousePointer as unknown as Component,
-          },
-        ];
-      })
-    )
-  );
+  const categoryOptions = $derived.by(() => {
+    const options = new SvelteMap<number | string, FacetedFilterOption>();
+    
+    // Add "None" option if there are transactions with null categories
+    if (hasNullCategories) {
+      options.set("null", {
+        label: "(None)",
+        value: "null",
+        icon: SquareMousePointer as unknown as Component,
+      });
+    }
+    
+    // Add regular category options
+    categories
+      ?.filter((category: Category) => category.id !== undefined)
+      .forEach((category: Category) => {
+        options.set(category.id, {
+          label: category.name || "",
+          value: category.id + "",
+          icon: SquareMousePointer as unknown as Component,
+        });
+      });
+    
+    return options;
+  });
+
+  const allCategoryOptions = $derived.by(() => {
+    const options = new SvelteMap<number | string, FacetedFilterOption>();
+    
+    // Add "None" option if there are transactions with null categories
+    if (hasNullCategories) {
+      options.set("null", {
+        label: "(None)",
+        value: "null",
+        icon: SquareMousePointer as unknown as Component,
+      });
+    }
+    
+    // Add all category options
+    allCategories?.forEach((category: Category) => {
+      options.set(category.id, {
+        label: category.name || "",
+        value: category.id + "",
+        icon: SquareMousePointer as unknown as Component,
+      });
+    });
+    
+    return options;
+  });
 </script>
 
 <DataTableFacetedFilter

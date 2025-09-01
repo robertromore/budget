@@ -26,38 +26,61 @@
     account.transactions.map((transaction: Transaction) => transaction.payee).concat(selectedValues)
   );
   const allPayees = $derived(data.payees);
-
-  const payeeOptions = $derived(
-    new SvelteMap<number, FacetedFilterOption>(
-      payees
-        ?.filter((payee: Payee) => payee.id !== undefined)
-        .map((payee: Payee) => {
-          return [
-            payee.id,
-            {
-              label: payee.name || "",
-              value: payee.id + "",
-              icon: HandCoins as unknown as Component,
-            },
-          ];
-        })
-    )
+  
+  // Check if there are any transactions with null payees
+  const hasNullPayees = $derived(
+    account.transactions.some((transaction: Transaction) => transaction.payeeId === null)
   );
 
-  const allPayeeOptions = $derived(
-    new SvelteMap<number, FacetedFilterOption>(
-      allPayees?.map((payee: Payee) => {
-        return [
-          payee.id,
-          {
-            label: payee.name || "",
-            value: payee.id + "",
-            icon: HandCoins as unknown as Component,
-          },
-        ];
-      })
-    )
-  );
+  const payeeOptions = $derived.by(() => {
+    const options = new SvelteMap<number | string, FacetedFilterOption>();
+    
+    // Add "None" option if there are transactions with null payees
+    if (hasNullPayees) {
+      options.set("null", {
+        label: "(None)",
+        value: "null",
+        icon: HandCoins as unknown as Component,
+      });
+    }
+    
+    // Add regular payee options
+    payees
+      ?.filter((payee: Payee) => payee.id !== undefined)
+      .forEach((payee: Payee) => {
+        options.set(payee.id, {
+          label: payee.name || "",
+          value: payee.id + "",
+          icon: HandCoins as unknown as Component,
+        });
+      });
+    
+    return options;
+  });
+
+  const allPayeeOptions = $derived.by(() => {
+    const options = new SvelteMap<number | string, FacetedFilterOption>();
+    
+    // Add "None" option if there are transactions with null payees
+    if (hasNullPayees) {
+      options.set("null", {
+        label: "(None)",
+        value: "null",
+        icon: HandCoins as unknown as Component,
+      });
+    }
+    
+    // Add all payee options
+    allPayees?.forEach((payee: Payee) => {
+      options.set(payee.id, {
+        label: payee.name || "",
+        value: payee.id + "",
+        icon: HandCoins as unknown as Component,
+      });
+    });
+    
+    return options;
+  });
 </script>
 
 <DataTableFacetedFilter
