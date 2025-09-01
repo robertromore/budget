@@ -106,9 +106,9 @@
           {...props}
           variant="outline"
           class={cn(
-            "block w-48 justify-start overflow-hidden text-ellipsis whitespace-nowrap text-left font-normal",
+            "block justify-start overflow-hidden text-ellipsis whitespace-nowrap text-left font-normal",
             !value && "text-muted-foreground",
-            buttonClass
+            buttonClass || "w-48"
           )}
         >
           <Icon class="-mt-1 mr-1 inline-block size-4"></Icon>
