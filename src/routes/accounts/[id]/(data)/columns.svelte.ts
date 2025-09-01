@@ -23,7 +23,7 @@ import DataTableFacetedFilterDate from "../(components)/(facets)/data-table-face
 import CalendarDays from "@lucide/svelte/icons/calendar-days";
 import HandCoins from "@lucide/svelte/icons/hand-coins";
 import SquareMousePointer from "@lucide/svelte/icons/square-mouse-pointer";
-import CircleCheckBig from "@lucide/svelte/icons/circle-check-big";
+import SquareCheck from "@lucide/svelte/icons/square-check";
 import { ExpandToggle } from "$lib/components/ui/expand-toggle";
 import { currencyFormatter } from "$lib/utils/formatters";
 import type { Component } from "svelte";
@@ -377,7 +377,7 @@ export const columns = (
         facetedFilter: (column: Column<TransactionsFormat, unknown>, value: unknown[]) => {
           return {
             name: "Status",
-            icon: CircleCheckBig,
+            icon: SquareCheck,
             column,
             value,
             component: () => {
