@@ -3,6 +3,7 @@
   import * as Card from "$lib/components/ui/card";
   import { currencyFormatter } from "$lib/utils/formatters";
   import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
+  import AddAccountDialog from "$lib/components/dialogs/add-account-dialog.svelte";
   import {
     deleteAccountDialog,
     deleteAccountId,
@@ -24,6 +25,11 @@
 
   const dialogOpen = $derived(newAccountDialog);
   const managingAccount = $derived(managingAccountId);
+
+  const editAccount = (id: number) => {
+    managingAccount.current = id;
+    dialogOpen.current = true;
+  };
 </script>
 
 <Button
@@ -46,13 +52,27 @@
         <strong>Balance:</strong>
         {currencyFormatter.format(balance ?? 0)}
       </Card.Content>
-      <Card.Footer>
-        <Button onclick={() => deleteAccount(id)} class={buttonVariants({ variant: "secondary" })}
-          >Delete</Button
+      <Card.Footer class="flex gap-2">
+        <Button 
+          onclick={() => editAccount(id)} 
+          variant="outline"
+          size="sm"
+          aria-label="Edit account {name}"
         >
+          Edit
+        </Button>
+        <Button 
+          onclick={() => deleteAccount(id)} 
+          variant="secondary"
+          size="sm"
+          aria-label="Delete account {name}"
+        >
+          Delete
+        </Button>
       </Card.Footer>
     </Card.Root>
   {/each}
 </div>
 
 <DeleteAccountDialog />
+<AddAccountDialog />

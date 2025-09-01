@@ -30,7 +30,13 @@
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {
-          accounts.addAccount(result.data.entity);
+          if (accountId && accountId > 0) {
+            // For existing accounts, update the account
+            accounts.updateAccount(result.data.entity);
+          } else {
+            // For new accounts, add the account
+            accounts.addAccount(result.data.entity);
+          }
           onSave(result.data.entity);
         }
       }
@@ -40,9 +46,12 @@
   const { form: formData, enhance } = form;
 
   if (accountId && accountId > 0) {
-    $formData.id = accountId;
-    $formData.name = accounts.getById(accountId).name;
-    $formData.notes = accounts.getById(accountId).notes;
+    const account = accounts.getById(accountId);
+    if (account) {
+      $formData.id = accountId;
+      $formData.name = account.name;
+      $formData.notes = account.notes;
+    }
   }
 </script>
 
