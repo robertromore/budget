@@ -112,9 +112,9 @@
           {...props}
           variant="outline"
           class={cn(
-            "w-36 justify-start text-left font-normal",
+            "justify-start text-left font-normal",
             !new_amount && "text-muted-foreground",
-            buttonClass
+            buttonClass || "w-36"
           )}
         >
           {currencyFormatter.format(parseFloat(new_amount) || 0)}
