@@ -10,7 +10,7 @@ This budget application provides a comprehensive solution for personal financial
 
 - **Account Management**: Organize finances across multiple accounts
 - **Transaction Tracking**: Detailed transaction history with advanced filtering
-- **Category System**: Flexible categorization for income and expenses  
+- **Category System**: Flexible categorization for income and expenses
 - **Schedule Management**: Recurring transaction planning
 - **Data Tables**: Interactive tables with sorting, filtering, and editing
 
@@ -23,11 +23,13 @@ This budget application provides a comprehensive solution for personal financial
 ## Quick Start
 
 1. **Install dependencies**:
+
    ```bash
    bun install
    ```
 
 2. **Set up database**:
+
    ```bash
    bun run db:generate
    bun run db:migrate
@@ -35,6 +37,7 @@ This budget application provides a comprehensive solution for personal financial
    ```
 
 3. **Start development server**:
+
    ```bash
    bun run dev
    ```
