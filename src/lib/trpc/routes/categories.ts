@@ -6,7 +6,7 @@ import {
   type Category,
 } from "$lib/schema";
 import { eq, isNull, inArray } from "drizzle-orm";
-import { publicProcedure, rateLimitedProcedure, t } from "../t";
+import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "../t";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
@@ -47,7 +47,7 @@ export const categoriesRoutes = t.router({
     }
     return result[0];
   }),
-  delete: rateLimitedProcedure
+  delete: bulkOperationProcedure
     .input(removeCategoriesSchema)
     .mutation(async ({ input: { entities }, ctx: { db } }) => {
       return await db

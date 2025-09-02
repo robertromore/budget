@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, rateLimitedProcedure, t } from "../t";
+import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "../t";
 import { TRPCError } from "@trpc/server";
 import { removeTransactionsSchema, formInsertTransactionSchema, transactions, accounts } from "$lib/schema";
 import { eq, inArray } from "drizzle-orm";
@@ -19,7 +19,7 @@ export const transactionRoutes = t.router({
       });
       return records;
     }),
-  delete: rateLimitedProcedure
+  delete: bulkOperationProcedure
     .input(removeTransactionsSchema)
     .mutation(async ({ input: { entities }, ctx: { db } }) => {
       return await db
