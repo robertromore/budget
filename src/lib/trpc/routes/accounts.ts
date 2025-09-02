@@ -6,7 +6,7 @@ import {
   type Transaction,
 } from "$lib/schema";
 import { z } from "zod";
-import { publicProcedure, rateLimitedProcedure, t } from "../t";
+import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "../t";
 import { eq, desc, isNull } from "drizzle-orm";
 import slugify from "@sindresorhus/slugify";
 import { TRPCError } from "@trpc/server";
