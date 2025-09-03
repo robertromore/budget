@@ -1,2 +1,60 @@
 {
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "svelte.enable-ts-plugin": true,
+  "files.associations": {
+    "*.svelte": "svelte",
+    "*.svelte.ts": "typescript"
+  },
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/build": true,
+    "**/.svelte-kit": true,
+    "**/drizzle": true,
+    "**/bun.lock": true
+  },
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/.svelte-kit": true,
+    "**/node_modules": true
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.svelte": "${capture}.svelte.ts",
+    "package.json": "bun.lock, package-lock.json",
+    "index.ts": "${dirname}.ts, ${dirname}.svelte"
+  },
+  "eslint.workingDirectories": ["./"],
+  "eslint.validate": ["javascript", "typescript", "svelte"],
+  "prettier.configPath": "./.prettierrc",
+  "emmet.includeLanguages": {
+    "svelte": "html"
+  },
+  "tailwindCSS.includeLanguages": {
+    "svelte": "html"
+  }
 }
