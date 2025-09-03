@@ -388,6 +388,114 @@ then implement following these same patterns."
 - **Improved Quality**: Each step can be thoroughly reviewed and optimized
 - **Maintainable Code**: Solutions follow established patterns and are easier to understand
 
+## Always Works™ Implementation Standards
+
+**ALWAYS ensure implementations are thoroughly tested and verified before claiming completion.**
+
+### Core Philosophy
+
+- **"Should work" ≠ "does work"** - Pattern matching and theoretical correctness aren't sufficient
+- **Problem-solving focus** - The goal is solving problems, not just writing code
+- **Verification requirement** - Untested code is just a guess, not a solution
+- **User trust priority** - Every failed implementation erodes confidence and wastes time
+
+### The 30-Second Reality Check
+
+**Must answer YES to ALL before claiming completion:**
+
+- ✅ **Did I run/build the code?** - Actual execution, not theoretical analysis
+- ✅ **Did I trigger the exact feature I changed?** - Test the specific functionality modified
+- ✅ **Did I see the expected result with my own observation?** - Visual/GUI confirmation included
+- ✅ **Did I check for error messages?** - Console, logs, and user-facing errors reviewed
+- ✅ **Would I bet $100 this works?** - Personal confidence test for thoroughness
+
+### Phrases to Avoid
+
+These phrases indicate insufficient verification:
+
+- ❌ "This should work now"
+- ❌ "I've fixed the issue" (especially on 2nd+ attempt)
+- ❌ "Try it now" (without testing it first)
+- ❌ "The logic is correct so..."
+- ❌ "Based on the code, it appears to..."
+
+### Specific Test Requirements
+
+#### UI Changes
+
+- Actually click buttons, links, and submit forms
+- Verify visual changes appear correctly
+- Test responsive behavior across screen sizes
+- Check accessibility features (keyboard navigation, screen readers)
+
+#### API Changes
+
+- Make actual HTTP requests to modified endpoints
+- Test both success and error scenarios
+- Verify request/response data structures
+- Check authentication and authorization
+
+#### Data Changes
+
+- Query the database directly to confirm changes
+- Verify data integrity and constraints
+- Test edge cases and boundary conditions
+- Check for unintended side effects
+
+#### Logic Changes
+
+- Run the specific scenarios that were modified
+- Test both expected and unexpected inputs
+- Verify error handling paths
+- Check performance implications
+
+#### Configuration Changes
+
+- Restart services and verify they load correctly
+- Test configuration in target environments
+- Validate environment variables and settings
+- Check for breaking changes in dependent systems
+
+### The Embarrassment Test
+
+**Ask yourself:** "If the user records themselves trying this feature and it fails, will I feel embarrassed watching their frustration?"
+
+This test ensures you're considering the user experience and the impact of failed implementations.
+
+### Time Reality Check
+
+- **Time saved by skipping tests**: 30 seconds
+- **Time wasted when it doesn't work**: 30+ minutes
+- **User trust lost**: Immeasurable and difficult to rebuild
+
+### User Perspective
+
+A user encountering the same bug for the third time isn't thinking:
+
+- ❌ "This AI is trying hard and learning"
+
+They're thinking:
+
+- ✅ "Why am I wasting time with this unreliable tool?"
+
+### Implementation Verification Checklist
+
+Before marking any task as complete:
+
+1. **Execute the code** in the actual environment
+2. **Test the specific feature** that was modified
+3. **Verify expected behavior** through direct observation
+4. **Check for errors** in all relevant logs and outputs
+5. **Test edge cases** that could break the implementation
+6. **Confirm user experience** meets expectations
+
+### Quality Standards
+
+- **Zero tolerance** for claiming completion without verification
+- **Thorough testing** before any "this is fixed" statements
+- **Honest communication** about what was tested vs. assumed
+- **User-first mentality** in all implementation decisions
+
 ## Architecture Notes
 
 ### Frontend Organization
