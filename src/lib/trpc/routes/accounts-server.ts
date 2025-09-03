@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, rateLimitedProcedure, t } from "../t";
+import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { eq, desc, isNull, and, count, sql, asc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { accounts, transactions } from "$lib/schema";

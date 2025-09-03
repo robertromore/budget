@@ -7,15 +7,17 @@
   import { dateFormatter } from "$lib/utils/date-formatters";
   import CalendarDays from "@lucide/svelte/icons/calendar-days";
 
-  let {
-    value = $bindable(),
-    handleSubmit,
-    buttonClass,
-  }: {
+  interface Props {
     value?: DateValue;
     handleSubmit?: (value: DateValue | undefined) => void;
     buttonClass?: string;
-  } = $props();
+  }
+
+  let {
+    value = $bindable(),
+    handleSubmit,
+    buttonClass
+  }: Props = $props();
 </script>
 
 <Popover.Root>

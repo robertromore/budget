@@ -1,5 +1,5 @@
 <script lang="ts">
-  import NumericInput from "$lib/components/inputs/numeric/numeric-input.svelte";
+  import { NumericInput } from "$lib/components/input";
 
   let {
     value = $bindable(),

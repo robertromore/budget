@@ -3,7 +3,7 @@
   import type { UseBoolean } from "$lib/hooks/ui/use-boolean.svelte";
   import type { UseNumber } from "$lib/hooks/ui/use-number.svelte";
   import { managingScheduleId, newScheduleDialog } from "$lib/states/ui/global.svelte";
-  import ManageScheduleForm from "../forms/manage-schedule-form.svelte";
+  import { ManageScheduleForm } from "$lib/components/forms";
 
   const dialogOpen: UseBoolean = $derived(newScheduleDialog);
   const scheduleId: UseNumber = $derived(managingScheduleId);

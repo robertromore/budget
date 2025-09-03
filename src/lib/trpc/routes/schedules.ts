@@ -1,6 +1,6 @@
 import { schedules, removeScheduleSchema, formInsertScheduleSchema } from "$lib/schema";
 import { z } from "zod";
-import { publicProcedure, rateLimitedProcedure, t } from "../t";
+import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
