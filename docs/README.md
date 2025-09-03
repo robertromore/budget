@@ -6,13 +6,13 @@ This directory contains technical documentation for the budget management applic
 
 ### Performance and Architecture
 
-- **[Account Performance Optimizations](./ACCOUNT_PERFORMANCE_OPTIMIZATIONS.md)**
+- **[Account Performance Optimizations](./account-performance-optimizations.md)**
   - Comprehensive guide to account page performance improvements
   - Smart rendering strategies (client-side vs server-side)
   - Multi-layer caching architecture
   - Performance metrics and troubleshooting
 
-- **[Transaction Update Flow](./TRANSACTION_UPDATE_FLOW.md)**
+- **[Transaction Update Flow](./transaction-update-flow.md)**
   - Detailed documentation of transaction inline editing system
   - API patterns and error handling
   - Cache invalidation strategies
