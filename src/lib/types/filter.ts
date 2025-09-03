@@ -1,7 +1,7 @@
 // $lib/types/filter.ts
 import type { Column } from "@tanstack/table-core";
 import type { SvelteSet } from "svelte/reactivity";
-import type { RenderComponentConfig } from "../components/ui/data-table/render-helpers";
+import type { RenderComponentConfig } from "$lib/components/ui/data-table";
 import type { Component } from "svelte";
 
 /**

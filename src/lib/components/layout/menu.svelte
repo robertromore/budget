@@ -1,5 +1,5 @@
 <script lang="ts">
-  import * as Dialog from "../ui/dialog";
+  import * as Dialog from "$lib/components/ui/dialog";
 
   let aboutDialogOpen = $state(false);
 </script>

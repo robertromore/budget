@@ -22,7 +22,7 @@
   import { Badge } from "$lib/components/ui/badge";
   import { cn } from "$lib/utils";
   import { currencyFormatter } from "$lib/utils/formatters";
-  import { currentViews } from "$lib/states/views/current-views.svelte";
+  import { currentViews } from "$lib/states/views";
   import X from "@lucide/svelte/icons/x";
 
   /**

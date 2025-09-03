@@ -1,7 +1,7 @@
 import type { Database } from "bun:sqlite";
 import { eq, desc, asc, like, and, or, count } from "drizzle-orm";
-import { DatabaseError, NotFoundError } from "../types/errors";
-import type { PaginationOptions, PaginatedResult, SortOptions, FilterOptions, SearchOptions } from "../types";
+import { DatabaseError, NotFoundError } from "$lib/server/shared/types";
+import type { PaginationOptions, PaginatedResult, SortOptions, FilterOptions, SearchOptions } from "$lib/server/shared/types";
 import { DATABASE_CONFIG } from "$lib/server/config/database";
 
 /**

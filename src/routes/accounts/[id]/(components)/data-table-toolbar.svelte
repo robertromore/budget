@@ -7,9 +7,8 @@
   import PencilLine from "@lucide/svelte/icons/pencil-line";
   import Toggle from "$lib/components/ui/toggle/toggle.svelte";
   import ManageViewForm from "./manage-view-form.svelte";
-  import FilterInput from "$lib/components/shared/filter-input.svelte";
-  import { currentViews } from "$lib/states/views/current-views.svelte";
-  import DisplayInput from "$lib/components/shared/display-input.svelte";
+  import { FilterInput, DisplayInput } from "$lib/components/input";
+  import { currentViews } from "$lib/states/views";
   import Asterisk from "@lucide/svelte/icons/asterisk";
   import { Button } from "$lib/components/ui/button";
   import Pencil from "@lucide/svelte/icons/pencil";
@@ -18,11 +17,11 @@
   import { CurrentViewState } from "$lib/states/views/current-view.svelte";
   import * as Tabs from "$lib/components/ui/tabs";
 
-  let {
-    table,
-  }: {
+  interface Props {
     table: Table<TransactionsFormat>;
-  } = $props();
+  }
+
+  let { table }: Props = $props();
 
   let manageViewForm = $state(false);
   let editViewId = $state(0);

@@ -24,22 +24,24 @@
   import { expanded, setExpanded } from "../(data)/expanded.svelte";
   import { pinning, setPinning } from "../(data)/pinning.svelte";
   import type { View } from "$lib/schema";
-  import { CurrentViewState } from "$lib/states/views/current-view.svelte";
+  import { CurrentViewState } from "$lib/states/views";
   import { page } from "$app/state";
-  import { currentViews, CurrentViewsState } from "$lib/states/views/current-views.svelte";
+  import { currentViews, CurrentViewsState } from "$lib/states/views";
   import { DateFiltersState } from "$lib/states/ui/date-filters.svelte";
+
+  interface Props {
+    columns: ColumnDef<TransactionsFormat, TValue>[];
+    transactions?: TransactionsFormat[];
+    views?: View[];
+    table?: TTable<TransactionsFormat>;
+  }
 
   let {
     columns,
     transactions,
     views,
-    table = $bindable(),
-  }: {
-    columns: ColumnDef<TransactionsFormat, TValue>[];
-    transactions?: TransactionsFormat[];
-    views?: View[];
-    table?: TTable<TransactionsFormat>;
-  } = $props();
+    table = $bindable()
+  }: Props = $props();
 
   const dateFiltersState: DateFiltersState = DateFiltersState.get();
   const allDates = $derived(dateFiltersState?.dateFilters);

@@ -1,6 +1,6 @@
 import { formInsertPayeeSchema, payees, removePayeeSchema, removePayeesSchema } from "$lib/schema";
 import { z } from "zod";
-import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "../t";
+import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "$lib/trpc";
 import { eq, isNull, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
