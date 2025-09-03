@@ -8,7 +8,6 @@
   import type { TransactionsFormat } from '$lib/types';
   import { CategoriesState } from '$lib/states/entities/categories.svelte';
   import { PayeesState } from '$lib/states/entities/payees.svelte';
-  import type { Category, Payee } from '$lib/schema';
   import { parseDate, type DateValue, today, getLocalTimeZone } from '@internationalized/date';
   import type { Table as TanStackTable } from '@tanstack/table-core';
   import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -18,51 +17,48 @@
   import * as Select from '$lib/components/ui/select';
   import { Label } from '$lib/components/ui/label';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-  import OptimizedDataTableToolbar from './(components)/optimized-data-table-toolbar.svelte';
-  import OptimizedDataTablePagination from './(components)/optimized-data-table-pagination.svelte';
-  import { OptimizedAccountState } from '$lib/states/views/optimized-account.svelte';
+  import ServerDataTableToolbar from './(components)/server-data-table-toolbar.svelte';
+  import ServerDataTablePagination from './(components)/server-data-table-pagination.svelte';
+  import { ServerAccountState } from '$lib/states/views/server-account.svelte';
   import TransactionSkeleton from './(components)/transaction-skeleton.svelte';
-  
+  import DeleteTransactionDialog from './(dialogs)/delete-transaction-dialog.svelte';
+
   let { data } = $props();
-  
+
   // Make accountId reactive to prop changes
   const accountId = $derived(data.accountId);
-  
-  // Debug reactive values in an effect
-  $effect(() => {
-    console.log('🔧 Props data received:', data);
-    console.log('🔧 Account ID from props:', accountId);
-  });
-  
+
+
   // Configuration
   const CLIENT_SIDE_THRESHOLD = 5000; // Switch to server-side rendering above this count
   const CACHE_DURATION = 30 * 1000; // 30 seconds cache for account data
-  
+
   // Simple in-memory cache for API responses
   const responseCache = new Map<string, { data: any; timestamp: number }>();
-  
+
   const getCacheKey = (url: string, params?: any) => {
     return params ? `${url}?${JSON.stringify(params)}` : url;
   };
-  
+
   const getCachedResponse = (key: string) => {
     const cached = responseCache.get(key);
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log('🚀 Using cached response for:', key);
       return cached.data;
     }
     return null;
   };
-  
+
   const setCachedResponse = (key: string, data: any) => {
     responseCache.set(key, { data, timestamp: Date.now() });
     // Clean old cache entries to prevent memory leaks
     if (responseCache.size > 50) {
       const oldestKey = responseCache.keys().next().value;
-      responseCache.delete(oldestKey);
+      if (oldestKey) {
+        responseCache.delete(oldestKey);
+      }
     }
   };
-  
+
   // Local state for data loading
   let account = $state<{id: number; name: string} | undefined>();
   let transactions = $state<TransactionsFormat[]>([]);
@@ -71,37 +67,36 @@
   let summary = $state<{balance: number; transactionCount: number} | undefined>();
   let useClientSideTable = $state<boolean>(true);
   let table = $state<TanStackTable<TransactionsFormat> | undefined>();
-  
+
   // Entity states for the advanced data table (get from context)
   const categoriesState = CategoriesState.get();
   const payeesState = PayeesState.get();
-  
+
   // Entity data will be available through context
-  
-  // Optimized account state for advanced filtering and pagination
-  let optimizedAccountState = $state<OptimizedAccountState | undefined>();
-  
+
+  // Server-side account state for advanced filtering and pagination
+  let serverAccountState = $state<ServerAccountState | undefined>();
+
   // Track the last account ID to prevent re-initialization
   let lastAccountId = $state<number | undefined>();
-  
-  // Initialize optimized account state when accountId changes (but don't auto-load data)
+
+  // Initialize server-side account state when accountId changes (but don't auto-load data)
   $effect(() => {
     if (accountId && accountId !== lastAccountId) {
-      console.log('🔧 Initializing OptimizedAccountState for account:', accountId);
       lastAccountId = accountId;
       // Create the state and immediately initialize with empty data to prevent auto-loading
-      const newState = new OptimizedAccountState(accountId);
+      const newState = new ServerAccountState(accountId);
       // Use initializeWithServerData to prevent automatic loading
       newState.initializeWithServerData(
         { id: accountId, name: `Account ${accountId}`, slug: '', type: '', balance: 0, transactionCount: 0 },
         { transactions: [], pagination: { page: 0, pageSize: 50, totalCount: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false } }
       );
-      optimizedAccountState = newState;
+      serverAccountState = newState;
     }
   });
   const categories = $derived(categoriesState?.all || []);
   const payees = $derived(payeesState?.all || []);
-  
+
   // Pagination and filtering state
   let pagination = $state({
     page: 0,
@@ -109,7 +104,7 @@
     totalCount: 0,
     totalPages: 0
   });
-  
+
   let filters = $state({
     searchQuery: '',
     sortBy: 'date' as const,
@@ -117,14 +112,14 @@
     dateFrom: undefined,
     dateTo: undefined
   });
-  
+
   // Transform server data to TanStack Table format for client-side rendering
   const formattedTransactions = $derived(() => {
     if (!transactions?.length) return [];
     return transactions.map(t => {
       const dateStr = typeof t.date === 'string' ? t.date : t.date.toString();
       const datePart = dateStr.split('T')[0];
-      
+
       return {
         id: t.id,
         date: parseDate(datePart) as DateValue,
@@ -141,11 +136,11 @@
       } as TransactionsFormat;
     });
   });
-  
+
   // Simple formatted data for server-side pagination table
   const simpleFormatted = $derived(() => {
     if (!transactions?.length) return [];
-    return transactions.map(t => ({
+    const formatted = transactions.map(t => ({
       id: t.id,
       date: typeof t.date === 'string' ? t.date : t.date.toString(),
       amount: t.amount,
@@ -154,6 +149,9 @@
       payee: t.payee,
       category: t.category,
     }));
+
+
+    return formatted;
   });
 
   // Simplified methods for data interaction (unused parameters removed)
@@ -162,11 +160,13 @@
     pagination.page = 0;
     loadData();
   };
-  
+
   // Transaction form dialog state
   let addTransactionDialogOpen = $state(false);
+  let bulkDeleteDialogOpen = $state(false);
+  let selectedTransactionIds = $state<number[]>([]);
   let isSubmittingTransaction = $state(false);
-  
+
   // Transaction form data
   let transactionForm = $state({
     amount: 0,
@@ -176,7 +176,7 @@
     categoryId: null as number | null,
     status: 'pending' as 'pending' | 'cleared' | 'scheduled'
   });
-  
+
   // Reset transaction form
   const resetTransactionForm = () => {
     transactionForm = {
@@ -188,14 +188,14 @@
       status: 'pending'
     };
   };
-  
+
   // Submit new transaction
   const submitTransaction = async () => {
     if (!account?.id) return;
-    
+
     try {
       isSubmittingTransaction = true;
-      
+
       // Create transaction via direct fetch
       const transactionPayload = {
         accountId: Number(account.id),
@@ -206,9 +206,8 @@
         categoryId: transactionForm.categoryId,
         status: transactionForm.status
       };
-      
-      console.log('🎉 Creating transaction via direct fetch:', transactionPayload);
-      
+
+
       const transactionResponse = await fetch('/trpc/transactionRoutes.save', {
         method: 'POST',
         headers: {
@@ -220,21 +219,20 @@
           }
         })
       });
-      
+
       if (!transactionResponse.ok) {
         throw new Error(`Failed to create transaction: HTTP ${transactionResponse.status}: ${transactionResponse.statusText}`);
       }
-      
+
       const transactionText = await transactionResponse.text();
       if (!transactionText.trim()) {
         throw new Error('Empty response when creating transaction');
       }
-      
+
       const transactionResult = JSON.parse(transactionText);
       const newTransaction = transactionResult[0]?.result?.data || transactionResult[0]?.result;
-      
-      console.log('🎉 Transaction created:', newTransaction);
-      
+
+
       // Optimistic UI update - add transaction immediately
       if (newTransaction) {
         // Convert date string to DateValue if needed
@@ -243,23 +241,23 @@
           date: typeof newTransaction.date === 'string' ? parseDate(newTransaction.date) : newTransaction.date,
           balance: null
         } as TransactionsFormat;
-        
+
         transactions = [formattedTransaction, ...transactions];
-        
+
         // Update summary
         if (summary) {
           summary.balance += newTransaction.amount;
           summary.transactionCount += 1;
         }
-        
+
         // Clear cache to ensure fresh data on next load
         responseCache.clear();
       }
-      
+
       // Close dialog and reset form
       addTransactionDialogOpen = false;
       resetTransactionForm();
-      
+
     } catch (err: any) {
       console.error('❌ Failed to create transaction:', err);
       error = err?.message || 'Failed to create transaction';
@@ -267,150 +265,205 @@
       isSubmittingTransaction = false;
     }
   };
-  
+
   // Update handler for editable cells
   const updateTransactionData = async (id: number, columnId: string, newValue?: unknown) => {
     try {
-      console.log('🔄 Updating transaction:', id, columnId, newValue);
-      
+
       // Find the transaction to update
       const transaction = transactions.find(t => t.id === id);
       if (!transaction) {
         console.error('Transaction not found:', id);
         return;
       }
-      
-      // Prepare update data
-      const updateData: any = {
-        id: id,
-        accountId: transaction.accountId || accountId,
-        [columnId]: newValue
+
+      // Map column IDs to the actual field names expected by the API
+      const fieldMap: Record<string, string> = {
+        'payee': 'payeeId',
+        'category': 'categoryId',
+        'date': 'date',
+        'amount': 'amount',
+        'notes': 'notes',
+        'status': 'status'
       };
-      
-      // Update via direct fetch
-      console.log('🔄 Updating transaction via direct fetch:', updateData);
-      
-      const updateResponse = await fetch('/trpc/transactionRoutes.save', {
+
+      const actualField = fieldMap[columnId] || columnId;
+
+      // Prepare data for form action (including ID for update)
+      const updateData: any = {
+        id: id, // Include ID for update
+        accountId: Number(transaction.accountId || accountId),
+        amount: Number(transaction.amount),
+        date: transaction.date,
+        notes: transaction.notes || null,
+        payeeId: transaction.payee?.id ? Number(transaction.payee.id) : null,
+        categoryId: transaction.category?.id ? Number(transaction.category.id) : null,
+        status: transaction.status || "pending"
+      };
+
+      // Override with the new value, ensuring proper typing
+      if (actualField === 'payeeId' || actualField === 'categoryId' || actualField === 'accountId') {
+        updateData[actualField] = newValue ? Number(newValue) : null;
+      } else if (actualField === 'amount') {
+        updateData[actualField] = Number(newValue);
+      } else {
+        updateData[actualField] = newValue;
+      }
+
+
+      // Update via SvelteKit API route instead of direct tRPC
+      const updateResponse = await fetch(`/accounts/${accountId}/api/update-transaction`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          "0": {
-            json: updateData
-          }
-        })
+        body: JSON.stringify(updateData)
       });
-      
+
       if (!updateResponse.ok) {
         throw new Error(`Failed to update transaction: HTTP ${updateResponse.status}: ${updateResponse.statusText}`);
       }
-      
-      const updateText = await updateResponse.text();
-      if (!updateText.trim()) {
-        throw new Error('Empty response when updating transaction');
+
+      const updateResult = await updateResponse.json();
+      if (!updateResult.success) {
+        throw new Error(updateResult.error || 'Failed to update transaction');
       }
-      
-      const updateResult = JSON.parse(updateText);
-      const updatedTransaction = updateResult[0]?.result?.data || updateResult[0]?.result;
-      
-      console.log('✅ Transaction updated:', updatedTransaction);
-      
-      // Reload data to show updated transaction
-      await loadData();
-      
+
+      // Clear cached data and refresh to show updated transaction
+      responseCache.clear();
+
+      // Refresh server account state if using server-side table
+      if (serverAccountState) {
+        await serverAccountState.refresh(accountId);
+      } else {
+        // For client-side table, just reload the data
+        await loadData();
+      }
+
     } catch (err: any) {
       console.error('❌ Failed to update transaction:', err);
       error = err?.message || 'Failed to update transaction';
     }
   };
-  
+
+  // TanStack Table and ServerAccountState Integration
+  const syncTableStateWithOptimizedState = () => {
+    if (!table || !serverAccountState || useClientSideTable) return;
+
+    // Sync pagination state from TanStack Table to ServerAccountState
+    const tablePagination = table.getState().pagination;
+    if (tablePagination.pageIndex !== pagination.page || tablePagination.pageSize !== pagination.pageSize) {
+      pagination.page = tablePagination.pageIndex;
+      pagination.pageSize = tablePagination.pageSize;
+      serverAccountState.setPageSize(accountId, pagination.pageSize);
+      serverAccountState.goToPage(accountId, pagination.page);
+      loadData(); // Reload data with new pagination
+    }
+  };
+
+  // Sync server-side state changes back to TanStack Table
+  const syncServerStateWithTable = () => {
+    if (!table || !serverAccountState || useClientSideTable) return;
+
+    const currentTablePage = table.getState().pagination.pageIndex;
+    const currentTablePageSize = table.getState().pagination.pageSize;
+
+    if (currentTablePage !== serverAccountState.pagination.page ||
+        currentTablePageSize !== serverAccountState.pagination.pageSize) {
+      table.setPageIndex(serverAccountState.pagination.page);
+      table.setPageSize(serverAccountState.pagination.pageSize);
+    }
+  };
+
+  // Enhanced search integration
+  const performEnhancedSearch = async (searchQuery: string) => {
+    if (useClientSideTable) {
+      // For client-side, use TanStack Table's global filter
+      if (table) {
+        table.setGlobalFilter(searchQuery);
+      }
+    } else {
+      // For server-side, update filters and reload data
+      filters.searchQuery = searchQuery;
+      await loadData();
+    }
+  };
+
   async function loadData() {
     if (typeof window === 'undefined') return; // Client-side only
-    
+
     try {
       isLoading = true;
-      console.log('🔧 Loading real account data for ID:', accountId);
-      
+
       // Ensure accountId is a number
       const numericAccountId = Number(accountId);
       if (isNaN(numericAccountId)) {
         throw new Error(`Invalid account ID: ${accountId}`);
       }
-      
-      console.log('🔧 Using numeric account ID:', numericAccountId);
-      
+
+
       // Check cache first for summary data
-      const summaryCacheKey = getCacheKey('optimizedAccountsRoutes.loadSummary', { id: numericAccountId });
+      const summaryCacheKey = getCacheKey('serverAccountsRoutes.loadSummary', { id: numericAccountId });
       let summaryData = getCachedResponse(summaryCacheKey);
-      
+
       if (!summaryData) {
         // Use direct fetch approach since tRPC client has issues
-        console.log('🔧 Loading account summary via direct fetch...');
-        const summaryResponse = await fetch(`/trpc/optimizedAccountsRoutes.loadSummary?input=${encodeURIComponent(JSON.stringify({ id: numericAccountId }))}`);
+        const summaryResponse = await fetch(`/trpc/serverAccountsRoutes.loadSummary?input=${encodeURIComponent(JSON.stringify({ id: numericAccountId }))}`);
         if (!summaryResponse.ok) {
           throw new Error(`Failed to load summary: HTTP ${summaryResponse.status}: ${summaryResponse.statusText}`);
         }
-        
+
         // Read response as text first to check for truncation
         const summaryText = await summaryResponse.text();
         if (!summaryText.trim()) {
           throw new Error('Empty response from server');
         }
-        
-        console.log('🔧 Response size:', summaryText.length, 'characters');
+
         const summaryResult = JSON.parse(summaryText);
         summaryData = summaryResult.result?.data || summaryResult;
-        
+
         // Cache the response
         setCachedResponse(summaryCacheKey, summaryData);
-        console.log('🔧 Account summary loaded and cached:', { balance: summaryData.balance, transactionCount: summaryData.transactionCount });
       }
-      
+
       summary = {
         balance: (summaryData as any)?.balance || 0,
         transactionCount: (summaryData as any)?.transactionCount || 0
       };
-      
+
       // Determine rendering mode based on transaction count
       useClientSideTable = ((summaryData as any)?.transactionCount || 0) <= CLIENT_SIDE_THRESHOLD;
-      console.log(`🔧 Transaction count: ${(summaryData as any)?.transactionCount || 0}, using ${useClientSideTable ? 'client-side' : 'server-side'} rendering`);
-      
+
       // Load account and transaction data via direct fetch
-      console.log('🔧 Loading account data via direct fetch...');
       const accountResponse = await fetch(`/trpc/accountRoutes.load?input=${encodeURIComponent(JSON.stringify({ id: numericAccountId }))}`);
       if (!accountResponse.ok) {
         throw new Error(`Failed to load account: HTTP ${accountResponse.status}: ${accountResponse.statusText}`);
       }
-      
+
       // Parse account data carefully
       const accountText = await accountResponse.text();
-      console.log('🔧 Account response size:', accountText.length, 'characters');
-      
+
       if (!accountText.trim()) {
         throw new Error('Empty account response from server');
       }
-      
+
       let accountData;
       try {
         const accountResult = JSON.parse(accountText);
         accountData = accountResult.result?.data || accountResult;
-        console.log('🔧 Account data loaded successfully:', { id: accountData.id, name: accountData.name, transactionCount: accountData.transactions?.length });
       } catch (parseError) {
         console.error('🔧 Failed to parse account JSON:', parseError);
-        console.log('🔧 Response text sample:', accountText.substring(0, 500));
         throw new Error('Invalid JSON response from account endpoint');
       }
-      
+
       let transactionData;
       // Load transactions via optimized route to ensure payee/category data is included
       if (useClientSideTable) {
         // For client-side, load all transactions in batches (due to 100 record limit)
-        console.log('🔧 Loading all transactions for client-side table...');
         const allTransactions: any[] = [];
         let currentPage = 0;
         let hasMorePages = true;
-        
+
         while (hasMorePages) {
           const transactionParams: any = {
             accountId: numericAccountId,
@@ -419,7 +472,7 @@
             sortBy: filters.sortBy,
             sortOrder: filters.sortOrder
           };
-          
+
           if (filters.searchQuery) {
             transactionParams.searchQuery = filters.searchQuery;
           }
@@ -429,34 +482,34 @@
           if (filters.dateTo) {
             transactionParams.dateTo = filters.dateTo;
           }
-          
-          const transactionResponse = await fetch(`/trpc/optimizedAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`);
+
+          const transactionResponse = await fetch(`/trpc/serverAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`);
           if (!transactionResponse.ok) {
             throw new Error(`Failed to load transactions page ${currentPage}: HTTP ${transactionResponse.status}: ${transactionResponse.statusText}`);
           }
-          
+
           const transactionText = await transactionResponse.text();
           if (!transactionText.trim()) {
             throw new Error('Empty transactions response from server');
           }
-          
+
           const transactionResult = JSON.parse(transactionText);
           const pageData = transactionResult.result?.data || transactionResult;
-          
+
           allTransactions.push(...(pageData.transactions || []));
-          
+
           // Check if we have more pages
           const paginationInfo = pageData.pagination;
           hasMorePages = paginationInfo?.hasNextPage || false;
           currentPage++;
-          
+
           // Safety break to prevent infinite loops
           if (currentPage > 100) {
             console.warn('🔧 Breaking pagination loop at page 100 for safety');
             break;
           }
         }
-        
+
         transactionData = {
           transactions: allTransactions,
           pagination: {
@@ -468,11 +521,9 @@
             hasPreviousPage: false
           }
         };
-        
-        console.log('🔧 Loaded', allTransactions.length, 'transactions for client-side rendering');
+
       } else {
         // For server-side, load single page
-        console.log('🔧 Loading single page for server-side table...');
         const transactionParams: any = {
           accountId: numericAccountId,
           page: pagination.page,
@@ -480,7 +531,7 @@
           sortBy: filters.sortBy,
           sortOrder: filters.sortOrder
         };
-        
+
         if (filters.searchQuery) {
           transactionParams.searchQuery = filters.searchQuery;
         }
@@ -490,57 +541,43 @@
         if (filters.dateTo) {
           transactionParams.dateTo = filters.dateTo;
         }
-        
-        const transactionResponse = await fetch(`/trpc/optimizedAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`);
+
+        const transactionResponse = await fetch(`/trpc/serverAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`);
         if (!transactionResponse.ok) {
           throw new Error(`Failed to load transactions: HTTP ${transactionResponse.status}: ${transactionResponse.statusText}`);
         }
-        
+
         const transactionText = await transactionResponse.text();
         if (!transactionText.trim()) {
           throw new Error('Empty transactions response from server');
         }
-        
+
         const transactionResult = JSON.parse(transactionText);
         transactionData = transactionResult.result?.data || transactionResult;
       }
-      
-      console.log('🔧 Received account data:', accountData);
-      console.log('🔧 Received transaction data:', transactionData);
-      
+
+
       // Set the loaded data
       account = {
         id: accountData.id,
         name: accountData.name
       };
-      
+
       // Always use transactions from the optimized route (includes payee/category data)
       transactions = (transactionData as any)?.transactions || [];
-      console.log('🔧 Loaded', transactions.length, 'transactions with relations');
-      
+
       // Update pagination info from server response
       const paginationData = (transactionData as any)?.pagination;
       pagination.totalCount = paginationData?.totalCount || 0;
       pagination.totalPages = paginationData?.totalPages || Math.ceil(pagination.totalCount / pagination.pageSize);
-      
-      // Log sample transaction to verify data structure
-      if (transactions.length > 0) {
-        console.log('🔧 Sample transaction:', {
-          id: transactions[0].id,
-          payee: transactions[0].payee,
-          category: transactions[0].category,
-          amount: transactions[0].amount
-        });
-      }
-      
-      console.log('🔧 Using entity states from context with', categories.length, 'categories and', payees.length, 'payees');
-      
+
+
+
       error = undefined;
-      console.log('🔧 Successfully loaded real data');
-      
+
       // Sync data with optimized account state if it exists
-      if (optimizedAccountState && account && summary) {
-        optimizedAccountState.initializeWithServerData(
+      if (serverAccountState && account && summary) {
+        serverAccountState.initializeWithServerData(
           {
             id: account.id,
             name: account.name,
@@ -550,7 +587,7 @@
             transactionCount: summary.transactionCount
           },
           useClientSideTable
-            ? { transactions, pagination: { 
+            ? { transactions, pagination: {
                 page: pagination.page,
                 pageSize: pagination.pageSize,
                 totalCount: pagination.totalCount,
@@ -568,16 +605,15 @@
               }}
         );
       }
-      
+
     } catch (err: any) {
       console.error('❌ Failed to load account data:', err);
       error = err?.message || 'Failed to load account data';
       transactions = [];
       summary = undefined;
-      
+
       // Try simpler route as fallback if optimized routes fail
       try {
-        console.log('🔧 Attempting fallback to basic account route...');
         const numericFallbackId = Number(accountId);
         const fallbackResponse = await fetch(`/trpc/accountRoutes.load?input=${encodeURIComponent(JSON.stringify({ id: numericFallbackId }))}`);
         if (!fallbackResponse.ok) {
@@ -585,41 +621,38 @@
         }
         const fallbackResult = await fallbackResponse.json();
         const fallbackData = fallbackResult.result?.data || fallbackResult;
-        console.log('🔧 Fallback data loaded:', fallbackData);
-        
+
         if (fallbackData) {
-          account = { 
-            id: fallbackData.id, 
-            name: fallbackData.name 
+          account = {
+            id: fallbackData.id,
+            name: fallbackData.name
           };
-          
+
           // Convert transactions to proper format with date conversion
           transactions = (fallbackData.transactions || []).map((t: any) => ({
             ...t,
             date: typeof t.date === 'string' ? parseDate(t.date) : t.date
           }));
-          
-          summary = { 
-            balance: fallbackData.balance || 0, 
-            transactionCount: transactions.length 
+
+          summary = {
+            balance: fallbackData.balance || 0,
+            transactionCount: transactions.length
           };
           pagination.totalCount = transactions.length;
           pagination.totalPages = Math.ceil(transactions.length / pagination.pageSize);
           error = undefined; // Clear error if fallback succeeds
-          console.log('🔧 Successfully loaded fallback data');
         }
       } catch (fallbackErr: any) {
         console.error('❌ Fallback also failed:', fallbackErr);
-        
+
         // Final fallback to mock data for development
-        console.log('🔧 Falling back to mock data due to error');
         account = { id: accountId, name: `Account ${accountId}` };
         transactions = [
-          { 
-            id: 1, 
-            date: parseDate('2024-01-15'), 
-            amount: -50.00, 
-            notes: 'Sample Transaction', 
+          {
+            id: 1,
+            date: parseDate('2024-01-15'),
+            amount: -50.00,
+            notes: 'Sample Transaction',
             status: 'cleared',
             accountId: accountId,
             payeeId: null,
@@ -637,19 +670,17 @@
       isLoading = false;
     }
   }
-  
+
   // Track previous account ID to detect changes
   let previousAccountId = $state<number | undefined>(undefined);
-  
+
   onMount(() => {
-    console.log('🔧 Optimized account page mounted, loading data for account:', data.accountId);
     loadData();
   });
-  
+
   // React to accountId changes (when navigating between accounts)
   $effect(() => {
     if (accountId !== previousAccountId) {
-      console.log('🔧 Account ID changed from', previousAccountId, 'to', accountId);
       // Reset state and reload data when account changes
       pagination.page = 0;
       filters.searchQuery = '';
@@ -657,7 +688,33 @@
       loadData();
     }
   });
-  
+
+  // TanStack Table Integration Effects
+  $effect(() => {
+    // Monitor TanStack Table pagination changes and sync with ServerAccountState
+    if (table && serverAccountState && !useClientSideTable) {
+      const tablePagination = table.getState().pagination;
+      if (tablePagination.pageIndex !== pagination.page) {
+        syncTableStateWithOptimizedState();
+      }
+    }
+  });
+
+  $effect(() => {
+    // Monitor ServerAccountState changes and sync with TanStack Table
+    if (serverAccountState && table && !useClientSideTable) {
+      syncServerStateWithTable();
+    }
+  });
+
+  // Enhanced search functionality
+  $effect(() => {
+    // Use the enhanced search when filters change
+    if (filters.searchQuery !== undefined) {
+      performEnhancedSearch(filters.searchQuery);
+    }
+  });
+
   // Clean up unused code - we're using a simple table instead of TanStack Table
 </script>
 
@@ -669,14 +726,42 @@
         {account?.name || `Account ${accountId}`}
       </h1>
       <p class="text-muted-foreground">
-        {useClientSideTable 
-          ? 'Advanced view with client-side filtering and views' 
+        {useClientSideTable
+          ? 'Advanced view with client-side filtering and views'
           : 'Optimized view with server-side pagination'}
       </p>
     </div>
-    
-    <!-- Add Transaction Button -->
+
+    <!-- Add Transaction Button & Bulk Actions -->
     <div class="flex items-center space-x-2">
+      <!-- Bulk Actions (shown when transactions are selected) -->
+      {#if table && Object.keys(table.getSelectedRowModel().rowsById).length > 0}
+        <div class="flex items-center space-x-2 mr-4 px-3 py-1 bg-blue-50 border border-blue-200 rounded-md">
+          <span class="text-sm text-blue-700">
+            {Object.keys(table.getSelectedRowModel().rowsById).length} selected
+          </span>
+          <Button
+            size="sm"
+            variant="destructive"
+            onclick={() => {
+              if (!table) return;
+              const selectedRows = Object.keys(table.getSelectedRowModel().rowsById);
+              selectedTransactionIds = selectedRows.map(id => parseInt(id));
+              bulkDeleteDialogOpen = true;
+            }}
+          >
+            Delete Selected
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onclick={() => table?.resetRowSelection()}
+          >
+            Clear Selection
+          </Button>
+        </div>
+      {/if}
+
       <Button onclick={() => addTransactionDialogOpen = true}>
         <Plus class="h-4 w-4 mr-2" />
         Add Transaction
@@ -729,7 +814,7 @@
           </div>
         {/each}
       </div>
-      
+
       <!-- Transaction Table Skeleton -->
       <TransactionSkeleton rows={10} />
     </div>
@@ -737,10 +822,10 @@
     <!-- Data Tables -->
     {#if useClientSideTable}
       <!-- Advanced Client-Side Data Table with View Management -->
-      {#if categoriesState && payeesState && categories.length > 0 && payees.length > 0}
-        <DataTable 
-          columns={columns(categoriesState, payeesState, updateTransactionData)} 
-          transactions={formattedTransactions()} 
+      {#if categoriesState && payeesState && !isLoading && transactions.length > 0}
+        <DataTable
+          columns={columns(categoriesState, payeesState, updateTransactionData)}
+          transactions={formattedTransactions()}
           bind:table
         />
       {:else}
@@ -750,17 +835,17 @@
             <h3 class="font-medium text-blue-800">Loading Advanced Table...</h3>
           </div>
           <p class="text-blue-700 text-sm">
-            Loading entity data and initializing the advanced data table with view management, 
+            Loading entity data and initializing the advanced data table with view management,
             filtering, and editing capabilities.
           </p>
         </div>
-        
+
         <!-- Simple fallback table while loading -->
       <div class="space-y-4">
         <!-- Advanced Filter Toolbar -->
-        {#if optimizedAccountState}
-          <OptimizedDataTableToolbar 
-            accountState={optimizedAccountState} 
+        {#if serverAccountState}
+          <ServerDataTableToolbar
+            accountState={serverAccountState}
             {accountId}
           />
         {:else}
@@ -780,7 +865,7 @@
         {/if}
 
         <!-- Transaction Table -->
-        {#if optimizedAccountState?.isLoadingTransactions}
+        {#if serverAccountState?.isLoadingTransactions}
           <TransactionSkeleton rows={8} />
         {:else}
           <div class="rounded-md border">
@@ -807,8 +892,8 @@
                     <Table.Cell>{transaction.category?.name || '-'}</Table.Cell>
                     <Table.Cell>
                       <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
-                        {transaction.status === 'cleared' ? 'bg-green-100 text-green-800' : 
-                         transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                        {transaction.status === 'cleared' ? 'bg-green-100 text-green-800' :
+                         transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                          'bg-gray-100 text-gray-800'}">
                         {transaction.status || 'pending'}
                       </span>
@@ -845,7 +930,7 @@
         </div>
 
         <!-- Transaction Table -->
-        {#if optimizedAccountState?.isLoadingTransactions}
+        {#if serverAccountState?.isLoadingTransactions}
           <TransactionSkeleton rows={pagination.pageSize} />
         {:else}
           <div class="rounded-md border">
@@ -872,8 +957,8 @@
                     <Table.Cell>{transaction.category?.name || '-'}</Table.Cell>
                     <Table.Cell>
                       <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
-                        {transaction.status === 'cleared' ? 'bg-green-100 text-green-800' : 
-                         transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                        {transaction.status === 'cleared' ? 'bg-green-100 text-green-800' :
+                         transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                          'bg-gray-100 text-gray-800'}">
                         {transaction.status || 'pending'}
                       </span>
@@ -892,9 +977,9 @@
         {/if}
 
         <!-- Advanced Pagination -->
-        {#if optimizedAccountState && optimizedAccountState.pagination.totalPages > 1}
-          <OptimizedDataTablePagination 
-            accountState={optimizedAccountState} 
+        {#if serverAccountState && serverAccountState.pagination.totalPages > 1}
+          <ServerDataTablePagination
+            accountState={serverAccountState}
             {accountId}
           />
         {:else if pagination.totalPages > 1}
@@ -904,9 +989,9 @@
               Showing {pagination.page * pagination.pageSize + 1} to {Math.min((pagination.page + 1) * pagination.pageSize, pagination.totalCount)} of {pagination.totalCount} transactions
             </div>
             <div class="flex items-center space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onclick={() => {
                   pagination.page = Math.max(0, pagination.page - 1);
                   loadData();
@@ -919,9 +1004,9 @@
               <div class="flex items-center space-x-1">
                 <span class="text-sm">Page {pagination.page + 1} of {pagination.totalPages}</span>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onclick={() => {
                   pagination.page = Math.min(pagination.totalPages - 1, pagination.page + 1);
                   loadData();
@@ -947,7 +1032,7 @@
           Create a new transaction for {account?.name || 'this account'}.
         </Dialog.Description>
       </Dialog.Header>
-      
+
       <div class="space-y-4 py-4">
         <!-- Amount -->
         <div class="space-y-2">
@@ -960,7 +1045,7 @@
             bind:value={transactionForm.amount}
           />
         </div>
-        
+
         <!-- Date -->
         <div class="space-y-2">
           <Label for="date">Date</Label>
@@ -970,7 +1055,7 @@
             bind:value={transactionForm.date}
           />
         </div>
-        
+
         <!-- Payee -->
         <div class="space-y-2">
           <Label for="payee">Payee</Label>
@@ -992,7 +1077,7 @@
             </Select.Content>
           </Select.Root>
         </div>
-        
+
         <!-- Category -->
         <div class="space-y-2">
           <Label for="category">Category</Label>
@@ -1014,7 +1099,7 @@
             </Select.Content>
           </Select.Root>
         </div>
-        
+
         <!-- Status -->
         <div class="space-y-2">
           <Label for="status">Status</Label>
@@ -1037,7 +1122,7 @@
             </Select.Content>
           </Select.Root>
         </div>
-        
+
         <!-- Notes -->
         <div class="space-y-2">
           <Label for="notes">Notes</Label>
@@ -1049,10 +1134,10 @@
           />
         </div>
       </div>
-      
+
       <Dialog.Footer>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onclick={() => {
             addTransactionDialogOpen = false;
             resetTransactionForm();
@@ -1061,7 +1146,7 @@
         >
           Cancel
         </Button>
-        <Button 
+        <Button
           onclick={submitTransaction}
           disabled={isSubmittingTransaction || !transactionForm.amount}
         >
@@ -1082,13 +1167,23 @@
       </div>
       <p class="{useClientSideTable ? 'text-green-700' : 'text-blue-700'} text-sm">
         {#if useClientSideTable}
-          With {summary.transactionCount} transactions ≤ {CLIENT_SIDE_THRESHOLD}, using advanced client-side 
+          With {summary.transactionCount} transactions ≤ {CLIENT_SIDE_THRESHOLD}, using advanced client-side
           table with full view management, filtering, sorting, and grouping capabilities.
         {:else}
-          With {summary.transactionCount} transactions > {CLIENT_SIDE_THRESHOLD}, using optimized server-side 
+          With {summary.transactionCount} transactions > {CLIENT_SIDE_THRESHOLD}, using server-side
           pagination for better performance. Advanced features available on smaller datasets.
         {/if}
       </p>
     </div>
   {/if}
+
+  <!-- Bulk Delete Dialog -->
+  <DeleteTransactionDialog
+    transactions={selectedTransactionIds}
+    bind:dialogOpen={bulkDeleteDialogOpen}
+    onDelete={() => {
+      table?.resetRowSelection();
+      loadData();
+    }}
+  />
 </div>

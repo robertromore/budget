@@ -20,10 +20,12 @@ import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-fa
 import DataTableFacetedFilterCategory from "../(components)/(facets)/data-table-faceted-filter-category.svelte";
 import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-faceted-filter-payee.svelte";
 import DataTableFacetedFilterDate from "../(components)/(facets)/data-table-faceted-filter-date.svelte";
+import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";
 import CalendarDays from "@lucide/svelte/icons/calendar-days";
 import HandCoins from "@lucide/svelte/icons/hand-coins";
 import SquareMousePointer from "@lucide/svelte/icons/square-mouse-pointer";
 import SquareCheck from "@lucide/svelte/icons/square-check";
+import DollarSign from "@lucide/svelte/icons/dollar-sign";
 import { ExpandToggle } from "$lib/components/ui/expand-toggle";
 import { currencyFormatter } from "$lib/utils/formatters";
 import type { Component } from "svelte";
@@ -334,8 +336,28 @@ export const columns = (
       sortingFn: (rowA, rowB) =>
         ((rowA.getValue("amount") as number) || 0) - ((rowB.getValue("amount") as number) || 0),
       enableGrouping: false,
+      enableColumnFilter: true,
+      filterFn: "amountFilter" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Amount",
+        facetedFilter: (column: Column<TransactionsFormat, unknown>) => {
+          return {
+            name: "Amount",
+            icon: DollarSign,
+            column,
+            component: () =>
+              renderComponent(DataTableFacetedFilterAmount<TransactionsFormat, unknown>, {
+                column,
+                title: "Amount",
+              }),
+          };
+        },
+        availableFilters: [
+          {
+            id: "amountFilter",
+            label: "amount",
+          },
+        ],
       },
     },
     {

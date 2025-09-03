@@ -74,3 +74,4 @@ export const load: PageServerLoad = async ({ params }) => {
     // The heavy data will be loaded client-side to prevent hydration issues
   };
 };
+

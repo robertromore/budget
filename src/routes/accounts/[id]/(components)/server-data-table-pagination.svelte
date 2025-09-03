@@ -5,13 +5,13 @@
   import ChevronsRight from "@lucide/svelte/icons/chevrons-right";
   import { Button } from "$lib/components/ui/button";
   import * as Select from "$lib/components/ui/select";
-  import type { OptimizedAccountState } from "$lib/states/views/optimized-account.svelte";
+  import type { ServerAccountState } from "$lib/states/views/server-account.svelte";
 
   let {
     accountState,
     accountId,
   }: {
-    accountState: OptimizedAccountState;
+    accountState: ServerAccountState;
     accountId: number;
   } = $props();
 
