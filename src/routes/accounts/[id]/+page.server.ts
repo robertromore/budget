@@ -1,24 +1,12 @@
-import { superValidate } from "sveltekit-superforms";
 import type { PageServerLoad } from "./$types";
-import { zod4 } from "sveltekit-superforms/adapters";
-import {
-  removeCategorySchema,
-  removePayeeSchema,
-  removeTransactionsSchema,
-  type View,
-} from "$lib/schema";
-import {
-  superformInsertPayeeSchema,
-  superformInsertCategorySchema,
-  superformInsertTransactionSchema,
-  superformInsertViewSchema,
-} from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
-import { getSpecialDateValueAsLabel } from "$lib/utils/date-formatters";
+import type { View } from "$lib/schema";
 
-export const load: PageServerLoad = async ({ params, parent }) => {
-  const { accounts, dates: defaultDates } = await parent();
+export const load: PageServerLoad = async ({ params }) => {
+  // Load minimal data required for the data table
+  // Views are needed for the DataTable component view management
+  
   const defaultViews = [
     {
       id: -3,
@@ -75,31 +63,14 @@ export const load: PageServerLoad = async ({ params, parent }) => {
     },
   ] as View[];
 
-  const views = await createCaller(await createContext()).viewsRoutes.all();
-  const dates = defaultDates.concat(
-    views
-      .map((view) => view.filters)
-      .flat()
-      .filter((filter) => filter?.column === "date")
-      .map((filter) => filter?.value)
-      .flat()
-      .map((date) => ({
-        value: date as string,
-        label: getSpecialDateValueAsLabel(date as string),
-      }))
-  );
-
+  // Load user-created views from database
+  const caller = createCaller(await createContext());
+  const userViews = await caller.viewsRoutes.all();
+  
   return {
     accountId: parseInt(params.id),
-    account: accounts.find((account) => account.id === parseInt(params.id)),
-    manageTransactionForm: await superValidate(zod4(superformInsertTransactionSchema)),
-    deleteTransactionForm: await superValidate(zod4(removeTransactionsSchema)),
-    manageCategoryForm: await superValidate(zod4(superformInsertCategorySchema)),
-    deleteCategoryForm: await superValidate(zod4(removeCategorySchema)),
-    managePayeeForm: await superValidate(zod4(superformInsertPayeeSchema)),
-    deletePayeeForm: await superValidate(zod4(removePayeeSchema)),
-    manageViewForm: await superValidate(zod4(superformInsertViewSchema)),
-    views: defaultViews.concat(views),
-    dates,
+    views: defaultViews.concat(userViews),
+    // Still keep the load minimal - no transactions, accounts, or forms
+    // The heavy data will be loaded client-side to prevent hydration issues
   };
 };

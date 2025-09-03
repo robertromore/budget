@@ -3,7 +3,7 @@ import type { Account } from "$lib/schema/accounts";
 import { ConflictError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import slugify from "@sindresorhus/slugify";
-import { generateUniqueSlug } from "$lib/utils/slug-utils";
+import { generateUniqueSlug } from "$lib/utils/generate-unique-slug";
 
 // Service input types
 export interface CreateAccountData {
@@ -111,6 +111,13 @@ export class AccountService {
    */
   async getActiveAccounts(): Promise<Account[]> {
     return await this.repository.findActive();
+  }
+
+  /**
+   * Get all accounts with their transactions
+   */
+  async getAllAccountsWithTransactions(): Promise<Account[]> {
+    return await this.repository.findAllWithTransactions();
   }
 
   /**
