@@ -304,6 +304,90 @@ export const actions = {
 - Be respectful and collaborative
 - Address all feedback before approving
 
+## Development Workflow Best Practices
+
+**ALWAYS follow incremental development patterns for complex changes to ensure reliability and maintainability.**
+
+### Planning and Implementation Strategy
+
+#### Break Down Complex Changes
+
+- **❌ Don't ask for**: "Implement a complete authentication system with all features"
+- **✅ Do ask for**: "Create a plan for authentication, then implement it step by step"
+- Request a detailed plan first, then implement each step incrementally
+- Test each step thoroughly before proceeding to the next
+- Validate functionality at each milestone before adding complexity
+
+**Example Incremental Workflow:**
+
+```text
+Plan → Implement Step 1 → Test → Implement Step 2 → Test → Continue...
+```
+
+### Complex Problem Solving
+
+#### Visualization for Complex Logic
+
+For intricate algorithms, data transformations, or architectural decisions:
+
+- **Request code to visualize the problem**: Create debugging utilities, data loggers, or visual representations
+- **Generate comprehensive test data**: Build datasets that expose edge cases and boundary conditions
+- **Create debugging tools**: Implement logging, state snapshots, or step-by-step execution traces
+- **Document decision trees**: Map out conditional logic and data flow patterns
+
+#### Systematic Debugging Process
+
+When implementations fail or behave unexpectedly:
+
+1. **Add Comprehensive Logging**
+   - Request detailed logging at each step of the failing process
+   - Log input parameters, intermediate values, and output results
+   - Include timing information and execution paths
+
+2. **Capture and Save Logs**
+   - Run the failing code with logging enabled
+   - Save logs to files for systematic analysis
+   - Create reproducible test cases that trigger the issue
+
+3. **Iterative Analysis**
+   - Review logs systematically to identify failure points
+   - Compare expected vs actual values at each step
+   - Repeat the logging and analysis cycle until root cause is found
+
+### Architecture-Aware Development
+
+#### Respect Existing Code Patterns
+
+Before implementing new features:
+
+- **Analyze existing codebase**: Understand current architecture and design patterns
+- **Follow established conventions**: Match existing file organization, naming patterns, and separation of concerns
+- **Avoid monolithic solutions**: Don't put all changes in one file if the codebase uses distributed architecture
+- **Maintain consistency**: Use the same state management, error handling, and data flow patterns
+
+**Example Analysis Request:**
+
+```text
+"Before adding this feature, examine how similar functionality is implemented. 
+Show me the patterns for file organization, state management, and error handling, 
+then implement following these same patterns."
+```
+
+### Implementation Guidelines
+
+- Request detailed plans for any change involving 2+ files
+- Ask for visualization tools when dealing with complex data transformations
+- Implement systematic logging for any failing functionality
+- Always analyze existing code patterns before implementing new features
+- Test each step independently before proceeding
+
+### Workflow Benefits
+
+- **Reduced Risk**: Small, tested increments minimize breaking changes
+- **Better Debugging**: Issues are isolated and easier to diagnose
+- **Improved Quality**: Each step can be thoroughly reviewed and optimized
+- **Maintainable Code**: Solutions follow established patterns and are easier to understand
+
 ## Architecture Notes
 
 ### Frontend Organization
