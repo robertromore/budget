@@ -1,3 +1,21 @@
+<!--
+  @fileoverview Server-side data table component optimized for large transaction datasets
+  
+  This component provides server-side pagination, sorting, and filtering for transaction data.
+  It integrates with ServerAccountState for consistent state management and supports both
+  loading states and error handling.
+  
+  @component ServerDataTable
+  @example
+  ```svelte
+  <ServerDataTable
+    {columns}
+    accountState={serverAccountState}
+    {accountId}
+    bind:table
+  />
+  ```
+-->
 <script lang="ts" generics="TValue">
   import {
     type ColumnDef,
@@ -11,23 +29,38 @@
   import type { TransactionsFormat } from "$lib/types";
   import { ServerDataTableToolbar, ServerDataTablePagination } from ".";
   import type { ServerAccountState } from "$lib/states/views/server-account.svelte";
-  // Use div placeholders instead of skeleton component
   import AlertCircle from "@lucide/svelte/icons/alert-circle";
   import * as Alert from "$lib/components/ui/alert";
 
+  /**
+   * Component props interface
+   * @typedef {Object} ServerDataTableProps
+   * @property {ColumnDef<TransactionsFormat, TValue>[]} columns - TanStack table column definitions
+   * @property {ServerAccountState} accountState - Reactive state manager for account data
+   * @property {number} accountId - Account identifier for data operations
+   * @property {TTable<TransactionsFormat>} [table] - Bindable table instance for parent access
+   */
   let {
     columns,
     accountState,
     accountId,
     table = $bindable(),
   }: {
+    /** Column definitions for the data table */
     columns: ColumnDef<TransactionsFormat, TValue>[];
+    /** State manager containing transaction data and pagination info */
     accountState: ServerAccountState;
+    /** Unique identifier for the account being displayed */
     accountId: number;
+    /** Optional bindable table instance for parent component access */
     table?: TTable<TransactionsFormat>;
   } = $props();
 
-  // Create table instance with server-side sorting
+  /**
+   * Creates a TanStack table instance configured for server-side operations.
+   * This table delegates sorting and pagination to the server while maintaining
+   * reactive state synchronization with the ServerAccountState.
+   */
   const tableInstance = createSvelteTable({
     get data() {
       return accountState.formatted || [];
@@ -37,9 +70,9 @@
     },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    // Server-side sorting - disable client-side sorting
+    /** Delegate sorting to server - prevents client-side sorting */
     manualSorting: true,
-    // Server-side pagination - disable client-side pagination
+    /** Delegate pagination to server - prevents client-side pagination */
     manualPagination: true,
     get pageCount() {
       return accountState.pagination.totalPages;
@@ -58,6 +91,12 @@
         };
       },
     },
+    /**
+     * Handles sorting changes from the table UI and delegates to server-side state.
+     * Maps frontend column IDs to backend field names before applying sort.
+     * 
+     * @param sortingUpdater - TanStack table sorting updater function or state
+     */
     onSortingChange: (sortingUpdater) => {
       try {
         const newSorting = typeof sortingUpdater === 'function' 
@@ -70,12 +109,12 @@
         if (newSorting.length > 0) {
           const sort = newSorting[0];
           
-          // Map column IDs to backend-expected values
+          /** Map frontend column IDs to backend-expected field names */
           const columnIdMap: Record<string, "date" | "amount" | "notes"> = {
             'date': 'date',
             'amount': 'amount', 
             'notes': 'notes',
-            // Add common variations
+            // Common column ID variations
             'transaction-date': 'date',
             'transaction-amount': 'amount',
             'transaction-notes': 'notes'
@@ -83,6 +122,7 @@
           
           const mappedSortBy = columnIdMap[sort.id] || 'date';
           
+          // Update server-side sorting state
           accountState.setSorting(
             accountId, 
             mappedSortBy,
@@ -90,9 +130,15 @@
           );
         }
       } catch (error) {
-        console.error('Sort error', error);
+        console.error('Sort error:', error);
       }
     },
+    /**
+     * Handles pagination changes from the table UI and delegates to server-side state.
+     * Distinguishes between page size changes and page navigation to trigger appropriate actions.
+     * 
+     * @param paginationUpdater - TanStack table pagination updater function or state
+     */
     onPaginationChange: (paginationUpdater) => {
       const newPagination = typeof paginationUpdater === 'function'
         ? paginationUpdater({
@@ -101,15 +147,18 @@
           })
         : paginationUpdater;
       
+      // Handle page size changes first (triggers data reload)
       if (newPagination.pageSize !== accountState.pagination.pageSize) {
         accountState.setPageSize(accountId, newPagination.pageSize);
-      } else if (newPagination.pageIndex !== accountState.pagination.page) {
+      } 
+      // Then handle page navigation
+      else if (newPagination.pageIndex !== accountState.pagination.page) {
         accountState.goToPage(accountId, newPagination.pageIndex);
       }
     },
   });
 
-  // Bind table instance to parent
+  /** Bind table instance to parent component for external access */
   table = tableInstance;
 </script>
 

@@ -1,3 +1,19 @@
+<!--
+  @fileoverview Server-side data table pagination controls
+  
+  This component provides comprehensive pagination controls for server-side data tables,
+  including page navigation, page size selection, and pagination status display.
+  All pagination operations are delegated to ServerAccountState for consistent state management.
+  
+  @component ServerDataTablePagination
+  @example
+  ```svelte
+  <ServerDataTablePagination 
+    accountState={serverAccountState} 
+    {accountId} 
+  />
+  ```
+-->
 <script lang="ts">
   import ChevronLeft from "@lucide/svelte/icons/chevron-left";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
@@ -7,33 +23,53 @@
   import * as Select from "$lib/components/ui/select";
   import type { ServerAccountState } from "$lib/states/views/server-account.svelte";
 
+  /**
+   * Component props interface
+   */
   let {
     accountState,
     accountId,
   }: {
+    /** State manager containing pagination state and methods */
     accountState: ServerAccountState;
+    /** Account identifier for pagination operations */
     accountId: number;
   } = $props();
 
-  // Page size options
+  /**
+   * Available page size options for the pagination dropdown.
+   * Provides common pagination sizes optimized for different use cases.
+   */
   const pageSizeOptions = [
-    { value: "10", label: "10 per page" },
-    { value: "25", label: "25 per page" },
-    { value: "50", label: "50 per page" },
-    { value: "100", label: "100 per page" },
+    { value: "10", label: "10 per page" },   // Small datasets, detailed viewing
+    { value: "25", label: "25 per page" },   // Balanced view
+    { value: "50", label: "50 per page" },   // Default recommended size
+    { value: "100", label: "100 per page" }, // Large datasets, overview
   ];
 
+  /**
+   * Updates the page size and triggers data reload.
+   * Validates the input value before applying the change.
+   * 
+   * @param value - String representation of the new page size
+   */
   function setPageSize(value: string) {
     const pageSize = parseInt(value);
-    if (!isNaN(pageSize)) {
+    if (!isNaN(pageSize) && pageSize > 0) {
       accountState.setPageSize(accountId, pageSize);
     }
   }
 
+  /**
+   * Navigates to the first page of results
+   */
   function goToFirstPage() {
     accountState.goToPage(accountId, 0);
   }
 
+  /**
+   * Navigates to the last page of results
+   */
   function goToLastPage() {
     accountState.goToPage(accountId, accountState.pagination.totalPages - 1);
   }

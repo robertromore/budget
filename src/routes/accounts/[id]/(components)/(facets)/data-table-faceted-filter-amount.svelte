@@ -1,3 +1,19 @@
+<!--
+  @fileoverview Faceted filter component for transaction amounts with multiple comparison operators
+  
+  This component provides advanced filtering capabilities for transaction amounts, supporting
+  various comparison operators (equals, greater than, less than, between, not equals) with
+  proper currency formatting and integration with the view management system.
+  
+  @component DataTableFacetedFilterAmount
+  @example
+  ```svelte
+  <DataTableFacetedFilterAmount 
+    {column}
+    title="Amount" 
+  />
+  ```
+-->
 <script lang="ts" generics="TData, TValue">
   import type { Column } from "@tanstack/table-core";
   import * as Popover from "$lib/components/ui/popover";
@@ -9,23 +25,34 @@
   import { currentViews } from "$lib/states/views/current-views.svelte";
   import X from "@lucide/svelte/icons/x";
 
+  /**
+   * Component props interface
+   */
   let {
     column,
     title = "Amount",
   }: {
+    /** TanStack table column instance for applying filters */
     column: Column<TData, TValue>;
+    /** Display title for the filter component */
     title?: string;
   } = $props();
 
+  /** Controls visibility of operator selection popover */
   let operatorOpen = $state(false);
+  /** Controls visibility of value input popover */
   let valueOpen = $state(false);
   
+  /**
+   * Available filter operation types for amount comparisons.
+   * Each type represents a different mathematical comparison operation.
+   */
   const filterTypes = [
-    { value: "equals", label: "equals" },
-    { value: "greaterThan", label: "greater than" },
-    { value: "lessThan", label: "less than" },
-    { value: "between", label: "between" },
-    { value: "notEquals", label: "not equals" },
+    { value: "equals", label: "equals" },                 // Exact match
+    { value: "greaterThan", label: "greater than" },     // Amount > value
+    { value: "lessThan", label: "less than" },           // Amount < value
+    { value: "between", label: "between" },               // value1 <= Amount <= value2
+    { value: "notEquals", label: "not equals" },          // Amount != value
   ];
 
   const activeView = $derived(currentViews.get().activeView);
