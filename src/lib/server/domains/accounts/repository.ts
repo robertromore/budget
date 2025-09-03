@@ -2,7 +2,10 @@ import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { db } from "$lib/server/shared/database";
 import { accounts } from "$lib/schema/accounts";
 import type { Account } from "$lib/schema/accounts";
-import { eq, like, and, isNull } from "drizzle-orm";
+import { transactions } from "$lib/schema/transactions";
+import { categories } from "$lib/schema/categories";
+import { payees } from "$lib/schema/payees";
+import { eq, like, and, isNull, desc } from "drizzle-orm";
 import { NotFoundError } from "$lib/server/shared/types/errors";
 
 // Types for account operations
@@ -143,6 +146,84 @@ export class AccountRepository extends BaseRepository<
         .orderBy(accounts.name);
     } catch (error) {
       throw new Error(`Failed to find active accounts: ${error}`);
+    }
+  }
+
+  /**
+   * Get all accounts with their transactions
+   */
+  async findAllWithTransactions(): Promise<Account[]> {
+    try {
+      // First get all active accounts
+      const accountList = await this.findActive();
+      
+      // Then fetch transactions for each account with proper joins
+      const accountsWithTransactions = await Promise.all(
+        accountList.map(async (account) => {
+          const accountTransactions = await this.db
+            .select({
+              id: transactions.id,
+              accountId: transactions.accountId,
+              parentId: transactions.parentId,
+              status: transactions.status,
+              payeeId: transactions.payeeId,
+              amount: transactions.amount,
+              categoryId: transactions.categoryId,
+              notes: transactions.notes,
+              date: transactions.date,
+              scheduleId: transactions.scheduleId,
+              createdAt: transactions.createdAt,
+              updatedAt: transactions.updatedAt,
+              deletedAt: transactions.deletedAt,
+              payee: {
+                id: payees.id,
+                name: payees.name,
+                notes: payees.notes,
+                createdAt: payees.createdAt,
+                updatedAt: payees.updatedAt,
+                deletedAt: payees.deletedAt,
+              },
+              category: {
+                id: categories.id,
+                name: categories.name,
+                notes: categories.notes,
+                createdAt: categories.createdAt,
+                updatedAt: categories.updatedAt,
+                deletedAt: categories.deletedAt,
+              },
+            })
+            .from(transactions)
+            .leftJoin(payees, eq(transactions.payeeId, payees.id))
+            .leftJoin(categories, eq(transactions.categoryId, categories.id))
+            .where(
+              and(
+                eq(transactions.accountId, account.id),
+                isNull(transactions.deletedAt)
+              )
+            )
+            .orderBy(desc(transactions.date), desc(transactions.id));
+
+          // Calculate running balances
+          let runningBalance = 0;
+          const transactionsWithBalance = accountTransactions.map((transaction: any) => {
+            runningBalance += transaction.amount;
+            return {
+              ...transaction,
+              balance: runningBalance,
+            };
+          });
+
+          return {
+            ...account,
+            transactions: transactionsWithBalance,
+            balance: runningBalance,
+          } as Account;
+        })
+      );
+
+      return accountsWithTransactions;
+    } catch (error) {
+      throw new Error(`Failed to find accounts with transactions: ${error}`);
     }
   }
 

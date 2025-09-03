@@ -22,9 +22,10 @@
   PayeesState.set((() => payees)());
 </script>
 
-{#if dev}
+<!-- Temporarily disabled RenderScan for debugging -->
+<!-- {#if dev}
 	<RenderScan />
-{/if}
+{/if} -->
 
 <AddAccountDialog/>
 <AddScheduleDialog/>
