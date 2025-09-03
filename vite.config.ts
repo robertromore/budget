@@ -51,7 +51,7 @@ export default defineConfig({
       '@tanstack/svelte-query',
       '@trpc/client',
       'zod',
-      'lucide-svelte'
+      '@lucide/svelte'
     ]
   },
   ssr: {
