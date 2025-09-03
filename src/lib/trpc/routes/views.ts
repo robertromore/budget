@@ -1,14 +1,13 @@
 import { eq, inArray } from "drizzle-orm";
-import { publicProcedure, rateLimitedProcedure, t } from "../t";
+import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "../t";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
   removeViewSchema,
   removeViewsSchema,
+  insertViewSchema,
   views,
-  type View,
 } from "$lib/schema";
-import { superformInsertViewSchema } from "$lib/schema/superforms";
 
 export const viewsRoutes = t.router({
   all: publicProcedure.query(async ({ ctx }) => {
@@ -47,14 +46,20 @@ export const viewsRoutes = t.router({
     }
     return result[0];
   }),
-  delete: rateLimitedProcedure
+  delete: bulkOperationProcedure
     .input(removeViewsSchema)
     .mutation(async ({ input: { entities }, ctx: { db } }) => {
       return await db.delete(views).where(inArray(views.id, entities)).returning();
     }),
   save: rateLimitedProcedure
-    .input(superformInsertViewSchema)
-    .mutation(async ({ input: { id, name, description, icon, filters, display }, ctx: { db } }) => {
+    .input(insertViewSchema)
+    .mutation(async ({ input: { id, name, description, icon, filters, display, dirty }, ctx: { db } }) => {
+      // Transform display object to match database schema
+      const transformedDisplay = display ? {
+        ...display,
+        expanded: display.expanded === true ? {} : display.expanded,
+        visibility: display.visibility === true ? {} : display.visibility,
+      } : display;
       let entities;
       if (id) {
         entities = await db
@@ -64,7 +69,8 @@ export const viewsRoutes = t.router({
             description,
             icon,
             filters,
-            display,
+            display: transformedDisplay,
+            dirty,
           })
           .where(eq(views.id, id))
           .returning();
@@ -76,7 +82,8 @@ export const viewsRoutes = t.router({
             description,
             icon,
             filters,
-            display,
+            display: transformedDisplay,
+            dirty,
           })
           .returning();
       }
