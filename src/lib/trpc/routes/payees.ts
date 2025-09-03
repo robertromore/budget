@@ -1,6 +1,6 @@
 import { formInsertPayeeSchema, payees, removePayeeSchema, removePayeesSchema } from "$lib/schema";
 import { z } from "zod";
-import { publicProcedure, rateLimitedProcedure, t } from "../t";
+import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "../t";
 import { eq, isNull, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
@@ -41,7 +41,7 @@ export const payeeRoutes = t.router({
     }
     return result[0];
   }),
-  delete: rateLimitedProcedure
+  delete: bulkOperationProcedure
     .input(removePayeesSchema)
     .mutation(async ({ input: { entities }, ctx: { db } }) => {
       return await db
