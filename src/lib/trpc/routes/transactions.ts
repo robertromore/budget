@@ -33,6 +33,7 @@ export const transactionRoutes = t.router({
     .mutation(
       async ({
         input: { id, payeeId, amount, categoryId, notes, date, accountId, status },
+        input,
         ctx: { db },
       }) => {
         if (!accountId) {

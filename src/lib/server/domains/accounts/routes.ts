@@ -6,7 +6,7 @@ import {
   bulkProcedure 
 } from "$lib/server/shared/trpc/procedures";
 import { AccountService } from "./services";
-import { router } from "$lib/trpc/t";
+import { t } from "$lib/trpc/t";
 import { removeAccountSchema } from "$lib/schema/accounts";
 
 // Initialize service
@@ -42,7 +42,13 @@ const searchAccountsSchema = z.object({
 /**
  * Account routes using the new architecture
  */
-export const accountRoutes = router({
+export const accountRoutes = t.router({
+  // Get all accounts with transactions for UI
+  all: publicProcedure
+    .query(async () => {
+      return await accountService.getAllAccountsWithTransactions();
+    }),
+
   // Get all active accounts
   list: publicProcedure
     .query(async () => {

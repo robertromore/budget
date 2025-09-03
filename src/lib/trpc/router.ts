@@ -1,5 +1,5 @@
 import { accountRoutes } from "$lib/trpc/routes/accounts";
-import { optimizedAccountsRoutes } from "$lib/trpc/routes/accounts-optimized";
+import { serverAccountsRoutes } from "$lib/trpc/routes/accounts-server";
 import { categoriesRoutes } from "$lib/trpc/routes/categories";
 import { payeeRoutes } from "$lib/trpc/routes/payees";
 import { transactionRoutes } from "$lib/trpc/routes/transactions";
@@ -10,7 +10,7 @@ import { scheduleRoutes } from "./routes/schedules";
 
 export const router = t.router({
   accountRoutes,
-  optimizedAccountsRoutes,
+  serverAccountsRoutes,
   categoriesRoutes,
   payeeRoutes,
   scheduleRoutes,

@@ -155,6 +155,32 @@ export const filters = {
   ) => {
     return !filterValue.has(row.original[columnId as keyof TransactionsFormat] as string);
   },
+  amountFilter: (
+    row: Row<TransactionsFormat>,
+    columnId: string,
+    filterValue: { type: string; value?: number; min?: number; max?: number },
+    addMeta: (meta: any) => void
+  ) => {
+    const amount = row.original.amount;
+    if (!filterValue || typeof amount !== 'number') return true;
+
+    switch (filterValue.type) {
+      case "equals":
+        return filterValue.value !== undefined ? amount === filterValue.value : true;
+      case "notEquals":
+        return filterValue.value !== undefined ? amount !== filterValue.value : true;
+      case "greaterThan":
+        return filterValue.value !== undefined ? amount > filterValue.value : true;
+      case "lessThan":
+        return filterValue.value !== undefined ? amount < filterValue.value : true;
+      case "between":
+        return filterValue.min !== undefined && filterValue.max !== undefined
+          ? amount >= filterValue.min && amount <= filterValue.max
+          : true;
+      default:
+        return true;
+    }
+  },
 };
 
 let _filtering = $state<ColumnFiltersState>([]);
