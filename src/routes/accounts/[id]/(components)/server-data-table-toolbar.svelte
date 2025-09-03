@@ -9,14 +9,14 @@
   import * as Popover from "$lib/components/ui/popover";
   import * as Select from "$lib/components/ui/select";
   // Use built-in label elements instead of UI component
-  import type { OptimizedAccountState } from "$lib/states/views/optimized-account.svelte";
+  import type { ServerAccountState } from "$lib/states/views/server-account.svelte";
   import { Badge } from "$lib/components/ui/badge";
 
   let {
     accountState,
     accountId,
   }: {
-    accountState: OptimizedAccountState;
+    accountState: ServerAccountState;
     accountId: number;
   } = $props();
 

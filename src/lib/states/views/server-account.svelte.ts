@@ -2,7 +2,7 @@ import {currencyFormatter, transactionFormatter} from "$lib/utils/formatters";
 import type {Category, Payee, Transaction} from "$lib/schema";
 import {getContext, setContext} from "svelte";
 
-const KEY = Symbol("optimized_account");
+const KEY = Symbol("server_account");
 
 interface PaginationState {
   page: number;
@@ -21,7 +21,7 @@ interface TransactionFilters {
   sortOrder: "asc" | "desc";
 }
 
-export class OptimizedAccountState {
+export class ServerAccountState {
   // Account summary (fast loading)
   accountSummary:
     | {
@@ -143,7 +143,7 @@ export class OptimizedAccountState {
 
     try {
       // Use direct fetch instead of tRPC client
-      const summaryResponse = await fetch(`/trpc/optimizedAccountsRoutes.loadSummary?input=${encodeURIComponent(JSON.stringify({ id: accountId }))}`);
+      const summaryResponse = await fetch(`/trpc/serverAccountsRoutes.loadSummary?input=${encodeURIComponent(JSON.stringify({ id: accountId }))}`);
       if (!summaryResponse.ok) {
         throw new Error(`Failed to load summary: HTTP ${summaryResponse.status}: ${summaryResponse.statusText}`);
       }
@@ -196,7 +196,7 @@ export class OptimizedAccountState {
         ...(this.filters.dateTo && { dateTo: this.filters.dateTo })
       };
       
-      const transactionResponse = await fetch(`/trpc/optimizedAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`);
+      const transactionResponse = await fetch(`/trpc/serverAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`);
       if (!transactionResponse.ok) {
         throw new Error(`Failed to load transactions: HTTP ${transactionResponse.status}: ${transactionResponse.statusText}`);
       }
@@ -349,7 +349,7 @@ export class OptimizedAccountState {
       };
       
       // Prefetch silently in background
-      fetch(`/trpc/optimizedAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`);
+      fetch(`/trpc/serverAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`);
       console.log('🚀 Prefetching next page:', nextPage + 1);
     } catch (error) {
       // Silently fail prefetching
@@ -377,7 +377,7 @@ export class OptimizedAccountState {
       };
       
       // Prefetch silently in background
-      fetch(`/trpc/optimizedAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`);
+      fetch(`/trpc/serverAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`);
       console.log('🚀 Prefetching previous page:', previousPage + 1);
     } catch (error) {
       // Silently fail prefetching
@@ -388,11 +388,11 @@ export class OptimizedAccountState {
   /**
    * Context management
    */
-  static get(): OptimizedAccountState | undefined {
+  static get(): ServerAccountState | undefined {
     return getContext(KEY);
   }
 
-  static set(state: OptimizedAccountState): OptimizedAccountState {
+  static set(state: ServerAccountState): ServerAccountState {
     return setContext(KEY, state);
   }
 }
@@ -400,8 +400,8 @@ export class OptimizedAccountState {
 /**
  * Hook for creating optimized account state
  */
-export function createOptimizedAccountState(accountId: number): OptimizedAccountState {
-  const state = new OptimizedAccountState(accountId);
-  OptimizedAccountState.set(state);
+export function createServerAccountState(accountId: number): ServerAccountState {
+  const state = new ServerAccountState(accountId);
+  ServerAccountState.set(state);
   return state;
 }

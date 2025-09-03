@@ -14,7 +14,7 @@ import { queryCache, cacheKeys } from "$lib/utils/cache";
  * - SQL-based balance calculations
  * - Caching integration
  */
-export const optimizedAccountsRoutes = t.router({
+export const serverAccountsRoutes = t.router({
   /**
    * Get account summary with balance but no transactions
    * Much faster for dashboard and account lists

@@ -6,7 +6,7 @@ export { default as DataTablePagination } from "./data-table-pagination.svelte";
 export { default as DataTableViewOptions } from "./data-table-view-options.svelte";
 export { default as DataTableFacetedFilter } from "./data-table-faceted-filter.svelte";
 
-// Optimized components
-export { default as OptimizedDataTable } from "./optimized-data-table.svelte";
-export { default as OptimizedDataTableToolbar } from "./optimized-data-table-toolbar.svelte";
-export { default as OptimizedDataTablePagination } from "./optimized-data-table-pagination.svelte";
+// Server-side components
+export { default as ServerDataTable } from "./server-data-table.svelte";
+export { default as ServerDataTableToolbar } from "./server-data-table-toolbar.svelte";
+export { default as ServerDataTablePagination } from "./server-data-table-pagination.svelte";

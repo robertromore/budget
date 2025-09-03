@@ -9,8 +9,8 @@
   import { createSvelteTable, FlexRender } from "$lib/components/ui/data-table";
   import * as Table from "$lib/components/ui/table";
   import type { TransactionsFormat } from "$lib/types";
-  import { OptimizedDataTableToolbar, OptimizedDataTablePagination } from ".";
-  import type { OptimizedAccountState } from "$lib/states/views/optimized-account.svelte";
+  import { ServerDataTableToolbar, ServerDataTablePagination } from ".";
+  import type { ServerAccountState } from "$lib/states/views/server-account.svelte";
   // Use div placeholders instead of skeleton component
   import AlertCircle from "@lucide/svelte/icons/alert-circle";
   import * as Alert from "$lib/components/ui/alert";
@@ -22,7 +22,7 @@
     table = $bindable(),
   }: {
     columns: ColumnDef<TransactionsFormat, TValue>[];
-    accountState: OptimizedAccountState;
+    accountState: ServerAccountState;
     accountId: number;
     table?: TTable<TransactionsFormat>;
   } = $props();
@@ -115,7 +115,7 @@
 
 <div class="space-y-4">
   <!-- Toolbar with search and filters -->
-  <OptimizedDataTableToolbar {accountState} {accountId} />
+  <ServerDataTableToolbar {accountState} {accountId} />
   
   <!-- Error display -->
   {#if accountState.transactionsError}
@@ -188,7 +188,7 @@
   </div>
 
   <!-- Pagination -->
-  <OptimizedDataTablePagination {accountState} {accountId} />
+  <ServerDataTablePagination {accountState} {accountId} />
 </div>
 
 <style>

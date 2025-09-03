@@ -32,10 +32,12 @@
   let {
     columns,
     transactions,
+    views,
     table = $bindable(),
   }: {
     columns: ColumnDef<TransactionsFormat, TValue>[];
     transactions?: TransactionsFormat[];
+    views?: View[];
     table?: TTable<TransactionsFormat>;
   } = $props();
 
@@ -130,9 +132,9 @@
     autoResetExpanded: false,
   });
 
-  const views: View[] = page.data.views;
+  const viewList = $derived(views || page.data.views || []);
 
-  const _currentViewStates: CurrentViewState<TransactionsFormat>[] = views.map(
+  const _currentViewStates: CurrentViewState<TransactionsFormat>[] = viewList.map(
     (view: View) => new CurrentViewState<TransactionsFormat>(view, table)
   );
   currentViews.set(new CurrentViewsState<TransactionsFormat>(_currentViewStates));
