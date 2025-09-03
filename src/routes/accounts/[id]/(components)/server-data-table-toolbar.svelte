@@ -1,3 +1,19 @@
+<!--
+  @fileoverview Server-side data table toolbar with search, filtering, and sorting controls
+  
+  This component provides comprehensive filtering capabilities for server-side data tables,
+  including debounced search, date range filtering, sort controls, and filter management.
+  All filter operations are delegated to the ServerAccountState for consistent state management.
+  
+  @component ServerDataTableToolbar
+  @example
+  ```svelte
+  <ServerDataTableToolbar 
+    accountState={serverAccountState} 
+    {accountId} 
+  />
+  ```
+-->
 <script lang="ts">
   import Search from "@lucide/svelte/icons/search";
   import X from "@lucide/svelte/icons/x";
@@ -8,44 +24,57 @@
   import { Input } from "$lib/components/ui/input";
   import * as Popover from "$lib/components/ui/popover";
   import * as Select from "$lib/components/ui/select";
-  // Use built-in label elements instead of UI component
   import type { ServerAccountState } from "$lib/states/views/server-account.svelte";
   import { Badge } from "$lib/components/ui/badge";
 
+  /**
+   * Component props interface
+   */
   let {
     accountState,
     accountId,
   }: {
+    /** State manager containing filter state and methods */
     accountState: ServerAccountState;
+    /** Account identifier for filter operations */
     accountId: number;
   } = $props();
 
+  /** Local search input value - synced with account state via debouncing */
   let searchValue = $state(accountState.filters.searchQuery || "");
+  /** Controls visibility of date filter popover */
   let dateFiltersOpen = $state(false);
+  /** Timeout handle for debounced search operations */
   let searchTimeout: NodeJS.Timeout | null = null;
 
-  // Debounced search input handler
+  /**
+   * Debounced search effect - prevents excessive server requests during typing.
+   * Triggers search operation 300ms after user stops typing.
+   */
   $effect(() => {
     if (searchValue !== (accountState.filters.searchQuery || "")) {
-      // Clear existing timeout
+      // Clear any existing timeout to reset debounce timer
       if (searchTimeout) {
         clearTimeout(searchTimeout);
       }
       
-      // Set new timeout for debounced search
+      // Set new timeout for debounced search operation
       searchTimeout = setTimeout(() => {
-        console.log('🔍 Debounced search triggered for:', searchValue);
         accountState.searchTransactions(accountId, searchValue);
-      }, 300); // 300ms debounce delay
+      }, 300); // 300ms debounce delay for optimal UX
     }
   });
 
-  // Clear search
+  /**
+   * Clears the search input and triggers server-side search reset
+   */
   function clearSearch() {
     searchValue = "";
   }
 
-  // Clear all filters
+  /**
+   * Resets all filters to their default state and triggers server refresh
+   */
   function clearAllFilters() {
     searchValue = "";
     accountState.filters.searchQuery = undefined;

@@ -18,6 +18,7 @@ This directory contains technical documentation for the budget management applic
   - Cache invalidation strategies
   - Field mapping and type safety
 
+
 ## Quick Reference
 
 ### Performance Thresholds
