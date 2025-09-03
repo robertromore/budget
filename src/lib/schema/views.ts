@@ -17,6 +17,7 @@ export const views = sqliteTable("views", {
 export const selectViewSchema = createSelectSchema(views);
 export const insertViewSchema = createInsertSchema(views, {
   name: z.string().min(2, "Name must contain at least 2 characters"),
+  description: z.union([z.string().max(500, "Description must be less than 500 characters"), z.null()]).optional(),
   filters: z.optional(
     z
       .array(

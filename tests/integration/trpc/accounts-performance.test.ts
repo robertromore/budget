@@ -3,7 +3,7 @@ import { createCaller } from "../../../src/lib/trpc/router";
 import { setupTestDb, clearTestDb } from "../setup/test-db";
 import { accounts, transactions, categories, payees } from "$lib/schema";
 
-describe("Optimized Accounts tRPC Integration Tests", () => {
+describe("Accounts Performance Testing Concepts", () => {
   let db: Awaited<ReturnType<typeof setupTestDb>>;
   let caller: ReturnType<typeof createCaller>;
   let testAccount: any;
@@ -43,8 +43,8 @@ describe("Optimized Accounts tRPC Integration Tests", () => {
     }
   });
 
-  describe("Optimized Account Loading", () => {
-    test("should load account summary without all transactions", async () => {
+  describe("Account Loading Performance Concepts", () => {
+    test("demonstrates current account loading with performance considerations", async () => {
       // Create some transactions
       await db.insert(transactions).values([
         {
@@ -65,15 +65,15 @@ describe("Optimized Accounts tRPC Integration Tests", () => {
         }
       ]);
 
-      // Note: This would use the optimized routes if they were integrated
-      // For now, testing the concept with existing routes
+      // This test demonstrates performance considerations for account loading
+      // Currently tests against existing routes to establish baseline metrics
       const account = await caller.accountRoutes.load({ id: testAccount.id });
       
       expect(account.id).toBe(testAccount.id);
       expect(account.name).toBe("Test Account");
       expect(account.balance).toBe(-75.00); // -50 - 25
       
-      // The key difference would be that optimized version wouldn't load all transactions
+      // Performance note: Current implementation loads all transactions which could be optimized
       expect(Array.isArray(account.transactions)).toBe(true);
     });
   });
@@ -102,10 +102,10 @@ describe("Optimized Accounts tRPC Integration Tests", () => {
       
       expect(account.transactions).toHaveLength(25);
       
-      // In optimized version, we'd test:
-      // - First page: transactions 0-19
-      // - Second page: transactions 20-24
-      // - Pagination metadata (totalCount, hasNextPage, etc.)
+      // Performance consideration: With pagination, we could test:
+      // - Loading transactions in pages (e.g., 20 per page)
+      // - Pagination metadata for better UX
+      // - Reduced memory usage for large accounts
       
       const totalTransactions = account.transactions.length;
       expect(totalTransactions).toBe(25);
@@ -173,7 +173,7 @@ describe("Optimized Accounts tRPC Integration Tests", () => {
 
       const account = await caller.accountRoutes.load({ id: testAccount.id });
       
-      // In optimized version, we'd test search functionality
+      // Performance consideration: Server-side search would be more efficient
       // For now, test that we can filter the loaded transactions
       const groceryTransactions = account.transactions.filter(tx => 
         tx.notes?.toLowerCase().includes('grocery')
@@ -214,15 +214,15 @@ describe("Optimized Accounts tRPC Integration Tests", () => {
       expect(account.transactions).toHaveLength(50);
       expect(loadTime).toBeLessThan(1000); // Should load in under 1 second
       
-      // In production, with optimized queries, this should be much faster
+      // Performance baseline: Current implementation loads all data upfront
       console.log(`Account load time: ${loadTime.toFixed(2)}ms`);
     });
   });
 
   describe("Memory Usage Optimization", () => {
     test("should handle large datasets efficiently", async () => {
-      // This test verifies that we can handle substantial data
-      // In the optimized version, we'd load data in chunks
+      // This test verifies current handling of substantial data
+      // Performance consideration: Future optimizations could load data in chunks
       
       const largeDatasetSize = 100;
       const transactionPromises = [];
@@ -253,7 +253,7 @@ describe("Optimized Accounts tRPC Integration Tests", () => {
     });
   });
 
-  describe("Error Handling in Optimized Queries", () => {
+  describe("Error Handling and Edge Cases", () => {
     test("should handle non-existent account gracefully", async () => {
       await expect(caller.accountRoutes.load({ id: 99999 }))
         .rejects
