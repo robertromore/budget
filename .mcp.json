@@ -3,6 +3,13 @@
     "svelte-llm": {
       "type": "http",
       "url": "https://svelte-llm.stanislav.garden/mcp/mcp"
+    },
+    "browser-mcp": {
+      "command": "npx",
+      "args": ["-y", "@browser-mcp/mcp-server"],
+      "env": {
+        "BROWSER_MCP_PORT": "3000"
+      }
     }
   }
 }

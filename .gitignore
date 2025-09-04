@@ -11,3 +11,10 @@ vite.config.ts.timestamp-*
 
 /playwright-report
 /test-results
+
+# Performance monitoring data
+/.performance
+
+# Test coverage and results
+/coverage
+/test-results
