@@ -84,8 +84,7 @@ export const selectTransactionSchema = createSelectSchema(transactions);
 export const insertTransactionSchema = createInsertSchema(transactions);
 export const formInsertTransactionSchema = createInsertSchema(transactions, {
   amount: z.number({
-    required_error: "Amount is required",
-    invalid_type_error: "Amount must be a number"
+    message: "Amount must be a number"
   })
     .min(-999999.99, "Amount cannot be less than -$999,999.99")
     .max(999999.99, "Amount cannot exceed $999,999.99")

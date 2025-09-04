@@ -1,6 +1,6 @@
 import { initTRPC } from "@trpc/server";
 import type { Context } from "$lib/trpc/context";
-import { UnauthorizedError, ForbiddenError } from "../types/errors";
+import { UnauthorizedError, ForbiddenError } from "$lib/server/shared/types";
 import type { Permission, UserRole } from "$lib/server/config/auth";
 
 // Initialize tRPC for middleware creation

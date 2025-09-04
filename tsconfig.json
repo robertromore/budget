@@ -1,6 +1,7 @@
 {
   "extends": "./.svelte-kit/tsconfig.json",
   "compilerOptions": {
+    // Basic settings
     "allowJs": true,
     "checkJs": true,
     "esModuleInterop": true,
@@ -8,12 +9,44 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
+    "moduleResolution": "bundler",
+    
+    // Enhanced strict mode settings
     "strict": true,
-    "moduleResolution": "bundler"
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitThis": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "exactOptionalPropertyTypes": true,
+    
+    // Additional quality checks (progressive enhancement)
+    "noUnusedLocals": false, // Enable gradually
+    "noUnusedParameters": false, // Enable gradually  
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    
+    // Import/export strictness (using SvelteKit defaults)
+    // "verbatimModuleSyntax": true, // handled by SvelteKit
+    // "isolatedModules": true, // handled by SvelteKit
+    
+    // Performance and debugging
+    "incremental": true,
+    "tsBuildInfoFile": ".svelte-kit/tsconfig.tsbuildinfo"
   },
-  "types": ["bun"]
+  "types": ["bun", "@types/node"],
+  
+  // Additional paths for our new architecture
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.svelte",
+    "tests/**/*.ts",
+    "scripts/**/*.ts",
+    ".templates/**/*.ts"
+  ]
+  
   // Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
-  //
-  // If you want to overwrite includes/excludes, make sure to copy over the relevant includes/excludes
-  // from the referenced tsconfig.json - TypeScript does not merge them in
+  // Enhanced TypeScript configuration for improved type safety and developer experience
 }

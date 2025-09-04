@@ -3,7 +3,7 @@
   import type { UseBoolean } from "$lib/hooks/ui/use-boolean.svelte";
   import type { UseNumber } from "$lib/hooks/ui/use-number.svelte";
   import { managingAccountId, newAccountDialog } from "$lib/states/ui/global.svelte";
-  import ManageAccountForm from "../forms/manage-account-form.svelte";
+  import { ManageAccountForm } from "$lib/components/forms";
 
   const dialogOpen: UseBoolean = $derived(newAccountDialog);
   const accountId: UseNumber = $derived(managingAccountId);

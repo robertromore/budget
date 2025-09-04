@@ -2,7 +2,7 @@
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { buttonVariants } from "$lib/components/ui/button";
   import type { CurrentViewState } from "$lib/states/views/current-view.svelte";
-  import { currentViews } from "$lib/states/views/current-views.svelte";
+  import { currentViews } from "$lib/states/views";
   import type { TransactionsFormat } from "$lib/types";
 
   let {

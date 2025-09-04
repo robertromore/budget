@@ -11,6 +11,25 @@
   import type { Component as ComponentType } from "svelte";
   import Fuse from 'fuse.js';
 
+  interface ManagementOptions {
+    enable: boolean;
+    component: ComponentType;
+    onSave: (new_value: EditableEntityItem, is_new: boolean) => void;
+    onDelete: (id: number) => void;
+  }
+
+  interface Props {
+    entityLabel: string;
+    entities: EditableEntityItem[];
+    value?: EditableEntityItem;
+    defaultValue?: number | unknown;
+    handleSubmit?: (selected?: EditableEntityItem) => void;
+    class?: string;
+    buttonClass?: string;
+    management?: ManagementOptions;
+    icon: ComponentType;
+  }
+
   let {
     entityLabel = $bindable(),
     entities = $bindable(),
@@ -20,23 +39,8 @@
     class: className,
     buttonClass,
     management,
-    icon: Icon,
-  }: {
-    entityLabel: string;
-    entities: EditableEntityItem[];
-    value?: EditableEntityItem;
-    defaultValue?: number | unknown;
-    handleSubmit?: (selected?: EditableEntityItem) => void;
-    class?: string;
-    buttonClass?: string;
-    management?: {
-      enable: boolean;
-      component: ComponentType;
-      onSave: (new_value: EditableEntityItem, is_new: boolean) => void;
-      onDelete: (id: number) => void;
-    };
-    icon: ComponentType;
-  } = $props();
+    icon: Icon
+  }: Props = $props();
 
   const findCurrentEntity = () => entities.find((entity) => entity.id == value?.id);
   let label = $derived(value?.name);

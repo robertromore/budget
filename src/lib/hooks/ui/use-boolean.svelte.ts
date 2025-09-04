@@ -37,7 +37,7 @@ export class UseBoolean {
 
   /** Sets the current state to false */
   setFalse() {
-    this.#current = true;
+    this.#current = false;
   }
 
   get current() {

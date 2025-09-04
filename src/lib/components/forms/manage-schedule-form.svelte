@@ -1,19 +1,35 @@
 <script lang="ts">
+  // Framework imports
+  import type { Component } from "svelte";
+
+  // SvelteKit imports
   import { page } from "$app/state";
+
+  // Third-party library imports
+  import HandCoins from "@lucide/svelte/icons/hand-coins";
+  import { superForm } from "sveltekit-superforms/client";
+  import { zod4Client } from "sveltekit-superforms/adapters";
+
+  // UI component imports
   import * as Form from "$lib/components/ui/form";
   import Input from "$lib/components/ui/input/input.svelte";
+  import { EntityInput, MultiNumericInput } from "$lib/components/input";
+
+  // Model imports
+  import RepeatingDateInputModel from "$lib/models/repeating_date.svelte";
+
+  // Schema imports
   import { type Schedule } from "$lib/schema/schedules";
   import { superformInsertScheduleSchema } from "$lib/schema/superforms";
-  import { SchedulesState } from "$lib/states/entities/schedules.svelte";
+
+  // State imports
+  import { SchedulesState } from "$lib/states/entities";
+
+  // Type imports
   import type { EditableEntityItem } from "$lib/types";
-  import HandCoins from "@lucide/svelte/icons/hand-coins";
-  import type { Component } from "svelte";
-  import { zod4Client } from "sveltekit-superforms/adapters";
-  import { superForm } from "sveltekit-superforms/client";
-  import EntityInput from "../inputs/entity-input.svelte";
-  import MultiNumericInput from "../inputs/numeric/multi-numeric-input.svelte";
-  import RepeatingDateInput from "$lib/components/inputs/date/repeating-date-input.svelte";
-  import RepeatingDateInputModel from "$lib/models/repeating_date.svelte";
+
+  // Local component imports
+  import { RepeatingDateInput } from "$lib/components/input";
 
   // Props
   let {

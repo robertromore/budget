@@ -1,15 +1,15 @@
 import type { Handle, RequestEvent } from "@sveltejs/kit";
 import type {
-  AnyTRPCRouter,
-  TRPCProcedureType,
+  AnyRouter,
+  ProcedureType,
   TRPCError,
   inferRouterContext,
   inferRouterError,
 } from "@trpc/server";
-import { resolveResponse, type ResponseMeta } from "@trpc/server/http";
+import { resolveHTTPResponse, type ResponseMeta } from "@trpc/server/http";
 import type { TRPCResponse } from "@trpc/server/rpc";
 import { serialize, type CookieSerializeOptions } from "cookie";
-import type { ValidRoute } from "./ValidRoute";
+import type { ValidRoute } from "trpc-sveltekit";
 
 /**
  * Create a SvelteKit handle function for tRPC requests.
@@ -18,7 +18,7 @@ import type { ValidRoute } from "./ValidRoute";
  * consider [the sequence helper function](https://kit.svelte.dev/docs/modules#sveltejs-kit-hooks).
  * @see https://kit.svelte.dev/docs/hooks
  */
-export function createTRPCHandle<Router extends AnyTRPCRouter, URL extends string>({
+export function createTRPCHandle<Router extends AnyRouter, URL extends string>({
   router,
   url = "/trpc",
   createContext,
@@ -53,7 +53,7 @@ export function createTRPCHandle<Router extends AnyTRPCRouter, URL extends strin
     data: TRPCResponse<unknown, inferRouterError<Router>>[];
     ctx?: inferRouterContext<Router>;
     paths?: string[];
-    type: TRPCProcedureType;
+    type: ProcedureType;
     errors: TRPCError[];
   }) => ResponseMeta;
 
@@ -67,7 +67,7 @@ export function createTRPCHandle<Router extends AnyTRPCRouter, URL extends strin
     path: string;
     input: unknown;
     req: RequestInit;
-    type: TRPCProcedureType | "unknown";
+    type: ProcedureType | "unknown";
   }) => void;
 }): Handle {
   return async ({ event, resolve }) => {
@@ -115,7 +115,7 @@ export function createTRPCHandle<Router extends AnyTRPCRouter, URL extends strin
         originalDeleteCookies(name, options);
       };
 
-      const httpResponse = await resolveResponse({
+      const httpResponse = await resolveHTTPResponse({
         router,
         req,
         path: event.url.pathname.substring(url.length + 1),

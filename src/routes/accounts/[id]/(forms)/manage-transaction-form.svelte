@@ -7,22 +7,22 @@
   import type { EditableDateItem, EditableEntityItem } from "$lib/types";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
   import { zod4Client } from "sveltekit-superforms/adapters";
-  import DateInput from "$lib/components/inputs/date/date-input.svelte";
-  import EntityInput from "$lib/components/inputs/entity-input.svelte";
-  import NumericInput from "$lib/components/inputs/numeric/numeric-input.svelte";
+  import { DateInput, EntityInput, NumericInput } from "$lib/components/input";
   import { page } from "$app/state";
   import HandCoins from "@lucide/svelte/icons/hand-coins";
   import type { Component } from "svelte";
   import SquareMousePointer from "@lucide/svelte/icons/square-mouse-pointer";
 
-  let {
-    accountId,
-    onSave,
-  }: {
+  interface Props {
     accountId: number;
     onDelete?: (id: number) => void;
     onSave?: (new_entity: Transaction) => void;
-  } = $props();
+  }
+
+  let {
+    accountId,
+    onSave
+  }: Props = $props();
 
   const {
     data: { payees, categories, manageTransactionForm },

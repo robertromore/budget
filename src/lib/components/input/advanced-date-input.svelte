@@ -7,10 +7,10 @@
     today
   } from "@internationalized/date";
   import { Calendar } from "$lib/components/ui/calendar/index.js";
-  import Label from "../ui/label/label.svelte";
+  import { Label } from "$lib/components/ui/label";
   import { SvelteMap } from "svelte/reactivity";
   import type { FacetedFilterOption } from "$lib/types";
-  import { Button } from "../ui/button";
+  import { Button } from "$lib/components/ui/button";
 
 
   type Props = {
