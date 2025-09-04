@@ -68,15 +68,16 @@ else
     print_status 1 "Prettier check failed"
 fi
 
-# 4. Run tests
+# 4. Run tests with coverage
 echo ""
-echo "4️⃣ Running tests..."
-if bun run test:bun > /dev/null 2>&1; then
-    print_status 0 "Unit tests passed"
+echo "4️⃣ Running tests with coverage..."
+if bunx vitest run --coverage > /dev/null 2>&1; then
+    print_status 0 "Tests passed with coverage"
+    echo "📊 Coverage report generated in coverage/"
 else
     echo "Test failures found. Running with output:"
-    bun run test:bun
-    print_status 1 "Unit tests failed"
+    bunx vitest run --coverage
+    print_status 1 "Tests failed"
 fi
 
 # 5. Check for common issues
