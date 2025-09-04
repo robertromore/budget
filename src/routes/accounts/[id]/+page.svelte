@@ -33,6 +33,9 @@
   import TransactionSkeleton from './(components)/transaction-skeleton.svelte';
   import { columns } from './(data)/columns.svelte';
   import DeleteTransactionDialog from './(dialogs)/delete-transaction-dialog.svelte';
+  
+  // Widget system imports
+  import WidgetDashboard from '$lib/components/widgets/widget-dashboard.svelte';
 
   let { data } = $props();
 
@@ -149,6 +152,7 @@
       } as TransactionsFormat;
     });
   });
+
 
   // Simple formatted data for server-side pagination table
   const simpleFormatted = $derived(() => {
@@ -735,9 +739,12 @@
   <!-- Header -->
   <div class="flex items-center justify-between">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight">
-        {account?.name || `Account ${accountId}`}
-      </h1>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold tracking-tight">
+          {account?.name || `Account ${accountId}`}
+        </h1>
+        <div class="w-3 h-3 bg-green-500 rounded-full" title="Active account"></div>
+      </div>
       <p class="text-muted-foreground">
         {useClientSideTable
           ? 'Advanced view with client-side filtering and views'
@@ -793,39 +800,28 @@
     </div>
   {/if}
 
-  <!-- Account Summary -->
+  <!-- Widget Dashboard -->
   {#if summary && !isLoading}
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <div class="rounded-lg border p-4">
-        <div class="text-sm font-medium text-muted-foreground">Account Name</div>
-        <div class="text-2xl font-bold">{account?.name || 'Loading...'}</div>
-      </div>
-      <div class="rounded-lg border p-4">
-        <div class="text-sm font-medium text-muted-foreground">Balance</div>
-        <div class="text-2xl font-bold">${summary.balance?.toFixed(2) || '0.00'}</div>
-      </div>
-      <div class="rounded-lg border p-4">
-        <div class="text-sm font-medium text-muted-foreground">Transactions</div>
-        <div class="text-2xl font-bold">{summary.transactionCount || 0}</div>
-      </div>
-      <div class="rounded-lg border p-4">
-        <div class="text-sm font-medium text-muted-foreground">Status</div>
-        <div class="text-2xl font-bold text-green-600">Active</div>
-      </div>
-    </div>
+    <WidgetDashboard {accountId} {transactions} {summary} />
   {/if}
 
   <!-- Loading State -->
   {#if isLoading}
     <div class="space-y-6">
-      <!-- Account Summary Skeleton -->
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {#each Array(4) as _, i}
-          <div class="rounded-lg border p-4">
-            <div class="h-4 w-20 bg-muted animate-pulse rounded mb-2" style="animation-delay: {i * 100}ms"></div>
-            <div class="h-6 w-16 bg-muted animate-pulse rounded" style="animation-delay: {i * 100 + 50}ms"></div>
-          </div>
-        {/each}
+      <!-- Dashboard Skeleton -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="h-6 w-24 bg-muted animate-pulse rounded"></div>
+          <div class="h-8 w-20 bg-muted animate-pulse rounded"></div>
+        </div>
+        <div class="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+          {#each Array(5) as _, i}
+            <div class="rounded-lg border p-4">
+              <div class="h-4 w-20 bg-muted animate-pulse rounded mb-2" style="animation-delay: {i * 100}ms"></div>
+              <div class="h-6 w-16 bg-muted animate-pulse rounded" style="animation-delay: {i * 100 + 50}ms"></div>
+            </div>
+          {/each}
+        </div>
       </div>
 
       <!-- Transaction Table Skeleton -->
@@ -839,19 +835,10 @@
         <DataTable
           columns={columns(categoriesState, payeesState, updateTransactionData)}
           transactions={formattedTransactions()}
+          views={data.views}
           bind:table
         />
       {:else}
-        <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 mb-4">
-          <div class="flex items-center space-x-2 mb-2">
-            <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-            <h3 class="font-medium text-blue-800">Loading Advanced Table...</h3>
-          </div>
-          <p class="text-blue-700 text-sm">
-            Loading entity data and initializing the advanced data table with view management,
-            filtering, and editing capabilities.
-          </p>
-        </div>
 
         <!-- Simple fallback table while loading -->
       <div class="space-y-4">
@@ -1169,26 +1156,6 @@
     </Dialog.Content>
   </Dialog.Root>
 
-  <!-- Additional Info -->
-  {#if !isLoading && summary}
-    <div class="rounded-lg border p-4 {useClientSideTable ? 'bg-green-50' : 'bg-blue-50'}">
-      <div class="flex items-center space-x-2 mb-2">
-        <div class="w-3 h-3 {useClientSideTable ? 'bg-green-500' : 'bg-blue-500'} rounded-full"></div>
-        <h3 class="font-medium {useClientSideTable ? 'text-green-800' : 'text-blue-800'}">
-          {useClientSideTable ? 'Advanced Client-Side Rendering' : 'Optimized Server-Side Rendering'}
-        </h3>
-      </div>
-      <p class="{useClientSideTable ? 'text-green-700' : 'text-blue-700'} text-sm">
-        {#if useClientSideTable}
-          With {summary.transactionCount} transactions ≤ {CLIENT_SIDE_THRESHOLD}, using advanced client-side
-          table with full view management, filtering, sorting, and grouping capabilities.
-        {:else}
-          With {summary.transactionCount} transactions > {CLIENT_SIDE_THRESHOLD}, using server-side
-          pagination for better performance. Advanced features available on smaller datasets.
-        {/if}
-      </p>
-    </div>
-  {/if}
 
   <!-- Bulk Delete Dialog -->
   <DeleteTransactionDialog
