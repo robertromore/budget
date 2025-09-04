@@ -9,14 +9,19 @@
   import { cn } from "$lib/utils";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import Button, { buttonVariants } from "$lib/components/ui/button/button.svelte";
-  import { currentViews } from "$lib/states/views/current-views.svelte";
+  import { currentViews } from "$lib/states/views";
 
-  type Props = HTMLAttributes<HTMLDivElement> & {
+  interface Props extends HTMLAttributes<HTMLDivElement> {
     column: Column<TData, TValue>;
     title: string;
-  };
+  }
 
-  let { column, class: className, title, ...restProps }: WithoutChildren<Props> = $props();
+  let {
+    column,
+    class: className,
+    title,
+    ...restProps
+  }: WithoutChildren<Props> = $props();
 
   const currentView = $derived(currentViews.get().activeView);
   const sortState = $derived(

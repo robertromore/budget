@@ -1,26 +1,37 @@
 <script lang="ts">
+  // Framework imports
   import { onMount } from 'svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import * as Table from '$lib/components/ui/table';
-  import { DataTable } from './(components)';
-  import { columns } from './(data)/columns.svelte';
-  import type { TransactionsFormat } from '$lib/types';
-  import { CategoriesState } from '$lib/states/entities/categories.svelte';
-  import { PayeesState } from '$lib/states/entities/payees.svelte';
+  import { browser } from '$app/environment';
+
+  // Third-party library imports
   import { parseDate, type DateValue, today, getLocalTimeZone } from '@internationalized/date';
   import type { Table as TanStackTable } from '@tanstack/table-core';
   import ChevronLeft from '@lucide/svelte/icons/chevron-left';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import Plus from '@lucide/svelte/icons/plus';
+
+  // UI component imports
+  import { Button } from '$lib/components/ui/button';
   import * as Dialog from '$lib/components/ui/dialog';
-  import * as Select from '$lib/components/ui/select';
+  import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
+  import * as Select from '$lib/components/ui/select';
+  import * as Table from '$lib/components/ui/table';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-  import ServerDataTableToolbar from './(components)/server-data-table-toolbar.svelte';
+
+  // State imports
+  import { CategoriesState, PayeesState } from '$lib/states/entities';
+  import { ServerAccountState } from '$lib/states/views';
+
+  // Type imports
+  import type { TransactionsFormat } from '$lib/types';
+
+  // Local component imports
+  import { DataTable } from './(components)';
   import ServerDataTablePagination from './(components)/server-data-table-pagination.svelte';
-  import { ServerAccountState } from '$lib/states/views/server-account.svelte';
+  import ServerDataTableToolbar from './(components)/server-data-table-toolbar.svelte';
   import TransactionSkeleton from './(components)/transaction-skeleton.svelte';
+  import { columns } from './(data)/columns.svelte';
   import DeleteTransactionDialog from './(dialogs)/delete-transaction-dialog.svelte';
 
   let { data } = $props();
@@ -62,7 +73,7 @@
   // Local state for data loading
   let account = $state<{id: number; name: string} | undefined>();
   let transactions = $state<TransactionsFormat[]>([]);
-  let isLoading = $state(true);
+  let isLoading = $state(false);
   let error = $state<string | undefined>();
   let summary = $state<{balance: number; transactionCount: number} | undefined>();
   let useClientSideTable = $state<boolean>(true);
@@ -71,6 +82,8 @@
   // Entity states for the advanced data table (get from context)
   const categoriesState = CategoriesState.get();
   const payeesState = PayeesState.get();
+  
+  // Use browser check to prevent hydration mismatch
 
   // Entity data will be available through context
 
@@ -822,7 +835,7 @@
     <!-- Data Tables -->
     {#if useClientSideTable}
       <!-- Advanced Client-Side Data Table with View Management -->
-      {#if categoriesState && payeesState && !isLoading && transactions.length > 0}
+      {#if browser && categoriesState && payeesState && !isLoading && transactions.length > 0}
         <DataTable
           columns={columns(categoriesState, payeesState, updateTransactionData)}
           transactions={formattedTransactions()}

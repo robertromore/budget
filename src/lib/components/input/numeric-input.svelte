@@ -8,17 +8,19 @@
   import Delete from "@lucide/svelte/icons/delete";
 
   // --- Props ---
-  let {
-    value = $bindable(),
-    onSubmit,
-    open = $bindable(),
-    buttonClass,
-  }: {
+  interface Props {
     value: number;
     onSubmit?: () => void;
     open?: boolean;
     buttonClass?: string;
-  } = $props();
+  }
+
+  let {
+    value = $bindable(),
+    onSubmit,
+    open = $bindable(),
+    buttonClass
+  }: Props = $props();
 
   // --- State ---
   let dialogOpen = $state(open || false);

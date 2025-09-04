@@ -3,7 +3,7 @@
 import { relations } from "drizzle-orm";
 import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { createSelectSchema } from "drizzle-zod";
-import { categories } from "../schema/categories";
+import { categories } from "$lib/schema/categories";
 // import { z } from 'zod';
 
 export const categoryGroups = sqliteTable("category_group", {

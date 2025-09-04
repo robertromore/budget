@@ -1,8 +1,8 @@
 import { initTRPC } from "@trpc/server";
 import type { Context } from "$lib/trpc/context";
-import { errorHandler } from "../middleware/error-handling";
-import { requireAuth, requireAdmin } from "../middleware/auth";
-import { mutationRateLimit, bulkOperationRateLimit, strictRateLimit } from "../middleware";
+import { errorHandler } from "$lib/server/shared/middleware";
+import { requireAuth, requireAdmin } from "$lib/server/shared/middleware";
+import { mutationRateLimit, bulkOperationRateLimit, strictRateLimit } from "$lib/server/shared/middleware";
 
 // Initialize tRPC
 const t = initTRPC.context<Context>().create();

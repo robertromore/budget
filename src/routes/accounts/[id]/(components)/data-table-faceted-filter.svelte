@@ -9,19 +9,26 @@
   import { Badge } from "$lib/components/ui/badge";
   import X from "@lucide/svelte/icons/x";
   import type { AvailableFilters, FacetedFilterOption } from "$lib/types";
-  import { currentViews } from "$lib/states/views/current-views.svelte";
+  import { currentViews } from "$lib/states/views";
   import type { SvelteMap } from "svelte/reactivity";
 
-  type Props<TData, TValue> = {
+  interface Props<TData, TValue> {
     column: Column<TData, TValue>;
     title: string;
     options?: SvelteMap<string | number, FacetedFilterOption>;
     allOptions?: SvelteMap<string | number, FacetedFilterOption>;
     allIcon?: Component;
     customValueSnippet?: Snippet;
-  };
+  }
 
-  let { column, title, options, allOptions, allIcon, customValueSnippet }: Props<TData, TValue> = $props();
+  let {
+    column,
+    title,
+    options,
+    allOptions,
+    allIcon,
+    customValueSnippet
+  }: Props<TData, TValue> = $props();
 
   const facets = $derived(column?.getFacetedUniqueValues());
   const operators = $derived<AvailableFilters>(column?.columnDef.meta?.availableFilters || []);
