@@ -7,7 +7,7 @@
 
   // Third-party library imports
   import HandCoins from "@lucide/svelte/icons/hand-coins";
-  import { superForm } from "sveltekit-superforms/client";
+  import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
 
   // UI component imports
@@ -58,8 +58,8 @@
     validators: zod4Client(superformInsertScheduleSchema),
     onResult: async ({ result }) => {
       if (onSave && result.type === "success" && result.data) {
-        schedules.addSchedule(result.data.entity);
-        onSave(result.data.entity);
+        schedules.addSchedule(result.data['entity']);
+        onSave(result.data['entity']);
       }
     },
   });
