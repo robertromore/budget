@@ -140,7 +140,7 @@ export const serverAccountsRoutes = t.router({
       // Create cache key based on all parameters
       const cacheKey = searchQuery 
         ? cacheKeys.searchTransactions(accountId, searchQuery)
-        : cacheKeys.accountTransactions(accountId, page, pageSize);
+        : `transactions:${accountId}:${page}:${pageSize}:${sortBy}:${sortOrder}:${dateFrom || 'null'}:${dateTo || 'null'}`;
 
       // Check cache first (skip for searches to get real-time results)
       if (!searchQuery) {
@@ -202,44 +202,60 @@ export const serverAccountsRoutes = t.router({
         });
 
         // Calculate running balance for the visible transactions
-        // Note: This is approximate for paginated results
-        // For accurate running balances, we'd need to calculate from account start
-        let runningBalance = 0;
-        if (page === 0 && sortBy === "date" && sortOrder === "asc") {
-          // Only calculate running balance for first page, chronological order
-          const transactionsWithBalance = paginatedTransactions.map(transaction => {
-            runningBalance += transaction.amount;
-            return {
-              ...transaction,
-              balance: runningBalance,
-            };
-          });
-
-          return {
-            transactions: transactionsWithBalance,
-            pagination: {
-              page,
-              pageSize,
-              totalCount,
-              totalPages: Math.ceil(totalCount / pageSize),
-              hasNextPage: offset + pageSize < totalCount,
-              hasPreviousPage: page > 0,
-            },
-          };
+        let transactionsWithBalance;
+        
+        if (page === 0 && sortBy === "date") {
+          // Calculate running balance for first page with date sorting
+          if (sortOrder === "asc") {
+            // Ascending order: start from 0 and add each transaction
+            let runningBalance = 0;
+            transactionsWithBalance = paginatedTransactions.map(transaction => {
+              runningBalance += transaction.amount;
+              return {
+                ...transaction,
+                balance: runningBalance,
+              };
+            });
+          } else {
+            // Descending order: get total account balance and work backwards
+            const [totalBalanceResult] = await ctx.db
+              .select({
+                balance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
+              })
+              .from(transactions)
+              .where(
+                and(
+                  eq(transactions.accountId, accountId),
+                  isNull(transactions.deletedAt)
+                )
+              );
+            
+            let runningBalance = totalBalanceResult?.balance ?? 0;
+            transactionsWithBalance = paginatedTransactions.map(transaction => {
+              const currentBalance = runningBalance;
+              runningBalance -= transaction.amount;
+              return {
+                ...transaction,
+                balance: currentBalance,
+              };
+            });
+          }
         } else {
           // For other pages/sorting, don't calculate running balance
-          return {
-            transactions: paginatedTransactions.map(t => ({ ...t, balance: null })),
-            pagination: {
-              page,
-              pageSize,
-              totalCount,
-              totalPages: Math.ceil(totalCount / pageSize),
-              hasNextPage: offset + pageSize < totalCount,
-              hasPreviousPage: page > 0,
-            },
-          };
+          transactionsWithBalance = paginatedTransactions.map(t => ({ ...t, balance: null }));
         }
+
+        return {
+          transactions: transactionsWithBalance,
+          pagination: {
+            page,
+            pageSize,
+            totalCount,
+            totalPages: Math.ceil(totalCount / pageSize),
+            hasNextPage: offset + pageSize < totalCount,
+            hasPreviousPage: page > 0,
+          },
+        };
       });
 
       // Cache non-search results for 1 minute
