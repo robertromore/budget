@@ -34,14 +34,14 @@
     data: { manageViewForm },
   } = page;
 
-  const form = superForm(manageViewForm, {
+  const form = superForm(manageViewForm || { id: 0, name: "", description: "", filters: {}, display: {} }, {
     id: "views-form",
     dataType: "json",
     validators: zodClient(superformInsertViewSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {
-          onSave(result.data.entity);
+          onSave(result.data['entity']);
         }
       }
     },

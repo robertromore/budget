@@ -22,7 +22,7 @@
 
   let dateType = $state('day');
 
-  let value = $state<CalendarDate>();
+  let value = $state<CalendarDate>(today(getLocalTimeZone()));
 
   // Constants for better maintainability
   const MONTHS_PER_QUARTER = 3;
@@ -67,10 +67,10 @@
     value: new Date().getFullYear() - i
   }));
 
-  let selectedMonth: string | undefined = $state();
-  let selectedQuarter: string | undefined = $state();
-  let selectedHalfYear: string | undefined = $state();
-  let selectedYear: string | undefined = $state();
+  let selectedMonth: string = $state('');
+  let selectedQuarter: string = $state('');
+  let selectedHalfYear: string = $state('');
+  let selectedYear: string = $state('');
 
   let _dateCache = {
     'month': new SvelteMap<string, CalendarDate>(),
@@ -109,8 +109,6 @@
 
   // Safe formatter function that handles all date types properly
   const getFormattedValue = (): string => {
-    if (!value) return '';
-
     try {
       switch (dateType) {
         case 'month':
@@ -142,11 +140,6 @@
   // Validation and submission helper
   const validateAndSubmit = (event: Event) => {
     event.preventDefault();
-
-    if (!value) {
-      console.warn('No date selected');
-      return;
-    }
 
     try {
       const submissionValue = {
@@ -199,7 +192,7 @@
   {:else if dateType === 'month'}
     <div role="group" aria-labelledby="month-picker-label">
       <span id="month-picker-label" class="sr-only">Select month and year</span>
-      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedMonth} onValueChange={(new_value) => value = getDateCache().month.get(new_value)} class="items-start justify-start grid h-[360px] overflow-auto">
+      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedMonth} onValueChange={(new_value) => { if (new_value) { const cached = getDateCache().month.get(new_value); if (cached) { value = cached; } } else { selectedMonth = ''; } }} class="items-start justify-start grid h-[360px] overflow-auto">
     {#each yearOptions as year (year)}
       <Label class="my-2">{year.label}</Label>
       <div class="grid w-full grid-cols-4">
@@ -215,7 +208,7 @@
   {:else if dateType === 'quarter'}
     <div role="group" aria-labelledby="quarter-picker-label">
       <span id="quarter-picker-label" class="sr-only">Select quarter and year</span>
-      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedQuarter} onValueChange={(new_value) => value = getDateCache().quarter.get(new_value)} class="items-stretch justify-start grid grid-cols-2 h-[360px] overflow-auto">
+      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedQuarter} onValueChange={(new_value) => { if (new_value) { const cached = getDateCache().quarter.get(new_value); if (cached) { value = cached; } } else { selectedQuarter = ''; } }} class="items-stretch justify-start grid grid-cols-2 h-[360px] overflow-auto">
     {#each yearOptions as year (year)}
       <div>
         <Label class="my-2">{year.label}</Label>
@@ -233,7 +226,7 @@
   {:else if dateType === 'half-year'}
     <div role="group" aria-labelledby="half-year-picker-label">
       <span id="half-year-picker-label" class="sr-only">Select half year and year</span>
-      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedHalfYear} onValueChange={(new_value) => value = getDateCache().halfYear.get(new_value)} class="items-start justify-start grid grid-cols-3 gap-2 h-[360px] overflow-auto">
+      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedHalfYear} onValueChange={(new_value) => { if (new_value) { const cached = getDateCache().halfYear.get(new_value); if (cached) { value = cached; } } else { selectedHalfYear = ''; } }} class="items-start justify-start grid grid-cols-3 gap-2 h-[360px] overflow-auto">
     {#each yearOptions as year (year)}
       <div>
         <Label class="my-2 text-center block">{year.label}</Label>
@@ -251,7 +244,7 @@
   {:else if dateType === 'year'}
     <div role="group" aria-labelledby="year-picker-label">
       <span id="year-picker-label" class="sr-only">Select year</span>
-      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedYear} onValueChange={(new_value) => value = new CalendarDate(parseInt(new_value), 1, 1)} class="items-start justify-start grid grid-cols-3 h-[360px] overflow-auto">
+      <ToggleGroup.Root type="single" variant="outline" bind:value={selectedYear} onValueChange={(new_value) => { if (new_value) { value = new CalendarDate(parseInt(new_value), 1, 1); } else { selectedYear = ''; } }} class="items-start justify-start grid grid-cols-3 h-[360px] overflow-auto">
     {#each yearOptions as year (year)}
       <ToggleGroup.Item value={`${year.value}`} aria-label={year.label}>
         {year.label}

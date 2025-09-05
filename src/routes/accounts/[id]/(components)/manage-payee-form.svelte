@@ -25,13 +25,13 @@
   const {
     data: { managePayeeForm },
   } = page;
-  const form = superForm(managePayeeForm, {
+  const form = superForm(managePayeeForm || { name: "", notes: "" }, {
     id: "payee-form",
     validators: zod4Client(superformInsertPayeeSchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {
-          onSave(result.data.entity, (id ?? 0) === 0);
+          onSave(result.data['entity'], (id ?? 0) === 0);
         }
       }
     },

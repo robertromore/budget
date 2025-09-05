@@ -63,9 +63,9 @@
   const cellState = useEditableCell({
     initialValue: value,
     onSave,
-    onCancel,
-    validator,
-    formatter
+    ...(onCancel && { onCancel }),
+    ...(validator && { validator }),
+    ...(formatter && { formatter })
   });
 
   // Handle external value changes

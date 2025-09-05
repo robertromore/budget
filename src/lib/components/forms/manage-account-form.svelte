@@ -32,12 +32,12 @@
         if (result.type === "success" && result.data) {
           if (accountId && accountId > 0) {
             // For existing accounts, update the account
-            accounts.updateAccount(result.data.entity);
+            accounts.updateAccount(result.data['entity']);
           } else {
             // For new accounts, add the account
-            accounts.addAccount(result.data.entity);
+            accounts.addAccount(result.data['entity']);
           }
-          onSave(result.data.entity);
+          onSave(result.data['entity']);
         }
       }
     },
