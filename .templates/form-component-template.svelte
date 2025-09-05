@@ -70,7 +70,7 @@
     validators: zod4Client(superformEntitySchema),
     onResult: async ({ result }) => {
       if (result.type === "success" && result.data && onSave) {
-        onSave(result.data.entity);
+        onSave(result.data['entity']);
       }
     }
   });

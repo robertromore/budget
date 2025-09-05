@@ -3,15 +3,13 @@
  */
 
 import {
-  type NonEmptyString,
-  type PositiveNumber,
   type AppConfig,
   type EnvironmentVariables,
-  brand,
-  getRequiredEnvironmentVariable,
   getEnvironmentVariable,
-} from '../types/enhanced-types';
-import { TypeValidator } from '../utils/type-validation';
+  getRequiredEnvironmentVariable,
+  type PositiveNumber,
+} from "../types/enhanced-types";
+import {TypeValidator} from "../utils/type-validation";
 
 /**
  * Configuration validation and management
@@ -41,65 +39,66 @@ export class ConfigManager {
     }
 
     try {
-      const nodeEnv = getRequiredEnvironmentVariable('NODE_ENV');
-      const databaseUrl = getRequiredEnvironmentVariable('DATABASE_URL');
-      
+      const nodeEnv = getRequiredEnvironmentVariable("NODE_ENV");
+      const databaseUrl = getRequiredEnvironmentVariable("DATABASE_URL");
+
       // API configuration
-      const apiBaseUrl = getEnvironmentVariable('API_BASE_URL') || 
-        (nodeEnv === 'development' ? 'http://localhost:5173' : '');
-      
+      const apiBaseUrl =
+        getEnvironmentVariable("API_BASE_URL") ||
+        (nodeEnv === "development" ? "http://localhost:5173" : "");
+
       if (!apiBaseUrl) {
-        throw new Error('API_BASE_URL must be set for production');
+        throw new Error("API_BASE_URL must be set for production");
       }
 
       const apiTimeout = this.parsePositiveNumber(
-        process.env['API_TIMEOUT'],
+        process.env["API_TIMEOUT"],
         5000, // Default 5 seconds
-        'API_TIMEOUT'
+        "API_TIMEOUT"
       );
 
       const apiRetryAttempts = this.parsePositiveNumber(
-        process.env['API_RETRY_ATTEMPTS'],
+        process.env["API_RETRY_ATTEMPTS"],
         3, // Default 3 attempts
-        'API_RETRY_ATTEMPTS'
+        "API_RETRY_ATTEMPTS"
       );
 
       // UI configuration
       const uiPageSize = this.parsePageSize(
-        process.env['UI_PAGE_SIZE'],
+        process.env["UI_PAGE_SIZE"],
         20, // Default 20 items per page
-        'UI_PAGE_SIZE'
+        "UI_PAGE_SIZE"
       );
 
       const uiDebounceMs = this.parsePositiveNumber(
-        process.env['UI_DEBOUNCE_MS'],
+        process.env["UI_DEBOUNCE_MS"],
         300, // Default 300ms debounce
-        'UI_DEBOUNCE_MS'
+        "UI_DEBOUNCE_MS"
       );
 
       const uiAnimationDuration = this.parsePositiveNumber(
-        process.env['UI_ANIMATION_DURATION'],
+        process.env["UI_ANIMATION_DURATION"],
         200, // Default 200ms animations
-        'UI_ANIMATION_DURATION'
+        "UI_ANIMATION_DURATION"
       );
 
       // Cache configuration
       const cacheDefaultTtl = this.parsePositiveNumber(
-        process.env['CACHE_DEFAULT_TTL'],
+        process.env["CACHE_DEFAULT_TTL"],
         300000, // Default 5 minutes
-        'CACHE_DEFAULT_TTL'
+        "CACHE_DEFAULT_TTL"
       );
 
       const cacheMaxSize = this.parsePositiveNumber(
-        process.env['CACHE_MAX_SIZE'],
+        process.env["CACHE_MAX_SIZE"],
         100, // Default 100 entries
-        'CACHE_MAX_SIZE'
+        "CACHE_MAX_SIZE"
       );
 
       const cacheEnabled = this.parseBoolean(
-        process.env['CACHE_ENABLED'],
+        process.env["CACHE_ENABLED"],
         true, // Default enabled
-        'CACHE_ENABLED'
+        "CACHE_ENABLED"
       );
 
       this.config = {
@@ -162,9 +161,9 @@ export class ConfigManager {
     this.config = {
       ...this.config!,
       ...updates,
-      api: { ...this.config!.api, ...updates.api },
-      ui: { ...this.config!.ui, ...updates.ui },
-      cache: { ...this.config!.cache, ...updates.cache },
+      api: {...this.config!.api, ...updates.api},
+      ui: {...this.config!.ui, ...updates.ui},
+      cache: {...this.config!.cache, ...updates.cache},
     };
 
     this.validateConfig(this.config);
@@ -203,7 +202,7 @@ export class ConfigManager {
     value: string | undefined,
     defaultValue: number,
     name: string
-  ): PositiveNumber & { __constraint: 'max100' } {
+  ): PositiveNumber & {__constraint: "max100"} {
     if (!value) {
       const validated = TypeValidator.validatePageSize(defaultValue);
       if (!validated) {
@@ -215,25 +214,23 @@ export class ConfigManager {
     const parsed = parseInt(value, 10);
     const validated = TypeValidator.validatePageSize(parsed);
     if (!validated) {
-      throw new Error(`Environment variable ${name} must be a positive number ≤ 100, got: ${value}`);
+      throw new Error(
+        `Environment variable ${name} must be a positive number ≤ 100, got: ${value}`
+      );
     }
     return validated;
   }
 
-  private parseBoolean(
-    value: string | undefined,
-    defaultValue: boolean,
-    name: string
-  ): boolean {
+  private parseBoolean(value: string | undefined, defaultValue: boolean, name: string): boolean {
     if (!value) {
       return defaultValue;
     }
 
     const lowerValue = value.toLowerCase();
-    if (lowerValue === 'true' || lowerValue === '1' || lowerValue === 'yes') {
+    if (lowerValue === "true" || lowerValue === "1" || lowerValue === "yes") {
       return true;
     }
-    if (lowerValue === 'false' || lowerValue === '0' || lowerValue === 'no') {
+    if (lowerValue === "false" || lowerValue === "0" || lowerValue === "no") {
       return false;
     }
 
@@ -243,41 +240,41 @@ export class ConfigManager {
   private validateConfig(config: AppConfig): void {
     // Validate API configuration
     if (!TypeValidator.validateNonEmptyString(config.api.baseUrl)) {
-      throw new Error('API baseUrl must be a non-empty string');
+      throw new Error("API baseUrl must be a non-empty string");
     }
 
     if (!TypeValidator.validatePositiveNumber(config.api.timeout)) {
-      throw new Error('API timeout must be a positive number');
+      throw new Error("API timeout must be a positive number");
     }
 
     if (!TypeValidator.validatePositiveNumber(config.api.retryAttempts)) {
-      throw new Error('API retryAttempts must be a positive number');
+      throw new Error("API retryAttempts must be a positive number");
     }
 
     // Validate UI configuration
     if (!TypeValidator.validatePageSize(config.ui.pageSize)) {
-      throw new Error('UI pageSize must be a positive number ≤ 100');
+      throw new Error("UI pageSize must be a positive number ≤ 100");
     }
 
     if (!TypeValidator.validatePositiveNumber(config.ui.debounceMs)) {
-      throw new Error('UI debounceMs must be a positive number');
+      throw new Error("UI debounceMs must be a positive number");
     }
 
     if (!TypeValidator.validatePositiveNumber(config.ui.animationDuration)) {
-      throw new Error('UI animationDuration must be a positive number');
+      throw new Error("UI animationDuration must be a positive number");
     }
 
     // Validate cache configuration
     if (!TypeValidator.validatePositiveNumber(config.cache.defaultTtl)) {
-      throw new Error('Cache defaultTtl must be a positive number');
+      throw new Error("Cache defaultTtl must be a positive number");
     }
 
     if (!TypeValidator.validatePositiveNumber(config.cache.maxSize)) {
-      throw new Error('Cache maxSize must be a positive number');
+      throw new Error("Cache maxSize must be a positive number");
     }
 
-    if (typeof config.cache.enabled !== 'boolean') {
-      throw new Error('Cache enabled must be a boolean');
+    if (typeof config.cache.enabled !== "boolean") {
+      throw new Error("Cache enabled must be a boolean");
     }
   }
 }
@@ -332,14 +329,14 @@ export class EnvironmentConfig {
    * Get configuration for current environment
    */
   static getEnvironmentDefaults() {
-    const env = getRequiredEnvironmentVariable('NODE_ENV');
-    
+    const env = getRequiredEnvironmentVariable("NODE_ENV");
+
     switch (env) {
-      case 'development':
+      case "development":
         return CONFIG_CONSTANTS.DEVELOPMENT_DEFAULTS;
-      case 'production':
+      case "production":
         return CONFIG_CONSTANTS.PRODUCTION_DEFAULTS;
-      case 'test':
+      case "test":
         return CONFIG_CONSTANTS.TEST_DEFAULTS;
       default:
         return CONFIG_CONSTANTS.DEVELOPMENT_DEFAULTS;
@@ -350,44 +347,44 @@ export class EnvironmentConfig {
    * Check if running in development
    */
   static isDevelopment(): boolean {
-    return getRequiredEnvironmentVariable('NODE_ENV') === 'development';
+    return getRequiredEnvironmentVariable("NODE_ENV") === "development";
   }
 
   /**
    * Check if running in production
    */
   static isProduction(): boolean {
-    return getRequiredEnvironmentVariable('NODE_ENV') === 'production';
+    return getRequiredEnvironmentVariable("NODE_ENV") === "production";
   }
 
   /**
    * Check if running in test environment
    */
   static isTest(): boolean {
-    return getRequiredEnvironmentVariable('NODE_ENV') === 'test';
+    return getRequiredEnvironmentVariable("NODE_ENV") === "test";
   }
 
   /**
    * Get log level based on environment
    */
-  static getLogLevel(): 'debug' | 'info' | 'warn' | 'error' {
-    const envLogLevel = getEnvironmentVariable('LOG_LEVEL');
+  static getLogLevel(): "debug" | "info" | "warn" | "error" {
+    const envLogLevel = getEnvironmentVariable("LOG_LEVEL");
     if (envLogLevel) {
       return envLogLevel;
     }
 
     // Default log levels by environment
-    if (this.isDevelopment()) return 'debug';
-    if (this.isTest()) return 'warn';
-    return 'info'; // Production default
+    if (this.isDevelopment()) return "debug";
+    if (this.isTest()) return "warn";
+    return "info"; // Production default
   }
 
   /**
    * Validate environment setup
    */
   static validateEnvironment(): void {
-    const requiredVars: (keyof EnvironmentVariables)[] = ['NODE_ENV', 'DATABASE_URL'];
-    
+    const requiredVars: (keyof EnvironmentVariables)[] = ["NODE_ENV", "DATABASE_URL"];
+
     for (const varName of requiredVars) {
       try {
         getRequiredEnvironmentVariable(varName);
@@ -398,13 +395,13 @@ export class EnvironmentConfig {
 
     // Additional production-specific validations
     if (this.isProduction()) {
-      const apiBaseUrl = getEnvironmentVariable('API_BASE_URL');
+      const apiBaseUrl = getEnvironmentVariable("API_BASE_URL");
       if (!apiBaseUrl) {
-        throw new Error('API_BASE_URL is required in production');
+        throw new Error("API_BASE_URL is required in production");
       }
 
-      if (apiBaseUrl.startsWith('localhost') || apiBaseUrl.includes('127.0.0.1')) {
-        throw new Error('API_BASE_URL cannot use localhost in production');
+      if (apiBaseUrl.startsWith("localhost") || apiBaseUrl.includes("127.0.0.1")) {
+        throw new Error("API_BASE_URL cannot use localhost in production");
       }
     }
   }

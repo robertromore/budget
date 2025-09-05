@@ -26,6 +26,7 @@
   import type { View } from "$lib/schema";
   import { CurrentViewState } from "$lib/states/views";
   import { page } from "$app/state";
+  import { setContext } from "svelte";
   import { currentViews, CurrentViewsState } from "$lib/states/views";
   import { DateFiltersState } from "$lib/states/ui/date-filters.svelte";
 
@@ -136,10 +137,30 @@
 
   const viewList = $derived(views || page.data.views || []);
 
-  const _currentViewStates: CurrentViewState<TransactionsFormat>[] = viewList.map(
-    (view: View) => new CurrentViewState<TransactionsFormat>(view, table)
-  );
-  currentViews.set(new CurrentViewsState<TransactionsFormat>(_currentViewStates));
+  // Initialize current views state immediately to avoid context timing issues
+  let currentViewsStateValue = new CurrentViewsState<TransactionsFormat>(null);
+  
+  // Set the context immediately so child components can access it
+  setContext("current_views", currentViewsStateValue);
+  currentViews.set(currentViewsStateValue);
+
+  // Update current views state when viewList changes
+  $effect(() => {
+    const _currentViewStates: CurrentViewState<TransactionsFormat>[] = viewList.map(
+      (view: View) => new CurrentViewState<TransactionsFormat>(view, table)
+    );
+    
+    // Clear existing views and add new ones
+    currentViewsStateValue.viewsStates.clear();
+    _currentViewStates.forEach(viewState => {
+      currentViewsStateValue.viewsStates.set(viewState.view.id, viewState);
+    });
+    
+    // Set the active view to the first view
+    if (_currentViewStates.length > 0) {
+      currentViewsStateValue.activeViewId = _currentViewStates[0].view.id;
+    }
+  });
 </script>
 
 <div class="space-y-4">

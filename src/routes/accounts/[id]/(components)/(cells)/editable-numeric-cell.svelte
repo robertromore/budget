@@ -1,10 +1,10 @@
 <script lang="ts">
   // Component imports
   import { NumericInput } from "$lib/components/input";
-  
+
   // Hook imports
   import { useEditableCell } from "$lib/hooks/ui";
-  
+
   // Utility imports
   import { currencyFormatter } from "$lib/utils/formatters";
 
@@ -55,31 +55,8 @@
   }
 </script>
 
-{#if cellState.isEditing}
-  <NumericInput 
-    bind:value={numericValue}
-    bind:open
-    onSubmit={handleSubmit}
-  />
-{:else}
-  <!-- Display mode with currency formatting -->
-  <button 
-    type="button"
-    class="flex items-center justify-between group w-full text-left p-2 rounded hover:bg-muted transition-colors" 
-    onclick={cellState.startEdit}
-    onkeydown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        cellState.startEdit();
-      }
-    }}
-    aria-label="Edit amount: {cellState.displayValue}"
-  >
-    <span class="flex-1">
-      {cellState.displayValue}
-    </span>
-    <span class="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-      ✏️
-    </span>
-  </button>
-{/if}
+<NumericInput
+  bind:value={numericValue}
+  bind:open
+  onSubmit={handleSubmit}
+/>

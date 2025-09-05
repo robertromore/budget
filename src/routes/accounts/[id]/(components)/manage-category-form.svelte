@@ -1,16 +1,16 @@
 <script lang="ts">
-  import type { EditableEntityItem } from "$lib/types";
-  import { type Category } from "$lib/schema";
-  import { superformInsertCategorySchema } from "$lib/schema/superforms";
   import { page } from "$app/state";
-  import * as Form from "$lib/components/ui/form";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button, buttonVariants } from "$lib/components/ui/button";
+  import * as Form from "$lib/components/ui/form";
   import Input from "$lib/components/ui/input/input.svelte";
   import { Textarea } from "$lib/components/ui/textarea";
+  import { type Category } from "$lib/schema";
+  import { superformInsertCategorySchema } from "$lib/schema/superforms";
+  import { CategoriesState } from "$lib/states/entities/categories.svelte";
+  import type { EditableEntityItem } from "$lib/types";
   import { superForm } from "sveltekit-superforms";
   import { zod4Client } from "sveltekit-superforms/adapters";
-  import { CategoriesState } from "$lib/states/entities/categories.svelte";
 
   let {
     id,
@@ -22,16 +22,16 @@
     onSave?: (new_category: EditableEntityItem, is_new: boolean) => void;
   } = $props();
 
-  const {
-    data: { manageCategoryForm },
-  } = page;
-  const form = superForm(manageCategoryForm, {
+  // Get form data from page if available, otherwise use defaults
+  const pageData = page.data['manageCategoryForm'];
+
+  const form = superForm(pageData || { name: "", notes: "" }, {
     id: "category-form",
     validators: zod4Client(superformInsertCategorySchema),
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {
-          onSave(result.data.entity, (id ?? 0) === 0);
+          onSave(result.data['entity'], (id ?? 0) === 0);
         }
       }
     },

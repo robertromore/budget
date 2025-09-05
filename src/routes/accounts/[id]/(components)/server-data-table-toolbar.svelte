@@ -1,31 +1,31 @@
 <!--
   @fileoverview Server-side data table toolbar with search, filtering, and sorting controls
-  
+
   This component provides comprehensive filtering capabilities for server-side data tables,
   including debounced search, date range filtering, sort controls, and filter management.
   All filter operations are delegated to the ServerAccountState for consistent state management.
-  
+
   @component ServerDataTableToolbar
   @example
   ```svelte
-  <ServerDataTableToolbar 
-    accountState={serverAccountState} 
-    {accountId} 
+  <ServerDataTableToolbar
+    accountState={serverAccountState}
+    {accountId}
   />
   ```
 -->
 <script lang="ts">
-  import Search from "@lucide/svelte/icons/search";
-  import X from "@lucide/svelte/icons/x";
-  import Calendar from "@lucide/svelte/icons/calendar";
-  import SlidersHorizontal from "@lucide/svelte/icons/sliders-horizontal";
-  import RotateCcw from "@lucide/svelte/icons/rotate-ccw";
+  import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import * as Popover from "$lib/components/ui/popover";
   import * as Select from "$lib/components/ui/select";
   import type { ServerAccountState } from "$lib/states/views/server-account.svelte";
-  import { Badge } from "$lib/components/ui/badge";
+  import Calendar from "@lucide/svelte/icons/calendar";
+  import RotateCcw from "@lucide/svelte/icons/rotate-ccw";
+  import Search from "@lucide/svelte/icons/search";
+  import SlidersHorizontal from "@lucide/svelte/icons/sliders-horizontal";
+  import X from "@lucide/svelte/icons/x";
 
   /**
    * Component props interface
@@ -57,7 +57,7 @@
       if (searchTimeout) {
         clearTimeout(searchTimeout);
       }
-      
+
       // Set new timeout for debounced search operation
       searchTimeout = setTimeout(() => {
         accountState.searchTransactions(accountId, searchValue);
@@ -77,9 +77,9 @@
    */
   function clearAllFilters() {
     searchValue = "";
-    accountState.filters.searchQuery = undefined;
-    accountState.filters.dateFrom = undefined;
-    accountState.filters.dateTo = undefined;
+    accountState.filters.searchQuery = '';
+    accountState.filters.dateFrom = '';
+    accountState.filters.dateTo = '';
     accountState.loadTransactions(accountId, true);
   }
 
@@ -111,7 +111,7 @@
     { value: "notes-asc", label: "Description (A-Z)", sortBy: "notes" as const, sortOrder: "asc" as const },
     { value: "notes-desc", label: "Description (Z-A)", sortBy: "notes" as const, sortOrder: "desc" as const },
   ];
-  
+
 
   const selectedSort = $derived(() => {
     const sortValue = `${accountState.filters.sortBy}-${accountState.filters.sortOrder}`;
@@ -217,9 +217,9 @@
     </Popover.Root>
 
     <!-- Sort options -->
-    <Select.Root 
+    <Select.Root
       type="single"
-      value={selectedSort()} 
+      value={selectedSort()}
       onValueChange={setSorting}
     >
       <Select.Trigger class="h-8 w-[200px]">
@@ -280,13 +280,13 @@
     {#if accountState.isLoadingTransactions}
       Loading transactions...
     {:else if accountState.filters.searchQuery}
-      Found {accountState.pagination.totalCount} transaction{accountState.pagination.totalCount === 1 ? '' : 's'} 
+      Found {accountState.pagination.totalCount} transaction{accountState.pagination.totalCount === 1 ? '' : 's'}
       matching "{accountState.filters.searchQuery}"
     {:else}
       Showing {accountState.currentTransactions.length} of {accountState.pagination.totalCount} transactions
     {/if}
   </div>
-  
+
   <div>
     Page {accountState.pagination.page + 1} of {accountState.pagination.totalPages || 1}
   </div>

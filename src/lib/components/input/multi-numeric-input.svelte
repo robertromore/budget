@@ -2,9 +2,9 @@
   // --- Imports ---
   import { Button } from "$lib/components/ui/button";
   import * as Command from "$lib/components/ui/command";
-  import NumericInput from "./numeric-input.svelte";
   import * as Popover from "$lib/components/ui/popover";
   import { tick } from "svelte";
+  import NumericInput from "./numeric-input.svelte";
 
   // --- Props ---
   let {
@@ -12,7 +12,7 @@
     open = $bindable(),
     type = $bindable("exact"),
   }: {
-    value: number[];
+    value: [number, number];
     onSubmit?: () => void;
     open?: boolean;
     type?: "exact" | "approximate" | "range";
@@ -38,8 +38,8 @@
   function handleTypeChange(newType: "exact" | "approximate" | "range") {
     if (newType === "range" && type !== "range") {
       // When switching to range, set max to min + 0.01 if max is not already set
-      if (value[1] === 0 || value[1] <= value[0]) {
-        value[1] = value[0] + 0.01;
+      if ((value[1] ?? 0) === 0 || (value[1] ?? 0) <= (value[0] ?? 0)) {
+        value[1] = (value[0] ?? 0) + 0.01;
       }
     }
     type = newType;
@@ -48,12 +48,10 @@
   // --- Reactive Effects ---
   $effect(() => {
     // Ensure max is always at least min + 0.01 in range mode
-    if (type === "range" && value[1] <= value[0]) {
-      value[1] = value[0] + 0.01;
+    if (type === "range" && (value[1] ?? 0) <= (value[0] ?? 0)) {
+      value[1] = (value[0] ?? 0) + 0.01;
     }
   });
-
-  $inspect(value);
 </script>
 
 <div class="flex items-center space-x-1">
@@ -68,7 +66,7 @@
           role="combobox"
           aria-expanded={open}
         >
-          {types.find((t) => t.value === type)?.label || "Select Type"}
+          {types.find((t) => t.value === type)?.label ?? "Select Type"}
         </Button>
       {/snippet}
     </Popover.Trigger>

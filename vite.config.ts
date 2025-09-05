@@ -1,6 +1,6 @@
 import { sveltekit } from "@sveltejs/kit/vite";
-import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
@@ -25,17 +25,17 @@ export default defineConfig({
             }
             return 'vendor-misc';
           }
-          
+
           // Application code splitting
-          if (id.includes('/routes/accounts/[id]/') && 
+          if (id.includes('/routes/accounts/[id]/') &&
               (id.includes('data-table') || id.includes('columns'))) {
             return 'data-table';
           }
-          
+
           if (id.includes('/states/') || id.includes('/models/')) {
             return 'app-state';
           }
-          
+
           if (id.includes('/components/ui/')) {
             return 'ui-components';
           }
@@ -48,7 +48,6 @@ export default defineConfig({
     include: [
       '@tanstack/table-core',
       '@tanstack/svelte-table',
-      '@tanstack/svelte-query',
       '@trpc/client',
       'zod',
       '@lucide/svelte'
