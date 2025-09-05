@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { Button, buttonVariants } from "$lib/components/ui/button";
-  import * as Card from "$lib/components/ui/card";
-  import { currencyFormatter } from "$lib/utils/formatters";
-  import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
   import AddAccountDialog from "$lib/components/dialogs/add-account-dialog.svelte";
+  import DeleteAccountDialog from "$lib/components/dialogs/delete-account-dialog.svelte";
+  import { Button } from "$lib/components/ui/button";
+  import * as Card from "$lib/components/ui/card";
+  import { AccountsState } from "$lib/states/entities/accounts.svelte";
   import {
     deleteAccountDialog,
     deleteAccountId,
     managingAccountId,
     newAccountDialog,
   } from "$lib/states/ui/global.svelte";
-  import { AccountsState } from "$lib/states/entities/accounts.svelte";
+  import { currencyFormatter } from "$lib/utils/formatters";
 
   const accountsState = $derived(AccountsState.get());
   const accounts = $derived(accountsState.accounts.values());
@@ -44,8 +44,8 @@
     <Card.Root>
       <Card.Header>
         <Card.Title>
-          <a 
-            href="/accounts/{id}" 
+          <a
+            href="/accounts/{id}"
             class="text-foreground hover:text-primary focus:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
           >
             {name}
@@ -60,16 +60,16 @@
         {currencyFormatter.format(balance ?? 0)}
       </Card.Content>
       <Card.Footer class="flex gap-2">
-        <Button 
-          onclick={() => editAccount(id)} 
+        <Button
+          onclick={() => editAccount(id)}
           variant="outline"
           size="sm"
           aria-label="Edit account {name}"
         >
           Edit
         </Button>
-        <Button 
-          onclick={() => deleteAccount(id)} 
+        <Button
+          onclick={() => deleteAccount(id)}
           variant="secondary"
           size="sm"
           aria-label="Delete account {name}"
