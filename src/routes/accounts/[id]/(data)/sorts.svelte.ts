@@ -2,7 +2,7 @@ import type { SortingState, Updater } from "@tanstack/table-core";
 
 let _sorting = $state<SortingState>([
   {
-    id: "id",
+    id: "date",
     desc: true,
   },
 ]);

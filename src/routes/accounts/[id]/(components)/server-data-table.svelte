@@ -1,10 +1,10 @@
 <!--
   @fileoverview Server-side data table component optimized for large transaction datasets
-  
+
   This component provides server-side pagination, sorting, and filtering for transaction data.
   It integrates with ServerAccountState for consistent state management and supports both
   loading states and error handling.
-  
+
   @component ServerDataTable
   @example
   ```svelte
@@ -17,20 +17,20 @@
   ```
 -->
 <script lang="ts" generics="TValue">
+  import * as Alert from "$lib/components/ui/alert";
+  import { createSvelteTable, FlexRender } from "$lib/components/ui/data-table";
+  import * as Table from "$lib/components/ui/table";
+  import type { ServerAccountState } from "$lib/states/views/server-account.svelte";
+  import type { TransactionsFormat } from "$lib/types";
+  import AlertCircle from "@lucide/svelte/icons/alert-circle";
   import {
     type ColumnDef,
     getCoreRowModel,
     getSortedRowModel,
-    type Table as TTable,
     type SortingState,
+    type Table as TTable,
   } from "@tanstack/table-core";
-  import { createSvelteTable, FlexRender } from "$lib/components/ui/data-table";
-  import * as Table from "$lib/components/ui/table";
-  import type { TransactionsFormat } from "$lib/types";
-  import { ServerDataTableToolbar, ServerDataTablePagination } from ".";
-  import type { ServerAccountState } from "$lib/states/views/server-account.svelte";
-  import AlertCircle from "@lucide/svelte/icons/alert-circle";
-  import * as Alert from "$lib/components/ui/alert";
+  import { ServerDataTablePagination, ServerDataTableToolbar } from ".";
 
   /**
    * Component props interface
@@ -94,39 +94,39 @@
     /**
      * Handles sorting changes from the table UI and delegates to server-side state.
      * Maps frontend column IDs to backend field names before applying sort.
-     * 
+     *
      * @param sortingUpdater - TanStack table sorting updater function or state
      */
     onSortingChange: (sortingUpdater) => {
       try {
-        const newSorting = typeof sortingUpdater === 'function' 
+        const newSorting = typeof sortingUpdater === 'function'
           ? sortingUpdater([{
               id: accountState.filters.sortBy,
               desc: accountState.filters.sortOrder === "desc"
             }])
           : sortingUpdater;
-        
+
         if (newSorting.length > 0) {
           const sort = newSorting[0];
-          
+
           /** Map frontend column IDs to backend-expected field names */
           const columnIdMap: Record<string, "date" | "amount" | "notes"> = {
             'date': 'date',
-            'amount': 'amount', 
+            'amount': 'amount',
             'notes': 'notes',
             // Common column ID variations
             'transaction-date': 'date',
             'transaction-amount': 'amount',
             'transaction-notes': 'notes'
           };
-          
-          const mappedSortBy = columnIdMap[sort.id] || 'date';
-          
+
+          const mappedSortBy = columnIdMap[sort?.id || 'date'] || 'date';
+
           // Update server-side sorting state
           accountState.setSorting(
-            accountId, 
+            accountId,
             mappedSortBy,
-            sort.desc ? "desc" : "asc"
+            sort?.desc ? "desc" : "asc"
           );
         }
       } catch (error) {
@@ -136,7 +136,7 @@
     /**
      * Handles pagination changes from the table UI and delegates to server-side state.
      * Distinguishes between page size changes and page navigation to trigger appropriate actions.
-     * 
+     *
      * @param paginationUpdater - TanStack table pagination updater function or state
      */
     onPaginationChange: (paginationUpdater) => {
@@ -146,11 +146,11 @@
             pageSize: accountState.pagination.pageSize,
           })
         : paginationUpdater;
-      
+
       // Handle page size changes first (triggers data reload)
       if (newPagination.pageSize !== accountState.pagination.pageSize) {
         accountState.setPageSize(accountId, newPagination.pageSize);
-      } 
+      }
       // Then handle page navigation
       else if (newPagination.pageIndex !== accountState.pagination.page) {
         accountState.goToPage(accountId, newPagination.pageIndex);
@@ -165,7 +165,7 @@
 <div class="space-y-4">
   <!-- Toolbar with search and filters -->
   <ServerDataTableToolbar {accountState} {accountId} />
-  
+
   <!-- Error display -->
   {#if accountState.transactionsError}
     <Alert.Root variant="destructive">
