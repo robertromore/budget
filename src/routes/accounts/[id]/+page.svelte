@@ -5,6 +5,7 @@
 
   // Third-party library imports
   import { parseDate, type DateValue, today, getLocalTimeZone } from '@internationalized/date';
+  import { currentDate } from '$lib/utils/dates';
   import type { Table as TanStackTable } from '@tanstack/table-core';
   import ChevronLeft from '@lucide/svelte/icons/chevron-left';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
@@ -132,10 +133,49 @@
   // Transform server data to TanStack Table format for client-side rendering
   const formattedTransactions = $derived(() => {
     if (!transactions?.length) return [];
-    return transactions.map(t => {
+    const formatted = transactions.map(t => {
+      // Handle null/undefined dates
+      if (!t.date) {
+        console.warn('Transaction with null/undefined date found:', t);
+        return {
+          id: t.id,
+          date: currentDate,
+          amount: t.amount,
+          notes: t.notes,
+          status: t.status as "cleared" | "pending" | "scheduled" | null,
+          accountId: accountId,
+          payeeId: t.payee?.id || null,
+          payee: t.payee || null,
+          categoryId: t.category?.id || null,
+          category: t.category || null,
+          parentId: null,
+          balance: (t as any).balance || null
+        } as TransactionsFormat;
+      }
+
+      // Normal date parsing
       const dateStr = typeof t.date === 'string' ? t.date : t.date.toString();
       const datePart = dateStr.split('T')[0];
-
+      
+      // Validate datePart before parsing
+      if (!datePart || datePart.length === 0) {
+        console.warn('Invalid date part found in transaction:', t);
+        return {
+          id: t.id,
+          date: currentDate,
+          amount: t.amount,
+          notes: t.notes,
+          status: t.status as "cleared" | "pending" | "scheduled" | null,
+          accountId: accountId,
+          payeeId: t.payee?.id || null,
+          payee: t.payee || null,
+          categoryId: t.category?.id || null,
+          category: t.category || null,
+          parentId: null,
+          balance: (t as any).balance || null
+        } as TransactionsFormat;
+      }
+      
       return {
         id: t.id,
         date: parseDate(datePart) as DateValue,
@@ -151,6 +191,8 @@
         balance: (t as any).balance || null
       } as TransactionsFormat;
     });
+    
+    return formatted;
   });
 
 
@@ -323,6 +365,19 @@
         updateData[actualField] = newValue ? Number(newValue) : null;
       } else if (actualField === 'amount') {
         updateData[actualField] = Number(newValue);
+      } else if (actualField === 'date') {
+        // Convert DateValue to ISO string for database
+        if (newValue && typeof newValue === 'object' && 'toString' in newValue) {
+          // DateValue.toString() gives YYYY-MM-DD format, which is what we want
+          const dateStr = (newValue as DateValue).toString();
+          updateData[actualField] = dateStr;
+          console.log('Converting DateValue to string:', dateStr);
+        } else if (typeof newValue === 'string') {
+          updateData[actualField] = newValue;
+        } else {
+          console.error('Invalid date value for update:', newValue);
+          return; // Don't proceed with invalid date
+        }
       } else {
         updateData[actualField] = newValue;
       }
@@ -345,7 +400,6 @@
       if (!updateResult.success) {
         throw new Error(updateResult.error || 'Failed to update transaction');
       }
-
       // Clear cached data and refresh to show updated transaction
       responseCache.clear();
 
@@ -411,6 +465,9 @@
 
     try {
       isLoading = true;
+
+      // Clear cache to ensure fresh data
+      responseCache.clear();
 
       // Ensure accountId is a number
       const numericAccountId = Number(accountId);
@@ -801,7 +858,7 @@
   {/if}
 
   <!-- Widget Dashboard -->
-  {#if summary && !isLoading}
+  {#if browser && summary && !isLoading}
     <WidgetDashboard {accountId} {transactions} {summary} />
   {/if}
 

@@ -23,9 +23,9 @@
     ...restProps
   }: WithoutChildren<Props> = $props();
 
-  const currentView = $derived(currentViews.get().activeView);
+  const currentView = $derived(currentViews.get()?.activeView);
   const sortState = $derived(
-    currentView.view.getSorting().find((sorter) => sorter.id === column.id)
+    currentView?.view?.getSorting()?.find((sorter) => sorter.id === column.id)
   );
 </script>
 
