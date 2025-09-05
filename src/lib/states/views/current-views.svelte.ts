@@ -23,7 +23,7 @@ export class CurrentViewsState<T> {
       .toArray()
   );
   nonEditableViews = $derived(
-    this.viewsStates.values().filter((viewState) => viewState.view.id < 0)
+    this.viewsStates.values().filter((viewState) => viewState.view.id < 0).toArray()
   );
 
   constructor(viewsStates: CurrentViewState<T>[] | null) {

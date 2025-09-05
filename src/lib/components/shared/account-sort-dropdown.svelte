@@ -1,12 +1,11 @@
 <script lang="ts">
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { buttonVariants } from "$lib/components/ui/button/index.js";
-  import ArrowUpDown from "@lucide/svelte/icons/arrow-up-down";
-  import ArrowUp from "@lucide/svelte/icons/arrow-up";
-  import ArrowDown from "@lucide/svelte/icons/arrow-down";
-  import Check from "@lucide/svelte/icons/check";
-  import { cn } from "$lib/utils";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { AccountsState, type AccountSortField, type SortDirection } from "$lib/states/entities/accounts.svelte";
+  import { cn } from "$lib/utils";
+  import ArrowDown from "@lucide/svelte/icons/arrow-down";
+  import ArrowUp from "@lucide/svelte/icons/arrow-up";
+  import Check from "@lucide/svelte/icons/check";
 
   let {
     size = "default",
@@ -43,9 +42,9 @@
 </script>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger 
+  <DropdownMenu.Trigger
     class={cn(
-      buttonVariants({ variant, size }), 
+      buttonVariants({ variant, size }),
       "gap-1 data-[state=open]:bg-accent w-auto",
       size === "icon" ? "w-8 h-8" : "px-2"
     )}
@@ -59,11 +58,11 @@
       </span>
     {/if}
   </DropdownMenu.Trigger>
-  
+
   <DropdownMenu.Content align="end" class="w-52">
     <DropdownMenu.Label>Sort accounts by</DropdownMenu.Label>
     <DropdownMenu.Separator />
-    
+
     {#each sortOptions as option}
       <DropdownMenu.Sub>
         <DropdownMenu.SubTrigger class="gap-2">
@@ -77,9 +76,9 @@
             <span class="text-xs text-muted-foreground">{option.description}</span>
           </div>
         </DropdownMenu.SubTrigger>
-        
+
         <DropdownMenu.SubContent>
-          <DropdownMenu.Item 
+          <DropdownMenu.Item
             class="gap-2"
             onclick={() => handleSort(option.field, "asc")}
           >
@@ -89,8 +88,8 @@
               <Check class="h-4 w-4 ml-auto text-primary" />
             {/if}
           </DropdownMenu.Item>
-          
-          <DropdownMenu.Item 
+
+          <DropdownMenu.Item
             class="gap-2"
             onclick={() => handleSort(option.field, "desc")}
           >
