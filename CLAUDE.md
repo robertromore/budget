@@ -512,6 +512,271 @@ Before marking any task as complete:
 - Config: Centralized configuration in `server/config/`
 - Security: Multi-layer validation and error handling
 
+## CSS and Styling Standards
+
+**ALWAYS use predefined CSS variables from the theme instead of hardcoded colors.**
+
+### Color Usage Guidelines
+
+- **✅ Use theme variables**: `hsl(var(--primary))`, `hsl(var(--accent) / 0.15)`
+- **❌ Avoid hardcoded colors**: `rgba(99, 102, 241, 0.9)`, `#3b82f6`
+- **✅ Support dark mode**: Theme variables automatically adapt
+- **✅ Maintain consistency**: Colors match the design system
+
+### Theme Variable Examples
+
+```css
+/* Background colors */
+background: hsl(var(--accent) / 0.15);
+color: hsl(var(--primary-foreground));
+
+/* Borders and shadows */
+border: 2px solid hsl(var(--primary) / 0.3);
+box-shadow: 0 4px 12px hsl(var(--foreground) / 0.1);
+```
+
+### Styling Benefits
+
+- **Automatic theme support**: Works in both light and dark modes
+- **Design system consistency**: Maintains brand coherence
+- **Maintainable code**: Easy to update colors centrally
+- **Accessible contrast**: Theme colors designed for proper accessibility
+
+## Drag-and-Drop Implementation Patterns
+
+**ALWAYS implement drag-and-drop with proper event handling and state management to prevent conflicts.**
+
+### Key Anti-Patterns to Avoid
+
+- **❌ Competing event handlers**: Multiple dragover handlers updating the same state
+- **❌ Rapid state toggling**: Frequent updates causing visual flickering
+- **❌ Missing event propagation control**: Events bubbling uncontrolled
+- **❌ Hardcoded positioning logic**: Complex conditionals for insertion points
+
+### Best Practices for Drag-and-Drop
+
+#### Event Handler Management
+
+```typescript
+// Prevent competing handlers
+function handleDragOver(widget: WidgetConfig, e: DragEvent) {
+  e.preventDefault();
+  // Only handle if not over an overlay
+  if (draggedWidget && dragOverDropZone === -1) {
+    // Update state
+  }
+}
+
+// Stop propagation for overlays
+function handleOverlayDragOver(index: number, e: DragEvent) {
+  e.preventDefault();
+  e.stopPropagation(); // Prevent bubbling to parent
+  // Update overlay state
+}
+```
+
+#### State Management
+
+```typescript
+// Prevent redundant updates
+if (draggedWidget && dragOverDropZone !== index) {
+  dragOverDropZone = index;
+  dragInsertIndex = index;
+}
+```
+
+#### CSS Grid Integration
+
+```css
+/* Maintain widget sizes during drag */
+.widget-grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* Avoid grid-column: 1 / -1 which breaks sizing */
+.drop-zone {
+  /* Don't span full width */
+}
+```
+
+### Visual Feedback Standards
+
+- **Overlay drop zones**: Position absolutely over existing elements
+- **Theme-consistent colors**: Use CSS variables for consistency  
+- **Subtle effects**: Minimal blur (1px) and appropriate opacity (0.7+)
+- **Clear messaging**: "Drop here" vs "Add widget here" for different actions
+- **Smooth animations**: CSS transitions with cubic-bezier easing
+
+### Drag-and-Drop Debugging
+
+When experiencing rapid movement or conflicts:
+
+1. **Check event propagation**: Ensure `stopPropagation()` on overlay events
+2. **Verify state conditions**: Add guards to prevent redundant updates
+3. **Test both directions**: Ensure left-to-right and right-to-left movement work
+4. **Monitor competing handlers**: Only one handler should update state at a time
+
+### Implementation Benefits
+
+- **Smooth user experience**: No rapid movement or visual glitches
+- **Bidirectional support**: Works for all movement directions
+- **Professional appearance**: Uses design system colors and effects
+- **Maintainable code**: Clear separation of concerns between handlers
+
+## Widget System Architecture
+
+**ALWAYS follow the established widget patterns for dashboard functionality and data visualization.**
+
+### Widget System Components
+
+The widget system provides a configurable dashboard with comprehensive financial data visualization:
+
+#### Core Architecture
+
+- **Widget Store** (`src/lib/stores/widgets.svelte.ts`): Svelte 5 reactive store managing widget configuration and data calculation
+- **Widget Registry** (`src/lib/components/widgets/widget-registry.ts`): Dynamic component loading system
+- **Widget Types** (`src/lib/types/widgets.ts`): TypeScript definitions and widget catalog
+- **Individual Widgets**: Specialized components for different data visualizations
+
+#### Widget Implementation Pattern
+
+```typescript
+// Widget component structure
+export interface WidgetProps {
+  config: WidgetConfig;
+  data: WidgetData;
+  onUpdate?: (config: Partial<WidgetConfig>) => void;
+  onRemove?: () => void;
+  editMode?: boolean;
+}
+```
+
+#### Data Flow Architecture
+
+```text
+Database → Widget Store → calculateWidgetData() → Individual Widgets → UI
+```
+
+### Chart Widget Standards
+
+**ALWAYS use shadcn ChartContainer and layerchart for data visualization.**
+
+#### Chart Implementation Pattern
+
+```svelte
+<ChartContainer config={chartConfig} class="h-full w-full">
+  <Chart data={chartData} x="x" y="value" yNice>
+    <Svg>
+      <!-- Chart components: Area, Spline, Bars, Arc -->
+    </Svg>
+  </Chart>
+</ChartContainer>
+```
+
+#### Supported Chart Types
+
+- **Line/Spline Charts**: Balance trends, spending over time
+- **Area Charts**: Spending patterns with filled regions  
+- **Bar Charts**: Income vs expenses, monthly comparisons
+- **Pie Charts**: Category breakdowns with legends
+
+### Widget Data Calculation
+
+**ALWAYS implement comprehensive data transformation in the widget store's `calculateWidgetData()` method.**
+
+#### Required Data Structures
+
+```typescript
+// Widget store must provide:
+{
+  // Basic metrics
+  balance: number;
+  transactionCount: number;
+  monthlyCashFlow: number;
+  pendingBalance: number;
+  recentActivity: number;
+
+  // Chart data
+  spendingTrend: Array<{label: string, amount: number}>;
+  incomeExpenses: Array<{period: string, income: number, expenses: number}>;
+  categoryBreakdown: Array<{name: string, amount: number, color: string}>;
+  balanceHistory: Array<{date: string, balance: number}>;
+  
+  // Advanced metrics
+  accountHealth: {score: number, factors: Array<{type: string, description: string}>};
+  quickStats: {avgTransaction: number, totalIncome: number, totalExpenses: number};
+  monthlyComparison: Array<{name: string, spending: number}>;
+}
+```
+
+### Widget Configuration Standards
+
+#### Widget Definitions
+
+- **Default widgets**: Balance, transaction count, monthly cash flow, recent activity, pending balance
+- **Chart widgets**: Spending trend, income/expenses, category pie chart, balance trend
+- **Advanced widgets**: Account health, quick stats, monthly comparison
+- **Size options**: Small, medium, large with responsive content
+- **Settings**: Configurable periods, limits, and display options
+
+#### Storage and Persistence
+
+- **LocalStorage**: Widget configurations persisted with `account-dashboard-widgets` key
+- **Default merging**: New widgets added when definitions expand
+- **Graceful degradation**: Fallbacks for missing or invalid configurations
+
+### Test Data Management
+
+**ALWAYS create comprehensive test data for meaningful widget demonstrations.**
+
+#### Test Data Categories
+
+- **Financial Categories**: Groceries, Transportation, Dining Out, Utilities, Entertainment, Shopping, Healthcare, Salary, Freelance, Investment
+- **Transaction Variety**: Multiple months, mixed statuses, diverse amounts
+- **Realistic Patterns**: Monthly salary, recurring expenses, variable spending
+
+#### Test Data Structure
+
+```sql
+-- Example realistic transaction data
+INSERT INTO "transaction" (account_id, amount, category_id, status, date, notes) VALUES 
+  (1, 4500.00, 8, 'cleared', '2025-01-01', 'January salary'),
+  (1, -89.45, 1, 'cleared', '2025-01-02', 'Weekly grocery shopping'),
+  -- Additional varied transactions across time periods
+```
+
+### Widget Development Guidelines
+
+#### Creating New Widgets
+
+1. **Add widget type** to `WidgetType` union in `src/lib/types/widgets.ts`
+2. **Define widget definition** in `WIDGET_DEFINITIONS` with proper metadata
+3. **Create widget component** following `WidgetProps` interface
+4. **Register component** in `src/lib/components/widgets/widget-registry.ts`
+5. **Update data calculation** in widget store's `calculateWidgetData()` method
+
+#### Widget Responsiveness
+
+- **Small widgets**: Single metric with minimal chrome
+- **Medium widgets**: Multiple metrics with moderate detail
+- **Large widgets**: Full data display with charts and comprehensive information
+- **Responsive grids**: CSS Grid with `minmax(300px, 1fr)` for optimal layouts
+
+#### Chart Configuration
+
+- **Theme integration**: Use `hsl(var(--primary))` color variables
+- **Data preparation**: Transform database results into chart-ready formats
+- **Error handling**: Show "No data available" states gracefully
+- **Performance**: Limit data points for smooth rendering
+
+### Widget System Benefits
+
+- **Modular architecture**: Easy to add new widget types
+- **User customization**: Drag-and-drop reordering and show/hide controls
+- **Rich visualizations**: Professional charts with theme support
+- **Responsive design**: Works across device sizes
+- **Data-driven**: Comprehensive financial metrics and trends
+
 ---
 
 *This configuration ensures consistent tooling across all Claude Code sessions.*
