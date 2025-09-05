@@ -204,12 +204,22 @@ export class AccountRepository extends BaseRepository<
             .orderBy(desc(transactions.date), desc(transactions.id));
 
           // Calculate running balances
-          let runningBalance = 0;
+          // Since transactions are ordered DESC (newest first), we start with total balance
+          // and show that as the balance AFTER the first (newest) transaction
+          const totalBalance = accountTransactions.reduce((sum: number, t: any) => {
+            const amount = Number(t.amount) || 0;
+            return sum + amount;
+          }, 0);
+          
+          
+          let runningBalance = totalBalance;
           const transactionsWithBalance = accountTransactions.map((transaction: any) => {
-            runningBalance += transaction.amount;
+            const balanceAfterTransaction = runningBalance;
+            // For next transaction, subtract this transaction's amount
+            runningBalance -= Number(transaction.amount) || 0;
             return {
               ...transaction,
-              balance: runningBalance,
+              balance: balanceAfterTransaction,
             };
           });
 
