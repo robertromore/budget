@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { WidgetProps } from '$lib/types/widgets';
+  import { WIDGET_DEFINITIONS } from '$lib/types/widgets';
   import { Button } from '$lib/components/ui/button';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import { cn } from '$lib/utils';
@@ -17,17 +18,20 @@
   }: WidgetProps & { children: any } = $props();
 
   const sizeClasses = {
-    small: 'col-span-1',
-    medium: 'col-span-2', 
-    large: 'col-span-3'
+    small: 'widget-size-small',
+    medium: 'widget-size-medium', 
+    large: 'widget-size-large'
   };
+
+  // Get available sizes for this widget type
+  const availableSizes = WIDGET_DEFINITIONS[config.type]?.availableSizes ?? ['small', 'medium', 'large'];
 </script>
 
 <div 
   class={cn(
-    "rounded-lg border p-4 relative transition-all duration-200",
+    "rounded-lg border p-4 relative transition-all duration-200 overflow-hidden flex flex-col",
     sizeClasses[config.size],
-    editMode && "border-dashed border-2 border-blue-300 bg-blue-50/50"
+    editMode && "border-dashed border-2 border-primary/30 bg-card"
   )}
   data-widget-id={config.id}
 >
@@ -37,19 +41,18 @@
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
           <Button variant="ghost" size="sm" class="h-6 w-6 p-0">
-            <MoreVertical class="size-3" />
+            <Settings class="size-3" />
           </Button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content>
-          <DropdownMenu.Item onclick={() => onUpdate?.({ size: 'small' })}>
-            Small
-          </DropdownMenu.Item>
-          <DropdownMenu.Item onclick={() => onUpdate?.({ size: 'medium' })}>
-            Medium  
-          </DropdownMenu.Item>
-          <DropdownMenu.Item onclick={() => onUpdate?.({ size: 'large' })}>
-            Large
-          </DropdownMenu.Item>
+          {#each availableSizes as size}
+            <DropdownMenu.Item 
+              onclick={() => onUpdate?.({ size })}
+              class={config.size === size ? 'bg-accent' : ''}
+            >
+              {size.charAt(0).toUpperCase() + size.slice(1)}
+            </DropdownMenu.Item>
+          {/each}
           <DropdownMenu.Separator />
           <DropdownMenu.Item onclick={() => onRemove?.()} class="text-red-600">
             Remove Widget
@@ -60,7 +63,7 @@
   {/if}
 
   <!-- Widget content -->
-  <div class={editMode ? 'pr-16' : ''}>
+  <div class={cn("flex-1 overflow-hidden", editMode ? 'pr-16' : '')}>
     {@render children()}
   </div>
 </div>

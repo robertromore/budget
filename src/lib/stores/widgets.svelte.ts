@@ -11,9 +11,9 @@ class WidgetStore {
   private editMode = $state(false);
 
   constructor() {
-    // Load saved widgets from localStorage on browser
+    // Defer localStorage loading to avoid hydration mismatch
     if (browser) {
-      this.loadFromStorage();
+      setTimeout(() => this.loadFromStorage(), 0);
     }
   }
 
@@ -184,7 +184,7 @@ class WidgetStore {
       // Recent activity (configurable days)
       const daysAgo = (now.getTime() - transactionDate.getTime()) / (1000 * 60 * 60 * 24);
       if (daysAgo <= 30) {
-        recentActivity++;
+        recentActivity += Math.abs(amount);
       }
 
       // Category sums
@@ -197,23 +197,192 @@ class WidgetStore {
       monthlyTrends[monthKey] = (monthlyTrends[monthKey] || 0) + amount;
     });
 
-    // Top categories
+    // Top categories with colors
+    const colors = [
+      'hsl(220, 91%, 60%)', // Blue
+      'hsl(142, 71%, 45%)', // Green  
+      'hsl(350, 89%, 60%)', // Red
+      'hsl(262, 83%, 58%)', // Purple
+      'hsl(25, 95%, 53%)',  // Orange
+      'hsl(175, 85%, 45%)', // Teal
+      'hsl(48, 94%, 68%)',  // Yellow
+      'hsl(343, 75%, 68%)'  // Pink
+    ];
+    
     const topCategories = Object.entries(categorySums)
       .sort(([,a], [,b]) => b - a)
-      .slice(0, 5)
-      .map(([name, amount]) => ({ name, amount }));
+      .slice(0, 8)
+      .map(([name, amount], index) => ({ 
+        name, 
+        amount,
+        color: colors[index % colors.length]
+      }));
+
+    // Spending trend data (last 6 months)
+    const spendingTrend = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentYear, currentMonth - i, 1);
+      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+      const amount = Math.abs(monthlyTrends[monthKey] || 0);
+      spendingTrend.push({
+        label: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+        amount: amount
+      });
+    }
+
+    // Income vs Expenses data (last 3 months)
+    const incomeExpenses = [];
+    for (let i = 2; i >= 0; i--) {
+      const date = new Date(currentYear, currentMonth - i, 1);
+      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+      
+      // Calculate income (positive amounts) and expenses (negative amounts) for this month
+      let income = 0;
+      let expenses = 0;
+      
+      transactions.forEach(transaction => {
+        const transactionDate = new Date(typeof transaction.date === 'string' ? transaction.date : transaction.date.toString());
+        if (transactionDate.getMonth() === date.getMonth() && transactionDate.getFullYear() === date.getFullYear()) {
+          const amount = transaction.amount || 0;
+          if (amount > 0) {
+            income += amount;
+          } else {
+            expenses += Math.abs(amount);
+          }
+        }
+      });
+
+      incomeExpenses.push({
+        period: date.toLocaleDateString('en-US', { month: 'short' }),
+        income: income,
+        expenses: expenses
+      });
+    }
+
+    // Balance history (last 30 days)
+    const balanceHistory = [];
+    const currentBalance = summary?.balance ?? 0;
+    
+    // Sort transactions by date to calculate running balance chronologically
+    const sortedTransactions = [...transactions].sort((a, b) => {
+      const dateA = new Date(typeof a.date === 'string' ? a.date : a.date.toString());
+      const dateB = new Date(typeof b.date === 'string' ? b.date : b.date.toString());
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    // Calculate starting balance 30 days ago by subtracting all transactions from current balance
+    let startingBalance = currentBalance;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    // Subtract transactions that occurred in the last 30 days to get starting balance
+    sortedTransactions.forEach(transaction => {
+      const transactionDate = new Date(typeof transaction.date === 'string' ? transaction.date : transaction.date.toString());
+      if (transactionDate >= thirtyDaysAgo) {
+        startingBalance -= (transaction.amount || 0);
+      }
+    });
+    
+    // Build balance history going forward from starting balance
+    let runningBalance = startingBalance;
+    
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      
+      // Find transactions for this day
+      const dayTransactions = sortedTransactions.filter(t => {
+        const transactionDate = new Date(typeof t.date === 'string' ? t.date : t.date.toString());
+        return transactionDate.toDateString() === date.toDateString();
+      });
+      
+      // Add daily transactions to running balance
+      const dailyAmount = dayTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+      runningBalance += dailyAmount;
+      
+      balanceHistory.push({
+        date: date.toISOString(),
+        balance: runningBalance
+      });
+    }
+
+    // Recent transactions for detailed widgets
+    const recentTransactions = transactions
+      .slice(0, 10)
+      .map(transaction => ({
+        ...transaction,
+        date: typeof transaction.date === 'string' ? transaction.date : transaction.date.toString(),
+        amount: transaction.amount || 0,
+        description: transaction.description || transaction.account?.name || 'Transaction'
+      }));
+
+    // Account health calculation
+    const accountHealth = {
+      score: Math.min(100, Math.max(0, 
+        70 + // Base score
+        (monthlyCashFlow > 0 ? 20 : -20) + // Positive cash flow bonus
+        (pendingBalance === 0 ? 10 : -10) + // No pending transactions bonus  
+        (transactions.length > 0 ? 0 : -30) // Activity penalty
+      )),
+      factors: [
+        monthlyCashFlow > 0 
+          ? { type: 'positive', description: 'Positive monthly cash flow' }
+          : { type: 'negative', description: 'Negative monthly cash flow' },
+        pendingBalance === 0
+          ? { type: 'positive', description: 'No pending transactions' }
+          : { type: 'warning', description: `$${Math.abs(pendingBalance).toFixed(2)} in pending transactions` },
+        recentActivity > 0
+          ? { type: 'positive', description: 'Active account usage' }
+          : { type: 'warning', description: 'Low account activity' }
+      ]
+    };
+
+    // Quick stats
+    const quickStats = {
+      avgTransaction: transactions.length > 0 ? (monthlyCashFlow / transactions.length) : 0,
+      avgTransactionTrend: 0, // Could calculate vs previous month
+      highestExpense: Math.max(...transactions.map(t => Math.abs(t.amount || 0)), 0),
+      totalIncome: transactions.filter(t => (t.amount || 0) > 0).reduce((sum, t) => sum + t.amount, 0),
+      incomeTrend: 0, // Could calculate vs previous month
+      totalExpenses: Math.abs(transactions.filter(t => (t.amount || 0) < 0).reduce((sum, t) => sum + t.amount, 0)),
+      expensesTrend: 0, // Could calculate vs previous month
+      lastActivity: transactions.length > 0 ? new Date(transactions[0]?.date).toLocaleDateString() : 'No activity'
+    };
+
+    // Monthly comparison data
+    const monthlyComparison = [];
+    for (let i = 2; i >= 0; i--) {
+      const date = new Date(currentYear, currentMonth - i, 1);
+      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+      const spending = Math.abs(monthlyTrends[monthKey] || 0);
+      
+      monthlyComparison.push({
+        name: date.toLocaleDateString('en-US', { month: 'long' }),
+        spending: spending
+      });
+    }
 
     return {
+      // Original widget data
       balance: summary?.balance ?? 0,
-      transactionCount: summary?.transactionCount ?? 0,
+      previousBalance: (summary?.balance ?? 0) - monthlyCashFlow, // Estimate previous balance
+      accounts: { 'Main Account': summary?.balance ?? 0 }, // Mock account breakdown
+      transactionCount: transactions.length,
       monthlyCashFlow,
       pendingBalance,
       recentActivity,
+      recentTransactions,
       topCategories,
       monthlyTrends,
-      avgTransaction: transactions.length > 0 ? (monthlyCashFlow / transactions.length) : 0,
-      highestExpense: Math.max(...transactions.map(t => Math.abs(t.amount || 0)), 0),
-      lastActivity: transactions.length > 0 ? transactions[0]?.date : null
+      
+      // Chart widget data
+      spendingTrend,
+      incomeExpenses,
+      categoryBreakdown: topCategories,
+      balanceHistory,
+      accountHealth,
+      quickStats,
+      monthlyComparison
     };
   }
 }
