@@ -37,12 +37,19 @@
   });
 
   const _currentViews = $derived(currentViews.get());
-  const firstViewId = $derived(_currentViews.viewsStates.values().next().value?.view.id!);
-  let currentViewValue = $state((() => firstViewId)().toString());
+  const firstViewId = $derived(_currentViews?.viewsStates.values().next().value?.view.id);
+  let currentViewValue = $state("");
+  
+  // Initialize currentViewValue when firstViewId changes
+  $effect(() => {
+    if (firstViewId && !currentViewValue) {
+      currentViewValue = firstViewId.toString();
+    }
+  });
 
-  const editableViews = $derived(_currentViews.editableViews);
+  const editableViews = $derived(_currentViews?.editableViews ?? []);
   const editableViewsSize = $derived(editableViews.length);
-  const nonEditableViews = $derived(_currentViews.nonEditableViews);
+  const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
 </script>
 
 <div class="flex text-sm">
@@ -172,12 +179,12 @@
     availableFilters={filterComponents}
     onCancel={() => {
       manageViewForm = false;
-      _currentViews.activeView.resetToInitialState();
+      _currentViews?.activeView?.resetToInitialState();
     }}
     onDelete={() => {
       manageViewForm = false;
       _currentViews.remove(editViewId);
-      currentViewValue = _currentViews.activeView.view.id.toString();
+      currentViewValue = _currentViews?.activeView?.view.id?.toString() ?? "";
     }}
     onSave={(new_entity) => {
       manageViewForm = false;
@@ -194,16 +201,16 @@
 
     <div class="flex gap-1">
       <DisplayInput />
-      {#if _currentViews.activeView.view.dirty}
+      {#if _currentViews?.activeView?.view?.dirty}
         <Button
           variant="outline"
           size="sm"
           onclick={() => {
-            _currentViews.activeView.resetToInitialState();
+            _currentViews?.activeView?.resetToInitialState();
           }}>Reset</Button
         >
         {#if parseInt(currentViewValue) >= 0}
-          <Button size="sm" onclick={() => _currentViews.activeView.view.saveView()}>Save</Button>
+          <Button size="sm" onclick={() => _currentViews?.activeView?.view?.saveView()}>Save</Button>
         {/if}
       {/if}
     </div>
