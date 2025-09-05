@@ -87,7 +87,6 @@
     "@tanstack/match-sorter-utils": "^8.19.4",
     "@tanstack/svelte-table": "^8.21.3",
     "@tanstack/table-core": "^8.21.3",
-    "@thisux/sveltednd": "^0.0.20",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "bits-ui": "^2.9.4",
