@@ -126,9 +126,13 @@ export const columns = (
         renderComponent(EditableDateCell, {
           value: info.getValue() as DateValue,
           onUpdateValue: (new_value: unknown) =>
-            updateHandler(info, "date", new_value, (new_value) =>
-              (new_value as DateValue)?.toDate(getLocalTimeZone()).toString()
-            ),
+            updateHandler(info, "date", new_value, (new_value) => {
+              // Convert DateValue to ISO string format for database
+              if (new_value && typeof new_value === 'object' && 'toString' in new_value) {
+                return (new_value as DateValue).toString(); // Returns YYYY-MM-DD
+              }
+              return new_value;
+            }),
         }),
       aggregatedCell: () => {},
       header: ({ column }) =>
@@ -136,7 +140,12 @@ export const columns = (
           title: "Date",
           column,
         }),
-      sortingFn: "datetime",
+      sortingFn: (rowA, rowB) => {
+        const dateA = rowA.getValue("date") as DateValue;
+        const dateB = rowB.getValue("date") as DateValue;
+        if (!dateA || !dateB) return 0;
+        return dateA.compare(dateB);
+      },
       filterFn: "dateAfter" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Date",

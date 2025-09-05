@@ -25,7 +25,7 @@
   // --- State ---
   let dialogOpen = $state(open || false);
   let new_amount = $state((value || 0).toFixed(2));
-  let input: HTMLInputElement | undefined | null = $state(null);
+  let input: HTMLInputElement | null = $state(null);
 
   // --- Functions: Numeric Input Logic ---
   const select = (num: string) => () => {

@@ -14,13 +14,13 @@
     availableFilters: FilterInputOption<TransactionsFormat>[];
   } = $props();
 
-  const currentView = $derived(currentViews.get().activeView);
+  const currentView = $derived(currentViews.get()?.activeView);
   const _selectedFilters = $derived(
-    currentView.view
-      .getAllFilteredColumns()
-      .map((selectedFilter) =>
+    currentView?.view
+      ?.getAllFilteredColumns()
+      ?.map((selectedFilter) =>
         availableFilters.find((availableFilter) => availableFilter.column.id === selectedFilter)
-      )
+      ) ?? []
   );
 
   let selectableFilters = $derived(

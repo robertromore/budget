@@ -38,6 +38,6 @@
     {/snippet}
   </Popover.Trigger>
   <Popover.Content class="w-auto p-0" align="start">
-    <Calendar type="single" bind:value initialFocus onValueChange={handleSubmit} />
+    <Calendar type="single" value={value ?? today(getLocalTimeZone())} onValueChange={(newValue) => { value = newValue; if (handleSubmit) handleSubmit(newValue); }} initialFocus />
   </Popover.Content>
 </Popover.Root>

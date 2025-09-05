@@ -254,13 +254,15 @@ export function useDataTable<TData>(
   // Call onStateChange when state changes
   $effect(() => {
     if (onStateChange) {
-      onStateChange(state);
+      // Access the current state value reactively
+      const currentState = state;
+      onStateChange(currentState);
     }
   });
 
   return {
     table,
-    state,
+    get state() { return state; },
     actions: {
       resetAllState,
       resetFilters,

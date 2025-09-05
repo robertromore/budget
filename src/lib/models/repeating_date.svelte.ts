@@ -26,7 +26,7 @@ interface DateGenerationConfig {
  */
 const DEFAULT_STATE: RepeatingDate = {
   start: currentDate,
-  end: undefined,
+  end: currentDate.add({ months: 1 }),
   end_type: null,
   frequency: "daily",
   interval: 1,
@@ -646,10 +646,10 @@ export default class RepeatingDateInput {
 
   /* -----------  Getters (just expose the underlying property)  ----------- */
   get start() {
-    return this.value.start;
+    return this.value.start ?? currentDate;
   }
-  get end(): DateValue | undefined {
-    return this.value.end ?? undefined;
+  get end(): DateValue {
+    return this.value.end ?? currentDate.add({ months: 1 });
   }
   get end_type() {
     return this.value.end_type;

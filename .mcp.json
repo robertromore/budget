@@ -5,11 +5,17 @@
       "url": "https://svelte-llm.stanislav.garden/mcp/mcp"
     },
     "browser-mcp": {
+      "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@browser-mcp/mcp-server"],
-      "env": {
-        "BROWSER_MCP_PORT": "3000"
-      }
+      "args": ["@browser-mcp/mcp-server"]
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ],
+      "env": {}
     }
   }
 }
