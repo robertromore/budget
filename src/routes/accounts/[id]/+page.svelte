@@ -858,7 +858,11 @@
   {/if}
 
   <!-- Widget Dashboard -->
+<<<<<<< HEAD
+  {#if summary && !isLoading}
+=======
   {#if browser && summary && !isLoading}
+>>>>>>> origin/main
     <WidgetDashboard {accountId} {transactions} {summary} />
   {/if}
 
