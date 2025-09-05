@@ -11,12 +11,12 @@ const envSchema = z.object({
 
 function getEnv() {
   const env = {
-    NODE_ENV: process.env.NODE_ENV,
-    DATABASE_URL: process.env.DATABASE_URL,
-    DATABASE_TYPE: process.env.DATABASE_TYPE,
-    DATABASE_LOG_QUERIES: process.env.DATABASE_LOG_QUERIES === "true",
-    APP_PORT: process.env.PORT || process.env.APP_PORT,
-    APP_HOST: process.env.HOST || process.env.APP_HOST,
+    NODE_ENV: process.env['NODE_ENV'],
+    DATABASE_URL: process.env['DATABASE_URL'],
+    DATABASE_TYPE: process.env['DATABASE_TYPE'],
+    DATABASE_LOG_QUERIES: process.env['DATABASE_LOG_QUERIES'] === "true",
+    APP_PORT: process.env['PORT'] || process.env['APP_PORT'],
+    APP_HOST: process.env['HOST'] || process.env['APP_HOST'],
   };
 
   const parsed = envSchema.safeParse(env);
