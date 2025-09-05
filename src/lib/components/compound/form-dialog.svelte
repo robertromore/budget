@@ -1,14 +1,15 @@
 <script lang="ts">
   // Framework imports
-  import type { Snippet, Component } from "svelte";
+  import type { Component, Snippet } from "svelte";
+  import { browser } from "$app/environment";
   
   // UI component imports
-  import * as Dialog from "$lib/components/ui/dialog";
   import { Button } from "$lib/components/ui/button";
+  import * as Dialog from "$lib/components/ui/dialog";
   
   // Hook imports
   import { useDialog } from "$lib/hooks/ui";
-  
+
   // Type imports
   import type { HTMLAttributes } from "svelte/elements";
 
@@ -17,30 +18,30 @@
     title: string;
     description?: string;
     icon?: Component;
-    
+
     // State management
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
-    
+
     // Form handling
     onSave?: () => Promise<void> | void;
     onCancel?: () => void;
     onDelete?: () => Promise<void> | void;
-    
+
     // Button configuration
     saveLabel?: string;
     cancelLabel?: string;
     deleteLabel?: string;
-    
+
     // Form state
     isDirty?: boolean;
     isValid?: boolean;
     isLoading?: boolean;
-    
+
     // Snippets
     content: Snippet;
-    actions?: Snippet<[{ save: () => void; cancel: () => void; delete?: () => void }]>;
-    
+    actions?: Snippet<[{ save: () => Promise<void>; cancel: () => void; delete?: () => Promise<void> }]>;
+
     // Styling
     maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
   }
@@ -55,7 +56,7 @@
     onCancel,
     onDelete,
     saveLabel = "Save",
-    cancelLabel = "Cancel", 
+    cancelLabel = "Cancel",
     deleteLabel = "Delete",
     isDirty = false,
     isValid = true,
@@ -64,47 +65,45 @@
     actions,
     maxWidth = "md",
     class: className,
-    ...restProps
+    id,
+    style,
   }: Props = $props();
 
-  // Use dialog hook for state management
-  const dialog = useDialog({
-    initialOpen: open,
-    onOpen: () => {
-      if (onOpenChange) onOpenChange(true);
-    },
-    onClose: () => {
-      if (onOpenChange) onOpenChange(false);
-    },
-    onCancel,
-    preventCloseWhenDirty: true
-  });
+  // Simplified dialog state - no hook needed
+  let dialogOpen = $state(false);
+  let dialogDirty = $state(false);
 
-  // Sync external open state with dialog hook
-  $effect(() => {
-    if (open !== dialog.isOpen) {
-      if (open) {
-        dialog.open();
-      } else {
-        dialog.close();
-      }
+  // Simple open/close handlers
+  function handleOpen() {
+    dialogOpen = true;
+    if (onOpenChange) onOpenChange(true);
+  }
+
+  function handleClose() {
+    if (isDirty && !confirm('You have unsaved changes. Are you sure you want to close?')) {
+      return;
     }
-  });
+    dialogOpen = false;
+    if (onOpenChange) onOpenChange(false);
+  }
 
+  // Sync with external open prop
   $effect(() => {
-    open = dialog.isOpen;
-    dialog.setDirty(isDirty);
+    if (browser) {
+      dialogOpen = open;
+      dialogDirty = isDirty;
+    }
   });
 
   // Action handlers
   async function handleSave() {
     if (!isValid || isLoading) return;
-    
+
     try {
       if (onSave) {
         await onSave();
       }
-      dialog.close();
+      handleClose();
     } catch (error) {
       console.error("Save failed:", error);
       // Keep dialog open on error
@@ -112,22 +111,20 @@
   }
 
   function handleCancel() {
-    if (isDirty) {
-      // Could show confirmation dialog here
-      dialog.cancel();
-    } else {
-      dialog.cancel();
+    handleClose();
+    if (onCancel) {
+      onCancel();
     }
   }
 
   async function handleDelete() {
     if (isLoading) return;
-    
+
     try {
       if (onDelete) {
         await onDelete();
       }
-      dialog.close();
+      handleClose();
     } catch (error) {
       console.error("Delete failed:", error);
       // Keep dialog open on error
@@ -137,15 +134,19 @@
   // Dialog size classes
   const sizeClasses = {
     sm: "max-w-sm",
-    md: "max-w-md", 
+    md: "max-w-md",
     lg: "max-w-lg",
     xl: "max-w-xl",
     "2xl": "max-w-2xl"
   };
 </script>
 
-<Dialog.Root bind:open={dialog.isOpen}>
-  <Dialog.Content class="sm:{sizeClasses[maxWidth]} {className || ''}" {...restProps}>
+<Dialog.Root bind:open={dialogOpen}>
+  <Dialog.Content
+    class="sm:{sizeClasses[maxWidth]} {className || ''}"
+    id={id || undefined}
+    style={style || undefined}
+  >
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">
         {#if Icon}
@@ -168,18 +169,18 @@
     <!-- Dialog actions -->
     <Dialog.Footer>
       {#if actions}
-        {@render actions({ 
-          save: handleSave, 
-          cancel: handleCancel, 
-          delete: onDelete ? handleDelete : undefined 
+        {@render actions({
+          save: handleSave,
+          cancel: handleCancel,
+          ...(onDelete && { delete: handleDelete })
         })}
       {:else}
         <div class="flex justify-between w-full">
           <!-- Delete button (left side) -->
           {#if onDelete}
-            <Button 
-              type="button" 
-              variant="destructive" 
+            <Button
+              type="button"
+              variant="destructive"
               onclick={handleDelete}
               disabled={isLoading}
             >
@@ -191,16 +192,16 @@
 
           <!-- Save/Cancel buttons (right side) -->
           <div class="flex gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onclick={handleCancel}
               disabled={isLoading}
             >
               {cancelLabel}
             </Button>
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               onclick={handleSave}
               disabled={!isValid || isLoading}
               class={isLoading ? "opacity-50" : ""}

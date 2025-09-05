@@ -34,7 +34,7 @@
     onResult: async ({ result }) => {
       if (onSave) {
         if (result.type === "success" && result.data) {
-          onSave(result.data.entity);
+          onSave(result.data['entity']);
         }
       }
     },

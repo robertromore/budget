@@ -65,8 +65,8 @@
           <Select.Content>
             <Select.Group>
               {#each groupableColumns as column}
-                <Select.Item value={column.id} label={column.columnDef.meta?.label}>
-                  {column.columnDef.meta?.label}
+                <Select.Item value={column.id} label={column.columnDef.meta?.label ?? column.id}>
+                  {column.columnDef.meta?.label ?? column.id}
                 </Select.Item>
               {/each}
             </Select.Group>
@@ -196,8 +196,8 @@
           <Select.Content>
             <Select.Group>
               {#each visiableColumns as column}
-                <Select.Item value={column.id} label={column.columnDef.meta?.label}>
-                  {column.columnDef.meta?.label}
+                <Select.Item value={column.id} label={column.columnDef.meta?.label ?? column.id}>
+                  {column.columnDef.meta?.label ?? column.id}
                 </Select.Item>
               {/each}
             </Select.Group>
