@@ -8,6 +8,8 @@ export const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
+export const numberFormatter = new Intl.NumberFormat("en-US");
+
 export const transactionFormatter = {
   format: (transactions?: Transaction[]) => {
     return transactions?.map((transaction: Transaction): TransactionsFormat => {

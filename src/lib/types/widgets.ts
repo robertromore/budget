@@ -10,6 +10,7 @@ import TrendingDown from '@lucide/svelte/icons/trending-down';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Heart from '@lucide/svelte/icons/heart';
 import Zap from '@lucide/svelte/icons/zap';
+import PieChart from '@lucide/svelte/icons/pie-chart';
 
 export interface WidgetConfig {
   id: string;
@@ -31,7 +32,10 @@ export type WidgetType =
   | 'spending-trend'
   | 'monthly-comparison'
   | 'account-health'
-  | 'quick-stats';
+  | 'quick-stats'
+  | 'income-expenses-chart'
+  | 'category-pie-chart'
+  | 'balance-trend-chart';
 
 export type WidgetSize = 'small' | 'medium' | 'large';
 
@@ -145,7 +149,7 @@ export const WIDGET_DEFINITIONS: Record<WidgetType, WidgetDefinition> = {
     description: 'Transaction activity in recent period',
     icon: Zap,
     defaultSize: 'small',
-    availableSizes: ['small', 'medium'],
+    availableSizes: ['small', 'medium', 'large'],
     defaultSettings: { days: 30 },
     configurable: true
   },
@@ -207,6 +211,36 @@ export const WIDGET_DEFINITIONS: Record<WidgetType, WidgetDefinition> = {
     defaultSize: 'large',
     availableSizes: ['medium', 'large'],
     defaultSettings: { metrics: ['avgTransaction', 'highestExpense', 'lastActivity'] },
+    configurable: true
+  },
+  'income-expenses-chart': {
+    type: 'income-expenses-chart',
+    name: 'Income vs Expenses Chart',
+    description: 'Bar chart comparing income and expenses over time',
+    icon: BarChart3,
+    defaultSize: 'large',
+    availableSizes: ['medium', 'large'],
+    defaultSettings: { period: 'month' },
+    configurable: true
+  },
+  'category-pie-chart': {
+    type: 'category-pie-chart',
+    name: 'Category Breakdown Chart',
+    description: 'Pie chart showing spending by category',
+    icon: PieChart,
+    defaultSize: 'medium',
+    availableSizes: ['medium', 'large'],
+    defaultSettings: { period: 'month' },
+    configurable: true
+  },
+  'balance-trend-chart': {
+    type: 'balance-trend-chart',
+    name: 'Balance Trend Chart',
+    description: 'Line chart showing balance changes over time',
+    icon: TrendingUp,
+    defaultSize: 'medium',
+    availableSizes: ['medium', 'large'],
+    defaultSettings: { period: 'day' },
     configurable: true
   }
 };
