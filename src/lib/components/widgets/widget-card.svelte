@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { Settings } from '$lib/components/icons';
   import { Button } from '$lib/components/ui/button';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import type { WidgetProps } from '$lib/types/widgets';
-  import { WIDGET_DEFINITIONS, WIDGET_CHART_TYPES } from '$lib/types/widgets';
+  import { WIDGET_CHART_TYPES, WIDGET_DEFINITIONS } from '$lib/types/widgets';
   import { cn } from '$lib/utils';
-  import { Settings } from '$lib/components/icons';
 
   let {
     config,
@@ -23,10 +23,10 @@
 
   // Get available sizes for this widget type
   const availableSizes = WIDGET_DEFINITIONS[config.type]?.availableSizes ?? ['small', 'medium', 'large'];
-  
+
   // Get available chart types for this widget type
   const availableChartTypes = WIDGET_CHART_TYPES[config.type] ?? [];
-  const currentChartType = $derived(config.settings?.chartType);
+  const currentChartType = $derived(config.settings?.['chartType']);
 </script>
 
 <div
@@ -59,7 +59,7 @@
             {/each}
             <DropdownMenu.Separator />
           {/if}
-          
+
           {#if availableChartTypes.length > 1}
             <DropdownMenu.Label>Chart Type</DropdownMenu.Label>
             {#each availableChartTypes as chartType}
@@ -75,7 +75,7 @@
             {/each}
             <DropdownMenu.Separator />
           {/if}
-          
+
           <DropdownMenu.Item onclick={() => onRemove?.()} class="text-red-600">
             Remove Widget
           </DropdownMenu.Item>
