@@ -84,10 +84,15 @@ test.describe("Individual Account Views and Displays", () => {
       
       // Should find a properly formatted currency amount
       expect(balanceMatch).not.toBeNull();
-      expect(balanceMatch![1]).toBeTruthy();
+      
+      if (!balanceMatch) {
+        throw new Error("Balance match not found");
+      }
+      
+      expect(balanceMatch[1]).toBeTruthy();
       
       // Parse the amount to ensure it's a valid number
-      const amountString = balanceMatch![1].replace(/,/g, ''); // Remove commas
+      const amountString = balanceMatch[1].replace(/,/g, ''); // Remove commas
       const amount = parseFloat(amountString);
       
       // Should be a valid finite number

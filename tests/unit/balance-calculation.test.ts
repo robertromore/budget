@@ -4,13 +4,15 @@ import { currencyFormatter } from "$lib/utils/formatters";
 describe("Balance Calculation Safety", () => {
   describe("Currency Formatter Edge Cases", () => {
     it("should handle null values without producing NaN", () => {
-      const result = currencyFormatter.format(null as any ?? 0);
+      const value: number | null = null;
+      const result = currencyFormatter.format(value ?? 0);
       expect(result).toBe("$0.00");
       expect(result).not.toContain("NaN");
     });
 
     it("should handle undefined values without producing NaN", () => {
-      const result = currencyFormatter.format(undefined as any ?? 0);
+      const value: number | undefined = undefined;
+      const result = currencyFormatter.format(value ?? 0);
       expect(result).toBe("$0.00");
       expect(result).not.toContain("NaN");
     });
@@ -72,9 +74,9 @@ describe("Balance Calculation Safety", () => {
         return { ...transaction, balance: runningBalance };
       });
 
-      expect(results[0].balance).toBe(100.00);
-      expect(results[1].balance).toBe(150.00);
-      expect(results[2].balance).toBe(175.50);
+      expect(results[0]?.balance).toBe(100.00);
+      expect(results[1]?.balance).toBe(150.00);
+      expect(results[2]?.balance).toBe(175.50);
 
       // Ensure no NaN values
       results.forEach(result => {
@@ -96,9 +98,9 @@ describe("Balance Calculation Safety", () => {
         return { ...transaction, balance: runningBalance };
       });
 
-      expect(results[0].balance).toBe(100.00);
-      expect(results[1].balance).toBe(74.50);
-      expect(results[2].balance).toBe(64.50);
+      expect(results[0]?.balance).toBe(100.00);
+      expect(results[1]?.balance).toBe(74.50);
+      expect(results[2]?.balance).toBe(64.50);
 
       // Ensure no NaN values
       results.forEach(result => {

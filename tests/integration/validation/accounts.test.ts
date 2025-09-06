@@ -304,6 +304,10 @@ Final line`;
         const { accounts } = await seedTestData(db);
         const originalAccount = accounts[0];
         
+        if (!originalAccount) {
+          throw new Error("No test account found");
+        }
+        
         const updated = await caller.accountRoutes.save({
           id: originalAccount.id,
           notes: "Updated notes only",
@@ -319,6 +323,10 @@ Final line`;
       it("should update timestamp when account is modified", async () => {
         const { accounts } = await seedTestData(db);
         const originalAccount = accounts[0];
+        
+        if (!originalAccount) {
+          throw new Error("No test account found");
+        }
         
         // Small delay to ensure timestamp difference
         await new Promise(resolve => setTimeout(resolve, 1));
@@ -347,6 +355,10 @@ Final line`;
         const { accounts } = await seedTestData(db);
         const accountToDelete = accounts[0];
         
+        if (!accountToDelete) {
+          throw new Error("No test account found");
+        }
+        
         const deleted = await caller.accountRoutes.remove({
           id: accountToDelete.id,
         });
@@ -358,6 +370,10 @@ Final line`;
 
       it("should not affect other accounts when deleting", async () => {
         const { accounts } = await seedTestData(db);
+        
+        if (!accounts[0] || !accounts[1]) {
+          throw new Error("Insufficient test accounts found");
+        }
         
         await caller.accountRoutes.remove({ id: accounts[0].id });
         
@@ -377,6 +393,10 @@ Final line`;
       it("should prevent access to deleted accounts", async () => {
         const { accounts } = await seedTestData(db);
         const accountToDelete = accounts[0];
+        
+        if (!accountToDelete) {
+          throw new Error("No test account found");
+        }
         
         await caller.accountRoutes.remove({ id: accountToDelete.id });
         
