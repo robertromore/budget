@@ -4,19 +4,21 @@
  */
 
 import type { ChartDataPoint } from '$lib/components/charts/chart-config';
+import type { DateValue } from '@internationalized/date';
+import { ensureDateValue, dateValueToJSDate } from './dates';
 
 /**
  * Common data transformation patterns for the budget application
  */
 
 export interface BalanceHistoryItem {
-  date: string | Date;
+  date: string | DateValue;
   balance: number;
   [key: string]: any;
 }
 
 export interface TransactionItem {
-  date: string | Date;
+  date: string | DateValue;
   amount: number;
   category?: string;
   description?: string;
@@ -44,11 +46,14 @@ export interface MonthlyDataItem {
 export function transformBalanceHistory(
   data: BalanceHistoryItem[]
 ): ChartDataPoint[] {
-  return data.map((item, index) => ({
-    x: item.date instanceof Date ? item.date : new Date(item.date),
-    y: item.balance,
-    metadata: { ...item, index }
-  }));
+  return data.map((item, index) => {
+    const dateValue = ensureDateValue(item.date);
+    return {
+      x: dateValueToJSDate(dateValue), // Convert DateValue to Date for LayerChart compatibility
+      y: item.balance,
+      metadata: { ...item, index, dateValue } // Keep DateValue in metadata for filtering
+    };
+  });
 }
 
 /**
@@ -83,7 +88,8 @@ export function transformTransactions(
     
     case 'month': {
       const grouped = transactions.reduce((acc, transaction) => {
-        const date = new Date(transaction.date);
+        const dateValue = ensureDateValue(transaction.date);
+        const date = dateValueToJSDate(dateValue);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         const monthLabel = date.toLocaleDateString('en-US', { 
           year: 'numeric', 
@@ -110,12 +116,17 @@ export function transformTransactions(
     
     case 'date':
     default: {
-      return transactions.map((transaction, index) => ({
-        x: transaction.date instanceof Date ? transaction.date : new Date(transaction.date),
-        y: transaction.amount,
-        category: transaction.category,
-        metadata: { ...transaction, index }
-      })).sort((a, b) => new Date(a.x).getTime() - new Date(b.x).getTime());
+      return transactions.map((transaction, index) => {
+        const dateValue = ensureDateValue(transaction.date);
+        return {
+          x: dateValueToJSDate(dateValue), // Convert DateValue to Date for LayerChart compatibility
+          y: transaction.amount,
+          category: transaction.category || undefined,
+          metadata: { ...transaction, index, dateValue } // Keep DateValue in metadata for filtering
+        };
+      }).sort((a, b) => {
+        return (a.x as Date).getTime() - (b.x as Date).getTime();
+      });
     }
   }
 }
@@ -197,23 +208,29 @@ export function aggregateByTimePeriod(
   aggregation: 'sum' | 'average' | 'count' = 'sum'
 ): ChartDataPoint[] {
   const grouped = data.reduce((acc, item) => {
-    const date = new Date(item.x);
-    let key: string;
+    const dateValue = ensureDateValue(item.x);
+    let key: string = ''; // Initialize to avoid undefined
     
     switch (period) {
       case 'day':
-        key = date.toISOString().split('T')[0];
+        key = `${dateValue.year}-${String(dateValue.month).padStart(2, '0')}-${String(dateValue.day).padStart(2, '0')}`;
         break;
       case 'week':
-        const weekStart = new Date(date);
-        weekStart.setDate(date.getDate() - date.getDay());
-        key = weekStart.toISOString().split('T')[0];
+        // Get the start of the week (Sunday)
+        const jsDate = dateValueToJSDate(dateValue);
+        const weekStart = new Date(jsDate);
+        weekStart.setDate(jsDate.getDate() - jsDate.getDay());
+        key = weekStart.toISOString().split('T')[0] || '';
         break;
       case 'month':
-        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        key = `${dateValue.year}-${String(dateValue.month).padStart(2, '0')}`;
         break;
       case 'year':
-        key = String(date.getFullYear());
+        key = String(dateValue.year);
+        break;
+      default:
+        // Fallback to day format
+        key = `${dateValue.year}-${String(dateValue.month).padStart(2, '0')}-${String(dateValue.day).padStart(2, '0')}`;
         break;
     }
     
@@ -221,31 +238,40 @@ export function aggregateByTimePeriod(
       acc[key] = { values: [], count: 0 };
     }
     
-    acc[key].values.push(item.y);
-    acc[key].count++;
+    // TypeScript now knows acc[key] exists because we just checked/created it
+    const bucket = acc[key]!;
+    bucket.values.push(item.y);
+    bucket.count++;
     
     return acc;
   }, {} as Record<string, { values: number[], count: number }>);
   
-  return Object.entries(grouped).map(([key, { values, count }]) => {
+  return Object.entries(grouped).map(([key, group]) => {
     let y: number;
     
-    switch (aggregation) {
-      case 'sum':
-        y = values.reduce((sum, val) => sum + val, 0);
-        break;
-      case 'average':
-        y = values.reduce((sum, val) => sum + val, 0) / values.length;
-        break;
-      case 'count':
-        y = count;
-        break;
+    if (!group) {
+      y = 0;
+    } else {
+      const { values, count } = group;
+      switch (aggregation) {
+        case 'sum':
+          y = values.reduce((sum, val) => sum + val, 0);
+          break;
+        case 'average':
+          y = values.reduce((sum, val) => sum + val, 0) / values.length;
+          break;
+        case 'count':
+          y = count;
+          break;
+        default:
+          y = 0;
+      }
     }
     
     return {
       x: key,
       y,
-      metadata: { period, aggregation, originalCount: count }
+      metadata: { period, aggregation, originalCount: group?.count || 0 }
     };
   }).sort((a, b) => String(a.x).localeCompare(String(b.x)));
 }

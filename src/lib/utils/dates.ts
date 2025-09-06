@@ -383,8 +383,35 @@ export function parseDateValue(dateValue: any): DateValue | null {
       return new CalendarDate(dateValue.getFullYear(), dateValue.getMonth() + 1, dateValue.getDate());
     }
     
+    // If it's a number (timestamp), convert it
+    if (typeof dateValue === 'number' && !isNaN(dateValue)) {
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return null;
+      return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    }
+    
     return null;
   } catch (error) {
     return null;
   }
+}
+
+/**
+ * Safely converts various date formats to DateValue, with fallback to current date
+ * @param dateValue - The date value to parse (string, Date, or DateValue)
+ * @returns DateValue (guaranteed to return a valid DateValue)
+ */
+export function ensureDateValue(dateValue: any): DateValue {
+  const parsed = parseDateValue(dateValue);
+  return parsed || currentDate;
+}
+
+/**
+ * Converts a DateValue to a JavaScript Date object for chart library compatibility
+ * @param dateValue - The DateValue to convert
+ * @param timeZone - The timezone to use (default: "UTC")
+ * @returns JavaScript Date object
+ */
+export function dateValueToJSDate(dateValue: DateValue, timeZone: string = "UTC"): Date {
+  return dateValue.toDate(timeZone);
 }

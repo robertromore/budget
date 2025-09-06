@@ -1,5 +1,6 @@
 import type { TransactionsFormat } from '$lib/types';
 import { CalendarDate } from '@internationalized/date';
+import { currentDate } from '$lib/utils/dates';
 
 export function createMonthlySpendingProcessor(transactions: TransactionsFormat[]) {
   let processMonthlySpending = $state<Array<{ month: CalendarDate; amount: number }>>([]);
@@ -43,7 +44,7 @@ export function createMonthlySpendingProcessor(transactions: TransactionsFormat[
 }
 
 export function createIncomeVsExpensesProcessor(transactions: TransactionsFormat[]) {
-  let processIncomeVsExpenses = $state<Array<{ month: Date; income: number; expenses: number }>>([]);
+  let processIncomeVsExpenses = $state<Array<{ month: CalendarDate; income: number; expenses: number }>>([]);
   
   $effect(() => {
     if (!transactions?.length) {
@@ -69,11 +70,18 @@ export function createIncomeVsExpensesProcessor(transactions: TransactionsFormat
     });
 
     processIncomeVsExpenses = Object.entries(monthlyData)
-      .map(([monthKey, data]) => ({ 
-        month: new Date(monthKey + '-01'), // Convert YYYY-MM to Date object
-        ...data 
-      }))
-      .sort((a, b) => a.month.getTime() - b.month.getTime());
+      .map(([monthKey, data]) => {
+        const [year = '', month = ''] = monthKey.split('-');
+        return {
+          month: new CalendarDate(
+            parseInt(year) || currentDate.year, 
+            parseInt(month) || currentDate.month, 
+            1
+          ),
+          ...data 
+        };
+      })
+      .sort((a, b) => a.month.compare(b.month));
   });
 
   return {

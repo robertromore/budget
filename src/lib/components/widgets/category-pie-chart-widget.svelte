@@ -34,11 +34,15 @@
     if (chartType === 'bar') {
       return { x: cat.name, y: cat.amount };
     }
+    // LayerChart Pie component expects just 'value' and 'color' properties
     return {
-      name: cat.name,
       value: cat.amount,
-      percentage: cat.percentage,
-      color: cat.color || colorUtils.getChartColor(index)
+      color: cat.color || colorUtils.getChartColor(index),
+      // Keep additional data in metadata for tooltips/legends
+      metadata: {
+        name: cat.name,
+        percentage: cat.percentage
+      }
     };
   }));
 
