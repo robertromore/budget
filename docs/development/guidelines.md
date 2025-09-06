@@ -5,6 +5,19 @@ practices for contributing to the SvelteKit budget management application.
 
 [TOC]
 
+## Before Starting Any Work - Feature Branch Checklist
+
+**STOP! Always verify before making changes:**
+
+- [ ] **Check current branch**: Run `git branch --show-current`
+- [ ] **Are you on `main`?** If not, switch first: `git checkout main`
+- [ ] **Is this new work?** Create feature branch: `git checkout -b feature/descriptive-name`
+- [ ] **Branch name is descriptive**: `feature/add-X`, `fix/Y-bug`, `docs/update-Z`
+
+### Critical Rule: **NEVER work directly on `main` branch!**
+
+Every change, no matter how small, requires its own feature branch.
+
 ## Getting Started
 
 ### Prerequisites
@@ -34,12 +47,23 @@ bun run dev
 
 ## Development Workflow
 
+### Core Principles
+
+- Focus on one feature at a time
+- Make small, incremental changes
+- **Use feature branches**: Create new branches for each feature/task (never commit directly to main)
+- Test changes before committing (run build, check dev server)
+- Write descriptive commit messages with context
+- Update project documentation as work progresses
+
 ### Branch Strategy
 
 - **main**: Production-ready code
-- **feature/***: New features and enhancements
-- **fix/***: Bug fixes
-- **docs/***: Documentation updates
+- **feature/***: New features and enhancements (e.g., `feature/add-transaction-filtering`)
+- **fix/***: Bug fixes (e.g., `fix/sidebar-responsive-issue`)
+- **docs/***: Documentation updates (e.g., `docs/update-api-guide`)
+- **refactor/***: Code refactoring (e.g., `refactor/reorganize-components`)
+- **perf/***: Performance improvements (e.g., `perf/optimize-data-loading`)
 
 ### Commit Message Format
 
@@ -57,12 +81,72 @@ fix(auth): resolve session timeout issue
 docs(api): update tRPC endpoint documentation
 ```
 
+**Extended Template for Detailed Commits:**
+
+```text
+Short summary (50 chars or less)
+
+More detailed explanation if needed. Wrap at 72 characters.
+Explain what and why, not how.
+
+- Use bullet points for multiple changes
+- Reference issues: Fixes #123, Closes #456
+
+Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+### Pre-Commit Checklist
+
+Before every commit:
+
+- [ ] **Verify you're on a feature branch** (not main)
+- [ ] **Run tests**: `bun run test` (if applicable)
+- [ ] **Check build**: `bun run build`
+- [ ] **Review changes**: `git diff` to confirm intended changes
+- [ ] **Stage specific files**: Avoid `git add .` unless intentional
+
 ### Code Review Process
 
 1. **Self-review**: Review your own code before creating PR
 2. **Automated checks**: Ensure all tests and linting pass
 3. **Peer review**: At least one team member review required
 4. **Security review**: Required for authentication/authorization changes
+
+## Component Organization Policy
+
+**Long-standing preference for component structure:**
+
+### Global Components (`src/lib/components/`)
+
+- Components used in multiple routes/pages
+- Reusable UI primitives beyond shadcn-svelte
+- App-wide components (e.g., `app-sidebar.svelte`)
+- `ui/` folder contains shadcn-svelte components
+
+### Route-Specific Components
+
+- Components specific to certain routes should be in their route's `(components)` subfolder
+- Configuration files should be in `(config)` subfolder
+- Data definitions should be in `(data)` subfolder
+- Other logical groupings use `(name)` convention
+
+**Example Structure:**
+
+```text
+src/routes/accounts/[id]/
+├── (components)/
+│   ├── data-table.svelte
+│   ├── (cells)/
+│   │   ├── data-table-cell.svelte
+│   │   └── data-table-editable-cell.svelte
+│   └── (facets)/
+│       └── data-table-faceted-filter.svelte
+├── (config)/
+│   └── table-columns.ts
+└── +page.svelte
+```
 
 ## Code Style Guidelines
 
@@ -652,7 +736,7 @@ logger.error('Failed to create account', {
 
 ## See Also
 
-- [Architecture Overview](architecture-overview.md)
-- [Frontend Architecture](frontend-architecture.md)
-- [Backend Architecture](backend-architecture.md)
-- [Project Standards](project-standards.md)
+- [Architecture Overview](../architecture/architecture-overview.md)
+- [Frontend Architecture](../architecture/frontend-architecture.md)
+- [Backend Architecture](../architecture/backend-architecture.md)
+- [Project Standards](../technical/project-standards.md)

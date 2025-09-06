@@ -50,6 +50,7 @@ This budget application provides a comprehensive solution for personal financial
 - **[Tasks & Roadmap](docs/tasks.md)** - Development tasks and priorities
 - **[Development Guide](docs/development-guide.md)** - Guidelines and best practices
 - **[Development Agents](docs/agents.md)** - Specialized agents and responsibilities
+- **[Context7 Cache](docs/context7-cache.md)** - Documentation cache system and management
 
 ## Development
 
