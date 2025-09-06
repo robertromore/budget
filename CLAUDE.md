@@ -8,12 +8,12 @@ This file contains configuration and preferences for Claude Code agents working 
 
 ### Command Mappings
 
-- ❌ `npm install` → ✅ `bun install`
-- ❌ `npm run dev` → ✅ `bun run dev`
-- ❌ `npm run build` → ✅ `bun run build`
-- ❌ `npm run test` → ✅ `bun run test`
-- ❌ `npm add package` → ✅ `bun add package`
-- ❌ `npm remove package` → ✅ `bun remove package`
+- `npm install` → `bun install`
+- `npm run dev` → `bun run dev`
+- `npm run build` → `bun run build`
+- `npm run test` → `bun run test`
+- `npm add package` → `bun add package`
+- `npm remove package` → `bun remove package`
 
 ### Benefits
 
@@ -36,12 +36,12 @@ This is a SvelteKit budget management application with:
 
 ### Import Mappings
 
-- ❌ `import { Component } from '../../../lib/components/ui/button'`
-- ✅ `import { Component } from '$lib/components/ui/button'`
-- ❌ `import { db } from '../../lib/server/db'`
-- ✅ `import { db } from '$lib/server/db'`
-- ❌ `import type { Account } from '../lib/schema/accounts'`
-- ✅ `import type { Account } from '$lib/schema/accounts'`
+- **Avoid**: `import { Component } from '../../../lib/components/ui/button'`
+- **Use**: `import { Component } from '$lib/components/ui/button'`
+- **Avoid**: `import { db } from '../../lib/server/db'`
+- **Use**: `import { db } from '$lib/server/db'`
+- **Avoid**: `import type { Account } from '../lib/schema/accounts'`
+- **Use**: `import type { Account } from '$lib/schema/accounts'`
 
 ### Import Benefits
 
@@ -97,13 +97,14 @@ This is a SvelteKit budget management application with:
 
 ### Markdown Quality Standards
 
-- ✅ Use language tags: ```typescript,```bash, ```text
-- ✅ Proper heading structure with blank lines
-- ✅ Consistent list formatting with proper spacing
-- ✅ Professional tone following Google's style principles
-- ❌ Bare URLs without proper link formatting
-- ❌ Missing language specifications in code blocks
-- ❌ Inconsistent heading spacing
+- Use language tags: ```typescript, ```bash, ```text
+- Proper heading structure with blank lines
+- Consistent list formatting with proper spacing
+- Professional tone following Google's style principles
+- **Never use emoticons or symbols** (like checkmarks, X marks, arrows) in documentation
+- No bare URLs without proper link formatting
+- No missing language specifications in code blocks
+- No inconsistent heading spacing
 
 ### Markdown Benefits
 
@@ -986,6 +987,72 @@ if (itemDate && itemDate.compare(startDate) >= 0) {
 4. **Handle empty states gracefully** - Show appropriate messages when no data available
 5. **Use consistent styling** - Follow theme variables and design system patterns
 
+## Request Quality and Accountability Standards
+
+**ALWAYS hold the user accountable to follow best practices and challenge requests that don't meet quality standards.**
+
+### When User Requests Are Too Broad
+
+Instead of immediately implementing broad requests, Claude should:
+
+- **Pause and clarify**: "This request is quite broad. Let me break it down into specific steps first. Would you like me to create a plan for [specific task], or did you have a particular aspect in mind?"
+- **Suggest planning**: "This involves multiple files/components. Should I create a plan first so you can review the approach before I start implementing?"
+- **Ask for specifics**: "Can you share the specific error message or file you're referring to? This will help me give you a more targeted solution."
+
+### When User Skips Planning for Complex Tasks
+
+For multi-step changes involving 3+ files or significant architecture changes:
+
+- **Recommend incremental approach**: "This is a substantial change. Would you prefer I implement this in steps so we can test each part, or do you want the full implementation at once?"
+- **Suggest breaking down**: "I notice you're asking me to modify multiple unrelated files. Based on your guidelines, would you prefer I tackle these as separate, focused tasks instead?"
+
+### Accountability Enforcement
+
+Claude must:
+
+✅ **Pause and ask** before diving into broad requests  
+✅ **Suggest planning** for complex multi-step tasks  
+✅ **Ask for specifics** when requests are vague  
+✅ **Recommend incremental approaches** for large changes  
+✅ **Follow established patterns** and remind user when something might break them  
+✅ **Challenge anti-patterns** and suggest better approaches
+
+### Examples of Good vs Bad Requests
+
+**Good (Specific and Focused):**
+- ✅ "Fix the TypeScript error on line 45 in chart-wrapper.svelte"
+- ✅ "Add a delete button to the transaction card component"
+- ✅ "Create a plan for implementing user authentication"
+
+**Bad (Too Broad):**
+- ❌ "Fix all the errors"
+- ❌ "Add authentication to the app"
+- ❌ "Make the dashboard better"
+
+### Goal
+
+Keep development focused, effective, and aligned with project best practices by ensuring all requests are specific, well-planned, and properly scoped.
+
+## Specialized Agents
+
+**Specialized agent definitions are stored in `.claude/agents/` directory.**
+
+Available specialized agents:
+
+- **backend-api-architect** (`.claude/agents/backend-api-architect.md`) - Expert in tRPC backend, API routes, Drizzle ORM database operations, Better Auth authentication, and backend service integration. Specializes in `src/lib/schema`, `src/lib/server/db`, and `src/lib/trpc` folders.
+
+- **code-review-specialist** (`.claude/agents/code-review-specialist.md`) - Expert in conducting thorough code reviews, analyzing code quality, identifying potential issues, and ensuring adherence to project standards. Provides comprehensive feedback on architecture, performance, security, and maintainability.
+
+- **documentation-specialist** (`.claude/agents/documentation-specialist.md`) - Expert in creating, editing, and maintaining markdown documentation files including README files, technical documentation, API docs, and project guides. Follows Google's documentation style guide and markdown best practices.
+
+- **frontend-ui-specialist** (`.claude/agents/frontend-ui-specialist.md`) - Expert in building user interfaces using Shadcn Svelte, Shadcn Svelte Extras, Tailwind CSS, and the packages/ui folder structure. Handles UI components, design patterns, styling, and frontend-specific challenges.
+
+- **layerchart-specialist** (`.claude/agents/layerchart-specialist.md`) - Expert in LayerChart components, data visualization, chart system architecture, performance optimization, and chart debugging. Use for all chart-related tasks.
+
+- **query-layer-specialist** (`.claude/agents/query-layer-specialist.md`) - Expert in the query layer including defineQuery/defineMutation, error transformations from service errors to TRPCError, RPC namespace patterns, reactive/imperative interfaces, cache updates, and optimistic UI patterns.
+
+**Usage:** Claude Code automatically uses specialized agents when tasks match their expertise areas. Agent definitions contain comprehensive knowledge areas, implementation patterns, and architectural understanding specific to each domain.
+
 ---
 
-*This configuration ensures consistent tooling across all Claude Code sessions.*
+*This configuration ensures consistent tooling and accountability across all Claude Code sessions.*

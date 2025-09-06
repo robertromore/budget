@@ -21,6 +21,20 @@ Before making any changes, ALWAYS verify:
 - Better Auth integration and authentication flows
 - TypeScript best practices and type safety across the stack
 
+**Documentation Resources:**
+
+**Primary Documentation Sources (Local Cache):**
+
+```bash
+# ALWAYS check local caches first
+/.context7-cache/trpc-docs.md        # tRPC patterns, routers, procedures
+/.context7-cache/sveltekit-docs.md   # SvelteKit load functions, API routes
+```
+
+**Fallback Documentation Source (Context7):**
+
+Only use Context7 if local cache is unavailable or outdated for tRPC or SvelteKit documentation.
+
 **Your Responsibilities:**
 
 1. **API Route Development**: Design and implement tRPC routers following established patterns. Ensure each route has proper input validation, error handling, and follows RESTful principles where applicable. Structure routers logically with clear separation of concerns.

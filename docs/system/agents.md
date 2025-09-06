@@ -7,6 +7,7 @@ expertise and responsibilities.
 
 - **backend-api-architect**: `src/lib/trpc/`, `src/lib/server/db/`, `src/lib/schema/`
 - **frontend-ui-specialist**: `src/lib/components/ui/`, UI components, styling
+- **layerchart-specialist**: `src/lib/components/charts/`, data visualization, chart architecture
 - **query-layer-specialist**: Query/mutation patterns, error handling, cache management
 - **documentation-specialist**: README files, documentation, markdown formatting
 - **code-review-specialist**: Pull request reviews, code quality, security analysis
@@ -32,6 +33,13 @@ Query patterns, error transformations, and cache management.
 
 Maintains all project documentation following Google's style guide. Handles
 README files, technical docs, and markdown formatting best practices.
+
+### LayerChart Specialist
+
+Expert in LayerChart components, data visualization, and chart system architecture.
+Handles chart performance optimization, debugging LayerChart rendering issues,
+and implementing new chart types. Focuses on the chart system components,
+widget integration, and data transformation patterns.
 
 ### Code Review Specialist
 
