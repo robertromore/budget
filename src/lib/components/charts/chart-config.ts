@@ -4,12 +4,13 @@
  */
 
 import type { ChartType } from './chart-types';
+import type { DateValue } from '@internationalized/date';
 
 // Standardized data point interface
 export interface ChartDataPoint {
-  x: string | number | Date;
+  x: string | number | Date | DateValue;
   y: number;
-  category?: string;
+  category?: string | undefined;
   metadata?: Record<string, any>;
 }
 
