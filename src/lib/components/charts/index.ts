@@ -4,6 +4,9 @@ export { default as ChartRenderer } from './chart-renderer.svelte';
 export { default as ChartTypeSelector } from './chart-type-selector.svelte';
 export { default as ChartPeriodControls } from './chart-period-controls.svelte';
 
+// New unified chart system (Phase 1)
+export { default as UnifiedChart } from './unified-chart.svelte';
+
 // Re-export layerchart components for direct usage when needed
 export {
   Chart,
@@ -30,7 +33,14 @@ export { colorUtils } from '$lib/utils/colors';
 // Export chart types and constants
 export * from './chart-types';
 
-// Chart configuration types
+// Export new configuration system
+export * from './chart-config';
+export * from './config-resolver';
+
+// Chart utilities
+export * from '$lib/utils/chart-data';
+
+// Legacy ChartSeries interface (for backward compatibility)
 export interface ChartSeries {
   data: any[];
   type: 'bar' | 'area' | 'line' | 'scatter' | 'pie' | 'arc' | 'threshold' | 'calendar' | 'hull';
@@ -50,6 +60,7 @@ export interface ChartSeries {
   threshold?: number; // For threshold charts
 }
 
+// Legacy ChartConfig interface (for backward compatibility)
 export interface ChartConfig {
   data: any[];
   series: ChartSeries[];

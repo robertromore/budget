@@ -1,12 +1,23 @@
-# Chart Wrapper Component
+# Chart System Documentation
 
-A flexible wrapper around layerchart that simplifies creating charts with consistent styling and behavior.
+A comprehensive chart system built on LayerChart with consistent styling,
+interactive controls, and flexible data visualization capabilities.
+
+## Overview
+
+The chart system provides:
+
+- **ChartWrapper**: Main component with controls and period filtering
+- **ChartRenderer**: LayerChart integration and visualization logic  
+- **ChartTypeSelector**: Dropdown for switching chart types with icons
+- **ChartPeriodControls**: Time period filtering buttons
+- **Global chart types**: Centralized type definitions with icons
 
 ## Basic Usage
 
 ```svelte
 <script>
-  import { ChartWrapper } from '$lib/components/charts';
+  import { ChartWrapper, ALL_CHART_TYPES } from '$lib/components/charts';
   
   const data = [
     { month: 'Jan', income: 4500, expenses: 1200 },
@@ -28,6 +39,14 @@ A flexible wrapper around layerchart that simplifies creating charts with consis
       label: 'Expenses'
     }
   ];
+
+  // Filter for supported chart types
+  const availableChartTypes = ALL_CHART_TYPES.flatMap(group => 
+    group.options.filter(option => ['bar', 'line', 'area'].includes(option.value))
+  );
+
+  let currentChartType = $state('bar');
+  let currentPeriod = $state(0);
 </script>
 
 <ChartWrapper
@@ -35,12 +54,19 @@ A flexible wrapper around layerchart that simplifies creating charts with consis
   {series}
   x="month"
   y="value"
+  showControls={true}
+  {availableChartTypes}
+  bind:chartType={currentChartType}
+  enablePeriodFiltering={true}
+  dateField="month"
+  bind:currentPeriod
 />
 ```
 
 ## Chart Types
 
 ### Bar Charts
+
 ```svelte
 const series = [
   { data: incomeData, type: 'bar', colorIndex: 1 },
@@ -49,6 +75,7 @@ const series = [
 ```
 
 ### Line Charts
+
 ```svelte
 const series = [
   { data: incomeData, type: 'line', colorIndex: 1, strokeWidth: 3 },
@@ -57,6 +84,7 @@ const series = [
 ```
 
 ### Area Charts
+
 ```svelte
 const series = [
   { data: incomeData, type: 'area', colorIndex: 1, fillOpacity: 0.7 },
@@ -65,6 +93,7 @@ const series = [
 ```
 
 ### Scatter Plots
+
 ```svelte
 const series = [
   { 
@@ -83,6 +112,7 @@ const series = [
 ```
 
 ### Pie Charts
+
 ```svelte
 const series = [
   { 
@@ -96,6 +126,7 @@ const series = [
 ```
 
 ### Arc Charts (Donut Charts)
+
 ```svelte
 const series = [
   { 
@@ -111,6 +142,7 @@ const series = [
 ```
 
 ### Threshold Charts
+
 ```svelte
 const series = [
   { 
@@ -123,6 +155,7 @@ const series = [
 ```
 
 ### Hull Charts (Convex Hull)
+
 ```svelte
 const series = [
   { 
@@ -136,6 +169,7 @@ const series = [
 ```
 
 ### Calendar Charts
+
 ```svelte
 const series = [
   { 
@@ -147,6 +181,7 @@ const series = [
 ```
 
 ### Mixed Chart Types
+
 ```svelte
 const series = [
   { data: targetData, type: 'line', color: '#666', strokeWidth: 2 },
@@ -158,7 +193,9 @@ const series = [
 ## Configuration Options
 
 ### Data Structure
+
 Each series needs data in `{ x: value, y: value }` format:
+
 ```javascript
 const seriesData = [
   { x: 'Jan 2025', y: 4500 },
@@ -167,10 +204,12 @@ const seriesData = [
 ```
 
 ### Series Configuration
+
 ```typescript
 interface ChartSeries {
   data: any[];                    // Chart data points
-  type: 'bar' | 'area' | 'line' | 'scatter' | 'pie' | 'arc' | 'threshold' | 'calendar' | 'hull';  // Chart type
+  type: 'bar' | 'area' | 'line' | 'scatter' | 'pie' | 'arc' | 
+        'threshold' | 'calendar' | 'hull';  // Chart type
   color?: string;                 // Explicit color (e.g., '#ff0000')
   colorIndex?: number;            // Theme color index (0-7)
   fill?: string;                  // Override fill color
@@ -194,6 +233,7 @@ interface ChartSeries {
 ```
 
 ### Chart Props
+
 ```typescript
 interface Props {
   // Data and chart configuration
@@ -205,7 +245,7 @@ interface Props {
   y?: string | string[];          // Y-axis data key(s)
   
   // Styling and layout
-  padding?: object;               // Chart padding
+  padding?: { left?: number; right?: number; top?: number; bottom?: number };
   yDomain?: [number|null, number|null]; // Y-axis domain
   xDomain?: [number|null, number|null]; // X-axis domain
   yNice?: boolean;                // Nice Y-axis values
@@ -225,13 +265,23 @@ interface Props {
   showRule?: boolean;             // Show rule line
   
   // Chart-specific options
-  chartType?: 'cartesian' | 'polar' | 'radial'; // Chart coordinate system
+  chartLayoutType?: string;       // Chart coordinate system
   innerRadius?: number;           // For polar charts
   outerRadius?: number;           // For polar charts
   
   // Legends and labels
   showLegend?: boolean;           // Show legend
   showLabels?: boolean;           // Show data labels
+  
+  // Interactive controls
+  showControls?: boolean;         // Show chart type and period controls
+  availableChartTypes?: ChartTypeOption[]; // Chart types for selector
+  chartType?: ChartType;          // Current chart type (bindable)
+  
+  // Period filtering (requires data with date/month field)
+  enablePeriodFiltering?: boolean; // Enable time period filtering
+  dateField?: string;             // Date field name (default: 'month')
+  currentPeriod?: string | number; // Current period (bindable)
   
   // Styling
   class?: string;                 // Container CSS class
@@ -240,10 +290,11 @@ interface Props {
 
 ## Advanced Examples
 
-### Financial Dashboard Chart
+### Financial Dashboard Chart with Controls
+
 ```svelte
 <script>
-  import { ChartWrapper } from '$lib/components/charts';
+  import { ChartWrapper, ALL_CHART_TYPES } from '$lib/components/charts';
   
   const financialData = processTransactions(transactions);
   
@@ -268,6 +319,16 @@ interface Props {
       label: 'Target'
     }
   ];
+
+  // Filter for financial chart types
+  const availableChartTypes = ALL_CHART_TYPES.flatMap(group => 
+    group.options.filter(option => 
+      ['bar', 'line', 'area'].includes(option.value)
+    )
+  );
+
+  let currentChartType = $state('bar');
+  let currentPeriod = $state(0);
 </script>
 
 <ChartWrapper
@@ -276,34 +337,150 @@ interface Props {
   x="month"
   padding={{ left: 100, bottom: 60, top: 20, right: 30 }}
   yNice={true}
+  showControls={true}
+  {availableChartTypes}
+  bind:chartType={currentChartType}
+  enablePeriodFiltering={true}
+  dateField="month"
+  bind:currentPeriod
   class="h-96 w-full"
 />
 ```
 
-### Performance Chart
+### Performance Chart with Period Filtering
+
 ```svelte
+<script>
+  import { ChartWrapper, ALL_CHART_TYPES } from '$lib/components/charts';
+
+  const availableChartTypes = ALL_CHART_TYPES.flatMap(group => 
+    group.options.filter(option => 
+      ['area', 'line'].includes(option.value)
+    )
+  );
+
+  let currentChartType = $state('area');
+  let currentPeriod = $state(0);
+</script>
+
 <ChartWrapper
   {data}
   series={[
-    { data: performanceData, type: 'area', colorIndex: 3, fillOpacity: 0.3 },
-    { data: benchmarkData, type: 'line', color: '#000', strokeWidth: 1 }
+    { 
+      data: performanceData, 
+      type: 'area', 
+      colorIndex: 3, 
+      fillOpacity: 0.3 
+    },
+    { 
+      data: benchmarkData, 
+      type: 'line', 
+      color: '#000', 
+      strokeWidth: 1 
+    }
   ]}
   x="date" 
   yDomain={[0, 100]}
   rotateBottomLabels={false}
+  showControls={true}
+  {availableChartTypes}
+  bind:chartType={currentChartType}
+  enablePeriodFiltering={true}
+  dateField="date"
+  bind:currentPeriod
 />
 ```
+
+## Chart Type System
+
+### Global Chart Types
+
+Always use global chart type definitions from `ALL_CHART_TYPES`:
+
+```typescript
+import { ALL_CHART_TYPES } from '$lib/components/charts';
+
+// Filter for supported chart types
+const availableChartTypes = $derived(() => {
+  const supportedTypes = ['bar', 'line', 'area'];
+  return ALL_CHART_TYPES.flatMap(group => 
+    group.options.filter(option => supportedTypes.includes(option.value))
+  );
+});
+```
+
+Benefits:
+
+- Consistent icons across all chart selectors
+- Complete type safety with descriptions
+- Centralized chart type management
+- Automatic icon integration in dropdowns
+
+### Chart Type Groups
+
+The system organizes chart types into logical groups:
+
+- **Line & Area**: line, area
+- **Bars & Columns**: bar
+- **Circular**: pie, arc
+- **Points & Scatter**: scatter
+- **Specialized**: threshold, hull, calendar
+
+## Period Filtering System
+
+### Automatic Period Generation
+
+The system automatically generates appropriate time periods based on data:
+
+```typescript
+import { generatePeriodOptions, filterDataByPeriod } from '$lib/utils/chart-periods';
+
+// Generate periods based on actual data
+const availablePeriods = $derived.by(() => {
+  if (!enablePeriodFiltering) return [];
+  return generatePeriodOptions(data, dateField);
+});
+
+// Filter data reactively
+const filteredData = $derived.by(() => {
+  if (!enablePeriodFiltering) return data;
+  return filterDataByPeriod(data, dateField, currentPeriod);
+});
+```
+
+### Period Options
+
+Based on data span:
+
+- **< 6 months**: All Time only
+- **6+ months**: All Time, Last 3 Months
+- **12+ months**: All Time, Last 3/6 Months  
+- **18+ months**: All Time, Last 3/6/12 Months
+- **Current year data**: Adds "Year to Date" option
 
 ## Theme Integration
 
 The wrapper automatically integrates with your color theme:
+
 - Use `colorIndex` (0-7) to use theme colors from `colorUtils`
 - Use `color` for explicit colors  
 - Colors automatically adapt to light/dark themes
+- Chart controls follow design system styling
 
 ## Error Handling
 
-The wrapper handles common layerchart issues:
-- Ensures proper data structure
+The wrapper handles common LayerChart issues:
+
+- Ensures proper data structure for each chart type
 - Sets sensible defaults for missing props
 - Handles color fallbacks gracefully
+- Shows appropriate empty states when no data available
+- Validates period filtering configuration
+
+## Accessibility Features
+
+- Full keyboard navigation for all controls
+- Screen reader support for chart type descriptions
+- Proper ARIA labels for interactive elements
+- Theme-aware color contrast compliance
+- Semantic HTML structure for chart controls

@@ -138,7 +138,9 @@
     {x}
     {y}
     {yNice}
+    {xNice}
     {yDomain}
+    {xDomain}
     {padding}
     {showLeftAxis}
     {showBottomAxis}
@@ -154,5 +156,6 @@
     {outerRadius}
     {showLegend}
     {showLabels}
+    {chartType}
   />
 </div>

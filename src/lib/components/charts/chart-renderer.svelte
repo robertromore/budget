@@ -1,33 +1,32 @@
 <script lang="ts">
+  import { colorUtils } from '$lib/utils/colors';
   import {
-    Chart,
-    Svg,
-    Bars,
     Area,
-    Spline,
     Axis,
-    Arc,
-    Points,
-    Pie,
+    Bars,
+    Calendar,
+    Chart,
+    Grid,
     Hull,
     Labels,
-    Rule,
-    Grid,
     Legend,
-    Threshold,
-    Calendar
+    Pie,
+    Points,
+    Rule,
+    Spline,
+    Svg,
+    Threshold
   } from 'layerchart';
-  import { colorUtils } from '$lib/utils/colors';
   import type { ChartSeries, ChartType } from './chart-types';
 
   interface Props {
     data: any[];
     series: ChartSeries[];
-    x?: string;
-    y?: string | string[];
+    x?: string | undefined;
+    y?: string | string[] | undefined;
     padding?: { left?: number; right?: number; top?: number; bottom?: number };
     yDomain?: [number | null, number | null];
-    xDomain?: [number | null, number | null];
+    xDomain?: [number | null, number | null] | undefined;
     yNice?: boolean;
     xNice?: boolean;
     showLeftAxis?: boolean;
@@ -40,10 +39,11 @@
     showVerticalGrid?: boolean;
     showRule?: boolean;
     chartLayoutType?: string;
-    innerRadius?: number;
-    outerRadius?: number;
+    innerRadius?: number | undefined;
+    outerRadius?: number | undefined;
     showLegend?: boolean;
     showLabels?: boolean;
+    chartType?: ChartType | undefined;
   }
 
   let {
@@ -69,7 +69,8 @@
     innerRadius,
     outerRadius,
     showLegend = false,
-    showLabels = false
+    showLabels = false,
+    chartType
   }: Props = $props();
 
   // Helper to get color for series
@@ -83,7 +84,7 @@
   const isPieChart = $derived(series.some(s => s.type === 'pie' || s.type === 'arc'));
 </script>
 
-<Chart {data} {x} {y} {yNice} {yDomain} {padding}>
+<Chart {data} {x} {y} {yNice} {xNice} {yDomain} {xDomain} {padding}>
   <Svg>
     {#if !isPieChart}
       {#if showLeftAxis}
@@ -92,8 +93,8 @@
       {#if showBottomAxis}
         <Axis
           placement="bottom"
-          tickLabelProps={rotateBottomLabels ? { rotate: -45, textAnchor: 'end' } : undefined}
-          ticks={data.length > 8 ? data.filter((_, i) => i % Math.ceil(data.length / 4) === 0).map(d => d[x || 'x']) : undefined}
+          {...(rotateBottomLabels ? { tickLabelProps: { rotate: -45, textAnchor: 'end' } } : {})}
+          {...(data.length > 8 ? { ticks: data.filter((_, i) => i % Math.ceil(data.length / 4) === 0).map(d => d[x || 'x']) } : {})}
         />
       {/if}
     {/if}
@@ -108,7 +109,7 @@
         <Area
           data={s.data}
           x={x}
-          y={y || 'y'}
+          y={Array.isArray(y) ? y[0] : (y || 'y')}
           fill={s.fill || getSeriesColor(s)}
           fillOpacity={s.fillOpacity || 0.6}
         />
@@ -123,7 +124,7 @@
         <Points
           data={s.data}
           fill={s.fill || getSeriesColor(s)}
-          r={s.r || 3}
+          r={typeof s.r === 'function' ? 3 : (s.r || 3)}
         />
       {:else if s.type === 'pie'}
         <Pie
@@ -138,19 +139,13 @@
           outerRadius={s.outerRadius || 100}
         />
       {:else if s.type === 'threshold'}
-        <Threshold
-          threshold={s.threshold || 0}
-          fill={s.fill || getSeriesColor(s)}
-        />
+        <Threshold />
       {:else if s.type === 'hull'}
-        <Hull
-          fill={s.fill || getSeriesColor(s)}
-          fillOpacity={s.fillOpacity || 0.3}
-          stroke={s.stroke || getSeriesColor(s)}
-        />
+        <Hull />
       {:else if s.type === 'calendar'}
         <Calendar
-          fill={s.fill || getSeriesColor(s)}
+          start={new Date()}
+          end={new Date()}
         />
       {/if}
     {/each}

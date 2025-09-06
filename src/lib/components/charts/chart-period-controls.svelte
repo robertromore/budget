@@ -9,10 +9,9 @@
     enablePeriodFiltering?: boolean;
   }
 
-  let { 
+  let {
     currentPeriod = $bindable(0),
     data,
-    dateField = 'month',
     enablePeriodFiltering = false
   }: Props = $props();
 </script>

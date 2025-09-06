@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ChartWrapper } from '$lib/components/charts';
-  import type { ChartSeries, ChartType, ChartTypeOption } from '$lib/components/charts/chart-types';
+  import type { ChartSeries, ChartType } from '$lib/components/charts/chart-types';
   import { ALL_CHART_TYPES } from '$lib/components/charts/chart-types';
   import type { TransactionsFormat } from '$lib/types';
   import { colorUtils } from '$lib/utils/colors';
@@ -39,10 +39,10 @@
       color: string;
       index: number;
     }> = [];
-    
+
     processedData.forEach((d, i) => {
       const monthLabel = d.month.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-      
+
       // Add income bar
       flatData.push({
         month: monthLabel,
@@ -52,18 +52,18 @@
         color: colorUtils.getChartColor(1),
         index: i
       });
-      
-      // Add expenses bar  
+
+      // Add expenses bar
       flatData.push({
         month: monthLabel,
         value: d.expenses || 0,
-        series: 'Expenses', 
+        series: 'Expenses',
         type: 'expenses',
         color: colorUtils.getChartColor(2),
         index: i
       });
     });
-    
+
     return flatData;
   });
 
@@ -78,15 +78,15 @@
     {
       data: chartData.filter(d => d.type === 'expenses'),
       type: chartType,
-      color: colorUtils.getChartColor(2), 
+      color: colorUtils.getChartColor(2),
       label: 'Expenses'
     }
   ]);
 
   // Get chart types from global definitions, filtering for the ones we support
-  const availableChartTypes: ChartTypeOption[] = $derived(() => {
+  const availableChartTypes = $derived.by(() => {
     const supportedTypes = ['bar', 'line', 'area'];
-    return ALL_CHART_TYPES.flatMap(group => 
+    return ALL_CHART_TYPES.flatMap(group =>
       group.options.filter(option => supportedTypes.includes(option.value))
     );
   });

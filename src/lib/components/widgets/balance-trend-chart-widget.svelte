@@ -1,16 +1,17 @@
 <script lang="ts">
-  import { ChartWrapper } from '$lib/components/charts';
-  import type { WidgetProps, ChartType } from '$lib/types/widgets';
+  import { UnifiedChart } from '$lib/components/charts';
+  import { transformBalanceHistory } from '$lib/utils/chart-data';
+  import type { WidgetProps } from '$lib/types/widgets';
+  import type { ChartType } from '$lib/components/charts/chart-types';
   import { currencyFormatter, periodFormatter } from '$lib/utils/formatters';
   import { TrendingDown, TrendingUp } from '$lib/components/icons';
-  import { colorUtils } from '$lib/utils/colors';
   import WidgetCard from './widget-card.svelte';
 
   let { config, data, onUpdate, onRemove, editMode = false }: WidgetProps = $props();
 
   const balanceHistory = data?.['balanceHistory'] ?? [];
   const period = $derived(config.settings?.['period'] ?? 'day');
-  const chartType = $derived(config.settings?.['chartType'] ?? 'line');
+  const chartType = $derived((config.settings?.['chartType'] ?? 'line') as ChartType);
 
   // Calculate trend
   const firstBalance = balanceHistory[0]?.balance ?? 0;
@@ -18,21 +19,8 @@
   const totalChange = lastBalance - firstBalance;
   const percentageChange = firstBalance !== 0 ? (totalChange / Math.abs(firstBalance)) * 100 : 0;
 
-  // Prepare chart data for ChartWrapper
-  const chartData = $derived(balanceHistory.map((item: any, index: number) => ({
-    x: chartType === 'bar' ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : index,
-    y: item.balance,
-    date: item.date // Keep original date for reference
-  })));
-
-  // Create series configuration for ChartWrapper
-  const series = $derived([{
-    data: chartData,
-    type: chartType as ChartType,
-    colorIndex: totalChange >= 0 ? 1 : 2, // Green for positive, red for negative
-    strokeWidth: 2,
-    fillOpacity: chartType === 'area' ? 0.3 : undefined
-  }]);
+  // Transform data using the new utility
+  const chartData = $derived(transformBalanceHistory(balanceHistory));
 
   // Find min/max for context
   const minBalance = Math.min(...balanceHistory.map((h: any) => h.balance));
@@ -82,16 +70,37 @@
 
       <!-- Chart -->
       <div class="h-32">
-        <ChartWrapper
+        <UnifiedChart
           data={chartData}
-          series={series}
-          x="x"
-          y="y"
-          yNice
-          padding={{ left: 80, right: 20, top: 10, bottom: chartType === 'bar' ? 40 : 10 }}
-          showBottomAxis={chartType === 'bar'}
-          showLeftAxis={config.size === 'large'}
-          rotateBottomLabels={chartType === 'bar'}
+          type={chartType}
+          styling={{
+            colors: [totalChange >= 0 ? 'hsl(var(--chart-2))' : 'hsl(var(--chart-3))'],
+            dimensions: {
+              padding: {
+                left: 80,
+                right: 20,
+                top: 10,
+                bottom: chartType === 'bar' ? 40 : 10
+              }
+            }
+          }}
+          axes={{
+            x: { 
+              show: chartType === 'bar',
+              rotateLabels: chartType === 'bar'
+            },
+            y: { 
+              show: config.size === 'large',
+              nice: true
+            }
+          }}
+          timeFiltering={{
+            enabled: true,
+            field: 'date'
+          }}
+          controls={{
+            show: false
+          }}
           class="h-full w-full"
         />
       </div>
