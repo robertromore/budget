@@ -26,6 +26,8 @@
     "dev:check": "./scripts/dev-check.sh",
     "dev:setup": "./scripts/setup-dev.sh",
     "generate:component": "./scripts/component-generator.sh",
+    "generate:widget": "node ./scripts/generate-widget.js",
+    "generate:chart": "node ./scripts/generate-chart.js",
     "analyze": "./scripts/analyze-bundle.sh",
     "perf:monitor": "./scripts/performance-monitor.sh",
     "db:generate": "bunx drizzle-kit generate",
@@ -36,7 +38,10 @@
     "db:refactory": "bun run ./src/lib/server/db/delete-all && bun run ./src/lib/server/db/factories",
     "db:drop": "bunx drizzle-kit drop && rm -f ./drizzle/db/sqlite.db",
     "db:restart": "bun run db:drop && bun run db:generate && bun run db:migrate && bun run db:seed",
-    "db:restart:test": "bun run db:drop && bun run db:generate && bun run db:migrate && bun run db:seed && bun run db:factory"
+    "db:restart:test": "bun run db:drop && bun run db:generate && bun run db:migrate && bun run db:seed && bun run db:factory",
+    "cache:help": "./scripts/context7-cache-help.sh",
+    "cache:status": "ls -la .context7-cache/",
+    "cache:clean": "rm -rf .context7-cache && echo 'Context7 cache cleared'"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.9.0",
