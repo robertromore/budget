@@ -44,6 +44,7 @@
     table = $bindable()
   }: Props = $props();
 
+  
   const dateFiltersState: DateFiltersState = DateFiltersState.get();
   const allDates = $derived(dateFiltersState?.dateFilters);
 

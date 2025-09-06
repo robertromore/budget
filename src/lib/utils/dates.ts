@@ -355,3 +355,36 @@ export function getLastWeekdayOfMonth(
     return null;
   }
 }
+
+/**
+ * Parses a date value from various formats into a DateValue
+ * @param dateValue - The date value to parse (string, Date, or DateValue)
+ * @returns DateValue or null if parsing fails
+ */
+export function parseDateValue(dateValue: any): DateValue | null {
+  if (!dateValue) return null;
+  
+  try {
+    // If it's already a DateValue, return it
+    if (dateValue && typeof dateValue === 'object' && 'year' in dateValue && 'month' in dateValue && 'day' in dateValue) {
+      return dateValue as DateValue;
+    }
+    
+    // If it's a string, try to parse it
+    if (typeof dateValue === 'string') {
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return null;
+      return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    }
+    
+    // If it's a Date object, convert it
+    if (dateValue instanceof Date) {
+      if (isNaN(dateValue.getTime())) return null;
+      return new CalendarDate(dateValue.getFullYear(), dateValue.getMonth() + 1, dateValue.getDate());
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
