@@ -1,8 +1,8 @@
 <script lang="ts">
   import { UnifiedChart } from '$lib/components/charts';
-  import { transformData } from '$lib/utils/chart-data';
-  import type { TransactionsFormat } from '$lib/types';
   import type { ChartType } from '$lib/components/charts/chart-types';
+  import type { TransactionsFormat } from '$lib/types';
+  import { transformData } from '$lib/utils/chart-data';
   import { createMonthlySpendingProcessor } from '../(analytics)/data-processors.svelte';
 
   interface Props {
@@ -12,7 +12,7 @@
   let { transactions }: Props = $props();
 
   const monthlySpendingProcessor = createMonthlySpendingProcessor(transactions);
-  
+
   // Transform data to ChartDataPoint format
   const chartData = $derived(
     transformData(monthlySpendingProcessor.data, {
@@ -33,18 +33,18 @@
       colors: 'auto'
     }}
     axes={{
-      x: { 
+      x: {
         title: 'Month',
         rotateLabels: true
       },
-      y: { 
+      y: {
         title: 'Spending Amount',
         nice: true
       }
     }}
     timeFiltering={{
       enabled: true,
-      field: 'month'
+      field: 'x'
     }}
     controls={{
       show: true,
