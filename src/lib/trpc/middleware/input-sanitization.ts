@@ -93,7 +93,7 @@ export const inputSanitization = t.middleware(async ({ next, input }) => {
     // Sanitize all string inputs
     const sanitizedInput = sanitizeObject(input);
     
-    return next({ input: sanitizedInput });
+    return next({ rawInput: sanitizedInput });
   } catch (error) {
     if (error instanceof TRPCError) {
       throw error;
@@ -113,7 +113,7 @@ export const inputSanitization = t.middleware(async ({ next, input }) => {
 export const strictInputSanitization = t.middleware(async ({ next, input }) => {
   try {
     if (input === null || input === undefined) {
-      return next({ input });
+      return next({ rawInput: input });
     }
     
     // Apply regular sanitization first
@@ -157,7 +157,7 @@ export const strictInputSanitization = t.middleware(async ({ next, input }) => {
       }
     }
     
-    return next({ input: sanitizedInput });
+    return next({ rawInput: sanitizedInput });
   } catch (error) {
     if (error instanceof TRPCError) {
       throw error;

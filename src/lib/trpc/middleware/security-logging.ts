@@ -9,7 +9,7 @@ interface SecurityLogEntry {
   timestamp: string;
   type: 'success' | 'error' | 'suspicious' | 'blocked';
   operation: string;
-  operationType: 'query' | 'mutation';
+  operationType: 'query' | 'mutation' | 'subscription';
   userAgent?: string;
   ip?: string;
   userId?: string;
@@ -111,8 +111,8 @@ function detectSuspiciousPatterns(input: any, operation: string): string[] {
  */
 function extractClientInfo(ctx: Context) {
   return {
-    userAgent: ctx.userAgent || 'unknown',
-    ip: ctx.ip || 'unknown',
+    userAgent: (ctx as any).userAgent || 'unknown',
+    ip: (ctx as any).ip || 'unknown',
     userId: (ctx as any).user?.id || 'anonymous',
   };
 }

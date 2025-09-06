@@ -4,7 +4,7 @@ interface PerformanceMetric {
   name: string;
   value: number;
   timestamp: number;
-  tags?: Record<string, string>;
+  tags?: Record<string, string> | undefined;
 }
 
 class PerformanceMonitor {
@@ -81,11 +81,11 @@ class PerformanceMonitor {
     return {
       count,
       avg: sum / count,
-      min: values[0],
-      max: values[count - 1],
-      p50: values[Math.floor(count * 0.5)],
-      p95: values[Math.floor(count * 0.95)],
-      p99: values[Math.floor(count * 0.99)],
+      min: values[0] ?? 0,
+      max: values[count - 1] ?? 0,
+      p50: values[Math.floor(count * 0.5)] ?? 0,
+      p95: values[Math.floor(count * 0.95)] ?? 0,
+      p99: values[Math.floor(count * 0.99)] ?? 0,
     };
   }
 
