@@ -99,7 +99,7 @@ export const requestLimits = (options: RequestLimitOptions = {}) => {
     try {
       // Skip for empty inputs
       if (!input) {
-        return next({ input });
+        return next({ rawInput: input });
       }
       
       // Check total input size
@@ -114,7 +114,7 @@ export const requestLimits = (options: RequestLimitOptions = {}) => {
       // Validate object structure
       validateObjectStructure(input, finalOptions);
       
-      return next({ input });
+      return next({ rawInput: input });
     } catch (error) {
       if (error instanceof TRPCError) {
         throw error;

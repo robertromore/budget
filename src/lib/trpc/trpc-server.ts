@@ -9,7 +9,6 @@ import type {
 import { resolveHTTPResponse, type ResponseMeta } from "@trpc/server/http";
 import type { TRPCResponse } from "@trpc/server/rpc";
 import { serialize, type CookieSerializeOptions } from "cookie";
-import type { ValidRoute } from "trpc-sveltekit";
 
 /**
  * Create a SvelteKit handle function for tRPC requests.
@@ -35,7 +34,7 @@ export function createTRPCHandle<Router extends AnyRouter, URL extends string>({
    * The tRPC api endpoint URL.
    * @default '/trpc'
    */
-  url?: ValidRoute<URL>;
+  url?: string;
 
   /**
    * A function that returns the tRPC context.
@@ -80,7 +79,7 @@ export function createTRPCHandle<Router extends AnyRouter, URL extends string>({
         method: request.method,
         headers: request.headers,
         query: event.url.searchParams,
-        body: await request.text(),
+        body: request.body,
       };
 
       // Using the default `event.setHeaders` and `event.cookies` will not work
@@ -120,7 +119,7 @@ export function createTRPCHandle<Router extends AnyRouter, URL extends string>({
         req,
         path: event.url.pathname.substring(url.length + 1),
         createContext: async () => createContext?.(event),
-        responseMeta,
+        ...(responseMeta && { responseMeta }),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: onError as any,
       });
