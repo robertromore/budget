@@ -1,7 +1,8 @@
 import type { TransactionsFormat } from '$lib/types';
+import { CalendarDate } from '@internationalized/date';
 
 export function createMonthlySpendingProcessor(transactions: TransactionsFormat[]) {
-  let processMonthlySpending = $state<Array<{ month: string; amount: number }>>([]);
+  let processMonthlySpending = $state<Array<{ month: CalendarDate; amount: number }>>([]);
   
   $effect(() => {
     if (!transactions?.length) {
@@ -9,19 +10,31 @@ export function createMonthlySpendingProcessor(transactions: TransactionsFormat[
       return;
     }
     
-    const monthlyData: Record<string, number> = {};
+    const monthlyData: Record<string, { amount: number; date: CalendarDate }> = {};
     
     transactions.forEach((t) => {
       if (t.amount < 0) {
-        const dateObject = t.date.toDate ? t.date.toDate() : new Date(t.date.toString());
-        const month = dateObject.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-        monthlyData[month] = (monthlyData[month] || 0) + Math.abs(t.amount);
+        const dateObject = t.date.toDate ? t.date.toDate('UTC') : new Date(t.date.toString() || Date.now());
+        const year = dateObject.getFullYear();
+        const month = dateObject.getMonth() + 1; // 1-based month
+        const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+        
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = {
+            amount: 0,
+            date: new CalendarDate(year, month, 1) // First day of month
+          };
+        }
+        monthlyData[monthKey].amount += Math.abs(t.amount);
       }
     });
 
     processMonthlySpending = Object.entries(monthlyData)
-      .map(([month, amount]) => ({ month, amount }))
-      .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+      .map(([_, data]) => ({ 
+        month: data.date,
+        amount: data.amount
+      }))
+      .sort((a, b) => a.month.compare(b.month));
   });
 
   return {
@@ -41,7 +54,7 @@ export function createIncomeVsExpensesProcessor(transactions: TransactionsFormat
     const monthlyData: Record<string, { income: number; expenses: number }> = {};
     
     transactions.forEach(t => {
-      const dateObject = t.date.toDate ? t.date.toDate() : new Date(t.date.toString());
+      const dateObject = t.date.toDate ? t.date.toDate('UTC') : new Date(t.date.toString() || Date.now());
       const year = dateObject.getFullYear();
       const month = String(dateObject.getMonth() + 1).padStart(2, '0');
       const monthKey = `${year}-${month}`;
