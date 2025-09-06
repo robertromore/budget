@@ -34,6 +34,16 @@
 
   --widget-active: hsl(217 91% 60%);
 
+  /* Chart colors */
+  --chart-1: hsl(142 76% 36%); /* Green for income */
+  --chart-2: hsl(0 84% 60%); /* Red for expenses */
+  --chart-3: hsl(217 91% 60%); /* Blue */
+  --chart-4: hsl(38 92% 50%); /* Orange */
+  --chart-5: hsl(280 100% 70%); /* Purple */
+
+  --success: hsl(142 76% 36%);
+  --warning: hsl(38 92% 50%);
+
   --radius: 0.5rem;
 }
 
@@ -67,6 +77,16 @@
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 
   --widget-active: hsl(217 91% 60%);
+
+  /* Chart colors (dark mode) */
+  --chart-1: hsl(142 70% 45%); /* Green for income (darker) */
+  --chart-2: hsl(0 70% 55%); /* Red for expenses (darker) */
+  --chart-3: hsl(217 80% 65%); /* Blue (darker) */
+  --chart-4: hsl(38 85% 55%); /* Orange (darker) */
+  --chart-5: hsl(280 90% 75%); /* Purple (darker) */
+
+  --success: hsl(142 70% 45%);
+  --warning: hsl(38 85% 55%);
 }
 
 @theme inline {

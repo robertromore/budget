@@ -120,6 +120,31 @@ This is a SvelteKit budget management application with:
 - **Lint**: `bun run lint` (if available)
 - **Type check**: `bun run typecheck` (if available)
 
+## Documentation and Research Standards
+
+**ALWAYS use the Context7 MCP server for up-to-date library documentation and code examples.**
+
+### When to Use Context7
+
+- When working with unfamiliar libraries or frameworks
+- When debugging implementation issues with third-party packages
+- When looking for code examples or best practices
+- When checking for breaking changes between library versions
+- When exploring new features or APIs
+
+### Context7 Usage Pattern
+
+1. **Resolve Library ID**: Use `mcp__context7__resolve-library-id` to find the correct library identifier
+2. **Get Documentation**: Use `mcp__context7__get-library-docs` with specific topics for targeted information
+3. **Apply Knowledge**: Use the retrieved documentation to implement solutions following current best practices
+
+### Context7 Benefits
+
+- Access to up-to-date library documentation and examples
+- Comprehensive code snippets showing real-world usage
+- Version-specific information and migration guides
+- Reduces guesswork and ensures current best practices
+
 ## Form Handling Standards
 
 **ALWAYS use SvelteKit Superforms for form handling and validation.**
@@ -185,6 +210,30 @@ export const actions = {
 - Consistent with modern JavaScript/TypeScript standards
 - Better performance characteristics
 - Cleaner syntax for method definitions
+
+## Svelte 5 Standards
+
+**ALWAYS use Svelte 5 runes mode patterns and avoid deprecated features.**
+
+### Component Usage
+
+- ✅ `<MyComponent class="styles"></MyComponent>` - Use proper opening/closing tags
+- ❌ `<MyComponent class="styles" />` - Avoid self-closing syntax for components
+- ✅ `<dynamicComponent class="styles"></dynamicComponent>` - Components are dynamic by default
+- ❌ `<svelte:component this={dynamicComponent} />` - Deprecated in Svelte 5
+
+### Dynamic Component Patterns
+
+- ✅ `<analytic.icon class="h-4 w-4"></analytic.icon>` - Direct component access
+- ✅ `<icon class="h-12 w-12"></icon>` - Variable component usage
+- ❌ `<svelte:component this={analytic.icon} />` - Deprecated pattern
+
+### Svelte 5 Benefits
+
+- Components are dynamic by default, no need for `svelte:component`
+- Cleaner syntax with proper component closing tags
+- Better TypeScript integration and type safety
+- Improved performance with runes mode
 
 ## Error Handling and Validation
 
@@ -776,6 +825,166 @@ INSERT INTO "transaction" (account_id, amount, category_id, status, date, notes)
 - **Rich visualizations**: Professional charts with theme support
 - **Responsive design**: Works across device sizes
 - **Data-driven**: Comprehensive financial metrics and trends
+
+## Chart System Architecture
+
+**ALWAYS use global chart type definitions and implement proper period filtering for dynamic, user-friendly chart interfaces.**
+
+### Core Chart Components
+
+The chart system provides a flexible, reusable architecture for data visualization:
+
+#### Component Structure
+
+- **ChartWrapper** (`src/lib/components/charts/chart-wrapper.svelte`): Main container with controls and period filtering
+- **ChartRenderer** (`src/lib/components/charts/chart-renderer.svelte`): LayerChart integration and visualization logic
+- **ChartTypeSelector** (`src/lib/components/charts/chart-type-selector.svelte`): Dropdown for switching chart types with icons
+- **ChartPeriodControls** (`src/lib/components/charts/chart-period-controls.svelte`): Time period filtering buttons
+
+#### Global Chart Type System
+
+```typescript
+// All chart types defined globally in chart-types.ts
+export const ALL_CHART_TYPES: ChartTypeGroup[] = [
+  {
+    label: 'Line & Area',
+    options: [
+      { value: 'line', label: 'Line Chart', icon: LineChart, description: 'Connected points showing trends' },
+      { value: 'area', label: 'Area Chart', icon: TrendingUp, description: 'Filled area under the line' }
+    ]
+  },
+  // Additional groups...
+];
+```
+
+### Chart Implementation Patterns
+
+#### Using Global Chart Types
+
+**✅ Always use global definitions:**
+
+```typescript
+import { ALL_CHART_TYPES } from '$lib/components/charts/chart-types';
+
+// Filter for supported chart types
+const availableChartTypes = $derived(() => {
+  const supportedTypes = ['bar', 'line', 'area'];
+  return ALL_CHART_TYPES.flatMap(group => 
+    group.options.filter(option => supportedTypes.includes(option.value))
+  );
+});
+```
+
+**❌ Never define chart types locally:**
+
+```typescript
+// DON'T DO THIS - icons will be missing
+const availableChartTypes = [
+  { value: 'bar', label: 'Bar Chart', icon: null, description: '...' }
+];
+```
+
+#### Period Filtering Implementation
+
+**✅ Use dynamic period generation:**
+
+```typescript
+import { generatePeriodOptions, filterDataByPeriod } from '$lib/utils/chart-periods';
+
+// Generate periods based on actual data
+const availablePeriods = $derived.by(() => {
+  if (!enablePeriodFiltering) return [];
+  return generatePeriodOptions(data, dateField);
+});
+
+// Filter data reactively
+const filteredData = $derived.by(() => {
+  if (!enablePeriodFiltering) return data;
+  return filterDataByPeriod(data, dateField, currentPeriod);
+});
+```
+
+### Period Filtering System
+
+The period filtering system provides intelligent time-based data filtering:
+
+#### Key Utilities (`src/lib/utils/chart-periods.ts`)
+
+- **`generatePeriodOptions()`**: Analyzes data to create appropriate time periods
+- **`filterDataByPeriod()`**: Filters arrays based on date fields and period keys
+- **`getPeriodStartDate()`**: Converts period keys to DateValue objects
+
+#### Automatic Period Generation
+
+The system automatically generates meaningful periods based on data span:
+
+- **Datasets < 6 months**: All Time only
+- **Datasets 6+ months**: All Time, Last 3 Months
+- **Datasets 12+ months**: All Time, Last 3/6 Months  
+- **Datasets 18+ months**: All Time, Last 3/6/12 Months
+- **Current year data**: Adds "Year to Date" option
+
+### Chart Type Selector with Icons
+
+#### Icon Integration
+
+**✅ Proper icon display in both trigger and dropdown:**
+
+```svelte
+<!-- Trigger button shows selected chart type with icon -->
+<Select.Trigger>
+  <div class="flex items-center gap-2">
+    {#if selectedChartTypeOption()}
+      {@const option = selectedChartTypeOption()!}
+      <option.icon class="h-4 w-4" />
+      <span>{option.label}</span>
+    {/if}
+  </div>
+</Select.Trigger>
+
+<!-- Dropdown options show all available types with icons -->
+<Select.Item>
+  <div class="flex items-center gap-2">
+    <option.icon class="h-4 w-4" />
+    <div class="flex flex-col">
+      <span>{option.label}</span>
+      <span class="text-xs text-muted-foreground">{option.description}</span>
+    </div>
+  </div>
+</Select.Item>
+```
+
+### Date Handling Standards
+
+**ALWAYS use @internationalized/date library for all date operations:**
+
+```typescript
+import { CalendarDate, type DateValue } from "@internationalized/date";
+import { parseDateValue, currentDate } from "$lib/utils/dates";
+
+// Parse dates consistently
+const itemDate = parseDateValue(item[dateField]);
+if (itemDate && itemDate.compare(startDate) >= 0) {
+  // Process filtered data
+}
+```
+
+### Chart System Benefits
+
+- **Consistent UX**: All charts use the same controls and visual patterns
+- **Global Icon System**: Icons defined once, used everywhere with full type safety
+- **Intelligent Period Filtering**: Automatically generates appropriate time periods based on data
+- **LayerChart Integration**: Professional visualizations with comprehensive chart type support
+- **Reactive Data Flow**: Real-time updates when users change chart types or time periods
+- **Accessibility**: Full keyboard navigation and screen reader support
+
+### Chart Development Guidelines
+
+1. **Always import global chart types** - Never define chart icons locally
+2. **Use derived values for period filtering** - Reactive data filtering with $derived.by()
+3. **Implement both chart and period controls** - Complete user control over visualization
+4. **Handle empty states gracefully** - Show appropriate messages when no data available
+5. **Use consistent styling** - Follow theme variables and design system patterns
 
 ---
 
