@@ -30,7 +30,7 @@
 {#if chartData.length > 0}
   <UnifiedChart
     data={chartData}
-    type="area"
+    type="line"
     styling={{
       colors: 'auto'
     }}
@@ -42,6 +42,13 @@
       y: {
         title: 'Spending Amount',
         nice: true
+      }
+    }}
+    annotations={{
+      type: 'labels',
+      labels: {
+        show: true,
+        placement: 'outside'
       }
     }}
     timeFiltering={{

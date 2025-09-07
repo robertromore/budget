@@ -3,6 +3,7 @@
   import type { TransactionsFormat } from '$lib/types';
   import { createTopPayeesProcessor } from '../(analytics)/data-processors.svelte';
   import { transformData } from '$lib/utils/chart-data';
+  import { chartFormatters } from '$lib/utils/chart-formatters';
 
   interface Props {
     transactions: TransactionsFormat[];
@@ -19,6 +20,13 @@
       y: 'total'
     })
   );
+
+  // Calculate average payee amount for rules
+  const averagePayeeAmount = $derived(() => {
+    if (chartData.length === 0) return 0;
+    const total = chartData.reduce((sum, d) => sum + (typeof d.y === 'number' ? d.y : 0), 0);
+    return Math.round(total / chartData.length);
+  });
 </script>
 
 {#if chartData.length > 0}
@@ -43,6 +51,19 @@
       availableTypes: ['bar', 'line', 'area'],
       allowTypeChange: true,
       allowPeriodChange: false
+    }}
+    annotations={{
+      type: 'labels',
+      labels: {
+        show: true,
+        format: chartFormatters.currencySmart,
+        position: 'auto',
+        class: 'fill-foreground text-xs font-medium'
+      },
+      rules: {
+        show: false,
+        values: [averagePayeeAmount()]
+      }
     }}
     class="h-full w-full"
   />

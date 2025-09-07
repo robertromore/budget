@@ -18,6 +18,7 @@ import {
   DEFAULT_INTERACTIONS_CONFIG,
   DEFAULT_TIME_FILTERING_CONFIG,
   DEFAULT_CONTROLS_CONFIG,
+  DEFAULT_ANNOTATIONS_CONFIG,
   CHART_TYPE_DEFAULTS
 } from './chart-config';
 import type { ChartType } from './chart-types';
@@ -52,16 +53,22 @@ function resolveColors(
   chartType: ChartType
 ): string[] {
   if (Array.isArray(colorConfig)) {
-    return colorConfig.map(color => {
-      // Convert named colors to CSS variables
+    return colorConfig.map((color, index) => {
+      // Convert named colors to resolved HSL strings for LayerChart compatibility
       switch (color) {
-        case 'primary': return 'hsl(var(--primary))';
-        case 'secondary': return 'hsl(var(--secondary))';
-        case 'success': return 'hsl(var(--success))';
-        case 'destructive': return 'hsl(var(--destructive))';
-        case 'warning': return 'hsl(var(--warning))';
-        case 'muted': return 'hsl(var(--muted))';
-        default: return color;
+        case 'primary': return colorUtils.getChartColor(0); // Blue
+        case 'secondary': return colorUtils.getChartColor(4); // Orange
+        case 'success': return colorUtils.getChartColor(1); // Green
+        case 'destructive': return colorUtils.getChartColor(2); // Red
+        case 'warning': return colorUtils.getChartColor(3); // Yellow
+        case 'muted': return colorUtils.getChartColor(7); // Gray/Pink
+        default: 
+          // If it's already an HSL string or hex color, return it
+          if (color.startsWith('hsl(') || color.startsWith('#') || color.startsWith('rgb(')) {
+            return color;
+          }
+          // Otherwise use indexed chart colors
+          return colorUtils.getChartColor(index);
       }
     });
   }
@@ -142,6 +149,11 @@ export function resolveChartConfig(
     props.controls || {}
   );
   
+  const annotations = deepMerge(
+    deepMerge(DEFAULT_ANNOTATIONS_CONFIG, typeDefaults.annotations || {}),
+    props.annotations || {}
+  );
+  
   // Resolve colors
   const resolvedColors = resolveColors(styling.colors, props.data, chartType);
   
@@ -153,6 +165,7 @@ export function resolveChartConfig(
     interactions,
     timeFiltering,
     controls,
+    annotations,
     resolvedColors
   };
 }

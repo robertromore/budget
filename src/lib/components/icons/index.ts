@@ -43,6 +43,12 @@ import {
   Activity,
   Target,
   Zap,
+  BarChart3,
+  CircleDot,
+  Network,
+  Globe,
+  TreePine,
+  Package,
   
   // Widget icons
   Clock,
@@ -128,6 +134,12 @@ export {
   Activity,
   Target,
   Zap,
+  BarChart3,
+  CircleDot,
+  Network,
+  Globe,
+  TreePine,
+  Package,
   Calendar as CalendarIcon,
   
   // Widget icons

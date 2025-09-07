@@ -1,20 +1,21 @@
 <script lang="ts">
   import { aggregateForPerformance } from '$lib/utils/chart-data';
   import { filterDataByPeriod, generatePeriodOptions } from '$lib/utils/chart-periods';
+  import {
+    getDataAccessorsForChartType,
+    isCircularChart,
+    requiresHierarchicalData,
+    supportsMultiSeries,
+    transformDataForChartType
+  } from '$lib/utils/chart-transformers';
   import { scaleBand } from 'd3-scale';
   import {
-    Area,
     Axis,
-    Bars,
-    Calendar,
     Chart,
     Grid,
-    Hull,
+    Labels,
     Legend,
-    Pie,
-    Points,
     Rule,
-    Spline,
     Svg
   } from 'layerchart';
   import type { ChartDataPoint, ChartDataValidation, UnifiedChartProps } from './chart-config';
@@ -22,6 +23,7 @@
   import ChartTypeSelector from './chart-type-selector.svelte';
   import { ALL_CHART_TYPES } from './chart-types';
   import { resolveChartConfig, validateChartData } from './config-resolver';
+  import DynamicChartRenderer from './dynamic-chart-renderer.svelte';
 
   // Props interface
   let {
@@ -32,6 +34,7 @@
     interactions,
     timeFiltering,
     controls,
+    annotations,
     yFields,
     yFieldLabels,
     colorField,
@@ -75,6 +78,15 @@
   // Generate period options for time filtering
   const availablePeriods = $derived.by(() => {
     if (!config.timeFiltering.enabled) return [];
+
+    // Only use transaction-based filtering for radial charts (pie/arc) that need it
+    const hasSourceData = config.timeFiltering.sourceData && config.timeFiltering.sourceData.length > 0;
+
+    if (isChartCircular && hasSourceData) {
+      return generatePeriodOptions(config.timeFiltering.sourceData, config.timeFiltering.sourceDateField);
+    }
+
+    // Default: use chart data for all other charts
     return generatePeriodOptions(config.data, config.timeFiltering.field);
   });
 
@@ -87,6 +99,26 @@
   // Filter data based on current period
   const filteredData = $derived.by(() => {
     if (!config.timeFiltering.enabled) return config.data;
+
+    // Only use transaction-based filtering for radial charts (pie/arc)
+    const hasSourceData = config.timeFiltering.sourceData &&
+                        config.timeFiltering.sourceData.length > 0 &&
+                        config.timeFiltering.sourceProcessor;
+
+    if (isChartCircular && hasSourceData) {
+      // Filter source data first, then process (for radial charts only)
+      const filteredSourceData = currentPeriod === 0 ? config.timeFiltering.sourceData :
+        filterDataByPeriod(
+          config.timeFiltering.sourceData,
+          config.timeFiltering.sourceDateField,
+          currentPeriod
+        );
+
+      // Process filtered source data into chart data
+      return config.timeFiltering.sourceProcessor(filteredSourceData);
+    }
+
+    // Default: filter chart data directly (for all linear charts: bar, line, area, etc.)
     return filterDataByPeriod(
       config.data,
       config.timeFiltering.field,
@@ -105,16 +137,16 @@
     );
   });
 
-  // Detect if chart is circular (pie/arc)
-  const isCircularChart = $derived(
-    currentChartType === 'pie' || currentChartType === 'arc'
-  );
+  // Detect chart characteristics using utilities
+  const isChartCircular = $derived(isCircularChart(currentChartType));
+  const isChartHierarchical = $derived(requiresHierarchicalData(currentChartType));
+  const chartSupportsMultiSeries = $derived(supportsMultiSeries(currentChartType));
 
   // Create band scale for bar charts with string x values
   const bandScale = $derived.by(() => {
-    if (currentChartType === 'bar' && filteredData.length > 0) {
+    if (currentChartType === 'bar' && chartData.length > 0 && !isChartCircular) {
       const scale = scaleBand()
-        .domain(filteredData.map(d => String(d.x)))
+        .domain(chartData.map(d => String(d.x)))
         .range([0, 1]) // LayerChart expects normalized range
         .paddingInner(0.1)
         .paddingOuter(0.05);
@@ -125,57 +157,64 @@
 
   // Detect if this is multi-series data
   const isMultiSeries = $derived.by(() => {
-    return yFields && yFields.length > 1 && 
-           filteredData.some(item => item.series || item.category);
+    return chartSupportsMultiSeries && yFields && yFields.length > 1 && filteredData.some(item => item.series || item.category);
   });
 
   // Get unique series for multi-series charts
   const seriesList = $derived.by(() => {
     if (!isMultiSeries) return [];
-    
+
     const uniqueSeries = new Set<string>();
-    filteredData.forEach(item => {
+    chartData.forEach(item => {
       if (item.series) uniqueSeries.add(item.series);
       else if (item.category) uniqueSeries.add(item.category);
     });
-    
+
     return Array.from(uniqueSeries);
   });
 
-  // Prepare chart data for LayerChart with performance optimization
+  // Prepare series data for multi-series charts
+  const seriesData = $derived.by(() => {
+    if (!isMultiSeries) return [];
+
+    return seriesList.map(series =>
+      chartData.filter(d =>
+        (d.series === series) || (d.category === series)
+      )
+    );
+  });
+
+  // Get data accessors for the current chart type
+  const dataAccessors = $derived(getDataAccessorsForChartType(currentChartType));
+
+  // Prepare chart data for LayerChart with performance optimization and transformation
   const chartData = $derived.by(() => {
+    // Ensure we have valid data before processing
+    if (!filteredData || filteredData.length === 0) {
+      return [];
+    }
+
     // Performance optimization: aggregate large datasets
     const dataToProcess = filteredData.length > 500
       ? aggregateForPerformance(filteredData, 500)
       : filteredData;
 
-    if (isCircularChart) {
-      // For circular charts, group by category if available
-      const groupedData = dataToProcess.reduce((acc, item) => {
-        const category = item.category || String(item.x);
-        const existing = acc.find(d => d.x === category);
+    // Transform data based on chart type requirements
+    const transformed = transformDataForChartType(dataToProcess, currentChartType, {
+      categoryField: categoryField || 'category',
+      valueField: 'y',
+      seriesField: 'series',
+      colors: config.resolvedColors
+    });
 
-        if (existing) {
-          existing.y += item.y;
-        } else {
-          acc.push({ x: category, y: item.y, category });
-        }
-
-        return acc;
-      }, [] as ChartDataPoint[]);
-
-      return groupedData;
-    }
-
-    // Special handling for bar charts with Date x-axis values
-    if (currentChartType === 'bar' && dataToProcess.length > 0) {
-      // Only convert to strings for categorical bar charts, preserve Date objects for time series
+    // Special handling for bar charts with Date x-axis values (preserve existing logic)
+    if (currentChartType === 'bar' && dataToProcess.length > 0 && !isChartCircular) {
       const firstItem = dataToProcess[0];
-      const shouldConvertToCategories = firstItem && 
-        firstItem.x instanceof Date && 
+      const shouldConvertToCategories = firstItem &&
+        firstItem.x instanceof Date &&
         dataToProcess.length <= 12 && // Only for small datasets that should be categorical
         !isMultiSeries; // Don't convert for multi-series time charts
-      
+
       if (shouldConvertToCategories) {
         return dataToProcess.map(item => ({
           ...item,
@@ -186,7 +225,7 @@
       }
     }
 
-    return dataToProcess;
+    return Array.isArray(transformed) ? transformed : [transformed];
   });
 
   // Error handling for invalid data with enhanced messaging
@@ -212,17 +251,6 @@
     hasRenderError = false;
   });
 
-  // Chart render error boundary simulation
-  $effect(() => {
-    try {
-      if (chartData.length === 0 && data.length > 0) {
-        throw new Error('Chart data processing failed');
-      }
-    } catch (error) {
-      hasRenderError = true;
-      console.error('Chart render error:', error);
-    }
-  });
 </script>
 
 <div class={className} role="img"
@@ -232,10 +260,9 @@
     <!-- Render error state -->
     <div class="flex items-center justify-center h-full text-center p-6">
       <div class="space-y-4">
-        <div class="text-4xl">⚠️</div>
         <h3 class="text-lg font-semibold text-destructive">Chart Rendering Error</h3>
         <p class="text-sm text-muted-foreground">
-          The chart encountered an error during rendering. Please try again or contact support.
+          The chart encountered an error during rendering. Please try again.
         </p>
       </div>
     </div>
@@ -276,18 +303,28 @@
 
     <Chart
       data={chartData}
-      {...(isCircularChart ? {} : { x: "x", y: "y" })}
-      {...(isMultiSeries ? { r: "series" } : {})}
-      {...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {})}
-      {...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {})}
-      {...(config.axes.y.domain && (config.axes.y.domain[0] !== null || config.axes.y.domain[1] !== null) ? { yDomain: config.axes.y.domain } : {})}
-      {...(config.axes.x.domain && (config.axes.x.domain[0] !== null || config.axes.x.domain[1] !== null) ? { xDomain: config.axes.x.domain } : {})}
+      {...(!isChartCircular && !isChartHierarchical ? {
+        x: dataAccessors.x || "x",
+        y: dataAccessors.y || "y",
+        ...(isMultiSeries ? { r: "series" } : {}),
+        ...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {}),
+        ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {}),
+        ...(config.axes.y.domain && (config.axes.y.domain[0] !== null || config.axes.y.domain[1] !== null) ? { yDomain: config.axes.y.domain } : {}),
+        ...(config.axes.x.domain && (config.axes.x.domain[0] !== null || config.axes.x.domain[1] !== null) ? { xDomain: config.axes.x.domain } : {}),
+        ...(bandScale ? { xScale: bandScale } : {})
+      } : {
+        // For circular and hierarchical charts, use appropriate data accessors
+        ...dataAccessors,
+        // For pie charts, configure color scale with cRange
+        ...(isChartCircular && config.resolvedColors.length > 0 ? {
+          cRange: config.resolvedColors
+        } : {})
+      })}
       {...(config.styling.dimensions.padding ? { padding: config.styling.dimensions.padding } : {})}
-      {...(bandScale ? { xScale: bandScale } : {})}
     >
       <Svg>
-        <!-- Axes for non-circular charts -->
-        {#if !isCircularChart}
+        <!-- Axes for non-circular and non-hierarchical charts -->
+        {#if !isChartCircular && !isChartHierarchical}
           {#if config.axes.y.show}
             <Axis placement="left" />
           {/if}
@@ -300,116 +337,94 @@
               {...(chartData.length > 8 ? {
                 ticks: chartData.filter((_, i) =>
                   i % Math.ceil(chartData.length / 4) === 0
-                ).map(d => d.x)
+                ).map(d =>
+                  (typeof d === 'object' && 'x' in d) ? d.x : ''
+                )
               } : {})}
             />
           {/if}
         {/if}
 
-        <!-- Render chart based on current type -->
-        {#if isMultiSeries && (currentChartType === 'bar' || currentChartType === 'area' || currentChartType === 'line' || currentChartType === 'scatter')}
-          <!-- Multi-series rendering -->
-          {#each seriesList as series, index}
-            {@const seriesData = chartData.filter(d => (d.series || d.category) === series)}
-            {@const seriesColor = config.resolvedColors[index % config.resolvedColors.length] || 'hsl(var(--primary))'}
-            
-            {#if currentChartType === 'bar'}
-              <Bars
-                data={seriesData}
-                fill={seriesColor}
-                padding={4}
-              />
-            {:else if currentChartType === 'area'}
-              <Area
-                data={seriesData}
-                fill={seriesColor}
-                fillOpacity={0.6}
-              />
-            {:else if currentChartType === 'line'}
-              <Spline
-                data={seriesData}
-                stroke={seriesColor}
-                strokeWidth={2}
-                fill="none"
-              />
-            {:else if currentChartType === 'scatter'}
-              <Points
-                data={seriesData}
-                fill={seriesColor}
-                r={4}
-              />
-            {/if}
-          {/each}
-        {:else if currentChartType === 'bar'}
-          <Bars
-            fill={config.resolvedColors[0] || 'hsl(var(--primary))'}
-            padding={4}
-          />
-        {:else if currentChartType === 'area'}
-          <Area
-            fill={config.resolvedColors[0] || 'hsl(var(--primary))'}
-            fillOpacity={0.6}
-          />
-        {:else if currentChartType === 'line'}
-          <Spline
-            stroke={config.resolvedColors[0] || 'hsl(var(--primary))'}
-            strokeWidth={2}
-            fill="none"
-          />
-        {:else if currentChartType === 'scatter'}
-          <Points
-            fill={config.resolvedColors[0] || 'hsl(var(--primary))'}
-            r={4}
-          />
-        {:else if currentChartType === 'pie'}
-          <Pie
-            innerRadius={0}
-            outerRadius={Math.min(
-              (config.styling.dimensions.padding?.top || 0) + 100,
-              120
-            )}
-          />
-        {:else if currentChartType === 'arc'}
-          <Pie
-            innerRadius={40}
-            outerRadius={Math.min(
-              (config.styling.dimensions.padding?.top || 0) + 100,
-              120
-            )}
-          />
-        {:else if currentChartType === 'threshold'}
-          <Spline
-            stroke={config.resolvedColors[0] || 'hsl(var(--primary))'}
-            strokeWidth={2}
-            fill="none"
-          />
+        <!-- Dynamic chart rendering using the component registry -->
+        <DynamicChartRenderer
+          chartType={currentChartType}
+          data={chartData}
+          config={{
+            padding: currentChartType === 'bar' ? 4 : undefined,
+            fillOpacity: currentChartType === 'area' ? 0.6 : undefined,
+            strokeWidth: ['line', 'spline', 'threshold'].includes(currentChartType) ? 2 : undefined,
+            fill: ['line', 'spline'].includes(currentChartType) ? 'none' : undefined,
+            stroke: ['line', 'spline'].includes(currentChartType) ? (config.resolvedColors[0] || 'hsl(var(--chart-1))') : undefined,
+            r: currentChartType === 'scatter' ? 4 : undefined,
+            innerRadius: currentChartType === 'arc' ? 40 : undefined,
+            outerRadius: currentChartType === 'arc' ? 150 : undefined,
+            start: currentChartType === 'calendar' && chartData.length > 0 ? new Date(Math.min(...chartData.map(d => {
+              if (typeof d === 'object' && 'x' in d) {
+                if (d.x instanceof Date) return d.x.getTime();
+                if (typeof d.x === 'string') return new Date(d.x).getTime();
+                if (typeof d.x === 'number') return d.x;
+              }
+              return new Date().getTime();
+            }))) : undefined,
+            end: currentChartType === 'calendar' && chartData.length > 0 ? new Date(Math.max(...chartData.map(d => {
+              if (typeof d === 'object' && 'x' in d) {
+                if (d.x instanceof Date) return d.x.getTime();
+                if (typeof d.x === 'string') return new Date(d.x).getTime();
+                if (typeof d.x === 'number') return d.x;
+              }
+              return new Date().getTime();
+            }))) : undefined
+          }}
+          seriesData={seriesData}
+          seriesColors={config.resolvedColors}
+          isMultiSeries={isMultiSeries || false}
+        />
+
+        <!-- Additional components for specific chart types -->
+        {#if currentChartType === 'threshold'}
           <Rule />
-        {:else if currentChartType === 'hull'}
-          <Points
-            fill={config.resolvedColors[0] || 'hsl(var(--primary))'}
-            r={4}
-          />
-          <Hull />
-        {:else if currentChartType === 'calendar'}
-          <Calendar
-            start={new Date(Math.min(...chartData.map(d => {
-              if (d.x instanceof Date) return d.x.getTime();
-              if (typeof d.x === 'string') return new Date(d.x).getTime();
-              if (typeof d.x === 'number') return d.x;
-              return new Date().getTime();
-            })))}
-            end={new Date(Math.max(...chartData.map(d => {
-              if (d.x instanceof Date) return d.x.getTime();
-              if (typeof d.x === 'string') return new Date(d.x).getTime();
-              if (typeof d.x === 'number') return d.x;
-              return new Date().getTime();
-            })))}
-          />
         {/if}
 
         <!-- Grid -->
         {#if config.styling.grid.show || config.styling.grid.horizontal}
           <Grid {...(config.styling.grid.opacity !== undefined ? { opacity: config.styling.grid.opacity } : {})} />
+        {/if}
+
+        <!-- Annotations: Rules and Labels -->
+        {#if config.annotations.type === 'rules' || config.annotations.type === 'both'}
+          {#if config.annotations.rules.show && config.annotations.rules.values && config.annotations.rules.values.length > 0}
+            <!-- Rules: Reference lines for thresholds, averages, etc. -->
+            {#each config.annotations.rules.values as ruleValue}
+              <Rule
+                y={ruleValue}
+                {...(config.annotations.rules.class ? { class: config.annotations.rules.class } : {})}
+                {...(config.annotations.rules.strokeWidth ? { strokeWidth: config.annotations.rules.strokeWidth } : {})}
+                {...(config.annotations.rules.strokeDasharray ? { style: `stroke-dasharray: ${config.annotations.rules.strokeDasharray}` } : {})}
+              />
+            {/each}
+          {/if}
+        {/if}
+
+        {#if config.annotations.type === 'labels' || config.annotations.type === 'both'}
+          {#if config.annotations.labels.show && !isCircularChart}
+            <!-- Labels: Data point value labels for non-circular charts -->
+            <Labels
+              data={chartData}
+              x="x"
+              y="y"
+              format={config.annotations.labels.format || ((d) => {
+                // Handle both object and primitive data formats
+                if (typeof d === 'object' && d !== null) {
+                  // For object data, look for common value fields
+                  return String(d.y ?? d.value ?? d.amount ?? d);
+                }
+                return String(d);
+              })}
+              {...(config.annotations.labels.class ? { class: config.annotations.labels.class } : {})}
+              offset={config.annotations.labels.offset?.y || 4}
+              placement={config.annotations.labels.placement || 'outside'}
+            />
+          {/if}
         {/if}
       </Svg>
 

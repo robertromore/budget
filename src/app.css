@@ -44,6 +44,12 @@
   --success: hsl(142 76% 36%);
   --warning: hsl(38 92% 50%);
 
+  /* LayerChart CSS variables for Labels and other components */
+  --surface-100: hsl(0 0% 100%);
+  --surface-200: hsl(240 4.8% 95.9%);
+  --surface-300: hsl(240 5.9% 90%);
+  --surface-content: hsl(240 10% 3.9%);
+
   --radius: 0.5rem;
 }
 
@@ -75,6 +81,12 @@
   --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+
+  /* LayerChart CSS variables for Labels and other components (dark mode) */
+  --surface-100: hsl(240 10% 3.9%);
+  --surface-200: hsl(240 3.7% 15.9%);
+  --surface-300: hsl(240 3.7% 25%);
+  --surface-content: hsl(0 0% 98%);
 
   --widget-active: hsl(217 91% 60%);
 
