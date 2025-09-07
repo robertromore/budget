@@ -14,6 +14,35 @@ export interface ChartDataPoint {
   metadata?: Record<string, any>;
 }
 
+// Extended validation interface for enhanced data quality checks
+export interface ChartDataValidation {
+  isValid: boolean;
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
+  dataQuality: DataQualityMetrics;
+}
+
+export interface ValidationError {
+  type: 'missing_field' | 'invalid_type' | 'invalid_value' | 'structure_error';
+  message: string;
+  dataIndex?: number;
+  field?: string;
+}
+
+export interface ValidationWarning {
+  type: 'inconsistent_types' | 'missing_optional' | 'data_quality' | 'performance';
+  message: string;
+  suggestion?: string;
+}
+
+export interface DataQualityMetrics {
+  totalPoints: number;
+  missingValues: number;
+  duplicateKeys: number;
+  dataTypes: { x: string[], y: string[] };
+  valueRanges: { x: [any, any], y: [number, number] };
+}
+
 // Axis configuration
 export interface AxisConfig {
   show?: boolean;
@@ -63,7 +92,7 @@ export interface StylingConfig {
 // Interaction configuration
 export interface TooltipConfig {
   enabled?: boolean;
-  format?: (dataPoint: ChartDataPoint) => string;
+  format?: 'default' | 'currency' | 'percentage' | ((dataPoint: ChartDataPoint) => string);
 }
 
 export interface ZoomConfig {
@@ -71,9 +100,19 @@ export interface ZoomConfig {
   resetButton?: boolean;
 }
 
+export interface PanConfig {
+  enabled?: boolean;
+}
+
+export interface BrushConfig {
+  enabled?: boolean;
+}
+
 export interface InteractionConfig {
   tooltip?: TooltipConfig;
   zoom?: ZoomConfig;
+  pan?: PanConfig;
+  brush?: BrushConfig;
 }
 
 // Time filtering configuration
@@ -164,11 +203,17 @@ export const DEFAULT_STYLING_CONFIG: Required<StylingConfig> = {
 export const DEFAULT_INTERACTIONS_CONFIG: Required<InteractionConfig> = {
   tooltip: {
     enabled: true,
-    format: (dataPoint: ChartDataPoint) => `${dataPoint.x}: ${dataPoint.y}`
+    format: 'default'
   },
   zoom: {
     enabled: false,
     resetButton: true
+  },
+  pan: {
+    enabled: false
+  },
+  brush: {
+    enabled: false
   }
 };
 

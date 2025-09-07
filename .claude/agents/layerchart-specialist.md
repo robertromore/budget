@@ -1,3 +1,9 @@
+---
+name: layerchart-specialist
+description: Use this agent when working with LayerChart components, data visualization, chart system architecture, performance optimization, and chart debugging. Expert in all LayerChart components, chart type implementation, period filtering, theme integration, and interactive features.
+color: blue
+---
+
 # LayerChart Specialist Agent
 
 **Agent ID:** `layerchart-specialist`
@@ -23,6 +29,7 @@
 - **Performance Optimization**: Chart rendering performance, data processing, memory management
 - **Debugging**: LayerChart rendering issues, data binding problems, scale and axis issues
 - **Data Transformations**: Converting raw data to chart-ready formats, handling time series, categories
+- **Date Handling Standards**: ALWAYS use @internationalized/date DateValue objects and project utility functions
 
 ### Implementation Patterns
 - **Current Codebase Patterns**: Follows established patterns from:
@@ -47,6 +54,7 @@
 - **Utility Functions**: 
   - `src/lib/utils/colors.ts` - Color utilities and theme integration
   - `src/lib/utils/chart-periods.ts` - Period filtering utilities
+  - `src/lib/utils/dates.ts` - DateValue utilities and conversion functions
 - **UI Components**: `src/lib/components/ui/chart/` - shadcn-style chart components
 
 ## Core Capabilities
@@ -109,3 +117,101 @@ This agent understands that the chart system follows a three-layer architecture:
 3. **Widget Integration** - Dashboard widgets using charts
 
 The agent ensures all implementations follow established patterns, maintain theme consistency, handle edge cases gracefully, and integrate seamlessly with the existing architecture.
+
+## Date Handling Standards
+
+**ALWAYS use DateValue objects and project utility functions for date operations:**
+
+### Required Imports
+```typescript
+import { type DateValue, CalendarDate } from "@internationalized/date";
+import { parseDateValue, ensureDateValue, dateValueToJSDate, currentDate } from "$lib/utils/dates";
+```
+
+### Date Conversion Patterns
+
+**✅ Converting various formats to DateValue:**
+```typescript
+// Parse from any format (string, Date, DateValue) - can return null
+const dateValue = parseDateValue(inputDate);
+
+// Ensure valid DateValue with fallback to current date
+const safeDate = ensureDateValue(inputDate);
+```
+
+**✅ Converting DateValue to JavaScript Date for LayerChart:**
+```typescript
+// For LayerChart compatibility (requires JS Date objects)
+const jsDate = dateValueToJSDate(dateValue);
+// or with timezone
+const jsDate = dateValue.toDate(timezone);
+```
+
+**✅ Creating DateValue from components:**
+```typescript
+// Direct construction
+const dateValue = new CalendarDate(2024, 1, 15);
+
+// From current date
+import { currentDate } from "$lib/utils/dates";
+const today = currentDate; // Already a DateValue
+```
+
+### Chart Data Transformation Pattern
+
+**✅ Preferred pattern for chart data preparation:**
+```typescript
+const chartData = rawData.map(item => ({
+  x: dateValueToJSDate(ensureDateValue(item.date)), // Convert to JS Date for LayerChart
+  y: item.value,
+  category: item.category
+}));
+```
+
+**✅ Period filtering with DateValue:**
+```typescript
+import { filterDataByPeriod } from "$lib/utils/chart-periods";
+
+// Filter using DateValue-aware utilities
+const filteredData = filterDataByPeriod(data, dateField, periodKey);
+```
+
+### Anti-Patterns to Avoid
+
+**❌ Don't use raw Date constructors:**
+```typescript
+// BAD
+const date = new Date(dateString);
+const chartPoint = { x: date, y: value };
+```
+
+**❌ Don't mix date types without conversion:**
+```typescript
+// BAD - mixing DateValue and JS Date
+const mixed = someDate instanceof Date ? someDate : parseDateValue(someDate);
+```
+
+**❌ Don't ignore null returns from parseDateValue:**
+```typescript
+// BAD - parseDateValue can return null
+const date = parseDateValue(input); // Could be null
+const chartData = { x: date.toDate(), y: value }; // Will crash
+```
+
+### Date Validation in Charts
+
+**✅ Always validate dates before chart rendering:**
+```typescript
+const validatedData = rawData
+  .map(item => ({
+    ...item,
+    parsedDate: parseDateValue(item.date)
+  }))
+  .filter(item => item.parsedDate !== null)
+  .map(item => ({
+    x: dateValueToJSDate(item.parsedDate!),
+    y: item.value
+  }));
+```
+
+This ensures consistent, reliable date handling across all chart components while maintaining compatibility with LayerChart's requirements for JavaScript Date objects.

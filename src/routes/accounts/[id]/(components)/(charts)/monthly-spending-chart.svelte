@@ -3,6 +3,7 @@
   import type { ChartType } from '$lib/components/charts/chart-types';
   import type { TransactionsFormat } from '$lib/types';
   import { transformData } from '$lib/utils/chart-data';
+  import { dateValueToJSDate } from '$lib/utils/dates';
   import { createMonthlySpendingProcessor } from '../(analytics)/data-processors.svelte';
 
   interface Props {
@@ -16,10 +17,11 @@
   // Transform data to ChartDataPoint format
   const chartData = $derived(
     transformData(monthlySpendingProcessor.data, {
-      x: 'month',
+      x: (item) => dateValueToJSDate(item.month), // Convert CalendarDate to JS Date
       y: 'amount'
     })
   );
+
 
   // Available chart types for spending data
   const availableChartTypes: ChartType[] = ['area', 'bar', 'line', 'scatter'];

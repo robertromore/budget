@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { ChartWrapper } from '$lib/components/charts';
-  import type { WidgetProps, ChartType } from '$lib/types/widgets';
+  import { UnifiedChart } from '$lib/components/charts';
+  import { transformData } from '$lib/utils/chart-data';
+  import type { WidgetProps } from '$lib/types/widgets';
+  import type { ChartType } from '$lib/components/charts/chart-types';
   import { colorUtils } from '$lib/utils/colors';
   import WidgetCard from './widget-card.svelte';
 
@@ -8,19 +10,7 @@
 
   const categoryData = data?.['categoryBreakdown'] ?? [];
   const period = $derived(config.settings?.['period'] ?? 'month');
-  const chartType = $derived(config.settings?.['chartType'] ?? 'pie');
-
-  // Debug logging to see what data we're getting
-  $effect(() => {
-    console.log('[Category Pie Chart] Chart data prepared:', {
-      categoryData: categoryData.length,
-      chartType,
-      totalAmount,
-      chartData: chartData.length,
-      series: series.length,
-      seriesData: series[0]?.data?.length
-    });
-  });
+  const chartType = $derived((config.settings?.['chartType'] ?? 'pie') as ChartType);
 
   // Calculate total and percentages
   const totalAmount = categoryData.reduce((sum: number, cat: any) => sum + cat.amount, 0);
@@ -29,31 +19,21 @@
     percentage: totalAmount > 0 ? (cat.amount / totalAmount) * 100 : 0
   }));
 
-  // Prepare chart data based on chart type
-  const chartData = $derived(categoriesWithPercentage.map((cat: any, index: number) => {
-    if (chartType === 'bar') {
-      return { x: cat.name, y: cat.amount };
-    }
-    // LayerChart Pie component expects just 'value' and 'color' properties
-    return {
-      value: cat.amount,
-      color: cat.color || colorUtils.getChartColor(index),
-      // Keep additional data in metadata for tooltips/legends
+  // Transform data to ChartDataPoint format
+  const chartData = $derived(
+    transformData(categoriesWithPercentage, {
+      x: 'name',
+      y: 'amount',
+      category: 'name'
+    }).map((point, index) => ({
+      ...point,
       metadata: {
-        name: cat.name,
-        percentage: cat.percentage
+        ...point.metadata,
+        percentage: categoriesWithPercentage[index]?.percentage || 0,
+        color: categoriesWithPercentage[index]?.color || colorUtils.getChartColor(index)
       }
-    };
-  }));
-
-  // Create series configuration
-  const series = $derived([{
-    data: chartData,
-    type: chartType as ChartType,
-    innerRadius: chartType === 'arc' ? 30 : 0,
-    outerRadius: chartType === 'pie' || chartType === 'arc' ? 80 : 100,
-    colorIndex: 0
-  }]);
+    }))
+  );
 
 </script>
 
@@ -74,13 +54,21 @@
       {#if config.size === 'small'}
         <!-- Small: Chart only with summary -->
         <div class="h-32 w-32 mx-auto">
-          <ChartWrapper
+          <UnifiedChart
             data={chartData}
-            {series}
-            {...(chartType === 'bar' && { x: 'x', y: 'y' })}
-            showLeftAxis={chartType === 'bar'}
-            showBottomAxis={chartType === 'bar'}
-            {...(chartType !== 'bar' && { padding: { left: 0, right: 0, top: 0, bottom: 0 } })}
+            type={chartType}
+            styling={{
+              colors: 'auto',
+              legend: { show: false },
+              dimensions: { padding: { top: 5, right: 5, bottom: 5, left: 5 } }
+            }}
+            axes={{
+              x: { show: chartType === 'bar' },
+              y: { show: chartType === 'bar' }
+            }}
+            controls={{
+              show: false
+            }}
             class="h-full w-full"
           />
         </div>
@@ -91,13 +79,21 @@
         <!-- Medium: Chart with compact legend below -->
         <div class="space-y-3">
           <div class="h-40 w-40 mx-auto">
-            <ChartWrapper
+            <UnifiedChart
               data={chartData}
-              {series}
-              {...(chartType === 'bar' && { x: 'x', y: 'y' })}
-              showLeftAxis={chartType === 'bar'}
-              showBottomAxis={chartType === 'bar'}
-              {...(chartType !== 'bar' && { padding: { left: 0, right: 0, top: 0, bottom: 0 } })}
+              type={chartType}
+              styling={{
+                colors: 'auto',
+                legend: { show: false },
+                dimensions: { padding: { top: 10, right: 10, bottom: 10, left: 10 } }
+              }}
+              axes={{
+                x: { show: chartType === 'bar' },
+                y: { show: chartType === 'bar' }
+              }}
+              controls={{
+                show: false
+              }}
               class="h-full w-full"
             />
           </div>
@@ -128,13 +124,21 @@
         <!-- Large: Side-by-side layout -->
         <div class="grid grid-cols-2 gap-4">
           <div class="h-48 w-48">
-            <ChartWrapper
+            <UnifiedChart
               data={chartData}
-              {series}
-              {...(chartType === 'bar' && { x: 'x', y: 'y' })}
-              showLeftAxis={chartType === 'bar'}
-              showBottomAxis={chartType === 'bar'}
-              {...(chartType !== 'bar' && { padding: { left: 0, right: 0, top: 0, bottom: 0 } })}
+              type={chartType}
+              styling={{
+                colors: 'auto',
+                legend: { show: false },
+                dimensions: { padding: { top: 20, right: 20, bottom: 20, left: 20 } }
+              }}
+              axes={{
+                x: { show: chartType === 'bar' },
+                y: { show: chartType === 'bar', nice: true }
+              }}
+              controls={{
+                show: false
+              }}
               class="h-full w-full"
             />
           </div>

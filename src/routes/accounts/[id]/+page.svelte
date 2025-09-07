@@ -383,27 +383,20 @@
       <Tabs.Trigger value="analytics" class="px-6 font-medium">Analytics</Tabs.Trigger>
     </Tabs.List>
     
-    <!-- Dashboard Tab Content -->
+    <!-- Dashboard Tab Content (temporarily disabled for monthly spending chart testing) -->
     <Tabs.Content value="dashboard" class="space-y-4">
-      {#if summary && !isLoading && activeTab === 'dashboard'}
-        <WidgetDashboard {accountId} {transactions} {summary} />
-      {:else if isLoading}
-        <!-- Dashboard Loading Skeleton -->
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <div class="h-6 w-24 bg-muted animate-pulse rounded"></div>
-            <div class="h-8 w-20 bg-muted animate-pulse rounded"></div>
-          </div>
-          <div class="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
-            {#each Array(5) as _, i}
-              <div class="rounded-lg border p-4">
-                <div class="h-4 w-20 bg-muted animate-pulse rounded mb-2" style="animation-delay: {i * 100}ms"></div>
-                <div class="h-6 w-16 bg-muted animate-pulse rounded" style="animation-delay: {i * 100 + 50}ms"></div>
-              </div>
-            {/each}
-          </div>
+      <div class="rounded-lg border border-blue-200 bg-blue-50 p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+          <h2 class="text-lg font-semibold text-blue-900">Dashboard Temporarily Disabled</h2>
         </div>
-      {/if}
+        <p class="text-blue-800 mb-3">
+          Widget dashboard is currently disabled for focused testing of the monthly spending trends chart.
+        </p>
+        <p class="text-blue-700 text-sm">
+          Switch to the <strong>Analytics</strong> tab to test the isolated monthly spending chart functionality.
+        </p>
+      </div>
     </Tabs.Content>
     
     <!-- Transactions Tab Content -->

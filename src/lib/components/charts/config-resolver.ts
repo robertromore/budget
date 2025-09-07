@@ -6,7 +6,11 @@
 import type { 
   UnifiedChartProps, 
   ResolvedChartConfig,
-  ChartDataPoint
+  ChartDataPoint,
+  ChartDataValidation,
+  ValidationError,
+  ValidationWarning,
+  DataQualityMetrics
 } from './chart-config';
 import {
   DEFAULT_AXES_CONFIG,
@@ -145,10 +149,7 @@ export function resolveChartConfig(
     type: chartType,
     data: props.data,
     axes,
-    styling: {
-      ...styling,
-      colors: resolvedColors
-    },
+    styling,
     interactions,
     timeFiltering,
     controls,
@@ -157,51 +158,162 @@ export function resolveChartConfig(
 }
 
 /**
- * Validates chart data and provides helpful error messages
+ * Enhanced chart data validation with comprehensive quality metrics
  */
-export function validateChartData(data: ChartDataPoint[]): {
-  isValid: boolean;
-  errors: string[];
-  warnings: string[];
-} {
-  const errors: string[] = [];
-  const warnings: string[] = [];
+export function validateChartData(data: ChartDataPoint[]): ChartDataValidation {
+  const errors: ValidationError[] = [];
+  const warnings: ValidationWarning[] = [];
   
+  // Basic structure validation
   if (!Array.isArray(data)) {
-    errors.push('Data must be an array');
-    return { isValid: false, errors, warnings };
+    errors.push({
+      type: 'structure_error',
+      message: 'Data must be an array'
+    });
+    
+    return {
+      isValid: false,
+      errors,
+      warnings,
+      dataQuality: {
+        totalPoints: 0,
+        missingValues: 0,
+        duplicateKeys: 0,
+        dataTypes: { x: [], y: [] },
+        valueRanges: { x: [null, null], y: [0, 0] }
+      }
+    };
   }
   
   if (data.length === 0) {
-    warnings.push('Data array is empty');
-    return { isValid: true, errors, warnings };
+    warnings.push({
+      type: 'data_quality',
+      message: 'Data array is empty',
+      suggestion: 'Provide at least one data point for visualization'
+    });
+    
+    return {
+      isValid: true,
+      errors,
+      warnings,
+      dataQuality: {
+        totalPoints: 0,
+        missingValues: 0,
+        duplicateKeys: 0,
+        dataTypes: { x: [], y: [] },
+        valueRanges: { x: [null, null], y: [0, 0] }
+      }
+    };
   }
   
-  // Check required fields
+  // Data quality metrics
+  let missingValues = 0;
+  const xValues: any[] = [];
+  const yValues: number[] = [];
+  const xTypes = new Set<string>();
+  const yTypes = new Set<string>();
+  
+  // Validate each data point
   data.forEach((item, index) => {
+    // Check required x field
     if (item.x === undefined || item.x === null) {
-      errors.push(`Data point at index ${index} is missing required 'x' field`);
+      errors.push({
+        type: 'missing_field',
+        message: `Data point at index ${index} is missing required 'x' field`,
+        dataIndex: index,
+        field: 'x'
+      });
+      missingValues++;
+    } else {
+      xValues.push(item.x);
+      xTypes.add(typeof item.x);
     }
     
+    // Check required y field
     if (item.y === undefined || item.y === null) {
-      errors.push(`Data point at index ${index} is missing required 'y' field`);
-    }
-    
-    if (typeof item.y !== 'number') {
-      errors.push(`Data point at index ${index} has non-numeric 'y' value: ${item.y}`);
+      errors.push({
+        type: 'missing_field',
+        message: `Data point at index ${index} is missing required 'y' field`,
+        dataIndex: index,
+        field: 'y'
+      });
+      missingValues++;
+    } else if (typeof item.y !== 'number') {
+      errors.push({
+        type: 'invalid_type',
+        message: `Data point at index ${index} has non-numeric 'y' value: ${item.y}`,
+        dataIndex: index,
+        field: 'y'
+      });
+    } else {
+      yValues.push(item.y);
+      yTypes.add(typeof item.y);
+      
+      // Check for invalid numbers
+      if (!isFinite(item.y)) {
+        errors.push({
+          type: 'invalid_value',
+          message: `Data point at index ${index} has invalid 'y' value (NaN or Infinity): ${item.y}`,
+          dataIndex: index,
+          field: 'y'
+        });
+      }
     }
   });
   
-  // Check for consistency warnings
-  const xTypes = [...new Set(data.map(d => typeof d.x))];
-  if (xTypes.length > 1) {
-    warnings.push(`Inconsistent x-axis data types found: ${xTypes.join(', ')}`);
+  // Calculate duplicate keys
+  const uniqueKeys = new Set(xValues.map(x => String(x)));
+  const duplicateKeys = xValues.length - uniqueKeys.size;
+  
+  // Generate warnings for data quality issues
+  if (xTypes.size > 1) {
+    warnings.push({
+      type: 'inconsistent_types',
+      message: `Inconsistent x-axis data types found: ${Array.from(xTypes).join(', ')}`,
+      suggestion: 'Consider converting all x-axis values to a consistent type'
+    });
   }
+  
+  if (duplicateKeys > 0) {
+    warnings.push({
+      type: 'data_quality',
+      message: `Found ${duplicateKeys} duplicate x-axis values`,
+      suggestion: 'Aggregate duplicate entries or ensure unique keys for better visualization'
+    });
+  }
+  
+  if (data.length > 1000) {
+    warnings.push({
+      type: 'performance',
+      message: `Large dataset detected (${data.length} points)`,
+      suggestion: 'Consider data aggregation or pagination for better performance'
+    });
+  }
+  
+  // Calculate value ranges
+  const xRange: [any, any] = xValues.length > 0 
+    ? [Math.min(...xValues.filter(x => typeof x === 'number')), Math.max(...xValues.filter(x => typeof x === 'number'))]
+    : [null, null];
+  const yRange: [number, number] = yValues.length > 0 
+    ? [Math.min(...yValues), Math.max(...yValues)]
+    : [0, 0];
+  
+  const dataQuality: DataQualityMetrics = {
+    totalPoints: data.length,
+    missingValues,
+    duplicateKeys,
+    dataTypes: {
+      x: Array.from(xTypes),
+      y: Array.from(yTypes)
+    },
+    valueRanges: { x: xRange, y: yRange }
+  };
   
   return {
     isValid: errors.length === 0,
     errors,
-    warnings
+    warnings,
+    dataQuality
   };
 }
 

@@ -19,51 +19,50 @@
   // Current selection
   let selectedAnalytic = $state('monthly-spending');
   const currentAnalytic = $derived(analyticsTypes.find(a => a.id === selectedAnalytic));
+  const primaryAnalytic = $derived(analyticsTypes[0]);
+  const PrimaryIcon = $derived(primaryAnalytic.icon);
 </script>
 
 <div class="space-y-6">
   <!-- Analytics Selector -->
   <div class="flex flex-col gap-4">
     <div>
-      <h2 class="text-2xl font-bold tracking-tight">Account Analytics</h2>
+      <h2 class="text-2xl font-bold tracking-tight">Analytics</h2>
       <p class="text-muted-foreground">
-        Select an analysis type to visualize your account data
+        Detailed analysis of your spending patterns and financial trends
       </p>
     </div>
 
     <!-- Analytics Selection Grid -->
-    <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       {#each analyticsTypes as analytic}
         <Button
           variant={selectedAnalytic === analytic.id ? "default" : "outline"}
-          class="h-auto p-3 justify-start"
+          size="sm"
+          class="h-auto p-3 flex-col items-start gap-2"
           onclick={() => selectedAnalytic = analytic.id}
         >
-          <div class="flex items-center gap-3">
-            <analytic.icon class="h-4 w-4 shrink-0"></analytic.icon>
-            <div class="text-left">
-              <div class="font-medium text-sm">{analytic.title}</div>
-              <div class="text-xs text-muted-foreground">{analytic.category}</div>
-            </div>
+          <div class="flex items-center gap-2 w-full">
+            <analytic.icon class="h-4 w-4" />
+            <span class="text-xs font-medium">{analytic.title}</span>
           </div>
+          <span class="text-xs opacity-75 text-left">{analytic.description}</span>
         </Button>
       {/each}
     </div>
   </div>
 
-  <!-- Chart Display -->
+  <!-- Selected Analytics Chart -->
   {#if currentAnalytic}
     <Card.Root>
       <Card.Header>
-        <Card.Title class="flex items-center gap-2">
-          <currentAnalytic.icon class="h-5 w-5"></currentAnalytic.icon>
-          {currentAnalytic.title}
-        </Card.Title>
-        <Card.Description>
-          {currentAnalytic.description}
-        </Card.Description>
+        <div class="flex items-center gap-2">
+          <currentAnalytic.icon class="h-5 w-5" />
+          <Card.Title>{currentAnalytic.title}</Card.Title>
+        </div>
+        <Card.Description>{currentAnalytic.description}</Card.Description>
       </Card.Header>
-      <Card.Content>
+      <Card.Content class="p-6">
         <div class="h-[400px] w-full">
           {#if selectedAnalytic === 'monthly-spending'}
             <MonthlySpendingChart {transactions} />
@@ -73,12 +72,8 @@
             <CategorySpendingChart {transactions} />
           {:else if selectedAnalytic === 'top-payees'}
             <TopPayeesChart {transactions} />
-          {:else if currentAnalytic}
-            <PlaceholderChart 
-              title={currentAnalytic.title} 
-              description={currentAnalytic.description}
-              icon={currentAnalytic.icon} 
-            />
+          {:else}
+            <PlaceholderChart type={selectedAnalytic} />
           {/if}
         </div>
       </Card.Content>
