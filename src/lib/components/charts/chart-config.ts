@@ -13,6 +13,7 @@ export interface ChartDataPoint {
   y: number;
   category?: string | undefined;
   series?: string | undefined;
+  key?: string | undefined; // Unique identifier for Svelte's keyed each blocks
   metadata?: Record<string, any>;
 }
 
@@ -161,6 +162,8 @@ export interface ControlsConfig {
   allowPeriodChange?: boolean;
   allowColorChange?: boolean;
   allowCurveChange?: boolean;
+  allowViewModeChange?: boolean;
+  availableViewModes?: ('combined' | 'side-by-side' | 'stacked' | 'overlaid')[];
 }
 
 // Main unified chart props interface
@@ -184,6 +187,15 @@ export interface UnifiedChartProps {
   yFieldLabels?: string[];
   colorField?: string;
   categoryField?: string;
+  
+  // View mode support
+  viewMode?: 'combined' | 'side-by-side' | 'stacked' | 'overlaid';
+  viewModeData?: {
+    combined?: ChartDataPoint[];
+    income?: ChartDataPoint[];
+    expenses?: ChartDataPoint[];
+    [key: string]: ChartDataPoint[] | undefined;
+  };
   
   // Data validation options
   suppressDuplicateWarnings?: boolean;
@@ -275,7 +287,9 @@ export const DEFAULT_CONTROLS_CONFIG: Required<ControlsConfig> = {
   allowTypeChange: true,
   allowPeriodChange: true,
   allowColorChange: false,
-  allowCurveChange: false
+  allowCurveChange: false,
+  allowViewModeChange: false,
+  availableViewModes: ['combined', 'side-by-side']
 };
 
 export const DEFAULT_ANNOTATIONS_CONFIG: Required<AnnotationConfig> = {
