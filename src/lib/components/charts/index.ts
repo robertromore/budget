@@ -1,52 +1,50 @@
 // Unified chart system (Phase 1 & 2 complete)
-export { default as UnifiedChart } from './unified-chart.svelte';
-
-// Specialized chart components
-export { default as IncomeExpensesChart } from './income-expenses-chart.svelte';
+export {default as UnifiedChart} from "./unified-chart.svelte";
 
 // Chart control components (used by UnifiedChart)
-export { default as ChartTypeSelector } from './chart-type-selector.svelte';
-export { default as ChartPeriodControls } from './chart-period-controls.svelte';
+export {default as ChartPeriodControls} from "./chart-period-controls.svelte";
+export {default as ChartTypeSelector} from "./chart-type-selector.svelte";
 
 // No more legacy components - all functionality consolidated into UnifiedChart
 
 // Re-export layerchart components for direct usage when needed
 export {
-  Chart,
-  Svg,
-  Bars,
-  Area,
-  Spline,
-  Axis,
   Arc,
-  Points,
-  Pie,
+  Area,
+  Axis,
+  Bars,
+  Calendar,
+  Chart,
+  Grid,
   Hull,
   Labels,
-  Rule,
-  Grid,
   Legend,
+  Line,
+  Pie,
+  Points,
+  Rule,
+  Spline,
+  Svg,
   Threshold,
-  Calendar
-} from 'layerchart';
+} from "layerchart";
 
 // Export chart utilities
-export { colorUtils } from '$lib/utils/colors';
+export {colorUtils} from "$lib/utils/colors";
 
 // Export chart types and constants
-export * from './chart-types';
+export * from "./chart-types";
 
 // Export new configuration system
-export * from './chart-config';
-export * from './config-resolver';
+export * from "./chart-config";
+export * from "./config-resolver";
 
 // Chart utilities
-export * from '$lib/utils/chart-data';
+export * from "$lib/utils/chart-data";
 
 // Legacy ChartSeries interface (for backward compatibility)
 export interface ChartSeries {
   data: any[];
-  type: 'bar' | 'area' | 'line' | 'scatter' | 'pie' | 'arc' | 'threshold' | 'calendar' | 'hull';
+  type: "bar" | "area" | "line" | "scatter" | "pie" | "arc" | "threshold" | "calendar" | "hull";
   color?: string;
   colorIndex?: number;
   fill?: string;
@@ -69,7 +67,7 @@ export interface ChartConfig {
   series: ChartSeries[];
   x: string;
   y?: string | string[];
-  padding?: { left?: number; right?: number; top?: number; bottom?: number };
+  padding?: {left?: number; right?: number; top?: number; bottom?: number};
   yDomain?: [number | null, number | null];
   yNice?: boolean;
   showLeftAxis?: boolean;

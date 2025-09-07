@@ -5,6 +5,7 @@
 
 import type { ChartType } from './chart-types';
 import type { DateValue } from '@internationalized/date';
+import { chartFormatters } from '$lib/utils/chart-formatters';
 
 // Standardized data point interface
 export interface ChartDataPoint {
@@ -121,6 +122,35 @@ export interface TimeFilteringConfig {
   enabled?: boolean;
   field?: string;
   defaultPeriod?: string | number;
+  // For transaction-based filtering where data needs to be processed first
+  sourceData?: any[]; // Raw transaction/source data
+  sourceProcessor?: (sourceData: any[]) => ChartDataPoint[]; // Function to process source data
+  sourceDateField?: string; // Date field in source data
+}
+
+// Annotation configuration
+export interface LabelConfig {
+  show?: boolean;
+  format?: (datum: any) => string;
+  position?: 'top' | 'center' | 'auto';
+  placement?: 'inside' | 'outside' | 'center';
+  class?: string;
+  offset?: { x?: number; y?: number };
+}
+
+export interface RuleConfig {
+  show?: boolean;
+  values?: number[];
+  orientation?: 'horizontal' | 'vertical';
+  class?: string;
+  strokeWidth?: number;
+  strokeDasharray?: string;
+}
+
+export interface AnnotationConfig {
+  type?: 'labels' | 'rules' | 'both';
+  labels?: LabelConfig;
+  rules?: RuleConfig;
 }
 
 // Controls configuration
@@ -145,6 +175,7 @@ export interface UnifiedChartProps {
   interactions?: InteractionConfig;
   timeFiltering?: TimeFilteringConfig;
   controls?: ControlsConfig;
+  annotations?: AnnotationConfig;
   
   // Multi-series support
   yFields?: string[];
@@ -230,7 +261,10 @@ export const DEFAULT_INTERACTIONS_CONFIG: Required<InteractionConfig> = {
 export const DEFAULT_TIME_FILTERING_CONFIG: Required<TimeFilteringConfig> = {
   enabled: false,
   field: 'date',
-  defaultPeriod: 0 // All time
+  defaultPeriod: 0, // All time
+  sourceData: [],
+  sourceProcessor: (data) => data,
+  sourceDateField: 'date'
 };
 
 export const DEFAULT_CONTROLS_CONFIG: Required<ControlsConfig> = {
@@ -240,6 +274,32 @@ export const DEFAULT_CONTROLS_CONFIG: Required<ControlsConfig> = {
   allowPeriodChange: true
 };
 
+export const DEFAULT_ANNOTATIONS_CONFIG: Required<AnnotationConfig> = {
+  type: 'labels',
+  labels: {
+    show: true,
+    format: (datum: any) => {
+      // Extract the numeric value from the data object
+      const value = typeof datum === 'object' && datum !== null 
+        ? (datum.y ?? datum.value ?? datum.amount ?? 0)
+        : datum;
+      return chartFormatters.currency(Number(value) || 0);
+    },
+    position: 'auto',
+    placement: 'outside',
+    class: '',
+    offset: { x: 0, y: 0 }
+  },
+  rules: {
+    show: false,
+    values: [],
+    orientation: 'horizontal',
+    class: 'stroke-muted-foreground/50',
+    strokeWidth: 1,
+    strokeDasharray: '2 2'
+  }
+};
+
 // Configuration resolver utility type
 export type ResolvedChartConfig = {
   axes: Required<AxesConfig>;
@@ -247,6 +307,7 @@ export type ResolvedChartConfig = {
   interactions: Required<InteractionConfig>;
   timeFiltering: Required<TimeFilteringConfig>;
   controls: Required<ControlsConfig>;
+  annotations: Required<AnnotationConfig>;
 };
 
 // Smart defaults based on chart type
@@ -262,6 +323,11 @@ export const CHART_TYPE_DEFAULTS: Record<ChartType, Partial<UnifiedChartProps>> 
     }
   },
   area: {
+    styling: {
+      dimensions: { padding: { bottom: 60, left: 80 } }
+    }
+  },
+  spline: {
     styling: {
       dimensions: { padding: { bottom: 60, left: 80 } }
     }

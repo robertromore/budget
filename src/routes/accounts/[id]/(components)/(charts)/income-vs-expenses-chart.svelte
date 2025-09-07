@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { UnifiedChart, ChartPeriodControls } from '$lib/components/charts';
+  import { ChartPeriodControls, UnifiedChart } from '$lib/components/charts';
   import type { ChartType } from '$lib/components/charts/chart-types';
   import type { TransactionsFormat } from '$lib/types';
-  import { colorUtils } from '$lib/utils/colors';
   import { transformIncomeVsExpensesData } from '$lib/utils/chart-data';
-  import { generatePeriodOptions, filterDataByPeriod } from '$lib/utils/chart-periods';
+  import { filterDataByPeriod, generatePeriodOptions } from '$lib/utils/chart-periods';
+  import { colorUtils } from '$lib/utils/colors';
   import { dateValueToJSDate } from '$lib/utils/dates';
   import { createIncomeVsExpensesProcessor } from '../(analytics)/data-processors.svelte';
 
@@ -68,7 +68,7 @@
         <!-- View Mode Toggle -->
         <div class="flex items-center gap-2">
           <label for="view-mode-selector" class="text-sm font-medium">View:</label>
-          <select 
+          <select
             id="view-mode-selector"
             bind:value={viewMode}
             class="text-sm border rounded px-2 py-1 bg-background"
@@ -81,7 +81,7 @@
         <!-- Chart Type Selector -->
         <div class="flex items-center gap-2">
           <label for="chart-type-selector" class="text-sm font-medium">Chart Type:</label>
-          <select 
+          <select
             id="chart-type-selector"
             bind:value={currentChartType}
             class="text-sm border rounded px-2 py-1 bg-background"

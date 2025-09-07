@@ -32,6 +32,13 @@ export const analyticsTypes = [
     icon: Activity,
     category: "Time-Based",
   },
+  {
+    id: "category-spending",
+    title: "Spending by Category",
+    description: "Distribution of expenses by category",
+    icon: ChartPie,
+    category: "Category Analysis",
+  },
 ];
 
 // Full analytics types (temporarily disabled for focused testing)

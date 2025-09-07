@@ -1,7 +1,9 @@
 import { eq, and, isNull, ne } from "drizzle-orm";
+import { generateUniqueSlug as generateUniqueSlugGeneric } from "./generate-unique-slug";
 
 /**
- * Generates a unique slug by checking against existing records in a table
+ * Database-specific wrapper for generating unique slugs
+ * Uses the generic generateUniqueSlug function with database-specific logic
  * @param db - Database instance
  * @param tableName - Table name as string (e.g., 'accounts')
  * @param slugColumn - Column name for the slug field
@@ -9,7 +11,7 @@ import { eq, and, isNull, ne } from "drizzle-orm";
  * @param options - Additional options
  * @returns Promise<string> - A unique slug
  */
-export async function generateUniqueSlug(
+export async function generateUniqueSlugForDB(
   db: any,
   tableName: string,
   slugColumn: any,
@@ -22,8 +24,8 @@ export async function generateUniqueSlug(
 ): Promise<string> {
   const { excludeId, idColumn, deletedAtColumn } = options;
 
-  // Helper function to check if a slug exists
-  const slugExists = async (slug: string): Promise<boolean> => {
+  // Create a database-specific uniqueness checker
+  const isUnique = async (slug: string): Promise<boolean> => {
     const conditions = [eq(slugColumn, slug)];
     
     // Only check non-deleted records if deletedAtColumn is provided
@@ -40,22 +42,15 @@ export async function generateUniqueSlug(
       where: and(...conditions)
     });
     
-    return !!existing;
+    return !existing; // Return true if unique (no existing record found)
   };
 
-  // First check if the base slug is available
-  if (!(await slugExists(baseSlug))) {
-    return baseSlug;
-  }
-  
-  // If base slug exists, try with numbers appended
-  let counter = 1;
-  let uniqueSlug = `${baseSlug}-${counter}`;
-  
-  while (await slugExists(uniqueSlug)) {
-    counter++;
-    uniqueSlug = `${baseSlug}-${counter}`;
-  }
-  
-  return uniqueSlug;
+  // Use the generic slug generator with our database-specific checker
+  return generateUniqueSlugGeneric(baseSlug, isUnique);
 }
+
+/**
+ * @deprecated Use generateUniqueSlugForDB instead
+ * Kept for backward compatibility
+ */
+export const generateUniqueSlug = generateUniqueSlugForDB;

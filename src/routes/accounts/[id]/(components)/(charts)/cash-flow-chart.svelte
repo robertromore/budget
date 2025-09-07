@@ -3,10 +3,10 @@
   import type { ChartType } from '$lib/components/charts/chart-types';
   import type { TransactionsFormat } from '$lib/types';
   import { transformData } from '$lib/utils/chart-data';
-  import { dateValueToJSDate } from '$lib/utils/dates';
   import { colorUtils } from '$lib/utils/colors';
-  import { createCashFlowProcessor } from '../(analytics)/data-processors.svelte';
+  import { dateValueToJSDate } from '$lib/utils/dates';
   import { extent } from 'd3-array';
+  import { createCashFlowProcessor } from '../(analytics)/data-processors.svelte';
 
   interface Props {
     transactions: TransactionsFormat[];
@@ -36,7 +36,7 @@
   // Use semantic colors for cash flow visualization
   const chartColors = $derived(() => {
     const financialColors = colorUtils.getFinancialColors();
-    return cashFlowTrend() === 'positive' 
+    return cashFlowTrend() === 'positive'
       ? [financialColors.positive] // Green for positive cash flow
       : [financialColors.negative] // Red for negative cash flow
   });
@@ -89,6 +89,19 @@
         title: 'Net Cash Flow',
         nice: false,
         domain: chartDomains.yDomain
+      }
+    }}
+    annotations={{
+      type: 'both',
+      labels: {
+        show: true,
+        placement: 'outside'
+      },
+      rules: {
+        show: true,
+        values: [0], // Zero line for cash flow
+        strokeDasharray: '4 4',
+        class: 'stroke-muted-foreground/50'
       }
     }}
     timeFiltering={{
