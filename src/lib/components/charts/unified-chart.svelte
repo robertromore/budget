@@ -32,6 +32,11 @@
     interactions,
     timeFiltering,
     controls,
+    yFields,
+    yFieldLabels,
+    colorField,
+    categoryField,
+    suppressDuplicateWarnings = false,
     class: className = "h-full w-full"
   }: UnifiedChartProps = $props();
 
@@ -57,7 +62,9 @@
   });
 
   // Validate data
-  const validation: ChartDataValidation = $derived(validateChartData(data));
+  const validation: ChartDataValidation = $derived(
+    validateChartData(data, { suppressDuplicateWarnings })
+  );
 
   // Bindable chart type (for controls)
   let currentChartType = $state(type || 'bar');
@@ -116,6 +123,25 @@
     return undefined;
   });
 
+  // Detect if this is multi-series data
+  const isMultiSeries = $derived.by(() => {
+    return yFields && yFields.length > 1 && 
+           filteredData.some(item => item.series || item.category);
+  });
+
+  // Get unique series for multi-series charts
+  const seriesList = $derived.by(() => {
+    if (!isMultiSeries) return [];
+    
+    const uniqueSeries = new Set<string>();
+    filteredData.forEach(item => {
+      if (item.series) uniqueSeries.add(item.series);
+      else if (item.category) uniqueSeries.add(item.category);
+    });
+    
+    return Array.from(uniqueSeries);
+  });
+
   // Prepare chart data for LayerChart with performance optimization
   const chartData = $derived.by(() => {
     // Performance optimization: aggregate large datasets
@@ -167,7 +193,7 @@
       console.warn('Detailed warnings:', validation.warnings);
     }
 
-    if (validation.dataQuality.duplicateKeys > 0) {
+    if (validation.dataQuality.duplicateKeys > 0 && !suppressDuplicateWarnings) {
       console.warn(`Chart has ${validation.dataQuality.duplicateKeys} duplicate keys which may affect visualization`);
     }
   });
@@ -243,6 +269,7 @@
     <Chart
       data={chartData}
       {...(isCircularChart ? {} : { x: "x", y: "y" })}
+      {...(isMultiSeries ? { r: "series" } : {})}
       {...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {})}
       {...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {})}
       {...(config.axes.y.domain && (config.axes.y.domain[0] !== null || config.axes.y.domain[1] !== null) ? { yDomain: config.axes.y.domain } : {})}
@@ -272,7 +299,40 @@
         {/if}
 
         <!-- Render chart based on current type -->
-        {#if currentChartType === 'bar'}
+        {#if isMultiSeries && (currentChartType === 'bar' || currentChartType === 'area' || currentChartType === 'line' || currentChartType === 'scatter')}
+          <!-- Multi-series rendering -->
+          {#each seriesList as series, index}
+            {@const seriesData = chartData.filter(d => (d.series || d.category) === series)}
+            {@const seriesColor = config.resolvedColors[index % config.resolvedColors.length] || 'hsl(var(--primary))'}
+            
+            {#if currentChartType === 'bar'}
+              <Bars
+                data={seriesData}
+                fill={seriesColor}
+                padding={4}
+              />
+            {:else if currentChartType === 'area'}
+              <Area
+                data={seriesData}
+                fill={seriesColor}
+                fillOpacity={0.6}
+              />
+            {:else if currentChartType === 'line'}
+              <Spline
+                data={seriesData}
+                stroke={seriesColor}
+                strokeWidth={2}
+                fill="none"
+              />
+            {:else if currentChartType === 'scatter'}
+              <Points
+                data={seriesData}
+                fill={seriesColor}
+                r={4}
+              />
+            {/if}
+          {/each}
+        {:else if currentChartType === 'bar'}
           <Bars
             fill={config.resolvedColors[0] || 'hsl(var(--primary))'}
             padding={4}

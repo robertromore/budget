@@ -160,7 +160,10 @@ export function resolveChartConfig(
 /**
  * Enhanced chart data validation with comprehensive quality metrics
  */
-export function validateChartData(data: ChartDataPoint[]): ChartDataValidation {
+export function validateChartData(
+  data: ChartDataPoint[], 
+  options?: { suppressDuplicateWarnings?: boolean }
+): ChartDataValidation {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
   
@@ -274,7 +277,7 @@ export function validateChartData(data: ChartDataPoint[]): ChartDataValidation {
     });
   }
   
-  if (duplicateKeys > 0) {
+  if (duplicateKeys > 0 && !options?.suppressDuplicateWarnings) {
     warnings.push({
       type: 'data_quality',
       message: `Found ${duplicateKeys} duplicate x-axis values`,

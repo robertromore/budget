@@ -11,6 +11,7 @@ export interface ChartDataPoint {
   x: string | number | Date | DateValue;
   y: number;
   category?: string | undefined;
+  series?: string | undefined;
   metadata?: Record<string, any>;
 }
 
@@ -144,6 +145,15 @@ export interface UnifiedChartProps {
   interactions?: InteractionConfig;
   timeFiltering?: TimeFilteringConfig;
   controls?: ControlsConfig;
+  
+  // Multi-series support
+  yFields?: string[];
+  yFieldLabels?: string[];
+  colorField?: string;
+  categoryField?: string;
+  
+  // Data validation options
+  suppressDuplicateWarnings?: boolean;
   
   // Basic styling
   class?: string;

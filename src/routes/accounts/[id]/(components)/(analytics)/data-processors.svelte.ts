@@ -58,14 +58,14 @@ export function createIncomeVsExpensesProcessor(transactions: TransactionsFormat
 
     const monthlyData: Record<string, { income: number; expenses: number }> = {};
     
-    transactions.forEach(t => {
+    transactions.forEach((t) => {
       // Use parseDateValue for consistent date handling
       const parsedDate = parseDateValue(t.date);
       if (!parsedDate) return; // Skip invalid dates
       
       const year = parsedDate.year;
-      const month = String(parsedDate.month).padStart(2, '0');
-      const monthKey = `${year}-${month}`;
+      const month = parsedDate.month;
+      const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
       
       if (!monthlyData[monthKey]) monthlyData[monthKey] = { income: 0, expenses: 0 };
       
