@@ -154,3 +154,56 @@ export function createTopPayeesProcessor(transactions: TransactionsFormat[]) {
     get data() { return processTopPayees; }
   };
 }
+
+export function createCashFlowProcessor(transactions: TransactionsFormat[]) {
+  let processCashFlow = $state<Array<{ month: CalendarDate; cashFlow: number; income: number; expenses: number }>>([]);
+  
+  $effect(() => {
+    if (!transactions?.length) {
+      processCashFlow = [];
+      return;
+    }
+
+    const monthlyData: Record<string, { income: number; expenses: number }> = {};
+    
+    transactions.forEach((t) => {
+      // Use parseDateValue for consistent date handling
+      const parsedDate = parseDateValue(t.date);
+      if (!parsedDate) return; // Skip invalid dates
+      
+      const year = parsedDate.year;
+      const month = parsedDate.month;
+      const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+      
+      if (!monthlyData[monthKey]) monthlyData[monthKey] = { income: 0, expenses: 0 };
+      
+      if (t.amount > 0) {
+        monthlyData[monthKey].income += t.amount;
+      } else {
+        monthlyData[monthKey].expenses += Math.abs(t.amount);
+      }
+    });
+
+    processCashFlow = Object.entries(monthlyData)
+      .map(([monthKey, data]) => {
+        const [year = '', month = ''] = monthKey.split('-');
+        const monthDate = new CalendarDate(
+          parseInt(year) || currentDate.year, 
+          parseInt(month) || currentDate.month, 
+          1
+        );
+        
+        return {
+          month: monthDate,
+          cashFlow: data.income - data.expenses, // Net cash flow
+          income: data.income,
+          expenses: data.expenses
+        };
+      })
+      .sort((a, b) => a.month.compare(b.month));
+  });
+
+  return {
+    get data() { return processCashFlow; }
+  };
+}

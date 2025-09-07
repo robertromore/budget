@@ -169,13 +169,21 @@
 
     // Special handling for bar charts with Date x-axis values
     if (currentChartType === 'bar' && dataToProcess.length > 0) {
-      // Convert Date objects to string labels for bar charts
-      return dataToProcess.map(item => ({
-        ...item,
-        x: item.x instanceof Date
-          ? item.x.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-          : String(item.x)
-      }));
+      // Only convert to strings for categorical bar charts, preserve Date objects for time series
+      const firstItem = dataToProcess[0];
+      const shouldConvertToCategories = firstItem && 
+        firstItem.x instanceof Date && 
+        dataToProcess.length <= 12 && // Only for small datasets that should be categorical
+        !isMultiSeries; // Don't convert for multi-series time charts
+      
+      if (shouldConvertToCategories) {
+        return dataToProcess.map(item => ({
+          ...item,
+          x: item.x instanceof Date
+            ? item.x.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+            : String(item.x)
+        }));
+      }
     }
 
     return dataToProcess;

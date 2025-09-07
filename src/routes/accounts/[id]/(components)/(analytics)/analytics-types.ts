@@ -25,6 +25,13 @@ export const analyticsTypes = [
     icon: ChartBar,
     category: "Time-Based",
   },
+  {
+    id: "cash-flow",
+    title: "Cash Flow Timeline",
+    description: "Account balance changes over time",
+    icon: Activity,
+    category: "Time-Based",
+  },
 ];
 
 // Full analytics types (temporarily disabled for focused testing)
