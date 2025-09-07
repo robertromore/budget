@@ -65,7 +65,84 @@ color: blue
 ✅ **Handle chart data transformations** - Convert data between formats efficiently  
 ✅ **Optimize Svelte chart components** - Improve reactivity and state management  
 ✅ **Implement LayerChart best practices** - Follow official patterns and conventions  
-✅ **Integrate with existing architecture** - Work within widget/dashboard system  
+✅ **Integrate with existing architecture** - Work within widget/dashboard system
+
+## Chart Implementation Standards
+
+**ALWAYS use UnifiedChart component for new chart implementations:**
+
+When creating new charts, **never create custom LayerChart wrappers**. Instead, use the established `UnifiedChart` component from `$lib/components/charts` which provides:
+
+✅ **Consistent Architecture** - All charts use the same reliable foundation  
+✅ **Built-in Features** - Period filtering, chart type switching, theme integration  
+✅ **Proven Reliability** - Handles bar chart categorical conversion, domain scaling, overflow prevention  
+✅ **Maintainable Code** - Single component to maintain instead of multiple custom implementations  
+
+### Implementation Pattern
+
+```typescript
+// ✅ ALWAYS use this pattern for new charts
+import { UnifiedChart } from '$lib/components/charts';
+import type { ChartType } from '$lib/components/charts/chart-types';
+import { transformData } from '$lib/utils/chart-data';
+import { colorUtils } from '$lib/utils/colors';
+
+// Transform data to ChartDataPoint format
+const chartData = $derived(
+  transformData(processedData, {
+    x: (item) => dateValueToJSDate(item.date),
+    y: 'value'  // or transform function
+  })
+);
+
+// Use semantic colors
+const chartColors = $derived(() => {
+  return [colorUtils.getChartColor(0)]; // Or semantic financial colors
+});
+
+// UnifiedChart with full configuration
+<UnifiedChart
+  data={chartData}
+  type="area"
+  styling={{ colors: chartColors() }}
+  axes={{
+    x: { title: 'Time', rotateLabels: true },
+    y: { title: 'Value', nice: false }
+  }}
+  timeFiltering={{ enabled: true, field: 'x' }}
+  controls={{ 
+    show: true,
+    availableTypes: ['area', 'bar', 'line'],
+    allowTypeChange: true,
+    allowPeriodChange: true 
+  }}
+/>
+```
+
+### Anti-Pattern to Avoid
+
+```typescript
+// ❌ NEVER create custom LayerChart wrappers like this
+import { Chart, Svg, Area, Axis } from 'layerchart';
+
+<Chart data={data}>
+  <Svg>
+    <Axis placement="left" />
+    <Area />
+  </Svg>
+</Chart>
+```
+
+**Why UnifiedChart is Required:**
+- **Bar Chart Support**: Handles categorical string conversion for proper bar rendering
+- **Overflow Prevention**: Built-in domain calculation and padding management  
+- **Theme Integration**: Proper color system integration with CSS variables
+- **Period Filtering**: Automatic time-based data filtering with intuitive controls
+- **Chart Type Switching**: Users can switch between line, area, bar, scatter charts
+- **Responsive Design**: Handles different screen sizes and container dimensions
+- **Error Handling**: Graceful fallbacks for missing data and edge cases
+
+All new charts should be implemented as route-level components that use UnifiedChart, following the patterns established in working charts like `monthly-spending-chart.svelte` and `cash-flow-chart.svelte`.  
 
 ## Specialized Tasks
 
