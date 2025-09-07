@@ -348,3 +348,110 @@ export function calculateRunningTotal(
     };
   });
 }
+
+/**
+ * Data cleaning utilities for improved data quality
+ */
+
+/**
+ * Removes outliers using the IQR method
+ */
+export function removeOutliers(
+  data: ChartDataPoint[],
+  multiplier: number = 1.5
+): ChartDataPoint[] {
+  if (data.length === 0) return data;
+  
+  const yValues = data.map(d => d.y).sort((a, b) => a - b);
+  const q1 = yValues[Math.floor(yValues.length * 0.25)] || 0;
+  const q3 = yValues[Math.floor(yValues.length * 0.75)] || 0;
+  const iqr = q3 - q1;
+  const lowerBound = q1 - (multiplier * iqr);
+  const upperBound = q3 + (multiplier * iqr);
+  
+  return data.filter(item => 
+    item.y >= lowerBound && item.y <= upperBound
+  );
+}
+
+/**
+ * Smooths data using a simple moving average
+ */
+export function smoothData(
+  data: ChartDataPoint[],
+  windowSize: number = 3
+): ChartDataPoint[] {
+  if (data.length < windowSize) return data;
+  
+  return data.map((item, index) => {
+    const start = Math.max(0, index - Math.floor(windowSize / 2));
+    const end = Math.min(data.length, start + windowSize);
+    
+    const window = data.slice(start, end);
+    const smoothedY = window.reduce((sum, d) => sum + d.y, 0) / window.length;
+    
+    return {
+      ...item,
+      y: smoothedY,
+      metadata: { ...item.metadata, originalValue: item.y, smoothed: true }
+    };
+  });
+}
+
+/**
+ * Validates and cleans ChartDataPoint array
+ */
+export function cleanChartData(
+  data: ChartDataPoint[]
+): ChartDataPoint[] {
+  return data
+    .filter(item => 
+      item.x !== undefined && 
+      item.x !== null && 
+      item.y !== undefined && 
+      item.y !== null && 
+      isFinite(item.y)
+    )
+    .map(item => ({
+      ...item,
+      y: Number(item.y) || 0,
+      x: item.x
+    }));
+}
+
+/**
+ * Aggregates data to reduce point count for performance
+ */
+export function aggregateForPerformance(
+  data: ChartDataPoint[],
+  maxPoints: number = 500
+): ChartDataPoint[] {
+  if (data.length <= maxPoints) return data;
+  
+  const step = Math.ceil(data.length / maxPoints);
+  const aggregated: ChartDataPoint[] = [];
+  
+  for (let i = 0; i < data.length; i += step) {
+    const chunk = data.slice(i, i + step);
+    const avgY = chunk.reduce((sum, d) => sum + d.y, 0) / chunk.length;
+    
+    // Use the middle point's x value, or the first if chunk is small
+    const middleIndex = Math.floor(chunk.length / 2);
+    const representative = chunk[middleIndex] || chunk[0];
+    
+    if (representative) {
+      aggregated.push({
+        x: representative.x,
+        y: avgY,
+        category: representative.category,
+        metadata: { 
+          ...representative.metadata, 
+          aggregated: true, 
+          pointCount: chunk.length 
+        }
+      });
+    }
+  }
+  
+  return aggregated;
+}

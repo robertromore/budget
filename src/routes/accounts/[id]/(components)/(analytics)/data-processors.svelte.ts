@@ -1,6 +1,6 @@
 import type { TransactionsFormat } from '$lib/types';
 import { CalendarDate } from '@internationalized/date';
-import { currentDate } from '$lib/utils/dates';
+import { currentDate, parseDateValue } from '$lib/utils/dates';
 
 export function createMonthlySpendingProcessor(transactions: TransactionsFormat[]) {
   let processMonthlySpending = $state<Array<{ month: CalendarDate; amount: number }>>([]);
@@ -15,9 +15,12 @@ export function createMonthlySpendingProcessor(transactions: TransactionsFormat[
     
     transactions.forEach((t) => {
       if (t.amount < 0) {
-        const dateObject = t.date.toDate ? t.date.toDate('UTC') : new Date(t.date.toString() || Date.now());
-        const year = dateObject.getFullYear();
-        const month = dateObject.getMonth() + 1; // 1-based month
+        // Use parseDateValue for consistent date handling
+        const parsedDate = parseDateValue(t.date);
+        if (!parsedDate) return; // Skip invalid dates
+        
+        const year = parsedDate.year;
+        const month = parsedDate.month;
         const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
         
         if (!monthlyData[monthKey]) {
@@ -36,6 +39,7 @@ export function createMonthlySpendingProcessor(transactions: TransactionsFormat[
         amount: data.amount
       }))
       .sort((a, b) => a.month.compare(b.month));
+
   });
 
   return {
@@ -55,9 +59,12 @@ export function createIncomeVsExpensesProcessor(transactions: TransactionsFormat
     const monthlyData: Record<string, { income: number; expenses: number }> = {};
     
     transactions.forEach(t => {
-      const dateObject = t.date.toDate ? t.date.toDate('UTC') : new Date(t.date.toString() || Date.now());
-      const year = dateObject.getFullYear();
-      const month = String(dateObject.getMonth() + 1).padStart(2, '0');
+      // Use parseDateValue for consistent date handling
+      const parsedDate = parseDateValue(t.date);
+      if (!parsedDate) return; // Skip invalid dates
+      
+      const year = parsedDate.year;
+      const month = String(parsedDate.month).padStart(2, '0');
       const monthKey = `${year}-${month}`;
       
       if (!monthlyData[monthKey]) monthlyData[monthKey] = { income: 0, expenses: 0 };

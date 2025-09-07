@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { ChartContainer } from '$lib/components/ui/chart';
-  import { Chart, Svg, Arc } from 'layerchart';
+  import { UnifiedChart } from '$lib/components/charts';
   import type { TransactionsFormat } from '$lib/types';
   import { createCategorySpendingProcessor } from '../(analytics)/data-processors.svelte';
-  import { colorUtils } from '$lib/utils/colors';
+  import { transformData } from '$lib/utils/chart-data';
 
   interface Props {
     transactions: TransactionsFormat[];
@@ -12,23 +11,40 @@
   let { transactions }: Props = $props();
 
   const categorySpendingProcessor = createCategorySpendingProcessor(transactions);
-  const categorySpendingData = $derived(categorySpendingProcessor.data);
 
-  const categoryColor = colorUtils.getChartColor(3); // Purple
-  
-  const chartConfig = {
-    category: { label: 'Amount', color: categoryColor }
-  };
+  // Transform data to ChartDataPoint format
+  const chartData = $derived(
+    transformData(categorySpendingProcessor.data, {
+      x: 'category',
+      y: 'amount'
+    })
+  );
 </script>
 
-{#if categorySpendingData.length > 0}
-  <ChartContainer config={chartConfig} class="h-full w-full">
-    <Chart data={categorySpendingData} x="category" y="amount" yNice>
-      <Svg>
-        <Arc />
-      </Svg>
-    </Chart>
-  </ChartContainer>
+{#if chartData.length > 0}
+  <UnifiedChart
+    data={chartData}
+    type="pie"
+    styling={{
+      colors: 'auto'
+    }}
+    axes={{
+      x: {
+        title: 'Category'
+      },
+      y: {
+        title: 'Amount',
+        nice: true
+      }
+    }}
+    controls={{
+      show: true,
+      availableTypes: ['pie', 'arc', 'bar'],
+      allowTypeChange: true,
+      allowPeriodChange: false
+    }}
+    class="h-full w-full"
+  />
 {:else}
   <div class="flex items-center justify-center h-full text-muted-foreground">
     No category spending data available

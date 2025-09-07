@@ -53,6 +53,7 @@
     "@sveltejs/vite-plugin-svelte-inspector": "^4.0.1",
     "@tailwindcss/vite": "^4.1.12",
     "@types/bun": "^1.2.21",
+    "@types/d3-scale": "^4.0.9",
     "@types/validator": "^13.15.2",
     "@typeschema/class-validator": "^0.3.0",
     "@typescript-eslint/eslint-plugin": "^8.41.0",

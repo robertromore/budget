@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { ChartWrapper } from '$lib/components/charts';
-  import type { WidgetProps, ChartType } from '$lib/types/widgets';
+  import { UnifiedChart } from '$lib/components/charts';
+  import type { WidgetProps } from '$lib/types/widgets';
+  import type { ChartType } from '$lib/components/charts/chart-types';
+  import type { ChartDataPoint } from '$lib/components/charts/chart-config';
   import { currencyFormatter, periodFormatter } from '$lib/utils/formatters';
   import { TrendingDown, TrendingUp } from '$lib/components/icons';
   import { colorUtils } from '$lib/utils/colors';
@@ -10,56 +12,48 @@
 
   const chartData = data?.['incomeExpenses'] ?? [];
   const period = $derived(config.settings?.['period'] ?? 'month');
-  const chartType = $derived(config.settings?.['chartType'] ?? 'bar');
+  const chartType = $derived((config.settings?.['chartType'] ?? 'bar') as ChartType);
 
   // Calculate totals and net
   const totalIncome = chartData.reduce((sum: number, item: any) => sum + (item.income || 0), 0);
   const totalExpenses = chartData.reduce((sum: number, item: any) => sum + (item.expenses || 0), 0);
   const netAmount = totalIncome - totalExpenses;
 
-  // Prepare data for ChartWrapper based on chart type
-  const processedData = $derived(() => {
-    if (chartType === 'bar') {
-      const incomeData = chartData.map((item: any) => ({ x: item.period, y: item.income || 0 }));
-      const expensesData = chartData.map((item: any) => ({ x: item.period, y: item.expenses || 0 }));
-      return [...incomeData, ...expensesData];
-    } else {
-      const incomeData = chartData.map((item: any) => ({ x: item.period, y: item.income || 0 }));
-      const expensesData = chartData.map((item: any) => ({ x: item.period, y: item.expenses || 0 }));
-      return [...incomeData, ...expensesData];
-    }
-  });
+  // Transform data for UnifiedChart - flatten into single array with series information
+  const transformedChartData = $derived.by((): ChartDataPoint[] => {
+    if (!chartData.length) return [];
 
-  const series = $derived(() => {
-    if (chartType === 'bar') {
-      const incomeData = chartData.map((item: any) => ({ x: item.period, y: item.income || 0 }));
-      const expensesData = chartData.map((item: any) => ({ x: item.period, y: item.expenses || 0 }));
-      return [
-        { data: incomeData, type: 'bar' as ChartType, colorIndex: 1, label: 'Income' },
-        { data: expensesData, type: 'bar' as ChartType, colorIndex: 2, label: 'Expenses' }
-      ];
-    } else {
-      const incomeData = chartData.map((item: any) => ({ x: item.period, y: item.income || 0 }));
-      const expensesData = chartData.map((item: any) => ({ x: item.period, y: item.expenses || 0 }));
-      return [
-        { 
-          data: incomeData, 
-          type: chartType as ChartType, 
-          colorIndex: 1, 
-          strokeWidth: 2,
-          fillOpacity: chartType === 'area' ? 0.3 : undefined,
-          label: 'Income' 
-        },
-        { 
-          data: expensesData, 
-          type: chartType as ChartType, 
-          colorIndex: 2, 
-          strokeWidth: 2,
-          fillOpacity: chartType === 'area' ? 0.3 : undefined,
-          label: 'Expenses' 
+    const flatData: ChartDataPoint[] = [];
+
+    chartData.forEach((item: any, index: number) => {
+      // Add income data point
+      flatData.push({
+        x: item.period,
+        y: item.income || 0,
+        category: 'Income',
+        metadata: { 
+          series: 'Income', 
+          type: 'income',
+          index,
+          color: colorUtils.getChartColor(1)
         }
-      ];
-    }
+      });
+
+      // Add expenses data point
+      flatData.push({
+        x: item.period,
+        y: item.expenses || 0,
+        category: 'Expenses',
+        metadata: { 
+          series: 'Expenses', 
+          type: 'expenses',
+          index,
+          color: colorUtils.getChartColor(2)
+        }
+      });
+    });
+
+    return flatData;
   });
 </script>
 
@@ -76,20 +70,32 @@
       <div class="text-xs text-muted-foreground">{periodFormatter.toAdverb(period)}</div>
     </div>
 
-    {#if chartData.length > 0}
+    {#if transformedChartData.length > 0}
       <!-- Chart -->
       <div class="h-40">
-        <ChartWrapper
-          data={processedData()}
-          series={series()}
-          x="x"
-          y="y"
-          yNice
-          padding={{ left: 60, right: 20, top: 10, bottom: 40 }}
-          showBottomAxis={config.size === 'large'}
-          showLeftAxis={true}
-          rotateBottomLabels={chartData.length > 4}
-          showLegend={config.size === 'large'}
+        <UnifiedChart
+          data={transformedChartData}
+          type={chartType}
+          styling={{
+            colors: [colorUtils.getChartColor(1), colorUtils.getChartColor(2)],
+            legend: { show: config.size === 'large', position: 'top' },
+            dimensions: {
+              padding: { left: 60, right: 20, top: 10, bottom: 40 }
+            }
+          }}
+          axes={{
+            x: { 
+              show: config.size === 'large',
+              rotateLabels: chartData.length > 4
+            },
+            y: { 
+              show: true, 
+              nice: true
+            }
+          }}
+          controls={{
+            show: false
+          }}
           class="h-full w-full"
         />
       </div>

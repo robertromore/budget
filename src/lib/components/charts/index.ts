@@ -1,11 +1,11 @@
-// Chart components
-export { default as ChartWrapper } from './chart-wrapper.svelte';
-export { default as ChartRenderer } from './chart-renderer.svelte';
+// Unified chart system (Phase 1 & 2 complete)
+export { default as UnifiedChart } from './unified-chart.svelte';
+
+// Chart control components (used by UnifiedChart)
 export { default as ChartTypeSelector } from './chart-type-selector.svelte';
 export { default as ChartPeriodControls } from './chart-period-controls.svelte';
 
-// New unified chart system (Phase 1)
-export { default as UnifiedChart } from './unified-chart.svelte';
+// No more legacy components - all functionality consolidated into UnifiedChart
 
 // Re-export layerchart components for direct usage when needed
 export {
