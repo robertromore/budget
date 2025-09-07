@@ -215,3 +215,90 @@ const validatedData = rawData
 ```
 
 This ensures consistent, reliable date handling across all chart components while maintaining compatibility with LayerChart's requirements for JavaScript Date objects.
+
+## Color System and Theme Integration
+
+LayerChart components work best with direct color values rather than CSS variables. **Always use the existing `colorUtils` system** from `/src/lib/utils/colors.ts` for consistent, reliable color implementation:
+
+### Existing Color System
+
+**✅ Use colorUtils.getChartColor() for all LayerChart implementations:**
+```typescript
+import { colorUtils } from '$lib/utils/colors';
+
+// Reliable color palette with pre-resolved HSL strings
+const colors = {
+  primary: colorUtils.getChartColor(0),    // "hsl(217 91% 60%)" - Blue
+  positive: colorUtils.getChartColor(1),   // "hsl(142 71% 45%)" - Green  
+  negative: colorUtils.getChartColor(2),   // "hsl(350 89% 60%)" - Red
+  accent: colorUtils.getChartColor(4),     // "hsl(25 95% 53%)" - Orange
+  neutral: colorUtils.getChartColor(7)     // "hsl(343 75% 68%)" - Pink/Gray
+};
+```
+
+### Financial Data Semantic Color Mappings
+
+For financial visualizations, use consistent semantic mappings:
+
+```typescript
+// Financial cash flow colors
+const cashFlowColors = {
+  positive: colorUtils.getChartColor(1), // Green - for positive cash flow/income
+  negative: colorUtils.getChartColor(2), // Red - for negative cash flow/expenses  
+  neutral: colorUtils.getChartColor(0),  // Blue - for balance/neutral data
+  zeroLine: colorUtils.getChartColor(7)  // Pink/Gray - for reference lines
+};
+
+// Multi-category colors (cycle through palette)
+const categoryColors = categories.map((_, index) => 
+  colorUtils.getChartColor(index % 8)
+);
+```
+
+### Color Resolution Patterns
+
+**✅ Always use existing colorUtils:**
+```typescript
+// Single series chart
+const chartColor = colorUtils.getChartColor(0);
+
+// Financial positive/negative chart  
+const colors = {
+  positive: colorUtils.getChartColor(1), // Green
+  negative: colorUtils.getChartColor(2), // Red
+  neutral: colorUtils.getChartColor(0)   // Blue
+};
+
+// Multi-series chart
+const seriesColors = seriesList.map((_, index) => 
+  colorUtils.getChartColor(index)
+);
+```
+
+**❌ Never use these problematic patterns:**
+```typescript
+// CSS variables fail in SVG contexts
+const colors = {
+  primary: 'hsl(var(--primary))',        // ❌ Fails in LayerChart
+  secondary: colorUtils.getThemeColor('chart-1') // ❌ Returns CSS variables
+};
+
+// Hardcoded colors bypass existing system
+const colors = {
+  primary: '#3b82f6',   // ❌ Should use colorUtils.getChartColor(0)
+  secondary: '#ef4444'  // ❌ Should use colorUtils.getChartColor(2)
+};
+```
+
+### Troubleshooting Color Issues
+
+**Common LayerChart color problems:**
+1. **Chart renders but is invisible** → Using CSS variables that don't resolve in SVG
+2. **Inconsistent colors across charts** → Not using colorUtils system
+3. **Theme switching breaks charts** → Hardcoded colors instead of semantic mappings
+
+**Debugging steps:**
+1. Check if colors are pre-resolved HSL strings: `"hsl(217 91% 60%)"`
+2. Verify using `colorUtils.getChartColor(index)` not `colorUtils.getThemeColor()`
+3. Test chart visibility by temporarily using high-contrast colors
+4. Ensure semantic financial mappings (green=positive, red=negative)

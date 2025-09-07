@@ -33,4 +33,24 @@ export const colorUtils = {
   getAllChartColors: (): string[] => {
     return [...chartColors];
   },
+
+  /**
+   * Get semantic colors for financial data visualization
+   */
+  getFinancialColors() {
+    return {
+      positive: colorUtils.getChartColor(1), // Green - for positive cash flow/income
+      negative: colorUtils.getChartColor(2), // Red - for negative cash flow/expenses
+      warning: colorUtils.getChartColor(4),  // Orange - for concerning trends
+      neutral: colorUtils.getChartColor(0),  // Blue - for balance/neutral data
+      zeroLine: colorUtils.getChartColor(7), // Pink/Gray - for reference lines
+    };
+  },
+
+  /**
+   * Get multiple colors for category-based data (cycles through palette)
+   */
+  getCategoryColors: (count: number): string[] => {
+    return Array.from({ length: count }, (_, i) => colorUtils.getChartColor(i % 8));
+  },
 };

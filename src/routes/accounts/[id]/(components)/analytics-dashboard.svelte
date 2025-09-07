@@ -3,12 +3,13 @@
   import * as Card from '$lib/components/ui/card';
   import type { TransactionsFormat } from '$lib/types';
   import { analyticsTypes } from './(analytics)/analytics-types';
-  import MonthlySpendingChart from './(charts)/monthly-spending-chart.svelte';
-  import IncomeVsExpensesChart from './(charts)/income-vs-expenses-chart.svelte';
+  import CashFlowChart from './(charts)/cash-flow-chart.svelte';
   import CategorySpendingChart from './(charts)/category-spending-chart.svelte';
-  import TopPayeesChart from './(charts)/top-payees-chart.svelte';
+  import IncomeVsExpensesChart from './(charts)/income-vs-expenses-chart.svelte';
+  import MonthlySpendingChart from './(charts)/monthly-spending-chart.svelte';
   import PlaceholderChart from './(charts)/placeholder-chart.svelte';
-  
+  import TopPayeesChart from './(charts)/top-payees-chart.svelte';
+
   interface Props {
     transactions: TransactionsFormat[];
     accountId: string;
@@ -19,8 +20,6 @@
   // Current selection
   let selectedAnalytic = $state('monthly-spending');
   const currentAnalytic = $derived(analyticsTypes.find(a => a.id === selectedAnalytic));
-  const primaryAnalytic = $derived(analyticsTypes[0]);
-  const PrimaryIcon = $derived(primaryAnalytic.icon);
 </script>
 
 <div class="space-y-6">
@@ -68,12 +67,18 @@
             <MonthlySpendingChart {transactions} />
           {:else if selectedAnalytic === 'income-vs-expenses'}
             <IncomeVsExpensesChart {transactions} />
+          {:else if selectedAnalytic === 'cash-flow'}
+            <CashFlowChart {transactions} />
           {:else if selectedAnalytic === 'category-spending'}
             <CategorySpendingChart {transactions} />
           {:else if selectedAnalytic === 'top-payees'}
             <TopPayeesChart {transactions} />
           {:else}
-            <PlaceholderChart type={selectedAnalytic} />
+            <PlaceholderChart
+              title={currentAnalytic?.title || 'Coming Soon'}
+              description={currentAnalytic?.description || 'This chart is not yet implemented'}
+              icon={currentAnalytic?.icon}
+            />
           {/if}
         </div>
       </Card.Content>
