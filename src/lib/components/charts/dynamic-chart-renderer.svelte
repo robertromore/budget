@@ -4,6 +4,7 @@
     getComponentConfig,
     validateDataCompatibility
   } from './layerchart-registry';
+  import { transformCurveInConfig } from '$lib/utils/chart-curves';
 
   interface DynamicChartRendererProps {
     chartType: ChartType;
@@ -35,10 +36,13 @@
   const componentProps = $derived(() => {
     if (!componentConfig) return {};
 
+    // Transform curve strings to functions if needed
+    const transformedConfig = transformCurveInConfig(config);
+
     const baseProps: Record<string, any> = {
       data,
       class: className,
-      ...config
+      ...transformedConfig
     };
 
     // Add color props if available
@@ -47,10 +51,10 @@
         // Multi-series coloring handled by parent
       } else {
         // Only set fill/stroke if not explicitly set in config
-        if (config['fill'] === undefined) {
+        if (transformedConfig['fill'] === undefined) {
           baseProps['fill'] = seriesColors[0];
         }
-        if (config['stroke'] === undefined) {
+        if (transformedConfig['stroke'] === undefined) {
           baseProps['stroke'] = seriesColors[0];
         }
       }
@@ -84,12 +88,12 @@
     <!-- Multi-series rendering -->
     {#each seriesData as series, index}
       {@const seriesColor = seriesColors[index % seriesColors.length] || 'hsl(var(--chart-1))'}
-      {@const seriesProps = {
+      {@const seriesProps = transformCurveInConfig({
         ...componentProps(),
         data: series,
         fill: ['line', 'spline'].includes(chartType) ? 'none' : seriesColor,
         stroke: seriesColor
-      }}
+      })}
       {@const Component = ComponentToRender()}
 
       {#if Component}

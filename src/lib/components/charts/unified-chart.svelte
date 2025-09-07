@@ -8,6 +8,8 @@
     supportsMultiSeries,
     transformDataForChartType
   } from '$lib/utils/chart-transformers';
+  import { colorUtils } from '$lib/utils/colors';
+  import { getSchemeColors } from '$lib/utils/chart-colors';
   import { scaleBand } from 'd3-scale';
   import {
     Axis,
@@ -18,7 +20,9 @@
     Rule,
     Svg
   } from 'layerchart';
+  import ChartColorSelector from './chart-color-selector.svelte';
   import type { ChartDataPoint, ChartDataValidation, UnifiedChartProps } from './chart-config';
+  import ChartCurveSelector from './chart-curve-selector.svelte';
   import ChartPeriodControls from './chart-period-controls.svelte';
   import ChartTypeSelector from './chart-type-selector.svelte';
   import { ALL_CHART_TYPES } from './chart-types';
@@ -73,6 +77,47 @@
   let currentChartType = $state(type || 'bar');
   $effect(() => {
     currentChartType = config.type;
+  });
+
+  // Interactive color and curve controls
+  let selectedColorScheme = $state('default');
+  let selectedCurve = $state('curveLinear');
+
+  // Color scheme definitions (using existing colorUtils)
+  const colorSchemes = {
+    default: Array.from({ length: 8 }, (_, i) => colorUtils.getChartColor(i)),
+    financial: [
+      colorUtils.getChartColor(1), // Green - positive
+      colorUtils.getChartColor(2), // Red - negative
+      colorUtils.getChartColor(0), // Blue - neutral
+      colorUtils.getChartColor(4)  // Orange - accent
+    ],
+    monochrome: [
+      'hsl(220 13% 69%)',  // Light gray
+      'hsl(220 13% 50%)',  // Medium gray
+      'hsl(220 13% 31%)',  // Dark gray
+      'hsl(220 13% 18%)'   // Very dark gray
+    ],
+    vibrant: [
+      'hsl(340 82% 52%)', // Vibrant pink
+      'hsl(291 64% 42%)', // Vibrant purple
+      'hsl(262 83% 58%)', // Vibrant blue
+      'hsl(175 70% 41%)'  // Vibrant teal
+    ],
+    pastel: [
+      'hsl(210 40% 80%)', // Pastel blue
+      'hsl(120 40% 80%)', // Pastel green
+      'hsl(60 40% 80%)',  // Pastel yellow
+      'hsl(0 40% 80%)'    // Pastel red
+    ]
+  };
+
+  // Override colors if control is enabled
+  const effectiveColors = $derived.by(() => {
+    if (config.controls.allowColorChange) {
+      return getSchemeColors(selectedColorScheme);
+    }
+    return config.resolvedColors;
   });
 
   // Generate period options for time filtering
@@ -297,6 +342,16 @@
               enablePeriodFiltering={true}
             />
           {/if}
+
+          <!-- Color Controls -->
+          {#if config.controls.allowColorChange}
+            <ChartColorSelector bind:selectedScheme={selectedColorScheme} />
+          {/if}
+
+          <!-- Curve Controls -->
+          {#if config.controls.allowCurveChange}
+            <ChartCurveSelector bind:curve={selectedCurve} chartType={currentChartType} />
+          {/if}
         </div>
       </div>
     {/if}
@@ -317,7 +372,7 @@
         ...dataAccessors,
         // For pie charts, configure color scale with cRange
         ...(isChartCircular && config.resolvedColors.length > 0 ? {
-          cRange: config.resolvedColors
+          cRange: effectiveColors
         } : {})
       })}
       {...(config.styling.dimensions.padding ? { padding: config.styling.dimensions.padding } : {})}
@@ -354,7 +409,8 @@
             fillOpacity: currentChartType === 'area' ? 0.6 : undefined,
             strokeWidth: ['line', 'spline', 'threshold'].includes(currentChartType) ? 2 : undefined,
             fill: ['line', 'spline'].includes(currentChartType) ? 'none' : undefined,
-            stroke: ['line', 'spline'].includes(currentChartType) ? (config.resolvedColors[0] || 'hsl(var(--chart-1))') : undefined,
+            stroke: ['line', 'spline'].includes(currentChartType) ? (effectiveColors[0] || 'hsl(var(--chart-1))') : undefined,
+            curve: ['line', 'spline', 'area'].includes(currentChartType) && config.controls.allowCurveChange ? selectedCurve : undefined,
             r: currentChartType === 'scatter' ? 4 : undefined,
             innerRadius: currentChartType === 'arc' ? 40 : undefined,
             outerRadius: currentChartType === 'arc' ? 150 : undefined,
@@ -376,7 +432,7 @@
             }))) : undefined
           }}
           seriesData={seriesData}
-          seriesColors={config.resolvedColors}
+          seriesColors={effectiveColors}
           isMultiSeries={isMultiSeries || false}
         />
 
