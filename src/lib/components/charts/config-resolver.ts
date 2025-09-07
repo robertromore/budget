@@ -117,11 +117,31 @@ export function resolveChartConfig(
   data: ChartDataPoint[];
   resolvedColors: string[];
 } {
+  // Merge controls first to get available types
+  const controls = deepMerge(
+    deepMerge(DEFAULT_CONTROLS_CONFIG, {}),
+    props.controls || {}
+  );
+  
   // Infer chart type if not provided
-  const chartType = props.type || inferChartType(props.data);
+  let chartType = props.type || inferChartType(props.data);
+  
+  // Validate chart type against available types if controls specify them
+  if (controls.availableTypes && controls.availableTypes.length > 0) {
+    if (!controls.availableTypes.includes(chartType)) {
+      // Use first available type as fallback
+      chartType = controls.availableTypes[0];
+    }
+  }
   
   // Get chart type specific defaults
   const typeDefaults = CHART_TYPE_DEFAULTS[chartType] || {};
+  
+  // Re-merge controls with type defaults
+  const finalControls = deepMerge(
+    deepMerge(DEFAULT_CONTROLS_CONFIG, typeDefaults.controls || {}),
+    props.controls || {}
+  );
   
   // Merge configurations with priority: user config > type defaults > system defaults
   const axes = deepMerge(
@@ -144,11 +164,6 @@ export function resolveChartConfig(
     props.timeFiltering || {}
   );
   
-  const controls = deepMerge(
-    deepMerge(DEFAULT_CONTROLS_CONFIG, typeDefaults.controls || {}),
-    props.controls || {}
-  );
-  
   const annotations = deepMerge(
     deepMerge(DEFAULT_ANNOTATIONS_CONFIG, typeDefaults.annotations || {}),
     props.annotations || {}
@@ -164,7 +179,7 @@ export function resolveChartConfig(
     styling,
     interactions,
     timeFiltering,
-    controls,
+    controls: finalControls,
     annotations,
     resolvedColors
   };

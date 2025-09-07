@@ -23,6 +23,7 @@
   import ChartColorSelector from './chart-color-selector.svelte';
   import type { ChartDataPoint, ChartDataValidation, UnifiedChartProps } from './chart-config';
   import ChartCurveSelector from './chart-curve-selector.svelte';
+  import ChartViewModeSelector from './chart-view-mode-selector.svelte';
   import ChartPeriodControls from './chart-period-controls.svelte';
   import ChartTypeSelector from './chart-type-selector.svelte';
   import { ALL_CHART_TYPES } from './chart-types';
@@ -43,6 +44,8 @@
     yFieldLabels,
     colorField,
     categoryField,
+    viewMode,
+    viewModeData,
     suppressDuplicateWarnings = false,
     class: className = "h-full w-full"
   }: UnifiedChartProps = $props();
@@ -76,12 +79,23 @@
   // Bindable chart type (for controls)
   let currentChartType = $state(type || 'bar');
   $effect(() => {
-    currentChartType = config.type;
+    // Update from config, but ensure it's a valid type if controls are enabled
+    if (config.controls.availableTypes && config.controls.availableTypes.length > 0) {
+      // If the current type is not in the available types, use the first available type
+      if (!config.controls.availableTypes.includes(config.type)) {
+        currentChartType = config.controls.availableTypes[0];
+      } else {
+        currentChartType = config.type;
+      }
+    } else {
+      currentChartType = config.type;
+    }
   });
 
   // Interactive color and curve controls
   let selectedColorScheme = $state('default');
   let selectedCurve = $state('curveLinear');
+  let selectedViewMode = $state(viewMode || 'combined');
 
   // Color scheme definitions (using existing colorUtils)
   const colorSchemes = {
@@ -141,9 +155,21 @@
     currentPeriod = Number(config.timeFiltering.defaultPeriod);
   });
 
+  // Select data based on view mode
+  const selectedData = $derived.by(() => {
+    if (!viewModeData || selectedViewMode === 'combined') {
+      return config.data;
+    }
+    
+    // For side-by-side mode, we'll handle the data differently later
+    // For now, return the combined data to avoid breaking existing functionality
+    return viewModeData.combined || config.data;
+  });
+
   // Filter data based on current period
   const filteredData = $derived.by(() => {
-    if (!config.timeFiltering.enabled) return config.data;
+    const dataToFilter = selectedData;
+    if (!config.timeFiltering.enabled) return dataToFilter;
 
     // Only use transaction-based filtering for radial charts (pie/arc)
     const hasSourceData = config.timeFiltering.sourceData &&
@@ -165,7 +191,7 @@
 
     // Default: filter chart data directly (for all linear charts: bar, line, area, etc.)
     return filterDataByPeriod(
-      config.data,
+      dataToFilter,
       config.timeFiltering.field,
       currentPeriod
     ) as ChartDataPoint[];
@@ -352,34 +378,138 @@
           {#if config.controls.allowCurveChange}
             <ChartCurveSelector bind:curve={selectedCurve} chartType={currentChartType} />
           {/if}
+          <!-- View Mode Controls -->
+          {#if config.controls.allowViewModeChange}
+            <ChartViewModeSelector 
+              bind:viewMode={selectedViewMode} 
+              availableViewModes={config.controls.availableViewModes}
+            />
+          {/if}
         </div>
       </div>
     {/if}
 
-    <Chart
-      data={chartData}
-      {...(!isChartCircular && !isChartHierarchical ? {
-        x: dataAccessors.x || "x",
-        y: dataAccessors.y || "y",
-        ...(isMultiSeries ? { r: "series" } : {}),
-        ...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {}),
-        ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {}),
-        ...(config.axes.y.domain && (config.axes.y.domain[0] !== null || config.axes.y.domain[1] !== null) ? { yDomain: config.axes.y.domain } : {}),
-        ...(config.axes.x.domain && (config.axes.x.domain[0] !== null || config.axes.x.domain[1] !== null) ? { xDomain: config.axes.x.domain } : {}),
-        ...(bandScale ? { xScale: bandScale } : {})
-      } : {
-        // For circular and hierarchical charts, use appropriate data accessors
-        ...dataAccessors,
-        // For pie charts, configure color scale with cRange
-        ...(isChartCircular && config.resolvedColors.length > 0 ? {
-          cRange: effectiveColors
-        } : {})
-      })}
-      {...(config.styling.dimensions.padding ? { padding: config.styling.dimensions.padding } : {})}
-    >
-      <Svg>
-        <!-- Axes for non-circular and non-hierarchical charts -->
-        {#if !isChartCircular && !isChartHierarchical}
+    {#if selectedViewMode === 'side-by-side' && viewModeData && viewModeData.income && viewModeData.expenses}
+      <!-- Side-by-side view: separate charts for income and expenses -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+        <!-- Income Chart -->
+        <div class="h-full">
+          <h4 class="text-sm font-medium mb-2 text-center">Income</h4>
+          <Chart
+            data={viewModeData.income}
+            {...(!isChartCircular && !isChartHierarchical ? {
+              x: dataAccessors.x || "x",
+              y: dataAccessors.y || "y",
+              ...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {}),
+              ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {})
+            } : {
+              ...dataAccessors,
+              ...(isChartCircular && config.resolvedColors.length > 0 ? {
+                cRange: [effectiveColors[0] || 'hsl(var(--chart-1))']
+              } : {})
+            })}
+            {...(config.styling.dimensions.padding ? { padding: config.styling.dimensions.padding } : {})}
+          >
+            <Svg>
+              {#if !isChartCircular && !isChartHierarchical}
+                {#if config.axes.y.show}
+                  <Axis placement="left" />
+                {/if}
+                {#if config.axes.x.show}
+                  <Axis placement="bottom" />
+                {/if}
+              {/if}
+              <DynamicChartRenderer
+                chartType={currentChartType}
+                data={viewModeData.income}
+                config={{
+                  padding: currentChartType === 'bar' ? 4 : undefined,
+                  fillOpacity: currentChartType === 'area' ? 0.6 : undefined,
+                  strokeWidth: ['line', 'spline', 'threshold'].includes(currentChartType) ? 2 : undefined,
+                  fill: ['line', 'spline'].includes(currentChartType) ? 'none' : undefined,
+                  stroke: ['line', 'spline'].includes(currentChartType) ? (effectiveColors[0] || 'hsl(var(--chart-1))') : undefined,
+                  curve: ['line', 'spline', 'area'].includes(currentChartType) && config.controls.allowCurveChange ? selectedCurve : undefined
+                }}
+                seriesData={[]}
+                seriesColors={[effectiveColors[0] || 'hsl(var(--chart-1))']}
+                isMultiSeries={false}
+              />
+            </Svg>
+          </Chart>
+        </div>
+
+        <!-- Expenses Chart -->
+        <div class="h-full">
+          <h4 class="text-sm font-medium mb-2 text-center">Expenses</h4>
+          <Chart
+            data={viewModeData.expenses}
+            {...(!isChartCircular && !isChartHierarchical ? {
+              x: dataAccessors.x || "x",
+              y: dataAccessors.y || "y",
+              ...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {}),
+              ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {})
+            } : {
+              ...dataAccessors,
+              ...(isChartCircular && config.resolvedColors.length > 0 ? {
+                cRange: [effectiveColors[1] || 'hsl(var(--chart-2))']
+              } : {})
+            })}
+            {...(config.styling.dimensions.padding ? { padding: config.styling.dimensions.padding } : {})}
+          >
+            <Svg>
+              {#if !isChartCircular && !isChartHierarchical}
+                {#if config.axes.y.show}
+                  <Axis placement="left" />
+                {/if}
+                {#if config.axes.x.show}
+                  <Axis placement="bottom" />
+                {/if}
+              {/if}
+              <DynamicChartRenderer
+                chartType={currentChartType}
+                data={viewModeData.expenses}
+                config={{
+                  padding: currentChartType === 'bar' ? 4 : undefined,
+                  fillOpacity: currentChartType === 'area' ? 0.6 : undefined,
+                  strokeWidth: ['line', 'spline', 'threshold'].includes(currentChartType) ? 2 : undefined,
+                  fill: ['line', 'spline'].includes(currentChartType) ? 'none' : undefined,
+                  stroke: ['line', 'spline'].includes(currentChartType) ? (effectiveColors[1] || 'hsl(var(--chart-2))') : undefined,
+                  curve: ['line', 'spline', 'area'].includes(currentChartType) && config.controls.allowCurveChange ? selectedCurve : undefined
+                }}
+                seriesData={[]}
+                seriesColors={[effectiveColors[1] || 'hsl(var(--chart-2))']}
+                isMultiSeries={false}
+              />
+            </Svg>
+          </Chart>
+        </div>
+      </div>
+    {:else}
+      <!-- Combined view: single chart with all data -->
+      <Chart
+        data={chartData}
+        {...(!isChartCircular && !isChartHierarchical ? {
+          x: dataAccessors.x || "x",
+          y: dataAccessors.y || "y",
+          ...(isMultiSeries ? { r: "series" } : {}),
+          ...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {}),
+          ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {}),
+          ...(config.axes.y.domain && (config.axes.y.domain[0] !== null || config.axes.y.domain[1] !== null) ? { yDomain: config.axes.y.domain } : {}),
+          ...(config.axes.x.domain && (config.axes.x.domain[0] !== null || config.axes.x.domain[1] !== null) ? { xDomain: config.axes.x.domain } : {}),
+          ...(bandScale ? { xScale: bandScale } : {})
+        } : {
+          // For circular and hierarchical charts, use appropriate data accessors
+          ...dataAccessors,
+          // For pie charts, configure color scale with cRange
+          ...(isChartCircular && config.resolvedColors.length > 0 ? {
+            cRange: effectiveColors
+          } : {})
+        })}
+        {...(config.styling.dimensions.padding ? { padding: config.styling.dimensions.padding } : {})}
+      >
+        <Svg>
+          <!-- Axes for non-circular and non-hierarchical charts -->
+          {#if !isChartCircular && !isChartHierarchical}
           {#if config.axes.y.show}
             <Axis placement="left" />
           {/if}
@@ -489,6 +619,7 @@
         <Legend />
       {/if}
     </Chart>
+    {/if}
   {:else}
     <!-- Error state with enhanced error display -->
     <div class="flex items-center justify-center h-full text-center p-6">

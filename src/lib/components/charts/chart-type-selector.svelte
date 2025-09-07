@@ -44,7 +44,9 @@
         <div class="flex items-center gap-2">
           {#if selectedChartTypeOption()}
             {@const option = selectedChartTypeOption()!}
-            <option.icon class="h-4 w-4" />
+            {#if option.icon}
+              <option.icon class="h-4 w-4" />
+            {/if}
             <span>{option.label}</span>
           {:else}
             <span>Select a chart</span>
@@ -62,7 +64,9 @@
               label={option.label}
             >
               <div class="flex items-center gap-2">
-                <option.icon class="h-4 w-4" />
+                {#if option.icon}
+                  <option.icon class="h-4 w-4" />
+                {/if}
                 <div class="flex flex-col">
                   <span>{option.label}</span>
                   <span class="text-xs text-muted-foreground">{option.description}</span>

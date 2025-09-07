@@ -6,6 +6,7 @@ export {default as ChartPeriodControls} from "./chart-period-controls.svelte";
 export {default as ChartTypeSelector} from "./chart-type-selector.svelte";
 export {default as ChartColorSelector} from "./chart-color-selector.svelte";
 export {default as ChartCurveSelector} from "./chart-curve-selector.svelte";
+export {default as ChartViewModeSelector} from "./chart-view-mode-selector.svelte";
 
 // No more legacy components - all functionality consolidated into UnifiedChart
 

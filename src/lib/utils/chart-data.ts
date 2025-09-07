@@ -219,13 +219,15 @@ export function transformIncomeVsExpensesData<T extends Record<string, any>>(
       y: Number(getField(mapping.income, item)) || 0,
       category: 'Income',
       series: 'income',
+      key: `combined-income-${index}`, // Unique key for combined dataset
       metadata: { ...item, index, type: 'income' }
     },
     {
       x: getField(mapping.x, item),
       y: Math.abs(Number(getField(mapping.expenses, item)) || 0),
       category: 'Expenses',
-      series: 'expenses', 
+      series: 'expenses',
+      key: `combined-expenses-${index}`, // Unique key for combined dataset
       metadata: { ...item, index, type: 'expenses' }
     }
   ]);
