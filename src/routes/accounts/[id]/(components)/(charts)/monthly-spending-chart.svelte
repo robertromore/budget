@@ -59,7 +59,9 @@
       show: true,
       availableTypes: availableChartTypes,
       allowTypeChange: true,
-      allowPeriodChange: true
+      allowPeriodChange: true,
+      allowColorChange: true,
+      allowCurveChange: true
     }}
     class="h-full w-full"
   />

@@ -159,6 +159,8 @@ export interface ControlsConfig {
   availableTypes?: ChartType[];
   allowTypeChange?: boolean;
   allowPeriodChange?: boolean;
+  allowColorChange?: boolean;
+  allowCurveChange?: boolean;
 }
 
 // Main unified chart props interface
@@ -271,7 +273,9 @@ export const DEFAULT_CONTROLS_CONFIG: Required<ControlsConfig> = {
   show: false,
   availableTypes: ['bar', 'line', 'area'],
   allowTypeChange: true,
-  allowPeriodChange: true
+  allowPeriodChange: true,
+  allowColorChange: false,
+  allowCurveChange: false
 };
 
 export const DEFAULT_ANNOTATIONS_CONFIG: Required<AnnotationConfig> = {
