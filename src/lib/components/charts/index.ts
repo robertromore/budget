@@ -1,6 +1,9 @@
 // Unified chart system (Phase 1 & 2 complete)
 export { default as UnifiedChart } from './unified-chart.svelte';
 
+// Specialized chart components
+export { default as IncomeExpensesChart } from './income-expenses-chart.svelte';
+
 // Chart control components (used by UnifiedChart)
 export { default as ChartTypeSelector } from './chart-type-selector.svelte';
 export { default as ChartPeriodControls } from './chart-period-controls.svelte';

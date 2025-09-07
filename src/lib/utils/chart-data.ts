@@ -175,6 +175,68 @@ export function transformMonthlyData(
 }
 
 /**
+ * Transforms income vs expenses data for multi-series charts
+ * Supports both combined and separate series views
+ */
+export function transformIncomeVsExpensesData<T extends Record<string, any>>(
+  data: T[],
+  mapping: {
+    x: keyof T | ((item: T) => any);
+    income: keyof T | ((item: T) => number);
+    expenses: keyof T | ((item: T) => number);
+  }
+): {
+  combined: ChartDataPoint[];
+  income: ChartDataPoint[];
+  expenses: ChartDataPoint[];
+  series: ChartDataPoint[];
+} {
+  const getField = <K>(field: keyof T | ((item: T) => K), item: T): K => {
+    return typeof field === 'function' ? field(item) : item[field] as K;
+  };
+
+  // Create separate series for income and expenses
+  const income = data.map((item, index) => ({
+    x: getField(mapping.x, item),
+    y: Number(getField(mapping.income, item)) || 0,
+    category: 'Income',
+    series: 'income',
+    metadata: { ...item, index, type: 'income' }
+  }));
+
+  const expenses = data.map((item, index) => ({
+    x: getField(mapping.x, item),
+    y: Math.abs(Number(getField(mapping.expenses, item)) || 0),
+    category: 'Expenses', 
+    series: 'expenses',
+    metadata: { ...item, index, type: 'expenses' }
+  }));
+
+  // Create combined dataset (interleaved for grouped bars)
+  const combined = data.flatMap((item, index) => [
+    {
+      x: getField(mapping.x, item),
+      y: Number(getField(mapping.income, item)) || 0,
+      category: 'Income',
+      series: 'income',
+      metadata: { ...item, index, type: 'income' }
+    },
+    {
+      x: getField(mapping.x, item),
+      y: Math.abs(Number(getField(mapping.expenses, item)) || 0),
+      category: 'Expenses',
+      series: 'expenses', 
+      metadata: { ...item, index, type: 'expenses' }
+    }
+  ]);
+
+  // Create series dataset for LayerChart with rScale
+  const series = [...income, ...expenses];
+
+  return { combined, income, expenses, series };
+}
+
+/**
  * Generic data transformer with flexible mapping
  */
 export function transformData<T extends Record<string, any>>(
