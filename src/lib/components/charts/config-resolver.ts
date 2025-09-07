@@ -124,13 +124,13 @@ export function resolveChartConfig(
   );
   
   // Infer chart type if not provided
-  let chartType = props.type || inferChartType(props.data);
+  let chartType: ChartType = props.type || inferChartType(props.data);
   
   // Validate chart type against available types if controls specify them
   if (controls.availableTypes && controls.availableTypes.length > 0) {
     if (!controls.availableTypes.includes(chartType)) {
       // Use first available type as fallback
-      chartType = controls.availableTypes[0];
+      chartType = controls.availableTypes[0] as ChartType;
     }
   }
   

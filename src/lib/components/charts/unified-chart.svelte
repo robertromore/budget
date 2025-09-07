@@ -226,6 +226,31 @@
     return undefined;
   });
 
+  // Create band scales for side-by-side income and expenses charts
+  const incomeBandScale = $derived.by(() => {
+    if (currentChartType === 'bar' && viewModeData?.income && viewModeData.income.length > 0 && !isChartCircular) {
+      const scale = scaleBand()
+        .domain(viewModeData.income.map(d => String(d.x)))
+        .range([0, 1])
+        .paddingInner(0.1)
+        .paddingOuter(0.05);
+      return scale;
+    }
+    return undefined;
+  });
+
+  const expensesBandScale = $derived.by(() => {
+    if (currentChartType === 'bar' && viewModeData?.expenses && viewModeData.expenses.length > 0 && !isChartCircular) {
+      const scale = scaleBand()
+        .domain(viewModeData.expenses.map(d => String(d.x)))
+        .range([0, 1])
+        .paddingInner(0.1)
+        .paddingOuter(0.05);
+      return scale;
+    }
+    return undefined;
+  });
+
   // Detect if this is multi-series data
   const isMultiSeries = $derived.by(() => {
     return chartSupportsMultiSeries && yFields && yFields.length > 1 && filteredData.some(item => item.series || item.category);
@@ -401,7 +426,8 @@
               x: dataAccessors.x || "x",
               y: dataAccessors.y || "y",
               ...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {}),
-              ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {})
+              ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {}),
+              ...(incomeBandScale ? { xScale: incomeBandScale } : {})
             } : {
               ...dataAccessors,
               ...(isChartCircular && config.resolvedColors.length > 0 ? {
@@ -447,7 +473,8 @@
               x: dataAccessors.x || "x",
               y: dataAccessors.y || "y",
               ...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {}),
-              ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {})
+              ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {}),
+              ...(expensesBandScale ? { xScale: expensesBandScale } : {})
             } : {
               ...dataAccessors,
               ...(isChartCircular && config.resolvedColors.length > 0 ? {
