@@ -1,8 +1,8 @@
 <script lang="ts">
   import { UnifiedChart } from '$lib/components/charts';
-  import type { ChartType } from '$lib/components/charts/chart-types';
+  import type { ChartType } from '$lib/components/charts/config/chart-types';
   import type { TransactionsFormat } from '$lib/types';
-  import { transformIncomeVsExpensesData } from '$lib/utils/chart-data';
+  import { transformIncomeVsExpensesData } from '$lib/utils/finance-chart-data';
   import { colorUtils } from '$lib/utils/colors';
   import { dateValueToJSDate } from '$lib/utils/dates';
   import { createIncomeVsExpensesProcessor } from '../(analytics)/data-processors.svelte';

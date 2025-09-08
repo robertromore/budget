@@ -1,6 +1,6 @@
 <script lang="ts">
   import { UnifiedChart } from '$lib/components/charts';
-  import type { ChartType } from '$lib/components/charts/chart-types';
+  import type { ChartType } from '$lib/components/charts/config/chart-types';
   import type { TransactionsFormat } from '$lib/types';
   import { transformData } from '$lib/utils/chart-data';
   import { dateValueToJSDate } from '$lib/utils/dates';
@@ -22,7 +22,6 @@
     })
   );
 
-
   // Available chart types for spending data
   const availableChartTypes: ChartType[] = ['area', 'bar', 'line', 'scatter'];
 </script>
@@ -32,7 +31,13 @@
     data={chartData}
     type="line"
     styling={{
-      colors: 'auto'
+      colors: 'auto',
+      points: {
+        show: true,
+        radius: 6,
+        stroke: 'white',
+        strokeWidth: 0
+      }
     }}
     axes={{
       x: {
@@ -55,13 +60,29 @@
       enabled: true,
       field: 'x'
     }}
+    interactions={{
+      tooltip: {
+        enabled: true,
+        format: 'currency'
+      },
+      highlight: {
+        enabled: true
+      }
+    }}
     controls={{
       show: true,
       availableTypes: availableChartTypes,
       allowTypeChange: true,
       allowPeriodChange: true,
       allowColorChange: true,
-      allowCurveChange: true
+      allowCurveChange: true,
+      allowPointsChange: true,
+      allowFontChange: true,
+      allowGridChange: true,
+      allowCrosshairChange: true,
+      allowHighlightChange: true,
+      allowLabelChange: true,
+      allowViewModeChange: true
     }}
     class="h-full w-full"
   />

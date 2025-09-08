@@ -1,6 +1,6 @@
 <script lang="ts">
   import { UnifiedChart } from '$lib/components/charts';
-  import type { ChartType } from '$lib/components/charts/chart-types';
+  import type { ChartType } from '$lib/components/charts/config/chart-types';
   import type { TransactionsFormat } from '$lib/types';
   import { transformData } from '$lib/utils/chart-data';
   import { colorUtils } from '$lib/utils/colors';

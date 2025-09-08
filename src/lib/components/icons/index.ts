@@ -15,8 +15,10 @@ import {
   // Actions icons
   MoreHorizontal,
   CirclePlus,
+  Eye,
   EyeOff,
   SlidersHorizontal,
+  Crosshair,
   
   // Sorting icons
   ArrowDown,
@@ -106,8 +108,10 @@ export {
   // Actions icons
   MoreHorizontal,
   CirclePlus,
+  Eye,
   EyeOff,
   SlidersHorizontal,
+  Crosshair,
   
   // Sorting icons
   ArrowDown,

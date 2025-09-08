@@ -2,7 +2,7 @@
   import { UnifiedChart } from '$lib/components/charts';
   import { transformData } from '$lib/utils/chart-data';
   import type { WidgetProps } from '$lib/types/widgets';
-  import type { ChartType } from '$lib/components/charts/chart-types';
+  import type { ChartType } from '$lib/components/charts/config/chart-types';
   import { colorUtils } from '$lib/utils/colors';
   import WidgetCard from './widget-card.svelte';
 

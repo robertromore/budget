@@ -1,36 +1,20 @@
 <script lang="ts">
-  import { aggregateForPerformance } from '$lib/utils/chart-data';
-  import { filterDataByPeriod, generatePeriodOptions } from '$lib/utils/chart-periods';
-  import {
-    getDataAccessorsForChartType,
-    isCircularChart,
-    requiresHierarchicalData,
-    supportsMultiSeries,
-    transformDataForChartType
-  } from '$lib/utils/chart-transformers';
-  import { colorUtils } from '$lib/utils/colors';
-  import { getSchemeColors } from '$lib/utils/chart-colors';
-  import { scaleBand } from 'd3-scale';
-  import {
-    Axis,
-    Chart,
-    Grid,
-    Labels,
-    Legend,
-    Rule,
-    Svg
-  } from 'layerchart';
-  import ChartColorSelector from './chart-color-selector.svelte';
-  import type { ChartDataPoint, ChartDataValidation, UnifiedChartProps } from './chart-config';
-  import ChartCurveSelector from './chart-curve-selector.svelte';
-  import ChartViewModeSelector from './chart-view-mode-selector.svelte';
-  import ChartPeriodControls from './chart-period-controls.svelte';
-  import ChartTypeSelector from './chart-type-selector.svelte';
-  import { ALL_CHART_TYPES } from './chart-types';
-  import { resolveChartConfig, validateChartData } from './config-resolver';
-  import DynamicChartRenderer from './dynamic-chart-renderer.svelte';
+  import ChartControlPanel from './controls/chart-control-panel.svelte';
+  import type { UnifiedChartProps } from './config/chart-config';
+  import { 
+    DEFAULT_STYLING_CONFIG, 
+    DEFAULT_INTERACTIONS_CONFIG,
+    DEFAULT_AXES_CONFIG,
+    DEFAULT_THRESHOLD_CONFIG 
+  } from './config/chart-config';
+  import ChartCore from './core/chart-core.svelte';
+  import { createReactiveChartDataProcessor } from './processors/chart-data-processor.svelte';
+  import { ALL_CHART_TYPES } from './config/chart-types';
+  import { resolveChartConfig, validateChartData } from './config/config-resolver';
+  import { calculateOptimalOpacity, createThemeDetector } from '$lib/utils/accessibility-colors';
+  import { chartFormatters } from '$lib/utils/chart-formatters';
 
-  // Props interface
+  // Props interface - maintain backward compatibility
   let {
     data,
     type,
@@ -40,50 +24,78 @@
     timeFiltering,
     controls,
     annotations,
+    threshold,
     yFields,
     yFieldLabels,
-    colorField,
     categoryField,
+    legendTitle,
     viewMode,
     viewModeData,
     suppressDuplicateWarnings = false,
     class: className = "h-full w-full"
   }: UnifiedChartProps = $props();
 
-  // Loading and error state management
-  let isLoading = $state(false);
-  let hasRenderError = $state(false);
-
-  // Accessibility ID for stable references
-  const chartId = Math.random().toString(36).substr(2, 9);
-
   // Resolve complete configuration
-  const config = $derived.by(() => {
-    const resolved = resolveChartConfig({
-      data,
-      type,
-      axes,
-      styling,
-      interactions,
-      timeFiltering,
-      controls
-    } as UnifiedChartProps);
-    return resolved;
-  });
+  const config = $derived(resolveChartConfig({
+    data,
+    type,
+    axes,
+    styling,
+    interactions,
+    timeFiltering,
+    controls,
+    annotations,
+    threshold
+  } as UnifiedChartProps));
 
   // Validate data
-  const validation: ChartDataValidation = $derived(
-    validateChartData(data, { suppressDuplicateWarnings })
-  );
+  const validation = $derived(validateChartData(data, { suppressDuplicateWarnings }));
 
-  // Bindable chart type (for controls)
+  // Control states - bindable for UI controls - initialize from config defaults
   let currentChartType = $state(type || 'bar');
+  let currentPeriod = $state<string | number>(0);
+  let selectedColorScheme = $state('default');
+  let selectedCurve = $state('curveLinear');
+  let showPoints = $state(DEFAULT_STYLING_CONFIG.points.show);
+  let pointRadius = $state(DEFAULT_STYLING_CONFIG.points.radius);
+  let pointStrokeWidth = $state(DEFAULT_STYLING_CONFIG.points.strokeWidth);
+  let pointFillOpacity = $state(DEFAULT_STYLING_CONFIG.points.fillOpacity);
+  let pointStrokeOpacity = $state(DEFAULT_STYLING_CONFIG.points.strokeOpacity);
+  let selectedViewMode = $state(viewMode || 'combined');
+  let axisFontSize = $state(DEFAULT_AXES_CONFIG.x.fontSize);
+  let rotateXLabels = $state(DEFAULT_AXES_CONFIG.x.rotateLabels);
+  let xAxisFormat = $state('default');
+  let yAxisFormat = $state('currency');
+  let showGrid = $state(DEFAULT_STYLING_CONFIG.grid.show);
+  let showHorizontal = $state(DEFAULT_STYLING_CONFIG.grid.horizontal);
+  let showVertical = $state(DEFAULT_STYLING_CONFIG.grid.vertical);
+  let gridOpacity = $state(DEFAULT_STYLING_CONFIG.grid.opacity);
+  let showCrosshair = $state(DEFAULT_INTERACTIONS_CONFIG.crosshair.enabled);
+  let crosshairAxis = $state<'x' | 'y' | 'both' | 'none'>(DEFAULT_INTERACTIONS_CONFIG.crosshair.axis as 'x' | 'y' | 'both' | 'none');
+  let crosshairStyle = $state<'solid' | 'dashed' | 'dotted'>(DEFAULT_INTERACTIONS_CONFIG.crosshair.style);
+  let crosshairOpacity = $state(DEFAULT_INTERACTIONS_CONFIG.crosshair.opacity); // Will be updated by effect to use accessibility-aware value
+  let showHighlightPoints = $state(DEFAULT_INTERACTIONS_CONFIG.highlight.showPoints);
+  let highlightPointRadius = $state(DEFAULT_INTERACTIONS_CONFIG.highlight.pointRadius);
+  let showLabels = $state(DEFAULT_STYLING_CONFIG.labels.show);
+  let labelPlacement = $state<'inside' | 'outside' | 'center'>(DEFAULT_STYLING_CONFIG.labels.placement);
+  let labelOffset = $state(DEFAULT_STYLING_CONFIG.labels.offset?.y ?? 4);
+  let labelFormat = $state('currency');
+  
+  // Threshold state management
+  let thresholdEnabled = $state(DEFAULT_THRESHOLD_CONFIG.enabled);
+  let thresholdValue = $state(DEFAULT_THRESHOLD_CONFIG.value);
+  let thresholdAboveColor = $state(DEFAULT_THRESHOLD_CONFIG.aboveColor);
+  let thresholdBelowColor = $state(DEFAULT_THRESHOLD_CONFIG.belowColor);
+  let thresholdAboveOpacity = $state(DEFAULT_THRESHOLD_CONFIG.aboveOpacity);
+  let thresholdBelowOpacity = $state(DEFAULT_THRESHOLD_CONFIG.belowOpacity);
+  let thresholdShowLine = $state(DEFAULT_THRESHOLD_CONFIG.showLine);
+  let thresholdLineOpacity = $state(DEFAULT_THRESHOLD_CONFIG.lineOpacity);
+
+  // Update chart type from config
   $effect(() => {
-    // Update from config, but ensure it's a valid type if controls are enabled
     if (config.controls.availableTypes && config.controls.availableTypes.length > 0) {
-      // If the current type is not in the available types, use the first available type
       if (!config.controls.availableTypes.includes(config.type)) {
-        currentChartType = config.controls.availableTypes[0];
+        currentChartType = config.controls.availableTypes[0]!;
       } else {
         currentChartType = config.type;
       }
@@ -92,112 +104,178 @@
     }
   });
 
-  // Interactive color and curve controls
-  let selectedColorScheme = $state('default');
-  let selectedCurve = $state('curveLinear');
-  let selectedViewMode = $state(viewMode || 'combined');
-
-  // Color scheme definitions (using existing colorUtils)
-  const colorSchemes = {
-    default: Array.from({ length: 8 }, (_, i) => colorUtils.getChartColor(i)),
-    financial: [
-      colorUtils.getChartColor(1), // Green - positive
-      colorUtils.getChartColor(2), // Red - negative
-      colorUtils.getChartColor(0), // Blue - neutral
-      colorUtils.getChartColor(4)  // Orange - accent
-    ],
-    monochrome: [
-      'hsl(220 13% 69%)',  // Light gray
-      'hsl(220 13% 50%)',  // Medium gray
-      'hsl(220 13% 31%)',  // Dark gray
-      'hsl(220 13% 18%)'   // Very dark gray
-    ],
-    vibrant: [
-      'hsl(340 82% 52%)', // Vibrant pink
-      'hsl(291 64% 42%)', // Vibrant purple
-      'hsl(262 83% 58%)', // Vibrant blue
-      'hsl(175 70% 41%)'  // Vibrant teal
-    ],
-    pastel: [
-      'hsl(210 40% 80%)', // Pastel blue
-      'hsl(120 40% 80%)', // Pastel green
-      'hsl(60 40% 80%)',  // Pastel yellow
-      'hsl(0 40% 80%)'    // Pastel red
-    ]
-  };
-
-  // Override colors if control is enabled
-  const effectiveColors = $derived.by(() => {
-    if (config.controls.allowColorChange) {
-      return getSchemeColors(selectedColorScheme);
-    }
-    return config.resolvedColors;
-  });
-
-  // Generate period options for time filtering
-  const availablePeriods = $derived.by(() => {
-    if (!config.timeFiltering.enabled) return [];
-
-    // Only use transaction-based filtering for radial charts (pie/arc) that need it
-    const hasSourceData = config.timeFiltering.sourceData && config.timeFiltering.sourceData.length > 0;
-
-    if (isChartCircular && hasSourceData) {
-      return generatePeriodOptions(config.timeFiltering.sourceData, config.timeFiltering.sourceDateField);
-    }
-
-    // Default: use chart data for all other charts
-    return generatePeriodOptions(config.data, config.timeFiltering.field);
-  });
-
-  // Bindable current period
-  let currentPeriod = $state(0); // Default to "All Time"
+  // Update period from config
   $effect(() => {
-    currentPeriod = Number(config.timeFiltering.defaultPeriod);
+    currentPeriod = config.timeFiltering.defaultPeriod;
   });
 
-  // Select data based on view mode
-  const selectedData = $derived.by(() => {
-    if (!viewModeData || selectedViewMode === 'combined') {
-      return config.data;
+  // Initialize grid controls from config defaults (only once)
+  let gridInitialized = $state(false);
+  let crosshairInitialized = $state(false);
+  let labelsInitialized = $state(false);
+  let thresholdInitialized = $state(false);
+  
+  $effect(() => {
+    if (!gridInitialized) {
+      showGrid = config.styling.grid?.show ?? false;
+      showHorizontal = config.styling.grid?.horizontal ?? true;
+      showVertical = config.styling.grid?.vertical ?? false;
+      gridOpacity = accessibleGridOpacity; // Use accessibility-aware opacity
+      gridInitialized = true;
     }
+  });
+
+  // Initialize crosshair opacity with accessibility-aware value (only once)
+  $effect(() => {
+    if (!crosshairInitialized) {
+      crosshairOpacity = accessibleCrosshairOpacity;
+      crosshairInitialized = true;
+    }
+  });
+
+  // Initialize label controls from annotation config (only once)
+  $effect(() => {
+    if (!labelsInitialized && config.controls.allowLabelChange) {
+      // If there are existing annotation labels, inherit their settings
+      if (config.annotations?.labels?.show) {
+        showLabels = config.annotations.labels.show;
+        labelPlacement = config.annotations.labels.placement || 'outside';
+        labelOffset = config.annotations.labels.offset?.y || 4;
+      }
+      labelsInitialized = true;
+    }
+  });
+
+  // Initialize threshold controls from config (only once)
+  $effect(() => {
+    if (!thresholdInitialized) {
+      if (config.threshold) {
+        thresholdEnabled = config.threshold.enabled;
+        thresholdValue = config.threshold.value;
+        thresholdAboveColor = config.threshold.aboveColor;
+        thresholdBelowColor = config.threshold.belowColor;
+        thresholdAboveOpacity = config.threshold.aboveOpacity;
+        thresholdBelowOpacity = config.threshold.belowOpacity;
+        thresholdShowLine = config.threshold.showLine;
+        thresholdLineOpacity = config.threshold.lineOpacity;
+      }
+      thresholdInitialized = true;
+    }
+  });
+
+  // Create the reactive data processor with all configuration
+  const processor = createReactiveChartDataProcessor(() => ({
+    data: data,
+    config: config,
+    chartType: currentChartType,
+    currentPeriod,
+    viewMode: selectedViewMode,
+    viewModeData: viewModeData || {},
+    yFields: yFields || [],
+    yFieldLabels: yFieldLabels || [],
+    categoryField: categoryField || 'category',
+    enableColorScheme: config.controls.allowColorChange,
+    selectedColorScheme
+  }));
+
+  // Get processed data from the processor
+  const processorData = $derived(processor());
+
+  // Theme detection for accessibility-aware opacity calculations
+  const themeDetector = createThemeDetector();
+  
+  // Map color scheme from effectiveColors (simplified mapping)
+  const currentColorScheme = $derived.by(() => {
+    const primaryColor = processorData.effectiveColors[0];
+    if (!primaryColor) return 'default';
     
-    // For side-by-side mode, we'll handle the data differently later
-    // For now, return the combined data to avoid breaking existing functionality
-    return viewModeData.combined || config.data;
+    if (primaryColor.includes('22c55e') || primaryColor.includes('green')) return 'green';
+    if (primaryColor.includes('f97316') || primaryColor.includes('orange')) return 'orange';
+    if (primaryColor.includes('ef4444') || primaryColor.includes('red')) return 'red';
+    if (primaryColor.includes('a855f7') || primaryColor.includes('purple')) return 'purple';
+    return 'default'; // blue
   });
 
-  // Filter data based on current period
-  const filteredData = $derived.by(() => {
-    const dataToFilter = selectedData;
-    if (!config.timeFiltering.enabled) return dataToFilter;
-
-    // Only use transaction-based filtering for radial charts (pie/arc)
-    const hasSourceData = config.timeFiltering.sourceData &&
-                        config.timeFiltering.sourceData.length > 0 &&
-                        config.timeFiltering.sourceProcessor;
-
-    if (isChartCircular && hasSourceData) {
-      // Filter source data first, then process (for radial charts only)
-      const filteredSourceData = currentPeriod === 0 ? config.timeFiltering.sourceData :
-        filterDataByPeriod(
-          config.timeFiltering.sourceData,
-          config.timeFiltering.sourceDateField,
-          currentPeriod
-        );
-
-      // Process filtered source data into chart data
-      return config.timeFiltering.sourceProcessor(filteredSourceData);
-    }
-
-    // Default: filter chart data directly (for all linear charts: bar, line, area, etc.)
-    return filterDataByPeriod(
-      dataToFilter,
-      config.timeFiltering.field,
-      currentPeriod
-    ) as ChartDataPoint[];
+  // Calculate accessibility-aware opacity for crosshair
+  const accessibleCrosshairOpacity = $derived.by(() => {
+    return calculateOptimalOpacity(currentColorScheme, themeDetector.mode);
   });
 
-  // Get available chart types based on controls config
+  // Calculate accessibility-aware opacity for grid lines (more subtle than crosshair)
+  const accessibleGridOpacity = $derived.by(() => {
+    // Grid lines should be more subtle than crosshairs
+    const baseOpacity = calculateOptimalOpacity(currentColorScheme, themeDetector.mode);
+    return Math.max(0.1, baseOpacity * 0.4); // 40% of crosshair opacity, minimum 0.1
+  });
+
+  // Create formatter function based on labelFormat
+  const labelFormatter = $derived.by(() => {
+    return (datum: any) => {
+      const value = typeof datum === 'object' && datum !== null
+        ? (datum.y ?? datum.value ?? datum.amount ?? datum)
+        : datum;
+      
+      if (typeof value !== 'number') return String(value);
+      
+      switch (labelFormat) {
+        case 'currency':
+          return chartFormatters.currency(value);
+        case 'percentage':
+          return chartFormatters.percentage(value);
+        case 'number':
+          return chartFormatters.number(value);
+        default:
+          return String(value);
+      }
+    };
+  });
+
+  // Create Y-axis formatter function
+  const yAxisFormatter = $derived.by(() => {
+    console.log('Creating Y-axis formatter for format:', yAxisFormat);
+    return (value: any) => {
+      console.log('Y-axis formatter called with value:', value, 'format:', yAxisFormat);
+      if (typeof value !== 'number') return String(value);
+      
+      switch (yAxisFormat) {
+        case 'currency':
+          return chartFormatters.currency(value);
+        case 'percentage':
+          return chartFormatters.percentage(value);
+        case 'number':
+          return chartFormatters.number(value);
+        case 'compact':
+          return chartFormatters.numberCompact(value);
+        case 'default':
+        default:
+          return chartFormatters.currency(value);
+      }
+    };
+  });
+
+  // Create X-axis formatter function
+  const xAxisFormatter = $derived.by(() => {
+    console.log('Creating X-axis formatter for format:', xAxisFormat);
+    return (value: any) => {
+      console.log('X-axis formatter called with value:', value, 'format:', xAxisFormat);
+      if (typeof value !== 'number') return String(value);
+      
+      switch (xAxisFormat) {
+        case 'currency':
+          return chartFormatters.currency(value);
+        case 'percentage':
+          return chartFormatters.percentage(value);
+        case 'number':
+          return chartFormatters.number(value);
+        case 'compact':
+          return chartFormatters.numberCompact(value);
+        default:
+          return String(value);
+      }
+    };
+  });
+
+  // Get available chart types for the selector
   const availableChartTypes = $derived.by(() => {
     if (!config.controls.availableTypes) return [];
 
@@ -208,150 +286,33 @@
     );
   });
 
-  // Detect chart characteristics using utilities
-  const isChartCircular = $derived(isCircularChart(currentChartType));
-  const isChartHierarchical = $derived(requiresHierarchicalData(currentChartType));
-  const chartSupportsMultiSeries = $derived(supportsMultiSeries(currentChartType));
+  // Loading and error states
+  const isLoading = $derived(data.length > 1000);
+  const hasRenderError = $state(false);
 
-  // Create band scale for bar charts with string x values
-  const bandScale = $derived.by(() => {
-    if (currentChartType === 'bar' && chartData.length > 0 && !isChartCircular) {
-      const scale = scaleBand()
-        .domain(chartData.map(d => String(d.x)))
-        .range([0, 1]) // LayerChart expects normalized range
-        .paddingInner(0.1)
-        .paddingOuter(0.05);
-      return scale;
-    }
-    return undefined;
-  });
+  // Accessibility ID
+  const chartId = Math.random().toString(36).substring(2, 9);
 
-  // Create band scales for side-by-side income and expenses charts
-  const incomeBandScale = $derived.by(() => {
-    if (currentChartType === 'bar' && viewModeData?.income && viewModeData.income.length > 0 && !isChartCircular) {
-      const scale = scaleBand()
-        .domain(viewModeData.income.map(d => String(d.x)))
-        .range([0, 1])
-        .paddingInner(0.1)
-        .paddingOuter(0.05);
-      return scale;
-    }
-    return undefined;
-  });
-
-  const expensesBandScale = $derived.by(() => {
-    if (currentChartType === 'bar' && viewModeData?.expenses && viewModeData.expenses.length > 0 && !isChartCircular) {
-      const scale = scaleBand()
-        .domain(viewModeData.expenses.map(d => String(d.x)))
-        .range([0, 1])
-        .paddingInner(0.1)
-        .paddingOuter(0.05);
-      return scale;
-    }
-    return undefined;
-  });
-
-  // Detect if this is multi-series data
-  const isMultiSeries = $derived.by(() => {
-    return chartSupportsMultiSeries && yFields && yFields.length > 1 && filteredData.some(item => item.series || item.category);
-  });
-
-  // Get unique series for multi-series charts
-  const seriesList = $derived.by(() => {
-    if (!isMultiSeries) return [];
-
-    const uniqueSeries = new Set<string>();
-    chartData.forEach(item => {
-      if (item.series) uniqueSeries.add(item.series);
-      else if (item.category) uniqueSeries.add(item.category);
-    });
-
-    return Array.from(uniqueSeries);
-  });
-
-  // Prepare series data for multi-series charts
-  const seriesData = $derived.by(() => {
-    if (!isMultiSeries) return [];
-
-    return seriesList.map(series =>
-      chartData.filter(d =>
-        (d.series === series) || (d.category === series)
-      )
-    );
-  });
-
-  // Get data accessors for the current chart type
-  const dataAccessors = $derived(getDataAccessorsForChartType(currentChartType));
-
-  // Prepare chart data for LayerChart with performance optimization and transformation
-  const chartData = $derived.by(() => {
-    // Ensure we have valid data before processing
-    if (!filteredData || filteredData.length === 0) {
-      return [];
-    }
-
-    // Performance optimization: aggregate large datasets
-    const dataToProcess = filteredData.length > 500
-      ? aggregateForPerformance(filteredData, 500)
-      : filteredData;
-
-    // Transform data based on chart type requirements
-    const transformed = transformDataForChartType(dataToProcess, currentChartType, {
-      categoryField: categoryField || 'category',
-      valueField: 'y',
-      seriesField: 'series',
-      colors: config.resolvedColors
-    });
-
-    // Special handling for bar charts with Date x-axis values (preserve existing logic)
-    if (currentChartType === 'bar' && dataToProcess.length > 0 && !isChartCircular) {
-      const firstItem = dataToProcess[0];
-      const shouldConvertToCategories = firstItem &&
-        firstItem.x instanceof Date &&
-        dataToProcess.length <= 12 && // Only for small datasets that should be categorical
-        !isMultiSeries; // Don't convert for multi-series time charts
-
-      if (shouldConvertToCategories) {
-        return dataToProcess.map(item => ({
-          ...item,
-          x: item.x instanceof Date
-            ? item.x.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-            : String(item.x)
-        }));
-      }
-    }
-
-    return Array.isArray(transformed) ? transformed : [transformed];
-  });
-
-  // Error handling for invalid data with enhanced messaging
+  // Error logging effect
   $effect(() => {
     if (!validation.isValid) {
       console.error('Chart data validation failed:', validation.errors.map((e: any) => e.message));
-      console.error('Detailed errors:', validation.errors);
     }
 
     if (validation.warnings.length > 0) {
       console.warn('Chart data warnings:', validation.warnings.map((w: any) => w.message));
-      console.warn('Detailed warnings:', validation.warnings);
     }
 
     if (validation.dataQuality.duplicateKeys > 0 && !suppressDuplicateWarnings) {
       console.warn(`Chart has ${validation.dataQuality.duplicateKeys} duplicate keys which may affect visualization`);
     }
   });
-
-  // Loading state management for large datasets
-  $effect(() => {
-    isLoading = data.length > 1000;
-    hasRenderError = false;
-  });
-
 </script>
 
 <div class={className} role="img"
-     aria-label={`${currentChartType} chart with ${chartData.length} data points`}
-     aria-describedby={`chart-description-${chartId}`}>
+    aria-label={`${currentChartType} chart with ${processorData.chartData.length} data points`}
+    aria-describedby={`chart-description-${chartId}`}>
+
   {#if hasRenderError}
     <!-- Render error state -->
     <div class="flex items-center justify-center h-full text-center p-6">
@@ -373,280 +334,158 @@
       </div>
     </div>
   {:else if validation.isValid}
+    <!-- Compact Controls Panel -->
     {#if config.controls.show}
-      <div class="flex items-center justify-between gap-4 p-3 bg-muted/30 rounded-lg mb-4">
-        <div class="flex items-center gap-6 text-sm">
-          <!-- Chart Type Controls -->
-          {#if config.controls.allowTypeChange && availableChartTypes.length > 1}
-            <ChartTypeSelector
-              bind:chartType={currentChartType}
-              availableChartTypes={availableChartTypes}
-            />
-          {/if}
-
-          <!-- Period Controls -->
-          {#if config.controls.allowPeriodChange && config.timeFiltering.enabled}
-            <ChartPeriodControls
-              bind:currentPeriod
-              data={availablePeriods}
-              dateField={config.timeFiltering.field}
-              enablePeriodFiltering={true}
-            />
-          {/if}
-
-          <!-- Color Controls -->
-          {#if config.controls.allowColorChange}
-            <ChartColorSelector bind:selectedScheme={selectedColorScheme} />
-          {/if}
-
-          <!-- Curve Controls -->
-          {#if config.controls.allowCurveChange}
-            <ChartCurveSelector bind:curve={selectedCurve} chartType={currentChartType} />
-          {/if}
-          <!-- View Mode Controls -->
-          {#if config.controls.allowViewModeChange}
-            <ChartViewModeSelector 
-              bind:viewMode={selectedViewMode} 
-              availableViewModes={config.controls.availableViewModes}
-            />
-          {/if}
-        </div>
-      </div>
-    {/if}
-
-    {#if selectedViewMode === 'side-by-side' && viewModeData && viewModeData.income && viewModeData.expenses}
-      <!-- Side-by-side view: separate charts for income and expenses -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-        <!-- Income Chart -->
-        <div class="h-full">
-          <h4 class="text-sm font-medium mb-2 text-center">Income</h4>
-          <Chart
-            data={viewModeData.income}
-            {...(!isChartCircular && !isChartHierarchical ? {
-              x: dataAccessors.x || "x",
-              y: dataAccessors.y || "y",
-              ...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {}),
-              ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {}),
-              ...(incomeBandScale ? { xScale: incomeBandScale } : {})
-            } : {
-              ...dataAccessors,
-              ...(isChartCircular && config.resolvedColors.length > 0 ? {
-                cRange: [effectiveColors[0] || 'hsl(var(--chart-1))']
-              } : {})
-            })}
-            {...(config.styling.dimensions.padding ? { padding: config.styling.dimensions.padding } : {})}
-          >
-            <Svg>
-              {#if !isChartCircular && !isChartHierarchical}
-                {#if config.axes.y.show}
-                  <Axis placement="left" />
-                {/if}
-                {#if config.axes.x.show}
-                  <Axis placement="bottom" />
-                {/if}
-              {/if}
-              <DynamicChartRenderer
-                chartType={currentChartType}
-                data={viewModeData.income}
-                config={{
-                  padding: currentChartType === 'bar' ? 4 : undefined,
-                  fillOpacity: currentChartType === 'area' ? 0.6 : undefined,
-                  strokeWidth: ['line', 'spline', 'threshold'].includes(currentChartType) ? 2 : undefined,
-                  fill: ['line', 'spline'].includes(currentChartType) ? 'none' : undefined,
-                  stroke: ['line', 'spline'].includes(currentChartType) ? (effectiveColors[0] || 'hsl(var(--chart-1))') : undefined,
-                  curve: ['line', 'spline', 'area'].includes(currentChartType) && config.controls.allowCurveChange ? selectedCurve : undefined
-                }}
-                seriesData={[]}
-                seriesColors={[effectiveColors[0] || 'hsl(var(--chart-1))']}
-                isMultiSeries={false}
-              />
-            </Svg>
-          </Chart>
-        </div>
-
-        <!-- Expenses Chart -->
-        <div class="h-full">
-          <h4 class="text-sm font-medium mb-2 text-center">Expenses</h4>
-          <Chart
-            data={viewModeData.expenses}
-            {...(!isChartCircular && !isChartHierarchical ? {
-              x: dataAccessors.x || "x",
-              y: dataAccessors.y || "y",
-              ...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {}),
-              ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {}),
-              ...(expensesBandScale ? { xScale: expensesBandScale } : {})
-            } : {
-              ...dataAccessors,
-              ...(isChartCircular && config.resolvedColors.length > 0 ? {
-                cRange: [effectiveColors[1] || 'hsl(var(--chart-2))']
-              } : {})
-            })}
-            {...(config.styling.dimensions.padding ? { padding: config.styling.dimensions.padding } : {})}
-          >
-            <Svg>
-              {#if !isChartCircular && !isChartHierarchical}
-                {#if config.axes.y.show}
-                  <Axis placement="left" />
-                {/if}
-                {#if config.axes.x.show}
-                  <Axis placement="bottom" />
-                {/if}
-              {/if}
-              <DynamicChartRenderer
-                chartType={currentChartType}
-                data={viewModeData.expenses}
-                config={{
-                  padding: currentChartType === 'bar' ? 4 : undefined,
-                  fillOpacity: currentChartType === 'area' ? 0.6 : undefined,
-                  strokeWidth: ['line', 'spline', 'threshold'].includes(currentChartType) ? 2 : undefined,
-                  fill: ['line', 'spline'].includes(currentChartType) ? 'none' : undefined,
-                  stroke: ['line', 'spline'].includes(currentChartType) ? (effectiveColors[1] || 'hsl(var(--chart-2))') : undefined,
-                  curve: ['line', 'spline', 'area'].includes(currentChartType) && config.controls.allowCurveChange ? selectedCurve : undefined
-                }}
-                seriesData={[]}
-                seriesColors={[effectiveColors[1] || 'hsl(var(--chart-2))']}
-                isMultiSeries={false}
-              />
-            </Svg>
-          </Chart>
-        </div>
-      </div>
-    {:else}
-      <!-- Combined view: single chart with all data -->
-      <Chart
-        data={chartData}
-        {...(!isChartCircular && !isChartHierarchical ? {
-          x: dataAccessors.x || "x",
-          y: dataAccessors.y || "y",
-          ...(isMultiSeries ? { r: "series" } : {}),
-          ...(config.axes.y.nice ? { yNice: config.axes.y.nice } : {}),
-          ...(config.axes.x.nice ? { xNice: config.axes.x.nice } : {}),
-          ...(config.axes.y.domain && (config.axes.y.domain[0] !== null || config.axes.y.domain[1] !== null) ? { yDomain: config.axes.y.domain } : {}),
-          ...(config.axes.x.domain && (config.axes.x.domain[0] !== null || config.axes.x.domain[1] !== null) ? { xDomain: config.axes.x.domain } : {}),
-          ...(bandScale ? { xScale: bandScale } : {})
-        } : {
-          // For circular and hierarchical charts, use appropriate data accessors
-          ...dataAccessors,
-          // For pie charts, configure color scale with cRange
-          ...(isChartCircular && config.resolvedColors.length > 0 ? {
-            cRange: effectiveColors
-          } : {})
-        })}
-        {...(config.styling.dimensions.padding ? { padding: config.styling.dimensions.padding } : {})}
-      >
-        <Svg>
-          <!-- Axes for non-circular and non-hierarchical charts -->
-          {#if !isChartCircular && !isChartHierarchical}
-          {#if config.axes.y.show}
-            <Axis placement="left" />
-          {/if}
-          {#if config.axes.x.show}
-            <Axis
-              placement="bottom"
-              {...(config.axes.x.rotateLabels ? {
-                tickLabelProps: { rotate: -45, textAnchor: 'end' }
-              } : {})}
-              {...(chartData.length > 8 ? {
-                ticks: chartData.filter((_, i) =>
-                  i % Math.ceil(chartData.length / 4) === 0
-                ).map(d =>
-                  (typeof d === 'object' && 'x' in d) ? d.x : ''
-                )
-              } : {})}
-            />
-          {/if}
-        {/if}
-
-        <!-- Dynamic chart rendering using the component registry -->
-        <DynamicChartRenderer
-          chartType={currentChartType}
-          data={chartData}
-          config={{
-            padding: currentChartType === 'bar' ? 4 : undefined,
-            fillOpacity: currentChartType === 'area' ? 0.6 : undefined,
-            strokeWidth: ['line', 'spline', 'threshold'].includes(currentChartType) ? 2 : undefined,
-            fill: ['line', 'spline'].includes(currentChartType) ? 'none' : undefined,
-            stroke: ['line', 'spline'].includes(currentChartType) ? (effectiveColors[0] || 'hsl(var(--chart-1))') : undefined,
-            curve: ['line', 'spline', 'area'].includes(currentChartType) && config.controls.allowCurveChange ? selectedCurve : undefined,
-            r: currentChartType === 'scatter' ? 4 : undefined,
-            innerRadius: currentChartType === 'arc' ? 40 : undefined,
-            outerRadius: currentChartType === 'arc' ? 150 : undefined,
-            start: currentChartType === 'calendar' && chartData.length > 0 ? new Date(Math.min(...chartData.map(d => {
-              if (typeof d === 'object' && 'x' in d) {
-                if (d.x instanceof Date) return d.x.getTime();
-                if (typeof d.x === 'string') return new Date(d.x).getTime();
-                if (typeof d.x === 'number') return d.x;
-              }
-              return new Date().getTime();
-            }))) : undefined,
-            end: currentChartType === 'calendar' && chartData.length > 0 ? new Date(Math.max(...chartData.map(d => {
-              if (typeof d === 'object' && 'x' in d) {
-                if (d.x instanceof Date) return d.x.getTime();
-                if (typeof d.x === 'string') return new Date(d.x).getTime();
-                if (typeof d.x === 'number') return d.x;
-              }
-              return new Date().getTime();
-            }))) : undefined
-          }}
-          seriesData={seriesData}
-          seriesColors={effectiveColors}
-          isMultiSeries={isMultiSeries || false}
+      <div class="mb-4">
+        <ChartControlPanel
+          bind:chartType={currentChartType}
+          availableChartTypes={availableChartTypes}
+          allowTypeChange={config.controls.allowTypeChange}
+          
+          bind:currentPeriod
+          periodData={processorData.availablePeriods.map(p => ({ key: p.value, label: p.label }))}
+          allowPeriodChange={config.controls.allowPeriodChange}
+          enablePeriodFiltering={config.timeFiltering.enabled}
+          dateField={config.timeFiltering.field}
+          
+          bind:selectedColorScheme
+          allowColorChange={config.controls.allowColorChange}
+          
+          bind:selectedCurve
+          allowCurveChange={config.controls.allowCurveChange}
+          
+          bind:showPoints
+          allowPointsChange={config.controls.allowPointsChange}
+          bind:pointRadius
+          bind:pointStrokeWidth
+          bind:pointFillOpacity
+          bind:pointStrokeOpacity
+          
+          bind:selectedViewMode
+          availableViewModes={config.controls.availableViewModes || ['combined', 'side-by-side']}
+          allowViewModeChange={config.controls.allowViewModeChange}
+          
+          bind:axisFontSize
+          bind:rotateXLabels
+          bind:xAxisFormat
+          bind:yAxisFormat
+          allowFontChange={config.controls.allowFontChange}
+          
+          bind:showGrid
+          bind:showHorizontal
+          bind:showVertical
+          bind:gridOpacity
+          allowGridChange={config.controls.allowGridChange}
+          calculatedGridOpacity={accessibleGridOpacity}
+          
+          bind:showCrosshair
+          bind:crosshairAxis
+          bind:crosshairStyle
+          bind:crosshairOpacity
+          allowCrosshairChange={config.controls.allowCrosshairChange}
+          calculatedOpacity={accessibleCrosshairOpacity}
+          
+          bind:showHighlightPoints
+          bind:highlightPointRadius
+          allowHighlightChange={config.controls.allowHighlightChange}
+          
+          bind:showLabels
+          bind:labelPlacement
+          bind:labelOffset
+          bind:labelFormat
+          allowLabelChange={config.controls.allowLabelChange}
+          
+          bind:thresholdEnabled
+          bind:thresholdValue
+          bind:thresholdAboveColor
+          bind:thresholdBelowColor
+          bind:thresholdAboveOpacity
+          bind:thresholdBelowOpacity
+          bind:thresholdShowLine
+          bind:thresholdLineOpacity
+          allowThresholdChange={config.controls.allowThresholdChange}
         />
-
-        <!-- Additional components for specific chart types -->
-        {#if currentChartType === 'threshold'}
-          <Rule />
-        {/if}
-
-        <!-- Grid -->
-        {#if config.styling.grid.show || config.styling.grid.horizontal}
-          <Grid {...(config.styling.grid.opacity !== undefined ? { opacity: config.styling.grid.opacity } : {})} />
-        {/if}
-
-        <!-- Annotations: Rules and Labels -->
-        {#if config.annotations.type === 'rules' || config.annotations.type === 'both'}
-          {#if config.annotations.rules.show && config.annotations.rules.values && config.annotations.rules.values.length > 0}
-            <!-- Rules: Reference lines for thresholds, averages, etc. -->
-            {#each config.annotations.rules.values as ruleValue}
-              <Rule
-                y={ruleValue}
-                {...(config.annotations.rules.class ? { class: config.annotations.rules.class } : {})}
-                {...(config.annotations.rules.strokeWidth ? { strokeWidth: config.annotations.rules.strokeWidth } : {})}
-                {...(config.annotations.rules.strokeDasharray ? { style: `stroke-dasharray: ${config.annotations.rules.strokeDasharray}` } : {})}
-              />
-            {/each}
-          {/if}
-        {/if}
-
-        {#if config.annotations.type === 'labels' || config.annotations.type === 'both'}
-          {#if config.annotations.labels.show && !isCircularChart}
-            <!-- Labels: Data point value labels for non-circular charts -->
-            <Labels
-              data={chartData}
-              x="x"
-              y="y"
-              format={config.annotations.labels.format || ((d) => {
-                // Handle both object and primitive data formats
-                if (typeof d === 'object' && d !== null) {
-                  // For object data, look for common value fields
-                  return String(d.y ?? d.value ?? d.amount ?? d);
-                }
-                return String(d);
-              })}
-              {...(config.annotations.labels.class ? { class: config.annotations.labels.class } : {})}
-              offset={config.annotations.labels.offset?.y || 4}
-              placement={config.annotations.labels.placement || 'outside'}
-            />
-          {/if}
-        {/if}
-      </Svg>
-
-      <!-- Legend -->
-      {#if config.styling.legend.show}
-        <Legend />
-      {/if}
-    </Chart>
+      </div>
     {/if}
+
+    <!-- Chart rendering via ChartCore -->
+    <ChartCore
+      processor={processorData}
+      chartType={currentChartType}
+      config={{
+        ...config,
+        type: currentChartType,
+        data: data,
+        resolvedColors: config.controls.allowColorChange ?
+          processorData.effectiveColors : config.resolvedColors,
+        axes: {
+          ...config.axes,
+          x: {
+            ...config.axes.x,
+            format: xAxisFormatter,
+            ...(config.controls.allowFontChange ? { 
+              fontSize: axisFontSize,
+              rotateLabels: rotateXLabels
+            } : {})
+          },
+          y: {
+            ...config.axes.y,
+            format: yAxisFormatter,
+            ...(config.controls.allowFontChange ? { 
+              fontSize: axisFontSize
+            } : {})
+          }
+        },
+        styling: {
+          ...config.styling,
+          points: {
+            ...config.styling.points,
+            show: config.controls.allowPointsChange ? showPoints : (config.styling.points?.show ?? false),
+            radius: config.controls.allowPointsChange ? pointRadius : (config.styling.points?.radius ?? 3),
+            strokeWidth: config.controls.allowPointsChange ? pointStrokeWidth : (config.styling.points?.strokeWidth ?? 0),
+            fillOpacity: config.controls.allowPointsChange ? pointFillOpacity : (config.styling.points?.fillOpacity ?? 1.0),
+            strokeOpacity: config.controls.allowPointsChange ? pointStrokeOpacity : (config.styling.points?.strokeOpacity ?? 1.0)
+          },
+          grid: {
+            ...config.styling.grid,
+            show: config.controls.allowGridChange ? showGrid : (config.styling.grid?.show ?? false),
+            horizontal: config.controls.allowGridChange ? showHorizontal : (config.styling.grid?.horizontal ?? false),
+            vertical: config.controls.allowGridChange ? showVertical : (config.styling.grid?.vertical ?? false),
+            opacity: config.controls.allowGridChange ? gridOpacity : (config.styling.grid?.opacity ?? 0.5)
+          },
+          labels: {
+            ...config.styling.labels,
+            show: config.controls.allowLabelChange ? showLabels : (config.styling.labels?.show ?? false),
+            placement: config.controls.allowLabelChange ? labelPlacement : (config.styling.labels?.placement ?? 'outside'),
+            offset: config.controls.allowLabelChange ? { y: labelOffset } : (config.styling.labels?.offset ?? { y: 4 }),
+            format: config.controls.allowLabelChange ? labelFormatter : (config.styling.labels?.format ?? labelFormatter)
+          }
+        },
+        threshold: {
+          ...config.threshold,
+          enabled: config.controls.allowThresholdChange ? thresholdEnabled : config.threshold.enabled,
+          value: config.controls.allowThresholdChange ? thresholdValue : config.threshold.value,
+          aboveColor: config.controls.allowThresholdChange ? thresholdAboveColor : config.threshold.aboveColor,
+          belowColor: config.controls.allowThresholdChange ? thresholdBelowColor : config.threshold.belowColor,
+          aboveOpacity: config.controls.allowThresholdChange ? thresholdAboveOpacity : config.threshold.aboveOpacity,
+          belowOpacity: config.controls.allowThresholdChange ? thresholdBelowOpacity : config.threshold.belowOpacity,
+          showLine: config.controls.allowThresholdChange ? thresholdShowLine : config.threshold.showLine,
+          lineOpacity: config.controls.allowThresholdChange ? thresholdLineOpacity : config.threshold.lineOpacity
+        }
+      }}
+      viewMode={selectedViewMode}
+      viewModeData={viewModeData || {}}
+      {...(legendTitle ? { legendTitle } : {})}
+      {...(config.controls.allowCurveChange ? { selectedCurve } : {})}
+      {...(yFieldLabels ? { yFieldLabels } : {})}
+      {showCrosshair}
+      {crosshairAxis}
+      {crosshairStyle}
+      {crosshairOpacity}
+      {showHighlightPoints}
+      {highlightPointRadius}
+      class="h-full w-full"
+    />
   {:else}
     <!-- Error state with enhanced error display -->
     <div class="flex items-center justify-center h-full text-center p-6">
@@ -679,9 +518,9 @@
 
   <!-- Screen reader description -->
   <div id={`chart-description-${chartId}`} class="sr-only">
-    {#if validation.isValid && chartData.length > 0}
+    {#if validation.isValid && processorData.chartData.length > 0}
       <p>
-        This is a {currentChartType} chart displaying {chartData.length} data points.
+        This is a {currentChartType} chart displaying {processorData.chartData.length} data points.
         {#if validation.dataQuality.valueRanges.y[0] !== validation.dataQuality.valueRanges.y[1]}
           Values range from {validation.dataQuality.valueRanges.y[0]} to {validation.dataQuality.valueRanges.y[1]}.
         {/if}

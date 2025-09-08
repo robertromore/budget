@@ -18,6 +18,7 @@ import {
   Points,
   Rule,
   Spline,
+  Threshold,
 } from "layerchart";
 
 // Additional components not available in the current LayerChart version
@@ -158,6 +159,19 @@ export const LAYERCHART_COMPONENT_REGISTRY: Record<string, LayerChartComponentCo
       fields: [],
     },
     supportedFeatures: ["animation", "annotations"],
+  },
+
+  threshold: {
+    component: Threshold,
+    category: "data-driven",
+    props: ["curve", "defined", "above", "below"],
+    requiredProps: [],
+    description: "Gradient visualization for data above and below a threshold value",
+    dataRequirements: {
+      format: "xy",
+      fields: ["x", "y"],
+    },
+    supportedFeatures: ["animation", "gradient", "multi-series"],
   },
 
   // Radial/Circular components
