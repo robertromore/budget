@@ -1,8 +1,8 @@
 <script lang="ts">
   import { UnifiedChart } from '$lib/components/charts';
   import type { WidgetProps } from '$lib/types/widgets';
-  import type { ChartType } from '$lib/components/charts/chart-types';
-  import type { ChartDataPoint } from '$lib/components/charts/chart-config';
+  import type { ChartType } from '$lib/components/charts/config/chart-types';
+  import type { ChartDataPoint } from '$lib/components/charts/config/chart-config';
   import { currencyFormatter, periodFormatter } from '$lib/utils/formatters';
   import { TrendingDown, TrendingUp } from '$lib/components/icons';
   import { colorUtils } from '$lib/utils/colors';

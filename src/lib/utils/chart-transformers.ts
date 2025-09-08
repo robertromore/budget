@@ -1,4 +1,4 @@
-import type { ChartType } from '$lib/components/charts/chart-types';
+import type { ChartType } from '$lib/components/charts/config/chart-types';
 
 /**
  * Transform data for specific chart types that need special formatting

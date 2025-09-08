@@ -1,16 +1,34 @@
-// Unified chart system (Phase 1 & 2 complete)
-export {default as UnifiedChart} from "./unified-chart.svelte";
+/**
+ * Chart System Exports
+ * Clean, package-ready exports without business logic
+ */
 
-// Chart control components (used by UnifiedChart)
-export {default as ChartPeriodControls} from "./chart-period-controls.svelte";
-export {default as ChartTypeSelector} from "./chart-type-selector.svelte";
-export {default as ChartColorSelector} from "./chart-color-selector.svelte";
-export {default as ChartCurveSelector} from "./chart-curve-selector.svelte";
-export {default as ChartViewModeSelector} from "./chart-view-mode-selector.svelte";
+// Main chart component
+export { default as UnifiedChart } from "./unified-chart.svelte";
 
-// No more legacy components - all functionality consolidated into UnifiedChart
+// Core components
+export { default as ChartCore } from "./core/chart-core.svelte";
+export { default as DynamicChartRenderer } from "./core/dynamic-chart-renderer.svelte";
+export { default as ChartTooltip } from "./core/chart-tooltip.svelte";
+export { default as ChartLegend } from "./core/chart-legend.svelte";
 
-// Re-export layerchart components for direct usage when needed
+// Control components
+export { default as ChartPeriodControls } from "./controls/chart-period-controls.svelte";
+export { default as ChartTypeSelector } from "./controls/chart-type-selector.svelte";
+export { default as ChartColorSelector } from "./controls/chart-color-selector.svelte";
+export { default as ChartCurveSelector } from "./controls/chart-curve-selector.svelte";
+export { default as ChartViewModeSelector } from "./controls/chart-view-mode-selector.svelte";
+
+// Configuration and types
+export * from "./config/chart-config";
+export * from "./config/config-resolver";
+export * from "./config/chart-types";
+export * from "./config/layerchart-registry";
+
+// Data processing
+export * from "./processors/chart-data-processor.svelte";
+
+// Re-export LayerChart components for convenience
 export {
   Arc,
   Area,
@@ -31,51 +49,11 @@ export {
   Threshold,
 } from "layerchart";
 
-// Export chart utilities
-export {colorUtils} from "$lib/utils/colors";
-export * from "$lib/utils/chart-colors";
-
-// Export chart types and constants
-export * from "./chart-types";
-
-// Export new configuration system
-export * from "./chart-config";
-export * from "./config-resolver";
-
-// Chart utilities
+// Re-export generic chart utilities (NOT finance-specific)
 export * from "$lib/utils/chart-data";
+export * from "$lib/utils/chart-colors";
+export * from "$lib/utils/chart-curves";
+export * from "$lib/utils/chart-periods";
 
-// Legacy ChartSeries interface (for backward compatibility)
-export interface ChartSeries {
-  data: any[];
-  type: "bar" | "area" | "line" | "scatter" | "pie" | "arc" | "threshold" | "calendar" | "hull";
-  color?: string;
-  colorIndex?: number;
-  fill?: string;
-  stroke?: string;
-  strokeWidth?: number;
-  fillOpacity?: number;
-  label?: string;
-  // Additional properties for specific chart types
-  r?: number | ((d: any) => number); // For scatter plots
-  innerRadius?: number; // For pie/arc charts
-  outerRadius?: number; // For pie/arc charts
-  startAngle?: number; // For arc charts
-  endAngle?: number; // For arc charts
-  threshold?: number; // For threshold charts
-}
-
-// Legacy ChartConfig interface (for backward compatibility)
-export interface ChartConfig {
-  data: any[];
-  series: ChartSeries[];
-  x: string;
-  y?: string | string[];
-  padding?: {left?: number; right?: number; top?: number; bottom?: number};
-  yDomain?: [number | null, number | null];
-  yNice?: boolean;
-  showLeftAxis?: boolean;
-  showBottomAxis?: boolean;
-  rotateBottomLabels?: boolean;
-  class?: string;
-}
+// Re-export color utilities (generic theming)
+export { colorUtils } from "$lib/utils/colors";

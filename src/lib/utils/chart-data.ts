@@ -1,242 +1,9 @@
 /**
- * Chart data standardization utilities
- * Transforms various data formats into standardized ChartDataPoint format
+ * Generic chart data transformation utilities
+ * These functions are reusable across any application domain
  */
 
-import type { ChartDataPoint } from '$lib/components/charts/chart-config';
-import type { DateValue } from '@internationalized/date';
-import { ensureDateValue, dateValueToJSDate } from './dates';
-
-/**
- * Common data transformation patterns for the budget application
- */
-
-export interface BalanceHistoryItem {
-  date: string | DateValue;
-  balance: number;
-  [key: string]: any;
-}
-
-export interface TransactionItem {
-  date: string | DateValue;
-  amount: number;
-  category?: string;
-  description?: string;
-  [key: string]: any;
-}
-
-export interface CategorySummaryItem {
-  category: string;
-  amount: number;
-  count?: number;
-  [key: string]: any;
-}
-
-export interface MonthlyDataItem {
-  month: string;
-  income?: number;
-  expenses?: number;
-  net?: number;
-  [key: string]: any;
-}
-
-/**
- * Transforms balance history data for trend charts
- */
-export function transformBalanceHistory(
-  data: BalanceHistoryItem[]
-): ChartDataPoint[] {
-  return data.map((item, index) => {
-    const dateValue = ensureDateValue(item.date);
-    return {
-      x: dateValueToJSDate(dateValue), // Convert DateValue to Date for LayerChart compatibility
-      y: item.balance,
-      metadata: { ...item, index, dateValue } // Keep DateValue in metadata for filtering
-    };
-  });
-}
-
-/**
- * Transforms transaction data for various chart types
- */
-export function transformTransactions(
-  transactions: TransactionItem[],
-  groupBy: 'date' | 'category' | 'month' = 'date'
-): ChartDataPoint[] {
-  switch (groupBy) {
-    case 'category': {
-      const grouped = transactions.reduce((acc, transaction) => {
-        const category = transaction.category || 'Uncategorized';
-        const existing = acc.find(item => item.category === category);
-        
-        if (existing) {
-          existing.y += Math.abs(transaction.amount);
-        } else {
-          acc.push({
-            x: category,
-            y: Math.abs(transaction.amount),
-            category,
-            metadata: { category, count: 1 }
-          });
-        }
-        
-        return acc;
-      }, [] as ChartDataPoint[]);
-      
-      return grouped.sort((a, b) => b.y - a.y);
-    }
-    
-    case 'month': {
-      const grouped = transactions.reduce((acc, transaction) => {
-        const dateValue = ensureDateValue(transaction.date);
-        const date = dateValueToJSDate(dateValue);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        const monthLabel = date.toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'short' 
-        });
-        
-        const existing = acc.find(item => item.x === monthKey);
-        
-        if (existing) {
-          existing.y += Math.abs(transaction.amount);
-        } else {
-          acc.push({
-            x: monthKey,
-            y: Math.abs(transaction.amount),
-            metadata: { monthKey, monthLabel, count: 1 }
-          });
-        }
-        
-        return acc;
-      }, [] as ChartDataPoint[]);
-      
-      return grouped.sort((a, b) => String(a.x).localeCompare(String(b.x)));
-    }
-    
-    case 'date':
-    default: {
-      return transactions.map((transaction, index) => {
-        const dateValue = ensureDateValue(transaction.date);
-        return {
-          x: dateValueToJSDate(dateValue), // Convert DateValue to Date for LayerChart compatibility
-          y: transaction.amount,
-          category: transaction.category || undefined,
-          metadata: { ...transaction, index, dateValue } // Keep DateValue in metadata for filtering
-        };
-      }).sort((a, b) => {
-        return (a.x as Date).getTime() - (b.x as Date).getTime();
-      });
-    }
-  }
-}
-
-/**
- * Transforms category summary data for pie/bar charts
- */
-export function transformCategorySummary(
-  data: CategorySummaryItem[]
-): ChartDataPoint[] {
-  return data
-    .map(item => ({
-      x: item.category,
-      y: Math.abs(item.amount),
-      category: item.category,
-      metadata: item
-    }))
-    .sort((a, b) => b.y - a.y);
-}
-
-/**
- * Transforms monthly data for income vs expenses charts
- */
-export function transformMonthlyData(
-  data: MonthlyDataItem[]
-): { income: ChartDataPoint[], expenses: ChartDataPoint[], net: ChartDataPoint[] } {
-  const income = data.map(item => ({
-    x: item.month,
-    y: item.income || 0,
-    metadata: item
-  }));
-  
-  const expenses = data.map(item => ({
-    x: item.month,
-    y: Math.abs(item.expenses || 0),
-    metadata: item
-  }));
-  
-  const net = data.map(item => ({
-    x: item.month,
-    y: (item.income || 0) - Math.abs(item.expenses || 0),
-    metadata: item
-  }));
-  
-  return { income, expenses, net };
-}
-
-/**
- * Transforms income vs expenses data for multi-series charts
- * Supports both combined and separate series views
- */
-export function transformIncomeVsExpensesData<T extends Record<string, any>>(
-  data: T[],
-  mapping: {
-    x: keyof T | ((item: T) => any);
-    income: keyof T | ((item: T) => number);
-    expenses: keyof T | ((item: T) => number);
-  }
-): {
-  combined: ChartDataPoint[];
-  income: ChartDataPoint[];
-  expenses: ChartDataPoint[];
-  series: ChartDataPoint[];
-} {
-  const getField = <K>(field: keyof T | ((item: T) => K), item: T): K => {
-    return typeof field === 'function' ? field(item) : item[field] as K;
-  };
-
-  // Create separate series for income and expenses
-  const income = data.map((item, index) => ({
-    x: getField(mapping.x, item),
-    y: Number(getField(mapping.income, item)) || 0,
-    category: 'Income',
-    series: 'income',
-    metadata: { ...item, index, type: 'income' }
-  }));
-
-  const expenses = data.map((item, index) => ({
-    x: getField(mapping.x, item),
-    y: Math.abs(Number(getField(mapping.expenses, item)) || 0),
-    category: 'Expenses', 
-    series: 'expenses',
-    metadata: { ...item, index, type: 'expenses' }
-  }));
-
-  // Create combined dataset (interleaved for grouped bars)
-  const combined = data.flatMap((item, index) => [
-    {
-      x: getField(mapping.x, item),
-      y: Number(getField(mapping.income, item)) || 0,
-      category: 'Income',
-      series: 'income',
-      key: `combined-income-${index}`, // Unique key for combined dataset
-      metadata: { ...item, index, type: 'income' }
-    },
-    {
-      x: getField(mapping.x, item),
-      y: Math.abs(Number(getField(mapping.expenses, item)) || 0),
-      category: 'Expenses',
-      series: 'expenses',
-      key: `combined-expenses-${index}`, // Unique key for combined dataset
-      metadata: { ...item, index, type: 'expenses' }
-    }
-  ]);
-
-  // Create series dataset for LayerChart with rScale
-  const series = [...income, ...expenses];
-
-  return { combined, income, expenses, series };
-}
+import type { ChartDataPoint } from '$lib/components/charts/config/chart-config';
 
 /**
  * Generic data transformer with flexible mapping
@@ -247,244 +14,331 @@ export function transformData<T extends Record<string, any>>(
     x: keyof T | ((item: T) => any);
     y: keyof T | ((item: T) => number);
     category?: keyof T | ((item: T) => string);
+    series?: keyof T | ((item: T) => string);
+    metadata?: (item: T, index: number) => any;
   }
 ): ChartDataPoint[] {
+  const getField = <K>(field: keyof T | ((item: T) => K) | undefined, item: T, defaultValue?: K): K | undefined => {
+    if (!field) return defaultValue;
+    return typeof field === 'function' ? field(item) : item[field] as K;
+  };
+
   return data.map((item, index) => {
-    const getField = <K>(field: keyof T | ((item: T) => K)): K => {
-      return typeof field === 'function' ? field(item) : item[field] as K;
+    const point: ChartDataPoint = {
+      x: getField(mapping.x, item)!,
+      y: Number(getField(mapping.y, item)) || 0
     };
-    
-    return {
-      x: getField(mapping.x),
-      y: Number(getField(mapping.y)) || 0,
-      ...(mapping.category && { category: String(getField(mapping.category)) }),
-      metadata: { ...item, index }
-    };
+
+    // Add optional fields if provided
+    const category = getField(mapping.category, item);
+    if (category !== undefined) {
+      point.category = String(category);
+    }
+
+    const series = getField(mapping.series, item);
+    if (series !== undefined) {
+      point.series = String(series);
+    }
+
+    // Add metadata
+    if (mapping.metadata) {
+      point.metadata = mapping.metadata(item, index);
+    } else {
+      point.metadata = { ...item, index };
+    }
+
+    return point;
   });
 }
 
 /**
- * Aggregates data by time periods (day, week, month, year)
+ * Groups data points by a specified field
  */
-export function aggregateByTimePeriod(
-  data: ChartDataPoint[],
-  period: 'day' | 'week' | 'month' | 'year' = 'month',
-  aggregation: 'sum' | 'average' | 'count' = 'sum'
+export function groupDataBy<T extends ChartDataPoint>(
+  data: T[],
+  groupField: 'x' | 'category' | 'series',
+  aggregation: 'sum' | 'average' | 'count' | 'min' | 'max' = 'sum'
 ): ChartDataPoint[] {
-  const grouped = data.reduce((acc, item) => {
-    const dateValue = ensureDateValue(item.x);
-    let key: string = ''; // Initialize to avoid undefined
-    
-    switch (period) {
-      case 'day':
-        key = `${dateValue.year}-${String(dateValue.month).padStart(2, '0')}-${String(dateValue.day).padStart(2, '0')}`;
-        break;
-      case 'week':
-        // Get the start of the week (Sunday)
-        const jsDate = dateValueToJSDate(dateValue);
-        const weekStart = new Date(jsDate);
-        weekStart.setDate(jsDate.getDate() - jsDate.getDay());
-        key = weekStart.toISOString().split('T')[0] || '';
-        break;
-      case 'month':
-        key = `${dateValue.year}-${String(dateValue.month).padStart(2, '0')}`;
-        break;
-      case 'year':
-        key = String(dateValue.year);
-        break;
-      default:
-        // Fallback to day format
-        key = `${dateValue.year}-${String(dateValue.month).padStart(2, '0')}-${String(dateValue.day).padStart(2, '0')}`;
-        break;
-    }
-    
-    if (!acc[key]) {
-      acc[key] = { values: [], count: 0 };
-    }
-    
-    // TypeScript now knows acc[key] exists because we just checked/created it
-    const bucket = acc[key]!;
-    bucket.values.push(item.y);
-    bucket.count++;
-    
-    return acc;
-  }, {} as Record<string, { values: number[], count: number }>);
+  const groups = new Map<any, T[]>();
   
-  return Object.entries(grouped).map(([key, group]) => {
+  // Group data
+  data.forEach(point => {
+    const key = point[groupField];
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key)!.push(point);
+  });
+  
+  // Aggregate groups
+  return Array.from(groups.entries()).map(([key, points]) => {
     let y: number;
     
-    if (!group) {
-      y = 0;
-    } else {
-      const { values, count } = group;
-      switch (aggregation) {
-        case 'sum':
-          y = values.reduce((sum, val) => sum + val, 0);
-          break;
-        case 'average':
-          y = values.reduce((sum, val) => sum + val, 0) / values.length;
-          break;
-        case 'count':
-          y = count;
-          break;
-        default:
-          y = 0;
-      }
+    switch (aggregation) {
+      case 'sum':
+        y = points.reduce((sum, p) => sum + p.y, 0);
+        break;
+      case 'average':
+        y = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+        break;
+      case 'count':
+        y = points.length;
+        break;
+      case 'min':
+        y = Math.min(...points.map(p => p.y));
+        break;
+      case 'max':
+        y = Math.max(...points.map(p => p.y));
+        break;
     }
     
     return {
-      x: key,
+      x: groupField === 'x' ? key : points[0].x,
       y,
-      metadata: { period, aggregation, originalCount: group?.count || 0 }
+      category: groupField === 'category' ? key : points[0].category,
+      series: groupField === 'series' ? key : points[0].series,
+      metadata: {
+        group: key,
+        count: points.length,
+        aggregation,
+        points
+      }
     };
-  }).sort((a, b) => String(a.x).localeCompare(String(b.x)));
-}
-
-/**
- * Filters data by value ranges
- */
-export function filterByRange(
-  data: ChartDataPoint[],
-  range: { min?: number; max?: number }
-): ChartDataPoint[] {
-  return data.filter(item => {
-    if (range.min !== undefined && item.y < range.min) return false;
-    if (range.max !== undefined && item.y > range.max) return false;
-    return true;
   });
 }
 
 /**
- * Sorts data by various criteria
+ * Sorts data points by a specified field
  */
-export function sortChartData(
+export function sortData(
   data: ChartDataPoint[],
-  sortBy: 'x' | 'y' | 'category',
+  field: 'x' | 'y' | 'category' | 'series' = 'x',
   order: 'asc' | 'desc' = 'asc'
 ): ChartDataPoint[] {
   const sorted = [...data].sort((a, b) => {
-    let aVal: any, bVal: any;
+    const aVal = a[field];
+    const bVal = b[field];
     
-    switch (sortBy) {
-      case 'x':
-        aVal = a.x;
-        bVal = b.x;
-        break;
-      case 'y':
-        aVal = a.y;
-        bVal = b.y;
-        break;
-      case 'category':
-        aVal = a.category || '';
-        bVal = b.category || '';
-        break;
-    }
+    if (aVal === undefined || bVal === undefined) return 0;
     
-    if (typeof aVal === 'number' && typeof bVal === 'number') {
-      return order === 'asc' ? aVal - bVal : bVal - aVal;
-    }
-    
-    const comparison = String(aVal).localeCompare(String(bVal));
-    return order === 'asc' ? comparison : -comparison;
+    if (aVal < bVal) return order === 'asc' ? -1 : 1;
+    if (aVal > bVal) return order === 'asc' ? 1 : -1;
+    return 0;
   });
   
   return sorted;
 }
 
 /**
- * Calculates running totals/cumulative sums
+ * Filters data points by value range
  */
-export function calculateRunningTotal(
-  data: ChartDataPoint[]
+export function filterByRange(
+  data: ChartDataPoint[],
+  field: 'x' | 'y',
+  min?: number | Date,
+  max?: number | Date
 ): ChartDataPoint[] {
-  let runningTotal = 0;
-  
-  return data.map(item => {
-    runningTotal += item.y;
+  return data.filter(point => {
+    const value = point[field];
+    if (min !== undefined && value < min) return false;
+    if (max !== undefined && value > max) return false;
+    return true;
+  });
+}
+
+/**
+ * Calculates moving average for time series data
+ */
+export function calculateMovingAverage(
+  data: ChartDataPoint[],
+  windowSize: number = 7
+): ChartDataPoint[] {
+  return data.map((point, index) => {
+    const start = Math.max(0, index - Math.floor(windowSize / 2));
+    const end = Math.min(data.length, index + Math.ceil(windowSize / 2));
+    const window = data.slice(start, end);
+    const avg = window.reduce((sum, p) => sum + p.y, 0) / window.length;
+    
     return {
-      ...item,
-      y: runningTotal,
-      metadata: { 
-        ...item.metadata, 
-        originalValue: item.y,
-        runningTotal 
+      ...point,
+      y: avg,
+      metadata: {
+        ...point.metadata,
+        originalValue: point.y,
+        movingAverage: avg,
+        windowSize
       }
     };
   });
 }
 
 /**
- * Data cleaning utilities for improved data quality
+ * Normalizes data to percentage (0-100)
  */
-
-/**
- * Removes outliers using the IQR method
- */
-export function removeOutliers(
+export function normalizeToPercentage(
   data: ChartDataPoint[],
-  multiplier: number = 1.5
+  groupBy?: 'x' | 'category' | 'series'
 ): ChartDataPoint[] {
-  if (data.length === 0) return data;
-  
-  const yValues = data.map(d => d.y).sort((a, b) => a - b);
-  const q1 = yValues[Math.floor(yValues.length * 0.25)] || 0;
-  const q3 = yValues[Math.floor(yValues.length * 0.75)] || 0;
-  const iqr = q3 - q1;
-  const lowerBound = q1 - (multiplier * iqr);
-  const upperBound = q3 + (multiplier * iqr);
-  
-  return data.filter(item => 
-    item.y >= lowerBound && item.y <= upperBound
-  );
-}
-
-/**
- * Smooths data using a simple moving average
- */
-export function smoothData(
-  data: ChartDataPoint[],
-  windowSize: number = 3
-): ChartDataPoint[] {
-  if (data.length < windowSize) return data;
-  
-  return data.map((item, index) => {
-    const start = Math.max(0, index - Math.floor(windowSize / 2));
-    const end = Math.min(data.length, start + windowSize);
+  if (!groupBy) {
+    // Normalize entire dataset
+    const total = data.reduce((sum, p) => sum + p.y, 0);
+    if (total === 0) return data;
     
-    const window = data.slice(start, end);
-    const smoothedY = window.reduce((sum, d) => sum + d.y, 0) / window.length;
+    return data.map(point => ({
+      ...point,
+      y: (point.y / total) * 100,
+      metadata: {
+        ...point.metadata,
+        originalValue: point.y,
+        percentage: (point.y / total) * 100
+      }
+    }));
+  }
+  
+  // Normalize within groups
+  const groups = new Map<any, number>();
+  data.forEach(point => {
+    const key = point[groupBy];
+    groups.set(key, (groups.get(key) || 0) + point.y);
+  });
+  
+  return data.map(point => {
+    const groupTotal = groups.get(point[groupBy]) || 0;
+    if (groupTotal === 0) return point;
     
     return {
-      ...item,
-      y: smoothedY,
-      metadata: { ...item.metadata, originalValue: item.y, smoothed: true }
+      ...point,
+      y: (point.y / groupTotal) * 100,
+      metadata: {
+        ...point.metadata,
+        originalValue: point.y,
+        percentage: (point.y / groupTotal) * 100,
+        groupTotal
+      }
     };
   });
 }
 
 /**
- * Validates and cleans ChartDataPoint array
+ * Fills gaps in time series data
  */
-export function cleanChartData(
-  data: ChartDataPoint[]
+export function fillTimeSeriesGaps(
+  data: ChartDataPoint[],
+  interval: 'day' | 'week' | 'month',
+  fillValue: number | 'interpolate' | 'previous' = 0
 ): ChartDataPoint[] {
-  return data
-    .filter(item => 
-      item.x !== undefined && 
-      item.x !== null && 
-      item.y !== undefined && 
-      item.y !== null && 
-      isFinite(item.y)
-    )
-    .map(item => ({
-      ...item,
-      y: Number(item.y) || 0,
-      x: item.x
-    }));
+  if (data.length < 2) return data;
+  
+  // Sort by x (assuming dates)
+  const sorted = sortData(data, 'x', 'asc');
+  const result: ChartDataPoint[] = [];
+  
+  for (let i = 0; i < sorted.length - 1; i++) {
+    result.push(sorted[i]);
+    
+    const current = sorted[i].x as Date;
+    const next = sorted[i + 1].x as Date;
+    
+    // Calculate expected interval in milliseconds
+    let expectedInterval: number;
+    switch (interval) {
+      case 'day':
+        expectedInterval = 24 * 60 * 60 * 1000;
+        break;
+      case 'week':
+        expectedInterval = 7 * 24 * 60 * 60 * 1000;
+        break;
+      case 'month':
+        expectedInterval = 30 * 24 * 60 * 60 * 1000; // Approximate
+        break;
+    }
+    
+    const gap = next.getTime() - current.getTime();
+    const missingPoints = Math.floor(gap / expectedInterval) - 1;
+    
+    // Fill missing points
+    for (let j = 1; j <= missingPoints; j++) {
+      const fillDate = new Date(current.getTime() + j * expectedInterval);
+      let fillY: number;
+      
+      if (fillValue === 'interpolate') {
+        // Linear interpolation
+        const progress = j / (missingPoints + 1);
+        fillY = sorted[i].y + (sorted[i + 1].y - sorted[i].y) * progress;
+      } else if (fillValue === 'previous') {
+        fillY = sorted[i].y;
+      } else {
+        fillY = fillValue;
+      }
+      
+      result.push({
+        x: fillDate,
+        y: fillY,
+        category: sorted[i].category,
+        series: sorted[i].series,
+        metadata: {
+          filled: true,
+          fillMethod: fillValue,
+          originalGap: [sorted[i], sorted[i + 1]]
+        }
+      });
+    }
+  }
+  
+  result.push(sorted[sorted.length - 1]);
+  return result;
 }
 
 /**
- * Aggregates data to reduce point count for performance
+ * Stacks data for stacked charts
+ */
+export function stackData(
+  data: ChartDataPoint[],
+  stackBy: 'category' | 'series' = 'series'
+): ChartDataPoint[] {
+  // Group by x value
+  const xGroups = new Map<any, ChartDataPoint[]>();
+  data.forEach(point => {
+    if (!xGroups.has(point.x)) {
+      xGroups.set(point.x, []);
+    }
+    xGroups.get(point.x)!.push(point);
+  });
+  
+  // Stack within each x group
+  const result: ChartDataPoint[] = [];
+  xGroups.forEach((points, x) => {
+    // Sort by stack field for consistent stacking order
+    points.sort((a, b) => {
+      const aVal = a[stackBy] || '';
+      const bVal = b[stackBy] || '';
+      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+    });
+    
+    let cumulative = 0;
+    points.forEach(point => {
+      const stackedPoint = {
+        ...point,
+        y0: cumulative,
+        y: cumulative + point.y,
+        metadata: {
+          ...point.metadata,
+          originalY: point.y,
+          stackBase: cumulative,
+          stackValue: point.y
+        }
+      };
+      cumulative += point.y;
+      result.push(stackedPoint);
+    });
+  });
+  
+  return result;
+}
+
+/**
+ * Aggregates large datasets for better performance
+ * Reduces the number of data points while preserving trends
  */
 export function aggregateForPerformance(
   data: ChartDataPoint[],
@@ -492,30 +346,28 @@ export function aggregateForPerformance(
 ): ChartDataPoint[] {
   if (data.length <= maxPoints) return data;
   
-  const step = Math.ceil(data.length / maxPoints);
-  const aggregated: ChartDataPoint[] = [];
+  // Calculate aggregation factor
+  const factor = Math.ceil(data.length / maxPoints);
+  const result: ChartDataPoint[] = [];
   
-  for (let i = 0; i < data.length; i += step) {
-    const chunk = data.slice(i, i + step);
-    const avgY = chunk.reduce((sum, d) => sum + d.y, 0) / chunk.length;
+  for (let i = 0; i < data.length; i += factor) {
+    const chunk = data.slice(i, i + factor);
     
-    // Use the middle point's x value, or the first if chunk is small
-    const middleIndex = Math.floor(chunk.length / 2);
-    const representative = chunk[middleIndex] || chunk[0];
+    // Use the first point as base, aggregate the y values
+    const aggregated: ChartDataPoint = {
+      ...chunk[0],
+      y: chunk.reduce((sum, point) => sum + point.y, 0) / chunk.length,
+      metadata: {
+        ...chunk[0].metadata,
+        aggregated: true,
+        originalCount: chunk.length,
+        aggregationFactor: factor,
+        aggregatedPoints: chunk
+      }
+    };
     
-    if (representative) {
-      aggregated.push({
-        x: representative.x,
-        y: avgY,
-        category: representative.category,
-        metadata: { 
-          ...representative.metadata, 
-          aggregated: true, 
-          pointCount: chunk.length 
-        }
-      });
-    }
+    result.push(aggregated);
   }
   
-  return aggregated;
+  return result;
 }

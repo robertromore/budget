@@ -1,8 +1,8 @@
 <script lang="ts">
   import { UnifiedChart } from '$lib/components/charts';
-  import type { ChartType } from '$lib/components/charts/chart-types';
+  import type { ChartType } from '$lib/components/charts/config/chart-types';
   import type { TransactionsFormat } from '$lib/types';
-  import { transformIncomeVsExpensesData } from '$lib/utils/chart-data';
+  import { transformIncomeVsExpensesData } from '$lib/utils/finance-chart-data';
   import { generatePeriodOptions } from '$lib/utils/chart-periods';
   import { colorUtils } from '$lib/utils/colors';
   import { dateValueToJSDate } from '$lib/utils/dates';
@@ -42,7 +42,7 @@
   );
 
   // Available chart types for income vs expenses data
-  const availableChartTypes: ChartType[] = ['bar', 'line', 'area'];
+  const availableChartTypes: ChartType[] = ['bar', 'line', 'area', 'pie'];
 </script>
 
 {#if transformedData.combined.length > 0}
@@ -67,6 +67,13 @@
           nice: true
         }
       }}
+      interactions={{
+        tooltip: {
+          enabled: true,
+          format: 'currency',
+          showTotal: true
+        }
+      }}
       yFields={['income', 'expenses']}
       yFieldLabels={['Income', 'Expenses']}
       suppressDuplicateWarnings={true}
@@ -87,7 +94,12 @@
         allowColorChange: true,
         allowCurveChange: true,
         allowViewModeChange: true,
-        availableViewModes: ['combined', 'side-by-side']
+        availableViewModes: ['combined', 'side-by-side'],
+        allowCrosshairChange: true,
+        allowGridChange: true,
+        allowPointsChange: true,
+        allowFontChange: true,
+        allowHighlightChange: true
       }}
       class="h-full w-full"
     />

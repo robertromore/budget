@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as Select from '$lib/components/ui/select';
-  import type { ChartType, ChartTypeOption } from './chart-types';
-  import { ALL_CHART_TYPES } from './chart-types';
+  import type { ChartType, ChartTypeOption } from '../config/chart-types';
+  import { ALL_CHART_TYPES } from '../config/chart-types';
 
   interface Props {
     chartType?: ChartType;
@@ -11,7 +11,7 @@
   let { chartType = $bindable('bar'), availableChartTypes }: Props = $props();
 
   // Determine which chart types to show - use provided ones or all available
-  const displayedChartTypes = $derived(() => {
+  const displayedChartTypes = $derived.by(() => {
     if (availableChartTypes && availableChartTypes.length > 0) {
       // Convert flat list to grouped structure for consistency
       return [{
@@ -24,8 +24,8 @@
   });
 
   // Find the selected chart type option
-  const selectedChartTypeOption = $derived(() => {
-    for (const group of displayedChartTypes()) {
+  const selectedChartTypeOption = $derived.by(() => {
+    for (const group of displayedChartTypes) {
       const option = group.options.find(opt => opt.value === chartType);
       if (option) return option;
     }
@@ -33,17 +33,17 @@
   });
 </script>
 
-{#if displayedChartTypes().some(group => group.options.length > 0)}
+{#if displayedChartTypes.some(group => group.options.length > 0)}
   <div class="flex items-center gap-2">
-    <span class="font-medium">Chart:</span>
+    <span class="sr-only">Chart:</span>
     <Select.Root
       type="single"
       bind:value={chartType}
     >
       <Select.Trigger class="w-48">
         <div class="flex items-center gap-2">
-          {#if selectedChartTypeOption()}
-            {@const option = selectedChartTypeOption()!}
+          {#if selectedChartTypeOption}
+            {@const option = selectedChartTypeOption!}
             {#if option.icon}
               <option.icon class="h-4 w-4" />
             {/if}
@@ -54,8 +54,8 @@
         </div>
       </Select.Trigger>
       <Select.Content>
-        {#each displayedChartTypes() as group}
-          {#if displayedChartTypes().length > 1}
+        {#each displayedChartTypes as group}
+          {#if displayedChartTypes.length > 1}
             <Select.Label>{group.label}</Select.Label>
           {/if}
           {#each group.options as option}

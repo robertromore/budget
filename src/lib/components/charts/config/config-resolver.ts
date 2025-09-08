@@ -19,6 +19,7 @@ import {
   DEFAULT_TIME_FILTERING_CONFIG,
   DEFAULT_CONTROLS_CONFIG,
   DEFAULT_ANNOTATIONS_CONFIG,
+  DEFAULT_THRESHOLD_CONFIG,
   CHART_TYPE_DEFAULTS
 } from './chart-config';
 import type { ChartType } from './chart-types';
@@ -169,6 +170,11 @@ export function resolveChartConfig(
     props.annotations || {}
   );
   
+  const threshold = deepMerge(
+    deepMerge(DEFAULT_THRESHOLD_CONFIG, typeDefaults.threshold || {}),
+    props.threshold || {}
+  );
+  
   // Resolve colors
   const resolvedColors = resolveColors(styling.colors, props.data, chartType);
   
@@ -177,10 +183,18 @@ export function resolveChartConfig(
     data: props.data,
     axes,
     styling,
-    interactions,
+    interactions: {
+      tooltip: interactions.tooltip,
+      highlight: interactions.highlight,
+      crosshair: interactions.crosshair,
+      zoom: interactions.zoom,
+      pan: interactions.pan,
+      brush: interactions.brush
+    },
     timeFiltering,
     controls: finalControls,
     annotations,
+    threshold,
     resolvedColors
   };
 }

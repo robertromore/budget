@@ -1,8 +1,8 @@
 <script lang="ts">
   import { UnifiedChart } from '$lib/components/charts';
-  import { transformBalanceHistory } from '$lib/utils/chart-data';
+  import { transformBalanceHistory } from '$lib/utils/finance-chart-data';
   import type { WidgetProps } from '$lib/types/widgets';
-  import type { ChartType } from '$lib/components/charts/chart-types';
+  import type { ChartType } from '$lib/components/charts/config/chart-types';
   import { currencyFormatter, periodFormatter } from '$lib/utils/formatters';
   import { TrendingDown, TrendingUp } from '$lib/components/icons';
   import WidgetCard from './widget-card.svelte';

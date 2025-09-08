@@ -1,6 +1,6 @@
 <script lang="ts">
   import { UnifiedChart } from '$lib/components/charts';
-  import type { ChartType } from '$lib/components/charts/chart-types';
+  import type { ChartType } from '$lib/components/charts/config/chart-types';
   import type { TransactionsFormat } from '$lib/types';
   import { transformData } from '$lib/utils/chart-data';
   import { chartFormatters } from '$lib/utils/chart-formatters';
@@ -68,18 +68,12 @@
   const availableChartTypes: ChartType[] = ['pie', 'arc', 'bar', 'scatter'];
 
   // Generate consistent colors for categories
-  const chartColors = $derived(() => {
+  const chartColors = $derived.by(() => {
     return chartData.map((_, index) =>
       colorUtils.getChartColor(index % 8) // Cycle through color palette
     );
   });
 
-  // Calculate average spending for rules
-  const averageSpending = $derived(() => {
-    if (chartData.length === 0) return 0;
-    const total = chartData.reduce((sum, d) => sum + (typeof d.y === 'number' ? d.y : 0), 0);
-    return Math.round(total / chartData.length);
-  });
 </script>
 
 {#if chartData.length > 0}
@@ -87,19 +81,18 @@
     data={chartData}
     type="pie"
     styling={{
-      colors: chartColors(),
-      dimensions: {
-        padding: { top: 20, right: 30, bottom: 60, left: 70 }
+      colors: chartColors,
+      legend: {
+        show: true,
+        position: "right"
       }
     }}
     axes={{
       x: {
-        title: 'Category',
-        rotateLabels: true
+        show: false
       },
       y: {
-        title: 'Spending Amount',
-        nice: true
+        show: false
       }
     }}
     timeFiltering={{
@@ -116,19 +109,11 @@
       allowPeriodChange: true
     }}
     annotations={{
-      type: 'both',
+      type: 'labels',
       labels: {
         show: true,
         format: chartFormatters.currencySmart,
-        position: 'auto'
-      },
-      rules: {
-        show: true,
-        values: [averageSpending()],
-        orientation: 'horizontal',
-        class: 'stroke-primary/60',
-        strokeWidth: 2,
-        strokeDasharray: '4 2'
+        placement: 'outside'
       }
     }}
     class="h-full w-full"

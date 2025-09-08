@@ -66,7 +66,7 @@
     <Select.Root type="single" bind:value={curve}>
       <Select.Trigger class="w-[140px]">
         <div class="flex items-center gap-2">
-          <span>{selectedCurveOption.label}</span>
+          <span>{selectedCurveOption?.label}</span>
         </div>
       </Select.Trigger>
       <Select.Content>
