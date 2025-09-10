@@ -1,0 +1,70 @@
+{
+  "name": "@budget-shared/utils",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./dates": {
+      "types": "./dist/dates.d.ts",
+      "default": "./dist/dates.js"
+    },
+    "./colors": {
+      "types": "./dist/colors.d.ts", 
+      "default": "./dist/colors.js"
+    },
+    "./chart-formatters": {
+      "types": "./dist/chart-formatters.d.ts",
+      "default": "./dist/chart-formatters.js"
+    },
+    "./chart-transformers": {
+      "types": "./dist/chart-transformers.d.ts",
+      "default": "./dist/chart-transformers.js"
+    },
+    "./chart-data": {
+      "types": "./dist/chart-data.d.ts",
+      "default": "./dist/chart-data.js"
+    },
+    "./chart-periods": {
+      "types": "./dist/chart-periods.d.ts",
+      "default": "./dist/chart-periods.js"
+    },
+    "./chart-colors": {
+      "types": "./dist/chart-colors.d.ts",
+      "default": "./dist/chart-colors.js"
+    },
+    "./chart-curves": {
+      "types": "./dist/chart-curves.d.ts",
+      "default": "./dist/chart-curves.js"
+    },
+    "./accessibility-colors": {
+      "types": "./dist/accessibility-colors.d.ts",
+      "default": "./dist/accessibility-colors.js"
+    },
+    "./options": {
+      "types": "./dist/options.d.ts",
+      "default": "./dist/options.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/**/*.spec.*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@internationalized/date": "^3.9.0",
+    "d3-scale": "^4.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "@budget-configs/typescript": "workspace:*"
+  }
+}

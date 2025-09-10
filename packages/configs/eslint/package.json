@@ -1,0 +1,25 @@
+{
+  "name": "@budget-configs/eslint",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "files": [
+    "index.js",
+    "svelte.js"
+  ],
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./svelte": "./svelte.js"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
+    "@typescript-eslint/parser": "^8.41.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-drizzle": "^0.2.3",
+    "eslint-plugin-svelte": "^3.11.0"
+  }
+}

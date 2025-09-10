@@ -44,7 +44,7 @@ color: blue
 - **Accessibility**: ARIA labels, keyboard navigation, screen reader support
 
 ### Key Implementation Files
-- **Chart System**: `src/lib/components/charts/`
+- **Chart System**: `packages/layerchart-wrapper/src/` (package: `@layerchart-wrapper/charts`)
   - `chart-wrapper.svelte` - Main wrapper with controls and period filtering
   - `chart-renderer.svelte` - LayerChart integration and visualization logic
   - `chart-type-selector.svelte` - Dropdown for switching chart types

@@ -1,0 +1,16 @@
+{
+  "name": "@budget-configs/tailwind",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "files": [
+    "index.js"
+  ],
+  "main": "index.js",
+  "peerDependencies": {
+    "tailwindcss": "^4.0.0"
+  },
+  "dependencies": {
+    "tw-animate-css": "^1.3.7"
+  }
+}

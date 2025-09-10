@@ -1,0 +1,17 @@
+{
+  "name": "@budget-configs/prettier",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "files": [
+    "index.json"
+  ],
+  "main": "index.json",
+  "peerDependencies": {
+    "prettier": "^3.0.0"
+  },
+  "dependencies": {
+    "prettier-plugin-svelte": "^3.4.0",
+    "prettier-plugin-tailwindcss": "^0.6.14"
+  }
+}
