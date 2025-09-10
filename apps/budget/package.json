@@ -45,6 +45,7 @@
     "clean": "rm -rf .svelte-kit build node_modules/.vite"
   },
   "devDependencies": {
+    "@budget/config": "workspace:*",
     "@faker-js/faker": "^9.9.0",
     "@lucide/svelte": "^0.526.0",
     "@playwright/test": "^1.55.0",
