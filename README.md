@@ -1,100 +1,139 @@
-# Budget App
+# Budget Management Monorepo
 
-A modern budget management application built with SvelteKit, tRPC, and contemporary web technologies.
+A Turbo-powered monorepo for budget management applications built with SvelteKit, TypeScript, and modern web technologies.
 
-## Overview
+## Structure
 
-This budget application provides a comprehensive solution for personal financial management with a focus on clean architecture, type safety, and excellent user experience.
+This repository is organized as a monorepo using [Turbo](https://turbo.build/) for efficient build orchestration and caching.
 
-### Key Features
+```
+├── apps/
+│   └── budget/          # Main SvelteKit budget application
+├── packages/            # Shared packages (future)
+├── turbo.json          # Turbo pipeline configuration
+└── package.json        # Root workspace configuration
+```
 
-- **Account Management**: Organize finances across multiple accounts
-- **Transaction Tracking**: Detailed transaction history with advanced filtering
-- **Category System**: Flexible categorization for income and expenses
-- **Schedule Management**: Recurring transaction planning
-- **Data Tables**: Interactive tables with sorting, filtering, and editing
+## Apps
 
-### Technology Stack
+### Budget App (`apps/budget/`)
 
-- **Frontend**: SvelteKit 5, Shadcn-Svelte, Tailwind CSS
-- **Backend**: tRPC, Drizzle ORM, SQLite
-- **Development**: TypeScript, Bun, Prettier, ESLint
+A comprehensive budget management application featuring:
 
-## Quick Start
+- **Frontend**: SvelteKit with Svelte 5, TypeScript, Tailwind CSS, shadcn-svelte
+- **Backend**: tRPC, Drizzle ORM, Better Auth, domain-driven architecture
+- **Database**: SQLite (with migrations via Drizzle)
+- **Architecture**: Domain-separated frontend and backend with comprehensive error handling
 
-1. **Install dependencies**:
+For detailed documentation about the budget app, see `apps/budget/README.md`.
 
+## Development
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) v1.2.20 or later
+- Node.js v18 or later (see `.nvmrc`)
+
+### Getting Started
+
+1. **Install dependencies:**
    ```bash
    bun install
    ```
 
-2. **Set up database**:
-
+2. **Start development server:**
    ```bash
-   bun run db:generate
-   bun run db:migrate
-   bun run db:seed
-   ```
-
-3. **Start development server**:
-
-   ```bash
+   # Run all apps in development mode
    bun run dev
+
+   # Or run specific app
+   bun run dev:budget
    ```
 
-4. **Open browser** to <http://localhost:5173>
+3. **Build applications:**
+   ```bash
+   # Build all apps
+   bun run build
 
-## Documentation
+   # Or build specific app
+   bun run build:budget
+   ```
 
-- **[Project Status](docs/project-status.md)** - Current state and technical overview
-- **[Tasks & Roadmap](docs/tasks.md)** - Development tasks and priorities
-- **[Development Guide](docs/development-guide.md)** - Guidelines and best practices
-- **[Development Agents](docs/agents.md)** - Specialized agents and responsibilities
-- **[Context7 Cache](docs/context7-cache.md)** - Documentation cache system and management
+### Available Scripts
 
-## Development
+From the root directory:
 
-This project follows modern development practices with:
+- `bun run dev` - Start all apps in development mode
+- `bun run build` - Build all apps for production
+- `bun run test` - Run tests across all apps
+- `bun run lint` - Lint all apps
+- `bun run format` - Format code across all apps
+- `bun run clean` - Clean build artifacts
 
-- **Feature branches** for all development work
-- **Type-safe** APIs with tRPC and TypeScript
-- **Component organization** with route-specific structure
-- **Specialized agents** for different development domains
+### App-Specific Scripts
 
-See the [Development Guide](docs/development-guide.md) for detailed guidelines and best practices.
+Use Turbo's filtering to run scripts for specific apps:
 
-## Architecture
+```bash
+# Development
+bun run dev --filter=budget
 
-The application uses a clean 3-layer architecture:
+# Build
+bun run build --filter=budget
 
-- **Services Layer**: Business logic and data operations
-- **Query Layer**: Reactive data management with TanStack Query
-- **UI Layer**: Svelte components with Shadcn design system
+# Test
+bun run test --filter=budget
+```
+
+### Database Operations
+
+Database operations are handled per-app. For the budget app:
+
+```bash
+bun run db:generate --filter=budget  # Generate migrations
+bun run db:migrate --filter=budget   # Run migrations
+bun run db:seed --filter=budget      # Seed with sample data
+```
+
+## Monorepo Benefits
+
+- **Shared tooling**: Consistent development experience across all apps
+- **Efficient builds**: Turbo's intelligent caching and dependency management
+- **Code sharing**: Easy sharing of utilities, types, and components (future packages)
+- **Simplified CI/CD**: Single repository for all related applications
+
+## Future Structure
+
+As the monorepo grows, we plan to extract shared functionality into packages:
+
+```
+packages/
+├── ui/              # Shared UI components
+├── database/        # Database schemas and utilities
+├── config/          # Shared configuration
+└── utils/          # Shared utility functions
+```
+
+## Technology Stack
+
+- **Monorepo**: Turbo
+- **Package Manager**: Bun
+- **Frontend**: SvelteKit, Svelte 5, TypeScript
+- **Styling**: Tailwind CSS, shadcn-svelte
+- **Backend**: tRPC, Drizzle ORM
+- **Database**: SQLite
+- **Authentication**: Better Auth
+- **Testing**: Vitest, Playwright
+- **Deployment**: Adapters for various platforms
 
 ## Contributing
 
-### 🚨 Critical: Always Use Feature Branches
+1. Create a feature branch from `main`
+2. Make your changes
+3. Ensure tests pass: `bun run test`
+4. Ensure code is formatted: `bun run format`
+5. Submit a pull request
 
-**Before making any changes:**
+## License
 
-1. **Check you're on `main`**: `git branch --show-current`
-2. **Create feature branch**: `git checkout -b feature/descriptive-name`
-3. **Never work directly on `main`** - every change needs its own branch
-
-### Development Workflow
-
-1. **Branch Creation**: Use descriptive names (`feature/add-auth`, `fix/table-bug`)
-2. **Focused Changes**: Keep commits small and atomic
-3. **Testing**: Run `bun run build` and test functionality
-4. **Clear Messages**: Write descriptive commit messages with context
-5. **Documentation**: Update relevant docs when adding features
-
-### Branch Naming Convention
-
-- `feature/` - New functionality
-- `fix/` - Bug fixes
-- `docs/` - Documentation updates
-- `refactor/` - Code refactoring
-- `perf/` - Performance improvements
-
-**For complete guidelines, see [Development Guide](docs/development-guide.md).**
+This project is licensed under the MIT License - see the LICENSE file for details.
