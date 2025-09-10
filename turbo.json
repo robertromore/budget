@@ -1,0 +1,65 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build", "check"],
+      "outputs": [".svelte-kit/**", "build/**"]
+    },
+    "check": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "lint": {
+      "outputs": []
+    },
+    "format": {
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:unit": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:integration": {
+      "dependsOn": ["build", "db:generate"],
+      "outputs": ["coverage/**"]
+    },
+    "test:playwright": {
+      "dependsOn": ["build"],
+      "outputs": ["playwright-report/**", "test-results/**"]
+    },
+    "db:generate": {
+      "outputs": ["drizzle/migrations/**"]
+    },
+    "db:migrate": {
+      "dependsOn": ["db:generate"],
+      "outputs": []
+    },
+    "db:seed": {
+      "dependsOn": ["db:migrate"],
+      "outputs": []
+    },
+    "db:reseed": {
+      "dependsOn": ["db:migrate"],
+      "outputs": []
+    },
+    "db:restart": {
+      "dependsOn": [],
+      "outputs": []
+    },
+    "clean": {
+      "cache": false
+    }
+  },
+  "globalDependencies": [
+    "package.json",
+    "turbo.json"
+  ]
+}

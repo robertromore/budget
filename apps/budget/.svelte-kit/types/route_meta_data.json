@@ -1,0 +1,40 @@
+{
+	"/": [
+		"src/routes/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/accounts": [
+		"src/routes/accounts/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/accounts/[id]": [
+		"src/routes/accounts/[id]/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/accounts/[id]/api/update-transaction": [
+		"src/routes/accounts/[id]/api/update-transaction/+server.ts"
+	],
+	"/categories": [
+		"src/routes/categories/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/payees": [
+		"src/routes/payees/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/schedules": [
+		"src/routes/schedules/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/schedules/[id]": [
+		"src/routes/schedules/[id]/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/test-tooltip": [
+		"src/routes/+layout.server.ts"
+	],
+	"/views": [
+		"src/routes/views/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	]
+}
