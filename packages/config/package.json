@@ -1,0 +1,26 @@
+{
+  "name": "@budget/config",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Shared configuration files for budget monorepo",
+  "files": [
+    "eslint.config.cjs",
+    ".prettierrc",
+    ".prettierignore",
+    "tsconfig.base.json",
+    "vite.base.ts"
+  ],
+  "exports": {
+    "./eslint": "./eslint.config.cjs",
+    "./prettier": "./.prettierrc",
+    "./prettier-ignore": "./.prettierignore", 
+    "./tsconfig": "./tsconfig.base.json",
+    "./vite": "./vite.base.ts"
+  },
+  "devDependencies": {
+    "@sveltejs/kit": "^2.36.3",
+    "@tailwindcss/vite": "^4.1.12",
+    "vite": "^7.1.3"
+  }
+}
