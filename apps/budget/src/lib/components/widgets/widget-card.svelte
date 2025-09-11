@@ -1,6 +1,6 @@
 <script lang="ts">
 import {Settings} from '$lib/components/icons';
-import {Button} from '$ui/components/ui/button';
+import {Button} from '$ui/lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import type {WidgetProps} from '$lib/types/widgets';
 import {WIDGET_CHART_TYPES, WIDGET_DEFINITIONS} from '$lib/types/widgets';

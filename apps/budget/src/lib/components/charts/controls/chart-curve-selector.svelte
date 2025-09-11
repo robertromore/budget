@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Select from '$lib/components/ui/select';
+import * as Select from '$ui/lib/components/ui/select';
 
 interface CurveOption {
   value: string;

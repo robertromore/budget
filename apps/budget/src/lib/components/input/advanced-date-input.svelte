@@ -2,10 +2,10 @@
 import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
 import {CalendarDate, DateFormatter, getLocalTimeZone, today} from '@internationalized/date';
 import {Calendar} from '$lib/components/ui/calendar/index.js';
-import {Label} from '$ui/components/ui/label';
+import {Label} from '$ui/lib/components/ui/label';
 import {SvelteMap} from 'svelte/reactivity';
 import type {FacetedFilterOption} from '$lib/types';
-import {Button} from '$lib/components/ui/button';
+import {Button} from '$ui/lib/components/ui/button';
 
 type Props = {
   onSubmit: (new_value: FacetedFilterOption) => void;

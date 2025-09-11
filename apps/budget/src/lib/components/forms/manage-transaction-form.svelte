@@ -5,7 +5,7 @@ import {superformInsertTransactionSchema} from '$lib/schema/superforms';
 import {superForm} from 'sveltekit-superforms/client';
 import {today, getLocalTimeZone} from '@internationalized/date';
 import type {EditableDateItem, EditableEntityItem} from '$lib/types';
-import {Textarea} from '$ui/components/ui/textarea';
+import {Textarea} from '$ui/lib/components/ui/textarea';
 import {zod4Client} from 'sveltekit-superforms/adapters';
 import DateInput from '$lib/components/input/date-input.svelte';
 import EntityInput from '$lib/components/input/entity-input.svelte';

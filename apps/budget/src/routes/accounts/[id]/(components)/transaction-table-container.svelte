@@ -1,7 +1,7 @@
 <script lang="ts">
 import {browser} from '$app/environment';
-import {Button} from '$ui/components/ui/button';
-import {Input} from '$ui/components/ui/input';
+import {Button} from '$ui/lib/components/ui/button';
+import {Input} from '$ui/lib/components/ui/input';
 import * as Table from '$lib/components/ui/table';
 import TransactionSkeleton from './transaction-skeleton.svelte';
 import {ChevronLeft, ChevronRight} from '@lucide/svelte/icons';

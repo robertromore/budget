@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Select from '$lib/components/ui/select';
+import * as Select from '$ui/lib/components/ui/select';
 import type {ChartType, ChartTypeOption} from '../config/chart-types';
 import {ALL_CHART_TYPES} from '../config/chart-types';
 

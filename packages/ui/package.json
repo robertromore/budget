@@ -13,6 +13,10 @@
     "./textarea": "./src/lib/components/ui/textarea/index.ts",
     "./checkbox": "./src/lib/components/ui/checkbox/index.ts",
     "./badge": "./src/lib/components/ui/badge/index.ts",
+    "./switch": "./src/lib/components/ui/switch/index.ts",
+    "./separator": "./src/lib/components/ui/separator/index.ts",
+    "./slider": "./src/lib/components/ui/slider/index.ts",
+    "./select": "./src/lib/components/ui/select/index.ts",
     "./utils": "./src/lib/utils.ts"
   },
   "files": [
@@ -27,6 +31,7 @@
     "svelte": "^5.0.0"
   },
   "dependencies": {
+    "@lucide/svelte": "^0.526.0",
     "bits-ui": "^2.9.6",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.4",

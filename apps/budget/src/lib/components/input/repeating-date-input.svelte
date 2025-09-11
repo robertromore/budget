@@ -39,18 +39,18 @@
 <script lang="ts">
 import {getLocalTimeZone, type DateValue} from '@internationalized/date';
 import {cn} from '$lib/utils';
-import {Button} from '$lib/components/ui/button';
+import {Button} from '$ui/lib/components/ui/button';
 import * as Calendar from '$lib/components/ui/calendar';
 import * as Popover from '$lib/components/ui/popover';
 import * as Card from '$lib/components/ui/card';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as RadioGroup from '$lib/components/ui/radio-group';
-import {Checkbox} from '$ui/components/ui/checkbox';
-import {Switch} from '$lib/components/ui/switch';
-import {Label} from '$ui/components/ui/label';
-import {Input} from '$ui/components/ui/input';
-import {Badge} from '$ui/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
+import {Checkbox} from '$ui/lib/components/ui/checkbox';
+import {Switch} from '$ui/lib/components/ui/switch';
+import {Label} from '$ui/lib/components/ui/label';
+import {Input} from '$ui/lib/components/ui/input';
+import {Badge} from '$ui/lib/components/ui/badge';
+import {Separator} from '$ui/lib/components/ui/separator';
 import {dateFormatter} from '$lib/utils/date-formatters';
 import {weekOptions, weekdayOptions} from '$lib/utils/date-options';
 
