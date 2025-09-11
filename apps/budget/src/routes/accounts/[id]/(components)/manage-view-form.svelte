@@ -1,6 +1,6 @@
 <script lang="ts">
 import {page} from '$app/state';
-import * as Form from '$lib/components/ui/form';
+import * as Form from '$ui/lib/components/ui/form';
 import {Textarea} from '$ui/lib/components/ui/textarea';
 import {type View} from '$lib/schema';
 import {superformInsertViewSchema} from '$lib/schema/superforms/views';

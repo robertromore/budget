@@ -15,7 +15,7 @@ import Pencil from '@lucide/svelte/icons/pencil';
 import Settings2 from '@lucide/svelte/icons/settings-2';
 import {cn} from '$lib/utils';
 import {CurrentViewState} from '$lib/states/views/current-view.svelte';
-import * as Tabs from '$lib/components/ui/tabs';
+import * as Tabs from '$ui/lib/components/ui/tabs';
 
 interface Props {
   table: Table<TransactionsFormat>;

@@ -2,7 +2,7 @@
 import {onMount} from 'svelte';
 import Plus from '@lucide/svelte/icons/plus';
 import {Button} from '$ui/lib/components/ui/button';
-import * as Tabs from '$lib/components/ui/tabs';
+import * as Tabs from '$ui/lib/components/ui/tabs';
 import WidgetDashboard from '$lib/components/widgets/widget-dashboard.svelte';
 import {parseDate, today, getLocalTimeZone} from '@internationalized/date';
 import type {Table as TanStackTable} from '@tanstack/table-core';

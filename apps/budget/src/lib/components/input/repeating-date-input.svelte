@@ -40,10 +40,10 @@
 import {getLocalTimeZone, type DateValue} from '@internationalized/date';
 import {cn} from '$lib/utils';
 import {Button} from '$ui/lib/components/ui/button';
-import * as Calendar from '$lib/components/ui/calendar';
+import * as Calendar from '$ui/lib/components/ui/calendar';
 import * as Popover from '$ui/lib/components/ui/popover';
 import * as Card from '$ui/lib/components/ui/card';
-import * as Tabs from '$lib/components/ui/tabs';
+import * as Tabs from '$ui/lib/components/ui/tabs';
 import * as RadioGroup from '$ui/lib/components/ui/radio-group';
 import {Checkbox} from '$ui/lib/components/ui/checkbox';
 import {Switch} from '$ui/lib/components/ui/switch';

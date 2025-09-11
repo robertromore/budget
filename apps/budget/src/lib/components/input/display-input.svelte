@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as DropdownMenu from '$ui/lib/components/ui/dropdown-menu';
 import * as Select from '$ui/lib/components/ui/select';
 import * as Popover from '$ui/lib/components/ui/popover';
 import {buttonVariants} from '$ui/lib/components/ui/button';

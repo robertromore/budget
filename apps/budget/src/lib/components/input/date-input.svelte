@@ -2,7 +2,7 @@
 import {getLocalTimeZone, type DateValue, today} from '@internationalized/date';
 import {cn} from '$lib/utils';
 import {Button} from '$ui/lib/components/ui/button';
-import {Calendar} from '$lib/components/ui/calendar';
+import {Calendar} from '$ui/lib/components/ui/calendar';
 import * as Popover from '$ui/lib/components/ui/popover';
 import {dateFormatter} from '$lib/utils/date-formatters';
 import CalendarDays from '@lucide/svelte/icons/calendar-days';

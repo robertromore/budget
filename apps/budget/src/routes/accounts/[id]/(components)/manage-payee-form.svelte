@@ -3,7 +3,7 @@ import type {EditableEntityItem} from '$lib/types';
 import {type Payee} from '$lib/schema';
 import {superformInsertPayeeSchema} from '$lib/schema/superforms';
 import {page} from '$app/state';
-import * as Form from '$lib/components/ui/form';
+import * as Form from '$ui/lib/components/ui/form';
 import * as AlertDialog from '$ui/lib/components/ui/alert-dialog';
 import {Button, buttonVariants} from '$ui/lib/components/ui/button';
 import {Input} from '$ui/lib/components/ui/input';
