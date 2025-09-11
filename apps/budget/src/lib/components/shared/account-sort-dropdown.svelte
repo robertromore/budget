@@ -1,5 +1,5 @@
 <script lang="ts">
-import {buttonVariants} from '$lib/components/ui/button/index.js';
+import {buttonVariants} from '$ui/lib/components/ui/button/index.js';
 import * as DropdownMenu from '$ui/lib/components/ui/dropdown-menu/index.js';
 import {
   AccountsState,
