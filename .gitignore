@@ -2,6 +2,7 @@
 node_modules
 /build
 /.svelte-kit
+**/.svelte-kit
 /package
 .env
 .env.*
@@ -20,3 +21,12 @@ vite.config.ts.timestamp-*
 /test-results
 /.playwright-mcp
 .context7-cache/
+
+# Build outputs
+apps/*/build/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Turbo cache
+.turbo/
