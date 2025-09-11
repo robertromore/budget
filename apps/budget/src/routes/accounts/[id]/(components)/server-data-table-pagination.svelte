@@ -19,8 +19,8 @@ import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
 import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
-import {Button} from '$ui/components/ui/button';
-import * as Select from '$lib/components/ui/select';
+import {Button} from '$ui/lib/components/ui/button';
+import * as Select from '$ui/lib/components/ui/select';
 import type {ServerAccountState} from '$lib/states/views/server-account.svelte';
 
 /**

@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Select from '$lib/components/ui/select';
+import * as Select from '$ui/lib/components/ui/select';
 import {CHART_COLOR_SCHEMES, getColorSchemesByCategory} from '$lib/utils/chart-colors';
 
 interface Props {

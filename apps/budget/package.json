@@ -89,6 +89,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@budget/ui": "workspace:*",
     "@decs/typeschema": "^0.12.2",
     "@internationalized/date": "^3.9.0",
     "@libsql/client": "^0.15.14",

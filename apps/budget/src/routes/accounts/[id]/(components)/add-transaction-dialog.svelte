@@ -1,10 +1,10 @@
 <script lang="ts">
-import {Button} from '$ui/components/ui/button';
+import {Button} from '$ui/lib/components/ui/button';
 import * as Dialog from '$lib/components/ui/dialog';
-import {Input} from '$ui/components/ui/input';
-import {Label} from '$ui/components/ui/label';
-import * as Select from '$lib/components/ui/select';
-import {Textarea} from '$ui/components/ui/textarea';
+import {Input} from '$ui/lib/components/ui/input';
+import {Label} from '$ui/lib/components/ui/label';
+import * as Select from '$ui/lib/components/ui/select';
+import {Textarea} from '$ui/lib/components/ui/textarea';
 import {today, getLocalTimeZone} from '@internationalized/date';
 
 let {

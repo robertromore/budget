@@ -1,5 +1,5 @@
 <script lang="ts">
-import {Button} from '$ui/components/ui/button';
+import {Button} from '$ui/lib/components/ui/button';
 import {cn} from '$lib/utils';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';

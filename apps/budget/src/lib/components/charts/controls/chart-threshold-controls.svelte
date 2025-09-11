@@ -1,9 +1,9 @@
 <script lang="ts">
-import {Label} from '$ui/components/ui/label';
-import {Input} from '$ui/components/ui/input';
-import {Switch} from '$lib/components/ui/switch';
-import {Separator} from '$lib/components/ui/separator';
-import * as Slider from '$lib/components/ui/slider';
+import {Label} from '$ui/lib/components/ui/label';
+import {Input} from '$ui/lib/components/ui/input';
+import {Switch} from '$ui/lib/components/ui/switch';
+import {Separator} from '$ui/lib/components/ui/separator';
+import * as Slider from '$ui/lib/components/ui/slider';
 import {DEFAULT_THRESHOLD_CONFIG} from '../config/chart-config';
 
 interface ThresholdControlsProps {

@@ -1,8 +1,8 @@
 <script lang="ts">
 import {Target} from '$lib/components/icons';
-import {Label} from '$ui/components/ui/label';
-import {Switch} from '$lib/components/ui/switch';
-import {Slider} from '$lib/components/ui/slider';
+import {Label} from '$ui/lib/components/ui/label';
+import {Switch} from '$ui/lib/components/ui/switch';
+import {Slider} from '$ui/lib/components/ui/slider';
 
 interface Props {
   showHighlightPoints: boolean;

@@ -13,8 +13,8 @@ const config = {
     // See https://kit.svelte.dev/docs/adapters for more information about adapters.
     adapter: adapter(),
     alias: {
-      '$ui': '../../packages/ui/src/lib',
-      '$ui/*': '../../packages/ui/src/lib/*'
+      '$ui': '../../packages/ui/src',
+      '$ui/*': '../../packages/ui/src/*'
     }
   },
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 import {getLocalTimeZone, type DateValue, today} from '@internationalized/date';
 import {cn} from '$lib/utils';
-import {Button} from '$ui/components/ui/button';
+import {Button} from '$ui/lib/components/ui/button';
 import {Calendar} from '$lib/components/ui/calendar';
 import * as Popover from '$lib/components/ui/popover';
 import {dateFormatter} from '$lib/utils/date-formatters';

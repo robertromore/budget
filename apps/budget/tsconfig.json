@@ -5,8 +5,8 @@
     "paths": {
       "$lib": ["./src/lib"],
       "$lib/*": ["./src/lib/*"],
-      "$ui": ["../../packages/ui/src/lib"],
-      "$ui/*": ["../../packages/ui/src/lib/*"]
+      "$ui": ["../../packages/ui/src"],
+      "$ui/*": ["../../packages/ui/src/*"]
     },
     "tsBuildInfoFile": ".svelte-kit/tsconfig.tsbuildinfo"
   },

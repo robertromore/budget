@@ -1,8 +1,8 @@
 <script lang="ts">
 import {PencilLine} from '$lib/components/icons';
-import {Label} from '$ui/components/ui/label';
-import {Switch} from '$lib/components/ui/switch';
-import * as Select from '$lib/components/ui/select';
+import {Label} from '$ui/lib/components/ui/label';
+import {Switch} from '$ui/lib/components/ui/switch';
+import * as Select from '$ui/lib/components/ui/select';
 
 interface Props {
   axisFontSize: string;

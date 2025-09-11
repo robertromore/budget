@@ -15,11 +15,11 @@
   ```
 -->
 <script lang="ts">
-import {Badge} from '$ui/components/ui/badge';
-import {Button} from '$ui/components/ui/button';
-import {Input} from '$ui/components/ui/input';
+import {Badge} from '$ui/lib/components/ui/badge';
+import {Button} from '$ui/lib/components/ui/button';
+import {Input} from '$ui/lib/components/ui/input';
 import * as Popover from '$lib/components/ui/popover';
-import * as Select from '$lib/components/ui/select';
+import * as Select from '$ui/lib/components/ui/select';
 import type {ServerAccountState} from '$lib/states/views/server-account.svelte';
 import Calendar from '@lucide/svelte/icons/calendar';
 import RotateCcw from '@lucide/svelte/icons/rotate-ccw';

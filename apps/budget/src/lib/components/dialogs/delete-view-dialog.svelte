@@ -1,6 +1,6 @@
 <script lang="ts">
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {buttonVariants} from '$lib/components/ui/button';
+import {buttonVariants} from '$ui/lib/components/ui/button';
 import type {CurrentViewState} from '$lib/states/current-view.svelte';
 import {currentViews} from '$lib/states/views';
 import type {TransactionsFormat} from '$lib/types';
