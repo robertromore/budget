@@ -12,7 +12,7 @@ import {zod4Client} from 'sveltekit-superforms/adapters';
 
 // UI component imports
 import * as Form from '$lib/components/ui/form';
-import Input from '$lib/components/ui/input/input.svelte';
+import {Input} from '$ui/components/ui/input';
 import {EntityInput, MultiNumericInput} from '$lib/components/input';
 
 // Model imports

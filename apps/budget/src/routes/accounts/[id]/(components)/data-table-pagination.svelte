@@ -5,7 +5,7 @@ import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
 import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
 import type {Table} from '@tanstack/table-core';
 import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
+import {Button} from '$ui/components/ui/button';
 
 let {table}: {table: Table<TData>} = $props();
 </script>

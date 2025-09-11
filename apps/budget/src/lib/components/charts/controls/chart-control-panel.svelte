@@ -1,7 +1,7 @@
 <script lang="ts">
 import {Settings, Settings2} from '$lib/components/icons';
 import * as ResponsiveSheet from '$lib/components/ui/responsive-sheet';
-import {Button} from '$lib/components/ui/button';
+import {Button} from '$ui/components/ui/button';
 import ChartTypeSelector from './chart-type-selector.svelte';
 import ChartPeriodControls from './chart-period-controls.svelte';
 import ChartColorSelector from './chart-color-selector.svelte';

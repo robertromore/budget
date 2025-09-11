@@ -1,6 +1,6 @@
 <script lang="ts">
-import {Label} from '$lib/components/ui/label';
-import {Input} from '$lib/components/ui/input';
+import {Label} from '$ui/components/ui/label';
+import {Input} from '$ui/components/ui/input';
 import {Switch} from '$lib/components/ui/switch';
 import {Separator} from '$lib/components/ui/separator';
 import * as Slider from '$lib/components/ui/slider';

@@ -1,7 +1,7 @@
 <script lang="ts">
 // --- Imports ---
 import {Button} from '$ui/components/ui/button';
-import Input from '$lib/components/ui/input/input.svelte';
+import {Input} from '$ui/components/ui/input';
 import * as Popover from '$lib/components/ui/popover';
 import {currencyFormatter} from '$lib/utils/formatters';
 import {cn} from '$lib/utils';

@@ -10,7 +10,7 @@ import ManageViewForm from './manage-view-form.svelte';
 import {FilterInput, DisplayInput} from '$lib/components/input';
 import {currentViews} from '$lib/states/views';
 import Asterisk from '@lucide/svelte/icons/asterisk';
-import {Button} from '$lib/components/ui/button';
+import {Button} from '$ui/components/ui/button';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Settings2 from '@lucide/svelte/icons/settings-2';
 import {cn} from '$lib/utils';

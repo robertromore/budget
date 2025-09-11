@@ -4,7 +4,7 @@ import type {Component, Snippet} from 'svelte';
 import {browser} from '$app/environment';
 
 // UI component imports
-import {Button} from '$lib/components/ui/button';
+import {Button} from '$ui/components/ui/button';
 import * as Dialog from '$lib/components/ui/dialog';
 
 // Hook imports
