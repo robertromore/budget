@@ -2,7 +2,7 @@
 // --- Imports ---
 import {Button} from '$ui/lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
-import * as Popover from '$lib/components/ui/popover';
+import * as Popover from '$ui/lib/components/ui/popover';
 import {tick} from 'svelte';
 import NumericInput from './numeric-input.svelte';
 

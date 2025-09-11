@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import * as AlertDialog from '$ui/lib/components/ui/alert-dialog';
 import {buttonVariants} from '$ui/lib/components/ui/button';
 import type {CurrentViewState} from '$lib/states/current-view.svelte';
 import {currentViews} from '$lib/states/views';

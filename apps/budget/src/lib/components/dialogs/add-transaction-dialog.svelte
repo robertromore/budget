@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Dialog from '$lib/components/ui/dialog';
+import * as Dialog from '$ui/lib/components/ui/dialog';
 import ManageTransactionForm from '$lib/components/forms/manage-transaction-form.svelte';
 import type {Transaction} from '$lib/schema';
 import {CurrentAccountState} from '$lib/states/current-account.svelte';

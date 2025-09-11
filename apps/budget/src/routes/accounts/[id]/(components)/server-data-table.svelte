@@ -17,7 +17,7 @@
   ```
 -->
 <script lang="ts" generics="TValue">
-import * as Alert from '$lib/components/ui/alert';
+import * as Alert from '$ui/lib/components/ui/alert';
 import {createSvelteTable, FlexRender} from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
 import type {ServerAccountState} from '$lib/states/views/server-account.svelte';

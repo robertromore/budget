@@ -4,7 +4,7 @@ import {type Payee} from '$lib/schema';
 import {superformInsertPayeeSchema} from '$lib/schema/superforms';
 import {page} from '$app/state';
 import * as Form from '$lib/components/ui/form';
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import * as AlertDialog from '$ui/lib/components/ui/alert-dialog';
 import {Button, buttonVariants} from '$ui/lib/components/ui/button';
 import {Input} from '$ui/lib/components/ui/input';
 import {Textarea} from '$ui/lib/components/ui/textarea';

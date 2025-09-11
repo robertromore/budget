@@ -1,6 +1,6 @@
 <script lang="ts">
 import {Button} from '$ui/lib/components/ui/button';
-import * as Dialog from '$lib/components/ui/dialog';
+import * as Dialog from '$ui/lib/components/ui/dialog';
 import {Input} from '$ui/lib/components/ui/input';
 import {Label} from '$ui/lib/components/ui/label';
 import * as Select from '$ui/lib/components/ui/select';
