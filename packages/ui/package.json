@@ -8,6 +8,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./button": "./src/lib/components/ui/button/index.ts",
+    "./input": "./src/lib/components/ui/input/index.ts",
+    "./label": "./src/lib/components/ui/label/index.ts",
+    "./textarea": "./src/lib/components/ui/textarea/index.ts",
+    "./checkbox": "./src/lib/components/ui/checkbox/index.ts",
+    "./badge": "./src/lib/components/ui/badge/index.ts",
     "./utils": "./src/lib/utils.ts"
   },
   "files": [
@@ -22,6 +27,7 @@
     "svelte": "^5.0.0"
   },
   "dependencies": {
+    "bits-ui": "^2.9.6",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.4",
     "tailwind-variants": "^1.0.0"
