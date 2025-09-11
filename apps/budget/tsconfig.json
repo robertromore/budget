@@ -4,7 +4,9 @@
     "baseUrl": ".",
     "paths": {
       "$lib": ["./src/lib"],
-      "$lib/*": ["./src/lib/*"]
+      "$lib/*": ["./src/lib/*"],
+      "$ui": ["../../packages/ui/src/lib"],
+      "$ui/*": ["../../packages/ui/src/lib/*"]
     },
     "tsBuildInfoFile": ".svelte-kit/tsconfig.tsbuildinfo"
   },
