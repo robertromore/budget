@@ -6,7 +6,7 @@ import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
 import {Button} from '$lib/components/ui/button';
 import {cn} from '$lib/utils';
-import {Badge} from '$lib/components/ui/badge';
+import {Badge} from '$ui/components/ui/badge';
 import X from '@lucide/svelte/icons/x';
 import type {AvailableFilters, FacetedFilterOption} from '$lib/types';
 import {currentViews} from '$lib/states/views';

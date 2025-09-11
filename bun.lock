@@ -108,6 +108,7 @@
       "name": "@budget/ui",
       "version": "0.0.1",
       "dependencies": {
+        "bits-ui": "^2.9.6",
         "clsx": "^2.1.1",
         "tailwind-merge": "^2.5.4",
         "tailwind-variants": "^1.0.0",

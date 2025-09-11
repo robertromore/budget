@@ -1,10 +1,10 @@
 <script lang="ts">
 import {page} from '$app/state';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {Button, buttonVariants} from '$lib/components/ui/button';
+import {Button, buttonVariants} from '$ui/components/ui/button';
 import * as Form from '$lib/components/ui/form';
-import Input from '$lib/components/ui/input/input.svelte';
-import {Textarea} from '$lib/components/ui/textarea';
+import {Input} from '$ui/components/ui/input';
+import {Textarea} from '$ui/components/ui/textarea';
 import {type Category} from '$lib/schema';
 import {superformInsertCategorySchema} from '$lib/schema/superforms';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';

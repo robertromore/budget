@@ -1,6 +1,6 @@
 <script lang="ts">
 import * as FormPrimitive from 'formsnap';
-import {Label} from '$lib/components/ui/label/index.js';
+import {Label} from '$ui/components/ui/label';
 import {cn, type WithoutChild} from '$lib/utils';
 let {
   ref = $bindable(null),

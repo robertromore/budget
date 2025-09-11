@@ -15,9 +15,9 @@
   ```
 -->
 <script lang="ts">
-import {Badge} from '$lib/components/ui/badge';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
+import {Badge} from '$ui/components/ui/badge';
+import {Button} from '$ui/components/ui/button';
+import {Input} from '$ui/components/ui/input';
 import * as Popover from '$lib/components/ui/popover';
 import * as Select from '$lib/components/ui/select';
 import type {ServerAccountState} from '$lib/states/views/server-account.svelte';

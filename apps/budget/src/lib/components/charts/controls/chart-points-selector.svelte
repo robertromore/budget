@@ -1,6 +1,6 @@
 <script lang="ts">
 import {Switch} from '$lib/components/ui/switch';
-import {Label} from '$lib/components/ui/label';
+import {Label} from '$ui/components/ui/label';
 
 interface Props {
   showPoints: boolean;

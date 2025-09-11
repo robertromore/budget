@@ -1,6 +1,6 @@
 <script lang="ts">
 import {Target} from '$lib/components/icons';
-import {Label} from '$lib/components/ui/label';
+import {Label} from '$ui/components/ui/label';
 import {Switch} from '$lib/components/ui/switch';
 import {Slider} from '$lib/components/ui/slider';
 
