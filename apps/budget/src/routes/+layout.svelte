@@ -6,8 +6,6 @@ import type {LayoutData} from './$types';
 import type {Snippet} from 'svelte';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {dev} from '$app/environment';
-import {RenderScan} from 'svelte-render-scan';
 import AddAccountDialog from '$lib/components/dialogs/add-account-dialog.svelte';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
@@ -16,16 +14,15 @@ import {SchedulesState} from '$lib/states/entities/schedules.svelte';
 
 let {data, children}: {data: LayoutData; children: Snippet} = $props();
 const {accounts, payees, categories, schedules} = $derived(data);
+
+// Initialize sidebar as open by default
+let sidebarOpen = $state(true);
+
 AccountsState.set((() => accounts)());
 SchedulesState.set((() => schedules)());
 CategoriesState.set((() => categories)());
 PayeesState.set((() => payees)());
 </script>
-
-<!-- Temporarily disabled RenderScan for debugging -->
-<!-- {#if dev}
-	<RenderScan />
-{/if} -->
 
 <AddAccountDialog />
 <AddScheduleDialog />

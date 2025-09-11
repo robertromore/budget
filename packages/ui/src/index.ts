@@ -75,3 +75,19 @@ export {
   ScrollUpButton as SelectScrollUpButton,
   GroupHeading as SelectGroupHeading,
 } from "./lib/components/ui/select/index.js";
+
+// Export Tooltip component
+export {
+  Root as Tooltip,
+  Trigger as TooltipTrigger,
+  Content as TooltipContent,
+  Provider as TooltipProvider,
+  Portal as TooltipPortal,
+  Root as TooltipRoot,
+} from "./lib/components/ui/tooltip/index.js";
+
+// Export Skeleton component
+export {
+  Skeleton,
+  Root as SkeletonRoot,
+} from "./lib/components/ui/skeleton/index.js";

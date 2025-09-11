@@ -1,8 +1,8 @@
 <script lang="ts">
-import {Skeleton} from '$ui/lib/components/ui/skeleton/index.js';
-import {cn} from '$lib/utils';
-import type {WithElementRef} from 'bits-ui';
-import type {HTMLAttributes} from 'svelte/elements';
+import { Skeleton } from '$ui/lib/components/ui/skeleton/index.js';
+import type { WithElementRef } from 'bits-ui';
+import type { HTMLAttributes } from 'svelte/elements';
+import { cn } from '../../../utils';
 
 let {
   ref = $bindable(null),

@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as Sheet from '$lib/components/ui/sheet/index.js';
-import {cn} from '$lib/utils';
+import * as Sheet from '../sheet/index.js';
+import {cn} from '../../../utils.js';
 import type {WithElementRef} from 'bits-ui';
 import type {HTMLAttributes} from 'svelte/elements';
 import {SIDEBAR_WIDTH_MOBILE} from './constants.js';

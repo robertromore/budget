@@ -2,7 +2,7 @@
 import * as FormPrimitive from 'formsnap';
 import type {FormPathLeaves} from 'sveltekit-superforms';
 import type {HTMLAttributes} from 'svelte/elements';
-import {cn, type WithElementRef, type WithoutChildren} from '$lib/utils';
+import {cn, type WithElementRef, type WithoutChildren} from '../../../utils.js';
 let {
   ref = $bindable(null),
   class: className,

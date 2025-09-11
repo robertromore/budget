@@ -28,7 +28,7 @@ export type ToggleVariants = VariantProps<typeof toggleVariants>;
 
 <script lang="ts">
 import {Toggle as TogglePrimitive} from 'bits-ui';
-import {cn} from '$lib/utils';
+import {cn} from '../../../utils.js';
 let {
   ref = $bindable(null),
   pressed = $bindable(false),

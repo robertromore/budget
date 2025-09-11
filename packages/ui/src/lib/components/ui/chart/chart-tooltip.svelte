@@ -1,5 +1,5 @@
 <script lang="ts">
-import {cn, type WithElementRef, type WithoutChildren} from '$lib/utils';
+import {cn, type WithElementRef, type WithoutChildren} from '../../../utils.js';
 import {getTooltipContext, Tooltip as TooltipPrimitive} from 'layerchart';
 import type {Snippet} from 'svelte';
 import type {HTMLAttributes} from 'svelte/elements';

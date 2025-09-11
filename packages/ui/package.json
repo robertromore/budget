@@ -7,6 +7,8 @@
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./theme.css": "./src/theme.css",
+    "./styles.css": "./dist/styles.css",
     "./button": "./src/lib/components/ui/button/index.ts",
     "./input": "./src/lib/components/ui/input/index.ts",
     "./label": "./src/lib/components/ui/label/index.ts",
@@ -17,14 +19,17 @@
     "./separator": "./src/lib/components/ui/separator/index.ts",
     "./slider": "./src/lib/components/ui/slider/index.ts",
     "./select": "./src/lib/components/ui/select/index.ts",
+    "./tooltip": "./src/lib/components/ui/tooltip/index.ts",
+    "./skeleton": "./src/lib/components/ui/skeleton/index.ts",
     "./utils": "./src/lib/utils.ts"
   },
   "files": [
-    "src"
+    "src",
+    "dist"
   ],
   "scripts": {
-    "dev": "echo 'UI package - no dev server needed'",
-    "build": "echo 'UI package - no build needed'",
+    "build": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --content '../../apps/budget/src/**/*.{html,js,svelte,ts}'",
+    "dev": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch --content '../../apps/budget/src/**/*.{html,js,svelte,ts}'",
     "check": "bunx svelte-check --tsconfig ./tsconfig.json"
   },
   "peerDependencies": {
@@ -32,6 +37,7 @@
   },
   "dependencies": {
     "@lucide/svelte": "^0.526.0",
+    "@tailwindcss/cli": "^4.1.13",
     "bits-ui": "^2.9.6",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.4",

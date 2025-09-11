@@ -4,6 +4,11 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  server: {
+    fs: {
+      allow: ['../../'] // Allow access to monorepo root
+    }
+  },
   build: {
     chunkSizeWarningLimit: 1000, // Increase warning threshold to 1MB
     rollupOptions: {

@@ -1,5 +1,5 @@
 <script lang="ts">
-import {cn, type WithoutChildrenOrChild} from '$lib/utils';
+import {cn, type WithoutChildrenOrChild} from '../../../utils.js';
 import {Slider as SliderPrimitive} from 'bits-ui';
 
 let {

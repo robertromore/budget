@@ -24,6 +24,7 @@ vite.config.ts.timestamp-*
 
 # Build outputs
 apps/*/build/
+packages/*/dist/
 
 # TypeScript build info
 *.tsbuildinfo
