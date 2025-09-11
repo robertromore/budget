@@ -1,5 +1,5 @@
 import type {EditableEntityItem, TransactionsFormat} from "$lib/types";
-import {Checkbox} from "$lib/components/ui/checkbox";
+import {Checkbox} from "$ui/lib/components/ui/checkbox";
 import {renderComponent} from "$ui/lib/components/ui/data-table";
 import type {CellContext, Column, ColumnDef, FilterFnOption} from "@tanstack/table-core";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
