@@ -1,7 +1,7 @@
 <script lang="ts">
 import * as ToggleGroup from '$ui/lib/components/ui/toggle-group/index.js';
 import {CalendarDate, DateFormatter, getLocalTimeZone, today} from '@internationalized/date';
-import {Calendar} from '$lib/components/ui/calendar/index.js';
+import {Calendar} from '$ui/lib/components/ui/calendar/index.js';
 import {Label} from '$ui/lib/components/ui/label';
 import {SvelteMap} from 'svelte/reactivity';
 import type {FacetedFilterOption} from '$lib/types';

@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Form from '$lib/components/ui/form';
+import * as Form from '$ui/lib/components/ui/form';
 import {type Transaction} from '$lib/schema';
 import {superformInsertTransactionSchema} from '$lib/schema/superforms';
 import {superForm} from 'sveltekit-superforms/client';

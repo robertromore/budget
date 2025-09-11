@@ -1,6 +1,6 @@
 <script lang="ts">
 import {Settings, Settings2} from '$lib/components/icons';
-import * as ResponsiveSheet from '$lib/components/ui/responsive-sheet';
+import * as ResponsiveSheet from '$ui/lib/components/ui/responsive-sheet';
 import {Button} from '$ui/lib/components/ui/button';
 import ChartTypeSelector from './chart-type-selector.svelte';
 import ChartPeriodControls from './chart-period-controls.svelte';

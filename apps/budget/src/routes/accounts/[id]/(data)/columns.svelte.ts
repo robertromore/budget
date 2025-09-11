@@ -1,6 +1,6 @@
 import type {EditableEntityItem, TransactionsFormat} from "$lib/types";
 import {Checkbox} from "$lib/components/ui/checkbox";
-import {renderComponent} from "$lib/components/ui/data-table";
+import {renderComponent} from "$ui/lib/components/ui/data-table";
 import type {CellContext, Column, ColumnDef, FilterFnOption} from "@tanstack/table-core";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
 import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
@@ -28,7 +28,7 @@ import {
   SquareCheck,
   DollarSign,
 } from "$lib/components/icons";
-import {ExpandToggle} from "$lib/components/ui/expand-toggle";
+import {ExpandToggle} from "$ui/lib/components/ui/expand-toggle";
 import {currencyFormatter} from "$lib/utils/formatters";
 import type {Component} from "svelte";
 

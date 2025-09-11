@@ -1,7 +1,7 @@
 <script lang="ts">
 import {browser} from '$app/environment';
 import {Button} from '$ui/lib/components/ui/button';
-import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as DropdownMenu from '$ui/lib/components/ui/dropdown-menu';
 import {widgetStore} from '$lib/stores/widgets.svelte';
 import type {WidgetConfig} from '$lib/types/widgets';
 import {Plus, Settings} from '$lib/components/icons';

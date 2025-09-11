@@ -1,6 +1,6 @@
 <script lang="ts">
 import {buttonVariants} from '$lib/components/ui/button/index.js';
-import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+import * as DropdownMenu from '$ui/lib/components/ui/dropdown-menu/index.js';
 import {
   AccountsState,
   type AccountSortField,

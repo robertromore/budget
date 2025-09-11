@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+import * as Sidebar from '$ui/lib/components/ui/sidebar/index.js';
 import AppSidebar from '$lib/components/layout/app-sidebar.svelte';
 import '../app.css';
 import type {LayoutData} from './$types';
