@@ -1,6 +1,6 @@
 <script lang="ts">
 import {Button} from '$ui/lib/components/ui/button';
-import * as Popover from '$lib/components/ui/popover';
+import * as Popover from '$ui/lib/components/ui/popover';
 import {Textarea} from '$ui/lib/components/ui/textarea';
 import {cn} from '$lib/utils';
 import SquarePen from '@lucide/svelte/icons/square-pen';

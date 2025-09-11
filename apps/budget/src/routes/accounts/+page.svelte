@@ -2,7 +2,7 @@
 import AddAccountDialog from '$lib/components/dialogs/add-account-dialog.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
 import {Button} from '$ui/lib/components/ui/button';
-import * as Card from '$lib/components/ui/card';
+import * as Card from '$ui/lib/components/ui/card';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import {
   deleteAccountDialog,

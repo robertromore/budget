@@ -5,7 +5,7 @@ import {Separator} from '$ui/lib/components/ui/separator';
 import CirclePlus from '@lucide/svelte/icons/circle-plus';
 import Layers from '@lucide/svelte/icons/layers';
 import PencilLine from '@lucide/svelte/icons/pencil-line';
-import Toggle from '$lib/components/ui/toggle/toggle.svelte';
+import Toggle from '$ui/lib/components/ui/toggle/toggle.svelte';
 import ManageViewForm from './manage-view-form.svelte';
 import {FilterInput, DisplayInput} from '$lib/components/input';
 import {currentViews} from '$lib/states/views';

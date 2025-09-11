@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import * as AlertDialog from '$ui/lib/components/ui/alert-dialog';
 import {buttonVariants} from '$ui/lib/components/ui/button';
 import {goto} from '$app/navigation';
 import {deleteAccountDialog, deleteAccountId} from '$lib/states/ui/global.svelte';

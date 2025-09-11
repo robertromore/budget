@@ -1,6 +1,6 @@
 <script lang="ts">
 import {Button} from '$ui/lib/components/ui/button';
-import * as Card from '$lib/components/ui/card';
+import * as Card from '$ui/lib/components/ui/card';
 import type {TransactionsFormat} from '$lib/types';
 import {analyticsTypes} from './(analytics)/analytics-types';
 import CashFlowChart from './(charts)/cash-flow-chart.svelte';

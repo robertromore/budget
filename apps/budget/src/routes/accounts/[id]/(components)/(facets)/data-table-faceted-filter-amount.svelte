@@ -16,7 +16,7 @@
 -->
 <script lang="ts" generics="TData, TValue">
 import type {Column} from '@tanstack/table-core';
-import * as Popover from '$lib/components/ui/popover';
+import * as Popover from '$ui/lib/components/ui/popover';
 import {Button} from '$ui/lib/components/ui/button';
 import {Input} from '$ui/lib/components/ui/input';
 import {Badge} from '$ui/lib/components/ui/badge';
