@@ -36,7 +36,7 @@ let {
 }: ChartTooltipProps = $props();
 
 // Determine formatter function based on config
-const formatValue = $derived(() => {
+const formatValue = $derived.by(() => {
   if (!config.format || config.format === 'default') {
     return (value: number) => String(value);
   }
@@ -163,7 +163,7 @@ const context = getChartContext();
 
               <Tooltip.Item
                 label={itemLabel}
-                value={formatValue()(value, item)}
+                value={formatValue(value, item)}
                 color={itemColor} />
             {/each}
 
@@ -175,7 +175,7 @@ const context = getChartContext();
               }, 0)}
 
               <Tooltip.Separator />
-              <Tooltip.Item label="Total" value={formatValue()(total)} class="font-semibold" />
+              <Tooltip.Item label="Total" value={formatValue(total)} class="font-semibold" />
             {/if}
           {:else if data}
             <!-- Single series tooltip -->
@@ -183,7 +183,8 @@ const context = getChartContext();
             {@const itemLabel = viewModeLabel || label || 'Value'}
             {@const itemColor = data.color || colors[0] || 'hsl(var(--chart-1))'}
 
-            <Tooltip.Item label={itemLabel} value={formatValue()(value, data)} color={itemColor} />
+              <Tooltip.Item label={itemLabel} value={formatValue(value, data)} color={itemColor} />
+            {/if}
           {/if}
         </Tooltip.List>
       {/if}
