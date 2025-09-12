@@ -1,8 +1,8 @@
 <script lang="ts">
-import {Label} from '$ui/lib/components/ui/label';
-import {Input} from '$ui/lib/components/ui/input';
-import {Slider} from '$ui/lib/components/ui/slider';
-import {Switch} from '$ui/lib/components/ui/switch';
+import {Label} from '$lib/components/ui/label';
+import {Input} from '$lib/components/ui/input';
+import {Slider} from '$lib/components/ui/slider';
+import {Switch} from '$lib/components/ui/switch';
 import {Target} from '$lib/components/icons';
 import {DEFAULT_STYLING_CONFIG} from '../config/chart-config';
 
@@ -24,7 +24,7 @@ let {
   chartType,
 }: Props = $props();
 
-const showPointControls = $derived(['line', 'spline', 'area'].includes(chartType));
+const showPointControls = $derived.by(() => ['line', 'spline', 'area'].includes(chartType));
 </script>
 
 {#if showPointControls}

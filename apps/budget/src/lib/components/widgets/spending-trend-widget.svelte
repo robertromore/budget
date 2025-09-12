@@ -1,5 +1,5 @@
 <script lang="ts">
-import {ChartContainer, type ChartConfig} from '$ui/lib/components/ui/chart';
+import {ChartContainer, type ChartConfig} from '$lib/components/ui/chart';
 import type {WidgetProps} from '$lib/types/widgets';
 import {currencyFormatter} from '$lib/utils/formatters';
 import {Area, Chart, Spline, Svg} from 'layerchart';

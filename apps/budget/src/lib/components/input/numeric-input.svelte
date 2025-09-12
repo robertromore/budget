@@ -1,8 +1,8 @@
 <script lang="ts">
 // --- Imports ---
-import {Button} from '$ui/lib/components/ui/button';
-import {Input} from '$ui/lib/components/ui/input';
-import * as Popover from '$ui/lib/components/ui/popover';
+import {Button} from '$lib/components/ui/button';
+import {Input} from '$lib/components/ui/input';
+import * as Popover from '$lib/components/ui/popover';
 import {currencyFormatter} from '$lib/utils/formatters';
 import {cn} from '$lib/utils';
 import Delete from '@lucide/svelte/icons/delete';

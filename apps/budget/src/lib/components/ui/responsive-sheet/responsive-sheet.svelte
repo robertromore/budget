@@ -1,7 +1,7 @@
 <script lang="ts">
 import {MediaQuery} from 'svelte/reactivity';
-import * as Sheet from '$ui/lib/components/ui/sheet/index.js';
-import * as Drawer from '$ui/lib/components/ui/drawer/index.js';
+import * as Sheet from '$lib/components/ui/sheet/index.js';
+import * as Drawer from '$lib/components/ui/drawer/index.js';
 import type {Snippet} from 'svelte';
 
 interface Props {

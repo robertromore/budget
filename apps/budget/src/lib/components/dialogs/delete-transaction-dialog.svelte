@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as AlertDialog from '$ui/lib/components/ui/alert-dialog';
-import {buttonVariants} from '$ui/lib/components/ui/button';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import {buttonVariants} from '$lib/components/ui/button';
 import {CurrentAccountState} from '$lib/states/current-account.svelte';
 
 let {

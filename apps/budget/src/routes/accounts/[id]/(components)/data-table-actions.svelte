@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as DropdownMenu from '$ui/lib/components/ui/dropdown-menu';
-import {Button} from '$ui/lib/components/ui/button';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import {Button} from '$lib/components/ui/button';
 import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
 import DeleteTransactionDialog from '../(dialogs)/delete-transaction-dialog.svelte';
 

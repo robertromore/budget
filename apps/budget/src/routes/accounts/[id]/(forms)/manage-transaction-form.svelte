@@ -1,11 +1,11 @@
 <script lang="ts">
-import * as Form from '$ui/lib/components/ui/form';
+import * as Form from '$lib/components/ui/form';
 import {type Transaction} from '$lib/schema';
 import {superformInsertTransactionSchema} from '$lib/schema/superforms';
 import {superForm} from 'sveltekit-superforms/client';
 import {today, getLocalTimeZone} from '@internationalized/date';
 import type {EditableDateItem, EditableEntityItem} from '$lib/types';
-import {Textarea} from '$ui/lib/components/ui/textarea';
+import {Textarea} from '$lib/components/ui/textarea';
 import {zod4Client} from 'sveltekit-superforms/adapters';
 import {DateInput, EntityInput, NumericInput} from '$lib/components/input';
 import {page} from '$app/state';

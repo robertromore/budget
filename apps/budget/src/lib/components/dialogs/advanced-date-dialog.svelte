@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Dialog from '$ui/lib/components/ui/dialog';
+import * as Dialog from '$lib/components/ui/dialog';
 import AdvancedDateInput from '$lib/components/input/advanced-date-input.svelte';
 import type {FacetedFilterOption} from '$lib/types';
 

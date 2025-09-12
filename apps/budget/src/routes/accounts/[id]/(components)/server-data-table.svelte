@@ -17,9 +17,9 @@
   ```
 -->
 <script lang="ts" generics="TValue">
-import * as Alert from '$ui/lib/components/ui/alert';
-import {createSvelteTable, FlexRender} from '$ui/lib/components/ui/data-table';
-import * as Table from '$ui/lib/components/ui/table';
+import * as Alert from '$lib/components/ui/alert';
+import {createSvelteTable, FlexRender} from '$lib/components/ui/data-table';
+import * as Table from '$lib/components/ui/table';
 import type {ServerAccountState} from '$lib/states/views/server-account.svelte';
 import type {TransactionsFormat} from '$lib/types';
 import AlertCircle from '@lucide/svelte/icons/alert-circle';

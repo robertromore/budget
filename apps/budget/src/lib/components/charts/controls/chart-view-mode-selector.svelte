@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Select from '$ui/lib/components/ui/select';
+import * as Select from '$lib/components/ui/select';
 
 export type ViewModeOption = 'combined' | 'side-by-side' | 'stacked' | 'overlaid';
 
@@ -46,11 +46,11 @@ const viewModeConfigs: Record<ViewModeOption, ViewModeConfig> = {
 };
 
 // Filter available view modes based on props
-const availableConfigs = $derived(
+const availableConfigs = $derived.by(() => 
   availableViewModes.map((mode) => viewModeConfigs[mode]).filter(Boolean)
 );
 
-const selectedViewModeConfig = $derived(viewModeConfigs[viewMode] || viewModeConfigs.combined);
+const selectedViewModeConfig = $derived.by(() => viewModeConfigs[viewMode] || viewModeConfigs.combined);
 </script>
 
 {#if availableConfigs.length > 1}

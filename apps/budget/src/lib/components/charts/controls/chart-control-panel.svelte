@@ -1,7 +1,7 @@
 <script lang="ts">
 import {Settings, Settings2} from '$lib/components/icons';
-import * as ResponsiveSheet from '$ui/lib/components/ui/responsive-sheet';
-import {Button} from '$ui/lib/components/ui/button';
+import * as ResponsiveSheet from '$lib/components/ui/responsive-sheet';
+import {Button} from '$lib/components/ui/button';
 import ChartTypeSelector from './chart-type-selector.svelte';
 import ChartPeriodControls from './chart-period-controls.svelte';
 import ChartColorSelector from './chart-color-selector.svelte';
@@ -196,7 +196,7 @@ let {
 let styleControlsOpen = $state(false);
 
 // Check if we have any style controls to show
-const hasStyleControls = $derived(
+const hasStyleControls = $derived.by(() => 
   allowColorChange ||
     allowCurveChange ||
     allowPointsChange ||
@@ -210,7 +210,7 @@ const hasStyleControls = $derived(
 );
 
 // Check if we have any data controls to show
-const hasDataControls = $derived(allowTypeChange || allowPeriodChange);
+const hasDataControls = $derived.by(() => allowTypeChange || allowPeriodChange);
 </script>
 
 {#if hasDataControls || hasStyleControls}

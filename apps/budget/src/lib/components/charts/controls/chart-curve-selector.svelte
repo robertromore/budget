@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Select from '$ui/lib/components/ui/select';
+import * as Select from '$lib/components/ui/select';
 
 interface CurveOption {
   value: string;
@@ -54,7 +54,7 @@ const curveOptions: CurveOption[] = [
 ];
 
 // Only show curve selector for line/spline charts
-const showCurveSelector = $derived(['line', 'spline', 'area'].includes(chartType));
+const showCurveSelector = $derived.by(() => ['line', 'spline', 'area'].includes(chartType));
 const selectedCurveOption = $derived.by(
   () => curveOptions.find((option) => option.value === curve) || curveOptions[0]
 );

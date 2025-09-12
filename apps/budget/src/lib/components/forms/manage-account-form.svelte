@@ -1,12 +1,12 @@
 <script lang="ts">
-import * as Form from '$ui/lib/components/ui/form';
+import * as Form from '$lib/components/ui/form';
 import {type Account} from '$lib/schema';
 import {superformInsertAccountSchema} from '$lib/schema/superforms';
 import {superForm} from 'sveltekit-superforms/client';
-import {Textarea} from '$ui/lib/components/ui/textarea';
+import {Textarea} from '$lib/components/ui/textarea';
 import {zod4Client} from 'sveltekit-superforms/adapters';
 import {page} from '$app/state';
-import {Input} from '$ui/lib/components/ui/input';
+import {Input} from '$lib/components/ui/input';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 
 let {

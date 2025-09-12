@@ -1,11 +1,17 @@
 <script lang="ts">
-import {Button} from '$ui/lib/components/ui/button';
-import * as Dialog from '$ui/lib/components/ui/dialog';
-import {Input} from '$ui/lib/components/ui/input';
-import {Label} from '$ui/lib/components/ui/label';
-import * as Select from '$ui/lib/components/ui/select';
-import {Textarea} from '$ui/lib/components/ui/textarea';
+import {Button} from '$lib/components/ui/button';
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import {Label} from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import {Textarea} from '$lib/components/ui/textarea';
+import DateInput from '$lib/components/input/date-input.svelte';
+import EntityInput from '$lib/components/input/entity-input.svelte';
+import NumericInput from '$lib/components/input/numeric-input.svelte';
 import {today, getLocalTimeZone} from '@internationalized/date';
+import type {EditableDateItem, EditableEntityItem} from '$lib/types';
+import HandCoins from '@lucide/svelte/icons/hand-coins';
+import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
+import type {Component} from 'svelte';
 
 let {
   open = $bindable(false),
@@ -41,6 +47,26 @@ let transactionForm = $state<TransactionFormData>({
   status: 'cleared',
 });
 
+// Input component state
+let dateValue: EditableDateItem = $state(today(getLocalTimeZone()));
+let amount: number = $state<number>(0);
+let payee: EditableEntityItem = $state({
+  id: 0,
+  name: '',
+});
+let category: EditableEntityItem = $state({
+  id: 0,
+  name: '',
+});
+
+// Sync component state with form state
+$effect(() => {
+  transactionForm.date = dateValue.toString();
+  transactionForm.amount = amount;
+  transactionForm.payeeId = payee.id || null;
+  transactionForm.categoryId = category.id || null;
+});
+
 // Reset form to defaults
 function resetForm() {
   transactionForm = {
@@ -51,6 +77,12 @@ function resetForm() {
     categoryId: null,
     status: 'cleared',
   };
+  
+  // Reset component state
+  dateValue = today(getLocalTimeZone());
+  amount = 0;
+  payee = { id: 0, name: '' };
+  category = { id: 0, name: '' };
 }
 
 // Handle form submission
@@ -81,86 +113,59 @@ function handleClose() {
 }
 </script>
 
-<Dialog.Root bind:open>
-  <Dialog.Content class="max-w-md">
-    <Dialog.Header>
-      <Dialog.Title>Add New Transaction</Dialog.Title>
-      <Dialog.Description>
-        Create a new transaction for {account?.name || 'this account'}.
-      </Dialog.Description>
-    </Dialog.Header>
+<ResponsiveSheet bind:open>
+    {#snippet header()}
+      <div>
+        <h2 class="text-lg font-semibold">Add New Transaction</h2>
+        <p class="text-sm text-muted-foreground">
+          Create a new transaction for {account?.name || 'this account'}.
+        </p>
+      </div>
+    {/snippet}
 
-    <div class="space-y-4 py-4">
+    <div class="space-y-4">
       <!-- Amount -->
       <div class="space-y-2">
         <Label for="amount">Amount</Label>
-        <Input
-          id="amount"
-          type="number"
-          step="0.01"
-          placeholder="0.00"
-          bind:value={transactionForm.amount} />
+        <NumericInput bind:value={amount} buttonClass="w-full" />
       </div>
 
       <!-- Date -->
       <div class="space-y-2">
         <Label for="date">Date</Label>
-        <Input id="date" type="date" bind:value={transactionForm.date} />
+        <DateInput bind:value={dateValue} />
       </div>
 
       <!-- Payee -->
       <div class="space-y-2">
         <Label for="payee">Payee</Label>
-        <Select.Root
-          type="single"
-          value={transactionForm.payeeId?.toString() ?? undefined}
-          onValueChange={(value) => {
-            transactionForm.payeeId = value ? parseInt(value) : null;
-          }}>
-          <Select.Trigger>
-            {payees.find((p) => p.id === transactionForm.payeeId)?.name ||
-              'Select payee (optional)'}
-          </Select.Trigger>
-          <Select.Content>
-            <Select.Item value="">No payee</Select.Item>
-            {#each payees as payee}
-              <Select.Item value={payee.id.toString()}>{payee.name}</Select.Item>
-            {/each}
-          </Select.Content>
-        </Select.Root>
+        <EntityInput
+          entityLabel="payees"
+          entities={payees as EditableEntityItem[]}
+          bind:value={payee}
+          icon={HandCoins as unknown as Component}
+          buttonClass="w-full" />
       </div>
 
       <!-- Category -->
       <div class="space-y-2">
         <Label for="category">Category</Label>
-        <Select.Root
-          type="single"
-          value={transactionForm.categoryId?.toString() ?? undefined}
-          onValueChange={(value) => {
-            transactionForm.categoryId = value ? parseInt(value) : null;
-          }}>
-          <Select.Trigger>
-            {categories.find((c) => c.id === transactionForm.categoryId)?.name ||
-              'Select category (optional)'}
-          </Select.Trigger>
-          <Select.Content>
-            <Select.Item value="">No category</Select.Item>
-            {#each categories as category}
-              <Select.Item value={category.id.toString()}>{category.name}</Select.Item>
-            {/each}
-          </Select.Content>
-        </Select.Root>
+        <EntityInput
+          entityLabel="categories"
+          entities={categories as EditableEntityItem[]}
+          bind:value={category}
+          icon={SquareMousePointer as unknown as Component}
+          buttonClass="w-full" />
       </div>
 
       <!-- Status -->
       <div class="space-y-2">
         <Label for="status">Status</Label>
         <Select.Root
-          type="single"
-          value={transactionForm.status}
-          onValueChange={(value) => {
-            if (value) {
-              transactionForm.status = value as 'pending' | 'cleared' | 'scheduled';
+          selected={{value: transactionForm.status || 'cleared', label: transactionForm.status || 'cleared'}}
+          onSelectedChange={(selected) => {
+            if (selected?.value) {
+              transactionForm.status = selected.value as 'pending' | 'cleared' | 'scheduled';
             }
           }}>
           <Select.Trigger>
@@ -185,11 +190,10 @@ function handleClose() {
       </div>
     </div>
 
-    <Dialog.Footer>
+    {#snippet footer()}
       <Button variant="outline" onclick={handleClose} disabled={isSubmitting}>Cancel</Button>
       <Button onclick={handleSubmit} disabled={isSubmitting || !transactionForm.amount}>
         {isSubmitting ? 'Adding...' : 'Add Transaction'}
       </Button>
-    </Dialog.Footer>
-  </Dialog.Content>
-</Dialog.Root>
+    {/snippet}
+</ResponsiveSheet>

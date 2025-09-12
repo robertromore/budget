@@ -1,18 +1,18 @@
 <script lang="ts">
-import * as DropdownMenu from '$ui/lib/components/ui/dropdown-menu';
-import * as Select from '$ui/lib/components/ui/select';
-import * as Popover from '$ui/lib/components/ui/popover';
-import {buttonVariants} from '$ui/lib/components/ui/button';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as Select from '$lib/components/ui/select';
+import * as Popover from '$lib/components/ui/popover';
+import {buttonVariants} from '$lib/components/ui/button';
 import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
 import {cn} from '$lib/utils';
-import {Label} from '$ui/lib/components/ui/label';
+import {Label} from '$lib/components/ui/label';
 import {currentViews} from '$lib/states/views';
-import {Badge} from '$ui/lib/components/ui/badge';
+import {Badge} from '$lib/components/ui/badge';
 import type {SortingState, VisibilityState} from '@tanstack/table-core';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import CircleChevronUp from '@lucide/svelte/icons/chevron-up';
 import CircleChevronDown from '@lucide/svelte/icons/chevron-down';
-import {Switch} from '$ui/lib/components/ui/switch';
+import {Switch} from '$lib/components/ui/switch';
 
 const currentView = $derived(currentViews.get().activeView);
 const table = $derived(currentView.table);

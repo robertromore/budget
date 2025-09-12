@@ -1,9 +1,9 @@
 <script lang="ts">
 import {Crosshair} from '$lib/components/icons';
-import {Label} from '$ui/lib/components/ui/label';
-import * as Select from '$ui/lib/components/ui/select';
-import {Slider} from '$ui/lib/components/ui/slider';
-import {Switch} from '$ui/lib/components/ui/switch';
+import {Label} from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import {Slider} from '$lib/components/ui/slider';
+import {Switch} from '$lib/components/ui/switch';
 
 interface Props {
   showCrosshair: boolean;
