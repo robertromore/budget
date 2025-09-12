@@ -36,7 +36,7 @@ let {
 }: UnifiedChartProps = $props();
 
 // Resolve complete configuration
-const config = $derived(
+const config = $derived.by(() =>
   resolveChartConfig({
     data,
     type,
@@ -187,7 +187,7 @@ const processor = createReactiveChartDataProcessor(() => ({
 }));
 
 // Get processed data from the processor
-const processorData = $derived(processor());
+const processorData = $derived.by(() => processor());
 
 // Theme detection for accessibility-aware opacity calculations
 const themeDetector = createThemeDetector();
@@ -294,7 +294,7 @@ const availableChartTypes = $derived.by(() => {
 });
 
 // Loading and error states
-const isLoading = $derived(data.length > 1000);
+const isLoading = $derived.by(() => data.length > 1000);
 const hasRenderError = $state(false);
 
 // Accessibility ID
