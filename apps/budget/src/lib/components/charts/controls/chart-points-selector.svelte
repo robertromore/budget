@@ -1,6 +1,6 @@
 <script lang="ts">
-import {Switch} from '$ui/lib/components/ui/switch';
-import {Label} from '$ui/lib/components/ui/label';
+import {Switch} from '$lib/components/ui/switch';
+import {Label} from '$lib/components/ui/label';
 
 interface Props {
   showPoints: boolean;
@@ -10,7 +10,7 @@ interface Props {
 let {showPoints = $bindable(false), chartType}: Props = $props();
 
 // Only show points toggle for line/spline charts
-const showPointsSelector = $derived(['line', 'spline'].includes(chartType));
+const showPointsSelector = $derived.by(() => ['line', 'spline'].includes(chartType));
 </script>
 
 {#if showPointsSelector}

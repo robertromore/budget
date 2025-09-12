@@ -140,7 +140,7 @@ const positionClasses = $derived.by(() => {
 });
 
 // Determine orientation based on position
-const orientation = $derived(
+const orientation = $derived.by(() => 
   position === 'left' || position === 'right' ? 'vertical' : 'horizontal'
 );
 
@@ -167,7 +167,7 @@ function handleItemLeave(_: MouseEvent, detail: {value: any; color: string}) {
 }
 
 // Build custom classes for LayerChart Legend
-const legendClasses = $derived({
+const legendClasses = $derived.by(() => ({
   // Root class with position alignment
   root: `${positionClasses} ${className}`,
   // Items container with proper spacing
@@ -178,7 +178,7 @@ const legendClasses = $derived({
   swatch: `${swatchSizeClasses} rounded ${swatchClass}`,
   // Label styling
   label: fontSizeClasses,
-});
+}));
 </script>
 
 {#if show && legendScale && items.length > 0}

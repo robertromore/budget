@@ -11,8 +11,8 @@ import {
   getSortedRowModel,
   type Table as TTable,
 } from '@tanstack/table-core';
-import {createSvelteTable, FlexRender} from '$ui/lib/components/ui/data-table';
-import * as Table from '$ui/lib/components/ui/table';
+import {createSvelteTable, FlexRender} from '$lib/components/ui/data-table';
+import * as Table from '$lib/components/ui/table';
 import type {TransactionsFormat} from '$lib/types';
 import {DataTablePagination, DataTableToolbar} from '.';
 import {filtering, filters, setFiltering, setGlobalFilter} from '../(data)/filters.svelte';

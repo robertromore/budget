@@ -6,7 +6,7 @@ import type {Component} from 'svelte';
 import type {HTMLAttributes} from 'svelte/elements';
 import type {FacetedFilterOption} from '$lib/types';
 import {SvelteMap} from 'svelte/reactivity';
-import * as Command from '$ui/lib/components/ui/command';
+import * as Command from '$lib/components/ui/command';
 import {AdvancedDateDialog} from '$lib/components/dialogs';
 import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
 import {currentViews} from '$lib/states/views';

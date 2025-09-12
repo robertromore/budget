@@ -16,10 +16,10 @@
 -->
 <script lang="ts" generics="TData, TValue">
 import type {Column} from '@tanstack/table-core';
-import * as Popover from '$ui/lib/components/ui/popover';
-import {Button} from '$ui/lib/components/ui/button';
-import {Input} from '$ui/lib/components/ui/input';
-import {Badge} from '$ui/lib/components/ui/badge';
+import * as Popover from '$lib/components/ui/popover';
+import {Button} from '$lib/components/ui/button';
+import {Input} from '$lib/components/ui/input';
+import {Badge} from '$lib/components/ui/badge';
 import {cn} from '$lib/utils';
 import {currencyFormatter} from '$lib/utils/formatters';
 import {currentViews} from '$lib/states/views';

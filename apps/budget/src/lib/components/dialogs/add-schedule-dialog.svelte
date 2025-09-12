@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Sheet from '$ui/lib/components/ui/sheet';
+import * as Sheet from '$lib/components/ui/sheet';
 import type {UseBoolean} from '$lib/hooks/ui/use-boolean.svelte';
 import type {UseNumber} from '$lib/hooks/ui/use-number.svelte';
 import {managingScheduleId, newScheduleDialog} from '$lib/states/ui/global.svelte';

@@ -1,7 +1,7 @@
 <script lang="ts">
 import {page} from '$app/state';
-import * as Form from '$ui/lib/components/ui/form';
-import {Textarea} from '$ui/lib/components/ui/textarea';
+import * as Form from '$lib/components/ui/form';
+import {Textarea} from '$lib/components/ui/textarea';
 import {type View} from '$lib/schema';
 import {superformInsertViewSchema} from '$lib/schema/superforms/views';
 import type {CurrentViewState} from '$lib/states/views';
@@ -11,8 +11,8 @@ import {zodClient} from 'sveltekit-superforms/adapters';
 import {superForm} from 'sveltekit-superforms/client';
 import DeleteViewDialog from '../(dialogs)/delete-view-dialog.svelte';
 import {DisplayInput, FilterInput} from '$lib/components/input';
-import {Button, buttonVariants} from '$ui/lib/components/ui/button';
-import {Input} from '$ui/lib/components/ui/input';
+import {Button, buttonVariants} from '$lib/components/ui/button';
+import {Input} from '$lib/components/ui/input';
 
 interface Props {
   onCancel?: () => void;

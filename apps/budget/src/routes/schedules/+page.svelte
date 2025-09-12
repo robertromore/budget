@@ -1,5 +1,5 @@
 <script lang="ts">
-import {Button} from '$ui/lib/components/ui/button';
+import {Button} from '$lib/components/ui/button';
 import type {Schedule} from '$lib/schema/schedules.js';
 import {managingScheduleId, newScheduleDialog} from '$lib/states/ui/global.svelte';
 

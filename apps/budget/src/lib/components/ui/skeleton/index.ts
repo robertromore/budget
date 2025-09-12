@@ -1,7 +1,7 @@
-import Root from "./skeleton.svelte";
+import Skeleton from "./skeleton.svelte";
 
 export {
-  Root,
-  //
-  Root as Skeleton,
+	Skeleton,
+	//
+	Skeleton as Root,
 };

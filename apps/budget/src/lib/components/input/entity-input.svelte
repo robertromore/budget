@@ -1,8 +1,8 @@
 <script lang="ts">
-import {Button} from '$ui/lib/components/ui/button';
+import {Button} from '$lib/components/ui/button';
 import {cn} from '$lib/utils';
-import * as Command from '$ui/lib/components/ui/command';
-import * as Popover from '$ui/lib/components/ui/popover';
+import * as Command from '$lib/components/ui/command';
+import * as Popover from '$lib/components/ui/popover';
 import type {EditableEntityItem} from '$lib/types';
 import Plus from '@lucide/svelte/icons/plus';
 import Pencil from '@lucide/svelte/icons/pencil';

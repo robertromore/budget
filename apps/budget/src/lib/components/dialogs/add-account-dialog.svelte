@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Dialog from '$ui/lib/components/ui/dialog';
+import * as Dialog from '$lib/components/ui/dialog';
 import type {UseBoolean} from '$lib/hooks/ui/use-boolean.svelte';
 import type {UseNumber} from '$lib/hooks/ui/use-number.svelte';
 import {managingAccountId, newAccountDialog} from '$lib/states/ui/global.svelte';

@@ -2,11 +2,11 @@
 import Check from '@lucide/svelte/icons/check';
 import type {Column, FilterFns} from '@tanstack/table-core';
 import type {Component, Snippet} from 'svelte';
-import * as Command from '$ui/lib/components/ui/command';
-import * as Popover from '$ui/lib/components/ui/popover';
-import {Button} from '$ui/lib/components/ui/button';
+import * as Command from '$lib/components/ui/command';
+import * as Popover from '$lib/components/ui/popover';
+import {Button} from '$lib/components/ui/button';
 import {cn} from '$lib/utils';
-import {Badge} from '$ui/lib/components/ui/badge';
+import {Badge} from '$lib/components/ui/badge';
 import X from '@lucide/svelte/icons/x';
 import type {AvailableFilters, FacetedFilterOption} from '$lib/types';
 import {currentViews} from '$lib/states/views';

@@ -3,7 +3,7 @@
 import type {Snippet, Component} from 'svelte';
 
 // UI component imports
-import {Button} from '$ui/lib/components/ui/button';
+import {Button} from '$lib/components/ui/button';
 
 // Hook imports
 import {useEditableCell} from '$lib/hooks/ui';
