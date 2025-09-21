@@ -23,7 +23,107 @@ export const transactionKeys = {
 };
 
 /**
- * Query: Get all transactions for an account
+ * Query: Get ALL transactions for an account (for client-side pagination)
+ */
+export function createAllAccountTransactionsQuery(
+  accountId: number,
+  options?: {
+    sortBy?: 'date' | 'amount' | 'notes';
+    sortOrder?: 'asc' | 'desc';
+    searchQuery?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }
+) {
+  const params = {
+    accountId,
+    sortBy: options?.sortBy ?? 'date',
+    sortOrder: options?.sortOrder ?? 'desc',
+    ...(options?.searchQuery && { searchQuery: options.searchQuery }),
+    ...(options?.dateFrom && { dateFrom: options.dateFrom }),
+    ...(options?.dateTo && { dateTo: options.dateTo }),
+  };
+
+  return createQuery({
+    queryKey: ['transactions', 'all', accountId, params],
+    queryFn: () => trpc().serverAccountsRoutes.loadAllTransactions.query(params),
+    staleTime: 30 * 1000, // 30 seconds
+  });
+}
+
+/**
+ * Query: Get ALL transactions for an account including upcoming scheduled transactions
+ */
+export function createAllAccountTransactionsWithUpcomingQuery(
+  accountId: number,
+  options?: {
+    sortBy?: 'date' | 'amount' | 'notes';
+    sortOrder?: 'asc' | 'desc';
+    searchQuery?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }
+) {
+  return createQuery({
+    queryKey: ['transactions', 'all-with-upcoming', accountId, options],
+    queryFn: () => trpc().transactionRoutes.forAccountWithUpcoming.query({ accountId }),
+    staleTime: 30 * 1000, // 30 seconds
+    select: (data) => {
+      // Client-side filtering and sorting since we get everything from the server
+      let filteredData = [...data];
+
+      // Apply search filter
+      if (options?.searchQuery) {
+        const query = options.searchQuery.toLowerCase();
+        filteredData = filteredData.filter(transaction =>
+          transaction.notes?.toLowerCase().includes(query) ||
+          (transaction as any).scheduleName?.toLowerCase().includes(query)
+        );
+      }
+
+      // Apply date filters
+      if (options?.dateFrom) {
+        filteredData = filteredData.filter(transaction => transaction.date >= options.dateFrom!);
+      }
+      if (options?.dateTo) {
+        filteredData = filteredData.filter(transaction => transaction.date <= options.dateTo!);
+      }
+
+      // Apply sorting
+      const sortBy = options?.sortBy ?? 'date';
+      const sortOrder = options?.sortOrder ?? 'desc';
+
+      filteredData.sort((a, b) => {
+        let aValue: any, bValue: any;
+
+        switch (sortBy) {
+          case 'amount':
+            aValue = a.amount;
+            bValue = b.amount;
+            break;
+          case 'notes':
+            aValue = a.notes || '';
+            bValue = b.notes || '';
+            break;
+          case 'date':
+          default:
+            aValue = a.date;
+            bValue = b.date;
+            break;
+        }
+
+        if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      return filteredData;
+    }
+  });
+}
+
+/**
+ * Query: Get paginated transactions for an account (legacy - for server-side pagination)
  */
 export function createAccountTransactionsQuery(
   accountId: number,
@@ -52,7 +152,7 @@ export function createAccountTransactionsQuery(
     queryKey: transactionKeys.byAccount(accountId, params),
     queryFn: () => trpc().serverAccountsRoutes.loadTransactions.query(params),
     staleTime: 30 * 1000, // 30 seconds
-    select: (data) => data?.transactions || [], // Extract transactions from the paginated response
+    // Return the whole payload including pagination metadata
   });
 }
 
@@ -102,15 +202,17 @@ export function createTransactionMutation() {
     mutationFn: (data: CreateTransactionData) =>
       trpc().transactionRoutes.create.mutate(data),
     onSuccess: (newTransaction, variables) => {
-      // Invalidate and refetch related queries
+      // Invalidate and refetch related queries using predicate matching
       client.invalidateQueries({
-        queryKey: transactionKeys.byAccount(variables.accountId),
-      });
-      client.invalidateQueries({
-        queryKey: transactionKeys.summary(variables.accountId),
-      });
-      client.invalidateQueries({
-        queryKey: transactionKeys.lists(),
+        predicate: (query) => {
+          const key = JSON.stringify(query.queryKey);
+          return (
+            key.includes('"account"') && key.includes(`${variables.accountId}`) ||
+            key.includes('"all"') && key.includes(`${variables.accountId}`) ||
+            key.includes('"summary"') && key.includes(`${variables.accountId}`) ||
+            key.includes('"list"')
+          );
+        },
       });
 
       toast.success("Transaction created successfully");
@@ -128,30 +230,43 @@ export function createUpdateTransactionMutation() {
   const client = useQueryClient();
 
   return createMutation({
-    mutationFn: ({id, data}: {id: number; data: UpdateTransactionData}) =>
+    mutationFn: ({id, data, accountId}: {id: number; data: UpdateTransactionData; accountId: number}) =>
       trpc().transactionRoutes.update.mutate({id, data}),
     onMutate: async (variables) => {
-      // Find the account query for optimistic updates
+      const { accountId } = variables;
+
+      // Find the specific query for this account ID
+      let targetQuery: any = null;
+      let transactionsArray: any[] = [];
+
       const allQueries = client.getQueryCache().getAll();
-      const accountQuery = allQueries.find(query => {
+
+      // Look for queries specifically for this account ID
+      for (const query of allQueries) {
         const key = query.queryKey as any[];
-        return key.includes("account");
-      });
+        if (!key.includes("transactions") || !key.includes(accountId)) continue;
 
-      if (!accountQuery) return {};
+        const currentData = query.state.data;
+        let queryTransactions: any[] = [];
 
-      const currentData = accountQuery.state.data;
-      let transactionsArray: any[];
+        if (Array.isArray(currentData)) {
+          queryTransactions = currentData;
+        } else if (currentData && typeof currentData === 'object' && 'transactions' in currentData && Array.isArray((currentData as any).transactions)) {
+          queryTransactions = (currentData as any).transactions;
+        }
 
-      if (Array.isArray(currentData)) {
-        transactionsArray = currentData;
-      } else if (currentData && Array.isArray(currentData.transactions)) {
-        transactionsArray = currentData.transactions;
-      } else {
-        return {};
+        const targetTransaction = queryTransactions.find((t: any) => t.id === variables.id);
+        if (targetTransaction) {
+          targetQuery = query;
+          transactionsArray = queryTransactions;
+          break;
+        }
       }
 
-      const queryKey = accountQuery.queryKey;
+      if (!targetQuery) return {};
+
+      const queryKey = targetQuery.queryKey;
+      const currentData = targetQuery.state.data;
 
       // Cancel any outgoing refetches
       await client.cancelQueries({ queryKey });
@@ -165,7 +280,7 @@ export function createUpdateTransactionMutation() {
       );
 
       // Recalculate running balances if amount changed
-      if ('amount' in variables.data) {
+      if ('amount' in variables.data && typeof variables.data.amount === 'number') {
         const changedTransaction = transactionsArray.find(t => t.id === variables.id);
         if (changedTransaction) {
           const amountDifference = variables.data.amount - changedTransaction.amount;
@@ -209,15 +324,14 @@ export function createUpdateTransactionMutation() {
       );
 
       // Invalidate all related queries to force refetch with updated data and running balances
-      if (updatedTransaction.accountId) {
-        client.invalidateQueries({
-          predicate: (query) => {
-            const key = query.queryKey as any[];
-            return (key.includes("account") && key.includes(updatedTransaction.accountId)) ||
-                   (key.includes("summary") && key.includes(updatedTransaction.accountId));
-          },
-        });
-      }
+      // Use the accountId from variables instead of the returned transaction for precision
+      client.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey as any[];
+          return (key.includes("account") && key.includes(variables.accountId)) ||
+                 (key.includes("summary") && key.includes(variables.accountId));
+        },
+      });
 
       // Invalidate general list queries
       client.invalidateQueries({
@@ -238,60 +352,22 @@ export function createUpdateTransactionWithBalanceMutation() {
   return createMutation({
     mutationFn: ({id, data}: {id: number; data: UpdateTransactionData}) =>
       trpc().transactionRoutes.updateWithBalance.mutate({id, data}),
-    onSuccess: (transactionsWithBalance, variables) => {
-      console.log('🔍 Server response for updateWithBalance:', transactionsWithBalance);
+    onSuccess: (transactionsWithBalance) => {
+      if (!Array.isArray(transactionsWithBalance) || !transactionsWithBalance.length) return;
 
-      if (!transactionsWithBalance.length) return;
+      const accountId = (transactionsWithBalance[0] as any).accountId;
 
-      // Get the account ID from the first transaction
-      const accountId = transactionsWithBalance[0].accountId;
-
-      // Debug: Check balance values in the response
-      console.log('💰 First few transactions with balances:',
-        transactionsWithBalance.slice(0, 3).map(t => ({
-          id: t.id,
-          amount: t.amount,
-          balance: t.balance
-        }))
-      );
-
-      // Update all account queries with the fresh data from server
-      const allQueries = client.getQueryCache().getAll();
-
-      // Find and update all account transaction queries
-      allQueries.forEach(query => {
-        const key = query.queryKey as any[];
-
-        // Check if this is an account transactions query
-        if (key.includes("account") && key.includes(accountId)) {
-          const currentData = query.state.data;
-
-          // Update the cache with the new data structure
-          if (Array.isArray(currentData)) {
-            // Simple array structure
-            client.setQueryData(key, transactionsWithBalance);
-          } else if (currentData && typeof currentData === 'object' && 'transactions' in currentData) {
-            // Paginated structure with transactions property
-            client.setQueryData(key, {
-              ...currentData,
-              transactions: transactionsWithBalance
-            });
-          }
-        }
-      });
-
-      // Update the detail query cache for the specific transaction
-      const updatedTransaction = transactionsWithBalance.find(t => t.id === variables.id);
-      if (updatedTransaction) {
-        client.setQueryData(
-          transactionKeys.detail(variables.id),
-          updatedTransaction
-        );
-      }
-
-      // Invalidate account summary to refresh balance totals
+      // Invalidate account transaction queries using predicate matching
       client.invalidateQueries({
-        queryKey: transactionKeys.summary(accountId),
+        predicate: (query) => {
+          const key = JSON.stringify(query.queryKey);
+          return (
+            key.includes('"account"') && key.includes(`${accountId}`) ||
+            key.includes('"all"') && key.includes(`${accountId}`) ||
+            key.includes('"summary"') && key.includes(`${accountId}`) ||
+            key.includes('"list"')
+          );
+        },
       });
 
       toast.success("Transaction updated successfully");
@@ -360,50 +436,6 @@ export function createBulkDeleteTransactionsMutation() {
   });
 }
 
-/**
- * Optimistic update helpers
- */
-export function optimisticCreateTransaction(
-  client: ReturnType<typeof useQueryClient>,
-  accountId: number,
-  newTransaction: CreateTransactionData
-) {
-  // Add the new transaction optimistically to the account transactions list
-  const previousData = client.getQueryData(transactionKeys.byAccount(accountId));
-  if (previousData && Array.isArray(previousData)) {
-    const optimisticTransaction = {
-      ...newTransaction,
-      id: -Math.random(), // Temporary negative ID
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deletedAt: null,
-    };
-    client.setQueryData(
-      transactionKeys.byAccount(accountId),
-      [...previousData, optimisticTransaction]
-    );
-  }
-
-  return previousData;
-}
-
-export function optimisticUpdateTransaction(
-  client: ReturnType<typeof useQueryClient>,
-  id: number,
-  updateData: UpdateTransactionData
-) {
-  // Update the transaction in cache optimistically
-  const previousData = client.getQueryData(transactionKeys.detail(id));
-  if (previousData) {
-    client.setQueryData(transactionKeys.detail(id), {
-      ...previousData,
-      ...updateData,
-      updatedAt: new Date().toISOString(),
-    });
-  }
-
-  return previousData;
-}
 
 /**
  * Legacy mutation for backwards compatibility
@@ -423,18 +455,20 @@ export function createSaveTransactionMutation() {
       status?: "cleared" | "pending" | "scheduled" | null;
     }) => trpc().transactionRoutes.save.mutate(data),
     onSuccess: (transaction) => {
-      // Invalidate relevant queries
+      // Invalidate relevant queries using predicate matching
       if (transaction.accountId) {
         client.invalidateQueries({
-          queryKey: transactionKeys.byAccount(transaction.accountId),
-        });
-        client.invalidateQueries({
-          queryKey: transactionKeys.summary(transaction.accountId),
+          predicate: (query) => {
+            const key = JSON.stringify(query.queryKey);
+            return (
+              key.includes('"account"') && key.includes(`${transaction.accountId}`) ||
+              key.includes('"all"') && key.includes(`${transaction.accountId}`) ||
+              key.includes('"summary"') && key.includes(`${transaction.accountId}`) ||
+              key.includes('"list"')
+            );
+          },
         });
       }
-      client.invalidateQueries({
-        queryKey: transactionKeys.lists(),
-      });
 
       toast.success("Transaction saved successfully");
     },

@@ -18,6 +18,7 @@ let {
   onSave?: (new_entity: Account) => void;
 } = $props();
 
+// Get form data from accounts page (not layout) to match the action schema
 const {
   data: {manageAccountForm},
 } = page;

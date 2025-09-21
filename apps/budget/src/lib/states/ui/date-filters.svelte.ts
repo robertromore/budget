@@ -4,26 +4,15 @@ import {getContext, setContext} from "svelte";
 const KEY = Symbol("date_filters");
 
 export class DateFiltersState {
-  dateFilters = $state([]) as FacetedFilterOption[];
+  dateFilters: FacetedFilterOption[] = $state() as FacetedFilterOption[];
 
-  constructor(date_filters?: FacetedFilterOption[]) {
-    if (date_filters) {
-      this.init(date_filters);
-    }
+  constructor(date_filters: FacetedFilterOption[]) {
+    this.dateFilters = date_filters;
+    setContext(KEY, this);
   }
 
-  // Initialize/reinitialize the store with new data
-  init(dateFilters: FacetedFilterOption[]) {
-    this.dateFilters = [...dateFilters];
-  }
-
-  // Context management
   static get() {
     return getContext<DateFiltersState>(KEY);
-  }
-
-  static set(dateFilters: FacetedFilterOption[]) {
-    return setContext(KEY, new DateFiltersState(dateFilters));
   }
 
   // Getters

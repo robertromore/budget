@@ -6,6 +6,7 @@ import {Label} from '$lib/components/ui/label';
 import {SvelteMap} from 'svelte/reactivity';
 import type {FacetedFilterOption} from '$lib/types';
 import {Button} from '$lib/components/ui/button';
+import {dayFmt} from '$lib/utils/date-formatters';
 
 type Props = {
   onSubmit: (new_value: FacetedFilterOption) => void;
@@ -127,11 +128,7 @@ const getFormattedValue = (): string => {
       case 'half-year':
         return `H${Math.ceil(value.month / MONTHS_PER_HALF_YEAR)} ${value.year}`;
       default:
-        return new DateFormatter(userLocale, {
-          month: 'short',
-          day: '2-digit',
-          year: 'numeric',
-        }).format(value.toDate(getLocalTimeZone()));
+        return dayFmt.format(value.toDate(getLocalTimeZone()));
     }
   } catch (error) {
     console.error('Error formatting date:', error);

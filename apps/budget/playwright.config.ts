@@ -3,8 +3,8 @@ import { devices } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
   webServer: {
-    command: "bun run build && bunx vite preview",
-    port: 4173,
+    command: "bun run dev",
+    port: 5173,
     reuseExistingServer: !process.env.CI, // Reuse server in dev, fresh in CI
     timeout: 120000, // 2 minutes timeout for server startup
   },

@@ -4,6 +4,13 @@ import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/
 import {InputSanitizer} from "$lib/server/shared/validation";
 import {getLocalTimeZone, parseDate, today} from "@internationalized/date";
 import type {TransactionFilters, PaginationParams, PaginatedResult} from "./repository";
+import {invalidateAccountCache} from "$lib/utils/cache";
+import {db} from "$lib/server/db";
+import {accounts, transactions} from "$lib/schema";
+import {eq, and, isNull, sql} from "drizzle-orm";
+import {PayeeService} from "../payees/services";
+import {CategoryService} from "../categories/services";
+import {ScheduleService, type UpcomingScheduledTransaction} from "../schedules/services";
 
 // Service input types
 export interface CreateTransactionData {
@@ -14,6 +21,7 @@ export interface CreateTransactionData {
   categoryId?: number | null | undefined;
   notes?: string | null | undefined;
   status?: "cleared" | "pending" | "scheduled" | undefined;
+  scheduleId?: number | null | undefined;
 }
 
 export interface UpdateTransactionData {
@@ -26,6 +34,8 @@ export interface UpdateTransactionData {
 }
 
 export interface TransactionSummary {
+  accountId: number;
+  accountName: string;
   balance: number;
   pendingBalance: number;
   transactionCount: number;
@@ -38,7 +48,11 @@ export interface TransactionSummary {
  * Transaction service containing business logic
  */
 export class TransactionService {
-  constructor(private repository: TransactionRepository = new TransactionRepository()) {}
+  constructor(
+    private repository: TransactionRepository = new TransactionRepository(),
+    private payeeService: PayeeService = new PayeeService(),
+    private categoryService: CategoryService = new CategoryService()
+  ) {}
 
   /**
    * Create a new transaction
@@ -78,7 +92,7 @@ export class TransactionService {
 
     // Verify payee exists if provided
     if (data.payeeId) {
-      const payeeExists = await this.verifyPayeeExists(data.payeeId);
+      const payeeExists = await this.payeeService.verifyPayeeExists(data.payeeId);
       if (!payeeExists) {
         throw new NotFoundError("Payee", data.payeeId);
       }
@@ -86,7 +100,7 @@ export class TransactionService {
 
     // Verify category exists if provided
     if (data.categoryId) {
-      const categoryExists = await this.verifyCategoryExists(data.categoryId);
+      const categoryExists = await this.categoryService.verifyCategoryExists(data.categoryId);
       if (!categoryExists) {
         throw new NotFoundError("Category", data.categoryId);
       }
@@ -102,6 +116,8 @@ export class TransactionService {
       notes,
       status,
     });
+
+    invalidateAccountCache(transaction.accountId);
 
     return transaction;
   }
@@ -152,7 +168,7 @@ export class TransactionService {
     // Verify payee exists if provided
     if (data.payeeId !== undefined) {
       if (data.payeeId) {
-        const payeeExists = await this.verifyPayeeExists(data.payeeId);
+        const payeeExists = await this.payeeService.verifyPayeeExists(data.payeeId);
         if (!payeeExists) {
           throw new NotFoundError("Payee", data.payeeId);
         }
@@ -163,7 +179,7 @@ export class TransactionService {
     // Verify category exists if provided
     if (data.categoryId !== undefined) {
       if (data.categoryId) {
-        const categoryExists = await this.verifyCategoryExists(data.categoryId);
+        const categoryExists = await this.categoryService.verifyCategoryExists(data.categoryId);
         if (!categoryExists) {
           throw new NotFoundError("Category", data.categoryId);
         }
@@ -172,7 +188,11 @@ export class TransactionService {
     }
 
     // Update transaction
-    return await this.repository.update(id, updateData);
+    const updatedTransaction = await this.repository.update(id, updateData);
+
+    invalidateAccountCache(updatedTransaction.accountId);
+
+    return updatedTransaction;
   }
 
   /**
@@ -229,6 +249,62 @@ export class TransactionService {
   }
 
   /**
+   * Get account transactions including upcoming scheduled transactions
+   */
+  async getAccountTransactionsWithUpcoming(accountId: number): Promise<(Transaction | UpcomingScheduledTransaction)[]> {
+    // Verify account exists
+    const accountExists = await this.verifyAccountExists(accountId);
+    if (!accountExists) {
+      throw new NotFoundError("Account", accountId);
+    }
+
+    // Get actual transactions with running balance
+    const rawTransactions = await this.repository.findWithRunningBalance(accountId);
+    console.log(`Found ${rawTransactions.length} actual transactions for account ${accountId}`);
+
+    // Enrich actual transactions with schedule metadata if they have a scheduleId
+    const actualTransactions = await Promise.all(rawTransactions.map(async (t: any): Promise<Transaction> => {
+      if (t.scheduleId) {
+        // Fetch schedule details for this transaction
+        const scheduleService = new ScheduleService();
+        try {
+          const schedule = await scheduleService.getScheduleById(t.scheduleId);
+          return {
+            ...t,
+            scheduleId: schedule.id,
+            scheduleName: schedule.name,
+            scheduleSlug: schedule.slug,
+            scheduleFrequency: schedule.scheduleDate?.frequency,
+            scheduleInterval: schedule.scheduleDate?.interval,
+            scheduleNextOccurrence: undefined, // Not applicable for actual transactions
+          } as Transaction;
+        } catch (error) {
+          // If schedule not found, just return transaction as-is
+          console.warn(`Schedule ${t.scheduleId} not found for transaction ${t.id}`);
+          return t as Transaction;
+        }
+      }
+      return t as Transaction;
+    }));
+
+    // Get upcoming scheduled transactions
+    const scheduleService = new ScheduleService();
+    const upcomingTransactions = await scheduleService.getUpcomingScheduledTransactionsForAccount(accountId);
+    console.log(`Found ${upcomingTransactions.length} upcoming scheduled transactions for account ${accountId}`);
+
+    // Combine and sort by date (newest first)
+    const allTransactions: (Transaction | UpcomingScheduledTransaction)[] = [
+      ...actualTransactions,
+      ...upcomingTransactions
+    ];
+
+    return allTransactions.sort((a, b) => {
+      // Sort by date, newest first
+      return b.date.localeCompare(a.date);
+    });
+  }
+
+  /**
    * Get transactions with running balance
    */
   async getTransactionsWithBalance(accountId: number, limit?: number): Promise<Array<Transaction & {balance: number}>> {
@@ -245,9 +321,17 @@ export class TransactionService {
    * Get account summary
    */
   async getAccountSummary(accountId: number): Promise<TransactionSummary> {
-    // Verify account exists
-    const accountExists = await this.verifyAccountExists(accountId);
-    if (!accountExists) {
+    // Fetch account info and verify it exists
+    const account = await db
+      .select({
+        id: accounts.id,
+        name: accounts.name,
+      })
+      .from(accounts)
+      .where(eq(accounts.id, accountId))
+      .limit(1);
+
+    if (!account.length) {
       throw new NotFoundError("Account", accountId);
     }
 
@@ -261,7 +345,14 @@ export class TransactionService {
     const pendingCount = transactions.filter((t) => t.status === "pending").length;
     const scheduledCount = transactions.filter((t) => t.status === "scheduled").length;
 
+    const accountData = account[0];
+    if (!accountData) {
+      throw new NotFoundError("Account", accountId);
+    }
+
     return {
+      accountId: accountData.id,
+      accountName: accountData.name,
       balance,
       pendingBalance,
       transactionCount: transactions.length,
@@ -275,11 +366,11 @@ export class TransactionService {
    * Delete transaction (soft delete)
    */
   async deleteTransaction(id: number): Promise<void> {
-    // Verify transaction exists
-    await this.repository.findByIdOrThrow(id);
-
     // Soft delete the transaction
+    const transaction = await this.repository.findByIdOrThrow(id);
     await this.repository.softDelete(id);
+
+    invalidateAccountCache(transaction.accountId);
   }
 
   /**
@@ -290,17 +381,14 @@ export class TransactionService {
       throw new ValidationError("No transaction IDs provided");
     }
 
-    // Verify all transactions exist
-    const verificationPromises = ids.map((id) => this.repository.exists(id));
-    const existenceResults = await Promise.all(verificationPromises);
-
-    const missingIds = ids.filter((_, index) => !existenceResults[index]);
-    if (missingIds.length > 0) {
-      throw new NotFoundError("Transaction", missingIds.join(", "));
-    }
+    // Load transactions to validate existence and capture account IDs for cache invalidation
+    const transactions = await Promise.all(ids.map((id) => this.repository.findByIdOrThrow(id)));
 
     // Bulk soft delete
     await this.repository.bulkSoftDelete(ids);
+
+    const affectedAccounts = new Set(transactions.map((transaction) => transaction.accountId));
+    affectedAccounts.forEach((accountId) => invalidateAccountCache(accountId));
   }
 
   /**
@@ -322,6 +410,50 @@ export class TransactionService {
   }
 
   /**
+   * Get monthly spending aggregates for analytics (all data, not paginated)
+   */
+  async getMonthlySpendingAggregates(accountId: number): Promise<Array<{
+    month: string;
+    monthLabel: string;
+    spending: number;
+    transactionCount: number;
+  }>> {
+    // Verify account exists
+    const accountExists = await this.verifyAccountExists(accountId);
+    if (!accountExists) {
+      throw new NotFoundError("Account", accountId);
+    }
+
+    const result = await db
+      .select({
+        month: sql<string>`strftime('%Y-%m', date)`,
+        spending: sql<number>`sum(case when amount < 0 then abs(amount) else 0 end)`,
+        transactionCount: sql<number>`count(case when amount < 0 then 1 else null end)`,
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.accountId, accountId),
+          isNull(transactions.deletedAt),
+          sql`amount < 0` // Only expenses
+        )
+      )
+      .groupBy(sql`strftime('%Y-%m', date)`)
+      .orderBy(sql`strftime('%Y-%m', date)`);
+
+    // Transform the results to include month labels
+    return result.map(row => ({
+      month: row.month,
+      monthLabel: new Date(row.month + '-01').toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long'
+      }),
+      spending: row.spending,
+      transactionCount: row.transactionCount,
+    }));
+  }
+
+  /**
    * Helper: Verify account exists
    */
   private async verifyAccountExists(accountId: number): Promise<boolean> {
@@ -340,37 +472,4 @@ export class TransactionService {
     return !!account;
   }
 
-  /**
-   * Helper: Verify payee exists
-   */
-  private async verifyPayeeExists(payeeId: number): Promise<boolean> {
-    const {db} = await import("$lib/server/db");
-    const {payees} = await import("$lib/schema");
-    const {eq, isNull, and} = await import("drizzle-orm");
-
-    const [payee] = await db
-      .select({id: payees.id})
-      .from(payees)
-      .where(and(eq(payees.id, payeeId), isNull(payees.deletedAt)))
-      .limit(1);
-
-    return !!payee;
-  }
-
-  /**
-   * Helper: Verify category exists
-   */
-  private async verifyCategoryExists(categoryId: number): Promise<boolean> {
-    const {db} = await import("$lib/server/db");
-    const {categories} = await import("$lib/schema");
-    const {eq, isNull, and} = await import("drizzle-orm");
-
-    const [category] = await db
-      .select({id: categories.id})
-      .from(categories)
-      .where(and(eq(categories.id, categoryId), isNull(categories.deletedAt)))
-      .limit(1);
-
-    return !!category;
-  }
 }

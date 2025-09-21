@@ -60,6 +60,11 @@ $effect(() => {
           </div>
         {/if}
       </div>
+      {#if footer}
+        <Sheet.Footer class="border-t px-6 py-4">
+          {@render footer()}
+        </Sheet.Footer>
+      {/if}
     </Sheet.Content>
   </Sheet.Root>
 {:else}

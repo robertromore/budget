@@ -1,87 +1,138 @@
-import {formInsertPayeeSchema, payees, removePayeeSchema, removePayeesSchema} from "$lib/schema";
+import {formInsertPayeeSchema, removePayeeSchema, removePayeesSchema} from "$lib/schema";
 import {z} from "zod";
 import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
-import {eq, isNull, inArray} from "drizzle-orm";
 import {TRPCError} from "@trpc/server";
+import {PayeeService, payeeIdSchema, searchPayeesSchema} from "$lib/server/domains/payees";
+import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
+
+const payeeService = new PayeeService();
 
 export const payeeRoutes = t.router({
-  all: publicProcedure.query(async ({ctx}) => {
-    return await ctx.db.select().from(payees).where(isNull(payees.deletedAt));
-  }),
-  load: publicProcedure.input(z.object({id: z.coerce.number()})).query(async ({ctx, input}) => {
-    const result = await ctx.db.query.payees.findMany({
-      where: (payees, {eq, and, isNull}) => and(eq(payees.id, input.id), isNull(payees.deletedAt)),
-    });
-    if (!result[0]) {
+  all: publicProcedure.query(async () => {
+    try {
+      return await payeeService.getAllPayees();
+    } catch (error) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Payee not found",
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to fetch payees",
       });
     }
-    return result[0];
   }),
-  remove: rateLimitedProcedure.input(removePayeeSchema).mutation(async ({ctx, input}) => {
-    if (!input) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Payee ID is required for deletion",
-      });
-    }
-    const result = await ctx.db
-      .update(payees)
-      .set({deletedAt: new Date().toISOString()})
-      .where(eq(payees.id, input.id))
-      .returning();
-    if (!result[0]) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Payee not found or could not be deleted",
-      });
-    }
-    return result[0];
-  }),
-  delete: bulkOperationProcedure
-    .input(removePayeesSchema)
-    .mutation(async ({input: {entities}, ctx: {db}}) => {
-      return await db
-        .update(payees)
-        .set({deletedAt: new Date().toISOString()})
-        .where(inArray(payees.id, entities))
-        .returning();
-    }),
-  save: rateLimitedProcedure
-    .input(formInsertPayeeSchema)
-    .mutation(async ({input: {id, name, notes}, ctx: {db}}) => {
-      if (id) {
-        const result = await db
-          .update(payees)
-          .set({
-            name,
-            notes,
-          })
-          .where(eq(payees.id, id))
-          .returning();
-        if (!result[0]) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to update payee",
-          });
-        }
-        return result[0];
-      }
-      const result = await db
-        .insert(payees)
-        .values({
-          name,
-          notes,
-        })
-        .returning();
-      if (!result[0]) {
+
+  load: publicProcedure.input(payeeIdSchema).query(async ({input}) => {
+    try {
+      return await payeeService.getPayeeById(input.id);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create payee",
+          code: "NOT_FOUND",
+          message: error.message,
         });
       }
-      return result[0];
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to load payee",
+      });
+    }
+  }),
+
+  search: publicProcedure.input(searchPayeesSchema).query(async ({input}) => {
+    try {
+      return await payeeService.searchPayees(input.query);
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to search payees",
+      });
+    }
+  }),
+
+  remove: rateLimitedProcedure.input(removePayeeSchema).mutation(async ({input}) => {
+    try {
+      return await payeeService.deletePayee(input.id, {force: false});
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: error.message,
+        });
+      }
+      if (error instanceof ConflictError) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: error.message,
+        });
+      }
+      if (error instanceof ValidationError) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error.message,
+        });
+      }
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to delete payee",
+      });
+    }
+  }),
+
+  delete: bulkOperationProcedure
+    .input(removePayeesSchema)
+    .mutation(async ({input: {entities}}) => {
+      try {
+        const result = await payeeService.bulkDeletePayees(entities, {force: false});
+        return {
+          deletedCount: result.deletedCount,
+          errors: result.errors,
+        };
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to bulk delete payees",
+        });
+      }
+    }),
+
+  save: rateLimitedProcedure
+    .input(formInsertPayeeSchema)
+    .mutation(async ({input: {id, name, notes}}) => {
+      try {
+        if (id) {
+          // Update existing payee
+          return await payeeService.updatePayee(id, {name, notes});
+        } else {
+          // Create new payee
+          return await payeeService.createPayee({name, notes});
+        }
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: error.message,
+          });
+        }
+        if (error instanceof ConflictError) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: error.message,
+          });
+        }
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to save payee",
+        });
+      }
     }),
 });

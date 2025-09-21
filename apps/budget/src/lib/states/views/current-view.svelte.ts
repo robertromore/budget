@@ -104,8 +104,15 @@ export class CurrentViewState<TData> {
         if (filterFn) {
           column.columnDef.filterFn = filterFn as FilterFnOption<TData>;
         }
-        if (this.view.getFilterValue(column.id).size > 0) {
-          column.setFilterValue(this.view.getFilterValue(column.id));
+        const filterValue = this.view.getFilterValue(column.id);
+        const filterFnName = this.view.getFilterFn(column.id);
+
+        // For amount filters, check if we have a valid object, not a Set
+        if (filterFnName === 'amountFilter' && filterValue && typeof filterValue === 'object' && filterValue !== null && !('size' in filterValue)) {
+          column.setFilterValue(filterValue);
+        } else if (filterValue && typeof filterValue === 'object' && filterValue !== null && 'size' in filterValue && (filterValue as Set<unknown>).size > 0) {
+          // For Set-based filters
+          column.setFilterValue(filterValue);
         }
       });
   }
@@ -125,11 +132,6 @@ export class CurrentViewState<TData> {
     this.table.setSorting(sorting);
   }
 
-  updateTableSorter = (column: string, value: boolean) => {
-    this.view.updateSorter(column, value);
-    this.table.setSorting(this.view.getSorting());
-  };
-
   updateTableVisibility(visibility: VisibilityState) {
     this.view.setVisibility(visibility);
     this.table.setColumnVisibility(visibility);
@@ -141,7 +143,7 @@ export class CurrentViewState<TData> {
   }
 
   toggleColumnVisibility(column: string) {
-    this.updateColumnVisibility(column, this.view.getVisibility()[column]);
+    this.updateColumnVisibility(column, this.view.getVisibility()[column] ?? false);
   }
 }
 

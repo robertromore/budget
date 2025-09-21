@@ -1,16 +1,16 @@
 // $lib/RepeatingDateInput.ts
-import {MoveToWeekday, type RepeatingDate} from "$lib/types";
+import { MoveToWeekday, type RepeatingDate } from "$lib/types";
+import { currentDate, sameMonthAndYear, timezone } from "$lib/utils";
+import { formatDate, formatDayOfMonth } from "$lib/utils/date-formatters";
+import { nextDaily, nextMonthly, nextWeekly, nextYearly } from "$lib/utils/date-frequency";
 import {
   dayOptions,
   lastDayOption,
+  monthOptions,
   weekdayOptions,
   weekOptions,
-  monthOptions,
 } from "$lib/utils/date-options";
-import {formatDayOfMonth, formatDate} from "$lib/utils/date-formatters";
-import {nextDaily, nextWeekly, nextMonthly, nextYearly} from "$lib/utils/date-frequency";
-import {endOfWeek, startOfWeek, type DateValue} from "@internationalized/date";
-import {currentDate, timezone, getFirstDayInCalendarMonth, sameMonthAndYear} from "$lib/utils";
+import { endOfWeek, startOfWeek, type DateValue } from "@internationalized/date";
 
 /**
  * Configuration for date generation
@@ -26,7 +26,7 @@ interface DateGenerationConfig {
  */
 const DEFAULT_STATE: RepeatingDate = {
   start: currentDate,
-  end: currentDate.add({months: 1}),
+  end: undefined,
   end_type: null,
   frequency: "daily",
   interval: 1,
@@ -61,10 +61,6 @@ export default class RepeatingDateInput {
 
   /** The "placeholder" – the date currently displayed in the picker */
   placeholder: DateValue = $state(currentDate);
-
-  /* ------------------------------------------------------------------ */
-  /* 1️⃣  Computed properties for better organization                     */
-  /* ------------------------------------------------------------------ */
 
   /**
    * Determine which constraint to use based on end_type
@@ -623,7 +619,7 @@ export default class RepeatingDateInput {
     this.value.start = value;
   }
   set end(value: DateValue | null | undefined) {
-    this.value.end = value === null ? undefined : value;
+    this.value.end = value || undefined;
   }
   set end_type(value: "limit" | "until" | null) {
     this.value.end_type = value;
@@ -648,8 +644,8 @@ export default class RepeatingDateInput {
   get start() {
     return this.value.start ?? currentDate;
   }
-  get end(): DateValue {
-    return this.value.end ?? currentDate.add({months: 1});
+  get end(): DateValue | undefined {
+    return this.value.end;
   }
   get end_type() {
     return this.value.end_type;

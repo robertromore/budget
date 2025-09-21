@@ -10,6 +10,8 @@ import {
   newAccountDialog,
   newScheduleDialog,
   managingScheduleId,
+  deleteScheduleDialog,
+  deleteScheduleId,
 } from '$lib/states/ui/global.svelte';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
@@ -27,6 +29,9 @@ const schedulesState = $derived(SchedulesState.get());
 const schedules = $derived(schedulesState.schedules.values());
 const _newScheduleDialog = $derived(newScheduleDialog);
 const _managingScheduleId = $derived(managingScheduleId);
+
+const _deleteScheduleDialog = $derived(deleteScheduleDialog);
+const _deleteScheduleId = $derived(deleteScheduleId);
 </script>
 
 <Sidebar.Root>
@@ -100,7 +105,7 @@ const _managingScheduleId = $derived(managingScheduleId);
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
                 {#snippet child({props})}
-                  <a href="/schedules/{schedule.id}" {...props}>
+                  <a href="/schedules/{schedule.slug}" {...props}>
                     <span>{schedule.name}</span>
                   </a>
                 {/snippet}
@@ -121,12 +126,12 @@ const _managingScheduleId = $derived(managingScheduleId);
                     }}>
                     <span>Edit</span>
                   </DropdownMenu.Item>
-                  <!-- <DropdownMenu.Item onclick={() => {
-                    _deleteAccountId.current = schedule.id;
-                    _deleteAccountDialog.setTrue();
+                  <DropdownMenu.Item onclick={() => {
+                    _deleteScheduleId.current = schedule.id;
+                    _deleteScheduleDialog.setTrue();
                   }}>
                     <span>Delete</span>
-                  </DropdownMenu.Item> -->
+                  </DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Root>
             </Sidebar.MenuItem>

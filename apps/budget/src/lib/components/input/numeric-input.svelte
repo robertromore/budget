@@ -22,6 +22,11 @@ let dialogOpen = $state(open || false);
 let new_amount = $state((value || 0).toFixed(2));
 let input: HTMLInputElement | null = $state(null);
 
+// Sync external value changes to internal state
+$effect(() => {
+  new_amount = (value || 0).toFixed(2);
+});
+
 // --- Functions: Numeric Input Logic ---
 const select = (num: string) => () => {
   new_amount += num;

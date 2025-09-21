@@ -37,7 +37,7 @@
   - Calendar highlighting of recurring dates
 -->
 <script lang="ts">
-import {getLocalTimeZone, type DateValue} from '@internationalized/date';
+import {getLocalTimeZone, today, type DateValue} from '@internationalized/date';
 import {cn} from '$lib/utils';
 import {Button} from '$lib/components/ui/button';
 import * as Calendar from '$lib/components/ui/calendar';
@@ -65,14 +65,15 @@ let {
   value = $bindable(new RepeatingDateInputModel()),
   class: className,
   disabled = false,
+  isRepeating = $bindable(false),
 }: {
   value?: RepeatingDateInputModel;
   class?: string;
   disabled?: boolean;
+  isRepeating?: boolean;
 } = $props();
 
 // Local state
-let isRepeating = $state(false);
 let hasEndCondition = $state(false);
 
 // Computed properties
@@ -84,10 +85,6 @@ let isValid = $derived.by(() => {
 let validationErrors = $derived.by(() => {
   const validation = value.validate();
   return validation ? validation.errors : [];
-});
-
-let upcomingDatesPreview = $derived.by(() => {
-  return value.upcoming.slice(0, 5);
 });
 
 // Helper functions
@@ -145,8 +142,6 @@ const handleWeeksDaysToggle = (weekday: number) => {
     value.weeks_days = [...current, weekday].sort();
   }
 };
-
-$inspect(value.end_type);
 </script>
 
 <div class={cn('space-y-6', className)}>
@@ -365,16 +360,16 @@ $inspect(value.end_type);
             <RadioGroup.Root bind:value={value.moveWeekends} {disabled}>
               <div class="space-y-2">
                 <div class="flex items-center space-x-2">
-                  <RadioGroup.Item value="none" />
-                  <Label class="text-sm">No adjustment</Label>
+                  <RadioGroup.Item value="none" id="move-weekends-none" />
+                  <Label class="text-sm" for="move-weekends-none">No adjustment</Label>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <RadioGroup.Item value="next_weekday" />
-                  <Label class="text-sm">Move to next weekday (Monday)</Label>
+                  <RadioGroup.Item value="next_weekday" id="move-weekends-next" />
+                  <Label class="text-sm" for="move-weekends-next">Move to next weekday (Monday)</Label>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <RadioGroup.Item value="previous_weekday" />
-                  <Label class="text-sm">Move to previous weekday (Friday)</Label>
+                  <RadioGroup.Item value="previous_weekday" id="move-weekends-previous" />
+                  <Label class="text-sm" for="move-weekends-previous">Move to previous weekday (Friday)</Label>
                 </div>
               </div>
             </RadioGroup.Root>
@@ -391,6 +386,8 @@ $inspect(value.end_type);
                 onCheckedChange={(checked) => {
                   if (!checked) {
                     value.end_type = null;
+                    value.end = undefined;
+                    value.limit = 0;
                   }
                 }}
                 {disabled}
@@ -442,7 +439,8 @@ $inspect(value.end_type);
                       <Calendar.Calendar
                         type="single"
                         initialFocus
-                        bind:value={value.end}
+                        value={value.end || today(getLocalTimeZone())}
+                        onValueChange={(v) => (value.end = v)}
                         {disabled} />
                     </Popover.Content>
                   </Popover.Root>
@@ -489,7 +487,7 @@ $inspect(value.end_type);
           <Calendar.Calendar
             type="single"
             value={value.start}
-            class="rounded-md border [--cell-size:--spacing(11)] md:[--cell-size:--spacing(9.75)]"
+            class="rounded-md border [--cell-size:--spacing(11)] md:[--cell-size:--spacing(12.5)]"
             readonly
             bind:placeholder={value.placeholder}
             captionLayout="dropdown">

@@ -1053,6 +1053,131 @@ Available specialized agents:
 
 **Usage:** Claude Code automatically uses specialized agents when tasks match their expertise areas. Agent definitions contain comprehensive knowledge areas, implementation patterns, and architectural understanding specific to each domain.
 
+## Scheduled Transactions Feature
+
+**Upcoming scheduled transactions are now displayed in the accounts transactions tab with visual indicators.**
+
+### Feature Overview
+
+The scheduled transactions feature shows upcoming transactions that are about to be created automatically based on schedule configurations. This provides users with visibility into their financial future without cluttering the view with infinite upcoming transactions.
+
+### Implementation Architecture
+
+#### Core Components
+
+- **ScheduleService** (`src/lib/server/domains/schedules/services.ts`): Calculates upcoming transactions based on schedule frequency
+- **TransactionService** (`src/lib/server/domains/transactions/services.ts`): Combines real and upcoming transactions
+- **tRPC Endpoint** (`src/lib/trpc/routes/transactions.ts`): `forAccountWithUpcoming` endpoint for unified data access
+- **Query Layer** (`src/lib/query/transactions.ts`): `getAllAccountTransactionsWithUpcoming` with client-side filtering
+
+#### Data Flow Architecture
+
+```text
+Schedule Database → ScheduleService.getUpcomingScheduledTransactionsForAccount()
+→ TransactionService.getAccountTransactionsWithUpcoming()
+→ tRPC forAccountWithUpcoming
+→ Query Layer filtering/sorting
+→ UI Display
+```
+
+### Key Features
+
+#### Upcoming Transaction Generation
+
+- **Time Window**: Shows transactions for the next 30 days only
+- **Deduplication**: Automatically excludes dates that already have transactions
+- **Smart Amount Calculation**: Handles range amounts by using average of min/max
+- **Frequency Support**: Daily, weekly, monthly, and yearly schedules
+
+#### Visual Indicators
+
+- **Status Column**: Blue calendar icon distinguishes scheduled transactions
+- **ID Column**: Shows em dash (—) instead of long composite IDs for cleaner display
+- **Transaction Status**: Uses "scheduled" status for semantic correctness
+
+#### Data Structure
+
+```typescript
+export interface UpcomingScheduledTransaction {
+  id: string; // Format: "schedule-{scheduleId}-{date}"
+  scheduleId: number;
+  scheduleName: string;
+  accountId: number;
+  amount: number;
+  date: string;
+  payeeId: number | null;
+  categoryId: number | null;
+  notes: string; // Format: "Scheduled: {scheduleName}"
+  status: "scheduled";
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: null;
+  balance: null; // No balance calculation for future transactions
+}
+```
+
+### UI Integration
+
+#### Status Cell Component
+
+The status cell (`data-table-editable-status-cell.svelte`) displays different icons based on transaction status:
+
+- **Cleared**: Green checkmark (SquareCheck)
+- **Pending**: Empty square (Square)
+- **Scheduled**: Blue calendar icon (Calendar)
+
+#### Columns Configuration
+
+The ID column in `columns.svelte.ts` shows a dash for scheduled transactions with string IDs to avoid displaying long composite identifiers.
+
+### Technical Implementation Details
+
+#### Schedule Date Calculation
+
+The system uses the existing schedule date configuration to calculate when upcoming transactions should appear:
+
+- **Start Date**: When the schedule begins
+- **End Date**: Optional schedule termination
+- **Frequency**: daily, weekly, monthly, yearly
+- **Interval**: How often (every 1 week, every 2 months, etc.)
+
+#### Error Handling
+
+- **Missing Schedule Data**: Gracefully skips schedules without date configuration
+- **Invalid Frequencies**: Safely handles unknown frequency types
+- **Database Issues**: Console warnings for debugging without breaking the UI
+
+#### Performance Considerations
+
+- **30-Day Limit**: Prevents infinite upcoming transactions from impacting performance
+- **Client-Side Filtering**: Combined data is filtered and sorted in the query layer
+- **Efficient Queries**: Only fetches active auto-add schedules for the specific account
+
+### Database Dependencies
+
+The feature requires proper database relationships:
+
+- **Schedules Table**: Must have valid `schedule_date_id` foreign key
+- **Schedule Dates Table**: Must contain frequency and date range information
+- **Auto-Add Enabled**: Schedules must have `auto_add = 1` and `status = 'active'`
+
+### Usage Benefits
+
+- **Financial Planning**: Users can see upcoming transactions before they're created
+- **Cash Flow Visibility**: Better understanding of future account balance changes
+- **Schedule Verification**: Visual confirmation that schedules are configured correctly
+- **Seamless Integration**: Upcoming transactions appear alongside real transactions with clear visual distinction
+
+### Development Guidelines
+
+When working with scheduled transactions:
+
+1. **Use proper type guards** for differentiating real vs scheduled transactions
+2. **Maintain visual consistency** with status indicators and formatting
+3. **Handle edge cases** like missing schedule data gracefully
+4. **Test with various schedule frequencies** to ensure accurate date calculations
+5. **Verify database relationships** are correct for schedule date functionality
+
 ---
 
 *This configuration ensures consistent tooling and accountability across all Claude Code sessions.*

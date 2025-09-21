@@ -3,12 +3,8 @@ import {Button} from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import type {TransactionsFormat} from '$lib/types';
 import {analyticsTypes} from './(analytics)/analytics-types';
-import CashFlowChart from './(charts)/cash-flow-chart.svelte';
-import CategorySpendingChart from './(charts)/category-spending-chart.svelte';
-import IncomeVsExpensesChart from './(charts)/income-vs-expenses-chart.svelte';
 import MonthlySpendingChart from './(charts)/monthly-spending-chart.svelte';
-import PlaceholderChart from './(charts)/placeholder-chart.svelte';
-import TopPayeesChart from './(charts)/top-payees-chart.svelte';
+import IncomeVsExpensesChart from './(charts)/income-vs-expenses-chart.svelte';
 
 interface Props {
   transactions: TransactionsFormat[];
@@ -63,20 +59,25 @@ const currentAnalytic = $derived(analyticsTypes.find((a) => a.id === selectedAna
       <Card.Content class="p-6">
         <div class="h-[400px] w-full">
           {#if selectedAnalytic === 'monthly-spending'}
-            <MonthlySpendingChart {transactions} />
+            <MonthlySpendingChart accountId={Number(accountId)} />
           {:else if selectedAnalytic === 'income-vs-expenses'}
             <IncomeVsExpensesChart {transactions} />
-          {:else if selectedAnalytic === 'cash-flow'}
-            <CashFlowChart {transactions} />
-          {:else if selectedAnalytic === 'category-spending'}
-            <CategorySpendingChart {transactions} />
-          {:else if selectedAnalytic === 'top-payees'}
-            <TopPayeesChart {transactions} />
           {:else}
-            <PlaceholderChart
-              title={currentAnalytic?.title || 'Coming Soon'}
-              description={currentAnalytic?.description || 'This chart is not yet implemented'}
-              icon={currentAnalytic?.icon} />
+            <div class="h-full flex items-center justify-center">
+              <div class="text-center space-y-4">
+                {#if currentAnalytic?.icon}
+                  <currentAnalytic.icon class="h-12 w-12 mx-auto text-muted-foreground/30" />
+                {/if}
+                <div>
+                  <h3 class="text-lg font-semibold text-muted-foreground">
+                    {currentAnalytic?.title || 'Coming Soon'}
+                  </h3>
+                  <p class="text-sm text-muted-foreground/70">
+                    This chart is not yet implemented.
+                  </p>
+                </div>
+              </div>
+            </div>
           {/if}
         </div>
       </Card.Content>

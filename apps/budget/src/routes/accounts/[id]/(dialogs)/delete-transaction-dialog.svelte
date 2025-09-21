@@ -1,7 +1,7 @@
 <script lang="ts">
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import {buttonVariants} from '$lib/components/ui/button';
-import {CurrentAccountState} from '$lib/states/views/current-account.svelte';
+import {rpc} from '$lib/query';
 
 let {
   transactions,
@@ -13,16 +13,30 @@ let {
   onDelete?: () => void;
 } = $props();
 
-let account: CurrentAccountState = CurrentAccountState.get();
+// Use new query mutations for proper cache invalidation
+const bulkDeleteMutation = rpc.transactions.bulkDeleteTransactions.options();
+const singleDeleteMutation = rpc.transactions.deleteTransaction.options();
 
 let confirmDeleteTransaction = async () => {
-  if (transactions) {
-    account?.deleteTransactions(transactions);
+  if (transactions && transactions.length > 0) {
+    try {
+      if (transactions.length === 1) {
+        // Use single delete mutation for one transaction
+        await $singleDeleteMutation.mutateAsync(transactions[0]);
+      } else {
+        // Use bulk delete mutation for multiple transactions
+        await $bulkDeleteMutation.mutateAsync(transactions);
+      }
+
+      if (onDelete) {
+        onDelete();
+      }
+      dialogOpen = false;
+    } catch (error) {
+      console.error('Failed to delete transaction(s):', error);
+      // Error handling is done by the mutations (toast notifications)
+    }
   }
-  if (onDelete) {
-    onDelete();
-  }
-  dialogOpen = false;
 };
 </script>
 

@@ -1,12 +1,11 @@
 <script lang="ts">
-import {UnifiedChart} from '$lib/components/charts';
-import type {ChartType} from '$lib/components/charts/config/chart-types';
+import * as Chart from '$lib/components/ui/chart';
+import * as Card from '$lib/components/ui/card';
+import { LineChart, Axis } from 'layerchart';
 import type {TransactionsFormat} from '$lib/types';
-import {transformIncomeVsExpensesData} from '$lib/utils/finance-chart-data';
-import {generatePeriodOptions} from '$lib/utils/chart-periods';
-import {colorUtils} from '$lib/utils/colors';
-import {dateValueToJSDate} from '$lib/utils/dates';
-import {createIncomeVsExpensesProcessor} from '../(analytics)/data-processors.svelte';
+import { monthYearFmt, monthYearShortFmt } from '$lib/utils/date-formatters';
+import { timezone } from '$lib/utils/dates';
+import { currencyFormatter } from '$lib/utils/formatters';
 
 interface Props {
   transactions: TransactionsFormat[];
@@ -14,97 +13,158 @@ interface Props {
 
 let {transactions}: Props = $props();
 
-const incomeVsExpensesProcessor = createIncomeVsExpensesProcessor(transactions);
+// Transform transaction data into monthly income vs expenses
+const chartData = $derived.by(() => {
+  if (!transactions?.length) return [];
 
-// Process raw data using standard transformation utilities
-const processedData = $derived(incomeVsExpensesProcessor.data);
+  // Group transactions by month and separate income/expenses
+  const monthlyData: Array<{month: string, monthDisplay: string, income: number, expenses: number, monthLabel: string}> = [];
+  const seenMonths = new Set<string>();
 
-// Transform data for multi-series visualization
-const transformedData = $derived(
-  transformIncomeVsExpensesData(processedData, {
-    x: (item) => dateValueToJSDate(item.month),
-    income: 'income',
-    expenses: 'expenses',
-  })
-);
+  transactions.forEach(transaction => {
+    const monthKey = `${transaction.date.year}-${String(transaction.date.month).padStart(2, '0')}`; // YYYY-MM format
 
-// Provide all data formats for different view modes
-const chartData = $derived({
-  combined: transformedData.combined,
-  income: transformedData.income,
-  expenses: transformedData.expenses,
-  series: transformedData.series,
+    // If we haven't seen this month yet, create a new entry
+    if (!seenMonths.has(monthKey)) {
+      const monthLabel = monthYearFmt.format(transaction.date.toDate(timezone));
+      const monthDisplay = monthYearShortFmt.format(transaction.date.toDate(timezone));
+      monthlyData.push({
+        month: monthKey,
+        monthDisplay,
+        income: 0,
+        expenses: 0,
+        monthLabel
+      });
+      seenMonths.add(monthKey);
+    }
+
+    // Find existing entry and add to appropriate category
+    const existing = monthlyData.find(item => item.month === monthKey)!;
+    if (transaction.amount >= 0) {
+      existing.income += transaction.amount;
+    } else {
+      existing.expenses += Math.abs(transaction.amount);
+    }
+  });
+
+  // Sort by month and return
+  return monthlyData.sort((a, b) => a.month.localeCompare(b.month));
 });
 
-// Generate available periods based on the combined data
-const availablePeriods = $derived(
-  transformedData.combined.length === 0 ? [] : generatePeriodOptions(transformedData.combined, 'x')
-);
+// Summary statistics for income vs expenses
+const summaryStats = $derived.by(() => {
+  if (!chartData.length) return null;
 
-// Available chart types for income vs expenses data
-const availableChartTypes: ChartType[] = ['bar', 'line', 'area', 'pie'];
+  const totalIncome = chartData.reduce((sum, d) => sum + d.income, 0);
+  const totalExpenses = chartData.reduce((sum, d) => sum + d.expenses, 0);
+  const netIncome = totalIncome - totalExpenses;
+  const avgMonthlyIncome = totalIncome / chartData.length;
+  const avgMonthlyExpenses = totalExpenses / chartData.length;
+
+  return {
+    totalIncome,
+    totalExpenses,
+    netIncome,
+    avgMonthlyIncome,
+    avgMonthlyExpenses,
+    monthCount: chartData.length
+  };
+});
+
+// Chart configuration for grouped bar chart
+const chartConfig = {
+  income: {
+    label: 'Income',
+    color: 'hsl(var(--chart-1))'
+  },
+  expenses: {
+    label: 'Expenses',
+    color: 'hsl(var(--chart-2))'
+  }
+} satisfies Chart.ChartConfig;
+
 </script>
 
-{#if transformedData.combined.length > 0}
-  <div class="h-full">
-    <UnifiedChart
-      data={chartData.combined}
-      type="bar"
-      styling={{
-        colors: [
-          colorUtils.getChartColor(1), // Green for income
-          colorUtils.getChartColor(2), // Red/orange for expenses
-        ],
-        legend: {show: true, position: 'top'},
-      }}
-      axes={{
-        x: {
-          title: 'Month',
-          rotateLabels: true,
-        },
-        y: {
-          title: 'Amount ($)',
-          nice: true,
-        },
-      }}
-      interactions={{
-        tooltip: {
-          enabled: true,
-          format: 'currency',
-          showTotal: true,
-        },
-      }}
-      yFields={['income', 'expenses']}
-      yFieldLabels={['Income', 'Expenses']}
-      suppressDuplicateWarnings={true}
-      viewModeData={{
-        combined: chartData.combined,
-        income: chartData.income,
-        expenses: chartData.expenses,
-      }}
-      timeFiltering={{
-        enabled: availablePeriods.length > 0,
-        field: 'x',
-      }}
-      controls={{
-        show: true,
-        availableTypes: availableChartTypes,
-        allowTypeChange: true,
-        allowPeriodChange: availablePeriods.length > 0,
-        allowColorChange: true,
-        allowCurveChange: true,
-        allowViewModeChange: true,
-        availableViewModes: ['combined', 'side-by-side'],
-        allowCrosshairChange: true,
-        allowGridChange: true,
-        allowPointsChange: true,
-        allowFontChange: true,
-        allowHighlightChange: true,
-      }}
-      class="h-full w-full" />
-  </div>
+{#if chartData.length > 0}
+  <!-- Summary Statistics Panel -->
+  {#if summaryStats}
+    <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+      <Card.Root>
+        <Card.Content class="p-4 text-center">
+          <div class="text-2xl font-bold text-green-600">{currencyFormatter.format(summaryStats.avgMonthlyIncome)}</div>
+          <div class="text-sm text-muted-foreground">Avg Monthly Income</div>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Content class="p-4 text-center">
+          <div class="text-2xl font-bold text-red-600">{currencyFormatter.format(summaryStats.avgMonthlyExpenses)}</div>
+          <div class="text-sm text-muted-foreground">Avg Monthly Expenses</div>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Content class="p-4 text-center">
+          <div class="text-2xl font-bold {summaryStats.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}">
+            {currencyFormatter.format(summaryStats.netIncome)}
+          </div>
+          <div class="text-sm text-muted-foreground">Net Income ({summaryStats.monthCount} months)</div>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Content class="p-4 text-center">
+          <div class="text-2xl font-bold">
+            {summaryStats.avgMonthlyExpenses > 0
+              ? (summaryStats.avgMonthlyIncome / summaryStats.avgMonthlyExpenses * 100).toFixed(0) + '%'
+              : '∞'
+            }
+          </div>
+          <div class="text-sm text-muted-foreground">Income Ratio</div>
+        </Card.Content>
+      </Card.Root>
+    </div>
+  {/if}
+
+  <Chart.Container config={chartConfig} class="h-[300px] w-full">
+    <LineChart
+      data={chartData}
+      x="monthDisplay"
+      series={[
+        { key: "income", color: "var(--chart-2)" },
+        { key: "expenses", color: "var(--chart-1)" },
+      ]}
+      yNice
+      padding={{ left: 80, right: 20, top: 20, bottom: 40 }}
+    >
+      {#snippet axis()}
+        <Axis placement="left" format="currency" grid rule />
+        <Axis placement="bottom" grid rule />
+      {/snippet}
+
+      {#snippet tooltip()}
+        <Chart.Tooltip
+          labelFormatter={(value, payload) => {
+            return payload?.[0]?.payload?.monthLabel || value;
+          }}
+        >
+          {#snippet formatter({ value, name })}
+            <div class="flex flex-1 shrink-0 justify-between leading-none items-center">
+              <span class="text-muted-foreground">{chartConfig[name as keyof typeof chartConfig]?.label || name}</span>
+              <span class="text-foreground font-mono font-medium tabular-nums">
+                {currencyFormatter.format(Number(value) || 0)}
+              </span>
+            </div>
+          {/snippet}
+        </Chart.Tooltip>
+      {/snippet}
+    </LineChart>
+  </Chart.Container>
 {:else}
-  <div class="text-muted-foreground flex h-full items-center justify-center">
-    No income/expense data available
+  <div class="h-[400px] w-full flex items-center justify-center">
+    <div class="text-center space-y-2">
+      <p class="text-lg font-medium text-muted-foreground">No income/expense data available</p>
+      <p class="text-sm text-muted-foreground/70">Add some transactions to see income vs expense trends</p>
+    </div>
   </div>
 {/if}

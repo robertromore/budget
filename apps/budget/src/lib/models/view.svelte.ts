@@ -1,14 +1,14 @@
-import type {View as ViewSchema} from "$lib/schema";
-import {trpc} from "$lib/trpc/client";
-import type {ViewFilter, ViewFilterWithSet} from "$lib/types";
-import deeplyEqual, {equalArray} from "$lib/utils";
+import type { View as ViewSchema } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import type { ViewFilter, ViewFilterWithSet } from "$lib/types";
+import deeplyEqual, { equalArray } from "$lib/utils";
 import type {
   ExpandedState,
   GroupingState,
   SortingState,
   VisibilityState,
 } from "@tanstack/table-core";
-import {SvelteMap, SvelteSet} from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 export default class View {
   view: ViewSchema = $state() as ViewSchema;
@@ -29,17 +29,14 @@ export default class View {
       this.#filterValues.size !== this.initial.filters?.length ||
       // Same filters?
       !equalArray(
-        this.#filterValues.keys().toArray(),
+        Array.from(this.#filterValues.keys()),
         this.initial.filters.map((filter) => filter.column)
       ) ||
       !equalArray(
-        this.#filterValues
-          .values()
-          .toArray()
-          .map((filterValue) => filterValue.filter),
+        Array.from(this.#filterValues.values()).map((filterValue) => filterValue.filter),
         this.view.filters?.map((filter) => filter.filter) || []
       ) ||
-      this.#filterValues.values().some(({column, value}) => {
+      Array.from(this.#filterValues.values()).some(({column, value}) => {
         const initialFilters = this.initial?.filters?.find(
           (filter) => filter.column === column
         )?.value;
@@ -118,7 +115,7 @@ export default class View {
         return Object.assign({}, sorter, {desc: value});
       }) || [];
     if (!this.view.display.sort?.find((sorter) => sorter.id === column)) {
-      this.view.display.sort = this.view.display.sort?.concat({id: column, desc: false});
+      this.view.display.sort = this.view.display.sort?.concat({id: column, desc: value});
     }
   };
 
@@ -201,11 +198,19 @@ export default class View {
   }
 
   getFilterValue(column: string) {
-    return this.#filterValues.get(column)?.value || new Set();
+    const filter = this.#filterValues.get(column);
+    if (!filter) return new Set();
+
+    // Special handling for amount filters - they store single objects, not sets
+    if (filter.filter === 'amountFilter' && filter.value.size === 1) {
+      return Array.from(filter.value)[0];
+    }
+
+    return filter.value;
   }
 
   getAllFilteredColumns() {
-    return this.#filterValues.keys().toArray();
+    return Array.from(this.#filterValues.keys());
   }
 
   getAllFilterValues() {
@@ -281,10 +286,10 @@ export default class View {
       this.view.name = this.initial.name;
       this.view.description = this.initial.description;
       this.view.display = this.initial.display || {};
-      this.view.display.grouping = this.initial.display?.grouping;
-      this.view.display.sort = this.initial.display?.sort;
-      this.view.display.expanded = this.initial.display?.expanded;
-      this.view.display.visibility = this.initial.display?.visibility;
+      this.view.display.grouping = this.initial.display?.grouping || [];
+      this.view.display.sort = this.initial.display?.sort || [];
+      this.view.display.expanded = this.initial.display?.expanded || {};
+      this.view.display.visibility = this.initial.display?.visibility || {};
       this.view.filters = this.initial.filters;
       this.view.dirty = false;
       this.#filterValues = new SvelteMap<string, ViewFilterWithSet>(
@@ -301,13 +306,10 @@ export default class View {
   }
 
   async saveView() {
-    this.view.filters = $state
-      .snapshot(this.#filterValues)
-      .values()
-      .toArray()
-      .map((filter) => {
-        return Object.assign({}, filter, {value: Array.from(filter.value)});
-      });
+    const snapshot = $state.snapshot(this.#filterValues);
+    this.view.filters = Array.from(snapshot.values()).map((filter) => {
+      return Object.assign({}, filter, {value: Array.from(filter.value)});
+    });
     this.initial = $state.snapshot(this.view);
     await trpc().viewsRoutes.save.mutate(this.view);
   }

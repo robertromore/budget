@@ -2,7 +2,6 @@
 import {Button} from '$lib/components/ui/button';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import {Label} from '$lib/components/ui/label';
-import * as Select from '$lib/components/ui/select';
 import {Textarea} from '$lib/components/ui/textarea';
 import DateInput from '$lib/components/input/date-input.svelte';
 import EntityInput from '$lib/components/input/entity-input.svelte';
@@ -44,7 +43,7 @@ let transactionForm = $state<TransactionFormData>({
   notes: null,
   payeeId: null,
   categoryId: null,
-  status: 'cleared',
+  status: 'pending',
 });
 
 // Input component state
@@ -75,7 +74,7 @@ function resetForm() {
     notes: null,
     payeeId: null,
     categoryId: null,
-    status: 'cleared',
+    status: 'pending',
   };
   
   // Reset component state
@@ -87,7 +86,7 @@ function resetForm() {
 
 // Handle form submission
 async function handleSubmit() {
-  if (!account?.id || !transactionForm.amount) return;
+  if (!account?.id || transactionForm.amount === null || transactionForm.amount === undefined) return;
 
   try {
     isSubmitting = true;
@@ -158,26 +157,7 @@ function handleClose() {
           buttonClass="w-full" />
       </div>
 
-      <!-- Status -->
-      <div class="space-y-2">
-        <Label for="status">Status</Label>
-        <Select.Root
-          selected={{value: transactionForm.status || 'cleared', label: transactionForm.status || 'cleared'}}
-          onSelectedChange={(selected) => {
-            if (selected?.value) {
-              transactionForm.status = selected.value as 'pending' | 'cleared' | 'scheduled';
-            }
-          }}>
-          <Select.Trigger>
-            {transactionForm.status || 'Select status'}
-          </Select.Trigger>
-          <Select.Content>
-            <Select.Item value="pending">Pending</Select.Item>
-            <Select.Item value="cleared">Cleared</Select.Item>
-            <Select.Item value="scheduled">Scheduled</Select.Item>
-          </Select.Content>
-        </Select.Root>
-      </div>
+      <!-- Status - Hidden, defaults to pending -->
 
       <!-- Notes -->
       <div class="space-y-2">
@@ -191,9 +171,13 @@ function handleClose() {
     </div>
 
     {#snippet footer()}
-      <Button variant="outline" onclick={handleClose} disabled={isSubmitting}>Cancel</Button>
-      <Button onclick={handleSubmit} disabled={isSubmitting || !transactionForm.amount}>
-        {isSubmitting ? 'Adding...' : 'Add Transaction'}
-      </Button>
+      <div class="flex gap-2">
+        <Button variant="outline" onclick={handleClose} disabled={isSubmitting} class="flex-1">
+          Cancel
+        </Button>
+        <Button onclick={handleSubmit} disabled={isSubmitting || !transactionForm.amount} class="flex-1">
+          {isSubmitting ? 'Adding...' : 'Add Transaction'}
+        </Button>
+      </div>
     {/snippet}
 </ResponsiveSheet>

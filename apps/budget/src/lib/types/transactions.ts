@@ -6,7 +6,7 @@ import type {DateValue} from "@internationalized/date";
  * The shape of a single transaction record.
  */
 export type TransactionsFormat = {
-  id: number;
+  id: number | string; // Can be numeric ID or string for scheduled transactions
   amount: number;
   date: DateValue;
   payeeId: number | null;
@@ -17,6 +17,14 @@ export type TransactionsFormat = {
   status: "cleared" | "pending" | "scheduled" | null;
   accountId: number;
   parentId: number | null;
+  balance: number | null;
+  // Schedule metadata (only present for scheduled transactions)
+  scheduleId?: number;
+  scheduleName?: string;
+  scheduleSlug?: string;
+  scheduleFrequency?: string;
+  scheduleInterval?: number;
+  scheduleNextOccurrence?: string;
 };
 
 /**

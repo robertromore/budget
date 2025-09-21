@@ -2,9 +2,9 @@
 import type {Column} from '@tanstack/table-core';
 import {DataTableFacetedFilter} from '..';
 import type {Component} from 'svelte';
-import {page} from '$app/state';
-import type {Transaction, Payee} from '$lib/schema';
+import type {Payee} from '$lib/schema';
 import {currentViews} from '$lib/states/views';
+import {PayeesState} from '$lib/states/entities';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 import {SvelteMap} from 'svelte/reactivity';
 import type {FacetedFilterOption} from '$lib/types';
@@ -15,45 +15,41 @@ type Props<TData, TValue> = {
 
 let {column}: Props<TData, TValue> = $props();
 
-const {data} = $derived(page);
-const account = $derived(data.account);
+const payeesState = PayeesState.get();
+const allPayees = $derived(payeesState?.all || []);
 
 const activeView = $derived(currentViews.get().activeView);
 const activeViewModel = $derived(activeView.view);
 const selectedValues = $derived(activeViewModel.getFilterValue(column.id));
 
-const payees = $derived(
-  account.transactions.map((transaction: Transaction) => transaction.payee).concat(selectedValues)
-);
-const allPayees = $derived(data.payees);
-
-// Check if there are any transactions with null payees
-const hasNullPayees = $derived(
-  account.transactions.some((transaction: Transaction) => transaction.payeeId === null)
-);
+// Get faceted values with counts from TanStack Table
+const facets = $derived(column?.getFacetedUniqueValues?.() || new Map());
 
 const payeeOptions = $derived.by(() => {
   const options = new SvelteMap<number | string, FacetedFilterOption>();
 
-  // Add "None" option if there are transactions with null payees
-  if (hasNullPayees) {
-    options.set('null', {
-      label: '(None)',
-      value: 'null',
-      icon: HandCoins as unknown as Component,
-    });
-  }
-
-  // Add regular payee options
-  payees
-    ?.filter((payee: Payee) => payee.id !== undefined)
-    .forEach((payee: Payee) => {
-      options.set(payee.id, {
-        label: payee.name || '',
-        value: payee.id + '',
+  // Add options based on faceted data (actual data in table with counts)
+  facets.forEach((count: number, value: string) => {
+    if (value === 'null' || value === '') {
+      // Handle null/empty payees
+      options.set('null', {
+        label: '(None)',
+        value: 'null',
         icon: HandCoins as unknown as Component,
       });
-    });
+    } else {
+      // Find the payee entity
+      const payeeId = parseInt(value);
+      const payee = allPayees.find(p => p.id === payeeId);
+      if (payee) {
+        options.set(payee.id, {
+          label: payee.name || '',
+          value: payee.id + '',
+          icon: HandCoins as unknown as Component,
+        });
+      }
+    }
+  });
 
   return options;
 });
@@ -61,8 +57,8 @@ const payeeOptions = $derived.by(() => {
 const allPayeeOptions = $derived.by(() => {
   const options = new SvelteMap<number | string, FacetedFilterOption>();
 
-  // Add "None" option if there are transactions with null payees
-  if (hasNullPayees) {
+  // Include null option if it exists in data
+  if (facets.has('null') || facets.has('')) {
     options.set('null', {
       label: '(None)',
       value: 'null',

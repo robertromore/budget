@@ -2,9 +2,9 @@
 import type {Column} from '@tanstack/table-core';
 import {DataTableFacetedFilter} from '..';
 import type {Component} from 'svelte';
-import {page} from '$app/state';
-import type {Category, Transaction} from '$lib/schema';
+import type {Category} from '$lib/schema';
 import {currentViews} from '$lib/states/views';
+import {CategoriesState} from '$lib/states/entities';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
 import type {FacetedFilterOption} from '$lib/types';
 import {SvelteMap} from 'svelte/reactivity';
@@ -15,47 +15,41 @@ type Props<TData, TValue> = {
 
 let {column}: Props<TData, TValue> = $props();
 
-const {data} = $derived(page);
-const account = $derived(data.account);
+const categoriesState = CategoriesState.get();
+const allCategories = $derived(categoriesState?.all || []);
 
 const activeView = $derived(currentViews.get().activeView);
 const activeViewModel = $derived(activeView.view);
 const selectedValues = $derived(activeViewModel.getFilterValue(column.id));
 
-const categories = $derived(
-  account.transactions
-    .map((transaction: Transaction) => transaction.category)
-    .concat(selectedValues)
-);
-const allCategories = $derived(data.categories);
-
-// Check if there are any transactions with null categories
-const hasNullCategories = $derived(
-  account.transactions.some((transaction: Transaction) => transaction.categoryId === null)
-);
+// Get faceted values with counts from TanStack Table
+const facets = $derived(column?.getFacetedUniqueValues?.() || new Map());
 
 const categoryOptions = $derived.by(() => {
   const options = new SvelteMap<number | string, FacetedFilterOption>();
 
-  // Add "None" option if there are transactions with null categories
-  if (hasNullCategories) {
-    options.set('null', {
-      label: '(None)',
-      value: 'null',
-      icon: SquareMousePointer as unknown as Component,
-    });
-  }
-
-  // Add regular category options
-  categories
-    ?.filter((category: Category) => category.id !== undefined)
-    .forEach((category: Category) => {
-      options.set(category.id, {
-        label: category.name || '',
-        value: category.id + '',
+  // Add options based on faceted data (actual data in table with counts)
+  facets.forEach((count: number, value: string) => {
+    if (value === 'null' || value === '') {
+      // Handle null/empty categories
+      options.set('null', {
+        label: '(None)',
+        value: 'null',
         icon: SquareMousePointer as unknown as Component,
       });
-    });
+    } else {
+      // Find the category entity
+      const categoryId = parseInt(value);
+      const category = allCategories.find(c => c.id === categoryId);
+      if (category) {
+        options.set(category.id, {
+          label: category.name || '',
+          value: category.id + '',
+          icon: SquareMousePointer as unknown as Component,
+        });
+      }
+    }
+  });
 
   return options;
 });
@@ -63,8 +57,8 @@ const categoryOptions = $derived.by(() => {
 const allCategoryOptions = $derived.by(() => {
   const options = new SvelteMap<number | string, FacetedFilterOption>();
 
-  // Add "None" option if there are transactions with null categories
-  if (hasNullCategories) {
+  // Include null option if it exists in data
+  if (facets.has('null') || facets.has('')) {
     options.set('null', {
       label: '(None)',
       value: 'null',

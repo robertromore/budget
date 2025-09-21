@@ -1,41 +1,45 @@
-import type {EditableEntityItem, TransactionsFormat} from "$lib/types";
-import {Checkbox} from "$lib/components/ui/checkbox";
-import {renderComponent} from "$lib/components/ui/data-table";
-import type {CellContext, Column, ColumnDef, FilterFnOption} from "@tanstack/table-core";
-import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
-import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
-import {getLocalTimeZone, type DateValue} from "@internationalized/date";
-import EditableEntityCell from "../(components)/(cells)/editable-entity-cell.svelte";
-import DataTableEditableCell from "../(components)/(cells)/data-table-editable-cell.svelte";
-import EditableNumericCell from "../(components)/(cells)/editable-numeric-cell.svelte";
-import DataTableActions from "../(components)/data-table-actions.svelte";
-import {compareAlphanumeric} from "$lib/utils";
-import type {Category, Payee} from "$lib/schema";
-import DataTableEditableStatusCell from "../(components)/(cells)/data-table-editable-status-cell.svelte";
-import ManagePayeeForm from "../(components)/manage-payee-form.svelte";
-import ManageCategoryForm from "../(components)/manage-category-form.svelte";
-import type {CategoriesState} from "$lib/states/entities/categories.svelte";
-import type {PayeesState} from "$lib/states/entities/payees.svelte";
-import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-faceted-filter-status.svelte";
-import DataTableFacetedFilterCategory from "../(components)/(facets)/data-table-faceted-filter-category.svelte";
-import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-faceted-filter-payee.svelte";
-import DataTableFacetedFilterDate from "../(components)/(facets)/data-table-faceted-filter-date.svelte";
-import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";
 import {
   CalendarDays,
-  HandCoins,
-  SquareMousePointer,
-  SquareCheck,
   DollarSign,
+  HandCoins,
+  SquareCheck,
+  SquareMousePointer,
 } from "$lib/components/icons";
-import {ExpandToggle} from "$lib/components/ui/expand-toggle";
-import {currencyFormatter} from "$lib/utils/formatters";
-import type {Component} from "svelte";
+import StickyNote from '@lucide/svelte/icons/sticky-note';
+import { Checkbox } from "$lib/components/ui/checkbox";
+import { renderComponent } from "$lib/components/ui/data-table";
+import { ExpandToggle } from "$lib/components/ui/expand-toggle";
+import type { Category, Payee } from "$lib/schema";
+import type { CategoriesState } from "$lib/states/entities/categories.svelte";
+import type { PayeesState } from "$lib/states/entities/payees.svelte";
+import type { EditableEntityItem, TransactionsFormat } from "$lib/types";
+import { compareAlphanumeric } from "$lib/utils";
+import { currencyFormatter } from "$lib/utils/formatters";
+import { dateFormatter } from "$lib/utils/date-formatters";
+import { type DateValue, getLocalTimeZone } from "@internationalized/date";
+import type { CellContext, Column, ColumnDef, FilterFnOption } from "@tanstack/table-core";
+import type { Component } from "svelte";
+import DataTableEditableCell from "../(components)/(cells)/data-table-editable-cell.svelte";
+import DataTableEditableStatusCell from "../(components)/(cells)/data-table-editable-status-cell.svelte";
+import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
+import EditableEntityCell from "../(components)/(cells)/editable-entity-cell.svelte";
+import EditableNumericCell from "../(components)/(cells)/editable-numeric-cell.svelte";
+import ReadOnlyCellWithIcon from "../(components)/(cells)/read-only-cell-with-icon.svelte";
+import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";
+import DataTableFacetedFilterCategory from "../(components)/(facets)/data-table-faceted-filter-category.svelte";
+import DataTableFacetedFilterDate from "../(components)/(facets)/data-table-faceted-filter-date.svelte";
+import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-faceted-filter-payee.svelte";
+import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-faceted-filter-status.svelte";
+import DataTableActions from "../(components)/data-table-actions.svelte";
+import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
+import ManageCategoryForm from "../(components)/manage-category-form.svelte";
+import ManagePayeeForm from "../(components)/manage-payee-form.svelte";
 
 export const columns = (
   categories: CategoriesState,
   payees: PayeesState,
-  updateData: (id: number, columnId: string, newValue?: unknown) => Promise<void>
+  updateData: (id: number, columnId: string, newValue?: unknown) => Promise<void>,
+  onScheduleClick?: (transaction: TransactionsFormat) => void
 ): ColumnDef<TransactionsFormat>[] => {
   const updateHandler = (
     info: CellContext<TransactionsFormat, unknown>,
@@ -43,7 +47,11 @@ export const columns = (
     new_value: unknown,
     value_transformer: (value: unknown) => unknown = (value) => value
   ) => {
-    return updateData(info.row.original.id, columnId, value_transformer(new_value));
+    const id = info.row.original.id;
+    // Only update for actual transactions (numeric IDs), not scheduled ones (string IDs)
+    if (typeof id === 'number') {
+      return updateData(id, columnId, value_transformer(new_value));
+    }
   };
 
   return [
@@ -57,14 +65,18 @@ export const columns = (
           controlledChecked: true,
           "aria-label": "Select all",
         }),
-      cell: ({row}) =>
-        renderComponent(Checkbox, {
+      cell: ({row}) => {
+        const transaction = row.original;
+        const isScheduled = transaction.status === "scheduled";
+
+        return renderComponent(Checkbox, {
           checked: row.getIsSelected(),
-          disabled: !row.getCanSelect(),
+          disabled: !row.getCanSelect() || isScheduled,
           onCheckedChange: (value) => row.toggleSelected(!!value),
           controlledChecked: true,
           "aria-label": "Select row",
-        }),
+        });
+      },
       aggregatedCell: ({row}) =>
         renderComponent(Checkbox, {
           checked: row.getIsSelected(),
@@ -107,7 +119,14 @@ export const columns = (
     },
     {
       accessorKey: "id",
-      cell: (info) => info.getValue(),
+      cell: (info) => {
+        const transaction = info.row.original;
+        // Show dash for upcoming scheduled transactions
+        if (transaction.status === "scheduled" && typeof transaction.id === "string") {
+          return "—";
+        }
+        return info.getValue();
+      },
       aggregatedCell: () => {},
       header: ({column}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
@@ -124,9 +143,20 @@ export const columns = (
     {
       accessorKey: "date",
       id: "date",
-      cell: (info) =>
-        renderComponent(EditableDateCell, {
-          value: info.getValue() as DateValue,
+      cell: (info) => {
+        const transaction = info.row.original;
+        const dateValue = info.getValue() as DateValue;
+
+        // Read-only for scheduled transactions
+        if (transaction.status === "scheduled") {
+          return renderComponent(ReadOnlyCellWithIcon, {
+            value: dateValue ? dateFormatter.format(dateValue.toDate(getLocalTimeZone())) : "—",
+            icon: CalendarDays
+          });
+        }
+
+        return renderComponent(EditableDateCell, {
+          value: dateValue,
           onUpdateValue: (new_value: unknown) =>
             updateHandler(info, "date", new_value, (new_value) => {
               // Convert DateValue to ISO string format for database
@@ -135,7 +165,8 @@ export const columns = (
               }
               return new_value;
             }),
-        }),
+        });
+      },
       aggregatedCell: () => {},
       header: ({column}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
@@ -181,9 +212,20 @@ export const columns = (
     {
       accessorKey: "payeeId",
       id: "payee",
-      cell: (info) =>
-        renderComponent(EditableEntityCell, {
-          value: payees.getById(info.getValue() as number) as EditableEntityItem,
+      cell: (info) => {
+        const transaction = info.row.original;
+        const payee = payees.getById(info.getValue() as number);
+
+        // Read-only for scheduled transactions
+        if (transaction.status === "scheduled") {
+          return renderComponent(ReadOnlyCellWithIcon, {
+            value: payee?.name || "—",
+            icon: HandCoins
+          });
+        }
+
+        return renderComponent(EditableEntityCell, {
+          value: payee as EditableEntityItem,
           entityLabel: "payee",
           onUpdateValue: (new_value) => updateHandler(info, "payeeId", new_value),
           entities: payees.all as EditableEntityItem[],
@@ -202,7 +244,8 @@ export const columns = (
               payees.deletePayee(id);
             },
           },
-        }),
+        });
+      },
       aggregatedCell: () => {},
       header: ({column}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
@@ -246,12 +289,28 @@ export const columns = (
     {
       accessorKey: "notes",
       id: "notes",
-      cell: (info) =>
-        renderComponent(DataTableEditableCell, {
-          value: info.getValue(),
-          onUpdateValue: (new_value: string) =>
-            updateData(info.row.original.id, "notes", new_value),
-        }),
+      cell: (info) => {
+        const transaction = info.row.original;
+        const notes = info.getValue() as string;
+
+        // Read-only for scheduled transactions
+        if (transaction.status === "scheduled") {
+          return renderComponent(ReadOnlyCellWithIcon, {
+            value: notes || "—",
+            icon: StickyNote
+          });
+        }
+
+        return renderComponent(DataTableEditableCell, {
+          value: notes,
+          onUpdateValue: (new_value: string) => {
+            const id = info.row.original.id;
+            if (typeof id === 'number') {
+              return updateData(id, "notes", new_value);
+            }
+          },
+        });
+      },
       aggregatedCell: () => {},
       header: ({column}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
@@ -267,9 +326,20 @@ export const columns = (
     {
       accessorKey: "categoryId",
       id: "category",
-      cell: (info) =>
-        renderComponent(EditableEntityCell, {
-          value: categories.getById(info.getValue() as number) as EditableEntityItem,
+      cell: (info) => {
+        const transaction = info.row.original;
+        const category = categories.getById(info.getValue() as number);
+
+        // Read-only for scheduled transactions
+        if (transaction.status === "scheduled") {
+          return renderComponent(ReadOnlyCellWithIcon, {
+            value: category?.name || "—",
+            icon: SquareMousePointer
+          });
+        }
+
+        return renderComponent(EditableEntityCell, {
+          value: category as EditableEntityItem,
           entityLabel: "category",
           onUpdateValue: (new_value) => updateHandler(info, "categoryId", new_value),
           entities: categories.all as EditableEntityItem[],
@@ -288,7 +358,8 @@ export const columns = (
               categories.deleteCategory(id);
             },
           },
-        }),
+        });
+      },
       aggregatedCell: () => {},
       header: ({column}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
@@ -330,11 +401,23 @@ export const columns = (
     {
       accessorKey: "amount",
       id: "amount",
-      cell: (info) =>
-        renderComponent(EditableNumericCell, {
-          value: info.getValue() as number,
+      cell: (info) => {
+        const transaction = info.row.original;
+        const amount = info.getValue() as number;
+
+        // Read-only for scheduled transactions
+        if (transaction.status === "scheduled") {
+          return renderComponent(ReadOnlyCellWithIcon, {
+            value: currencyFormatter.format(amount || 0),
+            icon: DollarSign
+          });
+        }
+
+        return renderComponent(EditableNumericCell, {
+          value: amount,
           onUpdateValue: (new_value) => updateHandler(info, "amount", new_value),
-        }),
+        });
+      },
       aggregatedCell: (info) => {
         const value = info.getValue() as number;
         return currencyFormatter.format(isNaN(value) ? 0 : (value ?? 0));
@@ -380,12 +463,20 @@ export const columns = (
           title: "Balance",
         }),
       cell: (info) => {
-        const value = info.getValue() as number;
-        return currencyFormatter.format(isNaN(value) ? 0 : (value ?? 0));
+        const value = info.getValue() as number | null | undefined;
+        // Show dash for null/undefined values to avoid misleading users with $0.00
+        if (value === null || value === undefined) {
+          return "—";
+        }
+        return currencyFormatter.format(isNaN(value) ? 0 : value);
       },
       aggregatedCell: (info) => {
-        const value = info.getValue() as number;
-        return currencyFormatter.format(isNaN(value) ? 0 : (value ?? 0));
+        const value = info.getValue() as number | null | undefined;
+        // Show dash for null/undefined values to avoid misleading users with $0.00
+        if (value === null || value === undefined) {
+          return "—";
+        }
+        return currencyFormatter.format(isNaN(value) ? 0 : value);
       },
       enableColumnFilter: false,
       enableGrouping: false,
@@ -401,6 +492,8 @@ export const columns = (
         renderComponent(DataTableEditableStatusCell, {
           value: info.getValue() as string,
           onUpdateValue: (new_value) => updateHandler(info, "status", new_value),
+          onScheduleClick: info.row.original.status === "scheduled" && onScheduleClick ?
+            () => onScheduleClick(info.row.original) : undefined,
         }),
       aggregatedCell: () => {},
       header: "",
@@ -437,7 +530,16 @@ export const columns = (
       accessorFn: (row) => row.id,
       aggregatedCell: () => {},
       header: "",
-      cell: (info) => renderComponent(DataTableActions, {id: info.getValue() as number}),
+      cell: (info) => {
+        const transaction = info.row.original;
+
+        // No actions for scheduled transactions
+        if (transaction.status === "scheduled") {
+          return "";
+        }
+
+        return renderComponent(DataTableActions, {id: info.getValue() as number});
+      },
       enableColumnFilter: false,
       enableSorting: false,
       enableGrouping: false,

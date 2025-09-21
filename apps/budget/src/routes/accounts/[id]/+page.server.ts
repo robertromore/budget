@@ -1,7 +1,8 @@
-import type {PageServerLoad} from "./$types";
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import type {View} from "$lib/schema";
+import type { View } from "$lib/schema";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
+import { currentDate } from "../../../lib/utils";
+import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({params}) => {
   // Load minimal data required for the data table
@@ -9,7 +10,7 @@ export const load: PageServerLoad = async ({params}) => {
 
   const defaultViews = [
     {
-      id: -3,
+      id: -4,
       name: "All Transactions",
       description: "All transactions for this account",
       filters: [],
@@ -26,7 +27,7 @@ export const load: PageServerLoad = async ({params}) => {
       dirty: false,
     },
     {
-      id: -2,
+      id: -3,
       name: "Cleared",
       description: "Cleared transactions for this account",
       filters: [
@@ -44,19 +45,42 @@ export const load: PageServerLoad = async ({params}) => {
       dirty: false,
     },
     {
-      id: -1,
+      id: -2,
       name: "Upcoming",
       description: "Upcoming transactions for this account",
       filters: [
         {
-          column: "status",
-          filter: "equalsString",
-          value: ["pending"],
+          column: "date",
+          filter: "dateAfter",
+          value: [currentDate.toString()],
         },
       ],
       display: {
         grouping: [],
         sort: [],
+      },
+      icon: "",
+      dirty: false,
+    },
+    {
+      id: -1,
+      name: "Scheduled",
+      description: "Scheduled transactions for this account",
+      filters: [
+        {
+          column: "status",
+          filter: "equalsString",
+          value: ["scheduled"],
+        },
+      ],
+      display: {
+        grouping: [],
+        sort: [
+          {
+            id: "date",
+            desc: false,
+          }
+        ],
       },
       icon: "",
       dirty: false,

@@ -12,14 +12,31 @@ import AddAccountDialog from '$lib/components/dialogs/add-account-dialog.svelte'
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
 import AddScheduleDialog from '$lib/components/dialogs/add-schedule-dialog.svelte';
+import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
+import {setQueryClientContext} from '@tanstack/svelte-query';
+import {queryClient} from '$lib/query';
+import {autoScheduler} from '$lib/stores/auto-scheduler.svelte';
+import {onMount} from 'svelte';
 
 let {data, children}: {data: LayoutData; children: Snippet} = $props();
 const {accounts, payees, categories, schedules} = $derived(data);
+
+// Set QueryClient context immediately using centralized client
+setQueryClientContext(queryClient);
+
 AccountsState.set((() => accounts)());
 SchedulesState.set((() => schedules)());
 CategoriesState.set((() => categories)());
 PayeesState.set((() => payees)());
+
+// Auto-scheduler: Automatically create scheduled transactions when app loads
+onMount(() => {
+  // Small delay to ensure everything is loaded, then run auto-scheduler
+  setTimeout(() => {
+    autoScheduler.runWithRetries();
+  }, 1000);
+});
 </script>
 
 <!-- Temporarily disabled RenderScan for debugging -->
@@ -30,6 +47,7 @@ PayeesState.set((() => payees)());
 <AddAccountDialog />
 <AddScheduleDialog />
 <DeleteAccountDialog />
+<DeleteScheduleDialog />
 
 <div class="bg-background">
   <div class="grid">

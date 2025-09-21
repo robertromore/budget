@@ -1,10 +1,10 @@
-import {z} from "zod";
-import {publicProcedure, rateLimitedProcedure, t} from "$lib/trpc";
-import {eq, desc, isNull, and, count, sql, asc} from "drizzle-orm";
-import {TRPCError} from "@trpc/server";
-import {accounts, transactions} from "$lib/schema";
-import {trackQuery} from "$lib/utils/performance";
-import {queryCache, cacheKeys} from "$lib/utils/cache";
+import { accounts, transactions } from "$lib/schema";
+import { publicProcedure, t } from "$lib/trpc";
+import { cacheKeys, queryCache } from "$lib/utils/cache";
+import { trackQuery } from "$lib/utils/performance";
+import { TRPCError } from "@trpc/server";
+import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
+import { z } from "zod";
 
 /**
  * Optimized account routes with performance improvements:
@@ -54,8 +54,8 @@ export const serverAccountsRoutes = t.router({
 
         return {
           ...account,
-          balance: balanceResult.balance,
-          transactionCount: balanceResult.transactionCount,
+          balance: balanceResult?.balance || 0,
+          transactionCount: balanceResult?.transactionCount || 0,
         };
       });
 
@@ -124,8 +124,8 @@ export const serverAccountsRoutes = t.router({
         sortBy: z.enum(["date", "amount", "notes"]).default("date"),
         sortOrder: z.enum(["asc", "desc"]).default("desc"),
         searchQuery: z.string().optional(),
-        dateFrom: z.string().datetime().optional(),
-        dateTo: z.string().datetime().optional(),
+        dateFrom: z.string().optional(),
+        dateTo: z.string().optional(),
       })
     )
     .query(async ({ctx, input}) => {
@@ -135,7 +135,7 @@ export const serverAccountsRoutes = t.router({
       // Create cache key based on all parameters
       const cacheKey = searchQuery
         ? cacheKeys.searchTransactions(accountId, searchQuery)
-        : `transactions:${accountId}:${page}:${pageSize}:${sortBy}:${sortOrder}:${dateFrom || "null"}:${dateTo || "null"}`;
+        : cacheKeys.accountTransactions(accountId, page, pageSize, sortBy, sortOrder, dateFrom, dateTo);
 
       // Check cache first (skip for searches to get real-time results)
       if (!searchQuery) {
@@ -176,7 +176,7 @@ export const serverAccountsRoutes = t.router({
           .from(transactions)
           .where(and(...whereConditions));
 
-        const totalCount = countResult.count;
+        const totalCount = countResult?.count || 0;
 
         // Get paginated transactions
         const paginatedTransactions = await ctx.db.query.transactions.findMany({
@@ -255,6 +255,129 @@ export const serverAccountsRoutes = t.router({
     }),
 
   /**
+   * Load ALL transactions for an account (for client-side pagination)
+   */
+  loadAllTransactions: publicProcedure
+    .input(
+      z.object({
+        accountId: z.coerce.number(),
+        sortBy: z.enum(["date", "amount", "notes"]).default("date"),
+        sortOrder: z.enum(["asc", "desc"]).default("desc"),
+        searchQuery: z.string().optional(),
+        dateFrom: z.string().optional(),
+        dateTo: z.string().optional(),
+      })
+    )
+    .query(async ({ctx, input}) => {
+      const {accountId, sortBy, sortOrder, searchQuery, dateFrom, dateTo} = input;
+
+      const cacheKey = searchQuery
+        ? `account:${accountId}:all:search:${searchQuery}`
+        : `account:${accountId}:all:${sortBy}:${sortOrder}:${dateFrom || "null"}:${dateTo || "null"}`;
+
+      // Check cache first (skip for searches to get real-time results)
+      if (!searchQuery) {
+        const cached = queryCache.get(cacheKey);
+        if (cached) {
+          return cached;
+        }
+      }
+
+      const result = await trackQuery("all-transactions", async () => {
+        // Build where conditions
+        const whereConditions = [
+          eq(transactions.accountId, accountId),
+          isNull(transactions.deletedAt),
+        ];
+
+        if (searchQuery) {
+          whereConditions.push(
+            sql`(${transactions.notes} LIKE ${'%' + searchQuery + '%'} OR
+                 ${accounts.name} LIKE ${'%' + searchQuery + '%'})`
+          );
+        }
+
+        if (dateFrom) {
+          whereConditions.push(sql`${transactions.date} >= ${dateFrom}`);
+        }
+
+        if (dateTo) {
+          whereConditions.push(sql`${transactions.date} <= ${dateTo}`);
+        }
+
+        // Get ALL transactions for the account
+        const allTransactions = await ctx.db.query.transactions.findMany({
+          where: and(...whereConditions),
+          with: {
+            payee: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
+            category: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: sortOrder === "desc" ? desc(transactions[sortBy]) : asc(transactions[sortBy]),
+        });
+
+        // Calculate running balance for ALL transactions
+        let transactionsWithBalance;
+
+        if (sortBy === "date") {
+          if (sortOrder === "asc") {
+            // Ascending order: start from 0 and add each transaction
+            let runningBalance = 0;
+            transactionsWithBalance = allTransactions.map((transaction) => {
+              runningBalance += transaction.amount;
+              return {
+                ...transaction,
+                balance: runningBalance,
+              };
+            });
+          } else {
+            // Descending order: get total account balance and work backwards
+            const [totalBalanceResult] = await ctx.db
+              .select({
+                balance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
+              })
+              .from(transactions)
+              .where(and(eq(transactions.accountId, accountId), isNull(transactions.deletedAt)));
+
+            let runningBalance = totalBalanceResult?.balance || 0;
+            transactionsWithBalance = allTransactions.map((transaction) => {
+              const currentBalance = runningBalance;
+              runningBalance -= transaction.amount;
+              return {
+                ...transaction,
+                balance: currentBalance,
+              };
+            });
+          }
+        } else {
+          // For non-date sorting, don't calculate running balance
+          transactionsWithBalance = allTransactions.map((transaction) => ({
+            ...transaction,
+            balance: null,
+          }));
+        }
+
+        return transactionsWithBalance;
+      });
+
+      // Cache non-search results for 1 minute
+      if (!searchQuery) {
+        queryCache.set(cacheKey, result, 60000);
+      }
+
+      return result;
+    }),
+
+  /**
    * Get recent transactions (optimized for dashboard widgets)
    */
   loadRecentTransactions: publicProcedure
@@ -302,8 +425,8 @@ export const serverAccountsRoutes = t.router({
     .input(
       z.object({
         accountId: z.coerce.number(),
-        fromDate: z.string().datetime().optional(),
-        toDate: z.string().datetime().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
         groupBy: z.enum(["day", "week", "month"]).default("day"),
       })
     )
