@@ -1254,6 +1254,176 @@ When working with scheduled transactions:
 4. **Test with various schedule frequencies** to ensure accurate date calculations
 5. **Verify database relationships** are correct for schedule date functionality
 
+## Budget System Implementation
+
+**Comprehensive budget system supporting multiple budget types, configurable enforcement, and seamless integration with existing financial data.**
+
+### Implementation Status
+
+**📋 Design Phase**: Complete
+- Comprehensive system design documented in `docs/plans/budget-system-design.md`
+- Database schema planned with hybrid metadata approach
+- Service layer architecture defined following existing domain patterns
+- UI/UX workflows designed for maximum flexibility
+
+### Implementation Roadmap
+
+#### Phase 1: Foundation (Database & Core Services) - PENDING
+**Objective**: Establish database schema and core business logic
+
+**Tasks**:
+1. **Database Schema** (`src/lib/schema/budgets/`)
+   - `budgets.ts` - Core budget table with type enum and metadata JSON
+   - `budget-groups.ts` - Optional budget organization with parent-child relationships
+   - `budget-period-templates.ts` - Flexible period definitions (weekly, monthly, custom)
+   - `budget-period-instances.ts` - Actual period instances with allocations and rollovers
+   - Junction tables: `budget-accounts.ts`, `budget-categories.ts`, `budget-transactions.ts`, `budget-group-memberships.ts`
+
+2. **Domain Services** (`src/lib/server/domains/budgets/`)
+   - `repository.ts` - Database queries with efficient joins and aggregations
+   - `services.ts` - Business logic for budget calculations, rollover processing, goal tracking
+   - `types.ts` - Service interfaces, DTOs, and validation schemas
+
+3. **tRPC Integration** (`src/lib/trpc/routes/budgets.ts`)
+   - CRUD operations for budgets and budget groups
+   - Budget summary and progress queries
+   - Transaction validation and assignment endpoints
+   - Period management and rollover operations
+
+#### Phase 2: Basic UI (Account-Monthly Budgets) - PENDING
+**Objective**: Implement core budget functionality with account-level budgets
+
+**Tasks**:
+1. **State Management**
+   - `src/lib/states/budgets.svelte.ts` - Reactive budget store
+   - `src/lib/query/budgets.ts` - TanStack Query integration
+
+2. **Core Components** (`src/lib/components/budgets/`)
+   - `BudgetProgress.svelte` - Visual progress indicators
+   - `BudgetSelector.svelte` - Reusable budget selection component
+   - `BudgetPeriodPicker.svelte` - Period configuration interface
+
+3. **Management Pages** (`src/routes/budgets/`)
+   - Budget list/dashboard view
+   - Simple budget creation form
+   - Budget detail and analytics page
+
+4. **Transaction Integration**
+   - Budget impact column in transaction tables
+   - Real-time budget updates on transaction save
+   - Basic enforcement warnings
+
+#### Phase 3: Advanced Features (Category Envelopes) - PENDING
+**Objective**: Implement YNAB-style envelope budgeting with rollover support
+
+**Tasks**:
+1. **Envelope Logic**
+   - Category-based budget allocation
+   - Rollover calculations and storage
+   - Deficit handling and recovery
+
+2. **Advanced UI**
+   - Envelope-style budget interface
+   - Drag-and-drop fund allocation
+   - Rollover management tools
+
+3. **Period Management**
+   - Automated period creation
+   - Custom period boundary handling
+   - Historical period tracking
+
+#### Phase 4: Goals & Schedules - PENDING
+**Objective**: Goal-based budgets and schedule integration
+
+**Tasks**:
+1. **Goal Tracking**
+   - Savings goal progress calculation
+   - Investment account integration
+   - Target date and contribution planning
+
+2. **Schedule Integration**
+   - Link budgets to recurring schedules
+   - Forecast future budget impact
+   - Automatic budget allocation for scheduled expenses
+
+3. **Advanced Analytics**
+   - Budget burn-down charts
+   - Goal progress visualization
+   - Spending trend analysis
+
+#### Phase 5: Polish & Optimization - PENDING
+**Objective**: Advanced features, performance optimization, and user experience polish
+
+**Tasks**:
+1. **Budget Hierarchy**
+   - Budget groups with optional spending limits
+   - Parent-child inheritance settings
+   - Multi-group membership support
+
+2. **Advanced Enforcement**
+   - Configurable enforcement levels (none, warning, strict)
+   - Transaction blocking for strict budgets
+   - Custom enforcement rules
+
+3. **Performance & UX**
+   - Bulk operations and budget templates
+   - Mobile responsiveness
+   - Accessibility improvements
+   - Performance optimization for large datasets
+
+### Core Design Principles
+
+- **User Control**: Users have ultimate control over budget behavior and configuration
+- **Smart Defaults**: Sensible defaults that work out-of-the-box but can be customized
+- **Flexibility**: Support multiple budget types (account-monthly, category-envelope, goal-based, scheduled-expense)
+- **Integration**: Seamless integration with existing transaction, schedule, and account systems
+
+### Key Features
+
+#### Budget Types
+1. **Account-Monthly**: Total spending limit per account per period
+2. **Category-Envelope**: YNAB-style allocation budgeting with rollover support
+3. **Goal-Based**: Target amount tracking for savings and spending goals
+4. **Scheduled-Expense**: Integration with recurring schedules for planned expenses
+
+#### Configuration Options
+- **Enforcement Levels**: None (tracking only), Warning (alerts), Strict (blocking)
+- **Rollover Behavior**: Indefinite, limited periods, or reset
+- **Period Types**: Weekly, monthly, quarterly, yearly, or custom
+- **Multi-Budget Assignment**: Automatic, manual, or proportional transaction allocation
+
+### Technical Architecture
+
+#### Database Schema
+- **Hybrid Metadata**: Core fields as columns + JSON for flexible type-specific settings
+- **Period Templates**: Flexible period definitions with instances for actual tracking
+- **Junction Tables**: Clean multi-budget transaction tracking and relationship management
+
+#### Service Layer
+- **Domain-Driven**: Follows existing patterns with BudgetService, BudgetRepository
+- **Real-Time Updates**: Configurable calculation refresh (real-time by default)
+- **Transaction Integration**: Automatic budget assignment with manual override capability
+
+#### State Management
+- **Reactive Stores**: Svelte 5 runes for real-time budget state
+- **Query Layer**: TanStack Query for efficient data fetching and caching
+- **Derived Values**: Computed budget summaries and progress indicators
+
+### Development Guidelines
+
+1. **Follow Existing Patterns**: Use established domain service, tRPC, and component patterns
+2. **User-Configurable**: Implement smart defaults with full user customization options
+3. **Performance First**: Design for efficient queries and real-time updates
+4. **Integration Focus**: Seamless integration with existing transaction and schedule workflows
+5. **Incremental Development**: Build and test each phase independently
+
+### Related Documentation
+
+- **Complete Design**: `docs/plans/budget-system-design.md`
+- **Database Schema**: Detailed table definitions and relationships
+- **API Specification**: tRPC route definitions and payload schemas
+- **Component Architecture**: UI component hierarchy and state management
+
 ---
 
 *This configuration ensures consistent tooling and accountability across all Claude Code sessions.*
