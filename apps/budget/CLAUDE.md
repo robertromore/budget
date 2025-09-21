@@ -957,18 +957,94 @@ The system automatically generates meaningful periods based on data span:
 
 ### Date Handling Standards
 
-**ALWAYS use @internationalized/date library for all date operations:**
+**ALWAYS use @internationalized/date as the primary date library for all date operations.**
+
+#### Consolidated Date Library Architecture
+
+The project uses a **single date library approach** for consistency and reduced bundle size:
+
+- **Primary Library**: `@internationalized/date` for all date operations
+- **Chart Integration**: Native Date objects only for LayerChart/D3 compatibility
+- **Database**: ISO string storage with @internationalized/date parsing
+- **Removed Libraries**: `date-fns` has been completely eliminated (~30KB bundle reduction)
+
+#### Core Date Utilities (`$lib/utils/dates.ts`)
 
 ```typescript
 import { CalendarDate, type DateValue } from "@internationalized/date";
-import { parseDateValue, currentDate } from "$lib/utils/dates";
+import {
+  parseDateValue,
+  parseISOString,
+  toISOString,
+  formatDateDisplay,
+  dateDifference,
+  isSamePeriod,
+  currentDate
+} from "$lib/utils/dates";
 
-// Parse dates consistently
-const itemDate = parseDateValue(item[dateField]);
-if (itemDate && itemDate.compare(startDate) >= 0) {
-  // Process filtered data
-}
+// Parse various date formats to DateValue
+const dateValue = parseDateValue(someDate) || currentDate;
+
+// Parse ISO strings from database
+const dbDate = parseISOString("2024-01-15");
+
+// Convert DateValue to ISO string for storage
+const isoString = toISOString(dateValue);
+
+// Format dates for display
+const formatted = formatDateDisplay(dateValue, 'short'); // "01/15/2024"
+
+// Date comparisons (replaces date-fns)
+const daysDiff = dateDifference(date1, date2, 'days');
+const sameMonth = isSamePeriod(date1, date2, 'month');
 ```
+
+#### Chart Library Integration
+
+**Maintain existing conversion pattern for chart compatibility:**
+
+```typescript
+// LayerChart and D3 require native Date objects
+const jsDate = dateValue.toDate(timezone);
+
+// Use in chart data processing
+const chartData = data.map(item => ({
+  date: parseISOString(item.date)?.toDate(timezone),
+  value: item.amount
+}));
+```
+
+#### Date Formatting Standards
+
+```typescript
+// Use centralized formatting instead of native Date methods
+// ❌ Avoid: new Date(transaction.date).toLocaleDateString()
+// ✅ Use: formatDateDisplay(parseISOString(transaction.date), 'short')
+
+// ❌ Avoid: date.getFullYear()
+// ✅ Use: dateValue.year
+
+// ❌ Avoid: new Date().getMonth()
+// ✅ Use: currentDate.month
+```
+
+#### Migration Guidelines
+
+When updating existing code:
+
+1. **Replace date-fns functions** with equivalent utilities from `$lib/utils/dates`
+2. **Use parseISOString()** for database date strings
+3. **Use formatDateDisplay()** for consistent date formatting
+4. **Keep chart conversions** with `.toDate(timezone)` pattern
+5. **Avoid native Date** except for third-party library requirements
+
+#### Benefits
+
+- **Single API**: Consistent date handling across entire codebase
+- **Smaller Bundle**: 30KB reduction from eliminating date-fns
+- **Better Timezone Support**: @internationalized/date has superior timezone handling
+- **Type Safety**: Strong TypeScript integration with DateValue types
+- **Maintainability**: Centralized date utilities in one location
 
 ### Chart System Benefits
 
