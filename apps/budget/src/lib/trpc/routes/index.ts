@@ -1,6 +1,7 @@
 // tRPC routes barrel exports
 export {accountRoutes} from "./accounts";
 export {accountsServerRoutes} from "./accounts-server";
+export {budgetRoutes} from "./budgets";
 export {categoryRoutes} from "./categories";
 export {payeeRoutes} from "./payees";
 export {scheduleRoutes} from "./schedules";
