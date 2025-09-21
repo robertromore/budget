@@ -1,9 +1,9 @@
 <script lang="ts">
 import * as Chart from '$lib/components/ui/chart';
-import * as Card from '$lib/components/ui/card';
 import { AreaChart, Axis } from 'layerchart';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { getMonthlySpendingAggregates } from '$lib/query/transactions';
+import AnalyticsChartShell from './analytics-chart-shell.svelte';
 
 interface Props {
   accountId: number;
@@ -41,9 +41,16 @@ const chartConfig = {
   }
 } satisfies Chart.ChartConfig;
 
-// Summary statistics
+// Summary statistics for the shell component
 const summaryStats = $derived.by(() => {
-  if (!monthlySpendingData.length) return null;
+  if (!monthlySpendingData.length) {
+    return [
+      { label: 'Average Monthly', value: '$0.00' },
+      { label: 'Highest', value: '$0.00' },
+      { label: 'Lowest', value: '$0.00' },
+      { label: 'Total', value: '$0.00' }
+    ];
+  }
 
   const amounts = monthlySpendingData.map((d: any) => d.spending);
   const total = amounts.reduce((sum: number, amount: number) => sum + amount, 0);
@@ -58,102 +65,76 @@ const summaryStats = $derived.by(() => {
   // Sum total transaction count
   const totalTransactions = monthlySpendingData.reduce((sum: number, d: any) => sum + d.transactionCount, 0);
 
-  return {
-    total,
-    average,
-    highest,
-    lowest,
-    highestMonth,
-    lowestMonth,
-    monthCount: amounts.length,
-    totalTransactions
-  };
+  return [
+    {
+      label: 'Average Monthly',
+      value: currencyFormatter.format(average)
+    },
+    {
+      label: 'Highest',
+      value: currencyFormatter.format(highest),
+      description: highestMonth || undefined
+    },
+    {
+      label: 'Lowest',
+      value: currencyFormatter.format(lowest),
+      description: lowestMonth || undefined
+    },
+    {
+      label: 'Total',
+      value: currencyFormatter.format(total),
+      description: `${totalTransactions} transactions`
+    }
+  ];
 });
 </script>
 
-{#if $monthlySpendingQuery.isLoading}
-  <div class="h-[400px] w-full flex items-center justify-center">
-    <div class="text-center space-y-2">
-      <p class="text-lg font-medium text-muted-foreground">Loading spending analytics...</p>
-    </div>
-  </div>
-{:else if $monthlySpendingQuery.error}
-  <div class="h-[400px] w-full flex items-center justify-center">
-    <div class="text-center space-y-2">
-      <p class="text-lg font-medium text-destructive">Error loading spending data</p>
-      <p class="text-sm text-muted-foreground/70">{$monthlySpendingQuery.error.message}</p>
-    </div>
-  </div>
-{:else if monthlySpendingData.length > 0}
-  <!-- Summary Statistics Panel -->
-  {#if summaryStats}
-    <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-      <Card.Root>
-        <Card.Content class="p-4 text-center">
-          <div class="text-2xl font-bold">{currencyFormatter.format(summaryStats.average)}</div>
-          <div class="text-sm text-muted-foreground">Average Monthly</div>
-        </Card.Content>
-      </Card.Root>
+<AnalyticsChartShell
+  loading={$monthlySpendingQuery.isLoading}
+  error={$monthlySpendingQuery.error?.message}
+  data={monthlySpendingData}
+  {summaryStats}
+  emptyMessage="Add some expense transactions to see spending trends"
+>
+  {#snippet title()}
+    Monthly Spending Trends
+  {/snippet}
 
-      <Card.Root>
-        <Card.Content class="p-4 text-center">
-          <div class="text-2xl font-bold text-red-600">{currencyFormatter.format(summaryStats.highest)}</div>
-          <div class="text-sm text-muted-foreground">Highest ({summaryStats.highestMonth})</div>
-        </Card.Content>
-      </Card.Root>
+  {#snippet subtitle()}
+    Expense patterns and analytics over time
+  {/snippet}
 
-      <Card.Root>
-        <Card.Content class="p-4 text-center">
-          <div class="text-2xl font-bold text-green-600">{currencyFormatter.format(summaryStats.lowest)}</div>
-          <div class="text-sm text-muted-foreground">Lowest ({summaryStats.lowestMonth})</div>
-        </Card.Content>
-      </Card.Root>
+  {#snippet chart({ data }: { data: typeof monthlySpendingData })}
+    <Chart.Container config={chartConfig} class="h-full w-full">
+      <AreaChart
+        {data}
+        x="monthDisplay"
+        y="spending"
+        yNice
+        padding={{ left: 80, right: 20, top: 20, bottom: 40 }}
+      >
+        {#snippet axis()}
+          <Axis placement="left" format="currency" grid rule />
+          <Axis placement="bottom" grid rule />
+        {/snippet}
 
-      <Card.Root>
-        <Card.Content class="p-4 text-center">
-          <div class="text-2xl font-bold">{currencyFormatter.format(summaryStats.total)}</div>
-          <div class="text-sm text-muted-foreground">Total ({summaryStats.totalTransactions} transactions)</div>
-        </Card.Content>
-      </Card.Root>
-    </div>
-  {/if}
-
-  <Chart.Container config={chartConfig} class="h-[300px] w-full">
-    <AreaChart
-      data={monthlySpendingData}
-      x="monthDisplay"
-      y="spending"
-      yNice
-      padding={{ left: 80, right: 20, top: 20, bottom: 40 }}
-    >
-      {#snippet axis()}
-        <Axis placement="left" format="currency" grid rule />
-        <Axis placement="bottom" grid rule />
-      {/snippet}
-
-      {#snippet tooltip()}
-        <Chart.Tooltip
-          labelFormatter={(value, payload) => {
-            return payload?.[0]?.payload?.monthLabel || value;
-          }}
-        >
-          {#snippet formatter({ value, name })}
-            <div class="flex flex-1 shrink-0 justify-between leading-none items-center">
-              <span class="text-muted-foreground">{name}</span>
-              <span class="text-foreground font-mono font-medium tabular-nums">
-                {currencyFormatter.format(Number(value))}
-              </span>
-            </div>
-          {/snippet}
-        </Chart.Tooltip>
-      {/snippet}
-    </AreaChart>
-  </Chart.Container>
-{:else}
-  <div class="h-[400px] w-full flex items-center justify-center">
-    <div class="text-center space-y-2">
-      <p class="text-lg font-medium text-muted-foreground">No spending data available</p>
-      <p class="text-sm text-muted-foreground/70">Add some expense transactions to see spending trends</p>
-    </div>
-  </div>
-{/if}
+        {#snippet tooltip()}
+          <Chart.Tooltip
+            labelFormatter={(value, payload) => {
+              return payload?.[0]?.payload?.monthLabel || value;
+            }}
+          >
+            {#snippet formatter({ value, name })}
+              <div class="flex flex-1 shrink-0 justify-between leading-none items-center">
+                <span class="text-muted-foreground">{name}</span>
+                <span class="text-foreground font-mono font-medium tabular-nums">
+                  {currencyFormatter.format(Number(value))}
+                </span>
+              </div>
+            {/snippet}
+          </Chart.Tooltip>
+        {/snippet}
+      </AreaChart>
+    </Chart.Container>
+  {/snippet}
+</AnalyticsChartShell>
