@@ -1,11 +1,11 @@
 <script lang="ts">
 import * as Chart from '$lib/components/ui/chart';
-import * as Card from '$lib/components/ui/card';
 import { LineChart, Axis } from 'layerchart';
 import type {TransactionsFormat} from '$lib/types';
 import { monthYearFmt, monthYearShortFmt } from '$lib/utils/date-formatters';
 import { timezone } from '$lib/utils/dates';
 import { currencyFormatter } from '$lib/utils/formatters';
+import AnalyticsChartShell from './analytics-chart-shell.svelte';
 
 interface Props {
   transactions: TransactionsFormat[];
@@ -51,9 +51,16 @@ const chartData = $derived.by(() => {
   return monthlyData.sort((a, b) => a.month.localeCompare(b.month));
 });
 
-// Summary statistics for income vs expenses
+// Summary statistics for the shell component
 const summaryStats = $derived.by(() => {
-  if (!chartData.length) return null;
+  if (!chartData.length) {
+    return [
+      { label: 'Avg Monthly Income', value: '$0.00' },
+      { label: 'Avg Monthly Expenses', value: '$0.00' },
+      { label: 'Net Income', value: '$0.00' },
+      { label: 'Income Ratio', value: '0%' }
+    ];
+  }
 
   const totalIncome = chartData.reduce((sum, d) => sum + d.income, 0);
   const totalExpenses = chartData.reduce((sum, d) => sum + d.expenses, 0);
@@ -61,14 +68,29 @@ const summaryStats = $derived.by(() => {
   const avgMonthlyIncome = totalIncome / chartData.length;
   const avgMonthlyExpenses = totalExpenses / chartData.length;
 
-  return {
-    totalIncome,
-    totalExpenses,
-    netIncome,
-    avgMonthlyIncome,
-    avgMonthlyExpenses,
-    monthCount: chartData.length
-  };
+  const incomeRatio = avgMonthlyExpenses > 0
+    ? (avgMonthlyIncome / avgMonthlyExpenses * 100).toFixed(0) + '%'
+    : '∞';
+
+  return [
+    {
+      label: 'Avg Monthly Income',
+      value: currencyFormatter.format(avgMonthlyIncome)
+    },
+    {
+      label: 'Avg Monthly Expenses',
+      value: currencyFormatter.format(avgMonthlyExpenses)
+    },
+    {
+      label: 'Net Income',
+      value: currencyFormatter.format(netIncome),
+      description: `${chartData.length} months`
+    },
+    {
+      label: 'Income Ratio',
+      value: incomeRatio
+    }
+  ];
 });
 
 // Chart configuration for grouped bar chart
@@ -85,86 +107,53 @@ const chartConfig = {
 
 </script>
 
-{#if chartData.length > 0}
-  <!-- Summary Statistics Panel -->
-  {#if summaryStats}
-    <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-      <Card.Root>
-        <Card.Content class="p-4 text-center">
-          <div class="text-2xl font-bold text-green-600">{currencyFormatter.format(summaryStats.avgMonthlyIncome)}</div>
-          <div class="text-sm text-muted-foreground">Avg Monthly Income</div>
-        </Card.Content>
-      </Card.Root>
+<AnalyticsChartShell
+  data={chartData}
+  {summaryStats}
+  emptyMessage="Add some transactions to see income vs expense trends"
+>
+  {#snippet title()}
+    Income vs Expenses
+  {/snippet}
 
-      <Card.Root>
-        <Card.Content class="p-4 text-center">
-          <div class="text-2xl font-bold text-red-600">{currencyFormatter.format(summaryStats.avgMonthlyExpenses)}</div>
-          <div class="text-sm text-muted-foreground">Avg Monthly Expenses</div>
-        </Card.Content>
-      </Card.Root>
+  {#snippet subtitle()}
+    Monthly comparison of income and expense patterns
+  {/snippet}
 
-      <Card.Root>
-        <Card.Content class="p-4 text-center">
-          <div class="text-2xl font-bold {summaryStats.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}">
-            {currencyFormatter.format(summaryStats.netIncome)}
-          </div>
-          <div class="text-sm text-muted-foreground">Net Income ({summaryStats.monthCount} months)</div>
-        </Card.Content>
-      </Card.Root>
+  {#snippet chart({ data }: { data: typeof chartData })}
+    <Chart.Container config={chartConfig} class="h-full w-full">
+      <LineChart
+        {data}
+        x="monthDisplay"
+        series={[
+          { key: "income", color: "var(--chart-2)" },
+          { key: "expenses", color: "var(--chart-1)" },
+        ]}
+        yNice
+        padding={{ left: 80, right: 20, top: 20, bottom: 40 }}
+      >
+        {#snippet axis()}
+          <Axis placement="left" format="currency" grid rule />
+          <Axis placement="bottom" grid rule />
+        {/snippet}
 
-      <Card.Root>
-        <Card.Content class="p-4 text-center">
-          <div class="text-2xl font-bold">
-            {summaryStats.avgMonthlyExpenses > 0
-              ? (summaryStats.avgMonthlyIncome / summaryStats.avgMonthlyExpenses * 100).toFixed(0) + '%'
-              : '∞'
-            }
-          </div>
-          <div class="text-sm text-muted-foreground">Income Ratio</div>
-        </Card.Content>
-      </Card.Root>
-    </div>
-  {/if}
-
-  <Chart.Container config={chartConfig} class="h-[300px] w-full">
-    <LineChart
-      data={chartData}
-      x="monthDisplay"
-      series={[
-        { key: "income", color: "var(--chart-2)" },
-        { key: "expenses", color: "var(--chart-1)" },
-      ]}
-      yNice
-      padding={{ left: 80, right: 20, top: 20, bottom: 40 }}
-    >
-      {#snippet axis()}
-        <Axis placement="left" format="currency" grid rule />
-        <Axis placement="bottom" grid rule />
-      {/snippet}
-
-      {#snippet tooltip()}
-        <Chart.Tooltip
-          labelFormatter={(value, payload) => {
-            return payload?.[0]?.payload?.monthLabel || value;
-          }}
-        >
-          {#snippet formatter({ value, name })}
-            <div class="flex flex-1 shrink-0 justify-between leading-none items-center">
-              <span class="text-muted-foreground">{chartConfig[name as keyof typeof chartConfig]?.label || name}</span>
-              <span class="text-foreground font-mono font-medium tabular-nums">
-                {currencyFormatter.format(Number(value) || 0)}
-              </span>
-            </div>
-          {/snippet}
-        </Chart.Tooltip>
-      {/snippet}
-    </LineChart>
-  </Chart.Container>
-{:else}
-  <div class="h-[400px] w-full flex items-center justify-center">
-    <div class="text-center space-y-2">
-      <p class="text-lg font-medium text-muted-foreground">No income/expense data available</p>
-      <p class="text-sm text-muted-foreground/70">Add some transactions to see income vs expense trends</p>
-    </div>
-  </div>
-{/if}
+        {#snippet tooltip()}
+          <Chart.Tooltip
+            labelFormatter={(value, payload) => {
+              return payload?.[0]?.payload?.monthLabel || value;
+            }}
+          >
+            {#snippet formatter({ value, name })}
+              <div class="flex flex-1 shrink-0 justify-between leading-none items-center">
+                <span class="text-muted-foreground">{chartConfig[name as keyof typeof chartConfig]?.label || name}</span>
+                <span class="text-foreground font-mono font-medium tabular-nums">
+                  {currencyFormatter.format(Number(value) || 0)}
+                </span>
+              </div>
+            {/snippet}
+          </Chart.Tooltip>
+        {/snippet}
+      </LineChart>
+    </Chart.Container>
+  {/snippet}
+</AnalyticsChartShell>
