@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as Chart from '$lib/components/ui/chart';
-import { LineChart, Axis } from 'layerchart';
+import * as ChartUI from '$lib/components/ui/chart';
+import { Chart, Spline, Axis, Svg } from 'layerchart';
 import type {TransactionsFormat} from '$lib/types';
 import { monthYearFmt, monthYearShortFmt } from '$lib/utils/date-formatters';
 import { timezone } from '$lib/utils/dates';
@@ -103,7 +103,7 @@ const chartConfig = {
     label: 'Expenses',
     color: 'hsl(var(--chart-2))'
   }
-} satisfies Chart.ChartConfig;
+} satisfies ChartUI.ChartConfig;
 
 </script>
 
@@ -121,28 +121,20 @@ const chartConfig = {
   {/snippet}
 
   {#snippet chart({ data }: { data: typeof chartData })}
-    <Chart.Container config={chartConfig} class="h-full w-full">
-      <LineChart
-        {data}
-        x="monthDisplay"
-        series={[
-          { key: "income", color: "var(--chart-2)" },
-          { key: "expenses", color: "var(--chart-1)" },
-        ]}
-        yNice
-        padding={{ left: 80, right: 20, top: 20, bottom: 40 }}
-      >
+    <ChartUI.Container config={chartConfig} class="h-full w-full">
+      <Chart {data} x="monthDisplay" yNice padding={{ left: 80, right: 20, top: 20, bottom: 40 }}>
+        <Svg>
+          <Spline y="income" class="stroke-[--color-income]" />
+          <Spline y="expenses" class="stroke-[--color-expenses]" />
+        </Svg>
+
         {#snippet axis()}
           <Axis placement="left" format="currency" grid rule />
           <Axis placement="bottom" grid rule />
         {/snippet}
 
-        {#snippet tooltip()}
-          <Chart.Tooltip
-            labelFormatter={(value, payload) => {
-              return payload?.[0]?.payload?.monthLabel || value;
-            }}
-          >
+        {#snippet tooltip({ data })}
+          <ChartUI.Tooltip>
             {#snippet formatter({ value, name })}
               <div class="flex flex-1 shrink-0 justify-between leading-none items-center">
                 <span class="text-muted-foreground">{chartConfig[name as keyof typeof chartConfig]?.label || name}</span>
@@ -151,9 +143,9 @@ const chartConfig = {
                 </span>
               </div>
             {/snippet}
-          </Chart.Tooltip>
+          </ChartUI.Tooltip>
         {/snippet}
-      </LineChart>
-    </Chart.Container>
+      </Chart>
+    </ChartUI.Container>
   {/snippet}
 </AnalyticsChartShell>
