@@ -48,39 +48,37 @@ const currentAnalytic = $derived(analyticsTypes.find((a) => a.id === selectedAna
 
   <!-- Selected Analytics Chart -->
   {#if currentAnalytic}
-    <Card.Root>
-      <Card.Header>
-        <div class="flex items-center gap-2">
-          <currentAnalytic.icon class="h-5 w-5" />
-          <Card.Title>{currentAnalytic.title}</Card.Title>
-        </div>
-        <Card.Description>{currentAnalytic.description}</Card.Description>
-      </Card.Header>
-      <Card.Content class="p-6">
-        <div class="h-[400px] w-full">
-          {#if selectedAnalytic === 'monthly-spending'}
-            <MonthlySpendingChart accountId={Number(accountId)} />
-          {:else if selectedAnalytic === 'income-vs-expenses'}
-            <IncomeVsExpensesChart {transactions} />
-          {:else}
-            <div class="h-full flex items-center justify-center">
-              <div class="text-center space-y-4">
-                {#if currentAnalytic?.icon}
-                  <currentAnalytic.icon class="h-12 w-12 mx-auto text-muted-foreground/30" />
-                {/if}
-                <div>
-                  <h3 class="text-lg font-semibold text-muted-foreground">
-                    {currentAnalytic?.title || 'Coming Soon'}
-                  </h3>
-                  <p class="text-sm text-muted-foreground/70">
-                    This chart is not yet implemented.
-                  </p>
-                </div>
+    {#if selectedAnalytic === 'monthly-spending'}
+      <MonthlySpendingChart accountId={Number(accountId)} />
+    {:else if selectedAnalytic === 'income-vs-expenses'}
+      <IncomeVsExpensesChart {transactions} />
+    {:else}
+      <Card.Root>
+        <Card.Header>
+          <div class="flex items-center gap-2">
+            <currentAnalytic.icon class="h-5 w-5" />
+            <Card.Title>{currentAnalytic.title}</Card.Title>
+          </div>
+          <Card.Description>{currentAnalytic.description}</Card.Description>
+        </Card.Header>
+        <Card.Content class="p-6">
+          <div class="h-[400px] w-full flex items-center justify-center">
+            <div class="text-center space-y-4">
+              {#if currentAnalytic?.icon}
+                <currentAnalytic.icon class="h-12 w-12 mx-auto text-muted-foreground/30" />
+              {/if}
+              <div>
+                <h3 class="text-lg font-semibold text-muted-foreground">
+                  {currentAnalytic?.title || 'Coming Soon'}
+                </h3>
+                <p class="text-sm text-muted-foreground/70">
+                  This chart is not yet implemented.
+                </p>
               </div>
             </div>
-          {/if}
-        </div>
-      </Card.Content>
-    </Card.Root>
+          </div>
+        </Card.Content>
+      </Card.Root>
+    {/if}
   {/if}
 </div>
