@@ -59,7 +59,7 @@ export const columns = (
    * but read-only with icon for scheduled transactions
    */
   const renderEditableCell = (info: CellContext<TransactionsFormat, unknown>, config: {
-    scheduledRenderer: () => { value: string; icon: Component };
+    scheduledRenderer: () => { value: string; icon?: Component };
     editableRenderer: () => { component: any; props: Record<string, unknown> };
   }) => {
     const transaction = info.row.original;
@@ -427,8 +427,7 @@ export const columns = (
 
         return renderEditableCell(info, {
           scheduledRenderer: () => ({
-            value: currencyFormatter.format(amount || 0),
-            icon: DollarSign
+            value: currencyFormatter.format(amount || 0)
           }),
           editableRenderer: () => ({
             component: EditableNumericCell,
