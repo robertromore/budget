@@ -1,6 +1,7 @@
 <script lang="ts">
 import type {WidgetProps} from '$lib/types/widgets';
 import {currencyFormatter} from '$lib/utils/formatters';
+import {parseISOString, formatDateDisplay} from '$lib/utils/dates';
 import {ArrowDownLeft, ArrowUpRight} from '$lib/components/icons';
 import WidgetCard from './widget-card.svelte';
 
@@ -40,7 +41,10 @@ const totalAmount = data?.['recentActivity'] ?? 0;
                 {transaction.description || 'Transaction'}
               </div>
               <div class="text-muted-foreground text-xs">
-                {new Date(transaction.date).toLocaleDateString()}
+                {(() => {
+                  const dateValue = parseISOString(transaction.date);
+                  return dateValue ? formatDateDisplay(dateValue, 'short') : transaction.date;
+                })()}
               </div>
             </div>
             <div

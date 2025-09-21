@@ -1,42 +1,33 @@
 import type {TransactionsFormat} from "$lib/types";
 import {getSpecialDateValue} from "$lib/utils";
-import {getLocalTimeZone, type DateValue} from "@internationalized/date";
+import type {DateValue} from "@internationalized/date";
+import {dateDifference, isSamePeriod, parseISOString} from "$lib/utils/dates";
 import type {ColumnFiltersState, Row, Updater} from "@tanstack/table-core";
-import {
-  differenceInDays,
-  differenceInMonths,
-  differenceInQuarters,
-  differenceInYears,
-  isSameDay,
-  isSameMonth,
-  isSameQuarter,
-  isSameYear,
-  parseISO,
-} from "date-fns";
 
 function compareDate(originalDate: DateValue, compareDate: string) {
   // @todo? cache results so comparison is only done once
   const [range, stringDate] = compareDate.includes(":")
     ? getSpecialDateValue(compareDate)
     : ["day", compareDate];
-  const date = parseISO(stringDate);
-  const og = parseISO(originalDate.toString());
+  const date = parseISOString(stringDate);
+  if (!date) return null;
+
   switch (range) {
     case "month":
-      return differenceInMonths(og, date);
+      return dateDifference(originalDate, date, 'months');
 
     case "quarter":
-      return differenceInQuarters(og, date);
+      return dateDifference(originalDate, date, 'quarters');
 
     case "half-year":
-      return Math.floor(differenceInMonths(og, date) / 6);
+      return Math.floor(dateDifference(originalDate, date, 'months') / 6);
 
     case "year":
-      return differenceInYears(og, date);
+      return dateDifference(originalDate, date, 'years');
 
     case "day":
     default:
-      return differenceInDays(og, date);
+      return dateDifference(originalDate, date, 'days');
   }
 }
 
@@ -45,24 +36,25 @@ function compareDateInterval(originalDate: DateValue, compareDate: string) {
   const [range, stringDate] = compareDate.includes(":")
     ? getSpecialDateValue(compareDate)
     : ["day", compareDate];
-  const date = parseISO(stringDate);
-  const og = originalDate.toDate(getLocalTimeZone());
+  const date = parseISOString(stringDate);
+  if (!date) return null;
+
   switch (range) {
     case "month":
-      return isSameMonth(og, date);
+      return isSamePeriod(originalDate, date, 'month');
 
     case "quarter":
-      return isSameQuarter(og, date);
+      return isSamePeriod(originalDate, date, 'quarter');
 
     case "half-year":
       return null;
 
     case "year":
-      return isSameYear(og, date);
+      return isSamePeriod(originalDate, date, 'year');
 
     case "day":
     default:
-      return isSameDay(og, date);
+      return isSamePeriod(originalDate, date, 'day');
   }
 }
 
@@ -97,7 +89,7 @@ export const filters = {
   ) => {
     return filterValue.size === 0
       ? true
-      : filterValue.values().some((date) => {
+      : Array.from(filterValue.values()).some((date: string) => {
           return (compareDate(row.original.date, date) || 0) < 0;
         });
   },
@@ -109,7 +101,7 @@ export const filters = {
   ) => {
     return filterValue.size === 0
       ? true
-      : Array.from(filterValue.values()).some((date) => {
+      : Array.from(filterValue.values()).some((date: string) => {
           return (compareDate(row.original.date, date) || 0) > 0;
         });
   },
@@ -121,7 +113,7 @@ export const filters = {
   ) => {
     return filterValue.size === 0
       ? true
-      : filterValue.values().some((date) => {
+      : Array.from(filterValue.values()).some((date: string) => {
           return compareDateInterval(row.original.date, date);
         });
   },
@@ -133,7 +125,7 @@ export const filters = {
   ) => {
     return filterValue.size === 0
       ? true
-      : filterValue.values().some((date) => {
+      : Array.from(filterValue.values()).some((date: string) => {
           return compareDateInterval(row.original.date, date);
         });
   },
