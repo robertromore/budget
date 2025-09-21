@@ -54,6 +54,27 @@ export const columns = (
     }
   };
 
+  /**
+   * Helper function to render cells that are editable for normal transactions
+   * but read-only with icon for scheduled transactions
+   */
+  const renderEditableCell = (info: CellContext<TransactionsFormat, unknown>, config: {
+    scheduledRenderer: () => { value: string; icon: Component };
+    editableRenderer: () => { component: any; props: Record<string, unknown> };
+  }) => {
+    const transaction = info.row.original;
+
+    // Read-only for scheduled transactions
+    if (transaction.status === "scheduled") {
+      const { value, icon } = config.scheduledRenderer();
+      return renderComponent(ReadOnlyCellWithIcon, { value, icon });
+    }
+
+    // Editable for normal transactions
+    const { component, props } = config.editableRenderer();
+    return renderComponent(component, props);
+  };
+
   return [
     {
       id: "select-col",
@@ -144,27 +165,27 @@ export const columns = (
       accessorKey: "date",
       id: "date",
       cell: (info) => {
-        const transaction = info.row.original;
         const dateValue = info.getValue() as DateValue;
 
-        // Read-only for scheduled transactions
-        if (transaction.status === "scheduled") {
-          return renderComponent(ReadOnlyCellWithIcon, {
+        return renderEditableCell(info, {
+          scheduledRenderer: () => ({
             value: dateValue ? dateFormatter.format(dateValue.toDate(getLocalTimeZone())) : "—",
             icon: CalendarDays
-          });
-        }
-
-        return renderComponent(EditableDateCell, {
-          value: dateValue,
-          onUpdateValue: (new_value: unknown) =>
-            updateHandler(info, "date", new_value, (new_value) => {
-              // Convert DateValue to ISO string format for database
-              if (new_value && typeof new_value === "object" && "toString" in new_value) {
-                return (new_value as DateValue).toString(); // Returns YYYY-MM-DD
-              }
-              return new_value;
-            }),
+          }),
+          editableRenderer: () => ({
+            component: EditableDateCell,
+            props: {
+              value: dateValue,
+              onUpdateValue: (new_value: unknown) =>
+                updateHandler(info, "date", new_value, (new_value) => {
+                  // Convert DateValue to ISO string format for database
+                  if (new_value && typeof new_value === "object" && "toString" in new_value) {
+                    return (new_value as DateValue).toString(); // Returns YYYY-MM-DD
+                  }
+                  return new_value;
+                }),
+            }
+          })
         });
       },
       aggregatedCell: () => {},
@@ -213,37 +234,37 @@ export const columns = (
       accessorKey: "payeeId",
       id: "payee",
       cell: (info) => {
-        const transaction = info.row.original;
         const payee = payees.getById(info.getValue() as number);
 
-        // Read-only for scheduled transactions
-        if (transaction.status === "scheduled") {
-          return renderComponent(ReadOnlyCellWithIcon, {
+        return renderEditableCell(info, {
+          scheduledRenderer: () => ({
             value: payee?.name || "—",
             icon: HandCoins
-          });
-        }
-
-        return renderComponent(EditableEntityCell, {
-          value: payee as EditableEntityItem,
-          entityLabel: "payee",
-          onUpdateValue: (new_value) => updateHandler(info, "payeeId", new_value),
-          entities: payees.all as EditableEntityItem[],
-          icon: HandCoins as unknown as Component,
-          management: {
-            enable: true,
-            component: ManagePayeeForm,
-            onSave: (new_value: EditableEntityItem, is_new: boolean) => {
-              if (is_new) {
-                payees.addPayee(new_value as Payee);
-              } else {
-                payees.updatePayee(new_value as Payee);
-              }
-            },
-            onDelete: (id: number) => {
-              payees.deletePayee(id);
-            },
-          },
+          }),
+          editableRenderer: () => ({
+            component: EditableEntityCell,
+            props: {
+              value: payee as EditableEntityItem,
+              entityLabel: "payee",
+              onUpdateValue: (new_value) => updateHandler(info, "payeeId", new_value),
+              entities: payees.all as EditableEntityItem[],
+              icon: HandCoins as unknown as Component,
+              management: {
+                enable: true,
+                component: ManagePayeeForm,
+                onSave: (new_value: EditableEntityItem, is_new: boolean) => {
+                  if (is_new) {
+                    payees.addPayee(new_value as Payee);
+                  } else {
+                    payees.updatePayee(new_value as Payee);
+                  }
+                },
+                onDelete: (id: number) => {
+                  payees.deletePayee(id);
+                },
+              },
+            }
+          })
         });
       },
       aggregatedCell: () => {},
@@ -290,25 +311,25 @@ export const columns = (
       accessorKey: "notes",
       id: "notes",
       cell: (info) => {
-        const transaction = info.row.original;
         const notes = info.getValue() as string;
 
-        // Read-only for scheduled transactions
-        if (transaction.status === "scheduled") {
-          return renderComponent(ReadOnlyCellWithIcon, {
+        return renderEditableCell(info, {
+          scheduledRenderer: () => ({
             value: notes || "—",
             icon: StickyNote
-          });
-        }
-
-        return renderComponent(DataTableEditableCell, {
-          value: notes,
-          onUpdateValue: (new_value: string) => {
-            const id = info.row.original.id;
-            if (typeof id === 'number') {
-              return updateData(id, "notes", new_value);
+          }),
+          editableRenderer: () => ({
+            component: DataTableEditableCell,
+            props: {
+              value: notes,
+              onUpdateValue: (new_value: string) => {
+                const id = info.row.original.id;
+                if (typeof id === 'number') {
+                  return updateData(id, "notes", new_value);
+                }
+              },
             }
-          },
+          })
         });
       },
       aggregatedCell: () => {},
@@ -327,37 +348,37 @@ export const columns = (
       accessorKey: "categoryId",
       id: "category",
       cell: (info) => {
-        const transaction = info.row.original;
         const category = categories.getById(info.getValue() as number);
 
-        // Read-only for scheduled transactions
-        if (transaction.status === "scheduled") {
-          return renderComponent(ReadOnlyCellWithIcon, {
+        return renderEditableCell(info, {
+          scheduledRenderer: () => ({
             value: category?.name || "—",
             icon: SquareMousePointer
-          });
-        }
-
-        return renderComponent(EditableEntityCell, {
-          value: category as EditableEntityItem,
-          entityLabel: "category",
-          onUpdateValue: (new_value) => updateHandler(info, "categoryId", new_value),
-          entities: categories.all as EditableEntityItem[],
-          icon: SquareMousePointer as unknown as Component,
-          management: {
-            enable: true,
-            component: ManageCategoryForm,
-            onSave: (new_value: EditableEntityItem, is_new: boolean) => {
-              if (is_new) {
-                categories.addCategory(new_value as Category);
-              } else {
-                categories.updateCategory(new_value as Category);
-              }
-            },
-            onDelete: (id: number) => {
-              categories.deleteCategory(id);
-            },
-          },
+          }),
+          editableRenderer: () => ({
+            component: EditableEntityCell,
+            props: {
+              value: category as EditableEntityItem,
+              entityLabel: "category",
+              onUpdateValue: (new_value) => updateHandler(info, "categoryId", new_value),
+              entities: categories.all as EditableEntityItem[],
+              icon: SquareMousePointer as unknown as Component,
+              management: {
+                enable: true,
+                component: ManageCategoryForm,
+                onSave: (new_value: EditableEntityItem, is_new: boolean) => {
+                  if (is_new) {
+                    categories.addCategory(new_value as Category);
+                  } else {
+                    categories.updateCategory(new_value as Category);
+                  }
+                },
+                onDelete: (id: number) => {
+                  categories.deleteCategory(id);
+                },
+              },
+            }
+          })
         });
       },
       aggregatedCell: () => {},
@@ -402,20 +423,20 @@ export const columns = (
       accessorKey: "amount",
       id: "amount",
       cell: (info) => {
-        const transaction = info.row.original;
         const amount = info.getValue() as number;
 
-        // Read-only for scheduled transactions
-        if (transaction.status === "scheduled") {
-          return renderComponent(ReadOnlyCellWithIcon, {
+        return renderEditableCell(info, {
+          scheduledRenderer: () => ({
             value: currencyFormatter.format(amount || 0),
             icon: DollarSign
-          });
-        }
-
-        return renderComponent(EditableNumericCell, {
-          value: amount,
-          onUpdateValue: (new_value) => updateHandler(info, "amount", new_value),
+          }),
+          editableRenderer: () => ({
+            component: EditableNumericCell,
+            props: {
+              value: amount,
+              onUpdateValue: (new_value) => updateHandler(info, "amount", new_value),
+            }
+          })
         });
       },
       aggregatedCell: (info) => {
