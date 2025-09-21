@@ -120,7 +120,15 @@ export const removeTransactionsSchema = z.object({
 type TransactionExtraFields = {
   payee: Payee | null;
   category: Category | null;
-  balance: number;
+  balance: number | null;
+} & {
+  // Schedule metadata (only present for scheduled transactions)
+  scheduleId?: number;
+  scheduleName?: string;
+  scheduleSlug?: string;
+  scheduleFrequency?: string;
+  scheduleInterval?: number;
+  scheduleNextOccurrence?: string;
 };
 
 export type Transaction = typeof transactions.$inferSelect & TransactionExtraFields;

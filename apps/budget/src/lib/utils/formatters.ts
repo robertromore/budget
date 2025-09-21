@@ -37,3 +37,20 @@ export const periodFormatter = {
     return periodMap[period] || `${period.charAt(0).toUpperCase() + period.slice(1)}ly`;
   },
 };
+
+// Recurring pattern formatter for schedules
+export const recurringFormatter = {
+  format: (frequency: string, interval: number = 1): string => {
+    if (interval === 1) {
+      // For interval of 1, use the frequency name directly
+      return frequency.charAt(0).toUpperCase() + frequency.slice(1); // "Daily", "Weekly", etc.
+    } else {
+      // For intervals > 1, use "Every X [units]"
+      const units = frequency === 'daily' ? 'days' :
+                    frequency === 'weekly' ? 'weeks' :
+                    frequency === 'monthly' ? 'months' :
+                    frequency === 'yearly' ? 'years' : frequency;
+      return `Every ${interval} ${units}`;
+    }
+  },
+};

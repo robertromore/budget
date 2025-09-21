@@ -1,91 +1,146 @@
 import {
-  categories,
   formInsertCategorySchema,
   removeCategoriesSchema,
   removeCategorySchema,
-  type Category,
 } from "$lib/schema";
-import {eq, isNull, inArray} from "drizzle-orm";
 import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
 import {z} from "zod";
 import {TRPCError} from "@trpc/server";
+import {CategoryService, categoryIdSchema, searchCategoriesSchema} from "$lib/server/domains/categories";
+import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
+
+const categoryService = new CategoryService();
 
 export const categoriesRoutes = t.router({
-  all: publicProcedure.query(async ({ctx}) => {
-    return await ctx.db.select().from(categories).where(isNull(categories.deletedAt));
-  }),
-  load: publicProcedure.input(z.object({id: z.coerce.number()})).query(async ({ctx, input}) => {
-    const result = await ctx.db.query.categories.findMany({
-      where: (categories, {eq, and, isNull}) =>
-        and(eq(categories.id, input.id), isNull(categories.deletedAt)),
-    });
-    if (!result[0]) {
+  all: publicProcedure.query(async () => {
+    try {
+      return await categoryService.getAllCategories();
+    } catch (error) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Category not found",
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to fetch categories",
       });
     }
-    return result[0];
   }),
-  remove: rateLimitedProcedure.input(removeCategorySchema).mutation(async ({ctx, input}) => {
-    if (!input) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Category ID is required for deletion",
-      });
-    }
-    const result = await ctx.db
-      .update(categories)
-      .set({deletedAt: new Date().toISOString()})
-      .where(eq(categories.id, input.id))
-      .returning();
-    if (!result[0]) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Category not found or could not be deleted",
-      });
-    }
-    return result[0];
-  }),
-  delete: bulkOperationProcedure
-    .input(removeCategoriesSchema)
-    .mutation(async ({input: {entities}, ctx: {db}}) => {
-      return await db
-        .update(categories)
-        .set({deletedAt: new Date().toISOString()})
-        .where(inArray(categories.id, entities))
-        .returning();
-    }),
-  save: rateLimitedProcedure
-    .input(formInsertCategorySchema)
-    .mutation(async ({input: {id, name, notes}, ctx: {db}}) => {
-      let entities;
-      if (id) {
-        entities = await db
-          .update(categories)
-          .set({
-            name,
-            notes,
-          })
-          .where(eq(categories.id, id))
-          .returning();
-      } else {
-        entities = await db
-          .insert(categories)
-          .values({
-            name,
-            notes,
-          })
-          .returning();
-      }
-      if (!entities[0]) {
+
+  load: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
+    try {
+      return await categoryService.getCategoryById(input.id);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to save category",
+          code: "NOT_FOUND",
+          message: error.message,
         });
       }
-      const entity = entities[0];
-      (entity as any).is_new = !!id;
-      return entity;
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to load category",
+      });
+    }
+  }),
+
+  search: publicProcedure.input(searchCategoriesSchema).query(async ({input}) => {
+    try {
+      return await categoryService.searchCategories(input.query);
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to search categories",
+      });
+    }
+  }),
+
+  remove: rateLimitedProcedure.input(removeCategorySchema).mutation(async ({input}) => {
+    try {
+      return await categoryService.deleteCategory(input.id, {force: false});
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: error.message,
+        });
+      }
+      if (error instanceof ConflictError) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: error.message,
+        });
+      }
+      if (error instanceof ValidationError) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error.message,
+        });
+      }
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to delete category",
+      });
+    }
+  }),
+
+  delete: bulkOperationProcedure
+    .input(removeCategoriesSchema)
+    .mutation(async ({input: {entities}}) => {
+      try {
+        const result = await categoryService.bulkDeleteCategories(entities, {force: false});
+        return {
+          deletedCount: result.deletedCount,
+          errors: result.errors,
+        };
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to bulk delete categories",
+        });
+      }
+    }),
+
+  save: rateLimitedProcedure
+    .input(formInsertCategorySchema)
+    .mutation(async ({input: {id, name, notes}}) => {
+      try {
+        if (id) {
+          // Update existing category
+          const category = await categoryService.updateCategory(id, {name, notes});
+          (category as any).is_new = false; // Maintain compatibility with existing UI
+          return category;
+        } else {
+          // Create new category
+          const category = await categoryService.createCategory({name, notes});
+          (category as any).is_new = true; // Maintain compatibility with existing UI
+          return category;
+        }
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: error.message,
+          });
+        }
+        if (error instanceof ConflictError) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: error.message,
+          });
+        }
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to save category",
+        });
+      }
     }),
 });

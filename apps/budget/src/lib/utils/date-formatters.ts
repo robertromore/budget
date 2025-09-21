@@ -13,6 +13,10 @@ export const monthYearFmt = new DateFormatter("en-US", {
   month: "short",
   year: "numeric",
 });
+export const monthYearShortFmt = new DateFormatter("en-US", {
+  month: "2-digit",
+  year: "2-digit",
+});
 export const dateFormatter = new DateFormatter("en-US", {
   dateStyle: "long",
 });

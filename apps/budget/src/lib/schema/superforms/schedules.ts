@@ -14,13 +14,15 @@ export const superformInsertScheduleSchema = z.object({
     ),
   slug: z
     .string()
-    .transform((val) => val?.trim()?.toLowerCase())
+    .optional()
+    .transform((val) => val?.trim()?.toLowerCase() || undefined)
     .pipe(
       z
         .string()
         .min(2, "Slug must be at least 2 characters")
         .max(30, "Slug must be less than 30 characters")
         .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens")
+        .optional()
     ),
   status: z.enum(["active", "inactive"]).default("active"),
   amount: z.number().default(0),
@@ -31,6 +33,7 @@ export const superformInsertScheduleSchema = z.object({
   dateId: z.number().optional().nullable(),
   payeeId: z.number().positive("Payee is required"),
   accountId: z.number().positive("Account is required"),
+  repeating_date: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -49,13 +52,14 @@ export const superformUpdateScheduleSchema = z.object({
     .optional(),
   slug: z
     .string()
-    .transform((val) => val?.trim()?.toLowerCase())
+    .transform((val) => val?.trim()?.toLowerCase() || undefined)
     .pipe(
       z
         .string()
         .min(2, "Slug must be at least 2 characters")
         .max(30, "Slug must be less than 30 characters")
         .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens")
+        .optional()
     )
     .optional(),
   status: z.enum(["active", "inactive"]).optional(),

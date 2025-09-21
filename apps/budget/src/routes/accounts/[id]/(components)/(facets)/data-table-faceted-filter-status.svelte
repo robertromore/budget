@@ -4,9 +4,8 @@ import {DataTableFacetedFilter} from '..';
 import CircleUserRound from '@lucide/svelte/icons/circle-user-round';
 import UsersRound from '@lucide/svelte/icons/users-round';
 import type {Component} from 'svelte';
-import {page} from '$app/state';
-import {TransactionStatuses, type Transaction} from '$lib/schema';
-import {SvelteMap, SvelteSet} from 'svelte/reactivity';
+import {TransactionStatuses} from '$lib/schema';
+import {SvelteMap} from 'svelte/reactivity';
 import {currentViews} from '$lib/states/views';
 import type {FacetedFilterOption} from '$lib/types';
 
@@ -16,34 +15,31 @@ type Props<TData, TValue> = {
 
 let {column}: Props<TData, TValue> = $props();
 
-const {data} = $derived(page);
-const account = $derived(data.account);
-
 const activeView = $derived(currentViews.get().activeView);
 const activeViewModel = $derived(activeView.view);
 const selectedValues = $derived(activeViewModel.getFilterValue(column.id));
 
-const statuses: TransactionStatuses[] = $derived([
-  ...new SvelteSet<TransactionStatuses>(
-    account.transactions.map((transaction: Transaction) => transaction.status)
-  ).union(selectedValues),
-] as TransactionStatuses[]);
+// Get faceted values with counts from TanStack Table
+const facets = $derived(column?.getFacetedUniqueValues?.() || new Map());
 const allStatuses = $derived(Object.values(TransactionStatuses));
 
-const statusOptions = $derived(
-  new SvelteMap<string, FacetedFilterOption>(
-    statuses?.map((status: TransactionStatuses) => {
-      return [
-        status,
-        {
-          label: status,
-          value: status,
-          icon: CircleUserRound as unknown as Component,
-        },
-      ];
-    })
-  )
-);
+const statusOptions = $derived.by(() => {
+  const options = new SvelteMap<string, FacetedFilterOption>();
+
+  // Add options based on faceted data (actual data in table with counts)
+  facets.forEach((count: number, value: string) => {
+    if (value && Object.values(TransactionStatuses).includes(value as TransactionStatuses)) {
+      const status = value as TransactionStatuses;
+      options.set(status, {
+        label: status,
+        value: status,
+        icon: CircleUserRound as unknown as Component,
+      });
+    }
+  });
+
+  return options;
+});
 
 const allStatusOptions = $derived(
   new SvelteMap<string, FacetedFilterOption>(

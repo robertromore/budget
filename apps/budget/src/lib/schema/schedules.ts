@@ -11,6 +11,7 @@ import {createInsertSchema, createSelectSchema} from "drizzle-zod";
 import {transactions} from "./transactions";
 import {z} from "zod/v4";
 import {payees} from "./payees";
+import {categories} from "./categories";
 import {accounts} from "./accounts";
 import {scheduleDates} from "./schedule-dates";
 
@@ -32,6 +33,8 @@ export const schedules = sqliteTable(
     payeeId: integer("payee_id")
       .notNull()
       .references(() => payees.id),
+    categoryId: integer("category_id")
+      .references(() => categories.id),
     accountId: integer("account_id")
       .notNull()
       .references(() => accounts.id),
@@ -46,6 +49,7 @@ export const schedules = sqliteTable(
     index("relations_schedule_schedule_date_idx").on(table.dateId),
     index("relations_schedule_account_idx").on(table.accountId),
     index("relations_schedule_payee_idx").on(table.payeeId),
+    index("relations_schedule_category_idx").on(table.categoryId),
     index("schedule_status_idx").on(table.status),
     index("schedule_name_idx").on(table.name),
     index("schedule_slug_idx").on(table.slug),
@@ -62,6 +66,14 @@ export const schedulesRelations = relations(schedules, ({many, one}) => ({
     fields: [schedules.payeeId],
     references: [payees.id],
   }),
+  category: one(categories, {
+    fields: [schedules.categoryId],
+    references: [categories.id],
+  }),
+  scheduleDate: one(scheduleDates, {
+    fields: [schedules.dateId],
+    references: [scheduleDates.id],
+  }),
 }));
 
 export const selectScheduleSchema = createSelectSchema(schedules);
@@ -70,11 +82,15 @@ export const formInsertScheduleSchema = createInsertSchema(schedules, {
   name: (schema) => schema.min(2).max(30),
 });
 export const removeScheduleSchema = z.object({id: z.number().nonnegative()});
+export const duplicateScheduleSchema = z.object({id: z.number().nonnegative()});
 
-interface SchedulesExtraFields {}
+interface SchedulesExtraFields {
+  scheduleDate?: typeof scheduleDates.$inferSelect | null;
+}
 
 export type Schedule = typeof schedules.$inferSelect & SchedulesExtraFields;
 export type NewSchedule = typeof schedules.$inferInsert;
 export type InsertScheduleSchema = typeof insertScheduleSchema;
 export type FormInsertScheduleSchema = typeof formInsertScheduleSchema;
 export type RemoveScheduleSchema = typeof removeScheduleSchema;
+export type DuplicateScheduleSchema = typeof duplicateScheduleSchema;

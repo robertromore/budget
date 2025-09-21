@@ -54,45 +54,58 @@ $effect(() => {
 });
 </script>
 
-<div class="flex items-center space-x-1">
+<div class="space-y-3">
   <!-- Type Selector -->
-  <Popover.Root bind:open={typeOpen}>
-    <Popover.Trigger bind:ref={triggerRef}>
-      {#snippet child({props})}
-        <Button
-          variant="outline"
-          class="justify-between"
-          {...props}
-          role="combobox"
-          aria-expanded={open}>
-          {types.find((t) => t.value === type)?.label ?? 'Select Type'}
-        </Button>
-      {/snippet}
-    </Popover.Trigger>
-    <Popover.Content class="w-auto p-0">
-      <Command.Root>
-        <Command.List>
-          <Command.Group>
-            {#each types as availableType}
-              <Command.Item
-                value={availableType.label}
-                onSelect={() => {
-                  handleTypeChange(availableType.value as 'exact' | 'approximate' | 'range');
-                  closeAndFocusTrigger();
-                }}>
-                {availableType.label}
-              </Command.Item>
-            {/each}
-          </Command.Group>
-        </Command.List>
-      </Command.Root>
-    </Popover.Content>
-  </Popover.Root>
+  <div class="flex items-center justify-between">
+    <span class="text-sm font-medium">Amount Type</span>
+    <Popover.Root bind:open={typeOpen}>
+      <Popover.Trigger bind:ref={triggerRef}>
+        {#snippet child({props})}
+          <Button
+            variant="outline"
+            size="sm"
+            class="justify-between min-w-[140px]"
+            {...props}
+            role="combobox"
+            aria-expanded={open}>
+            {types.find((t) => t.value === type)?.label ?? 'Select Type'}
+          </Button>
+        {/snippet}
+      </Popover.Trigger>
+      <Popover.Content class="w-auto p-0">
+        <Command.Root>
+          <Command.List>
+            <Command.Group>
+              {#each types as availableType}
+                <Command.Item
+                  value={availableType.label}
+                  onSelect={() => {
+                    handleTypeChange(availableType.value as 'exact' | 'approximate' | 'range');
+                    closeAndFocusTrigger();
+                  }}>
+                  {availableType.label}
+                </Command.Item>
+              {/each}
+            </Command.Group>
+          </Command.List>
+        </Command.Root>
+      </Popover.Content>
+    </Popover.Root>
+  </div>
 
+  <!-- Amount Input(s) -->
   {#if type === 'exact' || type === 'approximate'}
-    <NumericInput bind:value={value[0]} />
+    <NumericInput bind:value={value[0]} buttonClass="w-full" />
   {:else if type === 'range'}
-    <NumericInput bind:value={value[0]} />
-    <NumericInput bind:value={value[1]} />
+    <div class="grid grid-cols-2 gap-3">
+      <div class="space-y-1">
+        <label class="text-xs text-muted-foreground">Minimum</label>
+        <NumericInput bind:value={value[0]} buttonClass="w-full" />
+      </div>
+      <div class="space-y-1">
+        <label class="text-xs text-muted-foreground">Maximum</label>
+        <NumericInput bind:value={value[1]} buttonClass="w-full" />
+      </div>
+    </div>
   {/if}
 </div>

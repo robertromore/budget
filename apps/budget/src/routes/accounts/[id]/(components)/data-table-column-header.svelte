@@ -55,11 +55,11 @@ const sortState = $derived(
       </DropdownMenu.Trigger>
       <DropdownMenu.Content align="start">
         {#if column.getCanSort()}
-          <DropdownMenu.Item onclick={() => currentView.updateTableSorter(column.id, false)}>
+          <DropdownMenu.Item onclick={() => currentView.updateTableSorting([{id: column.id, desc: false}])}>
             <ArrowUp class="text-muted-foreground/70 mr-2 size-3.5" />
             Asc
           </DropdownMenu.Item>
-          <DropdownMenu.Item onclick={() => currentView.updateTableSorter(column.id, true)}>
+          <DropdownMenu.Item onclick={() => currentView.updateTableSorting([{id: column.id, desc: true}])}>
             <ArrowDown class="text-muted-foreground/70 mr-2 size-3.5" />
             Desc
           </DropdownMenu.Item>

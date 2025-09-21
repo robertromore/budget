@@ -2,8 +2,6 @@
 import {
   Calendar,
   ChartBar,
-  ChartLine,
-  ChartPie,
   Clock,
   DollarSign,
   Heart,
@@ -34,10 +32,7 @@ export type WidgetType =
   | "spending-trend"
   | "monthly-comparison"
   | "account-health"
-  | "quick-stats"
-  | "balance-trend-chart"
-  | "category-pie-chart"
-  | "income-expenses-chart";
+  | "quick-stats";
 
 export type WidgetSize = "small" | "medium" | "large";
 
@@ -64,39 +59,6 @@ export interface WidgetProps {
   editMode?: boolean;
 }
 
-// Chart type options for different widgets
-export type ChartType = "bar" | "line" | "area" | "pie" | "arc" | "scatter";
-
-export interface ChartTypeOption {
-  value: ChartType;
-  label: string;
-  icon: Component;
-  description: string;
-}
-
-// Chart type options by widget type
-export const WIDGET_CHART_TYPES: Record<string, ChartTypeOption[]> = {
-  "balance-trend-chart": [
-    {value: "line", label: "Line", icon: ChartLine, description: "Smooth trend line"},
-    {value: "area", label: "Area", icon: ChartBar, description: "Filled area chart"},
-    {value: "bar", label: "Bar", icon: ChartBar, description: "Bar chart"},
-  ],
-  "category-pie-chart": [
-    {value: "pie", label: "Pie", icon: ChartPie, description: "Full pie chart"},
-    {value: "arc", label: "Donut", icon: ChartPie, description: "Donut chart with center hole"},
-    {value: "bar", label: "Bar", icon: ChartBar, description: "Horizontal bars"},
-  ],
-  "income-expenses-chart": [
-    {value: "bar", label: "Grouped Bars", icon: ChartBar, description: "Side-by-side comparison"},
-    {value: "line", label: "Lines", icon: ChartLine, description: "Trend lines"},
-    {value: "area", label: "Areas", icon: TrendingUp, description: "Stacked areas"},
-  ],
-  "spending-trend": [
-    {value: "line", label: "Line", icon: ChartLine, description: "Smooth trend line"},
-    {value: "area", label: "Area", icon: TrendingUp, description: "Filled area"},
-    {value: "bar", label: "Bar", icon: ChartBar, description: "Bar chart"},
-  ],
-};
 
 // Default widget configurations
 export const DEFAULT_WIDGETS: WidgetConfig[] = [
@@ -144,15 +106,6 @@ export const DEFAULT_WIDGETS: WidgetConfig[] = [
     position: 4,
     size: "small",
     settings: {},
-  },
-  {
-    id: "category-pie-chart",
-    type: "category-pie-chart",
-    title: "Category Breakdown",
-    enabled: true,
-    position: 5,
-    size: "medium",
-    settings: {period: "month", chartType: "pie"},
   },
 ];
 
@@ -256,36 +209,6 @@ export const WIDGET_DEFINITIONS: Record<WidgetType, WidgetDefinition> = {
     defaultSize: "large",
     availableSizes: ["medium", "large"],
     defaultSettings: {metrics: ["avgTransaction", "highestExpense", "lastActivity"]},
-    configurable: true,
-  },
-  "balance-trend-chart": {
-    type: "balance-trend-chart",
-    name: "Balance Trend Chart",
-    description: "Balance changes over time",
-    icon: ChartLine,
-    defaultSize: "large",
-    availableSizes: ["medium", "large"],
-    defaultSettings: {period: "day", chartType: "line"},
-    configurable: true,
-  },
-  "category-pie-chart": {
-    type: "category-pie-chart",
-    name: "Category Pie Chart",
-    description: "Spending breakdown by category",
-    icon: ChartPie,
-    defaultSize: "medium",
-    availableSizes: ["medium", "large"],
-    defaultSettings: {period: "month", chartType: "pie"},
-    configurable: true,
-  },
-  "income-expenses-chart": {
-    type: "income-expenses-chart",
-    name: "Income vs Expenses Chart",
-    description: "Income and expenses comparison over time",
-    icon: ChartBar,
-    defaultSize: "large",
-    availableSizes: ["medium", "large"],
-    defaultSettings: {period: "month", chartType: "bar"},
     configurable: true,
   },
 };

@@ -4,10 +4,7 @@ import type {WidgetType, WidgetProps} from "$lib/types/widgets";
 import type {Component} from "svelte";
 
 import AccountHealthWidget from "./account-health-widget.svelte";
-import BalanceTrendChartWidget from "./balance-trend-chart-widget.svelte";
 import BalanceWidget from "./balance-widget.svelte";
-import CategoryPieChartWidget from "./category-pie-chart-widget.svelte";
-import IncomeExpensesChartWidget from "./income-expenses-chart-widget.svelte";
 import MonthlyCashflowWidget from "./monthly-cashflow-widget.svelte";
 import MonthlyComparisonWidget from "./monthly-comparison-widget.svelte";
 import PendingBalanceWidget from "./pending-balance-widget.svelte";
@@ -28,9 +25,6 @@ export const WIDGET_COMPONENTS: Record<WidgetType, Component<WidgetProps>> = {
   "monthly-comparison": MonthlyComparisonWidget,
   "account-health": AccountHealthWidget,
   "quick-stats": QuickStatsWidget,
-  "income-expenses-chart": IncomeExpensesChartWidget,
-  "category-pie-chart": CategoryPieChartWidget,
-  "balance-trend-chart": BalanceTrendChartWidget,
 };
 
 export function getWidgetComponent(type: WidgetType) {

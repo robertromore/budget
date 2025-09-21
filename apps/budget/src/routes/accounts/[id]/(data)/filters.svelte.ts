@@ -20,7 +20,7 @@ function compareDate(originalDate: DateValue, compareDate: string) {
     ? getSpecialDateValue(compareDate)
     : ["day", compareDate];
   const date = parseISO(stringDate);
-  const og = originalDate.toString();
+  const og = parseISO(originalDate.toString());
   switch (range) {
     case "month":
       return differenceInMonths(og, date);
@@ -109,7 +109,7 @@ export const filters = {
   ) => {
     return filterValue.size === 0
       ? true
-      : filterValue.values().some((date) => {
+      : Array.from(filterValue.values()).some((date) => {
           return (compareDate(row.original.date, date) || 0) > 0;
         });
   },

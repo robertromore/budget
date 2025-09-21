@@ -1,19 +1,22 @@
 <script lang="ts">
-import {onMount} from 'svelte';
 import Plus from '@lucide/svelte/icons/plus';
 import {Button} from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
-import WidgetDashboard from '$lib/components/widgets/widget-dashboard.svelte';
-import {parseDate, today, getLocalTimeZone} from '@internationalized/date';
+import {parseDate} from '@internationalized/date';
 import type {Table as TanStackTable} from '@tanstack/table-core';
 import {CategoriesState, PayeesState} from '$lib/states/entities';
 import {ServerAccountState} from '$lib/states/views';
 import type {TransactionsFormat} from '$lib/types';
+import type {Transaction} from '$lib/schema';
 
 // Local component imports
-import {AddTransactionDialog, TransactionTableContainer, AnalyticsDashboard} from './(components)';
+import {AddTransactionDialog, TransactionTableContainer} from './(components)';
 import {columns} from './(data)/columns.svelte';
+import {rpc} from '$lib/query';
+import {useQueryClient} from '@tanstack/svelte-query';
 import DeleteTransactionDialog from './(dialogs)/delete-transaction-dialog.svelte';
+import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
+import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
 
 let {data} = $props();
 
@@ -21,45 +24,42 @@ let {data} = $props();
 const accountId = $derived(data.accountId);
 
 // Tab state management
-let activeTab = $state('dashboard');
+let activeTab = $state('transactions');
 
-// Configuration constants
-const CLIENT_SIDE_THRESHOLD = 5000;
-const CACHE_DURATION = 30 * 1000;
-const responseCache = new Map();
-
-// Cache helper functions
-const getCacheKey = (url: string, params?: any) =>
-  params ? `${url}?${JSON.stringify(params)}` : url;
-const getCachedResponse = (key: string) => {
-  const cached = responseCache.get(key);
-  return cached && Date.now() - cached.timestamp < CACHE_DURATION ? cached.data : null;
-};
-const setCachedResponse = (key: string, data: any) => {
-  responseCache.set(key, {data, timestamp: Date.now()});
-  if (responseCache.size > 50) {
-    const oldestKey = responseCache.keys().next().value;
-    if (oldestKey) responseCache.delete(oldestKey);
-  }
-};
-
-// State
-let account = $state<{id: number; name: string} | undefined>();
-let transactions = $state<TransactionsFormat[]>([]);
-let isLoading = $state(false);
-let error = $state<string | undefined>();
-let summary = $state<{balance: number; transactionCount: number} | undefined>();
-let useClientSideTable = $state<boolean>(true);
+// State variables
 let table = $state<TanStackTable<TransactionsFormat> | undefined>();
 let serverAccountState = $state<ServerAccountState | undefined>();
-let pagination = $state({page: 0, pageSize: 50, totalCount: 0, totalPages: 0});
-let filters = $state({
-  searchQuery: '',
-  sortBy: 'date' as const,
-  sortOrder: 'desc' as const,
-  dateFrom: undefined,
-  dateTo: undefined,
+
+// TanStack Query state - load ALL transactions including upcoming scheduled for client-side pagination
+const transactionsQuery = $derived.by(() => {
+  return serverAccountState ? rpc.transactions.getAllAccountTransactionsWithUpcoming(Number(accountId), {
+    sortBy: serverAccountState.filters.sortBy,
+    sortOrder: serverAccountState.filters.sortOrder,
+    ...(serverAccountState.filters.searchQuery && { searchQuery: serverAccountState.filters.searchQuery }),
+    ...(serverAccountState.filters.dateFrom && { dateFrom: serverAccountState.filters.dateFrom }),
+    ...(serverAccountState.filters.dateTo && { dateTo: serverAccountState.filters.dateTo }),
+  }).options() : undefined;
 });
+const summaryQuery = $derived(rpc.transactions.getAccountSummary(Number(accountId)).options());
+
+// Create the mutations once
+const updateTransactionMutation = rpc.transactions.updateTransactionWithBalance.options();
+const saveTransactionMutation = rpc.transactions.saveTransaction.options();
+const queryClient = useQueryClient();
+
+// Derived state from TanStack Query with proper reactivity
+const transactions = $derived.by(() => {
+  if (!transactionsQuery) return [];
+  return Array.isArray($transactionsQuery?.data) ? $transactionsQuery.data : [];
+});
+const isLoading = $derived.by(() => {
+  return (transactionsQuery ? $transactionsQuery?.isLoading : false) || $summaryQuery.isLoading;
+});
+const error = $derived.by(() => {
+  return (transactionsQuery ? $transactionsQuery?.error?.message : undefined) || $summaryQuery.error?.message;
+});
+const summary = $derived($summaryQuery.data);
+const account = $derived(summary ? {id: summary.accountId, name: summary.accountName} : undefined);
 
 // Entity states
 const categoriesState = CategoriesState.get();
@@ -72,214 +72,71 @@ let addTransactionDialogOpen = $state(false);
 let bulkDeleteDialogOpen = $state(false);
 let selectedTransactionIds = $state<number[]>([]);
 
-// Transform data for tables
-const formattedTransactions = $derived(
-  (() => {
-    if (!transactions?.length) return [];
-    return transactions.map((t) => {
-      const dateStr = typeof t.date === 'string' ? t.date : t.date.toString();
-      const datePart = dateStr.split('T')[0];
-      return {
-        id: t.id ?? '',
-        date: parseDate(datePart),
-        amount: t.amount,
-        notes: t.notes,
-        status: t.status as 'cleared' | 'pending' | 'scheduled' | null,
-        accountId: accountId,
-        payeeId: t.payee?.id || null,
-        payee: t.payee || null,
-        categoryId: t.category?.id || null,
-        category: t.category || null,
-        parentId: null,
-        balance: (t as any).balance || null,
-      } as TransactionsFormat;
-    });
-  })()
-);
+// Schedule preview state
+let schedulePreviewOpen = $state(false);
+let selectedScheduleTransaction = $state<TransactionsFormat | null>(null);
 
-const simpleFormatted = $derived(() => {
-  if (!transactions?.length) return [];
-  return transactions.map((t) => ({
-    id: t.id,
-    date: typeof t.date === 'string' ? t.date : t.date.toString(),
-    amount: t.amount,
-    notes: t.notes || '',
-    status: t.status,
-    payee: t.payee,
-    category: t.category,
-  }));
+// Transform data for tables
+const formattedTransactions = $derived.by(() => {
+  const currentTransactions = transactions;
+  if (!currentTransactions || !Array.isArray(currentTransactions) || currentTransactions.length === 0) {
+    return [];
+  }
+
+  return currentTransactions.map((t: Transaction) => {
+    return {
+      id: t.id ?? '',
+      date: parseDate(t.date),
+      amount: t.amount,
+      notes: t.notes,
+      status: t.status as 'cleared' | 'pending' | 'scheduled' | null,
+      accountId: Number(accountId),
+      payeeId: t.payee?.id || null,
+      payee: t.payee || null,
+      categoryId: t.category?.id || null,
+      category: t.category || null,
+      parentId: null,
+      balance: t.balance,
+      // Schedule metadata (only present for scheduled transactions)
+      scheduleId: t.scheduleId,
+      scheduleName: t.scheduleName,
+      scheduleSlug: t.scheduleSlug,
+      scheduleFrequency: t.scheduleFrequency,
+      scheduleInterval: t.scheduleInterval,
+      scheduleNextOccurrence: t.scheduleNextOccurrence,
+    };
+  });
 });
+
 
 // Initialize server account state
 $effect(() => {
   if (accountId) {
+    // Only create the state for UI management (filters, pagination)
+    // TanStack Query handles the actual data loading
     const newState = new ServerAccountState(accountId);
-    newState.initializeWithServerData(
-      {
-        id: accountId,
-        name: `Account ${accountId}`,
-        slug: '',
-        type: '',
-        balance: 0,
-        transactionCount: 0,
-      },
-      {
-        transactions: [],
-        pagination: {
-          page: 0,
-          pageSize: 50,
-          totalCount: 0,
-          totalPages: 0,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
-      }
-    );
     serverAccountState = newState;
   }
 });
 
-// Main data loading function
-async function loadData() {
-  if (typeof window === 'undefined') return;
-
-  try {
-    isLoading = true;
-    const numericAccountId = Number(accountId);
-    if (isNaN(numericAccountId)) throw new Error(`Invalid account ID: ${accountId}`);
-
-    // Load summary
-    const summaryCacheKey = getCacheKey('serverAccountsRoutes.loadSummary', {id: numericAccountId});
-    let summaryData = getCachedResponse(summaryCacheKey);
-
-    if (!summaryData) {
-      const summaryResponse = await fetch(
-        `/trpc/serverAccountsRoutes.loadSummary?input=${encodeURIComponent(JSON.stringify({id: numericAccountId}))}`
-      );
-      if (!summaryResponse.ok)
-        throw new Error(`Failed to load summary: HTTP ${summaryResponse.status}`);
-
-      const summaryText = await summaryResponse.text();
-      if (!summaryText.trim()) throw new Error('Empty response from server');
-
-      const summaryResult = JSON.parse(summaryText);
-      summaryData = summaryResult.result?.data || summaryResult;
-      setCachedResponse(summaryCacheKey, summaryData);
-    }
-
-    summary = {
-      balance: summaryData?.balance || 0,
-      transactionCount: summaryData?.transactionCount || 0,
-    };
-    useClientSideTable = (summaryData?.transactionCount || 0) <= CLIENT_SIDE_THRESHOLD;
-
-    // Load account
-    const accountResponse = await fetch(
-      `/trpc/accountRoutes.load?input=${encodeURIComponent(JSON.stringify({id: numericAccountId}))}`
-    );
-    if (!accountResponse.ok)
-      throw new Error(`Failed to load account: HTTP ${accountResponse.status}`);
-
-    const accountText = await accountResponse.text();
-    if (!accountText.trim()) throw new Error('Empty account response');
-
-    const accountResult = JSON.parse(accountText);
-    const accountData = accountResult.result?.data || accountResult;
-    account = {id: accountData.id, name: accountData.name};
-
-    // Load transactions
-    const transactionParams: any = {
-      accountId: numericAccountId,
-      page: useClientSideTable ? 0 : pagination.page,
-      pageSize: useClientSideTable ? 100 : pagination.pageSize,
-      sortBy: filters.sortBy,
-      sortOrder: filters.sortOrder,
-    };
-
-    if (filters.searchQuery) transactionParams.searchQuery = filters.searchQuery;
-    if (filters.dateFrom) transactionParams.dateFrom = filters.dateFrom;
-    if (filters.dateTo) transactionParams.dateTo = filters.dateTo;
-
-    const transactionResponse = await fetch(
-      `/trpc/serverAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`
-    );
-    if (!transactionResponse.ok)
-      throw new Error(`Failed to load transactions: HTTP ${transactionResponse.status}`);
-
-    const transactionText = await transactionResponse.text();
-    if (!transactionText.trim()) throw new Error('Empty transactions response');
-
-    const transactionResult = JSON.parse(transactionText);
-    const transactionData = transactionResult.result?.data || transactionResult;
-
-    transactions = transactionData?.transactions || [];
-
-    const paginationData = transactionData?.pagination;
-    pagination.totalCount = paginationData?.totalCount || 0;
-    pagination.totalPages =
-      paginationData?.totalPages || Math.ceil(pagination.totalCount / pagination.pageSize);
-
-    error = undefined;
-  } catch (err: any) {
-    console.error('❌ Failed to load account data:', err);
-    console.error('Error details:', err?.message, err?.stack);
-    error = err?.message || 'Failed to load account data';
-    transactions = [];
-    account = undefined;
-  } finally {
-    isLoading = false;
-  }
-}
+// TanStack Query handles all data loading automatically
 
 // Transaction operations
 const submitTransaction = async (formData: any) => {
   if (!account?.id) return;
 
   try {
-    const transactionResponse = await fetch('/trpc/transactionRoutes.save', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        '0': {
-          json: {
-            accountId: Number(account.id),
-            amount: formData.amount,
-            date: formData.date,
-            notes: formData.notes || null,
-            payeeId: formData.payeeId,
-            categoryId: formData.categoryId,
-            status: formData.status,
-          },
-        },
-      }),
+    // Use TanStack Query mutation for proper cache invalidation
+    await $saveTransactionMutation.mutateAsync({
+      accountId: Number(account.id),
+      amount: formData.amount,
+      date: formData.date,
+      notes: formData.notes || null,
+      payeeId: formData.payeeId || null,
+      categoryId: formData.categoryId || null,
+      status: formData.status || 'pending',
     });
-
-    if (!transactionResponse.ok)
-      throw new Error(`Failed to create transaction: HTTP ${transactionResponse.status}`);
-
-    const transactionText = await transactionResponse.text();
-    if (!transactionText.trim()) throw new Error('Empty response when creating transaction');
-
-    const transactionResult = JSON.parse(transactionText);
-    const newTransaction = transactionResult[0]?.result?.data || transactionResult[0]?.result;
-
-    if (newTransaction) {
-      const formattedTransaction = {
-        ...newTransaction,
-        date:
-          typeof newTransaction.date === 'string'
-            ? parseDate(newTransaction.date)
-            : newTransaction.date,
-        balance: null,
-      } as TransactionsFormat;
-
-      transactions = [formattedTransaction, ...transactions];
-      if (summary) {
-        summary.balance += newTransaction.amount;
-        summary.transactionCount += 1;
-      }
-      responseCache.clear();
-    }
+    // TanStack Query mutation handles all cache invalidation automatically
   } catch (err: any) {
     console.error('❌ Failed to create transaction:', err);
     throw err;
@@ -287,14 +144,22 @@ const submitTransaction = async (formData: any) => {
 };
 
 const searchTransactions = (query: string) => {
-  filters.searchQuery = query;
-  pagination.page = 0;
-  loadData();
+  if (serverAccountState) {
+    serverAccountState.filters.searchQuery = query;
+    serverAccountState.pagination.page = 0;
+  }
+  // TanStack Query will automatically refetch with new parameters
 };
+
+const handleScheduleClick = (transaction: TransactionsFormat) => {
+  selectedScheduleTransaction = transaction;
+  schedulePreviewOpen = true;
+};
+
 
 const updateTransactionData = async (id: number, columnId: string, newValue?: unknown) => {
   try {
-    const transaction = transactions.find((t) => t.id === id);
+    const transaction = Array.isArray(transactions) ? transactions.find((t: Transaction) => t.id === id) : undefined;
     if (!transaction) return;
 
     const fieldMap: Record<string, string> = {
@@ -307,18 +172,10 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
     };
     const actualField = fieldMap[columnId] || columnId;
 
-    const updateData: any = {
-      id: id,
-      accountId: Number(transaction.accountId || accountId),
-      amount: Number(transaction.amount),
-      date: transaction.date,
-      notes: transaction.notes || null,
-      payeeId: transaction.payee?.id ? Number(transaction.payee.id) : null,
-      categoryId: transaction.category?.id ? Number(transaction.category.id) : null,
-      status: transaction.status || 'pending',
-    };
+    // Build update data with only the changed field (tRPC style)
+    const updateData: any = {};
 
-    if (actualField === 'payeeId' || actualField === 'categoryId' || actualField === 'accountId') {
+    if (actualField === 'payeeId' || actualField === 'categoryId') {
       updateData[actualField] = newValue ? Number(newValue) : null;
     } else if (actualField === 'amount') {
       updateData[actualField] = Number(newValue);
@@ -326,39 +183,63 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
       updateData[actualField] = newValue;
     }
 
-    const updateResponse = await fetch(`/accounts/${accountId}/api/update-transaction`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(updateData),
+    // Use TanStack Query mutation and capture the returned array
+    const updatedTransactionsWithBalance = await $updateTransactionMutation.mutateAsync({
+      id: id,
+      data: updateData,
     });
 
-    if (!updateResponse.ok)
-      throw new Error(`Failed to update transaction: HTTP ${updateResponse.status}`);
+    // Immediately update the cache with the returned transactions
+    if (Array.isArray(updatedTransactionsWithBalance) && updatedTransactionsWithBalance.length > 0) {
+      // Get current query data to preserve scheduled transactions
+      const currentQueryParams = serverAccountState ? {
+        sortBy: serverAccountState.filters.sortBy,
+        sortOrder: serverAccountState.filters.sortOrder,
+        ...(serverAccountState.filters.searchQuery && { searchQuery: serverAccountState.filters.searchQuery }),
+        ...(serverAccountState.filters.dateFrom && { dateFrom: serverAccountState.filters.dateFrom }),
+        ...(serverAccountState.filters.dateTo && { dateTo: serverAccountState.filters.dateTo }),
+      } : undefined;
 
-    const updateResult = await updateResponse.json();
-    if (!updateResult.success)
-      throw new Error(updateResult.error || 'Failed to update transaction');
+      const currentQuery = rpc.transactions.getAllAccountTransactionsWithUpcoming(Number(accountId), currentQueryParams);
+      const currentData = queryClient.getQueryData(currentQuery.queryKey);
 
-    responseCache.clear();
-    await loadData();
+      if (Array.isArray(currentData)) {
+        // Create a map of updated transactions for quick lookup
+        const updatedTransactionsMap = new Map(
+          updatedTransactionsWithBalance.map(tx => [tx.id, tx])
+        );
+
+        // Update existing actual transactions, keep scheduled transactions unchanged
+        const newData = currentData.map(item => {
+          // Only update actual transactions (numeric IDs), leave scheduled ones (string IDs) as is
+          if (typeof item.id === 'number' && updatedTransactionsMap.has(item.id)) {
+            return updatedTransactionsMap.get(item.id);
+          }
+          return item;
+        });
+
+        // Set the updated data in the cache
+        queryClient.setQueryData(currentQuery.queryKey, newData);
+      }
+    }
   } catch (err: any) {
     console.error('❌ Failed to update transaction:', err);
-    error = err?.message || 'Failed to update transaction';
+    console.error('Update transaction error details:', err?.message || err?.toString() || 'Failed to update transaction');
   }
 };
 
 // Track account changes
 let previousAccountId = $state<string | undefined>();
 
-// Load data on mount and account changes
-onMount(() => loadData());
-
+// TanStack Query handles data loading and refetching automatically
 $effect(() => {
   if (accountId && accountId !== previousAccountId) {
-    pagination.page = 0;
-    filters.searchQuery = '';
+    if (serverAccountState) {
+      serverAccountState.pagination.page = 0;
+      serverAccountState.filters.searchQuery = '';
+    }
     previousAccountId = accountId;
-    loadData();
+    // TanStack Query will automatically refetch when accountId changes
   }
 });
 </script>
@@ -422,13 +303,13 @@ $effect(() => {
   <!-- Tabs Structure -->
   <Tabs.Root bind:value={activeTab} class="mb-1 w-full">
     <Tabs.List class="inline-flex h-11">
-      <Tabs.Trigger value="dashboard" class="px-6 font-medium">Dashboard</Tabs.Trigger>
+      <!-- <Tabs.Trigger value="dashboard" class="px-6 font-medium">Dashboard</Tabs.Trigger> -->
       <Tabs.Trigger value="transactions" class="px-6 font-medium">Transactions</Tabs.Trigger>
       <Tabs.Trigger value="analytics" class="px-6 font-medium">Analytics</Tabs.Trigger>
     </Tabs.List>
 
-    <!-- Dashboard Tab Content (temporarily disabled for monthly spending chart testing) -->
-    <Tabs.Content value="dashboard" class="space-y-4">
+    <!-- Dashboard Tab Content (commented out) -->
+    <!-- <Tabs.Content value="dashboard" class="space-y-4">
       <div class="rounded-lg border border-blue-200 bg-blue-50 p-6">
         <div class="mb-4 flex items-center gap-3">
           <div class="h-4 w-4 rounded-full bg-blue-500"></div>
@@ -442,35 +323,29 @@ $effect(() => {
           Switch to the <strong>Analytics</strong> tab to test the isolated monthly spending chart functionality.
         </p>
       </div>
-    </Tabs.Content>
+    </Tabs.Content> -->
 
     <!-- Transactions Tab Content -->
     <Tabs.Content value="transactions" class="space-y-4">
       <TransactionTableContainer
-        {isLoading}
-        {useClientSideTable}
-        {transactions}
-        {filters}
-        {pagination}
-        bind:table
-        {serverAccountState}
-        {accountId}
+        isLoading={isLoading}
+        transactions={Array.isArray(transactions) ? transactions : []}
         {categoriesState}
         {payeesState}
         views={data.views}
         {columns}
         {formattedTransactions}
-        {simpleFormatted}
         {updateTransactionData}
         {searchTransactions}
-        {loadData} />
+        onScheduleClick={handleScheduleClick}
+        bind:table />
 
       <!-- Add Transaction Dialog -->
       <AddTransactionDialog
         bind:open={addTransactionDialogOpen}
-        {account}
-        {payees}
-        {categories}
+        account={account || null}
+        payees={payees.map(p => ({id: p.id, name: p.name || 'Unknown Payee'}))}
+        categories={categories.map(c => ({id: c.id, name: c.name || 'Unknown Category'}))}
         onSubmit={submitTransaction} />
     </Tabs.Content>
 
@@ -479,7 +354,6 @@ $effect(() => {
       {#if transactions && !isLoading && activeTab === 'analytics'}
         <AnalyticsDashboard transactions={formattedTransactions} {accountId} />
       {:else if isLoading}
-        <!-- Analytics Loading Skeleton -->
         <div class="space-y-4">
           <div class="flex items-center justify-between">
             <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
@@ -497,6 +371,17 @@ $effect(() => {
     bind:dialogOpen={bulkDeleteDialogOpen}
     onDelete={() => {
       table?.resetRowSelection();
-      loadData();
+      // TanStack Query will automatically refetch after mutations
     }} />
+
+  <!-- Schedule Preview Sheet -->
+  <SchedulePreviewSheet
+    bind:open={schedulePreviewOpen}
+    scheduleId={selectedScheduleTransaction?.scheduleId}
+    scheduleSlug={selectedScheduleTransaction?.scheduleSlug}
+    scheduleName={selectedScheduleTransaction?.scheduleName}
+    amount={selectedScheduleTransaction?.amount}
+    frequency={selectedScheduleTransaction?.scheduleFrequency}
+    interval={selectedScheduleTransaction?.scheduleInterval}
+    nextOccurrence={selectedScheduleTransaction?.scheduleNextOccurrence} />
 </div>

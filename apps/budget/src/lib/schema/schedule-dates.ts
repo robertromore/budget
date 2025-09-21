@@ -41,10 +41,10 @@ export const insertScheduleDateSchema = createInsertSchema(scheduleDates);
 export const formInsertScheduleDateSchema = createInsertSchema(scheduleDates, {
   // name: (schema) => schema.min(2).max(30),
 });
-export const removeScheduleSchema = z.object({id: z.number().nonnegative()});
+export const removeScheduleDateSchema = z.object({id: z.number().nonnegative()});
 
 export type ScheduleDate = typeof scheduleDates.$inferSelect;
 export type NewScheduleDate = typeof scheduleDates.$inferInsert;
 export type InsertScheduleDateSchema = typeof insertScheduleDateSchema;
 export type FormInsertScheduleDateSchema = typeof formInsertScheduleDateSchema;
-export type RemoveScheduleDateSchema = typeof removeScheduleSchema;
+export type RemoveScheduleDateSchema = typeof removeScheduleDateSchema;

@@ -48,9 +48,14 @@ export default defineConfig({
     include: [
       '@tanstack/table-core',
       '@tanstack/svelte-table',
+      '@tanstack/svelte-query',
       '@trpc/client',
       'zod',
-      '@lucide/svelte'
+      '@lucide/svelte',
+      'lodash-es',
+      'lodash-es/get',
+      'layerchart',
+      'svelte-sonner'
     ]
   },
   ssr: {
