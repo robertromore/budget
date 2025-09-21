@@ -1,9 +1,12 @@
 <script lang="ts">
-import * as ChartUI from '$lib/components/ui/chart';
-import { Chart, Area, Axis, Svg } from 'layerchart';
+import { ChartContainer, type ChartConfig } from '$lib/components/ui/chart';
+import { AreaChart } from "layerchart";
+import * as Chart from "$lib/components/ui/chart/index.js";
 import { currencyFormatter } from '$lib/utils/formatters';
 import { getMonthlySpendingAggregates } from '$lib/query/transactions';
 import AnalyticsChartShell from './analytics-chart-shell.svelte';
+import { curveNatural } from "d3-shape";
+import { scaleUtc } from "d3-scale";
 
 interface Props {
   accountId: number;
@@ -24,22 +27,33 @@ const monthlySpendingData = $derived.by(() => {
     monthLabel: string;
     spending: number;
     transactionCount: number;
-  }) => ({
-    month: item.month,
-    monthDisplay: item.monthLabel.split(' ').map((word: string, i: number) => i === 0 ? word.slice(0, 3) : word.slice(-2)).join(' '), // "Jan 25" format
-    spending: item.spending,
-    monthLabel: item.monthLabel,
-    transactionCount: item.transactionCount
-  }));
+  }, index: number) => {
+    // Convert month string (YYYY-MM) to Date object for proper time scale
+    const [year, month] = item.month.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1); // month is 0-indexed in Date constructor
+
+    return {
+      month: item.month,
+      monthDisplay: item.monthLabel.split(' ').map((word: string, i: number) => i === 0 ? word.slice(0, 3) : word.slice(-2)).join(' '), // "Jan 25" format
+      spending: item.spending,
+      monthLabel: item.monthLabel,
+      transactionCount: item.transactionCount,
+      date: date, // Use date object for x-axis
+      x: date,
+      y: item.spending
+    };
+  });
 });
 
+$inspect(monthlySpendingData, 'monthlySpendingData');
+
 // Chart configuration
-const chartConfig = {
+const chartConfig: ChartConfig = {
   spending: {
     label: 'Monthly Spending',
-    color: 'hsl(var(--chart-1))'
+    color: 'var(--color-primary)'
   }
-} satisfies ChartUI.ChartConfig;
+};
 
 // Summary statistics for the shell component
 const summaryStats = $derived.by(() => {
@@ -105,30 +119,38 @@ const summaryStats = $derived.by(() => {
   {/snippet}
 
   {#snippet chart({ data }: { data: typeof monthlySpendingData })}
-    <ChartUI.Container config={chartConfig} class="h-full w-full">
-      <Chart {data} x="monthDisplay" y="spending" yNice padding={{ left: 80, right: 20, top: 20, bottom: 40 }}>
-        <Svg>
-          <Area />
-        </Svg>
-
-        {#snippet axis()}
-          <Axis placement="left" format="currency" grid rule />
-          <Axis placement="bottom" grid rule />
+    <ChartContainer config={chartConfig} class="h-full w-full">
+      <AreaChart
+        data={data}
+        x="date"
+        series={[
+          {
+            key: "spending",
+            label: "Spending",
+            color: chartConfig['spending']?.color || 'var(--chart-1)',
+          },
+        ]}
+        axis="x"
+        props={{
+          area: {
+            curve: curveNatural,
+            "fill-opacity": 0.4,
+            line: { class: "stroke-1" },
+            motion: "tween",
+          },
+          xAxis: {
+            format: (v: Date) => v.toLocaleDateString("en-US", { month: "short" }),
+          },
+        }}
+      >
+        {#snippet tooltip()}
+          <Chart.Tooltip
+            labelFormatter={(v: Date) =>
+              v.toLocaleDateString("en-US", { month: "long" })}
+            indicator="line"
+          />
         {/snippet}
-
-        {#snippet tooltip({ data })}
-          <ChartUI.Tooltip>
-            {#snippet formatter({ value, name })}
-              <div class="flex flex-1 shrink-0 justify-between leading-none items-center">
-                <span class="text-muted-foreground">{name}</span>
-                <span class="text-foreground font-mono font-medium tabular-nums">
-                  {currencyFormatter.format(Number(value))}
-                </span>
-              </div>
-            {/snippet}
-          </ChartUI.Tooltip>
-        {/snippet}
-      </Chart>
-    </ChartUI.Container>
+      </AreaChart>
+    </ChartContainer>
   {/snippet}
 </AnalyticsChartShell>

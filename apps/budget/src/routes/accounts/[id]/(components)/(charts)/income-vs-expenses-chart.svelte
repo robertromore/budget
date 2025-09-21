@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as ChartUI from '$lib/components/ui/chart';
-import { Chart, Spline, Axis, Svg } from 'layerchart';
+import { ChartContainer, type ChartConfig } from '$lib/components/ui/chart';
+import { Chart, Spline, Svg } from 'layerchart';
 import type {TransactionsFormat} from '$lib/types';
 import { monthYearFmt, monthYearShortFmt } from '$lib/utils/date-formatters';
 import { timezone } from '$lib/utils/dates';
@@ -47,8 +47,14 @@ const chartData = $derived.by(() => {
     }
   });
 
-  // Sort by month and return
-  return monthlyData.sort((a, b) => a.month.localeCompare(b.month));
+  // Sort by month and add x/y mappings for LayerChart
+  return monthlyData
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .map((item, index) => ({
+      ...item,
+      x: index,
+      y: item.income // Using income as primary y value for now
+    }));
 });
 
 // Summary statistics for the shell component
@@ -94,7 +100,7 @@ const summaryStats = $derived.by(() => {
 });
 
 // Chart configuration for grouped bar chart
-const chartConfig = {
+const chartConfig: ChartConfig = {
   income: {
     label: 'Income',
     color: 'hsl(var(--chart-1))'
@@ -103,7 +109,7 @@ const chartConfig = {
     label: 'Expenses',
     color: 'hsl(var(--chart-2))'
   }
-} satisfies ChartUI.ChartConfig;
+};
 
 </script>
 
@@ -121,31 +127,13 @@ const chartConfig = {
   {/snippet}
 
   {#snippet chart({ data }: { data: typeof chartData })}
-    <ChartUI.Container config={chartConfig} class="h-full w-full">
-      <Chart {data} x="monthDisplay" yNice padding={{ left: 80, right: 20, top: 20, bottom: 40 }}>
+    <ChartContainer config={chartConfig} class="h-full w-full">
+      <Chart {data} x="x" yNice>
         <Svg>
-          <Spline y="income" class="stroke-[--color-income]" />
-          <Spline y="expenses" class="stroke-[--color-expenses]" />
+          <Spline y="income" class="stroke-chart-1 stroke-2" />
+          <Spline y="expenses" class="stroke-chart-2 stroke-2" />
         </Svg>
-
-        {#snippet axis()}
-          <Axis placement="left" format="currency" grid rule />
-          <Axis placement="bottom" grid rule />
-        {/snippet}
-
-        {#snippet tooltip({ data })}
-          <ChartUI.Tooltip>
-            {#snippet formatter({ value, name })}
-              <div class="flex flex-1 shrink-0 justify-between leading-none items-center">
-                <span class="text-muted-foreground">{chartConfig[name as keyof typeof chartConfig]?.label || name}</span>
-                <span class="text-foreground font-mono font-medium tabular-nums">
-                  {currencyFormatter.format(Number(value) || 0)}
-                </span>
-              </div>
-            {/snippet}
-          </ChartUI.Tooltip>
-        {/snippet}
       </Chart>
-    </ChartUI.Container>
+    </ChartContainer>
   {/snippet}
 </AnalyticsChartShell>

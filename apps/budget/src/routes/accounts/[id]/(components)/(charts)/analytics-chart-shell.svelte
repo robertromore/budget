@@ -12,11 +12,9 @@
 			value: string;
 			description?: string;
 		}>;
-		children: {
-			title?: any;
-			subtitle?: any;
-			chart: any;
-		};
+		title?: any;
+		subtitle?: any;
+		chart: any;
 	};
 
 	let {
@@ -25,7 +23,9 @@
 		data,
 		emptyMessage = 'No data available for the selected period.',
 		summaryStats,
-		children
+		title,
+		subtitle,
+		chart
 	}: Props<TData> = $props();
 
 	const hasData = $derived(data && data.length > 0);
@@ -65,11 +65,11 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>
-				{@render children?.title?.()}
+				{@render title?.()}
 			</Card.Title>
-			{#if children?.subtitle}
+			{#if subtitle}
 				<Card.Description>
-					{@render children.subtitle()}
+					{@render subtitle()}
 				</Card.Description>
 			{/if}
 		</Card.Header>
@@ -96,7 +96,7 @@
 				</div>
 			{:else if showChart}
 				<div class="h-[400px] w-full">
-					{@render children?.chart?.({ data })}
+					{@render chart?.({ data })}
 				</div>
 			{/if}
 		</Card.Content>
