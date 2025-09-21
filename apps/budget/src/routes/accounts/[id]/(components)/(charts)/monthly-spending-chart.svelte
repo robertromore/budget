@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as Chart from '$lib/components/ui/chart';
-import { AreaChart, Axis } from 'layerchart';
+import * as ChartUI from '$lib/components/ui/chart';
+import { Chart, Area, Axis, Svg } from 'layerchart';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { getMonthlySpendingAggregates } from '$lib/query/transactions';
 import AnalyticsChartShell from './analytics-chart-shell.svelte';
@@ -39,7 +39,7 @@ const chartConfig = {
     label: 'Monthly Spending',
     color: 'hsl(var(--chart-1))'
   }
-} satisfies Chart.ChartConfig;
+} satisfies ChartUI.ChartConfig;
 
 // Summary statistics for the shell component
 const summaryStats = $derived.by(() => {
@@ -105,25 +105,19 @@ const summaryStats = $derived.by(() => {
   {/snippet}
 
   {#snippet chart({ data }: { data: typeof monthlySpendingData })}
-    <Chart.Container config={chartConfig} class="h-full w-full">
-      <AreaChart
-        {data}
-        x="monthDisplay"
-        y="spending"
-        yNice
-        padding={{ left: 80, right: 20, top: 20, bottom: 40 }}
-      >
+    <ChartUI.Container config={chartConfig} class="h-full w-full">
+      <Chart {data} x="monthDisplay" y="spending" yNice padding={{ left: 80, right: 20, top: 20, bottom: 40 }}>
+        <Svg>
+          <Area />
+        </Svg>
+
         {#snippet axis()}
           <Axis placement="left" format="currency" grid rule />
           <Axis placement="bottom" grid rule />
         {/snippet}
 
-        {#snippet tooltip()}
-          <Chart.Tooltip
-            labelFormatter={(value, payload) => {
-              return payload?.[0]?.payload?.monthLabel || value;
-            }}
-          >
+        {#snippet tooltip({ data })}
+          <ChartUI.Tooltip>
             {#snippet formatter({ value, name })}
               <div class="flex flex-1 shrink-0 justify-between leading-none items-center">
                 <span class="text-muted-foreground">{name}</span>
@@ -132,9 +126,9 @@ const summaryStats = $derived.by(() => {
                 </span>
               </div>
             {/snippet}
-          </Chart.Tooltip>
+          </ChartUI.Tooltip>
         {/snippet}
-      </AreaChart>
-    </Chart.Container>
+      </Chart>
+    </ChartUI.Container>
   {/snippet}
 </AnalyticsChartShell>
