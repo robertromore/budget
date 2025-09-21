@@ -1,9 +1,9 @@
 import {
-  today,
-  getLocalTimeZone,
   CalendarDate,
   type DateValue,
+  getLocalTimeZone,
   startOfWeek,
+  today,
 } from "@internationalized/date";
 
 export const timezone = getLocalTimeZone();
@@ -27,7 +27,7 @@ export function getSpecialDateValue(date: string): SpecialDateValue {
  * const today = getLocalTimeZone();
  * const dayOfWeek = getDayOfWeek(today);
  */
-export function getDayOfWeek(date: DateValue, timeZone: string = "UTC"): number {
+export function getDayOfWeek(date: DateValue): number {
   // Use standard Date constructor which is more reliable than toDate()
   // month - 1 because Date constructor expects 0-indexed months
   const jsDate = new Date(date.year, date.month - 1, date.day);
@@ -107,12 +107,11 @@ export function getFirstDayInCalendarMonth(
 export function getFirstSpecifiedWeekdayInMonth(
   targetYear: number,
   targetMonth: number,
-  weekday: number,
-  timeZone: string = "UTC"
+  weekday: number
 ): DateValue {
   // Create first day of target month
   const firstOfMonth = new CalendarDate(targetYear, targetMonth, 1);
-  const firstDayWeekday = getDayOfWeek(firstOfMonth, timeZone);
+  const firstDayWeekday = getDayOfWeek(firstOfMonth);
 
   // Calculate how many days to add to reach the target weekday
   let daysToAdd = weekday - firstDayWeekday;
@@ -124,12 +123,12 @@ export function getFirstSpecifiedWeekdayInMonth(
   return firstOfMonth.add({days: daysToAdd});
 }
 
-export function getFirstWeekday(date: DateValue, timeZone: string = "UTC"): DateValue {
-  const targetWeekday = getDayOfWeek(date, timeZone);
+export function getFirstWeekday(date: DateValue): DateValue {
+  const targetWeekday = getDayOfWeek(date);
 
   // Get the first day of the same month
   const firstOfMonth = date.set({day: 1});
-  const firstDayWeekday = getDayOfWeek(firstOfMonth, timeZone);
+  const firstDayWeekday = getDayOfWeek(firstOfMonth);
 
   // Calculate how many days to add to reach the target weekday
   let daysToAdd = targetWeekday - firstDayWeekday;
@@ -299,7 +298,7 @@ export function getNthWeekdayOfMonth(
 
     // Find the first day of the month
     const firstOfMonth = today(timezone).set({year, month, day: 1});
-    const firstWeekDay = getDayOfWeek(firstOfMonth, timezone);
+    const firstWeekDay = getDayOfWeek(firstOfMonth);
 
     // Calculate the first occurrence of the target weekday
     let daysToAdd = weekDay - firstWeekDay;
@@ -345,7 +344,7 @@ export function getLastWeekdayOfMonth(
     // Work backwards from the last day to find the last occurrence of weekDay
     for (let i = 0; i < 7; i++) {
       const candidateDate = lastOfMonth.subtract({days: i});
-      if (getDayOfWeek(candidateDate, timezone) === weekDay) {
+      if (getDayOfWeek(candidateDate) === weekDay) {
         return candidateDate;
       }
     }
@@ -424,4 +423,131 @@ export function ensureDateValue(dateValue: any): DateValue {
  */
 export function dateValueToJSDate(dateValue: DateValue, timeZone: string = "UTC"): Date {
   return dateValue.toDate(timeZone);
+}
+
+/**
+ * Calculate the difference between two dates in the specified unit
+ * @param date1 - First date
+ * @param date2 - Second date
+ * @param unit - Unit to calculate difference in
+ * @returns Number representing the difference (date1 - date2)
+ */
+export function dateDifference(
+  date1: DateValue,
+  date2: DateValue,
+  unit: 'days' | 'months' | 'quarters' | 'years'
+): number {
+  switch (unit) {
+    case 'days':
+      return Math.floor((date1.toDate(timezone).getTime() - date2.toDate(timezone).getTime()) / (1000 * 60 * 60 * 24));
+
+    case 'months':
+      return (date1.year - date2.year) * 12 + (date1.month - date2.month);
+
+    case 'quarters':
+      const quarterDiff = Math.floor((date1.month - 1) / 3) - Math.floor((date2.month - 1) / 3);
+      return (date1.year - date2.year) * 4 + quarterDiff;
+
+    case 'years':
+      return date1.year - date2.year;
+
+    default:
+      return 0;
+  }
+}
+
+/**
+ * Check if two dates are in the same period (day, month, quarter, year)
+ * @param date1 - First date
+ * @param date2 - Second date
+ * @param unit - Period unit to compare
+ * @returns True if dates are in the same period
+ */
+export function isSamePeriod(
+  date1: DateValue,
+  date2: DateValue,
+  unit: 'day' | 'month' | 'quarter' | 'year'
+): boolean {
+  switch (unit) {
+    case 'day':
+      return date1.year === date2.year && date1.month === date2.month && date1.day === date2.day;
+
+    case 'month':
+      return date1.year === date2.year && date1.month === date2.month;
+
+    case 'quarter':
+      const quarter1 = Math.floor((date1.month - 1) / 3);
+      const quarter2 = Math.floor((date2.month - 1) / 3);
+      return date1.year === date2.year && quarter1 === quarter2;
+
+    case 'year':
+      return date1.year === date2.year;
+
+    default:
+      return false;
+  }
+}
+
+/**
+ * Parse an ISO date string to DateValue
+ * @param isoString - ISO date string (e.g., "2024-01-15")
+ * @returns DateValue or null if parsing fails
+ */
+export function parseISOString(isoString: string): DateValue | null {
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return null;
+
+    return new CalendarDate(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      date.getDate()
+    );
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Convert DateValue to ISO string format
+ * @param dateValue - DateValue to convert
+ * @returns ISO string (e.g., "2024-01-15")
+ */
+export function toISOString(dateValue: DateValue): string {
+  const year = dateValue.year.toString().padStart(4, '0');
+  const month = dateValue.month.toString().padStart(2, '0');
+  const day = dateValue.day.toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Format DateValue for display using consistent patterns
+ * @param dateValue - DateValue to format
+ * @param format - Format type ('short', 'medium', 'long')
+ * @returns Formatted date string
+ */
+export function formatDateDisplay(dateValue: DateValue, format: 'short' | 'medium' | 'long' = 'medium'): string {
+  const jsDate = dateValue.toDate(timezone);
+
+  switch (format) {
+    case 'short':
+      return new Intl.DateTimeFormat('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric'
+      }).format(jsDate);
+
+    case 'long':
+      return new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'long'
+      }).format(jsDate);
+
+    case 'medium':
+    default:
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      }).format(jsDate);
+  }
 }
