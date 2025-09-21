@@ -1,8 +1,6 @@
 <script lang="ts" generics="TData">
 	import * as Card from '$lib/components/ui/card';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { Chart } from '@layerchart/layerchart';
-	import type { Component } from 'svelte';
 
 	type Props<TData> = {
 		loading?: boolean;
