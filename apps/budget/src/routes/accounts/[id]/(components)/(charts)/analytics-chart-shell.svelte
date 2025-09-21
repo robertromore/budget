@@ -65,9 +65,9 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>
-				{@render children.title?.()}
+				{@render children?.title?.()}
 			</Card.Title>
-			{#if children.subtitle}
+			{#if children?.subtitle}
 				<Card.Description>
 					{@render children.subtitle()}
 				</Card.Description>
@@ -96,7 +96,7 @@
 				</div>
 			{:else if showChart}
 				<div class="h-[400px] w-full">
-					{@render children.chart({ data })}
+					{@render children?.chart?.({ data })}
 				</div>
 			{/if}
 		</Card.Content>
