@@ -17,6 +17,7 @@ export const load: LayoutServerLoad = async () => {
     payees: await caller.payeeRoutes.all(),
     categories: await caller.categoriesRoutes.all(),
     schedules: await caller.scheduleRoutes.all(),
+    budgets: await caller.budgetRoutes.getAll({ filters: {}, pagination: { page: 1, limit: 100 } }),
     manageAccountForm: await superValidate(zod4(superformInsertAccountSchema)),
     manageScheduleForm: await superValidate(zod4(formInsertScheduleSchema)),
     dates: [

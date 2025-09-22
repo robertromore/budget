@@ -5,8 +5,9 @@ export const createBudgetSchema = z.object({
   name: z.string().min(1, "Budget name is required").max(100),
   description: z.string().max(500).optional(),
   type: z.enum(["account-monthly", "category-envelope", "goal-based", "scheduled-expense"]),
-  enforcement: z.enum(["none", "warning", "strict"]).default("warning"),
-  isActive: z.boolean().default(true),
+  scope: z.enum(["account", "category", "global", "mixed"]).optional(),
+  status: z.enum(["active", "inactive", "archived"]).optional(),
+  enforcementLevel: z.enum(["none", "warning", "strict"]).optional(),
   metadata: z.object({}).passthrough().optional(),
   accountIds: z.array(z.number().positive()).optional(),
   categoryIds: z.array(z.number().positive()).optional()
@@ -16,36 +17,37 @@ export const updateBudgetSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
   type: z.enum(["account-monthly", "category-envelope", "goal-based", "scheduled-expense"]).optional(),
-  enforcement: z.enum(["none", "warning", "strict"]).optional(),
-  isActive: z.boolean().optional(),
+  scope: z.enum(["account", "category", "global", "mixed"]).optional(),
+  status: z.enum(["active", "inactive", "archived"]).optional(),
+  enforcementLevel: z.enum(["none", "warning", "strict"]).optional(),
   metadata: z.object({}).passthrough().optional()
 });
 
 // Filter schemas
 export const budgetFiltersSchema = z.object({
   type: z.enum(["account-monthly", "category-envelope", "goal-based", "scheduled-expense"]).optional(),
-  enforcement: z.enum(["none", "warning", "strict"]).optional(),
-  isActive: z.boolean().optional(),
+  scope: z.enum(["account", "category", "global", "mixed"]).optional(),
+  status: z.enum(["active", "inactive", "archived"]).optional(),
+  enforcementLevel: z.enum(["none", "warning", "strict"]).optional(),
   accountId: z.number().positive().optional(),
   categoryId: z.number().positive().optional(),
   search: z.string().optional()
 });
 
 export const periodFiltersSchema = z.object({
-  budgetId: z.number().positive().optional(),
-  status: z.enum(["upcoming", "active", "completed", "archived"]).optional(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format").optional(),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format").optional()
-});
+  budgetId: z.number().positive(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
+}).partial();
 
-export const allocationFiltersSchema = z.object({
-  budgetId: z.number().positive().optional(),
-  transactionId: z.number().positive().optional(),
-  periodId: z.number().positive().optional(),
-  assignmentType: z.enum(["automatic", "manual", "split"]).optional(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format").optional(),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format").optional()
-});
+export const transactionFiltersSchema = z.object({
+  budgetId: z.number().positive(),
+  transactionId: z.number().positive(),
+  autoAssigned: z.boolean(),
+  assignedBy: z.string(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
+}).partial();
 
 // Common pagination schema (reusable across domains)
 export const paginationSchema = z.object({
@@ -71,34 +73,28 @@ export const updateBudgetPeriodSchema = z.object({
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format").optional(),
   allocated: z.number().min(0).optional(),
   spent: z.number().optional(),
-  rollover: z.number().optional(),
-  status: z.enum(["upcoming", "active", "completed", "archived"]).optional()
+  rollover: z.number().optional()
 });
 
-// Budget allocation schemas
-export const createAllocationSchema = z.object({
+// Budget transaction schemas (replaces allocations)
+export const createBudgetTransactionSchema = z.object({
   budgetId: z.number().positive(),
   transactionId: z.number().positive(),
-  periodId: z.number().positive().optional(),
   allocatedAmount: z.number(),
-  percentage: z.number().min(0).max(100).optional(),
-  assignmentType: z.enum(["automatic", "manual", "split"]).default("manual"),
-  notes: z.string().max(500).optional()
+  autoAssigned: z.boolean().default(true),
+  assignedBy: z.string().optional()
 });
 
-export const updateAllocationSchema = z.object({
+export const updateBudgetTransactionSchema = z.object({
   allocatedAmount: z.number().optional(),
-  percentage: z.number().min(0).max(100).optional(),
-  assignmentType: z.enum(["automatic", "manual", "split"]).optional(),
-  notes: z.string().max(500).optional()
+  autoAssigned: z.boolean().optional(),
+  assignedBy: z.string().optional()
 });
 
 // Validation and business logic schemas
 export const validateAllocationSchema = z.object({
   transactionId: z.number().positive(),
-  budgetId: z.number().positive(),
-  proposedAmount: z.number(),
-  periodId: z.number().positive().optional()
+  proposedAmount: z.number()
 });
 
 // Account and category association schemas
@@ -138,7 +134,7 @@ export const transactionAllocationQuerySchema = z.object({
   transactionId: z.number().positive()
 });
 
-export const budgetAllocationsQuerySchema = z.object({
+export const budgetTransactionsQuerySchema = z.object({
   budgetId: z.number().positive(),
-  filters: allocationFiltersSchema.optional()
+  filters: transactionFiltersSchema.optional()
 });

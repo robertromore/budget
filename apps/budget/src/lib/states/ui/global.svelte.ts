@@ -11,3 +11,8 @@ export const deleteAccountDialog = $state(new UseBoolean(false));
 export const deleteAccountId = $state(new UseNumber(0));
 export const deleteScheduleDialog = $state(new UseBoolean(false));
 export const deleteScheduleId = $state(new UseNumber(0));
+// Budget dialog states (frontend only, backend disabled)
+export const newBudgetDialog = $state(new UseBoolean(false));
+export const managingBudgetId = $state(new UseNumber(0));
+export const deleteBudgetDialog = $state(new UseBoolean(false));
+export const deleteBudgetId = $state(new UseNumber(0));

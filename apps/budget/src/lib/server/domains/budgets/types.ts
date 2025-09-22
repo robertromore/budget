@@ -1,16 +1,22 @@
 import type {
   Budget,
   NewBudget,
+  BudgetGroup,
+  NewBudgetGroup,
+  BudgetGroupMembership,
+  NewBudgetGroupMembership,
+  BudgetPeriodTemplate,
+  NewBudgetPeriodTemplate,
+  BudgetPeriodInstance,
+  NewBudgetPeriodInstance,
   BudgetAccount,
   NewBudgetAccount,
   BudgetCategory,
   NewBudgetCategory,
-  BudgetPeriod,
-  NewBudgetPeriod,
-  BudgetAllocation,
-  NewBudgetAllocation
+  BudgetTransaction,
+  NewBudgetTransaction
 } from "$lib/schema/budgets";
-import type { Account } from "$lib/schema/accounts";
+import type { accounts } from "$lib/schema/accounts";
 import type { Category } from "$lib/schema/categories";
 import type { Transaction } from "$lib/schema/transactions";
 
@@ -18,29 +24,37 @@ import type { Transaction } from "$lib/schema/transactions";
 export type {
   Budget,
   NewBudget,
+  BudgetGroup,
+  NewBudgetGroup,
+  BudgetGroupMembership,
+  NewBudgetGroupMembership,
+  BudgetPeriodTemplate,
+  NewBudgetPeriodTemplate,
+  BudgetPeriodInstance,
+  NewBudgetPeriodInstance,
   BudgetAccount,
   NewBudgetAccount,
   BudgetCategory,
   NewBudgetCategory,
-  BudgetPeriod,
-  NewBudgetPeriod,
-  BudgetAllocation,
-  NewBudgetAllocation
+  BudgetTransaction,
+  NewBudgetTransaction
 };
 
 // Extended budget types with relations
 export interface BudgetWithRelations extends Budget {
-  accounts?: Account[];
+  accounts?: (typeof accounts.$inferSelect)[];
   categories?: BudgetCategory[];
-  periods?: BudgetPeriod[];
-  allocations?: BudgetAllocation[];
+  periodTemplates?: BudgetPeriodTemplate[];
+  periodInstances?: BudgetPeriodInstance[];
+  transactions?: BudgetTransaction[];
+  groups?: BudgetGroup[];
 }
 
 export interface BudgetCategoryWithCategory extends BudgetCategory {
   category: Category;
 }
 
-export interface BudgetAllocationWithTransaction extends BudgetAllocation {
+export interface BudgetTransactionWithTransaction extends BudgetTransaction {
   transaction: Transaction;
 }
 
@@ -49,8 +63,9 @@ export interface CreateBudgetData {
   name: string;
   description?: string;
   type: "account-monthly" | "category-envelope" | "goal-based" | "scheduled-expense";
-  enforcement?: "none" | "warning" | "strict";
-  isActive?: boolean;
+  scope?: "account" | "category" | "global" | "mixed";
+  status?: "active" | "inactive" | "archived";
+  enforcementLevel?: "none" | "warning" | "strict";
   metadata?: Record<string, any>;
   accountIds?: number[];
   categoryIds?: number[];
@@ -60,52 +75,67 @@ export interface UpdateBudgetData {
   name?: string;
   description?: string;
   type?: "account-monthly" | "category-envelope" | "goal-based" | "scheduled-expense";
-  enforcement?: "none" | "warning" | "strict";
-  isActive?: boolean;
+  scope?: "account" | "category" | "global" | "mixed";
+  status?: "active" | "inactive" | "archived";
+  enforcementLevel?: "none" | "warning" | "strict";
   metadata?: Record<string, any>;
 }
 
-export interface CreateBudgetPeriodData {
+export interface CreateBudgetPeriodTemplateData {
   budgetId: number;
-  name: string;
+  type: "weekly" | "monthly" | "quarterly" | "yearly" | "custom";
+  intervalCount?: number;
+  startDayOfWeek?: number;
+  startDayOfMonth?: number;
+  startMonth?: number;
+  timezone?: string;
+}
+
+export interface UpdateBudgetPeriodTemplateData {
+  type?: "weekly" | "monthly" | "quarterly" | "yearly" | "custom";
+  intervalCount?: number;
+  startDayOfWeek?: number;
+  startDayOfMonth?: number;
+  startMonth?: number;
+  timezone?: string;
+}
+
+export interface CreateBudgetPeriodInstanceData {
+  templateId: number;
   startDate: string;
   endDate: string;
-  allocated: number;
-  rollover?: number;
+  allocatedAmount: number;
+  rolloverAmount?: number;
 }
 
-export interface UpdateBudgetPeriodData {
-  name?: string;
+export interface UpdateBudgetPeriodInstanceData {
   startDate?: string;
   endDate?: string;
-  allocated?: number;
-  spent?: number;
-  rollover?: number;
-  status?: "upcoming" | "active" | "completed" | "archived";
+  allocatedAmount?: number;
+  rolloverAmount?: number;
+  actualAmount?: number;
 }
 
-export interface CreateBudgetAllocationData {
+export interface CreateBudgetTransactionData {
   budgetId: number;
   transactionId: number;
-  periodId?: number;
   allocatedAmount: number;
-  percentage?: number;
-  assignmentType?: "automatic" | "manual" | "split";
-  notes?: string;
+  autoAssigned?: boolean;
+  assignedBy?: string;
 }
 
-export interface UpdateBudgetAllocationData {
+export interface UpdateBudgetTransactionData {
   allocatedAmount?: number;
-  percentage?: number;
-  assignmentType?: "automatic" | "manual" | "split";
-  notes?: string;
+  autoAssigned?: boolean;
+  assignedBy?: string;
 }
 
 // Filter and pagination types
 export interface BudgetFilters {
   type?: "account-monthly" | "category-envelope" | "goal-based" | "scheduled-expense";
-  enforcement?: "none" | "warning" | "strict";
-  isActive?: boolean;
+  scope?: "account" | "category" | "global" | "mixed";
+  status?: "active" | "inactive" | "archived";
+  enforcementLevel?: "none" | "warning" | "strict";
   accountId?: number;
   categoryId?: number;
   search?: string;
@@ -113,16 +143,15 @@ export interface BudgetFilters {
 
 export interface PeriodFilters {
   budgetId?: number;
-  status?: "upcoming" | "active" | "completed" | "archived";
   startDate?: string;
   endDate?: string;
 }
 
-export interface AllocationFilters {
+export interface TransactionFilters {
   budgetId?: number;
   transactionId?: number;
-  periodId?: number;
-  assignmentType?: "automatic" | "manual" | "split";
+  autoAssigned?: boolean;
+  assignedBy?: string;
   startDate?: string;
   endDate?: string;
 }
@@ -152,8 +181,8 @@ export interface BudgetSummary {
   totalRemaining: number;
   percentageUsed: number;
   isOverBudget: boolean;
-  activePeriod?: BudgetPeriod;
-  recentAllocations: BudgetAllocationWithTransaction[];
+  activePeriod?: BudgetPeriodInstance;
+  recentTransactions: BudgetTransactionWithTransaction[];
 }
 
 export interface BudgetProgress {

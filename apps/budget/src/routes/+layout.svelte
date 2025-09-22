@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Sidebar from '$ui/lib/components/ui/sidebar/index.js';
+import * as Sidebar from '$lib/components/ui/sidebar';
 import AppSidebar from '$lib/components/layout/app-sidebar.svelte';
 import '../app.css';
 import type {LayoutData} from './$types';
@@ -14,13 +14,17 @@ import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.s
 import AddScheduleDialog from '$lib/components/dialogs/add-schedule-dialog.svelte';
 import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
+import BudgetManageDialog from '$lib/components/dialogs/budget-manage-dialog.svelte';
+import DeleteBudgetDialog from '$lib/components/dialogs/delete-budget-dialog.svelte';
+import {BudgetsState} from '$lib/states/budgets.svelte';
 import {setQueryClientContext} from '@tanstack/svelte-query';
 import {queryClient} from '$lib/query';
 import {autoScheduler} from '$lib/stores/auto-scheduler.svelte';
 import {onMount} from 'svelte';
 
 let {data, children}: {data: LayoutData; children: Snippet} = $props();
-const {accounts, payees, categories, schedules} = $derived(data);
+const {accounts, payees, categories, schedules, budgets: budgetData} = $derived(data);
+const budgets = $derived(budgetData?.data || []);
 
 // Set QueryClient context immediately using centralized client
 setQueryClientContext(queryClient);
@@ -29,6 +33,8 @@ AccountsState.set((() => accounts)());
 SchedulesState.set((() => schedules)());
 CategoriesState.set((() => categories)());
 PayeesState.set((() => payees)());
+// Initialize budget state with data from server
+BudgetsState.set((() => budgets)(), []);
 
 // Auto-scheduler: Automatically create scheduled transactions when app loads
 onMount(() => {
@@ -48,6 +54,8 @@ onMount(() => {
 <AddScheduleDialog />
 <DeleteAccountDialog />
 <DeleteScheduleDialog />
+<BudgetManageDialog />
+<DeleteBudgetDialog />
 
 <div class="bg-background">
   <div class="grid">

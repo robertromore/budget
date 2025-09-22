@@ -2,20 +2,29 @@ import { and, eq, like, desc, asc, isNull, sql, between } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import {
   budgets,
+  budgetGroups,
+  budgetGroupMemberships,
+  budgetPeriodTemplates,
+  budgetPeriodInstances,
   budgetAccounts,
   budgetCategories,
-  budgetPeriods,
-  budgetAllocations,
+  budgetTransactions,
   type Budget,
   type NewBudget,
+  type BudgetGroup,
+  type NewBudgetGroup,
+  type BudgetGroupMembership,
+  type NewBudgetGroupMembership,
+  type BudgetPeriodTemplate,
+  type NewBudgetPeriodTemplate,
+  type BudgetPeriodInstance,
+  type NewBudgetPeriodInstance,
   type BudgetAccount,
   type NewBudgetAccount,
   type BudgetCategory,
   type NewBudgetCategory,
-  type BudgetPeriod,
-  type NewBudgetPeriod,
-  type BudgetAllocation,
-  type NewBudgetAllocation
+  type BudgetTransaction,
+  type NewBudgetTransaction
 } from "$lib/schema/budgets";
 import { accounts } from "$lib/schema/accounts";
 import { categories } from "$lib/schema/categories";
@@ -23,12 +32,12 @@ import { transactions } from "$lib/schema/transactions";
 import type {
   BudgetFilters,
   PeriodFilters,
-  AllocationFilters,
+  TransactionFilters,
   PaginationParams,
   PaginatedResult,
   BudgetWithRelations,
   BudgetCategoryWithCategory,
-  BudgetAllocationWithTransaction
+  BudgetTransactionWithTransaction
 } from "./types";
 
 export class BudgetRepository {
@@ -51,7 +60,8 @@ export class BudgetRepository {
     const [budget] = await db
       .select()
       .from(budgets)
-      .where(and(eq(budgets.id, id), isNull(budgets.deletedAt)));
+      .where(and(eq(budgets.id, id), isNull(budgets.deletedAt)))
+      .limit(1);
 
     return budget || null;
   }
@@ -60,8 +70,8 @@ export class BudgetRepository {
     const budget = await this.getBudgetById(id);
     if (!budget) return null;
 
-    // Get associated accounts
-    const budgetAccountsList = await db
+    // Get related accounts
+    const accountsList = await db
       .select({
         account: accounts
       })
@@ -69,8 +79,8 @@ export class BudgetRepository {
       .innerJoin(accounts, eq(budgetAccounts.accountId, accounts.id))
       .where(eq(budgetAccounts.budgetId, id));
 
-    // Get associated categories with category details
-    const budgetCategoriesList = await db
+    // Get related categories with category details
+    const categoriesList = await db
       .select({
         budgetCategory: budgetCategories,
         category: categories
@@ -79,37 +89,46 @@ export class BudgetRepository {
       .innerJoin(categories, eq(budgetCategories.categoryId, categories.id))
       .where(eq(budgetCategories.budgetId, id));
 
-    // Get periods
-    const periodsList = await db
+    // Get period templates
+    const templatesList = await db
       .select()
-      .from(budgetPeriods)
-      .where(eq(budgetPeriods.budgetId, id))
-      .orderBy(desc(budgetPeriods.startDate));
+      .from(budgetPeriodTemplates)
+      .where(eq(budgetPeriodTemplates.budgetId, id))
+      .orderBy(desc(budgetPeriodTemplates.createdAt));
 
-    // Get recent allocations
-    const allocationsList = await db
+    // Get period instances
+    const instancesList = await db
+      .select()
+      .from(budgetPeriodInstances)
+      .innerJoin(budgetPeriodTemplates, eq(budgetPeriodInstances.templateId, budgetPeriodTemplates.id))
+      .where(eq(budgetPeriodTemplates.budgetId, id))
+      .orderBy(desc(budgetPeriodInstances.createdAt));
+
+    // Get recent budget transactions
+    const transactionsList = await db
       .select({
-        allocation: budgetAllocations,
+        budgetTransaction: budgetTransactions,
         transaction: transactions
       })
-      .from(budgetAllocations)
-      .innerJoin(transactions, eq(budgetAllocations.transactionId, transactions.id))
-      .where(eq(budgetAllocations.budgetId, id))
-      .orderBy(desc(budgetAllocations.createdAt))
+      .from(budgetTransactions)
+      .innerJoin(transactions, eq(budgetTransactions.transactionId, transactions.id))
+      .where(eq(budgetTransactions.budgetId, id))
+      .orderBy(desc(budgetTransactions.createdAt))
       .limit(10);
 
     return {
       ...budget,
-      accounts: budgetAccountsList.map(item => item.account),
-      categories: budgetCategoriesList.map(item => ({
+      accounts: accountsList.map(item => item.account),
+      categories: categoriesList.map(item => ({
         ...item.budgetCategory,
         category: item.category
-      })) as BudgetCategoryWithCategory[],
-      periods: periodsList,
-      allocations: allocationsList.map(item => ({
-        ...item.allocation,
+      })),
+      periodTemplates: templatesList,
+      periodInstances: instancesList.map(item => item.budget_period_instances),
+      transactions: transactionsList.map(item => ({
+        ...item.budgetTransaction,
         transaction: item.transaction
-      })) as BudgetAllocationWithTransaction[]
+      })) as BudgetTransactionWithTransaction[]
     };
   }
 
@@ -133,60 +152,53 @@ export class BudgetRepository {
       whereConditions.push(eq(budgets.type, filters.type));
     }
 
-    if (filters.enforcement) {
-      whereConditions.push(eq(budgets.enforcement, filters.enforcement));
+    if (filters.scope) {
+      whereConditions.push(eq(budgets.scope, filters.scope));
     }
 
-    if (filters.isActive !== undefined) {
-      whereConditions.push(eq(budgets.isActive, filters.isActive));
+    if (filters.status) {
+      whereConditions.push(eq(budgets.status, filters.status));
+    }
+
+    if (filters.enforcementLevel) {
+      whereConditions.push(eq(budgets.enforcementLevel, filters.enforcementLevel));
     }
 
     if (filters.search) {
-      whereConditions.push(
-        like(budgets.name, `%${filters.search}%`)
-      );
+      whereConditions.push(like(budgets.name, `%${filters.search}%`));
     }
 
-    // Account and category filters require joins
-    let query = db.select().from(budgets);
+    // Get total count
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(budgets)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : sql`1=1`);
 
-    if (filters.accountId) {
-      query = query
-        .innerJoin(budgetAccounts, eq(budgets.id, budgetAccounts.budgetId))
-        .where(and(
-          ...whereConditions,
-          eq(budgetAccounts.accountId, filters.accountId)
-        )) as any;
-    } else if (filters.categoryId) {
-      query = query
-        .innerJoin(budgetCategories, eq(budgets.id, budgetCategories.budgetId))
-        .where(and(
-          ...whereConditions,
-          eq(budgetCategories.categoryId, filters.categoryId)
-        )) as any;
-    } else {
-      query = query.where(and(...whereConditions)) as any;
-    }
+    const count = countResult[0]?.count || 0;
 
-    // Add sorting
-    const sortColumn = budgets[sortBy as keyof typeof budgets] || budgets.createdAt;
+    // Get paginated results
+    const validSortColumns = ['id', 'name', 'type', 'status', 'createdAt', 'updatedAt'] as const;
+    const sortKey = (sortBy && validSortColumns.includes(sortBy as any)) ? sortBy as typeof validSortColumns[number] : 'createdAt';
+    const sortColumn = sortKey === 'id' ? budgets.id :
+                       sortKey === 'name' ? budgets.name :
+                       sortKey === 'type' ? budgets.type :
+                       sortKey === 'status' ? budgets.status :
+                       sortKey === 'updatedAt' ? budgets.updatedAt :
+                       budgets.createdAt;
     const orderFn = sortOrder === "asc" ? asc : desc;
 
-    const results = await query
+    const results = await db
+      .select()
+      .from(budgets)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : sql`1=1`)
       .orderBy(orderFn(sortColumn))
       .limit(limit)
       .offset(offset);
 
-    // Get total count
-    const [{ count }] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(budgets)
-      .where(and(...whereConditions));
-
     const totalPages = Math.ceil(count / limit);
 
     return {
-      data: results.map((r: any) => r.budget || r) as Budget[],
+      data: results,
       total: count,
       page,
       limit,
@@ -215,7 +227,177 @@ export class BudgetRepository {
       .where(eq(budgets.id, id));
   }
 
-  // Budget account associations
+  // Budget Groups
+  async createBudgetGroup(data: NewBudgetGroup): Promise<BudgetGroup> {
+    const [group] = await db.insert(budgetGroups).values({
+      ...data,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }).returning();
+
+    if (!group) {
+      throw new Error("Failed to create budget group");
+    }
+
+    return group;
+  }
+
+  async getBudgetGroupById(id: number): Promise<BudgetGroup | null> {
+    const [group] = await db
+      .select()
+      .from(budgetGroups)
+      .where(eq(budgetGroups.id, id))
+      .limit(1);
+
+    return group || null;
+  }
+
+  // Budget Period Templates
+  async createBudgetPeriodTemplate(data: NewBudgetPeriodTemplate): Promise<BudgetPeriodTemplate> {
+    const [template] = await db.insert(budgetPeriodTemplates).values({
+      ...data,
+      createdAt: new Date().toISOString()
+    }).returning();
+
+    if (!template) {
+      throw new Error("Failed to create budget period template");
+    }
+
+    return template;
+  }
+
+  async getBudgetPeriodTemplateById(id: number): Promise<BudgetPeriodTemplate | null> {
+    const [template] = await db
+      .select()
+      .from(budgetPeriodTemplates)
+      .where(eq(budgetPeriodTemplates.id, id))
+      .limit(1);
+
+    return template || null;
+  }
+
+  async getBudgetPeriodTemplates(budgetId: number): Promise<BudgetPeriodTemplate[]> {
+    return await db
+      .select()
+      .from(budgetPeriodTemplates)
+      .where(eq(budgetPeriodTemplates.budgetId, budgetId))
+      .orderBy(desc(budgetPeriodTemplates.createdAt));
+  }
+
+  async updateBudgetPeriodTemplate(id: number, data: Partial<NewBudgetPeriodTemplate>): Promise<void> {
+    await db
+      .update(budgetPeriodTemplates)
+      .set(data)
+      .where(eq(budgetPeriodTemplates.id, id));
+  }
+
+  async deleteBudgetPeriodTemplate(id: number): Promise<void> {
+    await db
+      .delete(budgetPeriodTemplates)
+      .where(eq(budgetPeriodTemplates.id, id));
+  }
+
+  // Budget Period Instances
+  async createBudgetPeriodInstance(data: NewBudgetPeriodInstance): Promise<BudgetPeriodInstance> {
+    const [instance] = await db.insert(budgetPeriodInstances).values({
+      ...data,
+      createdAt: new Date().toISOString()
+    }).returning();
+
+    if (!instance) {
+      throw new Error("Failed to create budget period instance");
+    }
+
+    return instance;
+  }
+
+  async getBudgetPeriodInstanceById(id: number): Promise<BudgetPeriodInstance | null> {
+    const [instance] = await db
+      .select()
+      .from(budgetPeriodInstances)
+      .where(eq(budgetPeriodInstances.id, id))
+      .limit(1);
+
+    return instance || null;
+  }
+
+  async getBudgetPeriodInstances(
+    filters: PeriodFilters = {},
+    pagination: PaginationParams = {}
+  ): Promise<PaginatedResult<BudgetPeriodInstance>> {
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = "createdAt",
+      sortOrder = "desc"
+    } = pagination;
+
+    const offset = (page - 1) * limit;
+    const whereConditions = [];
+
+    if (filters.budgetId) {
+      // Join with templates to filter by budget
+      whereConditions.push(eq(budgetPeriodTemplates.budgetId, filters.budgetId));
+    }
+
+    if (filters.startDate) {
+      whereConditions.push(eq(budgetPeriodInstances.startDate, filters.startDate));
+    }
+
+    if (filters.endDate) {
+      whereConditions.push(eq(budgetPeriodInstances.endDate, filters.endDate));
+    }
+
+    // Get total count
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(budgetPeriodInstances)
+      .innerJoin(budgetPeriodTemplates, eq(budgetPeriodInstances.templateId, budgetPeriodTemplates.id))
+      .where(whereConditions.length > 0 ? and(...whereConditions) : sql`1=1`);
+
+    const count = countResult[0]?.count || 0;
+
+    // Get paginated results
+    const orderFn = sortOrder === "asc" ? asc : desc;
+
+    const results = await db
+      .select({
+        instance: budgetPeriodInstances
+      })
+      .from(budgetPeriodInstances)
+      .innerJoin(budgetPeriodTemplates, eq(budgetPeriodInstances.templateId, budgetPeriodTemplates.id))
+      .where(whereConditions.length > 0 ? and(...whereConditions) : sql`1=1`)
+      .orderBy(orderFn(budgetPeriodInstances.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const totalPages = Math.ceil(count / limit);
+
+    return {
+      data: results.map(r => r.instance),
+      total: count,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    };
+  }
+
+  async updateBudgetPeriodInstance(id: number, data: Partial<NewBudgetPeriodInstance>): Promise<void> {
+    await db
+      .update(budgetPeriodInstances)
+      .set(data)
+      .where(eq(budgetPeriodInstances.id, id));
+  }
+
+  async deleteBudgetPeriodInstance(id: number): Promise<void> {
+    await db
+      .delete(budgetPeriodInstances)
+      .where(eq(budgetPeriodInstances.id, id));
+  }
+
+  // Budget Accounts
   async addAccountToBudget(budgetId: number, accountId: number): Promise<void> {
     await db.insert(budgetAccounts).values({
       budgetId,
@@ -233,39 +415,14 @@ export class BudgetRepository {
       ));
   }
 
-  async getBudgetAccounts(budgetId: number): Promise<BudgetAccount[]> {
-    return await db
-      .select()
-      .from(budgetAccounts)
-      .where(eq(budgetAccounts.budgetId, budgetId));
-  }
-
-  // Budget category associations
-  async addCategoryToBudget(
-    budgetId: number,
-    categoryId: number,
-    allocatedAmount: number = 0
-  ): Promise<void> {
+  // Budget Categories
+  async addCategoryToBudget(budgetId: number, categoryId: number, allocatedAmount: number = 0): Promise<void> {
     await db.insert(budgetCategories).values({
       budgetId,
       categoryId,
       allocatedAmount,
       createdAt: new Date().toISOString()
     });
-  }
-
-  async updateBudgetCategoryAllocation(
-    budgetId: number,
-    categoryId: number,
-    allocatedAmount: number
-  ): Promise<void> {
-    await db
-      .update(budgetCategories)
-      .set({ allocatedAmount })
-      .where(and(
-        eq(budgetCategories.budgetId, budgetId),
-        eq(budgetCategories.categoryId, categoryId)
-      ));
   }
 
   async removeCategoryFromBudget(budgetId: number, categoryId: number): Promise<void> {
@@ -277,132 +434,24 @@ export class BudgetRepository {
       ));
   }
 
-  async getBudgetCategories(budgetId: number): Promise<BudgetCategoryWithCategory[]> {
-    const results = await db
-      .select({
-        budgetCategory: budgetCategories,
-        category: categories
-      })
-      .from(budgetCategories)
-      .innerJoin(categories, eq(budgetCategories.categoryId, categories.id))
-      .where(eq(budgetCategories.budgetId, budgetId));
-
-    return results.map(item => ({
-      ...item.budgetCategory,
-      category: item.category
-    }));
-  }
-
-  // Budget periods
-  async createBudgetPeriod(data: NewBudgetPeriod): Promise<BudgetPeriod> {
-    const [period] = await db.insert(budgetPeriods).values({
-      ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }).returning();
-
-    if (!period) {
-      throw new Error("Failed to create budget period");
-    }
-
-    return period;
-  }
-
-  async getBudgetPeriods(
-    filters: PeriodFilters = {},
-    pagination: PaginationParams = {}
-  ): Promise<PaginatedResult<BudgetPeriod>> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = "startDate",
-      sortOrder = "desc"
-    } = pagination;
-
-    const offset = (page - 1) * limit;
-
-    // Build where conditions
-    const whereConditions = [];
-
-    if (filters.budgetId) {
-      whereConditions.push(eq(budgetPeriods.budgetId, filters.budgetId));
-    }
-
-    if (filters.status) {
-      whereConditions.push(eq(budgetPeriods.status, filters.status));
-    }
-
-    if (filters.startDate && filters.endDate) {
-      whereConditions.push(
-        between(budgetPeriods.startDate, filters.startDate, filters.endDate)
-      );
-    }
-
-    // Execute query
-    const sortColumn = budgetPeriods[sortBy as keyof typeof budgetPeriods] || budgetPeriods.startDate;
-    const orderFn = sortOrder === "asc" ? asc : desc;
-
-    const results = await db
-      .select()
-      .from(budgetPeriods)
-      .where(and(...whereConditions))
-      .orderBy(orderFn(sortColumn))
-      .limit(limit)
-      .offset(offset);
-
-    // Get total count
-    const [{ count }] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(budgetPeriods)
-      .where(and(...whereConditions));
-
-    const totalPages = Math.ceil(count / limit);
-
-    return {
-      data: results,
-      total: count,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
-    };
-  }
-
-  async updateBudgetPeriod(id: number, data: Partial<NewBudgetPeriod>): Promise<void> {
-    await db
-      .update(budgetPeriods)
-      .set({
-        ...data,
-        updatedAt: new Date().toISOString()
-      })
-      .where(eq(budgetPeriods.id, id));
-  }
-
-  async deleteBudgetPeriod(id: number): Promise<void> {
-    await db
-      .delete(budgetPeriods)
-      .where(eq(budgetPeriods.id, id));
-  }
-
-  // Budget allocations
-  async createBudgetAllocation(data: NewBudgetAllocation): Promise<BudgetAllocation> {
-    const [allocation] = await db.insert(budgetAllocations).values({
+  // Budget Transactions
+  async createBudgetTransaction(data: NewBudgetTransaction): Promise<BudgetTransaction> {
+    const [transaction] = await db.insert(budgetTransactions).values({
       ...data,
       createdAt: new Date().toISOString()
     }).returning();
 
-    if (!allocation) {
-      throw new Error("Failed to create budget allocation");
+    if (!transaction) {
+      throw new Error("Failed to create budget transaction");
     }
 
-    return allocation;
+    return transaction;
   }
 
-  async getBudgetAllocations(
-    filters: AllocationFilters = {},
+  async getBudgetTransactions(
+    filters: TransactionFilters = {},
     pagination: PaginationParams = {}
-  ): Promise<PaginatedResult<BudgetAllocationWithTransaction>> {
+  ): Promise<PaginatedResult<BudgetTransactionWithTransaction>> {
     const {
       page = 1,
       limit = 20,
@@ -411,55 +460,56 @@ export class BudgetRepository {
     } = pagination;
 
     const offset = (page - 1) * limit;
-
-    // Build where conditions
     const whereConditions = [];
 
     if (filters.budgetId) {
-      whereConditions.push(eq(budgetAllocations.budgetId, filters.budgetId));
+      whereConditions.push(eq(budgetTransactions.budgetId, filters.budgetId));
     }
 
     if (filters.transactionId) {
-      whereConditions.push(eq(budgetAllocations.transactionId, filters.transactionId));
+      whereConditions.push(eq(budgetTransactions.transactionId, filters.transactionId));
     }
 
-    if (filters.periodId) {
-      whereConditions.push(eq(budgetAllocations.periodId, filters.periodId));
+    if (filters.autoAssigned !== undefined) {
+      whereConditions.push(eq(budgetTransactions.autoAssigned, filters.autoAssigned));
     }
 
-    if (filters.assignmentType) {
-      whereConditions.push(eq(budgetAllocations.assignmentType, filters.assignmentType));
+    if (filters.assignedBy) {
+      whereConditions.push(eq(budgetTransactions.assignedBy, filters.assignedBy));
     }
 
-    // Execute query with transaction join
-    const sortColumn = budgetAllocations[sortBy as keyof typeof budgetAllocations] || budgetAllocations.createdAt;
+    // Date filtering would need to be implemented based on transaction or assignment dates
+
+    // Get total count
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(budgetTransactions)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : sql`1=1`);
+
+    const count = countResult[0]?.count || 0;
+
+    // Get paginated results with transaction details
     const orderFn = sortOrder === "asc" ? asc : desc;
 
     const results = await db
       .select({
-        allocation: budgetAllocations,
+        budgetTransaction: budgetTransactions,
         transaction: transactions
       })
-      .from(budgetAllocations)
-      .innerJoin(transactions, eq(budgetAllocations.transactionId, transactions.id))
-      .where(and(...whereConditions))
-      .orderBy(orderFn(sortColumn))
+      .from(budgetTransactions)
+      .innerJoin(transactions, eq(budgetTransactions.transactionId, transactions.id))
+      .where(whereConditions.length > 0 ? and(...whereConditions) : sql`1=1`)
+      .orderBy(orderFn(budgetTransactions.createdAt))
       .limit(limit)
       .offset(offset);
-
-    // Get total count
-    const [{ count }] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(budgetAllocations)
-      .where(and(...whereConditions));
 
     const totalPages = Math.ceil(count / limit);
 
     return {
       data: results.map(item => ({
-        ...item.allocation,
+        ...item.budgetTransaction,
         transaction: item.transaction
-      })),
+      })) as BudgetTransactionWithTransaction[],
       total: count,
       page,
       limit,
@@ -469,52 +519,46 @@ export class BudgetRepository {
     };
   }
 
-  async updateBudgetAllocation(id: number, data: Partial<NewBudgetAllocation>): Promise<void> {
-    await db
-      .update(budgetAllocations)
-      .set(data)
-      .where(eq(budgetAllocations.id, id));
+  async getBudgetTransactionById(id: number): Promise<BudgetTransaction | null> {
+    const [transaction] = await db
+      .select()
+      .from(budgetTransactions)
+      .where(eq(budgetTransactions.id, id))
+      .limit(1);
+
+    return transaction || null;
   }
 
-  async deleteBudgetAllocation(id: number): Promise<void> {
+  async updateBudgetTransaction(id: number, data: Partial<NewBudgetTransaction>): Promise<void> {
     await db
-      .delete(budgetAllocations)
-      .where(eq(budgetAllocations.id, id));
+      .update(budgetTransactions)
+      .set(data)
+      .where(eq(budgetTransactions.id, id));
+  }
+
+  async deleteBudgetTransaction(id: number): Promise<void> {
+    await db
+      .delete(budgetTransactions)
+      .where(eq(budgetTransactions.id, id));
   }
 
   // Utility methods for budget calculations
-  async getBudgetSpending(budgetId: number, periodId?: number): Promise<number> {
-    const whereConditions = [eq(budgetAllocations.budgetId, budgetId)];
-
-    if (periodId) {
-      whereConditions.push(eq(budgetAllocations.periodId, periodId));
-    }
-
+  async getBudgetSpending(budgetId: number): Promise<number> {
     const [result] = await db
       .select({
-        total: sql<number>`COALESCE(SUM(${budgetAllocations.allocatedAmount}), 0)`
+        total: sql<number>`COALESCE(SUM(${budgetTransactions.allocatedAmount}), 0)`
       })
-      .from(budgetAllocations)
-      .where(and(...whereConditions));
+      .from(budgetTransactions)
+      .where(eq(budgetTransactions.budgetId, budgetId));
 
     return result?.total || 0;
   }
 
-  async getTransactionAllocations(transactionId: number): Promise<BudgetAllocation[]> {
+  async getBudgetTransactionsByTransaction(transactionId: number): Promise<BudgetTransaction[]> {
     return await db
       .select()
-      .from(budgetAllocations)
-      .where(eq(budgetAllocations.transactionId, transactionId));
+      .from(budgetTransactions)
+      .where(eq(budgetTransactions.transactionId, transactionId));
   }
 
-  async getTotalAllocatedForTransaction(transactionId: number): Promise<number> {
-    const [result] = await db
-      .select({
-        total: sql<number>`COALESCE(SUM(${budgetAllocations.allocatedAmount}), 0)`
-      })
-      .from(budgetAllocations)
-      .where(eq(budgetAllocations.transactionId, transactionId));
-
-    return result?.total || 0;
-  }
 }

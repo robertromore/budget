@@ -22,6 +22,20 @@
       "when": 1758494210253,
       "tag": "0002_cold_fallen_one",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1758502621706,
+      "tag": "0003_special_ironclad",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1758503000000,
+      "tag": "0004_safe_budget_schema_migration",
+      "breakpoints": true
     }
   ]
 }
