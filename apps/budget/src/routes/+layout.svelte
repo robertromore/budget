@@ -13,6 +13,7 @@ import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
 import AddScheduleDialog from '$lib/components/dialogs/add-schedule-dialog.svelte';
 import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog.svelte';
+import BudgetCreateDialog from '$lib/components/budgets/budget-create-dialog.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
 import {setQueryClientContext} from '@tanstack/svelte-query';
 import {queryClient} from '$lib/query';
@@ -48,6 +49,7 @@ onMount(() => {
 <AddScheduleDialog />
 <DeleteAccountDialog />
 <DeleteScheduleDialog />
+<BudgetCreateDialog />
 
 <div class="bg-background">
   <div class="grid">

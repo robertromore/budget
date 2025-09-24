@@ -12,10 +12,16 @@ import {
   managingScheduleId,
   deleteScheduleDialog,
   deleteScheduleId,
+  newBudgetDialog,
+  managingBudgetId,
+  deleteBudgetDialog,
+  deleteBudgetId,
 } from '$lib/states/ui/global.svelte';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
+import {listBudgets} from '$lib/query/budgets';
 import AccountSortDropdown from '$lib/components/shared/account-sort-dropdown.svelte';
+import {CircleDollarSign} from '@lucide/svelte/icons';
 
 const accountsState = $derived(AccountsState.get());
 const accounts = $derived(accountsState.sorted);
@@ -32,6 +38,13 @@ const _managingScheduleId = $derived(managingScheduleId);
 
 const _deleteScheduleDialog = $derived(deleteScheduleDialog);
 const _deleteScheduleId = $derived(deleteScheduleId);
+
+const budgetsQuery = listBudgets().options();
+const budgets = $derived($budgetsQuery.data ?? []);
+const _newBudgetDialog = $derived(newBudgetDialog);
+const _managingBudgetId = $derived(managingBudgetId);
+const _deleteBudgetDialog = $derived(deleteBudgetDialog);
+const _deleteBudgetId = $derived(deleteBudgetId);
 </script>
 
 <Sidebar.Root>
@@ -130,6 +143,59 @@ const _deleteScheduleId = $derived(deleteScheduleId);
                     _deleteScheduleId.current = schedule.id;
                     _deleteScheduleDialog.setTrue();
                   }}>
+                    <span>Delete</span>
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </Sidebar.MenuItem>
+          {/each}
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+
+    <Sidebar.Group>
+      <Sidebar.GroupLabel><a href="/budgets">Budgets</a></Sidebar.GroupLabel>
+      <Sidebar.GroupAction
+        title="Add Budget"
+        onclick={() => {
+          _managingBudgetId.current = 0;
+          _newBudgetDialog.setTrue();
+        }}>
+        <Plus /> <span class="sr-only">Add Budget</span>
+      </Sidebar.GroupAction>
+      <Sidebar.GroupContent>
+        <Sidebar.Menu>
+          {#each budgets as budget}
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton>
+                {#snippet child({props})}
+                  <a href="/budgets/{budget.id}" {...props}>
+                    <CircleDollarSign class="h-4 w-4" />
+                    <span>{budget.name}</span>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                  {#snippet child({props})}
+                    <Sidebar.MenuAction {...props}>
+                      <Ellipsis />
+                    </Sidebar.MenuAction>
+                  {/snippet}
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content side="right" align="start">
+                  <DropdownMenu.Item
+                    onclick={() => {
+                      _managingBudgetId.current = budget.id;
+                      _newBudgetDialog.setTrue();
+                    }}>
+                    <span>Edit</span>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onclick={() => {
+                      _deleteBudgetId.current = budget.id;
+                      _deleteBudgetDialog.setTrue();
+                    }}>
                     <span>Delete</span>
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>
