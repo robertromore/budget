@@ -1,4 +1,5 @@
 // Re-export all component categories
+export * from "./budgets";
 export * from "./dialogs";
 export * from "./forms";
 export * from "./layout";

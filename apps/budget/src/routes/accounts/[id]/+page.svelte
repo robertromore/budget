@@ -135,6 +135,8 @@ const submitTransaction = async (formData: any) => {
       payeeId: formData.payeeId || null,
       categoryId: formData.categoryId || null,
       status: formData.status || 'pending',
+      budgetId: formData.budgetId || null,
+      budgetAllocation: formData.budgetAllocation || null,
     });
     // TanStack Query mutation handles all cache invalidation automatically
   } catch (err: any) {

@@ -7,10 +7,12 @@ import type {TransactionFilters, PaginationParams, PaginatedResult} from "./repo
 import {invalidateAccountCache} from "$lib/utils/cache";
 import {db} from "$lib/server/db";
 import {accounts, transactions} from "$lib/schema";
+import {budgetTransactions} from "$lib/schema/budgets";
 import {eq, and, isNull, sql} from "drizzle-orm";
 import {PayeeService} from "../payees/services";
 import {CategoryService} from "../categories/services";
 import {ScheduleService, type UpcomingScheduledTransaction} from "../schedules/services";
+import {BudgetTransactionService} from "../budgets/services";
 
 // Service input types
 export interface CreateTransactionData {
@@ -22,6 +24,8 @@ export interface CreateTransactionData {
   notes?: string | null | undefined;
   status?: "cleared" | "pending" | "scheduled" | undefined;
   scheduleId?: number | null | undefined;
+  budgetId?: number | null | undefined;
+  budgetAllocation?: number | null | undefined;
 }
 
 export interface UpdateTransactionData {
@@ -31,6 +35,8 @@ export interface UpdateTransactionData {
   categoryId?: number | null | undefined;
   notes?: string | null | undefined;
   status?: "cleared" | "pending" | "scheduled" | undefined;
+  budgetId?: number | null | undefined;
+  budgetAllocation?: number | null | undefined;
 }
 
 export interface TransactionSummary {
@@ -51,7 +57,8 @@ export class TransactionService {
   constructor(
     private repository: TransactionRepository = new TransactionRepository(),
     private payeeService: PayeeService = new PayeeService(),
-    private categoryService: CategoryService = new CategoryService()
+    private categoryService: CategoryService = new CategoryService(),
+    private budgetTransactionService: BudgetTransactionService = new BudgetTransactionService()
   ) {}
 
   /**
@@ -116,6 +123,26 @@ export class TransactionService {
       notes,
       status,
     });
+
+    // Handle budget allocation if provided
+    if (data.budgetId && data.budgetAllocation !== undefined && data.budgetAllocation !== null) {
+      try {
+        // Ensure allocation has the same sign as the transaction amount
+        const signedAllocation = transaction.amount >= 0 ? Math.abs(data.budgetAllocation) : -Math.abs(data.budgetAllocation);
+
+        await this.budgetTransactionService.createAllocation({
+          transactionId: transaction.id,
+          budgetId: data.budgetId,
+          allocatedAmount: signedAllocation,
+          autoAssigned: false,
+          assignedBy: 'user',
+        });
+      } catch (budgetError) {
+        // If budget allocation fails, we should still return the transaction
+        // but could log the error or notify the client
+        console.warn(`Failed to create budget allocation for transaction ${transaction.id}:`, budgetError);
+      }
+    }
 
     invalidateAccountCache(transaction.accountId);
 
@@ -189,6 +216,40 @@ export class TransactionService {
 
     // Update transaction
     const updatedTransaction = await this.repository.update(id, updateData);
+
+    // Handle budget allocation if provided
+    // Note: This is a simplified implementation that creates a new allocation
+    // A more sophisticated implementation would update existing allocations
+    if (data.budgetId !== undefined && data.budgetAllocation !== undefined) {
+      try {
+        if (data.budgetId && data.budgetAllocation !== null) {
+          // Ensure allocation has the same sign as the transaction amount
+          const signedAllocation = updatedTransaction.amount >= 0 ? Math.abs(data.budgetAllocation) : -Math.abs(data.budgetAllocation);
+
+          // Create or update budget allocation
+          await this.budgetTransactionService.createAllocation({
+            transactionId: updatedTransaction.id,
+            budgetId: data.budgetId,
+            allocatedAmount: signedAllocation,
+            autoAssigned: false,
+            assignedBy: 'user',
+          });
+        } else if (data.budgetId === null) {
+          // Remove all budget allocations for this transaction
+          const existingAllocations = await db.select()
+            .from(budgetTransactions)
+            .where(eq(budgetTransactions.transactionId, updatedTransaction.id));
+
+          // Delete all existing allocations
+          for (const allocation of existingAllocations) {
+            await this.budgetTransactionService.deleteAllocation(allocation.id);
+          }
+        }
+      } catch (budgetError) {
+        // If budget allocation fails, we should still return the updated transaction
+        console.warn(`Failed to update budget allocation for transaction ${updatedTransaction.id}:`, budgetError);
+      }
+    }
 
     invalidateAccountCache(updatedTransaction.accountId);
 

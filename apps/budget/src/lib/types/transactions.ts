@@ -25,6 +25,15 @@ export type TransactionsFormat = {
   scheduleFrequency?: string;
   scheduleInterval?: number;
   scheduleNextOccurrence?: string;
+  // Budget allocation data
+  budgetAllocations?: Array<{
+    id: number;
+    budgetId: number;
+    budgetName: string;
+    allocatedAmount: number;
+    autoAssigned: boolean;
+    assignedBy: string | null;
+  }>;
 };
 
 /**

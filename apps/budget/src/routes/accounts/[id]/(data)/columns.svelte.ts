@@ -34,6 +34,7 @@ import DataTableActions from "../(components)/data-table-actions.svelte";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
 import ManageCategoryForm from "../(components)/manage-category-form.svelte";
 import ManagePayeeForm from "../(components)/manage-payee-form.svelte";
+import BudgetAllocationSimpleCell from "../(components)/(cells)/budget-allocation-simple-cell.svelte";
 
 export const columns = (
   categories: CategoriesState,
@@ -418,6 +419,24 @@ export const columns = (
           },
         ],
       },
+    },
+    {
+      accessorKey: "budget",
+      id: "budget",
+      cell: (info) => {
+        const transaction = info.row.original;
+        return renderComponent(BudgetAllocationSimpleCell, {
+          transaction
+        });
+      },
+      header: ({column}) =>
+        renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
+          column,
+          title: "Budget",
+        }),
+      size: 120,
+      enableSorting: false,
+      enableColumnFilter: false,
     },
     {
       accessorKey: "amount",

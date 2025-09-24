@@ -10,7 +10,15 @@ import {today, getLocalTimeZone} from '@internationalized/date';
 import type {EditableDateItem, EditableEntityItem} from '$lib/types';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
+import CircleDollarSign from '@lucide/svelte/icons/circle-dollar-sign';
 import type {Component} from 'svelte';
+import {BudgetSelector} from '$lib/components/budgets';
+
+// Currency formatter
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD'
+});
 
 let {
   open = $bindable(false),
@@ -33,6 +41,8 @@ type TransactionFormData = {
   payeeId: number | null;
   categoryId: number | null;
   status: 'pending' | 'cleared' | 'scheduled' | null;
+  budgetId: number | null;
+  budgetAllocation: number | null;
 };
 
 // Transaction form state
@@ -44,6 +54,8 @@ let transactionForm = $state<TransactionFormData>({
   payeeId: null,
   categoryId: null,
   status: 'pending',
+  budgetId: null,
+  budgetAllocation: null,
 });
 
 // Input component state
@@ -57,6 +69,7 @@ let category: EditableEntityItem = $state({
   id: 0,
   name: '',
 });
+let selectedBudgetId: string = $state('');
 
 // Sync component state with form state
 $effect(() => {
@@ -64,6 +77,9 @@ $effect(() => {
   transactionForm.amount = amount;
   transactionForm.payeeId = payee.id || null;
   transactionForm.categoryId = category.id || null;
+  transactionForm.budgetId = selectedBudgetId ? Number(selectedBudgetId) : null;
+  // Default allocation to full amount if budget is selected
+  transactionForm.budgetAllocation = selectedBudgetId && amount ? amount : null;
 });
 
 // Reset form to defaults
@@ -75,13 +91,16 @@ function resetForm() {
     payeeId: null,
     categoryId: null,
     status: 'pending',
+    budgetId: null,
+    budgetAllocation: null,
   };
-  
+
   // Reset component state
   dateValue = today(getLocalTimeZone());
   amount = 0;
   payee = { id: 0, name: '' };
   category = { id: 0, name: '' };
+  selectedBudgetId = '';
 }
 
 // Handle form submission
@@ -155,6 +174,23 @@ function handleClose() {
           bind:value={category}
           icon={SquareMousePointer as unknown as Component}
           buttonClass="w-full" />
+      </div>
+
+      <!-- Budget -->
+      <div class="space-y-2">
+        <Label for="budget">Budget (Optional)</Label>
+        <BudgetSelector
+          bind:value={selectedBudgetId}
+          placeholder="Allocate to budget..."
+        />
+        {#if selectedBudgetId && transactionForm.budgetAllocation}
+          <div class="flex items-center gap-2 text-xs text-muted-foreground">
+            <CircleDollarSign class="h-3 w-3" />
+            <span>
+              Allocating {currencyFormatter.format(Math.abs(transactionForm.budgetAllocation))} to selected budget
+            </span>
+          </div>
+        {/if}
       </div>
 
       <!-- Status - Hidden, defaults to pending -->

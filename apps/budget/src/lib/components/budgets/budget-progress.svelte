@@ -1,0 +1,168 @@
+<script lang="ts">
+  import {cn} from "$lib/utils";
+  import {currencyFormatter} from "$lib/utils/formatters";
+
+  type BudgetStatus = "on_track" | "approaching" | "over" | "paused";
+  type BudgetEnforcement = "none" | "warning" | "strict";
+
+  interface Props {
+    consumed?: number;
+    allocated?: number;
+    status?: BudgetStatus;
+    enforcementLevel?: BudgetEnforcement;
+    formatter?: (value: number) => string;
+    label?: string;
+    showStatus?: boolean;
+    showRemaining?: boolean;
+    class?: string;
+    size?: "sm" | "md" | "lg";
+    onStatusClick?: (status: BudgetStatus) => void;
+  }
+
+  const defaultFormatter = (value: number) => currencyFormatter.format(value ?? 0);
+
+  let {
+    consumed = 0,
+    allocated = 0,
+    status = "on_track",
+    enforcementLevel = "warning",
+    formatter = defaultFormatter,
+    label = "Budget Progress",
+    showStatus = true,
+    showRemaining = true,
+    class: className,
+    size = "md",
+    onStatusClick,
+  }: Props = $props();
+
+  const ratio = $derived.by(() => {
+    if (!Number.isFinite(allocated) || allocated <= 0) return 0;
+    return consumed / allocated;
+  });
+
+  const percentage = $derived.by(() => Math.max(0, ratio * 100));
+  const clampedPercentage = $derived.by(() => Math.min(percentage, 100));
+  const remaining = $derived.by(() => allocated - consumed);
+
+  const statusLabel = $derived.by(() => {
+    switch (status) {
+      case "approaching":
+        return "Approaching";
+      case "over":
+        return "Over Budget";
+      case "paused":
+        return "Paused";
+      case "on_track":
+      default:
+        return "On Track";
+    }
+  });
+
+  const statusClasses = $derived.by(() => {
+    switch (status) {
+      case "approaching":
+        return "bg-amber-500 text-amber-50";
+      case "over":
+        return "bg-destructive text-destructive-foreground";
+      case "paused":
+        return "bg-muted text-muted-foreground";
+      case "on_track":
+      default:
+        return "bg-emerald-500 text-emerald-50";
+    }
+  });
+
+  const barClasses = $derived.by(() => {
+    switch (status) {
+      case "approaching":
+        return "bg-amber-500";
+      case "over":
+        return "bg-destructive";
+      case "paused":
+        return "bg-muted-foreground";
+      case "on_track":
+      default:
+        return "bg-emerald-500";
+    }
+  });
+
+  const enforcementClasses = $derived.by(() => {
+    switch (enforcementLevel) {
+      case "strict":
+        return "ring-1 ring-destructive/40";
+      case "warning":
+        return "ring-1 ring-amber-500/20";
+      case "none":
+      default:
+        return "";
+    }
+  });
+
+  const sizeClasses = $derived.by(() => {
+    switch (size) {
+      case "sm":
+        return "p-3 text-xs";
+      case "lg":
+        return "p-5 text-sm";
+      case "md":
+      default:
+        return "p-4 text-sm";
+    }
+  });
+
+  function handleStatusClick() {
+    onStatusClick?.(status);
+  }
+</script>
+
+<div class={cn("rounded-lg border bg-card shadow-sm", enforcementClasses, sizeClasses, className)}>
+  <div class="flex items-center justify-between gap-3">
+    <div class="font-medium text-card-foreground">{label}</div>
+    <div class="text-xs text-muted-foreground">{Math.round(percentage)}%</div>
+  </div>
+
+  <div class="mt-3 flex flex-col gap-3">
+    <div class="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+      <div
+        class={cn("h-full rounded-full transition-all duration-300", barClasses)}
+        style={`width: ${clampedPercentage}%`}
+      ></div>
+
+      {#if percentage > 100}
+        <span class="absolute inset-y-0 right-0 translate-x-full pl-2 text-xs font-medium text-destructive">
+          +{formatter(consumed - allocated)}
+        </span>
+      {/if}
+    </div>
+
+    <div class="grid gap-1 text-xs">
+      <div class="flex items-center justify-between text-muted-foreground">
+        <span>Spent</span>
+        <span class="font-medium text-card-foreground">{formatter(consumed)}</span>
+      </div>
+
+      {#if showRemaining}
+        <div class="flex items-center justify-between text-muted-foreground">
+          <span>{remaining >= 0 ? "Remaining" : "Over"}</span>
+          <span class={cn("font-medium", remaining < 0 && "text-destructive")}
+            >{formatter(Math.abs(remaining))}</span
+          >
+        </div>
+      {/if}
+    </div>
+
+    {#if showStatus}
+      <button
+        type="button"
+        class={cn(
+          "inline-flex w-max items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-medium capitalize",
+          statusClasses
+        )}
+        onclick={handleStatusClick}
+      >
+        <span class="size-1.5 rounded-full bg-current"></span>
+        {statusLabel}
+      </button>
+    {/if}
+  </div>
+</div>

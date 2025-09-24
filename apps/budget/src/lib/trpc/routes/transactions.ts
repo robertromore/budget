@@ -240,7 +240,7 @@ export const transactionRoutes = t.router({
   // Legacy save endpoint (for backwards compatibility - will be deprecated)
   save: rateLimitedProcedure
     .input(z.object({
-      id: z.number().optional(),
+      id: z.number().nullable().optional(),
       accountId: z.number().optional(),
       amount: z.number(),
       date: z.string(),
@@ -248,6 +248,8 @@ export const transactionRoutes = t.router({
       categoryId: z.number().nullable().optional(),
       notes: z.string().nullable().optional(),
       status: z.enum(["cleared", "pending", "scheduled"]).nullable().optional(),
+      budgetId: z.number().nullable().optional(),
+      budgetAllocation: z.number().nullable().optional(),
     }))
     .mutation(async ({input}) => {
       try {

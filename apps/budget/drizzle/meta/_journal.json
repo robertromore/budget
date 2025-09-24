@@ -15,6 +15,20 @@
       "when": 1758413806118,
       "tag": "0001_clumsy_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1758582608332,
+      "tag": "0002_purple_wong",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1758592100173,
+      "tag": "0003_special_gateway",
+      "breakpoints": true
     }
   ]
 }
