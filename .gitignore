@@ -30,3 +30,5 @@ apps/*/build/
 
 # Turbo cache
 .turbo/
+
+.llms
