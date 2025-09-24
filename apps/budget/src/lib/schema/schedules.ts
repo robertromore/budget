@@ -14,6 +14,7 @@ import {payees} from "./payees";
 import {categories} from "./categories";
 import {accounts} from "./accounts";
 import {scheduleDates} from "./schedule-dates";
+import {budgets} from "./budgets";
 
 export const schedules = sqliteTable(
   "schedules",
@@ -38,6 +39,7 @@ export const schedules = sqliteTable(
     accountId: integer("account_id")
       .notNull()
       .references(() => accounts.id),
+    budgetId: integer("budget_id").references(() => budgets.id),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -50,6 +52,7 @@ export const schedules = sqliteTable(
     index("relations_schedule_account_idx").on(table.accountId),
     index("relations_schedule_payee_idx").on(table.payeeId),
     index("relations_schedule_category_idx").on(table.categoryId),
+    index("relations_schedule_budget_idx").on(table.budgetId),
     index("schedule_status_idx").on(table.status),
     index("schedule_name_idx").on(table.name),
     index("schedule_slug_idx").on(table.slug),
@@ -73,6 +76,10 @@ export const schedulesRelations = relations(schedules, ({many, one}) => ({
   scheduleDate: one(scheduleDates, {
     fields: [schedules.dateId],
     references: [scheduleDates.id],
+  }),
+  budget: one(budgets, {
+    fields: [schedules.budgetId],
+    references: [budgets.id],
   }),
 }));
 

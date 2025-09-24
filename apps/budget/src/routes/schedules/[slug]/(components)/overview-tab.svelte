@@ -34,7 +34,7 @@ let { schedule, statistics, futureProjections }: {
       <Card.Content class="pt-1">
         <div class="text-lg font-bold">{formatAmount(schedule)}</div>
         <p class="text-xs text-muted-foreground">
-          {schedule.amount_type} amount
+          {schedule.amount_type || 'fixed'} amount
         </p>
       </Card.Content>
     </Card.Root>

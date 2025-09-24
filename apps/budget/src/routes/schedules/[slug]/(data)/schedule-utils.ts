@@ -2,7 +2,11 @@ import type { PageData } from '../$types';
 import { currencyFormatter, recurringFormatter } from '$lib/utils/formatters';
 
 export function formatAmount(schedule: PageData['schedule']): string {
-  if (schedule.amount_type === 'range') {
+  if (!schedule || schedule.amount == null) {
+    return currencyFormatter.format(0);
+  }
+
+  if (schedule.amount_type === 'range' && schedule.amount_2 != null) {
     return `${currencyFormatter.format(schedule.amount)} - ${currencyFormatter.format(schedule.amount_2)}`;
   } else if (schedule.amount_type === 'approximate') {
     return `~${currencyFormatter.format(schedule.amount)}`;

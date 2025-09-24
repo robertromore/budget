@@ -376,6 +376,8 @@ export const saveTransaction = defineMutation<
     categoryId?: number | null;
     notes?: string | null;
     status?: "cleared" | "pending" | "scheduled" | null;
+    budgetId?: number | null;
+    budgetAllocation?: number | null;
   },
   Transaction
 >({
