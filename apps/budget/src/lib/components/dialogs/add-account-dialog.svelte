@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Dialog from '$lib/components/ui/dialog';
+import * as Sheet from '$lib/components/ui/sheet';
 import type {UseBoolean} from '$lib/hooks/ui/use-boolean.svelte';
 import type {UseNumber} from '$lib/hooks/ui/use-number.svelte';
 import {managingAccountId, newAccountDialog} from '$lib/states/ui/global.svelte';
@@ -9,16 +9,24 @@ const dialogOpen: UseBoolean = $derived(newAccountDialog);
 const accountId: UseNumber = $derived(managingAccountId);
 </script>
 
-<Dialog.Root bind:open={() => dialogOpen.current, (newOpen) => (dialogOpen.current = newOpen)}>
-  <Dialog.Content>
-    <Dialog.Header>
-      <Dialog.Title
-        >{#if accountId.current === 0}Add{:else}Manage{/if} Account</Dialog.Title>
-      <Dialog.Description>
+<Sheet.Root bind:open={dialogOpen.current} onOpenChange={(open) => {
+  dialogOpen.current = open;
+}}>
+  <Sheet.Content preventScroll={false} class="overflow-auto sm:max-w-lg">
+    <Sheet.Header>
+      <Sheet.Title>
+        {#if accountId.current === 0}
+          Add Account
+        {:else}
+          Manage Account
+        {/if}
+      </Sheet.Title>
+      <Sheet.Description>
         <ManageAccountForm
           accountId={accountId.current}
+          formId="add-account-dialog-form"
           onSave={() => (dialogOpen.current = false)} />
-      </Dialog.Description>
-    </Dialog.Header>
-  </Dialog.Content>
-</Dialog.Root>
+      </Sheet.Description>
+    </Sheet.Header>
+  </Sheet.Content>
+</Sheet.Root>

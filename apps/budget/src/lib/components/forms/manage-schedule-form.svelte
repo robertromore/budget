@@ -12,9 +12,9 @@ import CreditCard from '@lucide/svelte/icons/credit-card';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Building from '@lucide/svelte/icons/building';
 import Tag from '@lucide/svelte/icons/tag';
-import {superForm, fieldProxy} from 'sveltekit-superforms';
-import {zod4Client} from 'sveltekit-superforms/adapters';
+import {fieldProxy} from 'sveltekit-superforms';
 import {CalendarDate} from '@internationalized/date';
+import {useEntityForm} from '$lib/hooks/forms/use-entity-form';
 
 // UI component imports
 import * as Form from '$lib/components/ui/form';
@@ -40,6 +40,9 @@ import type {EditableEntityItem} from '$lib/types';
 
 // Local component imports
 import {RepeatingDateInput} from '$lib/components/input';
+import { WizardFormWrapper } from '$lib/components/wizard';
+import ScheduleWizard from '$lib/components/wizard/schedule-wizard.svelte';
+import { scheduleWizardStore } from '$lib/stores/wizardStore.svelte';
 
 // Props
 let {
@@ -89,30 +92,51 @@ let category: EditableEntityItem = $state(EMPTY_CATEGORY);
 let repeating_date = $state(new RepeatingDateInputModel());
 
 // Form
-const form = superForm(manageScheduleForm, {
-  id: 'schedule-form',
-  validators: zod4Client(superformInsertScheduleSchema),
-  onResult: async ({result}) => {
-    if (onSave && result.type === 'success' && result.data) {
-      const savedSchedule = result.data['entity'];
-      schedules.addSchedule(savedSchedule);
+const form = useEntityForm({
+  formData: manageScheduleForm,
+  schema: superformInsertScheduleSchema,
+  formId: 'schedule-form',
+  entityId: scheduleId || undefined,
+  onSave: (savedSchedule: any) => {
+    schedules.addSchedule(savedSchedule);
 
-      // Invalidate the schedule detail query to trigger reactivity
-      queryClient.invalidateQueries({
-        queryKey: scheduleKeys.detail(savedSchedule.id)
-      });
+    // Invalidate the schedule detail query to trigger reactivity
+    queryClient.invalidateQueries({
+      queryKey: scheduleKeys.detail(savedSchedule.id)
+    });
 
-      // Invalidate the schedules list to refresh the sidebar
-      queryClient.invalidateQueries({
-        queryKey: scheduleKeys.lists()
-      });
+    // Invalidate the schedules list to refresh the sidebar
+    queryClient.invalidateQueries({
+      queryKey: scheduleKeys.lists()
+    });
 
-      onSave(savedSchedule);
-    }
+    if (onSave) onSave(savedSchedule);
   },
 });
 
 const {form: formData, enhance} = form;
+
+// Determine if this is an update
+const isUpdate = scheduleId && scheduleId > 0;
+
+// Handle wizard completion
+async function handleWizardComplete(wizardFormData: Record<string, any>) {
+  // Update form data with wizard results
+  Object.keys(wizardFormData).forEach(key => {
+    if (wizardFormData[key] !== undefined) {
+      $formData[key] = wizardFormData[key];
+    }
+  });
+
+  // Wait a tick to ensure reactive updates complete
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  // Submit the form programmatically
+  const form = document.getElementById('schedule-form') as HTMLFormElement;
+  if (form) {
+    form.requestSubmit();
+  }
+}
 
 // Create fieldProxy for repeating_date
 const repeatingDateProxy = fieldProxy(form, 'repeating_date');
@@ -257,7 +281,26 @@ $effect(() => {
 
 </script>
 
-<form method="post" action="/schedules?/save-schedule" use:enhance class="space-y-6">
+<WizardFormWrapper
+  title={isUpdate ? "Edit Schedule" : "Create New Schedule"}
+  subtitle={isUpdate ? "Update your schedule details" : "Add a new recurring or one-time transaction schedule"}
+  wizardStore={scheduleWizardStore}
+  onComplete={handleWizardComplete}
+  defaultMode="manual"
+  currentFormData={{
+    name: $formData.name,
+    recurring: $formData.recurring,
+    amount: $formData.amount,
+    amount_2: $formData.amount_2,
+    amount_type: $formData.amount_type,
+    payeeId: $formData.payeeId,
+    accountId: $formData.accountId,
+    categoryId: $formData.categoryId,
+    auto_add: $formData.auto_add
+  }}
+>
+  {#snippet formContent()}
+    <form id="schedule-form" method="post" action="/schedules?/save-schedule" use:enhance class="space-y-6">
   <input hidden value={$formData.id} name="id" />
 
   <!-- Basic Details Section -->
@@ -457,3 +500,24 @@ $effect(() => {
     </Form.Button>
   </div>
 </form>
+  {/snippet}
+
+  {#snippet wizardContent()}
+    <ScheduleWizard
+      initialData={{
+        name: $formData.name,
+        recurring: $formData.recurring,
+        amount: $formData.amount,
+        amount_2: $formData.amount_2,
+        amount_type: $formData.amount_type,
+        payeeId: $formData.payeeId,
+        accountId: $formData.accountId,
+        categoryId: $formData.categoryId,
+        auto_add: $formData.auto_add
+      }}
+      accounts={accounts}
+      payees={payees}
+      categories={categories}
+    />
+  {/snippet}
+</WizardFormWrapper>

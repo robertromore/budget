@@ -3,7 +3,6 @@
   import {Button} from "$lib/components/ui/button";
   import * as Tabs from "$lib/components/ui/tabs";
   import BudgetProgress from "$lib/components/budgets/budget-progress.svelte";
-  import BudgetCreateDialog from "$lib/components/budgets/budget-create-dialog.svelte";
   import BudgetManageDialog from "$lib/components/budgets/budget-manage-dialog.svelte";
   import BudgetAnalyticsDashboard from "$lib/components/budgets/budget-analytics-dashboard.svelte";
   import BudgetFundTransfer from "$lib/components/budgets/budget-fund-transfer.svelte";
@@ -15,6 +14,7 @@
   import {rawDateFormatter} from "$lib/utils/date-formatters";
   import {parseDate, getLocalTimeZone} from "@internationalized/date";
   import {Settings, ChartBar, Grid3X3, ArrowRightLeft, RotateCcw} from "@lucide/svelte/icons";
+  import {newBudgetDialog} from "$lib/states/ui/global.svelte";
 
   let {
     data,
@@ -29,7 +29,6 @@
   const budgetsLoading = false;
   const tz = $derived.by(() => getLocalTimeZone());
 
-  let createDialogOpen = $state(false);
   let manageDialogOpen = $state(false);
   let selectedBudget = $state<BudgetWithRelations | null>(null);
 
@@ -107,7 +106,7 @@
     <h1 class="text-3xl font-semibold text-foreground">Budgets</h1>
     <p class="text-sm text-muted-foreground">Track how spending aligns with your plans.</p>
   </div>
-  <Button onclick={() => createDialogOpen = true}>Create Budget</Button>
+  <Button onclick={() => newBudgetDialog.setTrue()}>Create Budget</Button>
 </section>
 
 {#if budgetsLoading && !budgets.length}
@@ -233,12 +232,6 @@
   </Tabs.Root>
 {/if}
 
-<BudgetCreateDialog
-  bind:open={createDialogOpen}
-  onBudgetCreated={() => {
-    // TanStack Query will automatically refetch after the mutation's cache invalidation
-  }}
-/>
 
 <BudgetManageDialog
   budget={selectedBudget}

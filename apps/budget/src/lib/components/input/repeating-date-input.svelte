@@ -66,15 +66,24 @@ let {
   class: className,
   disabled = false,
   isRepeating = $bindable(false),
+  hideRecurringToggle = false,
 }: {
   value?: RepeatingDateInputModel;
   class?: string;
   disabled?: boolean;
   isRepeating?: boolean;
+  hideRecurringToggle?: boolean;
 } = $props();
 
 // Local state
 let hasEndCondition = $state(false);
+
+// Auto-enable isRepeating when the toggle is hidden
+$effect(() => {
+  if (hideRecurringToggle) {
+    isRepeating = true;
+  }
+});
 
 // Computed properties
 let isValid = $derived.by(() => {
@@ -163,20 +172,22 @@ const handleWeeksDaysToggle = (weekday: number) => {
 
   <!-- Repeat Toggle -->
   <div class="space-y-4">
-    <Label
-      class="hover:bg-accent/50 has-[[aria-checked=true]]:border-primary has-[[aria-checked=true]]:bg-primary/5 flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors">
-      <Checkbox
-        bind:checked={isRepeating}
-        {disabled}
-        class="data-[state=checked]:border-primary data-[state=checked]:bg-primary" />
-      <div class="flex-1 space-y-1">
-        <div class="flex items-center gap-2">
-          <Repeat class="h-4 w-4" />
-          <span class="font-medium">Make this recurring</span>
+    {#if !hideRecurringToggle}
+      <Label
+        class="hover:bg-accent/50 has-[[aria-checked=true]]:border-primary has-[[aria-checked=true]]:bg-primary/5 flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors">
+        <Checkbox
+          bind:checked={isRepeating}
+          {disabled}
+          class="data-[state=checked]:border-primary data-[state=checked]:bg-primary" />
+        <div class="flex-1 space-y-1">
+          <div class="flex items-center gap-2">
+            <Repeat class="h-4 w-4" />
+            <span class="font-medium">Make this recurring</span>
+          </div>
+          <p class="text-muted-foreground text-sm">Set up a repeating schedule for this item</p>
         </div>
-        <p class="text-muted-foreground text-sm">Set up a repeating schedule for this item</p>
-      </div>
-    </Label>
+      </Label>
+    {/if}
 
     <!-- Recurrence Pattern -->
     {#if isRepeating}

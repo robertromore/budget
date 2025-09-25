@@ -13,6 +13,7 @@ interface Props {
   content?: Snippet;
   footer?: Snippet;
   children?: Snippet;
+  class?: string;
 }
 
 let {
@@ -24,6 +25,7 @@ let {
   content,
   footer,
   children,
+  class: className,
 }: Props = $props();
 
 const isDesktop = new MediaQuery('(min-width: 768px)');
@@ -43,7 +45,7 @@ $effect(() => {
         {@render trigger()}
       </Sheet.Trigger>
     {/if}
-    <Sheet.Content {side} class="flex flex-col">
+    <Sheet.Content {side} class="flex flex-col {className || ''}">
       {#if header}
         <Sheet.Header class="border-b px-6 py-6">
           {@render header()}
