@@ -2,11 +2,9 @@
 import * as Form from '$lib/components/ui/form';
 import {type Transaction} from '$lib/schema';
 import {superformInsertTransactionSchema} from '$lib/schema/superforms';
-import {superForm} from 'sveltekit-superforms/client';
 import {today, getLocalTimeZone} from '@internationalized/date';
 import type {EditableDateItem, EditableEntityItem} from '$lib/types';
 import {Textarea} from '$lib/components/ui/textarea';
-import {zod4Client} from 'sveltekit-superforms/adapters';
 import DateInput from '$lib/components/input/date-input.svelte';
 import EntityInput from '$lib/components/input/entity-input.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
@@ -14,6 +12,7 @@ import {page} from '$app/state';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 import type {Component} from 'svelte';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
+import {useEntityForm} from '$lib/hooks/forms/use-entity-form';
 
 let {
   accountId,
@@ -28,16 +27,11 @@ const {
   data: {payees, categories, manageTransactionForm},
 } = page;
 
-const form = superForm(manageTransactionForm, {
-  id: 'transaction-form',
-  validators: zod4Client(superformInsertTransactionSchema),
-  onResult: async ({result}) => {
-    if (onSave) {
-      if (result.type === 'success' && result.data) {
-        onSave(result.data['entity']);
-      }
-    }
-  },
+const form = useEntityForm({
+  formData: manageTransactionForm,
+  schema: superformInsertTransactionSchema,
+  formId: 'transaction-form',
+  onSave: onSave || undefined,
 });
 
 const {form: formData, enhance} = form;

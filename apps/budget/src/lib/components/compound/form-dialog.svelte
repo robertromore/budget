@@ -27,6 +27,8 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   onSave?: () => Promise<void> | void;
   onCancel?: () => void;
   onDelete?: () => Promise<void> | void;
+  formAction?: string; // If provided, enables form submission mode
+  enhance?: any; // SvelteKit enhance function from superForm
 
   // Button configuration
   saveLabel?: string;
@@ -57,6 +59,8 @@ let {
   onSave,
   onCancel,
   onDelete,
+  formAction,
+  enhance,
   saveLabel = 'Save',
   cancelLabel = 'Cancel',
   deleteLabel = 'Delete',
@@ -70,6 +74,9 @@ let {
   id,
   style,
 }: Props = $props();
+
+// Form element reference for programmatic submission
+let formElement: HTMLFormElement | null = $state(null);
 
 // Simplified dialog state - no hook needed
 let dialogOpen = $state(false);
@@ -102,6 +109,13 @@ async function handleSave() {
   if (!isValid || isLoading) return;
 
   try {
+    // If formAction is provided and form element exists, use programmatic submission
+    if (formAction && formElement) {
+      formElement.requestSubmit(); // Triggers use:enhance and form actions
+      return; // Don't close dialog here - let form handle success/failure
+    }
+
+    // Otherwise use callback-based approach
     if (onSave) {
       await onSave();
     }
@@ -133,13 +147,13 @@ async function handleDelete() {
   }
 }
 
-// Dialog size classes
+// Dialog size classes with better mobile responsiveness
 const sizeClasses = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
-  '2xl': 'max-w-2xl',
+  sm: 'w-full max-w-sm mx-4',
+  md: 'w-full max-w-md mx-4',
+  lg: 'w-full max-w-lg mx-4',
+  xl: 'w-full max-w-xl mx-4',
+  '2xl': 'w-full max-w-2xl mx-4',
 };
 </script>
 
@@ -163,9 +177,15 @@ const sizeClasses = {
     </Dialog.Header>
 
     <!-- Form content -->
-    <div class="py-4">
-      {@render content()}
-    </div>
+    {#if formAction}
+      <form bind:this={formElement} method="post" action={formAction} use:enhance class="py-4">
+        {@render content()}
+      </form>
+    {:else}
+      <div class="py-4">
+        {@render content()}
+      </div>
+    {/if}
 
     <!-- Dialog actions -->
     <Dialog.Footer>
@@ -176,26 +196,26 @@ const sizeClasses = {
           ...(onDelete && {delete: handleDelete}),
         })}
       {:else}
-        <div class="flex w-full justify-between">
-          <!-- Delete button (left side) -->
+        <div class="flex w-full flex-col gap-3 sm:flex-row sm:justify-between">
+          <!-- Delete button (left side on desktop, full width on mobile) -->
           {#if onDelete}
-            <Button type="button" variant="destructive" onclick={handleDelete} disabled={isLoading}>
+            <Button type="button" variant="destructive" onclick={handleDelete} disabled={isLoading} class="sm:w-auto w-full sm:order-1 order-3">
               {deleteLabel}
             </Button>
           {:else}
-            <div></div>
+            <div class="hidden sm:block"></div>
           {/if}
 
-          <!-- Save/Cancel buttons (right side) -->
-          <div class="flex gap-2">
-            <Button type="button" variant="outline" onclick={handleCancel} disabled={isLoading}>
+          <!-- Save/Cancel buttons (right side on desktop, stacked on mobile) -->
+          <div class="flex flex-col gap-2 sm:flex-row sm:order-2 order-1">
+            <Button type="button" variant="outline" onclick={handleCancel} disabled={isLoading} class="w-full sm:w-auto">
               {cancelLabel}
             </Button>
             <Button
               type="button"
               onclick={handleSave}
               disabled={!isValid || isLoading}
-              class={isLoading ? 'opacity-50' : ''}>
+              class="{isLoading ? 'opacity-50' : ''} w-full sm:w-auto">
               {#if isLoading}
                 <div class="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
               {/if}

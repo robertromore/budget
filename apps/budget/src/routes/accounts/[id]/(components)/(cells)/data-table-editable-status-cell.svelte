@@ -29,7 +29,7 @@ const handleSubmit = (new_value: string) => {
     class="h-10 w-10 p-1 hover:bg-muted-foreground/20 transition-colors [&_svg]:size-auto">
     {#if value === 'cleared'}
       <SquareCheck
-        class="fill-green-600 text-white hover:fill-green-700 transition-colors"
+        class="fill-primary text-primary-foreground hover:fill-primary/90 transition-colors"
         strokeWidth={1.2}
         size={32} />
     {:else}
@@ -44,13 +44,13 @@ const handleSubmit = (new_value: string) => {
     <Button
       onclick={onScheduleClick}
       variant="ghost"
-      class="h-10 w-10 p-1 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors">
-      <Calendar class="text-blue-600 hover:text-blue-700 transition-colors" size={22} />
+      class="h-10 w-10 p-1 hover:bg-primary/10 transition-colors">
+      <Calendar class="text-primary hover:text-primary/80 transition-colors" size={22} />
     </Button>
   {:else}
     <div class="flex items-center justify-center h-10 w-10">
       {#if value === 'scheduled'}
-        <Calendar class="text-blue-600" size={22} />
+        <Calendar class="text-primary" size={22} />
       {:else}
         <CalendarClock class="text-muted-foreground" size={22} />
       {/if}

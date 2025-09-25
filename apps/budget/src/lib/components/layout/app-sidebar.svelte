@@ -21,7 +21,6 @@ import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
 import {listBudgets} from '$lib/query/budgets';
 import AccountSortDropdown from '$lib/components/shared/account-sort-dropdown.svelte';
-import {CircleDollarSign} from '@lucide/svelte/icons';
 
 const accountsState = $derived(AccountsState.get());
 const accounts = $derived(accountsState.sorted);
@@ -170,7 +169,6 @@ const _deleteBudgetId = $derived(deleteBudgetId);
               <Sidebar.MenuButton>
                 {#snippet child({props})}
                   <a href="/budgets/{budget.id}" {...props}>
-                    <CircleDollarSign class="h-4 w-4" />
                     <span>{budget.name}</span>
                   </a>
                 {/snippet}
