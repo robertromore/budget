@@ -87,6 +87,19 @@ export class InputSanitizer {
   }
 
   /**
+   * Sanitize and validate name
+   */
+  static sanitizeName(name: string): string {
+    return this.sanitizeText(name, {
+      required: true,
+      minLength: 1,
+      maxLength: 100,
+      allowedPattern: SANITIZATION_PATTERNS.NAME_ALLOWED,
+      fieldName: "Name",
+    });
+  }
+
+  /**
    * Sanitize and validate description
    */
   static sanitizeDescription(description: string, maxLength?: number): string {

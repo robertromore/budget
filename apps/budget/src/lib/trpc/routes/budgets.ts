@@ -120,6 +120,14 @@ const periodService = new BudgetPeriodService();
 const transactionService = new BudgetTransactionService();
 
 export const budgetRoutes = t.router({
+  count: publicProcedure.query(async () => {
+    try {
+      const budgets = await budgetService.listBudgets();
+      return { count: budgets.length };
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  }),
   list: publicProcedure.input(listBudgetSchema).query(async ({input}) => {
     try {
       const status = input?.status;

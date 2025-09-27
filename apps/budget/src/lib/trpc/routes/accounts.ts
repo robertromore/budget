@@ -2,6 +2,7 @@ import {
   accounts,
   transactions,
   removeAccountSchema,
+  accountTypeEnum,
   type Account,
   type Transaction,
 } from "$lib/schema";
@@ -12,7 +13,9 @@ import slugify from "@sindresorhus/slugify";
 import {TRPCError} from "@trpc/server";
 import {now, getLocalTimeZone} from "@internationalized/date";
 import {generateUniqueSlug} from "$lib/utils/slug-utils";
+import {isValidIconName} from "$lib/utils/icon-validation";
 import validator from "validator";
+import {AccountService} from "$lib/server/domains/accounts/services";
 
 // Custom schema for account save operation (handles both create and update)
 const accountSaveSchema = z
@@ -71,6 +74,36 @@ const accountSaveSchema = z
       .optional()
       .nullable(),
     closed: z.boolean().optional(),
+    // Enhanced account fields
+    accountType: z.enum(accountTypeEnum, {
+      message: "Please select a valid account type"
+    }).optional(),
+    institution: z
+      .string()
+      .transform((val) => val?.trim())
+      .pipe(z.string().max(100, "Institution name must be less than 100 characters"))
+      .optional()
+      .nullable(),
+    accountIcon: z
+      .string()
+      .refine(
+        (val) => !val || isValidIconName(val),
+        "Invalid icon selection"
+      )
+      .optional()
+      .nullable(),
+    accountColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex code")
+      .optional()
+      .nullable(),
+    initialBalance: z.number().optional(),
+    accountNumberLast4: z
+      .string()
+      .transform((val) => val?.trim())
+      .pipe(z.string().regex(/^\d{4}$/, "Account number must be exactly 4 digits"))
+      .optional()
+      .nullable(),
   })
   .refine(
     (data) => {
@@ -206,6 +239,31 @@ export const accountRoutes = t.router({
         updateData.closed = input.closed;
       }
 
+      // Enhanced account fields
+      if (input.accountType !== undefined) {
+        updateData.accountType = input.accountType;
+      }
+
+      if (input.institution !== undefined) {
+        updateData.institution = input.institution;
+      }
+
+      if (input.accountIcon !== undefined) {
+        updateData.accountIcon = input.accountIcon;
+      }
+
+      if (input.accountColor !== undefined) {
+        updateData.accountColor = input.accountColor;
+      }
+
+      if (input.initialBalance !== undefined) {
+        updateData.initialBalance = input.initialBalance;
+      }
+
+      if (input.accountNumberLast4 !== undefined) {
+        updateData.accountNumberLast4 = input.accountNumberLast4;
+      }
+
       // Only update if there's something to update
       if (Object.keys(updateData).length === 0) {
         return existingAccount;
@@ -237,36 +295,118 @@ export const accountRoutes = t.router({
       });
     }
 
-    const baseSlug = input.slug || slugify(input.name);
-    const uniqueSlug = await generateUniqueSlug(ctx.db, "accounts", accounts.slug, baseSlug, {
-      deletedAtColumn: accounts.deletedAt,
-    });
+    // Use AccountService to create account with initial balance transaction
+    const accountService = new AccountService();
 
-    const merged = {
-      name: input.name,
-      slug: uniqueSlug,
-      notes: input.notes,
-      closed: input.closed || false,
-    };
+    try {
+      const createdAccount = await accountService.createAccount({
+        name: input.name,
+        notes: input.notes,
+        initialBalance: input.initialBalance || 0.0,
+      });
 
-    const insertResult = await ctx.db.insert(accounts).values(merged).returning();
-    if (!insertResult[0]) {
+      // Update the created account with additional fields not handled by the service
+      if (input.accountType || input.institution || input.accountIcon || input.accountColor || input.accountNumberLast4) {
+        const updateData: any = {};
+
+        if (input.accountType) updateData.accountType = input.accountType;
+        if (input.institution) updateData.institution = input.institution;
+        if (input.accountIcon) updateData.accountIcon = input.accountIcon;
+        if (input.accountColor) updateData.accountColor = input.accountColor;
+        if (input.accountNumberLast4) updateData.accountNumberLast4 = input.accountNumberLast4;
+
+        updateData.updatedAt = now(getLocalTimeZone()).toDate().toISOString();
+
+        await ctx.db
+          .update(accounts)
+          .set(updateData)
+          .where(eq(accounts.id, createdAccount.id));
+
+        // Re-fetch the account with proper balance calculation after update
+        // Use the same logic as the load route to get account with calculated balance
+        const accountWithBalance = await ctx.db.query.accounts.findFirst({
+          where: (accounts, {eq, and, isNull}) =>
+            and(eq(accounts.id, createdAccount.id), isNull(accounts.deletedAt)),
+          with: {
+            transactions: {
+              where: (transactions, {isNull}) => isNull(transactions.deletedAt),
+              with: {
+                payee: true,
+                category: true,
+              },
+              orderBy: (transactions, {asc}) => [transactions.date, transactions.id],
+            },
+          },
+        });
+
+        if (!accountWithBalance) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Account not found after creation",
+          });
+        }
+
+        // Calculate running balance for each transaction
+        let runningBalance = 0;
+        const transactionsWithBalance = accountWithBalance.transactions.map((transaction) => {
+          runningBalance += transaction.amount;
+          return {
+            ...transaction,
+            balance: runningBalance,
+          };
+        });
+
+        return {
+          ...accountWithBalance,
+          balance: runningBalance,
+          transactions: transactionsWithBalance,
+        } as Account;
+      }
+
+      // Even if no additional fields to update, we still need to return account with calculated balance
+      const accountWithBalance = await ctx.db.query.accounts.findFirst({
+        where: (accounts, {eq, and, isNull}) =>
+          and(eq(accounts.id, createdAccount.id), isNull(accounts.deletedAt)),
+        with: {
+          transactions: {
+            where: (transactions, {isNull}) => isNull(transactions.deletedAt),
+            with: {
+              payee: true,
+              category: true,
+            },
+            orderBy: (transactions, {asc}) => [transactions.date, transactions.id],
+          },
+        },
+      });
+
+      if (!accountWithBalance) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found after creation",
+        });
+      }
+
+      // Calculate running balance for each transaction
+      let runningBalance = 0;
+      const transactionsWithBalance = accountWithBalance.transactions.map((transaction) => {
+        runningBalance += transaction.amount;
+        return {
+          ...transaction,
+          balance: runningBalance,
+        };
+      });
+
+      return {
+        ...accountWithBalance,
+        balance: runningBalance,
+        transactions: transactionsWithBalance,
+      } as Account;
+    } catch (error) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create account",
+        message: error instanceof Error ? error.message : "Failed to create account",
       });
     }
-    const new_account = insertResult[0];
-    // if (input.balance) {
-    //   const tx: NewTransaction = {
-    //     amount: input.balance,
-    //     accountId: new_account.id,
-    //     notes: 'Starting balance'
-    //   };
-    //   console.log(tx);
-    //   await ctx.db.insert(transactions).values(tx);
-    // }
-    return new_account;
   }),
   remove: rateLimitedProcedure.input(removeAccountSchema).mutation(async ({ctx, input}) => {
     if (!input) {

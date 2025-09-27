@@ -59,7 +59,7 @@
     if (!budget) return false;
 
     const currentAccountIds = budget.accounts?.map(a => String(a.id)) ?? [];
-    const currentAllocation = (budget.metadata as Record<string, unknown>)?.allocatedAmount as number;
+    const currentAllocation = (budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number;
 
     return name !== budget.name ||
            description !== (budget.description ?? "") ||
@@ -78,7 +78,7 @@
     enforcementLevel = budget.enforcementLevel ?? "warning";
     selectedAccountIds = budget.accounts?.map(a => String(a.id)) ?? [];
 
-    const currentAllocation = (budget.metadata as Record<string, unknown>)?.allocatedAmount as number;
+    const currentAllocation = (budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number;
     allocatedAmount = currentAllocation ?? 0;
   }
 
@@ -123,7 +123,7 @@
         updateData.accountIds = selectedAccountIds.map(id => Number(id));
       }
 
-      const currentAllocation = (budget.metadata as Record<string, unknown>)?.allocatedAmount as number;
+      const currentAllocation = (budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number;
       if (allocatedAmount !== (currentAllocation ?? 0)) {
         updateData.metadata = {
           ...budget.metadata,

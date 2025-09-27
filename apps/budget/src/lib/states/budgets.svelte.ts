@@ -1,5 +1,3 @@
-import {SvelteMap} from "svelte/reactivity";
-import {getContext, setContext} from "svelte";
 import type {
   Budget,
   BudgetAccount,
@@ -10,7 +8,9 @@ import type {
   BudgetPeriodTemplate,
   BudgetTransaction,
 } from "$lib/schema/budgets";
-import type {BudgetWithRelations} from "$lib/server/domains/budgets";
+import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("budget_state");
 
@@ -153,10 +153,10 @@ export class BudgetState {
     this.updateBudgetTemplate(updatedTemplate);
   }
 
-  private normalizedTemplate(template: BudgetPeriodTemplate): TemplateWithPeriods {
+  private normalizedTemplate(template: BudgetPeriodTemplate | TemplateWithPeriods): TemplateWithPeriods {
     return {
       ...template,
-      periods: [...(template.periods ?? [])].sort((a, b) => a.startDate.localeCompare(b.startDate)),
+      periods: [...((template as TemplateWithPeriods).periods ?? [])].sort((a, b) => a.startDate.localeCompare(b.startDate)),
     };
   }
 

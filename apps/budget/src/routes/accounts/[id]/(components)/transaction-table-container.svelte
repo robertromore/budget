@@ -16,6 +16,7 @@ let {
   updateTransactionData,
   searchTransactions,
   onScheduleClick,
+  budgetCount = 0,
 }: {
   isLoading: boolean;
   transactions: any[];
@@ -28,6 +29,7 @@ let {
   updateTransactionData?: (transactionId: number, columnId: string, newValue?: unknown) => Promise<void>;
   searchTransactions?: (query: string) => void;
   onScheduleClick?: (transaction: any) => void;
+  budgetCount?: number;
 } = $props();
 </script>
 
@@ -37,9 +39,10 @@ let {
 {:else if browser && categoriesState && payeesState}
   <!-- Show the data table (with filtering controls) regardless of data presence -->
   <DataTable
-    columns={columns(categoriesState, payeesState, updateTransactionData, onScheduleClick)}
+    columns={columns(categoriesState, payeesState, updateTransactionData, onScheduleClick, budgetCount)}
     transactions={formattedTransactions}
     {views}
+    {budgetCount}
     bind:table />
 {:else}
   <!-- Fallback loading state: Show skeleton if states aren't ready -->

@@ -8,6 +8,7 @@
   import EnvelopeBudgetAdvanced from "../envelope-budget-advanced.svelte";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
   import type {Category} from "$lib/schema/categories";
+  import type {BudgetHealthStatus} from "$lib/schema/budgets";
 
   interface Props {
     budget: BudgetWithRelations;
@@ -21,33 +22,22 @@
     class: className,
   }: Props = $props();
 
-  // Calculate budget metrics (same as dashboard layout)
-  const budgetMetrics = $derived.by(() => {
-    const allocated = Math.abs((budget.metadata as any)?.allocatedAmount ?? 0);
-    const latest = budget.periodTemplates?.[0]?.periods?.[0];
-    const spent = Math.abs(latest?.actualAmount ?? 0);
-    const remaining = allocated - spent;
-    const progressPercentage = allocated > 0 ? (spent / allocated) * 100 : 0;
+  // Budget metrics as individual derived variables
+  const allocated = $derived(Math.abs((budget.metadata as any)?.allocatedAmount ?? 0));
+  const latest = $derived(budget.periodTemplates?.[0]?.periods?.[0]);
+  const spent = $derived(Math.abs(latest?.actualAmount ?? 0));
+  const remaining = $derived(allocated - spent);
+  const progressPercentage = $derived(allocated > 0 ? (spent / allocated) * 100 : 0);
 
-    const daysInPeriod = 30;
-    const daysElapsed = 15;
-    const daysRemaining = daysInPeriod - daysElapsed;
-    const burnRate = daysElapsed > 0 ? spent / daysElapsed : 0;
+  const daysInPeriod = $derived(30);
+  const daysElapsed = $derived(15);
+  const daysRemaining = $derived(daysInPeriod - daysElapsed);
 
-    let status: "excellent" | "good" | "warning" | "danger" = "excellent";
-    if (progressPercentage > 100) status = "danger";
-    else if (progressPercentage > 90) status = "warning";
-    else if (progressPercentage > 75) status = "good";
-
-    return {
-      allocated,
-      spent,
-      remaining,
-      progressPercentage,
-      status,
-      daysRemaining,
-      burnRate,
-    };
+  const status = $derived.by((): BudgetHealthStatus => {
+    if (progressPercentage > 100) return "danger";
+    if (progressPercentage > 90) return "warning";
+    if (progressPercentage > 75) return "good";
+    return "excellent";
   });
 </script>
 
@@ -93,7 +83,7 @@
     <div class="space-y-3">
       <BudgetMetricCard
         title="Allocated Amount"
-        value={budgetMetrics.allocated}
+        value={allocated}
         format="currency"
         icon={Target}
         class="compact"
@@ -101,28 +91,28 @@
 
       <BudgetMetricCard
         title="Amount Spent"
-        value={budgetMetrics.spent}
+        value={spent}
         format="currency"
-        subtitle="{budgetMetrics.progressPercentage.toFixed(1)}% of budget"
+        subtitle="{progressPercentage.toFixed(1)}% of budget"
         icon={Wallet}
-        status={budgetMetrics.status}
-        progress={budgetMetrics.allocated > 0 ? {
-          current: budgetMetrics.spent,
-          total: budgetMetrics.allocated
+        status={status}
+        progress={allocated > 0 ? {
+          current: spent,
+          total: allocated
         } : undefined}
       />
 
       <BudgetMetricCard
         title="Remaining"
-        value={budgetMetrics.remaining}
+        value={remaining}
         format="currency"
         icon={TrendingUp}
-        status={budgetMetrics.remaining >= 0 ? "excellent" : "danger"}
+        status={remaining >= 0 ? "excellent" : "danger"}
       />
 
       <BudgetMetricCard
         title="Days Left"
-        value={budgetMetrics.daysRemaining}
+        value={daysRemaining}
         format="days"
         icon={Calendar}
       />

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {AlertTriangle, Plus, ArrowUpDown, TrendingUp, TrendingDown, Wallet} from "@lucide/svelte";
+  import {AlertTriangle, Plus, ArrowUpDown, Wallet} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import {Input} from "$lib/components/ui/input";
@@ -42,7 +42,7 @@
     new Map(Array.isArray(categories) ? categories.map(cat => [cat.id, cat]) : [])
   );
 
-  const envelopesByStatus = $derived(() => {
+  const envelopesByStatus = $derived.by(() => {
     const groups = {
       overspent: [] as EnvelopeAllocation[],
       depleted: [] as EnvelopeAllocation[],
@@ -61,29 +61,30 @@
     return groups;
   });
 
-  const budgetSummary = $derived(() => {
-    if (!Array.isArray(envelopes) || envelopes.length === 0) {
-      return {
-        totalAllocated: 0,
-        totalSpent: 0,
-        totalAvailable: 0,
-        totalDeficit: 0,
-        spentPercentage: 0,
-      };
-    }
+  // Budget summary metrics as individual derived variables
+  const totalAllocated = $derived.by(() => {
+    if (!Array.isArray(envelopes) || envelopes.length === 0) return 0;
+    return envelopes.reduce((sum, env) => sum + env.allocatedAmount, 0);
+  });
 
-    const totalAllocated = envelopes.reduce((sum, env) => sum + env.allocatedAmount, 0);
-    const totalSpent = envelopes.reduce((sum, env) => sum + env.spentAmount, 0);
-    const totalAvailable = envelopes.reduce((sum, env) => sum + env.availableAmount, 0);
-    const totalDeficit = envelopes.reduce((sum, env) => sum + env.deficitAmount, 0);
+  const totalSpent = $derived.by(() => {
+    if (!Array.isArray(envelopes) || envelopes.length === 0) return 0;
+    return envelopes.reduce((sum, env) => sum + env.spentAmount, 0);
+  });
 
-    return {
-      totalAllocated,
-      totalSpent,
-      totalAvailable,
-      totalDeficit,
-      spentPercentage: totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0,
-    };
+  const totalAvailable = $derived.by(() => {
+    if (!Array.isArray(envelopes) || envelopes.length === 0) return 0;
+    return envelopes.reduce((sum, env) => sum + env.availableAmount, 0);
+  });
+
+  const totalDeficit = $derived.by(() => {
+    if (!Array.isArray(envelopes) || envelopes.length === 0) return 0;
+    return envelopes.reduce((sum, env) => sum + env.deficitAmount, 0);
+  });
+
+  const spentPercentage = $derived.by(() => {
+    if (!Array.isArray(envelopes) || envelopes.length === 0) return 0;
+    return totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0;
   });
 
   function getCategoryName(categoryId: number): string {
@@ -166,29 +167,29 @@
       <div class="grid gap-4 md:grid-cols-4">
         <div class="space-y-1">
           <p class="text-sm text-muted-foreground">Total Allocated</p>
-          <p class="text-2xl font-bold">{currencyFormatter.format(budgetSummary.totalAllocated)}</p>
+          <p class="text-2xl font-bold">{currencyFormatter.format(totalAllocated)}</p>
         </div>
         <div class="space-y-1">
           <p class="text-sm text-muted-foreground">Total Spent</p>
-          <p class="text-2xl font-bold">{currencyFormatter.format(budgetSummary.totalSpent)}</p>
+          <p class="text-2xl font-bold">{currencyFormatter.format(totalSpent)}</p>
         </div>
         <div class="space-y-1">
           <p class="text-sm text-muted-foreground">Available</p>
-          <p class="text-2xl font-bold text-emerald-600">{currencyFormatter.format(budgetSummary.totalAvailable)}</p>
+          <p class="text-2xl font-bold text-emerald-600">{currencyFormatter.format(totalAvailable)}</p>
         </div>
         <div class="space-y-1">
           <p class="text-sm text-muted-foreground">Deficit</p>
-          <p class="text-2xl font-bold text-destructive">{currencyFormatter.format(budgetSummary.totalDeficit)}</p>
+          <p class="text-2xl font-bold text-destructive">{currencyFormatter.format(totalDeficit)}</p>
         </div>
       </div>
 
       <div class="mt-4">
         <div class="flex items-center justify-between text-sm mb-2">
           <span>Overall Progress</span>
-          <span>{budgetSummary.spentPercentage.toFixed(1)}%</span>
+          <span>{spentPercentage.toFixed(1)}%</span>
         </div>
         <Progress
-          value={budgetSummary.spentPercentage}
+          value={spentPercentage}
           class="h-2"
         />
       </div>

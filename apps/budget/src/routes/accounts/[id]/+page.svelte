@@ -17,6 +17,7 @@ import {useQueryClient} from '@tanstack/svelte-query';
 import DeleteTransactionDialog from './(dialogs)/delete-transaction-dialog.svelte';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
+import {newAccountDialog, managingAccountId} from '$lib/states/ui/global.svelte';
 
 let {data} = $props();
 
@@ -41,6 +42,7 @@ const transactionsQuery = $derived.by(() => {
   }).options() : undefined;
 });
 const summaryQuery = $derived(rpc.transactions.getAccountSummary(Number(accountId)).options());
+const budgetCountQuery = $derived(rpc.budgets.getBudgetCount().options());
 
 // Create the mutations once
 const updateTransactionMutation = rpc.transactions.updateTransactionWithBalance.options();
@@ -58,8 +60,15 @@ const isLoading = $derived.by(() => {
 const error = $derived.by(() => {
   return (transactionsQuery ? $transactionsQuery?.error?.message : undefined) || $summaryQuery.error?.message;
 });
+const isAccountNotFound = $derived.by(() => {
+  const summaryError = $summaryQuery.error;
+  const transactionsError = transactionsQuery ? $transactionsQuery?.error : undefined;
+  return (summaryError?.message?.includes('NOT_FOUND') || summaryError?.data?.code === 'NOT_FOUND') ||
+         (transactionsError?.message?.includes('NOT_FOUND') || transactionsError?.data?.code === 'NOT_FOUND');
+});
 const summary = $derived($summaryQuery.data);
 const account = $derived(summary ? {id: summary.accountId, name: summary.accountName} : undefined);
+const budgetCount = $derived($budgetCountQuery.data?.count ?? 0);
 
 // Entity states
 const categoriesState = CategoriesState.get();
@@ -99,7 +108,7 @@ const formattedTransactions = $derived.by(() => {
       balance: t.balance,
       // Schedule metadata (only present for scheduled transactions)
       scheduleId: t.scheduleId,
-      scheduleName: t.scheduleName,
+      scheduleName: t.scheduleName ?? undefined,
       scheduleSlug: t.scheduleSlug,
       scheduleFrequency: t.scheduleFrequency,
       scheduleInterval: t.scheduleInterval,
@@ -156,6 +165,11 @@ const searchTransactions = (query: string) => {
 const handleScheduleClick = (transaction: TransactionsFormat) => {
   selectedScheduleTransaction = transaction;
   schedulePreviewOpen = true;
+};
+
+const openCreateAccountDialog = () => {
+  managingAccountId.current = 0; // 0 indicates creating new account
+  newAccountDialog.current = true;
 };
 
 
@@ -254,11 +268,14 @@ $effect(() => {
         <h1 class="text-2xl font-bold tracking-tight">
           {account?.name || `Account ${accountId}`}
         </h1>
-        <div class="h-3 w-3 rounded-full bg-green-500" title="Active account"></div>
+        {#if !isAccountNotFound}
+          <div class="h-3 w-3 rounded-full bg-green-500" title="Active account"></div>
+        {/if}
       </div>
     </div>
 
-    <!-- Add Transaction Button & Bulk Actions -->
+    <!-- Add Transaction Button & Bulk Actions (only show if account exists) -->
+    {#if !isAccountNotFound}
     <div class="flex items-center space-x-2">
       <!-- Bulk Actions (shown when transactions are selected) -->
       {#if table && Object.keys(table.getSelectedRowModel().rowsById).length > 0}
@@ -289,10 +306,28 @@ $effect(() => {
         Add Transaction
       </Button>
     </div>
+    {/if}
   </div>
 
   <!-- Error State -->
-  {#if error}
+  {#if isAccountNotFound}
+    <div class="rounded-lg border border-red-200 bg-red-50 p-4">
+      <div class="flex items-center space-x-2">
+        <div class="text-red-600">🔍</div>
+        <div class="font-medium text-red-800">Account Not Found</div>
+      </div>
+      <p class="mt-2 text-red-700">The account with ID {accountId} doesn't exist.</p>
+      <div class="mt-4 flex items-center gap-3">
+        <Button onclick={openCreateAccountDialog} class="bg-blue-600 hover:bg-blue-700">
+          <Plus class="mr-2 h-4 w-4" />
+          Create Account
+        </Button>
+        <a href="/accounts" class="text-blue-600 hover:text-blue-800 underline">
+          ← Go back to accounts list
+        </a>
+      </div>
+    </div>
+  {:else if error}
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
       <div class="flex items-center space-x-2">
         <div class="text-red-600">⚠️</div>
@@ -302,6 +337,8 @@ $effect(() => {
     </div>
   {/if}
 
+  <!-- Main Content (only show if account exists) -->
+  {#if !isAccountNotFound}
   <!-- Tabs Structure -->
   <Tabs.Root bind:value={activeTab} class="mb-1 w-full">
     <Tabs.List class="inline-flex h-11">
@@ -339,6 +376,7 @@ $effect(() => {
         {formattedTransactions}
         {updateTransactionData}
         {searchTransactions}
+        {budgetCount}
         onScheduleClick={handleScheduleClick}
         bind:table />
 
@@ -386,4 +424,5 @@ $effect(() => {
     frequency={selectedScheduleTransaction?.scheduleFrequency}
     interval={selectedScheduleTransaction?.scheduleInterval}
     nextOccurrence={selectedScheduleTransaction?.scheduleNextOccurrence} />
+  {/if}
 </div>

@@ -1,7 +1,7 @@
-import {type Payee} from "$lib/schema";
-import {trpc} from "$lib/trpc/client";
-import {SvelteMap} from "svelte/reactivity";
-import {getContext, setContext} from "svelte";
+import { type Payee } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("payees");
 
@@ -31,7 +31,7 @@ export class PayeesState {
 
   // Getters
   get all(): Payee[] {
-    return this.payees.values().toArray();
+    return Array.from(this.payees.values());
   }
 
   get count(): number {
@@ -44,11 +44,11 @@ export class PayeesState {
   }
 
   findBy(predicate: (payee: Payee) => boolean): Payee | undefined {
-    return this.payees.values().find(predicate);
+    return Array.from(this.payees.values()).find(predicate);
   }
 
   filterBy(predicate: (payee: Payee) => boolean): Payee[] {
-    return this.payees.values().filter(predicate).toArray();
+    return Array.from(this.payees.values()).filter(predicate);
   }
 
   // Domain-specific methods

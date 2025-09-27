@@ -1,8 +1,8 @@
-import type {Account} from "$lib/schema";
-import {SvelteMap} from "svelte/reactivity";
-import {trpc} from "$lib/trpc/client";
-import {page} from "$app/state";
-import {getContext, setContext} from "svelte";
+import { page } from "$app/state";
+import type { Account } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("accounts");
 
@@ -22,7 +22,7 @@ export class AccountsState {
   }
 
   getById(id: number): Account {
-    return this.accounts.values().find((account: Account) => {
+    return Array.from(this.accounts.values()).find((account: Account) => {
       return account.id == id;
     })!;
   }

@@ -16,13 +16,8 @@
     TrendingUp,
     TrendingDown,
     Settings,
-    History,
-    AlertCircle,
-    CheckCircle,
     Clock,
     ArrowRight,
-    Plus,
-    Minus
   } from "@lucide/svelte/icons";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
@@ -119,35 +114,27 @@
     }
   ]);
 
-  const budgetMetrics = $derived.by(() => {
-    const totalSurplus = rolloverHistory
-      .filter(r => r.type === 'surplus' && r.status === 'completed')
-      .reduce((sum, r) => sum + r.amount, 0);
+  // Rollover metrics as individual derived variables
+  const totalSurplus = $derived(rolloverHistory
+    .filter(r => r.type === 'surplus' && r.status === 'completed')
+    .reduce((sum, r) => sum + r.amount, 0));
 
-    const totalDeficit = Math.abs(rolloverHistory
-      .filter(r => r.type === 'deficit')
-      .reduce((sum, r) => sum + r.amount, 0));
+  const totalDeficit = $derived(Math.abs(rolloverHistory
+    .filter(r => r.type === 'deficit')
+    .reduce((sum, r) => sum + r.amount, 0)));
 
-    const recoveringDeficits = rolloverHistory
-      .filter(r => r.type === 'deficit' && r.status === 'recovering').length;
+  const recoveringDeficits = $derived(rolloverHistory
+    .filter(r => r.type === 'deficit' && r.status === 'recovering').length);
 
-    const upcomingSurplus = upcomingTransitions
-      .filter(t => t.status === 'surplus')
-      .reduce((sum, t) => sum + t.projectedRollover, 0);
+  const upcomingSurplus = $derived(upcomingTransitions
+    .filter(t => t.status === 'surplus')
+    .reduce((sum, t) => sum + t.projectedRollover, 0));
 
-    const upcomingDeficit = Math.abs(upcomingTransitions
-      .filter(t => t.status === 'deficit')
-      .reduce((sum, t) => sum + t.projectedRollover, 0));
+  const upcomingDeficit = $derived(Math.abs(upcomingTransitions
+    .filter(t => t.status === 'deficit')
+    .reduce((sum, t) => sum + t.projectedRollover, 0)));
 
-    return {
-      totalSurplus,
-      totalDeficit,
-      recoveringDeficits,
-      upcomingSurplus,
-      upcomingDeficit,
-      netRollover: totalSurplus - totalDeficit
-    };
-  });
+  const netRollover = $derived(totalSurplus - totalDeficit);
 
   function getStatusColor(status: string, type?: string): string {
     if (type === 'deficit') {
@@ -194,7 +181,7 @@
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold text-green-600">
-          {currencyFormatter.format(budgetMetrics.totalSurplus)}
+          {currencyFormatter.format(totalSurplus)}
         </div>
         <p class="text-xs text-muted-foreground">
           Successfully rolled over
@@ -210,10 +197,10 @@
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold text-red-600">
-          {currencyFormatter.format(budgetMetrics.totalDeficit)}
+          {currencyFormatter.format(totalDeficit)}
         </div>
         <p class="text-xs text-muted-foreground">
-          {budgetMetrics.recoveringDeficits} recovering
+          {recoveringDeficits} recovering
         </p>
       </Card.Content>
     </Card.Root>
@@ -225,11 +212,11 @@
         <RotateCcw class="h-4 w-4 text-muted-foreground" />
       </Card.Header>
       <Card.Content>
-        <div class="text-2xl font-bold {budgetMetrics.netRollover >= 0 ? 'text-green-600' : 'text-red-600'}">
-          {currencyFormatter.format(Math.abs(budgetMetrics.netRollover))}
+        <div class="text-2xl font-bold {netRollover >= 0 ? 'text-green-600' : 'text-red-600'}">
+          {currencyFormatter.format(Math.abs(netRollover))}
         </div>
         <p class="text-xs text-muted-foreground">
-          {budgetMetrics.netRollover >= 0 ? 'Positive' : 'Negative'} rollover balance
+          {netRollover >= 0 ? 'Positive' : 'Negative'} rollover balance
         </p>
       </Card.Content>
     </Card.Root>

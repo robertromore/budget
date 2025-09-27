@@ -1,10 +1,10 @@
-import type {TransactionsFormat} from "$lib/types";
-import {currencyFormatter, transactionFormatter} from "$lib/utils/formatters";
-import type {Category, Payee, Transaction} from "$lib/schema";
-import type {Account} from "$lib/schema/accounts";
-import {trpc} from "$lib/trpc/client";
-import {without} from "$lib/utils";
-import {getContext, setContext} from "svelte";
+import type { Category, Payee, Transaction } from "$lib/schema";
+import type { Account } from "$lib/schema/accounts";
+import { trpc } from "$lib/trpc/client";
+import type { TransactionsFormat } from "$lib/types";
+import { without } from "$lib/utils";
+import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
+import { getContext, setContext } from "svelte";
 
 const KEY = Symbol("current_account");
 
@@ -68,7 +68,7 @@ export class CurrentAccountState {
 
   getRawTransaction(id: number): [number, Transaction] {
     const idx = this.transactions?.findIndex((transaction) => transaction.id === id);
-    return [idx, this.transactions[idx]];
+    return [idx, this.transactions[idx]!];
   }
 
   updateTransaction = async (id: number, columnId: string, newValue?: unknown) => {
@@ -94,9 +94,8 @@ export class CurrentAccountState {
   };
 
   async deleteTransactions(transactions: number[], cb?: (id: Transaction[]) => void) {
-    await trpc().transactionRoutes.delete.mutate({
-      entities: transactions,
-      accountId: this.id,
+    await trpc().transactionRoutes.bulkDelete.mutate({
+      ids: transactions,
     });
     const [kept, removed] = without(this.transactions ?? [], (transaction: Transaction) =>
       transactions.includes(transaction.id)

@@ -4,6 +4,8 @@ import {ConflictError, ValidationError} from "$lib/server/shared/types/errors";
 import {InputSanitizer} from "$lib/server/shared/validation";
 import slugify from "@sindresorhus/slugify";
 import {generateUniqueSlug} from "$lib/utils/generate-unique-slug";
+import {TransactionService} from "../transactions/services";
+import {today, getLocalTimeZone} from "@internationalized/date";
 
 // Service input types
 export interface CreateAccountData {
@@ -22,7 +24,10 @@ export interface UpdateAccountData {
  * Account service containing business logic
  */
 export class AccountService {
-  constructor(private repository: AccountRepository = new AccountRepository()) {}
+  constructor(
+    private repository: AccountRepository = new AccountRepository(),
+    private transactionService: TransactionService = new TransactionService()
+  ) {}
 
   /**
    * Create a new account
@@ -33,7 +38,7 @@ export class AccountService {
     const sanitizedNotes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : undefined;
 
     // Validate balance if provided
-    const balance =
+    const initialBalance =
       data.initialBalance !== undefined
         ? InputSanitizer.validateAmount(data.initialBalance, "Initial balance")
         : 0;
@@ -42,15 +47,31 @@ export class AccountService {
     const baseSlug = slugify(sanitizedName);
     const uniqueSlug = await this.generateUniqueSlug(baseSlug);
 
-    // Create account
+    // Create account with zero balance initially
     const account = await this.repository.create({
       name: sanitizedName,
       slug: uniqueSlug,
       notes: sanitizedNotes,
-      balance,
+      balance: 0, // Start with zero, we'll create a transaction for the initial balance
     });
 
-    return account;
+    // Create initial balance transaction if balance is non-zero
+    if (initialBalance !== 0) {
+      const todayDate = today(getLocalTimeZone()).toString();
+
+      await this.transactionService.createTransaction({
+        accountId: account.id,
+        amount: initialBalance,
+        date: todayDate,
+        notes: "Initial balance",
+        status: "cleared",
+        payeeId: null,
+        categoryId: null
+      });
+    }
+
+    // Return the account (balance will be updated by the transaction)
+    return this.repository.findByIdOrThrow(account.id);
   }
 
   /**

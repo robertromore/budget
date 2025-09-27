@@ -28,10 +28,13 @@ import RepeatingDateInputModel from '$lib/models/repeating_date.svelte';
 
 // Schema imports
 import {type Schedule} from '$lib/schema/schedules';
+import {type Payee, type Category} from '$lib/schema';
 import {superformInsertScheduleSchema} from '$lib/schema/superforms';
 
 // State imports
 import {SchedulesState} from '$lib/states/entities';
+import {PayeesState} from '$lib/states/entities/payees.svelte';
+import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import {useQueryClient} from '@tanstack/svelte-query';
 import {scheduleKeys} from '$lib/queries/schedules';
 
@@ -40,9 +43,12 @@ import type {EditableEntityItem} from '$lib/types';
 
 // Local component imports
 import {RepeatingDateInput} from '$lib/components/input';
+import AccountSelector from '$lib/components/input/account-selector.svelte';
 import { WizardFormWrapper } from '$lib/components/wizard';
 import ScheduleWizard from '$lib/components/wizard/schedule-wizard.svelte';
 import { scheduleWizardStore } from '$lib/stores/wizardStore.svelte';
+import ManagePayeeForm from '$lib/components/forms/manage-payee-form.svelte';
+import ManageCategoryForm from '$lib/components/forms/manage-category-form.svelte';
 
 // Props
 let {
@@ -62,6 +68,8 @@ const {
 
 // State
 const schedules = SchedulesState.get();
+const payeesState = PayeesState.get();
+const categoriesState = CategoriesState.get();
 const queryClient = useQueryClient();
 
 // Empty defaults for lookups
@@ -345,13 +353,12 @@ $effect(() => {
           <Form.Control>
             {#snippet children({props})}
               <Form.Label>From Account</Form.Label>
-              <EntityInput
+              <AccountSelector
                 entityLabel="account"
-                entities={accounts as EditableEntityItem[]}
+                entities={accounts}
                 defaultValue={defaultAccount}
                 bind:value={account}
                 handleSubmit={handleAccountChange}
-                icon={Building as unknown as Component}
                 buttonClass="w-full" />
               <Form.FieldErrors />
               <input hidden bind:value={$formData.accountId} name={props.name} />
@@ -370,7 +377,21 @@ $effect(() => {
                 bind:value={payee}
                 handleSubmit={handlePayeeChange}
                 icon={HandCoins as unknown as Component}
-                buttonClass="w-full" />
+                buttonClass="w-full"
+                management={{
+                  enable: true,
+                  component: ManagePayeeForm,
+                  onSave: (new_value: EditableEntityItem, is_new: boolean) => {
+                    if (is_new) {
+                      payeesState.addPayee(new_value as Payee);
+                    } else {
+                      payeesState.updatePayee(new_value as Payee);
+                    }
+                  },
+                  onDelete: (id: number) => {
+                    payeesState.deletePayee(id);
+                  },
+                }} />
               <Form.FieldErrors />
               <input hidden bind:value={$formData.payeeId} name={props.name} />
             {/snippet}
@@ -388,7 +409,21 @@ $effect(() => {
                 bind:value={category}
                 handleSubmit={handleCategoryChange}
                 icon={Tag as unknown as Component}
-                buttonClass="w-full" />
+                buttonClass="w-full"
+                management={{
+                  enable: true,
+                  component: ManageCategoryForm,
+                  onSave: (new_value: EditableEntityItem, is_new: boolean) => {
+                    if (is_new) {
+                      categoriesState.addCategory(new_value as Category);
+                    } else {
+                      categoriesState.updateCategory(new_value as Category);
+                    }
+                  },
+                  onDelete: (id: number) => {
+                    categoriesState.deleteCategory(id);
+                  },
+                }} />
               <Form.FieldErrors />
               <input hidden bind:value={$formData.categoryId} name={props.name} />
             {/snippet}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {ArrowUpDown, AlertTriangle, TrendingUp, Edit3} from "@lucide/svelte";
+  import {ArrowUpDown, AlertTriangle, TrendingUp, Edit3} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import {Input} from "$lib/components/ui/input";

@@ -1,7 +1,7 @@
-import {type Payee} from "$lib/schema";
-import {trpc} from "$lib/trpc/client";
-import {without} from "$lib/utils";
-import {Context} from "runed";
+import { type Payee } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { without } from "$lib/utils";
+import { Context } from "runed";
 
 export class PayeesState {
   payees: Payee[] = $state() as Payee[];

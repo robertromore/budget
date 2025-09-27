@@ -147,7 +147,7 @@ export class TransactionsState {
   }
 
   async updateTransaction(id: number, data: UpdateTransactionData) {
-    return await this.updateMutation.mutateAsync({id, data});
+    return await this.updateMutation.mutateAsync({id, data, accountId: data.accountId || this.accountId!});
   }
 
   async deleteTransaction(id: number) {

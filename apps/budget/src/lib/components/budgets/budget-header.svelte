@@ -1,7 +1,8 @@
 <script lang="ts">
+  import {SvelteMap} from "svelte/reactivity";
   import {ArrowLeft} from "@lucide/svelte/icons";
   import {Button} from "$lib/components/ui/button";
-  import {Badge} from "$lib/components/ui/badge";
+  import {Badge, type BadgeVariant} from "$lib/components/ui/badge";
   import BudgetSettingsMenu from "./budget-settings-menu.svelte";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
 
@@ -15,24 +16,21 @@
     class: className,
   }: Props = $props();
 
-  function getStatusVariant(status: string) {
-    switch (status) {
-      case "active": return "default";
-      case "inactive": return "secondary";
-      case "archived": return "outline";
-      default: return "secondary";
-    }
-  }
+  const statusVariantMap = new SvelteMap<string, BadgeVariant>([
+    ["active", "default"],
+    ["inactive", "secondary"],
+    ["archived", "outline"],
+  ]);
 
-  function getTypeColor(type: string) {
-    switch (type) {
-      case "category-envelope": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-      case "account-monthly": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "goal-based": return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
-      case "scheduled-expense": return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-    }
-  }
+  const typeColorMap = new SvelteMap([
+    ["category-envelope", "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"],
+    ["account-monthly", "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"],
+    ["goal-based", "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"],
+    ["scheduled-expense", "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300"],
+  ]);
+
+  const getStatusVariant = $derived((status: string): BadgeVariant => statusVariantMap.get(status) ?? "secondary");
+  const getTypeColor = $derived((type: string) => typeColorMap.get(type) ?? "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300");
 </script>
 
 <section class="flex items-center justify-between gap-4 py-6 {className}">

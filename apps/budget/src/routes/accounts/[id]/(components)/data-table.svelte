@@ -40,9 +40,10 @@ interface Props {
   table?: TTable<TransactionsFormat>;
   serverPagination?: { page: number; pageSize: number; totalCount?: number; totalPages?: number; };
   updatePagination?: (pageIndex: number, pageSize: number) => void;
+  budgetCount?: number;
 }
 
-let {columns, transactions, views, table = $bindable(), serverPagination, updatePagination}: Props = $props();
+let {columns, transactions, views, table = $bindable(), serverPagination, updatePagination, budgetCount = 0}: Props = $props();
 
 // Generate date filters from actual transaction dates (excluding future scheduled transactions)
 const generateDateFilters = (transactions: TransactionsFormat[]): FacetedFilterOption[] => {
@@ -114,14 +115,22 @@ $effect(() => {
 });
 
 // Intercept visibility state to hide balance column when sorting by columns
-// other than id or date.
+// other than id or date, and hide budget column when no budgets exist.
 const columnVisibility = () => {
   let visibleColumns = visibility();
   const sortingState = sorting();
   const firstSort = sortingState[0];
+
+  // Hide balance column when sorting by columns other than id or date
   if (sortingState.length > 0 && firstSort && firstSort.id !== 'id' && firstSort.id !== 'date') {
     visibleColumns = Object.assign({}, visibleColumns, {balance: false});
   }
+
+  // Hide budget column by default if no budgets exist
+  if (budgetCount === 0 && !('budget' in visibleColumns)) {
+    visibleColumns = Object.assign({}, visibleColumns, {budget: false});
+  }
+
   return visibleColumns;
 };
 

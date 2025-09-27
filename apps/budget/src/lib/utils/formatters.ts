@@ -12,6 +12,25 @@ export const numberFormatter = new Intl.NumberFormat("en-US", {
   style: "decimal",
 });
 
+export const percentageFormatter = {
+  format: (value: number): string => `${value.toFixed(1)}%`,
+};
+
+export const daysFormatter = {
+  format: (value: number): string => `${Math.round(value)} days`,
+};
+
+// Amount utilities
+export function toSignedAmount(amount: number, referenceAmount: number): number {
+  const magnitude = Math.abs(amount);
+  return referenceAmount < 0 ? -magnitude : magnitude;
+}
+
+// Budget utilities
+export function formatBudgetName(budgetId: number, budgetName?: string): string {
+  return budgetName ?? `Budget #${budgetId}`;
+}
+
 export const transactionFormatter = {
   format: (transactions?: Transaction[]) => {
     return transactions?.map((transaction: Transaction): TransactionsFormat => {

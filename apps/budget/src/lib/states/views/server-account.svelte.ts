@@ -1,6 +1,6 @@
-import {currencyFormatter, transactionFormatter} from "$lib/utils/formatters";
-import type {Category, Payee, Transaction} from "$lib/schema";
-import {getContext, setContext} from "svelte";
+import type { Category, Payee, Transaction } from "$lib/schema";
+import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
+import { getContext, setContext } from "svelte";
 
 const KEY = Symbol("server_account");
 
@@ -242,7 +242,7 @@ export class ServerAccountState {
 
     // Debounce search by 300ms
     this.searchTimeout = setTimeout(async () => {
-      this.filters.searchQuery = query || undefined;
+      this.filters.searchQuery = query || '';
       await this.loadTransactions(accountId, true); // Reset to first page
       this.isSearching = false;
     }, 300);
@@ -252,8 +252,8 @@ export class ServerAccountState {
    * Apply date filters
    */
   async setDateFilter(accountId: number, dateFrom?: string, dateTo?: string) {
-    this.filters.dateFrom = dateFrom;
-    this.filters.dateTo = dateTo;
+    this.filters.dateFrom = dateFrom || '';
+    this.filters.dateTo = dateTo || '';
     await this.loadTransactions(accountId, true); // Reset to first page
   }
 

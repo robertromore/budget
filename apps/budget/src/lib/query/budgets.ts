@@ -1,33 +1,43 @@
-import {defineMutation, defineQuery, createQueryKeys} from "./_factory";
-import {cachePatterns, queryPresets} from "./_client";
-import {trpc} from "$lib/trpc/client";
-import {BudgetState} from "$lib/states/budgets.svelte";
-import type {
-  CreateBudgetRequest,
-  UpdateBudgetRequest,
-  EnsurePeriodInstanceOptions,
-  AllocationValidationResult,
-} from "$lib/server/domains/budgets/services";
 import type {
   Budget,
   BudgetPeriodInstance,
   BudgetTransaction,
 } from "$lib/schema/budgets";
-import type {BudgetWithRelations} from "$lib/server/domains/budgets";
+import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+import type {
+  AllocationValidationResult,
+  CreateBudgetRequest,
+  EnsurePeriodInstanceOptions,
+  UpdateBudgetRequest,
+} from "$lib/server/domains/budgets/services";
+import { BudgetState } from "$lib/states/budgets.svelte";
+import { trpc } from "$lib/trpc/client";
+import { cachePatterns, queryPresets } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 export const budgetKeys = createQueryKeys("budgets", {
-  lists: () => [...budgetKeys.all(), "list"] as const,
-  list: (status?: Budget["status"]) => [...budgetKeys.lists(), status ?? "all"] as const,
-  details: () => [...budgetKeys.all(), "detail"] as const,
-  detail: (id: number) => [...budgetKeys.details(), id] as const,
-  periodInstances: (templateId: number) => [...budgetKeys.all(), "periods", templateId] as const,
+  lists: () => ["budgets", "list"] as const,
+  list: (status?: Budget["status"]) => ["budgets", "list", status ?? "all"] as const,
+  count: () => ["budgets", "count"] as const,
+  details: () => ["budgets", "detail"] as const,
+  detail: (id: number) => ["budgets", "detail", id] as const,
+  periodInstances: (templateId: number) => ["budgets", "periods", templateId] as const,
   allocationValidation: (transactionId: number, amount: number, excludeId: number | null) =>
-    [...budgetKeys.all(), "allocation", transactionId, amount, excludeId] as const,
+    ["budgets", "allocation", transactionId, amount, excludeId] as const,
 });
 
 function getState(): BudgetState | null {
   return BudgetState.safeGet();
 }
+
+export const getBudgetCount = () =>
+  defineQuery<{count: number}>({
+    queryKey: budgetKeys.count(),
+    queryFn: () => trpc().budgetRoutes.count.query(),
+    options: {
+      ...queryPresets.static,
+    },
+  });
 
 export const listBudgets = (status?: Budget["status"]) =>
   defineQuery<BudgetWithRelations[]>({
@@ -35,9 +45,6 @@ export const listBudgets = (status?: Budget["status"]) =>
     queryFn: () => trpc().budgetRoutes.list.query(status ? {status} : {}),
     options: {
       ...queryPresets.static,
-      onSuccess: (budgets) => {
-        getState()?.replaceBudgets(budgets);
-      },
     },
   });
 
@@ -47,9 +54,6 @@ export const getBudgetDetail = (id: number) =>
     queryFn: () => trpc().budgetRoutes.get.query({id}),
     options: {
       staleTime: 60 * 1000,
-      onSuccess: (budget) => {
-        getState()?.upsertBudget(budget);
-      },
     },
   });
 
@@ -59,9 +63,6 @@ export const listPeriodInstances = (templateId: number) =>
     queryFn: () => trpc().budgetRoutes.listPeriodInstances.query({templateId}),
     options: {
       staleTime: 5 * 60 * 1000,
-      onSuccess: (periods) => {
-        getState()?.syncPeriodInstances(templateId, periods);
-      },
     },
   });
 

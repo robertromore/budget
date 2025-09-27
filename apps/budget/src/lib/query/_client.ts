@@ -101,7 +101,7 @@ export const cachePatterns = {
   /**
    * Invalidate queries with prefix matching
    */
-  invalidatePrefix: (prefix: unknown[]) => {
+  invalidatePrefix: (prefix: readonly unknown[]) => {
     queryClient.invalidateQueries({
       predicate: (query) => {
         const queryKey = query.queryKey;
@@ -119,7 +119,7 @@ export const cachePatterns = {
   /**
    * Remove specific query from cache
    */
-  removeQuery: (queryKey: unknown[]) => {
+  removeQuery: (queryKey: readonly unknown[]) => {
     queryClient.removeQueries({
       queryKey,
     });
@@ -128,21 +128,21 @@ export const cachePatterns = {
   /**
    * Set query data imperatively
    */
-  setQueryData: <T>(queryKey: unknown[], data: T) => {
+  setQueryData: <T>(queryKey: readonly unknown[], data: T) => {
     queryClient.setQueryData(queryKey, data);
   },
 
   /**
    * Get query data imperatively
    */
-  getQueryData: <T>(queryKey: unknown[]): T | undefined => {
+  getQueryData: <T>(queryKey: readonly unknown[]): T | undefined => {
     return queryClient.getQueryData<T>(queryKey);
   },
 
   /**
    * Prefetch query data
    */
-  prefetchQuery: (queryKey: unknown[], queryFn: () => Promise<unknown>) => {
+  prefetchQuery: (queryKey: readonly unknown[], queryFn: () => Promise<unknown>) => {
     return queryClient.prefetchQuery({
       queryKey,
       queryFn,

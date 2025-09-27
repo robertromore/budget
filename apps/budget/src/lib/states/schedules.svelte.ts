@@ -1,8 +1,8 @@
-import type {Schedule} from "$lib/schema";
-import {SvelteMap} from "svelte/reactivity";
-import {trpc} from "$lib/trpc/client";
-import {page} from "$app/state";
-import {getContext, setContext} from "svelte";
+import { page } from "$app/state";
+import type { Schedule } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("schedules");
 
@@ -22,7 +22,7 @@ export class SchedulesState {
   }
 
   getById(id: number): Schedule {
-    return this.schedules.values().find((schedule: Schedule) => {
+    return Array.from(this.schedules.values()).find((schedule: Schedule) => {
       return schedule.id == id;
     })!;
   }

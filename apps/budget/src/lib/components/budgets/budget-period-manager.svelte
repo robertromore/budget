@@ -1,5 +1,6 @@
 <script lang="ts">
-  import {Calendar, Clock, TrendingUp, ChartBar, Plus} from "@lucide/svelte";
+  import {SvelteMap} from "svelte/reactivity";
+  import {Calendar, Clock, TrendingUp, TrendingDown, ChartBar, Plus, Minus} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import {Badge} from "$lib/components/ui/badge";
@@ -10,6 +11,7 @@
   import Label from "$lib/components/ui/label/label.svelte";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
+  import {formatDateDisplay, parseISOString, currentDate} from "$lib/utils/dates";
   import type {BudgetPeriodInstance} from "$lib/schema/budgets";
   import type {PeriodAnalytics, PeriodComparison} from "$lib/server/domains/budgets/period-manager";
 
@@ -59,26 +61,15 @@
     return "text-emerald-600";
   });
 
-  function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  }
 
-  function getTrendIcon(trend: string) {
-    switch (trend) {
-      case "increasing":
-      case "improving":
-        return "↗️";
-      case "decreasing":
-      case "declining":
-        return "↘️";
-      default:
-        return "→";
-    }
-  }
+  const trendIconMap = new SvelteMap([
+    ["increasing", TrendingUp],
+    ["improving", TrendingUp],
+    ["decreasing", TrendingDown],
+    ["declining", TrendingDown],
+  ]);
+
+  const getTrendIcon = $derived((trend: string) => trendIconMap.get(trend) ?? Minus);
 
   function handleCreatePeriod() {
     const config = {
@@ -119,7 +110,7 @@
         <div class="space-y-2">
           <p class="text-sm text-muted-foreground">Period Duration</p>
           <p class="text-lg font-semibold">
-            {formatDate(currentPeriod.startDate)} - {formatDate(currentPeriod.endDate)}
+            {formatDateDisplay(parseISOString(currentPeriod.startDate) || currentDate, 'medium')} - {formatDateDisplay(parseISOString(currentPeriod.endDate) || currentDate, 'medium')}
           </p>
           <p class="text-xs text-muted-foreground">{analytics.duration} days</p>
         </div>
@@ -223,26 +214,35 @@
       <Card.Content class="space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-sm">Spending Trend</span>
-          <span class="text-sm flex items-center gap-1">
-            {getTrendIcon(analytics.trends.spendingTrend)}
-            <span class="capitalize">{analytics.trends.spendingTrend}</span>
-          </span>
+          {#if analytics.trends.spendingTrend}
+            {@const Icon = getTrendIcon(analytics.trends.spendingTrend)}
+            <span class="text-sm flex items-center gap-1">
+              <Icon class="h-3 w-3" />
+              <span class="capitalize">{analytics.trends.spendingTrend}</span>
+            </span>
+          {/if}
         </div>
 
         <div class="flex items-center justify-between">
           <span class="text-sm">Allocation Trend</span>
-          <span class="text-sm flex items-center gap-1">
-            {getTrendIcon(analytics.trends.allocationTrend)}
-            <span class="capitalize">{analytics.trends.allocationTrend}</span>
-          </span>
+          {#if analytics.trends.allocationTrend}
+            {@const Icon = getTrendIcon(analytics.trends.allocationTrend)}
+            <span class="text-sm flex items-center gap-1">
+              <Icon class="h-3 w-3" />
+              <span class="capitalize">{analytics.trends.allocationTrend}</span>
+            </span>
+          {/if}
         </div>
 
         <div class="flex items-center justify-between">
           <span class="text-sm">Efficiency Trend</span>
-          <span class="text-sm flex items-center gap-1">
-            {getTrendIcon(analytics.trends.efficiencyTrend)}
-            <span class="capitalize">{analytics.trends.efficiencyTrend}</span>
-          </span>
+          {#if analytics.trends.efficiencyTrend}
+            {@const Icon = getTrendIcon(analytics.trends.efficiencyTrend)}
+            <span class="text-sm flex items-center gap-1">
+              <Icon class="h-3 w-3" />
+              <span class="capitalize">{analytics.trends.efficiencyTrend}</span>
+            </span>
+          {/if}
         </div>
       </Card.Content>
     </Card.Root>

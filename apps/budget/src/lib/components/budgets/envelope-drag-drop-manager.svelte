@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {ArrowUpDown, Grip, DollarSign} from "@lucide/svelte";
+  import {ArrowUpDown, Grip, DollarSign} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Input} from "$lib/components/ui/input";
   import {Badge} from "$lib/components/ui/badge";

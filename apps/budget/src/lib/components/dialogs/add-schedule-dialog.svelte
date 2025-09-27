@@ -30,7 +30,7 @@ async function handleSave(savedSchedule?: Schedule) {
     duplicatingSchedule.current = false;
   }
 }}>
-  <Sheet.Content preventScroll={false} class="overflow-auto sm:max-w-4xl">
+  <Sheet.Content preventScroll={false} class="overflow-auto sm:max-w-lg">
     <Sheet.Header>
       <Sheet.Title>
         {#if duplicatingSchedule.current}

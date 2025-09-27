@@ -7,6 +7,7 @@
   import EnvelopeBudgetAdvanced from "../envelope-budget-advanced.svelte";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
   import type {Category} from "$lib/schema/categories";
+  import type {BudgetHealthStatus} from "$lib/schema/budgets";
 
   interface Props {
     budget: BudgetWithRelations;
@@ -20,38 +21,28 @@
     class: className,
   }: Props = $props();
 
-  // Calculate budget metrics
-  const budgetMetrics = $derived.by(() => {
-    const allocated = Math.abs((budget.metadata as any)?.allocatedAmount ?? 0);
-    const latest = budget.periodTemplates?.[0]?.periods?.[0];
-    const spent = Math.abs(latest?.actualAmount ?? 0);
-    const remaining = allocated - spent;
-    const progressPercentage = allocated > 0 ? (spent / allocated) * 100 : 0;
+  // Basic budget values
+  const allocated = $derived(Math.abs((budget.metadata as any)?.allocatedAmount ?? 0));
+  const latest = $derived(budget.periodTemplates?.[0]?.periods?.[0]);
+  const spent = $derived(Math.abs(latest?.actualAmount ?? 0));
+  const remaining = $derived(allocated - spent);
+  const progressPercentage = $derived(allocated > 0 ? (spent / allocated) * 100 : 0);
 
-    // Calculate days in period (mock data for now)
-    const daysInPeriod = 30;
-    const daysElapsed = 15;
-    const daysRemaining = daysInPeriod - daysElapsed;
-    const burnRate = daysElapsed > 0 ? spent / daysElapsed : 0;
-    const projectedSpend = burnRate * daysInPeriod;
+  // Time period calculations (mock data for now)
+  const daysInPeriod = $derived(30);
+  const daysElapsed = $derived(15);
+  const daysRemaining = $derived(daysInPeriod - daysElapsed);
+  const burnRate = $derived(daysElapsed > 0 ? spent / daysElapsed : 0);
+  const projectedSpend = $derived(burnRate * daysInPeriod);
 
-    let status: "excellent" | "good" | "warning" | "danger" = "excellent";
-    if (progressPercentage > 100) status = "danger";
-    else if (progressPercentage > 90) status = "warning";
-    else if (progressPercentage > 75) status = "good";
-
-    return {
-      allocated,
-      spent,
-      remaining,
-      progressPercentage,
-      status,
-      daysRemaining,
-      burnRate,
-      projectedSpend,
-      isOnTrack: projectedSpend <= allocated,
-    };
+  // Status and tracking
+  const status = $derived.by((): BudgetHealthStatus => {
+    if (progressPercentage > 100) return "danger";
+    if (progressPercentage > 90) return "warning";
+    if (progressPercentage > 75) return "good";
+    return "excellent";
   });
+  const isOnTrack = $derived(projectedSpend <= allocated);
 </script>
 
 <div class="space-y-6 {className}">
@@ -59,42 +50,44 @@
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
     <BudgetMetricCard
       title="Total Allocated"
-      value={budgetMetrics.allocated}
+      value={allocated}
       format="currency"
       subtitle="Budget limit"
       icon={Target}
-      status={budgetMetrics.allocated > 0 ? "good" : undefined}
+      {...(allocated > 0 ? { status: "good" } : {})}
     />
 
     <BudgetMetricCard
       title="Spent"
-      value={budgetMetrics.spent}
+      value={spent}
       format="currency"
-      subtitle="{budgetMetrics.progressPercentage.toFixed(1)}% of budget"
+      subtitle="{progressPercentage.toFixed(1)}% of budget"
       icon={Wallet}
-      status={budgetMetrics.status}
-      progress={budgetMetrics.allocated > 0 ? {
-        current: budgetMetrics.spent,
-        total: budgetMetrics.allocated
-      } : undefined}
+      status={status}
+      {...(allocated > 0 ? {
+        progress: {
+          current: spent,
+          total: allocated
+        }
+      } : {})}
     />
 
     <BudgetMetricCard
       title="Remaining"
-      value={budgetMetrics.remaining}
+      value={remaining}
       format="currency"
       subtitle="Available to spend"
       icon={TrendingUp}
-      status={budgetMetrics.remaining >= 0 ? "excellent" : "danger"}
+      status={remaining >= 0 ? "excellent" : "danger"}
     />
 
     <BudgetMetricCard
       title="Days Left"
-      value={budgetMetrics.daysRemaining}
+      value={daysRemaining}
       format="days"
       subtitle="In current period"
       icon={Calendar}
-      trend={budgetMetrics.isOnTrack ? {
+      trend={isOnTrack ? {
         value: 5,
         direction: "up",
         period: "vs projected"
@@ -110,7 +103,7 @@
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <BudgetMetricCard
       title="Daily Burn Rate"
-      value={budgetMetrics.burnRate}
+      value={burnRate}
       format="currency"
       subtitle="Average per day"
       icon={Activity}
@@ -119,20 +112,20 @@
 
     <BudgetMetricCard
       title="Projected Spend"
-      value={budgetMetrics.projectedSpend}
+      value={projectedSpend}
       format="currency"
       subtitle="End of period estimate"
       icon={TrendingUp}
-      status={budgetMetrics.isOnTrack ? "good" : "warning"}
+      status={isOnTrack ? "good" : "warning"}
     />
 
     <BudgetMetricCard
       title="Budget Health"
-      value={budgetMetrics.progressPercentage}
+      value={progressPercentage}
       format="percentage"
       subtitle="Overall status"
       icon={AlertCircle}
-      status={budgetMetrics.status}
+      status={status}
     />
   </div>
 

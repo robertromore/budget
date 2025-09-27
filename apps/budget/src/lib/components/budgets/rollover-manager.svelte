@@ -9,6 +9,7 @@
   import Label from "$lib/components/ui/label/label.svelte";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
+  import {formatDateDisplay, parseISOString, currentDate} from "$lib/utils/dates";
   import {
     listPeriodInstances,
     previewEnvelopeRollover,
@@ -54,8 +55,8 @@
   });
 
   function formatPeriodDisplay(period: any): string {
-    const start = new Date(period.startDate).toLocaleDateString();
-    const end = new Date(period.endDate).toLocaleDateString();
+    const start = formatDateDisplay(parseISOString(period.startDate) || currentDate, 'short');
+    const end = formatDateDisplay(parseISOString(period.endDate) || currentDate, 'short');
     return `${start} - ${end}`;
   }
 

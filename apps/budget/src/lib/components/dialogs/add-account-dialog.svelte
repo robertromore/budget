@@ -21,12 +21,13 @@ const accountId: UseNumber = $derived(managingAccountId);
           Manage Account
         {/if}
       </Sheet.Title>
-      <Sheet.Description>
-        <ManageAccountForm
-          accountId={accountId.current}
-          formId="add-account-dialog-form"
-          onSave={() => (dialogOpen.current = false)} />
-      </Sheet.Description>
     </Sheet.Header>
+
+    <div class="p-4 pt-0">
+      <ManageAccountForm
+        accountId={accountId.current}
+        formId="add-account-dialog-form"
+        onSave={() => (dialogOpen.current = false)} />
+    </div>
   </Sheet.Content>
 </Sheet.Root>

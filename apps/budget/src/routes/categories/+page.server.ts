@@ -5,12 +5,11 @@ import {createCaller} from "$lib/trpc/router";
 import {superValidate} from "sveltekit-superforms/client";
 import type {Actions, PageServerLoad} from "./$types";
 import {fail} from "@sveltejs/kit";
-import {zod, zod4} from "sveltekit-superforms/adapters";
+import {zod4} from "sveltekit-superforms/adapters";
 
 export const load: PageServerLoad = async () => ({
   categories: await createCaller(await createContext()).categoriesRoutes.all(),
   form: await superValidate(zod4(superformInsertCategorySchema)),
-  deleteForm: await superValidate(zod(removeCategorySchema)),
 });
 
 export const actions: Actions = {
@@ -29,7 +28,7 @@ export const actions: Actions = {
     };
   },
   "delete-category": async (event) => {
-    const form = await superValidate(event, zod(removeCategorySchema));
+    const form = await superValidate(event, zod4(removeCategorySchema));
     if (!form.valid) {
       return fail(400, {
         form,

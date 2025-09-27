@@ -4,11 +4,25 @@
 
 import {createId} from "@paralleldrive/cuid2";
 import {relations, sql} from "drizzle-orm";
-import {sqliteTable, integer, text, index} from "drizzle-orm/sqlite-core";
+import {sqliteTable, integer, text, index, real} from "drizzle-orm/sqlite-core";
 import {createInsertSchema, createSelectSchema} from "drizzle-zod";
 import {transactions} from "./transactions";
 import type {Transaction} from "./transactions";
 import {z} from "zod/v4";
+import { isValidIconName } from "$lib/utils/icon-validation";
+
+// Account type enum for type safety
+export const accountTypeEnum = [
+  "checking",
+  "savings",
+  "investment",
+  "credit_card",
+  "loan",
+  "cash",
+  "other"
+] as const;
+
+export type AccountType = typeof accountTypeEnum[number];
 
 export const accounts = sqliteTable(
   "account",
@@ -23,6 +37,15 @@ export const accounts = sqliteTable(
     // the value based on the transaction rows.
     // balance: real('balance').default(0.0).notNull(),
     notes: text("notes"),
+
+    // Enhanced account fields
+    accountType: text("account_type", { enum: accountTypeEnum }).default("checking"),
+    institution: text("institution"), // Bank/institution name
+    accountIcon: text("account_icon"), // Lucide icon name
+    accountColor: text("account_color"), // Hex color code
+    initialBalance: real("initial_balance").default(0.0), // Starting balance
+    accountNumberLast4: text("account_number_last4"), // Last 4 digits for reference
+
     dateOpened: text("date_opened")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -80,6 +103,37 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .pipe(z.string().max(500, "Notes must be less than 500 characters"))
       .optional()
       .nullable(),
+  accountType: (schema) =>
+    schema.pipe(z.enum(accountTypeEnum, {
+      message: "Please select a valid account type"
+    })).default("checking"),
+  institution: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().max(100, "Institution name must be less than 100 characters"))
+      .optional()
+      .nullable(),
+  accountIcon: (schema) =>
+    schema
+      .pipe(z.string().refine(
+        (val) => !val || isValidIconName(val),
+        "Invalid icon selection"
+      ))
+      .optional()
+      .nullable(),
+  accountColor: (schema) =>
+    schema
+      .pipe(z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex code"))
+      .optional()
+      .nullable(),
+  initialBalance: (schema) =>
+    schema.pipe(z.number()).default(0.0),
+  accountNumberLast4: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().regex(/^\d{4}$/, "Account number must be exactly 4 digits"))
+      .optional()
+      .nullable(),
 });
 
 // Schema for updates (all fields optional, but with validation when provided)
@@ -114,6 +168,33 @@ export const formUpdateAccountSchema = z.object({
     .optional()
     .nullable(),
   closed: z.boolean().optional(),
+  accountType: z.enum(accountTypeEnum).optional(),
+  institution: z
+    .string()
+    .transform((val) => val?.trim())
+    .pipe(z.string().max(100, "Institution name must be less than 100 characters"))
+    .optional()
+    .nullable(),
+  accountIcon: z
+    .string()
+    .refine(
+      (val) => !val || isValidIconName(val),
+      "Invalid icon selection"
+    )
+    .optional()
+    .nullable(),
+  accountColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex code")
+    .optional()
+    .nullable(),
+  initialBalance: z.number().optional(),
+  accountNumberLast4: z
+    .string()
+    .transform((val) => val?.trim())
+    .pipe(z.string().regex(/^\d{4}$/, "Account number must be exactly 4 digits"))
+    .optional()
+    .nullable(),
 });
 
 // Combined schema that handles both create and update

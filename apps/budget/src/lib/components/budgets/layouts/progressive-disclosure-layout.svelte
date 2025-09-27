@@ -2,12 +2,13 @@
   import * as Card from "$lib/components/ui/card";
   import * as Collapsible from "$lib/components/ui/collapsible";
   import {Button} from "$lib/components/ui/button";
-  import {ChevronDown, ChevronUp, Target, TrendingUp, BarChart, Activity, Settings} from "@lucide/svelte/icons";
+  import {ChevronDown, ChevronUp, Target, TrendingUp, ChartBar, Settings} from "@lucide/svelte/icons";
   import BudgetMetricCard from "../budget-metric-card.svelte";
   import BudgetChartPlaceholder from "../budget-chart-placeholder.svelte";
   import EnvelopeBudgetAdvanced from "../envelope-budget-advanced.svelte";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
   import type {Category} from "$lib/schema/categories";
+  import type {BudgetHealthStatus} from "$lib/schema/budgets";
 
   interface Props {
     budget: BudgetWithRelations;
@@ -27,33 +28,23 @@
   let allocationsOpen = $state(false);
   let analyticsOpen = $state(false);
 
-  // Calculate budget metrics
-  const budgetMetrics = $derived.by(() => {
-    const allocated = Math.abs((budget.metadata as any)?.allocatedAmount ?? 0);
-    const latest = budget.periodTemplates?.[0]?.periods?.[0];
-    const spent = Math.abs(latest?.actualAmount ?? 0);
-    const remaining = allocated - spent;
-    const progressPercentage = allocated > 0 ? (spent / allocated) * 100 : 0;
+  // Budget metrics as individual derived variables
+  const allocated = $derived(Math.abs((budget.metadata as any)?.allocatedAmount ?? 0));
+  const latest = $derived(budget.periodTemplates?.[0]?.periods?.[0]);
+  const spent = $derived(Math.abs(latest?.actualAmount ?? 0));
+  const remaining = $derived(allocated - spent);
+  const progressPercentage = $derived(allocated > 0 ? (spent / allocated) * 100 : 0);
 
-    const daysInPeriod = 30;
-    const daysElapsed = 15;
-    const daysRemaining = daysInPeriod - daysElapsed;
-    const burnRate = daysElapsed > 0 ? spent / daysElapsed : 0;
+  const daysInPeriod = $derived(30);
+  const daysElapsed = $derived(15);
+  const daysRemaining = $derived(daysInPeriod - daysElapsed);
+  const burnRate = $derived(daysElapsed > 0 ? spent / daysElapsed : 0);
 
-    let status: "excellent" | "good" | "warning" | "danger" = "excellent";
-    if (progressPercentage > 100) status = "danger";
-    else if (progressPercentage > 90) status = "warning";
-    else if (progressPercentage > 75) status = "good";
-
-    return {
-      allocated,
-      spent,
-      remaining,
-      progressPercentage,
-      status,
-      daysRemaining,
-      burnRate,
-    };
+  const status = $derived.by((): BudgetHealthStatus => {
+    if (progressPercentage > 100) return "danger";
+    if (progressPercentage > 90) return "warning";
+    if (progressPercentage > 75) return "good";
+    return "excellent";
   });
 
 </script>
@@ -87,22 +78,22 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <BudgetMetricCard
               title="Allocated"
-              value={budgetMetrics.allocated}
+              value={allocated}
               format="currency"
               status="good"
             />
             <BudgetMetricCard
               title="Spent"
-              value={budgetMetrics.spent}
+              value={spent}
               format="currency"
-              subtitle="{budgetMetrics.progressPercentage.toFixed(1)}%"
-              status={budgetMetrics.status}
+              subtitle="{progressPercentage.toFixed(1)}%"
+              status={status}
             />
             <BudgetMetricCard
               title="Remaining"
-              value={budgetMetrics.remaining}
+              value={remaining}
               format="currency"
-              status={budgetMetrics.remaining >= 0 ? "excellent" : "danger"}
+              status={remaining >= 0 ? "excellent" : "danger"}
             />
           </div>
 
@@ -158,21 +149,21 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <BudgetMetricCard
               title="Days Remaining"
-              value={budgetMetrics.daysRemaining}
+              value={daysRemaining}
               format="days"
               subtitle="In current period"
             />
             <BudgetMetricCard
               title="Burn Rate"
-              value={budgetMetrics.burnRate}
+              value={burnRate}
               format="currency"
               subtitle="Per day average"
             />
             <BudgetMetricCard
               title="Budget Progress"
-              value={budgetMetrics.progressPercentage}
+              value={progressPercentage}
               format="percentage"
-              status={budgetMetrics.status}
+              status={status}
             />
           </div>
 
@@ -235,7 +226,7 @@
         <Card.Header class="hover:bg-muted/50 cursor-pointer transition-colors">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <BarChart class="h-5 w-5 text-muted-foreground" />
+              <ChartBar class="h-5 w-5 text-muted-foreground" />
               <div>
                 <Card.Title class="text-lg">Analytics & Trends</Card.Title>
                 <Card.Description>Historical data, trends, and detailed breakdowns</Card.Description>

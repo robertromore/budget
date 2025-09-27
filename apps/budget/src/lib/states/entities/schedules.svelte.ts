@@ -1,7 +1,7 @@
-import type {Schedule} from "$lib/schema";
-import {SvelteMap} from "svelte/reactivity";
-import {trpc} from "$lib/trpc/client";
-import {getContext, setContext} from "svelte";
+import type { Schedule } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("schedules");
 
@@ -30,7 +30,7 @@ export class SchedulesState {
 
   // Getters
   get all(): Schedule[] {
-    return this.schedules.values().toArray();
+    return Array.from(this.schedules.values());
   }
 
   get count(): number {
@@ -43,11 +43,11 @@ export class SchedulesState {
   }
 
   findBy(predicate: (schedule: Schedule) => boolean): Schedule | undefined {
-    return this.schedules.values().find(predicate);
+    return Array.from(this.schedules.values()).find(predicate);
   }
 
   filterBy(predicate: (schedule: Schedule) => boolean): Schedule[] {
-    return this.schedules.values().filter(predicate).toArray();
+    return Array.from(this.schedules.values()).filter(predicate);
   }
 
   // Domain-specific methods
@@ -95,7 +95,14 @@ export class SchedulesState {
 
   // API operations
   async saveSchedule(schedule: Schedule): Promise<Schedule> {
-    const result = await trpc().scheduleRoutes.save.mutate(schedule);
+    // Convert null to undefined for the mutation
+    const scheduleForMutation = {
+      ...schedule,
+      status: schedule.status ?? undefined,
+      recurring: schedule.recurring ?? undefined,
+      auto_add: schedule.auto_add ?? undefined,
+    };
+    const result = await trpc().scheduleRoutes.save.mutate(scheduleForMutation);
     this.addSchedule(result);
     return result;
   }

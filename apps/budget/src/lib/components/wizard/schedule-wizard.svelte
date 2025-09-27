@@ -182,7 +182,7 @@
     <!-- Schedule Type Selection -->
     <div class="space-y-4">
       <h3 class="text-lg font-semibold">Schedule Type</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="space-y-4">
         {#each scheduleTypes as scheduleType}
           {@const isSelected = formData['recurring'] === scheduleType.value}
           <Card.Root
