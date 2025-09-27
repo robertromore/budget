@@ -1,10 +1,8 @@
-// A "category" is a
-
-import {relations, sql} from "drizzle-orm";
-import {sqliteTable, integer, text, type AnySQLiteColumn, index} from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {z} from "zod/v4";
+import { relations, sql } from "drizzle-orm";
+import { index, integer, sqliteTable, text, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import validator from "validator";
+import { z } from "zod/v4";
 
 export const categories = sqliteTable(
   "categories",

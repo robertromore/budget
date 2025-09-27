@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {Zap, Target, Shuffle, TrendingUp, AlertTriangle} from "@lucide/svelte";
+  import {Zap, Target, Shuffle, TrendingUp, AlertTriangle} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import {Input} from "$lib/components/ui/input";

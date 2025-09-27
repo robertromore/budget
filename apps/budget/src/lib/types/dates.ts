@@ -25,7 +25,7 @@ export type RepeatingDate = {
   week_days?: number[]; // 1‑7 (Sun‑Sat) – only for weekly
 
   // ────────────────────── Monthly ─────────────────────
-  days?: number | null; // 1‑31 – “the 15th”
+  days?: number[] | null; // 1‑31 – "the 15th" - can be multiple days like [10, 25]
   weeks?: number[]; // 1‑5 – “first week”
   weeks_days?: number[]; // 1‑7
   on: boolean; // is the “on” state enabled?

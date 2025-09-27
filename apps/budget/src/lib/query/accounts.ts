@@ -4,10 +4,10 @@ import {trpc} from "$lib/trpc/client";
 import type {Account} from "$lib/schema/accounts";
 
 export const accountKeys = createQueryKeys("accounts", {
-  lists: () => [...accountKeys.all(), "list"] as const,
-  list: () => [...accountKeys.lists()] as const,
-  details: () => [...accountKeys.all(), "detail"] as const,
-  detail: (id: number) => [...accountKeys.details(), id] as const,
+  lists: () => ["accounts", "list"] as const,
+  list: () => ["accounts", "list"] as const,
+  details: () => ["accounts", "detail"] as const,
+  detail: (id: number) => ["accounts", "detail", id] as const,
 });
 
 export const listAccounts = () =>

@@ -13,17 +13,17 @@ import type { Transaction } from "$lib/schema";
  * Query Keys for transaction operations
  */
 export const transactionKeys = createQueryKeys("transactions", {
-  lists: () => [...transactionKeys.all(), "list"] as const,
+  lists: () => ["transactions", "list"] as const,
   list: (filters?: TransactionFilters, pagination?: PaginationParams) =>
-    [...transactionKeys.lists(), { filters, pagination }] as const,
-  details: () => [...transactionKeys.all(), "detail"] as const,
-  detail: (id: number) => [...transactionKeys.details(), id] as const,
+    ["transactions", "list", { filters, pagination }] as const,
+  details: () => ["transactions", "detail"] as const,
+  detail: (id: number) => ["transactions", "detail", id] as const,
   byAccount: (accountId: number, params?: any) =>
-    [...transactionKeys.all(), "account", accountId, params] as const,
+    ["transactions", "account", accountId, params] as const,
   allByAccount: (accountId: number, params?: any) =>
-    [...transactionKeys.all(), "all", accountId, params] as const,
+    ["transactions", "all", accountId, params] as const,
   summary: (accountId: number) =>
-    [...transactionKeys.all(), "summary", accountId] as const,
+    ["transactions", "summary", accountId] as const,
 });
 
 /**
@@ -213,7 +213,7 @@ export const getAccountSummary = (accountId: number) => {
  */
 export const getMonthlySpendingAggregates = (accountId: number) => {
   return defineQuery({
-    queryKey: [...transactionKeys.all(), "analytics", "monthlySpending", accountId],
+    queryKey: ["transactions", "analytics", "monthlySpending", accountId],
     queryFn: () => trpc().transactionRoutes.monthlySpendingAggregates.query({ accountId }),
     options: {
       staleTime: 60 * 1000, // 1 minute cache for analytics data
@@ -228,8 +228,8 @@ export const createTransaction = defineMutation<CreateTransactionData, Transacti
   mutationFn: (data) => trpc().transactionRoutes.create.mutate(data),
   onSuccess: (newTransaction, variables) => {
     // Invalidate and refetch related queries using prefix matching
-    cachePatterns.invalidatePrefix([...transactionKeys.all(), "account", variables.accountId]);
-    cachePatterns.invalidatePrefix([...transactionKeys.all(), "all", variables.accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.accountId]);
     cachePatterns.invalidatePrefix(transactionKeys.summary(variables.accountId));
     cachePatterns.invalidatePrefix(transactionKeys.lists());
   },
@@ -255,12 +255,12 @@ export const updateTransaction = defineMutation<
 
       // Invalidate all related queries
       cachePatterns.invalidatePrefix([
-        ...transactionKeys.all(),
+        "transactions",
         "account",
         updatedTransaction.accountId
       ]);
       cachePatterns.invalidatePrefix([
-        ...transactionKeys.all(),
+        "transactions",
         "all",
         updatedTransaction.accountId
       ]);
@@ -332,14 +332,14 @@ export const updateTransactionWithBalance = defineMutation<
 /**
  * Delete transaction
  */
-export const deleteTransaction = defineMutation<number, void>({
+export const deleteTransaction = defineMutation<number, { success: boolean }>({
   mutationFn: (id) => trpc().transactionRoutes.delete.mutate({ id }),
   onSuccess: (_, id) => {
     // Remove from cache
     cachePatterns.removeQuery(transactionKeys.detail(id));
 
     // Invalidate all list queries
-    cachePatterns.invalidatePrefix(transactionKeys.all());
+    cachePatterns.invalidatePrefix(["transactions"]);
   },
   successMessage: "Transaction deleted successfully",
   errorMessage: "Failed to delete transaction",
@@ -357,7 +357,7 @@ export const bulkDeleteTransactions = defineMutation<number[], { count: number }
     });
 
     // Invalidate all list queries
-    cachePatterns.invalidatePrefix(transactionKeys.all());
+    cachePatterns.invalidatePrefix(["transactions"]);
   },
   successMessage: (result) => `${result.count} transactions deleted successfully`,
   errorMessage: "Failed to delete transactions",
@@ -384,8 +384,8 @@ export const saveTransaction = defineMutation<
   mutationFn: (data) => trpc().transactionRoutes.save.mutate(data),
   onSuccess: (transaction) => {
     if (transaction.accountId) {
-      cachePatterns.invalidatePrefix([...transactionKeys.all(), "account", transaction.accountId]);
-      cachePatterns.invalidatePrefix([...transactionKeys.all(), "all", transaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "account", transaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", transaction.accountId]);
       cachePatterns.invalidatePrefix(transactionKeys.summary(transaction.accountId));
     }
     cachePatterns.invalidatePrefix(transactionKeys.lists());

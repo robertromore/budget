@@ -31,11 +31,19 @@ export const periodTemplateTypes = [
   "custom",
 ] as const;
 
+export const budgetHealthStatuses = [
+  "excellent",
+  "good",
+  "warning",
+  "danger",
+] as const;
+
 export type BudgetType = (typeof budgetTypes)[number];
 export type BudgetScope = (typeof budgetScopes)[number];
 export type BudgetStatus = (typeof budgetStatuses)[number];
 export type BudgetEnforcementLevel = (typeof budgetEnforcementLevels)[number];
 export type PeriodTemplateType = (typeof periodTemplateTypes)[number];
+export type BudgetHealthStatus = (typeof budgetHealthStatuses)[number];
 
 export interface BudgetMetadata {
   defaultPeriod?: {

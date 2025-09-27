@@ -1,10 +1,12 @@
 <script lang="ts">
+  import {SvelteMap} from "svelte/reactivity";
   import * as Card from "$lib/components/ui/card";
   import {Badge} from "$lib/components/ui/badge";
   import {Progress} from "$lib/components/ui/progress";
   import {TrendingUp, TrendingDown, Minus} from "@lucide/svelte/icons";
-  import {currencyFormatter} from "$lib/utils/formatters";
+  import {currencyFormatter, numberFormatter, percentageFormatter, daysFormatter} from "$lib/utils/formatters";
   import {cn} from "$lib/utils";
+  import type {BudgetHealthStatus} from "$lib/schema/budgets";
 
   interface Props {
     title: string;
@@ -20,7 +22,7 @@
       current: number;
       total: number;
     };
-    status?: "excellent" | "good" | "warning" | "danger";
+    status?: BudgetHealthStatus;
     icon?: any;
     class?: string;
   }
@@ -37,41 +39,37 @@
     class: className,
   }: Props = $props();
 
-  function formatValue(val: number, fmt: string) {
-    switch (fmt) {
-      case "currency": return currencyFormatter.format(val);
-      case "percentage": return `${val.toFixed(1)}%`;
-      case "days": return `${Math.round(val)} days`;
-      case "number": return val.toLocaleString();
-      default: return val.toString();
-    }
-  }
+  const formatValueMap = new SvelteMap([
+    ["currency", (val: number) => currencyFormatter.format(val)],
+    ["percentage", (val: number) => percentageFormatter.format(val)],
+    ["days", (val: number) => daysFormatter.format(val)],
+    ["number", (val: number) => numberFormatter.format(val)],
+  ]);
 
-  function getTrendIcon(direction: string) {
-    switch (direction) {
-      case "up": return TrendingUp;
-      case "down": return TrendingDown;
-      default: return Minus;
-    }
-  }
+  const formatValue = $derived((val: number, fmt: string) =>
+    formatValueMap.get(fmt)?.(val) ?? val.toString()
+  );
 
-  function getTrendColor(direction: string) {
-    switch (direction) {
-      case "up": return "text-green-600";
-      case "down": return "text-red-600";
-      default: return "text-muted-foreground";
-    }
-  }
+  const trendIconMap = new SvelteMap([
+    ["up", TrendingUp],
+    ["down", TrendingDown],
+  ]);
 
-  function getStatusColor(stat?: string) {
-    switch (stat) {
-      case "excellent": return "text-green-600";
-      case "good": return "text-blue-600";
-      case "warning": return "text-yellow-600";
-      case "danger": return "text-red-600";
-      default: return "text-foreground";
-    }
-  }
+  const trendColorMap = new SvelteMap([
+    ["up", "text-green-600"],
+    ["down", "text-red-600"],
+  ]);
+
+  const statusColorMap = new SvelteMap([
+    ["excellent", "text-green-600"],
+    ["good", "text-blue-600"],
+    ["warning", "text-yellow-600"],
+    ["danger", "text-red-600"],
+  ]);
+
+  const getTrendIcon = $derived((direction: string) => trendIconMap.get(direction) ?? Minus);
+  const getTrendColor = $derived((direction: string) => trendColorMap.get(direction) ?? "text-muted-foreground");
+  const getStatusColor = $derived((stat?: string) => statusColorMap.get(stat ?? "") ?? "text-foreground");
 
   const progressPercentage = $derived(
     progress ? Math.min((progress.current / progress.total) * 100, 100) : 0

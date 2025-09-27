@@ -1,4 +1,5 @@
 <script lang="ts">
+  import {SvelteMap} from "svelte/reactivity";
   import ResponsiveSheet from "$lib/components/ui/responsive-sheet/responsive-sheet.svelte";
   import * as Select from "$lib/components/ui/select";
   import {Input} from "$lib/components/ui/input";
@@ -49,20 +50,16 @@
   let periodType = $state<PeriodTemplateType>("monthly");
   let startDay = $state(1);
 
-  const accountMap = $derived.by(() =>
-    new Map(availableAccounts.map(account => [String(account.id), account]))
-  );
-
-  const categoryMap = $derived.by(() =>
-    new Map(availableCategories.map(category => [String(category.id), category]))
-  );
-
   const selectedAccounts = $derived.by(() =>
-    selectedAccountIds.map(id => accountMap.get(id)).filter(Boolean) as Account[]
+    selectedAccountIds
+      .map(id => availableAccounts.find(account => String(account.id) === id))
+      .filter(Boolean) as Account[]
   );
 
   const selectedCategories = $derived.by(() =>
-    selectedCategoryIds.map(id => categoryMap.get(id)).filter(Boolean) as Category[]
+    selectedCategoryIds
+      .map(id => availableCategories.find(category => String(category.id) === id))
+      .filter(Boolean) as Category[]
   );
 
   // Budget type configurations

@@ -1,7 +1,7 @@
-import {type Category} from "$lib/schema";
-import {trpc} from "$lib/trpc/client";
-import {SvelteMap} from "svelte/reactivity";
-import {getContext, setContext} from "svelte";
+import { type Category } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("categories");
 
@@ -31,7 +31,7 @@ export class CategoriesState {
 
   // Getters
   get all(): Category[] {
-    return this.categories.values().toArray();
+    return Array.from(this.categories.values());
   }
 
   get count(): number {
@@ -44,11 +44,11 @@ export class CategoriesState {
   }
 
   findBy(predicate: (category: Category) => boolean): Category | undefined {
-    return this.categories.values().find(predicate);
+    return Array.from(this.categories.values()).find(predicate);
   }
 
   filterBy(predicate: (category: Category) => boolean): Category[] {
-    return this.categories.values().filter(predicate).toArray();
+    return Array.from(this.categories.values()).filter(predicate);
   }
 
   // Domain-specific methods

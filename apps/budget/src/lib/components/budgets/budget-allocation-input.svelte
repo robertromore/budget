@@ -1,12 +1,12 @@
 <script lang="ts">
-  import {AlertTriangle, CheckCircle, Plus, X, Wallet} from "@lucide/svelte";
+  import {AlertTriangle, CheckCircle, Plus, X, Wallet} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import {Input} from "$lib/components/ui/input";
   import Label from "$lib/components/ui/label/label.svelte";
   import {Badge} from "$lib/components/ui/badge";
   import {cn} from "$lib/utils";
-  import {currencyFormatter} from "$lib/utils/formatters";
+  import {currencyFormatter, toSignedAmount, formatBudgetName} from "$lib/utils/formatters";
   import BudgetSelector from "./budget-selector.svelte";
   import {
     listBudgets,
@@ -51,7 +51,7 @@
   let validationResult = $state<AllocationValidationResult | null>(null);
   let validationError = $state<string | null>(null);
   let validationPending = $state(false);
-  let validationRunId = 0;
+  let validationController: AbortController | null = null;
 
   const createAllocationMutation = createAllocation.options();
   const deleteAllocationMutation = deleteAllocation.options();
@@ -79,21 +79,27 @@
   const remainingDisplay = $derived(currencyFormatter.format(Math.abs(remaining)));
   const transactionDisplay = $derived(currencyFormatter.format(normalizedTransactionAmount));
 
-  function toSignedAmount(amount: number): number {
-    const magnitude = Math.abs(amount);
-    return transactionAmount < 0 ? -magnitude : magnitude;
-  }
 
-  const validationTrigger = $derived({
-    budgetId: selectedBudgetId,
-    amount: parseFloat(allocationInput),
-    transactionId
+  const shouldValidate = $derived.by(() => {
+    const budgetId = selectedBudgetId;
+    const amount = parseFloat(allocationInput);
+
+    if (!budgetId || !Number.isFinite(amount) || amount <= 0) {
+      return null;
+    }
+
+    return { budgetId, amount };
   });
 
   $effect(() => {
-    const {budgetId, amount} = validationTrigger;
+    // Cancel any pending validation
+    if (validationController) {
+      validationController.abort();
+    }
 
-    if (!budgetId || !Number.isFinite(amount) || amount <= 0) {
+    const validation = shouldValidate;
+
+    if (!validation) {
       validationResult = null;
       validationError = null;
       validationPending = false;
@@ -101,35 +107,49 @@
     }
 
     validationPending = true;
-    const runId = ++validationRunId;
+    const controller = new AbortController();
+    validationController = controller;
 
-    (async () => {
+    const performValidation = async () => {
       try {
-        const result = await validateAllocation(transactionId, toSignedAmount(amount)).execute();
-        if (runId !== validationRunId) return;
+        const result = await validateAllocation(
+          transactionId,
+          toSignedAmount(validation.amount, transactionAmount)
+        ).execute();
+
+        if (controller.signal.aborted) return;
 
         validationResult = result;
         validationError = null;
+        validationPending = false;
         onValidationResult?.(result);
       } catch (error) {
-        if (runId !== validationRunId) return;
+        if (controller.signal.aborted) return;
 
         validationResult = null;
         validationError = error instanceof Error ? error.message : "Unable to validate allocation.";
-      } finally {
-        if (runId === validationRunId) {
-          validationPending = false;
-        }
+        validationPending = false;
       }
-    })();
+    };
+
+    performValidation();
+
+    return () => {
+      controller.abort();
+    };
   });
 
-  function formatBudgetName(allocation: BudgetTransaction): string {
-    return budgetLookup.get(allocation.budgetId)?.name ?? `Budget #${allocation.budgetId}`;
-  }
 
-  function formatAmount(amount: number): string {
-    return currencyFormatter.format(Math.abs(amount));
+
+  function resetAllocationForm() {
+    selectedBudgetId = "";
+    allocationInput = "";
+    validationResult = null;
+    validationError = null;
+    if (validationController) {
+      validationController.abort();
+      validationController = null;
+    }
   }
 
   async function handleCreateAllocation() {
@@ -138,17 +158,13 @@
     try {
       const allocation = await $createAllocationMutation.mutateAsync({
         transactionId,
-        budgetId: parseInt(selectedBudgetId),
-        allocatedAmount: toSignedAmount(parseFloat(allocationInput)),
+        budgetId: parseInt(selectedBudgetId, 10),
+        allocatedAmount: toSignedAmount(parseFloat(allocationInput), transactionAmount),
         autoAssigned: false,
         assignedBy: "user",
       });
 
-      selectedBudgetId = "";
-      allocationInput = "";
-      validationResult = null;
-      validationError = null;
-
+      resetAllocationForm();
       onAllocationCreated?.(allocation);
     } catch (error) {
       console.error("Failed to create allocation", error);
@@ -195,8 +211,8 @@
           {#each existingAllocations as allocation (allocation.id)}
             <div class="flex items-center justify-between rounded-md border p-2">
               <div class="flex items-center gap-2">
-                <Badge variant="outline">{formatBudgetName(allocation)}</Badge>
-                <span class="text-sm">{formatAmount(allocation.allocatedAmount)}</span>
+                <Badge variant="outline">{formatBudgetName(allocation.budgetId, budgetLookup.get(allocation.budgetId)?.name)}</Badge>
+                <span class="text-sm">{currencyFormatter.format(Math.abs(allocation.allocatedAmount))}</span>
               </div>
               <Button
                 type="button"

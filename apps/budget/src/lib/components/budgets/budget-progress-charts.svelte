@@ -1,10 +1,10 @@
 <script lang="ts">
-  import {TrendingUp, TrendingDown, Target, Calendar, PieChart, BarChart} from "@lucide/svelte/icons";
+  import {TrendingUp, TrendingDown, Target, ChartPie, ChartBar} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Badge} from "$lib/components/ui/badge";
   import * as Tabs from "$lib/components/ui/tabs";
   import {ChartContainer, ChartTooltip} from "$lib/components/ui/chart";
-  import {Chart, Svg, Area, Spline, Bars, Arc, Axis} from "layerchart";
+  import {Chart, Svg, Area, Spline, Arc, Axis} from "layerchart";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
@@ -224,7 +224,7 @@
       <Card.Root>
         <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
           <Card.Title class="text-sm font-medium">Progress</Card.Title>
-          <BarChart class="h-4 w-4 text-muted-foreground" />
+          <ChartBar class="h-4 w-4 text-muted-foreground" />
         </Card.Header>
         <Card.Content>
           <div class="text-2xl font-bold">{aggregateData.overallProgress.toFixed(0)}%</div>
@@ -247,7 +247,7 @@
   <Tabs.Root value="progress" class="space-y-4">
     <Tabs.List class="grid w-full grid-cols-3">
       <Tabs.Trigger value="progress">
-        <BarChart class="mr-2 h-4 w-4" />
+        <ChartBar class="mr-2 h-4 w-4" />
         Progress Details
       </Tabs.Trigger>
       <Tabs.Trigger value="trends">
@@ -255,7 +255,7 @@
         Spending Trends
       </Tabs.Trigger>
       <Tabs.Trigger value="breakdown">
-        <PieChart class="mr-2 h-4 w-4" />
+        <ChartPie class="mr-2 h-4 w-4" />
         Budget Breakdown
       </Tabs.Trigger>
     </Tabs.List>
@@ -339,7 +339,7 @@
                   <Area y="allocated" fill="hsl(var(--primary) / 0.2)" />
                   <Spline y="spent" stroke="hsl(var(--destructive))" strokeWidth={2} />
                   <Axis placement="left" />
-                  <Axis placement="bottom" format="timeFormat('%d')" />
+                  <Axis placement="bottom" />
                 </Svg>
                 <ChartTooltip />
               </Chart>

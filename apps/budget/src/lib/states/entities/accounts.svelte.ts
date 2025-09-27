@@ -1,7 +1,7 @@
-import type {Account} from "$lib/schema";
-import {SvelteMap} from "svelte/reactivity";
-import {trpc} from "$lib/trpc/client";
-import {getContext, setContext} from "svelte";
+import type { Account } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("accounts");
 
@@ -39,7 +39,7 @@ export class AccountsState {
 
   // Getters
   get all(): Account[] {
-    return this.accounts.values().toArray();
+    return Array.from(this.accounts.values());
   }
 
   sorted = $derived(this.sortAccounts(this.all, this.sortField, this.sortDirection));
@@ -54,11 +54,11 @@ export class AccountsState {
   }
 
   findBy(predicate: (account: Account) => boolean): Account | undefined {
-    return this.accounts.values().find(predicate);
+    return Array.from(this.accounts.values()).find(predicate);
   }
 
   filterBy(predicate: (account: Account) => boolean): Account[] {
-    return this.accounts.values().filter(predicate).toArray();
+    return Array.from(this.accounts.values()).filter(predicate);
   }
 
   // Domain-specific methods
@@ -102,6 +102,8 @@ export class AccountsState {
     const accountForMutation = {
       ...account,
       closed: account.closed ?? undefined,
+      accountType: account.accountType ?? undefined,
+      initialBalance: account.initialBalance ?? undefined,
     };
     const result = await trpc().accountRoutes.save.mutate(accountForMutation);
     // Add missing fields that the API response doesn't include

@@ -1,6 +1,7 @@
 <script lang="ts">
+  import {SvelteMap} from "svelte/reactivity";
   import * as Card from "$lib/components/ui/card";
-  import {BarChart, LineChart, PieChart, TrendingUp} from "@lucide/svelte/icons";
+  import {ChartBar, ChartLine, ChartPie, TrendingUp} from "@lucide/svelte/icons";
   import {cn} from "$lib/utils";
 
   interface Props {
@@ -19,14 +20,13 @@
     class: className,
   }: Props = $props();
 
-  function getIcon(chartType: string) {
-    switch (chartType) {
-      case "bar": return BarChart;
-      case "pie": return PieChart;
-      case "area": return TrendingUp;
-      default: return LineChart;
-    }
-  }
+  const chartIconMap = new SvelteMap([
+    ["bar", ChartBar],
+    ["pie", ChartPie],
+    ["area", TrendingUp],
+  ]);
+
+  const getIcon = $derived((chartType: string) => chartIconMap.get(chartType) ?? ChartLine);
 </script>
 
 <Card.Root class={className}>

@@ -14,6 +14,10 @@ import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.s
 import AddScheduleDialog from '$lib/components/dialogs/add-schedule-dialog.svelte';
 import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog.svelte';
 import BudgetCreateDialog from '$lib/components/budgets/budget-create-dialog.svelte';
+import AddPayeeDialog from '$lib/components/dialogs/add-payee-dialog.svelte';
+import DeletePayeeDialog from '$lib/components/dialogs/delete-payee-dialog.svelte';
+import AddCategoryDialog from '$lib/components/dialogs/add-category-dialog.svelte';
+import DeleteCategoryDialog from '$lib/components/dialogs/delete-category-dialog.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
 import {setQueryClientContext} from '@tanstack/svelte-query';
 import {queryClient} from '$lib/query';
@@ -50,6 +54,10 @@ onMount(() => {
 <DeleteAccountDialog />
 <DeleteScheduleDialog />
 <BudgetCreateDialog />
+<AddPayeeDialog />
+<DeletePayeeDialog />
+<AddCategoryDialog />
+<DeleteCategoryDialog />
 
 <div class="bg-background">
   <div class="grid">

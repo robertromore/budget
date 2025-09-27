@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {Grid3X3, Columns, Clock, BarChart3} from "@lucide/svelte/icons";
+  import {Grid3X3, Columns, Clock, ChartBar} from "@lucide/svelte/icons";
   import * as ToggleGroup from "$lib/components/ui/toggle-group";
 
   export type BudgetLayoutType = "dashboard" | "split" | "timeline" | "executive";
@@ -39,7 +39,7 @@
       value: "executive" as const,
       label: "Executive Summary",
       description: "High-level overview with key insights",
-      icon: BarChart3,
+      icon: ChartBar,
     },
   ];
 </script>

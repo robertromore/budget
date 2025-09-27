@@ -1,4 +1,5 @@
 <script lang="ts">
+  import {SvelteMap} from "svelte/reactivity";
   import {ArrowRightLeft, DollarSign, Target, Shuffle, AlertCircle, CheckCircle2} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
@@ -219,16 +220,15 @@
     return baseStyle;
   }
 
-  function getTypeIcon(type: string) {
-    const icons = {
-      'account-monthly': DollarSign,
-      'category-envelope': Target,
-      'goal-based': Target,
-      'scheduled-expense': Shuffle,
-      'general': DollarSign
-    };
-    return icons[type as keyof typeof icons] || DollarSign;
-  }
+  const typeIconMap = new SvelteMap([
+    ['account-monthly', DollarSign],
+    ['category-envelope', Target],
+    ['goal-based', Target],
+    ['scheduled-expense', Shuffle],
+    ['general', DollarSign],
+  ]);
+
+  const getTypeIcon = $derived((type: string) => typeIconMap.get(type) ?? DollarSign);
 
   const maxTransferAmount = $derived(() => {
     return sourceBudget?.availableAmount ?? 0;

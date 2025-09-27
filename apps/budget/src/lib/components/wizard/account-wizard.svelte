@@ -2,19 +2,23 @@
   import { Input } from "$lib/components/ui/input";
   import { Textarea } from "$lib/components/ui/textarea";
   import { Label } from "$lib/components/ui/label";
-  import * as Card from "$lib/components/ui/card";
+  import * as Select from "$lib/components/ui/select";
   import { Badge } from "$lib/components/ui/badge";
-  import { Building2, FileText, CheckCircle2, Info } from "@lucide/svelte/icons";
+  import { Building2, FileText, CheckCircle2, Info, Palette, CreditCard, Banknote } from "@lucide/svelte/icons";
   import WizardStep from "./wizard-step.svelte";
+  import IconPicker from "$lib/components/ui/icon-picker/icon-picker.svelte";
+  import { ColorPicker } from "$lib/components/ui/color-picker";
   import { accountWizardStore, type WizardStep as WizardStepType } from "$lib/stores/wizardStore.svelte";
   import { createAccountValidationEngine } from "$lib/utils/wizardValidation";
-  import type { Account } from "$lib/schema";
+  import { accountTypeEnum, type Account } from "$lib/schema";
+  import { getIconByName } from "$lib/components/ui/icon-picker/icon-categories";
 
   interface Props {
     initialData?: Partial<Account>;
+    onComplete?: (formData: Record<string, any>) => Promise<void>;
   }
 
-  let { initialData = {} }: Props = $props();
+  let { initialData = {}, onComplete }: Props = $props();
 
   // Initialize wizard steps
   const steps: WizardStepType[] = [
@@ -24,8 +28,14 @@
       description: 'Enter the basic information for your new account'
     },
     {
+      id: 'account-enhanced',
+      title: 'Visual & Details',
+      description: 'Customize your account appearance and add details',
+      isOptional: true
+    },
+    {
       id: 'account-details',
-      title: 'Additional Details',
+      title: 'Additional Notes',
       description: 'Add optional notes and description',
       isOptional: true
     },
@@ -40,7 +50,6 @@
   const validationEngine = createAccountValidationEngine();
 
   // Override the wizard store's validation method
-  const originalValidateStep = accountWizardStore.validateStep;
   accountWizardStore.validateStep = (stepId: string, formData: Record<string, any>) => {
     const result = validationEngine.validateStep(stepId, formData);
     accountWizardStore.setStepValidation(stepId, result.isValid, result.errors);
@@ -53,11 +62,64 @@
   });
 
   const formData = $derived(accountWizardStore.formData);
-  const currentStep = $derived(accountWizardStore.currentStep);
 
   // Form handlers
   function updateField(field: string, value: any) {
     accountWizardStore.updateFormData(field, value);
+  }
+
+  // Auto-detect account type from name (same logic as in manage-account-form)
+  function detectAccountTypeFromName(name: string): string | null {
+    const lowerName = name.toLowerCase();
+
+    // Account type keywords and their mappings
+    const typeKeywords: Record<string, string> = {
+      'checking': 'checking',
+      'check': 'checking',
+      'chk': 'checking',
+      'current': 'checking',
+
+      'savings': 'savings',
+      'save': 'savings',
+      'sav': 'savings',
+      'saving': 'savings',
+
+      'credit': 'credit_card',
+      'card': 'credit_card',
+      'cc': 'credit_card',
+      'mastercard': 'credit_card',
+      'visa': 'credit_card',
+      'amex': 'credit_card',
+      'discover': 'credit_card',
+
+      'investment': 'investment',
+      'invest': 'investment',
+      'brokerage': 'investment',
+      'portfolio': 'investment',
+      'ira': 'investment',
+      '401k': 'investment',
+      'roth': 'investment',
+
+      'loan': 'loan',
+      'mortgage': 'loan',
+      'auto': 'loan',
+      'car': 'loan',
+      'student': 'loan',
+      'personal': 'loan',
+
+      'cash': 'cash',
+      'wallet': 'cash',
+      'petty': 'cash'
+    };
+
+    // Check each keyword
+    for (const [keyword, type] of Object.entries(typeKeywords)) {
+      if (lowerName.includes(keyword)) {
+        return type;
+      }
+    }
+
+    return null;
   }
 
   // Account type suggestions
@@ -89,17 +151,23 @@
   ];
 
   // Template state management
-  let selectedAccountType = $state<string>('');
+  let selectedTemplateType = $state<string>('');
   let isInTemplateMode = $state(false);
 
   // Handle account type selection
   function handleAccountTypeClick(accountType: string) {
-    selectedAccountType = accountType;
+    selectedTemplateType = accountType;
     isInTemplateMode = true;
 
     // Set the actual field value to the template
     const templateValue = accountType + ' - ';
     updateField('name', templateValue);
+
+    // Auto-detect and set the account type based on the selected template
+    const detectedType = detectAccountTypeFromName(accountType);
+    if (detectedType) {
+      updateField('accountType', detectedType);
+    }
 
     // Focus the input and position cursor at the end
     setTimeout(() => {
@@ -113,23 +181,23 @@
 
   // Handle input focus - show template placeholder
   function handleInputFocus() {
-    if (isInTemplateMode && !formData.name?.trim()) {
+    if (isInTemplateMode && !formData['name']?.trim()) {
       // Input gets focus but stays empty, placeholder will show the template
     }
   }
 
   // Handle input blur - clean up if no user content
   function handleInputBlur() {
-    const currentValue = formData.name?.trim() || '';
+    const currentValue = formData['name']?.trim() || '';
 
-    if (isInTemplateMode && selectedAccountType) {
-      const templatePrefix = selectedAccountType + ' -';
-      const templatePrefixWithSpace = selectedAccountType + ' - ';
+    if (isInTemplateMode && selectedTemplateType) {
+      const templatePrefix = selectedTemplateType + ' -';
+      const templatePrefixWithSpace = selectedTemplateType + ' - ';
 
       if (currentValue === templatePrefix || currentValue === templatePrefixWithSpace) {
         // User left with just the template pattern, rename to just the account type
-        updateField('name', selectedAccountType);
-        selectedAccountType = '';
+        updateField('name', selectedTemplateType);
+        selectedTemplateType = '';
         isInTemplateMode = false;
       }
     }
@@ -139,12 +207,24 @@
   function handleInputChange(value: string) {
     updateField('name', value);
 
-    if (isInTemplateMode && selectedAccountType) {
-      const templatePrefix = selectedAccountType + ' - ';
+    // Auto-detect account type from name (only if no type is set or it's still the default)
+    if (value.length > 2) {
+      const currentAccountType = formData['accountType'];
+      // Only auto-detect if account type is unset or still the default 'checking'
+      if (!currentAccountType || currentAccountType === 'checking') {
+        const detectedType = detectAccountTypeFromName(value);
+        if (detectedType && detectedType !== currentAccountType) {
+          updateField('accountType', detectedType);
+        }
+      }
+    }
+
+    if (isInTemplateMode && selectedTemplateType) {
+      const templatePrefix = selectedTemplateType + ' - ';
 
       if (value === '') {
         // User cleared everything, clear template state
-        selectedAccountType = '';
+        selectedTemplateType = '';
         isInTemplateMode = false;
       } else if (value.length > templatePrefix.length) {
         // User started typing after the template, exit template mode
@@ -153,9 +233,43 @@
     }
   }
 
+  // Handle completion when Complete button is clicked
+  async function handleComplete() {
+    if (onComplete) {
+      await onComplete(formData);
+    }
+  }
+
   // Computed placeholder text
   const placeholderText = $derived.by(() => {
-    return 'e.g., Primary Checking, Savings Account';
+    return 'e.g., Chase Checking, Wells Fargo Savings, Amex Credit Card';
+  });
+
+  // Account type options for select
+  const accountTypeOptions = accountTypeEnum.map(type => ({
+    value: type,
+    label: type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  }));
+
+  // Enhanced field handlers
+  function handleAccountTypeChange(value: string) {
+    updateField('accountType', value);
+  }
+
+  function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
+    updateField('accountIcon', event.detail.value);
+  }
+
+
+  // Get selected account type option
+  const selectedAccountType = $derived(() => {
+    const type = formData['accountType'];
+    return accountTypeOptions.find(opt => opt.value === type);
+  });
+
+  // Get selected icon
+  const selectedIcon = $derived(() => {
+    return formData['accountIcon'] ? getIconByName(formData['accountIcon']) : null;
   });
 
 
@@ -168,15 +282,24 @@
   title="Account Basics"
   description="Let's start with the essential information for your new account."
 >
-  <div class="space-y-6">
-    <!-- Account Name -->
+  <!-- Account Name -->
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <div class="flex items-center gap-2">
+        <CreditCard class="h-5 w-5 text-primary" />
+        <h3 class="text-lg font-semibold">Account Name</h3>
+      </div>
+      <p class="text-sm text-muted-foreground">
+        Choose a clear, descriptive name that helps you identify this account easily.
+      </p>
+    </div>
     <div class="space-y-2">
       <Label for="account-name" class="text-sm font-medium">
         Account Name *
       </Label>
       <Input
         id="account-name"
-        value={formData.name || ''}
+        value={formData['name'] || ''}
         oninput={(e) => handleInputChange(e.currentTarget.value)}
         onfocus={handleInputFocus}
         onblur={handleInputBlur}
@@ -184,49 +307,48 @@
         class="w-full"
         required
       />
-      <p class="text-xs text-muted-foreground">
-        Choose a clear, descriptive name that helps you identify this account easily.
-      </p>
     </div>
+  </div>
 
-    <!-- Account Type Example Cards -->
-    <div class="space-y-3">
-      <h4 class="text-sm font-medium flex items-center gap-2">
-        <Info class="h-4 w-4" />
-        Quick Start - Choose an Account Type
-      </h4>
-      <p class="text-xs text-muted-foreground">
+  <!-- Account Type Quick Start -->
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <div class="flex items-center gap-2">
+        <Info class="h-5 w-5 text-primary" />
+        <h3 class="text-lg font-semibold">Quick Start - Choose an Account Type</h3>
+      </div>
+      <p class="text-sm text-muted-foreground">
         Click any account type below to automatically fill in your account name
       </p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {#each accountTypes as accountType}
-          <Card.Root class="p-3">
-            <div class="space-y-3">
-              <!-- Category Header -->
-              <div class="flex items-center gap-2">
-                <Building2 class="h-4 w-4 {accountType.color}" />
-                <div>
-                  <p class="font-medium text-sm">{accountType.category}</p>
-                  <p class="text-xs text-muted-foreground">{accountType.description}</p>
-                </div>
-              </div>
-
-              <!-- Clickable Account Type Buttons -->
-              <div class="flex flex-wrap gap-1">
-                {#each accountType.examples as example}
-                  <button
-                    type="button"
-                    onclick={() => handleAccountTypeClick(example)}
-                    class="px-2 py-1 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md transition-colors cursor-pointer border border-transparent hover:border-primary/20"
-                  >
-                    {example}
-                  </button>
-                {/each}
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {#each accountTypes as accountType}
+        <div class="p-3 border rounded-lg">
+          <div class="space-y-3">
+            <!-- Category Header -->
+            <div class="flex items-center gap-2">
+              <Building2 class="h-4 w-4 {accountType.color}" />
+              <div>
+                <p class="font-medium text-sm">{accountType.category}</p>
+                <p class="text-xs text-muted-foreground">{accountType.description}</p>
               </div>
             </div>
-          </Card.Root>
-        {/each}
-      </div>
+
+            <!-- Clickable Account Type Buttons -->
+            <div class="flex flex-wrap gap-1">
+              {#each accountType.examples as example}
+                <button
+                  type="button"
+                  onclick={() => handleAccountTypeClick(example)}
+                  class="px-2 py-1 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md transition-colors cursor-pointer border border-transparent hover:border-primary/20"
+                >
+                  {example}
+                </button>
+              {/each}
+            </div>
+          </div>
+        </div>
+      {/each}
     </div>
   </div>
 
@@ -254,46 +376,264 @@
   {/snippet}
 </WizardStep>
 
-<!-- Step 2: Additional Details -->
+<!-- Step 2: Enhanced Account Features -->
+<WizardStep
+  wizardStore={accountWizardStore}
+  stepId="account-enhanced"
+  title="Visual & Details"
+  description="Customize your account's appearance and add important details for better organization."
+>
+  <!-- Account Type Selection -->
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <div class="flex items-center gap-2">
+        <Building2 class="h-5 w-5 text-primary" />
+        <h3 class="text-lg font-semibold">Account Type</h3>
+      </div>
+      <p class="text-sm text-muted-foreground">
+        Choose the type that best describes this account
+      </p>
+    </div>
+    <Select.Root
+      type="single"
+      value={formData['accountType']}
+      onValueChange={handleAccountTypeChange}
+    >
+      <Select.Trigger class="w-full">
+        <span>{selectedAccountType()?.label || 'Select account type'}</span>
+      </Select.Trigger>
+      <Select.Content>
+        {#each accountTypeOptions as option}
+          <Select.Item value={option.value}>
+            {option.label}
+          </Select.Item>
+        {/each}
+      </Select.Content>
+    </Select.Root>
+  </div>
+
+  <!-- Visual Customization -->
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <div class="flex items-center gap-2">
+        <Palette class="h-5 w-5 text-primary" />
+        <h3 class="text-lg font-semibold">Visual Customization</h3>
+      </div>
+      <p class="text-sm text-muted-foreground">
+        Choose an icon and color to help identify this account visually.
+      </p>
+    </div>
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Icon Selection -->
+        <div class="space-y-2">
+          <Label class="text-sm font-medium flex items-center gap-2">
+            <CreditCard class="h-4 w-4" />
+            Account Icon
+          </Label>
+          <IconPicker
+            value={formData['accountIcon'] || ''}
+            placeholder="Choose an icon"
+            onchange={handleIconChange}
+            class="w-full"
+          />
+          <p class="text-xs text-muted-foreground">
+            Pick an icon to visually identify this account
+          </p>
+        </div>
+
+        <!-- Color Selection -->
+        <div class="space-y-2">
+          <Label class="text-sm font-medium flex items-center gap-2">
+            <Palette class="h-4 w-4" />
+            Account Color
+          </Label>
+          <ColorPicker
+            value={formData['accountColor'] || '#3B82F6'}
+            placeholder="Choose account color"
+            onchange={(event) => {
+              updateField('accountColor', event.detail.value);
+            }}
+          />
+          <p class="text-xs text-muted-foreground">
+            Choose a color to help distinguish this account
+          </p>
+        </div>
+      </div>
+
+      <!-- Preview Card -->
+      {#if formData['name'] || selectedIcon() || formData['accountColor']}
+        <div class="space-y-2">
+          <Label class="text-sm font-medium">Preview</Label>
+          <div class="border border-l-4 p-4 rounded-lg" style={formData['accountColor'] ? `border-left-color: ${formData['accountColor']}` : ''}>
+            <div class="flex items-center gap-3">
+              {#if selectedIcon()}
+                {@const iconData = selectedIcon()}
+                {#if iconData}
+                  <iconData.icon
+                    class="h-6 w-6"
+                    style={formData['accountColor'] ? `color: ${formData['accountColor']}` : ''}
+                  />
+                {:else}
+                  <CreditCard class="h-6 w-6 text-muted-foreground" />
+                {/if}
+              {:else}
+                <CreditCard class="h-6 w-6 text-muted-foreground" />
+              {/if}
+              <div>
+                <p class="font-medium">{formData['name'] || 'Account Name'}</p>
+                <p class="text-sm text-muted-foreground">
+                  {selectedAccountType()?.label || 'Account Type'}
+                  {formData['institution'] ? ` • ${formData['institution']}` : ''}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      {/if}
+    </div>
+  </div>
+
+  <!-- Additional Details -->
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <div class="flex items-center gap-2">
+        <Building2 class="h-5 w-5 text-primary" />
+        <h3 class="text-lg font-semibold">Additional Details</h3>
+      </div>
+      <p class="text-sm text-muted-foreground">
+        Add optional details like institution, starting balance, and account identification.
+      </p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Institution -->
+      <div class="space-y-2">
+        <Label for="institution" class="text-sm font-medium flex items-center gap-2">
+          <Building2 class="h-4 w-4" />
+          Bank/Institution
+        </Label>
+        <Input
+          id="institution"
+          value={formData['institution'] || ''}
+          oninput={(e) => updateField('institution', e.currentTarget.value)}
+          placeholder="e.g., Chase Bank, Fidelity"
+          class="w-full"
+        />
+        <p class="text-xs text-muted-foreground">
+          The financial institution that holds this account
+        </p>
+      </div>
+
+      <!-- Initial Balance -->
+      <div class="space-y-2">
+        <Label for="initial-balance" class="text-sm font-medium flex items-center gap-2">
+          <Banknote class="h-4 w-4" />
+          Starting Balance
+        </Label>
+        <Input
+          id="initial-balance"
+          type="number"
+          step="0.01"
+          value={formData['initialBalance'] || ''}
+          oninput={(e) => updateField('initialBalance', parseFloat(e.currentTarget.value) || 0)}
+          placeholder="0.00"
+          class="w-full"
+        />
+        <p class="text-xs text-muted-foreground">
+          The current balance of this account (optional)
+        </p>
+      </div>
+
+      <!-- Account Number Last 4 -->
+      <div class="space-y-2">
+        <Label for="account-last4" class="text-sm font-medium">
+          Account Last 4 Digits
+        </Label>
+        <Input
+          id="account-last4"
+          value={formData['accountNumberLast4'] || ''}
+          oninput={(e) => updateField('accountNumberLast4', e.currentTarget.value)}
+          placeholder="1234"
+          pattern="[0-9]{4}"
+          maxlength={4}
+          class="w-full"
+        />
+        <p class="text-xs text-muted-foreground">
+          Last 4 digits for easy identification (optional)
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {#snippet helpContent()}
+    <div class="space-y-2">
+      <p class="text-sm">
+        <strong>Visual Customization Tips:</strong>
+      </p>
+      <ul class="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+        <li>Choose colors that help you quickly identify account types</li>
+        <li>Use consistent colors for related accounts (e.g., all Chase accounts in blue)</li>
+        <li>Pick icons that match the account purpose or institution</li>
+        <li>Use the preview to see how your account will appear in lists</li>
+      </ul>
+
+      <p class="text-sm mt-3">
+        <strong>Account Details:</strong>
+      </p>
+      <ul class="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+        <li>Institution name helps track which bank/service the account is with</li>
+        <li>Starting balance can be updated later if you prefer</li>
+        <li>Last 4 digits help verify you're working with the right account</li>
+      </ul>
+    </div>
+  {/snippet}
+</WizardStep>
+
+<!-- Step 3: Additional Details -->
 <WizardStep
   wizardStore={accountWizardStore}
   stepId="account-details"
   title="Additional Details"
   description="Add optional notes to help you remember important details about this account."
 >
-  <div class="space-y-6">
-    <!-- Notes -->
+  <!-- Notes -->
+  <div class="space-y-4">
     <div class="space-y-2">
-      <Label for="account-notes" class="text-sm font-medium flex items-center gap-2">
-        <FileText class="h-4 w-4" />
-        Notes (Optional)
-      </Label>
-      <Textarea
-        id="account-notes"
-        value={formData.notes || ''}
-        oninput={(e) => updateField('notes', e.currentTarget.value)}
-        placeholder="e.g., High-yield savings account, 2.5% APY, used for emergency fund"
-        rows={4}
-        class="w-full"
-      />
-      <p class="text-xs text-muted-foreground">
+      <div class="flex items-center gap-2">
+        <FileText class="h-5 w-5 text-primary" />
+        <h3 class="text-lg font-semibold">Additional Notes</h3>
+      </div>
+      <p class="text-sm text-muted-foreground">
         Add any details that will help you manage this account effectively.
       </p>
     </div>
+    <Textarea
+      id="account-notes"
+      value={formData['notes'] || ''}
+      oninput={(e) => updateField('notes', e.currentTarget.value)}
+      placeholder="e.g., High-yield savings account, 2.5% APY, used for emergency fund"
+      rows={4}
+      class="w-full"
+    />
+  </div>
 
-    <!-- Example Notes -->
-    <div class="space-y-3">
-      <h4 class="text-sm font-medium">Example Notes:</h4>
-      <div class="space-y-2">
-        <Card.Root class="p-3 border-l-4 border-l-blue-500">
-          <p class="text-sm">"Primary checking account for monthly expenses. Direct deposit setup."</p>
-        </Card.Root>
-        <Card.Root class="p-3 border-l-4 border-l-green-500">
-          <p class="text-sm">"High-yield savings, 2.8% APY. Goal: $10,000 emergency fund."</p>
-        </Card.Root>
-        <Card.Root class="p-3 border-l-4 border-l-purple-500">
-          <p class="text-sm">"Rewards credit card, 2% cash back. Pay off monthly."</p>
-        </Card.Root>
+  <!-- Example Notes -->
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <h4 class="text-lg font-semibold">Example Notes</h4>
+      <p class="text-sm text-muted-foreground">
+        Here are some examples of useful notes you might add
+      </p>
+    </div>
+    <div class="space-y-2">
+      <div class="p-3 border border-l-4 border-l-blue-500 rounded-lg">
+        <p class="text-sm">"Primary checking account for monthly expenses. Direct deposit setup."</p>
+      </div>
+      <div class="p-3 border border-l-4 border-l-green-500 rounded-lg">
+        <p class="text-sm">"High-yield savings, 2.8% APY. Goal: $10,000 emergency fund."</p>
+      </div>
+      <div class="p-3 border border-l-4 border-l-purple-500 rounded-lg">
+        <p class="text-sm">"Rewards credit card, 2% cash back. Pay off monthly."</p>
       </div>
     </div>
   </div>
@@ -320,42 +660,114 @@
   stepId="review-create"
   title="Review & Create Account"
   description="Please review the account details below before creating your account."
+  onNext={handleComplete}
   showNavigation={false}
 >
-  <div class="space-y-6">
-    <!-- Account Summary -->
-    <Card.Root>
-      <Card.Header class="pb-4">
-        <Card.Title class="flex items-center gap-2">
-          <CheckCircle2 class="h-5 w-5 text-green-600" />
-          Account Summary
-        </Card.Title>
-      </Card.Header>
-      <Card.Content class="space-y-4">
-        <!-- Account Name -->
-        <div class="flex justify-between items-start">
+  <!-- Account Summary -->
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <h3 class="flex items-center gap-2 text-lg font-semibold">
+        <CheckCircle2 class="h-5 w-5 text-green-600" />
+        Account Summary
+      </h3>
+    </div>
+    <div class="space-y-4">
+        <!-- Account Preview -->
+        <div class="space-y-3">
           <div>
-            <p class="font-medium text-sm">Account Name</p>
-            <p class="text-muted-foreground text-sm">The display name for this account</p>
+            <p class="font-medium text-sm">Account Preview</p>
+            <p class="text-muted-foreground text-sm">How your account will appear</p>
           </div>
-          <div class="text-right">
-            <p class="font-mono text-sm">{formData.name || 'Not specified'}</p>
-            {#if !formData.name}
-              <Badge variant="destructive" class="text-xs">Required</Badge>
-            {/if}
+          <div class="border border-l-4 p-4 w-full rounded-lg" style={formData['accountColor'] ? `border-left-color: ${formData['accountColor']}` : ''}>
+            <div class="flex items-center gap-3">
+              {#if selectedIcon()}
+                {@const iconData = selectedIcon()}
+                {#if iconData}
+                  <iconData.icon
+                    class="h-6 w-6"
+                    style={formData['accountColor'] ? `color: ${formData['accountColor']}` : ''}
+                  />
+                {:else}
+                  <CreditCard class="h-6 w-6 text-muted-foreground" />
+                {/if}
+              {:else}
+                <CreditCard class="h-6 w-6 text-muted-foreground" />
+              {/if}
+              <div>
+                <p class="font-medium">{formData['name'] || 'Not specified'}</p>
+                <p class="text-sm text-muted-foreground">
+                  {selectedAccountType()?.label || 'No type selected'}
+                  {formData['institution'] ? ` • ${formData['institution']}` : ''}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
+        <!-- Account Details -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <p class="font-medium text-sm">Account Name</p>
+            <p class="text-sm text-muted-foreground">{formData['name'] || 'Not specified'}</p>
+            {#if !formData['name']}
+              <Badge variant="destructive" class="text-xs">Required</Badge>
+            {/if}
+          </div>
+
+          {#if formData['accountType']}
+            <div class="space-y-1">
+              <p class="font-medium text-sm">Account Type</p>
+              <p class="text-sm text-muted-foreground">{selectedAccountType()?.label}</p>
+            </div>
+          {/if}
+
+          {#if formData['institution']}
+            <div class="space-y-1">
+              <p class="font-medium text-sm">Institution</p>
+              <p class="text-sm text-muted-foreground">{formData['institution']}</p>
+            </div>
+          {/if}
+
+          {#if formData['initialBalance'] !== undefined && formData['initialBalance'] !== 0}
+            <div class="space-y-1">
+              <p class="font-medium text-sm">Starting Balance</p>
+              <p class="text-sm text-muted-foreground">${formData['initialBalance']?.toFixed(2)}</p>
+            </div>
+          {/if}
+
+          {#if formData['accountNumberLast4']}
+            <div class="space-y-1">
+              <p class="font-medium text-sm">Account Last 4</p>
+              <p class="text-sm text-muted-foreground font-mono">••••{formData['accountNumberLast4']}</p>
+            </div>
+          {/if}
+
+          {#if formData['accountIcon']}
+            <div class="space-y-1">
+              <p class="font-medium text-sm">Icon</p>
+              <p class="text-sm text-muted-foreground">{formData['accountIcon']}</p>
+            </div>
+          {/if}
+
+          {#if formData['accountColor']}
+            <div class="space-y-1">
+              <p class="font-medium text-sm">Color</p>
+              <div class="flex items-center gap-2">
+                <div
+                  class="w-4 h-4 rounded border"
+                  style={`background-color: ${formData['accountColor']}`}
+                ></div>
+                <p class="text-sm text-muted-foreground font-mono">{formData['accountColor']}</p>
+              </div>
+            </div>
+          {/if}
+        </div>
+
         <!-- Notes -->
-        {#if formData.notes}
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="font-medium text-sm">Notes</p>
-              <p class="text-muted-foreground text-sm">Additional details</p>
-            </div>
-            <div class="text-right max-w-xs">
-              <p class="text-sm text-muted-foreground">"{formData.notes}"</p>
-            </div>
+        {#if formData['notes']}
+          <div class="space-y-1">
+            <p class="font-medium text-sm">Notes</p>
+            <p class="text-sm text-muted-foreground">"{formData['notes']}"</p>
           </div>
         {/if}
 
@@ -373,36 +785,33 @@
             </div>
           </div>
         </div>
-      </Card.Content>
-    </Card.Root>
+      </div>
+    </div>
 
-    <!-- Next Steps Preview -->
-    <Card.Root>
-      <Card.Header class="pb-4">
-        <Card.Title class="text-base">What happens next?</Card.Title>
-      </Card.Header>
-      <Card.Content>
-        <div class="space-y-3">
-          <div class="flex items-center gap-3">
-            <div class="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-              <span class="text-xs font-medium text-blue-600 dark:text-blue-300">1</span>
-            </div>
-            <p class="text-sm">Your account will be created and available immediately</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-              <span class="text-xs font-medium text-blue-600 dark:text-blue-300">2</span>
-            </div>
-            <p class="text-sm">You can start adding transactions and tracking balances</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-              <span class="text-xs font-medium text-blue-600 dark:text-blue-300">3</span>
-            </div>
-            <p class="text-sm">Set up budgets and schedules for better financial management</p>
-          </div>
+  <!-- Next Steps Preview -->
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <h4 class="text-base font-semibold">What happens next?</h4>
+    </div>
+    <div class="space-y-3">
+      <div class="flex items-center gap-3">
+        <div class="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+          <span class="text-xs font-medium text-blue-600 dark:text-blue-300">1</span>
         </div>
-      </Card.Content>
-    </Card.Root>
+        <p class="text-sm">Your account will be created and available immediately</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+          <span class="text-xs font-medium text-blue-600 dark:text-blue-300">2</span>
+        </div>
+        <p class="text-sm">You can start adding transactions and tracking balances</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+          <span class="text-xs font-medium text-blue-600 dark:text-blue-300">3</span>
+        </div>
+        <p class="text-sm">Set up budgets and schedules for better financial management</p>
+      </div>
+    </div>
   </div>
 </WizardStep>

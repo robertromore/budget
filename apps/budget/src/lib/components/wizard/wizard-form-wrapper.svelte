@@ -20,6 +20,8 @@
     defaultMode?: "manual" | "wizard";
     persistenceKey?: string;
     currentFormData?: Record<string, any>;
+    showWizardActions?: boolean;
+    showWizardPrevious?: boolean;
   }
 
   let {
@@ -34,6 +36,8 @@
     defaultMode = "manual",
     persistenceKey,
     currentFormData,
+    showWizardActions = true,
+    showWizardPrevious = false,
   }: Props = $props();
 
   let currentMode = $state<"manual" | "wizard">(defaultMode);
@@ -117,6 +121,10 @@
     resetWizard();
   }
 
+  function handlePrevious() {
+    wizardStore.previousStep();
+  }
+
   // Get mode-specific classes
   function getModeClasses(mode: "manual" | "wizard") {
     const baseClasses = "flex items-center gap-2";
@@ -125,8 +133,7 @@
   }
 </script>
 
-<div class={cn("space-y-6", className)}>
-  <!-- Header -->
+<div class="space-y-6">
   <div class="space-y-4">
     <div class="space-y-1">
       <h1 class="text-2xl font-semibold text-foreground">{title}</h1>
@@ -166,54 +173,63 @@
 
       <!-- Wizard Mode -->
       <Tabs.Content value="wizard" class="mt-6">
-        <div class="space-y-6">
-          <!-- Wizard Controls -->
-          <div class="flex items-center justify-between bg-muted/20 border border-muted rounded-lg p-4">
-            <div class="space-y-1">
-              <p class="text-sm font-medium text-foreground">
-                Step-by-step guided setup
-              </p>
-              <p class="text-xs text-muted-foreground">
-                We'll walk you through each option with explanations
-              </p>
-            </div>
-
-            <div class="flex items-center gap-2">
-              {#if progress > 0}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onclick={resetWizard}
-                  disabled={isSubmitting || isCompleting}
-                  class="text-xs"
-                >
-                  <RotateCcw class="h-3 w-3 mr-1" />
-                  Reset
-                </Button>
-              {/if}
-
-              {#if persistenceKey}
-                <Badge variant="outline" class="text-xs">
-                  Auto-saved
-                </Badge>
-              {/if}
-            </div>
+        <!-- Wizard Controls -->
+        <div class="flex items-center justify-between bg-muted/20 border border-muted rounded-lg p-4">
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-foreground">
+              Step-by-step guided setup
+            </p>
+            <p class="text-xs text-muted-foreground">
+              We'll walk you through each option with explanations
+            </p>
           </div>
 
-          <!-- Progress Indicator -->
-          <WizardProgress {wizardStore} />
+          <div class="flex items-center gap-2">
+            {#if progress > 0}
+              <Button
+                variant="ghost"
+                size="sm"
+                onclick={resetWizard}
+                disabled={isSubmitting || isCompleting}
+                class="text-xs"
+              >
+                <RotateCcw class="h-3 w-3 mr-1" />
+                Reset
+              </Button>
+            {/if}
 
-          <!-- Wizard Content -->
-          <div class="min-h-[400px]">
-            {#if wizardContent}
-              {@render wizardContent()}
+            {#if persistenceKey}
+              <Badge variant="outline" class="text-xs">
+                Auto-saved
+              </Badge>
             {/if}
           </div>
+        </div>
 
-          <!-- Wizard Actions -->
-          {#if wizardStore.isLastStep && wizardStore.canGoNext}
-            <div class="border-t pt-4">
-              <div class="flex items-center justify-between">
+        <!-- Progress Indicator -->
+        <WizardProgress {wizardStore} />
+
+        <!-- Wizard Content -->
+        <div class="min-h-[400px]">
+          {#if wizardContent}
+            {@render wizardContent()}
+          {/if}
+        </div>
+
+        <!-- Wizard Actions -->
+        {#if showWizardActions && wizardStore.isLastStep && wizardStore.canGoNext}
+          <div class="border-t pt-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                {#if showWizardPrevious && !wizardStore.isFirstStep}
+                  <Button
+                    variant="outline"
+                    onclick={handlePrevious}
+                    disabled={isSubmitting || isCompleting}
+                  >
+                    Previous
+                  </Button>
+                {/if}
                 <Button
                   variant="outline"
                   onclick={handleCancel}
@@ -221,23 +237,23 @@
                 >
                   Cancel
                 </Button>
-
-                <Button
-                  onclick={handleComplete}
-                  disabled={isSubmitting || isCompleting || !wizardStore.canGoNext}
-                  class="min-w-[120px]"
-                >
-                  {#if isSubmitting}
-                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground mr-2"></div>
-                    Creating...
-                  {:else}
-                    Complete Setup
-                  {/if}
-                </Button>
               </div>
+
+              <Button
+                onclick={handleComplete}
+                disabled={isSubmitting || isCompleting || !wizardStore.canGoNext}
+                class="min-w-[120px]"
+              >
+                {#if isSubmitting}
+                  <div class="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground mr-2"></div>
+                  Creating...
+                {:else}
+                  Complete Setup
+                {/if}
+              </Button>
             </div>
-          {/if}
-        </div>
+          </div>
+        {/if}
       </Tabs.Content>
     </Tabs.Root>
   </div>

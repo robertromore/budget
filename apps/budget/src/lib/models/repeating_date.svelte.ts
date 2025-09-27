@@ -30,7 +30,7 @@ const DEFAULT_STATE: RepeatingDate = {
   end_type: null,
   frequency: "daily",
   interval: 1,
-  days: null,
+  days: [],
   weeks: [],
   weeks_days: [],
   months: [],
@@ -255,7 +255,7 @@ export default class RepeatingDateInput {
     const calendarEnd = config.calendarEnd || bounds.end;
 
     const onDay =
-      this.value.on && this.value.on_type === "day" && this.value.days && this.value.days > 0;
+      this.value.on && this.value.on_type === "day" && this.value.days && this.value.days.length > 0;
     const onThe =
       this.value.on &&
       this.value.on_type === "the" &&
@@ -267,7 +267,7 @@ export default class RepeatingDateInput {
         calendarStart,
         calendarEnd,
         interval,
-        this.value.days ?? null,
+        this.value.days ?? [],
         [],
         [],
         config.effectiveLimit
@@ -493,7 +493,7 @@ export default class RepeatingDateInput {
    */
   private formatMonthlyString(
     interval: number,
-    days: number | null,
+    days: number[] | null,
     weeks: number[] | undefined,
     weeksDays: number[] | undefined,
     listFmt: Intl.ListFormat,
@@ -507,8 +507,10 @@ export default class RepeatingDateInput {
         : `Repeats every ${interval} month${interval > 1 ? "s" : ""}`;
 
     // "on the Xth day of the month"
-    if (this.value.on && this.value.on_type === "day" && days) {
-      return `${prefix} on the ${dayOptions[days - 1]?.label ?? ""} day starting from ${startFormatted} ${suffix}`.trim();
+    if (this.value.on && this.value.on_type === "day" && days && days.length > 0) {
+      const dayLabels = days.map((day: number) => dayOptions[day - 1]?.label ?? `${day}th`);
+      const dayText = dayLabels.length === 1 ? dayLabels[0] : listFmt.format(dayLabels);
+      return `${prefix} on the ${dayText} day${dayLabels.length > 1 ? 's' : ''} starting from ${startFormatted} ${suffix}`.trim();
     }
 
     // "on the nth weekday"
@@ -606,7 +608,7 @@ export default class RepeatingDateInput {
   set weeks_days(value: number[]) {
     this.value.weeks_days = value;
   }
-  set days(value: number | null) {
+  set days(value: number[] | null) {
     this.value.days = value;
   }
   set interval(value: number) {
@@ -619,7 +621,7 @@ export default class RepeatingDateInput {
     this.value.start = value;
   }
   set end(value: DateValue | null | undefined) {
-    this.value.end = value || undefined;
+    this.value.end = value ?? undefined;
   }
   set end_type(value: "limit" | "until" | null) {
     this.value.end_type = value;
@@ -666,7 +668,7 @@ export default class RepeatingDateInput {
     return this.value.weeks_days ?? [];
   }
   get days() {
-    return this.value.days ?? null;
+    return this.value.days ?? [];
   }
   get months() {
     return this.value.months ?? [];

@@ -32,15 +32,16 @@ import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-fac
 import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-faceted-filter-status.svelte";
 import DataTableActions from "../(components)/data-table-actions.svelte";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
-import ManageCategoryForm from "../(components)/manage-category-form.svelte";
-import ManagePayeeForm from "../(components)/manage-payee-form.svelte";
+import ManageCategoryForm from "$lib/components/forms/manage-category-form.svelte";
+import ManagePayeeForm from "$lib/components/forms/manage-payee-form.svelte";
 import BudgetAllocationSimpleCell from "../(components)/(cells)/budget-allocation-simple-cell.svelte";
 
 export const columns = (
   categories: CategoriesState,
   payees: PayeesState,
   updateData: (id: number, columnId: string, newValue?: unknown) => Promise<void>,
-  onScheduleClick?: (transaction: TransactionsFormat) => void
+  onScheduleClick?: (transaction: TransactionsFormat) => void,
+  budgetCount: number = 0
 ): ColumnDef<TransactionsFormat>[] => {
   const updateHandler = (
     info: CellContext<TransactionsFormat, unknown>,
@@ -437,6 +438,10 @@ export const columns = (
       size: 120,
       enableSorting: false,
       enableColumnFilter: false,
+      enableHiding: true,
+      meta: {
+        label: "Budget",
+      },
     },
     {
       accessorKey: "amount",

@@ -1,15 +1,15 @@
-import {relations, sql} from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
-  sqliteTable,
-  integer,
-  text,
-  real,
   index,
+  integer,
+  real,
+  sqliteTable,
+  text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {budgets, budgetPeriodInstances} from "../budgets";
-import {categories} from "../categories";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { budgetPeriodInstances, budgets } from "../budgets";
+import { categories } from "../categories";
 
 export const envelopeStatuses = ["active", "paused", "depleted", "overspent"] as const;
 export const rolloverModes = ["unlimited", "reset", "limited"] as const;

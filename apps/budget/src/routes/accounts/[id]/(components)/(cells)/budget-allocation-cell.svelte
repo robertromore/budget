@@ -3,26 +3,25 @@
   import * as Tooltip from "$lib/components/ui/tooltip";
   import {Button} from "$lib/components/ui/button";
   import {Badge} from "$lib/components/ui/badge";
-  import {cn} from "$lib/utils";
   import {CircleDollarSign, Plus, AlertTriangle} from "@lucide/svelte/icons";
   import {currencyFormatter} from "$lib/utils/formatters";
   import {
     listBudgets,
-    getTransactionAllocations,
-    createAllocation,
-    deleteAllocation,
   } from "$lib/query/budgets";
   import type {TransactionsFormat} from "$lib/types";
-  import type {BudgetWithRelations} from "$lib/server/domains/budgets";
 
   interface Props {
     transaction: TransactionsFormat;
+    onAddAllocation?: (budgetId: number, amount: number) => Promise<void>;
+    onDeleteAllocation?: (allocationId: number) => Promise<void>;
   }
 
-  let {transaction}: Props = $props();
+  let {transaction, onAddAllocation, onDeleteAllocation}: Props = $props();
 
-  const budgetsQuery = listBudgets();
+  const budgetsQuery = listBudgets().options();
   const availableBudgets = $derived.by(() => $budgetsQuery.data ?? []);
+
+  const budgetAllocations = $derived.by(() => transaction.budgetAllocations ?? []);
 
   const totalAllocated = $derived.by(() =>
     budgetAllocations.reduce((sum, allocation) => sum + allocation.allocatedAmount, 0)
@@ -93,23 +92,25 @@
     <div class="flex flex-wrap gap-1">
       {#each budgetAllocations as allocation (allocation.id)}
         <Tooltip.Root>
-          <Tooltip.Trigger asChild let:builder>
-            <Badge
-              builders={[builder]}
-              variant="secondary"
-              class="flex items-center gap-1 text-xs max-w-[120px]"
-            >
-              <span class="truncate">{getBudgetName(allocation.budgetId)}</span>
-              <span class="text-xs opacity-75">
-                {currencyFormatter.format(Math.abs(allocation.allocatedAmount))}
-              </span>
-              <button
-                onclick={() => handleRemoveAllocation(allocation.id)}
-                class="ml-1 rounded-full hover:bg-secondary-foreground/20 text-xs"
+          <Tooltip.Trigger>
+            {#snippet child({ props })}
+              <Badge
+                {...props}
+                variant="secondary"
+                class="flex items-center gap-1 text-xs max-w-[120px]"
               >
-                ×
-              </button>
-            </Badge>
+                <span class="truncate">{getBudgetName(allocation.budgetId)}</span>
+                <span class="text-xs opacity-75">
+                  {currencyFormatter.format(Math.abs(allocation.allocatedAmount))}
+                </span>
+                <button
+                  onclick={() => handleRemoveAllocation(allocation.id)}
+                  class="ml-1 rounded-full hover:bg-secondary-foreground/20 text-xs"
+                >
+                  ×
+                </button>
+              </Badge>
+            {/snippet}
           </Tooltip.Trigger>
           <Tooltip.Content>
             <p>{getBudgetName(allocation.budgetId)}: {currencyFormatter.format(allocation.allocatedAmount)}</p>
@@ -130,7 +131,7 @@
   <!-- Add allocation interface -->
   {#if addingAllocation}
     <div class="flex flex-col gap-2 p-2 border rounded-md bg-background">
-      <Select.Root bind:value={selectedBudgetId}>
+      <Select.Root type="single" bind:value={selectedBudgetId}>
         <Select.Trigger class="h-8 text-xs">
           <span>{selectedBudgetId ? getBudgetName(Number(selectedBudgetId)) : "Select budget"}</span>
         </Select.Trigger>

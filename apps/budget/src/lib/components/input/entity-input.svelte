@@ -56,25 +56,25 @@ if (defaultValue) {
   }
 }
 
-const toggleManageScreen = (event: MouseEvent) => {
-  manage = !manage;
-  if (!manage) {
-    managingId = 0;
-  }
-};
-
 const onSave = (new_entity: EditableEntityItem, is_new: boolean) => {
   management?.onSave(new_entity, is_new);
   managingId = 0;
   manage = false;
+  value = new_entity; // Select the saved entity
   if (handleSubmit) handleSubmit(new_entity);
+  open = false; // Close the dropdown
 };
 
 const onDelete = (id: number) => {
   management?.onDelete(id);
   managingId = 0;
   manage = false;
-  if (handleSubmit) handleSubmit(undefined);
+  // Clear selection if the deleted entity was selected
+  if (value?.id === id) {
+    value = undefined;
+    if (handleSubmit) handleSubmit(undefined);
+  }
+  open = false; // Close the dropdown
 };
 
 const addNew = () => {
@@ -118,66 +118,88 @@ $effect(() => {
         </Button>
       {/snippet}
     </Popover.Trigger>
-    <Popover.Content class="p-0" align="start">
-      {#if !manage}
-        <Command.Root shouldFilter={false}>
-          <div class="flex">
-            <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} />
-            {#if management?.enable}
-              <Button
-                size="icon"
-                class="h-11 w-12 rounded-none border-b shadow-none"
-                onclick={addNew}>
-                <Plus />
-              </Button>
-            {/if}
+    <Popover.Content class="p-0 overflow-hidden" align="start">
+      <!-- Sliding Panel Container -->
+      <div class="grid grid-cols-2 transition-transform duration-300 ease-in-out" style="width: 200%; transform: translateX({manage ? '-50%' : '0%'})">
+
+        <!-- Panel 1: Entity List -->
+        <div class="w-full min-w-0">
+          <Command.Root shouldFilter={false}>
+            <div class="flex">
+              <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} />
+              {#if management?.enable}
+                <Button
+                  size="icon"
+                  class="rounded-none border-l-0 border-b shadow-none"
+                  onclick={addNew}>
+                  <Plus />
+                </Button>
+              {/if}
+            </div>
+            <Command.List>
+              <Command.Empty>No results found.</Command.Empty>
+              <Command.Group>
+                {#each visibleEntities as entity}
+                  <Command.Item
+                    value={entity.id + ''}
+                    class={cn(value?.id == entity.id && 'bg-muted')}
+                    onSelect={() => {
+                      value = entity;
+                      if (handleSubmit) {
+                        handleSubmit(entity);
+                      }
+                      open = false;
+                    }}>
+                    <Check class={cn(selected?.id != entity.id && 'text-transparent')} />
+                    <div class="flex-grow">
+                      {entity.name}
+                    </div>
+                    {#if management?.enable}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        class="mr-1 p-1 text-xs"
+                        onclick={(e: MouseEvent) => {
+                          e.stopPropagation();
+                          managingId = entity.id;
+                          manage = true;
+                        }}>
+                        <Pencil />
+                      </Button>
+                    {/if}
+                  </Command.Item>
+                {/each}
+              </Command.Group>
+            </Command.List>
+          </Command.Root>
+        </div>
+
+        <!-- Panel 2: Management Form -->
+        <div class="w-full min-w-0 p-4">
+          <div class="flex items-center gap-2 mb-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onclick={() => {
+                manage = false;
+                managingId = 0;
+              }}>
+              <MoveLeft class="size-4" />
+            </Button>
+            <h3 class="text-sm font-medium">
+              {managingId > 0 ? `Edit ${entityLabel}` : `Add ${entityLabel}`}
+            </h3>
           </div>
-          <Command.List>
-            <Command.Empty>No results found.</Command.Empty>
-            <Command.Group>
-              {#each visibleEntities as entity}
-                <Command.Item
-                  value={entity.id + ''}
-                  class={cn(value?.id == entity.id && 'bg-muted')}
-                  onSelect={() => {
-                    value = entity;
-                    if (handleSubmit) {
-                      handleSubmit(entity);
-                    }
-                  }}>
-                  <Check class={cn(selected?.id != entity.id && 'text-transparent')} />
-                  <div class="flex-grow">
-                    {entity.name}
-                  </div>
-                  {#if management?.enable}
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      class="mr-1 p-1 text-xs"
-                      onclick={(e: MouseEvent) => {
-                        managingId = entity.id;
-                        toggleManageScreen(e);
-                      }}>
-                      <Pencil />
-                    </Button>
-                  {/if}
-                </Command.Item>
-              {/each}
-            </Command.Group>
-          </Command.List>
-        </Command.Root>
-      {:else}
-        <div class="p-2">
-          <Button variant="outline" size="icon" onclick={toggleManageScreen}>
-            <MoveLeft class="size-4" />
-          </Button>
-          {#if managingId > 0 && management}
-            <management.component id={managingId} {onSave} {onDelete}></management.component>
-          {:else if management}
-            <management.component {onSave}></management.component>
+          {#if management}
+            {#if managingId > 0}
+              <management.component id={managingId} {onSave} {onDelete}></management.component>
+            {:else}
+              <management.component {onSave}></management.component>
+            {/if}
           {/if}
         </div>
-      {/if}
+
+      </div>
     </Popover.Content>
   </Popover.Root>
 </div>

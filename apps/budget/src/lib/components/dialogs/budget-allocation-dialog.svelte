@@ -352,7 +352,7 @@
             <div class="space-y-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 transition-all hover:border-primary/50 hover:bg-primary/10">
               <div class="space-y-2">
                 <Label for="budget-select" class="text-xs">Budget</Label>
-                <Select.Root bind:value={selectedBudgetId}>
+                <Select.Root type="single" bind:value={selectedBudgetId}>
                   <Select.Trigger id="budget-select" class="h-9">
                     <span>{selectedBudgetId ? getBudgetName(Number(selectedBudgetId)) : "Select budget"}</span>
                   </Select.Trigger>

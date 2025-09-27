@@ -1,4 +1,5 @@
 <script lang="ts">
+  import {SvelteMap} from "svelte/reactivity";
   import * as Card from "$lib/components/ui/card";
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
@@ -17,6 +18,7 @@
   import BudgetMetricCard from "../budget-metric-card.svelte";
   import type { BudgetWithRelations } from "$lib/server/domains/budgets";
   import type { Category } from "$lib/schema/categories";
+  import type { BudgetHealthStatus } from "$lib/schema/budgets";
 
   interface Props {
     budget: BudgetWithRelations;
@@ -30,33 +32,23 @@
     class: className,
   }: Props = $props();
 
-  // Calculate budget metrics
-  const budgetMetrics = $derived.by(() => {
-    const allocated = Math.abs((budget.metadata as any)?.allocatedAmount ?? 0);
-    const latest = budget.periodTemplates?.[0]?.periods?.[0];
-    const spent = Math.abs(latest?.actualAmount ?? 0);
-    const remaining = allocated - spent;
-    const progressPercentage = allocated > 0 ? (spent / allocated) * 100 : 0;
+  // Budget metrics as individual derived variables
+  const allocated = $derived(Math.abs((budget.metadata as any)?.allocatedAmount ?? 0));
+  const latest = $derived(budget.periodTemplates?.[0]?.periods?.[0]);
+  const spent = $derived(Math.abs(latest?.actualAmount ?? 0));
+  const remaining = $derived(allocated - spent);
+  const progressPercentage = $derived(allocated > 0 ? (spent / allocated) * 100 : 0);
 
-    const daysInPeriod = 30;
-    const daysElapsed = 15;
-    const daysRemaining = daysInPeriod - daysElapsed;
-    const burnRate = daysElapsed > 0 ? spent / daysElapsed : 0;
+  const daysInPeriod = $derived(30);
+  const daysElapsed = $derived(15);
+  const daysRemaining = $derived(daysInPeriod - daysElapsed);
+  const burnRate = $derived(daysElapsed > 0 ? spent / daysElapsed : 0);
 
-    let status: "excellent" | "good" | "warning" | "danger" = "excellent";
-    if (progressPercentage > 100) status = "danger";
-    else if (progressPercentage > 90) status = "warning";
-    else if (progressPercentage > 75) status = "good";
-
-    return {
-      allocated,
-      spent,
-      remaining,
-      progressPercentage,
-      status,
-      daysRemaining,
-      burnRate,
-    };
+  const status = $derived.by((): BudgetHealthStatus => {
+    if (progressPercentage > 100) return "danger";
+    if (progressPercentage > 90) return "warning";
+    if (progressPercentage > 75) return "good";
+    return "excellent";
   });
 
   // Mock timeline data - in real implementation, this would come from transaction history
@@ -65,8 +57,8 @@
       id: 1,
       type: "budget-created",
       title: "Budget Created",
-      description: `Monthly budget of $${budgetMetrics.allocated.toFixed(2)} established`,
-      amount: budgetMetrics.allocated,
+      description: `Monthly budget of $${allocated.toFixed(2)} established`,
+      amount: allocated,
       date: "2024-01-01",
       status: "success"
     },
@@ -93,7 +85,7 @@
       type: "milestone",
       title: "25% Budget Used",
       description: "Reached quarter milestone",
-      amount: budgetMetrics.allocated * 0.25,
+      amount: allocated * 0.25,
       date: "2024-01-08",
       status: "info"
     },
@@ -120,31 +112,28 @@
       type: "milestone",
       title: "50% Budget Used",
       description: "Halfway through budget",
-      amount: budgetMetrics.allocated * 0.5,
+      amount: allocated * 0.5,
       date: "2024-01-15",
       status: "warning"
     }
   ]);
 
-  function getEventIcon(type: string) {
-    switch (type) {
-      case "budget-created": return Target;
-      case "spending": return DollarSign;
-      case "milestone": return CheckCircle2;
-      case "alert": return AlertTriangle;
-      default: return Activity;
-    }
-  }
+  const eventIconMap = new SvelteMap([
+    ["budget-created", Target],
+    ["spending", DollarSign],
+    ["milestone", CheckCircle2],
+    ["alert", AlertTriangle],
+  ]);
 
-  function getEventColor(status: string) {
-    switch (status) {
-      case "success": return "text-green-500";
-      case "warning": return "text-yellow-500";
-      case "danger": return "text-red-500";
-      case "info": return "text-blue-500";
-      default: return "text-muted-foreground";
-    }
-  }
+  const eventColorMap = new SvelteMap([
+    ["success", "text-green-500"],
+    ["warning", "text-yellow-500"],
+    ["danger", "text-red-500"],
+    ["info", "text-blue-500"],
+  ]);
+
+  const getEventIcon = $derived((type: string) => eventIconMap.get(type) ?? Activity);
+  const getEventColor = $derived((status: string) => eventColorMap.get(status) ?? "text-muted-foreground");
 </script>
 
 <div class="space-y-6 {className}">
@@ -152,16 +141,16 @@
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
     <BudgetMetricCard
       title="Current Period"
-      value={budgetMetrics.progressPercentage}
+      value={progressPercentage}
       format="percentage"
       subtitle="Budget used"
       icon={Target}
-      status={budgetMetrics.status}
+      status={status}
     />
 
     <BudgetMetricCard
       title="Daily Rate"
-      value={budgetMetrics.burnRate}
+      value={burnRate}
       format="currency"
       subtitle="Average spending"
       icon={TrendingDown}
@@ -170,7 +159,7 @@
 
     <BudgetMetricCard
       title="Days Remaining"
-      value={budgetMetrics.daysRemaining}
+      value={daysRemaining}
       format="days"
       subtitle="In current period"
       icon={Calendar}
@@ -179,11 +168,11 @@
 
     <BudgetMetricCard
       title="Projected End"
-      value={budgetMetrics.burnRate * 30}
+      value={burnRate * 30}
       format="currency"
       subtitle="Estimated total"
       icon={TrendingUp}
-      status={budgetMetrics.burnRate * 30 <= budgetMetrics.allocated ? "good" : "warning"}
+      status={burnRate * 30 <= allocated ? "good" : "warning"}
     />
   </div>
 
@@ -207,11 +196,11 @@
             <!-- Timeline events -->
             <div class="space-y-6">
               {#each timelineEvents as event (event.id)}
+                {@const Icon = getEventIcon(event.type)}
                 <div class="relative flex items-start gap-4">
                   <!-- Timeline dot -->
                   <div class="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-card shadow">
-                    {#if getEventIcon(event.type)}
-                      {@const Icon = getEventIcon(event.type)}
+                    {#if Icon}
                       <Icon class="h-4 w-4 {getEventColor(event.status)}" />
                     {/if}
                   </div>
@@ -257,12 +246,12 @@
             <div>
               <div class="flex justify-between text-sm">
                 <span>Budget Progress</span>
-                <span>{budgetMetrics.progressPercentage.toFixed(1)}%</span>
+                <span>{progressPercentage.toFixed(1)}%</span>
               </div>
               <div class="w-full bg-secondary rounded-full h-2 mt-1">
                 <div
-                  class="h-2 rounded-full {budgetMetrics.status === 'danger' ? 'bg-red-500' : budgetMetrics.status === 'warning' ? 'bg-yellow-500' : 'bg-green-500'}"
-                  style="width: {Math.min(budgetMetrics.progressPercentage, 100)}%"
+                  class="h-2 rounded-full {status === 'danger' ? 'bg-red-500' : status === 'warning' ? 'bg-yellow-500' : 'bg-green-500'}"
+                  style="width: {Math.min(progressPercentage, 100)}%"
                 ></div>
               </div>
             </div>
@@ -270,12 +259,12 @@
             <div>
               <div class="flex justify-between text-sm">
                 <span>Time Progress</span>
-                <span>{Math.round(((30 - budgetMetrics.daysRemaining) / 30) * 100)}%</span>
+                <span>{Math.round(((30 - daysRemaining) / 30) * 100)}%</span>
               </div>
               <div class="w-full bg-secondary rounded-full h-2 mt-1">
                 <div
                   class="bg-blue-500 h-2 rounded-full"
-                  style="width: {((30 - budgetMetrics.daysRemaining) / 30) * 100}%"
+                  style="width: {((30 - daysRemaining) / 30) * 100}%"
                 ></div>
               </div>
             </div>
@@ -287,7 +276,7 @@
               <div class="text-sm">
                 <p class="font-medium">Spending Pattern</p>
                 <p class="text-muted-foreground">
-                  {budgetMetrics.burnRate > (budgetMetrics.allocated / 30)
+                  {burnRate > (allocated / 30)
                     ? 'Above average daily spending'
                     : 'On track with spending goals'}
                 </p>
@@ -299,8 +288,8 @@
               <div class="text-sm">
                 <p class="font-medium">Recommendation</p>
                 <p class="text-muted-foreground">
-                  {budgetMetrics.remaining > 0
-                    ? `$${(budgetMetrics.remaining / budgetMetrics.daysRemaining).toFixed(2)}/day available`
+                  {remaining > 0
+                    ? `$${(remaining / daysRemaining).toFixed(2)}/day available`
                     : 'Consider reducing spending'}
                 </p>
               </div>

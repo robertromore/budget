@@ -1,6 +1,7 @@
 <script lang="ts">
+  import {SvelteMap} from "svelte/reactivity";
   import * as Card from "$lib/components/ui/card";
-  import {Badge} from "$lib/components/ui/badge";
+  import {Badge, type BadgeVariant} from "$lib/components/ui/badge";
   import Progress from "$lib/components/ui/progress/progress.svelte";
   import * as Tabs from "$lib/components/ui/tabs";
   import {ChartContainer, ChartTooltip} from "$lib/components/ui/chart";
@@ -52,7 +53,7 @@
   const overallProgress = $derived.by(() => totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0);
 
   const activeBudgets = $derived.by(() => allBudgets.filter(b => b.status === 'active'));
-  const pausedBudgets = $derived.by(() => allBudgets.filter(b => b.status === 'paused'));
+  const pausedBudgets = $derived.by(() => allBudgets.filter(b => b.status === 'inactive'));
   const overdraftBudgets = $derived.by(() =>
     allBudgets.filter(b => {
       const allocated = Math.abs((b.metadata as any)?.allocatedAmount ?? 0);
@@ -121,16 +122,17 @@
     return Object.values(categories);
   });
 
-  function getTypeColor(type: string): string {
-    const colors = {
-      'account-monthly': 'hsl(var(--primary))',
-      'category-envelope': 'hsl(var(--secondary))',
-      'goal-based': 'hsl(var(--accent))',
-      'scheduled-expense': 'hsl(var(--muted))',
-      'general': 'hsl(var(--foreground))'
-    };
-    return colors[type as keyof typeof colors] || colors.general;
-  }
+  const typeColorMap = new SvelteMap([
+    ['account-monthly', 'hsl(var(--primary))'],
+    ['category-envelope', 'hsl(var(--secondary))'],
+    ['goal-based', 'hsl(var(--accent))'],
+    ['scheduled-expense', 'hsl(var(--muted))'],
+    ['general', 'hsl(var(--foreground))'],
+  ]);
+
+  const getTypeColor = $derived((type: string) =>
+    typeColorMap.get(type) ?? 'hsl(var(--foreground))'
+  );
 
   function getStatusColor(status: string): string {
     const colors = {
@@ -142,7 +144,7 @@
     return colors[status as keyof typeof colors] || colors.excellent;
   }
 
-  function getStatusBadgeVariant(status: string): "default" | "destructive" | "outline" | "secondary" {
+  function getStatusBadgeVariant(status: string): BadgeVariant {
     const variants = {
       excellent: 'default' as const,
       good: 'secondary' as const,

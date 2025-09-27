@@ -115,7 +115,7 @@ const handleFrequencyChange = (newFrequency: string) => {
   value.week_days = [];
   value.weeks = [];
   value.weeks_days = [];
-  value.days = null;
+  value.days = [];
   value.on = false;
 };
 
@@ -149,6 +149,17 @@ const handleWeeksDaysToggle = (weekday: number) => {
     value.weeks_days = current.filter((d) => d !== weekday);
   } else {
     value.weeks_days = [...current, weekday].sort();
+  }
+};
+
+const handleDayToggle = (day: number) => {
+  const current = value.days || [];
+  const index = current.indexOf(day);
+
+  if (index > -1) {
+    value.days = current.filter((d) => d !== day);
+  } else {
+    value.days = [...current, day].sort();
   }
 };
 </script>
@@ -270,34 +281,43 @@ const handleWeeksDaysToggle = (weekday: number) => {
 
               <div class="space-y-4">
                 <div class="flex items-center gap-2">
-                  <Switch bind:checked={value.on} {disabled} />
-                  <Label class="text-sm font-medium">Specify occurrence pattern</Label>
+                  <Switch bind:checked={value.on} {disabled} id="specify-occurrence-pattern" />
+                  <Label class="text-sm font-medium" for="specify-occurrence-pattern">Specify occurrence pattern</Label>
                 </div>
 
                 {#if value.on}
                   <RadioGroup.Root bind:value={value.on_type} disabled={!value.on || disabled}>
                     <div class="space-y-3">
                       <!-- On specific day of month -->
-                      <div class="flex items-center gap-3">
-                        <RadioGroup.Item value="day" />
-                        <Label class="flex items-center gap-2">
-                          <span>On day</span>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="31"
-                            bind:value={value.days}
-                            class="w-16"
-                            disabled={value.on_type !== 'day' || !value.on || disabled} />
-                          <span>of the month</span>
-                        </Label>
+                      <div class="flex items-start gap-3">
+                        <RadioGroup.Item value="day" class="mt-1" id="on-day" />
+                        <div class="space-y-3">
+                          <Label for="on-day">On day(s) of the month</Label>
+
+                          <div class="grid grid-cols-7 gap-0.5">
+                            {#each Array.from({length: 31}, (_, i) => i + 1) as day}
+                              <Button
+                                variant={(value.days || []).includes(day) ? 'default' : 'outline'}
+                                size="sm"
+                                onclick={() => handleDayToggle(day)}
+                                disabled={value.on_type !== 'day' || !value.on || disabled}
+                                class="text-xs h-8 w-8 p-0">
+                                {day}
+                              </Button>
+                            {/each}
+                          </div>
+
+                          <p class="text-xs text-muted-foreground">
+                            Select multiple days (e.g., 10th and 25th for bi-monthly)
+                          </p>
+                        </div>
                       </div>
 
                       <!-- On specific weekday -->
                       <div class="flex items-start gap-3">
-                        <RadioGroup.Item value="the" class="mt-1" />
+                        <RadioGroup.Item value="the" class="mt-1" id="on-the" />
                         <div class="space-y-3">
-                          <Label>On the</Label>
+                          <Label for="on-the">On the</Label>
 
                           <div class="space-y-2">
                             <Label class="text-muted-foreground text-xs font-medium"

@@ -1,8 +1,8 @@
-import {SvelteMap} from "svelte/reactivity";
-import {CurrentViewState} from "./current-view.svelte";
-import {Context} from "runed";
-import type {TransactionsFormat, ViewFilter} from "$lib/types";
-import type {Table} from "@tanstack/table-core";
+import type { TransactionsFormat, ViewFilter } from "$lib/types";
+import type { Table } from "@tanstack/table-core";
+import { Context } from "runed";
+import { SvelteMap } from "svelte/reactivity";
+import { CurrentViewState } from "./current-view.svelte";
 
 /**
  * A state class representing multiple active views.
@@ -17,16 +17,14 @@ export class CurrentViewsState<T> {
   previousViewId: number | undefined = $state();
 
   editableViews = $derived(
-    this.viewsStates
-      .values()
+    Array.from(this.viewsStates
+      .values())
       .filter((viewState) => viewState.view.id > 0)
-      .toArray()
   );
   nonEditableViews = $derived(
-    this.viewsStates
-      .values()
+    Array.from(this.viewsStates
+      .values())
       .filter((viewState) => viewState.view.id < 0)
-      .toArray()
   );
 
   constructor(viewsStates: CurrentViewState<T>[] | null) {
@@ -34,7 +32,7 @@ export class CurrentViewsState<T> {
       this.viewsStates = new SvelteMap(
         viewsStates.map((viewsState) => [viewsState.view.id, viewsState])
       );
-      this.activeViewId = viewsStates[0].view.id;
+      this.activeViewId = viewsStates[0]?.view.id ?? -100;
     }
   }
 
@@ -48,12 +46,11 @@ export class CurrentViewsState<T> {
 
   get(id: number | number[]) {
     if (Array.isArray(id)) {
-      return this.viewsStates
-        .values()
-        .filter((viewState) => id.includes(viewState.view.id))
-        .toArray();
+      return Array.from(this.viewsStates
+        .values())
+        .filter((viewState) => id.includes(viewState.view.id));
     }
-    return this.viewsStates.values().find((viewState) => viewState.view.id === id);
+    return Array.from(this.viewsStates.values()).find((viewState) => viewState.view.id === id);
   }
 
   remove(viewState: CurrentViewState<T> | number, setFirstToActive: boolean = true) {
