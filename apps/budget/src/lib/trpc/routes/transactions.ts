@@ -4,10 +4,13 @@ import {TRPCError} from "@trpc/server";
 import {
   TransactionService,
   createTransactionSchema,
+  createTransactionWithAutoPopulationSchema,
   updateTransactionSchema,
   transactionFiltersSchema,
   paginationSchema,
   bulkDeleteSchema,
+  transactionSuggestionRequestSchema,
+  payeeIntelligenceRequestSchema,
 } from "$lib/server/domains/transactions";
 
 const transactionService = new TransactionService();
@@ -278,6 +281,76 @@ export const transactionRoutes = t.router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: error.message || "Failed to save transaction",
+        });
+      }
+    }),
+
+  // Create transaction with payee auto-population
+  createWithAutoPopulation: rateLimitedProcedure
+    .input(createTransactionWithAutoPopulationSchema)
+    .mutation(async ({input}) => {
+      try {
+        return await transactionService.createTransactionWithPayeeDefaults(input);
+      } catch (error: any) {
+        if (error.statusCode === 400) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        } else if (error.statusCode === 404) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to create transaction with auto-population",
+        });
+      }
+    }),
+
+  // Get transaction suggestions based on payee
+  getSuggestions: publicProcedure
+    .input(transactionSuggestionRequestSchema)
+    .query(async ({input}) => {
+      try {
+        return await transactionService.suggestTransactionDetails(input.payeeId, input.amount);
+      } catch (error: any) {
+        throw new TRPCError({
+          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to get transaction suggestions",
+        });
+      }
+    }),
+
+  // Get payee transaction intelligence
+  getPayeeIntelligence: publicProcedure
+    .input(payeeIntelligenceRequestSchema)
+    .query(async ({input}) => {
+      try {
+        return await transactionService.getPayeeTransactionIntelligence(input.payeeId);
+      } catch (error: any) {
+        throw new TRPCError({
+          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to get payee intelligence",
+        });
+      }
+    }),
+
+  // Update payee statistics after transaction changes
+  updatePayeeStats: rateLimitedProcedure
+    .input(z.object({
+      payeeId: z.number().positive("Payee ID must be a positive number"),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        await transactionService.updatePayeeAfterTransaction(input.payeeId);
+        return {success: true};
+      } catch (error: any) {
+        throw new TRPCError({
+          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to update payee statistics",
         });
       }
     }),

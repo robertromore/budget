@@ -7,14 +7,20 @@ export type {
 } from "./repository";
 export type {
   CreateTransactionData,
+  CreateTransactionWithAutoPopulationData,
   UpdateTransactionData,
   TransactionSummary,
+  TransactionSuggestion,
+  PayeeTransactionIntelligence,
 } from "./services";
 export {
   createTransactionSchema,
+  createTransactionWithAutoPopulationSchema,
   updateTransactionSchema,
   transactionFiltersSchema,
   paginationSchema,
   bulkDeleteSchema,
   transactionQuerySchema,
+  transactionSuggestionRequestSchema,
+  payeeIntelligenceRequestSchema,
 } from "./validation";

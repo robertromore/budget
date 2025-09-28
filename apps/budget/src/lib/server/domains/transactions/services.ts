@@ -28,6 +28,32 @@ export interface CreateTransactionData {
   budgetAllocation?: number | null | undefined;
 }
 
+export interface CreateTransactionWithAutoPopulationData extends CreateTransactionData {
+  // Auto-population flags
+  autoPopulateFromPayee?: boolean;
+  allowPayeeOverrides?: boolean;
+  updatePayeeStats?: boolean;
+}
+
+export interface TransactionSuggestion {
+  suggestedCategoryId: number | null;
+  suggestedBudgetId: number | null;
+  suggestedAmount: number | null;
+  suggestedNotes: string | null;
+  confidence: number; // 0-1 scale
+  reasoning: string;
+}
+
+export interface PayeeTransactionIntelligence {
+  mostUsedCategory: {id: number; name: string; usage: number} | null;
+  mostUsedBudget: {id: number; name: string; usage: number} | null;
+  averageAmount: number | null;
+  typicalFrequency: string | null;
+  lastTransactionDate: string | null;
+  transactionCount: number;
+  amountRange: {min: number; max: number} | null;
+}
+
 export interface UpdateTransactionData {
   amount?: number | undefined;
   date?: string | undefined;
@@ -60,6 +86,50 @@ export class TransactionService {
     private categoryService: CategoryService = new CategoryService(),
     private budgetTransactionService: BudgetTransactionService = new BudgetTransactionService()
   ) {}
+
+  /**
+   * Create a new transaction with enhanced payee defaults integration
+   */
+  async createTransactionWithPayeeDefaults(data: CreateTransactionWithAutoPopulationData): Promise<Transaction> {
+    // Get payee intelligence if payeeId is provided and auto-population is enabled
+    let suggestions: TransactionSuggestion | null = null;
+
+    if (data.payeeId && data.autoPopulateFromPayee !== false) {
+      try {
+        suggestions = await this.suggestTransactionDetails(data.payeeId, data.amount);
+
+        // Auto-populate missing fields with payee defaults (only if not explicitly provided)
+        if (!data.categoryId && suggestions.suggestedCategoryId) {
+          data.categoryId = suggestions.suggestedCategoryId;
+        }
+
+        if (!data.budgetId && suggestions.suggestedBudgetId) {
+          data.budgetId = suggestions.suggestedBudgetId;
+        }
+
+        if (!data.notes && suggestions.suggestedNotes && data.allowPayeeOverrides !== false) {
+          data.notes = suggestions.suggestedNotes;
+        }
+      } catch (error) {
+        // Log the error but continue with transaction creation
+        console.warn(`Failed to get payee suggestions for payee ${data.payeeId}:`, error);
+      }
+    }
+
+    // Create the transaction using the enhanced data
+    const transaction = await this.createTransaction(data);
+
+    // Update payee statistics after successful transaction creation
+    if (data.payeeId && data.updatePayeeStats !== false) {
+      try {
+        await this.updatePayeeAfterTransaction(data.payeeId);
+      } catch (error) {
+        console.warn(`Failed to update payee stats for payee ${data.payeeId}:`, error);
+      }
+    }
+
+    return transaction;
+  }
 
   /**
    * Create a new transaction
@@ -248,6 +318,21 @@ export class TransactionService {
       } catch (budgetError) {
         // If budget allocation fails, we should still return the updated transaction
         console.warn(`Failed to update budget allocation for transaction ${updatedTransaction.id}:`, budgetError);
+      }
+    }
+
+    // Update payee statistics if the payee changed or transaction amount/date changed
+    const payeeIdToUpdate = updateData.payeeId ?? existingTransaction.payeeId;
+    if (payeeIdToUpdate && (updateData.amount !== undefined || updateData.date !== undefined || updateData.payeeId !== undefined)) {
+      try {
+        await this.updatePayeeAfterTransaction(payeeIdToUpdate);
+
+        // If payee changed, also update the old payee's stats
+        if (updateData.payeeId !== undefined && existingTransaction.payeeId && existingTransaction.payeeId !== updateData.payeeId) {
+          await this.updatePayeeAfterTransaction(existingTransaction.payeeId);
+        }
+      } catch (error) {
+        console.warn(`Failed to update payee stats after transaction update:`, error);
       }
     }
 
@@ -512,6 +597,209 @@ export class TransactionService {
       spending: row.spending,
       transactionCount: row.transactionCount,
     }));
+  }
+
+  /**
+   * Generate intelligent transaction suggestions based on payee history
+   */
+  async suggestTransactionDetails(payeeId: number, amount?: number): Promise<TransactionSuggestion> {
+    // Get payee with default settings
+    const payee = await this.payeeService.getPayeeById(payeeId);
+
+    // Get payee intelligence data
+    const intelligence = await this.getPayeeTransactionIntelligence(payeeId);
+
+    let confidence = 0;
+    let reasoning = "Based on payee settings";
+
+    // Start with payee defaults
+    let suggestedCategoryId = payee.defaultCategoryId;
+    let suggestedBudgetId = payee.defaultBudgetId;
+    let suggestedAmount = amount || payee.avgAmount;
+    let suggestedNotes: string | null = null;
+
+    // Enhance suggestions with transaction history intelligence
+    if (intelligence.transactionCount > 0) {
+      confidence += 0.3; // Base confidence for having transaction history
+      reasoning = "Based on payee settings and transaction history";
+
+      // Use most frequently used category if available and more confident
+      if (intelligence.mostUsedCategory && intelligence.mostUsedCategory.usage > 2) {
+        suggestedCategoryId = intelligence.mostUsedCategory.id;
+        confidence += 0.3;
+      }
+
+      // Use most frequently used budget if available and more confident
+      if (intelligence.mostUsedBudget && intelligence.mostUsedBudget.usage > 2) {
+        suggestedBudgetId = intelligence.mostUsedBudget.id;
+        confidence += 0.2;
+      }
+
+      // Use average amount if no amount provided and we have good data
+      if (!amount && intelligence.averageAmount && intelligence.transactionCount >= 3) {
+        suggestedAmount = Math.round(intelligence.averageAmount * 100) / 100; // Round to cents
+        confidence += 0.2;
+      }
+    }
+
+    // Add confidence for having default settings
+    if (payee.defaultCategoryId) confidence += 0.2;
+    if (payee.defaultBudgetId) confidence += 0.2;
+
+    // Generate intelligent notes suggestion
+    if (payee.payeeType && intelligence.typicalFrequency) {
+      const typeLabel = payee.payeeType.replace('_', ' ');
+      suggestedNotes = `${typeLabel} - typically ${intelligence.typicalFrequency}`;
+    }
+
+    return {
+      suggestedCategoryId,
+      suggestedBudgetId,
+      suggestedAmount,
+      suggestedNotes,
+      confidence: Math.min(confidence, 1.0), // Cap at 1.0
+      reasoning,
+    };
+  }
+
+  /**
+   * Get comprehensive payee transaction intelligence
+   */
+  async getPayeeTransactionIntelligence(payeeId: number): Promise<PayeeTransactionIntelligence> {
+    // Get all transactions for this payee
+    const payeeTransactions = await db
+      .select({
+        categoryId: transactions.categoryId,
+        amount: transactions.amount,
+        date: transactions.date,
+        // We would need to join with budget_transactions table for budget info
+        // For now, we'll focus on category intelligence
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.payeeId, payeeId),
+          isNull(transactions.deletedAt)
+        )
+      )
+      .orderBy(sql`date DESC`);
+
+    if (payeeTransactions.length === 0) {
+      return {
+        mostUsedCategory: null,
+        mostUsedBudget: null,
+        averageAmount: null,
+        typicalFrequency: null,
+        lastTransactionDate: null,
+        transactionCount: 0,
+        amountRange: null,
+      };
+    }
+
+    // Calculate category usage
+    const categoryUsage = new Map<number, number>();
+    let totalAmount = 0;
+    let minAmount = Infinity;
+    let maxAmount = -Infinity;
+
+    for (const tx of payeeTransactions) {
+      if (tx.categoryId) {
+        categoryUsage.set(tx.categoryId, (categoryUsage.get(tx.categoryId) || 0) + 1);
+      }
+
+      totalAmount += Math.abs(tx.amount);
+      minAmount = Math.min(minAmount, Math.abs(tx.amount));
+      maxAmount = Math.max(maxAmount, Math.abs(tx.amount));
+    }
+
+    // Find most used category
+    let mostUsedCategory: {id: number; name: string; usage: number} | null = null;
+    if (categoryUsage.size > 0) {
+      const [categoryId, usage] = Array.from(categoryUsage.entries())
+        .sort(([,a], [,b]) => b - a)[0];
+
+      // Get category name (simplified for now)
+      mostUsedCategory = {
+        id: categoryId,
+        name: `Category ${categoryId}`, // TODO: Fetch actual category name
+        usage,
+      };
+    }
+
+    // Calculate frequency pattern (simplified)
+    let typicalFrequency: string | null = null;
+    if (payeeTransactions.length >= 3) {
+      const daysBetween = this.calculateAverageTransactionInterval(payeeTransactions);
+      if (daysBetween <= 7) typicalFrequency = "weekly";
+      else if (daysBetween <= 14) typicalFrequency = "bi-weekly";
+      else if (daysBetween <= 35) typicalFrequency = "monthly";
+      else if (daysBetween <= 95) typicalFrequency = "quarterly";
+      else typicalFrequency = "infrequent";
+    }
+
+    return {
+      mostUsedCategory,
+      mostUsedBudget: null, // TODO: Implement budget intelligence
+      averageAmount: totalAmount / payeeTransactions.length,
+      typicalFrequency,
+      lastTransactionDate: payeeTransactions[0]?.date || null,
+      transactionCount: payeeTransactions.length,
+      amountRange: minAmount === Infinity ? null : {min: minAmount, max: maxAmount},
+    };
+  }
+
+  /**
+   * Update payee calculated fields after transaction creation/update
+   */
+  async updatePayeeAfterTransaction(payeeId: number): Promise<void> {
+    // Get latest transaction data for this payee
+    const intelligence = await this.getPayeeTransactionIntelligence(payeeId);
+
+    // Prepare update data
+    const updateData: any = {
+      lastTransactionDate: intelligence.lastTransactionDate,
+    };
+
+    // Update average amount if we have sufficient data
+    if (intelligence.averageAmount !== null && intelligence.transactionCount >= 2) {
+      updateData.avgAmount = Math.round(intelligence.averageAmount * 100) / 100;
+    }
+
+    // Update payment frequency if detected
+    if (intelligence.typicalFrequency) {
+      // Map our internal frequency to payee schema frequency
+      const frequencyMap: Record<string, string> = {
+        "weekly": "weekly",
+        "bi-weekly": "bi_weekly",
+        "monthly": "monthly",
+        "quarterly": "quarterly",
+        "infrequent": "irregular",
+      };
+
+      updateData.paymentFrequency = frequencyMap[intelligence.typicalFrequency] || "irregular";
+    }
+
+    // Update the payee with calculated fields
+    if (Object.keys(updateData).length > 0) {
+      await this.payeeService.updatePayee(payeeId, updateData);
+    }
+  }
+
+  /**
+   * Calculate average days between transactions for frequency detection
+   */
+  private calculateAverageTransactionInterval(transactions: Array<{date: string}>): number {
+    if (transactions.length < 2) return 0;
+
+    const dates = transactions.map(t => new Date(t.date)).sort((a, b) => a.getTime() - b.getTime());
+    let totalDays = 0;
+
+    for (let i = 1; i < dates.length; i++) {
+      const daysDiff = (dates[i].getTime() - dates[i-1].getTime()) / (1000 * 60 * 60 * 24);
+      totalDays += daysDiff;
+    }
+
+    return totalDays / (dates.length - 1);
   }
 
   /**
