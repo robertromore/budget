@@ -18,7 +18,7 @@ vite.config.ts.timestamp-*
 
 # Test coverage and results
 /coverage
-/test-results
+**/*/test-results
 /.playwright-mcp
 .context7-cache/
 
