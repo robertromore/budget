@@ -11,6 +11,32 @@ export const createTransactionSchema = z.object({
   categoryId: z.number().positive().nullable().optional(),
   notes: z.string().max(500, "Notes must be 500 characters or less").nullable().optional(),
   status: z.enum(["cleared", "pending", "scheduled"]).optional(),
+  budgetId: z.number().positive().nullable().optional(),
+  budgetAllocation: z.number().nullable().optional(),
+});
+
+/**
+ * Schema for creating a transaction with auto-population support
+ */
+export const createTransactionWithAutoPopulationSchema = createTransactionSchema.extend({
+  autoPopulateFromPayee: z.boolean().optional().default(true),
+  allowPayeeOverrides: z.boolean().optional().default(true),
+  updatePayeeStats: z.boolean().optional().default(true),
+});
+
+/**
+ * Schema for transaction suggestions request
+ */
+export const transactionSuggestionRequestSchema = z.object({
+  payeeId: z.number().positive("Payee ID must be a positive number"),
+  amount: z.number().optional(),
+});
+
+/**
+ * Schema for payee intelligence request
+ */
+export const payeeIntelligenceRequestSchema = z.object({
+  payeeId: z.number().positive("Payee ID must be a positive number"),
 });
 
 /**
@@ -23,6 +49,8 @@ export const updateTransactionSchema = z.object({
   categoryId: z.number().positive().nullable().optional(),
   notes: z.string().max(500, "Notes must be 500 characters or less").nullable().optional(),
   status: z.enum(["cleared", "pending", "scheduled"]).optional(),
+  budgetId: z.number().positive().nullable().optional(),
+  budgetAllocation: z.number().nullable().optional(),
 });
 
 /**

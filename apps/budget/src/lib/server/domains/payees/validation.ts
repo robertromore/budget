@@ -1,7 +1,8 @@
 import {z} from "zod";
+import {payeeTypes, paymentFrequencies} from "$lib/schema";
 
 /**
- * Create payee validation schema
+ * Create payee validation schema with enhanced budgeting fields
  */
 export const createPayeeSchema = z.object({
   name: z
@@ -15,10 +16,37 @@ export const createPayeeSchema = z.object({
     .optional()
     .nullable()
     .transform(val => val || null),
+
+  // Budgeting Integration Fields
+  defaultCategoryId: z.number().int().positive().optional().nullable(),
+  defaultBudgetId: z.number().int().positive().optional().nullable(),
+  payeeType: z.enum(payeeTypes).optional().nullable(),
+
+  // Analytics Support Fields
+  taxRelevant: z.boolean().optional().default(false),
+
+  // Contact Information Fields
+  website: z.string().url("Invalid website URL").max(500).optional().nullable(),
+  phone: z.string().max(20).optional().nullable(),
+  email: z.string().email("Invalid email address").max(255).optional().nullable(),
+
+  // Organization Fields
+  address: z.any().optional().nullable(), // JSON field
+  accountNumber: z.string().max(100).optional().nullable(),
+
+  // Advanced Features Fields
+  alertThreshold: z.number().positive().optional().nullable(),
+  isSeasonal: z.boolean().optional().default(false),
+  subscriptionInfo: z.any().optional().nullable(), // JSON field
+  tags: z.any().optional().nullable(), // JSON field
+
+  // Payment Processing Fields
+  preferredPaymentMethods: z.any().optional().nullable(), // JSON field
+  merchantCategoryCode: z.string().length(4).regex(/^\d{4}$/).optional().nullable(),
 });
 
 /**
- * Update payee validation schema
+ * Update payee validation schema with all enhanced fields
  */
 export const updatePayeeSchema = z.object({
   name: z
@@ -33,6 +61,39 @@ export const updatePayeeSchema = z.object({
     .optional()
     .nullable()
     .transform(val => val || null),
+
+  // Budgeting Integration Fields
+  defaultCategoryId: z.number().int().positive().optional().nullable(),
+  defaultBudgetId: z.number().int().positive().optional().nullable(),
+  payeeType: z.enum(payeeTypes).optional().nullable(),
+
+  // Transaction Automation Fields
+  avgAmount: z.number().positive().optional().nullable(),
+  paymentFrequency: z.enum(paymentFrequencies).optional().nullable(),
+  lastTransactionDate: z.string().optional().nullable(),
+
+  // Analytics Support Fields
+  taxRelevant: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+
+  // Contact Information Fields
+  website: z.string().url("Invalid website URL").max(500).optional().nullable(),
+  phone: z.string().max(20).optional().nullable(),
+  email: z.string().email("Invalid email address").max(255).optional().nullable(),
+
+  // Organization Fields
+  address: z.any().optional().nullable(),
+  accountNumber: z.string().max(100).optional().nullable(),
+
+  // Advanced Features Fields
+  alertThreshold: z.number().positive().optional().nullable(),
+  isSeasonal: z.boolean().optional(),
+  subscriptionInfo: z.any().optional().nullable(),
+  tags: z.any().optional().nullable(),
+
+  // Payment Processing Fields
+  preferredPaymentMethods: z.any().optional().nullable(),
+  merchantCategoryCode: z.string().length(4).regex(/^\d{4}$/).optional().nullable(),
 }).refine(
   data => Object.keys(data).length > 0,
   {message: "At least one field must be provided for update"}
@@ -58,7 +119,7 @@ export const bulkDeletePayeesSchema = z.object({
 });
 
 /**
- * Search payees validation schema
+ * Basic search payees validation schema
  */
 export const searchPayeesSchema = z.object({
   query: z
@@ -76,11 +137,30 @@ export const searchPayeesSchema = z.object({
 });
 
 /**
+ * Advanced search payees validation schema with filters
+ */
+export const advancedSearchPayeesSchema = z.object({
+  query: z.string().max(255).optional(),
+  payeeType: z.enum(payeeTypes).optional(),
+  isActive: z.boolean().optional(),
+  taxRelevant: z.boolean().optional(),
+  hasDefaultCategory: z.boolean().optional(),
+  hasDefaultBudget: z.boolean().optional(),
+  minAvgAmount: z.number().positive().optional(),
+  maxAvgAmount: z.number().positive().optional(),
+  paymentFrequency: z.enum(paymentFrequencies).optional(),
+  lastTransactionBefore: z.string().optional(),
+  lastTransactionAfter: z.string().optional(),
+});
+
+/**
  * Get payee by ID validation schema
  */
 export const getPayeeSchema = z.object({
   id: z.number().int().positive("Invalid payee ID"),
   includeStats: z.boolean().optional().default(false),
+  includeRelations: z.boolean().optional().default(false),
+  includeSuggestions: z.boolean().optional().default(false),
 });
 
 /**
@@ -109,6 +189,29 @@ export const payeeIdSchema = z.object({
 });
 
 /**
+ * Apply intelligent defaults validation schema
+ */
+export const applyIntelligentDefaultsSchema = z.object({
+  id: z.number().int().positive("Invalid payee ID"),
+  applyCategory: z.boolean().optional().default(true),
+  applyBudget: z.boolean().optional().default(true),
+});
+
+/**
+ * Get payees by type validation schema
+ */
+export const getPayeesByTypeSchema = z.object({
+  payeeType: z.enum(payeeTypes),
+});
+
+/**
+ * Update calculated fields validation schema
+ */
+export const updateCalculatedFieldsSchema = z.object({
+  payeeId: z.number().int().positive().optional(), // If omitted, updates all payees
+});
+
+/**
  * Type exports for use in services and routes
  */
 export type CreatePayeeInput = z.infer<typeof createPayeeSchema>;
@@ -116,7 +219,11 @@ export type UpdatePayeeInput = z.infer<typeof updatePayeeSchema>;
 export type DeletePayeeInput = z.infer<typeof deletePayeeSchema>;
 export type BulkDeletePayeesInput = z.infer<typeof bulkDeletePayeesSchema>;
 export type SearchPayeesInput = z.infer<typeof searchPayeesSchema>;
+export type AdvancedSearchPayeesInput = z.infer<typeof advancedSearchPayeesSchema>;
 export type GetPayeeInput = z.infer<typeof getPayeeSchema>;
 export type GetPayeesByAccountInput = z.infer<typeof getPayeesByAccountSchema>;
+export type GetPayeesByTypeInput = z.infer<typeof getPayeesByTypeSchema>;
 export type MergePayeesInput = z.infer<typeof mergePayeesSchema>;
 export type PayeeIdInput = z.infer<typeof payeeIdSchema>;
+export type ApplyIntelligentDefaultsInput = z.infer<typeof applyIntelligentDefaultsSchema>;
+export type UpdateCalculatedFieldsInput = z.infer<typeof updateCalculatedFieldsSchema>;

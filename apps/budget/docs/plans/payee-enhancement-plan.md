@@ -359,57 +359,137 @@ interface PayeeAnalytics {
 }
 ```
 
+## Implementation Guidelines
+
+### Core Development Standards
+
+**Database Operations**:
+- **❌ Never use raw SQL queries** - Always use Drizzle ORM for type safety and consistency
+- **✅ Use Drizzle migrations** - Generate migrations with `bun drizzle-kit generate` and apply with `bun drizzle-kit push`
+- **✅ Follow schema patterns** - Use existing schema patterns from `src/lib/schema/` files
+
+**Agent Utilization**:
+- **✅ Always use relevant specialized agents** when available:
+  - `backend-api-architect` for tRPC routes, database operations, and service layer work
+  - `frontend-ui-specialist` for UI components and Shadcn Svelte integration
+  - `query-layer-specialist` for query/mutation definitions and error handling
+  - `documentation-specialist` for updating documentation and plans
+
+**Framework Standards**:
+- **❌ Never use Svelte 4 patterns** - This project uses Svelte 5 with runes mode
+- **✅ Use Svelte 5 runes** - `$state`, `$derived`, `$props` for reactive state management
+- **✅ Follow component patterns** - Use proper opening/closing tags, avoid self-closing syntax for components
+
+**Code Quality**:
+- **✅ Use TypeScript strictly** - Leverage type safety for all database operations and API calls
+- **✅ Follow project conventions** - Match existing file organization and naming patterns
+- **✅ Implement comprehensive error handling** - Use proper TRPCError transformations and user feedback
+
 ## Implementation Strategy
 
 ### Database Migration Plan
 
 **Migration 001: Core Fields**
-```sql
--- Add core budgeting fields
-ALTER TABLE payee ADD COLUMN default_category_id INTEGER REFERENCES categories(id);
-ALTER TABLE payee ADD COLUMN default_budget_id INTEGER REFERENCES budgets(id);
-ALTER TABLE payee ADD COLUMN payee_type TEXT CHECK(payee_type IN ('merchant', 'utility', 'employer', 'financial_institution', 'government', 'individual'));
-ALTER TABLE payee ADD COLUMN avg_amount REAL;
-ALTER TABLE payee ADD COLUMN payment_frequency TEXT;
-ALTER TABLE payee ADD COLUMN last_transaction_date TEXT;
-ALTER TABLE payee ADD COLUMN tax_relevant INTEGER DEFAULT 0;
-ALTER TABLE payee ADD COLUMN is_active INTEGER DEFAULT 1;
+```typescript
+// Use Drizzle ORM - Update src/lib/schema/payees.ts
+export const payees = sqliteTable('payee', {
+  // Existing fields...
+
+  // Budgeting Integration
+  defaultCategoryId: integer('default_category_id').references(() => categories.id),
+  defaultBudgetId: integer('default_budget_id').references(() => budgets.id),
+  payeeType: text('payee_type', { enum: payeeTypes }),
+  avgAmount: real('avg_amount'),
+  paymentFrequency: text('payment_frequency', { enum: paymentFrequencies }),
+  lastTransactionDate: text('last_transaction_date'),
+  taxRelevant: integer('tax_relevant', { mode: 'boolean' }).default(false),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+}, (table) => [
+  // Add indexes for performance
+  index('payee_default_category_idx').on(table.defaultCategoryId),
+  index('payee_default_budget_idx').on(table.defaultBudgetId),
+  index('payee_type_idx').on(table.payeeType),
+  index('payee_active_idx').on(table.isActive),
+  index('payee_last_transaction_idx').on(table.lastTransactionDate),
+]);
+
+// Generate migration: bun drizzle-kit generate
+// Apply migration: bun drizzle-kit push
 ```
 
 **Migration 002: Contact Fields**
-```sql
--- Add contact and organization fields
-ALTER TABLE payee ADD COLUMN website TEXT;
-ALTER TABLE payee ADD COLUMN phone TEXT;
-ALTER TABLE payee ADD COLUMN email TEXT;
-ALTER TABLE payee ADD COLUMN address TEXT; -- JSON
-ALTER TABLE payee ADD COLUMN account_number TEXT;
+```typescript
+// Continue updating src/lib/schema/payees.ts
+export const payees = sqliteTable('payee', {
+  // Previous fields...
+
+  // Contact Information
+  website: text('website'),
+  phone: text('phone'),
+  email: text('email'),
+  address: text('address'), // JSON object
+  accountNumber: text('account_number'),
+});
+
+// Generate and apply with Drizzle commands
 ```
 
 **Migration 003: Advanced Features**
-```sql
--- Add advanced budgeting features
-ALTER TABLE payee ADD COLUMN alert_threshold REAL;
-ALTER TABLE payee ADD COLUMN is_seasonal INTEGER DEFAULT 0;
-ALTER TABLE payee ADD COLUMN subscription_info TEXT; -- JSON
-ALTER TABLE payee ADD COLUMN tags TEXT; -- JSON array
-ALTER TABLE payee ADD COLUMN preferred_payment_methods TEXT; -- JSON array
-ALTER TABLE payee ADD COLUMN merchant_category_code TEXT;
+```typescript
+// Final payee schema update
+export const payees = sqliteTable('payee', {
+  // Previous fields...
+
+  // Advanced Features
+  alertThreshold: real('alert_threshold'),
+  isSeasonal: integer('is_seasonal', { mode: 'boolean' }).default(false),
+  subscriptionInfo: text('subscription_info'), // JSON
+  tags: text('tags'), // JSON array
+  preferredPaymentMethods: text('preferred_payment_methods'), // JSON array
+  merchantCategoryCode: text('mcc'),
+});
 ```
 
 ### Service Layer Updates
 
+**Use backend-api-architect agent for all service layer work**:
+
 1. **PayeeService**: Enhance with calculation methods and intelligent defaults
+   - Implement using Drizzle ORM queries and proper TypeScript types
+   - Follow existing domain service patterns in `src/lib/server/domains/`
+
 2. **TransactionService**: Integrate payee-based auto-population
+   - Use tRPC for API endpoints with proper error handling
+   - Implement TRPCError transformations for service errors
+
 3. **BudgetService**: Add payee-specific budget allocation logic
+   - Leverage existing budget system architecture when implemented
+   - Use query layer patterns with defineQuery/defineMutation
+
 4. **AnalyticsService**: Implement payee spending pattern analysis
+   - Create efficient Drizzle queries with proper joins and aggregations
+   - Implement caching strategies for performance
 
 ### Frontend Integration
 
+**Use frontend-ui-specialist agent for all UI work**:
+
 1. **Enhanced Forms**: Update payee management with new fields
+   - Use Shadcn Svelte components and Tailwind CSS styling
+   - Implement Svelte 5 runes for reactive state management
+   - Follow packages/ui structure and design patterns
+
 2. **Smart Suggestions**: Show payee-based suggestions in transaction forms
+   - Use proper Svelte 5 component patterns (no self-closing syntax)
+   - Implement responsive design with theme integration
+
 3. **Analytics Views**: Add payee insights to dashboard
+   - Use LayerChart for data visualization components
+   - Follow existing chart system architecture and period filtering
+
 4. **Subscription Management**: Dedicated subscription tracking interface
+   - Create new UI components following established patterns
+   - Use SvelteKit form handling with Superforms integration
 
 ## Benefits
 
