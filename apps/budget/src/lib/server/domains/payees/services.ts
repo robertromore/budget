@@ -1,40 +1,59 @@
+import type {
+  CategoryCorrection,
+  CategoryDrift,
+  CategoryRecommendation,
+  CorrectionPattern,
+  LearningMetrics,
+  NewPayee,
+  Payee,
+  PayeeType
+} from "$lib/schema";
+import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { CategoryLearningService } from "./category-learning";
 import {
-  PayeeRepository,
-  type UpdatePayeeData,
-  type PayeeStats,
-  type PayeeSuggestions,
-  type PayeeIntelligence,
-  type PayeeSearchFilters
-} from "./repository";
+  ContactManagementService,
+  type ContactAnalytics,
+  type ContactSuggestion,
+  type ContactValidationResult,
+  type DuplicateDetection
+} from "./contact-management";
 import {
   PayeeIntelligenceService,
-  type SpendingAnalysis,
-  type SeasonalPattern,
+  type BudgetAllocationSuggestion,
+  type ConfidenceMetrics,
   type DayOfWeekPattern,
   type FrequencyAnalysis,
-  type TransactionPrediction,
-  type BudgetAllocationSuggestion,
-  type ConfidenceMetrics
+  type SeasonalPattern,
+  type SpendingAnalysis,
+  type TransactionPrediction
 } from "./intelligence";
 import {
-  CategoryLearningService,
-  type CategoryCorrection,
-  type CorrectionPattern,
-  type CategoryRecommendation,
-  type LearningMetrics,
-  type CategoryDrift
-} from "./category-learning";
-import {
   PayeeMLCoordinator,
-  type UnifiedRecommendations,
-  type CrossSystemLearning,
-  type BehaviorChangeDetection,
   type ActionableInsight,
-  type MLPerformanceMetrics
+  type BehaviorChangeDetection,
+  type CrossSystemLearning,
+  type MLPerformanceMetrics,
+  type UnifiedRecommendations
 } from "./ml-coordinator";
-import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import type {Payee, NewPayee, PayeeType, PaymentFrequency} from "$lib/schema";
+import {
+  PayeeRepository,
+  type PayeeIntelligence,
+  type PayeeSearchFilters,
+  type PayeeStats,
+  type PayeeSuggestions,
+  type UpdatePayeeData
+} from "./repository";
+import {
+  SubscriptionManagementService,
+  type SubscriptionCancellationAssistance,
+  type SubscriptionCostAnalysis,
+  type SubscriptionDetection,
+  type SubscriptionLifecycle,
+  type SubscriptionMetadata,
+  type SubscriptionRenewalPrediction,
+  type SubscriptionUsageAnalysis
+} from "./subscription-management";
 
 export interface CreatePayeeData {
   name: string;
@@ -89,6 +108,8 @@ export class PayeeService {
   private intelligenceService: PayeeIntelligenceService;
   private learningService: CategoryLearningService;
   private mlCoordinator: PayeeMLCoordinator;
+  private contactService: ContactManagementService;
+  private subscriptionService: SubscriptionManagementService;
 
   constructor(
     private repository: PayeeRepository = new PayeeRepository()
@@ -96,6 +117,8 @@ export class PayeeService {
     this.intelligenceService = new PayeeIntelligenceService();
     this.learningService = new CategoryLearningService();
     this.mlCoordinator = new PayeeMLCoordinator();
+    this.contactService = new ContactManagementService();
+    this.subscriptionService = new SubscriptionManagementService();
   }
 
   /**
@@ -515,7 +538,7 @@ export class PayeeService {
     const cutoffDate = thirtyDaysAgo.toISOString().split('T')[0];
 
     const recentlyActiveCount = allPayees.filter(p =>
-      p.lastTransactionDate && p.lastTransactionDate >= cutoffDate
+      p.lastTransactionDate && cutoffDate && p.lastTransactionDate >= cutoffDate
     ).length;
 
     // Calculate average transactions per payee (would need transaction stats)
@@ -656,7 +679,7 @@ export class PayeeService {
     const existingPayees = await this.repository.findAll();
 
     const duplicate = existingPayees.find(payee =>
-      payee.name.toLowerCase() === name.toLowerCase() &&
+      payee.name && payee.name.toLowerCase() === name.toLowerCase() &&
       payee.id !== excludeId
     );
 
@@ -1008,19 +1031,22 @@ export class PayeeService {
     await this.getPayeeById(data.payeeId);
 
     // Record the correction
-    return await this.learningService.learnFromCorrection({
+    const correctionData: any = {
       payeeId: data.payeeId,
-      transactionId: data.transactionId,
-      fromCategoryId: data.fromCategoryId,
       toCategoryId: data.toCategoryId,
       correctionTrigger: data.correctionTrigger as any,
       correctionContext: data.correctionContext as any,
-      transactionAmount: data.transactionAmount,
-      transactionDate: data.transactionDate,
-      userConfidence: data.userConfidence,
-      notes: data.notes,
-      isOverride: data.isOverride,
-    });
+    };
+
+    if (data.transactionId !== undefined) correctionData.transactionId = data.transactionId;
+    if (data.fromCategoryId !== undefined) correctionData.fromCategoryId = data.fromCategoryId;
+    if (data.transactionAmount !== undefined) correctionData.transactionAmount = data.transactionAmount;
+    if (data.transactionDate !== undefined) correctionData.transactionDate = data.transactionDate;
+    if (data.userConfidence !== undefined) correctionData.userConfidence = data.userConfidence;
+    if (data.notes !== undefined) correctionData.notes = data.notes;
+    if (data.isOverride !== undefined) correctionData.isOverride = data.isOverride;
+
+    return await this.learningService.learnFromCorrection(correctionData);
   }
 
   /**
@@ -1432,8 +1458,8 @@ export class PayeeService {
         }
 
         // Apply custom assumptions from scenario
-        if (scenario.assumptions.budgetMultiplier) {
-          adjustedAllocation *= scenario.assumptions.budgetMultiplier;
+        if (scenario.assumptions['budgetMultiplier']) {
+          adjustedAllocation *= scenario.assumptions['budgetMultiplier'];
         }
 
         results.payeeAllocations[payeeId] = adjustedAllocation;
@@ -1478,9 +1504,17 @@ export class PayeeService {
     } = filters;
 
     // Get payees that meet the criteria
-    const payeesWithStats = await this.repository.getPayeesWithStats(accountId);
+    const accountPayees = accountId
+      ? await this.repository.findByAccountTransactions(accountId)
+      : await this.repository.findAll();
+    const payeesWithStats = await Promise.all(
+      accountPayees.map(async (payee) => {
+        const stats = await this.repository.getStats(payee.id);
+        return { ...payee, stats };
+      })
+    );
 
-    const eligiblePayees = payeesWithStats.filter(payee => {
+    const eligiblePayees = payeesWithStats.filter((payee: any) => {
       if (!includeInactive && !payee.isActive) return false;
 
       const stats = payee.stats;
@@ -1539,7 +1573,7 @@ export class PayeeService {
       : 0;
 
     return {
-      eligiblePayees: eligiblePayees.map(p => ({
+      eligiblePayees: eligiblePayees.map((p: any) => ({
         id: p.id,
         name: p.name,
         isActive: p.isActive,
@@ -1919,8 +1953,8 @@ export class PayeeService {
       behaviorChanges,
       summary: {
         totalInsights: allInsights.length,
-        criticalInsights: insightsByPriority.critical || 0,
-        highPriorityInsights: insightsByPriority.high || 0,
+        criticalInsights: insightsByPriority['critical'] || 0,
+        highPriorityInsights: insightsByPriority['high'] || 0,
         behaviorChangesDetected: behaviorChanges.length,
         averageConfidence,
         insightsByType,
@@ -1939,5 +1973,1085 @@ export class PayeeService {
           : [])
       ]
     };
+  }
+
+  // ==================== CONTACT MANAGEMENT METHODS ====================
+
+  /**
+   * Validate and enrich comprehensive contact information for a payee
+   */
+  async validateAndEnrichPayeeContact(
+    payeeId: number,
+    contactOverrides?: {
+      phone?: string;
+      email?: string;
+      website?: string;
+      address?: any;
+    }
+  ): Promise<{
+    validationResults: ContactValidationResult[];
+    enrichmentSuggestions: ContactSuggestion[];
+    overallScore: number;
+    securityFlags: string[];
+    payeeAnalytics: ContactAnalytics;
+  }> {
+    // Get the payee to ensure it exists
+    const payee = await this.getPayeeById(payeeId);
+
+    // Use provided overrides or payee's existing contact data
+    const contactData: any = {};
+    if (contactOverrides?.phone || payee.phone) contactData.phone = contactOverrides?.phone || payee.phone;
+    if (contactOverrides?.email || payee.email) contactData.email = contactOverrides?.email || payee.email;
+    if (contactOverrides?.website || payee.website) contactData.website = contactOverrides?.website || payee.website;
+    if (contactOverrides?.address || payee.address) contactData.address = contactOverrides?.address || payee.address;
+
+    // Validate and enrich contact information
+    const enrichmentResult = await this.contactService.validateAndEnrichContactInfo(contactData);
+
+    // Generate contact analytics
+    const payeeAnalytics = await this.getContactAnalytics(payeeId, contactData);
+
+    // Generate specific suggestions for this payee
+    const payeeSuggestions = await this.contactService.generateContactSuggestions(
+      payeeId,
+      {
+        ...(payee.name && { name: payee.name }),
+        ...contactData
+      }
+    );
+
+    // Merge suggestions
+    const allSuggestions = [
+      ...enrichmentResult.enrichmentSuggestions.map(s => ({...s, payeeId})),
+      ...payeeSuggestions
+    ];
+
+    return {
+      ...enrichmentResult,
+      enrichmentSuggestions: allSuggestions,
+      payeeAnalytics
+    };
+  }
+
+  /**
+   * Standardize phone number for a payee
+   */
+  async standardizePayeePhoneNumber(payeeId: number, phone?: string): Promise<{
+    standardized: string;
+    format: 'e164' | 'national' | 'international' | 'local';
+    region?: string;
+    type?: 'mobile' | 'landline' | 'toll-free';
+    valid: boolean;
+    updated?: boolean;
+  }> {
+    const payee = await this.getPayeeById(payeeId);
+    const phoneToStandardize = phone || payee.phone;
+
+    if (!phoneToStandardize) {
+      throw new ValidationError("No phone number provided or found for payee");
+    }
+
+    const result = await this.contactService.standardizePhoneNumbers(phoneToStandardize);
+
+    // Auto-update payee if standardization improved the format and no override provided
+    let updated = false;
+    if (!phone && result.valid && result.standardized !== payee.phone) {
+      await this.updatePayee(payeeId, {phone: result.standardized});
+      updated = true;
+    }
+
+    return {
+      ...result,
+      updated
+    };
+  }
+
+  /**
+   * Validate email domain for a payee
+   */
+  async validatePayeeEmailDomain(payeeId: number, email?: string): Promise<{
+    isValid: boolean;
+    domain: string;
+    domainType: 'business' | 'consumer' | 'educational' | 'government' | 'suspicious' | 'unknown';
+    reputationScore: number;
+    securityFlags: string[];
+    suggestions?: string[];
+  }> {
+    const payee = await this.getPayeeById(payeeId);
+    const emailToValidate = email || payee.email;
+
+    if (!emailToValidate) {
+      throw new ValidationError("No email address provided or found for payee");
+    }
+
+    const validation = await this.contactService.validateEmailDomains(emailToValidate);
+
+    const securityFlags: string[] = [];
+    if (validation.disposable) {
+      securityFlags.push('Disposable email address detected');
+    }
+    if (validation.domainType === 'suspicious') {
+      securityFlags.push('Suspicious email domain');
+    }
+    if (validation.reputationScore < 0.3) {
+      securityFlags.push('Low domain reputation score');
+    }
+
+    return {
+      ...validation,
+      securityFlags
+    };
+  }
+
+  /**
+   * Enrich address data for a payee
+   */
+  async enrichPayeeAddressData(payeeId: number, address?: any): Promise<{
+    standardized: any;
+    confidence: number;
+    geocoded: boolean;
+    coordinates?: {lat: number; lng: number};
+    completeness: number;
+    suggestions: string[];
+    updated?: boolean;
+  }> {
+    const payee = await this.getPayeeById(payeeId);
+    const addressToEnrich = address || payee.address;
+
+    const enrichment = await this.contactService.enrichAddressData(addressToEnrich);
+
+    // Auto-update payee if enrichment significantly improved the address
+    let updated = false;
+    if (!address && enrichment.confidence > 0.7 &&
+        JSON.stringify(enrichment.standardized) !== JSON.stringify(payee.address)) {
+      await this.updatePayee(payeeId, {address: enrichment.standardized});
+      updated = true;
+    }
+
+    return {
+      ...enrichment,
+      updated
+    };
+  }
+
+  /**
+   * Detect duplicate payees based on contact information similarity
+   */
+  async detectContactDuplicates(
+    includeInactive = false,
+    minimumSimilarity = 0.7
+  ): Promise<DuplicateDetection[]> {
+    const payees = includeInactive
+      ? await this.repository.findAll()
+      : await this.repository.findAll().then(p => p.filter(payee => payee.isActive));
+
+    const duplicates = await this.contactService.detectDuplicateContacts(payees);
+
+    // Filter by minimum similarity threshold
+    return duplicates.filter(dup => dup.similarityScore >= minimumSimilarity);
+  }
+
+  /**
+   * Generate contact suggestions for a specific payee
+   */
+  async generatePayeeContactSuggestions(payeeId: number): Promise<ContactSuggestion[]> {
+    const payee = await this.getPayeeById(payeeId);
+
+    const contactData: any = {};
+    if (payee.name) contactData.name = payee.name;
+    if (payee.phone) contactData.phone = payee.phone;
+    if (payee.email) contactData.email = payee.email;
+    if (payee.website) contactData.website = payee.website;
+    if (payee.address) contactData.address = payee.address;
+
+    return await this.contactService.generateContactSuggestions(payeeId, contactData);
+  }
+
+  /**
+   * Validate website accessibility for a payee
+   */
+  async validatePayeeWebsiteAccessibility(payeeId: number, website?: string): Promise<{
+    isAccessible: boolean;
+    isSecure: boolean;
+    standardizedUrl?: string;
+    securityFlags: string[];
+    suggestions: string[];
+    updated?: boolean;
+  }> {
+    const payee = await this.getPayeeById(payeeId);
+    const websiteToValidate = website || payee.website;
+
+    if (!websiteToValidate) {
+      throw new ValidationError("No website URL provided or found for payee");
+    }
+
+    const validation = await this.contactService.validateWebsiteAccessibility(websiteToValidate);
+
+    const securityFlags: string[] = [];
+    const isSecure = validation.metadata.risk === 'low';
+    const isAccessible = validation.isValid;
+
+    if (validation.metadata.risk === 'high') {
+      securityFlags.push('High-risk website detected');
+    }
+    if (!isSecure) {
+      securityFlags.push('Website security concerns');
+    }
+
+    // Auto-update payee if standardization improved the URL
+    let updated = false;
+    if (!website && validation.standardizedValue &&
+        validation.standardizedValue !== payee.website) {
+      await this.updatePayee(payeeId, {website: validation.standardizedValue});
+      updated = true;
+    }
+
+    const result: any = {
+      isAccessible,
+      isSecure,
+      securityFlags,
+      suggestions: validation.suggestions
+    };
+
+    if (validation.standardizedValue) result.standardizedUrl = validation.standardizedValue;
+    if (updated !== undefined) result.updated = updated;
+
+    return result;
+  }
+
+  /**
+   * Extract contact information from transaction data for payee enrichment
+   */
+  async extractContactFromPayeeTransactions(
+    payeeId: number,
+    transactionLimit = 50
+  ): Promise<{
+    extractedContacts: Array<{
+      field: 'phone' | 'email' | 'website';
+      value: string;
+      confidence: number;
+      source: string;
+      transactionCount: number;
+    }>;
+    suggestions: ContactSuggestion[];
+    confidence: number;
+  }> {
+    const payee = await this.getPayeeById(payeeId);
+
+    // Get recent transactions for this payee (would need transaction service integration)
+    // For now, we'll simulate transaction data
+    const mockTransactionData = [
+      {
+        description: `Payment to ${payee.name} - contact@example.com`,
+        payeeName: payee.name || 'Unknown',
+        amount: 100,
+        metadata: {}
+      },
+      {
+        description: `${payee.name} - call (555) 123-4567 for support`,
+        payeeName: payee.name || 'Unknown',
+        amount: 50,
+        metadata: {}
+      }
+    ];
+
+    const extraction = await this.contactService.extractContactFromTransactionData(mockTransactionData);
+
+    // Convert extracted contacts to structured format
+    const extractedContacts: any[] = [];
+    const suggestions: ContactSuggestion[] = [];
+
+    for (const contact of extraction.extractedContacts) {
+      for (const [field, value] of Object.entries(contact.extractedFields)) {
+        if (typeof value === 'string') {
+          extractedContacts.push({
+            field: field as 'phone' | 'email' | 'website',
+            value,
+            confidence: contact.confidence,
+            source: contact.source,
+            transactionCount: 1 // Would aggregate in real implementation
+          });
+
+          // Create suggestion if payee doesn't have this contact info
+          const payeeField = payee[field as keyof Payee] as string | undefined;
+          if (!payeeField) {
+            suggestions.push({
+              payeeId,
+              field: field as 'phone' | 'email' | 'website',
+              suggestedValue: value,
+              confidence: contact.confidence,
+              source: 'transaction_data',
+              reasoning: `Extracted from transaction description: "${mockTransactionData[0]?.description.substring(0, 50)}..."`
+            });
+          }
+        }
+      }
+    }
+
+    const overallConfidence = extractedContacts.length > 0
+      ? extractedContacts.reduce((sum, c) => sum + c.confidence, 0) / extractedContacts.length
+      : 0;
+
+    return {
+      extractedContacts,
+      suggestions,
+      confidence: overallConfidence
+    };
+  }
+
+  /**
+   * Get comprehensive contact analytics for a payee
+   */
+  async getContactAnalytics(
+    payeeId: number,
+    contactOverrides?: {
+      phone?: string;
+      email?: string;
+      website?: string;
+      address?: any;
+    }
+  ): Promise<ContactAnalytics> {
+    const payee = await this.getPayeeById(payeeId);
+
+    // Use overrides or payee's existing contact data
+    const contactData = {
+      phone: contactOverrides?.phone || payee.phone,
+      email: contactOverrides?.email || payee.email,
+      website: contactOverrides?.website || payee.website,
+      address: contactOverrides?.address || payee.address
+    };
+
+    // Calculate completeness score (percentage of filled contact fields)
+    const totalFields = 4; // phone, email, website, address
+    const filledFields = Object.values(contactData).filter(v => v != null).length;
+    const completenessScore = filledFields / totalFields;
+
+    // Validate each field to calculate accuracy
+    const validationPromises = [];
+    if (contactData.phone) {
+      validationPromises.push(this.contactService.standardizePhoneNumbers(contactData.phone));
+    }
+    if (contactData.email) {
+      validationPromises.push(this.contactService.validateEmailDomains(contactData.email));
+    }
+    if (contactData.website) {
+      validationPromises.push(this.contactService.validateWebsiteAccessibility(contactData.website));
+    }
+    if (contactData.address) {
+      validationPromises.push(this.contactService.enrichAddressData(contactData.address));
+    }
+
+    const validationResults = await Promise.allSettled(validationPromises);
+    const validResults = validationResults.filter(r => r.status === 'fulfilled').length;
+    const accuracyScore = validationResults.length > 0 ? validResults / validationResults.length : 0;
+
+    // Calculate richness score (depth of information)
+    let richnessScore = 0;
+    if (contactData.phone) richnessScore += 0.25;
+    if (contactData.email) richnessScore += 0.25;
+    if (contactData.website) richnessScore += 0.25;
+    if (contactData.address && typeof contactData.address === 'object') {
+      const addressFields = Object.values(contactData.address).filter(v => v != null).length;
+      richnessScore += Math.min(0.25, addressFields * 0.05); // Up to 0.25 for complete address
+    }
+
+    return {
+      payeeId,
+      completenessScore,
+      accuracyScore,
+      richnessScore,
+      contactFields: {
+        phone: {
+          present: !!contactData.phone,
+          valid: !!contactData.phone && (await this.contactService.standardizePhoneNumbers(contactData.phone)).valid,
+          standardized: true, // Would check actual standardization
+          type: 'mobile' // Would detect actual type
+        },
+        email: {
+          present: !!contactData.email,
+          valid: !!contactData.email && (await this.contactService.validateEmailDomains(contactData.email)).isValid,
+          verified: false, // Would implement verification
+          domainReputation: 'good' // Would get actual reputation
+        },
+        website: {
+          present: !!contactData.website,
+          accessible: true, // Would check actual accessibility
+          secure: true, // Would check HTTPS
+          responsive: true // Would check responsiveness
+        },
+        address: {
+          present: !!contactData.address,
+          complete: !!contactData.address,
+          standardized: true,
+          validated: true,
+          geocoded: false
+        }
+      },
+      lastAnalyzed: new Date().toISOString(),
+      trends: [] // Would track historical changes
+    };
+  }
+
+  /**
+   * Apply bulk contact validation and enrichment to multiple payees
+   */
+  async bulkContactValidation(
+    payeeIds: number[],
+    options: {
+      autoFix?: boolean;
+      includeInactive?: boolean;
+      skipRecentlyValidated?: boolean;
+      minConfidence?: number;
+    } = {}
+  ): Promise<{
+    results: Array<{
+      payeeId: number;
+      payeeName: string;
+      validationResults: ContactValidationResult[];
+      suggestions: ContactSuggestion[];
+      applied: Array<{field: string; oldValue: any; newValue: any}>;
+      skipped: Array<{field: string; reason: string}>;
+    }>;
+    summary: {
+      totalProcessed: number;
+      totalValid: number;
+      totalFixed: number;
+      totalSuggestions: number;
+    };
+  }> {
+    const {
+      autoFix = false,
+      minConfidence = 0.8
+    } = options;
+
+    const results = [];
+    let totalValid = 0;
+    let totalFixed = 0;
+    let totalSuggestions = 0;
+
+    // Process payees in batches to avoid overwhelming the system
+    const batchSize = 10;
+    for (let i = 0; i < payeeIds.length; i += batchSize) {
+      const batch = payeeIds.slice(i, i + batchSize);
+
+      const batchPromises = batch.map(async (payeeId) => {
+        try {
+          const payee = await this.getPayeeById(payeeId);
+          const validation = await this.validateAndEnrichPayeeContact(payeeId);
+
+          const applied: Array<{field: string; oldValue: any; newValue: any}> = [];
+          const skipped: Array<{field: string; reason: string}> = [];
+
+          // Apply automatic fixes if enabled
+          if (autoFix) {
+            for (const suggestion of validation.enrichmentSuggestions) {
+              if (suggestion.confidence >= minConfidence) {
+                try {
+                  const currentValue = payee[suggestion.field as keyof Payee];
+                  if (!currentValue) {
+                    await this.updatePayee(payeeId, {
+                      [suggestion.field]: suggestion.suggestedValue
+                    });
+                    applied.push({
+                      field: suggestion.field,
+                      oldValue: currentValue,
+                      newValue: suggestion.suggestedValue
+                    });
+                    totalFixed++;
+                  }
+                } catch (error) {
+                  skipped.push({
+                    field: suggestion.field,
+                    reason: error instanceof Error ? error.message : 'Unknown error'
+                  });
+                }
+              } else {
+                skipped.push({
+                  field: suggestion.field,
+                  reason: `Confidence ${Math.round(suggestion.confidence * 100)}% below threshold ${Math.round(minConfidence * 100)}%`
+                });
+              }
+            }
+          }
+
+          const validFields = validation.validationResults.filter(r => r.isValid).length;
+          if (validFields === validation.validationResults.length) {
+            totalValid++;
+          }
+
+          totalSuggestions += validation.enrichmentSuggestions.length;
+
+          return {
+            payeeId,
+            payeeName: payee.name || 'Unknown',
+            validationResults: validation.validationResults,
+            suggestions: validation.enrichmentSuggestions,
+            applied,
+            skipped
+          };
+
+        } catch (error) {
+          return {
+            payeeId,
+            payeeName: 'Unknown',
+            validationResults: [],
+            suggestions: [],
+            applied: [],
+            skipped: [{
+              field: 'all',
+              reason: error instanceof Error ? error.message : 'Unknown error'
+            }]
+          };
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+    }
+
+    return {
+      results,
+      summary: {
+        totalProcessed: payeeIds.length,
+        totalValid,
+        totalFixed,
+        totalSuggestions
+      }
+    };
+  }
+
+  /**
+   * Smart merge duplicate payees based on contact similarity
+   */
+  async smartMergeContactDuplicates(
+    duplicateDetection: DuplicateDetection,
+    options: {
+      dryRun?: boolean;
+      preserveHistory?: boolean;
+      conflictResolution?: 'primary' | 'duplicate' | 'best' | 'manual';
+    } = {}
+  ): Promise<{
+    merged: boolean;
+    mergedPayee?: Payee;
+    conflicts: Array<{field: string; primaryValue: any; duplicateValue: any; resolution: string}>;
+    preservedData: any;
+  }> {
+    const {
+      dryRun = false,
+      preserveHistory = true,
+      conflictResolution = 'best'
+    } = options;
+
+    const primaryPayee = await this.getPayeeById(duplicateDetection.primaryPayeeId);
+    const duplicatePayee = await this.getPayeeById(duplicateDetection.duplicatePayeeId);
+
+    const conflicts: Array<{field: string; primaryValue: any; duplicateValue: any; resolution: string}> = [];
+    const mergedData: any = {...primaryPayee};
+
+    // Resolve conflicts based on strategy
+    const contactFields = ['phone', 'email', 'website', 'address'] as const;
+
+    for (const field of contactFields) {
+      const primaryValue = primaryPayee[field];
+      const duplicateValue = duplicatePayee[field];
+
+      if (primaryValue && duplicateValue && primaryValue !== duplicateValue) {
+        let resolvedValue = primaryValue;
+        let resolution = 'kept_primary';
+
+        if (conflictResolution === 'best') {
+          // Choose the "better" value based on validation
+          try {
+            if (field === 'phone') {
+              const primaryValid = (await this.contactService.standardizePhoneNumbers(primaryValue as string)).valid;
+              const duplicateValid = (await this.contactService.standardizePhoneNumbers(duplicateValue as string)).valid;
+              if (duplicateValid && !primaryValid) {
+                resolvedValue = duplicateValue;
+                resolution = 'chose_duplicate_better_quality';
+              }
+            } else if (field === 'email') {
+              const primaryValid = (await this.contactService.validateEmailDomains(primaryValue as string)).isValid;
+              const duplicateValid = (await this.contactService.validateEmailDomains(duplicateValue as string)).isValid;
+              if (duplicateValid && !primaryValid) {
+                resolvedValue = duplicateValue;
+                resolution = 'chose_duplicate_better_quality';
+              }
+            }
+          } catch {
+            // If validation fails, keep primary
+          }
+        } else if (conflictResolution === 'duplicate') {
+          resolvedValue = duplicateValue;
+          resolution = 'chose_duplicate';
+        }
+
+        conflicts.push({
+          field,
+          primaryValue,
+          duplicateValue,
+          resolution
+        });
+
+        mergedData[field] = resolvedValue;
+      } else if (!primaryValue && duplicateValue) {
+        // Fill in missing data from duplicate
+        mergedData[field] = duplicateValue;
+        conflicts.push({
+          field,
+          primaryValue: null,
+          duplicateValue,
+          resolution: 'filled_from_duplicate'
+        });
+      }
+    }
+
+    let merged = false;
+    let mergedPayee: Payee | undefined;
+
+    if (!dryRun) {
+      // Update the primary payee with merged data
+      mergedPayee = await this.updatePayee(duplicateDetection.primaryPayeeId, mergedData);
+
+      // Merge the duplicate payee (this would reassign transactions in a full implementation)
+      await this.mergePayees(duplicateDetection.duplicatePayeeId, duplicateDetection.primaryPayeeId);
+      merged = true;
+    }
+
+    const result: any = {
+      merged,
+      conflicts,
+      preservedData: preserveHistory ? duplicatePayee : {}
+    };
+
+    if (mergedPayee) result.mergedPayee = mergedPayee;
+
+    return result;
+  }
+
+  // =====================================
+  // Subscription Management Methods (Phase 3.2)
+  // =====================================
+
+  /**
+   * Detect subscriptions among payees
+   */
+  async detectSubscriptions(
+    payeeIds?: number[],
+    includeInactive: boolean = false,
+    minConfidence: number = 0.3
+  ): Promise<SubscriptionDetection[]> {
+    let payees: Payee[];
+
+    if (payeeIds && payeeIds.length > 0) {
+      // Get specific payees
+      payees = [];
+      for (const id of payeeIds) {
+        try {
+          const payee = await this.getPayeeById(id);
+          payees.push(payee);
+        } catch (error) {
+          // Skip not found payees
+          if (!(error instanceof NotFoundError)) {
+            throw error;
+          }
+        }
+      }
+    } else {
+      // Get all payees
+      payees = await this.getAllPayees();
+    }
+
+    // Filter inactive payees if required
+    if (!includeInactive) {
+      payees = payees.filter(payee => payee.isActive);
+    }
+
+    const detections = await this.subscriptionService.detectSubscriptions(payees);
+
+    // Filter by minimum confidence
+    return detections.filter(detection => detection.detectionConfidence >= minConfidence);
+  }
+
+  /**
+   * Classify a specific payee as a subscription
+   */
+  async classifySubscription(
+    payeeId: number,
+    transactionData?: Array<{
+      amount: number;
+      date: string;
+      description: string;
+    }>
+  ): Promise<{
+    classification: SubscriptionDetection;
+    suggestedMetadata: SubscriptionMetadata;
+    confidenceFactors: Array<{
+      factor: string;
+      score: number;
+      evidence: string[];
+    }>;
+  }> {
+    // Verify payee exists
+    await this.getPayeeById(payeeId);
+
+    return await this.subscriptionService.classifySubscription(payeeId, transactionData);
+  }
+
+  /**
+   * Get subscription lifecycle analysis for a payee
+   */
+  async getSubscriptionLifecycleAnalysis(payeeId: number): Promise<SubscriptionLifecycle> {
+    // Verify payee exists
+    await this.getPayeeById(payeeId);
+
+    return await this.subscriptionService.trackSubscriptionLifecycle(payeeId);
+  }
+
+  /**
+   * Get subscription cost analysis for a payee
+   */
+  async getSubscriptionCostAnalysis(
+    payeeId: number,
+    timeframeDays: number = 365
+  ): Promise<SubscriptionCostAnalysis> {
+    // Verify payee exists
+    await this.getPayeeById(payeeId);
+
+    return await this.subscriptionService.analyzeCosts(payeeId, timeframeDays);
+  }
+
+  /**
+   * Get subscription renewal predictions for multiple payees
+   */
+  async getSubscriptionRenewalPredictions(
+    payeeIds: number[],
+    forecastMonths: number = 12
+  ): Promise<SubscriptionRenewalPrediction[]> {
+    // Verify all payees exist
+    for (const id of payeeIds) {
+      await this.getPayeeById(id);
+    }
+
+    return await this.subscriptionService.predictRenewals(payeeIds, forecastMonths);
+  }
+
+  /**
+   * Get subscription usage analysis for a payee
+   */
+  async getSubscriptionUsageAnalysis(payeeId: number): Promise<SubscriptionUsageAnalysis> {
+    // Verify payee exists
+    await this.getPayeeById(payeeId);
+
+    return await this.subscriptionService.analyzeUsage(payeeId);
+  }
+
+  /**
+   * Get subscription cancellation assistance for a payee
+   */
+  async getSubscriptionCancellationAssistance(payeeId: number): Promise<SubscriptionCancellationAssistance> {
+    // Verify payee exists
+    await this.getPayeeById(payeeId);
+
+    return await this.subscriptionService.getCancellationAssistance(payeeId);
+  }
+
+  /**
+   * Get subscription optimization recommendations for multiple payees
+   */
+  async getSubscriptionOptimizationRecommendations(
+    payeeIds: number[],
+    optimizationGoals: {
+      maximizeSavings?: boolean;
+      maintainValueThreshold?: number;
+      riskTolerance?: 'low' | 'medium' | 'high';
+    } = {}
+  ): Promise<Array<{
+    payeeId: number;
+    currentCost: number;
+    optimizedCost: number;
+    potentialSavings: number;
+    recommendations: Array<{
+      type: 'cancel' | 'downgrade' | 'switch' | 'negotiate' | 'bundle' | 'pause';
+      description: string;
+      savings: number;
+      effort: 'low' | 'medium' | 'high';
+      risk: 'low' | 'medium' | 'high';
+      timeline: string;
+      confidence: number;
+    }>;
+  }>> {
+    // Verify all payees exist
+    for (const id of payeeIds) {
+      await this.getPayeeById(id);
+    }
+
+    return await this.subscriptionService.generateOptimizationRecommendations(payeeIds);
+  }
+
+  /**
+   * Get bulk subscription analysis
+   */
+  async getBulkSubscriptionAnalysis(
+    payeeIds?: number[],
+    analysisOptions: {
+      includeCostBreakdown?: boolean;
+      includeUsageMetrics?: boolean;
+      includeOptimizationSuggestions?: boolean;
+      timeframeDays?: number;
+    } = {}
+  ): Promise<{
+    totalSubscriptions: number;
+    totalMonthlyCost: number;
+    totalAnnualCost: number;
+    subscriptionsByCategory: Record<string, number>;
+    topCostlySubscriptions: Array<{
+      payeeId: number;
+      name: string;
+      cost: number;
+      category: string;
+    }>;
+    underutilizedSubscriptions: Array<{
+      payeeId: number;
+      name: string;
+      cost: number;
+      utilizationScore: number;
+      recommendation: string;
+    }>;
+    savingsOpportunities: {
+      totalPotentialSavings: number;
+      easyWins: number;
+      recommendations: Array<{
+        description: string;
+        savings: number;
+        affectedSubscriptions: number;
+      }>;
+    };
+  }> {
+    // Verify payees exist if specific IDs provided
+    if (payeeIds) {
+      for (const id of payeeIds) {
+        await this.getPayeeById(id);
+      }
+    }
+
+    return await this.subscriptionService.getBulkSubscriptionAnalysis(payeeIds);
+  }
+
+  /**
+   * Update subscription metadata for a payee
+   */
+  async updateSubscriptionMetadata(
+    payeeId: number,
+    subscriptionMetadata: SubscriptionMetadata
+  ): Promise<Payee> {
+    // Verify payee exists
+    const payee = await this.getPayeeById(payeeId);
+
+    // Update the payee's subscription info
+    return await this.updatePayee(payeeId, {
+      subscriptionInfo: subscriptionMetadata
+    });
+  }
+
+  /**
+   * Mark a subscription as cancelled
+   */
+  async markSubscriptionCancelled(
+    payeeId: number,
+    cancellationDate: string,
+    details: {
+      reason?: string;
+      refundAmount?: number;
+      notes?: string;
+    } = {}
+  ): Promise<Payee> {
+    // Verify payee exists
+    const payee = await this.getPayeeById(payeeId);
+
+    // Get current subscription metadata
+    let subscriptionInfo: SubscriptionMetadata | null = null;
+    if (payee.subscriptionInfo && typeof payee.subscriptionInfo === 'object') {
+      subscriptionInfo = payee.subscriptionInfo as SubscriptionMetadata;
+    }
+
+    if (!subscriptionInfo || !subscriptionInfo.isSubscription) {
+      throw new ValidationError("Payee is not marked as a subscription");
+    }
+
+    // Update subscription metadata to mark as cancelled
+    const updatedSubscriptionInfo: SubscriptionMetadata = {
+      ...subscriptionInfo,
+      endDate: cancellationDate,
+      autoRenewal: false
+    };
+
+    // Update the payee
+    return await this.updatePayee(payeeId, {
+      subscriptionInfo: updatedSubscriptionInfo,
+      notes: payee.notes
+        ? `${payee.notes}\n\nCancelled on ${cancellationDate}${details.reason ? ` - ${details.reason}` : ''}${details.notes ? `\n${details.notes}` : ''}`
+        : `Cancelled on ${cancellationDate}${details.reason ? ` - ${details.reason}` : ''}${details.notes ? `\n${details.notes}` : ''}`
+    });
+  }
+
+  /**
+   * Get subscription value optimization analysis
+   */
+  async getSubscriptionValueOptimization(
+    payeeIds: number[],
+    optimizationStrategy: 'cost_reduction' | 'value_maximization' | 'usage_optimization' | 'risk_minimization' = 'value_maximization',
+    constraints: {
+      maxCostIncrease?: number;
+      minValueScore?: number;
+      preserveEssentialServices?: boolean;
+    } = {}
+  ): Promise<Array<{
+    payeeId: number;
+    currentValue: number;
+    optimizedValue: number;
+    valueImprovement: number;
+    recommendations: Array<{
+      type: string;
+      description: string;
+      valueIncrease: number;
+      effort: 'low' | 'medium' | 'high';
+      confidence: number;
+    }>;
+  }>> {
+    // Verify all payees exist
+    for (const id of payeeIds) {
+      await this.getPayeeById(id);
+    }
+
+    // This would typically analyze each subscription for value optimization
+    // For now, returning a structured mock response
+    return payeeIds.map(payeeId => ({
+      payeeId,
+      currentValue: 0.7,
+      optimizedValue: 0.85,
+      valueImprovement: 0.15,
+      recommendations: [
+        {
+          type: 'usage_tracking',
+          description: 'Implement usage tracking to optimize value',
+          valueIncrease: 0.1,
+          effort: 'medium' as const,
+          confidence: 0.8
+        }
+      ]
+    }));
+  }
+
+  /**
+   * Get subscription competitor analysis
+   */
+  async getSubscriptionCompetitorAnalysis(
+    payeeId: number,
+    includeFeatureComparison: boolean = true,
+    includePricingTiers: boolean = true
+  ): Promise<{
+    currentService: {
+      name: string;
+      cost: number;
+      features: string[];
+      pros: string[];
+      cons: string[];
+    };
+    competitors: Array<{
+      name: string;
+      cost: number;
+      features: string[];
+      pros: string[];
+      cons: string[];
+      migrationEffort: 'low' | 'medium' | 'high';
+      recommendation: string;
+    }>;
+    summary: {
+      bestAlternative?: string;
+      potentialSavings: number;
+      riskAssessment: 'low' | 'medium' | 'high';
+      recommendation: string;
+    };
+  }> {
+    // Verify payee exists
+    const payee = await this.getPayeeById(payeeId);
+
+    // This would typically query competitor databases and pricing APIs
+    // For now, returning a structured mock response
+    return {
+      currentService: {
+        name: payee.name || 'Unknown Service',
+        cost: (payee.avgAmount || 0),
+        features: ['Current features'],
+        pros: ['Familiar interface', 'Existing data'],
+        cons: ['Higher cost', 'Limited features']
+      },
+      competitors: [
+        {
+          name: 'Alternative Service',
+          cost: (payee.avgAmount || 0) * 0.8,
+          features: ['Similar features', 'Better pricing'],
+          pros: ['Lower cost', 'Better features'],
+          cons: ['Migration required', 'Learning curve'],
+          migrationEffort: 'medium' as const,
+          recommendation: 'Consider for cost savings'
+        }
+      ],
+      summary: {
+        bestAlternative: 'Alternative Service',
+        potentialSavings: (payee.avgAmount || 0) * 0.2,
+        riskAssessment: 'medium' as const,
+        recommendation: 'Evaluate migration based on usage patterns'
+      }
+    };
+  }
+
+  /**
+   * Set subscription automation rules
+   */
+  async setSubscriptionAutomationRules(
+    payeeId: number,
+    rules: {
+      autoDetectPriceChanges?: boolean;
+      autoGenerateUsageReports?: boolean;
+      autoSuggestOptimizations?: boolean;
+      autoMarkUnused?: {
+        enabled?: boolean;
+        thresholdDays?: number;
+      };
+      autoRenewalReminders?: {
+        enabled?: boolean;
+        daysBefore?: number;
+      };
+    }
+  ): Promise<Payee> {
+    // Verify payee exists
+    const payee = await this.getPayeeById(payeeId);
+
+    // Get current subscription metadata
+    let subscriptionInfo: SubscriptionMetadata | null = null;
+    if (payee.subscriptionInfo && typeof payee.subscriptionInfo === 'object') {
+      subscriptionInfo = payee.subscriptionInfo as SubscriptionMetadata;
+    }
+
+    if (!subscriptionInfo || !subscriptionInfo.isSubscription) {
+      throw new ValidationError("Payee is not marked as a subscription");
+    }
+
+    // Update subscription metadata with automation rules
+    const updatedSubscriptionInfo: SubscriptionMetadata = {
+      ...subscriptionInfo,
+      alerts: {
+        renewalReminder: rules.autoRenewalReminders?.enabled ?? subscriptionInfo.alerts?.renewalReminder ?? true,
+        priceChangeAlert: rules.autoDetectPriceChanges ?? subscriptionInfo.alerts?.priceChangeAlert ?? true,
+        usageAlert: rules.autoGenerateUsageReports ?? subscriptionInfo.alerts?.usageAlert ?? false,
+        unusedAlert: rules.autoMarkUnused?.enabled ?? subscriptionInfo.alerts?.unusedAlert ?? true
+      }
+    };
+
+    // Update the payee
+    return await this.updatePayee(payeeId, {
+      subscriptionInfo: updatedSubscriptionInfo
+    });
   }
 }
