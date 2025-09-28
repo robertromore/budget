@@ -366,8 +366,8 @@ interface PayeeAnalytics {
 **Migration 001: Core Fields**
 ```sql
 -- Add core budgeting fields
-ALTER TABLE payee ADD COLUMN default_category_id INTEGER REFERENCES category(id);
-ALTER TABLE payee ADD COLUMN default_budget_id INTEGER REFERENCES budget(id);
+ALTER TABLE payee ADD COLUMN default_category_id INTEGER REFERENCES categories(id);
+ALTER TABLE payee ADD COLUMN default_budget_id INTEGER REFERENCES budgets(id);
 ALTER TABLE payee ADD COLUMN payee_type TEXT CHECK(payee_type IN ('merchant', 'utility', 'employer', 'financial_institution', 'government', 'individual'));
 ALTER TABLE payee ADD COLUMN avg_amount REAL;
 ALTER TABLE payee ADD COLUMN payment_frequency TEXT;
