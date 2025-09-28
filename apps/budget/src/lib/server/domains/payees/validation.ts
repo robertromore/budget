@@ -211,6 +211,99 @@ export const updateCalculatedFieldsSchema = z.object({
   payeeId: z.number().int().positive().optional(), // If omitted, updates all payees
 });
 
+// ==================== INTELLIGENCE VALIDATION SCHEMAS ====================
+
+/**
+ * Intelligence analysis validation schema
+ */
+export const intelligenceAnalysisSchema = z.object({
+  payeeId: z.number().int().positive(),
+});
+
+/**
+ * Comprehensive intelligence analysis validation schema
+ */
+export const comprehensiveIntelligenceSchema = z.object({
+  payeeId: z.number().int().positive(),
+});
+
+/**
+ * Apply intelligent optimizations validation schema
+ */
+export const applyIntelligentOptimizationsSchema = z.object({
+  payeeId: z.number().int().positive(),
+  options: z.object({
+    updateCategory: z.boolean().optional().default(true),
+    updateBudget: z.boolean().optional().default(true),
+    updateFrequency: z.boolean().optional().default(true),
+    updateAmount: z.boolean().optional().default(true),
+    minConfidence: z.number().min(0).max(1).optional().default(0.7),
+  }).optional().default({}),
+});
+
+/**
+ * Bulk intelligence analysis validation schema
+ */
+export const bulkIntelligenceAnalysisSchema = z.object({
+  payeeIds: z.array(z.number().int().positive()).min(1).max(50), // Limit to 50 payees at once
+  options: z.object({
+    includeSpendingAnalysis: z.boolean().optional().default(true),
+    includeSeasonalPatterns: z.boolean().optional().default(false),
+    includeFrequencyAnalysis: z.boolean().optional().default(false),
+    includePredictions: z.boolean().optional().default(false),
+    minTransactionCount: z.number().int().min(1).optional().default(3),
+  }).optional().default({}),
+});
+
+/**
+ * Transaction prediction validation schema
+ */
+export const transactionPredictionSchema = z.object({
+  payeeId: z.number().int().positive(),
+});
+
+/**
+ * Budget allocation suggestion validation schema
+ */
+export const budgetAllocationSuggestionSchema = z.object({
+  payeeId: z.number().int().positive(),
+});
+
+/**
+ * Confidence metrics validation schema
+ */
+export const confidenceMetricsSchema = z.object({
+  payeeId: z.number().int().positive(),
+});
+
+/**
+ * Seasonal patterns validation schema
+ */
+export const seasonalPatternsSchema = z.object({
+  payeeId: z.number().int().positive(),
+});
+
+/**
+ * Day of week patterns validation schema
+ */
+export const dayOfWeekPatternsSchema = z.object({
+  payeeId: z.number().int().positive(),
+});
+
+/**
+ * Advanced frequency analysis validation schema
+ */
+export const advancedFrequencyAnalysisSchema = z.object({
+  payeeId: z.number().int().positive(),
+});
+
+/**
+ * Advanced spending analysis validation schema
+ */
+export const advancedSpendingAnalysisSchema = z.object({
+  payeeId: z.number().int().positive(),
+});
+
 /**
  * Type exports for use in services and routes
  */
@@ -227,3 +320,16 @@ export type MergePayeesInput = z.infer<typeof mergePayeesSchema>;
 export type PayeeIdInput = z.infer<typeof payeeIdSchema>;
 export type ApplyIntelligentDefaultsInput = z.infer<typeof applyIntelligentDefaultsSchema>;
 export type UpdateCalculatedFieldsInput = z.infer<typeof updateCalculatedFieldsSchema>;
+
+// Intelligence validation type exports
+export type IntelligenceAnalysisInput = z.infer<typeof intelligenceAnalysisSchema>;
+export type ComprehensiveIntelligenceInput = z.infer<typeof comprehensiveIntelligenceSchema>;
+export type ApplyIntelligentOptimizationsInput = z.infer<typeof applyIntelligentOptimizationsSchema>;
+export type BulkIntelligenceAnalysisInput = z.infer<typeof bulkIntelligenceAnalysisSchema>;
+export type TransactionPredictionInput = z.infer<typeof transactionPredictionSchema>;
+export type BudgetAllocationSuggestionInput = z.infer<typeof budgetAllocationSuggestionSchema>;
+export type ConfidenceMetricsInput = z.infer<typeof confidenceMetricsSchema>;
+export type SeasonalPatternsInput = z.infer<typeof seasonalPatternsSchema>;
+export type DayOfWeekPatternsInput = z.infer<typeof dayOfWeekPatternsSchema>;
+export type AdvancedFrequencyAnalysisInput = z.infer<typeof advancedFrequencyAnalysisSchema>;
+export type AdvancedSpendingAnalysisInput = z.infer<typeof advancedSpendingAnalysisSchema>;
