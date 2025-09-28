@@ -91,10 +91,11 @@ export class PayeesState {
   }
 
   // API operations
-  async savePayee(payee: Payee): Promise<Payee> {
+  async savePayee(payee: any): Promise<Payee> {
     const result = await trpc().payeeRoutes.save.mutate(payee);
-    this.addPayee(result);
-    return result;
+    const typedResult = result as Payee;
+    this.addPayee(typedResult);
+    return typedResult;
   }
 
   async deletePayee(id: number): Promise<void> {
