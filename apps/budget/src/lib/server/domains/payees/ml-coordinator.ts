@@ -1,10 +1,9 @@
 import {db} from "$lib/server/db";
-import {payees, transactions, categories, payeeCategoryCorrections} from "$lib/schema";
-import {eq, and, isNull, sql, desc, gte, lte, count, avg, sum} from "drizzle-orm";
+import {payees, transactions} from "$lib/schema";
+import {eq, and, isNull, count, gte, lte} from "drizzle-orm";
 import {PayeeIntelligenceService} from "./intelligence";
 import {CategoryLearningService} from "./category-learning";
 import {BudgetAllocationService} from "./budget-allocation";
-import type {PaymentFrequency} from "$lib/schema";
 
 // Unified ML Recommendation Interfaces
 export interface UnifiedRecommendations {
@@ -82,12 +81,12 @@ export interface CrossSystemLearning {
     factor1: string;
     factor2: string;
     correlationStrength: number; // -1 to 1
-    statistical significance: number;
+    statisticalSignificance: number;
     businessImplication: string;
   }>;
   emergentBehaviors: Array<{
     behavior: string;
-    detection_date: string;
+    detectionDate: string;
     confidence: number;
     impact: 'positive' | 'negative' | 'neutral';
     recommendedResponse: string;
@@ -1126,7 +1125,7 @@ export class PayeeMLCoordinator {
         factor1: 'Spending Volatility',
         factor2: 'Category Correction Frequency',
         correlationStrength: correlation,
-        statistical significance: 0.05,
+        statisticalSignificance: 0.05,
         businessImplication: 'Higher spending volatility leads to more category corrections'
       });
     }
@@ -1145,7 +1144,7 @@ export class PayeeMLCoordinator {
     if (patterns.length > 2 && correlations.length > 0) {
       behaviors.push({
         behavior: 'Adaptive categorization improving budget efficiency',
-        detection_date: new Date().toISOString(),
+        detectionDate: new Date().toISOString(),
         confidence: 0.75,
         impact: 'positive' as const,
         recommendedResponse: 'Continue current ML-driven categorization approach'
@@ -1192,7 +1191,7 @@ export class PayeeMLCoordinator {
         }
 
         applied.push({
-          type: 'automation',
+          type: 'automation' as const,
           change: suggestion.description,
           oldValue: null,
           newValue: suggestion.type,
@@ -1201,7 +1200,7 @@ export class PayeeMLCoordinator {
         });
       } else {
         skipped.push({
-          type: 'automation',
+          type: 'automation' as const,
           reason: `Confidence ${suggestion.confidence.toFixed(2)} below threshold ${confidenceThreshold}`,
           recommendation: suggestion.description
         });
@@ -1221,10 +1220,10 @@ export class PayeeMLCoordinator {
         isNull(transactions.deletedAt)
       ));
 
-    const completeness = Math.min(1, transactionCount[0]?.count / 20);
+    const completeness = Math.min(1, (transactionCount[0]?.count || 0) / 20);
     const consistency = 0.85; // Would calculate based on data consistency
     const recency = 0.9; // Would calculate based on data recency
-    const volume = Math.min(1, transactionCount[0]?.count / 50);
+    const volume = Math.min(1, (transactionCount[0]?.count || 0) / 50);
 
     return {
       score: (completeness + consistency + recency + volume) / 4,
@@ -1244,7 +1243,7 @@ export class PayeeMLCoordinator {
       factors: {
         historicalAccuracy: 0.75,
         predictionStability: 0.82,
-        systemAgreement: this.calculateSystemAgreement(Object.values(systemConfidences).slice(0, 3))
+        systemAgreement: this.calculateSystemAgreement(Object.values(systemConfidences).slice(0, 3) as number[])
       }
     };
   }
@@ -1269,7 +1268,7 @@ export class PayeeMLCoordinator {
       recommendations.push('System reliability concerns - review and calibrate ML models');
     }
 
-    const systemVariance = this.calculateSystemAgreement(Object.values(systemConfidences).slice(0, 3));
+    const systemVariance = this.calculateSystemAgreement(Object.values(systemConfidences).slice(0, 3) as number[]);
     if (systemVariance < 0.7) {
       recommendations.push('Low system agreement - investigate conflicting recommendations');
     }
@@ -1507,8 +1506,8 @@ export class PayeeMLCoordinator {
         id: `opt_${payeeId}_${Date.now()}`,
         payeeId,
         payeeName,
-        type: 'optimization',
-        priority: unifiedRecommendations.overall.priority,
+        type: 'optimization' as const,
+        priority: unifiedRecommendations.overall.priority as 'critical' | 'high' | 'medium' | 'low',
         title: 'Budget and Category Optimization Available',
         description: unifiedRecommendations.overall.recommendation,
         insight: `ML analysis suggests ${unifiedRecommendations.overall.action} with ${(unifiedRecommendations.overall.confidence * 100).toFixed(0)}% confidence`,
@@ -1517,8 +1516,8 @@ export class PayeeMLCoordinator {
         recommendedActions: [{
           action: unifiedRecommendations.overall.action,
           description: unifiedRecommendations.overall.reasoning.join('; '),
-          effort: 'low',
-          impact: 'high',
+          effort: 'low' as const,
+          impact: 'high' as const,
           timeline: '1-2 days',
           implementation: {
             manual: true,
@@ -1546,7 +1545,7 @@ export class PayeeMLCoordinator {
         }],
         generatedAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'active'
+        status: 'active' as const
       });
     }
 
@@ -1566,8 +1565,8 @@ export class PayeeMLCoordinator {
         id: `corr_${payeeId}_${Date.now()}`,
         payeeId,
         payeeName,
-        type: 'correction',
-        priority: behaviorChanges.severity === 'major' ? 'critical' : 'high',
+        type: 'correction' as const,
+        priority: (behaviorChanges.severity === 'major' ? 'critical' : 'high') as 'critical' | 'high',
         title: 'Behavior Change Requires Attention',
         description: `${behaviorChanges.changeType} detected with ${behaviorChanges.severity} severity`,
         insight: `Payee behavior has changed significantly, requiring manual review and potential corrections`,
@@ -1576,8 +1575,8 @@ export class PayeeMLCoordinator {
         recommendedActions: behaviorChanges.recommendedActions.map(action => ({
           action: action.action,
           description: action.description,
-          effort: action.priority === 'immediate' ? 'high' : 'medium',
-          impact: 'high',
+          effort: (action.priority === 'immediate' ? 'high' : 'medium') as 'high' | 'medium',
+          impact: 'high' as const,
           timeline: action.priority === 'immediate' ? 'Immediate' : '1 week',
           implementation: {
             manual: true,
@@ -1605,7 +1604,7 @@ export class PayeeMLCoordinator {
         }],
         generatedAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'active'
+        status: 'active' as const
       });
     }
 
@@ -1625,8 +1624,8 @@ export class PayeeMLCoordinator {
         id: `pred_${payeeId}_${Date.now()}`,
         payeeId,
         payeeName,
-        type: 'prediction',
-        priority: 'medium',
+        type: 'prediction' as const,
+        priority: 'medium' as const,
         title: 'Prediction Accuracy Below Optimal',
         description: `ML prediction accuracy is ${(unifiedRecommendations.performanceMetrics.predictionAccuracy * 100).toFixed(0)}%, below optimal threshold`,
         insight: 'Low prediction accuracy may lead to suboptimal recommendations and automation decisions',
@@ -1635,8 +1634,8 @@ export class PayeeMLCoordinator {
         recommendedActions: [{
           action: 'Improve data quality',
           description: 'Focus on data completeness and consistency to improve prediction accuracy',
-          effort: 'medium',
-          impact: 'high',
+          effort: 'medium' as const,
+          impact: 'high' as const,
           timeline: '2-4 weeks',
           implementation: {
             manual: true,
@@ -1664,7 +1663,7 @@ export class PayeeMLCoordinator {
         }],
         generatedAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'active'
+        status: 'active' as const
       });
     }
 
@@ -1685,8 +1684,8 @@ export class PayeeMLCoordinator {
         id: `auto_${payeeId}_${Date.now()}`,
         payeeId,
         payeeName,
-        type: 'automation',
-        priority: 'medium',
+        type: 'automation' as const,
+        priority: 'medium' as const,
         title: 'High-Confidence Automation Available',
         description: `${highConfidenceAutomation.length} automation opportunities with high confidence`,
         insight: 'ML systems have identified opportunities for reliable automation that could save time and improve accuracy',
@@ -1695,8 +1694,8 @@ export class PayeeMLCoordinator {
         recommendedActions: highConfidenceAutomation.map(suggestion => ({
           action: `Enable ${suggestion.type.replace('_', ' ')}`,
           description: suggestion.description,
-          effort: 'low',
-          impact: 'medium',
+          effort: 'low' as const,
+          impact: 'medium' as const,
           timeline: '1 day',
           implementation: {
             manual: false,
@@ -1724,7 +1723,7 @@ export class PayeeMLCoordinator {
         }],
         generatedAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'active'
+        status: 'active' as const
       });
     }
 
@@ -1744,8 +1743,8 @@ export class PayeeMLCoordinator {
         id: `alert_${payeeId}_${Date.now()}`,
         payeeId,
         payeeName,
-        type: 'alert',
-        priority: 'high',
+        type: 'alert' as const,
+        priority: 'high' as const,
         title: 'Low System Confidence Alert',
         description: `Overall ML confidence is ${(systemConfidence.overall * 100).toFixed(0)}%, below acceptable threshold`,
         insight: 'Low system confidence indicates potential data quality issues or model performance problems',
@@ -1754,8 +1753,8 @@ export class PayeeMLCoordinator {
         recommendedActions: [{
           action: 'Manual review and validation',
           description: 'Manually review recent transactions and ML recommendations for this payee',
-          effort: 'high',
-          impact: 'high',
+          effort: 'high' as const,
+          impact: 'high' as const,
           timeline: '1-2 days',
           implementation: {
             manual: true,
@@ -1783,7 +1782,7 @@ export class PayeeMLCoordinator {
         }],
         generatedAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'active'
+        status: 'active' as const
       });
     }
 
