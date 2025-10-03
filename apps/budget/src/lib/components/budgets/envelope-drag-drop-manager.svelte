@@ -1,8 +1,9 @@
 <script lang="ts">
   import {ArrowUpDown, Grip, DollarSign} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
-  import {Input} from "$lib/components/ui/input";
   import {Badge} from "$lib/components/ui/badge";
+  import {Progress} from "$lib/components/ui/progress";
+  import NumericInput from "$lib/components/input/numeric-input.svelte";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
   import type {EnvelopeAllocation} from "$lib/schema/budgets/envelope-allocations";
@@ -24,7 +25,7 @@
   let draggedEnvelope = $state<EnvelopeAllocation | null>(null);
   let draggedAmount = $state<number>(0);
   let dropTargetId = $state<number | null>(null);
-  let transferAmount = $state<string>("");
+  let transferAmount = $state<number>(0);
   let isDragging = $state(false);
 
   const percentage = $derived.by(() => {
@@ -61,7 +62,7 @@
     draggedEnvelope = null;
     dropTargetId = null;
     isDragging = false;
-    transferAmount = "";
+    transferAmount = 0;
   }
 
   function handleDragOver(e: DragEvent, targetEnvelope: EnvelopeAllocation) {
@@ -93,9 +94,8 @@
       return;
     }
 
-    // Parse the amount to transfer
-    const amount = parseFloat(transferAmount);
-    if (!Number.isFinite(amount) || amount <= 0) {
+    // Check the transfer amount
+    if (!Number.isFinite(transferAmount) || transferAmount <= 0) {
       // If no amount specified, transfer a reasonable default (10% or $10, whichever is smaller)
       const defaultAmount = Math.min(
         Math.max(draggedEnvelope.availableAmount * 0.1, 1),
@@ -103,7 +103,7 @@
       );
       draggedAmount = Math.min(defaultAmount, draggedEnvelope.availableAmount);
     } else {
-      draggedAmount = Math.min(amount, draggedEnvelope.availableAmount);
+      draggedAmount = Math.min(transferAmount, draggedEnvelope.availableAmount);
     }
 
     if (draggedAmount > 0) {
@@ -114,7 +114,7 @@
     draggedEnvelope = null;
     dropTargetId = null;
     isDragging = false;
-    transferAmount = "";
+    transferAmount = 0;
   }
 
   function getEnvelopeStatusStyle(envelope: EnvelopeAllocation, isDropTarget = false): string {
@@ -174,17 +174,12 @@
             <DollarSign class="h-4 w-4" />
             <span class="text-sm font-medium">Transfer Amount:</span>
           </div>
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            max={draggedEnvelope.availableAmount}
+          <NumericInput
             bind:value={transferAmount}
-            placeholder={`Max: ${currencyFormatter.format(draggedEnvelope.availableAmount)}`}
-            class="w-32 h-8"
+            buttonClass="w-32 h-8"
           />
           <span class="text-xs text-muted-foreground">
-            Leave empty for smart default
+            Max: {currencyFormatter.format(draggedEnvelope.availableAmount)} • Leave 0 for smart default
           </span>
         </div>
       </Card.Content>
@@ -227,9 +222,9 @@
             <div class="text-center">
               <ArrowUpDown class="h-8 w-8 mx-auto text-primary mb-2" />
               <span class="text-sm font-medium text-primary">Drop to Transfer</span>
-              {#if draggedEnvelope && transferAmount}
+              {#if draggedEnvelope && transferAmount > 0}
                 <div class="text-xs text-primary/80">
-                  {currencyFormatter.format(parseFloat(transferAmount))}
+                  {currencyFormatter.format(transferAmount)}
                 </div>
               {/if}
             </div>
@@ -277,18 +272,13 @@
           </div>
 
           <!-- Progress Bar -->
-          <div class="w-full bg-muted rounded-full h-2">
-            {percentage}
-            <div
-              class={cn(
-                "h-2 rounded-full transition-all",
-                envelope.status === "overspent" ? "bg-destructive" :
-                percentage >= 90 ? "bg-orange-500" :
-                percentage >= 75 ? "bg-yellow-500" : "bg-primary"
-              )}
-              style={`width: ${percentage}%`}
-            ></div>
-          </div>
+          <Progress
+            value={percentage}
+            class={cn(
+              "h-2",
+              envelope.status === "overspent" && "text-destructive"
+            )}
+          />
 
           <!-- Drag Instructions -->
           {#if isDragSource && !isDragging}

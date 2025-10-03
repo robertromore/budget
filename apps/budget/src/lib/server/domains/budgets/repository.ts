@@ -294,6 +294,13 @@ export class BudgetRepository {
   }
 
   /**
+   * Delete a period template (cascade deletes associated instances).
+   */
+  async deletePeriodTemplate(id: number): Promise<void> {
+    await db.delete(budgetPeriodTemplates).where(eq(budgetPeriodTemplates.id, id));
+  }
+
+  /**
    * Create a period instance if one does not already exist for the provided range.
    */
   async createPeriodInstance(data: NewBudgetPeriodInstance): Promise<BudgetPeriodInstance> {

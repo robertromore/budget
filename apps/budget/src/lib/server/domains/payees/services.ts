@@ -544,7 +544,7 @@ export class PayeeService {
 
     // Calculate recent activity (payees with transactions in last 30 days)
     const thirtyDaysAgo = currentDate.subtract({ days: 30 });
-    const cutoffDate = thirtyDaysAgo.toISOString().split('T')[0];
+    const cutoffDate = toISOString(thirtyDaysAgo);
 
     const recentlyActiveCount = allPayees.filter(p =>
       p.lastTransactionDate && cutoffDate && p.lastTransactionDate >= cutoffDate

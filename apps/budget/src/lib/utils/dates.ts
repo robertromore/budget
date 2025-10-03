@@ -34,6 +34,42 @@ export function getDayOfWeek(date: DateValue): number {
   return jsDate.getDay(); // 0=Sunday … 6=Saturday
 }
 
+/**
+ * Returns the ISO day of week for a DateValue.
+ * 1 = Monday, 7 = Sunday (ISO 8601 format)
+ *
+ * @param date - The DateValue to get the ISO day of week for
+ * @returns The ISO day of week (1-7)
+ *
+ * @example
+ * const date = new CalendarDate(2024, 1, 15); // Monday
+ * const isoDay = getIsoWeekday(date); // Returns 1
+ */
+export function getIsoWeekday(date: DateValue): number {
+  const jsDate = date.toDate('UTC');
+  const day = jsDate.getUTCDay();
+  return day === 0 ? 7 : day; // Convert Sunday from 0 to 7
+}
+
+/**
+ * Returns the number of days in the month for a DateValue
+ *
+ * @param date - The DateValue to get days in month for
+ * @returns Number of days in the month (28-31)
+ *
+ * @example
+ * const jan = new CalendarDate(2024, 1, 15);
+ * const days = getDaysInMonth(jan); // Returns 31
+ *
+ * const feb = new CalendarDate(2024, 2, 1);
+ * const febDays = getDaysInMonth(feb); // Returns 29 (leap year)
+ */
+export function getDaysInMonth(date: DateValue): number {
+  const nextMonth = date.add({ months: 1 }).set({ day: 1 });
+  const lastDayOfMonth = nextMonth.subtract({ days: 1 });
+  return lastDayOfMonth.day;
+}
+
 /* ------------------------------------------------------------------ */
 /* Helper that returns the correct ordinal suffix for a day number   */
 /* ------------------------------------------------------------------ */

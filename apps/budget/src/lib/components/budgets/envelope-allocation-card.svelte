@@ -1,10 +1,10 @@
 <script lang="ts">
-  import {ArrowUpDown, AlertTriangle, TrendingUp, Edit3} from "@lucide/svelte/icons";
+  import {ArrowUpDown, AlertTriangle, TrendingUp, Star} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
-  import {Input} from "$lib/components/ui/input";
   import {Badge} from "$lib/components/ui/badge";
   import {Progress} from "$lib/components/ui/progress";
+  import NumericInput from "$lib/components/input/numeric-input.svelte";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
   import type {EnvelopeAllocation} from "$lib/schema/budgets/envelope-allocations";
@@ -29,15 +29,14 @@
     class: className,
   }: Props = $props();
 
-  let isEditing = $state(false);
-  let editValue = $state(envelope.allocatedAmount.toString());
+  let editValue = $state(envelope.allocatedAmount);
 
-  const progressPercentage = $derived(() => {
+  const progressPercentage = $derived.by(() => {
     if (envelope.allocatedAmount <= 0) return 0;
     return Math.min(100, (envelope.spentAmount / envelope.allocatedAmount) * 100);
   });
 
-  const statusConfig = $derived(() => {
+  const statusConfig = $derived.by(() => {
     switch (envelope.status) {
       case "overspent":
         return {
@@ -77,28 +76,18 @@
     }
   });
 
-  function handleEditToggle() {
-    if (isEditing) {
-      const newAmount = parseFloat(editValue);
-      if (Number.isFinite(newAmount) && newAmount >= 0) {
-        onUpdateAllocation?.(newAmount);
-      } else {
-        editValue = envelope.allocatedAmount.toString();
-      }
-    } else {
-      editValue = envelope.allocatedAmount.toString();
+  function handleAllocationSubmit() {
+    if (Number.isFinite(editValue) && editValue >= 0 && editValue !== envelope.allocatedAmount) {
+      onUpdateAllocation?.(editValue);
     }
-    isEditing = !isEditing;
   }
 
-  function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === "Enter") {
-      handleEditToggle();
-    } else if (e.key === "Escape") {
-      editValue = envelope.allocatedAmount.toString();
-      isEditing = false;
-    }
-  }
+  $effect(() => {
+    editValue = envelope.allocatedAmount;
+  });
+
+  const priority = $derived.by(() => (envelope.metadata as any)?.priority ?? null);
+  const isEmergencyFund = $derived.by(() => (envelope.metadata as any)?.isEmergencyFund ?? false);
 </script>
 
 <Card.Root class={cn("transition-all hover:shadow-md", statusConfig.color, className)}>
@@ -107,6 +96,14 @@
       <div class="flex items-center gap-2">
         <statusConfig.icon class="h-4 w-4" />
         <Card.Title class="text-lg">{categoryName}</Card.Title>
+        {#if isEmergencyFund}
+          <Badge variant="destructive" class="text-xs">Emergency</Badge>
+        {:else if priority !== null}
+          <div class="flex items-center gap-1 text-xs text-muted-foreground">
+            <Star class="h-3 w-3 fill-current" />
+            <span>P{priority}</span>
+          </div>
+        {/if}
       </div>
       <Badge variant={statusConfig.badge}>{statusConfig.label}</Badge>
     </div>
@@ -117,30 +114,12 @@
     <div class="flex items-center justify-between">
       <span class="text-sm font-medium">Allocated</span>
       <div class="flex items-center gap-2">
-        {#if isEditing}
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            bind:value={editValue}
-            onkeydown={handleKeyDown}
-            class="h-8 w-24 text-right text-sm"
-            onfocusout={handleEditToggle}
-          />
+        {#if editable}
+          <NumericInput bind:value={editValue} onSubmit={handleAllocationSubmit} buttonClass="h-8 w-28" />
         {:else}
           <span class="font-mono text-sm">
             {currencyFormatter.format(envelope.allocatedAmount)}
           </span>
-          {#if editable}
-            <Button
-              size="sm"
-              variant="ghost"
-              onclick={handleEditToggle}
-              class="h-6 w-6 p-0"
-            >
-              <Edit3 class="h-3 w-3" />
-            </Button>
-          {/if}
         {/if}
       </div>
     </div>

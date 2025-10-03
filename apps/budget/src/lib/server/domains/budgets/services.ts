@@ -274,6 +274,14 @@ export class BudgetService {
     return await this.envelopeService.createEnvelopeAllocation(request);
   }
 
+  async updateEnvelopeAllocation(
+    envelopeId: number,
+    allocatedAmount: number,
+    metadata?: Record<string, unknown>
+  ) {
+    return await this.envelopeService.updateEnvelopeAllocation(envelopeId, allocatedAmount, metadata);
+  }
+
   async transferEnvelopeFunds(
     fromEnvelopeId: number,
     toEnvelopeId: number,
@@ -511,6 +519,153 @@ export class BudgetService {
 
   async getBudgetSummaryStats(budgetId: number) {
     return await this.repository.getBudgetSummaryStats(budgetId);
+  }
+
+  // Period Template Methods
+
+  async createPeriodTemplate(data: {
+    budgetId: number;
+    type: BudgetPeriodTemplate["type"];
+    intervalCount?: number;
+    startDayOfWeek?: number;
+    startDayOfMonth?: number;
+    startMonth?: number;
+    timezone?: string;
+  }): Promise<BudgetPeriodTemplate> {
+    // Validate budget exists
+    const budget = await this.repository.findById(data.budgetId);
+    if (!budget) {
+      throw new NotFoundError("Budget", data.budgetId);
+    }
+
+    // Validate period type
+    const validTypes = ["weekly", "monthly", "quarterly", "yearly", "custom"] as const;
+    if (!validTypes.includes(data.type)) {
+      throw new ValidationError(`Invalid period type: ${data.type}`, "type");
+    }
+
+    // Validate interval
+    if (data.intervalCount !== undefined) {
+      if (data.intervalCount < 1 || data.intervalCount > 52) {
+        throw new ValidationError("Interval count must be between 1 and 52", "intervalCount");
+      }
+    }
+
+    // Validate day of week (1-7 for weekly periods)
+    if (data.startDayOfWeek !== undefined) {
+      if (data.startDayOfWeek < 1 || data.startDayOfWeek > 7) {
+        throw new ValidationError("Start day of week must be between 1 and 7", "startDayOfWeek");
+      }
+    }
+
+    // Validate day of month (1-31)
+    if (data.startDayOfMonth !== undefined) {
+      if (data.startDayOfMonth < 1 || data.startDayOfMonth > 31) {
+        throw new ValidationError("Start day of month must be between 1 and 31", "startDayOfMonth");
+      }
+    }
+
+    // Validate month (1-12)
+    if (data.startMonth !== undefined) {
+      if (data.startMonth < 1 || data.startMonth > 12) {
+        throw new ValidationError("Start month must be between 1 and 12", "startMonth");
+      }
+    }
+
+    return await this.repository.createPeriodTemplate({
+      budgetId: data.budgetId,
+      type: data.type,
+      intervalCount: data.intervalCount ?? 1,
+      startDayOfWeek: data.startDayOfWeek ?? null,
+      startDayOfMonth: data.startDayOfMonth ?? null,
+      startMonth: data.startMonth ?? null,
+      timezone: data.timezone ?? null,
+    });
+  }
+
+  async updatePeriodTemplate(
+    id: number,
+    updates: {
+      type?: BudgetPeriodTemplate["type"];
+      intervalCount?: number;
+      startDayOfWeek?: number;
+      startDayOfMonth?: number;
+      startMonth?: number;
+      timezone?: string;
+    }
+  ): Promise<BudgetPeriodTemplate> {
+    const existing = await this.repository.findTemplateById(id);
+    if (!existing) {
+      throw new NotFoundError("Period template", id);
+    }
+
+    // Validate period type if provided
+    if (updates.type !== undefined) {
+      const validTypes = ["weekly", "monthly", "quarterly", "yearly", "custom"] as const;
+      if (!validTypes.includes(updates.type)) {
+        throw new ValidationError(`Invalid period type: ${updates.type}`, "type");
+      }
+    }
+
+    // Validate interval if provided
+    if (updates.intervalCount !== undefined) {
+      if (updates.intervalCount < 1 || updates.intervalCount > 52) {
+        throw new ValidationError("Interval count must be between 1 and 52", "intervalCount");
+      }
+    }
+
+    // Validate day of week if provided
+    if (updates.startDayOfWeek !== undefined) {
+      if (updates.startDayOfWeek < 1 || updates.startDayOfWeek > 7) {
+        throw new ValidationError("Start day of week must be between 1 and 7", "startDayOfWeek");
+      }
+    }
+
+    // Validate day of month if provided
+    if (updates.startDayOfMonth !== undefined) {
+      if (updates.startDayOfMonth < 1 || updates.startDayOfMonth > 31) {
+        throw new ValidationError("Start day of month must be between 1 and 31", "startDayOfMonth");
+      }
+    }
+
+    // Validate month if provided
+    if (updates.startMonth !== undefined) {
+      if (updates.startMonth < 1 || updates.startMonth > 12) {
+        throw new ValidationError("Start month must be between 1 and 12", "startMonth");
+      }
+    }
+
+    const sanitizedUpdates: Partial<typeof existing> = {};
+    if (updates.type !== undefined) sanitizedUpdates.type = updates.type;
+    if (updates.intervalCount !== undefined) sanitizedUpdates.intervalCount = updates.intervalCount;
+    if (updates.startDayOfWeek !== undefined) sanitizedUpdates.startDayOfWeek = updates.startDayOfWeek;
+    if (updates.startDayOfMonth !== undefined) sanitizedUpdates.startDayOfMonth = updates.startDayOfMonth;
+    if (updates.startMonth !== undefined) sanitizedUpdates.startMonth = updates.startMonth;
+    if (updates.timezone !== undefined) sanitizedUpdates.timezone = updates.timezone;
+
+    return await this.repository.updatePeriodTemplate(id, sanitizedUpdates);
+  }
+
+  async getPeriodTemplate(id: number): Promise<BudgetPeriodTemplate> {
+    const template = await this.repository.findTemplateById(id);
+    if (!template) {
+      throw new NotFoundError("Period template", id);
+    }
+    return template;
+  }
+
+  async listPeriodTemplates(budgetId: number): Promise<BudgetPeriodTemplate[]> {
+    return await this.repository.listTemplatesForBudget(budgetId);
+  }
+
+  async deletePeriodTemplate(id: number): Promise<void> {
+    const template = await this.repository.findTemplateById(id);
+    if (!template) {
+      throw new NotFoundError("Period template", id);
+    }
+
+    // Cascade delete will automatically remove associated period instances
+    await this.repository.deletePeriodTemplate(id);
   }
 }
 

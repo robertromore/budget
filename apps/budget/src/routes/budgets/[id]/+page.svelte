@@ -8,9 +8,20 @@ import BudgetAnalyticsDashboard from '$lib/components/budgets/budget-analytics-d
 import PeriodAutomation from '$lib/components/budgets/period-automation.svelte';
 import BudgetRolloverManager from '$lib/components/budgets/budget-rollover-manager.svelte';
 import EnvelopeBudgetManager from '$lib/components/budgets/envelope-budget-manager.svelte';
-import {BudgetBurndownChart, GoalProgressTracker, BudgetForecastDisplay} from '$lib/components/budgets';
+import {BudgetBurndownChart, GoalProgressTracker, BudgetForecastDisplay, BudgetPeriodPicker} from '$lib/components/budgets';
 import {currencyFormatter} from '$lib/utils/formatters';
-import {getBudgetDetail} from '$lib/query/budgets';
+import {
+  getBudgetDetail,
+  listPeriodInstances,
+  getEnvelopeAllocations,
+  createEnvelopeAllocation,
+  updateEnvelopeAllocation,
+  transferEnvelopeFunds,
+  processEnvelopeRollover,
+  executeDeficitRecovery
+} from '$lib/query/budgets';
+import {listCategories} from '$lib/query/categories';
+import {trpc} from '$lib/trpc/client';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Settings from '@lucide/svelte/icons/settings';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
@@ -26,6 +37,110 @@ let budget = $derived(budgetQuery.data);
 let isLoading = $derived(budgetQuery.isLoading);
 
 const isEnvelopeBudget = $derived(budget?.type === 'category-envelope');
+
+// Period management state
+let selectedPeriodId = $state<string>("");
+const firstTemplateId = $derived(budget?.periodTemplates?.[0]?.id);
+let periodsQuery = $derived(firstTemplateId ? listPeriodInstances(firstTemplateId).options() : null);
+let periods = $derived(periodsQuery?.data ?? []);
+
+// Envelope budget data
+const envelopesQuery = $derived.by(() => {
+  if (!isEnvelopeBudget || !budget?.id) return null;
+  return getEnvelopeAllocations(budget.id).options();
+});
+const envelopes = $derived(envelopesQuery?.data ?? []);
+
+const categoriesQuery = $derived.by(() => {
+  if (!isEnvelopeBudget) return null;
+  return listCategories().options();
+});
+const categories = $derived(categoriesQuery?.data ?? []);
+
+// Envelope mutations
+const createEnvelopeMutation = createEnvelopeAllocation;
+const transferFundsMutation = transferEnvelopeFunds;
+
+async function handleEnvelopeUpdate(envelopeId: number, newAmount: number) {
+  try {
+    if (!budget) return;
+    await createEnvelopeMutation.execute({
+      budgetId: budget.id,
+      categoryId: envelopes.find(e => e.id === envelopeId)?.categoryId ?? 0,
+      periodInstanceId: envelopes.find(e => e.id === envelopeId)?.periodInstanceId ?? 0,
+      allocatedAmount: newAmount
+    });
+  } catch (error) {
+    console.error('Failed to update envelope:', error);
+  }
+}
+
+async function handleFundTransfer(fromId: number, toId: number, amount: number) {
+  try {
+    await transferFundsMutation.execute({
+      fromEnvelopeId: fromId,
+      toEnvelopeId: toId,
+      amount,
+      transferredBy: 'user' // TODO: get from auth context
+    });
+  } catch (error) {
+    console.error('Failed to transfer funds:', error);
+  }
+}
+
+async function handleDeficitRecover(envelopeId: number) {
+  try {
+    // Create a recovery plan for the deficit envelope
+    const plan = await trpc().budgetRoutes.createDeficitRecoveryPlan.query({envelopeId});
+
+    if (plan) {
+      // Execute the recovery plan
+      await executeDeficitRecovery.execute({
+        plan,
+        executedBy: 'user' // TODO: get from auth context
+      });
+    }
+  } catch (error) {
+    console.error('Failed to recover deficit:', error);
+  }
+}
+
+async function handleActivateEnvelope(envelope: any) {
+  try {
+    await updateEnvelopeAllocation.execute({
+      envelopeId: envelope.id,
+      allocatedAmount: envelope.allocatedAmount,
+      metadata: {
+        ...(envelope.metadata || {}),
+        // Status is managed by the service based on allocation calculations
+      }
+    });
+  } catch (error) {
+    console.error('Failed to activate envelope:', error);
+  }
+}
+
+async function handleAddEnvelope(categoryId: number, amount: number) {
+  try {
+    if (!budget) return;
+
+    // Get the first (or current) period instance
+    const currentPeriod = periods[0];
+    if (!currentPeriod) {
+      console.error('No period instance available');
+      return;
+    }
+
+    await createEnvelopeMutation.execute({
+      budgetId: budget.id,
+      categoryId,
+      periodInstanceId: currentPeriod.id,
+      allocatedAmount: amount
+    });
+  } catch (error) {
+    console.error('Failed to create envelope:', error);
+  }
+}
 
 // Extract allocated amount from metadata
 const allocatedAmount = $derived(
@@ -202,7 +317,23 @@ function getStatus() {
     </Tabs.Content>
 
     <!-- Period Management Tab -->
-    <Tabs.Content value="periods">
+    <Tabs.Content value="periods" class="space-y-6">
+      {#if firstTemplateId}
+        <Card.Root>
+          <Card.Header>
+            <Card.Title>Period Selection</Card.Title>
+            <Card.Description>Select and navigate between budget periods</Card.Description>
+          </Card.Header>
+          <Card.Content>
+            <BudgetPeriodPicker
+              periods={periods}
+              bind:selectedId={selectedPeriodId}
+              label="Budget Period"
+              loading={periodsQuery?.isLoading ?? false}
+            />
+          </Card.Content>
+        </Card.Root>
+      {/if}
       <PeriodAutomation budget={budget} />
     </Tabs.Content>
 
@@ -214,8 +345,20 @@ function getStatus() {
     <!-- Envelopes Tab (conditional) -->
     {#if isEnvelopeBudget}
       <Tabs.Content value="envelopes">
-        <!-- EnvelopeBudgetManager requires envelopes and categories data -->
-        <p class="text-muted-foreground text-center py-8">Envelope management coming soon</p>
+        {#if budget}
+          <EnvelopeBudgetManager
+            budget={budget}
+            envelopes={envelopes}
+            categories={categories}
+            onEnvelopeUpdate={handleEnvelopeUpdate}
+            onFundTransfer={handleFundTransfer}
+            onDeficitRecover={handleDeficitRecover}
+            onActivate={handleActivateEnvelope}
+            onAddEnvelope={handleAddEnvelope}
+          />
+        {:else}
+          <p class="text-muted-foreground text-center py-8">Loading envelope data...</p>
+        {/if}
       </Tabs.Content>
     {/if}
   </Tabs.Root>

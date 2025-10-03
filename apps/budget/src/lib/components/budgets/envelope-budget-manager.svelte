@@ -1,12 +1,18 @@
 <script lang="ts">
-  import {AlertTriangle, Plus, ArrowUpDown, Wallet} from "@lucide/svelte/icons";
+  import {AlertTriangle, Plus, ArrowUpDown, Wallet, Grip} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
-  import {Input} from "$lib/components/ui/input";
   import Label from "$lib/components/ui/label/label.svelte";
   import {Badge} from "$lib/components/ui/badge";
   import {Progress} from "$lib/components/ui/progress";
   import * as Dialog from "$lib/components/ui/dialog";
+  import * as Tabs from "$lib/components/ui/tabs";
+  import * as Select from "$lib/components/ui/select";
+  import ResponsiveSheet from "$lib/components/ui/responsive-sheet/responsive-sheet.svelte";
+  import NumericInput from "$lib/components/input/numeric-input.svelte";
+  import EnvelopeAllocationCard from "./envelope-allocation-card.svelte";
+  import FundAllocationPanel from "./fund-allocation-panel.svelte";
+  import EnvelopeDragDropManager from "./envelope-drag-drop-manager.svelte";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
@@ -20,6 +26,8 @@
     onEnvelopeUpdate?: (envelopeId: number, newAmount: number) => void;
     onFundTransfer?: (fromId: number, toId: number, amount: number) => void;
     onDeficitRecover?: (envelopeId: number) => void;
+    onActivate?: (envelope: EnvelopeAllocation) => void;
+    onAddEnvelope?: (categoryId: number, amount: number) => void;
     class?: string;
   }
 
@@ -30,13 +38,21 @@
     onEnvelopeUpdate,
     onFundTransfer,
     onDeficitRecover,
+    onActivate,
+    onAddEnvelope,
     class: className,
   }: Props = $props();
 
   let transferDialogOpen = $state(false);
   let selectedSourceEnvelope = $state<EnvelopeAllocation | null>(null);
-  let selectedTargetEnvelope = $state<EnvelopeAllocation | null>(null);
-  let transferAmount = $state("");
+  let selectedTargetEnvelopeId = $state<string>("");
+  let transferAmount = $state(0);
+
+  let addEnvelopeDialogOpen = $state(false);
+  let selectedCategoryId = $state<string>("");
+  let newEnvelopeAmount = $state(0);
+
+  let isLoading = $state(false);
 
   const categoryMap = $derived(
     new Map(Array.isArray(categories) ? categories.map(cat => [cat.id, cat]) : [])
@@ -91,55 +107,19 @@
     return categoryMap.get(categoryId)?.name ?? `Category ${categoryId}`;
   }
 
-  function getEnvelopeStatusColor(envelope: EnvelopeAllocation): string {
-    switch (envelope.status) {
-      case "overspent":
-        return "bg-destructive/10 border-destructive/50 text-destructive";
-      case "depleted":
-        return "bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-950 dark:border-orange-800 dark:text-orange-300";
-      case "active":
-        return "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-300";
-      case "paused":
-        return "bg-muted border-muted-foreground/20 text-muted-foreground";
-      default:
-        return "bg-background border-border text-foreground";
-    }
-  }
-
-  function getProgressValue(envelope: EnvelopeAllocation): number {
-    if (envelope.allocatedAmount <= 0) return 0;
-    return Math.min(100, (envelope.spentAmount / envelope.allocatedAmount) * 100);
-  }
-
-  function getProgressColor(envelope: EnvelopeAllocation): string {
-    const percentage = getProgressValue(envelope);
-    if (envelope.status === "overspent") return "bg-destructive";
-    if (percentage >= 90) return "bg-orange-500";
-    if (percentage >= 75) return "bg-yellow-500";
-    return "bg-primary";
-  }
-
-  function handleEnvelopeAllocationUpdate(envelope: EnvelopeAllocation, newValue: string) {
-    const amount = parseFloat(newValue);
-    if (Number.isFinite(amount) && amount >= 0) {
-      onEnvelopeUpdate?.(envelope.id, amount);
-    }
-  }
-
   function initiateFundTransfer(fromEnvelope: EnvelopeAllocation) {
     selectedSourceEnvelope = fromEnvelope;
-    selectedTargetEnvelope = null;
-    transferAmount = "";
+    selectedTargetEnvelopeId = "";
+    transferAmount = 0;
     transferDialogOpen = true;
   }
 
   function executeFundTransfer() {
-    if (!selectedSourceEnvelope || !selectedTargetEnvelope) return;
+    if (!selectedSourceEnvelope || !selectedTargetEnvelopeId) return;
+    if (!Number.isFinite(transferAmount) || transferAmount <= 0) return;
 
-    const amount = parseFloat(transferAmount);
-    if (!Number.isFinite(amount) || amount <= 0) return;
-
-    onFundTransfer?.(selectedSourceEnvelope.id, selectedTargetEnvelope.id, amount);
+    const targetId = parseInt(selectedTargetEnvelopeId);
+    onFundTransfer?.(selectedSourceEnvelope.id, targetId, transferAmount);
     transferDialogOpen = false;
   }
 
@@ -147,10 +127,109 @@
     onDeficitRecover?.(envelope.id);
   }
 
+  async function handleAutoBalance() {
+    if (!Array.isArray(envelopes) || envelopes.length === 0) return;
+
+    // Calculate total available funds
+    const totalFunds = envelopes.reduce((sum, env) => sum + env.availableAmount, 0);
+    if (totalFunds <= 0) return;
+
+    // Get active envelopes only
+    const activeEnvelopes = envelopes.filter(env => env.status === 'active');
+    if (activeEnvelopes.length === 0) return;
+
+    // Calculate equal distribution
+    const amountPerEnvelope = totalFunds / activeEnvelopes.length;
+
+    isLoading = true;
+    // Update each envelope
+    for (const envelope of activeEnvelopes) {
+      try {
+        await onEnvelopeUpdate?.(envelope.id, amountPerEnvelope);
+      } catch (error) {
+        console.error(`Failed to balance envelope ${envelope.id}:`, error);
+      }
+    }
+    isLoading = false;
+  }
+
+  async function handleEmergencyFill() {
+    if (!Array.isArray(envelopes) || envelopes.length === 0) return;
+
+    // Find emergency fund envelopes (marked in metadata)
+    const emergencyEnvelopes = envelopes.filter(env =>
+      (env.metadata as any)?.isEmergencyFund && env.status === 'active'
+    );
+
+    if (emergencyEnvelopes.length === 0) return;
+
+    // Calculate total available funds from non-emergency envelopes
+    const nonEmergencyEnvelopes = envelopes.filter(env =>
+      !(env.metadata as any)?.isEmergencyFund && env.availableAmount > 0
+    );
+
+    const availableFunds = nonEmergencyEnvelopes.reduce((sum, env) => sum + env.availableAmount, 0);
+    if (availableFunds <= 0) return;
+
+    // Distribute funds equally among emergency envelopes
+    const amountPerEmergency = availableFunds / emergencyEnvelopes.length;
+
+    isLoading = true;
+    // Update emergency envelopes
+    for (const envelope of emergencyEnvelopes) {
+      try {
+        const newAmount = envelope.allocatedAmount + amountPerEmergency;
+        await onEnvelopeUpdate?.(envelope.id, newAmount);
+      } catch (error) {
+        console.error(`Failed to fill emergency envelope ${envelope.id}:`, error);
+      }
+    }
+    isLoading = false;
+  }
+
   const transferFormValid = $derived(() => {
-    if (!selectedSourceEnvelope || !selectedTargetEnvelope) return false;
-    const amount = parseFloat(transferAmount);
-    return Number.isFinite(amount) && amount > 0 && amount <= selectedSourceEnvelope.availableAmount;
+    if (!selectedSourceEnvelope || !selectedTargetEnvelopeId) return false;
+    return Number.isFinite(transferAmount) && transferAmount > 0 && transferAmount <= selectedSourceEnvelope.availableAmount;
+  });
+
+  function openAddEnvelopeDialog() {
+    selectedCategoryId = "";
+    newEnvelopeAmount = 0;
+    addEnvelopeDialogOpen = true;
+  }
+
+  function executeAddEnvelope() {
+    if (!selectedCategoryId) return;
+    if (!Number.isFinite(newEnvelopeAmount) || newEnvelopeAmount < 0) return;
+
+    const categoryId = parseInt(selectedCategoryId);
+    onAddEnvelope?.(categoryId, newEnvelopeAmount);
+    addEnvelopeDialogOpen = false;
+  }
+
+  const addEnvelopeFormValid = $derived(() => {
+    if (!selectedCategoryId) return false;
+    return Number.isFinite(newEnvelopeAmount) && newEnvelopeAmount >= 0;
+  });
+
+  // Get categories that don't already have envelopes
+  const availableCategories = $derived.by(() => {
+    if (!Array.isArray(categories) || !Array.isArray(envelopes)) return [];
+    const usedCategoryIds = new Set(envelopes.map(env => env.categoryId));
+    return categories.filter(cat => !usedCategoryIds.has(cat.id));
+  });
+
+  // Selected labels for dropdowns
+  const selectedTargetLabel = $derived.by(() => {
+    if (!selectedTargetEnvelopeId) return "Select destination envelope";
+    const envelope = envelopes.find(e => e.id === parseInt(selectedTargetEnvelopeId));
+    return envelope ? getCategoryName(envelope.categoryId) : "Select destination envelope";
+  });
+
+  const selectedCategoryLabel = $derived.by(() => {
+    if (!selectedCategoryId) return "Select a category";
+    const category = availableCategories.find(c => c.id === parseInt(selectedCategoryId));
+    return category?.name ?? "Select a category";
   });
 </script>
 
@@ -244,94 +323,89 @@
     </Card.Root>
   {/if}
 
-  <!-- Active Envelopes -->
-  <Card.Root>
-    <Card.Header>
-      <Card.Title class="flex items-center justify-between">
-        <span>Active Envelopes ({envelopesByStatus.active.length + envelopesByStatus.depleted.length})</span>
-        <Button size="sm" variant="outline">
+  <!-- Envelope Management Tabs -->
+  <Tabs.Root value="envelopes" class="space-y-6">
+    <Tabs.List class="grid w-full grid-cols-3">
+      <Tabs.Trigger value="envelopes">
+        <Wallet class="h-4 w-4 mr-2" />
+        Envelopes
+      </Tabs.Trigger>
+      <Tabs.Trigger value="drag-drop">
+        <Grip class="h-4 w-4 mr-2" />
+        Drag & Drop
+      </Tabs.Trigger>
+      <Tabs.Trigger value="allocation">
+        <ArrowUpDown class="h-4 w-4 mr-2" />
+        Bulk Allocation
+      </Tabs.Trigger>
+    </Tabs.List>
+
+    <!-- Envelopes Tab -->
+    <Tabs.Content value="envelopes" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-medium">Active Envelopes ({envelopesByStatus.active.length + envelopesByStatus.depleted.length})</h3>
+        <Button size="sm" variant="outline" onclick={openAddEnvelopeDialog} disabled={availableCategories.length === 0}>
           <Plus class="h-4 w-4 mr-1" />
           Add Envelope
         </Button>
-      </Card.Title>
-    </Card.Header>
-    <Card.Content>
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {#each [...envelopesByStatus.active, ...envelopesByStatus.depleted] as envelope (envelope.id)}
-          <div class={cn(
-            "rounded-lg border p-4 space-y-3",
-            getEnvelopeStatusColor(envelope)
-          )}>
-            <div class="flex items-center justify-between">
-              <h4 class="font-medium">{getCategoryName(envelope.categoryId)}</h4>
-              <Badge variant={envelope.status === "active" ? "secondary" : "outline"}>
-                {envelope.status}
-              </Badge>
-            </div>
-
-            <div class="space-y-2">
-              <div class="flex justify-between text-sm">
-                <span>Allocated</span>
-                <span class="font-medium">{currencyFormatter.format(envelope.allocatedAmount)}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span>Spent</span>
-                <span class="font-medium">{currencyFormatter.format(envelope.spentAmount)}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span>Available</span>
-                <span class={cn(
-                  "font-medium",
-                  envelope.availableAmount > 0 ? "text-emerald-600" : "text-muted-foreground"
-                )}>
-                  {currencyFormatter.format(envelope.availableAmount)}
-                </span>
-              </div>
-
-              {#if envelope.rolloverAmount > 0}
-                <div class="flex justify-between text-sm">
-                  <span>Rollover</span>
-                  <span class="font-medium text-blue-600">{currencyFormatter.format(envelope.rolloverAmount)}</span>
-                </div>
-              {/if}
-            </div>
-
-            <div class="space-y-2">
-              <div class="flex items-center justify-between text-xs">
-                <span>Progress</span>
-                <span>{getProgressValue(envelope).toFixed(0)}%</span>
-              </div>
-              <div class="w-full bg-muted rounded-full h-2">
-                <div
-                  class={cn("h-2 rounded-full transition-all", getProgressColor(envelope))}
-                  style={`width: ${Math.min(100, getProgressValue(envelope))}%`}
-                ></div>
-              </div>
-            </div>
-
-            <div class="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Allocation"
-                value={envelope.allocatedAmount}
-                onchange={(e) => handleEnvelopeAllocationUpdate(envelope, e.currentTarget.value)}
-                class="h-8 text-sm"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                onclick={() => initiateFundTransfer(envelope)}
-                disabled={envelope.availableAmount <= 0}
-                class="shrink-0"
-              >
-                <ArrowUpDown class="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        {/each}
       </div>
-    </Card.Content>
-  </Card.Root>
+
+      {#if isLoading}
+        <div class="flex items-center justify-center py-12">
+          <div class="text-center space-y-2">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p class="text-sm text-muted-foreground">Updating envelopes...</p>
+          </div>
+        </div>
+      {:else}
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {#each [...envelopesByStatus.active, ...envelopesByStatus.depleted] as envelope (envelope.id)}
+            <EnvelopeAllocationCard
+              envelope={envelope}
+              categoryName={getCategoryName(envelope.categoryId)}
+              editable={true}
+              onUpdateAllocation={(newAmount) => onEnvelopeUpdate?.(envelope.id, newAmount)}
+              onTransferRequest={() => initiateFundTransfer(envelope)}
+              onDeficitRecover={() => handleDeficitRecover(envelope)}
+            />
+          {/each}
+        </div>
+      {/if}
+    </Tabs.Content>
+
+    <!-- Drag & Drop Tab -->
+    <Tabs.Content value="drag-drop">
+      {#if onFundTransfer}
+        <EnvelopeDragDropManager
+          envelopes={envelopes}
+          getCategoryName={getCategoryName}
+          onFundTransfer={onFundTransfer}
+        />
+      {:else}
+        <Card.Root>
+          <Card.Content class="py-8 text-center text-muted-foreground">
+            Drag & Drop functionality requires fund transfer handler.
+          </Card.Content>
+        </Card.Root>
+      {/if}
+    </Tabs.Content>
+
+    <!-- Bulk Allocation Tab -->
+    <Tabs.Content value="allocation">
+      <FundAllocationPanel
+        envelopes={envelopes}
+        getCategoryName={getCategoryName}
+        availableFunds={totalAvailable}
+        onBulkAllocate={(allocations) => {
+          allocations.forEach(alloc => {
+            onEnvelopeUpdate?.(alloc.envelopeId, alloc.amount);
+          });
+        }}
+        onAutoBalance={handleAutoBalance}
+        onEmergencyFill={handleEmergencyFill}
+      />
+    </Tabs.Content>
+  </Tabs.Root>
 
   <!-- Paused Envelopes -->
   {#if envelopesByStatus.paused.length > 0}
@@ -350,7 +424,7 @@
                 <span class="text-sm text-muted-foreground">
                   {currencyFormatter.format(envelope.availableAmount)}
                 </span>
-                <Button size="sm" variant="outline">Activate</Button>
+                <Button size="sm" variant="outline" onclick={() => onActivate?.(envelope)}>Activate</Button>
               </div>
             </div>
           {/each}
@@ -384,27 +458,26 @@
 
         <div class="space-y-2">
           <Label>To Envelope</Label>
-          <select
-            bind:value={selectedTargetEnvelope}
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value={null}>Select destination envelope</option>
-            {#each envelopes.filter(e => e.id !== selectedSourceEnvelope?.id) as envelope (envelope.id)}
-              <option value={envelope}>{getCategoryName(envelope.categoryId)}</option>
-            {/each}
-          </select>
+          <Select.Root type="single" bind:value={selectedTargetEnvelopeId}>
+            <Select.Trigger class="w-full justify-between">
+              <span>{selectedTargetLabel}</span>
+            </Select.Trigger>
+            <Select.Content>
+              {#each envelopes.filter(e => e.id !== selectedSourceEnvelope?.id) as envelope (envelope.id)}
+                <Select.Item value={String(envelope.id)}>
+                  {getCategoryName(envelope.categoryId)}
+                </Select.Item>
+              {/each}
+            </Select.Content>
+          </Select.Root>
         </div>
 
         <div class="space-y-2">
           <Label for="transfer-amount">Amount</Label>
-          <Input
-            id="transfer-amount"
-            type="number"
-            step="0.01"
-            max={selectedSourceEnvelope.availableAmount}
-            bind:value={transferAmount}
-            placeholder="0.00"
-          />
+          <NumericInput bind:value={transferAmount} id="transfer-amount" />
+          <p class="text-xs text-muted-foreground">
+            Available: {currencyFormatter.format(selectedSourceEnvelope.availableAmount)}
+          </p>
         </div>
       </div>
 
@@ -422,3 +495,62 @@
     {/if}
   </Dialog.Content>
 </Dialog.Root>
+
+<!-- Add Envelope Sheet -->
+<ResponsiveSheet bind:open={addEnvelopeDialogOpen} side="right">
+  {#snippet header()}
+    <div class="space-y-1">
+      <h2 class="text-lg font-semibold">Add New Envelope</h2>
+      <p class="text-sm text-muted-foreground">
+        Create a new envelope allocation for a category in this budget period.
+      </p>
+    </div>
+  {/snippet}
+
+  {#snippet content()}
+    <div class="space-y-6">
+      <div class="space-y-2">
+        <Label>Category</Label>
+        {#if availableCategories.length > 0}
+          <Select.Root type="single" bind:value={selectedCategoryId}>
+            <Select.Trigger class="w-full justify-between">
+              <span>{selectedCategoryLabel}</span>
+            </Select.Trigger>
+            <Select.Content>
+              {#each availableCategories as category (category.id)}
+                <Select.Item value={String(category.id)}>
+                  {category.name}
+                </Select.Item>
+              {/each}
+            </Select.Content>
+          </Select.Root>
+        {:else}
+          <p class="text-sm text-muted-foreground">All categories already have envelopes</p>
+        {/if}
+      </div>
+
+      <div class="space-y-2">
+        <Label for="envelope-amount">Allocated Amount</Label>
+        <NumericInput bind:value={newEnvelopeAmount} id="envelope-amount" />
+        <p class="text-xs text-muted-foreground">
+          The initial amount allocated to this envelope for the current period.
+        </p>
+      </div>
+    </div>
+  {/snippet}
+
+  {#snippet footer()}
+    <div class="flex gap-3">
+      <Button variant="outline" onclick={() => addEnvelopeDialogOpen = false} class="flex-1">
+        Cancel
+      </Button>
+      <Button
+        onclick={executeAddEnvelope}
+        disabled={!addEnvelopeFormValid}
+        class="flex-1"
+      >
+        Create Envelope
+      </Button>
+    </div>
+  {/snippet}
+</ResponsiveSheet>
