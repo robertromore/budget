@@ -44,8 +44,8 @@
 
   // Use reactive client-side query instead of server data
   const budgetsQuery = listBudgets().options();
-  const budgets = $derived($budgetsQuery.data ?? []);
-  const budgetsLoading = $derived($budgetsQuery.isLoading);
+  const budgets = $derived(budgetsQuery.data ?? []);
+  const budgetsLoading = $derived(budgetsQuery.isLoading);
   const tz = $derived.by(() => getLocalTimeZone());
 
   let manageDialogOpen = $state(false);

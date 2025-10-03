@@ -79,7 +79,7 @@ function editSchedule() {
 }
 
 async function toggleStatus() {
-  $toggleStatusMutation.mutate(schedule.id);
+  toggleStatusMutation.mutate(schedule.id);
 }
 
 async function executeAutoAdd() {
@@ -89,7 +89,7 @@ async function executeAutoAdd() {
   autoAddResult = null;
 
   try {
-    const result = await $executeAutoAddMutation.mutateAsync(schedule.id) as any;
+    const result = await executeAutoAddMutation.mutateAsync(schedule.id) as any;
 
     if (result.transactionsCreated > 0) {
       autoAddResult = `Created ${result.transactionsCreated} transaction${result.transactionsCreated === 1 ? '' : 's'}`;
@@ -114,7 +114,7 @@ function openDeleteDialog() {
 
 async function confirmDeleteSchedule() {
   try {
-    await $deleteScheduleMutation.mutateAsync(schedule.id);
+    await deleteScheduleMutation.mutateAsync(schedule.id);
     showDeleteDialog = false;
     // Navigate back to schedules list
     goto('/schedules');

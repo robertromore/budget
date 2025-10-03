@@ -22,8 +22,8 @@ import Wallet from '@lucide/svelte/icons/wallet';
 let {data} = $props();
 
 let budgetQuery = $derived(getBudgetDetail(data.budgetId).options());
-let budget = $derived($budgetQuery.data);
-let isLoading = $derived($budgetQuery.isLoading);
+let budget = $derived(budgetQuery.data);
+let isLoading = $derived(budgetQuery.isLoading);
 
 const isEnvelopeBudget = $derived(budget?.type === 'category-envelope');
 

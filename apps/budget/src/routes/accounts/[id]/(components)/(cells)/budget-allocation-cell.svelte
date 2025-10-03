@@ -19,7 +19,7 @@
   let {transaction, onAddAllocation, onDeleteAllocation}: Props = $props();
 
   const budgetsQuery = listBudgets().options();
-  const availableBudgets = $derived.by(() => $budgetsQuery.data ?? []);
+  const availableBudgets = $derived.by(() => budgetsQuery.data ?? []);
 
   const budgetAllocations = $derived.by(() => transaction.budgetAllocations ?? []);
 

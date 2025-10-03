@@ -30,7 +30,7 @@
   let {budgets = [], className}: Props = $props();
 
   const budgetsQuery = listBudgets().options();
-  const allBudgets = $derived.by(() => budgets.length > 0 ? budgets : ($budgetsQuery.data ?? []));
+  const allBudgets = $derived.by(() => budgets.length > 0 ? budgets : (budgetsQuery.data ?? []));
 
   // Analytics calculations
   const totalAllocated = $derived.by(() => {
@@ -96,7 +96,7 @@
 
   // Chart data for spending trends
   const spendingTrendData = $derived.by(() => {
-    const trendsData = spendingTrendsQuery ? $spendingTrendsQuery.data : null;
+    const trendsData = spendingTrendsQuery ? spendingTrendsQuery.data : null;
 
     if (!trendsData || trendsData.length === 0) {
       // Fallback to empty data if no real data available

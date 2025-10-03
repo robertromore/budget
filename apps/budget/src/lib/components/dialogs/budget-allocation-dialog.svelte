@@ -29,7 +29,7 @@
   }: Props = $props();
 
   const budgetsQuery = listBudgets().options();
-  const availableBudgets = $derived.by(() => $budgetsQuery.data ?? []);
+  const availableBudgets = $derived.by(() => budgetsQuery.data ?? []);
   const createAllocationMutation = createAllocation.options();
   const deleteAllocationMutation = deleteAllocation.options();
 
@@ -165,7 +165,7 @@
       const signedAmount = transactionAmount >= 0 ? Math.abs(amount) : -Math.abs(amount);
 
       // Create the allocation using the real API
-      await $createAllocationMutation.mutateAsync({
+      await createAllocationMutation.mutateAsync({
         transactionId: transaction.id,
         budgetId: Number(selectedBudgetId),
         allocatedAmount: signedAmount,
@@ -185,7 +185,7 @@
   async function handleRemoveAllocation(allocationId: number) {
     try {
       // Delete the allocation using the real API
-      await $deleteAllocationMutation.mutateAsync(allocationId);
+      await deleteAllocationMutation.mutateAsync(allocationId);
 
       onAllocationChanged?.();
     } catch (error) {

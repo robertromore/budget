@@ -20,7 +20,7 @@
   let allocationDialogOpen = $state(false);
 
   const budgetsQuery = listBudgets().options();
-  const availableBudgets = $derived.by(() => $budgetsQuery.data ?? []);
+  const availableBudgets = $derived.by(() => budgetsQuery.data ?? []);
 
   // Check if this is a real transaction (not scheduled)
   const isRealTransaction = $derived.by(() => typeof transaction.id === 'number');

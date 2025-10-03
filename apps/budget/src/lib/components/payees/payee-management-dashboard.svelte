@@ -67,7 +67,7 @@ const selectedCount = $derived(bulkOpsState.selectedCount);
 const hasSelection = $derived(bulkOpsState.hasSelection);
 
 // Recent operation history
-const operationHistoryQuery = getOperationHistory(5, 0);
+const operationHistoryQuery = getOperationHistory(5, 0).options();
 const recentOperations = $derived(operationHistoryQuery.data || []);
 
 // Payee type distribution

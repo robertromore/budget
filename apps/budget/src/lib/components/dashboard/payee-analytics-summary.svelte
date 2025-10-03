@@ -14,9 +14,9 @@ import {currencyFormatter} from '$lib/utils/formatters';
 
 // Analytics query
 const analyticsQuery = getPayeeAnalytics().options();
-const analytics = $derived($analyticsQuery.data);
-const isLoading = $derived($analyticsQuery.isLoading);
-const hasError = $derived($analyticsQuery.error);
+const analytics = $derived(analyticsQuery.data);
+const isLoading = $derived(analyticsQuery.isLoading);
+const hasError = $derived(analyticsQuery.error);
 
 // Derived analytics data
 const totalPayees = $derived(analytics?.totalPayees || 0);
@@ -58,7 +58,7 @@ const topPayees = $derived(analytics?.topPayees?.slice(0, 3) || []);
         <Button
           variant="outline"
           size="sm"
-          onclick={() => $analyticsQuery.refetch()}
+          onclick={() => analyticsQuery.refetch()}
         >
           Retry
         </Button>

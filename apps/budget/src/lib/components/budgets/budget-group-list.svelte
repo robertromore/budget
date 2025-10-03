@@ -15,7 +15,7 @@ let {
 } = $props();
 
 const groupsQuery = listBudgetGroups().options();
-const groups = $derived($groupsQuery.data || []);
+const groups = $derived(groupsQuery.data || []);
 const deleteMutation = deleteBudgetGroup.options();
 
 // Build hierarchical structure
@@ -58,7 +58,7 @@ async function handleDelete(group: BudgetGroup) {
   const confirmed = confirm(confirmMessage);
   if (confirmed) {
     try {
-      await $deleteMutation.mutateAsync(group.id);
+      await deleteMutation.mutateAsync(group.id);
     } catch (error) {
       console.error('Failed to delete budget group:', error);
     }
@@ -89,7 +89,7 @@ const flattenedGroups = $derived(
     </Button>
   </div>
 
-  {#if $groupsQuery.isLoading}
+  {#if groupsQuery.isLoading}
     <Card.Root>
       <Card.Content class="p-8 text-center text-muted-foreground">
         Loading budget groups...

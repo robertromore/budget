@@ -34,7 +34,7 @@
   let fromPeriodId = $state<string>("");
   let toPeriodId = $state<string>("");
 
-  const periods = $derived.by(() => $periodsQuery.data ?? []);
+  const periods = $derived.by(() => periodsQuery.data ?? []);
 
   // Get preview when both periods are selected
   const previewQuery = $derived.by(() => {
@@ -43,7 +43,7 @@
   });
 
   const rolloverPreview = $derived.by(() => {
-    return $previewQuery ? $previewQuery.data : null;
+    return previewQuery ? previewQuery.data : null;
   });
 
   const availableFromPeriods = $derived.by(() => {
@@ -90,7 +90,7 @@
     if (!fromPeriodId || !toPeriodId) return;
 
     try {
-      await $processRolloverMutation.mutateAsync({
+      await processRolloverMutation.mutateAsync({
         fromPeriodId: Number(fromPeriodId),
         toPeriodId: Number(toPeriodId),
       });
@@ -146,7 +146,7 @@
       </Card.Description>
     </Card.Header>
     <Card.Content>
-      {#if $periodsQuery.isLoading}
+      {#if periodsQuery.isLoading}
         <div class="flex items-center justify-center py-8">
           <RefreshCw class="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
@@ -320,9 +320,9 @@
       </Button>
       <Button
         onclick={handleProcessRollover}
-        disabled={!fromPeriodId || !toPeriodId || $processRolloverMutation.isPending}
+        disabled={!fromPeriodId || !toPeriodId || processRolloverMutation.isPending}
       >
-        {#if $processRolloverMutation.isPending}
+        {#if processRolloverMutation.isPending}
           <RefreshCw class="h-4 w-4 mr-2 animate-spin" />
           Processing...
         {:else}

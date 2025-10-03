@@ -20,7 +20,7 @@
   });
 
   const currentPeriod = $derived.by(() => {
-    const trends = spendingTrendsQuery ? $spendingTrendsQuery.data : null;
+    const trends = spendingTrendsQuery ? spendingTrendsQuery.data : null;
     if (!trends || trends.length === 0) return null;
     // Get the most recent period
     return trends[trends.length - 1];
@@ -44,7 +44,7 @@
       return [];
     }
 
-    const dailyData = $dailySpendingQuery.data ?? [];
+    const dailyData = dailySpendingQuery.data ?? [];
     const startDate = new Date(currentPeriod.startDate);
     const endDate = new Date(currentPeriod.endDate);
     const today = new Date();

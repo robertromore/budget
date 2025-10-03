@@ -36,7 +36,7 @@
   const deleteBudgetMutation = deleteBudget.options();
 
   const availableAccounts = $derived.by(() => accountsState.getSortedActiveAccounts());
-  const isLoading = $derived.by(() => $updateBudgetMutation.isPending || $deleteBudgetMutation.isPending);
+  const isLoading = $derived.by(() => updateBudgetMutation.isPending || deleteBudgetMutation.isPending);
 
   let name = $state("");
   let description = $state("");
@@ -131,7 +131,7 @@
         };
       }
 
-      await $updateBudgetMutation.mutateAsync({
+      await updateBudgetMutation.mutateAsync({
         id: budget.id,
         data: updateData,
       });
@@ -148,7 +148,7 @@
     if (!budget) return;
 
     try {
-      await $deleteBudgetMutation.mutateAsync(budget.id);
+      await deleteBudgetMutation.mutateAsync(budget.id);
 
       deleteDialogOpen = false;
       open = false;
@@ -310,7 +310,7 @@
           onclick={handleSubmit}
           disabled={!hasChanges || isLoading}
         >
-          {#if $updateBudgetMutation.isPending}
+          {#if updateBudgetMutation.isPending}
             Updating...
           {:else}
             Update Budget
@@ -333,10 +333,10 @@
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={handleDelete}
-        disabled={$deleteBudgetMutation.isPending}
+        disabled={deleteBudgetMutation.isPending}
         class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
       >
-        {#if $deleteBudgetMutation.isPending}
+        {#if deleteBudgetMutation.isPending}
           Deleting...
         {:else}
           Delete Budget

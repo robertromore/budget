@@ -29,7 +29,7 @@ function toggleExpand(id: number) {
 }
 
 async function handleDelete(group: BudgetGroup) {
-  const groups = $groupsQuery.data || [];
+  const groups = groupsQuery.data || [];
   const hasChildren = groups.some(g => g.parentId === group.id);
 
   const confirmMessage = hasChildren
@@ -38,7 +38,7 @@ async function handleDelete(group: BudgetGroup) {
 
   if (confirm(confirmMessage)) {
     try {
-      await $deleteMutation.mutateAsync(group.id);
+      await deleteMutation.mutateAsync(group.id);
     } catch (error) {
       console.error('Failed to delete budget group:', error);
     }
@@ -46,7 +46,7 @@ async function handleDelete(group: BudgetGroup) {
 }
 
 const hierarchy = $derived.by(() => {
-  const groups = $groupsQuery.data || [];
+  const groups = groupsQuery.data || [];
   const rootGroups = groups.filter(g => !g.parentId);
   const childMap = new Map<number, BudgetGroup[]>();
 
@@ -76,13 +76,13 @@ const hierarchy = $derived.by(() => {
     </Button>
   </div>
 
-  {#if $groupsQuery.isLoading}
+  {#if groupsQuery.isLoading}
     <Card.Root>
       <Card.Content class="p-8 text-center text-muted-foreground">
         Loading budget groups...
       </Card.Content>
     </Card.Root>
-  {:else if !$groupsQuery.data || $groupsQuery.data.length === 0}
+  {:else if !groupsQuery.data || groupsQuery.data.length === 0}
     <Card.Root>
       <Card.Content class="p-8 text-center">
         <FolderTree class="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />

@@ -52,23 +52,23 @@ const queryClient = useQueryClient();
 // Derived state from TanStack Query with proper reactivity
 const transactions = $derived.by(() => {
   if (!transactionsQuery) return [];
-  return Array.isArray($transactionsQuery?.data) ? $transactionsQuery.data : [];
+  return Array.isArray(transactionsQuery?.data) ? transactionsQuery.data : [];
 });
 const isLoading = $derived.by(() => {
-  return (transactionsQuery ? $transactionsQuery?.isLoading : false) || $summaryQuery.isLoading;
+  return (transactionsQuery ? transactionsQuery?.isLoading : false) || summaryQuery.isLoading;
 });
 const error = $derived.by(() => {
-  return (transactionsQuery ? $transactionsQuery?.error?.message : undefined) || $summaryQuery.error?.message;
+  return (transactionsQuery ? transactionsQuery?.error?.message : undefined) || summaryQuery.error?.message;
 });
 const isAccountNotFound = $derived.by(() => {
-  const summaryError = $summaryQuery.error;
-  const transactionsError = transactionsQuery ? $transactionsQuery?.error : undefined;
-  return (summaryError?.message?.includes('NOT_FOUND') || summaryError?.data?.code === 'NOT_FOUND') ||
-         (transactionsError?.message?.includes('NOT_FOUND') || transactionsError?.data?.code === 'NOT_FOUND');
+  const summaryError = summaryQuery.error;
+  const transactionsError = transactionsQuery ? transactionsQuery?.error : undefined;
+  return (summaryError?.message?.includes('NOT_FOUND')) ||
+         (transactionsError?.message?.includes('NOT_FOUND'));
 });
-const summary = $derived($summaryQuery.data);
+const summary = $derived(summaryQuery.data);
 const account = $derived(summary ? {id: summary.accountId, name: summary.accountName} : undefined);
-const budgetCount = $derived($budgetCountQuery.data?.count ?? 0);
+const budgetCount = $derived(budgetCountQuery.data?.count ?? 0);
 
 // Entity states
 const categoriesState = CategoriesState.get();
@@ -138,7 +138,7 @@ const submitTransaction = async (formData: any) => {
 
   try {
     // Use TanStack Query mutation for proper cache invalidation
-    await $saveTransactionMutation.mutateAsync({
+    await saveTransactionMutation.mutateAsync({
       accountId: Number(account.id),
       amount: formData.amount,
       date: formData.date,
@@ -198,7 +198,7 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
     }
 
     // Use TanStack Query mutation and capture the returned array
-    const updatedTransactionsWithBalance = await $updateTransactionMutation.mutateAsync({
+    const updatedTransactionsWithBalance = await updateTransactionMutation.mutateAsync({
       id: id,
       data: updateData,
     });
