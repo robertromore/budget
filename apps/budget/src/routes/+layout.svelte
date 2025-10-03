@@ -22,26 +22,23 @@ import {onMount} from 'svelte';
 import {rpc} from '$lib/query';
 
 let {data, children}: {data: LayoutData; children: Snippet} = $props();
-const {payees, categories, schedules} = $derived(data);
 
 // Set QueryClient context immediately using centralized client
 setQueryClientContext(queryClient);
 
 // Use TanStack Query for accounts to enable reactive updates
 const accountsQuery = rpc.accounts.listAccounts().options();
-const accounts = $derived($accountsQuery.data ?? data.accounts);
 
-// Initialize states
-const accountsState = AccountsState.set(accounts);
-SchedulesState.set((() => schedules)());
-CategoriesState.set((() => categories)());
-PayeesState.set((() => payees)());
+// Initialize states with initial data
+const accountsState = AccountsState.set(data.accounts);
+SchedulesState.set(data.schedules);
+CategoriesState.set(data.categories);
+PayeesState.set(data.payees);
 
 // Keep AccountsState in sync with query data
 $effect(() => {
-  if ($accountsQuery.data) {
-    accountsState.init($accountsQuery.data);
-  }
+  const accounts = $accountsQuery.data ?? data.accounts;
+  accountsState.init(accounts);
 });
 
 // Auto-scheduler: Automatically create scheduled transactions when app loads

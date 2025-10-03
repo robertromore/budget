@@ -41,7 +41,6 @@ const isDesktop = new MediaQuery('(min-width: 768px)');
 // Resize state
 let sheetWidth = $state(defaultWidth);
 let isResizing = $state(false);
-let contentElement: HTMLElement | null = $state(null);
 
 // Handle resize
 function handleMouseDown(e: MouseEvent) {
@@ -108,19 +107,17 @@ $effect(() => {
       {side}
       class="flex flex-col {className || ''}"
       style="width: {sheetWidth}px; max-width: {sheetWidth}px;"
-      bind:this={contentElement}
     >
       {#if resizable}
-        <div
-          class="absolute top-0 {side === 'right' ? 'left-0 -ml-1' : 'right-0 -mr-1'} h-full w-2 cursor-col-resize group z-50"
+        <button
+          type="button"
+          class="absolute top-0 {side === 'right' ? 'left-0 -ml-1' : 'right-0 -mr-1'} h-full w-2 cursor-col-resize group z-50 border-0 bg-transparent p-0"
           onmousedown={handleMouseDown}
-          role="separator"
-          aria-orientation="vertical"
           aria-label="Resize panel"
         >
           <div class="absolute inset-0 hover:bg-primary/10 active:bg-primary/20 transition-colors"></div>
           <div class="absolute top-1/2 {side === 'right' ? 'left-0' : 'right-0'} -translate-y-1/2 w-1 h-16 bg-border group-hover:bg-primary/50 transition-colors rounded-full"></div>
-        </div>
+        </button>
       {/if}
       {#if header}
         <Sheet.Header class="border-b px-6 py-6">
