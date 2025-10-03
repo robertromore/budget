@@ -13,9 +13,10 @@ interface Props {
   onSubmit?: () => void;
   open?: boolean;
   buttonClass?: string;
+  id?: string;
 }
 
-let {value = $bindable(), onSubmit, open = $bindable(), buttonClass}: Props = $props();
+let {value = $bindable(), onSubmit, open = $bindable(), buttonClass, id}: Props = $props();
 
 // --- State ---
 let dialogOpen = $state(open || false);
@@ -58,6 +59,14 @@ const changeSign = () => {
 // --- Functions: Keyboard Handling ---
 const handleKeyDown = (event: KeyboardEvent) => {
   if (!dialogOpen) return;
+
+  // Allow paste, undo, redo (cmd+shift+z), and select all operations
+  if (event.ctrlKey || event.metaKey) {
+    if (['v', 'z', 'a'].includes(event.key.toLowerCase())) {
+      return;
+    }
+  }
+
   if (new_amount?.includes('.') && event.key === '.') {
     event.preventDefault();
   }
@@ -69,6 +78,9 @@ const handleKeyDown = (event: KeyboardEvent) => {
       if (new_amount) submit();
       break;
     case 'Backspace':
+      break;
+    case '.':
+      // Allow period if one doesn't already exist (handled above)
       break;
     case '0':
     case '1':
@@ -92,6 +104,31 @@ const handleKeyDown = (event: KeyboardEvent) => {
     default:
       event.preventDefault();
   }
+};
+
+// --- Functions: Paste Handling ---
+const handlePaste = (event: ClipboardEvent) => {
+  if (!dialogOpen) return;
+
+  event.preventDefault();
+  const pastedText = event.clipboardData?.getData('text');
+  if (!pastedText) return;
+
+  // Strip all non-numeric characters except period and minus sign
+  let cleaned = pastedText.replace(/[^0-9.-]/g, '');
+
+  // Only allow one minus sign at the beginning
+  const hasNegative = cleaned.startsWith('-');
+  cleaned = cleaned.replace(/-/g, '');
+  if (hasNegative) cleaned = '-' + cleaned;
+
+  // Only allow one period
+  const parts = cleaned.split('.');
+  if (parts.length > 2) {
+    cleaned = parts[0] + '.' + parts.slice(1).join('');
+  }
+
+  new_amount = cleaned;
 };
 </script>
 
@@ -124,9 +161,9 @@ const handleKeyDown = (event: KeyboardEvent) => {
     <Popover.Content
       class="p-0"
       align="start"
-      onEscapeKeydown={() => (new_amount = value!.toString())}>
+      onEscapeKeydown={() => (new_amount = (value || 0).toString())}>
       <div class="p-2">
-        <Input bind:value={new_amount} class="mb-2" bind:ref={input} placeholder="0.00" />
+        <Input bind:value={new_amount} class="mb-2" bind:ref={input} placeholder="0.00" id={id} onpaste={handlePaste} />
 
         <div class="keypad grid grid-cols-3 grid-rows-3 gap-2">
           {#each Array.from({length: 9}, (_, i) => i + 1) as i}

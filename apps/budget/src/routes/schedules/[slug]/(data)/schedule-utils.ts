@@ -1,5 +1,7 @@
 import type { PageData } from '../$types';
 import { currencyFormatter, recurringFormatter } from '$lib/utils/formatters';
+import { nextDaily, nextWeekly, nextMonthly, nextYearly } from '$lib/utils/date-frequency';
+import { parseISOString, currentDate } from '$lib/utils/dates';
 
 export function formatAmount(schedule: PageData['schedule']): string {
   if (!schedule || schedule.amount == null) {
@@ -27,40 +29,55 @@ export function formatRecurringPattern(schedule: PageData['schedule']): string {
 export function calculateNextOccurrenceDate(schedule: PageData['schedule']): Date | null {
   if (!schedule.scheduleDate || !schedule.scheduleDate.frequency) return null;
 
-  const today = new Date();
-  const startDate = new Date(schedule.scheduleDate.start);
-  const endDate = schedule.scheduleDate.end ? new Date(schedule.scheduleDate.end) : null;
   const frequency = schedule.scheduleDate.frequency;
   const interval = schedule.scheduleDate.interval || 1;
+  const startDateValue = parseISOString(schedule.scheduleDate.start);
+  const endDateValue = schedule.scheduleDate.end ? parseISOString(schedule.scheduleDate.end) : null;
 
-  let nextDate = new Date(startDate);
+  if (!startDateValue) return null;
 
-  // Find the first future date
-  while (nextDate <= today) {
-    switch (frequency) {
-      case "daily":
-        nextDate.setDate(nextDate.getDate() + interval);
-        break;
-      case "weekly":
-        nextDate.setDate(nextDate.getDate() + (7 * interval));
-        break;
-      case "monthly":
-        nextDate.setMonth(nextDate.getMonth() + interval);
-        break;
-      case "yearly":
-        nextDate.setFullYear(nextDate.getFullYear() + interval);
-        break;
-      default:
-        return null;
-    }
+  const today = currentDate;
+
+  // Use proper date generation to get next occurrence
+  let futureDates;
+  switch (frequency) {
+    case "daily":
+      futureDates = nextDaily(startDateValue, endDateValue, interval, 10);
+      break;
+    case "weekly":
+      futureDates = nextWeekly(
+        startDateValue,
+        endDateValue,
+        interval,
+        schedule.scheduleDate.week_days || [],
+        10
+      );
+      break;
+    case "monthly":
+      futureDates = nextMonthly(
+        startDateValue,
+        endDateValue,
+        interval,
+        schedule.scheduleDate.days || null,
+        schedule.scheduleDate.weeks || [],
+        schedule.scheduleDate.weeks_days || [],
+        10
+      );
+      break;
+    case "yearly":
+      futureDates = nextYearly(startDateValue, startDateValue, endDateValue, interval, 10);
+      break;
+    default:
+      return null;
   }
 
-  // Check if it's within the end date
-  if (endDate && nextDate > endDate) {
-    return null;
-  }
+  // Find the first date that's in the future
+  const nextDateValue = futureDates.find(date => date.compare(today) > 0);
 
-  return nextDate;
+  if (!nextDateValue) return null;
+
+  // Convert DateValue to JavaScript Date
+  return new Date(nextDateValue.year, nextDateValue.month - 1, nextDateValue.day);
 }
 
 export function calculateNextOccurrence(schedule: PageData['schedule']): string {

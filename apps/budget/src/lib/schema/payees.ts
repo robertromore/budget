@@ -18,7 +18,8 @@ export const payeeTypes = [
   "employer",
   "financial_institution",
   "government",
-  "individual"
+  "individual",
+  "other"
 ] as const;
 
 export const paymentFrequencies = [
@@ -67,10 +68,10 @@ export const payees = sqliteTable(
     alertThreshold: real("alert_threshold"),
     isSeasonal: integer("is_seasonal", {mode: "boolean"}).default(false).notNull(),
     subscriptionInfo: text("subscription_info", {mode: "json"}),
-    tags: text("tags", {mode: "json"}),
+    tags: text("tags"),
 
     // Payment Processing Fields
-    preferredPaymentMethods: text("preferred_payment_methods", {mode: "json"}),
+    preferredPaymentMethods: text("preferred_payment_methods"),
     merchantCategoryCode: text("merchant_category_code"),
 
     dateCreated: text("date_created")
@@ -130,12 +131,12 @@ export const formInsertPayeeSchema = createInsertSchema(payees, {
     schema.max(500, "Notes must be less than 500 characters").optional().nullable(),
 
   // Budgeting Integration Fields validation
-  defaultCategoryId: (schema) => schema.positive("Invalid category ID").optional().nullable(),
-  defaultBudgetId: (schema) => schema.positive("Invalid budget ID").optional().nullable(),
+  defaultCategoryId: (schema) => schema.optional().nullable(),
+  defaultBudgetId: (schema) => schema.optional().nullable(),
   payeeType: (schema) => schema.optional().nullable(),
 
   // Transaction Automation Fields validation
-  avgAmount: (schema) => schema.positive("Average amount must be positive").optional().nullable(),
+  avgAmount: (schema) => schema.optional().nullable(),
   paymentFrequency: (schema) => schema.optional().nullable(),
   lastTransactionDate: (schema) => schema.optional().nullable(),
 
@@ -172,7 +173,7 @@ export const formInsertPayeeSchema = createInsertSchema(payees, {
       .nullable(),
 
   // Advanced Features Fields validation
-  alertThreshold: (schema) => schema.positive("Alert threshold must be positive").optional().nullable(),
+  alertThreshold: (schema) => schema.optional().nullable(),
   isSeasonal: (schema) => schema.default(false),
   subscriptionInfo: (schema) => schema.optional().nullable(),
   tags: (schema) => schema.optional().nullable(),

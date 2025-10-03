@@ -7,8 +7,6 @@ import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import {
   deleteAccountDialog,
   deleteAccountId,
-  managingAccountId,
-  newAccountDialog,
 } from '$lib/states/ui/global.svelte';
 import {currencyFormatter} from '$lib/utils/formatters';
 import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
@@ -25,25 +23,18 @@ const deleteAccount = (id: number) => {
   deleteDialogId.current = id;
   deleteDialogOpen.setTrue();
 };
-
-const dialogOpen = $derived(newAccountDialog);
-const managingAccount = $derived(managingAccountId);
-
-const editAccount = (id: number) => {
-  managingAccount.current = id;
-  dialogOpen.current = true;
-};
 </script>
+
+<svelte:head>
+  <title>Accounts - Budget App</title>
+  <meta name="description" content="Manage your financial accounts" />
+</svelte:head>
 
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold tracking-tight">Accounts</h1>
-    <Button
-      onclick={() => {
-        managingAccount.current = 0;
-        dialogOpen.current = true;
-      }}>
+    <Button href="/accounts/new">
       <Plus class="mr-2 h-4 w-4" />
       Add Account
     </Button>
@@ -62,10 +53,7 @@ const editAccount = (id: number) => {
         credit cards, or any other financial account you want to track.
       </p>
       <Button
-        onclick={() => {
-          managingAccount.current = 0;
-          dialogOpen.current = true;
-        }}
+        href="/accounts/new"
         class="bg-blue-600 hover:bg-blue-700">
         <Plus class="mr-2 h-4 w-4" />
         Create Your First Account
@@ -117,7 +105,7 @@ const editAccount = (id: number) => {
       </Card.Content>
       <Card.Footer class="flex gap-2">
         <Button
-          onclick={() => editAccount(id)}
+          href="/accounts/{id}/edit"
           variant="outline"
           size="sm"
           aria-label="Edit account {name}">

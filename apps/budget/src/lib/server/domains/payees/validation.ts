@@ -18,24 +18,28 @@ export const createPayeeSchema = z.object({
     .transform(val => val || null),
 
   // Budgeting Integration Fields
-  defaultCategoryId: z.number().int().positive().optional().nullable(),
-  defaultBudgetId: z.number().int().positive().optional().nullable(),
+  defaultCategoryId: z.number().int().optional().nullable(),
+  defaultBudgetId: z.number().int().optional().nullable(),
   payeeType: z.enum(payeeTypes).optional().nullable(),
 
   // Analytics Support Fields
   taxRelevant: z.boolean().optional().default(false),
 
   // Contact Information Fields
-  website: z.string().url("Invalid website URL").max(500).optional().nullable(),
+  website: z.string().optional().nullable().refine((val) => !val || val.trim() === '' || z.string().url().safeParse(val).success, {
+    message: "Invalid website URL"
+  }),
   phone: z.string().max(20).optional().nullable(),
-  email: z.string().email("Invalid email address").max(255).optional().nullable(),
+  email: z.string().optional().nullable().refine((val) => !val || val.trim() === '' || z.string().email().safeParse(val).success, {
+    message: "Invalid email address"
+  }),
 
   // Organization Fields
   address: z.any().optional().nullable(), // JSON field
   accountNumber: z.string().max(100).optional().nullable(),
 
   // Advanced Features Fields
-  alertThreshold: z.number().positive().optional().nullable(),
+  alertThreshold: z.number().min(0).optional().nullable(),
   isSeasonal: z.boolean().optional().default(false),
   subscriptionInfo: z.any().optional().nullable(), // JSON field
   tags: z.any().optional().nullable(), // JSON field
@@ -63,12 +67,12 @@ export const updatePayeeSchema = z.object({
     .transform(val => val || null),
 
   // Budgeting Integration Fields
-  defaultCategoryId: z.number().int().positive().optional().nullable(),
-  defaultBudgetId: z.number().int().positive().optional().nullable(),
+  defaultCategoryId: z.number().int().optional().nullable(),
+  defaultBudgetId: z.number().int().optional().nullable(),
   payeeType: z.enum(payeeTypes).optional().nullable(),
 
   // Transaction Automation Fields
-  avgAmount: z.number().positive().optional().nullable(),
+  avgAmount: z.number().optional().nullable(),
   paymentFrequency: z.enum(paymentFrequencies).optional().nullable(),
   lastTransactionDate: z.string().optional().nullable(),
 
@@ -77,16 +81,20 @@ export const updatePayeeSchema = z.object({
   isActive: z.boolean().optional(),
 
   // Contact Information Fields
-  website: z.string().url("Invalid website URL").max(500).optional().nullable(),
+  website: z.string().optional().nullable().refine((val) => !val || val.trim() === '' || z.string().url().safeParse(val).success, {
+    message: "Invalid website URL"
+  }),
   phone: z.string().max(20).optional().nullable(),
-  email: z.string().email("Invalid email address").max(255).optional().nullable(),
+  email: z.string().optional().nullable().refine((val) => !val || val.trim() === '' || z.string().email().safeParse(val).success, {
+    message: "Invalid email address"
+  }),
 
   // Organization Fields
   address: z.any().optional().nullable(),
   accountNumber: z.string().max(100).optional().nullable(),
 
   // Advanced Features Fields
-  alertThreshold: z.number().positive().optional().nullable(),
+  alertThreshold: z.number().min(0).optional().nullable(),
   isSeasonal: z.boolean().optional(),
   subscriptionInfo: z.any().optional().nullable(),
   tags: z.any().optional().nullable(),

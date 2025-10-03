@@ -215,3 +215,4 @@ export class WizardStore {
 export const accountWizardStore = new WizardStore();
 export const scheduleWizardStore = new WizardStore();
 export const budgetWizardStore = new WizardStore();
+export const transactionWizardStore = new WizardStore();

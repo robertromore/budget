@@ -1,6 +1,5 @@
-import { superForm } from 'sveltekit-superforms/client';
 import { zod4Client } from 'sveltekit-superforms/adapters';
-import type { z } from 'zod';
+import { superForm } from 'sveltekit-superforms/client';
 
 export interface EntityFormOptions<T = any> {
   formData: any;
@@ -38,10 +37,8 @@ export function useEntityForm<T = any>(options: EntityFormOptions<T>): any {
           onUpdate(entity);
         } else if (!isUpdate && onSave) {
           onSave(entity);
-        }
-
-        // Call generic onSave if provided (for backward compatibility)
-        if (onSave && !onUpdate) {
+        } else if (onSave && !onUpdate) {
+          // Backward compatibility: only call if not already handled above
           onSave(entity);
         }
       }

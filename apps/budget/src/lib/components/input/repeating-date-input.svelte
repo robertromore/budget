@@ -51,12 +51,14 @@ import {Label} from '$lib/components/ui/label';
 import {Input} from '$lib/components/ui/input';
 import {Badge} from '$lib/components/ui/badge';
 import {Separator} from '$lib/components/ui/separator';
-import {dateFormatter} from '$lib/utils/date-formatters';
+import {dateFormatter, pluralRules} from '$lib/utils/date-formatters';
 import {weekOptions, weekdayOptions} from '$lib/utils/date-options';
+import {nextDaily, nextWeekly, nextMonthly, nextYearly} from '$lib/utils/date-frequency';
 
 import CalendarDays from '@lucide/svelte/icons/calendar-days';
 import Repeat from '@lucide/svelte/icons/repeat';
 import AlertCircle from '@lucide/svelte/icons/alert-circle';
+import X from '@lucide/svelte/icons/x';
 
 import RepeatingDateInputModel from '$lib/models/repeating_date.svelte';
 
@@ -107,6 +109,75 @@ const isUpcomingDate = (date: DateValue) => {
     return d.year === date.year && d.month === date.month && d.day === date.day;
   });
 };
+
+const isSpecificDate = (date: DateValue) => {
+  const specificDates = value.specific_dates || [];
+  return specificDates.some((d) => {
+    return d.year === date.year && d.month === date.month && d.day === date.day;
+  });
+};
+
+// Specific dates button text
+const specificDatesButtonText = $derived.by(() => {
+  const count = value.specific_dates?.length || 0;
+  if (count === 0) return 'Add specific dates';
+  const plural = pluralRules.select(count) === 'one' ? '' : 's';
+  return `${count} date${plural} selected`;
+});
+
+// Generate next occurrences independent of calendar navigation
+const nextOccurrences = $derived.by(() => {
+  if (!value.start) return [];
+
+  const frequency = value.frequency || 'daily';
+  const interval = value.interval || 1;
+  const startDate = value.start;
+
+  // Generate enough dates for display (50 should be more than enough for the first 5)
+  const endDate = startDate.add({ years: 2 });
+  const limit = 50;
+
+  try {
+    let dates: DateValue[] = [];
+
+    switch (frequency) {
+      case 'daily':
+        dates = nextDaily(startDate, endDate, interval, limit);
+        break;
+      case 'weekly': {
+        const weekDays = value.week_days ?? [];
+        dates = nextWeekly(startDate, endDate, interval, weekDays, limit);
+        break;
+      }
+      case 'monthly':
+        dates = nextMonthly(startDate, endDate, interval, value.days || null, value.weeks || [], value.weeks_days || [], limit);
+        break;
+      case 'yearly':
+        dates = nextYearly(startDate, startDate, endDate, interval, limit);
+        break;
+    }
+
+    // Add specific dates
+    const specificDates = value.specific_dates || [];
+    dates.push(...specificDates);
+
+    // Deduplicate dates
+    const uniqueDatesMap = new Map<string, DateValue>();
+    for (const date of dates) {
+      const key = date.toString();
+      if (!uniqueDatesMap.has(key)) {
+        uniqueDatesMap.set(key, date);
+      }
+    }
+
+    // Sort and return first 5
+    const uniqueDates = Array.from(uniqueDatesMap.values()).sort((a, b) => a.compare(b));
+    return uniqueDates.slice(0, 5);
+  } catch (error) {
+    console.warn('Error generating next occurrences:', error);
+    return [];
+  }
+});
 
 // Event handlers
 const handleFrequencyChange = (newFrequency: string) => {
@@ -162,6 +233,25 @@ const handleDayToggle = (day: number) => {
     value.days = [...current, day].sort();
   }
 };
+
+const handleAddSpecificDate = (date: DateValue | undefined) => {
+  if (!date) return;
+
+  const current = value.specific_dates || [];
+  // Check if date already exists
+  const exists = current.some(d => d.year === date.year && d.month === date.month && d.day === date.day);
+
+  if (!exists) {
+    value.specific_dates = [...current, date].sort((a, b) => a.compare(b));
+  }
+};
+
+const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
+  const current = value.specific_dates || [];
+  value.specific_dates = current.filter(d =>
+    !(d.year === dateToRemove.year && d.month === dateToRemove.month && d.day === dateToRemove.day)
+  );
+};
 </script>
 
 <div class={cn('space-y-6', className)}>
@@ -169,11 +259,9 @@ const handleDayToggle = (day: number) => {
   <div class="space-y-2">
     <Label for="start-date" class="text-sm font-medium">Start Date</Label>
     <Popover.Root>
-      <Popover.Trigger>
-        <Button variant="outline" class="w-full justify-start text-left font-normal" {disabled}>
-          <CalendarDays class="mr-2 h-4 w-4" />
-          {value.start ? formatDate(value.start) : 'Select a date'}
-        </Button>
+      <Popover.Trigger class="inline-flex h-10 w-full items-center justify-start whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-left text-sm font-normal ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" {disabled}>
+        <CalendarDays class="mr-2 h-4 w-4" />
+        {value.start ? formatDate(value.start) : 'Select a date'}
       </Popover.Trigger>
       <Popover.Content class="w-auto p-0" align="start">
         <Calendar.Calendar type="single" initialFocus bind:value={value.start} {disabled} />
@@ -408,6 +496,78 @@ const handleDayToggle = (day: number) => {
 
           <Separator />
 
+          <!-- Holiday Handling -->
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <Label class="text-sm font-medium">Holiday Handling</Label>
+              <p class="text-muted-foreground text-xs">Adjust dates that fall on US federal holidays</p>
+            </div>
+
+            <RadioGroup.Root bind:value={value.moveHolidays} {disabled}>
+              <div class="space-y-2">
+                <div class="flex items-center space-x-2">
+                  <RadioGroup.Item value="none" id="move-holidays-none" />
+                  <Label class="text-sm" for="move-holidays-none">No adjustment</Label>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <RadioGroup.Item value="next_weekday" id="move-holidays-next" />
+                  <Label class="text-sm" for="move-holidays-next">Move to next weekday</Label>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <RadioGroup.Item value="previous_weekday" id="move-holidays-previous" />
+                  <Label class="text-sm" for="move-holidays-previous">Move to previous weekday</Label>
+                </div>
+              </div>
+            </RadioGroup.Root>
+          </div>
+
+          <Separator />
+
+          <!-- Additional Dates -->
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <Label class="text-sm font-medium">Additional Dates</Label>
+              <p class="text-muted-foreground text-xs">Add specific dates to include in the schedule</p>
+            </div>
+
+            <Popover.Root>
+              <Popover.Trigger class="inline-flex h-10 w-full items-center justify-start whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" {disabled}>
+                <CalendarDays class="mr-2 h-4 w-4" />
+                {specificDatesButtonText}
+              </Popover.Trigger>
+              <Popover.Content class="w-auto p-0" align="start">
+                <Calendar.Calendar
+                  type="multiple"
+                  value={value.specific_dates}
+                  onValueChange={(dates) => {
+                    value.specific_dates = dates;
+                  }}
+                  {disabled}
+                  initialFocus />
+              </Popover.Content>
+            </Popover.Root>
+
+            {#if value.specific_dates && value.specific_dates.length > 0}
+              <div class="space-y-1.5">
+                {#each value.specific_dates as date}
+                  <div class="bg-muted/50 flex items-center justify-between rounded p-2">
+                    <span class="text-sm">{formatDate(date)}</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      class="h-6 w-6"
+                      onclick={() => handleRemoveSpecificDate(date)}
+                      {disabled}>
+                      <X class="h-4 w-4" />
+                    </Button>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </div>
+
+          <Separator />
+
           <!-- End Condition -->
           <div class="space-y-4">
             <Label
@@ -457,14 +617,9 @@ const handleDayToggle = (day: number) => {
                 <Tabs.Content value="until" class="space-y-2">
                   Repeat until
                   <Popover.Root>
-                    <Popover.Trigger>
-                      <Button
-                        variant="outline"
-                        class="ml-1 w-full justify-start text-left font-normal"
-                        {disabled}>
-                        <CalendarDays class="mr-2 h-4 w-4" />
-                        {value.end ? formatDate(value.end) : 'Select end date'}
-                      </Button>
+                    <Popover.Trigger class="ml-1 inline-flex h-10 w-full items-center justify-start whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-left text-sm font-normal ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" {disabled}>
+                      <CalendarDays class="mr-2 h-4 w-4" />
+                      {value.end ? formatDate(value.end) : 'Select end date'}
                     </Popover.Trigger>
                     <Popover.Content class="w-auto p-0" align="start">
                       <Calendar.Calendar
@@ -515,33 +670,111 @@ const handleDayToggle = (day: number) => {
         <!-- Calendar Preview -->
         <div class="space-y-2">
           <Label class="text-muted-foreground text-xs font-medium">Calendar preview:</Label>
-          <Calendar.Calendar
-            type="single"
-            value={value.start}
-            class="rounded-md border [--cell-size:--spacing(11)] md:[--cell-size:--spacing(12.5)]"
-            readonly
-            bind:placeholder={value.placeholder}
-            captionLayout="dropdown">
-            {#snippet day({day, outsideMonth})}
-              {@const isStartDate = value.start && day === value.start}
-              {@const isRecurring = isUpcomingDate(day)}
+          <div class="flex flex-col md:flex-row gap-4 items-start">
+            <div class="inline-block">
+              <Calendar.Calendar
+                type="single"
+                value={value.start}
+                class="rounded-md border [--cell-size:--spacing(11)] md:[--cell-size:--spacing(12.5)]"
+                readonly
+                bind:placeholder={value.placeholder}
+                captionLayout="dropdown">
+                {#snippet day({day, outsideMonth})}
+                  {@const isStartDate = value.start && day.year === value.start.year && day.month === value.start.month && day.day === value.start.day}
+                  {@const isRecurring = isUpcomingDate(day)}
+                  {@const isSpecific = isSpecificDate(day)}
+                  {@const todayDate = today(getLocalTimeZone())}
+                  {@const isToday = day.year === todayDate.year && day.month === todayDate.month && day.day === todayDate.day}
+                  {@const prevDay = day.subtract({ days: 1 })}
+                  {@const nextDay = day.add({ days: 1 })}
+                  {@const isPrevRecurring = isUpcomingDate(prevDay)}
+                  {@const isNextRecurring = isUpcomingDate(nextDay)}
+                  {@const isPrevSpecific = isSpecificDate(prevDay)}
+                  {@const isNextSpecific = isSpecificDate(nextDay)}
 
-              <Calendar.Day
-                class={cn(
-                  isStartDate
-                    ? 'bg-green-500 font-bold text-white ring-2 ring-green-300 hover:bg-green-600'
-                    : isRecurring
-                      ? outsideMonth
-                        ? 'bg-primary/30 text-primary hover:bg-primary/40 border-primary/50 border'
-                        : 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
-                      : outsideMonth
-                        ? 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
-                        : ''
-                )}>
-                {day.day}
-              </Calendar.Day>
-            {/snippet}
-          </Calendar.Calendar>
+                  <Calendar.Day
+                    class={cn(
+                      isStartDate
+                        ? outsideMonth
+                          ? '!bg-white dark:!bg-transparent ring-2 ring-green-500/40 !text-green-600/50 dark:!text-green-400/50 font-semibold'
+                          : '!bg-white dark:!bg-transparent ring-2 ring-green-500 !text-green-600 dark:!text-green-400 font-semibold'
+                        : isSpecific
+                          ? outsideMonth
+                            ? 'bg-amber-500/30 text-amber-700 hover:bg-amber-500/40 border-2 border-dotted border-amber-500/50'
+                            : 'bg-amber-500 text-white hover:bg-amber-600 border-2 border-dotted border-amber-300'
+                          : isRecurring
+                            ? outsideMonth
+                              ? 'bg-primary/30 text-primary hover:bg-primary/40 border-primary/50 border'
+                              : 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                            : isToday
+                              ? outsideMonth
+                                ? 'border-2 border-blue-500/40 !text-blue-600/50 dark:!text-blue-400/50 font-medium'
+                                : 'border-2 border-blue-500 !text-blue-600 dark:!text-blue-400 font-medium'
+                              : outsideMonth
+                                ? 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
+                                : '',
+                      // Flow adjacent highlighted days together
+                      isRecurring && isPrevRecurring && 'rounded-l-none',
+                      isRecurring && isNextRecurring && 'rounded-r-none',
+                      isSpecific && isPrevSpecific && 'rounded-l-none',
+                      isSpecific && isNextSpecific && 'rounded-r-none'
+                    )}>
+                    {day.day}
+                  </Calendar.Day>
+                {/snippet}
+              </Calendar.Calendar>
+            </div>
+
+            <!-- Next Occurrences List -->
+            {#if nextOccurrences.length > 0}
+              <div class="space-y-3 flex-1">
+                <div class="space-y-2">
+                  <Label class="text-muted-foreground text-xs font-medium">Next occurrences:</Label>
+                  <div class="space-y-1.5">
+                    {#each nextOccurrences as date, index}
+                      <div class="flex items-center gap-2 text-sm">
+                        <Badge variant="outline" class="w-6 h-6 p-0 flex items-center justify-center text-xs">
+                          {index + 1}
+                        </Badge>
+                        <span>{formatDate(date)}</span>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+
+                <!-- Weekend/Holiday Adjustments -->
+                {#if value.moveWeekends !== 'none' && value.moveWeekends !== 0 || value.moveHolidays !== 'none' && value.moveHolidays !== 0}
+                  <div class="space-y-2 pt-2 border-t">
+                    <Label class="text-muted-foreground text-xs font-medium">Adjustments:</Label>
+                    <div class="space-y-1.5 text-xs">
+                      {#if value.moveWeekends === 'next_weekday' || value.moveWeekends === 1}
+                        <div class="flex items-center gap-2 text-muted-foreground">
+                          <Badge variant="secondary" class="text-xs px-1.5 py-0">Weekend</Badge>
+                          <span>Move to next weekday (Monday)</span>
+                        </div>
+                      {:else if value.moveWeekends === 'previous_weekday' || value.moveWeekends === 2}
+                        <div class="flex items-center gap-2 text-muted-foreground">
+                          <Badge variant="secondary" class="text-xs px-1.5 py-0">Weekend</Badge>
+                          <span>Move to previous weekday (Friday)</span>
+                        </div>
+                      {/if}
+                      {#if value.moveHolidays === 'next_weekday' || value.moveHolidays === 1}
+                        <div class="flex items-center gap-2 text-muted-foreground">
+                          <Badge variant="secondary" class="text-xs px-1.5 py-0">Holiday</Badge>
+                          <span>Move to next weekday</span>
+                        </div>
+                      {:else if value.moveHolidays === 'previous_weekday' || value.moveHolidays === 2}
+                        <div class="flex items-center gap-2 text-muted-foreground">
+                          <Badge variant="secondary" class="text-xs px-1.5 py-0">Holiday</Badge>
+                          <span>Move to previous weekday</span>
+                        </div>
+                      {/if}
+                    </div>
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </div>
         </div>
 
         <!-- Legend -->
@@ -549,12 +782,26 @@ const handleDayToggle = (day: number) => {
           <Label class="text-muted-foreground text-xs font-medium">Legend:</Label>
           <div class="flex flex-wrap gap-3 text-xs">
             <div class="flex items-center gap-1">
+              <div class="bg-white dark:bg-transparent ring-2 ring-green-500 h-3 w-3 rounded"></div>
+              <span>Start date</span>
+            </div>
+            <div class="flex items-center gap-1">
               <div class="bg-primary h-3 w-3 rounded"></div>
               <span>Recurring dates</span>
             </div>
             <div class="flex items-center gap-1">
               <div class="bg-primary/30 border-primary/50 h-3 w-3 rounded border"></div>
               <span>Adjacent month occurrences</span>
+            </div>
+            {#if value.specific_dates && value.specific_dates.length > 0}
+              <div class="flex items-center gap-1">
+                <div class="bg-amber-500 border-2 border-dotted border-amber-300 h-3 w-3 rounded"></div>
+                <span>Specific dates</span>
+              </div>
+            {/if}
+            <div class="flex items-center gap-1">
+              <div class="border-2 border-blue-500 h-3 w-3 rounded"></div>
+              <span>Today</span>
             </div>
           </div>
         </div>

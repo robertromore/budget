@@ -8,6 +8,7 @@ import {
   BudgetService,
   BudgetPeriodService,
   BudgetTransactionService,
+  BudgetForecastService,
 } from "$lib/server/domains/budgets";
 import {publicProcedure, t} from "$lib/trpc";
 import {TRPCError} from "@trpc/server";
@@ -115,6 +116,41 @@ const allocationIdSchema = z.object({
   id: z.number().int().positive(),
 });
 
+const createBudgetGroupSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  description: z.string().trim().max(500).optional().nullable(),
+  parentId: z.number().int().positive().optional().nullable(),
+  spendingLimit: z.number().optional().nullable(),
+});
+
+const updateBudgetGroupSchema = z
+  .object({
+    id: z.number().int().positive(),
+    name: z.string().trim().min(2).max(80).optional(),
+    description: z.string().trim().max(500).optional().nullable(),
+    parentId: z.number().int().positive().optional().nullable(),
+    spendingLimit: z.number().optional().nullable(),
+  })
+  .refine((value) => {
+    const {name, description, parentId, spendingLimit} = value;
+    return (
+      name !== undefined ||
+      description !== undefined ||
+      parentId !== undefined ||
+      spendingLimit !== undefined
+    );
+  }, "At least one field must be provided when updating a budget group");
+
+const budgetGroupIdSchema = z.object({
+  id: z.number().int().positive(),
+});
+
+const listBudgetGroupsSchema = z
+  .object({
+    parentId: z.number().int().positive().optional().nullable(),
+  })
+  .optional();
+
 const budgetService = new BudgetService();
 const periodService = new BudgetPeriodService();
 const transactionService = new BudgetTransactionService();
@@ -167,6 +203,40 @@ export const budgetRoutes = t.router({
       throw translateDomainError(error);
     }
   }),
+  duplicate: publicProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      newName: z.string().trim().min(2).max(80).optional(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await budgetService.duplicateBudget(input.id, input.newName);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+  bulkArchive: publicProcedure
+    .input(z.object({
+      ids: z.array(z.number().int().positive()).min(1),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await budgetService.bulkArchive(input.ids);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+  bulkDelete: publicProcedure
+    .input(z.object({
+      ids: z.array(z.number().int().positive()).min(1),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await budgetService.bulkDelete(input.ids);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
   ensurePeriodInstance: publicProcedure.input(ensurePeriodSchema).mutation(async ({input}) => {
     try {
       return await periodService.ensureInstanceForDate(input.templateId, {
@@ -330,6 +400,170 @@ export const budgetRoutes = t.router({
     .query(async ({input}) => {
       try {
         return await budgetService.getSurplusEnvelopes(input.budgetId, input.minimumSurplus);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  // Get applicable budgets for a transaction based on account and category
+  getApplicableBudgets: publicProcedure
+    .input(z.object({
+      accountId: z.number().int().positive().optional(),
+      categoryId: z.number().int().positive().optional(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.getApplicableBudgets(input.accountId, input.categoryId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  // Validate transaction against strict budget enforcement
+  validateTransactionStrict: publicProcedure
+    .input(z.object({
+      amount: z.number(),
+      accountId: z.number().int().positive().optional(),
+      categoryId: z.number().int().positive().optional(),
+      transactionId: z.number().int().positive().optional(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.validateTransactionAgainstStrictBudgets(
+          input.amount,
+          input.accountId,
+          input.categoryId,
+          input.transactionId
+        );
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  // Budget group operations
+  createGroup: publicProcedure.input(createBudgetGroupSchema).mutation(async ({input}) => {
+    try {
+      return await budgetService.createBudgetGroup(input);
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  }),
+
+  getGroup: publicProcedure.input(budgetGroupIdSchema).query(async ({input}) => {
+    try {
+      return await budgetService.getBudgetGroup(input.id);
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  }),
+
+  listGroups: publicProcedure.input(listBudgetGroupsSchema).query(async ({input}) => {
+    try {
+      const parentId = input?.parentId;
+      return await budgetService.listBudgetGroups(parentId);
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  }),
+
+  getRootGroups: publicProcedure.query(async () => {
+    try {
+      return await budgetService.getRootBudgetGroups();
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  }),
+
+  updateGroup: publicProcedure.input(updateBudgetGroupSchema).mutation(async ({input}) => {
+    try {
+      const {id, ...updates} = input;
+      return await budgetService.updateBudgetGroup(id, updates);
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  }),
+
+  deleteGroup: publicProcedure.input(budgetGroupIdSchema).mutation(async ({input}) => {
+    try {
+      await budgetService.deleteBudgetGroup(input.id);
+      return {success: true};
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  }),
+
+  // Analytics Endpoints
+
+  getSpendingTrends: publicProcedure
+    .input(z.object({budgetId: z.number().positive(), limit: z.number().positive().optional()}))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.getSpendingTrends(input.budgetId, input.limit);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getCategoryBreakdown: publicProcedure
+    .input(z.object({budgetId: z.number().positive()}))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.getCategoryBreakdown(input.budgetId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getDailySpending: publicProcedure
+    .input(
+      z.object({
+        budgetId: z.number().positive(),
+        startDate: z.string(),
+        endDate: z.string(),
+      })
+    )
+    .query(async ({input}) => {
+      try {
+        return await budgetService.getDailySpending(input.budgetId, input.startDate, input.endDate);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getSummaryStats: publicProcedure
+    .input(z.object({budgetId: z.number().positive()}))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.getBudgetSummaryStats(input.budgetId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  // Forecast & Schedule Integration Endpoints
+
+  getBudgetForecast: publicProcedure
+    .input(
+      z.object({
+        budgetId: z.number().positive(),
+        daysAhead: z.number().positive().optional().default(30),
+      })
+    )
+    .query(async ({input}) => {
+      try {
+        const forecastService = new BudgetForecastService();
+        return await forecastService.forecastBudgetImpact(input.budgetId, input.daysAhead);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  autoAllocateBudget: publicProcedure
+    .input(z.object({budgetId: z.number().positive()}))
+    .mutation(async ({input}) => {
+      try {
+        const forecastService = new BudgetForecastService();
+        return await forecastService.autoAllocateScheduledExpenses(input.budgetId);
       } catch (error) {
         throw translateDomainError(error);
       }

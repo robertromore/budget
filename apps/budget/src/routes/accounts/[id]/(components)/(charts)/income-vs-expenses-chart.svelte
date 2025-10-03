@@ -1,6 +1,5 @@
 <script lang="ts">
-import { ChartContainer, type ChartConfig } from '$lib/components/ui/chart';
-import { Chart, Spline, Svg } from 'layerchart';
+import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
 import type {TransactionsFormat} from '$lib/types';
 import { monthYearFmt, monthYearShortFmt } from '$lib/utils/date-formatters';
 import { timezone } from '$lib/utils/dates';
@@ -127,13 +126,6 @@ const chartConfig: ChartConfig = {
   {/snippet}
 
   {#snippet chart({ data }: { data: typeof chartData })}
-    <ChartContainer config={chartConfig} class="h-full w-full">
-      <Chart {data} x="x" yNice>
-        <Svg>
-          <Spline y="income" class="stroke-chart-1 stroke-2" />
-          <Spline y="expenses" class="stroke-chart-2 stroke-2" />
-        </Svg>
-      </Chart>
-    </ChartContainer>
+    <ChartPlaceholder class="h-full" title="Income vs Expenses Chart" />
   {/snippet}
 </AnalyticsChartShell>

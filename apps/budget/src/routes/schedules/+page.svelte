@@ -5,7 +5,6 @@ import {Badge} from '$lib/components/ui/badge';
 import {Separator} from '$lib/components/ui/separator';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import type {Schedule} from '$lib/schema/schedules.js';
-import {managingScheduleId, newScheduleDialog} from '$lib/states/ui/global.svelte';
 import {SchedulesState} from '$lib/states/entities';
 import {currencyFormatter, recurringFormatter} from '$lib/utils/formatters';
 import Calendar from '@lucide/svelte/icons/calendar';
@@ -77,17 +76,18 @@ function cancelDelete() {
 }
 </script>
 
+<svelte:head>
+  <title>Schedules - Budget App</title>
+  <meta name="description" content="Manage your scheduled transactions" />
+</svelte:head>
+
 <div class="container mx-auto p-6">
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-3xl font-bold tracking-tight">Schedules</h1>
       <p class="text-muted-foreground">Manage your recurring and scheduled transactions</p>
     </div>
-    <Button
-      onclick={() => {
-        managingScheduleId.current = 0;
-        newScheduleDialog.current = true;
-      }}>
+    <Button href="/schedules/new">
       <DollarSign class="h-4 w-4 mr-2" />
       Add Schedule
     </Button>
@@ -98,11 +98,7 @@ function cancelDelete() {
       <Calendar class="h-12 w-12 mx-auto text-muted-foreground mb-4" />
       <h3 class="text-lg font-semibold mb-2">No schedules yet</h3>
       <p class="text-muted-foreground mb-4">Create your first schedule to track recurring transactions</p>
-      <Button
-        onclick={() => {
-          managingScheduleId.current = 0;
-          newScheduleDialog.current = true;
-        }}>
+      <Button href="/schedules/new">
         <DollarSign class="h-4 w-4 mr-2" />
         Create Schedule
       </Button>
@@ -116,10 +112,7 @@ function cancelDelete() {
               variant="ghost"
               size="icon"
               class="h-8 w-8"
-              onclick={() => {
-                managingScheduleId.current = schedule.id;
-                newScheduleDialog.current = true;
-              }}>
+              href="/schedules/{schedule.slug}/edit">
               <Edit class="h-4 w-4" />
             </Button>
             <Button

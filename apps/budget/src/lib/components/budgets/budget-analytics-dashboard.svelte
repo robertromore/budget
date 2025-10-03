@@ -4,11 +4,10 @@
   import {Badge, type BadgeVariant} from "$lib/components/ui/badge";
   import Progress from "$lib/components/ui/progress/progress.svelte";
   import * as Tabs from "$lib/components/ui/tabs";
-  import {ChartContainer, ChartTooltip} from "$lib/components/ui/chart";
-  import {Chart, Svg, Area, Spline, Arc, Axis} from "layerchart";
+  import ChartPlaceholder from "$lib/components/ui/chart-placeholder.svelte";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
-  import {listBudgets} from "$lib/query/budgets";
+  import {listBudgets, getSpendingTrends} from "$lib/query/budgets";
   import {
     TrendingUp,
     AlertTriangle,
@@ -88,16 +87,42 @@
     }).sort((a, b) => b.utilizationRate - a.utilizationRate);
   });
 
+  // Fetch spending trends for the first budget (for demonstration)
+  const firstBudget = $derived(allBudgets[0]);
+  const spendingTrendsQuery = $derived.by(() => {
+    if (!firstBudget?.id) return null;
+    return getSpendingTrends(firstBudget.id).options();
+  });
+
   // Chart data for spending trends
   const spendingTrendData = $derived.by(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    return months.map((month, index) => ({
-      month,
-      allocated: totalAllocated * (0.8 + Math.random() * 0.4),
-      spent: totalSpent * (0.6 + Math.random() * 0.6),
-      date: new Date(2024, index, 1)
+    const trendsData = spendingTrendsQuery ? $spendingTrendsQuery.data : null;
+
+    if (!trendsData || trendsData.length === 0) {
+      // Fallback to empty data if no real data available
+      return [];
+    }
+
+    return trendsData.map((period) => ({
+      month: new Date(period.startDate).toLocaleDateString('en-US', { month: 'short' }),
+      allocated: period.allocated,
+      spent: period.actual,
+      date: new Date(period.startDate)
     }));
   });
+
+  // Color mapping for budget types
+  const typeColorMap = new SvelteMap([
+    ['account-monthly', 'hsl(var(--primary))'],
+    ['category-envelope', 'hsl(var(--secondary))'],
+    ['goal-based', 'hsl(var(--accent))'],
+    ['scheduled-expense', 'hsl(var(--muted))'],
+    ['general', 'hsl(var(--foreground))'],
+  ]);
+
+  function getTypeColor(type: string): string {
+    return typeColorMap.get(type) ?? 'hsl(var(--foreground))';
+  }
 
   // Budget category breakdown
   const categoryBreakdown = $derived.by(() => {
@@ -121,18 +146,6 @@
 
     return Object.values(categories);
   });
-
-  const typeColorMap = new SvelteMap([
-    ['account-monthly', 'hsl(var(--primary))'],
-    ['category-envelope', 'hsl(var(--secondary))'],
-    ['goal-based', 'hsl(var(--accent))'],
-    ['scheduled-expense', 'hsl(var(--muted))'],
-    ['general', 'hsl(var(--foreground))'],
-  ]);
-
-  const getTypeColor = $derived((type: string) =>
-    typeColorMap.get(type) ?? 'hsl(var(--foreground))'
-  );
 
   function getStatusColor(status: string): string {
     const colors = {
@@ -268,17 +281,7 @@
           </Card.Description>
         </Card.Header>
         <Card.Content>
-          <ChartContainer config={chartConfig} class="h-[300px] w-full">
-            <Chart data={spendingTrendData} x="date" y={['allocated', 'spent']} yNice>
-              <Svg>
-                <Area y="allocated" fill="hsl(var(--primary) / 0.2)" />
-                <Spline y="spent" stroke="hsl(var(--destructive))" strokeWidth={3} />
-                <Axis placement="left" />
-                <Axis placement="bottom" format="timeFormat('%b')" />
-              </Svg>
-              <ChartTooltip />
-            </Chart>
-          </ChartContainer>
+          <ChartPlaceholder class="h-[300px]" title="Spending Trends Chart" />
         </Card.Content>
       </Card.Root>
     </Tabs.Content>
@@ -295,20 +298,7 @@
             </Card.Description>
           </Card.Header>
           <Card.Content>
-            {#if categoryBreakdown.length > 0}
-              <ChartContainer config={pieChartConfig} class="h-[250px] w-full">
-                <Chart data={categoryBreakdown} x="name" y="value">
-                  <Svg>
-                    <Arc innerRadius={60} cornerRadius={4} padAngle={0.02} />
-                  </Svg>
-                  <ChartTooltip />
-                </Chart>
-              </ChartContainer>
-            {:else}
-              <div class="flex h-[250px] items-center justify-center text-muted-foreground">
-                No budget data available
-              </div>
-            {/if}
+            <ChartPlaceholder class="h-[250px]" title="Budget Types Chart" />
           </Card.Content>
         </Card.Root>
 

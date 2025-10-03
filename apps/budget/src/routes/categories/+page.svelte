@@ -1,55 +1,231 @@
 <script lang="ts">
 import {Button} from '$lib/components/ui/button';
-import * as Card from '$lib/components/ui/card';
 import Plus from '@lucide/svelte/icons/plus';
 import Tag from '@lucide/svelte/icons/tag';
+import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import {
-  newCategoryDialog,
   deleteCategoryDialog,
   deleteCategoryId,
-  managingCategoryId,
 } from '$lib/states/ui/categories.svelte';
+import {categorySearchState} from '$lib/states/ui/category-search.svelte';
+import CategorySearchToolbar from '$lib/components/categories/category-search-toolbar.svelte';
+import CategorySearchResults from '$lib/components/categories/category-search-results.svelte';
+import {goto} from '$app/navigation';
+import type {Category} from '$lib/schema';
 
 const categoriesState = $derived(CategoriesState.get());
 const categories = $derived(categoriesState.categories.values());
 const categoriesArray = $derived(Array.from(categories));
 const hasNoCategories = $derived(categoriesArray.length === 0);
 
+// Search state
+const search = categorySearchState;
+let searchResults = $state<Category[]>([]);
+let isSearching = $state(false);
+
+// Computed values
+const displayedCategories = $derived.by(() => {
+  return search.isSearchActive() ? searchResults : categoriesArray;
+});
+
+const shouldShowNoCategories = $derived.by(() => {
+  return !search.isSearchActive() && hasNoCategories;
+});
+
+// Dialog state
 let deleteDialogId = $derived(deleteCategoryId);
 let deleteDialogOpen = $derived(deleteCategoryDialog);
 
-const deleteCategory = (id: number) => {
-  deleteDialogId.current = id;
+// Client-side search and filter function
+const performSearch = () => {
+  if (!search.isSearchActive()) {
+    searchResults = [];
+    isSearching = false;
+    return;
+  }
+
+  isSearching = true;
+
+  try {
+    let results = [...categoriesArray];
+
+    // Filter by search query
+    if (search.query.trim()) {
+      const query = search.query.toLowerCase();
+      results = results.filter(category =>
+        category.name?.toLowerCase().includes(query) ||
+        category.notes?.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by hasParent
+    if (search.filters.hasParent !== undefined) {
+      results = results.filter(category =>
+        search.filters.hasParent
+          ? category.parentId !== null
+          : category.parentId === null
+      );
+    }
+
+    // Filter by categoryType
+    if (search.filters.categoryType) {
+      results = results.filter(category =>
+        category.categoryType === search.filters.categoryType
+      );
+    }
+
+    // Filter by isTaxDeductible
+    if (search.filters.isTaxDeductible !== undefined) {
+      results = results.filter(category =>
+        category.isTaxDeductible === search.filters.isTaxDeductible
+      );
+    }
+
+    // Filter by spendingPriority
+    if (search.filters.spendingPriority) {
+      results = results.filter(category =>
+        category.spendingPriority === search.filters.spendingPriority
+      );
+    }
+
+    // Filter by isSeasonal
+    if (search.filters.isSeasonal !== undefined) {
+      results = results.filter(category =>
+        category.isSeasonal === search.filters.isSeasonal
+      );
+    }
+
+    // Filter by isActive
+    if (search.filters.isActive !== undefined) {
+      results = results.filter(category =>
+        category.isActive === search.filters.isActive
+      );
+    }
+
+    // Sort results
+    results.sort((a, b) => {
+      let comparison = 0;
+
+      switch (search.sortBy) {
+        case 'name':
+          comparison = (a.name || '').localeCompare(b.name || '');
+          break;
+        case 'created':
+          comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
+          break;
+        default:
+          comparison = (a.name || '').localeCompare(b.name || '');
+      }
+
+      return search.sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    searchResults = results;
+    search.setResults(results);
+  } catch (error) {
+    console.error('Error filtering categories:', error);
+    searchResults = [];
+  } finally {
+    isSearching = false;
+  }
+};
+
+// Track if this is the first run
+let isFirstRun = true;
+
+// Debounced search effect
+$effect(() => {
+  // Track search state reactively
+  search.query;
+  search.filters;
+  search.sortBy;
+  search.sortOrder;
+
+  // Don't set loading state on initial mount
+  if (!isFirstRun) {
+    isSearching = true;
+  }
+  isFirstRun = false;
+
+  const timeoutId = setTimeout(() => {
+    performSearch();
+  }, 300);
+
+  return () => clearTimeout(timeoutId);
+});
+
+const deleteCategory = (category: Category) => {
+  deleteDialogId.current = category.id;
   deleteDialogOpen.setTrue();
 };
 
-const dialogOpen = $derived(newCategoryDialog);
-const managingCategory = $derived(managingCategoryId);
+const viewCategory = (category: Category) => {
+  goto(`/categories/${category.id}`);
+};
 
-const editCategory = (id: number) => {
-  managingCategory.current = id;
-  dialogOpen.current = true;
+const editCategory = (category: Category) => {
+  goto(`/categories/${category.id}/edit`);
+};
+
+const viewAnalytics = (category: Category) => {
+  goto(`/categories/${category.id}/analytics`);
 };
 </script>
 
+<svelte:head>
+  <title>Categories - Budget App</title>
+  <meta name="description" content="Manage your transaction categories" />
+</svelte:head>
+
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold tracking-tight">Categories</h1>
-    <Button
-      onclick={() => {
-        managingCategory.current = 0;
-        dialogOpen.current = true;
-      }}>
-      <Plus class="mr-2 h-4 w-4" />
-      Add Category
-    </Button>
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Categories</h1>
+      <p class="text-muted-foreground">
+        {#if search.isSearchActive()}
+          {searchResults.length} of {categoriesArray.length} categories
+        {:else}
+          {categoriesArray.length} categories total
+        {/if}
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <Button variant="outline" href="/categories/analytics">
+        <BarChart3 class="mr-2 h-4 w-4" />
+        Analytics Dashboard
+      </Button>
+      <Button href="/categories/new">
+        <Plus class="mr-2 h-4 w-4" />
+        Add Category
+      </Button>
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="space-y-4">
+    <!-- Search Toolbar -->
+    <CategorySearchToolbar
+      bind:searchQuery={search.query}
+      bind:filters={search.filters}
+      bind:viewMode={search.viewMode}
+      bind:sortBy={search.sortBy}
+      bind:sortOrder={search.sortOrder}
+      onSearchChange={(query) => search.updateQuery(query)}
+      onFiltersChange={(filters) => search.updateFilters(filters)}
+      onViewModeChange={(mode) => search.viewMode = mode}
+      onSortChange={(sortBy, sortOrder) => {
+        search.sortBy = sortBy;
+        search.sortOrder = sortOrder;
+      }}
+      onClearAll={() => search.clearAllFilters()}
+    />
   </div>
 
   <!-- Content -->
-  {#if hasNoCategories}
-    <!-- Empty State -->
+  {#if shouldShowNoCategories}
+    <!-- Empty State - No Categories -->
     <div class="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center">
       <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
         <Tag class="h-8 w-8 text-blue-600" />
@@ -60,51 +236,22 @@ const editCategory = (id: number) => {
         like groceries, utilities, entertainment, and more.
       </p>
       <Button
-        onclick={() => {
-          managingCategory.current = 0;
-          dialogOpen.current = true;
-        }}
+        href="/categories/new"
         class="bg-blue-600 hover:bg-blue-700">
         <Plus class="mr-2 h-4 w-4" />
         Create Your First Category
       </Button>
     </div>
   {:else}
-    <!-- Categories Grid -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {#each categoriesArray as { id, name, notes }}
-        <Card.Root>
-          <Card.Header>
-            <Card.Title class="flex items-center gap-2">
-              <Tag class="h-5 w-5 text-muted-foreground" />
-              <span>{name}</span>
-            </Card.Title>
-            {#if notes && notes.length > 0}
-              <Card.Description>
-                <span class="text-sm block">
-                  {notes.length > 80 ? notes.substring(0, 80) + '...' : notes}
-                </span>
-              </Card.Description>
-            {/if}
-          </Card.Header>
-          <Card.Footer class="flex gap-2">
-            <Button
-              onclick={() => editCategory(id)}
-              variant="outline"
-              size="sm"
-              aria-label="Edit category {name}">
-              Edit
-            </Button>
-            <Button
-              onclick={() => deleteCategory(id)}
-              variant="secondary"
-              size="sm"
-              aria-label="Delete category {name}">
-              Delete
-            </Button>
-          </Card.Footer>
-        </Card.Root>
-      {/each}
-    </div>
+    <!-- Search Results -->
+    <CategorySearchResults
+      categories={displayedCategories}
+      isLoading={isSearching}
+      searchQuery={search.query}
+      onView={viewCategory}
+      onEdit={editCategory}
+      onDelete={deleteCategory}
+      onViewAnalytics={viewAnalytics}
+    />
   {/if}
 </div>

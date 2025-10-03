@@ -23,9 +23,17 @@ interface DateGenerationResult {
 }
 
 /**
- * Maximum safety limit to prevent infinite loops
+ * Safety limit for database operations (pagination, bulk operations)
+ * This limit should stay low to prevent performance issues
  */
-const MAX_SAFETY_LIMIT = DATABASE_LIMITS.MAX_SAFETY_LIMIT;
+const DATABASE_SAFETY_LIMIT = DATABASE_LIMITS.MAX_SAFETY_LIMIT;
+
+/**
+ * Higher safety limit for calendar date generation
+ * This allows generating dates for extended calendar navigation
+ * while still preventing infinite loops
+ */
+const DATE_GENERATION_SAFETY_LIMIT = 10000;
 
 /**
  * Generate dates with either end date or limit constraint
@@ -39,8 +47,11 @@ function generateDatesWithConstraints(
   let totalGenerated = 0;
   let truncated = false;
 
-  // Determine the effective limit
-  const effectiveLimit = Math.min(limit ?? MAX_SAFETY_LIMIT, MAX_SAFETY_LIMIT);
+  // Determine the effective limit:
+  // - If limit is provided and reasonable, use it (capped at safety limit)
+  // - If no limit provided, use database safety limit as fallback
+  const providedLimit = limit ?? DATABASE_SAFETY_LIMIT;
+  const effectiveLimit = Math.min(providedLimit, DATE_GENERATION_SAFETY_LIMIT);
 
   while (totalGenerated < effectiveLimit) {
     const nextDate = generator();
@@ -64,7 +75,7 @@ function generateDatesWithConstraints(
     totalGenerated++;
 
     // Safety check to prevent infinite loops when all dates are before start
-    if (totalGenerated > MAX_SAFETY_LIMIT * 2) {
+    if (totalGenerated > DATE_GENERATION_SAFETY_LIMIT * 2) {
       break;
     }
   }

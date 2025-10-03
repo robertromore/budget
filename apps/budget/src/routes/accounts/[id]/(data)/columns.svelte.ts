@@ -35,6 +35,8 @@ import DataTableColumnHeader from "../(components)/data-table-column-header.svel
 import ManageCategoryForm from "$lib/components/forms/manage-category-form.svelte";
 import ManagePayeeForm from "$lib/components/forms/manage-payee-form.svelte";
 import BudgetAllocationSimpleCell from "../(components)/(cells)/budget-allocation-simple-cell.svelte";
+import EditableCategoryCell from "../(components)/(cells)/editable-category-cell.svelte";
+import ReadOnlyCategoryCell from "../(components)/(cells)/read-only-category-cell.svelte";
 
 export const columns = (
   categories: CategoriesState,
@@ -351,36 +353,34 @@ export const columns = (
       id: "category",
       cell: (info) => {
         const category = categories.getById(info.getValue() as number);
+        const transaction = info.row.original;
 
-        return renderEditableCell(info, {
-          scheduledRenderer: () => ({
-            value: category?.name || "—",
-            icon: SquareMousePointer
-          }),
-          editableRenderer: () => ({
-            component: EditableEntityCell,
-            props: {
-              value: category as EditableEntityItem,
-              entityLabel: "category",
-              onUpdateValue: (new_value) => updateHandler(info, "categoryId", new_value),
-              entities: categories.all as EditableEntityItem[],
-              icon: SquareMousePointer as unknown as Component,
-              management: {
-                enable: true,
-                component: ManageCategoryForm,
-                onSave: (new_value: EditableEntityItem, is_new: boolean) => {
-                  if (is_new) {
-                    categories.addCategory(new_value as Category);
-                  } else {
-                    categories.updateCategory(new_value as Category);
-                  }
-                },
-                onDelete: (id: number) => {
-                  categories.deleteCategory(id);
-                },
-              },
-            }
-          })
+        // Read-only for scheduled transactions
+        if (transaction.status === "scheduled") {
+          return renderComponent(ReadOnlyCategoryCell, { category });
+        }
+
+        // Editable for normal transactions
+        return renderComponent(EditableCategoryCell, {
+          value: category as EditableEntityItem,
+          entityLabel: "category",
+          onUpdateValue: (new_value) => updateHandler(info, "categoryId", new_value),
+          entities: categories.all as EditableEntityItem[],
+          icon: SquareMousePointer as unknown as Component,
+          management: {
+            enable: true,
+            component: ManageCategoryForm,
+            onSave: (new_value: EditableEntityItem, is_new: boolean) => {
+              if (is_new) {
+                categories.addCategory(new_value as Category);
+              } else {
+                categories.updateCategory(new_value as Category);
+              }
+            },
+            onDelete: (id: number) => {
+              categories.deleteCategory(id);
+            },
+          },
         });
       },
       aggregatedCell: () => {},

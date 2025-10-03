@@ -20,6 +20,7 @@
   import WizardStep from "./wizard-step.svelte";
   import RepeatingDateInput from "$lib/components/input/repeating-date-input.svelte";
   import DateInput from "$lib/components/input/date-input.svelte";
+  import MultiNumericInput from "$lib/components/input/multi-numeric-input.svelte";
   import RepeatingDateInputModel from "$lib/models/repeating_date.svelte";
   import { type DateValue, today, getLocalTimeZone } from "@internationalized/date";
   import { scheduleWizardStore, type WizardStep as WizardStepType } from "$lib/stores/wizardStore.svelte";
@@ -65,6 +66,22 @@
   ];
 
   const formData = $derived(scheduleWizardStore.formData);
+
+  // Amount state - sync with formData
+  let amountValue = $state<[number, number]>([0, 0]);
+  let amountType = $state<'exact' | 'approximate' | 'range'>('exact');
+
+  // Sync amountValue and amountType with formData
+  $effect(() => {
+    amountValue = [formData['amount'] ?? 0, formData['amount_2'] ?? 0];
+    amountType = (formData['amount_type'] as 'exact' | 'approximate' | 'range') ?? 'exact';
+  });
+
+  $effect(() => {
+    updateField('amount', amountValue[0]);
+    updateField('amount_2', amountValue[1]);
+    updateField('amount_type', amountType);
+  });
 
   // Set up validation engine
   const validationEngine = createScheduleValidationEngine();
@@ -161,13 +178,6 @@
       icon: Calendar,
       examples: ['Holiday bonus', 'Tax refund', 'One-time purchase']
     }
-  ];
-
-  // Amount type options
-  const amountTypes = [
-    { value: 'exact', label: 'Exact Amount', description: 'Always the same amount' },
-    { value: 'range', label: 'Amount Range', description: 'Between a minimum and maximum' },
-    { value: 'approximate', label: 'Approximate', description: 'Estimated amount that may vary' }
   ];
 </script>
 
@@ -308,88 +318,7 @@
     </div>
 
     <!-- Amount Configuration -->
-    <div class="space-y-4">
-      <div class="space-y-2">
-        <Label class="text-sm font-medium">Amount Type</Label>
-        <Select.Root
-          type="single"
-          value={formData['amount_type'] || 'exact'}
-          onValueChange={(value) => value && updateField('amount_type', value)}
-        >
-          <Select.Trigger>
-            {amountTypes.find(t => t.value === (formData['amount_type'] || 'exact'))?.label || 'Select amount type'}
-          </Select.Trigger>
-          <Select.Content>
-            {#each amountTypes as type}
-              <Select.Item value={type.value}>
-                <div class="flex flex-col">
-                  <span>{type.label}</span>
-                  <span class="text-xs text-muted-foreground">{type.description}</span>
-                </div>
-              </Select.Item>
-            {/each}
-          </Select.Content>
-        </Select.Root>
-      </div>
-
-      <!-- Amount Input -->
-      {#if (formData['amount_type'] || 'exact') === 'range'}
-        <div class="space-y-2">
-          <Label class="text-sm font-medium">Amount Range *</Label>
-          <div class="grid grid-cols-2 gap-2">
-            <div class="space-y-1">
-              <Label for="min-amount" class="text-xs">Min Amount</Label>
-              <div class="relative">
-                <DollarSign class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="min-amount"
-                  type="number"
-                  step="0.01"
-                  value={formData['amount'] || ''}
-                  oninput={(e) => updateField('amount', parseFloat(e.currentTarget.value) || 0)}
-                  placeholder="0.00"
-                  class="pl-10"
-                />
-              </div>
-            </div>
-            <div class="space-y-1">
-              <Label for="max-amount" class="text-xs">Max Amount</Label>
-              <div class="relative">
-                <DollarSign class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="max-amount"
-                  type="number"
-                  step="0.01"
-                  value={formData['amount_2'] || ''}
-                  oninput={(e) => updateField('amount_2', parseFloat(e.currentTarget.value) || 0)}
-                  placeholder="0.00"
-                  class="pl-10"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      {:else}
-        <div class="space-y-2">
-          <Label for="amount" class="text-sm font-medium">
-            Amount * {(formData['amount_type'] || 'exact') === 'approximate' ? '(Estimated)' : ''}
-          </Label>
-          <div class="relative">
-            <DollarSign class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              value={formData['amount'] || ''}
-              oninput={(e) => updateField('amount', parseFloat(e.currentTarget.value) || 0)}
-              placeholder="0.00"
-              class="pl-10"
-              required
-            />
-          </div>
-        </div>
-      {/if}
-    </div>
+    <MultiNumericInput bind:value={amountValue} bind:type={amountType} />
 
     <!-- Auto-add Setting -->
     <div class="space-y-2">

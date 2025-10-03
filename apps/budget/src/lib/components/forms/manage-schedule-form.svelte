@@ -54,10 +54,12 @@ import ManageCategoryForm from '$lib/components/forms/manage-category-form.svelt
 let {
   scheduleId,
   duplicateMode = false,
+  formId,
   onSave,
 }: {
   scheduleId?: number;
   duplicateMode?: boolean;
+  formId?: string;
   onSave?: (new_entity: Schedule) => void;
 } = $props();
 
@@ -77,21 +79,13 @@ const EMPTY_PAYEE: EditableEntityItem = {id: 0, name: ''};
 const EMPTY_ACCOUNT: EditableEntityItem = {id: 0, name: ''};
 const EMPTY_CATEGORY: EditableEntityItem = {id: 0, name: ''};
 
+// Generate unique form ID if not provided
+const uniqueFormId = formId || `schedule-form-${scheduleId || 'new'}-${Math.random().toString(36).substring(2, 9)}`;
+
 // Create lookup maps for efficient searching
 const payeeLookup = $derived(new Map(payees?.map(p => [p.id, p]) || []));
 const accountLookup = $derived(new Map(accounts?.map(a => [a.id, a]) || []));
 const categoryLookup = $derived(new Map(categories?.map(c => [c.id, c]) || []));
-
-// Derive current values from formData (single source of truth)
-const payeeValue = $derived.by(() =>
-  payeeLookup.get($formData.payeeId ?? 0) ?? EMPTY_PAYEE
-);
-const accountValue = $derived.by(() =>
-  accountLookup.get($formData.accountId ?? 0) ?? EMPTY_ACCOUNT
-);
-const categoryValue = $derived.by(() =>
-  categoryLookup.get($formData.categoryId ?? 0) ?? EMPTY_CATEGORY
-);
 
 // Local state for components that need it
 let payee: EditableEntityItem = $state(EMPTY_PAYEE);
@@ -103,7 +97,7 @@ let repeating_date = $state(new RepeatingDateInputModel());
 const form = useEntityForm({
   formData: manageScheduleForm,
   schema: superformInsertScheduleSchema,
-  formId: 'schedule-form',
+  formId: uniqueFormId,
   entityId: scheduleId || undefined,
   onSave: (savedSchedule: any) => {
     schedules.addSchedule(savedSchedule);
@@ -124,6 +118,17 @@ const form = useEntityForm({
 
 const {form: formData, enhance} = form;
 
+// Derive current values from formData (single source of truth)
+const payeeValue = $derived.by(() =>
+  payeeLookup.get($formData.payeeId ?? 0) ?? EMPTY_PAYEE
+);
+const accountValue = $derived.by(() =>
+  accountLookup.get($formData.accountId ?? 0) ?? EMPTY_ACCOUNT
+);
+const categoryValue = $derived.by(() =>
+  categoryLookup.get($formData.categoryId ?? 0) ?? EMPTY_CATEGORY
+);
+
 // Determine if this is an update
 const isUpdate = scheduleId && scheduleId > 0;
 
@@ -140,9 +145,9 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
   await new Promise(resolve => setTimeout(resolve, 0));
 
   // Submit the form programmatically
-  const form = document.getElementById('schedule-form') as HTMLFormElement;
-  if (form) {
-    form.requestSubmit();
+  const formElement = document.getElementById(uniqueFormId) as HTMLFormElement;
+  if (formElement) {
+    formElement.requestSubmit();
   }
 }
 
@@ -212,8 +217,12 @@ $effect(() => {
           move_weekends: scheduleDate.move_weekends || 'none',
           move_holidays: scheduleDate.move_holidays || 'none',
           specific_dates: scheduleDate.specific_dates || [],
-          on: false,
-          on_type: 'day'
+          on: scheduleDate.on || false,
+          on_type: scheduleDate.on_type || 'day',
+          days: scheduleDate.days || [],
+          weeks: scheduleDate.weeks || [],
+          weeks_days: scheduleDate.weeks_days || [],
+          week_days: scheduleDate.week_days || []
         };
 
         // Only add end if it exists
@@ -308,7 +317,7 @@ $effect(() => {
   }}
 >
   {#snippet formContent()}
-    <form id="schedule-form" method="post" action="/schedules?/save-schedule" use:enhance class="space-y-6">
+    <form id={uniqueFormId} method="post" action="/schedules?/save-schedule" use:enhance class="space-y-6">
   <input hidden value={$formData.id} name="id" />
 
   <!-- Basic Details Section -->
@@ -369,7 +378,7 @@ $effect(() => {
         <Form.Field {form} name="payeeId">
           <Form.Control>
             {#snippet children({props})}
-              <Form.Label>To Payee</Form.Label>
+              <Form.Label>{$formData.amount >= 0 ? 'From' : 'To'} Payee</Form.Label>
               <EntityInput
                 entityLabel="payees"
                 entities={payees as EditableEntityItem[]}
@@ -379,7 +388,7 @@ $effect(() => {
                 icon={HandCoins as unknown as Component}
                 buttonClass="w-full"
                 management={{
-                  enable: true,
+                  enable: false,
                   component: ManagePayeeForm,
                   onSave: (new_value: EditableEntityItem, is_new: boolean) => {
                     if (is_new) {
@@ -411,7 +420,7 @@ $effect(() => {
                 icon={Tag as unknown as Component}
                 buttonClass="w-full"
                 management={{
-                  enable: true,
+                  enable: false,
                   component: ManageCategoryForm,
                   onSave: (new_value: EditableEntityItem, is_new: boolean) => {
                     if (is_new) {

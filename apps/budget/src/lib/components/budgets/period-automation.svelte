@@ -1,7 +1,7 @@
 <script lang="ts">
   import {Calendar, Clock, Settings, Play, Pause, CheckCircle, AlertTriangle, Info} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
-  import * as Dialog from "$lib/components/ui/dialog";
+  import ResponsiveSheet from "$lib/components/ui/responsive-sheet/responsive-sheet.svelte";
   import * as Select from "$lib/components/ui/select";
   import {Button} from "$lib/components/ui/button";
   import {Badge} from "$lib/components/ui/badge";
@@ -40,7 +40,7 @@
   const ensurePeriodMutation = ensurePeriodInstance.options();
   const processRolloverMutation = processEnvelopeRollover.options();
 
-  let automationDialogOpen = $state(false);
+  let automationSheetOpen = $state(false);
   let settings = $state<AutomationSettings>({
     enabled: false,
     frequency: "monthly",
@@ -188,14 +188,14 @@
   }
 
   function openAutomationSettings() {
-    automationDialogOpen = true;
+    automationSheetOpen = true;
     previewNextPeriod();
   }
 
   function saveAutomationSettings() {
     // In a real implementation, this would save to backend
     console.log("Saving automation settings:", settings);
-    automationDialogOpen = false;
+    automationSheetOpen = false;
   }
 </script>
 
@@ -343,16 +343,18 @@
   {/if}
 </div>
 
-<!-- Automation Settings Dialog -->
-<Dialog.Root bind:open={automationDialogOpen}>
-  <Dialog.Content class="max-w-2xl">
-    <Dialog.Header>
-      <Dialog.Title>Period Automation Settings</Dialog.Title>
-      <Dialog.Description>
+<!-- Automation Settings Sheet -->
+<ResponsiveSheet bind:open={automationSheetOpen} side="right">
+  {#snippet header()}
+    <div class="space-y-2">
+      <h2 class="text-lg font-semibold">Period Automation Settings</h2>
+      <p class="text-sm text-muted-foreground">
         Configure automatic period creation and rollover behavior
-      </Dialog.Description>
-    </Dialog.Header>
+      </p>
+    </div>
+  {/snippet}
 
+  {#snippet content()}
     <div class="space-y-6">
       <!-- Enable Automation -->
       <div class="flex items-center justify-between">
@@ -468,14 +470,16 @@
         {/if}
       {/if}
     </div>
+  {/snippet}
 
-    <Dialog.Footer>
-      <Button variant="outline" onclick={() => automationDialogOpen = false}>
+  {#snippet footer()}
+    <div class="flex gap-2">
+      <Button class="flex-1" variant="outline" onclick={() => automationSheetOpen = false}>
         Cancel
       </Button>
-      <Button onclick={saveAutomationSettings}>
+      <Button class="flex-1" onclick={saveAutomationSettings}>
         Save Settings
       </Button>
-    </Dialog.Footer>
-  </Dialog.Content>
-</Dialog.Root>
+    </div>
+  {/snippet}
+</ResponsiveSheet>

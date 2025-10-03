@@ -22,6 +22,7 @@ let { schedule, statistics, futureProjections }: {
 } = $props();
 </script>
 
+{#if schedule}
 <div class="space-y-4">
   <!-- Key Metrics Cards -->
   <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -210,3 +211,4 @@ let { schedule, statistics, futureProjections }: {
     </Card.Root>
   {/if}
 </div>
+{/if}

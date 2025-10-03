@@ -1,4 +1,5 @@
 import {db} from "$lib/server/db";
+import {getCurrentTimestamp} from "$lib/utils/dates";
 import {
   budgets,
   budgetGroups,
@@ -25,7 +26,7 @@ import {
 } from "$lib/schema/budgets";
 import {accounts, categories, transactions} from "$lib/schema";
 import {NotFoundError, DatabaseError} from "$lib/server/shared/types/errors";
-import {and, eq, inArray} from "drizzle-orm";
+import {and, eq, inArray, isNull, sql} from "drizzle-orm";
 
 type TransactionClient = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export type DbClient = typeof db | TransactionClient;
@@ -71,7 +72,7 @@ export class BudgetRepository {
   async createBudget(input: CreateBudgetInput): Promise<BudgetWithRelations> {
     try {
       return await db.transaction(async (tx) => {
-        const now = new Date().toISOString();
+        const now = getCurrentTimestamp();
         const [created] = await tx
           .insert(budgets)
           .values({
@@ -123,7 +124,7 @@ export class BudgetRepository {
           throw new NotFoundError("Budget", id);
         }
 
-        const now = new Date().toISOString();
+        const now = getCurrentTimestamp();
         const [updated] = await tx
           .update(budgets)
           .set({
@@ -365,10 +366,7 @@ export class BudgetRepository {
    * Delete allocation by ID.
    */
   async deleteAllocation(id: number): Promise<void> {
-    const result = await db.delete(budgetTransactions).where(eq(budgetTransactions.id, id));
-    if (result.changes === 0) {
-      throw new NotFoundError("Budget allocation", id);
-    }
+    await db.delete(budgetTransactions).where(eq(budgetTransactions.id, id));
   }
 
   /**
@@ -378,6 +376,61 @@ export class BudgetRepository {
     return await db.query.budgetTransactions.findMany({
       where: eq(budgetTransactions.transactionId, transactionId),
     });
+  }
+
+  /**
+   * Find applicable budgets for a transaction based on account and category.
+   * Returns active budgets that match the account OR category OR have global scope.
+   */
+  async findApplicableBudgets(accountId?: number, categoryId?: number): Promise<BudgetWithRelations[]> {
+    // Collect all matching budget IDs
+    const budgetIdSet = new Set<number>();
+
+    // Find budgets linked to the account
+    if (accountId) {
+      const accountBudgetIds = await db
+        .select({budgetId: budgetAccounts.budgetId})
+        .from(budgetAccounts)
+        .where(eq(budgetAccounts.accountId, accountId));
+
+      accountBudgetIds.forEach(b => budgetIdSet.add(b.budgetId));
+    }
+
+    // Find budgets linked to the category
+    if (categoryId) {
+      const categoryBudgetIds = await db
+        .select({budgetId: budgetCategories.budgetId})
+        .from(budgetCategories)
+        .where(eq(budgetCategories.categoryId, categoryId));
+
+      categoryBudgetIds.forEach(b => budgetIdSet.add(b.budgetId));
+    }
+
+    // Also include budgets with global scope
+    const globalBudgets = await db.query.budgets.findMany({
+      where: and(
+        eq(budgets.status, "active"),
+        eq(budgets.scope, "global")
+      ),
+    });
+
+    globalBudgets.forEach(b => budgetIdSet.add(b.id));
+
+    // If no matching budgets found, return empty array
+    if (budgetIdSet.size === 0) {
+      return [];
+    }
+
+    // Fetch all matching budgets with relations
+    const matchingBudgets = await db.query.budgets.findMany({
+      where: and(
+        eq(budgets.status, "active"),
+        inArray(budgets.id, Array.from(budgetIdSet))
+      ),
+      with: this.defaultRelations(),
+    });
+
+    return matchingBudgets as BudgetWithRelations[];
   }
 
   /**
@@ -469,5 +522,258 @@ export class BudgetRepository {
       .insert(budgetGroupMemberships)
       .values(uniqueGroupIds.map((groupId) => ({budgetId, groupId})))
       .onConflictDoNothing();
+  }
+
+  async getAccountsBalance(accountIds: number[]): Promise<number> {
+    if (accountIds.length === 0) return 0;
+
+    const accountRecords = await db
+      .select()
+      .from(accounts)
+      .where(inArray(accounts.id, accountIds));
+
+    return accountRecords.reduce((sum, account) => sum + (account.balance || 0), 0);
+  }
+
+  async getCategorySpendingSince(categoryIds: number[], startDate: string): Promise<number> {
+    if (categoryIds.length === 0) return 0;
+
+    const categoryTransactions = await db
+      .select()
+      .from(transactions)
+      .where(
+        and(
+          inArray(transactions.categoryId, categoryIds),
+          eq(transactions.status, 'cleared')
+        )
+      );
+
+    const filteredTransactions = categoryTransactions.filter(t => {
+      if (!t.date) return false;
+      return t.date >= startDate;
+    });
+
+    return filteredTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+  }
+
+  /**
+   * Create a budget group.
+   */
+  async createBudgetGroup(data: NewBudgetGroup): Promise<BudgetGroup> {
+    const now = getCurrentTimestamp();
+    const [group] = await db
+      .insert(budgetGroups)
+      .values({
+        ...data,
+        createdAt: data.createdAt ?? now,
+        updatedAt: data.updatedAt ?? now,
+      })
+      .returning();
+
+    if (!group) {
+      throw new DatabaseError("Failed to create budget group", "createBudgetGroup");
+    }
+
+    return group;
+  }
+
+  /**
+   * Get budget group by ID with its child groups and member budgets.
+   */
+  async getBudgetGroupById(id: number): Promise<BudgetGroup | null> {
+    const group = await db.query.budgetGroups.findFirst({
+      where: eq(budgetGroups.id, id),
+      with: {
+        children: true,
+        memberships: {
+          with: {
+            budget: true,
+          },
+        },
+      },
+    });
+
+    return group ?? null;
+  }
+
+  /**
+   * List all budget groups with optional parent filter.
+   */
+  async listBudgetGroups(parentId?: number | null): Promise<BudgetGroup[]> {
+    if (parentId === undefined) {
+      return await db.query.budgetGroups.findMany({
+        with: {
+          children: true,
+          memberships: {
+            with: {
+              budget: true,
+            },
+          },
+        },
+      });
+    }
+
+    const condition = parentId === null
+      ? isNull(budgetGroups.parentId)
+      : eq(budgetGroups.parentId, parentId);
+
+    return await db.query.budgetGroups.findMany({
+      where: condition,
+      with: {
+        children: true,
+        memberships: {
+          with: {
+            budget: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Update a budget group.
+   */
+  async updateBudgetGroup(id: number, updates: Partial<NewBudgetGroup>): Promise<BudgetGroup> {
+    const [group] = await db
+      .update(budgetGroups)
+      .set({
+        ...updates,
+        updatedAt: getCurrentTimestamp(),
+      })
+      .where(eq(budgetGroups.id, id))
+      .returning();
+
+    if (!group) {
+      throw new NotFoundError("Budget group", id);
+    }
+
+    return group;
+  }
+
+  /**
+   * Delete a budget group.
+   */
+  async deleteBudgetGroup(id: number): Promise<void> {
+    await db.delete(budgetGroups).where(eq(budgetGroups.id, id));
+  }
+
+  /**
+   * Get all root-level budget groups (no parent).
+   */
+  async getRootBudgetGroups(): Promise<BudgetGroup[]> {
+    return await db.query.budgetGroups.findMany({
+      where: isNull(budgetGroups.parentId),
+      with: {
+        children: true,
+        memberships: {
+          with: {
+            budget: true,
+          },
+        },
+      },
+    });
+  }
+
+  // Analytics Methods
+
+  /**
+   * Get spending trends over time for a budget (by period instances).
+   */
+  async getSpendingTrends(budgetId: number, limit = 6) {
+    const periods = await db.query.budgetPeriodInstances.findMany({
+      where: eq(budgetPeriodInstances.templateId, budgetId),
+      orderBy: (fields, {desc}) => [desc(fields.startDate)],
+      limit,
+    });
+
+    return periods.reverse().map(period => ({
+      periodId: period.id,
+      startDate: period.startDate,
+      endDate: period.endDate,
+      allocated: Number(period.allocatedAmount || 0),
+      actual: Number(period.actualAmount || 0),
+      remaining: Number(period.allocatedAmount || 0) - Number(period.actualAmount || 0),
+    }));
+  }
+
+  /**
+   * Get category breakdown for a budget's spending.
+   */
+  async getCategoryBreakdown(budgetId: number) {
+    const result = await db
+      .select({
+        categoryId: transactions.categoryId,
+        categoryName: categories.name,
+        categoryType: categories.categoryType,
+        categoryColor: categories.categoryColor,
+        totalAmount: sql<number>`COALESCE(SUM(ABS(${budgetTransactions.allocatedAmount})), 0)`,
+        transactionCount: sql<number>`COUNT(DISTINCT ${budgetTransactions.transactionId})`,
+      })
+      .from(budgetTransactions)
+      .innerJoin(transactions, eq(budgetTransactions.transactionId, transactions.id))
+      .leftJoin(categories, eq(transactions.categoryId, categories.id))
+      .where(eq(budgetTransactions.budgetId, budgetId))
+      .groupBy(transactions.categoryId, categories.name, categories.categoryType, categories.categoryColor);
+
+    return result.map(row => ({
+      categoryId: row.categoryId,
+      categoryName: row.categoryName || "Uncategorized",
+      categoryType: row.categoryType || "expense",
+      categoryColor: row.categoryColor || "#6b7280",
+      amount: Number(row.totalAmount),
+      count: Number(row.transactionCount),
+    }));
+  }
+
+  /**
+   * Get daily spending data for a budget within a date range for burndown charts.
+   */
+  async getDailySpending(budgetId: number, startDate: string, endDate: string) {
+    const result = await db
+      .select({
+        date: transactions.date,
+        totalAmount: sql<number>`COALESCE(SUM(ABS(${budgetTransactions.allocatedAmount})), 0)`,
+      })
+      .from(budgetTransactions)
+      .innerJoin(transactions, eq(budgetTransactions.transactionId, transactions.id))
+      .where(
+        and(
+          eq(budgetTransactions.budgetId, budgetId),
+          sql`${transactions.date} >= ${startDate}`,
+          sql`${transactions.date} <= ${endDate}`
+        )
+      )
+      .groupBy(transactions.date)
+      .orderBy(sql`${transactions.date} ASC`);
+
+    return result.map(row => ({
+      date: row.date,
+      amount: Number(row.totalAmount),
+    }));
+  }
+
+  /**
+   * Get summary statistics for a budget across all its period instances.
+   */
+  async getBudgetSummaryStats(budgetId: number) {
+    const [stats] = await db
+      .select({
+        totalPeriods: sql<number>`COUNT(*)`,
+        totalAllocated: sql<number>`COALESCE(SUM(${budgetPeriodInstances.allocatedAmount}), 0)`,
+        totalActual: sql<number>`COALESCE(SUM(${budgetPeriodInstances.actualAmount}), 0)`,
+        avgAllocated: sql<number>`COALESCE(AVG(${budgetPeriodInstances.allocatedAmount}), 0)`,
+        avgActual: sql<number>`COALESCE(AVG(${budgetPeriodInstances.actualAmount}), 0)`,
+      })
+      .from(budgetPeriodInstances)
+      .where(eq(budgetPeriodInstances.templateId, budgetId));
+
+    return {
+      totalPeriods: Number(stats?.totalPeriods || 0),
+      totalAllocated: Number(stats?.totalAllocated || 0),
+      totalActual: Number(stats?.totalActual || 0),
+      avgAllocated: Number(stats?.avgAllocated || 0),
+      avgActual: Number(stats?.avgActual || 0),
+      totalRemaining: Number(stats?.totalAllocated || 0) - Number(stats?.totalActual || 0),
+    };
   }
 }

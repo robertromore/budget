@@ -1,8 +1,13 @@
 import {db} from "$lib/server/db";
+import {getCurrentTimestamp} from "$lib/utils/dates";
 import {categories, transactions} from "$lib/schema";
+import {getCurrentTimestamp} from "$lib/utils/dates";
 import {eq, and, isNull, like, inArray, sql, count, sum} from "drizzle-orm";
+import {getCurrentTimestamp} from "$lib/utils/dates";
 import type {Category, NewCategory} from "$lib/schema/categories";
+import {getCurrentTimestamp} from "$lib/utils/dates";
 import {NotFoundError} from "$lib/server/shared/types/errors";
+import {getCurrentTimestamp} from "$lib/utils/dates";
 
 export interface UpdateCategoryData {
   name?: string;
@@ -72,7 +77,7 @@ export class CategoryRepository {
       .update(categories)
       .set({
         ...data,
-        updatedAt: new Date().toISOString(),
+        updatedAt: getCurrentTimestamp(),
       })
       .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
       .returning();
@@ -91,8 +96,8 @@ export class CategoryRepository {
     const [category] = await db
       .update(categories)
       .set({
-        deletedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        deletedAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
       })
       .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
       .returning();
@@ -113,8 +118,8 @@ export class CategoryRepository {
     const result = await db
       .update(categories)
       .set({
-        deletedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        deletedAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
       })
       .where(and(
         inArray(categories.id, ids),

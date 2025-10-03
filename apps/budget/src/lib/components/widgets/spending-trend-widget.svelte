@@ -1,8 +1,7 @@
 <script lang="ts">
-import {ChartContainer, type ChartConfig} from '$lib/components/ui/chart';
+import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
 import type {WidgetProps} from '$lib/types/widgets';
 import {currencyFormatter} from '$lib/utils/formatters';
-import {Area, Chart, Spline, Svg} from 'layerchart';
 import WidgetCard from './widget-card.svelte';
 
 let {config, data, onUpdate, onRemove, editMode = false}: WidgetProps = $props();
@@ -42,14 +41,7 @@ const chartData = spendingData.map((item: any, index: number) => ({
     {#if chartData.length > 0}
       <!-- Chart -->
       <div class="h-32">
-        <ChartContainer config={chartConfig} class="h-full min-h-32 w-full">
-          <Chart data={chartData} x="x" y="amount" yNice>
-            <Svg>
-              <Area class="fill-destructive/20" />
-              <Spline class="stroke-destructive stroke-2" />
-            </Svg>
-          </Chart>
-        </ChartContainer>
+        <ChartPlaceholder class="h-full" title="Spending Trend" />
       </div>
 
       <!-- Stats -->

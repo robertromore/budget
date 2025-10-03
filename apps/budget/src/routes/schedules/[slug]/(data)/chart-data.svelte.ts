@@ -1,4 +1,7 @@
 import type { PageData } from '../$types';
+import { CalendarDate } from '@internationalized/date';
+import { nextDaily, nextWeekly, nextMonthly, nextYearly } from '$lib/utils/date-frequency';
+import { parseISOString, currentDate } from '$lib/utils/dates';
 
 export interface ChartDataPoint {
   date: string;
@@ -155,66 +158,69 @@ export function generateCalendarData(schedule: PageData['schedule']): CalendarDa
 export function generateFutureProjections(schedule: PageData['schedule']): ProjectionData[] {
   if (!schedule.scheduleDate || schedule.status !== 'active') return [];
 
-  const projections: ProjectionData[] = [];
   const frequency = schedule.scheduleDate.frequency!;
   const interval = schedule.scheduleDate.interval || 1;
-  const endDate = schedule.scheduleDate.end ? new Date(schedule.scheduleDate.end) : null;
+  const startDateValue = parseISOString(schedule.scheduleDate.start) || currentDate;
+  const endDateValue = schedule.scheduleDate.end ? parseISOString(schedule.scheduleDate.end) : null;
 
-  // Generate projections for next 12 months
-  const today = new Date();
-  const futureLimit = new Date();
-  futureLimit.setMonth(futureLimit.getMonth() + 12);
+  // Calculate date range for projections (next 12 months from today)
+  const today = currentDate;
+  const futureLimit = today.add({ months: 12 });
 
-  // Start from the schedule's start date and find the first future occurrence
-  const startDate = new Date(schedule.scheduleDate.start);
-  let nextDate = new Date(startDate);
-
-  // Find the first future date using the same logic as calculateNextOccurrence
-  while (nextDate <= today) {
-    switch (frequency) {
-      case "daily":
-        nextDate.setDate(nextDate.getDate() + interval);
-        break;
-      case "weekly":
-        nextDate.setDate(nextDate.getDate() + (7 * interval));
-        break;
-      case "monthly":
-        nextDate.setMonth(nextDate.getMonth() + interval);
-        break;
-      case "yearly":
-        nextDate.setFullYear(nextDate.getFullYear() + interval);
-        break;
-    }
+  // Use proper date generation based on frequency
+  let futureDates;
+  switch (frequency) {
+    case "daily":
+      futureDates = nextDaily(startDateValue, futureLimit, interval, 100);
+      break;
+    case "weekly":
+      futureDates = nextWeekly(
+        startDateValue,
+        futureLimit,
+        interval,
+        schedule.scheduleDate.week_days || [],
+        100
+      );
+      break;
+    case "monthly":
+      futureDates = nextMonthly(
+        startDateValue,
+        futureLimit,
+        interval,
+        schedule.scheduleDate.days || null,
+        schedule.scheduleDate.weeks || [],
+        schedule.scheduleDate.weeks_days || [],
+        100
+      );
+      break;
+    case "yearly":
+      futureDates = nextYearly(startDateValue, startDateValue, futureLimit, interval, 20);
+      break;
+    default:
+      return [];
   }
 
-  // Generate projections starting from the first valid future date
-  while (projections.length < 20 && nextDate <= futureLimit && (!endDate || nextDate <= endDate)) {
-    const monthsFromNow = Math.floor((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30));
+  // Filter to only future dates and apply end date if specified
+  const filteredDates = futureDates.filter(date => {
+    if (date.compare(today) <= 0) return false; // Only future dates
+    if (endDateValue && date.compare(endDateValue) > 0) return false; // Within end date
+    return true;
+  });
 
-    projections.push({
-      date: new Date(nextDate),
-      dateString: nextDate.toISOString().split('T')[0],
+  // Convert to projection data
+  const todayJs = new Date();
+  const projections: ProjectionData[] = filteredDates.slice(0, 20).map(dateValue => {
+    const jsDate = new Date(dateValue.year, dateValue.month - 1, dateValue.day);
+    const monthsFromNow = Math.floor((jsDate.getTime() - todayJs.getTime()) / (1000 * 60 * 60 * 24 * 30));
+
+    return {
+      date: jsDate,
+      dateString: `${dateValue.year}-${String(dateValue.month).padStart(2, '0')}-${String(dateValue.day).padStart(2, '0')}`,
       amount: schedule.amount,
       description: `${schedule.name} - recurring`,
       monthsFromNow
-    });
-
-    // Calculate next occurrence
-    switch (frequency) {
-      case "daily":
-        nextDate.setDate(nextDate.getDate() + interval);
-        break;
-      case "weekly":
-        nextDate.setDate(nextDate.getDate() + (7 * interval));
-        break;
-      case "monthly":
-        nextDate.setMonth(nextDate.getMonth() + interval);
-        break;
-      case "yearly":
-        nextDate.setFullYear(nextDate.getFullYear() + interval);
-        break;
-    }
-  }
+    };
+  });
 
   return projections;
 }

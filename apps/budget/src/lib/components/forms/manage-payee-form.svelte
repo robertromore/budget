@@ -2,41 +2,29 @@
 import * as Form from '$lib/components/ui/form';
 import * as Card from '$lib/components/ui/card';
 import * as Tabs from '$lib/components/ui/tabs';
-import * as Select from '$lib/components/ui/select';
-import * as Dialog from '$lib/components/ui/dialog';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Switch} from '$lib/components/ui/switch';
-import {Badge} from '$lib/components/ui/badge';
 import {Button, buttonVariants} from '$lib/components/ui/button';
 import {Separator} from '$lib/components/ui/separator';
-import {Label} from '$lib/components/ui/label';
+import {Textarea} from '$lib/components/ui/textarea';
+import {Badge} from '$lib/components/ui/badge';
 
 import {page} from '$app/state';
 import {useEntityForm} from '$lib/hooks/forms/use-entity-form';
 import {superformInsertPayeeSchema} from '$lib/schema/superforms';
-import {payeeTypes, paymentFrequencies, type Payee, type PayeeType, type PaymentFrequency} from '$lib/schema/payees';
+import type {Payee} from '$lib/schema/payees';
 import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {EntityInput} from '$lib/components/input';
 import {trpc} from '$lib/trpc/client';
 import type {EditableEntityItem} from '$lib/types';
-import ManageCategoryForm from '$lib/components/forms/manage-category-form.svelte';
+import { PayeeBasicInfoForm, PayeeContactForm, PayeeBusinessForm } from '$lib/components/payees';
 
 // Icons
 import User from '@lucide/svelte/icons/user';
-import CreditCard from '@lucide/svelte/icons/credit-card';
-import MapPin from '@lucide/svelte/icons/map-pin';
 import Phone from '@lucide/svelte/icons/phone';
-import Mail from '@lucide/svelte/icons/mail';
-import Globe from '@lucide/svelte/icons/globe';
 import Brain from '@lucide/svelte/icons/brain';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Target from '@lucide/svelte/icons/target';
 import Calendar from '@lucide/svelte/icons/calendar';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import Bell from '@lucide/svelte/icons/bell';
 import Tag from '@lucide/svelte/icons/tag';
 import Building from '@lucide/svelte/icons/building';
 import CheckCircle from '@lucide/svelte/icons/check-circle';
@@ -59,14 +47,13 @@ let {
 // Page data and states - handle case where page data might not be available
 const pageData = page?.data || {};
 const payees = PayeesState.get();
-const categoriesState = CategoriesState.get();
 
 // Create a minimal form data structure for compatibility
-const managePayeeForm = pageData['managePayeeForm'] || {name: '', notes: ''};
+const managePayeeForm = pageData['form'] || {name: '', notes: ''};
 const categories = pageData['categories'] || [];
 
 // Form setup
-const isUpdate = id && id > 0;
+const isUpdate = Boolean(id && id > 0);
 
 const entityForm = useEntityForm({
   formData: managePayeeForm,
@@ -79,14 +66,98 @@ const entityForm = useEntityForm({
     } else {
       payees.addPayee(entity);
     }
-    if (onSave) onSave(entity as EditableEntityItem, !isUpdate);
+    if (onSave) {
+      // Call the onSave callback after updating the client state
+      onSave(entity as EditableEntityItem, !isUpdate);
+    }
   },
+  customOptions: {
+    dataType: 'json',
+    transformData: (data: any) => {
+      // Transform empty strings to null for optional fields
+      const transformed = { ...data };
+
+      // Handle string fields that should be null when empty
+      const nullableStringFields = [
+        'website', 'phone', 'email', 'address', 'accountNumber',
+        'merchantCategoryCode', 'notes', 'subscriptionInfo'
+      ];
+
+      for (const field of nullableStringFields) {
+        if (transformed[field] === '' || transformed[field] === undefined) {
+          transformed[field] = null;
+        }
+      }
+
+      // Handle numeric fields that should be null when empty
+      const numericFields = ['defaultCategoryId', 'avgAmount', 'alertThreshold'];
+      for (const field of numericFields) {
+        if (transformed[field] === '' || transformed[field] === undefined) {
+          transformed[field] = null;
+        } else if (transformed[field] !== null) {
+          const numValue = Number(transformed[field]);
+          // defaultCategoryId: 0 means no category selected
+          if (field === 'defaultCategoryId' && numValue === 0) {
+            transformed[field] = null;
+          } else {
+            transformed[field] = numValue;
+          }
+        }
+      }
+
+      return transformed;
+    }
+  }
 });
 
-const {form: formData, enhance, submitting} = entityForm;
+const {form: formData, enhance, submitting, errors} = entityForm;
 
 // Local state
 let activeTab = $state('basic');
+
+// Define which fields belong to which tabs
+const tabFieldMapping = {
+  basic: ['name', 'notes', 'payeeType', 'defaultCategoryId', 'avgAmount', 'paymentFrequency', 'taxRelevant', 'isActive', 'isSeasonal'],
+  contact: ['phone', 'email', 'website', 'accountNumber', 'address'],
+  business: ['merchantCategoryCode', 'alertThreshold', 'tags', 'preferredPaymentMethods'],
+  intelligence: [], // No form fields, just displays data
+  automation: [] // No form fields, just displays data
+};
+
+// Computed: Check which tabs have errors
+const tabErrors = $derived.by(() => {
+  const result = {
+    basic: false,
+    contact: false,
+    business: false,
+    intelligence: false,
+    automation: false
+  };
+
+  if ($errors) {
+    for (const [tab, fields] of Object.entries(tabFieldMapping)) {
+      result[tab as keyof typeof result] = fields.some(field => $errors[field] && $errors[field].length > 0);
+    }
+  }
+
+  return result;
+});
+
+// Computed: Check which tabs have required fields missing
+const tabRequiredFields = $derived.by(() => {
+  const result = {
+    basic: false,
+    contact: false,
+    business: false,
+    intelligence: false,
+    automation: false
+  };
+
+  // Only 'name' is required in basic tab
+  result.basic = !$formData.name || $formData.name.trim() === '';
+
+  return result;
+});
 let isLoadingRecommendations = $state(false);
 let isLoadingContactValidation = $state(false);
 let isLoadingSubscriptionDetection = $state(false);
@@ -95,8 +166,9 @@ let contactValidation = $state<any>(null);
 let subscriptionInfo = $state<any>(null);
 let alertDialogOpen = $state(false);
 
-// Initialize form data for existing payee
+// Initialize form data for existing or new payee
 if (id && id > 0) {
+  // Existing payee - load from data
   const payee = payees.getById(id);
   if (payee) {
     $formData.id = id;
@@ -104,38 +176,41 @@ if (id && id > 0) {
     $formData.notes = payee.notes;
     $formData.payeeType = payee.payeeType;
     $formData.defaultCategoryId = payee.defaultCategoryId;
-    $formData.taxRelevant = payee.taxRelevant;
-    $formData.isActive = payee.isActive;
-    $formData.avgAmount = payee.avgAmount;
-    $formData.paymentFrequency = payee.paymentFrequency;
-    $formData.website = payee.website;
-    $formData.phone = payee.phone;
-    $formData.email = payee.email;
-    $formData.address = payee.address;
-    $formData.accountNumber = payee.accountNumber;
-    $formData.alertThreshold = payee.alertThreshold;
-    $formData.isSeasonal = payee.isSeasonal;
-    $formData.subscriptionInfo = payee.subscriptionInfo;
-    $formData.tags = payee.tags;
-    $formData.preferredPaymentMethods = payee.preferredPaymentMethods;
+    $formData.taxRelevant = payee.taxRelevant ?? false;
+    $formData.isActive = payee.isActive ?? true;
+    $formData.avgAmount = payee.avgAmount ?? 0;
+    $formData.paymentFrequency = payee.paymentFrequency ?? 'monthly';
+    $formData.website = payee.website ?? '';
+    $formData.phone = payee.phone ?? '';
+    $formData.email = payee.email ?? '';
+    $formData.address = payee.address ?? '';
+    $formData.accountNumber = payee.accountNumber ?? '';
+    $formData.alertThreshold = payee.alertThreshold ?? 0;
+    $formData.isSeasonal = payee.isSeasonal ?? false;
+    $formData.subscriptionInfo = payee.subscriptionInfo ?? '';
+    $formData.tags = payee.tags ?? [];
+    $formData.preferredPaymentMethods = payee.preferredPaymentMethods ?? [];
     $formData.merchantCategoryCode = payee.merchantCategoryCode;
   }
+} else {
+  // New payee - set sensible defaults
+  $formData.taxRelevant = false;
+  $formData.isActive = true;
+  $formData.isSeasonal = false;
+  $formData.avgAmount = 0;
+  $formData.paymentFrequency = 'monthly';
+  $formData.website = '';
+  $formData.phone = '';
+  $formData.email = '';
+  $formData.address = '';
+  $formData.accountNumber = '';
+  $formData.alertThreshold = 0;
+  $formData.subscriptionInfo = '';
+  $formData.tags = [];
+  $formData.preferredPaymentMethods = [];
+  $formData.defaultCategoryId = 0;
 }
 
-// Dropdown options
-const payeeTypeOptions = payeeTypes.map(type => ({
-  value: type,
-  label: type.replace('_', ' ').split(' ').map(word =>
-    word.charAt(0).toUpperCase() + word.slice(1)
-  ).join(' ')
-}));
-
-const paymentFrequencyOptions = paymentFrequencies.map(freq => ({
-  value: freq,
-  label: freq.replace('_', ' ').split(' ').map(word =>
-    word.charAt(0).toUpperCase() + word.slice(1)
-  ).join(' ')
-}));
 
 // ML and intelligence functions
 async function loadRecommendations() {
@@ -232,414 +307,91 @@ $effect(() => {
     detectSubscription();
   }
 });
-
-// Handle tab changes to load data lazily
-function handleTabChange(newTab: string) {
-  activeTab = newTab;
-
-  if (newTab === 'contact' && isUpdate && !contactValidation) {
-    validateContact();
-  }
-}
 </script>
 
-<form id={formId} method="post" action="/payees?/save-payee" use:enhance class="space-y-6">
+<form id={formId} method="post" action="?/save-payee" use:enhance class="space-y-6">
   <input hidden value={$formData.id} name="id" />
 
-  <Tabs.Root value={activeTab} onValueChange={handleTabChange} class="w-full">
+  <Tabs.Root bind:value={activeTab} class="w-full">
     <Tabs.List class="grid w-full grid-cols-5">
-      <Tabs.Trigger value="basic" class="flex items-center gap-2">
+      <Tabs.Trigger value="basic" class="flex items-center gap-2 relative">
         <User class="h-4 w-4" />
         Basic Info
+        {#if tabErrors.basic}
+          <div class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white" title="Has validation errors"></div>
+        {:else if tabRequiredFields.basic}
+          <div class="absolute -top-1 -right-1 h-3 w-3 bg-amber-500 rounded-full border-2 border-white" title="Required fields missing"></div>
+        {/if}
       </Tabs.Trigger>
-      <Tabs.Trigger value="contact" class="flex items-center gap-2">
+      <Tabs.Trigger value="contact" class="flex items-center gap-2 relative">
         <Phone class="h-4 w-4" />
         Contact
+        {#if tabErrors.contact}
+          <div class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white" title="Has validation errors"></div>
+        {:else if tabRequiredFields.contact}
+          <div class="absolute -top-1 -right-1 h-3 w-3 bg-amber-500 rounded-full border-2 border-white" title="Required fields missing"></div>
+        {/if}
       </Tabs.Trigger>
-      <Tabs.Trigger value="business" class="flex items-center gap-2">
+      <Tabs.Trigger value="business" class="flex items-center gap-2 relative">
         <Building class="h-4 w-4" />
         Business
+        {#if tabErrors.business}
+          <div class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white" title="Has validation errors"></div>
+        {:else if tabRequiredFields.business}
+          <div class="absolute -top-1 -right-1 h-3 w-3 bg-amber-500 rounded-full border-2 border-white" title="Required fields missing"></div>
+        {/if}
       </Tabs.Trigger>
-      <Tabs.Trigger value="intelligence" class="flex items-center gap-2">
+      <Tabs.Trigger value="intelligence" class="flex items-center gap-2 relative">
         <Brain class="h-4 w-4" />
         ML Insights
+        {#if tabErrors.intelligence}
+          <div class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white" title="Has validation errors"></div>
+        {:else if tabRequiredFields.intelligence}
+          <div class="absolute -top-1 -right-1 h-3 w-3 bg-amber-500 rounded-full border-2 border-white" title="Required fields missing"></div>
+        {/if}
       </Tabs.Trigger>
-      <Tabs.Trigger value="automation" class="flex items-center gap-2">
+      <Tabs.Trigger value="automation" class="flex items-center gap-2 relative">
         <Target class="h-4 w-4" />
         Automation
+        {#if tabErrors.automation}
+          <div class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white" title="Has validation errors"></div>
+        {:else if tabRequiredFields.automation}
+          <div class="absolute -top-1 -right-1 h-3 w-3 bg-amber-500 rounded-full border-2 border-white" title="Required fields missing"></div>
+        {/if}
       </Tabs.Trigger>
     </Tabs.List>
 
     <!-- Basic Information Tab -->
     <Tabs.Content value="basic" class="space-y-6">
-      <Card.Root>
-        <Card.Header>
-          <div class="flex items-center gap-2">
-            <User class="h-5 w-5 text-primary" />
-            <Card.Title>Basic Information</Card.Title>
-          </div>
-          <Card.Description>
-            Essential payee details and categorization settings.
-          </Card.Description>
-        </Card.Header>
-        <Card.Content class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Payee Name -->
-            <Form.Field form={entityForm} name="name">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Payee Name</Form.Label>
-                  <Input {...props} bind:value={$formData.name} placeholder="e.g., Starbucks, Netflix, Electric Company" />
-                  <Form.FieldErrors />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-
-            <!-- Payee Type -->
-            <Form.Field form={entityForm} name="payeeType">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Payee Type</Form.Label>
-                  <Select.Root type="single" bind:value={$formData.payeeType}>
-                    <Select.Trigger {...props}>
-                      <span>{$formData.payeeType ? payeeTypeOptions.find(opt => opt.value === $formData.payeeType)?.label : "Select type"}</span>
-                    </Select.Trigger>
-                    <Select.Content>
-                      {#each payeeTypeOptions as option}
-                        <Select.Item value={option.value}>{option.label}</Select.Item>
-                      {/each}
-                    </Select.Content>
-                  </Select.Root>
-                  <Form.FieldErrors />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-
-            <!-- Payment Frequency -->
-            <Form.Field form={entityForm} name="paymentFrequency">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Payment Frequency</Form.Label>
-                  <Select.Root type="single" bind:value={$formData.paymentFrequency}>
-                    <Select.Trigger {...props}>
-                      <span>{$formData.paymentFrequency ? paymentFrequencyOptions.find(opt => opt.value === $formData.paymentFrequency)?.label : "Select frequency"}</span>
-                    </Select.Trigger>
-                    <Select.Content>
-                      {#each paymentFrequencyOptions as option}
-                        <Select.Item value={option.value}>{option.label}</Select.Item>
-                      {/each}
-                    </Select.Content>
-                  </Select.Root>
-                  <Form.FieldErrors />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-
-            <!-- Default Category -->
-            <Form.Field form={entityForm} name="defaultCategoryId">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Default Category</Form.Label>
-                  <EntityInput
-                    entityLabel="categories"
-                    entities={categories}
-                    bind:value={$formData.defaultCategoryId}
-                    handleSubmit={(category) => {
-                      if (category) {
-                        $formData.defaultCategoryId = category.id || 0;
-                      }
-                    }}
-                    icon={Tag}
-                    buttonClass="w-full"
-                    management={{
-                      enable: true,
-                      component: ManageCategoryForm,
-                      onSave: (new_value: any, is_new: boolean) => {
-                        if (is_new) {
-                          categoriesState.addCategory(new_value);
-                        } else {
-                          categoriesState.updateCategory(new_value);
-                        }
-                      },
-                      onDelete: (id: number) => {
-                        categoriesState.deleteCategory(id);
-                      },
-                    }}
-                  />
-                  <Form.FieldErrors />
-                  <input hidden bind:value={$formData.defaultCategoryId} name={props.name} />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-
-            <!-- Average Amount -->
-            <Form.Field form={entityForm} name="avgAmount">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Average Transaction Amount</Form.Label>
-                  <Input {...props} bind:value={$formData.avgAmount} type="number" step="0.01" placeholder="0.00" />
-                  <Form.FieldErrors />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-          </div>
-
-          <!-- Notes -->
-          <Form.Field form={entityForm} name="notes">
-            <Form.Control>
-              {#snippet children({props})}
-                <Form.Label>Notes</Form.Label>
-                <Textarea {...props} bind:value={$formData.notes} placeholder="Additional notes about this payee..." />
-                <Form.FieldErrors />
-              {/snippet}
-            </Form.Control>
-          </Form.Field>
-
-          <!-- Flags -->
-          <div class="flex flex-wrap gap-4">
-            <div class="flex items-center space-x-2">
-              <Switch bind:checked={$formData.taxRelevant} />
-              <Label>Tax Relevant</Label>
-            </div>
-            <div class="flex items-center space-x-2">
-              <Switch bind:checked={$formData.isSeasonal} />
-              <Label>Seasonal Payee</Label>
-            </div>
-            <div class="flex items-center space-x-2">
-              <Switch bind:checked={$formData.isActive} />
-              <Label>Active</Label>
-            </div>
-          </div>
-        </Card.Content>
-      </Card.Root>
+      <PayeeBasicInfoForm
+        {formData}
+        {entityForm}
+        {categories}
+      />
     </Tabs.Content>
 
     <!-- Contact Information Tab -->
     <Tabs.Content value="contact" class="space-y-6">
-      <Card.Root>
-        <Card.Header>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <Phone class="h-5 w-5 text-primary" />
-              <Card.Title>Contact Information</Card.Title>
-            </div>
-            {#if isUpdate}
-              <Button variant="outline" size="sm" onclick={validateContact} disabled={isLoadingContactValidation}>
-                {#if isLoadingContactValidation}
-                  <Loader2 class="h-4 w-4 animate-spin mr-2" />
-                {/if}
-                Validate & Enrich
-              </Button>
-            {/if}
-          </div>
-          <Card.Description>
-            Contact details and validation status.
-          </Card.Description>
-        </Card.Header>
-        <Card.Content class="space-y-4">
-          {#if contactValidation}
-            <div class="bg-muted/50 p-4 rounded-lg">
-              <h4 class="font-medium mb-2 flex items-center gap-2">
-                <CheckCircle class="h-4 w-4 text-green-500" />
-                Validation Results
-              </h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                {#if contactValidation.phoneValidation}
-                  <div class="flex items-center gap-2">
-                    <Badge variant={contactValidation.phoneValidation.isValid ? 'default' : 'destructive'}>
-                      Phone: {contactValidation.phoneValidation.isValid ? 'Valid' : 'Invalid'}
-                    </Badge>
-                  </div>
-                {/if}
-                {#if contactValidation.emailValidation}
-                  <div class="flex items-center gap-2">
-                    <Badge variant={contactValidation.emailValidation.isValid ? 'default' : 'destructive'}>
-                      Email: {contactValidation.emailValidation.isValid ? 'Valid' : 'Invalid'}
-                    </Badge>
-                  </div>
-                {/if}
-                {#if contactValidation.websiteValidation}
-                  <div class="flex items-center gap-2">
-                    <Badge variant={contactValidation.websiteValidation.isAccessible ? 'default' : 'destructive'}>
-                      Website: {contactValidation.websiteValidation.isAccessible ? 'Accessible' : 'Inaccessible'}
-                    </Badge>
-                  </div>
-                {/if}
-              </div>
-            </div>
-          {/if}
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Phone -->
-            <Form.Field form={entityForm} name="phone">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Phone Number</Form.Label>
-                  <Input {...props} bind:value={$formData.phone} placeholder="+1 (555) 123-4567" />
-                  <Form.FieldErrors />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-
-            <!-- Email -->
-            <Form.Field form={entityForm} name="email">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Email Address</Form.Label>
-                  <Input {...props} bind:value={$formData.email} type="email" placeholder="contact@example.com" />
-                  <Form.FieldErrors />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-
-            <!-- Website -->
-            <Form.Field form={entityForm} name="website">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Website</Form.Label>
-                  <Input {...props} bind:value={$formData.website} placeholder="https://example.com" />
-                  <Form.FieldErrors />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-
-            <!-- Account Number -->
-            <Form.Field form={entityForm} name="accountNumber">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Account Number</Form.Label>
-                  <Input {...props} bind:value={$formData.accountNumber} placeholder="Account or reference number" />
-                  <Form.FieldErrors />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-          </div>
-
-          <!-- Address -->
-          <Form.Field form={entityForm} name="address">
-            <Form.Control>
-              {#snippet children({props})}
-                <Form.Label>Address</Form.Label>
-                <Textarea {...props} bind:value={$formData.address} placeholder="Street address, city, state, postal code" />
-                <Form.FieldErrors />
-              {/snippet}
-            </Form.Control>
-          </Form.Field>
-        </Card.Content>
-      </Card.Root>
+      <PayeeContactForm
+        {formData}
+        {entityForm}
+        {isUpdate}
+        {contactValidation}
+        {isLoadingContactValidation}
+        onValidateContact={validateContact}
+      />
     </Tabs.Content>
 
     <!-- Business Information Tab -->
     <Tabs.Content value="business" class="space-y-6">
-      <Card.Root>
-        <Card.Header>
-          <div class="flex items-center gap-2">
-            <Building class="h-5 w-5 text-primary" />
-            <Card.Title>Business & Payment Details</Card.Title>
-          </div>
-          <Card.Description>
-            Business-specific information and payment processing details.
-          </Card.Description>
-        </Card.Header>
-        <Card.Content class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Merchant Category Code -->
-            <Form.Field form={entityForm} name="merchantCategoryCode">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Merchant Category Code</Form.Label>
-                  <Input {...props} bind:value={$formData.merchantCategoryCode} placeholder="4-digit MCC" maxlength={4} />
-                  <Form.Description>Standard industry classification code</Form.Description>
-                  <Form.FieldErrors />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-
-            <!-- Alert Threshold -->
-            <Form.Field form={entityForm} name="alertThreshold">
-              <Form.Control>
-                {#snippet children({props})}
-                  <Form.Label>Alert Threshold</Form.Label>
-                  <Input {...props} bind:value={$formData.alertThreshold} type="number" step="0.01" placeholder="0.00" />
-                  <Form.Description>Notify when transactions exceed this amount</Form.Description>
-                  <Form.FieldErrors />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-          </div>
-
-          <!-- Subscription Detection -->
-          {#if isUpdate}
-            <Card.Root>
-              <Card.Header>
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <Calendar class="h-4 w-4 text-primary" />
-                    <Card.Title class="text-base">Subscription Detection</Card.Title>
-                  </div>
-                  <Button variant="outline" size="sm" onclick={detectSubscription} disabled={isLoadingSubscriptionDetection}>
-                    {#if isLoadingSubscriptionDetection}
-                      <Loader2 class="h-4 w-4 animate-spin mr-2" />
-                    {/if}
-                    Detect
-                  </Button>
-                </div>
-              </Card.Header>
-              <Card.Content>
-                {#if subscriptionInfo}
-                  <div class="space-y-2">
-                    <div class="flex items-center gap-2">
-                      <Badge variant={subscriptionInfo.isSubscription ? 'default' : 'secondary'}>
-                        {subscriptionInfo.isSubscription ? 'Subscription Detected' : 'Not a Subscription'}
-                      </Badge>
-                      {#if subscriptionInfo.confidence}
-                        <Badge variant="outline">
-                          {Math.round(subscriptionInfo.confidence * 100)}% confidence
-                        </Badge>
-                      {/if}
-                    </div>
-                    {#if subscriptionInfo.details}
-                      <div class="text-sm text-muted-foreground">
-                        <p><strong>Type:</strong> {subscriptionInfo.details.type}</p>
-                        <p><strong>Frequency:</strong> {subscriptionInfo.details.frequency}</p>
-                        {#if subscriptionInfo.details.estimatedCost}
-                          <p><strong>Estimated Cost:</strong> ${subscriptionInfo.details.estimatedCost}</p>
-                        {/if}
-                      </div>
-                    {/if}
-                  </div>
-                {:else}
-                  <p class="text-sm text-muted-foreground">Click "Detect" to analyze subscription patterns</p>
-                {/if}
-              </Card.Content>
-            </Card.Root>
-          {/if}
-
-          <!-- Tags -->
-          <Form.Field form={entityForm} name="tags">
-            <Form.Control>
-              {#snippet children({props})}
-                <Form.Label>Tags</Form.Label>
-                <Input {...props} bind:value={$formData.tags} placeholder="comma, separated, tags" />
-                <Form.Description>Comma-separated tags for organization</Form.Description>
-                <Form.FieldErrors />
-              {/snippet}
-            </Form.Control>
-          </Form.Field>
-
-          <!-- Preferred Payment Methods -->
-          <Form.Field form={entityForm} name="preferredPaymentMethods">
-            <Form.Control>
-              {#snippet children({props})}
-                <Form.Label>Preferred Payment Methods</Form.Label>
-                <Input {...props} bind:value={$formData.preferredPaymentMethods} placeholder="credit card, bank transfer, cash" />
-                <Form.Description>Comma-separated list of accepted payment methods</Form.Description>
-                <Form.FieldErrors />
-              {/snippet}
-            </Form.Control>
-          </Form.Field>
-        </Card.Content>
-      </Card.Root>
+      <PayeeBusinessForm
+        {formData}
+        {entityForm}
+        {isUpdate}
+        {subscriptionInfo}
+        {isLoadingSubscriptionDetection}
+        onDetectSubscription={detectSubscription}
+      />
     </Tabs.Content>
 
     <!-- ML Insights Tab -->

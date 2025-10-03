@@ -17,6 +17,7 @@ import {payees, type Payee} from "./payees";
 import {accounts} from "./accounts";
 import {z} from "zod/v4";
 import {schedules} from "./schedules";
+import {budgetTransactions} from "./budgets";
 import validator from "validator";
 
 export const transactions = sqliteTable(
@@ -78,6 +79,7 @@ export const transactionsRelations = relations(transactions, ({many, one}) => ({
     fields: [transactions.scheduleId],
     references: [schedules.id],
   }),
+  budgetAllocations: many(budgetTransactions),
 }));
 
 export const selectTransactionSchema = createSelectSchema(transactions);

@@ -99,12 +99,12 @@ $effect(() => {
   {:else if type === 'range'}
     <div class="grid grid-cols-2 gap-3">
       <div class="space-y-1">
-        <label class="text-xs text-muted-foreground">Minimum</label>
-        <NumericInput bind:value={value[0]} buttonClass="w-full" />
+        <label class="text-xs text-muted-foreground" for="min">Minimum</label>
+        <NumericInput bind:value={value[0]} buttonClass="w-full" id="min" />
       </div>
       <div class="space-y-1">
-        <label class="text-xs text-muted-foreground">Maximum</label>
-        <NumericInput bind:value={value[1]} buttonClass="w-full" />
+        <label class="text-xs text-muted-foreground" for="max">Maximum</label>
+        <NumericInput bind:value={value[1]} buttonClass="w-full" id="max" />
       </div>
     </div>
   {/if}

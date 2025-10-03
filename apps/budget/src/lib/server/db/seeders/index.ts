@@ -12,21 +12,28 @@ import type {SQLiteTable} from "drizzle-orm/sqlite-core";
 
 const glob = new Glob("*.json");
 const seeders_path = "./src/lib/server/db/seeders/";
-const tables = Object.keys(schema);
 
 for await (const file of glob.scan(seeders_path)) {
-  const table_name = path.basename(file, ".json") as keyof typeof tables;
-  if (Object.prototype.hasOwnProperty.call(schema, table_name)) {
-    throw new Error(`Table ` + table_name.toString() + ` doesn't exist.`);
+  const table_name = path.basename(file, ".json") as keyof typeof schema;
+
+  if (!Object.prototype.hasOwnProperty.call(schema, table_name)) {
+    console.warn(`Skipping ${file}: Table ${table_name} doesn't exist in schema.`);
+    continue;
   }
-  const table = tables[table_name] as unknown as SQLiteTable<TableConfig>;
+
+  const table = schema[table_name] as unknown as SQLiteTable<TableConfig>;
   const data = await Bun.file(seeders_path + file).json();
-  let count = 0;
-  for (const records of data.values()) {
-    count++;
-    await db.insert(table).values(records);
+
+  if (!Array.isArray(data)) {
+    console.warn(`Skipping ${file}: Data must be an array.`);
+    continue;
   }
-  console.log("Seeded " + table + " with " + count + " records.");
+
+  for (const record of data) {
+    await db.insert(table).values(record);
+  }
+
+  console.log(`Seeded ${table_name} with ${data.length} record(s).`);
 }
 
 console.log("Seeding complete.");

@@ -14,9 +14,13 @@ import {
   createPayeeSchema,
   updatePayeeSchema,
 } from "$lib/server/domains/payees";
+import {CategoryService} from "$lib/server/domains/categories";
+import {BudgetService} from "$lib/server/domains/budgets";
 import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
 
-const payeeService = new PayeeService();
+const categoryService = new CategoryService();
+const budgetService = new BudgetService();
+const payeeService = new PayeeService(undefined, categoryService, budgetService);
 
 export const payeeRoutes = t.router({
   all: publicProcedure.query(async () => {
@@ -171,13 +175,26 @@ export const payeeRoutes = t.router({
     .input(formInsertPayeeSchema)
     .mutation(async ({input}) => {
       try {
-        const {id, name, notes} = input;
+        const {id, ...payeeData} = input;
+
+        // Ensure name is properly typed and required
+        const name = payeeData.name || "";
+        if (!name.trim()) {
+          throw new ValidationError("Payee name is required");
+        }
+
         if (id) {
           // Update existing payee
-          return await payeeService.updatePayee(id, {name: name!, notes});
+          return await payeeService.updatePayee(id, {
+            ...payeeData,
+            name: name.trim()
+          });
         } else {
           // Create new payee
-          return await payeeService.createPayee({name: name!, notes});
+          return await payeeService.createPayee({
+            ...payeeData,
+            name: name.trim()
+          });
         }
       } catch (error) {
         if (error instanceof NotFoundError) {
@@ -210,7 +227,10 @@ export const payeeRoutes = t.router({
     .input(advancedSearchPayeesSchema)
     .query(async ({input}) => {
       try {
-        return await payeeService.searchPayeesAdvanced(input);
+        console.log('tRPC searchAdvanced called with input:', JSON.stringify(input, null, 2));
+        const result = await payeeService.searchPayeesAdvanced(input);
+        console.log('tRPC searchAdvanced result count:', result.length);
+        return result;
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -1744,4 +1764,353 @@ export const payeeRoutes = t.router({
           });
         }
       }),
+
+  // =====================================
+  // Bulk Operations Routes (Phase 4)
+  // =====================================
+
+  bulkStatusChange: rateLimitedProcedure
+    .input(z.object({
+      payeeIds: z.array(z.number().positive()),
+      status: z.enum(['active', 'inactive']),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        const isActivating = input.status === 'active';
+        return await payeeService.bulkUpdatePayeeStatus(input.payeeIds, isActivating);
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to update payee status",
+        });
+      }
+    }),
+
+  bulkCategoryAssignment: rateLimitedProcedure
+    .input(z.object({
+      payeeIds: z.array(z.number().positive()),
+      categoryId: z.number().positive(),
+      overwriteExisting: z.boolean().default(false),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await payeeService.bulkAssignCategory(
+          input.payeeIds,
+          input.categoryId,
+          input.overwriteExisting
+        );
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        if (error instanceof NotFoundError) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to assign category to payees",
+        });
+      }
+    }),
+
+  bulkTagManagement: rateLimitedProcedure
+    .input(z.object({
+      payeeIds: z.array(z.number().positive()),
+      tags: z.array(z.string()),
+      operation: z.enum(['add', 'remove', 'replace']),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await payeeService.bulkManageTags(
+          input.payeeIds,
+          input.tags,
+          input.operation
+        );
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to manage payee tags",
+        });
+      }
+    }),
+
+  bulkIntelligenceApplication: rateLimitedProcedure
+    .input(z.object({
+      payeeIds: z.array(z.number().positive()),
+      options: z.object({
+        applyCategory: z.boolean().default(true),
+        applyBudget: z.boolean().default(true),
+        confidenceThreshold: z.number().min(0).max(1).default(0.7),
+        overwriteExisting: z.boolean().default(false),
+      }),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await payeeService.bulkApplyIntelligentDefaults(
+          input.payeeIds,
+          input.options
+        );
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to apply intelligent defaults",
+        });
+      }
+    }),
+
+  bulkExport: publicProcedure
+    .input(z.object({
+      payeeIds: z.array(z.number().positive()),
+      format: z.enum(['csv', 'json']),
+      includeTransactionStats: z.boolean().default(true),
+      includeContactInfo: z.boolean().default(true),
+      includeIntelligenceData: z.boolean().default(false),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await payeeService.exportPayees(
+          input.payeeIds,
+          input.format,
+          {
+            includeTransactionStats: input.includeTransactionStats,
+            includeContactInfo: input.includeContactInfo,
+            includeIntelligenceData: input.includeIntelligenceData,
+          }
+        );
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to export payees",
+        });
+      }
+    }),
+
+  bulkImport: rateLimitedProcedure
+    .input(z.object({
+      data: z.string(), // CSV or JSON string
+      format: z.enum(['csv', 'json']),
+      options: z.object({
+        skipDuplicates: z.boolean().default(true),
+        updateExisting: z.boolean().default(false),
+        applyIntelligentDefaults: z.boolean().default(true),
+        validateContactInfo: z.boolean().default(true),
+      }).default({}),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await payeeService.importPayees(
+          input.data,
+          input.format,
+          input.options
+        );
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to import payees",
+        });
+      }
+    }),
+
+  bulkCleanup: rateLimitedProcedure
+    .input(z.object({
+      operations: z.array(z.enum([
+        'remove_inactive',
+        'remove_empty_payees',
+        'normalize_names',
+        'standardize_contact_info',
+        'merge_duplicates',
+        'update_calculated_fields'
+      ])),
+      dryRun: z.boolean().default(true),
+      confirmDestructive: z.boolean().default(false),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await payeeService.bulkCleanupPayees(
+          input.operations,
+          input.dryRun,
+          input.confirmDestructive
+        );
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to perform bulk cleanup",
+        });
+      }
+    }),
+
+  getDuplicates: publicProcedure
+    .input(z.object({
+      similarityThreshold: z.number().min(0).max(1).default(0.8),
+      includeInactive: z.boolean().default(false),
+      groupingStrategy: z.enum(['name', 'contact', 'transaction_pattern', 'comprehensive']).default('comprehensive'),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await payeeService.findDuplicatePayees(
+          input.similarityThreshold,
+          input.includeInactive,
+          input.groupingStrategy
+        );
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to find duplicate payees",
+        });
+      }
+    }),
+
+  mergeDuplicates: rateLimitedProcedure
+    .input(z.object({
+      primaryPayeeId: z.number().positive(),
+      duplicatePayeeIds: z.array(z.number().positive()),
+      mergeStrategy: z.object({
+        preserveTransactionHistory: z.boolean().default(true),
+        conflictResolution: z.enum(['primary', 'latest', 'best_quality', 'manual']).default('best_quality'),
+        mergeContactInfo: z.boolean().default(true),
+        mergeIntelligenceData: z.boolean().default(true),
+      }).default({}),
+      confirmMerge: z.boolean().default(false),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await payeeService.mergeDuplicatePayees(
+          input.primaryPayeeId,
+          input.duplicatePayeeIds,
+          input.mergeStrategy,
+          input.confirmMerge
+        );
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        if (error instanceof NotFoundError) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: error.message,
+          });
+        }
+        if (error instanceof ConflictError) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to merge duplicate payees",
+        });
+      }
+    }),
+
+  undoOperation: rateLimitedProcedure
+    .input(z.object({
+      operationId: z.string(),
+      operationType: z.enum([
+        'bulk_delete',
+        'bulk_status_change',
+        'bulk_category_assignment',
+        'bulk_tag_management',
+        'bulk_intelligence_application',
+        'bulk_cleanup',
+        'merge_duplicates'
+      ]),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await payeeService.undoBulkOperation(
+          input.operationId,
+          input.operationType
+        );
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: error.message,
+          });
+        }
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to undo bulk operation",
+        });
+      }
+    }),
+
+  getOperationHistory: publicProcedure
+    .input(z.object({
+      limit: z.number().positive().default(20),
+      offset: z.number().min(0).default(0),
+      operationType: z.enum([
+        'bulk_delete',
+        'bulk_status_change',
+        'bulk_category_assignment',
+        'bulk_tag_management',
+        'bulk_intelligence_application',
+        'bulk_cleanup',
+        'merge_duplicates'
+      ]).optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await payeeService.getBulkOperationHistory(
+          input.limit,
+          input.offset,
+          input.operationType,
+          input.startDate,
+          input.endDate
+        );
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to get operation history",
+        });
+      }
+    }),
 });

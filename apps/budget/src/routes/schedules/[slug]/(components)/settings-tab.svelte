@@ -28,6 +28,7 @@ let { schedule, statistics, isExecutingAutoAdd, executeAutoAdd, editSchedule, to
 } = $props();
 </script>
 
+{#if schedule}
 <div class="space-y-4">
   <div class="grid gap-3 md:grid-cols-2">
     <!-- Schedule Configuration -->
@@ -157,3 +158,4 @@ let { schedule, statistics, isExecutingAutoAdd, executeAutoAdd, editSchedule, to
     </Card.Content>
   </Card.Root>
 </div>
+{/if}

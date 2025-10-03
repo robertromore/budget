@@ -270,3 +270,40 @@ export function createBudgetValidationEngine(): WizardValidationEngine {
   budgetValidations.forEach(validation => engine.addStepValidation(validation));
   return engine;
 }
+
+export const transactionValidations: StepValidation[] = [
+  {
+    stepId: 'date-amount',
+    rules: [
+      { field: 'date', validator: validators.required('Date') },
+      { field: 'amount', validator: validators.custom('Amount',
+        (value) => {
+          const num = Number(value);
+          return !isNaN(num) && num !== 0;
+        }, 'Amount must be a non-zero number') }
+    ]
+  },
+  {
+    stepId: 'payee-category',
+    rules: [
+      // At least one of payee or category should be set (both optional but recommended)
+    ]
+  },
+  {
+    stepId: 'notes-status',
+    rules: [
+      { field: 'notes', validator: validators.maxLength('Notes', 500) }
+    ]
+  },
+  {
+    stepId: 'review',
+    rules: [],
+    dependencies: ['date-amount']
+  }
+];
+
+export function createTransactionValidationEngine(): WizardValidationEngine {
+  const engine = new WizardValidationEngine();
+  transactionValidations.forEach(validation => engine.addStepValidation(validation));
+  return engine;
+}

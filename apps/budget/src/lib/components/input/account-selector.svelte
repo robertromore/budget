@@ -49,9 +49,8 @@ let {
   management,
 }: Props = $props();
 
-const findCurrentEntity = () => entities.find((entity) => entity.id == value?.id);
 let label = $derived(value?.name);
-let selected = $derived(findCurrentEntity());
+let selected = $derived.by(() => entities.find((entity) => entity.id == value?.id));
 let open = $state(false);
 let manage = $state(false);
 let managingId: number = $state(0);
@@ -62,8 +61,6 @@ if (defaultValue) {
     value = defaultEntity;
   }
 }
-
-// Removed toggleManageScreen - now using direct state management
 
 const onSave = (new_entity: EditableEntityItem, is_new: boolean) => {
   management?.onSave(new_entity, is_new);

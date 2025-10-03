@@ -9,6 +9,8 @@ import {
   type BudgetType,
   type BudgetScope,
   type BudgetEnforcementLevel,
+  type BudgetGroup,
+  type NewBudgetGroup,
   budgetTypes,
   budgetScopes,
   budgetEnforcementLevels,
@@ -56,7 +58,9 @@ export interface UpdateBudgetRequest {
 export class BudgetService {
   constructor(
     private repository: BudgetRepository = new BudgetRepository(),
-    private envelopeService: EnvelopeService = new EnvelopeService()
+    private envelopeService: EnvelopeService = new EnvelopeService(),
+    private goalTrackingService: GoalTrackingService = new GoalTrackingService(),
+    private forecastService: BudgetForecastService = new BudgetForecastService()
   ) {}
 
   async createBudget(input: CreateBudgetRequest): Promise<BudgetWithRelations> {
@@ -169,6 +173,69 @@ export class BudgetService {
     await this.repository.deleteBudget(id);
   }
 
+  async duplicateBudget(id: number, newName?: string): Promise<BudgetWithRelations> {
+    const originalBudget = await this.getBudget(id);
+
+    const duplicatedName = newName || `${originalBudget.name} (Copy)`;
+
+    return await this.repository.createBudget({
+      budget: {
+        name: duplicatedName,
+        description: originalBudget.description,
+        type: originalBudget.type,
+        scope: originalBudget.scope,
+        status: originalBudget.status,
+        enforcementLevel: originalBudget.enforcementLevel,
+        metadata: originalBudget.metadata as BudgetMetadata,
+      },
+      accountIds: originalBudget.accounts?.map(a => a.id),
+      categoryIds: originalBudget.categories?.map(c => c.id),
+      groupIds: originalBudget.groups?.map(g => g.id),
+    });
+  }
+
+  async bulkArchive(ids: number[]): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
+    let success = 0;
+    let failed = 0;
+    const errors: Array<{id: number; error: string}> = [];
+
+    for (const id of ids) {
+      try {
+        await this.updateBudget(id, { status: 'archived' });
+        success++;
+      } catch (error) {
+        failed++;
+        errors.push({
+          id,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    return { success, failed, errors };
+  }
+
+  async bulkDelete(ids: number[]): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
+    let success = 0;
+    let failed = 0;
+    const errors: Array<{id: number; error: string}> = [];
+
+    for (const id of ids) {
+      try {
+        await this.deleteBudget(id);
+        success++;
+      } catch (error) {
+        failed++;
+        errors.push({
+          id,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    return { success, failed, errors };
+  }
+
   private validateEnumValue<T extends string>(
     label: string,
     value: T,
@@ -269,6 +336,181 @@ export class BudgetService {
 
   async detectEnvelopeDeficitRisk(envelopeId: number) {
     return await this.envelopeService.detectDeficitRisk(envelopeId);
+  }
+
+  async getApplicableBudgets(accountId?: number, categoryId?: number): Promise<BudgetWithRelations[]> {
+    return await this.repository.findApplicableBudgets(accountId, categoryId);
+  }
+
+  async validateTransactionAgainstStrictBudgets(
+    transactionAmount: number,
+    accountId?: number,
+    categoryId?: number,
+    transactionId?: number
+  ): Promise<{allowed: boolean; violations: Array<{budgetId: number; budgetName: string; exceeded: number}>}> {
+    const applicableBudgets = await this.repository.findApplicableBudgets(accountId, categoryId);
+    const strictBudgets = applicableBudgets.filter(b => b.enforcementLevel === 'strict' && b.status === 'active');
+
+    if (strictBudgets.length === 0) {
+      return {allowed: true, violations: []};
+    }
+
+    const violations: Array<{budgetId: number; budgetName: string; exceeded: number}> = [];
+
+    for (const budget of strictBudgets) {
+      const latestPeriod = this.getLatestPeriodInstance(budget);
+      if (!latestPeriod) continue;
+
+      const currentSpent = Math.abs(latestPeriod.actualAmount ?? 0);
+      const allocated = Math.abs(latestPeriod.allocatedAmount ?? 0);
+      const remaining = allocated - currentSpent;
+
+      const proposedTransactionAmount = Math.abs(transactionAmount);
+
+      if (proposedTransactionAmount > remaining) {
+        violations.push({
+          budgetId: budget.id,
+          budgetName: budget.name,
+          exceeded: proposedTransactionAmount - remaining,
+        });
+      }
+    }
+
+    return {
+      allowed: violations.length === 0,
+      violations,
+    };
+  }
+
+  private getLatestPeriodInstance(budget: BudgetWithRelations): BudgetPeriodInstance | null {
+    const templates = budget.periodTemplates ?? [];
+    const periods = templates.flatMap(template => template.periods ?? []);
+    if (!periods.length) return null;
+
+    return periods.reduce((latest, current) =>
+      latest.endDate > current.endDate ? latest : current
+    );
+  }
+
+  async getGoalProgress(budgetId: number): Promise<GoalProgress> {
+    return await this.goalTrackingService.calculateGoalProgress(budgetId);
+  }
+
+  async createGoalContributionPlan(
+    budgetId: number,
+    frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly',
+    customAmount?: number
+  ): Promise<ContributionPlan> {
+    return await this.goalTrackingService.createContributionPlan(budgetId, frequency, customAmount);
+  }
+
+  async linkScheduleToGoal(budgetId: number, scheduleId: number): Promise<BudgetWithRelations> {
+    return await this.goalTrackingService.linkScheduleToGoal(budgetId, scheduleId);
+  }
+
+  async forecastBudgetImpact(budgetId: number, daysAhead?: number): Promise<BudgetForecast> {
+    return await this.forecastService.forecastBudgetImpact(budgetId, daysAhead);
+  }
+
+  async autoAllocateScheduledExpenses(budgetId: number): Promise<BudgetWithRelations> {
+    return await this.forecastService.autoAllocateScheduledExpenses(budgetId);
+  }
+
+  async createBudgetGroup(data: {
+    name: string;
+    description?: string | null;
+    parentId?: number | null;
+    spendingLimit?: number | null;
+  }): Promise<BudgetGroup> {
+    const name = InputSanitizer.sanitizeText(data.name, {
+      required: true,
+      minLength: 2,
+      maxLength: 80,
+      fieldName: "Budget group name",
+    });
+
+    const description = data.description
+      ? InputSanitizer.sanitizeDescription(data.description, 500)
+      : null;
+
+    return await this.repository.createBudgetGroup({
+      name,
+      description,
+      parentId: data.parentId ?? null,
+      spendingLimit: data.spendingLimit ?? null,
+    });
+  }
+
+  async getBudgetGroup(id: number): Promise<BudgetGroup> {
+    const group = await this.repository.getBudgetGroupById(id);
+    if (!group) {
+      throw new NotFoundError("Budget group", id);
+    }
+    return group;
+  }
+
+  async listBudgetGroups(parentId?: number | null): Promise<BudgetGroup[]> {
+    return await this.repository.listBudgetGroups(parentId);
+  }
+
+  async getRootBudgetGroups(): Promise<BudgetGroup[]> {
+    return await this.repository.getRootBudgetGroups();
+  }
+
+  async updateBudgetGroup(id: number, updates: {
+    name?: string;
+    description?: string | null;
+    parentId?: number | null;
+    spendingLimit?: number | null;
+  }): Promise<BudgetGroup> {
+    const sanitizedUpdates: Partial<NewBudgetGroup> = {};
+
+    if (updates.name !== undefined) {
+      sanitizedUpdates.name = InputSanitizer.sanitizeText(updates.name, {
+        required: true,
+        minLength: 2,
+        maxLength: 80,
+        fieldName: "Budget group name",
+      });
+    }
+
+    if (updates.description !== undefined) {
+      sanitizedUpdates.description = updates.description
+        ? InputSanitizer.sanitizeDescription(updates.description, 500)
+        : null;
+    }
+
+    if (updates.parentId !== undefined) {
+      sanitizedUpdates.parentId = updates.parentId;
+    }
+
+    if (updates.spendingLimit !== undefined) {
+      sanitizedUpdates.spendingLimit = updates.spendingLimit;
+    }
+
+    return await this.repository.updateBudgetGroup(id, sanitizedUpdates);
+  }
+
+  async deleteBudgetGroup(id: number): Promise<void> {
+    await this.repository.deleteBudgetGroup(id);
+  }
+
+  // Analytics Methods
+
+  async getSpendingTrends(budgetId: number, limit = 6) {
+    return await this.repository.getSpendingTrends(budgetId, limit);
+  }
+
+  async getCategoryBreakdown(budgetId: number) {
+    return await this.repository.getCategoryBreakdown(budgetId);
+  }
+
+  async getDailySpending(budgetId: number, startDate: string, endDate: string) {
+    return await this.repository.getDailySpending(budgetId, startDate, endDate);
+  }
+
+  async getBudgetSummaryStats(budgetId: number) {
+    return await this.repository.getBudgetSummaryStats(budgetId);
   }
 }
 
@@ -476,6 +718,415 @@ export class BudgetPeriodService {
 
   async listInstances(templateId: number): Promise<BudgetPeriodInstance[]> {
     return await this.repository.listPeriodInstances(templateId);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Goal Tracking Service                                             */
+/* ------------------------------------------------------------------ */
+
+export interface GoalProgress {
+  budgetId: number;
+  budgetName: string;
+  targetAmount: number;
+  currentAmount: number;
+  remainingAmount: number;
+  percentComplete: number;
+  targetDate: string;
+  daysRemaining: number;
+  isOnTrack: boolean;
+  requiredContribution: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+  };
+  projectedCompletionDate?: string;
+  status: 'on-track' | 'ahead' | 'behind' | 'at-risk' | 'completed';
+}
+
+export interface ContributionPlan {
+  frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  amount: number;
+  numberOfPayments: number;
+  totalAmount: number;
+  projectedCompletionDate: string;
+}
+
+export class GoalTrackingService {
+  constructor(private repository: BudgetRepository = new BudgetRepository()) {}
+
+  async calculateGoalProgress(budgetId: number): Promise<GoalProgress> {
+    const budget = await this.repository.findById(budgetId);
+    if (!budget) {
+      throw new NotFoundError("Budget", budgetId);
+    }
+
+    if (budget.type !== 'goal-based') {
+      throw new ValidationError('Budget is not a goal-based budget', 'type');
+    }
+
+    const goalMetadata = budget.metadata?.goal;
+    if (!goalMetadata) {
+      throw new ValidationError('Budget does not have goal metadata', 'goal');
+    }
+
+    const currentAmount = await this.getCurrentGoalAmount(budgetId, budget);
+    const targetAmount = goalMetadata.targetAmount;
+    const remainingAmount = Math.max(0, targetAmount - currentAmount);
+    const percentComplete = Math.min(100, (currentAmount / targetAmount) * 100);
+
+    const targetDate = new Date(goalMetadata.targetDate);
+    const today = new Date();
+    const daysRemaining = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    const requiredContribution = this.calculateRequiredContributions(remainingAmount, daysRemaining);
+
+    const {status, projectedCompletionDate} = this.calculateGoalStatus(
+      currentAmount,
+      targetAmount,
+      daysRemaining,
+      goalMetadata
+    );
+
+    return {
+      budgetId: budget.id,
+      budgetName: budget.name,
+      targetAmount,
+      currentAmount,
+      remainingAmount,
+      percentComplete,
+      targetDate: goalMetadata.targetDate,
+      daysRemaining,
+      isOnTrack: status === 'on-track' || status === 'ahead',
+      requiredContribution,
+      projectedCompletionDate,
+      status,
+    };
+  }
+
+  private async getCurrentGoalAmount(budgetId: number, budget: BudgetWithRelations): Promise<number> {
+    const goalMetadata = budget.metadata?.goal;
+    const startDate = goalMetadata?.startDate || budget.createdAt;
+
+    const relevantCategories = budget.categories?.map(c => c.id) || [];
+    const relevantAccounts = budget.accounts?.map(a => a.id) || [];
+
+    if (relevantAccounts.length === 0 && relevantCategories.length === 0) {
+      return 0;
+    }
+
+    const accountTotal = relevantAccounts.length > 0
+      ? await this.repository.getAccountsBalance(relevantAccounts)
+      : 0;
+
+    const categoryTotal = relevantCategories.length > 0
+      ? await this.repository.getCategorySpendingSince(relevantCategories, startDate)
+      : 0;
+
+    return accountTotal + categoryTotal;
+  }
+
+  private calculateRequiredContributions(remainingAmount: number, daysRemaining: number): {
+    daily: number;
+    weekly: number;
+    monthly: number;
+  } {
+    if (daysRemaining <= 0 || remainingAmount <= 0) {
+      return {daily: 0, weekly: 0, monthly: 0};
+    }
+
+    const daily = remainingAmount / daysRemaining;
+    const weekly = (remainingAmount / daysRemaining) * 7;
+    const monthly = (remainingAmount / daysRemaining) * 30;
+
+    return {
+      daily: Math.ceil(daily * 100) / 100,
+      weekly: Math.ceil(weekly * 100) / 100,
+      monthly: Math.ceil(monthly * 100) / 100,
+    };
+  }
+
+  private calculateGoalStatus(
+    currentAmount: number,
+    targetAmount: number,
+    daysRemaining: number,
+    goalMetadata: NonNullable<BudgetMetadata['goal']>
+  ): {status: GoalProgress['status']; projectedCompletionDate?: string} {
+    if (currentAmount >= targetAmount) {
+      return {status: 'completed'};
+    }
+
+    if (daysRemaining <= 0) {
+      return {status: 'at-risk'};
+    }
+
+    const percentComplete = (currentAmount / targetAmount) * 100;
+    const elapsedDays = this.getElapsedDays(goalMetadata.startDate);
+    const totalDays = elapsedDays + daysRemaining;
+    const expectedPercent = (elapsedDays / totalDays) * 100;
+
+    if (percentComplete >= expectedPercent + 10) {
+      const daysToComplete = Math.ceil((targetAmount - currentAmount) / (currentAmount / elapsedDays));
+      const projectedDate = new Date();
+      projectedDate.setDate(projectedDate.getDate() + daysToComplete);
+      return {
+        status: 'ahead',
+        projectedCompletionDate: projectedDate.toISOString().split('T')[0],
+      };
+    }
+
+    if (percentComplete < expectedPercent - 20) {
+      return {status: 'at-risk'};
+    }
+
+    if (percentComplete < expectedPercent - 10) {
+      return {status: 'behind'};
+    }
+
+    return {status: 'on-track'};
+  }
+
+  private getElapsedDays(startDate?: string): number {
+    if (!startDate) return 30;
+    const start = new Date(startDate);
+    const now = new Date();
+    return Math.max(1, Math.ceil((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  }
+
+  async createContributionPlan(
+    budgetId: number,
+    frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly',
+    customAmount?: number
+  ): Promise<ContributionPlan> {
+    const progress = await this.calculateGoalProgress(budgetId);
+
+    if (progress.status === 'completed') {
+      throw new ValidationError('Goal is already completed', 'goal');
+    }
+
+    let amount: number;
+    let daysPerPayment: number;
+
+    switch (frequency) {
+      case 'weekly':
+        amount = customAmount ?? progress.requiredContribution.weekly;
+        daysPerPayment = 7;
+        break;
+      case 'monthly':
+        amount = customAmount ?? progress.requiredContribution.monthly;
+        daysPerPayment = 30;
+        break;
+      case 'quarterly':
+        amount = customAmount ?? progress.requiredContribution.monthly * 3;
+        daysPerPayment = 90;
+        break;
+      case 'yearly':
+        amount = customAmount ?? progress.requiredContribution.monthly * 12;
+        daysPerPayment = 365;
+        break;
+    }
+
+    const numberOfPayments = Math.ceil(progress.remainingAmount / amount);
+    const totalAmount = amount * numberOfPayments;
+    const daysToComplete = numberOfPayments * daysPerPayment;
+
+    const completionDate = new Date();
+    completionDate.setDate(completionDate.getDate() + daysToComplete);
+
+    return {
+      frequency,
+      amount,
+      numberOfPayments,
+      totalAmount,
+      projectedCompletionDate: completionDate.toISOString().split('T')[0],
+    };
+  }
+
+  async linkScheduleToGoal(budgetId: number, scheduleId: number): Promise<BudgetWithRelations> {
+    const budget = await this.repository.findById(budgetId);
+    if (!budget) {
+      throw new NotFoundError("Budget", budgetId);
+    }
+
+    if (budget.type !== 'goal-based') {
+      throw new ValidationError('Budget is not a goal-based budget', 'type');
+    }
+
+    const metadata = budget.metadata || {};
+    const goal = metadata.goal;
+
+    if (!goal) {
+      throw new ValidationError('Budget does not have goal metadata', 'goal');
+    }
+
+    goal.linkedScheduleId = scheduleId;
+    goal.autoContribute = true;
+
+    return await this.repository.updateBudget(budgetId, {metadata}, {});
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Budget Forecast Service                                           */
+/* ------------------------------------------------------------------ */
+
+export interface ScheduledExpenseForecast {
+  scheduleId: number;
+  scheduleName: string;
+  nextOccurrence: string;
+  amount: number;
+  frequency: string;
+  occurrencesInPeriod: number;
+  totalImpact: number;
+}
+
+export interface BudgetForecast {
+  budgetId: number;
+  budgetName: string;
+  periodStart: string;
+  periodEnd: string;
+  allocatedAmount: number;
+  projectedScheduledExpenses: number;
+  projectedBalance: number;
+  scheduledExpenses: ScheduledExpenseForecast[];
+  status: 'sufficient' | 'tight' | 'exceeded';
+}
+
+export class BudgetForecastService {
+  constructor(private repository: BudgetRepository = new BudgetRepository()) {}
+
+  async forecastBudgetImpact(budgetId: number, daysAhead: number = 30): Promise<BudgetForecast> {
+    const budget = await this.repository.findById(budgetId);
+    if (!budget) {
+      throw new NotFoundError("Budget", budgetId);
+    }
+
+    const now = new Date();
+    const periodEnd = new Date(now);
+    periodEnd.setDate(periodEnd.getDate() + daysAhead);
+
+    const periodStart = now.toISOString().split('T')[0];
+    const periodEndStr = periodEnd.toISOString().split('T')[0];
+
+    const schedules = await this.getSchedulesForBudget(budgetId);
+    const scheduledExpenses: ScheduledExpenseForecast[] = [];
+    let projectedScheduledExpenses = 0;
+
+    for (const schedule of schedules) {
+      const forecast = await this.forecastSchedule(schedule, periodStart, periodEndStr);
+      if (forecast) {
+        scheduledExpenses.push(forecast);
+        projectedScheduledExpenses += forecast.totalImpact;
+      }
+    }
+
+    const allocatedAmount = budget.metadata?.allocatedAmount || 0;
+    const projectedBalance = allocatedAmount - projectedScheduledExpenses;
+
+    let status: BudgetForecast['status'] = 'sufficient';
+    if (projectedBalance < 0) {
+      status = 'exceeded';
+    } else if (projectedBalance < allocatedAmount * 0.1) {
+      status = 'tight';
+    }
+
+    return {
+      budgetId: budget.id,
+      budgetName: budget.name,
+      periodStart,
+      periodEnd: periodEndStr,
+      allocatedAmount,
+      projectedScheduledExpenses,
+      projectedBalance,
+      scheduledExpenses,
+      status,
+    };
+  }
+
+  private async getSchedulesForBudget(budgetId: number): Promise<any[]> {
+    const schedulesModule = await import("$lib/schema/schedules");
+    const {schedules} = schedulesModule;
+    const results = await db.select().from(schedules).where(eq(schedules.budgetId, budgetId));
+    return results;
+  }
+
+  private async forecastSchedule(
+    schedule: any,
+    periodStart: string,
+    periodEnd: string
+  ): Promise<ScheduledExpenseForecast | null> {
+    if (!schedule.dateId || schedule.status !== 'active') {
+      return null;
+    }
+
+    const scheduleDatesModule = await import("$lib/schema/schedule-dates");
+    const {scheduleDates} = scheduleDatesModule;
+
+    const dateConfig = await db.query.scheduleDates.findFirst({
+      where: eq(scheduleDates.id, schedule.dateId),
+    });
+
+    if (!dateConfig) {
+      return null;
+    }
+
+    const occurrencesInPeriod = this.calculateOccurrences(dateConfig, periodStart, periodEnd);
+    const amount = schedule.amount_type === 'range'
+      ? (schedule.amount + schedule.amount_2) / 2
+      : schedule.amount;
+
+    const totalImpact = Math.abs(amount) * occurrencesInPeriod;
+
+    return {
+      scheduleId: schedule.id,
+      scheduleName: schedule.name,
+      nextOccurrence: this.calculateNextOccurrence(dateConfig, periodStart),
+      amount,
+      frequency: dateConfig.frequency || 'once',
+      occurrencesInPeriod,
+      totalImpact,
+    };
+  }
+
+  private calculateOccurrences(dateConfig: any, periodStart: string, periodEnd: string): number {
+    const frequency = dateConfig.frequency;
+    const start = new Date(periodStart);
+    const end = new Date(periodEnd);
+    const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+    switch (frequency) {
+      case 'daily':
+        return daysDiff;
+      case 'weekly':
+        return Math.floor(daysDiff / 7);
+      case 'monthly':
+        return Math.floor(daysDiff / 30);
+      case 'yearly':
+        return Math.floor(daysDiff / 365);
+      default:
+        return 1;
+    }
+  }
+
+  private calculateNextOccurrence(dateConfig: any, fromDate: string): string {
+    const startDate = dateConfig.startDate || fromDate;
+    return startDate;
+  }
+
+  async autoAllocateScheduledExpenses(budgetId: number): Promise<BudgetWithRelations> {
+    const forecast = await this.forecastBudgetImpact(budgetId, 30);
+    const budget = await this.repository.findById(budgetId);
+
+    if (!budget) {
+      throw new NotFoundError("Budget", budgetId);
+    }
+
+    const metadata = {
+      ...budget.metadata,
+      allocatedAmount: forecast.projectedScheduledExpenses,
+    };
+
+    return await this.repository.updateBudget(budgetId, {metadata}, {});
   }
 }
 
