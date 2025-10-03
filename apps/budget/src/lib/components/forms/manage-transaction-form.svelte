@@ -78,79 +78,52 @@ const selectedPayee = $derived.by(() => {
   return (payees as Payee[]).find(p => p.id === payee.id) || null;
 });
 
-// Get intelligence query for selected payee
-const intelligenceQuery = $derived.by(() => {
-  const currentPayee = selectedPayee;
-  if (!currentPayee?.id || currentPayee.id === 0) return null;
-
-  return getPayeeSuggestionsFor(
-    currentPayee.id,
-    categories as EditableEntityItem[],
-    {
-      transactionAmount: amount > 0 ? amount : 0,
-      transactionDate: dateValue.toString(),
-    }
-  );
-});
-
 // Intelligence suggestions based on selected payee
 const intelligenceSuggestions = $derived.by(() => {
   const currentPayee = selectedPayee;
   if (!currentPayee) return null;
 
-  // Try to get advanced intelligence first
-  const query = intelligenceQuery;
-  if (query) {
-    try {
-      const result = query.execute ? query.execute() : null;
-      if (result) {
-        const processed = query.processSuggestions(result, result);
-        if (processed) return processed;
-      }
-    } catch (error) {
-      // If query execution fails, fall through to basic suggestions
-      console.warn('Intelligence query failed:', error);
-    }
-  }
-
-  // Fallback to basic suggestions from payee data
-  return generateBasicSuggestions(currentPayee, categories as EditableEntityItem[]);
+  // Generate basic suggestions from payee data
+  return generateBasicSuggestions(currentPayee);
 });
 
 // Category suggestion for EntityInput
 const categorySuggestion = $derived.by(() => {
   const suggestions = intelligenceSuggestions;
-  if (!suggestions?.category?.suggestedCategory) return undefined;
+  if (!suggestions?.category?.id) return undefined;
+
+  const suggestedCategory = (categories as EditableEntityItem[]).find(c => c.id === suggestions.category?.id);
+  if (!suggestedCategory) return undefined;
 
   return {
-    type: suggestions.category.type,
-    reason: suggestions.category.reason,
-    ...(suggestions.category.confidence !== undefined && { confidence: suggestions.category.confidence }),
-    suggestedValue: suggestions.category.suggestedCategory,
+    type: 'intelligent' as const,
+    reason: 'Based on your transaction history',
+    confidence: suggestions.category.confidence ?? 0.8,
+    suggestedValue: suggestedCategory,
     onApply: () => {
-      if (suggestions.category?.suggestedCategory) {
-        category = suggestions.category.suggestedCategory;
+      if (suggestedCategory) {
+        category = suggestedCategory;
       }
     }
-  } as const;
+  };
 });
 
 // Amount suggestion for NumericInput
 const amountSuggestion = $derived.by(() => {
   const suggestions = intelligenceSuggestions;
-  if (!suggestions?.amount) return undefined;
+  if (!suggestions?.amount?.value) return undefined;
 
   return {
-    type: suggestions.amount.type,
-    reason: suggestions.amount.reason,
-    ...(suggestions.amount.confidence !== undefined && { confidence: suggestions.amount.confidence }),
-    suggestedAmount: suggestions.amount.suggestedAmount || 0,
+    type: 'smart' as const,
+    reason: 'Based on your transaction history',
+    confidence: suggestions.amount.confidence ?? 0.6,
+    suggestedAmount: suggestions.amount.value,
     onApply: () => {
-      if (suggestions.amount?.suggestedAmount) {
-        amount = suggestions.amount.suggestedAmount;
+      if (suggestions.amount?.value) {
+        amount = suggestions.amount.value;
       }
     }
-  } as const;
+  };
 });
 
 // Auto-apply suggestions when payee changes (configurable behavior)
@@ -164,12 +137,15 @@ $effect(() => {
     const shouldApplyCategory = !category.id || category.id === 0;
     const shouldApplyAmount = !amount || amount === 0;
 
-    if (shouldApplyCategory && suggestions.category?.suggestedCategory) {
-      category = suggestions.category.suggestedCategory;
+    if (shouldApplyCategory && suggestions.category?.id) {
+      const suggestedCategory = (categories as EditableEntityItem[]).find(c => c.id === suggestions.category?.id);
+      if (suggestedCategory) {
+        category = suggestedCategory;
+      }
     }
 
-    if (shouldApplyAmount && suggestions.amount?.suggestedAmount) {
-      amount = suggestions.amount.suggestedAmount;
+    if (shouldApplyAmount && suggestions.amount?.value) {
+      amount = suggestions.amount.value;
     }
   }
 });
@@ -190,15 +166,14 @@ const applicableBudgetsQuery = $derived.by(() => {
 
   if (!accId && !catId) return null;
 
-  return getApplicableBudgets(accId, catId);
+  return getApplicableBudgets(accId, catId).options();
 });
 
 const applicableBudgets = $derived.by(() => {
   const query = applicableBudgetsQuery;
   if (!query) return [];
 
-  const result = query.execute ? query.execute() : null;
-  return result?.data ?? [];
+  return query.data ?? [];
 });
 
 // Calculate total allocated and remaining amounts
@@ -222,24 +197,19 @@ const strictValidationQuery = $derived.by(() => {
   if (!accId && !catId) return null;
   if (amount === 0) return null;
 
-  return validateTransactionStrict(amount, accId, catId);
+  return validateTransactionStrict(amount, accId, catId).options();
 });
 
 const strictValidation = $derived.by(() => {
   const query = strictValidationQuery;
   if (!query) return null;
 
-  const result = query.execute ? query.execute() : null;
-  return result?.data ?? null;
+  return query.data ?? null;
 });
 
 const hasStrictViolations = $derived.by(() => {
   const validation = strictValidation;
   return validation && !validation.allowed && validation.violations.length > 0;
-});
-
-const canSubmit = $derived.by(() => {
-  return !hasStrictViolations;
 });
 
 // Auto-assign budgets when applicable budgets or amount changes
@@ -281,7 +251,7 @@ function updateAllocationBudget(index: number, budgetId: number) {
 }
 
 function getBudgetName(budgetId: number): string {
-  return applicableBudgets.find(b => b.id === budgetId)?.name ?? 'Select budget';
+  return applicableBudgets.find((b: {id: number, name: string}) => b.id === budgetId)?.name ?? 'Select budget';
 }
 
 // Sync form data
@@ -405,13 +375,12 @@ $effect(() => {
           {#each budgetAllocations as allocation, index (index)}
             <div class="flex gap-2 items-start">
               <Select.Root
+                type="single"
                 value={allocation.budgetId.toString()}
                 onValueChange={(value) => value && updateAllocationBudget(index, parseInt(value))}
               >
                 <Select.Trigger class="flex-1">
-                  <Select.Value placeholder="Select budget">
-                    {getBudgetName(allocation.budgetId)}
-                  </Select.Value>
+                  <span>{getBudgetName(allocation.budgetId)}</span>
                 </Select.Trigger>
                 <Select.Content>
                   {#each applicableBudgets as budget}
