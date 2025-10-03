@@ -53,3 +53,16 @@ export const superformUpdateBudgetSchema = z.object({
 
 export type SuperformInsertBudgetSchema = typeof superformInsertBudgetSchema;
 export type SuperformUpdateBudgetSchema = typeof superformUpdateBudgetSchema;
+
+// Superform-compatible schema for creating budget period templates
+export const superformCreatePeriodTemplateSchema = z.object({
+  budgetId: z.number().int().positive(),
+  type: z.enum(periodTemplateTypes),
+  intervalCount: z.number().int().min(1).max(52).default(1),
+  startDayOfWeek: z.number().int().min(1).max(7).optional(),
+  startDayOfMonth: z.number().int().min(1).max(31).optional(),
+  startMonth: z.number().int().min(1).max(12).optional(),
+  timezone: z.string().optional(),
+});
+
+export type SuperformCreatePeriodTemplateSchema = typeof superformCreatePeriodTemplateSchema;

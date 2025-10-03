@@ -1,6 +1,7 @@
 import type {
   Budget,
   BudgetPeriodInstance,
+  BudgetPeriodTemplate,
   BudgetTransaction,
 } from "$lib/schema/budgets";
 import type { BudgetWithRelations } from "$lib/server/domains/budgets";
@@ -22,6 +23,9 @@ export const budgetKeys = createQueryKeys("budgets", {
   details: () => ["budgets", "detail"] as const,
   detail: (id: number) => ["budgets", "detail", id] as const,
   periodInstances: (templateId: number) => ["budgets", "periods", templateId] as const,
+  periodTemplates: () => ["budgets", "period-templates"] as const,
+  periodTemplateDetail: (id: number) => ["budgets", "period-templates", "detail", id] as const,
+  periodTemplateList: (budgetId: number) => ["budgets", "period-templates", "list", budgetId] as const,
   allocationValidation: (transactionId: number, amount: number, excludeId: number | null) =>
     ["budgets", "allocation", transactionId, amount, excludeId] as const,
   applicableBudgets: (accountId?: number, categoryId?: number) =>
@@ -263,6 +267,19 @@ export const createEnvelopeAllocation = defineMutation<
   errorMessage: "Failed to create envelope allocation",
 });
 
+export const updateEnvelopeAllocation = defineMutation<
+  {envelopeId: number; allocatedAmount: number; metadata?: Record<string, unknown>},
+  any
+>({
+  mutationFn: (input) => trpc().budgetRoutes.updateEnvelopeAllocation.mutate(input),
+  onSuccess: () => {
+    // Invalidate all envelope data since we don't know the budgetId from the envelope ID alone
+    cachePatterns.invalidatePrefix([...budgetKeys.all(), "envelopes"]);
+  },
+  successMessage: "Envelope allocation updated",
+  errorMessage: "Failed to update envelope allocation",
+});
+
 export const transferEnvelopeFunds = defineMutation<
   {fromEnvelopeId: number; toEnvelopeId: number; amount: number; reason?: string; transferredBy?: string},
   any
@@ -317,6 +334,52 @@ export const getSurplusEnvelopes = (budgetId: number, minimumSurplus?: number) =
       enabled: !!budgetId,
     },
   });
+
+export const analyzeEnvelopeDeficit = (envelopeId: number) =>
+  defineQuery({
+    queryKey: [...budgetKeys.all(), "analyze-deficit", envelopeId],
+    queryFn: () => trpc().budgetRoutes.analyzeEnvelopeDeficit.query({envelopeId}),
+    options: {
+      staleTime: 10 * 1000,
+      enabled: !!envelopeId,
+    },
+  });
+
+export const createDeficitRecoveryPlan = (envelopeId: number) =>
+  defineQuery({
+    queryKey: [...budgetKeys.all(), "deficit-recovery-plan", envelopeId],
+    queryFn: () => trpc().budgetRoutes.createDeficitRecoveryPlan.query({envelopeId}),
+    options: {
+      staleTime: 0,
+      enabled: !!envelopeId,
+    },
+  });
+
+export const executeDeficitRecovery = defineMutation<
+  {plan: any; executedBy?: string},
+  any
+>({
+  mutationFn: (input) => trpc().budgetRoutes.executeDeficitRecovery.mutate(input),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix([...budgetKeys.all(), "envelopes"]);
+    cachePatterns.invalidatePrefix([...budgetKeys.all(), "deficit-envelopes"]);
+  },
+  successMessage: "Deficit recovery executed successfully",
+  errorMessage: "Failed to execute deficit recovery",
+});
+
+export const generateBulkDeficitRecovery = defineMutation<
+  {budgetId: number},
+  any
+>({
+  mutationFn: (input) => trpc().budgetRoutes.generateBulkDeficitRecovery.mutate(input),
+  onSuccess: (_, variables) => {
+    cachePatterns.invalidatePrefix([...budgetKeys.all(), "envelopes", variables.budgetId]);
+    cachePatterns.invalidatePrefix([...budgetKeys.all(), "deficit-envelopes", variables.budgetId]);
+  },
+  successMessage: "Bulk deficit recovery generated",
+  errorMessage: "Failed to generate bulk deficit recovery",
+});
 
 export const getApplicableBudgets = (accountId?: number, categoryId?: number) =>
   defineQuery<BudgetWithRelations[]>({
@@ -469,7 +532,81 @@ export const autoAllocateBudget = () =>
   defineMutation({
     mutationFn: (budgetId: number) => trpc().budgetRoutes.autoAllocateBudget.mutate({budgetId}),
     onSuccess: (_, budgetId) => {
-      cachePatterns.invalidate(budgetKeys.detail(budgetId));
-      cachePatterns.invalidate([...budgetKeys.detail(budgetId), "forecast"]);
+      cachePatterns.invalidatePrefix(budgetKeys.detail(budgetId));
+      cachePatterns.invalidatePrefix([...budgetKeys.detail(budgetId), "forecast"]);
     },
   });
+
+// Period Template Operations
+
+export const getPeriodTemplate = (id: number) =>
+  defineQuery<BudgetPeriodTemplate>({
+    queryKey: budgetKeys.periodTemplateDetail(id),
+    queryFn: () => trpc().budgetRoutes.getPeriodTemplate.query({id}),
+    options: {
+      staleTime: 60 * 1000,
+    },
+  });
+
+export const listPeriodTemplates = (budgetId: number) =>
+  defineQuery<BudgetPeriodTemplate[]>({
+    queryKey: budgetKeys.periodTemplateList(budgetId),
+    queryFn: () => trpc().budgetRoutes.listPeriodTemplates.query({budgetId}),
+    options: {
+      staleTime: 60 * 1000,
+      enabled: !!budgetId,
+    },
+  });
+
+export const createPeriodTemplate = defineMutation<
+  {
+    budgetId: number;
+    type: BudgetPeriodTemplate["type"];
+    intervalCount?: number;
+    startDayOfWeek?: number;
+    startDayOfMonth?: number;
+    startMonth?: number;
+    timezone?: string;
+  },
+  BudgetPeriodTemplate
+>({
+  mutationFn: (input) => trpc().budgetRoutes.createPeriodTemplate.mutate(input),
+  onSuccess: (template) => {
+    cachePatterns.invalidatePrefix(budgetKeys.periodTemplateList(template.budgetId));
+    cachePatterns.invalidatePrefix(budgetKeys.detail(template.budgetId));
+  },
+  successMessage: "Period template created",
+  errorMessage: "Failed to create period template",
+});
+
+export const updatePeriodTemplate = defineMutation<
+  {
+    id: number;
+    type?: BudgetPeriodTemplate["type"];
+    intervalCount?: number;
+    startDayOfWeek?: number;
+    startDayOfMonth?: number;
+    startMonth?: number;
+    timezone?: string;
+  },
+  BudgetPeriodTemplate
+>({
+  mutationFn: (input) => trpc().budgetRoutes.updatePeriodTemplate.mutate(input),
+  onSuccess: (template) => {
+    cachePatterns.invalidatePrefix(budgetKeys.periodTemplateDetail(template.id));
+    cachePatterns.invalidatePrefix(budgetKeys.periodTemplateList(template.budgetId));
+    cachePatterns.invalidatePrefix(budgetKeys.detail(template.budgetId));
+  },
+  successMessage: "Period template updated",
+  errorMessage: "Failed to update period template",
+});
+
+export const deletePeriodTemplate = defineMutation<number, {success: boolean}>({
+  mutationFn: (id) => trpc().budgetRoutes.deletePeriodTemplate.mutate({id}),
+  onSuccess: (_, id) => {
+    cachePatterns.removeQuery(budgetKeys.periodTemplateDetail(id));
+    cachePatterns.invalidatePrefix(budgetKeys.periodTemplates());
+  },
+  successMessage: "Period template deleted",
+  errorMessage: "Failed to delete period template",
+});

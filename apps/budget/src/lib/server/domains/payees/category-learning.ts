@@ -96,8 +96,7 @@ export class CategoryLearningService {
   ): Promise<CorrectionPattern[]> {
     const {timeframeMonths = 12, minConfidence = 0.1, includeProcessed = true} = options;
 
-    const cutoffDate = currentDate;
-    cutoffDate.setMonth(cutoffDate.getMonth() - timeframeMonths);
+    const cutoffDate = currentDate.subtract({ months: timeframeMonths });
 
     // Get all corrections for the payee within timeframe
     const corrections = await db
@@ -1035,8 +1034,7 @@ export class CategoryLearningService {
   }
 
   private async calculateConfidenceDistribution(timeframeMonths: number): Promise<LearningMetrics['confidenceDistribution']> {
-    const cutoffDate = currentDate;
-    cutoffDate.setMonth(cutoffDate.getMonth() - timeframeMonths);
+    const cutoffDate = currentDate.subtract({ months: timeframeMonths });
 
     const corrections = await db
       .select({userConfidence: payeeCategoryCorrections.userConfidence})

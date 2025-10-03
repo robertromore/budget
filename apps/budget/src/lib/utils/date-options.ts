@@ -47,3 +47,25 @@ export const monthOptions: Option<number>[] = Array.from({length: 12}, (_, i) =>
   const label = new Intl.DateTimeFormat("en-US", {month: "long"}).format(new Date(1970, i, 1));
   return {value, label};
 });
+
+/**
+ * ISO weekday options – Monday is 1, Sunday is 7 (ISO 8601 format)
+ * Used for budget period templates and other ISO week-based scheduling
+ */
+export const isoWeekdayOptions: Option<string>[] = [
+  {value: '1', label: 'Monday'},
+  {value: '2', label: 'Tuesday'},
+  {value: '3', label: 'Wednesday'},
+  {value: '4', label: 'Thursday'},
+  {value: '5', label: 'Friday'},
+  {value: '6', label: 'Saturday'},
+  {value: '7', label: 'Sunday'},
+];
+
+/**
+ * Month options with string values for select components
+ */
+export const monthStringOptions: Option<string>[] = monthOptions.map((option) => ({
+  value: option.value.toString(),
+  label: option.label,
+}));

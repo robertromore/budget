@@ -3,6 +3,7 @@ import {
   budgetScopes,
   budgetStatuses,
   budgetTypes,
+  periodTemplateTypes,
 } from "$lib/schema/budgets";
 import {
   BudgetService,
@@ -150,6 +151,46 @@ const listBudgetGroupsSchema = z
     parentId: z.number().int().positive().optional().nullable(),
   })
   .optional();
+
+const createPeriodTemplateSchema = z.object({
+  budgetId: z.number().int().positive(),
+  type: z.enum(periodTemplateTypes),
+  intervalCount: z.number().int().min(1).max(52).optional(),
+  startDayOfWeek: z.number().int().min(1).max(7).optional(),
+  startDayOfMonth: z.number().int().min(1).max(31).optional(),
+  startMonth: z.number().int().min(1).max(12).optional(),
+  timezone: z.string().optional(),
+});
+
+const updatePeriodTemplateSchema = z
+  .object({
+    id: z.number().int().positive(),
+    type: z.enum(periodTemplateTypes).optional(),
+    intervalCount: z.number().int().min(1).max(52).optional(),
+    startDayOfWeek: z.number().int().min(1).max(7).optional(),
+    startDayOfMonth: z.number().int().min(1).max(31).optional(),
+    startMonth: z.number().int().min(1).max(12).optional(),
+    timezone: z.string().optional(),
+  })
+  .refine((value) => {
+    const {type, intervalCount, startDayOfWeek, startDayOfMonth, startMonth, timezone} = value;
+    return (
+      type !== undefined ||
+      intervalCount !== undefined ||
+      startDayOfWeek !== undefined ||
+      startDayOfMonth !== undefined ||
+      startMonth !== undefined ||
+      timezone !== undefined
+    );
+  }, "At least one field must be provided when updating a period template");
+
+const periodTemplateIdSchema = z.object({
+  id: z.number().int().positive(),
+});
+
+const listPeriodTemplatesSchema = z.object({
+  budgetId: z.number().int().positive(),
+});
 
 const budgetService = new BudgetService();
 const periodService = new BudgetPeriodService();
@@ -334,6 +375,24 @@ export const budgetRoutes = t.router({
       }
     }),
 
+  updateEnvelopeAllocation: publicProcedure
+    .input(z.object({
+      envelopeId: z.number().int().positive(),
+      allocatedAmount: z.number(),
+      metadata: z.record(z.unknown()).optional(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await budgetService.updateEnvelopeAllocation(
+          input.envelopeId,
+          input.allocatedAmount,
+          input.metadata
+        );
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
   transferEnvelopeFunds: publicProcedure
     .input(z.object({
       fromEnvelopeId: z.number().int().positive(),
@@ -400,6 +459,55 @@ export const budgetRoutes = t.router({
     .query(async ({input}) => {
       try {
         return await budgetService.getSurplusEnvelopes(input.budgetId, input.minimumSurplus);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  analyzeEnvelopeDeficit: publicProcedure
+    .input(z.object({
+      envelopeId: z.number().int().positive(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.analyzeEnvelopeDeficit(input.envelopeId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  createDeficitRecoveryPlan: publicProcedure
+    .input(z.object({
+      envelopeId: z.number().int().positive(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.createEnvelopeDeficitRecoveryPlan(input.envelopeId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  executeDeficitRecovery: publicProcedure
+    .input(z.object({
+      plan: z.any(),
+      executedBy: z.string().optional(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await budgetService.executeEnvelopeDeficitRecovery(input.plan, input.executedBy);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  generateBulkDeficitRecovery: publicProcedure
+    .input(z.object({
+      budgetId: z.number().int().positive(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await budgetService.generateBulkDeficitRecovery(input.budgetId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -564,6 +672,60 @@ export const budgetRoutes = t.router({
       try {
         const forecastService = new BudgetForecastService();
         return await forecastService.autoAllocateScheduledExpenses(input.budgetId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  // Period Template Endpoints
+
+  createPeriodTemplate: publicProcedure
+    .input(createPeriodTemplateSchema)
+    .mutation(async ({input}) => {
+      try {
+        return await budgetService.createPeriodTemplate(input);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  updatePeriodTemplate: publicProcedure
+    .input(updatePeriodTemplateSchema)
+    .mutation(async ({input}) => {
+      try {
+        const {id, ...updates} = input;
+        return await budgetService.updatePeriodTemplate(id, updates);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getPeriodTemplate: publicProcedure
+    .input(periodTemplateIdSchema)
+    .query(async ({input}) => {
+      try {
+        return await budgetService.getPeriodTemplate(input.id);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  listPeriodTemplates: publicProcedure
+    .input(listPeriodTemplatesSchema)
+    .query(async ({input}) => {
+      try {
+        return await budgetService.listPeriodTemplates(input.budgetId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  deletePeriodTemplate: publicProcedure
+    .input(periodTemplateIdSchema)
+    .mutation(async ({input}) => {
+      try {
+        await budgetService.deletePeriodTemplate(input.id);
+        return {success: true};
       } catch (error) {
         throw translateDomainError(error);
       }

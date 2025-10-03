@@ -1,0 +1,65 @@
+import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
+import { cachePatterns } from "./_client";
+import { trpc } from "$lib/trpc/client";
+import type {Category, NewCategory} from "$lib/schema/categories";
+
+export const categoryKeys = createQueryKeys("categories", {
+  all: () => ["categories", "all"] as const,
+  detail: (id: number) => ["categories", "detail", id] as const,
+  search: (query: string) => ["categories", "search", query] as const,
+});
+
+export const listCategories = () =>
+  defineQuery<Category[]>({
+    queryKey: categoryKeys.all(),
+    queryFn: () => trpc().categoriesRoutes.all.query(),
+  });
+
+export const getCategoryById = (id: number) =>
+  defineQuery<Category>({
+    queryKey: categoryKeys.detail(id),
+    queryFn: () => trpc().categoriesRoutes.load.query({id}),
+  });
+
+export const searchCategories = (query: string) =>
+  defineQuery<Category[]>({
+    queryKey: categoryKeys.search(query),
+    queryFn: () => trpc().categoriesRoutes.search.query({query}),
+  });
+
+export const createCategory = defineMutation<NewCategory, Category>({
+  mutationFn: (input) => trpc().categoriesRoutes.save.mutate({...input}),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(categoryKeys.all());
+  },
+  successMessage: "Category created",
+  errorMessage: "Failed to create category",
+});
+
+export const updateCategory = defineMutation<{id: number} & Partial<NewCategory>, Category>({
+  mutationFn: (input) => trpc().categoriesRoutes.save.mutate(input),
+  onSuccess: (_, variables) => {
+    cachePatterns.invalidatePrefix(categoryKeys.all());
+    cachePatterns.invalidatePrefix(categoryKeys.detail(variables.id));
+  },
+  successMessage: "Category updated",
+  errorMessage: "Failed to update category",
+});
+
+export const deleteCategory = defineMutation<number, Category>({
+  mutationFn: (id) => trpc().categoriesRoutes.remove.mutate({id}),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(categoryKeys.all());
+  },
+  successMessage: "Category deleted",
+  errorMessage: "Failed to delete category",
+});
+
+export const bulkDeleteCategories = defineMutation<number[], {deletedCount: number; errors: any[]}>({
+  mutationFn: (entities) => trpc().categoriesRoutes.delete.mutate({entities}),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(categoryKeys.all());
+  },
+  successMessage: "Categories deleted",
+  errorMessage: "Failed to delete categories",
+});

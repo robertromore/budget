@@ -10,6 +10,7 @@
   import BudgetTemplatePicker from "$lib/components/budgets/budget-template-picker.svelte";
   import BudgetGroupsSection from "$lib/components/budgets/budget-groups-section.svelte";
   import BudgetGroupDialog from "$lib/components/budgets/budget-group-dialog.svelte";
+  import {BudgetForecastDisplay} from "$lib/components/budgets";
   import {listBudgets, duplicateBudget, updateBudget, deleteBudget, bulkArchiveBudgets, bulkDeleteBudgets} from "$lib/query/budgets";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
   import type {BudgetPeriodInstance, BudgetGroup} from "$lib/schema/budgets";
@@ -662,6 +663,15 @@
 
     <!-- Analytics & Insights Tab -->
     <Tabs.Content value="analytics" class="space-y-6">
+      <!-- Forecast Summary for Active Budgets -->
+      {#if budgets.filter(b => b.status === 'active').length > 0}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {#each budgets.filter(b => b.status === 'active').slice(0, 4) as budget}
+            <BudgetForecastDisplay budgetId={budget.id} daysAhead={30} showAutoAllocate={false} />
+          {/each}
+        </div>
+      {/if}
+
       <BudgetAnalyticsDashboard budgets={budgets} />
     </Tabs.Content>
   </Tabs.Root>
@@ -681,7 +691,9 @@
   }}
 />
 
-<BudgetGroupDialog
-  budgetGroup={selectedGroup}
-  bind:open={groupDialogOpen}
-/>
+{#if selectedGroup}
+  <BudgetGroupDialog
+    budgetGroup={selectedGroup}
+    bind:open={groupDialogOpen}
+  />
+{/if}

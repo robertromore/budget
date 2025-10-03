@@ -25,7 +25,18 @@ const isUpdate = $derived(budgetGroup !== undefined);
 let name = $state(budgetGroup?.name || '');
 let description = $state(budgetGroup?.description || '');
 let parentId = $state<number | null>(budgetGroup?.parentId || null);
-let spendingLimit = $state<number | null>(budgetGroup?.spendingLimit || null);
+let spendingLimitValue = $state<number>(budgetGroup?.spendingLimit || 0);
+
+// Computed spending limit (null when 0)
+const spendingLimit = $derived(spendingLimitValue > 0 ? spendingLimitValue : null);
+
+// String binding for Select component
+let parentIdStr = $state<string>(budgetGroup?.parentId ? String(budgetGroup.parentId) : 'none');
+
+// Sync string value with number value
+$effect(() => {
+  parentId = parentIdStr === 'none' ? null : Number(parentIdStr);
+});
 
 // Query for available parent groups
 const groupsQuery = listBudgetGroups().options();
@@ -80,10 +91,6 @@ async function handleSubmit() {
   }
 }
 
-const selectedParentGroup = $derived.by(() => {
-  if (!parentId) return null;
-  return availableParentGroups.find(g => g.id === parentId) || null;
-});
 </script>
 
 <form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">
@@ -94,8 +101,8 @@ const selectedParentGroup = $derived.by(() => {
       bind:value={name}
       placeholder="e.g., Housing, Transportation"
       required
-      minlength="2"
-      maxlength="80"
+      minlength={2}
+      maxlength={80}
     />
     <p class="text-sm text-muted-foreground">
       A descriptive name for organizing your budgets
@@ -108,31 +115,29 @@ const selectedParentGroup = $derived.by(() => {
       id="description"
       bind:value={description}
       placeholder="Additional details about this budget group"
-      rows="3"
-      maxlength="500"
+      rows={3}
+      maxlength={500}
     />
   </div>
 
   <div class="space-y-2">
     <Label for="parent">Parent Group (Optional)</Label>
-    <Select.Root
-      selected={selectedParentGroup ? {
-        value: String(selectedParentGroup.id),
-        label: selectedParentGroup.name
-      } : undefined}
-      onSelectedChange={(selected) => {
-        parentId = selected && selected.value !== "none" ? Number(selected.value) : null;
-      }}
-    >
+    <Select.Root type="single" bind:value={parentIdStr}>
       <Select.Trigger id="parent">
-        <Select.Value placeholder="None (top-level group)" />
+        <span>
+          {#if parentIdStr === 'none'}
+            None (top-level group)
+          {:else}
+            {availableParentGroups.find(g => String(g.id) === parentIdStr)?.name || 'Select parent group'}
+          {/if}
+        </span>
       </Select.Trigger>
       <Select.Content>
-        <Select.Item value="none" label="None (top-level group)">
+        <Select.Item value="none">
           None (top-level group)
         </Select.Item>
         {#each availableParentGroups as group}
-          <Select.Item value={String(group.id)} label={group.name}>
+          <Select.Item value={String(group.id)}>
             {group.name}
           </Select.Item>
         {/each}
@@ -147,13 +152,10 @@ const selectedParentGroup = $derived.by(() => {
     <Label for="spending-limit">Spending Limit (Optional)</Label>
     <NumericInput
       id="spending-limit"
-      bind:value={spendingLimit}
-      placeholder="No limit"
-      min={0}
-      step={0.01}
+      bind:value={spendingLimitValue}
     />
     <p class="text-sm text-muted-foreground">
-      Optional overall spending limit for all budgets in this group
+      Optional overall spending limit for all budgets in this group (set to 0 for no limit)
     </p>
   </div>
 
