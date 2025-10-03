@@ -169,7 +169,7 @@
     };
 
     try {
-      await $createBudgetMutation.mutateAsync(budgetData);
+      await createBudgetMutation.mutateAsync(budgetData);
       resetForm();
       _newBudgetDialog.setFalse();
     } catch (error) {
@@ -205,7 +205,7 @@
         ...(currentBudgetConfig.requiresCategories && { categoryIds: selectedCategoryIds.map(id => Number(id)) }),
       };
 
-      await $createBudgetMutation.mutateAsync(budgetData);
+      await createBudgetMutation.mutateAsync(budgetData);
 
       resetForm();
       _newBudgetDialog.setFalse();

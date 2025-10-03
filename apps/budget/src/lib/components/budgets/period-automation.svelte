@@ -52,7 +52,7 @@
 
   let nextPeriodPreview = $state<any>(null);
 
-  const periods = $derived.by(() => $periodsQuery.data ?? []);
+  const periods = $derived.by(() => periodsQuery.data ?? []);
 
   const currentPeriod = $derived.by(() => {
     const now = new Date();
@@ -151,7 +151,7 @@
     const { start, end } = calculateNextPeriodDates();
 
     try {
-      const newPeriod = await $ensurePeriodMutation.mutateAsync({
+      const newPeriod = await ensurePeriodMutation.mutateAsync({
         templateId: budget.id,
         options: {
           referenceDate: {
@@ -165,7 +165,7 @@
 
       // If auto-rollover is enabled and we have a current period, process rollover
       if (settings.autoRollover && currentPeriod && newPeriod) {
-        await $processRolloverMutation.mutateAsync({
+        await processRolloverMutation.mutateAsync({
           fromPeriodId: currentPeriod.id,
           toPeriodId: newPeriod.id,
         });
@@ -269,8 +269,8 @@
                     Next period creation due
                   </span>
                 </div>
-                <Button onclick={createNextPeriod} size="sm" disabled={$ensurePeriodMutation.isPending}>
-                  {#if $ensurePeriodMutation.isPending}
+                <Button onclick={createNextPeriod} size="sm" disabled={ensurePeriodMutation.isPending}>
+                  {#if ensurePeriodMutation.isPending}
                     Creating...
                   {:else}
                     Create Next Period

@@ -100,7 +100,7 @@ export function defineQuery<TData, TError = Error>(
     queryKey,
 
     options() {
-      return createQuery({
+      return createQuery(() => ({
         queryKey,
         queryFn: async () => {
           try {
@@ -110,7 +110,7 @@ export function defineQuery<TData, TError = Error>(
           }
         },
         ...options,
-      });
+      }));
     },
 
     async execute() {
@@ -142,7 +142,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
   const { mutationFn, options = {}, onSuccess, onError, successMessage, errorMessage } = config;
 
   // Create the mutation with enhanced error handling and notifications
-  const createMutationWithConfig = () => createMutation({
+  const createMutationWithConfig = () => createMutation(() => ({
     mutationFn: async (variables: TVariables) => {
       try {
         return await mutationFn(variables);
@@ -166,7 +166,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
 
       // Call original onSuccess from options
       if (options.onSuccess) {
-        options.onSuccess(data, variables, undefined);
+        options.onSuccess(data, variables);
       }
     },
     onError: (error: TError, variables: TVariables) => {
@@ -183,11 +183,11 @@ export function defineMutation<TVariables, TData, TError = Error>(
 
       // Call original onError from options
       if (options.onError) {
-        options.onError(error, variables, undefined);
+        options.onError(error, variables);
       }
     },
     ...options,
-  });
+  }));
 
   return {
     options() {

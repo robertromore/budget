@@ -15,7 +15,7 @@ const monthlySpendingQuery = getMonthlySpendingAggregates(accountId).options();
 
 // Transform API data into chart format
 const monthlySpendingData = $derived.by(() => {
-  const data = $monthlySpendingQuery.data;
+  const data = monthlySpendingQuery.data;
   if (!data?.length) return [];
 
   return data.map((item: {
@@ -100,8 +100,8 @@ const summaryStats = $derived.by(() => {
 </script>
 
 <AnalyticsChartShell
-  loading={$monthlySpendingQuery.isLoading}
-  error={$monthlySpendingQuery.error?.message}
+  loading={monthlySpendingQuery.isLoading}
+  error={monthlySpendingQuery.error?.message}
   data={monthlySpendingData}
   {summaryStats}
   emptyMessage="Add some expense transactions to see spending trends"

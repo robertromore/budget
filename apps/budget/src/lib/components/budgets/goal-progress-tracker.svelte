@@ -37,7 +37,7 @@
     if (!goalMetadata) return null;
 
     const targetAmount = goalMetadata.targetAmount || 10000;
-    const summaryStats = summaryStatsQuery ? $summaryStatsQuery.data : null;
+    const summaryStats = summaryStatsQuery ? summaryStatsQuery.data : null;
     const currentAmount = summaryStats?.totalActual ?? 0; // Real progress from analytics
     const percentComplete = Math.min(100, (currentAmount / targetAmount) * 100);
 

@@ -43,9 +43,9 @@
   const createAllocationMutation = createEnvelopeAllocation.options();
   const transferFundsMutation = transferEnvelopeFunds.options();
 
-  const envelopes = $derived.by(() => $envelopesQuery.data ?? []);
-  const deficitEnvelopes = $derived.by(() => $deficitEnvelopesQuery.data ?? []);
-  const surplusEnvelopes = $derived.by(() => $surplusEnvelopesQuery.data ?? []);
+  const envelopes = $derived.by(() => envelopesQuery.data ?? []);
+  const deficitEnvelopes = $derived.by(() => deficitEnvelopesQuery.data ?? []);
+  const surplusEnvelopes = $derived.by(() => surplusEnvelopesQuery.data ?? []);
 
   const categoryMap = $derived(
     new Map(Array.isArray(categories) ? categories.map(cat => [cat.id, cat]) : [])
@@ -140,7 +140,7 @@
     const mockPeriodInstanceId = 1;
 
     try {
-      await $createAllocationMutation.mutateAsync({
+      await createAllocationMutation.mutateAsync({
         budgetId: budget.id,
         categoryId: Number(selectedCategoryId),
         periodInstanceId: mockPeriodInstanceId,
@@ -159,7 +159,7 @@
     if (!fromEnvelopeId || !toEnvelopeId || !transferAmount) return;
 
     try {
-      await $transferFundsMutation.mutateAsync({
+      await transferFundsMutation.mutateAsync({
         fromEnvelopeId: Number(fromEnvelopeId),
         toEnvelopeId: Number(toEnvelopeId),
         amount: transferAmount,
@@ -484,10 +484,10 @@
         </Button>
         <Button
           onclick={handleCreateEnvelope}
-          disabled={!selectedCategoryId || !allocationAmount || $createAllocationMutation.isPending}
+          disabled={!selectedCategoryId || !allocationAmount || createAllocationMutation.isPending}
           class="flex-1"
         >
-          {#if $createAllocationMutation.isPending}
+          {#if createAllocationMutation.isPending}
             Creating...
           {:else}
             Create Envelope
@@ -568,10 +568,10 @@
         </Button>
         <Button
           onclick={handleTransferFunds}
-          disabled={!fromEnvelopeId || !toEnvelopeId || !transferAmount || $transferFundsMutation.isPending}
+          disabled={!fromEnvelopeId || !toEnvelopeId || !transferAmount || transferFundsMutation.isPending}
           class="flex-1"
         >
-          {#if $transferFundsMutation.isPending}
+          {#if transferFundsMutation.isPending}
             Transferring...
           {:else}
             Transfer Funds

@@ -37,7 +37,7 @@ PayeesState.set(data.payees);
 
 // Keep AccountsState in sync with query data
 $effect(() => {
-  const accounts = $accountsQuery.data ?? data.accounts;
+  const accounts = accountsQuery.data ?? data.accounts;
   accountsState.init(accounts);
 });
 

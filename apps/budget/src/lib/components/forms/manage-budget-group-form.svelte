@@ -29,7 +29,7 @@ let spendingLimit = $state<number | null>(budgetGroup?.spendingLimit || null);
 
 // Query for available parent groups
 const groupsQuery = listBudgetGroups().options();
-const groups = $derived($groupsQuery.data || []);
+const groups = $derived(groupsQuery.data || []);
 
 // Filter out current group and its descendants to prevent circular references
 const availableParentGroups = $derived.by(() => {
@@ -67,12 +67,12 @@ async function handleSubmit() {
 
   try {
     if (isUpdate) {
-      await $updateMutation.mutateAsync({
+      await updateMutation.mutateAsync({
         id: budgetGroup!.id,
         ...input,
       });
     } else {
-      await $createMutation.mutateAsync(input);
+      await createMutation.mutateAsync(input);
     }
     onSuccess?.();
   } catch (error) {
@@ -165,7 +165,7 @@ const selectedParentGroup = $derived.by(() => {
     {/if}
     <Button
       type="submit"
-      disabled={!isFormValid || $createMutation.isPending || $updateMutation.isPending}
+      disabled={!isFormValid || createMutation.isPending || updateMutation.isPending}
     >
       {isUpdate ? 'Update' : 'Create'} Group
     </Button>

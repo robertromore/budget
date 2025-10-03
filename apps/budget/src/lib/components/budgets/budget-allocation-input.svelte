@@ -39,8 +39,8 @@
   }: Props = $props();
 
   const budgetsQuery = listBudgets("active").options();
-  const availableBudgets = $derived.by(() => $budgetsQuery.data ?? []);
-  const isBudgetsLoading = $derived.by(() => $budgetsQuery.isPending);
+  const availableBudgets = $derived.by(() => budgetsQuery.data ?? []);
+  const isBudgetsLoading = $derived.by(() => budgetsQuery.isPending);
   const budgetLookup = $derived(
     new Map<number, BudgetWithRelations>(availableBudgets.map((budget) => [budget.id, budget]))
   );
@@ -55,8 +55,8 @@
 
   const createAllocationMutation = createAllocation.options();
   const deleteAllocationMutation = deleteAllocation.options();
-  const isCreating = $derived($createAllocationMutation.isPending);
-  const isDeleting = $derived($deleteAllocationMutation.isPending);
+  const isCreating = $derived(createAllocationMutation.isPending);
+  const isDeleting = $derived(deleteAllocationMutation.isPending);
 
   const normalizedTransactionAmount = $derived(Math.abs(transactionAmount));
   const existingAllocated = $derived(
@@ -156,7 +156,7 @@
     if (!isFormValid || !selectedBudgetId) return;
 
     try {
-      const allocation = await $createAllocationMutation.mutateAsync({
+      const allocation = await createAllocationMutation.mutateAsync({
         transactionId,
         budgetId: parseInt(selectedBudgetId, 10),
         allocatedAmount: toSignedAmount(parseFloat(allocationInput), transactionAmount),
@@ -173,7 +173,7 @@
 
   async function handleRemoveAllocation(allocationId: number) {
     try {
-      await $deleteAllocationMutation.mutateAsync(allocationId);
+      await deleteAllocationMutation.mutateAsync(allocationId);
       onAllocationRemoved?.(allocationId);
     } catch (error) {
       console.error("Failed to remove allocation", error);

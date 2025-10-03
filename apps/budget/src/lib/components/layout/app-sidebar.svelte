@@ -47,7 +47,7 @@ const _deleteScheduleDialog = $derived(deleteScheduleDialog);
 const _deleteScheduleId = $derived(deleteScheduleId);
 
 const budgetsQuery = listBudgets().options();
-const budgets = $derived($budgetsQuery.data ?? []);
+const budgets = $derived(budgetsQuery.data ?? []);
 const _deleteBudgetDialog = $derived(deleteBudgetDialog);
 const _deleteBudgetId = $derived(deleteBudgetId);
 

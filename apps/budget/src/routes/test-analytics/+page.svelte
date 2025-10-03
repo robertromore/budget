@@ -15,45 +15,45 @@ const summaryStatsQuery = getBudgetSummaryStats(budgetId).options();
   <div class="space-y-4">
     <div class="border rounded-lg p-4">
       <h2 class="text-xl font-semibold mb-2">Spending Trends</h2>
-      {#if $spendingTrendsQuery.isLoading}
+      {#if spendingTrendsQuery.isLoading}
         <p>Loading...</p>
-      {:else if $spendingTrendsQuery.error}
-        <p class="text-red-500">Error: {$spendingTrendsQuery.error.message}</p>
+      {:else if spendingTrendsQuery.error}
+        <p class="text-red-500">Error: {spendingTrendsQuery.error.message}</p>
       {:else}
-        <pre class="bg-gray-100 p-2 rounded overflow-auto">{JSON.stringify($spendingTrendsQuery.data, null, 2)}</pre>
+        <pre class="bg-gray-100 p-2 rounded overflow-auto">{JSON.stringify(spendingTrendsQuery.data, null, 2)}</pre>
       {/if}
     </div>
 
     <div class="border rounded-lg p-4">
       <h2 class="text-xl font-semibold mb-2">Category Breakdown</h2>
-      {#if $categoryBreakdownQuery.isLoading}
+      {#if categoryBreakdownQuery.isLoading}
         <p>Loading...</p>
-      {:else if $categoryBreakdownQuery.error}
-        <p class="text-red-500">Error: {$categoryBreakdownQuery.error.message}</p>
+      {:else if categoryBreakdownQuery.error}
+        <p class="text-red-500">Error: {categoryBreakdownQuery.error.message}</p>
       {:else}
-        <pre class="bg-gray-100 p-2 rounded overflow-auto">{JSON.stringify($categoryBreakdownQuery.data, null, 2)}</pre>
+        <pre class="bg-gray-100 p-2 rounded overflow-auto">{JSON.stringify(categoryBreakdownQuery.data, null, 2)}</pre>
       {/if}
     </div>
 
     <div class="border rounded-lg p-4">
       <h2 class="text-xl font-semibold mb-2">Daily Spending</h2>
-      {#if $dailySpendingQuery.isLoading}
+      {#if dailySpendingQuery.isLoading}
         <p>Loading...</p>
-      {:else if $dailySpendingQuery.error}
-        <p class="text-red-500">Error: {$dailySpendingQuery.error.message}</p>
+      {:else if dailySpendingQuery.error}
+        <p class="text-red-500">Error: {dailySpendingQuery.error.message}</p>
       {:else}
-        <pre class="bg-gray-100 p-2 rounded overflow-auto">{JSON.stringify($dailySpendingQuery.data, null, 2)}</pre>
+        <pre class="bg-gray-100 p-2 rounded overflow-auto">{JSON.stringify(dailySpendingQuery.data, null, 2)}</pre>
       {/if}
     </div>
 
     <div class="border rounded-lg p-4">
       <h2 class="text-xl font-semibold mb-2">Summary Stats</h2>
-      {#if $summaryStatsQuery.isLoading}
+      {#if summaryStatsQuery.isLoading}
         <p>Loading...</p>
-      {:else if $summaryStatsQuery.error}
-        <p class="text-red-500">Error: {$summaryStatsQuery.error.message}</p>
+      {:else if summaryStatsQuery.error}
+        <p class="text-red-500">Error: {summaryStatsQuery.error.message}</p>
       {:else}
-        <pre class="bg-gray-100 p-2 rounded overflow-auto">{JSON.stringify($summaryStatsQuery.data, null, 2)}</pre>
+        <pre class="bg-gray-100 p-2 rounded overflow-auto">{JSON.stringify(summaryStatsQuery.data, null, 2)}</pre>
       {/if}
     </div>
   </div>

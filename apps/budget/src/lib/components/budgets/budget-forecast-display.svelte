@@ -24,12 +24,12 @@ let { budgetId, daysAhead = 30, showAutoAllocate = false }: Props = $props();
 const forecastQuery = $derived(getBudgetForecast(budgetId, daysAhead).options());
 const autoAllocateMutation = $derived(autoAllocateBudget().execute());
 
-const forecast = $derived($forecastQuery.data);
-const isLoading = $derived($forecastQuery.isLoading);
-const error = $derived($forecastQuery.error);
+const forecast = $derived(forecastQuery.data);
+const isLoading = $derived(forecastQuery.isLoading);
+const error = $derived(forecastQuery.error);
 
 function handleAutoAllocate() {
-	$autoAllocateMutation.mutate(budgetId);
+	autoAllocateMutation.mutate(budgetId);
 }
 
 const statusConfig = $derived.by(() => {
@@ -172,7 +172,7 @@ const statusConfig = $derived.by(() => {
 						size="sm"
 						class="w-full"
 						onclick={handleAutoAllocate}
-						disabled={$autoAllocateMutation.isPending}
+						disabled={autoAllocateMutation.isPending}
 					>
 						<Zap class="mr-2 h-4 w-4" />
 						Auto-Allocate Budget

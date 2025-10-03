@@ -22,10 +22,10 @@ let confirmDeleteTransaction = async () => {
     try {
       if (transactions.length === 1) {
         // Use single delete mutation for one transaction
-        await $singleDeleteMutation.mutateAsync(transactions[0]);
+        await singleDeleteMutation.mutateAsync(transactions[0]);
       } else {
         // Use bulk delete mutation for multiple transactions
-        await $bulkDeleteMutation.mutateAsync(transactions);
+        await bulkDeleteMutation.mutateAsync(transactions);
       }
 
       if (onDelete) {
