@@ -7,8 +7,8 @@ import type {Actions, PageServerLoad} from "./$types";
 import {fail} from "@sveltejs/kit";
 import {zod4} from "sveltekit-superforms/adapters";
 
-export const load: PageServerLoad = async () => ({
-  payees: await createCaller(await createContext()).payeeRoutes.all(),
+export const load: PageServerLoad = async (event) => ({
+  payees: await createCaller(await createContext(event)).payeeRoutes.all(),
   form: await superValidate(zod4(superformInsertPayeeSchema)),
   deleteForm: await superValidate(zod4(removePayeeSchema)),
 });
@@ -22,7 +22,7 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext()).payeeRoutes.save(form.data);
+    const entity = await createCaller(await createContext(event)).payeeRoutes.save(form.data);
     return {
       form,
       entity,
@@ -36,7 +36,7 @@ export const actions: Actions = {
       });
     }
 
-    await createCaller(await createContext()).payeeRoutes.remove(form.data);
+    await createCaller(await createContext(event)).payeeRoutes.remove(form.data);
     return {
       form,
     };

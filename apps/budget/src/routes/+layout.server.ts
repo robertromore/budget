@@ -8,8 +8,8 @@ import {superformInsertAccountSchema} from "$lib/schema/superforms";
 import {getLocalTimeZone, today} from "@internationalized/date";
 
 const thisday = today(getLocalTimeZone());
-export const load: LayoutServerLoad = async () => {
-  const ctx = await createContext();
+export const load: LayoutServerLoad = async (event) => {
+  const ctx = await createContext(event);
   const caller = createCaller(ctx);
 
   return {

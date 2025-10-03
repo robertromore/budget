@@ -1,11 +1,7 @@
-import {createContext} from "$lib/trpc/context";
-import {router} from "$lib/trpc/router";
-import type {Handle} from "@sveltejs/kit";
-import {createTRPCHandle} from "trpc-sveltekit";
+import type {Handle} from '@sveltejs/kit';
 
-export const handle: Handle = createTRPCHandle({
-  router,
-  createContext,
-  onError: ({type, path, error}) =>
-    console.error(`Encountered error while trying to process ${type} @ ${path}:`, error),
-});
+// tRPC is now handled by the /api/trpc/[...procedure] endpoint
+// This file can be used for other server hooks if needed
+export const handle: Handle = async ({event, resolve}) => {
+  return resolve(event);
+};

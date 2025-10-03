@@ -6,14 +6,15 @@ import {superValidate} from 'sveltekit-superforms/client';
 import {zod4} from 'sveltekit-superforms/adapters';
 import type {Actions, PageServerLoad} from './$types';
 
-export const load: PageServerLoad = async ({params}) => {
+export const load: PageServerLoad = async (event) => {
+  const {params} = event;
   const budgetId = parseInt(params.id);
 
   if (isNaN(budgetId)) {
     throw redirect(303, '/budgets');
   }
 
-  const context = await createContext();
+  const context = await createContext(event);
   const caller = createCaller(context);
 
   try {
@@ -51,7 +52,8 @@ export const load: PageServerLoad = async ({params}) => {
 };
 
 export const actions: Actions = {
-  default: async ({request, params}) => {
+  default: async (event) => {
+    const {request, params} = event;
     const budgetId = parseInt(params.id);
     const form = await superValidate(request, zod4(superformInsertBudgetSchema));
 
@@ -71,7 +73,7 @@ export const actions: Actions = {
     }
 
     try {
-      await createCaller(await createContext()).budgetRoutes.update({
+      await createCaller(await createContext(event)).budgetRoutes.update({
         id: budgetId,
         name: form.data.name,
         description: form.data.description,

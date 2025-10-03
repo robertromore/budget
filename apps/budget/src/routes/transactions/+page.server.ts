@@ -17,7 +17,7 @@ const deleteTransactionSchema = z.object({
   id: z.number().positive('Transaction ID is required'),
 });
 
-export const load: PageServerLoad = async () => ({
+export const load: PageServerLoad = async (event) => ({
   addTransactionForm: await superValidate(zod(superformInsertTransactionSchema)),
   updateTransactionForm: await superValidate(zod(superformUpdateTransactionSchema)),
   deleteTransactionForm: await superValidate(zod(deleteTransactionSchema)),
@@ -55,7 +55,7 @@ export const actions: Actions = {
         });
       }
 
-      const caller = createCaller(await createContext());
+      const caller = createCaller(await createContext(event));
       const entity = await caller.transactionRoutes.create({
         accountId: form.data['accountId'] as number,
         amount: form.data['amount'] as number,
@@ -100,7 +100,7 @@ export const actions: Actions = {
         });
       }
 
-      const caller = createCaller(await createContext());
+      const caller = createCaller(await createContext(event));
 
       // Manual security validation for notes field
       if (form.data['notes'] !== undefined) {
@@ -161,7 +161,7 @@ export const actions: Actions = {
     }
 
     try {
-      const caller = createCaller(await createContext());
+      const caller = createCaller(await createContext(event));
       await caller.transactionRoutes.delete({
         entities: [form.data['id'] as number],
       });

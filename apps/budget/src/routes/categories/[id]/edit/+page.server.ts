@@ -3,14 +3,15 @@ import {createCaller} from '$lib/trpc/router';
 import type {PageServerLoad} from './$types';
 import {error} from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({params}) => {
+export const load: PageServerLoad = async (event) => {
+  const {params} = event;
   const categoryId = Number(params.id);
 
   if (isNaN(categoryId)) {
     throw error(404, 'Invalid category ID');
   }
 
-  const caller = createCaller(await createContext());
+  const caller = createCaller(await createContext(event));
   const category = await caller.categoriesRoutes.load({id: categoryId});
 
   if (!category) {
