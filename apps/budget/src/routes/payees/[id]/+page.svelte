@@ -78,26 +78,26 @@ $effect(() => {
         </Card.Header>
         <Card.Content class="space-y-3">
           <div>
-            <label class="text-sm font-medium text-muted-foreground">Name</label>
+            <span class="text-sm font-medium text-muted-foreground">Name</span>
             <p class="text-sm">{payee.name}</p>
           </div>
 
           {#if payee.notes}
             <div>
-              <label class="text-sm font-medium text-muted-foreground">Notes</label>
+              <span class="text-sm font-medium text-muted-foreground">Notes</span>
               <p class="text-sm">{payee.notes}</p>
             </div>
           {/if}
 
           {#if payee.payeeType}
             <div>
-              <label class="text-sm font-medium text-muted-foreground">Type</label>
+              <span class="text-sm font-medium text-muted-foreground">Type</span>
               <p class="text-sm capitalize">{payee.payeeType.replace('_', ' ')}</p>
             </div>
           {/if}
 
           <div>
-            <label class="text-sm font-medium text-muted-foreground">Status</label>
+            <span class="text-sm font-medium text-muted-foreground">Status</span>
             <p class="text-sm">{payee.isActive ? 'Active' : 'Inactive'}</p>
           </div>
         </Card.Content>
@@ -114,21 +114,21 @@ $effect(() => {
         <Card.Content class="space-y-3">
           {#if payee.email}
             <div>
-              <label class="text-sm font-medium text-muted-foreground">Email</label>
+              <span class="text-sm font-medium text-muted-foreground">Email</span>
               <p class="text-sm">{payee.email}</p>
             </div>
           {/if}
 
           {#if payee.phone}
             <div>
-              <label class="text-sm font-medium text-muted-foreground">Phone</label>
+              <span class="text-sm font-medium text-muted-foreground">Phone</span>
               <p class="text-sm">{payee.phone}</p>
             </div>
           {/if}
 
           {#if payee.website}
             <div>
-              <label class="text-sm font-medium text-muted-foreground">Website</label>
+              <span class="text-sm font-medium text-muted-foreground">Website</span>
               <p class="text-sm">
                 <a href={payee.website} target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
                   {payee.website}
@@ -139,7 +139,7 @@ $effect(() => {
 
           {#if payee.address}
             <div>
-              <label class="text-sm font-medium text-muted-foreground">Address</label>
+              <span class="text-sm font-medium text-muted-foreground">Address</span>
               <p class="text-sm whitespace-pre-line">{payee.address}</p>
             </div>
           {/if}
@@ -157,25 +157,25 @@ $effect(() => {
         <Card.Content class="space-y-3">
           {#if payee.avgAmount}
             <div>
-              <label class="text-sm font-medium text-muted-foreground">Average Amount</label>
+              <span class="text-sm font-medium text-muted-foreground">Average Amount</span>
               <p class="text-sm">${payee.avgAmount.toFixed(2)}</p>
             </div>
           {/if}
 
           {#if payee.paymentFrequency}
             <div>
-              <label class="text-sm font-medium text-muted-foreground">Payment Frequency</label>
+              <span class="text-sm font-medium text-muted-foreground">Payment Frequency</span>
               <p class="text-sm capitalize">{payee.paymentFrequency.replace('_', ' ')}</p>
             </div>
           {/if}
 
           <div>
-            <label class="text-sm font-medium text-muted-foreground">Tax Relevant</label>
+            <span class="text-sm font-medium text-muted-foreground">Tax Relevant</span>
             <p class="text-sm">{payee.taxRelevant ? 'Yes' : 'No'}</p>
           </div>
 
           <div>
-            <label class="text-sm font-medium text-muted-foreground">Seasonal</label>
+            <span class="text-sm font-medium text-muted-foreground">Seasonal</span>
             <p class="text-sm">{payee.isSeasonal ? 'Yes' : 'No'}</p>
           </div>
         </Card.Content>
