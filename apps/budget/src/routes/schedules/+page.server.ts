@@ -8,8 +8,8 @@ import {fail} from "@sveltejs/kit";
 import {zod4} from "sveltekit-superforms/adapters";
 import {insertFormSchema} from "./schema";
 
-export const load: PageServerLoad = async () => ({
-  schedules: await createCaller(await createContext()).scheduleRoutes.all(),
+export const load: PageServerLoad = async (event) => ({
+  schedules: await createCaller(await createContext(event)).scheduleRoutes.all(),
   form: await superValidate(zod4(insertFormSchema)),
   deleteForm: await superValidate(zod4(removeScheduleSchema)),
 });
@@ -23,7 +23,7 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext()).scheduleRoutes.save(form.data);
+    const entity = await createCaller(await createContext(event)).scheduleRoutes.save(form.data);
     return {
       form,
       entity,
@@ -37,7 +37,7 @@ export const actions: Actions = {
       });
     }
 
-    await createCaller(await createContext()).scheduleRoutes.remove(form.data);
+    await createCaller(await createContext(event)).scheduleRoutes.remove(form.data);
     return {
       form,
     };

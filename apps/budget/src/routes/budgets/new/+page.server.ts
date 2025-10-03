@@ -8,8 +8,9 @@ import { zod4 } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms/client";
 import { getBudgetTemplateById } from "$lib/constants/budget-templates";
 
-export const load: PageServerLoad = async ({ url }) => {
-  const context = await createContext();
+export const load: PageServerLoad = async (event) => {
+  const { url } = event;
+  const context = await createContext(event);
   const caller = createCaller(context);
 
   // Check for template parameter and prefill form data
@@ -51,7 +52,8 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 export const actions: Actions = {
-  default: async ({request}) => {
+  default: async (event) => {
+    const {request} = event;
     const form = await superValidate(request, zod4(superformInsertBudgetSchema));
 
     if (!form.valid) {
@@ -83,7 +85,7 @@ export const actions: Actions = {
         categoryIds: form.data.categoryIds,
       };
 
-      const budget = await createCaller(await createContext()).budgetRoutes.create(budgetData);
+      const budget = await createCaller(await createContext(event)).budgetRoutes.create(budgetData);
 
       // Redirect to the budgets list on success
       throw redirect(303, '/budgets');

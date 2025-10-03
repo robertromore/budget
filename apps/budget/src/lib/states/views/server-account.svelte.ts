@@ -1,6 +1,7 @@
 import type { Category, Payee, Transaction } from "$lib/schema";
 import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
 import { getContext, setContext } from "svelte";
+import { trpc } from "$lib/trpc/client";
 
 const KEY = Symbol("server_account");
 
@@ -142,23 +143,7 @@ export class ServerAccountState {
     this.summaryError = null;
 
     try {
-      // Use direct fetch instead of tRPC client
-      const summaryResponse = await fetch(
-        `/trpc/serverAccountsRoutes.loadSummary?input=${encodeURIComponent(JSON.stringify({id: accountId}))}`
-      );
-      if (!summaryResponse.ok) {
-        throw new Error(
-          `Failed to load summary: HTTP ${summaryResponse.status}: ${summaryResponse.statusText}`
-        );
-      }
-
-      const summaryText = await summaryResponse.text();
-      if (!summaryText.trim()) {
-        throw new Error("Empty response from server");
-      }
-
-      const summaryResult = JSON.parse(summaryText);
-      const summary = summaryResult.result?.data || summaryResult;
+      const summary = await trpc().serverAccountsRoutes.loadSummary.query({id: accountId});
       this.accountSummary = {
         id: summary.id,
         name: summary.name,
@@ -188,7 +173,6 @@ export class ServerAccountState {
     }
 
     try {
-      // Use direct fetch instead of tRPC client
       const transactionParams = {
         accountId,
         page: this.pagination.page,
@@ -200,22 +184,7 @@ export class ServerAccountState {
         ...(this.filters.dateTo && {dateTo: this.filters.dateTo}),
       };
 
-      const transactionResponse = await fetch(
-        `/trpc/serverAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`
-      );
-      if (!transactionResponse.ok) {
-        throw new Error(
-          `Failed to load transactions: HTTP ${transactionResponse.status}: ${transactionResponse.statusText}`
-        );
-      }
-
-      const transactionText = await transactionResponse.text();
-      if (!transactionText.trim()) {
-        throw new Error("Empty response from server");
-      }
-
-      const transactionResult = JSON.parse(transactionText);
-      const result = transactionResult.result?.data || transactionResult;
+      const result = await trpc().serverAccountsRoutes.loadTransactions.query(transactionParams);
 
       this.currentTransactions = result.transactions;
       this.pagination = {...this.pagination, ...result.pagination};
@@ -357,9 +326,7 @@ export class ServerAccountState {
       };
 
       // Prefetch silently in background
-      fetch(
-        `/trpc/serverAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`
-      );
+      trpc().serverAccountsRoutes.loadTransactions.query(transactionParams).catch(() => {});
       console.log("🚀 Prefetching next page:", nextPage + 1);
     } catch (error) {
       // Silently fail prefetching
@@ -387,9 +354,7 @@ export class ServerAccountState {
       };
 
       // Prefetch silently in background
-      fetch(
-        `/trpc/serverAccountsRoutes.loadTransactions?input=${encodeURIComponent(JSON.stringify(transactionParams))}`
-      );
+      trpc().serverAccountsRoutes.loadTransactions.query(transactionParams).catch(() => {});
       console.log("🚀 Prefetching previous page:", previousPage + 1);
     } catch (error) {
       // Silently fail prefetching

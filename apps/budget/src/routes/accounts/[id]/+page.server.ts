@@ -4,7 +4,8 @@ import { createCaller } from "$lib/trpc/router";
 import { currentDate } from "$lib/utils/dates";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({params}) => {
+export const load: PageServerLoad = async (event) => {
+  const {params} = event;
   // Load minimal data required for the data table
   // Views are needed for the DataTable component view management
 
@@ -88,7 +89,7 @@ export const load: PageServerLoad = async ({params}) => {
   ] as View[];
 
   // Load user-created views from database
-  const caller = createCaller(await createContext());
+  const caller = createCaller(await createContext(event));
   const userViews = await caller.viewsRoutes.all();
 
   return {

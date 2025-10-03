@@ -10,7 +10,7 @@ import type {Actions, PageServerLoad} from "./$types";
 import {fail} from "@sveltejs/kit";
 import {zod4} from "sveltekit-superforms/adapters";
 
-export const load: PageServerLoad = async () => ({
+export const load: PageServerLoad = async (event) => ({
   manageAccountForm: await superValidate(zod4(superformInsertAccountSchema)),
   deleteAccountForm: await superValidate(zod4(removeAccountSchema)),
 });
@@ -24,7 +24,7 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext()).accountRoutes.save(form.data);
+    const entity = await createCaller(await createContext(event)).accountRoutes.save(form.data);
     return {
       form,
       entity,
@@ -38,7 +38,7 @@ export const actions: Actions = {
       });
     }
 
-    await createCaller(await createContext()).accountRoutes.remove(form.data);
+    await createCaller(await createContext(event)).accountRoutes.remove(form.data);
     return {
       form,
     };
@@ -51,7 +51,7 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext()).transactionRoutes.save(form.data);
+    const entity = await createCaller(await createContext(event)).transactionRoutes.save(form.data);
     return {
       form,
       entity,
