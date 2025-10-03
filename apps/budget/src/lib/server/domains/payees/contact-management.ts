@@ -1,6 +1,7 @@
 import {ValidationError} from "$lib/server/shared/types/errors";
 import {InputSanitizer} from "$lib/server/shared/validation";
 import type {Payee} from "$lib/schema";
+import {logger} from "$lib/server/shared/logging";
 
 // ==================== CORE CONTACT INTERFACES ====================
 
@@ -811,7 +812,7 @@ export class ContactManagementService {
     retentionDate.setFullYear(retentionDate.getFullYear() + 7);
 
     // In a real implementation, this would be stored in an audit log table
-    console.log(`AUDIT: ${action} on payee ${payeeId} by user ${userId || 'system'}`);
+    logger.info('Payee audit log', {action, payeeId, userId: userId || 'system'});
 
     const result: {
       auditId: string;

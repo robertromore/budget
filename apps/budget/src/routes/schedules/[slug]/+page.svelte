@@ -4,7 +4,6 @@ import { Button } from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { goto } from '$app/navigation';
-import { managingScheduleId, newScheduleDialog, duplicatingSchedule } from '$lib/states/ui/global.svelte';
 import {
   createScheduleDetailQuery,
   createToggleScheduleStatusMutation,
@@ -76,8 +75,7 @@ const futureProjections = $derived.by(() => generateFutureProjections(schedule))
 
 // Actions
 function editSchedule() {
-  managingScheduleId.current = schedule.id;
-  newScheduleDialog.current = true;
+  goto(`/schedules/${schedule.slug}/edit`);
 }
 
 async function toggleStatus() {
@@ -127,11 +125,8 @@ async function confirmDeleteSchedule() {
 }
 
 function duplicateSchedule() {
-  // Set the schedule to duplicate and enable duplication mode
-  managingScheduleId.current = schedule.id;
-  duplicatingSchedule.current = true;
-  // Open the schedule dialog
-  newScheduleDialog.current = true;
+  // Navigate to new schedule page with duplication data in query params
+  goto(`/schedules/new?duplicate=${schedule.id}`);
 }
 </script>
 

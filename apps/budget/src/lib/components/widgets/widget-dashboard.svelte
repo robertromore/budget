@@ -387,9 +387,9 @@ function handleGridDrop(e: DragEvent) {
                 dragImage.style.pointerEvents = 'none';
                 dragImage.style.zIndex = '9999';
                 dragImage.style.background = 'white';
-                dragImage.style.border = '2px dashed rgba(59, 130, 246, 0.6)';
+                dragImage.style.border = '2px dashed hsl(var(--primary) / 0.6)';
                 dragImage.style.borderRadius = '8px';
-                dragImage.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3)';
+                dragImage.style.boxShadow = '0 8px 25px hsl(var(--foreground) / 0.3)';
 
                 // Add to document temporarily
                 document.body.appendChild(dragImage);
@@ -536,8 +536,8 @@ function handleGridDrop(e: DragEvent) {
 
 /* Add visual feedback during drag operations */
 .widget-grid.drag-active {
-  background: rgba(59, 130, 246, 0.05);
-  border: 2px dashed rgba(59, 130, 246, 0.3);
+  background: hsl(var(--primary) / 0.05);
+  border: 2px dashed hsl(var(--primary) / 0.3);
   border-radius: 8px;
 }
 
@@ -607,7 +607,7 @@ function handleGridDrop(e: DragEvent) {
 /* Override shadcn card shadows in edit mode */
 .widget-grid .widget-wrapper.draggable :global(.card) {
   box-shadow: none;
-  border: 2px dashed rgba(156, 163, 175, 0.3);
+  border: 2px dashed hsl(var(--muted-foreground) / 0.3);
 }
 
 .widget-wrapper.draggable:hover {
@@ -616,8 +616,8 @@ function handleGridDrop(e: DragEvent) {
 
 .widget-grid .widget-wrapper.draggable:hover :global(.card) {
   box-shadow: none;
-  border: 2px dashed rgba(59, 130, 246, 0.6);
-  background: rgba(59, 130, 246, 0.02);
+  border: 2px dashed hsl(var(--primary) / 0.6);
+  background: hsl(var(--primary) / 0.02);
 }
 
 /* Widget being dragged */
@@ -625,18 +625,18 @@ function handleGridDrop(e: DragEvent) {
   opacity: 0.7;
   transform: scale(0.98) rotate(1deg);
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.02);
-  border: 2px dashed rgba(59, 130, 246, 0.5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: hsl(var(--foreground) / 0.02);
+  border: 2px dashed hsl(var(--primary) / 0.5);
+  box-shadow: 0 4px 12px hsl(var(--foreground) / 0.15);
 }
 
 /* Drop target visual feedback */
 .widget-wrapper.drag-over {
-  background: rgba(59, 130, 246, 0.1);
-  border: 2px solid rgba(59, 130, 246, 0.6);
+  background: hsl(var(--primary) / 0.1);
+  border: 2px solid hsl(var(--primary) / 0.6);
   border-radius: 8px;
   transform: scale(1.02);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 25px hsl(var(--primary) / 0.3);
 }
 
 /* Enhanced drag hover effect - only transform, no shadow conflicts */
@@ -646,19 +646,19 @@ function handleGridDrop(e: DragEvent) {
 
 /* Grid drag active state */
 .widget-grid.drag-active {
-  background: rgba(59, 130, 246, 0.03);
-  border: 2px dashed rgba(59, 130, 246, 0.4);
+  background: hsl(var(--primary) / 0.03);
+  border: 2px dashed hsl(var(--primary) / 0.4);
   border-radius: 12px;
   padding: 8px;
 }
 
 /* Enhanced drag over visual feedback */
 .widget-wrapper.drag-over {
-  background: rgba(59, 130, 246, 0.1);
-  border: 2px solid rgba(59, 130, 246, 0.8);
+  background: hsl(var(--primary) / 0.1);
+  border: 2px solid hsl(var(--primary) / 0.8);
   border-radius: 8px;
   transform: scale(1.02);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 25px hsl(var(--primary) / 0.3);
   position: relative;
 }
 
@@ -671,7 +671,7 @@ function handleGridDrop(e: DragEvent) {
   transform: translateX(-50%);
   width: 60%;
   height: 4px;
-  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.8), transparent);
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.8), transparent);
   border-radius: 2px;
   animation: drop-indicator-pulse 1.5s ease-in-out infinite;
 }
@@ -786,7 +786,7 @@ function handleGridDrop(e: DragEvent) {
 }
 
 .drop-zone-end.drag-over .drop-zone-line {
-  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.8), transparent);
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.8), transparent);
   animation: drop-zone-pulse 1s ease-in-out infinite;
 }
 

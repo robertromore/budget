@@ -2,7 +2,15 @@ import {db} from "$lib/server/db";
 import {payees, transactions, categories, budgets} from "$lib/schema";
 import {eq, and, isNull, like, inArray, sql, count, desc, avg, max, min} from "drizzle-orm";
 import type {Payee, NewPayee, PayeeType, PaymentFrequency} from "$lib/schema";
+import type {
+  SubscriptionInfo,
+  PayeeAddress,
+  PaymentMethodReference,
+  PayeeTags
+} from "./types";
+import {logger} from "$lib/server/shared/logging";
 import {NotFoundError} from "$lib/server/shared/types/errors";
+import {getCurrentTimestamp, currentDate} from "$lib/utils/dates";
 
 export interface UpdatePayeeData {
   name?: string | undefined;
@@ -18,13 +26,13 @@ export interface UpdatePayeeData {
   website?: string | null | undefined;
   phone?: string | null | undefined;
   email?: string | null | undefined;
-  address?: any | null | undefined;
+  address?: PayeeAddress | null | undefined;
   accountNumber?: string | null | undefined;
   alertThreshold?: number | null | undefined;
   isSeasonal?: boolean | undefined;
-  subscriptionInfo?: any | null | undefined;
-  tags?: any | null | undefined;
-  preferredPaymentMethods?: any | null | undefined;
+  subscriptionInfo?: SubscriptionInfo | null | undefined;
+  tags?: PayeeTags | null | undefined;
+  preferredPaymentMethods?: PaymentMethodReference[] | null | undefined;
   merchantCategoryCode?: string | null | undefined;
 }
 
@@ -129,7 +137,7 @@ export class PayeeRepository {
       .update(payees)
       .set({
         ...data,
-        updatedAt: new Date().toISOString(),
+        updatedAt: getCurrentTimestamp(),
       })
       .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
       .returning();
@@ -148,8 +156,8 @@ export class PayeeRepository {
     const [payee] = await db
       .update(payees)
       .set({
-        deletedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        deletedAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
       })
       .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
       .returning();
@@ -170,8 +178,8 @@ export class PayeeRepository {
     const result = await db
       .update(payees)
       .set({
-        deletedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        deletedAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
       })
       .where(and(
         inArray(payees.id, ids),
@@ -381,6 +389,7 @@ export class PayeeRepository {
    * Advanced search with filters
    */
   async searchWithFilters(filters: PayeeSearchFilters): Promise<Payee[]> {
+    logger.debug('Repository searchWithFilters called', {filters});
     const conditions = [isNull(payees.deletedAt)];
 
     if (filters.query) {
@@ -461,9 +470,8 @@ export class PayeeRepository {
    * Get payees that need attention (old transactions, missing defaults, etc.)
    */
   async findNeedingAttention(): Promise<Array<Payee & {reason: string}>> {
-    const cutoffDate = new Date();
-    cutoffDate.setMonth(cutoffDate.getMonth() - 3); // 3 months ago
-    const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+    const cutoffDateValue = currentDate.subtract({months: 3});
+    const cutoffDateStr = `${cutoffDateValue.year}-${String(cutoffDateValue.month).padStart(2, '0')}-${String(cutoffDateValue.day).padStart(2, '0')}`;
 
     // Payees without default category or budget, or with old last transaction dates
     const results = await db
@@ -524,7 +532,7 @@ export class PayeeRepository {
       .update(payees)
       .set({
         ...updateData,
-        updatedAt: new Date().toISOString(),
+        updatedAt: getCurrentTimestamp(),
       })
       .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
       .returning();

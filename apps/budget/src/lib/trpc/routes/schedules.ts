@@ -7,6 +7,7 @@ import {TRPCError} from "@trpc/server";
 import slugify from "@sindresorhus/slugify";
 import {generateUniqueSlugForDB} from "$lib/utils/slug-utils";
 import {ScheduleService} from "$lib/server/domains/schedules";
+import {getCurrentTimestamp} from "$lib/utils/dates";
 
 export const scheduleRoutes = t.router({
   all: publicProcedure.query(async ({ctx}) => {
@@ -42,12 +43,16 @@ export const scheduleRoutes = t.router({
     return result[0];
   }),
   save: rateLimitedProcedure.input(superformInsertScheduleSchema).mutation(async ({ctx, input}) => {
+    console.log('Save schedule input:', JSON.stringify(input, null, 2));
+
     // Helper function to handle repeating date data
     const handleRepeatingDate = async (scheduleId: number, repeatingDateJson?: string) => {
+      console.log('handleRepeatingDate called with:', repeatingDateJson ? 'data present' : 'NO DATA');
       if (!repeatingDateJson) return null;
 
       try {
         const repeatingDate = JSON.parse(repeatingDateJson);
+        console.log('Parsed repeating date data:', JSON.stringify(repeatingDate, null, 2));
 
         // Helper to convert DateValue object to Date
         const convertDateValue = (dateValue: any) => {
@@ -62,14 +67,20 @@ export const scheduleRoutes = t.router({
         // Create schedule date record
         const scheduleDateResult = await ctx.db.insert(scheduleDates).values({
           scheduleId,
-          start: repeatingDate.start ? convertDateValue(repeatingDate.start).toISOString() : new Date().toISOString(),
+          start: repeatingDate.start ? convertDateValue(repeatingDate.start).toISOString() : getCurrentTimestamp(),
           end: repeatingDate.end ? convertDateValue(repeatingDate.end)?.toISOString() || null : null,
           frequency: repeatingDate.frequency || 'daily',
           interval: repeatingDate.interval || 1,
           limit: repeatingDate.limit || 0,
           move_weekends: repeatingDate.move_weekends || 'none',
           move_holidays: repeatingDate.move_holidays || 'none',
-          specific_dates: repeatingDate.specific_dates || {}
+          specific_dates: repeatingDate.specific_dates || [],
+          on: repeatingDate.on || false,
+          on_type: repeatingDate.on_type || 'day',
+          days: repeatingDate.days || [],
+          weeks: repeatingDate.weeks || [],
+          weeks_days: repeatingDate.weeks_days || [],
+          week_days: repeatingDate.week_days || []
         }).returning();
 
         return scheduleDateResult[0]?.id || null;
@@ -116,18 +127,26 @@ export const scheduleRoutes = t.router({
         updateData.dateId = null;
       }
 
-      const result = await ctx.db
+      await ctx.db
         .update(schedules)
         .set(updateData)
-        .where(eq(schedules.id, input.id))
-        .returning();
-      if (!result[0]) {
+        .where(eq(schedules.id, input.id));
+
+      // Return the full schedule with relationships
+      const updatedSchedule = await ctx.db.query.schedules.findFirst({
+        where: eq(schedules.id, input.id),
+        with: {
+          scheduleDate: true,
+        },
+      });
+
+      if (!updatedSchedule) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update schedule",
         });
       }
-      return result[0];
+      return updatedSchedule;
     }
 
     // For new schedules, separate repeating_date from schedule data
@@ -158,17 +177,22 @@ export const scheduleRoutes = t.router({
       const dateId = await handleRepeatingDate(new_schedule.id, repeating_date);
       if (dateId) {
         // Update the schedule with the dateId
-        const updatedSchedule = await ctx.db
+        await ctx.db
           .update(schedules)
           .set({ dateId })
-          .where(eq(schedules.id, new_schedule.id))
-          .returning();
-
-        return updatedSchedule[0] || new_schedule;
+          .where(eq(schedules.id, new_schedule.id));
       }
     }
 
-    return new_schedule;
+    // Return the full schedule with relationships
+    const finalSchedule = await ctx.db.query.schedules.findFirst({
+      where: eq(schedules.id, new_schedule.id),
+      with: {
+        scheduleDate: true,
+      },
+    });
+
+    return finalSchedule || new_schedule;
   }),
   remove: rateLimitedProcedure.input(removeScheduleSchema).mutation(async ({ctx, input}) => {
     if (!input) {
@@ -250,6 +274,12 @@ export const scheduleRoutes = t.router({
         move_weekends: originalSchedule.scheduleDate.move_weekends,
         move_holidays: originalSchedule.scheduleDate.move_holidays,
         specific_dates: originalSchedule.scheduleDate.specific_dates,
+        on: originalSchedule.scheduleDate.on,
+        on_type: originalSchedule.scheduleDate.on_type,
+        days: originalSchedule.scheduleDate.days,
+        weeks: originalSchedule.scheduleDate.weeks,
+        weeks_days: originalSchedule.scheduleDate.weeks_days,
+        week_days: originalSchedule.scheduleDate.week_days,
       };
 
       const scheduleDateResult = await ctx.db.insert(scheduleDates).values(scheduleDateData).returning();
@@ -366,6 +396,69 @@ export const scheduleRoutes = t.router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to toggle schedule status",
+        });
+      }
+    }),
+
+  linkToBudget: publicProcedure
+    .input(
+      z.object({
+        scheduleId: z.number().int().positive(),
+        budgetId: z.number().int().positive(),
+      })
+    )
+    .mutation(async ({ctx, input}) => {
+      try {
+        const result = await ctx.db
+          .update(schedules)
+          .set({budgetId: input.budgetId})
+          .where(eq(schedules.id, input.scheduleId))
+          .returning();
+
+        if (!result[0]) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Schedule not found",
+          });
+        }
+
+        return result[0];
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to link schedule to budget",
+        });
+      }
+    }),
+
+  unlinkFromBudget: publicProcedure
+    .input(z.object({scheduleId: z.number().int().positive()}))
+    .mutation(async ({ctx, input}) => {
+      try {
+        const result = await ctx.db
+          .update(schedules)
+          .set({budgetId: null})
+          .where(eq(schedules.id, input.scheduleId))
+          .returning();
+
+        if (!result[0]) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Schedule not found",
+          });
+        }
+
+        return result[0];
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to unlink schedule from budget",
         });
       }
     }),

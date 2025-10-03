@@ -1,4 +1,5 @@
 import {db} from "$lib/server/db";
+import {getCurrentTimestamp} from "$lib/utils/dates";
 import {transactions, accounts, categories, payees} from "$lib/schema";
 import {eq, and, isNull, desc, asc, like, between, sql, inArray} from "drizzle-orm";
 import type {Transaction, NewTransaction} from "$lib/schema/transactions";
@@ -80,6 +81,11 @@ export class TransactionRepository {
         account: true,
         category: true,
         payee: true,
+        budgetAllocations: {
+          with: {
+            budget: true,
+          },
+        },
       },
     });
 
@@ -183,6 +189,11 @@ export class TransactionRepository {
         account: true,
         category: true,
         payee: true,
+        budgetAllocations: {
+          with: {
+            budget: true,
+          },
+        },
       },
       orderBy,
       limit: pageSize,
@@ -214,6 +225,11 @@ export class TransactionRepository {
       with: {
         category: true,
         payee: true,
+        budgetAllocations: {
+          with: {
+            budget: true,
+          },
+        },
       },
       orderBy: desc(transactions.date),
     });
@@ -282,7 +298,7 @@ export class TransactionRepository {
   async softDelete(id: number): Promise<void> {
     const [deleted] = await db
       .update(transactions)
-      .set({deletedAt: new Date().toISOString()})
+      .set({deletedAt: getCurrentTimestamp()})
       .where(and(eq(transactions.id, id), isNull(transactions.deletedAt)))
       .returning();
 
@@ -299,7 +315,7 @@ export class TransactionRepository {
 
     await db
       .update(transactions)
-      .set({deletedAt: new Date().toISOString()})
+      .set({deletedAt: getCurrentTimestamp()})
       .where(and(inArray(transactions.id, ids), isNull(transactions.deletedAt)));
   }
 
@@ -331,6 +347,11 @@ export class TransactionRepository {
       with: {
         category: true,
         payee: true,
+        budgetAllocations: {
+          with: {
+            budget: true,
+          },
+        },
       },
       orderBy: [desc(transactions.date), desc(transactions.id)],
       limit: limit,

@@ -13,6 +13,7 @@ import {
   type CorrectionContext,
 } from "$lib/schema";
 import {eq, and, isNull, sql, desc, gte, lte, count, max, inArray} from "drizzle-orm";
+import {currentDate, toISOString} from "$lib/utils/dates";
 
 /**
  * Category Learning Service
@@ -95,7 +96,7 @@ export class CategoryLearningService {
   ): Promise<CorrectionPattern[]> {
     const {timeframeMonths = 12, minConfidence = 0.1, includeProcessed = true} = options;
 
-    const cutoffDate = new Date();
+    const cutoffDate = currentDate;
     cutoffDate.setMonth(cutoffDate.getMonth() - timeframeMonths);
 
     // Get all corrections for the payee within timeframe
@@ -104,7 +105,7 @@ export class CategoryLearningService {
       .from(payeeCategoryCorrections)
       .where(and(
         eq(payeeCategoryCorrections.payeeId, payeeId),
-        gte(payeeCategoryCorrections.createdAt, cutoffDate.toISOString()),
+        gte(payeeCategoryCorrections.createdAt, toISOString(cutoffDate)),
         isNull(payeeCategoryCorrections.deletedAt),
         includeProcessed ? undefined : eq(payeeCategoryCorrections.isProcessed, false)
       ))
@@ -230,31 +231,28 @@ export class CategoryLearningService {
    */
   async detectCategoryDrift(payeeId: number): Promise<CategoryDrift | null> {
     // Get recent corrections (last 3 months)
-    const recentDate = new Date();
-    recentDate.setMonth(recentDate.getMonth() - 3);
+    const recentDate = currentDate.subtract({ months: 3 });
 
     const recentCorrections = await db
       .select()
       .from(payeeCategoryCorrections)
       .where(and(
         eq(payeeCategoryCorrections.payeeId, payeeId),
-        gte(payeeCategoryCorrections.createdAt, recentDate.toISOString()),
+        gte(payeeCategoryCorrections.createdAt, toISOString(recentDate)),
         isNull(payeeCategoryCorrections.deletedAt)
       ))
       .orderBy(desc(payeeCategoryCorrections.createdAt));
 
     // Get historical baseline (6-18 months ago)
-    const baselineStartDate = new Date();
-    baselineStartDate.setMonth(baselineStartDate.getMonth() - 18);
-    const baselineEndDate = new Date();
-    baselineEndDate.setMonth(baselineEndDate.getMonth() - 6);
+    const baselineStartDate = currentDate.subtract({ months: 18 });
+    const baselineEndDate = currentDate.subtract({ months: 6 });
 
     const baselineCorrections = await db
       .select()
       .from(payeeCategoryCorrections)
       .where(and(
         eq(payeeCategoryCorrections.payeeId, payeeId),
-        gte(payeeCategoryCorrections.createdAt, baselineStartDate.toISOString()),
+        gte(payeeCategoryCorrections.createdAt, toISOString(baselineStartDate)),
         lte(payeeCategoryCorrections.createdAt, baselineEndDate.toISOString()),
         isNull(payeeCategoryCorrections.deletedAt)
       ));
@@ -291,7 +289,7 @@ export class CategoryLearningService {
         newCategoryName: categoryNames[driftAnalysis.newCategoryId] || 'Unknown',
         driftConfidence: driftAnalysis.confidence,
         driftReason: driftAnalysis.reason,
-        detectedAt: new Date().toISOString(),
+        detectedAt: toISOString(currentDate),
         confirmedAt: null,
         correctionCount: recentCorrections.length,
         timespan: `${recentCorrections.length} corrections in last 3 months`,
@@ -379,8 +377,7 @@ export class CategoryLearningService {
    * Get comprehensive learning metrics
    */
   async getLearningMetrics(timeframeMonths: number = 6): Promise<LearningMetrics> {
-    const cutoffDate = new Date();
-    cutoffDate.setMonth(cutoffDate.getMonth() - timeframeMonths);
+    const cutoffDate = currentDate.subtract({ months: timeframeMonths });
 
     // Basic correction statistics
     const correctionStats = await db
@@ -390,7 +387,7 @@ export class CategoryLearningService {
       })
       .from(payeeCategoryCorrections)
       .where(and(
-        gte(payeeCategoryCorrections.createdAt, cutoffDate.toISOString()),
+        gte(payeeCategoryCorrections.createdAt, toISOString(cutoffDate)),
         isNull(payeeCategoryCorrections.deletedAt)
       ));
 
@@ -603,7 +600,7 @@ export class CategoryLearningService {
       .update(payeeCategoryCorrections)
       .set({
         isProcessed: true,
-        processedAt: new Date().toISOString(),
+        processedAt: toISOString(currentDate),
       })
       .where(eq(payeeCategoryCorrections.id, correctionId));
   }
@@ -635,7 +632,7 @@ export class CategoryLearningService {
       : 0;
 
     // Calculate decay factor based on recency
-    const now = new Date();
+    const now = currentDate;
     const decayFactor = group.reduce((sum, correction) => {
       const correctionDate = new Date(correction.createdAt);
       const ageMonths = (now.getTime() - correctionDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
@@ -880,7 +877,7 @@ export class CategoryLearningService {
   private calculateRecencyScore(corrections: any[]): number {
     if (corrections.length === 0) return 0;
 
-    const now = new Date();
+    const now = currentDate;
     const scores = corrections.map(correction => {
       const correctionDate = new Date(correction.createdAt);
       const ageMonths = (now.getTime() - correctionDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
@@ -1038,14 +1035,14 @@ export class CategoryLearningService {
   }
 
   private async calculateConfidenceDistribution(timeframeMonths: number): Promise<LearningMetrics['confidenceDistribution']> {
-    const cutoffDate = new Date();
+    const cutoffDate = currentDate;
     cutoffDate.setMonth(cutoffDate.getMonth() - timeframeMonths);
 
     const corrections = await db
       .select({userConfidence: payeeCategoryCorrections.userConfidence})
       .from(payeeCategoryCorrections)
       .where(and(
-        gte(payeeCategoryCorrections.createdAt, cutoffDate.toISOString()),
+        gte(payeeCategoryCorrections.createdAt, toISOString(cutoffDate)),
         isNull(payeeCategoryCorrections.deletedAt),
         isNull(payeeCategoryCorrections.userConfidence)
       ));

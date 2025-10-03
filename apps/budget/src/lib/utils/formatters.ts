@@ -12,6 +12,11 @@ export const numberFormatter = new Intl.NumberFormat("en-US", {
   style: "decimal",
 });
 
+// Helper function for formatting currency
+export function formatCurrency(amount: number): string {
+  return currencyFormatter.format(amount);
+}
+
 export const percentageFormatter = {
   format: (value: number): string => `${value.toFixed(1)}%`,
 };

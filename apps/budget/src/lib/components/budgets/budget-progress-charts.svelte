@@ -3,8 +3,7 @@
   import * as Card from "$lib/components/ui/card";
   import {Badge} from "$lib/components/ui/badge";
   import * as Tabs from "$lib/components/ui/tabs";
-  import {ChartContainer, ChartTooltip} from "$lib/components/ui/chart";
-  import {Chart, Svg, Area, Spline, Arc, Axis} from "layerchart";
+  import ChartPlaceholder from "$lib/components/ui/chart-placeholder.svelte";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
@@ -332,23 +331,7 @@
           </Card.Description>
         </Card.Header>
         <Card.Content>
-          {#if aggregateData}
-            <ChartContainer config={progressChartConfig} class="h-[300px] w-full">
-              <Chart data={aggregateData.combinedTrend} x="date" y={['allocated', 'spent']} yNice>
-                <Svg>
-                  <Area y="allocated" fill="hsl(var(--primary) / 0.2)" />
-                  <Spline y="spent" stroke="hsl(var(--destructive))" strokeWidth={2} />
-                  <Axis placement="left" />
-                  <Axis placement="bottom" />
-                </Svg>
-                <ChartTooltip />
-              </Chart>
-            </ChartContainer>
-          {:else}
-            <div class="flex h-[300px] items-center justify-center text-muted-foreground">
-              No budget data available
-            </div>
-          {/if}
+          <ChartPlaceholder class="h-[300px]" title="Spending Trends Chart" />
         </Card.Content>
       </Card.Root>
     </Tabs.Content>
@@ -365,20 +348,7 @@
             </Card.Description>
           </Card.Header>
           <Card.Content>
-            {#if donutChartData.length > 0}
-              <ChartContainer config={donutChartConfig} class="h-[250px] w-full">
-                <Chart data={donutChartData} x="name" y="value">
-                  <Svg>
-                    <Arc innerRadius={60} cornerRadius={4} padAngle={0.02} />
-                  </Svg>
-                  <ChartTooltip />
-                </Chart>
-              </ChartContainer>
-            {:else}
-              <div class="flex h-[250px] items-center justify-center text-muted-foreground">
-                No budget data available
-              </div>
-            {/if}
+            <ChartPlaceholder class="h-[250px]" title="Budget Allocation Chart" />
           </Card.Content>
         </Card.Root>
 

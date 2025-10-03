@@ -1,7 +1,7 @@
 import type { View } from "$lib/schema";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
-import { currentDate } from "../../../lib/utils";
+import { currentDate } from "$lib/utils/dates";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({params}) => {

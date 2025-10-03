@@ -52,6 +52,14 @@ export interface BudgetMetadata {
     startMonth?: number;
   };
   allocatedAmount?: number;
+  goal?: {
+    targetAmount: number;
+    targetDate: string;
+    startDate?: string;
+    contributionFrequency?: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+    autoContribute?: boolean;
+    linkedScheduleId?: number;
+  };
   [key: string]: unknown;
 }
 

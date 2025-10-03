@@ -55,6 +55,10 @@ export class SchedulesState {
     return this.findBy((schedule) => schedule.name === name);
   }
 
+  getBySlug(slug: string): Schedule | undefined {
+    return this.findBy((schedule) => schedule.slug === slug);
+  }
+
   getActiveSchedules(): Schedule[] {
     return this.filterBy((schedule) => schedule.status === "active");
   }

@@ -4,15 +4,29 @@ import {type Transaction} from '$lib/schema';
 import {superformInsertTransactionSchema} from '$lib/schema/superforms';
 import {today, getLocalTimeZone} from '@internationalized/date';
 import type {EditableDateItem, EditableEntityItem} from '$lib/types';
+import type {Payee} from '$lib/schema/payees';
 import {Textarea} from '$lib/components/ui/textarea';
 import DateInput from '$lib/components/input/date-input.svelte';
-import EntityInput from '$lib/components/input/entity-input.svelte';
-import NumericInput from '$lib/components/input/numeric-input.svelte';
+import IntelligentEntityInput from '$lib/components/input/intelligent-entity-input.svelte';
+import IntelligentNumericInput from '$lib/components/input/intelligent-numeric-input.svelte';
 import {page} from '$app/state';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 import type {Component} from 'svelte';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
 import {useEntityForm} from '$lib/hooks/forms/use-entity-form';
+import {usePayeeIntelligence} from '$lib/hooks/use-payee-intelligence.svelte';
+import { Switch } from '$lib/components/ui/switch';
+import { Label } from '$lib/components/ui/label';
+import Settings from '@lucide/svelte/icons/settings';
+import { getApplicableBudgets, validateTransactionStrict } from '$lib/query/budgets';
+import * as Select from '$lib/components/ui/select';
+import * as Alert from '$lib/components/ui/alert';
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import { Button } from '$lib/components/ui/button';
+import Plus from '@lucide/svelte/icons/plus';
+import X from '@lucide/svelte/icons/x';
+import { formatCurrency } from '$lib/utils';
+import BudgetImpactPreview from '$lib/components/budgets/budget-impact-preview.svelte';
 
 let {
   accountId,
@@ -31,41 +45,291 @@ const form = useEntityForm({
   formData: manageTransactionForm,
   schema: superformInsertTransactionSchema,
   formId: 'transaction-form',
-  onSave: onSave || undefined,
+  ...(onSave && { onSave }),
 });
 
 const {form: formData, enhance} = form;
 
-$formData.accountId = accountId;
+// Initialize account ID
+$effect(() => {
+  if ($formData) {
+    $formData.accountId = accountId;
+  }
+});
 
+// Form state with Svelte 5 runes
 let dateValue: EditableDateItem = $state(today(getLocalTimeZone()));
-let amount: number = $state<number>(0);
-let payee: EditableEntityItem = $state({
+let amount = $state<number>(0);
+let payee = $state<EditableEntityItem>({
   id: 0,
   name: '',
 });
-let category: EditableEntityItem = $state({
+let category = $state<EditableEntityItem>({
   id: 0,
   name: '',
 });
+
+// Payee intelligence integration
+const { getPayeeSuggestionsFor, generateBasicSuggestions } = usePayeeIntelligence();
+
+// Get selected payee data for intelligence
+const selectedPayee = $derived.by(() => {
+  if (!payee.id || payee.id === 0) return null;
+  return (payees as Payee[]).find(p => p.id === payee.id) || null;
+});
+
+// Get intelligence query for selected payee
+const intelligenceQuery = $derived.by(() => {
+  const currentPayee = selectedPayee;
+  if (!currentPayee?.id || currentPayee.id === 0) return null;
+
+  return getPayeeSuggestionsFor(
+    currentPayee.id,
+    categories as EditableEntityItem[],
+    {
+      transactionAmount: amount > 0 ? amount : 0,
+      transactionDate: dateValue.toString(),
+    }
+  );
+});
+
+// Intelligence suggestions based on selected payee
+const intelligenceSuggestions = $derived.by(() => {
+  const currentPayee = selectedPayee;
+  if (!currentPayee) return null;
+
+  // Try to get advanced intelligence first
+  const query = intelligenceQuery;
+  if (query) {
+    try {
+      const result = query.execute ? query.execute() : null;
+      if (result) {
+        const processed = query.processSuggestions(result, result);
+        if (processed) return processed;
+      }
+    } catch (error) {
+      // If query execution fails, fall through to basic suggestions
+      console.warn('Intelligence query failed:', error);
+    }
+  }
+
+  // Fallback to basic suggestions from payee data
+  return generateBasicSuggestions(currentPayee, categories as EditableEntityItem[]);
+});
+
+// Category suggestion for EntityInput
+const categorySuggestion = $derived.by(() => {
+  const suggestions = intelligenceSuggestions;
+  if (!suggestions?.category?.suggestedCategory) return undefined;
+
+  return {
+    type: suggestions.category.type,
+    reason: suggestions.category.reason,
+    ...(suggestions.category.confidence !== undefined && { confidence: suggestions.category.confidence }),
+    suggestedValue: suggestions.category.suggestedCategory,
+    onApply: () => {
+      if (suggestions.category?.suggestedCategory) {
+        category = suggestions.category.suggestedCategory;
+      }
+    }
+  } as const;
+});
+
+// Amount suggestion for NumericInput
+const amountSuggestion = $derived.by(() => {
+  const suggestions = intelligenceSuggestions;
+  if (!suggestions?.amount) return undefined;
+
+  return {
+    type: suggestions.amount.type,
+    reason: suggestions.amount.reason,
+    ...(suggestions.amount.confidence !== undefined && { confidence: suggestions.amount.confidence }),
+    suggestedAmount: suggestions.amount.suggestedAmount || 0,
+    onApply: () => {
+      if (suggestions.amount?.suggestedAmount) {
+        amount = suggestions.amount.suggestedAmount;
+      }
+    }
+  } as const;
+});
+
+// Auto-apply suggestions when payee changes (configurable behavior)
+let autoApplySuggestions = $state<boolean>(true);
 
 $effect(() => {
-  $formData.date = dateValue.toString();
-  $formData.amount = amount;
-  $formData.payeeId = payee.id;
-  $formData.categoryId = category.id;
+  // When payee changes and we have suggestions, optionally auto-apply them
+  const suggestions = intelligenceSuggestions;
+  if (autoApplySuggestions && suggestions && payee.id > 0) {
+    // Only auto-apply if current values are empty/default
+    const shouldApplyCategory = !category.id || category.id === 0;
+    const shouldApplyAmount = !amount || amount === 0;
+
+    if (shouldApplyCategory && suggestions.category?.suggestedCategory) {
+      category = suggestions.category.suggestedCategory;
+    }
+
+    if (shouldApplyAmount && suggestions.amount?.suggestedAmount) {
+      amount = suggestions.amount.suggestedAmount;
+    }
+  }
+});
+
+// Budget allocation state
+interface BudgetAllocation {
+  budgetId: number;
+  amount: number;
+}
+
+let autoAssignBudgets = $state<boolean>(true);
+let budgetAllocations = $state<BudgetAllocation[]>([]);
+
+// Get applicable budgets based on account and category
+const applicableBudgetsQuery = $derived.by(() => {
+  const accId = accountId;
+  const catId = category.id > 0 ? category.id : undefined;
+
+  if (!accId && !catId) return null;
+
+  return getApplicableBudgets(accId, catId);
+});
+
+const applicableBudgets = $derived.by(() => {
+  const query = applicableBudgetsQuery;
+  if (!query) return [];
+
+  const result = query.execute ? query.execute() : null;
+  return result?.data ?? [];
+});
+
+// Calculate total allocated and remaining amounts
+const totalAllocated = $derived.by(() => {
+  return budgetAllocations.reduce((sum, allocation) => sum + allocation.amount, 0);
+});
+
+const remainingAmount = $derived.by(() => {
+  return amount - totalAllocated;
+});
+
+const isOverAllocated = $derived.by(() => {
+  return Math.abs(totalAllocated) > Math.abs(amount) && amount !== 0;
+});
+
+// Strict budget validation
+const strictValidationQuery = $derived.by(() => {
+  const accId = accountId;
+  const catId = category.id > 0 ? category.id : undefined;
+
+  if (!accId && !catId) return null;
+  if (amount === 0) return null;
+
+  return validateTransactionStrict(amount, accId, catId);
+});
+
+const strictValidation = $derived.by(() => {
+  const query = strictValidationQuery;
+  if (!query) return null;
+
+  const result = query.execute ? query.execute() : null;
+  return result?.data ?? null;
+});
+
+const hasStrictViolations = $derived.by(() => {
+  const validation = strictValidation;
+  return validation && !validation.allowed && validation.violations.length > 0;
+});
+
+const canSubmit = $derived.by(() => {
+  return !hasStrictViolations;
+});
+
+// Auto-assign budgets when applicable budgets or amount changes
+$effect(() => {
+  if (autoAssignBudgets && applicableBudgets.length > 0 && amount !== 0) {
+    // Simple auto-assignment: allocate full amount to first applicable budget
+    if (budgetAllocations.length === 0 || budgetAllocations[0]?.budgetId !== applicableBudgets[0]?.id) {
+      budgetAllocations = [{
+        budgetId: applicableBudgets[0]!.id,
+        amount: amount,
+      }];
+    } else {
+      // Update amount for existing allocation
+      budgetAllocations[0]!.amount = amount;
+    }
+  }
+});
+
+// Helper functions for budget allocation UI
+function addAllocation() {
+  if (applicableBudgets.length > 0) {
+    budgetAllocations = [
+      ...budgetAllocations,
+      { budgetId: applicableBudgets[0]!.id, amount: remainingAmount },
+    ];
+  }
+}
+
+function removeAllocation(index: number) {
+  budgetAllocations = budgetAllocations.filter((_, i) => i !== index);
+}
+
+function updateAllocationAmount(index: number, newAmount: number) {
+  budgetAllocations[index]!.amount = newAmount;
+}
+
+function updateAllocationBudget(index: number, budgetId: number) {
+  budgetAllocations[index]!.budgetId = budgetId;
+}
+
+function getBudgetName(budgetId: number): string {
+  return applicableBudgets.find(b => b.id === budgetId)?.name ?? 'Select budget';
+}
+
+// Sync form data
+$effect(() => {
+  if ($formData) {
+    $formData.date = dateValue.toString();
+    $formData.amount = amount;
+    $formData.payeeId = payee.id;
+    $formData.categoryId = category.id;
+
+    // Add budget allocations as metadata for server processing
+    // Note: This will need server-side handling in the form action
+    ($formData as any).budgetAllocations = budgetAllocations;
+    ($formData as any).autoAssignBudgets = autoAssignBudgets;
+  }
 });
 </script>
 
-<form method="post" action="/accounts?/add-transaction" use:enhance class="grid grid-cols-2 gap-2">
-  <input hidden value={$formData.accountId} name="accountId" />
+<div class="space-y-4">
+  <!-- Intelligence Settings -->
+  {#if intelligenceSuggestions}
+    <div class="flex items-center justify-between p-3 bg-accent/5 border border-accent/20 rounded-lg transition-all duration-300">
+      <div class="flex items-center gap-3">
+        <Settings class="h-4 w-4 text-muted-foreground" />
+        <div>
+          <Label for="auto-apply" class="text-sm font-medium">Auto-apply suggestions</Label>
+          <p class="text-xs text-muted-foreground">Automatically fill in suggested values when selecting a payee</p>
+        </div>
+      </div>
+      <Switch
+        id="auto-apply"
+        checked={autoApplySuggestions}
+        onCheckedChange={(checked) => autoApplySuggestions = checked ?? true}
+        class="data-[state=checked]:bg-primary"
+      />
+    </div>
+  {/if}
+
+  <!-- Transaction Form -->
+  <form method="post" action="/accounts?/add-transaction" use:enhance class="grid grid-cols-2 gap-4">
+  <input hidden value={$formData?.accountId || accountId} name="accountId" />
   <Form.Field {form} name="date">
     <Form.Control>
       {#snippet children({props})}
         <Form.Label>Date</Form.Label>
         <DateInput {...props} bind:value={dateValue} />
         <Form.FieldErrors />
-        <input hidden bind:value={$formData.date} name={props.name} />
+        <input hidden value={$formData?.date || dateValue.toString()} name={props.name} />
       {/snippet}
     </Form.Control>
   </Form.Field>
@@ -73,9 +337,13 @@ $effect(() => {
     <Form.Control>
       {#snippet children({props})}
         <Form.Label>Amount</Form.Label>
-        <NumericInput {...props} bind:value={amount} buttonClass="w-full" />
+        <IntelligentNumericInput
+          {...props}
+          bind:value={amount}
+          buttonClass="w-full"
+          {...(amountSuggestion && { suggestion: amountSuggestion })} />
         <Form.FieldErrors />
-        <input hidden bind:value={$formData.amount} name={props.name} />
+        <input hidden value={$formData?.amount || amount} name={props.name} />
       {/snippet}
     </Form.Control>
   </Form.Field>
@@ -83,7 +351,7 @@ $effect(() => {
     <Form.Control>
       {#snippet children({props})}
         <Form.Label>Payee</Form.Label>
-        <EntityInput
+        <IntelligentEntityInput
           {...props}
           entityLabel="payees"
           entities={payees as EditableEntityItem[]}
@@ -91,7 +359,7 @@ $effect(() => {
           icon={HandCoins as unknown as Component}
           buttonClass="w-full" />
         <Form.FieldErrors />
-        <input hidden bind:value={$formData.payeeId} name={props.name} />
+        <input hidden value={$formData?.payeeId || payee.id} name={props.name} />
       {/snippet}
     </Form.Control>
   </Form.Field>
@@ -99,26 +367,164 @@ $effect(() => {
     <Form.Control>
       {#snippet children({props})}
         <Form.Label>Category</Form.Label>
-        <EntityInput
+        <IntelligentEntityInput
           {...props}
           entityLabel="categories"
           entities={categories as EditableEntityItem[]}
           bind:value={category}
           icon={SquareMousePointer as unknown as Component}
-          buttonClass="w-full" />
+          buttonClass="w-full"
+          {...(categorySuggestion && { suggestion: categorySuggestion })} />
         <Form.FieldErrors />
-        <input hidden bind:value={$formData.categoryId} name={props.name} />
+        <input hidden value={$formData?.categoryId || category.id} name={props.name} />
       {/snippet}
     </Form.Control>
   </Form.Field>
+
+  <!-- Budget Allocation Section -->
+  {#if applicableBudgets.length > 0}
+    <div class="col-span-full space-y-3 p-4 border border-border rounded-lg bg-muted/30">
+      <div class="flex items-center justify-between">
+        <Label class="text-sm font-medium">Budget Allocation</Label>
+        <div class="flex items-center gap-2">
+          <Switch
+            id="auto-assign-budgets"
+            checked={autoAssignBudgets}
+            onCheckedChange={(checked) => autoAssignBudgets = checked ?? true}
+            class="data-[state=checked]:bg-primary"
+          />
+          <Label for="auto-assign-budgets" class="text-sm text-muted-foreground cursor-pointer">
+            Auto-assign
+          </Label>
+        </div>
+      </div>
+
+      {#if !autoAssignBudgets}
+        <!-- Manual allocation interface -->
+        <div class="space-y-2">
+          {#each budgetAllocations as allocation, index (index)}
+            <div class="flex gap-2 items-start">
+              <Select.Root
+                value={allocation.budgetId.toString()}
+                onValueChange={(value) => value && updateAllocationBudget(index, parseInt(value))}
+              >
+                <Select.Trigger class="flex-1">
+                  <Select.Value placeholder="Select budget">
+                    {getBudgetName(allocation.budgetId)}
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
+                  {#each applicableBudgets as budget}
+                    <Select.Item value={budget.id.toString()}>
+                      {budget.name}
+                    </Select.Item>
+                  {/each}
+                </Select.Content>
+              </Select.Root>
+
+              <input
+                type="number"
+                step="0.01"
+                value={allocation.amount}
+                oninput={(e) => updateAllocationAmount(index, parseFloat((e.target as HTMLInputElement).value) || 0)}
+                class="w-32 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder="0.00"
+              />
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onclick={() => removeAllocation(index)}
+              >
+                <X class="h-4 w-4" />
+              </Button>
+            </div>
+          {/each}
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onclick={addAllocation}
+            class="w-full"
+          >
+            <Plus class="h-4 w-4 mr-2" />
+            Add Allocation
+          </Button>
+
+          <!-- Remaining amount indicator -->
+          <div class="flex justify-between items-center text-sm pt-2 border-t border-border">
+            <span class="text-muted-foreground">Total Allocated:</span>
+            <span class="font-medium">{formatCurrency(totalAllocated)}</span>
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-muted-foreground">Remaining:</span>
+            <span class="font-medium" class:text-destructive={isOverAllocated}>
+              {formatCurrency(remainingAmount)}
+            </span>
+          </div>
+          {#if isOverAllocated}
+            <p class="text-xs text-destructive">
+              Allocation exceeds transaction amount
+            </p>
+          {/if}
+        </div>
+      {:else}
+        <!-- Auto-assign preview -->
+        <div class="text-sm text-muted-foreground">
+          <p>Automatically allocated to: <span class="font-medium text-foreground">{applicableBudgets[0]?.name ?? 'N/A'}</span></p>
+        </div>
+      {/if}
+    </div>
+  {/if}
+
+  <!-- Budget Impact Preview -->
+  {#if budgetAllocations.length > 0 && amount !== 0}
+    <div class="col-span-full">
+      <BudgetImpactPreview
+        budgets={applicableBudgets}
+        allocations={budgetAllocations}
+      />
+    </div>
+  {/if}
+
   <Form.Field {form} name="notes" class="col-span-full">
     <Form.Control>
       {#snippet children({props})}
         <Form.Label>Notes</Form.Label>
-        <Textarea {...props} bind:value={$formData.notes} />
+        <Textarea {...props} value={$formData?.notes || ''} onchange={(e: Event) => {
+          if ($formData) $formData.notes = (e.target as HTMLTextAreaElement).value;
+        }} />
         <Form.FieldErrors />
       {/snippet}
     </Form.Control>
   </Form.Field>
-  <Form.Button>save</Form.Button>
-</form>
+
+  <!-- Strict Budget Violation Warning -->
+  {#if hasStrictViolations && strictValidation}
+    <div class="col-span-full">
+      <Alert.Root variant="destructive">
+        <AlertTriangle class="h-4 w-4" />
+        <Alert.Title>Budget Limit Exceeded</Alert.Title>
+        <Alert.Description>
+          <div class="space-y-1 mt-2">
+            <p>This transaction exceeds strict budget limits:</p>
+            <ul class="list-disc list-inside ml-2 space-y-0.5">
+              {#each strictValidation.violations as violation}
+                <li class="text-sm">
+                  <span class="font-medium">{violation.budgetName}</span>:
+                  exceeds by {formatCurrency(violation.exceeded)}
+                </li>
+              {/each}
+            </ul>
+            <p class="text-sm mt-2">You cannot save this transaction until the amount is reduced.</p>
+          </div>
+        </Alert.Description>
+      </Alert.Root>
+    </div>
+  {/if}
+
+  <Form.Button class="col-span-full" disabled={isOverAllocated || hasStrictViolations}>save</Form.Button>
+  </form>
+</div>

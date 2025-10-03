@@ -1,7 +1,8 @@
-import { createQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
+import { createQuery, createMutation } from "@tanstack/svelte-query";
 import type { CreateQueryOptions, CreateMutationOptions, QueryKey } from "@tanstack/svelte-query";
 import { TRPCError } from "@trpc/server";
 import { toast } from "svelte-sonner";
+import { queryClient } from "./_client";
 
 /**
  * Configuration for defineQuery wrapper
@@ -113,7 +114,6 @@ export function defineQuery<TData, TError = Error>(
     },
 
     async execute() {
-      const queryClient = useQueryClient();
 
       try {
         // Try to get from cache first

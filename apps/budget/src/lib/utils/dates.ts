@@ -551,3 +551,11 @@ export function formatDateDisplay(dateValue: DateValue, format: 'short' | 'mediu
       }).format(jsDate);
   }
 }
+
+/**
+ * Get current timestamp in ISO format for database operations
+ * @returns ISO string with current date and time
+ */
+export function getCurrentTimestamp(): string {
+  return toISOString(currentDate);
+}

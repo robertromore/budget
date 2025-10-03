@@ -10,6 +10,7 @@ import {
   weekdayOptions,
   weekOptions,
 } from "$lib/utils/date-options";
+import { isHoliday } from "$lib/utils/holidays";
 import { endOfWeek, startOfWeek, type DateValue } from "@internationalized/date";
 
 /**
@@ -63,16 +64,21 @@ export default class RepeatingDateInput {
   placeholder: DateValue = $state(currentDate);
 
   /**
-   * Determine which constraint to use based on end_type
+   * Determine which constraint to use by inferring from the data
+   * Since end_type is not persisted, we infer it from end and limit values
    */
   private dateConstraints = $derived.by(() => {
-    if (this.value.end_type === "until" && this.value.end) {
+    // If end date is set, use it as the constraint (takes precedence)
+    if (this.value.end) {
       return {
         end: this.value.end,
-        limit: 1000, // Large number, won't be used
+        limit: 1000, // Safety limit, actual end date takes precedence
         hasEndDate: true,
       };
-    } else if (this.value.end_type === "limit" && this.value.limit) {
+    }
+
+    // If limit is set and > 0, use it as the constraint
+    if (this.value.limit && this.value.limit > 0) {
       return {
         end: null,
         limit: this.value.limit,
@@ -80,9 +86,10 @@ export default class RepeatingDateInput {
       };
     }
 
+    // No end condition - generate dates for visible calendar range
     return {
       end: null,
-      limit: this.value.limit || 50,
+      limit: 0, // Will be calculated dynamically based on visible calendar range
       hasEndDate: false,
     };
   });
@@ -100,11 +107,7 @@ export default class RepeatingDateInput {
       return null;
     }
 
-    let calendarStart = sameMonthAndYear(this.start, this.placeholder)
-      ? this.start
-      : this.placeholder;
-
-    // Expand calendar start to include previous month dates visible in calendar
+    // Expand calendar to include all visible dates in the calendar grid
     const firstOfMonth = this.placeholder.set({day: 1});
     const firstWeekStart = startOfWeek(firstOfMonth, "en-us", "sun");
 
@@ -112,13 +115,11 @@ export default class RepeatingDateInput {
     const lastOfMonth = this.placeholder.set({day: 0}).add({months: 1});
     const lastWeekEnd = endOfWeek(lastOfMonth, "en-us", "sun");
 
-    // Only expand backwards if the start date is before the first week start
-    // This ensures we don't generate unnecessary dates before the start date
-    const shouldExpandBackwards = this.start.compare(firstWeekStart) < 0;
-    const expandedStart =
-      shouldExpandBackwards && calendarStart.compare(firstWeekStart) > 0
-        ? firstWeekStart
-        : calendarStart;
+    // Use the earlier of: start date or first week of calendar view
+    // This ensures we show all recurring dates in the visible calendar
+    const expandedStart = this.start.compare(firstWeekStart) < 0
+      ? this.start
+      : firstWeekStart;
 
     const bounds = {
       start: expandedStart,
@@ -152,8 +153,18 @@ export default class RepeatingDateInput {
       const specificDates = this.value.specific_dates || [];
       upcomingDates.push(...specificDates);
 
-      // Apply weekend adjustments
-      const adjustedDates = this.applyWeekendAdjustments(upcomingDates);
+      // Apply adjustments based on settings
+      let adjustedDates = upcomingDates;
+
+      // Apply weekend adjustments if enabled
+      if (this.value.move_weekends !== MoveToWeekday.None) {
+        adjustedDates = this.applyWeekendAdjustments(adjustedDates);
+      }
+
+      // Apply holiday adjustments if enabled (only applied to dates that haven't been weekend-adjusted)
+      if (this.value.move_holidays !== MoveToWeekday.None) {
+        adjustedDates = this.applyHolidayAdjustments(adjustedDates);
+      }
 
       // Sort and deduplicate after adjustments
       return this.sortAndDeduplicateDates(adjustedDates);
@@ -185,8 +196,10 @@ export default class RepeatingDateInput {
   ): DateValue[] {
     const config: DateGenerationConfig = {
       calendarStart: bounds.start,
-      calendarEnd: constraints.end,
-      effectiveLimit: constraints.limit,
+      // Use user-specified end date if available, otherwise use visible calendar end
+      calendarEnd: constraints.end || bounds.end,
+      // Use user-specified limit if available, otherwise calculate based on range
+      effectiveLimit: constraints.hasEndDate ? constraints.limit : this.calculateDynamicLimit(frequency, interval, bounds),
     };
 
     switch (frequency) {
@@ -204,6 +217,42 @@ export default class RepeatingDateInput {
   }
 
   /**
+   * Calculate a dynamic limit based on the frequency and visible date range
+   */
+  private calculateDynamicLimit(
+    frequency: string,
+    interval: number,
+    bounds: {start: DateValue; end: DateValue; originalStart: DateValue}
+  ): number {
+    // Calculate the approximate number of days in the range
+    const startDate = bounds.start.toDate('UTC');
+    const endDate = bounds.end.toDate('UTC');
+    const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Calculate a reasonable limit based on frequency and interval
+    let limit: number;
+    switch (frequency) {
+      case "daily":
+        limit = Math.ceil(daysDiff / interval) + 10; // +10 for buffer
+        break;
+      case "weekly":
+        limit = Math.ceil((daysDiff / 7) / interval) * 7 + 10; // 7 days per week max
+        break;
+      case "monthly":
+        limit = Math.ceil((daysDiff / 30) / interval) * 31 + 10; // 31 days per month max
+        break;
+      case "yearly":
+        limit = Math.ceil((daysDiff / 365) / interval) * 366 + 10; // 366 days per year max (leap year)
+        break;
+      default:
+        limit = 1000;
+    }
+
+    // Minimum limit of 100 to ensure we always generate enough dates
+    return Math.max(100, limit);
+  }
+
+  /**
    * Generate daily recurring dates
    */
   private generateDailyDates(
@@ -215,7 +264,49 @@ export default class RepeatingDateInput {
     const calendarStart = bounds.start;
     const calendarEnd = config.calendarEnd || bounds.end;
 
-    return nextDaily(calendarStart, calendarEnd, interval, config.effectiveLimit);
+    // Calculate the aligned start date based on the original pattern
+    // This ensures the pattern continues correctly when navigating to future months
+    const alignedStart = this.calculateAlignedStartDate(
+      bounds.originalStart,
+      calendarStart,
+      interval
+    );
+
+    return nextDaily(alignedStart, calendarEnd, interval, config.effectiveLimit);
+  }
+
+  /**
+   * Calculate the first occurrence on or after targetDate that aligns with the pattern
+   */
+  private calculateAlignedStartDate(
+    patternStart: DateValue,
+    targetDate: DateValue,
+    interval: number
+  ): DateValue {
+    // If target is before or equal to pattern start, use pattern start
+    if (targetDate.compare(patternStart) <= 0) {
+      return patternStart;
+    }
+
+    // Calculate days between pattern start and target
+    const startJsDate = patternStart.toDate('UTC');
+    const targetJsDate = targetDate.toDate('UTC');
+    const daysDiff = Math.floor(
+      (targetJsDate.getTime() - startJsDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Calculate how many complete intervals have passed
+    const intervalsCompleted = Math.floor(daysDiff / interval);
+
+    // Calculate the aligned date
+    const alignedDate = patternStart.add({ days: intervalsCompleted * interval });
+
+    // If aligned date is before target, move forward one interval
+    if (alignedDate.compare(targetDate) < 0) {
+      return alignedDate.add({ days: interval });
+    }
+
+    return alignedDate;
   }
 
   /**
@@ -227,19 +318,54 @@ export default class RepeatingDateInput {
     bounds: {start: DateValue; end: DateValue; originalStart: DateValue}
   ): DateValue[] {
     const weekDays = this.value.week_days ?? [];
-
-    // Use the expanded calendar bounds which already include full weeks
-    let calendarStart = bounds.start;
     const calendarEnd = config.calendarEnd || bounds.end;
 
-    // For weekly patterns, ensure we start from a reasonable point for the pattern
-    // If we have specific weekdays, start from the beginning of the range
-    if (weekDays.length > 0) {
-      // Find the earliest occurrence that makes sense for the pattern
-      calendarStart = calendarStart < bounds.originalStart ? bounds.originalStart : calendarStart;
+    // Calculate the aligned week start based on the original pattern
+    // This ensures weekly patterns continue correctly when navigating to future months
+    const alignedStart = this.calculateAlignedWeekStart(
+      bounds.originalStart,
+      bounds.start,
+      interval
+    );
+
+    return nextWeekly(alignedStart, calendarEnd, interval, weekDays, config.effectiveLimit);
+  }
+
+  /**
+   * Calculate the aligned week start for weekly patterns
+   * Ensures the pattern interval is maintained when navigating to future months
+   */
+  private calculateAlignedWeekStart(
+    patternStart: DateValue,
+    targetDate: DateValue,
+    interval: number
+  ): DateValue {
+    // If target is before or equal to pattern start, use pattern start
+    if (targetDate.compare(patternStart) <= 0) {
+      return patternStart;
     }
 
-    return nextWeekly(calendarStart, calendarEnd, interval, weekDays, config.effectiveLimit);
+    // Calculate days between pattern start and target
+    const startJsDate = patternStart.toDate('UTC');
+    const targetJsDate = targetDate.toDate('UTC');
+    const daysDiff = Math.floor(
+      (targetJsDate.getTime() - startJsDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Calculate how many complete week intervals have passed
+    const weeksCompleted = Math.floor(daysDiff / (7 * interval));
+
+    // Calculate the aligned week start
+    const alignedWeekStart = patternStart.add({ weeks: weeksCompleted * interval });
+
+    // If aligned week start is before target, it's the correct week to start from
+    // The nextWeekly function will handle finding the specific weekdays within this week
+    if (alignedWeekStart.compare(targetDate) <= 0) {
+      return alignedWeekStart;
+    }
+
+    // Otherwise, go back one interval to ensure we don't skip dates
+    return alignedWeekStart.subtract({ weeks: interval });
   }
 
   /**
@@ -368,6 +494,44 @@ export default class RepeatingDateInput {
   }
 
   /**
+   * Adjust a date if it falls on a holiday according to the move_holidays setting
+   */
+  private adjustForHoliday(date: DateValue, maxAdjustments = 10): DateValue {
+    if (!isHoliday(date) || this.value.move_holidays === MoveToWeekday.None) {
+      return date;
+    }
+
+    let adjustedDate = date;
+    let adjustmentCount = 0;
+
+    // Keep adjusting until we find a non-holiday date
+    // (don't worry about weekends here - they're handled separately)
+    while (adjustmentCount < maxAdjustments) {
+      if (this.value.move_holidays === MoveToWeekday.NextWeekday) {
+        adjustedDate = adjustedDate.add({ days: 1 });
+      } else if (this.value.move_holidays === MoveToWeekday.PreviousWeekday) {
+        adjustedDate = adjustedDate.subtract({ days: 1 });
+      }
+
+      adjustmentCount++;
+
+      // If the adjusted date is not a holiday, we're done
+      if (!isHoliday(adjustedDate)) {
+        return adjustedDate;
+      }
+    }
+
+    return adjustedDate;
+  }
+
+  /**
+   * Apply holiday adjustments to an array of dates
+   */
+  private applyHolidayAdjustments(dates: DateValue[]): DateValue[] {
+    return dates.map((date) => this.adjustForHoliday(date));
+  }
+
+  /**
    * Sort dates and remove duplicates
    */
   private sortAndDeduplicateDates(dates: DateValue[]): DateValue[] {
@@ -446,11 +610,33 @@ export default class RepeatingDateInput {
       parts.push(`until ${formatDate(this.value.end.toDate(timezone))}`);
     }
 
-    // Add weekend handling information
+    // Add weekend and holiday handling information
+    const adjustments: string[] = [];
+
     if (this.value.move_weekends === MoveToWeekday.NextWeekday) {
-      parts.push("(weekends moved to Monday)");
+      adjustments.push("weekends moved to Monday");
     } else if (this.value.move_weekends === MoveToWeekday.PreviousWeekday) {
-      parts.push("(weekends moved to Friday)");
+      adjustments.push("weekends moved to Friday");
+    }
+
+    if (this.value.move_holidays === MoveToWeekday.NextWeekday) {
+      adjustments.push("holidays moved to next weekday");
+    } else if (this.value.move_holidays === MoveToWeekday.PreviousWeekday) {
+      adjustments.push("holidays moved to previous weekday");
+    }
+
+    if (adjustments.length > 0) {
+      parts.push(`(${adjustments.join(", ")})`);
+    }
+
+    // Add specific dates information
+    const specificDates = this.value.specific_dates || [];
+    if (specificDates.length > 0) {
+      if (specificDates.length === 1) {
+        parts.push(`with 1 additional date`);
+      } else {
+        parts.push(`with ${specificDates.length} additional dates`);
+      }
     }
 
     return parts.join(" ");

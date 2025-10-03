@@ -1,4 +1,4 @@
-import {z} from "zod";
+import { z } from "zod";
 
 // Import enum types from main payee schema
 const payeeTypes = [
@@ -7,7 +7,8 @@ const payeeTypes = [
   "employer",
   "financial_institution",
   "government",
-  "individual"
+  "individual",
+  "other"
 ] as const;
 
 const paymentFrequencies = [
@@ -40,12 +41,25 @@ export const superformInsertPayeeSchema = z.object({
     .nullable(),
 
   // Budgeting Integration Fields
-  defaultCategoryId: z.number().positive("Invalid category ID").optional().nullable(),
-  defaultBudgetId: z.number().positive("Invalid budget ID").optional().nullable(),
+  defaultCategoryId: z
+    .union([
+      z.string(),
+      z.number().nonnegative("Invalid category ID"),
+      z.null(),
+      z.undefined()
+    ])
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (val === null || val === undefined || val === '' || val === '0') return null;
+      if (typeof val === 'string') return Number(val);
+      return val;
+    }),
+  defaultBudgetId: z.number().nonnegative("Invalid budget ID").optional().nullable(),
   payeeType: z.enum(payeeTypes).optional().nullable(),
 
   // Transaction Automation Fields
-  avgAmount: z.number().positive("Average amount must be positive").optional().nullable(),
+  avgAmount: z.number().nonnegative("Average amount must be positive").optional().nullable(),
   paymentFrequency: z.enum(paymentFrequencies).optional().nullable(),
   lastTransactionDate: z.string().optional().nullable(),
 
@@ -56,10 +70,9 @@ export const superformInsertPayeeSchema = z.object({
   // Contact Information Fields
   website: z
     .string()
-    .url({ message: "Invalid website URL" })
-    .max(500, "Website URL must be less than 500 characters")
     .optional()
-    .nullable(),
+    .nullable()
+    .transform((val) => val?.trim() || null),
   phone: z
     .string()
     .max(20, "Phone number must be less than 20 characters")
@@ -68,10 +81,9 @@ export const superformInsertPayeeSchema = z.object({
     .nullable(),
   email: z
     .string()
-    .email({ message: "Invalid email address" })
-    .max(255, "Email must be less than 255 characters")
     .optional()
-    .nullable(),
+    .nullable()
+    .transform((val) => val?.trim() || null),
 
   // Organization Fields
   address: z.string().optional().nullable(), // JSON object for structured address
@@ -82,13 +94,45 @@ export const superformInsertPayeeSchema = z.object({
     .nullable(),
 
   // Advanced Features Fields
-  alertThreshold: z.number().positive("Alert threshold must be positive").optional().nullable(),
+  alertThreshold: z.number().min(0, "Alert threshold must be 0 or greater").optional().nullable(),
   isSeasonal: z.boolean().default(false),
   subscriptionInfo: z.string().optional().nullable(), // JSON: {cost, renewalDate, etc}
-  tags: z.string().optional().nullable(), // JSON array of custom tags
+  tags: z
+    .union([
+      z.array(z.string()),
+      z.string(),
+      z.null()
+    ])
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (Array.isArray(val)) {
+        return val.length > 0 ? val.join(', ') : null;
+      }
+      if (typeof val === 'string') {
+        return val.trim() || null;
+      }
+      return null;
+    }), // Can be array or comma-separated string
 
   // Payment Processing Fields
-  preferredPaymentMethods: z.string().optional().nullable(), // JSON array of account IDs
+  preferredPaymentMethods: z
+    .union([
+      z.array(z.string()),
+      z.string(),
+      z.null()
+    ])
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (Array.isArray(val)) {
+        return val.length > 0 ? val.join(', ') : null;
+      }
+      if (typeof val === 'string') {
+        return val.trim() || null;
+      }
+      return null;
+    }), // Can be array or comma-separated string
   merchantCategoryCode: z
     .string()
     .max(10, "Merchant category code must be less than 10 characters")
@@ -124,12 +168,25 @@ export const superformUpdatePayeeSchema = z.object({
     .nullable(),
 
   // Budgeting Integration Fields
-  defaultCategoryId: z.number().positive("Invalid category ID").optional().nullable(),
-  defaultBudgetId: z.number().positive("Invalid budget ID").optional().nullable(),
+  defaultCategoryId: z
+    .union([
+      z.string(),
+      z.number().nonnegative("Invalid category ID"),
+      z.null(),
+      z.undefined()
+    ])
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (val === null || val === undefined || val === '' || val === '0') return null;
+      if (typeof val === 'string') return Number(val);
+      return val;
+    }),
+  defaultBudgetId: z.number().nonnegative("Invalid budget ID").optional().nullable(),
   payeeType: z.enum(payeeTypes).optional().nullable(),
 
   // Transaction Automation Fields
-  avgAmount: z.number().positive("Average amount must be positive").optional().nullable(),
+  avgAmount: z.number().nonnegative("Average amount must be positive").optional().nullable(),
   paymentFrequency: z.enum(paymentFrequencies).optional().nullable(),
   lastTransactionDate: z.string().optional().nullable(),
 
@@ -140,10 +197,12 @@ export const superformUpdatePayeeSchema = z.object({
   // Contact Information Fields
   website: z
     .string()
-    .url({ message: "Invalid website URL" })
-    .max(500, "Website URL must be less than 500 characters")
     .optional()
-    .nullable(),
+    .nullable()
+    .refine((val) => !val || val.trim() === '' || z.string().url({ message: "Invalid website URL" }).safeParse(val).success, {
+      message: "Invalid website URL"
+    })
+    .transform((val) => val?.trim() || null),
   phone: z
     .string()
     .max(20, "Phone number must be less than 20 characters")
@@ -152,10 +211,12 @@ export const superformUpdatePayeeSchema = z.object({
     .nullable(),
   email: z
     .string()
-    .email({ message: "Invalid email address" })
-    .max(255, "Email must be less than 255 characters")
     .optional()
-    .nullable(),
+    .nullable()
+    .refine((val) => !val || val.trim() === '' || z.string().email({ message: "Invalid email address" }).safeParse(val).success, {
+      message: "Invalid email address"
+    })
+    .transform((val) => val?.trim() || null),
 
   // Organization Fields
   address: z.string().optional().nullable(),
@@ -166,13 +227,45 @@ export const superformUpdatePayeeSchema = z.object({
     .nullable(),
 
   // Advanced Features Fields
-  alertThreshold: z.number().positive("Alert threshold must be positive").optional().nullable(),
+  alertThreshold: z.number().min(0, "Alert threshold must be 0 or greater").optional().nullable(),
   isSeasonal: z.boolean().optional(),
   subscriptionInfo: z.string().optional().nullable(),
-  tags: z.string().optional().nullable(),
+  tags: z
+    .union([
+      z.array(z.string()),
+      z.string(),
+      z.null()
+    ])
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (Array.isArray(val)) {
+        return val.length > 0 ? val.join(', ') : null;
+      }
+      if (typeof val === 'string') {
+        return val.trim() || null;
+      }
+      return null;
+    }), // Can be array or comma-separated string
 
   // Payment Processing Fields
-  preferredPaymentMethods: z.string().optional().nullable(),
+  preferredPaymentMethods: z
+    .union([
+      z.array(z.string()),
+      z.string(),
+      z.null()
+    ])
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (Array.isArray(val)) {
+        return val.length > 0 ? val.join(', ') : null;
+      }
+      if (typeof val === 'string') {
+        return val.trim() || null;
+      }
+      return null;
+    }), // Can be array or comma-separated string
   merchantCategoryCode: z
     .string()
     .max(10, "Merchant category code must be less than 10 characters")

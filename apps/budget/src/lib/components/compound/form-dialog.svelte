@@ -160,7 +160,7 @@ const sizeClasses = {
 <Dialog.Root bind:open={dialogOpen}>
   <Dialog.Content
     class="sm:{sizeClasses[maxWidth]} {className || ''}"
-    id={id || undefined}
+    id={id || ''}
     style={style || undefined}>
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">

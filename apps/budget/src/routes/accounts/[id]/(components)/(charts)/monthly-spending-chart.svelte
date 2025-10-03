@@ -1,12 +1,8 @@
 <script lang="ts">
-import { ChartContainer, type ChartConfig } from '$lib/components/ui/chart';
-import { AreaChart } from "layerchart";
-import * as Chart from "$lib/components/ui/chart/index.js";
+import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { getMonthlySpendingAggregates } from '$lib/query/transactions';
 import AnalyticsChartShell from './analytics-chart-shell.svelte';
-import { curveNatural } from "d3-shape";
-import { scaleUtc } from "d3-scale";
 
 interface Props {
   accountId: number;
@@ -119,38 +115,6 @@ const summaryStats = $derived.by(() => {
   {/snippet}
 
   {#snippet chart({ data }: { data: typeof monthlySpendingData })}
-    <ChartContainer config={chartConfig} class="h-full w-full">
-      <AreaChart
-        data={data}
-        x="date"
-        series={[
-          {
-            key: "spending",
-            label: "Spending",
-            color: chartConfig['spending']?.color || 'var(--chart-1)',
-          },
-        ]}
-        axis="x"
-        props={{
-          area: {
-            curve: curveNatural,
-            "fill-opacity": 0.4,
-            line: { class: "stroke-1" },
-            motion: "tween",
-          },
-          xAxis: {
-            format: (v: Date) => v.toLocaleDateString("en-US", { month: "short" }),
-          },
-        }}
-      >
-        {#snippet tooltip()}
-          <Chart.Tooltip
-            labelFormatter={(v: Date) =>
-              v.toLocaleDateString("en-US", { month: "long" })}
-            indicator="line"
-          />
-        {/snippet}
-      </AreaChart>
-    </ChartContainer>
+    <ChartPlaceholder class="h-full" title="Monthly Spending Trends Chart" />
   {/snippet}
 </AnalyticsChartShell>

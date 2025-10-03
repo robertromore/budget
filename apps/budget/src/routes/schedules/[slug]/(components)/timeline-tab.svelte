@@ -1,8 +1,6 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import { Badge } from '$lib/components/ui/badge';
-import * as Chart from '$lib/components/ui/chart';
-import { AreaChart, Axis } from 'layerchart';
+import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
 import { currencyFormatter } from '$lib/utils/formatters';
 import type { PageData } from '../$types';
 import { formatAmount } from '../(data)';
@@ -29,6 +27,7 @@ const timelineChartConfig = {
 } satisfies Chart.ChartConfig;
 </script>
 
+{#if schedule}
 <div class="space-y-4">
   {#if cumulativeBalanceData.length > 0}
     <Card.Root>
@@ -39,61 +38,7 @@ const timelineChartConfig = {
         </Card.Description>
       </Card.Header>
       <Card.Content class="pt-2">
-        <Chart.Container config={timelineChartConfig} class="h-[300px] w-full">
-          <AreaChart
-            data={cumulativeBalanceData}
-            x="dateLabel"
-            y="amount"
-            yNice
-            padding={{ left: 80, right: 20, top: 20, bottom: 60 }}
-          >
-            {#snippet axis()}
-              <Axis placement="left" format="currency" grid rule />
-              <Axis
-                placement="bottom"
-                grid
-                rule
-                tickLabelProps={{
-                  rotate: 315,
-                  textAnchor: "end",
-                }}
-              />
-            {/snippet}
-
-            {#snippet tooltip()}
-              <Chart.Tooltip>
-                {#snippet formatter({ value, payload })}
-                  <div class="flex flex-col space-y-1">
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Cumulative Balance</span>
-                      <span class="font-mono font-medium">
-                        {currencyFormatter.format(Number(value))}
-                      </span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Type</span>
-                      <Badge variant="outline">
-                        {Array.isArray(payload) && payload[0]?.payload?.type === 'historical' ? 'Historical' : 'Projected'}
-                      </Badge>
-                    </div>
-                  </div>
-                {/snippet}
-              </Chart.Tooltip>
-            {/snippet}
-          </AreaChart>
-        </Chart.Container>
-
-        <!-- Cumulative balance legend -->
-        <div class="flex items-center gap-6 mt-4 text-sm">
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 rounded-full bg-primary"></div>
-            <span>Historical Cumulative</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 rounded-full bg-muted-foreground opacity-50"></div>
-            <span>Projected Cumulative</span>
-          </div>
-        </div>
+        <ChartPlaceholder class="h-[300px]" title="Cumulative Balance Impact Chart" />
       </Card.Content>
     </Card.Root>
 
@@ -152,3 +97,4 @@ const timelineChartConfig = {
     </Card.Root>
   {/if}
 </div>
+{/if}

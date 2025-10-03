@@ -14,6 +14,10 @@ interface Props {
   footer?: Snippet;
   children?: Snippet;
   class?: string;
+  resizable?: boolean;
+  defaultWidth?: number;
+  minWidth?: number;
+  maxWidth?: number;
 }
 
 let {
@@ -26,9 +30,39 @@ let {
   footer,
   children,
   class: className,
+  resizable = true,
+  defaultWidth = 640,
+  minWidth = 400,
+  maxWidth = 1200,
 }: Props = $props();
 
 const isDesktop = new MediaQuery('(min-width: 768px)');
+
+// Resize state
+let sheetWidth = $state(defaultWidth);
+let isResizing = $state(false);
+let contentElement: HTMLElement | null = $state(null);
+
+// Handle resize
+function handleMouseDown(e: MouseEvent) {
+  if (!resizable || !isDesktop.current) return;
+  isResizing = true;
+  e.preventDefault();
+}
+
+function handleMouseMove(e: MouseEvent) {
+  if (!isResizing) return;
+
+  const newWidth = side === 'right'
+    ? window.innerWidth - e.clientX
+    : e.clientX;
+
+  sheetWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+}
+
+function handleMouseUp() {
+  isResizing = false;
+}
 
 // Handle open state changes
 $effect(() => {
@@ -36,7 +70,32 @@ $effect(() => {
     onOpenChange(open);
   }
 });
+
+// Add/remove mouse event listeners for resize
+$effect(() => {
+  if (isResizing) {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }
+});
 </script>
+
+<style>
+  /* Prevent text selection during resize */
+  :global(body.resizing) {
+    user-select: none;
+    cursor: col-resize !important;
+  }
+</style>
 
 {#if isDesktop.current}
   <Sheet.Root bind:open>
@@ -45,7 +104,24 @@ $effect(() => {
         {@render trigger()}
       </Sheet.Trigger>
     {/if}
-    <Sheet.Content {side} class="flex flex-col {className || ''}">
+    <Sheet.Content
+      {side}
+      class="flex flex-col {className || ''}"
+      style="width: {sheetWidth}px; max-width: {sheetWidth}px;"
+      bind:this={contentElement}
+    >
+      {#if resizable}
+        <div
+          class="absolute top-0 {side === 'right' ? 'left-0 -ml-1' : 'right-0 -mr-1'} h-full w-2 cursor-col-resize group z-50"
+          onmousedown={handleMouseDown}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize panel"
+        >
+          <div class="absolute inset-0 hover:bg-primary/10 active:bg-primary/20 transition-colors"></div>
+          <div class="absolute top-1/2 {side === 'right' ? 'left-0' : 'right-0'} -translate-y-1/2 w-1 h-16 bg-border group-hover:bg-primary/50 transition-colors rounded-full"></div>
+        </div>
+      {/if}
       {#if header}
         <Sheet.Header class="border-b px-6 py-6">
           {@render header()}

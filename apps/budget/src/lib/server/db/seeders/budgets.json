@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Monthly Checking Budget",
+    "description": "Overall monthly spending limit for checking account",
+    "type": "account-monthly",
+    "scope": "account",
+    "status": "active",
+    "enforcement_level": "warning",
+    "metadata": {
+      "allocatedAmount": 2500,
+      "defaultPeriod": {
+        "type": "monthly",
+        "startDay": 1
+      }
+    }
+  },
+  {
+    "name": "Grocery Envelope",
+    "description": "Monthly envelope budget for grocery expenses",
+    "type": "category-envelope",
+    "scope": "category",
+    "status": "active",
+    "enforcement_level": "warning",
+    "metadata": {
+      "allocatedAmount": 600,
+      "defaultPeriod": {
+        "type": "monthly",
+        "startDay": 1
+      },
+      "rolloverMode": "unlimited"
+    }
+  },
+  {
+    "name": "Emergency Fund Goal",
+    "description": "Savings goal for emergency expenses",
+    "type": "goal-based",
+    "scope": "global",
+    "status": "active",
+    "enforcement_level": "none",
+    "metadata": {
+      "allocatedAmount": 10000,
+      "target": 10000,
+      "targetDate": "2025-12-31",
+      "currentAmount": 3500
+    }
+  }
+]

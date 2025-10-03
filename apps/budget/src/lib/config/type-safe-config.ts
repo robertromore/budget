@@ -40,7 +40,6 @@ export class ConfigManager {
 
     try {
       const nodeEnv = getRequiredEnvironmentVariable("NODE_ENV");
-      const databaseUrl = getRequiredEnvironmentVariable("DATABASE_URL");
 
       // API configuration
       const apiBaseUrl =

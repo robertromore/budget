@@ -1,9 +1,11 @@
 import {db} from "$lib/server/db";
 import {payees, transactions} from "$lib/schema";
 import {eq, and, isNull, count, gte, lte} from "drizzle-orm";
+import {currentDate, toISOString} from "$lib/utils/dates";
 import {PayeeIntelligenceService} from "./intelligence";
 import {CategoryLearningService} from "./category-learning";
 import {BudgetAllocationService} from "./budget-allocation";
+import {logger} from "$lib/server/shared/logging";
 
 // Unified ML Recommendation Interfaces
 export interface UnifiedRecommendations {
@@ -531,7 +533,7 @@ export class PayeeMLCoordinator {
       };
 
     } catch (error) {
-      console.error('Error in adaptive optimization:', error);
+      logger.error('Adaptive optimization failed', error, {payeeId});
       throw new Error(`Adaptive optimization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -627,14 +629,14 @@ export class PayeeMLCoordinator {
     const payeeInfo = await this.getPayeeInfo(payeeId);
 
     // Define time periods for comparison
-    const now = new Date();
-    const splitDate = new Date(now.getTime() - (lookbackMonths / 2) * 30 * 24 * 60 * 60 * 1000);
-    const startDate = new Date(now.getTime() - lookbackMonths * 30 * 24 * 60 * 60 * 1000);
+    const now = currentDate;
+    const splitDate = now.subtract({ months: Math.floor(lookbackMonths / 2) });
+    const startDate = now.subtract({ months: lookbackMonths });
 
     // Get data for both periods
     const [beforeData, afterData] = await Promise.all([
-      this.getPayeeBehaviorData(payeeId, startDate.toISOString(), splitDate.toISOString()),
-      this.getPayeeBehaviorData(payeeId, splitDate.toISOString(), now.toISOString())
+      this.getPayeeBehaviorData(payeeId, toISOString(startDate), toISOString(splitDate)),
+      this.getPayeeBehaviorData(payeeId, toISOString(splitDate), toISOString(now))
     ]);
 
     // Analyze for different types of changes
@@ -1144,7 +1146,7 @@ export class PayeeMLCoordinator {
     if (patterns.length > 2 && correlations.length > 0) {
       behaviors.push({
         behavior: 'Adaptive categorization improving budget efficiency',
-        detectionDate: new Date().toISOString(),
+        detectionDate: toISOString(currentDate),
         confidence: 0.75,
         impact: 'positive' as const,
         recommendedResponse: 'Continue current ML-driven categorization approach'
@@ -1164,14 +1166,14 @@ export class PayeeMLCoordinator {
       .update(payees)
       .set({
         defaultCategoryId: categoryId,
-        updatedAt: new Date().toISOString()
+        updatedAt: toISOString(currentDate)
       })
       .where(eq(payees.id, payeeId));
   }
 
   private async updatePayeeBudgetAllocation(payeeId: number, allocation: number): Promise<void> {
     // This would update the budget system when implemented
-    console.log(`Would update budget allocation for payee ${payeeId} to ${allocation}`);
+    logger.debug('Budget allocation update placeholder', {payeeId, allocation});
   }
 
   private async applyAutomationRules(
@@ -1187,7 +1189,11 @@ export class PayeeMLCoordinator {
       if (suggestion.confidence >= confidenceThreshold) {
         if (!dryRun) {
           // Apply automation rule (would implement actual automation)
-          console.log(`Would apply automation: ${suggestion.type} - ${suggestion.description}`);
+          logger.debug('Automation application placeholder', {
+            type: suggestion.type,
+            description: suggestion.description,
+            confidence: suggestion.confidence
+          });
         }
 
         applied.push({
@@ -1543,8 +1549,8 @@ export class PayeeMLCoordinator {
           targetValue: '90%+',
           measurementFrequency: 'Weekly'
         }],
-        generatedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        generatedAt: toISOString(currentDate),
+        expiresAt: toISOString(currentDate.add({ days: 30 })),
         status: 'active' as const
       });
     }
@@ -1602,8 +1608,8 @@ export class PayeeMLCoordinator {
           targetValue: 'Stable',
           measurementFrequency: 'Daily'
         }],
-        generatedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        generatedAt: toISOString(currentDate),
+        expiresAt: toISOString(currentDate.add({ days: 14 })),
         status: 'active' as const
       });
     }
@@ -1661,8 +1667,8 @@ export class PayeeMLCoordinator {
           targetValue: 0.8,
           measurementFrequency: 'Weekly'
         }],
-        generatedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+        generatedAt: toISOString(currentDate),
+        expiresAt: toISOString(currentDate.add({ days: 60 })),
         status: 'active' as const
       });
     }
@@ -1721,8 +1727,8 @@ export class PayeeMLCoordinator {
           targetValue: '95%+',
           measurementFrequency: 'Daily'
         }],
-        generatedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        generatedAt: toISOString(currentDate),
+        expiresAt: toISOString(currentDate.add({ days: 30 })),
         status: 'active' as const
       });
     }
@@ -1780,8 +1786,8 @@ export class PayeeMLCoordinator {
           targetValue: 0.7,
           measurementFrequency: 'Daily'
         }],
-        generatedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        generatedAt: toISOString(currentDate),
+        expiresAt: toISOString(currentDate.add({ days: 7 })),
         status: 'active' as const
       });
     }

@@ -9,6 +9,7 @@ import type {
   SearchOptions,
 } from "$lib/server/shared/types";
 import {DATABASE_CONFIG} from "$lib/server/config/database";
+import {getCurrentTimestamp} from "$lib/utils/dates";
 
 /**
  * Base repository class providing common database operations
@@ -165,7 +166,7 @@ export abstract class BaseRepository<
         throw new DatabaseError(`Soft delete not supported for ${this.entityName}`, "softDelete");
       }
 
-      return await this.update(id, {deletedAt: new Date()} as TUpdateInput);
+      return await this.update(id, {deletedAt: getCurrentTimestamp()} as TUpdateInput);
     } catch (error) {
       if (error instanceof DatabaseError || error instanceof NotFoundError) throw error;
       throw new DatabaseError(`Failed to soft delete ${this.entityName}`, "softDelete");

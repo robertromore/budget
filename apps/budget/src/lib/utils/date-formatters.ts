@@ -59,6 +59,9 @@ const suffixMap = {
 // Create an Intl.PluralRules instance for ordinal numbers in English
 const pr = new Intl.PluralRules("en-US", {type: "ordinal"});
 
+// Create an Intl.PluralRules instance for cardinal numbers (for pluralization)
+export const pluralRules = new Intl.PluralRules("en-US", {type: "cardinal"});
+
 /** Formats a `Date` as “{short month}. {day}, {year}” e.g. “Aug. 1st, 2023” */
 export const formatDate = (d: Date): string => {
   // month abbreviation (e.g. "Aug")

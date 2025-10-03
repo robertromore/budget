@@ -8,8 +8,16 @@ import type {
   Payee,
   PayeeType
 } from "$lib/schema";
+import type {
+  SubscriptionInfo,
+  PayeeAddress,
+  PaymentMethodReference,
+  PayeeTags
+} from "./types";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
+import { currentDate, toISOString } from "$lib/utils/dates";
+import {logger} from "$lib/server/shared/logging";
 import { CategoryLearningService } from "./category-learning";
 import {
   ContactManagementService,
@@ -65,13 +73,13 @@ export interface CreatePayeeData {
   website?: string | null | undefined;
   phone?: string | null | undefined;
   email?: string | null | undefined;
-  address?: any | null | undefined;
+  address?: PayeeAddress | null | undefined;
   accountNumber?: string | null | undefined;
   alertThreshold?: number | null | undefined;
   isSeasonal?: boolean | undefined;
-  subscriptionInfo?: any | null | undefined;
-  tags?: any | null | undefined;
-  preferredPaymentMethods?: any | null | undefined;
+  subscriptionInfo?: SubscriptionInfo | null | undefined;
+  tags?: PayeeTags | null | undefined;
+  preferredPaymentMethods?: PaymentMethodReference[] | null | undefined;
   merchantCategoryCode?: string | null | undefined;
 }
 
@@ -110,15 +118,21 @@ export class PayeeService {
   private mlCoordinator: PayeeMLCoordinator;
   private contactService: ContactManagementService;
   private subscriptionService: SubscriptionManagementService;
+  private categoryService?: any;
+  private budgetService?: any;
 
   constructor(
-    private repository: PayeeRepository = new PayeeRepository()
+    private repository: PayeeRepository = new PayeeRepository(),
+    categoryService?: any,
+    budgetService?: any
   ) {
     this.intelligenceService = new PayeeIntelligenceService();
     this.learningService = new CategoryLearningService();
     this.mlCoordinator = new PayeeMLCoordinator();
     this.contactService = new ContactManagementService();
     this.subscriptionService = new SubscriptionManagementService();
+    this.categoryService = categoryService;
+    this.budgetService = budgetService;
   }
 
   /**
@@ -139,8 +153,7 @@ export class PayeeService {
       ? InputSanitizer.sanitizeDescription(data.notes)
       : null;
 
-    // Check for duplicate names (case-insensitive)
-    await this.validateUniquePayeeName(sanitizedName);
+    // Allow duplicate payee names - users may want multiple entries for same name
 
     // Validate related entities if provided
     if (data.defaultCategoryId) {
@@ -225,8 +238,7 @@ export class PayeeService {
         throw new ValidationError("Invalid payee name");
       }
 
-      // Check for duplicate names (excluding current payee)
-      await this.validateUniquePayeeName(sanitizedName, id);
+      // Allow duplicate payee names - users may want multiple entries for same name
       updateData.name = sanitizedName;
     }
 
@@ -267,14 +279,6 @@ export class PayeeService {
     }
 
     // Validate specific field constraints
-    if (updateData.avgAmount !== undefined && updateData.avgAmount !== null && updateData.avgAmount <= 0) {
-      throw new ValidationError("Average amount must be positive");
-    }
-
-    if (updateData.alertThreshold !== undefined && updateData.alertThreshold !== null && updateData.alertThreshold <= 0) {
-      throw new ValidationError("Alert threshold must be positive");
-    }
-
     if (updateData.website && typeof updateData.website === 'string' && !this.isValidUrl(updateData.website)) {
       throw new ValidationError("Invalid website URL");
     }
@@ -422,7 +426,13 @@ export class PayeeService {
     // Update calculated fields for target payee
     await this.repository.updateCalculatedFields(targetId);
 
-    console.log(`Merged payee ${sourcePayee.name} into ${targetPayee.name}. Transaction reassignment pending implementation.`);
+    logger.info('Payee merge completed', {
+      sourceId,
+      sourceName: sourcePayee.name,
+      targetId,
+      targetName: targetPayee.name,
+      note: 'Transaction reassignment pending implementation'
+    });
   }
 
   /**
@@ -533,8 +543,7 @@ export class PayeeService {
     })).sort((a, b) => b.payeeCount - a.payeeCount).slice(0, 5);
 
     // Calculate recent activity (payees with transactions in last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgo = currentDate.subtract({ days: 30 });
     const cutoffDate = thirtyDaysAgo.toISOString().split('T')[0];
 
     const recentlyActiveCount = allPayees.filter(p =>
@@ -634,10 +643,15 @@ export class PayeeService {
    * Validate that a category exists
    */
   private async validateCategoryExists(categoryId: number): Promise<void> {
-    // TODO: This should call CategoryService.exists() when available
-    // For now, we'll assume it exists
     if (categoryId <= 0) {
       throw new ValidationError("Invalid category ID");
+    }
+
+    if (this.categoryService) {
+      const exists = await this.categoryService.verifyCategoryExists(categoryId);
+      if (!exists) {
+        throw new NotFoundError("Category", categoryId);
+      }
     }
   }
 
@@ -645,10 +659,19 @@ export class PayeeService {
    * Validate that a budget exists
    */
   private async validateBudgetExists(budgetId: number): Promise<void> {
-    // TODO: This should call BudgetService.exists() when available
-    // For now, we'll assume it exists
     if (budgetId <= 0) {
       throw new ValidationError("Invalid budget ID");
+    }
+
+    if (this.budgetService) {
+      try {
+        await this.budgetService.getBudget(budgetId);
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          throw error;
+        }
+        throw error;
+      }
     }
   }
 
@@ -672,21 +695,6 @@ export class PayeeService {
     return emailRegex.test(email);
   }
 
-  /**
-   * Private: Validate unique payee name
-   */
-  private async validateUniquePayeeName(name: string, excludeId?: number): Promise<void> {
-    const existingPayees = await this.repository.findAll();
-
-    const duplicate = existingPayees.find(payee =>
-      payee.name && payee.name.toLowerCase() === name.toLowerCase() &&
-      payee.id !== excludeId
-    );
-
-    if (duplicate) {
-      throw new ConflictError(`Payee with name "${name}" already exists`);
-    }
-  }
 
   // ==================== ADVANCED INTELLIGENCE METHODS ====================
 
@@ -1563,7 +1571,10 @@ export class PayeeService {
         totalEfficiencyImprovement += optimization.efficiency.score;
       } catch (error) {
         // Skip payees that can't be analyzed
-        console.warn(`Failed to analyze payee ${payee.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        logger.warn('Payee analysis failed', {
+          payeeId: payee.id,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
     }
 
@@ -1701,7 +1712,10 @@ export class PayeeService {
           results.push({payeeId, recommendations});
         }
       } catch (error) {
-        console.warn(`Failed to generate recommendations for payee ${payeeId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        logger.warn('Recommendation generation failed', {
+          payeeId,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
     }
 
@@ -1740,8 +1754,8 @@ export class PayeeService {
     return systems.map(system => ({
       system,
       period: period || {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        endDate: new Date().toISOString(),
+        startDate: toISOString(currentDate.subtract({ days: 30 })),
+        endDate: toISOString(currentDate),
         periodType: 'monthly'
       },
       accuracy: {
@@ -1908,7 +1922,10 @@ export class PayeeService {
         if (behavior.changeDetected) behaviorChanges.push(behavior);
         performanceMetrics.push(...performance);
       } catch (error) {
-        console.warn(`Failed to generate dashboard data for payee ${payeeId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        logger.warn('Dashboard data generation failed', {
+          payeeId,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
     }
 
@@ -2387,7 +2404,7 @@ export class PayeeService {
           geocoded: false
         }
       },
-      lastAnalyzed: new Date().toISOString(),
+      lastAnalyzed: toISOString(currentDate),
       trends: [] // Would track historical changes
     };
   }

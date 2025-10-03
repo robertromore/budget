@@ -1,0 +1,24 @@
+[
+  {
+    "budgetId": 1,
+    "type": "monthly",
+    "intervalCount": 1,
+    "startDayOfMonth": 1,
+    "timezone": "America/New_York"
+  },
+  {
+    "budgetId": 2,
+    "type": "monthly",
+    "intervalCount": 1,
+    "startDayOfMonth": 1,
+    "timezone": "America/New_York"
+  },
+  {
+    "budgetId": 3,
+    "type": "yearly",
+    "intervalCount": 1,
+    "startMonth": 1,
+    "startDayOfMonth": 1,
+    "timezone": "America/New_York"
+  }
+]

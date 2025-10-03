@@ -1,5 +1,6 @@
 <script lang="ts">
 import Plus from '@lucide/svelte/icons/plus';
+import Edit from '@lucide/svelte/icons/edit';
 import {Button} from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
 import {parseDate} from '@internationalized/date';
@@ -17,7 +18,6 @@ import {useQueryClient} from '@tanstack/svelte-query';
 import DeleteTransactionDialog from './(dialogs)/delete-transaction-dialog.svelte';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
-import {newAccountDialog, managingAccountId} from '$lib/states/ui/global.svelte';
 
 let {data} = $props();
 
@@ -106,6 +106,8 @@ const formattedTransactions = $derived.by(() => {
       category: t.category || null,
       parentId: null,
       balance: t.balance,
+      // Budget allocations
+      budgetAllocations: t.budgetAllocations || [],
       // Schedule metadata (only present for scheduled transactions)
       scheduleId: t.scheduleId,
       scheduleName: t.scheduleName ?? undefined,
@@ -167,10 +169,6 @@ const handleScheduleClick = (transaction: TransactionsFormat) => {
   schedulePreviewOpen = true;
 };
 
-const openCreateAccountDialog = () => {
-  managingAccountId.current = 0; // 0 indicates creating new account
-  newAccountDialog.current = true;
-};
 
 
 const updateTransactionData = async (id: number, columnId: string, newValue?: unknown) => {
@@ -300,6 +298,11 @@ $effect(() => {
           </Button>
         </div>
       {/if}
+
+      <Button variant="outline" href="/accounts/{accountId}/edit">
+        <Edit class="mr-2 h-4 w-4" />
+        Edit Account
+      </Button>
 
       <Button onclick={() => (addTransactionDialogOpen = true)}>
         <Plus class="mr-2 h-4 w-4" />

@@ -3,10 +3,10 @@ import {Button} from '$lib/components/ui/button';
 import {cn} from '$lib/utils';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import type {EditableEntityItem} from '$lib/types';
 import Plus from '@lucide/svelte/icons/plus';
 import Pencil from '@lucide/svelte/icons/pencil';
-import MoveLeft from '@lucide/svelte/icons/move-left';
 import Check from '@lucide/svelte/icons/check';
 import type {Component as ComponentType} from 'svelte';
 import Fuse from 'fuse.js';
@@ -42,11 +42,10 @@ let {
   icon: Icon,
 }: Props = $props();
 
-const findCurrentEntity = () => entities.find((entity) => entity.id == value?.id);
 let label = $derived(value?.name);
-let selected = $derived(findCurrentEntity());
+let selected = $derived.by(() => entities.find((entity) => entity.id == value?.id));
 let open = $state(false);
-let manage = $state(false);
+let sheetOpen = $state(false);
 let managingId: number = $state(0);
 
 if (defaultValue) {
@@ -59,27 +58,25 @@ if (defaultValue) {
 const onSave = (new_entity: EditableEntityItem, is_new: boolean) => {
   management?.onSave(new_entity, is_new);
   managingId = 0;
-  manage = false;
+  sheetOpen = false;
   value = new_entity; // Select the saved entity
   if (handleSubmit) handleSubmit(new_entity);
-  open = false; // Close the dropdown
 };
 
 const onDelete = (id: number) => {
   management?.onDelete(id);
   managingId = 0;
-  manage = false;
+  sheetOpen = false;
   // Clear selection if the deleted entity was selected
   if (value?.id === id) {
     value = undefined;
     if (handleSubmit) handleSubmit(undefined);
   }
-  open = false; // Close the dropdown
 };
 
 const addNew = () => {
   managingId = 0;
-  manage = true;
+  sheetOpen = true;
 };
 
 let searchValue = $state('');
@@ -96,13 +93,7 @@ $effect(() => {
 </script>
 
 <div class={cn('flex items-center space-x-4', className)}>
-  <Popover.Root
-    bind:open
-    onOpenChange={(open) => {
-      if (!open) {
-        manage = false;
-      }
-    }}>
+  <Popover.Root bind:open>
     <Popover.Trigger>
       {#snippet child({props})}
         <Button
@@ -119,87 +110,106 @@ $effect(() => {
       {/snippet}
     </Popover.Trigger>
     <Popover.Content class="p-0 overflow-hidden" align="start">
-      <!-- Sliding Panel Container -->
-      <div class="grid grid-cols-2 transition-transform duration-300 ease-in-out" style="width: 200%; transform: translateX({manage ? '-50%' : '0%'})">
-
-        <!-- Panel 1: Entity List -->
-        <div class="w-full min-w-0">
-          <Command.Root shouldFilter={false}>
-            <div class="flex">
-              <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} />
-              {#if management?.enable}
-                <Button
-                  size="icon"
-                  class="rounded-none border-l-0 border-b shadow-none"
-                  onclick={addNew}>
-                  <Plus />
-                </Button>
-              {/if}
-            </div>
-            <Command.List>
-              <Command.Empty>No results found.</Command.Empty>
-              <Command.Group>
-                {#each visibleEntities as entity}
-                  <Command.Item
-                    value={entity.id + ''}
-                    class={cn(value?.id == entity.id && 'bg-muted')}
-                    onSelect={() => {
-                      value = entity;
-                      if (handleSubmit) {
-                        handleSubmit(entity);
-                      }
-                      open = false;
-                    }}>
-                    <Check class={cn(selected?.id != entity.id && 'text-transparent')} />
-                    <div class="flex-grow">
-                      {entity.name}
-                    </div>
-                    {#if management?.enable}
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        class="mr-1 p-1 text-xs"
-                        onclick={(e: MouseEvent) => {
-                          e.stopPropagation();
-                          managingId = entity.id;
-                          manage = true;
-                        }}>
-                        <Pencil />
-                      </Button>
-                    {/if}
-                  </Command.Item>
-                {/each}
-              </Command.Group>
-            </Command.List>
-          </Command.Root>
-        </div>
-
-        <!-- Panel 2: Management Form -->
-        <div class="w-full min-w-0 p-4">
-          <div class="flex items-center gap-2 mb-4">
+      {#if management?.enable}
+        <!-- Entity List with Management Actions -->
+        <Command.Root shouldFilter={false}>
+          <div class="flex">
+            <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} />
             <Button
-              variant="outline"
               size="icon"
-              onclick={() => {
-                manage = false;
-                managingId = 0;
-              }}>
-              <MoveLeft class="size-4" />
+              class="rounded-none border-l-0 border-b shadow-none"
+              onclick={addNew}>
+              <Plus />
             </Button>
-            <h3 class="text-sm font-medium">
-              {managingId > 0 ? `Edit ${entityLabel}` : `Add ${entityLabel}`}
-            </h3>
           </div>
-          {#if management}
-            {#if managingId > 0}
-              <management.component id={managingId} {onSave} {onDelete}></management.component>
-            {:else}
-              <management.component {onSave}></management.component>
-            {/if}
-          {/if}
-        </div>
-
-      </div>
+          <Command.List class="max-h-[300px] overflow-auto">
+            <Command.Empty>No results found.</Command.Empty>
+            <Command.Group>
+              {#each visibleEntities as entity}
+                <Command.Item
+                  value={entity.id + ''}
+                  class={cn(value?.id == entity.id && 'bg-muted')}
+                  onSelect={() => {
+                    value = entity;
+                    if (handleSubmit) {
+                      handleSubmit(entity);
+                    }
+                    open = false;
+                  }}>
+                  <Check class={cn(selected?.id != entity.id && 'text-transparent')} />
+                  <div class="flex-grow">
+                    {entity.name}
+                  </div>
+                  <div
+                    role="button"
+                    tabindex="0"
+                    class="mr-1 p-1 text-xs inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    onclick={(e: MouseEvent) => {
+                      e.stopPropagation();
+                      managingId = entity.id;
+                      sheetOpen = true;
+                    }}
+                    onkeydown={(e: KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        managingId = entity.id;
+                        sheetOpen = true;
+                      }
+                    }}>
+                    <Pencil class="h-4 w-4" />
+                  </div>
+                </Command.Item>
+              {/each}
+            </Command.Group>
+          </Command.List>
+        </Command.Root>
+      {:else}
+        <!-- Simple Entity List (when management is disabled) -->
+        <Command.Root shouldFilter={false}>
+          <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} />
+          <Command.List class="max-h-[300px] overflow-auto">
+            <Command.Empty>No results found.</Command.Empty>
+            <Command.Group>
+              {#each visibleEntities as entity}
+                <Command.Item
+                  value={entity.id + ''}
+                  class={cn(value?.id == entity.id && 'bg-muted')}
+                  onSelect={() => {
+                    value = entity;
+                    if (handleSubmit) {
+                      handleSubmit(entity);
+                    }
+                    open = false;
+                  }}>
+                  <Check class={cn(selected?.id != entity.id && 'text-transparent')} />
+                  <div class="flex-grow">
+                    {entity.name}
+                  </div>
+                </Command.Item>
+              {/each}
+            </Command.Group>
+          </Command.List>
+        </Command.Root>
+      {/if}
     </Popover.Content>
   </Popover.Root>
+
+  <!-- Management Sheet -->
+  {#if management?.enable}
+    <ResponsiveSheet bind:open={sheetOpen}>
+      {#snippet header()}
+        <h2 class="text-lg font-semibold">
+          {managingId > 0 ? `Edit ${entityLabel}` : `Add ${entityLabel}`}
+        </h2>
+      {/snippet}
+      {#snippet content()}
+        {#if managingId > 0}
+          <management.component id={managingId} {onSave} {onDelete}></management.component>
+        {:else}
+          <management.component {onSave}></management.component>
+        {/if}
+      {/snippet}
+    </ResponsiveSheet>
+  {/if}
 </div>

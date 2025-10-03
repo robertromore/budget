@@ -6,7 +6,6 @@ import {Button} from '$lib/components/ui/button';
 import {Badge} from '$lib/components/ui/badge';
 import {Separator} from '$lib/components/ui/separator';
 import {Progress} from '$lib/components/ui/progress';
-import {ChartContainer} from '$lib/components/ui/chart';
 
 import {trpc} from '$lib/trpc/client';
 import {currencyFormatter} from '$lib/utils/formatters';

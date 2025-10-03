@@ -13,6 +13,7 @@ import {PayeeService} from "../payees/services";
 import {CategoryService} from "../categories/services";
 import {ScheduleService, type UpcomingScheduledTransaction} from "../schedules/services";
 import {BudgetTransactionService} from "../budgets/services";
+import {BudgetCalculationService} from "../budgets/calculation-service";
 
 // Service input types
 export interface CreateTransactionData {
@@ -84,8 +85,34 @@ export class TransactionService {
     private repository: TransactionRepository = new TransactionRepository(),
     private payeeService: PayeeService = new PayeeService(),
     private categoryService: CategoryService = new CategoryService(),
-    private budgetTransactionService: BudgetTransactionService = new BudgetTransactionService()
+    private budgetTransactionService: BudgetTransactionService = new BudgetTransactionService(),
+    private budgetCalculationService: BudgetCalculationService = new BudgetCalculationService()
   ) {}
+
+  /**
+   * Transform budget allocations from database format to TransactionsFormat
+   */
+  private transformBudgetAllocations(rawAllocations: any[]): Array<{
+    id: number;
+    budgetId: number;
+    budgetName: string;
+    allocatedAmount: number;
+    autoAssigned: boolean;
+    assignedBy: string | null;
+  }> {
+    if (!rawAllocations || rawAllocations.length === 0) {
+      return [];
+    }
+
+    return rawAllocations.map((allocation) => ({
+      id: allocation.id,
+      budgetId: allocation.budgetId,
+      budgetName: allocation.budget?.name || "Unknown Budget",
+      allocatedAmount: allocation.allocatedAmount,
+      autoAssigned: allocation.autoAssigned ?? false,
+      assignedBy: allocation.assignedBy || null,
+    }));
+  }
 
   /**
    * Create a new transaction with enhanced payee defaults integration
@@ -214,6 +241,13 @@ export class TransactionService {
       }
     }
 
+    // Trigger budget consumption recalculation
+    try {
+      await this.budgetCalculationService.onTransactionChange(transaction.id);
+    } catch (budgetCalcError) {
+      console.warn(`Failed to recalculate budget consumption for transaction ${transaction.id}:`, budgetCalcError);
+    }
+
     invalidateAccountCache(transaction.accountId);
 
     return transaction;
@@ -336,6 +370,13 @@ export class TransactionService {
       }
     }
 
+    // Trigger budget consumption recalculation
+    try {
+      await this.budgetCalculationService.onTransactionChange(updatedTransaction.id);
+    } catch (budgetCalcError) {
+      console.warn(`Failed to recalculate budget consumption for transaction ${updatedTransaction.id}:`, budgetCalcError);
+    }
+
     invalidateAccountCache(updatedTransaction.accountId);
 
     return updatedTransaction;
@@ -391,7 +432,13 @@ export class TransactionService {
       throw new NotFoundError("Account", accountId);
     }
 
-    return await this.repository.findByAccountId(accountId);
+    const rawTransactions = await this.repository.findByAccountId(accountId);
+
+    // Transform budget allocations for each transaction
+    return rawTransactions.map((t: any) => ({
+      ...t,
+      budgetAllocations: this.transformBudgetAllocations(t.budgetAllocations || []),
+    })) as Transaction[];
   }
 
   /**
@@ -410,6 +457,9 @@ export class TransactionService {
 
     // Enrich actual transactions with schedule metadata if they have a scheduleId
     const actualTransactions = await Promise.all(rawTransactions.map(async (t: any): Promise<Transaction> => {
+      // Transform budget allocations to match TransactionsFormat
+      const budgetAllocations = this.transformBudgetAllocations(t.budgetAllocations || []);
+
       if (t.scheduleId) {
         // Fetch schedule details for this transaction
         const scheduleService = new ScheduleService();
@@ -423,14 +473,15 @@ export class TransactionService {
             scheduleFrequency: schedule.scheduleDate?.frequency,
             scheduleInterval: schedule.scheduleDate?.interval,
             scheduleNextOccurrence: undefined, // Not applicable for actual transactions
+            budgetAllocations,
           } as Transaction;
         } catch (error) {
           // If schedule not found, just return transaction as-is
           console.warn(`Schedule ${t.scheduleId} not found for transaction ${t.id}`);
-          return t as Transaction;
+          return {...t, budgetAllocations} as Transaction;
         }
       }
-      return t as Transaction;
+      return {...t, budgetAllocations} as Transaction;
     }));
 
     // Get upcoming scheduled transactions
@@ -515,6 +566,13 @@ export class TransactionService {
     // Soft delete the transaction
     const transaction = await this.repository.findByIdOrThrow(id);
     await this.repository.softDelete(id);
+
+    // Trigger budget consumption recalculation
+    try {
+      await this.budgetCalculationService.onTransactionChange(id);
+    } catch (budgetCalcError) {
+      console.warn(`Failed to recalculate budget consumption for deleted transaction ${id}:`, budgetCalcError);
+    }
 
     invalidateAccountCache(transaction.accountId);
   }

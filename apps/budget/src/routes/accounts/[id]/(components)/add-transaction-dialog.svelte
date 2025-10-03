@@ -1,11 +1,13 @@
 <script lang="ts">
 import {Button} from '$lib/components/ui/button';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import * as Tabs from '$lib/components/ui/tabs';
 import {Label} from '$lib/components/ui/label';
 import {Textarea} from '$lib/components/ui/textarea';
 import DateInput from '$lib/components/input/date-input.svelte';
 import EntityInput from '$lib/components/input/entity-input.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
+import TransactionWizard from '$lib/components/wizard/transaction-wizard.svelte';
 import {today, getLocalTimeZone} from '@internationalized/date';
 import type {EditableDateItem, EditableEntityItem} from '$lib/types';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
@@ -44,6 +46,9 @@ type TransactionFormData = {
   budgetId: number | null;
   budgetAllocation: number | null;
 };
+
+// Tab state
+let activeTab = $state('manual');
 
 // Transaction form state
 let isSubmitting = $state(false);
@@ -129,6 +134,31 @@ function handleClose() {
     resetForm();
   }
 }
+
+// Handle wizard completion
+async function handleWizardComplete(data: Record<string, any>) {
+  const wizardFormData: TransactionFormData = {
+    amount: data.amount,
+    date: data.date,
+    notes: data.notes || null,
+    payeeId: data.payeeId || null,
+    categoryId: data.categoryId || null,
+    status: data.status || 'pending',
+    budgetId: null,
+    budgetAllocation: null,
+  };
+
+  try {
+    isSubmitting = true;
+    await onSubmit(wizardFormData);
+    resetForm();
+    open = false;
+  } catch (error) {
+    console.error('Transaction submission failed:', error);
+  } finally {
+    isSubmitting = false;
+  }
+}
 </script>
 
 <ResponsiveSheet bind:open>
@@ -141,7 +171,14 @@ function handleClose() {
       </div>
     {/snippet}
 
-    <div class="space-y-4">
+    <Tabs.Root bind:value={activeTab} class="w-full">
+      <Tabs.List class="grid w-full grid-cols-2">
+        <Tabs.Trigger value="manual">Manual</Tabs.Trigger>
+        <Tabs.Trigger value="guided">Guided</Tabs.Trigger>
+      </Tabs.List>
+
+      <Tabs.Content value="manual" class="mt-4">
+        <div class="space-y-4">
       <!-- Amount -->
       <div class="space-y-2">
         <Label for="amount">Amount</Label>
@@ -204,16 +241,29 @@ function handleClose() {
           bind:value={transactionForm.notes}
           rows={3} />
       </div>
-    </div>
+        </div>
+      </Tabs.Content>
+
+      <Tabs.Content value="guided" class="mt-4">
+        <TransactionWizard
+          accountId={account?.id || 0}
+          payees={payees}
+          categories={categories}
+          onComplete={handleWizardComplete}
+        />
+      </Tabs.Content>
+    </Tabs.Root>
 
     {#snippet footer()}
-      <div class="flex gap-2">
-        <Button variant="outline" onclick={handleClose} disabled={isSubmitting} class="flex-1">
-          Cancel
-        </Button>
-        <Button onclick={handleSubmit} disabled={isSubmitting || !transactionForm.amount} class="flex-1">
-          {isSubmitting ? 'Adding...' : 'Add Transaction'}
-        </Button>
-      </div>
+      {#if activeTab === 'manual'}
+        <div class="flex gap-2">
+          <Button variant="outline" onclick={handleClose} disabled={isSubmitting} class="flex-1">
+            Cancel
+          </Button>
+          <Button onclick={handleSubmit} disabled={isSubmitting || !transactionForm.amount} class="flex-1">
+            {isSubmitting ? 'Adding...' : 'Add Transaction'}
+          </Button>
+        </div>
+      {/if}
     {/snippet}
 </ResponsiveSheet>

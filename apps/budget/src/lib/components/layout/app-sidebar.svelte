@@ -3,17 +3,12 @@ import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import Ellipsis from '@lucide/svelte/icons/ellipsis';
 import Plus from '@lucide/svelte/icons/plus';
+import {goto} from '$app/navigation';
 import {
   deleteAccountDialog,
   deleteAccountId,
-  managingAccountId,
-  newAccountDialog,
-  newScheduleDialog,
-  managingScheduleId,
   deleteScheduleDialog,
   deleteScheduleId,
-  newBudgetDialog,
-  managingBudgetId,
   deleteBudgetDialog,
   deleteBudgetId,
 } from '$lib/states/ui/global.svelte';
@@ -24,8 +19,6 @@ import {
   deletePayeeId,
 } from '$lib/states/ui/payees.svelte';
 import {
-  newCategoryDialog,
-  managingCategoryId,
   deleteCategoryDialog,
   deleteCategoryId,
 } from '$lib/states/ui/categories.svelte';
@@ -45,25 +38,16 @@ const accountsState = $derived(AccountsState.get());
 const accounts = $derived(accountsState.sorted);
 const totalBalance = $derived(accountsState.getTotalBalance());
 
-
-const _newAccountDialog = $derived(newAccountDialog);
-const _managingAccountId = $derived(managingAccountId);
-
 const _deleteAccountDialog = $derived(deleteAccountDialog);
 const _deleteAccountId = $derived(deleteAccountId);
 
 const schedulesState = $derived(SchedulesState.get());
 const schedules = $derived(schedulesState.schedules.values());
-const _newScheduleDialog = $derived(newScheduleDialog);
-const _managingScheduleId = $derived(managingScheduleId);
-
 const _deleteScheduleDialog = $derived(deleteScheduleDialog);
 const _deleteScheduleId = $derived(deleteScheduleId);
 
 const budgetsQuery = listBudgets().options();
 const budgets = $derived($budgetsQuery.data ?? []);
-const _newBudgetDialog = $derived(newBudgetDialog);
-const _managingBudgetId = $derived(managingBudgetId);
 const _deleteBudgetDialog = $derived(deleteBudgetDialog);
 const _deleteBudgetId = $derived(deleteBudgetId);
 
@@ -76,8 +60,6 @@ const _deletePayeeId = $derived(deletePayeeId);
 
 const categoriesState = $derived(CategoriesState.get());
 const categories = $derived(categoriesState.categories.values());
-const _newCategoryDialog = $derived(newCategoryDialog);
-const _managingCategoryId = $derived(managingCategoryId);
 const _deleteCategoryDialog = $derived(deleteCategoryDialog);
 const _deleteCategoryId = $derived(deleteCategoryId);
 </script>
@@ -87,7 +69,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
     <Sidebar.Group>
       <Sidebar.GroupLabel>
         <div class="flex items-center w-full">
-          <a href="/accounts" class="text-sm font-medium">Accounts</a>
+          <a href="/accounts">Accounts</a>
           <div class="flex-1 flex justify-center">
             <span class="text-xs font-medium"
                   class:text-green-600={totalBalance > 0}
@@ -101,10 +83,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
       <AccountSortDropdown size="default" variant="outline" />
       <Sidebar.GroupAction
         title="Add Account"
-        onclick={() => {
-          _managingAccountId.current = 0;
-          _newAccountDialog.setTrue();
-        }}>
+        onclick={() => goto('/accounts/new')}>
         <Plus /> <span class="sr-only">Add Account</span>
       </Sidebar.GroupAction>
       <Sidebar.GroupContent>
@@ -135,12 +114,21 @@ const _deleteCategoryId = $derived(deleteCategoryId);
                     <!-- Account Info -->
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center justify-between gap-2">
-                        <span data-testid="account-name" class="font-medium text-sm truncate">
-                          {account.name}
-                        </span>
-                        {#if account.closed}
-                          <Badge variant="secondary" class="text-xs px-1.5 py-0">Closed</Badge>
-                        {/if}
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-2">
+                            <span data-testid="account-name" class="font-medium text-sm truncate">
+                              {account.name}
+                            </span>
+                            {#if account.closed}
+                              <Badge variant="secondary" class="text-xs px-1.5 py-0">Closed</Badge>
+                            {/if}
+                          </div>
+                          {#if (account as any).accountNumber}
+                            <div class="text-xs text-muted-foreground font-mono">
+                              ••{(account as any).accountNumber.slice(-4)}
+                            </div>
+                          {/if}
+                        </div>
                       </div>
 
                       <!-- Account Details -->
@@ -182,12 +170,8 @@ const _deleteCategoryId = $derived(deleteCategoryId);
                   {/snippet}
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="right" align="start">
-                  <DropdownMenu.Item
-                    onclick={() => {
-                      _managingAccountId.current = account.id;
-                      _newAccountDialog.setTrue();
-                    }}>
-                    <span>Edit</span>
+                  <DropdownMenu.Item>
+                    <a href="/accounts/{account.id}/edit" class="w-full">Edit</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onclick={() => {
@@ -208,10 +192,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
       <Sidebar.GroupLabel><a href="/schedules">Schedules</a></Sidebar.GroupLabel>
       <Sidebar.GroupAction
         title="Add Schedule"
-        onclick={() => {
-          _managingScheduleId.current = 0;
-          _newScheduleDialog.setTrue();
-        }}>
+        onclick={() => goto('/schedules/new')}>
         <Plus /> <span class="sr-only">Add Schedule</span>
       </Sidebar.GroupAction>
       <Sidebar.GroupContent>
@@ -221,7 +202,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
               <Sidebar.MenuButton>
                 {#snippet child({props})}
                   <a href="/schedules/{schedule.slug}" {...props}>
-                    <span>{schedule.name}</span>
+                    <span class="text-sm">{schedule.name}</span>
                   </a>
                 {/snippet}
               </Sidebar.MenuButton>
@@ -234,12 +215,8 @@ const _deleteCategoryId = $derived(deleteCategoryId);
                   {/snippet}
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="right" align="start">
-                  <DropdownMenu.Item
-                    onclick={() => {
-                      _managingScheduleId.current = schedule.id;
-                      _newScheduleDialog.setTrue();
-                    }}>
-                    <span>Edit</span>
+                  <DropdownMenu.Item>
+                    <a href="/schedules/{schedule.slug}/edit" class="w-full">Edit</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item onclick={() => {
                     _deleteScheduleId.current = schedule.id;
@@ -259,10 +236,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
       <Sidebar.GroupLabel><a href="/budgets">Budgets</a></Sidebar.GroupLabel>
       <Sidebar.GroupAction
         title="Add Budget"
-        onclick={() => {
-          _managingBudgetId.current = 0;
-          _newBudgetDialog.setTrue();
-        }}>
+        onclick={() => goto('/budgets/new')}>
         <Plus /> <span class="sr-only">Add Budget</span>
       </Sidebar.GroupAction>
       <Sidebar.GroupContent>
@@ -272,7 +246,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
               <Sidebar.MenuButton>
                 {#snippet child({props})}
                   <a href="/budgets/{budget.id}" {...props}>
-                    <span>{budget.name}</span>
+                    <span class="text-sm">{budget.name}</span>
                   </a>
                 {/snippet}
               </Sidebar.MenuButton>
@@ -285,12 +259,8 @@ const _deleteCategoryId = $derived(deleteCategoryId);
                   {/snippet}
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="right" align="start">
-                  <DropdownMenu.Item
-                    onclick={() => {
-                      _managingBudgetId.current = budget.id;
-                      _newBudgetDialog.setTrue();
-                    }}>
-                    <span>Edit</span>
+                  <DropdownMenu.Item>
+                    <a href="/budgets/{budget.id}/edit" class="w-full">Edit</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onclick={() => {
@@ -311,10 +281,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
       <Sidebar.GroupLabel><a href="/payees">Payees</a></Sidebar.GroupLabel>
       <Sidebar.GroupAction
         title="Add Payee"
-        onclick={() => {
-          _managingPayeeId.current = 0;
-          _newPayeeDialog.setTrue();
-        }}>
+        onclick={() => goto('/payees/new')}>
         <Plus /> <span class="sr-only">Add Payee</span>
       </Sidebar.GroupAction>
       <Sidebar.GroupContent>
@@ -323,9 +290,9 @@ const _deleteCategoryId = $derived(deleteCategoryId);
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
                 {#snippet child({props})}
-                  <span {...props}>
-                    {payee.name}
-                  </span>
+                  <a href="/payees/{payee.id}" {...props}>
+                    <span class="text-sm">{payee.name}</span>
+                  </a>
                 {/snippet}
               </Sidebar.MenuButton>
               <DropdownMenu.Root>
@@ -337,12 +304,14 @@ const _deleteCategoryId = $derived(deleteCategoryId);
                   {/snippet}
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="right" align="start">
-                  <DropdownMenu.Item
-                    onclick={() => {
-                      _managingPayeeId.current = payee.id;
-                      _newPayeeDialog.setTrue();
-                    }}>
-                    <span>Edit</span>
+                  <DropdownMenu.Item>
+                    <a href="/payees/{payee.id}" class="w-full">View Details</a>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item>
+                    <a href="/payees/{payee.id}/edit" class="w-full">Edit</a>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item>
+                    <a href="/payees/{payee.id}/analytics" class="w-full">Analytics</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onclick={() => {
@@ -363,10 +332,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
       <Sidebar.GroupLabel><a href="/categories">Categories</a></Sidebar.GroupLabel>
       <Sidebar.GroupAction
         title="Add Category"
-        onclick={() => {
-          _managingCategoryId.current = 0;
-          _newCategoryDialog.setTrue();
-        }}>
+        onclick={() => goto('/categories/new')}>
         <Plus /> <span class="sr-only">Add Category</span>
       </Sidebar.GroupAction>
       <Sidebar.GroupContent>
@@ -375,9 +341,9 @@ const _deleteCategoryId = $derived(deleteCategoryId);
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
                 {#snippet child({props})}
-                  <span {...props}>
-                    {category.name}
-                  </span>
+                  <a href="/categories/{category.id}" {...props}>
+                    <span class="text-sm">{category.name}</span>
+                  </a>
                 {/snippet}
               </Sidebar.MenuButton>
               <DropdownMenu.Root>
@@ -389,12 +355,14 @@ const _deleteCategoryId = $derived(deleteCategoryId);
                   {/snippet}
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="right" align="start">
-                  <DropdownMenu.Item
-                    onclick={() => {
-                      _managingCategoryId.current = category.id;
-                      _newCategoryDialog.setTrue();
-                    }}>
-                    <span>Edit</span>
+                  <DropdownMenu.Item>
+                    <a href="/categories/{category.id}" class="w-full">View Details</a>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item>
+                    <a href="/categories/{category.id}/edit" class="w-full">Edit</a>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item>
+                    <a href="/categories/{category.id}/analytics" class="w-full">Analytics</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onclick={() => {

@@ -154,6 +154,7 @@ table = createSvelteTable<TransactionsFormat>({
   get data() {
     return transactions || [];
   },
+  getRowId: (row) => String(row.id),
   state: {
     get sorting() {
       return sorting();

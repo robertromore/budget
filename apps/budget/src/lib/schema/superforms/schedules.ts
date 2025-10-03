@@ -32,6 +32,7 @@ export const superformInsertScheduleSchema = z.object({
   auto_add: z.boolean().default(false),
   dateId: z.number().optional().nullable(),
   payeeId: z.number().positive("Payee is required"),
+  categoryId: z.number().optional().nullable(),
   accountId: z.number().positive("Account is required"),
   repeating_date: z.string().optional(),
   createdAt: z.string().optional(),
@@ -70,6 +71,7 @@ export const superformUpdateScheduleSchema = z.object({
   auto_add: z.boolean().optional(),
   dateId: z.number().optional().nullable(),
   payeeId: z.number().positive("Payee is required").optional(),
+  categoryId: z.number().optional().nullable(),
   accountId: z.number().positive("Account is required").optional(),
 });
 

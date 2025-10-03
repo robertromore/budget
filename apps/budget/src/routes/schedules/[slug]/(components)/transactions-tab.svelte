@@ -14,6 +14,7 @@ let { schedule }: {
 } = $props();
 </script>
 
+{#if schedule}
 <div class="space-y-4">
   {#if schedule.transactions.length > 0}
     <Card.Root>
@@ -85,3 +86,4 @@ let { schedule }: {
     </Card.Root>
   {/if}
 </div>
+{/if}
