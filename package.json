@@ -25,12 +25,9 @@
     "test:budget": "turbo run test --filter=budget"
   },
   "devDependencies": {
-    "@turbo/gen": "^2.5.6",
-    "turbo": "^2.5.6",
+    "@turbo/gen": "^2.5.8",
+    "turbo": "^2.5.8",
     "prettier": "^3.6.2"
   },
-  "packageManager": "bun@1.2.20",
-  "dependencies": {
-    "@tanstack/svelte-query": "^5.89.0"
-  }
+  "packageManager": "bun@1.2.23"
 }
