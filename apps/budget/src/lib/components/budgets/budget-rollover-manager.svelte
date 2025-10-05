@@ -160,12 +160,10 @@
   }
 
   async function handleManualTransition(budgetId: number, amount: number) {
-    console.log(`Manual transition for budget ${budgetId}: ${amount}`);
     // Implementation would integrate with tRPC mutations
   }
 
   async function handleRecoveryAction(budgetId: number, action: 'defer' | 'adjust' | 'clear') {
-    console.log(`Recovery action for budget ${budgetId}: ${action}`);
     // Implementation would integrate with tRPC mutations
   }
 </script>

@@ -2,16 +2,45 @@
 import {Button} from '$lib/components/ui/button';
 import {BudgetWizard, WizardFormWrapper, budgetWizardStore} from '$lib/components/wizard';
 import {ManageBudgetForm} from '$lib/components/forms';
-import {createBudget} from '$lib/query/budgets';
+import {createBudget, getBudgetTemplate} from '$lib/query/budgets';
 import type {CreateBudgetRequest} from '$lib/server/domains/budgets/services';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
 import {goto} from '$app/navigation';
 
+import {browser} from '$app/environment';
+
 let {data} = $props();
 
-$inspect('BudgetNew data:', data);
-$inspect('BudgetNew form.data:', data.form.data);
+// Check for template ID in URL params
+const templateId = $state(browser ? new URLSearchParams(window.location.search).get('templateId') : null);
+const templateQuery = $derived.by(() => {
+  if (templateId) {
+    const id = parseInt(templateId, 10);
+    if (!isNaN(id)) {
+      return getBudgetTemplate(id).options();
+    }
+  }
+  return null;
+});
+const selectedTemplate = $derived(templateQuery?.data ?? null);
+
+// Merge template data with form data when template is loaded
+const initialFormData = $derived.by(() => {
+  if (selectedTemplate && data.form?.data) {
+    return {
+      ...data.form.data,
+      name: selectedTemplate.name,
+      description: selectedTemplate.description || '',
+      type: selectedTemplate.type,
+      scope: selectedTemplate.scope,
+      enforcementLevel: selectedTemplate.enforcementLevel,
+      allocatedAmount: selectedTemplate.suggestedAmount || 0,
+      ...((selectedTemplate.metadata as Record<string, any>) || {}),
+    };
+  }
+  return data.form?.data ?? {};
+});
 
 // Set up mutation during component initialization
 const createBudgetMutation = createBudget.options();
@@ -47,7 +76,7 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
 
     const result = await createBudgetMutation.mutateAsync(transformedData);
     if (result) {
-      goto(`/budgets/${result.id}`);
+      goto(`/budgets/${result.slug}`);
     }
   } catch (error) {
     console.error('Failed to create budget:', error);
@@ -81,7 +110,7 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
   <!-- Budget Creation Form with Manual/Wizard Toggle -->
   <WizardFormWrapper
     title="Create Budget"
-    subtitle="Choose between manual form entry or step-by-step wizard"
+    subtitle={selectedTemplate ? `Using template: ${selectedTemplate.name}` : "Choose between manual form entry or step-by-step wizard"}
     wizardStore={budgetWizardStore}
     onComplete={handleComplete}
     onCancel={() => goto('/budgets')}
@@ -98,7 +127,7 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
 
     {#snippet wizardContent()}
       <BudgetWizard
-        initialData={data.form.data}
+        initialData={initialFormData}
         accounts={data.accounts}
         categories={data.categories}
         onComplete={handleComplete}

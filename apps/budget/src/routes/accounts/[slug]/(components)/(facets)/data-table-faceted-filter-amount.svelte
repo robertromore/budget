@@ -118,14 +118,12 @@ const applyValue = () => {
     const max = parseFloat(rangeMax);
     if (!isNaN(min) && !isNaN(max)) {
       const newFilter = {...currentFilter, min, max};
-      console.log('🔍 Applying between filter:', newFilter);
       column.setFilterValue(newFilter);
     }
   } else {
     const value = parseFloat(inputValue);
     if (!isNaN(value)) {
       const newFilter = {...currentFilter, value};
-      console.log('🔍 Applying single value filter:', newFilter);
       column.setFilterValue(newFilter);
     }
   }

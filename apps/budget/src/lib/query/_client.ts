@@ -95,6 +95,7 @@ export const cachePatterns = {
   invalidateDomain: (domain: string) => {
     queryClient.invalidateQueries({
       queryKey: [domain],
+      refetchType: 'active',
     });
   },
 
@@ -113,6 +114,7 @@ export const cachePatterns = {
           return queryKey[index] === prefixPart;
         });
       },
+      refetchType: 'active',
     });
   },
 

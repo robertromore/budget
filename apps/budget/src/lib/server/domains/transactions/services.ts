@@ -16,6 +16,11 @@ import {BudgetTransactionService} from "../budgets/services";
 import {BudgetCalculationService} from "../budgets/calculation-service";
 
 // Service input types
+export interface BudgetAllocationData {
+  budgetId: number;
+  amount: number;
+}
+
 export interface CreateTransactionData {
   accountId: number;
   amount: number;
@@ -27,6 +32,8 @@ export interface CreateTransactionData {
   scheduleId?: number | null | undefined;
   budgetId?: number | null | undefined;
   budgetAllocation?: number | null | undefined;
+  budgetAllocations?: BudgetAllocationData[];
+  autoAssignBudgets?: boolean;
 }
 
 export interface CreateTransactionWithAutoPopulationData extends CreateTransactionData {
@@ -64,6 +71,8 @@ export interface UpdateTransactionData {
   status?: "cleared" | "pending" | "scheduled" | undefined;
   budgetId?: number | null | undefined;
   budgetAllocation?: number | null | undefined;
+  budgetAllocations?: BudgetAllocationData[];
+  autoAssignBudgets?: boolean;
 }
 
 export interface TransactionSummary {
@@ -221,23 +230,37 @@ export class TransactionService {
       status,
     });
 
-    // Handle budget allocation if provided
-    if (data.budgetId && data.budgetAllocation !== undefined && data.budgetAllocation !== null) {
-      try {
-        // Ensure allocation has the same sign as the transaction amount
-        const signedAllocation = transaction.amount >= 0 ? Math.abs(data.budgetAllocation) : -Math.abs(data.budgetAllocation);
+    // Handle budget allocations
+    const budgetAllocationsToCreate = data.budgetAllocations || [];
 
-        await this.budgetTransactionService.createAllocation({
-          transactionId: transaction.id,
-          budgetId: data.budgetId,
-          allocatedAmount: signedAllocation,
-          autoAssigned: false,
-          assignedBy: 'user',
-        });
-      } catch (budgetError) {
-        // If budget allocation fails, we should still return the transaction
-        // but could log the error or notify the client
-        console.warn(`Failed to create budget allocation for transaction ${transaction.id}:`, budgetError);
+    // Support legacy single budget allocation for backward compatibility
+    if (data.budgetId && data.budgetAllocation !== undefined && data.budgetAllocation !== null) {
+      budgetAllocationsToCreate.push({
+        budgetId: data.budgetId,
+        amount: data.budgetAllocation,
+      });
+    }
+
+    // Create all budget allocations
+    if (budgetAllocationsToCreate.length > 0) {
+      for (const allocation of budgetAllocationsToCreate) {
+        try {
+          // Ensure allocation has the same sign as the transaction amount
+          const signedAllocation = transaction.amount >= 0
+            ? Math.abs(allocation.amount)
+            : -Math.abs(allocation.amount);
+
+          await this.budgetTransactionService.createAllocation({
+            transactionId: transaction.id,
+            budgetId: allocation.budgetId,
+            allocatedAmount: signedAllocation,
+            autoAssigned: data.autoAssignBudgets ?? false,
+            assignedBy: 'user',
+          });
+        } catch (budgetError) {
+          // If budget allocation fails, log the error but continue with other allocations
+          console.warn(`Failed to create budget allocation for transaction ${transaction.id}, budget ${allocation.budgetId}:`, budgetError);
+        }
       }
     }
 
@@ -321,16 +344,57 @@ export class TransactionService {
     // Update transaction
     const updatedTransaction = await this.repository.update(id, updateData);
 
-    // Handle budget allocation if provided
-    // Note: This is a simplified implementation that creates a new allocation
-    // A more sophisticated implementation would update existing allocations
-    if (data.budgetId !== undefined && data.budgetAllocation !== undefined) {
+    // Handle budget allocations
+    if (data.budgetAllocations !== undefined) {
+      try {
+        // Remove all existing budget allocations
+        const existingAllocations = await db.select()
+          .from(budgetTransactions)
+          .where(eq(budgetTransactions.transactionId, updatedTransaction.id));
+
+        for (const allocation of existingAllocations) {
+          await this.budgetTransactionService.deleteAllocation(allocation.id);
+        }
+
+        // Create new budget allocations
+        for (const allocation of data.budgetAllocations) {
+          // Ensure allocation has the same sign as the transaction amount
+          const signedAllocation = updatedTransaction.amount >= 0
+            ? Math.abs(allocation.amount)
+            : -Math.abs(allocation.amount);
+
+          await this.budgetTransactionService.createAllocation({
+            transactionId: updatedTransaction.id,
+            budgetId: allocation.budgetId,
+            allocatedAmount: signedAllocation,
+            autoAssigned: data.autoAssignBudgets ?? false,
+            assignedBy: 'user',
+          });
+        }
+      } catch (budgetError) {
+        // If budget allocation fails, we should still return the updated transaction
+        console.warn(`Failed to update budget allocations for transaction ${updatedTransaction.id}:`, budgetError);
+      }
+    }
+    // Support legacy single budget allocation for backward compatibility
+    else if (data.budgetId !== undefined && data.budgetAllocation !== undefined) {
       try {
         if (data.budgetId && data.budgetAllocation !== null) {
-          // Ensure allocation has the same sign as the transaction amount
-          const signedAllocation = updatedTransaction.amount >= 0 ? Math.abs(data.budgetAllocation) : -Math.abs(data.budgetAllocation);
+          // Remove all existing allocations first
+          const existingAllocations = await db.select()
+            .from(budgetTransactions)
+            .where(eq(budgetTransactions.transactionId, updatedTransaction.id));
 
-          // Create or update budget allocation
+          for (const allocation of existingAllocations) {
+            await this.budgetTransactionService.deleteAllocation(allocation.id);
+          }
+
+          // Ensure allocation has the same sign as the transaction amount
+          const signedAllocation = updatedTransaction.amount >= 0
+            ? Math.abs(data.budgetAllocation)
+            : -Math.abs(data.budgetAllocation);
+
+          // Create new budget allocation
           await this.budgetTransactionService.createAllocation({
             transactionId: updatedTransaction.id,
             budgetId: data.budgetId,
@@ -344,13 +408,11 @@ export class TransactionService {
             .from(budgetTransactions)
             .where(eq(budgetTransactions.transactionId, updatedTransaction.id));
 
-          // Delete all existing allocations
           for (const allocation of existingAllocations) {
             await this.budgetTransactionService.deleteAllocation(allocation.id);
           }
         }
       } catch (budgetError) {
-        // If budget allocation fails, we should still return the updated transaction
         console.warn(`Failed to update budget allocation for transaction ${updatedTransaction.id}:`, budgetError);
       }
     }
@@ -591,6 +653,15 @@ export class TransactionService {
     // Bulk soft delete
     await this.repository.bulkSoftDelete(ids);
 
+    // Trigger budget consumption recalculation for each deleted transaction
+    for (const id of ids) {
+      try {
+        await this.budgetCalculationService.onTransactionChange(id);
+      } catch (budgetCalcError) {
+        console.warn(`Failed to recalculate budget consumption for deleted transaction ${id}:`, budgetCalcError);
+      }
+    }
+
     const affectedAccounts = new Set(transactions.map((transaction) => transaction.accountId));
     affectedAccounts.forEach((accountId) => invalidateAccountCache(accountId));
   }
@@ -607,6 +678,14 @@ export class TransactionService {
     let clearedCount = 0;
     for (const id of pendingIds) {
       await this.repository.update(id, {status: "cleared"});
+
+      // Trigger budget consumption recalculation (status change may affect period calculations)
+      try {
+        await this.budgetCalculationService.onTransactionChange(id);
+      } catch (budgetCalcError) {
+        console.warn(`Failed to recalculate budget consumption for cleared transaction ${id}:`, budgetCalcError);
+      }
+
       clearedCount++;
     }
 

@@ -38,6 +38,7 @@ const formId = id ? `category-form-${id}` : `category-form-new-${Math.random().t
 const defaults: Omit<Category, 'id' | 'parentId' | 'isActive' | 'createdAt' | 'updatedAt' | 'dateCreated' | 'displayOrder'> = {
   name: '',
   notes: '',
+  slug: '',
   categoryType: 'expense' as CategoryType,
   categoryIcon: '',
   categoryColor: '',

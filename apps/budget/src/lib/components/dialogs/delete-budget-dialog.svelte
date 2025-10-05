@@ -17,8 +17,8 @@ const confirmDeleteBudget = async () => {
   // Delete the budget using the mutation
   await deleteBudgetMutation.mutateAsync(_deleteBudgetId.current);
 
-  // Only redirect if we're currently viewing the budget being deleted
-  if (page.route.id?.startsWith('/budgets/') && parseInt(page.params['id']) === _deleteBudgetId.current) {
+  // Redirect if we're currently viewing a budget detail or edit page
+  if (page.route.id?.startsWith('/budgets/[slug]')) {
     await goto('/budgets');
   }
 };

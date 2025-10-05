@@ -1,0 +1,134 @@
+[
+  {
+    "name": "Monthly Groceries",
+    "description": "Track monthly grocery spending with a set budget limit",
+    "type": "account-monthly",
+    "scope": "account",
+    "icon": "🛒",
+    "suggested_amount": 500,
+    "enforcement_level": "warning",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Emergency Fund",
+    "description": "Build up savings for unexpected expenses",
+    "type": "goal-based",
+    "scope": "account",
+    "icon": "🚨",
+    "suggested_amount": 5000,
+    "enforcement_level": "none",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Vacation Savings",
+    "description": "Save for your next vacation or travel adventure",
+    "type": "goal-based",
+    "scope": "account",
+    "icon": "✈️",
+    "suggested_amount": 2000,
+    "enforcement_level": "none",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Dining & Restaurants",
+    "description": "Manage spending on dining out and restaurants",
+    "type": "category-envelope",
+    "scope": "category",
+    "icon": "🍽️",
+    "suggested_amount": 300,
+    "enforcement_level": "warning",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Entertainment",
+    "description": "Budget for movies, concerts, games, and other entertainment",
+    "type": "category-envelope",
+    "scope": "category",
+    "icon": "🎬",
+    "suggested_amount": 150,
+    "enforcement_level": "warning",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Monthly Utilities",
+    "description": "Track recurring utility bills and expenses",
+    "type": "scheduled-expense",
+    "scope": "category",
+    "icon": "💡",
+    "suggested_amount": 200,
+    "enforcement_level": "strict",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Rent/Mortgage",
+    "description": "Track monthly housing payments",
+    "type": "scheduled-expense",
+    "scope": "account",
+    "icon": "🏠",
+    "suggested_amount": 1500,
+    "enforcement_level": "strict",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Transportation",
+    "description": "Budget for gas, public transit, and vehicle expenses",
+    "type": "category-envelope",
+    "scope": "category",
+    "icon": "🚗",
+    "suggested_amount": 250,
+    "enforcement_level": "warning",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Healthcare & Medical",
+    "description": "Budget for medical expenses, prescriptions, and insurance",
+    "type": "category-envelope",
+    "scope": "category",
+    "icon": "🏥",
+    "suggested_amount": 200,
+    "enforcement_level": "warning",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Debt Payoff",
+    "description": "Track progress paying down loans or credit card debt",
+    "type": "goal-based",
+    "scope": "account",
+    "icon": "💳",
+    "suggested_amount": 10000,
+    "enforcement_level": "none",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Home Improvement",
+    "description": "Save for home repairs, renovations, or improvements",
+    "type": "goal-based",
+    "scope": "account",
+    "icon": "🔨",
+    "suggested_amount": 3000,
+    "enforcement_level": "none",
+    "metadata": null,
+    "is_system": true
+  },
+  {
+    "name": "Education & Learning",
+    "description": "Budget for courses, books, and educational materials",
+    "type": "category-envelope",
+    "scope": "category",
+    "icon": "📚",
+    "suggested_amount": 100,
+    "enforcement_level": "warning",
+    "metadata": null,
+    "is_system": true
+  }
+]

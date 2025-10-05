@@ -429,7 +429,6 @@ async function handleBulkImport(file: File) {
 
 async function handleDuplicateDetection() {
   // This would open a separate duplicate detection interface
-  console.log('Opening duplicate detection interface...');
 }
 
 async function handleUndo() {

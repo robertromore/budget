@@ -82,18 +82,9 @@ export const actions: Actions = {
 
   'update-transaction': async (event) => {
     try {
-      console.log('=== UPDATE TRANSACTION DEBUG ===');
-
       const form = await superValidate(event, zod(superformUpdateTransactionSchema));
 
-      console.log('Form validation result:', {
-        valid: form.valid,
-        data: form.data,
-        errors: form.errors
-      });
-
       if (!form.valid) {
-        console.error('Form validation failed:', form.errors);
         return fail(400, {
           form,
           error: `Validation failed: ${JSON.stringify(form.errors)}`
