@@ -1,10 +1,16 @@
 <script lang="ts">
   import * as Card from "$lib/components/ui/card";
   import * as Tabs from "$lib/components/ui/tabs";
-  import {Target, Wallet, TrendingUp, Calendar, Activity, AlertCircle} from "@lucide/svelte/icons";
+  import Target from "@lucide/svelte/icons/target";
+  import Wallet from "@lucide/svelte/icons/wallet";
+  import TrendingUp from "@lucide/svelte/icons/trending-up";
+  import Calendar from "@lucide/svelte/icons/calendar";
+  import Activity from "@lucide/svelte/icons/activity";
+  import AlertCircle from "@lucide/svelte/icons/alert-circle";
   import BudgetMetricCard from "../budget-metric-card.svelte";
   import BudgetChartPlaceholder from "../budget-chart-placeholder.svelte";
   import EnvelopeBudgetAdvanced from "../envelope-budget-advanced.svelte";
+  import {calculateActualSpent} from "$lib/utils/budget-calculations";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
   import type {Category} from "$lib/schema/categories";
   import type {BudgetHealthStatus} from "$lib/schema/budgets";
@@ -23,8 +29,7 @@
 
   // Basic budget values
   const allocated = $derived(Math.abs((budget.metadata as any)?.allocatedAmount ?? 0));
-  const latest = $derived(budget.periodTemplates?.[0]?.periods?.[0]);
-  const spent = $derived(Math.abs(latest?.actualAmount ?? 0));
+  const spent = $derived(calculateActualSpent(budget));
   const remaining = $derived(allocated - spent);
   const progressPercentage = $derived(allocated > 0 ? (spent / allocated) * 100 : 0);
 

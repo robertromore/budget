@@ -20,6 +20,7 @@ import Tag from '@lucide/svelte/icons/tag';
 import Palette from '@lucide/svelte/icons/palette';
 import Receipt from '@lucide/svelte/icons/receipt';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Settings from '@lucide/svelte/icons/settings';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 
 let {
@@ -35,13 +36,15 @@ let {
 // Generate unique form ID based on category ID or a random value for new categories
 const formId = id ? `category-form-${id}` : `category-form-new-${Math.random().toString(36).slice(2, 9)}`;
 
-const defaults: Omit<Category, 'id' | 'parentId' | 'isActive' | 'createdAt' | 'updatedAt' | 'dateCreated' | 'displayOrder'> = {
+const defaults: Omit<Category, 'id' | 'parentId' | 'createdAt' | 'updatedAt' | 'dateCreated'> = {
   name: '',
   notes: '',
   slug: '',
   categoryType: 'expense' as CategoryType,
   categoryIcon: '',
   categoryColor: '',
+  isActive: true,
+  displayOrder: 0,
   isTaxDeductible: false,
   taxCategory: 'other' as TaxCategory,
   deductiblePercentage: 0,
@@ -61,6 +64,8 @@ if (id) {
   defaults.categoryType = category.categoryType || 'expense';
   defaults.categoryIcon = category.categoryIcon || '';
   defaults.categoryColor = category.categoryColor || '';
+  defaults.isActive = category.isActive ?? true;
+  defaults.displayOrder = category.displayOrder ?? 0;
   defaults.isTaxDeductible = category.isTaxDeductible || false;
   defaults.taxCategory = category.taxCategory || 'other';
   defaults.deductiblePercentage = category.deductiblePercentage ?? 0;
@@ -232,6 +237,66 @@ const deleteCategory = async (id: number) => {
                   $formData.categoryColor = event.detail.value;
                 }}
               />
+              <Form.FieldErrors />
+            {/snippet}
+          </Form.Control>
+        </Form.Field>
+      </div>
+    </Card.Content>
+  </Card.Root>
+
+  <!-- Status & Ordering Section -->
+  <Card.Root>
+    <Card.Header class="pb-4">
+      <div class="flex items-center gap-2">
+        <Settings class="h-5 w-5 text-primary" />
+        <Card.Title class="text-lg">Status & Ordering</Card.Title>
+      </div>
+      <Card.Description>
+        Control category visibility and display order in lists.
+      </Card.Description>
+    </Card.Header>
+    <Card.Content class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Active Status Checkbox -->
+        <Form.Field {form} name="isActive" class="flex flex-row items-start space-x-3 space-y-0">
+          <Form.Control>
+            {#snippet children({props})}
+              <Checkbox
+                {...props}
+                checked={$formData.isActive}
+                onCheckedChange={(checked) => {
+                  $formData.isActive = checked === true;
+                }}
+              />
+              <div class="space-y-1 leading-none">
+                <Form.Label>Active Category</Form.Label>
+                <Form.Description>Show this category in lists and dropdowns</Form.Description>
+              </div>
+              <Form.FieldErrors />
+            {/snippet}
+          </Form.Control>
+        </Form.Field>
+
+        <!-- Display Order -->
+        <Form.Field {form} name="displayOrder">
+          <Form.Control>
+            {#snippet children({props})}
+              <Form.Label>Display Order</Form.Label>
+              <Input
+                {...props}
+                type="number"
+                value={$formData.displayOrder ?? ''}
+                placeholder="Optional sort order"
+                min={0}
+                step={1}
+                oninput={(event) => {
+                  const target = event.currentTarget as HTMLInputElement;
+                  const value = target.value;
+                  $formData.displayOrder = value === '' ? 0 : Number(value);
+                }}
+              />
+              <Form.Description>Lower numbers appear first. Leave empty for automatic ordering.</Form.Description>
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>

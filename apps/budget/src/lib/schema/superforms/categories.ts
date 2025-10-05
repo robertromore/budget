@@ -43,6 +43,8 @@ export const superformInsertCategorySchema = z.object({
   categoryType: z.string().optional(),
   categoryIcon: z.string().optional().nullable(),
   categoryColor: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  displayOrder: z.number().optional(),
   isTaxDeductible: z.boolean().optional(),
   taxCategory: z.string().optional().nullable(),
   deductiblePercentage: z.number().optional().nullable(),
