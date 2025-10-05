@@ -365,6 +365,24 @@ export const formBudgetSchema = createInsertSchema(budgets, {
   metadata: (schema) => schema.optional(),
 });
 
+// Budget Templates Table
+export const budgetTemplates = sqliteTable("budget_template", {
+  id: integer("id", {mode: "number"}).primaryKey({autoIncrement: true}),
+  name: text("name").notNull(),
+  description: text("description"),
+  type: text("type", {enum: budgetTypes}).notNull(),
+  scope: text("scope", {enum: budgetScopes}).notNull(),
+  icon: text("icon").default("📊"),
+  suggestedAmount: real("suggested_amount"),
+  enforcementLevel: text("enforcement_level", {enum: budgetEnforcementLevels})
+    .notNull()
+    .default("warning"),
+  metadata: text("metadata", {mode: "json"}).$type<Record<string, unknown>>(),
+  isSystem: integer("is_system", {mode: "boolean"}).notNull().default(false),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 export type Budget = typeof budgets.$inferSelect;
 export type NewBudget = typeof budgets.$inferInsert;
 export type BudgetGroup = typeof budgetGroups.$inferSelect;
@@ -381,3 +399,5 @@ export type BudgetCategory = typeof budgetCategories.$inferSelect;
 export type NewBudgetCategory = typeof budgetCategories.$inferInsert;
 export type BudgetTransaction = typeof budgetTransactions.$inferSelect;
 export type NewBudgetTransaction = typeof budgetTransactions.$inferInsert;
+export type BudgetTemplate = typeof budgetTemplates.$inferSelect;
+export type NewBudgetTemplate = typeof budgetTemplates.$inferInsert;

@@ -140,19 +140,18 @@ function handleKeyboardShortcut(action: string) {
       keyboardShortcutsOpen = false;
       break;
     default:
-      console.log('Unhandled keyboard shortcut:', action);
+      // Unhandled keyboard shortcut
+      break;
   }
 }
 
 // Handle completion callbacks
 function handleDuplicateMergeComplete(mergedCount: number) {
   // Show success notification or refresh data
-  console.log(`Successfully merged ${mergedCount} duplicate groups`);
 }
 
 function handleImportComplete(importedCount: number) {
   // Show success notification or refresh data
-  console.log(`Successfully imported ${importedCount} payees`);
 }
 
 // Get health score color

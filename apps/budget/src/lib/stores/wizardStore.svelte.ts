@@ -1,5 +1,3 @@
-import { goto } from '$app/navigation';
-
 export interface WizardStep {
   id: string;
   title: string;

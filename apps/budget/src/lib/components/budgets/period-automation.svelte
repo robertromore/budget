@@ -194,7 +194,6 @@
 
   function saveAutomationSettings() {
     // In a real implementation, this would save to backend
-    console.log("Saving automation settings:", settings);
     automationSheetOpen = false;
   }
 </script>

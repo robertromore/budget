@@ -10,7 +10,9 @@ import {
   BudgetPeriodService,
   BudgetTransactionService,
   BudgetForecastService,
+  BudgetTemplateService,
 } from "$lib/server/domains/budgets";
+import {PeriodManager} from "$lib/server/domains/budgets/period-manager";
 import {publicProcedure, t} from "$lib/trpc";
 import {TRPCError} from "@trpc/server";
 import {z} from "zod";
@@ -199,6 +201,8 @@ const listPeriodTemplatesSchema = z.object({
 const budgetService = new BudgetService();
 const periodService = new BudgetPeriodService();
 const transactionService = new BudgetTransactionService();
+const periodManager = new PeriodManager();
+const templateService = new BudgetTemplateService();
 
 export const budgetRoutes = t.router({
   count: publicProcedure.query(async () => {
@@ -738,6 +742,153 @@ export const budgetRoutes = t.router({
       try {
         await budgetService.deletePeriodTemplate(input.id);
         return {success: true};
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  // Period Maintenance Endpoint
+  schedulePeriodMaintenance: publicProcedure
+    .input(z.object({budgetId: z.number().int().positive()}))
+    .mutation(async ({input}) => {
+      try {
+        return await periodManager.schedulePeriodMaintenance(input.budgetId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  // Goal Tracking Endpoints
+  getGoalProgress: publicProcedure
+    .input(z.object({budgetId: z.number().int().positive()}))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.getGoalProgress(input.budgetId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  createGoalContributionPlan: publicProcedure
+    .input(z.object({
+      budgetId: z.number().int().positive(),
+      frequency: z.enum(['weekly', 'monthly', 'quarterly', 'yearly']),
+      customAmount: z.number().optional(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.createGoalContributionPlan(
+          input.budgetId,
+          input.frequency,
+          input.customAmount
+        );
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  linkScheduleToGoal: publicProcedure
+    .input(z.object({
+      budgetId: z.number().int().positive(),
+      scheduleId: z.number().int().positive(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await budgetService.linkScheduleToGoal(input.budgetId, input.scheduleId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  // Budget Template Endpoints
+  listBudgetTemplates: publicProcedure
+    .input(z.object({includeSystem: z.boolean().optional()}).optional())
+    .query(async ({input}) => {
+      try {
+        return await templateService.listTemplates(input?.includeSystem);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getBudgetTemplate: publicProcedure
+    .input(z.object({id: z.number().int().positive()}))
+    .query(async ({input}) => {
+      try {
+        return await templateService.getTemplate(input.id);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  createBudgetTemplate: publicProcedure
+    .input(z.object({
+      name: z.string().min(2).max(80),
+      description: z.string().max(500).nullable().optional(),
+      type: z.enum(budgetTypes),
+      scope: z.enum(budgetScopes),
+      icon: z.string().optional(),
+      suggestedAmount: z.number().optional(),
+      enforcementLevel: z.enum(budgetEnforcementLevels).optional(),
+      metadata: z.record(z.unknown()).optional(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await templateService.createTemplate({
+          ...input,
+          description: input.description ?? undefined,
+        });
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  updateBudgetTemplate: publicProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      name: z.string().min(2).max(80).optional(),
+      description: z.string().max(500).nullable().optional(),
+      icon: z.string().optional(),
+      suggestedAmount: z.number().optional(),
+      enforcementLevel: z.enum(budgetEnforcementLevels).optional(),
+      metadata: z.record(z.unknown()).optional(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        const {id, name, description, icon, suggestedAmount, enforcementLevel, metadata} = input;
+        const updates: Record<string, unknown> = {};
+        if (name !== undefined) updates.name = name;
+        if (description !== undefined) updates.description = description ?? undefined;
+        if (icon !== undefined) updates.icon = icon;
+        if (suggestedAmount !== undefined) updates.suggestedAmount = suggestedAmount;
+        if (enforcementLevel !== undefined) updates.enforcementLevel = enforcementLevel;
+        if (metadata !== undefined) updates.metadata = metadata;
+        return await templateService.updateTemplate(id, updates as any);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  deleteBudgetTemplate: publicProcedure
+    .input(z.object({id: z.number().int().positive()}))
+    .mutation(async ({input}) => {
+      try {
+        await templateService.deleteTemplate(input.id);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  duplicateBudgetTemplate: publicProcedure
+    .input(
+      z.object({
+        id: z.number().int().positive(),
+        newName: z.string().min(2).max(80).optional(),
+      })
+    )
+    .mutation(async ({input}) => {
+      try {
+        return await templateService.duplicateTemplate(input.id, input.newName);
       } catch (error) {
         throw translateDomainError(error);
       }

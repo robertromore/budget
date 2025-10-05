@@ -1,6 +1,14 @@
 import {z} from "zod";
 
 /**
+ * Schema for budget allocation
+ */
+export const budgetAllocationSchema = z.object({
+  budgetId: z.number().positive("Budget ID must be a positive number"),
+  amount: z.number().refine((val) => val !== 0, "Allocation amount cannot be zero"),
+});
+
+/**
  * Schema for creating a transaction
  */
 export const createTransactionSchema = z.object({
@@ -13,6 +21,8 @@ export const createTransactionSchema = z.object({
   status: z.enum(["cleared", "pending", "scheduled"]).optional(),
   budgetId: z.number().positive().nullable().optional(),
   budgetAllocation: z.number().nullable().optional(),
+  budgetAllocations: z.array(budgetAllocationSchema).optional(),
+  autoAssignBudgets: z.boolean().optional(),
 });
 
 /**
@@ -51,6 +61,8 @@ export const updateTransactionSchema = z.object({
   status: z.enum(["cleared", "pending", "scheduled"]).optional(),
   budgetId: z.number().positive().nullable().optional(),
   budgetAllocation: z.number().nullable().optional(),
+  budgetAllocations: z.array(budgetAllocationSchema).optional(),
+  autoAssignBudgets: z.boolean().optional(),
 });
 
 /**

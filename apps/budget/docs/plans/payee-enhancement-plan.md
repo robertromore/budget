@@ -1,5 +1,10 @@
 # Payee Enhancement Plan: Budgeting Integration
 
+> **Status**: 📋 NOT IMPLEMENTED - FUTURE WORK
+> **Priority**: Medium-High
+> **Dependencies**: Budget system UI completion
+> **Estimated Effort**: 3-4 weeks
+
 ## Overview
 
 This document outlines the enhancement of the payee entity to provide deeper integration with the budgeting and transaction systems. The goal is to create a more intelligent and automated budgeting experience by leveraging payee-specific patterns and preferences.

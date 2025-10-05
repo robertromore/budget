@@ -1,8 +1,12 @@
 # Category Enhancement Plan
 
-**Date**: 2025-09-29
-**Status**: Planning
-**Goal**: Enhance categories entity with abstracted patterns from accounts and payees
+> **Status**: 📋 NOT IMPLEMENTED - FUTURE WORK
+> **Priority**: Medium
+> **Dependencies**: None
+> **Estimated Effort**: 2-3 weeks
+>
+> **Date**: 2025-09-29
+> **Goal**: Enhance categories entity with abstracted patterns from accounts and payees
 
 ---
 

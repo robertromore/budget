@@ -79,8 +79,6 @@
 
   const formData = $derived(budgetWizardStore.formData);
 
-  $inspect('BudgetWizard formData from store:', formData);
-
   // Set up validation engine
   const validationEngine = createBudgetValidationEngine();
 
@@ -130,9 +128,6 @@
     return result.isValid;
   };
 
-  // Debug initial data
-  $inspect('BudgetWizard initialData:', initialData);
-
   // Initialize the wizard once
   $effect(() => {
     // Create enhanced initial data with defaults
@@ -143,8 +138,6 @@
       // Handle allocatedAmount from either top-level or nested in metadata
       allocatedAmount: (initialData as any)?.allocatedAmount || initialData?.metadata?.allocatedAmount || 0
     };
-
-    $inspect('BudgetWizard enhancedInitialData:', enhancedInitialData);
 
     budgetWizardStore.initialize(steps, enhancedInitialData);
   });

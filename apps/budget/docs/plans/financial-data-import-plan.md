@@ -1,5 +1,10 @@
 # Financial Data Import Plan: Multi-Format Import System
 
+> **Status**: 📋 NOT IMPLEMENTED - FUTURE WORK
+> **Priority**: High (User Onboarding Feature)
+> **Dependencies**: None
+> **Estimated Effort**: 4-6 weeks
+
 ## Overview
 
 This document outlines the comprehensive implementation of a financial data import system that supports multiple file formats (CSV, Excel, QIF, OFX) with intelligent entity matching, validation, and user-friendly workflows. The goal is to enable users to seamlessly import their financial data from banks, accounting software, and manual records.

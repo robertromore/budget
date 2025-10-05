@@ -4,8 +4,9 @@
   import * as Card from "$lib/components/ui/card";
   import { Badge } from "$lib/components/ui/badge";
   import { Input } from "$lib/components/ui/input";
-  import { BUDGET_TEMPLATES, type BudgetTemplate } from "$lib/constants/budget-templates";
-  import { Search, Sparkles } from "@lucide/svelte/icons";
+  import { listBudgetTemplates } from "$lib/query/budgets";
+  import type { BudgetTemplate } from "$lib/schema/budgets";
+  import { Search, Sparkles, Loader2 } from "@lucide/svelte/icons";
   import { currencyFormatter } from "$lib/utils/formatters";
   import { goto } from "$app/navigation";
 
@@ -17,20 +18,25 @@
 
   let searchTerm = $state("");
 
+  // Fetch templates from database
+  const templatesQuery = $derived(listBudgetTemplates(true).options());
+  const templates = $derived(templatesQuery.data ?? []);
+  const isLoading = $derived(templatesQuery.isLoading);
+
   const filteredTemplates = $derived.by(() => {
-    if (!searchTerm.trim()) return BUDGET_TEMPLATES;
+    if (!searchTerm.trim()) return templates;
     const term = searchTerm.toLowerCase();
-    return BUDGET_TEMPLATES.filter(
+    return templates.filter(
       (template) =>
         template.name.toLowerCase().includes(term) ||
-        template.description.toLowerCase().includes(term)
+        (template.description && template.description.toLowerCase().includes(term))
     );
   });
 
   function selectTemplate(template: BudgetTemplate) {
     // Navigate to budget creation with template pre-selected
     const params = new URLSearchParams({
-      template: template.id,
+      templateId: template.id.toString(),
     });
     goto(`/budgets/new?${params.toString()}`);
     open = false;
@@ -83,10 +89,17 @@
       </div>
 
       <!-- Template Grid -->
-      {#if filteredTemplates.length === 0}
+      {#if isLoading}
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
+          <p class="text-muted-foreground mt-4">Loading templates...</p>
+        </div>
+      {:else if filteredTemplates.length === 0}
         <div class="flex flex-col items-center justify-center py-12 text-center">
           <p class="text-muted-foreground">No templates found</p>
-          <p class="text-sm text-muted-foreground mt-2">Try a different search term</p>
+          <p class="text-sm text-muted-foreground mt-2">
+            {searchTerm ? "Try a different search term" : "No templates available yet"}
+          </p>
         </div>
       {:else}
         <div class="space-y-3">
@@ -95,7 +108,7 @@
               class="cursor-pointer transition-all hover:shadow-md hover:border-primary"
               onclick={() => selectTemplate(template)}
               role="button"
-              tabindex="0"
+              tabindex={0}
               onkeydown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
@@ -105,15 +118,17 @@
             >
               <Card.Header class="pb-3">
                 <div class="flex items-start justify-between gap-2">
-                  <span class="text-3xl" aria-hidden="true">{template.icon}</span>
+                  <span class="text-3xl" aria-hidden="true">{template.icon || "📊"}</span>
                   <Badge variant={getTypeBadgeVariant(template.type)} class="text-xs">
                     {formatType(template.type)}
                   </Badge>
                 </div>
                 <Card.Title class="text-lg mt-2">{template.name}</Card.Title>
-                <Card.Description class="line-clamp-2">
-                  {template.description}
-                </Card.Description>
+                {#if template.description}
+                  <Card.Description class="line-clamp-2">
+                    {template.description}
+                  </Card.Description>
+                {/if}
               </Card.Header>
               <Card.Content class="pt-0">
                 <div class="flex items-center justify-between text-sm">

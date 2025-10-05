@@ -15,32 +15,26 @@
   }: Props = $props();
 
   function handleEditBudget() {
-    console.log("Edit budget:", budget.name);
     // TODO: Open budget edit dialog
   }
 
   function handleDuplicateBudget() {
-    console.log("Duplicate budget:", budget.name);
     // TODO: Implement budget duplication
   }
 
   function handleArchiveBudget() {
-    console.log("Archive budget:", budget.name);
     // TODO: Implement budget archiving
   }
 
   function handleDeleteBudget() {
-    console.log("Delete budget:", budget.name);
     // TODO: Implement budget deletion with confirmation
   }
 
   function handleExportBudget() {
-    console.log("Export budget:", budget.name);
     // TODO: Implement budget export (CSV/JSON)
   }
 
   function handleRefreshBudget() {
-    console.log("Refresh budget data:", budget.name);
     // TODO: Implement budget data refresh
   }
 </script>

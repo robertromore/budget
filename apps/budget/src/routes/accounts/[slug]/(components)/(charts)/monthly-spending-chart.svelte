@@ -41,7 +41,6 @@ const monthlySpendingData = $derived.by(() => {
   });
 });
 
-$inspect(monthlySpendingData, 'monthlySpendingData');
 
 // Chart configuration
 const chartConfig: ChartConfig = {

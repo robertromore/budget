@@ -28,7 +28,7 @@ if (isUpdate && payeeId) {
   const existingPayee = payees.getById(payeeId);
   if (existingPayee) {
     initialData = {
-      name: existingPayee.name,
+      name: existingPayee.name ?? '',
       notes: existingPayee.notes || ''
     };
   }

@@ -174,10 +174,7 @@
   }
 
   async function handleFundTransfer(fromId: number, toId: number, amount: number) {
-    console.log(`Transferring ${amount} from budget ${fromId} to budget ${toId}`);
     // This would integrate with your tRPC mutations once the backend is ready
-    // For now, just log the transfer action
-
     // Example:
     // await transferFunds.mutateAsync({ fromBudgetId: fromId, toBudgetId: toId, amount });
 
@@ -373,71 +370,6 @@
     </Card.Root>
   </div>
 
-  <!-- Filter and Sort Controls -->
-  <Card.Root>
-    <Card.Content class="py-4">
-      <div class="flex flex-col gap-3 sm:gap-4" role="search" aria-label="Budget filters and search">
-        <div class="relative w-full">
-          <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <Input
-            type="search"
-            placeholder="Search budgets..."
-            bind:value={searchTerm}
-            class="pl-9"
-            aria-label="Search budgets by name or description"
-          />
-        </div>
-        <div class="grid grid-cols-3 gap-2 sm:flex sm:gap-2" role="group" aria-label="Filter and sort options">
-          <Select.Root type="single" bind:value={statusFilter}>
-            <Select.Trigger class="w-full sm:w-[140px]" aria-label="Filter by budget status">
-              <div class="flex items-center gap-1 sm:gap-2">
-                <Filter class="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" aria-hidden="true" />
-                <span class="capitalize text-xs sm:text-sm truncate">{statusFilter === "all" ? "Status" : statusFilter}</span>
-              </div>
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="all">All Status</Select.Item>
-              <Select.Item value="active">Active</Select.Item>
-              <Select.Item value="inactive">Inactive</Select.Item>
-              <Select.Item value="paused">Paused</Select.Item>
-            </Select.Content>
-          </Select.Root>
-
-          <Select.Root type="single" bind:value={typeFilter}>
-            <Select.Trigger class="w-full sm:w-[160px]" aria-label="Filter by budget type">
-              <div class="flex items-center gap-1 sm:gap-2">
-                <Filter class="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" aria-hidden="true" />
-                <span class="capitalize text-xs sm:text-sm truncate">{typeFilter === "all" ? "Type" : typeFilter.replace("-", " ")}</span>
-              </div>
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="all">All Types</Select.Item>
-              <Select.Item value="account-monthly">Account Monthly</Select.Item>
-              <Select.Item value="category-envelope">Category Envelope</Select.Item>
-              <Select.Item value="goal-based">Goal Based</Select.Item>
-              <Select.Item value="scheduled-expense">Scheduled Expense</Select.Item>
-            </Select.Content>
-          </Select.Root>
-
-          <Select.Root type="single" bind:value={sortBy}>
-            <Select.Trigger class="w-full sm:w-[140px]" aria-label="Sort budgets by">
-              <div class="flex items-center gap-1 sm:gap-2">
-                <ArrowUpDown class="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" aria-hidden="true" />
-                <span class="capitalize text-xs sm:text-sm truncate">{sortBy === "name" ? "Name" : sortBy}</span>
-              </div>
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="name">Name</Select.Item>
-              <Select.Item value="allocated">Allocated</Select.Item>
-              <Select.Item value="consumed">Consumed</Select.Item>
-              <Select.Item value="remaining">Remaining</Select.Item>
-            </Select.Content>
-          </Select.Root>
-        </div>
-      </div>
-    </Card.Content>
-  </Card.Root>
-
   <Tabs.Root value="overview" class="space-y-6">
     <Tabs.List class="grid w-full grid-cols-5">
       <Tabs.Trigger value="overview" class="flex items-center gap-2">
@@ -464,6 +396,71 @@
 
     <!-- Budget Overview Tab -->
     <Tabs.Content value="overview" class="space-y-6">
+      <!-- Filter and Sort Controls -->
+      <Card.Root>
+        <Card.Content class="py-4">
+          <div class="flex flex-col gap-3 sm:gap-4" role="search" aria-label="Budget filters and search">
+            <div class="relative w-full">
+              <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Input
+                type="search"
+                placeholder="Search budgets..."
+                bind:value={searchTerm}
+                class="pl-9"
+                aria-label="Search budgets by name or description"
+              />
+            </div>
+            <div class="grid grid-cols-3 gap-2 sm:flex sm:gap-2" role="group" aria-label="Filter and sort options">
+              <Select.Root type="single" bind:value={statusFilter}>
+                <Select.Trigger class="w-full sm:w-[140px]" aria-label="Filter by budget status">
+                  <div class="flex items-center gap-1 sm:gap-2">
+                    <Filter class="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" aria-hidden="true" />
+                    <span class="capitalize text-xs sm:text-sm truncate">{statusFilter === "all" ? "Status" : statusFilter}</span>
+                  </div>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="all">All Status</Select.Item>
+                  <Select.Item value="active">Active</Select.Item>
+                  <Select.Item value="inactive">Inactive</Select.Item>
+                  <Select.Item value="paused">Paused</Select.Item>
+                </Select.Content>
+              </Select.Root>
+
+              <Select.Root type="single" bind:value={typeFilter}>
+                <Select.Trigger class="w-full sm:w-[160px]" aria-label="Filter by budget type">
+                  <div class="flex items-center gap-1 sm:gap-2">
+                    <Filter class="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" aria-hidden="true" />
+                    <span class="capitalize text-xs sm:text-sm truncate">{typeFilter === "all" ? "Type" : typeFilter.replace("-", " ")}</span>
+                  </div>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="all">All Types</Select.Item>
+                  <Select.Item value="account-monthly">Account Monthly</Select.Item>
+                  <Select.Item value="category-envelope">Category Envelope</Select.Item>
+                  <Select.Item value="goal-based">Goal Based</Select.Item>
+                  <Select.Item value="scheduled-expense">Scheduled Expense</Select.Item>
+                </Select.Content>
+              </Select.Root>
+
+              <Select.Root type="single" bind:value={sortBy}>
+                <Select.Trigger class="w-full sm:w-[140px]" aria-label="Sort budgets by">
+                  <div class="flex items-center gap-1 sm:gap-2">
+                    <ArrowUpDown class="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" aria-hidden="true" />
+                    <span class="capitalize text-xs sm:text-sm truncate">{sortBy === "name" ? "Name" : sortBy}</span>
+                  </div>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="name">Name</Select.Item>
+                  <Select.Item value="allocated">Allocated</Select.Item>
+                  <Select.Item value="consumed">Consumed</Select.Item>
+                  <Select.Item value="remaining">Remaining</Select.Item>
+                </Select.Content>
+              </Select.Root>
+            </div>
+          </div>
+        </Card.Content>
+      </Card.Root>
+
       <!-- Screen reader announcement for filter results -->
       <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {filteredBudgets.length} {filteredBudgets.length === 1 ? 'budget' : 'budgets'} found

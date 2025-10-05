@@ -1,5 +1,11 @@
 # MicroLLM for Budgeting: Comprehensive Development Plan
 
+> **Status**: 📋 NOT IMPLEMENTED - RESEARCH & FUTURE WORK
+> **Priority**: Low (R&D / Innovation)
+> **Dependencies**: Core budget features, substantial dataset
+> **Estimated Effort**: 6+ months (research + development)
+> **Note**: This is an ambitious AI/ML research project, not immediate roadmap
+
 ## Executive Summary
 
 This document outlines a comprehensive plan for developing a domain-specific microLLM (Small Language Model) specialized in personal budgeting and financial planning. The model will be designed to integrate seamlessly with our existing SvelteKit budget application, providing intelligent financial assistance while maintaining privacy and efficiency.

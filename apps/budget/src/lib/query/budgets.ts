@@ -3,6 +3,7 @@ import type {
   BudgetPeriodInstance,
   BudgetPeriodTemplate,
   BudgetTransaction,
+  BudgetTemplate,
 } from "$lib/schema/budgets";
 import type { BudgetWithRelations } from "$lib/server/domains/budgets";
 import type {
@@ -10,6 +11,8 @@ import type {
   CreateBudgetRequest,
   EnsurePeriodInstanceOptions,
   UpdateBudgetRequest,
+  GoalProgress,
+  ContributionPlan,
 } from "$lib/server/domains/budgets/services";
 import { BudgetState } from "$lib/states/budgets.svelte";
 import { trpc } from "$lib/trpc/client";
@@ -35,6 +38,14 @@ export const budgetKeys = createQueryKeys("budgets", {
   groupDetail: (id: number) => ["budgets", "groups", "detail", id] as const,
   groupList: (parentId?: number | null) => ["budgets", "groups", "list", parentId ?? "all"] as const,
   rootGroups: () => ["budgets", "groups", "root"] as const,
+  goalProgress: (budgetId: number) => ["budgets", "goal", "progress", budgetId] as const,
+  goalContributionPlan: (budgetId: number, frequency: string) =>
+    ["budgets", "goal", "contribution-plan", budgetId, frequency] as const,
+  templates: {
+    all: () => ["budgets", "templates"] as const,
+    list: (includeSystem: boolean) => ["budgets", "templates", "list", includeSystem] as const,
+    detail: (id: number) => ["budgets", "templates", "detail", id] as const,
+  },
 });
 
 function getState(): BudgetState | null {
@@ -99,8 +110,18 @@ export const validateAllocation = (
 
 export const createBudget = defineMutation<CreateBudgetRequest, BudgetWithRelations>({
   mutationFn: (input) => trpc().budgetRoutes.create.mutate(input),
-  onSuccess: (budget) => {
-    getState()?.upsertBudget(budget);
+  onSuccess: (budget, variables, context) => {
+    const state = getState();
+    if (state) {
+      state.upsertBudget(budget);
+    }
+
+    // Update cache with new budget optimistically
+    cachePatterns.updateQueriesWithCondition<BudgetWithRelations[]>(
+      (queryKey) => queryKey[0] === 'budgets' && queryKey[1] === 'list',
+      (oldData) => [...oldData, budget]
+    );
+
     cachePatterns.invalidatePrefix(budgetKeys.lists());
   },
   successMessage: "Budget created",
@@ -612,4 +633,145 @@ export const deletePeriodTemplate = defineMutation<number, {success: boolean}>({
   },
   successMessage: "Period template deleted",
   errorMessage: "Failed to delete period template",
+});
+
+export const schedulePeriodMaintenance = defineMutation<
+  number,
+  {created: number; rolledOver: number; cleaned: number}
+>({
+  mutationFn: (budgetId) => trpc().budgetRoutes.schedulePeriodMaintenance.mutate({budgetId}),
+  onSuccess: (_result, budgetId) => {
+    cachePatterns.invalidatePrefix(budgetKeys.detail(budgetId));
+    cachePatterns.invalidatePrefix(budgetKeys.periodTemplates());
+  },
+  successMessage: (result) =>
+    `Period maintenance complete: ${result.created} created, ${result.rolledOver} rolled over, ${result.cleaned} cleaned`,
+  errorMessage: "Failed to run period maintenance",
+});
+
+// Goal Tracking Queries and Mutations
+
+export const getGoalProgress = (budgetId: number) =>
+  defineQuery<GoalProgress>({
+    queryKey: budgetKeys.goalProgress(budgetId),
+    queryFn: () => trpc().budgetRoutes.getGoalProgress.query({budgetId}),
+    options: {
+      staleTime: 30 * 1000, // 30 seconds
+    },
+  });
+
+export const getGoalContributionPlan = (
+  budgetId: number,
+  frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly',
+  customAmount?: number
+) =>
+  defineQuery<ContributionPlan>({
+    queryKey: budgetKeys.goalContributionPlan(budgetId, frequency),
+    queryFn: () =>
+      trpc().budgetRoutes.createGoalContributionPlan.query({
+        budgetId,
+        frequency,
+        customAmount,
+      }),
+    options: {
+      staleTime: 60 * 1000, // 1 minute
+    },
+  });
+
+export const linkScheduleToGoal = defineMutation<
+  {budgetId: number; scheduleId: number},
+  BudgetWithRelations
+>({
+  mutationFn: (input) => trpc().budgetRoutes.linkScheduleToGoal.mutate(input),
+  onSuccess: (_result, {budgetId}) => {
+    cachePatterns.invalidatePrefix(budgetKeys.detail(budgetId));
+    cachePatterns.invalidatePrefix(budgetKeys.goalProgress(budgetId));
+  },
+  successMessage: "Schedule linked to goal budget",
+  errorMessage: "Failed to link schedule to goal",
+});
+
+// Budget Template Queries and Mutations
+
+export const listBudgetTemplates = (includeSystem: boolean = true) =>
+  defineQuery<BudgetTemplate[]>({
+    queryKey: budgetKeys.templates.list(includeSystem),
+    queryFn: () => trpc().budgetRoutes.listBudgetTemplates.query({includeSystem}),
+    options: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  });
+
+export const getBudgetTemplate = (id: number) =>
+  defineQuery<BudgetTemplate>({
+    queryKey: budgetKeys.templates.detail(id),
+    queryFn: () => trpc().budgetRoutes.getBudgetTemplate.query({id}),
+    options: {
+      staleTime: 5 * 60 * 1000,
+    },
+  });
+
+export const createBudgetTemplate = defineMutation<
+  {
+    name: string;
+    description?: string | null;
+    type: BudgetTemplate["type"];
+    scope: BudgetTemplate["scope"];
+    icon?: string;
+    suggestedAmount?: number;
+    enforcementLevel?: BudgetTemplate["enforcementLevel"];
+    metadata?: Record<string, unknown>;
+  },
+  BudgetTemplate
+>({
+  mutationFn: (input) => trpc().budgetRoutes.createBudgetTemplate.mutate(input),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(budgetKeys.templates.all());
+  },
+  successMessage: "Budget template created successfully",
+  errorMessage: "Failed to create budget template",
+});
+
+export const updateBudgetTemplate = defineMutation<
+  {
+    id: number;
+    name?: string;
+    description?: string | null;
+    icon?: string;
+    suggestedAmount?: number;
+    enforcementLevel?: BudgetTemplate["enforcementLevel"];
+    metadata?: Record<string, unknown>;
+  },
+  BudgetTemplate
+>({
+  mutationFn: (input) => trpc().budgetRoutes.updateBudgetTemplate.mutate(input),
+  onSuccess: (_result, variables) => {
+    cachePatterns.invalidatePrefix(budgetKeys.templates.all());
+    cachePatterns.invalidatePrefix(budgetKeys.templates.detail(variables.id));
+  },
+  successMessage: "Budget template updated successfully",
+  errorMessage: "Failed to update budget template",
+});
+
+export const deleteBudgetTemplate = defineMutation<number, void>({
+  mutationFn: (id) => trpc().budgetRoutes.deleteBudgetTemplate.mutate({id}),
+  onSuccess: (_result, id) => {
+    cachePatterns.invalidatePrefix(budgetKeys.templates.all());
+    cachePatterns.invalidatePrefix(budgetKeys.templates.detail(id));
+  },
+  successMessage: "Budget template deleted successfully",
+  errorMessage: "Failed to delete budget template",
+});
+
+export const duplicateBudgetTemplate = defineMutation<
+  {id: number; newName?: string},
+  BudgetTemplate
+>({
+  mutationFn: ({id, newName}) =>
+    trpc().budgetRoutes.duplicateBudgetTemplate.mutate({id, newName}),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(budgetKeys.templates.all());
+  },
+  successMessage: "Budget template duplicated successfully",
+  errorMessage: "Failed to duplicate budget template",
 });

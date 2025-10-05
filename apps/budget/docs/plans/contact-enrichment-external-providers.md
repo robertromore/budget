@@ -1,5 +1,10 @@
 # Contact Enrichment External Data Provider Integration Plan
 
+> **Status**: 📋 NOT IMPLEMENTED - FUTURE WORK
+> **Priority**: Low-Medium (Enhancement)
+> **Dependencies**: Payee enhancement plan implementation
+> **Estimated Effort**: 6 weeks (phased rollout)
+
 ## Overview
 
 This document outlines the integration of external data providers to enhance payee contact information with real-world validation and enrichment capabilities. The current system performs only local validation (pattern matching, format checks). This enhancement adds actual data verification and enrichment through free-tier external APIs.
