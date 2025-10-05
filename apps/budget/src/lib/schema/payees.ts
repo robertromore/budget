@@ -39,6 +39,7 @@ export const payees = sqliteTable(
   {
     id: integer("id").primaryKey({autoIncrement: true}),
     name: text("name"),
+    slug: text("slug").notNull().unique(),
     notes: text("notes"),
 
     // Budgeting Integration Fields
@@ -88,6 +89,7 @@ export const payees = sqliteTable(
   (table) => [
     // Existing indexes
     index("payee_name_idx").on(table.name),
+    index("payee_slug_idx").on(table.slug),
     index("payee_deleted_at_idx").on(table.deletedAt),
 
     // Foreign key indexes for performance

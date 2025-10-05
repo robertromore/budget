@@ -22,8 +22,10 @@ import {
 } from '$lib/query/budgets';
 import {listCategories} from '$lib/query/categories';
 import {trpc} from '$lib/trpc/client';
+import {deleteBudgetDialog, deleteBudgetId} from '$lib/states/ui/global.svelte';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
-import Settings from '@lucide/svelte/icons/settings';
+import Edit from '@lucide/svelte/icons/edit';
+import Trash2 from '@lucide/svelte/icons/trash-2';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
 import BarChart from '@lucide/svelte/icons/bar-chart';
 import Calendar from '@lucide/svelte/icons/calendar';
@@ -32,7 +34,8 @@ import Wallet from '@lucide/svelte/icons/wallet';
 
 let {data} = $props();
 
-let budgetQuery = $derived(getBudgetDetail(data.budgetId).options());
+const budgetSlug = $derived(data.budgetSlug);
+let budgetQuery = $derived(getBudgetDetail(budgetSlug).options());
 let budget = $derived(budgetQuery.data);
 let isLoading = $derived(budgetQuery.isLoading);
 
@@ -205,10 +208,19 @@ function getStatus() {
         </p>
       </div>
     </div>
-    <Button variant="outline" size="sm" href="/budgets/{budget.id}/edit">
-      <Settings class="h-4 w-4 mr-2" />
-      Edit Budget
-    </Button>
+    <div class="flex items-center gap-2">
+      <Button variant="outline" href="/budgets/{budget.slug}/edit">
+        <Edit class="mr-2 h-4 w-4" />
+        Edit
+      </Button>
+      <Button variant="destructive" onclick={() => {
+        deleteBudgetId.current = budget.id;
+        deleteBudgetDialog.setTrue();
+      }}>
+        <Trash2 class="mr-2 h-4 w-4" />
+        Delete
+      </Button>
+    </div>
   </div>
 
   <!-- Budget Overview -->

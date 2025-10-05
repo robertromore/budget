@@ -18,11 +18,11 @@ const pageDescription = $derived(isDuplicating
   : 'Create a new payee for your transactions');
 
 const handleSave = (payee: any, isNew: boolean) => {
-  if (isNew && payee.id) {
+  if (isNew && payee.slug) {
     // Navigate to the new payee's detail page after a brief delay
     // The timeout ensures form submission completes before redirect
     setTimeout(() => {
-      goto(`/payees/${payee.id}`, { replaceState: true });
+      goto(`/payees/${payee.slug}`, { replaceState: true });
     }, 100);
   } else {
     // Navigate back to payees list

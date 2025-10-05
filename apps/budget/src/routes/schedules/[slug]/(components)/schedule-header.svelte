@@ -48,22 +48,22 @@ let {
       </div>
     </div>
 
-    <div class="flex gap-1 flex-shrink-0">
-      <Button variant="outline" size="sm" onclick={toggleStatus}>
+    <div class="flex gap-2 flex-shrink-0">
+      <Button variant="outline" onclick={toggleStatus}>
         {#if schedule.status === 'active'}
-          <Pause class="h-3 w-3 mr-1" />
+          <Pause class="mr-2 h-4 w-4" />
           Pause
         {:else}
-          <Play class="h-3 w-3 mr-1" />
+          <Play class="mr-2 h-4 w-4" />
           Resume
         {/if}
       </Button>
-      <Button variant="outline" size="sm" onclick={editSchedule}>
-        <Edit class="h-3 w-3 mr-1" />
+      <Button variant="outline" onclick={editSchedule}>
+        <Edit class="mr-2 h-4 w-4" />
         Edit
       </Button>
-      <Button variant="outline" size="sm" class="text-destructive" onclick={deleteSchedule}>
-        <Trash class="h-3 w-3 mr-1" />
+      <Button variant="destructive" onclick={deleteSchedule}>
+        <Trash class="mr-2 h-4 w-4" />
         Delete
       </Button>
     </div>

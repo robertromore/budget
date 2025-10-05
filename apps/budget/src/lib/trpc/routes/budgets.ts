@@ -26,6 +26,10 @@ const budgetIdSchema = z.object({
   id: z.number().int().positive(),
 });
 
+const budgetSlugSchema = z.object({
+  slug: z.string(),
+});
+
 const metadataSchema = z.record(z.string(), z.unknown());
 
 const createBudgetSchema = z.object({
@@ -216,6 +220,14 @@ export const budgetRoutes = t.router({
   get: publicProcedure.input(budgetIdSchema).query(async ({input}) => {
     try {
       return await budgetService.getBudget(input.id);
+    } catch (error) {
+      if (error instanceof TRPCError) throw error;
+      throw translateDomainError(error);
+    }
+  }),
+  getBySlug: publicProcedure.input(budgetSlugSchema).query(async ({input}) => {
+    try {
+      return await budgetService.getBudgetBySlug(input.slug);
     } catch (error) {
       if (error instanceof TRPCError) throw error;
       throw translateDomainError(error);

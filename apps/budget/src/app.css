@@ -43,6 +43,14 @@
 
   --widget-active: hsl(217 91% 60%);
 
+  /* Account type colors */
+  --account-checking: oklch(0.6 0.118 184.704);
+  --account-savings: oklch(0.646 0.222 41.116);
+  --account-credit-card: oklch(0.627 0.265 303.9);
+  --account-investment: oklch(0.769 0.188 70.08);
+  --account-loan: oklch(0.577 0.245 27.325);
+  --account-cash: oklch(0.556 0 0);
+
   /* LayerChart CSS variables for Labels and other components */
   --surface-100: oklch(1 0 0);
   --surface-200: oklch(0.959 0.005 240);
@@ -83,6 +91,14 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* Account type colors */
+  --account-checking: oklch(0.696 0.17 162.48);
+  --account-savings: oklch(0.769 0.188 70.08);
+  --account-credit-card: oklch(0.627 0.265 303.9);
+  --account-investment: oklch(0.828 0.189 84.429);
+  --account-loan: oklch(0.704 0.191 22.216);
+  --account-cash: oklch(0.708 0 0);
 }
 
 @theme inline {
@@ -121,6 +137,12 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-account-checking: var(--account-checking);
+  --color-account-savings: var(--account-savings);
+  --color-account-credit-card: var(--account-credit-card);
+  --color-account-investment: var(--account-investment);
+  --color-account-loan: var(--account-loan);
+  --color-account-cash: var(--account-cash);
 }
 
 @layer base {

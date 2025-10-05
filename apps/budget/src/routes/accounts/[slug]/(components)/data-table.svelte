@@ -243,8 +243,26 @@ let currentViewsStateValue = new CurrentViewsState<TransactionsFormat>(null);
 setContext('current_views', currentViewsStateValue);
 currentViews.set(currentViewsStateValue);
 
+let lastViewSignature: string | null = null;
+let hasAppliedInitialView = false;
+let lastActiveViewId: number | undefined;
+
 // Update current views state when viewList changes
 $effect(() => {
+  const signature = viewList
+    .map((view: View) => {
+      const sortSignature = view.display?.sort
+        ?.map((sort) => `${sort.id}:${sort.desc ?? false}`)
+        .join('|') ?? '';
+      return `${view.id}:${sortSignature}`;
+    })
+    .join(';');
+
+  if (signature !== lastViewSignature) {
+    lastViewSignature = signature;
+    hasAppliedInitialView = false;
+  }
+
   const _currentViewStates: CurrentViewState<TransactionsFormat>[] = viewList.map(
     (view: View) => new CurrentViewState<TransactionsFormat>(view, table)
   );
@@ -255,9 +273,29 @@ $effect(() => {
     currentViewsStateValue.viewsStates.set(viewState.view.id, viewState);
   });
 
-  // Set the active view to the first view
-  if (_currentViewStates.length > 0) {
-    currentViewsStateValue.activeViewId = _currentViewStates[0]!.view.id;
+  if (_currentViewStates.length === 0) {
+    return;
+  }
+
+  const targetViewState = lastActiveViewId
+    ? currentViewsStateValue.viewsStates.get(lastActiveViewId) ?? _currentViewStates[0]!
+    : _currentViewStates[0]!;
+
+  if (!targetViewState) {
+    return;
+  }
+
+  if (!hasAppliedInitialView || lastActiveViewId !== targetViewState.view.id) {
+    hasAppliedInitialView = true;
+    lastActiveViewId = targetViewState.view.id;
+    const targetViewId = targetViewState.view.id;
+    currentViewsStateValue.activeViewId = targetViewId;
+    queueMicrotask(() => {
+      const latestViewState = currentViewsStateValue.viewsStates.get(targetViewId);
+      if (latestViewState) {
+        currentViewsStateValue.setActive(targetViewId);
+      }
+    });
   }
 });
 </script>

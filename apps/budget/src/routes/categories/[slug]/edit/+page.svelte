@@ -7,17 +7,25 @@ import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Tag from '@lucide/svelte/icons/tag';
 import {ManageCategoryForm} from '$lib/components/forms';
 import type {Category} from '$lib/schema';
+import type {EditableEntityItem} from '$lib/types';
 import type {PageData} from './$types';
+import {CategoriesState} from '$lib/states/entities/categories.svelte';
 
 let {data}: {data: PageData} = $props();
 
-const categoryId = $derived(Number(page.params.id));
+const slug = $derived(page.params['slug']);
 const category = $derived(data.category);
+const categoriesState = CategoriesState.get();
 
-const handleSave = (updatedCategory: Category) => {
+const handleSave = (entity: EditableEntityItem) => {
+  const updatedCategory = entity as Category;
+
+  // Update the category in state
+  categoriesState.updateCategory(updatedCategory);
+
   // Navigate back to the category detail page
   setTimeout(() => {
-    goto(`/categories/${updatedCategory.id}`, { replaceState: true });
+    goto(`/categories/${updatedCategory.slug}`, { replaceState: true });
   }, 100);
 };
 </script>
@@ -31,7 +39,7 @@ const handleSave = (updatedCategory: Category) => {
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="sm" href="/categories/{categoryId}" class="p-2">
+      <Button variant="ghost" size="sm" href="/categories/{slug}" class="p-2">
         <ArrowLeft class="h-4 w-4" />
         <span class="sr-only">Back to Category</span>
       </Button>
@@ -58,7 +66,7 @@ const handleSave = (updatedCategory: Category) => {
       </Card.Header>
       <Card.Content>
         <ManageCategoryForm
-          id={categoryId}
+          id={category.id}
           onSave={handleSave}
         />
       </Card.Content>

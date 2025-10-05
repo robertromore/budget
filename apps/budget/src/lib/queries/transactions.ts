@@ -35,19 +35,21 @@ export function createAllAccountTransactionsQuery(
     dateTo?: string;
   }
 ) {
-  const params = {
-    accountId,
-    sortBy: options?.sortBy ?? 'date',
-    sortOrder: options?.sortOrder ?? 'desc',
-    ...(options?.searchQuery && { searchQuery: options.searchQuery }),
-    ...(options?.dateFrom && { dateFrom: options.dateFrom }),
-    ...(options?.dateTo && { dateTo: options.dateTo }),
-  };
+  return createQuery(() => {
+    const params = {
+      accountId,
+      sortBy: options?.sortBy ?? 'date',
+      sortOrder: options?.sortOrder ?? 'desc',
+      ...(options?.searchQuery && { searchQuery: options.searchQuery }),
+      ...(options?.dateFrom && { dateFrom: options.dateFrom }),
+      ...(options?.dateTo && { dateTo: options.dateTo }),
+    };
 
-  return createQuery({
-    queryKey: ['transactions', 'all', accountId, params],
-    queryFn: () => trpc().serverAccountsRoutes.loadAllTransactions.query(params),
-    staleTime: 30 * 1000, // 30 seconds
+    return {
+      queryKey: ['transactions', 'all', accountId, params],
+      queryFn: () => trpc().serverAccountsRoutes.loadAllTransactions.query(params),
+      staleTime: 30 * 1000, // 30 seconds
+    };
   });
 }
 
@@ -64,7 +66,7 @@ export function createAllAccountTransactionsWithUpcomingQuery(
     dateTo?: string;
   }
 ) {
-  return createQuery({
+  return createQuery(() => ({
     queryKey: ['transactions', 'all-with-upcoming', accountId, options],
     queryFn: () => trpc().transactionRoutes.forAccountWithUpcoming.query({ accountId }),
     staleTime: 30 * 1000, // 30 seconds
@@ -119,7 +121,7 @@ export function createAllAccountTransactionsWithUpcomingQuery(
 
       return filteredData;
     }
-  });
+  }));
 }
 
 /**
@@ -137,22 +139,24 @@ export function createAccountTransactionsQuery(
     dateTo?: string;
   }
 ) {
-  const params = {
-    accountId,
-    page: options?.page ?? 0,
-    pageSize: options?.pageSize ?? 50,
-    sortBy: options?.sortBy ?? 'date',
-    sortOrder: options?.sortOrder ?? 'desc',
-    ...(options?.searchQuery && { searchQuery: options.searchQuery }),
-    ...(options?.dateFrom && { dateFrom: options.dateFrom }),
-    ...(options?.dateTo && { dateTo: options.dateTo }),
-  };
+  return createQuery(() => {
+    const params = {
+      accountId,
+      page: options?.page ?? 0,
+      pageSize: options?.pageSize ?? 50,
+      sortBy: options?.sortBy ?? 'date',
+      sortOrder: options?.sortOrder ?? 'desc',
+      ...(options?.searchQuery && { searchQuery: options.searchQuery }),
+      ...(options?.dateFrom && { dateFrom: options.dateFrom }),
+      ...(options?.dateTo && { dateTo: options.dateTo }),
+    };
 
-  return createQuery({
-    queryKey: transactionKeys.byAccount(accountId, params),
-    queryFn: () => trpc().serverAccountsRoutes.loadTransactions.query(params),
-    staleTime: 30 * 1000, // 30 seconds
-    // Return the whole payload including pagination metadata
+    return {
+      queryKey: transactionKeys.byAccount(accountId, params),
+      queryFn: () => trpc().serverAccountsRoutes.loadTransactions.query(params),
+      staleTime: 30 * 1000, // 30 seconds
+      // Return the whole payload including pagination metadata
+    };
   });
 }
 
@@ -163,63 +167,65 @@ export function createTransactionsListQuery(
   filters?: TransactionFilters,
   pagination?: PaginationParams
 ) {
-  return createQuery({
+  return createQuery(() => ({
     queryKey: transactionKeys.list(filters, pagination),
     queryFn: () => trpc().transactionRoutes.list.query({filters, pagination}),
     staleTime: 30 * 1000,
-  });
+  }));
 }
 
 /**
  * Query: Get single transaction by ID
  */
 export function createTransactionDetailQuery(id: number) {
-  return createQuery({
+  return createQuery(() => ({
     queryKey: transactionKeys.detail(id),
     queryFn: () => trpc().transactionRoutes.byId.query({id}),
     staleTime: 60 * 1000, // 1 minute
-  });
+  }));
 }
 
 /**
  * Query: Get account summary
  */
 export function createAccountSummaryQuery(accountId: number) {
-  return createQuery({
+  return createQuery(() => ({
     queryKey: transactionKeys.summary(accountId),
     queryFn: () => trpc().transactionRoutes.summary.query({accountId}),
     staleTime: 30 * 1000,
-  });
+  }));
 }
 
 /**
  * Mutation: Create new transaction
  */
 export function createTransactionMutation() {
-  const client = useQueryClient();
+  return createMutation(() => {
+    const client = useQueryClient();
 
-  return createMutation({
-    mutationFn: (data: CreateTransactionData) =>
-      trpc().transactionRoutes.create.mutate(data),
-    onSuccess: (newTransaction, variables) => {
-      // Invalidate and refetch related queries using predicate matching
-      client.invalidateQueries({
-        predicate: (query) => {
-          const key = JSON.stringify(query.queryKey);
-          return (
-            key.includes('"account"') && key.includes(`${variables.accountId}`) ||
-            key.includes('"all"') && key.includes(`${variables.accountId}`) ||
-            key.includes('"summary"') && key.includes(`${variables.accountId}`) ||
-            key.includes('"list"')
-          );
-        },
-      });
+    return {
+      mutationFn: (data: CreateTransactionData) =>
+        trpc().transactionRoutes.create.mutate(data),
+      onSuccess: (newTransaction, variables) => {
+        // Invalidate and refetch related queries using predicate matching
+        client.invalidateQueries({
+          predicate: (query) => {
+            const key = JSON.stringify(query.queryKey);
+            return (
+              key.includes('"account"') && key.includes(`${variables.accountId}`) ||
+              key.includes('"all"') && key.includes(`${variables.accountId}`) ||
+              key.includes('"summary"') && key.includes(`${variables.accountId}`) ||
+              key.includes('"list"')
+            );
+          },
+        });
 
-      toast.success("Transaction created successfully");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to create transaction");
-    },
+        toast.success("Transaction created successfully");
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to create transaction");
+      },
+    };
   });
 }
 
@@ -227,9 +233,10 @@ export function createTransactionMutation() {
  * Mutation: Update transaction
  */
 export function createUpdateTransactionMutation() {
-  const client = useQueryClient();
+  return createMutation(() => {
+    const client = useQueryClient();
 
-  return createMutation({
+    return {
     mutationFn: ({id, data, accountId}: {id: number; data: UpdateTransactionData; accountId: number}) =>
       trpc().transactionRoutes.update.mutate({id, data}),
     onMutate: async (variables) => {
@@ -340,6 +347,7 @@ export function createUpdateTransactionMutation() {
 
       toast.success("Transaction updated successfully");
     },
+    };
   });
 }
 
@@ -347,34 +355,36 @@ export function createUpdateTransactionMutation() {
  * Mutation: Update transaction and get all account transactions with recalculated running balances
  */
 export function createUpdateTransactionWithBalanceMutation() {
-  const client = useQueryClient();
+  return createMutation(() => {
+    const client = useQueryClient();
 
-  return createMutation({
-    mutationFn: ({id, data}: {id: number; data: UpdateTransactionData}) =>
-      trpc().transactionRoutes.updateWithBalance.mutate({id, data}),
-    onSuccess: (transactionsWithBalance) => {
-      if (!Array.isArray(transactionsWithBalance) || !transactionsWithBalance.length) return;
+    return {
+      mutationFn: ({id, data}: {id: number; data: UpdateTransactionData}) =>
+        trpc().transactionRoutes.updateWithBalance.mutate({id, data}),
+      onSuccess: (transactionsWithBalance) => {
+        if (!Array.isArray(transactionsWithBalance) || !transactionsWithBalance.length) return;
 
-      const accountId = (transactionsWithBalance[0] as any).accountId;
+        const accountId = (transactionsWithBalance[0] as any).accountId;
 
-      // Invalidate account transaction queries using predicate matching
-      client.invalidateQueries({
-        predicate: (query) => {
-          const key = JSON.stringify(query.queryKey);
-          return (
-            key.includes('"account"') && key.includes(`${accountId}`) ||
-            key.includes('"all"') && key.includes(`${accountId}`) ||
-            key.includes('"summary"') && key.includes(`${accountId}`) ||
-            key.includes('"list"')
-          );
-        },
-      });
+        // Invalidate account transaction queries using predicate matching
+        client.invalidateQueries({
+          predicate: (query) => {
+            const key = JSON.stringify(query.queryKey);
+            return (
+              key.includes('"account"') && key.includes(`${accountId}`) ||
+              key.includes('"all"') && key.includes(`${accountId}`) ||
+              key.includes('"summary"') && key.includes(`${accountId}`) ||
+              key.includes('"list"')
+            );
+          },
+        });
 
-      toast.success("Transaction updated successfully");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to update transaction");
-    },
+        toast.success("Transaction updated successfully");
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to update transaction");
+      },
+    };
   });
 }
 
@@ -382,27 +392,29 @@ export function createUpdateTransactionWithBalanceMutation() {
  * Mutation: Delete transaction
  */
 export function createDeleteTransactionMutation() {
-  const client = useQueryClient();
+  return createMutation(() => {
+    const client = useQueryClient();
 
-  return createMutation({
-    mutationFn: (id: number) =>
-      trpc().transactionRoutes.delete.mutate({id}),
-    onSuccess: (_, id) => {
-      // Remove from cache
-      client.removeQueries({
-        queryKey: transactionKeys.detail(id),
-      });
+    return {
+      mutationFn: (id: number) =>
+        trpc().transactionRoutes.delete.mutate({id}),
+      onSuccess: (_, id) => {
+        // Remove from cache
+        client.removeQueries({
+          queryKey: transactionKeys.detail(id),
+        });
 
-      // Invalidate all list queries
-      client.invalidateQueries({
-        queryKey: transactionKeys.all,
-      });
+        // Invalidate all list queries
+        client.invalidateQueries({
+          queryKey: transactionKeys.all,
+        });
 
-      toast.success("Transaction deleted successfully");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to delete transaction");
-    },
+        toast.success("Transaction deleted successfully");
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to delete transaction");
+      },
+    };
   });
 }
 
@@ -410,29 +422,31 @@ export function createDeleteTransactionMutation() {
  * Mutation: Bulk delete transactions
  */
 export function createBulkDeleteTransactionsMutation() {
-  const client = useQueryClient();
+  return createMutation(() => {
+    const client = useQueryClient();
 
-  return createMutation({
-    mutationFn: (ids: number[]) =>
-      trpc().transactionRoutes.bulkDelete.mutate({ids}),
-    onSuccess: (result, ids) => {
-      // Remove individual transaction queries
-      ids.forEach((id) => {
-        client.removeQueries({
-          queryKey: transactionKeys.detail(id),
+    return {
+      mutationFn: (ids: number[]) =>
+        trpc().transactionRoutes.bulkDelete.mutate({ids}),
+      onSuccess: (result, ids) => {
+        // Remove individual transaction queries
+        ids.forEach((id) => {
+          client.removeQueries({
+            queryKey: transactionKeys.detail(id),
+          });
         });
-      });
 
-      // Invalidate all list queries
-      client.invalidateQueries({
-        queryKey: transactionKeys.all,
-      });
+        // Invalidate all list queries
+        client.invalidateQueries({
+          queryKey: transactionKeys.all,
+        });
 
-      toast.success(`${result.count} transactions deleted successfully`);
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to delete transactions");
-    },
+        toast.success(`${result.count} transactions deleted successfully`);
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to delete transactions");
+      },
+    };
   });
 }
 
@@ -441,39 +455,41 @@ export function createBulkDeleteTransactionsMutation() {
  * Legacy mutation for backwards compatibility
  */
 export function createSaveTransactionMutation() {
-  const client = useQueryClient();
+  return createMutation(() => {
+    const client = useQueryClient();
 
-  return createMutation({
-    mutationFn: (data: {
-      id?: number;
-      accountId?: number;
-      amount: number;
-      date: string;
-      payeeId?: number | null;
-      categoryId?: number | null;
-      notes?: string | null;
-      status?: "cleared" | "pending" | "scheduled" | null;
-    }) => trpc().transactionRoutes.save.mutate(data),
-    onSuccess: (transaction) => {
-      // Invalidate relevant queries using predicate matching
-      if (transaction.accountId) {
-        client.invalidateQueries({
-          predicate: (query) => {
-            const key = JSON.stringify(query.queryKey);
-            return (
-              key.includes('"account"') && key.includes(`${transaction.accountId}`) ||
-              key.includes('"all"') && key.includes(`${transaction.accountId}`) ||
-              key.includes('"summary"') && key.includes(`${transaction.accountId}`) ||
-              key.includes('"list"')
-            );
-          },
-        });
-      }
+    return {
+      mutationFn: (data: {
+        id?: number;
+        accountId?: number;
+        amount: number;
+        date: string;
+        payeeId?: number | null;
+        categoryId?: number | null;
+        notes?: string | null;
+        status?: "cleared" | "pending" | "scheduled" | null;
+      }) => trpc().transactionRoutes.save.mutate(data),
+      onSuccess: (transaction) => {
+        // Invalidate relevant queries using predicate matching
+        if (transaction.accountId) {
+          client.invalidateQueries({
+            predicate: (query) => {
+              const key = JSON.stringify(query.queryKey);
+              return (
+                key.includes('"account"') && key.includes(`${transaction.accountId}`) ||
+                key.includes('"all"') && key.includes(`${transaction.accountId}`) ||
+                key.includes('"summary"') && key.includes(`${transaction.accountId}`) ||
+                key.includes('"list"')
+              );
+            },
+          });
+        }
 
-      toast.success("Transaction saved successfully");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to save transaction");
-    },
+        toast.success("Transaction saved successfully");
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to save transaction");
+      },
+    };
   });
 }

@@ -66,6 +66,10 @@ export class AccountsState {
     return this.findBy((account) => account.name === name);
   }
 
+  getBySlug(slug: string): Account | null {
+    return this.findBy((account) => account.slug === slug) ?? null;
+  }
+
   getActiveAccounts(): Account[] {
     return this.filterBy((account) => !account.closed);
   }

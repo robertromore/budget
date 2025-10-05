@@ -1,29 +1,48 @@
 <script lang="ts">
 import {goto} from '$app/navigation';
 import {page} from '$app/state';
-import {Button} from '$lib/components/ui/button';
+import {Button, buttonVariants} from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import * as Tabs from '$lib/components/ui/tabs';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import User from '@lucide/svelte/icons/user';
 import Edit from '@lucide/svelte/icons/edit';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
-import Settings from '@lucide/svelte/icons/settings';
+import Trash2 from '@lucide/svelte/icons/trash-2';
+import Phone from '@lucide/svelte/icons/phone';
 import {PayeesState} from '$lib/states/entities/payees.svelte';
 
-// Get payee ID from URL parameter
-const payeeId = $derived(parseInt(page.params.id) || 0);
+// Get payee slug from URL parameter
+const payeeSlug = $derived(page.params['slug'] || '');
 
 // Get payee data
 const payeesState = PayeesState.get();
-const payee = $derived(payeeId > 0 ? payeesState.getById(payeeId) : null);
+const payee = $derived(payeeSlug ? payeesState.getBySlug(payeeSlug) : null);
 
 const pageTitle = $derived(payee ? payee.name : 'Payee Not Found');
 const pageDescription = $derived(payee ? 'View and manage payee information' : 'The requested payee could not be found');
 
-// Redirect to payees list if no valid ID provided
+// Delete dialog state
+let deleteDialogOpen = $state(false);
+let isDeleting = $state(false);
+
+const handleDelete = async () => {
+  if (isDeleting || !payee) return;
+
+  isDeleting = true;
+  try {
+    await payeesState.deletePayee(payee.id);
+    deleteDialogOpen = false;
+    goto('/payees');
+  } catch (error) {
+    console.error('Failed to delete payee:', error);
+    isDeleting = false;
+  }
+};
+
+// Redirect to payees list if no valid slug provided
 $effect(() => {
-  if (payeeId === 0) {
+  if (!payeeSlug) {
     goto('/payees');
   }
 });
@@ -53,13 +72,17 @@ $effect(() => {
 
     {#if payee}
       <div class="flex items-center gap-2">
-        <Button variant="outline" href="/payees/{payeeId}/analytics">
+        <Button variant="outline" href="/payees/{payee.slug}/analytics">
           <BarChart3 class="mr-2 h-4 w-4" />
-          Analytics
+          View Analytics
         </Button>
-        <Button href="/payees/{payeeId}/edit">
+        <Button variant="outline" href="/payees/{payee.slug}/edit">
           <Edit class="mr-2 h-4 w-4" />
-          Edit Payee
+          Edit
+        </Button>
+        <Button variant="destructive" onclick={() => deleteDialogOpen = true}>
+          <Trash2 class="mr-2 h-4 w-4" />
+          Delete
         </Button>
       </div>
     {/if}
@@ -107,7 +130,7 @@ $effect(() => {
       <Card.Root>
         <Card.Header>
           <Card.Title class="flex items-center gap-2">
-            <Settings class="h-4 w-4" />
+            <Phone class="h-4 w-4" />
             Contact Information
           </Card.Title>
         </Card.Header>
@@ -193,7 +216,7 @@ $effect(() => {
       <Card.Content>
         <div class="text-center py-8 text-muted-foreground">
           <p>Transaction history will be displayed here.</p>
-          <Button variant="outline" href="/payees/{payeeId}/analytics" class="mt-4">
+          <Button variant="outline" href="/payees/{payee.slug}/analytics" class="mt-4">
             <BarChart3 class="mr-2 h-4 w-4" />
             View Full Analytics
           </Button>
@@ -217,3 +240,21 @@ $effect(() => {
     </Card.Root>
   {/if}
 </div>
+
+<!-- Delete Confirmation Dialog -->
+<AlertDialog.Root bind:open={deleteDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete Payee</AlertDialog.Title>
+      <AlertDialog.Description>
+        Are you sure you want to delete "{payee?.name}"? This action cannot be undone.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action onclick={handleDelete} disabled={isDeleting} class={buttonVariants({variant: 'destructive'})}>
+        {isDeleting ? 'Deleting...' : 'Delete'}
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

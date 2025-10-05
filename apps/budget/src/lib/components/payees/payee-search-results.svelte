@@ -152,7 +152,7 @@ const formatLastTransaction = (date: string | null) => {
             <TypeIcon class="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
             <div class="min-w-0 flex-1">
               <a
-                href="/payees/{payee.id}"
+                href="/payees/{payee.slug}"
                 class="font-medium truncate hover:underline block"
               >
                 {@html highlightMatches(payee.name || 'Unnamed Payee', searchQuery)}

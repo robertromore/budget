@@ -9,14 +9,16 @@ import type {Actions} from "@sveltejs/kit";
 
 export const load = async (event: any) => {
   const {params} = event;
-  const payeeId = params.id;
+  const slug = params.slug;
 
-  if (!payeeId || isNaN(parseInt(payeeId))) {
+  if (!slug) {
     throw redirect(303, '/payees');
   }
 
+  const payee = await createCaller(await createContext(event)).payeeRoutes.getBySlug({slug});
+
   return {
-    payeeId: parseInt(payeeId),
+    payee,
     form: await superValidate(zod4(superformInsertPayeeSchema)),
     deleteForm: await superValidate(zod4(removePayeeSchema)),
     categories: await createCaller(await createContext(event)).categoriesRoutes.all(),

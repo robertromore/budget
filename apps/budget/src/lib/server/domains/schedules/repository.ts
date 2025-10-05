@@ -18,11 +18,32 @@ export interface ScheduleWithDetails extends Schedule {
     move_weekends: "none" | "next_weekday" | "previous_weekday" | null;
     move_holidays: "none" | "next_weekday" | "previous_weekday" | null;
     specific_dates: any;
+    on: boolean | null;
+    on_type: "day" | "the" | null;
+    days: any;
+    weeks: any;
+    weeks_days: any;
+    week_days: any;
     scheduleId: number;
   } | null;
 }
 
 export class ScheduleRepository {
+  /**
+   * Get all active schedules regardless of auto_add setting
+   */
+  async getActiveSchedules(): Promise<ScheduleWithDetails[]> {
+    return await db.query.schedules.findMany({
+      where: eq(schedules.status, "active"),
+      with: {
+        account: true,
+        payee: true,
+        category: true,
+        scheduleDate: true,
+      },
+    });
+  }
+
   /**
    * Get all active schedules with auto_add enabled
    */

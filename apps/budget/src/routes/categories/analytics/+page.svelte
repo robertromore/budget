@@ -137,7 +137,7 @@ const categories = $derived(Array.from(categoriesState.categories.values()));
           {#each categories as category}
             <div class="flex items-center justify-between p-3 rounded-lg border">
               <div class="flex-1">
-                <a href="/categories/{category.id}" class="font-medium hover:text-primary">
+                <a href="/categories/{category.slug}" class="font-medium hover:text-primary">
                   {category.name}
                 </a>
                 {#if category.notes}
@@ -148,7 +148,7 @@ const categories = $derived(Array.from(categoriesState.categories.values()));
                 <div class="font-medium">Coming soon</div>
                 <p class="text-xs text-muted-foreground">Total spent</p>
               </div>
-              <Button variant="ghost" size="sm" href="/categories/{category.id}/analytics" class="ml-4">
+              <Button variant="ghost" size="sm" href="/categories/{category.slug}/analytics" class="ml-4">
                 <BarChart3 class="h-4 w-4" />
               </Button>
             </div>

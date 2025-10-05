@@ -22,12 +22,14 @@ import DollarSign from '@lucide/svelte/icons/dollar-sign';
 let {
   accountId,
   onSave,
-  formId = 'account-form',
+  formId,
+  mode: initialMode = 'manual',
 }: {
   accountId?: number;
   onDelete?: (id: number) => void;
   onSave?: (new_entity: Account) => void;
   formId?: string;
+  mode?: 'manual' | 'wizard';
 } = $props();
 
 // Get form data from accounts page (not layout) to match the action schema
@@ -39,10 +41,25 @@ const accounts = AccountsState.get();
 
 const isUpdate = accountId && accountId > 0;
 
+const resolvedFormId = formId ?? (accountId && accountId > 0 ? `account-form-${accountId}` : 'account-form-new');
+
+// Keep mode as 'manual' during SSR and initial hydration
+let mode = $state<'manual' | 'wizard'>('manual');
+let mounted = $state(false);
+
+import { onMount } from 'svelte';
+import { browser } from '$app/environment';
+
+onMount(() => {
+  mounted = true;
+  // Apply the saved/desired mode only after hydration is complete
+  mode = initialMode;
+});
+
 const entityForm = useEntityForm({
   formData: manageAccountForm,
   schema: superformInsertAccountSchema,
-  formId,
+  formId: resolvedFormId,
   entityId: accountId,
   onSave: (entity: Account) => {
     if (isUpdate) {
@@ -119,8 +136,8 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
   // Wait a tick to ensure reactive updates complete
   await new Promise(resolve => setTimeout(resolve, 0));
 
-  // Submit the form programmatically
-  const form = document.getElementById(formId) as HTMLFormElement;
+  // Submit the wizard form programmatically
+  const form = document.getElementById(`${resolvedFormId}-wizard`) as HTMLFormElement;
   if (form) {
     // Ensure all form fields have the correct values
     const nameInput = form.querySelector('input[name="name"]') as HTMLInputElement;
@@ -154,16 +171,21 @@ function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
   }
 }
 
-
-function handleInitialBalanceSubmit() {
-  // Value is already bound via bind:value, no need to set it again
-}
-
 // Account type options for the dropdown
 const accountTypeOptions = accountTypeEnum.map(type => ({
   value: type,
   label: type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')
 }));
+
+// Default icons for account types
+const accountTypeDefaults: Record<string, { icon: string }> = {
+  checking: { icon: 'credit-card' },
+  savings: { icon: 'piggy-bank' },
+  credit_card: { icon: 'credit-card' },
+  investment: { icon: 'trending-up' },
+  loan: { icon: 'banknote' },
+  cash: { icon: 'wallet' }
+};
 
 // Auto-detect account type from name
 function detectAccountTypeFromName(name: string): AccountType | null {
@@ -229,8 +251,38 @@ function handleNameChange(event: Event) {
   if (!isUpdate && name.length > 2) {
     const detectedType = detectAccountTypeFromName(name);
     if (detectedType && (!$formData.accountType || $formData.accountType === 'checking')) {
+      const previousAccountType = $formData.accountType;
       $formData.accountType = detectedType;
+      // Auto-set icon when type is auto-detected, passing the previous type
+      updateIconForAccountType(detectedType, previousAccountType);
     }
+  }
+}
+
+// Handle account type change and auto-set icon
+function handleAccountTypeChange(value: string) {
+  const previousAccountType = $formData.accountType;
+  $formData.accountType = value;
+  updateIconForAccountType(value, previousAccountType);
+}
+
+// Update icon based on account type change
+function updateIconForAccountType(newAccountType: string, previousAccountType: string | undefined) {
+  // Auto-update icon if:
+  // 1. No icon is set yet, OR
+  // 2. Current icon matches the default for the previous account type (user hasn't customized it)
+  const defaults = accountTypeDefaults[newAccountType];
+  const currentIcon = $formData.accountIcon;
+  const previousDefaults = previousAccountType ? accountTypeDefaults[previousAccountType] : null;
+
+  const shouldUpdateIcon = defaults && (
+    !currentIcon ||
+    currentIcon === '' ||
+    (previousDefaults && currentIcon === previousDefaults.icon)
+  );
+
+  if (shouldUpdateIcon) {
+    $formData.accountIcon = defaults.icon;
   }
 }
 </script>
@@ -253,9 +305,10 @@ function handleNameChange(event: Event) {
     initialBalance: $formData.initialBalance,
     accountNumberLast4: $formData.accountNumberLast4
   }}
+  bind:currentMode={mode}
 >
   {#snippet formContent()}
-    <form id={formId} method="post" action="/accounts?/add-account" use:enhance class="space-y-6">
+    <form id={`${resolvedFormId}-manual`} method="post" action="/accounts?/add-account" use:enhance class="space-y-6">
       <input hidden value={$formData.id} name="id" />
       <input hidden value={$formData.accountType} name="accountType" />
       <input hidden value={$formData.institution} name="institution" />
@@ -298,7 +351,7 @@ function handleNameChange(event: Event) {
               <Form.Control>
                 {#snippet children({props})}
                   <Form.Label>Account Type</Form.Label>
-                  <Select.Root type="single" bind:value={$formData.accountType}>
+                  <Select.Root type="single" value={$formData.accountType} onValueChange={handleAccountTypeChange}>
                     <Select.Trigger {...props}>
                       <span>{$formData.accountType ? accountTypeOptions.find(opt => opt.value === $formData.accountType)?.label : "Select account type"}</span>
                     </Select.Trigger>
@@ -405,7 +458,6 @@ function handleNameChange(event: Event) {
                   <Form.Label>Initial Balance</Form.Label>
                   <NumericInput
                     bind:value={$formData.initialBalance}
-                    onSubmit={handleInitialBalanceSubmit}
                     buttonClass="w-full max-w-xs"
                   />
                   <Form.Description>The starting balance for this account</Form.Description>
@@ -452,5 +504,18 @@ function handleNameChange(event: Event) {
       initialData={initialData}
       onComplete={handleWizardComplete}
     />
+
+    <!-- Hidden form for wizard submission -->
+    <form id={`${resolvedFormId}-wizard`} method="post" action="/accounts?/add-account" use:enhance class="hidden">
+      <input hidden value={$formData.id} name="id" />
+      <input hidden value={$formData.name} name="name" />
+      <input hidden value={$formData.notes} name="notes" />
+      <input hidden value={$formData.accountType} name="accountType" />
+      <input hidden value={$formData.institution} name="institution" />
+      <input hidden value={$formData.accountIcon} name="accountIcon" />
+      <input hidden value={$formData.accountColor} name="accountColor" />
+      <input hidden value={$formData.initialBalance} name="initialBalance" />
+      <input hidden value={$formData.accountNumberLast4} name="accountNumberLast4" />
+    </form>
   {/snippet}
 </WizardFormWrapper>

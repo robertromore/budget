@@ -136,6 +136,18 @@ export class PayeeService {
   }
 
   /**
+   * Generate a URL-friendly slug from a string
+   */
+  private generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  }
+
+  /**
    * Create a new payee with enhanced budgeting integration
    */
   async createPayee(data: CreatePayeeData): Promise<Payee> {
@@ -167,8 +179,20 @@ export class PayeeService {
     // Sanitize and validate additional fields
     const sanitizedData = await this.sanitizePayeeData(data);
 
+    // Generate unique slug
+    let baseSlug = this.generateSlug(sanitizedName);
+    let slug = baseSlug;
+    let counter = 1;
+
+    // Ensure slug uniqueness (only checking active payees since deleted ones have modified slugs)
+    while (await this.repository.findBySlug(slug)) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
     const newPayee: NewPayee = {
       name: sanitizedName,
+      slug,
       notes: sanitizedNotes,
       ...sanitizedData,
       isActive: true, // New payees are active by default
@@ -189,6 +213,22 @@ export class PayeeService {
     const payee = await this.repository.findById(id);
     if (!payee) {
       throw new NotFoundError("Payee", id);
+    }
+
+    return payee;
+  }
+
+  /**
+   * Get payee by slug
+   */
+  async getPayeeBySlug(slug: string): Promise<Payee> {
+    if (!slug?.trim()) {
+      throw new ValidationError("Invalid payee slug");
+    }
+
+    const payee = await this.repository.findBySlug(slug);
+    if (!payee) {
+      throw new NotFoundError("Payee", slug);
     }
 
     return payee;

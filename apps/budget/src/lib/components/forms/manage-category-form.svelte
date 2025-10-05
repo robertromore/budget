@@ -7,7 +7,7 @@ import * as Form from '$lib/components/ui/form';
 import * as Select from '$lib/components/ui/select';
 import {Input} from '$lib/components/ui/input';
 import {Textarea} from '$lib/components/ui/textarea';
-import {type Category, categoryTypeEnum, type CategoryType, taxCategories, spendingPriorityEnum, incomeReliabilityEnum} from '$lib/schema';
+import {type Category, categoryTypeEnum, type CategoryType, taxCategories, type TaxCategory, spendingPriorityEnum, incomeReliabilityEnum} from '$lib/schema';
 import {superformInsertCategorySchema} from '$lib/schema/superforms';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import type {EditableEntityItem} from '$lib/types';
@@ -35,22 +35,43 @@ let {
 // Generate unique form ID based on category ID or a random value for new categories
 const formId = id ? `category-form-${id}` : `category-form-new-${Math.random().toString(36).slice(2, 9)}`;
 
-const form = superForm({
+const defaults: Omit<Category, 'id' | 'parentId' | 'isActive' | 'createdAt' | 'updatedAt' | 'dateCreated' | 'displayOrder'> = {
   name: '',
   notes: '',
-  categoryType: 'expense',
+  categoryType: 'expense' as CategoryType,
   categoryIcon: '',
   categoryColor: '',
   isTaxDeductible: false,
-  taxCategory: null,
-  deductiblePercentage: null,
+  taxCategory: 'other' as TaxCategory,
+  deductiblePercentage: 0,
   isSeasonal: false,
   seasonalMonths: '',
-  expectedMonthlyMin: null,
-  expectedMonthlyMax: null,
+  expectedMonthlyMin: 0,
+  expectedMonthlyMax: 0,
   spendingPriority: null,
-  incomeReliability: null
-}, {
+  incomeReliability: null,
+  deletedAt: null,
+};
+
+if (id) {
+  const category: Category = CategoriesState.get().getById(id)!;
+  defaults.name = category.name ?? '';
+  defaults.notes = category.notes ?? '';
+  defaults.categoryType = category.categoryType || 'expense';
+  defaults.categoryIcon = category.categoryIcon || '';
+  defaults.categoryColor = category.categoryColor || '';
+  defaults.isTaxDeductible = category.isTaxDeductible || false;
+  defaults.taxCategory = category.taxCategory || 'other';
+  defaults.deductiblePercentage = category.deductiblePercentage ?? 0;
+  defaults.isSeasonal = category.isSeasonal || false;
+  defaults.seasonalMonths = category.seasonalMonths || '';
+  defaults.expectedMonthlyMin = category.expectedMonthlyMin || null;
+  defaults.expectedMonthlyMax = category.expectedMonthlyMax || null;
+  defaults.spendingPriority = category.spendingPriority;
+  defaults.incomeReliability = category.incomeReliability || null;
+}
+
+const form = superForm(defaults, {
   id: formId,
   validators: zod4Client(superformInsertCategorySchema),
   onResult: async ({result}) => {
@@ -65,23 +86,6 @@ const form = superForm({
 });
 
 const {form: formData, enhance, submitting} = form;
-if (id) {
-  const category: Category = CategoriesState.get().getById(id)!;
-  $formData.name = category.name;
-  $formData.notes = category.notes;
-  $formData.categoryType = category.categoryType || 'expense';
-  $formData.categoryIcon = category.categoryIcon || '';
-  $formData.categoryColor = category.categoryColor || '';
-  $formData.isTaxDeductible = category.isTaxDeductible || false;
-  $formData.taxCategory = category.taxCategory || null;
-  $formData.deductiblePercentage = category.deductiblePercentage || null;
-  $formData.isSeasonal = category.isSeasonal || false;
-  $formData.seasonalMonths = category.seasonalMonths || '';
-  $formData.expectedMonthlyMin = category.expectedMonthlyMin || null;
-  $formData.expectedMonthlyMax = category.expectedMonthlyMax || null;
-  $formData.spendingPriority = category.spendingPriority || null;
-  $formData.incomeReliability = category.incomeReliability || null;
-}
 
 // Category type options for the dropdown
 const categoryTypeOptions = categoryTypeEnum.map(type => ({
@@ -167,6 +171,7 @@ const deleteCategory = async (id: number) => {
                   {/each}
                 </Select.Content>
               </Select.Root>
+              <input type="hidden" name="categoryType" value={$formData.categoryType} />
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
@@ -205,7 +210,7 @@ const deleteCategory = async (id: number) => {
             {#snippet children({})}
               <Form.Label>Category Icon</Form.Label>
               <IconPicker
-                value={$formData.categoryIcon}
+                value={$formData.categoryIcon ?? ''}
                 placeholder="Select an icon..."
                 onchange={handleIconChange}
               />
@@ -220,7 +225,7 @@ const deleteCategory = async (id: number) => {
             {#snippet children({})}
               <Form.Label>Category Color</Form.Label>
               <ColorPicker
-                value={$formData.categoryColor}
+                value={$formData.categoryColor ?? ''}
                 placeholder="Choose category color"
                 onchange={(event) => {
                   $formData.categoryColor = event.detail.value;
@@ -273,7 +278,7 @@ const deleteCategory = async (id: number) => {
             <Form.Control>
               {#snippet children({props})}
                 <Form.Label>Tax Category</Form.Label>
-                <Select.Root type="single" bind:value={$formData.taxCategory}>
+                <Select.Root type="single" bind:value={$formData.taxCategory as string}>
                   <Select.Trigger {...props}>
                     <span>{$formData.taxCategory ? taxCategoryOptions.find(opt => opt.value === $formData.taxCategory)?.label : "Select tax category"}</span>
                   </Select.Trigger>
@@ -283,6 +288,7 @@ const deleteCategory = async (id: number) => {
                     {/each}
                   </Select.Content>
                 </Select.Root>
+                <input type="hidden" name="taxCategory" value={$formData.taxCategory || ''} />
                 <Form.FieldErrors />
               {/snippet}
             </Form.Control>
@@ -295,12 +301,7 @@ const deleteCategory = async (id: number) => {
                 <Form.Label>Deductible Percentage</Form.Label>
                 <NumericInput
                   {...props}
-                  bind:value={$formData.deductiblePercentage}
-                  placeholder="e.g., 100"
-                  min={0}
-                  max={100}
-                  step={1}
-                  suffix="%"
+                  bind:value={$formData.deductiblePercentage as number}
                 />
                 <Form.FieldErrors />
               {/snippet}
@@ -330,7 +331,7 @@ const deleteCategory = async (id: number) => {
           <Form.Control>
             {#snippet children({props})}
               <Form.Label>Spending Priority</Form.Label>
-              <Select.Root type="single" bind:value={$formData.spendingPriority}>
+              <Select.Root type="single" bind:value={$formData.spendingPriority as string}>
                 <Select.Trigger {...props}>
                   <span>{$formData.spendingPriority ? spendingPriorityOptions.find(opt => opt.value === $formData.spendingPriority)?.label : "Select priority"}</span>
                 </Select.Trigger>
@@ -340,6 +341,7 @@ const deleteCategory = async (id: number) => {
                   {/each}
                 </Select.Content>
               </Select.Root>
+              <input type="hidden" name="spendingPriority" value={$formData.spendingPriority || ''} />
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
@@ -388,11 +390,7 @@ const deleteCategory = async (id: number) => {
               <Form.Label>Expected Monthly Min</Form.Label>
               <NumericInput
                 {...props}
-                bind:value={$formData.expectedMonthlyMin}
-                placeholder="e.g., 100"
-                min={0}
-                step={10}
-                prefix="$"
+                bind:value={$formData.expectedMonthlyMin as number}
               />
               <Form.FieldErrors />
             {/snippet}
@@ -405,11 +403,7 @@ const deleteCategory = async (id: number) => {
               <Form.Label>Expected Monthly Max</Form.Label>
               <NumericInput
                 {...props}
-                bind:value={$formData.expectedMonthlyMax}
-                placeholder="e.g., 500"
-                min={0}
-                step={10}
-                prefix="$"
+                bind:value={$formData.expectedMonthlyMax as number}
               />
               <Form.FieldErrors />
             {/snippet}
@@ -439,7 +433,7 @@ const deleteCategory = async (id: number) => {
           <Form.Control>
             {#snippet children({props})}
               <Form.Label>Income Reliability</Form.Label>
-              <Select.Root type="single" bind:value={$formData.incomeReliability}>
+              <Select.Root type="single" bind:value={$formData.incomeReliability as string}>
                 <Select.Trigger {...props}>
                   <span>{$formData.incomeReliability ? incomeReliabilityOptions.find(opt => opt.value === $formData.incomeReliability)?.label : "Select reliability"}</span>
                 </Select.Trigger>
@@ -449,6 +443,7 @@ const deleteCategory = async (id: number) => {
                   {/each}
                 </Select.Content>
               </Select.Root>
+              <input type="hidden" name="incomeReliability" value={$formData.incomeReliability || ''} />
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
@@ -497,11 +492,7 @@ const deleteCategory = async (id: number) => {
               <Form.Label>Expected Monthly Min</Form.Label>
               <NumericInput
                 {...props}
-                bind:value={$formData.expectedMonthlyMin}
-                placeholder="e.g., 3000"
-                min={0}
-                step={100}
-                prefix="$"
+                bind:value={$formData.expectedMonthlyMin as number}
               />
               <Form.FieldErrors />
             {/snippet}
@@ -514,11 +505,7 @@ const deleteCategory = async (id: number) => {
               <Form.Label>Expected Monthly Max</Form.Label>
               <NumericInput
                 {...props}
-                bind:value={$formData.expectedMonthlyMax}
-                placeholder="e.g., 5000"
-                min={0}
-                step={100}
-                prefix="$"
+                bind:value={$formData.expectedMonthlyMax as number}
               />
               <Form.FieldErrors />
             {/snippet}

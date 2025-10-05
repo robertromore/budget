@@ -8,6 +8,7 @@ export const accountKeys = createQueryKeys("accounts", {
   list: () => ["accounts", "list"] as const,
   details: () => ["accounts", "detail"] as const,
   detail: (id: number) => ["accounts", "detail", id] as const,
+  detailBySlug: (slug: string) => ["accounts", "detail", "slug", slug] as const,
 });
 
 export const listAccounts = () =>
@@ -19,10 +20,12 @@ export const listAccounts = () =>
     },
   });
 
-export const getAccountDetail = (id: number) =>
+export const getAccountDetail = (idOrSlug: number | string) =>
   defineQuery<Account>({
-    queryKey: accountKeys.detail(id),
-    queryFn: () => trpc().accountRoutes.get.query({id}),
+    queryKey: typeof idOrSlug === "number" ? accountKeys.detail(idOrSlug) : accountKeys.detailBySlug(idOrSlug),
+    queryFn: () => typeof idOrSlug === "number"
+      ? trpc().accountRoutes.load.query({id: idOrSlug})
+      : trpc().accountRoutes.getBySlug.query({slug: idOrSlug}),
     options: {
       staleTime: 60 * 1000,
     },

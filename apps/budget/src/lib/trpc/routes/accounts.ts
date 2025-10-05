@@ -212,6 +212,19 @@ export const accountRoutes = t.router({
 
     return accountWithBalance as Account;
   }),
+  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({ctx, input}) => {
+    const accountService = new AccountService();
+    const account = await accountService.getAccountBySlug(input.slug);
+
+    if (!account) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Account not found",
+      });
+    }
+
+    return account;
+  }),
   save: rateLimitedProcedure.input(accountSaveSchema).mutation(async ({ctx, input}) => {
     if (input.id) {
       // For updates, get existing account first

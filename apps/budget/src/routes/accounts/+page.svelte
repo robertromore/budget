@@ -62,12 +62,12 @@ const deleteAccount = (id: number) => {
   {:else}
     <!-- Accounts Grid -->
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {#each accountsArray as { id, name, balance, notes, accountIcon, accountColor, accountType, institution }}
+      {#each accountsArray as { id, slug, name, balance, notes, accountIcon, accountColor, accountType, institution }}
     <Card.Root class="border-l-4" style={accountColor ? `border-left-color: ${accountColor}` : ''}>
       <Card.Header>
         <Card.Title>
           <a
-            href="/accounts/{id}"
+            href="/accounts/{slug}"
             class="text-foreground hover:text-primary focus:text-primary focus:ring-primary rounded focus:ring-2 focus:ring-offset-2 focus:outline-none flex items-center gap-2">
             {#if accountIcon}
               {@const IconComponent = getIconByName(accountIcon)?.icon}
@@ -105,7 +105,7 @@ const deleteAccount = (id: number) => {
       </Card.Content>
       <Card.Footer class="flex gap-2">
         <Button
-          href="/accounts/{id}/edit"
+          href="/accounts/{slug}/edit"
           variant="outline"
           size="sm"
           aria-label="Edit account {name}">

@@ -163,7 +163,7 @@ let defaultCategory = $state();
 $formData.amount_type = 'exact';
 $formData.status = 'active';
 $formData.recurring = false;
-$formData.auto_add = false;
+$formData.auto_add = true;
 
 // Initialize form data if editing or duplicating
 $effect(() => {
@@ -217,7 +217,7 @@ $effect(() => {
           move_weekends: scheduleDate.move_weekends || 'none',
           move_holidays: scheduleDate.move_holidays || 'none',
           specific_dates: scheduleDate.specific_dates || [],
-          on: scheduleDate.on || false,
+          on: Boolean(scheduleDate.on),
           on_type: scheduleDate.on_type || 'day',
           days: scheduleDate.days || [],
           weeks: scheduleDate.weeks || [],
@@ -356,12 +356,24 @@ $effect(() => {
       </Card.Description>
     </Card.Header>
     <Card.Content class="space-y-4">
+      <!-- Amount Field -->
+      <Form.Field {form} name="amount">
+        <Form.Control>
+          {#snippet children({props})}
+            <Form.Label>Transaction Amount</Form.Label>
+            <MultiNumericInput {...props} bind:value={amount} bind:type={$formData.amount_type} />
+            <Form.FieldErrors />
+            <input hidden bind:value={$formData.amount} name={props.name} />
+          {/snippet}
+        </Form.Control>
+      </Form.Field>
+
       <!-- Account and Payee Row -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Form.Field {form} name="accountId">
           <Form.Control>
             {#snippet children({props})}
-              <Form.Label>From Account</Form.Label>
+              <Form.Label>{$formData.amount >= 0 ? 'To' : 'From'} Account</Form.Label>
               <AccountSelector
                 entityLabel="account"
                 entities={accounts}
@@ -439,18 +451,6 @@ $effect(() => {
           </Form.Control>
         </Form.Field>
       </div>
-
-      <!-- Amount Field -->
-      <Form.Field {form} name="amount">
-        <Form.Control>
-          {#snippet children({props})}
-            <Form.Label>Transaction Amount</Form.Label>
-            <MultiNumericInput {...props} bind:value={amount} bind:type={$formData.amount_type} />
-            <Form.FieldErrors />
-            <input hidden bind:value={$formData.amount} name={props.name} />
-          {/snippet}
-        </Form.Control>
-      </Form.Field>
     </Card.Content>
   </Card.Root>
 

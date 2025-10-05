@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "7f4dc33b-bd9b-4ab8-8539-cb8b1ee28c59",
-  "prevId": "ea2498a1-0627-4579-916a-2109764c2d1b",
+  "id": "805d21a7-1097-445e-b801-87f02b248f4e",
+  "prevId": "ab0ef5a6-e9cb-4e47-9c1b-1acf65c27720",
   "tables": {
     "account": {
       "name": "account",
@@ -826,6 +826,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "description": {
           "name": "description",
           "type": "text",
@@ -896,6 +903,27 @@
         }
       },
       "indexes": {
+        "budget_slug_unique": {
+          "name": "budget_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        },
+        "budget_name_idx": {
+          "name": "budget_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        },
+        "budget_slug_idx": {
+          "name": "budget_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": false
+        },
         "budget_type_idx": {
           "name": "budget_type_idx",
           "columns": [
@@ -921,6 +949,13 @@
           "name": "budget_enforcement_idx",
           "columns": [
             "enforcement_level"
+          ],
+          "isUnique": false
+        },
+        "budget_deleted_at_idx": {
+          "name": "budget_deleted_at_idx",
+          "columns": [
+            "deleted_at"
           ],
           "isUnique": false
         }
@@ -952,6 +987,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         },
         "notes": {
@@ -1097,10 +1139,24 @@
         }
       },
       "indexes": {
+        "categories_slug_unique": {
+          "name": "categories_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        },
         "category_name_idx": {
           "name": "category_name_idx",
           "columns": [
             "name"
+          ],
+          "isUnique": false
+        },
+        "category_slug_idx": {
+          "name": "category_slug_idx",
+          "columns": [
+            "slug"
           ],
           "isUnique": false
         },
@@ -1240,6 +1296,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         },
         "notes": {
@@ -1418,10 +1481,24 @@
         }
       },
       "indexes": {
+        "payee_slug_unique": {
+          "name": "payee_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        },
         "payee_name_idx": {
           "name": "payee_name_idx",
           "columns": [
             "name"
+          ],
+          "isUnique": false
+        },
+        "payee_slug_idx": {
+          "name": "payee_slug_idx",
+          "columns": [
+            "slug"
           ],
           "isUnique": false
         },

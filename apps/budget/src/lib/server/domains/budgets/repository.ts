@@ -192,6 +192,64 @@ export class BudgetRepository {
   }
 
   /**
+   * Find budget by slug including relations.
+   */
+  async findBySlug(slug: string, client: DbClient = db): Promise<BudgetWithRelations | null> {
+    const result = await client.query.budgets.findFirst({
+      where: and(eq(budgets.slug, slug), isNull(budgets.deletedAt)),
+      with: this.defaultRelations(),
+    });
+
+    return (result as BudgetWithRelations) ?? null;
+  }
+
+  /**
+   * Check if a slug exists (excluding deleted budgets).
+   */
+  async slugExists(slug: string): Promise<boolean> {
+    const [result] = await db
+      .select()
+      .from(budgets)
+      .where(eq(budgets.slug, slug))
+      .limit(1);
+    return !!result;
+  }
+
+  /**
+   * Soft delete a budget (mark as deleted and archive slug).
+   */
+  async softDelete(id: number): Promise<Budget> {
+    const [existingBudget] = await db
+      .select()
+      .from(budgets)
+      .where(and(eq(budgets.id, id), isNull(budgets.deletedAt)))
+      .limit(1);
+
+    if (!existingBudget) {
+      throw new NotFoundError("Budget", id);
+    }
+
+    const timestamp = Date.now();
+    const archivedSlug = `${existingBudget.slug}-deleted-${timestamp}`;
+
+    const [budget] = await db
+      .update(budgets)
+      .set({
+        slug: archivedSlug,
+        deletedAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
+      })
+      .where(and(eq(budgets.id, id), isNull(budgets.deletedAt)))
+      .returning();
+
+    if (!budget) {
+      throw new NotFoundError("Budget", id);
+    }
+
+    return budget;
+  }
+
+  /**
    * Permanently delete a budget and all dependent records.
    */
   async deleteBudget(id: number): Promise<void> {

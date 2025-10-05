@@ -51,6 +51,23 @@ export const payeeRoutes = t.router({
     }
   }),
 
+  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({input}) => {
+    try {
+      return await payeeService.getPayeeBySlug(input.slug);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: error.message,
+        });
+      }
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to load payee",
+      });
+    }
+  }),
+
   search: publicProcedure.input(searchPayeesSchema).query(async ({input}) => {
     try {
       return await payeeService.searchPayees(input.query);
@@ -140,7 +157,7 @@ export const payeeRoutes = t.router({
     }),
 
   update: rateLimitedProcedure
-    .input(updatePayeeSchema.extend({id: z.number().int().positive()}))
+    .input(updatePayeeSchema.safeExtend({id: z.number().int().positive()}))
     .mutation(async ({input}) => {
       try {
         const {id, ...updateData} = input;

@@ -22,6 +22,7 @@ export const budgetKeys = createQueryKeys("budgets", {
   count: () => ["budgets", "count"] as const,
   details: () => ["budgets", "detail"] as const,
   detail: (id: number) => ["budgets", "detail", id] as const,
+  detailBySlug: (slug: string) => ["budgets", "detail", "slug", slug] as const,
   periodInstances: (templateId: number) => ["budgets", "periods", templateId] as const,
   periodTemplates: () => ["budgets", "period-templates"] as const,
   periodTemplateDetail: (id: number) => ["budgets", "period-templates", "detail", id] as const,
@@ -58,10 +59,12 @@ export const listBudgets = (status?: Budget["status"]) =>
     },
   });
 
-export const getBudgetDetail = (id: number) =>
+export const getBudgetDetail = (idOrSlug: number | string) =>
   defineQuery<BudgetWithRelations>({
-    queryKey: budgetKeys.detail(id),
-    queryFn: () => trpc().budgetRoutes.get.query({id}),
+    queryKey: typeof idOrSlug === "number" ? budgetKeys.detail(idOrSlug) : budgetKeys.detailBySlug(idOrSlug),
+    queryFn: () => typeof idOrSlug === "number"
+      ? trpc().budgetRoutes.get.query({id: idOrSlug})
+      : trpc().budgetRoutes.getBySlug.query({slug: idOrSlug}),
     options: {
       staleTime: 60 * 1000,
     },

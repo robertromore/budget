@@ -11,10 +11,12 @@ import {RenderScan} from 'svelte-render-scan';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
 import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog.svelte';
+import DeleteBudgetDialog from '$lib/components/dialogs/delete-budget-dialog.svelte';
 import AddPayeeDialog from '$lib/components/dialogs/add-payee-dialog.svelte';
 import DeletePayeeDialog from '$lib/components/dialogs/delete-payee-dialog.svelte';
 import DeleteCategoryDialog from '$lib/components/dialogs/delete-category-dialog.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
+import {BudgetState} from '$lib/states/budgets.svelte';
 import {setQueryClientContext} from '@tanstack/svelte-query';
 import {queryClient} from '$lib/query';
 import {autoScheduler} from '$lib/stores/auto-scheduler.svelte';
@@ -34,6 +36,7 @@ const accountsState = AccountsState.set(data.accounts);
 SchedulesState.set(data.schedules);
 CategoriesState.set(data.categories);
 PayeesState.set(data.payees);
+BudgetState.set(data.budgets);
 
 // Keep AccountsState in sync with query data
 $effect(() => {
@@ -57,6 +60,7 @@ onMount(() => {
 
 <DeleteAccountDialog />
 <DeleteScheduleDialog />
+<DeleteBudgetDialog />
 <AddPayeeDialog />
 <DeletePayeeDialog />
 <DeleteCategoryDialog />

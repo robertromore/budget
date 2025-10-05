@@ -97,15 +97,15 @@ const deletePayee = (payee: Payee) => {
 };
 
 const viewPayee = (payee: Payee) => {
-  goto(`/payees/${payee.id}`);
+  goto(`/payees/${payee.slug}`);
 };
 
 const editPayee = (payee: Payee) => {
-  goto(`/payees/${payee.id}/edit`);
+  goto(`/payees/${payee.slug}/edit`);
 };
 
 const viewAnalytics = (payee: Payee) => {
-  goto(`/payees/${payee.id}/analytics`);
+  goto(`/payees/${payee.slug}/analytics`);
 };
 
 
