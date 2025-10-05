@@ -103,6 +103,10 @@ export class BudgetState {
     return this.budgets.get(id);
   }
 
+  getBySlug(slug: string): BudgetWithRelations | null {
+    return Array.from(this.budgets.values()).find((budget) => budget.slug === slug) ?? null;
+  }
+
   getTemplatesForBudget(budgetId: number): TemplateWithPeriods[] {
     const budget = this.budgets.get(budgetId);
     if (!budget?.periodTemplates) return [];

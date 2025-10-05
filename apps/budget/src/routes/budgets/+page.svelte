@@ -144,24 +144,24 @@
   const bulkDeleteMutation = bulkDeleteBudgets.options();
 
   async function handleDuplicateBudget(budget: BudgetWithRelations) {
-    await $duplicateMutation.mutateAsync({ id: budget.id });
+    await duplicateMutation.mutateAsync({ id: budget.id });
   }
 
   async function handleArchiveBudget(budget: BudgetWithRelations) {
-    await $updateMutation.mutateAsync({ id: budget.id, data: { status: 'archived' } });
+    await updateMutation.mutateAsync({ id: budget.id, data: { status: 'archived' } });
   }
 
   async function handleDeleteBudget(budget: BudgetWithRelations) {
     const confirmed = confirm(`Are you sure you want to delete "${budget.name}"? This action cannot be undone.`);
     if (!confirmed) return;
-    await $deleteMutation.mutateAsync(budget.id);
+    await deleteMutation.mutateAsync(budget.id);
   }
 
   async function handleBulkArchive() {
     const ids = Array.from(selectedIds);
     const confirmed = confirm(`Archive ${ids.length} budget(s)?`);
     if (!confirmed) return;
-    await $bulkArchiveMutation.mutateAsync(ids);
+    await bulkArchiveMutation.mutateAsync(ids);
     clearSelection();
   }
 
@@ -169,7 +169,7 @@
     const ids = Array.from(selectedIds);
     const confirmed = confirm(`Are you sure you want to delete ${ids.length} budget(s)? This action cannot be undone.`);
     if (!confirmed) return;
-    await $bulkDeleteMutation.mutateAsync(ids);
+    await bulkDeleteMutation.mutateAsync(ids);
     clearSelection();
   }
 
@@ -500,7 +500,7 @@
                     variant="outline"
                     size="sm"
                     onclick={handleBulkArchive}
-                    disabled={$bulkArchiveMutation.isPending}
+                    disabled={bulkArchiveMutation.isPending}
                   >
                     <Archive class="h-4 w-4 mr-2" />
                     Archive
@@ -509,7 +509,7 @@
                     variant="outline"
                     size="sm"
                     onclick={handleBulkDelete}
-                    disabled={$bulkDeleteMutation.isPending}
+                    disabled={bulkDeleteMutation.isPending}
                   >
                     <Trash2 class="h-4 w-4 mr-2" />
                     Delete
@@ -556,7 +556,7 @@
                   <Card.Title class="text-xl font-semibold text-foreground flex-1 min-w-0">
                     <a
                       class="rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary hover:text-primary break-words"
-                      href={`/budgets/${budget.id}`}
+                      href={`/budgets/${budget.slug}`}
                     >
                       {budget.name}
                     </a>

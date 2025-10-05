@@ -161,15 +161,15 @@ const deleteCategory = (category: Category) => {
 };
 
 const viewCategory = (category: Category) => {
-  goto(`/categories/${category.id}`);
+  goto(`/categories/${category.slug}`);
 };
 
 const editCategory = (category: Category) => {
-  goto(`/categories/${category.id}/edit`);
+  goto(`/categories/${category.slug}/edit`);
 };
 
 const viewAnalytics = (category: Category) => {
-  goto(`/categories/${category.id}/analytics`);
+  goto(`/categories/${category.slug}/analytics`);
 };
 </script>
 

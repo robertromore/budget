@@ -93,23 +93,17 @@
   onSheetChange={handleSheetChange}
 >
   {#snippet trigger()}
-    <Button
-      variant="outline"
-      class="w-full justify-start gap-2"
-      {disabled}
-    >
-      <div class="flex items-center gap-2">
-        {#if value && isValidHexColor(value)}
-          <div
-            class="h-5 w-5 rounded-md border border-border"
-            style="background-color: {value}"
-          ></div>
-          <span class="text-sm font-mono uppercase">{value}</span>
-        {:else}
-          <Palette class="h-4 w-4 text-muted-foreground" />
-          <span class="text-muted-foreground">{placeholder}</span>
-        {/if}
-      </div>
-    </Button>
+    <div class="flex w-full items-center justify-start gap-2 {disabled ? 'opacity-50 cursor-not-allowed' : ''}">
+      {#if value && isValidHexColor(value)}
+        <div
+          class="h-5 w-5 rounded-md border border-border"
+          style="background-color: {value}"
+        ></div>
+        <span class="text-sm font-mono uppercase">{value}</span>
+      {:else}
+        <Palette class="h-4 w-4 text-muted-foreground" />
+        <span class="text-muted-foreground">{placeholder}</span>
+      {/if}
+    </div>
   {/snippet}
 </StackedSheet>

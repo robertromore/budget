@@ -40,6 +40,23 @@ export const categoriesRoutes = t.router({
     }
   }),
 
+  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({input}) => {
+    try {
+      return await categoryService.getCategoryBySlug(input.slug);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: error.message,
+        });
+      }
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to load category",
+      });
+    }
+  }),
+
   search: publicProcedure.input(searchCategoriesSchema).query(async ({input}) => {
     try {
       return await categoryService.searchCategories(input.query);
@@ -105,11 +122,28 @@ export const categoriesRoutes = t.router({
 
   save: rateLimitedProcedure
     .input(formInsertCategorySchema)
-    .mutation(async ({input: {id, name, notes}}) => {
+    .mutation(async ({input}) => {
       try {
+        const {id, name, notes, categoryType, categoryIcon, categoryColor, isTaxDeductible, taxCategory, deductiblePercentage, isSeasonal, seasonalMonths, expectedMonthlyMin, expectedMonthlyMax, spendingPriority, incomeReliability} = input;
+
         if (id) {
           // Update existing category
-          const category = await categoryService.updateCategory(id, {name, notes});
+          const category = await categoryService.updateCategory(id, {
+            name,
+            notes,
+            categoryType,
+            categoryIcon,
+            categoryColor,
+            isTaxDeductible,
+            taxCategory,
+            deductiblePercentage,
+            isSeasonal,
+            seasonalMonths,
+            expectedMonthlyMin,
+            expectedMonthlyMax,
+            spendingPriority,
+            incomeReliability,
+          });
           (category as any).is_new = false; // Maintain compatibility with existing UI
           return category;
         } else {

@@ -80,22 +80,24 @@
   }
 </script>
 
-<div class="space-y-4 {className}">
+<div class="space-y-4 mt-6 mb-8 bg-muted/20 border-2 border-border rounded-lg p-6 {className}">
   <!-- Progress Bar -->
-  <div class="space-y-2">
-    <div class="flex justify-between items-center">
-      <span class="text-sm font-medium text-muted-foreground">
-        Step {currentStepIndex + 1} of {steps.length}
-      </span>
-      <span class="text-sm font-medium text-muted-foreground">
-        {Math.round(progress)}% Complete
-      </span>
-    </div>
-    <div class="h-2 bg-muted rounded-full overflow-hidden">
-      <div
-        class="h-full bg-primary transition-all duration-300 ease-out"
-        style="width: {progress}%"
-      ></div>
+  <div class="rounded-lg p-4 bg-muted/30">
+    <div class="space-y-2">
+      <div class="flex justify-between items-center">
+        <span class="text-sm font-medium text-muted-foreground">
+          Step {currentStepIndex + 1} of {steps.length}
+        </span>
+        <span class="text-sm font-medium text-muted-foreground">
+          {Math.round(progress)}% Complete
+        </span>
+      </div>
+      <div class="h-2 bg-muted rounded-full overflow-hidden">
+        <div
+          class="h-full bg-primary transition-all duration-300 ease-out"
+          style="width: {progress}%"
+        ></div>
+      </div>
     </div>
   </div>
 
@@ -123,21 +125,4 @@
       <div class={getConnectorClasses(index)}></div>
     {/each}
   </div>
-
-  <!-- Current Step Info -->
-  {#if steps[currentStepIndex]}
-    <div class="bg-muted/30 rounded-lg p-4">
-      <h3 class="font-semibold text-foreground mb-1">
-        {steps[currentStepIndex].title}
-      </h3>
-      <p class="text-sm text-muted-foreground">
-        {steps[currentStepIndex].description}
-      </p>
-      {#if steps[currentStepIndex].isOptional}
-        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full mt-2">
-          Optional
-        </span>
-      {/if}
-    </div>
-  {/if}
 </div>

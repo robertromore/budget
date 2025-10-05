@@ -17,7 +17,7 @@ let {data} = $props();
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="sm" href="/budgets/{data.budgetId}" class="p-2">
+      <Button variant="ghost" size="sm" href="/budgets/{data.budgetSlug}" class="p-2">
         <ArrowLeft class="h-4 w-4" />
         <span class="sr-only">Back to Budget</span>
       </Button>
@@ -37,6 +37,6 @@ let {data} = $props();
     accounts={data.accounts}
     categories={data.categories}
     budgetId={data.budgetId}
-    onCancel={() => goto(`/budgets/${data.budgetId}`)}
+    onCancel={() => goto(`/budgets/${data.budgetSlug}`)}
   />
 </div>

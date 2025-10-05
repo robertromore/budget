@@ -42,7 +42,7 @@ const executeAutoAddMutation = createExecuteAutoAddMutation();
 const deleteScheduleMutation = createDeleteScheduleMutation();
 
 // Use reactive schedule data when available, fallback to current data from route
-const schedule = $derived($scheduleQuery?.data ?? data.schedule);
+const schedule = $derived(scheduleQuery?.data ?? data.schedule);
 
 // Calculate statistics reactively based on current schedule data
 const statistics = $derived.by(() => {

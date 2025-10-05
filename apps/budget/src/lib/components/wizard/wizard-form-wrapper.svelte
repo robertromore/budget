@@ -22,6 +22,7 @@
     currentFormData?: Record<string, any>;
     showWizardActions?: boolean;
     showWizardPrevious?: boolean;
+    currentMode?: "manual" | "wizard";
   }
 
   let {
@@ -38,9 +39,8 @@
     currentFormData,
     showWizardActions = true,
     showWizardPrevious = false,
+    currentMode = $bindable(defaultMode),
   }: Props = $props();
-
-  let currentMode = $state<"manual" | "wizard">(defaultMode);
   let isSubmitting = $state(false);
 
   const progress = $derived(wizardStore.progress);
@@ -158,6 +158,7 @@
       </Tabs.List>
 
       <!-- Manual Form Mode -->
+      <!-- @ts-ignore - Svelte hydration boundary -->
       <Tabs.Content value="manual" class="mt-6">
         <div class="bg-muted/20 border border-muted rounded-lg p-4 mb-4">
           <p class="text-sm text-muted-foreground">

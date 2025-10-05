@@ -43,6 +43,10 @@ export class CategoriesState {
     return this.categories.get(id);
   }
 
+  getBySlug(slug: string): Category | undefined {
+    return this.findBy((category) => category.slug === slug);
+  }
+
   findBy(predicate: (category: Category) => boolean): Category | undefined {
     return Array.from(this.categories.values()).find(predicate);
   }

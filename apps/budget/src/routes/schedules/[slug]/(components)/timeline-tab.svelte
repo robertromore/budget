@@ -1,5 +1,6 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
+import { Badge } from '$lib/components/ui/badge';
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
 import { currencyFormatter } from '$lib/utils/formatters';
 import type { PageData } from '../$types';

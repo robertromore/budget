@@ -2,7 +2,7 @@
   import * as Popover from '$lib/components/ui/popover';
   import * as Select from '$lib/components/ui/select';
   import { Input } from '$lib/components/ui/input';
-  import { Button } from '$lib/components/ui/button';
+  import { Button, buttonVariants } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
   import { Search, X } from '@lucide/svelte/icons';
   import { ICON_CATEGORIES, searchIcons, getIconByName, type IconOption } from './icon-categories';
@@ -78,37 +78,15 @@
 </script>
 
 <Popover.Root bind:open>
-  <Popover.Trigger>
-    <Button
-      variant="outline"
-      role="combobox"
-      aria-expanded={open}
-      class="w-full justify-between {className}"
-      {disabled}
-    >
-      <div class="flex items-center gap-2">
-        {#if selectedIconData.hasIcon}
-          <selectedIconData.component class="h-4 w-4" />
-          <span>{selectedIconData.name}</span>
-        {:else}
-          <span class="text-muted-foreground">{placeholder}</span>
-        {/if}
-      </div>
-
-      {#if value && !disabled}
-        <Button
-          variant="ghost"
-          size="sm"
-          class="h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
-          onclick={(e) => {
-            e.stopPropagation();
-            handleClear();
-          }}
-        >
-          <X class="h-3 w-3" />
-        </Button>
+  <Popover.Trigger class={buttonVariants({ variant: "outline" })}>
+    <div class="flex items-center gap-2">
+      {#if selectedIconData.hasIcon}
+        <selectedIconData.component class="h-4 w-4" />
+        <span>{selectedIconData.name}</span>
+      {:else}
+        <span class="text-muted-foreground">{placeholder}</span>
       {/if}
-    </Button>
+    </div>
   </Popover.Trigger>
 
   <Popover.Content class="w-80 p-0" align="start">

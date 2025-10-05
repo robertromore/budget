@@ -17,7 +17,7 @@ import {CategoriesState} from '$lib/states/entities/categories.svelte';
 
 let {data}: {data: PageData} = $props();
 
-const categoryId = $derived(Number(page.params.id));
+const slug = $derived(page.params['slug']);
 const category = $derived(data.category);
 const categoriesState = CategoriesState.get();
 
@@ -25,11 +25,11 @@ let deleteDialogOpen = $state(false);
 let isDeleting = $state(false);
 
 const handleDelete = async () => {
-  if (isDeleting) return;
+  if (isDeleting || !category) return;
 
   isDeleting = true;
   try {
-    await categoriesState.deleteCategory(categoryId);
+    await categoriesState.deleteCategory(category.id);
     deleteDialogOpen = false;
     goto('/categories');
   } catch (error) {
@@ -64,11 +64,11 @@ const handleDelete = async () => {
     </div>
     {#if category}
       <div class="flex items-center gap-2">
-        <Button variant="outline" href="/categories/{categoryId}/analytics">
+        <Button variant="outline" href="/categories/{slug}/analytics">
           <BarChart3 class="mr-2 h-4 w-4" />
           View Analytics
         </Button>
-        <Button variant="outline" href="/categories/{categoryId}/edit">
+        <Button variant="outline" href="/categories/{slug}/edit">
           <Edit class="mr-2 h-4 w-4" />
           Edit
         </Button>

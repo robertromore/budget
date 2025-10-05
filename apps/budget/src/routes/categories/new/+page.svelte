@@ -6,12 +6,21 @@ import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Tag from '@lucide/svelte/icons/tag';
 import {ManageCategoryForm} from '$lib/components/forms';
 import type {Category} from '$lib/schema';
+import type {EditableEntityItem} from '$lib/types';
+import {CategoriesState} from '$lib/states/entities/categories.svelte';
 
-const handleSave = (category: Category, isNew: boolean) => {
-  if (isNew && category.id) {
+const categoriesState = CategoriesState.get();
+
+const handleSave = (entity: EditableEntityItem, isNew: boolean) => {
+  const category = entity as Category;
+
+  if (isNew && category.slug) {
+    // Add the new category to state
+    categoriesState.addCategory(category);
+
     // Navigate to the new category's detail page
     setTimeout(() => {
-      goto(`/categories/${category.id}`, { replaceState: true });
+      goto(`/categories/${category.slug}`, { replaceState: true });
     }, 100);
   } else {
     // Navigate back to categories list

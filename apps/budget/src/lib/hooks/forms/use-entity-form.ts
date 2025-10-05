@@ -29,6 +29,9 @@ export function useEntityForm<T = any>(options: EntityFormOptions<T>): any {
   const form = superForm(formData, {
     id: formId,
     validators: zod4Client(schema),
+    warnings: {
+      duplicateId: false
+    },
     onResult: async ({ result }) => {
       if (result.type === 'success' && result.data) {
         const entity = result.data['entity'];

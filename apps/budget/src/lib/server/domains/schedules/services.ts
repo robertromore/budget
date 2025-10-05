@@ -326,9 +326,10 @@ export class ScheduleService {
   /**
    * Get upcoming scheduled transactions for an account
    * Shows transactions that will be created in the near future with intelligent frequency-based limits
+   * Only includes schedules with auto_add enabled
    */
   async getUpcomingScheduledTransactionsForAccount(accountId: number, useSmartLimits: boolean = true): Promise<UpcomingScheduledTransaction[]> {
-    // Get all active auto-add schedules for this account
+    // Get all active schedules with auto_add enabled for this account
     const schedules = await this.repository.getActiveAutoAddSchedules();
     const accountSchedules = schedules.filter(schedule => schedule.accountId === accountId);
 
@@ -435,14 +436,100 @@ export class ScheduleService {
       return [];
     }
 
+    const frequency = schedule.scheduleDate.frequency;
+
+    // Handle monthly schedules with specific days
+    if (frequency === "monthly" && schedule.scheduleDate.on && schedule.scheduleDate.on_type === "day" && schedule.scheduleDate.days && Array.isArray(schedule.scheduleDate.days) && schedule.scheduleDate.days.length > 0) {
+      return this.calculateMonthlyOnDayDates(schedule, daysAhead, maxOccurrences);
+    }
+
+    // Fall back to basic frequency-based calculation
+    return this.calculateBasicFrequencyDates(schedule, daysAhead, maxOccurrences);
+  }
+
+  /**
+   * Calculate dates for monthly schedules with specific days (e.g., 10th and 25th)
+   */
+  private calculateMonthlyOnDayDates(
+    schedule: ScheduleWithDetails,
+    daysAhead: number,
+    maxOccurrences?: number
+  ): string[] {
     const today = new Date();
     const endDate = new Date(today);
     endDate.setDate(today.getDate() + daysAhead);
 
-    const startDate = new Date(schedule.scheduleDate.start);
-    const scheduleEndDate = schedule.scheduleDate.end ? new Date(schedule.scheduleDate.end) : null;
-    const frequency = schedule.scheduleDate.frequency;
-    const interval = schedule.scheduleDate.interval || 1;
+    const startDate = new Date(schedule.scheduleDate!.start);
+    const scheduleEndDate = schedule.scheduleDate!.end ? new Date(schedule.scheduleDate!.end) : null;
+    const interval = schedule.scheduleDate!.interval || 1;
+    const days = schedule.scheduleDate!.days as number[];
+
+    const upcomingDates: string[] = [];
+
+    // Start from the month of the start date or today, whichever is later
+    let currentMonth = new Date(Math.max(startDate.getTime(), today.getTime()));
+    currentMonth.setDate(1); // Set to first day of month
+
+    let loopCount = 0;
+    const safetyLimit = 50; // Safety limit to prevent infinite loops
+
+    while (loopCount < safetyLimit) {
+      loopCount++;
+
+      // For each day in the days array
+      for (const day of days) {
+        // Create date for this day in the current month
+        const candidateDate = new Date(currentMonth);
+        candidateDate.setDate(day);
+
+        // Skip if date is before start date, before today, or after end window
+        if (candidateDate < startDate || candidateDate < today || candidateDate > endDate) {
+          continue;
+        }
+
+        // Skip if date is after schedule end date
+        if (scheduleEndDate && candidateDate > scheduleEndDate) {
+          continue;
+        }
+
+        // Check if we've reached the maximum occurrences limit
+        if (maxOccurrences && upcomingDates.length >= maxOccurrences) {
+          return upcomingDates;
+        }
+
+        const dateString = candidateDate.toISOString().split('T')[0];
+        upcomingDates.push(dateString);
+      }
+
+      // Move to next month (respecting interval)
+      currentMonth.setMonth(currentMonth.getMonth() + interval);
+
+      // Stop if we've moved past the end window
+      if (currentMonth > endDate) {
+        break;
+      }
+    }
+
+    // Sort dates chronologically
+    return upcomingDates.sort((a, b) => a.localeCompare(b));
+  }
+
+  /**
+   * Calculate dates using basic frequency-based logic (daily, weekly, monthly without specific days, yearly)
+   */
+  private calculateBasicFrequencyDates(
+    schedule: ScheduleWithDetails,
+    daysAhead: number,
+    maxOccurrences?: number
+  ): string[] {
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + daysAhead);
+
+    const startDate = new Date(schedule.scheduleDate!.start);
+    const scheduleEndDate = schedule.scheduleDate!.end ? new Date(schedule.scheduleDate!.end) : null;
+    const frequency = schedule.scheduleDate!.frequency;
+    const interval = schedule.scheduleDate!.interval || 1;
 
     // Early return if frequency is null
     if (!frequency) {

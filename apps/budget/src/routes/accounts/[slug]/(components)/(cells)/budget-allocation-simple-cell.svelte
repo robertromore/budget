@@ -166,8 +166,7 @@
   {:else}
     <!-- For scheduled transactions -->
     <div class="flex items-center gap-1 text-xs text-muted-foreground">
-      <CircleDollarSign class="h-3 w-3" />
-      <span>Auto-assigned</span>
+      <span>—</span>
     </div>
   {/if}
 </div>

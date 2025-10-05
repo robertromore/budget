@@ -146,7 +146,7 @@ const getPriorityColor = (priority: string | null) => {
             </div>
             <div class="min-w-0 flex-1">
               <a
-                href="/categories/{category.id}"
+                href="/categories/{category.slug}"
                 class="font-medium truncate hover:underline block"
               >
                 {@html highlightMatches(category.name || 'Unnamed Category', searchQuery)}

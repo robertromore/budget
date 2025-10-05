@@ -68,6 +68,7 @@ export const budgets = sqliteTable(
   {
     id: integer("id").primaryKey({autoIncrement: true}),
     name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
     description: text("description"),
     type: text("type", {enum: budgetTypes}).notNull(),
     scope: text("scope", {enum: budgetScopes}).notNull(),
@@ -88,10 +89,13 @@ export const budgets = sqliteTable(
     deletedAt: text("deleted_at"),
   },
   (table) => [
+    index("budget_name_idx").on(table.name),
+    index("budget_slug_idx").on(table.slug),
     index("budget_type_idx").on(table.type),
     index("budget_scope_idx").on(table.scope),
     index("budget_status_idx").on(table.status),
     index("budget_enforcement_idx").on(table.enforcementLevel),
+    index("budget_deleted_at_idx").on(table.deletedAt),
   ]
 );
 

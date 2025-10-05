@@ -7,13 +7,12 @@ import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import User from '@lucide/svelte/icons/user';
 import {ManagePayeeForm} from '$lib/components/forms';
 import {PayeesState} from '$lib/states/entities/payees.svelte';
+import type {PageData} from './$types';
 
-// Get payee ID from page data
-const payeeId = $derived(page.data?.['payeeId'] || 0);
+let {data}: {data: PageData} = $props();
 
-// Get payee data
-const payeesState = PayeesState.get();
-const payee = $derived(payeeId > 0 ? payeesState.getById(payeeId) : null);
+// Get payee from page data
+const payee = $derived(data.payee);
 
 const pageTitle = $derived(payee ? `Edit ${payee?.name}` : 'Edit Payee');
 
@@ -21,18 +20,21 @@ const pageDescription = 'Update payee information and settings';
 
 const handleSave = () => {
   // Navigate back to individual payee page after successful update
-  goto(`/payees/${payeeId}`);
+  if (payee) {
+    goto(`/payees/${payee.slug}`);
+  }
 };
 
 const handleDelete = async (id: number) => {
   // Delete the payee first, then navigate
+  const payeesState = PayeesState.get();
   await payeesState.deletePayee(id);
   goto('/payees');
 };
 
-// Redirect to payees list if no valid ID provided
+// Redirect to payees list if no payee provided
 $effect(() => {
-  if (payeeId === 0) {
+  if (!payee) {
     goto('/payees');
   }
 });
@@ -47,7 +49,7 @@ $effect(() => {
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="sm" href="/payees/{payeeId}" class="p-2">
+      <Button variant="ghost" size="sm" href="/payees/{payee?.slug}" class="p-2">
         <ArrowLeft class="h-4 w-4" />
         <span class="sr-only">Back to Payee</span>
       </Button>
@@ -72,7 +74,7 @@ $effect(() => {
       </Card.Header>
       <Card.Content>
         <ManagePayeeForm
-          id={payeeId}
+          id={payee.id}
           onSave={handleSave}
           onDelete={handleDelete}
         />
@@ -83,7 +85,7 @@ $effect(() => {
     <Card.Root class="max-w-4xl">
       <Card.Content class="text-center py-8">
         <p class="text-muted-foreground">
-          {payeeId > 0 ? 'Loading payee information...' : 'Invalid payee ID'}
+          Payee not found
         </p>
       </Card.Content>
     </Card.Root>

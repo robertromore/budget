@@ -21,8 +21,13 @@ import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
 
 let {data} = $props();
 
-// Make accountId reactive to prop changes
-const accountId = $derived(data.accountId);
+// Get account slug from URL parameter
+const accountSlug = $derived(data.accountSlug);
+
+// Fetch account by slug to get ID for queries
+const accountQuery = $derived(rpc.accounts.getAccountDetail(accountSlug).options());
+const accountData = $derived(accountQuery.data);
+const accountId = $derived(accountData?.id);
 
 // Tab state management
 let activeTab = $state('transactions');
@@ -33,7 +38,7 @@ let serverAccountState = $state<ServerAccountState | undefined>();
 
 // TanStack Query state - load ALL transactions including upcoming scheduled for client-side pagination
 const transactionsQuery = $derived.by(() => {
-  return serverAccountState ? rpc.transactions.getAllAccountTransactionsWithUpcoming(Number(accountId), {
+  return serverAccountState && accountId ? rpc.transactions.getAllAccountTransactionsWithUpcoming(Number(accountId), {
     sortBy: serverAccountState.filters.sortBy,
     sortOrder: serverAccountState.filters.sortOrder,
     ...(serverAccountState.filters.searchQuery && { searchQuery: serverAccountState.filters.searchQuery }),
@@ -41,7 +46,7 @@ const transactionsQuery = $derived.by(() => {
     ...(serverAccountState.filters.dateTo && { dateTo: serverAccountState.filters.dateTo }),
   }).options() : undefined;
 });
-const summaryQuery = $derived(rpc.transactions.getAccountSummary(Number(accountId)).options());
+const summaryQuery = $derived(accountId ? rpc.transactions.getAccountSummary(Number(accountId)).options() : undefined);
 const budgetCountQuery = $derived(rpc.budgets.getBudgetCount().options());
 
 // Create the mutations once
@@ -55,18 +60,18 @@ const transactions = $derived.by(() => {
   return Array.isArray(transactionsQuery?.data) ? transactionsQuery.data : [];
 });
 const isLoading = $derived.by(() => {
-  return (transactionsQuery ? transactionsQuery?.isLoading : false) || summaryQuery.isLoading;
+  return (transactionsQuery ? transactionsQuery?.isLoading : false) || (summaryQuery ? summaryQuery.isLoading : false);
 });
 const error = $derived.by(() => {
-  return (transactionsQuery ? transactionsQuery?.error?.message : undefined) || summaryQuery.error?.message;
+  return (transactionsQuery ? transactionsQuery?.error?.message : undefined) || (summaryQuery ? summaryQuery.error?.message : undefined);
 });
 const isAccountNotFound = $derived.by(() => {
-  const summaryError = summaryQuery.error;
+  const summaryError = summaryQuery ? summaryQuery.error : undefined;
   const transactionsError = transactionsQuery ? transactionsQuery?.error : undefined;
   return (summaryError?.message?.includes('NOT_FOUND')) ||
          (transactionsError?.message?.includes('NOT_FOUND'));
 });
-const summary = $derived(summaryQuery.data);
+const summary = $derived(summaryQuery ? summaryQuery.data : undefined);
 const account = $derived(summary ? {id: summary.accountId, name: summary.accountName} : undefined);
 const budgetCount = $derived(budgetCountQuery.data?.count ?? 0);
 
@@ -299,9 +304,9 @@ $effect(() => {
         </div>
       {/if}
 
-      <Button variant="outline" href="/accounts/{accountId}/edit">
+      <Button variant="outline" href="/accounts/{accountSlug}/edit">
         <Edit class="mr-2 h-4 w-4" />
-        Edit Account
+        Edit
       </Button>
 
       <Button onclick={() => (addTransactionDialogOpen = true)}>

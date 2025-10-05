@@ -119,6 +119,32 @@ export class PayeeRepository {
   }
 
   /**
+   * Find payee by slug
+   */
+  async findBySlug(slug: string): Promise<Payee | null> {
+    const [payee] = await db
+      .select()
+      .from(payees)
+      .where(and(eq(payees.slug, slug), isNull(payees.deletedAt)))
+      .limit(1);
+
+    return payee || null;
+  }
+
+  /**
+   * Check if slug exists (including deleted payees)
+   */
+  async slugExists(slug: string): Promise<boolean> {
+    const [result] = await db
+      .select()
+      .from(payees)
+      .where(eq(payees.slug, slug))
+      .limit(1);
+
+    return !!result;
+  }
+
+  /**
    * Find all active payees
    */
   async findAll(): Promise<Payee[]> {
@@ -150,12 +176,26 @@ export class PayeeRepository {
   }
 
   /**
-   * Soft delete payee
+   * Soft delete payee with slug archiving
    */
   async softDelete(id: number): Promise<Payee> {
+    const [existingPayee] = await db
+      .select()
+      .from(payees)
+      .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
+      .limit(1);
+
+    if (!existingPayee) {
+      throw new NotFoundError("Payee", id);
+    }
+
+    const timestamp = Date.now();
+    const archivedSlug = `${existingPayee.slug}-deleted-${timestamp}`;
+
     const [payee] = await db
       .update(payees)
       .set({
+        slug: archivedSlug,
         deletedAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
       })
@@ -170,24 +210,33 @@ export class PayeeRepository {
   }
 
   /**
-   * Bulk soft delete payees
+   * Bulk soft delete payees with slug archiving
    */
   async bulkDelete(ids: number[]): Promise<number> {
     if (ids.length === 0) return 0;
 
-    const result = await db
-      .update(payees)
-      .set({
-        deletedAt: getCurrentTimestamp(),
-        updatedAt: getCurrentTimestamp(),
-      })
+    const timestamp = Date.now();
+
+    const payeesToDelete = await db
+      .select()
+      .from(payees)
       .where(and(
         inArray(payees.id, ids),
         isNull(payees.deletedAt)
-      ))
-      .returning({id: payees.id});
+      ));
 
-    return result.length;
+    for (const payee of payeesToDelete) {
+      await db
+        .update(payees)
+        .set({
+          slug: `${payee.slug}-deleted-${timestamp}`,
+          deletedAt: getCurrentTimestamp(),
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(eq(payees.id, payee.id));
+    }
+
+    return payeesToDelete.length;
   }
 
   /**

@@ -5,14 +5,14 @@ import {error} from '@sveltejs/kit';
 
 export const load: PageServerLoad = async (event) => {
   const {params} = event;
-  const categoryId = Number(params.id);
+  const slug = params.slug;
 
-  if (isNaN(categoryId)) {
-    throw error(404, 'Invalid category ID');
+  if (!slug) {
+    throw error(404, 'Invalid category slug');
   }
 
   const caller = createCaller(await createContext(event));
-  const category = await caller.categoriesRoutes.load({id: categoryId});
+  const category = await caller.categoriesRoutes.getBySlug({slug});
 
   if (!category) {
     throw error(404, 'Category not found');

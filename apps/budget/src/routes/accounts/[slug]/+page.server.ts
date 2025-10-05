@@ -22,6 +22,10 @@ export const load: PageServerLoad = async (event) => {
             id: "id",
             desc: false,
           },
+          {
+            id: "date",
+            desc: false,
+          }
         ],
       },
       icon: "",
@@ -58,7 +62,16 @@ export const load: PageServerLoad = async (event) => {
       ],
       display: {
         grouping: [],
-        sort: [],
+        sort: [
+          {
+            id: "id",
+            desc: false,
+          },
+          {
+            id: "date",
+            desc: false,
+          }
+        ],
       },
       icon: "",
       dirty: false,
@@ -93,7 +106,7 @@ export const load: PageServerLoad = async (event) => {
   const userViews = await caller.viewsRoutes.all();
 
   return {
-    accountId: parseInt(params.id),
+    accountSlug: params.slug,
     views: defaultViews.concat(userViews),
     // Still keep the load minimal - no transactions, accounts, or forms
     // The heavy data will be loaded client-side to prevent hydration issues

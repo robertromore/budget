@@ -63,6 +63,15 @@ export class BudgetService {
     private forecastService: BudgetForecastService = new BudgetForecastService()
   ) {}
 
+  private generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  }
+
   async createBudget(input: CreateBudgetRequest): Promise<BudgetWithRelations> {
     const name = InputSanitizer.sanitizeText(input.name, {
       required: true,
@@ -86,9 +95,20 @@ export class BudgetService {
 
     const metadata = input.metadata ?? {};
 
+    // Generate unique slug
+    let baseSlug = this.generateSlug(name);
+    let slug = baseSlug;
+    let counter = 1;
+
+    while (await this.repository.slugExists(slug)) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
     return await this.repository.createBudget({
       budget: {
         name,
+        slug,
         description,
         type: input.type,
         scope: input.scope,
@@ -166,6 +186,19 @@ export class BudgetService {
     if (!budget) {
       throw new NotFoundError("Budget", id);
     }
+    return budget;
+  }
+
+  async getBudgetBySlug(slug: string): Promise<BudgetWithRelations> {
+    if (!slug?.trim()) {
+      throw new ValidationError("Invalid budget slug");
+    }
+
+    const budget = await this.repository.findBySlug(slug);
+    if (!budget) {
+      throw new NotFoundError("Budget", slug);
+    }
+
     return budget;
   }
 

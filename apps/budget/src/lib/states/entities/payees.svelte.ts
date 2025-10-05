@@ -52,6 +52,10 @@ export class PayeesState {
   }
 
   // Domain-specific methods
+  getBySlug(slug: string): Payee | undefined {
+    return this.findBy((payee) => payee.slug === slug);
+  }
+
   getByName(name: string): Payee | undefined {
     return this.findBy((payee) => payee.name === name);
   }

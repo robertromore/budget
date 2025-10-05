@@ -12,6 +12,18 @@ import {getCurrentTimestamp} from "$lib/utils/dates";
 export interface UpdateCategoryData {
   name?: string;
   notes?: string | null;
+  categoryType?: string;
+  categoryIcon?: string | null;
+  categoryColor?: string | null;
+  isTaxDeductible?: boolean;
+  taxCategory?: string | null;
+  deductiblePercentage?: number | null;
+  isSeasonal?: boolean;
+  seasonalMonths?: string | null;
+  expectedMonthlyMin?: number | null;
+  expectedMonthlyMax?: number | null;
+  spendingPriority?: string | null;
+  incomeReliability?: string | null;
 }
 
 export interface CategoryStats {
@@ -59,6 +71,32 @@ export class CategoryRepository {
   }
 
   /**
+   * Find category by slug
+   */
+  async findBySlug(slug: string): Promise<Category | null> {
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.slug, slug), isNull(categories.deletedAt)))
+      .limit(1);
+
+    return category || null;
+  }
+
+  /**
+   * Check if slug exists (including deleted categories)
+   */
+  async slugExists(slug: string): Promise<boolean> {
+    const [result] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.slug, slug))
+      .limit(1);
+
+    return !!result;
+  }
+
+  /**
    * Find all active categories
    */
   async findAll(): Promise<Category[]> {
@@ -93,9 +131,25 @@ export class CategoryRepository {
    * Soft delete category
    */
   async softDelete(id: number): Promise<Category> {
+    // First, get the current category to access its slug
+    const [existingCategory] = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
+      .limit(1);
+
+    if (!existingCategory) {
+      throw new NotFoundError("Category", id);
+    }
+
+    // Append timestamp to slug to free it up for future use
+    const timestamp = Date.now();
+    const archivedSlug = `${existingCategory.slug}-deleted-${timestamp}`;
+
     const [category] = await db
       .update(categories)
       .set({
+        slug: archivedSlug,
         deletedAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
       })
@@ -115,19 +169,37 @@ export class CategoryRepository {
   async bulkDelete(ids: number[]): Promise<number> {
     if (ids.length === 0) return 0;
 
-    const result = await db
-      .update(categories)
-      .set({
-        deletedAt: getCurrentTimestamp(),
-        updatedAt: getCurrentTimestamp(),
-      })
+    // Get existing categories to access their slugs
+    const existingCategories = await db
+      .select()
+      .from(categories)
       .where(and(
         inArray(categories.id, ids),
         isNull(categories.deletedAt)
-      ))
-      .returning({id: categories.id});
+      ));
 
-    return result.length;
+    // Delete each category with slug modification
+    const timestamp = Date.now();
+    const deletedCategories = [];
+
+    for (const category of existingCategories) {
+      const archivedSlug = `${category.slug}-deleted-${timestamp}`;
+      const [deleted] = await db
+        .update(categories)
+        .set({
+          slug: archivedSlug,
+          deletedAt: getCurrentTimestamp(),
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(eq(categories.id, category.id))
+        .returning({id: categories.id});
+
+      if (deleted) {
+        deletedCategories.push(deleted);
+      }
+    }
+
+    return deletedCategories.length;
   }
 
   /**

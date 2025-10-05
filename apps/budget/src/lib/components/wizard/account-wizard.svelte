@@ -154,6 +154,69 @@
   let selectedTemplateType = $state<string>('');
   let isInTemplateMode = $state(false);
 
+  // Example notes categories
+  let selectedNotesCategory = $state<string>('all');
+
+  // Auto-select notes category based on initial account type
+  $effect(() => {
+    const currentAccountType = formData['accountType'];
+    if (currentAccountType && noteCategories.find(cat => cat.value === currentAccountType && cat.value !== 'all')) {
+      selectedNotesCategory = currentAccountType;
+    }
+  });
+
+  const exampleNotesByCategory = {
+    checking: [
+      'Primary checking account for monthly expenses. Direct deposit setup.',
+      'Joint checking account for household bills and shared expenses.',
+      'Business checking account for freelance income and expenses.',
+      'Second checking for travel and discretionary spending.'
+    ],
+    savings: [
+      'High-yield savings, 2.8% APY. Goal: $10,000 emergency fund.',
+      'Vacation savings fund. Target: $5,000 by December.',
+      'Down payment savings for house. Goal: $50,000.',
+      'Kids college fund. Contributing $200/month.'
+    ],
+    credit_card: [
+      'Rewards credit card, 2% cash back. Pay off monthly.',
+      'Travel rewards card, 3x points on travel. $0 annual fee.',
+      'Balance transfer card, 0% APR for 18 months.',
+      'Cash back card for groceries and gas. 5% back on categories.'
+    ],
+    investment: [
+      'Roth IRA with Vanguard. Target: Max contribution annually.',
+      '401k through employer. Contributing 10% with 5% match.',
+      'Brokerage account for long-term growth investing.',
+      'HSA investment account for healthcare expenses.'
+    ],
+    loan: [
+      'Mortgage - 30 year fixed at 3.5%. Monthly payment $1,800.',
+      'Auto loan - 5 year term, 4.2% APR. 36 payments remaining.',
+      'Student loan - federal, income-driven repayment plan.',
+      'Personal loan for home improvements. 3 year term.'
+    ]
+  };
+
+  const noteCategories = [
+    { value: 'all', label: 'All', color: 'border-l-gray-500' },
+    { value: 'checking', label: 'Checking', color: 'border-l-blue-500' },
+    { value: 'savings', label: 'Savings', color: 'border-l-green-500' },
+    { value: 'credit_card', label: 'Credit Card', color: 'border-l-purple-500' },
+    { value: 'investment', label: 'Investment', color: 'border-l-orange-500' },
+    { value: 'loan', label: 'Loan', color: 'border-l-red-500' }
+  ];
+
+  // Default icons for account types
+  const accountTypeDefaults: Record<string, { icon: string }> = {
+    checking: { icon: 'credit-card' },
+    savings: { icon: 'piggy-bank' },
+    credit_card: { icon: 'credit-card' },
+    investment: { icon: 'trending-up' },
+    loan: { icon: 'banknote' },
+    cash: { icon: 'wallet' }
+  };
+
   // Handle account type selection
   function handleAccountTypeClick(accountType: string) {
     selectedTemplateType = accountType;
@@ -166,7 +229,7 @@
     // Auto-detect and set the account type based on the selected template
     const detectedType = detectAccountTypeFromName(accountType);
     if (detectedType) {
-      updateField('accountType', detectedType);
+      handleAccountTypeChange(detectedType);
     }
 
     // Focus the input and position cursor at the end
@@ -214,7 +277,8 @@
       if (!currentAccountType || currentAccountType === 'checking') {
         const detectedType = detectAccountTypeFromName(value);
         if (detectedType && detectedType !== currentAccountType) {
-          updateField('accountType', detectedType);
+          // Use handleAccountTypeChange to ensure icon is updated
+          handleAccountTypeChange(detectedType);
         }
       }
     }
@@ -253,7 +317,30 @@
 
   // Enhanced field handlers
   function handleAccountTypeChange(value: string) {
+    const previousAccountType = formData['accountType'];
     updateField('accountType', value);
+
+    // Auto-select matching notes category when account type changes
+    if (value && noteCategories.find(cat => cat.value === value && cat.value !== 'all')) {
+      selectedNotesCategory = value;
+    }
+
+    // Auto-update icon if:
+    // 1. No icon is set yet, OR
+    // 2. Current icon matches the default for the previous account type (user hasn't customized it)
+    const defaults = accountTypeDefaults[value];
+    const currentIcon = formData['accountIcon'];
+    const previousDefaults = previousAccountType ? accountTypeDefaults[previousAccountType] : null;
+
+    const shouldUpdateIcon = defaults && (
+      !currentIcon ||
+      currentIcon === '' ||
+      (previousDefaults && currentIcon === previousDefaults.icon)
+    );
+
+    if (shouldUpdateIcon) {
+      updateField('accountIcon', defaults.icon);
+    }
   }
 
   function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
@@ -463,33 +550,33 @@
 
       <!-- Preview Card -->
       {#if formData['name'] || selectedIcon() || formData['accountColor']}
-        <div class="space-y-2">
-          <Label class="text-sm font-medium">Preview</Label>
-          <div class="border border-l-4 p-4 rounded-lg" style={formData['accountColor'] ? `border-left-color: ${formData['accountColor']}` : ''}>
-            <div class="flex items-center gap-3">
-              {#if selectedIcon()}
-                {@const iconData = selectedIcon()}
-                {#if iconData}
-                  <iconData.icon
-                    class="h-6 w-6"
-                    style={formData['accountColor'] ? `color: ${formData['accountColor']}` : ''}
-                  />
+        {#snippet previewCard()}
+          <div class="space-y-2">
+            <Label class="text-sm font-medium">Preview</Label>
+            <div class="border border-l-4 p-4 rounded-lg" style={formData['accountColor'] ? `border-left-color: ${formData['accountColor']}` : ''}>
+              <div class="flex items-center gap-3">
+                {#if selectedIcon()}
+                  {@const iconData = selectedIcon()}
+                  {#if iconData}
+                    <iconData.icon class="h-6 w-6" style={formData['accountColor'] ? `color: ${formData['accountColor']}` : ''} />
+                  {:else}
+                    <CreditCard class="h-6 w-6 text-muted-foreground" />
+                  {/if}
                 {:else}
                   <CreditCard class="h-6 w-6 text-muted-foreground" />
                 {/if}
-              {:else}
-                <CreditCard class="h-6 w-6 text-muted-foreground" />
-              {/if}
-              <div>
-                <p class="font-medium">{formData['name'] || 'Account Name'}</p>
-                <p class="text-sm text-muted-foreground">
-                  {selectedAccountType()?.label || 'Account Type'}
-                  {formData['institution'] ? ` • ${formData['institution']}` : ''}
-                </p>
+                <div>
+                  <p class="font-medium">{formData['name'] || 'Account Name'}</p>
+                  <p class="text-sm text-muted-foreground">
+                    {selectedAccountType()?.label || 'Account Type'}
+                    {formData['institution'] ? ` • ${formData['institution']}` : ''}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        {/snippet}
+        {@render previewCard()}
       {/if}
     </div>
   </div>
@@ -622,19 +709,58 @@
     <div class="space-y-2">
       <h4 class="text-lg font-semibold">Example Notes</h4>
       <p class="text-sm text-muted-foreground">
-        Here are some examples of useful notes you might add
+        Choose a category and click any example to use it as your notes
       </p>
     </div>
+
+    <!-- Category Selector -->
+    <div class="flex flex-wrap gap-2">
+      {#each noteCategories as category}
+        <button
+          type="button"
+          onclick={() => selectedNotesCategory = category.value}
+          class={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            selectedNotesCategory === category.value
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+          }`}
+        >
+          {category.label}
+        </button>
+      {/each}
+    </div>
+
+    <!-- Example Notes List -->
     <div class="space-y-2">
-      <div class="p-3 border border-l-4 border-l-blue-500 rounded-lg">
-        <p class="text-sm">"Primary checking account for monthly expenses. Direct deposit setup."</p>
-      </div>
-      <div class="p-3 border border-l-4 border-l-green-500 rounded-lg">
-        <p class="text-sm">"High-yield savings, 2.8% APY. Goal: $10,000 emergency fund."</p>
-      </div>
-      <div class="p-3 border border-l-4 border-l-purple-500 rounded-lg">
-        <p class="text-sm">"Rewards credit card, 2% cash back. Pay off monthly."</p>
-      </div>
+      {#if selectedNotesCategory === 'all'}
+        {#each Object.entries(exampleNotesByCategory) as [categoryKey, notes]}
+          {@const category = noteCategories.find(c => c.value === categoryKey)}
+          {#if category}
+            {#each notes as note}
+              <button
+                type="button"
+                onclick={() => updateField('notes', note)}
+                class="w-full p-3 border border-l-4 {category.color} rounded-lg hover:bg-muted/50 transition-colors cursor-pointer text-left"
+              >
+                <p class="text-sm">"{note}"</p>
+              </button>
+            {/each}
+          {/if}
+        {/each}
+      {:else}
+        {@const category = noteCategories.find(c => c.value === selectedNotesCategory)}
+        {#if category && exampleNotesByCategory[selectedNotesCategory]}
+          {#each exampleNotesByCategory[selectedNotesCategory] as note}
+            <button
+              type="button"
+              onclick={() => updateField('notes', note)}
+              class="w-full p-3 border border-l-4 {category.color} rounded-lg hover:bg-muted/50 transition-colors cursor-pointer text-left"
+            >
+              <p class="text-sm">"{note}"</p>
+            </button>
+          {/each}
+        {/if}
+      {/if}
     </div>
   </div>
 
@@ -673,36 +799,36 @@
     </div>
     <div class="space-y-4">
         <!-- Account Preview -->
-        <div class="space-y-3">
-          <div>
-            <p class="font-medium text-sm">Account Preview</p>
-            <p class="text-muted-foreground text-sm">How your account will appear</p>
-          </div>
-          <div class="border border-l-4 p-4 w-full rounded-lg" style={formData['accountColor'] ? `border-left-color: ${formData['accountColor']}` : ''}>
-            <div class="flex items-center gap-3">
-              {#if selectedIcon()}
-                {@const iconData = selectedIcon()}
-                {#if iconData}
-                  <iconData.icon
-                    class="h-6 w-6"
-                    style={formData['accountColor'] ? `color: ${formData['accountColor']}` : ''}
-                  />
+        {#snippet accountPreview()}
+          <div class="space-y-3">
+            <div>
+              <p class="font-medium text-sm">Account Preview</p>
+              <p class="text-muted-foreground text-sm">How your account will appear</p>
+            </div>
+            <div class="border border-l-4 p-4 w-full rounded-lg" style={formData['accountColor'] ? `border-left-color: ${formData['accountColor']}` : ''}>
+              <div class="flex items-center gap-3">
+                {#if selectedIcon()}
+                  {@const iconData = selectedIcon()}
+                  {#if iconData}
+                    <iconData.icon class="h-6 w-6" style={formData['accountColor'] ? `color: ${formData['accountColor']}` : ''} />
+                  {:else}
+                    <CreditCard class="h-6 w-6 text-muted-foreground" />
+                  {/if}
                 {:else}
                   <CreditCard class="h-6 w-6 text-muted-foreground" />
                 {/if}
-              {:else}
-                <CreditCard class="h-6 w-6 text-muted-foreground" />
-              {/if}
-              <div>
-                <p class="font-medium">{formData['name'] || 'Not specified'}</p>
-                <p class="text-sm text-muted-foreground">
-                  {selectedAccountType()?.label || 'No type selected'}
-                  {formData['institution'] ? ` • ${formData['institution']}` : ''}
-                </p>
+                <div>
+                  <p class="font-medium">{formData['name'] || 'Not specified'}</p>
+                  <p class="text-sm text-muted-foreground">
+                    {selectedAccountType()?.label || 'No type selected'}
+                    {formData['institution'] ? ` • ${formData['institution']}` : ''}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        {/snippet}
+        {@render accountPreview()}
 
         <!-- Account Details -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -753,10 +879,7 @@
             <div class="space-y-1">
               <p class="font-medium text-sm">Color</p>
               <div class="flex items-center gap-2">
-                <div
-                  class="w-4 h-4 rounded border"
-                  style={`background-color: ${formData['accountColor']}`}
-                ></div>
+                <div class="w-4 h-4 rounded border" style="background-color: {formData['accountColor']}"></div>
                 <p class="text-sm text-muted-foreground font-mono">{formData['accountColor']}</p>
               </div>
             </div>

@@ -121,30 +121,50 @@ This is a SvelteKit budget management application with:
 - **Lint**: `bun run lint` (if available)
 - **Type check**: `bun run typecheck` (if available)
 
-## Documentation and Research Standards
+## Svelte MCP Server
 
-**ALWAYS use the Context7 MCP server for up-to-date library documentation and code examples.**
+**You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation.**
 
-### When to Use Context7
+### Available MCP Tools
 
-- When working with unfamiliar libraries or frameworks
-- When debugging implementation issues with third-party packages
-- When looking for code examples or best practices
-- When checking for breaking changes between library versions
-- When exploring new features or APIs
+#### 1. list-sections
 
-### Context7 Usage Pattern
+Use this FIRST to discover all available documentation sections. Returns a structured list with titles, use_cases, and paths.
 
-1. **Resolve Library ID**: Use `mcp__context7__resolve-library-id` to find the correct library identifier
-2. **Get Documentation**: Use `mcp__context7__get-library-docs` with specific topics for targeted information
-3. **Apply Knowledge**: Use the retrieved documentation to implement solutions following current best practices
+When asked about Svelte or SvelteKit topics, ALWAYS use this tool at the start of the chat to find relevant sections.
 
-### Context7 Benefits
+#### 2. get-documentation
 
-- Access to up-to-date library documentation and examples
-- Comprehensive code snippets showing real-world usage
-- Version-specific information and migration guides
-- Reduces guesswork and ensures current best practices
+Retrieves full documentation content for specific sections. Accepts single or multiple sections.
+
+After calling the list-sections tool, you MUST analyze the returned documentation sections (especially the use_cases field) and then use the get-documentation tool to fetch ALL documentation sections that are relevant for the user's task.
+
+#### 3. svelte-autofixer
+
+Analyzes Svelte code and returns issues and suggestions.
+
+You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
+
+#### 4. playground-link
+
+Generates a Svelte Playground link with the provided code.
+
+After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
+
+### Svelte MCP Usage Pattern
+
+1. **Discover Sections**: Use `mcp__svelte-llm__list_sections` to see all available documentation
+2. **Analyze Relevance**: Review the use_cases field to identify which sections are needed
+3. **Fetch Documentation**: Use `mcp__svelte-llm__get_documentation` to retrieve all relevant sections
+4. **Validate Code**: Use `svelte-autofixer` to check Svelte code before delivery
+5. **Share Playground**: Optionally generate playground links for user experimentation
+
+### Svelte MCP Benefits
+
+- Comprehensive Svelte 5 and SvelteKit documentation access
+- Automated code validation and improvement suggestions
+- Quick playground sharing for prototyping and testing
+- Always up-to-date with latest Svelte features and best practices
 
 ## Form Handling Standards
 

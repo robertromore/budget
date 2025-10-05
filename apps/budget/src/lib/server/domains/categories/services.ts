@@ -25,6 +25,18 @@ export class CategoryService {
   ) {}
 
   /**
+   * Generate a URL-friendly slug from a string
+   */
+  private generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  }
+
+  /**
    * Create a new category
    */
   async createCategory(data: CreateCategoryData): Promise<Category> {
@@ -45,8 +57,20 @@ export class CategoryService {
     // Check for duplicate names (case-insensitive)
     await this.validateUniqueCategoryName(sanitizedName);
 
+    // Generate unique slug
+    let baseSlug = this.generateSlug(sanitizedName);
+    let slug = baseSlug;
+    let counter = 1;
+
+    // Ensure slug uniqueness (only checking active categories since deleted ones have modified slugs)
+    while (await this.repository.findBySlug(slug)) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
     const newCategory: NewCategory = {
       name: sanitizedName,
+      slug,
       notes: sanitizedNotes,
     };
 
@@ -64,6 +88,22 @@ export class CategoryService {
     const category = await this.repository.findById(id);
     if (!category) {
       throw new NotFoundError("Category", id);
+    }
+
+    return category;
+  }
+
+  /**
+   * Get category by slug
+   */
+  async getCategoryBySlug(slug: string): Promise<Category> {
+    if (!slug?.trim()) {
+      throw new ValidationError("Invalid category slug");
+    }
+
+    const category = await this.repository.findBySlug(slug);
+    if (!category) {
+      throw new NotFoundError("Category", slug);
     }
 
     return category;
@@ -130,6 +170,55 @@ export class CategoryService {
       updateData.notes = data.notes
         ? InputSanitizer.sanitizeDescription(data.notes)
         : null;
+    }
+
+    // Handle all other category fields
+    if (data.categoryType !== undefined) {
+      updateData.categoryType = data.categoryType;
+    }
+
+    if (data.categoryIcon !== undefined) {
+      updateData.categoryIcon = data.categoryIcon;
+    }
+
+    if (data.categoryColor !== undefined) {
+      updateData.categoryColor = data.categoryColor;
+    }
+
+    if (data.isTaxDeductible !== undefined) {
+      updateData.isTaxDeductible = data.isTaxDeductible;
+    }
+
+    if (data.taxCategory !== undefined) {
+      updateData.taxCategory = data.taxCategory;
+    }
+
+    if (data.deductiblePercentage !== undefined) {
+      updateData.deductiblePercentage = data.deductiblePercentage;
+    }
+
+    if (data.isSeasonal !== undefined) {
+      updateData.isSeasonal = data.isSeasonal;
+    }
+
+    if (data.seasonalMonths !== undefined) {
+      updateData.seasonalMonths = data.seasonalMonths;
+    }
+
+    if (data.expectedMonthlyMin !== undefined) {
+      updateData.expectedMonthlyMin = data.expectedMonthlyMin;
+    }
+
+    if (data.expectedMonthlyMax !== undefined) {
+      updateData.expectedMonthlyMax = data.expectedMonthlyMax;
+    }
+
+    if (data.spendingPriority !== undefined) {
+      updateData.spendingPriority = data.spendingPriority;
+    }
+
+    if (data.incomeReliability !== undefined) {
+      updateData.incomeReliability = data.incomeReliability;
     }
 
     if (Object.keys(updateData).length === 0) {

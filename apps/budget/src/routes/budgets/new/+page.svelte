@@ -10,11 +10,44 @@ import {goto} from '$app/navigation';
 
 let {data} = $props();
 
+$inspect('BudgetNew data:', data);
+$inspect('BudgetNew form.data:', data.form.data);
+
+// Set up mutation during component initialization
+const createBudgetMutation = createBudget.options();
+
 async function handleComplete(budgetData: CreateBudgetRequest | Record<string, any>) {
   try {
-    const result = await createBudget.execute(budgetData as CreateBudgetRequest);
-    if (result.data) {
-      goto(`/budgets/${result.data.id}`);
+    // Cast to Record to access wizard-specific fields
+    const wizardData = budgetData as Record<string, any>;
+
+    // Transform flat form data to CreateBudgetRequest with nested metadata
+    const metadata: Record<string, any> = {
+      defaultPeriod: {
+        type: wizardData['periodType'] || 'monthly',
+        startDay: wizardData['startDay'] || 1,
+      },
+    };
+
+    if (wizardData['allocatedAmount'] !== undefined) {
+      metadata['allocatedAmount'] = wizardData['allocatedAmount'];
+    }
+
+    const transformedData: CreateBudgetRequest = {
+      name: wizardData['name'],
+      description: wizardData['description'] || null,
+      type: wizardData['type'],
+      scope: wizardData['scope'],
+      status: wizardData['status'] || 'active',
+      enforcementLevel: wizardData['enforcementLevel'] || 'warning',
+      metadata,
+      accountIds: wizardData['accountIds'] || [],
+      categoryIds: wizardData['categoryIds'] || [],
+    };
+
+    const result = await createBudgetMutation.mutateAsync(transformedData);
+    if (result) {
+      goto(`/budgets/${result.id}`);
     }
   } catch (error) {
     console.error('Failed to create budget:', error);
@@ -53,7 +86,6 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
     onComplete={handleComplete}
     onCancel={() => goto('/budgets')}
     defaultMode="wizard"
-    persistenceKey="budget-creation-wizard"
   >
     {#snippet formContent()}
       <ManageBudgetForm
@@ -66,6 +98,7 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
 
     {#snippet wizardContent()}
       <BudgetWizard
+        initialData={data.form.data}
         accounts={data.accounts}
         categories={data.categories}
         onComplete={handleComplete}

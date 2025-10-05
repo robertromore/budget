@@ -26,7 +26,7 @@ import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
 import {PayeesState} from '$lib/states/entities/payees.svelte';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {listBudgets} from '$lib/query/budgets';
+import {BudgetState} from '$lib/states/budgets.svelte';
 import AccountSortDropdown from '$lib/components/shared/account-sort-dropdown.svelte';
 import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
 import {currencyFormatter} from '$lib/utils/formatters';
@@ -46,8 +46,8 @@ const schedules = $derived(schedulesState.schedules.values());
 const _deleteScheduleDialog = $derived(deleteScheduleDialog);
 const _deleteScheduleId = $derived(deleteScheduleId);
 
-const budgetsQuery = listBudgets().options();
-const budgets = $derived(budgetsQuery.data ?? []);
+const budgetState = $derived(BudgetState.get());
+const budgets = $derived(budgetState.all);
 const _deleteBudgetDialog = $derived(deleteBudgetDialog);
 const _deleteBudgetId = $derived(deleteBudgetId);
 
@@ -92,7 +92,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
                 {#snippet child({props})}
-                  <a href="/accounts/{account.id}" {...props} class="flex items-center gap-3 min-w-0 py-2">
+                  <a href="/accounts/{account.slug}" {...props} class="flex items-center gap-3 min-w-0 py-2">
                     <!-- Account Icon with colored background -->
                     <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
                          style="background-color: {(account as any).accountColor ? `${(account as any).accountColor}15` : 'hsl(var(--muted))'}">
@@ -171,7 +171,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="right" align="start">
                   <DropdownMenu.Item>
-                    <a href="/accounts/{account.id}/edit" class="w-full">Edit</a>
+                    <a href="/accounts/{account.slug}/edit" class="w-full">Edit</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onclick={() => {
@@ -245,7 +245,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
                 {#snippet child({props})}
-                  <a href="/budgets/{budget.id}" {...props}>
+                  <a href="/budgets/{budget.slug}" {...props}>
                     <span class="text-sm">{budget.name}</span>
                   </a>
                 {/snippet}
@@ -260,7 +260,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="right" align="start">
                   <DropdownMenu.Item>
-                    <a href="/budgets/{budget.id}/edit" class="w-full">Edit</a>
+                    <a href="/budgets/{budget.slug}/edit" class="w-full">Edit</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onclick={() => {
@@ -290,7 +290,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
                 {#snippet child({props})}
-                  <a href="/payees/{payee.id}" {...props}>
+                  <a href="/payees/{payee.slug}" {...props}>
                     <span class="text-sm">{payee.name}</span>
                   </a>
                 {/snippet}
@@ -305,13 +305,13 @@ const _deleteCategoryId = $derived(deleteCategoryId);
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="right" align="start">
                   <DropdownMenu.Item>
-                    <a href="/payees/{payee.id}" class="w-full">View Details</a>
+                    <a href="/payees/{payee.slug}" class="w-full">View Details</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item>
-                    <a href="/payees/{payee.id}/edit" class="w-full">Edit</a>
+                    <a href="/payees/{payee.slug}/edit" class="w-full">Edit</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item>
-                    <a href="/payees/{payee.id}/analytics" class="w-full">Analytics</a>
+                    <a href="/payees/{payee.slug}/analytics" class="w-full">Analytics</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onclick={() => {
@@ -341,7 +341,7 @@ const _deleteCategoryId = $derived(deleteCategoryId);
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
                 {#snippet child({props})}
-                  <a href="/categories/{category.id}" {...props}>
+                  <a href="/categories/{category.slug}" {...props}>
                     <span class="text-sm">{category.name}</span>
                   </a>
                 {/snippet}
@@ -356,13 +356,13 @@ const _deleteCategoryId = $derived(deleteCategoryId);
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="right" align="start">
                   <DropdownMenu.Item>
-                    <a href="/categories/{category.id}" class="w-full">View Details</a>
+                    <a href="/categories/{category.slug}" class="w-full">View Details</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item>
-                    <a href="/categories/{category.id}/edit" class="w-full">Edit</a>
+                    <a href="/categories/{category.slug}/edit" class="w-full">Edit</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item>
-                    <a href="/categories/{category.id}/analytics" class="w-full">Analytics</a>
+                    <a href="/categories/{category.slug}/analytics" class="w-full">Analytics</a>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onclick={() => {

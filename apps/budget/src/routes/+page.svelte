@@ -182,7 +182,7 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
             {#each payees.slice(0, 5) as payee}
               <div class="flex items-center justify-between">
                 <span class="text-sm font-medium truncate">{payee.name}</span>
-                <Button variant="ghost" size="sm" href="/payees/{payee.id}/analytics" class="h-6 px-2 text-xs">
+                <Button variant="ghost" size="sm" href="/payees/{payee.slug}/analytics" class="h-6 px-2 text-xs">
                   Analytics
                 </Button>
               </div>

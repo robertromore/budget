@@ -52,6 +52,7 @@ export const categories = sqliteTable(
     id: integer("id").primaryKey({autoIncrement: true}),
     parentId: integer("parent_id").references((): AnySQLiteColumn => categories.id),
     name: text("name"),
+    slug: text("slug").notNull().unique(),
     notes: text("notes"),
 
     // Type classification
@@ -91,6 +92,7 @@ export const categories = sqliteTable(
   },
   (table) => [
     index("category_name_idx").on(table.name),
+    index("category_slug_idx").on(table.slug),
     index("category_parent_idx").on(table.parentId),
     index("category_deleted_at_idx").on(table.deletedAt),
     index("category_type_idx").on(table.categoryType),
@@ -131,6 +133,7 @@ export const formInsertCategorySchema = createInsertSchema(categories, {
             return true;
           }, "Category name contains invalid characters")
       ),
+  slug: (schema) => schema.optional(),
   notes: (schema) =>
     schema
       .transform((val) => val?.trim())
