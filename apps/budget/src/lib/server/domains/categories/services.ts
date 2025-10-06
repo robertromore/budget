@@ -6,6 +6,7 @@ import type {Category, NewCategory, CategoryType, TaxCategory, SpendingPriority,
 export interface CreateCategoryData {
   name: string;
   notes?: string | null;
+  parentId?: number | null;
 }
 
 export interface CategoryAnalytics {
@@ -54,6 +55,11 @@ export class CategoryService {
       ? InputSanitizer.sanitizeDescription(data.notes)
       : null;
 
+    // Validate parent if provided
+    if (data.parentId !== undefined && data.parentId !== null) {
+      await this.validateParentAssignment(data.parentId);
+    }
+
     // Check for duplicate names (case-insensitive)
     await this.validateUniqueCategoryName(sanitizedName);
 
@@ -72,6 +78,7 @@ export class CategoryService {
       name: sanitizedName,
       slug,
       notes: sanitizedNotes,
+      parentId: data.parentId ?? null,
     };
 
     return await this.repository.create(newCategory);
@@ -170,6 +177,12 @@ export class CategoryService {
       updateData.notes = data.notes
         ? InputSanitizer.sanitizeDescription(data.notes)
         : null;
+    }
+
+    // Validate and handle parentId if provided
+    if (data.parentId !== undefined) {
+      await this.validateParentAssignment(data.parentId, id);
+      updateData.parentId = data.parentId;
     }
 
     // Handle all other category fields
@@ -520,6 +533,137 @@ export class CategoryService {
    */
   async getAllCategoriesWithBudgets() {
     return await this.repository.findAllWithBudgets();
+  }
+
+  /**
+   * Get root categories (no parent)
+   */
+  async getRootCategories() {
+    return await this.repository.findRootCategories();
+  }
+
+  /**
+   * Get children of a category
+   */
+  async getCategoryChildren(parentId: number) {
+    if (!parentId || parentId <= 0) {
+      throw new ValidationError("Invalid parent category ID");
+    }
+
+    await this.getCategoryById(parentId);
+    return await this.repository.findChildren(parentId);
+  }
+
+  /**
+   * Get category with its children
+   */
+  async getCategoryWithChildren(id: number) {
+    if (!id || id <= 0) {
+      throw new ValidationError("Invalid category ID");
+    }
+
+    const category = await this.repository.findWithChildren(id);
+    if (!category) {
+      throw new NotFoundError("Category", id);
+    }
+
+    return category;
+  }
+
+  /**
+   * Get full category hierarchy tree
+   */
+  async getCategoryHierarchyTree() {
+    return await this.repository.getHierarchyTree();
+  }
+
+  /**
+   * Set category parent (with circular reference validation)
+   */
+  async setCategoryParent(categoryId: number, parentId: number | null) {
+    if (!categoryId || categoryId <= 0) {
+      throw new ValidationError("Invalid category ID");
+    }
+
+    // Verify category exists
+    await this.getCategoryById(categoryId);
+
+    // If setting a parent, validate it
+    if (parentId !== null) {
+      if (parentId <= 0) {
+        throw new ValidationError("Invalid parent category ID");
+      }
+
+      // Verify parent exists
+      await this.getCategoryById(parentId);
+
+      // Prevent self-reference
+      if (categoryId === parentId) {
+        throw new ValidationError("Category cannot be its own parent");
+      }
+
+      // Prevent circular reference
+      const descendantIds = await this.repository.getDescendantIds(categoryId);
+      if (descendantIds.includes(parentId)) {
+        throw new ValidationError(
+          "Cannot set parent: This would create a circular reference"
+        );
+      }
+    }
+
+    // Update the parent
+    return await this.repository.update(categoryId, {parentId});
+  }
+
+  /**
+   * Check if category has children
+   */
+  async categoryHasChildren(id: number): Promise<boolean> {
+    if (!id || id <= 0) return false;
+    return await this.repository.hasChildren(id);
+  }
+
+  /**
+   * Get descendant IDs of a category
+   */
+  async getCategoryDescendantIds(id: number): Promise<number[]> {
+    if (!id || id <= 0) {
+      throw new ValidationError("Invalid category ID");
+    }
+
+    await this.getCategoryById(id);
+    return await this.repository.getDescendantIds(id);
+  }
+
+  /**
+   * Validate parent assignment before create/update
+   */
+  private async validateParentAssignment(
+    parentId: number | null | undefined,
+    categoryId?: number
+  ): Promise<void> {
+    if (parentId === null || parentId === undefined) return;
+
+    if (parentId <= 0) {
+      throw new ValidationError("Invalid parent category ID");
+    }
+
+    // Verify parent exists
+    await this.getCategoryById(parentId);
+
+    // If updating, check for circular reference
+    if (categoryId) {
+      if (categoryId === parentId) {
+        throw new ValidationError("Category cannot be its own parent");
+      }
+
+      const descendantIds = await this.repository.getDescendantIds(categoryId);
+      if (descendantIds.includes(parentId)) {
+        throw new ValidationError(
+          "Cannot set parent: This would create a circular reference"
+        );
+      }
+    }
   }
 
   /**

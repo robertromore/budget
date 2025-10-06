@@ -258,4 +258,88 @@ export const categoriesRoutes = t.router({
       });
     }
   }),
+
+  rootCategories: publicProcedure.query(async () => {
+    try {
+      return await categoryService.getRootCategories();
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to fetch root categories",
+      });
+    }
+  }),
+
+  categoryChildren: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
+    try {
+      return await categoryService.getCategoryChildren(input.id);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: error.message,
+        });
+      }
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to fetch category children",
+      });
+    }
+  }),
+
+  categoryWithChildren: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
+    try {
+      return await categoryService.getCategoryWithChildren(input.id);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: error.message,
+        });
+      }
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to fetch category with children",
+      });
+    }
+  }),
+
+  hierarchyTree: publicProcedure.query(async () => {
+    try {
+      return await categoryService.getCategoryHierarchyTree();
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to fetch category hierarchy",
+      });
+    }
+  }),
+
+  setParent: rateLimitedProcedure
+    .input(z.object({
+      categoryId: z.number().positive(),
+      parentId: z.number().positive().nullable(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await categoryService.setCategoryParent(input.categoryId, input.parentId);
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: error.message,
+          });
+        }
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to set category parent",
+        });
+      }
+    }),
 });

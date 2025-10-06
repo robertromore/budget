@@ -10,6 +10,7 @@ import {NotFoundError} from "$lib/server/shared/types/errors";
 export interface UpdateCategoryData {
   name?: string | undefined;
   notes?: string | null | undefined;
+  parentId?: number | null | undefined;
   categoryType?: CategoryType | undefined;
   categoryIcon?: string | null | undefined;
   categoryColor?: string | null | undefined;
@@ -53,6 +54,14 @@ export interface CategoryBudgetSummary {
 
 export interface CategoryWithBudgets extends Category {
   budgets: CategoryBudgetSummary[];
+}
+
+export interface CategoryWithChildren extends Category {
+  children: Category[];
+}
+
+export interface CategoryTreeNode extends Category {
+  children: CategoryTreeNode[];
 }
 
 /**
@@ -483,5 +492,120 @@ export class CategoryRepository {
     );
 
     return categoriesWithBudgets;
+  }
+
+  /**
+   * Find all root categories (no parent)
+   */
+  async findRootCategories(): Promise<Category[]> {
+    return await db
+      .select()
+      .from(categories)
+      .where(and(
+        isNull(categories.parentId),
+        isNull(categories.deletedAt)
+      ))
+      .orderBy(categories.displayOrder, categories.name);
+  }
+
+  /**
+   * Find direct children of a category
+   */
+  async findChildren(parentId: number): Promise<Category[]> {
+    return await db
+      .select()
+      .from(categories)
+      .where(and(
+        eq(categories.parentId, parentId),
+        isNull(categories.deletedAt)
+      ))
+      .orderBy(categories.displayOrder, categories.name);
+  }
+
+  /**
+   * Find category with its direct children
+   */
+  async findWithChildren(id: number): Promise<CategoryWithChildren | null> {
+    const category = await this.findById(id);
+    if (!category) return null;
+
+    const children = await this.findChildren(id);
+
+    return {
+      ...category,
+      children,
+    };
+  }
+
+  /**
+   * Build full category hierarchy tree
+   */
+  async getHierarchyTree(): Promise<CategoryTreeNode[]> {
+    const allCategories = await this.findAll();
+
+    // Create a map for quick lookup
+    const categoryMap = new Map<number, CategoryTreeNode>();
+
+    // Initialize all categories as tree nodes
+    allCategories.forEach(cat => {
+      categoryMap.set(cat.id, {
+        ...cat,
+        children: [],
+      });
+    });
+
+    // Build the tree
+    const rootNodes: CategoryTreeNode[] = [];
+
+    allCategories.forEach(cat => {
+      const node = categoryMap.get(cat.id)!;
+
+      if (cat.parentId === null) {
+        // Root category
+        rootNodes.push(node);
+      } else {
+        // Child category
+        const parent = categoryMap.get(cat.parentId);
+        if (parent) {
+          parent.children.push(node);
+        } else {
+          // Parent not found or deleted, treat as root
+          rootNodes.push(node);
+        }
+      }
+    });
+
+    return rootNodes;
+  }
+
+  /**
+   * Check if category has children
+   */
+  async hasChildren(id: number): Promise<boolean> {
+    const [result] = await db
+      .select({id: categories.id})
+      .from(categories)
+      .where(and(
+        eq(categories.parentId, id),
+        isNull(categories.deletedAt)
+      ))
+      .limit(1);
+
+    return !!result;
+  }
+
+  /**
+   * Get all descendant IDs of a category (recursive)
+   */
+  async getDescendantIds(id: number): Promise<number[]> {
+    const children = await this.findChildren(id);
+    let descendantIds: number[] = children.map(c => c.id);
+
+    for (const child of children) {
+      const childDescendants = await this.getDescendantIds(child.id);
+      descendantIds = [...descendantIds, ...childDescendants];
+    }
+
+    return descendantIds;
   }
 }
