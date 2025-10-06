@@ -10,20 +10,22 @@ import {NotFoundError} from "$lib/server/shared/types/errors";
 import {getCurrentTimestamp} from "$lib/utils/dates";
 
 export interface UpdateCategoryData {
-  name?: string;
-  notes?: string | null;
-  categoryType?: string;
-  categoryIcon?: string | null;
-  categoryColor?: string | null;
-  isTaxDeductible?: boolean;
-  taxCategory?: string | null;
-  deductiblePercentage?: number | null;
-  isSeasonal?: boolean;
-  seasonalMonths?: string | null;
-  expectedMonthlyMin?: number | null;
-  expectedMonthlyMax?: number | null;
-  spendingPriority?: string | null;
-  incomeReliability?: string | null;
+  name?: string | undefined;
+  notes?: string | null | undefined;
+  categoryType?: string | undefined;
+  categoryIcon?: string | null | undefined;
+  categoryColor?: string | null | undefined;
+  isActive?: boolean | undefined;
+  displayOrder?: number | null | undefined;
+  isTaxDeductible?: boolean | undefined;
+  taxCategory?: string | null | undefined;
+  deductiblePercentage?: number | null | undefined;
+  isSeasonal?: boolean | undefined;
+  seasonalMonths?: string | null | undefined;
+  expectedMonthlyMin?: number | null | undefined;
+  expectedMonthlyMax?: number | null | undefined;
+  spendingPriority?: string | null | undefined;
+  incomeReliability?: string | null | undefined;
 }
 
 export interface CategoryStats {

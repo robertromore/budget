@@ -185,6 +185,14 @@ export class CategoryService {
       updateData.categoryColor = data.categoryColor;
     }
 
+    if (data.isActive !== undefined) {
+      updateData.isActive = data.isActive;
+    }
+
+    if (data.displayOrder !== undefined) {
+      updateData.displayOrder = data.displayOrder;
+    }
+
     if (data.isTaxDeductible !== undefined) {
       updateData.isTaxDeductible = data.isTaxDeductible;
     }
@@ -295,6 +303,46 @@ export class CategoryService {
       : 0;
 
     return {deletedCount, errors};
+  }
+
+  /**
+   * Bulk update category display order
+   */
+  async bulkUpdateDisplayOrder(
+    updates: Array<{id: number; displayOrder: number}>
+  ): Promise<{updatedCount: number; errors: string[]}> {
+    if (!Array.isArray(updates) || updates.length === 0) {
+      throw new ValidationError("No category updates provided");
+    }
+
+    const errors: string[] = [];
+    let updatedCount = 0;
+
+    // Process each update
+    for (const update of updates) {
+      try {
+        if (!update.id || update.id <= 0) {
+          errors.push(`Invalid category ID: ${update.id}`);
+          continue;
+        }
+
+        if (update.displayOrder < 0) {
+          errors.push(`Category ${update.id}: Display order must be non-negative`);
+          continue;
+        }
+
+        // Verify category exists
+        await this.getCategoryById(update.id);
+
+        // Update display order
+        await this.repository.update(update.id, {displayOrder: update.displayOrder});
+        updatedCount++;
+      } catch (error) {
+        errors.push(`Category ${update.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
+    return {updatedCount, errors};
   }
 
   /**
@@ -437,7 +485,7 @@ export class CategoryService {
     const existingCategories = await this.repository.findAll();
 
     const duplicate = existingCategories.find(category =>
-      category.name.toLowerCase() === name.toLowerCase() &&
+      category.name?.toLowerCase() === name.toLowerCase() &&
       category.id !== excludeId
     );
 
