@@ -7,6 +7,7 @@
   import ChartPlaceholder from "$lib/components/ui/chart-placeholder.svelte";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
+  import {calculateActualSpent, calculateAllocated} from "$lib/utils/budget-calculations";
   import {listBudgets, getSpendingTrends} from "$lib/query/budgets";
   import {
     TrendingUp,
@@ -35,16 +36,13 @@
   // Analytics calculations
   const totalAllocated = $derived.by(() => {
     return allBudgets.reduce((sum, budget) => {
-      const allocated = Math.abs((budget.metadata as any)?.allocatedAmount ?? 0);
-      return sum + allocated;
+      return sum + calculateAllocated(budget);
     }, 0);
   });
 
   const totalSpent = $derived.by(() => {
     return allBudgets.reduce((sum, budget) => {
-      const latest = budget.periodTemplates?.[0]?.periods?.[0];
-      const spent = Math.abs(latest?.actualAmount ?? 0);
-      return sum + spent;
+      return sum + calculateActualSpent(budget);
     }, 0);
   });
 
@@ -55,19 +53,15 @@
   const pausedBudgets = $derived.by(() => allBudgets.filter(b => b.status === 'inactive'));
   const overdraftBudgets = $derived.by(() =>
     allBudgets.filter(b => {
-      const allocated = Math.abs((b.metadata as any)?.allocatedAmount ?? 0);
-      const latest = b.periodTemplates?.[0]?.periods?.[0];
-      const spent = Math.abs(latest?.actualAmount ?? 0);
-      return spent > allocated;
+      return calculateActualSpent(b) > calculateAllocated(b);
     })
   );
 
   // Budget performance insights
   const budgetPerformance = $derived.by(() => {
     return allBudgets.map(budget => {
-      const allocated = Math.abs((budget.metadata as any)?.allocatedAmount ?? 0);
-      const latest = budget.periodTemplates?.[0]?.periods?.[0];
-      const spent = Math.abs(latest?.actualAmount ?? 0);
+      const allocated = calculateAllocated(budget);
+      const spent = calculateActualSpent(budget);
       const remaining = allocated - spent;
       const utilizationRate = allocated > 0 ? (spent / allocated) * 100 : 0;
 

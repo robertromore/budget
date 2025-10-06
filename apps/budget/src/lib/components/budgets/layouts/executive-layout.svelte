@@ -13,6 +13,7 @@
     Lightbulb
   } from "@lucide/svelte/icons";
   import BudgetMetricCard from "../budget-metric-card.svelte";
+  import {calculateActualSpent} from "$lib/utils/budget-calculations";
   import type { BudgetWithRelations } from "$lib/server/domains/budgets";
   import type { Category } from "$lib/schema/categories";
   import type { BudgetHealthStatus } from "$lib/schema/budgets";
@@ -31,8 +32,7 @@
 
   // Basic budget values as individual derived variables
   const allocated = $derived(Math.abs((budget.metadata as any)?.allocatedAmount ?? 0));
-  const latest = $derived(budget.periodTemplates?.[0]?.periods?.[0]);
-  const spent = $derived(Math.abs(latest?.actualAmount ?? 0));
+  const spent = $derived(calculateActualSpent(budget));
   const remaining = $derived(allocated - spent);
   const progressPercentage = $derived(allocated > 0 ? (spent / allocated) * 100 : 0);
 

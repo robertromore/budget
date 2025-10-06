@@ -9,6 +9,7 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
+  import {calculateActualSpent} from "$lib/utils/budget-calculations";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
 
   interface BudgetEnvelope {
@@ -45,8 +46,7 @@
   const envelopes = $derived.by(() => {
     return budgets.map(budget => {
       const allocated = Math.abs((budget.metadata as any)?.allocatedAmount ?? 0);
-      const latest = budget.periodTemplates?.[0]?.periods?.[0];
-      const spent = Math.abs(latest?.actualAmount ?? 0);
+      const spent = calculateActualSpent(budget);
       const available = allocated - spent;
 
       let status: 'active' | 'paused' | 'overspent' = 'active';

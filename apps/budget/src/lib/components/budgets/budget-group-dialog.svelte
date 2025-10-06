@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as Dialog from '$lib/components/ui/dialog';
+import {ResponsiveSheet} from '$lib/components/ui/responsive-sheet';
 import ManageBudgetGroupForm from '$lib/components/forms/manage-budget-group-form.svelte';
 import type {BudgetGroup} from '$lib/schema/budgets';
 
@@ -8,7 +8,7 @@ let {
   budgetGroup,
 }: {
   open?: boolean;
-  budgetGroup?: BudgetGroup;
+  budgetGroup?: BudgetGroup | undefined;
 } = $props();
 
 const isUpdate = $derived(budgetGroup !== undefined);
@@ -22,25 +22,25 @@ function handleCancel() {
 }
 </script>
 
-<Dialog.Root bind:open>
-  <Dialog.Content class="max-w-2xl max-h-[90vh] overflow-y-auto">
-    <Dialog.Header>
-      <Dialog.Title>
+<ResponsiveSheet bind:open>
+  {#snippet header()}
+    <div class="space-y-1">
+      <h2 class="text-lg font-semibold">
         {isUpdate ? 'Edit Budget Group' : 'Create Budget Group'}
-      </Dialog.Title>
-      <Dialog.Description>
+      </h2>
+      <p class="text-sm text-muted-foreground">
         {isUpdate
           ? 'Update the budget group details below'
           : 'Create a new budget group to organize your budgets'}
-      </Dialog.Description>
-    </Dialog.Header>
-
-    <div class="py-4">
-      <ManageBudgetGroupForm
-        {budgetGroup}
-        onSuccess={handleSuccess}
-        onCancel={handleCancel}
-      />
+      </p>
     </div>
-  </Dialog.Content>
-</Dialog.Root>
+  {/snippet}
+
+  {#snippet content()}
+    <ManageBudgetGroupForm
+      {budgetGroup}
+      onSuccess={handleSuccess}
+      onCancel={handleCancel}
+    />
+  {/snippet}
+</ResponsiveSheet>
