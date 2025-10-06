@@ -124,9 +124,7 @@ export const categoriesRoutes = t.router({
     .input(formInsertCategorySchema)
     .mutation(async ({input}) => {
       try {
-        console.log('[tRPC categories.save] Received input:', JSON.stringify(input, null, 2));
         const {id, name, notes, categoryType, categoryIcon, categoryColor, isActive, displayOrder, isTaxDeductible, taxCategory, deductiblePercentage, isSeasonal, seasonalMonths, expectedMonthlyMin, expectedMonthlyMax, spendingPriority, incomeReliability} = input;
-        console.log('[tRPC categories.save] Extracted values - isActive:', isActive, 'displayOrder:', displayOrder);
 
         if (id) {
           // Update existing category
