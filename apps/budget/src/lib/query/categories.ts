@@ -2,11 +2,15 @@ import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
 import { cachePatterns } from "./_client";
 import { trpc } from "$lib/trpc/client";
 import type {Category, NewCategory} from "$lib/schema/categories";
+import type {CategoryWithBudgets} from "$lib/server/domains/categories/repository";
 
 export const categoryKeys = createQueryKeys("categories", {
   all: () => ["categories", "all"] as const,
   detail: (id: number) => ["categories", "detail", id] as const,
   search: (query: string) => ["categories", "search", query] as const,
+  allWithBudgets: () => ["categories", "all", "budgets"] as const,
+  detailWithBudgets: (id: number) => ["categories", "detail", id, "budgets"] as const,
+  slugWithBudgets: (slug: string) => ["categories", "slug", slug, "budgets"] as const,
 });
 
 export const listCategories = () =>
@@ -72,3 +76,21 @@ export const reorderCategories = defineMutation<Array<{id: number; displayOrder:
   successMessage: "Categories reordered",
   errorMessage: "Failed to reorder categories",
 });
+
+export const listCategoriesWithBudgets = () =>
+  defineQuery<CategoryWithBudgets[]>({
+    queryKey: categoryKeys.allWithBudgets(),
+    queryFn: () => trpc().categoriesRoutes.allWithBudgets.query(),
+  });
+
+export const getCategoryByIdWithBudgets = (id: number) =>
+  defineQuery<CategoryWithBudgets>({
+    queryKey: categoryKeys.detailWithBudgets(id),
+    queryFn: () => trpc().categoriesRoutes.loadWithBudgets.query({id}),
+  });
+
+export const getCategoryBySlugWithBudgets = (slug: string) =>
+  defineQuery<CategoryWithBudgets>({
+    queryKey: categoryKeys.slugWithBudgets(slug),
+    queryFn: () => trpc().categoriesRoutes.getBySlugWithBudgets.query({slug}),
+  });

@@ -12,7 +12,7 @@ export const load: PageServerLoad = async (event) => {
   }
 
   const caller = createCaller(await createContext(event));
-  const category = await caller.categoriesRoutes.getBySlug({slug});
+  const category = await caller.categoriesRoutes.getBySlugWithBudgets({slug});
 
   if (!category) {
     throw error(404, 'Category not found');

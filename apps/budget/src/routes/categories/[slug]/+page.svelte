@@ -12,8 +12,10 @@ import Tag from '@lucide/svelte/icons/tag';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Receipt from '@lucide/svelte/icons/receipt';
+import Wallet from '@lucide/svelte/icons/wallet';
 import type {PageData} from './$types';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
+import {formatCurrency} from '$lib/utils/currency';
 
 let {data}: {data: PageData} = $props();
 
@@ -136,6 +138,78 @@ const handleDelete = async () => {
         </Card.Content>
       </Card.Root>
     </div>
+
+    <!-- Budget Allocations Card -->
+    {#if category.budgets && category.budgets.length > 0}
+      <Card.Root>
+        <Card.Header>
+          <Card.Title class="flex items-center gap-2">
+            <Wallet class="h-5 w-5" />
+            Budget Allocations
+          </Card.Title>
+          <Card.Description>
+            Envelope allocations for this category across budgets
+          </Card.Description>
+        </Card.Header>
+        <Card.Content>
+          <div class="space-y-4">
+            {#each category.budgets as budget}
+              <div class="rounded-lg border p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                  <a
+                    href="/budgets/{budget.budgetSlug}"
+                    class="font-medium hover:underline"
+                  >
+                    {budget.budgetName}
+                  </a>
+                  <span class="text-xs px-2 py-1 rounded-full bg-muted">
+                    {budget.status}
+                  </span>
+                </div>
+
+                <Separator />
+
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div class="text-muted-foreground">Allocated</div>
+                    <div class="font-medium">{formatCurrency(budget.allocatedAmount)}</div>
+                  </div>
+                  <div>
+                    <div class="text-muted-foreground">Spent</div>
+                    <div class="font-medium">{formatCurrency(budget.spentAmount)}</div>
+                  </div>
+                  <div>
+                    <div class="text-muted-foreground">Available</div>
+                    <div class="font-medium" class:text-green-600={budget.availableAmount > 0} class:text-red-600={budget.availableAmount < 0}>
+                      {formatCurrency(budget.availableAmount)}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-muted-foreground">Rollover</div>
+                    <div class="font-medium">{formatCurrency(budget.rolloverAmount)}</div>
+                  </div>
+                </div>
+
+                {#if budget.deficitAmount !== 0}
+                  <div class="pt-2 border-t">
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="text-muted-foreground">Deficit</span>
+                      <span class="font-medium text-red-600">{formatCurrency(budget.deficitAmount)}</span>
+                    </div>
+                  </div>
+                {/if}
+
+                {#if budget.lastCalculated}
+                  <div class="text-xs text-muted-foreground">
+                    Last calculated: {new Date(budget.lastCalculated).toLocaleString()}
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </Card.Content>
+      </Card.Root>
+    {/if}
 
     <!-- Recent Transactions Card -->
     <Card.Root>
