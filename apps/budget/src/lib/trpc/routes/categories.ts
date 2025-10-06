@@ -213,4 +213,49 @@ export const categoriesRoutes = t.router({
         });
       }
     }),
+
+  allWithBudgets: publicProcedure.query(async () => {
+    try {
+      return await categoryService.getAllCategoriesWithBudgets();
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to fetch categories with budgets",
+      });
+    }
+  }),
+
+  loadWithBudgets: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
+    try {
+      return await categoryService.getCategoryByIdWithBudgets(input.id);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: error.message,
+        });
+      }
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to load category with budgets",
+      });
+    }
+  }),
+
+  getBySlugWithBudgets: publicProcedure.input(z.object({slug: z.string()})).query(async ({input}) => {
+    try {
+      return await categoryService.getCategoryBySlugWithBudgets(input.slug);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: error.message,
+        });
+      }
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to load category with budgets",
+      });
+    }
+  }),
 });

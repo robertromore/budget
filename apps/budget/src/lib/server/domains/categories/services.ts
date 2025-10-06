@@ -1,7 +1,7 @@
 import {CategoryRepository, type UpdateCategoryData, type CategoryStats, type CategoryWithStats} from "./repository";
 import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
 import {InputSanitizer} from "$lib/server/shared/validation";
-import type {Category, NewCategory} from "$lib/schema/categories";
+import type {Category, NewCategory, CategoryType, TaxCategory, SpendingPriority, IncomeReliability} from "$lib/schema/categories";
 
 export interface CreateCategoryData {
   name: string;
@@ -476,6 +476,50 @@ export class CategoryService {
         : 0,
       topCategory: topCategory && topCategory.stats.transactionCount > 0 ? topCategory : null,
     };
+  }
+
+  /**
+   * Get category by ID with budget data
+   */
+  async getCategoryByIdWithBudgets(id: number) {
+    if (!id || id <= 0) {
+      throw new ValidationError("Invalid category ID");
+    }
+
+    const category = await this.repository.findByIdWithBudgets(id);
+    if (!category) {
+      throw new NotFoundError("Category", id);
+    }
+
+    return category;
+  }
+
+  /**
+   * Get category by slug with budget data
+   */
+  async getCategoryBySlugWithBudgets(slug: string) {
+    if (!slug?.trim()) {
+      throw new ValidationError("Invalid category slug");
+    }
+
+    const category = await this.repository.findBySlug(slug);
+    if (!category) {
+      throw new NotFoundError("Category", slug);
+    }
+
+    const budgetSummaries = await this.repository.getBudgetSummary(category.id);
+
+    return {
+      ...category,
+      budgets: budgetSummaries,
+    };
+  }
+
+  /**
+   * Get all categories with budget data
+   */
+  async getAllCategoriesWithBudgets() {
+    return await this.repository.findAllWithBudgets();
   }
 
   /**

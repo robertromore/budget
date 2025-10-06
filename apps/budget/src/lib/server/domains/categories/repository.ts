@@ -1,31 +1,29 @@
 import {db} from "$lib/server/db";
 import {getCurrentTimestamp} from "$lib/utils/dates";
 import {categories, transactions} from "$lib/schema";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {eq, and, isNull, like, inArray, sql, count, sum} from "drizzle-orm";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import type {Category, NewCategory} from "$lib/schema/categories";
-import {getCurrentTimestamp} from "$lib/utils/dates";
+import {envelopeAllocations} from "$lib/schema/budgets/envelope-allocations";
+import {budgets} from "$lib/schema/budgets";
+import {eq, and, isNull, like, inArray, sql, count, desc} from "drizzle-orm";
+import type {Category, NewCategory, CategoryType, TaxCategory, SpendingPriority, IncomeReliability} from "$lib/schema/categories";
 import {NotFoundError} from "$lib/server/shared/types/errors";
-import {getCurrentTimestamp} from "$lib/utils/dates";
 
 export interface UpdateCategoryData {
   name?: string | undefined;
   notes?: string | null | undefined;
-  categoryType?: string | undefined;
+  categoryType?: CategoryType | undefined;
   categoryIcon?: string | null | undefined;
   categoryColor?: string | null | undefined;
   isActive?: boolean | undefined;
-  displayOrder?: number | null | undefined;
+  displayOrder?: number | undefined;
   isTaxDeductible?: boolean | undefined;
-  taxCategory?: string | null | undefined;
+  taxCategory?: TaxCategory | null | undefined;
   deductiblePercentage?: number | null | undefined;
   isSeasonal?: boolean | undefined;
   seasonalMonths?: string | null | undefined;
   expectedMonthlyMin?: number | null | undefined;
   expectedMonthlyMax?: number | null | undefined;
-  spendingPriority?: string | null | undefined;
-  incomeReliability?: string | null | undefined;
+  spendingPriority?: SpendingPriority | null | undefined;
+  incomeReliability?: IncomeReliability | null | undefined;
 }
 
 export interface CategoryStats {
@@ -37,6 +35,24 @@ export interface CategoryStats {
 
 export interface CategoryWithStats extends Category {
   stats: CategoryStats;
+}
+
+export interface CategoryBudgetSummary {
+  budgetId: number;
+  budgetName: string;
+  budgetSlug: string;
+  envelopeId: number;
+  allocatedAmount: number;
+  spentAmount: number;
+  availableAmount: number;
+  rolloverAmount: number;
+  deficitAmount: number;
+  status: string;
+  lastCalculated: string | null;
+}
+
+export interface CategoryWithBudgets extends Category {
+  budgets: CategoryBudgetSummary[];
 }
 
 /**
@@ -395,5 +411,77 @@ export class CategoryRepository {
       ));
 
     return result?.count || 0;
+  }
+
+  /**
+   * Get budget summary for a category
+   */
+  async getBudgetSummary(categoryId: number): Promise<CategoryBudgetSummary[]> {
+    const results = await db
+      .select({
+        budgetId: budgets.id,
+        budgetName: budgets.name,
+        budgetSlug: budgets.slug,
+        envelopeId: envelopeAllocations.id,
+        allocatedAmount: envelopeAllocations.allocatedAmount,
+        spentAmount: envelopeAllocations.spentAmount,
+        availableAmount: envelopeAllocations.availableAmount,
+        rolloverAmount: envelopeAllocations.rolloverAmount,
+        deficitAmount: envelopeAllocations.deficitAmount,
+        status: envelopeAllocations.status,
+        lastCalculated: envelopeAllocations.lastCalculated,
+      })
+      .from(envelopeAllocations)
+      .leftJoin(budgets, eq(envelopeAllocations.budgetId, budgets.id))
+      .where(eq(envelopeAllocations.categoryId, categoryId))
+      .orderBy(desc(envelopeAllocations.updatedAt));
+
+    return results.map(r => ({
+      budgetId: r.budgetId!,
+      budgetName: r.budgetName!,
+      budgetSlug: r.budgetSlug!,
+      envelopeId: r.envelopeId,
+      allocatedAmount: r.allocatedAmount,
+      spentAmount: r.spentAmount,
+      availableAmount: r.availableAmount,
+      rolloverAmount: r.rolloverAmount,
+      deficitAmount: r.deficitAmount,
+      status: r.status,
+      lastCalculated: r.lastCalculated,
+    }));
+  }
+
+  /**
+   * Get category with budget data
+   */
+  async findByIdWithBudgets(id: number): Promise<CategoryWithBudgets | null> {
+    const category = await this.findById(id);
+    if (!category) return null;
+
+    const budgetSummaries = await this.getBudgetSummary(id);
+
+    return {
+      ...category,
+      budgets: budgetSummaries,
+    };
+  }
+
+  /**
+   * Get all categories with budget data
+   */
+  async findAllWithBudgets(): Promise<CategoryWithBudgets[]> {
+    const allCategories = await this.findAll();
+
+    const categoriesWithBudgets = await Promise.all(
+      allCategories.map(async (category) => {
+        const budgetSummaries = await this.getBudgetSummary(category.id);
+        return {
+          ...category,
+          budgets: budgetSummaries,
+        };
+      })
+    );
+
+    return categoriesWithBudgets;
   }
 }
