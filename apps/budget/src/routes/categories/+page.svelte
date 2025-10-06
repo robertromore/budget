@@ -193,11 +193,8 @@ const handleReorder = async (reorderedCategories: Category[]) => {
     displayOrder: cat.displayOrder ?? 0,
   }));
 
-  console.log('[handleReorder] Updates to send:', updates);
-
   try {
-    const result = await reorderMutation.mutateAsync(updates);
-    console.log('[handleReorder] Result:', result);
+    await reorderMutation.mutateAsync(updates);
 
     // Update CategoriesState with new displayOrder values
     reorderedCategories.forEach((cat) => {
