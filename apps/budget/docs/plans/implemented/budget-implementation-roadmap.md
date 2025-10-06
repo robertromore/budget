@@ -9,15 +9,78 @@
 > **Phase 5**: ✅ COMPLETE (budget templates fully implemented)
 > **Phase 6**: ✅ COMPLETE (analytics connected to real data)
 > **Phase 7**: ✅ COMPLETE (transaction auto-assignment implemented)
-> **Last Updated**: October 2025
+> **Last Updated**: October 5, 2025
 
 This document outlines the complete plan for finishing and enhancing the budget management system.
+
+## Recent Bug Fixes & Improvements
+
+### Budget Group Dialog Enhancement (October 2025)
+
+**Issue**: Budget group creation dialog not appearing when creating new groups
+
+**Fix Applied**: `/Users/robert/Projects/JS/SvelteKit/budget/apps/budget/src/lib/components/budgets/budget-group-dialog.svelte`
+
+**Changes**:
+
+- Converted `BudgetGroupDialog` from `Dialog` to `ResponsiveSheet` for improved user experience across device sizes
+- Updated component to use Svelte 5 snippet-based API for header and content sections
+- Added explicit `| undefined` type annotation for TypeScript strictness in dialog state management
+- Improved modal visibility and responsiveness on mobile and desktop devices
+
+**Result**: Budget group creation dialog now appears correctly when users click "Create Group" buttons throughout the application.
+
+### Budget Calculation Improvements (October 2025)
+
+**Issue**: Analytics dashboard and budget detail pages showing $0 for allocated/remaining amounts
+
+**Root Cause**: `calculateAllocated()` utility function only checked budget metadata, missing fallback to period instance `allocatedAmount`
+
+**Fix Applied**: `/Users/robert/Projects/JS/SvelteKit/budget/apps/budget/src/lib/utils/budget-calculations.ts`
+
+**Changes**:
+
+- Updated `calculateAllocated()` to support period instance fallback logic
+- Function now checks `budget.metadata?.allocatedAmount` first, then falls back to `periodInstance?.allocatedAmount`
+- Ensures accurate allocation calculations across all budget types and display contexts
+
+**Impact**: All components using `calculateAllocated()` automatically inherit the fix:
+
+- Budget detail pages show correct allocated amounts
+- Analytics dashboard displays accurate budget metrics
+- Remaining amount calculations reflect true budget state
+- Budget progress indicators show proper percentage completion
+
+**Result**: Budget analytics, detail views, and dashboard widgets now display accurate allocated and remaining amounts instead of defaulting to $0.
+
+### Budget Spending Calculation Consistency (Previous Session)
+
+**Issue**: Stale spending data from period instance `actualAmount` not reflecting real transaction changes
+
+**Fix Applied**: Updated 10+ budget components across the application
+
+**Changes**:
+
+- Replaced all `periodInstance.actualAmount` references with `calculateActualSpent()` calls
+- `calculateActualSpent()` computes spending from actual `budget_transaction` records in real-time
+- Ensures spending metrics accurately reflect current transaction data rather than cached values
+
+**Components Updated**:
+
+- Budget overview cards and summaries
+- Budget detail analytics sections
+- Budget progress indicators
+- Envelope budget displays
+- Category spending breakdowns
+
+**Result**: All budget spending metrics now display real-time transaction data, preventing discrepancies between displayed and actual spending amounts.
 
 ## Implementation Status Summary
 
 ### ✅ Fully Implemented (100% Complete)
 
 **Database & Backend (100%)**
+
 - ✅ All tables migrated: budget, budget_account, budget_category, budget_group, budget_period_template, budget_period_instance, budget_transaction
 - ✅ Envelope tables: envelope_allocation, envelope_transfer, envelope_rollover_history
 - ✅ Complete service layer: BudgetService, EnvelopeService, PeriodManager, RolloverCalculator, DeficitRecovery
@@ -26,6 +89,7 @@ This document outlines the complete plan for finishing and enhancing the budget 
 - ✅ **Test data**: Comprehensive seed files (budgets.json, budgetPeriodTemplates.json, budgetPeriodInstances.json)
 
 **Query Layer (100%)**
+
 - ✅ **40+ query/mutation definitions** in `src/lib/query/budgets.ts` (615 lines)
 - ✅ Budget list/detail queries with proper caching strategies
 - ✅ Full CRUD mutations with cache invalidation
@@ -35,12 +99,14 @@ This document outlines the complete plan for finishing and enhancing the budget 
 - ✅ Forecast and schedule integration queries
 
 **UI Pages (100%)**
+
 - ✅ `/budgets` - List page **using reactive queries** (`listBudgets().options()`)
 - ✅ `/budgets/[slug]` - Detail page **using reactive queries** (`getBudgetDetail()`, `getEnvelopeAllocations()`)
 - ✅ `/budgets/new` - Creation page with wizard
 - ✅ `/budgets/[slug]/edit` - Edit page
 
 **Envelope Budgeting (100%)**
+
 - ✅ **30+ UI components** for comprehensive envelope management
 - ✅ Simple, advanced, and drag-drop envelope managers
 - ✅ Fund transfers, rollover processing, deficit recovery
@@ -48,6 +114,7 @@ This document outlines the complete plan for finishing and enhancing the budget 
 - ✅ Full integration in detail page (Lines 51-146)
 
 **Analytics & Reporting (100%)**
+
 - ✅ Analytics dashboard **connected to real data** (not mock)
 - ✅ `getSpendingTrends()` query integration (Lines 98-112 in dashboard)
 - ✅ Real historical period data with dates and amounts
@@ -55,18 +122,21 @@ This document outlines the complete plan for finishing and enhancing the budget 
 - ✅ Category breakdown, daily spending, summary statistics
 
 **Period Management UI (100%)**
+
 - ✅ Period template components (form, manager, picker)
 - ✅ Period instance management UI
 - ✅ Query layer support for all period operations
 - ✅ Timezone-aware period calculations
 
 **UX Enhancements (100%)**
+
 - ✅ Bulk operations (archive/delete with selection UI)
 - ✅ Budget template picker UI
 - ✅ Mobile responsiveness (responsive grids, text sizing)
 - ✅ **Comprehensive accessibility** (ARIA labels, live regions, semantic structure)
 
 **Transaction Integration (100%)** ✅ **COMPLETE**
+
 - ✅ Budget allocation UI infrastructure in transaction form (Lines 154-200)
 - ✅ Applicable budgets query integration
 - ✅ Auto-assign toggle and allocation tracking
@@ -101,6 +171,7 @@ This document outlines the complete plan for finishing and enhancing the budget 
 ### ⚠️ Partially Implemented
 
 **Period Automation (100%)** ✅ **COMPLETE**
+
 - ✅ UI components complete (period-automation.svelte)
 - ✅ Query layer support for automation
 - ✅ **PeriodManager.schedulePeriodMaintenance()** method in `period-manager.ts:228`
@@ -113,6 +184,7 @@ This document outlines the complete plan for finishing and enhancing the budget 
 - ℹ️ No cron service needed - periods generated with look-ahead/behind logic prevents gaps
 
 **Goal-Based Budgets (100%)** ✅ **COMPLETE**
+
 - ✅ Goal progress tracker UI component
 - ✅ Goal metadata in budget schema
 - ✅ Forecast queries in query layer
@@ -126,6 +198,7 @@ This document outlines the complete plan for finishing and enhancing the budget 
   - `linkScheduleToGoal()` mutation with cache invalidation
 
 **Budget Templates (100%)** ✅ **COMPLETE**
+
 - ✅ Template picker UI (budget-template-picker.svelte)
 - ✅ Template selection in budgets page
 - ✅ **Template storage backend** (`template-service.ts`, 165 lines)
@@ -163,6 +236,7 @@ This document outlines the complete plan for finishing and enhancing the budget 
 **Implementation Evidence**:
 
 **File**: `src/routes/budgets/+page.svelte` (Line 47-49)
+
 ```svelte
 const budgetsQuery = $derived(listBudgets().options());
 const budgets = $derived(budgetsQuery.data ?? []);
@@ -170,6 +244,7 @@ const isLoading = $derived(budgetsQuery.isLoading);
 ```
 
 **File**: `src/routes/budgets/[slug]/+page.svelte` (Lines 37-54)
+
 ```svelte
 const budgetQuery = $derived(getBudgetDetail(budgetSlug).options());
 const budget = $derived(budgetQuery.data);
@@ -183,6 +258,7 @@ const envelopesQuery = $derived.by(() => {
 ```
 
 **Query Layer**: `src/lib/query/budgets.ts` (615 lines, 40+ definitions)
+
 - ✅ Budget list/detail queries with caching
 - ✅ Full CRUD mutations with cache invalidation
 - ✅ Envelope operations (allocations, transfers, rollovers)
@@ -260,6 +336,7 @@ const envelopesQuery = $derived.by(() => {
 5. `recalculateAllEnvelopes(budgetId)` - Batch envelope updates
 
 **✅ Integration Complete**: `onTransactionChange()` **hooked into all TransactionService mutation methods**:
+
 - ✅ `createTransaction()` (Line 244-249)
 - ✅ `updateTransaction()` (Line 373-378)
 - ✅ `deleteTransaction()` (Line 570-575)
@@ -279,6 +356,7 @@ const envelopesQuery = $derived.by(() => {
 **File**: `src/lib/components/forms/manage-transaction-form.svelte`
 
 **Implemented Features**:
+
 - ✅ Budget allocation interface with `BudgetAllocation` type (Lines 154-200)
 - ✅ Auto-assign budgets toggle with manual override (Line 360-369)
 - ✅ Budget allocations array tracking with reactive updates
@@ -301,6 +379,7 @@ const envelopesQuery = $derived.by(() => {
 **File**: `src/routes/accounts/[slug]/(data)/columns.svelte.ts` (Lines 425-443)
 
 Budget column configuration:
+
 - Column ID: "budget"
 - Uses `BudgetAllocationSimpleCell` component
 - Displays budget count via `budgetCount` accessor
@@ -308,6 +387,7 @@ Budget column configuration:
 **Component**: `src/routes/accounts/[slug]/(components)/(cells)/budget-allocation-simple-cell.svelte` (179 lines)
 
 **Features**:
+
 - ✅ Shows allocated budgets with amounts and percentages in tooltip
 - ✅ Visual indicators: emerald badges for allocated budgets
 - ✅ "Allocate to budget" button when unallocated
@@ -381,6 +461,7 @@ Budget column configuration:
 ```
 
 **Logic**:
+
 - `applicableBudgets` = budgets matching transaction's account/category
 - Validate total allocation <= transaction amount
 - Show error if over-allocated
@@ -407,6 +488,7 @@ Add budget column:
 ```
 
 **Enhancements**:
+
 - Click badge to quick-edit allocation
 - Show amount allocated to each budget
 - Visual indicator for partial allocations
@@ -1319,6 +1401,7 @@ Show linked budget on schedule detail page:
 **Goal**: Connect analytics UI to real data and add reporting features
 
 **Current Status**: Analytics dashboard UI is complete (`budget-analytics-dashboard.svelte`) with:
+
 - ✅ Overview cards (Total Allocated, Total Spent, Remaining, Budget Health)
 - ✅ Three-tab interface (Trends, Breakdown, Performance)
 - ✅ LayerChart integration with Area, Spline, and Arc charts
@@ -1438,6 +1521,7 @@ const spendingTrendData = $derived.by(() => {
 ```
 
 **Result**: Analytics dashboard will display:
+
 - Real historical spending patterns from period instances
 - Accurate allocated vs actual comparisons over time
 - True trend analysis instead of random data
@@ -1940,6 +2024,7 @@ Batch processing for efficiency:
 Apply responsive design patterns across all budget components:
 
 **Breakpoint Strategy**:
+
 - Mobile: < 640px (single column, stacked cards)
 - Tablet: 640px - 1024px (2 columns, compact controls)
 - Desktop: > 1024px (3-4 columns, full features)
@@ -2106,6 +2191,7 @@ export const exchangeRates = sqliteTable("exchange_rate", {
 ```
 
 **Features**:
+
 - Per-budget currency selection
 - Automatic exchange rate fetching
 - Multi-currency reporting with consolidated view
@@ -2137,6 +2223,7 @@ export const budgetActivityLog = sqliteTable("budget_activity_log", {
 ```
 
 **Features**:
+
 - User invitation system
 - Role-based permissions
 - Approval workflows for large transfers
@@ -2224,30 +2311,35 @@ export class BudgetIntegrationService {
 ## Implementation Priority Summary
 
 ### Must-Have (Complete First)
+
 1. **Wire queries into UI pages** - Connect existing reactive data layer ✓ (Query layer already built)
 2. **Test data generation** - Enable UI testing and development
 3. **Transaction budget allocation** - Core integration
 4. **Real-time budget calculations** - Accurate consumption tracking
 
 ### Should-Have (High Value)
+
 5. **Period management UI** - User control over periods
 6. **Period auto-generation** - Reduce manual work
 7. **Enhanced envelope allocation** - YNAB-style improvements
 8. **Rollover processing UI** - Envelope lifecycle management
 
 ### Nice-to-Have (Polish & Features)
+
 9. **Goal-based budgets** - Savings goals support
 10. **Scheduled expense integration** - Schedule-aware budgeting
 11. **Analytics data feeds** - Connect dashboard UI to real historical data (UI already complete)
 12. **Budget reports** - Exportable summaries
 
 ### Polish (User Experience)
+
 13. **Budget templates** - Quick setup
 14. **Bulk operations** - Efficiency improvements
 15. **Mobile responsiveness** - All devices support
 16. **Accessibility** - WCAG compliance
 
 ### Optional Advanced (Future Enhancements)
+
 17. **AI suggestions** - Machine learning insights
 18. **Multi-currency** - International support
 19. **Shared budgets** - Household collaboration

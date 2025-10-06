@@ -10,6 +10,7 @@ import BudgetRolloverManager from '$lib/components/budgets/budget-rollover-manag
 import EnvelopeBudgetManager from '$lib/components/budgets/envelope-budget-manager.svelte';
 import {BudgetBurndownChart, GoalProgressTracker, BudgetForecastDisplay, BudgetPeriodPicker} from '$lib/components/budgets';
 import {currencyFormatter} from '$lib/utils/formatters';
+import {calculateActualSpent, calculateAllocated} from '$lib/utils/budget-calculations';
 import {
   getBudgetDetail,
   listPeriodInstances,
@@ -145,13 +146,11 @@ async function handleAddEnvelope(categoryId: number, amount: number) {
   }
 }
 
-// Extract allocated amount from metadata
-const allocatedAmount = $derived(
-  (budget?.metadata as Record<string, unknown>)?.['allocatedAmount'] as number ?? 0
-);
+// Extract allocated amount from metadata or period instance
+const allocatedAmount = $derived(budget ? calculateAllocated(budget) : 0);
 
-// Placeholder for actual amount (would come from period instances)
-const actualAmount = $derived(0);
+// Calculate actual spent from transactions
+const actualAmount = $derived(budget ? calculateActualSpent(budget) : 0);
 
 function formatCurrency(value: number) {
   return currencyFormatter.format(Math.abs(value ?? 0));

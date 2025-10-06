@@ -6,6 +6,7 @@
   import ChartPlaceholder from "$lib/components/ui/chart-placeholder.svelte";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
+  import {calculateActualSpent} from "$lib/utils/budget-calculations";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
 
   interface Props {
@@ -34,8 +35,7 @@
   const budgetProgressData = $derived.by(() => {
     return filteredBudgets.map(budget => {
       const allocated = Math.abs((budget.metadata as any)?.allocatedAmount ?? 0);
-      const latest = budget.periodTemplates?.[0]?.periods?.[0];
-      const spent = Math.abs(latest?.actualAmount ?? 0);
+      const spent = calculateActualSpent(budget);
       const remaining = allocated - spent;
       const progressPercentage = allocated > 0 ? (spent / allocated) * 100 : 0;
 

@@ -17,6 +17,7 @@
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
   import {rawDateFormatter} from "$lib/utils/date-formatters";
+  import {calculateActualSpent} from "$lib/utils/budget-calculations";
   import {parseDate, getLocalTimeZone} from "@internationalized/date";
   import {
     ChartBar,
@@ -45,7 +46,7 @@
 
   // Use reactive client-side query instead of server data
   const budgetsQuery = listBudgets().options();
-  const budgets = $derived(budgetsQuery.data ?? []);
+  const budgets = $derived<BudgetWithRelations[]>(budgetsQuery.data ?? []);
   const budgetsLoading = $derived(budgetsQuery.isLoading);
   const tz = $derived.by(() => getLocalTimeZone());
 
@@ -106,9 +107,7 @@
   }
 
   function getConsumed(budget: BudgetWithRelations) {
-    const latest = getLatestPeriod(budget);
-    if (latest) return Math.abs(latest.actualAmount ?? 0);
-    return 0;
+    return calculateActualSpent(budget);
   }
 
   function resolveStatus(budget: BudgetWithRelations) {
@@ -129,11 +128,6 @@
 
   function formatCurrency(value: number) {
     return currencyFormatter.format(Math.abs(value ?? 0));
-  }
-
-  function openManageDialog(budget: BudgetWithRelations) {
-    selectedBudget = budget;
-    manageDialogOpen = true;
   }
 
   // Mutations
@@ -173,10 +167,10 @@
     clearSelection();
   }
 
-  async function handleFundTransfer(fromId: number, toId: number, amount: number) {
+  async function handleFundTransfer(_fromId: number, _toId: number, _amount: number) {
     // This would integrate with your tRPC mutations once the backend is ready
     // Example:
-    // await transferFunds.mutateAsync({ fromBudgetId: fromId, toBudgetId: toId, amount });
+    // await transferFunds.mutateAsync({ fromBudgetId: _fromId, toBudgetId: _toId, amount: _amount });
 
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -688,9 +682,7 @@
   }}
 />
 
-{#if selectedGroup}
-  <BudgetGroupDialog
-    budgetGroup={selectedGroup}
-    bind:open={groupDialogOpen}
-  />
-{/if}
+<BudgetGroupDialog
+  budgetGroup={selectedGroup}
+  bind:open={groupDialogOpen}
+/>
