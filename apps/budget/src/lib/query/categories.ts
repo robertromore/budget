@@ -2,7 +2,7 @@ import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
 import { cachePatterns } from "./_client";
 import { trpc } from "$lib/trpc/client";
 import type {Category, NewCategory} from "$lib/schema/categories";
-import type {CategoryWithBudgets} from "$lib/server/domains/categories/repository";
+import type {CategoryWithBudgets, CategoryWithChildren, CategoryTreeNode} from "$lib/server/domains/categories/repository";
 
 export const categoryKeys = createQueryKeys("categories", {
   all: () => ["categories", "all"] as const,
@@ -11,6 +11,10 @@ export const categoryKeys = createQueryKeys("categories", {
   allWithBudgets: () => ["categories", "all", "budgets"] as const,
   detailWithBudgets: (id: number) => ["categories", "detail", id, "budgets"] as const,
   slugWithBudgets: (slug: string) => ["categories", "slug", slug, "budgets"] as const,
+  rootCategories: () => ["categories", "roots"] as const,
+  children: (parentId: number) => ["categories", "children", parentId] as const,
+  withChildren: (id: number) => ["categories", "withChildren", id] as const,
+  hierarchyTree: () => ["categories", "hierarchy"] as const,
 });
 
 export const listCategories = () =>
@@ -94,3 +98,37 @@ export const getCategoryBySlugWithBudgets = (slug: string) =>
     queryKey: categoryKeys.slugWithBudgets(slug),
     queryFn: () => trpc().categoriesRoutes.getBySlugWithBudgets.query({slug}),
   });
+
+export const listRootCategories = () =>
+  defineQuery<Category[]>({
+    queryKey: categoryKeys.rootCategories(),
+    queryFn: () => trpc().categoriesRoutes.rootCategories.query(),
+  });
+
+export const getCategoryChildren = (parentId: number) =>
+  defineQuery<Category[]>({
+    queryKey: categoryKeys.children(parentId),
+    queryFn: () => trpc().categoriesRoutes.categoryChildren.query({id: parentId}),
+  });
+
+export const getCategoryWithChildren = (id: number) =>
+  defineQuery<CategoryWithChildren>({
+    queryKey: categoryKeys.withChildren(id),
+    queryFn: () => trpc().categoriesRoutes.categoryWithChildren.query({id}),
+  });
+
+export const getCategoryHierarchyTree = () =>
+  defineQuery<CategoryTreeNode[]>({
+    queryKey: categoryKeys.hierarchyTree(),
+    queryFn: () => trpc().categoriesRoutes.hierarchyTree.query(),
+  });
+
+export const setCategoryParent = defineMutation<{categoryId: number; parentId: number | null}, Category>({
+  mutationFn: (input) => trpc().categoriesRoutes.setParent.mutate(input),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(categoryKeys.all());
+    cachePatterns.invalidatePrefix(categoryKeys.hierarchyTree());
+  },
+  successMessage: "Category parent updated",
+  errorMessage: "Failed to update category parent",
+});
