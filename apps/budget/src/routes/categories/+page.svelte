@@ -3,6 +3,7 @@ import {Button} from '$lib/components/ui/button';
 import Plus from '@lucide/svelte/icons/plus';
 import Tag from '@lucide/svelte/icons/tag';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
+import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import {
   deleteCategoryDialog,
@@ -13,6 +14,7 @@ import CategorySearchToolbar from '$lib/components/categories/category-search-to
 import CategorySearchResults from '$lib/components/categories/category-search-results.svelte';
 import {goto} from '$app/navigation';
 import type {Category} from '$lib/schema';
+import {reorderCategories} from '$lib/query/categories';
 
 const categoriesState = $derived(CategoriesState.get());
 const categories = $derived(categoriesState.categories.values());
@@ -23,10 +25,20 @@ const hasNoCategories = $derived(categoriesArray.length === 0);
 const search = categorySearchState;
 let searchResults = $state<Category[]>([]);
 let isSearching = $state(false);
+let isReorderMode = $state(false);
+
+// Sort categories by displayOrder when not searching
+const sortedCategoriesArray = $derived.by(() => {
+  return [...categoriesArray].sort((a, b) => {
+    const orderA = a.displayOrder ?? 0;
+    const orderB = b.displayOrder ?? 0;
+    return orderA - orderB;
+  });
+});
 
 // Computed values
 const displayedCategories = $derived.by(() => {
-  return search.isSearchActive() ? searchResults : categoriesArray;
+  return search.isSearchActive() ? searchResults : sortedCategoriesArray;
 });
 
 const shouldShowNoCategories = $derived.by(() => {
@@ -171,6 +183,38 @@ const editCategory = (category: Category) => {
 const viewAnalytics = (category: Category) => {
   goto(`/categories/${category.slug}/analytics`);
 };
+
+// Create mutation instance at component initialization
+const reorderMutation = reorderCategories.options();
+
+const handleReorder = async (reorderedCategories: Category[]) => {
+  const updates = reorderedCategories.map((cat) => ({
+    id: cat.id,
+    displayOrder: cat.displayOrder ?? 0,
+  }));
+
+  console.log('[handleReorder] Updates to send:', updates);
+
+  try {
+    const result = await reorderMutation.mutateAsync(updates);
+    console.log('[handleReorder] Result:', result);
+
+    // Update CategoriesState with new displayOrder values
+    reorderedCategories.forEach((cat) => {
+      categoriesState.updateCategory(cat);
+    });
+  } catch (error) {
+    console.error('[handleReorder] Error:', error);
+  }
+};
+
+const toggleReorderMode = () => {
+  isReorderMode = !isReorderMode;
+  // Clear search when entering reorder mode
+  if (isReorderMode && search.isSearchActive()) {
+    search.clearAllFilters();
+  }
+};
 </script>
 
 <svelte:head>
@@ -192,11 +236,19 @@ const viewAnalytics = (category: Category) => {
       </p>
     </div>
     <div class="flex items-center gap-2">
-      <Button variant="outline" href="/categories/analytics">
+      <Button variant="outline" href="/categories/analytics" disabled={isReorderMode}>
         <BarChart3 class="mr-2 h-4 w-4" />
         Analytics Dashboard
       </Button>
-      <Button href="/categories/new">
+      <Button
+        variant={isReorderMode ? 'default' : 'outline'}
+        onclick={toggleReorderMode}
+        disabled={hasNoCategories}
+      >
+        <ArrowUpDown class="mr-2 h-4 w-4" />
+        {isReorderMode ? 'Done' : 'Reorder'}
+      </Button>
+      <Button href="/categories/new" disabled={isReorderMode}>
         <Plus class="mr-2 h-4 w-4" />
         Add Category
       </Button>
@@ -248,10 +300,19 @@ const viewAnalytics = (category: Category) => {
       categories={displayedCategories}
       isLoading={isSearching}
       searchQuery={search.query}
+      isReorderMode={isReorderMode}
       onView={viewCategory}
       onEdit={editCategory}
       onDelete={deleteCategory}
       onViewAnalytics={viewAnalytics}
+      onReorder={handleReorder}
     />
+  {/if}
+
+  <!-- Reorder Mode Help -->
+  {#if isReorderMode}
+    <div class="text-muted-foreground rounded-lg bg-blue-50 p-3 text-sm dark:bg-blue-950/30">
+      <strong>Reorder Mode:</strong> Drag categories to reorder them. Changes are saved automatically.
+    </div>
   {/if}
 </div>

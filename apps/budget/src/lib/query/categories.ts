@@ -63,3 +63,12 @@ export const bulkDeleteCategories = defineMutation<number[], {deletedCount: numb
   successMessage: "Categories deleted",
   errorMessage: "Failed to delete categories",
 });
+
+export const reorderCategories = defineMutation<Array<{id: number; displayOrder: number}>, {updatedCount: number; errors: string[]}>({
+  mutationFn: (updates) => trpc().categoriesRoutes.reorder.mutate({updates}),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(categoryKeys.all());
+  },
+  successMessage: "Categories reordered",
+  errorMessage: "Failed to reorder categories",
+});

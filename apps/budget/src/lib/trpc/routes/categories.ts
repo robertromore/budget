@@ -131,7 +131,7 @@ export const categoriesRoutes = t.router({
         if (id) {
           // Update existing category
           const category = await categoryService.updateCategory(id, {
-            name,
+            name: name ?? undefined,
             notes,
             categoryType,
             categoryIcon,
@@ -151,8 +151,14 @@ export const categoriesRoutes = t.router({
           (category as any).is_new = false; // Maintain compatibility with existing UI
           return category;
         } else {
-          // Create new category
-          const category = await categoryService.createCategory({name, notes});
+          // Create new category - name is guaranteed to be non-null by Zod validation
+          if (!name) {
+            throw new ValidationError("Category name is required");
+          }
+          const category = await categoryService.createCategory({
+            name,
+            notes: notes ?? null
+          });
           (category as any).is_new = true; // Maintain compatibility with existing UI
           return category;
         }
@@ -178,6 +184,34 @@ export const categoriesRoutes = t.router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: error instanceof Error ? error.message : "Failed to save category",
+        });
+      }
+    }),
+
+  reorder: bulkOperationProcedure
+    .input(z.object({
+      updates: z.array(z.object({
+        id: z.number().positive(),
+        displayOrder: z.number().min(0),
+      })).min(1),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        const result = await categoryService.bulkUpdateDisplayOrder(input.updates);
+        return {
+          updatedCount: result.updatedCount,
+          errors: result.errors,
+        };
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to reorder categories",
         });
       }
     }),
