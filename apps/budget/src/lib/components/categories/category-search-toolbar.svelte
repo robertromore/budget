@@ -1,6 +1,6 @@
 <script lang="ts">
 import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
+import * as InputGroup from '$lib/components/ui/input-group';
 import * as Select from '$lib/components/ui/select';
 import * as Popover from '$lib/components/ui/popover';
 import {Badge} from '$lib/components/ui/badge';
@@ -143,15 +143,18 @@ const getFilterSummary = $derived(() => {
   <!-- Search and Filter Row -->
   <div class="flex items-center gap-2">
     <!-- Search Input -->
-    <div class="relative flex-1 max-w-sm">
-      <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        type="text"
-        placeholder="Search categories..."
-        value={searchQuery}
-        oninput={handleSearchInput}
-        class="pl-9"
-      />
+    <div class="flex-1 max-w-sm">
+      <InputGroup.InputGroup>
+        <InputGroup.InputGroupAddon align="inline-start">
+          <Search class="h-4 w-4" />
+        </InputGroup.InputGroupAddon>
+        <InputGroup.InputGroupInput
+          type="text"
+          placeholder="Search categories..."
+          value={searchQuery}
+          oninput={handleSearchInput}
+        />
+      </InputGroup.InputGroup>
     </div>
 
     <!-- Filter Button -->

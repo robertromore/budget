@@ -1,5 +1,7 @@
 <script lang="ts">
 import {Button} from '$lib/components/ui/button';
+import * as ButtonGroup from '$lib/components/ui/button-group';
+import * as Empty from '$lib/components/ui/empty';
 import Plus from '@lucide/svelte/icons/plus';
 import Tag from '@lucide/svelte/icons/tag';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
@@ -256,22 +258,35 @@ const addSubcategory = (parent: CategoryTreeNode) => {
         <BarChart3 class="mr-2 h-4 w-4" />
         Analytics Dashboard
       </Button>
-      <Button
-        variant={showHierarchyView ? 'default' : 'outline'}
-        onclick={toggleHierarchyView}
-        disabled={hasNoCategories || isReorderMode}
-      >
-        <FolderTree class="mr-2 h-4 w-4" />
-        {showHierarchyView ? 'List View' : 'Hierarchy'}
-      </Button>
-      <Button
-        variant={isReorderMode ? 'default' : 'outline'}
-        onclick={toggleReorderMode}
-        disabled={hasNoCategories || showHierarchyView}
-      >
-        <ArrowUpDown class="mr-2 h-4 w-4" />
-        {isReorderMode ? 'Done' : 'Reorder'}
-      </Button>
+      <ButtonGroup.ButtonGroup>
+        <Button
+          variant={!showHierarchyView && !isReorderMode ? 'default' : 'outline'}
+          onclick={() => {
+            if (showHierarchyView) toggleHierarchyView();
+            if (isReorderMode) toggleReorderMode();
+          }}
+          disabled={hasNoCategories}
+        >
+          <Tag class="mr-2 h-4 w-4" />
+          List View
+        </Button>
+        <Button
+          variant={showHierarchyView ? 'default' : 'outline'}
+          onclick={toggleHierarchyView}
+          disabled={hasNoCategories}
+        >
+          <FolderTree class="mr-2 h-4 w-4" />
+          Hierarchy
+        </Button>
+        <Button
+          variant={isReorderMode ? 'default' : 'outline'}
+          onclick={toggleReorderMode}
+          disabled={hasNoCategories || showHierarchyView}
+        >
+          <ArrowUpDown class="mr-2 h-4 w-4" />
+          Reorder
+        </Button>
+      </ButtonGroup.ButtonGroup>
       <Button href="/categories/new" disabled={isReorderMode || showHierarchyView}>
         <Plus class="mr-2 h-4 w-4" />
         Add Category
@@ -304,22 +319,24 @@ const addSubcategory = (parent: CategoryTreeNode) => {
   <!-- Content -->
   {#if shouldShowNoCategories}
     <!-- Empty State - No Categories -->
-    <div class="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center">
-      <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-        <Tag class="h-8 w-8 text-blue-600" />
-      </div>
-      <h2 class="mb-2 text-xl font-semibold text-blue-900">No Categories Yet</h2>
-      <p class="mb-6 text-blue-700 max-w-md mx-auto">
-        Get started by creating your first category. You can organize your transactions by categories
-        like groceries, utilities, entertainment, and more.
-      </p>
-      <Button
-        href="/categories/new"
-        class="bg-blue-600 hover:bg-blue-700">
-        <Plus class="mr-2 h-4 w-4" />
-        Create Your First Category
-      </Button>
-    </div>
+    <Empty.Empty>
+      <Empty.EmptyMedia variant="icon">
+        <Tag class="size-6" />
+      </Empty.EmptyMedia>
+      <Empty.EmptyHeader>
+        <Empty.EmptyTitle>No Categories Yet</Empty.EmptyTitle>
+        <Empty.EmptyDescription>
+          Get started by creating your first category. Organize your transactions by categories
+          like groceries, utilities, entertainment, and more.
+        </Empty.EmptyDescription>
+      </Empty.EmptyHeader>
+      <Empty.EmptyContent>
+        <Button href="/categories/new">
+          <Plus class="mr-2 h-4 w-4" />
+          Create Your First Category
+        </Button>
+      </Empty.EmptyContent>
+    </Empty.Empty>
   {:else if showHierarchyView}
     <!-- Hierarchy Tree View -->
     <div class="rounded-lg border p-6">
