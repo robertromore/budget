@@ -22,45 +22,55 @@ import Receipt from '@lucide/svelte/icons/receipt';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Settings from '@lucide/svelte/icons/settings';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
+import {ParentCategorySelector} from '$lib/components/categories';
+import {Slider} from '$lib/components/ui/slider';
 
 let {
   id,
+  initialParentId,
   onDelete,
   onSave,
 }: {
   id?: number | undefined;
+  initialParentId?: number | null | undefined;
   onDelete?: (id: number) => void;
   onSave?: (new_category: EditableEntityItem, is_new: boolean) => void;
 } = $props();
 
+// Load all categories for parent selector
+const categoriesState = CategoriesState.get();
+const allCategories = $derived(categoriesState.all);
+
 // Generate unique form ID based on category ID or a random value for new categories
 const formId = id ? `category-form-${id}` : `category-form-new-${Math.random().toString(36).slice(2, 9)}`;
 
-const defaults: Omit<Category, 'id' | 'parentId' | 'createdAt' | 'updatedAt' | 'dateCreated'> = {
+const defaults = {
   name: '',
-  notes: '',
+  notes: '' as string | null | undefined,
   slug: '',
-  categoryType: 'expense' as CategoryType,
-  categoryIcon: '',
-  categoryColor: '',
-  isActive: true,
-  displayOrder: 0,
-  isTaxDeductible: false,
-  taxCategory: 'other' as TaxCategory,
-  deductiblePercentage: 0,
-  isSeasonal: false,
-  seasonalMonths: '',
-  expectedMonthlyMin: 0,
-  expectedMonthlyMax: 0,
-  spendingPriority: null,
-  incomeReliability: null,
-  deletedAt: null,
+  parentId: (initialParentId ?? null) as number | null | undefined,
+  categoryType: 'expense' as CategoryType | undefined,
+  categoryIcon: '' as string | null | undefined,
+  categoryColor: '' as string | null | undefined,
+  isActive: true as boolean | undefined,
+  displayOrder: 0 as number | undefined,
+  isTaxDeductible: false as boolean | undefined,
+  taxCategory: 'other' as TaxCategory | null | undefined,
+  deductiblePercentage: 0 as number | null | undefined,
+  isSeasonal: false as boolean | undefined,
+  seasonalMonths: [] as string[] | null | undefined,
+  expectedMonthlyMin: 0 as number | null | undefined,
+  expectedMonthlyMax: 0 as number | null | undefined,
+  spendingPriority: null as typeof spendingPriorityEnum[number] | null | undefined,
+  incomeReliability: null as typeof incomeReliabilityEnum[number] | null | undefined,
+  deletedAt: null as string | null | undefined,
 };
 
 if (id) {
   const category: Category = CategoriesState.get().getById(id)!;
   defaults.name = category.name ?? '';
   defaults.notes = category.notes ?? '';
+  defaults.parentId = category.parentId;
   defaults.categoryType = category.categoryType || 'expense';
   defaults.categoryIcon = category.categoryIcon || '';
   defaults.categoryColor = category.categoryColor || '';
@@ -70,7 +80,7 @@ if (id) {
   defaults.taxCategory = category.taxCategory || 'other';
   defaults.deductiblePercentage = category.deductiblePercentage ?? 0;
   defaults.isSeasonal = category.isSeasonal || false;
-  defaults.seasonalMonths = category.seasonalMonths || '';
+  defaults.seasonalMonths = category.seasonalMonths ?? [];
   defaults.expectedMonthlyMin = category.expectedMonthlyMin || null;
   defaults.expectedMonthlyMax = category.expectedMonthlyMax || null;
   defaults.spendingPriority = category.spendingPriority;
@@ -124,6 +134,49 @@ function handleIconChange(event: CustomEvent<{ value: string }>) {
   }
 }
 
+// Derived values to ensure no undefined for components that don't accept it
+const categoryTypeValue = $derived($formData.categoryType ?? 'expense');
+const isActiveValue = $derived($formData.isActive ?? true);
+const isTaxDeductibleValue = $derived($formData.isTaxDeductible ?? false);
+const isSeasonalValue = $derived($formData.isSeasonal ?? false);
+
+// Deductible percentage slider value
+let deductiblePercentageSlider = $state($formData.deductiblePercentage ?? 0);
+
+// Sync slider changes to form data
+$effect(() => {
+  $formData.deductiblePercentage = deductiblePercentageSlider === 0 ? null : deductiblePercentageSlider;
+});
+
+// Sync form data changes to slider
+$effect(() => {
+  const formValue = $formData.deductiblePercentage ?? 0;
+  if (deductiblePercentageSlider !== formValue) {
+    deductiblePercentageSlider = formValue;
+  }
+});
+
+// Reactive string representation of seasonalMonths array
+let seasonalMonthsInput = $state('');
+
+// Sync array → string when array changes
+$effect(() => {
+  const arrayValue = $formData.seasonalMonths;
+  if (Array.isArray(arrayValue)) {
+    seasonalMonthsInput = arrayValue.join(', ');
+  }
+});
+
+// Sync string → array when string changes
+$effect(() => {
+  const inputValue = seasonalMonthsInput;
+  if (!inputValue?.trim()) {
+    $formData.seasonalMonths = [];
+  } else {
+    $formData.seasonalMonths = inputValue.split(',').map((m: string) => m.trim()).filter(Boolean);
+  }
+});
+
 let alertDialogOpen = $state(false);
 const deleteCategory = async (id: number) => {
   alertDialogOpen = false;
@@ -167,9 +220,13 @@ const deleteCategory = async (id: number) => {
           <Form.Control>
             {#snippet children({props})}
               <Form.Label>Category Type</Form.Label>
-              <Select.Root type="single" bind:value={$formData.categoryType}>
+              <Select.Root
+                type="single"
+                value={categoryTypeValue}
+                onValueChange={(v) => $formData.categoryType = v as CategoryType}
+              >
                 <Select.Trigger {...props}>
-                  <span>{$formData.categoryType ? categoryTypeOptions.find(opt => opt.value === $formData.categoryType)?.label : "Select category type"}</span>
+                  <span>{categoryTypeOptions.find(opt => opt.value === categoryTypeValue)?.label ?? "Select category type"}</span>
                 </Select.Trigger>
                 <Select.Content>
                   {#each categoryTypeOptions as option}
@@ -177,12 +234,27 @@ const deleteCategory = async (id: number) => {
                   {/each}
                 </Select.Content>
               </Select.Root>
-              <input type="hidden" name="categoryType" value={$formData.categoryType} />
+              <input type="hidden" name="categoryType" value={categoryTypeValue} />
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
         </Form.Field>
       </div>
+
+      <!-- Parent Category (full width) -->
+      <Form.Field {form} name="parentId" class="col-span-full">
+        <Form.Control>
+          {#snippet children({})}
+            <ParentCategorySelector
+              categories={allCategories}
+              bind:value={$formData.parentId}
+              currentCategoryId={id ?? undefined}
+            />
+            <input type="hidden" name="parentId" value={$formData.parentId || ''} />
+            <Form.FieldErrors />
+          {/snippet}
+        </Form.Control>
+      </Form.Field>
 
       <!-- Notes (full width) -->
       <Form.Field {form} name="notes" class="col-span-full">
@@ -264,7 +336,7 @@ const deleteCategory = async (id: number) => {
             {#snippet children({props})}
               <Checkbox
                 {...props}
-                checked={$formData.isActive}
+                checked={isActiveValue}
                 onCheckedChange={(checked) => {
                   $formData.isActive = checked === true;
                 }}
@@ -323,7 +395,7 @@ const deleteCategory = async (id: number) => {
           {#snippet children({props})}
             <Checkbox
               {...props}
-              checked={$formData.isTaxDeductible}
+              checked={isTaxDeductibleValue}
               onCheckedChange={(checked) => {
                 $formData.isTaxDeductible = checked === true;
               }}
@@ -363,12 +435,22 @@ const deleteCategory = async (id: number) => {
           <!-- Deductible Percentage -->
           <Form.Field {form} name="deductiblePercentage">
             <Form.Control>
-              {#snippet children({props})}
-                <Form.Label>Deductible Percentage</Form.Label>
-                <NumericInput
-                  {...props}
-                  bind:value={$formData.deductiblePercentage as number}
-                />
+              {#snippet children({})}
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <Form.Label>Deductible Percentage</Form.Label>
+                    <span class="text-sm font-medium">{deductiblePercentageSlider}%</span>
+                  </div>
+                  <Slider
+                    type="single"
+                    bind:value={deductiblePercentageSlider}
+                    min={0}
+                    max={100}
+                    step={1}
+                    class="w-full"
+                  />
+                  <Form.Description class="text-xs">Percentage of expenses that are tax deductible</Form.Description>
+                </div>
                 <Form.FieldErrors />
               {/snippet}
             </Form.Control>
@@ -419,7 +501,7 @@ const deleteCategory = async (id: number) => {
             {#snippet children({props})}
               <Checkbox
                 {...props}
-                checked={$formData.isSeasonal}
+                checked={isSeasonalValue}
                 onCheckedChange={(checked) => {
                   $formData.isSeasonal = checked === true;
                 }}
@@ -440,7 +522,7 @@ const deleteCategory = async (id: number) => {
           <Form.Control>
             {#snippet children({props})}
               <Form.Label>Seasonal Months</Form.Label>
-              <Input {...props} bind:value={$formData.seasonalMonths} placeholder="e.g., November, December" />
+              <Input {...props} bind:value={seasonalMonthsInput} placeholder="e.g., November, December" />
               <Form.Description class="text-xs">Months when spending is higher (comma-separated)</Form.Description>
               <Form.FieldErrors />
             {/snippet}
@@ -521,7 +603,7 @@ const deleteCategory = async (id: number) => {
             {#snippet children({props})}
               <Checkbox
                 {...props}
-                checked={$formData.isSeasonal}
+                checked={isSeasonalValue}
                 onCheckedChange={(checked) => {
                   $formData.isSeasonal = checked === true;
                 }}
@@ -542,7 +624,7 @@ const deleteCategory = async (id: number) => {
           <Form.Control>
             {#snippet children({props})}
               <Form.Label>Seasonal Months</Form.Label>
-              <Input {...props} bind:value={$formData.seasonalMonths} placeholder="e.g., January (tax refund), December (bonus)" />
+              <Input {...props} bind:value={seasonalMonthsInput} placeholder="e.g., January (tax refund), December (bonus)" />
               <Form.Description class="text-xs">Months when this income is received (comma-separated)</Form.Description>
               <Form.FieldErrors />
             {/snippet}

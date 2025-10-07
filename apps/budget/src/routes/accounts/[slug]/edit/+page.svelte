@@ -9,14 +9,14 @@ import {ManageAccountForm} from '$lib/components/forms';
 import type {Account} from '$lib/schema';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 
-const accountId = $derived(Number(page.params.id));
+const accountSlug = $derived(page.params.slug);
 const accountsState = $derived(AccountsState.get());
-const account = $derived(accountsState.getById(accountId));
+const account = $derived(accountsState.getBySlug(accountSlug));
 
 const handleSave = (updatedAccount: Account) => {
   // Navigate back to the account detail page
   setTimeout(() => {
-    goto(`/accounts/${updatedAccount.id}`, { replaceState: true });
+    goto(`/accounts/${updatedAccount.slug}`, { replaceState: true });
   }, 100);
 };
 </script>
@@ -30,7 +30,7 @@ const handleSave = (updatedAccount: Account) => {
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="sm" href="/accounts/{accountId}" class="p-2">
+      <Button variant="ghost" size="sm" href="/accounts/{accountSlug}" class="p-2">
         <ArrowLeft class="h-4 w-4" />
         <span class="sr-only">Back to Account</span>
       </Button>
@@ -57,7 +57,7 @@ const handleSave = (updatedAccount: Account) => {
       </Card.Header>
       <Card.Content>
         <ManageAccountForm
-          accountId={accountId}
+          accountId={account.id}
           onSave={handleSave}
         />
       </Card.Content>

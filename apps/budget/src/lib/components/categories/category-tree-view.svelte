@@ -8,13 +8,7 @@ import Tag from '@lucide/svelte/icons/tag';
 import MoreVertical from '@lucide/svelte/icons/more-vertical';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import Self from './category-tree-view.svelte';
-
-type CategoryTreeNode = {
-  id: number;
-  name: string | null;
-  parentId: number | null;
-  children: CategoryTreeNode[];
-};
+import type {CategoryTreeNode} from '$lib/types/categories';
 
 type Props = {
   nodes: CategoryTreeNode[];

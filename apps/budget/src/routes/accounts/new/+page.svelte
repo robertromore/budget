@@ -10,7 +10,7 @@ import type {Account} from '$lib/schema';
 const handleSave = (account: Account) => {
   // Navigate to the new account's detail page
   setTimeout(() => {
-    goto(`/accounts/${account.id}`, { replaceState: true });
+    goto(`/accounts/${account.slug}`, { replaceState: true });
   }, 100);
 };
 </script>

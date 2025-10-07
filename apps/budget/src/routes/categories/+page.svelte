@@ -12,9 +12,11 @@ import {
 import {categorySearchState} from '$lib/states/ui/category-search.svelte';
 import CategorySearchToolbar from '$lib/components/categories/category-search-toolbar.svelte';
 import CategorySearchResults from '$lib/components/categories/category-search-results.svelte';
+import {CategoryTreeView, type CategoryTreeNode} from '$lib/components/categories';
 import {goto} from '$app/navigation';
 import type {Category} from '$lib/schema';
-import {reorderCategories} from '$lib/query/categories';
+import {reorderCategories, getCategoryHierarchyTree} from '$lib/query/categories';
+import FolderTree from '@lucide/svelte/icons/folder-tree';
 
 const categoriesState = $derived(CategoriesState.get());
 const categories = $derived(categoriesState.categories.values());
@@ -26,6 +28,11 @@ const search = categorySearchState;
 let searchResults = $state<Category[]>([]);
 let isSearching = $state(false);
 let isReorderMode = $state(false);
+let showHierarchyView = $state(false);
+
+// Load hierarchy tree
+const hierarchyTreeQuery = getCategoryHierarchyTree().options();
+const hierarchyTree = $derived(hierarchyTreeQuery.data ?? []);
 
 // Sort categories by displayOrder when not searching
 const sortedCategoriesArray = $derived.by(() => {
@@ -212,6 +219,18 @@ const toggleReorderMode = () => {
     search.clearAllFilters();
   }
 };
+
+const toggleHierarchyView = () => {
+  showHierarchyView = !showHierarchyView;
+  // Clear search when entering hierarchy view
+  if (showHierarchyView && search.isSearchActive()) {
+    search.clearAllFilters();
+  }
+};
+
+const addSubcategory = (parent: CategoryTreeNode) => {
+  goto(`/categories/new?parentId=${parent.id}`);
+};
 </script>
 
 <svelte:head>
@@ -233,44 +252,54 @@ const toggleReorderMode = () => {
       </p>
     </div>
     <div class="flex items-center gap-2">
-      <Button variant="outline" href="/categories/analytics" disabled={isReorderMode}>
+      <Button variant="outline" href="/categories/analytics" disabled={isReorderMode || showHierarchyView}>
         <BarChart3 class="mr-2 h-4 w-4" />
         Analytics Dashboard
       </Button>
       <Button
+        variant={showHierarchyView ? 'default' : 'outline'}
+        onclick={toggleHierarchyView}
+        disabled={hasNoCategories || isReorderMode}
+      >
+        <FolderTree class="mr-2 h-4 w-4" />
+        {showHierarchyView ? 'List View' : 'Hierarchy'}
+      </Button>
+      <Button
         variant={isReorderMode ? 'default' : 'outline'}
         onclick={toggleReorderMode}
-        disabled={hasNoCategories}
+        disabled={hasNoCategories || showHierarchyView}
       >
         <ArrowUpDown class="mr-2 h-4 w-4" />
         {isReorderMode ? 'Done' : 'Reorder'}
       </Button>
-      <Button href="/categories/new" disabled={isReorderMode}>
+      <Button href="/categories/new" disabled={isReorderMode || showHierarchyView}>
         <Plus class="mr-2 h-4 w-4" />
         Add Category
       </Button>
     </div>
   </div>
 
-  <!-- Search and Filters -->
-  <div class="space-y-4">
-    <!-- Search Toolbar -->
-    <CategorySearchToolbar
-      bind:searchQuery={search.query}
-      bind:filters={search.filters}
-      bind:viewMode={search.viewMode}
-      bind:sortBy={search.sortBy}
-      bind:sortOrder={search.sortOrder}
-      onSearchChange={(query) => search.updateQuery(query)}
-      onFiltersChange={(filters) => search.updateFilters(filters)}
-      onViewModeChange={(mode) => search.viewMode = mode}
-      onSortChange={(sortBy, sortOrder) => {
-        search.sortBy = sortBy;
-        search.sortOrder = sortOrder;
-      }}
-      onClearAll={() => search.clearAllFilters()}
-    />
-  </div>
+  <!-- Search and Filters (hidden in hierarchy view) -->
+  {#if !showHierarchyView}
+    <div class="space-y-4">
+      <!-- Search Toolbar -->
+      <CategorySearchToolbar
+        bind:searchQuery={search.query}
+        bind:filters={search.filters}
+        bind:viewMode={search.viewMode}
+        bind:sortBy={search.sortBy}
+        bind:sortOrder={search.sortOrder}
+        onSearchChange={(query) => search.updateQuery(query)}
+        onFiltersChange={(filters) => search.updateFilters(filters)}
+        onViewModeChange={(mode) => search.viewMode = mode}
+        onSortChange={(sortBy, sortOrder) => {
+          search.sortBy = sortBy;
+          search.sortOrder = sortOrder;
+        }}
+        onClearAll={() => search.clearAllFilters()}
+      />
+    </div>
+  {/if}
 
   <!-- Content -->
   {#if shouldShowNoCategories}
@@ -290,6 +319,21 @@ const toggleReorderMode = () => {
         <Plus class="mr-2 h-4 w-4" />
         Create Your First Category
       </Button>
+    </div>
+  {:else if showHierarchyView}
+    <!-- Hierarchy Tree View -->
+    <div class="rounded-lg border p-6">
+      <div class="mb-4">
+        <h2 class="text-lg font-semibold">Category Hierarchy</h2>
+        <p class="text-sm text-muted-foreground">View and manage parent-child relationships</p>
+      </div>
+      <CategoryTreeView
+        nodes={hierarchyTree}
+        onView={viewCategory}
+        onEdit={editCategory}
+        onDelete={deleteCategory}
+        onAddChild={addSubcategory}
+      />
     </div>
   {:else}
     <!-- Search Results -->

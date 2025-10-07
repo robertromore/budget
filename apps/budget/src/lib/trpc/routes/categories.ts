@@ -155,7 +155,21 @@ export const categoriesRoutes = t.router({
           }
           const category = await categoryService.createCategory({
             name,
-            notes: notes ?? null
+            notes: notes ?? null,
+            categoryType,
+            categoryIcon,
+            categoryColor,
+            isActive,
+            displayOrder,
+            isTaxDeductible,
+            taxCategory,
+            deductiblePercentage,
+            isSeasonal,
+            seasonalMonths,
+            expectedMonthlyMin,
+            expectedMonthlyMax,
+            spendingPriority,
+            incomeReliability,
           });
           (category as any).is_new = true; // Maintain compatibility with existing UI
           return category;
