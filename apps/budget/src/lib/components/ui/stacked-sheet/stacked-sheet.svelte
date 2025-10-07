@@ -43,8 +43,52 @@
   const activeSheet = $derived(sheets.find(sheet => sheet.id === activeSheetId));
   const activeIndex = $derived(sheets.findIndex(sheet => sheet.id === activeSheetId));
 
-  // Handle open state changes
+  // Track previous open state to detect transitions
+  let previousOpen = $state(open);
+  let internalOpen = $state(open);
+  let previousActiveIndex = $state(activeIndex);
+  let isNavigatingBack = $state(false);
+
+  // Sync external open with internal
   $effect(() => {
+    internalOpen = open;
+  });
+
+  // Track navigation direction
+  $effect(() => {
+    if (activeIndex < previousActiveIndex) {
+      isNavigatingBack = true;
+      // Clear the flag after animation would have completed
+      setTimeout(() => {
+        isNavigatingBack = false;
+      }, 50);
+    }
+    previousActiveIndex = activeIndex;
+  });
+
+  // Handle internal open changes
+  $effect(() => {
+    // Reset to first sheet when transitioning from closed to open
+    if (internalOpen && !previousOpen) {
+      activeSheetId = sheets[0]?.id || '';
+    }
+
+    // When trying to close from a nested sheet, go back instead
+    if (!internalOpen && previousOpen && activeIndex > 0) {
+      // Navigate back instead of closing
+      const currentIndex = sheets.findIndex(sheet => sheet.id === activeSheetId);
+      if (currentIndex > 0) {
+        activeSheetId = sheets[currentIndex - 1].id;
+      }
+      // Prevent the close from propagating
+      internalOpen = true;
+      open = true;
+    } else {
+      // Propagate open state to parent
+      open = internalOpen;
+    }
+
+    previousOpen = internalOpen;
     onOpenChange?.(open);
   });
 
@@ -54,16 +98,14 @@
     onSheetChange?.(sheetId);
   }
 
-  function goBack() {
-    const currentIndex = sheets.findIndex(sheet => sheet.id === activeSheetId);
-    if (currentIndex > 0) {
-      navigateToSheet(sheets[currentIndex - 1].id);
-    }
-  }
-
   function handleKeyDown(event: KeyboardEvent) {
     if (event.key === 'Escape' && activeIndex > 0) {
-      goBack();
+      event.preventDefault();
+      // Navigate back
+      const currentIndex = sheets.findIndex(sheet => sheet.id === activeSheetId);
+      if (currentIndex > 0) {
+        activeSheetId = sheets[currentIndex - 1].id;
+      }
     }
   }
 </script>
@@ -72,9 +114,9 @@
 
 {#if isDesktop.current}
   <!-- Desktop: Sheet with stacked visual effect -->
-  <Sheet.Root bind:open>
+  <Sheet.Root bind:open={internalOpen}>
     {#if trigger}
-      <Sheet.Trigger>
+      <Sheet.Trigger type="button">
         {@render trigger()}
       </Sheet.Trigger>
     {/if}
@@ -83,10 +125,10 @@
       {#if index <= activeIndex}
         <Sheet.Content
           {side}
-          class="flex flex-col transition-transform duration-300 ease-in-out {sheet.class || ''} {className}"
+          class="flex flex-col {!isNavigatingBack && index < activeIndex ? 'transition-transform duration-300 ease-in-out' : ''} {sheet.class || ''} {className}"
           style="
             z-index: {50 + index};
-            transform: translateX({index < activeIndex ? -offsetDistance * (activeIndex - index) : 0}px);
+            transform: translateX({!isNavigatingBack && index < activeIndex ? -offsetDistance * (activeIndex - index) : 0}px);
             opacity: {index === activeIndex ? 1 : 0.7};
             pointer-events: {index === activeIndex ? 'auto' : 'none'};
           "
@@ -136,9 +178,9 @@
   </Sheet.Root>
 {:else}
   <!-- Mobile: Nested drawers -->
-  <Drawer.Root bind:open>
+  <Drawer.Root bind:open={internalOpen}>
     {#if trigger}
-      <Drawer.Trigger>
+      <Drawer.Trigger type="button">
         {@render trigger()}
       </Drawer.Trigger>
     {/if}

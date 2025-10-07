@@ -99,7 +99,7 @@ $effect(() => {
 {#if isDesktop.current}
   <Sheet.Root bind:open>
     {#if trigger}
-      <Sheet.Trigger>
+      <Sheet.Trigger type="button">
         {@render trigger()}
       </Sheet.Trigger>
     {/if}
@@ -145,7 +145,7 @@ $effect(() => {
 {:else}
   <Drawer.Root bind:open>
     {#if trigger}
-      <Drawer.Trigger>
+      <Drawer.Trigger type="button">
         {@render trigger()}
       </Drawer.Trigger>
     {/if}
