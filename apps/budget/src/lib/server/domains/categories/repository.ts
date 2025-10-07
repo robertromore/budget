@@ -6,6 +6,7 @@ import {budgets} from "$lib/schema/budgets";
 import {eq, and, isNull, like, inArray, sql, count, desc} from "drizzle-orm";
 import type {Category, NewCategory, CategoryType, TaxCategory, SpendingPriority, IncomeReliability} from "$lib/schema/categories";
 import {NotFoundError} from "$lib/server/shared/types/errors";
+import type {CategoryTreeNode} from "$lib/types/categories";
 
 export interface UpdateCategoryData {
   name?: string | undefined;
@@ -20,7 +21,7 @@ export interface UpdateCategoryData {
   taxCategory?: TaxCategory | null | undefined;
   deductiblePercentage?: number | null | undefined;
   isSeasonal?: boolean | undefined;
-  seasonalMonths?: string | null | undefined;
+  seasonalMonths?: string[] | null | undefined;
   expectedMonthlyMin?: number | null | undefined;
   expectedMonthlyMax?: number | null | undefined;
   spendingPriority?: SpendingPriority | null | undefined;
@@ -58,10 +59,6 @@ export interface CategoryWithBudgets extends Category {
 
 export interface CategoryWithChildren extends Category {
   children: Category[];
-}
-
-export interface CategoryTreeNode extends Category {
-  children: CategoryTreeNode[];
 }
 
 /**

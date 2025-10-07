@@ -15,7 +15,7 @@ import Receipt from '@lucide/svelte/icons/receipt';
 import Wallet from '@lucide/svelte/icons/wallet';
 import type {PageData} from './$types';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {formatCurrency} from '$lib/utils/currency';
+import {formatCurrency} from '$lib/utils/formatters';
 
 let {data}: {data: PageData} = $props();
 

@@ -9,9 +9,10 @@
 
 <script lang="ts">
   import { StackedSheet } from '$lib/components/ui/stacked-sheet';
-  import { Button } from '$lib/components/ui/button';
+  import { buttonVariants } from '$lib/components/ui/button';
   import { Palette } from '@lucide/svelte/icons';
   import type { Snippet } from 'svelte';
+  import { cn } from '$lib/utils';
 
   interface Props {
     value?: string;
@@ -93,17 +94,19 @@
   onSheetChange={handleSheetChange}
 >
   {#snippet trigger()}
-    <div class="flex w-full items-center justify-start gap-2 {disabled ? 'opacity-50 cursor-not-allowed' : ''}">
-      {#if value && isValidHexColor(value)}
-        <div
-          class="h-5 w-5 rounded-md border border-border"
-          style="background-color: {value}"
-        ></div>
-        <span class="text-sm font-mono uppercase">{value}</span>
-      {:else}
-        <Palette class="h-4 w-4 text-muted-foreground" />
-        <span class="text-muted-foreground">{placeholder}</span>
-      {/if}
+    <div class={cn(buttonVariants({ variant: "outline" }), "justify-start", className)}>
+      <div class="flex items-center gap-2">
+        {#if value && isValidHexColor(value)}
+          <div
+            class="h-5 w-5 rounded-md border border-border flex-shrink-0"
+            style="background-color: {value}"
+          ></div>
+          <span class="text-sm font-mono uppercase">{value}</span>
+        {:else}
+          <Palette class="h-4 w-4 text-muted-foreground" />
+          <span class="text-muted-foreground">{placeholder}</span>
+        {/if}
+      </div>
     </div>
   {/snippet}
 </StackedSheet>

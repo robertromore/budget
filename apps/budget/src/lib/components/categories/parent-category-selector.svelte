@@ -11,10 +11,10 @@ let {
   error,
 }: {
   categories: Category[];
-  value?: number | null;
-  currentCategoryId?: number;
-  disabled?: boolean;
-  error?: string;
+  value?: number | null | undefined;
+  currentCategoryId?: number | undefined;
+  disabled?: boolean | undefined;
+  error?: string | undefined;
 } = $props();
 
 // Filter out current category and its descendants

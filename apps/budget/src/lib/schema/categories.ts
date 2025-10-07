@@ -71,7 +71,7 @@ export const categories = sqliteTable(
 
     // Spending patterns (for expenses)
     isSeasonal: integer("is_seasonal", { mode: "boolean" }).notNull().default(false),
-    seasonalMonths: text("seasonal_months"),
+    seasonalMonths: text("seasonal_months", { mode: "json" }).$type<string[]>(),
     expectedMonthlyMin: real("expected_monthly_min"),
     expectedMonthlyMax: real("expected_monthly_max"),
     spendingPriority: text("spending_priority", { enum: spendingPriorityEnum }),
@@ -189,8 +189,7 @@ export const formInsertCategorySchema = createInsertSchema(categories, {
     schema.pipe(z.boolean()).default(false),
   seasonalMonths: (schema) =>
     schema
-      .transform((val) => val?.trim())
-      .pipe(z.string().max(500))
+      .pipe(z.array(z.string()).max(12, "Cannot have more than 12 months"))
       .optional()
       .nullable(),
   expectedMonthlyMin: (schema) =>

@@ -5,8 +5,22 @@ import type {Category, NewCategory, CategoryType, TaxCategory, SpendingPriority,
 
 export interface CreateCategoryData {
   name: string;
-  notes?: string | null;
-  parentId?: number | null;
+  notes?: string | null | undefined;
+  parentId?: number | null | undefined;
+  categoryType?: CategoryType | undefined;
+  categoryIcon?: string | null | undefined;
+  categoryColor?: string | null | undefined;
+  isActive?: boolean | undefined;
+  displayOrder?: number | undefined;
+  isTaxDeductible?: boolean | undefined;
+  taxCategory?: TaxCategory | null | undefined;
+  deductiblePercentage?: number | null | undefined;
+  isSeasonal?: boolean | undefined;
+  seasonalMonths?: string[] | null | undefined;
+  expectedMonthlyMin?: number | null | undefined;
+  expectedMonthlyMax?: number | null | undefined;
+  spendingPriority?: SpendingPriority | null | undefined;
+  incomeReliability?: IncomeReliability | null | undefined;
 }
 
 export interface CategoryAnalytics {
@@ -79,6 +93,20 @@ export class CategoryService {
       slug,
       notes: sanitizedNotes,
       parentId: data.parentId ?? null,
+      categoryType: data.categoryType ?? 'expense',
+      categoryIcon: data.categoryIcon ?? null,
+      categoryColor: data.categoryColor ?? null,
+      isActive: data.isActive ?? true,
+      displayOrder: data.displayOrder ?? 0,
+      isTaxDeductible: data.isTaxDeductible ?? false,
+      taxCategory: data.taxCategory ?? null,
+      deductiblePercentage: data.deductiblePercentage ?? null,
+      isSeasonal: data.isSeasonal ?? false,
+      seasonalMonths: data.seasonalMonths ?? null,
+      expectedMonthlyMin: data.expectedMonthlyMin ?? null,
+      expectedMonthlyMax: data.expectedMonthlyMax ?? null,
+      spendingPriority: data.spendingPriority ?? null,
+      incomeReliability: data.incomeReliability ?? null,
     };
 
     return await this.repository.create(newCategory);

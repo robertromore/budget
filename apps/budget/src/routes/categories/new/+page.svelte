@@ -1,5 +1,6 @@
 <script lang="ts">
 import {goto} from '$app/navigation';
+import {page} from '$app/state';
 import {Button} from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
@@ -10,6 +11,10 @@ import type {EditableEntityItem} from '$lib/types';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
 
 const categoriesState = CategoriesState.get();
+
+// Get parentId from query parameter if present
+const parentIdParam = $derived(page.url.searchParams.get('parentId'));
+const initialParentId = $derived(parentIdParam ? parseInt(parentIdParam) : null);
 
 const handleSave = (entity: EditableEntityItem, isNew: boolean) => {
   const category = entity as Category;
@@ -63,6 +68,7 @@ const handleSave = (entity: EditableEntityItem, isNew: boolean) => {
     <Card.Content>
       <ManageCategoryForm
         id={0}
+        initialParentId={initialParentId}
         onSave={handleSave}
       />
     </Card.Content>

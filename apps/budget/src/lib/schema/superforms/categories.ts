@@ -1,5 +1,6 @@
 import {z} from "zod";
 import validator from "validator";
+import {categoryTypeEnum, taxCategories, spendingPriorityEnum, incomeReliabilityEnum} from "$lib/schema/categories";
 
 // Superform-compatible schemas for categories (not using drizzle-zod)
 export const superformInsertCategorySchema = z.object({
@@ -40,20 +41,20 @@ export const superformInsertCategorySchema = z.object({
     )
     .optional()
     .nullable(),
-  categoryType: z.string().optional(),
+  categoryType: z.enum(categoryTypeEnum).optional(),
   categoryIcon: z.string().optional().nullable(),
   categoryColor: z.string().optional().nullable(),
   isActive: z.boolean().optional(),
   displayOrder: z.number().optional(),
   isTaxDeductible: z.boolean().optional(),
-  taxCategory: z.string().optional().nullable(),
+  taxCategory: z.enum(taxCategories).optional().nullable(),
   deductiblePercentage: z.number().optional().nullable(),
   isSeasonal: z.boolean().optional(),
-  seasonalMonths: z.string().optional().nullable(),
+  seasonalMonths: z.array(z.string()).optional().nullable(),
   expectedMonthlyMin: z.number().optional().nullable(),
   expectedMonthlyMax: z.number().optional().nullable(),
-  spendingPriority: z.string().optional().nullable(),
-  incomeReliability: z.string().optional().nullable(),
+  spendingPriority: z.enum(spendingPriorityEnum).optional().nullable(),
+  incomeReliability: z.enum(incomeReliabilityEnum).optional().nullable(),
   dateCreated: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
