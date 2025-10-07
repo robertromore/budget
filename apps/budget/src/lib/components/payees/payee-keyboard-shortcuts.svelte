@@ -2,7 +2,7 @@
 import * as Dialog from '$lib/components/ui/dialog';
 import * as Card from '$lib/components/ui/card';
 import { Button } from '$lib/components/ui/button';
-import { Badge } from '$lib/components/ui/badge';
+import { Kbd } from '$lib/components/ui/kbd';
 import { Separator } from '$lib/components/ui/separator';
 import { ScrollArea } from '$lib/components/ui/scroll-area';
 
@@ -446,9 +446,9 @@ $effect(() => {
                         {#if index > 0}
                           <span class="text-xs text-muted-foreground mx-1">+</span>
                         {/if}
-                        <Badge variant="outline" class="text-xs font-mono px-2 py-1">
+                        <Kbd>
                           {formatKey(key)}
-                        </Badge>
+                        </Kbd>
                       {/each}
                       {#if shortcut.action}
                         <Button
@@ -476,11 +476,11 @@ $effect(() => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground">
         <div class="flex items-start gap-2">
           <MousePointer class="h-4 w-4 mt-0.5 flex-shrink-0" />
-          <span>Hold <Badge variant="outline" class="text-xs">Ctrl/Cmd</Badge> while clicking to select multiple payees</span>
+          <span>Hold <Kbd>Ctrl/Cmd</Kbd> while clicking to select multiple payees</span>
         </div>
         <div class="flex items-start gap-2">
           <Keyboard class="h-4 w-4 mt-0.5 flex-shrink-0" />
-          <span>Press <Badge variant="outline" class="text-xs">?</Badge> anytime to show this dialog</span>
+          <span>Press <Kbd>?</Kbd> anytime to show this dialog</span>
         </div>
         <div class="flex items-start gap-2">
           <Zap class="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -488,7 +488,7 @@ $effect(() => {
         </div>
         <div class="flex items-start gap-2">
           <ArrowLeft class="h-4 w-4 mt-0.5 flex-shrink-0" />
-          <span>Use <Badge variant="outline" class="text-xs">Ctrl/Cmd + Z</Badge> to undo bulk operations</span>
+          <span>Use <Kbd>Ctrl/Cmd</Kbd> + <Kbd>Z</Kbd> to undo bulk operations</span>
         </div>
       </div>
     </div>

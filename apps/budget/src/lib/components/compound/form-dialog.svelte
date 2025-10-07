@@ -6,6 +6,7 @@ import {browser} from '$app/environment';
 // UI component imports
 import {Button} from '$lib/components/ui/button';
 import * as Dialog from '$lib/components/ui/dialog';
+import {Spinner} from '$lib/components/ui/spinner';
 
 // Hook imports
 import {useDialog} from '$lib/hooks/ui';
@@ -215,9 +216,9 @@ const sizeClasses = {
               type="button"
               onclick={handleSave}
               disabled={!isValid || isLoading}
-              class="{isLoading ? 'opacity-50' : ''} w-full sm:w-auto">
+              class="w-full sm:w-auto">
               {#if isLoading}
-                <div class="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                <Spinner class="mr-2" />
               {/if}
               {saveLabel}
             </Button>
