@@ -1,5 +1,6 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
+import * as Table from '$lib/components/ui/table';
 import {Badge} from '$lib/components/ui/badge';
 import {Button} from '$lib/components/ui/button';
 import {Skeleton} from '$lib/components/ui/skeleton';
@@ -16,13 +17,19 @@ import ArrowLeftRight from '@lucide/svelte/icons/arrow-left-right';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
 import Calendar from '@lucide/svelte/icons/calendar';
 import GripVertical from '@lucide/svelte/icons/grip-vertical';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import CheckCircle from '@lucide/svelte/icons/check-circle';
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import type {Category} from '$lib/schema';
 import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+
+export type ViewMode = 'list' | 'grid';
 
 interface Props {
   categories: Category[];
   isLoading: boolean;
   searchQuery: string;
+  viewMode?: ViewMode;
   isReorderMode?: boolean;
   onView: (category: Category) => void;
   onEdit: (category: Category) => void;
@@ -35,6 +42,7 @@ let {
   categories,
   isLoading,
   searchQuery,
+  viewMode = 'grid',
   isReorderMode = false,
   onView,
   onEdit,
@@ -83,6 +91,22 @@ const getPriorityColor = (priority: string | null) => {
   }
 };
 
+// Format priority for display
+const formatPriority = (priority: string | null) => {
+  if (!priority) return null;
+  return priority.charAt(0).toUpperCase() + priority.slice(1);
+};
+
+// Get status color and icon
+const getStatusDisplay = (isActive: boolean) => {
+  return {
+    icon: isActive ? CheckCircle : AlertTriangle,
+    color: isActive ? 'text-green-600' : 'text-orange-600',
+    bgColor: isActive ? 'bg-green-50 dark:bg-green-950' : 'bg-orange-50 dark:bg-orange-950',
+    label: isActive ? 'Active' : 'Inactive'
+  };
+};
+
 // Drag-and-drop state
 let draggedCategory = $state<Category | null>(null);
 let isDragging = $state(false);
@@ -92,7 +116,8 @@ let justReordered = $state(false);
 let dragUpdateTimeout: number | undefined;
 
 function handleDragStart(category: Category) {
-  if (!isReorderMode) return;
+  // Only allow drag and drop in grid view
+  if (!isReorderMode || viewMode !== 'grid') return;
   draggedCategory = category;
   isDragging = true;
 }
@@ -198,29 +223,60 @@ function getCategoryShift(category: Category, index: number): string {
 
 {#if isLoading}
   <!-- Loading State -->
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    {#each Array(8) as _}
-      <Card.Root>
-        <Card.Header>
-          <Skeleton class="h-6 w-3/4" />
-          <Skeleton class="h-4 w-full" />
-        </Card.Header>
-        <Card.Content>
-          <div class="space-y-2">
-            <Skeleton class="h-4 w-1/2" />
-            <Skeleton class="h-4 w-2/3" />
-          </div>
-        </Card.Content>
-        <Card.Footer>
-          <div class="flex gap-2">
-            <Skeleton class="h-8 w-16" />
-            <Skeleton class="h-8 w-16" />
-            <Skeleton class="h-8 w-16" />
-          </div>
-        </Card.Footer>
-      </Card.Root>
-    {/each}
-  </div>
+  {#if viewMode === 'grid'}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {#each Array(8) as _}
+        <Card.Root>
+          <Card.Header>
+            <Skeleton class="h-6 w-3/4" />
+            <Skeleton class="h-4 w-full" />
+          </Card.Header>
+          <Card.Content>
+            <div class="space-y-2">
+              <Skeleton class="h-4 w-1/2" />
+              <Skeleton class="h-4 w-2/3" />
+            </div>
+          </Card.Content>
+          <Card.Footer>
+            <div class="flex gap-2">
+              <Skeleton class="h-8 w-16" />
+              <Skeleton class="h-8 w-16" />
+              <Skeleton class="h-8 w-16" />
+            </div>
+          </Card.Footer>
+        </Card.Root>
+      {/each}
+    </div>
+  {:else}
+    <div class="rounded-md border">
+      <Table.Root>
+        <Table.Header>
+          <Table.Row>
+            <Table.Head><Skeleton class="h-4 w-24" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-20" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-32" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-24" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-24" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-20" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-32" /></Table.Head>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {#each Array(10) as _}
+            <Table.Row>
+              <Table.Cell><Skeleton class="h-4 w-32" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-4 w-16" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-4 w-40" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-4 w-24" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-4 w-24" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-8 w-20" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-8 w-32" /></Table.Cell>
+            </Table.Row>
+          {/each}
+        </Table.Body>
+      </Table.Root>
+    </div>
+  {/if}
 {:else if categories.length === 0}
   <!-- Empty State -->
   <div class="text-center py-12">
@@ -234,7 +290,7 @@ function getCategoryShift(category: Category, index: number): string {
       {/if}
     </p>
   </div>
-{:else}
+{:else if viewMode === 'grid'}
   <!-- Results Grid -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 {isDragging && isReorderMode ? 'drag-active' : ''}">
     {#each categories as category, index (category.id)}
@@ -447,6 +503,166 @@ function getCategoryShift(category: Category, index: number): string {
       </div>
     {/each}
   </div>
+{:else}
+  <!-- List View -->
+  <div class="rounded-md border">
+    <Table.Root>
+      <Table.Header>
+        <Table.Row>
+          <Table.Head>Name</Table.Head>
+          <Table.Head>Type</Table.Head>
+          <Table.Head>Priority/Tags</Table.Head>
+          <Table.Head>Expected Range</Table.Head>
+          <Table.Head>Notes</Table.Head>
+          <Table.Head>Status</Table.Head>
+          <Table.Head class="text-right">Actions</Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {#each categories as category (category.id)}
+          {@const typeInfo = getCategoryTypeInfo(category.categoryType)}
+          {@const iconData = category.categoryIcon ? getIconByName(category.categoryIcon) : null}
+          {@const IconComponent = iconData?.icon || Tag}
+          {@const statusDisplay = getStatusDisplay(category.isActive)}
+
+          <Table.Row class={cn(!category.isActive && "opacity-60")}>
+            <Table.Cell>
+              <div class="flex items-center gap-2">
+                <IconComponent
+                  class="h-4 w-4 flex-shrink-0"
+                  style={category.categoryColor ? `color: ${category.categoryColor};` : ''}
+                />
+                <a
+                  href="/categories/{category.slug}"
+                  class="font-medium hover:underline"
+                >
+                  {@html highlightMatches(category.name || 'Unnamed Category', searchQuery)}
+                </a>
+                {#if category.parentId}
+                  <Badge variant="outline" class="text-xs">
+                    <FolderTree class="mr-1 h-3 w-3" />
+                    Subcategory
+                  </Badge>
+                {/if}
+              </div>
+            </Table.Cell>
+
+            <Table.Cell>
+              <Badge variant={typeInfo.variant} class="text-xs">
+                <typeInfo.icon class="mr-1 h-3 w-3" />
+                {typeInfo.label}
+              </Badge>
+            </Table.Cell>
+
+            <Table.Cell>
+              <div class="space-y-1">
+                {#if category.spendingPriority}
+                  <Badge variant="outline" class="text-xs {getPriorityColor(category.spendingPriority)}">
+                    {formatPriority(category.spendingPriority)}
+                  </Badge>
+                {/if}
+                {#if category.isTaxDeductible}
+                  <Badge variant="secondary" class="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">
+                    <Receipt class="mr-1 h-3 w-3" />
+                    Tax
+                  </Badge>
+                {/if}
+                {#if category.isSeasonal}
+                  <Badge variant="outline" class="text-xs">
+                    <Calendar class="mr-1 h-3 w-3" />
+                    Seasonal
+                  </Badge>
+                {/if}
+                {#if !category.spendingPriority && !category.isTaxDeductible && !category.isSeasonal}
+                  <span class="text-sm text-muted-foreground">—</span>
+                {/if}
+              </div>
+            </Table.Cell>
+
+            <Table.Cell>
+              {#if category.expectedMonthlyMin || category.expectedMonthlyMax}
+                <div class="flex items-center gap-1 text-sm">
+                  <DollarSign class="h-3 w-3 text-muted-foreground" />
+                  {#if category.expectedMonthlyMin && category.expectedMonthlyMax}
+                    <span>{currencyFormatter.format(category.expectedMonthlyMin)} - {currencyFormatter.format(category.expectedMonthlyMax)}</span>
+                  {:else if category.expectedMonthlyMin}
+                    <span>Min: {currencyFormatter.format(category.expectedMonthlyMin)}</span>
+                  {:else if category.expectedMonthlyMax}
+                    <span>Max: {currencyFormatter.format(category.expectedMonthlyMax)}</span>
+                  {/if}
+                </div>
+              {:else}
+                <span class="text-muted-foreground">—</span>
+              {/if}
+            </Table.Cell>
+
+            <Table.Cell>
+              {#if category.notes}
+                <span class="text-sm text-muted-foreground line-clamp-2 max-w-[200px]">
+                  {@html highlightMatches(
+                    category.notes.length > 50 ? category.notes.substring(0, 50) + '...' : category.notes,
+                    searchQuery
+                  )}
+                </span>
+              {:else}
+                <span class="text-muted-foreground">—</span>
+              {/if}
+            </Table.Cell>
+
+            <Table.Cell>
+              <Badge
+                variant="outline"
+                class={cn("text-xs", statusDisplay.color, statusDisplay.bgColor)}>
+                <statusDisplay.icon class="mr-1 h-3 w-3" />
+                {statusDisplay.label}
+              </Badge>
+            </Table.Cell>
+
+            <Table.Cell class="text-right">
+              <div class="flex items-center justify-end gap-1">
+                <Button
+                  onclick={() => onView(category)}
+                  variant="ghost"
+                  size="sm"
+                  disabled={isReorderMode}
+                  aria-label="View category {category.name}">
+                  <Tag class="h-4 w-4" />
+                </Button>
+
+                <Button
+                  onclick={() => onViewAnalytics(category)}
+                  variant="ghost"
+                  size="sm"
+                  disabled={isReorderMode}
+                  aria-label="View analytics for {category.name}">
+                  <BarChart3 class="h-4 w-4" />
+                </Button>
+
+                <Button
+                  onclick={() => onEdit(category)}
+                  variant="ghost"
+                  size="sm"
+                  disabled={isReorderMode}
+                  aria-label="Edit category {category.name}">
+                  <Pencil class="h-4 w-4" />
+                </Button>
+
+                <Button
+                  onclick={() => onDelete(category)}
+                  variant="ghost"
+                  size="sm"
+                  class="text-destructive hover:text-destructive"
+                  disabled={isReorderMode}
+                  aria-label="Delete category {category.name}">
+                  <Trash2 class="h-4 w-4" />
+                </Button>
+              </div>
+            </Table.Cell>
+          </Table.Row>
+        {/each}
+      </Table.Body>
+    </Table.Root>
+  </div>
 {/if}
 
 <style>
@@ -456,6 +672,7 @@ function getCategoryShift(category: Category, index: number): string {
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    word-break: break-word;
   }
 
   /* Drag-and-drop styles */

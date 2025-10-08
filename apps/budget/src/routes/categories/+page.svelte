@@ -358,6 +358,7 @@ const addSubcategory = (parent: CategoryTreeNode) => {
       categories={displayedCategories}
       isLoading={isSearching}
       searchQuery={search.query}
+      viewMode={search.viewMode}
       isReorderMode={isReorderMode}
       onView={viewCategory}
       onEdit={editCategory}
@@ -371,6 +372,9 @@ const addSubcategory = (parent: CategoryTreeNode) => {
   {#if isReorderMode}
     <div class="text-muted-foreground rounded-lg bg-blue-50 p-3 text-sm dark:bg-blue-950/30">
       <strong>Reorder Mode:</strong> Drag categories to reorder them. Changes are saved automatically.
+      {#if search.viewMode === 'list'}
+        <span class="text-orange-600 dark:text-orange-400 ml-1">(Switch to grid view to enable drag and drop)</span>
+      {/if}
     </div>
   {/if}
 </div>
