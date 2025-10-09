@@ -34,6 +34,17 @@ export const payeeRoutes = t.router({
     }
   }),
 
+  allWithStats: publicProcedure.query(async () => {
+    try {
+      return await payeeService.getAllPayeesWithStats();
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to fetch payees with stats",
+      });
+    }
+  }),
+
   load: publicProcedure.input(payeeIdSchema).query(async ({input}) => {
     try {
       return await payeeService.getPayeeById(input.id);

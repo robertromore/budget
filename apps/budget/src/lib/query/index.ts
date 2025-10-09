@@ -7,6 +7,8 @@
 import * as transactions from "./transactions";
 import * as budgets from "./budgets";
 import * as accounts from "./accounts";
+import * as payees from "./payees";
+import * as categories from "./categories";
 
 /**
  * Centralized RPC interface aggregating all query modules
@@ -17,6 +19,8 @@ export const rpc = {
   transactions,
   budgets,
   accounts,
+  payees,
+  categories,
 } as const;
 
 /**
@@ -35,6 +39,8 @@ export type RPC = typeof rpc;
 export type TransactionQueries = typeof transactions;
 export type BudgetQueries = typeof budgets;
 export type AccountQueries = typeof accounts;
+export type PayeeQueries = typeof payees;
+export type CategoryQueries = typeof categories;
 
 /**
  * Convenience re-exports for specific domains
@@ -42,6 +48,8 @@ export type AccountQueries = typeof accounts;
 export { transactionKeys } from "./transactions";
 export { budgetKeys } from "./budgets";
 export { accountKeys } from "./accounts";
+export { payeeKeys } from "./payees";
+export { categoryKeys } from "./categories";
 
 /**
  * Helper to get specific domain operations
@@ -49,6 +57,8 @@ export { accountKeys } from "./accounts";
 export const getTransactionOps = () => rpc.transactions;
 export const getBudgetOps = () => rpc.budgets;
 export const getAccountOps = () => rpc.accounts;
+export const getPayeeOps = () => rpc.payees;
+export const getCategoryOps = () => rpc.categories;
 
 /**
  * Development helpers

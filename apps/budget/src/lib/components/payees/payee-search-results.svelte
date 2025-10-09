@@ -1,33 +1,39 @@
 <script lang="ts">
-import {onMount} from 'svelte';
 import * as Card from '$lib/components/ui/card';
+import * as Table from '$lib/components/ui/table';
 import {Badge} from '$lib/components/ui/badge';
 import {Button} from '$lib/components/ui/button';
 import {Skeleton} from '$lib/components/ui/skeleton';
 import {cn, currencyFormatter} from '$lib/utils';
 import User from '@lucide/svelte/icons/user';
 import Building from '@lucide/svelte/icons/building';
-import MapPin from '@lucide/svelte/icons/map-pin';
 import Phone from '@lucide/svelte/icons/phone';
 import Mail from '@lucide/svelte/icons/mail';
 import Globe from '@lucide/svelte/icons/globe';
 import Calendar from '@lucide/svelte/icons/calendar';
 import CreditCard from '@lucide/svelte/icons/credit-card';
-import Brain from '@lucide/svelte/icons/brain';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import CheckCircle from '@lucide/svelte/icons/check-circle';
 import type {Payee} from '$lib/schema';
+import {PayeesState} from '$lib/states/entities/payees.svelte';
+import type {Table as TanStackTable} from '@tanstack/table-core';
+import PayeeDataTableContainer from '../../../routes/payees/(components)/payee-data-table-container.svelte';
+import {columns} from '../../../routes/payees/(data)/columns.svelte';
+
+export type ViewMode = 'list' | 'grid';
 
 interface Props {
   payees: Payee[];
   isLoading: boolean;
   searchQuery: string;
+  viewMode?: ViewMode;
   onView: (payee: Payee) => void;
   onEdit: (payee: Payee) => void;
   onDelete: (payee: Payee) => void;
+  onBulkDelete: (payees: Payee[]) => void;
   onViewAnalytics: (payee: Payee) => void;
 }
 
@@ -35,13 +41,21 @@ let {
   payees,
   isLoading,
   searchQuery,
+  viewMode = 'grid',
   onView,
   onEdit,
   onDelete,
+  onBulkDelete,
   onViewAnalytics
 }: Props = $props();
 
-// Get icon for payee type
+// Get payees state from context
+const payeesState = $derived(PayeesState.get());
+
+// Table binding for list view
+let table = $state<TanStackTable<Payee>>();
+
+// Get icon for payee type (for grid view)
 const getPayeeTypeIcon = (type: string | null) => {
   switch (type) {
     case 'company':
@@ -56,13 +70,13 @@ const getPayeeTypeIcon = (type: string | null) => {
   }
 };
 
-// Format payee type for display
+// Format payee type for display (for grid view)
 const formatPayeeType = (type: string | null) => {
   if (!type) return null;
   return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
-// Highlight search matches in text
+// Highlight search matches in text (for grid view)
 const highlightMatches = (text: string, query: string) => {
   if (!query || !text) return text;
 
@@ -70,7 +84,7 @@ const highlightMatches = (text: string, query: string) => {
   return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-1">$1</mark>');
 };
 
-// Get status color and icon
+// Get status color and icon (for grid view)
 const getStatusDisplay = (isActive: boolean) => {
   return {
     icon: isActive ? CheckCircle : AlertTriangle,
@@ -80,7 +94,7 @@ const getStatusDisplay = (isActive: boolean) => {
   };
 };
 
-// Format last transaction date
+// Format last transaction date (for grid view)
 const formatLastTransaction = (date: string | null) => {
   if (!date) return 'No transactions';
   return new Date(date).toLocaleDateString();
@@ -89,29 +103,58 @@ const formatLastTransaction = (date: string | null) => {
 
 {#if isLoading}
   <!-- Loading State -->
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    {#each Array(8) as _}
-      <Card.Root>
-        <Card.Header>
-          <Skeleton class="h-6 w-3/4" />
-          <Skeleton class="h-4 w-full" />
-        </Card.Header>
-        <Card.Content>
-          <div class="space-y-2">
-            <Skeleton class="h-4 w-1/2" />
-            <Skeleton class="h-4 w-2/3" />
-          </div>
-        </Card.Content>
-        <Card.Footer>
-          <div class="flex gap-2">
-            <Skeleton class="h-8 w-16" />
-            <Skeleton class="h-8 w-16" />
-            <Skeleton class="h-8 w-16" />
-          </div>
-        </Card.Footer>
-      </Card.Root>
-    {/each}
-  </div>
+  {#if viewMode === 'grid'}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {#each Array(8) as _}
+        <Card.Root>
+          <Card.Header>
+            <Skeleton class="h-6 w-3/4" />
+            <Skeleton class="h-4 w-full" />
+          </Card.Header>
+          <Card.Content>
+            <div class="space-y-2">
+              <Skeleton class="h-4 w-1/2" />
+              <Skeleton class="h-4 w-2/3" />
+            </div>
+          </Card.Content>
+          <Card.Footer>
+            <div class="flex gap-2">
+              <Skeleton class="h-8 w-16" />
+              <Skeleton class="h-8 w-16" />
+              <Skeleton class="h-8 w-16" />
+            </div>
+          </Card.Footer>
+        </Card.Root>
+      {/each}
+    </div>
+  {:else}
+    <div class="rounded-md border">
+      <Table.Root>
+        <Table.Header>
+          <Table.Row>
+            <Table.Head><Skeleton class="h-4 w-24" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-20" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-32" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-20" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-24" /></Table.Head>
+            <Table.Head><Skeleton class="h-4 w-20" /></Table.Head>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {#each Array(10) as _}
+            <Table.Row>
+              <Table.Cell><Skeleton class="h-4 w-32" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-4 w-16" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-4 w-40" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-4 w-20" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-4 w-24" /></Table.Cell>
+              <Table.Cell><Skeleton class="h-8 w-32" /></Table.Cell>
+            </Table.Row>
+          {/each}
+        </Table.Body>
+      </Table.Root>
+    </div>
+  {/if}
 {:else if payees.length === 0}
   <!-- Empty State -->
   <div class="text-center py-12">
@@ -125,7 +168,7 @@ const formatLastTransaction = (date: string | null) => {
       {/if}
     </p>
   </div>
-{:else}
+{:else if viewMode === 'grid'}
   <!-- Results Grid -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
     {#each payees as payee (payee.id)}
@@ -279,13 +322,18 @@ const formatLastTransaction = (date: string | null) => {
       </Card.Root>
     {/each}
   </div>
+{:else}
+  <!-- List View with Data Table -->
+  <PayeeDataTableContainer
+    {isLoading}
+    {payees}
+    {columns}
+    {payeesState}
+    {onView}
+    {onEdit}
+    {onDelete}
+    {onBulkDelete}
+    {onViewAnalytics}
+    bind:table
+  />
 {/if}
-
-<style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-</style>

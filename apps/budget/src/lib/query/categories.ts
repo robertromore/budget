@@ -2,10 +2,11 @@ import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
 import { cachePatterns } from "./_client";
 import { trpc } from "$lib/trpc/client";
 import type {Category, NewCategory} from "$lib/schema/categories";
-import type {CategoryWithBudgets, CategoryWithChildren, CategoryTreeNode} from "$lib/server/domains/categories/repository";
+import type {CategoryWithBudgets, CategoryWithChildren, CategoryTreeNode, CategoryWithStats} from "$lib/server/domains/categories/repository";
 
 export const categoryKeys = createQueryKeys("categories", {
   all: () => ["categories", "all"] as const,
+  allWithStats: () => ["categories", "all", "stats"] as const,
   detail: (id: number) => ["categories", "detail", id] as const,
   search: (query: string) => ["categories", "search", query] as const,
   allWithBudgets: () => ["categories", "all", "budgets"] as const,
@@ -21,6 +22,12 @@ export const listCategories = () =>
   defineQuery<Category[]>({
     queryKey: categoryKeys.all(),
     queryFn: () => trpc().categoriesRoutes.all.query(),
+  });
+
+export const listCategoriesWithStats = () =>
+  defineQuery<CategoryWithStats[]>({
+    queryKey: categoryKeys.allWithStats(),
+    queryFn: () => trpc().categoriesRoutes.allWithStats.query(),
   });
 
 export const getCategoryById = (id: number) =>

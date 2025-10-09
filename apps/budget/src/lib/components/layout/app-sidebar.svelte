@@ -12,20 +12,8 @@ import {
   deleteBudgetDialog,
   deleteBudgetId,
 } from '$lib/states/ui/global.svelte';
-import {
-  newPayeeDialog,
-  managingPayeeId,
-  deletePayeeDialog,
-  deletePayeeId,
-} from '$lib/states/ui/payees.svelte';
-import {
-  deleteCategoryDialog,
-  deleteCategoryId,
-} from '$lib/states/ui/categories.svelte';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import {BudgetState} from '$lib/states/budgets.svelte';
 import {rpc} from '$lib/query';
 import AccountSortDropdown from '$lib/components/shared/account-sort-dropdown.svelte';
@@ -52,18 +40,6 @@ const budgetsQuery = $derived(rpc.budgets.listBudgets().options());
 const budgets = $derived(budgetsQuery.data ?? budgetState.all);
 const _deleteBudgetDialog = $derived(deleteBudgetDialog);
 const _deleteBudgetId = $derived(deleteBudgetId);
-
-const payeesState = $derived(PayeesState.get());
-const payees = $derived(payeesState.payees.values());
-const _newPayeeDialog = $derived(newPayeeDialog);
-const _managingPayeeId = $derived(managingPayeeId);
-const _deletePayeeDialog = $derived(deletePayeeDialog);
-const _deletePayeeId = $derived(deletePayeeId);
-
-const categoriesState = $derived(CategoriesState.get());
-const categories = $derived(categoriesState.categories.values());
-const _deleteCategoryDialog = $derived(deleteCategoryDialog);
-const _deleteCategoryId = $derived(deleteCategoryId);
 </script>
 
 <Sidebar.Root>
@@ -286,48 +262,6 @@ const _deleteCategoryId = $derived(deleteCategoryId);
         onclick={() => goto('/payees/new')}>
         <Plus /> <span class="sr-only">Add Payee</span>
       </Sidebar.GroupAction>
-      <Sidebar.GroupContent>
-        <Sidebar.Menu>
-          {#each payees as payee}
-            <Sidebar.MenuItem>
-              <Sidebar.MenuButton>
-                {#snippet child({props})}
-                  <a href="/payees/{payee.slug}" {...props}>
-                    <span class="text-sm">{payee.name}</span>
-                  </a>
-                {/snippet}
-              </Sidebar.MenuButton>
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger>
-                  {#snippet child({props})}
-                    <Sidebar.MenuAction {...props}>
-                      <Ellipsis />
-                    </Sidebar.MenuAction>
-                  {/snippet}
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content side="right" align="start">
-                  <DropdownMenu.Item>
-                    <a href="/payees/{payee.slug}" class="w-full">View Details</a>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item>
-                    <a href="/payees/{payee.slug}/edit" class="w-full">Edit</a>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item>
-                    <a href="/payees/{payee.slug}/analytics" class="w-full">Analytics</a>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    onclick={() => {
-                      _deletePayeeId.current = payee.id;
-                      _deletePayeeDialog.setTrue();
-                    }}>
-                    <span>Delete</span>
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Root>
-            </Sidebar.MenuItem>
-          {/each}
-        </Sidebar.Menu>
-      </Sidebar.GroupContent>
     </Sidebar.Group>
 
     <Sidebar.Group>
@@ -337,48 +271,6 @@ const _deleteCategoryId = $derived(deleteCategoryId);
         onclick={() => goto('/categories/new')}>
         <Plus /> <span class="sr-only">Add Category</span>
       </Sidebar.GroupAction>
-      <Sidebar.GroupContent>
-        <Sidebar.Menu>
-          {#each categories as category}
-            <Sidebar.MenuItem>
-              <Sidebar.MenuButton>
-                {#snippet child({props})}
-                  <a href="/categories/{category.slug}" {...props}>
-                    <span class="text-sm">{category.name}</span>
-                  </a>
-                {/snippet}
-              </Sidebar.MenuButton>
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger>
-                  {#snippet child({props})}
-                    <Sidebar.MenuAction {...props}>
-                      <Ellipsis />
-                    </Sidebar.MenuAction>
-                  {/snippet}
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content side="right" align="start">
-                  <DropdownMenu.Item>
-                    <a href="/categories/{category.slug}" class="w-full">View Details</a>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item>
-                    <a href="/categories/{category.slug}/edit" class="w-full">Edit</a>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item>
-                    <a href="/categories/{category.slug}/analytics" class="w-full">Analytics</a>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    onclick={() => {
-                      _deleteCategoryId.current = category.id;
-                      _deleteCategoryDialog.setTrue();
-                    }}>
-                    <span>Delete</span>
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Root>
-            </Sidebar.MenuItem>
-          {/each}
-        </Sidebar.Menu>
-      </Sidebar.GroupContent>
     </Sidebar.Group>
   </Sidebar.Content>
 </Sidebar.Root>

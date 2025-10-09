@@ -19,7 +19,7 @@ interface PayeeSearchState {
  */
 class PayeeSearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState('payee-search-view-mode', 'grid' as const);
+  private viewModeState = createLocalStorageState('payee-search-view-mode', 'list' as const);
   private sortByState = createLocalStorageState('payee-search-sort-by', 'name' as const);
   private sortOrderState = createLocalStorageState('payee-search-sort-order', 'asc' as const);
 

@@ -28,7 +28,7 @@ interface CategorySearchState {
  */
 class CategorySearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState('category-search-view-mode', 'grid' as 'grid' | 'list');
+  private viewModeState = createLocalStorageState('category-search-view-mode', 'list' as 'grid' | 'list');
   private sortByState = createLocalStorageState('category-search-sort-by', 'name' as 'name' | 'created' | 'lastTransaction' | 'totalAmount');
   private sortOrderState = createLocalStorageState('category-search-sort-order', 'asc' as 'asc' | 'desc');
 

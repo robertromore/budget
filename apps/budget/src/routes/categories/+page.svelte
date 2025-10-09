@@ -1,7 +1,8 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import {Button, buttonVariants} from '$lib/components/ui/button';
 import * as ButtonGroup from '$lib/components/ui/button-group';
 import * as Empty from '$lib/components/ui/empty';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import Plus from '@lucide/svelte/icons/plus';
 import Tag from '@lucide/svelte/icons/tag';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
@@ -17,13 +18,19 @@ import CategorySearchResults from '$lib/components/categories/category-search-re
 import {CategoryTreeView, type CategoryTreeNode} from '$lib/components/categories';
 import {goto} from '$app/navigation';
 import type {Category} from '$lib/schema';
-import {reorderCategories, getCategoryHierarchyTree} from '$lib/query/categories';
+import {reorderCategories, getCategoryHierarchyTree, bulkDeleteCategories as bulkDeleteCategoriesMutation, listCategoriesWithStats} from '$lib/query/categories';
+import type {CategoryWithStats} from '$lib/server/domains/categories/repository';
 import FolderTree from '@lucide/svelte/icons/folder-tree';
+import {rpc} from '$lib/query';
 
 const categoriesState = $derived(CategoriesState.get());
 const categories = $derived(categoriesState.categories.values());
 const categoriesArray = $derived(Array.from(categories));
 const hasNoCategories = $derived(categoriesArray.length === 0);
+
+// Fetch categories with transaction stats for sorting
+const categoriesWithStatsQuery = rpc.categories.listCategoriesWithStats().options();
+const categoriesWithStats = $derived(categoriesWithStatsQuery.data ?? []);
 
 // Search state
 const search = categorySearchState;
@@ -36,12 +43,37 @@ let showHierarchyView = $state(false);
 const hierarchyTreeQuery = getCategoryHierarchyTree().options();
 const hierarchyTree = $derived(hierarchyTreeQuery.data ?? []);
 
-// Sort categories by displayOrder when not searching
+// Sort categories based on user selection or displayOrder
 const sortedCategoriesArray = $derived.by(() => {
+  // Create a map of category stats for quick lookup
+  const statsMap = new Map(categoriesWithStats.map(c => [c.id, c.stats]));
+
   return [...categoriesArray].sort((a, b) => {
-    const orderA = a.displayOrder ?? 0;
-    const orderB = b.displayOrder ?? 0;
-    return orderA - orderB;
+    let comparison = 0;
+    const statsA = statsMap.get(a.id);
+    const statsB = statsMap.get(b.id);
+
+    switch (search.sortBy) {
+      case 'name':
+        comparison = (a.name || '').localeCompare(b.name || '');
+        break;
+      case 'created':
+        comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
+        break;
+      case 'lastTransaction':
+        comparison = (statsA?.lastTransactionDate || '').localeCompare(statsB?.lastTransactionDate || '');
+        break;
+      case 'totalAmount':
+        comparison = (statsA?.totalAmount || 0) - (statsB?.totalAmount || 0);
+        break;
+      default:
+        // Default to displayOrder
+        const orderA = a.displayOrder ?? 0;
+        const orderB = b.displayOrder ?? 0;
+        comparison = orderA - orderB;
+    }
+
+    return search.sortOrder === 'asc' ? comparison : -comparison;
   });
 });
 
@@ -57,6 +89,11 @@ const shouldShowNoCategories = $derived.by(() => {
 // Dialog state
 let deleteDialogId = $derived(deleteCategoryId);
 let deleteDialogOpen = $derived(deleteCategoryDialog);
+
+// Bulk delete dialog state
+let bulkDeleteDialogOpen = $state(false);
+let categoriesToDelete = $state<Category[]>([]);
+let isDeletingBulk = $state(false);
 
 // Client-side search and filter function
 const performSearch = () => {
@@ -125,8 +162,11 @@ const performSearch = () => {
     }
 
     // Sort results
+    const statsMap = new Map(categoriesWithStats.map(c => [c.id, c.stats]));
     results.sort((a, b) => {
       let comparison = 0;
+      const statsA = statsMap.get(a.id);
+      const statsB = statsMap.get(b.id);
 
       switch (search.sortBy) {
         case 'name':
@@ -134,6 +174,12 @@ const performSearch = () => {
           break;
         case 'created':
           comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
+          break;
+        case 'lastTransaction':
+          comparison = (statsA?.lastTransactionDate || '').localeCompare(statsB?.lastTransactionDate || '');
+          break;
+        case 'totalAmount':
+          comparison = (statsA?.totalAmount || 0) - (statsB?.totalAmount || 0);
           break;
         default:
           comparison = (a.name || '').localeCompare(b.name || '');
@@ -193,8 +239,33 @@ const viewAnalytics = (category: Category) => {
   goto(`/categories/${category.slug}/analytics`);
 };
 
-// Create mutation instance at component initialization
+const bulkDeleteCategories = async (categories: Category[]) => {
+  if (categories.length === 0) return;
+
+  categoriesToDelete = categories;
+  bulkDeleteDialogOpen = true;
+};
+
+// Create mutation instances at component initialization
 const reorderMutation = reorderCategories.options();
+const bulkDeleteMutation = bulkDeleteCategoriesMutation.options();
+
+const confirmBulkDelete = async () => {
+  if (isDeletingBulk || categoriesToDelete.length === 0) return;
+
+  isDeletingBulk = true;
+  try {
+    const idsToDelete = categoriesToDelete.map((c) => c.id);
+    await bulkDeleteMutation.mutateAsync(idsToDelete);
+
+    bulkDeleteDialogOpen = false;
+    categoriesToDelete = [];
+  } catch (error) {
+    console.error('Failed to delete categories:', error);
+  } finally {
+    isDeletingBulk = false;
+  }
+};
 
 const handleReorder = async (reorderedCategories: Category[]) => {
   const updates = reorderedCategories.map((cat) => ({
@@ -268,7 +339,7 @@ const addSubcategory = (parent: CategoryTreeNode) => {
           disabled={hasNoCategories}
         >
           <Tag class="mr-2 h-4 w-4" />
-          List View
+          Browse
         </Button>
         <Button
           variant={showHierarchyView ? 'default' : 'outline'}
@@ -281,7 +352,7 @@ const addSubcategory = (parent: CategoryTreeNode) => {
         <Button
           variant={isReorderMode ? 'default' : 'outline'}
           onclick={toggleReorderMode}
-          disabled={hasNoCategories || showHierarchyView}
+          disabled={hasNoCategories || showHierarchyView || search.viewMode === 'list'}
         >
           <ArrowUpDown class="mr-2 h-4 w-4" />
           Reorder
@@ -363,6 +434,7 @@ const addSubcategory = (parent: CategoryTreeNode) => {
       onView={viewCategory}
       onEdit={editCategory}
       onDelete={deleteCategory}
+      onBulkDelete={bulkDeleteCategories}
       onViewAnalytics={viewAnalytics}
       onReorder={handleReorder}
     />
@@ -378,3 +450,24 @@ const addSubcategory = (parent: CategoryTreeNode) => {
     </div>
   {/if}
 </div>
+
+<!-- Bulk Delete Confirmation Dialog -->
+<AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete {categoriesToDelete.length} Categor{categoriesToDelete.length > 1 ? 'ies' : 'y'}</AlertDialog.Title>
+      <AlertDialog.Description>
+        Are you sure you want to delete {categoriesToDelete.length} categor{categoriesToDelete.length > 1 ? 'ies' : 'y'}? This action cannot be undone.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmBulkDelete}
+        disabled={isDeletingBulk}
+        class={buttonVariants({variant: 'destructive'})}>
+        {isDeletingBulk ? 'Deleting...' : 'Delete'}
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

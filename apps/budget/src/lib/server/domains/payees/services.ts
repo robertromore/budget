@@ -255,6 +255,23 @@ export class PayeeService {
   }
 
   /**
+   * Get all payees with transaction statistics
+   */
+  async getAllPayeesWithStats(): Promise<PayeeWithStats[]> {
+    const payees = await this.repository.findAll();
+
+    return await Promise.all(
+      payees.map(async (payee) => {
+        const stats = await this.repository.getStats(payee.id);
+        return {
+          ...payee,
+          stats,
+        };
+      })
+    );
+  }
+
+  /**
    * Update payee with enhanced validation and field support
    */
   async updatePayee(id: number, data: UpdatePayeeData): Promise<Payee> {

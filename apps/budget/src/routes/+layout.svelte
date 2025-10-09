@@ -28,20 +28,32 @@ let {data, children}: {data: LayoutData; children: Snippet} = $props();
 // Set QueryClient context immediately using centralized client
 setQueryClientContext(queryClient);
 
-// Use TanStack Query for accounts to enable reactive updates
+// Use TanStack Query for reactive updates
 const accountsQuery = rpc.accounts.listAccounts().options();
+const payeesQuery = rpc.payees.listPayees().options();
+const categoriesQuery = rpc.categories.listCategories().options();
 
 // Initialize states with initial data
 const accountsState = AccountsState.set(data.accounts);
+const payeesState = PayeesState.set(data.payees);
+const categoriesState = CategoriesState.set(data.categories);
 SchedulesState.set(data.schedules);
-CategoriesState.set(data.categories);
-PayeesState.set(data.payees);
 BudgetState.set(data.budgets);
 
-// Keep AccountsState in sync with query data
+// Keep states in sync with query data
 $effect(() => {
   const accounts = accountsQuery.data ?? data.accounts;
   accountsState.init(accounts);
+});
+
+$effect(() => {
+  const payees = payeesQuery.data ?? data.payees;
+  payeesState.init(payees);
+});
+
+$effect(() => {
+  const categories = categoriesQuery.data ?? data.categories;
+  categoriesState.init(categories);
 });
 
 // Auto-scheduler: Automatically create scheduled transactions when app loads

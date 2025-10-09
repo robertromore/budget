@@ -1,5 +1,6 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import {Button, buttonVariants} from '$lib/components/ui/button';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import Plus from '@lucide/svelte/icons/plus';
 import User from '@lucide/svelte/icons/user';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
@@ -12,23 +13,71 @@ import {payeeSearchState} from '$lib/states/ui/payee-search.svelte';
 import PayeeSearchToolbar from '$lib/components/payees/payee-search-toolbar.svelte';
 import PayeeSearchResults from '$lib/components/payees/payee-search-results.svelte';
 import PayeeFacetedFilters from '$lib/components/payees/payee-faceted-filters.svelte';
-import {searchPayeesAdvanced} from '$lib/query/payees';
+import {searchPayeesAdvanced, bulkDeletePayees as bulkDeletePayeesMutation, listPayeesWithStats} from '$lib/query/payees';
 import {goto} from '$app/navigation';
 import type {Payee, PayeeType, PaymentFrequency} from '$lib/schema';
+import {rpc} from '$lib/query';
+import type {PayeeWithStats} from '$lib/server/domains/payees/services';
 
 const payeesState = $derived(PayeesState.get());
 const allPayees = $derived(payeesState.payees.values());
 const allPayeesArray = $derived(Array.from(allPayees));
 const hasNoPayees = $derived(allPayeesArray.length === 0);
 
+// Fetch payees with transaction stats for sorting
+const payeesWithStatsQuery = rpc.payees.listPayeesWithStats().options();
+const payeesWithStats = $derived(payeesWithStatsQuery.data ?? []);
+
 // Search state
 const search = payeeSearchState;
 let searchResults = $state<Payee[]>([]);
 let isSearching = $state(false);
 
+// Sort payees based on user selection
+const sortedPayeesArray = $derived.by(() => {
+  // Create a map of payee stats for quick lookup
+  const statsMap = new Map(payeesWithStats.map(p => [p.id, p.stats]));
+
+  return [...allPayeesArray].sort((a, b) => {
+    let comparison = 0;
+    const statsA = statsMap.get(a.id);
+    const statsB = statsMap.get(b.id);
+
+    switch (search.sortBy) {
+      case 'name':
+        comparison = (a.name || '').localeCompare(b.name || '');
+        break;
+      case 'created':
+        comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
+        break;
+      case 'lastTransaction':
+        comparison = (statsA?.lastTransactionDate || '').localeCompare(statsB?.lastTransactionDate || '');
+        break;
+      case 'avgAmount':
+        comparison = (statsA?.avgAmount || 0) - (statsB?.avgAmount || 0);
+        break;
+      default:
+        comparison = (a.name || '').localeCompare(b.name || '');
+    }
+
+    return search.sortOrder === 'asc' ? comparison : -comparison;
+  });
+});
+
+// Merge stats into payees for display
+const payeesWithStatsData = $derived.by(() => {
+  const statsMap = new Map(payeesWithStats.map(p => [p.id, p.stats]));
+
+  return sortedPayeesArray.map(payee => ({
+    ...payee,
+    avgAmount: statsMap.get(payee.id)?.avgAmount ?? null,
+    lastTransactionDate: statsMap.get(payee.id)?.lastTransactionDate ?? null,
+  }));
+});
+
 // Computed values
 const displayedPayees = $derived.by(() => {
-  return search.isSearchActive() ? searchResults : allPayeesArray;
+  return search.isSearchActive() ? searchResults : payeesWithStatsData;
 });
 
 const shouldShowNoPayees = $derived.by(() => {
@@ -38,6 +87,11 @@ const shouldShowNoPayees = $derived.by(() => {
 // Dialog state
 let deleteDialogId = $derived(deletePayeeId);
 let deleteDialogOpen = $derived(deletePayeeDialog);
+
+// Bulk delete dialog state
+let bulkDeleteDialogOpen = $state(false);
+let payeesToDelete = $state<Payee[]>([]);
+let isDeletingBulk = $state(false);
 
 // Server-side search function
 const performSearch = async () => {
@@ -94,6 +148,33 @@ $effect(() => {
 const deletePayee = (payee: Payee) => {
   deleteDialogId.current = payee.id;
   deleteDialogOpen.setTrue();
+};
+
+const bulkDeletePayees = async (payees: Payee[]) => {
+  if (payees.length === 0) return;
+
+  payeesToDelete = payees;
+  bulkDeleteDialogOpen = true;
+};
+
+// Create mutation instance at component initialization
+const bulkDeleteMutation = bulkDeletePayeesMutation.options();
+
+const confirmBulkDelete = async () => {
+  if (isDeletingBulk || payeesToDelete.length === 0) return;
+
+  isDeletingBulk = true;
+  try {
+    const idsToDelete = payeesToDelete.map((p) => p.id);
+    await bulkDeleteMutation.mutateAsync(idsToDelete);
+
+    bulkDeleteDialogOpen = false;
+    payeesToDelete = [];
+  } catch (error) {
+    console.error('Failed to delete payees:', error);
+  } finally {
+    isDeletingBulk = false;
+  }
 };
 
 const viewPayee = (payee: Payee) => {
@@ -246,10 +327,33 @@ const frequencyOptions = [
       payees={displayedPayees}
       isLoading={isSearching}
       searchQuery={search.query}
+      viewMode={search.viewMode}
       onView={viewPayee}
       onEdit={editPayee}
       onDelete={deletePayee}
+      onBulkDelete={bulkDeletePayees}
       onViewAnalytics={viewAnalytics}
     />
   {/if}
 </div>
+
+<!-- Bulk Delete Confirmation Dialog -->
+<AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete {payeesToDelete.length} Payee{payeesToDelete.length > 1 ? 's' : ''}</AlertDialog.Title>
+      <AlertDialog.Description>
+        Are you sure you want to delete {payeesToDelete.length} payee{payeesToDelete.length > 1 ? 's' : ''}? This action cannot be undone.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmBulkDelete}
+        disabled={isDeletingBulk}
+        class={buttonVariants({variant: 'destructive'})}>
+        {isDeletingBulk ? 'Deleting...' : 'Delete'}
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

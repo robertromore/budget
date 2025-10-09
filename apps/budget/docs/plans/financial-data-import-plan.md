@@ -1,13 +1,72 @@
 # Financial Data Import Plan: Multi-Format Import System
 
-> **Status**: 📋 NOT IMPLEMENTED - FUTURE WORK
+> **Status**: ✅ PHASE 3 COMPLETE - CORE FUNCTIONALITY READY
 > **Priority**: High (User Onboarding Feature)
 > **Dependencies**: None
-> **Estimated Effort**: 4-6 weeks
+> **Completed**: Phases 1-3 (File Upload, Processors, Entity Matching & Validation)
 
 ## Overview
 
 This document outlines the comprehensive implementation of a financial data import system that supports multiple file formats (CSV, Excel, QIF, OFX) with intelligent entity matching, validation, and user-friendly workflows. The goal is to enable users to seamlessly import their financial data from banks, accounting software, and manual records.
+
+## Implementation Summary
+
+### ✅ Completed Features (Phases 1-3)
+
+#### Phase 1: File Upload Infrastructure
+- **File Upload Dropzone Component** - Drag-and-drop interface with file validation
+- **Import Preview Table** - Display and review parsed data before import
+- **Import Page** - Three-step wizard (Upload → Preview → Complete)
+- **Server Actions** - File upload and import processing endpoints
+
+#### Phase 2: File Format Processors
+- **CSV Processor** - Handles CSV and TXT files with Papa Parse
+- **Excel Processor** - Supports .xlsx and .xls with XLSX library
+- **QIF Processor** - Parses Quicken Interchange Format
+- **OFX Processor** - Handles Open Financial Exchange (XML and SGML)
+- **Unified Interface** - All processors implement FileProcessor interface
+
+#### Phase 3: Entity Matching & Validation
+- **Payee Matcher** - Fuzzy matching with confidence scoring and name cleaning
+- **Category Matcher** - Keyword-based matching with 10+ default patterns
+- **Transaction Validator** - Comprehensive validation with duplicate detection
+- **Import Orchestrator** - Coordinates validation → matching → creation workflow
+
+### 📁 Created Files
+
+```
+src/lib/server/import/
+├── file-processors/
+│   ├── csv-processor.ts          ✅ CSV/TXT parsing
+│   ├── excel-processor.ts        ✅ Excel file support
+│   ├── qif-processor.ts          ✅ QIF format support
+│   └── ofx-processor.ts          ✅ OFX/QFX support
+├── matchers/
+│   ├── payee-matcher.ts          ✅ Payee fuzzy matching
+│   └── category-matcher.ts       ✅ Category keyword matching
+├── validators/
+│   └── transaction-validator.ts  ✅ Data validation & duplicate detection
+├── import-orchestrator.ts        ✅ Main orchestration service
+├── utils.ts                      ✅ Utility functions (enhanced)
+└── errors.ts                     ✅ Custom error types
+
+src/lib/components/import/
+├── file-upload-dropzone.svelte   ✅ File upload UI
+└── import-preview-table.svelte   ✅ Data preview table
+
+src/routes/import/
+├── +page.svelte                  ✅ Import wizard UI
+└── +page.server.ts               ✅ Server actions (integrated)
+```
+
+### 🎯 Key Capabilities
+
+1. **Multi-Format Support** - CSV, Excel (.xlsx, .xls), QIF, OFX/QFX
+2. **Intelligent Matching** - Fuzzy matching for payees and keyword matching for categories
+3. **Auto-Creation** - Automatically creates missing payees and categories
+4. **Validation** - Field validation, date/amount checks, duplicate detection
+5. **Error Handling** - Comprehensive error collection with partial import support
+6. **Clean Architecture** - Service-based design following existing patterns
 
 ## Current System Analysis
 
@@ -420,6 +479,152 @@ export class QIFProcessor implements FileProcessor {
       checkNumber: qif.number,
     };
   }
+}
+```
+
+#### 2.4 OFX Processing
+
+**OFX Processor** (`src/lib/server/import/file-processors/ofx-processor.ts`):
+
+```typescript
+export class OFXProcessor implements FileProcessor {
+  async parseFile(file: File): Promise<ImportRow[]> {
+    const text = await file.text();
+    const parsedData = await this.parseOFXData(text);
+    const transactions = this.extractTransactions(parsedData);
+
+    return transactions.map((transaction, index) => ({
+      rowIndex: index,
+      rawData: transaction,
+      normalizedData: this.normalizeOFXTransaction(transaction),
+      validationStatus: 'pending',
+    }));
+  }
+
+  private async parseOFXData(text: string): Promise<OFXData> {
+    // OFX can be SGML or XML format
+    const isXML = text.trim().startsWith('<?xml');
+
+    if (isXML) {
+      return this.parseOFXXML(text);
+    } else {
+      return this.parseOFXSGML(text);
+    }
+  }
+
+  private parseOFXXML(text: string): OFXData {
+    // Use XML parser for OFXv2 (XML format)
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/xml');
+
+    const bankTransactions = doc.querySelectorAll('STMTTRN');
+    const transactions: OFXTransaction[] = [];
+
+    bankTransactions.forEach(trn => {
+      transactions.push({
+        type: this.getTagValue(trn, 'TRNTYPE'),
+        date: this.getTagValue(trn, 'DTPOSTED'),
+        amount: this.getTagValue(trn, 'TRNAMT'),
+        fitid: this.getTagValue(trn, 'FITID'),
+        name: this.getTagValue(trn, 'NAME') || this.getTagValue(trn, 'PAYEE'),
+        memo: this.getTagValue(trn, 'MEMO'),
+      });
+    });
+
+    return { transactions };
+  }
+
+  private parseOFXSGML(text: string): OFXData {
+    // Parse OFXv1 (SGML format)
+    const transactions: OFXTransaction[] = [];
+    const lines = text.split('\n').map(line => line.trim());
+
+    let currentTransaction: Partial<OFXTransaction> = {};
+    let inTransaction = false;
+
+    for (const line of lines) {
+      if (line.startsWith('<STMTTRN>')) {
+        inTransaction = true;
+        currentTransaction = {};
+      } else if (line.startsWith('</STMTTRN>')) {
+        if (currentTransaction.date && currentTransaction.amount) {
+          transactions.push(currentTransaction as OFXTransaction);
+        }
+        inTransaction = false;
+      } else if (inTransaction) {
+        const match = line.match(/<(\w+)>(.*?)(?:<\/\1>)?$/);
+        if (match) {
+          const [, tag, value] = match;
+          switch (tag) {
+            case 'TRNTYPE':
+              currentTransaction.type = value;
+              break;
+            case 'DTPOSTED':
+              currentTransaction.date = value;
+              break;
+            case 'TRNAMT':
+              currentTransaction.amount = value;
+              break;
+            case 'FITID':
+              currentTransaction.fitid = value;
+              break;
+            case 'NAME':
+            case 'PAYEE':
+              currentTransaction.name = value;
+              break;
+            case 'MEMO':
+              currentTransaction.memo = value;
+              break;
+          }
+        }
+      }
+    }
+
+    return { transactions };
+  }
+
+  private getTagValue(element: Element, tagName: string): string {
+    const tag = element.querySelector(tagName);
+    return tag?.textContent?.trim() || '';
+  }
+
+  private parseOFXDate(dateString: string): string {
+    // OFX dates are YYYYMMDDHHMMSS[.XXX][+/-TZ]
+    // Extract YYYYMMDD portion
+    const dateMatch = dateString.match(/^(\d{4})(\d{2})(\d{2})/);
+    if (!dateMatch) {
+      throw new ValidationError(`Invalid OFX date format: ${dateString}`, 'date');
+    }
+
+    const [, year, month, day] = dateMatch;
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return date.toISOString().split('T')[0];
+  }
+
+  private normalizeOFXTransaction(ofx: OFXTransaction): NormalizedTransaction {
+    return {
+      date: this.parseOFXDate(ofx.date),
+      amount: parseFloat(ofx.amount),
+      payee: ofx.name,
+      description: ofx.memo,
+      category: undefined,
+      status: 'pending',
+      fitid: ofx.fitid,
+    };
+  }
+}
+
+interface OFXTransaction {
+  type: string;
+  date: string;
+  amount: string;
+  fitid: string;
+  name?: string;
+  memo?: string;
+}
+
+interface OFXData {
+  transactions: OFXTransaction[];
 }
 ```
 
@@ -1141,3 +1346,177 @@ export class ImportProgressTracker {
 **Total Estimated Timeline**: 5-6 weeks
 
 This comprehensive import system transforms the budget application from manual entry-focused to supporting seamless migration from existing financial tools and bank exports, significantly lowering the barrier to adoption while maintaining data quality and user control.
+
+## Duplicate Detection Algorithm
+
+### Detection Strategy
+
+The duplicate detection system uses a multi-factor scoring algorithm to identify potential duplicate transactions with high accuracy while minimizing false positives.
+
+### Detection Criteria
+
+**Matching Window**: 3 days before and after transaction date (configurable)
+
+**Scoring Factors**:
+
+- **Amount Match (40 points)**: Exact amount match within $0.01 tolerance
+- **Date Match (30 points)**: Same transaction date
+- **Payee Match (20 points)**: Same payee ID
+- **Description Similarity (10 points)**: Levenshtein distance similarity above 80%
+
+**Duplicate Threshold**: 70+ points indicates potential duplicate
+
+### Algorithm Implementation
+
+```typescript
+interface DuplicateDetectionCriteria {
+  dateWindow: number;           // Days before/after to search (default: 3)
+  amountTolerance: number;      // Dollar amount variance (default: 0.01)
+  descriptionThreshold: number; // Similarity percentage (default: 0.8)
+  minimumScore: number;         // Minimum match score (default: 70)
+}
+
+async function detectDuplicates(
+  transaction: Transaction,
+  criteria: DuplicateDetectionCriteria = DEFAULT_CRITERIA
+): Promise<DuplicateMatch[]> {
+  // Query transactions within date window
+  const candidateTransactions = await findTransactionsInDateRange(
+    transaction.accountId,
+    subtractDays(transaction.date, criteria.dateWindow),
+    addDays(transaction.date, criteria.dateWindow)
+  );
+
+  // Score each candidate
+  const matches = candidateTransactions
+    .filter(candidate => candidate.id !== transaction.id)
+    .map(candidate => ({
+      transaction: candidate,
+      score: calculateMatchScore(transaction, candidate, criteria),
+      factors: getMatchFactors(transaction, candidate),
+    }))
+    .filter(match => match.score >= criteria.minimumScore)
+    .sort((a, b) => b.score - a.score);
+
+  return matches;
+}
+
+function calculateMatchScore(
+  transaction: Transaction,
+  candidate: Transaction,
+  criteria: DuplicateDetectionCriteria
+): number {
+  const amountMatch = Math.abs(candidate.amount - transaction.amount) <= criteria.amountTolerance;
+  const dateMatch = candidate.date === transaction.date;
+  const payeeMatch = candidate.payeeId === transaction.payeeId;
+  const descriptionSimilarity = calculateStringSimilarity(
+    candidate.notes || '',
+    transaction.notes || ''
+  );
+
+  let score = 0;
+  if (amountMatch) score += 40;
+  if (dateMatch) score += 30;
+  if (payeeMatch) score += 20;
+  if (descriptionSimilarity >= criteria.descriptionThreshold) {
+    score += Math.floor(descriptionSimilarity * 10);
+  }
+
+  return score;
+}
+
+function calculateStringSimilarity(str1: string, str2: string): number {
+  const editDistance = levenshteinDistance(str1, str2);
+  const maxLength = Math.max(str1.length, str2.length);
+  return maxLength === 0 ? 1.0 : (maxLength - editDistance) / maxLength;
+}
+```
+
+### User Workflow Integration
+
+**During Import Preview**:
+
+1. **Automatic Detection**: System scans for duplicates as preview data loads
+2. **Visual Indicators**: Duplicate rows highlighted with warning badge
+3. **Confidence Display**: Shows match score and matching factors
+4. **Comparison View**: Side-by-side comparison of matched transactions
+5. **User Decision**: Skip, merge, or import as new transaction
+
+**Duplicate Resolution Options**:
+
+- **Skip Import**: Don't import the duplicate transaction
+- **Import Anyway**: User confirms this is not actually a duplicate
+- **Merge Data**: Combine information from both transactions
+- **Update Existing**: Replace existing transaction with imported data
+
+**Batch Operations**:
+
+- **Skip All High Confidence**: Automatically skip duplicates above 90% confidence
+- **Review Medium Confidence**: Manually review duplicates between 70-90%
+- **Import All Low Matches**: Auto-import below duplicate threshold
+
+### Edge Cases and Special Handling
+
+**Transfer Transactions**:
+
+- Two-sided transactions (withdraw from one account, deposit to another)
+- Detection limited to same account to avoid flagging legitimate transfers
+- Future enhancement: Transfer matching across accounts
+
+**Recurring Transactions**:
+
+- Same amount and payee but different dates
+- Lower description weight for recurring patterns
+- Integration with schedule system to exclude expected recurrence
+
+**Split Transactions**:
+
+- Same date and payee, different amounts
+- Future enhancement: Detect partial amount matches
+- Consider transaction grouping for splits
+
+**Import Re-runs**:
+
+- FITID tracking for OFX files (Financial Institution Transaction ID)
+- Exact duplicate detection using FITID where available
+- 100% confidence match if FITID matches existing transaction
+
+### Performance Optimization
+
+**Database Indexing**:
+
+```sql
+CREATE INDEX idx_transactions_duplicate_detection
+ON "transaction" (account_id, date, amount, payee_id)
+WHERE deleted_at IS NULL;
+```
+
+**Query Optimization**:
+
+- Date range filtering before similarity calculations
+- Amount pre-filtering with indexed queries
+- Batch processing for large imports (check 50 transactions at a time)
+- Caching of existing transaction data during import session
+
+**Memory Management**:
+
+- Stream large datasets instead of loading all into memory
+- Process duplicates in chunks during import
+- Clear detection cache after import completion
+
+### Configurable Settings
+
+Users can adjust duplicate detection sensitivity:
+
+- **Strict** (90+ score): Only flag obvious duplicates
+- **Normal** (70+ score): Default balanced detection
+- **Lenient** (50+ score): Flag potential duplicates for review
+- **Custom**: User-defined scoring weights and thresholds
+
+### Future Enhancements
+
+- Machine learning to improve detection accuracy over time
+- User feedback integration (mark as "not duplicate" trains system)
+- Cross-account transfer detection and matching
+- Merchant name normalization (e.g., "Amazon.com" vs "AMZN Marketplace")
+- Historical pattern analysis for context-aware detection
