@@ -11,7 +11,7 @@ import {PayeesState} from '$lib/states/entities/payees.svelte';
 import type {Payee} from '$lib/schema/payees';
 import ManagePayeeForm from '$lib/components/forms/manage-payee-form.svelte';
 import {currencyFormatter} from '$lib/utils/formatters';
-import {formatDateDisplay} from '$lib/utils/dates';
+import {formatDateDisplay, parseISOString} from '$lib/utils/dates';
 
 // Icons
 import Check from '@lucide/svelte/icons/check';
@@ -106,9 +106,7 @@ async function performAdvancedSearch(query: string) {
     const results = await trpc().payeeRoutes.searchAdvanced.query({
       query,
       isActive: true,
-      payeeTypes: undefined,
-      hasTransactions: undefined,
-      limit: 20
+      payeeType: undefined
     });
 
     searchResults = results as Payee[];
@@ -403,7 +401,10 @@ $effect(() => {
                           <span>{payeeStats[payee.id].transactionCount} transactions</span>
                         {/if}
                         {#if payee.lastTransactionDate}
-                          <span>Last: {formatDateDisplay(payee.lastTransactionDate, 'short')}</span>
+                          {@const parsedDate = parseISOString(payee.lastTransactionDate)}
+                          {#if parsedDate}
+                            <span>Last: {formatDateDisplay(parsedDate, 'short')}</span>
+                          {/if}
                         {/if}
                       </div>
                     </div>

@@ -17,6 +17,7 @@ let {
   searchTransactions,
   onScheduleClick,
   budgetCount = 0,
+  onBulkDelete,
 }: {
   isLoading: boolean;
   transactions: any[];
@@ -30,6 +31,7 @@ let {
   searchTransactions?: (query: string) => void;
   onScheduleClick?: (transaction: any) => void;
   budgetCount?: number;
+  onBulkDelete?: (transactions: any[]) => void;
 } = $props();
 </script>
 
@@ -43,6 +45,7 @@ let {
     transactions={formattedTransactions}
     {views}
     {budgetCount}
+    {onBulkDelete}
     bind:table />
 {:else}
   <!-- Fallback loading state: Show skeleton if states aren't ready -->

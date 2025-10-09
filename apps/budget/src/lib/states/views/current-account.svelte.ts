@@ -94,11 +94,18 @@ export class CurrentAccountState {
   };
 
   async deleteTransactions(transactions: number[], cb?: (id: Transaction[]) => void) {
+    // Filter out any non-numeric IDs (scheduled transactions with string IDs)
+    const numericIds = transactions.filter((id) => typeof id === 'number');
+
+    if (numericIds.length === 0) {
+      return; // No valid transactions to delete
+    }
+
     await trpc().transactionRoutes.bulkDelete.mutate({
-      ids: transactions,
+      ids: numericIds,
     });
     const [kept, removed] = without(this.transactions ?? [], (transaction: Transaction) =>
-      transactions.includes(transaction.id)
+      numericIds.includes(transaction.id)
     );
     this.account.transactions = kept;
     this.account.balance =

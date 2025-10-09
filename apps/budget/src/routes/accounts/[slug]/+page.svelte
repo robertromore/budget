@@ -1,8 +1,10 @@
 <script lang="ts">
 import Plus from '@lucide/svelte/icons/plus';
 import Edit from '@lucide/svelte/icons/edit';
-import {Button} from '$lib/components/ui/button';
+import Upload from '@lucide/svelte/icons/upload';
+import {Button, buttonVariants} from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import {parseDate} from '@internationalized/date';
 import type {Table as TanStackTable} from '@tanstack/table-core';
 import {CategoriesState, PayeesState} from '$lib/states/entities';
@@ -15,7 +17,6 @@ import {AddTransactionDialog, TransactionTableContainer} from './(components)';
 import {columns} from './(data)/columns.svelte';
 import {rpc} from '$lib/query';
 import {useQueryClient} from '@tanstack/svelte-query';
-import DeleteTransactionDialog from './(dialogs)/delete-transaction-dialog.svelte';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
 
@@ -52,6 +53,7 @@ const budgetCountQuery = $derived(rpc.budgets.getBudgetCount().options());
 // Create the mutations once
 const updateTransactionMutation = rpc.transactions.updateTransactionWithBalance.options();
 const saveTransactionMutation = rpc.transactions.saveTransaction.options();
+const bulkDeleteTransactionsMutation = rpc.transactions.bulkDeleteTransactions.options();
 const queryClient = useQueryClient();
 
 // Derived state from TanStack Query with proper reactivity
@@ -84,7 +86,8 @@ const payees = $derived(payeesState?.all || []);
 // Dialog state
 let addTransactionDialogOpen = $state(false);
 let bulkDeleteDialogOpen = $state(false);
-let selectedTransactionIds = $state<number[]>([]);
+let transactionsToDelete = $state<TransactionsFormat[]>([]);
+let isDeletingBulk = $state(false);
 
 // Schedule preview state
 let schedulePreviewOpen = $state(false);
@@ -247,6 +250,38 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
   }
 };
 
+// Bulk delete transactions
+const handleBulkDelete = async (transactions: TransactionsFormat[]) => {
+  if (transactions.length === 0) return;
+
+  transactionsToDelete = transactions;
+  bulkDeleteDialogOpen = true;
+};
+
+const confirmBulkDelete = async () => {
+  if (isDeletingBulk || transactionsToDelete.length === 0) return;
+
+  isDeletingBulk = true;
+  try {
+    // Filter to only numeric IDs (exclude scheduled transactions with string IDs)
+    const idsToDelete = transactionsToDelete
+      .filter(t => typeof t.id === 'number')
+      .map(t => t.id as number);
+
+    if (idsToDelete.length > 0) {
+      // Delete all transactions in a single batch request
+      await bulkDeleteTransactionsMutation.mutateAsync(idsToDelete);
+    }
+
+    bulkDeleteDialogOpen = false;
+    transactionsToDelete = [];
+  } catch (error) {
+    console.error('Failed to delete transactions:', error);
+  } finally {
+    isDeletingBulk = false;
+  }
+};
+
 // Track account changes
 let previousAccountId = $state<string | undefined>();
 
@@ -277,36 +312,18 @@ $effect(() => {
       </div>
     </div>
 
-    <!-- Add Transaction Button & Bulk Actions (only show if account exists) -->
+    <!-- Add Transaction Button (only show if account exists) -->
     {#if !isAccountNotFound}
     <div class="flex items-center space-x-2">
-      <!-- Bulk Actions (shown when transactions are selected) -->
-      {#if table && Object.keys(table.getSelectedRowModel().rowsById).length > 0}
-        <div
-          class="mr-4 flex items-center space-x-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-1">
-          <span class="text-sm text-blue-700">
-            {Object.keys(table.getSelectedRowModel().rowsById).length} selected
-          </span>
-          <Button
-            size="sm"
-            variant="destructive"
-            onclick={() => {
-              if (!table) return;
-              const selectedRows = Object.keys(table.getSelectedRowModel().rowsById);
-              selectedTransactionIds = selectedRows.map((id) => parseInt(id));
-              bulkDeleteDialogOpen = true;
-            }}>
-            Delete Selected
-          </Button>
-          <Button size="sm" variant="outline" onclick={() => table?.resetRowSelection()}>
-            Clear Selection
-          </Button>
-        </div>
-      {/if}
 
       <Button variant="outline" href="/accounts/{accountSlug}/edit">
         <Edit class="mr-2 h-4 w-4" />
         Edit
+      </Button>
+
+      <Button variant="outline" href="/import?accountId={accountId}">
+        <Upload class="mr-2 h-4 w-4" />
+        Import
       </Button>
 
       <Button onclick={() => (addTransactionDialogOpen = true)}>
@@ -386,6 +403,7 @@ $effect(() => {
         {searchTransactions}
         {budgetCount}
         onScheduleClick={handleScheduleClick}
+        onBulkDelete={handleBulkDelete}
         bind:table />
 
       <!-- Add Transaction Dialog -->
@@ -413,14 +431,26 @@ $effect(() => {
     </Tabs.Content>
   </Tabs.Root>
 
-  <!-- Bulk Delete Dialog -->
-  <DeleteTransactionDialog
-    transactions={selectedTransactionIds}
-    bind:dialogOpen={bulkDeleteDialogOpen}
-    onDelete={() => {
-      table?.resetRowSelection();
-      // TanStack Query will automatically refetch after mutations
-    }} />
+  <!-- Bulk Delete Confirmation Dialog -->
+  <AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
+    <AlertDialog.Content>
+      <AlertDialog.Header>
+        <AlertDialog.Title>Delete {transactionsToDelete.length} Transaction{transactionsToDelete.length > 1 ? 's' : ''}</AlertDialog.Title>
+        <AlertDialog.Description>
+          Are you sure you want to delete {transactionsToDelete.length} transaction{transactionsToDelete.length > 1 ? 's' : ''}? This action cannot be undone.
+        </AlertDialog.Description>
+      </AlertDialog.Header>
+      <AlertDialog.Footer>
+        <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+        <AlertDialog.Action
+          onclick={confirmBulkDelete}
+          disabled={isDeletingBulk}
+          class={buttonVariants({variant: 'destructive'})}>
+          {isDeletingBulk ? 'Deleting...' : 'Delete'}
+        </AlertDialog.Action>
+      </AlertDialog.Footer>
+    </AlertDialog.Content>
+  </AlertDialog.Root>
 
   <!-- Schedule Preview Sheet -->
   <SchedulePreviewSheet

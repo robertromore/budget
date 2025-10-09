@@ -1,5 +1,5 @@
 import {defineQuery, defineMutation, createQueryKeys} from "./_factory";
-import {queryPresets, queryClient} from "./_client";
+import {queryPresets, queryClient, cachePatterns} from "./_client";
 import {trpc} from "$lib/trpc/client";
 import type {Payee, PayeeType, PaymentFrequency} from "$lib/schema/payees";
 import type {
@@ -14,6 +14,7 @@ import type {
 export const payeeKeys = createQueryKeys("payees", {
   lists: () => ["payees", "list"] as const,
   list: () => ["payees", "list"] as const,
+  listWithStats: () => ["payees", "list", "stats"] as const,
   details: () => ["payees", "detail"] as const,
   detail: (id: number) => ["payees", "detail", id] as const,
   analytics: () => ["payees", "analytics"] as const,
@@ -33,6 +34,18 @@ export const listPayees = () =>
     queryFn: async () => {
       const result = await trpc().payeeRoutes.all.query();
       return result as Payee[];
+    },
+    options: {
+      ...queryPresets.static,
+    },
+  });
+
+export const listPayeesWithStats = () =>
+  defineQuery<any[]>({
+    queryKey: payeeKeys.listWithStats(),
+    queryFn: async () => {
+      const result = await trpc().payeeRoutes.allWithStats.query();
+      return result as any[];
     },
     options: {
       ...queryPresets.static,
@@ -351,6 +364,15 @@ export const deletePayee = () =>
       ]);
     },
   });
+
+export const bulkDeletePayees = defineMutation<number[], {deletedCount: number; errors: any[]}>({
+  mutationFn: (entities) => trpc().payeeRoutes.delete.mutate({entities}),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(payeeKeys.all());
+  },
+  successMessage: "Payees deleted",
+  errorMessage: "Failed to delete payees",
+});
 
 export const applyIntelligentDefaults = () =>
   defineMutation({

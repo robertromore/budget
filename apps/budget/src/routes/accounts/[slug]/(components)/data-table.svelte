@@ -15,6 +15,7 @@ import {createSvelteTable, FlexRender} from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
 import type {TransactionsFormat} from '$lib/types';
 import {DataTablePagination, DataTableToolbar} from '.';
+import TransactionBulkActions from './transaction-bulk-actions.svelte';
 import {filtering, filters, setFiltering, setGlobalFilter} from '../(data)/filters.svelte';
 import {pagination, setPagination} from '../(data)/pagination.svelte';
 import {selection, setSelection} from '../(data)/selection.svelte';
@@ -41,9 +42,10 @@ interface Props {
   serverPagination?: { page: number; pageSize: number; totalCount?: number; totalPages?: number; };
   updatePagination?: (pageIndex: number, pageSize: number) => void;
   budgetCount?: number;
+  onBulkDelete?: (transactions: TransactionsFormat[]) => void;
 }
 
-let {columns, transactions, views, table = $bindable(), serverPagination, updatePagination, budgetCount = 0}: Props = $props();
+let {columns, transactions, views, table = $bindable(), serverPagination, updatePagination, budgetCount = 0, onBulkDelete}: Props = $props();
 
 // Generate date filters from actual transaction dates (excluding future scheduled transactions)
 const generateDateFilters = (transactions: TransactionsFormat[]): FacetedFilterOption[] => {
@@ -302,6 +304,12 @@ $effect(() => {
 
 <div class="space-y-4">
   <DataTableToolbar {table} />
+
+  <!-- Bulk Actions -->
+  {#if onBulkDelete}
+    <TransactionBulkActions {table} allTransactions={transactions || []} {onBulkDelete} />
+  {/if}
+
   <div class="w-full rounded-md border">
     <Table.Root>
       <Table.Header>

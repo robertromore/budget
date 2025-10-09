@@ -82,14 +82,26 @@ export const columns = (
   return [
     {
       id: "select-col",
-      header: ({table}) =>
-        renderComponent(Checkbox, {
-          checked: table.getIsAllPageRowsSelected(),
-          indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
-          onCheckedChange: (value) => table.toggleAllPageRowsSelected(!!value),
+      header: ({table}) => {
+        const allPageRowsSelected = table.getIsAllPageRowsSelected();
+        const somePageRowsSelected = table.getIsSomePageRowsSelected();
+
+        return renderComponent(Checkbox, {
+          checked: allPageRowsSelected,
+          indeterminate: somePageRowsSelected && !allPageRowsSelected,
+          onCheckedChange: (value) => {
+            if (value) {
+              // Select all on current page
+              table.toggleAllPageRowsSelected(true);
+            } else {
+              // Deselect all (both page and all rows)
+              table.toggleAllRowsSelected(false);
+            }
+          },
           controlledChecked: true,
-          "aria-label": "Select all",
-        }),
+          "aria-label": "Select all on page",
+        });
+      },
       cell: ({row}) => {
         const transaction = row.original;
         const isScheduled = transaction.status === "scheduled";

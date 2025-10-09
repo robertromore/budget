@@ -23,6 +23,17 @@ export const categoriesRoutes = t.router({
     }
   }),
 
+  allWithStats: publicProcedure.query(async () => {
+    try {
+      return await categoryService.getAllCategoriesWithStats();
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error instanceof Error ? error.message : "Failed to fetch categories with stats",
+      });
+    }
+  }),
+
   load: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
     try {
       return await categoryService.getCategoryById(input.id);
