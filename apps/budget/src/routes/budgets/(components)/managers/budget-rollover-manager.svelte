@@ -100,6 +100,18 @@
       rolloverConfig.deficitRecoveryMode = saved.deficitRecoveryMode ?? rolloverConfig.deficitRecoveryMode;
       rolloverConfig.autoTransition = saved.autoTransition ?? rolloverConfig.autoTransition;
       rolloverConfig.notificationEnabled = saved.notificationEnabled ?? rolloverConfig.notificationEnabled;
+
+      // Sync UI state with loaded config
+      rolloverLimit = rolloverConfig.rolloverLimitMonths === 999 ? 'unlimited' : String(rolloverConfig.rolloverLimitMonths);
+    }
+  });
+
+  // Sync rolloverLimit changes back to config
+  $effect(() => {
+    if (rolloverLimit === 'unlimited') {
+      rolloverConfig.rolloverLimitMonths = 999; // Use 999 as unlimited marker
+    } else {
+      rolloverConfig.rolloverLimitMonths = parseInt(rolloverLimit) || 6;
     }
   });
 
