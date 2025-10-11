@@ -14,6 +14,7 @@ export {default as EnvelopeAllocationCard} from "./envelope-allocation-card.svel
 export {default as EnvelopeCreateDialog} from "./envelope-create-dialog.svelte";
 export {default as EnvelopeCreateSheet} from "./envelope-create-sheet.svelte";
 export {default as EnvelopeSettingsSheet} from "./envelope-settings-sheet.svelte";
+export {default as EnvelopeDeficitRecoveryDialog} from "./envelope-deficit-recovery-dialog.svelte";
 export {default as EnvelopeDragDropManager} from "./envelope-drag-drop-manager.svelte";
 export {default as FundAllocationPanel} from "./fund-allocation-panel.svelte";
 export {default as BudgetProgressCharts} from "./budget-progress-charts.svelte";
