@@ -18,6 +18,7 @@ export {default as EnvelopeDeficitRecoveryDialog} from "./envelope-deficit-recov
 export {default as EnvelopeDragDropManager} from "./envelope-drag-drop-manager.svelte";
 export {default as FundAllocationPanel} from "./fund-allocation-panel.svelte";
 export {default as BudgetProgressCharts} from "./budget-progress-charts.svelte";
+export {default as RolloverNotificationCard} from "./rollover-notification-card.svelte";
 
 // Note: Route-specific components have been moved to:
 // - /routes/budgets/(components)/analytics/
