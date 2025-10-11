@@ -450,6 +450,26 @@ export const budgetRoutes = t.router({
       }
     }),
 
+  updateEnvelopeSettings: publicProcedure
+    .input(z.object({
+      envelopeId: z.number().int().positive(),
+      rolloverMode: z.enum(['unlimited', 'limited', 'reset']).optional(),
+      metadata: z.record(z.unknown()).optional(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await budgetService.updateEnvelopeSettings(
+          input.envelopeId,
+          {
+            rolloverMode: input.rolloverMode,
+            metadata: input.metadata,
+          }
+        );
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
   transferEnvelopeFunds: publicProcedure
     .input(z.object({
       fromEnvelopeId: z.number().int().positive(),

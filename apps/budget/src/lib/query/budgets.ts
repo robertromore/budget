@@ -318,6 +318,23 @@ export const updateEnvelopeAllocation = defineMutation<
   errorMessage: "Failed to update envelope allocation",
 });
 
+export const updateEnvelopeSettings = defineMutation<
+  {
+    envelopeId: number;
+    rolloverMode?: 'unlimited' | 'limited' | 'reset';
+    metadata?: Record<string, unknown>;
+  },
+  any
+>({
+  mutationFn: (input) => trpc().budgetRoutes.updateEnvelopeSettings.mutate(input),
+  onSuccess: () => {
+    // Invalidate all envelope data
+    cachePatterns.invalidatePrefix([...budgetKeys.all(), "envelopes"]);
+  },
+  successMessage: "Envelope settings updated successfully",
+  errorMessage: "Failed to update envelope settings",
+});
+
 export const transferEnvelopeFunds = defineMutation<
   {fromEnvelopeId: number; toEnvelopeId: number; amount: number; reason?: string; transferredBy?: string},
   any
