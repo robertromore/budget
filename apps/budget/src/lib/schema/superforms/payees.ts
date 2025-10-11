@@ -23,7 +23,7 @@ const paymentFrequencies = [
 // Superform-compatible schemas for payees (not using drizzle-zod)
 export const superformInsertPayeeSchema = z.object({
   id: z.number().optional(),
-  slug: z.string().optional(),
+  slug: z.string().nullish(),
   name: z
     .string()
     .transform((val) => val?.trim())

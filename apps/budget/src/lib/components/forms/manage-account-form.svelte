@@ -7,6 +7,8 @@ import {superformInsertAccountSchema} from '$lib/schema/superforms';
 import {Textarea} from '$lib/components/ui/textarea';
 import {page} from '$app/state';
 import {Input} from '$lib/components/ui/input';
+import {Label} from '$lib/components/ui/label';
+import {Switch} from '$lib/components/ui/switch';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import {useEntityForm} from '$lib/hooks/forms/use-entity-form';
 import { WizardFormWrapper } from '$lib/components/wizard';
@@ -18,12 +20,13 @@ import NumericInput from '$lib/components/input/numeric-input.svelte';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Palette from '@lucide/svelte/icons/palette';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Wallet from '@lucide/svelte/icons/wallet';
 
 let {
   accountId,
   onSave,
   formId,
-  mode: initialMode = 'manual',
+  mode: initialMode = 'wizard',
 }: {
   accountId?: number;
   onDelete?: (id: number) => void;
@@ -95,6 +98,13 @@ const {form: formData, enhance} = entityForm;
 
 // Initialize form data for existing account
 const initialData: Partial<Account> = {};
+
+// Ensure default values for new accounts
+if (!accountId || accountId === 0) {
+  $formData.onBudget = true;
+  $formData.accountColor = $formData.accountColor || '#3b82f6'; // Default blue color
+}
+
 if (accountId && accountId > 0) {
   const account = accounts.getById(accountId);
   if (account) {
@@ -107,6 +117,7 @@ if (accountId && accountId > 0) {
     $formData.accountColor = account.accountColor || '';
     $formData.initialBalance = account.initialBalance || 0.0;
     $formData.accountNumberLast4 = String((account as any).accountNumberLast4 || '');
+    $formData.onBudget = account.onBudget ?? true;
 
     // Set initial data for wizard
     initialData.id = accountId;
@@ -118,6 +129,7 @@ if (accountId && accountId > 0) {
     initialData.accountColor = account.accountColor;
     initialData.initialBalance = account.initialBalance;
     initialData.accountNumberLast4 = String((account as any).accountNumberLast4 || '');
+    initialData.onBudget = account.onBudget ?? true;
   }
 }
 
@@ -132,6 +144,7 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
   $formData.accountColor = wizardFormData['accountColor'] || '#3B82F6'; // Default blue color
   $formData.initialBalance = wizardFormData['initialBalance'] || 0.0;
   $formData.accountNumberLast4 = wizardFormData['accountNumberLast4'] || '';
+  $formData.onBudget = wizardFormData['onBudget'] ?? true;
 
   // Wait a tick to ensure reactive updates complete
   await new Promise(resolve => setTimeout(resolve, 0));
@@ -148,6 +161,7 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
     const accountColorInput = form.querySelector('input[name="accountColor"]') as HTMLInputElement;
     const initialBalanceInput = form.querySelector('input[name="initialBalance"]') as HTMLInputElement;
     const accountNumberLast4Input = form.querySelector('input[name="accountNumberLast4"]') as HTMLInputElement;
+    const onBudgetInput = form.querySelector('input[name="onBudget"]') as HTMLInputElement;
 
     if (nameInput) nameInput.value = $formData.name;
     if (notesInput) notesInput.value = $formData.notes;
@@ -157,6 +171,7 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
     if (accountColorInput) accountColorInput.value = $formData.accountColor;
     if (initialBalanceInput) initialBalanceInput.value = String($formData.initialBalance);
     if (accountNumberLast4Input) accountNumberLast4Input.value = $formData.accountNumberLast4;
+    if (onBudgetInput) onBudgetInput.value = String($formData.onBudget);
 
     form.requestSubmit();
   }
@@ -292,7 +307,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
   subtitle={isUpdate ? "Update your account details" : "Add a new account to track your finances"}
   wizardStore={accountWizardStore}
   onComplete={handleWizardComplete}
-  defaultMode="manual"
+  defaultMode="wizard"
   showWizardActions={true}
   showWizardPrevious={true}
   currentFormData={{
@@ -303,7 +318,8 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
     accountIcon: $formData.accountIcon,
     accountColor: $formData.accountColor,
     initialBalance: $formData.initialBalance,
-    accountNumberLast4: $formData.accountNumberLast4
+    accountNumberLast4: $formData.accountNumberLast4,
+    onBudget: $formData.onBudget
   }}
   bind:currentMode={mode}
 >
@@ -316,6 +332,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <input hidden value={$formData.accountColor} name="accountColor" />
       <input hidden value={$formData.initialBalance} name="initialBalance" />
       <input hidden value={$formData.accountNumberLast4} name="accountNumberLast4" />
+      <input hidden value={$formData.onBudget} name="onBudget" />
 
       <!-- Basic Information Section -->
       <Card.Root>
@@ -469,6 +486,36 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
         </Card.Root>
       {/if}
 
+      <!-- Budget Settings -->
+      <Card.Root>
+        <Card.Header class="pb-4">
+          <div class="flex items-center gap-2">
+            <Wallet class="h-5 w-5 text-primary" />
+            <Card.Title class="text-lg">Budget Inclusion</Card.Title>
+          </div>
+          <Card.Description>
+            Control whether this account is included in budget calculations. Off-budget accounts are tracked for net worth only.
+          </Card.Description>
+        </Card.Header>
+        <Card.Content>
+          <div class="flex items-center space-x-3">
+            <Switch bind:checked={$formData.onBudget} />
+            <div class="flex-1">
+              <Label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Include in budget calculations
+              </Label>
+              <p class="text-sm text-muted-foreground mt-1">
+                {#if $formData.onBudget}
+                  This account will be included in your budget totals and spending reports.
+                {:else}
+                  This account will only be tracked for net worth (e.g., investments, loans).
+                {/if}
+              </p>
+            </div>
+          </div>
+        </Card.Content>
+      </Card.Root>
+
       <!-- Notes Section -->
       <Card.Root>
         <Card.Header class="pb-4">
@@ -516,6 +563,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <input hidden value={$formData.accountColor} name="accountColor" />
       <input hidden value={$formData.initialBalance} name="initialBalance" />
       <input hidden value={$formData.accountNumberLast4} name="accountNumberLast4" />
+      <input hidden value={$formData.onBudget} name="onBudget" />
     </form>
   {/snippet}
 </WizardFormWrapper>

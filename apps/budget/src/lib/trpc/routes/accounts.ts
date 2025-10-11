@@ -9,23 +9,14 @@ import {
 import {z} from "zod";
 import {getCurrentTimestamp} from "$lib/utils/dates";
 import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {eq, desc, isNull} from "drizzle-orm";
-import {getCurrentTimestamp} from "$lib/utils/dates";
+import {eq, desc, isNull, and, sql} from "drizzle-orm";
 import slugify from "@sindresorhus/slugify";
-import {getCurrentTimestamp} from "$lib/utils/dates";
 import {TRPCError} from "@trpc/server";
-import {getCurrentTimestamp} from "$lib/utils/dates";
 import {now, getLocalTimeZone} from "@internationalized/date";
-import {getCurrentTimestamp} from "$lib/utils/dates";
 import {generateUniqueSlug} from "$lib/utils/slug-utils";
-import {getCurrentTimestamp} from "$lib/utils/dates";
 import {isValidIconName} from "$lib/utils/icon-validation";
-import {getCurrentTimestamp} from "$lib/utils/dates";
 import validator from "validator";
-import {getCurrentTimestamp} from "$lib/utils/dates";
 import {AccountService} from "$lib/server/domains/accounts/services";
-import {getCurrentTimestamp} from "$lib/utils/dates";
 
 // Custom schema for account save operation (handles both create and update)
 const accountSaveSchema = z
@@ -307,7 +298,19 @@ export const accountRoutes = t.router({
           message: "Failed to update account",
         });
       }
-      return result[0];
+
+      // Calculate balance from transactions
+      const [balanceResult] = await ctx.db
+        .select({
+          balance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
+        })
+        .from(transactions)
+        .where(and(eq(transactions.accountId, input.id!), isNull(transactions.deletedAt)));
+
+      return {
+        ...result[0],
+        balance: balanceResult?.balance || 0,
+      };
     }
 
     // For new accounts, name is required (validated by schema)

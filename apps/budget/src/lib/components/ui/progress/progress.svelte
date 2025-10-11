@@ -2,10 +2,10 @@
   import {cn} from "$lib/utils";
   import type {HTMLAttributes} from "svelte/elements";
 
-  interface Props extends HTMLAttributes<HTMLDivElement> {
-    value?: number;
-    max?: number;
-    getValueLabel?: (value: number, max: number) => string;
+  export interface Props extends HTMLAttributes<HTMLDivElement> {
+    value?: number | undefined;
+    max?: number | undefined;
+    getValueLabel?: ((value: number, max: number) => string) | undefined;
   }
 
   let {

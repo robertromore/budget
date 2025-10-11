@@ -19,9 +19,9 @@ interface PayeeSearchState {
  */
 class PayeeSearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState('payee-search-view-mode', 'list' as const);
-  private sortByState = createLocalStorageState('payee-search-sort-by', 'name' as const);
-  private sortOrderState = createLocalStorageState('payee-search-sort-order', 'asc' as const);
+  private viewModeState = createLocalStorageState<'grid' | 'list'>('payee-search-view-mode', 'list');
+  private sortByState = createLocalStorageState<'name' | 'lastTransaction' | 'avgAmount' | 'created'>('payee-search-sort-by', 'name');
+  private sortOrderState = createLocalStorageState<'asc' | 'desc'>('payee-search-sort-order', 'asc');
 
   // Reactive state
   query = $state('');
@@ -42,21 +42,19 @@ class PayeeSearchStateManager {
   set sortOrder(value: 'asc' | 'desc') { this.sortOrderState.value = value; }
 
   // Computed properties
-  hasActiveFilters = $derived(() => {
+  hasActiveFilters = $derived.by(() => {
     return Object.keys(this.filters).length > 0;
   });
 
-  hasSearchTerm = $derived(() => {
+  hasSearchTerm = $derived.by(() => {
     return this.query.trim().length > 0;
   });
 
-  isSearchActive = $derived(() => {
-    return this.hasSearchTerm() || this.hasActiveFilters();
+  isSearchActive = $derived.by(() => {
+    return this.hasSearchTerm || this.hasActiveFilters;
   });
 
-  displayedResultsCount = $derived(() => {
-    return this.results.length;
-  });
+  displayedResultsCount = $derived(this.results.length);
 
   // Methods
   updateQuery(newQuery: string) {

@@ -13,6 +13,7 @@ import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Edit from '@lucide/svelte/icons/edit';
 import Trash from '@lucide/svelte/icons/trash';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
+import Sparkles from '@lucide/svelte/icons/sparkles';
 
 // Get existing schedules state from layout context
 const schedulesState = SchedulesState.get();
@@ -87,10 +88,16 @@ function cancelDelete() {
       <h1 class="text-3xl font-bold tracking-tight">Schedules</h1>
       <p class="text-muted-foreground">Manage your recurring and scheduled transactions</p>
     </div>
-    <Button href="/schedules/new">
-      <DollarSign class="h-4 w-4 mr-2" />
-      Add Schedule
-    </Button>
+    <div class="flex gap-2">
+      <Button variant="outline" href="/patterns">
+        <Sparkles class="h-4 w-4 mr-2" />
+        Patterns
+      </Button>
+      <Button href="/schedules/new">
+        <DollarSign class="h-4 w-4 mr-2" />
+        Add Schedule
+      </Button>
+    </div>
   </div>
 
   {#if !schedules || schedules.length === 0}

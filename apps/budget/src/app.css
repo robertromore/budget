@@ -51,6 +51,14 @@
   --account-loan: oklch(0.577 0.245 27.325);
   --account-cash: oklch(0.556 0 0);
 
+  /* Budget status colors */
+  --budget-success: oklch(0.696 0.17 162.48);
+  --budget-success-foreground: oklch(0.985 0 0);
+  --budget-warning: oklch(0.828 0.189 84.429);
+  --budget-warning-foreground: oklch(0.145 0 0);
+  --budget-danger: var(--destructive);
+  --budget-danger-foreground: oklch(0.985 0 0);
+
   /* LayerChart CSS variables for Labels and other components */
   --surface-100: oklch(1 0 0);
   --surface-200: oklch(0.959 0.005 240);
@@ -99,6 +107,14 @@
   --account-investment: oklch(0.828 0.189 84.429);
   --account-loan: oklch(0.704 0.191 22.216);
   --account-cash: oklch(0.708 0 0);
+
+  /* Budget status colors */
+  --budget-success: oklch(0.696 0.17 162.48);
+  --budget-success-foreground: oklch(0.145 0 0);
+  --budget-warning: oklch(0.828 0.189 84.429);
+  --budget-warning-foreground: oklch(0.145 0 0);
+  --budget-danger: var(--destructive);
+  --budget-danger-foreground: oklch(0.985 0 0);
 }
 
 @theme inline {

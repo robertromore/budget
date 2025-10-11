@@ -45,6 +45,13 @@ export const accounts = sqliteTable(
     accountColor: text("account_color"), // Hex color code
     initialBalance: real("initial_balance").default(0.0), // Starting balance
     accountNumberLast4: text("account_number_last4"), // Last 4 digits for reference
+    onBudget: integer("on_budget", {mode: "boolean"}).default(true).notNull(), // Include in budget calculations
+
+    // Debt account-specific fields (credit cards & loans)
+    debtLimit: real("debt_limit"), // Credit limit (credit cards) or principal amount (loans)
+    minimumPayment: real("minimum_payment"), // Minimum monthly payment
+    paymentDueDay: integer("payment_due_day"), // Day of month payment is due (1-31)
+    interestRate: real("interest_rate"), // APR for credit cards or loan interest rate
 
     dateOpened: text("date_opened")
       .notNull()
@@ -63,6 +70,7 @@ export const accounts = sqliteTable(
     index("account_name_idx").on(table.name),
     index("account_slug_idx").on(table.slug),
     index("account_closed_idx").on(table.closed),
+    index("account_on_budget_idx").on(table.onBudget),
     index("account_deleted_at_idx").on(table.deletedAt),
   ]
 );
@@ -88,15 +96,16 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       ),
   slug: (schema) =>
     schema
-      .transform((val) => val?.trim()?.toLowerCase()) // Trim and lowercase
-      .pipe(
-        z
-          .string()
-          .min(2, "Slug must be at least 2 characters")
-          .max(30, "Slug must be less than 30 characters")
-          .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens")
+      .optional()
+      .transform((val) => val?.trim()?.toLowerCase() || undefined)
+      .refine(
+        (val) => val === undefined || (val.length >= 2 && val.length <= 30),
+        "Slug must be between 2 and 30 characters"
       )
-      .optional(),
+      .refine(
+        (val) => val === undefined || /^[a-z0-9-]+$/.test(val),
+        "Slug must contain only lowercase letters, numbers, and hyphens"
+      ),
   notes: (schema) =>
     schema
       .transform((val) => val?.trim()) // Trim notes too
@@ -134,6 +143,8 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .pipe(z.string().regex(/^\d{4}$/, "Account number must be exactly 4 digits"))
       .optional()
       .nullable(),
+  onBudget: (schema) =>
+    schema.pipe(z.boolean()).default(true),
 });
 
 // Schema for updates (all fields optional, but with validation when provided)
@@ -195,6 +206,7 @@ export const formUpdateAccountSchema = z.object({
     .pipe(z.string().regex(/^\d{4}$/, "Account number must be exactly 4 digits"))
     .optional()
     .nullable(),
+  onBudget: z.boolean().optional(),
 });
 
 // Combined schema that handles both create and update
@@ -215,3 +227,12 @@ export type NewAccount = typeof accounts.$inferInsert;
 export type InsertAccountSchema = typeof insertAccountSchema;
 export type FormInsertAccountSchema = typeof formInsertAccountSchema;
 export type RemoveAccountSchema = typeof removeAccountSchema;
+
+// Helper functions for account classification
+export function isDebtAccount(accountType: AccountType): boolean {
+  return accountType === 'credit_card' || accountType === 'loan';
+}
+
+export function getAccountNature(accountType: AccountType): 'asset' | 'liability' {
+  return isDebtAccount(accountType) ? 'liability' : 'asset';
+}

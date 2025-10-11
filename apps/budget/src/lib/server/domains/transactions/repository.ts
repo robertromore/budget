@@ -4,6 +4,7 @@ import {transactions, accounts, categories, payees} from "$lib/schema";
 import {eq, and, isNull, desc, asc, like, between, sql, inArray} from "drizzle-orm";
 import type {Transaction, NewTransaction} from "$lib/schema/transactions";
 import {NotFoundError} from "$lib/server/shared/types/errors";
+import {isDebtAccount} from "$lib/schema/accounts";
 
 export interface TransactionFilters {
   accountId?: number | undefined;
@@ -239,6 +240,21 @@ export class TransactionRepository {
    * Get account balance from transactions
    */
   async getAccountBalance(accountId: number): Promise<number> {
+    // Get account to check type and initial balance
+    const [account] = await db
+      .select({
+        accountType: accounts.accountType,
+        initialBalance: accounts.initialBalance,
+      })
+      .from(accounts)
+      .where(eq(accounts.id, accountId))
+      .limit(1);
+
+    if (!account) {
+      return 0;
+    }
+
+    // Calculate transaction sum
     const result = await db
       .select({
         balance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
@@ -252,13 +268,36 @@ export class TransactionRepository {
         )
       );
 
-    return Number(result[0]?.balance ?? 0);
+    const transactionSum = Number(result[0]?.balance ?? 0);
+    const initialBalance = Number(account.initialBalance ?? 0);
+
+    // For debt accounts, invert the polarity
+    if (isDebtAccount(account.accountType)) {
+      // Start with negative initial balance (debt), then subtract transaction amounts
+      return -(initialBalance) - transactionSum;
+    }
+
+    // For asset accounts, normal calculation
+    return initialBalance + transactionSum;
   }
 
   /**
    * Get pending balance for an account
    */
   async getPendingBalance(accountId: number): Promise<number> {
+    // Get account to check type
+    const [account] = await db
+      .select({
+        accountType: accounts.accountType,
+      })
+      .from(accounts)
+      .where(eq(accounts.id, accountId))
+      .limit(1);
+
+    if (!account) {
+      return 0;
+    }
+
     const result = await db
       .select({
         balance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
@@ -272,7 +311,14 @@ export class TransactionRepository {
         )
       );
 
-    return Number(result[0]?.balance ?? 0);
+    const pendingSum = Number(result[0]?.balance ?? 0);
+
+    // For debt accounts, invert the polarity
+    if (isDebtAccount(account.accountType)) {
+      return -pendingSum;
+    }
+
+    return pendingSum;
   }
 
   /**
@@ -339,6 +385,16 @@ export class TransactionRepository {
     accountId: number,
     limit?: number
   ): Promise<Array<Transaction & {balance: number}>> {
+    // Get account to check type and initial balance
+    const [account] = await db
+      .select({
+        accountType: accounts.accountType,
+        initialBalance: accounts.initialBalance,
+      })
+      .from(accounts)
+      .where(eq(accounts.id, accountId))
+      .limit(1);
+
     const transactionList = await db.query.transactions.findMany({
       where: and(
         eq(transactions.accountId, accountId),
@@ -358,10 +414,17 @@ export class TransactionRepository {
     });
 
     // Calculate running balance including ALL transaction statuses (cleared, pending, scheduled)
-    // This matches the behavior in accounts.ts and provides users with comprehensive balance view
-    let runningBalance = 0;
+    // For debt accounts, invert the polarity to show debt as negative
+    const initialBalance = Number(account?.initialBalance ?? 0);
+    const isDebt = account && isDebtAccount(account.accountType);
+
+    // Start with initial balance (inverted for debt accounts)
+    let runningBalance = isDebt ? -initialBalance : initialBalance;
+
     const transactionsWithBalance = transactionList.reverse().map((t) => {
-      runningBalance += Number(t.amount);
+      const amount = Number(t.amount);
+      // For debt accounts, invert transaction amounts
+      runningBalance += isDebt ? -amount : amount;
       return {...t, balance: runningBalance};
     }).reverse();
 

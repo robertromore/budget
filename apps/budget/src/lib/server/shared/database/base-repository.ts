@@ -239,6 +239,132 @@ export abstract class BaseRepository<
     }
   }
 
+  /**
+   * Find entity by slug
+   * Assumes table has a 'slug' column and optionally 'deletedAt' for soft deletes
+   */
+  async findBySlug(slug: string): Promise<TEntity | null> {
+    try {
+      // Import isNull dynamically to avoid circular dependency
+      const {isNull} = await import('drizzle-orm');
+
+      const conditions = [eq((this.table as any).slug, slug)];
+
+      // Add deletedAt check if table supports soft deletes
+      if ((this.table as any).deletedAt) {
+        conditions.push(isNull((this.table as any).deletedAt));
+      }
+
+      const result = await this.db
+        .select()
+        .from(this.table)
+        .where(and(...conditions))
+        .limit(1);
+
+      return result[0] || null;
+    } catch (error) {
+      throw new DatabaseError(`Failed to find ${this.entityName} by slug`, "findById");
+    }
+  }
+
+  /**
+   * Check if a slug is unique (optionally excluding a specific entity)
+   * @param slug The slug to check
+   * @param excludeId Optional ID to exclude from the check (for updates)
+   */
+  async isSlugUnique(slug: string, excludeId?: number): Promise<boolean> {
+    try {
+      const {ne} = await import('drizzle-orm');
+
+      const conditions = [eq((this.table as any).slug, slug)];
+
+      if (excludeId) {
+        conditions.push(ne((this.table as any).id, excludeId));
+      }
+
+      const result = await this.db
+        .select()
+        .from(this.table)
+        .where(and(...conditions))
+        .limit(1);
+
+      return !result[0]; // true if no entity found (slug is unique)
+    } catch (error) {
+      throw new DatabaseError(`Failed to check slug uniqueness for ${this.entityName}`, "isSlugUnique");
+    }
+  }
+
+  /**
+   * Soft delete entity with slug archiving to prevent conflicts
+   * Appends "-deleted-{timestamp}" to the slug before soft deleting
+   */
+  async softDeleteWithSlugArchive(id: number): Promise<TEntity> {
+    try {
+      // Check if table supports soft deletes and has slug column
+      if (!("deletedAt" in (this.table as any)) || !("slug" in (this.table as any))) {
+        throw new DatabaseError(
+          `Soft delete with slug archive not supported for ${this.entityName}`,
+          "softDeleteWithSlugArchive"
+        );
+      }
+
+      // Get existing entity
+      const entity = await this.findByIdOrThrow(id);
+      const slug = (entity as any).slug;
+
+      // Create archived slug
+      const timestamp = Date.now();
+      const archivedSlug = `${slug}-deleted-${timestamp}`;
+
+      // Update with archived slug and deletedAt
+      return await this.update(id, {
+        slug: archivedSlug,
+        deletedAt: getCurrentTimestamp(),
+      } as TUpdateInput);
+    } catch (error) {
+      if (error instanceof DatabaseError || error instanceof NotFoundError) throw error;
+      throw new DatabaseError(
+        `Failed to soft delete ${this.entityName} with slug archive`,
+        "softDeleteWithSlugArchive"
+      );
+    }
+  }
+
+  /**
+   * Search entities by name field
+   * Assumes table has a 'name' column
+   */
+  async searchByName(
+    query: string,
+    options?: {limit?: number; excludeDeleted?: boolean}
+  ): Promise<TEntity[]> {
+    try {
+      const {limit = 50, excludeDeleted = true} = options || {};
+      const {isNull} = await import('drizzle-orm');
+
+      if (!("name" in (this.table as any))) {
+        throw new DatabaseError(`Search by name not supported for ${this.entityName}`, "searchByName");
+      }
+
+      const conditions = [like((this.table as any).name, `%${query}%`)];
+
+      // Exclude soft-deleted entities if requested and supported
+      if (excludeDeleted && (this.table as any).deletedAt) {
+        conditions.push(isNull((this.table as any).deletedAt));
+      }
+
+      return await this.db
+        .select()
+        .from(this.table)
+        .where(and(...conditions))
+        .limit(limit)
+        .orderBy(asc((this.table as any).name));
+    } catch (error) {
+      if (error instanceof DatabaseError) throw error;
+      throw new DatabaseError(`Failed to search ${this.entityName} by name`, "searchByName");
+    }
+  }
+
   // Helper methods
   protected buildInCondition(column: any, values: any[]) {
     // Build IN condition for bulk operations

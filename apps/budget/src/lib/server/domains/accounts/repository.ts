@@ -12,15 +12,17 @@ import {NotFoundError} from "$lib/server/shared/types/errors";
 export interface CreateAccountInput {
   name: string;
   slug: string;
-  notes?: string;
-  balance?: number;
+  notes?: string | undefined;
+  balance?: number | undefined;
+  onBudget?: boolean | undefined;
 }
 
 export interface UpdateAccountInput {
-  name?: string;
-  slug?: string;
-  notes?: string;
-  balance?: number;
+  name?: string | undefined;
+  slug?: string | undefined;
+  notes?: string | undefined;
+  balance?: number | undefined;
+  onBudget?: boolean | undefined;
 }
 
 export interface AccountWithTransactions extends Account {
@@ -40,22 +42,7 @@ export class AccountRepository extends BaseRepository<
     super(db, accounts, "Account");
   }
 
-  /**
-   * Find account by slug
-   */
-  async findBySlug(slug: string): Promise<Account | null> {
-    try {
-      const result = await this.db
-        .select()
-        .from(accounts)
-        .where(and(eq(accounts.slug, slug), isNull(accounts.deletedAt)))
-        .limit(1);
-
-      return result[0] || null;
-    } catch (error) {
-      throw new Error(`Failed to find account by slug: ${error}`);
-    }
-  }
+  // findBySlug() inherited from BaseRepository
 
   /**
    * Find account by slug or throw error
@@ -68,28 +55,7 @@ export class AccountRepository extends BaseRepository<
     return account;
   }
 
-  /**
-   * Check if slug is unique (excluding specific account ID)
-   */
-  async isSlugUnique(slug: string, excludeId?: number): Promise<boolean> {
-    try {
-      const conditions = [eq(accounts.slug, slug), isNull(accounts.deletedAt)];
-
-      if (excludeId) {
-        conditions.push(eq(accounts.id, excludeId));
-      }
-
-      const result = await this.db
-        .select({id: accounts.id})
-        .from(accounts)
-        .where(and(...conditions))
-        .limit(1);
-
-      return result.length === 0;
-    } catch (error) {
-      throw new Error(`Failed to check slug uniqueness: ${error}`);
-    }
-  }
+  // isSlugUnique() inherited from BaseRepository
 
   /**
    * Find account with related transactions
@@ -112,17 +78,12 @@ export class AccountRepository extends BaseRepository<
 
   /**
    * Search accounts by name
+   * Overrides BaseRepository searchByName to use different default limit
    */
-  async searchByName(query: string, limit: number = 10): Promise<Account[]> {
-    try {
-      return await this.db
-        .select()
-        .from(accounts)
-        .where(and(like(accounts.name, `%${query}%`), isNull(accounts.deletedAt)))
-        .limit(limit);
-    } catch (error) {
-      throw new Error(`Failed to search accounts: ${error}`);
-    }
+  async searchByName(query: string, options?: {limit?: number}): Promise<Account[]> {
+    return await super.searchByName(query, {
+      limit: options?.limit ?? 10
+    });
   }
 
   /**
@@ -137,6 +98,36 @@ export class AccountRepository extends BaseRepository<
         .orderBy(accounts.name);
     } catch (error) {
       throw new Error(`Failed to find active accounts: ${error}`);
+    }
+  }
+
+  /**
+   * Get on-budget accounts (included in budget calculations)
+   */
+  async findOnBudgetAccounts(): Promise<Account[]> {
+    try {
+      return await this.db
+        .select()
+        .from(accounts)
+        .where(and(eq(accounts.onBudget, true), isNull(accounts.deletedAt)))
+        .orderBy(accounts.name);
+    } catch (error) {
+      throw new Error(`Failed to find on-budget accounts: ${error}`);
+    }
+  }
+
+  /**
+   * Get off-budget accounts (tracked for net worth only)
+   */
+  async findOffBudgetAccounts(): Promise<Account[]> {
+    try {
+      return await this.db
+        .select()
+        .from(accounts)
+        .where(and(eq(accounts.onBudget, false), isNull(accounts.deletedAt)))
+        .orderBy(accounts.name);
+    } catch (error) {
+      throw new Error(`Failed to find off-budget accounts: ${error}`);
     }
   }
 

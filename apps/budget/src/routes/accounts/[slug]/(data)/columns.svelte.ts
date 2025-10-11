@@ -37,6 +37,7 @@ import ManagePayeeForm from "$lib/components/forms/manage-payee-form.svelte";
 import BudgetAllocationSimpleCell from "../(components)/(cells)/budget-allocation-simple-cell.svelte";
 import EditableCategoryCell from "../(components)/(cells)/editable-category-cell.svelte";
 import ReadOnlyCategoryCell from "../(components)/(cells)/read-only-category-cell.svelte";
+import TransferIndicatorCell from "../(components)/(cells)/transfer-indicator-cell.svelte";
 
 export const columns = (
   categories: CategoriesState,
@@ -358,6 +359,22 @@ export const columns = (
       enableGrouping: false,
       meta: {
         label: "Notes",
+      },
+    },
+    {
+      id: "transfer",
+      cell: (info) => {
+        const transaction = info.row.original;
+        return renderComponent(TransferIndicatorCell, { transaction });
+      },
+      aggregatedCell: () => {},
+      header: () => "",
+      enableSorting: false,
+      enableGrouping: false,
+      enableColumnFilter: false,
+      enableHiding: false,
+      meta: {
+        label: "Transfer",
       },
     },
     {

@@ -9,10 +9,12 @@
   import {cn} from "$lib/utils";
   import {CircleDollarSign, Plus, AlertTriangle, Trash2, Target, PieChart, Wallet, ArrowRightLeft} from "@lucide/svelte/icons";
   import {currencyFormatter} from "$lib/utils/formatters";
-  import {listBudgets, createAllocation, deleteAllocation} from "$lib/query/budgets";
+  import {listBudgets, createAllocation, deleteAllocation, getBudgetSuggestions, type BudgetSuggestion} from "$lib/query/budgets";
   import type {TransactionsFormat} from "$lib/types";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
   import Progress from "$lib/components/ui/progress/progress.svelte";
+  import {Lightbulb} from "@lucide/svelte/icons";
+  import {toISOString} from "$lib/utils/dates";
 
   interface Props {
     open?: boolean;
@@ -32,6 +34,24 @@
   const availableBudgets = $derived.by(() => budgetsQuery.data ?? []);
   const createAllocationMutation = createAllocation.options();
   const deleteAllocationMutation = deleteAllocation.options();
+
+  // Get budget suggestions based on transaction details
+  const budgetSuggestionsQuery = $derived(
+    getBudgetSuggestions.options({
+      accountId: transaction?.accountId || 0,
+      categoryId: transaction?.categoryId || null,
+      payeeId: transaction?.payeeId || null,
+      amount: transaction?.amount || 0,
+      date: transaction?.date ? toISOString(transaction.date) : '', // Convert DateValue to ISO string
+    })
+  );
+
+  // Get the top suggestion
+  const topSuggestion = $derived.by((): BudgetSuggestion | null => {
+    const data = budgetSuggestionsQuery.data;
+    if (!data || data.length === 0) return null;
+    return data[0] ?? null;
+  });
 
   // Form state for adding new allocation
   let selectedBudgetId = $state("");
@@ -102,6 +122,13 @@
   $effect(() => {
     if (open && transaction) {
       resetForm();
+    }
+  });
+
+  // Auto-select top suggestion when it becomes available
+  $effect(() => {
+    if (topSuggestion && !selectedBudgetId && open) {
+      selectedBudgetId = String(topSuggestion.budgetId);
     }
   });
 
@@ -350,6 +377,23 @@
             </div>
 
             <div class="space-y-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 transition-all hover:border-primary/50 hover:bg-primary/10">
+              {#if topSuggestion}
+                <div class="flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border border-amber-200 dark:border-amber-800 p-3">
+                  <Lightbulb class="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-sm font-medium text-amber-900 dark:text-amber-100">Suggested:</span>
+                      <Badge variant="secondary" class="text-xs">
+                        {topSuggestion.budgetName}
+                      </Badge>
+                    </div>
+                    <div class="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                      {topSuggestion.confidence}% confident - {topSuggestion.reasonText}
+                    </div>
+                  </div>
+                </div>
+              {/if}
+
               <div class="space-y-2">
                 <Label for="budget-select" class="text-xs">Budget</Label>
                 <Select.Root type="single" bind:value={selectedBudgetId}>

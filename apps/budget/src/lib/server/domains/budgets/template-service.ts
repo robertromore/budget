@@ -164,4 +164,149 @@ export class BudgetTemplateService {
       metadata: original.metadata ? (original.metadata as Record<string, unknown>) : undefined,
     });
   }
+
+  async seedSystemTemplates(): Promise<void> {
+    const systemTemplates: Omit<NewBudgetTemplate, "createdAt" | "updatedAt">[] = [
+      {
+        name: "Monthly Checking Account Budget",
+        description: "Track total spending in your checking account each month",
+        type: "account-monthly",
+        scope: "account",
+        icon: "💰",
+        suggestedAmount: null,
+        enforcementLevel: "warning",
+        metadata: {
+          defaultPeriod: {type: "monthly", startDay: 1},
+        } as any,
+        isSystem: true,
+      },
+      {
+        name: "Monthly Savings Goal",
+        description: "Set aside a specific amount each month for savings",
+        type: "goal-based",
+        scope: "account",
+        icon: "🎯",
+        suggestedAmount: null,
+        enforcementLevel: "none",
+        metadata: {
+          goal: {contributionFrequency: "monthly"},
+        } as any,
+        isSystem: true,
+      },
+      {
+        name: "Groceries Budget",
+        description: "Envelope-style budget for grocery spending",
+        type: "category-envelope",
+        scope: "category",
+        icon: "🛒",
+        suggestedAmount: 500,
+        enforcementLevel: "warning",
+        metadata: {
+          rolloverType: "indefinite",
+        } as any,
+        isSystem: true,
+      },
+      {
+        name: "Dining Out Budget",
+        description: "Envelope-style budget for restaurants and takeout",
+        type: "category-envelope",
+        scope: "category",
+        icon: "🍽️",
+        suggestedAmount: 300,
+        enforcementLevel: "warning",
+        metadata: {
+          rolloverType: "indefinite",
+        } as any,
+        isSystem: true,
+      },
+      {
+        name: "Transportation Budget",
+        description: "Envelope-style budget for gas, parking, and transit",
+        type: "category-envelope",
+        scope: "category",
+        icon: "🚗",
+        suggestedAmount: 200,
+        enforcementLevel: "warning",
+        metadata: {
+          rolloverType: "indefinite",
+        } as any,
+        isSystem: true,
+      },
+      {
+        name: "Entertainment Budget",
+        description: "Envelope-style budget for fun and leisure",
+        type: "category-envelope",
+        scope: "category",
+        icon: "🎬",
+        suggestedAmount: 150,
+        enforcementLevel: "none",
+        metadata: {
+          rolloverType: "indefinite",
+        } as any,
+        isSystem: true,
+      },
+      {
+        name: "Utilities Budget",
+        description: "Envelope-style budget for electric, water, gas, internet",
+        type: "category-envelope",
+        scope: "category",
+        icon: "⚡",
+        suggestedAmount: 250,
+        enforcementLevel: "warning",
+        metadata: {
+          rolloverType: "indefinite",
+        } as any,
+        isSystem: true,
+      },
+      {
+        name: "Healthcare Budget",
+        description: "Envelope-style budget for medical expenses",
+        type: "category-envelope",
+        scope: "category",
+        icon: "🏥",
+        suggestedAmount: 200,
+        enforcementLevel: "warning",
+        metadata: {
+          rolloverType: "indefinite",
+        } as any,
+        isSystem: true,
+      },
+      {
+        name: "Rent/Mortgage Payment",
+        description: "Scheduled expense budget for housing costs",
+        type: "scheduled-expense",
+        scope: "category",
+        icon: "🏠",
+        suggestedAmount: null,
+        enforcementLevel: "strict",
+        metadata: {
+          defaultPeriod: {type: "monthly"},
+        } as any,
+        isSystem: true,
+      },
+      {
+        name: "Emergency Fund",
+        description: "Build an emergency fund with automatic contributions",
+        type: "goal-based",
+        scope: "account",
+        icon: "🆘",
+        suggestedAmount: null,
+        enforcementLevel: "none",
+        metadata: {
+          goal: {contributionFrequency: "monthly", autoContribute: true},
+        } as any,
+        isSystem: true,
+      },
+    ];
+
+    for (const template of systemTemplates) {
+      const existing = await db.query.budgetTemplates.findFirst({
+        where: (t, {and, eq}) => and(eq(t.name, template.name), eq(t.isSystem, true)),
+      });
+
+      if (!existing) {
+        await db.insert(budgetTemplates).values(template);
+      }
+    }
+  }
 }

@@ -11,6 +11,7 @@ import type {
 import {logger} from "$lib/server/shared/logging";
 import {NotFoundError} from "$lib/server/shared/types/errors";
 import {getCurrentTimestamp, currentDate} from "$lib/utils/dates";
+import {BaseRepository} from "$lib/server/shared/database/base-repository";
 
 export interface UpdatePayeeData {
   name?: string | undefined;
@@ -88,7 +89,16 @@ export interface PayeeSearchFilters {
 /**
  * Repository for payee database operations
  */
-export class PayeeRepository {
+export class PayeeRepository extends BaseRepository<
+  typeof payees,
+  Payee,
+  NewPayee,
+  UpdatePayeeData
+> {
+  constructor() {
+    super(db, payees, 'Payee');
+  }
+
   /**
    * Create a new payee
    */
@@ -118,21 +128,12 @@ export class PayeeRepository {
     return payee || null;
   }
 
-  /**
-   * Find payee by slug
-   */
-  async findBySlug(slug: string): Promise<Payee | null> {
-    const [payee] = await db
-      .select()
-      .from(payees)
-      .where(and(eq(payees.slug, slug), isNull(payees.deletedAt)))
-      .limit(1);
-
-    return payee || null;
-  }
+  // findBySlug() inherited from BaseRepository
 
   /**
-   * Check if slug exists (including deleted payees)
+   * Check if slug is unique (optionally excluding a specific ID)
+   * Note: This replaces the old slugExists() method with inverted logic
+   * @deprecated Use isSlugUnique() inherited from BaseRepository instead
    */
   async slugExists(slug: string): Promise<boolean> {
     const [result] = await db
@@ -177,36 +178,10 @@ export class PayeeRepository {
 
   /**
    * Soft delete payee with slug archiving
+   * Now uses the inherited softDeleteWithSlugArchive() method from BaseRepository
    */
   async softDelete(id: number): Promise<Payee> {
-    const [existingPayee] = await db
-      .select()
-      .from(payees)
-      .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
-      .limit(1);
-
-    if (!existingPayee) {
-      throw new NotFoundError("Payee", id);
-    }
-
-    const timestamp = Date.now();
-    const archivedSlug = `${existingPayee.slug}-deleted-${timestamp}`;
-
-    const [payee] = await db
-      .update(payees)
-      .set({
-        slug: archivedSlug,
-        deletedAt: getCurrentTimestamp(),
-        updatedAt: getCurrentTimestamp(),
-      })
-      .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
-      .returning();
-
-    if (!payee) {
-      throw new NotFoundError("Payee", id);
-    }
-
-    return payee;
+    return await this.softDeleteWithSlugArchive(id);
   }
 
   /**
@@ -241,22 +216,17 @@ export class PayeeRepository {
 
   /**
    * Search payees by name (enhanced with better ordering)
+   * Now uses the inherited searchByName() method from BaseRepository
    */
   async search(query: string): Promise<Payee[]> {
     if (!query.trim()) {
       return this.findAll();
     }
 
-    return await db
-      .select()
-      .from(payees)
-      .where(and(
-        like(payees.name, `%${query}%`),
-        isNull(payees.deletedAt),
-        eq(payees.isActive, true) // Only return active payees by default
-      ))
-      .orderBy(payees.name)
-      .limit(50);
+    return await this.searchByName(query, {
+      additionalFilters: [eq(payees.isActive, true)],
+      limit: 50
+    });
   }
 
   /**
@@ -662,14 +632,16 @@ export class PayeeRepository {
       ? stats.categoryDistribution[0]
       : null;
 
-    // For budget suggestion, we'd need to implement budget logic
-    // For now, return null but structure is ready
+    // Get budget suggestion using intelligence service
+    const {BudgetIntelligenceService} = await import("$lib/server/domains/budgets/services");
+    const intelligenceService = new BudgetIntelligenceService();
+    const budgetSuggestion = await intelligenceService.suggestBudgetForPayee(id);
 
     return {
       suggestedCategoryId: mostCommonCategory?.categoryId || null,
       suggestedCategoryName: mostCommonCategory?.categoryName || null,
-      suggestedBudgetId: null, // TODO: Implement budget suggestion logic
-      suggestedBudgetName: null,
+      suggestedBudgetId: budgetSuggestion?.budgetId || null,
+      suggestedBudgetName: budgetSuggestion?.budgetName || null,
       suggestedAmount: stats.avgAmount || null,
       suggestedFrequency: frequencyAnalysis.suggestedFrequency,
       confidence: Math.min(frequencyAnalysis.confidence, mostCommonCategory ? 0.8 : 0.3),
@@ -770,5 +742,46 @@ export class PayeeRepository {
       mostCommonDay: dayOfWeekCounts.some(count => count > 0) ? mostCommonDay : null,
       seasonalTrends,
     };
+  }
+
+  /**
+   * Reassign all transactions from source payee to target payee.
+   * Used during payee merging operations.
+   */
+  async reassignTransactions(sourcePayeeId: number, targetPayeeId: number): Promise<number> {
+    await db
+      .update(transactions)
+      .set({
+        payeeId: targetPayeeId,
+        updatedAt: getCurrentTimestamp(),
+      })
+      .where(eq(transactions.payeeId, sourcePayeeId));
+
+    // Return count of updated transactions
+    // Note: Drizzle doesn't return affected rows count directly, so we query after update
+    const transactionCount = await db
+      .select({count: count()})
+      .from(transactions)
+      .where(eq(transactions.payeeId, targetPayeeId));
+
+    logger.info('Transactions reassigned', {
+      sourcePayeeId,
+      targetPayeeId,
+      count: transactionCount[0]?.count || 0,
+    });
+
+    return Number(transactionCount[0]?.count || 0);
+  }
+
+  /**
+   * Get total transaction count across all payees for analytics.
+   */
+  async getTotalTransactionCount(): Promise<number> {
+    const result = await db
+      .select({count: count()})
+      .from(transactions)
+      .where(isNull(transactions.deletedAt));
+
+    return Number(result[0]?.count || 0);
   }
 }

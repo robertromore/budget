@@ -8,3 +8,4 @@ export * from "./schedules";
 export * from "./schedule-dates";
 export * from "./transactions";
 export * from "./views";
+export * from "./detected-patterns";

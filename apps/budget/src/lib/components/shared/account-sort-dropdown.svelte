@@ -31,18 +31,18 @@ const sortOptions: {field: AccountSortField; label: string; description: string}
   {field: 'createdAt', label: 'Date Created', description: 'Sort by creation date'},
 ];
 
-const getCurrentSortIcon = () => {
+const getCurrentSortIcon = $derived.by(() => {
   return currentSortDirection === 'asc' ? ArrowUp : ArrowDown;
-};
+});
 
 const handleSort = (field: AccountSortField, direction: SortDirection) => {
   accountsState.setSorting(field, direction);
 };
 
-const getCurrentSortLabel = () => {
+const getCurrentSortLabel = $derived.by(() => {
   const option = sortOptions.find((opt) => opt.field === currentSortField);
   return `Sorting by: ${option?.label || 'Name'}`;
-};
+});
 </script>
 
 <DropdownMenu.Root>
@@ -50,14 +50,14 @@ const getCurrentSortLabel = () => {
     class={cn(
       buttonVariants({variant, size}),
       'data-[state=open]:bg-accent w-auto gap-1',
-      size === 'icon' ? 'h-8 w-8' : 'px-2'
+      size === 'icon' ? 'size-8' : 'px-2'
     )}
-    title={`${getCurrentSortLabel()} (${currentSortDirection === 'asc' ? 'Ascending' : 'Descending'})`}>
-    {@const SortIcon = getCurrentSortIcon()}
+    title={`${getCurrentSortLabel} (${currentSortDirection === 'asc' ? 'Ascending' : 'Descending'})`}>
+    {@const SortIcon = getCurrentSortIcon}
     <SortIcon class="h-4 w-4" />
     {#if size !== 'icon'}
       <span class="sr-only text-xs sm:not-sr-only sm:whitespace-nowrap">
-        {getCurrentSortLabel()}
+        {getCurrentSortLabel}
       </span>
     {/if}
   </DropdownMenu.Trigger>

@@ -2,57 +2,24 @@
   "recommendations": [
     // Essential for Svelte development
     "svelte.svelte-vscode",
-    
+
     // Code formatting and linting
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
-    
+
     // TypeScript support
     "ms-vscode.vscode-typescript-next",
-    
+
     // Tailwind CSS support
     "bradlc.vscode-tailwindcss",
-    
+
     // Git integration
     "eamodio.gitlens",
-    
+
     // Error highlighting
     "usernamehw.errorlens",
-    
-    // File icons
-    "vscode-icons-team.vscode-icons",
-    
-    // Bracket pair colorization
-    "CoenraadS.bracket-pair-colorizer-2",
-    
-    // Auto rename tag
-    "formulahendry.auto-rename-tag",
-    
+
     // Path intellisense
-    "christian-kohler.path-intellisense",
-    
-    // Import cost
-    "wix.vscode-import-cost",
-    
-    // Thunder Client for API testing
-    "rangav.vscode-thunder-client",
-    
-    // Database tools
-    "qwtel.sqlite-viewer",
-    
-    // Markdown support
-    "yzhang.markdown-all-in-one",
-    "davidanson.vscode-markdownlint",
-    
-    // YAML support
-    "redhat.vscode-yaml",
-    
-    // REST Client
-    "humao.rest-client"
-  ],
-  "unwantedRecommendations": [
-    "ms-vscode.vscode-json",
-    "hookyqr.beautify",
-    "ms-vscode.typescript-hero"
+    "christian-kohler.path-intellisense"
   ]
 }

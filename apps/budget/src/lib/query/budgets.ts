@@ -14,6 +14,10 @@ import type {
   GoalProgress,
   ContributionPlan,
 } from "$lib/server/domains/budgets/services";
+import type {
+  PeriodAnalytics,
+  PeriodComparison,
+} from "$lib/server/domains/budgets/period-manager";
 import { BudgetState } from "$lib/states/budgets.svelte";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryPresets } from "./_client";
@@ -27,6 +31,9 @@ export const budgetKeys = createQueryKeys("budgets", {
   detail: (id: number) => ["budgets", "detail", id] as const,
   detailBySlug: (slug: string) => ["budgets", "detail", "slug", slug] as const,
   periodInstances: (templateId: number) => ["budgets", "periods", templateId] as const,
+  periodAnalytics: (periodId: number) => ["budgets", "periods", "analytics", periodId] as const,
+  periodComparison: (currentId: number, previousId: number) => ["budgets", "periods", "comparison", currentId, previousId] as const,
+  periodHistory: (budgetId: number, limit: number) => ["budgets", "periods", "history", budgetId, limit] as const,
   periodTemplates: () => ["budgets", "period-templates"] as const,
   periodTemplateDetail: (id: number) => ["budgets", "period-templates", "detail", id] as const,
   periodTemplateList: (budgetId: number) => ["budgets", "period-templates", "list", budgetId] as const,
@@ -46,6 +53,13 @@ export const budgetKeys = createQueryKeys("budgets", {
     list: (includeSystem: boolean) => ["budgets", "templates", "list", includeSystem] as const,
     detail: (id: number) => ["budgets", "templates", "detail", id] as const,
   },
+  suggestions: (params: {
+    accountId: number;
+    categoryId?: number | null;
+    payeeId?: number | null;
+    amount: number;
+    date: string;
+  }) => ["budgets", "suggestions", params] as const,
 });
 
 function getState(): BudgetState | null {
@@ -338,6 +352,78 @@ export const previewEnvelopeRollover = (fromPeriodId: number, toPeriodId: number
       enabled: !!fromPeriodId && !!toPeriodId,
     },
   });
+
+export const getRolloverSummary = (periodId: number) =>
+  defineQuery({
+    queryKey: [...budgetKeys.all(), "rollover-summary", periodId],
+    queryFn: () => trpc().budgetRoutes.getRolloverSummary.query({periodId}),
+    options: {
+      staleTime: 60 * 1000,
+      enabled: !!periodId,
+    },
+  });
+
+export const getRolloverHistory = (envelopeId: number, limit?: number) =>
+  defineQuery({
+    queryKey: [...budgetKeys.all(), "rollover-history", envelopeId, limit ?? null],
+    queryFn: () => trpc().budgetRoutes.getRolloverHistory.query({envelopeId, limit}),
+    options: {
+      staleTime: 60 * 1000,
+      enabled: !!envelopeId,
+    },
+  });
+
+export const getBudgetRolloverHistory = (budgetId: number, limit?: number) =>
+  defineQuery({
+    queryKey: [...budgetKeys.all(), "budget-rollover-history", budgetId, limit ?? null],
+    queryFn: () => trpc().budgetRoutes.getBudgetRolloverHistory.query({budgetId, limit}),
+    options: {
+      staleTime: 60 * 1000,
+      enabled: !!budgetId,
+    },
+  });
+
+export const estimateRolloverImpact = (fromPeriodId: number, toPeriodId: number) =>
+  defineQuery({
+    queryKey: [...budgetKeys.all(), "rollover-estimate", fromPeriodId, toPeriodId],
+    queryFn: () => trpc().budgetRoutes.estimateRolloverImpact.query({fromPeriodId, toPeriodId}),
+    options: {
+      staleTime: 30 * 1000,
+      enabled: !!fromPeriodId && !!toPeriodId,
+    },
+  });
+
+export const previewRollover = (fromPeriodId: number, toPeriodId: number) =>
+  defineQuery({
+    queryKey: [...budgetKeys.all(), "rollover-preview", fromPeriodId, toPeriodId],
+    queryFn: () => trpc().budgetRoutes.previewRollover.query({fromPeriodId, toPeriodId}),
+    options: {
+      staleTime: 30 * 1000,
+      enabled: !!fromPeriodId && !!toPeriodId,
+    },
+  });
+
+export const updateRolloverSettings = defineMutation<
+  {
+    budgetId: number;
+    settings: {
+      enabled?: boolean;
+      maxRolloverPercentage?: number;
+      rolloverLimitMonths?: number;
+      deficitRecoveryMode?: 'immediate' | 'gradual' | 'manual';
+      autoTransition?: boolean;
+      notificationEnabled?: boolean;
+    };
+  },
+  any
+>({
+  mutationFn: (input) => trpc().budgetRoutes.updateRolloverSettings.mutate(input),
+  onSuccess: (_, variables) => {
+    cachePatterns.invalidatePrefix([...budgetKeys.detail(variables.budgetId)]);
+  },
+  successMessage: "Rollover settings updated successfully",
+  errorMessage: "Failed to update rollover settings",
+});
 
 export const getDeficitEnvelopes = (budgetId: number) =>
   defineQuery({
@@ -635,6 +721,48 @@ export const deletePeriodTemplate = defineMutation<number, {success: boolean}>({
   errorMessage: "Failed to delete period template",
 });
 
+export const getPeriodAnalytics = (periodId: number) =>
+  defineQuery<PeriodAnalytics>({
+    queryKey: budgetKeys.periodAnalytics(periodId),
+    queryFn: () => trpc().budgetRoutes.getPeriodAnalytics.query({periodId}),
+    options: {
+      staleTime: 2 * 60 * 1000, // 2 minutes
+      enabled: !!periodId,
+    },
+  });
+
+export const comparePeriods = (currentPeriodId: number, previousPeriodId: number) =>
+  defineQuery<PeriodComparison>({
+    queryKey: budgetKeys.periodComparison(currentPeriodId, previousPeriodId),
+    queryFn: () =>
+      trpc().budgetRoutes.comparePeriods.query({currentPeriodId, previousPeriodId}),
+    options: {
+      staleTime: 5 * 60 * 1000,
+      enabled: !!currentPeriodId && !!previousPeriodId,
+    },
+  });
+
+export const getPeriodHistory = (budgetId: number, limit = 10) =>
+  defineQuery<PeriodAnalytics[]>({
+    queryKey: budgetKeys.periodHistory(budgetId, limit),
+    queryFn: () => trpc().budgetRoutes.getPeriodHistory.query({budgetId, limit}),
+    options: {
+      staleTime: 5 * 60 * 1000,
+      enabled: !!budgetId,
+    },
+  });
+
+export const generateNextPeriod = defineMutation<number, BudgetPeriodInstance | null>({
+  mutationFn: (templateId) => trpc().budgetRoutes.generateNextPeriod.mutate({templateId}),
+  onSuccess: (instance, templateId) => {
+    if (instance) {
+      cachePatterns.invalidatePrefix(budgetKeys.periodInstances(templateId));
+    }
+  },
+  successMessage: "Next period generated successfully",
+  errorMessage: "Failed to generate next period",
+});
+
 export const schedulePeriodMaintenance = defineMutation<
   number,
   {created: number; rolledOver: number; cleaned: number}
@@ -774,4 +902,30 @@ export const duplicateBudgetTemplate = defineMutation<
   },
   successMessage: "Budget template duplicated successfully",
   errorMessage: "Failed to duplicate budget template",
+});
+
+/**
+ * Get budget suggestions for a transaction
+ */
+export interface BudgetSuggestion {
+  budgetId: number;
+  budgetName: string;
+  confidence: number;
+  reason: "payee_default" | "category_link" | "account_scope" | "historical_pattern" | "smart_fallback";
+  reasonText: string;
+}
+
+export const getBudgetSuggestions = defineQuery<
+  {
+    accountId: number;
+    categoryId?: number | null;
+    payeeId?: number | null;
+    amount: number;
+    date: string;
+  },
+  BudgetSuggestion[]
+>({
+  queryKey: (params) => budgetKeys.suggestions(params),
+  queryFn: (params) => trpc().budgetRoutes.suggestBudgets.query(params),
+  enabled: (params) => params.accountId > 0,
 });

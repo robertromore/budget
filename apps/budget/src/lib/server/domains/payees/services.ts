@@ -473,9 +473,8 @@ export class PayeeService {
       throw new ValidationError("Source payee has no transactions to merge");
     }
 
-    // Note: Transaction reassignment would be handled by TransactionService
-    // For now, we'll soft delete the source payee and update calculated fields
-    // TODO: Implement actual transaction reassignment when TransactionService supports it
+    // Reassign all transactions from source to target payee
+    const reassignedCount = await this.repository.reassignTransactions(sourceId, targetId);
 
     // Soft delete the source payee
     await this.repository.softDelete(sourceId);
@@ -488,7 +487,7 @@ export class PayeeService {
       sourceName: sourcePayee.name,
       targetId,
       targetName: targetPayee.name,
-      note: 'Transaction reassignment pending implementation'
+      transactionsReassigned: reassignedCount,
     });
   }
 
@@ -607,8 +606,11 @@ export class PayeeService {
       p.lastTransactionDate && cutoffDate && p.lastTransactionDate >= cutoffDate
     ).length;
 
-    // Calculate average transactions per payee (would need transaction stats)
-    const averageTransactionsPerPayee = 0; // TODO: Implement with transaction aggregation
+    // Calculate average transactions per payee
+    const totalTransactions = await this.repository.getTotalTransactionCount();
+    const averageTransactionsPerPayee = allPayees.length > 0
+      ? Math.round(totalTransactions / allPayees.length)
+      : 0;
 
     return {
       totalPayees: allPayees.length,

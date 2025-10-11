@@ -14,6 +14,16 @@ export interface DefineQueryConfig<TData, TError = Error> {
 }
 
 /**
+ * Configuration for parameterized defineQuery wrapper
+ */
+export interface DefineParameterizedQueryConfig<TParams, TData, TError = Error> {
+  queryKey: (params: TParams) => QueryKey;
+  queryFn: (params: TParams) => Promise<TData>;
+  enabled?: (params: TParams) => boolean;
+  options?: Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn' | 'enabled'>;
+}
+
+/**
  * Configuration for defineMutation wrapper
  */
 export interface DefineMutationConfig<TVariables, TData, TError = Error> {
@@ -43,6 +53,26 @@ export interface QueryWrapper<TData, TError = Error> {
    * Access to underlying query key for cache operations
    */
   queryKey: QueryKey;
+}
+
+/**
+ * Parameterized query wrapper that provides dual interface pattern with parameters
+ */
+export interface ParameterizedQueryWrapper<TParams, TData, TError = Error> {
+  /**
+   * Reactive interface - returns Svelte store for component reactivity
+   */
+  options(params: TParams): ReturnType<typeof createQuery<TData, TError>>;
+
+  /**
+   * Imperative interface - executes query and returns promise
+   */
+  execute(params: TParams): Promise<TData>;
+
+  /**
+   * Access to query key factory for cache operations
+   */
+  queryKey: (params: TParams) => QueryKey;
 }
 
 /**
@@ -93,8 +123,66 @@ function transformError(error: unknown): TRPCError {
  */
 export function defineQuery<TData, TError = Error>(
   config: DefineQueryConfig<TData, TError>
-): QueryWrapper<TData, TError> {
-  const { queryKey, queryFn, options = {} } = config;
+): QueryWrapper<TData, TError>;
+
+/**
+ * Creates a parameterized query wrapper with dual interface pattern
+ */
+export function defineQuery<TParams, TData, TError = Error>(
+  config: DefineParameterizedQueryConfig<TParams, TData, TError>
+): ParameterizedQueryWrapper<TParams, TData, TError>;
+
+// Implementation
+export function defineQuery<TParams, TData, TError = Error>(
+  config: DefineQueryConfig<TData, TError> | DefineParameterizedQueryConfig<TParams, TData, TError>
+): QueryWrapper<TData, TError> | ParameterizedQueryWrapper<TParams, TData, TError> {
+  // Check if this is a parameterized query
+  if (typeof config.queryKey === 'function') {
+    const paramConfig = config as DefineParameterizedQueryConfig<TParams, TData, TError>;
+    return {
+      queryKey: paramConfig.queryKey,
+
+      options(params: TParams) {
+        const queryKey = paramConfig.queryKey(params);
+        const enabled = paramConfig.enabled ? paramConfig.enabled(params) : true;
+
+        return createQuery(() => ({
+          queryKey,
+          queryFn: async () => {
+            try {
+              return await paramConfig.queryFn(params);
+            } catch (error) {
+              throw transformError(error);
+            }
+          },
+          enabled,
+          ...paramConfig.options,
+        }));
+      },
+
+      async execute(params: TParams) {
+        const queryKey = paramConfig.queryKey(params);
+        try {
+          // Try to get from cache first
+          const cachedData = queryClient.getQueryData<TData>(queryKey);
+          if (cachedData) {
+            return cachedData;
+          }
+
+          // Execute and cache the result
+          const result = await paramConfig.queryFn(params);
+          queryClient.setQueryData(queryKey, result);
+          return result;
+        } catch (error) {
+          throw transformError(error);
+        }
+      },
+    };
+  }
+
+  // Non-parameterized query
+  const simpleConfig = config as DefineQueryConfig<TData, TError>;
+  const { queryKey, queryFn, options = {} } = simpleConfig;
 
   return {
     queryKey,
@@ -114,7 +202,6 @@ export function defineQuery<TData, TError = Error>(
     },
 
     async execute() {
-
       try {
         // Try to get from cache first
         const cachedData = queryClient.getQueryData<TData>(queryKey);

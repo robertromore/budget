@@ -10,14 +10,14 @@ import {
   deletePayeeId,
 } from '$lib/states/ui/payees.svelte';
 import {payeeSearchState} from '$lib/states/ui/payee-search.svelte';
-import PayeeSearchToolbar from '$lib/components/payees/payee-search-toolbar.svelte';
-import PayeeSearchResults from '$lib/components/payees/payee-search-results.svelte';
-import PayeeFacetedFilters from '$lib/components/payees/payee-faceted-filters.svelte';
+import EntitySearchToolbar from '$lib/components/shared/search/entity-search-toolbar.svelte';
+import PayeeSearchFilters from './(components)/search/payee-search-filters.svelte';
+import PayeeSearchResults from './(components)/search/payee-search-results.svelte';
+import PayeeFacetedFilters from './(components)/bulk-operations/payee-faceted-filters.svelte';
 import {searchPayeesAdvanced, bulkDeletePayees as bulkDeletePayeesMutation, listPayeesWithStats} from '$lib/query/payees';
 import {goto} from '$app/navigation';
 import type {Payee, PayeeType, PaymentFrequency} from '$lib/schema';
 import {rpc} from '$lib/query';
-import type {PayeeWithStats} from '$lib/server/domains/payees/services';
 
 const payeesState = $derived(PayeesState.get());
 const allPayees = $derived(payeesState.payees.values());
@@ -77,11 +77,20 @@ const payeesWithStatsData = $derived.by(() => {
 
 // Computed values
 const displayedPayees = $derived.by(() => {
-  return search.isSearchActive() ? searchResults : payeesWithStatsData;
+  return search.isSearchActive ? searchResults : payeesWithStatsData;
 });
 
+// Sort options for toolbar
+const payeeSortOptions = [
+  {value: 'name' as const, label: 'Name', order: 'asc' as const},
+  {value: 'name' as const, label: 'Name', order: 'desc' as const},
+  {value: 'lastTransaction' as const, label: 'Last Transaction', order: 'desc' as const},
+  {value: 'avgAmount' as const, label: 'Avg Amount', order: 'desc' as const},
+  {value: 'created' as const, label: 'Created', order: 'desc' as const},
+];
+
 const shouldShowNoPayees = $derived.by(() => {
-  return !search.isSearchActive() && hasNoPayees;
+  return !search.isSearchActive && hasNoPayees;
 });
 
 // Dialog state
@@ -95,7 +104,7 @@ let isDeletingBulk = $state(false);
 
 // Server-side search function
 const performSearch = async () => {
-  if (!search.isSearchActive()) {
+  if (!search.isSearchActive) {
     searchResults = [];
     isSearching = false;
     return;
@@ -226,7 +235,7 @@ const frequencyOptions = [
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Payees</h1>
       <p class="text-muted-foreground">
-        {#if search.isSearchActive()}
+        {#if search.isSearchActive}
           {searchResults.length} of {allPayeesArray.length} payees
         {:else}
           {allPayeesArray.length} payees total
@@ -248,21 +257,30 @@ const frequencyOptions = [
   <!-- Search and Filters -->
   <div class="space-y-4">
     <!-- Search Toolbar -->
-    <PayeeSearchToolbar
+    <EntitySearchToolbar
       bind:searchQuery={search.query}
       bind:filters={search.filters}
       bind:viewMode={search.viewMode}
       bind:sortBy={search.sortBy}
       bind:sortOrder={search.sortOrder}
+      searchPlaceholder="Search payees..."
+      sortOptions={payeeSortOptions}
+      activeFilterCount={Object.keys(search.filters).length}
       onSearchChange={(query) => search.updateQuery(query)}
       onFiltersChange={(filters) => search.updateFilters(filters)}
-      onViewModeChange={(mode) => search.viewMode = mode}
+      onViewModeChange={(mode) => (search.viewMode = mode)}
       onSortChange={(sortBy, sortOrder) => {
         search.sortBy = sortBy;
         search.sortOrder = sortOrder;
       }}
-      onClearAll={() => search.clearAllFilters()}
-    />
+      onClearAll={() => search.clearAllFilters()}>
+      {#snippet filterContent()}
+        <PayeeSearchFilters
+          filters={search.filters}
+          onFilterChange={(key, value) => search.updateFilter(key, value)}
+        />
+      {/snippet}
+    </EntitySearchToolbar>
 
     <!-- Faceted Filters -->
     <div class="flex flex-wrap items-center gap-2">

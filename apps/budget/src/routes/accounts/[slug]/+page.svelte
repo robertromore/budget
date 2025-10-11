@@ -19,6 +19,8 @@ import {rpc} from '$lib/query';
 import {useQueryClient} from '@tanstack/svelte-query';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
+import DebtAccountMetrics from '$lib/components/accounts/debt-account-metrics.svelte';
+import {isDebtAccount} from '$lib/schema/accounts';
 
 let {data} = $props();
 
@@ -26,8 +28,8 @@ let {data} = $props();
 const accountSlug = $derived(data.accountSlug);
 
 // Fetch account by slug to get ID for queries
-const accountQuery = $derived(rpc.accounts.getAccountDetail(accountSlug).options());
-const accountData = $derived(accountQuery.data);
+const accountQuery = $derived(accountSlug ? rpc.accounts.getAccountDetail(accountSlug).options() : undefined);
+const accountData = $derived(accountQuery?.data);
 const accountId = $derived(accountData?.id);
 
 // Tab state management
@@ -101,7 +103,7 @@ const formattedTransactions = $derived.by(() => {
   }
 
   return currentTransactions.map((t: Transaction) => {
-    return {
+    const formatted: TransactionsFormat = {
       id: t.id ?? '',
       date: parseDate(t.date),
       amount: t.amount,
@@ -116,14 +118,17 @@ const formattedTransactions = $derived.by(() => {
       balance: t.balance,
       // Budget allocations
       budgetAllocations: t.budgetAllocations || [],
-      // Schedule metadata (only present for scheduled transactions)
-      scheduleId: t.scheduleId,
-      scheduleName: t.scheduleName ?? undefined,
-      scheduleSlug: t.scheduleSlug,
-      scheduleFrequency: t.scheduleFrequency,
-      scheduleInterval: t.scheduleInterval,
-      scheduleNextOccurrence: t.scheduleNextOccurrence,
     };
+
+    // Only add schedule metadata if present
+    if (t.scheduleId !== undefined) formatted.scheduleId = t.scheduleId;
+    if (t.scheduleName) formatted.scheduleName = t.scheduleName;
+    if (t.scheduleSlug) formatted.scheduleSlug = t.scheduleSlug;
+    if (t.scheduleFrequency) formatted.scheduleFrequency = t.scheduleFrequency;
+    if (t.scheduleInterval !== undefined) formatted.scheduleInterval = t.scheduleInterval;
+    if (t.scheduleNextOccurrence) formatted.scheduleNextOccurrence = t.scheduleNextOccurrence;
+
+    return formatted;
   });
 });
 
@@ -287,12 +292,12 @@ let previousAccountId = $state<string | undefined>();
 
 // TanStack Query handles data loading and refetching automatically
 $effect(() => {
-  if (accountId && accountId !== previousAccountId) {
+  if (accountId && (accountId + '') !== previousAccountId) {
     if (serverAccountState) {
       serverAccountState.pagination.page = 0;
       serverAccountState.filters.searchQuery = '';
     }
-    previousAccountId = accountId;
+    previousAccountId = accountId + '';
     // TanStack Query will automatically refetch when accountId changes
   }
 });
@@ -343,7 +348,7 @@ $effect(() => {
       </div>
       <p class="mt-2 text-red-700">The account with ID {accountId} doesn't exist.</p>
       <div class="mt-4 flex items-center gap-3">
-        <Button onclick={openCreateAccountDialog} class="bg-blue-600 hover:bg-blue-700">
+        <Button href="/accounts/new" class="bg-blue-600 hover:bg-blue-700">
           <Plus class="mr-2 h-4 w-4" />
           Create Account
         </Button>
@@ -364,6 +369,11 @@ $effect(() => {
 
   <!-- Main Content (only show if account exists) -->
   {#if !isAccountNotFound}
+  <!-- Debt Account Metrics -->
+  {#if accountData && accountData.accountType && isDebtAccount(accountData.accountType)}
+    <DebtAccountMetrics account={accountData} />
+  {/if}
+
   <!-- Tabs Structure -->
   <Tabs.Root bind:value={activeTab} class="mb-1 w-full">
     <Tabs.List class="inline-flex h-11">
@@ -418,7 +428,7 @@ $effect(() => {
     <!-- Analytics Tab Content -->
     <Tabs.Content value="analytics" class="space-y-4">
       {#if transactions && !isLoading && activeTab === 'analytics'}
-        <AnalyticsDashboard transactions={formattedTransactions} {accountId} />
+        <AnalyticsDashboard transactions={formattedTransactions} accountId={accountId + ''} />
       {:else if isLoading}
         <div class="space-y-4">
           <div class="flex items-center justify-between">

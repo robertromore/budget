@@ -1,12 +1,13 @@
+import { getBudgetTemplateById } from "$lib/constants/budget-templates";
+import type { BudgetMetadata } from "$lib/schema/budgets";
 import { superformInsertBudgetSchema } from "$lib/schema/superforms";
-import type { BudgetMetadata, CreateBudgetRequest } from "$lib/server/domains/budgets/services";
+import type { CreateBudgetRequest } from "$lib/server/domains/budgets/services";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import type { Actions, PageServerLoad } from "@sveltejs/kit";
 import { fail, redirect } from '@sveltejs/kit';
 import { zod4 } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms/client";
-import { getBudgetTemplateById } from "$lib/constants/budget-templates";
 
 export const load: PageServerLoad = async (event) => {
   const { url } = event;
@@ -81,11 +82,11 @@ export const actions: Actions = {
         status: form.data.status || "active",
         enforcementLevel: form.data.enforcementLevel || "warning",
         metadata,
-        accountIds: form.data.accountIds,
-        categoryIds: form.data.categoryIds,
+        ...(form.data.accountIds && { accountIds: form.data.accountIds }),
+        ...(form.data.categoryIds && { categoryIds: form.data.categoryIds }),
       };
 
-      const budget = await createCaller(await createContext(event)).budgetRoutes.create(budgetData);
+      await createCaller(await createContext(event)).budgetRoutes.create(budgetData);
 
       // Redirect to the budgets list on success
       throw redirect(303, '/budgets');

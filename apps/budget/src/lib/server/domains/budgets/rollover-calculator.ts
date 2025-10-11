@@ -262,6 +262,31 @@ export class RolloverCalculator {
       .limit(limit);
   }
 
+  async getRolloverHistoryForBudget(
+    budgetId: number,
+    limit: number = 50
+  ): Promise<EnvelopeRolloverHistory[]> {
+    // Get all envelopes for this budget
+    const envelopes = await db
+      .select({ id: envelopeAllocations.id })
+      .from(envelopeAllocations)
+      .where(eq(envelopeAllocations.budgetId, budgetId));
+
+    if (envelopes.length === 0) {
+      return [];
+    }
+
+    const envelopeIds = envelopes.map(e => e.id);
+
+    // Get rollover history for all these envelopes
+    return await db
+      .select()
+      .from(envelopeRolloverHistory)
+      .where(sql`${envelopeRolloverHistory.envelopeId} IN (${envelopeIds.join(',')})`)
+      .orderBy(desc(envelopeRolloverHistory.processedAt))
+      .limit(limit);
+  }
+
   async estimateRolloverImpact(
     fromPeriodId: number,
     toPeriodId: number,

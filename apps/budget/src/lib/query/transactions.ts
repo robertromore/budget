@@ -444,3 +444,68 @@ export const optimisticHelpers = {
     return previousData;
   },
 };
+
+/**
+ * Create a transfer transaction between two accounts
+ */
+export const createTransfer = defineMutation({
+  mutationFn: async (params: {
+    fromAccountId: number;
+    toAccountId: number;
+    amount: number;
+    date: string;
+    notes?: string;
+    categoryId?: number | null;
+    payeeId?: number | null;
+  }) => {
+    const result = await trpc.transactions.createTransfer.mutate(params);
+    return result;
+  },
+  onSuccess: (_data, variables) => {
+    cachePatterns.invalidateQueries(transactionKeys.byAccount(variables.fromAccountId));
+    cachePatterns.invalidateQueries(transactionKeys.byAccount(variables.toAccountId));
+    cachePatterns.invalidateQueries(transactionKeys.allByAccount(variables.fromAccountId));
+    cachePatterns.invalidateQueries(transactionKeys.allByAccount(variables.toAccountId));
+    cachePatterns.invalidateQueries(transactionKeys.summary(variables.fromAccountId));
+    cachePatterns.invalidateQueries(transactionKeys.summary(variables.toAccountId));
+  },
+});
+
+/**
+ * Update a transfer transaction
+ */
+export const updateTransfer = defineMutation({
+  mutationFn: async (params: {
+    transferId: string;
+    amount?: number;
+    date?: string;
+    notes?: string;
+    categoryId?: number | null;
+    payeeId?: number | null;
+  }) => {
+    const result = await trpc.transactions.updateTransfer.mutate(params);
+    return result;
+  },
+  onSuccess: (data) => {
+    if (data.fromTransaction && data.toTransaction) {
+      cachePatterns.invalidateQueries(transactionKeys.byAccount(data.fromTransaction.accountId));
+      cachePatterns.invalidateQueries(transactionKeys.byAccount(data.toTransaction.accountId));
+      cachePatterns.invalidateQueries(transactionKeys.allByAccount(data.fromTransaction.accountId));
+      cachePatterns.invalidateQueries(transactionKeys.allByAccount(data.toTransaction.accountId));
+      cachePatterns.invalidateQueries(transactionKeys.summary(data.fromTransaction.accountId));
+      cachePatterns.invalidateQueries(transactionKeys.summary(data.toTransaction.accountId));
+    }
+  },
+});
+
+/**
+ * Delete a transfer transaction
+ */
+export const deleteTransfer = defineMutation({
+  mutationFn: async (params: { transferId: string }) => {
+    await trpc.transactions.deleteTransfer.mutate(params);
+  },
+  onSuccess: () => {
+    cachePatterns.invalidateQueries(transactionKeys.lists());
+  },
+});

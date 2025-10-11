@@ -1,4 +1,5 @@
-import {formInsertPayeeSchema, removePayeeSchema, removePayeesSchema, recordCorrectionSchema, analyzeCorrectionsSchema, learningMetricsSchema} from "$lib/schema";
+import {removePayeeSchema, removePayeesSchema, recordCorrectionSchema, analyzeCorrectionsSchema, learningMetricsSchema} from "$lib/schema";
+import {superformInsertPayeeSchema} from "$lib/schema/superforms";
 import {z} from "zod";
 import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
 import {TRPCError} from "@trpc/server";
@@ -200,10 +201,10 @@ export const payeeRoutes = t.router({
     }),
 
   save: rateLimitedProcedure
-    .input(formInsertPayeeSchema)
+    .input(superformInsertPayeeSchema)
     .mutation(async ({input}) => {
       try {
-        const {id, ...payeeData} = input;
+        const {id, address, ...payeeData} = input;
 
         // Ensure name is properly typed and required
         const name = payeeData.name || "";
@@ -211,17 +212,30 @@ export const payeeRoutes = t.router({
           throw new ValidationError("Payee name is required");
         }
 
+        // Transform address from string to PayeeAddress object if provided
+        let parsedAddress: any = null;
+        if (address && typeof address === 'string' && address.trim() !== '') {
+          try {
+            parsedAddress = JSON.parse(address);
+          } catch {
+            // If it's not valid JSON, treat it as null
+            parsedAddress = null;
+          }
+        }
+
         if (id) {
           // Update existing payee
           return await payeeService.updatePayee(id, {
             ...payeeData,
-            name: name.trim()
+            name: name.trim(),
+            address: parsedAddress
           });
         } else {
           // Create new payee
           return await payeeService.createPayee({
             ...payeeData,
-            name: name.trim()
+            name: name.trim(),
+            address: parsedAddress
           });
         }
       } catch (error) {

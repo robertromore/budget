@@ -259,6 +259,10 @@ export class EnvelopeService {
     return await this.rolloverCalculator.getRolloverHistoryForEnvelope(envelopeId, limit);
   }
 
+  async getRolloverHistoryForBudget(budgetId: number, limit: number = 50) {
+    return await this.rolloverCalculator.getRolloverHistoryForBudget(budgetId, limit);
+  }
+
   async estimateRolloverImpact(
     fromPeriodId: number,
     toPeriodId: number,

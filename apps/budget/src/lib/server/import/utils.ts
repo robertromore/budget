@@ -195,10 +195,38 @@ export function parseAmount(amountString: string | number): number {
 }
 
 /**
+ * Strip monetary amounts from payee names.
+ * Removes common currency formats like:
+ * - $123.45, £99.99, €50.00
+ * - 123.45, 99.99 (standalone numbers with decimals)
+ * - $1,234.56 (with thousand separators)
+ * - (123.45) (negative amounts in parentheses)
+ */
+export function stripAmountsFromPayeeName(name: string): string {
+  return name
+    .trim()
+    // Remove currency symbols followed by amounts
+    .replace(/[$£€¥₹₽¢₩]\s*[\d,]+\.?\d*/g, '')
+    // Remove standalone amounts with decimals (e.g., 123.45)
+    .replace(/\b\d{1,3}(,\d{3})*\.\d{2}\b/g, '')
+    // Remove amounts in parentheses
+    .replace(/\(\s*[\d,]+\.?\d*\s*\)/g, '')
+    // Remove trailing/leading amounts
+    .replace(/^\s*[\d,]+\.?\d*\s*/g, '')
+    .replace(/\s*[\d,]+\.?\d*\s*$/g, '')
+    // Clean up extra whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Normalize payee name
  */
 export function normalizePayeeName(name: string): string {
-  return name
+  // First strip any amounts from the name
+  const withoutAmounts = stripAmountsFromPayeeName(name);
+
+  return withoutAmounts
     .trim()
     .replace(/\s+/g, ' ') // Normalize whitespace
     .replace(/[^\w\s&'\-]/g, '') // Remove special characters except &, ', -
@@ -209,7 +237,10 @@ export function normalizePayeeName(name: string): string {
  * Capitalize payee name for display
  */
 export function capitalizePayeeName(name: string): string {
-  return name
+  // First strip amounts
+  const cleaned = stripAmountsFromPayeeName(name);
+
+  return cleaned
     .split(' ')
     .map(word => {
       if (word.length === 0) return word;

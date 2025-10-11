@@ -1,18 +1,18 @@
-import {eq, and, between, sum as sqlSum} from "drizzle-orm";
-import {db} from "$lib/server/db";
+import { isDebtAccount, type Account } from "$lib/schema/accounts";
 import {
-  budgets,
   budgetPeriodInstances,
   budgetPeriodTemplates,
-  budgetTransactions,
-  type BudgetPeriodInstance,
+  budgets,
+  budgetTransactions
 } from "$lib/schema/budgets";
-import {transactions} from "$lib/schema/transactions";
-import {envelopeAllocations} from "$lib/schema/budgets/envelope-allocations";
-import {BudgetRepository} from "./repository";
-import {EnvelopeService} from "./envelope-service";
-import {NotFoundError, DatabaseError} from "$lib/server/shared/types/errors";
-import {getCurrentTimestamp} from "$lib/utils/dates";
+import { envelopeAllocations } from "$lib/schema/budgets/envelope-allocations";
+import { transactions, type Transaction } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { and, between, eq, sum as sqlSum } from "drizzle-orm";
+import { EnvelopeService } from "./envelope-service";
+import { BudgetRepository } from "./repository";
 
 export interface PeriodCalculationResult {
   periodInstanceId: number;
@@ -47,6 +47,35 @@ export class BudgetCalculationService {
   ) {}
 
   /**
+   * Determine if a transaction should count against a budget.
+   * Excludes all transfer transactions.
+   */
+  private shouldCountAgainstBudget(transaction: Transaction): boolean {
+    // Never count transfers (includes payments from checking to credit card)
+    if (transaction.isTransfer) return false;
+
+    // All non-transfer transactions count against budgets
+    return true;
+  }
+
+  /**
+   * Calculate the budget impact of a transaction.
+   * For debt accounts, inverts the amount to show purchases as positive spending.
+   */
+  private calculateBudgetImpact(transaction: Transaction, accountType: Account["accountType"]): number {
+    if (!this.shouldCountAgainstBudget(transaction)) return 0;
+
+    // For debt accounts: Invert the amount so purchases (negative) become positive spending
+    // and refunds (positive) become negative spending (reduces budget)
+    if (accountType && isDebtAccount(accountType)) {
+      return -transaction.amount;
+    }
+
+    // For asset accounts, use amount as-is (typically absolute value for spending)
+    return Math.abs(transaction.amount);
+  }
+
+  /**
    * Recalculate actualAmount for a budget period instance by summing all
    * budget transactions that fall within the period's date range.
    */
@@ -71,7 +100,7 @@ export class BudgetCalculationService {
       }
 
       // Sum all budget_transactions for this budget where the transaction date
-      // falls within the period's date range
+      // falls within the period's date range, excluding transfer transactions
       const result = await tx
         .select({
           total: sqlSum(budgetTransactions.allocatedAmount),
@@ -82,7 +111,9 @@ export class BudgetCalculationService {
         .where(
           and(
             eq(budgetTransactions.budgetId, template.budgetId),
-            between(transactions.date, instance.startDate, instance.endDate)
+            between(transactions.date, instance.startDate, instance.endDate),
+            // Exclude transfer transactions from budget calculations
+            eq(transactions.isTransfer, false)
           )
         );
 

@@ -220,7 +220,7 @@ export class PayeeBulkOperationsState {
   }
 
   getLatestUndoOperation(): UndoOperation | null {
-    return this.undoStack.length > 0 ? this.undoStack[0] : null;
+    return this.undoStack.length > 0 ? (this.undoStack[0] ?? null) : null;
   }
 
   removeUndoOperation(operationId: string) {

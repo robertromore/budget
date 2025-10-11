@@ -105,7 +105,7 @@ table = createSvelteTable({
 
 <div class="space-y-4">
   <!-- Bulk Actions -->
-  <CategoryBulkActions {table} allCategories={categories} {onBulkDelete} />
+  <CategoryBulkActions {table} allCategories={categories} {onBulkDelete}></CategoryBulkActions>
 
   <!-- Table -->
   <div class="rounded-md border">
@@ -116,7 +116,7 @@ table = createSvelteTable({
             {#each headerGroup.headers as header}
               <Table.Head>
                 {#if !header.isPlaceholder}
-                  <FlexRender content={header.column.columnDef.header} context={header.getContext()} />
+                  <FlexRender content={header.column.columnDef.header} context={header.getContext()}></FlexRender>
                 {/if}
               </Table.Head>
             {/each}
@@ -129,7 +129,7 @@ table = createSvelteTable({
             <Table.Row data-state={row.getIsSelected() && 'selected'}>
               {#each row.getVisibleCells() as cell}
                 <Table.Cell>
-                  <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+                  <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()}></FlexRender>
                 </Table.Cell>
               {/each}
             </Table.Row>
@@ -146,5 +146,5 @@ table = createSvelteTable({
   </div>
 
   <!-- Pagination -->
-  <DataTablePagination {table} />
+  <DataTablePagination {table}></DataTablePagination>
 </div>

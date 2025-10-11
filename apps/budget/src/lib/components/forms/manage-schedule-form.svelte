@@ -303,7 +303,7 @@ $effect(() => {
   subtitle={isUpdate ? "Update your schedule details" : "Add a new recurring or one-time transaction schedule"}
   wizardStore={scheduleWizardStore}
   onComplete={handleWizardComplete}
-  defaultMode="manual"
+  defaultMode="wizard"
   currentFormData={{
     name: $formData.name,
     recurring: $formData.recurring,

@@ -2,7 +2,7 @@
   import * as Tabs from "$lib/components/ui/tabs";
   import { Button } from "$lib/components/ui/button";
   import { Badge } from "$lib/components/ui/badge";
-  import { FileText, Wand2, RotateCcw } from "@lucide/svelte/icons";
+  import { FileText, Wand, RotateCcw } from "@lucide/svelte/icons";
   import WizardProgress from "./wizard-progress.svelte";
   import { cn } from "$lib/utils";
   import type { Snippet } from "svelte";
@@ -46,6 +46,7 @@
   const progress = $derived(wizardStore.progress);
   const isCompleting = $derived(wizardStore.isCompleting);
   const formData = $derived(wizardStore.formData);
+  const currentStepIndex = $derived(wizardStore.currentStepIndex);
 
   // Load saved progress if persistence key is provided
   $effect(() => {
@@ -58,6 +59,14 @@
   $effect(() => {
     if (persistenceKey && currentMode === "wizard") {
       wizardStore.saveToLocalStorage(persistenceKey);
+    }
+  });
+
+  // Scroll to top when wizard step changes
+  $effect(() => {
+    if (currentMode === "wizard") {
+      currentStepIndex;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   });
 
@@ -145,15 +154,15 @@
     <!-- Mode Switcher -->
     <Tabs.Root value={currentMode} onValueChange={handleModeChange}>
       <Tabs.List class="grid w-full grid-cols-2">
+        <Tabs.Trigger value="wizard" class={getModeClasses("wizard")}>
+          <Wand class="h-4 w-4" />
+          Guided Setup
+          <Badge variant="secondary" class="text-xs">Helpful</Badge>
+        </Tabs.Trigger>
         <Tabs.Trigger value="manual" class={getModeClasses("manual")}>
           <FileText class="h-4 w-4" />
           Manual Form
           <Badge variant="secondary" class="text-xs">Quick</Badge>
-        </Tabs.Trigger>
-        <Tabs.Trigger value="wizard" class={getModeClasses("wizard")}>
-          <Wand2 class="h-4 w-4" />
-          Guided Setup
-          <Badge variant="secondary" class="text-xs">Helpful</Badge>
         </Tabs.Trigger>
       </Tabs.List>
 

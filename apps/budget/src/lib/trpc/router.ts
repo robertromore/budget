@@ -8,6 +8,7 @@ import type {inferRouterInputs, inferRouterOutputs} from "@trpc/server";
 import {viewsRoutes} from "./routes/views";
 import {scheduleRoutes} from "./routes/schedules";
 import {budgetRoutes} from "./routes/budgets";
+import {patternRoutes} from "./routes/patterns";
 
 export const router = t.router({
   accountRoutes,
@@ -18,6 +19,7 @@ export const router = t.router({
   transactionRoutes,
   viewsRoutes,
   budgetRoutes,
+  patternRoutes,
 });
 
 export const createCaller = t.createCallerFactory(router);

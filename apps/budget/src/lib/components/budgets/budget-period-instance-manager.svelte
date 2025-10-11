@@ -11,7 +11,8 @@ import {
   Check,
   Clock,
   Edit,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from '@lucide/svelte/icons';
 import { parseISOString, formatDateDisplay, currentDate } from '$lib/utils/dates';
 import { formatCurrency } from '$lib/utils';
@@ -50,6 +51,7 @@ interface Props {
   onGenerateNext?: () => void;
   onEditPeriod?: (instanceId: number) => void;
   onEditTemplate?: () => void;
+  onDeleteTemplate?: () => void;
 }
 
 let {
@@ -59,11 +61,13 @@ let {
   instances = [],
   onGenerateNext,
   onEditPeriod,
-  onEditTemplate
+  onEditTemplate,
+  onDeleteTemplate
 }: Props = $props();
 
 // Format period type for display
-function formatPeriodType(type: string): string {
+function formatPeriodType(type: string | undefined): string {
+  if (!type) return 'Unknown';
   return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
@@ -153,11 +157,21 @@ function getProgressColorClass(spent: number, allocated: number): string {
             </Card.Description>
           </div>
         </div>
-        {#if onEditTemplate}
-          <Button variant="ghost" size="sm" onclick={onEditTemplate}>
-            <Edit class="h-4 w-4" />
-            Edit
-          </Button>
+        {#if template && (onEditTemplate || onDeleteTemplate)}
+          <div class="flex gap-2">
+            {#if onEditTemplate}
+              <Button variant="ghost" size="sm" onclick={onEditTemplate}>
+                <Edit class="h-4 w-4" />
+                Edit
+              </Button>
+            {/if}
+            {#if onDeleteTemplate}
+              <Button variant="ghost" size="sm" onclick={onDeleteTemplate}>
+                <Trash2 class="h-4 w-4" />
+                Delete
+              </Button>
+            {/if}
+          </div>
         {/if}
       </div>
     </Card.Header>
