@@ -353,10 +353,25 @@ export const processEnvelopeRollover = defineMutation<
   any
 >({
   mutationFn: (input) => trpc().budgetRoutes.processEnvelopeRollover.mutate(input),
-  onSuccess: () => {
+  onSuccess: (data) => {
     cachePatterns.invalidatePrefix([...budgetKeys.all(), "envelopes"]);
   },
-  successMessage: "Rollover processed successfully",
+  successMessage: (data) => {
+    if (data && Array.isArray(data) && data.length > 0) {
+      const totalRolledOver = data.reduce((sum: number, item: any) => sum + (item.rolledAmount || 0), 0);
+      const resetCount = data.filter((item: any) => item.resetAmount > 0).length;
+
+      let message = `✓ Rollover completed: ${data.length} envelope${data.length !== 1 ? 's' : ''} processed`;
+      if (totalRolledOver > 0) {
+        message += ` • $${totalRolledOver.toFixed(2)} rolled over`;
+      }
+      if (resetCount > 0) {
+        message += ` • ${resetCount} envelope${resetCount !== 1 ? 's' : ''} reset`;
+      }
+      return message;
+    }
+    return "✓ Rollover processed successfully";
+  },
   errorMessage: "Failed to process rollover",
 });
 

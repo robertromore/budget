@@ -22,6 +22,7 @@ import {queryClient} from '$lib/query';
 import {autoScheduler} from '$lib/stores/auto-scheduler.svelte';
 import {onMount} from 'svelte';
 import {rpc} from '$lib/query';
+import {Toaster} from 'svelte-sonner';
 
 let {data, children}: {data: LayoutData; children: Snippet} = $props();
 
@@ -69,6 +70,8 @@ onMount(() => {
 <!-- {#if dev}
 	<RenderScan />
 {/if} -->
+
+<Toaster richColors position="top-center" />
 
 <DeleteAccountDialog />
 <DeleteScheduleDialog />

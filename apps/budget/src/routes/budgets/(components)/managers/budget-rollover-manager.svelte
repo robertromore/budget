@@ -52,8 +52,9 @@
     return listPeriodInstances(firstTemplateId).options();
   });
   const periods = $derived(periodsQuery?.data ?? []);
-  const currentPeriod = $derived(periods[0]);
-  const previousPeriod = $derived(periods[1]);
+  // Periods are ordered by startDate ascending, so [0] is oldest, [length-1] is newest
+  const previousPeriod = $derived(periods[periods.length - 2]); // Second to last = previous period
+  const currentPeriod = $derived(periods[periods.length - 1]); // Last = current period
 
   // Rollover data queries
   const rolloverSummaryQuery = $derived.by(() => {
@@ -152,6 +153,9 @@
   const rolloverHistory = $derived(rolloverHistoryQuery?.data ?? []);
   const isLoadingHistory = $derived(rolloverHistoryQuery?.isLoading ?? false);
 
+  // Mutations
+  const rolloverMutation = processEnvelopeRollover.options();
+
   function openRolloverSettings(budget?: BudgetWithRelations) {
     selectedBudget = budget || null;
     rolloverSettingsOpen = true;
@@ -168,9 +172,8 @@
     }
 
     isProcessingTransition = true;
-    const mutation = processEnvelopeRollover.execute();
     try {
-      await mutation.mutateAsync({
+      await rolloverMutation.mutateAsync({
         fromPeriodId: previousPeriod.id,
         toPeriodId: currentPeriod.id,
       });
@@ -205,6 +208,46 @@
 </script>
 
 <div class={cn("space-y-6", className)}>
+  <!-- Period Information -->
+  <Card.Root>
+    <Card.Header>
+      <Card.Title>Period Information</Card.Title>
+    </Card.Header>
+    <Card.Content class="space-y-2">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm font-medium text-muted-foreground">Previous Period</p>
+          {#if previousPeriod}
+            <p class="text-lg font-semibold">
+              {new Date(previousPeriod.startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </p>
+            <p class="text-xs text-muted-foreground">
+              ID: {previousPeriod.id} | {previousPeriod.startDate} to {previousPeriod.endDate}
+            </p>
+          {:else}
+            <p class="text-sm text-muted-foreground">No previous period found</p>
+          {/if}
+        </div>
+        <div>
+          <p class="text-sm font-medium text-muted-foreground">Current Period</p>
+          {#if currentPeriod}
+            <p class="text-lg font-semibold">
+              {new Date(currentPeriod.startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </p>
+            <p class="text-xs text-muted-foreground">
+              ID: {currentPeriod.id} | {currentPeriod.startDate} to {currentPeriod.endDate}
+            </p>
+          {:else}
+            <p class="text-sm text-muted-foreground">No current period found</p>
+          {/if}
+        </div>
+      </div>
+      <div class="text-xs text-muted-foreground pt-2 border-t">
+        Total periods loaded: {periods.length} | Template ID: {firstTemplateId ?? 'none'}
+      </div>
+    </Card.Content>
+  </Card.Root>
+
   <!-- Overview Cards -->
   <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
     <!-- Total Rolled In -->

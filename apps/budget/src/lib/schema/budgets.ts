@@ -401,3 +401,6 @@ export type BudgetTransaction = typeof budgetTransactions.$inferSelect;
 export type NewBudgetTransaction = typeof budgetTransactions.$inferInsert;
 export type BudgetTemplate = typeof budgetTemplates.$inferSelect;
 export type NewBudgetTemplate = typeof budgetTemplates.$inferInsert;
+
+// Re-export envelope allocations
+export * from './budgets/envelope-allocations';
