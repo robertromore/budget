@@ -9,9 +9,9 @@ import {ManageAccountForm} from '$lib/components/forms';
 import type {Account} from '$lib/schema';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 
-const accountSlug = $derived(page.params.slug);
+const accountSlug = $derived(page.params['slug']);
 const accountsState = $derived(AccountsState.get());
-const account = $derived(accountsState.getBySlug(accountSlug));
+const account = $derived(accountsState.getBySlug(accountSlug || ''));
 
 const handleSave = (updatedAccount: Account) => {
   // Navigate back to the account detail page
@@ -48,7 +48,7 @@ const handleSave = (updatedAccount: Account) => {
 
   {#if account}
     <!-- Form Card -->
-    <Card.Root class="max-w-4xl">
+    <Card.Root>
       <Card.Header>
         <Card.Title>Account Information</Card.Title>
         <Card.Description>

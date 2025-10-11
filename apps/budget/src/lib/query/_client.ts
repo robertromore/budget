@@ -119,6 +119,16 @@ export const cachePatterns = {
   },
 
   /**
+   * Invalidate queries by exact key match
+   */
+  invalidateQueries: (queryKey: readonly unknown[]) => {
+    queryClient.invalidateQueries({
+      queryKey,
+      refetchType: 'active',
+    });
+  },
+
+  /**
    * Remove specific query from cache
    */
   removeQuery: (queryKey: readonly unknown[]) => {

@@ -2,9 +2,10 @@
   import { Input } from "$lib/components/ui/input";
   import { Textarea } from "$lib/components/ui/textarea";
   import { Label } from "$lib/components/ui/label";
+  import { Switch } from "$lib/components/ui/switch";
   import * as Select from "$lib/components/ui/select";
   import { Badge } from "$lib/components/ui/badge";
-  import { Building2, FileText, CheckCircle2, Info, Palette, CreditCard, Banknote } from "@lucide/svelte/icons";
+  import { Building2, FileText, CheckCircle2, Info, Palette, CreditCard, Banknote, Wallet } from "@lucide/svelte/icons";
   import WizardStep from "./wizard-step.svelte";
   import IconPicker from "$lib/components/ui/icon-picker/icon-picker.svelte";
   import { ColorPicker } from "$lib/components/ui/color-picker";
@@ -62,6 +63,18 @@
   });
 
   const formData = $derived(accountWizardStore.formData);
+
+  // Set default color if not present
+  $effect(() => {
+    if (!formData['accountColor']) {
+      // Get computed primary color from CSS variable
+      const primaryColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--primary')
+        .trim();
+      const defaultColor = primaryColor ? `hsl(${primaryColor})` : '#3b82f6';
+      accountWizardStore.updateFormData('accountColor', defaultColor);
+    }
+  });
 
   // Form handlers
   function updateField(field: string, value: any) {
@@ -536,7 +549,7 @@
             Account Color
           </Label>
           <ColorPicker
-            value={formData['accountColor'] || '#3B82F6'}
+            value={formData['accountColor']}
             placeholder="Choose account color"
             onchange={(event) => {
               updateField('accountColor', event.detail.value);
@@ -553,7 +566,7 @@
         {#snippet previewCard()}
           <div class="space-y-2">
             <Label class="text-sm font-medium">Preview</Label>
-            <div class="border border-l-4 p-4 rounded-lg" style={formData['accountColor'] ? `border-left-color: ${formData['accountColor']}` : ''}>
+            <div class="border border-l-4 p-4 rounded-lg" style={`border-left-color: ${formData['accountColor'] || 'hsl(var(--primary))'}`}>
               <div class="flex items-center gap-3">
                 {#if selectedIcon()}
                   {@const iconData = selectedIcon()}
@@ -648,6 +661,56 @@
         <p class="text-xs text-muted-foreground">
           Last 4 digits for easy identification (optional)
         </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget Inclusion -->
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <div class="flex items-center gap-2">
+        <Wallet class="h-5 w-5 text-primary" />
+        <h3 class="text-lg font-semibold">Budget Inclusion</h3>
+      </div>
+      <p class="text-sm text-muted-foreground">
+        Choose whether this account should be included in your budget calculations.
+      </p>
+    </div>
+    <div class="border rounded-lg p-4">
+      <div class="flex items-start space-x-3">
+        <Switch
+          checked={formData['onBudget'] ?? true}
+          onCheckedChange={(checked) => updateField('onBudget', checked)}
+        />
+        <div class="flex-1 space-y-1">
+          <Label class="text-sm font-medium leading-none">
+            Include in budget calculations
+          </Label>
+          <p class="text-sm text-muted-foreground">
+            {#if formData['onBudget'] ?? true}
+              This account will be included in your budget totals and spending reports. Transactions will count toward your budget.
+            {:else}
+              This account will only be tracked for net worth. Use this for investments, loans, or other accounts you don't budget for.
+            {/if}
+          </p>
+        </div>
+      </div>
+
+      <!-- Info Box -->
+      <div class="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+        <div class="flex items-start gap-2">
+          <Info class="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div class="space-y-1">
+            <p class="text-xs font-medium text-blue-900 dark:text-blue-100">
+              When to use off-budget accounts:
+            </p>
+            <ul class="text-xs text-blue-700 dark:text-blue-200 space-y-0.5 list-disc list-inside">
+              <li>Investment accounts (401k, IRA, brokerage)</li>
+              <li>Loan accounts (mortgage, car loans)</li>
+              <li>Accounts you track for net worth but don't actively budget</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -805,7 +868,7 @@
               <p class="font-medium text-sm">Account Preview</p>
               <p class="text-muted-foreground text-sm">How your account will appear</p>
             </div>
-            <div class="border border-l-4 p-4 w-full rounded-lg" style={formData['accountColor'] ? `border-left-color: ${formData['accountColor']}` : ''}>
+            <div class="border border-l-4 p-4 w-full rounded-lg" style={`border-left-color: ${formData['accountColor'] || 'hsl(var(--primary))'}`}>
               <div class="flex items-center gap-3">
                 {#if selectedIcon()}
                   {@const iconData = selectedIcon()}
@@ -875,15 +938,26 @@
             </div>
           {/if}
 
-          {#if formData['accountColor']}
-            <div class="space-y-1">
-              <p class="font-medium text-sm">Color</p>
-              <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded border" style="background-color: {formData['accountColor']}"></div>
-                <p class="text-sm text-muted-foreground font-mono">{formData['accountColor']}</p>
-              </div>
+          <div class="space-y-1">
+            <p class="font-medium text-sm">Color</p>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded border" style="background-color: {formData['accountColor'] || 'hsl(var(--primary))'}"></div>
+              <p class="text-sm text-muted-foreground font-mono">{formData['accountColor'] || 'hsl(var(--primary))'}</p>
             </div>
-          {/if}
+          </div>
+
+          <div class="space-y-1">
+            <p class="font-medium text-sm">Budget Inclusion</p>
+            <div class="flex items-center gap-2">
+              {#if formData['onBudget'] ?? true}
+                <Badge variant="default" class="text-xs">On Budget</Badge>
+                <p class="text-sm text-muted-foreground">Included in budget calculations</p>
+              {:else}
+                <Badge variant="secondary" class="text-xs">Off Budget</Badge>
+                <p class="text-sm text-muted-foreground">Tracked for net worth only</p>
+              {/if}
+            </div>
+          </div>
         </div>
 
         <!-- Notes -->

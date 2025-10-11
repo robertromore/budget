@@ -3,11 +3,16 @@
   import * as Card from "$lib/components/ui/card";
   import {Badge} from "$lib/components/ui/badge";
   import * as Tabs from "$lib/components/ui/tabs";
-  import ChartPlaceholder from "$lib/components/ui/chart-placeholder.svelte";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
   import {calculateActualSpent} from "$lib/utils/budget-calculations";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
+
+  // LayerChart imports
+  import { Chart, Svg, Area, Spline, Axis, Grid, Highlight } from "layerchart";
+  import ChartContainer from "$lib/components/ui/chart/chart-container.svelte";
+  import { colorUtils } from "$lib/utils/colors";
+  import { pie, arc as d3arc } from "d3-shape";
 
   interface Props {
     budgets: BudgetWithRelations[];
@@ -331,7 +336,89 @@
           </Card.Description>
         </Card.Header>
         <Card.Content>
-          <ChartPlaceholder class="h-[300px]" title="Spending Trends Chart" />
+          {#if aggregateData && aggregateData.combinedTrend.length > 0}
+            <ChartContainer config={progressChartConfig} class="h-[300px] w-full">
+              <Chart
+                data={aggregateData.combinedTrend}
+                x="day"
+                y="allocated"
+                yDomain={[0, null]}
+                padding={{ left: 48, bottom: 24, right: 12, top: 12 }}
+                tooltip={{ mode: 'bisect-x' }}
+              >
+                <Svg>
+                  <Grid class="stroke-muted/20" />
+
+                  <Axis
+                    placement="left"
+                    label="Amount ($)"
+                    format={(value: number) => currencyFormatter.format(value).replace('$', '')}
+                    labelProps={{ class: "text-xs fill-muted-foreground" }}
+                  />
+                  <Axis
+                    placement="bottom"
+                    label="Day of Month"
+                    labelProps={{ class: "text-xs fill-muted-foreground" }}
+                  />
+
+                  <!-- Allocated budget line (target) -->
+                  <Spline
+                    y="allocated"
+                    class="stroke-2"
+                    style="stroke: {colorUtils.getChartColor(0)}; fill: none; opacity: 0.5;"
+                  />
+
+                  <!-- Actual spending area and line -->
+                  <Area
+                    y="spent"
+                    style="fill: {colorUtils.getFinancialColor('negative')}; opacity: 0.3;"
+                  />
+                  <Spline
+                    y="spent"
+                    class="stroke-2"
+                    style="stroke: {colorUtils.getFinancialColor('negative')}; fill: none;"
+                  />
+
+                  <Highlight points lines>
+                    {#snippet tooltip({ data })}
+                      <div class="bg-background/95 backdrop-blur-sm border shadow-xl px-3 py-2 rounded-lg pointer-events-none">
+                        <div class="space-y-1 text-xs">
+                          <div class="flex items-center justify-between gap-4">
+                            <span class="text-muted-foreground">Day {data.day}</span>
+                          </div>
+                          <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-1.5">
+                              <div class="h-2 w-2 rounded-full" style="background-color: {colorUtils.getChartColor(0)}"></div>
+                              <span class="text-muted-foreground">Allocated</span>
+                            </div>
+                            <span class="font-mono font-medium">{currencyFormatter.format(data.allocated)}</span>
+                          </div>
+                          <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-1.5">
+                              <div class="h-2 w-2 rounded-full" style="background-color: {colorUtils.getFinancialColor('negative')}"></div>
+                              <span class="text-muted-foreground">Spent</span>
+                            </div>
+                            <span class="font-mono font-medium">{currencyFormatter.format(data.spent)}</span>
+                          </div>
+                          <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-1.5">
+                              <div class="h-2 w-2 rounded-full" style="background-color: {colorUtils.getFinancialColor('positive')}"></div>
+                              <span class="text-muted-foreground">Remaining</span>
+                            </div>
+                            <span class="font-mono font-medium">{currencyFormatter.format(data.remaining)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    {/snippet}
+                  </Highlight>
+                </Svg>
+              </Chart>
+            </ChartContainer>
+          {:else}
+            <div class="flex h-[300px] items-center justify-center text-muted-foreground">
+              No data available for spending trends
+            </div>
+          {/if}
         </Card.Content>
       </Card.Root>
     </Tabs.Content>
@@ -348,7 +435,71 @@
             </Card.Description>
           </Card.Header>
           <Card.Content>
-            <ChartPlaceholder class="h-[250px]" title="Budget Allocation Chart" />
+            {#if donutChartData.length > 0}
+              {@const pieGenerator = pie<typeof donutChartData[0]>().value(d => d.value).padAngle(0.02)}
+              {@const arcGenerator = d3arc<any, any>().innerRadius(60).outerRadius(90)}
+              {@const arcs = pieGenerator(donutChartData)}
+
+              <div class="h-[250px] w-full flex items-center justify-center">
+                <svg viewBox="-125 -125 250 250" class="h-full w-full max-h-[250px] max-w-[250px]">
+                  <g>
+                    {#each arcs as arc, i}
+                      {@const path = arcGenerator(arc as any)}
+                      {@const item = arc.data}
+                      {#if path}
+                        <path
+                          d={path}
+                          fill={item.color}
+                          stroke="white"
+                          stroke-width="2"
+                          class="transition-all hover:opacity-80 cursor-pointer"
+                          role="img"
+                          aria-label="{item.name}: {currencyFormatter.format(item.value)} allocated"
+                        >
+                          <title>
+                            {item.name}: {currencyFormatter.format(item.value)} allocated, {currencyFormatter.format(item.spent)} spent
+                          </title>
+                        </path>
+                      {/if}
+                    {/each}
+                  </g>
+
+                  <!-- Center text showing total -->
+                  <g>
+                    <text
+                      x="0"
+                      y="-5"
+                      text-anchor="middle"
+                      class="fill-muted-foreground text-xs"
+                    >
+                      Total
+                    </text>
+                    <text
+                      x="0"
+                      y="10"
+                      text-anchor="middle"
+                      class="fill-foreground text-sm font-semibold"
+                    >
+                      {currencyFormatter.format(aggregateData?.totalAllocated || 0)}
+                    </text>
+                  </g>
+                </svg>
+              </div>
+
+              <!-- Legend below the chart -->
+              <div class="mt-4 flex flex-wrap gap-3 justify-center">
+                {#each donutChartData as item}
+                  <div class="flex items-center gap-1.5 text-xs">
+                    <div class="h-2 w-2 rounded-full" style="background-color: {item.color}"></div>
+                    <span class="text-muted-foreground">{item.name}</span>
+                  </div>
+                {/each}
+              </div>
+            {:else}
+              <div class="flex h-[250px] items-center justify-center text-muted-foreground">
+                No budget allocation data available
+              </div>
+            {/if}
           </Card.Content>
         </Card.Root>
 

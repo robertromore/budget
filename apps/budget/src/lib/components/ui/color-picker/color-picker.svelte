@@ -122,9 +122,12 @@
 
   // Update custom input when value changes externally
   $effect(() => {
-    if (value && isValidHexColor(value)) {
+    if (value && isValidHexColor(value) && value !== customInput) {
       customInput = value;
       initializeFromHex(value);
+    } else if (!value) {
+      customInput = '#000000';
+      initializeFromHex('#000000');
     }
   });
 

@@ -12,17 +12,12 @@ import {
   BudgetForecastService,
   BudgetTemplateService,
 } from "$lib/server/domains/budgets";
+import {BudgetIntelligenceService} from "$lib/server/domains/budgets/intelligence-service";
 import {PeriodManager} from "$lib/server/domains/budgets/period-manager";
 import {publicProcedure, t} from "$lib/trpc";
 import {TRPCError} from "@trpc/server";
 import {z} from "zod";
-import {
-  ConflictError,
-  DatabaseError,
-  DomainError,
-  NotFoundError,
-  ValidationError,
-} from "$lib/server/shared/types/errors";
+import {translateDomainError} from "$lib/trpc/shared/errors";
 
 const budgetIdSchema = z.object({
   id: z.number().int().positive(),
@@ -203,6 +198,7 @@ const periodService = new BudgetPeriodService();
 const transactionService = new BudgetTransactionService();
 const periodManager = new PeriodManager();
 const templateService = new BudgetTemplateService();
+const intelligenceService = new BudgetIntelligenceService();
 
 export const budgetRoutes = t.router({
   count: publicProcedure.query(async () => {
@@ -221,6 +217,51 @@ export const budgetRoutes = t.router({
       throw translateDomainError(error);
     }
   }),
+  suggestBudgets: publicProcedure
+    .input(
+      z.object({
+        accountId: z.number().int().positive(),
+        categoryId: z.number().int().positive().optional().nullable(),
+        payeeId: z.number().int().positive().optional().nullable(),
+        amount: z.number(),
+        date: z.string(),
+      })
+    )
+    .query(async ({input}) => {
+      try {
+        return await intelligenceService.detectBudgetsForTransaction({
+          accountId: input.accountId,
+          categoryId: input.categoryId ?? null,
+          payeeId: input.payeeId ?? null,
+          amount: input.amount,
+          date: input.date,
+        });
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+  suggestBudgetsBulk: publicProcedure
+    .input(
+      z.object({
+        transactions: z.array(
+          z.object({
+            id: z.number().int().positive().optional(),
+            accountId: z.number().int().positive(),
+            categoryId: z.number().int().positive().optional().nullable(),
+            payeeId: z.number().int().positive().optional().nullable(),
+            amount: z.number(),
+            date: z.string(),
+          })
+        ),
+      })
+    )
+    .query(async ({input}) => {
+      try {
+        return await intelligenceService.detectBudgetsForTransactions(input.transactions);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
   get: publicProcedure.input(budgetIdSchema).query(async ({input}) => {
     try {
       return await budgetService.getBudget(input.id);
@@ -524,6 +565,119 @@ export const budgetRoutes = t.router({
     .mutation(async ({input}) => {
       try {
         return await budgetService.generateBulkDeficitRecovery(input.budgetId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getRolloverSummary: publicProcedure
+    .input(z.object({
+      periodId: z.number().int().positive(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.getEnvelopeRolloverSummary(input.periodId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getRolloverHistory: publicProcedure
+    .input(z.object({
+      envelopeId: z.number().int().positive(),
+      limit: z.number().int().positive().optional(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.getEnvelopeRolloverHistory(input.envelopeId, input.limit);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getBudgetRolloverHistory: publicProcedure
+    .input(z.object({
+      budgetId: z.number().int().positive(),
+      limit: z.number().int().positive().optional(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.getBudgetRolloverHistory(input.budgetId, input.limit);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  estimateRolloverImpact: publicProcedure
+    .input(z.object({
+      fromPeriodId: z.number().int().positive(),
+      toPeriodId: z.number().int().positive(),
+      policy: z.object({
+        maxRolloverMonths: z.number().int().positive().optional(),
+        resetOnLimitExceeded: z.boolean().optional(),
+        preserveDeficits: z.boolean().optional(),
+        rolloverDeficits: z.boolean().optional(),
+        emergencyFundPriority: z.boolean().optional(),
+        autoRefillAmount: z.number().optional(),
+      }).optional(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.estimateEnvelopeRolloverImpact(
+          input.fromPeriodId,
+          input.toPeriodId
+        );
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  previewRollover: publicProcedure
+    .input(z.object({
+      fromPeriodId: z.number().int().positive(),
+      toPeriodId: z.number().int().positive(),
+    }))
+    .query(async ({input}) => {
+      try {
+        return await budgetService.previewEnvelopeRollover(
+          input.fromPeriodId,
+          input.toPeriodId
+        );
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  updateRolloverSettings: publicProcedure
+    .input(z.object({
+      budgetId: z.number().int().positive(),
+      settings: z.object({
+        enabled: z.boolean().optional(),
+        maxRolloverPercentage: z.number().int().min(0).max(100).optional(),
+        rolloverLimitMonths: z.number().int().positive().optional(),
+        deficitRecoveryMode: z.enum(['immediate', 'gradual', 'manual']).optional(),
+        autoTransition: z.boolean().optional(),
+        notificationEnabled: z.boolean().optional(),
+      }),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        const budget = await budgetService.getById(input.budgetId);
+        if (!budget) {
+          throw new NotFoundError("Budget", input.budgetId);
+        }
+
+        const updatedMetadata = {
+          ...budget.metadata,
+          rolloverSettings: {
+            ...(budget.metadata?.rolloverSettings ?? {}),
+            ...input.settings,
+          },
+        };
+
+        return await budgetService.update(input.budgetId, {
+          metadata: updatedMetadata,
+        });
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -893,35 +1047,99 @@ export const budgetRoutes = t.router({
         throw translateDomainError(error);
       }
     }),
+
+  seedSystemBudgetTemplates: publicProcedure.mutation(async () => {
+    try {
+      await templateService.seedSystemTemplates();
+      return {success: true, message: "System budget templates seeded successfully"};
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  }),
+
+  // Period Analytics Routes
+  getPeriodAnalytics: publicProcedure
+    .input(z.object({periodId: z.number().int().positive()}))
+    .query(async ({input}) => {
+      try {
+        const periodManager = new PeriodManager();
+        return await periodManager.getPeriodAnalytics(input.periodId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  comparePeriods: publicProcedure
+    .input(
+      z.object({
+        currentPeriodId: z.number().int().positive(),
+        previousPeriodId: z.number().int().positive(),
+      })
+    )
+    .query(async ({input}) => {
+      try {
+        const periodManager = new PeriodManager();
+        return await periodManager.comparePeriods(input.currentPeriodId, input.previousPeriodId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getPeriodHistory: publicProcedure
+    .input(
+      z.object({
+        budgetId: z.number().int().positive(),
+        limit: z.number().int().positive().max(50).optional().default(10),
+      })
+    )
+    .query(async ({input}) => {
+      try {
+        const periodManager = new PeriodManager();
+        return await periodManager.getPeriodHistory(input.budgetId, input.limit);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  generateNextPeriod: publicProcedure
+    .input(z.object({templateId: z.number().int().positive()}))
+    .mutation(async ({input}) => {
+      try {
+        const periodManager = new PeriodManager();
+        const periods = await periodManager.createPeriodsAutomatically(input.templateId, {
+          lookAheadMonths: 1,
+          autoCreateEnvelopes: true,
+        });
+        return periods[0] || null;
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  updatePeriodInstance: publicProcedure
+    .input(
+      z.object({
+        instanceId: z.number().int().positive(),
+        allocatedAmount: z.number().nonnegative(),
+      })
+    )
+    .mutation(async ({input}) => {
+      try {
+        const updated = await db
+          .update(budgetPeriodInstances)
+          .set({
+            allocatedAmount: input.allocatedAmount,
+          })
+          .where(eq(budgetPeriodInstances.id, input.instanceId))
+          .returning();
+
+        if (!updated || updated.length === 0) {
+          throw new NotFoundError('Period instance not found');
+        }
+
+        return updated[0];
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
 });
-
-function translateDomainError(error: unknown): TRPCError {
-  if (error instanceof TRPCError) {
-    return error;
-  }
-
-  if (error instanceof ValidationError) {
-    return new TRPCError({code: "BAD_REQUEST", message: error.message});
-  }
-
-  if (error instanceof NotFoundError) {
-    return new TRPCError({code: "NOT_FOUND", message: error.message});
-  }
-
-  if (error instanceof ConflictError) {
-    return new TRPCError({code: "CONFLICT", message: error.message});
-  }
-
-  if (error instanceof DomainError && !(error instanceof DatabaseError)) {
-    return new TRPCError({code: "BAD_REQUEST", message: error.message});
-  }
-
-  if (error instanceof DatabaseError) {
-    return new TRPCError({code: "INTERNAL_SERVER_ERROR", message: error.message});
-  }
-
-  return new TRPCError({
-    code: "INTERNAL_SERVER_ERROR",
-    message: (error as Error)?.message ?? "Unknown error",
-  });
-}

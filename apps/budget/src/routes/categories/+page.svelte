@@ -7,20 +7,22 @@ import Plus from '@lucide/svelte/icons/plus';
 import Tag from '@lucide/svelte/icons/tag';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
+import FolderTree from '@lucide/svelte/icons/folder-tree';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import {
   deleteCategoryDialog,
   deleteCategoryId,
 } from '$lib/states/ui/categories.svelte';
 import {categorySearchState} from '$lib/states/ui/category-search.svelte';
-import CategorySearchToolbar from '$lib/components/categories/category-search-toolbar.svelte';
-import CategorySearchResults from '$lib/components/categories/category-search-results.svelte';
-import {CategoryTreeView, type CategoryTreeNode} from '$lib/components/categories';
+import EntitySearchToolbar from '$lib/components/shared/search/entity-search-toolbar.svelte';
+import CategorySearchFilters from './(components)/search/category-search-filters.svelte';
+import CategorySearchResults from './(components)/search/category-search-results.svelte';
+import CategoryTreeView from './(components)/tree/category-tree-view.svelte';
+import type {CategoryTreeNode} from '$lib/types';
 import {goto} from '$app/navigation';
 import type {Category} from '$lib/schema';
 import {reorderCategories, getCategoryHierarchyTree, bulkDeleteCategories as bulkDeleteCategoriesMutation, listCategoriesWithStats} from '$lib/query/categories';
 import type {CategoryWithStats} from '$lib/server/domains/categories/repository';
-import FolderTree from '@lucide/svelte/icons/folder-tree';
 import {rpc} from '$lib/query';
 
 const categoriesState = $derived(CategoriesState.get());
@@ -79,11 +81,20 @@ const sortedCategoriesArray = $derived.by(() => {
 
 // Computed values
 const displayedCategories = $derived.by(() => {
-  return search.isSearchActive() ? searchResults : sortedCategoriesArray;
+  return search.isSearchActive ? searchResults : sortedCategoriesArray;
 });
 
+// Sort options for toolbar
+const categorySortOptions = [
+  {value: 'name' as const, label: 'Name', order: 'asc' as const},
+  {value: 'name' as const, label: 'Name', order: 'desc' as const},
+  {value: 'lastTransaction' as const, label: 'Last Transaction', order: 'desc' as const},
+  {value: 'totalAmount' as const, label: 'Total Amount', order: 'desc' as const},
+  {value: 'created' as const, label: 'Created', order: 'desc' as const},
+];
+
 const shouldShowNoCategories = $derived.by(() => {
-  return !search.isSearchActive() && hasNoCategories;
+  return !search.isSearchActive && hasNoCategories;
 });
 
 // Dialog state
@@ -97,7 +108,7 @@ let isDeletingBulk = $state(false);
 
 // Client-side search and filter function
 const performSearch = () => {
-  if (!search.isSearchActive()) {
+  if (!search.isSearchActive) {
     searchResults = [];
     isSearching = false;
     return;
@@ -288,7 +299,7 @@ const handleReorder = async (reorderedCategories: Category[]) => {
 const toggleReorderMode = () => {
   isReorderMode = !isReorderMode;
   // Clear search when entering reorder mode
-  if (isReorderMode && search.isSearchActive()) {
+  if (isReorderMode && search.isSearchActive) {
     search.clearAllFilters();
   }
 };
@@ -296,7 +307,7 @@ const toggleReorderMode = () => {
 const toggleHierarchyView = () => {
   showHierarchyView = !showHierarchyView;
   // Clear search when entering hierarchy view
-  if (showHierarchyView && search.isSearchActive()) {
+  if (showHierarchyView && search.isSearchActive) {
     search.clearAllFilters();
   }
 };
@@ -317,7 +328,7 @@ const addSubcategory = (parent: CategoryTreeNode) => {
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Categories</h1>
       <p class="text-muted-foreground">
-        {#if search.isSearchActive()}
+        {#if search.isSearchActive}
           {searchResults.length} of {categoriesArray.length} categories
         {:else}
           {categoriesArray.length} categories total
@@ -325,40 +336,11 @@ const addSubcategory = (parent: CategoryTreeNode) => {
       </p>
     </div>
     <div class="flex items-center gap-2">
-      <Button variant="outline" href="/categories/analytics" disabled={isReorderMode || showHierarchyView}>
+      <Button variant="outline" href="/categories/analytics">
         <BarChart3 class="mr-2 h-4 w-4" />
         Analytics Dashboard
       </Button>
-      <ButtonGroup.ButtonGroup>
-        <Button
-          variant={!showHierarchyView && !isReorderMode ? 'default' : 'outline'}
-          onclick={() => {
-            if (showHierarchyView) toggleHierarchyView();
-            if (isReorderMode) toggleReorderMode();
-          }}
-          disabled={hasNoCategories}
-        >
-          <Tag class="mr-2 h-4 w-4" />
-          Browse
-        </Button>
-        <Button
-          variant={showHierarchyView ? 'default' : 'outline'}
-          onclick={toggleHierarchyView}
-          disabled={hasNoCategories}
-        >
-          <FolderTree class="mr-2 h-4 w-4" />
-          Hierarchy
-        </Button>
-        <Button
-          variant={isReorderMode ? 'default' : 'outline'}
-          onclick={toggleReorderMode}
-          disabled={hasNoCategories || showHierarchyView || search.viewMode === 'list'}
-        >
-          <ArrowUpDown class="mr-2 h-4 w-4" />
-          Reorder
-        </Button>
-      </ButtonGroup.ButtonGroup>
-      <Button href="/categories/new" disabled={isReorderMode || showHierarchyView}>
+      <Button href="/categories/new">
         <Plus class="mr-2 h-4 w-4" />
         Add Category
       </Button>
@@ -369,21 +351,30 @@ const addSubcategory = (parent: CategoryTreeNode) => {
   {#if !showHierarchyView}
     <div class="space-y-4">
       <!-- Search Toolbar -->
-      <CategorySearchToolbar
+      <EntitySearchToolbar
         bind:searchQuery={search.query}
         bind:filters={search.filters}
         bind:viewMode={search.viewMode}
         bind:sortBy={search.sortBy}
         bind:sortOrder={search.sortOrder}
+        searchPlaceholder="Search categories..."
+        sortOptions={categorySortOptions}
+        activeFilterCount={Object.keys(search.filters).length}
         onSearchChange={(query) => search.updateQuery(query)}
         onFiltersChange={(filters) => search.updateFilters(filters)}
-        onViewModeChange={(mode) => search.viewMode = mode}
+        onViewModeChange={(mode) => (search.viewMode = mode)}
         onSortChange={(sortBy, sortOrder) => {
           search.sortBy = sortBy;
           search.sortOrder = sortOrder;
         }}
-        onClearAll={() => search.clearAllFilters()}
-      />
+        onClearAll={() => search.clearAllFilters()}>
+        {#snippet filterContent()}
+          <CategorySearchFilters
+            filters={search.filters}
+            onFilterChange={(key, value) => search.updateFilter(key, value)}
+          />
+        {/snippet}
+      </EntitySearchToolbar>
     </div>
   {/if}
 
@@ -430,7 +421,7 @@ const addSubcategory = (parent: CategoryTreeNode) => {
       isLoading={isSearching}
       searchQuery={search.query}
       viewMode={search.viewMode}
-      isReorderMode={isReorderMode}
+      {isReorderMode}
       onView={viewCategory}
       onEdit={editCategory}
       onDelete={deleteCategory}

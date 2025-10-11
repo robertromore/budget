@@ -51,21 +51,19 @@ class CategorySearchStateManager {
   set sortOrder(value: 'asc' | 'desc') { this.sortOrderState.value = value; }
 
   // Computed properties
-  hasActiveFilters = $derived(() => {
+  hasActiveFilters = $derived.by(() => {
     return Object.keys(this.filters).length > 0;
   });
 
-  hasSearchTerm = $derived(() => {
+  hasSearchTerm = $derived.by(() => {
     return this.query.trim().length > 0;
   });
 
-  isSearchActive = $derived(() => {
-    return this.hasSearchTerm() || this.hasActiveFilters();
+  isSearchActive = $derived.by(() => {
+    return this.hasSearchTerm || this.hasActiveFilters;
   });
 
-  displayedResultsCount = $derived(() => {
-    return this.results.length;
-  });
+  displayedResultsCount = $derived(this.results.length);
 
   // Methods
   updateQuery(newQuery: string) {

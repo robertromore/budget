@@ -3,12 +3,21 @@ import {Button} from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Tabs from '$lib/components/ui/tabs';
 import {Badge} from '$lib/components/ui/badge';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import BudgetProgress from '$lib/components/budgets/budget-progress.svelte';
-import BudgetAnalyticsDashboard from '$lib/components/budgets/budget-analytics-dashboard.svelte';
-import PeriodAutomation from '$lib/components/budgets/period-automation.svelte';
-import BudgetRolloverManager from '$lib/components/budgets/budget-rollover-manager.svelte';
-import EnvelopeBudgetManager from '$lib/components/budgets/envelope-budget-manager.svelte';
-import {BudgetBurndownChart, GoalProgressTracker, BudgetForecastDisplay, BudgetPeriodPicker} from '$lib/components/budgets';
+import BudgetAnalyticsDashboard from '../(components)/analytics/budget-analytics-dashboard.svelte';
+import PeriodAutomation from '../(components)/managers/period-automation.svelte';
+import BudgetRolloverManager from '../(components)/managers/budget-rollover-manager.svelte';
+import EnvelopeBudgetManager from '../(components)/managers/envelope-budget-manager.svelte';
+import BudgetBurndownChart from '../(components)/analytics/budget-burndown-chart.svelte';
+import GoalProgressTracker from '../(components)/forecast/goal-progress-tracker.svelte';
+import BudgetForecastDisplay from '../(components)/forecast/budget-forecast-display.svelte';
+import {BudgetPeriodPicker} from '$lib/components/budgets';
+import BudgetPeriodInstanceManager from '$lib/components/budgets/budget-period-instance-manager.svelte';
+import BudgetPeriodManager from '$lib/components/budgets/budget-period-manager.svelte';
+import PeriodTemplateSheet from '../(components)/sheets/period-template-sheet.svelte';
+import PeriodInstanceEditSheet from '../(components)/sheets/period-instance-edit-sheet.svelte';
+import PeriodMaintenanceSheet from '../(components)/sheets/period-maintenance-sheet.svelte';
 import {currencyFormatter} from '$lib/utils/formatters';
 import {calculateActualSpent, calculateAllocated} from '$lib/utils/budget-calculations';
 import {
@@ -19,7 +28,12 @@ import {
   updateEnvelopeAllocation,
   transferEnvelopeFunds,
   processEnvelopeRollover,
-  executeDeficitRecovery
+  executeDeficitRecovery,
+  generateNextPeriod,
+  getPeriodAnalytics,
+  comparePeriods,
+  getPeriodHistory,
+  deletePeriodTemplate
 } from '$lib/query/budgets';
 import {listCategories} from '$lib/query/categories';
 import {trpc} from '$lib/trpc/client';
@@ -44,9 +58,33 @@ const isEnvelopeBudget = $derived(budget?.type === 'category-envelope');
 
 // Period management state
 let selectedPeriodId = $state<string>("");
+let periodTemplateSheetOpen = $state(false);
+let periodInstanceEditSheetOpen = $state(false);
+let periodMaintenanceSheetOpen = $state(false);
+let deleteTemplateDialogOpen = $state(false);
+let selectedPeriodInstance = $state<typeof periods[0] | null>(null);
 const firstTemplateId = $derived(budget?.periodTemplates?.[0]?.id);
 let periodsQuery = $derived(firstTemplateId ? listPeriodInstances(firstTemplateId).options() : null);
 let periods = $derived(periodsQuery?.data ?? []);
+
+// Period analytics data
+const currentPeriod = $derived(periods[0]);
+const previousPeriod = $derived(periods[1]);
+const currentPeriodAnalyticsQuery = $derived.by(() => {
+  if (!currentPeriod) return null;
+  return getPeriodAnalytics(currentPeriod.id).options();
+});
+const currentPeriodAnalytics = $derived(currentPeriodAnalyticsQuery?.data);
+const periodComparisonQuery = $derived.by(() => {
+  if (!currentPeriod || !previousPeriod) return null;
+  return comparePeriods(currentPeriod.id, previousPeriod.id).options();
+});
+const periodComparison = $derived(periodComparisonQuery?.data);
+const periodHistoryQuery = $derived.by(() => {
+  if (!budget?.id) return null;
+  return getPeriodHistory(budget.id, 10).options();
+});
+const periodHistoryData = $derived(periodHistoryQuery?.data ?? []);
 
 // Envelope budget data
 const envelopesQuery = $derived.by(() => {
@@ -64,6 +102,9 @@ const categories = $derived(categoriesQuery?.data ?? []);
 // Envelope mutations
 const createEnvelopeMutation = createEnvelopeAllocation;
 const transferFundsMutation = transferEnvelopeFunds;
+
+// Period mutations
+const deletePeriodTemplateMutation = deletePeriodTemplate.options();
 
 async function handleEnvelopeUpdate(envelopeId: number, newAmount: number) {
   try {
@@ -146,6 +187,76 @@ async function handleAddEnvelope(categoryId: number, amount: number) {
   }
 }
 
+function handlePeriodTemplateCreated() {
+  // Refresh budget data to get updated period templates
+  budgetQuery.refetch?.();
+}
+
+// Period instance handlers
+async function handleGenerateNext() {
+  if (!firstTemplateId) return;
+  try {
+    await generateNextPeriod.execute(firstTemplateId);
+    periodsQuery?.refetch?.();
+  } catch (error) {
+    console.error('Failed to generate next period:', error);
+  }
+}
+
+function handleEditPeriod(instanceId: number) {
+  const instance = periods.find(p => p.id === instanceId);
+  if (instance) {
+    selectedPeriodInstance = instance;
+    periodInstanceEditSheetOpen = true;
+  }
+}
+
+function handleEditTemplate() {
+  periodTemplateSheetOpen = true;
+}
+
+function handleDeleteTemplate() {
+  deleteTemplateDialogOpen = true;
+}
+
+async function confirmDeleteTemplate() {
+  if (!firstTemplateId) return;
+
+  try {
+    await deletePeriodTemplateMutation.mutateAsync(firstTemplateId);
+    deleteTemplateDialogOpen = false;
+    await budgetQuery?.refetch?.();
+  } catch (error) {
+    console.error('Failed to delete period template:', error);
+  }
+}
+
+async function handleCreatePeriod(config: any) {
+  if (!firstTemplateId) return;
+  try {
+    const periodManager = await import('$lib/server/domains/budgets/period-manager');
+    // This will be implemented when backend endpoint is available
+    console.log('Create periods with config:', config);
+    periodsQuery?.refetch?.();
+  } catch (error) {
+    console.error('Failed to create periods:', error);
+  }
+}
+
+function handleScheduleMaintenance() {
+  periodMaintenanceSheetOpen = true;
+}
+
+function handlePeriodInstanceUpdated() {
+  periodsQuery?.refetch?.();
+  budgetQuery.refetch?.();
+}
+
+function handleMaintenanceScheduled() {
+  // Refresh any relevant data
+  budgetQuery.refetch?.();
+}
+
 // Extract allocated amount from metadata or period instance
 const allocatedAmount = $derived(budget ? calculateAllocated(budget) : 0);
 
@@ -208,6 +319,12 @@ function getStatus() {
       </div>
     </div>
     <div class="flex items-center gap-2">
+      {#if isEnvelopeBudget && !firstTemplateId}
+        <Button variant="default" onclick={() => periodTemplateSheetOpen = true}>
+          <Calendar class="mr-2 h-4 w-4" />
+          Setup Periods
+        </Button>
+      {/if}
       <Button variant="outline" href="/budgets/{budget.slug}/edit">
         <Edit class="mr-2 h-4 w-4" />
         Edit
@@ -317,40 +434,60 @@ function getStatus() {
 
     <!-- Analytics Tab -->
     <Tabs.Content value="analytics" class="space-y-6">
-      <BudgetForecastDisplay budgetId={budget.id} showAutoAllocate={true} />
+      <BudgetForecastDisplay budgetId={budget.id} showAutoAllocate={true}></BudgetForecastDisplay>
 
-      <BudgetAnalyticsDashboard budgets={[budget]} />
+      <BudgetAnalyticsDashboard budgets={[budget]}></BudgetAnalyticsDashboard>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BudgetBurndownChart budget={budget} />
-        <GoalProgressTracker budget={budget} />
+        <BudgetBurndownChart budget={budget}></BudgetBurndownChart>
+        <GoalProgressTracker budget={budget}></GoalProgressTracker>
       </div>
+
+      {#if currentPeriod && currentPeriodAnalytics}
+        <BudgetPeriodManager
+          currentPeriod={currentPeriod}
+          analytics={currentPeriodAnalytics}
+          comparison={periodComparison}
+          periodHistory={periodHistoryData}
+          onCreatePeriod={handleCreatePeriod}
+          onScheduleMaintenance={handleScheduleMaintenance}
+        />
+      {/if}
     </Tabs.Content>
 
     <!-- Period Management Tab -->
     <Tabs.Content value="periods" class="space-y-6">
-      {#if firstTemplateId}
+      {#if firstTemplateId && budget.periodTemplates?.[0]}
+        <BudgetPeriodInstanceManager
+          budgetId={budget.id}
+          budgetName={budget.name}
+          template={budget.periodTemplates[0]}
+          instances={periods}
+          onGenerateNext={handleGenerateNext}
+          onEditPeriod={handleEditPeriod}
+          onEditTemplate={handleEditTemplate}
+          onDeleteTemplate={handleDeleteTemplate}
+        />
+      {:else}
         <Card.Root>
-          <Card.Header>
-            <Card.Title>Period Selection</Card.Title>
-            <Card.Description>Select and navigate between budget periods</Card.Description>
-          </Card.Header>
-          <Card.Content>
-            <BudgetPeriodPicker
-              periods={periods}
-              bind:selectedId={selectedPeriodId}
-              label="Budget Period"
-              loading={periodsQuery?.isLoading ?? false}
-            />
+          <Card.Content class="py-16 text-center">
+            <p class="text-lg font-medium mb-2">No Period Template</p>
+            <p class="text-sm text-muted-foreground mb-6">
+              Set up a period template to start tracking budget periods over time.
+            </p>
+            <Button onclick={() => periodTemplateSheetOpen = true}>
+              <Calendar class="mr-2 h-4 w-4" />
+              Create Period Template
+            </Button>
           </Card.Content>
         </Card.Root>
       {/if}
-      <PeriodAutomation budget={budget} />
+      <PeriodAutomation budget={budget}></PeriodAutomation>
     </Tabs.Content>
 
     <!-- Rollover Tab -->
     <Tabs.Content value="rollover">
-      <BudgetRolloverManager budgets={[budget]} />
+      <BudgetRolloverManager budgets={[budget]}></BudgetRolloverManager>
     </Tabs.Content>
 
     <!-- Envelopes Tab (conditional) -->
@@ -374,4 +511,46 @@ function getStatus() {
     {/if}
   </Tabs.Root>
 </div>
+{/if}
+
+<!-- Period Management Sheets -->
+{#if budget}
+  <PeriodTemplateSheet
+    bind:open={periodTemplateSheetOpen}
+    budgetId={budget.id}
+    onSuccess={handlePeriodTemplateCreated}
+  />
+
+  <PeriodInstanceEditSheet
+    bind:open={periodInstanceEditSheetOpen}
+    instance={selectedPeriodInstance}
+    onSuccess={handlePeriodInstanceUpdated}
+  />
+
+  <PeriodMaintenanceSheet
+    bind:open={periodMaintenanceSheetOpen}
+    budgetId={budget.id}
+    onSuccess={handleMaintenanceScheduled}
+  />
+
+  <!-- Delete Template Confirmation Dialog -->
+  <AlertDialog.Root bind:open={deleteTemplateDialogOpen}>
+    <AlertDialog.Content>
+      <AlertDialog.Header>
+        <AlertDialog.Title>Delete Period Template</AlertDialog.Title>
+        <AlertDialog.Description>
+          Are you sure you want to delete this period template? This will remove the automated period generation configuration, but existing period instances will be kept. This action cannot be undone.
+        </AlertDialog.Description>
+      </AlertDialog.Header>
+      <AlertDialog.Footer>
+        <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+        <AlertDialog.Action
+          onclick={confirmDeleteTemplate}
+          class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        >
+          Delete Template
+        </AlertDialog.Action>
+      </AlertDialog.Footer>
+    </AlertDialog.Content>
+  </AlertDialog.Root>
 {/if}

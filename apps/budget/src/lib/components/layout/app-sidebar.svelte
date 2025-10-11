@@ -1,8 +1,13 @@
 <script lang="ts">
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+import CalendarSync from '@lucide/svelte/icons/calendar-sync';
 import Ellipsis from '@lucide/svelte/icons/ellipsis';
+import HandCoins from '@lucide/svelte/icons/hand-coins';
 import Plus from '@lucide/svelte/icons/plus';
+import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
+import Tags from '@lucide/svelte/icons/tags';
+import Wallet from '@lucide/svelte/icons/wallet';
 import {goto} from '$app/navigation';
 import {
   deleteAccountDialog,
@@ -22,10 +27,13 @@ import {currencyFormatter} from '$lib/utils/formatters';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Receipt from '@lucide/svelte/icons/receipt';
 import {Badge} from '$lib/components/ui/badge';
+import {formatAccountBalance, getBalanceColorClass} from '$lib/utils/account-display';
+import {isDebtAccount} from '$lib/schema/accounts';
 
 const accountsState = $derived(AccountsState.get());
 const accounts = $derived(accountsState.sorted);
 const totalBalance = $derived(accountsState.getTotalBalance());
+const onBudgetBalance = $derived(accountsState.getOnBudgetBalance());
 
 const _deleteAccountDialog = $derived(deleteAccountDialog);
 const _deleteAccountId = $derived(deleteAccountId);
@@ -45,20 +53,83 @@ const _deleteBudgetId = $derived(deleteBudgetId);
 <Sidebar.Root>
   <Sidebar.Content>
     <Sidebar.Group>
+      <Sidebar.GroupContent>
+        <Sidebar.Menu>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({props})}
+                <a href="/" {...props} class="flex items-center gap-3">
+                  <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
+                  <span class="font-medium">Dashboard</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({props})}
+                <a href="/budgets" {...props} class="flex items-center gap-3">
+                  <Wallet class="h-4 w-4"></Wallet>
+                  <span class="font-medium">Budgets</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({props})}
+                <a href="/schedules" {...props} class="flex items-center gap-3">
+                  <CalendarSync class="h-4 w-4"></CalendarSync>
+                  <span class="font-medium">Schedules</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({props})}
+                <a href="/payees" {...props} class="flex items-center gap-3">
+                  <HandCoins class="h-4 w-4"></HandCoins>
+                  <span class="font-medium">Payees</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({props})}
+                <a href="/categories" {...props} class="flex items-center gap-3">
+                  <Tags class="h-4 w-4"></Tags>
+                  <span class="font-medium">Categories</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+
+    <Sidebar.Group>
       <Sidebar.GroupLabel>
-        <div class="flex items-center w-full">
+        <div class="flex flex-col w-full">
           <a href="/accounts">Accounts</a>
-          <div class="flex-1 flex justify-center">
-            <span class="text-xs font-medium"
-                  class:text-green-600={totalBalance > 0}
-                  class:text-red-600={totalBalance < 0}
-                  class:text-muted-foreground={totalBalance === 0}>
-              {currencyFormatter.format(totalBalance)}
-            </span>
-          </div>
         </div>
       </Sidebar.GroupLabel>
-      <AccountSortDropdown size="default" variant="outline" />
+      <div class="flex items-center justify-between text-xs px-2">
+        <span class="font-medium"
+              class:text-green-600={onBudgetBalance > 0}
+              class:text-red-600={onBudgetBalance < 0}
+              class:text-muted-foreground={onBudgetBalance === 0}
+              title="On-Budget Balance">
+          {currencyFormatter.format(onBudgetBalance)}
+        </span>
+        <span class="text-[10px] text-muted-foreground" title="Total Balance (including off-budget accounts)">
+          {currencyFormatter.format(totalBalance)} total
+        </span>
+      </div>
+      <!-- <div class="mt-2 px-2 w-full">
+        <AccountSortDropdown variant="outline" />
+      </div> -->
       <Sidebar.GroupAction
         title="Add Account"
         onclick={() => goto('/accounts/new')}>
@@ -70,7 +141,8 @@ const _deleteBudgetId = $derived(deleteBudgetId);
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
                 {#snippet child({props})}
-                  <a href="/accounts/{account.slug}" {...props} class="flex items-center gap-3 min-w-0 py-2">
+                  {@const formattedBalance = formatAccountBalance(account)}
+                  <a href="/accounts/{account.slug}" {...props} class="flex gap-3 min-w-0 py-2">
                     <!-- Account Icon with colored background -->
                     <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
                          style="background-color: {(account as any).accountColor ? `${(account as any).accountColor}15` : 'hsl(var(--muted))'}">
@@ -101,40 +173,45 @@ const _deleteBudgetId = $derived(deleteBudgetId);
                               <Badge variant="secondary" class="text-xs px-1.5 py-0">Closed</Badge>
                             {/if}
                           </div>
-                          {#if (account as any).accountNumber}
-                            <div class="text-xs text-muted-foreground font-mono">
-                              ••{(account as any).accountNumber.slice(-4)}
-                            </div>
-                          {/if}
+                          <div class="flex items-center gap-2 mt-0.5">
+                            {#if (account as any).accountType}
+                              <span class="text-xs text-muted-foreground capitalize">
+                                {(account as any).accountType.replace('_', ' ')}
+                              </span>
+                            {/if}
+                            {#if account.onBudget === false}
+                              <Badge variant="outline" class="text-xs px-1.5 py-0 border-muted-foreground/30 text-muted-foreground">Off Budget</Badge>
+                            {/if}
+                          </div>
                         </div>
                       </div>
 
                       <!-- Account Details -->
-                      <div class="flex items-center justify-between gap-1 mt-0.5">
-                        <div class="flex items-center gap-1 text-xs text-muted-foreground truncate">
-                          {#if (account as any).accountType}
-                            <span class="capitalize">
-                              {(account as any).accountType.replace('_', ' ')}
-                            </span>
-                          {/if}
-                          {#if (account as any).institution}
+                      <div class="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                        {#if (account as any).accountNumber}
+                          <span class="font-mono">
+                            ••{(account as any).accountNumber.slice(-4)}
+                          </span>
+                        {/if}
+                        {#if (account as any).institution}
+                          {#if (account as any).accountNumber}
                             <span>•</span>
-                            <span class="truncate">{(account as any).institution}</span>
                           {/if}
-                        </div>
+                          <span class="truncate">{(account as any).institution}</span>
+                        {/if}
+                      </div>
 
-                        <!-- Account Balance -->
-                        <span class="text-xs font-medium text-right whitespace-nowrap"
-                              class:text-green-600={account.balance && account.balance > 0}
-                              class:text-red-600={account.balance && account.balance < 0}
-                              class:text-muted-foreground={!account.balance || account.balance === 0}>
-                          {currencyFormatter.format(account.balance || 0)}
-                        </span>
+                      <!-- Account Balance -->
+                      <div class="text-xs font-medium text-right {getBalanceColorClass(formattedBalance.color)}">
+                        {currencyFormatter.format(formattedBalance.displayAmount)}
+                        {#if account.accountType && isDebtAccount(account.accountType)}
+                          <span class="text-[10px] ml-1 opacity-70">{formattedBalance.label}</span>
+                        {/if}
                       </div>
                     </div>
 
                     {#if account.name === 'Test Account'}
-                      <Receipt class="h-4 w-4 ml-2 flex-shrink-0" style="color: red;" />
+                      <Receipt class="h-4 w-4 ml-2 flex-shrink-0 text-destructive" />
                     {/if}
                   </a>
                 {/snippet}
@@ -166,7 +243,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
       </Sidebar.GroupContent>
     </Sidebar.Group>
 
-    <Sidebar.Group>
+    <!-- <Sidebar.Group>
       <Sidebar.GroupLabel><a href="/schedules">Schedules</a></Sidebar.GroupLabel>
       <Sidebar.GroupAction
         title="Add Schedule"
@@ -206,6 +283,23 @@ const _deleteBudgetId = $derived(deleteBudgetId);
               </DropdownMenu.Root>
             </Sidebar.MenuItem>
           {/each}
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+
+    <Sidebar.Group>
+      <Sidebar.GroupContent>
+        <Sidebar.Menu>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({props})}
+                <a href="/patterns" {...props} class="flex items-center gap-3">
+                  <Sparkles class="h-4 w-4"></Sparkles>
+                  <span class="font-medium">Patterns</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
         </Sidebar.Menu>
       </Sidebar.GroupContent>
     </Sidebar.Group>
@@ -271,6 +365,6 @@ const _deleteBudgetId = $derived(deleteBudgetId);
         onclick={() => goto('/categories/new')}>
         <Plus /> <span class="sr-only">Add Category</span>
       </Sidebar.GroupAction>
-    </Sidebar.Group>
+    </Sidebar.Group> -->
   </Sidebar.Content>
 </Sidebar.Root>

@@ -7,17 +7,22 @@ import {generateUniqueSlug} from "$lib/utils/generate-unique-slug";
 import {TransactionService} from "../transactions/services";
 import {today, getLocalTimeZone} from "@internationalized/date";
 
+import type { AccountType } from "$lib/schema/accounts";
+
 // Service input types
 export interface CreateAccountData {
   name: string;
   notes?: string;
   initialBalance?: number;
+  accountType?: AccountType;
+  onBudget?: boolean;
 }
 
 export interface UpdateAccountData {
   name?: string;
   notes?: string;
   balance?: number;
+  onBudget?: boolean;
 }
 
 /**
@@ -43,6 +48,13 @@ export class AccountService {
         ? InputSanitizer.validateAmount(data.initialBalance, "Initial balance")
         : 0;
 
+    // Determine onBudget value with smart defaults
+    // If explicitly provided, use that value
+    // Otherwise, default to false for investment/loan accounts, true for all others
+    const onBudget = data.onBudget !== undefined
+      ? data.onBudget
+      : !['investment', 'loan'].includes(data.accountType || 'checking');
+
     // Generate unique slug
     const baseSlug = slugify(sanitizedName);
     const uniqueSlug = await this.generateUniqueSlug(baseSlug);
@@ -53,6 +65,7 @@ export class AccountService {
       slug: uniqueSlug,
       notes: sanitizedNotes,
       balance: 0, // Start with zero, we'll create a transaction for the initial balance
+      onBudget,
     });
 
     // Create initial balance transaction if balance is non-zero
@@ -102,6 +115,11 @@ export class AccountService {
     // Validate balance if provided
     if (data.balance !== undefined) {
       updateData.balance = InputSanitizer.validateAmount(data.balance, "Balance");
+    }
+
+    // Update onBudget status if provided
+    if (data.onBudget !== undefined) {
+      updateData.onBudget = data.onBudget;
     }
 
     // Update account

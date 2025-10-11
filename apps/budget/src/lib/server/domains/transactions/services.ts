@@ -874,9 +874,14 @@ export class TransactionService {
       else typicalFrequency = "infrequent";
     }
 
+    // Get most used budget for this payee
+    const {BudgetIntelligenceService} = await import("$lib/server/domains/budgets/services");
+    const intelligenceService = new BudgetIntelligenceService();
+    const budgetPattern = await intelligenceService.getMostUsedBudget(payeeId, mostUsedCategory);
+
     return {
       mostUsedCategory,
-      mostUsedBudget: null, // TODO: Implement budget intelligence
+      mostUsedBudget: budgetPattern ? budgetPattern.budgetId : null,
       averageAmount: totalAmount / payeeTransactions.length,
       typicalFrequency,
       lastTransactionDate: payeeTransactions[0]?.date || null,
@@ -956,6 +961,196 @@ export class TransactionService {
       .limit(1);
 
     return !!account;
+  }
+
+  /**
+   * Create a transfer between two accounts (dual-entry transaction)
+   */
+  async createTransfer(params: {
+    fromAccountId: number;
+    toAccountId: number;
+    amount: number; // Always positive
+    date: string;
+    notes?: string;
+    categoryId?: number | null;
+    payeeId?: number | null;
+  }): Promise<{transferId: string; fromTransaction: Transaction; toTransaction: Transaction}> {
+    const {createId} = await import("@paralleldrive/cuid2");
+
+    // Validate accounts exist
+    const fromAccountExists = await this.verifyAccountExists(params.fromAccountId);
+    if (!fromAccountExists) {
+      throw new NotFoundError("Account", params.fromAccountId);
+    }
+
+    const toAccountExists = await this.verifyAccountExists(params.toAccountId);
+    if (!toAccountExists) {
+      throw new NotFoundError("Account", params.toAccountId);
+    }
+
+    // Validate amount is positive
+    if (params.amount <= 0) {
+      throw new ValidationError("Transfer amount must be positive");
+    }
+
+    // Generate shared transfer ID
+    const transferId = createId();
+
+    // Sanitize notes if provided
+    const notes = params.notes ? InputSanitizer.sanitizeDescription(params.notes) : null;
+
+    // Create FROM transaction (money out - negative amount)
+    const fromTransaction = await this.repository.create({
+      accountId: params.fromAccountId,
+      amount: -params.amount,
+      date: params.date,
+      notes,
+      categoryId: params.categoryId || null,
+      payeeId: params.payeeId || null,
+      transferId,
+      transferAccountId: params.toAccountId,
+      isTransfer: true,
+      status: "cleared", // Transfers are typically cleared immediately
+    });
+
+    // Create TO transaction (money in - positive amount)
+    const toTransaction = await this.repository.create({
+      accountId: params.toAccountId,
+      amount: params.amount,
+      date: params.date,
+      notes,
+      categoryId: params.categoryId || null,
+      payeeId: params.payeeId || null,
+      transferId,
+      transferAccountId: params.fromAccountId,
+      isTransfer: true,
+      status: "cleared",
+    });
+
+    // Link the transactions together
+    await this.repository.update(fromTransaction.id, {
+      transferTransactionId: toTransaction.id,
+    });
+
+    await this.repository.update(toTransaction.id, {
+      transferTransactionId: fromTransaction.id,
+    });
+
+    // Invalidate both account caches
+    invalidateAccountCache(params.fromAccountId);
+    invalidateAccountCache(params.toAccountId);
+
+    return {
+      transferId,
+      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id),
+      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id),
+    };
+  }
+
+  /**
+   * Update a transfer (updates both transactions atomically)
+   */
+  async updateTransfer(
+    transferId: string,
+    updates: {
+      amount?: number;
+      date?: string;
+      notes?: string;
+      categoryId?: number | null;
+      payeeId?: number | null;
+    }
+  ): Promise<{fromTransaction: Transaction; toTransaction: Transaction}> {
+    // Find both transactions using shared transferId
+    const transferTransactions = await db
+      .select()
+      .from(transactions)
+      .where(and(eq(transactions.transferId, transferId), isNull(transactions.deletedAt)));
+
+    if (transferTransactions.length !== 2) {
+      throw new ValidationError(`Invalid transfer: expected exactly 2 transactions, found ${transferTransactions.length}`);
+    }
+
+    // Identify which is from and which is to based on amount sign
+    const fromTransaction = transferTransactions.find(t => t.amount < 0);
+    const toTransaction = transferTransactions.find(t => t.amount > 0);
+
+    if (!fromTransaction || !toTransaction) {
+      throw new ValidationError("Invalid transfer: could not identify transaction direction");
+    }
+
+    // Prepare update data
+    const updateData: Partial<NewTransaction> = {};
+
+    if (updates.amount !== undefined) {
+      if (updates.amount <= 0) {
+        throw new ValidationError("Transfer amount must be positive");
+      }
+      // Will be applied differently to from/to transactions
+    }
+
+    if (updates.date !== undefined) {
+      updateData.date = updates.date;
+    }
+
+    if (updates.notes !== undefined) {
+      updateData.notes = updates.notes ? InputSanitizer.sanitizeDescription(updates.notes) : null;
+    }
+
+    if (updates.categoryId !== undefined) {
+      updateData.categoryId = updates.categoryId;
+    }
+
+    if (updates.payeeId !== undefined) {
+      updateData.payeeId = updates.payeeId;
+    }
+
+    // Update FROM transaction
+    const fromUpdateData = {...updateData};
+    if (updates.amount !== undefined) {
+      fromUpdateData.amount = -updates.amount; // Negative for outgoing
+    }
+    await this.repository.update(fromTransaction.id, fromUpdateData);
+
+    // Update TO transaction
+    const toUpdateData = {...updateData};
+    if (updates.amount !== undefined) {
+      toUpdateData.amount = updates.amount; // Positive for incoming
+    }
+    await this.repository.update(toTransaction.id, toUpdateData);
+
+    // Invalidate both account caches
+    invalidateAccountCache(fromTransaction.accountId);
+    invalidateAccountCache(toTransaction.accountId);
+
+    return {
+      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id),
+      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id),
+    };
+  }
+
+  /**
+   * Delete a transfer (soft deletes both transactions)
+   */
+  async deleteTransfer(transferId: string): Promise<void> {
+    // Find both transactions using shared transferId
+    const transferTransactions = await db
+      .select()
+      .from(transactions)
+      .where(and(eq(transactions.transferId, transferId), isNull(transactions.deletedAt)));
+
+    if (transferTransactions.length !== 2) {
+      throw new ValidationError(`Invalid transfer: expected exactly 2 transactions, found ${transferTransactions.length}`);
+    }
+
+    // Soft delete both transactions
+    const accountIds = new Set<number>();
+    for (const transaction of transferTransactions) {
+      await this.repository.softDelete(transaction.id);
+      accountIds.add(transaction.accountId);
+    }
+
+    // Invalidate all affected account caches
+    accountIds.forEach(accountId => invalidateAccountCache(accountId));
   }
 
 }

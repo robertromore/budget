@@ -7,6 +7,7 @@ import {eq, and, isNull, like, inArray, sql, count, desc} from "drizzle-orm";
 import type {Category, NewCategory, CategoryType, TaxCategory, SpendingPriority, IncomeReliability} from "$lib/schema/categories";
 import {NotFoundError} from "$lib/server/shared/types/errors";
 import type {CategoryTreeNode} from "$lib/types/categories";
+import {BaseRepository} from "$lib/server/shared/database/base-repository";
 
 export interface UpdateCategoryData {
   name?: string | undefined;
@@ -64,7 +65,15 @@ export interface CategoryWithChildren extends Category {
 /**
  * Repository for category database operations
  */
-export class CategoryRepository {
+export class CategoryRepository extends BaseRepository<
+  typeof categories,
+  Category,
+  NewCategory,
+  UpdateCategoryData
+> {
+  constructor() {
+    super(db, categories, 'Category');
+  }
   /**
    * Create a new category
    */
@@ -94,21 +103,11 @@ export class CategoryRepository {
     return category || null;
   }
 
-  /**
-   * Find category by slug
-   */
-  async findBySlug(slug: string): Promise<Category | null> {
-    const [category] = await db
-      .select()
-      .from(categories)
-      .where(and(eq(categories.slug, slug), isNull(categories.deletedAt)))
-      .limit(1);
-
-    return category || null;
-  }
+  // findBySlug() inherited from BaseRepository
 
   /**
    * Check if slug exists (including deleted categories)
+   * @deprecated Use isSlugUnique() inherited from BaseRepository instead
    */
   async slugExists(slug: string): Promise<boolean> {
     const [result] = await db
@@ -152,39 +151,11 @@ export class CategoryRepository {
   }
 
   /**
-   * Soft delete category
+   * Soft delete category with slug archiving
+   * Now uses the inherited softDeleteWithSlugArchive() method from BaseRepository
    */
   async softDelete(id: number): Promise<Category> {
-    // First, get the current category to access its slug
-    const [existingCategory] = await db
-      .select()
-      .from(categories)
-      .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
-      .limit(1);
-
-    if (!existingCategory) {
-      throw new NotFoundError("Category", id);
-    }
-
-    // Append timestamp to slug to free it up for future use
-    const timestamp = Date.now();
-    const archivedSlug = `${existingCategory.slug}-deleted-${timestamp}`;
-
-    const [category] = await db
-      .update(categories)
-      .set({
-        slug: archivedSlug,
-        deletedAt: getCurrentTimestamp(),
-        updatedAt: getCurrentTimestamp(),
-      })
-      .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
-      .returning();
-
-    if (!category) {
-      throw new NotFoundError("Category", id);
-    }
-
-    return category;
+    return await this.softDeleteWithSlugArchive(id);
   }
 
   /**
@@ -228,21 +199,16 @@ export class CategoryRepository {
 
   /**
    * Search categories by name
+   * Now uses the inherited searchByName() method from BaseRepository
    */
   async search(query: string): Promise<Category[]> {
     if (!query.trim()) {
       return this.findAll();
     }
 
-    return await db
-      .select()
-      .from(categories)
-      .where(and(
-        like(categories.name, `%${query}%`),
-        isNull(categories.deletedAt)
-      ))
-      .orderBy(categories.name)
-      .limit(50);
+    return await this.searchByName(query, {
+      limit: 50
+    });
   }
 
   /**

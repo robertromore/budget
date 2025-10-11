@@ -78,8 +78,24 @@ export class AccountsState {
     return this.filterBy((account) => !!account.closed);
   }
 
+  getOnBudgetAccounts(): Account[] {
+    return this.filterBy((account) => account.onBudget === true);
+  }
+
+  getOffBudgetAccounts(): Account[] {
+    return this.filterBy((account) => account.onBudget === false);
+  }
+
   getTotalBalance(): number {
     return this.all.reduce((total, account) => total + (account.balance || 0), 0);
+  }
+
+  getOnBudgetBalance(): number {
+    return this.getOnBudgetAccounts().reduce((total, account) => total + (account.balance || 0), 0);
+  }
+
+  getOffBudgetBalance(): number {
+    return this.getOffBudgetAccounts().reduce((total, account) => total + (account.balance || 0), 0);
   }
 
   // CRUD operations
@@ -110,13 +126,13 @@ export class AccountsState {
       initialBalance: account.initialBalance ?? undefined,
     };
     const result = await trpc().accountRoutes.save.mutate(accountForMutation);
-    // Add missing fields that the API response doesn't include
+    // The API now returns balance, but we still need to add transactions field
     const accountWithDefaults: Account = {
       ...result,
-      transactions: [], // Will be loaded separately if needed
-      balance: 0, // Will be calculated from transactions
+      transactions: result.transactions ?? account.transactions ?? [],
+      balance: result.balance ?? 0, // API should always return balance now
     };
-    this.addAccount(accountWithDefaults);
+    this.updateAccount(accountWithDefaults);
     return accountWithDefaults;
   }
 

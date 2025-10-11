@@ -29,6 +29,7 @@ export const superformInsertAccountSchema = z.object({
   accountColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Account color must be a valid hex color").optional(),
   initialBalance: z.number().optional(),
   accountNumberLast4: z.string().max(4, "Account number last 4 must be 4 characters or less").optional(),
+  onBudget: z.boolean().default(true),
 });
 
 export const superformUpdateAccountSchema = z.object({
@@ -62,6 +63,7 @@ export const superformUpdateAccountSchema = z.object({
     .optional()
     .nullable(),
   closed: z.boolean().optional(),
+  onBudget: z.boolean().optional(),
 });
 
 export type SuperformInsertAccountSchema = typeof superformInsertAccountSchema;

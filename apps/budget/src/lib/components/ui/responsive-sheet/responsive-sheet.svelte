@@ -6,7 +6,7 @@ import type {Snippet} from 'svelte';
 
 interface Props {
   open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: ((open: boolean) => void) | undefined;
   side?: 'top' | 'right' | 'bottom' | 'left';
   trigger?: Snippet;
   header?: Snippet;

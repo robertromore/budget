@@ -15,6 +15,8 @@ import {
   budgetScopes,
   budgetEnforcementLevels,
   budgetStatuses,
+  budgets,
+  budgetTransactions,
 } from "$lib/schema/budgets";
 import type {Transaction} from "$lib/schema/transactions";
 import {transactions} from "$lib/schema/transactions";
@@ -23,8 +25,7 @@ import {InputSanitizer} from "$lib/server/shared/validation";
 import {BudgetRepository, type BudgetWithRelations, type DbClient} from "./repository";
 import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
 import {currentDate as defaultCurrentDate, timezone as defaultTimezone} from "$lib/utils/dates";
-import {budgetTransactions} from "$lib/schema/budgets";
-import {eq} from "drizzle-orm";
+import {and, eq, sql} from "drizzle-orm";
 import {EnvelopeService, type EnvelopeAllocationRequest} from "./envelope-service";
 
 /* ------------------------------------------------------------------ */
@@ -60,7 +61,8 @@ export class BudgetService {
     private repository: BudgetRepository = new BudgetRepository(),
     private envelopeService: EnvelopeService = new EnvelopeService(),
     private goalTrackingService: GoalTrackingService = new GoalTrackingService(),
-    private forecastService: BudgetForecastService = new BudgetForecastService()
+    private forecastService: BudgetForecastService = new BudgetForecastService(),
+    private intelligenceService: BudgetIntelligenceService = new BudgetIntelligenceService()
   ) {}
 
   private generateSlug(name: string): string {
@@ -347,6 +349,10 @@ export class BudgetService {
     return await this.envelopeService.getRolloverHistoryForEnvelope(envelopeId, limit);
   }
 
+  async getBudgetRolloverHistory(budgetId: number, limit?: number) {
+    return await this.envelopeService.getRolloverHistoryForBudget(budgetId, limit);
+  }
+
   async estimateEnvelopeRolloverImpact(fromPeriodId: number, toPeriodId: number) {
     return await this.envelopeService.estimateRolloverImpact(fromPeriodId, toPeriodId);
   }
@@ -552,6 +558,20 @@ export class BudgetService {
 
   async getBudgetSummaryStats(budgetId: number) {
     return await this.repository.getBudgetSummaryStats(budgetId);
+  }
+
+  // Budget Intelligence Methods
+
+  async suggestBudgetForPayee(payeeId: number) {
+    return await this.intelligenceService.suggestBudgetForPayee(payeeId);
+  }
+
+  async suggestBudgetForCategory(categoryId: number) {
+    return await this.intelligenceService.suggestBudgetForCategory(categoryId);
+  }
+
+  async getMostUsedBudget(payeeId?: number, categoryId?: number) {
+    return await this.intelligenceService.getMostUsedBudget(payeeId, categoryId);
   }
 
   // Period Template Methods
@@ -1331,6 +1351,202 @@ export interface AllocationValidationResult {
   remaining: number;
   errors: string[];
 }
+
+/* ------------------------------------------------------------------ */
+/* Budget Intelligence Service                                       */
+/* ------------------------------------------------------------------ */
+
+export interface BudgetUsagePattern {
+  budgetId: number;
+  budgetName: string;
+  usageCount: number;
+  totalAmount: number;
+  avgAmount: number;
+  lastUsedDate: string;
+}
+
+export interface BudgetSuggestion {
+  budgetId: number;
+  budgetName: string;
+  confidence: number; // 0-100
+  reason: string;
+}
+
+export class BudgetIntelligenceService {
+  constructor(private repository: BudgetRepository = new BudgetRepository()) {}
+
+  /**
+   * Analyzes transaction history for a payee to suggest the most appropriate budget.
+   */
+  async suggestBudgetForPayee(payeeId: number): Promise<BudgetSuggestion | null> {
+    const patterns = await this.getBudgetUsagePatternsForPayee(payeeId);
+
+    if (patterns.length === 0) {
+      return null;
+    }
+
+    // Sort by usage count (most frequently used)
+    const sorted = patterns.sort((a, b) => b.usageCount - a.usageCount);
+    const mostUsed = sorted[0];
+
+    if (!mostUsed) {
+      return null;
+    }
+
+    // Calculate confidence based on usage frequency
+    const totalTransactions = patterns.reduce((sum, p) => sum + p.usageCount, 0);
+    const confidence = Math.min(100, Math.round((mostUsed.usageCount / totalTransactions) * 100));
+
+    return {
+      budgetId: mostUsed.budgetId,
+      budgetName: mostUsed.budgetName,
+      confidence,
+      reason: `Used in ${mostUsed.usageCount} of ${totalTransactions} transactions (${confidence}%)`,
+    };
+  }
+
+  /**
+   * Analyzes transaction history for a category to suggest the most appropriate budget.
+   */
+  async suggestBudgetForCategory(categoryId: number): Promise<BudgetSuggestion | null> {
+    const patterns = await this.getBudgetUsagePatternsForCategory(categoryId);
+
+    if (patterns.length === 0) {
+      return null;
+    }
+
+    const sorted = patterns.sort((a, b) => b.usageCount - a.usageCount);
+    const mostUsed = sorted[0];
+
+    if (!mostUsed) {
+      return null;
+    }
+
+    const totalTransactions = patterns.reduce((sum, p) => sum + p.usageCount, 0);
+    const confidence = Math.min(100, Math.round((mostUsed.usageCount / totalTransactions) * 100));
+
+    return {
+      budgetId: mostUsed.budgetId,
+      budgetName: mostUsed.budgetName,
+      confidence,
+      reason: `Used in ${mostUsed.usageCount} of ${totalTransactions} transactions (${confidence}%)`,
+    };
+  }
+
+  /**
+   * Gets the most commonly used budget for a specific payee and category combination.
+   */
+  async getMostUsedBudget(payeeId?: number, categoryId?: number): Promise<BudgetUsagePattern | null> {
+    if (!payeeId && !categoryId) {
+      return null;
+    }
+
+    const query = db
+      .select({
+        budgetId: budgetTransactions.budgetId,
+        budgetName: budgets.name,
+        usageCount: sql<number>`COUNT(DISTINCT ${budgetTransactions.transactionId})`,
+        totalAmount: sql<number>`COALESCE(SUM(ABS(${budgetTransactions.allocatedAmount})), 0)`,
+        avgAmount: sql<number>`COALESCE(AVG(ABS(${budgetTransactions.allocatedAmount})), 0)`,
+        lastUsedDate: sql<string>`MAX(${transactions.date})`,
+      })
+      .from(budgetTransactions)
+      .innerJoin(budgets, eq(budgetTransactions.budgetId, budgets.id))
+      .innerJoin(transactions, eq(budgetTransactions.transactionId, transactions.id));
+
+    const conditions = [];
+    if (payeeId) {
+      conditions.push(eq(transactions.payeeId, payeeId));
+    }
+    if (categoryId) {
+      conditions.push(eq(transactions.categoryId, categoryId));
+    }
+
+    const results = await query
+      .where(and(...conditions))
+      .groupBy(budgetTransactions.budgetId, budgets.name)
+      .orderBy(sql`COUNT(DISTINCT ${budgetTransactions.transactionId}) DESC`)
+      .limit(1);
+
+    const mostUsed = results[0];
+    if (!mostUsed) {
+      return null;
+    }
+
+    return {
+      budgetId: mostUsed.budgetId,
+      budgetName: mostUsed.budgetName,
+      usageCount: Number(mostUsed.usageCount),
+      totalAmount: Number(mostUsed.totalAmount),
+      avgAmount: Number(mostUsed.avgAmount),
+      lastUsedDate: mostUsed.lastUsedDate,
+    };
+  }
+
+  /**
+   * Gets budget usage patterns for a specific payee.
+   */
+  private async getBudgetUsagePatternsForPayee(payeeId: number): Promise<BudgetUsagePattern[]> {
+    const results = await db
+      .select({
+        budgetId: budgetTransactions.budgetId,
+        budgetName: budgets.name,
+        usageCount: sql<number>`COUNT(DISTINCT ${budgetTransactions.transactionId})`,
+        totalAmount: sql<number>`COALESCE(SUM(ABS(${budgetTransactions.allocatedAmount})), 0)`,
+        avgAmount: sql<number>`COALESCE(AVG(ABS(${budgetTransactions.allocatedAmount})), 0)`,
+        lastUsedDate: sql<string>`MAX(${transactions.date})`,
+      })
+      .from(budgetTransactions)
+      .innerJoin(budgets, eq(budgetTransactions.budgetId, budgets.id))
+      .innerJoin(transactions, eq(budgetTransactions.transactionId, transactions.id))
+      .where(eq(transactions.payeeId, payeeId))
+      .groupBy(budgetTransactions.budgetId, budgets.name)
+      .orderBy(sql`COUNT(DISTINCT ${budgetTransactions.transactionId}) DESC`);
+
+    return results.map(r => ({
+      budgetId: r.budgetId,
+      budgetName: r.budgetName,
+      usageCount: Number(r.usageCount),
+      totalAmount: Number(r.totalAmount),
+      avgAmount: Number(r.avgAmount),
+      lastUsedDate: r.lastUsedDate,
+    }));
+  }
+
+  /**
+   * Gets budget usage patterns for a specific category.
+   */
+  private async getBudgetUsagePatternsForCategory(categoryId: number): Promise<BudgetUsagePattern[]> {
+    const results = await db
+      .select({
+        budgetId: budgetTransactions.budgetId,
+        budgetName: budgets.name,
+        usageCount: sql<number>`COUNT(DISTINCT ${budgetTransactions.transactionId})`,
+        totalAmount: sql<number>`COALESCE(SUM(ABS(${budgetTransactions.allocatedAmount})), 0)`,
+        avgAmount: sql<number>`COALESCE(AVG(ABS(${budgetTransactions.allocatedAmount})), 0)`,
+        lastUsedDate: sql<string>`MAX(${transactions.date})`,
+      })
+      .from(budgetTransactions)
+      .innerJoin(budgets, eq(budgetTransactions.budgetId, budgets.id))
+      .innerJoin(transactions, eq(budgetTransactions.transactionId, transactions.id))
+      .where(eq(transactions.categoryId, categoryId))
+      .groupBy(budgetTransactions.budgetId, budgets.name)
+      .orderBy(sql`COUNT(DISTINCT ${budgetTransactions.transactionId}) DESC`);
+
+    return results.map(r => ({
+      budgetId: r.budgetId,
+      budgetName: r.budgetName,
+      usageCount: Number(r.usageCount),
+      totalAmount: Number(r.totalAmount),
+      avgAmount: Number(r.avgAmount),
+      lastUsedDate: r.lastUsedDate,
+    }));
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Budget Transaction Service                                        */
+/* ------------------------------------------------------------------ */
 
 export class BudgetTransactionService {
   constructor(private repository: BudgetRepository = new BudgetRepository()) {}

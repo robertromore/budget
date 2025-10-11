@@ -37,6 +37,13 @@ export const transactions = sqliteTable(
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
     scheduleId: integer("schedule_id").references(() => schedules.id),
+
+    // Transfer transaction fields
+    transferId: text("transfer_id"), // Shared ID for both transactions in the pair (CUID)
+    transferAccountId: integer("transfer_account_id").references(() => accounts.id), // The OTHER account in the transfer
+    transferTransactionId: integer("transfer_transaction_id").references((): AnySQLiteColumn => transactions.id), // The linked transaction
+    isTransfer: integer("is_transfer", {mode: "boolean"}).default(false), // Quick check for transfers
+
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -55,6 +62,9 @@ export const transactions = sqliteTable(
     index("transaction_status_idx").on(table.status),
     index("transaction_parent_idx").on(table.parentId),
     index("transaction_deleted_at_idx").on(table.deletedAt),
+    index("transaction_transfer_id_idx").on(table.transferId),
+    index("transaction_transfer_account_idx").on(table.transferAccountId),
+    index("transaction_is_transfer_idx").on(table.isTransfer),
   ]
 );
 
@@ -125,12 +135,21 @@ type TransactionExtraFields = {
   balance: number | null;
 } & {
   // Schedule metadata (only present for scheduled transactions)
-  scheduleId?: number;
-  scheduleName?: string;
-  scheduleSlug?: string;
-  scheduleFrequency?: string;
-  scheduleInterval?: number;
-  scheduleNextOccurrence?: string;
+  scheduleId?: number | undefined;
+  scheduleName?: string | undefined;
+  scheduleSlug?: string | undefined;
+  scheduleFrequency?: string | undefined;
+  scheduleInterval?: number | undefined;
+  scheduleNextOccurrence?: string | undefined;
+  // Budget allocation data (only present when loaded with relation)
+  budgetAllocations?: Array<{
+    id: number;
+    budgetId: number;
+    budgetName: string;
+    allocatedAmount: number;
+    autoAssigned: boolean;
+    assignedBy: string | null;
+  }> | undefined;
 };
 
 export type Transaction = typeof transactions.$inferSelect & TransactionExtraFields;

@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as Select from '$lib/components/ui/select';
-import * as Form from '$lib/components/ui/form';
 import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
 import * as Card from '$lib/components/ui/card';
 import { CalendarDays } from '@lucide/svelte/icons';
 import { parseISOString, currentDate, toISOString, getIsoWeekday, getDaysInMonth, formatDateDisplay } from '$lib/utils/dates';
@@ -10,9 +10,6 @@ import type { CalendarDate } from '@internationalized/date';
 import type { BudgetPeriodTemplate } from '$lib/schema/budgets';
 import { createPeriodTemplate } from '$lib/query/budgets';
 import { isoWeekdayOptions, monthStringOptions } from '$lib/utils/date-options';
-import { superformCreatePeriodTemplateSchema } from '$lib/schema/superforms';
-import { superForm, defaults } from 'sveltekit-superforms';
-import { zod } from 'sveltekit-superforms/adapters';
 
 interface Props {
   budgetId: number;
@@ -22,48 +19,15 @@ interface Props {
 
 let { budgetId, onSuccess, onCancel }: Props = $props();
 
-// Mutations
-const createMutation = createPeriodTemplate;
+// Mutations - must be called during component initialization
+const createMutation = createPeriodTemplate.options();
 
-// Superform setup
-const superform = superForm(defaults({ budgetId, type: 'monthly' as const }, zod(superformCreatePeriodTemplateSchema)), {
-  SPA: true,
-  validators: zod(superformCreatePeriodTemplateSchema),
-  onSubmit: async ({ formData, cancel }) => {
-    cancel(); // Prevent default form submission
-
-    // Build template data conditionally
-    const data: any = {
-      budgetId: formData.get('budgetId'),
-      type: formData.get('type'),
-      intervalCount: Number(formData.get('intervalCount')),
-    };
-
-    // Only include optional fields when they have values
-    const type = formData.get('type') as string;
-    const startDayOfWeek = formData.get('startDayOfWeek');
-    const startDayOfMonth = formData.get('startDayOfMonth');
-    const startMonth = formData.get('startMonth');
-
-    if (type === 'weekly' && startDayOfWeek) {
-      data.startDayOfWeek = Number(startDayOfWeek);
-    }
-    if ((type === 'monthly' || type === 'yearly') && startDayOfMonth) {
-      data.startDayOfMonth = Number(startDayOfMonth);
-    }
-    if (type === 'yearly' && startMonth) {
-      data.startMonth = Number(startMonth);
-    }
-
-    // Execute mutation
-    const result = await createMutation.execute(data);
-    if (result) {
-      onSuccess?.(result);
-    }
-  },
-});
-
-const { form: formData, enhance } = superform;
+// Form state
+let type = $state<'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom'>('monthly');
+let intervalCount = $state(1);
+let startDayOfWeek = $state(1);
+let startDayOfMonth = $state(1);
+let startMonth = $state(1);
 
 // String bindings for Select components (which require string values)
 let startDayOfWeekStr = $state<string>('1');
@@ -71,22 +35,19 @@ let startMonthStr = $state<string>('1');
 
 // Sync number values with string bindings
 $effect(() => {
-  $formData['startDayOfWeek'] = parseInt(startDayOfWeekStr) || 1;
+  startDayOfWeek = parseInt(startDayOfWeekStr) || 1;
 });
 
 $effect(() => {
-  $formData['startMonth'] = parseInt(startMonthStr) || 1;
+  startMonth = parseInt(startMonthStr) || 1;
 });
 
 // Calculate preview periods using form data
 const previewPeriods = $derived.by(() => {
   const periods: Array<{ start: string; end: string }> = [];
   let current: CalendarDate = currentDate;
-  const periodType = $formData['type'];
-  const interval = Number($formData['intervalCount']) || 1;
-  const startDayOfWeek = Number($formData['startDayOfWeek']) || 1;
-  const startDayOfMonth = Number($formData['startDayOfMonth']) || 1;
-  const startMonth = Number($formData['startMonth']) || 1;
+  const periodType = type;
+  const interval = intervalCount || 1;
 
   // Generate 3 preview periods
   for (let i = 0; i < 3; i++) {
@@ -158,16 +119,45 @@ const previewPeriods = $derived.by(() => {
 
   return periods;
 });
+
+async function handleSubmit(e: SubmitEvent) {
+  e.preventDefault();
+
+  // Build template data conditionally
+  const data: any = {
+    budgetId,
+    type,
+    intervalCount,
+  };
+
+  // Only include optional fields when they have values
+  if (type === 'weekly') {
+    data.startDayOfWeek = startDayOfWeek;
+  }
+  if (type === 'monthly' || type === 'yearly') {
+    data.startDayOfMonth = startDayOfMonth;
+  }
+  if (type === 'yearly') {
+    data.startMonth = startMonth;
+  }
+
+  // Execute mutation
+  const result = await createMutation.mutateAsync(data);
+  if (result) {
+    onSuccess?.(result);
+  }
+}
 </script>
 
-<form method="POST" use:enhance class="space-y-6">
-  <!-- Period Type Selector -->
-  <Form.Field form={superform} name="type">
-    <Form.Control>
-      <Form.Label>Period Type</Form.Label>
-      <Select.Root type="single" bind:value={$formData['type']}>
+<form onsubmit={handleSubmit} class="space-y-4">
+  <!-- Configuration -->
+  <div class="grid sm:grid-cols-2 gap-4">
+    <!-- Period Type Selector -->
+    <div class="space-y-2">
+      <Label>Period Type</Label>
+      <Select.Root type="single" bind:value={type}>
         <Select.Trigger>
-          <span>{String($formData['type']).charAt(0).toUpperCase() + String($formData['type']).slice(1)}</span>
+          <span>{String(type).charAt(0).toUpperCase() + String(type).slice(1)}</span>
         </Select.Trigger>
         <Select.Content>
           <Select.Item value="weekly">Weekly</Select.Item>
@@ -177,117 +167,95 @@ const previewPeriods = $derived.by(() => {
           <Select.Item value="custom">Custom</Select.Item>
         </Select.Content>
       </Select.Root>
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
+    </div>
 
-  <!-- Interval -->
-  <Form.Field form={superform} name="intervalCount">
-    <Form.Control let:attrs>
-      <Form.Label>Interval</Form.Label>
-      <div class="flex items-center gap-2">
-        <span class="text-sm text-muted-foreground">Every</span>
+    <!-- Interval -->
+    <div class="space-y-2">
+      <Label>Interval</Label>
+      <div class="flex items-center gap-2 w-full">
+        <span class="text-sm text-muted-foreground whitespace-nowrap">Every</span>
         <Input
-          {...attrs}
           type="number"
-          bind:value={$formData['intervalCount']}
+          bind:value={intervalCount}
           min="1"
-          max={$formData['type'] === 'weekly' ? 52 : 12}
-          class="w-20"
+          max={type === 'weekly' ? 52 : 12}
+          class="w-16 flex-shrink-0"
         />
-        <span class="text-sm text-muted-foreground">
-          {$formData['intervalCount'] === 1 ? String($formData['type']).slice(0, -2) : String($formData['type'])}
+        <span class="text-sm text-muted-foreground truncate">
+          {intervalCount === 1 ? String(type).slice(0, -2) : String(type)}
         </span>
       </div>
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
+    </div>
+  </div>
 
   <!-- Period-specific configuration -->
-  {#if $formData['type'] === 'weekly'}
-    <Form.Field form={superform} name="startDayOfWeek">
-      <Form.Control>
-        <Form.Label>Week Starts On</Form.Label>
-        <Select.Root type="single" bind:value={startDayOfWeekStr}>
+  {#if type === 'weekly'}
+    <div class="space-y-2">
+      <Label>Week Starts On</Label>
+      <Select.Root type="single" bind:value={startDayOfWeekStr}>
+        <Select.Trigger>
+          <span>{isoWeekdayOptions.find(d => d.value === startDayOfWeekStr)?.label || 'Select Day'}</span>
+        </Select.Trigger>
+        <Select.Content>
+          {#each isoWeekdayOptions as day}
+            <Select.Item value={day.value}>{day.label}</Select.Item>
+          {/each}
+        </Select.Content>
+      </Select.Root>
+    </div>
+  {:else if type === 'monthly'}
+    <div class="space-y-2">
+      <Label>Month Starts On (Day 1-31)</Label>
+      <Input
+        type="number"
+        bind:value={startDayOfMonth}
+        min="1"
+        max="31"
+        class="w-full"
+      />
+    </div>
+  {:else if type === 'yearly'}
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="space-y-2">
+        <Label>Start Month</Label>
+        <Select.Root type="single" bind:value={startMonthStr}>
           <Select.Trigger>
-            <span>{isoWeekdayOptions.find(d => d.value === startDayOfWeekStr)?.label || 'Select Day'}</span>
+            <span>{monthStringOptions.find(m => m.value === startMonthStr)?.label || 'Select Month'}</span>
           </Select.Trigger>
           <Select.Content>
-            {#each isoWeekdayOptions as day}
-              <Select.Item value={day.value}>{day.label}</Select.Item>
+            {#each monthStringOptions as month}
+              <Select.Item value={month.value}>{month.label}</Select.Item>
             {/each}
           </Select.Content>
         </Select.Root>
-      </Form.Control>
-      <Form.FieldErrors />
-    </Form.Field>
-  {:else if $formData['type'] === 'monthly'}
-    <Form.Field form={superform} name="startDayOfMonth">
-      <Form.Control let:attrs>
-        <Form.Label>Month Starts On</Form.Label>
+      </div>
+      <div class="space-y-2">
+        <Label>Start Day</Label>
         <Input
-          {...attrs}
           type="number"
-          bind:value={$formData['startDayOfMonth']}
+          bind:value={startDayOfMonth}
           min="1"
           max="31"
-          class="w-20"
         />
-        <p class="text-xs text-muted-foreground">
-          Day 1-31 (automatically handles months with fewer days)
-        </p>
-      </Form.Control>
-      <Form.FieldErrors />
-    </Form.Field>
-  {:else if $formData['type'] === 'yearly'}
-    <div class="grid grid-cols-2 gap-4">
-      <Form.Field form={superform} name="startMonth">
-        <Form.Control>
-          <Form.Label>Start Month</Form.Label>
-          <Select.Root type="single" bind:value={startMonthStr}>
-            <Select.Trigger>
-              <span>{monthStringOptions.find(m => m.value === startMonthStr)?.label || 'Select Month'}</span>
-            </Select.Trigger>
-            <Select.Content>
-              {#each monthStringOptions as month}
-                <Select.Item value={month.value}>{month.label}</Select.Item>
-              {/each}
-            </Select.Content>
-          </Select.Root>
-        </Form.Control>
-        <Form.FieldErrors />
-      </Form.Field>
-      <Form.Field form={superform} name="startDayOfMonth">
-        <Form.Control let:attrs>
-          <Form.Label>Start Day</Form.Label>
-          <Input
-            {...attrs}
-            type="number"
-            bind:value={$formData['startDayOfMonth']}
-            min="1"
-            max="31"
-          />
-        </Form.Control>
-        <Form.FieldErrors />
-      </Form.Field>
+      </div>
     </div>
   {/if}
 
   <!-- Preview upcoming periods -->
   <Card.Root>
-    <Card.Header>
+    <Card.Header class="pb-3">
       <div class="flex items-center gap-2">
         <CalendarDays class="h-4 w-4" />
-        <Card.Title class="text-base">Preview</Card.Title>
+        <Card.Title class="text-sm font-medium">Next 3 Periods</Card.Title>
       </div>
     </Card.Header>
-    <Card.Content>
-      <ul class="space-y-2 text-sm">
+    <Card.Content class="pt-0">
+      <ul class="space-y-1.5 text-sm">
         {#each previewPeriods as period, index}
-          <li class="flex justify-between p-2 rounded-md bg-muted/30">
-            <span class="text-muted-foreground">Period {index + 1}:</span>
-            <span class="font-medium">
-              {formatDateDisplay(parseISOString(period.start)!, 'medium')} → {formatDateDisplay(parseISOString(period.end)!, 'medium')}
+          <li class="flex justify-between py-1.5 px-2 rounded-md bg-muted/30">
+            <span class="text-muted-foreground">Period {index + 1}</span>
+            <span class="font-medium text-xs">
+              {formatDateDisplay(parseISOString(period.start)!, 'short')} → {formatDateDisplay(parseISOString(period.end)!, 'short')}
             </span>
           </li>
         {/each}
@@ -296,7 +264,7 @@ const previewPeriods = $derived.by(() => {
   </Card.Root>
 
   <!-- Actions -->
-  <div class="flex gap-2">
+  <div class="flex gap-2 pt-2">
     <Button type="submit" class="flex-1">Create Template</Button>
     {#if onCancel}
       <Button type="button" variant="outline" onclick={onCancel}>Cancel</Button>

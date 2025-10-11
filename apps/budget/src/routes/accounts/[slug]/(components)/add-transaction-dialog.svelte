@@ -15,6 +15,7 @@ import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
 import CircleDollarSign from '@lucide/svelte/icons/circle-dollar-sign';
 import type {Component} from 'svelte';
 import {BudgetSelector} from '$lib/components/budgets';
+import TransferTransactionForm from '$lib/components/forms/transfer-transaction-form.svelte';
 
 // Currency formatter
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -172,8 +173,9 @@ async function handleWizardComplete(data: Record<string, any>) {
     {/snippet}
 
     <Tabs.Root bind:value={activeTab} class="w-full">
-      <Tabs.List class="grid w-full grid-cols-2">
+      <Tabs.List class="grid w-full grid-cols-3">
         <Tabs.Trigger value="manual">Manual</Tabs.Trigger>
+        <Tabs.Trigger value="transfer">Transfer</Tabs.Trigger>
         <Tabs.Trigger value="guided">Guided</Tabs.Trigger>
       </Tabs.List>
 
@@ -242,6 +244,14 @@ async function handleWizardComplete(data: Record<string, any>) {
           rows={3} />
       </div>
         </div>
+      </Tabs.Content>
+
+      <Tabs.Content value="transfer" class="mt-4">
+        <TransferTransactionForm
+          fromAccountId={account?.id || 0}
+          onSuccess={handleClose}
+          onCancel={handleClose}
+        />
       </Tabs.Content>
 
       <Tabs.Content value="guided" class="mt-4">

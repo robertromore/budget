@@ -7,3 +7,4 @@ export {scheduleRoutes} from "./schedules";
 export {transactionRoutes} from "./transactions";
 export {viewsRoutes} from "./views";
 export {budgetRoutes} from "./budgets";
+export {patternRoutes} from "./patterns";

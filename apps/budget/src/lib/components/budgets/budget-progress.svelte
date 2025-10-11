@@ -61,37 +61,37 @@
   const statusClasses = $derived.by(() => {
     switch (status) {
       case "approaching":
-        return "bg-amber-500 text-amber-50";
+        return "bg-[hsl(var(--budget-warning))] text-[hsl(var(--budget-warning-foreground))]";
       case "over":
-        return "bg-destructive text-destructive-foreground";
+        return "bg-[hsl(var(--budget-danger))] text-[hsl(var(--budget-danger-foreground))]";
       case "paused":
         return "bg-muted text-muted-foreground";
       case "on_track":
       default:
-        return "bg-emerald-500 text-emerald-50";
+        return "bg-[hsl(var(--budget-success))] text-[hsl(var(--budget-success-foreground))]";
     }
   });
 
   const barClasses = $derived.by(() => {
     switch (status) {
       case "approaching":
-        return "bg-amber-500";
+        return "bg-[hsl(var(--budget-warning))]";
       case "over":
-        return "bg-destructive";
+        return "bg-[hsl(var(--budget-danger))]";
       case "paused":
         return "bg-muted-foreground";
       case "on_track":
       default:
-        return "bg-emerald-500";
+        return "bg-[hsl(var(--budget-success))]";
     }
   });
 
   const enforcementClasses = $derived.by(() => {
     switch (enforcementLevel) {
       case "strict":
-        return "ring-1 ring-destructive/40";
+        return "ring-1 ring-[hsl(var(--budget-danger)_/_0.4)]";
       case "warning":
-        return "ring-1 ring-amber-500/20";
+        return "ring-1 ring-[hsl(var(--budget-warning)_/_0.2)]";
       case "none":
       default:
         return "";

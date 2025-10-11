@@ -354,4 +354,75 @@ export const transactionRoutes = t.router({
         });
       }
     }),
+
+  // Create a transfer transaction between two accounts
+  createTransfer: rateLimitedProcedure
+    .input(z.object({
+      fromAccountId: z.number().positive("From account ID must be positive"),
+      toAccountId: z.number().positive("To account ID must be positive"),
+      amount: z.number().positive("Amount must be positive"),
+      date: z.string().min(1, "Date is required"),
+      notes: z.string().optional(),
+      categoryId: z.number().positive().nullable().optional(),
+      payeeId: z.number().positive().nullable().optional(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await transactionService.createTransfer({
+          fromAccountId: input.fromAccountId,
+          toAccountId: input.toAccountId,
+          amount: input.amount,
+          date: input.date,
+          notes: input.notes,
+          categoryId: input.categoryId,
+          payeeId: input.payeeId,
+        });
+      } catch (error: any) {
+        throw new TRPCError({
+          code: error.statusCode === 404 ? "NOT_FOUND" :
+                error.statusCode === 400 ? "BAD_REQUEST" : "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to create transfer",
+        });
+      }
+    }),
+
+  // Update a transfer transaction
+  updateTransfer: rateLimitedProcedure
+    .input(z.object({
+      transferId: z.string().min(1, "Transfer ID is required"),
+      amount: z.number().positive("Amount must be positive").optional(),
+      date: z.string().min(1).optional(),
+      notes: z.string().optional(),
+      categoryId: z.number().positive().nullable().optional(),
+      payeeId: z.number().positive().nullable().optional(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        const {transferId, ...updates} = input;
+        return await transactionService.updateTransfer(transferId, updates);
+      } catch (error: any) {
+        throw new TRPCError({
+          code: error.statusCode === 404 ? "NOT_FOUND" :
+                error.statusCode === 400 ? "BAD_REQUEST" : "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to update transfer",
+        });
+      }
+    }),
+
+  // Delete a transfer transaction
+  deleteTransfer: rateLimitedProcedure
+    .input(z.object({
+      transferId: z.string().min(1, "Transfer ID is required"),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        await transactionService.deleteTransfer(input.transferId);
+        return {success: true};
+      } catch (error: any) {
+        throw new TRPCError({
+          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to delete transfer",
+        });
+      }
+    }),
 });

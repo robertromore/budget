@@ -1,5 +1,5 @@
 <script lang="ts">
-import PayeeAnalyticsDashboard from '$lib/components/payees/payee-analytics-dashboard.svelte';
+import PayeeAnalyticsDashboard from '../(components)/analytics/payee-analytics-dashboard.svelte';
 import {Button} from '$lib/components/ui/button';
 import {Badge} from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
