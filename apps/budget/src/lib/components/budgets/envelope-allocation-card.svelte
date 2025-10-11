@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {ArrowUpDown, AlertTriangle, TrendingUp, Star} from "@lucide/svelte/icons";
+  import {ArrowUpDown, AlertTriangle, TrendingUp, Star, Settings2} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import {Badge} from "$lib/components/ui/badge";
@@ -16,6 +16,7 @@
     onUpdateAllocation?: (newAmount: number) => void;
     onTransferRequest?: () => void;
     onDeficitRecover?: () => void;
+    onSettingsClick?: () => void;
     class?: string;
   }
 
@@ -26,6 +27,7 @@
     onUpdateAllocation,
     onTransferRequest,
     onDeficitRecover,
+    onSettingsClick,
     class: className,
   }: Props = $props();
 
@@ -93,9 +95,9 @@
 <Card.Root class={cn("transition-all hover:shadow-md", statusConfig.color, className)}>
   <Card.Header class="pb-3">
     <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <statusConfig.icon class="h-4 w-4" />
-        <Card.Title class="text-lg">{categoryName}</Card.Title>
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <statusConfig.icon class="h-4 w-4 flex-shrink-0" />
+        <Card.Title class="text-lg truncate">{categoryName}</Card.Title>
         {#if isEmergencyFund}
           <Badge variant="destructive" class="text-xs">Emergency</Badge>
         {:else if priority !== null}
@@ -105,7 +107,20 @@
           </div>
         {/if}
       </div>
-      <Badge variant={statusConfig.badge}>{statusConfig.label}</Badge>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <Badge variant={statusConfig.badge}>{statusConfig.label}</Badge>
+        {#if onSettingsClick}
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8"
+            onclick={onSettingsClick}
+            title="Envelope Settings"
+          >
+            <Settings2 class="h-4 w-4" />
+          </Button>
+        {/if}
+      </div>
     </div>
   </Card.Header>
 

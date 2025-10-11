@@ -141,6 +141,40 @@ export class EnvelopeService {
     return updated;
   }
 
+  async updateEnvelopeSettings(
+    envelopeId: number,
+    settings: {
+      rolloverMode?: RolloverMode;
+      metadata?: Record<string, unknown>;
+    }
+  ): Promise<EnvelopeAllocation> {
+    const existing = await this.findEnvelopeById(envelopeId);
+
+    const updateData: any = {
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (settings.rolloverMode !== undefined) {
+      updateData.rolloverMode = settings.rolloverMode;
+    }
+
+    if (settings.metadata !== undefined) {
+      updateData.metadata = settings.metadata;
+    }
+
+    const [updated] = await db
+      .update(envelopeAllocations)
+      .set(updateData)
+      .where(eq(envelopeAllocations.id, envelopeId))
+      .returning();
+
+    if (!updated) {
+      throw new DatabaseError("Failed to update envelope settings", "updateEnvelopeSettings");
+    }
+
+    return updated;
+  }
+
   async transferFunds(input: EnvelopeTransferRequest): Promise<EnvelopeTransfer> {
     const amount = this.validateAmount(input.amount, "Transfer amount");
 

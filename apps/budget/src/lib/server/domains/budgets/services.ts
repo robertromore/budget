@@ -317,6 +317,16 @@ export class BudgetService {
     return await this.envelopeService.updateEnvelopeAllocation(envelopeId, allocatedAmount, metadata);
   }
 
+  async updateEnvelopeSettings(
+    envelopeId: number,
+    settings: {
+      rolloverMode?: import("$lib/schema/budgets/envelope-allocations").RolloverMode;
+      metadata?: Record<string, unknown>;
+    }
+  ) {
+    return await this.envelopeService.updateEnvelopeSettings(envelopeId, settings);
+  }
+
   async transferEnvelopeFunds(
     fromEnvelopeId: number,
     toEnvelopeId: number,
