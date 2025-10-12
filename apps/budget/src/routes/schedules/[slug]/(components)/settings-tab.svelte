@@ -8,7 +8,7 @@ import type { PageData } from '../$types';
 // Icons
 import Settings from '@lucide/svelte/icons/settings';
 import Activity from '@lucide/svelte/icons/activity';
-import Edit from '@lucide/svelte/icons/edit';
+import SquarePen from '@lucide/svelte/icons/square-pen';
 import Pause from '@lucide/svelte/icons/pause';
 import Play from '@lucide/svelte/icons/play';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
@@ -130,7 +130,7 @@ let { schedule, statistics, isExecutingAutoAdd, executeAutoAdd, editSchedule, to
           </Button>
         {/if}
         <Button size="sm" onclick={editSchedule}>
-          <Edit class="h-3 w-3 mr-1" />
+          <SquarePen class="h-3 w-3 mr-1" />
           Edit
         </Button>
         <Button size="sm" variant="outline" onclick={toggleStatus}>

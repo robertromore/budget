@@ -36,8 +36,8 @@ import Settings from '@lucide/svelte/icons/settings';
 import Database from '@lucide/svelte/icons/database';
 import Merge from '@lucide/svelte/icons/merge';
 import Keyboard from '@lucide/svelte/icons/keyboard';
-import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Clock from '@lucide/svelte/icons/clock';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Zap from '@lucide/svelte/icons/zap';
@@ -223,7 +223,7 @@ function formatOperationType(type: string): string {
             <p class="text-sm font-medium text-muted-foreground">Selected</p>
             <p class="text-2xl font-bold">{selectedCount}</p>
           </div>
-          <CheckCircle class="h-8 w-8 text-muted-foreground" />
+          <CircleCheck class="h-8 w-8 text-muted-foreground" />
         </div>
         {#if hasSelection}
           <div class="mt-2">

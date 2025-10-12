@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as Tooltip from "$lib/components/ui/tooltip";
   import {Button} from "$lib/components/ui/button";
-  import {CircleDollarSign, Plus, AlertTriangle} from "@lucide/svelte/icons";
+  import {CircleDollarSign, Plus, TriangleAlert} from "@lucide/svelte/icons";
   import {currencyFormatter} from "$lib/utils/formatters";
   import {listBudgets} from "$lib/query/budgets";
   import BudgetAllocationDialog from "$lib/components/dialogs/budget-allocation-dialog.svelte";
@@ -126,12 +126,12 @@
       <!-- Show unallocated amount if any -->
       {#if allocationSummary && allocationSummary.remainingAmount > 0.01}
         <div class="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
-          <AlertTriangle class="h-3 w-3" />
+          <TriangleAlert class="h-3 w-3" />
           <span>Unallocated: {currencyFormatter.format(allocationSummary.remainingAmount)}</span>
         </div>
       {:else if allocationSummary && allocationSummary.remainingAmount < -0.01}
         <div class="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
-          <AlertTriangle class="h-3 w-3" />
+          <TriangleAlert class="h-3 w-3" />
           <span>Over-allocated: {currencyFormatter.format(Math.abs(allocationSummary.remainingAmount))}</span>
         </div>
       {/if}

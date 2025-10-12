@@ -1,10 +1,9 @@
 <script lang="ts">
   import * as Card from '$lib/components/ui/card';
-  import {Badge} from '$lib/components/ui/badge';
   import {Button} from '$lib/components/ui/button';
   import {Separator} from '$lib/components/ui/separator';
   import {
-    CheckCircle2,
+    CircleCheck,
     TrendingUp,
     RotateCcw,
     AlertTriangle,
@@ -73,7 +72,7 @@
     <div class="flex items-start justify-between">
       <div class="flex items-start gap-3 flex-1">
         <div class="p-2 bg-green-50 dark:bg-green-950/20 rounded-lg mt-0.5">
-          <CheckCircle2 class="h-5 w-5 text-green-600" />
+          <CircleCheck class="h-5 w-5 text-green-600" />
         </div>
         <div class="flex-1 min-w-0">
           <Card.Title class="text-lg mb-1">Rollover Completed</Card.Title>

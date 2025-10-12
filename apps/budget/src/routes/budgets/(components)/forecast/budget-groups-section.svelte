@@ -1,7 +1,7 @@
 <script lang="ts">
 import {Button} from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {FolderTree, Plus, ChevronRight, ChevronDown, Edit, Trash2} from '@lucide/svelte';
+import {FolderTree, Plus, ChevronRight, ChevronDown, SquarePen, Trash2} from '@lucide/svelte/icons';
 import {listBudgetGroups, deleteBudgetGroup} from '$lib/query/budgets';
 import type {BudgetGroup} from '$lib/schema/budgets';
 
@@ -135,7 +135,7 @@ const hierarchy = $derived.by(() => {
                   size="sm"
                   onclick={() => onEditGroup?.(rootGroup)}
                 >
-                  <Edit class="h-4 w-4" />
+                  <SquarePen class="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -183,7 +183,7 @@ const hierarchy = $derived.by(() => {
                       size="sm"
                       onclick={() => onEditGroup?.(child)}
                     >
-                      <Edit class="h-4 w-4" />
+                      <SquarePen class="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"

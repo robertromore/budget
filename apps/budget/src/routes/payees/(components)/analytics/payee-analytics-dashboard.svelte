@@ -20,12 +20,12 @@ import Calendar from '@lucide/svelte/icons/calendar';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Users from '@lucide/svelte/icons/users';
 import Activity from '@lucide/svelte/icons/activity';
-import AlertCircle from '@lucide/svelte/icons/alert-circle';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import PieChart from '@lucide/svelte/icons/pie-chart';
 import LineChart from '@lucide/svelte/icons/line-chart';
-import Loader2 from '@lucide/svelte/icons/loader-2';
+import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 import Download from '@lucide/svelte/icons/download';
 import Filter from '@lucide/svelte/icons/filter';
@@ -215,7 +215,7 @@ const chartConfig = {
 
       <Button variant="outline" size="sm" onclick={loadAnalytics} disabled={isLoading}>
         {#if isLoading}
-          <Loader2 class="h-4 w-4 animate-spin mr-2" />
+          <LoaderCircle class="h-4 w-4 animate-spin mr-2" />
         {:else}
           <RefreshCw class="h-4 w-4 mr-2" />
         {/if}
@@ -226,7 +226,7 @@ const chartConfig = {
 
   {#if isLoading}
     <div class="flex items-center justify-center py-12">
-      <Loader2 class="h-8 w-8 animate-spin" />
+      <LoaderCircle class="h-8 w-8 animate-spin" />
     </div>
   {:else}
     <Tabs.Root value={activeTab} onValueChange={(tab) => activeTab = tab} class="w-full">
@@ -412,7 +412,7 @@ const chartConfig = {
               <Card.Content class="space-y-4">
                 {#if analytics.intelligence.categoryRecommendation}
                   <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                    <CheckCircle class="h-4 w-4 text-blue-500" />
+                    <CircleCheck class="h-4 w-4 text-blue-500" />
                     <span class="text-sm">
                       <strong>Category:</strong> {analytics.intelligence.categoryRecommendation.name}
                       ({Math.round(analytics.intelligence.categoryRecommendation.confidence * 100)}% confidence)
@@ -429,7 +429,7 @@ const chartConfig = {
                 {/if}
                 {#if analytics.intelligence.riskLevel}
                   <div class="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
-                    <AlertCircle class="h-4 w-4 text-orange-500" />
+                    <CircleAlert class="h-4 w-4 text-orange-500" />
                     <span class="text-sm">
                       <strong>Risk Level:</strong> {analytics.intelligence.riskLevel}
                     </span>
@@ -492,7 +492,7 @@ const chartConfig = {
                       <div class="space-y-2">
                         {#each mlInsights.unifiedRecommendations.automationSuggestions as suggestion}
                           <div class="flex items-center gap-2">
-                            <CheckCircle class="h-4 w-4 text-green-500" />
+                            <CircleCheck class="h-4 w-4 text-green-500" />
                             <span class="text-sm">{suggestion.description}</span>
                             <Badge variant="outline">{suggestion.impact}</Badge>
                           </div>
@@ -562,7 +562,7 @@ const chartConfig = {
                           {:else if change.type === 'decrease'}
                             <TrendingDown class="h-4 w-4 text-red-500" />
                           {:else}
-                            <AlertCircle class="h-4 w-4 text-orange-500" />
+                            <CircleAlert class="h-4 w-4 text-orange-500" />
                           {/if}
                         </div>
                         <div class="flex-1">
@@ -670,7 +670,7 @@ const chartConfig = {
                           {:else if insight.type === 'automation'}
                             <Target class="h-4 w-4 text-purple-500" />
                           {:else}
-                            <AlertCircle class="h-4 w-4 text-orange-500" />
+                            <CircleAlert class="h-4 w-4 text-orange-500" />
                           {/if}
                         </div>
                         <div class="flex-1">
@@ -755,7 +755,7 @@ const chartConfig = {
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Accuracy Score</Card.Title>
-                <CheckCircle class="h-4 w-4 text-muted-foreground" />
+                <CircleCheck class="h-4 w-4 text-muted-foreground" />
               </Card.Header>
               <Card.Content>
                 <div class="text-2xl font-bold">{Math.round((performanceMetrics.accuracy || 0) * 100)}%</div>
@@ -768,7 +768,7 @@ const chartConfig = {
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Corrections</Card.Title>
-                <AlertCircle class="h-4 w-4 text-muted-foreground" />
+                <CircleAlert class="h-4 w-4 text-muted-foreground" />
               </Card.Header>
               <Card.Content>
                 <div class="text-2xl font-bold">{performanceMetrics.totalCorrections || 0}</div>

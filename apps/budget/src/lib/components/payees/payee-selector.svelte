@@ -30,7 +30,7 @@ import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Clock from '@lucide/svelte/icons/clock';
 import Brain from '@lucide/svelte/icons/brain';
 import Sparkles from '@lucide/svelte/icons/sparkles';
-import Loader2 from '@lucide/svelte/icons/loader-2';
+import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 
 let {
   value = null,
@@ -318,7 +318,7 @@ $effect(() => {
             class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
           />
           {#if isSearching}
-            <Loader2 class="h-4 w-4 animate-spin" />
+            <LoaderCircle class="h-4 w-4 animate-spin" />
           {/if}
         </div>
 
@@ -524,7 +524,7 @@ $effect(() => {
         </div>
 
         {#if isLoadingDetails}
-          <Loader2 class="h-4 w-4 animate-spin" />
+          <LoaderCircle class="h-4 w-4 animate-spin" />
         {/if}
       </div>
 

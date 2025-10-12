@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {AlertTriangle, Plus, ArrowUpDown, Wallet, Grip} from "@lucide/svelte/icons";
+  import {TriangleAlert, Plus, ArrowUpDown, Wallet, Grip} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import Label from "$lib/components/ui/label/label.svelte";
@@ -274,7 +274,7 @@
     <Card.Root class="border-destructive/50 bg-destructive/5">
       <Card.Header>
         <Card.Title class="flex items-center gap-2 text-destructive">
-          <AlertTriangle class="h-5 w-5" />
+          <TriangleAlert class="h-5 w-5" />
           Overspent Envelopes ({envelopesByStatus.overspent.length})
         </Card.Title>
         <Card.Description>

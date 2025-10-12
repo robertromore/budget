@@ -7,7 +7,7 @@
   import {Label} from "$lib/components/ui/label";
   import * as Tooltip from "$lib/components/ui/tooltip";
   import {cn} from "$lib/utils";
-  import {CircleDollarSign, Plus, AlertTriangle, Trash2, Target, PieChart, Wallet, ArrowRightLeft} from "@lucide/svelte/icons";
+  import {CircleDollarSign, Plus, TriangleAlert, Trash2, Target, PieChart, Wallet, ArrowRightLeft} from "@lucide/svelte/icons";
   import {currencyFormatter} from "$lib/utils/formatters";
   import {listBudgets, createAllocation, deleteAllocation, getBudgetSuggestions, type BudgetSuggestion} from "$lib/query/budgets";
   import type {TransactionsFormat} from "$lib/types";
@@ -440,12 +440,12 @@
                 <!-- Real-time validation feedback -->
                 {#if validationError}
                   <div class="flex items-center gap-1 text-xs text-red-600">
-                    <AlertTriangle class="h-3 w-3" />
+                    <TriangleAlert class="h-3 w-3" />
                     <span>{validationError}</span>
                   </div>
                 {:else if validationWarning}
                   <div class="flex items-center gap-1 text-xs text-orange-600">
-                    <AlertTriangle class="h-3 w-3" />
+                    <TriangleAlert class="h-3 w-3" />
                     <span>{validationWarning}</span>
                   </div>
                 {/if}
@@ -529,7 +529,7 @@
           </div>
         {:else if availableBudgetOptions.length === 0}
           <div class="rounded-lg border bg-muted/50 p-3 text-center">
-            <AlertTriangle class="mx-auto h-8 w-8 text-muted-foreground" />
+            <TriangleAlert class="mx-auto h-8 w-8 text-muted-foreground" />
             <p class="mt-2 text-sm font-medium">No Available Budgets</p>
             <p class="text-xs text-muted-foreground">
               All budgets have been allocated or no budgets exist
@@ -540,7 +540,7 @@
     {:else}
       <div class="flex items-center justify-center py-8">
         <div class="text-center">
-          <AlertTriangle class="mx-auto h-8 w-8 text-muted-foreground" />
+          <TriangleAlert class="mx-auto h-8 w-8 text-muted-foreground" />
           <p class="mt-2 text-sm text-muted-foreground">No transaction selected</p>
         </div>
       </div>

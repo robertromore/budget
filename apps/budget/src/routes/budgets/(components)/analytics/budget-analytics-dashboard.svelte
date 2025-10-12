@@ -11,7 +11,7 @@
   import {listBudgets, getSpendingTrends} from "$lib/query/budgets";
   import {
     TrendingUp,
-    AlertTriangle,
+    TriangleAlert,
     Target,
     PiggyBank,
     CreditCard,
@@ -385,7 +385,7 @@
     <Card.Root class="border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/20">
       <Card.Header>
         <Card.Title class="flex items-center gap-2 text-orange-800 dark:text-orange-200">
-          <AlertTriangle class="h-5 w-5" />
+          <TriangleAlert class="h-5 w-5" />
           Budget Alerts
         </Card.Title>
       </Card.Header>

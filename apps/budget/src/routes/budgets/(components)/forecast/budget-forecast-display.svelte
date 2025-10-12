@@ -9,8 +9,8 @@ import { currencyFormatter } from '$lib/utils/formatters';
 import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
-import AlertCircle from '@lucide/svelte/icons/alert-circle';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Zap from '@lucide/svelte/icons/zap';
 
 interface Props {
@@ -38,7 +38,7 @@ const statusConfig = $derived.by(() => {
 	switch (forecast.status) {
 		case 'sufficient':
 			return {
-				icon: CheckCircle,
+				icon: CircleCheck,
 				color: 'text-green-600 dark:text-green-400',
 				bgColor: 'bg-green-50 dark:bg-green-950/50',
 				borderColor: 'border-green-200 dark:border-green-800',
@@ -47,7 +47,7 @@ const statusConfig = $derived.by(() => {
 			};
 		case 'tight':
 			return {
-				icon: AlertCircle,
+				icon: CircleAlert,
 				color: 'text-yellow-600 dark:text-yellow-400',
 				bgColor: 'bg-yellow-50 dark:bg-yellow-950/50',
 				borderColor: 'border-yellow-200 dark:border-yellow-800',
@@ -83,7 +83,7 @@ const statusConfig = $derived.by(() => {
 	</Card.Root>
 {:else if error}
 	<Alert.Root variant="destructive">
-		<AlertCircle class="h-4 w-4" />
+		<CircleAlert class="h-4 w-4" />
 		<Alert.Title>Error Loading Forecast</Alert.Title>
 		<Alert.Description>{error.message}</Alert.Description>
 	</Alert.Root>

@@ -27,8 +27,8 @@
     RotateCcw,
     DollarSign,
     TrendingUp,
-    AlertTriangle,
-    CheckCircle2,
+    TriangleAlert,
+    CircleCheck,
     Sparkles,
     FolderTree,
     Plus,
@@ -312,7 +312,7 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-xs sm:text-sm font-medium">Remaining</Card.Title>
-        <CheckCircle2 class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+        <CircleCheck class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
       </Card.Header>
       <Card.Content>
         <div class="text-lg sm:text-2xl font-bold break-all {summaryMetrics.remaining < 0 ? 'text-destructive' : ''}">
@@ -327,7 +327,7 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-xs sm:text-sm font-medium">Alerts</Card.Title>
-        <AlertTriangle class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+        <TriangleAlert class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
       </Card.Header>
       <Card.Content>
         <div class="text-lg sm:text-2xl font-bold">

@@ -12,8 +12,8 @@ import Mail from '@lucide/svelte/icons/mail';
 import Globe from '@lucide/svelte/icons/globe';
 import Calendar from '@lucide/svelte/icons/calendar';
 import CreditCard from '@lucide/svelte/icons/credit-card';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
-import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import Eye from '@lucide/svelte/icons/eye';
 import type {Payee} from '$lib/schema';
 import PayeeDataTableContainer from '../payee-data-table-container.svelte';
@@ -77,7 +77,7 @@ const formatPayeeType = (type: string | null) => {
 // Get status color and icon
 const getStatusDisplay = (isActive: boolean) => {
   return {
-    icon: isActive ? CheckCircle : AlertTriangle,
+    icon: isActive ? CircleCheck : TriangleAlert,
     color: isActive ? 'text-green-600' : 'text-orange-600',
     bgColor: isActive ? 'bg-green-50 dark:bg-green-950' : 'bg-orange-50 dark:bg-orange-950',
     label: isActive ? 'Active' : 'Inactive'

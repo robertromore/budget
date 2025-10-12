@@ -8,7 +8,7 @@ import {Badge} from '$lib/components/ui/badge';
 // Icons
 import Building from '@lucide/svelte/icons/building';
 import Calendar from '@lucide/svelte/icons/calendar';
-import Loader2 from '@lucide/svelte/icons/loader-2';
+import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 
 interface Props {
 	formData: any; // Store type from superform
@@ -77,7 +77,7 @@ let {
 						</div>
 						<Button variant="outline" size="sm" onclick={onDetectSubscription} disabled={isLoadingSubscriptionDetection}>
 							{#if isLoadingSubscriptionDetection}
-								<Loader2 class="h-4 w-4 animate-spin mr-2" />
+								<LoaderCircle class="h-4 w-4 animate-spin mr-2" />
 							{/if}
 							Detect
 						</Button>

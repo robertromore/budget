@@ -6,7 +6,7 @@
   import { Input } from "$lib/components/ui/input";
   import { listBudgetTemplates } from "$lib/query/budgets";
   import type { BudgetTemplate } from "$lib/schema/budgets";
-  import { Search, Sparkles, Loader2 } from "@lucide/svelte/icons";
+  import { Search, Sparkles, LoaderCircle } from "@lucide/svelte/icons";
   import * as LucideIcons from "@lucide/svelte/icons";
   import { currencyFormatter } from "$lib/utils/formatters";
   import { goto } from "$app/navigation";
@@ -105,7 +105,7 @@
       <!-- Template Grid -->
       {#if isLoading}
         <div class="flex flex-col items-center justify-center py-12 text-center">
-          <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
+          <LoaderCircle class="h-8 w-8 animate-spin text-muted-foreground" />
           <p class="text-muted-foreground mt-4">Loading templates...</p>
         </div>
       {:else if filteredTemplates.length === 0}

@@ -5,7 +5,7 @@ import {cn} from '$lib/utils';
 import Upload from '@lucide/svelte/icons/upload';
 import FileText from '@lucide/svelte/icons/file-text';
 import X from '@lucide/svelte/icons/x';
-import AlertCircle from '@lucide/svelte/icons/alert-circle';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
 
 interface Props {
   acceptedFormats: string[];
@@ -160,7 +160,7 @@ function openFilePicker() {
 
     <div class="flex flex-col items-center justify-center gap-4">
       {#if error}
-        <AlertCircle class="h-12 w-12 text-destructive" />
+        <CircleAlert class="h-12 w-12 text-destructive" />
       {:else}
         <Upload class={cn('h-12 w-12', isDragging ? 'text-primary' : 'text-muted-foreground')} />
       {/if}

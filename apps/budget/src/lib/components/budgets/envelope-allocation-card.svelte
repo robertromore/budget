@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {ArrowUpDown, AlertTriangle, TrendingUp, Star, Settings2} from "@lucide/svelte/icons";
+  import {ArrowUpDown, TriangleAlert, TrendingUp, Star, Settings2} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import {Badge} from "$lib/components/ui/badge";
@@ -44,14 +44,14 @@
         return {
           color: "bg-destructive/10 border-destructive text-destructive",
           badge: "destructive" as const,
-          icon: AlertTriangle,
+          icon: TriangleAlert,
           label: "Overspent",
         };
       case "depleted":
         return {
           color: "bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-900 dark:border-orange-700 dark:text-orange-300",
           badge: "secondary" as const,
-          icon: AlertTriangle,
+          icon: TriangleAlert,
           label: "Depleted",
         };
       case "active":
@@ -94,18 +94,22 @@
 
 <Card.Root class={cn("transition-all hover:shadow-md", statusConfig.color, className)}>
   <Card.Header class="pb-3">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2 flex-1 min-w-0">
-        <statusConfig.icon class="h-4 w-4 flex-shrink-0" />
-        <Card.Title class="text-lg truncate">{categoryName}</Card.Title>
-        {#if isEmergencyFund}
-          <Badge variant="destructive" class="text-xs">Emergency</Badge>
-        {:else if priority !== null}
-          <div class="flex items-center gap-1 text-xs text-muted-foreground">
-            <Star class="h-3 w-3 fill-current" />
-            <span>P{priority}</span>
-          </div>
-        {/if}
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-1">
+          <statusConfig.icon class="h-4 w-4 flex-shrink-0" />
+          <Card.Title class="text-lg truncate">{categoryName}</Card.Title>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+          {#if isEmergencyFund}
+            <Badge variant="destructive" class="text-xs">Emergency</Badge>
+          {:else if priority !== null}
+            <div class="flex items-center gap-1">
+              <Star class="h-3 w-3 fill-current" />
+              <span>Priority {priority}</span>
+            </div>
+          {/if}
+        </div>
       </div>
       <div class="flex items-center gap-2 flex-shrink-0">
         <Badge variant={statusConfig.badge}>{statusConfig.label}</Badge>
@@ -219,7 +223,7 @@
           onclick={onDeficitRecover}
           class="flex-1"
         >
-          <AlertTriangle class="h-4 w-4 mr-1" />
+          <TriangleAlert class="h-4 w-4 mr-1" />
           Recover
         </Button>
       {/if}

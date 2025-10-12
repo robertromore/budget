@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
 import { cn } from '$lib/utils';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
-import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 
 interface Props {
   isActive: boolean;
@@ -12,7 +12,7 @@ let { isActive }: Props = $props();
 
 const statusDisplay = $derived(() => {
   return {
-    icon: isActive ? CheckCircle : AlertTriangle,
+    icon: isActive ? CircleCheck : TriangleAlert,
     color: isActive ? 'text-green-600' : 'text-orange-600',
     bgColor: isActive ? 'bg-green-50 dark:bg-green-950' : 'bg-orange-50 dark:bg-orange-950',
     label: isActive ? 'Active' : 'Inactive'

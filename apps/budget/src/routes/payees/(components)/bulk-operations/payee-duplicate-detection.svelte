@@ -21,10 +21,10 @@ import Users from '@lucide/svelte/icons/users';
 import Merge from '@lucide/svelte/icons/merge';
 import Eye from '@lucide/svelte/icons/eye';
 import EyeOff from '@lucide/svelte/icons/eye-off';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import XCircle from '@lucide/svelte/icons/x-circle';
 import ArrowRight from '@lucide/svelte/icons/arrow-right';
-import Loader2 from '@lucide/svelte/icons/loader-2';
+import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 import Settings from '@lucide/svelte/icons/settings';
 import Building from '@lucide/svelte/icons/building';
 import User from '@lucide/svelte/icons/user';
@@ -382,7 +382,7 @@ $effect(() => {
             class="w-full md:w-auto"
           >
             {#if isDetecting}
-              <Loader2 class="h-4 w-4 mr-2 animate-spin" />
+              <LoaderCircle class="h-4 w-4 mr-2 animate-spin" />
               Detecting Duplicates...
             {:else}
               <Search class="h-4 w-4 mr-2" />
@@ -393,7 +393,7 @@ $effect(() => {
 
         {#if duplicateGroups.length > 0}
           <Alert.Root>
-            <CheckCircle class="h-4 w-4" />
+            <CircleCheck class="h-4 w-4" />
             <Alert.Title>Detection Complete</Alert.Title>
             <Alert.Description>
               Found {duplicateGroups.length} potential duplicate group{duplicateGroups.length > 1 ? 's' : ''}.
@@ -402,7 +402,7 @@ $effect(() => {
           </Alert.Root>
         {:else if !isDetecting && duplicateGroups.length === 0}
           <Alert.Root>
-            <CheckCircle class="h-4 w-4 text-green-600" />
+            <CircleCheck class="h-4 w-4 text-green-600" />
             <Alert.Title>No Duplicates Found</Alert.Title>
             <Alert.Description>
               No duplicate payees were found with the current settings. Your payee data appears to be clean!
@@ -433,7 +433,7 @@ $effect(() => {
               variant="default"
             >
               {#if mergeInProgress}
-                <Loader2 class="h-4 w-4 mr-2 animate-spin" />
+                <LoaderCircle class="h-4 w-4 mr-2 animate-spin" />
                 Merging...
               {:else}
                 <Merge class="h-4 w-4 mr-2" />
@@ -639,7 +639,7 @@ $effect(() => {
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2">
                         {#if result.success}
-                          <CheckCircle class="h-4 w-4 text-green-500" />
+                          <CircleCheck class="h-4 w-4 text-green-500" />
                         {:else}
                           <XCircle class="h-4 w-4 text-red-500" />
                         {/if}
@@ -665,7 +665,7 @@ $effect(() => {
           </ScrollArea>
         {:else if mergeInProgress}
           <div class="text-center py-8">
-            <Loader2 class="h-8 w-8 animate-spin mx-auto mb-4" />
+            <LoaderCircle class="h-8 w-8 animate-spin mx-auto mb-4" />
             <p class="text-muted-foreground">Merging duplicates in progress...</p>
           </div>
         {:else}

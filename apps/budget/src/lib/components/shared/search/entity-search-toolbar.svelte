@@ -10,18 +10,8 @@ import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 import List from '@lucide/svelte/icons/list';
 import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
 import type {ViewMode, SortOrder} from './entity-search-state.svelte';
+import type {SortOption, FilterSummary} from './types';
 import type {Snippet} from 'svelte';
-
-export interface SortOption<TSortBy extends string> {
-  value: TSortBy;
-  label: string;
-  order: SortOrder;
-}
-
-export interface FilterSummary {
-  key: string;
-  label: string;
-}
 
 interface Props {
   // Search query

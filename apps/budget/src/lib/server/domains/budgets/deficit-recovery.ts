@@ -1,18 +1,13 @@
-import {CalendarDate, type DateValue} from "@internationalized/date";
-import {eq, and, desc, asc, sql, lt, gt} from "drizzle-orm";
-import {db} from "$lib/server/db";
 import {
   type EnvelopeAllocation,
   type EnvelopeTransfer,
-  type NewEnvelopeTransfer,
-  type EnvelopeStatus,
   envelopeAllocations,
   envelopeTransfers,
 } from "$lib/schema/budgets/envelope-allocations";
-import {budgetPeriodInstances} from "$lib/schema/budgets";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {currentDate as defaultCurrentDate} from "$lib/utils/dates";
+import { categories } from "$lib/schema/categories";
+import { db } from "$lib/server/db";
+import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { and, desc, eq, gt, sql } from "drizzle-orm";
 
 export interface DeficitAnalysis {
   envelopeId: number;
@@ -350,14 +345,15 @@ export class DeficitRecoveryService {
     for (const source of sources) {
       const transferAmount = Math.min(envelope.deficitAmount, source.availableAmount);
       if (transferAmount > 0) {
+        const categoryName = await this.getCategoryName(source.categoryId);
         options.push({
           type: "transfer",
           sourceEnvelopeId: source.id,
           amount: transferAmount,
-          description: `Transfer from ${this.getCategoryName(source.categoryId)}`,
+          description: `Transfer from ${categoryName}`,
           priority: (source.metadata as any)?.priority ?? 5,
           feasible: true,
-          impact: `Reduces source envelope by ${transferAmount}`,
+          impact: `Reduces ${categoryName} by ${transferAmount}`,
         });
       }
     }
@@ -403,15 +399,22 @@ export class DeficitRecoveryService {
     for (const option of analysis.autoRecoveryOptions) {
       if (remainingDeficit <= 0) break;
 
+      // Skip "reset" type as it's not an actual recovery action
+      if (option.type === "reset") continue;
+
       const stepAmount = Math.min(remainingDeficit, option.amount);
 
+      // Map "borrowing" to "external_injection" for recovery steps
+      const stepType: DeficitRecoveryStep["type"] =
+        option.type === "borrowing" ? "external_injection" : option.type;
+
       steps.push({
-        type: option.type,
-        sourceEnvelopeId: option.sourceEnvelopeId,
+        type: stepType,
+        ...(option.sourceEnvelopeId != null && { sourceEnvelopeId: option.sourceEnvelopeId }),
         amount: stepAmount,
         description: option.description,
         order: stepOrder++,
-        automated: option.type === "transfer" || option.type === "emergency_fund",
+        automated: stepType === "transfer" || stepType === "emergency_fund",
       });
 
       remainingDeficit -= stepAmount;
@@ -490,6 +493,10 @@ export class DeficitRecoveryService {
         })
         .returning();
 
+      if (!transfer) {
+        throw new DatabaseError("Failed to create transfer record");
+      }
+
       return transfer;
     });
   }
@@ -511,8 +518,13 @@ export class DeficitRecoveryService {
     );
   }
 
-  private getCategoryName(categoryId: number): string {
-    // This would ideally fetch from categories table
-    return `Category ${categoryId}`;
+  private async getCategoryName(categoryId: number): Promise<string> {
+    const category = await db
+      .select({name: categories.name})
+      .from(categories)
+      .where(eq(categories.id, categoryId))
+      .limit(1);
+
+    return category[0]?.name ?? `Category ${categoryId}`;
   }
 }

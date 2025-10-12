@@ -5,7 +5,6 @@
   import {Input} from "$lib/components/ui/input";
   import Label from "$lib/components/ui/label/label.svelte";
   import {Badge} from "$lib/components/ui/badge";
-  import {cn} from "$lib/utils";
   import type {EnvelopeAllocationRequest} from "$lib/server/domains/budgets/envelope-service";
   import type {RolloverMode} from "$lib/schema/budgets/envelope-allocations";
   import type {Category} from "$lib/schema/categories";

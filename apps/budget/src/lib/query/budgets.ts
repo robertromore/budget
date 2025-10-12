@@ -48,11 +48,9 @@ export const budgetKeys = createQueryKeys("budgets", {
   goalProgress: (budgetId: number) => ["budgets", "goal", "progress", budgetId] as const,
   goalContributionPlan: (budgetId: number, frequency: string) =>
     ["budgets", "goal", "contribution-plan", budgetId, frequency] as const,
-  templates: {
-    all: () => ["budgets", "templates"] as const,
-    list: (includeSystem: boolean) => ["budgets", "templates", "list", includeSystem] as const,
-    detail: (id: number) => ["budgets", "templates", "detail", id] as const,
-  },
+  templatesAll: () => ["budgets", "templates"] as const,
+  templatesList: (includeSystem: boolean) => ["budgets", "templates", "list", includeSystem] as const,
+  templatesDetail: (id: number) => ["budgets", "templates", "detail", id] as const,
   suggestions: (params: {
     accountId: number;
     categoryId?: number | null;
@@ -68,7 +66,7 @@ function getState(): BudgetState | null {
 
 export const getBudgetCount = () =>
   defineQuery<{count: number}>({
-    queryKey: budgetKeys.count(),
+    queryKey: budgetKeys['count'](),
     queryFn: () => trpc().budgetRoutes.count.query(),
     options: {
       ...queryPresets.static,
@@ -77,7 +75,7 @@ export const getBudgetCount = () =>
 
 export const listBudgets = (status?: Budget["status"]) =>
   defineQuery<BudgetWithRelations[]>({
-    queryKey: budgetKeys.list(status),
+    queryKey: budgetKeys['list'](status),
     queryFn: () => trpc().budgetRoutes.list.query(status ? {status} : {}),
     options: {
       ...queryPresets.static,
@@ -86,7 +84,7 @@ export const listBudgets = (status?: Budget["status"]) =>
 
 export const getBudgetDetail = (idOrSlug: number | string) =>
   defineQuery<BudgetWithRelations>({
-    queryKey: typeof idOrSlug === "number" ? budgetKeys.detail(idOrSlug) : budgetKeys.detailBySlug(idOrSlug),
+    queryKey: typeof idOrSlug === "number" ? budgetKeys['detail'](idOrSlug) : budgetKeys['detailBySlug'](idOrSlug),
     queryFn: () => typeof idOrSlug === "number"
       ? trpc().budgetRoutes.get.query({id: idOrSlug})
       : trpc().budgetRoutes.getBySlug.query({slug: idOrSlug}),
@@ -97,10 +95,10 @@ export const getBudgetDetail = (idOrSlug: number | string) =>
 
 export const listPeriodInstances = (templateId: number) =>
   defineQuery<BudgetPeriodInstance[]>({
-    queryKey: budgetKeys.periodInstances(templateId),
+    queryKey: budgetKeys['periodInstances'](templateId),
     queryFn: () => trpc().budgetRoutes.listPeriodInstances.query({templateId}),
     options: {
-      staleTime: 5 * 60 * 1000,
+      staleTime: 30 * 1000, // 30 seconds - periods can change when new months roll over
     },
   });
 
@@ -110,7 +108,7 @@ export const validateAllocation = (
   excludeAllocationId?: number
 ) =>
   defineQuery<AllocationValidationResult>({
-    queryKey: budgetKeys.allocationValidation(transactionId, amount, excludeAllocationId ?? null),
+    queryKey: budgetKeys['allocationValidation'](transactionId, amount, excludeAllocationId ?? null),
     queryFn: () =>
       trpc().budgetRoutes.validateAllocation.query({
         transactionId,
@@ -124,7 +122,7 @@ export const validateAllocation = (
 
 export const createBudget = defineMutation<CreateBudgetRequest, BudgetWithRelations>({
   mutationFn: (input) => trpc().budgetRoutes.create.mutate(input),
-  onSuccess: (budget, variables, context) => {
+  onSuccess: (budget, variables) => {
     const state = getState();
     if (state) {
       state.upsertBudget(budget);
@@ -136,7 +134,7 @@ export const createBudget = defineMutation<CreateBudgetRequest, BudgetWithRelati
       (oldData) => [...oldData, budget]
     );
 
-    cachePatterns.invalidatePrefix(budgetKeys.lists());
+    cachePatterns.invalidatePrefix(budgetKeys['lists']());
   },
   successMessage: "Budget created",
   errorMessage: "Failed to create budget",
@@ -855,7 +853,7 @@ export const linkScheduleToGoal = defineMutation<
 
 export const listBudgetTemplates = (includeSystem: boolean = true) =>
   defineQuery<BudgetTemplate[]>({
-    queryKey: budgetKeys.templates.list(includeSystem),
+    queryKey: budgetKeys['templatesList'](includeSystem),
     queryFn: () => trpc().budgetRoutes.listBudgetTemplates.query({includeSystem}),
     options: {
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -864,7 +862,7 @@ export const listBudgetTemplates = (includeSystem: boolean = true) =>
 
 export const getBudgetTemplate = (id: number) =>
   defineQuery<BudgetTemplate>({
-    queryKey: budgetKeys.templates.detail(id),
+    queryKey: budgetKeys['templatesDetail'](id),
     queryFn: () => trpc().budgetRoutes.getBudgetTemplate.query({id}),
     options: {
       staleTime: 5 * 60 * 1000,
@@ -886,7 +884,7 @@ export const createBudgetTemplate = defineMutation<
 >({
   mutationFn: (input) => trpc().budgetRoutes.createBudgetTemplate.mutate(input),
   onSuccess: () => {
-    cachePatterns.invalidatePrefix(budgetKeys.templates.all());
+    cachePatterns.invalidatePrefix(budgetKeys['templatesAll']());
   },
   successMessage: "Budget template created successfully",
   errorMessage: "Failed to create budget template",
@@ -906,8 +904,8 @@ export const updateBudgetTemplate = defineMutation<
 >({
   mutationFn: (input) => trpc().budgetRoutes.updateBudgetTemplate.mutate(input),
   onSuccess: (_result, variables) => {
-    cachePatterns.invalidatePrefix(budgetKeys.templates.all());
-    cachePatterns.invalidatePrefix(budgetKeys.templates.detail(variables.id));
+    cachePatterns.invalidatePrefix(budgetKeys['templatesAll']());
+    cachePatterns.invalidatePrefix(budgetKeys['templatesDetail'](variables.id));
   },
   successMessage: "Budget template updated successfully",
   errorMessage: "Failed to update budget template",
@@ -916,8 +914,8 @@ export const updateBudgetTemplate = defineMutation<
 export const deleteBudgetTemplate = defineMutation<number, void>({
   mutationFn: (id) => trpc().budgetRoutes.deleteBudgetTemplate.mutate({id}),
   onSuccess: (_result, id) => {
-    cachePatterns.invalidatePrefix(budgetKeys.templates.all());
-    cachePatterns.invalidatePrefix(budgetKeys.templates.detail(id));
+    cachePatterns.invalidatePrefix(budgetKeys['templatesAll']());
+    cachePatterns.invalidatePrefix(budgetKeys['templatesDetail'](id));
   },
   successMessage: "Budget template deleted successfully",
   errorMessage: "Failed to delete budget template",
@@ -930,7 +928,7 @@ export const duplicateBudgetTemplate = defineMutation<
   mutationFn: ({id, newName}) =>
     trpc().budgetRoutes.duplicateBudgetTemplate.mutate({id, newName}),
   onSuccess: () => {
-    cachePatterns.invalidatePrefix(budgetKeys.templates.all());
+    cachePatterns.invalidatePrefix(budgetKeys['templatesAll']());
   },
   successMessage: "Budget template duplicated successfully",
   errorMessage: "Failed to duplicate budget template",

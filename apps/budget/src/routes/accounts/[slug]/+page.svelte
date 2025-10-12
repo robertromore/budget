@@ -1,6 +1,6 @@
 <script lang="ts">
 import Plus from '@lucide/svelte/icons/plus';
-import Edit from '@lucide/svelte/icons/edit';
+import SquarePen from '@lucide/svelte/icons/square-pen';
 import Upload from '@lucide/svelte/icons/upload';
 import {Button, buttonVariants} from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
@@ -322,7 +322,7 @@ $effect(() => {
     <div class="flex items-center space-x-2">
 
       <Button variant="outline" href="/accounts/{accountSlug}/edit">
-        <Edit class="mr-2 h-4 w-4" />
+        <SquarePen class="mr-2 h-4 w-4" />
         Edit
       </Button>
 

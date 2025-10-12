@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as Card from "$lib/components/ui/card";
   import ChartPlaceholder from "$lib/components/ui/chart-placeholder.svelte";
-  import {TrendingDown, Target, AlertTriangle} from "@lucide/svelte/icons";
+  import {TrendingDown, Target, TriangleAlert} from "@lucide/svelte/icons";
   import {currencyFormatter} from "$lib/utils/formatters";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
 
@@ -77,9 +77,9 @@
       <div class="space-y-1">
         <div class="flex items-center gap-1 text-sm text-muted-foreground">
           {#if status === 'danger'}
-            <AlertTriangle class="h-3 w-3 text-destructive" />
+            <TriangleAlert class="h-3 w-3 text-destructive" />
           {:else if status === 'warning'}
-            <AlertTriangle class="h-3 w-3 text-orange-600" />
+            <TriangleAlert class="h-3 w-3 text-orange-600" />
           {:else}
             <Target class="h-3 w-3 text-green-600" />
           {/if}
@@ -95,7 +95,7 @@
     {#if status === 'danger'}
       <div class="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
         <div class="flex items-center gap-2 text-destructive">
-          <AlertTriangle class="h-4 w-4" />
+          <TriangleAlert class="h-4 w-4" />
           <span class="text-sm font-medium">Budget is projected to be exceeded</span>
         </div>
         <p class="text-sm text-muted-foreground mt-1">
@@ -105,7 +105,7 @@
     {:else if status === 'warning'}
       <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 dark:bg-orange-950 dark:border-orange-800">
         <div class="flex items-center gap-2 text-orange-700 dark:text-orange-300">
-          <AlertTriangle class="h-4 w-4" />
+          <TriangleAlert class="h-4 w-4" />
           <span class="text-sm font-medium">Budget is running tight</span>
         </div>
         <p class="text-sm text-muted-foreground mt-1">

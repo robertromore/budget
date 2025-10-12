@@ -5,10 +5,10 @@ import {Button} from '$lib/components/ui/button';
 import {Badge} from '$lib/components/ui/badge';
 import {ScrollArea} from '$lib/components/ui/scroll-area';
 import {Checkbox} from '$lib/components/ui/checkbox';
-import AlertCircle from '@lucide/svelte/icons/alert-circle';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Clock from '@lucide/svelte/icons/clock';
-import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import type {ImportRow} from '$lib/types/import';
 import {formatCurrency} from '$lib/utils/formatters';
 
@@ -56,11 +56,11 @@ const selectedCount = $derived(selectedRows.size);
 function getStatusIcon(status: string) {
   switch (status) {
     case 'valid':
-      return CheckCircle;
+      return CircleCheck;
     case 'invalid':
-      return AlertCircle;
+      return CircleAlert;
     case 'warning':
-      return AlertTriangle;
+      return TriangleAlert;
     default:
       return Clock;
   }

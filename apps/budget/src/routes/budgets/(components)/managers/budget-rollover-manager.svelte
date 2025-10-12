@@ -18,8 +18,8 @@
     Settings,
     Clock,
     ArrowRight,
-    Loader2,
-    AlertTriangle,
+    LoaderCircle,
+    TriangleAlert,
   } from "@lucide/svelte/icons";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
@@ -38,9 +38,11 @@
   interface Props {
     budgets: BudgetWithRelations[];
     className?: string;
+    hidePeriodInfo?: boolean;
+    hideMetrics?: boolean;
   }
 
-  let {budgets = [], className}: Props = $props();
+  let {budgets = [], className, hidePeriodInfo = false, hideMetrics = false}: Props = $props();
 
   // Get the first budget with periods
   const primaryBudget = $derived(budgets.find(b => b.periodTemplates && b.periodTemplates.length > 0));
@@ -93,8 +95,8 @@
 
   // Load settings from budget metadata when budget changes
   $effect(() => {
-    if (primaryBudget?.metadata?.rolloverSettings) {
-      const saved = primaryBudget.metadata.rolloverSettings as any;
+    if (primaryBudget?.metadata?.['rolloverSettings']) {
+      const saved = primaryBudget.metadata['rolloverSettings'] as any;
       rolloverConfig.enabled = saved.enabled ?? rolloverConfig.enabled;
       rolloverConfig.maxRolloverPercentage = saved.maxRolloverPercentage ?? rolloverConfig.maxRolloverPercentage;
       rolloverConfig.rolloverLimitMonths = saved.rolloverLimitMonths ?? rolloverConfig.rolloverLimitMonths;
@@ -142,6 +144,15 @@
     if (!currentPeriod?.id || !previousPeriod?.id) return null;
     return previewRollover(previousPeriod.id, currentPeriod.id).options();
   });
+
+  // Helper to format period dates as readable names
+  function formatPeriodName(period: typeof periods[0] | undefined): string {
+    if (!period) return 'period';
+    const start = new Date(period.startDate);
+    const end = new Date(period.endDate);
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${monthNames[start.getMonth()]} ${start.getDate()} - ${monthNames[end.getMonth()]} ${end.getDate()}`;
+  }
   const rolloverPreview = $derived(rolloverPreviewQuery?.data);
   const upcomingTransitions = $derived(rolloverPreview?.calculations ?? []);
 
@@ -193,9 +204,8 @@
       return;
     }
 
-    const mutation = updateRolloverSettings.execute();
     try {
-      await mutation.mutateAsync({
+      await updateRolloverSettings.execute({
         budgetId: primaryBudget.id,
         settings: rolloverConfig,
       });
@@ -209,6 +219,7 @@
 
 <div class={cn("space-y-6", className)}>
   <!-- Period Information -->
+  {#if !hidePeriodInfo}
   <Card.Root>
     <Card.Header>
       <Card.Title>Period Information</Card.Title>
@@ -247,8 +258,10 @@
       </div>
     </Card.Content>
   </Card.Root>
+  {/if}
 
   <!-- Overview Cards -->
+  {#if !hideMetrics}
   <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
     <!-- Total Rolled In -->
     <Card.Root>
@@ -259,7 +272,7 @@
       <Card.Content>
         {#if isLoadingSummary}
           <div class="flex items-center gap-2">
-            <Loader2 class="h-4 w-4 animate-spin" />
+            <LoaderCircle class="h-4 w-4 animate-spin" />
             <span class="text-sm text-muted-foreground">Loading...</span>
           </div>
         {:else}
@@ -282,7 +295,7 @@
       <Card.Content>
         {#if isLoadingSummary}
           <div class="flex items-center gap-2">
-            <Loader2 class="h-4 w-4 animate-spin" />
+            <LoaderCircle class="h-4 w-4 animate-spin" />
             <span class="text-sm text-muted-foreground">Loading...</span>
           </div>
         {:else}
@@ -305,7 +318,7 @@
       <Card.Content>
         {#if isLoadingEstimate}
           <div class="flex items-center gap-2">
-            <Loader2 class="h-4 w-4 animate-spin" />
+            <LoaderCircle class="h-4 w-4 animate-spin" />
             <span class="text-sm text-muted-foreground">Loading...</span>
           </div>
         {:else}
@@ -333,6 +346,7 @@
       </Card.Content>
     </Card.Root>
   </div>
+  {/if}
 
   <!-- Main Content Tabs -->
   <Tabs.Root value="upcoming" class="space-y-4">
@@ -364,7 +378,7 @@
     <Tabs.Content value="upcoming" class="space-y-4">
       {#if isLoadingEstimate}
         <div class="flex items-center justify-center py-12">
-          <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
+          <LoaderCircle class="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       {:else if !rolloverEstimate || envelopesAffected === 0}
         <Card.Root>
@@ -386,7 +400,7 @@
                 <div>
                   <h3 class="font-medium">Estimated Rollover Impact</h3>
                   <p class="text-sm text-muted-foreground">
-                    Transition from {previousPeriod?.name ?? 'Previous'} to {currentPeriod?.name ?? 'Current'}
+                    Transition from {formatPeriodName(previousPeriod)} to {formatPeriodName(currentPeriod)}
                   </p>
                 </div>
                 <div class="text-right">
@@ -402,7 +416,7 @@
               {#if estimatedReset > 0}
                 <div class="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
                   <div class="flex items-center gap-2">
-                    <AlertTriangle class="h-4 w-4 text-orange-600" />
+                    <TriangleAlert class="h-4 w-4 text-orange-600" />
                     <span class="text-sm font-medium">Amount to be Reset</span>
                   </div>
                   <span class="text-sm font-medium text-orange-600">
@@ -487,7 +501,7 @@
       {#if isLoadingHistory}
         <Card.Root>
           <Card.Content class="p-12 text-center">
-            <Loader2 class="mx-auto h-12 w-12 text-muted-foreground/50 mb-4 animate-spin" />
+            <LoaderCircle class="mx-auto h-12 w-12 text-muted-foreground/50 mb-4 animate-spin" />
             <h3 class="text-lg font-medium mb-2">Loading History...</h3>
           </Card.Content>
         </Card.Root>
@@ -697,7 +711,7 @@
     <Dialog.Header>
       <Dialog.Title>Manual Period Transition</Dialog.Title>
       <Dialog.Description>
-        Process rollover from {previousPeriod?.name ?? 'previous period'} to {currentPeriod?.name ?? 'current period'}
+        Process rollover from {formatPeriodName(previousPeriod)} to {formatPeriodName(currentPeriod)}
       </Dialog.Description>
     </Dialog.Header>
 
@@ -741,7 +755,7 @@
         disabled={isProcessingTransition || !previousPeriod || !currentPeriod}
       >
         {#if isProcessingTransition}
-          <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+          <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
         {/if}
         Execute Transition
       </Button>

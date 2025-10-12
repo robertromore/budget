@@ -5,7 +5,7 @@
   import { Switch } from "$lib/components/ui/switch";
   import * as Select from "$lib/components/ui/select";
   import { Badge } from "$lib/components/ui/badge";
-  import { Building2, FileText, CheckCircle2, Info, Palette, CreditCard, Banknote, Wallet } from "@lucide/svelte/icons";
+  import { Building2, FileText, CircleCheck, Info, Palette, CreditCard, Banknote, Wallet } from "@lucide/svelte/icons";
   import WizardStep from "./wizard-step.svelte";
   import IconPicker from "$lib/components/ui/icon-picker/icon-picker.svelte";
   import { ColorPicker } from "$lib/components/ui/color-picker";
@@ -856,7 +856,7 @@
   <div class="space-y-4">
     <div class="space-y-2">
       <h3 class="flex items-center gap-2 text-lg font-semibold">
-        <CheckCircle2 class="h-5 w-5 text-green-600" />
+        <CircleCheck class="h-5 w-5 text-green-600" />
         Account Summary
       </h3>
     </div>
