@@ -354,7 +354,7 @@ export const processEnvelopeRollover = defineMutation<
   onSuccess: (data) => {
     // Invalidate envelopes and rollover history to reflect the completed rollover
     cachePatterns.invalidatePrefix([...budgetKeys.all(), "envelopes"]);
-    cachePatterns.invalidatePrefix([...budgetKeys.all(), "rollover-history"]);
+    cachePatterns.invalidatePrefix([...budgetKeys.all(), "budget-rollover-history"]);
   },
   successMessage: (data) => {
     if (data && Array.isArray(data) && data.length > 0) {

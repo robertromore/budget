@@ -1,5 +1,5 @@
 import {CalendarDate, type DateValue} from "@internationalized/date";
-import {eq, and, desc, asc, sql} from "drizzle-orm";
+import {eq, and, desc, asc, sql, inArray} from "drizzle-orm";
 import {db} from "$lib/server/db";
 import {
   type EnvelopeAllocation,
@@ -282,7 +282,7 @@ export class RolloverCalculator {
     return await db
       .select()
       .from(envelopeRolloverHistory)
-      .where(sql`${envelopeRolloverHistory.envelopeId} IN (${envelopeIds.join(',')})`)
+      .where(inArray(envelopeRolloverHistory.envelopeId, envelopeIds))
       .orderBy(desc(envelopeRolloverHistory.processedAt))
       .limit(limit);
   }
