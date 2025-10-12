@@ -10,6 +10,7 @@
  * 5. Inline editing: Reduce modal dialogs
  */
 
+import {SvelteSet} from 'svelte/reactivity';
 import {Button} from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Select from '$lib/components/ui/select';
@@ -17,6 +18,9 @@ import * as Tabs from '$lib/components/ui/tabs';
 import {Badge} from '$lib/components/ui/badge';
 import {Progress} from '$lib/components/ui/progress';
 import {Separator} from '$lib/components/ui/separator';
+import * as Dialog from '$lib/components/ui/dialog';
+import {Input} from '$lib/components/ui/input';
+import {Label} from '$lib/components/ui/label';
 import BudgetProgress from '$lib/components/budgets/budget-progress.svelte';
 import EnvelopeAllocationCard from '$lib/components/budgets/envelope-allocation-card.svelte';
 import EnvelopeSettingsSheet from '$lib/components/budgets/envelope-settings-sheet.svelte';
@@ -28,6 +32,7 @@ import BudgetRolloverManager from '../(components)/managers/budget-rollover-mana
 import {currencyFormatter} from '$lib/utils/formatters';
 import {calculateActualSpent, calculateAllocated} from '$lib/utils/budget-calculations';
 import {parseDate, getLocalTimeZone} from '@internationalized/date';
+import {parseISOString, currentDate} from '$lib/utils/dates';
 import {monthYearFmt, dayFmt} from '$lib/utils/date-formatters';
 import {
   getBudgetDetail,
@@ -38,6 +43,8 @@ import {
   processEnvelopeRollover,
   executeDeficitRecovery,
   getBudgetRolloverHistory,
+  generateNextPeriod,
+  updatePeriodTemplate,
 } from '$lib/query/budgets';
 import {listCategories} from '$lib/query/categories';
 import {trpc} from '$lib/trpc/client';
@@ -84,9 +91,24 @@ const firstTemplateId = $derived(budget?.periodTemplates?.[0]?.id);
 let periodsQuery = $derived(firstTemplateId ? listPeriodInstances(firstTemplateId).options() : null);
 let periods = $derived(periodsQuery?.data ?? []);
 
-// Periods are ordered by startDate ascending, so [0] is oldest, [length-1] is newest
-const currentPeriod = $derived(periods[periods.length - 1]);
-const previousPeriod = $derived(periods[periods.length - 2]);
+// Find the actual current period (the one that includes today)
+// and the most recent period (which might be in the future)
+const currentPeriod = $derived.by(() => {
+  return periods.find(p => {
+    const start = parseISOString(p.startDate);
+    const end = parseISOString(p.endDate);
+    if (!start || !end) return false;
+    return start.compare(currentDate) <= 0 && end.compare(currentDate) >= 0;
+  }) || periods[periods.length - 1]; // Fallback to newest if none match
+});
+
+const previousPeriod = $derived.by(() => {
+  const currentIndex = periods.findIndex(p => p.id === currentPeriod?.id);
+  return currentIndex > 0 ? periods[currentIndex - 1] : undefined;
+});
+
+// Get the most recent period (last in array, might be future)
+const mostRecentPeriod = $derived(periods[periods.length - 1]);
 
 // Selected period for filtering envelopes (defaults to current period)
 let selectedPeriodId = $state<number | undefined>(undefined);
@@ -102,6 +124,22 @@ $effect(() => {
 const selectedPeriod = $derived.by(() => {
   if (!selectedPeriodId) return currentPeriod;
   return periods.find(p => p.id === selectedPeriodId) || currentPeriod;
+});
+
+// Check if we can create the next period
+// Only show button if there are no future periods (periods that start after today)
+const canCreateNextPeriod = $derived.by(() => {
+  if (periods.length === 0 || !budget?.periodTemplates?.[0]) return false;
+
+  // Check if any period starts in the future (after today)
+  const hasFuturePeriod = periods.some(p => {
+    const start = parseISOString(p.startDate);
+    if (!start) return false;
+    return start.compare(currentDate) > 0;
+  });
+
+  // Only show button if NO future periods exist
+  return !hasFuturePeriod;
 });
 
 // Get the period before the selected one
@@ -153,14 +191,24 @@ const rolloverHistoryQuery = $derived.by(() => {
 });
 const rolloverHistory = $derived(rolloverHistoryQuery?.data ?? []);
 
-// Check if rollover has already been processed for this period transition
-const hasRolloverBeenProcessed = $derived.by(() => {
-  if (!previousPeriod || !currentPeriod) return false;
+// Helper function to check if rollover has been processed between two periods
+function isRolloverProcessed(fromPeriodId: number, toPeriodId: number): boolean {
+  // Check session-tracked rollovers first (immediate)
+  const rolloverKey = `${fromPeriodId}-${toPeriodId}`;
+  if (completedRollovers.has(rolloverKey)) return true;
+
+  // Then check rollover history from DB
   return rolloverHistory.some(
     history =>
-      history.fromPeriodId === previousPeriod.id &&
-      history.toPeriodId === currentPeriod.id
+      history.fromPeriodId === fromPeriodId &&
+      history.toPeriodId === toPeriodId
   );
+}
+
+// Check if rollover has already been processed for the main period transition
+const hasRolloverBeenProcessed = $derived.by(() => {
+  if (!previousPeriod || !currentPeriod) return false;
+  return isRolloverProcessed(previousPeriod.id, currentPeriod.id);
 });
 
 // Dialog state
@@ -173,6 +221,19 @@ let deficitRecoveryPlan = $state<any>(null);
 let isAnalyzingDeficit = $state(false);
 let isCreatingDeficitPlan = $state(false);
 let isExecutingDeficitPlan = $state(false);
+let isProcessingRollover = $state(false);
+let editTemplateDialogOpen = $state(false);
+
+// Template editing form state
+let templateForm = $state({
+  intervalCount: 1,
+  startDayOfMonth: 1,
+});
+
+// Track completed rollovers in this session to prevent duplicates
+// Key format: "fromPeriodId-toPeriodId"
+// Using SvelteSet for reactive mutations
+let completedRollovers = new SvelteSet<string>();
 
 // Calculate metrics
 const allocatedAmount = $derived(budget ? calculateAllocated(budget) : 0);
@@ -223,7 +284,8 @@ const primaryAction = $derived.by(() => {
     };
   }
 
-  if (previousPeriod && currentPeriod && !hasRolloverBeenProcessed) {
+  // Check both the rollover history AND the current processing state
+  if (previousPeriod && currentPeriod && !hasRolloverBeenProcessed && !isProcessingRollover && !rolloverMutation.isPending) {
     const previousPeriodName = monthYearFmt.format(parseDate(previousPeriod.startDate).toDate(getLocalTimeZone()));
     const currentPeriodName = monthYearFmt.format(parseDate(currentPeriod.startDate).toDate(getLocalTimeZone()));
 
@@ -260,6 +322,8 @@ const primaryAction = $derived.by(() => {
 const updateEnvelopeMutation = updateEnvelopeAllocation.options();
 const transferFundsMutation = transferEnvelopeFunds.options();
 const rolloverMutation = processEnvelopeRollover.options();
+const generatePeriodMutation = generateNextPeriod.options();
+const updateTemplateMutation = updatePeriodTemplate.options();
 
 function formatCurrency(value: number) {
   return currencyFormatter.format(Math.abs(value ?? 0));
@@ -286,10 +350,23 @@ async function handlePrimaryAction() {
       deficitRecoveryDialogOpen = true;
     }
   } else if (primaryAction.type === 'rollover' && previousPeriod && currentPeriod) {
-    await rolloverMutation.mutateAsync({
-      fromPeriodId: previousPeriod.id,
-      toPeriodId: currentPeriod.id,
-    });
+    // Prevent duplicate clicks - check all possible states
+    if (isProcessingRollover || rolloverMutation.isPending || hasRolloverBeenProcessed) {
+      return;
+    }
+
+    const rolloverKey = `${previousPeriod.id}-${currentPeriod.id}`;
+    isProcessingRollover = true;
+    try {
+      await rolloverMutation.mutateAsync({
+        fromPeriodId: previousPeriod.id,
+        toPeriodId: currentPeriod.id,
+      });
+      // Mark this rollover as completed in the session
+      completedRollovers.add(rolloverKey);
+    } finally {
+      isProcessingRollover = false;
+    }
   }
 }
 
@@ -559,9 +636,9 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
               <Button
                 variant={primaryAction.variant}
                 onclick={handlePrimaryAction}
-                disabled={rolloverMutation.isPending}
+                disabled={rolloverMutation.isPending || isProcessingRollover}
               >
-                {#if rolloverMutation.isPending && primaryAction.type === 'rollover'}
+                {#if (rolloverMutation.isPending || isProcessingRollover) && primaryAction.type === 'rollover'}
                   <Repeat class="mr-2 h-4 w-4 animate-spin" />
                   Processing...
                 {:else}
@@ -1134,30 +1211,54 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
               <Card.Title class="text-base">Quick Actions</Card.Title>
             </Card.Header>
             <Card.Content class="space-y-3">
-              <Button variant="outline" class="w-full justify-start" size="sm">
-                <Calendar class="h-4 w-4 mr-2" />
-                Create New Period
-              </Button>
-              <Button variant="outline" class="w-full justify-start" size="sm">
+              <!-- Create New Period button removed - the backend generateNextPeriod uses lookAheadMonths
+                   which doesn't work correctly for manual period creation. Periods are auto-created. -->
+              <Button
+                variant="outline"
+                class="w-full justify-start"
+                size="sm"
+                disabled={!firstTemplateId}
+                onclick={() => {
+                  const template = budget?.periodTemplates?.[0];
+                  if (template) {
+                    templateForm.intervalCount = template.intervalCount;
+                    templateForm.startDayOfMonth = template.startDayOfMonth ?? 1;
+                  }
+                  editTemplateDialogOpen = true;
+                }}
+              >
                 <Settings2 class="h-4 w-4 mr-2" />
                 Edit Template
               </Button>
-              {#if previousToSelectedPeriod && selectedPeriod}
+              {#if previousToSelectedPeriod && selectedPeriod && !isRolloverProcessed(previousToSelectedPeriod.id, selectedPeriod.id)}
                 <Separator />
                 <Button
                   variant="outline"
                   class="w-full justify-start"
                   size="sm"
-                  disabled={selectedPeriod.id !== currentPeriod?.id}
-                  onclick={() => {
-                    rolloverMutation.mutateAsync({
-                      fromPeriodId: previousToSelectedPeriod.id,
-                      toPeriodId: selectedPeriod.id,
-                    });
+                  disabled={selectedPeriod.id !== currentPeriod?.id || rolloverMutation.isPending || isProcessingRollover}
+                  onclick={async () => {
+                    if (isProcessingRollover || rolloverMutation.isPending) return;
+
+                    // Check if already processed (both session and database)
+                    if (isRolloverProcessed(previousToSelectedPeriod.id, selectedPeriod.id)) return;
+
+                    const rolloverKey = `${previousToSelectedPeriod.id}-${selectedPeriod.id}`;
+                    isProcessingRollover = true;
+                    try {
+                      await rolloverMutation.mutateAsync({
+                        fromPeriodId: previousToSelectedPeriod.id,
+                        toPeriodId: selectedPeriod.id,
+                      });
+                      // Mark this rollover as completed in the session
+                      completedRollovers.add(rolloverKey);
+                    } finally {
+                      isProcessingRollover = false;
+                    }
                   }}
                 >
-                  <Repeat class="h-4 w-4 mr-2" />
-                  Process Rollover
+                  <Repeat class={`h-4 w-4 mr-2 ${rolloverMutation.isPending || isProcessingRollover ? 'animate-spin' : ''}`} />
+                  {rolloverMutation.isPending || isProcessingRollover ? 'Processing...' : 'Process Rollover'}
                 </Button>
               {/if}
             </Card.Content>
@@ -1298,3 +1399,71 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
     onExecutePlan={handleExecuteDeficitPlan}
   />
 {/if}
+
+<!-- Edit Template Dialog -->
+<Dialog.Root bind:open={editTemplateDialogOpen}>
+  <Dialog.Content class="sm:max-w-[425px]">
+    <Dialog.Header>
+      <Dialog.Title>Edit Period Template</Dialog.Title>
+      <Dialog.Description>
+        Update the settings for your budget period template. Changes will only affect future periods.
+      </Dialog.Description>
+    </Dialog.Header>
+    <div class="grid gap-4 py-4">
+      <div class="grid gap-2">
+        <Label for="interval">Period Interval</Label>
+        <Input
+          id="interval"
+          type="number"
+          min="1"
+          bind:value={templateForm.intervalCount}
+          placeholder="1"
+        />
+        <p class="text-sm text-muted-foreground">
+          How many months per period
+        </p>
+      </div>
+      <div class="grid gap-2">
+        <Label for="startDay">Start Day of Month</Label>
+        <Input
+          id="startDay"
+          type="number"
+          min="1"
+          max="28"
+          bind:value={templateForm.startDayOfMonth}
+          placeholder="1"
+        />
+        <p class="text-sm text-muted-foreground">
+          Day of month when each period starts (1-28)
+        </p>
+      </div>
+    </div>
+    <Dialog.Footer>
+      <Button
+        variant="outline"
+        onclick={() => {
+          editTemplateDialogOpen = false;
+        }}
+      >
+        Cancel
+      </Button>
+      <Button
+        disabled={updateTemplateMutation.isPending}
+        onclick={async () => {
+          const template = budget?.periodTemplates?.[0];
+          if (!template) return;
+
+          await updateTemplateMutation.mutateAsync({
+            id: template.id,
+            intervalCount: templateForm.intervalCount,
+            startDayOfMonth: templateForm.startDayOfMonth,
+          });
+
+          editTemplateDialogOpen = false;
+        }}
+      >
+        {updateTemplateMutation.isPending ? 'Saving...' : 'Save Changes'}
+      </Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
