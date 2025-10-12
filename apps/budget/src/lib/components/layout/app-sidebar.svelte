@@ -21,7 +21,6 @@ import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
 import {BudgetState} from '$lib/states/budgets.svelte';
 import {rpc} from '$lib/query';
-import AccountSortDropdown from '$lib/components/shared/account-sort-dropdown.svelte';
 import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
 import {currencyFormatter} from '$lib/utils/formatters';
 import CreditCard from '@lucide/svelte/icons/credit-card';
