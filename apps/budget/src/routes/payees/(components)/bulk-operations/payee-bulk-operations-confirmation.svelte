@@ -11,12 +11,12 @@ import { Label } from '$lib/components/ui/label';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 
 // Icons
-import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import Users from '@lucide/svelte/icons/users';
 import Eye from '@lucide/svelte/icons/eye';
 import EyeOff from '@lucide/svelte/icons/eye-off';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Merge from '@lucide/svelte/icons/merge';
 import Building from '@lucide/svelte/icons/building';
 
@@ -99,7 +99,7 @@ function getOperationIcon(type: string) {
     case 'delete': return Trash2;
     case 'merge': return Merge;
     case 'cleanup': return Building;
-    default: return AlertTriangle;
+    default: return TriangleAlert;
   }
 }
 
@@ -206,7 +206,7 @@ function togglePayeeDetails() {
           <Card.Root class="border-orange-200 bg-orange-50">
             <Card.Header>
               <Card.Title class="text-lg text-orange-800 flex items-center gap-2">
-                <AlertTriangle class="h-5 w-5" />
+                <TriangleAlert class="h-5 w-5" />
                 Impact Assessment
               </Card.Title>
             </Card.Header>
@@ -311,7 +311,7 @@ function togglePayeeDetails() {
               <div class="space-y-2">
                 {#each options.cleanupOperations as operation}
                   <div class="flex items-center gap-2 p-2 border rounded-lg">
-                    <CheckCircle class="h-4 w-4 text-green-500" />
+                    <CircleCheck class="h-4 w-4 text-green-500" />
                     <span class="text-sm">{operation.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
                   </div>
                 {/each}

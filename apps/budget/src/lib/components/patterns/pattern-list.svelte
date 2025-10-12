@@ -3,7 +3,7 @@ import type {DetectedPattern} from '$lib/schema/detected-patterns';
 import PatternCard from './pattern-card.svelte';
 import {Button} from '$lib/components/ui/button';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '$lib/components/ui/tabs';
-import AlertCircle from '@lucide/svelte/icons/alert-circle';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 
 interface PatternListProps {
@@ -74,7 +74,7 @@ let selectedTab = $state('pending');
     <TabsContent value="pending" class="mt-6">
       {#if pendingPatterns.length === 0}
         <div class="flex flex-col items-center justify-center py-12 text-center">
-          <AlertCircle class="mb-4 h-12 w-12 text-muted-foreground/50"></AlertCircle>
+          <CircleAlert class="mb-4 h-12 w-12 text-muted-foreground/50"></CircleAlert>
           <h3 class="mb-2 text-lg font-semibold">No pending patterns</h3>
           <p class="max-w-md text-sm text-muted-foreground">
             All detected patterns have been reviewed. Run detection again to find new patterns.
@@ -92,7 +92,7 @@ let selectedTab = $state('pending');
     <TabsContent value="converted" class="mt-6">
       {#if convertedPatterns.length === 0}
         <div class="flex flex-col items-center justify-center py-12 text-center">
-          <AlertCircle class="mb-4 h-12 w-12 text-muted-foreground/50"></AlertCircle>
+          <CircleAlert class="mb-4 h-12 w-12 text-muted-foreground/50"></CircleAlert>
           <h3 class="mb-2 text-lg font-semibold">No converted patterns</h3>
           <p class="max-w-md text-sm text-muted-foreground">
             Patterns you convert to schedules will appear here.
@@ -110,7 +110,7 @@ let selectedTab = $state('pending');
     <TabsContent value="dismissed" class="mt-6">
       {#if dismissedPatterns.length === 0}
         <div class="flex flex-col items-center justify-center py-12 text-center">
-          <AlertCircle class="mb-4 h-12 w-12 text-muted-foreground/50"></AlertCircle>
+          <CircleAlert class="mb-4 h-12 w-12 text-muted-foreground/50"></CircleAlert>
           <h3 class="mb-2 text-lg font-semibold">No dismissed patterns</h3>
           <p class="max-w-md text-sm text-muted-foreground">
             Patterns you dismiss will appear here.

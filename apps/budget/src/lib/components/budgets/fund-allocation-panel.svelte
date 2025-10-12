@@ -1,12 +1,11 @@
 <script lang="ts">
-  import {Zap, Target, Shuffle, TrendingUp, AlertTriangle} from "@lucide/svelte/icons";
+  import {Zap, Target, Shuffle, TrendingUp, TriangleAlert} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import * as Select from "$lib/components/ui/select";
   import NumericInput from "$lib/components/input/numeric-input.svelte";
   import Label from "$lib/components/ui/label/label.svelte";
   import {Badge} from "$lib/components/ui/badge";
-  import {Progress} from "$lib/components/ui/progress";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
   import type {EnvelopeAllocation} from "$lib/schema/budgets/envelope-allocations";
@@ -237,7 +236,7 @@
           class="h-auto p-4 flex flex-col items-center gap-2"
           disabled={emergencyFunds.length === 0}
         >
-          <AlertTriangle class="h-6 w-6" />
+          <TriangleAlert class="h-6 w-6" />
           <div class="text-center">
             <div class="font-medium">Emergency Fill</div>
             <div class="text-xs text-muted-foreground">Fill emergency funds first</div>
@@ -371,7 +370,7 @@
     <Card.Root class="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
       <Card.Header>
         <Card.Title class="flex items-center gap-2 text-orange-700 dark:text-orange-300">
-          <AlertTriangle class="h-5 w-5" />
+          <TriangleAlert class="h-5 w-5" />
           Deficit Summary
         </Card.Title>
       </Card.Header>

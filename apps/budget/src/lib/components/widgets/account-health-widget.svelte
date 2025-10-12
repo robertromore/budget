@@ -1,6 +1,8 @@
 <script lang="ts">
 import type {WidgetProps} from '$lib/types/widgets';
-import {AlertCircle, TrendingDown, TrendingUp} from '$lib/components/icons';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
 import WidgetCard from './widget-card.svelte';
 
 let {config, data, onUpdate, onRemove, editMode = false}: WidgetProps = $props();
@@ -76,7 +78,7 @@ const status = getHealthStatus(score);
             {:else if factor.type === 'negative'}
               <TrendingDown class="h-3 w-3 text-red-600" />
             {:else}
-              <AlertCircle class="h-3 w-3 text-yellow-600" />
+              <CircleAlert class="h-3 w-3 text-yellow-600" />
             {/if}
             <span class="text-muted-foreground">{factor.description}</span>
           </div>

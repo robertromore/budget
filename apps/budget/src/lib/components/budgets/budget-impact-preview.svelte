@@ -2,7 +2,7 @@
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { formatCurrency } from '$lib/utils';
 import { Progress } from '$lib/components/ui/progress';
-import { AlertTriangle, TrendingUp, TrendingDown, Check } from '@lucide/svelte/icons';
+import { TriangleAlert, TrendingUp, TrendingDown, Check } from '@lucide/svelte/icons';
 
 interface BudgetAllocation {
   budgetId: number;
@@ -80,8 +80,8 @@ function getStatusClasses(status: 'safe' | 'warning' | 'danger' | 'over') {
 // Helper to get icon based on status
 function getStatusIcon(status: 'safe' | 'warning' | 'danger' | 'over', isNegativeAmount: boolean) {
   if (isNegativeAmount) return TrendingDown; // Income/refund
-  if (status === 'over') return AlertTriangle;
-  if (status === 'danger') return AlertTriangle;
+  if (status === 'over') return TriangleAlert;
+  if (status === 'danger') return TriangleAlert;
   if (status === 'warning') return TrendingUp;
   return Check;
 }

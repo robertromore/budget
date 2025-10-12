@@ -6,8 +6,8 @@ import {Button} from '$lib/components/ui/button';
 import {cn, currencyFormatter} from '$lib/utils';
 import {highlightMatches} from '$lib/utils/search';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
-import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Wallet from '@lucide/svelte/icons/wallet';
 import Target from '@lucide/svelte/icons/target';
 import Repeat from '@lucide/svelte/icons/repeat';
@@ -88,15 +88,15 @@ function getBudgetStatus(budget: BudgetWithRelations): 'on_track' | 'approaching
 function getStatusDisplay(status: string) {
   switch (status) {
     case 'on_track':
-      return { icon: CheckCircle2, color: 'text-green-600', bgColor: 'bg-green-50 dark:bg-green-950', label: 'On Track' };
+      return { icon: CircleCheck, color: 'text-green-600', bgColor: 'bg-green-50 dark:bg-green-950', label: 'On Track' };
     case 'approaching':
-      return { icon: AlertTriangle, color: 'text-orange-600', bgColor: 'bg-orange-50 dark:bg-orange-950', label: 'Approaching Limit' };
+      return { icon: TriangleAlert, color: 'text-orange-600', bgColor: 'bg-orange-50 dark:bg-orange-950', label: 'Approaching Limit' };
     case 'over':
-      return { icon: AlertTriangle, color: 'text-red-600', bgColor: 'bg-red-50 dark:bg-red-950', label: 'Over Budget' };
+      return { icon: TriangleAlert, color: 'text-red-600', bgColor: 'bg-red-50 dark:bg-red-950', label: 'Over Budget' };
     case 'paused':
-      return { icon: AlertTriangle, color: 'text-gray-600', bgColor: 'bg-gray-50 dark:bg-gray-950', label: 'Paused' };
+      return { icon: TriangleAlert, color: 'text-gray-600', bgColor: 'bg-gray-50 dark:bg-gray-950', label: 'Paused' };
     default:
-      return { icon: CheckCircle2, color: 'text-green-600', bgColor: 'bg-green-50 dark:bg-green-950', label: 'On Track' };
+      return { icon: CircleCheck, color: 'text-green-600', bgColor: 'bg-green-50 dark:bg-green-950', label: 'On Track' };
   }
 }
 

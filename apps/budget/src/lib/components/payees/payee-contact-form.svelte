@@ -8,8 +8,8 @@ import {Badge} from '$lib/components/ui/badge';
 
 // Icons
 import Phone from '@lucide/svelte/icons/phone';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
-import Loader2 from '@lucide/svelte/icons/loader-2';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
+import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 
 interface Props {
 	formData: any; // Store type from superform
@@ -40,7 +40,7 @@ let {
 			{#if isUpdate}
 				<Button variant="outline" size="sm" onclick={onValidateContact} disabled={isLoadingContactValidation}>
 					{#if isLoadingContactValidation}
-						<Loader2 class="h-4 w-4 animate-spin mr-2" />
+						<LoaderCircle class="h-4 w-4 animate-spin mr-2" />
 					{/if}
 					Validate & Enrich
 				</Button>
@@ -54,7 +54,7 @@ let {
 		{#if contactValidation}
 			<div class="bg-muted/50 p-4 rounded-lg">
 				<h4 class="font-medium mb-2 flex items-center gap-2">
-					<CheckCircle class="h-4 w-4 text-green-500" />
+					<CircleCheck class="h-4 w-4 text-green-500" />
 					Validation Results
 				</h4>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">

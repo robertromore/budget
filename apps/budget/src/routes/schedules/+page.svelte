@@ -10,7 +10,7 @@ import {currencyFormatter, recurringFormatter} from '$lib/utils/formatters';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Clock from '@lucide/svelte/icons/clock';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import Edit from '@lucide/svelte/icons/edit';
+import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash from '@lucide/svelte/icons/trash';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
 import Sparkles from '@lucide/svelte/icons/sparkles';
@@ -120,7 +120,7 @@ function cancelDelete() {
               size="icon"
               class="h-8 w-8"
               href="/schedules/{schedule.slug}/edit">
-              <Edit class="h-4 w-4" />
+              <SquarePen class="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"

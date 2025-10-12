@@ -10,7 +10,7 @@ import Brain from '@lucide/svelte/icons/brain';
 import User from '@lucide/svelte/icons/user';
 import Activity from '@lucide/svelte/icons/activity';
 import Target from '@lucide/svelte/icons/target';
-import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import {getPayeeDetail} from '$lib/query/payees';
 
 // Get payee ID from params
@@ -91,7 +91,7 @@ const description = 'Detailed performance metrics and ML insights for this payee
     <!-- Error State -->
     <Card.Root>
       <Card.Content class="text-center py-8">
-        <AlertTriangle class="h-12 w-12 text-destructive mx-auto mb-4" />
+        <TriangleAlert class="h-12 w-12 text-destructive mx-auto mb-4" />
         <h3 class="text-lg font-medium mb-2">Failed to Load Payee</h3>
         <p class="text-muted-foreground mb-4">
           Unable to load payee data. Please check the payee ID and try again.

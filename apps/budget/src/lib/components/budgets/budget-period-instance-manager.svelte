@@ -7,16 +7,15 @@ import {
   Calendar,
   Plus,
   TrendingUp,
-  AlertCircle,
+  CircleAlert,
   Check,
   Clock,
-  Edit,
+  SquarePen,
   ChevronRight,
   Trash2
 } from '@lucide/svelte/icons';
-import { parseISOString, formatDateDisplay, currentDate } from '$lib/utils/dates';
+import { parseISOString, formatDateDisplay } from '$lib/utils/dates';
 import { formatCurrency } from '$lib/utils';
-import type { CalendarDate } from '@internationalized/date';
 
 interface BudgetPeriodTemplate {
   id: number;
@@ -48,6 +47,8 @@ interface Props {
   budgetName: string;
   template?: BudgetPeriodTemplate;
   instances?: BudgetPeriodInstance[];
+  hideCurrentPeriod?: boolean;
+  hideConfiguration?: boolean;
   onGenerateNext?: () => void;
   onEditPeriod?: (instanceId: number) => void;
   onEditTemplate?: () => void;
@@ -55,10 +56,10 @@ interface Props {
 }
 
 let {
-  budgetId,
-  budgetName,
   template,
   instances = [],
+  hideCurrentPeriod = false,
+  hideConfiguration = false,
   onGenerateNext,
   onEditPeriod,
   onEditTemplate,
@@ -69,6 +70,13 @@ let {
 function formatPeriodType(type: string | undefined): string {
   if (!type) return 'Unknown';
   return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+// Safely format date with fallback for null values
+function safeFormatDate(isoString: string, format: 'short' | 'medium' | 'long' = 'short'): string {
+  const dateValue = parseISOString(isoString);
+  if (!dateValue) return 'Invalid Date';
+  return formatDateDisplay(dateValue, format);
 }
 
 // Get period type description
@@ -116,20 +124,6 @@ function calculateProgress(spent: number, allocated: number): number {
   return Math.min((spent / allocated) * 100, 100);
 }
 
-// Get status badge variant
-function getStatusVariant(status: string): 'default' | 'secondary' | 'outline' {
-  switch (status) {
-    case 'active':
-      return 'default';
-    case 'upcoming':
-      return 'secondary';
-    case 'completed':
-      return 'outline';
-    default:
-      return 'outline';
-  }
-}
-
 // Get progress color class
 function getProgressColorClass(spent: number, allocated: number): string {
   if (allocated === 0) return '';
@@ -145,6 +139,7 @@ function getProgressColorClass(spent: number, allocated: number): string {
 
 <div class="space-y-6">
   <!-- Template Configuration Card -->
+  {#if !hideConfiguration}
   <Card.Root>
     <Card.Header>
       <div class="flex items-center justify-between">
@@ -161,7 +156,7 @@ function getProgressColorClass(spent: number, allocated: number): string {
           <div class="flex gap-2">
             {#if onEditTemplate}
               <Button variant="ghost" size="sm" onclick={onEditTemplate}>
-                <Edit class="h-4 w-4" />
+                <SquarePen class="h-4 w-4" />
                 Edit
               </Button>
             {/if}
@@ -196,9 +191,10 @@ function getProgressColorClass(spent: number, allocated: number): string {
       </Card.Content>
     {/if}
   </Card.Root>
+  {/if}
 
   <!-- Current Period -->
-  {#if currentPeriod}
+  {#if currentPeriod && !hideCurrentPeriod}
     <Card.Root class="border-primary">
       <Card.Header>
         <div class="flex items-center justify-between">
@@ -207,9 +203,9 @@ function getProgressColorClass(spent: number, allocated: number): string {
             <div>
               <Card.Title class="text-primary">Current Period</Card.Title>
               <Card.Description>
-                {formatDateDisplay(parseISOString(currentPeriod.startDate), 'short')}
+                {safeFormatDate(currentPeriod.startDate, 'short')}
                 →
-                {formatDateDisplay(parseISOString(currentPeriod.endDate), 'short')}
+                {safeFormatDate(currentPeriod.endDate, 'short')}
               </Card.Description>
             </div>
           </div>
@@ -295,9 +291,9 @@ function getProgressColorClass(spent: number, allocated: number): string {
                 <div class="flex items-center gap-2">
                   <Badge variant="secondary">Upcoming</Badge>
                   <span class="text-sm font-medium">
-                    {formatDateDisplay(parseISOString(period.startDate), 'short')}
+                    {safeFormatDate(period.startDate, 'short')}
                     →
-                    {formatDateDisplay(parseISOString(period.endDate), 'short')}
+                    {safeFormatDate(period.endDate, 'short')}
                   </span>
                 </div>
                 <p class="text-sm text-muted-foreground">
@@ -306,7 +302,7 @@ function getProgressColorClass(spent: number, allocated: number): string {
               </div>
               {#if onEditPeriod}
                 <Button variant="ghost" size="sm" onclick={() => onEditPeriod?.(period.id)}>
-                  <Edit class="h-4 w-4" />
+                  <SquarePen class="h-4 w-4" />
                 </Button>
               {/if}
             </div>
@@ -333,9 +329,9 @@ function getProgressColorClass(spent: number, allocated: number): string {
                 <div class="flex items-center gap-2">
                   <Badge variant="outline">Completed</Badge>
                   <span class="text-sm font-medium">
-                    {formatDateDisplay(parseISOString(period.startDate), 'short')}
+                    {safeFormatDate(period.startDate, 'short')}
                     →
-                    {formatDateDisplay(parseISOString(period.endDate), 'short')}
+                    {safeFormatDate(period.endDate, 'short')}
                   </span>
                 </div>
                 <div class="flex items-center gap-4 text-sm text-muted-foreground">
@@ -362,7 +358,7 @@ function getProgressColorClass(spent: number, allocated: number): string {
   {#if instances.length === 0}
     <Card.Root>
       <Card.Content class="flex flex-col items-center justify-center py-12 text-center">
-        <AlertCircle class="h-12 w-12 text-muted-foreground mb-4" />
+        <CircleAlert class="h-12 w-12 text-muted-foreground mb-4" />
         <h3 class="text-lg font-semibold mb-2">No Periods Yet</h3>
         <p class="text-sm text-muted-foreground mb-6 max-w-md">
           Create a period template to start tracking your budget over time.

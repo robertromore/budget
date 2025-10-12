@@ -27,9 +27,9 @@ import Calendar from '@lucide/svelte/icons/calendar';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Tag from '@lucide/svelte/icons/tag';
 import Building from '@lucide/svelte/icons/building';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
-import AlertCircle from '@lucide/svelte/icons/alert-circle';
-import Loader2 from '@lucide/svelte/icons/loader-2';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 
 let {
@@ -407,7 +407,7 @@ $effect(() => {
               <div class="flex gap-2">
                 <Button variant="outline" size="sm" onclick={loadRecommendations} disabled={isLoadingRecommendations}>
                   {#if isLoadingRecommendations}
-                    <Loader2 class="h-4 w-4 animate-spin mr-2" />
+                    <LoaderCircle class="h-4 w-4 animate-spin mr-2" />
                   {/if}
                   Refresh
                 </Button>
@@ -424,7 +424,7 @@ $effect(() => {
           <Card.Content>
             {#if isLoadingRecommendations}
               <div class="flex items-center justify-center py-8">
-                <Loader2 class="h-8 w-8 animate-spin" />
+                <LoaderCircle class="h-8 w-8 animate-spin" />
               </div>
             {:else if recommendations}
               <div class="space-y-6">
@@ -480,7 +480,7 @@ $effect(() => {
                     <div class="space-y-2">
                       {#each recommendations.suggestions as suggestion}
                         <div class="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
-                          <AlertCircle class="h-4 w-4 text-orange-500 mt-0.5" />
+                          <CircleAlert class="h-4 w-4 text-orange-500 mt-0.5" />
                           <div class="text-sm">
                             <strong>{suggestion.type}:</strong> {suggestion.description}
                             {#if suggestion.impact}
@@ -555,7 +555,7 @@ $effect(() => {
 
                 <Button variant="outline" class="h-auto p-4 text-left" onclick={validateContact}>
                   <div class="flex items-center gap-3">
-                    <CheckCircle class="h-5 w-5 text-green-500" />
+                    <CircleCheck class="h-5 w-5 text-green-500" />
                     <div>
                       <div class="font-medium">Validate Contact</div>
                       <div class="text-sm text-muted-foreground">Check and enrich contact information</div>
@@ -618,7 +618,7 @@ $effect(() => {
     </div>
     <Form.Button class="px-8" disabled={$submitting}>
       {#if $submitting}
-        <Loader2 class="h-4 w-4 animate-spin mr-2" />
+        <LoaderCircle class="h-4 w-4 animate-spin mr-2" />
         Saving...
       {:else}
         {isUpdate ? 'Update Payee' : 'Create Payee'}

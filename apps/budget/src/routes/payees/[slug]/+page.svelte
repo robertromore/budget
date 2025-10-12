@@ -6,7 +6,7 @@ import * as Card from '$lib/components/ui/card';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import User from '@lucide/svelte/icons/user';
-import Edit from '@lucide/svelte/icons/edit';
+import SquarePen from '@lucide/svelte/icons/square-pen';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import Phone from '@lucide/svelte/icons/phone';
@@ -77,7 +77,7 @@ $effect(() => {
           View Analytics
         </Button>
         <Button variant="outline" href="/payees/{payee.slug}/edit">
-          <Edit class="mr-2 h-4 w-4" />
+          <SquarePen class="mr-2 h-4 w-4" />
           Edit
         </Button>
         <Button variant="destructive" onclick={() => deleteDialogOpen = true}>

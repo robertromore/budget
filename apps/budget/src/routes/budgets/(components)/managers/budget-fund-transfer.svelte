@@ -1,6 +1,6 @@
 <script lang="ts">
   import {SvelteMap} from "svelte/reactivity";
-  import {ArrowRightLeft, DollarSign, Target, Shuffle, AlertCircle, CheckCircle2} from "@lucide/svelte/icons";
+  import {ArrowRightLeft, DollarSign, Target, Shuffle, CircleAlert, CircleCheck} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import {Input} from "$lib/components/ui/input";
@@ -259,7 +259,7 @@
     <Card.Root class="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/10">
       <Card.Header>
         <Card.Title class="flex items-center gap-2 text-red-700 dark:text-red-300">
-          <AlertCircle class="h-5 w-5" />
+          <CircleAlert class="h-5 w-5" />
           Overspent Envelopes - Need Funding
         </Card.Title>
         <Card.Description class="text-red-600 dark:text-red-400">
@@ -487,9 +487,9 @@
             transferResult.success ? "bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200" : "bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200"
           )}>
             {#if transferResult.success}
-              <CheckCircle2 class="h-4 w-4" />
+              <CircleCheck class="h-4 w-4" />
             {:else}
-              <AlertCircle class="h-4 w-4" />
+              <CircleAlert class="h-4 w-4" />
             {/if}
             <p class="text-sm">{transferResult.message}</p>
           </div>

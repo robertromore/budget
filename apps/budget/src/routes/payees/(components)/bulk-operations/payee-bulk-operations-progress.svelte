@@ -11,12 +11,12 @@ import { ScrollArea } from '$lib/components/ui/scroll-area';
 import { PayeeBulkOperationsState, type BulkOperationResult } from '$lib/states/ui/payee-bulk-operations.svelte';
 
 // Icons
-import CheckCircle from '@lucide/svelte/icons/check-circle';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import XCircle from '@lucide/svelte/icons/x-circle';
-import AlertCircle from '@lucide/svelte/icons/alert-circle';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import Clock from '@lucide/svelte/icons/clock';
 import Download from '@lucide/svelte/icons/download';
-import Loader2 from '@lucide/svelte/icons/loader-2';
+import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 import Users from '@lucide/svelte/icons/users';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import X from '@lucide/svelte/icons/x';
@@ -116,7 +116,7 @@ function getOperationDisplayName(operation: string): string {
 
 // Get result type icon and color
 function getResultIcon(success: boolean) {
-  return success ? CheckCircle : XCircle;
+  return success ? CircleCheck : XCircle;
 }
 
 function getResultColor(success: boolean): string {
@@ -165,14 +165,14 @@ function toggleExpandedError(payeeId: number) {
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">
         {#if isRunning}
-          <Loader2 class="h-5 w-5 animate-spin" />
+          <LoaderCircle class="h-5 w-5 animate-spin" />
         {:else if currentOperation}
           {#if failedResults.length === 0}
-            <CheckCircle class="h-5 w-5 text-green-500" />
+            <CircleCheck class="h-5 w-5 text-green-500" />
           {:else if successfulResults.length === 0}
             <XCircle class="h-5 w-5 text-red-500" />
           {:else}
-            <AlertCircle class="h-5 w-5 text-orange-500" />
+            <CircleAlert class="h-5 w-5 text-orange-500" />
           {/if}
         {/if}
         {currentOperation ? getOperationDisplayName(currentOperation.operation) : 'Bulk Operation'}
@@ -318,13 +318,13 @@ function toggleExpandedError(payeeId: number) {
                   {#if successfulResults.length > 0}
                     <div class="space-y-2">
                       <h4 class="font-medium text-green-600 flex items-center gap-2">
-                        <CheckCircle class="h-4 w-4" />
+                        <CircleCheck class="h-4 w-4" />
                         Successful Operations ({successfulResults.length})
                       </h4>
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {#each successfulResults.slice(0, 10) as result}
                           <div class="flex items-center gap-2 text-sm p-2 border border-green-200 rounded bg-green-50">
-                            <CheckCircle class="h-3 w-3 text-green-500" />
+                            <CircleCheck class="h-3 w-3 text-green-500" />
                             <span>Payee ID: {result.payeeId}</span>
                             {#if result.details?.payeeName}
                               <Badge variant="outline" class="text-xs">{result.details.payeeName}</Badge>
@@ -380,7 +380,7 @@ function toggleExpandedError(payeeId: number) {
                   onclick={handleClose}
                   class="flex items-center gap-2"
                 >
-                  <CheckCircle class="h-4 w-4" />
+                  <CircleCheck class="h-4 w-4" />
                   Close
                 </Button>
               </div>
@@ -392,7 +392,7 @@ function toggleExpandedError(payeeId: number) {
         {#if !isRunning && currentOperation}
           {#if failedResults.length === 0}
             <Alert.Root class="border-green-200 bg-green-50">
-              <CheckCircle class="h-4 w-4 text-green-600" />
+              <CircleCheck class="h-4 w-4 text-green-600" />
               <Alert.Title class="text-green-800">Operation Completed Successfully</Alert.Title>
               <Alert.Description class="text-green-700">
                 All {currentOperation.completed} operations were completed successfully.
@@ -408,7 +408,7 @@ function toggleExpandedError(payeeId: number) {
             </Alert.Root>
           {:else}
             <Alert.Root class="border-orange-200 bg-orange-50">
-              <AlertCircle class="h-4 w-4 text-orange-600" />
+              <CircleAlert class="h-4 w-4 text-orange-600" />
               <Alert.Title class="text-orange-800">Operation Partially Completed</Alert.Title>
               <Alert.Description class="text-orange-700">
                 {currentOperation.completed} operations succeeded, {currentOperation.failed} failed.

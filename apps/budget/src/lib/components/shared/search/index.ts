@@ -15,4 +15,4 @@ export {
 	type SortOrder
 } from './entity-search-state.svelte';
 
-export type {SortOption, FilterSummary} from './entity-search-toolbar.svelte';
+export type {SortOption, FilterSummary} from './types';

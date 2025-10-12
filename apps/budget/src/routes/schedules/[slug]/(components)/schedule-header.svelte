@@ -7,7 +7,7 @@ import { formatAmount, formatRecurringPattern, getStatusVariant } from '../(data
 // Icons
 import Activity from '@lucide/svelte/icons/activity';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
-import Edit from '@lucide/svelte/icons/edit';
+import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash from '@lucide/svelte/icons/trash';
 import Pause from '@lucide/svelte/icons/pause';
 import Play from '@lucide/svelte/icons/play';
@@ -59,7 +59,7 @@ let {
         {/if}
       </Button>
       <Button variant="outline" onclick={editSchedule}>
-        <Edit class="mr-2 h-4 w-4" />
+        <SquarePen class="mr-2 h-4 w-4" />
         Edit
       </Button>
       <Button variant="destructive" onclick={deleteSchedule}>

@@ -21,7 +21,7 @@ import Settings from '@lucide/svelte/icons/settings';
 import { getApplicableBudgets, validateTransactionStrict } from '$lib/query/budgets';
 import * as Select from '$lib/components/ui/select';
 import * as Alert from '$lib/components/ui/alert';
-import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import { Button } from '$lib/components/ui/button';
 import Plus from '@lucide/svelte/icons/plus';
 import X from '@lucide/svelte/icons/x';
@@ -474,7 +474,7 @@ $effect(() => {
   {#if hasStrictViolations && strictValidation}
     <div class="col-span-full">
       <Alert.Root variant="destructive">
-        <AlertTriangle class="h-4 w-4" />
+        <TriangleAlert class="h-4 w-4" />
         <Alert.Title>Budget Limit Exceeded</Alert.Title>
         <Alert.Description>
           <div class="space-y-1 mt-2">

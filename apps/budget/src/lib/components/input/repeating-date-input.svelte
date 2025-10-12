@@ -57,7 +57,7 @@ import {nextDaily, nextWeekly, nextMonthly, nextYearly} from '$lib/utils/date-fr
 
 import CalendarDays from '@lucide/svelte/icons/calendar-days';
 import Repeat from '@lucide/svelte/icons/repeat';
-import AlertCircle from '@lucide/svelte/icons/alert-circle';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import X from '@lucide/svelte/icons/x';
 
 import RepeatingDateInputModel from '$lib/models/repeating_date.svelte';
@@ -650,7 +650,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
         {#if !isValid && validationErrors.length > 0}
           <div class="bg-destructive/10 rounded-lg p-3 text-sm">
             <div class="text-destructive flex items-center gap-2 font-medium">
-              <AlertCircle class="h-4 w-4" />
+              <CircleAlert class="h-4 w-4" />
               Configuration Issues
             </div>
             <ul class="text-destructive/80 mt-2 space-y-1">

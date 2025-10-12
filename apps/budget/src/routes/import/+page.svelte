@@ -7,7 +7,7 @@ import * as Select from '$lib/components/ui/select';
 import {Button} from '$lib/components/ui/button';
 import {Checkbox} from '$lib/components/ui/checkbox';
 import * as Card from '$lib/components/ui/card';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Circle from '@lucide/svelte/icons/circle';
 import type {
   ParseResult,
@@ -372,7 +372,7 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
                     : 'bg-muted text-muted-foreground'}"
               >
                 {#if isComplete}
-                  <CheckCircle class="h-6 w-6" />
+                  <CircleCheck class="h-6 w-6" />
                 {:else if isCurrent}
                   <Circle class="h-6 w-6 fill-current" />
                 {:else}
@@ -626,7 +626,7 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
       <div class="space-y-6">
         <div class="text-center">
           <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/10 mb-4">
-            <CheckCircle class="h-8 w-8 text-green-600" />
+            <CircleCheck class="h-8 w-8 text-green-600" />
           </div>
           <h2 class="text-2xl font-bold">Import Complete!</h2>
           <p class="text-muted-foreground mt-2">

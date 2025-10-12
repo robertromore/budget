@@ -44,7 +44,7 @@ import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
 import Eye from '@lucide/svelte/icons/eye';
-import Edit from '@lucide/svelte/icons/edit';
+import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import Search from '@lucide/svelte/icons/search';
 import Filter from '@lucide/svelte/icons/filter';
@@ -677,7 +677,7 @@ $effect(() => {
                     View
                   </DropdownMenu.Item>
                   <DropdownMenu.Item onclick={() => handlePayeeEdit(payee)}>
-                    <Edit class="h-4 w-4 mr-2" />
+                    <SquarePen class="h-4 w-4 mr-2" />
                     Edit
                   </DropdownMenu.Item>
                   <DropdownMenu.Separator />

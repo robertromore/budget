@@ -9,8 +9,8 @@
     TrendingDown,
     Calendar,
     DollarSign,
-    CheckCircle,
-    AlertCircle,
+    CircleCheck,
+    CircleAlert,
   } from "@lucide/svelte/icons";
   import {currencyFormatter} from "$lib/utils/formatters";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
@@ -134,7 +134,7 @@
         </div>
         {#if goalData.status === 'completed'}
           <Badge variant={getStatusBadgeVariant(goalData.status)} class="flex items-center gap-1">
-            <CheckCircle class="h-3 w-3" />
+            <CircleCheck class="h-3 w-3" />
             Completed
           </Badge>
         {:else if goalData.status === 'ahead'}
@@ -149,7 +149,7 @@
           </Badge>
         {:else if goalData.status === 'at-risk'}
           <Badge variant={getStatusBadgeVariant(goalData.status)} class="flex items-center gap-1">
-            <AlertCircle class="h-3 w-3" />
+            <CircleAlert class="h-3 w-3" />
             At Risk
           </Badge>
         {:else}
@@ -239,7 +239,7 @@
       {#if goalData.status === 'completed'}
         <div class="bg-green-50 border border-green-200 rounded-lg p-3 dark:bg-green-950 dark:border-green-800">
           <div class="flex items-center gap-2 text-green-700 dark:text-green-300">
-            <CheckCircle class="h-4 w-4" />
+            <CircleCheck class="h-4 w-4" />
             <span class="text-sm font-medium">Goal Completed!</span>
           </div>
           <p class="text-sm text-muted-foreground mt-1">
@@ -249,7 +249,7 @@
       {:else if goalData.status === 'at-risk'}
         <div class="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
           <div class="flex items-center gap-2 text-destructive">
-            <AlertCircle class="h-4 w-4" />
+            <CircleAlert class="h-4 w-4" />
             <span class="text-sm font-medium">Goal at Risk</span>
           </div>
           <p class="text-sm text-muted-foreground mt-1">

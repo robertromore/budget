@@ -144,7 +144,7 @@ function handleTypeChange(value: string | undefined) {
 </script>
 
 <form method="POST" use:enhance>
-  <Card.Root class="max-w-4xl">
+  <Card.Root>
     <Card.Header>
       <Card.Title>Budget Information</Card.Title>
       <Card.Description>

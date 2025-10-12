@@ -3,7 +3,7 @@
   import * as Tooltip from "$lib/components/ui/tooltip";
   import {Button} from "$lib/components/ui/button";
   import {Badge} from "$lib/components/ui/badge";
-  import {CircleDollarSign, Plus, AlertTriangle} from "@lucide/svelte/icons";
+  import {CircleDollarSign, Plus, TriangleAlert} from "@lucide/svelte/icons";
   import {currencyFormatter} from "$lib/utils/formatters";
   import {
     listBudgets,
@@ -123,7 +123,7 @@
   <!-- Unallocated amount warning -->
   {#if hasUnallocationAmount}
     <div class="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
-      <AlertTriangle class="h-3 w-3" />
+      <TriangleAlert class="h-3 w-3" />
       <span>Unallocated: {currencyFormatter.format(Math.abs(remainingAmount))}</span>
     </div>
   {/if}

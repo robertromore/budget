@@ -22,11 +22,11 @@ import Download from '@lucide/svelte/icons/download';
 import Upload from '@lucide/svelte/icons/upload';
 import FileText from '@lucide/svelte/icons/file-text';
 import Database from '@lucide/svelte/icons/database';
-import CheckCircle from '@lucide/svelte/icons/check-circle';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import XCircle from '@lucide/svelte/icons/x-circle';
-import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import Info from '@lucide/svelte/icons/info';
-import Loader2 from '@lucide/svelte/icons/loader-2';
+import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 import Copy from '@lucide/svelte/icons/copy';
 import Eye from '@lucide/svelte/icons/eye';
 import EyeOff from '@lucide/svelte/icons/eye-off';
@@ -332,7 +332,7 @@ $effect(() => {
                 <div class="text-sm text-muted-foreground">
                   {#if selectedPayeeIds.length > 0}
                     <div class="flex items-center gap-2">
-                      <CheckCircle class="h-4 w-4 text-green-500" />
+                      <CircleCheck class="h-4 w-4 text-green-500" />
                       {selectedPayeeIds.length} selected payee{selectedPayeeIds.length > 1 ? 's' : ''}
                     </div>
                   {:else}
@@ -377,7 +377,7 @@ $effect(() => {
                 class="w-full"
               >
                 {#if exportInProgress}
-                  <Loader2 class="h-4 w-4 mr-2 animate-spin" />
+                  <LoaderCircle class="h-4 w-4 mr-2 animate-spin" />
                   Exporting...
                 {:else}
                   <Download class="h-4 w-4 mr-2" />
@@ -544,7 +544,7 @@ $effect(() => {
                 class="w-full"
               >
                 {#if importInProgress}
-                  <Loader2 class="h-4 w-4 mr-2 animate-spin" />
+                  <LoaderCircle class="h-4 w-4 mr-2 animate-spin" />
                   Importing...
                 {:else}
                   <Upload class="h-4 w-4 mr-2" />
@@ -570,7 +570,7 @@ $effect(() => {
                   <Label>Import Results</Label>
                   {#if importResults.success}
                     <Alert.Root class="border-green-200 bg-green-50">
-                      <CheckCircle class="h-4 w-4 text-green-600" />
+                      <CircleCheck class="h-4 w-4 text-green-600" />
                       <Alert.Title class="text-green-800">Import Successful</Alert.Title>
                       <Alert.Description class="text-green-700">
                         {#if importResults.summary}

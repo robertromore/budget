@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {Calendar, Clock, Settings, Play, Pause, CheckCircle, AlertTriangle, Info} from "@lucide/svelte/icons";
+  import {Calendar, Clock, Settings, Play, Pause, CircleCheck, TriangleAlert, Info} from "@lucide/svelte/icons";
   import * as Card from "$lib/components/ui/card";
   import ResponsiveSheet from "$lib/components/ui/responsive-sheet/responsive-sheet.svelte";
   import * as Select from "$lib/components/ui/select";
@@ -16,10 +16,12 @@
     processEnvelopeRollover,
   } from "$lib/query/budgets";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
+  import {CalendarDate} from "@internationalized/date";
 
   interface Props {
     budget: BudgetWithRelations;
     class?: string;
+    hideStatus?: boolean;
   }
 
   interface AutomationSettings {
@@ -34,6 +36,7 @@
   let {
     budget,
     class: className,
+    hideStatus = false,
   }: Props = $props();
 
   const periodsQuery = listPeriodInstances(budget.id).options();
@@ -154,11 +157,11 @@
       const newPeriod = await ensurePeriodMutation.mutateAsync({
         templateId: budget.id,
         options: {
-          referenceDate: {
-            year: start.getFullYear(),
-            month: start.getMonth() + 1,
-            day: start.getDate(),
-          },
+          referenceDate: new CalendarDate(
+            start.getFullYear(),
+            start.getMonth() + 1,
+            start.getDate()
+          ),
           allocatedAmount: settings.defaultAllocation,
         },
       });
@@ -224,6 +227,7 @@
   </Card.Root>
 
   <!-- Current Period Status -->
+  {#if !hideStatus}
   <Card.Root>
     <Card.Header>
       <Card.Title>Current Period Status</Card.Title>
@@ -245,13 +249,13 @@
               {#if nextPeriodDue !== null}
                 <div class="flex items-center gap-1">
                   {#if nextPeriodDue <= 0}
-                    <AlertTriangle class="h-4 w-4 text-red-500" />
+                    <TriangleAlert class="h-4 w-4 text-red-500" />
                     <span class="text-sm font-medium text-red-600">Period ended</span>
                   {:else if nextPeriodDue <= settings.advanceNotice}
-                    <AlertTriangle class="h-4 w-4 text-yellow-500" />
+                    <TriangleAlert class="h-4 w-4 text-yellow-500" />
                     <span class="text-sm font-medium text-yellow-600">{nextPeriodDue} days remaining</span>
                   {:else}
-                    <CheckCircle class="h-4 w-4 text-green-500" />
+                    <CircleCheck class="h-4 w-4 text-green-500" />
                     <span class="text-sm text-green-600">{nextPeriodDue} days remaining</span>
                   {/if}
                 </div>
@@ -288,6 +292,7 @@
       {/if}
     </Card.Content>
   </Card.Root>
+  {/if}
 
   <!-- Automation Summary -->
   {#if settings.enabled}
@@ -319,7 +324,7 @@
 
           <div class="space-y-2">
             <div class="flex items-center gap-2">
-              <CheckCircle class="h-4 w-4 text-muted-foreground" />
+              <CircleCheck class="h-4 w-4 text-muted-foreground" />
               <span class="text-sm font-medium">Auto Rollover</span>
             </div>
             <p class="text-sm text-muted-foreground ml-6">

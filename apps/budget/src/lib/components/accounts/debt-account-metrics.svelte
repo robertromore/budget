@@ -6,7 +6,7 @@ import {Progress} from '$lib/components/ui/progress';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import CreditCard from '@lucide/svelte/icons/credit-card';
-import AlertCircle from '@lucide/svelte/icons/alert-circle';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
 
 let {account} = $props<{account: Account}>();
 
@@ -56,7 +56,7 @@ const isLoan = $derived(account.accountType === 'loan');
         <Card.Root class="border-red-600 bg-red-50 dark:bg-red-950">
           <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
             <Card.Title class="text-sm font-medium text-red-600 dark:text-red-400">Over Limit</Card.Title>
-            <AlertCircle class="h-4 w-4 text-red-600 dark:text-red-400"></AlertCircle>
+            <CircleAlert class="h-4 w-4 text-red-600 dark:text-red-400"></CircleAlert>
           </Card.Header>
           <Card.Content>
             <div class="text-2xl font-bold text-red-600 dark:text-red-400">

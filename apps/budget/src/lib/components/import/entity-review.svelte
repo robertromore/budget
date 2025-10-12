@@ -3,7 +3,7 @@ import * as Card from '$lib/components/ui/card';
 import {Button} from '$lib/components/ui/button';
 import {Checkbox} from '$lib/components/ui/checkbox';
 import * as Badge from '$lib/components/ui/badge';
-import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Circle from '@lucide/svelte/icons/circle';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import type {PayeePreview, CategoryPreview} from '$lib/types/import';
@@ -115,7 +115,7 @@ const selectedCategoriesCount = $derived(
                   />
                 {:else}
                   <div class="w-5 h-5 flex items-center justify-center">
-                    <CheckCircle2 class="h-5 w-5 text-green-500" />
+                    <CircleCheck class="h-5 w-5 text-green-500" />
                   </div>
                 {/if}
 
@@ -187,7 +187,7 @@ const selectedCategoriesCount = $derived(
                   />
                 {:else}
                   <div class="w-5 h-5 flex items-center justify-center">
-                    <CheckCircle2 class="h-5 w-5 text-green-500" />
+                    <CircleCheck class="h-5 w-5 text-green-500" />
                   </div>
                 {/if}
 
