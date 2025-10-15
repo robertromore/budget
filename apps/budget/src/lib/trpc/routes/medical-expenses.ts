@@ -1,14 +1,9 @@
 import { z } from "zod";
 import { publicProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
-import {
-  medicalExpenseTypeEnum,
-  medicalExpenseTypeKeys,
-  receiptTypeEnum,
-  receiptTypeKeys,
-  claimStatusEnum,
-  claimStatusKeys,
-} from "$lib/schema";
+import { medicalExpenseTypeEnum, medicalExpenseTypeKeys } from "$lib/schema/medical-expenses";
+import { receiptTypeEnum, receiptTypeKeys } from "$lib/schema/expense-receipts";
+import { claimStatusEnum, claimStatusKeys } from "$lib/schema/hsa-claims";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 
 // PERFORMANCE: Removed module-level service initialization to prevent eager loading
@@ -137,7 +132,7 @@ export const medicalExpensesRouter = t.router({
     .input(createMedicalExpenseSchema)
     .mutation(async ({ input }) => {
       try {
-        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        const medicalExpenseService = await serviceFactory.getMedicalExpenseService();
         // Build data object conditionally for exactOptionalPropertyTypes
         const data: any = {
           transactionId: input.transactionId,
@@ -173,7 +168,7 @@ export const medicalExpensesRouter = t.router({
     .input(createMedicalExpenseWithTransactionSchema)
     .mutation(async ({ input }) => {
       try {
-        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        const medicalExpenseService = await serviceFactory.getMedicalExpenseService();
         // Build data object conditionally for exactOptionalPropertyTypes
         const data: any = {
           accountId: input.accountId,
@@ -210,7 +205,7 @@ export const medicalExpensesRouter = t.router({
     .input(updateMedicalExpenseSchema)
     .mutation(async ({ input }) => {
       try {
-        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        const medicalExpenseService = await serviceFactory.getMedicalExpenseService();
         const { id, ...inputData } = input;
 
         // Build data object conditionally for exactOptionalPropertyTypes
@@ -244,7 +239,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ id: z.number().positive() }))
     .query(async ({ input }) => {
       try {
-        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        const medicalExpenseService = await serviceFactory.getMedicalExpenseService();
         const expense = await medicalExpenseService.getMedicalExpenseWithRelations(input.id);
         if (!expense) {
           throw new TRPCError({
@@ -266,7 +261,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ hsaAccountId: z.number().positive() }))
     .query(async ({ input }) => {
       try {
-        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        const medicalExpenseService = await serviceFactory.getMedicalExpenseService();
         const expenses = await medicalExpenseService.getMedicalExpensesByAccount(
           input.hsaAccountId
         );
@@ -289,7 +284,7 @@ export const medicalExpensesRouter = t.router({
     )
     .query(async ({ input }) => {
       try {
-        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        const medicalExpenseService = await serviceFactory.getMedicalExpenseService();
         const expenses = await medicalExpenseService.getMedicalExpensesByTaxYear(
           input.hsaAccountId,
           input.taxYear
@@ -308,7 +303,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ hsaAccountId: z.number().positive() }))
     .query(async ({ input }) => {
       try {
-        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        const medicalExpenseService = await serviceFactory.getMedicalExpenseService();
         const expenses = await medicalExpenseService.getAllExpensesWithRelations(
           input.hsaAccountId
         );
@@ -331,7 +326,7 @@ export const medicalExpensesRouter = t.router({
     )
     .query(async ({ input }) => {
       try {
-        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        const medicalExpenseService = await serviceFactory.getMedicalExpenseService();
         const summary = await medicalExpenseService.getTaxYearSummary(
           input.hsaAccountId,
           input.taxYear
@@ -350,7 +345,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ input }) => {
       try {
-        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        const medicalExpenseService = await serviceFactory.getMedicalExpenseService();
         await medicalExpenseService.deleteMedicalExpense(input.id);
         return { success: true };
       } catch (error: any) {
@@ -370,7 +365,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ medicalExpenseId: z.number().positive() }))
     .query(async ({ input }) => {
       try {
-        const receiptService = serviceFactory.getReceiptService();
+        const receiptService = await serviceFactory.getReceiptService();
         const receipts = await receiptService.getReceiptsByExpense(input.medicalExpenseId);
         return receipts;
       } catch (error: any) {
@@ -386,7 +381,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ id: z.number().positive() }))
     .query(async ({ input }) => {
       try {
-        const receiptService = serviceFactory.getReceiptService();
+        const receiptService = await serviceFactory.getReceiptService();
         const receipt = await receiptService.getReceipt(input.id);
         return receipt;
       } catch (error: any) {
@@ -402,7 +397,7 @@ export const medicalExpensesRouter = t.router({
     .input(updateReceiptSchema)
     .mutation(async ({ input }) => {
       try {
-        const receiptService = serviceFactory.getReceiptService();
+        const receiptService = await serviceFactory.getReceiptService();
         const { id, ...inputData } = input;
 
         // Build data object conditionally for exactOptionalPropertyTypes
@@ -425,7 +420,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ input }) => {
       try {
-        const receiptService = serviceFactory.getReceiptService();
+        const receiptService = await serviceFactory.getReceiptService();
         await receiptService.deleteReceipt(input.id);
         return { success: true };
       } catch (error: any) {
@@ -441,7 +436,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ medicalExpenseId: z.number().positive() }))
     .query(async ({ input }) => {
       try {
-        const receiptService = serviceFactory.getReceiptService();
+        const receiptService = await serviceFactory.getReceiptService();
         const count = await receiptService.countReceipts(input.medicalExpenseId);
         return { count };
       } catch (error: any) {
@@ -461,7 +456,7 @@ export const medicalExpensesRouter = t.router({
     .input(createClaimSchema)
     .mutation(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         // Build data object conditionally for exactOptionalPropertyTypes
         const data: any = {
           medicalExpenseId: input.medicalExpenseId,
@@ -488,7 +483,7 @@ export const medicalExpensesRouter = t.router({
     .input(submitClaimSchema)
     .mutation(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         const { id, ...inputData } = input;
 
         // Build data object conditionally for exactOptionalPropertyTypes
@@ -516,7 +511,7 @@ export const medicalExpensesRouter = t.router({
     )
     .mutation(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         const claim = await claimService.markInReview(input.id, input.reviewDate);
         return claim;
       } catch (error: any) {
@@ -532,7 +527,7 @@ export const medicalExpensesRouter = t.router({
     .input(approveClaimSchema)
     .mutation(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         const { id, ...inputData } = input;
 
         // Build data object conditionally for exactOptionalPropertyTypes
@@ -558,7 +553,7 @@ export const medicalExpensesRouter = t.router({
     .input(denyClaimSchema)
     .mutation(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         const { id, ...inputData } = input;
 
         // Build data object conditionally for exactOptionalPropertyTypes
@@ -583,7 +578,7 @@ export const medicalExpensesRouter = t.router({
     .input(markClaimPaidSchema)
     .mutation(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         const { id, ...inputData } = input;
 
         // Build data object conditionally for exactOptionalPropertyTypes
@@ -613,7 +608,7 @@ export const medicalExpensesRouter = t.router({
     )
     .mutation(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         const claim = await claimService.requestResubmission(input.id, input.reason);
         return claim;
       } catch (error: any) {
@@ -629,7 +624,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         const claim = await claimService.withdrawClaim(input.id);
         return claim;
       } catch (error: any) {
@@ -645,7 +640,7 @@ export const medicalExpensesRouter = t.router({
     .input(updateClaimSchema)
     .mutation(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         const { id, ...inputData } = input;
 
         // Build data object conditionally for exactOptionalPropertyTypes
@@ -678,7 +673,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ medicalExpenseId: z.number().positive() }))
     .query(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         const claims = await claimService.getClaimsByExpense(input.medicalExpenseId);
         return claims;
       } catch (error: any) {
@@ -692,7 +687,7 @@ export const medicalExpensesRouter = t.router({
   // Get pending claims
   getPendingClaims: publicProcedure.query(async () => {
     try {
-      const claimService = serviceFactory.getClaimService();
+      const claimService = await serviceFactory.getClaimService();
       const claims = await claimService.getPendingClaims();
       return claims;
     } catch (error: any) {
@@ -708,7 +703,7 @@ export const medicalExpensesRouter = t.router({
     .input(z.object({ id: z.number().positive() }))
     .mutation(async ({ input }) => {
       try {
-        const claimService = serviceFactory.getClaimService();
+        const claimService = await serviceFactory.getClaimService();
         await claimService.deleteClaim(input.id);
         return { success: true };
       } catch (error: any) {

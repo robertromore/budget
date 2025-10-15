@@ -9,7 +9,7 @@ import {generateUniqueSlugForDB} from "$lib/utils/slug-utils";
 import {serviceFactory} from "$lib/server/shared/container/service-factory";
 import {getCurrentTimestamp} from "$lib/utils/dates";
 
-const scheduleService = serviceFactory.getScheduleService();
+// PERFORMANCE: Services retrieved per-request to avoid module-level instantiation
 
 export const scheduleRoutes = t.router({
   all: publicProcedure.query(async ({ctx}) => {
@@ -305,6 +305,7 @@ export const scheduleRoutes = t.router({
     .input(z.object({ scheduleId: z.number() }))
     .mutation(async ({ input }) => {
       try {
+        const scheduleService = serviceFactory.getScheduleService();
         const result = await scheduleService.executeAutoAddForSchedule(input.scheduleId);
         return result;
       } catch (error) {
@@ -324,6 +325,7 @@ export const scheduleRoutes = t.router({
   executeAutoAddAll: rateLimitedProcedure
     .mutation(async () => {
       try {
+        const scheduleService = serviceFactory.getScheduleService();
         const result = await scheduleService.executeAutoAddForAllSchedules();
         return result;
       } catch (error) {
@@ -338,6 +340,7 @@ export const scheduleRoutes = t.router({
     .input(z.object({ scheduleId: z.number() }))
     .query(async ({ input }) => {
       try {
+        const scheduleService = serviceFactory.getScheduleService();
         const result = await scheduleService.previewAutoAddForSchedule(input.scheduleId);
         return result;
       } catch (error) {

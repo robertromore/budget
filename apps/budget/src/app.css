@@ -1,4 +1,12 @@
 @import 'tailwindcss';
+/**
+ * PERFORMANCE: Limit Tailwind CSS v4 file scanning to only necessary directories.
+ * Without @source, Tailwind scans ALL files recursively, causing high CPU usage.
+ * See: https://tailwindcss.com/docs/v4-beta#specifying-source-paths
+ */
+@source '../src/routes/**/*.{svelte,ts}';
+@source '../src/lib/components/**/*.{svelte,ts}';
+@source '../src/lib/query/**/*.ts';
 /* @source '../../../node_modules/layerchart/dist'; */
 @import 'tw-animate-css';
 

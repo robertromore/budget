@@ -19,7 +19,7 @@ import {isValidIconName} from "$lib/utils/icon-validation";
 import validator from "validator";
 import {serviceFactory} from "$lib/server/shared/container/service-factory";
 
-const accountService = serviceFactory.getAccountService();
+// PERFORMANCE: Services retrieved per-request to avoid module-level instantiation
 
 // Custom schema for account save operation (handles both create and update)
 const accountSaveSchema = z
@@ -219,6 +219,7 @@ export const accountRoutes = t.router({
     return accountWithBalance as Account;
   }),
   getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({ctx, input}) => {
+    const accountService = serviceFactory.getAccountService();
     const account = await accountService.getAccountBySlug(input.slug);
 
     if (!account) {
@@ -379,6 +380,7 @@ export const accountRoutes = t.router({
 
     // Use AccountService to create account with initial balance transaction
     try {
+      const accountService = serviceFactory.getAccountService();
       const createdAccount = await accountService.createAccount({
         name: input.name,
         notes: input.notes,

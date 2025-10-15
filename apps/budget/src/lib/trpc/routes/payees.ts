@@ -18,10 +18,11 @@ import {
 import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
 import {serviceFactory} from "$lib/server/shared/container/service-factory";
 
-const payeeService = serviceFactory.getPayeeService();
+// PERFORMANCE: Services retrieved per-request to avoid module-level instantiation
 
 export const payeeRoutes = t.router({
   all: publicProcedure.query(async () => {
+    const payeeService = serviceFactory.getPayeeService();
     try {
       return await payeeService.getAllPayees();
     } catch (error) {
@@ -33,6 +34,7 @@ export const payeeRoutes = t.router({
   }),
 
   allWithStats: publicProcedure.query(async () => {
+    const payeeService = serviceFactory.getPayeeService();
     try {
       return await payeeService.getAllPayeesWithStats();
     } catch (error) {
@@ -44,6 +46,7 @@ export const payeeRoutes = t.router({
   }),
 
   load: publicProcedure.input(payeeIdSchema).query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
     try {
       return await payeeService.getPayeeById(input.id);
     } catch (error) {
@@ -61,6 +64,7 @@ export const payeeRoutes = t.router({
   }),
 
   getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
     try {
       return await payeeService.getPayeeBySlug(input.slug);
     } catch (error) {
@@ -78,6 +82,7 @@ export const payeeRoutes = t.router({
   }),
 
   search: publicProcedure.input(searchPayeesSchema).query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
     try {
       return await payeeService.searchPayees(input.query);
     } catch (error) {
@@ -89,6 +94,7 @@ export const payeeRoutes = t.router({
   }),
 
   remove: rateLimitedProcedure.input(removePayeeSchema).mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
     try {
       return await payeeService.deletePayee(input.id, {force: false});
     } catch (error) {
@@ -120,6 +126,7 @@ export const payeeRoutes = t.router({
   delete: bulkOperationProcedure
     .input(removePayeesSchema)
     .mutation(async ({input: {entities}}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         const result = await payeeService.bulkDeletePayees(entities, {force: false});
         return {
@@ -143,6 +150,7 @@ export const payeeRoutes = t.router({
   create: rateLimitedProcedure
     .input(createPayeeSchema)
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.createPayee(input);
       } catch (error) {
@@ -168,6 +176,7 @@ export const payeeRoutes = t.router({
   update: rateLimitedProcedure
     .input(updatePayeeSchema.safeExtend({id: z.number().int().positive()}))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         const {id, ...updateData} = input;
         return await payeeService.updatePayee(id, updateData);
@@ -200,6 +209,7 @@ export const payeeRoutes = t.router({
   save: rateLimitedProcedure
     .input(superformInsertPayeeSchema)
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         const {id, address, ...payeeData} = input;
 
@@ -265,6 +275,7 @@ export const payeeRoutes = t.router({
   searchAdvanced: publicProcedure
     .input(advancedSearchPayeesSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         console.log('tRPC searchAdvanced called with input:', JSON.stringify(input, null, 2));
         const result = await payeeService.searchPayeesAdvanced(input);
@@ -281,6 +292,7 @@ export const payeeRoutes = t.router({
   byType: publicProcedure
     .input(getPayeesByTypeSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getPayeesByType(input.payeeType);
       } catch (error) {
@@ -293,6 +305,7 @@ export const payeeRoutes = t.router({
 
   withRelations: publicProcedure
     .query(async () => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getPayeesWithRelations();
       } catch (error) {
@@ -305,6 +318,7 @@ export const payeeRoutes = t.router({
 
   needingAttention: publicProcedure
     .query(async () => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getPayeesNeedingAttention();
       } catch (error) {
@@ -319,6 +333,7 @@ export const payeeRoutes = t.router({
   stats: publicProcedure
     .input(payeeIdSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getPayeeStats(input.id);
       } catch (error) {
@@ -338,6 +353,7 @@ export const payeeRoutes = t.router({
   suggestions: publicProcedure
     .input(payeeIdSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.generatePayeeSuggestions(input.id);
       } catch (error) {
@@ -357,6 +373,7 @@ export const payeeRoutes = t.router({
   intelligence: publicProcedure
     .input(payeeIdSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getPayeeIntelligence(input.id);
       } catch (error) {
@@ -375,6 +392,7 @@ export const payeeRoutes = t.router({
 
   analytics: publicProcedure
     .query(async () => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getPayeeAnalytics();
       } catch (error) {
@@ -389,6 +407,7 @@ export const payeeRoutes = t.router({
   merge: rateLimitedProcedure
     .input(mergePayeesSchema)
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         await payeeService.mergePayees(input.sourceId, input.targetId);
         return {success: true};
@@ -415,6 +434,7 @@ export const payeeRoutes = t.router({
   applyIntelligentDefaults: rateLimitedProcedure
     .input(applyIntelligentDefaultsSchema)
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.applyIntelligentDefaults(
           input.id,
@@ -444,6 +464,7 @@ export const payeeRoutes = t.router({
   updateCalculatedFields: rateLimitedProcedure
     .input(updateCalculatedFieldsSchema)
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.updateCalculatedFields(input.payeeId);
       } catch (error) {
@@ -467,6 +488,7 @@ export const payeeRoutes = t.router({
   recordCategoryCorrection: rateLimitedProcedure
     .input(recordCorrectionSchema)
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.recordCategoryCorrection({
           payeeId: input.payeeId,
@@ -508,6 +530,7 @@ export const payeeRoutes = t.router({
       transactionDate: z.string().optional(),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getCategoryRecommendation(input.payeeId, {
           transactionAmount: input.transactionAmount,
@@ -534,6 +557,7 @@ export const payeeRoutes = t.router({
       transactionDate: z.string().optional(),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getEnhancedCategoryRecommendation(input.payeeId, {
           transactionAmount: input.transactionAmount,
@@ -561,6 +585,7 @@ export const payeeRoutes = t.router({
       transactionDate: z.string().optional(),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.calculateCategoryConfidence(
           input.payeeId,
@@ -587,6 +612,7 @@ export const payeeRoutes = t.router({
   analyzeCorrectionPatterns: publicProcedure
     .input(analyzeCorrectionsSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.analyzeCorrectionPatterns(input.payeeId, {
           timeframeMonths: input.timeframeMonths,
@@ -610,6 +636,7 @@ export const payeeRoutes = t.router({
   detectCategoryDrift: publicProcedure
     .input(payeeIdSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.detectCategoryDrift(input.id);
       } catch (error) {
@@ -628,6 +655,7 @@ export const payeeRoutes = t.router({
 
   getDefaultCategoryUpdateSuggestions: publicProcedure
     .query(async () => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getDefaultCategoryUpdateSuggestions();
       } catch (error) {
@@ -641,6 +669,7 @@ export const payeeRoutes = t.router({
   getLearningMetrics: publicProcedure
     .input(learningMetricsSchema.optional())
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getLearningMetrics(input?.timeframeMonths);
       } catch (error) {
@@ -658,6 +687,7 @@ export const payeeRoutes = t.router({
       dryRun: z.boolean().default(false),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.applyLearningBasedUpdates({
           minConfidence: input.minConfidence,
@@ -679,6 +709,7 @@ export const payeeRoutes = t.router({
   budgetOptimizationAnalysis: publicProcedure
     .input(payeeIdSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getBudgetOptimizationAnalysis(input.id);
       } catch (error) {
@@ -703,6 +734,7 @@ export const payeeRoutes = t.router({
       timeHorizon: z.number().positive().default(12),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getBudgetAllocationSuggestions(
           input.accountId,
@@ -727,6 +759,7 @@ export const payeeRoutes = t.router({
       periodsAhead: z.number().positive().default(12),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getBudgetForecast(
           input.payeeId,
@@ -750,6 +783,7 @@ export const payeeRoutes = t.router({
   budgetHealthMetrics: publicProcedure
     .input(payeeIdSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getBudgetHealthMetrics(input.id);
       } catch (error) {
@@ -772,6 +806,7 @@ export const payeeRoutes = t.router({
       strategy: z.enum(['conservative', 'aggressive', 'balanced']).default('balanced'),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getBudgetRebalancingPlan(
           input.accountId,
@@ -791,6 +826,7 @@ export const payeeRoutes = t.router({
       currentBudget: z.number().positive().optional(),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getBudgetEfficiencyAnalysis(
           input.payeeId,
@@ -821,6 +857,7 @@ export const payeeRoutes = t.router({
       }).default({}),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getMultiPayeeBudgetOptimization(
           input.payeeIds,
@@ -846,6 +883,7 @@ export const payeeRoutes = t.router({
       })),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getBudgetScenarioAnalysis(
           input.payeeIds,
@@ -869,6 +907,7 @@ export const payeeRoutes = t.router({
       }).default({}),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getBulkBudgetOptimization(
           input.accountId,
@@ -897,6 +936,7 @@ export const payeeRoutes = t.router({
       }).optional(),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getUnifiedMLRecommendations(input.payeeId, input.context);
       } catch (error) {
@@ -916,6 +956,7 @@ export const payeeRoutes = t.router({
   crossSystemLearning: publicProcedure
     .input(payeeIdSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getCrossSystemLearning(input.id);
       } catch (error) {
@@ -944,6 +985,7 @@ export const payeeRoutes = t.router({
       }).default({}),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.executeAdaptiveOptimization(input.payeeId, input.options);
       } catch (error) {
@@ -963,6 +1005,7 @@ export const payeeRoutes = t.router({
   systemConfidence: publicProcedure
     .input(payeeIdSchema)
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getSystemConfidence(input.id);
       } catch (error) {
@@ -985,6 +1028,7 @@ export const payeeRoutes = t.router({
       lookbackMonths: z.number().positive().default(6),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.detectBehaviorChanges(input.payeeId, input.lookbackMonths);
       } catch (error) {
@@ -1007,6 +1051,7 @@ export const payeeRoutes = t.router({
       insightTypes: z.array(z.enum(['optimization', 'correction', 'prediction', 'automation', 'alert'])).optional(),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getActionableInsights(input.payeeId, input.insightTypes);
       } catch (error) {
@@ -1033,6 +1078,7 @@ export const payeeRoutes = t.router({
       }).default({}),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getBulkUnifiedRecommendations(input.payeeIds, input.options);
       } catch (error) {
@@ -1053,6 +1099,7 @@ export const payeeRoutes = t.router({
       }).optional(),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getMLPerformanceMetrics(input.payeeId, input.period);
       } catch (error) {
@@ -1080,6 +1127,7 @@ export const payeeRoutes = t.router({
       }).default({}),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.applyBulkMLAutomation(input.payeeIds, input.options);
       } catch (error) {
@@ -1103,6 +1151,7 @@ export const payeeRoutes = t.router({
       }).default({}),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getMLInsightsDashboard(input.filters);
       } catch (error) {
@@ -1128,6 +1177,7 @@ export const payeeRoutes = t.router({
         }).optional(),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.validateAndEnrichPayeeContact(
             input.payeeId,
@@ -1153,6 +1203,7 @@ export const payeeRoutes = t.router({
         phone: z.string().optional(),
       }))
       .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.standardizePayeePhoneNumber(input.payeeId, input.phone);
         } catch (error) {
@@ -1181,6 +1232,7 @@ export const payeeRoutes = t.router({
         email: z.string().optional(),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.validatePayeeEmailDomain(input.payeeId, input.email);
         } catch (error) {
@@ -1209,6 +1261,7 @@ export const payeeRoutes = t.router({
         address: z.any().optional(),
       }))
       .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.enrichPayeeAddressData(input.payeeId, input.address);
         } catch (error) {
@@ -1231,6 +1284,7 @@ export const payeeRoutes = t.router({
         minimumSimilarity: z.number().min(0).max(1).default(0.7),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.detectContactDuplicates(
             input.includeInactive,
@@ -1247,6 +1301,7 @@ export const payeeRoutes = t.router({
     generateContactSuggestions: publicProcedure
       .input(payeeIdSchema)
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.generatePayeeContactSuggestions(input.id);
         } catch (error) {
@@ -1269,6 +1324,7 @@ export const payeeRoutes = t.router({
         website: z.string().optional(),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.validatePayeeWebsiteAccessibility(input.payeeId, input.website);
         } catch (error) {
@@ -1297,6 +1353,7 @@ export const payeeRoutes = t.router({
         transactionLimit: z.number().positive().default(50),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.extractContactFromPayeeTransactions(
             input.payeeId,
@@ -1327,6 +1384,7 @@ export const payeeRoutes = t.router({
         }).optional(),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.getContactAnalytics(input.payeeId, input.contactOverrides);
         } catch (error) {
@@ -1354,6 +1412,7 @@ export const payeeRoutes = t.router({
         }).default({}),
       }))
       .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.bulkContactValidation(input.payeeIds, input.options);
         } catch (error) {
@@ -1385,6 +1444,7 @@ export const payeeRoutes = t.router({
         }).default({}),
       }))
       .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           const duplicateDetection = {
             primaryPayeeId: input.primaryPayeeId,
@@ -1427,6 +1487,7 @@ export const payeeRoutes = t.router({
         minConfidence: z.number().min(0).max(1).default(0.3),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.detectSubscriptions(
             input.payeeIds,
@@ -1451,6 +1512,7 @@ export const payeeRoutes = t.router({
         })).optional(),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.classifySubscription(input.payeeId, input.transactionData);
         } catch (error) {
@@ -1472,6 +1534,7 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.getSubscriptionLifecycleAnalysis(input.payeeId);
         } catch (error) {
@@ -1494,6 +1557,7 @@ export const payeeRoutes = t.router({
         timeframeDays: z.number().positive().default(365),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.getSubscriptionCostAnalysis(input.payeeId, input.timeframeDays);
         } catch (error) {
@@ -1516,6 +1580,7 @@ export const payeeRoutes = t.router({
         forecastMonths: z.number().positive().default(12),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.getSubscriptionRenewalPredictions(input.payeeIds, input.forecastMonths);
         } catch (error) {
@@ -1531,6 +1596,7 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.getSubscriptionUsageAnalysis(input.payeeId);
         } catch (error) {
@@ -1552,6 +1618,7 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.getSubscriptionCancellationAssistance(input.payeeId);
         } catch (error) {
@@ -1578,6 +1645,7 @@ export const payeeRoutes = t.router({
         }).default({}),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.getSubscriptionOptimizationRecommendations(
             input.payeeIds,
@@ -1602,6 +1670,7 @@ export const payeeRoutes = t.router({
         }).default({}),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.getBulkSubscriptionAnalysis(input.payeeIds, input.analysisOptions);
         } catch (error) {
@@ -1651,6 +1720,7 @@ export const payeeRoutes = t.router({
         }),
       }))
       .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.updateSubscriptionMetadata(input.payeeId, input.subscriptionMetadata);
         } catch (error) {
@@ -1682,6 +1752,7 @@ export const payeeRoutes = t.router({
         notes: z.string().optional(),
       }))
       .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.markSubscriptionCancelled(
             input.payeeId,
@@ -1723,6 +1794,7 @@ export const payeeRoutes = t.router({
         }).default({}),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.getSubscriptionValueOptimization(
             input.payeeIds,
@@ -1744,6 +1816,7 @@ export const payeeRoutes = t.router({
         includePricingTiers: z.boolean().default(true),
       }))
       .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.getSubscriptionCompetitorAnalysis(
             input.payeeId,
@@ -1782,6 +1855,7 @@ export const payeeRoutes = t.router({
         }),
       }))
       .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
         try {
           return await payeeService.setSubscriptionAutomationRules(input.payeeId, input.rules);
         } catch (error) {
@@ -1814,6 +1888,7 @@ export const payeeRoutes = t.router({
       status: z.enum(['active', 'inactive']),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         const isActivating = input.status === 'active';
         return await payeeService.bulkUpdatePayeeStatus(input.payeeIds, isActivating);
@@ -1838,6 +1913,7 @@ export const payeeRoutes = t.router({
       overwriteExisting: z.boolean().default(false),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.bulkAssignCategory(
           input.payeeIds,
@@ -1871,6 +1947,7 @@ export const payeeRoutes = t.router({
       operation: z.enum(['add', 'remove', 'replace']),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.bulkManageTags(
           input.payeeIds,
@@ -1902,6 +1979,7 @@ export const payeeRoutes = t.router({
       }),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.bulkApplyIntelligentDefaults(
           input.payeeIds,
@@ -1930,6 +2008,7 @@ export const payeeRoutes = t.router({
       includeIntelligenceData: z.boolean().default(false),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.exportPayees(
           input.payeeIds,
@@ -1960,6 +2039,7 @@ export const payeeRoutes = t.router({
       }).default({}),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.importPayees(
           input.data,
@@ -1994,6 +2074,7 @@ export const payeeRoutes = t.router({
       confirmDestructive: z.boolean().default(false),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.bulkCleanupPayees(
           input.operations,
@@ -2021,6 +2102,7 @@ export const payeeRoutes = t.router({
       groupingStrategy: z.enum(['name', 'contact', 'transaction_pattern', 'comprehensive']).default('comprehensive'),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.findDuplicatePayees(
           input.similarityThreshold,
@@ -2048,6 +2130,7 @@ export const payeeRoutes = t.router({
       confirmMerge: z.boolean().default(false),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.mergeDuplicatePayees(
           input.primaryPayeeId,
@@ -2095,6 +2178,7 @@ export const payeeRoutes = t.router({
       ]),
     }))
     .mutation(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.undoBulkOperation(
           input.operationId,
@@ -2137,6 +2221,7 @@ export const payeeRoutes = t.router({
       endDate: z.string().optional(),
     }))
     .query(async ({input}) => {
+    const payeeService = serviceFactory.getPayeeService();
       try {
         return await payeeService.getBulkOperationHistory(
           input.limit,

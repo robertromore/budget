@@ -1,13 +1,18 @@
 import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { ReceiptService } from "$lib/server/domains/medical-expenses";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
 
-const receiptService = new ReceiptService();
+// PERFORMANCE: Service retrieved per-request via serviceFactory to enable lazy loading
+// of medical-expenses modules. Module-level instantiation causes eager compilation
+// of the entire 504+ line HSA feature set, resulting in sustained 100% CPU usage.
 
 export const GET: RequestHandler = async ({ params }) => {
   try {
+    // Get service per-request via lazy loading
+    const receiptService = await serviceFactory.getReceiptService();
+
     const receiptId = parseInt(params.id, 10);
 
     if (isNaN(receiptId) || receiptId <= 0) {

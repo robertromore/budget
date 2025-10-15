@@ -20,7 +20,6 @@ import { PayeeRepository } from '$lib/server/domains/payees/repository';
 import { BudgetRepository } from '$lib/server/domains/budgets/repository';
 import { PatternRepository } from '$lib/server/domains/patterns/repository';
 import { ScheduleRepository } from '$lib/server/domains/schedules/repository';
-import { MedicalExpenseRepository } from '$lib/server/domains/medical-expenses/repository';
 
 import { CategoryService } from '$lib/server/domains/categories/services';
 import { PatternDetectionService } from '$lib/server/domains/patterns/services';
@@ -42,11 +41,18 @@ import { ContactManagementService } from '$lib/server/domains/payees/contact-man
 import { SubscriptionManagementService } from '$lib/server/domains/payees/subscription-management';
 import { AccountService } from '$lib/server/domains/accounts/services';
 import { ScheduleService } from '$lib/server/domains/schedules/services';
-import { MedicalExpenseService } from '$lib/server/domains/medical-expenses/services';
-import { ClaimService } from '$lib/server/domains/medical-expenses/claim-service';
-import { ClaimRepository } from '$lib/server/domains/medical-expenses/claim-repository';
-import { ReceiptService } from '$lib/server/domains/medical-expenses/receipt-service';
-import { ReceiptRepository } from '$lib/server/domains/medical-expenses/receipt-repository';
+
+// PERFORMANCE: Lazy load medical-expenses modules via dynamic imports to prevent eager compilation
+// These modules are large (504+ lines) and importing them at the top level causes TypeScript/Vite
+// to compile the entire HSA feature set whenever any tRPC route imports the serviceFactory,
+// resulting in sustained 100% CPU usage during development. Dynamic imports ensure modules are
+// only loaded when medical-expenses routes are actually invoked.
+import type { MedicalExpenseRepository } from '$lib/server/domains/medical-expenses/repository';
+import type { MedicalExpenseService } from '$lib/server/domains/medical-expenses/services';
+import type { ClaimService } from '$lib/server/domains/medical-expenses/claim-service';
+import type { ClaimRepository } from '$lib/server/domains/medical-expenses/claim-repository';
+import type { ReceiptService } from '$lib/server/domains/medical-expenses/receipt-service';
+import type { ReceiptRepository } from '$lib/server/domains/medical-expenses/receipt-repository';
 
 export class ServiceFactory {
   private instances = new Map<string, unknown>();
@@ -111,25 +117,28 @@ export class ServiceFactory {
     return this.instances.get(key) as ScheduleRepository;
   }
 
-  getMedicalExpenseRepository(): MedicalExpenseRepository {
+  async getMedicalExpenseRepository(): Promise<MedicalExpenseRepository> {
     const key = 'MedicalExpenseRepository';
     if (!this.instances.has(key)) {
+      const { MedicalExpenseRepository } = await import('$lib/server/domains/medical-expenses/repository');
       this.instances.set(key, new MedicalExpenseRepository());
     }
     return this.instances.get(key) as MedicalExpenseRepository;
   }
 
-  getClaimRepository(): ClaimRepository {
+  async getClaimRepository(): Promise<ClaimRepository> {
     const key = 'ClaimRepository';
     if (!this.instances.has(key)) {
+      const { ClaimRepository } = await import('$lib/server/domains/medical-expenses/claim-repository');
       this.instances.set(key, new ClaimRepository());
     }
     return this.instances.get(key) as ClaimRepository;
   }
 
-  getReceiptRepository(): ReceiptRepository {
+  async getReceiptRepository(): Promise<ReceiptRepository> {
     const key = 'ReceiptRepository';
     if (!this.instances.has(key)) {
+      const { ReceiptRepository } = await import('$lib/server/domains/medical-expenses/receipt-repository');
       this.instances.set(key, new ReceiptRepository());
     }
     return this.instances.get(key) as ReceiptRepository;
@@ -320,24 +329,26 @@ export class ServiceFactory {
     return this.instances.get(key) as ScheduleService;
   }
 
-  getClaimService(): ClaimService {
+  async getClaimService(): Promise<ClaimService> {
     const key = 'ClaimService';
     if (!this.instances.has(key)) {
+      const { ClaimService } = await import('$lib/server/domains/medical-expenses/claim-service');
       this.instances.set(key, new ClaimService(
-        this.getClaimRepository(),
-        this.getMedicalExpenseRepository()
+        await this.getClaimRepository(),
+        await this.getMedicalExpenseRepository()
       ));
     }
     return this.instances.get(key) as ClaimService;
   }
 
-  getMedicalExpenseService(): MedicalExpenseService {
+  async getMedicalExpenseService(): Promise<MedicalExpenseService> {
     const key = 'MedicalExpenseService';
     if (!this.instances.has(key)) {
+      const { MedicalExpenseService } = await import('$lib/server/domains/medical-expenses/services');
       this.instances.set(key, new MedicalExpenseService(
-        this.getMedicalExpenseRepository(),
+        await this.getMedicalExpenseRepository(),
         this.getTransactionService(),
-        this.getClaimService()
+        await this.getClaimService()
       ));
     }
     return this.instances.get(key) as MedicalExpenseService;
@@ -411,12 +422,13 @@ export class ServiceFactory {
     return this.instances.get(key) as BudgetService;
   }
 
-  getReceiptService(): ReceiptService {
+  async getReceiptService(): Promise<ReceiptService> {
     const key = 'ReceiptService';
     if (!this.instances.has(key)) {
+      const { ReceiptService } = await import('$lib/server/domains/medical-expenses/receipt-service');
       this.instances.set(key, new ReceiptService(
-        this.getReceiptRepository(),
-        this.getMedicalExpenseRepository()
+        await this.getReceiptRepository(),
+        await this.getMedicalExpenseRepository()
       ));
     }
     return this.instances.get(key) as ReceiptService;

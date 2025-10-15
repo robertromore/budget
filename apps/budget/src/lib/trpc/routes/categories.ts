@@ -10,11 +10,12 @@ import {categoryIdSchema, searchCategoriesSchema} from "$lib/server/domains/cate
 import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
 import {serviceFactory} from "$lib/server/shared/container/service-factory";
 
-const categoryService = serviceFactory.getCategoryService();
+// PERFORMANCE: Services retrieved per-request to avoid module-level instantiation
 
 export const categoriesRoutes = t.router({
   all: publicProcedure.query(async () => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getAllCategories();
     } catch (error) {
       throw new TRPCError({
@@ -26,6 +27,7 @@ export const categoriesRoutes = t.router({
 
   allWithStats: publicProcedure.query(async () => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getAllCategoriesWithStats();
     } catch (error) {
       throw new TRPCError({
@@ -37,6 +39,7 @@ export const categoriesRoutes = t.router({
 
   load: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getCategoryById(input.id);
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -54,6 +57,7 @@ export const categoriesRoutes = t.router({
 
   getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({input}) => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getCategoryBySlug(input.slug);
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -71,6 +75,7 @@ export const categoriesRoutes = t.router({
 
   search: publicProcedure.input(searchCategoriesSchema).query(async ({input}) => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.searchCategories(input.query);
     } catch (error) {
       throw new TRPCError({
@@ -82,6 +87,7 @@ export const categoriesRoutes = t.router({
 
   remove: rateLimitedProcedure.input(removeCategorySchema).mutation(async ({input}) => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.deleteCategory(input.id, {force: false});
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -113,6 +119,7 @@ export const categoriesRoutes = t.router({
     .input(removeCategoriesSchema)
     .mutation(async ({input: {entities}}) => {
       try {
+        const categoryService = serviceFactory.getCategoryService();
         const result = await categoryService.bulkDeleteCategories(entities, {force: false});
         return {
           deletedCount: result.deletedCount,
@@ -136,6 +143,7 @@ export const categoriesRoutes = t.router({
     .input(formInsertCategorySchema)
     .mutation(async ({input}) => {
       try {
+        const categoryService = serviceFactory.getCategoryService();
         const {id, name, notes, categoryType, categoryIcon, categoryColor, isActive, displayOrder, isTaxDeductible, taxCategory, deductiblePercentage, isSeasonal, seasonalMonths, expectedMonthlyMin, expectedMonthlyMax, spendingPriority, incomeReliability} = input;
 
         if (id) {
@@ -221,6 +229,7 @@ export const categoriesRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
+        const categoryService = serviceFactory.getCategoryService();
         const result = await categoryService.bulkUpdateDisplayOrder(input.updates);
         return {
           updatedCount: result.updatedCount,
@@ -242,6 +251,7 @@ export const categoriesRoutes = t.router({
 
   allWithBudgets: publicProcedure.query(async () => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getAllCategoriesWithBudgets();
     } catch (error) {
       throw new TRPCError({
@@ -253,6 +263,7 @@ export const categoriesRoutes = t.router({
 
   loadWithBudgets: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getCategoryByIdWithBudgets(input.id);
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -270,6 +281,7 @@ export const categoriesRoutes = t.router({
 
   getBySlugWithBudgets: publicProcedure.input(z.object({slug: z.string()})).query(async ({input}) => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getCategoryBySlugWithBudgets(input.slug);
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -287,6 +299,7 @@ export const categoriesRoutes = t.router({
 
   rootCategories: publicProcedure.query(async () => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getRootCategories();
     } catch (error) {
       throw new TRPCError({
@@ -298,6 +311,7 @@ export const categoriesRoutes = t.router({
 
   categoryChildren: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getCategoryChildren(input.id);
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -315,6 +329,7 @@ export const categoriesRoutes = t.router({
 
   categoryWithChildren: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getCategoryWithChildren(input.id);
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -332,6 +347,7 @@ export const categoriesRoutes = t.router({
 
   hierarchyTree: publicProcedure.query(async () => {
     try {
+      const categoryService = serviceFactory.getCategoryService();
       return await categoryService.getCategoryHierarchyTree();
     } catch (error) {
       throw new TRPCError({
@@ -348,6 +364,7 @@ export const categoriesRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
+        const categoryService = serviceFactory.getCategoryService();
         return await categoryService.setCategoryParent(input.categoryId, input.parentId);
       } catch (error) {
         if (error instanceof NotFoundError) {

@@ -12,7 +12,7 @@ import Image from '@lucide/svelte/icons/image';
 import X from '@lucide/svelte/icons/x';
 import Download from '@lucide/svelte/icons/download';
 import Trash2 from '@lucide/svelte/icons/trash-2';
-import { receiptTypeEnum, type ReceiptType } from '$lib/schema';
+import { receiptTypeEnum, type ReceiptType } from '$lib/schema/expense-receipts';
 
 // Receipt type keys array
 const receiptTypeKeys = Object.keys(receiptTypeEnum) as Array<ReceiptType>;

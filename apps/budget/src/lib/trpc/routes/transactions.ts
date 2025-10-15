@@ -13,7 +13,7 @@ import {
 } from "$lib/server/domains/transactions";
 import {serviceFactory} from "$lib/server/shared/container/service-factory";
 
-const transactionService = serviceFactory.getTransactionService();
+// PERFORMANCE: Services retrieved per-request to avoid module-level instantiation
 
 export const transactionRoutes = t.router({
   // Get all transactions for an account
@@ -23,6 +23,7 @@ export const transactionRoutes = t.router({
     }))
     .query(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.getAccountTransactions(input.accountId);
       } catch (error: any) {
         throw new TRPCError({
@@ -39,6 +40,7 @@ export const transactionRoutes = t.router({
     }))
     .query(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.getAccountTransactionsWithUpcoming(input.accountId);
       } catch (error: any) {
         throw new TRPCError({
@@ -56,6 +58,7 @@ export const transactionRoutes = t.router({
     }))
     .query(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.getTransactions(
           input.filters || {},
           input.pagination
@@ -75,6 +78,7 @@ export const transactionRoutes = t.router({
     }))
     .query(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.getTransactionById(input.id);
       } catch (error: any) {
         throw new TRPCError({
@@ -91,6 +95,7 @@ export const transactionRoutes = t.router({
     }))
     .query(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.getAccountSummary(input.accountId);
       } catch (error: any) {
         throw new TRPCError({
@@ -107,6 +112,7 @@ export const transactionRoutes = t.router({
     }))
     .query(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.getMonthlySpendingAggregates(input.accountId);
       } catch (error: any) {
         throw new TRPCError({
@@ -121,6 +127,7 @@ export const transactionRoutes = t.router({
     .input(createTransactionSchema)
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.createTransaction(input);
       } catch (error: any) {
         if (error.statusCode === 400) {
@@ -149,6 +156,7 @@ export const transactionRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.updateTransaction(input.id, input.data);
       } catch (error: any) {
         if (error.statusCode === 400) {
@@ -177,6 +185,7 @@ export const transactionRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.updateTransactionWithRecalculatedBalance(input.id, input.data);
       } catch (error: any) {
         if (error.statusCode === 400) {
@@ -204,6 +213,7 @@ export const transactionRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         await transactionService.deleteTransaction(input.id);
         return {success: true};
       } catch (error: any) {
@@ -219,6 +229,7 @@ export const transactionRoutes = t.router({
     .input(bulkDeleteSchema)
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         await transactionService.deleteTransactions(input.ids);
         return {success: true, count: input.ids.length};
       } catch (error: any) {
@@ -256,6 +267,7 @@ export const transactionRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         if (input.id) {
           // Update existing transaction
           const {id, accountId, ...updateData} = input;
@@ -290,6 +302,7 @@ export const transactionRoutes = t.router({
     .input(createTransactionWithAutoPopulationSchema)
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.createTransactionWithPayeeDefaults(input);
       } catch (error: any) {
         if (error.statusCode === 400) {
@@ -315,6 +328,7 @@ export const transactionRoutes = t.router({
     .input(transactionSuggestionRequestSchema)
     .query(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.suggestTransactionDetails(input.payeeId, input.amount);
       } catch (error: any) {
         throw new TRPCError({
@@ -329,6 +343,7 @@ export const transactionRoutes = t.router({
     .input(payeeIntelligenceRequestSchema)
     .query(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.getPayeeTransactionIntelligence(input.payeeId);
       } catch (error: any) {
         throw new TRPCError({
@@ -345,6 +360,7 @@ export const transactionRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         await transactionService.updatePayeeAfterTransaction(input.payeeId);
         return {success: true};
       } catch (error: any) {
@@ -368,6 +384,7 @@ export const transactionRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         return await transactionService.createTransfer({
           fromAccountId: input.fromAccountId,
           toAccountId: input.toAccountId,
@@ -398,6 +415,7 @@ export const transactionRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         const {transferId, ...updates} = input;
         return await transactionService.updateTransfer(transferId, updates);
       } catch (error: any) {
@@ -416,6 +434,7 @@ export const transactionRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
+        const transactionService = serviceFactory.getTransactionService();
         await transactionService.deleteTransfer(input.transferId);
         return {success: true};
       } catch (error: any) {

@@ -185,15 +185,12 @@ const listPeriodTemplatesSchema = z.object({
   budgetId: z.number().int().positive(),
 });
 
-const budgetService = serviceFactory.getBudgetService();
-const periodService = serviceFactory.getBudgetPeriodService();
-const transactionService = serviceFactory.getBudgetTransactionService();
-const periodManager = serviceFactory.getPeriodManager();
-const templateService = serviceFactory.getBudgetTemplateService();
-const intelligenceService = serviceFactory.getBudgetIntelligenceService();
+// PERFORMANCE: Services retrieved per-request to avoid module-level instantiation
+// This prevents eager loading of dependencies during module import.
 
 export const budgetRoutes = t.router({
   count: publicProcedure.query(async () => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       const budgets = await budgetService.listBudgets();
       return { count: budgets.length };
@@ -202,6 +199,7 @@ export const budgetRoutes = t.router({
     }
   }),
   list: publicProcedure.input(listBudgetSchema).query(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       const status = input?.status;
       return await budgetService.listBudgets(status);
@@ -220,6 +218,7 @@ export const budgetRoutes = t.router({
       })
     )
     .query(async ({input}) => {
+      const intelligenceService = serviceFactory.getBudgetIntelligenceService();
       try {
         return await intelligenceService.detectBudgetsForTransaction({
           accountId: input.accountId,
@@ -248,6 +247,7 @@ export const budgetRoutes = t.router({
       })
     )
     .query(async ({input}) => {
+      const intelligenceService = serviceFactory.getBudgetIntelligenceService();
       try {
         return await intelligenceService.detectBudgetsForTransactions(input.transactions);
       } catch (error) {
@@ -255,6 +255,7 @@ export const budgetRoutes = t.router({
       }
     }),
   get: publicProcedure.input(budgetIdSchema).query(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       return await budgetService.getBudget(input.id);
     } catch (error) {
@@ -263,6 +264,7 @@ export const budgetRoutes = t.router({
     }
   }),
   getBySlug: publicProcedure.input(budgetSlugSchema).query(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       return await budgetService.getBudgetBySlug(input.slug);
     } catch (error) {
@@ -271,6 +273,7 @@ export const budgetRoutes = t.router({
     }
   }),
   create: publicProcedure.input(createBudgetSchema).mutation(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       return await budgetService.createBudget(input);
     } catch (error) {
@@ -278,6 +281,7 @@ export const budgetRoutes = t.router({
     }
   }),
   update: publicProcedure.input(updateBudgetSchema).mutation(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       const {id, ...updates} = input;
       return await budgetService.updateBudget(id, updates);
@@ -286,6 +290,7 @@ export const budgetRoutes = t.router({
     }
   }),
   delete: publicProcedure.input(budgetIdSchema).mutation(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       await budgetService.deleteBudget(input.id);
       return {success: true};
@@ -299,6 +304,7 @@ export const budgetRoutes = t.router({
       newName: z.string().trim().min(2).max(80).optional(),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.duplicateBudget(input.id, input.newName);
       } catch (error) {
@@ -310,6 +316,7 @@ export const budgetRoutes = t.router({
       ids: z.array(z.number().int().positive()).min(1),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.bulkArchive(input.ids);
       } catch (error) {
@@ -321,6 +328,7 @@ export const budgetRoutes = t.router({
       ids: z.array(z.number().int().positive()).min(1),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.bulkDelete(input.ids);
       } catch (error) {
@@ -328,6 +336,7 @@ export const budgetRoutes = t.router({
       }
     }),
   ensurePeriodInstance: publicProcedure.input(ensurePeriodSchema).mutation(async ({input}) => {
+    const periodService = serviceFactory.getBudgetPeriodService();
     try {
       return await periodService.ensureInstanceForDate(input.templateId, {
         referenceDate: input.referenceDate,
@@ -340,6 +349,7 @@ export const budgetRoutes = t.router({
     }
   }),
   listPeriodInstances: publicProcedure.input(periodListSchema).query(async ({input}) => {
+    const periodService = serviceFactory.getBudgetPeriodService();
     try {
       return await periodService.listInstances(input.templateId);
     } catch (error) {
@@ -347,6 +357,7 @@ export const budgetRoutes = t.router({
     }
   }),
   validateAllocation: publicProcedure.input(allocationValidateSchema).query(async ({input}) => {
+    const transactionService = serviceFactory.getBudgetTransactionService();
     try {
       return await transactionService.validateProposedAllocation(
         input.transactionId,
@@ -358,6 +369,7 @@ export const budgetRoutes = t.router({
     }
   }),
   createAllocation: publicProcedure.input(allocationCreateSchema).mutation(async ({input}) => {
+    const transactionService = serviceFactory.getBudgetTransactionService();
     try {
       return await transactionService.createAllocation({
         transactionId: input.transactionId,
@@ -371,6 +383,7 @@ export const budgetRoutes = t.router({
     }
   }),
   updateAllocation: publicProcedure.input(allocationUpdateSchema).mutation(async ({input}) => {
+    const transactionService = serviceFactory.getBudgetTransactionService();
     try {
       return await transactionService.updateAllocation(input.id, input.allocatedAmount, {
         autoAssigned: input.autoAssigned,
@@ -381,6 +394,7 @@ export const budgetRoutes = t.router({
     }
   }),
   clearAllocation: publicProcedure.input(allocationIdSchema).mutation(async ({input}) => {
+    const transactionService = serviceFactory.getBudgetTransactionService();
     try {
       return await transactionService.clearAllocation(input.id);
     } catch (error) {
@@ -388,6 +402,7 @@ export const budgetRoutes = t.router({
     }
   }),
   deleteAllocation: publicProcedure.input(allocationIdSchema).mutation(async ({input}) => {
+    const transactionService = serviceFactory.getBudgetTransactionService();
     try {
       await transactionService.deleteAllocation(input.id);
       return {success: true};
@@ -400,6 +415,7 @@ export const budgetRoutes = t.router({
   getEnvelopeAllocations: publicProcedure
     .input(z.object({budgetId: z.number().int().positive()}))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getEnvelopeAllocations(input.budgetId);
       } catch (error) {
@@ -417,6 +433,7 @@ export const budgetRoutes = t.router({
       metadata: z.record(z.unknown()).optional(),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.createEnvelopeAllocation(input);
       } catch (error) {
@@ -431,6 +448,7 @@ export const budgetRoutes = t.router({
       metadata: z.record(z.unknown()).optional(),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.updateEnvelopeAllocation(
           input.envelopeId,
@@ -449,6 +467,7 @@ export const budgetRoutes = t.router({
       metadata: z.record(z.unknown()).optional(),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.updateEnvelopeSettings(
           input.envelopeId,
@@ -471,6 +490,7 @@ export const budgetRoutes = t.router({
       transferredBy: z.string().default("user"),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.transferEnvelopeFunds(
           input.fromEnvelopeId,
@@ -490,6 +510,7 @@ export const budgetRoutes = t.router({
       toPeriodId: z.number().int().positive(),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.processEnvelopeRollover(input.fromPeriodId, input.toPeriodId);
       } catch (error) {
@@ -503,6 +524,7 @@ export const budgetRoutes = t.router({
       toPeriodId: z.number().int().positive(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.previewEnvelopeRollover(input.fromPeriodId, input.toPeriodId);
       } catch (error) {
@@ -513,6 +535,7 @@ export const budgetRoutes = t.router({
   getDeficitEnvelopes: publicProcedure
     .input(z.object({budgetId: z.number().int().positive()}))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getDeficitEnvelopes(input.budgetId);
       } catch (error) {
@@ -526,6 +549,7 @@ export const budgetRoutes = t.router({
       minimumSurplus: z.number().optional(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getSurplusEnvelopes(input.budgetId, input.minimumSurplus);
       } catch (error) {
@@ -538,6 +562,7 @@ export const budgetRoutes = t.router({
       envelopeId: z.number().int().positive(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.analyzeEnvelopeDeficit(input.envelopeId);
       } catch (error) {
@@ -550,6 +575,7 @@ export const budgetRoutes = t.router({
       envelopeId: z.number().int().positive(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.createEnvelopeDeficitRecoveryPlan(input.envelopeId);
       } catch (error) {
@@ -563,6 +589,7 @@ export const budgetRoutes = t.router({
       executedBy: z.string().optional(),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.executeEnvelopeDeficitRecovery(input.plan, input.executedBy);
       } catch (error) {
@@ -575,6 +602,7 @@ export const budgetRoutes = t.router({
       budgetId: z.number().int().positive(),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.generateBulkDeficitRecovery(input.budgetId);
       } catch (error) {
@@ -587,6 +615,7 @@ export const budgetRoutes = t.router({
       periodId: z.number().int().positive(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getEnvelopeRolloverSummary(input.periodId);
       } catch (error) {
@@ -600,6 +629,7 @@ export const budgetRoutes = t.router({
       limit: z.number().int().positive().optional(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getEnvelopeRolloverHistory(input.envelopeId, input.limit);
       } catch (error) {
@@ -613,6 +643,7 @@ export const budgetRoutes = t.router({
       limit: z.number().int().positive().optional(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getBudgetRolloverHistory(input.budgetId, input.limit);
       } catch (error) {
@@ -634,6 +665,7 @@ export const budgetRoutes = t.router({
       }).optional(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.estimateEnvelopeRolloverImpact(
           input.fromPeriodId,
@@ -650,6 +682,7 @@ export const budgetRoutes = t.router({
       toPeriodId: z.number().int().positive(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.previewEnvelopeRollover(
           input.fromPeriodId,
@@ -673,6 +706,7 @@ export const budgetRoutes = t.router({
       }),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         const budget = await budgetService.getById(input.budgetId);
         if (!budget) {
@@ -702,6 +736,7 @@ export const budgetRoutes = t.router({
       categoryId: z.number().int().positive().optional(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getApplicableBudgets(input.accountId, input.categoryId);
       } catch (error) {
@@ -718,6 +753,7 @@ export const budgetRoutes = t.router({
       transactionId: z.number().int().positive().optional(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.validateTransactionAgainstStrictBudgets(
           input.amount,
@@ -732,6 +768,7 @@ export const budgetRoutes = t.router({
 
   // Budget group operations
   createGroup: publicProcedure.input(createBudgetGroupSchema).mutation(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       return await budgetService.createBudgetGroup(input);
     } catch (error) {
@@ -740,6 +777,7 @@ export const budgetRoutes = t.router({
   }),
 
   getGroup: publicProcedure.input(budgetGroupIdSchema).query(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       return await budgetService.getBudgetGroup(input.id);
     } catch (error) {
@@ -748,6 +786,7 @@ export const budgetRoutes = t.router({
   }),
 
   listGroups: publicProcedure.input(listBudgetGroupsSchema).query(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       const parentId = input?.parentId;
       return await budgetService.listBudgetGroups(parentId);
@@ -757,6 +796,7 @@ export const budgetRoutes = t.router({
   }),
 
   getRootGroups: publicProcedure.query(async () => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       return await budgetService.getRootBudgetGroups();
     } catch (error) {
@@ -765,6 +805,7 @@ export const budgetRoutes = t.router({
   }),
 
   updateGroup: publicProcedure.input(updateBudgetGroupSchema).mutation(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       const {id, ...updates} = input;
       return await budgetService.updateBudgetGroup(id, updates);
@@ -774,6 +815,7 @@ export const budgetRoutes = t.router({
   }),
 
   deleteGroup: publicProcedure.input(budgetGroupIdSchema).mutation(async ({input}) => {
+    const budgetService = serviceFactory.getBudgetService();
     try {
       await budgetService.deleteBudgetGroup(input.id);
       return {success: true};
@@ -787,6 +829,7 @@ export const budgetRoutes = t.router({
   getSpendingTrends: publicProcedure
     .input(z.object({budgetId: z.number().positive(), limit: z.number().positive().optional()}))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getSpendingTrends(input.budgetId, input.limit);
       } catch (error) {
@@ -797,6 +840,7 @@ export const budgetRoutes = t.router({
   getCategoryBreakdown: publicProcedure
     .input(z.object({budgetId: z.number().positive()}))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getCategoryBreakdown(input.budgetId);
       } catch (error) {
@@ -813,6 +857,7 @@ export const budgetRoutes = t.router({
       })
     )
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getDailySpending(input.budgetId, input.startDate, input.endDate);
       } catch (error) {
@@ -823,6 +868,7 @@ export const budgetRoutes = t.router({
   getSummaryStats: publicProcedure
     .input(z.object({budgetId: z.number().positive()}))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getBudgetSummaryStats(input.budgetId);
       } catch (error) {
@@ -864,6 +910,7 @@ export const budgetRoutes = t.router({
   createPeriodTemplate: publicProcedure
     .input(createPeriodTemplateSchema)
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.createPeriodTemplate(input);
       } catch (error) {
@@ -874,6 +921,7 @@ export const budgetRoutes = t.router({
   updatePeriodTemplate: publicProcedure
     .input(updatePeriodTemplateSchema)
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         const {id, ...updates} = input;
         return await budgetService.updatePeriodTemplate(id, updates);
@@ -885,6 +933,7 @@ export const budgetRoutes = t.router({
   getPeriodTemplate: publicProcedure
     .input(periodTemplateIdSchema)
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getPeriodTemplate(input.id);
       } catch (error) {
@@ -895,6 +944,7 @@ export const budgetRoutes = t.router({
   listPeriodTemplates: publicProcedure
     .input(listPeriodTemplatesSchema)
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.listPeriodTemplates(input.budgetId);
       } catch (error) {
@@ -905,6 +955,7 @@ export const budgetRoutes = t.router({
   deletePeriodTemplate: publicProcedure
     .input(periodTemplateIdSchema)
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         await budgetService.deletePeriodTemplate(input.id);
         return {success: true};
@@ -917,6 +968,7 @@ export const budgetRoutes = t.router({
   schedulePeriodMaintenance: publicProcedure
     .input(z.object({budgetId: z.number().int().positive()}))
     .mutation(async ({input}) => {
+      const periodManager = serviceFactory.getPeriodManager();
       try {
         return await periodManager.schedulePeriodMaintenance(input.budgetId);
       } catch (error) {
@@ -928,6 +980,7 @@ export const budgetRoutes = t.router({
   getGoalProgress: publicProcedure
     .input(z.object({budgetId: z.number().int().positive()}))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.getGoalProgress(input.budgetId);
       } catch (error) {
@@ -942,6 +995,7 @@ export const budgetRoutes = t.router({
       customAmount: z.number().optional(),
     }))
     .query(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.createGoalContributionPlan(
           input.budgetId,
@@ -959,6 +1013,7 @@ export const budgetRoutes = t.router({
       scheduleId: z.number().int().positive(),
     }))
     .mutation(async ({input}) => {
+      const budgetService = serviceFactory.getBudgetService();
       try {
         return await budgetService.linkScheduleToGoal(input.budgetId, input.scheduleId);
       } catch (error) {
@@ -970,6 +1025,7 @@ export const budgetRoutes = t.router({
   listBudgetTemplates: publicProcedure
     .input(z.object({includeSystem: z.boolean().optional()}).optional())
     .query(async ({input}) => {
+      const templateService = serviceFactory.getBudgetTemplateService();
       try {
         return await templateService.listTemplates(input?.includeSystem);
       } catch (error) {
@@ -980,6 +1036,7 @@ export const budgetRoutes = t.router({
   getBudgetTemplate: publicProcedure
     .input(z.object({id: z.number().int().positive()}))
     .query(async ({input}) => {
+      const templateService = serviceFactory.getBudgetTemplateService();
       try {
         return await templateService.getTemplate(input.id);
       } catch (error) {
@@ -999,6 +1056,7 @@ export const budgetRoutes = t.router({
       metadata: z.record(z.unknown()).optional(),
     }))
     .mutation(async ({input}) => {
+      const templateService = serviceFactory.getBudgetTemplateService();
       try {
         return await templateService.createTemplate({
           ...input,
@@ -1020,6 +1078,7 @@ export const budgetRoutes = t.router({
       metadata: z.record(z.unknown()).optional(),
     }))
     .mutation(async ({input}) => {
+      const templateService = serviceFactory.getBudgetTemplateService();
       try {
         const {id, name, description, icon, suggestedAmount, enforcementLevel, metadata} = input;
         const updates: Record<string, unknown> = {};
@@ -1038,6 +1097,7 @@ export const budgetRoutes = t.router({
   deleteBudgetTemplate: publicProcedure
     .input(z.object({id: z.number().int().positive()}))
     .mutation(async ({input}) => {
+      const templateService = serviceFactory.getBudgetTemplateService();
       try {
         await templateService.deleteTemplate(input.id);
       } catch (error) {
@@ -1053,6 +1113,7 @@ export const budgetRoutes = t.router({
       })
     )
     .mutation(async ({input}) => {
+      const templateService = serviceFactory.getBudgetTemplateService();
       try {
         return await templateService.duplicateTemplate(input.id, input.newName);
       } catch (error) {
@@ -1061,6 +1122,7 @@ export const budgetRoutes = t.router({
     }),
 
   seedSystemBudgetTemplates: publicProcedure.mutation(async () => {
+    const templateService = serviceFactory.getBudgetTemplateService();
     try {
       await templateService.seedSystemTemplates();
       return {success: true, message: "System budget templates seeded successfully"};
@@ -1073,8 +1135,8 @@ export const budgetRoutes = t.router({
   getPeriodAnalytics: publicProcedure
     .input(z.object({periodId: z.number().int().positive()}))
     .query(async ({input}) => {
+      const periodManager = serviceFactory.getPeriodManager();
       try {
-        const periodManager = new PeriodManager();
         return await periodManager.getPeriodAnalytics(input.periodId);
       } catch (error) {
         throw translateDomainError(error);
@@ -1089,8 +1151,8 @@ export const budgetRoutes = t.router({
       })
     )
     .query(async ({input}) => {
+      const periodManager = serviceFactory.getPeriodManager();
       try {
-        const periodManager = new PeriodManager();
         return await periodManager.comparePeriods(input.currentPeriodId, input.previousPeriodId);
       } catch (error) {
         throw translateDomainError(error);
@@ -1105,8 +1167,8 @@ export const budgetRoutes = t.router({
       })
     )
     .query(async ({input}) => {
+      const periodManager = serviceFactory.getPeriodManager();
       try {
-        const periodManager = new PeriodManager();
         return await periodManager.getPeriodHistory(input.budgetId, input.limit);
       } catch (error) {
         throw translateDomainError(error);
@@ -1116,8 +1178,8 @@ export const budgetRoutes = t.router({
   generateNextPeriod: publicProcedure
     .input(z.object({templateId: z.number().int().positive()}))
     .mutation(async ({input}) => {
+      const periodManager = serviceFactory.getPeriodManager();
       try {
-        const periodManager = new PeriodManager();
         const periods = await periodManager.createPeriodsAutomatically(input.templateId, {
           lookAheadMonths: 1,
           autoCreateEnvelopes: true,
