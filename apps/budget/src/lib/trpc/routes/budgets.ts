@@ -5,15 +5,7 @@ import {
   budgetTypes,
   periodTemplateTypes,
 } from "$lib/schema/budgets";
-import {
-  BudgetService,
-  BudgetPeriodService,
-  BudgetTransactionService,
-  BudgetForecastService,
-  BudgetTemplateService,
-} from "$lib/server/domains/budgets";
-import {BudgetIntelligenceService} from "$lib/server/domains/budgets/intelligence-service";
-import {PeriodManager} from "$lib/server/domains/budgets/period-manager";
+import {serviceFactory} from "$lib/server/shared/container/service-factory";
 import {publicProcedure, t} from "$lib/trpc";
 import {TRPCError} from "@trpc/server";
 import {z} from "zod";
@@ -193,12 +185,12 @@ const listPeriodTemplatesSchema = z.object({
   budgetId: z.number().int().positive(),
 });
 
-const budgetService = new BudgetService();
-const periodService = new BudgetPeriodService();
-const transactionService = new BudgetTransactionService();
-const periodManager = new PeriodManager();
-const templateService = new BudgetTemplateService();
-const intelligenceService = new BudgetIntelligenceService();
+const budgetService = serviceFactory.getBudgetService();
+const periodService = serviceFactory.getBudgetPeriodService();
+const transactionService = serviceFactory.getBudgetTransactionService();
+const periodManager = serviceFactory.getPeriodManager();
+const templateService = serviceFactory.getBudgetTemplateService();
+const intelligenceService = serviceFactory.getBudgetIntelligenceService();
 
 export const budgetRoutes = t.router({
   count: publicProcedure.query(async () => {

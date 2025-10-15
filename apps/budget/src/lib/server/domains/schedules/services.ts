@@ -1,9 +1,9 @@
-import { ScheduleRepository, type ScheduleWithDetails } from "./repository";
-import { TransactionService, type CreateTransactionData } from "../transactions/services";
+import type { Category, Payee } from "$lib/schema";
+import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { PayeeService } from "../payees/services";
-import { ValidationError, NotFoundError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
-import type { Payee, Category } from "$lib/schema";
+import { CategoryService } from "../categories/services";
+import { TransactionService, type CreateTransactionData } from "../transactions/services";
+import { ScheduleRepository, type ScheduleWithDetails } from "./repository";
 
 export interface AutoAddResult {
   scheduleId: number;
@@ -56,11 +56,18 @@ const FREQUENCY_DISPLAY_LIMITS: Record<string, FrequencyLimits> = {
   yearly: { maxOccurrences: 3, maxDaysAhead: 1095 }
 };
 
+/**
+ * Schedule service containing business logic
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
+ */
 export class ScheduleService {
   constructor(
-    private repository: ScheduleRepository = new ScheduleRepository(),
-    private transactionService: TransactionService = new TransactionService(),
-    private payeeService: PayeeService = new PayeeService()
+    private repository: ScheduleRepository,
+    private transactionService: TransactionService,
+    private payeeService: PayeeService,
+    private categoryService: CategoryService
   ) {}
 
   /**
@@ -184,7 +191,7 @@ export class ScheduleService {
 
     // Only include today's date if it matches the schedule
     const currentDateString = currentDate.toISOString().split('T')[0];
-    if (currentDateString === todayString && (!endDate || currentDate <= endDate)) {
+    if (currentDateString && currentDateString === todayString && (!endDate || currentDate <= endDate)) {
       dueDates.push(currentDateString);
     }
 
@@ -223,7 +230,7 @@ export class ScheduleService {
       return null;
     }
 
-    return nextDate.toISOString().split('T')[0];
+    return nextDate.toISOString().split('T')[0] || null;
   }
 
   /**
@@ -374,6 +381,17 @@ export class ScheduleService {
               }
             }
 
+            // Load category object if categoryId exists
+            let category: Category | null = null;
+            if (schedule.categoryId) {
+              try {
+                category = await this.categoryService.getCategoryById(schedule.categoryId);
+              } catch (error) {
+                console.warn(`Failed to load category ${schedule.categoryId} for schedule ${schedule.id}:`, error);
+                category = null;
+              }
+            }
+
             // Calculate next occurrence for this schedule
             const nextOccurrence = this.calculateNextDueDate(schedule);
 
@@ -389,16 +407,7 @@ export class ScheduleService {
               payeeId: schedule.payeeId,
               categoryId: schedule.categoryId,
               payee: payee,
-              category: schedule.category ? {
-                id: schedule.category.id,
-                name: schedule.category.name,
-                notes: null,
-                dateCreated: new Date().toISOString(),
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                deletedAt: null,
-                parentId: null,
-              } : null,
+              category: category,
               notes: `Scheduled: ${schedule.name}`,
               status: "scheduled",
               createdAt: new Date().toISOString(),
@@ -498,7 +507,9 @@ export class ScheduleService {
         }
 
         const dateString = candidateDate.toISOString().split('T')[0];
-        upcomingDates.push(dateString);
+        if (dateString) {
+          upcomingDates.push(dateString);
+        }
       }
 
       // Move to next month (respecting interval)
@@ -570,7 +581,9 @@ export class ScheduleService {
       }
 
       const dateString = currentDate.toISOString().split('T')[0];
-      upcomingDates.push(dateString);
+      if (dateString) {
+        upcomingDates.push(dateString);
+      }
 
       // Move to next occurrence
       if (!frequency) break;

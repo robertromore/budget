@@ -6,10 +6,11 @@ import {
 import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
 import {z} from "zod";
 import {TRPCError} from "@trpc/server";
-import {CategoryService, categoryIdSchema, searchCategoriesSchema} from "$lib/server/domains/categories";
+import {categoryIdSchema, searchCategoriesSchema} from "$lib/server/domains/categories";
 import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
+import {serviceFactory} from "$lib/server/shared/container/service-factory";
 
-const categoryService = new CategoryService();
+const categoryService = serviceFactory.getCategoryService();
 
 export const categoriesRoutes = t.router({
   all: publicProcedure.query(async () => {

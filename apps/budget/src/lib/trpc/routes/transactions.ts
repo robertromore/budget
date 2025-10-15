@@ -2,7 +2,6 @@ import {z} from "zod";
 import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
 import {TRPCError} from "@trpc/server";
 import {
-  TransactionService,
   createTransactionSchema,
   createTransactionWithAutoPopulationSchema,
   updateTransactionSchema,
@@ -12,8 +11,9 @@ import {
   transactionSuggestionRequestSchema,
   payeeIntelligenceRequestSchema,
 } from "$lib/server/domains/transactions";
+import {serviceFactory} from "$lib/server/shared/container/service-factory";
 
-const transactionService = new TransactionService();
+const transactionService = serviceFactory.getTransactionService();
 
 export const transactionRoutes = t.router({
   // Get all transactions for an account

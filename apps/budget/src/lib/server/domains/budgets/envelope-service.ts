@@ -1,27 +1,22 @@
-import {CalendarDate, type DateValue} from "@internationalized/date";
-import {eq, and, desc, sum, asc} from "drizzle-orm";
-import {db} from "$lib/server/db";
+import { budgetPeriodInstances, budgetTransactions } from "$lib/schema/budgets";
 import {
-  type EnvelopeAllocation,
-  type NewEnvelopeAllocation,
-  type EnvelopeTransfer,
-  type NewEnvelopeTransfer,
-  type EnvelopeRolloverHistory,
-  type NewEnvelopeRolloverHistory,
-  type EnvelopeStatus,
-  type RolloverMode,
   envelopeAllocations,
-  envelopeTransfers,
   envelopeRolloverHistory,
+  envelopeTransfers,
+  type EnvelopeAllocation,
+  type EnvelopeRolloverHistory,
+  type EnvelopeStatus,
+  type EnvelopeTransfer,
+  type RolloverMode,
 } from "$lib/schema/budgets/envelope-allocations";
-import {budgetPeriodInstances, budgetTransactions} from "$lib/schema/budgets";
-import {transactions} from "$lib/schema/transactions";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {BudgetRepository, type DbClient} from "./repository";
-import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {currentDate as defaultCurrentDate} from "$lib/utils/dates";
-import {RolloverCalculator, type RolloverPolicy, type BulkRolloverOptions} from "./rollover-calculator";
-import {DeficitRecoveryService, type DeficitPolicy, type DeficitAnalysis, type DeficitRecoveryPlan} from "./deficit-recovery";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { and, asc, desc, eq, sum } from "drizzle-orm";
+import { DeficitRecoveryService, type DeficitAnalysis, type DeficitPolicy, type DeficitRecoveryPlan } from "./deficit-recovery";
+import { BudgetRepository, type DbClient } from "./repository";
+import { RolloverCalculator, type RolloverPolicy } from "./rollover-calculator";
 
 export interface EnvelopeCalculationResult {
   allocatedAmount: number;
@@ -55,11 +50,17 @@ export interface RolloverOptions {
   preserveDeficits?: boolean;
 }
 
+/**
+ * Envelope service for envelope budgeting allocation and tracking
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
+ */
 export class EnvelopeService {
   constructor(
-    private repository: BudgetRepository = new BudgetRepository(),
-    private rolloverCalculator: RolloverCalculator = new RolloverCalculator(),
-    private deficitRecoveryService: DeficitRecoveryService = new DeficitRecoveryService()
+    private repository: BudgetRepository,
+    private rolloverCalculator: RolloverCalculator,
+    private deficitRecoveryService: DeficitRecoveryService
   ) {}
 
   async createEnvelopeAllocation(
@@ -250,18 +251,14 @@ export class EnvelopeService {
     toPeriodId: number,
     options: RolloverOptions = {}
   ): Promise<EnvelopeRolloverHistory[]> {
-    const policy: RolloverPolicy = {
-      maxRolloverMonths: options.maxRolloverMonths,
-      resetOnLimitExceeded: options.resetOnLimitExceeded,
-      preserveDeficits: options.preserveDeficits,
-    };
-
-    const summary = await this.rolloverCalculator.calculateBulkRollover({
-      fromPeriodId,
-      toPeriodId,
-      policy,
-      dryRun: false,
-    });
+    // Filter out undefined values to satisfy exactOptionalPropertyTypes
+    const policy: RolloverPolicy = Object.fromEntries(
+      Object.entries({
+        maxRolloverMonths: options.maxRolloverMonths,
+        resetOnLimitExceeded: options.resetOnLimitExceeded,
+        preserveDeficits: options.preserveDeficits,
+      }).filter(([_, v]) => v !== undefined)
+    ) as RolloverPolicy;
 
     return await this.getRolloverHistoryForPeriod(fromPeriodId, toPeriodId);
   }
@@ -271,11 +268,14 @@ export class EnvelopeService {
     toPeriodId: number,
     options: RolloverOptions = {}
   ) {
-    const policy: RolloverPolicy = {
-      maxRolloverMonths: options.maxRolloverMonths,
-      resetOnLimitExceeded: options.resetOnLimitExceeded,
-      preserveDeficits: options.preserveDeficits,
-    };
+    // Filter out undefined values to satisfy exactOptionalPropertyTypes
+    const policy: RolloverPolicy = Object.fromEntries(
+      Object.entries({
+        maxRolloverMonths: options.maxRolloverMonths,
+        resetOnLimitExceeded: options.resetOnLimitExceeded,
+        preserveDeficits: options.preserveDeficits,
+      }).filter(([_, v]) => v !== undefined)
+    ) as RolloverPolicy;
 
     return await this.rolloverCalculator.calculateBulkRollover({
       fromPeriodId,
@@ -302,11 +302,14 @@ export class EnvelopeService {
     toPeriodId: number,
     options: RolloverOptions = {}
   ) {
-    const policy: RolloverPolicy = {
-      maxRolloverMonths: options.maxRolloverMonths,
-      resetOnLimitExceeded: options.resetOnLimitExceeded,
-      preserveDeficits: options.preserveDeficits,
-    };
+    // Filter out undefined values to satisfy exactOptionalPropertyTypes
+    const policy: RolloverPolicy = Object.fromEntries(
+      Object.entries({
+        maxRolloverMonths: options.maxRolloverMonths,
+        resetOnLimitExceeded: options.resetOnLimitExceeded,
+        preserveDeficits: options.preserveDeficits,
+      }).filter(([_, v]) => v !== undefined)
+    ) as RolloverPolicy;
 
     return await this.rolloverCalculator.estimateRolloverImpact(
       fromPeriodId,

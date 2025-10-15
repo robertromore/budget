@@ -249,10 +249,14 @@ export class PayeeMLCoordinator {
   private categoryLearning: CategoryLearningService;
   private budgetAllocation: BudgetAllocationService;
 
-  constructor() {
-    this.payeeIntelligence = new PayeeIntelligenceService();
-    this.categoryLearning = new CategoryLearningService();
-    this.budgetAllocation = new BudgetAllocationService();
+  constructor(
+    payeeIntelligence?: PayeeIntelligenceService,
+    categoryLearning?: CategoryLearningService,
+    budgetAllocation?: BudgetAllocationService
+  ) {
+    this.payeeIntelligence = payeeIntelligence || new PayeeIntelligenceService();
+    this.categoryLearning = categoryLearning || new CategoryLearningService();
+    this.budgetAllocation = budgetAllocation || new BudgetAllocationService();
   }
 
   /**
@@ -680,13 +684,13 @@ export class PayeeMLCoordinator {
       detectionMethod: significantChange.method,
       changeDetails: {
         beforePeriod: {
-          startDate: startDate.toISOString(),
-          endDate: splitDate.toISOString(),
+          startDate: toISOString(startDate),
+          endDate: toISOString(splitDate),
           characteristics: beforeData
         },
         afterPeriod: {
-          startDate: splitDate.toISOString(),
-          endDate: now.toISOString(),
+          startDate: toISOString(splitDate),
+          endDate: toISOString(now),
           characteristics: afterData
         },
         keyChanges: significantChange.keyChanges

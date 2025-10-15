@@ -14,8 +14,13 @@ import {DEFAULT_DETECTION_CRITERIA} from "./types";
 import type {DetectedPattern} from "$lib/schema/detected-patterns";
 import type {SuggestedScheduleConfig} from "$lib/schema/detected-patterns";
 
+/**
+ * Service for detecting transaction patterns
+ *
+ * Dependencies are injected via constructor for testability.
+ */
 export class PatternDetectionService {
-  constructor(private repository = new PatternRepository()) {}
+  constructor(private repository: PatternRepository) {}
 
   /**
    * Detect patterns for a specific account

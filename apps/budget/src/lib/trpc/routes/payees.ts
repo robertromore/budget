@@ -15,13 +15,10 @@ import {
   createPayeeSchema,
   updatePayeeSchema,
 } from "$lib/server/domains/payees";
-import {CategoryService} from "$lib/server/domains/categories";
-import {BudgetService} from "$lib/server/domains/budgets";
 import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
+import {serviceFactory} from "$lib/server/shared/container/service-factory";
 
-const categoryService = new CategoryService();
-const budgetService = new BudgetService();
-const payeeService = new PayeeService(undefined, categoryService, budgetService);
+const payeeService = serviceFactory.getPayeeService();
 
 export const payeeRoutes = t.router({
   all: publicProcedure.query(async () => {

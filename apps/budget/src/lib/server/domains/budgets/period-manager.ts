@@ -1,16 +1,15 @@
-import {CalendarDate, type DateValue} from "@internationalized/date";
-import {eq, and, desc, asc, sql, gte, lte, lt} from "drizzle-orm";
-import {db} from "$lib/server/db";
 import {
-  type BudgetPeriodTemplate,
   type BudgetPeriodInstance,
-  type NewBudgetPeriodInstance,
-  budgetPeriodTemplates,
   budgetPeriodInstances,
+  type BudgetPeriodTemplate,
+  budgetPeriodTemplates,
 } from "$lib/schema/budgets";
-import {BudgetPeriodCalculator, type PeriodBoundary} from "./services";
-import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {currentDate as defaultCurrentDate, toISOString, parseISOString} from "$lib/utils/dates";
+import { db } from "$lib/server/db";
+import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { currentDate as defaultCurrentDate, parseISOString, toISOString } from "$lib/utils/dates";
+import { CalendarDate, type DateValue } from "@internationalized/date";
+import { and, desc, eq, sql } from "drizzle-orm";
+import { BudgetPeriodCalculator, type PeriodBoundary } from "./services";
 
 export interface PeriodCreationOptions {
   lookAheadMonths?: number;
@@ -318,7 +317,7 @@ export class PeriodManager {
       )
       .limit(1);
 
-    return existing.length > 0 ? existing[0] : null;
+    return existing[0] ?? null;
   }
 
   private async createPeriodInstance(
@@ -501,7 +500,7 @@ export class PeriodManager {
       throw new NotFoundError("Budget period template", templateId);
     }
 
-    return template[0];
+    return template[0]!;
   }
 
   private async getPeriodById(periodId: number): Promise<BudgetPeriodInstance> {
@@ -515,7 +514,7 @@ export class PeriodManager {
       throw new NotFoundError("Budget period instance", periodId);
     }
 
-    return period[0];
+    return period[0]!;
   }
 
   private async getLatestPeriod(templateId: number): Promise<BudgetPeriodInstance | null> {
@@ -526,7 +525,7 @@ export class PeriodManager {
       .orderBy(desc(budgetPeriodInstances.startDate))
       .limit(1);
 
-    return periods.length > 0 ? periods[0] : null;
+    return periods.length > 0 ? periods[0]! : null;
   }
 
   private async createEnvelopeAllocationsForPeriod(

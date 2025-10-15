@@ -1,17 +1,19 @@
-import {db} from "$lib/server/db";
-import {payees, transactions, categories, budgets} from "$lib/schema";
-import {eq, and, isNull, like, inArray, sql, count, desc, avg, max, min} from "drizzle-orm";
-import type {Payee, NewPayee, PayeeType, PaymentFrequency} from "$lib/schema";
+import type { NewPayee, Payee, PayeeType, PaymentFrequency } from "$lib/schema";
+import { budgets, categories, payees, transactions } from "$lib/schema";
+import { DATABASE_CONFIG } from "$lib/server/config/database";
+import { db } from "$lib/server/db";
+import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { logger } from "$lib/server/shared/logging";
+import type { PaginatedResult, PaginationOptions } from "$lib/server/shared/types";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import { currentDate, getCurrentTimestamp } from "$lib/utils/dates";
+import { and, count, desc, eq, inArray, isNull, like, sql } from "drizzle-orm";
 import type {
-  SubscriptionInfo,
   PayeeAddress,
+  PayeeTags,
   PaymentMethodReference,
-  PayeeTags
+  SubscriptionInfo
 } from "./types";
-import {logger} from "$lib/server/shared/logging";
-import {NotFoundError} from "$lib/server/shared/types/errors";
-import {getCurrentTimestamp, currentDate} from "$lib/utils/dates";
-import {BaseRepository} from "$lib/server/shared/database/base-repository";
 
 export interface UpdatePayeeData {
   name?: string | undefined;
@@ -95,14 +97,16 @@ export class PayeeRepository extends BaseRepository<
   NewPayee,
   UpdatePayeeData
 > {
-  constructor() {
+  constructor(
+    private budgetIntelligenceService?: any // BudgetIntelligenceService - using any to avoid circular import
+  ) {
     super(db, payees, 'Payee');
   }
 
   /**
    * Create a new payee
    */
-  async create(data: NewPayee): Promise<Payee> {
+  override async create(data: NewPayee): Promise<Payee> {
     const [payee] = await db
       .insert(payees)
       .values(data)
@@ -118,7 +122,7 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Find payee by ID
    */
-  async findById(id: number): Promise<Payee | null> {
+  override async findById(id: number): Promise<Payee | null> {
     const [payee] = await db
       .select()
       .from(payees)
@@ -146,26 +150,83 @@ export class PayeeRepository extends BaseRepository<
   }
 
   /**
-   * Find all active payees
+   * Find all active payees with pagination
    */
-  async findAll(): Promise<Payee[]> {
-    return await db
+  override async findAll(options?: PaginationOptions): Promise<PaginatedResult<Payee>> {
+    const {
+      page = 1,
+      pageSize = DATABASE_CONFIG.LIMITS.DEFAULT_PAGE_SIZE,
+      offset,
+      limit,
+    } = options || {};
+
+    // Use offset/limit if provided, otherwise calculate from page/pageSize
+    const actualLimit = limit || Math.min(pageSize, DATABASE_CONFIG.LIMITS.MAX_PAGE_SIZE);
+    const actualOffset = offset !== undefined ? offset : (page - 1) * actualLimit;
+
+    // Get total count of active payees
+    const result = await db
+      .select({total: count()})
+      .from(payees)
+      .where(isNull(payees.deletedAt));
+    const total = result[0]?.total || 0;
+
+    // Get paginated data
+    const data = await db
       .select()
       .from(payees)
       .where(isNull(payees.deletedAt))
-      .orderBy(payees.name);
+      .orderBy(payees.name)
+      .limit(actualLimit)
+      .offset(actualOffset);
+
+    return {
+      data,
+      total,
+      page,
+      pageSize: actualLimit,
+      hasNext: actualOffset + actualLimit < total,
+      hasPrevious: actualOffset > 0,
+    };
   }
 
   /**
    * Update payee
    */
-  async update(id: number, data: UpdatePayeeData): Promise<Payee> {
+  override async update(id: number, data: UpdatePayeeData): Promise<Payee> {
+    // Type-safe database update data
+    interface PayeeDbUpdate extends Omit<UpdatePayeeData, 'address' | 'subscriptionInfo' | 'tags' | 'preferredPaymentMethods'> {
+      address?: string | null;
+      subscriptionInfo?: string | null;
+      tags?: string | null;
+      preferredPaymentMethods?: string | null;
+    }
+
+    // Serialize JSON fields to strings
+    // Exclude fields that need JSON serialization from the spread
+    const { address, subscriptionInfo, tags, preferredPaymentMethods, ...rest } = data;
+
+    const updateData: PayeeDbUpdate = {
+      ...rest,
+    };
+
+    // Convert complex types to JSON strings for database storage
+    if (tags !== undefined) {
+      updateData.tags = tags ? JSON.stringify(tags) : null;
+    }
+    if (address !== undefined) {
+      updateData.address = address ? JSON.stringify(address) : null;
+    }
+    if (subscriptionInfo !== undefined) {
+      updateData.subscriptionInfo = subscriptionInfo ? JSON.stringify(subscriptionInfo) : null;
+    }
+    if (preferredPaymentMethods !== undefined) {
+      updateData.preferredPaymentMethods = preferredPaymentMethods ? JSON.stringify(preferredPaymentMethods) : null;
+    }
+
     const [payee] = await db
       .update(payees)
-      .set({
-        ...data,
-        updatedAt: getCurrentTimestamp(),
-      })
+      .set(updateData)
       .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
       .returning();
 
@@ -180,15 +241,15 @@ export class PayeeRepository extends BaseRepository<
    * Soft delete payee with slug archiving
    * Now uses the inherited softDeleteWithSlugArchive() method from BaseRepository
    */
-  async softDelete(id: number): Promise<Payee> {
+  override async softDelete(id: number): Promise<Payee> {
     return await this.softDeleteWithSlugArchive(id);
   }
 
   /**
    * Bulk soft delete payees with slug archiving
    */
-  async bulkDelete(ids: number[]): Promise<number> {
-    if (ids.length === 0) return 0;
+  override async bulkDelete(ids: number[]): Promise<void> {
+    if (ids.length === 0) return;
 
     const timestamp = Date.now();
 
@@ -210,23 +271,31 @@ export class PayeeRepository extends BaseRepository<
         })
         .where(eq(payees.id, payee.id));
     }
-
-    return payeesToDelete.length;
   }
 
   /**
    * Search payees by name (enhanced with better ordering)
-   * Now uses the inherited searchByName() method from BaseRepository
+   * Filters for active payees only
    */
   async search(query: string): Promise<Payee[]> {
     if (!query.trim()) {
-      return this.findAll();
+      const result = await this.findAll();
+      return result.data;
     }
 
-    return await this.searchByName(query, {
-      additionalFilters: [eq(payees.isActive, true)],
-      limit: 50
-    });
+    // Custom search with active filter
+    return await db
+      .select()
+      .from(payees)
+      .where(
+        and(
+          like(payees.name, `%${query}%`),
+          eq(payees.isActive, true),
+          isNull(payees.deletedAt)
+        )
+      )
+      .orderBy(payees.name)
+      .limit(50);
   }
 
   /**
@@ -330,7 +399,7 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Check if payee exists and is active
    */
-  async exists(id: number): Promise<boolean> {
+  override async exists(id: number): Promise<boolean> {
     const [result] = await db
       .select({id: payees.id})
       .from(payees)
@@ -364,6 +433,7 @@ export class PayeeRepository extends BaseRepository<
       .select({
         id: payees.id,
         name: payees.name,
+        slug: payees.slug,
         notes: payees.notes,
         defaultCategoryId: payees.defaultCategoryId,
         defaultBudgetId: payees.defaultBudgetId,
@@ -547,12 +617,29 @@ export class PayeeRepository extends BaseRepository<
       updateData.paymentFrequency = frequencyAnalysis.suggestedFrequency;
     }
 
+    // Serialize JSON fields to strings for database storage
+    const dbUpdateData: any = {
+      ...updateData,
+      updatedAt: getCurrentTimestamp(),
+    };
+
+    // Convert complex types to JSON strings if present
+    if (updateData.tags !== undefined) {
+      dbUpdateData.tags = updateData.tags ? JSON.stringify(updateData.tags) : null;
+    }
+    if (updateData.address !== undefined) {
+      dbUpdateData.address = updateData.address ? JSON.stringify(updateData.address) : null;
+    }
+    if (updateData.subscriptionInfo !== undefined) {
+      dbUpdateData.subscriptionInfo = updateData.subscriptionInfo ? JSON.stringify(updateData.subscriptionInfo) : null;
+    }
+    if (updateData.preferredPaymentMethods !== undefined) {
+      dbUpdateData.preferredPaymentMethods = updateData.preferredPaymentMethods ? JSON.stringify(updateData.preferredPaymentMethods) : null;
+    }
+
     const [payee] = await db
       .update(payees)
-      .set({
-        ...updateData,
-        updatedAt: getCurrentTimestamp(),
-      })
+      .set(dbUpdateData)
       .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
       .returning();
 
@@ -583,8 +670,13 @@ export class PayeeRepository extends BaseRepository<
     // Calculate intervals between transactions
     const intervals: number[] = [];
     for (let i = 1; i < transactionDates.length; i++) {
-      const prev = new Date(transactionDates[i - 1].date);
-      const curr = new Date(transactionDates[i].date);
+      const prevDate = transactionDates[i - 1]?.date;
+      const currDate = transactionDates[i]?.date;
+
+      if (!prevDate || !currDate) continue;
+
+      const prev = new Date(prevDate);
+      const curr = new Date(currDate);
       const daysDiff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
       intervals.push(daysDiff);
     }
@@ -633,9 +725,15 @@ export class PayeeRepository extends BaseRepository<
       : null;
 
     // Get budget suggestion using intelligence service
-    const {BudgetIntelligenceService} = await import("$lib/server/domains/budgets/services");
-    const intelligenceService = new BudgetIntelligenceService();
-    const budgetSuggestion = await intelligenceService.suggestBudgetForPayee(id);
+    let budgetSuggestion = null;
+    if (this.budgetIntelligenceService) {
+      budgetSuggestion = await this.budgetIntelligenceService.suggestBudgetForPayee(id);
+    } else {
+      // Fallback for backward compatibility
+      const {BudgetIntelligenceService} = await import("$lib/server/domains/budgets/services");
+      const intelligenceService = new BudgetIntelligenceService();
+      budgetSuggestion = await intelligenceService.suggestBudgetForPayee(id);
+    }
 
     return {
       suggestedCategoryId: mostCommonCategory?.categoryId || null,
@@ -701,8 +799,14 @@ export class PayeeRepository extends BaseRepository<
     const monthlyData: {[month: number]: {total: number; count: number}} = {};
 
     for (let i = 1; i < transactionData.length; i++) {
-      const prev = new Date(transactionData[i - 1].date);
-      const curr = new Date(transactionData[i].date);
+      const prevDate = transactionData[i - 1]?.date;
+      const currDate = transactionData[i]?.date;
+      const currAmount = transactionData[i]?.amount;
+
+      if (!prevDate || !currDate) continue;
+
+      const prev = new Date(prevDate);
+      const curr = new Date(currDate);
       const daysDiff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
       intervals.push(daysDiff);
 
@@ -714,7 +818,7 @@ export class PayeeRepository extends BaseRepository<
       if (!monthlyData[month]) {
         monthlyData[month] = {total: 0, count: 0};
       }
-      monthlyData[month].total += transactionData[i].amount || 0;
+      monthlyData[month].total += currAmount || 0;
       monthlyData[month].count++;
     }
 

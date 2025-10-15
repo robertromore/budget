@@ -39,11 +39,13 @@ export interface TransactionChangeResult {
 
 /**
  * Service for calculating budget consumption and updating period/envelope amounts
+ *
+ * Dependencies are injected via constructor for testability.
  */
 export class BudgetCalculationService {
   constructor(
-    private repository: BudgetRepository = new BudgetRepository(),
-    private envelopeService: EnvelopeService = new EnvelopeService()
+    private repository: BudgetRepository,
+    private envelopeService: EnvelopeService
   ) {}
 
   /**
