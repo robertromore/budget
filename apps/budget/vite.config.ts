@@ -4,6 +4,39 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  logLevel: 'info', // Enable verbose logging
+  server: {
+    fs: {
+      // Prevent watching node_modules for changes
+      strict: true,
+    },
+    watch: {
+      // Reduce file watcher overhead
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/dist/**',
+        '**/.svelte-kit/**',
+        '**/build/**',
+        '**/*.log',
+        '**/.DS_Store',
+        '**/drizzle/**', // Ignore database files
+        '**/*.db',
+        '**/*.db-*'
+      ],
+      // Reduce polling interval
+      usePolling: false,
+      // Increase debounce
+      awaitWriteFinish: {
+        stabilityThreshold: 100,
+        pollInterval: 100
+      }
+    },
+    hmr: {
+      // Prevent HMR from getting stuck
+      timeout: 5000
+    }
+  },
   build: {
     chunkSizeWarningLimit: 1000, // Increase warning threshold to 1MB
     rollupOptions: {

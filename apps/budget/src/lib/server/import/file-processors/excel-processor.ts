@@ -5,13 +5,13 @@
  * header normalization, and data transformation.
  */
 
-import * as XLSX from 'xlsx';
 import type { FileProcessor, ImportRow, NormalizedTransaction } from '$lib/types/import';
+import * as XLSX from 'xlsx';
 import { FileValidationError, ParseError } from '../errors';
 import {
   normalizeHeader,
-  parseDate,
   parseAmount,
+  parseDate,
   sanitizeText,
   validateFileType,
 } from '../utils';
@@ -143,62 +143,59 @@ export class ExcelProcessor implements FileProcessor {
     const normalized: Partial<NormalizedTransaction> = {};
 
     // Parse date
-    if (row.date) {
+    if (row['date']) {
       try {
         // Excel dates might be serial numbers
-        if (typeof row.date === 'number') {
+        if (typeof row['date'] === 'number') {
           // Convert Excel serial date to JS Date
-          const excelDate = XLSX.SSF.parse_date_code(row.date);
+          const excelDate = XLSX.SSF.parse_date_code(row['date']);
           if (excelDate) {
             normalized.date = `${excelDate.y}-${String(excelDate.m).padStart(2, '0')}-${String(excelDate.d).padStart(2, '0')}`;
           }
         } else {
-          normalized.date = parseDate(String(row.date));
+          normalized.date = parseDate(String(row['date']));
         }
       } catch (error) {
         // Leave as is, will be caught in validation
-        normalized.date = String(row.date);
+        normalized.date = String(row['date']);
       }
     }
 
     // Parse amount
-    if (row.amount !== undefined && row.amount !== null && row.amount !== '') {
+    if (row['amount'] !== undefined && row['amount'] !== null && row['amount'] !== '') {
       try {
-        normalized.amount = parseAmount(row.amount);
+        normalized.amount = parseAmount(row['amount']);
       } catch (error) {
         // Leave as is, will be caught in validation
-        normalized.amount = row.amount;
+        normalized.amount = row['amount'];
       }
     }
 
     // Normalize payee
-    if (row.payee) {
-      normalized.payee = sanitizeText(String(row.payee), 200);
+    if (row['payee']) {
+      normalized.payee = sanitizeText(String(row['payee']), 200);
     }
 
-    // Normalize description
-    if (row.description) {
-      normalized.description = sanitizeText(String(row.description), 500);
+    // Normalize notes/description
+    if (row['description']) {
+      normalized.notes = sanitizeText(String(row['description']), 500);
+    } else if (row['notes']) {
+      normalized.notes = sanitizeText(String(row['notes']), 500);
     }
 
     // Normalize category
-    if (row.category) {
-      normalized.category = sanitizeText(String(row.category), 100);
+    if (row['category']) {
+      normalized.category = sanitizeText(String(row['category']), 100);
     }
 
     // Normalize status
-    if (row.status) {
-      const statusLower = String(row.status).toLowerCase();
+    if (row['status']) {
+      const statusLower = String(row['status']).toLowerCase();
       if (statusLower === 'cleared' || statusLower === 'posted' || statusLower === 'c') {
         normalized.status = 'cleared';
       } else {
         normalized.status = 'pending';
       }
-    }
-
-    // Normalize check number
-    if (row.checkNumber) {
-      normalized.checkNumber = sanitizeText(String(row.checkNumber), 50);
     }
 
     return normalized;

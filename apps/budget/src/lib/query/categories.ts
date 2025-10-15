@@ -2,7 +2,8 @@ import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
 import { cachePatterns } from "./_client";
 import { trpc } from "$lib/trpc/client";
 import type {Category, NewCategory} from "$lib/schema/categories";
-import type {CategoryWithBudgets, CategoryWithChildren, CategoryTreeNode, CategoryWithStats} from "$lib/server/domains/categories/repository";
+import type {CategoryWithBudgets, CategoryWithChildren, CategoryWithStats} from "$lib/server/domains/categories/repository";
+import type {CategoryTreeNode} from "$lib/types/categories";
 
 export const categoryKeys = createQueryKeys("categories", {
   all: () => ["categories", "all"] as const,
@@ -43,7 +44,13 @@ export const searchCategories = (query: string) =>
   });
 
 export const createCategory = defineMutation<NewCategory, Category>({
-  mutationFn: (input) => trpc().categoriesRoutes.save.mutate({...input}),
+  mutationFn: (input) => {
+    // Filter out undefined values to satisfy exactOptionalPropertyTypes
+    const cleanInput = Object.fromEntries(
+      Object.entries(input).filter(([_, v]) => v !== undefined)
+    );
+    return trpc().categoriesRoutes.save.mutate(cleanInput as any);
+  },
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryKeys.all());
   },
@@ -52,7 +59,13 @@ export const createCategory = defineMutation<NewCategory, Category>({
 });
 
 export const updateCategory = defineMutation<{id: number} & Partial<NewCategory>, Category>({
-  mutationFn: (input) => trpc().categoriesRoutes.save.mutate(input),
+  mutationFn: (input) => {
+    // Filter out undefined values to satisfy exactOptionalPropertyTypes
+    const cleanInput = Object.fromEntries(
+      Object.entries(input).filter(([_, v]) => v !== undefined)
+    );
+    return trpc().categoriesRoutes.save.mutate(cleanInput as any);
+  },
   onSuccess: (_, variables) => {
     cachePatterns.invalidatePrefix(categoryKeys.all());
     cachePatterns.invalidatePrefix(categoryKeys.detail(variables.id));

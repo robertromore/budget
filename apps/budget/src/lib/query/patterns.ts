@@ -4,18 +4,20 @@ import {trpc} from "$lib/trpc/client";
 import type {DetectedPattern} from "$lib/schema/detected-patterns";
 import type {DetectedPatternData, DetectionCriteria} from "$lib/server/domains/patterns/types";
 
+type PatternStatus = "pending" | "accepted" | "dismissed" | "converted";
+
 export const patternKeys = createQueryKeys("patterns", {
   all: () => ["patterns", "all"] as const,
   byAccount: (accountId: number) => ["patterns", "account", accountId] as const,
-  byStatus: (status: string) => ["patterns", "status", status] as const,
-  byAccountAndStatus: (accountId: number, status: string) =>
+  byStatus: (status: PatternStatus) => ["patterns", "status", status] as const,
+  byAccountAndStatus: (accountId: number, status: PatternStatus) =>
     ["patterns", "account", accountId, "status", status] as const,
 });
 
 /**
  * List all detected patterns with optional filtering
  */
-export const listPatterns = (accountId?: number, status?: string) =>
+export const listPatterns = (accountId?: number, status?: PatternStatus) =>
   defineQuery<DetectedPattern[]>({
     queryKey: accountId && status
       ? patternKeys.byAccountAndStatus(accountId, status)
@@ -84,7 +86,7 @@ export const expireStalePatterns = defineMutation<{daysSinceLastMatch?: number},
  * Delete all patterns (optionally filtered by status)
  */
 export const deleteAllPatterns = defineMutation<
-  {status?: "pending" | "accepted" | "dismissed" | "converted"},
+  {status?: PatternStatus},
   {count: number}
 >({
   mutationFn: (input) => trpc().patternRoutes.deleteAll.mutate(input),

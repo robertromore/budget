@@ -27,12 +27,17 @@ import CreditCard from '@lucide/svelte/icons/credit-card';
 import Receipt from '@lucide/svelte/icons/receipt';
 import {Badge} from '$lib/components/ui/badge';
 import {formatAccountBalance, getBalanceColorClass} from '$lib/utils/account-display';
-import {isDebtAccount} from '$lib/schema/accounts';
+import {isDebtAccount, isHealthSavingsAccount} from '$lib/schema/accounts';
 
 const accountsState = $derived(AccountsState.get());
 const accounts = $derived(accountsState.sorted);
 const totalBalance = $derived(accountsState.getTotalBalance());
 const onBudgetBalance = $derived(accountsState.getOnBudgetBalance());
+
+// Group accounts by category
+const onBudgetAccounts = $derived(accounts.filter(a => a.onBudget === true && (!a.accountType || !isHealthSavingsAccount(a.accountType))));
+const offBudgetAccounts = $derived(accounts.filter(a => a.onBudget === false && (!a.accountType || !isHealthSavingsAccount(a.accountType))));
+const hsaAccounts = $derived(accounts.filter(a => a.accountType && isHealthSavingsAccount(a.accountType)));
 
 const _deleteAccountDialog = $derived(deleteAccountDialog);
 const _deleteAccountId = $derived(deleteAccountId);
@@ -135,13 +140,19 @@ const _deleteBudgetId = $derived(deleteBudgetId);
         <Plus /> <span class="sr-only">Add Account</span>
       </Sidebar.GroupAction>
       <Sidebar.GroupContent>
-        <Sidebar.Menu>
-          {#each accounts as account}
+        <!-- On-Budget Accounts -->
+        {#if onBudgetAccounts.length > 0}
+          <div class="px-2 py-1">
+            <span class="text-xs font-semibold text-muted-foreground">On-Budget</span>
+          </div>
+          <Sidebar.Menu>
+            {#each onBudgetAccounts as account}
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
                 {#snippet child({props})}
                   {@const formattedBalance = formatAccountBalance(account)}
-                  <a href="/accounts/{account.slug}" {...props} class="flex gap-3 min-w-0 py-2">
+                  {@const accountUrl = account.accountType && isHealthSavingsAccount(account.accountType) ? `/hsa/${account.slug}` : `/accounts/${account.slug}`}
+                  <a href={accountUrl} {...props} class="flex gap-3 min-w-0 py-2">
                     <!-- Account Icon with colored background -->
                     <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
                          style="background-color: {(account as any).accountColor ? `${(account as any).accountColor}15` : 'hsl(var(--muted))'}">
@@ -208,6 +219,111 @@ const _deleteBudgetId = $derived(deleteBudgetId);
                         {/if}
                       </div>
                     </div>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                  {#snippet child({props})}
+                    <Sidebar.MenuAction {...props}>
+                      <Ellipsis />
+                    </Sidebar.MenuAction>
+                  {/snippet}
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content side="right" align="start">
+                  <DropdownMenu.Item>
+                    <a href="{account.accountType && isHealthSavingsAccount(account.accountType) ? `/hsa/${account.slug}` : `/accounts/${account.slug}`}/edit" class="w-full">Edit</a>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onclick={() => {
+                      _deleteAccountId.current = account.id;
+                      _deleteAccountDialog.setTrue();
+                    }}>
+                    <span>Delete</span>
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </Sidebar.MenuItem>
+          {/each}
+        </Sidebar.Menu>
+        {/if}
+
+        <!-- Off-Budget Accounts -->
+        {#if offBudgetAccounts.length > 0}
+          <div class="px-2 py-1 mt-2">
+            <span class="text-xs font-semibold text-muted-foreground">Off-Budget</span>
+          </div>
+          <Sidebar.Menu>
+            {#each offBudgetAccounts as account}
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton>
+                {#snippet child({props})}
+                  {@const formattedBalance = formatAccountBalance(account)}
+                  {@const accountUrl = `/accounts/${account.slug}`}
+                  <a href={accountUrl} {...props} class="flex gap-3 min-w-0 py-2">
+                    <!-- Account Icon with colored background -->
+                    <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+                         style="background-color: {(account as any).accountColor ? `${(account as any).accountColor}15` : 'hsl(var(--muted))'}">
+                      {#if (account as any).accountIcon}
+                        {@const iconData = getIconByName((account as any).accountIcon)}
+                        {#if iconData?.icon}
+                          <iconData.icon
+                            class="h-4 w-4"
+                            style={(account as any).accountColor ? `color: ${(account as any).accountColor}` : 'color: hsl(var(--muted-foreground))'}
+                          />
+                        {:else}
+                          <CreditCard class="h-4 w-4" style={(account as any).accountColor ? `color: ${(account as any).accountColor}` : 'color: hsl(var(--muted-foreground))'} />
+                        {/if}
+                      {:else}
+                        <CreditCard class="h-4 w-4" style={(account as any).accountColor ? `color: ${(account as any).accountColor}` : 'color: hsl(var(--muted-foreground))'} />
+                      {/if}
+                    </div>
+
+                    <!-- Account Info -->
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-2">
+                            <span data-testid="account-name" class="font-medium text-sm truncate">
+                              {account.name}
+                            </span>
+                            {#if account.closed}
+                              <Badge variant="secondary" class="text-xs px-1.5 py-0">Closed</Badge>
+                            {/if}
+                          </div>
+                          <div class="flex items-center gap-2 mt-0.5">
+                            {#if (account as any).accountType}
+                              <span class="text-xs text-muted-foreground capitalize">
+                                {(account as any).accountType.replace('_', ' ')}
+                              </span>
+                            {/if}
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Account Details -->
+                      <div class="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                        {#if (account as any).accountNumber}
+                          <span class="font-mono">
+                            ••{(account as any).accountNumber.slice(-4)}
+                          </span>
+                        {/if}
+                        {#if (account as any).institution}
+                          {#if (account as any).accountNumber}
+                            <span>•</span>
+                          {/if}
+                          <span class="truncate">{(account as any).institution}</span>
+                        {/if}
+                      </div>
+
+                      <!-- Account Balance -->
+                      <div class="text-xs font-medium text-right {getBalanceColorClass(formattedBalance.color)}">
+                        {currencyFormatter.format(formattedBalance.displayAmount)}
+                        {#if account.accountType && isDebtAccount(account.accountType)}
+                          <span class="text-[10px] ml-1 opacity-70">{formattedBalance.label}</span>
+                        {/if}
+                      </div>
+                    </div>
 
                     {#if account.name === 'Test Account'}
                       <Receipt class="h-4 w-4 ml-2 flex-shrink-0 text-destructive" />
@@ -239,6 +355,104 @@ const _deleteBudgetId = $derived(deleteBudgetId);
             </Sidebar.MenuItem>
           {/each}
         </Sidebar.Menu>
+        {/if}
+
+        <!-- HSA Accounts -->
+        {#if hsaAccounts.length > 0}
+          <div class="px-2 py-1 mt-2">
+            <span class="text-xs font-semibold text-muted-foreground">Health Savings</span>
+          </div>
+          <Sidebar.Menu>
+            {#each hsaAccounts as account}
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton>
+                {#snippet child({props})}
+                  {@const formattedBalance = formatAccountBalance(account)}
+                  <a href="/hsa/{account.slug}" {...props} class="flex gap-3 min-w-0 py-2">
+                    <!-- Account Icon with colored background -->
+                    <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+                         style="background-color: {(account as any).accountColor ? `${(account as any).accountColor}15` : 'hsl(var(--muted))'}">
+                      {#if (account as any).accountIcon}
+                        {@const iconData = getIconByName((account as any).accountIcon)}
+                        {#if iconData?.icon}
+                          <iconData.icon
+                            class="h-4 w-4"
+                            style={(account as any).accountColor ? `color: ${(account as any).accountColor}` : 'color: hsl(var(--muted-foreground))'}
+                          />
+                        {:else}
+                          <CreditCard class="h-4 w-4" style={(account as any).accountColor ? `color: ${(account as any).accountColor}` : 'color: hsl(var(--muted-foreground))'} />
+                        {/if}
+                      {:else}
+                        <CreditCard class="h-4 w-4" style={(account as any).accountColor ? `color: ${(account as any).accountColor}` : 'color: hsl(var(--muted-foreground))'} />
+                      {/if}
+                    </div>
+
+                    <!-- Account Info -->
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-2">
+                            <span data-testid="account-name" class="font-medium text-sm truncate">
+                              {account.name}
+                            </span>
+                            {#if account.closed}
+                              <Badge variant="secondary" class="text-xs px-1.5 py-0">Closed</Badge>
+                            {/if}
+                          </div>
+                          <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-xs text-muted-foreground">HSA</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Account Details -->
+                      <div class="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                        {#if (account as any).accountNumber}
+                          <span class="font-mono">
+                            ••{(account as any).accountNumber.slice(-4)}
+                          </span>
+                        {/if}
+                        {#if (account as any).institution}
+                          {#if (account as any).accountNumber}
+                            <span>•</span>
+                          {/if}
+                          <span class="truncate">{(account as any).institution}</span>
+                        {/if}
+                      </div>
+
+                      <!-- Account Balance -->
+                      <div class="text-xs font-medium text-right {getBalanceColorClass(formattedBalance.color)}">
+                        {currencyFormatter.format(formattedBalance.displayAmount)}
+                      </div>
+                    </div>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                  {#snippet child({props})}
+                    <Sidebar.MenuAction {...props}>
+                      <Ellipsis />
+                    </Sidebar.MenuAction>
+                  {/snippet}
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content side="right" align="start">
+                  <DropdownMenu.Item>
+                    <a href="/hsa/{account.slug}/edit" class="w-full">Edit</a>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onclick={() => {
+                      _deleteAccountId.current = account.id;
+                      _deleteAccountDialog.setTrue();
+                    }}>
+                    <span>Delete</span>
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </Sidebar.MenuItem>
+          {/each}
+        </Sidebar.Menu>
+        {/if}
       </Sidebar.GroupContent>
     </Sidebar.Group>
 

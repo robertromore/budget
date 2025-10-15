@@ -1,5 +1,4 @@
 <script lang="ts">
-import * as Form from '$lib/components/ui/form';
 import {Button} from '$lib/components/ui/button';
 import {DateInput, NumericInput} from '$lib/components/input';
 import {Textarea} from '$lib/components/ui/textarea';
@@ -9,7 +8,6 @@ import {toISOString} from '$lib/utils/dates';
 import {createTransfer} from '$lib/query/transactions';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
-import type {Account} from '$lib/schema/accounts';
 
 interface Props {
   fromAccountId: number;
@@ -55,13 +53,24 @@ async function handleSubmit() {
   error = '';
 
   try {
-    await transferMutation.mutateAsync({
+    const transferData: {
+      fromAccountId: number;
+      toAccountId: number;
+      amount: number;
+      date: string;
+      notes?: string;
+    } = {
       fromAccountId,
       toAccountId,
       amount,
       date: toISOString(dateValue),
-      notes: notes || undefined,
-    });
+    };
+
+    if (notes) {
+      transferData.notes = notes;
+    }
+
+    await transferMutation.mutateAsync(transferData);
 
     if (onSuccess) onSuccess();
   } catch (err: any) {
@@ -74,7 +83,7 @@ async function handleSubmit() {
 
 <div class="space-y-4">
   <div class="flex items-center gap-2 pb-2 border-b">
-    <ArrowRightLeft class="h-5 w-5 text-blue-600"></ArrowRightLeft>
+    <ArrowRightLeft class="h-5 w-5"></ArrowRightLeft>
     <h3 class="text-lg font-semibold">Transfer Money</h3>
   </div>
 
@@ -100,34 +109,56 @@ async function handleSubmit() {
     <!-- To Account -->
     <div class="space-y-2">
       <label for="toAccount" class="text-sm font-medium">To Account</label>
-      <Select.Root
-        onSelectedChange={(selected) => {
-          if (selected?.value) {
-            toAccountId = Number(selected.value);
-          }
-        }}>
-        <Select.Trigger class="w-full">
-          <Select.Value placeholder="Select destination account">
-            {#if selectedAccount}
-              {selectedAccount.name}
-            {:else}
-              Select destination account
-            {/if}
-          </Select.Value>
-        </Select.Trigger>
-        <Select.Content>
-          {#each targetAccounts as account (account.id)}
-            <Select.Item value={String(account.id)}>
-              <div class="flex items-center gap-2">
-                <span>{account.name}</span>
-                <span class="text-xs text-muted-foreground capitalize">
-                  ({account.accountType?.replace('_', ' ')})
-                </span>
-              </div>
-            </Select.Item>
-          {/each}
-        </Select.Content>
-      </Select.Root>
+      {#if toAccountId > 0}
+        <Select.Root
+          type="single"
+          value={String(toAccountId)}
+          onValueChange={(value) => {
+            if (value) {
+              toAccountId = Number(value);
+            }
+          }}>
+          <Select.Trigger class="w-full">
+            {selectedAccount ? selectedAccount.name : 'Select destination account'}
+          </Select.Trigger>
+          <Select.Content>
+            {#each targetAccounts as account (account.id)}
+              <Select.Item value={String(account.id)}>
+                <div class="flex items-center gap-2">
+                  <span>{account.name}</span>
+                  <span class="text-xs text-muted-foreground capitalize">
+                    ({account.accountType?.replace('_', ' ')})
+                  </span>
+                </div>
+              </Select.Item>
+            {/each}
+          </Select.Content>
+        </Select.Root>
+      {:else}
+        <Select.Root
+          type="single"
+          onValueChange={(value) => {
+            if (value) {
+              toAccountId = Number(value);
+            }
+          }}>
+          <Select.Trigger class="w-full">
+            Select destination account
+          </Select.Trigger>
+          <Select.Content>
+            {#each targetAccounts as account (account.id)}
+              <Select.Item value={String(account.id)}>
+                <div class="flex items-center gap-2">
+                  <span>{account.name}</span>
+                  <span class="text-xs text-muted-foreground capitalize">
+                    ({account.accountType?.replace('_', ' ')})
+                  </span>
+                </div>
+              </Select.Item>
+            {/each}
+          </Select.Content>
+        </Select.Root>
+      {/if}
     </div>
 
     <!-- Notes -->

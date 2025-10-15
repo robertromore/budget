@@ -281,22 +281,12 @@ export class TransactionValidator {
       });
     }
 
-    // Description validation
-    if (normalized.description && normalized.description.length > 500) {
+    // Notes validation
+    if (normalized.notes && normalized.notes.length > 500) {
       errors.push({
-        field: 'description',
-        message: 'Description is too long (max 500 characters)',
-        value: normalized.description,
-        severity: 'warning',
-      });
-    }
-
-    // Check number validation
-    if (normalized.checkNumber && normalized.checkNumber.length > 50) {
-      errors.push({
-        field: 'checkNumber',
-        message: 'Check number is too long (max 50 characters)',
-        value: normalized.checkNumber,
+        field: 'notes',
+        message: 'Notes are too long (max 500 characters)',
+        value: normalized.notes,
         severity: 'warning',
       });
     }
@@ -397,8 +387,8 @@ export class TransactionValidator {
       return true;
     }
 
-    // If description matches (or both are missing), consider it a duplicate
-    const normalizedDesc = normalized.description?.toLowerCase().trim() || '';
+    // If notes/description matches (or both are missing), consider it a duplicate
+    const normalizedDesc = normalized.notes?.toLowerCase().trim() || '';
     const existingDesc = this.getTransactionDescription(existing).toLowerCase().trim();
 
     if (normalizedDesc && existingDesc && normalizedDesc === existingDesc) {

@@ -215,9 +215,9 @@ export class QIFProcessor implements FileProcessor {
       normalized.payee = sanitizeText(transaction.payee, 200);
     }
 
-    // Description (use memo if available)
+    // Notes (use memo if available)
     if (transaction.memo) {
-      normalized.description = sanitizeText(transaction.memo, 500);
+      normalized.notes = sanitizeText(transaction.memo, 500);
     }
 
     // Category
@@ -238,9 +238,12 @@ export class QIFProcessor implements FileProcessor {
       }
     }
 
-    // Check number
+    // Check number - append to notes if present
     if (transaction.checkNumber) {
-      normalized.checkNumber = sanitizeText(transaction.checkNumber, 50);
+      const checkNum = sanitizeText(transaction.checkNumber, 50);
+      normalized.notes = normalized.notes
+        ? `${normalized.notes} (Check #${checkNum})`
+        : `Check #${checkNum}`;
     }
 
     return normalized;

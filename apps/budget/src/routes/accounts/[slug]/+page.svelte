@@ -317,7 +317,7 @@ $effect(() => {
       </div>
     </div>
 
-    <!-- Add Transaction Button (only show if account exists) -->
+    <!-- Action Buttons (only show if account exists) -->
     {#if !isAccountNotFound}
     <div class="flex items-center space-x-2">
 

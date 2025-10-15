@@ -225,7 +225,10 @@ export const getMonthlySpendingAggregates = (accountId: number) => {
  * Create new transaction
  */
 export const createTransaction = defineMutation<CreateTransactionData, Transaction>({
-  mutationFn: (data) => trpc().transactionRoutes.create.mutate(data),
+  mutationFn: async (data) => {
+    const result = await trpc().transactionRoutes.create.mutate(data);
+    return result as Transaction;
+  },
   onSuccess: (_newTransaction, variables) => {
     // Invalidate and refetch related queries using prefix matching
     cachePatterns.invalidatePrefix(["transactions", "account", variables.accountId]);
@@ -244,7 +247,10 @@ export const updateTransaction = defineMutation<
   { id: number; data: UpdateTransactionData },
   Transaction
 >({
-  mutationFn: ({ id, data }) => trpc().transactionRoutes.update.mutate({ id, data }),
+  mutationFn: async ({ id, data }) => {
+    const result = await trpc().transactionRoutes.update.mutate({ id, data });
+    return result as Transaction;
+  },
   onSuccess: (updatedTransaction) => {
     if (updatedTransaction.accountId) {
       // Update the detail query cache
@@ -281,7 +287,10 @@ export const updateTransactionWithBalance = defineMutation<
   { id: number; data: UpdateTransactionData },
   Transaction[]
 >({
-  mutationFn: ({ id, data }) => trpc().transactionRoutes.updateWithBalance.mutate({ id, data }),
+  mutationFn: async ({ id, data }) => {
+    const result = await trpc().transactionRoutes.updateWithBalance.mutate({ id, data });
+    return result as Transaction[];
+  },
   onSuccess: (transactionsWithBalance, _variables) => {
     if (!Array.isArray(transactionsWithBalance) || !transactionsWithBalance.length) return;
 
@@ -389,7 +398,10 @@ export const saveTransaction = defineMutation<
   },
   Transaction
 >({
-  mutationFn: (data) => trpc().transactionRoutes.save.mutate(data),
+  mutationFn: async (data) => {
+    const result = await trpc().transactionRoutes.save.mutate(data);
+    return result as Transaction;
+  },
   onSuccess: (transaction) => {
     if (transaction.accountId) {
       cachePatterns.invalidatePrefix(["transactions", "account", transaction.accountId]);
@@ -458,17 +470,28 @@ export const createTransfer = defineMutation({
     categoryId?: number | null;
     payeeId?: number | null;
   }) => {
-    const result = await trpc.transactions.createTransfer.mutate(params);
+    const result = await trpc().transactionRoutes.createTransfer.mutate(params);
     return result;
   },
   onSuccess: (_data, variables) => {
-    cachePatterns.invalidateQueries(transactionKeys.byAccount(variables.fromAccountId));
-    cachePatterns.invalidateQueries(transactionKeys.byAccount(variables.toAccountId));
-    cachePatterns.invalidateQueries(transactionKeys.allByAccount(variables.fromAccountId));
-    cachePatterns.invalidateQueries(transactionKeys.allByAccount(variables.toAccountId));
-    cachePatterns.invalidateQueries(transactionKeys.summary(variables.fromAccountId));
-    cachePatterns.invalidateQueries(transactionKeys.summary(variables.toAccountId));
+    // Invalidate all transaction queries for both accounts using prefix matching
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.fromAccountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.fromAccountId]);
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.toAccountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.toAccountId]);
+
+    // Invalidate summaries for both accounts
+    cachePatterns.invalidatePrefix(transactionKeys.summary(variables.fromAccountId));
+    cachePatterns.invalidatePrefix(transactionKeys.summary(variables.toAccountId));
+
+    // Invalidate transaction lists
+    cachePatterns.invalidatePrefix(transactionKeys.lists());
+
+    // Invalidate accounts list to update balances in sidebar
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
   },
+  successMessage: "Transfer created successfully",
+  errorMessage: "Failed to create transfer",
 });
 
 /**
@@ -483,19 +506,30 @@ export const updateTransfer = defineMutation({
     categoryId?: number | null;
     payeeId?: number | null;
   }) => {
-    const result = await trpc.transactions.updateTransfer.mutate(params);
+    const result = await trpc().transactionRoutes.updateTransfer.mutate(params);
     return result;
   },
   onSuccess: (data) => {
     if (data.fromTransaction && data.toTransaction) {
-      cachePatterns.invalidateQueries(transactionKeys.byAccount(data.fromTransaction.accountId));
-      cachePatterns.invalidateQueries(transactionKeys.byAccount(data.toTransaction.accountId));
-      cachePatterns.invalidateQueries(transactionKeys.allByAccount(data.fromTransaction.accountId));
-      cachePatterns.invalidateQueries(transactionKeys.allByAccount(data.toTransaction.accountId));
-      cachePatterns.invalidateQueries(transactionKeys.summary(data.fromTransaction.accountId));
-      cachePatterns.invalidateQueries(transactionKeys.summary(data.toTransaction.accountId));
+      // Invalidate all transaction queries for both accounts using prefix matching
+      cachePatterns.invalidatePrefix(["transactions", "account", data.fromTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", data.fromTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "account", data.toTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", data.toTransaction.accountId]);
+
+      // Invalidate summaries for both accounts
+      cachePatterns.invalidatePrefix(transactionKeys.summary(data.fromTransaction.accountId));
+      cachePatterns.invalidatePrefix(transactionKeys.summary(data.toTransaction.accountId));
+
+      // Invalidate transaction lists
+      cachePatterns.invalidatePrefix(transactionKeys.lists());
+
+      // Invalidate accounts list to update balances in sidebar
+      cachePatterns.invalidatePrefix(["accounts", "list"]);
     }
   },
+  successMessage: "Transfer updated successfully",
+  errorMessage: "Failed to update transfer",
 });
 
 /**
@@ -503,9 +537,14 @@ export const updateTransfer = defineMutation({
  */
 export const deleteTransfer = defineMutation({
   mutationFn: async (params: { transferId: string }) => {
-    await trpc.transactions.deleteTransfer.mutate(params);
+    await trpc().transactionRoutes.deleteTransfer.mutate(params);
   },
   onSuccess: () => {
-    cachePatterns.invalidateQueries(transactionKeys.lists());
+    // Invalidate all transaction queries
+    cachePatterns.invalidatePrefix(["transactions"]);
+    // Invalidate accounts list to update balances in sidebar
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
   },
+  successMessage: "Transfer deleted successfully",
+  errorMessage: "Failed to delete transfer",
 });

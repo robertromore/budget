@@ -1,16 +1,15 @@
-import {z} from "zod";
+import { removeAccountSchema } from "$lib/schema/accounts";
 import {
-  publicProcedure,
   authenticatedProcedure,
+  publicProcedure,
   rateLimitedProcedure,
-  bulkProcedure,
 } from "$lib/server/shared/trpc/procedures";
-import {AccountService} from "./services";
-import {t} from "$lib/trpc/t";
-import {removeAccountSchema} from "$lib/schema/accounts";
+import { t } from "$lib/trpc/t";
+import { z } from "zod";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
 
-// Initialize service
-const accountService = new AccountService();
+// Get service from factory (lazy initialization)
+const getAccountService = () => serviceFactory.getAccountService();
 
 // Input schemas
 const createAccountSchema = z.object({
@@ -45,43 +44,51 @@ const searchAccountsSchema = z.object({
 export const accountRoutes = t.router({
   // Get all accounts with transactions for UI
   all: publicProcedure.query(async () => {
-    return await accountService.getAllAccountsWithTransactions();
+    return await getAccountService().getAllAccountsWithTransactions();
   }),
 
   // Get all active accounts
   list: publicProcedure.query(async () => {
-    return await accountService.getActiveAccounts();
+    return await getAccountService().getActiveAccounts();
   }),
 
   // Get account by ID
   getById: publicProcedure.input(accountByIdSchema).query(async ({input}) => {
-    return await accountService.getAccountById(input.id);
+    return await getAccountService().getAccountById(input.id);
   }),
 
   // Get account by slug
   getBySlug: publicProcedure.input(accountBySlugSchema).query(async ({input}) => {
-    return await accountService.getAccountBySlug(input.slug);
+    return await getAccountService().getAccountBySlug(input.slug);
   }),
 
   // Search accounts
   search: authenticatedProcedure.input(searchAccountsSchema).query(async ({input}) => {
-    return await accountService.searchAccounts(input.query, input.limit);
+    return await getAccountService().searchAccounts(input.query, input.limit);
   }),
 
   // Create new account
   create: rateLimitedProcedure.input(createAccountSchema).mutation(async ({input}) => {
-    return await accountService.createAccount(input);
+    // Filter out undefined values to satisfy exactOptionalPropertyTypes
+    const cleanInput = Object.fromEntries(
+      Object.entries(input).filter(([_, v]) => v !== undefined)
+    );
+    return await getAccountService().createAccount(cleanInput as any);
   }),
 
   // Update account
   update: rateLimitedProcedure.input(updateAccountSchema).mutation(async ({input}) => {
     const {id, ...updateData} = input;
-    return await accountService.updateAccount(id, updateData);
+    // Filter out undefined values to satisfy exactOptionalPropertyTypes
+    const cleanUpdateData = Object.fromEntries(
+      Object.entries(updateData).filter(([_, v]) => v !== undefined)
+    );
+    return await getAccountService().updateAccount(id, cleanUpdateData as any);
   }),
 
   // Delete account (soft delete)
   remove: rateLimitedProcedure.input(removeAccountSchema).mutation(async ({input}) => {
-    await accountService.deleteAccount(input.id);
+    await getAccountService().deleteAccount(input.id);
     return {success: true};
   }),
 
@@ -94,6 +101,6 @@ export const accountRoutes = t.router({
       })
     )
     .mutation(async ({input}) => {
-      return await accountService.updateAccountBalance(input.id, input.balance);
+      return await getAccountService().updateAccountBalance(input.id, input.balance);
     }),
 });

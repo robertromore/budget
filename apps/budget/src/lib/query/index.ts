@@ -4,12 +4,13 @@
  * Based on Epicenter's RPC pattern for better developer experience
  */
 
-import * as transactions from "./transactions";
-import * as budgets from "./budgets";
 import * as accounts from "./accounts";
-import * as payees from "./payees";
+import * as budgets from "./budgets";
 import * as categories from "./categories";
+import * as medicalExpenses from "./medical-expenses";
 import * as patterns from "./patterns";
+import * as payees from "./payees";
+import * as transactions from "./transactions";
 
 /**
  * Centralized RPC interface aggregating all query modules
@@ -23,13 +24,14 @@ export const rpc = {
   payees,
   categories,
   patterns,
+  medicalExpenses,
 } as const;
 
 /**
  * Re-export commonly used utilities for convenience
  */
-export { queryClient, cachePatterns, queryPresets } from "./_client";
-export { defineQuery, defineMutation, createQueryKeys } from "./_factory";
+export { cachePatterns, queryClient, queryPresets } from "./_client";
+export { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 // Import for internal use in dev tools
 import { queryClient } from "./_client";
@@ -44,16 +46,18 @@ export type AccountQueries = typeof accounts;
 export type PayeeQueries = typeof payees;
 export type CategoryQueries = typeof categories;
 export type PatternQueries = typeof patterns;
+export type MedicalExpenseQueries = typeof medicalExpenses;
 
 /**
  * Convenience re-exports for specific domains
  */
-export { transactionKeys } from "./transactions";
-export { budgetKeys } from "./budgets";
 export { accountKeys } from "./accounts";
-export { payeeKeys } from "./payees";
+export { budgetKeys } from "./budgets";
 export { categoryKeys } from "./categories";
+export { medicalExpenseKeys } from "./medical-expenses";
 export { patternKeys } from "./patterns";
+export { payeeKeys } from "./payees";
+export { transactionKeys } from "./transactions";
 
 /**
  * Helper to get specific domain operations
@@ -64,6 +68,7 @@ export const getAccountOps = () => rpc.accounts;
 export const getPayeeOps = () => rpc.payees;
 export const getCategoryOps = () => rpc.categories;
 export const getPatternOps = () => rpc.patterns;
+export const getMedicalExpenseOps = () => rpc.medicalExpenses;
 
 /**
  * Development helpers

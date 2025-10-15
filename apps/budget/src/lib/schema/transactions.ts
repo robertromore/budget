@@ -90,6 +90,8 @@ export const transactionsRelations = relations(transactions, ({many, one}) => ({
     references: [schedules.id],
   }),
   budgetAllocations: many(budgetTransactions),
+  // NOTE: HSA medical expense relation is defined in src/lib/schema/index.ts
+  // to avoid circular dependencies with the medical-expenses schema
 }));
 
 export const selectTransactionSchema = createSelectSchema(transactions);

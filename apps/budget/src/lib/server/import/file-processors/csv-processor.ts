@@ -23,7 +23,9 @@ export class CSVProcessor implements FileProcessor {
   private columnMapping?: ColumnMapping;
 
   constructor(columnMapping?: ColumnMapping) {
-    this.columnMapping = columnMapping;
+    if (columnMapping !== undefined) {
+      this.columnMapping = columnMapping;
+    }
   }
 
   getSupportedFormats(): string[] {
@@ -92,11 +94,13 @@ export class CSVProcessor implements FileProcessor {
 
               if (criticalErrors.length > 0) {
                 const firstError = criticalErrors[0];
-                throw new ParseError(
-                  `CSV parsing failed: ${firstError.message}`,
-                  firstError.row,
-                  firstError.code
-                );
+                if (firstError) {
+                  throw new ParseError(
+                    `CSV parsing failed: ${firstError.message}`,
+                    firstError.row,
+                    firstError.code
+                  );
+                }
               }
             }
 
@@ -114,7 +118,7 @@ export class CSVProcessor implements FileProcessor {
             }
           }
         },
-        error: (error) => {
+        error: (error: Error) => {
           reject(new ParseError(`CSV parsing error: ${error.message}`));
         },
       });

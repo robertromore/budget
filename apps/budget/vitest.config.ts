@@ -7,6 +7,14 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    // Disable parallel execution to avoid Bun worker compatibility issues
+    pool: "forks",
+    poolOptions: {
+      forks: {
+        singleFork: true, // Run all tests in a single process
+      },
+    },
+    fileParallelism: false,
     include: [
       "src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}",
       "tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}",
@@ -23,7 +31,7 @@ export default defineConfig({
     
     // Coverage configuration
     coverage: {
-      enabled: true,
+      enabled: false, // Disable by default (use --coverage flag when needed)
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],
       reportsDirectory: "coverage",

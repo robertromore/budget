@@ -33,8 +33,6 @@ let {
   onDelete,
   onViewAnalytics,
   onBulkDelete,
-  table = $bindable(),
-  dataTableComponent
 }: Props = $props();
 </script>
 
@@ -54,6 +52,5 @@ let {
     {onDelete}
     {onViewAnalytics}
     {onBulkDelete}
-    bind:table
-  />
+  ></dataTableComponent>
 {/if}

@@ -1,15 +1,13 @@
-import type {Database} from "bun:sqlite";
-import {eq, desc, asc, like, and, or, count} from "drizzle-orm";
-import {DatabaseError, NotFoundError} from "$lib/server/shared/types";
+import { DATABASE_CONFIG } from "$lib/server/config/database";
 import type {
-  PaginationOptions,
-  PaginatedResult,
-  SortOptions,
   FilterOptions,
-  SearchOptions,
+  PaginatedResult,
+  PaginationOptions,
+  SortOptions
 } from "$lib/server/shared/types";
-import {DATABASE_CONFIG} from "$lib/server/config/database";
-import {getCurrentTimestamp} from "$lib/utils/dates";
+import { DatabaseError, NotFoundError } from "$lib/server/shared/types";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { and, asc, count, desc, eq, inArray, like, not } from "drizzle-orm";
 
 /**
  * Base repository class providing common database operations
@@ -367,8 +365,8 @@ export abstract class BaseRepository<
 
   // Helper methods
   protected buildInCondition(column: any, values: any[]) {
-    // Build IN condition for bulk operations
-    return or(...values.map((value) => eq(column, value)));
+    // Build IN condition for bulk operations using efficient SQL IN clause
+    return inArray(column, values);
   }
 
   protected buildSortConditions(sorts: SortOptions[]) {
@@ -386,7 +384,7 @@ export abstract class BaseRepository<
         case "eq":
           return eq(column, filter.value);
         case "ne":
-          return eq(column, filter.value); // Note: Drizzle doesn't have ne, use not(eq())
+          return not(eq(column, filter.value));
         case "like":
           return like(column, `%${filter.value}%`);
         default:

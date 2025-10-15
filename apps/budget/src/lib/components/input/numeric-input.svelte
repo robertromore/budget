@@ -142,6 +142,10 @@ const handlePaste = (event: ClipboardEvent) => {
     onOpenChange={(open) => {
       if (open && parseFloat(new_amount) == 0) {
         new_amount = '';
+      } else if (!open && new_amount) {
+        // Apply the value when popover closes if there's a valid input
+        value = parseFloat(new_amount);
+        onSubmit?.();
       }
     }}>
     <Popover.Trigger>

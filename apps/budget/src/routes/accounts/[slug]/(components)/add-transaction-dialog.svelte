@@ -139,12 +139,12 @@ function handleClose() {
 // Handle wizard completion
 async function handleWizardComplete(data: Record<string, any>) {
   const wizardFormData: TransactionFormData = {
-    amount: data.amount,
-    date: data.date,
-    notes: data.notes || null,
-    payeeId: data.payeeId || null,
-    categoryId: data.categoryId || null,
-    status: data.status || 'pending',
+    amount: data['amount'],
+    date: data['date'],
+    notes: data['notes'] || null,
+    payeeId: data['payeeId'] || null,
+    categoryId: data['categoryId'] || null,
+    status: data['status'] || 'pending',
     budgetId: null,
     budgetAllocation: null,
   };

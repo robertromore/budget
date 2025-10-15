@@ -130,9 +130,17 @@ $effect(() => {
                   value={entity.id + ''}
                   class={cn(value?.id == entity.id && 'bg-muted')}
                   onSelect={() => {
-                    value = entity;
-                    if (handleSubmit) {
-                      handleSubmit(entity);
+                    // Toggle: if already selected, deselect it; otherwise select it
+                    if (value?.id === entity.id) {
+                      value = undefined;
+                      if (handleSubmit) {
+                        handleSubmit(undefined);
+                      }
+                    } else {
+                      value = entity;
+                      if (handleSubmit) {
+                        handleSubmit(entity);
+                      }
                     }
                     open = false;
                   }}>
@@ -176,9 +184,17 @@ $effect(() => {
                   value={entity.id + ''}
                   class={cn(value?.id == entity.id && 'bg-muted')}
                   onSelect={() => {
-                    value = entity;
-                    if (handleSubmit) {
-                      handleSubmit(entity);
+                    // Toggle: if already selected, deselect it; otherwise select it
+                    if (value?.id === entity.id) {
+                      value = undefined;
+                      if (handleSubmit) {
+                        handleSubmit(undefined);
+                      }
+                    } else {
+                      value = entity;
+                      if (handleSubmit) {
+                        handleSubmit(entity);
+                      }
                     }
                     open = false;
                   }}>

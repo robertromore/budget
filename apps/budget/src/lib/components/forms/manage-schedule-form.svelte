@@ -28,7 +28,7 @@ import RepeatingDateInputModel from '$lib/models/repeating_date.svelte';
 
 // Schema imports
 import {type Schedule} from '$lib/schema/schedules';
-import {type Payee, type Category} from '$lib/schema';
+import {type Payee, type Category, type Account} from '$lib/schema';
 import {superformInsertScheduleSchema} from '$lib/schema/superforms';
 
 // State imports
@@ -83,9 +83,9 @@ const EMPTY_CATEGORY: EditableEntityItem = {id: 0, name: ''};
 const uniqueFormId = formId || `schedule-form-${scheduleId || 'new'}-${Math.random().toString(36).substring(2, 9)}`;
 
 // Create lookup maps for efficient searching
-const payeeLookup = $derived(new Map(payees?.map(p => [p.id, p]) || []));
-const accountLookup = $derived(new Map(accounts?.map(a => [a.id, a]) || []));
-const categoryLookup = $derived(new Map(categories?.map(c => [c.id, c]) || []));
+const payeeLookup = $derived(new Map(payees?.map((p: Payee) => [p.id, p]) || []));
+const accountLookup = $derived(new Map(accounts?.map((a: Account) => [a.id, a]) || []));
+const categoryLookup = $derived(new Map(categories?.map((c: Category) => [c.id, c]) || []));
 
 // Local state for components that need it
 let payee: EditableEntityItem = $state(EMPTY_PAYEE);
@@ -120,13 +120,13 @@ const {form: formData, enhance} = form;
 
 // Derive current values from formData (single source of truth)
 const payeeValue = $derived.by(() =>
-  payeeLookup.get($formData.payeeId ?? 0) ?? EMPTY_PAYEE
+  (payeeLookup.get($formData.payeeId ?? 0) ?? EMPTY_PAYEE) as EditableEntityItem
 );
 const accountValue = $derived.by(() =>
-  accountLookup.get($formData.accountId ?? 0) ?? EMPTY_ACCOUNT
+  (accountLookup.get($formData.accountId ?? 0) ?? EMPTY_ACCOUNT) as EditableEntityItem
 );
 const categoryValue = $derived.by(() =>
-  categoryLookup.get($formData.categoryId ?? 0) ?? EMPTY_CATEGORY
+  (categoryLookup.get($formData.categoryId ?? 0) ?? EMPTY_CATEGORY) as EditableEntityItem
 );
 
 // Determine if this is an update

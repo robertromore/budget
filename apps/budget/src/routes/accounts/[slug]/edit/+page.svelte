@@ -7,16 +7,28 @@ import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import {ManageAccountForm} from '$lib/components/forms';
 import type {Account} from '$lib/schema';
+import {isHealthSavingsAccount} from '$lib/schema/accounts';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 
 const accountSlug = $derived(page.params['slug']);
 const accountsState = $derived(AccountsState.get());
 const account = $derived(accountsState.getBySlug(accountSlug || ''));
 
+// Determine the base path for navigation based on account type
+const basePath = $derived(
+  account?.accountType && isHealthSavingsAccount(account.accountType)
+    ? '/hsa'
+    : '/accounts'
+);
+
 const handleSave = (updatedAccount: Account) => {
-  // Navigate back to the account detail page
+  // Navigate back to the appropriate detail page based on account type
+  const savePath = updatedAccount.accountType && isHealthSavingsAccount(updatedAccount.accountType)
+    ? '/hsa'
+    : '/accounts';
+
   setTimeout(() => {
-    goto(`/accounts/${updatedAccount.slug}`, { replaceState: true });
+    goto(`${savePath}/${updatedAccount.slug}`, { replaceState: true });
   }, 100);
 };
 </script>
@@ -30,7 +42,7 @@ const handleSave = (updatedAccount: Account) => {
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="sm" href="/accounts/{accountSlug}" class="p-2">
+      <Button variant="ghost" size="sm" href="{basePath}/{accountSlug}" class="p-2">
         <ArrowLeft class="h-4 w-4" />
         <span class="sr-only">Back to Account</span>
       </Button>

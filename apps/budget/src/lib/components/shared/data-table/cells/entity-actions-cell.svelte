@@ -26,10 +26,6 @@ let {
   onDelete,
   onViewAnalytics,
   entityName,
-  viewIcon = User,
-  analyticsIcon = BarChart3,
-  editIcon = Pencil,
-  deleteIcon = Trash2
 }: Props = $props();
 </script>
 
@@ -39,7 +35,7 @@ let {
     variant="ghost"
     size="sm"
     aria-label="View {entityName} {entity.name}">
-    <viewIcon class="h-4 w-4" />
+    <viewIcon class="h-4 w-4"></viewIcon>
   </Button>
 
   <Button
@@ -47,7 +43,7 @@ let {
     variant="ghost"
     size="sm"
     aria-label="View analytics for {entity.name}">
-    <analyticsIcon class="h-4 w-4" />
+    <analyticsIcon class="h-4 w-4"></analyticsIcon>
   </Button>
 
   <Button
@@ -55,7 +51,7 @@ let {
     variant="ghost"
     size="sm"
     aria-label="Edit {entityName} {entity.name}">
-    <editIcon class="h-4 w-4" />
+    <editIcon class="h-4 w-4"></editIcon>
   </Button>
 
   <Button
@@ -64,6 +60,6 @@ let {
     size="sm"
     class="text-destructive hover:text-destructive"
     aria-label="Delete {entityName} {entity.name}">
-    <deleteIcon class="h-4 w-4" />
+    <deleteIcon class="h-4 w-4"></deleteIcon>
   </Button>
 </div>

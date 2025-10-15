@@ -11,7 +11,7 @@
   import { ColorPicker } from "$lib/components/ui/color-picker";
   import { accountWizardStore, type WizardStep as WizardStepType } from "$lib/stores/wizardStore.svelte";
   import { createAccountValidationEngine } from "$lib/utils/wizardValidation";
-  import { accountTypeEnum, type Account } from "$lib/schema";
+  import { accountTypeEnum, accountTypeKeys, type Account } from "$lib/schema";
   import { getIconByName } from "$lib/components/ui/icon-picker/icon-categories";
 
   interface Props {
@@ -122,7 +122,12 @@
 
       'cash': 'cash',
       'wallet': 'cash',
-      'petty': 'cash'
+      'petty': 'cash',
+
+      'hsa': 'hsa',
+      'health savings': 'hsa',
+      'health account': 'hsa',
+      'medical savings': 'hsa'
     };
 
     // Check each keyword
@@ -156,6 +161,12 @@
       description: 'Brokerage, 401k, IRA'
     },
     {
+      category: 'Health Savings Accounts',
+      examples: ['HSA'],
+      color: 'text-red-600',
+      description: 'Health Savings Accounts (HSA)'
+    },
+    {
       category: 'Loan Accounts',
       examples: ['Mortgage', 'Auto Loan', 'Personal Loan'],
       color: 'text-orange-600',
@@ -168,16 +179,6 @@
   let isInTemplateMode = $state(false);
 
   // Example notes categories
-  let selectedNotesCategory = $state<string>('all');
-
-  // Auto-select notes category based on initial account type
-  $effect(() => {
-    const currentAccountType = formData['accountType'];
-    if (currentAccountType && noteCategories.find(cat => cat.value === currentAccountType && cat.value !== 'all')) {
-      selectedNotesCategory = currentAccountType;
-    }
-  });
-
   const exampleNotesByCategory = {
     checking: [
       'Primary checking account for monthly expenses. Direct deposit setup.',
@@ -201,7 +202,13 @@
       'Roth IRA with Vanguard. Target: Max contribution annually.',
       '401k through employer. Contributing 10% with 5% match.',
       'Brokerage account for long-term growth investing.',
-      'HSA investment account for healthcare expenses.'
+      'Individual investment account for dividend growth strategy.'
+    ],
+    hsa: [
+      'Family HSA with Fidelity. 2025 limit: $8,300. HDHP through employer.',
+      'Individual HSA. Contributing $4,150/year for tax-deductible medical expenses.',
+      'HSA investment account for long-term healthcare savings. Triple tax advantage.',
+      'Health Savings Account - Track qualified medical expenses and receipts.'
     ],
     loan: [
       'Mortgage - 30 year fixed at 3.5%. Monthly payment $1,800.',
@@ -209,15 +216,28 @@
       'Student loan - federal, income-driven repayment plan.',
       'Personal loan for home improvements. 3 year term.'
     ]
-  };
+  } as const;
 
-  const noteCategories = [
+  type NotesCategory = keyof typeof exampleNotesByCategory | 'all';
+
+  let selectedNotesCategory = $state<NotesCategory>('all');
+
+  // Auto-select notes category based on initial account type
+  $effect(() => {
+    const currentAccountType = formData['accountType'];
+    if (currentAccountType && noteCategories.find(cat => cat.value === currentAccountType && cat.value !== 'all')) {
+      selectedNotesCategory = currentAccountType as NotesCategory;
+    }
+  });
+
+  const noteCategories: Array<{ value: NotesCategory; label: string; color: string }> = [
     { value: 'all', label: 'All', color: 'border-l-gray-500' },
     { value: 'checking', label: 'Checking', color: 'border-l-blue-500' },
     { value: 'savings', label: 'Savings', color: 'border-l-green-500' },
     { value: 'credit_card', label: 'Credit Card', color: 'border-l-purple-500' },
     { value: 'investment', label: 'Investment', color: 'border-l-orange-500' },
-    { value: 'loan', label: 'Loan', color: 'border-l-red-500' }
+    { value: 'hsa', label: 'HSA', color: 'border-l-red-500' },
+    { value: 'loan', label: 'Loan', color: 'border-l-orange-500' }
   ];
 
   // Default icons for account types
@@ -227,7 +247,8 @@
     credit_card: { icon: 'credit-card' },
     investment: { icon: 'trending-up' },
     loan: { icon: 'banknote' },
-    cash: { icon: 'wallet' }
+    cash: { icon: 'wallet' },
+    hsa: { icon: 'heart-pulse' }
   };
 
   // Handle account type selection
@@ -323,9 +344,9 @@
   });
 
   // Account type options for select
-  const accountTypeOptions = accountTypeEnum.map(type => ({
+  const accountTypeOptions = accountTypeKeys.map(type => ({
     value: type,
-    label: type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    label: accountTypeEnum[type]
   }));
 
   // Enhanced field handlers
@@ -335,7 +356,7 @@
 
     // Auto-select matching notes category when account type changes
     if (value && noteCategories.find(cat => cat.value === value && cat.value !== 'all')) {
-      selectedNotesCategory = value;
+      selectedNotesCategory = value as NotesCategory;
     }
 
     // Auto-update icon if:
@@ -812,8 +833,9 @@
         {/each}
       {:else}
         {@const category = noteCategories.find(c => c.value === selectedNotesCategory)}
-        {#if category && exampleNotesByCategory[selectedNotesCategory]}
-          {#each exampleNotesByCategory[selectedNotesCategory] as note}
+        {@const categoryKey = selectedNotesCategory as keyof typeof exampleNotesByCategory}
+        {#if category && categoryKey in exampleNotesByCategory}
+          {#each exampleNotesByCategory[categoryKey] as note}
             <button
               type="button"
               onclick={() => updateField('notes', note)}

@@ -61,6 +61,8 @@ export class PayeeMatcher {
 
     for (const payee of existingPayees) {
       const match = this.matchPayee(normalizedInput, payee);
+      if (!match) continue;
+
       if (match.score > bestMatch.score) {
         bestMatch = match;
       }
@@ -77,7 +79,9 @@ export class PayeeMatcher {
   /**
    * Match a single payee against the input
    */
-  private matchPayee(normalizedInput: string, payee: Payee): PayeeMatch {
+  private matchPayee(normalizedInput: string, payee: Payee): PayeeMatch | null {
+    if (!payee.name) return null;
+
     const normalizedPayeeName = normalizeText(payee.name);
 
     // Check for exact match
@@ -154,7 +158,7 @@ export class PayeeMatcher {
 
     for (const payee of existingPayees) {
       const match = this.matchPayee(normalizedInput, payee);
-      if (match.score >= minScore) {
+      if (match && match.score >= minScore) {
         matches.push(match);
       }
     }

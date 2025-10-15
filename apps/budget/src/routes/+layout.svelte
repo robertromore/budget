@@ -29,33 +29,46 @@ let {data, children}: {data: LayoutData; children: Snippet} = $props();
 // Set QueryClient context immediately using centralized client
 setQueryClientContext(queryClient);
 
-// Use TanStack Query for reactive updates
+// Use TanStack Query for reactive data fetching on the client
+// These queries replace the server-side data loading that was removed from +layout.server.ts
 const accountsQuery = rpc.accounts.listAccounts().options();
 const payeesQuery = rpc.payees.listPayees().options();
 const categoriesQuery = rpc.categories.listCategories().options();
+const budgetsQuery = rpc.budgets.listBudgets().options();
 
-// Initialize states with initial data
-const accountsState = AccountsState.set(data.accounts);
-const payeesState = PayeesState.set(data.payees);
-const categoriesState = CategoriesState.set(data.categories);
-SchedulesState.set(data.schedules);
-BudgetState.set(data.budgets);
+// Initialize states (will be populated by queries below)
+const accountsState = AccountsState.set([]);
+const payeesState = PayeesState.set([]);
+const categoriesState = CategoriesState.set([]);
+SchedulesState.set([]);
+BudgetState.set([]);
 
 // Keep states in sync with query data
 $effect(() => {
-  const accounts = accountsQuery.data ?? data.accounts;
-  accountsState.init(accounts);
+  if (accountsQuery.data) {
+    accountsState.init(accountsQuery.data);
+  }
 });
 
 $effect(() => {
-  const payees = payeesQuery.data ?? data.payees;
-  payeesState.init(payees);
+  if (payeesQuery.data) {
+    payeesState.init(payeesQuery.data);
+  }
 });
 
 $effect(() => {
-  const categories = categoriesQuery.data ?? data.categories;
-  categoriesState.init(categories);
+  if (categoriesQuery.data) {
+    categoriesState.init(categoriesQuery.data);
+  }
 });
+
+$effect(() => {
+  if (budgetsQuery.data) {
+    BudgetState.set(budgetsQuery.data);
+  }
+});
+
+// Schedules will be loaded on-demand by pages that need them
 
 // Auto-scheduler: Automatically create scheduled transactions when app loads
 onMount(() => {

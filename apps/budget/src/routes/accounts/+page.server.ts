@@ -18,6 +18,7 @@ export const load: PageServerLoad = async (event) => ({
 export const actions: Actions = {
   "add-account": async (event) => {
     const form = await superValidate(event, zod4(superformInsertAccountSchema));
+
     if (!form.valid) {
       return fail(400, {
         form,
@@ -25,6 +26,7 @@ export const actions: Actions = {
     }
 
     const entity = await createCaller(await createContext(event)).accountRoutes.save(form.data);
+
     return {
       form,
       entity,

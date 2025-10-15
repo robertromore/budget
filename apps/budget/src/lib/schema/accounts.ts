@@ -11,18 +11,20 @@ import type {Transaction} from "./transactions";
 import {z} from "zod/v4";
 import { isValidIconName } from "$lib/utils/icon-validation";
 
-// Account type enum for type safety
-export const accountTypeEnum = [
-  "checking",
-  "savings",
-  "investment",
-  "credit_card",
-  "loan",
-  "cash",
-  "other"
-] as const;
+// Account type enum with labels
+export const accountTypeEnum = {
+  checking: "Checking",
+  savings: "Savings",
+  investment: "Investment",
+  credit_card: "Credit Card",
+  loan: "Loan",
+  cash: "Cash",
+  hsa: "Health Savings Account",
+  other: "Other"
+} as const;
 
-export type AccountType = typeof accountTypeEnum[number];
+export type AccountType = keyof typeof accountTypeEnum;
+export const accountTypeKeys = ["checking", "savings", "investment", "credit_card", "loan", "cash", "hsa", "other"] as const;
 
 export const accounts = sqliteTable(
   "account",
@@ -39,7 +41,7 @@ export const accounts = sqliteTable(
     notes: text("notes"),
 
     // Enhanced account fields
-    accountType: text("account_type", { enum: accountTypeEnum }).default("checking"),
+    accountType: text("account_type", { enum: accountTypeKeys }).default("checking"),
     institution: text("institution"), // Bank/institution name
     accountIcon: text("account_icon"), // Lucide icon name
     accountColor: text("account_color"), // Hex color code
@@ -52,6 +54,13 @@ export const accounts = sqliteTable(
     minimumPayment: real("minimum_payment"), // Minimum monthly payment
     paymentDueDay: integer("payment_due_day"), // Day of month payment is due (1-31)
     interestRate: real("interest_rate"), // APR for credit cards or loan interest rate
+
+    // HSA-specific fields (only populated for HSA account type)
+    hsaContributionLimit: real("hsa_contribution_limit"), // Annual contribution limit for current tax year
+    hsaType: text("hsa_type", { enum: ["individual", "family"] }), // HSA type affects contribution limits
+    hsaCurrentTaxYear: integer("hsa_current_tax_year"), // Current tax year for tracking
+    hsaAdministrator: text("hsa_administrator"), // HSA provider (Fidelity, HSA Bank, etc.)
+    hsaHighDeductiblePlan: text("hsa_high_deductible_plan"), // Associated HDHP name/details
 
     dateOpened: text("date_opened")
       .notNull()
@@ -78,6 +87,9 @@ export const accounts = sqliteTable(
 export const accountsRelations = relations(accounts, ({many}) => ({
   transactions: many(transactions),
 }));
+
+// NOTE: HSA medical expenses relation is defined in src/lib/schema/index.ts
+// to avoid circular dependencies with the medical-expenses schema
 
 export const selectAccountSchema = createSelectSchema(accounts);
 export const insertAccountSchema = createInsertSchema(accounts);
@@ -113,7 +125,7 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .optional()
       .nullable(),
   accountType: (schema) =>
-    schema.pipe(z.enum(accountTypeEnum, {
+    schema.pipe(z.enum(accountTypeKeys, {
       message: "Please select a valid account type"
     })).default("checking"),
   institution: (schema) =>
@@ -145,6 +157,33 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .nullable(),
   onBudget: (schema) =>
     schema.pipe(z.boolean()).default(true),
+  hsaType: (schema) =>
+    schema
+      .pipe(z.enum(["individual", "family"]))
+      .optional()
+      .nullable(),
+  hsaContributionLimit: (schema) =>
+    schema
+      .pipe(z.number().min(0).max(100000))
+      .optional()
+      .nullable(),
+  hsaCurrentTaxYear: (schema) =>
+    schema
+      .pipe(z.number().min(2000).max(2100))
+      .optional()
+      .nullable(),
+  hsaAdministrator: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().max(100))
+      .optional()
+      .nullable(),
+  hsaHighDeductiblePlan: (schema) =>
+    schema
+      .transform((val) => val?.trim())
+      .pipe(z.string().max(200))
+      .optional()
+      .nullable(),
 });
 
 // Schema for updates (all fields optional, but with validation when provided)
@@ -179,7 +218,7 @@ export const formUpdateAccountSchema = z.object({
     .optional()
     .nullable(),
   closed: z.boolean().optional(),
-  accountType: z.enum(accountTypeEnum).optional(),
+  accountType: z.enum(accountTypeKeys).optional(),
   institution: z
     .string()
     .transform((val) => val?.trim())
@@ -231,6 +270,10 @@ export type RemoveAccountSchema = typeof removeAccountSchema;
 // Helper functions for account classification
 export function isDebtAccount(accountType: AccountType): boolean {
   return accountType === 'credit_card' || accountType === 'loan';
+}
+
+export function isHealthSavingsAccount(accountType: AccountType): boolean {
+  return accountType === 'hsa';
 }
 
 export function getAccountNature(accountType: AccountType): 'asset' | 'liability' {

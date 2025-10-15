@@ -237,7 +237,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
         throw transformError(error);
       }
     },
-    onSuccess: (data: TData, variables: TVariables) => {
+    onSuccess: (data: TData, variables: TVariables, context: any, mutationResult: any) => {
       // Call custom onSuccess if provided
       if (onSuccess) {
         onSuccess(data, variables);
@@ -253,10 +253,10 @@ export function defineMutation<TVariables, TData, TError = Error>(
 
       // Call original onSuccess from options
       if (options.onSuccess) {
-        options.onSuccess(data, variables);
+        options.onSuccess(data, variables, context, mutationResult);
       }
     },
-    onError: (error: TError, variables: TVariables) => {
+    onError: (error: TError, variables: TVariables, context: any, mutationResult: any) => {
       // Call custom onError if provided
       if (onError) {
         onError(error, variables);
@@ -270,7 +270,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
 
       // Call original onError from options
       if (options.onError) {
-        options.onError(error, variables);
+        options.onError(error, variables, context, mutationResult);
       }
     },
     ...options,
@@ -282,13 +282,52 @@ export function defineMutation<TVariables, TData, TError = Error>(
     },
 
     async execute(variables: TVariables) {
-      const mutation = createMutationWithConfig();
-      return mutation.mutateAsync(variables);
+      try {
+        const result = await mutationFn(variables);
+
+        // Call onSuccess handlers
+        if (onSuccess) {
+          await onSuccess(result, variables);
+        }
+        if (options.onSuccess) {
+          // Pass empty objects for context and mutationResult when calling imperatively
+          options.onSuccess(result, variables, {} as any, {} as any);
+        }
+
+        // Show success toast
+        if (successMessage) {
+          const message = typeof successMessage === 'function'
+            ? successMessage(result, variables)
+            : successMessage;
+          toast.success(message);
+        }
+
+        return result;
+      } catch (error) {
+        const transformedError = transformError(error) as TError;
+
+        // Call onError handlers
+        if (onError) {
+          onError(transformedError, variables);
+        }
+        if (options.onError) {
+          // Pass empty objects for context and mutationResult when calling imperatively
+          options.onError(transformedError, variables, {} as any, {} as any);
+        }
+
+        // Show error toast
+        const message = errorMessage
+          ? (typeof errorMessage === 'function' ? errorMessage(transformedError, variables) : errorMessage)
+          : (error instanceof Error ? error.message : 'An error occurred');
+        toast.error(message);
+
+        throw transformedError;
+      }
     },
 
     async mutateAsync(variables: TVariables) {
-      const mutation = createMutationWithConfig();
-      return mutation.mutateAsync(variables);
+      // For backward compatibility, use the same implementation as execute
+      return this.execute(variables);
     },
   };
 }

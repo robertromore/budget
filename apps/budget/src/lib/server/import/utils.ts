@@ -107,6 +107,8 @@ export function parseDate(dateString: string): string {
     if (match) {
       const [, part1, part2, part3] = match;
 
+      if (!part1 || !part2 || !part3) continue;
+
       // Determine if it's MM/DD/YYYY or DD/MM/YYYY
       // Heuristic: if first part > 12, it must be day
       const num1 = parseInt(part1, 10);
@@ -142,7 +144,8 @@ export function parseDate(dateString: string): string {
 
       const date = new Date(year, month - 1, day);
       if (!isNaN(date.getTime()) && date.getMonth() === month - 1) {
-        return date.toISOString().split('T')[0];
+        const isoDate = date.toISOString().split('T')[0];
+        if (isoDate) return isoDate;
       }
     }
   }
@@ -255,23 +258,35 @@ export function capitalizePayeeName(name: string): string {
 export function levenshteinDistance(str1: string, str2: string): number {
   const matrix: number[][] = Array(str2.length + 1)
     .fill(null)
-    .map(() => Array(str1.length + 1).fill(null));
+    .map(() => Array(str1.length + 1).fill(0));
 
-  for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
-  for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+  for (let i = 0; i <= str1.length; i++) {
+    const row = matrix[0];
+    if (row) row[i] = i;
+  }
+  for (let j = 0; j <= str2.length; j++) {
+    const row = matrix[j];
+    if (row) row[0] = j;
+  }
 
   for (let j = 1; j <= str2.length; j++) {
     for (let i = 1; i <= str1.length; i++) {
       const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-      matrix[j][i] = Math.min(
-        matrix[j][i - 1] + 1, // insertion
-        matrix[j - 1][i] + 1, // deletion
-        matrix[j - 1][i - 1] + cost // substitution
-      );
+      const currentRow = matrix[j];
+      const prevRow = matrix[j - 1];
+
+      if (currentRow && prevRow) {
+        currentRow[i] = Math.min(
+          (currentRow[i - 1] ?? 0) + 1, // insertion
+          (prevRow[i] ?? 0) + 1, // deletion
+          (prevRow[i - 1] ?? 0) + cost // substitution
+        );
+      }
     }
   }
 
-  return matrix[str2.length][str1.length];
+  const lastRow = matrix[str2.length];
+  return lastRow?.[str1.length] ?? 0;
 }
 
 /**
@@ -332,7 +347,7 @@ export function detectCSVDelimiter(text: string): string {
   }));
 
   counts.sort((a, b) => b.count - a.count);
-  return counts[0].delimiter;
+  return counts[0]?.delimiter ?? ',';
 }
 
 /**

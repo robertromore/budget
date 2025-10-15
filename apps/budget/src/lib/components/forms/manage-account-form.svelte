@@ -2,7 +2,7 @@
 import * as Form from '$lib/components/ui/form';
 import * as Select from '$lib/components/ui/select';
 import * as Card from '$lib/components/ui/card';
-import {type Account, accountTypeEnum, type AccountType} from '$lib/schema';
+import {type Account, accountTypeEnum, accountTypeKeys, type AccountType} from '$lib/schema';
 import {superformInsertAccountSchema} from '$lib/schema/superforms';
 import {Textarea} from '$lib/components/ui/textarea';
 import {page} from '$app/state';
@@ -73,13 +73,16 @@ const entityForm = useEntityForm({
     if (onSave) onSave(entity);
   },
   customOptions: {
+    resetForm: false, // Don't reset form after submission
     onResult: async ({ result }) => {
       if (result.type === 'success') {
         // Call the original useEntityForm logic manually
         if (result.data && result.data.entity) {
           const entity = result.data.entity;
 
+          // Sync form data with the returned entity to keep UI in sync
           if (isUpdate) {
+            $formData.onBudget = entity.onBudget ?? true;
             accounts.updateAccount(entity);
           } else {
             accounts.addAccount(entity);
@@ -171,7 +174,7 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
     if (accountColorInput) accountColorInput.value = $formData.accountColor;
     if (initialBalanceInput) initialBalanceInput.value = String($formData.initialBalance);
     if (accountNumberLast4Input) accountNumberLast4Input.value = $formData.accountNumberLast4;
-    if (onBudgetInput) onBudgetInput.value = String($formData.onBudget);
+    if (onBudgetInput) onBudgetInput.value = $formData.onBudget ? 'true' : 'false';
 
     form.requestSubmit();
   }
@@ -187,9 +190,9 @@ function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
 }
 
 // Account type options for the dropdown
-const accountTypeOptions = accountTypeEnum.map(type => ({
+const accountTypeOptions = accountTypeKeys.map(type => ({
   value: type,
-  label: type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')
+  label: accountTypeEnum[type]
 }));
 
 // Default icons for account types
@@ -332,7 +335,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <input hidden value={$formData.accountColor} name="accountColor" />
       <input hidden value={$formData.initialBalance} name="initialBalance" />
       <input hidden value={$formData.accountNumberLast4} name="accountNumberLast4" />
-      <input hidden value={$formData.onBudget} name="onBudget" />
+      <input type="hidden" name="onBudget" value={$formData.onBudget ? 'true' : 'false'} />
 
       <!-- Basic Information Section -->
       <Card.Root>
@@ -563,7 +566,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <input hidden value={$formData.accountColor} name="accountColor" />
       <input hidden value={$formData.initialBalance} name="initialBalance" />
       <input hidden value={$formData.accountNumberLast4} name="accountNumberLast4" />
-      <input hidden value={$formData.onBudget} name="onBudget" />
+      <input type="hidden" name="onBudget" value={$formData.onBudget ? 'true' : 'false'} />
     </form>
   {/snippet}
 </WizardFormWrapper>

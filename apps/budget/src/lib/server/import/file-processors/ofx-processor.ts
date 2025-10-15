@@ -5,12 +5,10 @@
  * for bank statement downloads.
  */
 
-import { XMLParser } from 'fast-xml-parser';
 import type { FileProcessor, ImportRow, NormalizedTransaction } from '$lib/types/import';
+import { XMLParser } from 'fast-xml-parser';
 import { FileValidationError, ParseError } from '../errors';
 import {
-  parseDate,
-  parseAmount,
   sanitizeText,
   validateFileType,
 } from '../utils';
@@ -158,6 +156,8 @@ export class OFXProcessor implements FileProcessor {
         const tagName = openMatch[1];
         const rest = openMatch[2];
 
+        if (!tagName) continue;
+
         // Close any tags that should be closed before this one
         // SGML rules: a new tag at the same level closes the previous sibling
         if (tagStack.length > 0) {
@@ -178,6 +178,8 @@ export class OFXProcessor implements FileProcessor {
       const closeMatch = trimmedLine.match(/^<\/([A-Z][A-Z0-9.]*)\s*>$/);
       if (closeMatch) {
         const tagName = closeMatch[1];
+        if (!tagName) continue;
+
         // Close all tags until we find this one
         while (tagStack.length > 0) {
           const lastTag = tagStack.pop();
@@ -298,7 +300,8 @@ export class OFXProcessor implements FileProcessor {
           ? transaction.TRNAMT
           : parseFloat(String(transaction.TRNAMT));
       } catch (error) {
-        normalized.amount = transaction.TRNAMT;
+        // If parsing fails, default to 0 - this will be caught in validation
+        normalized.amount = 0;
       }
     }
 
@@ -309,12 +312,15 @@ export class OFXProcessor implements FileProcessor {
 
     // Description (MEMO field in OFX)
     if (transaction.MEMO) {
-      normalized.description = sanitizeText(String(transaction.MEMO), 500);
+      normalized.notes = sanitizeText(String(transaction.MEMO), 500);
     }
 
-    // Check number
+    // Check number - append to notes if present
     if (transaction.CHECKNUM) {
-      normalized.checkNumber = sanitizeText(String(transaction.CHECKNUM), 50);
+      const checkNum = sanitizeText(String(transaction.CHECKNUM), 50);
+      normalized.notes = normalized.notes
+        ? `${normalized.notes} (Check #${checkNum})`
+        : `Check #${checkNum}`;
     }
 
     // OFX transactions are typically cleared by default

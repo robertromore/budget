@@ -14,7 +14,10 @@ export const accountKeys = createQueryKeys("accounts", {
 export const listAccounts = () =>
   defineQuery<Account[]>({
     queryKey: accountKeys.list(),
-    queryFn: () => trpc().accountRoutes.all.query(),
+    queryFn: async () => {
+      const result = await trpc().accountRoutes.all.query();
+      return result as Account[];
+    },
     options: {
       ...queryPresets.static,
     },
@@ -23,9 +26,12 @@ export const listAccounts = () =>
 export const getAccountDetail = (idOrSlug: number | string) =>
   defineQuery<Account>({
     queryKey: typeof idOrSlug === "number" ? accountKeys.detail(idOrSlug) : accountKeys.detailBySlug(idOrSlug),
-    queryFn: () => typeof idOrSlug === "number"
-      ? trpc().accountRoutes.load.query({id: idOrSlug})
-      : trpc().accountRoutes.getBySlug.query({slug: idOrSlug}),
+    queryFn: async () => {
+      const result = typeof idOrSlug === "number"
+        ? await trpc().accountRoutes.load.query({id: idOrSlug})
+        : await trpc().accountRoutes.getBySlug.query({slug: idOrSlug});
+      return result as Account;
+    },
     options: {
       staleTime: 60 * 1000,
     },

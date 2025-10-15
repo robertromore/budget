@@ -841,7 +841,7 @@ export const budgetRoutes = t.router({
     )
     .query(async ({input}) => {
       try {
-        const forecastService = new BudgetForecastService();
+        const forecastService = serviceFactory.getBudgetForecastService();
         return await forecastService.forecastBudgetImpact(input.budgetId, input.daysAhead);
       } catch (error) {
         throw translateDomainError(error);
@@ -852,7 +852,7 @@ export const budgetRoutes = t.router({
     .input(z.object({budgetId: z.number().positive()}))
     .mutation(async ({input}) => {
       try {
-        const forecastService = new BudgetForecastService();
+        const forecastService = serviceFactory.getBudgetForecastService();
         return await forecastService.autoAllocateScheduledExpenses(input.budgetId);
       } catch (error) {
         throw translateDomainError(error);

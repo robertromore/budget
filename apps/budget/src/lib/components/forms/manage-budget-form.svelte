@@ -50,7 +50,7 @@ const form = superForm(formData, {
 const {form: formStore, enhance, submitting} = form;
 
 // Reactive state from form data
-const selectedBudgetType = $derived($formStore.type || "account-monthly");
+const selectedBudgetType = $derived(($formStore.type || "account-monthly") as BudgetType);
 const selectedAccountIds = $derived($formStore.accountIds || []);
 const selectedCategoryIds = $derived($formStore.categoryIds || []);
 
@@ -59,13 +59,13 @@ const availableCategories = $derived(categories);
 
 const selectedAccounts = $derived.by(() =>
   selectedAccountIds
-    .map(id => availableAccounts.find(account => account.id === id))
+    .map((id: number) => availableAccounts.find(account => account.id === id))
     .filter(Boolean) as Account[]
 );
 
 const selectedCategories = $derived.by(() =>
   selectedCategoryIds
-    .map(id => availableCategories.find(category => category.id === id))
+    .map((id: number) => availableCategories.find(category => category.id === id))
     .filter(Boolean) as Category[]
 );
 
@@ -121,7 +121,7 @@ function addAccount(accountId: number) {
 }
 
 function removeAccount(accountId: number) {
-  $formStore.accountIds = selectedAccountIds.filter(id => id !== accountId);
+  $formStore.accountIds = selectedAccountIds.filter((id: number) => id !== accountId);
 }
 
 function addCategory(categoryId: number) {
@@ -131,7 +131,7 @@ function addCategory(categoryId: number) {
 }
 
 function removeCategory(categoryId: number) {
-  $formStore.categoryIds = selectedCategoryIds.filter(id => id !== categoryId);
+  $formStore.categoryIds = selectedCategoryIds.filter((id: number) => id !== categoryId);
 }
 
 // Handle type changes to update scope

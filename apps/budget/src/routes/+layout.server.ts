@@ -1,23 +1,14 @@
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import {superValidate} from "sveltekit-superforms";
-import type {LayoutServerLoad} from "./$types";
-import {zod4} from "sveltekit-superforms/adapters";
-import {formInsertScheduleSchema} from "$lib/schema";
-import {superformInsertAccountSchema} from "$lib/schema/superforms";
-import {getLocalTimeZone, today} from "@internationalized/date";
+import { formInsertScheduleSchema } from "$lib/schema";
+import { superformInsertAccountSchema } from "$lib/schema/superforms";
+import { getLocalTimeZone, today } from "@internationalized/date";
+import { superValidate } from "sveltekit-superforms";
+import { zod4 } from "sveltekit-superforms/adapters";
+import type { LayoutServerLoad } from "./$types";
 
 const thisday = today(getLocalTimeZone());
-export const load: LayoutServerLoad = async (event) => {
-  const ctx = await createContext(event);
-  const caller = createCaller(ctx);
+export const load: LayoutServerLoad = async () => {
 
   return {
-    accounts: await caller.accountRoutes.all(),
-    payees: await caller.payeeRoutes.all(),
-    categories: await caller.categoriesRoutes.all(),
-    schedules: await caller.scheduleRoutes.all(),
-    budgets: await caller.budgetRoutes.list(),
     manageAccountForm: await superValidate(zod4(superformInsertAccountSchema)),
     manageScheduleForm: await superValidate(zod4(formInsertScheduleSchema)),
     dates: [

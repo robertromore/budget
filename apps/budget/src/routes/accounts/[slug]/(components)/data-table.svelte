@@ -27,7 +27,7 @@ import {pinning, setPinning} from '../(data)/pinning.svelte';
 import type {View} from '$lib/schema';
 import {CurrentViewState} from '$lib/states/views';
 import {page} from '$app/state';
-import {setContext} from 'svelte';
+import {setContext, untrack} from 'svelte';
 import {currentViews, CurrentViewsState} from '$lib/states/views';
 import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
 import type {FacetedFilterOption} from '$lib/types';
@@ -265,40 +265,43 @@ $effect(() => {
     hasAppliedInitialView = false;
   }
 
-  const _currentViewStates: CurrentViewState<TransactionsFormat>[] = viewList.map(
-    (view: View) => new CurrentViewState<TransactionsFormat>(view, table)
-  );
+  // Untrack to prevent mutations from triggering this effect
+  untrack(() => {
+    const _currentViewStates: CurrentViewState<TransactionsFormat>[] = viewList.map(
+      (view: View) => new CurrentViewState<TransactionsFormat>(view, table)
+    );
 
-  // Clear existing views and add new ones
-  currentViewsStateValue.viewsStates.clear();
-  _currentViewStates.forEach((viewState) => {
-    currentViewsStateValue.viewsStates.set(viewState.view.id, viewState);
-  });
-
-  if (_currentViewStates.length === 0) {
-    return;
-  }
-
-  const targetViewState = lastActiveViewId
-    ? currentViewsStateValue.viewsStates.get(lastActiveViewId) ?? _currentViewStates[0]!
-    : _currentViewStates[0]!;
-
-  if (!targetViewState) {
-    return;
-  }
-
-  if (!hasAppliedInitialView || lastActiveViewId !== targetViewState.view.id) {
-    hasAppliedInitialView = true;
-    lastActiveViewId = targetViewState.view.id;
-    const targetViewId = targetViewState.view.id;
-    currentViewsStateValue.activeViewId = targetViewId;
-    queueMicrotask(() => {
-      const latestViewState = currentViewsStateValue.viewsStates.get(targetViewId);
-      if (latestViewState) {
-        currentViewsStateValue.setActive(targetViewId);
-      }
+    // Clear existing views and add new ones
+    currentViewsStateValue.viewsStates.clear();
+    _currentViewStates.forEach((viewState) => {
+      currentViewsStateValue.viewsStates.set(viewState.view.id, viewState);
     });
-  }
+
+    if (_currentViewStates.length === 0) {
+      return;
+    }
+
+    const targetViewState = lastActiveViewId
+      ? currentViewsStateValue.viewsStates.get(lastActiveViewId) ?? _currentViewStates[0]!
+      : _currentViewStates[0]!;
+
+    if (!targetViewState) {
+      return;
+    }
+
+    if (!hasAppliedInitialView || lastActiveViewId !== targetViewState.view.id) {
+      hasAppliedInitialView = true;
+      lastActiveViewId = targetViewState.view.id;
+      const targetViewId = targetViewState.view.id;
+      currentViewsStateValue.activeViewId = targetViewId;
+      queueMicrotask(() => {
+        const latestViewState = currentViewsStateValue.viewsStates.get(targetViewId);
+        if (latestViewState) {
+          currentViewsStateValue.setActive(targetViewId);
+        }
+      });
+    }
+  });
 });
 </script>
 
