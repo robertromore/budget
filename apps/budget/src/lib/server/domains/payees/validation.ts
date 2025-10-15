@@ -246,7 +246,13 @@ export const applyIntelligentOptimizationsSchema = z.object({
     updateFrequency: z.boolean().optional().default(true),
     updateAmount: z.boolean().optional().default(true),
     minConfidence: z.number().min(0).max(1).optional().default(0.7),
-  }).optional().default({}),
+  }).optional().default({
+    updateCategory: true,
+    updateBudget: true,
+    updateFrequency: true,
+    updateAmount: true,
+    minConfidence: 0.7,
+  }),
 });
 
 /**
@@ -260,7 +266,13 @@ export const bulkIntelligenceAnalysisSchema = z.object({
     includeFrequencyAnalysis: z.boolean().optional().default(false),
     includePredictions: z.boolean().optional().default(false),
     minTransactionCount: z.number().int().min(1).optional().default(3),
-  }).optional().default({}),
+  }).optional().default({
+    includeSpendingAnalysis: true,
+    includeSeasonalPatterns: false,
+    includeFrequencyAnalysis: false,
+    includePredictions: false,
+    minTransactionCount: 3,
+  }),
 });
 
 /**

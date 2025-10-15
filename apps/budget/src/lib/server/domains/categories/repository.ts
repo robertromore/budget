@@ -1,13 +1,13 @@
-import {db} from "$lib/server/db";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {categories, transactions} from "$lib/schema";
-import {envelopeAllocations} from "$lib/schema/budgets/envelope-allocations";
-import {budgets} from "$lib/schema/budgets";
-import {eq, and, isNull, like, inArray, sql, count, desc} from "drizzle-orm";
-import type {Category, NewCategory, CategoryType, TaxCategory, SpendingPriority, IncomeReliability} from "$lib/schema/categories";
-import {NotFoundError} from "$lib/server/shared/types/errors";
-import type {CategoryTreeNode} from "$lib/types/categories";
-import {BaseRepository} from "$lib/server/shared/database/base-repository";
+import { categories, transactions } from "$lib/schema";
+import { budgets } from "$lib/schema/budgets";
+import { envelopeAllocations } from "$lib/schema/budgets/envelope-allocations";
+import type { Category, CategoryType, IncomeReliability, NewCategory, SpendingPriority, TaxCategory } from "$lib/schema/categories";
+import { db } from "$lib/server/db";
+import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import type { CategoryTreeNode } from "$lib/types/categories";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 export interface UpdateCategoryData {
   name?: string | undefined;
@@ -77,7 +77,7 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Create a new category
    */
-  async create(data: NewCategory): Promise<Category> {
+  override async create(data: NewCategory): Promise<Category> {
     const [category] = await db
       .insert(categories)
       .values(data)
@@ -93,7 +93,7 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Find category by ID
    */
-  async findById(id: number): Promise<Category | null> {
+  override async findById(id: number): Promise<Category | null> {
     const [category] = await db
       .select()
       .from(categories)
@@ -120,9 +120,9 @@ export class CategoryRepository extends BaseRepository<
   }
 
   /**
-   * Find all active categories
+   * Find all active categories (without pagination)
    */
-  async findAll(): Promise<Category[]> {
+  async findAllCategories(): Promise<Category[]> {
     return await db
       .select()
       .from(categories)
@@ -133,7 +133,7 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Update category
    */
-  async update(id: number, data: UpdateCategoryData): Promise<Category> {
+  override async update(id: number, data: UpdateCategoryData): Promise<Category> {
     const [category] = await db
       .update(categories)
       .set({
@@ -154,14 +154,15 @@ export class CategoryRepository extends BaseRepository<
    * Soft delete category with slug archiving
    * Now uses the inherited softDeleteWithSlugArchive() method from BaseRepository
    */
-  async softDelete(id: number): Promise<Category> {
+  override async softDelete(id: number): Promise<Category> {
     return await this.softDeleteWithSlugArchive(id);
   }
 
   /**
    * Bulk soft delete categories
+   * Returns the number of categories deleted
    */
-  async bulkDelete(ids: number[]): Promise<number> {
+  async bulkDeleteCategories(ids: number[]): Promise<number> {
     if (ids.length === 0) return 0;
 
     // Get existing categories to access their slugs
@@ -203,7 +204,7 @@ export class CategoryRepository extends BaseRepository<
    */
   async search(query: string): Promise<Category[]> {
     if (!query.trim()) {
-      return this.findAll();
+      return this.findAllCategories();
     }
 
     return await this.searchByName(query, {
@@ -270,7 +271,7 @@ export class CategoryRepository extends BaseRepository<
    * Get categories with statistics
    */
   async findAllWithStats(): Promise<CategoryWithStats[]> {
-    const categoriesData = await this.findAll();
+    const categoriesData = await this.findAllCategories();
 
     const categoriesWithStats: CategoryWithStats[] = [];
 
@@ -344,7 +345,7 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Check if category exists and is active
    */
-  async exists(id: number): Promise<boolean> {
+  override async exists(id: number): Promise<boolean> {
     const [result] = await db
       .select({id: categories.id})
       .from(categories)
@@ -442,7 +443,7 @@ export class CategoryRepository extends BaseRepository<
    * Get all categories with budget data
    */
   async findAllWithBudgets(): Promise<CategoryWithBudgets[]> {
-    const allCategories = await this.findAll();
+    const allCategories = await this.findAllCategories();
 
     const categoriesWithBudgets = await Promise.all(
       allCategories.map(async (category) => {
@@ -504,7 +505,7 @@ export class CategoryRepository extends BaseRepository<
    * Build full category hierarchy tree
    */
   async getHierarchyTree(): Promise<CategoryTreeNode[]> {
-    const allCategories = await this.findAll();
+    const allCategories = await this.findAllCategories();
 
     // Create a map for quick lookup
     const categoryMap = new Map<number, CategoryTreeNode>();

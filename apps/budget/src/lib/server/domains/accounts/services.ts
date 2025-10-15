@@ -27,11 +27,14 @@ export interface UpdateAccountData {
 
 /**
  * Account service containing business logic
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
  */
 export class AccountService {
   constructor(
-    private repository: AccountRepository = new AccountRepository(),
-    private transactionService: TransactionService = new TransactionService()
+    private repository: AccountRepository,
+    private transactionService: TransactionService
   ) {}
 
   /**
@@ -59,12 +62,11 @@ export class AccountService {
     const baseSlug = slugify(sanitizedName);
     const uniqueSlug = await this.generateUniqueSlug(baseSlug);
 
-    // Create account with zero balance initially
+    // Create account
     const account = await this.repository.create({
       name: sanitizedName,
       slug: uniqueSlug,
       notes: sanitizedNotes,
-      balance: 0, // Start with zero, we'll create a transaction for the initial balance
       onBudget,
     });
 
@@ -94,7 +96,16 @@ export class AccountService {
     // Verify account exists
     const existingAccount = await this.repository.findByIdOrThrow(id);
 
-    const updateData: any = {};
+    // Type-safe update data
+    interface AccountUpdateFields {
+      name?: string;
+      slug?: string;
+      notes?: string | null;
+      balance?: number;
+      onBudget?: boolean;
+    }
+
+    const updateData: AccountUpdateFields = {};
 
     // Sanitize and validate name if provided
     if (data.name !== undefined) {
@@ -168,7 +179,7 @@ export class AccountService {
       fieldName: "Search query",
     });
 
-    return await this.repository.searchByName(sanitizedQuery, limit);
+    return await this.repository.searchByName(sanitizedQuery, limit !== undefined ? {limit} : undefined);
   }
 
   /**

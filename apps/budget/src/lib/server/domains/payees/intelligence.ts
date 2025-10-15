@@ -251,7 +251,9 @@ export class PayeeIntelligenceService {
     // Calculate time span
     const firstDate = dates[0];
     const lastDate = dates[dates.length - 1];
-    const timeSpanDays = Math.round((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+    const timeSpanDays = dates.length > 1
+      ? Math.round((dates[dates.length - 1]!.getTime() - dates[0]!.getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
 
     return {
       payeeId,
@@ -319,7 +321,7 @@ export class PayeeIntelligenceService {
 
       return {
         month: month.month,
-        monthName: monthNames[month.month - 1],
+        monthName: monthNames[month.month - 1] ?? 'Unknown',
         transactionCount: month.transactionCount,
         totalAmount: month.totalAmount,
         averageAmount: month.averageAmount,
@@ -360,7 +362,7 @@ export class PayeeIntelligenceService {
 
     return dayOfWeekData.map(day => ({
       dayOfWeek: day.dayOfWeek,
-      dayName: dayNames[day.dayOfWeek],
+      dayName: dayNames[day.dayOfWeek] ?? 'Unknown',
       transactionCount: day.transactionCount,
       totalAmount: day.totalAmount,
       averageAmount: day.averageAmount,
@@ -402,10 +404,14 @@ export class PayeeIntelligenceService {
     // Calculate intervals between consecutive transactions
     const intervals: number[] = [];
     for (let i = 1; i < transactionDates.length; i++) {
-      const prev = new Date(transactionDates[i - 1].date);
-      const curr = new Date(transactionDates[i].date);
-      const daysDiff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
-      intervals.push(daysDiff);
+      const prevTransaction = transactionDates[i - 1];
+      const currTransaction = transactionDates[i];
+      if (prevTransaction && currTransaction) {
+        const prev = new Date(prevTransaction.date);
+        const curr = new Date(currTransaction.date);
+        const daysDiff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+        intervals.push(daysDiff);
+      }
     }
 
     const averageDaysBetween = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
@@ -482,7 +488,7 @@ export class PayeeIntelligenceService {
       const predictedDate = new Date(lastDate);
       predictedDate.setDate(lastDate.getDate() + Math.round(frequencyAnalysis.averageDaysBetween));
 
-      nextTransactionDate = predictedDate.toISOString().split('T')[0];
+      nextTransactionDate = predictedDate.toISOString().split('T')[0] ?? null;
       predictionMethod = 'frequency_based';
       confidence = frequencyAnalysis.confidence * frequencyAnalysis.regularityScore;
       reasoning = `Based on ${frequencyAnalysis.detectedFrequency} payment pattern with ${Math.round(frequencyAnalysis.averageDaysBetween)} day average interval`;
@@ -653,7 +659,7 @@ export class PayeeIntelligenceService {
     }
 
     const totalTransactions = categoryData.reduce((sum, cat) => sum + cat.transactionCount, 0);
-    const primaryCategory = categoryData[0];
+    const primaryCategory = categoryData[0]!; // Safe because we checked length above
 
     const categoryConfidence = totalTransactions > 0 ? primaryCategory.transactionCount / totalTransactions : 0;
 
@@ -677,8 +683,8 @@ export class PayeeIntelligenceService {
   private calculateMedian(sortedNumbers: number[]): number {
     const mid = Math.floor(sortedNumbers.length / 2);
     return sortedNumbers.length % 2 !== 0
-      ? sortedNumbers[mid]
-      : (sortedNumbers[mid - 1] + sortedNumbers[mid]) / 2;
+      ? sortedNumbers[mid] ?? 0
+      : ((sortedNumbers[mid - 1] ?? 0) + (sortedNumbers[mid] ?? 0)) / 2;
   }
 
   private calculateQuartiles(sortedNumbers: number[]): [number, number, number] {
@@ -687,9 +693,9 @@ export class PayeeIntelligenceService {
     const q3Index = Math.floor(sortedNumbers.length * 0.75);
 
     return [
-      sortedNumbers[q1Index],
-      sortedNumbers[q2Index],
-      sortedNumbers[q3Index]
+      sortedNumbers[q1Index] ?? 0,
+      sortedNumbers[q2Index] ?? 0,
+      sortedNumbers[q3Index] ?? 0
     ];
   }
 
@@ -811,14 +817,18 @@ export class PayeeIntelligenceService {
     const threshold = Math.max(60, averageInterval * 2); // At least 60 days or 2x average
 
     for (let i = 1; i < transactionDates.length; i++) {
-      const prev = new Date(transactionDates[i - 1].date);
-      const curr = new Date(transactionDates[i].date);
+      const prevTransaction = transactionDates[i - 1];
+      const currTransaction = transactionDates[i];
+      if (!prevTransaction || !currTransaction) continue;
+
+      const prev = new Date(prevTransaction.date);
+      const curr = new Date(currTransaction.date);
       const gapDays = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
 
       if (gapDays > threshold) {
         gaps.push({
-          startDate: transactionDates[i - 1].date,
-          endDate: transactionDates[i].date,
+          startDate: prevTransaction.date,
+          endDate: currTransaction.date,
           gapDays,
           reason: this.inferGapReason(gapDays, prev, curr)
         });
@@ -904,7 +914,7 @@ export class PayeeIntelligenceService {
 
       scenarios.push({
         scenario: 'Early payment',
-        date: earlyDate.toISOString().split('T')[0],
+        date: earlyDate.toISOString().split('T')[0] ?? '',
         amount: spendingAnalysis.averageAmount,
         probability: 0.25
       });
@@ -917,7 +927,7 @@ export class PayeeIntelligenceService {
 
       scenarios.push({
         scenario: 'Delayed payment',
-        date: lateDate.toISOString().split('T')[0],
+        date: lateDate.toISOString().split('T')[0] ?? '',
         amount: spendingAnalysis.averageAmount,
         probability: 0.25
       });
@@ -930,7 +940,7 @@ export class PayeeIntelligenceService {
 
       scenarios.push({
         scenario: 'Higher than average amount',
-        date: normalDate.toISOString().split('T')[0],
+        date: normalDate.toISOString().split('T')[0] ?? '',
         amount: spendingAnalysis.averageAmount + spendingAnalysis.standardDeviation,
         probability: 0.15
       });

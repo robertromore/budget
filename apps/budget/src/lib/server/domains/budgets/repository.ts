@@ -592,12 +592,20 @@ export class BudgetRepository {
   async getAccountsBalance(accountIds: number[]): Promise<number> {
     if (accountIds.length === 0) return 0;
 
-    const accountRecords = await db
-      .select()
-      .from(accounts)
-      .where(inArray(accounts.id, accountIds));
+    // Calculate balance by summing all transactions for these accounts
+    const result = await db
+      .select({
+        totalBalance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
+      })
+      .from(transactions)
+      .where(
+        and(
+          inArray(transactions.accountId, accountIds),
+          isNull(transactions.deletedAt)
+        )
+      );
 
-    return accountRecords.reduce((sum, account) => sum + (account.balance || 0), 0);
+    return Number(result[0]?.totalBalance ?? 0);
   }
 
   async getCategorySpendingSince(categoryIds: number[], startDate: string): Promise<number> {

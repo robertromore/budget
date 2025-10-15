@@ -68,7 +68,7 @@ export class BudgetTemplateService {
       icon: input.icon ?? "📊",
       suggestedAmount: input.suggestedAmount ?? null,
       enforcementLevel: input.enforcementLevel ?? "warning",
-      metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+      metadata: input.metadata ?? null,
       isSystem: false,
     };
 
@@ -118,7 +118,7 @@ export class BudgetTemplateService {
     }
 
     if (input.metadata !== undefined) {
-      updates.metadata = JSON.stringify(input.metadata);
+      updates.metadata = input.metadata;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -153,16 +153,27 @@ export class BudgetTemplateService {
 
     const duplicatedName = newName || `${original.name} (Copy)`;
 
-    return await this.createTemplate({
+    const request: CreateBudgetTemplateRequest = {
       name: duplicatedName,
       description: original.description,
       type: original.type,
       scope: original.scope,
-      icon: original.icon ?? "📊",
-      suggestedAmount: original.suggestedAmount ?? undefined,
       enforcementLevel: original.enforcementLevel,
-      metadata: original.metadata ? (original.metadata as Record<string, unknown>) : undefined,
-    });
+    };
+
+    if (original.icon !== null) {
+      request.icon = original.icon;
+    }
+
+    if (original.suggestedAmount !== null) {
+      request.suggestedAmount = original.suggestedAmount;
+    }
+
+    if (original.metadata !== null && original.metadata !== undefined) {
+      request.metadata = original.metadata as Record<string, unknown>;
+    }
+
+    return await this.createTemplate(request);
   }
 
   async seedSystemTemplates(): Promise<void> {
@@ -177,7 +188,7 @@ export class BudgetTemplateService {
         enforcementLevel: "warning",
         metadata: {
           defaultPeriod: {type: "monthly", startDay: 1},
-        } as any,
+        },
         isSystem: true,
       },
       {
@@ -190,7 +201,7 @@ export class BudgetTemplateService {
         enforcementLevel: "none",
         metadata: {
           goal: {contributionFrequency: "monthly"},
-        } as any,
+        },
         isSystem: true,
       },
       {
@@ -203,7 +214,7 @@ export class BudgetTemplateService {
         enforcementLevel: "warning",
         metadata: {
           rolloverType: "indefinite",
-        } as any,
+        },
         isSystem: true,
       },
       {
@@ -216,7 +227,7 @@ export class BudgetTemplateService {
         enforcementLevel: "warning",
         metadata: {
           rolloverType: "indefinite",
-        } as any,
+        },
         isSystem: true,
       },
       {
@@ -229,7 +240,7 @@ export class BudgetTemplateService {
         enforcementLevel: "warning",
         metadata: {
           rolloverType: "indefinite",
-        } as any,
+        },
         isSystem: true,
       },
       {
@@ -242,7 +253,7 @@ export class BudgetTemplateService {
         enforcementLevel: "none",
         metadata: {
           rolloverType: "indefinite",
-        } as any,
+        },
         isSystem: true,
       },
       {
@@ -255,7 +266,7 @@ export class BudgetTemplateService {
         enforcementLevel: "warning",
         metadata: {
           rolloverType: "indefinite",
-        } as any,
+        },
         isSystem: true,
       },
       {
@@ -268,7 +279,7 @@ export class BudgetTemplateService {
         enforcementLevel: "warning",
         metadata: {
           rolloverType: "indefinite",
-        } as any,
+        },
         isSystem: true,
       },
       {
@@ -281,7 +292,7 @@ export class BudgetTemplateService {
         enforcementLevel: "strict",
         metadata: {
           defaultPeriod: {type: "monthly"},
-        } as any,
+        },
         isSystem: true,
       },
       {
@@ -294,7 +305,7 @@ export class BudgetTemplateService {
         enforcementLevel: "none",
         metadata: {
           goal: {contributionFrequency: "monthly", autoContribute: true},
-        } as any,
+        },
         isSystem: true,
       },
     ];

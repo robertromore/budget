@@ -210,9 +210,12 @@ export class BudgetAllocationService {
   private payeeIntelligence: PayeeIntelligenceService;
   private categoryLearning: CategoryLearningService;
 
-  constructor() {
-    this.payeeIntelligence = new PayeeIntelligenceService();
-    this.categoryLearning = new CategoryLearningService();
+  constructor(
+    payeeIntelligence?: PayeeIntelligenceService,
+    categoryLearning?: CategoryLearningService
+  ) {
+    this.payeeIntelligence = payeeIntelligence || new PayeeIntelligenceService();
+    this.categoryLearning = categoryLearning || new CategoryLearningService();
   }
 
   /**
@@ -320,8 +323,12 @@ export class BudgetAllocationService {
     const frequencyAnalysis = await this.payeeIntelligence.analyzeFrequencyPattern(payeeId);
 
     // Generate predictions for each period
-    const predictions = [];
-    const scenarios = {conservative: [], optimistic: [], realistic: []};
+    const predictions: BudgetForecast['predictions'] = [];
+    const scenarios: BudgetForecast['scenarios'] = {
+      conservative: [],
+      optimistic: [],
+      realistic: []
+    };
 
     for (let i = 1; i <= periodsAhead; i++) {
       const periodPrediction = await this.generatePeriodPrediction(
@@ -440,8 +447,7 @@ export class BudgetAllocationService {
       }
     };
 
-    return {
-      accountId,
+    const result: BudgetRebalancingPlan = {
       accountName: accountInfo?.name || 'All Accounts',
       totalCurrentBudget,
       totalOptimizedBudget,
@@ -453,6 +459,12 @@ export class BudgetAllocationService {
       implementationPlan,
       monitoring
     };
+
+    if (accountId !== undefined) {
+      result.accountId = accountId;
+    }
+
+    return result;
   }
 
   /**
@@ -820,23 +832,28 @@ export class BudgetAllocationService {
   }
 
   private async getRelevantPayees(accountId?: number): Promise<number[]> {
-    let query = db
-      .select({id: payees.id})
-      .from(payees)
-      .where(isNull(payees.deletedAt));
-
-    // Add account filter if specified
     if (accountId) {
-      query = query.leftJoin(transactions, eq(transactions.payeeId, payees.id))
+      // Query payees with transactions in specific account
+      const result = await db
+        .select({id: payees.id})
+        .from(payees)
+        .leftJoin(transactions, eq(transactions.payeeId, payees.id))
         .where(and(
           eq(transactions.accountId, accountId),
           isNull(payees.deletedAt),
           isNull(transactions.deletedAt)
         ));
-    }
 
-    const result = await query;
-    return result.map(p => p.id);
+      return result.map(p => p.id);
+    } else {
+      // Query all non-deleted payees
+      const result = await db
+        .select({id: payees.id})
+        .from(payees)
+        .where(isNull(payees.deletedAt));
+
+      return result.map(p => p.id);
+    }
   }
 
   private async getPayeeCategoryInfo(payeeId: number): Promise<{categoryId: number | null; categoryName: string | null}> {
@@ -1024,7 +1041,7 @@ export class BudgetAllocationService {
       periodDate.setFullYear(currentDate.getFullYear() + periodIndex);
     }
 
-    const period = periodDate.toISOString().split('T')[0];
+    const period = periodDate.toISOString().split('T')[0] || periodDate.toISOString();
 
     // Identify risk factors for this period
     const riskFactors = [];
@@ -1146,9 +1163,9 @@ export class BudgetAllocationService {
       return Math.abs(b.adjustmentPercent) - Math.abs(a.adjustmentPercent);
     });
 
-    const phase1: typeof payeeAdjustments = [];
-    const phase2: typeof payeeAdjustments = [];
-    const phase3: typeof payeeAdjustments = [];
+    const phase1: Array<{payeeId: number; adjustment: number; reason: string}> = [];
+    const phase2: Array<{payeeId: number; adjustment: number; reason: string}> = [];
+    const phase3: Array<{payeeId: number; adjustment: number; reason: string}> = [];
 
     // Distribute adjustments across phases based on strategy
     sortedAdjustments.forEach((adjustment, index) => {
@@ -1210,13 +1227,13 @@ export class BudgetAllocationService {
     for (const {payeeId, analysis} of sortedAnalyses) {
       if (remainingBudget <= 0) break;
 
-      const currentAllocation = allocations[payeeId];
+      const currentAllocation = allocations[payeeId] ?? 0;
       const targetAllocation = analysis.recommendations.optimizedAllocation;
       const additionalNeeded = targetAllocation - currentAllocation;
 
       if (additionalNeeded > 0) {
         const additionalAllocation = Math.min(additionalNeeded, remainingBudget);
-        allocations[payeeId] += additionalAllocation;
+        allocations[payeeId] = (allocations[payeeId] ?? 0) + additionalAllocation;
         remainingBudget -= additionalAllocation;
       }
     }
@@ -1233,7 +1250,7 @@ export class BudgetAllocationService {
     let weightedScore = 0;
 
     analyses.forEach(({payeeId, analysis}) => {
-      const allocation = optimizedAllocations[payeeId];
+      const allocation = optimizedAllocations[payeeId] ?? 0;
       const weight = allocation; // Weight by allocation amount
       const currentEfficiency = analysis.efficiency.score;
 

@@ -5,6 +5,26 @@ import {eq, and, isNull, desc, asc, like, between, sql, inArray} from "drizzle-o
 import type {Transaction, NewTransaction} from "$lib/schema/transactions";
 import {NotFoundError} from "$lib/server/shared/types/errors";
 import {isDebtAccount} from "$lib/schema/accounts";
+import type {TransactionDbResult} from "./types";
+
+/**
+ * Convert database query result to Transaction type
+ * Converts null values to undefined for optional schedule fields
+ */
+function toTransaction(dbResult: TransactionDbResult): Transaction {
+  const {scheduleId, scheduleName, scheduleSlug, scheduleFrequency, scheduleInterval, scheduleNextOccurrence, ...rest} = dbResult;
+
+  return {
+    ...rest,
+    balance: rest.balance ?? null,
+    ...(scheduleId != null && {scheduleId}),
+    ...(scheduleName != null && {scheduleName}),
+    ...(scheduleSlug != null && {scheduleSlug}),
+    ...(scheduleFrequency != null && {scheduleFrequency}),
+    ...(scheduleInterval != null && {scheduleInterval}),
+    ...(scheduleNextOccurrence != null && {scheduleNextOccurrence}),
+  } as Transaction;
+}
 
 export interface TransactionFilters {
   accountId?: number | undefined;
@@ -94,7 +114,7 @@ export class TransactionRepository {
       throw new NotFoundError("Transaction", id);
     }
 
-    return transaction;
+    return toTransaction(transaction);
   }
 
   /**
@@ -103,9 +123,14 @@ export class TransactionRepository {
   async findById(id: number): Promise<Transaction | null> {
     const transaction = await db.query.transactions.findFirst({
       where: and(eq(transactions.id, id), isNull(transactions.deletedAt)),
+      with: {
+        account: true,
+        category: true,
+        payee: true,
+      },
     });
 
-    return transaction || null;
+    return transaction ? toTransaction(transaction) : null;
   }
 
   /**
@@ -202,7 +227,7 @@ export class TransactionRepository {
     });
 
     return {
-      data,
+      data: data.map(toTransaction),
       pagination: {
         page,
         pageSize,
@@ -218,7 +243,7 @@ export class TransactionRepository {
    * Find all transactions for an account
    */
   async findByAccountId(accountId: number): Promise<Transaction[]> {
-    return await db.query.transactions.findMany({
+    const data = await db.query.transactions.findMany({
       where: and(
         eq(transactions.accountId, accountId),
         isNull(transactions.deletedAt)
@@ -234,6 +259,8 @@ export class TransactionRepository {
       },
       orderBy: desc(transactions.date),
     });
+
+    return data.map(toTransaction);
   }
 
   /**
@@ -272,7 +299,7 @@ export class TransactionRepository {
     const initialBalance = Number(account.initialBalance ?? 0);
 
     // For debt accounts, invert the polarity
-    if (isDebtAccount(account.accountType)) {
+    if (account.accountType && isDebtAccount(account.accountType)) {
       // Start with negative initial balance (debt), then subtract transaction amounts
       return -(initialBalance) - transactionSum;
     }
@@ -314,7 +341,7 @@ export class TransactionRepository {
     const pendingSum = Number(result[0]?.balance ?? 0);
 
     // For debt accounts, invert the polarity
-    if (isDebtAccount(account.accountType)) {
+    if (account.accountType && isDebtAccount(account.accountType)) {
       return -pendingSum;
     }
 
@@ -416,7 +443,7 @@ export class TransactionRepository {
     // Calculate running balance including ALL transaction statuses (cleared, pending, scheduled)
     // For debt accounts, invert the polarity to show debt as negative
     const initialBalance = Number(account?.initialBalance ?? 0);
-    const isDebt = account && isDebtAccount(account.accountType);
+    const isDebt = account && account.accountType && isDebtAccount(account.accountType);
 
     // Start with initial balance (inverted for debt accounts)
     let runningBalance = isDebt ? -initialBalance : initialBalance;
@@ -425,7 +452,10 @@ export class TransactionRepository {
       const amount = Number(t.amount);
       // For debt accounts, invert transaction amounts
       runningBalance += isDebt ? -amount : amount;
-      return {...t, balance: runningBalance};
+      return {
+        ...toTransaction(t),
+        balance: runningBalance
+      };
     }).reverse();
 
     return transactionsWithBalance;
