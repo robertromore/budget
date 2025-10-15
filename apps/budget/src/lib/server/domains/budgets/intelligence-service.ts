@@ -87,10 +87,11 @@ export class BudgetIntelligenceService {
         .where(and(eq(payees.id, payeeId), eq(budgets.status, "active")))
         .limit(1);
 
-      if (result.length > 0 && result[0].budgetId) {
+      const firstResult = result[0];
+      if (firstResult && firstResult.budgetId) {
         return {
-          budgetId: result[0].budgetId,
-          budgetName: result[0].budgetName,
+          budgetId: firstResult.budgetId,
+          budgetName: firstResult.budgetName,
           confidence: 95,
           reason: "payee_default",
           reasonText: "Default budget for this payee",
@@ -257,7 +258,7 @@ export class BudgetIntelligenceService {
    */
   async getTopBudgetSuggestion(params: DetectBudgetParams): Promise<BudgetSuggestion | null> {
     const suggestions = await this.detectBudgetsForTransaction(params);
-    return suggestions.length > 0 ? suggestions[0] : null;
+    return suggestions[0] ?? null;
   }
 
   /**
@@ -284,6 +285,8 @@ export class BudgetIntelligenceService {
 
     for (let i = 0; i < transactions.length; i++) {
       const transaction = transactions[i];
+      if (!transaction) continue;
+
       try {
         const suggestions = await this.detectBudgetsForTransaction({
           accountId: transaction.accountId,
@@ -293,24 +296,45 @@ export class BudgetIntelligenceService {
           date: transaction.date,
         });
 
-        results.push({
+        const result: {
+          transactionIndex: number;
+          transactionId?: number;
+          suggestions: BudgetSuggestion[];
+          topSuggestion: BudgetSuggestion | null;
+        } = {
           transactionIndex: i,
-          transactionId: transaction.id,
           suggestions,
-          topSuggestion: suggestions.length > 0 ? suggestions[0] : null,
-        });
+          topSuggestion: suggestions[0] ?? null,
+        };
+
+        if (transaction.id !== undefined) {
+          result.transactionId = transaction.id;
+        }
+
+        results.push(result);
       } catch (error) {
         logger.warn("Error detecting budgets for transaction", {
           error,
           transactionIndex: i,
           transactionId: transaction.id,
         });
-        results.push({
+
+        const result: {
+          transactionIndex: number;
+          transactionId?: number;
+          suggestions: BudgetSuggestion[];
+          topSuggestion: BudgetSuggestion | null;
+        } = {
           transactionIndex: i,
-          transactionId: transaction.id,
           suggestions: [],
           topSuggestion: null,
-        });
+        };
+
+        if (transaction.id !== undefined) {
+          result.transactionId = transaction.id;
+        }
+
+        results.push(result);
       }
     }
 

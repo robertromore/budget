@@ -6,8 +6,10 @@ import {eq} from "drizzle-orm";
 import {TRPCError} from "@trpc/server";
 import slugify from "@sindresorhus/slugify";
 import {generateUniqueSlugForDB} from "$lib/utils/slug-utils";
-import {ScheduleService} from "$lib/server/domains/schedules";
+import {serviceFactory} from "$lib/server/shared/container/service-factory";
 import {getCurrentTimestamp} from "$lib/utils/dates";
+
+const scheduleService = serviceFactory.getScheduleService();
 
 export const scheduleRoutes = t.router({
   all: publicProcedure.query(async ({ctx}) => {
@@ -303,7 +305,6 @@ export const scheduleRoutes = t.router({
     .input(z.object({ scheduleId: z.number() }))
     .mutation(async ({ input }) => {
       try {
-        const scheduleService = new ScheduleService();
         const result = await scheduleService.executeAutoAddForSchedule(input.scheduleId);
         return result;
       } catch (error) {
@@ -323,7 +324,6 @@ export const scheduleRoutes = t.router({
   executeAutoAddAll: rateLimitedProcedure
     .mutation(async () => {
       try {
-        const scheduleService = new ScheduleService();
         const result = await scheduleService.executeAutoAddForAllSchedules();
         return result;
       } catch (error) {
@@ -338,7 +338,6 @@ export const scheduleRoutes = t.router({
     .input(z.object({ scheduleId: z.number() }))
     .query(async ({ input }) => {
       try {
-        const scheduleService = new ScheduleService();
         const result = await scheduleService.previewAutoAddForSchedule(input.scheduleId);
         return result;
       } catch (error) {

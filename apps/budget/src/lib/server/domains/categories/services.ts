@@ -33,10 +33,13 @@ export interface CategoryAnalytics {
 
 /**
  * Service for category business logic
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
  */
 export class CategoryService {
   constructor(
-    private repository: CategoryRepository = new CategoryRepository()
+    private repository: CategoryRepository
   ) {}
 
   /**
@@ -161,7 +164,7 @@ export class CategoryService {
    * Get all categories
    */
   async getAllCategories(): Promise<Category[]> {
-    return await this.repository.findAll();
+    return await this.repository.findAllCategories();
   }
 
   /**
@@ -340,7 +343,7 @@ export class CategoryService {
     }
 
     const deletedCount = deleteableIds.length > 0
-      ? await this.repository.bulkDelete(deleteableIds)
+      ? await this.repository.bulkDeleteCategories(deleteableIds)
       : 0;
 
     return {deletedCount, errors};
@@ -491,7 +494,7 @@ export class CategoryService {
     averageTransactionsPerCategory: number;
     topCategory: CategoryWithStats | null;
   }> {
-    const allCategories = await this.repository.findAll();
+    const allCategories = await this.repository.findAllCategories();
     const categoriesWithStats = await this.repository.findAllWithStats();
 
     const categoriesWithTransactions = categoriesWithStats.filter(
@@ -698,7 +701,7 @@ export class CategoryService {
    * Private: Validate unique category name
    */
   private async validateUniqueCategoryName(name: string, excludeId?: number): Promise<void> {
-    const existingCategories = await this.repository.findAll();
+    const existingCategories = await this.repository.findAllCategories();
 
     const duplicate = existingCategories.find(category =>
       category.name?.toLowerCase() === name.toLowerCase() &&

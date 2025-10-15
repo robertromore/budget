@@ -1,6 +1,4 @@
-import {CalendarDate, type DateValue} from "@internationalized/date";
-import {eq, and, desc, asc, sql, inArray} from "drizzle-orm";
-import {db} from "$lib/server/db";
+import { budgetPeriodInstances } from "$lib/schema/budgets";
 import {
   type EnvelopeAllocation,
   type EnvelopeRolloverHistory,
@@ -8,10 +6,9 @@ import {
   envelopeAllocations,
   envelopeRolloverHistory,
 } from "$lib/schema/budgets/envelope-allocations";
-import {budgetPeriodInstances} from "$lib/schema/budgets";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {currentDate as defaultCurrentDate} from "$lib/utils/dates";
+import { db } from "$lib/server/db";
+import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 export interface RolloverCalculationResult {
   envelopeId: number;
@@ -215,7 +212,7 @@ export class RolloverCalculator {
         );
       }
 
-      return rolloverRecord;
+      return rolloverRecord!;
     });
   }
 
@@ -368,18 +365,17 @@ export class RolloverCalculator {
     periodId: number,
     selectedIds?: number[]
   ): Promise<EnvelopeAllocation[]> {
-    let query = db
-      .select()
-      .from(envelopeAllocations)
-      .where(eq(envelopeAllocations.periodInstanceId, periodId));
+    const conditions = [eq(envelopeAllocations.periodInstanceId, periodId)];
 
     if (selectedIds && selectedIds.length > 0) {
-      query = query.where(
-        sql`${envelopeAllocations.id} IN (${selectedIds.join(",")})`
-      );
+      conditions.push(inArray(envelopeAllocations.id, selectedIds));
     }
 
-    return await query.orderBy(asc(envelopeAllocations.categoryId));
+    return await db
+      .select()
+      .from(envelopeAllocations)
+      .where(and(...conditions))
+      .orderBy(asc(envelopeAllocations.categoryId));
   }
 
   private async getRolloverHistory(envelopeId: number): Promise<EnvelopeRolloverHistory[]> {

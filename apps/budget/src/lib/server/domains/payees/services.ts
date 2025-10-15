@@ -8,16 +8,11 @@ import type {
   Payee,
   PayeeType
 } from "$lib/schema";
-import type {
-  SubscriptionInfo,
-  PayeeAddress,
-  PaymentMethodReference,
-  PayeeTags
-} from "./types";
+import { logger } from "$lib/server/shared/logging";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { currentDate, toISOString } from "$lib/utils/dates";
-import {logger} from "$lib/server/shared/logging";
+import { BudgetAllocationService } from "./budget-allocation";
 import { CategoryLearningService } from "./category-learning";
 import {
   ContactManagementService,
@@ -52,6 +47,13 @@ import {
   type PayeeSuggestions,
   type UpdatePayeeData
 } from "./repository";
+import type {
+  PayeeIntelligenceSummary,
+  FieldChange,
+  FieldRecommendation,
+  AddressData,
+  ContactData
+} from "./types";
 import {
   SubscriptionManagementService,
   type SubscriptionCancellationAssistance,
@@ -62,6 +64,12 @@ import {
   type SubscriptionRenewalPrediction,
   type SubscriptionUsageAnalysis
 } from "./subscription-management";
+import type {
+  PayeeAddress,
+  PayeeTags,
+  PaymentMethodReference,
+  SubscriptionInfo
+} from "./types";
 
 export interface CreatePayeeData {
   name: string;
@@ -112,27 +120,36 @@ export interface PayeeAnalytics {
 /**
  * Service for payee business logic with advanced intelligence capabilities
  */
-export class PayeeService {
-  private intelligenceService: PayeeIntelligenceService;
-  private learningService: CategoryLearningService;
-  private mlCoordinator: PayeeMLCoordinator;
-  private contactService: ContactManagementService;
-  private subscriptionService: SubscriptionManagementService;
-  private categoryService?: any;
-  private budgetService?: any;
+import type { CategoryService } from "../categories/services";
+import type { BudgetService } from "../budgets/services";
 
+/**
+ * Payee service containing business logic with advanced intelligence capabilities
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
+ */
+export class PayeeService {
   constructor(
-    private repository: PayeeRepository = new PayeeRepository(),
-    categoryService?: any,
-    budgetService?: any
-  ) {
-    this.intelligenceService = new PayeeIntelligenceService();
-    this.learningService = new CategoryLearningService();
-    this.mlCoordinator = new PayeeMLCoordinator();
-    this.contactService = new ContactManagementService();
-    this.subscriptionService = new SubscriptionManagementService();
-    this.categoryService = categoryService;
-    this.budgetService = budgetService;
+    private repository: PayeeRepository,
+    private intelligenceService: PayeeIntelligenceService,
+    private learningService: CategoryLearningService,
+    private mlCoordinator: PayeeMLCoordinator,
+    private contactService: ContactManagementService,
+    private subscriptionService: SubscriptionManagementService,
+    private categoryService?: CategoryService,
+    private budgetService?: BudgetService,
+    private budgetAllocationService?: BudgetAllocationService
+  ) {}
+
+  /**
+   * Get budget allocation service, creating if not injected
+   */
+  private getBudgetAllocationService(): BudgetAllocationService {
+    if (!this.budgetAllocationService) {
+      this.budgetAllocationService = new BudgetAllocationService();
+    }
+    return this.budgetAllocationService;
   }
 
   /**
@@ -251,14 +268,16 @@ export class PayeeService {
    * Get all payees
    */
   async getAllPayees(): Promise<Payee[]> {
-    return await this.repository.findAll();
+    const result = await this.repository.findAll();
+    return result.data;
   }
 
   /**
    * Get all payees with transaction statistics
    */
   async getAllPayeesWithStats(): Promise<PayeeWithStats[]> {
-    const payees = await this.repository.findAll();
+    const result = await this.repository.findAll();
+    const payees = result.data;
 
     return await Promise.all(
       payees.map(async (payee) => {
@@ -413,11 +432,11 @@ export class PayeeService {
       }
     }
 
-    const deletedCount = deleteableIds.length > 0
-      ? await this.repository.bulkDelete(deleteableIds)
-      : 0;
+    if (deleteableIds.length > 0) {
+      await this.repository.bulkDelete(deleteableIds);
+    }
 
-    return {deletedCount, errors};
+    return {deletedCount: deleteableIds.length, errors};
   }
 
   /**
@@ -551,7 +570,8 @@ export class PayeeService {
     }
 
     // Update all payees
-    const allPayees = await this.repository.findAll();
+    const allPayeesResult = await this.repository.findAll();
+    const allPayees = allPayeesResult.data;
     const result: BulkUpdateResult = {successCount: 0, errors: []};
 
     for (const payee of allPayees) {
@@ -573,7 +593,8 @@ export class PayeeService {
    * Get payee analytics and summary data
    */
   async getPayeeAnalytics(): Promise<PayeeAnalytics> {
-    const allPayees = await this.repository.findAll();
+    const allPayeesResult = await this.repository.findAll();
+    const allPayees = allPayeesResult.data;
     const activePayees = allPayees.filter(p => p.isActive);
     const payeesWithDefaults = allPayees.filter(p => p.defaultCategoryId || p.defaultBudgetId);
     const needingAttention = await this.repository.findNeedingAttention();
@@ -868,11 +889,7 @@ export class PayeeService {
     updateFrequency?: boolean;
     updateAmount?: boolean;
     minConfidence?: number;
-  } = {}): Promise<{
-    updated: boolean;
-    changes: Array<{field: string; oldValue: any; newValue: any; confidence: number}>;
-    recommendations: Array<{field: string; suggestion: any; confidence: number; reason: string}>;
-  }> {
+  } = {}): Promise<PayeeIntelligenceSummary & { updated: boolean }> {
     const {
       updateCategory = true,
       updateBudget = true,
@@ -886,8 +903,8 @@ export class PayeeService {
     const frequencyAnalysis = await this.intelligenceService.analyzeFrequencyPattern(id);
     const spendingAnalysis = await this.intelligenceService.analyzeSpendingPatterns(id);
 
-    const changes: Array<{field: string; oldValue: any; newValue: any; confidence: number}> = [];
-    const recommendations: Array<{field: string; suggestion: any; confidence: number; reason: string}> = [];
+    const changes: FieldChange[] = [];
+    const recommendations: FieldRecommendation[] = [];
     const updateData: Partial<UpdatePayeeData> = {};
 
     // Update category if confidence is high enough
@@ -972,7 +989,11 @@ export class PayeeService {
     return {
       updated,
       changes,
-      recommendations
+      recommendations,
+      confidence: changes.length > 0
+        ? changes.reduce((sum, c) => sum + c.confidence, 0) / changes.length
+        : 0,
+      lastUpdated: toISOString(currentDate)
     };
   }
 
@@ -1027,7 +1048,13 @@ export class PayeeService {
             };
           }
 
-          const analysis: any = {};
+          const analysis: {
+            spendingAnalysis?: SpendingAnalysis;
+            seasonalPatterns?: SeasonalPattern[];
+            frequencyAnalysis?: FrequencyAnalysis;
+            transactionPrediction?: TransactionPrediction;
+            confidence?: ConfidenceMetrics;
+          } = {};
 
           // Run requested analyses
           if (includeSpendingAnalysis) {
@@ -1086,8 +1113,8 @@ export class PayeeService {
     transactionId?: number;
     fromCategoryId?: number;
     toCategoryId: number;
-    correctionTrigger: string;
-    correctionContext?: string;
+    correctionTrigger: "manual_user_correction" | "transaction_creation" | "bulk_categorization" | "import_correction" | "scheduled_transaction";
+    correctionContext?: "transaction_amount_low" | "transaction_amount_medium" | "transaction_amount_high" | "seasonal_period" | "weekend_transaction" | "weekday_transaction" | "first_time_payee" | "recurring_payee";
     transactionAmount?: number;
     transactionDate?: string;
     userConfidence?: number;
@@ -1098,13 +1125,25 @@ export class PayeeService {
     await this.getPayeeById(data.payeeId);
 
     // Record the correction
-    const correctionData: any = {
+    const correctionData: {
+      payeeId: number;
+      transactionId?: number;
+      fromCategoryId?: number;
+      toCategoryId: number;
+      correctionTrigger: "manual_user_correction" | "transaction_creation" | "bulk_categorization" | "import_correction" | "scheduled_transaction";
+      correctionContext?: "transaction_amount_low" | "transaction_amount_medium" | "transaction_amount_high" | "seasonal_period" | "weekend_transaction" | "weekday_transaction" | "first_time_payee" | "recurring_payee";
+      transactionAmount?: number;
+      transactionDate?: string;
+      userConfidence?: number;
+      notes?: string;
+      isOverride?: boolean;
+    } = {
       payeeId: data.payeeId,
       toCategoryId: data.toCategoryId,
-      correctionTrigger: data.correctionTrigger as any,
-      correctionContext: data.correctionContext as any,
+      correctionTrigger: data.correctionTrigger,
     };
 
+    if (data.correctionContext !== undefined) correctionData.correctionContext = data.correctionContext;
     if (data.transactionId !== undefined) correctionData.transactionId = data.transactionId;
     if (data.fromCategoryId !== undefined) correctionData.fromCategoryId = data.fromCategoryId;
     if (data.transactionAmount !== undefined) correctionData.transactionAmount = data.transactionAmount;
@@ -1306,7 +1345,7 @@ export class PayeeService {
     updatedPayees: Array<{
       payeeId: number;
       payeeName: string;
-      changes: Array<{field: string; oldValue: any; newValue: any; confidence: number}>;
+      changes: Array<{field: string; oldValue: unknown; newValue: unknown; confidence: number}>;
     }>;
     skippedPayees: Array<{
       payeeId: number;
@@ -1384,9 +1423,7 @@ export class PayeeService {
    */
   async getBudgetOptimizationAnalysis(payeeId: number) {
     await this.validatePayeeExists(payeeId);
-    const {BudgetAllocationService} = await import('./budget-allocation');
-    const budgetService = new BudgetAllocationService();
-    return await budgetService.analyzeBudgetOptimization(payeeId);
+    return await this.getBudgetAllocationService().analyzeBudgetOptimization(payeeId);
   }
 
   /**
@@ -1400,9 +1437,7 @@ export class PayeeService {
       timeHorizon?: number;
     } = {}
   ) {
-    const {BudgetAllocationService} = await import('./budget-allocation');
-    const budgetService = new BudgetAllocationService();
-    return await budgetService.suggestOptimalAllocations(accountId, options);
+    return await this.getBudgetAllocationService().suggestOptimalAllocations(accountId, options);
   }
 
   /**
@@ -1414,9 +1449,7 @@ export class PayeeService {
     periodsAhead: number = 12
   ) {
     await this.validatePayeeExists(payeeId);
-    const {BudgetAllocationService} = await import('./budget-allocation');
-    const budgetService = new BudgetAllocationService();
-    return await budgetService.predictFutureBudgetNeeds(payeeId, forecastPeriod, periodsAhead);
+    return await this.getBudgetAllocationService().predictFutureBudgetNeeds(payeeId, forecastPeriod, periodsAhead);
   }
 
   /**
@@ -1424,9 +1457,7 @@ export class PayeeService {
    */
   async getBudgetHealthMetrics(payeeId: number) {
     await this.validatePayeeExists(payeeId);
-    const {BudgetAllocationService} = await import('./budget-allocation');
-    const budgetService = new BudgetAllocationService();
-    return await budgetService.calculateBudgetHealth(payeeId);
+    return await this.getBudgetAllocationService().calculateBudgetHealth(payeeId);
   }
 
   /**
@@ -1436,9 +1467,7 @@ export class PayeeService {
     accountId?: number,
     strategy: 'conservative' | 'aggressive' | 'balanced' = 'balanced'
   ) {
-    const {BudgetAllocationService} = await import('./budget-allocation');
-    const budgetService = new BudgetAllocationService();
-    return await budgetService.generateBudgetRebalancing(accountId, strategy);
+    return await this.getBudgetAllocationService().generateBudgetRebalancing(accountId, strategy);
   }
 
   /**
@@ -1446,9 +1475,7 @@ export class PayeeService {
    */
   async getBudgetEfficiencyAnalysis(payeeId: number, currentBudget?: number) {
     await this.validatePayeeExists(payeeId);
-    const {BudgetAllocationService} = await import('./budget-allocation');
-    const budgetService = new BudgetAllocationService();
-    return await budgetService.calculateBudgetEfficiency(payeeId, currentBudget);
+    return await this.getBudgetAllocationService().calculateBudgetEfficiency(payeeId, currentBudget);
   }
 
   /**
@@ -1468,9 +1495,7 @@ export class PayeeService {
       await this.validatePayeeExists(payeeId);
     }
 
-    const {BudgetAllocationService} = await import('./budget-allocation');
-    const budgetService = new BudgetAllocationService();
-    return await budgetService.optimizeMultiPayeeBudgets(payeeIds, totalBudgetConstraint, objectives);
+    return await this.getBudgetAllocationService().optimizeMultiPayeeBudgets(payeeIds, totalBudgetConstraint, objectives);
   }
 
   /**
@@ -1490,8 +1515,7 @@ export class PayeeService {
       await this.validatePayeeExists(payeeId);
     }
 
-    const {BudgetAllocationService} = await import('./budget-allocation');
-    const budgetService = new BudgetAllocationService();
+    const budgetService = this.getBudgetAllocationService();
 
     // Generate scenarios for each payee
     const scenarioResults = [];
@@ -1571,9 +1595,15 @@ export class PayeeService {
     } = filters;
 
     // Get payees that meet the criteria
-    const accountPayees = accountId
+    const accountPayeesResult = accountId
       ? await this.repository.findByAccountTransactions(accountId)
       : await this.repository.findAll();
+
+    // Extract array from paginated result if needed
+    const accountPayees = Array.isArray(accountPayeesResult)
+      ? accountPayeesResult
+      : accountPayeesResult.data;
+
     const payeesWithStats = await Promise.all(
       accountPayees.map(async (payee) => {
         const stats = await this.repository.getStats(payee.id);
@@ -1581,7 +1611,7 @@ export class PayeeService {
       })
     );
 
-    const eligiblePayees = payeesWithStats.filter((payee: any) => {
+    const eligiblePayees = payeesWithStats.filter((payee: Payee & { stats: PayeeStats }) => {
       if (!includeInactive && !payee.isActive) return false;
 
       const stats = payee.stats;
@@ -1607,8 +1637,7 @@ export class PayeeService {
       };
     }
 
-    const {BudgetAllocationService} = await import('./budget-allocation');
-    const budgetService = new BudgetAllocationService();
+    const budgetService = this.getBudgetAllocationService();
 
     // Get optimization analysis for each eligible payee
     const optimizations = [];
@@ -1643,7 +1672,7 @@ export class PayeeService {
       : 0;
 
     return {
-      eligiblePayees: eligiblePayees.map((p: any) => ({
+      eligiblePayees: eligiblePayees.map((p) => ({
         id: p.id,
         name: p.name,
         isActive: p.isActive,
@@ -1949,7 +1978,7 @@ export class PayeeService {
     const {payeeIds, insightTypes, priorityFilter, timeRange} = filters;
 
     // Get relevant payees
-    const targetPayeeIds = payeeIds || (await this.repository.findAll()).map(p => p.id);
+    const targetPayeeIds = payeeIds || (await this.repository.findAll()).data.map(p => p.id);
 
     // Validate payee IDs
     if (payeeIds) {
@@ -2062,7 +2091,7 @@ export class PayeeService {
       phone?: string;
       email?: string;
       website?: string;
-      address?: any;
+      address?: AddressData;
     }
   ): Promise<{
     validationResults: ContactValidationResult[];
@@ -2075,24 +2104,36 @@ export class PayeeService {
     const payee = await this.getPayeeById(payeeId);
 
     // Use provided overrides or payee's existing contact data
-    const contactData: any = {};
+    const contactData: ContactData = {};
     if (contactOverrides?.phone || payee.phone) contactData.phone = contactOverrides?.phone || payee.phone;
     if (contactOverrides?.email || payee.email) contactData.email = contactOverrides?.email || payee.email;
     if (contactOverrides?.website || payee.website) contactData.website = contactOverrides?.website || payee.website;
-    if (contactOverrides?.address || payee.address) contactData.address = contactOverrides?.address || payee.address;
+    if (contactOverrides?.address || payee.address) contactData.address = contactOverrides?.address || (payee.address as AddressData | null);
+
+    // Convert ContactData to service-compatible format (strip nulls)
+    const serviceContactData: {
+      phone?: string;
+      email?: string;
+      website?: string;
+      address?: AddressData;
+    } = {};
+    if (contactData.phone) serviceContactData.phone = contactData.phone;
+    if (contactData.email) serviceContactData.email = contactData.email;
+    if (contactData.website) serviceContactData.website = contactData.website;
+    if (contactData.address) serviceContactData.address = contactData.address;
 
     // Validate and enrich contact information
-    const enrichmentResult = await this.contactService.validateAndEnrichContactInfo(contactData);
+    const enrichmentResult = await this.contactService.validateAndEnrichContactInfo(serviceContactData);
 
     // Generate contact analytics
-    const payeeAnalytics = await this.getContactAnalytics(payeeId, contactData);
+    const payeeAnalytics = await this.getContactAnalytics(payeeId, serviceContactData);
 
     // Generate specific suggestions for this payee
     const payeeSuggestions = await this.contactService.generateContactSuggestions(
       payeeId,
       {
         ...(payee.name && { name: payee.name }),
-        ...contactData
+        ...serviceContactData
       }
     );
 
@@ -2182,8 +2223,8 @@ export class PayeeService {
   /**
    * Enrich address data for a payee
    */
-  async enrichPayeeAddressData(payeeId: number, address?: any): Promise<{
-    standardized: any;
+  async enrichPayeeAddressData(payeeId: number, address?: AddressData): Promise<{
+    standardized: AddressData;
     confidence: number;
     geocoded: boolean;
     coordinates?: {lat: number; lng: number};
@@ -2217,9 +2258,10 @@ export class PayeeService {
     includeInactive = false,
     minimumSimilarity = 0.7
   ): Promise<DuplicateDetection[]> {
+    const result = await this.repository.findAll();
     const payees = includeInactive
-      ? await this.repository.findAll()
-      : await this.repository.findAll().then(p => p.filter(payee => payee.isActive));
+      ? result.data
+      : result.data.filter(payee => payee.isActive);
 
     const duplicates = await this.contactService.detectDuplicateContacts(payees);
 
@@ -2233,7 +2275,13 @@ export class PayeeService {
   async generatePayeeContactSuggestions(payeeId: number): Promise<ContactSuggestion[]> {
     const payee = await this.getPayeeById(payeeId);
 
-    const contactData: any = {};
+    const contactData: {
+      name?: string;
+      phone?: string;
+      email?: string;
+      website?: string;
+      address?: AddressData;
+    } = {};
     if (payee.name) contactData.name = payee.name;
     if (payee.phone) contactData.phone = payee.phone;
     if (payee.email) contactData.email = payee.email;
@@ -2282,7 +2330,14 @@ export class PayeeService {
       updated = true;
     }
 
-    const result: any = {
+    const result: {
+      isAccessible: boolean;
+      isSecure: boolean;
+      standardizedUrl?: string;
+      securityFlags: string[];
+      suggestions: string[];
+      updated?: boolean;
+    } = {
       isAccessible,
       isSecure,
       securityFlags,
@@ -2334,7 +2389,13 @@ export class PayeeService {
     const extraction = await this.contactService.extractContactFromTransactionData(mockTransactionData);
 
     // Convert extracted contacts to structured format
-    const extractedContacts: any[] = [];
+    const extractedContacts: Array<{
+      field: 'phone' | 'email' | 'website';
+      value: string;
+      confidence: number;
+      source: string;
+      transactionCount: number;
+    }> = [];
     const suggestions: ContactSuggestion[] = [];
 
     for (const contact of extraction.extractedContacts) {
@@ -2384,7 +2445,7 @@ export class PayeeService {
       phone?: string;
       email?: string;
       website?: string;
-      address?: any;
+      address?: AddressData;
     }
   ): Promise<ContactAnalytics> {
     const payee = await this.getPayeeById(payeeId);
@@ -2485,7 +2546,7 @@ export class PayeeService {
       payeeName: string;
       validationResults: ContactValidationResult[];
       suggestions: ContactSuggestion[];
-      applied: Array<{field: string; oldValue: any; newValue: any}>;
+      applied: Array<{field: string; oldValue: unknown; newValue: unknown}>;
       skipped: Array<{field: string; reason: string}>;
     }>;
     summary: {
@@ -2515,7 +2576,7 @@ export class PayeeService {
           const payee = await this.getPayeeById(payeeId);
           const validation = await this.validateAndEnrichPayeeContact(payeeId);
 
-          const applied: Array<{field: string; oldValue: any; newValue: any}> = [];
+          const applied: Array<{field: string; oldValue: unknown; newValue: unknown}> = [];
           const skipped: Array<{field: string; reason: string}> = [];
 
           // Apply automatic fixes if enabled
@@ -2609,8 +2670,8 @@ export class PayeeService {
   ): Promise<{
     merged: boolean;
     mergedPayee?: Payee;
-    conflicts: Array<{field: string; primaryValue: any; duplicateValue: any; resolution: string}>;
-    preservedData: any;
+    conflicts: Array<{field: string; primaryValue: unknown; duplicateValue: unknown; resolution: string}>;
+    preservedData: Record<string, unknown>;
   }> {
     const {
       dryRun = false,
@@ -2621,8 +2682,8 @@ export class PayeeService {
     const primaryPayee = await this.getPayeeById(duplicateDetection.primaryPayeeId);
     const duplicatePayee = await this.getPayeeById(duplicateDetection.duplicatePayeeId);
 
-    const conflicts: Array<{field: string; primaryValue: any; duplicateValue: any; resolution: string}> = [];
-    const mergedData: any = {...primaryPayee};
+    const conflicts: Array<{field: string; primaryValue: unknown; duplicateValue: unknown; resolution: string}> = [];
+    const mergedData: UpdatePayeeData = {};
 
     // Resolve conflicts based on strategy
     const contactFields = ['phone', 'email', 'website', 'address'] as const;
@@ -2668,10 +2729,10 @@ export class PayeeService {
           resolution
         });
 
-        mergedData[field] = resolvedValue;
+        (mergedData as Record<string, unknown>)[field] = resolvedValue;
       } else if (!primaryValue && duplicateValue) {
         // Fill in missing data from duplicate
-        mergedData[field] = duplicateValue;
+        (mergedData as Record<string, unknown>)[field] = duplicateValue;
         conflicts.push({
           field,
           primaryValue: null,
@@ -2693,7 +2754,12 @@ export class PayeeService {
       merged = true;
     }
 
-    const result: any = {
+    const result: {
+      merged: boolean;
+      mergedPayee?: Payee;
+      conflicts: Array<{field: string; primaryValue: unknown; duplicateValue: unknown; resolution: string}>;
+      preservedData: Record<string, unknown>;
+    } = {
       merged,
       conflicts,
       preservedData: preserveHistory ? duplicatePayee : {}
@@ -2923,9 +2989,18 @@ export class PayeeService {
     // Verify payee exists
     const payee = await this.getPayeeById(payeeId);
 
+    // Convert SubscriptionMetadata to SubscriptionInfo format
+    const subscriptionInfo: SubscriptionInfo = {
+      monthlyCost: subscriptionMetadata.baseCost,
+      renewalDate: subscriptionMetadata.startDate || new Date().toISOString(),
+      isActive: !subscriptionMetadata.endDate,
+      billingCycle: subscriptionMetadata.billingCycle === 'annual' ? 'yearly' :
+                    subscriptionMetadata.billingCycle === 'quarterly' ? 'quarterly' : 'monthly',
+    };
+
     // Update the payee's subscription info
     return await this.updatePayee(payeeId, {
-      subscriptionInfo: subscriptionMetadata
+      subscriptionInfo
     });
   }
 
@@ -2955,10 +3030,19 @@ export class PayeeService {
     }
 
     // Update subscription metadata to mark as cancelled
-    const updatedSubscriptionInfo: SubscriptionMetadata = {
+    const updatedSubscriptionMetadata: SubscriptionMetadata = {
       ...subscriptionInfo,
       endDate: cancellationDate,
       autoRenewal: false
+    };
+
+    // Convert to SubscriptionInfo format
+    const updatedSubscriptionInfo: SubscriptionInfo = {
+      monthlyCost: updatedSubscriptionMetadata.baseCost,
+      renewalDate: updatedSubscriptionMetadata.startDate || new Date().toISOString(),
+      isActive: false, // Subscription is now cancelled
+      billingCycle: updatedSubscriptionMetadata.billingCycle === 'annual' ? 'yearly' :
+                    updatedSubscriptionMetadata.billingCycle === 'quarterly' ? 'quarterly' : 'monthly',
     };
 
     // Update the payee
@@ -2975,12 +3059,6 @@ export class PayeeService {
    */
   async getSubscriptionValueOptimization(
     payeeIds: number[],
-    optimizationStrategy: 'cost_reduction' | 'value_maximization' | 'usage_optimization' | 'risk_minimization' = 'value_maximization',
-    constraints: {
-      maxCostIncrease?: number;
-      minValueScore?: number;
-      preserveEssentialServices?: boolean;
-    } = {}
   ): Promise<Array<{
     payeeId: number;
     currentValue: number;
@@ -3023,8 +3101,6 @@ export class PayeeService {
    */
   async getSubscriptionCompetitorAnalysis(
     payeeId: number,
-    includeFeatureComparison: boolean = true,
-    includePricingTiers: boolean = true
   ): Promise<{
     currentService: {
       name: string;
@@ -3115,7 +3191,7 @@ export class PayeeService {
     }
 
     // Update subscription metadata with automation rules
-    const updatedSubscriptionInfo: SubscriptionMetadata = {
+    const updatedSubscriptionMetadata: SubscriptionMetadata = {
       ...subscriptionInfo,
       alerts: {
         renewalReminder: rules.autoRenewalReminders?.enabled ?? subscriptionInfo.alerts?.renewalReminder ?? true,
@@ -3123,6 +3199,15 @@ export class PayeeService {
         usageAlert: rules.autoGenerateUsageReports ?? subscriptionInfo.alerts?.usageAlert ?? false,
         unusedAlert: rules.autoMarkUnused?.enabled ?? subscriptionInfo.alerts?.unusedAlert ?? true
       }
+    };
+
+    // Convert to SubscriptionInfo format
+    const updatedSubscriptionInfo: SubscriptionInfo = {
+      monthlyCost: updatedSubscriptionMetadata.baseCost,
+      renewalDate: updatedSubscriptionMetadata.startDate || new Date().toISOString(),
+      isActive: !updatedSubscriptionMetadata.endDate,
+      billingCycle: updatedSubscriptionMetadata.billingCycle === 'annual' ? 'yearly' :
+                    updatedSubscriptionMetadata.billingCycle === 'quarterly' ? 'quarterly' : 'monthly',
     };
 
     // Update the payee
