@@ -9,6 +9,7 @@ import {viewsRoutes} from "./routes/views";
 import {scheduleRoutes} from "./routes/schedules";
 import {budgetRoutes} from "./routes/budgets";
 import {patternRoutes} from "./routes/patterns";
+import {medicalExpensesRouter} from "./routes/medical-expenses";
 
 export const router = t.router({
   accountRoutes,
@@ -20,6 +21,7 @@ export const router = t.router({
   viewsRoutes,
   budgetRoutes,
   patternRoutes,
+  medicalExpensesRouter,
 });
 
 export const createCaller = t.createCallerFactory(router);

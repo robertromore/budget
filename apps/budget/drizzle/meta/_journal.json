@@ -15,6 +15,13 @@
       "when": 1760065962613,
       "tag": "0001_robust_ken_ellis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1760297915270,
+      "tag": "0002_many_maggott",
+      "breakpoints": true
     }
   ]
 }
