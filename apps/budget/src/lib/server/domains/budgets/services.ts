@@ -27,6 +27,7 @@ import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/
 import {currentDate as defaultCurrentDate, timezone as defaultTimezone} from "$lib/utils/dates";
 import {and, eq, sql} from "drizzle-orm";
 import {EnvelopeService, type EnvelopeAllocationRequest} from "./envelope-service";
+import type {DeficitRecoveryPlan} from "./deficit-recovery";
 
 /* ------------------------------------------------------------------ */
 /* Budget Service                                                     */
@@ -56,13 +57,19 @@ export interface UpdateBudgetRequest {
   groupIds?: number[];
 }
 
+/**
+ * Budget service containing business logic
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
+ */
 export class BudgetService {
   constructor(
-    private repository: BudgetRepository = new BudgetRepository(),
-    private envelopeService: EnvelopeService = new EnvelopeService(),
-    private goalTrackingService: GoalTrackingService = new GoalTrackingService(),
-    private forecastService: BudgetForecastService = new BudgetForecastService(),
-    private intelligenceService: BudgetIntelligenceService = new BudgetIntelligenceService()
+    private repository: BudgetRepository,
+    private envelopeService: EnvelopeService,
+    private goalTrackingService: GoalTrackingService,
+    private forecastService: BudgetForecastService,
+    private intelligenceService: BudgetIntelligenceService
   ) {}
 
   private generateSlug(name: string): string {
@@ -107,7 +114,21 @@ export class BudgetService {
       counter++;
     }
 
-    return await this.repository.createBudget({
+    const createInput: {
+      budget: {
+        name: string;
+        slug: string;
+        description: string | null;
+        type: typeof input.type;
+        scope: typeof input.scope;
+        status: typeof status;
+        enforcementLevel: typeof enforcementLevel;
+        metadata: typeof metadata;
+      };
+      accountIds?: number[];
+      categoryIds?: number[];
+      groupIds?: number[];
+    } = {
       budget: {
         name,
         slug,
@@ -118,17 +139,26 @@ export class BudgetService {
         enforcementLevel,
         metadata,
       },
-      accountIds: input.accountIds,
-      categoryIds: input.categoryIds,
-      groupIds: input.groupIds,
-    });
+    };
+
+    if (input.accountIds !== undefined) {
+      createInput.accountIds = input.accountIds;
+    }
+    if (input.categoryIds !== undefined) {
+      createInput.categoryIds = input.categoryIds;
+    }
+    if (input.groupIds !== undefined) {
+      createInput.groupIds = input.groupIds;
+    }
+
+    return await this.repository.createBudget(createInput);
   }
 
   async updateBudget(id: number, input: UpdateBudgetRequest): Promise<BudgetWithRelations> {
     const updates: Record<string, unknown> = {};
 
     if (input.name !== undefined) {
-      updates.name = InputSanitizer.sanitizeText(input.name, {
+      updates['name'] = InputSanitizer.sanitizeText(input.name, {
         required: true,
         minLength: 2,
         maxLength: 80,
@@ -137,23 +167,23 @@ export class BudgetService {
     }
 
     if (input.description !== undefined) {
-      updates.description = input.description
+      updates['description'] = input.description
         ? InputSanitizer.sanitizeDescription(input.description, 500)
         : null;
     }
 
     if (input.status !== undefined) {
       this.validateEnumValue("Budget status", input.status, budgetStatuses);
-      updates.status = input.status;
+      updates['status'] = input.status;
     }
 
     if (input.enforcementLevel !== undefined) {
       this.validateEnumValue("Enforcement level", input.enforcementLevel, budgetEnforcementLevels);
-      updates.enforcementLevel = input.enforcementLevel;
+      updates['enforcementLevel'] = input.enforcementLevel;
     }
 
     if (input.metadata !== undefined) {
-      updates.metadata = input.metadata;
+      updates['metadata'] = input.metadata;
     }
 
     if (
@@ -165,15 +195,23 @@ export class BudgetService {
       throw new ValidationError("No updates provided", "budget");
     }
 
-    return await this.repository.updateBudget(
-      id,
-      updates,
-      {
-        accountIds: input.accountIds,
-        categoryIds: input.categoryIds,
-        groupIds: input.groupIds,
-      }
-    );
+    const relations: {
+      accountIds?: number[];
+      categoryIds?: number[];
+      groupIds?: number[];
+    } = {};
+
+    if (input.accountIds !== undefined) {
+      relations.accountIds = input.accountIds;
+    }
+    if (input.categoryIds !== undefined) {
+      relations.categoryIds = input.categoryIds;
+    }
+    if (input.groupIds !== undefined) {
+      relations.groupIds = input.groupIds;
+    }
+
+    return await this.repository.updateBudget(id, updates, relations);
   }
 
   async listBudgets(status?: Budget["status"]): Promise<BudgetWithRelations[]> {
@@ -213,9 +251,34 @@ export class BudgetService {
 
     const duplicatedName = newName || `${originalBudget.name} (Copy)`;
 
-    return await this.repository.createBudget({
+    // Generate unique slug
+    let baseSlug = this.generateSlug(duplicatedName);
+    let slug = baseSlug;
+    let counter = 1;
+
+    while (await this.repository.slugExists(slug)) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    const createInput: {
+      budget: {
+        name: string;
+        slug: string;
+        description: string | null;
+        type: typeof originalBudget.type;
+        scope: typeof originalBudget.scope;
+        status: typeof originalBudget.status;
+        enforcementLevel: typeof originalBudget.enforcementLevel;
+        metadata: BudgetMetadata;
+      };
+      accountIds?: number[];
+      categoryIds?: number[];
+      groupIds?: number[];
+    } = {
       budget: {
         name: duplicatedName,
+        slug,
         description: originalBudget.description,
         type: originalBudget.type,
         scope: originalBudget.scope,
@@ -223,10 +286,23 @@ export class BudgetService {
         enforcementLevel: originalBudget.enforcementLevel,
         metadata: originalBudget.metadata as BudgetMetadata,
       },
-      accountIds: originalBudget.accounts?.map(a => a.id),
-      categoryIds: originalBudget.categories?.map(c => c.id),
-      groupIds: originalBudget.groups?.map(g => g.id),
-    });
+    };
+
+    const accountIds = originalBudget.accounts?.map(a => a.id);
+    const categoryIds = originalBudget.categories?.map(c => c.id);
+    const groupIds = originalBudget.groupMemberships?.map((gm) => gm.groupId);
+
+    if (accountIds !== undefined) {
+      createInput.accountIds = accountIds;
+    }
+    if (categoryIds !== undefined) {
+      createInput.categoryIds = categoryIds;
+    }
+    if (groupIds !== undefined) {
+      createInput.groupIds = groupIds;
+    }
+
+    return await this.repository.createBudget(createInput);
   }
 
   async bulkArchive(ids: number[]): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
@@ -334,13 +410,24 @@ export class BudgetService {
     reason?: string,
     transferredBy: string = "user"
   ) {
-    return await this.envelopeService.transferFunds({
+    const request: {
+      fromEnvelopeId: number;
+      toEnvelopeId: number;
+      amount: number;
+      reason?: string;
+      transferredBy: string;
+    } = {
       fromEnvelopeId,
       toEnvelopeId,
       amount,
-      reason: reason ?? undefined,
       transferredBy,
-    });
+    };
+
+    if (reason !== undefined) {
+      request.reason = reason;
+    }
+
+    return await this.envelopeService.transferFunds(request);
   }
 
   async processEnvelopeRollover(fromPeriodId: number, toPeriodId: number) {
@@ -375,7 +462,7 @@ export class BudgetService {
     return await this.envelopeService.createDeficitRecoveryPlan(envelopeId);
   }
 
-  async executeEnvelopeDeficitRecovery(plan: any, executedBy?: string) {
+  async executeEnvelopeDeficitRecovery(plan: DeficitRecoveryPlan, executedBy?: string) {
     return await this.envelopeService.executeDeficitRecovery(plan, executedBy);
   }
 
@@ -896,8 +983,14 @@ export interface EnsurePeriodInstanceOptions {
   actualAmount?: number;
 }
 
+/**
+ * Budget period service for managing budget period instances
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
+ */
 export class BudgetPeriodService {
-  constructor(private repository: BudgetRepository = new BudgetRepository()) {}
+  constructor(private repository: BudgetRepository) {}
 
   async ensureInstanceForDate(
     templateId: number,
@@ -970,8 +1063,14 @@ export interface ContributionPlan {
   projectedCompletionDate: string;
 }
 
+/**
+ * Goal tracking service for goal-based budgets
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
+ */
 export class GoalTrackingService {
-  constructor(private repository: BudgetRepository = new BudgetRepository()) {}
+  constructor(private repository: BudgetRepository) {}
 
   async calculateGoalProgress(budgetId: number): Promise<GoalProgress> {
     const budget = await this.repository.findById(budgetId);
@@ -1006,7 +1105,7 @@ export class GoalTrackingService {
       goalMetadata
     );
 
-    return {
+    const result: GoalProgress = {
       budgetId: budget.id,
       budgetName: budget.name,
       targetAmount,
@@ -1017,9 +1116,14 @@ export class GoalTrackingService {
       daysRemaining,
       isOnTrack: status === 'on-track' || status === 'ahead',
       requiredContribution,
-      projectedCompletionDate,
       status,
     };
+
+    if (projectedCompletionDate !== undefined) {
+      result.projectedCompletionDate = projectedCompletionDate;
+    }
+
+    return result;
   }
 
   private async getCurrentGoalAmount(budgetId: number, budget: BudgetWithRelations): Promise<number> {
@@ -1087,10 +1191,14 @@ export class GoalTrackingService {
       const daysToComplete = Math.ceil((targetAmount - currentAmount) / (currentAmount / elapsedDays));
       const projectedDate = new Date();
       projectedDate.setDate(projectedDate.getDate() + daysToComplete);
-      return {
+      const result: {status: GoalProgress['status']; projectedCompletionDate?: string} = {
         status: 'ahead',
-        projectedCompletionDate: projectedDate.toISOString().split('T')[0],
       };
+      const dateStr = projectedDate.toISOString().split('T')[0];
+      if (dateStr) {
+        result.projectedCompletionDate = dateStr;
+      }
+      return result;
     }
 
     if (percentComplete < expectedPercent - 20) {
@@ -1122,8 +1230,8 @@ export class GoalTrackingService {
       throw new ValidationError('Goal is already completed', 'goal');
     }
 
-    let amount: number;
-    let daysPerPayment: number;
+    let amount: number = 0;
+    let daysPerPayment: number = 0;
 
     switch (frequency) {
       case 'weekly':
@@ -1156,7 +1264,7 @@ export class GoalTrackingService {
       amount,
       numberOfPayments,
       totalAmount,
-      projectedCompletionDate: completionDate.toISOString().split('T')[0],
+      projectedCompletionDate: completionDate.toISOString().split('T')[0]!,
     };
   }
 
@@ -1210,8 +1318,14 @@ export interface BudgetForecast {
   status: 'sufficient' | 'tight' | 'exceeded';
 }
 
+/**
+ * Budget forecast service for predicting future budget states
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
+ */
 export class BudgetForecastService {
-  constructor(private repository: BudgetRepository = new BudgetRepository()) {}
+  constructor(private repository: BudgetRepository) {}
 
   async forecastBudgetImpact(budgetId: number, daysAhead: number = 30): Promise<BudgetForecast> {
     const budget = await this.repository.findById(budgetId);
@@ -1223,8 +1337,8 @@ export class BudgetForecastService {
     const periodEnd = new Date(now);
     periodEnd.setDate(periodEnd.getDate() + daysAhead);
 
-    const periodStart = now.toISOString().split('T')[0];
-    const periodEndStr = periodEnd.toISOString().split('T')[0];
+    const periodStart = now.toISOString().split('T')[0]!;
+    const periodEndStr = periodEnd.toISOString().split('T')[0]!;
 
     const schedules = await this.getSchedulesForBudget(budgetId);
     const scheduledExpenses: ScheduledExpenseForecast[] = [];
@@ -1269,7 +1383,15 @@ export class BudgetForecastService {
   }
 
   private async forecastSchedule(
-    schedule: any,
+    schedule: {
+      id: number;
+      name: string;
+      dateId: number | null;
+      status: string;
+      amount: number;
+      amount_type: string;
+      amount_2?: number;
+    },
     periodStart: string,
     periodEnd: string
   ): Promise<ScheduledExpenseForecast | null> {
@@ -1306,7 +1428,7 @@ export class BudgetForecastService {
     };
   }
 
-  private calculateOccurrences(dateConfig: any, periodStart: string, periodEnd: string): number {
+  private calculateOccurrences(dateConfig: { frequency?: string }, periodStart: string, periodEnd: string): number {
     const frequency = dateConfig.frequency;
     const start = new Date(periodStart);
     const end = new Date(periodEnd);
@@ -1326,7 +1448,7 @@ export class BudgetForecastService {
     }
   }
 
-  private calculateNextOccurrence(dateConfig: any, fromDate: string): string {
+  private calculateNextOccurrence(dateConfig: { startDate?: string }, fromDate: string): string {
     const startDate = dateConfig.startDate || fromDate;
     return startDate;
   }
@@ -1382,8 +1504,16 @@ export interface BudgetSuggestion {
   reason: string;
 }
 
+/**
+ * Budget intelligence service for suggesting budgets based on patterns (from services.ts)
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
+ *
+ * NOTE: There's another BudgetIntelligenceService in intelligence-service.ts
+ */
 export class BudgetIntelligenceService {
-  constructor(private repository: BudgetRepository = new BudgetRepository()) {}
+  constructor(private repository: BudgetRepository) {}
 
   /**
    * Analyzes transaction history for a payee to suggest the most appropriate budget.
@@ -1559,7 +1689,7 @@ export class BudgetIntelligenceService {
 /* ------------------------------------------------------------------ */
 
 export class BudgetTransactionService {
-  constructor(private repository: BudgetRepository = new BudgetRepository()) {}
+  constructor(private repository: BudgetRepository) {}
 
   async isTransactionFullyAllocated(transactionId: number): Promise<boolean> {
     return await db.transaction(async (tx) => {

@@ -3,6 +3,7 @@ import {
   transactions,
   removeAccountSchema,
   accountTypeEnum,
+  accountTypeKeys,
   type Account,
   type Transaction,
 } from "$lib/schema";
@@ -16,7 +17,9 @@ import {now, getLocalTimeZone} from "@internationalized/date";
 import {generateUniqueSlug} from "$lib/utils/slug-utils";
 import {isValidIconName} from "$lib/utils/icon-validation";
 import validator from "validator";
-import {AccountService} from "$lib/server/domains/accounts/services";
+import {serviceFactory} from "$lib/server/shared/container/service-factory";
+
+const accountService = serviceFactory.getAccountService();
 
 // Custom schema for account save operation (handles both create and update)
 const accountSaveSchema = z
@@ -76,7 +79,7 @@ const accountSaveSchema = z
       .nullable(),
     closed: z.boolean().optional(),
     // Enhanced account fields
-    accountType: z.enum(accountTypeEnum, {
+    accountType: z.enum(accountTypeKeys, {
       message: "Please select a valid account type"
     }).optional(),
     institution: z
@@ -105,6 +108,18 @@ const accountSaveSchema = z
       .pipe(z.string().regex(/^\d{4}$/, "Account number must be exactly 4 digits"))
       .optional()
       .nullable(),
+    onBudget: z.coerce.boolean().optional(),
+    // Debt account-specific fields
+    debtLimit: z.number().optional().nullable(),
+    minimumPayment: z.number().optional().nullable(),
+    paymentDueDay: z.number().min(1).max(31).optional().nullable(),
+    interestRate: z.number().optional().nullable(),
+    // HSA-specific fields
+    hsaContributionLimit: z.number().optional().nullable(),
+    hsaType: z.enum(["individual", "family"]).optional().nullable(),
+    hsaCurrentTaxYear: z.number().optional().nullable(),
+    hsaAdministrator: z.string().max(100).optional().nullable(),
+    hsaHighDeductiblePlan: z.string().max(200).optional().nullable(),
   })
   .refine(
     (data) => {
@@ -204,7 +219,6 @@ export const accountRoutes = t.router({
     return accountWithBalance as Account;
   }),
   getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({ctx, input}) => {
-    const accountService = new AccountService();
     const account = await accountService.getAccountBySlug(input.slug);
 
     if (!account) {
@@ -278,6 +292,48 @@ export const accountRoutes = t.router({
         updateData.accountNumberLast4 = input.accountNumberLast4;
       }
 
+      if (input.onBudget !== undefined) {
+        updateData.onBudget = input.onBudget;
+      }
+
+      // Debt account-specific fields
+      if (input.debtLimit !== undefined) {
+        updateData.debtLimit = input.debtLimit;
+      }
+
+      if (input.minimumPayment !== undefined) {
+        updateData.minimumPayment = input.minimumPayment;
+      }
+
+      if (input.paymentDueDay !== undefined) {
+        updateData.paymentDueDay = input.paymentDueDay;
+      }
+
+      if (input.interestRate !== undefined) {
+        updateData.interestRate = input.interestRate;
+      }
+
+      // HSA-specific fields
+      if (input.hsaContributionLimit !== undefined) {
+        updateData.hsaContributionLimit = input.hsaContributionLimit;
+      }
+
+      if (input.hsaType !== undefined) {
+        updateData.hsaType = input.hsaType;
+      }
+
+      if (input.hsaCurrentTaxYear !== undefined) {
+        updateData.hsaCurrentTaxYear = input.hsaCurrentTaxYear;
+      }
+
+      if (input.hsaAdministrator !== undefined) {
+        updateData.hsaAdministrator = input.hsaAdministrator;
+      }
+
+      if (input.hsaHighDeductiblePlan !== undefined) {
+        updateData.hsaHighDeductiblePlan = input.hsaHighDeductiblePlan;
+      }
+
       // Only update if there's something to update
       if (Object.keys(updateData).length === 0) {
         return existingAccount;
@@ -322,8 +378,6 @@ export const accountRoutes = t.router({
     }
 
     // Use AccountService to create account with initial balance transaction
-    const accountService = new AccountService();
-
     try {
       const createdAccount = await accountService.createAccount({
         name: input.name,
@@ -332,7 +386,7 @@ export const accountRoutes = t.router({
       });
 
       // Update the created account with additional fields not handled by the service
-      if (input.accountType || input.institution || input.accountIcon || input.accountColor || input.accountNumberLast4) {
+      if (input.accountType || input.institution || input.accountIcon || input.accountColor || input.accountNumberLast4 || input.onBudget !== undefined || input.debtLimit !== undefined || input.minimumPayment !== undefined || input.paymentDueDay !== undefined || input.interestRate !== undefined || input.hsaContributionLimit !== undefined || input.hsaType || input.hsaCurrentTaxYear !== undefined || input.hsaAdministrator || input.hsaHighDeductiblePlan) {
         const updateData: any = {};
 
         if (input.accountType) updateData.accountType = input.accountType;
@@ -340,6 +394,20 @@ export const accountRoutes = t.router({
         if (input.accountIcon) updateData.accountIcon = input.accountIcon;
         if (input.accountColor) updateData.accountColor = input.accountColor;
         if (input.accountNumberLast4) updateData.accountNumberLast4 = input.accountNumberLast4;
+        if (input.onBudget !== undefined) updateData.onBudget = input.onBudget;
+
+        // Debt account-specific fields
+        if (input.debtLimit !== undefined) updateData.debtLimit = input.debtLimit;
+        if (input.minimumPayment !== undefined) updateData.minimumPayment = input.minimumPayment;
+        if (input.paymentDueDay !== undefined) updateData.paymentDueDay = input.paymentDueDay;
+        if (input.interestRate !== undefined) updateData.interestRate = input.interestRate;
+
+        // HSA-specific fields
+        if (input.hsaContributionLimit !== undefined) updateData.hsaContributionLimit = input.hsaContributionLimit;
+        if (input.hsaType) updateData.hsaType = input.hsaType;
+        if (input.hsaCurrentTaxYear !== undefined) updateData.hsaCurrentTaxYear = input.hsaCurrentTaxYear;
+        if (input.hsaAdministrator) updateData.hsaAdministrator = input.hsaAdministrator;
+        if (input.hsaHighDeductiblePlan) updateData.hsaHighDeductiblePlan = input.hsaHighDeductiblePlan;
 
         updateData.updatedAt = now(getLocalTimeZone()).toDate().toISOString();
 
@@ -428,9 +496,11 @@ export const accountRoutes = t.router({
         transactions: transactionsWithBalance,
       } as Account;
     } catch (error) {
+      console.error("Account creation error:", error);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: error instanceof Error ? error.message : "Failed to create account",
+        cause: error,
       });
     }
   }),

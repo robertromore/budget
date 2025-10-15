@@ -88,20 +88,47 @@ export interface TransactionSummary {
 
 /**
  * Transaction service containing business logic
+ *
+ * Dependencies are injected via constructor for testability.
+ * Use ServiceFactory to instantiate in production code.
  */
 export class TransactionService {
+  private _scheduleService?: ScheduleService;
+
   constructor(
-    private repository: TransactionRepository = new TransactionRepository(),
-    private payeeService: PayeeService = new PayeeService(),
-    private categoryService: CategoryService = new CategoryService(),
-    private budgetTransactionService: BudgetTransactionService = new BudgetTransactionService(),
-    private budgetCalculationService: BudgetCalculationService = new BudgetCalculationService()
+    private repository: TransactionRepository,
+    private payeeService: PayeeService,
+    private categoryService: CategoryService,
+    private budgetTransactionService: BudgetTransactionService,
+    private budgetCalculationService: BudgetCalculationService,
+    private scheduleServiceGetter?: () => ScheduleService,
+    private budgetIntelligenceService?: any // BudgetIntelligenceService - using any to avoid circular import
   ) {}
+
+  /**
+   * Lazy getter for ScheduleService to avoid circular dependency
+   */
+  private get scheduleService(): ScheduleService {
+    if (!this._scheduleService && this.scheduleServiceGetter) {
+      this._scheduleService = this.scheduleServiceGetter();
+    }
+    if (!this._scheduleService) {
+      throw new Error('ScheduleService not available - circular dependency not resolved');
+    }
+    return this._scheduleService;
+  }
 
   /**
    * Transform budget allocations from database format to TransactionsFormat
    */
-  private transformBudgetAllocations(rawAllocations: any[]): Array<{
+  private transformBudgetAllocations(rawAllocations: Array<{
+    id: number;
+    budgetId: number;
+    allocatedAmount: number;
+    autoAssigned?: boolean;
+    assignedBy?: string | null;
+    budget?: { name: string } | null;
+  }>): Array<{
     id: number;
     budgetId: number;
     budgetName: string;
@@ -497,10 +524,10 @@ export class TransactionService {
     const rawTransactions = await this.repository.findByAccountId(accountId);
 
     // Transform budget allocations for each transaction
-    return rawTransactions.map((t: any) => ({
+    return rawTransactions.map((t) => ({
       ...t,
       budgetAllocations: this.transformBudgetAllocations(t.budgetAllocations || []),
-    })) as Transaction[];
+    }));
   }
 
   /**
@@ -518,15 +545,14 @@ export class TransactionService {
     console.log(`Found ${rawTransactions.length} actual transactions for account ${accountId}`);
 
     // Enrich actual transactions with schedule metadata if they have a scheduleId
-    const actualTransactions = await Promise.all(rawTransactions.map(async (t: any): Promise<Transaction> => {
+    const actualTransactions = await Promise.all(rawTransactions.map(async (t): Promise<Transaction> => {
       // Transform budget allocations to match TransactionsFormat
       const budgetAllocations = this.transformBudgetAllocations(t.budgetAllocations || []);
 
       if (t.scheduleId) {
         // Fetch schedule details for this transaction
-        const scheduleService = new ScheduleService();
         try {
-          const schedule = await scheduleService.getScheduleById(t.scheduleId);
+          const schedule = await this.scheduleService.getScheduleById(t.scheduleId);
           return {
             ...t,
             scheduleId: schedule.id,
@@ -547,8 +573,7 @@ export class TransactionService {
     }));
 
     // Get upcoming scheduled transactions
-    const scheduleService = new ScheduleService();
-    const upcomingTransactions = await scheduleService.getUpcomingScheduledTransactionsForAccount(accountId);
+    const upcomingTransactions = await this.scheduleService.getUpcomingScheduledTransactionsForAccount(accountId);
     console.log(`Found ${upcomingTransactions.length} upcoming scheduled transactions for account ${accountId}`);
 
     // Combine and sort by date (newest first)
@@ -852,15 +877,30 @@ export class TransactionService {
     // Find most used category
     let mostUsedCategory: {id: number; name: string; usage: number} | null = null;
     if (categoryUsage.size > 0) {
-      const [categoryId, usage] = Array.from(categoryUsage.entries())
-        .sort(([,a], [,b]) => b - a)[0];
+      const sortedCategories = Array.from(categoryUsage.entries())
+        .sort(([,a], [,b]) => b - a);
 
-      // Get category name (simplified for now)
-      mostUsedCategory = {
-        id: categoryId,
-        name: `Category ${categoryId}`, // TODO: Fetch actual category name
-        usage,
-      };
+      if (sortedCategories.length > 0) {
+        const first = sortedCategories[0];
+        if (first) {
+          const [categoryId, usage] = first;
+
+          // Fetch actual category name
+          let categoryName = `Category ${categoryId}`;
+          try {
+            const category = await this.categoryService.getCategoryById(categoryId);
+            categoryName = category.name ?? `Category ${categoryId}`;
+          } catch (error) {
+            console.warn(`Failed to fetch category ${categoryId}:`, error);
+          }
+
+          mostUsedCategory = {
+            id: categoryId,
+            name: categoryName,
+            usage,
+          };
+        }
+      }
     }
 
     // Calculate frequency pattern (simplified)
@@ -875,13 +915,29 @@ export class TransactionService {
     }
 
     // Get most used budget for this payee
-    const {BudgetIntelligenceService} = await import("$lib/server/domains/budgets/services");
-    const intelligenceService = new BudgetIntelligenceService();
-    const budgetPattern = await intelligenceService.getMostUsedBudget(payeeId, mostUsedCategory);
+    let budgetPattern = null;
+    if (this.budgetIntelligenceService) {
+      budgetPattern = await this.budgetIntelligenceService.getMostUsedBudget(payeeId, mostUsedCategory?.id ?? undefined);
+    } else {
+      // Fallback for backward compatibility
+      const {BudgetIntelligenceService} = await import("$lib/server/domains/budgets/services");
+      const intelligenceService = new BudgetIntelligenceService();
+      budgetPattern = await intelligenceService.getMostUsedBudget(payeeId, mostUsedCategory?.id ?? undefined);
+    }
+
+    // Transform budget pattern to match interface
+    let mostUsedBudget: {id: number; name: string; usage: number} | null = null;
+    if (budgetPattern) {
+      mostUsedBudget = {
+        id: budgetPattern.budgetId,
+        name: budgetPattern.budgetName,
+        usage: budgetPattern.usageCount,
+      };
+    }
 
     return {
       mostUsedCategory,
-      mostUsedBudget: budgetPattern ? budgetPattern.budgetId : null,
+      mostUsedBudget,
       averageAmount: totalAmount / payeeTransactions.length,
       typicalFrequency,
       lastTransactionDate: payeeTransactions[0]?.date || null,
@@ -897,8 +953,14 @@ export class TransactionService {
     // Get latest transaction data for this payee
     const intelligence = await this.getPayeeTransactionIntelligence(payeeId);
 
-    // Prepare update data
-    const updateData: any = {
+    // Prepare update data with proper typing
+    interface PayeeIntelligenceUpdate {
+      lastTransactionDate: string | null;
+      avgAmount?: number;
+      paymentFrequency?: string;
+    }
+
+    const updateData: PayeeIntelligenceUpdate = {
       lastTransactionDate: intelligence.lastTransactionDate,
     };
 
@@ -937,8 +999,12 @@ export class TransactionService {
     let totalDays = 0;
 
     for (let i = 1; i < dates.length; i++) {
-      const daysDiff = (dates[i].getTime() - dates[i-1].getTime()) / (1000 * 60 * 60 * 24);
-      totalDays += daysDiff;
+      const current = dates[i];
+      const previous = dates[i - 1];
+      if (current && previous) {
+        const daysDiff = (current.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24);
+        totalDays += daysDiff;
+      }
     }
 
     return totalDays / (dates.length - 1);
@@ -996,15 +1062,37 @@ export class TransactionService {
     // Generate shared transfer ID
     const transferId = createId();
 
-    // Sanitize notes if provided
-    const notes = params.notes ? InputSanitizer.sanitizeDescription(params.notes) : null;
+    // Sanitize user-provided notes if any
+    const userNotes = params.notes ? InputSanitizer.sanitizeDescription(params.notes) : null;
+
+    // Generate descriptive notes only if user didn't provide notes
+    let fromNotes = userNotes;
+    let toNotes = userNotes;
+
+    if (!userNotes) {
+      // Fetch account names for automatic descriptive notes
+      const [fromAccount] = await db
+        .select({name: accounts.name})
+        .from(accounts)
+        .where(eq(accounts.id, params.fromAccountId))
+        .limit(1);
+
+      const [toAccount] = await db
+        .select({name: accounts.name})
+        .from(accounts)
+        .where(eq(accounts.id, params.toAccountId))
+        .limit(1);
+
+      fromNotes = `Transfer to ${toAccount?.name || 'Unknown Account'}`;
+      toNotes = `Transfer from ${fromAccount?.name || 'Unknown Account'}`;
+    }
 
     // Create FROM transaction (money out - negative amount)
     const fromTransaction = await this.repository.create({
       accountId: params.fromAccountId,
       amount: -params.amount,
       date: params.date,
-      notes,
+      notes: fromNotes,
       categoryId: params.categoryId || null,
       payeeId: params.payeeId || null,
       transferId,
@@ -1018,7 +1106,7 @@ export class TransactionService {
       accountId: params.toAccountId,
       amount: params.amount,
       date: params.date,
-      notes,
+      notes: toNotes,
       categoryId: params.categoryId || null,
       payeeId: params.payeeId || null,
       transferId,

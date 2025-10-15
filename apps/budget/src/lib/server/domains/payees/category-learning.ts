@@ -80,7 +80,12 @@ export class CategoryLearningService {
     // Check for category drift
     await this.detectCategoryDrift(correction.payeeId);
 
-    return insertedCorrection;
+    return {
+      ...insertedCorrection,
+      amountRange: insertedCorrection.amountRange as {min: number; max: number} | null,
+      temporalContext: insertedCorrection.temporalContext as CategoryCorrection['temporalContext'],
+      payeePatternContext: insertedCorrection.payeePatternContext as CategoryCorrection['payeePatternContext'],
+    };
   }
 
   /**
@@ -252,7 +257,7 @@ export class CategoryLearningService {
       .where(and(
         eq(payeeCategoryCorrections.payeeId, payeeId),
         gte(payeeCategoryCorrections.createdAt, toISOString(baselineStartDate)),
-        lte(payeeCategoryCorrections.createdAt, baselineEndDate.toISOString()),
+        lte(payeeCategoryCorrections.createdAt, toISOString(baselineEndDate)),
         isNull(payeeCategoryCorrections.deletedAt)
       ));
 
@@ -631,7 +636,7 @@ export class CategoryLearningService {
       : 0;
 
     // Calculate decay factor based on recency
-    const now = currentDate;
+    const now = currentDate.toDate('UTC');
     const decayFactor = group.reduce((sum, correction) => {
       const correctionDate = new Date(correction.createdAt);
       const ageMonths = (now.getTime() - correctionDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
@@ -876,7 +881,7 @@ export class CategoryLearningService {
   private calculateRecencyScore(corrections: any[]): number {
     if (corrections.length === 0) return 0;
 
-    const now = currentDate;
+    const now = currentDate.toDate('UTC');
     const scores = corrections.map(correction => {
       const correctionDate = new Date(correction.createdAt);
       const ageMonths = (now.getTime() - correctionDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
@@ -1008,7 +1013,7 @@ export class CategoryLearningService {
 
     const nameMap: Record<number, string> = {};
     categoryResults.forEach(category => {
-      nameMap[category.id] = category.name;
+      nameMap[category.id] = category.name ?? 'Unknown Category';
     });
 
     return nameMap;
@@ -1072,3 +1077,12 @@ export class CategoryLearningService {
     return [];
   }
 }
+
+// Re-export types for external use
+export type {
+  CategoryCorrection,
+  CorrectionPattern,
+  CategoryRecommendation,
+  LearningMetrics,
+  CategoryDrift,
+} from "$lib/schema";
