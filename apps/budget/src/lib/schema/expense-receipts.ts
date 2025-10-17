@@ -105,4 +105,3 @@ export const formInsertExpenseReceiptSchema = createInsertSchema(expenseReceipts
 });
 
 export type ExpenseReceipt = typeof expenseReceipts.$inferSelect;
-export type NewExpenseReceipt = typeof expenseReceipts.$inferInsert;

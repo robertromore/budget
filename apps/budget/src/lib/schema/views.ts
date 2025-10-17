@@ -53,7 +53,3 @@ export const removeViewSchema = z.object({id: z.number().nonnegative()});
 export const removeViewsSchema = z.object({entities: z.array(z.number().nonnegative())});
 
 export type View = typeof views.$inferSelect;
-export type NewView = typeof views.$inferInsert;
-export type InsertViewSchema = typeof insertViewSchema;
-export type RemoveViewSchema = typeof removeViewSchema;
-export type RemoveViewsSchema = typeof removeViewsSchema;

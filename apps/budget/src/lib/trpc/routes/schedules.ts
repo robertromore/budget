@@ -8,6 +8,7 @@ import slugify from "@sindresorhus/slugify";
 import {generateUniqueSlugForDB} from "$lib/utils/slug-utils";
 import {serviceFactory} from "$lib/server/shared/container/service-factory";
 import {getCurrentTimestamp} from "$lib/utils/dates";
+import {withErrorHandler} from "$lib/trpc/shared/errors";
 
 const scheduleService = serviceFactory.getScheduleService();
 
@@ -303,56 +304,14 @@ export const scheduleRoutes = t.router({
   // Auto-add functionality
   executeAutoAdd: rateLimitedProcedure
     .input(z.object({ scheduleId: z.number() }))
-    .mutation(async ({ input }) => {
-      try {
-        const result = await scheduleService.executeAutoAddForSchedule(input.scheduleId);
-        return result;
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to execute auto-add",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({ input }) => scheduleService.executeAutoAddForSchedule(input.scheduleId))),
 
   executeAutoAddAll: rateLimitedProcedure
-    .mutation(async () => {
-      try {
-        const result = await scheduleService.executeAutoAddForAllSchedules();
-        return result;
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to execute auto-add for all schedules",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async () => scheduleService.executeAutoAddForAllSchedules())),
 
   previewAutoAdd: publicProcedure
     .input(z.object({ scheduleId: z.number() }))
-    .query(async ({ input }) => {
-      try {
-        const result = await scheduleService.previewAutoAddForSchedule(input.scheduleId);
-        return result;
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to preview auto-add",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({ input }) => scheduleService.previewAutoAddForSchedule(input.scheduleId))),
 
   toggleStatus: rateLimitedProcedure
     .input(z.object({ scheduleId: z.number() }))

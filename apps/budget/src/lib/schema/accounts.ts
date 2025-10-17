@@ -19,6 +19,7 @@ export const accountTypeEnum = [
   "credit_card",
   "loan",
   "cash",
+  "hsa",
   "other"
 ] as const;
 
@@ -231,6 +232,10 @@ export type RemoveAccountSchema = typeof removeAccountSchema;
 // Helper functions for account classification
 export function isDebtAccount(accountType: AccountType): boolean {
   return accountType === 'credit_card' || accountType === 'loan';
+}
+
+export function isHealthSavingsAccount(accountType: AccountType): boolean {
+  return accountType === 'hsa';
 }
 
 export function getAccountNature(accountType: AccountType): 'asset' | 'liability' {

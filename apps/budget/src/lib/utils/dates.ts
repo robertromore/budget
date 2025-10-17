@@ -2,6 +2,7 @@ import {
   CalendarDate,
   type DateValue,
   getLocalTimeZone,
+  parseDate,
   startOfWeek,
   today,
 } from "@internationalized/date";
@@ -413,9 +414,17 @@ export function parseDateValue(dateValue: any): DateValue | null {
 
     // If it's a string, try to parse it
     if (typeof dateValue === "string") {
-      const date = new Date(dateValue);
-      if (isNaN(date.getTime())) return null;
-      return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+      // Try parsing as ISO date string first (YYYY-MM-DD format)
+      try {
+        return parseDate(dateValue);
+      } catch {
+        // If that fails, try parsing as a general date string
+        // This handles formats like "2024-01-15T10:30:00Z" or timestamp strings
+        const date = new Date(dateValue);
+        if (isNaN(date.getTime())) return null;
+        // Convert to local date components to avoid timezone shifts
+        return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+      }
     }
 
     // If it's a Date object, convert it
@@ -531,14 +540,9 @@ export function isSamePeriod(
  */
 export function parseISOString(isoString: string): DateValue | null {
   try {
-    const date = new Date(isoString);
-    if (isNaN(date.getTime())) return null;
-
-    return new CalendarDate(
-      date.getFullYear(),
-      date.getMonth() + 1,
-      date.getDate()
-    );
+    // Use parseDate from @internationalized/date to avoid timezone issues
+    // parseDate expects YYYY-MM-DD format and creates a CalendarDate directly
+    return parseDate(isoString);
   } catch (error) {
     return null;
   }

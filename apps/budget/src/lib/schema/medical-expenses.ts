@@ -261,4 +261,3 @@ export const formInsertMedicalExpenseSchema = createInsertSchema(medicalExpenses
 });
 
 export type MedicalExpense = typeof medicalExpenses.$inferSelect;
-export type NewMedicalExpense = typeof medicalExpenses.$inferInsert;

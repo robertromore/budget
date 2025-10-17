@@ -131,4 +131,3 @@ export const formInsertHsaClaimSchema = createInsertSchema(hsaClaims, {
 });
 
 export type HsaClaim = typeof hsaClaims.$inferSelect;
-export type NewHsaClaim = typeof hsaClaims.$inferInsert;

@@ -17,5 +17,3 @@ export type EditableEntityItem = {
   name: string | null;
   [key: string]: unknown;
 };
-export type EditableNumericItem = {value: number | null; formatted: string | null};
-export type SelectableEditableEntity = {value: string; label: string};
