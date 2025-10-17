@@ -361,7 +361,7 @@
         </Empty.EmptyDescription>
       </Empty.EmptyHeader>
       <Empty.EmptyContent>
-        <Button onclick={() => (manageDialogOpen = true)}>
+        <Button href="/budgets/new">
           <Plus class="mr-2 h-4 w-4" />
           Create Your First Budget
         </Button>
