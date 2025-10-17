@@ -1,1 +1,0 @@
-ALTER TABLE `detected_patterns` ADD `schedule_id` integer REFERENCES schedules(id);

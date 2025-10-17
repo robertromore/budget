@@ -1,6 +1,0 @@
-Date,Transaction,Debit,Credit,Balance,Memo
-2/1/2025,Beginning Balance,$0.00,$0.00,"$4,827.55",
-3/31/2025,Dividend,$0.00,$0.60,"$4,828.15",XXX5915-01 APY 0.050  Days 90
-4/27/2025,Transfer,$0.00,"$3,358.00","$8,186.15",From XXX5915-75 To XXX5915-01
-6/30/2025,Dividend,$0.00,$0.90,"$8,187.05",XXX5915-01 APY 0.050  Days 91
-7/13/2025,Ending Balance,$0.00,$0.00,"$8,187.05",

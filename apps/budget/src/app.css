@@ -1,9 +1,9 @@
 @import 'tailwindcss';
-@source '../../../node_modules/layerchart/dist';
+@source '../node_modules/layerchart/dist';
 @import 'tw-animate-css';
 
-@import '../../../node_modules/@layerstack/tailwind/dist/css/core.css';
-@import '../../../node_modules/@layerstack/tailwind/dist/css/themes/basic.css';
+/* @import '../../../node_modules/@layerstack/tailwind/dist/css/core.css';
+@import '../../../node_modules/@layerstack/tailwind/dist/css/themes/basic.css'; */
 
 @custom-variant dark (&:is(.dark *));
 
