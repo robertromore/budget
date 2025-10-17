@@ -107,8 +107,9 @@ export class CurrentViewState<TData> {
         const filterValue = this.view.getFilterValue(column.id);
         const filterFnName = this.view.getFilterFn(column.id);
 
-        // For amount filters, check if we have a valid object, not a Set
-        if (filterFnName === 'amountFilter' && filterValue && typeof filterValue === 'object' && filterValue !== null && !('size' in filterValue)) {
+        // For amount and date filters with operator-based format, check if we have a valid object, not a Set
+        const operatorBasedFilters = ['amountFilter', 'dateIn', 'dateAfter', 'dateBefore', 'dateBetween'];
+        if (operatorBasedFilters.includes(filterFnName || '') && filterValue && typeof filterValue === 'object' && filterValue !== null && !('size' in filterValue)) {
           column.setFilterValue(filterValue);
         } else if (filterValue && typeof filterValue === 'object' && filterValue !== null && 'size' in filterValue && (filterValue as Set<unknown>).size > 0) {
           // For Set-based filters

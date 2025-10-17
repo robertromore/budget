@@ -27,7 +27,7 @@ import EditableNumericCell from "../(components)/(cells)/editable-numeric-cell.s
 import ReadOnlyCellWithIcon from "../(components)/(cells)/read-only-cell-with-icon.svelte";
 import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";
 import DataTableFacetedFilterCategory from "../(components)/(facets)/data-table-faceted-filter-category.svelte";
-import DataTableFacetedFilterDate from "../(components)/(facets)/data-table-faceted-filter-date.svelte";
+import DataTableFacetedFilterDateWithOperators from "../(components)/(facets)/data-table-faceted-filter-date-with-operators.svelte";
 import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-faceted-filter-payee.svelte";
 import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-faceted-filter-status.svelte";
 import DataTableActions from "../(components)/data-table-actions.svelte";
@@ -217,7 +217,7 @@ export const columns = (
         if (!dateA || !dateB) return 0;
         return dateA.compare(dateB);
       },
-      filterFn: "dateAfter" as FilterFnOption<TransactionsFormat>,
+      filterFn: "dateIn" as FilterFnOption<TransactionsFormat>,
       meta: {
         label: "Date",
         facetedFilter: (column: Column<TransactionsFormat, unknown>) => {
@@ -226,8 +226,9 @@ export const columns = (
             icon: CalendarDays,
             column,
             component: () =>
-              renderComponent(DataTableFacetedFilterDate<TransactionsFormat, unknown>, {
+              renderComponent(DataTableFacetedFilterDateWithOperators<TransactionsFormat, unknown>, {
                 column,
+                title: "Date",
               }),
           };
         },
@@ -243,6 +244,10 @@ export const columns = (
           {
             id: "dateAfter",
             label: "after",
+          },
+          {
+            id: "dateBetween",
+            label: "between",
           },
         ],
       },
