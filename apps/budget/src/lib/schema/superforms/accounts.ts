@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { accountTypeEnum } from "../accounts";
 
 // Superform-compatible schemas for accounts (not using drizzle-zod)
 export const superformInsertAccountSchema = z.object({
@@ -23,7 +24,7 @@ export const superformInsertAccountSchema = z.object({
   updatedAt: z.string().optional(),
   deletedAt: z.string().optional().nullable(),
   // Additional fields added to database schema
-  accountType: z.enum(["checking", "savings", "investment", "credit_card", "loan", "cash", "other"]).optional(),
+  accountType: z.enum(accountTypeEnum).optional(),
   institution: z.string().max(100, "Institution name must be less than 100 characters").optional(),
   accountIcon: z.string().max(50, "Account icon name must be less than 50 characters").optional(),
   accountColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Account color must be a valid hex color").optional(),

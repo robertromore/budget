@@ -22,7 +22,7 @@ export const VALID_ICON_NAMES = [
   "building", "briefcase", "laptop", "pen-tool", "file-text", "users",
 
   // Health & Medical
-  "heart", "pill", "stethoscope", "cross",
+  "heart", "heart-pulse", "pill", "stethoscope", "cross",
 
   // General
   "star", "gift", "calendar", "map-pin", "settings", "tag", "archive",

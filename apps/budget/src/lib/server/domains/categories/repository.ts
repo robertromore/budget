@@ -90,19 +90,7 @@ export class CategoryRepository extends BaseRepository<
     return category;
   }
 
-  /**
-   * Find category by ID
-   */
-  override async findById(id: number): Promise<Category | null> {
-    const [category] = await db
-      .select()
-      .from(categories)
-      .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
-      .limit(1);
-
-    return category || null;
-  }
-
+  // findById() inherited from BaseRepository
   // findBySlug() inherited from BaseRepository
 
   /**
@@ -159,43 +147,12 @@ export class CategoryRepository extends BaseRepository<
   }
 
   /**
-   * Bulk soft delete categories
+   * Bulk soft delete categories with slug archiving
+   * Now uses the inherited bulkSoftDeleteWithSlugArchive() method from BaseRepository
    * Returns the number of categories deleted
    */
   async bulkDeleteCategories(ids: number[]): Promise<number> {
-    if (ids.length === 0) return 0;
-
-    // Get existing categories to access their slugs
-    const existingCategories = await db
-      .select()
-      .from(categories)
-      .where(and(
-        inArray(categories.id, ids),
-        isNull(categories.deletedAt)
-      ));
-
-    // Delete each category with slug modification
-    const timestamp = Date.now();
-    const deletedCategories = [];
-
-    for (const category of existingCategories) {
-      const archivedSlug = `${category.slug}-deleted-${timestamp}`;
-      const [deleted] = await db
-        .update(categories)
-        .set({
-          slug: archivedSlug,
-          deletedAt: getCurrentTimestamp(),
-          updatedAt: getCurrentTimestamp(),
-        })
-        .where(eq(categories.id, category.id))
-        .returning({id: categories.id});
-
-      if (deleted) {
-        deletedCategories.push(deleted);
-      }
-    }
-
-    return deletedCategories.length;
+    return await this.bulkSoftDeleteWithSlugArchive(ids);
   }
 
   /**
@@ -342,18 +299,7 @@ export class CategoryRepository extends BaseRepository<
     );
   }
 
-  /**
-   * Check if category exists and is active
-   */
-  override async exists(id: number): Promise<boolean> {
-    const [result] = await db
-      .select({id: categories.id})
-      .from(categories)
-      .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
-      .limit(1);
-
-    return !!result;
-  }
+  // exists() inherited from BaseRepository
 
   /**
    * Check if category has associated transactions

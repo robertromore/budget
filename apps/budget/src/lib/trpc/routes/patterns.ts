@@ -1,7 +1,7 @@
 import {z} from "zod";
 import {rateLimitedProcedure, t} from "$lib/trpc";
-import {TRPCError} from "@trpc/server";
 import {PatternDetectionService} from "$lib/server/domains/patterns";
+import {withErrorHandler} from "$lib/trpc/shared/errors";
 
 const patternService = new PatternDetectionService();
 

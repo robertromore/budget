@@ -5,212 +5,86 @@ import {
 } from "$lib/schema";
 import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
 import {z} from "zod";
-import {TRPCError} from "@trpc/server";
 import {categoryIdSchema, searchCategoriesSchema} from "$lib/server/domains/categories";
-import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
 import {serviceFactory} from "$lib/server/shared/container/service-factory";
+import {withErrorHandler} from "$lib/trpc/shared/errors";
 
 const categoryService = serviceFactory.getCategoryService();
 
 export const categoriesRoutes = t.router({
-  all: publicProcedure.query(async () => {
-    try {
-      return await categoryService.getAllCategories();
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to fetch categories",
-      });
-    }
-  }),
+  all: publicProcedure.query(withErrorHandler(async () => categoryService.getAllCategories())),
 
-  allWithStats: publicProcedure.query(async () => {
-    try {
-      return await categoryService.getAllCategoriesWithStats();
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to fetch categories with stats",
-      });
-    }
-  }),
+  allWithStats: publicProcedure.query(withErrorHandler(async () => categoryService.getAllCategoriesWithStats())),
 
-  load: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
-    try {
-      return await categoryService.getCategoryById(input.id);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: error.message,
-        });
-      }
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to load category",
-      });
-    }
-  }),
+  load: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input}) => categoryService.getCategoryById(input.id))),
 
-  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({input}) => {
-    try {
-      return await categoryService.getCategoryBySlug(input.slug);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: error.message,
-        });
-      }
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to load category",
-      });
-    }
-  }),
+  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(withErrorHandler(async ({input}) => categoryService.getCategoryBySlug(input.slug))),
 
-  search: publicProcedure.input(searchCategoriesSchema).query(async ({input}) => {
-    try {
-      return await categoryService.searchCategories(input.query);
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to search categories",
-      });
-    }
-  }),
+  search: publicProcedure.input(searchCategoriesSchema).query(withErrorHandler(async ({input}) => categoryService.searchCategories(input.query))),
 
-  remove: rateLimitedProcedure.input(removeCategorySchema).mutation(async ({input}) => {
-    try {
-      return await categoryService.deleteCategory(input.id, {force: false});
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: error.message,
-        });
-      }
-      if (error instanceof ConflictError) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: error.message,
-        });
-      }
-      if (error instanceof ValidationError) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: error.message,
-        });
-      }
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to delete category",
-      });
-    }
-  }),
+  remove: rateLimitedProcedure.input(removeCategorySchema).mutation(withErrorHandler(async ({input}) => categoryService.deleteCategory(input.id, {force: false}))),
 
   delete: bulkOperationProcedure
     .input(removeCategoriesSchema)
-    .mutation(async ({input: {entities}}) => {
-      try {
-        const result = await categoryService.bulkDeleteCategories(entities, {force: false});
-        return {
-          deletedCount: result.deletedCount,
-          errors: result.errors,
-        };
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to bulk delete categories",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input: {entities}}) => {
+      const result = await categoryService.bulkDeleteCategories(entities, {force: false});
+      return {
+        deletedCount: result.deletedCount,
+        errors: result.errors,
+      };
+    })),
 
   save: rateLimitedProcedure
     .input(formInsertCategorySchema)
-    .mutation(async ({input}) => {
-      try {
-        const {id, name, notes, categoryType, categoryIcon, categoryColor, isActive, displayOrder, isTaxDeductible, taxCategory, deductiblePercentage, isSeasonal, seasonalMonths, expectedMonthlyMin, expectedMonthlyMax, spendingPriority, incomeReliability} = input;
+    .mutation(withErrorHandler(async ({input}) => {
+      const {id, name, notes, categoryType, categoryIcon, categoryColor, isActive, displayOrder, isTaxDeductible, taxCategory, deductiblePercentage, isSeasonal, seasonalMonths, expectedMonthlyMin, expectedMonthlyMax, spendingPriority, incomeReliability} = input;
 
-        if (id) {
-          // Update existing category
-          const category = await categoryService.updateCategory(id, {
-            name: name ?? undefined,
-            notes,
-            categoryType,
-            categoryIcon,
-            categoryColor,
-            isActive,
-            displayOrder,
-            isTaxDeductible,
-            taxCategory,
-            deductiblePercentage,
-            isSeasonal,
-            seasonalMonths,
-            expectedMonthlyMin,
-            expectedMonthlyMax,
-            spendingPriority,
-            incomeReliability,
-          });
-          (category as any).is_new = false; // Maintain compatibility with existing UI
-          return category;
-        } else {
-          // Create new category - name is guaranteed to be non-null by Zod validation
-          if (!name) {
-            throw new ValidationError("Category name is required");
-          }
-          const category = await categoryService.createCategory({
-            name,
-            notes: notes ?? null,
-            categoryType,
-            categoryIcon,
-            categoryColor,
-            isActive,
-            displayOrder,
-            isTaxDeductible,
-            taxCategory,
-            deductiblePercentage,
-            isSeasonal,
-            seasonalMonths,
-            expectedMonthlyMin,
-            expectedMonthlyMax,
-            spendingPriority,
-            incomeReliability,
-          });
-          (category as any).is_new = true; // Maintain compatibility with existing UI
-          return category;
-        }
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof ConflictError) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: error.message,
-          });
-        }
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to save category",
+      if (id) {
+        // Update existing category
+        const category = await categoryService.updateCategory(id, {
+          name: name ?? undefined,
+          notes,
+          categoryType,
+          categoryIcon,
+          categoryColor,
+          isActive,
+          displayOrder,
+          isTaxDeductible,
+          taxCategory,
+          deductiblePercentage,
+          isSeasonal,
+          seasonalMonths,
+          expectedMonthlyMin,
+          expectedMonthlyMax,
+          spendingPriority,
+          incomeReliability,
         });
+        (category as any).is_new = false; // Maintain compatibility with existing UI
+        return category;
+      } else {
+        // Create new category - name is guaranteed to be non-null by Zod validation
+        const category = await categoryService.createCategory({
+          name: name!,
+          notes: notes ?? null,
+          categoryType,
+          categoryIcon,
+          categoryColor,
+          isActive,
+          displayOrder,
+          isTaxDeductible,
+          taxCategory,
+          deductiblePercentage,
+          isSeasonal,
+          seasonalMonths,
+          expectedMonthlyMin,
+          expectedMonthlyMax,
+          spendingPriority,
+          incomeReliability,
+        });
+        (category as any).is_new = true; // Maintain compatibility with existing UI
+        return category;
       }
-    }),
+    })),
 
   reorder: bulkOperationProcedure
     .input(z.object({
@@ -219,153 +93,32 @@ export const categoriesRoutes = t.router({
         displayOrder: z.number().min(0),
       })).min(1),
     }))
-    .mutation(async ({input}) => {
-      try {
-        const result = await categoryService.bulkUpdateDisplayOrder(input.updates);
-        return {
-          updatedCount: result.updatedCount,
-          errors: result.errors,
-        };
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to reorder categories",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => {
+      const result = await categoryService.bulkUpdateDisplayOrder(input.updates);
+      return {
+        updatedCount: result.updatedCount,
+        errors: result.errors,
+      };
+    })),
 
-  allWithBudgets: publicProcedure.query(async () => {
-    try {
-      return await categoryService.getAllCategoriesWithBudgets();
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to fetch categories with budgets",
-      });
-    }
-  }),
+  allWithBudgets: publicProcedure.query(withErrorHandler(async () => categoryService.getAllCategoriesWithBudgets())),
 
-  loadWithBudgets: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
-    try {
-      return await categoryService.getCategoryByIdWithBudgets(input.id);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: error.message,
-        });
-      }
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to load category with budgets",
-      });
-    }
-  }),
+  loadWithBudgets: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input}) => categoryService.getCategoryByIdWithBudgets(input.id))),
 
-  getBySlugWithBudgets: publicProcedure.input(z.object({slug: z.string()})).query(async ({input}) => {
-    try {
-      return await categoryService.getCategoryBySlugWithBudgets(input.slug);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: error.message,
-        });
-      }
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to load category with budgets",
-      });
-    }
-  }),
+  getBySlugWithBudgets: publicProcedure.input(z.object({slug: z.string()})).query(withErrorHandler(async ({input}) => categoryService.getCategoryBySlugWithBudgets(input.slug))),
 
-  rootCategories: publicProcedure.query(async () => {
-    try {
-      return await categoryService.getRootCategories();
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to fetch root categories",
-      });
-    }
-  }),
+  rootCategories: publicProcedure.query(withErrorHandler(async () => categoryService.getRootCategories())),
 
-  categoryChildren: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
-    try {
-      return await categoryService.getCategoryChildren(input.id);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: error.message,
-        });
-      }
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to fetch category children",
-      });
-    }
-  }),
+  categoryChildren: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input}) => categoryService.getCategoryChildren(input.id))),
 
-  categoryWithChildren: publicProcedure.input(categoryIdSchema).query(async ({input}) => {
-    try {
-      return await categoryService.getCategoryWithChildren(input.id);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: error.message,
-        });
-      }
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to fetch category with children",
-      });
-    }
-  }),
+  categoryWithChildren: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input}) => categoryService.getCategoryWithChildren(input.id))),
 
-  hierarchyTree: publicProcedure.query(async () => {
-    try {
-      return await categoryService.getCategoryHierarchyTree();
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to fetch category hierarchy",
-      });
-    }
-  }),
+  hierarchyTree: publicProcedure.query(withErrorHandler(async () => categoryService.getCategoryHierarchyTree())),
 
   setParent: rateLimitedProcedure
     .input(z.object({
       categoryId: z.number().positive(),
       parentId: z.number().positive().nullable(),
     }))
-    .mutation(async ({input}) => {
-      try {
-        return await categoryService.setCategoryParent(input.categoryId, input.parentId);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to set category parent",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => categoryService.setCategoryParent(input.categoryId, input.parentId))),
 });

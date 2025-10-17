@@ -1,11 +1,6 @@
 // UI-related constants
 export const MOBILE_BREAKPOINT = 768;
 
-// Animation durations (in milliseconds)
-export const ANIMATION_DURATION_FAST = 150;
-export const ANIMATION_DURATION_NORMAL = 250;
-export const ANIMATION_DURATION_SLOW = 400;
-
 // Z-index layers
 export const Z_INDEX = {
   DROPDOWN: 1000,

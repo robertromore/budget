@@ -68,3 +68,41 @@ export function translateDomainError(error: unknown): TRPCError {
     message: (error as Error)?.message ?? "Unknown error",
   });
 }
+
+/**
+ * Wraps a tRPC route handler with automatic error translation.
+ *
+ * This eliminates the need for repetitive try-catch blocks in every route.
+ * Any domain errors thrown by the handler are automatically translated to TRPCErrors.
+ *
+ * @param handler - The async route handler function
+ * @returns A wrapped handler that catches and translates errors
+ *
+ * @example
+ * ```typescript
+ * // Before:
+ * load: publicProcedure.input(schema).query(async ({ input }) => {
+ *   try {
+ *     return await service.method(input);
+ *   } catch (error) {
+ *     throw translateDomainError(error);
+ *   }
+ * }),
+ *
+ * // After:
+ * load: publicProcedure.input(schema).query(
+ *   withErrorHandler(async ({ input }) => service.method(input))
+ * ),
+ * ```
+ */
+export function withErrorHandler<TInput, TOutput>(
+  handler: (input: TInput) => Promise<TOutput>
+): (input: TInput) => Promise<TOutput> {
+  return async (input: TInput) => {
+    try {
+      return await handler(input);
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  };
+}

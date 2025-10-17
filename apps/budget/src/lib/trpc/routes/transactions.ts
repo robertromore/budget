@@ -1,6 +1,5 @@
 import {z} from "zod";
 import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
-import {TRPCError} from "@trpc/server";
 import {
   createTransactionSchema,
   createTransactionWithAutoPopulationSchema,
@@ -12,6 +11,7 @@ import {
   payeeIntelligenceRequestSchema,
 } from "$lib/server/domains/transactions";
 import {serviceFactory} from "$lib/server/shared/container/service-factory";
+import {withErrorHandler} from "$lib/trpc/shared/errors";
 
 const transactionService = serviceFactory.getTransactionService();
 
@@ -21,32 +21,14 @@ export const transactionRoutes = t.router({
     .input(z.object({
       accountId: z.number().positive(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await transactionService.getAccountTransactions(input.accountId);
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to fetch transactions",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => transactionService.getAccountTransactions(input.accountId))),
 
   // Get all transactions for an account including upcoming scheduled transactions
   forAccountWithUpcoming: publicProcedure
     .input(z.object({
       accountId: z.number().positive(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await transactionService.getAccountTransactionsWithUpcoming(input.accountId);
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to fetch transactions with upcoming",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => transactionService.getAccountTransactionsWithUpcoming(input.accountId))),
 
   // Get transactions with filters and pagination
   list: publicProcedure
@@ -54,92 +36,36 @@ export const transactionRoutes = t.router({
       filters: transactionFiltersSchema.optional(),
       pagination: paginationSchema.optional(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await transactionService.getTransactions(
-          input.filters || {},
-          input.pagination
-        );
-      } catch (error: any) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to fetch transactions",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => transactionService.getTransactions(
+      input.filters || {},
+      input.pagination
+    ))),
 
   // Get single transaction by ID
   byId: publicProcedure
     .input(z.object({
       id: z.number().positive(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await transactionService.getTransactionById(input.id);
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to fetch transaction",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => transactionService.getTransactionById(input.id))),
 
   // Get account summary
   summary: publicProcedure
     .input(z.object({
       accountId: z.number().positive(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await transactionService.getAccountSummary(input.accountId);
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to fetch account summary",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => transactionService.getAccountSummary(input.accountId))),
 
   // Get monthly spending aggregates for analytics
   monthlySpendingAggregates: publicProcedure
     .input(z.object({
       accountId: z.number().positive(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await transactionService.getMonthlySpendingAggregates(input.accountId);
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to fetch monthly spending aggregates",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => transactionService.getMonthlySpendingAggregates(input.accountId))),
 
   // Create new transaction
   create: rateLimitedProcedure
     .input(createTransactionSchema)
-    .mutation(async ({input}) => {
-      try {
-        return await transactionService.createTransaction(input);
-      } catch (error: any) {
-        if (error.statusCode === 400) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        } else if (error.statusCode === 404) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to create transaction",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => transactionService.createTransaction(input))),
 
   // Update existing transaction
   update: rateLimitedProcedure
@@ -147,27 +73,7 @@ export const transactionRoutes = t.router({
       id: z.number().positive(),
       data: updateTransactionSchema,
     }))
-    .mutation(async ({input}) => {
-      try {
-        return await transactionService.updateTransaction(input.id, input.data);
-      } catch (error: any) {
-        if (error.statusCode === 400) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        } else if (error.statusCode === 404) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to update transaction",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => transactionService.updateTransaction(input.id, input.data))),
 
   // Update transaction and return all account transactions with recalculated running balances
   updateWithBalance: rateLimitedProcedure
@@ -175,70 +81,25 @@ export const transactionRoutes = t.router({
       id: z.number().positive(),
       data: updateTransactionSchema,
     }))
-    .mutation(async ({input}) => {
-      try {
-        return await transactionService.updateTransactionWithRecalculatedBalance(input.id, input.data);
-      } catch (error: any) {
-        if (error.statusCode === 400) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        } else if (error.statusCode === 404) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to update transaction",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => transactionService.updateTransactionWithRecalculatedBalance(input.id, input.data))),
 
   // Delete single transaction
   delete: rateLimitedProcedure
     .input(z.object({
       id: z.number().positive(),
     }))
-    .mutation(async ({input}) => {
-      try {
-        await transactionService.deleteTransaction(input.id);
-        return {success: true};
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to delete transaction",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => {
+      await transactionService.deleteTransaction(input.id);
+      return {success: true};
+    })),
 
   // Bulk delete transactions
   bulkDelete: bulkOperationProcedure
     .input(bulkDeleteSchema)
-    .mutation(async ({input}) => {
-      try {
-        await transactionService.deleteTransactions(input.ids);
-        return {success: true, count: input.ids.length};
-      } catch (error: any) {
-        if (error.statusCode === 400) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        } else if (error.statusCode === 404) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to delete transactions",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => {
+      await transactionService.deleteTransactions(input.ids);
+      return {success: true, count: input.ids.length};
+    })),
 
   // Legacy save endpoint (for backwards compatibility - will be deprecated)
   save: rateLimitedProcedure
@@ -288,72 +149,27 @@ export const transactionRoutes = t.router({
   // Create transaction with payee auto-population
   createWithAutoPopulation: rateLimitedProcedure
     .input(createTransactionWithAutoPopulationSchema)
-    .mutation(async ({input}) => {
-      try {
-        return await transactionService.createTransactionWithPayeeDefaults(input);
-      } catch (error: any) {
-        if (error.statusCode === 400) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        } else if (error.statusCode === 404) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to create transaction with auto-population",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => transactionService.createTransactionWithPayeeDefaults(input))),
 
   // Get transaction suggestions based on payee
   getSuggestions: publicProcedure
     .input(transactionSuggestionRequestSchema)
-    .query(async ({input}) => {
-      try {
-        return await transactionService.suggestTransactionDetails(input.payeeId, input.amount);
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to get transaction suggestions",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => transactionService.suggestTransactionDetails(input.payeeId, input.amount))),
 
   // Get payee transaction intelligence
   getPayeeIntelligence: publicProcedure
     .input(payeeIntelligenceRequestSchema)
-    .query(async ({input}) => {
-      try {
-        return await transactionService.getPayeeTransactionIntelligence(input.payeeId);
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to get payee intelligence",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => transactionService.getPayeeTransactionIntelligence(input.payeeId))),
 
   // Update payee statistics after transaction changes
   updatePayeeStats: rateLimitedProcedure
     .input(z.object({
       payeeId: z.number().positive("Payee ID must be a positive number"),
     }))
-    .mutation(async ({input}) => {
-      try {
-        await transactionService.updatePayeeAfterTransaction(input.payeeId);
-        return {success: true};
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to update payee statistics",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => {
+      await transactionService.updatePayeeAfterTransaction(input.payeeId);
+      return {success: true};
+    })),
 
   // Create a transfer transaction between two accounts
   createTransfer: rateLimitedProcedure
@@ -366,25 +182,15 @@ export const transactionRoutes = t.router({
       categoryId: z.number().positive().nullable().optional(),
       payeeId: z.number().positive().nullable().optional(),
     }))
-    .mutation(async ({input}) => {
-      try {
-        return await transactionService.createTransfer({
-          fromAccountId: input.fromAccountId,
-          toAccountId: input.toAccountId,
-          amount: input.amount,
-          date: input.date,
-          notes: input.notes,
-          categoryId: input.categoryId,
-          payeeId: input.payeeId,
-        });
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" :
-                error.statusCode === 400 ? "BAD_REQUEST" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to create transfer",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => transactionService.createTransfer({
+      fromAccountId: input.fromAccountId,
+      toAccountId: input.toAccountId,
+      amount: input.amount,
+      date: input.date,
+      notes: input.notes,
+      categoryId: input.categoryId,
+      payeeId: input.payeeId,
+    }))),
 
   // Update a transfer transaction
   updateTransfer: rateLimitedProcedure
@@ -396,33 +202,18 @@ export const transactionRoutes = t.router({
       categoryId: z.number().positive().nullable().optional(),
       payeeId: z.number().positive().nullable().optional(),
     }))
-    .mutation(async ({input}) => {
-      try {
-        const {transferId, ...updates} = input;
-        return await transactionService.updateTransfer(transferId, updates);
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" :
-                error.statusCode === 400 ? "BAD_REQUEST" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to update transfer",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => {
+      const {transferId, ...updates} = input;
+      return await transactionService.updateTransfer(transferId, updates);
+    })),
 
   // Delete a transfer transaction
   deleteTransfer: rateLimitedProcedure
     .input(z.object({
       transferId: z.string().min(1, "Transfer ID is required"),
     }))
-    .mutation(async ({input}) => {
-      try {
-        await transactionService.deleteTransfer(input.transferId);
-        return {success: true};
-      } catch (error: any) {
-        throw new TRPCError({
-          code: error.statusCode === 404 ? "NOT_FOUND" : "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to delete transfer",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => {
+      await transactionService.deleteTransfer(input.transferId);
+      return {success: true};
+    })),
 });

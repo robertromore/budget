@@ -51,5 +51,5 @@ export const SANITIZATION_PATTERNS = {
   // Safe characters for different field types
   NAME_ALLOWED: /^[a-zA-Z0-9\s\-_.()&]+$/,
   SLUG_ALLOWED: /^[a-z0-9\-_]+$/,
-  DESCRIPTION_ALLOWED: /^[a-zA-Z0-9\s\-_.()&,!?:;]+$/,
+  DESCRIPTION_ALLOWED: /^[a-zA-Z0-9\s\-_.()&,!?:;'$/%]+$/,
 } as const;

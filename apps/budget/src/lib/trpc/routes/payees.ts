@@ -2,7 +2,6 @@ import {removePayeeSchema, removePayeesSchema, recordCorrectionSchema, analyzeCo
 import {superformInsertPayeeSchema} from "$lib/schema/superforms";
 import {z} from "zod";
 import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
-import {TRPCError} from "@trpc/server";
 import {
   PayeeService,
   payeeIdSchema,
@@ -15,450 +14,136 @@ import {
   createPayeeSchema,
   updatePayeeSchema,
 } from "$lib/server/domains/payees";
-import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
 import {serviceFactory} from "$lib/server/shared/container/service-factory";
+import {withErrorHandler} from "$lib/trpc/shared/errors";
 
 const payeeService = serviceFactory.getPayeeService();
 
 export const payeeRoutes = t.router({
-  all: publicProcedure.query(async () => {
-    try {
-      return await payeeService.getAllPayees();
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to fetch payees",
-      });
-    }
-  }),
+  all: publicProcedure.query(withErrorHandler(async () => payeeService.getAllPayees())),
 
-  allWithStats: publicProcedure.query(async () => {
-    try {
-      return await payeeService.getAllPayeesWithStats();
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to fetch payees with stats",
-      });
-    }
-  }),
+  allWithStats: publicProcedure.query(withErrorHandler(async () => payeeService.getAllPayeesWithStats())),
 
-  load: publicProcedure.input(payeeIdSchema).query(async ({input}) => {
-    try {
-      return await payeeService.getPayeeById(input.id);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: error.message,
-        });
-      }
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to load payee",
-      });
-    }
-  }),
+  load: publicProcedure.input(payeeIdSchema).query(withErrorHandler(async ({input}) => payeeService.getPayeeById(input.id))),
 
-  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({input}) => {
-    try {
-      return await payeeService.getPayeeBySlug(input.slug);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: error.message,
-        });
-      }
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to load payee",
-      });
-    }
-  }),
+  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(withErrorHandler(async ({input}) => payeeService.getPayeeBySlug(input.slug))),
 
-  search: publicProcedure.input(searchPayeesSchema).query(async ({input}) => {
-    try {
-      return await payeeService.searchPayees(input.query);
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to search payees",
-      });
-    }
-  }),
+  search: publicProcedure.input(searchPayeesSchema).query(withErrorHandler(async ({input}) => payeeService.searchPayees(input.query))),
 
-  remove: rateLimitedProcedure.input(removePayeeSchema).mutation(async ({input}) => {
-    try {
-      return await payeeService.deletePayee(input.id, {force: false});
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: error.message,
-        });
-      }
-      if (error instanceof ConflictError) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: error.message,
-        });
-      }
-      if (error instanceof ValidationError) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: error.message,
-        });
-      }
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to delete payee",
-      });
-    }
-  }),
+  remove: rateLimitedProcedure.input(removePayeeSchema).mutation(withErrorHandler(async ({input}) => payeeService.deletePayee(input.id, {force: false}))),
 
   delete: bulkOperationProcedure
     .input(removePayeesSchema)
-    .mutation(async ({input: {entities}}) => {
-      try {
-        const result = await payeeService.bulkDeletePayees(entities, {force: false});
-        return {
-          deletedCount: result.deletedCount,
-          errors: result.errors,
-        };
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to bulk delete payees",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input: {entities}}) => {
+      const result = await payeeService.bulkDeletePayees(entities, {force: false});
+      return {
+        deletedCount: result.deletedCount,
+        errors: result.errors,
+      };
+    })),
 
   create: rateLimitedProcedure
     .input(createPayeeSchema)
-    .mutation(async ({input}) => {
-      try {
-        return await payeeService.createPayee(input);
-      } catch (error) {
-        if (error instanceof ConflictError) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: error.message,
-          });
-        }
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to create payee",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => payeeService.createPayee(input))),
 
   update: rateLimitedProcedure
     .input(updatePayeeSchema.safeExtend({id: z.number().int().positive()}))
-    .mutation(async ({input}) => {
-      try {
-        const {id, ...updateData} = input;
-        return await payeeService.updatePayee(id, updateData);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof ConflictError) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: error.message,
-          });
-        }
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to update payee",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => {
+      const {id, ...updateData} = input;
+      return await payeeService.updatePayee(id, updateData);
+    })),
 
   save: rateLimitedProcedure
     .input(superformInsertPayeeSchema)
-    .mutation(async ({input}) => {
-      try {
-        const {id, address, ...payeeData} = input;
+    .mutation(withErrorHandler(async ({input}) => {
+      const {id, address, ...payeeData} = input;
 
-        // Ensure name is properly typed and required
-        const name = payeeData.name || "";
-        if (!name.trim()) {
-          throw new ValidationError("Payee name is required");
-        }
+      // Ensure name is properly typed and required
+      const name = payeeData.name || "";
 
-        // Transform address from string to PayeeAddress object if provided
-        let parsedAddress: any = null;
-        if (address && typeof address === 'string' && address.trim() !== '') {
-          try {
-            parsedAddress = JSON.parse(address);
-          } catch {
-            // If it's not valid JSON, treat it as null
-            parsedAddress = null;
-          }
+      // Transform address from string to PayeeAddress object if provided
+      let parsedAddress: any = null;
+      if (address && typeof address === 'string' && address.trim() !== '') {
+        try {
+          parsedAddress = JSON.parse(address);
+        } catch {
+          // If it's not valid JSON, treat it as null
+          parsedAddress = null;
         }
+      }
 
-        if (id) {
-          // Update existing payee
-          return await payeeService.updatePayee(id, {
-            ...payeeData,
-            name: name.trim(),
-            address: parsedAddress
-          });
-        } else {
-          // Create new payee
-          return await payeeService.createPayee({
-            ...payeeData,
-            name: name.trim(),
-            address: parsedAddress
-          });
-        }
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof ConflictError) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: error.message,
-          });
-        }
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to save payee",
+      if (id) {
+        // Update existing payee
+        return await payeeService.updatePayee(id, {
+          ...payeeData,
+          name: name.trim(),
+          address: parsedAddress
+        });
+      } else {
+        // Create new payee
+        return await payeeService.createPayee({
+          ...payeeData,
+          name: name.trim(),
+          address: parsedAddress
         });
       }
-    }),
+    })),
 
   // Enhanced search and filtering endpoints
   searchAdvanced: publicProcedure
     .input(advancedSearchPayeesSchema)
-    .query(async ({input}) => {
-      try {
-        console.log('tRPC searchAdvanced called with input:', JSON.stringify(input, null, 2));
-        const result = await payeeService.searchPayeesAdvanced(input);
-        console.log('tRPC searchAdvanced result count:', result.length);
-        return result;
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to search payees",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => {
+      console.log('tRPC searchAdvanced called with input:', JSON.stringify(input, null, 2));
+      const result = await payeeService.searchPayeesAdvanced(input);
+      console.log('tRPC searchAdvanced result count:', result.length);
+      return result;
+    })),
 
   byType: publicProcedure
     .input(getPayeesByTypeSchema)
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getPayeesByType(input.payeeType);
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get payees by type",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getPayeesByType(input.payeeType))),
 
   withRelations: publicProcedure
-    .query(async () => {
-      try {
-        return await payeeService.getPayeesWithRelations();
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get payees with relations",
-        });
-      }
-    }),
+    .query(withErrorHandler(async () => payeeService.getPayeesWithRelations())),
 
   needingAttention: publicProcedure
-    .query(async () => {
-      try {
-        return await payeeService.getPayeesNeedingAttention();
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get payees needing attention",
-        });
-      }
-    }),
+    .query(withErrorHandler(async () => payeeService.getPayeesNeedingAttention())),
 
   // Intelligence and analytics endpoints
   stats: publicProcedure
     .input(payeeIdSchema)
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getPayeeStats(input.id);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get payee stats",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getPayeeStats(input.id))),
 
   suggestions: publicProcedure
     .input(payeeIdSchema)
-    .query(async ({input}) => {
-      try {
-        return await payeeService.generatePayeeSuggestions(input.id);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to generate payee suggestions",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.generatePayeeSuggestions(input.id))),
 
   intelligence: publicProcedure
     .input(payeeIdSchema)
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getPayeeIntelligence(input.id);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get payee intelligence",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getPayeeIntelligence(input.id))),
 
   analytics: publicProcedure
-    .query(async () => {
-      try {
-        return await payeeService.getPayeeAnalytics();
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get payee analytics",
-        });
-      }
-    }),
+    .query(withErrorHandler(async () => payeeService.getPayeeAnalytics())),
 
   // Management and automation endpoints
   merge: rateLimitedProcedure
     .input(mergePayeesSchema)
-    .mutation(async ({input}) => {
-      try {
-        await payeeService.mergePayees(input.sourceId, input.targetId);
-        return {success: true};
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to merge payees",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => {
+      await payeeService.mergePayees(input.sourceId, input.targetId);
+      return {success: true};
+    })),
 
   applyIntelligentDefaults: rateLimitedProcedure
     .input(applyIntelligentDefaultsSchema)
-    .mutation(async ({input}) => {
-      try {
-        return await payeeService.applyIntelligentDefaults(
-          input.id,
-          input.applyCategory ?? true,
-          input.applyBudget ?? true
-        );
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to apply intelligent defaults",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => payeeService.applyIntelligentDefaults(
+      input.id,
+      input.applyCategory ?? true,
+      input.applyBudget ?? true
+    ))),
 
   updateCalculatedFields: rateLimitedProcedure
     .input(updateCalculatedFieldsSchema)
-    .mutation(async ({input}) => {
-      try {
-        return await payeeService.updateCalculatedFields(input.payeeId);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to update calculated fields",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => payeeService.updateCalculatedFields(input.payeeId))),
 
   // =====================================
   // Category Learning Routes
@@ -466,40 +151,19 @@ export const payeeRoutes = t.router({
 
   recordCategoryCorrection: rateLimitedProcedure
     .input(recordCorrectionSchema)
-    .mutation(async ({input}) => {
-      try {
-        return await payeeService.recordCategoryCorrection({
-          payeeId: input.payeeId,
-          transactionId: input.transactionId,
-          fromCategoryId: input.fromCategoryId,
-          toCategoryId: input.toCategoryId,
-          correctionTrigger: input.correctionTrigger,
-          correctionContext: input.correctionContext,
-          transactionAmount: input.transactionAmount,
-          transactionDate: input.transactionDate,
-          userConfidence: input.userConfidence,
-          notes: input.notes,
-          isOverride: input.isOverride,
-        });
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to record category correction",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => payeeService.recordCategoryCorrection({
+      payeeId: input.payeeId,
+      transactionId: input.transactionId,
+      fromCategoryId: input.fromCategoryId,
+      toCategoryId: input.toCategoryId,
+      correctionTrigger: input.correctionTrigger,
+      correctionContext: input.correctionContext,
+      transactionAmount: input.transactionAmount,
+      transactionDate: input.transactionDate,
+      userConfidence: input.userConfidence,
+      notes: input.notes,
+      isOverride: input.isOverride,
+    }))),
 
   getCategoryRecommendation: publicProcedure
     .input(z.object({
@@ -507,25 +171,10 @@ export const payeeRoutes = t.router({
       transactionAmount: z.number().optional(),
       transactionDate: z.string().optional(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getCategoryRecommendation(input.payeeId, {
-          transactionAmount: input.transactionAmount,
-          transactionDate: input.transactionDate,
-        });
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get category recommendation",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getCategoryRecommendation(input.payeeId, {
+      transactionAmount: input.transactionAmount,
+      transactionDate: input.transactionDate,
+    }))),
 
   getEnhancedCategoryRecommendation: publicProcedure
     .input(z.object({
@@ -533,25 +182,10 @@ export const payeeRoutes = t.router({
       transactionAmount: z.number().optional(),
       transactionDate: z.string().optional(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getEnhancedCategoryRecommendation(input.payeeId, {
-          transactionAmount: input.transactionAmount,
-          transactionDate: input.transactionDate,
-        });
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get enhanced category recommendation",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getEnhancedCategoryRecommendation(input.payeeId, {
+      transactionAmount: input.transactionAmount,
+      transactionDate: input.transactionDate,
+    }))),
 
   calculateCategoryConfidence: publicProcedure
     .input(z.object({
@@ -560,96 +194,33 @@ export const payeeRoutes = t.router({
       transactionAmount: z.number().optional(),
       transactionDate: z.string().optional(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.calculateCategoryConfidence(
-          input.payeeId,
-          input.categoryId,
-          {
-            transactionAmount: input.transactionAmount,
-            transactionDate: input.transactionDate,
-          }
-        );
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to calculate category confidence",
-        });
+    .query(withErrorHandler(async ({input}) => payeeService.calculateCategoryConfidence(
+      input.payeeId,
+      input.categoryId,
+      {
+        transactionAmount: input.transactionAmount,
+        transactionDate: input.transactionDate,
       }
-    }),
+    ))),
 
   analyzeCorrectionPatterns: publicProcedure
     .input(analyzeCorrectionsSchema)
-    .query(async ({input}) => {
-      try {
-        return await payeeService.analyzeCorrectionPatterns(input.payeeId, {
-          timeframeMonths: input.timeframeMonths,
-          minConfidence: input.minConfidence,
-          includeProcessed: input.includeProcessed,
-        });
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to analyze correction patterns",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.analyzeCorrectionPatterns(input.payeeId, {
+      timeframeMonths: input.timeframeMonths,
+      minConfidence: input.minConfidence,
+      includeProcessed: input.includeProcessed,
+    }))),
 
   detectCategoryDrift: publicProcedure
     .input(payeeIdSchema)
-    .query(async ({input}) => {
-      try {
-        return await payeeService.detectCategoryDrift(input.id);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to detect category drift",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.detectCategoryDrift(input.id))),
 
   getDefaultCategoryUpdateSuggestions: publicProcedure
-    .query(async () => {
-      try {
-        return await payeeService.getDefaultCategoryUpdateSuggestions();
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get default category update suggestions",
-        });
-      }
-    }),
+    .query(withErrorHandler(async () => payeeService.getDefaultCategoryUpdateSuggestions())),
 
   getLearningMetrics: publicProcedure
     .input(learningMetricsSchema.optional())
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getLearningMetrics(input?.timeframeMonths);
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get learning metrics",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getLearningMetrics(input?.timeframeMonths))),
 
   applyLearningBasedUpdates: rateLimitedProcedure
     .input(z.object({
@@ -657,20 +228,11 @@ export const payeeRoutes = t.router({
       minCorrectionCount: z.number().positive().default(5),
       dryRun: z.boolean().default(false),
     }))
-    .mutation(async ({input}) => {
-      try {
-        return await payeeService.applyLearningBasedUpdates({
-          minConfidence: input.minConfidence,
-          minCorrectionCount: input.minCorrectionCount,
-          dryRun: input.dryRun,
-        });
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to apply learning-based updates",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => payeeService.applyLearningBasedUpdates({
+      minConfidence: input.minConfidence,
+      minCorrectionCount: input.minCorrectionCount,
+      dryRun: input.dryRun,
+    }))),
 
   // =====================================
   // Budget Allocation Intelligence Routes
@@ -678,22 +240,7 @@ export const payeeRoutes = t.router({
 
   budgetOptimizationAnalysis: publicProcedure
     .input(payeeIdSchema)
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getBudgetOptimizationAnalysis(input.id);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get budget optimization analysis",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getBudgetOptimizationAnalysis(input.id))),
 
   budgetAllocationSuggestions: publicProcedure
     .input(z.object({
@@ -702,23 +249,14 @@ export const payeeRoutes = t.router({
       riskTolerance: z.number().min(0).max(1).default(0.5),
       timeHorizon: z.number().positive().default(12),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getBudgetAllocationSuggestions(
-          input.accountId,
-          {
-            strategy: input.strategy,
-            riskTolerance: input.riskTolerance,
-            timeHorizon: input.timeHorizon,
-          }
-        );
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get budget allocation suggestions",
-        });
+    .query(withErrorHandler(async ({input}) => payeeService.getBudgetAllocationSuggestions(
+      input.accountId,
+      {
+        strategy: input.strategy,
+        riskTolerance: input.riskTolerance,
+        timeHorizon: input.timeHorizon,
       }
-    }),
+    ))),
 
   budgetForecast: publicProcedure
     .input(z.object({
@@ -726,89 +264,35 @@ export const payeeRoutes = t.router({
       forecastPeriod: z.enum(['monthly', 'quarterly', 'yearly']).default('monthly'),
       periodsAhead: z.number().positive().default(12),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getBudgetForecast(
-          input.payeeId,
-          input.forecastPeriod,
-          input.periodsAhead
-        );
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get budget forecast",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getBudgetForecast(
+      input.payeeId,
+      input.forecastPeriod,
+      input.periodsAhead
+    ))),
 
   budgetHealthMetrics: publicProcedure
     .input(payeeIdSchema)
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getBudgetHealthMetrics(input.id);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get budget health metrics",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getBudgetHealthMetrics(input.id))),
 
   budgetRebalancingPlan: publicProcedure
     .input(z.object({
       accountId: z.number().positive().optional(),
       strategy: z.enum(['conservative', 'aggressive', 'balanced']).default('balanced'),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getBudgetRebalancingPlan(
-          input.accountId,
-          input.strategy
-        );
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get budget rebalancing plan",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getBudgetRebalancingPlan(
+      input.accountId,
+      input.strategy
+    ))),
 
   budgetEfficiencyAnalysis: publicProcedure
     .input(z.object({
       payeeId: z.number().positive(),
       currentBudget: z.number().positive().optional(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getBudgetEfficiencyAnalysis(
-          input.payeeId,
-          input.currentBudget
-        );
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get budget efficiency analysis",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getBudgetEfficiencyAnalysis(
+      input.payeeId,
+      input.currentBudget
+    ))),
 
   multiPayeeBudgetOptimization: publicProcedure
     .input(z.object({
@@ -820,20 +304,11 @@ export const payeeRoutes = t.router({
         balanceAllocations: z.boolean().default(false),
       }).default({}),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getMultiPayeeBudgetOptimization(
-          input.payeeIds,
-          input.totalBudgetConstraint,
-          input.objectives
-        );
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get multi-payee budget optimization",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getMultiPayeeBudgetOptimization(
+      input.payeeIds,
+      input.totalBudgetConstraint,
+      input.objectives
+    ))),
 
   budgetScenarioAnalysis: publicProcedure
     .input(z.object({
@@ -845,19 +320,10 @@ export const payeeRoutes = t.router({
         assumptions: z.record(z.any()),
       })),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getBudgetScenarioAnalysis(
-          input.payeeIds,
-          input.scenarios
-        );
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get budget scenario analysis",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getBudgetScenarioAnalysis(
+      input.payeeIds,
+      input.scenarios
+    ))),
 
   bulkBudgetOptimization: publicProcedure
     .input(z.object({
@@ -868,19 +334,10 @@ export const payeeRoutes = t.router({
         includeInactive: z.boolean().default(false),
       }).default({}),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getBulkBudgetOptimization(
-          input.accountId,
-          input.filters
-        );
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get bulk budget optimization",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getBulkBudgetOptimization(
+      input.accountId,
+      input.filters
+    ))),
 
   // =====================================
   // ML Coordinator Routes (Phase 2.4)
@@ -896,41 +353,11 @@ export const payeeRoutes = t.router({
         riskTolerance: z.number().min(0).max(1).optional(),
       }).optional(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getUnifiedMLRecommendations(input.payeeId, input.context);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get unified ML recommendations",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getUnifiedMLRecommendations(input.payeeId, input.context))),
 
   crossSystemLearning: publicProcedure
     .input(payeeIdSchema)
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getCrossSystemLearning(input.id);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get cross-system learning analysis",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getCrossSystemLearning(input.id))),
 
   executeAdaptiveOptimization: rateLimitedProcedure
     .input(z.object({
@@ -943,85 +370,25 @@ export const payeeRoutes = t.router({
         dryRun: z.boolean().default(false),
       }).default({}),
     }))
-    .mutation(async ({input}) => {
-      try {
-        return await payeeService.executeAdaptiveOptimization(input.payeeId, input.options);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to execute adaptive optimization",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => payeeService.executeAdaptiveOptimization(input.payeeId, input.options))),
 
   systemConfidence: publicProcedure
     .input(payeeIdSchema)
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getSystemConfidence(input.id);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to assess system confidence",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getSystemConfidence(input.id))),
 
   detectBehaviorChanges: publicProcedure
     .input(z.object({
       payeeId: z.number().positive(),
       lookbackMonths: z.number().positive().default(6),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.detectBehaviorChanges(input.payeeId, input.lookbackMonths);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to detect behavior changes",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.detectBehaviorChanges(input.payeeId, input.lookbackMonths))),
 
   actionableInsights: publicProcedure
     .input(z.object({
       payeeId: z.number().positive(),
       insightTypes: z.array(z.enum(['optimization', 'correction', 'prediction', 'automation', 'alert'])).optional(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getActionableInsights(input.payeeId, input.insightTypes);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get actionable insights",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getActionableInsights(input.payeeId, input.insightTypes))),
 
   bulkUnifiedRecommendations: publicProcedure
     .input(z.object({
@@ -1032,16 +399,7 @@ export const payeeRoutes = t.router({
         maxResults: z.number().positive().default(50),
       }).default({}),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getBulkUnifiedRecommendations(input.payeeIds, input.options);
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get bulk unified recommendations",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getBulkUnifiedRecommendations(input.payeeIds, input.options))),
 
   mlPerformanceMetrics: publicProcedure
     .input(z.object({
@@ -1052,22 +410,7 @@ export const payeeRoutes = t.router({
         periodType: z.enum(['daily', 'weekly', 'monthly']),
       }).optional(),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getMLPerformanceMetrics(input.payeeId, input.period);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get ML performance metrics",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getMLPerformanceMetrics(input.payeeId, input.period))),
 
   applyBulkMLAutomation: rateLimitedProcedure
     .input(z.object({
@@ -1079,16 +422,7 @@ export const payeeRoutes = t.router({
         automationTypes: z.array(z.enum(['category', 'budget', 'rules'])).default(['category', 'budget']),
       }).default({}),
     }))
-    .mutation(async ({input}) => {
-      try {
-        return await payeeService.applyBulkMLAutomation(input.payeeIds, input.options);
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to apply bulk ML automation",
-        });
-      }
-    }),
+    .mutation(withErrorHandler(async ({input}) => payeeService.applyBulkMLAutomation(input.payeeIds, input.options))),
 
   mlInsightsDashboard: publicProcedure
     .input(z.object({
@@ -1102,16 +436,7 @@ export const payeeRoutes = t.router({
         }).optional(),
       }).default({}),
     }))
-    .query(async ({input}) => {
-      try {
-        return await payeeService.getMLInsightsDashboard(input.filters);
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get ML insights dashboard",
-        });
-      }
-    }),
+    .query(withErrorHandler(async ({input}) => payeeService.getMLInsightsDashboard(input.filters))),
 
     // =====================================
     // Contact Management Routes (Phase 3.1)
@@ -1128,23 +453,11 @@ export const payeeRoutes = t.router({
         }).optional(),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.validateAndEnrichPayeeContact(
+        return withErrorHandler(() => payeeService.validateAndEnrichPayeeContact(
             input.payeeId,
             input.contactOverrides
-          );
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to validate and enrich contact",
-          });
-        }
+          ));
+
       }),
 
     standardizePhoneNumber: rateLimitedProcedure
@@ -1153,26 +466,8 @@ export const payeeRoutes = t.router({
         phone: z.string().optional(),
       }))
       .mutation(async ({input}) => {
-        try {
-          return await payeeService.standardizePayeePhoneNumber(input.payeeId, input.phone);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          if (error instanceof ValidationError) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to standardize phone number",
-          });
-        }
+        return withErrorHandler(() => payeeService.standardizePayeePhoneNumber(input.payeeId, input.phone));
+
       }),
 
     validateEmailDomain: publicProcedure
@@ -1181,26 +476,8 @@ export const payeeRoutes = t.router({
         email: z.string().optional(),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.validatePayeeEmailDomain(input.payeeId, input.email);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          if (error instanceof ValidationError) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to validate email domain",
-          });
-        }
+        return withErrorHandler(() => payeeService.validatePayeeEmailDomain(input.payeeId, input.email));
+
       }),
 
     enrichAddressData: rateLimitedProcedure
@@ -1209,20 +486,8 @@ export const payeeRoutes = t.router({
         address: z.any().optional(),
       }))
       .mutation(async ({input}) => {
-        try {
-          return await payeeService.enrichPayeeAddressData(input.payeeId, input.address);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to enrich address data",
-          });
-        }
+        return withErrorHandler(() => payeeService.enrichPayeeAddressData(input.payeeId, input.address));
+
       }),
 
     detectContactDuplicates: publicProcedure
@@ -1231,36 +496,18 @@ export const payeeRoutes = t.router({
         minimumSimilarity: z.number().min(0).max(1).default(0.7),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.detectContactDuplicates(
+        return withErrorHandler(() => payeeService.detectContactDuplicates(
             input.includeInactive,
             input.minimumSimilarity
-          );
-        } catch (error) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to detect contact duplicates",
-          });
-        }
+          ));
+
       }),
 
     generateContactSuggestions: publicProcedure
       .input(payeeIdSchema)
       .query(async ({input}) => {
-        try {
-          return await payeeService.generatePayeeContactSuggestions(input.id);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to generate contact suggestions",
-          });
-        }
+        return withErrorHandler(() => payeeService.generatePayeeContactSuggestions(input.id));
+
       }),
 
     validateWebsiteAccessibility: publicProcedure
@@ -1269,26 +516,8 @@ export const payeeRoutes = t.router({
         website: z.string().optional(),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.validatePayeeWebsiteAccessibility(input.payeeId, input.website);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          if (error instanceof ValidationError) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to validate website accessibility",
-          });
-        }
+        return withErrorHandler(() => payeeService.validatePayeeWebsiteAccessibility(input.payeeId, input.website));
+
       }),
 
     extractContactFromTransactions: publicProcedure
@@ -1297,23 +526,11 @@ export const payeeRoutes = t.router({
         transactionLimit: z.number().positive().default(50),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.extractContactFromPayeeTransactions(
+        return withErrorHandler(() => payeeService.extractContactFromPayeeTransactions(
             input.payeeId,
             input.transactionLimit
-          );
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to extract contact from transactions",
-          });
-        }
+          ));
+
       }),
 
     getContactAnalytics: publicProcedure
@@ -1327,20 +544,8 @@ export const payeeRoutes = t.router({
         }).optional(),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.getContactAnalytics(input.payeeId, input.contactOverrides);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to get contact analytics",
-          });
-        }
+        return withErrorHandler(() => payeeService.getContactAnalytics(input.payeeId, input.contactOverrides));
+
       }),
 
     bulkContactValidation: rateLimitedProcedure
@@ -1354,14 +559,8 @@ export const payeeRoutes = t.router({
         }).default({}),
       }))
       .mutation(async ({input}) => {
-        try {
-          return await payeeService.bulkContactValidation(input.payeeIds, input.options);
-        } catch (error) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to perform bulk contact validation",
-          });
-        }
+        return withErrorHandler(() => payeeService.bulkContactValidation(input.payeeIds, input.options));
+
       }),
 
     smartMergeContactDuplicates: rateLimitedProcedure
@@ -1385,7 +584,7 @@ export const payeeRoutes = t.router({
         }).default({}),
       }))
       .mutation(async ({input}) => {
-        try {
+        return withErrorHandler(async () => {
           const duplicateDetection = {
             primaryPayeeId: input.primaryPayeeId,
             duplicatePayeeId: input.duplicatePayeeId,
@@ -1396,24 +595,7 @@ export const payeeRoutes = t.router({
           };
 
           return await payeeService.smartMergeContactDuplicates(duplicateDetection, input.options);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          if (error instanceof ValidationError) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to smart merge contact duplicates",
-          });
-        }
+        });
       }),
 
     // =====================================
@@ -1427,18 +609,12 @@ export const payeeRoutes = t.router({
         minConfidence: z.number().min(0).max(1).default(0.3),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.detectSubscriptions(
+        return withErrorHandler(() => payeeService.detectSubscriptions(
             input.payeeIds,
             input.includeInactive,
             input.minConfidence
-          );
-        } catch (error) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to detect subscriptions",
-          });
-        }
+          ));
+
       }),
 
     classifySubscription: publicProcedure
@@ -1451,20 +627,8 @@ export const payeeRoutes = t.router({
         })).optional(),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.classifySubscription(input.payeeId, input.transactionData);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to classify subscription",
-          });
-        }
+        return withErrorHandler(() => payeeService.classifySubscription(input.payeeId, input.transactionData));
+
       }),
 
     subscriptionLifecycleAnalysis: publicProcedure
@@ -1472,20 +636,8 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.getSubscriptionLifecycleAnalysis(input.payeeId);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to get subscription lifecycle analysis",
-          });
-        }
+        return withErrorHandler(() => payeeService.getSubscriptionLifecycleAnalysis(input.payeeId));
+
       }),
 
     subscriptionCostAnalysis: publicProcedure
@@ -1494,20 +646,8 @@ export const payeeRoutes = t.router({
         timeframeDays: z.number().positive().default(365),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.getSubscriptionCostAnalysis(input.payeeId, input.timeframeDays);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to get subscription cost analysis",
-          });
-        }
+        return withErrorHandler(() => payeeService.getSubscriptionCostAnalysis(input.payeeId, input.timeframeDays));
+
       }),
 
     subscriptionRenewalPredictions: publicProcedure
@@ -1516,14 +656,8 @@ export const payeeRoutes = t.router({
         forecastMonths: z.number().positive().default(12),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.getSubscriptionRenewalPredictions(input.payeeIds, input.forecastMonths);
-        } catch (error) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to get subscription renewal predictions",
-          });
-        }
+        return withErrorHandler(() => payeeService.getSubscriptionRenewalPredictions(input.payeeIds, input.forecastMonths));
+
       }),
 
     subscriptionUsageAnalysis: publicProcedure
@@ -1531,20 +665,8 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.getSubscriptionUsageAnalysis(input.payeeId);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to get subscription usage analysis",
-          });
-        }
+        return withErrorHandler(() => payeeService.getSubscriptionUsageAnalysis(input.payeeId));
+
       }),
 
     subscriptionCancellationAssistance: publicProcedure
@@ -1552,20 +674,8 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.getSubscriptionCancellationAssistance(input.payeeId);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to get subscription cancellation assistance",
-          });
-        }
+        return withErrorHandler(() => payeeService.getSubscriptionCancellationAssistance(input.payeeId));
+
       }),
 
     subscriptionOptimizationRecommendations: publicProcedure
@@ -1578,17 +688,11 @@ export const payeeRoutes = t.router({
         }).default({}),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.getSubscriptionOptimizationRecommendations(
+        return withErrorHandler(() => payeeService.getSubscriptionOptimizationRecommendations(
             input.payeeIds,
             input.optimizationGoals
-          );
-        } catch (error) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to get subscription optimization recommendations",
-          });
-        }
+          ));
+
       }),
 
     bulkSubscriptionAnalysis: publicProcedure
@@ -1602,14 +706,8 @@ export const payeeRoutes = t.router({
         }).default({}),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.getBulkSubscriptionAnalysis(input.payeeIds, input.analysisOptions);
-        } catch (error) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to get bulk subscription analysis",
-          });
-        }
+        return withErrorHandler(() => payeeService.getBulkSubscriptionAnalysis(input.payeeIds, input.analysisOptions));
+
       }),
 
     updateSubscriptionMetadata: rateLimitedProcedure
@@ -1651,26 +749,8 @@ export const payeeRoutes = t.router({
         }),
       }))
       .mutation(async ({input}) => {
-        try {
-          return await payeeService.updateSubscriptionMetadata(input.payeeId, input.subscriptionMetadata);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          if (error instanceof ValidationError) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to update subscription metadata",
-          });
-        }
+        return withErrorHandler(() => payeeService.updateSubscriptionMetadata(input.payeeId, input.subscriptionMetadata));
+
       }),
 
     markSubscriptionCancelled: rateLimitedProcedure
@@ -1682,8 +762,7 @@ export const payeeRoutes = t.router({
         notes: z.string().optional(),
       }))
       .mutation(async ({input}) => {
-        try {
-          return await payeeService.markSubscriptionCancelled(
+        return withErrorHandler(() => payeeService.markSubscriptionCancelled(
             input.payeeId,
             input.cancellationDate,
             {
@@ -1691,25 +770,8 @@ export const payeeRoutes = t.router({
               refundAmount: input.refundAmount,
               notes: input.notes,
             }
-          );
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          if (error instanceof ValidationError) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to mark subscription as cancelled",
-          });
-        }
+          ));
+
       }),
 
     subscriptionValueOptimization: publicProcedure
@@ -1723,18 +785,12 @@ export const payeeRoutes = t.router({
         }).default({}),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.getSubscriptionValueOptimization(
+        return withErrorHandler(() => payeeService.getSubscriptionValueOptimization(
             input.payeeIds,
             input.optimizationStrategy,
             input.constraints
-          );
-        } catch (error) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to get subscription value optimization",
-          });
-        }
+          ));
+
       }),
 
     subscriptionCompetitorAnalysis: publicProcedure
@@ -1744,24 +800,12 @@ export const payeeRoutes = t.router({
         includePricingTiers: z.boolean().default(true),
       }))
       .query(async ({input}) => {
-        try {
-          return await payeeService.getSubscriptionCompetitorAnalysis(
+        return withErrorHandler(() => payeeService.getSubscriptionCompetitorAnalysis(
             input.payeeId,
             input.includeFeatureComparison,
             input.includePricingTiers
-          );
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to get subscription competitor analysis",
-          });
-        }
+          ));
+
       }),
 
     subscriptionAutomationRules: rateLimitedProcedure
@@ -1782,26 +826,8 @@ export const payeeRoutes = t.router({
         }),
       }))
       .mutation(async ({input}) => {
-        try {
-          return await payeeService.setSubscriptionAutomationRules(input.payeeId, input.rules);
-        } catch (error) {
-          if (error instanceof NotFoundError) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: error.message,
-            });
-          }
-          if (error instanceof ValidationError) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: error.message,
-            });
-          }
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error instanceof Error ? error.message : "Failed to set subscription automation rules",
-          });
-        }
+        return withErrorHandler(() => payeeService.setSubscriptionAutomationRules(input.payeeId, input.rules));
+
       }),
 
   // =====================================
@@ -1814,21 +840,10 @@ export const payeeRoutes = t.router({
       status: z.enum(['active', 'inactive']),
     }))
     .mutation(async ({input}) => {
-      try {
+      return withErrorHandler(async () => {
         const isActivating = input.status === 'active';
         return await payeeService.bulkUpdatePayeeStatus(input.payeeIds, isActivating);
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to update payee status",
-        });
-      }
+      });
     }),
 
   bulkCategoryAssignment: rateLimitedProcedure
@@ -1838,30 +853,12 @@ export const payeeRoutes = t.router({
       overwriteExisting: z.boolean().default(false),
     }))
     .mutation(async ({input}) => {
-      try {
-        return await payeeService.bulkAssignCategory(
+      return withErrorHandler(() => payeeService.bulkAssignCategory(
           input.payeeIds,
           input.categoryId,
           input.overwriteExisting
-        );
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to assign category to payees",
-        });
-      }
+        ));
+
     }),
 
   bulkTagManagement: rateLimitedProcedure
@@ -1871,24 +868,12 @@ export const payeeRoutes = t.router({
       operation: z.enum(['add', 'remove', 'replace']),
     }))
     .mutation(async ({input}) => {
-      try {
-        return await payeeService.bulkManageTags(
+      return withErrorHandler(() => payeeService.bulkManageTags(
           input.payeeIds,
           input.tags,
           input.operation
-        );
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to manage payee tags",
-        });
-      }
+        ));
+
     }),
 
   bulkIntelligenceApplication: rateLimitedProcedure
@@ -1902,23 +887,11 @@ export const payeeRoutes = t.router({
       }),
     }))
     .mutation(async ({input}) => {
-      try {
-        return await payeeService.bulkApplyIntelligentDefaults(
+      return withErrorHandler(() => payeeService.bulkApplyIntelligentDefaults(
           input.payeeIds,
           input.options
-        );
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to apply intelligent defaults",
-        });
-      }
+        ));
+
     }),
 
   bulkExport: publicProcedure
@@ -1930,8 +903,7 @@ export const payeeRoutes = t.router({
       includeIntelligenceData: z.boolean().default(false),
     }))
     .query(async ({input}) => {
-      try {
-        return await payeeService.exportPayees(
+      return withErrorHandler(() => payeeService.exportPayees(
           input.payeeIds,
           input.format,
           {
@@ -1939,13 +911,8 @@ export const payeeRoutes = t.router({
             includeContactInfo: input.includeContactInfo,
             includeIntelligenceData: input.includeIntelligenceData,
           }
-        );
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to export payees",
-        });
-      }
+        ));
+
     }),
 
   bulkImport: rateLimitedProcedure
@@ -1960,24 +927,12 @@ export const payeeRoutes = t.router({
       }).default({}),
     }))
     .mutation(async ({input}) => {
-      try {
-        return await payeeService.importPayees(
+      return withErrorHandler(() => payeeService.importPayees(
           input.data,
           input.format,
           input.options
-        );
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to import payees",
-        });
-      }
+        ));
+
     }),
 
   bulkCleanup: rateLimitedProcedure
@@ -1994,24 +949,12 @@ export const payeeRoutes = t.router({
       confirmDestructive: z.boolean().default(false),
     }))
     .mutation(async ({input}) => {
-      try {
-        return await payeeService.bulkCleanupPayees(
+      return withErrorHandler(() => payeeService.bulkCleanupPayees(
           input.operations,
           input.dryRun,
           input.confirmDestructive
-        );
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to perform bulk cleanup",
-        });
-      }
+        ));
+
     }),
 
   getDuplicates: publicProcedure
@@ -2021,18 +964,12 @@ export const payeeRoutes = t.router({
       groupingStrategy: z.enum(['name', 'contact', 'transaction_pattern', 'comprehensive']).default('comprehensive'),
     }))
     .query(async ({input}) => {
-      try {
-        return await payeeService.findDuplicatePayees(
+      return withErrorHandler(() => payeeService.findDuplicatePayees(
           input.similarityThreshold,
           input.includeInactive,
           input.groupingStrategy
-        );
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to find duplicate payees",
-        });
-      }
+        ));
+
     }),
 
   mergeDuplicates: rateLimitedProcedure
@@ -2048,37 +985,13 @@ export const payeeRoutes = t.router({
       confirmMerge: z.boolean().default(false),
     }))
     .mutation(async ({input}) => {
-      try {
-        return await payeeService.mergeDuplicatePayees(
+      return withErrorHandler(() => payeeService.mergeDuplicatePayees(
           input.primaryPayeeId,
           input.duplicatePayeeIds,
           input.mergeStrategy,
           input.confirmMerge
-        );
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof ConflictError) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to merge duplicate payees",
-        });
-      }
+        ));
+
     }),
 
   undoOperation: rateLimitedProcedure
@@ -2095,29 +1008,11 @@ export const payeeRoutes = t.router({
       ]),
     }))
     .mutation(async ({input}) => {
-      try {
-        return await payeeService.undoBulkOperation(
+      return withErrorHandler(() => payeeService.undoBulkOperation(
           input.operationId,
           input.operationType
-        );
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: error.message,
-          });
-        }
-        if (error instanceof ValidationError) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to undo bulk operation",
-        });
-      }
+        ));
+
     }),
 
   getOperationHistory: publicProcedure
@@ -2137,19 +1032,13 @@ export const payeeRoutes = t.router({
       endDate: z.string().optional(),
     }))
     .query(async ({input}) => {
-      try {
-        return await payeeService.getBulkOperationHistory(
+      return withErrorHandler(() => payeeService.getBulkOperationHistory(
           input.limit,
           input.offset,
           input.operationType,
           input.startDate,
           input.endDate
-        );
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get operation history",
-        });
-      }
+        ));
+
     }),
 });

@@ -96,8 +96,3 @@ interface SchedulesExtraFields {
 }
 
 export type Schedule = typeof schedules.$inferSelect & SchedulesExtraFields;
-export type NewSchedule = typeof schedules.$inferInsert;
-export type InsertScheduleSchema = typeof insertScheduleSchema;
-export type FormInsertScheduleSchema = typeof formInsertScheduleSchema;
-export type RemoveScheduleSchema = typeof removeScheduleSchema;
-export type DuplicateScheduleSchema = typeof duplicateScheduleSchema;

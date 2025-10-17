@@ -10,6 +10,7 @@ import type {
 } from "$lib/server/shared/types";
 import {DATABASE_CONFIG} from "$lib/server/config/database";
 import {getCurrentTimestamp} from "$lib/utils/dates";
+import {logger} from "$lib/server/shared/logging";
 
 /**
  * Base repository class providing common database operations
@@ -326,6 +327,69 @@ export abstract class BaseRepository<
       throw new DatabaseError(
         `Failed to soft delete ${this.entityName} with slug archive`,
         "softDeleteWithSlugArchive"
+      );
+    }
+  }
+
+  /**
+   * Bulk soft delete entities with slug archiving
+   * Appends "-deleted-{timestamp}" to slugs before soft deleting
+   * Returns the number of entities successfully deleted
+   */
+  async bulkSoftDeleteWithSlugArchive(ids: number[]): Promise<number> {
+    try {
+      if (ids.length === 0) return 0;
+
+      // Check if table supports soft deletes and has slug column
+      if (!("deletedAt" in (this.table as any)) || !("slug" in (this.table as any))) {
+        throw new DatabaseError(
+          `Bulk soft delete with slug archive not supported for ${this.entityName}`,
+          "bulkSoftDeleteWithSlugArchive"
+        );
+      }
+
+      const {inArray, isNull, and} = await import('drizzle-orm');
+
+      // Get existing entities to access their slugs
+      const entities = await this.db
+        .select()
+        .from(this.table)
+        .where(
+          and(
+            inArray((this.table as any).id, ids),
+            isNull((this.table as any).deletedAt)
+          )
+        );
+
+      if (entities.length === 0) return 0;
+
+      // Delete each entity with slug modification
+      const timestamp = Date.now();
+      let deletedCount = 0;
+
+      for (const entity of entities) {
+        const slug = (entity as any).slug;
+        const id = (entity as any).id;
+        const archivedSlug = `${slug}-deleted-${timestamp}`;
+
+        try {
+          await this.update(id, {
+            slug: archivedSlug,
+            deletedAt: getCurrentTimestamp(),
+          } as TUpdateInput);
+          deletedCount++;
+        } catch (error) {
+          // Log error but continue with other entities
+          logger.error(`Failed to delete ${this.entityName} ${id}:`, error);
+        }
+      }
+
+      return deletedCount;
+    } catch (error) {
+      if (error instanceof DatabaseError) throw error;
+      throw new DatabaseError(
+        `Failed to bulk soft delete ${this.entityName} entities with slug archive`,
+        "bulkSoftDeleteWithSlugArchive"
       );
     }
   }

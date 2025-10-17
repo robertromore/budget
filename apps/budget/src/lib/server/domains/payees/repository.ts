@@ -119,19 +119,7 @@ export class PayeeRepository extends BaseRepository<
     return payee;
   }
 
-  /**
-   * Find payee by ID
-   */
-  override async findById(id: number): Promise<Payee | null> {
-    const [payee] = await db
-      .select()
-      .from(payees)
-      .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
-      .limit(1);
-
-    return payee || null;
-  }
-
+  // findById() inherited from BaseRepository
   // findBySlug() inherited from BaseRepository
 
   /**
@@ -247,30 +235,10 @@ export class PayeeRepository extends BaseRepository<
 
   /**
    * Bulk soft delete payees with slug archiving
+   * Now uses the inherited bulkSoftDeleteWithSlugArchive() method from BaseRepository
    */
   override async bulkDelete(ids: number[]): Promise<void> {
-    if (ids.length === 0) return;
-
-    const timestamp = Date.now();
-
-    const payeesToDelete = await db
-      .select()
-      .from(payees)
-      .where(and(
-        inArray(payees.id, ids),
-        isNull(payees.deletedAt)
-      ));
-
-    for (const payee of payeesToDelete) {
-      await db
-        .update(payees)
-        .set({
-          slug: `${payee.slug}-deleted-${timestamp}`,
-          deletedAt: getCurrentTimestamp(),
-          updatedAt: getCurrentTimestamp(),
-        })
-        .where(eq(payees.id, payee.id));
-    }
+    await this.bulkSoftDeleteWithSlugArchive(ids);
   }
 
   /**
@@ -396,18 +364,7 @@ export class PayeeRepository extends BaseRepository<
     };
   }
 
-  /**
-   * Check if payee exists and is active
-   */
-  override async exists(id: number): Promise<boolean> {
-    const [result] = await db
-      .select({id: payees.id})
-      .from(payees)
-      .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
-      .limit(1);
-
-    return !!result;
-  }
+  // exists() inherited from BaseRepository
 
   /**
    * Check if payee has associated transactions

@@ -28,6 +28,16 @@ export type FacetedFilterOption = {
 };
 
 /**
+ * Amount filter value with type and range values.
+ */
+export type AmountFilterValue = {
+  type: string;
+  value?: number;
+  min?: number;
+  max?: number;
+};
+
+/**
  * A filter that renders a component (date‑picker, multi‑select, …).
  */
 export type FilterInputOption<T> = {
