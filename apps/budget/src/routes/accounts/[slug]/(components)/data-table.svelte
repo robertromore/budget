@@ -27,12 +27,12 @@ import {pinning, setPinning} from '../(data)/pinning.svelte';
 import type {View} from '$lib/schema';
 import {CurrentViewState} from '$lib/states/views';
 import {page} from '$app/state';
-import {setContext} from 'svelte';
+import {setContext, untrack} from 'svelte';
 import {currentViews, CurrentViewsState} from '$lib/states/views';
 import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
 import type {FacetedFilterOption} from '$lib/types';
 import {dayFmt} from '$lib/utils/date-formatters';
-import {parseDate, getLocalTimeZone} from '@internationalized/date';
+import {parseDate, getLocalTimeZone, today} from '@internationalized/date';
 
 interface Props {
   columns: ColumnDef<TransactionsFormat, TValue>[];
@@ -53,8 +53,7 @@ const generateDateFilters = (transactions: TransactionsFormat[]): FacetedFilterO
 
   // Include all transactions except future scheduled ones
   // This includes cleared/pending transactions and auto-created scheduled transactions that have already occurred
-  const today = new Date();
-  today.setHours(23, 59, 59, 999); // End of today
+  const todayDate = today(getLocalTimeZone());
 
   const relevantTransactions = transactions.filter(t => {
     // Include all non-scheduled transactions
@@ -62,8 +61,8 @@ const generateDateFilters = (transactions: TransactionsFormat[]): FacetedFilterO
 
     // For scheduled transactions, only include those that are in the past or today
     if (t.date) {
-      const transactionDate = new Date(t.date.toString());
-      return transactionDate <= today;
+      // Compare DateValue objects directly using compare() method
+      return t.date.compare(todayDate) <= 0;
     }
 
     return false;
@@ -265,40 +264,43 @@ $effect(() => {
     hasAppliedInitialView = false;
   }
 
-  const _currentViewStates: CurrentViewState<TransactionsFormat>[] = viewList.map(
-    (view: View) => new CurrentViewState<TransactionsFormat>(view, table)
-  );
+  // Use untrack to prevent state modifications from re-triggering this effect
+  untrack(() => {
+    const _currentViewStates: CurrentViewState<TransactionsFormat>[] = viewList.map(
+      (view: View) => new CurrentViewState<TransactionsFormat>(view, table)
+    );
 
-  // Clear existing views and add new ones
-  currentViewsStateValue.viewsStates.clear();
-  _currentViewStates.forEach((viewState) => {
-    currentViewsStateValue.viewsStates.set(viewState.view.id, viewState);
-  });
-
-  if (_currentViewStates.length === 0) {
-    return;
-  }
-
-  const targetViewState = lastActiveViewId
-    ? currentViewsStateValue.viewsStates.get(lastActiveViewId) ?? _currentViewStates[0]!
-    : _currentViewStates[0]!;
-
-  if (!targetViewState) {
-    return;
-  }
-
-  if (!hasAppliedInitialView || lastActiveViewId !== targetViewState.view.id) {
-    hasAppliedInitialView = true;
-    lastActiveViewId = targetViewState.view.id;
-    const targetViewId = targetViewState.view.id;
-    currentViewsStateValue.activeViewId = targetViewId;
-    queueMicrotask(() => {
-      const latestViewState = currentViewsStateValue.viewsStates.get(targetViewId);
-      if (latestViewState) {
-        currentViewsStateValue.setActive(targetViewId);
-      }
+    // Clear existing views and add new ones
+    currentViewsStateValue.viewsStates.clear();
+    _currentViewStates.forEach((viewState) => {
+      currentViewsStateValue.viewsStates.set(viewState.view.id, viewState);
     });
-  }
+
+    if (_currentViewStates.length === 0) {
+      return;
+    }
+
+    const targetViewState = lastActiveViewId
+      ? currentViewsStateValue.viewsStates.get(lastActiveViewId) ?? _currentViewStates[0]!
+      : _currentViewStates[0]!;
+
+    if (!targetViewState) {
+      return;
+    }
+
+    if (!hasAppliedInitialView || lastActiveViewId !== targetViewState.view.id) {
+      hasAppliedInitialView = true;
+      lastActiveViewId = targetViewState.view.id;
+      const targetViewId = targetViewState.view.id;
+      currentViewsStateValue.activeViewId = targetViewId;
+      queueMicrotask(() => {
+        const latestViewState = currentViewsStateValue.viewsStates.get(targetViewId);
+        if (latestViewState) {
+          currentViewsStateValue.setActive(targetViewId);
+        }
+      });
+    }
+  });
 });
 </script>
 
