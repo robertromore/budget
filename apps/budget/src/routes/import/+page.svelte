@@ -7,8 +7,10 @@ import * as Select from '$lib/components/ui/select';
 import {Button} from '$lib/components/ui/button';
 import {Checkbox} from '$lib/components/ui/checkbox';
 import * as Card from '$lib/components/ui/card';
+import * as Empty from '$lib/components/ui/empty';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Circle from '@lucide/svelte/icons/circle';
+import Wallet from '@lucide/svelte/icons/wallet';
 import type {
   ParseResult,
   ImportResult,
@@ -22,6 +24,11 @@ import {useQueryClient} from '@tanstack/svelte-query';
 
 let {data} = $props();
 const queryClient = useQueryClient();
+
+const accounts = $derived(data.accounts);
+// Filter out HSA accounts since they can't be imported into
+const importableAccounts = $derived(accounts.filter((a: Account) => a.accountType !== 'hsa'));
+const hasImportableAccounts = $derived(importableAccounts.length > 0);
 
 type Step = 'upload' | 'map-columns' | 'preview' | 'review-entities' | 'complete';
 
@@ -56,17 +63,16 @@ const previewData = $derived.by(() => {
       ...row,
       normalizedData: {
         ...row.normalizedData,
-        amount: row.normalizedData.amount ? -row.normalizedData.amount : row.normalizedData.amount
+        amount: row.normalizedData['amount'] ? -row.normalizedData['amount'] : row.normalizedData['amount']
       }
     }))
   };
 });
 
-const accounts = $derived(data.accounts);
 // Pre-select account from query parameter if provided
 let selectedAccountId = $state<string>(data.preselectedAccountId || '');
 const selectedAccount = $derived(() =>
-  accounts.find((a: Account) => a.id.toString() === selectedAccountId)
+  importableAccounts.find((a: Account) => a.id.toString() === selectedAccountId)
 );
 
 async function handleFileSelected(file: File) {
@@ -355,7 +361,26 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
 </svelte:head>
 
 <div class="container mx-auto py-8">
-  <div class="max-w-4xl mx-auto">
+  <div>
+    {#if !hasImportableAccounts}
+      <Empty.Empty>
+        <Empty.EmptyMedia variant="icon">
+          <Wallet class="size-6" />
+        </Empty.EmptyMedia>
+        <Empty.EmptyHeader>
+          <Empty.EmptyTitle>No Importable Accounts Available</Empty.EmptyTitle>
+          <Empty.EmptyDescription>
+            You need to create at least one account before you can import transactions.
+            HSA accounts cannot be imported into directly.
+          </Empty.EmptyDescription>
+        </Empty.EmptyHeader>
+        <Empty.EmptyContent>
+          <Button href="/accounts/new">
+            Create an Account
+          </Button>
+        </Empty.EmptyContent>
+      </Empty.Empty>
+    {:else}
     <!-- Progress Steps -->
     <div class="mb-8">
       <div class="flex items-center justify-center">
@@ -439,14 +464,14 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
               <Select.Trigger class="w-full">
                 <span class="truncate">
                   {#if selectedAccountId}
-                    {accounts.find((a: Account) => a.id.toString() === selectedAccountId)?.name || 'Choose an account...'}
+                    {importableAccounts.find((a: Account) => a.id.toString() === selectedAccountId)?.name || 'Choose an account...'}
                   {:else}
                     Choose an account...
                   {/if}
                 </span>
               </Select.Trigger>
               <Select.Content>
-                {#each accounts as account}
+                {#each importableAccounts as account}
                   <Select.Item value={account.id.toString()}>
                     {account.name}
                   </Select.Item>
@@ -678,6 +703,7 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
           </Button>
         </div>
       </div>
+    {/if}
     {/if}
   </div>
 </div>

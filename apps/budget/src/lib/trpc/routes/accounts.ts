@@ -3,7 +3,6 @@ import {
   transactions,
   removeAccountSchema,
   accountTypeEnum,
-  accountTypeKeys,
   type Account,
   type Transaction,
 } from "$lib/schema";
@@ -79,7 +78,7 @@ const accountSaveSchema = z
       .nullable(),
     closed: z.boolean().optional(),
     // Enhanced account fields
-    accountType: z.enum(accountTypeKeys, {
+    accountType: z.enum(accountTypeEnum, {
       message: "Please select a valid account type"
     }).optional(),
     institution: z
@@ -394,7 +393,13 @@ export const accountRoutes = t.router({
         if (input.accountIcon) updateData.accountIcon = input.accountIcon;
         if (input.accountColor) updateData.accountColor = input.accountColor;
         if (input.accountNumberLast4) updateData.accountNumberLast4 = input.accountNumberLast4;
-        if (input.onBudget !== undefined) updateData.onBudget = input.onBudget;
+
+        // Set onBudget - HSA accounts default to off-budget unless explicitly specified
+        if (input.onBudget !== undefined) {
+          updateData.onBudget = input.onBudget;
+        } else if (input.accountType === 'hsa') {
+          updateData.onBudget = false;
+        }
 
         // Debt account-specific fields
         if (input.debtLimit !== undefined) updateData.debtLimit = input.debtLimit;

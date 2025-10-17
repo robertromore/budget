@@ -57,6 +57,22 @@ onMount(() => {
   mounted = true;
   // Apply the saved/desired mode only after hydration is complete
   mode = initialMode;
+
+  // Set default icon and color for new accounts based on account type
+  if (!accountId && browser) {
+    const accountType = $formData.accountType;
+    if (accountType && accountTypeDefaults[accountType]) {
+      const defaults = accountTypeDefaults[accountType];
+
+      if (!$formData.accountIcon && defaults.icon) {
+        $formData.accountIcon = defaults.icon;
+      }
+
+      if (!$formData.accountColor && defaults.color) {
+        $formData.accountColor = defaults.color;
+      }
+    }
+  }
 });
 
 const entityForm = useEntityForm({
@@ -186,20 +202,33 @@ function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
   }
 }
 
+// Account type labels
+const accountTypeLabels: Record<string, string> = {
+  checking: 'Checking',
+  savings: 'Savings',
+  investment: 'Investment',
+  credit_card: 'Credit Card',
+  loan: 'Loan',
+  cash: 'Cash',
+  hsa: 'Health Savings Account',
+  other: 'Other'
+};
+
 // Account type options for the dropdown
 const accountTypeOptions = accountTypeEnum.map(type => ({
   value: type,
-  label: type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')
+  label: accountTypeLabels[type] || type
 }));
 
-// Default icons for account types
-const accountTypeDefaults: Record<string, { icon: string }> = {
-  checking: { icon: 'credit-card' },
-  savings: { icon: 'piggy-bank' },
-  credit_card: { icon: 'credit-card' },
-  investment: { icon: 'trending-up' },
-  loan: { icon: 'banknote' },
-  cash: { icon: 'wallet' }
+// Default icons and colors for account types
+const accountTypeDefaults: Record<string, { icon: string; color?: string }> = {
+  checking: { icon: 'credit-card', color: '#3B82F6' },      // blue
+  savings: { icon: 'piggy-bank', color: '#10B981' },        // green
+  credit_card: { icon: 'credit-card', color: '#8B5CF6' },   // purple
+  investment: { icon: 'trending-up', color: '#F59E0B' },    // orange
+  loan: { icon: 'banknote', color: '#EF4444' },             // red
+  cash: { icon: 'wallet', color: '#6B7280' },               // gray
+  hsa: { icon: 'heart-pulse', color: '#14B8A6' }            // teal
 };
 
 // Auto-detect account type from name
@@ -279,15 +308,21 @@ function handleAccountTypeChange(value: string) {
   const previousAccountType = $formData.accountType;
   $formData.accountType = value;
   updateIconForAccountType(value, previousAccountType);
+
+  // HSA accounts should default to off-budget for new accounts
+  if (value === 'hsa' && !accountId) {
+    $formData.onBudget = false;
+  }
 }
 
-// Update icon based on account type change
+// Update icon and color based on account type change
 function updateIconForAccountType(newAccountType: string, previousAccountType: string | undefined) {
   // Auto-update icon if:
   // 1. No icon is set yet, OR
   // 2. Current icon matches the default for the previous account type (user hasn't customized it)
   const defaults = accountTypeDefaults[newAccountType];
   const currentIcon = $formData.accountIcon;
+  const currentColor = $formData.accountColor;
   const previousDefaults = previousAccountType ? accountTypeDefaults[previousAccountType] : null;
 
   const shouldUpdateIcon = defaults && (
@@ -296,8 +331,18 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
     (previousDefaults && currentIcon === previousDefaults.icon)
   );
 
+  const shouldUpdateColor = defaults?.color && (
+    !currentColor ||
+    currentColor === '' ||
+    (previousDefaults?.color && currentColor === previousDefaults.color)
+  );
+
   if (shouldUpdateIcon) {
     $formData.accountIcon = defaults.icon;
+  }
+
+  if (shouldUpdateColor) {
+    $formData.accountColor = defaults.color;
   }
 }
 </script>
@@ -499,9 +544,9 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
         </Card.Header>
         <Card.Content>
           <div class="flex items-center space-x-3">
-            <Switch bind:checked={$formData.onBudget} />
+            <Switch id="account-on-budget" bind:checked={$formData.onBudget} />
             <div class="flex-1">
-              <Label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <Label for="account-on-budget" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Include in budget calculations
               </Label>
               <p class="text-sm text-muted-foreground mt-1">
