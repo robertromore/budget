@@ -1,6 +1,7 @@
 <script lang="ts">
 import {Button, buttonVariants} from '$lib/components/ui/button';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import * as Empty from '$lib/components/ui/empty';
 import Plus from '@lucide/svelte/icons/plus';
 import User from '@lucide/svelte/icons/user';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
@@ -323,22 +324,24 @@ const frequencyOptions = [
   <!-- Content -->
   {#if shouldShowNoPayees}
     <!-- Empty State - No Payees -->
-    <div class="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center">
-      <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-        <User class="h-8 w-8 text-blue-600" />
-      </div>
-      <h2 class="mb-2 text-xl font-semibold text-blue-900">No Payees Yet</h2>
-      <p class="mb-6 text-blue-700 max-w-md mx-auto">
-        Get started by creating your first payee. You can add merchants, companies, people, or any other
-        entity you pay or receive money from.
-      </p>
-      <Button
-        href="/payees/new"
-        class="bg-blue-600 hover:bg-blue-700">
-        <Plus class="mr-2 h-4 w-4" />
-        Create Your First Payee
-      </Button>
-    </div>
+    <Empty.Empty>
+      <Empty.EmptyMedia variant="icon">
+        <User class="size-6" />
+      </Empty.EmptyMedia>
+      <Empty.EmptyHeader>
+        <Empty.EmptyTitle>No Payees Yet</Empty.EmptyTitle>
+        <Empty.EmptyDescription>
+          Get started by creating your first payee. You can add merchants, companies, people, or any other
+          entity you pay or receive money from.
+        </Empty.EmptyDescription>
+      </Empty.EmptyHeader>
+      <Empty.EmptyContent>
+        <Button href="/payees/new">
+          <Plus class="mr-2 h-4 w-4" />
+          Create Your First Payee
+        </Button>
+      </Empty.EmptyContent>
+    </Empty.Empty>
   {:else}
     <!-- Search Results -->
     <PayeeSearchResults

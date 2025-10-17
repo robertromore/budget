@@ -64,15 +64,23 @@
 
   const formData = $derived(accountWizardStore.formData);
 
-  // Set default color if not present
+  // Set default icon and color based on account type when wizard initializes
   $effect(() => {
-    if (!formData['accountColor']) {
-      // Get computed primary color from CSS variable
-      const primaryColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--primary')
-        .trim();
-      const defaultColor = primaryColor ? `hsl(${primaryColor})` : '#3b82f6';
-      accountWizardStore.updateFormData('accountColor', defaultColor);
+    const accountType = formData['accountType'];
+    const currentIcon = formData['accountIcon'];
+    const currentColor = formData['accountColor'];
+
+    // Only set defaults if not already set
+    if (accountType && accountTypeDefaults[accountType]) {
+      const defaults = accountTypeDefaults[accountType];
+
+      if (!currentIcon && defaults.icon) {
+        accountWizardStore.updateFormData('accountIcon', defaults.icon);
+      }
+
+      if (!currentColor && defaults.color) {
+        accountWizardStore.updateFormData('accountColor', defaults.color);
+      }
     }
   });
 
@@ -122,6 +130,10 @@
 
       'cash': 'cash',
       'wallet': 'cash',
+
+      'hsa': 'hsa',
+      'health savings': 'hsa',
+      'health': 'hsa',
       'petty': 'cash'
     };
 
@@ -156,6 +168,12 @@
       description: 'Brokerage, 401k, IRA'
     },
     {
+      category: 'Health Savings',
+      examples: ['HSA', 'Health Savings Account'],
+      color: 'text-teal-600',
+      description: 'Health Savings Accounts'
+    },
+    {
       category: 'Loan Accounts',
       examples: ['Mortgage', 'Auto Loan', 'Personal Loan'],
       color: 'text-orange-600',
@@ -178,7 +196,7 @@
     }
   });
 
-  const exampleNotesByCategory = {
+  const exampleNotesByCategory: Record<string, string[]> = {
     checking: [
       'Primary checking account for monthly expenses. Direct deposit setup.',
       'Joint checking account for household bills and shared expenses.',
@@ -208,6 +226,12 @@
       'Auto loan - 5 year term, 4.2% APR. 36 payments remaining.',
       'Student loan - federal, income-driven repayment plan.',
       'Personal loan for home improvements. 3 year term.'
+    ],
+    hsa: [
+      'Health Savings Account. Tax-free medical expenses. Max contribution $4,150/year.',
+      'HSA with investment options. Building healthcare nest egg for retirement.',
+      'Paired with High-Deductible Health Plan. Family contribution limit $8,300/year.',
+      'Triple tax advantage: deductible contributions, tax-free growth, tax-free withdrawals for qualified medical expenses.'
     ]
   };
 
@@ -217,17 +241,19 @@
     { value: 'savings', label: 'Savings', color: 'border-l-green-500' },
     { value: 'credit_card', label: 'Credit Card', color: 'border-l-purple-500' },
     { value: 'investment', label: 'Investment', color: 'border-l-orange-500' },
-    { value: 'loan', label: 'Loan', color: 'border-l-red-500' }
+    { value: 'loan', label: 'Loan', color: 'border-l-red-500' },
+    { value: 'hsa', label: 'HSA', color: 'border-l-teal-500' }
   ];
 
-  // Default icons for account types
-  const accountTypeDefaults: Record<string, { icon: string }> = {
-    checking: { icon: 'credit-card' },
-    savings: { icon: 'piggy-bank' },
-    credit_card: { icon: 'credit-card' },
-    investment: { icon: 'trending-up' },
-    loan: { icon: 'banknote' },
-    cash: { icon: 'wallet' }
+  // Default icons and colors for account types
+  const accountTypeDefaults: Record<string, { icon: string; color?: string }> = {
+    checking: { icon: 'credit-card', color: '#3B82F6' },      // blue
+    savings: { icon: 'piggy-bank', color: '#10B981' },        // green
+    credit_card: { icon: 'credit-card', color: '#8B5CF6' },   // purple
+    investment: { icon: 'trending-up', color: '#F59E0B' },    // orange
+    loan: { icon: 'banknote', color: '#EF4444' },             // red
+    cash: { icon: 'wallet', color: '#6B7280' },               // gray
+    hsa: { icon: 'heart-pulse', color: '#14B8A6' }            // teal
   };
 
   // Handle account type selection
@@ -322,10 +348,22 @@
     return 'e.g., Chase Checking, Wells Fargo Savings, Amex Credit Card';
   });
 
+  // Account type labels
+  const accountTypeLabels: Record<string, string> = {
+    checking: 'Checking',
+    savings: 'Savings',
+    investment: 'Investment',
+    credit_card: 'Credit Card',
+    loan: 'Loan',
+    cash: 'Cash',
+    hsa: 'Health Savings Account',
+    other: 'Other'
+  };
+
   // Account type options for select
   const accountTypeOptions = accountTypeEnum.map(type => ({
     value: type,
-    label: type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    label: accountTypeLabels[type] || type
   }));
 
   // Enhanced field handlers
@@ -338,11 +376,12 @@
       selectedNotesCategory = value;
     }
 
-    // Auto-update icon if:
-    // 1. No icon is set yet, OR
-    // 2. Current icon matches the default for the previous account type (user hasn't customized it)
+    // Auto-update icon and color if:
+    // 1. No icon/color is set yet, OR
+    // 2. Current icon/color matches the default for the previous account type (user hasn't customized it)
     const defaults = accountTypeDefaults[value];
     const currentIcon = formData['accountIcon'];
+    const currentColor = formData['accountColor'];
     const previousDefaults = previousAccountType ? accountTypeDefaults[previousAccountType] : null;
 
     const shouldUpdateIcon = defaults && (
@@ -351,8 +390,18 @@
       (previousDefaults && currentIcon === previousDefaults.icon)
     );
 
+    const shouldUpdateColor = defaults?.color && (
+      !currentColor ||
+      currentColor === '' ||
+      (previousDefaults?.color && currentColor === previousDefaults.color)
+    );
+
     if (shouldUpdateIcon) {
       updateField('accountIcon', defaults.icon);
+    }
+
+    if (shouldUpdateColor) {
+      updateField('accountColor', defaults.color);
     }
   }
 
@@ -679,11 +728,12 @@
     <div class="border rounded-lg p-4">
       <div class="flex items-start space-x-3">
         <Switch
+          id="wizard-on-budget"
           checked={formData['onBudget'] ?? true}
           onCheckedChange={(checked) => updateField('onBudget', checked)}
         />
         <div class="flex-1 space-y-1">
-          <Label class="text-sm font-medium leading-none">
+          <Label for="wizard-on-budget" class="text-sm font-medium leading-none">
             Include in budget calculations
           </Label>
           <p class="text-sm text-muted-foreground">

@@ -9,7 +9,6 @@ import type {WithoutChildren} from 'bits-ui';
 import {cn} from '$lib/utils';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import Button, {buttonVariants} from '$lib/components/ui/button/button.svelte';
-import {currentViews} from '$lib/states/views';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
@@ -18,10 +17,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 
 let {column, class: className, title, ...restProps}: WithoutChildren<Props> = $props();
 
-const currentView = $derived(currentViews.get()?.activeView);
-const sortState = $derived(
-  currentView?.view?.getSorting()?.find((sorter) => sorter.id === column.id)
-);
+const sortState = $derived(column.getIsSorted());
 </script>
 
 {#if !column?.getCanSort() && !column?.getCanHide()}
@@ -42,9 +38,9 @@ const sortState = $derived(
               {title}
             </span>
             {#if column.getCanSort()}
-              {#if sortState && sortState.desc}
+              {#if sortState === 'desc'}
                 <ArrowDown class="ml-2 size-4" />
-              {:else if sortState && !sortState.desc}
+              {:else if sortState === 'asc'}
                 <ArrowUp class="ml-2 size-4" />
               {:else}
                 <ArrowUpDown class="ml-2 size-4" />
@@ -55,20 +51,22 @@ const sortState = $derived(
       </DropdownMenu.Trigger>
       <DropdownMenu.Content align="start">
         {#if column.getCanSort()}
-          <DropdownMenu.Item onclick={() => currentView.updateTableSorting([{id: column.id, desc: false}])}>
+          <DropdownMenu.Item onclick={() => column.toggleSorting(false)}>
             <ArrowUp class="text-muted-foreground/70 mr-2 size-3.5" />
             Asc
           </DropdownMenu.Item>
-          <DropdownMenu.Item onclick={() => currentView.updateTableSorting([{id: column.id, desc: true}])}>
+          <DropdownMenu.Item onclick={() => column.toggleSorting(true)}>
             <ArrowDown class="text-muted-foreground/70 mr-2 size-3.5" />
             Desc
           </DropdownMenu.Item>
           <DropdownMenu.Separator />
         {/if}
-        <DropdownMenu.Item onclick={() => currentView.updateColumnVisibility(column.id, false)}>
-          <EyeNone class="text-muted-foreground/70 mr-2 size-3.5" />
-          Hide
-        </DropdownMenu.Item>
+        {#if column.getCanHide()}
+          <DropdownMenu.Item onclick={() => column.toggleVisibility(false)}>
+            <EyeNone class="text-muted-foreground/70 mr-2 size-3.5" />
+            Hide
+          </DropdownMenu.Item>
+        {/if}
       </DropdownMenu.Content>
     </DropdownMenu.Root>
   </div>

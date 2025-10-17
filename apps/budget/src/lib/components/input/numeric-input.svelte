@@ -143,6 +143,14 @@ const handlePaste = (event: ClipboardEvent) => {
       if (open && parseFloat(new_amount) == 0) {
         new_amount = '';
       }
+      // Auto-submit when closing if value has changed
+      if (!open && new_amount && new_amount !== (value || 0).toString()) {
+        const parsedValue = parseFloat(new_amount);
+        if (!isNaN(parsedValue)) {
+          value = parsedValue;
+          onSubmit?.();
+        }
+      }
     }}>
     <Popover.Trigger>
       {#snippet child({props})}
