@@ -84,50 +84,161 @@ export const filters = {
   dateBefore: (
     row: Row<TransactionsFormat>,
     columnId: string,
-    filterValue: Set<string>,
+    filterValue: Set<string> | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
     addMeta: (meta: any) => void
   ) => {
-    return filterValue.size === 0
+    // Handle new DateFilterValue format
+    if (filterValue && typeof filterValue === 'object' && 'operator' in filterValue) {
+      if (filterValue.operator === 'before' && filterValue.date) {
+        return (compareDate(row.original.date, filterValue.date) || 0) < 0;
+      }
+      return true;
+    }
+    // Backward compatibility: Handle Set format
+    const setFilter = filterValue as Set<string>;
+    return setFilter.size === 0
       ? true
-      : Array.from(filterValue.values()).some((date: string) => {
+      : Array.from(setFilter.values()).some((date: string) => {
           return (compareDate(row.original.date, date) || 0) < 0;
         });
   },
   dateAfter: (
     row: Row<TransactionsFormat>,
     columnId: string,
-    filterValue: Set<string>,
+    filterValue: Set<string> | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
     addMeta: (meta: any) => void
   ) => {
-    return filterValue.size === 0
+    // Handle new DateFilterValue format
+    if (filterValue && typeof filterValue === 'object' && 'operator' in filterValue) {
+      if (filterValue.operator === 'after' && filterValue.date) {
+        return (compareDate(row.original.date, filterValue.date) || 0) > 0;
+      }
+      return true;
+    }
+    // Backward compatibility: Handle Set format
+    const setFilter = filterValue as Set<string>;
+    return setFilter.size === 0
       ? true
-      : Array.from(filterValue.values()).some((date: string) => {
+      : Array.from(setFilter.values()).some((date: string) => {
           return (compareDate(row.original.date, date) || 0) > 0;
         });
   },
   dateOn: (
     row: Row<TransactionsFormat>,
     columnId: string,
-    filterValue: Set<string>,
+    filterValue: Set<string> | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
     addMeta: (meta: any) => void
   ) => {
-    return filterValue.size === 0
+    // Handle new DateFilterValue format
+    if (filterValue && typeof filterValue === 'object' && 'operator' in filterValue) {
+      if (filterValue.operator === 'in' && filterValue.values) {
+        return filterValue.values.size === 0
+          ? true
+          : Array.from(filterValue.values.values()).some((date: string) => {
+              return compareDateInterval(row.original.date, date);
+            });
+      }
+      return true;
+    }
+    // Backward compatibility: Handle Set format
+    const setFilter = filterValue as Set<string>;
+    return setFilter.size === 0
       ? true
-      : Array.from(filterValue.values()).some((date: string) => {
+      : Array.from(setFilter.values()).some((date: string) => {
           return compareDateInterval(row.original.date, date);
         });
   },
   dateIn: (
     row: Row<TransactionsFormat>,
     columnId: string,
-    filterValue: Set<string>,
+    filterValue: Set<string> | Set<{operator: string; date?: string; from?: string; to?: string; values?: Set<string>}> | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
     addMeta: (meta: any) => void
   ) => {
-    return filterValue.size === 0
-      ? true
-      : Array.from(filterValue.values()).some((date: string) => {
-          return compareDateInterval(row.original.date, date);
-        });
+    // Handle Set (from view system)
+    if (filterValue instanceof Set) {
+      const setFilter = filterValue as Set<any>;
+      if (setFilter.size === 0) return true;
+
+      const firstValue = Array.from(setFilter.values())[0];
+      // Check if it's a Set of objects with operator
+      if (typeof firstValue === 'object' && firstValue !== null && 'operator' in firstValue) {
+        const operatorValue = firstValue as {operator: string; date?: string; from?: string; to?: string; values?: Set<string>};
+
+        // Handle different operators
+        switch (operatorValue.operator) {
+          case 'in':
+            if (operatorValue.values) {
+              return operatorValue.values.size === 0
+                ? true
+                : Array.from(operatorValue.values.values()).some((date: string) => {
+                    const result = compareDateInterval(row.original.date, date);
+                    return result === true;
+                  });
+            }
+            return true;
+
+          case 'after':
+            if (operatorValue.date) {
+              const comparison = compareDate(row.original.date, operatorValue.date);
+              return comparison !== null && comparison > 0;
+            }
+            return true;
+
+          case 'before':
+            if (operatorValue.date) {
+              const comparison = compareDate(row.original.date, operatorValue.date);
+              return comparison !== null && comparison < 0;
+            }
+            return true;
+
+          case 'between':
+            if (operatorValue.from && operatorValue.to) {
+              const fromComparison = compareDate(row.original.date, operatorValue.from) || 0;
+              const toComparison = compareDate(row.original.date, operatorValue.to) || 0;
+              return fromComparison >= 0 && toComparison <= 0;
+            }
+            return true;
+
+          default:
+            return true;
+        }
+      }
+
+      // Backward compatibility: Set of date strings
+      return Array.from(setFilter.values()).some((date: string) => {
+        const result = compareDateInterval(row.original.date, date);
+        return result === true;
+      });
+    }
+
+    // Handle direct object format
+    if (filterValue && typeof filterValue === 'object' && 'operator' in filterValue) {
+      if (filterValue.operator === 'in' && filterValue.values) {
+        return filterValue.values.size === 0
+          ? true
+          : Array.from(filterValue.values.values()).some((date: string) => {
+              const result = compareDateInterval(row.original.date, date);
+              return result === true;
+            });
+      }
+      return true;
+    }
+
+    return true;
+  },
+  dateBetween: (
+    row: Row<TransactionsFormat>,
+    columnId: string,
+    filterValue: {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
+    addMeta: (meta: any) => void
+  ) => {
+    if (!filterValue || filterValue.operator !== 'between') return true;
+    if (!filterValue.from || !filterValue.to) return true;
+
+    const fromComparison = compareDate(row.original.date, filterValue.from) || 0;
+    const toComparison = compareDate(row.original.date, filterValue.to) || 0;
+
+    return fromComparison >= 0 && toComparison <= 0;
   },
   equalsString: (
     row: Row<TransactionsFormat>,

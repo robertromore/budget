@@ -201,9 +201,14 @@ export default class View {
     const filter = this.#filterValues.get(column);
     if (!filter) return new Set();
 
-    // Special handling for amount filters - they store single objects, not sets
-    if (filter.filter === 'amountFilter' && filter.value.size === 1) {
-      return Array.from(filter.value)[0];
+    // Special handling for operator-based filters - they store single objects, not sets
+    const operatorBasedFilters = ['amountFilter', 'dateIn', 'dateAfter', 'dateBefore', 'dateBetween'];
+    if (operatorBasedFilters.includes(filter.filter || '') && filter.value.size === 1) {
+      const firstValue = Array.from(filter.value)[0];
+      // Check if it's an operator object
+      if (typeof firstValue === 'object' && firstValue !== null && 'operator' in firstValue) {
+        return firstValue;
+      }
     }
 
     return filter.value;

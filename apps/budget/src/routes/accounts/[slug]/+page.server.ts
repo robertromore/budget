@@ -13,7 +13,7 @@ export const load: PageServerLoad = async (event) => {
   // Load minimal data required for the data table
   // Views are needed for the DataTable component view management
 
-  const defaultViews = [
+  const defaultTransactionViews = [
     {
       id: -4,
       name: "All Transactions",
@@ -60,8 +60,8 @@ export const load: PageServerLoad = async (event) => {
       filters: [
         {
           column: "date",
-          filter: "dateAfter",
-          value: [currentDate.toString()],
+          filter: "dateIn",
+          value: [{operator: "after", date: currentDate.toString()}],
         },
       ],
       display: {
@@ -105,6 +105,127 @@ export const load: PageServerLoad = async (event) => {
     },
   ] as View[];
 
+  const defaultExpenseViews = [
+    {
+      id: -10,
+      name: "All Expenses",
+      description: "All medical expenses",
+      filters: [],
+      display: {
+        grouping: [],
+        sort: [
+          {
+            id: "date",
+            desc: true,
+          }
+        ],
+        visibility: {
+          id: false,
+          provider: false,
+          patientName: false,
+          diagnosis: false,
+          treatmentDescription: false,
+          notes: false,
+        },
+      },
+      icon: "",
+      dirty: false,
+    },
+    {
+      id: -11,
+      name: "Recent",
+      description: "Expenses from the last 30 days",
+      filters: [
+        {
+          column: "date",
+          filter: "dateIn",
+          value: [{operator: "after", date: currentDate.subtract({days: 30}).toString()}],
+        },
+      ],
+      display: {
+        grouping: [],
+        sort: [
+          {
+            id: "date",
+            desc: true,
+          }
+        ],
+        visibility: {
+          id: false,
+          provider: false,
+          patientName: false,
+          diagnosis: false,
+          treatmentDescription: false,
+          notes: false,
+        },
+      },
+      icon: "",
+      dirty: false,
+    },
+    {
+      id: -12,
+      name: "High Amount",
+      description: "Expenses over $500",
+      filters: [
+        {
+          column: "amount",
+          filter: "amountFilter",
+          value: [{operator: "greaterThan", value: 500}],
+        },
+      ],
+      display: {
+        grouping: [],
+        sort: [
+          {
+            id: "amount",
+            desc: true,
+          }
+        ],
+        visibility: {
+          id: false,
+          provider: false,
+          patientName: false,
+          diagnosis: false,
+          treatmentDescription: false,
+          notes: false,
+        },
+      },
+      icon: "",
+      dirty: false,
+    },
+    {
+      id: -13,
+      name: "Unclaimed",
+      description: "Expenses not yet submitted for reimbursement",
+      filters: [
+        {
+          column: "status",
+          filter: "entityIsFilter",
+          value: ["not_submitted"],
+        },
+      ],
+      display: {
+        grouping: [],
+        sort: [
+          {
+            id: "date",
+            desc: true,
+          }
+        ],
+        visibility: {
+          id: false,
+          provider: false,
+          patientName: false,
+          diagnosis: false,
+          treatmentDescription: false,
+          notes: false,
+        },
+      },
+      icon: "",
+      dirty: false,
+    },
+  ] as View[];
+
   // Load user-created views from database
   const caller = createCaller(await createContext(event));
   const userViews = await caller.viewsRoutes.all();
@@ -114,7 +235,10 @@ export const load: PageServerLoad = async (event) => {
 
   return {
     accountSlug: params.slug,
-    views: defaultViews.concat(userViews),
+    transactionViews: defaultTransactionViews.concat(userViews),
+    expenseViews: defaultExpenseViews,
+    // Keep old views property for backward compatibility temporarily
+    views: defaultTransactionViews.concat(userViews),
     managePayeeForm: await superValidate(zod4(superformInsertPayeeSchema)),
     budgets,
     // Still keep the load minimal - no transactions, accounts, or forms
