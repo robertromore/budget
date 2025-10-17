@@ -363,12 +363,12 @@
       <!-- Enable Automation -->
       <div class="flex items-center justify-between">
         <div class="space-y-1">
-          <Label>Enable Automation</Label>
+          <Label for="automation-enabled">Enable Automation</Label>
           <p class="text-sm text-muted-foreground">
             Automatically create new budget periods and manage rollovers
           </p>
         </div>
-        <Switch bind:checked={settings.enabled} />
+        <Switch id="automation-enabled" bind:checked={settings.enabled} />
       </div>
 
       {#if settings.enabled}
@@ -402,12 +402,12 @@
         <!-- Auto Rollover -->
         <div class="flex items-center justify-between">
           <div class="space-y-1">
-            <Label>Auto Rollover</Label>
+            <Label for="auto-rollover">Auto Rollover</Label>
             <p class="text-sm text-muted-foreground">
               Automatically transfer remaining funds to new periods
             </p>
           </div>
-          <Switch bind:checked={settings.autoRollover} />
+          <Switch id="auto-rollover" bind:checked={settings.autoRollover} />
         </div>
 
         <!-- Default Allocation -->

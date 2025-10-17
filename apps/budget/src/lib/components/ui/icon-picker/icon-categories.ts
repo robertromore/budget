@@ -30,6 +30,7 @@ import {
   Globe,
   // Health & Medical
   Heart,
+  HeartPulse,
   // Home & Utilities
   Home,
   Landmark,
@@ -159,6 +160,7 @@ export const ICON_CATEGORIES: IconCategory[] = [
     description: "Health, medical, and wellness icons",
     icons: [
       { name: "heart", icon: Heart, keywords: ["health", "medical", "wellness", "care"] },
+      { name: "heart-pulse", icon: HeartPulse, keywords: ["health", "medical", "hsa", "healthcare", "savings"] },
       { name: "pill", icon: Pill, keywords: ["medicine", "pharmacy", "health", "medication"] },
       { name: "stethoscope", icon: Stethoscope, keywords: ["doctor", "medical", "health", "checkup"] },
       { name: "cross", icon: Cross, keywords: ["hospital", "medical", "emergency", "health"] },

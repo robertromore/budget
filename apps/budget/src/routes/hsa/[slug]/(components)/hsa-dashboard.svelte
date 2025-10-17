@@ -23,14 +23,14 @@ const currentYear = new Date().getFullYear();
 
 // Query data
 const summaryQuery = $derived(
-  rpc.medicalExpenses.getTaxYearSummary(hsaAccountId, currentYear).options()
+  rpc.medicalExpenses?.getTaxYearSummary?.(hsaAccountId, currentYear)?.options?.() ?? null
 );
-const summary = $derived(summaryQuery.data);
+const summary = $derived(summaryQuery?.data);
 
 const pendingClaimsQuery = $derived(
-  rpc.medicalExpenses.getPendingClaims().options()
+  rpc.medicalExpenses?.getPendingClaims?.()?.options?.() ?? null
 );
-const pendingClaims = $derived(pendingClaimsQuery.data ?? []);
+const pendingClaims = $derived(pendingClaimsQuery?.data ?? []);
 
 // Dialog state
 let showExpenseForm = $state(false);

@@ -4,15 +4,15 @@ import {DateInput} from '$lib/components/input';
 
 let {
   value = $bindable(),
-  onUpdateValue,
+  onSave,
 }: {
   value: DateValue | undefined;
-  onUpdateValue?: (newValue: unknown) => void;
+  onSave: (newValue: DateValue) => Promise<void>;
 } = $props();
 
-const handleSubmit = (new_value: DateValue | undefined) => {
-  if (onUpdateValue) {
-    onUpdateValue(new_value);
+const handleSubmit = async (new_value: DateValue | undefined) => {
+  if (new_value && onSave) {
+    await onSave(new_value);
   }
 };
 </script>

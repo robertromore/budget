@@ -479,12 +479,12 @@ $effect(() => {
       {#if $formData.recurring}
         <div class="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
           <div class="space-y-0.5">
-            <div class="text-sm font-medium">Automatically add transactions</div>
+            <Label for="schedule-auto-add" class="text-sm font-medium">Automatically add transactions</Label>
             <div class="text-xs text-muted-foreground">
               When enabled, upcoming transactions will appear in account views for better planning
             </div>
           </div>
-          <Switch bind:checked={$formData.auto_add} />
+          <Switch id="schedule-auto-add" bind:checked={$formData.auto_add} />
         </div>
       {/if}
     </Card.Content>

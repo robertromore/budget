@@ -189,16 +189,16 @@ const paymentFrequencyOptions = paymentFrequencies.map(freq => ({
 		<!-- Flags -->
 		<div class="flex flex-wrap gap-4">
 			<div class="flex items-center space-x-2">
-				<Switch bind:checked={$formData.taxRelevant} />
-				<Label>Tax Relevant</Label>
+				<Switch id="payee-tax-relevant" bind:checked={$formData.taxRelevant} />
+				<Label for="payee-tax-relevant">Tax Relevant</Label>
 			</div>
 			<div class="flex items-center space-x-2">
-				<Switch bind:checked={$formData.isSeasonal} />
-				<Label>Seasonal Payee</Label>
+				<Switch id="payee-seasonal" bind:checked={$formData.isSeasonal} />
+				<Label for="payee-seasonal">Seasonal Payee</Label>
 			</div>
 			<div class="flex items-center space-x-2">
-				<Switch bind:checked={$formData.isActive} />
-				<Label>Active</Label>
+				<Switch id="payee-active" bind:checked={$formData.isActive} />
+				<Label for="payee-active">Active</Label>
 			</div>
 		</div>
 	</Card.Content>

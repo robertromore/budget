@@ -4,7 +4,8 @@ import {buttonVariants} from '$lib/components/ui/button/index.js';
 import ListFilterPlus from '@lucide/svelte/icons/list-filter-plus';
 import {cn} from '$lib/utils';
 import type {FilterInputOption, TransactionsFormat, ViewFilter} from '$lib/types';
-import {currentViews} from '$lib/states/views';
+import {getContext} from 'svelte';
+import type {CurrentViewsState} from '$lib/states/views';
 
 let {
   value = $bindable(),
@@ -14,7 +15,8 @@ let {
   availableFilters: FilterInputOption<TransactionsFormat>[];
 } = $props();
 
-const currentView = $derived(currentViews.get()?.activeView);
+const currentViewsState = getContext<CurrentViewsState<any>>('current_views');
+const currentView = $derived(currentViewsState?.activeView);
 const _selectedFilters = $derived(
   currentView?.view
     ?.getAllFilteredColumns()

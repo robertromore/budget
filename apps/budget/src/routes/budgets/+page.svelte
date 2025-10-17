@@ -2,6 +2,7 @@
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import * as Tabs from "$lib/components/ui/tabs";
+  import * as Empty from "$lib/components/ui/empty";
   import BudgetManageDialog from "./(components)/dialogs/budget-manage-dialog.svelte";
   import BudgetAnalyticsDashboard from "./(components)/analytics/budget-analytics-dashboard.svelte";
   import BudgetFundTransfer from "./(components)/managers/budget-fund-transfer.svelte";
@@ -349,11 +350,23 @@
       </Card.Content>
     </Card.Root>
   {:else if !budgets.length}
-    <Card.Root class="border-dashed">
-      <Card.Content class="py-16 text-center text-sm text-muted-foreground">
-        No budgets yet. Create your first budget to get started.
-      </Card.Content>
-    </Card.Root>
+    <Empty.Empty>
+      <Empty.EmptyMedia variant="icon">
+        <DollarSign class="size-6" />
+      </Empty.EmptyMedia>
+      <Empty.EmptyHeader>
+        <Empty.EmptyTitle>No Budgets Yet</Empty.EmptyTitle>
+        <Empty.EmptyDescription>
+          Get started by creating your first budget. Track your spending across different categories and manage your finances effectively.
+        </Empty.EmptyDescription>
+      </Empty.EmptyHeader>
+      <Empty.EmptyContent>
+        <Button onclick={() => (manageDialogOpen = true)}>
+          <Plus class="mr-2 h-4 w-4" />
+          Create Your First Budget
+        </Button>
+      </Empty.EmptyContent>
+    </Empty.Empty>
   {:else}
   <Tabs.Root value="overview" class="space-y-6">
     <Tabs.List class="grid w-full grid-cols-5">

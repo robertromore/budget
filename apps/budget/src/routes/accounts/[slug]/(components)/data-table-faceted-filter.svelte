@@ -9,7 +9,8 @@ import {cn} from '$lib/utils';
 import {Badge} from '$lib/components/ui/badge';
 import X from '@lucide/svelte/icons/x';
 import type {AvailableFilters, FacetedFilterOption} from '$lib/types';
-import {currentViews} from '$lib/states/views';
+import {getContext} from 'svelte';
+import type {CurrentViewsState} from '$lib/states/views';
 import type {SvelteMap} from 'svelte/reactivity';
 
 interface Props<TData, TValue> {
@@ -30,23 +31,24 @@ const operators = $derived<AvailableFilters>(column?.columnDef.meta?.availableFi
 let showAll = $state(false);
 let activeOperator = $state<string>(column.getFilterFn()?.name as keyof FilterFns);
 
-const optionsValues = $derived(options?.values().toArray());
-const optionsRawValues = $derived(optionsValues?.map((opt) => opt.value));
+const optionsValues = $derived(options ? Array.from(options.values()) : []);
+const optionsRawValues = $derived(optionsValues?.map((opt: FacetedFilterOption) => opt.value));
 const showOptions: FacetedFilterOption[] = $derived(
   (showAll
     ? optionsValues?.concat(
         allOptions
-          ?.values()
-          .toArray()
-          .filter((option) => !optionsRawValues?.includes(option.value)) || []
+          ? Array.from(allOptions.values())
+          .filter((option: FacetedFilterOption) => !optionsRawValues?.includes(option.value))
+          : []
       )
     : optionsValues) || []
 );
 const notIn = $derived((allOptions?.size || 0) - (options?.size || 0));
 
-const activeView = $derived(currentViews.get().activeView);
-const activeViewModel = $derived(activeView.view);
-const selectedValues = $derived(activeViewModel.getFilterValue(column.id));
+const currentViewsState = getContext<CurrentViewsState<TData>>('current_views');
+const activeView = $derived(currentViewsState?.activeView);
+const activeViewModel = $derived(activeView?.view);
+const selectedValues = $derived<Set<string | number>>(activeViewModel?.getFilterValue(column.id) as Set<string | number> || new Set());
 </script>
 
 <div class="flex">
@@ -114,9 +116,9 @@ const selectedValues = $derived(activeViewModel.getFilterValue(column.id));
               {:else}
                 {@const matchingOptions =
                   allOptions
-                    ?.values()
-                    .toArray()
-                    .filter((opt) => selectedValues.has(opt.value)) || []}
+                    ? Array.from(allOptions.values())
+                    .filter((opt: FacetedFilterOption) => selectedValues.has(opt.value))
+                    : []}
                 {#if matchingOptions.length > 0}
                   {#each matchingOptions as option}
                     <Badge variant="secondary" class="rounded-sm px-1 font-normal">
@@ -209,5 +211,12 @@ const selectedValues = $derived(activeViewModel.getFilterValue(column.id));
   <Button
     variant="outline"
     class="h-8 rounded-l-none border-l-0 p-2"
-    onclick={() => activeView.removeFilter(column.id)}><X /></Button>
+    onclick={() => {
+      // Two-click behavior: first click clears values, second click removes filter
+      if (selectedValues.size > 0) {
+        activeView.clearFilterValue(column.id);
+      } else {
+        activeView.removeFilter(column.id);
+      }
+    }}><X /></Button>
 </div>

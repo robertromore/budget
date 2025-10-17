@@ -54,19 +54,18 @@ const options = $derived(
 let dialogOpen = $state(false);
 </script>
 
-{#snippet customValueSnippet()}
-  <Command.Item onSelect={() => (dialogOpen = true)} class="justify-center text-center">
-    Custom value
-  </Command.Item>
-{/snippet}
-
 <DataTableFacetedFilter
   {column}
   title="Date"
   {options}
   {allOptions}
-  allIcon={UsersRound as unknown as Component}
-  {customValueSnippet} />
+  allIcon={UsersRound as unknown as Component}>
+  {#snippet customValueSnippet()}
+    <Command.Item onSelect={() => (dialogOpen = true)} class="justify-center text-center">
+      Custom value
+    </Command.Item>
+  {/snippet}
+</DataTableFacetedFilter>
 
 <AdvancedDateDialog
   bind:dialogOpen

@@ -9,7 +9,6 @@ import {toISOString} from '$lib/utils/dates';
 import {createTransfer} from '$lib/query/transactions';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
-import type {Account} from '$lib/schema/accounts';
 
 interface Props {
   fromAccountId: number;
@@ -60,7 +59,7 @@ async function handleSubmit() {
       toAccountId,
       amount,
       date: toISOString(dateValue),
-      notes: notes || undefined,
+      ...(notes && { notes }),
     });
 
     if (onSuccess) onSuccess();
@@ -101,19 +100,11 @@ async function handleSubmit() {
     <div class="space-y-2">
       <label for="toAccount" class="text-sm font-medium">To Account</label>
       <Select.Root
-        onSelectedChange={(selected) => {
-          if (selected?.value) {
-            toAccountId = Number(selected.value);
-          }
-        }}>
+        type="single"
+        bind:value={toAccountId}
+      >
         <Select.Trigger class="w-full">
-          <Select.Value placeholder="Select destination account">
-            {#if selectedAccount}
-              {selectedAccount.name}
-            {:else}
-              Select destination account
-            {/if}
-          </Select.Value>
+          {selectedAccount?.name ?? 'Select destination account'}
         </Select.Trigger>
         <Select.Content>
           {#each targetAccounts as account (account.id)}

@@ -8,6 +8,7 @@ import Plus from '@lucide/svelte/icons/plus';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import Tags from '@lucide/svelte/icons/tags';
 import Wallet from '@lucide/svelte/icons/wallet';
+import Download from '@lucide/svelte/icons/download';
 import {goto} from '$app/navigation';
 import {
   deleteAccountDialog,
@@ -100,6 +101,16 @@ const _deleteBudgetId = $derived(deleteBudgetId);
                 <a href="/categories" {...props} class="flex items-center gap-3">
                   <Tags class="h-4 w-4"></Tags>
                   <span class="font-medium">Categories</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({props})}
+                <a href="/import" {...props} class="flex items-center gap-3">
+                  <Download class="h-4 w-4"></Download>
+                  <span class="font-medium">Import</span>
                 </a>
               {/snippet}
             </Sidebar.MenuButton>

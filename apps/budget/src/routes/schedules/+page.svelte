@@ -4,6 +4,7 @@ import * as Card from '$lib/components/ui/card';
 import {Badge} from '$lib/components/ui/badge';
 import {Separator} from '$lib/components/ui/separator';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import * as Empty from '$lib/components/ui/empty';
 import type {Schedule} from '$lib/schema/schedules.js';
 import {SchedulesState} from '$lib/states/entities';
 import {currencyFormatter, recurringFormatter} from '$lib/utils/formatters';
@@ -101,15 +102,23 @@ function cancelDelete() {
   </div>
 
   {#if !schedules || schedules.length === 0}
-    <Card.Root class="p-8 text-center">
-      <Calendar class="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-      <h3 class="text-lg font-semibold mb-2">No schedules yet</h3>
-      <p class="text-muted-foreground mb-4">Create your first schedule to track recurring transactions</p>
-      <Button href="/schedules/new">
-        <DollarSign class="h-4 w-4 mr-2" />
-        Create Schedule
-      </Button>
-    </Card.Root>
+    <Empty.Empty>
+      <Empty.EmptyMedia variant="icon">
+        <Calendar class="size-6" />
+      </Empty.EmptyMedia>
+      <Empty.EmptyHeader>
+        <Empty.EmptyTitle>No Schedules Yet</Empty.EmptyTitle>
+        <Empty.EmptyDescription>
+          Create your first schedule to track recurring transactions like bills, subscriptions, and regular income.
+        </Empty.EmptyDescription>
+      </Empty.EmptyHeader>
+      <Empty.EmptyContent>
+        <Button href="/schedules/new">
+          <DollarSign class="mr-2 h-4 w-4" />
+          Create Your First Schedule
+        </Button>
+      </Empty.EmptyContent>
+    </Empty.Empty>
   {:else}
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {#each schedules as schedule}

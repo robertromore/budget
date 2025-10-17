@@ -1,29 +1,28 @@
 <script lang="ts">
-// Component imports
 import {NumericInput} from '$lib/components/input';
-
-// Hook imports
 import {useEditableCell} from '$lib/hooks/ui';
-
-// Utility imports
 import {currencyFormatter} from '$lib/utils/formatters';
 
 interface Props {
   value: number;
-  onUpdateValue: (newValue: unknown) => void;
+  format?: 'currency' | 'number';
+  onSave: (newValue: number) => Promise<void>;
 }
 
-let {value = $bindable(), onUpdateValue}: Props = $props();
+let {value = $bindable(), format = 'currency', onSave}: Props = $props();
 
-// Use editable cell hook for consistent state management
+const formatter = format === 'currency'
+  ? (amount: number) => currencyFormatter.format(amount)
+  : (amount: number) => String(amount);
+
 const cellState = useEditableCell({
   initialValue: value,
   onSave: async (newValue: number) => {
     value = newValue;
-    onUpdateValue(newValue);
+    await onSave(newValue);
   },
   validator: (amount: number) => !isNaN(amount) && isFinite(amount),
-  formatter: (amount: number) => currencyFormatter.format(amount),
+  formatter,
 });
 
 // Sync external value changes
@@ -33,7 +32,6 @@ $effect(() => {
   }
 });
 
-// Handle NumericInput's bindable value and submit
 let numericValue = $state(cellState.currentValue);
 let open = $state(false);
 
