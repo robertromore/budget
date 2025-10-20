@@ -32,3 +32,10 @@ apps/*/build/
 .turbo/
 
 .llms
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+apps/budget/database.db
+apps/budget/drizzle/db/sqlite.db
