@@ -44,6 +44,15 @@ export const transactions = sqliteTable(
     transferTransactionId: integer("transfer_transaction_id").references((): AnySQLiteColumn => transactions.id), // The linked transaction
     isTransfer: integer("is_transfer", {mode: "boolean"}).default(false), // Quick check for transfers
 
+    // Import metadata
+    importedFrom: text("imported_from"), // File name or source of import
+    importedAt: text("imported_at"), // When the transaction was imported
+    originalPayeeName: text("original_payee_name"), // Original payee name from import file before normalization
+    originalCategoryName: text("original_category_name"), // Original category from import file
+    inferredCategory: text("inferred_category"), // Category suggested by smart categorization
+    importDetails: text("import_details"), // Additional details extracted during import (e.g., transaction IDs, location)
+    rawImportData: text("raw_import_data"), // Complete unmodified raw data from import file (JSON)
+
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),

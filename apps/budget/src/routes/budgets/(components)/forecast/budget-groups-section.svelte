@@ -1,6 +1,7 @@
 <script lang="ts">
 import {Button} from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import {FolderTree, Plus, ChevronRight, ChevronDown, SquarePen, Trash2} from '@lucide/svelte/icons';
 import {listBudgetGroups, deleteBudgetGroup} from '$lib/query/budgets';
 import type {BudgetGroup} from '$lib/schema/budgets';
@@ -17,6 +18,9 @@ const groupsQuery = listBudgetGroups().options();
 const deleteMutation = deleteBudgetGroup.options();
 
 let expandedIds = $state<Set<number>>(new Set());
+let deleteDialogOpen = $state(false);
+let groupToDelete = $state<BudgetGroup | null>(null);
+let deleteConfirmMessage = $state('');
 
 function toggleExpand(id: number) {
   const newSet = new Set(expandedIds);
@@ -28,20 +32,25 @@ function toggleExpand(id: number) {
   expandedIds = newSet;
 }
 
-async function handleDelete(group: BudgetGroup) {
+function handleDelete(group: BudgetGroup) {
   const groups = groupsQuery.data || [];
   const hasChildren = groups.some(g => g.parentId === group.id);
 
-  const confirmMessage = hasChildren
+  groupToDelete = group;
+  deleteConfirmMessage = hasChildren
     ? `Delete "${group.name}" and all its child groups? This will also remove budget assignments.`
     : `Delete budget group "${group.name}"? This will remove budget assignments.`;
+  deleteDialogOpen = true;
+}
 
-  if (confirm(confirmMessage)) {
-    try {
-      await deleteMutation.mutateAsync(group.id);
-    } catch (error) {
-      console.error('Failed to delete budget group:', error);
-    }
+async function confirmDelete() {
+  if (!groupToDelete) return;
+  try {
+    await deleteMutation.mutateAsync(groupToDelete.id);
+    deleteDialogOpen = false;
+    groupToDelete = null;
+  } catch (error) {
+    console.error('Failed to delete budget group:', error);
   }
 }
 
@@ -202,3 +211,29 @@ const hierarchy = $derived.by(() => {
     </div>
   {/if}
 </div>
+
+<!-- Delete Budget Group Confirmation Dialog -->
+<AlertDialog.Root bind:open={deleteDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete Budget Group</AlertDialog.Title>
+      <AlertDialog.Description>
+        {deleteConfirmMessage}
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmDelete}
+        disabled={deleteMutation.isPending}
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      >
+        {#if deleteMutation.isPending}
+          Deleting...
+        {:else}
+          Delete Group
+        {/if}
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

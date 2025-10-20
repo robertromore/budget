@@ -6,10 +6,8 @@ import {browser} from '$app/environment';
 // UI component imports
 import {Button} from '$lib/components/ui/button';
 import * as Dialog from '$lib/components/ui/dialog';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import {Spinner} from '$lib/components/ui/spinner';
-
-// Hook imports
-import {useDialog} from '$lib/hooks/ui';
 
 // Type imports
 import type {HTMLAttributes} from 'svelte/elements';
@@ -82,6 +80,7 @@ let formElement: HTMLFormElement | null = $state(null);
 // Simplified dialog state - no hook needed
 let dialogOpen = $state(false);
 let dialogDirty = $state(false);
+let unsavedChangesDialogOpen = $state(false);
 
 // Simple open/close handlers
 function handleOpen() {
@@ -90,9 +89,16 @@ function handleOpen() {
 }
 
 function handleClose() {
-  if (isDirty && !confirm('You have unsaved changes. Are you sure you want to close?')) {
+  if (isDirty) {
+    unsavedChangesDialogOpen = true;
     return;
   }
+  dialogOpen = false;
+  if (onOpenChange) onOpenChange(false);
+}
+
+function confirmClose() {
+  unsavedChangesDialogOpen = false;
   dialogOpen = false;
   if (onOpenChange) onOpenChange(false);
 }
@@ -228,3 +234,24 @@ const sizeClasses = {
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
+
+<!-- Unsaved Changes Confirmation Dialog -->
+<AlertDialog.Root bind:open={unsavedChangesDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Unsaved Changes</AlertDialog.Title>
+      <AlertDialog.Description>
+        You have unsaved changes. Are you sure you want to close? All changes will be lost.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Continue Editing</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmClose}
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      >
+        Discard Changes
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

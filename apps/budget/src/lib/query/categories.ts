@@ -67,7 +67,13 @@ export const deleteCategory = defineMutation<number, Category>({
     cachePatterns.invalidatePrefix(categoryKeys.all());
   },
   successMessage: "Category deleted",
-  errorMessage: "Failed to delete category",
+  errorMessage: (error) => {
+    // Preserve the actual error message from the server (e.g., "Cannot delete category with associated transactions")
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return "Failed to delete category";
+  },
 });
 
 export const bulkDeleteCategories = defineMutation<number[], {deletedCount: number; errors: any[]}>({

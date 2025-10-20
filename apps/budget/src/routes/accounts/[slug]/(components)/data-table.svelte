@@ -32,7 +32,8 @@ import {currentViews, CurrentViewsState} from '$lib/states/views';
 import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
 import type {FacetedFilterOption} from '$lib/types';
 import {dayFmt} from '$lib/utils/date-formatters';
-import {parseDate, getLocalTimeZone, today} from '@internationalized/date';
+import {parseDate} from '@internationalized/date';
+import {timezone, currentDate} from '$lib/utils/dates';
 
 interface Props {
   columns: ColumnDef<TransactionsFormat, TValue>[];
@@ -53,7 +54,7 @@ const generateDateFilters = (transactions: TransactionsFormat[]): FacetedFilterO
 
   // Include all transactions except future scheduled ones
   // This includes cleared/pending transactions and auto-created scheduled transactions that have already occurred
-  const todayDate = today(getLocalTimeZone());
+  const todayDate = currentDate;
 
   const relevantTransactions = transactions.filter(t => {
     // Include all non-scheduled transactions
@@ -80,7 +81,7 @@ const generateDateFilters = (transactions: TransactionsFormat[]): FacetedFilterO
     const count = relevantTransactions.filter(t => t.date?.toString() === dateStr).length;
     return {
       value: dateStr,
-      label: dayFmt.format(parseDate(dateStr).toDate(getLocalTimeZone())),
+      label: dayFmt.format(parseDate(dateStr).toDate(timezone)),
       count
     };
   });

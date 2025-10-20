@@ -20,6 +20,7 @@ import {
 } from '$lib/schema/budgets';
 import type {Account} from '$lib/schema/accounts';
 import type {Category} from '$lib/schema/categories';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
 let {
   formData,
@@ -50,7 +51,7 @@ const form = superForm(formData, {
 const {form: formStore, enhance, submitting} = form;
 
 // Reactive state from form data
-const selectedBudgetType = $derived($formStore.type || "account-monthly");
+const selectedBudgetType = $derived(($formStore.type || "account-monthly") as BudgetType);
 const selectedAccountIds = $derived($formStore.accountIds || []);
 const selectedCategoryIds = $derived($formStore.categoryIds || []);
 
@@ -59,13 +60,13 @@ const availableCategories = $derived(categories);
 
 const selectedAccounts = $derived.by(() =>
   selectedAccountIds
-    .map(id => availableAccounts.find(account => account.id === id))
+    .map((id: number) => availableAccounts.find(account => account.id === id))
     .filter(Boolean) as Account[]
 );
 
 const selectedCategories = $derived.by(() =>
   selectedCategoryIds
-    .map(id => availableCategories.find(category => category.id === id))
+    .map((id: number) => availableCategories.find(category => category.id === id))
     .filter(Boolean) as Category[]
 );
 
@@ -121,7 +122,7 @@ function addAccount(accountId: number) {
 }
 
 function removeAccount(accountId: number) {
-  $formStore.accountIds = selectedAccountIds.filter(id => id !== accountId);
+  $formStore.accountIds = selectedAccountIds.filter((id: number) => id !== accountId);
 }
 
 function addCategory(categoryId: number) {
@@ -131,16 +132,49 @@ function addCategory(categoryId: number) {
 }
 
 function removeCategory(categoryId: number) {
-  $formStore.categoryIds = selectedCategoryIds.filter(id => id !== categoryId);
+  $formStore.categoryIds = selectedCategoryIds.filter((id: number) => id !== categoryId);
 }
 
-// Handle type changes to update scope
-function handleTypeChange(value: string | undefined) {
-  if (value) {
-    $formStore.type = value as BudgetType;
-    $formStore.scope = budgetTypeConfigs[value as BudgetType].scope;
+// Auto-update scope when type changes using accessors
+const typeAccessors = createTransformAccessors(
+  () => $formStore.type,
+  (value: BudgetType) => {
+    $formStore.type = value;
+    // Automatically update scope when type changes
+    const newScope = budgetTypeConfigs[value].scope;
+    if ($formStore.scope !== newScope) {
+      $formStore.scope = newScope;
+    }
   }
-}
+);
+
+// Account/category selection state with accessors
+let selectedAccountValue = $state('');
+let selectedCategoryValue = $state('');
+
+const accountAccessors = createTransformAccessors(
+  () => selectedAccountValue,
+  (value: string) => {
+    if (value) {
+      addAccount(parseInt(value));
+      selectedAccountValue = ''; // Reset after adding
+    } else {
+      selectedAccountValue = value;
+    }
+  }
+);
+
+const categoryAccessors = createTransformAccessors(
+  () => selectedCategoryValue,
+  (value: string) => {
+    if (value) {
+      addCategory(parseInt(value));
+      selectedCategoryValue = ''; // Reset after adding
+    } else {
+      selectedCategoryValue = value;
+    }
+  }
+);
 </script>
 
 <form method="POST" use:enhance>
@@ -159,8 +193,7 @@ function handleTypeChange(value: string | undefined) {
             <Form.Label>Budget Type</Form.Label>
             <Select.Root
               type="single"
-              bind:value={$formStore.type}
-              onValueChange={handleTypeChange}
+              bind:value={typeAccessors.get, typeAccessors.set}
             >
               <Select.Trigger {...props}>
                 {currentBudgetConfig.label}
@@ -333,7 +366,7 @@ function handleTypeChange(value: string | undefined) {
           <Label>Accounts</Label>
           <Select.Root
             type="single"
-            onValueChange={(value) => value && addAccount(parseInt(value))}
+            bind:value={accountAccessors.get, accountAccessors.set}
           >
             <Select.Trigger>
               Select accounts to include
@@ -377,7 +410,7 @@ function handleTypeChange(value: string | undefined) {
           <Label>Categories</Label>
           <Select.Root
             type="single"
-            onValueChange={(value) => value && addCategory(parseInt(value))}
+            bind:value={categoryAccessors.get, categoryAccessors.set}
           >
             <Select.Trigger>
               Select categories to include

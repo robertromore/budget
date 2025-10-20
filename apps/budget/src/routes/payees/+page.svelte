@@ -178,6 +178,9 @@ const confirmBulkDelete = async () => {
     const idsToDelete = payeesToDelete.map((p) => p.id);
     await bulkDeleteMutation.mutateAsync(idsToDelete);
 
+    // Update local state to remove deleted payees
+    payeesState.removePayees(idsToDelete);
+
     bulkDeleteDialogOpen = false;
     payeesToDelete = [];
   } catch (error) {

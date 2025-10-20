@@ -35,6 +35,7 @@
     type PeriodTemplateType,
     type BudgetMetadata
   } from "$lib/schema/budgets";
+  import { createTransformAccessors } from "$lib/utils/bind-helpers";
 
   interface Props {
     initialData?: Partial<CreateBudgetRequest>;
@@ -47,6 +48,16 @@
 
   // Local state for form fields that need binding
   let allocatedAmount = $state(initialData?.metadata?.allocatedAmount || 0);
+  let periodTypeValue = $state<PeriodTemplateType>(initialData?.metadata?.defaultPeriod?.type || 'monthly');
+  const periodTypeAccessors = createTransformAccessors(
+    () => periodTypeValue,
+    (value: string) => { periodTypeValue = value as PeriodTemplateType; }
+  );
+  let categorySelectValue = $state('');
+  const categorySelectAccessors = createTransformAccessors(
+    () => categorySelectValue,
+    (value: string) => { categorySelectValue = value; }
+  );
 
   // Initialize wizard steps
   const steps: WizardStepType[] = [
@@ -146,6 +157,28 @@
   $effect(() => {
     if (formData['allocatedAmount'] !== undefined && formData['allocatedAmount'] !== allocatedAmount) {
       allocatedAmount = formData['allocatedAmount'] || 0;
+    }
+  });
+
+  // Sync periodType with formData
+  $effect(() => {
+    if (formData['periodType'] !== undefined && formData['periodType'] !== periodTypeValue) {
+      periodTypeValue = formData['periodType'] || 'monthly';
+    }
+  });
+
+  // Update formData when periodTypeValue changes
+  $effect(() => {
+    if (periodTypeValue !== formData['periodType']) {
+      updateField('periodType', periodTypeValue);
+    }
+  });
+
+  // Handle category selection
+  $effect(() => {
+    if (categorySelectValue && categorySelectValue !== '') {
+      addCategory(parseInt(categorySelectValue));
+      categorySelectValue = ''; // Reset after adding
     }
   });
 
@@ -456,13 +489,12 @@
       <Label class="text-sm font-medium">Budget Period *</Label>
       <Select.Root
         type="single"
-        value={formData['periodType'] || 'monthly'}
-        onValueChange={(value) => value && updateField('periodType', value)}
+        bind:value={periodTypeAccessors.get, periodTypeAccessors.set}
       >
         <Select.Trigger>
           <div class="flex items-center gap-2">
             <Clock class="h-4 w-4 text-muted-foreground" />
-            <span>{(formData['periodType'] || 'monthly').charAt(0).toUpperCase() + (formData['periodType'] || 'monthly').slice(1)}</span>
+            <span>{(periodTypeValue || 'monthly').charAt(0).toUpperCase() + (periodTypeValue || 'monthly').slice(1)}</span>
           </div>
         </Select.Trigger>
         <Select.Content>
@@ -491,16 +523,16 @@
         id="start-day"
         type="number"
         min="1"
-        max={formData['periodType'] === 'monthly' ? 31 : formData['periodType'] === 'weekly' ? 7 : 366}
+        max={periodTypeValue === 'monthly' ? 31 : periodTypeValue === 'weekly' ? 7 : 366}
         value={formData['startDay'] || 1}
         oninput={(e) => updateField('startDay', parseInt(e.currentTarget.value) || 1)}
-        placeholder={(formData['periodType'] === 'monthly' ? '1-31' : formData['periodType'] === 'weekly' ? '1-7 (1=Monday)' : '1-366')}
+        placeholder={(periodTypeValue === 'monthly' ? '1-31' : periodTypeValue === 'weekly' ? '1-7 (1=Monday)' : '1-366')}
         class="w-full"
       />
       <p class="text-xs text-muted-foreground">
-        {formData['periodType'] === 'monthly' ? 'Day of the month when budget period starts (1-31)' :
-         formData['periodType'] === 'weekly' ? 'Day of the week when budget period starts (1=Monday, 7=Sunday)' :
-         formData['periodType'] === 'yearly' ? 'Day of the year when budget period starts (1-366)' :
+        {periodTypeValue === 'monthly' ? 'Day of the month when budget period starts (1-31)' :
+         periodTypeValue === 'weekly' ? 'Day of the week when budget period starts (1=Monday, 7=Sunday)' :
+         periodTypeValue === 'yearly' ? 'Day of the year when budget period starts (1-366)' :
          'Day when budget period starts'}
       </p>
     </div>
@@ -563,6 +595,7 @@
           </Label>
           <Select.Root
             type="single"
+            value=""
             onValueChange={(value) => value && addAccount(parseInt(value))}
           >
             <Select.Trigger>
@@ -616,7 +649,7 @@
           </Label>
           <Select.Root
             type="single"
-            onValueChange={(value) => value && addCategory(parseInt(value))}
+            bind:value={categorySelectAccessors.get, categorySelectAccessors.set}
           >
             <Select.Trigger>
               Select categories to include

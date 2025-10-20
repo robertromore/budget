@@ -15,12 +15,6 @@ This file contains configuration and preferences for Claude Code agents working 
 - `npm add package` → `bun add package`
 - `npm remove package` → `bun remove package`
 
-### Benefits
-
-- Faster package installation and script execution
-- Better performance for development workflows
-- Consistent with project setup and team preferences
-
 ## Project Context
 
 This is a SvelteKit budget management application with:
@@ -42,13 +36,6 @@ This is a SvelteKit budget management application with:
 - **Use**: `import { db } from '$lib/server/db'`
 - **Avoid**: `import type { Account } from '../lib/schema/accounts'`
 - **Use**: `import type { Account } from '$lib/schema/accounts'`
-
-### Import Benefits
-
-- Cleaner, more readable imports
-- Consistent with SvelteKit conventions
-- Easier refactoring and maintenance
-- Avoids relative path complexity
 
 ## Comment and Documentation Standards
 
@@ -74,14 +61,6 @@ This is a SvelteKit budget management application with:
 - Use present tense to describe current functionality
 - Remove transitional TODO comments that reference previous states
 
-### Documentation Benefits
-
-- Creates timeless documentation that doesn't become outdated
-- Focuses on current architecture rather than historical changes
-- Improves code readability for new developers
-- Maintains professional documentation standards
-- Prevents confusion about what is "old" vs "new" code
-
 ## Markdown Documentation Standards
 
 **ALWAYS follow Google's documentation style guidelines and run markdownlint when creating or editing markdown content.**
@@ -106,20 +85,15 @@ This is a SvelteKit budget management application with:
 - No missing language specifications in code blocks
 - No inconsistent heading spacing
 
-### Markdown Benefits
-
-- Ensures consistent, professional documentation quality
-- Improves readability and maintainability of documentation
-- Follows industry-standard documentation practices
-- Enables automated quality checking and validation
-
 ## Development Commands
 
 - **Dev server**: `bun run dev`
 - **Build**: `bun run build`
-- **Test**: `bun run test` (if available)
-- **Lint**: `bun run lint` (if available)
-- **Type check**: `bun run typecheck` (if available)
+- **Test**: `bun run test`
+- **Lint**: `bun run lint`
+- **Type check**: `bun run check`
+- **DB migrate**: `bun run db:migrate`
+- **DB studio**: `bun run db:studio`
 
 ## Svelte MCP Server
 
@@ -127,29 +101,10 @@ This is a SvelteKit budget management application with:
 
 ### Available MCP Tools
 
-#### 1. list-sections
-
-Use this FIRST to discover all available documentation sections. Returns a structured list with titles, use_cases, and paths.
-
-When asked about Svelte or SvelteKit topics, ALWAYS use this tool at the start of the chat to find relevant sections.
-
-#### 2. get-documentation
-
-Retrieves full documentation content for specific sections. Accepts single or multiple sections.
-
-After calling the list-sections tool, you MUST analyze the returned documentation sections (especially the use_cases field) and then use the get-documentation tool to fetch ALL documentation sections that are relevant for the user's task.
-
-#### 3. svelte-autofixer
-
-Analyzes Svelte code and returns issues and suggestions.
-
-You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
-
-#### 4. playground-link
-
-Generates a Svelte Playground link with the provided code.
-
-After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
+1. **list-sections**: Use FIRST to discover all available documentation sections
+2. **get-documentation**: Retrieves full documentation content for specific sections
+3. **svelte-autofixer**: Analyzes Svelte code and returns issues and suggestions (MUST use before sending code to user)
+4. **playground-link**: Generates a Svelte Playground link (ask user first, never use if code written to files)
 
 ### Svelte MCP Usage Pattern
 
@@ -158,13 +113,6 @@ After completing the code, ask the user if they want a playground link. Only cal
 3. **Fetch Documentation**: Use `mcp__svelte-llm__get_documentation` to retrieve all relevant sections
 4. **Validate Code**: Use `svelte-autofixer` to check Svelte code before delivery
 5. **Share Playground**: Optionally generate playground links for user experimentation
-
-### Svelte MCP Benefits
-
-- Comprehensive Svelte 5 and SvelteKit documentation access
-- Automated code validation and improvement suggestions
-- Quick playground sharing for prototyping and testing
-- Always up-to-date with latest Svelte features and best practices
 
 ## Form Handling Standards
 
@@ -179,41 +127,6 @@ After completing the code, ask the user if they want a playground link. Only cal
 - Implement proper loading states and form submission feedback
 - Follow the validation flow: client validation → server validation → success/error handling
 
-### Form Implementation Pattern
-
-```typescript
-// Client-side form setup
-const form = superForm(data.form, {
-  validators: zod4Client(validationSchema),
-  onResult: ({ result }) => {
-    if (result.type === 'success') {
-      // Handle success
-    }
-  }
-});
-
-// Server-side action
-const formSchema = z.object({
-  field: z.string().min(1)
-});
-
-export const actions = {
-  default: async ({ request }) => {
-    const form = await superValidate(request, zod4Server(formSchema));
-    if (!form.valid) return fail(400, { form });
-    // Process valid form data
-    return { form };
-  }
-};
-```
-
-### Form Benefits
-
-- Provides comprehensive form validation and error handling
-- Ensures consistent form behavior across the application  
-- Integrates seamlessly with SvelteKit's form handling
-- Reduces boilerplate code for common form patterns
-
 ## Code Style Standards
 
 **ALWAYS use object method shorthand syntax when defining object methods.**
@@ -224,13 +137,6 @@ export const actions = {
 - ❌ `const obj = { method: function() { return 'value'; } }`
 - ✅ `const obj = { async method() { return await promise; } }`
 - ❌ `const obj = { method: async function() { return await promise; } }`
-
-### Style Benefits
-
-- More concise and readable code
-- Consistent with modern JavaScript/TypeScript standards
-- Better performance characteristics
-- Cleaner syntax for method definitions
 
 ## Svelte 5 Standards
 
@@ -248,13 +154,6 @@ export const actions = {
 - ✅ `<analytic.icon class="h-4 w-4"></analytic.icon>` - Direct component access
 - ✅ `<icon class="h-12 w-12"></icon>` - Variable component usage
 - ❌ `<svelte:component this={analytic.icon} />` - Deprecated pattern
-
-### Svelte 5 Benefits
-
-- Components are dynamic by default, no need for `svelte:component`
-- Cleaner syntax with proper component closing tags
-- Better TypeScript integration and type safety
-- Improved performance with runes mode
 
 ## Error Handling and Validation
 
@@ -435,29 +334,6 @@ Before implementing new features:
 - **Avoid monolithic solutions**: Don't put all changes in one file if the codebase uses distributed architecture
 - **Maintain consistency**: Use the same state management, error handling, and data flow patterns
 
-**Example Analysis Request:**
-
-```text
-"Before adding this feature, examine how similar functionality is implemented. 
-Show me the patterns for file organization, state management, and error handling, 
-then implement following these same patterns."
-```
-
-### Implementation Guidelines
-
-- Request detailed plans for any change involving 2+ files
-- Ask for visualization tools when dealing with complex data transformations
-- Implement systematic logging for any failing functionality
-- Always analyze existing code patterns before implementing new features
-- Test each step independently before proceeding
-
-### Workflow Benefits
-
-- **Reduced Risk**: Small, tested increments minimize breaking changes
-- **Better Debugging**: Issues are isolated and easier to diagnose
-- **Improved Quality**: Each step can be thoroughly reviewed and optimized
-- **Maintainable Code**: Solutions follow established patterns and are easier to understand
-
 ## Always Works™ Implementation Standards
 
 **ALWAYS ensure implementations are thoroughly tested and verified before claiming completion.**
@@ -538,16 +414,6 @@ This test ensures you're considering the user experience and the impact of faile
 - **Time wasted when it doesn't work**: 30+ minutes
 - **User trust lost**: Immeasurable and difficult to rebuild
 
-### User Perspective
-
-A user encountering the same bug for the third time isn't thinking:
-
-- ❌ "This AI is trying hard and learning"
-
-They're thinking:
-
-- ✅ "Why am I wasting time with this unreliable tool?"
-
 ### Implementation Verification Checklist
 
 Before marking any task as complete:
@@ -559,13 +425,6 @@ Before marking any task as complete:
 5. **Test edge cases** that could break the implementation
 6. **Confirm user experience** meets expectations
 
-### Quality Standards
-
-- **Zero tolerance** for claiming completion without verification
-- **Thorough testing** before any "this is fixed" statements
-- **Honest communication** about what was tested vs. assumed
-- **User-first mentality** in all implementation decisions
-
 ## Architecture Notes
 
 ### Frontend Organization
@@ -575,7 +434,7 @@ Before marking any task as complete:
 - Hooks: UI-focused in `hooks/ui/`
 - Constants: Centralized in `constants/`
 
-### Backend Organization  
+### Backend Organization
 
 - Domains: `server/domains/` with repository → service → routes pattern
 - Shared: Common utilities in `server/shared/`
@@ -605,13 +464,6 @@ border: 2px solid hsl(var(--primary) / 0.3);
 box-shadow: 0 4px 12px hsl(var(--foreground) / 0.1);
 ```
 
-### Styling Benefits
-
-- **Automatic theme support**: Works in both light and dark modes
-- **Design system consistency**: Maintains brand coherence
-- **Maintainable code**: Easy to update colors centrally
-- **Accessible contrast**: Theme colors designed for proper accessibility
-
 ## Drag-and-Drop Implementation Patterns
 
 **ALWAYS implement drag-and-drop with proper event handling and state management to prevent conflicts.**
@@ -631,7 +483,6 @@ box-shadow: 0 4px 12px hsl(var(--foreground) / 0.1);
 // Prevent competing handlers
 function handleDragOver(widget: WidgetConfig, e: DragEvent) {
   e.preventDefault();
-  // Only handle if not over an overlay
   if (draggedWidget && dragOverDropZone === -1) {
     // Update state
   }
@@ -640,7 +491,7 @@ function handleDragOver(widget: WidgetConfig, e: DragEvent) {
 // Stop propagation for overlays
 function handleOverlayDragOver(index: number, e: DragEvent) {
   e.preventDefault();
-  e.stopPropagation(); // Prevent bubbling to parent
+  e.stopPropagation();
   // Update overlay state
 }
 ```
@@ -655,129 +506,16 @@ if (draggedWidget && dragOverDropZone !== index) {
 }
 ```
 
-#### CSS Grid Integration
-
-```css
-/* Maintain widget sizes during drag */
-.widget-grid {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-/* Avoid grid-column: 1 / -1 which breaks sizing */
-.drop-zone {
-  /* Don't span full width */
-}
-```
-
-### Visual Feedback Standards
-
-- **Overlay drop zones**: Position absolutely over existing elements
-- **Theme-consistent colors**: Use CSS variables for consistency  
-- **Subtle effects**: Minimal blur (1px) and appropriate opacity (0.7+)
-- **Clear messaging**: "Drop here" vs "Add widget here" for different actions
-- **Smooth animations**: CSS transitions with cubic-bezier easing
-
-### Drag-and-Drop Debugging
-
-When experiencing rapid movement or conflicts:
-
-1. **Check event propagation**: Ensure `stopPropagation()` on overlay events
-2. **Verify state conditions**: Add guards to prevent redundant updates
-3. **Test both directions**: Ensure left-to-right and right-to-left movement work
-4. **Monitor competing handlers**: Only one handler should update state at a time
-
-### Implementation Benefits
-
-- **Smooth user experience**: No rapid movement or visual glitches
-- **Bidirectional support**: Works for all movement directions
-- **Professional appearance**: Uses design system colors and effects
-- **Maintainable code**: Clear separation of concerns between handlers
-
 ## Widget System Architecture
 
 **ALWAYS follow the established widget patterns for dashboard functionality and data visualization.**
 
 ### Widget System Components
 
-The widget system provides a configurable dashboard with comprehensive financial data visualization:
-
-#### Core Architecture
-
 - **Widget Store** (`src/lib/stores/widgets.svelte.ts`): Svelte 5 reactive store managing widget configuration and data calculation
 - **Widget Registry** (`src/lib/components/widgets/widget-registry.ts`): Dynamic component loading system
 - **Widget Types** (`src/lib/types/widgets.ts`): TypeScript definitions and widget catalog
 - **Individual Widgets**: Specialized components for different data visualizations
-
-#### Widget Implementation Pattern
-
-```typescript
-// Widget component structure
-export interface WidgetProps {
-  config: WidgetConfig;
-  data: WidgetData;
-  onUpdate?: (config: Partial<WidgetConfig>) => void;
-  onRemove?: () => void;
-  editMode?: boolean;
-}
-```
-
-#### Data Flow Architecture
-
-```text
-Database → Widget Store → calculateWidgetData() → Individual Widgets → UI
-```
-
-### Chart Widget Standards
-
-**ALWAYS use shadcn ChartContainer and layerchart for data visualization.**
-
-#### Chart Implementation Pattern
-
-```svelte
-<ChartContainer config={chartConfig} class="h-full w-full">
-  <Chart data={chartData} x="x" y="value" yNice>
-    <Svg>
-      <!-- Chart components: Area, Spline, Bars, Arc -->
-    </Svg>
-  </Chart>
-</ChartContainer>
-```
-
-#### Supported Chart Types
-
-- **Line/Spline Charts**: Balance trends, spending over time
-- **Area Charts**: Spending patterns with filled regions  
-- **Bar Charts**: Income vs expenses, monthly comparisons
-- **Pie Charts**: Category breakdowns with legends
-
-### Widget Data Calculation
-
-**ALWAYS implement comprehensive data transformation in the widget store's `calculateWidgetData()` method.**
-
-#### Required Data Structures
-
-```typescript
-// Widget store must provide:
-{
-  // Basic metrics
-  balance: number;
-  transactionCount: number;
-  monthlyCashFlow: number;
-  pendingBalance: number;
-  recentActivity: number;
-
-  // Chart data
-  spendingTrend: Array<{label: string, amount: number}>;
-  incomeExpenses: Array<{period: string, income: number, expenses: number}>;
-  categoryBreakdown: Array<{name: string, amount: number, color: string}>;
-  balanceHistory: Array<{date: string, balance: number}>;
-  
-  // Advanced metrics
-  accountHealth: {score: number, factors: Array<{type: string, description: string}>};
-  quickStats: {avgTransaction: number, totalIncome: number, totalExpenses: number};
-  monthlyComparison: Array<{name: string, spending: number}>;
-}
-```
 
 ### Widget Configuration Standards
 
@@ -795,88 +533,16 @@ Database → Widget Store → calculateWidgetData() → Individual Widgets → U
 - **Default merging**: New widgets added when definitions expand
 - **Graceful degradation**: Fallbacks for missing or invalid configurations
 
-### Test Data Management
-
-**ALWAYS create comprehensive test data for meaningful widget demonstrations.**
-
-#### Test Data Categories
-
-- **Financial Categories**: Groceries, Transportation, Dining Out, Utilities, Entertainment, Shopping, Healthcare, Salary, Freelance, Investment
-- **Transaction Variety**: Multiple months, mixed statuses, diverse amounts
-- **Realistic Patterns**: Monthly salary, recurring expenses, variable spending
-
-#### Test Data Structure
-
-```sql
--- Example realistic transaction data
-INSERT INTO "transaction" (account_id, amount, category_id, status, date, notes) VALUES 
-  (1, 4500.00, 8, 'cleared', '2025-01-01', 'January salary'),
-  (1, -89.45, 1, 'cleared', '2025-01-02', 'Weekly grocery shopping'),
-  -- Additional varied transactions across time periods
-```
-
-### Widget Development Guidelines
-
-#### Creating New Widgets
-
-1. **Add widget type** to `WidgetType` union in `src/lib/types/widgets.ts`
-2. **Define widget definition** in `WIDGET_DEFINITIONS` with proper metadata
-3. **Create widget component** following `WidgetProps` interface
-4. **Register component** in `src/lib/components/widgets/widget-registry.ts`
-5. **Update data calculation** in widget store's `calculateWidgetData()` method
-
-#### Widget Responsiveness
-
-- **Small widgets**: Single metric with minimal chrome
-- **Medium widgets**: Multiple metrics with moderate detail
-- **Large widgets**: Full data display with charts and comprehensive information
-- **Responsive grids**: CSS Grid with `minmax(300px, 1fr)` for optimal layouts
-
-#### Chart Configuration
-
-- **Theme integration**: Use `hsl(var(--primary))` color variables
-- **Data preparation**: Transform database results into chart-ready formats
-- **Error handling**: Show "No data available" states gracefully
-- **Performance**: Limit data points for smooth rendering
-
-### Widget System Benefits
-
-- **Modular architecture**: Easy to add new widget types
-- **User customization**: Drag-and-drop reordering and show/hide controls
-- **Rich visualizations**: Professional charts with theme support
-- **Responsive design**: Works across device sizes
-- **Data-driven**: Comprehensive financial metrics and trends
-
 ## Chart System Architecture
 
 **ALWAYS use global chart type definitions and implement proper period filtering for dynamic, user-friendly chart interfaces.**
 
 ### Core Chart Components
 
-The chart system provides a flexible, reusable architecture for data visualization:
-
-#### Component Structure
-
-- **ChartWrapper** (`src/lib/components/charts/chart-wrapper.svelte`): Main container with controls and period filtering
-- **ChartRenderer** (`src/lib/components/charts/chart-renderer.svelte`): LayerChart integration and visualization logic
-- **ChartTypeSelector** (`src/lib/components/charts/chart-type-selector.svelte`): Dropdown for switching chart types with icons
-- **ChartPeriodControls** (`src/lib/components/charts/chart-period-controls.svelte`): Time period filtering buttons
-
-#### Global Chart Type System
-
-```typescript
-// All chart types defined globally in chart-types.ts
-export const ALL_CHART_TYPES: ChartTypeGroup[] = [
-  {
-    label: 'Line & Area',
-    options: [
-      { value: 'line', label: 'Line Chart', icon: LineChart, description: 'Connected points showing trends' },
-      { value: 'area', label: 'Area Chart', icon: TrendingUp, description: 'Filled area under the line' }
-    ]
-  },
-  // Additional groups...
-];
-```
+- **ChartWrapper**: Main container with controls and period filtering
+- **ChartRenderer**: LayerChart integration and visualization logic
+- **ChartTypeSelector**: Dropdown for switching chart types with icons
+- **ChartPeriodControls**: Time period filtering buttons
 
 ### Chart Implementation Patterns
 
@@ -887,23 +553,15 @@ export const ALL_CHART_TYPES: ChartTypeGroup[] = [
 ```typescript
 import { ALL_CHART_TYPES } from '$lib/components/charts/chart-types';
 
-// Filter for supported chart types
 const availableChartTypes = $derived(() => {
   const supportedTypes = ['bar', 'line', 'area'];
-  return ALL_CHART_TYPES.flatMap(group => 
+  return ALL_CHART_TYPES.flatMap(group =>
     group.options.filter(option => supportedTypes.includes(option.value))
   );
 });
 ```
 
-**❌ Never define chart types locally:**
-
-```typescript
-// DON'T DO THIS - icons will be missing
-const availableChartTypes = [
-  { value: 'bar', label: 'Bar Chart', icon: null, description: '...' }
-];
-```
+**❌ Never define chart types locally** - icons will be missing
 
 #### Period Filtering Implementation
 
@@ -912,67 +570,15 @@ const availableChartTypes = [
 ```typescript
 import { generatePeriodOptions, filterDataByPeriod } from '$lib/utils/chart-periods';
 
-// Generate periods based on actual data
 const availablePeriods = $derived.by(() => {
   if (!enablePeriodFiltering) return [];
   return generatePeriodOptions(data, dateField);
 });
 
-// Filter data reactively
 const filteredData = $derived.by(() => {
   if (!enablePeriodFiltering) return data;
   return filterDataByPeriod(data, dateField, currentPeriod);
 });
-```
-
-### Period Filtering System
-
-The period filtering system provides intelligent time-based data filtering:
-
-#### Key Utilities (`src/lib/utils/chart-periods.ts`)
-
-- **`generatePeriodOptions()`**: Analyzes data to create appropriate time periods
-- **`filterDataByPeriod()`**: Filters arrays based on date fields and period keys
-- **`getPeriodStartDate()`**: Converts period keys to DateValue objects
-
-#### Automatic Period Generation
-
-The system automatically generates meaningful periods based on data span:
-
-- **Datasets < 6 months**: All Time only
-- **Datasets 6+ months**: All Time, Last 3 Months
-- **Datasets 12+ months**: All Time, Last 3/6 Months  
-- **Datasets 18+ months**: All Time, Last 3/6/12 Months
-- **Current year data**: Adds "Year to Date" option
-
-### Chart Type Selector with Icons
-
-#### Icon Integration
-
-**✅ Proper icon display in both trigger and dropdown:**
-
-```svelte
-<!-- Trigger button shows selected chart type with icon -->
-<Select.Trigger>
-  <div class="flex items-center gap-2">
-    {#if selectedChartTypeOption()}
-      {@const option = selectedChartTypeOption()!}
-      <option.icon class="h-4 w-4" />
-      <span>{option.label}</span>
-    {/if}
-  </div>
-</Select.Trigger>
-
-<!-- Dropdown options show all available types with icons -->
-<Select.Item>
-  <div class="flex items-center gap-2">
-    <option.icon class="h-4 w-4" />
-    <div class="flex flex-col">
-      <span>{option.label}</span>
-      <span class="text-xs text-muted-foreground">{option.description}</span>
-    </div>
-  </div>
-</Select.Item>
 ```
 
 ### Date Handling Standards
@@ -980,8 +586,6 @@ The system automatically generates meaningful periods based on data span:
 **ALWAYS use @internationalized/date as the primary date library for all date operations.**
 
 #### Consolidated Date Library Architecture
-
-The project uses a **single date library approach** for consistency and reduced bundle size:
 
 - **Primary Library**: `@internationalized/date` for all date operations
 - **Chart Integration**: Native Date objects only for LayerChart/D3 compatibility
@@ -1021,8 +625,6 @@ const sameMonth = isSamePeriod(date1, date2, 'month');
 
 #### Chart Library Integration
 
-**Maintain existing conversion pattern for chart compatibility:**
-
 ```typescript
 // LayerChart and D3 require native Date objects
 const jsDate = dateValue.toDate(timezone);
@@ -1033,55 +635,6 @@ const chartData = data.map(item => ({
   value: item.amount
 }));
 ```
-
-#### Date Formatting Standards
-
-```typescript
-// Use centralized formatting instead of native Date methods
-// ❌ Avoid: new Date(transaction.date).toLocaleDateString()
-// ✅ Use: formatDateDisplay(parseISOString(transaction.date), 'short')
-
-// ❌ Avoid: date.getFullYear()
-// ✅ Use: dateValue.year
-
-// ❌ Avoid: new Date().getMonth()
-// ✅ Use: currentDate.month
-```
-
-#### Migration Guidelines
-
-When updating existing code:
-
-1. **Replace date-fns functions** with equivalent utilities from `$lib/utils/dates`
-2. **Use parseISOString()** for database date strings
-3. **Use formatDateDisplay()** for consistent date formatting
-4. **Keep chart conversions** with `.toDate(timezone)` pattern
-5. **Avoid native Date** except for third-party library requirements
-
-#### Benefits
-
-- **Single API**: Consistent date handling across entire codebase
-- **Smaller Bundle**: 30KB reduction from eliminating date-fns
-- **Better Timezone Support**: @internationalized/date has superior timezone handling
-- **Type Safety**: Strong TypeScript integration with DateValue types
-- **Maintainability**: Centralized date utilities in one location
-
-### Chart System Benefits
-
-- **Consistent UX**: All charts use the same controls and visual patterns
-- **Global Icon System**: Icons defined once, used everywhere with full type safety
-- **Intelligent Period Filtering**: Automatically generates appropriate time periods based on data
-- **LayerChart Integration**: Professional visualizations with comprehensive chart type support
-- **Reactive Data Flow**: Real-time updates when users change chart types or time periods
-- **Accessibility**: Full keyboard navigation and screen reader support
-
-### Chart Development Guidelines
-
-1. **Always import global chart types** - Never define chart icons locally
-2. **Use derived values for period filtering** - Reactive data filtering with $derived.by()
-3. **Implement both chart and period controls** - Complete user control over visualization
-4. **Handle empty states gracefully** - Show appropriate messages when no data available
-5. **Use consistent styling** - Follow theme variables and design system patterns
 
 ## Request Quality and Accountability Standards
 
@@ -1106,28 +659,12 @@ For multi-step changes involving 3+ files or significant architecture changes:
 
 Claude must:
 
-✅ **Pause and ask** before diving into broad requests  
-✅ **Suggest planning** for complex multi-step tasks  
-✅ **Ask for specifics** when requests are vague  
-✅ **Recommend incremental approaches** for large changes  
-✅ **Follow established patterns** and remind user when something might break them  
+✅ **Pause and ask** before diving into broad requests
+✅ **Suggest planning** for complex multi-step tasks
+✅ **Ask for specifics** when requests are vague
+✅ **Recommend incremental approaches** for large changes
+✅ **Follow established patterns** and remind user when something might break them
 ✅ **Challenge anti-patterns** and suggest better approaches
-
-### Examples of Good vs Bad Requests
-
-**Good (Specific and Focused):**
-- ✅ "Fix the TypeScript error on line 45 in chart-wrapper.svelte"
-- ✅ "Add a delete button to the transaction card component"
-- ✅ "Create a plan for implementing user authentication"
-
-**Bad (Too Broad):**
-- ❌ "Fix all the errors"
-- ❌ "Add authentication to the app"
-- ❌ "Make the dashboard better"
-
-### Goal
-
-Keep development focused, effective, and aligned with project best practices by ensuring all requests are specific, well-planned, and properly scoped.
 
 ## Specialized Agents
 
@@ -1135,38 +672,997 @@ Keep development focused, effective, and aligned with project best practices by 
 
 Available specialized agents:
 
-- **backend-api-architect** (`.claude/agents/backend-api-architect.md`) - Expert in tRPC backend, API routes, Drizzle ORM database operations, Better Auth authentication, and backend service integration. Specializes in `src/lib/schema`, `src/lib/server/db`, and `src/lib/trpc` folders.
+- **backend-api-architect** - Expert in tRPC backend, API routes, Drizzle ORM database operations, Better Auth authentication, and backend service integration
+- **code-review-specialist** - Expert in conducting thorough code reviews, analyzing code quality, and ensuring adherence to project standards
+- **documentation-specialist** - Expert in creating, editing, and maintaining markdown documentation files following Google's style guide
+- **frontend-ui-specialist** - Expert in building user interfaces using Shadcn Svelte, Tailwind CSS, and UI components
+- **layerchart-specialist** - Expert in LayerChart components, data visualization, and chart system architecture
+- **query-layer-specialist** - Expert in the query layer including defineQuery/defineMutation, error transformations, and cache updates
 
-- **code-review-specialist** (`.claude/agents/code-review-specialist.md`) - Expert in conducting thorough code reviews, analyzing code quality, identifying potential issues, and ensuring adherence to project standards. Provides comprehensive feedback on architecture, performance, security, and maintainability.
+**Usage:** Claude Code automatically uses specialized agents when tasks match their expertise areas.
 
-- **documentation-specialist** (`.claude/agents/documentation-specialist.md`) - Expert in creating, editing, and maintaining markdown documentation files including README files, technical documentation, API docs, and project guides. Follows Google's documentation style guide and markdown best practices.
+## Project Structure Overview
 
-- **frontend-ui-specialist** (`.claude/agents/frontend-ui-specialist.md`) - Expert in building user interfaces using Shadcn Svelte, Shadcn Svelte Extras, Tailwind CSS, and the packages/ui folder structure. Handles UI components, design patterns, styling, and frontend-specific challenges.
+**The budget application follows a monorepo architecture with clear separation between application and shared packages.**
 
-- **layerchart-specialist** (`.claude/agents/layerchart-specialist.md`) - Expert in LayerChart components, data visualization, chart system architecture, performance optimization, and chart debugging. Use for all chart-related tasks.
+### Monorepo Structure
 
-- **query-layer-specialist** (`.claude/agents/query-layer-specialist.md`) - Expert in the query layer including defineQuery/defineMutation, error transformations from service errors to TRPCError, RPC namespace patterns, reactive/imperative interfaces, cache updates, and optimistic UI patterns.
+- **apps/budget**: Main SvelteKit budget application
+- **packages/ui**: Shared UI components library (shadcn-svelte components)
+- **Root Configuration**: Shared tooling configuration (TypeScript, ESLint, Tailwind)
 
-**Usage:** Claude Code automatically uses specialized agents when tasks match their expertise areas. Agent definitions contain comprehensive knowledge areas, implementation patterns, and architectural understanding specific to each domain.
+### Main Application Directories
+
+```text
+apps/budget/
+├── src/
+│   ├── lib/
+│   │   ├── components/       # Reusable UI components
+│   │   ├── server/          # Backend domain logic
+│   │   │   ├── domains/     # Domain-driven service modules
+│   │   │   ├── config/      # Server configuration
+│   │   │   └── shared/      # Shared utilities
+│   │   ├── schema/          # Database schema definitions
+│   │   ├── trpc/            # tRPC routers and middleware
+│   │   ├── query/           # Query layer (TanStack Query)
+│   │   ├── states/          # Frontend state management
+│   │   ├── types/           # TypeScript type definitions
+│   │   ├── utils/           # Utility functions
+│   │   └── constants/       # Application constants
+│   ├── routes/              # SvelteKit file-based routing
+│   └── tests/
+│       ├── unit/            # Unit tests
+│       ├── integration/     # Integration tests
+│       └── e2e/             # End-to-end tests
+├── drizzle/                 # Database migrations
+└── static/                  # Static assets
+```
+
+### Key Architectural Patterns
+
+#### Domain-Driven Design
+
+- **Clear boundaries**: Each domain encapsulates its own data and logic
+- **Service-oriented**: Business logic separated from data access
+- **Type safety**: Strong TypeScript types throughout the stack
+
+#### Repository Pattern
+
+- **Data access layer**: All database queries through repository modules
+- **Query optimization**: Efficient joins and aggregations using Drizzle
+- **Reusability**: Common queries extracted and shared
+
+#### Service Layer
+
+- **Business logic**: Validation, transformation, and orchestration
+- **Cross-domain coordination**: Services can call other domain services
+- **Error handling**: Custom error types (ValidationError, NotFoundError, ConflictError)
+
+#### Query Layer
+
+- **Client-side data fetching**: TanStack Query for reactive data management
+- **Cache management**: Automatic invalidation and optimistic updates
+- **Imperative/reactive**: Both `.execute()` and `.options()` patterns supported
+
+## Technology Stack Reference
+
+**Complete technology stack with versions and usage patterns for the budget application.**
+
+### Framework and Runtime
+
+- **SvelteKit 2.47.0**: Full-stack framework with file-based routing
+- **Svelte 5.40.1**: Frontend framework with runes mode
+- **TypeScript 5.8.3**: Type-safe development across the stack
+- **Bun 1.2.23**: Package manager and runtime
+- **Vite 7.1.10**: Build tool and development server
+- **svelte-adapter-bun 1.0.0**: Production deployment adapter
+
+### Database and ORM
+
+- **SQLite**: Embedded database for local-first architecture
+- **Drizzle ORM 0.44.6**: Type-safe database queries and migrations
+- **drizzle-kit 0.38.5**: Schema management and migration tooling
+
+### Backend Stack
+
+- **tRPC 11.6.0**: End-to-end type-safe API layer
+- **Zod 4.1.12**: Schema validation and parsing
+- **Better Auth**: Authentication and session management
+- **Rate Limiting**: API endpoint protection
+
+### UI Component Libraries
+
+- **shadcn-svelte 1.0.8**: Core design system components
+- **bits-ui 2.11.7**: Headless UI primitives
+- **Tailwind CSS 4.1.14**: Utility-first styling
+- **tailwindcss-animate 1.0.7**: Animation utilities
+- **clsx 2.1.1**: Class name utilities
+- **tailwind-merge 2.7.2**: Tailwind class merging
+- **tailwind-variants 0.4.0**: Component variant management
+
+### Data Visualization
+
+- **LayerChart 2.0.0-next.42**: Professional chart components
+- **D3 Libraries**: d3-scale, d3-shape, d3-array, d3-format, d3-time
+
+### State Management
+
+- **TanStack Query 6.0.2**: Server state and cache management
+- **Svelte 5 Runes**: Built-in reactive state ($state, $derived, $effect)
+- **Context API**: Component-level state sharing
+
+### Form Handling
+
+- **sveltekit-superforms 2.27.4**: Form validation and submission
+- **zod-form-data 2.0.2**: Form data parsing with Zod schemas
+
+### Date Handling
+
+- **@internationalized/date 3.10.0**: Primary date library for all operations
+- **Date Utilities**: Custom utilities in `$lib/utils/dates.ts`
+
+### Import and Parsing
+
+- **papaparse 5.5.3**: CSV file parsing
+- **fast-xml-parser 5.3.0**: XML/OFX/QFX file parsing
+
+### Testing Infrastructure
+
+- **Vitest 3.2.4**: Unit and integration testing
+- **Playwright 1.56.0**: End-to-end testing
+- **@testing-library/svelte 6.0.1**: Component testing utilities
+- **@faker-js/faker 9.4.0**: Test data generation
+
+### Development Tools
+
+- **ESLint**: Code linting with Svelte and TypeScript support
+- **Prettier**: Code formatting with Svelte plugin
+- **svelte-check**: Type checking and validation
+- **Turborepo**: Monorepo task orchestration
+
+### Icons and Assets
+
+- **lucide-svelte 0.469.0**: Icon library
+
+### Utility Libraries
+
+- **mode-watcher 0.5.1**: Dark mode management
+- **fuzzysort 3.2.1**: Fuzzy string matching for search
+- **nanoid 5.1.0**: Unique ID generation
+
+## Core Domain Models
+
+**Comprehensive entity descriptions and database relationships for the budget application.**
+
+### Database Architecture
+
+#### Accounts
+
+Primary entity for financial account management.
+
+**Core Fields:**
+- `id`, `name`, `type` (checking, savings, credit_card, investment, hsa, debt_account)
+- `balance`, `initial_balance`, `is_budget`, `currency`, `notes`
+
+**HSA-Specific:** `is_hsa`, `hsa_contribution_limit`, `hsa_employer_contribution`
+
+**Debt-Specific:** `debt_type`, `debt_interest_rate`, `debt_minimum_payment`, `debt_payoff_goal_date`
+
+**Metadata:** `created_at`, `updated_at`, `deleted_at`
+
+#### Transactions
+
+Financial transaction records with import support.
+
+**Core Fields:**
+- `id`, `account_id`, `amount`, `date`, `status` (cleared, pending, scheduled, reconciled), `notes`
+
+**Relationships:**
+- `payee_id`, `category_id`, `transfer_id` (foreign keys, nullable)
+
+**Import Metadata:**
+- `imported` (boolean), `rawImportData` (JSON field)
+
+**Split Transaction Support:**
+- `parent_transaction_id`, `is_split`
+
+**Timestamps:** `created_at`, `updated_at`, `deleted_at`
+
+#### Categories
+
+Hierarchical category organization with tax tracking.
+
+**Core Fields:**
+- `id`, `name`, `parent_category_id`, `is_income`, `is_tax_related`, `color`, `icon`
+
+**Analytics:** `average_spending`, `total_spending`, `transaction_count`
+
+**Metadata:** `notes`, `created_at`, `updated_at`, `deleted_at`
+
+#### Payees
+
+Entity representing transaction payees with normalization support.
+
+**Core Fields:**
+- `id`, `name`, `normalized_name`
+
+**Default Associations:**
+- `default_category_id` (nullable)
+
+**Analytics:** `transaction_count`, `total_amount`
+
+**Metadata:** `notes`, `created_at`, `updated_at`, `deleted_at`
+
+#### Schedules
+
+Recurring transaction templates.
+
+**Core Fields:**
+- `id`, `name`, `account_id`, `amount`, `amount_min`, `amount_max`, `status` (active, paused, completed)
+
+**Relationships:**
+- `payee_id`, `category_id`, `schedule_date_id`
+
+**Automation:** `auto_add` (boolean)
+
+**Metadata:** `notes`, `created_at`, `updated_at`, `deleted_at`
+
+#### Schedule Dates
+
+Frequency configuration for recurring schedules.
+
+**Core Fields:**
+- `id`, `start_date`, `end_date`, `frequency` (daily, weekly, monthly, yearly), `interval`
+
+**Weekly Configuration:** `days_of_week` (JSON array)
+
+**Monthly Configuration:** `day_of_month`
+
+**Yearly Configuration:** `month_of_year`, `day_of_month`
+
+**Metadata:** `created_at`, `updated_at`, `deleted_at`
+
+#### Budgets
+
+Budget tracking with multiple types (in design phase).
+
+**Core Fields:**
+- `id`, `name`, `type` (account_monthly, category_envelope, goal_based, scheduled_expense)
+- `enforcement` (none, warning, strict), `metadata` (JSON)
+
+**Period Configuration:** `budget_period_template_id`
+
+**Junction Tables:** `budget_accounts`, `budget_categories`, `budget_transactions`, `budget_group_memberships`
+
+**Metadata:** `created_at`, `updated_at`, `deleted_at`
+
+#### Views
+
+Saved table configurations with filters and sorting.
+
+**Core Fields:**
+- `id`, `name`, `entity_type`, `is_default`, `is_global`
+
+**Configuration:**
+- `filters` (JSON), `sort_column`, `sort_direction`, `visible_columns` (JSON), `grouping` (JSON)
+
+**Metadata:** `created_at`, `updated_at`, `deleted_at`
+
+#### Medical Expenses / HSA Claims
+
+HSA-specific expense tracking.
+
+**Core Fields:**
+- `id`, `transaction_id`, `amount`, `date`, `provider`, `description`
+- `claim_status` (pending, submitted, approved, denied, paid)
+
+**Receipt Management:** `receipt_url`
+
+**Metadata:** `created_at`, `updated_at`, `deleted_at`
+
+### Database Relationship Diagram
+
+```text
+Accounts (1) ----< (N) Transactions
+Accounts (1) ----< (N) Schedules
+Accounts (1) ----< (N) Medical Expenses (HSA)
+
+Categories (1) ----< (N) Transactions
+Categories (1) ----< (N) Schedules
+Categories (1) ----< (N) Payees (default)
+Categories (1) ----< (N) Categories (parent-child)
+
+Payees (1) ----< (N) Transactions
+Payees (1) ----< (N) Schedules
+
+Schedule Dates (1) ----< (N) Schedules
+
+Transactions (1) ----< (1) Transactions (transfers)
+Transactions (1) ----< (N) Transactions (splits)
+Transactions (1) ----< (N) Medical Expenses
+
+Budgets (1) ----< (N) Budget Period Instances
+Budgets (N) ----< (N) Accounts (via budget_accounts)
+Budgets (N) ----< (N) Categories (via budget_categories)
+Budgets (N) ----< (N) Transactions (via budget_transactions)
+
+Views (scoped to entity types)
+```
+
+### Key Design Patterns
+
+- **Soft Deletes**: All entities support `deleted_at` for reversible deletions
+- **Normalized Payees**: Fuzzy matching on `normalized_name` for import intelligence
+- **Hierarchical Categories**: Unlimited nesting depth with parent-child relationships
+- **Transfer Linking**: Bidirectional transaction references for account transfers
+- **Import Metadata**: Raw import data preserved for auditing and re-processing
+- **Flexible Schedules**: Complex recurring patterns with date configuration
+- **Type-Specific Fields**: HSA and debt fields coexist with standard account fields
+
+## Key Features and Architecture
+
+### Account Management
+
+**Multi-type account system with specialized tracking capabilities.**
+
+#### Account Types
+
+- **Checking/Savings**: Standard banking accounts with balance tracking
+- **Credit Cards**: Negative balance accounts with debt management
+- **Investment Accounts**: Portfolio tracking with goal integration
+- **HSA Accounts**: Healthcare savings with contribution limits and expense tracking
+- **Debt Accounts**: Loan and mortgage tracking with payoff calculations
+
+#### Balance Tracking
+
+- **Real-time Balance**: Calculated from initial balance plus transaction sum
+- **Pending Balance**: Includes pending transactions for cash flow planning
+- **Balance History**: Historical tracking for trend analysis
+- **Multi-currency Support**: ISO currency codes with conversion capabilities
+
+### Transaction System
+
+**Comprehensive transaction management with import capabilities and real-time updates.**
+
+#### Import System
+
+**Multi-format financial data import with intelligent matching.**
+
+##### Supported Formats
+
+- **QFX/OFX Files**: Quicken and Money file formats
+- **CSV Files**: Customizable column mapping
+- **XML Parsing**: Fast-xml-parser for OFX processing
+- **Encoding Support**: Handles various character encodings
+
+##### Import Process
+
+1. **File Upload**: Drag-and-drop or file picker
+2. **Format Detection**: Automatic format recognition
+3. **Data Parsing**: Extract transactions from file structure
+4. **Column Mapping**: User-configurable field mapping (CSV only)
+5. **Validation**: Check for required fields and data types
+6. **Matching**: Intelligent payee and category suggestions
+7. **Preview**: Review before committing to database
+8. **Import**: Create transactions with import metadata
+
+##### Intelligent Matching
+
+- **Payee Matching**: Fuzzy matching with confidence scores (exact, high, medium)
+- **Category Suggestions**: Based on payee history and transaction patterns
+- **Duplicate Detection**: Prevents importing same transactions twice
+- **Metadata Preservation**: Raw import data stored for auditing
+
+#### Split Transactions
+
+- **Parent-Child Relationship**: Link splits to parent transaction
+- **Automatic Reconciliation**: Ensure splits sum to parent amount
+- **Category Distribution**: Allocate amounts across categories
+
+#### Transfer Linking
+
+- **Bidirectional Links**: Transactions reference each other
+- **Balance Neutrality**: Ensures zero-sum across accounts
+- **Automatic Creation**: Option to create matching transfer
+
+### Category System
+
+**Hierarchical category organization with analytics and tax tracking.**
+
+- **Unlimited Nesting**: Categories can have multiple levels
+- **Tax Tracking**: Mark categories for tax reporting
+- **Category Analytics**: Average spending, total spending, transaction count
+
+### Payee Management
+
+**Intelligent payee system with normalization and analytics.**
+
+#### Normalization
+
+- **Lowercase Storage**: All payee names normalized to lowercase
+- **Fuzzy Matching**: Find similar payee names during import
+- **Duplicate Prevention**: Detect and merge duplicate payees
+
+#### Default Categories
+
+- **Auto-Assignment**: Link payees to default categories
+- **Learning System**: Suggests categories based on history
+
+### Schedule System
+
+**Flexible recurring transaction templates with automatic creation.**
+
+#### Recurring Patterns
+
+- **Daily**: Every N days
+- **Weekly**: Specific days of week, every N weeks
+- **Monthly**: Specific day of month, every N months
+- **Yearly**: Specific month and day, every N years
+
+#### Auto-Add Feature
+
+- **Automatic Creation**: Creates transactions on schedule dates
+- **30-Day Window**: Shows upcoming scheduled transactions
+- **Deduplication**: Skips dates with existing transactions
+
+### View System
+
+**Saved table configurations with filters, sorting, and grouping.**
+
+- **Column Visibility**: Show/hide specific columns
+- **Sort Order**: Sort by any column, ascending or descending
+- **Filter Definitions**: Complex filter criteria
+- **Grouping**: Group by category, payee, date, etc.
+
+### Widget Dashboard
+
+**Configurable dashboard with financial data visualizations.**
+
+- **Metric Widgets**: Balance, transaction count, cash flow
+- **Chart Widgets**: Spending trends, category breakdowns
+- **Advanced Widgets**: Account health scores, quick stats
+- **Drag-and-Drop**: Reorder widgets on dashboard
+
+### HSA Tracking
+
+**Healthcare savings account with medical expense management.**
+
+- **Contribution Tracking**: Annual limits and employer contributions
+- **Medical Expenses**: Link transactions to healthcare expenses
+- **Receipt Upload**: Attach receipts to claims
+- **Claim Status**: Track pending, submitted, approved, denied, paid
+
+## Code Patterns Deep Dive
+
+### State Management
+
+**Multi-layered reactive state using Svelte 5 runes and context-based state classes.**
+
+#### Svelte 5 Runes
+
+**$state - Reactive State:**
+
+```typescript
+let count = $state(0);
+let user = $state({ name: 'John', email: 'john@example.com' });
+
+class AccountsState {
+  accounts = $state<Account[]>([]);
+  selectedAccountId = $state<number | null>(null);
+}
+```
+
+**$derived - Computed Values:**
+
+```typescript
+let doubled = $derived(count * 2);
+
+let filteredAccounts = $derived.by(() => {
+  return accounts.filter(account => account.balance > 0);
+});
+```
+
+**$effect - Side Effects:**
+
+```typescript
+$effect(() => {
+  console.log(`Count is now ${count}`);
+  return () => console.log('Effect cleanup');
+});
+```
+
+#### Context-Based State Classes
+
+```typescript
+// src/lib/states/accounts.svelte.ts
+import { getContext, setContext } from 'svelte';
+
+const ACCOUNTS_STATE_KEY = Symbol('accounts-state');
+
+export class AccountsState {
+  accounts = $state<Account[]>([]);
+  selectedAccountId = $state<number | null>(null);
+
+  selectedAccount = $derived.by(() => {
+    return this.accounts.find(a => a.id === this.selectedAccountId);
+  });
+
+  setAccounts(accounts: Account[]) {
+    this.accounts = accounts;
+  }
+}
+
+export function setAccountsState() {
+  const state = new AccountsState();
+  setContext(ACCOUNTS_STATE_KEY, state);
+  return state;
+}
+
+export function getAccountsState(): AccountsState {
+  return getContext(ACCOUNTS_STATE_KEY);
+}
+```
+
+### Query Layer Architecture
+
+**Type-safe data fetching with TanStack Query and tRPC integration.**
+
+#### defineQuery Pattern
+
+```typescript
+import { createQuery } from '@tanstack/svelte-query';
+import { trpc } from '$lib/trpc/client';
+
+export function getAllAccountTransactions(accountId: number) {
+  // Reactive query options
+  const options = () => ({
+    queryKey: ['transactions', 'account', accountId],
+    queryFn: () => trpc.transactions.forAccount.query({ accountId }),
+    enabled: accountId > 0
+  });
+
+  // Imperative execution
+  async function execute() {
+    return await trpc.transactions.forAccount.query({ accountId });
+  }
+
+  return { options, execute };
+}
+```
+
+#### defineMutation Pattern
+
+```typescript
+import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+import { toast } from 'svelte-sonner';
+
+export function createTransaction() {
+  const queryClient = useQueryClient();
+
+  const options = () => ({
+    mutationFn: (data: CreateTransactionInput) =>
+      trpc.transactions.create.mutate(data),
+    onSuccess: (transaction) => {
+      toast.success('Transaction created successfully');
+      queryClient.invalidateQueries({
+        queryKey: ['transactions', 'account', transaction.accountId]
+      });
+    },
+    onError: (error: TRPCError) => {
+      toast.error(error.message || 'Failed to create transaction');
+    }
+  });
+
+  async function execute(data: CreateTransactionInput) {
+    try {
+      const result = await trpc.transactions.create.mutate(data);
+      toast.success('Transaction created successfully');
+      return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed';
+      toast.error(message);
+      throw error;
+    }
+  }
+
+  return { options, execute };
+}
+```
+
+### Domain Service Pattern
+
+**Three-layer architecture: Repository, Service, and Routes.**
+
+#### Repository Layer
+
+```typescript
+// src/lib/server/domains/transactions/repository.ts
+import { db } from '$lib/server/db';
+import { transactions, accounts, categories, payees } from '$lib/schema';
+import { eq, and, gte, lte, desc } from 'drizzle-orm';
+
+export async function findById(id: number) {
+  const [transaction] = await db
+    .select()
+    .from(transactions)
+    .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .leftJoin(payees, eq(transactions.payeeId, payees.id))
+    .where(and(
+      eq(transactions.id, id),
+      eq(transactions.deletedAt, null)
+    ))
+    .limit(1);
+
+  return transaction;
+}
+
+export async function create(data: InsertTransaction) {
+  const [transaction] = await db
+    .insert(transactions)
+    .values(data)
+    .returning();
+
+  return transaction;
+}
+```
+
+#### Service Layer
+
+```typescript
+// src/lib/server/domains/transactions/services.ts
+import * as repository from './repository';
+import { ValidationError, NotFoundError } from '$lib/server/shared/errors';
+
+export async function createTransaction(data: CreateTransactionInput) {
+  // Validation
+  if (data.amount === 0) {
+    throw new ValidationError('Transaction amount cannot be zero');
+  }
+
+  // Business logic
+  const transaction = await repository.create({
+    ...data,
+    status: data.status ?? 'pending',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+
+  // Update account balance
+  await accountsService.updateBalance(data.accountId, data.amount);
+
+  return transaction;
+}
+```
+
+### Component Organization
+
+**Structured component architecture with clear separation of concerns.**
+
+#### Route-Specific Components
+
+```text
+src/routes/accounts/[slug]/
+├── +page.svelte
+├── +page.server.ts
+└── (components)/
+    ├── data-table-pagination.svelte
+    ├── transaction-quick-add.svelte
+    └── account-header.svelte
+```
+
+#### Shared Components
+
+```text
+src/lib/components/
+├── ui/                    # Design system components
+├── forms/                 # Form components
+├── transactions/          # Domain components
+├── accounts/
+└── shared/                # Generic shared components
+```
+
+#### Index Barrel Exports
+
+```typescript
+// src/lib/components/accounts/index.ts
+export { default as AccountSelector } from './account-selector.svelte';
+export { default as AccountCard } from './account-card.svelte';
+
+// Usage
+import { AccountSelector, AccountCard } from '$lib/components/accounts';
+```
+
+## Import System Architecture
+
+**Multi-format financial data import with intelligent matching and validation.**
+
+### File Processors
+
+#### OFX/QFX Processor
+
+```typescript
+import { XMLParser } from 'fast-xml-parser';
+
+export function parseOFX(fileContent: string) {
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: '',
+    textNodeName: 'value'
+  });
+
+  const parsed = parser.parse(fileContent);
+  const transactions = extractTransactions(parsed);
+
+  return transactions.map(t => ({
+    date: parseOFXDate(t.DTPOSTED),
+    amount: parseFloat(t.TRNAMT),
+    payee: t.NAME || t.MEMO,
+    memo: t.MEMO,
+    fitid: t.FITID
+  }));
+}
+```
+
+#### CSV Processor
+
+```typescript
+import Papa from 'papaparse';
+
+export function parseCSV(fileContent: string) {
+  const result = Papa.parse(fileContent, {
+    header: true,
+    skipEmptyLines: true,
+    dynamicTyping: true
+  });
+
+  return {
+    headers: result.meta.fields || [],
+    rows: result.data,
+    errors: result.errors
+  };
+}
+```
+
+### PayeeMatcher
+
+**Intelligent payee matching with confidence scoring.**
+
+```typescript
+import fuzzysort from 'fuzzysort';
+
+export class PayeeMatcher {
+  private payees: Payee[] = [];
+
+  async findMatch(payeeName: string): Promise<PayeeMatch | null> {
+    if (!payeeName) return null;
+
+    const normalized = this.normalize(payeeName);
+
+    // Exact match
+    const exactMatch = this.payees.find(
+      p => p.normalizedName === normalized
+    );
+    if (exactMatch) {
+      return {
+        payeeId: exactMatch.id,
+        payeeName: exactMatch.name,
+        confidence: 'exact'
+      };
+    }
+
+    // Fuzzy match
+    const results = fuzzysort.go(normalized, this.payees, {
+      key: 'normalizedName',
+      threshold: -10000
+    });
+
+    if (results.length === 0) return null;
+
+    const bestMatch = results[0];
+    const score = bestMatch.score;
+
+    let confidence: MatchConfidence;
+    if (score > -1000) confidence = 'high';
+    else if (score > -5000) confidence = 'medium';
+    else confidence = 'low';
+
+    return {
+      payeeId: bestMatch.obj.id,
+      payeeName: bestMatch.obj.name,
+      confidence,
+      score
+    };
+  }
+
+  private normalize(name: string): string {
+    return name.toLowerCase().trim().replace(/\s+/g, ' ');
+  }
+}
+```
+
+## Development Commands and Workflows
+
+### Development Commands
+
+#### Server Commands
+
+- **Start Dev Server**: `bun run dev` - Starts SvelteKit dev server on http://localhost:5173
+- **Build for Production**: `bun run build` - Creates optimized production build
+- **Preview Production**: `bun run preview` - Serves production build locally
+- **Type Checking**: `bun run check` - Runs svelte-check
+- **Watch Mode Type Checking**: `bun run check:watch` - Continuous type checking
+
+#### Database Commands
+
+- **Generate Migration**: `bun run db:generate` - Creates new migration from schema changes
+- **Run Migrations**: `bun run db:migrate` - Applies pending migrations
+- **Seed Database**: `bun run db:seed` - Populates database with test data
+- **Restart Database**: `bun run db:restart` - Drops, migrates, and reseeds database
+- **Database Studio**: `bun run db:studio` - Opens Drizzle Studio web interface
+
+#### Testing Commands
+
+- **Run All Tests**: `bun run test`
+- **Unit Tests**: `bun run test:unit`
+- **Unit Tests (Watch)**: `bun run test:unit:watch`
+- **Integration Tests**: `bun run test:integration`
+- **E2E Tests**: `bun run test:e2e`
+- **Test Coverage**: `bun run test:coverage`
+
+#### Code Quality Commands
+
+- **Lint Code**: `bun run lint`
+- **Fix Lint Issues**: `bun run lint:fix`
+- **Format Code**: `bun run format`
+- **Format Check**: `bun run format:check`
+
+### Common Development Workflows
+
+#### Starting New Feature Development
+
+```bash
+# 1. Ensure dependencies are installed
+bun install
+
+# 2. Start dev server
+bun run dev
+
+# 3. In separate terminal, watch type checking
+bun run check:watch
+
+# 4. In separate terminal, run tests in watch mode
+bun run test:unit:watch
+```
+
+#### Making Schema Changes
+
+```bash
+# 1. Update schema files in src/lib/schema/
+# 2. Generate migration
+bun run db:generate
+# 3. Review migration in drizzle/migrations/
+# 4. Apply migration
+bun run db:migrate
+# 5. Verify changes
+bun run db:studio
+```
+
+#### Running Full Quality Check Before Commit
+
+```bash
+bun run check
+bun run lint
+bun run format:check
+bun run test
+bun run build
+```
+
+## Testing Architecture
+
+**Comprehensive testing strategy with unit, integration, and end-to-end tests.**
+
+### Test Structure
+
+```text
+apps/budget/src/tests/
+├── unit/                      # Fast, isolated tests
+│   ├── utils/
+│   ├── services/
+│   └── components/
+├── integration/               # Database and API tests
+│   ├── domains/
+│   └── trpc/
+└── e2e/                       # Full user journey tests
+    ├── accounts.spec.ts
+    ├── transactions.spec.ts
+    └── import.spec.ts
+```
+
+### Coverage Thresholds
+
+- **Branches**: 70%
+- **Functions**: 80%
+- **Lines**: 80%
+- **Statements**: 80%
+
+### Testing Examples
+
+#### Unit Test Example
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { parseDateValue, dateDifference } from '$lib/utils/dates';
+
+describe('parseDateValue', () => {
+  it('parses ISO string to DateValue', () => {
+    const result = parseDateValue('2024-01-15');
+    expect(result?.year).toBe(2024);
+    expect(result?.month).toBe(1);
+    expect(result?.day).toBe(15);
+  });
+});
+```
+
+#### Integration Test Example
+
+```typescript
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import * as repository from '$lib/server/domains/transactions/repository';
+
+describe('Transaction Repository', () => {
+  let testAccountId: number;
+
+  beforeEach(async () => {
+    // Setup test data
+  });
+
+  afterEach(async () => {
+    // Cleanup
+  });
+
+  it('creates transaction in database', async () => {
+    const transaction = await repository.create({
+      accountId: testAccountId,
+      amount: -50.00,
+      date: '2024-01-15',
+      status: 'cleared'
+    });
+
+    expect(transaction.id).toBeDefined();
+    expect(transaction.amount).toBe(-50.00);
+  });
+});
+```
+
+#### E2E Test Example
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Account Management', () => {
+  test('creates new account', async ({ page }) => {
+    await page.goto('/accounts');
+    await page.click('button:has-text("New Account")');
+    await page.fill('input[name="name"]', 'Test Checking');
+    await page.selectOption('select[name="type"]', 'checking');
+    await page.click('button[type="submit"]');
+    await expect(page.locator('text=Account created successfully')).toBeVisible();
+  });
+});
+```
 
 ## Scheduled Transactions Feature
 
-**Upcoming scheduled transactions are now displayed in the accounts transactions tab with visual indicators.**
+**Upcoming scheduled transactions are displayed in the accounts transactions tab with visual indicators.**
 
 ### Feature Overview
 
-The scheduled transactions feature shows upcoming transactions that are about to be created automatically based on schedule configurations. This provides users with visibility into their financial future without cluttering the view with infinite upcoming transactions.
+Shows upcoming transactions that will be created automatically based on schedule configurations (30-day window).
 
 ### Implementation Architecture
 
-#### Core Components
-
-- **ScheduleService** (`src/lib/server/domains/schedules/services.ts`): Calculates upcoming transactions based on schedule frequency
-- **TransactionService** (`src/lib/server/domains/transactions/services.ts`): Combines real and upcoming transactions
-- **tRPC Endpoint** (`src/lib/trpc/routes/transactions.ts`): `forAccountWithUpcoming` endpoint for unified data access
-- **Query Layer** (`src/lib/query/transactions.ts`): `getAllAccountTransactionsWithUpcoming` with client-side filtering
-
-#### Data Flow Architecture
+**Data Flow:**
 
 ```text
 Schedule Database → ScheduleService.getUpcomingScheduledTransactionsForAccount()
@@ -1178,20 +1674,13 @@ Schedule Database → ScheduleService.getUpcomingScheduledTransactionsForAccount
 
 ### Key Features
 
-#### Upcoming Transaction Generation
+- **Time Window**: Shows transactions for next 30 days only
+- **Deduplication**: Excludes dates with existing transactions
+- **Smart Amount Calculation**: Handles range amounts using average
+- **Visual Indicators**: Blue calendar icon for scheduled transactions
+- **Status Column**: Shows em dash (—) for ID column on scheduled transactions
 
-- **Time Window**: Shows transactions for the next 30 days only
-- **Deduplication**: Automatically excludes dates that already have transactions
-- **Smart Amount Calculation**: Handles range amounts by using average of min/max
-- **Frequency Support**: Daily, weekly, monthly, and yearly schedules
-
-#### Visual Indicators
-
-- **Status Column**: Blue calendar icon distinguishes scheduled transactions
-- **ID Column**: Shows em dash (—) instead of long composite IDs for cleaner display
-- **Transaction Status**: Uses "scheduled" status for semantic correctness
-
-#### Data Structure
+### Data Structure
 
 ```typescript
 export interface UpcomingScheduledTransaction {
@@ -1205,244 +1694,91 @@ export interface UpcomingScheduledTransaction {
   categoryId: number | null;
   notes: string; // Format: "Scheduled: {scheduleName}"
   status: "scheduled";
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: null;
-  balance: null; // No balance calculation for future transactions
+  balance: null; // No balance for future transactions
 }
 ```
 
-### UI Integration
-
-#### Status Cell Component
-
-The status cell (`data-table-editable-status-cell.svelte`) displays different icons based on transaction status:
-
-- **Cleared**: Green checkmark (SquareCheck)
-- **Pending**: Empty square (Square)
-- **Scheduled**: Blue calendar icon (Calendar)
-
-#### Columns Configuration
-
-The ID column in `columns.svelte.ts` shows a dash for scheduled transactions with string IDs to avoid displaying long composite identifiers.
-
-### Technical Implementation Details
-
-#### Schedule Date Calculation
-
-The system uses the existing schedule date configuration to calculate when upcoming transactions should appear:
-
-- **Start Date**: When the schedule begins
-- **End Date**: Optional schedule termination
-- **Frequency**: daily, weekly, monthly, yearly
-- **Interval**: How often (every 1 week, every 2 months, etc.)
-
-#### Error Handling
-
-- **Missing Schedule Data**: Gracefully skips schedules without date configuration
-- **Invalid Frequencies**: Safely handles unknown frequency types
-- **Database Issues**: Console warnings for debugging without breaking the UI
-
-#### Performance Considerations
-
-- **30-Day Limit**: Prevents infinite upcoming transactions from impacting performance
-- **Client-Side Filtering**: Combined data is filtered and sorted in the query layer
-- **Efficient Queries**: Only fetches active auto-add schedules for the specific account
-
-### Database Dependencies
-
-The feature requires proper database relationships:
-
-- **Schedules Table**: Must have valid `schedule_date_id` foreign key
-- **Schedule Dates Table**: Must contain frequency and date range information
-- **Auto-Add Enabled**: Schedules must have `auto_add = 1` and `status = 'active'`
-
-### Usage Benefits
-
-- **Financial Planning**: Users can see upcoming transactions before they're created
-- **Cash Flow Visibility**: Better understanding of future account balance changes
-- **Schedule Verification**: Visual confirmation that schedules are configured correctly
-- **Seamless Integration**: Upcoming transactions appear alongside real transactions with clear visual distinction
-
-### Development Guidelines
-
-When working with scheduled transactions:
-
-1. **Use proper type guards** for differentiating real vs scheduled transactions
-2. **Maintain visual consistency** with status indicators and formatting
-3. **Handle edge cases** like missing schedule data gracefully
-4. **Test with various schedule frequencies** to ensure accurate date calculations
-5. **Verify database relationships** are correct for schedule date functionality
-
 ## Budget System Implementation
 
-**Comprehensive budget system supporting multiple budget types, configurable enforcement, and seamless integration with existing financial data.**
+**Comprehensive budget system supporting multiple budget types, configurable enforcement, and seamless integration.**
 
 ### Implementation Status
 
 **📋 Design Phase**: Complete
-- Comprehensive system design documented in `docs/plans/budget-system-design.md`
-- Database schema planned with hybrid metadata approach
-- Service layer architecture defined following existing domain patterns
-- UI/UX workflows designed for maximum flexibility
+
+Comprehensive system design documented in `docs/plans/budget-system-design.md`
 
 ### Implementation Roadmap
 
 #### Phase 1: Foundation (Database & Core Services) - PENDING
-**Objective**: Establish database schema and core business logic
 
-**Tasks**:
-1. **Database Schema** (`src/lib/schema/budgets/`)
-   - `budgets.ts` - Core budget table with type enum and metadata JSON
-   - `budget-groups.ts` - Optional budget organization with parent-child relationships
-   - `budget-period-templates.ts` - Flexible period definitions (weekly, monthly, custom)
-   - `budget-period-instances.ts` - Actual period instances with allocations and rollovers
-   - Junction tables: `budget-accounts.ts`, `budget-categories.ts`, `budget-transactions.ts`, `budget-group-memberships.ts`
+**Database Schema** (`src/lib/schema/budgets/`):
+- Core budget table with type enum and metadata JSON
+- Budget groups with parent-child relationships
+- Flexible period definitions and instances
+- Junction tables for accounts, categories, transactions
 
-2. **Domain Services** (`src/lib/server/domains/budgets/`)
-   - `repository.ts` - Database queries with efficient joins and aggregations
-   - `services.ts` - Business logic for budget calculations, rollover processing, goal tracking
-   - `types.ts` - Service interfaces, DTOs, and validation schemas
+**Domain Services** (`src/lib/server/domains/budgets/`):
+- Repository for database queries
+- Service layer for business logic
+- Type definitions and validation schemas
 
-3. **tRPC Integration** (`src/lib/trpc/routes/budgets.ts`)
-   - CRUD operations for budgets and budget groups
-   - Budget summary and progress queries
-   - Transaction validation and assignment endpoints
-   - Period management and rollover operations
+**tRPC Integration** (`src/lib/trpc/routes/budgets.ts`):
+- CRUD operations for budgets and groups
+- Budget summary and progress queries
+- Transaction validation endpoints
 
 #### Phase 2: Basic UI (Account-Monthly Budgets) - PENDING
-**Objective**: Implement core budget functionality with account-level budgets
 
-**Tasks**:
-1. **State Management**
-   - `src/lib/states/budgets.svelte.ts` - Reactive budget store
-   - `src/lib/query/budgets.ts` - TanStack Query integration
+**State Management**:
+- Reactive budget store
+- TanStack Query integration
 
-2. **Core Components** (`src/lib/components/budgets/`)
-   - `BudgetProgress.svelte` - Visual progress indicators
-   - `BudgetSelector.svelte` - Reusable budget selection component
-   - `BudgetPeriodPicker.svelte` - Period configuration interface
+**Core Components** (`src/lib/components/budgets/`):
+- BudgetProgress, BudgetSelector, BudgetPeriodPicker
 
-3. **Management Pages** (`src/routes/budgets/`)
-   - Budget list/dashboard view
-   - Simple budget creation form
-   - Budget detail and analytics page
-
-4. **Transaction Integration**
-   - Budget impact column in transaction tables
-   - Real-time budget updates on transaction save
-   - Basic enforcement warnings
+**Management Pages** (`src/routes/budgets/`):
+- Budget list/dashboard, creation forms, detail pages
 
 #### Phase 3: Advanced Features (Category Envelopes) - PENDING
-**Objective**: Implement YNAB-style envelope budgeting with rollover support
 
-**Tasks**:
-1. **Envelope Logic**
-   - Category-based budget allocation
-   - Rollover calculations and storage
-   - Deficit handling and recovery
-
-2. **Advanced UI**
-   - Envelope-style budget interface
-   - Drag-and-drop fund allocation
-   - Rollover management tools
-
-3. **Period Management**
-   - Automated period creation
-   - Custom period boundary handling
-   - Historical period tracking
+- YNAB-style envelope budgeting
+- Rollover calculations
+- Deficit handling
 
 #### Phase 4: Goals & Schedules - PENDING
-**Objective**: Goal-based budgets and schedule integration
 
-**Tasks**:
-1. **Goal Tracking**
-   - Savings goal progress calculation
-   - Investment account integration
-   - Target date and contribution planning
-
-2. **Schedule Integration**
-   - Link budgets to recurring schedules
-   - Forecast future budget impact
-   - Automatic budget allocation for scheduled expenses
-
-3. **Advanced Analytics**
-   - Budget burn-down charts
-   - Goal progress visualization
-   - Spending trend analysis
+- Goal-based budgets
+- Schedule integration
+- Advanced analytics
 
 #### Phase 5: Polish & Optimization - PENDING
-**Objective**: Advanced features, performance optimization, and user experience polish
 
-**Tasks**:
-1. **Budget Hierarchy**
-   - Budget groups with optional spending limits
-   - Parent-child inheritance settings
-   - Multi-group membership support
-
-2. **Advanced Enforcement**
-   - Configurable enforcement levels (none, warning, strict)
-   - Transaction blocking for strict budgets
-   - Custom enforcement rules
-
-3. **Performance & UX**
-   - Bulk operations and budget templates
-   - Mobile responsiveness
-   - Accessibility improvements
-   - Performance optimization for large datasets
+- Budget hierarchy and groups
+- Advanced enforcement levels
+- Performance optimization
 
 ### Core Design Principles
 
-- **User Control**: Users have ultimate control over budget behavior and configuration
-- **Smart Defaults**: Sensible defaults that work out-of-the-box but can be customized
-- **Flexibility**: Support multiple budget types (account-monthly, category-envelope, goal-based, scheduled-expense)
-- **Integration**: Seamless integration with existing transaction, schedule, and account systems
+- **User Control**: Users have ultimate control over budget behavior
+- **Smart Defaults**: Sensible defaults that work out-of-the-box
+- **Flexibility**: Support multiple budget types
+- **Integration**: Seamless with existing transaction and schedule systems
 
-### Key Features
+### Budget Types
 
-#### Budget Types
 1. **Account-Monthly**: Total spending limit per account per period
-2. **Category-Envelope**: YNAB-style allocation budgeting with rollover support
-3. **Goal-Based**: Target amount tracking for savings and spending goals
-4. **Scheduled-Expense**: Integration with recurring schedules for planned expenses
-
-#### Configuration Options
-- **Enforcement Levels**: None (tracking only), Warning (alerts), Strict (blocking)
-- **Rollover Behavior**: Indefinite, limited periods, or reset
-- **Period Types**: Weekly, monthly, quarterly, yearly, or custom
-- **Multi-Budget Assignment**: Automatic, manual, or proportional transaction allocation
+2. **Category-Envelope**: YNAB-style allocation budgeting with rollover
+3. **Goal-Based**: Target amount tracking for savings goals
+4. **Scheduled-Expense**: Integration with recurring schedules
 
 ### Technical Architecture
 
-#### Database Schema
-- **Hybrid Metadata**: Core fields as columns + JSON for flexible type-specific settings
-- **Period Templates**: Flexible period definitions with instances for actual tracking
-- **Junction Tables**: Clean multi-budget transaction tracking and relationship management
-
-#### Service Layer
-- **Domain-Driven**: Follows existing patterns with BudgetService, BudgetRepository
-- **Real-Time Updates**: Configurable calculation refresh (real-time by default)
-- **Transaction Integration**: Automatic budget assignment with manual override capability
-
-#### State Management
-- **Reactive Stores**: Svelte 5 runes for real-time budget state
-- **Query Layer**: TanStack Query for efficient data fetching and caching
-- **Derived Values**: Computed budget summaries and progress indicators
-
-### Development Guidelines
-
-1. **Follow Existing Patterns**: Use established domain service, tRPC, and component patterns
-2. **User-Configurable**: Implement smart defaults with full user customization options
-3. **Performance First**: Design for efficient queries and real-time updates
-4. **Integration Focus**: Seamless integration with existing transaction and schedule workflows
-5. **Incremental Development**: Build and test each phase independently
-
-### Related Documentation
-
-- **Complete Design**: `docs/plans/budget-system-design.md`
-- **Database Schema**: Detailed table definitions and relationships
-- **API Specification**: tRPC route definitions and payload schemas
-- **Component Architecture**: UI component hierarchy and state management
+- **Hybrid Metadata**: Core fields as columns + JSON for flexible settings
+- **Period Templates**: Flexible period definitions with instances
+- **Junction Tables**: Clean multi-budget transaction tracking
+- **Domain-Driven**: Follows existing patterns
+- **Real-Time Updates**: Configurable calculation refresh
 
 ---
 

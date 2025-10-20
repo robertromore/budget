@@ -186,6 +186,7 @@ const listPeriodTemplatesSchema = z.object({
 });
 
 const budgetService = serviceFactory.getBudgetService();
+const forecastService = serviceFactory.getBudgetForecastService();
 const periodService = serviceFactory.getBudgetPeriodService();
 const transactionService = serviceFactory.getBudgetTransactionService();
 const periodManager = serviceFactory.getPeriodManager();
@@ -414,7 +415,7 @@ export const budgetRoutes = t.router({
       periodInstanceId: z.number().int().positive(),
       allocatedAmount: z.number(),
       rolloverMode: z.enum(["unlimited", "reset", "limited"]).optional(),
-      metadata: z.record(z.unknown()).optional(),
+      metadata: z.record(z.string(), z.any()).optional(),
     }))
     .mutation(async ({input}) => {
       try {
@@ -841,7 +842,6 @@ export const budgetRoutes = t.router({
     )
     .query(async ({input}) => {
       try {
-        const forecastService = new BudgetForecastService();
         return await forecastService.forecastBudgetImpact(input.budgetId, input.daysAhead);
       } catch (error) {
         throw translateDomainError(error);
@@ -852,7 +852,6 @@ export const budgetRoutes = t.router({
     .input(z.object({budgetId: z.number().positive()}))
     .mutation(async ({input}) => {
       try {
-        const forecastService = new BudgetForecastService();
         return await forecastService.autoAllocateScheduledExpenses(input.budgetId);
       } catch (error) {
         throw translateDomainError(error);
@@ -961,6 +960,19 @@ export const budgetRoutes = t.router({
     .mutation(async ({input}) => {
       try {
         return await budgetService.linkScheduleToGoal(input.budgetId, input.scheduleId);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  linkScheduleToScheduledExpense: publicProcedure
+    .input(z.object({
+      budgetId: z.number().int().positive(),
+      scheduleId: z.number().int().positive(),
+    }))
+    .mutation(async ({input}) => {
+      try {
+        return await budgetService.linkScheduleToScheduledExpense(input.budgetId, input.scheduleId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1150,6 +1162,129 @@ export const budgetRoutes = t.router({
         }
 
         return updated[0];
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  // Budget Analysis & Recommendations Routes
+
+  analyzeSpendingHistory: publicProcedure
+    .input(
+      z.object({
+        accountIds: z.array(z.number().int().positive()).optional(),
+        months: z.number().int().positive().min(1).max(24).optional().default(6),
+        minTransactions: z.number().int().positive().optional().default(3),
+        minConfidence: z.number().int().min(0).max(100).optional().default(40),
+      })
+    )
+    .query(async ({input}) => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.analyzeSpendingHistory(input);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  generateRecommendations: publicProcedure
+    .input(
+      z.object({
+        accountIds: z.array(z.number().int().positive()).optional(),
+        months: z.number().int().positive().min(1).max(24).optional().default(6),
+        minTransactions: z.number().int().positive().optional().default(3),
+        minConfidence: z.number().int().min(0).max(100).optional().default(40),
+      })
+    )
+    .mutation(async ({input}) => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.generateRecommendations(input);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  listRecommendations: publicProcedure
+    .input(
+      z.object({
+        status: z.enum(['pending', 'dismissed', 'applied', 'expired']).or(z.array(z.enum(['pending', 'dismissed', 'applied', 'expired']))).optional(),
+        type: z.enum(['create_budget', 'increase_budget', 'decrease_budget', 'merge_budgets', 'seasonal_adjustment', 'missing_category']).or(z.array(z.enum(['create_budget', 'increase_budget', 'decrease_budget', 'merge_budgets', 'seasonal_adjustment', 'missing_category']))).optional(),
+        priority: z.enum(['high', 'medium', 'low']).or(z.array(z.enum(['high', 'medium', 'low']))).optional(),
+        budgetId: z.number().int().positive().optional(),
+        accountId: z.number().int().positive().optional(),
+        categoryId: z.number().int().positive().optional(),
+        includeExpired: z.boolean().optional().default(false),
+      })
+    )
+    .query(async ({input}) => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.listRecommendations(input);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getRecommendation: publicProcedure
+    .input(z.object({id: z.number().int().positive()}))
+    .query(async ({input}) => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.getRecommendation(input.id);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  dismissRecommendation: publicProcedure
+    .input(z.object({id: z.number().int().positive()}))
+    .mutation(async ({input}) => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.dismissRecommendation(input.id);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  restoreRecommendation: publicProcedure
+    .input(z.object({id: z.number().int().positive()}))
+    .mutation(async ({input}) => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.restoreRecommendation(input.id);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  applyRecommendation: publicProcedure
+    .input(z.object({id: z.number().int().positive()}))
+    .mutation(async ({input}) => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.applyRecommendation(input.id);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getPendingRecommendationsCount: publicProcedure
+    .query(async () => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.getPendingRecommendationsCount();
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  getRecommendationCounts: publicProcedure
+    .query(async () => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        return await budgetService.getRecommendationCounts();
       } catch (error) {
         throw translateDomainError(error);
       }

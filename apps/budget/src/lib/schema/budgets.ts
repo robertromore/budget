@@ -60,6 +60,13 @@ export interface BudgetMetadata {
     autoContribute?: boolean;
     linkedScheduleId?: number;
   };
+  scheduledExpense?: {
+    linkedScheduleId?: number;
+    expectedAmount?: number;
+    frequency?: 'weekly' | 'bi-weekly' | 'monthly' | 'quarterly' | 'yearly';
+    payeeId?: number;
+    autoTrack?: boolean;
+  };
   [key: string]: unknown;
 }
 

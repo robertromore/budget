@@ -6,11 +6,12 @@ import { Label } from '$lib/components/ui/label';
 import { Textarea } from '$lib/components/ui/textarea';
 import { Badge } from '$lib/components/ui/badge';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Separator from '$lib/components/ui/separator';
 import * as Card from '$lib/components/ui/card';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
-import { today, getLocalTimeZone } from '@internationalized/date';
+import { timezone, currentDate } from '$lib/utils/dates';
 import { claimStatusEnum, type ClaimStatus } from '$lib/schema/hsa-claims';
 import Plus from '@lucide/svelte/icons/plus';
 import Send from '@lucide/svelte/icons/send';
@@ -54,7 +55,9 @@ let deniedAmount = $state(0);
 let paidAmount = $state(0);
 let denialReason = $state('');
 let denialCode = $state('');
-let statusDate = $state(today(getLocalTimeZone()));
+let statusDate = $state(currentDate);
+let deleteDialogOpen = $state(false);
+let claimToDelete = $state<any>(null);
 
 // Create mutations at component level
 const createClaimMutation = rpc.medicalExpenses.createClaim.options();
@@ -161,7 +164,7 @@ async function submitStatusUpdate() {
 
   try {
     // Convert DateValue to ISO datetime string with timezone
-    const dateStr = statusDate.toDate(getLocalTimeZone()).toISOString();
+    const dateStr = statusDate.toDate(timezone).toISOString();
 
     switch (newStatus) {
       case 'submitted':
@@ -236,14 +239,21 @@ async function submitStatusUpdate() {
   }
 }
 
-async function handleDeleteClaim(claim: any) {
-  if (!confirm('Are you sure you want to delete this claim?')) return;
+function handleDeleteClaim(claim: any) {
+  claimToDelete = claim;
+  deleteDialogOpen = true;
+}
+
+async function confirmDeleteClaim() {
+  if (!claimToDelete) return;
 
   try {
     await deleteClaimMutation.mutateAsync({
-      id: claim.id,
+      id: claimToDelete.id,
       medicalExpenseId: expense.id,
     });
+    deleteDialogOpen = false;
+    claimToDelete = null;
   } catch (err: any) {
     error = err.message || 'Failed to delete claim';
   }
@@ -677,3 +687,29 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
     </div>
   {/snippet}
 </ResponsiveSheet>
+
+<!-- Delete Claim Confirmation Dialog -->
+<AlertDialog.Root bind:open={deleteDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete Claim</AlertDialog.Title>
+      <AlertDialog.Description>
+        Are you sure you want to delete this claim? This action cannot be undone.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmDeleteClaim}
+        disabled={deleteClaimMutation.isPending}
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      >
+        {#if deleteClaimMutation.isPending}
+          Deleting...
+        {:else}
+          Delete Claim
+        {/if}
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

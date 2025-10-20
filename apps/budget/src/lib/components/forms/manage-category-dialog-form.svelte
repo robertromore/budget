@@ -28,7 +28,7 @@ if (isUpdate && categoryId) {
   const existingCategory = categories.getById(categoryId);
   if (existingCategory) {
     initialData = {
-      name: existingCategory.name,
+      name: existingCategory.name || '',
       notes: existingCategory.notes || ''
     };
   }

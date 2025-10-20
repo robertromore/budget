@@ -34,6 +34,7 @@
     previewRollover,
   } from "$lib/query/budgets";
   import {toast} from "svelte-sonner";
+  import {createTransformAccessors} from "$lib/utils/bind-helpers";
 
   interface Props {
     budgets: BudgetWithRelations[];
@@ -80,7 +81,15 @@
   let periodTransitionOpen = $state(false);
   let selectedBudget = $state<BudgetWithRelations | null>(null);
   let rolloverLimit = $state<string>('6');
+  const rolloverLimitAccessors = createTransformAccessors(
+    () => rolloverLimit,
+    (value: string) => { rolloverLimit = value; }
+  );
   let rolloverType = $state<string>('');
+  const rolloverTypeAccessors = createTransformAccessors(
+    () => rolloverType,
+    (value: string) => { rolloverType = value; }
+  );
   let isProcessingTransition = $state(false);
 
   // Rollover configuration state
@@ -92,6 +101,10 @@
     autoTransition: true,
     notificationEnabled: true
   });
+  const deficitRecoveryModeAccessors = createTransformAccessors(
+    () => rolloverConfig.deficitRecoveryMode,
+    (value: 'immediate' | 'gradual' | 'manual') => { rolloverConfig.deficitRecoveryMode = value; }
+  );
 
   // Load settings from budget metadata when budget changes
   $effect(() => {
@@ -596,7 +609,7 @@
 
             <div class="space-y-2">
               <Label for="rollover-limit">Rollover Limit</Label>
-              <Select.Root type="single" bind:value={rolloverLimit}>
+              <Select.Root type="single" bind:value={rolloverLimitAccessors.get, rolloverLimitAccessors.set}>
                 <Select.Trigger>
                   {rolloverLimit === '3' ? '3 months' : rolloverLimit === '6' ? '6 months' : rolloverLimit === '12' ? '12 months' : rolloverLimit === 'unlimited' ? 'Unlimited' : 'Select limit'}
                 </Select.Trigger>
@@ -623,7 +636,7 @@
           <Card.Content class="space-y-4">
             <div class="space-y-2">
               <Label>Recovery Mode</Label>
-              <Select.Root type="single" bind:value={rolloverConfig.deficitRecoveryMode}>
+              <Select.Root type="single" bind:value={deficitRecoveryModeAccessors.get, deficitRecoveryModeAccessors.set}>
                 <Select.Trigger>
                   {rolloverConfig.deficitRecoveryMode === 'immediate' ? 'Immediate Recovery' : rolloverConfig.deficitRecoveryMode === 'gradual' ? 'Gradual Recovery' : rolloverConfig.deficitRecoveryMode === 'manual' ? 'Manual Review' : 'Select recovery mode'}
                 </Select.Trigger>
@@ -672,7 +685,7 @@
     <div class="space-y-4">
       <div class="space-y-2">
         <Label>Rollover Type</Label>
-        <Select.Root type="single" bind:value={rolloverType}>
+        <Select.Root type="single" bind:value={rolloverTypeAccessors.get, rolloverTypeAccessors.set}>
           <Select.Trigger>
             {rolloverType === 'percentage' ? 'Percentage of unused' : rolloverType === 'fixed' ? 'Fixed amount' : rolloverType === 'all' ? 'All unused funds' : rolloverType === 'none' ? 'No rollover' : 'Select rollover type'}
           </Select.Trigger>

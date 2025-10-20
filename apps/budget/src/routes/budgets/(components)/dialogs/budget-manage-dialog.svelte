@@ -10,9 +10,11 @@
   import NumericInput from "$lib/components/input/numeric-input.svelte";
   import {updateBudget, deleteBudget} from "$lib/query/budgets";
   import {AccountsState} from "$lib/states/entities/accounts.svelte";
+  import {CategoriesState} from "$lib/states/entities/categories.svelte";
   import type {UpdateBudgetRequest} from "$lib/server/domains/budgets/services";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
   import type {Account} from "$lib/schema/accounts";
+  import type {Category} from "$lib/schema/categories";
   import {budgetStatuses, budgetEnforcementLevels} from "$lib/schema/budgets";
 
   interface Props {
@@ -32,10 +34,12 @@
   }: Props = $props();
 
   const accountsState = AccountsState.get();
+  const categoriesState = CategoriesState.get();
   const updateBudgetMutation = updateBudget.options();
   const deleteBudgetMutation = deleteBudget.options();
 
   const availableAccounts = $derived.by(() => accountsState.getSortedActiveAccounts());
+  const availableCategories = $derived.by(() => categoriesState.all.filter(c => !c.deletedAt));
   const isLoading = $derived.by(() => updateBudgetMutation.isPending || deleteBudgetMutation.isPending);
 
   let name = $state("");
@@ -43,6 +47,7 @@
   let status = $state("");
   let enforcementLevel = $state("");
   let selectedAccountIds = $state<string[]>([]);
+  let selectedCategoryIds = $state<string[]>([]);
   let allocatedAmount = $state(0);
 
   let deleteDialogOpen = $state(false);
@@ -51,21 +56,31 @@
     new Map(availableAccounts.map(account => [String(account.id), account]))
   );
 
+  const categoryMap = $derived.by(() =>
+    new Map(availableCategories.map(category => [String(category.id), category]))
+  );
+
   const selectedAccounts = $derived.by(() =>
     selectedAccountIds.map(id => accountMap.get(id)).filter(Boolean) as Account[]
+  );
+
+  const selectedCategories = $derived.by(() =>
+    selectedCategoryIds.map(id => categoryMap.get(id)).filter(Boolean) as Category[]
   );
 
   const hasChanges = $derived.by(() => {
     if (!budget) return false;
 
     const currentAccountIds = budget.accounts?.map(a => String(a.id)) ?? [];
+    const currentCategoryIds = budget.categories?.map(c => String(c.id)) ?? [];
     const currentAllocation = (budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number;
 
     return name !== budget.name ||
            description !== (budget.description ?? "") ||
            status !== budget.status ||
            enforcementLevel !== budget.enforcementLevel ||
-           JSON.stringify(selectedAccountIds.sort()) !== JSON.stringify(currentAccountIds.sort()) ||
+           JSON.stringify([...selectedAccountIds].sort()) !== JSON.stringify([...currentAccountIds].sort()) ||
+           JSON.stringify([...selectedCategoryIds].sort()) !== JSON.stringify([...currentCategoryIds].sort()) ||
            allocatedAmount !== (currentAllocation ?? 0);
   });
 
@@ -77,6 +92,7 @@
     status = budget.status;
     enforcementLevel = budget.enforcementLevel ?? "warning";
     selectedAccountIds = budget.accounts?.map(a => String(a.id)) ?? [];
+    selectedCategoryIds = budget.categories?.map(c => String(c.id)) ?? [];
 
     const currentAllocation = (budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number;
     allocatedAmount = currentAllocation ?? 0;
@@ -90,6 +106,16 @@
 
   function removeAccount(accountId: string) {
     selectedAccountIds = selectedAccountIds.filter(id => id !== accountId);
+  }
+
+  function addCategory(categoryId: string) {
+    if (!selectedCategoryIds.includes(categoryId)) {
+      selectedCategoryIds = [...selectedCategoryIds, categoryId];
+    }
+  }
+
+  function removeCategory(categoryId: string) {
+    selectedCategoryIds = selectedCategoryIds.filter(id => id !== categoryId);
   }
 
   function resetForm() {
@@ -121,6 +147,11 @@
       const currentAccountIds = budget.accounts?.map(a => String(a.id)) ?? [];
       if (JSON.stringify(selectedAccountIds.sort()) !== JSON.stringify(currentAccountIds.sort())) {
         updateData.accountIds = selectedAccountIds.map(id => Number(id));
+      }
+
+      const currentCategoryIds = budget.categories?.map(c => String(c.id)) ?? [];
+      if (JSON.stringify(selectedCategoryIds.sort()) !== JSON.stringify(currentCategoryIds.sort())) {
+        updateData.categoryIds = selectedCategoryIds.map(id => Number(id));
       }
 
       const currentAllocation = (budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number;
@@ -275,6 +306,45 @@
                     class="ml-1 rounded-full hover:bg-secondary-foreground/20"
                   >
                     <span class="sr-only">Remove {account.name}</span>
+                    ×
+                  </button>
+                </Badge>
+              {/each}
+            </div>
+          {/if}
+        </div>
+
+        <div class="space-y-2">
+          <Label>Categories</Label>
+          <Select.Root
+            type="single"
+            onValueChange={(value) => value && addCategory(value)}
+          >
+            <Select.Trigger>
+              Select categories to include
+            </Select.Trigger>
+            <Select.Content>
+              {#each availableCategories as category (category.id)}
+                {#if !selectedCategoryIds.includes(String(category.id))}
+                  <Select.Item value={String(category.id)}>
+                    {category.name}
+                  </Select.Item>
+                {/if}
+              {/each}
+            </Select.Content>
+          </Select.Root>
+
+          {#if selectedCategories.length > 0}
+            <div class="flex flex-wrap gap-2">
+              {#each selectedCategories as category (category.id)}
+                <Badge variant="secondary" class="flex items-center gap-1">
+                  {category.name}
+                  <button
+                    type="button"
+                    onclick={() => removeCategory(String(category.id))}
+                    class="ml-1 rounded-full hover:bg-secondary-foreground/20"
+                  >
+                    <span class="sr-only">Remove {category.name}</span>
                     ×
                   </button>
                 </Badge>

@@ -27,7 +27,7 @@
   let open = $state(false);
   let advancedOpen = $state(false);
   let customInput = $state(value || '#000000');
-  let colorFormat = $state('hex');
+  let colorFormat = $state<string>('hex');
 
   // Advanced color picker state
   let hue = $state(0);

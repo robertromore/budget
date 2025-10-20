@@ -31,7 +31,8 @@ import type {View} from '$lib/schema';
 import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
 import type {FacetedFilterOption} from '$lib/types';
 import {dayFmt} from '$lib/utils/date-formatters';
-import {parseDate, getLocalTimeZone} from '@internationalized/date';
+import {parseDate} from '@internationalized/date';
+import {timezone} from '$lib/utils/dates';
 
 interface Props {
   columns: ColumnDef<ExpenseFormat, TValue>[];
@@ -61,7 +62,7 @@ const generateDateFilters = (expenses: ExpenseFormat[]): FacetedFilterOption[] =
       const count = expenses.filter(e => e.date?.toString() === dateStr).length;
       return {
         value: dateStr,
-        label: dayFmt.format(parseDate(dateStr).toDate(getLocalTimeZone())),
+        label: dayFmt.format(parseDate(dateStr).toDate(timezone)),
         count
       };
     });

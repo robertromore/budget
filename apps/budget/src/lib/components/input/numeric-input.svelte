@@ -28,6 +28,9 @@ $effect(() => {
   new_amount = (value || 0).toFixed(2);
 });
 
+// Track if popover has been opened to prevent auto-submit on mount
+let hasBeenOpened = $state(false);
+
 // --- Functions: Numeric Input Logic ---
 const select = (num: string) => () => {
   new_amount += num;
@@ -140,11 +143,14 @@ const handlePaste = (event: ClipboardEvent) => {
   <Popover.Root
     bind:open={dialogOpen}
     onOpenChange={(open) => {
-      if (open && parseFloat(new_amount) == 0) {
-        new_amount = '';
+      if (open) {
+        hasBeenOpened = true;
+        if (parseFloat(new_amount) == 0) {
+          new_amount = '';
+        }
       }
-      // Auto-submit when closing if value has changed
-      if (!open && new_amount && new_amount !== (value || 0).toString()) {
+      // Auto-submit when closing if value has changed (but not on mount)
+      if (!open && hasBeenOpened && new_amount && new_amount !== (value || 0).toString()) {
         const parsedValue = parseFloat(new_amount);
         if (!isNaN(parsedValue)) {
           value = parsedValue;

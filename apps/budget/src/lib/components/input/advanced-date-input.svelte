@@ -1,12 +1,13 @@
 <script lang="ts">
 import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
-import {CalendarDate, DateFormatter, getLocalTimeZone, today} from '@internationalized/date';
+import {CalendarDate, DateFormatter} from '@internationalized/date';
 import {Calendar} from '$lib/components/ui/calendar/index.js';
 import {Label} from '$lib/components/ui/label';
 import {SvelteMap} from 'svelte/reactivity';
 import type {FacetedFilterOption} from '$lib/types';
 import {Button} from '$lib/components/ui/button';
 import {dayFmt} from '$lib/utils/date-formatters';
+import {timezone, currentDate} from '$lib/utils/dates';
 
 type Props = {
   onSubmit: (new_value: FacetedFilterOption) => void;
@@ -17,14 +18,14 @@ let {onSubmit, disabled = false, ariaLabel = 'Advanced date input'}: Props = $pr
 
 let dateType = $state('day');
 
-let value = $state<CalendarDate>(today(getLocalTimeZone()));
+let value = $state<CalendarDate>(currentDate);
 
 // Constants for better maintainability
 const MONTHS_PER_QUARTER = 3;
 const MONTHS_PER_HALF_YEAR = 6;
 const YEARS_TO_SHOW = 6;
 
-const currentDate = today(getLocalTimeZone());
+const todayDate = currentDate;
 
 // Localization support - can be enhanced with proper i18n store
 const userLocale = 'en-US'; // TODO: Replace with actual locale from i18n store
@@ -37,7 +38,7 @@ const monthOptions = Array.from({length: 12}, (_, i) => {
   const month = currentDate.set({month: i + 1});
   return {
     value: month.month,
-    label: monthFmt.format(month.toDate(getLocalTimeZone())),
+    label: monthFmt.format(month.toDate(timezone)),
   };
 });
 
@@ -118,17 +119,17 @@ const getFormattedValue = (): string => {
         return new DateFormatter(userLocale, {
           month: 'short',
           year: 'numeric',
-        }).format(value.toDate(getLocalTimeZone()));
+        }).format(value.toDate(timezone));
       case 'year':
         return new DateFormatter(userLocale, {
           year: 'numeric',
-        }).format(value.toDate(getLocalTimeZone()));
+        }).format(value.toDate(timezone));
       case 'quarter':
         return `Q${Math.ceil(value.month / MONTHS_PER_QUARTER)} ${value.year}`;
       case 'half-year':
         return `H${Math.ceil(value.month / MONTHS_PER_HALF_YEAR)} ${value.year}`;
       default:
-        return dayFmt.format(value.toDate(getLocalTimeZone()));
+        return dayFmt.format(value.toDate(timezone));
     }
   } catch (error) {
     console.error('Error formatting date:', error);
@@ -151,6 +152,43 @@ const validateAndSubmit = (event: Event) => {
     console.error('Error submitting date:', error);
   }
 };
+
+// Handle selectedMonth changes
+$effect(() => {
+  if (selectedMonth) {
+    const cached = getDateCache().month.get(selectedMonth);
+    if (cached) {
+      value = cached;
+    }
+  }
+});
+
+// Handle selectedQuarter changes
+$effect(() => {
+  if (selectedQuarter) {
+    const cached = getDateCache().quarter.get(selectedQuarter);
+    if (cached) {
+      value = cached;
+    }
+  }
+});
+
+// Handle selectedHalfYear changes
+$effect(() => {
+  if (selectedHalfYear) {
+    const cached = getDateCache().halfYear.get(selectedHalfYear);
+    if (cached) {
+      value = cached;
+    }
+  }
+});
+
+// Handle selectedYear changes
+$effect(() => {
+  if (selectedYear) {
+    value = new CalendarDate(parseInt(selectedYear), 1, 1);
+  }
+});
 </script>
 
 <div role="region" aria-label={ariaLabel}>
@@ -188,16 +226,6 @@ const validateAndSubmit = (event: Event) => {
           type="single"
           variant="outline"
           bind:value={selectedMonth}
-          onValueChange={(new_value) => {
-            if (new_value) {
-              const cached = getDateCache().month.get(new_value);
-              if (cached) {
-                value = cached;
-              }
-            } else {
-              selectedMonth = '';
-            }
-          }}
           class="grid h-[360px] items-start justify-start overflow-auto">
           {#each yearOptions as year (year)}
             <Label class="my-2">{year.label}</Label>
@@ -220,16 +248,6 @@ const validateAndSubmit = (event: Event) => {
           type="single"
           variant="outline"
           bind:value={selectedQuarter}
-          onValueChange={(new_value) => {
-            if (new_value) {
-              const cached = getDateCache().quarter.get(new_value);
-              if (cached) {
-                value = cached;
-              }
-            } else {
-              selectedQuarter = '';
-            }
-          }}
           class="grid h-[360px] grid-cols-2 items-stretch justify-start overflow-auto">
           {#each yearOptions as year (year)}
             <div>
@@ -254,16 +272,6 @@ const validateAndSubmit = (event: Event) => {
           type="single"
           variant="outline"
           bind:value={selectedHalfYear}
-          onValueChange={(new_value) => {
-            if (new_value) {
-              const cached = getDateCache().halfYear.get(new_value);
-              if (cached) {
-                value = cached;
-              }
-            } else {
-              selectedHalfYear = '';
-            }
-          }}
           class="grid h-[360px] grid-cols-3 items-start justify-start gap-2 overflow-auto">
           {#each yearOptions as year (year)}
             <div>
@@ -288,13 +296,6 @@ const validateAndSubmit = (event: Event) => {
           type="single"
           variant="outline"
           bind:value={selectedYear}
-          onValueChange={(new_value) => {
-            if (new_value) {
-              value = new CalendarDate(parseInt(new_value), 1, 1);
-            } else {
-              selectedYear = '';
-            }
-          }}
           class="grid h-[360px] grid-cols-3 items-start justify-start overflow-auto">
           {#each yearOptions as year (year)}
             <ToggleGroup.Item value={`${year.value}`} aria-label={year.label}>

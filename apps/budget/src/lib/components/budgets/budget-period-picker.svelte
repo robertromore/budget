@@ -4,7 +4,8 @@
   import Label from "$lib/components/ui/label/label.svelte";
   import {cn} from "$lib/utils";
   import {rawDateFormatter} from "$lib/utils/date-formatters";
-  import {parseDate, getLocalTimeZone} from "@internationalized/date";
+  import {parseDate} from "@internationalized/date";
+  import {timezone as defaultTimezone} from "$lib/utils/dates";
   import ChevronLeft from "@lucide/svelte/icons/chevron-left";
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
   import type {BudgetPeriodInstance} from "$lib/schema/budgets";
@@ -35,7 +36,7 @@
   }: Props = $props();
 
 
-  const tz = $derived.by(() => timezone ?? getLocalTimeZone());
+  const tz = $derived.by(() => timezone ?? defaultTimezone);
 
   const sortedPeriods = $derived.by(() =>
     [...periods].sort((a, b) => a.startDate.localeCompare(b.startDate))

@@ -8,6 +8,17 @@ import * as Select from '$lib/components/ui/select';
 import {Button} from '$lib/components/ui/button';
 
 let {table}: {table: Table<TData>} = $props();
+
+// Page size state
+let pageSizeValue = $state('10');
+
+// Sync page size changes
+$effect(() => {
+  const currentSize = table.getState().pagination.pageSize;
+  if (pageSizeValue !== String(currentSize)) {
+    table.setPageSize(Number(pageSizeValue));
+  }
+});
 </script>
 
 <div class="flex items-center justify-between px-2">
@@ -21,10 +32,7 @@ let {table}: {table: Table<TData>} = $props();
       <Select.Root
         allowDeselect={false}
         type="single"
-        value={`${table.getState().pagination.pageSize}`}
-        onValueChange={(value) => {
-          table.setPageSize(Number(value));
-        }}>
+        bind:value={pageSizeValue}>
         <Select.Trigger class="h-8 w-[70px]">
           {String(table.getState().pagination.pageSize)}
         </Select.Trigger>

@@ -24,6 +24,7 @@ import Settings from '@lucide/svelte/icons/settings';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import {ParentCategorySelector} from '$lib/components/categories';
 import {Slider} from '$lib/components/ui/slider';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
 let {
   id,
@@ -135,47 +136,31 @@ function handleIconChange(event: CustomEvent<{ value: string }>) {
 }
 
 // Derived values to ensure no undefined for components that don't accept it
-const categoryTypeValue = $derived($formData.categoryType ?? 'expense');
 const isActiveValue = $derived($formData.isActive ?? true);
 const isTaxDeductibleValue = $derived($formData.isTaxDeductible ?? false);
 const isSeasonalValue = $derived($formData.isSeasonal ?? false);
 
-// Deductible percentage slider value
-let deductiblePercentageSlider = $state($formData.deductiblePercentage ?? 0);
+// Category type accessor - transforms between CategoryType and form data
+const categoryTypeAccessors = createTransformAccessors(
+  () => $formData.categoryType ?? 'expense',
+  (value: CategoryType) => { $formData.categoryType = value; }
+);
 
-// Sync slider changes to form data
-$effect(() => {
-  $formData.deductiblePercentage = deductiblePercentageSlider === 0 ? null : deductiblePercentageSlider;
-});
+// Deductible percentage accessor - transforms between slider value and form data (0 becomes null)
+const deductiblePercentageAccessors = createTransformAccessors(
+  () => $formData.deductiblePercentage ?? 0,
+  (value: number) => { $formData.deductiblePercentage = value === 0 ? null : value; }
+);
 
-// Sync form data changes to slider
-$effect(() => {
-  const formValue = $formData.deductiblePercentage ?? 0;
-  if (deductiblePercentageSlider !== formValue) {
-    deductiblePercentageSlider = formValue;
+// Seasonal months accessor - transforms between comma-separated string and array
+const seasonalMonthsAccessors = createTransformAccessors(
+  () => Array.isArray($formData.seasonalMonths) ? $formData.seasonalMonths.join(', ') : '',
+  (value: string) => {
+    $formData.seasonalMonths = !value?.trim()
+      ? []
+      : value.split(',').map((m: string) => m.trim()).filter(Boolean);
   }
-});
-
-// Reactive string representation of seasonalMonths array
-let seasonalMonthsInput = $state('');
-
-// Sync array → string when array changes
-$effect(() => {
-  const arrayValue = $formData.seasonalMonths;
-  if (Array.isArray(arrayValue)) {
-    seasonalMonthsInput = arrayValue.join(', ');
-  }
-});
-
-// Sync string → array when string changes
-$effect(() => {
-  const inputValue = seasonalMonthsInput;
-  if (!inputValue?.trim()) {
-    $formData.seasonalMonths = [];
-  } else {
-    $formData.seasonalMonths = inputValue.split(',').map((m: string) => m.trim()).filter(Boolean);
-  }
-});
+);
 
 let alertDialogOpen = $state(false);
 const deleteCategory = async (id: number) => {
@@ -222,11 +207,10 @@ const deleteCategory = async (id: number) => {
               <Form.Label>Category Type</Form.Label>
               <Select.Root
                 type="single"
-                value={categoryTypeValue}
-                onValueChange={(v) => $formData.categoryType = v as CategoryType}
+                bind:value={categoryTypeAccessors.get, categoryTypeAccessors.set}
               >
                 <Select.Trigger {...props}>
-                  <span>{categoryTypeOptions.find(opt => opt.value === categoryTypeValue)?.label ?? "Select category type"}</span>
+                  {categoryTypeOptions.find(opt => opt.value === ($formData.categoryType ?? 'expense'))?.label ?? "Select category type"}
                 </Select.Trigger>
                 <Select.Content>
                   {#each categoryTypeOptions as option}
@@ -234,7 +218,7 @@ const deleteCategory = async (id: number) => {
                   {/each}
                 </Select.Content>
               </Select.Root>
-              <input type="hidden" name="categoryType" value={categoryTypeValue} />
+              <input type="hidden" name="categoryType" value={$formData.categoryType ?? 'expense'} />
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
@@ -439,11 +423,11 @@ const deleteCategory = async (id: number) => {
                 <div class="space-y-2">
                   <div class="flex items-center justify-between">
                     <Form.Label>Deductible Percentage</Form.Label>
-                    <span class="text-sm font-medium">{deductiblePercentageSlider}%</span>
+                    <span class="text-sm font-medium">{$formData.deductiblePercentage ?? 0}%</span>
                   </div>
                   <Slider
                     type="single"
-                    bind:value={deductiblePercentageSlider}
+                    bind:value={deductiblePercentageAccessors.get, deductiblePercentageAccessors.set}
                     min={0}
                     max={100}
                     step={1}
@@ -522,7 +506,7 @@ const deleteCategory = async (id: number) => {
           <Form.Control>
             {#snippet children({props})}
               <Form.Label>Seasonal Months</Form.Label>
-              <Input {...props} bind:value={seasonalMonthsInput} placeholder="e.g., November, December" />
+              <Input {...props} bind:value={seasonalMonthsAccessors.get, seasonalMonthsAccessors.set} placeholder="e.g., November, December" />
               <Form.Description class="text-xs">Months when spending is higher (comma-separated)</Form.Description>
               <Form.FieldErrors />
             {/snippet}
@@ -624,7 +608,7 @@ const deleteCategory = async (id: number) => {
           <Form.Control>
             {#snippet children({props})}
               <Form.Label>Seasonal Months</Form.Label>
-              <Input {...props} bind:value={seasonalMonthsInput} placeholder="e.g., January (tax refund), December (bonus)" />
+              <Input {...props} bind:value={seasonalMonthsAccessors.get, seasonalMonthsAccessors.set} placeholder="e.g., January (tax refund), December (bonus)" />
               <Form.Description class="text-xs">Months when this income is received (comma-separated)</Form.Description>
               <Form.FieldErrors />
             {/snippet}

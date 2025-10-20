@@ -3,8 +3,8 @@ import * as Card from '$lib/components/ui/card';
 import { Badge } from '$lib/components/ui/badge';
 import { Separator } from '$lib/components/ui/separator';
 import { currencyFormatter } from '$lib/utils/formatters';
-import type { PageData } from '../$types';
 import { formatAmount, formatRecurringPattern, calculateNextOccurrence } from '../(data)';
+import type { ScheduleWithDetails } from '$lib/server/domains/schedules';
 
 // Icons
 import Calendar from '@lucide/svelte/icons/calendar';
@@ -16,8 +16,8 @@ import CalendarDays from '@lucide/svelte/icons/calendar-days';
 import Building from '@lucide/svelte/icons/building';
 
 let { schedule, statistics, futureProjections }: {
-  schedule: PageData['schedule'];
-  statistics: PageData['statistics'];
+  schedule: ScheduleWithDetails | null;
+  statistics: any;
   futureProjections: any[];
 } = $props();
 </script>
@@ -106,12 +106,12 @@ let { schedule, statistics, futureProjections }: {
       <Card.Content class="space-y-2 pt-2">
         <div class="flex justify-between items-center">
           <span class="text-xs text-muted-foreground">Account</span>
-          <span class="text-sm font-medium">{schedule.account.name}</span>
+          <span class="text-sm font-medium">{schedule.account?.name || 'None'}</span>
         </div>
         <Separator />
         <div class="flex justify-between items-center">
           <span class="text-xs text-muted-foreground">Payee</span>
-          <span class="text-sm font-medium">{schedule.payee.name}</span>
+          <span class="text-sm font-medium">{schedule.payee?.name || 'None'}</span>
         </div>
         <Separator />
         <div class="flex justify-between items-center">

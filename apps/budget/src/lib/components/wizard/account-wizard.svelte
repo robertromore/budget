@@ -13,6 +13,7 @@
   import { createAccountValidationEngine } from "$lib/utils/wizardValidation";
   import { accountTypeEnum, type Account } from "$lib/schema";
   import { getIconByName } from "$lib/components/ui/icon-picker/icon-categories";
+  import { createTransformAccessors } from "$lib/utils/bind-helpers";
 
   interface Props {
     initialData?: Partial<Account>;
@@ -366,20 +367,51 @@
     label: accountTypeLabels[type] || type
   }));
 
-  // Enhanced field handlers
-  function handleAccountTypeChange(value: string) {
+  // Local state for account type select
+  // Initialized with default value, will sync with formData in effect
+  let accountTypeValue = $state('checking');
+  const accountTypeAccessors = createTransformAccessors(
+    () => accountTypeValue,
+    (value: string) => { accountTypeValue = value; }
+  );
+
+  // Track if this is the initial mount
+  let isInitialMount = true;
+
+  // Keep accountTypeValue in sync with formData changes (one-way: formData -> accountTypeValue)
+  $effect(() => {
+    const formDataValue = formData['accountType'];
+    if (formDataValue && formDataValue !== accountTypeValue) {
+      accountTypeValue = formDataValue;
+    }
+  });
+
+  // Sync accountTypeValue changes back to formData and trigger side effects
+  // Skip on initial mount to avoid triggering side effects on load
+  $effect(() => {
+    if (isInitialMount) {
+      isInitialMount = false;
+      return;
+    }
+
     const previousAccountType = formData['accountType'];
-    updateField('accountType', value);
+
+    // Only proceed if accountType actually changed
+    if (accountTypeValue === previousAccountType) {
+      return;
+    }
+
+    updateField('accountType', accountTypeValue);
 
     // Auto-select matching notes category when account type changes
-    if (value && noteCategories.find(cat => cat.value === value && cat.value !== 'all')) {
-      selectedNotesCategory = value;
+    if (accountTypeValue && noteCategories.find(cat => cat.value === accountTypeValue && cat.value !== 'all')) {
+      selectedNotesCategory = accountTypeValue;
     }
 
     // Auto-update icon and color if:
     // 1. No icon/color is set yet, OR
     // 2. Current icon/color matches the default for the previous account type (user hasn't customized it)
-    const defaults = accountTypeDefaults[value];
+    const defaults = accountTypeDefaults[accountTypeValue];
     const currentIcon = formData['accountIcon'];
     const currentColor = formData['accountColor'];
     const previousDefaults = previousAccountType ? accountTypeDefaults[previousAccountType] : null;
@@ -403,12 +435,11 @@
     if (shouldUpdateColor) {
       updateField('accountColor', defaults.color);
     }
-  }
+  });
 
   function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
     updateField('accountIcon', event.detail.value);
   }
-
 
   // Get selected account type option
   const selectedAccountType = $derived(() => {
@@ -545,8 +576,7 @@
     </div>
     <Select.Root
       type="single"
-      value={formData['accountType']}
-      onValueChange={handleAccountTypeChange}
+      bind:value={accountTypeAccessors.get, accountTypeAccessors.set}
     >
       <Select.Trigger class="w-full">
         <span>{selectedAccountType()?.label || 'Select account type'}</span>

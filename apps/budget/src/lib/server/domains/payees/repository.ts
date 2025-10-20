@@ -138,6 +138,17 @@ export class PayeeRepository extends BaseRepository<
   }
 
   /**
+   * Find all active payees without pagination
+   */
+  async findAllPayees(): Promise<Payee[]> {
+    return await db
+      .select()
+      .from(payees)
+      .where(isNull(payees.deletedAt))
+      .orderBy(payees.name);
+  }
+
+  /**
    * Find all active payees with pagination
    */
   override async findAll(options?: PaginationOptions): Promise<PaginatedResult<Payee>> {

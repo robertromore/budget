@@ -3,7 +3,7 @@ import * as Form from '$lib/components/ui/form';
 import {type Transaction} from '$lib/schema';
 import {superformInsertTransactionSchema} from '$lib/schema/superforms';
 import {superForm} from 'sveltekit-superforms/client';
-import {today, getLocalTimeZone} from '@internationalized/date';
+import {currentDate} from '$lib/utils/dates';
 import type {EditableDateItem, EditableEntityItem} from '$lib/types';
 import {Textarea} from '$lib/components/ui/textarea';
 import {zod4Client} from 'sveltekit-superforms/adapters';
@@ -45,7 +45,7 @@ const {form: formData, enhance} = form;
 
 $formData.accountId = accountId;
 
-let dateValue: EditableDateItem = $state(today(getLocalTimeZone()));
+let dateValue: EditableDateItem = $state(currentDate);
 let amount: number = $state<number>(0);
 let payee: EditableEntityItem = $state({
   id: 0,

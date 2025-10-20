@@ -2,7 +2,8 @@
 import {Button} from '$lib/components/ui/button';
 import {BudgetWizard, WizardFormWrapper, budgetWizardStore} from '$lib/components/wizard';
 import {ManageBudgetForm} from '$lib/components/forms';
-import {createBudget, getBudgetTemplate} from '$lib/query/budgets';
+import {createBudget} from '$lib/query/budgets';
+import {getBudgetTemplateById} from '$lib/constants/budget-templates';
 import type {CreateBudgetRequest} from '$lib/server/domains/budgets/services';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
@@ -12,18 +13,9 @@ import {browser} from '$app/environment';
 
 let {data} = $props();
 
-// Check for template ID in URL params
+// Check for template ID in URL params and get template from constants
 const templateId = $state(browser ? new URLSearchParams(window.location.search).get('templateId') : null);
-const templateQuery = $derived.by(() => {
-  if (templateId) {
-    const id = parseInt(templateId, 10);
-    if (!isNaN(id)) {
-      return getBudgetTemplate(id).options();
-    }
-  }
-  return null;
-});
-const selectedTemplate = $derived(templateQuery?.data ?? null);
+const selectedTemplate = $derived(templateId ? getBudgetTemplateById(templateId) : null);
 
 // Merge template data with form data when template is loaded
 const initialFormData = $derived.by(() => {

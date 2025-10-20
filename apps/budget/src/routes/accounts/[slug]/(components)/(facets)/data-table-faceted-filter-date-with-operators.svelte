@@ -214,10 +214,10 @@ const formatDate = (dateStr: string): string => {
     if (dateStr.includes(':')) {
       const [type, value] = dateStr.split(':');
       const date = parseDate(value);
-      return dayFmt.format(date.toDate(getLocalTimeZone()));
+      return dayFmt.format(date.toDate(timezone));
     }
     const date = parseDate(dateStr);
-    return dayFmt.format(date.toDate(getLocalTimeZone()));
+    return dayFmt.format(date.toDate(timezone));
   } catch {
     return dateStr;
   }
@@ -239,10 +239,10 @@ const toggleDateValue = (dateValue: string) => {
 // Single date value for before/after operators
 const singleDateValue = $derived.by(() => {
   if (!currentFilter || (currentFilter.operator !== 'before' && currentFilter.operator !== 'after')) {
-    return today(getLocalTimeZone());
+    return currentDate;
   }
   const dateStr = (currentFilter as any).date;
-  return dateStr ? parseDate(dateStr) : today(getLocalTimeZone());
+  return dateStr ? parseDate(dateStr) : currentDate;
 });
 
 // Range date value for between operator

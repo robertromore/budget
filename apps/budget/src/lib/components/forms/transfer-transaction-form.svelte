@@ -1,11 +1,10 @@
 <script lang="ts">
-import * as Form from '$lib/components/ui/form';
 import {Button} from '$lib/components/ui/button';
 import {DateInput, NumericInput} from '$lib/components/input';
 import {Textarea} from '$lib/components/ui/textarea';
 import * as Select from '$lib/components/ui/select';
-import {today, getLocalTimeZone, type DateValue} from '@internationalized/date';
-import {toISOString} from '$lib/utils/dates';
+import type {DateValue} from '@internationalized/date';
+import {toISOString, currentDate} from '$lib/utils/dates';
 import {createTransfer} from '$lib/query/transactions';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
@@ -19,9 +18,9 @@ interface Props {
 let {fromAccountId, onSuccess, onCancel}: Props = $props();
 
 // State
-let dateValue: DateValue = $state(today(getLocalTimeZone()));
+let dateValue: DateValue = $state(currentDate);
 let amount: number = $state(0);
-let toAccountId: number = $state(0);
+let toAccountIdString: string = $state('');
 let notes: string = $state('');
 let isSubmitting: boolean = $state(false);
 let error: string = $state('');
@@ -30,6 +29,9 @@ let error: string = $state('');
 const accountsState = $derived(AccountsState.get());
 const accounts = $derived(accountsState.sorted);
 const targetAccounts = $derived(accounts.filter(a => a.id !== fromAccountId));
+
+// Convert string to number for finding selected account
+const toAccountId = $derived(toAccountIdString ? parseInt(toAccountIdString, 10) : 0);
 const selectedAccount = $derived(targetAccounts.find(a => a.id === toAccountId));
 
 // Get mutation
@@ -54,13 +56,18 @@ async function handleSubmit() {
   error = '';
 
   try {
-    await transferMutation.mutateAsync({
+    const baseData = {
       fromAccountId,
       toAccountId,
       amount,
       date: toISOString(dateValue),
-      ...(notes && { notes }),
-    });
+    };
+
+    const transferData = notes.trim()
+      ? { ...baseData, notes: notes.trim() }
+      : baseData;
+
+    await transferMutation.mutateAsync(transferData);
 
     if (onSuccess) onSuccess();
   } catch (err: any) {
@@ -101,14 +108,14 @@ async function handleSubmit() {
       <label for="toAccount" class="text-sm font-medium">To Account</label>
       <Select.Root
         type="single"
-        bind:value={toAccountId}
+        bind:value={toAccountIdString}
       >
         <Select.Trigger class="w-full">
           {selectedAccount?.name ?? 'Select destination account'}
         </Select.Trigger>
         <Select.Content>
           {#each targetAccounts as account (account.id)}
-            <Select.Item value={String(account.id)}>
+            <Select.Item value={account.id.toString()}>
               <div class="flex items-center gap-2">
                 <span>{account.name}</span>
                 <span class="text-xs text-muted-foreground capitalize">

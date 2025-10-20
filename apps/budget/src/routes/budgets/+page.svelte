@@ -3,6 +3,7 @@
   import {Button} from "$lib/components/ui/button";
   import * as Tabs from "$lib/components/ui/tabs";
   import * as Empty from "$lib/components/ui/empty";
+  import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import BudgetManageDialog from "./(components)/dialogs/budget-manage-dialog.svelte";
   import BudgetAnalyticsDashboard from "./(components)/analytics/budget-analytics-dashboard.svelte";
   import BudgetFundTransfer from "./(components)/managers/budget-fund-transfer.svelte";
@@ -14,13 +15,15 @@
   import BudgetSearchResults from "./(components)/search/budget-search-results.svelte";
   import BudgetSearchFilters from "./(components)/search/budget-search-filters.svelte";
   import EntitySearchToolbar from "$lib/components/shared/search/entity-search-toolbar.svelte";
-  import {listBudgets, duplicateBudget, updateBudget, deleteBudget, bulkArchiveBudgets, bulkDeleteBudgets} from "$lib/query/budgets";
+  import {listBudgets, duplicateBudget, updateBudget, deleteBudget, bulkArchiveBudgets, bulkDeleteBudgets, getPendingRecommendationsCount} from "$lib/query/budgets";
   import type {BudgetWithRelations} from "$lib/server/domains/budgets";
   import type {BudgetGroup} from "$lib/schema/budgets";
   import {budgetSearchState} from "$lib/states/ui/budget-search.svelte";
   import {currencyFormatter} from "$lib/utils/formatters";
   import {calculateActualSpent} from "$lib/utils/budget-calculations";
   import {goto} from "$app/navigation";
+  import BudgetRecommendationsPanel from "$lib/components/budgets/budget-recommendations-panel.svelte";
+  import {Badge} from "$lib/components/ui/badge";
   import {
     ChartBar,
     Grid3x3,
@@ -40,11 +43,23 @@
   const budgets = $derived<BudgetWithRelations[]>(budgetsQuery.data ?? []);
   const budgetsLoading = $derived(budgetsQuery.isLoading);
 
+  // Get pending recommendations count for badge
+  const pendingCountQuery = getPendingRecommendationsCount().options();
+  const pendingCount = $derived(pendingCountQuery.data ?? 0);
+
   let manageDialogOpen = $state(false);
   let selectedBudget = $state<BudgetWithRelations | null>(null);
   let templatePickerOpen = $state(false);
   let groupDialogOpen = $state(false);
   let selectedGroup = $state<BudgetGroup | undefined>(undefined);
+
+  // Delete confirmation dialogs
+  let deleteDialogOpen = $state(false);
+  let bulkDeleteDialogOpen = $state(false);
+  let bulkArchiveDialogOpen = $state(false);
+  let budgetToDelete = $state<BudgetWithRelations | null>(null);
+  let budgetsToDelete = $state<BudgetWithRelations[]>([]);
+  let budgetsToArchive = $state<BudgetWithRelations[]>([]);
 
   // Use centralized search state
   const search = budgetSearchState;
@@ -94,10 +109,16 @@
     await updateMutation.mutateAsync({ id: budget.id, data: { status: 'archived' } });
   }
 
-  async function handleDeleteBudget(budget: BudgetWithRelations) {
-    const confirmed = confirm(`Are you sure you want to delete "${budget.name}"? This action cannot be undone.`);
-    if (!confirmed) return;
-    await deleteMutation.mutateAsync(budget.id);
+  function handleDeleteBudget(budget: BudgetWithRelations) {
+    budgetToDelete = budget;
+    deleteDialogOpen = true;
+  }
+
+  async function confirmDeleteBudget() {
+    if (!budgetToDelete) return;
+    await deleteMutation.mutateAsync(budgetToDelete.id);
+    deleteDialogOpen = false;
+    budgetToDelete = null;
   }
 
   async function handleFundTransfer(_fromId: number, _toId: number, _amount: number) {
@@ -125,18 +146,28 @@
     manageDialogOpen = true;
   }
 
-  async function handleBulkDeleteBudgets(budgets: BudgetWithRelations[]) {
-    const ids = budgets.map(b => b.id);
-    const confirmed = confirm(`Are you sure you want to delete ${ids.length} budget(s)? This action cannot be undone.`);
-    if (!confirmed) return;
-    await bulkDeleteMutation.mutateAsync(ids);
+  function handleBulkDeleteBudgets(budgets: BudgetWithRelations[]) {
+    budgetsToDelete = budgets;
+    bulkDeleteDialogOpen = true;
   }
 
-  async function handleBulkArchiveBudgets(budgets: BudgetWithRelations[]) {
-    const ids = budgets.map(b => b.id);
-    const confirmed = confirm(`Archive ${ids.length} budget(s)?`);
-    if (!confirmed) return;
+  async function confirmBulkDelete() {
+    const ids = budgetsToDelete.map(b => b.id);
+    await bulkDeleteMutation.mutateAsync(ids);
+    bulkDeleteDialogOpen = false;
+    budgetsToDelete = [];
+  }
+
+  function handleBulkArchiveBudgets(budgets: BudgetWithRelations[]) {
+    budgetsToArchive = budgets;
+    bulkArchiveDialogOpen = true;
+  }
+
+  async function confirmBulkArchive() {
+    const ids = budgetsToArchive.map(b => b.id);
     await bulkArchiveMutation.mutateAsync(ids);
+    bulkArchiveDialogOpen = false;
+    budgetsToArchive = [];
   }
 
   // Summary metrics
@@ -343,36 +374,42 @@
   {/if}
 
   <!-- Content -->
-  {#if budgetsLoading && !budgets.length}
-    <Card.Root class="border-dashed">
-      <Card.Content class="py-16 text-center text-sm text-muted-foreground">
-        Loading budgets...
-      </Card.Content>
-    </Card.Root>
-  {:else if !budgets.length}
-    <Empty.Empty>
-      <Empty.EmptyMedia variant="icon">
-        <DollarSign class="size-6" />
-      </Empty.EmptyMedia>
-      <Empty.EmptyHeader>
-        <Empty.EmptyTitle>No Budgets Yet</Empty.EmptyTitle>
-        <Empty.EmptyDescription>
-          Get started by creating your first budget. Track your spending across different categories and manage your finances effectively.
-        </Empty.EmptyDescription>
-      </Empty.EmptyHeader>
-      <Empty.EmptyContent>
-        <Button href="/budgets/new">
-          <Plus class="mr-2 h-4 w-4" />
-          Create Your First Budget
-        </Button>
-      </Empty.EmptyContent>
-    </Empty.Empty>
+  {#if budgetsLoading && budgets.length === 0}
+    <!-- Initial loading skeletons -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {#each Array(8) as _}
+        <Card.Root>
+          <Card.Header class="space-y-2">
+            <div class="h-5 w-3/4 bg-muted rounded animate-pulse"></div>
+            <div class="h-3 w-full bg-muted rounded animate-pulse"></div>
+          </Card.Header>
+          <Card.Content class="space-y-3">
+            <div class="h-3 w-1/2 bg-muted rounded animate-pulse"></div>
+            <div class="h-3 w-2/3 bg-muted rounded animate-pulse"></div>
+            <div class="flex gap-2 mt-4">
+              <div class="h-8 w-16 bg-muted rounded animate-pulse"></div>
+              <div class="h-8 w-16 bg-muted rounded animate-pulse"></div>
+            </div>
+          </Card.Content>
+        </Card.Root>
+      {/each}
+    </div>
   {:else}
-  <Tabs.Root value="overview" class="space-y-6">
-    <Tabs.List class="grid w-full grid-cols-5">
+  <!-- Show tabs even when there are no budgets so users can access Recommendations -->
+  <Tabs.Root value={budgets.length === 0 ? "recommendations" : "overview"} class="space-y-6">
+    <Tabs.List class="grid w-full grid-cols-6">
       <Tabs.Trigger value="overview" class="flex items-center gap-2">
         <Grid3x3 class="h-4 w-4" />
         Budget Overview
+      </Tabs.Trigger>
+      <Tabs.Trigger value="recommendations" class="flex items-center gap-2">
+        <Sparkles class="h-4 w-4" />
+        Recommendations
+        {#if pendingCount > 0}
+          <Badge variant="default" class="ml-1 h-5 min-w-5 px-1.5">
+            {pendingCount}
+          </Badge>
+        {/if}
       </Tabs.Trigger>
       <Tabs.Trigger value="groups" class="flex items-center gap-2">
         <FolderTree class="h-4 w-4" />
@@ -394,46 +431,81 @@
 
     <!-- Budget Overview Tab -->
     <Tabs.Content value="overview" class="space-y-6">
-      <!-- Search Toolbar -->
-      <EntitySearchToolbar
-        bind:searchQuery={search.query}
-        bind:filters={search.filters}
-        bind:viewMode={search.viewMode}
-        bind:sortBy={search.sortBy}
-        bind:sortOrder={search.sortOrder}
-        searchPlaceholder="Search budgets..."
-        sortOptions={budgetSortOptions}
-        activeFilterCount={Object.keys(search.filters).length}
-        onSearchChange={(query) => search.updateQuery(query)}
-        onFiltersChange={(filters) => search.updateFilters(filters)}
-        onViewModeChange={(mode) => (search.viewMode = mode)}
-        onSortChange={(sortBy, sortOrder) => {
-          search.sortBy = sortBy as any;
-          search.sortOrder = sortOrder;
-        }}
-        onClearAll={() => search.clearAllFilters()}>
-        {#snippet filterContent()}
-          <BudgetSearchFilters
-            filters={search.filters}
-            onFilterChange={(key, value) => search.updateFilter(key, value)}
-          />
-        {/snippet}
-      </EntitySearchToolbar>
+      {#if budgets.length === 0}
+        <!-- Empty state when no budgets -->
+        <Empty.Empty>
+          <Empty.EmptyMedia variant="icon">
+            <DollarSign class="size-6" />
+          </Empty.EmptyMedia>
+          <Empty.EmptyHeader>
+            <Empty.EmptyTitle>No Budgets Yet</Empty.EmptyTitle>
+            <Empty.EmptyDescription>
+              Get started by creating your first budget. Track your spending across different categories and manage your finances effectively.
+            </Empty.EmptyDescription>
+          </Empty.EmptyHeader>
+          <Empty.EmptyContent>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <Button href="/budgets/new">
+                <Plus class="mr-2 h-4 w-4" />
+                Create Your First Budget
+              </Button>
+              <Button variant="outline" onclick={() => {
+                const tabs = document.querySelector('[value="recommendations"]');
+                if (tabs) tabs.click();
+              }}>
+                <Sparkles class="mr-2 h-4 w-4" />
+                View Recommendations
+              </Button>
+            </div>
+          </Empty.EmptyContent>
+        </Empty.Empty>
+      {:else}
+        <!-- Search Toolbar -->
+        <EntitySearchToolbar
+          bind:searchQuery={search.query}
+          bind:filters={search.filters}
+          bind:viewMode={search.viewMode}
+          bind:sortBy={search.sortBy}
+          bind:sortOrder={search.sortOrder}
+          searchPlaceholder="Search budgets..."
+          sortOptions={budgetSortOptions}
+          activeFilterCount={Object.keys(search.filters).length}
+          onSearchChange={(query) => search.updateQuery(query)}
+          onFiltersChange={(filters) => search.updateFilters(filters)}
+          onViewModeChange={(mode) => (search.viewMode = mode)}
+          onSortChange={(sortBy, sortOrder) => {
+            search.sortBy = sortBy as any;
+            search.sortOrder = sortOrder;
+          }}
+          onClearAll={() => search.clearAllFilters()}>
+          {#snippet filterContent()}
+            <BudgetSearchFilters
+              filters={search.filters}
+              onFilterChange={(key, value) => search.updateFilter(key, value)}
+            />
+          {/snippet}
+        </EntitySearchToolbar>
 
-      <!-- Budget Results -->
-      <BudgetSearchResults
-        budgets={filteredBudgets}
-        isLoading={budgetsLoading}
-        searchQuery={search.query}
-        viewMode={search.viewMode}
-        onView={handleViewBudget}
-        onEdit={handleEditBudget}
-        onDelete={handleDeleteBudget}
-        onDuplicate={handleDuplicateBudget}
-        onArchive={handleArchiveBudget}
-        onBulkDelete={handleBulkDeleteBudgets}
-        onBulkArchive={handleBulkArchiveBudgets}
-      />
+        <!-- Budget Results -->
+        <BudgetSearchResults
+          budgets={filteredBudgets}
+          isLoading={budgetsLoading}
+          searchQuery={search.query}
+          viewMode={search.viewMode}
+          onView={handleViewBudget}
+          onEdit={handleEditBudget}
+          onDelete={handleDeleteBudget}
+          onDuplicate={handleDuplicateBudget}
+          onArchive={handleArchiveBudget}
+          onBulkDelete={handleBulkDeleteBudgets}
+          onBulkArchive={handleBulkArchiveBudgets}
+        />
+      {/if}
+    </Tabs.Content>
+
+    <!-- Recommendations Tab -->
+    <Tabs.Content value="recommendations" class="space-y-6">
+      <BudgetRecommendationsPanel />
     </Tabs.Content>
 
     <!-- Budget Groups Tab -->
@@ -486,3 +558,80 @@
   budgetGroup={selectedGroup}
   bind:open={groupDialogOpen}
 />
+
+<!-- Delete Budget Confirmation Dialog -->
+<AlertDialog.Root bind:open={deleteDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete Budget</AlertDialog.Title>
+      <AlertDialog.Description>
+        Are you sure you want to delete "{budgetToDelete?.name}"? This action cannot be undone.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmDeleteBudget}
+        disabled={deleteMutation.isPending}
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      >
+        {#if deleteMutation.isPending}
+          Deleting...
+        {:else}
+          Delete Budget
+        {/if}
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- Bulk Delete Budgets Confirmation Dialog -->
+<AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete {budgetsToDelete.length} Budget(s)</AlertDialog.Title>
+      <AlertDialog.Description>
+        Are you sure you want to delete {budgetsToDelete.length} budget(s)? This action cannot be undone and will remove all associated budget data.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmBulkDelete}
+        disabled={bulkDeleteMutation.isPending}
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      >
+        {#if bulkDeleteMutation.isPending}
+          Deleting...
+        {:else}
+          Delete {budgetsToDelete.length} Budget(s)
+        {/if}
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- Bulk Archive Budgets Confirmation Dialog -->
+<AlertDialog.Root bind:open={bulkArchiveDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Archive {budgetsToArchive.length} Budget(s)</AlertDialog.Title>
+      <AlertDialog.Description>
+        Are you sure you want to archive {budgetsToArchive.length} budget(s)? Archived budgets can be restored later.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmBulkArchive}
+        disabled={bulkArchiveMutation.isPending}
+      >
+        {#if bulkArchiveMutation.isPending}
+          Archiving...
+        {:else}
+          Archive {budgetsToArchive.length} Budget(s)
+        {/if}
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

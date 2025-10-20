@@ -20,6 +20,7 @@ import {
 } from "$lib/schema/budgets";
 import type {Transaction} from "$lib/schema/transactions";
 import {transactions} from "$lib/schema/transactions";
+import {payees} from "$lib/schema/payees";
 import {db} from "$lib/server/db";
 import {InputSanitizer} from "$lib/server/shared/validation";
 import {BudgetRepository, type BudgetWithRelations, type DbClient} from "./repository";
@@ -28,6 +29,9 @@ import {currentDate as defaultCurrentDate, timezone as defaultTimezone} from "$l
 import {and, eq, sql} from "drizzle-orm";
 import {EnvelopeService, type EnvelopeAllocationRequest} from "./envelope-service";
 import type {DeficitRecoveryPlan} from "./deficit-recovery";
+import {PeriodManager} from "./period-manager";
+import {BudgetAnalysisService, type AnalysisParams} from "./budget-analysis-service";
+import {RecommendationService, type RecommendationFilters} from "./recommendation-service";
 
 /* ------------------------------------------------------------------ */
 /* Budget Service                                                     */
@@ -69,7 +73,9 @@ export class BudgetService {
     private envelopeService: EnvelopeService,
     private goalTrackingService: GoalTrackingService,
     private forecastService: BudgetForecastService,
-    private intelligenceService: BudgetIntelligenceService
+    private intelligenceService: BudgetIntelligenceService,
+    private analysisService?: BudgetAnalysisService,
+    private recommendationService?: RecommendationService
   ) {}
 
   private generateSlug(name: string): string {
@@ -145,7 +151,8 @@ export class BudgetService {
       createInput.accountIds = input.accountIds;
     }
     if (input.categoryIds !== undefined) {
-      createInput.categoryIds = input.categoryIds;
+      // Filter out any deleted categories by verifying they still exist
+      createInput.categoryIds = await this.getValidCategoryIds(input.categoryIds);
     }
     if (input.groupIds !== undefined) {
       createInput.groupIds = input.groupIds;
@@ -205,7 +212,9 @@ export class BudgetService {
       relations.accountIds = input.accountIds;
     }
     if (input.categoryIds !== undefined) {
-      relations.categoryIds = input.categoryIds;
+      // Filter out any deleted categories by verifying they still exist
+      const validCategoryIds = await this.getValidCategoryIds(input.categoryIds);
+      relations.categoryIds = validCategoryIds;
     }
     if (input.groupIds !== undefined) {
       relations.groupIds = input.groupIds;
@@ -289,7 +298,10 @@ export class BudgetService {
     };
 
     const accountIds = originalBudget.accounts?.map(a => a.id);
-    const categoryIds = originalBudget.categories?.map(c => c.id);
+    // Only copy categories that still exist (filter out deleted ones)
+    const categoryIds = originalBudget.categories
+      ?.filter(bc => bc.category !== null)
+      .map(bc => bc.categoryId);
     const groupIds = originalBudget.groupMemberships?.map((gm) => gm.groupId);
 
     if (accountIds !== undefined) {
@@ -355,6 +367,26 @@ export class BudgetService {
     if (!allowed.includes(value)) {
       throw new ValidationError(`${label} is invalid`, label);
     }
+  }
+
+  /**
+   * Filter out deleted categories by verifying they still exist in the database.
+   * This prevents budgets from keeping associations with deleted categories.
+   */
+  private async getValidCategoryIds(categoryIds: number[]): Promise<number[]> {
+    if (!categoryIds.length) return [];
+
+    // Query the database to check which categories still exist (not deleted)
+    const existingCategories = await db.query.categories.findMany({
+      where: (categories, { inArray, isNull }) =>
+        and(
+          inArray(categories.id, categoryIds),
+          isNull(categories.deletedAt)
+        ),
+      columns: { id: true },
+    });
+
+    return existingCategories.map(c => c.id);
   }
 
   async createEnvelopeBudget(
@@ -552,6 +584,10 @@ export class BudgetService {
     return await this.goalTrackingService.linkScheduleToGoal(budgetId, scheduleId);
   }
 
+  async linkScheduleToScheduledExpense(budgetId: number, scheduleId: number): Promise<BudgetWithRelations> {
+    return await this.goalTrackingService.linkScheduleToScheduledExpense(budgetId, scheduleId);
+  }
+
   async forecastBudgetImpact(budgetId: number, daysAhead?: number): Promise<BudgetForecast> {
     return await this.forecastService.forecastBudgetImpact(budgetId, daysAhead);
   }
@@ -671,6 +707,149 @@ export class BudgetService {
     return await this.intelligenceService.getMostUsedBudget(payeeId, categoryId);
   }
 
+  // Budget Analysis & Recommendations Methods
+
+  async analyzeSpendingHistory(params?: AnalysisParams) {
+    if (!this.analysisService) {
+      throw new Error("Budget analysis service not available");
+    }
+    return await this.analysisService.analyzeTransactionHistory(params);
+  }
+
+  async generateRecommendations(params?: AnalysisParams) {
+    if (!this.analysisService || !this.recommendationService) {
+      throw new Error("Analysis or recommendation service not available");
+    }
+
+    const drafts = await this.analysisService.analyzeTransactionHistory(params);
+    return await this.recommendationService.createRecommendations(drafts);
+  }
+
+  async listRecommendations(filters?: RecommendationFilters) {
+    if (!this.recommendationService) {
+      throw new Error("Recommendation service not available");
+    }
+    return await this.recommendationService.listRecommendations(filters);
+  }
+
+  async getRecommendation(id: number) {
+    if (!this.recommendationService) {
+      throw new Error("Recommendation service not available");
+    }
+    return await this.recommendationService.getRecommendation(id);
+  }
+
+  async dismissRecommendation(id: number) {
+    if (!this.recommendationService) {
+      throw new Error("Recommendation service not available");
+    }
+    return await this.recommendationService.dismissRecommendation(id);
+  }
+
+  async restoreRecommendation(id: number) {
+    if (!this.recommendationService) {
+      throw new Error("Recommendation service not available");
+    }
+    return await this.recommendationService.restoreRecommendation(id);
+  }
+
+  async applyRecommendation(id: number) {
+    if (!this.recommendationService) {
+      throw new Error("Recommendation service not available");
+    }
+
+    // Get the recommendation details
+    const recommendation = await this.recommendationService.getRecommendation(id);
+
+    // Create the budget based on the recommendation
+    const metadata = recommendation.metadata as any;
+    const suggestedType = metadata?.suggestedType || 'category-envelope';
+    const suggestedAmount = metadata?.suggestedAmount || 0;
+
+    // Build budget name from recommendation
+    let budgetName = '';
+
+    // For scheduled expenses, use the payee name
+    if (suggestedType === 'scheduled-expense' && metadata?.payeeIds?.[0]) {
+      const payee = await db.query.payees.findFirst({
+        where: eq(payees.id, metadata.payeeIds[0]),
+      });
+      if (payee) {
+        budgetName = payee.name;
+      }
+    }
+
+    // Fallback to category or account name (without "Budget" suffix for non-scheduled types)
+    if (!budgetName && recommendation.category?.name) {
+      budgetName = recommendation.category.name;
+    } else if (!budgetName && recommendation.account?.name) {
+      budgetName = recommendation.account.name;
+    } else if (!budgetName) {
+      // Extract from title as last resort
+      budgetName = recommendation.title.replace(/^Create (scheduled )?budget for /i, '');
+    }
+
+    // Clean up description to remove recommendation-specific language
+    let budgetDescription = recommendation.description || '';
+    // Remove phrases like "We recommend", "Consider setting", "You should", etc.
+    budgetDescription = budgetDescription
+      .replace(/^We recommend (setting|creating|allocating) (a|an) /i, '')
+      .replace(/^Consider (setting|creating|allocating) (a|an) /i, '')
+      .replace(/^You should (set|create|allocate) (a|an) /i, '')
+      .replace(/^Set (a|an) /i, '')
+      .replace(/\s+based on your spending patterns\.?$/i, '')
+      .replace(/\s+to help manage this expense\.?$/i, '')
+      .replace(/\s+to track this category\.?$/i, '')
+      .trim();
+
+    // Capitalize first letter if needed
+    if (budgetDescription.length > 0) {
+      budgetDescription = budgetDescription.charAt(0).toUpperCase() + budgetDescription.slice(1);
+    }
+
+    // Create the budget
+    const newBudget = await this.createBudget({
+      name: budgetName,
+      description: budgetDescription || undefined,
+      type: suggestedType,
+      scope: metadata?.suggestedScope || (recommendation.categoryId ? 'category' : 'account'),
+      status: 'active',
+      enforcementLevel: 'warning',
+      categoryIds: recommendation.categoryId ? [recommendation.categoryId] : [],
+      accountIds: recommendation.accountId ? [recommendation.accountId] : [],
+      metadata: {
+        allocatedAmount: suggestedAmount,
+        ...(suggestedType === 'scheduled-expense' && metadata?.payeeIds?.[0] && {
+          scheduledExpense: {
+            payeeId: metadata.payeeIds[0],
+            expectedAmount: suggestedAmount,
+            frequency: metadata.detectedFrequency,
+            autoTrack: true,
+          }
+        })
+      }
+    });
+
+    // Mark recommendation as applied
+    await this.recommendationService.applyRecommendation(id);
+
+    return newBudget;
+  }
+
+  async getPendingRecommendationsCount() {
+    if (!this.recommendationService) {
+      return 0;
+    }
+    return await this.recommendationService.getPendingCount();
+  }
+
+  async getRecommendationCounts() {
+    if (!this.recommendationService) {
+      return { pending: 0, dismissed: 0, applied: 0, expired: 0 };
+    }
+    return await this.recommendationService.getRecommendationCounts();
+  }
+
   // Period Template Methods
 
   async createPeriodTemplate(data: {
@@ -722,7 +901,7 @@ export class BudgetService {
       }
     }
 
-    return await this.repository.createPeriodTemplate({
+    const template = await this.repository.createPeriodTemplate({
       budgetId: data.budgetId,
       type: data.type,
       intervalCount: data.intervalCount ?? 1,
@@ -731,6 +910,18 @@ export class BudgetService {
       startMonth: data.startMonth ?? null,
       timezone: data.timezone ?? null,
     });
+
+    // Automatically create the first period instance
+    const periodManager = new PeriodManager();
+    await periodManager.createPeriodsAutomatically(data.budgetId, {
+      lookAheadMonths: 3,
+      lookBehindMonths: 0,
+      autoCreateEnvelopes: false,
+      copyPreviousPeriodSettings: false,
+      enableRollover: false,
+    });
+
+    return template;
   }
 
   async updatePeriodTemplate(
@@ -1287,6 +1478,33 @@ export class GoalTrackingService {
 
     goal.linkedScheduleId = scheduleId;
     goal.autoContribute = true;
+
+    return await this.repository.updateBudget(budgetId, {metadata}, {});
+  }
+
+  async linkScheduleToScheduledExpense(
+    budgetId: number,
+    scheduleId: number
+  ): Promise<BudgetWithRelations> {
+    const budget = await this.repository.findById(budgetId);
+    if (!budget) {
+      throw new NotFoundError("Budget", budgetId);
+    }
+
+    if (budget.type !== 'scheduled-expense') {
+      throw new ValidationError(
+        'Budget must be of type scheduled-expense to link a schedule',
+        'type'
+      );
+    }
+
+    const metadata = budget.metadata as BudgetMetadata;
+    if (!metadata.scheduledExpense) {
+      metadata.scheduledExpense = {};
+    }
+
+    metadata.scheduledExpense.linkedScheduleId = scheduleId;
+    metadata.scheduledExpense.autoTrack = true;
 
     return await this.repository.updateBudget(budgetId, {metadata}, {});
   }

@@ -303,17 +303,21 @@ function handleNameChange(event: Event) {
   }
 }
 
-// Handle account type change and auto-set icon
-function handleAccountTypeChange(value: string) {
-  const previousAccountType = $formData.accountType;
-  $formData.accountType = value;
-  updateIconForAccountType(value, previousAccountType);
+// Watch for account type changes and auto-set icon
+let previousAccountType = $state<string | undefined>(undefined);
+$effect(() => {
+  const currentType = $formData.accountType;
+  if (currentType && currentType !== previousAccountType) {
+    updateIconForAccountType(currentType, previousAccountType);
 
-  // HSA accounts should default to off-budget for new accounts
-  if (value === 'hsa' && !accountId) {
-    $formData.onBudget = false;
+    // HSA accounts should default to off-budget for new accounts
+    if (currentType === 'hsa' && !accountId) {
+      $formData.onBudget = false;
+    }
+
+    previousAccountType = currentType;
   }
-}
+});
 
 // Update icon and color based on account type change
 function updateIconForAccountType(newAccountType: string, previousAccountType: string | undefined) {
@@ -413,9 +417,9 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
               <Form.Control>
                 {#snippet children({props})}
                   <Form.Label>Account Type</Form.Label>
-                  <Select.Root type="single" value={$formData.accountType} onValueChange={handleAccountTypeChange}>
+                  <Select.Root type="single" bind:value={$formData.accountType}>
                     <Select.Trigger {...props}>
-                      <span>{$formData.accountType ? accountTypeOptions.find(opt => opt.value === $formData.accountType)?.label : "Select account type"}</span>
+                      {$formData.accountType ? accountTypeOptions.find(opt => opt.value === $formData.accountType)?.label : "Select account type"}
                     </Select.Trigger>
                     <Select.Content>
                       {#each accountTypeOptions as option}

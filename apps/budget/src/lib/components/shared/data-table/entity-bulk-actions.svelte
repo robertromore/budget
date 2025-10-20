@@ -20,7 +20,8 @@ const selectedEntities = $derived(selectedRows.map(row => row.original));
 const totalCount = $derived(allEntities.length);
 const pageRowCount = $derived(table.getRowModel().rows.length);
 const allPageRowsSelected = $derived(table.getIsAllPageRowsSelected());
-const canSelectAll = $derived(allPageRowsSelected && totalCount > pageRowCount);
+const hasMultiplePages = $derived(table.getPageCount() > 1);
+const canSelectAll = $derived(allPageRowsSelected && hasMultiplePages);
 
 let selectingAll = $state(false);
 

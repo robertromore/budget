@@ -4,6 +4,7 @@ import * as Card from '$lib/components/ui/card';
 import { Button } from '$lib/components/ui/button';
 import type { ColumnMapping } from '$lib/types/import';
 import { formatPreviewAmount } from '$lib/utils/import';
+import { createRecordAccessors } from '$lib/utils/bind-helpers';
 
 interface Props {
   rawColumns: string[];
@@ -21,6 +22,8 @@ const filteredSampleData = $derived.by(() => {
 
   // Check if first row is the header row (values match column names)
   const firstRow = sampleData[0];
+  if (!firstRow) return sampleData;
+
   const isHeaderRow = rawColumns.every(col => firstRow[col] === col);
 
   return isHeaderRow ? sampleData.slice(1) : sampleData;
@@ -62,6 +65,11 @@ const targetFields = $derived((() => {
 // Initialize mapping state
 let columnMapping = $state<Record<string, string>>({});
 
+// State for Select components
+let debitSelectValue = $state<string>('');
+let creditSelectValue = $state<string>('');
+let fieldSelectValues = $state<Record<string, string>>({});
+
 // Initialize with provided mapping or attempt auto-detection
 $effect(() => {
   if (initialMapping) {
@@ -98,6 +106,71 @@ $effect(() => {
 
     console.log('Final column mapping:', columnMapping);
   }
+
+  // Initialize select values based on column mapping
+  Object.entries(columnMapping).forEach(([col, target]) => {
+    if (target === 'debit/credit') {
+      if (col.toLowerCase().includes('debit')) {
+        debitSelectValue = col;
+      } else if (col.toLowerCase().includes('credit')) {
+        creditSelectValue = col;
+      }
+    } else if (target) {
+      if (!fieldSelectValues[target]) {
+        fieldSelectValues[target] = col;
+      }
+    }
+  });
+});
+
+// Handle debit select value changes
+$effect(() => {
+  if (debitSelectValue !== undefined) {
+    // Clear any existing debit mapping
+    Object.entries(columnMapping).forEach(([col, target]) => {
+      if (target === 'debit/credit' && col.toLowerCase().includes('debit')) {
+        columnMapping[col] = '';
+      }
+    });
+    // Set new debit mapping
+    if (debitSelectValue) {
+      columnMapping[debitSelectValue] = 'debit/credit';
+    }
+  }
+});
+
+// Handle credit select value changes
+$effect(() => {
+  if (creditSelectValue !== undefined) {
+    // Clear any existing credit mapping
+    Object.entries(columnMapping).forEach(([col, target]) => {
+      if (target === 'debit/credit' && col.toLowerCase().includes('credit')) {
+        columnMapping[col] = '';
+      }
+    });
+    // Set new credit mapping
+    if (creditSelectValue) {
+      columnMapping[creditSelectValue] = 'debit/credit';
+    }
+  }
+});
+
+// Handle field select value changes
+$effect(() => {
+  Object.entries(fieldSelectValues).forEach(([field, column]) => {
+    if (column !== undefined) {
+      // Clear any existing mapping to this target field
+      Object.entries(columnMapping).forEach(([col, target]) => {
+        if (target === field) {
+          columnMapping[col] = '';
+        }
+      });
+      // Set new mapping
+      if (column) {
+        columnMapping[column] = field;
+      }
+    }
+  });
 });
 
 // Check if mapping is valid (at minimum needs date and either amount OR debit/credit)
@@ -176,22 +249,10 @@ function handleNext() {
                     <div class="flex-1">
                       <Select.Root
                         type="single"
-                        value={selectedColumns.find(col => col.toLowerCase().includes('debit')) || ''}
-                        onValueChange={(v) => {
-                          // Clear any existing debit mapping
-                          Object.entries(columnMapping).forEach(([col, target]) => {
-                            if (target === 'debit/credit' && col.toLowerCase().includes('debit')) {
-                              columnMapping[col] = '';
-                            }
-                          });
-                          // Set new debit mapping
-                          if (v) {
-                            columnMapping[v] = 'debit/credit';
-                          }
-                        }}>
+                        bind:value={debitSelectValue}>
                         <Select.Trigger class="w-full">
                           <span class="truncate text-xs">
-                            Debit: {selectedColumns.find(col => col.toLowerCase().includes('debit')) || 'Select...'}
+                            Debit: {debitSelectValue || 'Select...'}
                           </span>
                         </Select.Trigger>
                         <Select.Content>
@@ -205,22 +266,10 @@ function handleNext() {
                     <div class="flex-1">
                       <Select.Root
                         type="single"
-                        value={selectedColumns.find(col => col.toLowerCase().includes('credit')) || ''}
-                        onValueChange={(v) => {
-                          // Clear any existing credit mapping
-                          Object.entries(columnMapping).forEach(([col, target]) => {
-                            if (target === 'debit/credit' && col.toLowerCase().includes('credit')) {
-                              columnMapping[col] = '';
-                            }
-                          });
-                          // Set new credit mapping
-                          if (v) {
-                            columnMapping[v] = 'debit/credit';
-                          }
-                        }}>
+                        bind:value={creditSelectValue}>
                         <Select.Trigger class="w-full">
                           <span class="truncate text-xs">
-                            Credit: {selectedColumns.find(col => col.toLowerCase().includes('credit')) || 'Select...'}
+                            Credit: {creditSelectValue || 'Select...'}
                           </span>
                         </Select.Trigger>
                         <Select.Content>
@@ -233,21 +282,15 @@ function handleNext() {
                     </div>
                   </div>
                 {:else}
-                  <Select.Root type="single" value={selectedColumns[0] || ''} onValueChange={(v) => {
-                    // Clear any existing mapping to this target field
-                    Object.entries(columnMapping).forEach(([col, target]) => {
-                      if (target === field.value) {
-                        columnMapping[col] = '';
-                      }
-                    });
-                    // Set new mapping
-                    if (v) {
-                      columnMapping[v] = field.value;
-                    }
-                  }}>
+                  {@const fieldKey = field.value}
+                  {@const accessors = createRecordAccessors(fieldSelectValues, fieldKey)}
+                  {@const currentFieldValue = accessors.get()}
+                  <Select.Root
+                    type="single"
+                    bind:value={accessors.get, accessors.set}>
                     <Select.Trigger class="w-full">
                       <span class="truncate">
-                        {selectedColumns[0] || 'Select CSV column...'}
+                        {currentFieldValue || 'Select CSV column...'}
                       </span>
                     </Select.Trigger>
                     <Select.Content>

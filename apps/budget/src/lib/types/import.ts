@@ -110,6 +110,7 @@ export interface ImportOptions {
   skipDuplicates?: boolean;
   duplicateThreshold?: number;
   reverseAmountSigns?: boolean;
+  fileName?: string; // Source file name for tracking import history
 }
 
 export interface ImportResult {

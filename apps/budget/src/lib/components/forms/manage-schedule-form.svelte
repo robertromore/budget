@@ -21,6 +21,7 @@ import * as Form from '$lib/components/ui/form';
 import * as Card from '$lib/components/ui/card';
 import {Input} from '$lib/components/ui/input';
 import {Switch} from '$lib/components/ui/switch';
+import {Label} from '$lib/components/ui/label';
 import {EntityInput, MultiNumericInput} from '$lib/components/input';
 
 // Model imports
@@ -83,9 +84,9 @@ const EMPTY_CATEGORY: EditableEntityItem = {id: 0, name: ''};
 const uniqueFormId = formId || `schedule-form-${scheduleId || 'new'}-${Math.random().toString(36).substring(2, 9)}`;
 
 // Create lookup maps for efficient searching
-const payeeLookup = $derived(new Map(payees?.map(p => [p.id, p]) || []));
-const accountLookup = $derived(new Map(accounts?.map(a => [a.id, a]) || []));
-const categoryLookup = $derived(new Map(categories?.map(c => [c.id, c]) || []));
+const payeeLookup = $derived(new Map(payees?.map((p: any) => [p.id, p]) || []));
+const accountLookup = $derived(new Map(accounts?.map((a: any) => [a.id, a]) || []));
+const categoryLookup = $derived(new Map(categories?.map((c: any) => [c.id, c]) || []));
 
 // Local state for components that need it
 let payee: EditableEntityItem = $state(EMPTY_PAYEE);
@@ -119,15 +120,18 @@ const form = useEntityForm({
 const {form: formData, enhance} = form;
 
 // Derive current values from formData (single source of truth)
-const payeeValue = $derived.by(() =>
-  payeeLookup.get($formData.payeeId ?? 0) ?? EMPTY_PAYEE
-);
-const accountValue = $derived.by(() =>
-  accountLookup.get($formData.accountId ?? 0) ?? EMPTY_ACCOUNT
-);
-const categoryValue = $derived.by(() =>
-  categoryLookup.get($formData.categoryId ?? 0) ?? EMPTY_CATEGORY
-);
+const payeeValue: EditableEntityItem = $derived.by(() => {
+  const found = payeeLookup.get($formData.payeeId ?? 0);
+  return (found as EditableEntityItem | undefined) ?? EMPTY_PAYEE;
+});
+const accountValue: EditableEntityItem = $derived.by(() => {
+  const found = accountLookup.get($formData.accountId ?? 0);
+  return (found as EditableEntityItem | undefined) ?? EMPTY_ACCOUNT;
+});
+const categoryValue: EditableEntityItem = $derived.by(() => {
+  const found = categoryLookup.get($formData.categoryId ?? 0);
+  return (found as EditableEntityItem | undefined) ?? EMPTY_CATEGORY;
+});
 
 // Determine if this is an update
 const isUpdate = scheduleId && scheduleId > 0;

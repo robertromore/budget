@@ -274,3 +274,4 @@ export default function deeplyEqual(left: unknown, right: unknown) {
 
 export * from "./dates";
 export * from "./formatters";
+export * from "./bind-helpers";

@@ -2,7 +2,7 @@
 import * as Form from '$lib/components/ui/form';
 import {type Transaction} from '$lib/schema';
 import {superformInsertTransactionSchema} from '$lib/schema/superforms';
-import {today, getLocalTimeZone} from '@internationalized/date';
+import {currentDate} from '$lib/utils/dates';
 import type {EditableDateItem, EditableEntityItem} from '$lib/types';
 import type {Payee} from '$lib/schema/payees';
 import {Textarea} from '$lib/components/ui/textarea';
@@ -58,7 +58,7 @@ $effect(() => {
 });
 
 // Form state with Svelte 5 runes
-let dateValue: EditableDateItem = $state(today(getLocalTimeZone()));
+let dateValue: EditableDateItem = $state(currentDate);
 let amount = $state<number>(0);
 let payee = $state<EditableEntityItem>({
   id: 0,
@@ -158,6 +158,8 @@ interface BudgetAllocation {
 
 let autoAssignBudgets = $state<boolean>(true);
 let budgetAllocations = $state<BudgetAllocation[]>([]);
+let selectedBudgetValue = $state<string>('');
+let selectedBudgetIndex = $state<number>(-1);
 
 // Get applicable budgets based on account and category
 const applicableBudgetsQuery = $derived.by(() => {
@@ -224,6 +226,17 @@ $effect(() => {
     } else {
       // Update amount for existing allocation
       budgetAllocations[0]!.amount = amount;
+    }
+  }
+});
+
+// Handle budget selection changes
+$effect(() => {
+  if (selectedBudgetIndex >= 0 && selectedBudgetValue) {
+    const budgetId = parseInt(selectedBudgetValue);
+    if (!isNaN(budgetId)) {
+      updateAllocationBudget(selectedBudgetIndex, budgetId);
+      selectedBudgetIndex = -1; // Reset after update
     }
   }
 });
@@ -373,11 +386,19 @@ $effect(() => {
         <!-- Manual allocation interface -->
         <div class="space-y-2">
           {#each budgetAllocations as allocation, index (index)}
+            {@const currentValue = allocation.budgetId.toString()}
             <div class="flex gap-2 items-start">
               <Select.Root
                 type="single"
-                value={allocation.budgetId.toString()}
-                onValueChange={(value) => value && updateAllocationBudget(index, parseInt(value))}
+                bind:value={selectedBudgetValue}
+                onOpenChange={(open) => {
+                  if (open) {
+                    selectedBudgetValue = currentValue;
+                    selectedBudgetIndex = index;
+                  } else {
+                    selectedBudgetIndex = -1;
+                  }
+                }}
               >
                 <Select.Trigger class="flex-1">
                   <span>{getBudgetName(allocation.budgetId)}</span>

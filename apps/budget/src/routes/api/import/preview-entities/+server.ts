@@ -6,6 +6,7 @@ import {categories as categoryTable} from '$lib/schema/categories';
 import type {ImportRow, PayeePreview, CategoryPreview, ImportPreviewData} from '$lib/types/import';
 import {isNull} from 'drizzle-orm';
 import {CategoryMatcher} from '$lib/server/import/matchers/category-matcher';
+import {PayeeMatcher} from '$lib/server/import/matchers/payee-matcher';
 
 export const POST: RequestHandler = async ({request}) => {
   try {
@@ -21,7 +22,8 @@ export const POST: RequestHandler = async ({request}) => {
       db.select().from(categoryTable).where(isNull(categoryTable.deletedAt)),
     ]);
 
-    // Initialize category matcher for inference
+    // Initialize matchers
+    const payeeMatcher = new PayeeMatcher();
     const categoryMatcher = new CategoryMatcher();
 
     // Analyze rows to find unique payees and categories
@@ -42,9 +44,10 @@ export const POST: RequestHandler = async ({request}) => {
         }
       }
 
-      // Track payees
+      // Track payees - normalize the name first
       if (data.payee && typeof data.payee === 'string') {
-        const payeeName = data.payee.trim();
+        const normalized = payeeMatcher.normalizePayeeName(data.payee);
+        const payeeName = normalized.name;
         if (payeeName) {
           const current = payeeMap.get(payeeName) || {occurrences: 0, source: 'import' as const};
           payeeMap.set(payeeName, {
@@ -54,10 +57,10 @@ export const POST: RequestHandler = async ({request}) => {
         }
       }
 
-      // Track categories
+      // Track categories (skip "Uncategorized" as it's just a placeholder for no category)
       if (data.category && typeof data.category === 'string') {
         const categoryName = data.category.trim();
-        if (categoryName) {
+        if (categoryName && categoryName.toLowerCase() !== 'uncategorized') {
           const current = categoryMap.get(categoryName) || {occurrences: 0, source: 'import' as const};
           categoryMap.set(categoryName, {
             ...current,
@@ -67,9 +70,10 @@ export const POST: RequestHandler = async ({request}) => {
       }
 
       // Track inferred categories (from payee/description)
+      // Skip "Uncategorized" as it's just a placeholder
       if (data.inferredCategory && typeof data.inferredCategory === 'string' && !data.category) {
         const categoryName = data.inferredCategory.trim();
-        if (categoryName) {
+        if (categoryName && categoryName.toLowerCase() !== 'uncategorized') {
           const current = categoryMap.get(categoryName) || {occurrences: 0, source: 'inferred' as const};
           categoryMap.set(categoryName, {
             source: 'inferred',
@@ -82,21 +86,26 @@ export const POST: RequestHandler = async ({request}) => {
     // Build payee previews
     const payeePreviews: PayeePreview[] = Array.from(payeeMap.entries())
       .map(([name, info]) => {
-        const existing = existingPayees.find(
-          (p) => p.name?.toLowerCase() === name.toLowerCase()
-        );
+        // Use fuzzy matcher to find existing payees
+        const cleanedName = payeeMatcher.cleanPayeeName(name);
+        const match = payeeMatcher.findBestMatch(cleanedName, existingPayees);
+
+        // Only consider it existing if match confidence is medium or higher
+        const existing = match.payee && (match.confidence === 'exact' || match.confidence === 'high' || match.confidence === 'medium')
+          ? match.payee
+          : undefined;
 
         return {
           name,
           source: info.source,
           occurrences: info.occurrences,
           selected: !existing, // Auto-select new entities, deselect existing
-          existing: existing
-            ? {
-                id: existing.id,
-                name: existing.name || name,
-              }
-            : undefined,
+          ...(existing && {
+            existing: {
+              id: existing.id,
+              name: existing.name || name,
+            }
+          }),
         };
       })
       .sort((a, b) => b.occurrences - a.occurrences); // Sort by most used first
@@ -104,21 +113,26 @@ export const POST: RequestHandler = async ({request}) => {
     // Build category previews
     const categoryPreviews: CategoryPreview[] = Array.from(categoryMap.entries())
       .map(([name, info]) => {
-        const existing = existingCategories.find(
-          (c) => c.name?.toLowerCase() === name.toLowerCase()
+        // Use fuzzy matcher to find existing categories
+        const match = categoryMatcher.findBestMatch(
+          { categoryName: name },
+          existingCategories
         );
+
+        // Consider it existing if a match was found
+        const existing = match.category || undefined;
 
         return {
           name,
           source: info.source,
           occurrences: info.occurrences,
           selected: !existing, // Auto-select new entities, deselect existing
-          existing: existing
-            ? {
-                id: existing.id,
-                name: existing.name || name,
-              }
-            : undefined,
+          ...(existing && {
+            existing: {
+              id: existing.id,
+              name: existing.name || name,
+            }
+          }),
         };
       })
       .sort((a, b) => b.occurrences - a.occurrences); // Sort by most used first

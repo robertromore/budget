@@ -10,15 +10,19 @@ import { createContext } from '$lib/trpc/context';
 import { createCaller } from '$lib/trpc/router';
 
 export const load: PageServerLoad = async (event) => {
-  // Load accounts for account selection
+  // Load accounts, payees, and categories for import
   const caller = createCaller(await createContext(event));
   const accounts = await caller.accountRoutes.all();
+  const payees = await caller.payeeRoutes.all();
+  const categories = await caller.categoriesRoutes.all();
 
   // Get preselected account ID from query parameter if provided
   const preselectedAccountId = event.url.searchParams.get('accountId');
 
   return {
     accounts,
+    payees,
+    categories,
     preselectedAccountId: preselectedAccountId || undefined,
   };
 };

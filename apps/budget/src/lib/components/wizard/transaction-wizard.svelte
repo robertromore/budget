@@ -16,7 +16,8 @@
   import DateInput from "$lib/components/input/date-input.svelte";
   import IntelligentNumericInput from "$lib/components/input/intelligent-numeric-input.svelte";
   import IntelligentEntityInput from "$lib/components/input/intelligent-entity-input.svelte";
-  import { type DateValue, today, getLocalTimeZone } from "@internationalized/date";
+  import type { DateValue } from "@internationalized/date";
+  import { timezone, currentDate } from "$lib/utils/dates";
   import { transactionWizardStore, type WizardStep as WizardStepType } from "$lib/stores/wizardStore.svelte";
   import { createTransactionValidationEngine } from "$lib/utils/wizardValidation";
   import type { Transaction } from "$lib/schema";
@@ -25,6 +26,7 @@
   import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
   import { usePayeeIntelligence } from '$lib/hooks/use-payee-intelligence.svelte';
   import type {Payee} from '$lib/schema/payees';
+  import { createTransformAccessors } from "$lib/utils/bind-helpers";
 
   interface Props {
     accountId: number;
@@ -64,7 +66,7 @@
   const formData = $derived(transactionWizardStore.formData);
 
   // Form state
-  let dateValue: DateValue = $state(today(getLocalTimeZone()));
+  let dateValue: DateValue = $state(currentDate);
   let amount = $state<number>(0);
   let payee = $state<EditableEntityItem>({
     id: 0,
@@ -76,6 +78,10 @@
   });
   let notes = $state<string>('');
   let status = $state<'cleared' | 'pending' | 'scheduled'>('pending');
+  const statusAccessors = createTransformAccessors(
+    () => status,
+    (value: 'cleared' | 'pending' | 'scheduled') => { status = value; }
+  );
 
   // Payee intelligence integration
   const { getPayeeSuggestionsFor, generateBasicSuggestions } = usePayeeIntelligence();
@@ -351,8 +357,7 @@
       <Label class="text-sm font-medium">Transaction Status</Label>
       <Select.Root
         type="single"
-        value={status}
-        onValueChange={(value) => value && (status = value as 'cleared' | 'pending' | 'scheduled')}
+        bind:value={statusAccessors.get, statusAccessors.set}
       >
         <Select.Trigger>
           {statusOptions.find(s => s.value === status)?.label || 'Select status'}

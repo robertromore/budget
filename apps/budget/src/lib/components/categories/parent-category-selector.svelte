@@ -26,22 +26,20 @@ const availableCategories = $derived.by(() => {
   return categories.filter(cat => cat.id !== currentCategoryId);
 });
 
-let selectValue = $state<string>('');
-
-// Sync external value to internal select value
-$effect(() => {
-  selectValue = value ? value.toString() : '';
-});
-
-// Sync internal select value to external value
-const handleValueChange = () => {
-  if (!selectValue || selectValue === '') {
-    value = null;
-  } else {
-    const categoryId = parseInt(selectValue);
-    value = isNaN(categoryId) ? null : categoryId;
+// Use accessor pattern for type conversion between number|null and string
+const selectValue = $state.raw({
+  get value() {
+    return value ? value.toString() : '';
+  },
+  set value(newValue: string) {
+    if (!newValue || newValue === '') {
+      value = null;
+    } else {
+      const categoryId = parseInt(newValue);
+      value = isNaN(categoryId) ? null : categoryId;
+    }
   }
-};
+});
 </script>
 
 <div class="space-y-2">
@@ -52,16 +50,15 @@ const handleValueChange = () => {
 
   <Select.Root
     type="single"
-    bind:value={selectValue}
-    onValueChange={handleValueChange}
+    bind:value={selectValue.value}
     {disabled}
   >
     <Select.Trigger
       id="parent-category"
       class={error ? 'border-destructive' : ''}
     >
-      {#if selectValue && selectValue !== ''}
-        {@const category = availableCategories.find(c => c.id.toString() === selectValue)}
+      {#if selectValue.value && selectValue.value !== ''}
+        {@const category = availableCategories.find(c => c.id.toString() === selectValue.value)}
         {category?.name || 'Unnamed'}
       {:else}
         <span class="text-muted-foreground">None (Top Level)</span>

@@ -74,6 +74,10 @@ export class ImportOrchestrator {
       },
     };
 
+    console.log('=== IMPORT ORCHESTRATOR DEBUG ===');
+    console.log('Selected entities - categories:', selectedEntities?.categories || 'ALL (no filter)');
+    console.log('Options:', options);
+
     try {
       // Stage 1: Validation
       const existingTransactions = await this.getExistingTransactions(accountId);
@@ -122,7 +126,8 @@ export class ImportOrchestrator {
             existingPayees,
             existingCategories,
             options,
-            selectedEntities
+            selectedEntities,
+            result.entitiesCreated
           );
 
           if (transaction) {
@@ -170,18 +175,27 @@ export class ImportOrchestrator {
     selectedEntities?: {
       payees: string[];
       categories: string[];
+    },
+    entitiesCreated?: {
+      payees: number;
+      categories: number;
     }
   ): Promise<z.infer<typeof selectTransactionSchema> | null> {
     const normalized = row.normalizedData;
 
     // Match or create payee
     let payeeId: number | null = null;
+    let payeeDetails: string | null = null;
     if (normalized['payee']) {
-      const cleanedPayeeName = this.payeeMatcher.cleanPayeeName(normalized['payee']);
+      // Normalize the payee name and extract details
+      const { name: cleanedPayeeName, details } = this.payeeMatcher.normalizePayeeName(normalized['payee']);
+      payeeDetails = details;
+
       const payeeMatch = this.payeeMatcher.findBestMatch(cleanedPayeeName, existingPayees);
 
-      // Only use matches with medium or higher confidence
-      if (payeeMatch.payee && (payeeMatch.confidence === 'exact' || payeeMatch.confidence === 'high' || payeeMatch.confidence === 'medium')) {
+      // Only use matches with high or exact confidence to avoid merging similar but distinct payees
+      // (e.g., "The Home Depot" and "The Food Depot" are 71% similar but should be separate)
+      if (payeeMatch.payee && (payeeMatch.confidence === 'exact' || payeeMatch.confidence === 'high')) {
         payeeId = payeeMatch.payee.id;
       } else if (_options.createMissingPayees ?? _options.createMissingEntities) {
         // Check if this payee is in the selected entities list
@@ -205,6 +219,7 @@ export class ImportOrchestrator {
           if (newPayee) {
             payeeId = newPayee.id;
             existingPayees.push(newPayee);
+            if (entitiesCreated) entitiesCreated.payees++;
           }
         } else {
         }
@@ -214,41 +229,109 @@ export class ImportOrchestrator {
     // Match or create category
     let categoryId: number | null = null;
     if (normalized['category'] || normalized['payee'] || normalized['description']) {
-      const categoryMatch = this.categoryMatcher.findBestMatch(
-        {
-          categoryName: normalized['category'],
-          payeeName: normalized['payee'],
-          description: normalized['description'],
-        },
-        existingCategories
-      );
+      // If explicit category is provided, try exact match first
+      let categoryMatch: any = null;
+      if (normalized['category']) {
+        // Check for exact name match only (case-insensitive)
+        const exactMatch = existingCategories.find(
+          c => c.name?.toLowerCase() === normalized['category'].toLowerCase()
+        );
+        if (exactMatch) {
+          categoryId = exactMatch.id;
+        }
+      }
 
-      if (categoryMatch.category) {
-        categoryId = categoryMatch.category.id;
-      } else if (normalized['category'] && (_options.createMissingCategories ?? _options.createMissingEntities)) {
-        // Check if this category is in the selected entities list
-        const isSelected = !selectedEntities || selectedEntities.categories.includes(normalized['category']);
+      // If no explicit category or no exact match found, use fuzzy matching
+      if (!categoryId && !normalized['category']) {
+        categoryMatch = this.categoryMatcher.findBestMatch(
+          {
+            categoryName: normalized['category'],
+            payeeName: normalized['payee'],
+            description: normalized['description'],
+          },
+          existingCategories
+        );
+        if (categoryMatch.category) {
+          categoryId = categoryMatch.category.id;
+        }
+      }
+
+      // If still no match and explicit category provided, try to create it
+      if (!categoryId && normalized['category'] && normalized['category'].toLowerCase() !== 'uncategorized' && (_options.createMissingCategories ?? _options.createMissingEntities)) {
+        // Skip "Uncategorized" - it's just a placeholder for no category
+        // Check if this category is in the selected entities list (case-insensitive)
+        const normalizedCategoryName = normalized['category'].trim();
+        const isSelected = !selectedEntities || selectedEntities.categories.some(
+          selected => selected.trim().toLowerCase() === normalizedCategoryName.toLowerCase()
+        );
+
+        console.log(`Category "${normalizedCategoryName}" - isSelected: ${isSelected}`, {
+          selectedEntities: selectedEntities?.categories,
+          matches: selectedEntities?.categories.map(s => ({
+            selected: s,
+            match: s.trim().toLowerCase() === normalizedCategoryName.toLowerCase()
+          }))
+        });
 
         if (isSelected) {
+          console.log(`Creating category: "${normalized['category']}"`);
           // Create new category with slug
           const slug = normalized['category']
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '');
 
-          const [newCategory] = await db
-            .insert(categoryTable)
-            .values({
-              name: normalized['category'],
-              slug,
-            })
-            .returning();
+          // Check if category with this slug already exists (could be from soft-deleted or previous import)
+          const existingBySlug = existingCategories.find(c => c.slug === slug);
+          if (existingBySlug) {
+            console.log(`Category with slug "${slug}" already exists (ID: ${existingBySlug.id}), using existing`);
+            categoryId = existingBySlug.id;
+          } else {
+            try {
+              const [newCategory] = await db
+                .insert(categoryTable)
+                .values({
+                  name: normalized['category'],
+                  slug,
+                })
+                .returning();
 
-          if (newCategory) {
-            categoryId = newCategory.id;
-            existingCategories.push(newCategory);
+              if (newCategory) {
+                categoryId = newCategory.id;
+                existingCategories.push(newCategory);
+                if (entitiesCreated) entitiesCreated.categories++;
+                console.log(`Successfully created category: "${newCategory.name}" with ID ${newCategory.id}`);
+              }
+            } catch (error) {
+              console.error(`Failed to create category "${normalized['category']}":`, error);
+              // If it failed due to unique constraint, check for soft-deleted category
+              const existing = await db.select().from(categoryTable).where(eq(categoryTable.slug, slug)).limit(1);
+              if (existing && existing.length > 0) {
+                const category = existing[0];
+                if (category.deletedAt) {
+                  // Restore soft-deleted category
+                  console.log(`Restoring soft-deleted category "${category.name}" (slug: ${slug})`);
+                  const [restored] = await db
+                    .update(categoryTable)
+                    .set({ deletedAt: null, name: normalized['category'] })
+                    .where(eq(categoryTable.id, category.id))
+                    .returning();
+                  if (restored) {
+                    categoryId = restored.id;
+                    existingCategories.push(restored);
+                    if (entitiesCreated) entitiesCreated.categories++;
+                    console.log(`Successfully restored category: "${restored.name}" with ID ${restored.id}`);
+                  }
+                } else {
+                  console.log(`Found existing active category with slug "${slug}", using it`);
+                  categoryId = category.id;
+                  existingCategories.push(category);
+                }
+              }
+            }
           }
         } else {
+          console.log(`Skipping category "${normalizedCategoryName}" - not in selectedEntities`);
         }
       } else if (!normalized['category'] && (_options.createMissingCategories ?? _options.createMissingEntities)) {
         // No explicit category provided, use inferred category if available, otherwise infer
@@ -257,7 +340,8 @@ export class ImportOrchestrator {
           description: normalized['description'],
         });
 
-        if (suggestedCategoryName) {
+        // Skip "Uncategorized" - it's just a placeholder
+        if (suggestedCategoryName && suggestedCategoryName.toLowerCase() !== 'uncategorized') {
           // Check if this suggested category already exists
           const existingCategory = existingCategories.find(
             (c) => c.name?.toLowerCase() === suggestedCategoryName.toLowerCase()
@@ -266,8 +350,10 @@ export class ImportOrchestrator {
           if (existingCategory) {
             categoryId = existingCategory.id;
           } else {
-            // Check if this inferred category is in the selected entities list
-            const isSelected = !selectedEntities || selectedEntities.categories.includes(suggestedCategoryName);
+            // Check if this inferred category is in the selected entities list (case-insensitive)
+            const isSelected = !selectedEntities || selectedEntities.categories.some(
+              selected => selected.trim().toLowerCase() === suggestedCategoryName.trim().toLowerCase()
+            );
 
             if (isSelected) {
               // Create the suggested category
@@ -276,17 +362,49 @@ export class ImportOrchestrator {
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/^-+|-+$/g, '');
 
-              const [newCategory] = await db
-                .insert(categoryTable)
-                .values({
-                  name: suggestedCategoryName,
-                  slug,
-                })
-                .returning();
+              // Check if category with this slug already exists
+              const existingBySlug = existingCategories.find(c => c.slug === slug);
+              if (existingBySlug) {
+                categoryId = existingBySlug.id;
+              } else {
+                try {
+                  const [newCategory] = await db
+                    .insert(categoryTable)
+                    .values({
+                      name: suggestedCategoryName,
+                      slug,
+                    })
+                    .returning();
 
-              if (newCategory) {
-                categoryId = newCategory.id;
-                existingCategories.push(newCategory);
+                  if (newCategory) {
+                    categoryId = newCategory.id;
+                    existingCategories.push(newCategory);
+                    if (entitiesCreated) entitiesCreated.categories++;
+                  }
+                } catch (error) {
+                  console.error(`Failed to create inferred category "${suggestedCategoryName}":`, error);
+                  // Check for soft-deleted category
+                  const existing = await db.select().from(categoryTable).where(eq(categoryTable.slug, slug)).limit(1);
+                  if (existing && existing.length > 0) {
+                    const category = existing[0];
+                    if (category.deletedAt) {
+                      // Restore soft-deleted category
+                      const [restored] = await db
+                        .update(categoryTable)
+                        .set({ deletedAt: null, name: suggestedCategoryName })
+                        .where(eq(categoryTable.id, category.id))
+                        .returning();
+                      if (restored) {
+                        categoryId = restored.id;
+                        existingCategories.push(restored);
+                        if (entitiesCreated) entitiesCreated.categories++;
+                      }
+                    } else {
+                      categoryId = category.id;
+                      existingCategories.push(category);
+                    }
+                  }
+                }
               }
             } else {
             }
@@ -303,17 +421,75 @@ export class ImportOrchestrator {
       amount = -amount;
     }
 
+    // Combine description with extracted payee details
+    let notes = normalized['description'] || '';
+    if (payeeDetails) {
+      notes = notes ? `${notes} (${payeeDetails})` : payeeDetails;
+    }
+
+    // Prepare import metadata
+    const importMetadata: any = {
+      accountId,
+      amount,
+      date: normalized['date'] || new Date().toISOString().split('T')[0],
+      payeeId,
+      categoryId,
+      notes,
+      status: normalized['status'] || 'cleared',
+    };
+
+    // Add import metadata if this was an imported transaction
+    if (_options.fileName) {
+      importMetadata.importedFrom = _options.fileName;
+      importMetadata.importedAt = new Date().toISOString();
+    }
+
+    // Store original payee name if it was normalized
+    if (normalized['originalPayee'] && normalized['originalPayee'] !== normalized['payee']) {
+      importMetadata.originalPayeeName = normalized['originalPayee'];
+    }
+
+    // Store original category name if provided in import
+    if (normalized['category']) {
+      importMetadata.originalCategoryName = normalized['category'];
+    }
+
+    // Store inferred category if it was auto-categorized
+    if (normalized['inferredCategory']) {
+      importMetadata.inferredCategory = normalized['inferredCategory'];
+    }
+
+    // Store additional import details (transaction IDs, location, etc.)
+    if (payeeDetails) {
+      const detailsObj: any = { extractedDetails: payeeDetails };
+      if (normalized['fitid']) {
+        detailsObj.fitid = normalized['fitid'];
+      }
+      importMetadata.importDetails = JSON.stringify(detailsObj);
+    }
+
+    // Store complete raw import data for audit/debugging purposes
+    // This includes both the original file data and the normalized data before any import adjustments
+    if (row.rawData && Object.keys(row.rawData).length > 0) {
+      const rawImportSnapshot = {
+        // Original data from the file (OFX/QFX/CSV fields exactly as they appeared)
+        originalFileData: row.rawData,
+        // Normalized data before import orchestrator adjustments (before payee normalization, amount reversal, etc.)
+        normalizedBeforeImport: row.normalizedData,
+        // What adjustments were applied during import
+        importAdjustments: {
+          amountSignReversed: _options.reverseAmountSigns || false,
+          payeeNormalized: !!normalized['payee'],
+          categoryMatched: !!categoryId,
+          payeeDetailsExtracted: !!payeeDetails,
+        }
+      };
+      importMetadata.rawImportData = JSON.stringify(rawImportSnapshot);
+    }
+
     const [transaction] = await db
       .insert(transactionTable)
-      .values({
-        accountId,
-        amount,
-        date: normalized['date'] || new Date().toISOString().split('T')[0],
-        payeeId,
-        categoryId,
-        notes: normalized['description'] || '',
-        status: normalized['status'] || 'cleared',
-      })
+      .values(importMetadata)
       .returning();
 
     return transaction || null;

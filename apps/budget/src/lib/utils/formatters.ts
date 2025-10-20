@@ -78,3 +78,43 @@ export const recurringFormatter = {
     }
   },
 };
+
+// Value formatter for displaying any type of value in UI (tooltips, errors, etc.)
+export function formatDisplayValue(value: any): string {
+  if (value === undefined || value === null) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  if (typeof value === 'object') {
+    // Handle arrays
+    if (Array.isArray(value)) {
+      return value.length > 0 ? JSON.stringify(value, null, 2) : '[]';
+    }
+
+    // Handle dates
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    // Handle plain objects
+    try {
+      const stringified = JSON.stringify(value, null, 2);
+      // Return empty string for empty objects
+      return stringified === '{}' ? '' : stringified;
+    } catch (error) {
+      // Fallback for circular references or other JSON.stringify errors
+      return '[Complex Object]';
+    }
+  }
+
+  // Fallback for any other type
+  return String(value);
+}

@@ -7,6 +7,12 @@ export const POST: RequestHandler = async ({ request }) => {
     const body = await request.json();
     const { accountId, data, selectedEntities, options } = body;
 
+    console.log('=== IMPORT PROCESS ENDPOINT ===');
+    console.log('AccountId:', accountId);
+    console.log('Data rows count:', data?.length);
+    console.log('Selected entities:', selectedEntities);
+    console.log('Options:', options);
+
     if (!accountId || !data) {
       return json({ error: 'Missing required fields' }, { status: 400 });
     }
@@ -19,6 +25,11 @@ export const POST: RequestHandler = async ({ request }) => {
       options || {},
       selectedEntities
     );
+
+    console.log('=== IMPORT RESULT ===');
+    console.log('Transactions created:', result.transactionsCreated);
+    console.log('Entities created:', result.entitiesCreated);
+    console.log('Errors:', result.errors);
 
     return json({ result });
   } catch (error) {

@@ -213,10 +213,7 @@ function handleOpenChange(newOpen: boolean) {
               <Label for="receipt-type">Receipt Type</Label>
               <Select.Root
                 type="single"
-                value={receiptType}
-                onValueChange={(value) => {
-                  if (value) receiptType = value as ReceiptType;
-                }}
+                bind:value={receiptType}
               >
                 <Select.Trigger>
                   {receiptType ? receiptTypeEnum[receiptType as ReceiptType] : ''}

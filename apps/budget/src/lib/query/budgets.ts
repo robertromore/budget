@@ -18,6 +18,13 @@ import type {
   PeriodAnalytics,
   PeriodComparison,
 } from "$lib/server/domains/budgets/period-manager";
+import type { BudgetRecommendationDraft } from "$lib/server/domains/budgets/budget-analysis-service";
+import type {
+  BudgetRecommendationWithRelations,
+  RecommendationType,
+  RecommendationPriority,
+  RecommendationStatus
+} from "$lib/schema/recommendations";
 import { BudgetState } from "$lib/states/budgets.svelte";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryPresets } from "./_client";
@@ -58,6 +65,12 @@ export const budgetKeys = createQueryKeys("budgets", {
     amount: number;
     date: string;
   }) => ["budgets", "suggestions", params] as const,
+  recommendations: () => ["budgets", "recommendations"] as const,
+  recommendationsList: (filters?: Record<string, unknown>) => ["budgets", "recommendations", "list", filters ?? "all"] as const,
+  recommendationDetail: (id: number) => ["budgets", "recommendations", "detail", id] as const,
+  recommendationsCount: () => ["budgets", "recommendations", "count"] as const,
+  recommendationsPendingCount: () => ["budgets", "recommendations", "count", "pending"] as const,
+  analysisHistory: (params?: Record<string, unknown>) => ["budgets", "analysis", "history", params ?? "all"] as const,
 });
 
 function getState(): BudgetState | null {
@@ -148,6 +161,7 @@ export const updateBudget = defineMutation<
   onSuccess: (budget) => {
     getState()?.upsertBudget(budget);
     cachePatterns.invalidatePrefix(budgetKeys.detail(budget.id));
+    cachePatterns.invalidatePrefix(budgetKeys.lists());
   },
   successMessage: "Budget updated",
   errorMessage: "Failed to update budget",
@@ -714,8 +728,13 @@ export const createPeriodTemplate = defineMutation<
 >({
   mutationFn: (input) => trpc().budgetRoutes.createPeriodTemplate.mutate(input),
   onSuccess: (template) => {
+    // Invalidate period template list
     cachePatterns.invalidatePrefix(budgetKeys.periodTemplateList(template.budgetId));
+    // Invalidate both numeric ID and slug-based budget detail queries
     cachePatterns.invalidatePrefix(budgetKeys.detail(template.budgetId));
+    cachePatterns.invalidateMatching((key) =>
+      Array.isArray(key) && key[0] === 'budgets' && key[1] === 'detailBySlug'
+    );
   },
   successMessage: "Period template created",
   errorMessage: "Failed to create period template",
@@ -851,6 +870,19 @@ export const linkScheduleToGoal = defineMutation<
   errorMessage: "Failed to link schedule to goal",
 });
 
+export const linkScheduleToScheduledExpense = defineMutation<
+  {budgetId: number; scheduleId: number},
+  BudgetWithRelations
+>({
+  mutationFn: (input) => trpc().budgetRoutes.linkScheduleToScheduledExpense.mutate(input),
+  onSuccess: (_result, {budgetId}) => {
+    cachePatterns.invalidatePrefix(budgetKeys.detail(budgetId));
+    cachePatterns.invalidatePrefix(budgetKeys.lists());
+  },
+  successMessage: "Schedule linked to scheduled-expense budget",
+  errorMessage: "Failed to link schedule to budget",
+});
+
 // Budget Template Queries and Mutations
 
 export const listBudgetTemplates = (includeSystem: boolean = true) =>
@@ -961,3 +993,117 @@ export const getBudgetSuggestions = defineQuery<
   queryFn: (params) => trpc().budgetRoutes.suggestBudgets.query(params),
   enabled: (params) => params.accountId > 0,
 });
+
+// Budget Intelligence & Recommendations
+
+export const analyzeSpendingHistory = (params?: {
+  accountIds?: number[];
+  months?: number;
+  minTransactions?: number;
+  minConfidence?: number;
+}) =>
+  defineQuery<BudgetRecommendationDraft[]>({
+    queryKey: budgetKeys.analysisHistory(params),
+    queryFn: () => trpc().budgetRoutes.analyzeSpendingHistory.query(params ?? {}),
+    options: {
+      staleTime: 5 * 60 * 1000, // 5 minutes - analysis is expensive
+    },
+  });
+
+export const generateRecommendations = defineMutation<
+  {
+    accountIds?: number[];
+    months?: number;
+    minTransactions?: number;
+    minConfidence?: number;
+  },
+  BudgetRecommendationWithRelations[]
+>({
+  mutationFn: (input) => trpc().budgetRoutes.generateRecommendations.mutate(input),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
+  },
+  successMessage: (result) => `Generated ${result.length} recommendation${result.length !== 1 ? 's' : ''}`,
+  errorMessage: "Failed to generate recommendations",
+});
+
+export const listRecommendations = (filters?: {
+  status?: RecommendationStatus | RecommendationStatus[];
+  type?: RecommendationType | RecommendationType[];
+  priority?: RecommendationPriority | RecommendationPriority[];
+  budgetId?: number;
+  accountId?: number;
+  categoryId?: number;
+  includeExpired?: boolean;
+}) =>
+  defineQuery<BudgetRecommendationWithRelations[]>({
+    queryKey: budgetKeys.recommendationsList(filters),
+    queryFn: () => trpc().budgetRoutes.listRecommendations.query(filters ?? {}),
+    options: {
+      staleTime: 30 * 1000, // 30 seconds
+    },
+  });
+
+export const getRecommendation = (id: number) =>
+  defineQuery<BudgetRecommendationWithRelations>({
+    queryKey: budgetKeys.recommendationDetail(id),
+    queryFn: () => trpc().budgetRoutes.getRecommendation.query({id}),
+    options: {
+      staleTime: 30 * 1000,
+      enabled: !!id,
+    },
+  });
+
+export const dismissRecommendation = defineMutation<number, BudgetRecommendationWithRelations>({
+  mutationFn: (id) => trpc().budgetRoutes.dismissRecommendation.mutate({id}),
+  onSuccess: (_, id) => {
+    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
+    cachePatterns.invalidatePrefix(budgetKeys.recommendationDetail(id));
+  },
+  successMessage: "Recommendation dismissed",
+  errorMessage: "Failed to dismiss recommendation",
+});
+
+export const restoreRecommendation = defineMutation<number, BudgetRecommendationWithRelations>({
+  mutationFn: (id) => trpc().budgetRoutes.restoreRecommendation.mutate({id}),
+  onSuccess: (_, id) => {
+    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
+    cachePatterns.invalidatePrefix(budgetKeys.recommendationDetail(id));
+  },
+  successMessage: "Recommendation restored",
+  errorMessage: "Failed to restore recommendation",
+});
+
+export const applyRecommendation = defineMutation<number, BudgetRecommendationWithRelations>({
+  mutationFn: (id) => trpc().budgetRoutes.applyRecommendation.mutate({id}),
+  onSuccess: (_, id) => {
+    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
+    cachePatterns.invalidatePrefix(budgetKeys.recommendationDetail(id));
+    cachePatterns.invalidatePrefix(budgetKeys.lists()); // Budgets may have changed
+  },
+  successMessage: "Recommendation applied successfully",
+  errorMessage: "Failed to apply recommendation",
+});
+
+export const getPendingRecommendationsCount = () =>
+  defineQuery<number>({
+    queryKey: budgetKeys.recommendationsPendingCount(),
+    queryFn: () => trpc().budgetRoutes.getPendingRecommendationsCount.query(),
+    options: {
+      ...queryPresets.static,
+    },
+  });
+
+export const getRecommendationCounts = () =>
+  defineQuery<{
+    pending: number;
+    dismissed: number;
+    applied: number;
+    expired: number;
+  }>({
+    queryKey: budgetKeys.recommendationsCount(),
+    queryFn: () => trpc().budgetRoutes.getRecommendationCounts.query(),
+    options: {
+      ...queryPresets.static,
+    },
+  });

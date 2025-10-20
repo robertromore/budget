@@ -1,6 +1,5 @@
 <script lang="ts">
 import {Button} from '$lib/components/ui/button';
-import * as Form from '$lib/components/ui/form';
 import * as Select from '$lib/components/ui/select';
 import {Input} from '$lib/components/ui/input';
 import {Label} from '$lib/components/ui/label';
@@ -8,6 +7,7 @@ import {Textarea} from '$lib/components/ui/textarea';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import {createBudgetGroup, updateBudgetGroup, listBudgetGroups} from '$lib/query/budgets';
 import type {BudgetGroup} from '$lib/schema/budgets';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
 let {
   budgetGroup,
@@ -30,13 +30,11 @@ let spendingLimitValue = $state<number>(budgetGroup?.spendingLimit || 0);
 // Computed spending limit (null when 0)
 const spendingLimit = $derived(spendingLimitValue > 0 ? spendingLimitValue : null);
 
-// String binding for Select component
-let parentIdStr = $state<string>(budgetGroup?.parentId ? String(budgetGroup.parentId) : 'none');
-
-// Sync string value with number value
-$effect(() => {
-  parentId = parentIdStr === 'none' ? null : Number(parentIdStr);
-});
+// Parent ID accessor - transforms between string (for Select) and number|null (for form state)
+const parentIdAccessors = createTransformAccessors(
+  () => parentId === null ? 'none' : String(parentId),
+  (value: string) => { parentId = value === 'none' ? null : Number(value); }
+);
 
 // Query for available parent groups
 const groupsQuery = listBudgetGroups().options();
@@ -122,13 +120,13 @@ async function handleSubmit() {
 
   <div class="space-y-2">
     <Label for="parent">Parent Group (Optional)</Label>
-    <Select.Root type="single" bind:value={parentIdStr}>
+    <Select.Root type="single" bind:value={parentIdAccessors.get, parentIdAccessors.set}>
       <Select.Trigger id="parent">
         <span>
-          {#if parentIdStr === 'none'}
+          {#if parentId === null}
             None (top-level group)
           {:else}
-            {availableParentGroups.find(g => String(g.id) === parentIdStr)?.name || 'Select parent group'}
+            {availableParentGroups.find(g => g.id === parentId)?.name || 'Select parent group'}
           {/if}
         </span>
       </Select.Trigger>

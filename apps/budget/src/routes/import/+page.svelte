@@ -1,6 +1,6 @@
 <script lang="ts">
 import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svelte';
-import ImportPreviewTable from '$lib/components/import/import-preview-table.svelte';
+import ImportDataTable from '$lib/components/import/import-data-table.svelte';
 import EntityReview from '$lib/components/import/entity-review.svelte';
 import ColumnMapper from '$lib/components/import/column-mapper.svelte';
 import * as Select from '$lib/components/ui/select';
@@ -8,6 +8,7 @@ import {Button} from '$lib/components/ui/button';
 import {Checkbox} from '$lib/components/ui/checkbox';
 import * as Card from '$lib/components/ui/card';
 import * as Empty from '$lib/components/ui/empty';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Circle from '@lucide/svelte/icons/circle';
 import Wallet from '@lucide/svelte/icons/wallet';
@@ -21,9 +22,17 @@ import type {
 } from '$lib/types/import';
 import type {Account} from '$lib/schema/accounts';
 import {useQueryClient} from '@tanstack/svelte-query';
+import {PayeesState} from '$lib/states/entities/payees.svelte';
+import {CategoriesState} from '$lib/states/entities/categories.svelte';
+import Fuse from 'fuse.js';
+import {toast} from 'svelte-sonner';
 
 let {data} = $props();
 const queryClient = useQueryClient();
+
+// Initialize entity states for the import page
+PayeesState.set(data.payees);
+CategoriesState.set(data.categories);
 
 const accounts = $derived(data.accounts);
 // Filter out HSA accounts since they can't be imported into
@@ -44,30 +53,256 @@ let isProcessing = $state(false);
 let error = $state<string | null>(null);
 let selectedRows = $state<Set<number>>(new Set());
 
+// Entity overrides - track user-selected payee/category for each row
+let entityOverrides = $state<Record<number, {payeeId?: number | null; payeeName?: string | null; categoryId?: number | null; categoryName?: string | null}>>({});
+
+// Derive temporary entities (created during preview but not yet in database)
+const temporaryCategories = $derived.by(() => {
+  const tempCats = new Set<string>();
+  Object.values(entityOverrides).forEach(override => {
+    if (override.categoryName && !override.categoryId) {
+      tempCats.add(override.categoryName);
+    }
+  });
+  return Array.from(tempCats);
+});
+
+const temporaryPayees = $derived.by(() => {
+  const tempPayees = new Set<string>();
+  Object.values(entityOverrides).forEach(override => {
+    if (override.payeeName && !override.payeeId) {
+      tempPayees.add(override.payeeName);
+    }
+  });
+  return Array.from(tempPayees);
+});
+
 // Import options
 let createMissingPayees = $state(true);
 let createMissingCategories = $state(true);
 let allowPartialImport = $state(true);
 let reverseAmountSigns = $state(false);
 
-// Create reactive preview data that applies amount reversal
+// Create reactive preview data that applies amount reversal and entity overrides
 const previewData = $derived.by(() => {
   if (!parseResults) return null;
 
-  if (!reverseAmountSigns) return parseResults;
-
-  // Create a copy with reversed amounts
+  // Apply transformations to the rows
   return {
     ...parseResults,
-    rows: parseResults.rows.map(row => ({
-      ...row,
-      normalizedData: {
-        ...row.normalizedData,
-        amount: row.normalizedData['amount'] ? -row.normalizedData['amount'] : row.normalizedData['amount']
-      }
-    }))
+    rows: parseResults.rows.map(row => {
+      const override = entityOverrides[row.rowIndex];
+
+      return {
+        ...row,
+        normalizedData: {
+          ...row.normalizedData,
+          // Apply amount reversal if enabled
+          amount: reverseAmountSigns && row.normalizedData['amount']
+            ? -row.normalizedData['amount']
+            : row.normalizedData['amount'],
+          // Apply entity overrides if set
+          payee: override?.payeeName !== undefined ? override.payeeName : row.normalizedData['payee'],
+          category: override?.categoryName !== undefined ? override.categoryName : row.normalizedData['category'],
+        }
+      };
+    })
   };
 });
+
+// Handler for payee updates from the table
+function handlePayeeUpdate(rowIndex: number, payeeId: number | null, payeeName: string | null) {
+  if (!entityOverrides[rowIndex]) {
+    entityOverrides[rowIndex] = {};
+  }
+  entityOverrides[rowIndex].payeeId = payeeId;
+  entityOverrides[rowIndex].payeeName = payeeName;
+}
+
+// State for bulk payee update confirmation dialog
+let bulkPayeeUpdateDialog = $state({
+  open: false,
+  rowIndex: 0,
+  payeeId: null as number | null,
+  payeeName: null as string | null,
+  originalPayeeName: '',
+  matchCount: 0,
+  matches: [] as Array<{item: any}>
+});
+
+// Apply payee update to all similar transactions (fuzzy matched by original payee)
+function handlePayeeUpdateWithSimilar(rowIndex: number, payeeId: number | null, payeeName: string | null) {
+  if (!parseResults) return;
+
+  // First update the selected row
+  handlePayeeUpdate(rowIndex, payeeId, payeeName);
+
+  // Get the original payee name for the selected row
+  const selectedRow = parseResults.rows.find(r => r.rowIndex === rowIndex);
+  if (!selectedRow) return;
+
+  const originalPayeeName = selectedRow.normalizedData['payee'];
+  if (!originalPayeeName || typeof originalPayeeName !== 'string') return;
+
+  // Use Fuse for fuzzy matching similar payees
+  const payeeMatcher = new Fuse(parseResults.rows, {
+    keys: ['normalizedData.payee'],
+    threshold: 0.3, // 70% similarity
+    includeScore: true,
+  });
+
+  const matches = payeeMatcher.search(originalPayeeName);
+
+  // Count how many other transactions would be updated (excluding the one we just updated)
+  const matchesToUpdate = matches.filter(match => match.item.rowIndex !== rowIndex);
+
+  // If there are similar transactions, ask user if they want to update them
+  if (matchesToUpdate.length > 0) {
+    bulkPayeeUpdateDialog = {
+      open: true,
+      rowIndex,
+      payeeId,
+      payeeName,
+      originalPayeeName,
+      matchCount: matchesToUpdate.length,
+      matches: matchesToUpdate
+    };
+  }
+}
+
+// Confirm and apply bulk payee update
+function confirmBulkPayeeUpdate() {
+  if (!bulkPayeeUpdateDialog.matches) return;
+
+  let updatedCount = 0;
+  bulkPayeeUpdateDialog.matches.forEach(match => {
+    handlePayeeUpdate(match.item.rowIndex, bulkPayeeUpdateDialog.payeeId, bulkPayeeUpdateDialog.payeeName);
+    updatedCount++;
+  });
+
+  // Notify user of bulk update
+  if (updatedCount > 0) {
+    const payeeDisplay = bulkPayeeUpdateDialog.payeeName || 'None';
+    toast.success(`Updated payee to "${payeeDisplay}" for ${updatedCount + 1} similar transaction${updatedCount + 1 > 1 ? 's' : ''}`);
+  }
+
+  // Close dialog
+  bulkPayeeUpdateDialog.open = false;
+}
+
+// Cancel bulk payee update
+function cancelBulkPayeeUpdate() {
+  bulkPayeeUpdateDialog.open = false;
+}
+
+// Handler for category updates from the table
+function handleCategoryUpdate(rowIndex: number, categoryId: number | null, categoryName: string | null) {
+  if (!entityOverrides[rowIndex]) {
+    entityOverrides[rowIndex] = {};
+  }
+  entityOverrides[rowIndex].categoryId = categoryId;
+  entityOverrides[rowIndex].categoryName = categoryName;
+}
+
+// State for bulk update confirmation dialog
+let bulkUpdateDialog = $state({
+  open: false,
+  rowIndex: 0,
+  categoryId: null as number | null,
+  categoryName: null as string | null,
+  payeeName: '',
+  matchCount: 0,
+  matches: [] as Array<{item: any}>
+});
+
+// Apply category update to all similar transactions (fuzzy matched by payee)
+function handleCategoryUpdateWithSimilar(rowIndex: number, categoryId: number | null, categoryName: string | null) {
+  if (!parseResults) return;
+
+  // First update the selected row
+  handleCategoryUpdate(rowIndex, categoryId, categoryName);
+
+  // Get the payee name for the selected row
+  const selectedRow = parseResults.rows.find(r => r.rowIndex === rowIndex);
+  if (!selectedRow) return;
+
+  const payeeName = selectedRow.normalizedData['payee'];
+  if (!payeeName || typeof payeeName !== 'string') return;
+
+  // Use Fuse for fuzzy matching similar payees
+  const payeeMatcher = new Fuse(parseResults.rows, {
+    keys: ['normalizedData.payee'],
+    threshold: 0.3, // 70% similarity
+    includeScore: true,
+  });
+
+  const matches = payeeMatcher.search(payeeName);
+
+  // Count how many other transactions would be updated (excluding the one we just updated)
+  const matchesToUpdate = matches.filter(match => match.item.rowIndex !== rowIndex);
+
+  // If there are similar transactions, ask user if they want to update them
+  if (matchesToUpdate.length > 0) {
+    bulkUpdateDialog = {
+      open: true,
+      rowIndex,
+      categoryId,
+      categoryName,
+      payeeName,
+      matchCount: matchesToUpdate.length,
+      matches: matchesToUpdate
+    };
+  }
+}
+
+// Confirm and apply bulk update
+function confirmBulkUpdate() {
+  if (!bulkUpdateDialog.matches) return;
+
+  let updatedCount = 0;
+  bulkUpdateDialog.matches.forEach(match => {
+    handleCategoryUpdate(match.item.rowIndex, bulkUpdateDialog.categoryId, bulkUpdateDialog.categoryName);
+    updatedCount++;
+  });
+
+  // Notify user of bulk update
+  if (updatedCount > 0) {
+    const categoryDisplay = bulkUpdateDialog.categoryName || 'Uncategorized';
+    toast.success(`Updated category to "${categoryDisplay}" for ${updatedCount + 1} similar transaction${updatedCount + 1 > 1 ? 's' : ''}`);
+  }
+
+  // Close dialog
+  bulkUpdateDialog.open = false;
+}
+
+// Cancel bulk update
+function cancelBulkUpdate() {
+  bulkUpdateDialog.open = false;
+}
+
+// Apply smart categorization and payee normalization using the backend matcher
+async function applySmartCategorization() {
+  if (!parseResults) return;
+
+  try {
+    const response = await fetch('/api/import/infer-categories', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({rows: parseResults.rows}),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      // Update parseResults with normalized payees and inferred categories
+      parseResults.rows = result.rows;
+    }
+  } catch (err) {
+    console.error('Failed to apply smart data enrichment:', err);
+    // Continue anyway - this is non-critical
+  }
+}
 
 // Pre-select account from query parameter if provided
 let selectedAccountId = $state<string>(data.preselectedAccountId || '');
@@ -113,6 +348,9 @@ async function handleFileSelected(file: File) {
       // Store raw data for column mapping preview
       rawCSVData = result.rows.map((row: any) => row.rawData);
       console.log('Parse results:', parseResults);
+
+      // Apply smart categorization to rows without explicit categories
+      await applySmartCategorization();
 
       // Skip column mapping for QIF, OFX files (they have fixed formats)
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
@@ -188,14 +426,14 @@ async function handleColumnMappingComplete(mapping: ColumnMapping) {
 }
 
 async function proceedToEntityReview() {
-  if (!parseResults || !selectedAccountId) return;
+  if (!parseResults || !selectedAccountId || !previewData) return;
 
   isProcessing = true;
   error = null;
 
   try {
-    // Filter rows to only include selected ones
-    const selectedRowsData = parseResults.rows.filter((row) => selectedRows.has(row.rowIndex));
+    // Filter rows to only include selected ones (with entity overrides applied)
+    const selectedRowsData = previewData.rows.filter((row) => selectedRows.has(row.rowIndex));
 
     const response = await fetch('/api/import/preview-entities', {
       method: 'POST',
@@ -270,23 +508,27 @@ function deselectAllCategories() {
 }
 
 async function processImport() {
-  if (!parseResults || !selectedAccountId || !entityPreview) return;
+  if (!parseResults || !selectedAccountId || !entityPreview || !previewData) return;
 
   isProcessing = true;
   error = null;
 
   try {
-    // Filter rows to only include selected ones
-    const selectedRowsData = parseResults.rows.filter((row) => selectedRows.has(row.rowIndex));
+    // Filter rows to only include selected ones (with entity overrides applied)
+    const selectedRowsData = previewData.rows.filter((row) => selectedRows.has(row.rowIndex));
 
-    // Get selected entity names
+    // Get selected entity names (include both new and existing)
     const selectedPayeeNames = entityPreview.payees
-      .filter((p) => p.selected && !p.existing)
+      .filter((p) => p.selected)
       .map((p) => p.name);
 
     const selectedCategoryNames = entityPreview.categories
-      .filter((c) => c.selected && !c.existing)
+      .filter((c) => c.selected)
       .map((c) => c.name);
+
+    console.log('=== IMPORT DEBUG ===');
+    console.log('All categories in preview:', entityPreview.categories.map(c => ({name: c.name, selected: c.selected, existing: c.existing})));
+    console.log('Selected category names:', selectedCategoryNames);
 
     const importData = {
       accountId: parseInt(selectedAccountId),
@@ -301,6 +543,7 @@ async function processImport() {
         createMissingPayees,
         createMissingCategories,
         reverseAmountSigns,
+        fileName: previewData?.fileName,
       },
     };
 
@@ -312,10 +555,13 @@ async function processImport() {
       body: JSON.stringify(importData),
     });
 
+    console.log('Response status:', response.status);
     const result = await response.json();
+    console.log('Import result:', result);
 
     if (response.ok) {
       importResult = result.result;
+      console.log('Import completed:', importResult);
       currentStep = 'complete';
 
       // Invalidate all account-related queries to refresh balances everywhere
@@ -570,12 +816,16 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
         <!-- Right Content - Stats and Preview -->
         <div class="flex-1 min-w-0 pr-8">
           {#if previewData}
-            <ImportPreviewTable
+            <ImportDataTable
               data={previewData.rows}
               fileName={previewData.fileName}
               onNext={proceedToEntityReview}
               onBack={goBackToUpload}
               bind:selectedRows
+              onPayeeUpdate={handlePayeeUpdateWithSimilar}
+              onCategoryUpdate={handleCategoryUpdateWithSimilar}
+              temporaryCategories={temporaryCategories}
+              temporaryPayees={temporaryPayees}
             />
           {/if}
         </div>
@@ -707,3 +957,39 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
     {/if}
   </div>
 </div>
+
+<!-- Bulk Update Confirmation Dialog -->
+<AlertDialog.Root bind:open={bulkUpdateDialog.open}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
+      <AlertDialog.Description>
+        Found {bulkUpdateDialog.matchCount} other transaction{bulkUpdateDialog.matchCount !== 1 ? 's' : ''} with similar payee "{bulkUpdateDialog.payeeName}".
+        <br /><br />
+        Would you like to update {bulkUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to category "{bulkUpdateDialog.categoryName || 'Uncategorized'}" as well?
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel onclick={cancelBulkUpdate}>No, Just This One</AlertDialog.Cancel>
+      <AlertDialog.Action onclick={confirmBulkUpdate}>Yes, Update All Similar</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- Bulk Payee Update Confirmation Dialog -->
+<AlertDialog.Root bind:open={bulkPayeeUpdateDialog.open}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
+      <AlertDialog.Description>
+        Found {bulkPayeeUpdateDialog.matchCount} other transaction{bulkPayeeUpdateDialog.matchCount !== 1 ? 's' : ''} with similar payee "{bulkPayeeUpdateDialog.originalPayeeName}".
+        <br /><br />
+        Would you like to update {bulkPayeeUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to payee "{bulkPayeeUpdateDialog.payeeName || 'None'}" as well?
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel onclick={cancelBulkPayeeUpdate}>No, Just This One</AlertDialog.Cancel>
+      <AlertDialog.Action onclick={confirmBulkPayeeUpdate}>Yes, Update All Similar</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

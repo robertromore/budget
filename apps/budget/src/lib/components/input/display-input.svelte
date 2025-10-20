@@ -16,22 +16,57 @@ import {getContext} from 'svelte';
 import type {CurrentViewsState} from '$lib/states/views';
 
 const currentViewsState = getContext<CurrentViewsState<any>>('current_views');
-const currentView = $derived(currentViewsState.activeView);
-const table = $derived(currentView.table);
-const groupableColumns = $derived(table.getAllColumns().filter((column) => column.getCanGroup()));
-const sortableColumns = $derived(table.getAllColumns().filter((column) => column.getCanSort()));
-const visiableColumns = $derived(table.getAllColumns().filter((column) => column.getCanHide()));
+const currentView = $derived(currentViewsState?.activeView);
+const table = $derived(currentView?.table);
+const groupableColumns = $derived(table?.getAllColumns().filter((column) => column.getCanGroup()) ?? []);
+const sortableColumns = $derived(table?.getAllColumns().filter((column) => column.getCanSort()) ?? []);
+const visiableColumns = $derived(table?.getAllColumns().filter((column) => column.getCanHide()) ?? []);
 
-const grouping = $derived(currentView.view.getGrouping());
-const sorting = $derived(currentView.view.getSorting());
-const visibility = $derived(currentView.view.getVisibility());
+const sorting = $derived(currentView?.view.getSorting() ?? []);
+const visibility = $derived(currentView?.view.getVisibility() ?? {});
 const visibleColumns = $derived(
   visiableColumns.filter(
     (column) => !Object.keys(visibility).includes(column.id) || visibility[column.id] === true
   )
 );
+
+// Grouping state - derived from view, with setter to update view
+const grouping = {
+  get value() {
+    return currentView?.view.getGrouping() ?? [];
+  },
+  set value(newGrouping: string[]) {
+    if (currentView?.view) {
+      currentView.updateTableGrouping(newGrouping);
+    }
+  }
+};
+
+// Visibility state - derived from view, with setter to update view
+const visibilityValue = {
+  get value() {
+    return visibleColumns.map((visibleColumn) => visibleColumn.id);
+  },
+  set value(newVisibility: string[]) {
+    if (!currentView) return;
+    const visibility = Object.assign(
+      {},
+      ...visiableColumns.map((column) => {
+        return {[column.id as string]: false};
+      }),
+      ...newVisibility.map((id) => {
+        return {[id as string]: true};
+      })
+    ) as VisibilityState;
+    currentView.updateTableVisibility(visibility);
+  }
+};
+
+// Only render if we have a valid context
+const hasContext = $derived(!!currentView?.view && !!table);
 </script>
 
+{#if hasContext}
 <Popover.Root>
   <Popover.Trigger class={cn(buttonVariants({variant: 'outline'}), 'h-8')}>
     <SlidersHorizontal />
@@ -44,21 +79,18 @@ const visibleColumns = $derived(
         <Select.Root
           type="multiple"
           name="grouping"
-          value={currentView.view.getGrouping()}
-          onValueChange={(value) => {
-            currentView.updateTableGrouping(value);
-          }}>
+          bind:value={grouping.value}>
           <Select.Trigger class="w-[180px]">
-            {#if grouping.length === 0}
+            {#if grouping.value.length === 0}
               <Badge variant="secondary">none selected</Badge>
             {:else}
               <div class="hidden space-x-1 lg:flex">
-                {#if grouping.length > 2}
+                {#if grouping.value.length > 2}
                   <Badge variant="secondary" class="rounded-sm px-1 font-normal">
-                    {grouping.length} selected
+                    {grouping.value.length} selected
                   </Badge>
                 {:else}
-                  {#each groupableColumns.filter( (column) => grouping.includes(column.id) ) as groupableColumn}
+                  {#each groupableColumns.filter( (column) => grouping.value.includes(column.id) ) as groupableColumn}
                     <Badge variant="secondary" class="rounded-sm px-1 font-normal">
                       {groupableColumn.columnDef.meta?.label}
                     </Badge>
@@ -117,6 +149,7 @@ const visibleColumns = $derived(
               {#each sortableColumns as column}
                 <DropdownMenu.Item
                   onSelect={() => {
+                    if (!currentView?.view) return;
                     let newState = currentView.view.getSorting();
                     if (!sorting.find((sorter) => sorter.id === column.id)) {
                       newState.push({
@@ -163,19 +196,7 @@ const visibleColumns = $derived(
         <Select.Root
           type="multiple"
           name="visibility"
-          value={visibleColumns.map((visibleColumn) => visibleColumn.id)}
-          onValueChange={(value) => {
-            const visibility = Object.assign(
-              {},
-              ...visiableColumns.map((column) => {
-                return {[column.id as string]: false};
-              }),
-              ...value.map((id) => {
-                return {[id as string]: true};
-              })
-            ) as VisibilityState;
-            currentView.updateTableVisibility(visibility);
-          }}>
+          bind:value={visibilityValue.value}>
           <Select.Trigger class="text-muted-foreground w-[180px]">
             {#if visibleColumns.length === 0}
               <Badge variant="secondary">none selected</Badge>
@@ -210,13 +231,14 @@ const visibleColumns = $derived(
     <div class="mt-4 flex justify-start">
       <Switch
         id="expand-all"
-        checked={typeof currentView.view.getExpanded() === 'boolean' &&
+        checked={typeof currentView?.view.getExpanded() === 'boolean' &&
           (currentView.view.getExpanded() as boolean)}
         onCheckedChange={(checked) => {
+          if (!currentView) return;
           currentView.updateTableAllRowsExpanded(checked ? true : {});
         }}
         aria-labelledby="Expand all rows"
-        disabled={grouping.length === 0} />
+        disabled={grouping.value.length === 0} />
       <Label
         for="expand-all"
         class="ml-1 text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -225,3 +247,4 @@ const visibleColumns = $derived(
     </div>
   </Popover.Content>
 </Popover.Root>
+{/if}

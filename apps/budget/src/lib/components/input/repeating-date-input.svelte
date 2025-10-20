@@ -179,16 +179,17 @@ const nextOccurrences = $derived.by(() => {
   }
 });
 
-// Event handlers
-const handleFrequencyChange = (newFrequency: string) => {
-  value.frequency = newFrequency as 'daily' | 'weekly' | 'monthly' | 'yearly';
-  // Reset frequency-specific settings when changing frequency
-  value.week_days = [];
-  value.weeks = [];
-  value.weeks_days = [];
-  value.days = [];
-  value.on = false;
-};
+// Handle frequency changes
+$effect(() => {
+  if (value.frequency) {
+    // Reset frequency-specific settings when changing frequency
+    value.week_days = [];
+    value.weeks = [];
+    value.weeks_days = [];
+    value.days = [];
+    value.on = false;
+  }
+});
 
 const handleWeekdayToggle = (weekday: number) => {
   const current = value.week_days || [];
@@ -231,18 +232,6 @@ const handleDayToggle = (day: number) => {
     value.days = current.filter((d) => d !== day);
   } else {
     value.days = [...current, day].sort();
-  }
-};
-
-const handleAddSpecificDate = (date: DateValue | undefined) => {
-  if (!date) return;
-
-  const current = value.specific_dates || [];
-  // Check if date already exists
-  const exists = current.some(d => d.year === date.year && d.month === date.month && d.day === date.day);
-
-  if (!exists) {
-    value.specific_dates = [...current, date].sort((a, b) => a.compare(b));
   }
 };
 
@@ -297,7 +286,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
         </Card.Header>
         <Card.Content class="space-y-6">
           <!-- Frequency Selection -->
-          <Tabs.Root bind:value={value.frequency} onValueChange={handleFrequencyChange}>
+          <Tabs.Root bind:value={value.frequency}>
             <Tabs.List class="grid w-full grid-cols-4">
               <Tabs.Trigger value="daily" {disabled}>Daily</Tabs.Trigger>
               <Tabs.Trigger value="weekly" {disabled}>Weekly</Tabs.Trigger>
@@ -538,10 +527,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
               <Popover.Content class="w-auto p-0" align="start">
                 <Calendar.Calendar
                   type="multiple"
-                  value={value.specific_dates}
-                  onValueChange={(dates) => {
-                    value.specific_dates = dates;
-                  }}
+                  bind:value={value.specific_dates}
                   {disabled}
                   initialFocus />
               </Popover.Content>
@@ -593,8 +579,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
 
             {#if hasEndCondition}
               <Tabs.Root
-                value={value.end_type || 'limit'}
-                onValueChange={(v) => (value.end_type = v as 'limit' | 'until' | null)}>
+                bind:value={value.end_type}>
                 <Tabs.List class="grid w-full grid-cols-2">
                   <Tabs.Trigger value="limit" {disabled}>Limit occurrences</Tabs.Trigger>
                   <Tabs.Trigger value="until" {disabled}>End on date</Tabs.Trigger>
@@ -625,8 +610,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                       <Calendar.Calendar
                         type="single"
                         initialFocus
-                        value={value.end || today(getLocalTimeZone())}
-                        onValueChange={(v) => (value.end = v)}
+                        bind:value={value.end}
                         {disabled} />
                     </Popover.Content>
                   </Popover.Root>
@@ -683,7 +667,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                   {@const isStartDate = value.start && day.year === value.start.year && day.month === value.start.month && day.day === value.start.day}
                   {@const isRecurring = isUpcomingDate(day)}
                   {@const isSpecific = isSpecificDate(day)}
-                  {@const todayDate = today(getLocalTimeZone())}
+                  {@const todayDate = currentDate}
                   {@const isToday = day.year === todayDate.year && day.month === todayDate.month && day.day === todayDate.day}
                   {@const prevDay = day.subtract({ days: 1 })}
                   {@const nextDay = day.add({ days: 1 })}

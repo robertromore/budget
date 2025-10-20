@@ -9,6 +9,7 @@ export * from "./schedule-dates";
 export * from "./transactions";
 export * from "./views";
 export * from "./detected-patterns";
+export * from "./recommendations";
 
 // HSA-related schemas
 export * from "./medical-expenses";

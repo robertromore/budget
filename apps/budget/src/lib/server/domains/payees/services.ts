@@ -268,16 +268,16 @@ export class PayeeService {
    * Get all payees
    */
   async getAllPayees(): Promise<Payee[]> {
-    const result = await this.repository.findAll();
-    return result.data;
+    // Fetch all payees without pagination
+    return await this.repository.findAllPayees();
   }
 
   /**
    * Get all payees with transaction statistics
    */
   async getAllPayeesWithStats(): Promise<PayeeWithStats[]> {
-    const result = await this.repository.findAll();
-    const payees = result.data;
+    // Fetch all payees without pagination
+    const payees = await this.repository.findAllPayees();
 
     return await Promise.all(
       payees.map(async (payee) => {

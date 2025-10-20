@@ -1,9 +1,11 @@
 import {z} from "zod";
 import {rateLimitedProcedure, t} from "$lib/trpc";
-import {PatternDetectionService} from "$lib/server/domains/patterns";
+import {PatternDetectionService, PatternRepository} from "$lib/server/domains/patterns";
 import {withErrorHandler} from "$lib/trpc/shared/errors";
+import {TRPCError} from "@trpc/server";
 
-const patternService = new PatternDetectionService();
+const patternRepository = new PatternRepository();
+const patternService = new PatternDetectionService(patternRepository);
 
 const detectionCriteriaSchema = z.object({
   minOccurrences: z.number().min(2).optional(),
@@ -94,6 +96,9 @@ export const patternRoutes = t.router({
           input.status
         );
       } catch (error: any) {
+        console.error('[patterns.list] Error fetching patterns:', error);
+        console.error('[patterns.list] Error stack:', error.stack);
+
         // Multi-user error handling (ready for when auth is added)
         if (error.statusCode === 403) {
           throw new TRPCError({

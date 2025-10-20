@@ -4,9 +4,15 @@
   import * as Card from "$lib/components/ui/card";
   import { Badge } from "$lib/components/ui/badge";
   import { Input } from "$lib/components/ui/input";
-  import { listBudgetTemplates } from "$lib/query/budgets";
-  import type { BudgetTemplate } from "$lib/schema/budgets";
-  import { Search, Sparkles, LoaderCircle } from "@lucide/svelte/icons";
+  import * as Tabs from "$lib/components/ui/tabs";
+  import {
+    BUDGET_TEMPLATES,
+    TEMPLATE_CATEGORY_LABELS,
+    getTemplateCategories,
+    type BudgetTemplate,
+    type TemplateCategory
+  } from "$lib/constants/budget-templates";
+  import { Search, Sparkles } from "@lucide/svelte/icons";
   import * as LucideIcons from "@lucide/svelte/icons";
   import { currencyFormatter } from "$lib/utils/formatters";
   import { goto } from "$app/navigation";
@@ -31,26 +37,37 @@
   }
 
   let searchTerm = $state("");
+  let selectedCategory = $state<TemplateCategory | "all">("all");
 
-  // Fetch templates from database
-  const templatesQuery = $derived(listBudgetTemplates(true).options());
-  const templates = $derived(templatesQuery.data ?? []);
-  const isLoading = $derived(templatesQuery.isLoading);
+  // Use hardcoded templates from constants
+  const templates = BUDGET_TEMPLATES;
+  const categories = getTemplateCategories();
 
   const filteredTemplates = $derived.by(() => {
-    if (!searchTerm.trim()) return templates;
-    const term = searchTerm.toLowerCase();
-    return templates.filter(
-      (template) =>
-        template.name.toLowerCase().includes(term) ||
-        (template.description && template.description.toLowerCase().includes(term))
-    );
+    let result = templates;
+
+    // Filter by category
+    if (selectedCategory !== "all") {
+      result = result.filter((template) => template.category === selectedCategory);
+    }
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (template) =>
+          template.name.toLowerCase().includes(term) ||
+          template.description.toLowerCase().includes(term)
+      );
+    }
+
+    return result;
   });
 
   function selectTemplate(template: BudgetTemplate) {
     // Navigate to budget creation with template pre-selected
     const params = new URLSearchParams({
-      templateId: template.id.toString(),
+      templateId: template.id,
     });
     goto(`/budgets/new?${params.toString()}`);
     open = false;
@@ -102,13 +119,20 @@
         />
       </div>
 
+      <!-- Category Tabs -->
+      <Tabs.Root bind:value={selectedCategory}>
+        <Tabs.List class="grid w-full grid-cols-5">
+          <Tabs.Trigger value="all">All</Tabs.Trigger>
+          {#each categories as category}
+            <Tabs.Trigger value={category}>
+              {TEMPLATE_CATEGORY_LABELS[category]}
+            </Tabs.Trigger>
+          {/each}
+        </Tabs.List>
+      </Tabs.Root>
+
       <!-- Template Grid -->
-      {#if isLoading}
-        <div class="flex flex-col items-center justify-center py-12 text-center">
-          <LoaderCircle class="h-8 w-8 animate-spin text-muted-foreground" />
-          <p class="text-muted-foreground mt-4">Loading templates...</p>
-        </div>
-      {:else if filteredTemplates.length === 0}
+      {#if filteredTemplates.length === 0}
         <div class="flex flex-col items-center justify-center py-12 text-center">
           <p class="text-muted-foreground">No templates found</p>
           <p class="text-sm text-muted-foreground mt-2">

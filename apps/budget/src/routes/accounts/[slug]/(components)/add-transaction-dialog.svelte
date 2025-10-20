@@ -8,7 +8,7 @@ import DateInput from '$lib/components/input/date-input.svelte';
 import EntityInput from '$lib/components/input/entity-input.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import TransactionWizard from '$lib/components/wizard/transaction-wizard.svelte';
-import {today, getLocalTimeZone} from '@internationalized/date';
+import {currentDate} from '$lib/utils/dates';
 import type {EditableDateItem, EditableEntityItem} from '$lib/types';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
@@ -55,7 +55,7 @@ let activeTab = $state('manual');
 let isSubmitting = $state(false);
 let transactionForm = $state<TransactionFormData>({
   amount: 0,
-  date: today(getLocalTimeZone()).toString(),
+  date: currentDate.toString(),
   notes: null,
   payeeId: null,
   categoryId: null,
@@ -65,7 +65,7 @@ let transactionForm = $state<TransactionFormData>({
 });
 
 // Input component state
-let dateValue: EditableDateItem = $state(today(getLocalTimeZone()));
+let dateValue: EditableDateItem = $state(currentDate);
 let amount: number = $state<number>(0);
 let payee: EditableEntityItem = $state({
   id: 0,
@@ -92,7 +92,7 @@ $effect(() => {
 function resetForm() {
   transactionForm = {
     amount: 0,
-    date: today(getLocalTimeZone()).toString(),
+    date: currentDate.toString(),
     notes: null,
     payeeId: null,
     categoryId: null,
@@ -102,7 +102,7 @@ function resetForm() {
   };
 
   // Reset component state
-  dateValue = today(getLocalTimeZone());
+  dateValue = currentDate;
   amount = 0;
   payee = { id: 0, name: '' };
   category = { id: 0, name: '' };

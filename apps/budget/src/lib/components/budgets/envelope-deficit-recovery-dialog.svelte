@@ -23,6 +23,7 @@
   import {toast} from 'svelte-sonner';
   import {trpc} from '$lib/trpc/client';
   import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
+  import {createTransformAccessors} from '$lib/utils/bind-helpers';
 
   interface DeficitAnalysis {
     envelopeId: number;
@@ -93,8 +94,12 @@
   }: Props = $props();
 
   let selectedOptionIndex = $state<string | undefined>(undefined);
+  const selectedOptionAccessors = createTransformAccessors(
+    () => selectedOptionIndex ?? '',
+    (value: string) => { selectedOptionIndex = value || undefined; }
+  );
   let isPerformingQuickAction = $state<boolean>(false);
-  let selectedTransferSource = $state<string | undefined>(undefined);
+  let selectedTransferSource = $state<string>('');
   let transferAmount = $state<number>(envelope.deficitAmount);
   let surplusEnvelopes = $state<EnvelopeAllocation[]>([]);
   let isLoadingSurplus = $state<boolean>(false);
@@ -120,7 +125,7 @@
     open = false;
     selectedOptionIndex = undefined;
     isPerformingQuickAction = false;
-    selectedTransferSource = undefined;
+    selectedTransferSource = '';
     transferAmount = envelope.deficitAmount;
     surplusEnvelopes = [];
   }
@@ -337,7 +342,7 @@
                 <Card.Description>Choose which option to use to cover the deficit</Card.Description>
               </Card.Header>
               <Card.Content>
-                <RadioGroup.Root value={selectedOptionIndex ?? ''} onValueChange={(v) => selectedOptionIndex = v} class="space-y-3">
+                <RadioGroup.Root bind:value={selectedOptionAccessors.get, selectedOptionAccessors.set} class="space-y-3">
                   {#each analysis.autoRecoveryOptions as option, index}
                     {@const typeConfig = {
                       transfer: {color: 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800', icon: ArrowRight, label: 'Transfer'},
@@ -505,7 +510,7 @@
                     Load Available Envelopes
                   </Button>
                 {:else}
-                  <Select.Root type="single" value={selectedTransferSource ?? ''} onValueChange={(v) => selectedTransferSource = v}>
+                  <Select.Root type="single" bind:value={selectedTransferSource}>
                     <Select.Trigger>
                       {#if selectedTransferSource}
                         {@const selectedEnv = surplusEnvelopes.find((e) => String(e.id) === selectedTransferSource)}

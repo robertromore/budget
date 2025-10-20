@@ -8,6 +8,7 @@
   import {Badge} from "$lib/components/ui/badge";
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
+  import {createNumericRecordAccessors} from "$lib/utils/bind-helpers";
   import type {EnvelopeAllocation} from "$lib/schema/budgets/envelope-allocations";
 
   interface Props {
@@ -310,12 +311,13 @@
           <Label>Manual Allocations</Label>
           <div class="grid gap-3 md:grid-cols-2">
             {#each envelopes.filter(env => env.status === "active") as envelope (envelope.id)}
+              {@const accessors = createNumericRecordAccessors(manualAllocations, envelope.id, 0)}
               <div class="flex items-center gap-2">
                 <span class="text-sm font-medium min-w-0 flex-1 truncate">
                   {getCategoryName(envelope.categoryId)}
                 </span>
                 <NumericInput
-                  bind:value={manualAllocations[envelope.id]}
+                  bind:value={accessors.get, accessors.set}
                   buttonClass="w-24 h-8 text-sm"
                 />
               </div>
@@ -355,7 +357,7 @@
 
           <Button
             onclick={executeBulkAllocation}
-            disabled={allocationPreview.length === 0 || Math.abs(allocationDifference) > parseFloat(totalToAllocate) * 0.01}
+            disabled={allocationPreview.length === 0 || Math.abs(allocationDifference) > totalToAllocate * 0.01}
             class="w-full"
           >
             Execute Allocation ({allocationPreview.length} envelopes)

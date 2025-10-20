@@ -33,9 +33,10 @@ const expenses = $derived.by((): ExpenseFormat[] => {
     // Parse date
     let date;
     try {
-      date = parseDate(expense.serviceDate.split('T')[0]);
+      const datePart = expense.serviceDate.split('T')[0];
+      date = parseDate(datePart || new Date().toISOString().split('T')[0]!);
     } catch {
-      date = parseDate(new Date().toISOString().split('T')[0]);
+      date = parseDate(new Date().toISOString().split('T')[0]!);
     }
 
     return {
@@ -67,7 +68,6 @@ async function handleUpdateData(id: number, columnId: string, newValue?: unknown
   try {
     const updateData: any = {
       id,
-      hsaAccountId,
     };
 
     // Map column IDs to update fields

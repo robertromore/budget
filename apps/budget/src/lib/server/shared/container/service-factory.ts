@@ -25,13 +25,15 @@ import { MedicalExpenseRepository } from '$lib/server/domains/medical-expenses/r
 import { CategoryService } from '$lib/server/domains/categories/services';
 import { PatternDetectionService } from '$lib/server/domains/patterns/services';
 import { BudgetTransactionService, BudgetService, GoalTrackingService, BudgetForecastService, BudgetPeriodService } from '$lib/server/domains/budgets/services';
+import { BudgetIntelligenceService } from '$lib/server/domains/budgets/intelligence-service';
 import { BudgetCalculationService } from '$lib/server/domains/budgets/calculation-service';
 import { EnvelopeService } from '$lib/server/domains/budgets/envelope-service';
-import { BudgetIntelligenceService } from '$lib/server/domains/budgets/intelligence-service';
 import { BudgetTemplateService } from '$lib/server/domains/budgets/template-service';
 import { PeriodManager } from '$lib/server/domains/budgets/period-manager';
 import { RolloverCalculator } from '$lib/server/domains/budgets/rollover-calculator';
 import { DeficitRecoveryService } from '$lib/server/domains/budgets/deficit-recovery';
+import { BudgetAnalysisService } from '$lib/server/domains/budgets/budget-analysis-service';
+import { RecommendationService } from '$lib/server/domains/budgets/recommendation-service';
 import { TransactionService } from '$lib/server/domains/transactions/services';
 import { PayeeService } from '$lib/server/domains/payees/services';
 import { PayeeIntelligenceService } from '$lib/server/domains/payees/intelligence';
@@ -366,7 +368,9 @@ export class ServiceFactory {
   getBudgetIntelligenceService(): BudgetIntelligenceService {
     const key = 'BudgetIntelligenceService';
     if (!this.instances.has(key)) {
-      this.instances.set(key, new BudgetIntelligenceService());
+      this.instances.set(key, new BudgetIntelligenceService(
+        this.getBudgetRepository()
+      ));
     }
     return this.instances.get(key) as BudgetIntelligenceService;
   }
@@ -397,6 +401,22 @@ export class ServiceFactory {
     return this.instances.get(key) as PeriodManager;
   }
 
+  getBudgetAnalysisService(): BudgetAnalysisService {
+    const key = 'BudgetAnalysisService';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new BudgetAnalysisService());
+    }
+    return this.instances.get(key) as BudgetAnalysisService;
+  }
+
+  getRecommendationService(): RecommendationService {
+    const key = 'RecommendationService';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new RecommendationService());
+    }
+    return this.instances.get(key) as RecommendationService;
+  }
+
   getBudgetService(): BudgetService {
     const key = 'BudgetService';
     if (!this.instances.has(key)) {
@@ -405,7 +425,9 @@ export class ServiceFactory {
         this.getEnvelopeService(),
         this.getGoalTrackingService(),
         this.getBudgetForecastService(),
-        this.getBudgetIntelligenceService()
+        this.getBudgetIntelligenceService(),
+        this.getBudgetAnalysisService(),
+        this.getRecommendationService()
       ));
     }
     return this.instances.get(key) as BudgetService;

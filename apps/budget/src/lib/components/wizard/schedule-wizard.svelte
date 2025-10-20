@@ -22,11 +22,13 @@
   import DateInput from "$lib/components/input/date-input.svelte";
   import MultiNumericInput from "$lib/components/input/multi-numeric-input.svelte";
   import RepeatingDateInputModel from "$lib/models/repeating_date.svelte";
-  import { type DateValue, today, getLocalTimeZone } from "@internationalized/date";
+  import type { DateValue } from "@internationalized/date";
+  import { timezone, currentDate } from "$lib/utils/dates";
   import { scheduleWizardStore, type WizardStep as WizardStepType } from "$lib/stores/wizardStore.svelte";
   import { createScheduleValidationEngine } from "$lib/utils/wizardValidation";
   import type { Schedule } from "$lib/schema/schedules";
   import type { EditableEntityItem } from "$lib/types";
+  import { createTransformAccessors } from "$lib/utils/bind-helpers";
 
   interface Props {
     initialData?: Partial<Schedule>;
@@ -71,6 +73,23 @@
   let amountValue = $state<[number, number]>([0, 0]);
   let amountType = $state<'exact' | 'approximate' | 'range'>('exact');
 
+  // Select state variables
+  let payeeSelectValue = $state(initialData?.payeeId?.toString() || '');
+  const payeeSelectAccessors = createTransformAccessors(
+    () => payeeSelectValue,
+    (value: string) => { payeeSelectValue = value; }
+  );
+  let accountSelectValue = $state(initialData?.accountId?.toString() || '');
+  const accountSelectAccessors = createTransformAccessors(
+    () => accountSelectValue,
+    (value: string) => { accountSelectValue = value; }
+  );
+  let categorySelectValue = $state(initialData?.categoryId?.toString() || '');
+  const categorySelectAccessors = createTransformAccessors(
+    () => categorySelectValue,
+    (value: string) => { categorySelectValue = value; }
+  );
+
   // Sync amountValue and amountType with formData
   $effect(() => {
     amountValue = [formData['amount'] ?? 0, formData['amount_2'] ?? 0];
@@ -81,6 +100,38 @@
     updateField('amount', amountValue[0]);
     updateField('amount_2', amountValue[1]);
     updateField('amount_type', amountType);
+  });
+
+  // Sync select values with formData
+  $effect(() => {
+    if (formData['payeeId'] !== undefined) {
+      payeeSelectValue = formData['payeeId']?.toString() || '';
+    }
+    if (formData['accountId'] !== undefined) {
+      accountSelectValue = formData['accountId']?.toString() || '';
+    }
+    if (formData['categoryId'] !== undefined) {
+      categorySelectValue = formData['categoryId']?.toString() || '';
+    }
+  });
+
+  // Update formData when select values change
+  $effect(() => {
+    if (payeeSelectValue && payeeSelectValue !== formData['payeeId']?.toString()) {
+      updateField('payeeId', parseInt(payeeSelectValue));
+    }
+  });
+
+  $effect(() => {
+    if (accountSelectValue && accountSelectValue !== formData['accountId']?.toString()) {
+      updateField('accountId', parseInt(accountSelectValue));
+    }
+  });
+
+  $effect(() => {
+    if (categorySelectValue && categorySelectValue !== formData['categoryId']?.toString()) {
+      updateField('categoryId', parseInt(categorySelectValue));
+    }
   });
 
   // Set up validation engine
@@ -145,7 +196,7 @@
     if (field === 'recurring') {
       if (value === false) {
         // Initialize one-time date with today's date if not already set
-        const todayDate = today(getLocalTimeZone());
+        const todayDate = currentDate;
         if (!oneTimeDate) {
           oneTimeDate = todayDate;
         }
@@ -248,9 +299,9 @@
         {:else}
           <div class="space-y-4">
             <DateInput
-              value={oneTimeDate ?? today(getLocalTimeZone())}
+              value={oneTimeDate ?? currentDate}
               handleSubmit={(value) => {
-                oneTimeDate = value ?? today(getLocalTimeZone());
+                oneTimeDate = value ?? currentDate;
                 updateField('transaction_date', oneTimeDate);
               }}
             />
@@ -364,13 +415,12 @@
       <Label class="text-sm font-medium">Payee *</Label>
       <Select.Root
         type="single"
-        value={formData['payeeId']?.toString() || ''}
-        onValueChange={(value) => value && updateField('payeeId', parseInt(value))}
+        bind:value={payeeSelectAccessors.get, payeeSelectAccessors.set}
       >
         <Select.Trigger>
           <div class="flex items-center gap-2">
             <HandCoins class="h-4 w-4 text-muted-foreground" />
-            <span>{payees.find(p => p.id === formData['payeeId'])?.name || 'Select payee...'}</span>
+            <span>{payees.find(p => p.id.toString() === payeeSelectValue)?.name || 'Select payee...'}</span>
           </div>
         </Select.Trigger>
         <Select.Content>
@@ -389,13 +439,12 @@
       <Label class="text-sm font-medium">Account *</Label>
       <Select.Root
         type="single"
-        value={formData['accountId']?.toString() || ''}
-        onValueChange={(value) => value && updateField('accountId', parseInt(value))}
+        bind:value={accountSelectAccessors.get, accountSelectAccessors.set}
       >
         <Select.Trigger>
           <div class="flex items-center gap-2">
             <Building2 class="h-4 w-4 text-muted-foreground" />
-            <span>{accounts.find(a => a.id === formData['accountId'])?.name || 'Select account...'}</span>
+            <span>{accounts.find(a => a.id.toString() === accountSelectValue)?.name || 'Select account...'}</span>
           </div>
         </Select.Trigger>
         <Select.Content>
@@ -414,13 +463,12 @@
       <Label class="text-sm font-medium">Category</Label>
       <Select.Root
         type="single"
-        value={formData['categoryId']?.toString() || ''}
-        onValueChange={(value) => value && updateField('categoryId', parseInt(value))}
+        bind:value={categorySelectAccessors.get, categorySelectAccessors.set}
       >
         <Select.Trigger>
           <div class="flex items-center gap-2">
             <Tag class="h-4 w-4 text-muted-foreground" />
-            <span>{categories.find(c => c.id === formData['categoryId'])?.name || 'Select category...'}</span>
+            <span>{categories.find(c => c.id.toString() === categorySelectValue)?.name || 'Select category...'}</span>
           </div>
         </Select.Trigger>
         <Select.Content>
