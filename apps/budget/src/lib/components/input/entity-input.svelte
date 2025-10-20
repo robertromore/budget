@@ -90,6 +90,51 @@ $effect(() => {
     visibleEntities = entities;
   }
 });
+
+// Scroll selected item into view when popover opens
+$effect(() => {
+  if (open && value?.id) {
+    // Wait for DOM to render, then scroll
+    // Use multiple animation frames to ensure content is fully rendered
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          // Find the wrapper element
+          const wrapper = document.querySelector(`[data-value="${value.id}"]`) as HTMLElement;
+
+          if (wrapper) {
+            // Look for the actual item element
+            const item = wrapper.querySelector('[role="option"]') as HTMLElement ||
+                        wrapper.querySelector('[cmdk-item]') as HTMLElement ||
+                        wrapper.firstElementChild as HTMLElement;
+
+            if (item) {
+              // Get the scrollable container (Command.List)
+              const scrollContainer = item.closest('[cmdk-list]') as HTMLElement;
+
+              if (scrollContainer) {
+                // Calculate the position to scroll to
+                const itemTop = item.offsetTop;
+                const itemHeight = item.offsetHeight;
+                const containerHeight = scrollContainer.clientHeight;
+
+                // Center the item in the container
+                const scrollTo = itemTop - (containerHeight / 2) + (itemHeight / 2);
+                scrollContainer.scrollTop = scrollTo;
+              } else {
+                // Fallback to scrollIntoView if we can't find the container
+                item.scrollIntoView({
+                  block: 'center',
+                  behavior: 'instant'
+                });
+              }
+            }
+          }
+        }, 50);
+      });
+    });
+  }
+});
 </script>
 
 <div class={cn('flex items-center space-x-4', className)}>
@@ -128,6 +173,7 @@ $effect(() => {
               {#each visibleEntities as entity}
                 <Command.Item
                   value={entity.id + ''}
+                  data-value={entity.id}
                   class={cn(value?.id == entity.id && 'bg-muted')}
                   onSelect={() => {
                     value = entity;
@@ -174,6 +220,7 @@ $effect(() => {
               {#each visibleEntities as entity}
                 <Command.Item
                   value={entity.id + ''}
+                  data-value={entity.id}
                   class={cn(value?.id == entity.id && 'bg-muted')}
                   onSelect={() => {
                     value = entity;
