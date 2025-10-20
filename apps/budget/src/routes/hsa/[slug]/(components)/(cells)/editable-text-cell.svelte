@@ -44,12 +44,11 @@ $effect(() => {
       </Button>
     {/snippet}
   </Popover.Trigger>
-  <Popover.Content class="grid w-auto gap-2 p-2" align="start">
+  <Popover.Content class="grid gap-2 p-2" align="start">
     {#if multiline}
       <Textarea
         {placeholder}
         bind:value={newValue}
-        class="min-w-[300px]"
       />
     {:else}
       <Input
