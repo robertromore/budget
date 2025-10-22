@@ -16,7 +16,6 @@ import * as Card from '$lib/components/ui/card';
 import * as Select from '$lib/components/ui/select';
 import * as Tabs from '$lib/components/ui/tabs';
 import {Badge} from '$lib/components/ui/badge';
-import {Progress} from '$lib/components/ui/progress';
 import {Separator} from '$lib/components/ui/separator';
 import * as Dialog from '$lib/components/ui/dialog';
 import {Input} from '$lib/components/ui/input';
@@ -27,7 +26,6 @@ import EnvelopeSettingsSheet from '$lib/components/budgets/envelope-settings-she
 import EnvelopeCreateSheet from '$lib/components/budgets/envelope-create-sheet.svelte';
 import EnvelopeDeficitRecoveryDialog from '$lib/components/budgets/envelope-deficit-recovery-dialog.svelte';
 import BudgetPeriodInstanceManager from '$lib/components/budgets/budget-period-instance-manager.svelte';
-import {BudgetPeriodPicker} from '$lib/components/budgets';
 import PeriodAutomation from '../(components)/managers/period-automation.svelte';
 import BudgetRolloverManager from '../(components)/managers/budget-rollover-manager.svelte';
 import PeriodTemplateSheet from '../(components)/sheets/period-template-sheet.svelte';
@@ -56,6 +54,7 @@ import {listCategories} from '$lib/query/categories';
 import {trpc} from '$lib/trpc/client';
 import {deleteBudgetDialog, deleteBudgetId} from '$lib/states/ui/global.svelte';
 import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
+import type {Schedule} from '$lib/schema/schedules';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash2 from '@lucide/svelte/icons/trash-2';
@@ -66,7 +65,6 @@ import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Repeat from '@lucide/svelte/icons/repeat';
 import Wallet from '@lucide/svelte/icons/wallet';
-import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
 import Info from '@lucide/svelte/icons/info';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import Settings2 from '@lucide/svelte/icons/settings-2';
@@ -85,6 +83,23 @@ let budget = $derived(budgetQuery.data);
 let isLoading = $derived(budgetQuery.isLoading);
 
 const isEnvelopeBudget = $derived(budget?.type === 'category-envelope');
+
+// Fetch linked schedule if this is a scheduled-expense budget
+const linkedScheduleId = $derived(budget?.metadata?.scheduledExpense?.linkedScheduleId as number | undefined);
+let linkedSchedule = $state<Schedule | null>(null);
+
+$effect(() => {
+  if (linkedScheduleId) {
+    trpc().scheduleRoutes.load.query({id: linkedScheduleId})
+      .then(schedule => linkedSchedule = schedule)
+      .catch(err => {
+        console.error('Failed to load linked schedule:', err);
+        linkedSchedule = null;
+      });
+  } else {
+    linkedSchedule = null;
+  }
+});
 
 // Validation state
 const validation = $derived(budget ? getBudgetValidationIssues(budget) : { hasIssues: false, invalidCategories: 0, invalidAccounts: 0, messages: [] });
@@ -646,7 +661,7 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
           <Button
             variant="outline"
             size="sm"
-            onclick={() => editDialogOpen = true}
+            onclick={() => editTemplateDialogOpen = true}
             class="bg-background"
           >
             <Settings2 class="h-4 w-4 mr-2" />
@@ -738,392 +753,6 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
           </div>
         </Card.Content>
       </Card.Root>
-
-      <!-- Envelopes moved to separate tab -->
-      {#if false}
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-xl font-semibold flex items-center gap-2">
-                <Wallet class="h-5 w-5" />
-                Envelopes
-              </h2>
-              <p class="text-sm text-muted-foreground mt-1">
-                {envelopes.length} total envelope{envelopes.length !== 1 ? 's' : ''}
-                {#if overspentEnvelopes.length > 0}
-                  <span class="text-destructive ml-2">• {overspentEnvelopes.length} overspent</span>
-                {/if}
-              </p>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <!-- Add Envelope Button -->
-              {#if currentPeriod && availableCategories.length > 0}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onclick={() => envelopeCreateOpen = true}
-                  disabled={!currentPeriod || isSelectedPeriodPast}
-                  title={isSelectedPeriodPast ? 'Cannot add envelopes to past periods' : ''}
-                >
-                  <Plus class="h-4 w-4 mr-2" />
-                  Add Envelope
-                </Button>
-              {/if}
-
-              <!-- View Mode Switcher -->
-              <div class="flex items-center gap-1 border rounded-lg p-1">
-                <Button
-                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  class="h-8 px-3"
-                  onclick={() => viewMode = 'list'}
-                >
-                  <List class="h-4 w-4" />
-                  <span class="ml-2 hidden sm:inline">List</span>
-                </Button>
-                <Button
-                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  class="h-8 px-3"
-                  onclick={() => viewMode = 'grid'}
-                >
-                  <LayoutGrid class="h-4 w-4" />
-                  <span class="ml-2 hidden sm:inline">Grid</span>
-                </Button>
-                <Button
-                  variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  class="h-8 px-3"
-                  onclick={() => viewMode = 'kanban'}
-                >
-                  <Columns3 class="h-4 w-4" />
-                  <span class="ml-2 hidden sm:inline">Board</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {#if envelopes.length === 0}
-            <Card.Root class="border-dashed">
-              <Card.Content class="py-12 text-center">
-                <Wallet class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p class="text-lg font-medium mb-2">No Envelopes Yet</p>
-                {#if !firstTemplateId}
-                  <p class="text-sm text-muted-foreground mb-2">
-                    Before creating envelopes, you need to set up a period template.
-                  </p>
-                  <p class="text-sm text-muted-foreground mb-6">
-                    Period templates define how often your budget cycles (weekly, monthly, etc.).
-                  </p>
-                  <Button variant="outline" onclick={() => periodTemplateDialogOpen = true}>
-                    <Calendar class="h-4 w-4 mr-2" />
-                    Create Period Template
-                  </Button>
-                {:else if !currentPeriod}
-                  <p class="text-sm text-muted-foreground mb-4">
-                    No periods have been created yet. Click below to generate periods for your budget.
-                  </p>
-                  <Button
-                    variant="outline"
-                    onclick={async () => {
-                      if (budget?.id) {
-                        await maintenanceMutation.mutateAsync(budget.id);
-                      }
-                    }}
-                    disabled={maintenanceMutation.isPending}
-                  >
-                    {#if maintenanceMutation.isPending}
-                      <Repeat class="h-4 w-4 mr-2 animate-spin" />
-                      Creating Periods...
-                    {:else}
-                      <Calendar class="h-4 w-4 mr-2" />
-                      Create Periods
-                    {/if}
-                  </Button>
-                {:else}
-                  <p class="text-sm text-muted-foreground mb-6">
-                    {#if isSelectedPeriodPast}
-                      Cannot add envelopes to past periods. Please select a current or future period.
-                    {:else}
-                      Create your first envelope to start tracking category budgets.
-                    {/if}
-                  </p>
-                  <Button
-                    variant="outline"
-                    onclick={() => envelopeCreateOpen = true}
-                    disabled={isSelectedPeriodPast}
-                  >
-                    <Wallet class="h-4 w-4 mr-2" />
-                    Add Envelope
-                  </Button>
-                {/if}
-              </Card.Content>
-            </Card.Root>
-          {:else}
-            <!-- List View -->
-            {#if viewMode === 'list'}
-              <div class="space-y-2">
-                {#each envelopes as envelope (envelope.id)}
-                  <div class="flex items-center gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-2 mb-1">
-                        <h3 class="font-medium truncate">{getCategoryName(envelope.categoryId)}</h3>
-                        <Badge variant={
-                          envelope.status === 'overspent' ? 'destructive' :
-                          envelope.status === 'depleted' ? 'secondary' :
-                          envelope.status === 'active' ? 'default' : 'outline'
-                        } class="text-xs">
-                          {envelope.status}
-                        </Badge>
-                      </div>
-                      <div class="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Allocated: {currencyFormatter.format(envelope.allocatedAmount)}</span>
-                        <span>•</span>
-                        <span>Spent: {currencyFormatter.format(envelope.spentAmount)}</span>
-                        <span>•</span>
-                        <span class={envelope.availableAmount < 0 ? 'text-destructive font-medium' : 'text-emerald-600 font-medium'}>
-                          {envelope.availableAmount < 0 ? 'Over' : 'Available'}: {currencyFormatter.format(Math.abs(envelope.availableAmount))}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onclick={() => handleEnvelopeSettings(envelope)}
-                      >
-                        <Settings2 class="h-4 w-4" />
-                      </Button>
-                      {#if envelope.status === 'overspent'}
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onclick={() => handleDeficitRecover(envelope)}
-                        >
-                          Recover
-                        </Button>
-                      {/if}
-                    </div>
-                  </div>
-                {/each}
-              </div>
-
-            <!-- Grid View -->
-            {:else if viewMode === 'grid'}
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {#each envelopes as envelope (envelope.id)}
-                  <EnvelopeAllocationCard
-                    {envelope}
-                    categoryName={getCategoryName(envelope.categoryId)}
-                    editable={true}
-                    onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                    onTransferRequest={() => handleTransferRequest(envelope)}
-                    onDeficitRecover={() => handleDeficitRecover(envelope)}
-                    onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                  />
-                {/each}
-              </div>
-
-            <!-- Kanban Board View -->
-            {:else if viewMode === 'kanban'}
-              <div class="hidden xl:block overflow-x-auto">
-              <div class="flex gap-4 min-w-max pb-4">
-                <!-- Overspent Column -->
-                <div class="space-y-3 w-80 flex-shrink-0">
-                  <div class="flex items-center justify-between px-3 py-2 bg-destructive/5 border border-destructive/20 rounded-lg">
-                    <div class="flex items-center gap-2">
-                      <TriangleAlert class="h-4 w-4 text-destructive" />
-                      <h3 class="font-semibold text-sm text-destructive">Overspent</h3>
-                    </div>
-                    <Badge variant="destructive" class="text-xs">{overspentEnvelopes.length}</Badge>
-                  </div>
-                  <div class="space-y-3 min-h-[200px]">
-                    {#each overspentEnvelopes as envelope (envelope.id)}
-                      <EnvelopeAllocationCard
-                        envelope={envelope}
-                        categoryName={getCategoryName(envelope.categoryId)}
-                        editable={true}
-                        onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                        onTransferRequest={() => handleTransferRequest(envelope)}
-                        onDeficitRecover={() => handleDeficitRecover(envelope)}
-                        onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                      />
-                    {/each}
-                    {#if overspentEnvelopes.length === 0}
-                      <div class="flex items-center justify-center h-32 border-2 border-dashed border-muted rounded-lg">
-                        <p class="text-xs text-muted-foreground">No overspent envelopes</p>
-                      </div>
-                    {/if}
-                  </div>
-                </div>
-
-                <!-- Depleted Column -->
-                <div class="space-y-3 w-80 flex-shrink-0">
-                  <div class="flex items-center justify-between px-3 py-2 bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg">
-                    <div class="flex items-center gap-2">
-                      <TriangleAlert class="h-4 w-4 text-orange-600" />
-                      <h3 class="font-semibold text-sm text-orange-700 dark:text-orange-400">Depleted</h3>
-                    </div>
-                    <Badge variant="secondary" class="text-xs">{depletedEnvelopes.length}</Badge>
-                  </div>
-                  <div class="space-y-3 min-h-[200px]">
-                    {#each depletedEnvelopes as envelope (envelope.id)}
-                      <EnvelopeAllocationCard
-                        envelope={envelope}
-                        categoryName={getCategoryName(envelope.categoryId)}
-                        editable={true}
-                        onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                        onTransferRequest={() => handleTransferRequest(envelope)}
-                        onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                      />
-                    {/each}
-                    {#if depletedEnvelopes.length === 0}
-                      <div class="flex items-center justify-center h-32 border-2 border-dashed border-muted rounded-lg">
-                        <p class="text-xs text-muted-foreground">No depleted envelopes</p>
-                      </div>
-                    {/if}
-                  </div>
-                </div>
-
-                <!-- Active Column -->
-                <div class="space-y-3 w-80 flex-shrink-0">
-                  <div class="flex items-center justify-between px-3 py-2 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-                    <div class="flex items-center gap-2">
-                      <CircleCheck class="h-4 w-4 text-emerald-600" />
-                      <h3 class="font-semibold text-sm text-emerald-700 dark:text-emerald-400">Active</h3>
-                    </div>
-                    <Badge variant="secondary" class="text-xs">{envelopes.filter(e => e.status === 'active').length}</Badge>
-                  </div>
-                  <div class="space-y-3 min-h-[200px]">
-                    {#each envelopes.filter(e => e.status === 'active') as envelope (envelope.id)}
-                      <EnvelopeAllocationCard
-                        envelope={envelope}
-                        categoryName={getCategoryName(envelope.categoryId)}
-                        editable={true}
-                        onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                        onTransferRequest={() => handleTransferRequest(envelope)}
-                        onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                      />
-                    {/each}
-                    {#if envelopes.filter(e => e.status === 'active').length === 0}
-                      <div class="flex items-center justify-center h-32 border-2 border-dashed border-muted rounded-lg">
-                        <p class="text-xs text-muted-foreground">No active envelopes</p>
-                      </div>
-                    {/if}
-                  </div>
-                </div>
-
-                <!-- Paused Column -->
-                <div class="space-y-3 w-80 flex-shrink-0">
-                  <div class="flex items-center justify-between px-3 py-2 bg-muted/50 border border-muted-foreground/20 rounded-lg">
-                    <div class="flex items-center gap-2">
-                      <TrendingUp class="h-4 w-4 text-muted-foreground" />
-                      <h3 class="font-semibold text-sm text-muted-foreground">Paused</h3>
-                    </div>
-                    <Badge variant="outline" class="text-xs">{envelopes.filter(e => e.status === 'paused').length}</Badge>
-                  </div>
-                  <div class="space-y-3 min-h-[200px]">
-                    {#each envelopes.filter(e => e.status === 'paused') as envelope (envelope.id)}
-                      <EnvelopeAllocationCard
-                        envelope={envelope}
-                        categoryName={getCategoryName(envelope.categoryId)}
-                        editable={true}
-                        onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                        onTransferRequest={() => handleTransferRequest(envelope)}
-                        onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                      />
-                    {/each}
-                    {#if envelopes.filter(e => e.status === 'paused').length === 0}
-                      <div class="flex items-center justify-center h-32 border-2 border-dashed border-muted rounded-lg">
-                        <p class="text-xs text-muted-foreground">No paused envelopes</p>
-                      </div>
-                    {/if}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Mobile/Tablet View (< xl screens) -->
-            <div class="xl:hidden space-y-6">
-              <!-- Overspent envelopes first (if any) -->
-              {#if overspentEnvelopes.length > 0}
-                <div class="space-y-3">
-                  <div class="flex items-center gap-2 text-sm">
-                    <TriangleAlert class="h-4 w-4 text-destructive" />
-                    <h3 class="font-medium text-destructive">Needs Attention ({overspentEnvelopes.length})</h3>
-                  </div>
-                  <div class="grid gap-4 md:grid-cols-2">
-                    {#each overspentEnvelopes as envelope (envelope.id)}
-                      <EnvelopeAllocationCard
-                        envelope={envelope}
-                        categoryName={getCategoryName(envelope.categoryId)}
-                        editable={true}
-                        onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                        onTransferRequest={() => handleTransferRequest(envelope)}
-                        onDeficitRecover={() => handleDeficitRecover(envelope)}
-                        onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                      />
-                    {/each}
-                  </div>
-                </div>
-              {/if}
-
-              <!-- Active envelopes -->
-              {#if activeEnvelopes.length > 0}
-                <div class="space-y-3">
-                  {#if overspentEnvelopes.length > 0}
-                    <Separator />
-                  {/if}
-                  <h3 class="font-medium text-sm flex items-center gap-2">
-                    <CircleCheck class="h-4 w-4 text-muted-foreground" />
-                    Active & Depleted ({activeEnvelopes.length})
-                  </h3>
-                  <div class="grid gap-4 md:grid-cols-2">
-                    {#each activeEnvelopes as envelope (envelope.id)}
-                      {#if envelope.status !== 'overspent'}
-                        <EnvelopeAllocationCard
-                          envelope={envelope}
-                          categoryName={getCategoryName(envelope.categoryId)}
-                          editable={true}
-                          onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                          onTransferRequest={() => handleTransferRequest(envelope)}
-                          onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                        />
-                      {/if}
-                    {/each}
-                  </div>
-                </div>
-              {/if}
-
-              <!-- Paused envelopes -->
-              {#if envelopes.filter(e => e.status === 'paused').length > 0}
-                <div class="space-y-3">
-                  <Separator />
-                  <h3 class="font-medium text-sm flex items-center gap-2 text-muted-foreground">
-                    <TrendingUp class="h-4 w-4" />
-                    Paused ({envelopes.filter(e => e.status === 'paused').length})
-                  </h3>
-                  <div class="grid gap-4 md:grid-cols-2">
-                    {#each envelopes.filter(e => e.status === 'paused') as envelope (envelope.id)}
-                      <EnvelopeAllocationCard
-                        envelope={envelope}
-                        categoryName={getCategoryName(envelope.categoryId)}
-                        editable={true}
-                        onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                        onTransferRequest={() => handleTransferRequest(envelope)}
-                        onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                      />
-                    {/each}
-                  </div>
-                </div>
-              {/if}
-            </div>
-            {/if}
-          {/if}
-        </div>
-      {/if}
-
     </div>
 
     <!-- Sidebar Column (visible on lg+ screens) -->

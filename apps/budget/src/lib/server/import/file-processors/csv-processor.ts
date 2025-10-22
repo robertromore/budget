@@ -20,7 +20,7 @@ import {
 export class CSVProcessor implements FileProcessor {
   private readonly maxFileSize = 10 * 1024 * 1024; // 10MB
   private readonly supportedFormats = ['.csv', '.txt'];
-  private columnMapping?: ColumnMapping;
+  private columnMapping: ColumnMapping | undefined;
 
   constructor(columnMapping?: ColumnMapping) {
     this.columnMapping = columnMapping;
@@ -91,7 +91,7 @@ export class CSVProcessor implements FileProcessor {
               );
 
               if (criticalErrors.length > 0) {
-                const firstError = criticalErrors[0];
+                const firstError = criticalErrors[0]!;
                 throw new ParseError(
                   `CSV parsing failed: ${firstError.message}`,
                   firstError.row,
@@ -184,7 +184,11 @@ export class CSVProcessor implements FileProcessor {
     }
 
     if (this.columnMapping.category && row[this.columnMapping.category] !== undefined) {
-      mapped['category'] = row[this.columnMapping.category];
+      const categoryValue = row[this.columnMapping.category];
+      // Filter out "Uncategorized" - treat it as no category
+      if (categoryValue && categoryValue.trim().toLowerCase() !== 'uncategorized') {
+        mapped['category'] = categoryValue;
+      }
     }
 
     if (this.columnMapping.status && row[this.columnMapping.status] !== undefined) {

@@ -16,16 +16,18 @@ import type {
   ParseResult,
   ImportResult,
   ImportPreviewData,
-  PayeePreview,
-  CategoryPreview,
   ColumnMapping,
 } from '$lib/types/import';
 import type {Account} from '$lib/schema/accounts';
 import {useQueryClient} from '@tanstack/svelte-query';
 import {PayeesState} from '$lib/states/entities/payees.svelte';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import Fuse from 'fuse.js';
 import {toast} from 'svelte-sonner';
+import {
+  PAYMENT_PROCESSORS,
+  detectPaymentProcessor,
+  countProcessorTransactions,
+} from '$lib/utils/import/payment-processor-filter';
 
 let {data} = $props();
 const queryClient = useQueryClient();
@@ -45,37 +47,16 @@ let currentStep = $state<Step>('upload');
 let selectedFile = $state<File | null>(null);
 let fileData = $state<{data: string; name: string; type: string} | null>(null);
 let parseResults = $state<ParseResult | null>(null);
-let columnMapping = $state<ColumnMapping | null>(null);
 let rawCSVData = $state<Record<string, any>[] | null>(null);
+let columnMapping = $state<ColumnMapping | null>(null);
 let entityPreview = $state<ImportPreviewData | null>(null);
 let importResult = $state<ImportResult | null>(null);
 let isProcessing = $state(false);
 let error = $state<string | null>(null);
 let selectedRows = $state<Set<number>>(new Set());
 
-// Entity overrides - track user-selected payee/category for each row
-let entityOverrides = $state<Record<number, {payeeId?: number | null; payeeName?: string | null; categoryId?: number | null; categoryName?: string | null}>>({});
-
-// Derive temporary entities (created during preview but not yet in database)
-const temporaryCategories = $derived.by(() => {
-  const tempCats = new Set<string>();
-  Object.values(entityOverrides).forEach(override => {
-    if (override.categoryName && !override.categoryId) {
-      tempCats.add(override.categoryName);
-    }
-  });
-  return Array.from(tempCats);
-});
-
-const temporaryPayees = $derived.by(() => {
-  const tempPayees = new Set<string>();
-  Object.values(entityOverrides).forEach(override => {
-    if (override.payeeName && !override.payeeId) {
-      tempPayees.add(override.payeeName);
-    }
-  });
-  return Array.from(tempPayees);
-});
+// Entity overrides - track user-selected payee/category/description for each row
+let entityOverrides = $state<Record<number, {payeeId?: number | null; payeeName?: string | null; categoryId?: number | null; categoryName?: string | null; description?: string | null}>>({});
 
 // Import options
 let createMissingPayees = $state(true);
@@ -104,19 +85,72 @@ const previewData = $derived.by(() => {
           // Apply entity overrides if set
           payee: override?.payeeName !== undefined ? override.payeeName : row.normalizedData['payee'],
           category: override?.categoryName !== undefined ? override.categoryName : row.normalizedData['category'],
+          description: override?.description !== undefined ? override.description : (row.normalizedData['description'] || row.normalizedData['notes']),
         }
       };
     })
   };
 });
 
+// Derive temporary entities (created during preview but not yet in database)
+const temporaryCategories = $derived.by(() => {
+  const tempCats = new Set<string>();
+
+  // Use previewData (which includes overrides) to determine actual temporary categories
+  if (previewData) {
+    const categoryState = CategoriesState.get();
+    const existingCategoryNames = categoryState
+      ? new Set(Array.from(categoryState.categories.values()).map(c => c.name?.toLowerCase()))
+      : new Set();
+
+    previewData.rows.forEach(row => {
+      const categoryName = row.normalizedData['category'];
+      if (categoryName && typeof categoryName === 'string') {
+        // Only add if it's not an existing category
+        if (!existingCategoryNames.has(categoryName.toLowerCase())) {
+          tempCats.add(categoryName);
+        }
+      }
+    });
+  }
+
+  return Array.from(tempCats);
+});
+
+const temporaryPayees = $derived.by(() => {
+  const tempPayees = new Set<string>();
+
+  // Use previewData (which includes overrides) to determine actual temporary payees
+  if (previewData) {
+    const payeeState = PayeesState.get();
+    const existingPayeeNames = payeeState
+      ? new Set(Array.from(payeeState.payees.values()).map(p => p.name?.toLowerCase()))
+      : new Set();
+
+    previewData.rows.forEach(row => {
+      const payeeName = row.normalizedData['payee'];
+      if (payeeName && typeof payeeName === 'string') {
+        // Only add if it's not an existing payee
+        if (!existingPayeeNames.has(payeeName.toLowerCase())) {
+          tempPayees.add(payeeName);
+        }
+      }
+    });
+  }
+
+  return Array.from(tempPayees);
+});
+
 // Handler for payee updates from the table
 function handlePayeeUpdate(rowIndex: number, payeeId: number | null, payeeName: string | null) {
-  if (!entityOverrides[rowIndex]) {
-    entityOverrides[rowIndex] = {};
-  }
-  entityOverrides[rowIndex].payeeId = payeeId;
-  entityOverrides[rowIndex].payeeName = payeeName;
+  entityOverrides = {
+    ...entityOverrides,
+    [rowIndex]: {
+      ...entityOverrides[rowIndex],
+      payeeId,
+      payeeName
+    }
+  };
 }
 
 // State for bulk payee update confirmation dialog
@@ -126,6 +160,8 @@ let bulkPayeeUpdateDialog = $state({
   payeeId: null as number | null,
   payeeName: null as string | null,
   originalPayeeName: '',
+  previousPayeeId: null as number | null,
+  previousPayeeName: null as string | null,
   matchCount: 0,
   matches: [] as Array<{item: any}>
 });
@@ -133,6 +169,11 @@ let bulkPayeeUpdateDialog = $state({
 // Apply payee update to all similar transactions (fuzzy matched by original payee)
 function handlePayeeUpdateWithSimilar(rowIndex: number, payeeId: number | null, payeeName: string | null) {
   if (!parseResults) return;
+
+  // Capture the previous value before updating (for potential revert)
+  const previousOverride = entityOverrides[rowIndex];
+  const previousPayeeId = previousOverride?.payeeId !== undefined ? previousOverride.payeeId : null;
+  const previousPayeeName = previousOverride?.payeeName !== undefined ? previousOverride.payeeName : null;
 
   // First update the selected row
   handlePayeeUpdate(rowIndex, payeeId, payeeName);
@@ -144,17 +185,17 @@ function handlePayeeUpdateWithSimilar(rowIndex: number, payeeId: number | null, 
   const originalPayeeName = selectedRow.normalizedData['payee'];
   if (!originalPayeeName || typeof originalPayeeName !== 'string') return;
 
-  // Use Fuse for fuzzy matching similar payees
-  const payeeMatcher = new Fuse(parseResults.rows, {
-    keys: ['normalizedData.payee'],
-    threshold: 0.3, // 70% similarity
-    includeScore: true,
-  });
-
-  const matches = payeeMatcher.search(originalPayeeName);
-
-  // Count how many other transactions would be updated (excluding the one we just updated)
-  const matchesToUpdate = matches.filter(match => match.item.rowIndex !== rowIndex);
+  // Use exact matching for payees to avoid false positives
+  // Example: "PayPal - Acme" should not match "PayPal - Chewy"
+  const matchesToUpdate = parseResults.rows
+    .filter(row => {
+      if (row.rowIndex === rowIndex) return false;
+      const rowPayee = row.normalizedData['payee'];
+      // Exact match (case-insensitive)
+      return rowPayee && typeof rowPayee === 'string' &&
+             rowPayee.toLowerCase() === originalPayeeName.toLowerCase();
+    })
+    .map(item => ({item}));
 
   // If there are similar transactions, ask user if they want to update them
   if (matchesToUpdate.length > 0) {
@@ -164,6 +205,8 @@ function handlePayeeUpdateWithSimilar(rowIndex: number, payeeId: number | null, 
       payeeId,
       payeeName,
       originalPayeeName,
+      previousPayeeId,
+      previousPayeeName,
       matchCount: matchesToUpdate.length,
       matches: matchesToUpdate
     };
@@ -190,18 +233,139 @@ function confirmBulkPayeeUpdate() {
   bulkPayeeUpdateDialog.open = false;
 }
 
-// Cancel bulk payee update
+// Cancel bulk payee update (keep single row update)
 function cancelBulkPayeeUpdate() {
   bulkPayeeUpdateDialog.open = false;
 }
 
+// Revert the payee update entirely
+function revertPayeeUpdate() {
+  const {rowIndex, previousPayeeId, previousPayeeName} = bulkPayeeUpdateDialog;
+
+  // Revert the single row to its previous value
+  handlePayeeUpdate(rowIndex, previousPayeeId, previousPayeeName);
+
+  bulkPayeeUpdateDialog.open = false;
+}
+
+// State for payment processor filter dialog
+let processorFilterDialog = $state({
+  open: false,
+  selectedProcessors: new Set<string>(),
+  affectedCount: 0,
+});
+
+// Analyze payee names for payment processors
+const processorAnalysis = $derived.by(() => {
+  if (!parseResults) return { total: 0, byProcessor: new Map<string, number>() };
+
+  const payeeNames = parseResults.rows
+    .map(row => row.normalizedData['payee'])
+    .filter((name): name is string => typeof name === 'string');
+
+  return countProcessorTransactions(payeeNames);
+});
+
+// Open payment processor filter dialog
+function openProcessorFilterDialog() {
+  // Pre-select all processors that have transactions
+  const preselected = new Set<string>();
+  for (const [processor, count] of processorAnalysis.byProcessor) {
+    if (count > 0) {
+      preselected.add(processor);
+    }
+  }
+
+  processorFilterDialog = {
+    open: true,
+    selectedProcessors: preselected,
+    affectedCount: processorAnalysis.total,
+  };
+}
+
+// Toggle processor selection
+function toggleProcessor(processorName: string) {
+  const newSelection = new Set(processorFilterDialog.selectedProcessors);
+  if (newSelection.has(processorName)) {
+    newSelection.delete(processorName);
+  } else {
+    newSelection.add(processorName);
+  }
+
+  // Calculate affected count
+  let count = 0;
+  for (const [processor, processorCount] of processorAnalysis.byProcessor) {
+    if (newSelection.has(processor)) {
+      count += processorCount;
+    }
+  }
+
+  processorFilterDialog = {
+    ...processorFilterDialog,
+    selectedProcessors: newSelection,
+    affectedCount: count,
+  };
+}
+
+// Apply payment processor filtering to all matching transactions
+function applyProcessorFilter() {
+  if (!parseResults || processorFilterDialog.selectedProcessors.size === 0) {
+    processorFilterDialog.open = false;
+    return;
+  }
+
+  let updatedCount = 0;
+
+  // Iterate through all rows and filter payee names
+  parseResults.rows.forEach(row => {
+    const payeeName = row.normalizedData['payee'];
+    if (!payeeName || typeof payeeName !== 'string') return;
+
+    const detection = detectPaymentProcessor(payeeName);
+    if (detection && processorFilterDialog.selectedProcessors.has(detection.processor)) {
+      // Filter out the payment processor
+      const filteredName = detection.merchantName;
+      handlePayeeUpdate(row.rowIndex, null, filteredName);
+      updatedCount++;
+    }
+  });
+
+  // Notify user
+  if (updatedCount > 0) {
+    toast.success(`Filtered payment processors from ${updatedCount} transaction${updatedCount !== 1 ? 's' : ''}`);
+  }
+
+  processorFilterDialog.open = false;
+}
+
+// Cancel processor filter
+function cancelProcessorFilter() {
+  processorFilterDialog.open = false;
+}
+
 // Handler for category updates from the table
 function handleCategoryUpdate(rowIndex: number, categoryId: number | null, categoryName: string | null) {
-  if (!entityOverrides[rowIndex]) {
-    entityOverrides[rowIndex] = {};
-  }
-  entityOverrides[rowIndex].categoryId = categoryId;
-  entityOverrides[rowIndex].categoryName = categoryName;
+  // Create a new object to trigger reactivity
+  entityOverrides = {
+    ...entityOverrides,
+    [rowIndex]: {
+      ...entityOverrides[rowIndex],
+      categoryId,
+      categoryName
+    }
+  };
+}
+
+// Handler for description updates from the table
+function handleDescriptionUpdate(rowIndex: number, description: string | null) {
+  // Create a new object to trigger reactivity
+  entityOverrides = {
+    ...entityOverrides,
+    [rowIndex]: {
+      ...entityOverrides[rowIndex],
+      description
+    }
+  };
 }
 
 // State for bulk update confirmation dialog
@@ -210,72 +374,178 @@ let bulkUpdateDialog = $state({
   rowIndex: 0,
   categoryId: null as number | null,
   categoryName: null as string | null,
+  previousCategoryName: null as string | null,
   payeeName: '',
-  matchCount: 0,
-  matches: [] as Array<{item: any}>
+  matchCountByPayee: 0,
+  matchCountByCategory: 0,
+  matchesByPayee: [] as Array<{item: any}>,
+  matchesByCategory: [] as Array<{item: any}>
 });
 
 // Apply category update to all similar transactions (fuzzy matched by payee)
 function handleCategoryUpdateWithSimilar(rowIndex: number, categoryId: number | null, categoryName: string | null) {
   if (!parseResults) return;
 
-  // First update the selected row
-  handleCategoryUpdate(rowIndex, categoryId, categoryName);
+  // Check if we're clearing the category (setting to null/empty)
+  const isClearingCategory = !categoryName || categoryName.trim() === '';
 
-  // Get the payee name for the selected row
+  // Get the selected row info BEFORE updating it
   const selectedRow = parseResults.rows.find(r => r.rowIndex === rowIndex);
   if (!selectedRow) return;
 
   const payeeName = selectedRow.normalizedData['payee'];
-  if (!payeeName || typeof payeeName !== 'string') return;
+  if (!payeeName || typeof payeeName !== 'string') {
+    // No payee, just update this one transaction
+    handleCategoryUpdate(rowIndex, categoryId, categoryName);
+    return;
+  }
 
-  // Use Fuse for fuzzy matching similar payees
-  const payeeMatcher = new Fuse(parseResults.rows, {
-    keys: ['normalizedData.payee'],
-    threshold: 0.3, // 70% similarity
-    includeScore: true,
-  });
+  // Get the previous category for this row
+  const previousCategoryName = entityOverrides[rowIndex]?.categoryName || selectedRow.normalizedData['category'] || null;
 
-  const matches = payeeMatcher.search(payeeName);
+  // Check if previous category was real (not null/empty)
+  const hasRealPreviousCategory = previousCategoryName && previousCategoryName.trim() !== '';
 
-  // Count how many other transactions would be updated (excluding the one we just updated)
-  const matchesToUpdate = matches.filter(match => match.item.rowIndex !== rowIndex);
+  // If clearing category and there's no real previous category, just update without asking
+  if (isClearingCategory && !hasRealPreviousCategory) {
+    handleCategoryUpdate(rowIndex, categoryId, categoryName);
+    return;
+  }
 
-  // If there are similar transactions, ask user if they want to update them
-  if (matchesToUpdate.length > 0) {
+  // Find matches by payee (for "update all transactions with same payee" option)
+  // Use exact matching to avoid false positives like "PayPal - Acme" matching "PayPal - Chewy"
+  const matchesByPayee = parseResults.rows
+    .filter(row => {
+      if (row.rowIndex === rowIndex) return false;
+      const rowPayee = row.normalizedData['payee'];
+      // Exact match (case-insensitive)
+      return rowPayee && typeof rowPayee === 'string' &&
+             rowPayee.toLowerCase() === payeeName.toLowerCase();
+    })
+    .map(item => ({item}));
+
+  // Find matches by previous category (for "rename category" option)
+  // Only allow this if the previous category was a real category (not uncategorized/null/empty)
+  let matchesByCategory: Array<{item: any}> = [];
+
+  if (hasRealPreviousCategory) {
+    matchesByCategory = parseResults.rows
+      .map((row, idx) => ({item: row, index: idx}))
+      .filter(({item, index}) => {
+        if (item.rowIndex === rowIndex) return false;
+        const rowCategory = entityOverrides[item.rowIndex]?.categoryName || item.normalizedData['category'];
+        return rowCategory === previousCategoryName;
+      });
+  }
+
+  // If there are potential bulk updates, show dialog (don't update yet!)
+  if (matchesByPayee.length > 0 || matchesByCategory.length > 0) {
     bulkUpdateDialog = {
       open: true,
       rowIndex,
       categoryId,
       categoryName,
+      previousCategoryName,
       payeeName,
-      matchCount: matchesToUpdate.length,
-      matches: matchesToUpdate
+      matchCountByPayee: matchesByPayee.length,
+      matchCountByCategory: matchesByCategory.length,
+      matchesByPayee,
+      matchesByCategory
     };
+  } else {
+    // No matches, just update this one transaction
+    handleCategoryUpdate(rowIndex, categoryId, categoryName);
   }
 }
 
-// Confirm and apply bulk update
-function confirmBulkUpdate() {
-  if (!bulkUpdateDialog.matches) return;
+// Update just the selected row
+function confirmBulkUpdateJustOne() {
+  // Only update the original row
+  handleCategoryUpdate(bulkUpdateDialog.rowIndex, bulkUpdateDialog.categoryId, bulkUpdateDialog.categoryName);
+  bulkUpdateDialog.open = false;
+}
+
+// Apply bulk update by payee only
+function confirmBulkUpdateByPayee() {
+  if (!bulkUpdateDialog.matchesByPayee) return;
+
+  // Update the original row first
+  handleCategoryUpdate(bulkUpdateDialog.rowIndex, bulkUpdateDialog.categoryId, bulkUpdateDialog.categoryName);
 
   let updatedCount = 0;
-  bulkUpdateDialog.matches.forEach(match => {
+  bulkUpdateDialog.matchesByPayee.forEach(match => {
     handleCategoryUpdate(match.item.rowIndex, bulkUpdateDialog.categoryId, bulkUpdateDialog.categoryName);
     updatedCount++;
   });
 
   // Notify user of bulk update
   if (updatedCount > 0) {
-    const categoryDisplay = bulkUpdateDialog.categoryName || 'Uncategorized';
-    toast.success(`Updated category to "${categoryDisplay}" for ${updatedCount + 1} similar transaction${updatedCount + 1 > 1 ? 's' : ''}`);
+    if (bulkUpdateDialog.categoryName) {
+      toast.success(`Updated category to "${bulkUpdateDialog.categoryName}" for ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''} with payee "${bulkUpdateDialog.payeeName}"`);
+    } else {
+      toast.success(`Removed category from ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''} with payee "${bulkUpdateDialog.payeeName}"`);
+    }
   }
 
-  // Close dialog
   bulkUpdateDialog.open = false;
 }
 
-// Cancel bulk update
+// Apply bulk update by previous category (rename category)
+function confirmBulkUpdateByCategory() {
+  if (!bulkUpdateDialog.matchesByCategory) return;
+
+  // Update the original row first
+  handleCategoryUpdate(bulkUpdateDialog.rowIndex, bulkUpdateDialog.categoryId, bulkUpdateDialog.categoryName);
+
+  let updatedCount = 0;
+  bulkUpdateDialog.matchesByCategory.forEach(match => {
+    handleCategoryUpdate(match.item.rowIndex, bulkUpdateDialog.categoryId, bulkUpdateDialog.categoryName);
+    updatedCount++;
+  });
+
+  // Notify user of bulk update
+  if (updatedCount > 0) {
+    if (bulkUpdateDialog.categoryName) {
+      toast.success(`Renamed category "${bulkUpdateDialog.previousCategoryName}" to "${bulkUpdateDialog.categoryName}" for ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''}`);
+    } else {
+      toast.success(`Removed category "${bulkUpdateDialog.previousCategoryName}" from ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''}`);
+    }
+  }
+
+  bulkUpdateDialog.open = false;
+}
+
+// Apply bulk update to both payee matches and category matches
+function confirmBulkUpdateBoth() {
+  // Update the original row first
+  handleCategoryUpdate(bulkUpdateDialog.rowIndex, bulkUpdateDialog.categoryId, bulkUpdateDialog.categoryName);
+
+  const allMatches = [...(bulkUpdateDialog.matchesByPayee || []), ...(bulkUpdateDialog.matchesByCategory || [])];
+
+  // Remove duplicates (transactions that match both criteria)
+  const uniqueMatches = allMatches.filter((match, index, self) =>
+    index === self.findIndex(m => m.item.rowIndex === match.item.rowIndex)
+  );
+
+  let updatedCount = 0;
+  uniqueMatches.forEach(match => {
+    handleCategoryUpdate(match.item.rowIndex, bulkUpdateDialog.categoryId, bulkUpdateDialog.categoryName);
+    updatedCount++;
+  });
+
+  // Notify user of bulk update
+  if (updatedCount > 0) {
+    if (bulkUpdateDialog.categoryName) {
+      toast.success(`Updated category to "${bulkUpdateDialog.categoryName}" for ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''}`);
+    } else {
+      toast.success(`Removed category from ${updatedCount + 1} transaction${updatedCount + 1 > 1 ? 's' : ''}`);
+    }
+  }
+
+  bulkUpdateDialog.open = false;
+}
+
+// Cancel bulk update - don't apply any changes
 function cancelBulkUpdate() {
   bulkUpdateDialog.open = false;
 }
@@ -310,6 +580,10 @@ const selectedAccount = $derived(() =>
   importableAccounts.find((a: Account) => a.id.toString() === selectedAccountId)
 );
 
+// Note: reverseAmountSigns should generally NOT be used for QFX/OFX files from credit cards
+// QFX files already have the correct signs: charges are negative, payments are positive
+// Only enable this manually for CSV files where signs are inverted from what you want
+
 async function handleFileSelected(file: File) {
   selectedFile = file;
   isProcessing = true;
@@ -329,11 +603,13 @@ async function handleFileSelected(file: File) {
     const formData = new FormData();
     formData.append('importFile', file);
 
-    // Add accountId as query parameter for duplicate checking
+    // Add accountId and reverseAmountSigns as query parameters for duplicate checking
     const url = new URL('/api/import/upload', window.location.origin);
     if (selectedAccountId) {
       url.searchParams.set('accountId', selectedAccountId);
     }
+    // Pass reverseAmountSigns so duplicate detection can compare final amounts
+    url.searchParams.set('reverseAmountSigns', reverseAmountSigns.toString());
 
     const response = await fetch(url.toString(), {
       method: 'POST',
@@ -341,13 +617,10 @@ async function handleFileSelected(file: File) {
     });
 
     const result = await response.json();
-    console.log('Upload result:', result);
 
     if (response.ok) {
       parseResults = result;
-      // Store raw data for column mapping preview
       rawCSVData = result.rows.map((row: any) => row.rawData);
-      console.log('Parse results:', parseResults);
 
       // Apply smart categorization to rows without explicit categories
       await applySmartCategorization();
@@ -408,7 +681,6 @@ async function handleColumnMappingComplete(mapping: ColumnMapping) {
     });
 
     const result = await response.json();
-    console.log('Remap result:', result);
 
     if (response.ok) {
       parseResults = result;
@@ -514,8 +786,23 @@ async function processImport() {
   error = null;
 
   try {
-    // Filter rows to only include selected ones (with entity overrides applied)
-    const selectedRowsData = previewData.rows.filter((row) => selectedRows.has(row.rowIndex));
+    // Filter rows to only include selected ones (with entity overrides applied, but NOT amount reversal)
+    // Amount reversal will be applied by the backend based on the reverseAmountSigns flag
+    const selectedRowsData = parseResults.rows
+      .filter((row) => selectedRows.has(row.rowIndex))
+      .map(row => {
+        const override = entityOverrides[row.rowIndex];
+        return {
+          ...row,
+          normalizedData: {
+            ...row.normalizedData,
+            // Apply entity overrides (but NOT amount reversal - backend will handle that)
+            payee: override?.payeeName !== undefined ? override.payeeName : row.normalizedData['payee'],
+            category: override?.categoryName !== undefined ? override.categoryName : row.normalizedData['category'],
+            description: override?.description !== undefined ? override.description : (row.normalizedData['description'] || row.normalizedData['notes']),
+          }
+        };
+      });
 
     // Get selected entity names (include both new and existing)
     const selectedPayeeNames = entityPreview.payees
@@ -525,10 +812,6 @@ async function processImport() {
     const selectedCategoryNames = entityPreview.categories
       .filter((c) => c.selected)
       .map((c) => c.name);
-
-    console.log('=== IMPORT DEBUG ===');
-    console.log('All categories in preview:', entityPreview.categories.map(c => ({name: c.name, selected: c.selected, existing: c.existing})));
-    console.log('Selected category names:', selectedCategoryNames);
 
     const importData = {
       accountId: parseInt(selectedAccountId),
@@ -555,13 +838,10 @@ async function processImport() {
       body: JSON.stringify(importData),
     });
 
-    console.log('Response status:', response.status);
     const result = await response.json();
-    console.log('Import result:', result);
 
     if (response.ok) {
       importResult = result.result;
-      console.log('Import completed:', importResult);
       currentStep = 'complete';
 
       // Invalidate all account-related queries to refresh balances everywhere
@@ -809,6 +1089,30 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
                 </div>
                 <Checkbox id="reverse-amounts" bind:checked={reverseAmountSigns} />
               </div>
+
+              {#if processorAnalysis.total > 0}
+                <div class="pt-4 border-t">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <div class="space-y-0.5">
+                        <div class="text-sm font-medium">
+                          Payment Processors
+                        </div>
+                        <p class="text-sm text-muted-foreground">
+                          Found {processorAnalysis.total} transaction{processorAnalysis.total !== 1 ? 's' : ''} with payment processors
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      class="w-full"
+                      onclick={openProcessorFilterDialog}
+                    >
+                      Filter Processors
+                    </Button>
+                  </div>
+                </div>
+              {/if}
             </Card.Content>
           </Card.Root>
         </div>
@@ -824,6 +1128,7 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
               bind:selectedRows
               onPayeeUpdate={handlePayeeUpdateWithSimilar}
               onCategoryUpdate={handleCategoryUpdateWithSimilar}
+              onDescriptionUpdate={handleDescriptionUpdate}
               temporaryCategories={temporaryCategories}
               temporaryPayees={temporaryPayees}
             />
@@ -960,18 +1265,52 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
 
 <!-- Bulk Update Confirmation Dialog -->
 <AlertDialog.Root bind:open={bulkUpdateDialog.open}>
-  <AlertDialog.Content>
+  <AlertDialog.Content class="max-w-2xl">
     <AlertDialog.Header>
       <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
-      <AlertDialog.Description>
-        Found {bulkUpdateDialog.matchCount} other transaction{bulkUpdateDialog.matchCount !== 1 ? 's' : ''} with similar payee "{bulkUpdateDialog.payeeName}".
-        <br /><br />
-        Would you like to update {bulkUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to category "{bulkUpdateDialog.categoryName || 'Uncategorized'}" as well?
+      <AlertDialog.Description class="space-y-3">
+        {#if bulkUpdateDialog.categoryName}
+          <p>You're changing the category to "<strong>{bulkUpdateDialog.categoryName}</strong>". How would you like to apply this change?</p>
+        {:else}
+          <p>You're <strong>removing the category</strong> from this transaction. How would you like to apply this change?</p>
+        {/if}
+
+        {#if bulkUpdateDialog.matchCountByPayee > 0 && bulkUpdateDialog.matchCountByCategory > 0}
+          <div class="space-y-2 text-sm">
+            <p>• <strong>{bulkUpdateDialog.matchCountByPayee}</strong> other transaction{bulkUpdateDialog.matchCountByPayee !== 1 ? 's' : ''} with the same payee "<strong>{bulkUpdateDialog.payeeName}</strong>"</p>
+            <p>• <strong>{bulkUpdateDialog.matchCountByCategory}</strong> other transaction{bulkUpdateDialog.matchCountByCategory !== 1 ? 's' : ''} with the category "<strong>{bulkUpdateDialog.previousCategoryName}</strong>"</p>
+          </div>
+        {:else if bulkUpdateDialog.matchCountByPayee > 0}
+          <p class="text-sm">Found <strong>{bulkUpdateDialog.matchCountByPayee}</strong> other transaction{bulkUpdateDialog.matchCountByPayee !== 1 ? 's' : ''} with the same payee "<strong>{bulkUpdateDialog.payeeName}</strong>".</p>
+        {:else if bulkUpdateDialog.matchCountByCategory > 0}
+          <p class="text-sm">Found <strong>{bulkUpdateDialog.matchCountByCategory}</strong> other transaction{bulkUpdateDialog.matchCountByCategory !== 1 ? 's' : ''} with the category "<strong>{bulkUpdateDialog.previousCategoryName}</strong>".</p>
+        {/if}
       </AlertDialog.Description>
     </AlertDialog.Header>
-    <AlertDialog.Footer>
-      <AlertDialog.Cancel onclick={cancelBulkUpdate}>No, Just This One</AlertDialog.Cancel>
-      <AlertDialog.Action onclick={confirmBulkUpdate}>Yes, Update All Similar</AlertDialog.Action>
+    <AlertDialog.Footer class="flex-col sm:flex-col gap-2">
+      {#if bulkUpdateDialog.matchCountByPayee > 0 && bulkUpdateDialog.matchCountByCategory > 0}
+        <AlertDialog.Action onclick={confirmBulkUpdateBoth} class="w-full">
+          Update All ({bulkUpdateDialog.matchCountByPayee + bulkUpdateDialog.matchCountByCategory} transactions)
+        </AlertDialog.Action>
+        <AlertDialog.Action onclick={confirmBulkUpdateByPayee} class="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80">
+          Only Same Payee ({bulkUpdateDialog.matchCountByPayee + 1} transactions)
+        </AlertDialog.Action>
+        <AlertDialog.Action onclick={confirmBulkUpdateByCategory} class="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80">
+          Rename Category ({bulkUpdateDialog.matchCountByCategory + 1} transactions)
+        </AlertDialog.Action>
+      {:else if bulkUpdateDialog.matchCountByPayee > 0}
+        <AlertDialog.Action onclick={confirmBulkUpdateByPayee} class="w-full">
+          Update All Same Payee ({bulkUpdateDialog.matchCountByPayee + 1} transactions)
+        </AlertDialog.Action>
+      {:else if bulkUpdateDialog.matchCountByCategory > 0}
+        <AlertDialog.Action onclick={confirmBulkUpdateByCategory} class="w-full">
+          Rename Category ({bulkUpdateDialog.matchCountByCategory + 1} transactions)
+        </AlertDialog.Action>
+      {/if}
+      <AlertDialog.Action onclick={confirmBulkUpdateJustOne} class="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80">
+        Just This One
+      </AlertDialog.Action>
+      <AlertDialog.Cancel onclick={cancelBulkUpdate} class="w-full">Cancel</AlertDialog.Cancel>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
@@ -987,9 +1326,68 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
         Would you like to update {bulkPayeeUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to payee "{bulkPayeeUpdateDialog.payeeName || 'None'}" as well?
       </AlertDialog.Description>
     </AlertDialog.Header>
+    <AlertDialog.Footer class="flex-col sm:flex-col gap-2">
+      <AlertDialog.Action onclick={confirmBulkPayeeUpdate} class="w-full">Yes, Update All Similar</AlertDialog.Action>
+      <AlertDialog.Cancel onclick={cancelBulkPayeeUpdate} class="w-full">No, Just This One</AlertDialog.Cancel>
+      <Button variant="outline" onclick={revertPayeeUpdate} class="w-full">Cancel & Revert</Button>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- Payment Processor Filter Dialog -->
+<AlertDialog.Root bind:open={processorFilterDialog.open}>
+  <AlertDialog.Content class="max-w-lg">
+    <AlertDialog.Header>
+      <AlertDialog.Title>Filter Payment Processors</AlertDialog.Title>
+      <AlertDialog.Description>
+        Select which payment processors and vendor providers to filter out from payee names.
+        This will extract the actual merchant name from transactions like "PayPal - Acme tools" → "Acme tools".
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+
+    <div class="space-y-3 py-4">
+      {#each PAYMENT_PROCESSORS as processor}
+        {@const count = processorAnalysis.byProcessor.get(processor.name) || 0}
+        {#if count > 0}
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3 flex-1">
+              <Checkbox
+                id={`processor-${processor.name}`}
+                checked={processorFilterDialog.selectedProcessors.has(processor.name)}
+                onCheckedChange={() => toggleProcessor(processor.name)}
+              />
+              <label
+                for={`processor-${processor.name}`}
+                class="flex-1 cursor-pointer"
+              >
+                <div class="text-sm font-medium">{processor.name}</div>
+                <div class="text-xs text-muted-foreground">{processor.description}</div>
+              </label>
+            </div>
+            <div class="text-sm text-muted-foreground whitespace-nowrap">
+              {count} transaction{count !== 1 ? 's' : ''}
+            </div>
+          </div>
+        {/if}
+      {/each}
+    </div>
+
+    {#if processorFilterDialog.affectedCount > 0}
+      <div class="bg-muted p-3 rounded-md">
+        <p class="text-sm">
+          <strong>{processorFilterDialog.affectedCount}</strong> transaction{processorFilterDialog.affectedCount !== 1 ? 's' : ''} will be updated
+        </p>
+      </div>
+    {/if}
+
     <AlertDialog.Footer>
-      <AlertDialog.Cancel onclick={cancelBulkPayeeUpdate}>No, Just This One</AlertDialog.Cancel>
-      <AlertDialog.Action onclick={confirmBulkPayeeUpdate}>Yes, Update All Similar</AlertDialog.Action>
+      <AlertDialog.Cancel onclick={cancelProcessorFilter}>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={applyProcessorFilter}
+        disabled={processorFilterDialog.selectedProcessors.size === 0}
+      >
+        Apply Filter
+      </AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

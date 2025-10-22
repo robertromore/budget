@@ -1,22 +1,22 @@
 import {
   accounts,
-  transactions,
-  removeAccountSchema,
   accountTypeEnum,
+  removeAccountSchema,
+  transactions,
   type Account,
   type Transaction,
 } from "$lib/schema";
-import {z} from "zod";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
-import {eq, desc, isNull, and, sql} from "drizzle-orm";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { isValidIconName } from "$lib/utils/icon-validation";
+import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
+import { getLocalTimeZone, now } from "@internationalized/date";
 import slugify from "@sindresorhus/slugify";
-import {TRPCError} from "@trpc/server";
-import {now, getLocalTimeZone} from "@internationalized/date";
-import {generateUniqueSlug} from "$lib/utils/slug-utils";
-import {isValidIconName} from "$lib/utils/icon-validation";
+import { TRPCError } from "@trpc/server";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import validator from "validator";
-import {serviceFactory} from "$lib/server/shared/container/service-factory";
+import { z } from "zod";
 
 const accountService = serviceFactory.getAccountService();
 
@@ -218,7 +218,16 @@ export const accountRoutes = t.router({
     return accountWithBalance as Account;
   }),
   getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({ctx, input}) => {
-    const account = await accountService.getAccountBySlug(input.slug);
+    const account = await ctx.db.query.accounts.findFirst({
+      where: (accounts, {eq, and, isNull}) =>
+        and(eq(accounts.slug, input.slug), isNull(accounts.deletedAt)),
+      with: {
+        transactions: {
+          where: isNull(transactions.deletedAt),
+          orderBy: [transactions.date, transactions.id],
+        },
+      },
+    });
 
     if (!account) {
       throw new TRPCError({
@@ -227,7 +236,18 @@ export const accountRoutes = t.router({
       });
     }
 
-    return account;
+    // Calculate running balance from all transactions
+    let runningBalance = 0;
+    account.transactions.forEach((transaction) => {
+      runningBalance += transaction.amount;
+    });
+
+    const accountWithBalance = {
+      ...account,
+      balance: runningBalance,
+    };
+
+    return accountWithBalance as Account;
   }),
   save: rateLimitedProcedure.input(accountSaveSchema).mutation(async ({ctx, input}) => {
     if (input.id) {
@@ -251,7 +271,7 @@ export const accountRoutes = t.router({
         updateData.name = input.name;
         // If name is being updated, regenerate slug unless one was provided
         const baseSlug = input.slug || slugify(input.name);
-        updateData.slug = await generateUniqueSlug(ctx.db, "accounts", accounts.slug, baseSlug, {
+        updateData.slug = await generateUniqueSlugForDB(ctx.db, "accounts", accounts.slug, baseSlug, {
           excludeId: input.id!,
           idColumn: accounts.id,
           deletedAtColumn: accounts.deletedAt,
@@ -380,7 +400,7 @@ export const accountRoutes = t.router({
     try {
       const createdAccount = await accountService.createAccount({
         name: input.name,
-        notes: input.notes,
+        ...(input.notes && { notes: input.notes }),
         initialBalance: input.initialBalance || 0.0,
       });
 
@@ -529,4 +549,43 @@ export const accountRoutes = t.router({
     }
     return result[0];
   }),
+  updateEnabledMetrics: rateLimitedProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive(),
+        enabledMetrics: z.array(z.string()),
+      })
+    )
+    .mutation(async ({ctx, input}) => {
+      // Validate account exists and is not deleted
+      const account = await ctx.db.query.accounts.findFirst({
+        where: and(eq(accounts.id, input.accountId), isNull(accounts.deletedAt)),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      // Update the enabled metrics
+      const result = await ctx.db
+        .update(accounts)
+        .set({
+          enabledMetrics: JSON.stringify(input.enabledMetrics),
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(eq(accounts.id, input.accountId))
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update enabled metrics",
+        });
+      }
+
+      return result[0];
+    }),
 });

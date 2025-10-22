@@ -4,14 +4,14 @@ import { superformInsertBudgetSchema } from "$lib/schema/superforms";
 import type { CreateBudgetRequest } from "$lib/server/domains/budgets/services";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
-import type { Actions, PageServerLoad } from "@sveltejs/kit";
+import type { Actions } from "@sveltejs/kit";
 import { fail, redirect } from '@sveltejs/kit';
 import { zod4 } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms/client";
 
-export const load: PageServerLoad = async (event) => {
+export const load = async (event) => {
   const { url } = event;
-  const context = await createContext(event);
+  const context = await createContext();
   const caller = createCaller(context);
 
   // Check for template parameter and prefill form data
@@ -49,6 +49,7 @@ export const load: PageServerLoad = async (event) => {
     }),
     accounts: await caller.accountRoutes.all(),
     categories: await caller.categoriesRoutes.all(),
+    schedules: await caller.scheduleRoutes.all(),
   };
 };
 
@@ -74,6 +75,14 @@ export const actions: Actions = {
         metadata.allocatedAmount = form.data.allocatedAmount;
       }
 
+      // Handle scheduled-expense metadata
+      if (form.data.type === "scheduled-expense" && form.data.linkedScheduleId) {
+        metadata.scheduledExpense = {
+          linkedScheduleId: form.data.linkedScheduleId,
+          autoTrack: true,
+        };
+      }
+
       const budgetData: CreateBudgetRequest = {
         name: form.data.name,
         description: form.data.description || null,
@@ -86,7 +95,41 @@ export const actions: Actions = {
         ...(form.data.categoryIds && { categoryIds: form.data.categoryIds }),
       };
 
-      await createCaller(await createContext(event)).budgetRoutes.create(budgetData);
+      const caller = createCaller(await createContext());
+      const newBudget = await caller.budgetRoutes.create(budgetData);
+
+      // If a schedule was linked, update the schedule's budgetId and link it via the service
+      if (form.data.type === "scheduled-expense" && form.data.linkedScheduleId && newBudget) {
+        try {
+          // Link the schedule to the budget
+          await caller.budgetRoutes.linkScheduleToScheduledExpense({
+            budgetId: newBudget.id,
+            scheduleId: form.data.linkedScheduleId,
+          });
+
+          // Update the schedule to reference the budget
+          const schedule = await caller.scheduleRoutes.load({id: form.data.linkedScheduleId});
+          await caller.scheduleRoutes.save({
+            id: schedule.id,
+            name: schedule.name,
+            slug: schedule.slug,
+            status: schedule.status ?? 'active',
+            amount: schedule.amount,
+            amount_2: schedule.amount_2,
+            amount_type: schedule.amount_type,
+            recurring: schedule.recurring ?? false,
+            auto_add: schedule.auto_add ?? false,
+            dateId: schedule.dateId,
+            payeeId: schedule.payeeId,
+            categoryId: schedule.categoryId,
+            accountId: schedule.accountId,
+            budgetId: newBudget.id,
+          });
+        } catch (linkError) {
+          console.error("Failed to link schedule to budget:", linkError);
+          // Don't fail the entire operation if linking fails
+        }
+      }
 
       // Redirect to the budgets list on success
       throw redirect(303, '/budgets');

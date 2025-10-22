@@ -37,7 +37,7 @@
   - Calendar highlighting of recurring dates
 -->
 <script lang="ts">
-import {getLocalTimeZone, today, type DateValue} from '@internationalized/date';
+import {getLocalTimeZone, type DateValue} from '@internationalized/date';
 import {cn} from '$lib/utils';
 import {Button} from '$lib/components/ui/button';
 import * as Calendar from '$lib/components/ui/calendar';
@@ -54,6 +54,7 @@ import {Separator} from '$lib/components/ui/separator';
 import {dateFormatter, pluralRules} from '$lib/utils/date-formatters';
 import {weekOptions, weekdayOptions} from '$lib/utils/date-options';
 import {nextDaily, nextWeekly, nextMonthly, nextYearly} from '$lib/utils/date-frequency';
+import {currentDate} from '$lib/utils/dates';
 
 import CalendarDays from '@lucide/svelte/icons/calendar-days';
 import Repeat from '@lucide/svelte/icons/repeat';
@@ -579,7 +580,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
 
             {#if hasEndCondition}
               <Tabs.Root
-                bind:value={value.end_type}>
+                bind:value={value.end_type as string | undefined}>
                 <Tabs.List class="grid w-full grid-cols-2">
                   <Tabs.Trigger value="limit" {disabled}>Limit occurrences</Tabs.Trigger>
                   <Tabs.Trigger value="until" {disabled}>End on date</Tabs.Trigger>
@@ -727,27 +728,27 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                 </div>
 
                 <!-- Weekend/Holiday Adjustments -->
-                {#if value.moveWeekends !== 'none' && value.moveWeekends !== 0 || value.moveHolidays !== 'none' && value.moveHolidays !== 0}
+                {#if value.moveWeekends !== 'none' || value.moveHolidays !== 'none'}
                   <div class="space-y-2 pt-2 border-t">
                     <Label class="text-muted-foreground text-xs font-medium">Adjustments:</Label>
                     <div class="space-y-1.5 text-xs">
-                      {#if value.moveWeekends === 'next_weekday' || value.moveWeekends === 1}
+                      {#if value.moveWeekends === 'next_weekday'}
                         <div class="flex items-center gap-2 text-muted-foreground">
                           <Badge variant="secondary" class="text-xs px-1.5 py-0">Weekend</Badge>
                           <span>Move to next weekday (Monday)</span>
                         </div>
-                      {:else if value.moveWeekends === 'previous_weekday' || value.moveWeekends === 2}
+                      {:else if value.moveWeekends === 'previous_weekday'}
                         <div class="flex items-center gap-2 text-muted-foreground">
                           <Badge variant="secondary" class="text-xs px-1.5 py-0">Weekend</Badge>
                           <span>Move to previous weekday (Friday)</span>
                         </div>
                       {/if}
-                      {#if value.moveHolidays === 'next_weekday' || value.moveHolidays === 1}
+                      {#if value.moveHolidays === 'next_weekday'}
                         <div class="flex items-center gap-2 text-muted-foreground">
                           <Badge variant="secondary" class="text-xs px-1.5 py-0">Holiday</Badge>
                           <span>Move to next weekday</span>
                         </div>
-                      {:else if value.moveHolidays === 'previous_weekday' || value.moveHolidays === 2}
+                      {:else if value.moveHolidays === 'previous_weekday'}
                         <div class="flex items-center gap-2 text-muted-foreground">
                           <Badge variant="secondary" class="text-xs px-1.5 py-0">Holiday</Badge>
                           <span>Move to previous weekday</span>

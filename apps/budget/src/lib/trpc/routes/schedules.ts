@@ -16,6 +16,7 @@ export const scheduleRoutes = t.router({
   all: publicProcedure.query(async ({ctx}) => {
     return await ctx.db.query.schedules.findMany({
       with: {
+        payee: true,
         scheduleDate: true,
       },
     });
@@ -46,16 +47,11 @@ export const scheduleRoutes = t.router({
     return result[0];
   }),
   save: rateLimitedProcedure.input(superformInsertScheduleSchema).mutation(async ({ctx, input}) => {
-    console.log('Save schedule input:', JSON.stringify(input, null, 2));
-
-    // Helper function to handle repeating date data
     const handleRepeatingDate = async (scheduleId: number, repeatingDateJson?: string) => {
-      console.log('handleRepeatingDate called with:', repeatingDateJson ? 'data present' : 'NO DATA');
       if (!repeatingDateJson) return null;
 
       try {
         const repeatingDate = JSON.parse(repeatingDateJson);
-        console.log('Parsed repeating date data:', JSON.stringify(repeatingDate, null, 2));
 
         // Helper to convert DateValue object to Date
         const convertDateValue = (dateValue: any) => {
@@ -70,7 +66,7 @@ export const scheduleRoutes = t.router({
         // Create schedule date record
         const scheduleDateResult = await ctx.db.insert(scheduleDates).values({
           scheduleId,
-          start: repeatingDate.start ? convertDateValue(repeatingDate.start).toISOString() : getCurrentTimestamp(),
+          start: repeatingDate.start ? (convertDateValue(repeatingDate.start)?.toISOString() ?? getCurrentTimestamp()) : getCurrentTimestamp(),
           end: repeatingDate.end ? convertDateValue(repeatingDate.end)?.toISOString() || null : null,
           frequency: repeatingDate.frequency || 'daily',
           interval: repeatingDate.interval || 1,
@@ -115,18 +111,14 @@ export const scheduleRoutes = t.router({
           updateData.dateId = dateId;
         }
       } else {
-        // No repeating date provided - clear any existing schedule_date relationship
-        // First get the current schedule to see if it has a dateId
         const currentSchedule = await ctx.db.query.schedules.findFirst({
           where: eq(schedules.id, input.id)
         });
 
         if (currentSchedule?.dateId) {
-          // Delete the associated schedule_date record
           await ctx.db.delete(scheduleDates).where(eq(scheduleDates.id, currentSchedule.dateId));
         }
 
-        // Clear the dateId reference
         updateData.dateId = null;
       }
 
@@ -152,7 +144,6 @@ export const scheduleRoutes = t.router({
       return updatedSchedule;
     }
 
-    // For new schedules, separate repeating_date from schedule data
     const { repeating_date, ...scheduleData } = input;
 
     // Generate unique slug
@@ -175,11 +166,9 @@ export const scheduleRoutes = t.router({
     }
     const new_schedule = insertResult[0];
 
-    // Handle repeating date for new schedules
     if (repeating_date) {
       const dateId = await handleRepeatingDate(new_schedule.id, repeating_date);
       if (dateId) {
-        // Update the schedule with the dateId
         await ctx.db
           .update(schedules)
           .set({ dateId })
@@ -187,7 +176,6 @@ export const scheduleRoutes = t.router({
       }
     }
 
-    // Return the full schedule with relationships
     const finalSchedule = await ctx.db.query.schedules.findFirst({
       where: eq(schedules.id, new_schedule.id),
       with: {

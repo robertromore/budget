@@ -92,7 +92,11 @@ export const removeScheduleSchema = z.object({id: z.number().nonnegative()});
 export const duplicateScheduleSchema = z.object({id: z.number().nonnegative()});
 
 interface SchedulesExtraFields {
-  scheduleDate?: typeof scheduleDates.$inferSelect | null;
+  payee?: any;
+  scheduleDate?: any;
+  account?: any;
+  category?: any;
+  budget?: any;
 }
 
-export type Schedule = typeof schedules.$inferSelect & SchedulesExtraFields;
+export type Schedule = typeof schedules.$inferSelect & Partial<SchedulesExtraFields>;

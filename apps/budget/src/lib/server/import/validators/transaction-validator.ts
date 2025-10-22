@@ -281,22 +281,12 @@ export class TransactionValidator {
       });
     }
 
-    // Description validation
-    if (normalized.description && normalized.description.length > 500) {
+    // Notes validation
+    if (normalized.notes && normalized.notes.length > 500) {
       errors.push({
-        field: 'description',
-        message: 'Description is too long (max 500 characters)',
-        value: normalized.description,
-        severity: 'warning',
-      });
-    }
-
-    // Check number validation
-    if (normalized.checkNumber && normalized.checkNumber.length > 50) {
-      errors.push({
-        field: 'checkNumber',
-        message: 'Check number is too long (max 50 characters)',
-        value: normalized.checkNumber,
+        field: 'notes',
+        message: 'Notes is too long (max 500 characters)',
+        value: normalized.notes,
         severity: 'warning',
       });
     }
@@ -379,7 +369,10 @@ export class TransactionValidator {
     const normalizedAmount = normalized.amount;
     const existingAmount = this.getTransactionAmount(existing);
 
-    // Must match on date and amount
+    // Primary duplicate detection: date and amount match
+    // If date + amount match (within $0.01), consider it a duplicate
+    // This is intentionally loose to catch duplicates even if payee/description differ
+    // (users may change these during import)
     if (
       !normalizedDate ||
       !normalizedAmount ||
@@ -389,23 +382,7 @@ export class TransactionValidator {
       return false;
     }
 
-    // If payee matches (or both are missing), consider it a duplicate
-    const normalizedPayee = normalized.payee?.toLowerCase().trim() || '';
-    const existingPayee = this.getTransactionPayee(existing).toLowerCase().trim();
-
-    if (normalizedPayee && existingPayee && normalizedPayee === existingPayee) {
-      return true;
-    }
-
-    // If description matches (or both are missing), consider it a duplicate
-    const normalizedDesc = normalized.description?.toLowerCase().trim() || '';
-    const existingDesc = this.getTransactionDescription(existing).toLowerCase().trim();
-
-    if (normalizedDesc && existingDesc && normalizedDesc === existingDesc) {
-      return true;
-    }
-
-    return false;
+    return true;
   }
 
   /**

@@ -34,6 +34,7 @@ export const superformInsertScheduleSchema = z.object({
   payeeId: z.number().positive("Payee is required"),
   categoryId: z.number().optional().nullable(),
   accountId: z.number().positive("Account is required"),
+  budgetId: z.number().optional().nullable(),
   repeating_date: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -73,6 +74,7 @@ export const superformUpdateScheduleSchema = z.object({
   payeeId: z.number().positive("Payee is required").optional(),
   categoryId: z.number().optional().nullable(),
   accountId: z.number().positive("Account is required").optional(),
+  budgetId: z.number().optional().nullable(),
 });
 
 export type SuperformInsertScheduleSchema = typeof superformInsertScheduleSchema;
