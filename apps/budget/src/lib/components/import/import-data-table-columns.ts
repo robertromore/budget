@@ -7,14 +7,16 @@ import ImportTableStatusCell from './import-table-status-cell.svelte';
 import ImportTableAmountCell from './import-table-amount-cell.svelte';
 import ImportTablePayeeCell from './import-table-payee-cell.svelte';
 import ImportTableCategoryCell from './import-table-category-cell.svelte';
+import ImportTableDescriptionCell from './import-table-description-cell.svelte';
 
 export function createColumns(options?: {
   onPayeeUpdate?: (rowIndex: number, payeeId: number | null, payeeName: string | null) => void;
   onCategoryUpdate?: (rowIndex: number, categoryId: number | null, categoryName: string | null) => void;
+  onDescriptionUpdate?: (rowIndex: number, description: string | null) => void;
   temporaryPayees?: string[];
   temporaryCategories?: string[];
 }): ColumnDef<ImportRow>[] {
-  const {onPayeeUpdate, onCategoryUpdate, temporaryPayees, temporaryCategories} = options || {};
+  const {onPayeeUpdate, onCategoryUpdate, onDescriptionUpdate, temporaryPayees, temporaryCategories} = options || {};
 
   return [
   {
@@ -83,21 +85,26 @@ export function createColumns(options?: {
   },
   {
     accessorKey: 'category',
-    header: 'Category',
+    header: ({column}) => renderComponent(ImportTableColumnHeader, {column, label: 'Category'}),
     cell: ({row}) => renderComponent(ImportTableCategoryCell, {
       row,
       ...(onCategoryUpdate ? {onUpdate: onCategoryUpdate} : {}),
       ...(temporaryCategories ? {temporaryCategories} : {}),
     }),
     accessorFn: (row) => row.normalizedData['category'],
+    sortingFn: (rowA, rowB) => {
+      const categoryA = (rowA.original.normalizedData['category'] as string | null) || '';
+      const categoryB = (rowB.original.normalizedData['category'] as string | null) || '';
+      return categoryA.toLowerCase().localeCompare(categoryB.toLowerCase());
+    },
   },
   {
     accessorKey: 'description',
-    header: 'Description',
-    cell: ({row}) => {
-      const desc = row.original.normalizedData['description'] || row.original.normalizedData['notes'] || '—';
-      return desc;
-    },
+    header: ({column}) => renderComponent(ImportTableColumnHeader, {column, label: 'Description'}),
+    cell: ({row}) => renderComponent(ImportTableDescriptionCell, {
+      row,
+      ...(onDescriptionUpdate ? {onUpdate: onDescriptionUpdate} : {}),
+    }),
     accessorFn: (row) => row.normalizedData['description'] || row.normalizedData['notes'],
   },
   ];

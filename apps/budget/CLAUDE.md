@@ -155,6 +155,151 @@ This is a SvelteKit budget management application with:
 - ✅ `<icon class="h-12 w-12"></icon>` - Variable component usage
 - ❌ `<svelte:component this={analytic.icon} />` - Deprecated pattern
 
+### Binding with Getter/Setter Pairs
+
+**Svelte 5 supports `bind:value={get, set}` syntax for components that need bidirectional binding.**
+
+Available utility functions in `$lib/utils/bind-helpers.ts`:
+
+#### createRecordAccessors
+
+Use when binding to a field in a Record that might be undefined:
+
+```svelte
+<script lang="ts">
+  import { createRecordAccessors } from '$lib/utils/bind-helpers';
+
+  let formData = $state<Record<string, string>>({});
+  const nameAccessors = createRecordAccessors(formData, 'name', '');
+</script>
+
+<Input bind:value={nameAccessors.get, nameAccessors.set} />
+```
+
+#### createMapAccessors
+
+Use when binding to a Map entry:
+
+```svelte
+<script lang="ts">
+  import { createMapAccessors } from '$lib/utils/bind-helpers';
+
+  let myMap = $state(new Map<string, number>());
+  const countAccessors = createMapAccessors(myMap, 'count', 0);
+</script>
+
+<Input bind:value={countAccessors.get, countAccessors.set} />
+```
+
+#### createNumericRecordAccessors
+
+Use when binding to numeric Record values:
+
+```svelte
+<script lang="ts">
+  import { createNumericRecordAccessors } from '$lib/utils/bind-helpers';
+
+  let allocations = $state<Record<number, number>>({});
+  const accessors = createNumericRecordAccessors(allocations, categoryId, 0);
+</script>
+
+<NumericInput bind:value={accessors.get, accessors.set} />
+```
+
+#### createTransformAccessors
+
+Use when binding to local state with type transformations or simple getter/setter logic:
+
+```svelte
+<script lang="ts">
+  import { createTransformAccessors } from '$lib/utils/bind-helpers';
+
+  let periodType = $state<'monthly' | 'yearly'>('monthly');
+  const accessors = createTransformAccessors(
+    () => periodType,
+    (value: string) => { periodType = value as 'monthly' | 'yearly'; }
+  );
+</script>
+
+<Select.Root bind:value={accessors.get, accessors.set}>
+  <!-- options -->
+</Select.Root>
+```
+
+#### When to Use Each Pattern
+
+**Use createRecordAccessors when:**
+
+- Binding to Record fields that might be undefined
+- Need default values for missing Record keys
+
+**Use createMapAccessors when:**
+
+- Binding to Map entries
+- Need default values for missing Map keys
+
+**Use createNumericRecordAccessors when:**
+
+- Binding to numeric Record values
+- Need default numeric values for missing keys
+
+**Use createTransformAccessors when:**
+
+- Binding to local `$state` variables with simple type transformations
+- Need basic getter/setter pairs without complex logic
+- Want cleaner syntax for simple transformations
+
+**Use inline accessors when:**
+
+- Need custom setter logic with side effects (e.g., updating related fields)
+- Binding requires validation or business logic
+- Want maximum flexibility and control
+- The logic is specific to one component and won't be reused
+
+##### Example: Inline Accessor with Side Effects
+
+```svelte
+<script lang="ts">
+  let accountType = $state('checking');
+
+  function handleAccountTypeChange(newType: string) {
+    accountType = newType;
+    // Perform side effects
+    updateIcon(newType);
+    updateDefaults(newType);
+  }
+
+  const typeAccessors = {
+    get: () => accountType,
+    set: (value: string) => handleAccountTypeChange(value)
+  };
+</script>
+
+<Select.Root bind:value={typeAccessors.get, typeAccessors.set}>
+  <!-- options -->
+</Select.Root>
+```
+
+#### Never Use $derived for Accessors
+
+Do NOT wrap accessor objects in `$derived` unless the object itself needs to be recreated when dependencies change (very rare):
+
+```svelte
+<!-- ❌ WRONG - Unnecessary overhead -->
+const accessors = $derived({
+  get: () => value,
+  set: (v) => { value = v; }
+});
+
+<!-- ✅ CORRECT - Simple object -->
+const accessors = {
+  get: () => value,
+  set: (v) => { value = v; }
+};
+```
+
+The getter function is already reactive because it reads from reactive `$state`. The accessor object doesn't need to be reactive.
+
 ## Error Handling and Validation
 
 **ALWAYS implement comprehensive error handling with proper user feedback.**

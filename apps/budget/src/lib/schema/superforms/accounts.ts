@@ -31,6 +31,11 @@ export const superformInsertAccountSchema = z.object({
   initialBalance: z.number().optional(),
   accountNumberLast4: z.string().max(4, "Account number last 4 must be 4 characters or less").optional(),
   onBudget: z.boolean().default(true),
+  // Debt account fields (credit cards & loans)
+  debtLimit: z.number().positive("Credit limit must be a positive number").optional().nullable(),
+  minimumPayment: z.number().positive("Minimum payment must be a positive number").optional().nullable(),
+  paymentDueDay: z.number().int().min(1).max(31, "Payment due day must be between 1 and 31").optional().nullable(),
+  interestRate: z.number().min(0).max(100, "Interest rate must be between 0 and 100").optional().nullable(),
 });
 
 export const superformUpdateAccountSchema = z.object({

@@ -27,7 +27,7 @@ import {currencyFormatter} from '$lib/utils/formatters';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Receipt from '@lucide/svelte/icons/receipt';
 import {Badge} from '$lib/components/ui/badge';
-import {formatAccountBalance, getBalanceColorClass} from '$lib/utils/account-display';
+import {formatAccountBalance, getBalanceColorClass, calculateDebtMetrics} from '$lib/utils/account-display';
 import {isDebtAccount} from '$lib/schema/accounts';
 
 const accountsState = $derived(AccountsState.get());
@@ -212,10 +212,31 @@ const _deleteBudgetId = $derived(deleteBudgetId);
                       </div>
 
                       <!-- Account Balance -->
-                      <div class="text-xs font-medium text-right {getBalanceColorClass(formattedBalance.color)}">
-                        {currencyFormatter.format(formattedBalance.displayAmount)}
-                        {#if account.accountType && isDebtAccount(account.accountType)}
-                          <span class="text-[10px] ml-1 opacity-70">{formattedBalance.label}</span>
+                      <div class="text-xs font-medium text-right">
+                        {#if account.accountType === 'credit_card' && account.debtLimit}
+                          {@const metrics = calculateDebtMetrics(account)}
+                          {#if metrics}
+                            <div class="flex flex-col gap-0.5">
+                              <div class="{getBalanceColorClass(formattedBalance.color)}">
+                                {currencyFormatter.format(metrics.availableCredit ?? 0)} <span class="text-[10px] opacity-70">available</span>
+                              </div>
+                              <div class="text-[10px] text-muted-foreground">
+                                {currencyFormatter.format(Math.abs(account.balance || 0))} / {currencyFormatter.format(account.debtLimit)}
+                              </div>
+                            </div>
+                          {:else}
+                            <div class="{getBalanceColorClass(formattedBalance.color)}">
+                              {currencyFormatter.format(formattedBalance.displayAmount)}
+                              <span class="text-[10px] ml-1 opacity-70">{formattedBalance.label}</span>
+                            </div>
+                          {/if}
+                        {:else}
+                          <div class="{getBalanceColorClass(formattedBalance.color)}">
+                            {currencyFormatter.format(formattedBalance.displayAmount)}
+                            {#if account.accountType && isDebtAccount(account.accountType)}
+                              <span class="text-[10px] ml-1 opacity-70">{formattedBalance.label}</span>
+                            {/if}
+                          </div>
                         {/if}
                       </div>
                     </div>

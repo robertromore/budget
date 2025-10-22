@@ -9,7 +9,7 @@ import {ManageScheduleForm} from '$lib/components/forms';
 import type {Schedule} from '$lib/schema/schedules';
 import {SchedulesState} from '$lib/states/entities/schedules.svelte';
 
-const slug = $derived(page.params.slug);
+const slug = $derived(page.params['slug']);
 const schedulesState = $derived(SchedulesState.get());
 const schedule = $derived(schedulesState.getBySlug(slug));
 
@@ -54,7 +54,7 @@ const handleSave = (updatedSchedule?: Schedule) => {
 
   {#if schedule}
     <!-- Form Card -->
-    <Card.Root class="max-w-4xl">
+    <Card.Root>
       <Card.Header>
         <Card.Title>Schedule Information</Card.Title>
         <Card.Description>
@@ -70,7 +70,7 @@ const handleSave = (updatedSchedule?: Schedule) => {
       </Card.Content>
     </Card.Root>
   {:else}
-    <Card.Root class="max-w-4xl">
+    <Card.Root>
       <Card.Content class="py-8 text-center text-muted-foreground">
         Schedule not found
       </Card.Content>

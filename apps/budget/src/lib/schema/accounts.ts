@@ -54,6 +54,9 @@ export const accounts = sqliteTable(
     paymentDueDay: integer("payment_due_day"), // Day of month payment is due (1-31)
     interestRate: real("interest_rate"), // APR for credit cards or loan interest rate
 
+    // Metric preferences - JSON array of enabled metric IDs
+    enabledMetrics: text("enabled_metrics"), // JSON array like ["availableCredit", "utilization", "paymentDue"]
+
     dateOpened: text("date_opened")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -146,6 +149,26 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .nullable(),
   onBudget: (schema) =>
     schema.pipe(z.boolean()).default(true),
+  debtLimit: (schema) =>
+    schema
+      .pipe(z.number().positive("Credit limit must be a positive number"))
+      .optional()
+      .nullable(),
+  minimumPayment: (schema) =>
+    schema
+      .pipe(z.number().positive("Minimum payment must be a positive number"))
+      .optional()
+      .nullable(),
+  paymentDueDay: (schema) =>
+    schema
+      .pipe(z.number().int().min(1).max(31, "Payment due day must be between 1 and 31"))
+      .optional()
+      .nullable(),
+  interestRate: (schema) =>
+    schema
+      .pipe(z.number().min(0).max(100, "Interest rate must be between 0 and 100"))
+      .optional()
+      .nullable(),
 });
 
 // Schema for updates (all fields optional, but with validation when provided)
@@ -208,6 +231,29 @@ export const formUpdateAccountSchema = z.object({
     .optional()
     .nullable(),
   onBudget: z.boolean().optional(),
+  debtLimit: z
+    .number()
+    .positive("Credit limit must be a positive number")
+    .optional()
+    .nullable(),
+  minimumPayment: z
+    .number()
+    .positive("Minimum payment must be a positive number")
+    .optional()
+    .nullable(),
+  paymentDueDay: z
+    .number()
+    .int()
+    .min(1)
+    .max(31, "Payment due day must be between 1 and 31")
+    .optional()
+    .nullable(),
+  interestRate: z
+    .number()
+    .min(0)
+    .max(100, "Interest rate must be between 0 and 100")
+    .optional()
+    .nullable(),
 });
 
 // Combined schema that handles both create and update

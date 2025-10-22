@@ -93,3 +93,13 @@ export function formatDayOfMonth(date: DateValue): string {
   // Combine the day with its corresponding suffix, defaulting to 'th' if not found
   return `${day}${suffixMap[ordinalRule] ?? "th"}`;
 }
+
+/**
+ * Format a day number with ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
+ * @param day - Day of the month (1-31)
+ * @returns Formatted day with ordinal suffix (e.g., "21st")
+ */
+export function formatDayOrdinal(day: number): string {
+  const ordinalRule = pr.select(day) as keyof typeof suffixMap;
+  return `${day}${suffixMap[ordinalRule] ?? "th"}`;
+}

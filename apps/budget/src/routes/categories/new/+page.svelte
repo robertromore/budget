@@ -58,7 +58,7 @@ const handleSave = (entity: EditableEntityItem, isNew: boolean) => {
   </div>
 
   <!-- Form Card -->
-  <Card.Root class="max-w-4xl">
+  <Card.Root>
     <Card.Header>
       <Card.Title>Category Information</Card.Title>
       <Card.Description>

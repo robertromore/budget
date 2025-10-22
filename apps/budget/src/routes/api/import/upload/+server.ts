@@ -1,20 +1,21 @@
-import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { transactions as transactionTable } from '$lib/schema/transactions';
+import { db } from '$lib/server/db';
 import { CSVProcessor } from '$lib/server/import/file-processors/csv-processor';
 import { ExcelProcessor } from '$lib/server/import/file-processors/excel-processor';
-import { QIFProcessor } from '$lib/server/import/file-processors/qif-processor';
 import { OFXProcessor } from '$lib/server/import/file-processors/ofx-processor';
+import { QIFProcessor } from '$lib/server/import/file-processors/qif-processor';
 import { TransactionValidator } from '$lib/server/import/validators/transaction-validator';
-import { db } from '$lib/server/db';
-import { transactions as transactionTable } from '$lib/schema/transactions';
-import { and, eq, isNull } from 'drizzle-orm';
 import type { ParseResult } from '$lib/types/import';
+import { json } from '@sveltejs/kit';
+import { and, eq, isNull } from 'drizzle-orm';
+import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, url }) => {
   try {
     const formData = await request.formData();
     const file = formData.get('importFile') as File;
     const accountIdParam = url.searchParams.get('accountId');
+    const reverseAmountSignsParam = url.searchParams.get('reverseAmountSigns');
 
     if (!file) {
       return json({ error: 'No file provided' }, { status: 400 });
@@ -52,9 +53,24 @@ export const POST: RequestHandler = async ({ request, url }) => {
           .from(transactionTable)
           .where(and(eq(transactionTable.accountId, accountId), isNull(transactionTable.deletedAt)));
 
+        // Apply amount reversal before duplicate checking if enabled
+        // This ensures we compare "final" amounts (as they will be stored in DB) against existing transactions
+        let dataForValidation = rawData;
+        if (reverseAmountSignsParam === 'true') {
+          dataForValidation = rawData.map(row => ({
+            ...row,
+            normalizedData: {
+              ...row.normalizedData,
+              amount: row.normalizedData['amount'] !== undefined && row.normalizedData['amount'] !== null
+                ? -(row.normalizedData['amount'] as number)
+                : row.normalizedData['amount']
+            }
+          }));
+        }
+
         // Validate rows with duplicate checking
         const validator = new TransactionValidator();
-        validatedData = validator.validateRows(rawData, existingTransactions as any);
+        validatedData = validator.validateRows(dataForValidation, existingTransactions as any);
       }
     }
 

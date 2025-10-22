@@ -20,12 +20,14 @@ import {
 } from '$lib/schema/budgets';
 import type {Account} from '$lib/schema/accounts';
 import type {Category} from '$lib/schema/categories';
+import type {Schedule} from '$lib/schema/schedules';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
 let {
   formData,
   accounts,
   categories,
+  schedules = [],
   budgetId,
   onCancel,
   formId = 'budget-form',
@@ -33,6 +35,7 @@ let {
   formData: any;
   accounts: Account[];
   categories: Category[];
+  schedules?: Schedule[];
   budgetId?: number;
   onCancel?: () => void;
   formId?: string;
@@ -173,6 +176,23 @@ const categoryAccessors = createTransformAccessors(
     } else {
       selectedCategoryValue = value;
     }
+  }
+);
+
+// Schedule selection for scheduled-expense budgets
+const availableSchedules = $derived(
+  schedules.filter(s => s.status === 'active' && !s.budgetId)
+);
+
+const selectedSchedule = $derived.by(() => {
+  if (!$formStore.linkedScheduleId) return null;
+  return schedules.find(s => s.id === $formStore.linkedScheduleId);
+});
+
+const scheduleAccessors = createTransformAccessors(
+  () => $formStore.linkedScheduleId?.toString() ?? '',
+  (value: string) => {
+    $formStore.linkedScheduleId = value ? parseInt(value) : null;
   }
 );
 </script>
@@ -400,6 +420,46 @@ const categoryAccessors = createTransformAccessors(
             </div>
           {:else}
             <p class="text-sm text-muted-foreground">Select at least one account for this budget</p>
+          {/if}
+        </div>
+      {/if}
+
+      <!-- Schedule Selection (for scheduled-expense budgets) -->
+      {#if selectedBudgetType === 'scheduled-expense'}
+        <div class="space-y-2 pt-4 border-t border-border">
+          <Label>Link to Schedule (Optional)</Label>
+          <Select.Root
+            type="single"
+            bind:value={scheduleAccessors.get, scheduleAccessors.set}
+          >
+            <Select.Trigger>
+              {selectedSchedule ? selectedSchedule.name : 'Select a schedule...'}
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="">None</Select.Item>
+              {#each availableSchedules as schedule (schedule.id)}
+                <Select.Item value={String(schedule.id)}>
+                  <div class="flex flex-col">
+                    <span class="font-medium">{schedule.name}</span>
+                    <span class="text-xs text-muted-foreground">
+                      {schedule.payee?.name || 'No payee'} • {schedule.scheduleDate?.frequency || 'One-time'}
+                    </span>
+                  </div>
+                </Select.Item>
+              {/each}
+            </Select.Content>
+          </Select.Root>
+          <Form.Description>
+            Link this budget to a recurring schedule for automatic tracking
+          </Form.Description>
+          {#if selectedSchedule}
+            <div class="p-3 bg-muted rounded-md">
+              <p class="text-sm font-medium">{selectedSchedule.name}</p>
+              <p class="text-xs text-muted-foreground mt-1">
+                Amount: ${selectedSchedule.amount.toFixed(2)} •
+                {selectedSchedule.scheduleDate?.frequency || 'One-time'}
+              </p>
+            </div>
           {/if}
         </div>
       {/if}

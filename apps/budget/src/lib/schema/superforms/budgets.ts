@@ -21,6 +21,7 @@ export const superformInsertBudgetSchema = z.object({
   startDay: z.number().min(1).max(366).optional(),
   accountIds: z.array(z.number().int().positive()).optional(),
   categoryIds: z.array(z.number().int().positive()).optional(),
+  linkedScheduleId: z.number().int().positive().optional().nullable(),
 });
 
 // Superform-compatible schema for updating budgets
@@ -49,6 +50,7 @@ export const superformUpdateBudgetSchema = z.object({
   startDay: z.number().min(1).max(366).optional(),
   accountIds: z.array(z.number().int().positive()).optional(),
   categoryIds: z.array(z.number().int().positive()).optional(),
+  linkedScheduleId: z.number().int().positive().optional().nullable(),
 });
 
 export type SuperformInsertBudgetSchema = typeof superformInsertBudgetSchema;

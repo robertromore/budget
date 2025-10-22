@@ -10,6 +10,7 @@ import type {Row} from '@tanstack/table-core';
 import type {ImportRow} from '$lib/types/import';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import {cn} from '$lib/utils';
+import {createTransformAccessors} from '$lib/utils/bind-helpers';
 import Fuse from 'fuse.js';
 
 interface Props {
@@ -26,37 +27,40 @@ const categoriesArray = $derived(categoryState ? Array.from(categoryState.catego
 // Get the current value from the row data
 const initialCategoryName = $derived(row.original.normalizedData['category'] as string | undefined);
 
-// Local state for the selected category
-let selectedCategoryName = $state<string>('');
-let selectedCategoryId = $state<number | null>(null);
+// Local state for the selected category - using private vars for accessor pattern
+let _selectedCategoryName = $state<string>('');
+let _selectedCategoryId = $state<number | null>(null);
 
-// Sync with initial value reactively
+// Initialize from row data only once on mount
+let hasInitialized = $state(false);
 $effect(() => {
-  if (initialCategoryName && selectedCategoryName !== initialCategoryName) {
-    selectedCategoryName = initialCategoryName;
-    // Try to find matching category from the initial name
-    const match = categoriesArray.find(c => c.name?.toLowerCase() === initialCategoryName.toLowerCase());
-    if (match) {
-      selectedCategoryId = match.id;
-    } else {
-      selectedCategoryId = null;
+  if (!hasInitialized) {
+    const initName = initialCategoryName || '';
+    _selectedCategoryName = initName;
+
+    if (initName) {
+      const match = categoriesArray.find(c => c.name?.toLowerCase() === initName.toLowerCase());
+      _selectedCategoryId = match?.id || null;
     }
+
+    hasInitialized = true;
   }
 });
+
+// Create accessors to allow controlled access without triggering effect loops
+const selectedCategoryName = createTransformAccessors(
+  () => _selectedCategoryName,
+  (value: string) => { _selectedCategoryName = value; }
+);
+
+const selectedCategoryId = createTransformAccessors(
+  () => _selectedCategoryId,
+  (value: number | null) => { _selectedCategoryId = value; }
+);
 
 const rowIndex = $derived(row.original.rowIndex);
 let open = $state(false);
 let searchValue = $state('');
-
-// When dropdown opens, pre-fill search with current name if creating new
-$effect(() => {
-  if (open && needsCreation && !searchValue && selectedCategoryName) {
-    searchValue = selectedCategoryName;
-  }
-  if (!open) {
-    searchValue = '';
-  }
-});
 
 // Combine existing categories with temporary ones for search
 const combinedItems = $derived.by(() => {
@@ -79,49 +83,67 @@ let visibleItems = $derived.by(() => {
 const visibleCategories = $derived(visibleItems.filter(item => item.type === 'existing').map(item => item.category));
 const visibleTemporaryCategories = $derived(visibleItems.filter(item => item.type === 'temporary').map(item => item.name));
 
-const selectedCategory = $derived(categoriesArray.find(c => c.id === selectedCategoryId));
-const displayName = $derived(selectedCategory?.name || selectedCategoryName || 'Select category...');
+const selectedCategory = $derived(categoriesArray.find(c => c.id === selectedCategoryId.get()));
+const displayName = $derived(selectedCategory?.name || selectedCategoryName.get() || 'Select category...');
 
-// Check if the suggested name from CSV doesn't match any existing category
-const needsCreation = $derived(
-  selectedCategoryName &&
-  !selectedCategoryId &&
-  !categoriesArray.some(c => c.name?.toLowerCase() === selectedCategoryName.toLowerCase())
-);
+// Show "Create" option when: there's search text AND no exact match exists (case-sensitive)
+const showCreateOption = $derived.by(() => {
+  if (!searchValue.trim()) return false;
+  const searchTrimmed = searchValue.trim();
+  // Check for exact match (case-sensitive) - allows creating different capitalizations
+  const hasExactMatch = visibleCategories.some(c => c.name === searchTrimmed) ||
+                        visibleTemporaryCategories.some(t => t === searchTrimmed);
+  return !hasExactMatch;
+});
 
 function handleSelect(categoryId: number, categoryName: string) {
-  selectedCategoryId = categoryId;
-  selectedCategoryName = categoryName;
-  onUpdate?.(rowIndex, categoryId, categoryName);
-  open = false;
+  // Only call onUpdate if the value actually changed
+  const currentId = selectedCategoryId.get();
+  const currentName = selectedCategoryName.get();
+  const hasChanged = currentId !== categoryId || currentName !== categoryName;
+
+  selectedCategoryId.set(categoryId);
+  selectedCategoryName.set(categoryName);
+
+  if (hasChanged) {
+    onUpdate?.(rowIndex, categoryId, categoryName);
+  }
+
   searchValue = '';
+  open = false;
 }
 
 function handleCreateNew() {
-  const nameToCreate = searchValue.trim() || selectedCategoryName;
+  const nameToCreate = searchValue.trim();
   if (nameToCreate) {
-    selectedCategoryName = nameToCreate;
-    selectedCategoryId = null;
+    selectedCategoryName.set(nameToCreate);
+    selectedCategoryId.set(null);
     onUpdate?.(rowIndex, null, nameToCreate);
-    open = false;
     searchValue = '';
+    open = false;
   }
 }
 
 function handleSelectTemporary(categoryName: string) {
-  selectedCategoryName = categoryName;
-  selectedCategoryId = null;
-  onUpdate?.(rowIndex, null, categoryName);
-  open = false;
+  const hasChanged = selectedCategoryName.get() !== categoryName;
+
+  selectedCategoryName.set(categoryName);
+  selectedCategoryId.set(null);
+
+  if (hasChanged) {
+    onUpdate?.(rowIndex, null, categoryName);
+  }
+
   searchValue = '';
+  open = false;
 }
 
 function handleClear() {
-  selectedCategoryName = '';
-  selectedCategoryId = null;
+  selectedCategoryName.set('');
+  selectedCategoryId.set(null);
   onUpdate?.(rowIndex, null, null);
-  open = false;
   searchValue = '';
+  open = false;
 }
 </script>
 
@@ -134,7 +156,7 @@ function handleClear() {
           variant="outline"
           class={cn(
             'w-full h-8 text-xs justify-start overflow-hidden text-ellipsis whitespace-nowrap',
-            !selectedCategory && !selectedCategoryName && 'text-muted-foreground'
+            !selectedCategory && !selectedCategoryName.get() && 'text-muted-foreground'
           )}>
           <Tag class="mr-2 h-3 w-3" />
           {displayName}
@@ -146,7 +168,7 @@ function handleClear() {
         <Command.Input placeholder="Search or create category..." bind:value={searchValue} />
         <Command.List class="max-h-[300px]">
           <Command.Group>
-            {#if selectedCategoryName || selectedCategoryId}
+            {#if selectedCategoryName.get() || selectedCategoryId.get()}
               <Command.Item
                 value="clear"
                 onSelect={() => handleClear()}
@@ -156,28 +178,21 @@ function handleClear() {
               </Command.Item>
               <Command.Separator />
             {/if}
-            {#if searchValue.trim() && visibleCategories.length === 0 && visibleTemporaryCategories.length === 0}
+            {#if showCreateOption}
               <Command.Item
                 value="create-new"
                 onSelect={() => handleCreateNew()}
                 class="text-primary">
                 <Check class="mr-2 h-4 w-4 text-transparent" />
-                Create "{searchValue}"
-              </Command.Item>
-            {:else if needsCreation && !searchValue}
-              <Command.Item
-                value="create-suggested"
-                onSelect={() => handleCreateNew()}
-                class="text-primary">
-                <Check class="mr-2 h-4 w-4 text-transparent" />
-                Create "{selectedCategoryName}"
+                Create "{searchValue.trim()}"
               </Command.Item>
             {/if}
             {#each visibleCategories as category (category.id)}
+              {@const isSelected = selectedCategoryId.get() === category.id}
               <Command.Item
                 value={String(category.id)}
                 onSelect={() => handleSelect(category.id, category.name || '')}>
-                <Check class={cn('mr-2 h-4 w-4', selectedCategoryId !== category.id && 'text-transparent')} />
+                <Check class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
                 {category.name}
               </Command.Item>
             {/each}
@@ -185,11 +200,12 @@ function handleClear() {
               <Command.Separator />
               <Command.Group heading="Temporary (Will be created)">
                 {#each visibleTemporaryCategories as tempCategory}
+                  {@const isSelected = selectedCategoryName.get() === tempCategory}
                   <Command.Item
                     value={tempCategory}
                     onSelect={() => handleSelectTemporary(tempCategory)}
                     class="text-blue-600">
-                    <Sparkles class={cn('mr-2 h-4 w-4', selectedCategoryName !== tempCategory && 'text-transparent')} />
+                    <Sparkles class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
                     {tempCategory}
                   </Command.Item>
                 {/each}

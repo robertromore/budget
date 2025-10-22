@@ -65,10 +65,10 @@ const handleWizardComplete = async (data: Record<string, any>) => {
 
 {#if schedule}
 <div class="space-y-4">
-  {#if schedule.transactions.length > 0}
+  {#if schedule.transactions?.length > 0}
     <Card.Root>
       <Card.Header class="pb-2">
-        <Card.Title class="text-sm">Transaction History ({schedule.transactions.length})</Card.Title>
+        <Card.Title class="text-sm">Transaction History ({schedule.transactions?.length ?? 0})</Card.Title>
         <Card.Description class="text-xs">
           Complete list of transactions created by this schedule
         </Card.Description>
@@ -85,7 +85,7 @@ const handleWizardComplete = async (data: Record<string, any>) => {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {#each schedule.transactions as transaction}
+            {#each schedule.transactions ?? [] as transaction}
               <Table.Row>
                 <Table.Cell class="font-medium">
                   {new Date(transaction.date).toLocaleDateString()}

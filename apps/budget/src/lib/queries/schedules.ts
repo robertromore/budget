@@ -41,15 +41,16 @@ export function createToggleScheduleStatusMutation() {
       mutationFn: (scheduleId: number) =>
         trpc().scheduleRoutes.toggleStatus.mutate({ scheduleId }),
       onSuccess: (updatedSchedule, scheduleId) => {
-        // Update the detail query cache
+        // Update the detail query cache with the fresh data
         queryClient.setQueryData(
           scheduleKeys.detail(scheduleId),
           updatedSchedule
         );
 
-        // Optionally invalidate to ensure fresh data
+        // Invalidate to trigger reactivity and refetch
         queryClient.invalidateQueries({
-          queryKey: scheduleKeys.detail(scheduleId)
+          queryKey: scheduleKeys.detail(scheduleId),
+          refetchType: 'active'
         });
 
         toast.success(

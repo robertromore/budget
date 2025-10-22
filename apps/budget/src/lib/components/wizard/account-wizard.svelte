@@ -13,7 +13,6 @@
   import { createAccountValidationEngine } from "$lib/utils/wizardValidation";
   import { accountTypeEnum, type Account } from "$lib/schema";
   import { getIconByName } from "$lib/components/ui/icon-picker/icon-categories";
-  import { createTransformAccessors } from "$lib/utils/bind-helpers";
 
   interface Props {
     initialData?: Partial<Account>;
@@ -89,6 +88,45 @@
   function updateField(field: string, value: any) {
     accountWizardStore.updateFormData(field, value);
   }
+
+  // Generate suggested description for credit cards based on debt fields
+  function generateCreditCardDescription(): string | null {
+    if (formData['accountType'] !== 'credit_card') return null;
+
+    const parts: string[] = [];
+
+    if (formData['debtLimit']) {
+      const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      parts.push(`${formatter.format(formData['debtLimit'])} credit limit`);
+    }
+
+    if (formData['interestRate']) {
+      parts.push(`${formData['interestRate']}% APR`);
+    }
+
+    if (formData['paymentDueDay']) {
+      const day = formData['paymentDueDay'];
+      const suffix = day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : day === 21 ? 'st' : day === 22 ? 'nd' : day === 23 ? 'rd' : day === 31 ? 'st' : 'th';
+      parts.push(`payment due ${day}${suffix} of month`);
+    }
+
+    if (formData['minimumPayment']) {
+      const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+      parts.push(`${formatter.format(formData['minimumPayment'])} minimum payment`);
+    }
+
+    return parts.length > 0 ? parts.join(', ') : null;
+  }
+
+  // Auto-update notes when debt fields change for credit cards
+  $effect(() => {
+    if (formData['accountType'] === 'credit_card' && !formData['notes']) {
+      const suggested = generateCreditCardDescription();
+      if (suggested) {
+        updateField('notes', suggested);
+      }
+    }
+  });
 
   // Auto-detect account type from name (same logic as in manage-account-form)
   function detectAccountTypeFromName(name: string): string | null {
@@ -367,51 +405,22 @@
     label: accountTypeLabels[type] || type
   }));
 
-  // Local state for account type select
-  // Initialized with default value, will sync with formData in effect
-  let accountTypeValue = $state('checking');
-  const accountTypeAccessors = createTransformAccessors(
-    () => accountTypeValue,
-    (value: string) => { accountTypeValue = value; }
-  );
-
-  // Track if this is the initial mount
-  let isInitialMount = true;
-
-  // Keep accountTypeValue in sync with formData changes (one-way: formData -> accountTypeValue)
-  $effect(() => {
-    const formDataValue = formData['accountType'];
-    if (formDataValue && formDataValue !== accountTypeValue) {
-      accountTypeValue = formDataValue;
-    }
-  });
-
-  // Sync accountTypeValue changes back to formData and trigger side effects
-  // Skip on initial mount to avoid triggering side effects on load
-  $effect(() => {
-    if (isInitialMount) {
-      isInitialMount = false;
-      return;
-    }
-
+  // Handle account type changes with side effects
+  function handleAccountTypeChange(newAccountType: string) {
     const previousAccountType = formData['accountType'];
 
-    // Only proceed if accountType actually changed
-    if (accountTypeValue === previousAccountType) {
-      return;
-    }
-
-    updateField('accountType', accountTypeValue);
+    // Update the field
+    updateField('accountType', newAccountType);
 
     // Auto-select matching notes category when account type changes
-    if (accountTypeValue && noteCategories.find(cat => cat.value === accountTypeValue && cat.value !== 'all')) {
-      selectedNotesCategory = accountTypeValue;
+    if (newAccountType && noteCategories.find(cat => cat.value === newAccountType && cat.value !== 'all')) {
+      selectedNotesCategory = newAccountType;
     }
 
     // Auto-update icon and color if:
     // 1. No icon/color is set yet, OR
     // 2. Current icon/color matches the default for the previous account type (user hasn't customized it)
-    const defaults = accountTypeDefaults[accountTypeValue];
+    const defaults = accountTypeDefaults[newAccountType];
     const currentIcon = formData['accountIcon'];
     const currentColor = formData['accountColor'];
     const previousDefaults = previousAccountType ? accountTypeDefaults[previousAccountType] : null;
@@ -435,7 +444,23 @@
     if (shouldUpdateColor) {
       updateField('accountColor', defaults.color);
     }
-  });
+
+    // Auto-set onBudget to false for credit cards and loans
+    // These are liability accounts where the spending is tracked in categories,
+    // and payments are transfers (not expenses)
+    if (newAccountType === 'credit_card' || newAccountType === 'loan') {
+      updateField('onBudget', false);
+    } else if (previousAccountType === 'credit_card' || previousAccountType === 'loan') {
+      // If switching FROM credit card/loan to another type, default back to on-budget
+      updateField('onBudget', true);
+    }
+  }
+
+  // Account type accessors - binds directly to formData with custom setter for side effects
+  const accountTypeAccessors = {
+    get: () => formData['accountType'] ?? 'checking',
+    set: (value: string) => handleAccountTypeChange(value)
+  };
 
   function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
     updateField('accountIcon', event.detail.value);
@@ -742,6 +767,91 @@
         </p>
       </div>
     </div>
+
+    <!-- Debt Account Fields (Credit Cards & Loans) -->
+    {#if formData['accountType'] === 'credit_card' || formData['accountType'] === 'loan'}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+        <!-- Credit Limit / Loan Amount -->
+        <div class="space-y-2">
+          <Label for="debt-limit" class="text-sm font-medium flex items-center gap-2">
+            <Banknote class="h-4 w-4" />
+            {formData['accountType'] === 'credit_card' ? 'Credit Limit' : 'Loan Amount'}
+          </Label>
+          <Input
+            id="debt-limit"
+            type="number"
+            step="0.01"
+            value={formData['debtLimit'] || ''}
+            oninput={(e) => updateField('debtLimit', parseFloat(e.currentTarget.value) || null)}
+            placeholder="0.00"
+            class="w-full"
+          />
+          <p class="text-xs text-muted-foreground">
+            {formData['accountType'] === 'credit_card'
+              ? 'Maximum credit available on this card'
+              : 'Total principal amount borrowed'}
+          </p>
+        </div>
+
+        <!-- Interest Rate -->
+        <div class="space-y-2">
+          <Label for="interest-rate" class="text-sm font-medium">
+            Interest Rate (APR %)
+          </Label>
+          <Input
+            id="interest-rate"
+            type="number"
+            step="0.01"
+            value={formData['interestRate'] || ''}
+            oninput={(e) => updateField('interestRate', parseFloat(e.currentTarget.value) || null)}
+            placeholder="0.00"
+            class="w-full"
+          />
+          <p class="text-xs text-muted-foreground">
+            Annual percentage rate (optional)
+          </p>
+        </div>
+
+        <!-- Minimum Payment -->
+        <div class="space-y-2">
+          <Label for="minimum-payment" class="text-sm font-medium">
+            Minimum Payment
+          </Label>
+          <Input
+            id="minimum-payment"
+            type="number"
+            step="0.01"
+            value={formData['minimumPayment'] || ''}
+            oninput={(e) => updateField('minimumPayment', parseFloat(e.currentTarget.value) || null)}
+            placeholder="0.00"
+            class="w-full"
+          />
+          <p class="text-xs text-muted-foreground">
+            Minimum monthly payment required (optional)
+          </p>
+        </div>
+
+        <!-- Payment Due Day -->
+        <div class="space-y-2">
+          <Label for="payment-due-day" class="text-sm font-medium">
+            Payment Due Day
+          </Label>
+          <Input
+            id="payment-due-day"
+            type="number"
+            min="1"
+            max="31"
+            value={formData['paymentDueDay'] || ''}
+            oninput={(e) => updateField('paymentDueDay', parseInt(e.currentTarget.value) || null)}
+            placeholder="e.g., 15"
+            class="w-full"
+          />
+          <p class="text-xs text-muted-foreground">
+            Day of month payment is due (1-31)
+          </p>
+        </div>
+      </div>
+    {/if}
   </div>
 
   <!-- Budget Inclusion -->
@@ -1025,6 +1135,37 @@
               <p class="text-sm text-muted-foreground font-mono">{formData['accountColor'] || 'hsl(var(--primary))'}</p>
             </div>
           </div>
+
+          <!-- Debt Account Details -->
+          {#if formData['accountType'] === 'credit_card' || formData['accountType'] === 'loan'}
+            {#if formData['debtLimit']}
+              <div class="space-y-1">
+                <p class="font-medium text-sm">{formData['accountType'] === 'credit_card' ? 'Credit Limit' : 'Loan Amount'}</p>
+                <p class="text-sm text-muted-foreground">${formData['debtLimit']?.toFixed(2)}</p>
+              </div>
+            {/if}
+
+            {#if formData['interestRate']}
+              <div class="space-y-1">
+                <p class="font-medium text-sm">Interest Rate</p>
+                <p class="text-sm text-muted-foreground">{formData['interestRate']}% APR</p>
+              </div>
+            {/if}
+
+            {#if formData['minimumPayment']}
+              <div class="space-y-1">
+                <p class="font-medium text-sm">Minimum Payment</p>
+                <p class="text-sm text-muted-foreground">${formData['minimumPayment']?.toFixed(2)}</p>
+              </div>
+            {/if}
+
+            {#if formData['paymentDueDay']}
+              <div class="space-y-1">
+                <p class="font-medium text-sm">Payment Due Day</p>
+                <p class="text-sm text-muted-foreground">Day {formData['paymentDueDay']} of each month</p>
+              </div>
+            {/if}
+          {/if}
 
           <div class="space-y-1">
             <p class="font-medium text-sm">Budget Inclusion</p>

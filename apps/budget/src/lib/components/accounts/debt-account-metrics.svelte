@@ -1,152 +1,249 @@
 <script lang="ts">
 import type {Account} from '$lib/schema/accounts';
-import {calculateDebtMetrics, formatCurrency, formatPercentage} from '$lib/utils/account-display';
+import {formatCurrency, formatPercentage} from '$lib/utils/account-display';
+import {formatDayOrdinal} from '$lib/utils/date-formatters';
+import {
+  calculateAllMetrics,
+  getEnabledMetrics,
+  AVAILABLE_METRICS,
+  type MetricId
+} from '$lib/utils/credit-card-metrics';
+import ConfigureMetricsDialog from './configure-metrics-dialog.svelte';
 import * as Card from '$lib/components/ui/card';
 import {Progress} from '$lib/components/ui/progress';
-import TrendingDown from '@lucide/svelte/icons/trending-down';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
+import {Button} from '$lib/components/ui/button';
+import Settings from '@lucide/svelte/icons/settings';
 import CreditCard from '@lucide/svelte/icons/credit-card';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Percent from '@lucide/svelte/icons/percent';
+import Calendar from '@lucide/svelte/icons/calendar';
+import Clock from '@lucide/svelte/icons/clock';
+import Wallet from '@lucide/svelte/icons/wallet';
+import Target from '@lucide/svelte/icons/target';
+import ShoppingCart from '@lucide/svelte/icons/shopping-cart';
+import Hash from '@lucide/svelte/icons/hash';
+import CalendarDays from '@lucide/svelte/icons/calendar-days';
+import HelpCircle from '@lucide/svelte/icons/help-circle';
+import type {Component} from 'svelte';
+import {trpc} from '$lib/trpc/client';
+import {toast} from 'svelte-sonner';
+import {useQueryClient} from '@tanstack/svelte-query';
+import {accountKeys} from '$lib/query/accounts';
 
 let {account} = $props<{account: Account}>();
 
-const metrics = $derived(calculateDebtMetrics(account));
+let showConfigDialog = $state(false);
+const queryClient = useQueryClient();
+
+// Handle metric configuration save
+async function handleSaveMetrics(enabledMetrics: MetricId[]) {
+  try {
+    await trpc().accountRoutes.updateEnabledMetrics.mutate({
+      accountId: account.id,
+      enabledMetrics,
+    });
+
+    // Invalidate the account detail query to refetch with new data
+    await queryClient.invalidateQueries({
+      queryKey: accountKeys.detailBySlug(account.slug),
+    });
+
+    toast.success('Metrics configuration updated');
+  } catch (error) {
+    console.error('Failed to update metrics:', error);
+    toast.error('Failed to update metrics configuration');
+  }
+}
+
 const isCreditCard = $derived(account.accountType === 'credit_card');
-const isLoan = $derived(account.accountType === 'loan');
+const calculatedMetrics = $derived(isCreditCard ? calculateAllMetrics(account) : null);
+const enabledMetricIds = $derived(isCreditCard ? getEnabledMetrics(account) : []);
+
+// Get the metric definitions for enabled metrics
+const enabledMetrics = $derived(
+  enabledMetricIds
+    .map(id => AVAILABLE_METRICS.find(m => m.id === id))
+    .filter((m): m is typeof AVAILABLE_METRICS[number] => m !== undefined)
+);
+
+// Icon mapping
+const iconMap: Record<string, Component> = {
+  CreditCard,
+  TrendingUp,
+  TrendingDown,
+  CircleAlert,
+  DollarSign,
+  Percent,
+  Calendar,
+  Clock,
+  Wallet,
+  Target,
+  ShoppingCart,
+  Hash,
+  CalendarDays,
+  HelpCircle,
+};
+
+// Helper to get icon component from name
+function getIconComponent(iconName: string): Component {
+  return iconMap[iconName] || HelpCircle;
+}
+
+// Helper to render metric value
+function renderMetricValue(metricId: MetricId, calculatedMetrics: ReturnType<typeof calculateAllMetrics>) {
+  switch (metricId) {
+    case 'availableCredit':
+      return calculatedMetrics.availableCredit !== undefined
+        ? formatCurrency(calculatedMetrics.availableCredit)
+        : 'N/A';
+    case 'creditUtilization':
+      return calculatedMetrics.creditUtilization !== undefined
+        ? formatPercentage(calculatedMetrics.creditUtilization)
+        : 'N/A';
+    case 'overLimit':
+      return calculatedMetrics.isOverLimit
+        ? formatCurrency((calculatedMetrics.currentBalance || 0) - (calculatedMetrics.creditLimit || 0))
+        : null;
+    case 'minimumPayment':
+      return account.minimumPayment ? formatCurrency(account.minimumPayment) : 'N/A';
+    case 'interestRate':
+      return account.interestRate ? formatPercentage(account.interestRate) : 'N/A';
+    case 'paymentDueDate':
+      return calculatedMetrics.nextPaymentDue
+        ? new Date(calculatedMetrics.nextPaymentDue).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : 'N/A';
+    case 'daysUntilDue':
+      return calculatedMetrics.daysUntilDue !== undefined
+        ? `${calculatedMetrics.daysUntilDue} days`
+        : 'N/A';
+    case 'currentBalance':
+      return formatCurrency(calculatedMetrics.currentBalance || 0);
+    case 'creditLimit':
+      return calculatedMetrics.creditLimit ? formatCurrency(calculatedMetrics.creditLimit) : 'N/A';
+    case 'monthlySpending':
+      return calculatedMetrics.monthlySpending !== undefined
+        ? formatCurrency(calculatedMetrics.monthlySpending)
+        : 'N/A';
+    case 'transactionCount':
+      return calculatedMetrics.transactionCount !== undefined
+        ? calculatedMetrics.transactionCount.toString()
+        : 'N/A';
+    case 'interestCharges':
+      return calculatedMetrics.estimatedInterestThisMonth !== undefined
+        ? formatCurrency(calculatedMetrics.estimatedInterestThisMonth)
+        : 'N/A';
+    case 'payoffTimeline':
+      return calculatedMetrics.payoffMonths !== undefined
+        ? `${calculatedMetrics.payoffMonths} months`
+        : 'N/A';
+    default:
+      return 'N/A';
+  }
+}
+
+// Helper to get additional description text
+function getMetricDescription(metricId: MetricId, calculatedMetrics: ReturnType<typeof calculateAllMetrics>) {
+  switch (metricId) {
+    case 'availableCredit':
+      return `${formatCurrency(calculatedMetrics.currentBalance || 0)} of ${formatCurrency(calculatedMetrics.creditLimit || 0)} used`;
+    case 'creditUtilization':
+      const util = calculatedMetrics.creditUtilization || 0;
+      return util < 30 ? 'Excellent' : util < 70 ? 'Good' : 'High usage';
+    case 'overLimit':
+      return 'Balance exceeds credit limit';
+    case 'minimumPayment':
+      return account.paymentDueDay
+        ? `Due on the ${formatDayOrdinal(account.paymentDueDay)} of each month`
+        : 'Monthly payment';
+    case 'interestRate':
+      return 'APR';
+    case 'paymentDueDate':
+      return calculatedMetrics.nextPaymentDue ? 'Next payment due' : '';
+    case 'payoffTimeline':
+      return 'At minimum payment';
+    default:
+      return '';
+  }
+}
+
+// Helper to determine card styling based on metric
+function getMetricCardClass(metricId: MetricId, calculatedMetrics: ReturnType<typeof calculateAllMetrics>) {
+  if (metricId === 'overLimit' && calculatedMetrics.isOverLimit) {
+    return 'border-red-600 bg-red-50 dark:bg-red-950';
+  }
+  return '';
+}
+
+function getMetricValueClass(metricId: MetricId, calculatedMetrics: ReturnType<typeof calculateAllMetrics>) {
+  if (metricId === 'availableCredit') {
+    const available = calculatedMetrics.availableCredit || 0;
+    return available > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+  }
+  if (metricId === 'creditUtilization') {
+    const util = calculatedMetrics.creditUtilization || 0;
+    return util < 30
+      ? 'text-green-600 dark:text-green-400'
+      : util < 70
+        ? 'text-yellow-600 dark:text-yellow-400'
+        : 'text-red-600 dark:text-red-400';
+  }
+  if (metricId === 'overLimit') {
+    return 'text-red-600 dark:text-red-400';
+  }
+  return '';
+}
 </script>
 
-{#if metrics}
-  <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-    {#if isCreditCard && metrics.availableCredit !== undefined}
-      <!-- Available Credit -->
-      <Card.Root>
-        <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <Card.Title class="text-sm font-medium">Available Credit</Card.Title>
-          <CreditCard class="h-4 w-4 text-muted-foreground"></CreditCard>
-        </Card.Header>
-        <Card.Content>
-          <div class="text-2xl font-bold {metrics.availableCredit > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-            {formatCurrency(metrics.availableCredit)}
-          </div>
-          <p class="text-xs text-muted-foreground">
-            {formatCurrency(account.balance ? Math.abs(account.balance) : 0)} of {formatCurrency(account.debtLimit || 0)} used
-          </p>
-        </Card.Content>
-      </Card.Root>
+{#if isCreditCard && calculatedMetrics}
+  <div class="space-y-4">
+    <!-- Header with Configure button -->
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold">Credit Card Metrics</h3>
+      <Button variant="outline" size="sm" onclick={() => (showConfigDialog = true)}>
+        <Settings class="h-4 w-4 mr-2" />
+        Configure Metrics
+      </Button>
+    </div>
 
-      <!-- Credit Utilization -->
-      <Card.Root>
-        <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <Card.Title class="text-sm font-medium">Credit Utilization</Card.Title>
-          <TrendingUp class="h-4 w-4 text-muted-foreground"></TrendingUp>
-        </Card.Header>
-        <Card.Content>
-          <div class="text-2xl font-bold" class:text-green-600={metrics.creditUtilization! < 30} class:text-yellow-600={metrics.creditUtilization! >= 30 && metrics.creditUtilization! < 70} class:text-red-600={metrics.creditUtilization! >= 70} class:dark:text-green-400={metrics.creditUtilization! < 30} class:dark:text-yellow-400={metrics.creditUtilization! >= 30 && metrics.creditUtilization! < 70} class:dark:text-red-400={metrics.creditUtilization! >= 70}>
-            {formatPercentage(metrics.creditUtilization!)}
-          </div>
-          <Progress value={metrics['creditUtilization']} class="mt-2" />
-          <p class="mt-1 text-xs text-muted-foreground">
-            {metrics.creditUtilization! < 30 ? 'Excellent' : metrics.creditUtilization! < 70 ? 'Good' : 'High usage'}
-          </p>
-        </Card.Content>
-      </Card.Root>
+    <!-- Metrics Grid -->
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {#each enabledMetrics as metric}
+        {@const metricValue = renderMetricValue(metric.id, calculatedMetrics)}
+        {@const Icon = getIconComponent(metric.icon)}
 
-      <!-- Over Limit Warning -->
-      {#if metrics.isOverLimit}
-        <Card.Root class="border-red-600 bg-red-50 dark:bg-red-950">
-          <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <Card.Title class="text-sm font-medium text-red-600 dark:text-red-400">Over Limit</Card.Title>
-            <CircleAlert class="h-4 w-4 text-red-600 dark:text-red-400"></CircleAlert>
-          </Card.Header>
-          <Card.Content>
-            <div class="text-2xl font-bold text-red-600 dark:text-red-400">
-              {formatCurrency((account.balance ? Math.abs(account.balance) : 0) - (account.debtLimit || 0))}
-            </div>
-            <p class="text-xs text-red-600 dark:text-red-400">
-              Balance exceeds credit limit
-            </p>
-          </Card.Content>
-        </Card.Root>
-      {/if}
-    {/if}
+        {#if metricValue !== null && (metric.id !== 'overLimit' || calculatedMetrics.isOverLimit)}
+          <Card.Root class={getMetricCardClass(metric.id, calculatedMetrics)}>
+            <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Card.Title class="text-sm font-medium {metric.id === 'overLimit' ? 'text-red-600 dark:text-red-400' : ''}">
+                {metric.label}
+              </Card.Title>
+              <Icon class="h-4 w-4 {metric.id === 'overLimit' ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}" />
+            </Card.Header>
+            <Card.Content>
+              <div class="text-2xl font-bold {getMetricValueClass(metric.id, calculatedMetrics)}">
+                {metricValue}
+              </div>
 
-    {#if isLoan && metrics.remainingBalance !== undefined}
-      <!-- Remaining Balance -->
-      <Card.Root>
-        <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <Card.Title class="text-sm font-medium">Remaining Balance</Card.Title>
-          <TrendingDown class="h-4 w-4 text-muted-foreground"></TrendingDown>
-        </Card.Header>
-        <Card.Content>
-          <div class="text-2xl font-bold text-red-600 dark:text-red-400">
-            {formatCurrency(metrics.remainingBalance)}
-          </div>
-          <p class="text-xs text-muted-foreground">
-            Of {formatCurrency(account.debtLimit || 0)} original loan
-          </p>
-        </Card.Content>
-      </Card.Root>
+              {#if metric.id === 'creditUtilization' && calculatedMetrics.creditUtilization !== undefined}
+                <Progress value={calculatedMetrics.creditUtilization} class="mt-2" />
+              {/if}
 
-      <!-- Payoff Progress -->
-      {#if metrics.payoffProgress !== undefined}
-        <Card.Root>
-          <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <Card.Title class="text-sm font-medium">Payoff Progress</Card.Title>
-            <TrendingUp class="h-4 w-4 text-muted-foreground"></TrendingUp>
-          </Card.Header>
-          <Card.Content>
-            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-              {formatPercentage(metrics.payoffProgress)}
-            </div>
-            <Progress value={metrics.payoffProgress} class="mt-2" />
-            <p class="mt-1 text-xs text-muted-foreground">
-              {formatCurrency((account.debtLimit || 0) - metrics.remainingBalance)} paid off
-            </p>
-          </Card.Content>
-        </Card.Root>
-      {/if}
-    {/if}
-
-    <!-- Minimum Payment (if configured) -->
-    {#if account.minimumPayment}
-      <Card.Root>
-        <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <Card.Title class="text-sm font-medium">Minimum Payment</Card.Title>
-          <CreditCard class="h-4 w-4 text-muted-foreground"></CreditCard>
-        </Card.Header>
-        <Card.Content>
-          <div class="text-2xl font-bold">
-            {formatCurrency(account.minimumPayment)}
-          </div>
-          {#if account.paymentDueDay}
-            <p class="text-xs text-muted-foreground">
-              Due on day {account.paymentDueDay} of each month
-            </p>
-          {:else}
-            <p class="text-xs text-muted-foreground">
-              Monthly payment
-            </p>
-          {/if}
-        </Card.Content>
-      </Card.Root>
-    {/if}
-
-    <!-- Interest Rate (if configured) -->
-    {#if account.interestRate}
-      <Card.Root>
-        <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <Card.Title class="text-sm font-medium">Interest Rate</Card.Title>
-          <TrendingUp class="h-4 w-4 text-muted-foreground"></TrendingUp>
-        </Card.Header>
-        <Card.Content>
-          <div class="text-2xl font-bold">
-            {formatPercentage(account.interestRate)}
-          </div>
-          <p class="text-xs text-muted-foreground">
-            APR
-          </p>
-        </Card.Content>
-      </Card.Root>
-    {/if}
+              {@const description = getMetricDescription(metric.id, calculatedMetrics)}
+              {#if description}
+                <p class="mt-1 text-xs {metric.id === 'overLimit' ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}">
+                  {description}
+                </p>
+              {/if}
+            </Card.Content>
+          </Card.Root>
+        {/if}
+      {/each}
+    </div>
   </div>
+
+  <!-- Configuration Dialog -->
+  <ConfigureMetricsDialog {account} bind:open={showConfigDialog} onSave={handleSaveMetrics} />
 {/if}

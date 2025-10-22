@@ -23,40 +23,20 @@ let {row, onUpdate, temporaryPayees = []}: Props = $props();
 const payeeState = PayeesState.get();
 const payeesArray = $derived(payeeState ? Array.from(payeeState.payees.values()) : []);
 
-// Get the current value from the row data
-const initialPayeeName = $derived(row.original.normalizedData['payee'] as string | undefined);
-
-// Local state for the selected payee
-let selectedPayeeName = $state<string>('');
-let selectedPayeeId = $state<number | null>(null);
-
-// Sync with initial value reactively
-$effect(() => {
-  if (initialPayeeName && selectedPayeeName !== initialPayeeName) {
-    selectedPayeeName = initialPayeeName;
-    // Try to find matching payee from the initial name
-    const match = payeesArray.find(p => p.name?.toLowerCase() === initialPayeeName.toLowerCase());
-    if (match) {
-      selectedPayeeId = match.id;
-    } else {
-      selectedPayeeId = null;
-    }
-  }
-});
-
 const rowIndex = $derived(row.original.rowIndex);
+
+// Access row data directly - get payee name from row (which includes overrides)
+const selectedPayeeName = $derived((row.original.normalizedData['payee'] as string | null | undefined) ?? '');
+
+// Find matching payee ID from payee name
+const selectedPayeeId = $derived.by(() => {
+  const payeeName = selectedPayeeName;
+  if (!payeeName) return null;
+  const match = payeesArray.find(p => p.name?.toLowerCase() === payeeName.toLowerCase());
+  return match?.id || null;
+});
 let open = $state(false);
 let searchValue = $state('');
-
-// When dropdown opens, pre-fill search with current name if creating new
-$effect(() => {
-  if (open && needsCreation && !searchValue && selectedPayeeName) {
-    searchValue = selectedPayeeName;
-  }
-  if (!open) {
-    searchValue = '';
-  }
-});
 
 // Combine existing payees with temporary ones for search
 const combinedItems = $derived.by(() => {
@@ -82,46 +62,54 @@ const visibleTemporaryPayees = $derived(visibleItems.filter(item => item.type ==
 const selectedPayee = $derived(payeesArray.find(p => p.id === selectedPayeeId));
 const displayName = $derived(selectedPayee?.name || selectedPayeeName || 'Select payee...');
 
-// Check if the suggested name from CSV doesn't match any existing payee
-const needsCreation = $derived(
-  selectedPayeeName &&
-  !selectedPayeeId &&
-  !payeesArray.some(p => p.name?.toLowerCase() === selectedPayeeName.toLowerCase())
-);
+// Show "Create" option when: there's search text AND no exact match exists (case-sensitive)
+const showCreateOption = $derived.by(() => {
+  if (!searchValue.trim()) return false;
+  const searchTrimmed = searchValue.trim();
+  // Check for exact match (case-sensitive) - allows creating "Hy-Vee" even if "Hy-vee" exists
+  const hasExactMatch = visiblePayees.some(p => p.name === searchTrimmed) ||
+                        visibleTemporaryPayees.some(t => t === searchTrimmed);
+  return !hasExactMatch;
+});
 
 function handleSelect(payeeId: number, payeeName: string) {
-  selectedPayeeId = payeeId;
-  selectedPayeeName = payeeName;
-  onUpdate?.(rowIndex, payeeId, payeeName);
-  open = false;
+  // Only call onUpdate if the value actually changed
+  const hasChanged = selectedPayeeId !== payeeId || selectedPayeeName !== payeeName;
+
+  if (hasChanged) {
+    onUpdate?.(rowIndex, payeeId, payeeName);
+  }
+
   searchValue = '';
+  open = false;
 }
 
 function handleCreateNew() {
-  const nameToCreate = searchValue.trim() || selectedPayeeName;
+  const nameToCreate = searchValue.trim();
   if (nameToCreate) {
-    selectedPayeeName = nameToCreate;
-    selectedPayeeId = null;
+    console.log('PayeeCell handleCreateNew:', {rowIndex, payeeId: null, payeeName: nameToCreate});
     onUpdate?.(rowIndex, null, nameToCreate);
-    open = false;
     searchValue = '';
+    open = false;
   }
 }
 
 function handleSelectTemporary(payeeName: string) {
-  selectedPayeeName = payeeName;
-  selectedPayeeId = null;
-  onUpdate?.(rowIndex, null, payeeName);
-  open = false;
+  const hasChanged = selectedPayeeName !== payeeName;
+
+  if (hasChanged) {
+    console.log('PayeeCell handleSelectTemporary:', {rowIndex, payeeId: null, payeeName});
+    onUpdate?.(rowIndex, null, payeeName);
+  }
+
   searchValue = '';
+  open = false;
 }
 
 function handleClear() {
-  selectedPayeeName = '';
-  selectedPayeeId = null;
   onUpdate?.(rowIndex, null, null);
-  open = false;
   searchValue = '';
+  open = false;
 }
 </script>
 
@@ -146,7 +134,16 @@ function handleClear() {
         <Command.Input placeholder="Search or create payee..." bind:value={searchValue} />
         <Command.List class="max-h-[300px]">
           <Command.Group>
-            {#if selectedPayeeName || selectedPayeeId}
+            {#if showCreateOption}
+              <Command.Item
+                value="create-new"
+                onSelect={() => handleCreateNew()}
+                class="text-primary">
+                <Check class="mr-2 h-4 w-4 text-transparent" />
+                Create "{searchValue.trim()}"
+              </Command.Item>
+            {/if}
+            {#if (selectedPayeeName || selectedPayeeId) && !searchValue.trim()}
               <Command.Item
                 value="clear"
                 onSelect={() => handleClear()}
@@ -156,28 +153,12 @@ function handleClear() {
               </Command.Item>
               <Command.Separator />
             {/if}
-            {#if searchValue.trim() && visiblePayees.length === 0 && visibleTemporaryPayees.length === 0}
-              <Command.Item
-                value="create-new"
-                onSelect={() => handleCreateNew()}
-                class="text-primary">
-                <Check class="mr-2 h-4 w-4 text-transparent" />
-                Create "{searchValue}"
-              </Command.Item>
-            {:else if needsCreation && !searchValue}
-              <Command.Item
-                value="create-suggested"
-                onSelect={() => handleCreateNew()}
-                class="text-primary">
-                <Check class="mr-2 h-4 w-4 text-transparent" />
-                Create "{selectedPayeeName}"
-              </Command.Item>
-            {/if}
             {#each visiblePayees as payee (payee.id)}
+              {@const isSelected = selectedPayeeId === payee.id}
               <Command.Item
                 value={String(payee.id)}
                 onSelect={() => handleSelect(payee.id, payee.name || '')}>
-                <Check class={cn('mr-2 h-4 w-4', selectedPayeeId !== payee.id && 'text-transparent')} />
+                <Check class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
                 {payee.name}
               </Command.Item>
             {/each}
@@ -185,11 +166,12 @@ function handleClear() {
               <Command.Separator />
               <Command.Group heading="Temporary (Will be created)">
                 {#each visibleTemporaryPayees as tempPayee}
+                  {@const isSelected = selectedPayeeName === tempPayee}
                   <Command.Item
                     value={tempPayee}
                     onSelect={() => handleSelectTemporary(tempPayee)}
                     class="text-blue-600">
-                    <Sparkles class={cn('mr-2 h-4 w-4', selectedPayeeName !== tempPayee && 'text-transparent')} />
+                    <Sparkles class={cn('mr-2 h-4 w-4', !isSelected && 'text-transparent')} />
                     {tempPayee}
                   </Command.Item>
                 {/each}

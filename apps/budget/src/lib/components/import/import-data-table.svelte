@@ -28,6 +28,7 @@ interface Props {
   onSelectionChange?: (selected: Set<number>) => void;
   onPayeeUpdate?: (rowIndex: number, payeeId: number | null, payeeName: string | null) => void;
   onCategoryUpdate?: (rowIndex: number, categoryId: number | null, categoryName: string | null) => void;
+  onDescriptionUpdate?: (rowIndex: number, description: string | null) => void;
   temporaryCategories?: string[];
   temporaryPayees?: string[];
 }
@@ -41,17 +42,19 @@ let {
   onSelectionChange,
   onPayeeUpdate,
   onCategoryUpdate,
+  onDescriptionUpdate,
   temporaryCategories = [],
   temporaryPayees = [],
 }: Props = $props();
 
-// Create columns with entity update callbacks
-const columns = createColumns({
+// Create columns with entity update callbacks - make reactive to prop changes
+const columns = $derived(createColumns({
   ...(onPayeeUpdate ? {onPayeeUpdate} : {}),
   ...(onCategoryUpdate ? {onCategoryUpdate} : {}),
+  ...(onDescriptionUpdate ? {onDescriptionUpdate} : {}),
   temporaryCategories,
   temporaryPayees,
-});
+}));
 
 // Table state
 let sorting = $state<any[]>([]);
@@ -93,67 +96,87 @@ const filteredData = $derived.by(() => {
 });
 
 // Create table instance
-const table = $derived(
-  createSvelteTable({
-    data: filteredData,
-    columns,
-    state: {
-      get sorting() {
-        return sorting;
-      },
-      get columnFilters() {
-        return columnFilters;
-      },
-      get columnVisibility() {
-        return columnVisibility;
-      },
-      get rowSelection() {
-        return rowSelection;
-      },
-      get pagination() {
-        return pagination;
-      },
+const table = createSvelteTable({
+  get data() {
+    return filteredData;
+  },
+  get columns() {
+    return columns;
+  },
+  state: {
+    get sorting() {
+      return sorting;
     },
-    enableRowSelection: (row) => row.original.validationStatus !== 'invalid',
-    onSortingChange: (updater) => {
-      sorting = typeof updater === 'function' ? updater(sorting) : updater;
+    get columnFilters() {
+      return columnFilters;
     },
-    onColumnFiltersChange: (updater) => {
-      columnFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
+    get columnVisibility() {
+      return columnVisibility;
     },
-    onColumnVisibilityChange: (updater) => {
-      columnVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
+    get rowSelection() {
+      return rowSelection;
     },
-    onRowSelectionChange: (updater) => {
-      rowSelection = typeof updater === 'function' ? updater(rowSelection) : updater;
+    get pagination() {
+      return pagination;
     },
-    onPaginationChange: (updater) => {
-      pagination = typeof updater === 'function' ? updater(pagination) : updater;
-    },
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    getRowId: (row) => String(row.rowIndex),
-  })
-);
+  },
+  enableRowSelection: (row) => row.original.validationStatus !== 'invalid',
+  onSortingChange: (updater) => {
+    sorting = typeof updater === 'function' ? updater(sorting) : updater;
+  },
+  onColumnFiltersChange: (updater) => {
+    columnFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
+  },
+  onColumnVisibilityChange: (updater) => {
+    columnVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
+  },
+  onRowSelectionChange: (updater) => {
+    rowSelection = typeof updater === 'function' ? updater(rowSelection) : updater;
+  },
+  onPaginationChange: (updater) => {
+    pagination = typeof updater === 'function' ? updater(pagination) : updater;
+  },
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+  getFilteredRowModel: getFilteredRowModel(),
+  getPaginationRowModel: getPaginationRowModel(),
+  getFacetedRowModel: getFacetedRowModel(),
+  getFacetedUniqueValues: getFacetedUniqueValues(),
+  getRowId: (row) => String(row.rowIndex),
+});
 
-// Initialize selection with all valid and warning rows
+// Initialize selection with only valid rows (exclude warnings by default)
 let hasInitialized = false;
 $effect(() => {
   if (!hasInitialized && data.length > 0) {
     hasInitialized = true;
     const initialSelection: Record<string, boolean> = {};
     data.forEach((row) => {
-      if (row.validationStatus === 'valid' || row.validationStatus === 'warning') {
+      if (row.validationStatus === 'valid') {
         initialSelection[String(row.rowIndex)] = true;
       }
     });
     rowSelection = initialSelection;
   }
 });
+
+// Toggle warnings selection
+function toggleWarningSelection() {
+  const warningRows = data.filter(row => row.validationStatus === 'warning');
+  const allWarningsSelected = warningRows.every(row => selectedRows.has(row.rowIndex));
+
+  const newSelection = new Set(selectedRows);
+  if (allWarningsSelected) {
+    // Deselect all warnings
+    warningRows.forEach(row => newSelection.delete(row.rowIndex));
+  } else {
+    // Select all warnings
+    warningRows.forEach(row => newSelection.add(row.rowIndex));
+  }
+
+  selectedRows = newSelection;
+  onSelectionChange?.(selectedRows);
+}
 
 // Stats
 const validRowCount = $derived(
@@ -163,6 +186,9 @@ const validRowCount = $derived(
 const invalidRowCount = $derived(data.filter((row) => row.validationStatus === 'invalid').length);
 const warningRowCount = $derived(data.filter((row) => row.validationStatus === 'warning').length);
 const selectedCount = $derived(selectedRows.size);
+const warningSelectedCount = $derived(
+  data.filter(row => row.validationStatus === 'warning' && selectedRows.has(row.rowIndex)).length
+);
 </script>
 
 <div class="space-y-6">
@@ -233,6 +259,16 @@ const selectedCount = $derived(selectedRows.size);
               <Select.Item value="invalid">Invalid ({invalidRowCount})</Select.Item>
             </Select.Content>
           </Select.Root>
+
+          {#if warningRowCount > 0}
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={toggleWarningSelection}
+            >
+              {warningSelectedCount === warningRowCount ? 'Deselect' : 'Select'} Warnings ({warningSelectedCount}/{warningRowCount})
+            </Button>
+          {/if}
         </div>
 
         <div class="flex items-center gap-2">
@@ -263,11 +299,11 @@ const selectedCount = $derived(selectedRows.size);
       </Table.Header>
       <Table.Body>
         {#if table.getRowModel().rows?.length}
-          {#each table.getRowModel().rows as row}
+          {#each table.getRowModel().rows as row (row.id)}
             {@const isSelected = row.getIsSelected()}
             {@const isInvalid = row.original.validationStatus === 'invalid'}
             <Table.Row class={isSelected && !isInvalid ? 'bg-blue-50' : ''}>
-              {#each row.getVisibleCells() as cell}
+              {#each row.getVisibleCells() as cell (cell.id)}
                 <Table.Cell>
                   {#if cell.column.columnDef.cell}
                     {@const cellContent = cell.column.columnDef.cell}

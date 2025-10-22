@@ -29,6 +29,13 @@
       "when": 1760894584707,
       "tag": "0003_legal_fantastic_four",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1761094616330,
+      "tag": "0004_bumpy_miracleman",
+      "breakpoints": true
     }
   ]
 }

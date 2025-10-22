@@ -82,25 +82,25 @@ const addNew = () => {
 let searchValue = $state('');
 const fused = $derived(new Fuse(entities, {keys: ['name'], includeScore: true}));
 
-let visibleEntities = $state(entities);
-$effect(() => {
+// Use $derived instead of $effect for computed filtering
+const visibleEntities = $derived.by(() => {
   if (searchValue) {
-    visibleEntities = fused.search(searchValue).map((result) => result.item);
-  } else {
-    visibleEntities = entities;
+    return fused.search(searchValue).map((result) => result.item);
   }
+  return entities;
 });
 
 // Scroll selected item into view when popover opens
 $effect(() => {
   if (open && value?.id) {
+    const valueId = value.id; // Capture the value
     // Wait for DOM to render, then scroll
     // Use multiple animation frames to ensure content is fully rendered
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setTimeout(() => {
           // Find the wrapper element
-          const wrapper = document.querySelector(`[data-value="${value.id}"]`) as HTMLElement;
+          const wrapper = document.querySelector(`[data-value="${valueId}"]`) as HTMLElement;
 
           if (wrapper) {
             // Look for the actual item element

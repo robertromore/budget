@@ -113,6 +113,7 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
         formData={data.form}
         accounts={data.accounts}
         categories={data.categories}
+        schedules={data.schedules}
         onCancel={() => goto('/budgets')}
       />
     {/snippet}
@@ -122,6 +123,7 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
         initialData={initialFormData}
         accounts={data.accounts}
         categories={data.categories}
+        schedules={data.schedules}
         onComplete={handleComplete}
       />
     {/snippet}

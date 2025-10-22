@@ -48,32 +48,8 @@ const resolvedFormId = formId ?? (accountId && accountId > 0 ? `account-form-${a
 
 // Keep mode as 'manual' during SSR and initial hydration
 let mode = $state<'manual' | 'wizard'>('manual');
-let mounted = $state(false);
 
-import { onMount } from 'svelte';
 import { browser } from '$app/environment';
-
-onMount(() => {
-  mounted = true;
-  // Apply the saved/desired mode only after hydration is complete
-  mode = initialMode;
-
-  // Set default icon and color for new accounts based on account type
-  if (!accountId && browser) {
-    const accountType = $formData.accountType;
-    if (accountType && accountTypeDefaults[accountType]) {
-      const defaults = accountTypeDefaults[accountType];
-
-      if (!$formData.accountIcon && defaults.icon) {
-        $formData.accountIcon = defaults.icon;
-      }
-
-      if (!$formData.accountColor && defaults.color) {
-        $formData.accountColor = defaults.color;
-      }
-    }
-  }
-});
 
 const entityForm = useEntityForm({
   formData: manageAccountForm,
@@ -134,6 +110,10 @@ if (accountId && accountId > 0) {
     $formData.initialBalance = account.initialBalance || 0.0;
     $formData.accountNumberLast4 = String((account as any).accountNumberLast4 || '');
     $formData.onBudget = account.onBudget ?? true;
+    $formData.debtLimit = (account as any).debtLimit || null;
+    $formData.minimumPayment = (account as any).minimumPayment || null;
+    $formData.paymentDueDay = (account as any).paymentDueDay || null;
+    $formData.interestRate = (account as any).interestRate || null;
 
     // Set initial data for wizard
     initialData.id = accountId;
@@ -146,6 +126,10 @@ if (accountId && accountId > 0) {
     initialData.initialBalance = account.initialBalance;
     initialData.accountNumberLast4 = String((account as any).accountNumberLast4 || '');
     initialData.onBudget = account.onBudget ?? true;
+    initialData.debtLimit = (account as any).debtLimit;
+    initialData.minimumPayment = (account as any).minimumPayment;
+    initialData.paymentDueDay = (account as any).paymentDueDay;
+    initialData.interestRate = (account as any).interestRate;
   }
 }
 
@@ -161,6 +145,10 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
   $formData.initialBalance = wizardFormData['initialBalance'] || 0.0;
   $formData.accountNumberLast4 = wizardFormData['accountNumberLast4'] || '';
   $formData.onBudget = wizardFormData['onBudget'] ?? true;
+  $formData.debtLimit = wizardFormData['debtLimit'] || null;
+  $formData.minimumPayment = wizardFormData['minimumPayment'] || null;
+  $formData.paymentDueDay = wizardFormData['paymentDueDay'] || null;
+  $formData.interestRate = wizardFormData['interestRate'] || null;
 
   // Wait a tick to ensure reactive updates complete
   await new Promise(resolve => setTimeout(resolve, 0));
@@ -310,9 +298,18 @@ $effect(() => {
   if (currentType && currentType !== previousAccountType) {
     updateIconForAccountType(currentType, previousAccountType);
 
-    // HSA accounts should default to off-budget for new accounts
-    if (currentType === 'hsa' && !accountId) {
+    // Auto-set onBudget for certain account types
+    // Credit cards and loans: off-budget (spending is tracked in categories, payments are transfers)
+    // HSA accounts: off-budget (tax-advantaged medical savings)
+    if ((currentType === 'credit_card' || currentType === 'loan') && !accountId) {
       $formData.onBudget = false;
+    } else if (currentType === 'hsa' && !accountId) {
+      $formData.onBudget = false;
+    } else if (previousAccountType === 'credit_card' || previousAccountType === 'loan' || previousAccountType === 'hsa') {
+      // If switching FROM credit card/loan/hsa to another type, default back to on-budget
+      if (!accountId) {
+        $formData.onBudget = true;
+      }
     }
 
     previousAccountType = currentType;
@@ -368,7 +365,11 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
     accountColor: $formData.accountColor,
     initialBalance: $formData.initialBalance,
     accountNumberLast4: $formData.accountNumberLast4,
-    onBudget: $formData.onBudget
+    onBudget: $formData.onBudget,
+    debtLimit: $formData.debtLimit,
+    minimumPayment: $formData.minimumPayment,
+    paymentDueDay: $formData.paymentDueDay,
+    interestRate: $formData.interestRate
   }}
   bind:currentMode={mode}
 >
@@ -382,6 +383,10 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <input hidden value={$formData.initialBalance} name="initialBalance" />
       <input hidden value={$formData.accountNumberLast4} name="accountNumberLast4" />
       <input hidden value={$formData.onBudget} name="onBudget" />
+      <input hidden value={$formData.debtLimit ?? ''} name="debtLimit" />
+      <input hidden value={$formData.minimumPayment ?? ''} name="minimumPayment" />
+      <input hidden value={$formData.paymentDueDay ?? ''} name="paymentDueDay" />
+      <input hidden value={$formData.interestRate ?? ''} name="interestRate" />
 
       <!-- Basic Information Section -->
       <Card.Root>
@@ -535,6 +540,101 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
         </Card.Root>
       {/if}
 
+      <!-- Debt Account Details (Credit Cards & Loans) -->
+      {#if $formData.accountType === 'credit_card' || $formData.accountType === 'loan'}
+        <Card.Root>
+          <Card.Header class="pb-4">
+            <div class="flex items-center gap-2">
+              <CreditCard class="h-5 w-5 text-primary" />
+              <Card.Title class="text-lg">
+                {$formData.accountType === 'credit_card' ? 'Credit Card' : 'Loan'} Details
+              </Card.Title>
+            </div>
+            <Card.Description>
+              {$formData.accountType === 'credit_card'
+                ? 'Track your credit limit, interest rate, and payment information.'
+                : 'Track your loan amount, interest rate, and payment schedule.'}
+            </Card.Description>
+          </Card.Header>
+          <Card.Content>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Credit Limit / Loan Amount -->
+              <Form.Field form={entityForm} name="debtLimit">
+                <Form.Control>
+                  {#snippet children({})}
+                    <Form.Label>
+                      {$formData.accountType === 'credit_card' ? 'Credit Limit' : 'Loan Amount'}
+                    </Form.Label>
+                    <NumericInput
+                      bind:value={$formData.debtLimit}
+                      buttonClass="w-full"
+                    />
+                    <Form.Description>
+                      {$formData.accountType === 'credit_card'
+                        ? 'Maximum credit available on this card'
+                        : 'Total principal amount borrowed'}
+                    </Form.Description>
+                    <Form.FieldErrors />
+                  {/snippet}
+                </Form.Control>
+              </Form.Field>
+
+              <!-- Interest Rate -->
+              <Form.Field form={entityForm} name="interestRate">
+                <Form.Control>
+                  {#snippet children({props})}
+                    <Form.Label>Interest Rate (APR %)</Form.Label>
+                    <Input
+                      {...props}
+                      type="number"
+                      step="0.01"
+                      bind:value={$formData.interestRate}
+                      placeholder="0.00"
+                    />
+                    <Form.Description>Annual percentage rate</Form.Description>
+                    <Form.FieldErrors />
+                  {/snippet}
+                </Form.Control>
+              </Form.Field>
+
+              <!-- Minimum Payment -->
+              <Form.Field form={entityForm} name="minimumPayment">
+                <Form.Control>
+                  {#snippet children({})}
+                    <Form.Label>Minimum Payment</Form.Label>
+                    <NumericInput
+                      bind:value={$formData.minimumPayment}
+                      buttonClass="w-full"
+                    />
+                    <Form.Description>Minimum monthly payment required</Form.Description>
+                    <Form.FieldErrors />
+                  {/snippet}
+                </Form.Control>
+              </Form.Field>
+
+              <!-- Payment Due Day -->
+              <Form.Field form={entityForm} name="paymentDueDay">
+                <Form.Control>
+                  {#snippet children({props})}
+                    <Form.Label>Payment Due Day</Form.Label>
+                    <Input
+                      {...props}
+                      type="number"
+                      min="1"
+                      max="31"
+                      bind:value={$formData.paymentDueDay}
+                      placeholder="e.g., 15"
+                    />
+                    <Form.Description>Day of month payment is due (1-31)</Form.Description>
+                    <Form.FieldErrors />
+                  {/snippet}
+                </Form.Control>
+              </Form.Field>
+            </div>
+          </Card.Content>
+        </Card.Root>
+      {/if}
+
       <!-- Budget Settings -->
       <Card.Root>
         <Card.Header class="pb-4">
@@ -613,6 +713,10 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <input hidden value={$formData.initialBalance} name="initialBalance" />
       <input hidden value={$formData.accountNumberLast4} name="accountNumberLast4" />
       <input hidden value={$formData.onBudget} name="onBudget" />
+      <input hidden value={$formData.debtLimit ?? ''} name="debtLimit" />
+      <input hidden value={$formData.minimumPayment ?? ''} name="minimumPayment" />
+      <input hidden value={$formData.paymentDueDay ?? ''} name="paymentDueDay" />
+      <input hidden value={$formData.interestRate ?? ''} name="interestRate" />
     </form>
   {/snippet}
 </WizardFormWrapper>

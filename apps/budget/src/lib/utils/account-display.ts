@@ -23,7 +23,7 @@ export interface DebtAccountMetrics {
 export function formatAccountBalance(account: Account): FormattedBalance {
   const balance = account.balance || 0;
 
-  if (isDebtAccount(account.accountType)) {
+  if (account.accountType && isDebtAccount(account.accountType)) {
     // Debt accounts (credit cards & loans)
     // Balance is already inverted (negative = debt owed, positive = credit/overpayment)
     return {
@@ -47,7 +47,7 @@ export function formatAccountBalance(account: Account): FormattedBalance {
  * Calculate debt account-specific metrics
  */
 export function calculateDebtMetrics(account: Account): DebtAccountMetrics | null {
-  if (!isDebtAccount(account.accountType)) {
+  if (!account.accountType || !isDebtAccount(account.accountType)) {
     return null;
   }
 

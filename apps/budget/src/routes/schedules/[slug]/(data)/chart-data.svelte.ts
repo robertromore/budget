@@ -1,5 +1,4 @@
 import type { PageData } from '../$types';
-import { CalendarDate } from '@internationalized/date';
 import { nextDaily, nextWeekly, nextMonthly, nextYearly } from '$lib/utils/date-frequency';
 import { parseISOString, currentDate } from '$lib/utils/dates';
 
@@ -31,7 +30,7 @@ export function generateCumulativeBalanceData(schedule: PageData['schedule']): C
   const rawData: ChartDataPoint[] = [];
 
   // Add historical transactions
-  schedule.transactions.forEach((transaction: any) => {
+  schedule.transactions?.forEach((transaction: any) => {
     rawData.push({
       date: transaction.date,
       amount: transaction.amount,
@@ -42,10 +41,9 @@ export function generateCumulativeBalanceData(schedule: PageData['schedule']): C
   });
 
   // Generate future projections if schedule is recurring
-  if (schedule.scheduleDate && schedule.status === 'active') {
-    const startDate = new Date(schedule.scheduleDate.start);
+  if (schedule.scheduleDate && schedule.scheduleDate.frequency && schedule.status === 'active') {
     const endDate = schedule.scheduleDate.end ? new Date(schedule.scheduleDate.end) : null;
-    const frequency = schedule.scheduleDate.frequency!;
+    const frequency = schedule.scheduleDate.frequency;
     const interval = schedule.scheduleDate.interval || 1;
 
     // Generate next 6 months of projections
@@ -64,7 +62,7 @@ export function generateCumulativeBalanceData(schedule: PageData['schedule']): C
 
     while (nextDate <= futureLimit && (!endDate || nextDate <= endDate)) {
       rawData.push({
-        date: nextDate.toISOString().split('T')[0],
+        date: nextDate.toISOString().split('T')[0]!,
         amount: schedule.amount,
         type: 'projected',
         dateLabel: nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -102,7 +100,7 @@ export function generateCalendarData(schedule: PageData['schedule']): CalendarDa
   const data: CalendarDataPoint[] = [];
 
   // Add historical transactions
-  schedule.transactions.forEach((transaction: any) => {
+  schedule.transactions?.forEach((transaction: any) => {
     data.push({
       date: new Date(transaction.date),
       value: Math.abs(transaction.amount), // Use absolute value for scale
@@ -113,10 +111,9 @@ export function generateCalendarData(schedule: PageData['schedule']): CalendarDa
   });
 
   // Generate future projections if schedule is recurring
-  if (schedule.scheduleDate && schedule.status === 'active') {
-    const startDate = new Date(schedule.scheduleDate.start);
+  if (schedule.scheduleDate && schedule.scheduleDate.frequency && schedule.status === 'active') {
     const endDate = schedule.scheduleDate.end ? new Date(schedule.scheduleDate.end) : null;
-    const frequency = schedule.scheduleDate.frequency!;
+    const frequency = schedule.scheduleDate.frequency;
     const interval = schedule.scheduleDate.interval || 1;
 
     // Generate next 6 months of projections
