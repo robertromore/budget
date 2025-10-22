@@ -151,7 +151,6 @@ export class BudgetService {
       createInput.accountIds = input.accountIds;
     }
     if (input.categoryIds !== undefined) {
-      // Filter out any deleted categories by verifying they still exist
       createInput.categoryIds = await this.getValidCategoryIds(input.categoryIds);
     }
     if (input.groupIds !== undefined) {
@@ -212,7 +211,6 @@ export class BudgetService {
       relations.accountIds = input.accountIds;
     }
     if (input.categoryIds !== undefined) {
-      // Filter out any deleted categories by verifying they still exist
       const validCategoryIds = await this.getValidCategoryIds(input.categoryIds);
       relations.categoryIds = validCategoryIds;
     }
@@ -298,7 +296,6 @@ export class BudgetService {
     };
 
     const accountIds = originalBudget.accounts?.map(a => a.id);
-    // Only copy categories that still exist (filter out deleted ones)
     const categoryIds = originalBudget.categories
       ?.filter(bc => bc.category !== null)
       .map(bc => bc.categoryId);
@@ -1723,12 +1720,10 @@ export interface BudgetSuggestion {
 }
 
 /**
- * Budget intelligence service for suggesting budgets based on patterns (from services.ts)
+ * Budget intelligence service for suggesting budgets based on patterns
  *
  * Dependencies are injected via constructor for testability.
  * Use ServiceFactory to instantiate in production code.
- *
- * NOTE: There's another BudgetIntelligenceService in intelligence-service.ts
  */
 export class BudgetIntelligenceService {
   constructor(private repository: BudgetRepository) {}

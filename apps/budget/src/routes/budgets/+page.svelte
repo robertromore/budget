@@ -546,12 +546,8 @@
 <BudgetManageDialog
   budget={selectedBudget}
   bind:open={manageDialogOpen}
-  onBudgetUpdated={() => {
-    // TanStack Query will automatically refetch after the mutation's cache invalidation
-  }}
-  onBudgetDeleted={() => {
-    // TanStack Query will automatically refetch after the mutation's cache invalidation
-  }}
+  onBudgetUpdated={() => {}}
+  onBudgetDeleted={() => {}}
 />
 
 <BudgetGroupDialog

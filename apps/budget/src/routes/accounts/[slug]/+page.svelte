@@ -229,7 +229,6 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
     };
     const actualField = fieldMap[columnId] || columnId;
 
-    // Build update data with only the changed field (tRPC style)
     const updateData: any = {};
 
     if (actualField === 'payeeId' || actualField === 'categoryId') {
@@ -240,15 +239,12 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
       updateData[actualField] = newValue;
     }
 
-    // Use TanStack Query mutation and capture the returned array
     const updatedTransactionsWithBalance = await updateTransactionMutation.mutateAsync({
       id: id,
       data: updateData,
     });
 
-    // Immediately update the cache with the returned transactions
     if (Array.isArray(updatedTransactionsWithBalance) && updatedTransactionsWithBalance.length > 0) {
-      // Get current query data to preserve scheduled transactions
       const currentQueryParams = serverAccountState ? {
         sortBy: serverAccountState.filters.sortBy,
         sortOrder: serverAccountState.filters.sortOrder,
@@ -261,27 +257,22 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
       const currentData = queryClient.getQueryData(currentQuery.queryKey);
 
       if (Array.isArray(currentData)) {
-        // Create a map of updated transactions for quick lookup
         const updatedTransactionsMap = new Map(
           updatedTransactionsWithBalance.map(tx => [tx.id, tx])
         );
 
-        // Update existing actual transactions, keep scheduled transactions unchanged
         const newData = currentData.map(item => {
-          // Only update actual transactions (numeric IDs), leave scheduled ones (string IDs) as is
           if (typeof item.id === 'number' && updatedTransactionsMap.has(item.id)) {
             return updatedTransactionsMap.get(item.id);
           }
           return item;
         });
 
-        // Set the updated data in the cache
         queryClient.setQueryData(currentQuery.queryKey, newData);
       }
     }
   } catch (err: any) {
-    console.error('❌ Failed to update transaction:', err);
-    console.error('Update transaction error details:', err?.message || err?.toString() || 'Failed to update transaction');
+    console.error('Failed to update transaction:', err);
   }
 };
 
@@ -317,10 +308,8 @@ const confirmBulkDelete = async () => {
   }
 };
 
-// Track account changes
 let previousAccountId = $state<string | undefined>();
 
-// TanStack Query handles data loading and refetching automatically
 $effect(() => {
   if (accountId && (accountId + '') !== previousAccountId) {
     if (serverAccountState) {
@@ -328,7 +317,6 @@ $effect(() => {
       serverAccountState.filters.searchQuery = '';
     }
     previousAccountId = accountId + '';
-    // TanStack Query will automatically refetch when accountId changes
   }
 });
 </script>
@@ -408,15 +396,10 @@ $effect(() => {
 
   <!-- Main Content (only show if account exists) -->
   {#if !isAccountNotFound}
-  <!-- Debt Account Metrics -->
-  {#if accountData && accountData.accountType && isDebtAccount(accountData.accountType)}
-    <DebtAccountMetrics account={accountData} />
-  {/if}
 
   <!-- Tabs Structure -->
   <Tabs.Root bind:value={activeTab} class="mb-1 w-full">
     <Tabs.List class="inline-flex h-11">
-      <!-- <Tabs.Trigger value="dashboard" class="px-6 font-medium">Dashboard</Tabs.Trigger> -->
       <Tabs.Trigger value="transactions" class="px-6 font-medium">Transactions</Tabs.Trigger>
       {#if isHsaAccount}
       <Tabs.Trigger value="hsa-expenses" class="px-6 font-medium">Medical Expenses</Tabs.Trigger>
@@ -424,23 +407,6 @@ $effect(() => {
       {/if}
       <Tabs.Trigger value="analytics" class="px-6 font-medium">Analytics</Tabs.Trigger>
     </Tabs.List>
-
-    <!-- Dashboard Tab Content (commented out) -->
-    <!-- <Tabs.Content value="dashboard" class="space-y-4">
-      <div class="rounded-lg border border-blue-200 bg-blue-50 p-6">
-        <div class="mb-4 flex items-center gap-3">
-          <div class="h-4 w-4 rounded-full bg-blue-500"></div>
-          <h2 class="text-lg font-semibold text-blue-900">Dashboard Temporarily Disabled</h2>
-        </div>
-        <p class="mb-3 text-blue-800">
-          Widget dashboard is currently disabled for focused testing of the monthly spending trends
-          chart.
-        </p>
-        <p class="text-sm text-blue-700">
-          Switch to the <strong>Analytics</strong> tab to test the isolated monthly spending chart functionality.
-        </p>
-      </div>
-    </Tabs.Content> -->
 
     <!-- Transactions Tab Content -->
     <Tabs.Content value="transactions" class="space-y-4">
@@ -491,7 +457,13 @@ $effect(() => {
     <!-- Analytics Tab Content -->
     <Tabs.Content value="analytics" class="space-y-4">
       {#if transactions && !isLoading && activeTab === 'analytics'}
-        <AnalyticsDashboard transactions={formattedTransactions} accountId={accountId + ''} />
+        {#if accountData && accountData.accountType && isDebtAccount(accountData.accountType)}
+          <!-- Credit Card Metrics Dashboard -->
+          <DebtAccountMetrics account={accountData} />
+        {:else}
+          <!-- Standard Analytics Dashboard -->
+          <AnalyticsDashboard transactions={formattedTransactions} accountId={accountId + ''} />
+        {/if}
       {:else if isLoading}
         <div class="space-y-4">
           <div class="flex items-center justify-between">
