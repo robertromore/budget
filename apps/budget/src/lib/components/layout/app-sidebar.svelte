@@ -109,16 +109,6 @@ const _deleteBudgetId = $derived(deleteBudgetId);
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
               {#snippet child({props})}
-                <a href="/category-groups" {...props} class="flex items-center gap-3">
-                  <FolderTree class="h-4 w-4"></FolderTree>
-                  <span class="font-medium">Category Groups</span>
-                </a>
-              {/snippet}
-            </Sidebar.MenuButton>
-          </Sidebar.MenuItem>
-          <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
-              {#snippet child({props})}
                 <a href="/import" {...props} class="flex items-center gap-3">
                   <Download class="h-4 w-4"></Download>
                   <span class="font-medium">Import</span>
