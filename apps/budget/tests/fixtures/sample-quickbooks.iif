@@ -1,0 +1,18 @@
+!TRNS	DATE	ACCNT	NAME	AMOUNT	DOCNUM	MEMO	CLEAR
+!SPL	DATE	ACCNT	AMOUNT	MEMO
+!ENDTRNS
+TRNS	01/15/2024	Checking	Grocery Store	-125.50	1001	Weekly groceries	X
+SPL	01/15/2024	Groceries	-125.50	Food and supplies
+ENDTRNS
+TRNS	01/16/2024	Checking	Electric Company	-85.00	1002	January electric bill	X
+SPL	01/16/2024	Utilities	-85.00	Electric
+ENDTRNS
+TRNS	01/17/2024	Checking	ABC Corporation	2500.00		Salary deposit	X
+SPL	01/17/2024	Income:Salary	2500.00	Biweekly paycheck
+ENDTRNS
+TRNS	01/18/2024	Checking	Gas Station	-42.75	1003	Fuel
+SPL	01/18/2024	Auto:Fuel	-42.75	Gas
+ENDTRNS
+TRNS	01/20/2024	Checking	Restaurant	-68.25	1004	Dinner with friends
+SPL	01/20/2024	Dining	-68.25	Entertainment
+ENDTRNS

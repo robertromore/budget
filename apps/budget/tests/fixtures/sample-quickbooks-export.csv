@@ -1,0 +1,6 @@
+Type,Date,Num,Name,Memo,Account,Clr,Split,Amount
+Check,01/15/2024,1001,Grocery Store,Weekly groceries,Checking,X,Groceries,-125.50
+Check,01/16/2024,1002,Electric Company,January electric bill,Checking,X,Utilities,-85.00
+Deposit,01/17/2024,,ABC Corporation,Salary deposit,Checking,X,Income:Salary,2500.00
+Check,01/18/2024,1003,Gas Station,Fuel,Checking,,Auto:Fuel,-42.75
+Check,01/20/2024,1004,Restaurant,Dinner with friends,Checking,,Dining,-68.25
