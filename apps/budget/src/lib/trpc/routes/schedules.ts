@@ -1,14 +1,14 @@
-import {schedules, removeScheduleSchema, duplicateScheduleSchema, scheduleDates} from "$lib/schema";
-import {superformInsertScheduleSchema} from "$lib/schema/superforms";
-import {z} from "zod";
-import {publicProcedure, rateLimitedProcedure, t} from "$lib/trpc";
-import {eq} from "drizzle-orm";
-import {TRPCError} from "@trpc/server";
+import { duplicateScheduleSchema, removeScheduleSchema, scheduleDates, schedules } from "$lib/schema";
+import { superformInsertScheduleSchema } from "$lib/schema/superforms";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
+import { withErrorHandler } from "$lib/trpc/shared/errors";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
 import slugify from "@sindresorhus/slugify";
-import {generateUniqueSlugForDB} from "$lib/utils/slug-utils";
-import {serviceFactory} from "$lib/server/shared/container/service-factory";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {withErrorHandler} from "$lib/trpc/shared/errors";
+import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
 
 const scheduleService = serviceFactory.getScheduleService();
 
@@ -29,6 +29,7 @@ export const scheduleRoutes = t.router({
         payee: true,
         scheduleDate: true,
         transactions: {
+          where: (transactions, { isNull }) => isNull(transactions.deletedAt),
           with: {
             payee: true,
             category: true,

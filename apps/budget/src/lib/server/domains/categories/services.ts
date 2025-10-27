@@ -1,7 +1,8 @@
-import {CategoryRepository, type UpdateCategoryData, type CategoryStats, type CategoryWithStats} from "./repository";
-import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import type {Category, NewCategory, CategoryType, TaxCategory, SpendingPriority, IncomeReliability} from "$lib/schema/categories";
+import type { Category, CategoryType, IncomeReliability, NewCategory, SpendingPriority, TaxCategory } from "$lib/schema/categories";
+import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { defaultCategories } from "./default-categories";
+import { CategoryRepository, type CategoryStats, type CategoryWithGroup, type CategoryWithStats, type UpdateCategoryData } from "./repository";
 
 export interface CreateCategoryData {
   name: string;
@@ -172,6 +173,13 @@ export class CategoryService {
    */
   async getAllCategoriesWithStats(): Promise<CategoryWithStats[]> {
     return await this.repository.findAllWithStats();
+  }
+
+  /**
+   * Get all categories with their assigned group information
+   */
+  async getAllCategoriesWithGroups(): Promise<CategoryWithGroup[]> {
+    return await this.repository.findAllWithGroups();
   }
 
   /**
@@ -711,5 +719,95 @@ export class CategoryService {
     if (duplicate) {
       throw new ConflictError(`Category with name "${name}" already exists`);
     }
+  }
+
+  /**
+   * Seed default popular categories
+   * Only creates categories that don't already exist (by slug)
+   * @param slugs - Optional array of slugs to seed. If not provided, seeds all default categories.
+   */
+  async seedDefaultCategories(slugs?: string[]): Promise<{
+    created: number;
+    skipped: number;
+    errors: string[];
+  }> {
+    let created = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+
+    // Filter categories if specific slugs are provided
+    const categoriesToSeed = slugs
+      ? defaultCategories.filter(cat => slugs.includes(cat.slug))
+      : defaultCategories;
+
+    for (const defaultCategory of categoriesToSeed) {
+      try {
+        // Check if category with this slug already exists
+        const existing = await this.repository.findBySlug(defaultCategory.slug);
+
+        if (existing) {
+          skipped++;
+          continue;
+        }
+
+        // Create the category
+        await this.repository.create({
+          ...defaultCategory,
+          // These will be set by the database
+          dateCreated: undefined,
+          createdAt: undefined,
+          updatedAt: undefined,
+          deletedAt: undefined,
+        });
+
+        created++;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`Failed to create "${defaultCategory.name}": ${message}`);
+      }
+    }
+
+    return { created, skipped, errors };
+  }
+
+  /**
+   * Get list of available default categories (for preview)
+   */
+  async getAvailableDefaultCategories(): Promise<typeof defaultCategories> {
+    return defaultCategories;
+  }
+
+  /**
+   * Check which default categories are already installed
+   */
+  async getDefaultCategoriesStatus(): Promise<{
+    total: number;
+    installed: number;
+    available: number;
+    categories: Array<{
+      name: string;
+      slug: string;
+      categoryType: string;
+      installed: boolean;
+    }>;
+  }> {
+    const existingCategories = await this.repository.findAllCategories();
+    const existingSlugs = new Set(existingCategories.map(c => c.slug));
+
+    const categories = defaultCategories.map(dc => ({
+      name: dc.name ?? '',
+      slug: dc.slug,
+      categoryType: dc.categoryType ?? 'expense',
+      installed: existingSlugs.has(dc.slug),
+    }));
+
+    const installedCount = categories.filter(c => c.installed).length;
+
+    return {
+      total: defaultCategories.length,
+      installed: installedCount,
+      available: defaultCategories.length - installedCount,
+      categories,
+    };
   }
 }

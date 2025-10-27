@@ -1,18 +1,20 @@
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
 import type { Category } from "$lib/schema";
+import type { CategoryWithGroup } from "$lib/server/domains/categories/repository";
 import type { CategoriesState } from "$lib/states/entities/categories.svelte";
 import { compareAlphanumeric } from "$lib/utils";
 import type { ColumnDef, FilterFnOption } from "@tanstack/table-core";
-import CategoryColumnHeader from "../(components)/category-column-header.svelte";
-import CategoryNameCell from "../(components)/(cells)/category-name-cell.svelte";
-import CategoryTypeCell from "../(components)/(cells)/category-type-cell.svelte";
-import CategoryPriorityCell from "../(components)/(cells)/category-priority-cell.svelte";
-import CategoryTaxDeductibleCell from "../(components)/(cells)/category-tax-deductible-cell.svelte";
-import CategoryExpectedRangeCell from "../(components)/(cells)/category-expected-range-cell.svelte";
-import CategoryNotesCell from "../(components)/(cells)/category-notes-cell.svelte";
-import CategoryStatusCell from "../(components)/(cells)/category-status-cell.svelte";
 import CategoryActionsCell from "../(components)/(cells)/category-actions-cell.svelte";
+import CategoryExpectedRangeCell from "../(components)/(cells)/category-expected-range-cell.svelte";
+import CategoryGroupCell from "../(components)/(cells)/category-group-cell.svelte";
+import CategoryNameCell from "../(components)/(cells)/category-name-cell.svelte";
+import CategoryNotesCell from "../(components)/(cells)/category-notes-cell.svelte";
+import CategoryPriorityCell from "../(components)/(cells)/category-priority-cell.svelte";
+import CategoryStatusCell from "../(components)/(cells)/category-status-cell.svelte";
+import CategoryTaxDeductibleCell from "../(components)/(cells)/category-tax-deductible-cell.svelte";
+import CategoryTypeCell from "../(components)/(cells)/category-type-cell.svelte";
+import CategoryColumnHeader from "../(components)/category-column-header.svelte";
 
 export const columns = (
   _categoriesState: CategoriesState,
@@ -20,7 +22,7 @@ export const columns = (
   onEdit: (category: Category) => void,
   onDelete: (category: Category) => void,
   onViewAnalytics: (category: Category) => void
-): ColumnDef<Category>[] => {
+): ColumnDef<CategoryWithGroup>[] => {
   return [
     {
       id: "select-col",
@@ -58,7 +60,7 @@ export const columns = (
     {
       accessorKey: "id",
       header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<Category, unknown>, {
+        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "ID",
         }),
@@ -73,7 +75,7 @@ export const columns = (
       accessorKey: "name",
       id: "name",
       header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<Category, unknown>, {
+        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Name",
         }),
@@ -83,16 +85,39 @@ export const columns = (
       },
       sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.name || "", rowB.original.name || ""),
       enableColumnFilter: true,
-      filterFn: "includesString" as FilterFnOption<Category>,
+      filterFn: "includesString" as FilterFnOption<CategoryWithGroup>,
       meta: {
         label: "Name",
+      },
+    },
+    {
+      accessorKey: "groupName",
+      id: "group",
+      header: ({ column }) =>
+        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
+          column,
+          title: "Group",
+        }),
+      cell: (info) => {
+        const category = info.row.original;
+        return renderComponent(CategoryGroupCell, {
+          groupName: category.groupName,
+          groupColor: category.groupColor,
+          groupIcon: category.groupIcon,
+        });
+      },
+      sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.groupName || "", rowB.original.groupName || ""),
+      enableColumnFilter: true,
+      filterFn: "includesString" as FilterFnOption<CategoryWithGroup>,
+      meta: {
+        label: "Group",
       },
     },
     {
       accessorKey: "categoryType",
       id: "type",
       header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<Category, unknown>, {
+        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Type",
         }),
@@ -102,7 +127,7 @@ export const columns = (
       },
       sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.categoryType || "", rowB.original.categoryType || ""),
       enableColumnFilter: true,
-      filterFn: "equalsString" as FilterFnOption<Category>,
+      filterFn: "equalsString" as FilterFnOption<CategoryWithGroup>,
       meta: {
         label: "Type",
       },
@@ -111,7 +136,7 @@ export const columns = (
       accessorKey: "spendingPriority",
       id: "priority",
       header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<Category, unknown>, {
+        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Priority",
         }),
@@ -121,7 +146,7 @@ export const columns = (
       },
       sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.spendingPriority || "", rowB.original.spendingPriority || ""),
       enableColumnFilter: true,
-      filterFn: "equalsString" as FilterFnOption<Category>,
+      filterFn: "equalsString" as FilterFnOption<CategoryWithGroup>,
       meta: {
         label: "Priority",
       },
@@ -130,7 +155,7 @@ export const columns = (
       accessorKey: "isTaxDeductible",
       id: "taxDeductible",
       header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<Category, unknown>, {
+        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Tax Deductible",
         }),
@@ -140,7 +165,7 @@ export const columns = (
       },
       enableSorting: true,
       enableColumnFilter: true,
-      filterFn: "equals" as FilterFnOption<Category>,
+      filterFn: "equals" as FilterFnOption<CategoryWithGroup>,
       meta: {
         label: "Tax Deductible",
       },
@@ -149,7 +174,7 @@ export const columns = (
       accessorKey: "expectedMonthlyMin",
       id: "expectedRange",
       header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<Category, unknown>, {
+        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Expected Range",
         }),
@@ -175,7 +200,7 @@ export const columns = (
       accessorKey: "notes",
       id: "notes",
       header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<Category, unknown>, {
+        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Notes",
         }),
@@ -193,7 +218,7 @@ export const columns = (
       accessorKey: "isActive",
       id: "status",
       header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<Category, unknown>, {
+        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Status",
         }),
@@ -203,7 +228,7 @@ export const columns = (
       },
       enableSorting: true,
       enableColumnFilter: true,
-      filterFn: "equals" as FilterFnOption<Category>,
+      filterFn: "equals" as FilterFnOption<CategoryWithGroup>,
       meta: {
         label: "Status",
       },

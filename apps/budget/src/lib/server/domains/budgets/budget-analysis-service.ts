@@ -5,19 +5,19 @@
  * intelligent budget recommendations for creation and optimization.
  */
 
-import { db } from "$lib/server/db";
-import { transactions } from "$lib/schema/transactions";
+import { budgetAccounts, budgetCategories, budgets } from "$lib/schema/budgets";
 import { categories } from "$lib/schema/categories";
-import { budgets, budgetCategories, budgetAccounts } from "$lib/schema/budgets";
 import { payees } from "$lib/schema/payees";
-import { accounts } from "$lib/schema/accounts";
-import { and, eq, gte, lte, sql, desc, isNull, inArray } from "drizzle-orm";
-import { logger } from "$lib/server/shared/logging";
 import type {
-  RecommendationType,
-  RecommendationPriority,
   RecommendationMetadata,
+  RecommendationPriority,
+  RecommendationType,
 } from "$lib/schema/recommendations";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { logger } from "$lib/server/shared/logging";
+import { and, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
+import { BudgetGroupAnalysisService } from "./budget-group-analysis-service";
 
 export interface AnalysisParams {
   accountIds?: number[];
@@ -225,6 +225,24 @@ export class BudgetAnalysisService {
         ...missingCategoryRecs.filter((rec) => rec.confidence >= minConfidence)
       );
 
+      // 6. Generate budget group recommendations
+      try {
+        const groupAnalysis = new BudgetGroupAnalysisService();
+        const groupRecommendations = await groupAnalysis.generateAllGroupRecommendations({
+          ...(accountIds !== undefined && { accountIds }),
+          minSimilarityScore: minConfidence,
+        });
+        recommendations.push(
+          ...groupRecommendations.filter((rec) => rec.confidence >= minConfidence)
+        );
+      } catch (error) {
+        logger.error("Error generating group recommendations", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+        // Continue even if group analysis fails
+      }
+
       logger.info("Analysis complete", {
         patternsFound: patterns.length,
         recommendationsGenerated: recommendations.length,
@@ -382,7 +400,7 @@ export class BudgetAnalysisService {
       type: "create_budget",
       priority,
       title: `Create budget for ${pattern.categoryName}`,
-      description: `Based on ${pattern.transactionCount} transactions over ${pattern.monthsCovered} months, we recommend creating a ${pattern.frequency} budget for this category.`,
+      description: `Based on ${pattern.transactionCount} transactions over ${pattern.monthsCovered} months.\nWe recommend creating a ${pattern.frequency} budget for this category.`,
       confidence,
       metadata: {
         analysisTimeRange: {
@@ -438,7 +456,7 @@ export class BudgetAnalysisService {
       ? `Based on ${expense.transactionCount} ${expense.frequency} payments to ${expense.payeeName}, we recommend creating a scheduled expense budget.`
       : `Create a ${expense.frequency} scheduled budget for ${expense.payeeName} payments.`;
 
-    return {
+    const recommendation: BudgetRecommendationDraft = {
       type: "create_budget",
       priority,
       title: `Create scheduled budget for ${expense.payeeName}`,
@@ -457,10 +475,16 @@ export class BudgetAnalysisService {
         predictability: expense.predictability,
         intervalDays: expense.intervalDays,
       },
-      categoryId: expense.categoryId || undefined,
       accountId: expense.accountId,
       expiresAt: expiresAt.toISOString(),
     };
+
+    // Only add categoryId if it exists
+    if (expense.categoryId) {
+      recommendation.categoryId = expense.categoryId;
+    }
+
+    return recommendation;
   }
 
   /**
@@ -490,11 +514,11 @@ export class BudgetAnalysisService {
       ? ` (detected keywords: ${goal.goalKeywords.join(", ")})`
       : "";
 
-    return {
+    const recommendation: BudgetRecommendationDraft = {
       type: "create_budget",
       priority,
       title: `Create savings goal for ${goal.accountName}`,
-      description: `Based on ${goal.transactionCount} deposits averaging $${goal.monthlyAverage.toFixed(0)}/month${keywordText}, we recommend creating a goal-based budget.`,
+      description: `Based on ${goal.transactionCount} deposits averaging $${goal.monthlyAverage.toFixed(0)}/month${keywordText}.\nWe recommend creating a goal-based budget.`,
       confidence: goal.confidence,
       metadata: {
         transactionCount: goal.transactionCount,
@@ -510,9 +534,15 @@ export class BudgetAnalysisService {
         },
       },
       accountId: goal.accountId,
-      categoryId: goal.categoryId || undefined,
       expiresAt: expiresAt.toISOString(),
     };
+
+    // Only add categoryId if it exists
+    if (goal.categoryId) {
+      recommendation.categoryId = goal.categoryId;
+    }
+
+    return recommendation;
   }
 
   /**
@@ -545,7 +575,7 @@ export class BudgetAnalysisService {
       type: "create_budget",
       priority,
       title: `Create monthly budget for ${accountData.accountName}`,
-      description: `Your ${accountData.accountName} averages $${accountData.monthlyAverage.toFixed(0)}/month in spending. Top categories: ${topCategories}. Consider setting a monthly spending limit.`,
+      description: `Your ${accountData.accountName} averages $${accountData.monthlyAverage.toFixed(0)}/month in spending.\nTop categories: ${topCategories}.\nConsider setting a monthly spending limit.`,
       confidence,
       metadata: {
         transactionCount: accountData.transactionCount,
@@ -597,7 +627,7 @@ export class BudgetAnalysisService {
           type: "increase_budget",
           priority: "high",
           title: `Increase budget for ${budget.name}`,
-          description: `Your ${budget.name} budget is being exceeded. Based on recent spending patterns, we recommend increasing it.`,
+          description: `Your ${budget.name} budget is being exceeded.\nBased on recent spending patterns, we recommend increasing it.`,
           confidence: 75,
           metadata: {
             currentAmount,
@@ -620,7 +650,7 @@ export class BudgetAnalysisService {
           type: "decrease_budget",
           priority: "low",
           title: `Decrease budget for ${budget.name}`,
-          description: `Your ${budget.name} budget is underutilized. Consider reducing it to free up funds.`,
+          description: `Your ${budget.name} budget is underutilized.\nConsider reducing it to free up funds.`,
           confidence: 65,
           metadata: {
             currentAmount,
@@ -812,7 +842,7 @@ export class BudgetAnalysisService {
         categoryId: transactions.categoryId,
         categoryName: categories.name,
         amount: transactions.amount,
-        note: transactions.note,
+        notes: transactions.notes,
         date: transactions.date,
       })
       .from(transactions)
@@ -863,11 +893,11 @@ export class BudgetAnalysisService {
       if (txn.categoryId) data.categoryIds.add(txn.categoryId);
       if (txn.categoryName) data.categoryNames.add(txn.categoryName);
 
-      // Check for goal keywords in note
-      if (txn.note) {
-        const noteLower = txn.note.toLowerCase();
+      // Check for goal keywords in notes
+      if (txn.notes) {
+        const notesLower = txn.notes.toLowerCase();
         for (const keyword of goalKeywordList) {
-          if (noteLower.includes(keyword)) {
+          if (notesLower.includes(keyword)) {
             data.goalKeywords.add(keyword);
           }
         }

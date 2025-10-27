@@ -357,3 +357,145 @@ export function isValidDate(dateString: string): boolean {
   const date = new Date(dateString);
   return date instanceof Date && !isNaN(date.getTime());
 }
+
+/**
+ * Parse IIF date format (MM/DD/YYYY or M/D/YY)
+ */
+export function parseIIFDate(dateStr: string): Date {
+  if (!dateStr) {
+    throw new ValidationError('Date is required', 'date', dateStr);
+  }
+
+  const parts = dateStr.trim().split('/');
+  if (parts.length !== 3) {
+    throw new ValidationError(`Invalid IIF date format: ${dateStr}`, 'date', dateStr);
+  }
+
+  let [month, day, year] = parts.map(p => parseInt(p, 10));
+
+  if (year < 100) {
+    year += year < 50 ? 2000 : 1900;
+  }
+
+  const date = new Date(year, month - 1, day);
+
+  if (isNaN(date.getTime())) {
+    throw new ValidationError(`Invalid IIF date: ${dateStr}`, 'date', dateStr);
+  }
+
+  return date;
+}
+
+/**
+ * Parse QBO XML date format (YYYY-MM-DD)
+ */
+export function parseQBODate(dateStr: string): Date {
+  if (!dateStr) {
+    throw new ValidationError('Date is required', 'date', dateStr);
+  }
+
+  const date = new Date(dateStr);
+
+  if (isNaN(date.getTime())) {
+    throw new ValidationError(`Invalid QBO date: ${dateStr}`, 'date', dateStr);
+  }
+
+  return date;
+}
+
+/**
+ * Normalize IIF transaction type to budget transaction status
+ */
+export function normalizeIIFTransactionType(type: string, cleared?: string): 'pending' | 'cleared' {
+  if (!type) return 'pending';
+
+  const upperType = type.toUpperCase();
+  const upperCleared = cleared?.toUpperCase();
+
+  if (upperCleared === 'X' || upperCleared === 'R' || upperCleared === 'C') {
+    return 'cleared';
+  }
+
+  if (upperType === 'CHECK' || upperType === 'DEPOSIT') {
+    return 'cleared';
+  }
+
+  return 'pending';
+}
+
+/**
+ * Extract QBO transactions from parsed XML data
+ */
+export function extractQBOTransactions(xmlData: any): any[] {
+  const transactions: any[] = [];
+
+  if (!xmlData || typeof xmlData !== 'object') {
+    console.log('[QBO] xmlData is null or not an object');
+    return transactions;
+  }
+
+  console.log('[QBO] Top-level keys:', Object.keys(xmlData));
+
+  // Try to find the QB data at various levels
+  const qb = xmlData.QBXML || xmlData.QBXMLMsgsRs || xmlData;
+  console.log('[QBO] QB object keys:', Object.keys(qb));
+
+  // Extract various transaction types
+  const checkTxns = qb.CheckQueryRs?.CheckRet || qb.CheckRet || [];
+  const depositTxns = qb.DepositQueryRs?.DepositRet || qb.DepositRet || [];
+  const paymentTxns = qb.PaymentQueryRs?.PaymentRet || qb.PaymentRet || [];
+  const creditCardTxns = qb.CreditCardChargeQueryRs?.CreditCardChargeRet || qb.CreditCardChargeRet || [];
+  const billTxns = qb.BillQueryRs?.BillRet || qb.BillRet || [];
+  const invoiceTxns = qb.InvoiceQueryRs?.InvoiceRet || qb.InvoiceRet || [];
+  const salesReceiptTxns = qb.SalesReceiptQueryRs?.SalesReceiptRet || qb.SalesReceiptRet || [];
+  const journalEntryTxns = qb.JournalEntryQueryRs?.JournalEntryRet || qb.JournalEntryRet || [];
+
+  console.log('[QBO] Transaction counts:', {
+    checks: Array.isArray(checkTxns) ? checkTxns.length : (checkTxns ? 1 : 0),
+    deposits: Array.isArray(depositTxns) ? depositTxns.length : (depositTxns ? 1 : 0),
+    payments: Array.isArray(paymentTxns) ? paymentTxns.length : (paymentTxns ? 1 : 0),
+    creditCards: Array.isArray(creditCardTxns) ? creditCardTxns.length : (creditCardTxns ? 1 : 0),
+    bills: Array.isArray(billTxns) ? billTxns.length : (billTxns ? 1 : 0),
+    invoices: Array.isArray(invoiceTxns) ? invoiceTxns.length : (invoiceTxns ? 1 : 0),
+    salesReceipts: Array.isArray(salesReceiptTxns) ? salesReceiptTxns.length : (salesReceiptTxns ? 1 : 0),
+    journalEntries: Array.isArray(journalEntryTxns) ? journalEntryTxns.length : (journalEntryTxns ? 1 : 0),
+  });
+
+  const allTxns = [
+    ...(Array.isArray(checkTxns) ? checkTxns : [checkTxns]).filter(Boolean),
+    ...(Array.isArray(depositTxns) ? depositTxns : [depositTxns]).filter(Boolean),
+    ...(Array.isArray(paymentTxns) ? paymentTxns : [paymentTxns]).filter(Boolean),
+    ...(Array.isArray(creditCardTxns) ? creditCardTxns : [creditCardTxns]).filter(Boolean),
+    ...(Array.isArray(billTxns) ? billTxns : [billTxns]).filter(Boolean),
+    ...(Array.isArray(invoiceTxns) ? invoiceTxns : [invoiceTxns]).filter(Boolean),
+    ...(Array.isArray(salesReceiptTxns) ? salesReceiptTxns : [salesReceiptTxns]).filter(Boolean),
+    ...(Array.isArray(journalEntryTxns) ? journalEntryTxns : [journalEntryTxns]).filter(Boolean),
+  ];
+
+  console.log('[QBO] Total transactions found:', allTxns.length);
+
+  return allTxns;
+}
+
+/**
+ * Detect if CSV is a QuickBooks export by checking headers
+ */
+export function isQuickBooksCSV(headers: string[]): boolean {
+  const qbHeaders = [
+    'transaction type',
+    'type',
+    'split',
+    'num',
+    'clr',
+    'account',
+    'balance'
+  ];
+
+  const normalizedHeaders = headers.map(h => h.toLowerCase().trim());
+
+  const matches = qbHeaders.filter(qbHeader =>
+    normalizedHeaders.some(h => h.includes(qbHeader))
+  );
+
+  return matches.length >= 3;
+}

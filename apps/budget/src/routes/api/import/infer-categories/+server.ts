@@ -1,8 +1,8 @@
-import {json} from '@sveltejs/kit';
-import type {RequestHandler} from './$types';
-import {CategoryMatcher} from '$lib/server/import/matchers/category-matcher';
-import {PayeeMatcher} from '$lib/server/import/matchers/payee-matcher';
-import type {ImportRow} from '$lib/types/import';
+import { CategoryMatcher } from '$lib/server/import/matchers/category-matcher';
+import { PayeeMatcher } from '$lib/server/import/matchers/payee-matcher';
+import type { ImportRow } from '$lib/types/import';
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({request}) => {
   try {
@@ -28,7 +28,7 @@ export const POST: RequestHandler = async ({request}) => {
       if (data['payee'] && typeof data['payee'] === 'string') {
         const originalPayee = data['payee'] as string;
         const {name, details} = payeeMatcher.normalizePayeeName(originalPayee);
-        console.log(`[Payee Normalization] Original: "${originalPayee}" -> Normalized: "${name}"`);
+        // console.log(`[Payee Normalization] Original: "${originalPayee}" -> Normalized: "${name}"`);
         updates['payee'] = name;
         updates['originalPayee'] = originalPayee; // Keep original for reference
 
@@ -54,7 +54,7 @@ export const POST: RequestHandler = async ({request}) => {
         // Check if we've already assigned a category to this payee
         if (normalizedPayee && payeeCategoryMap.has(normalizedPayee)) {
           const existingCategory = payeeCategoryMap.get(normalizedPayee)!;
-          console.log(`[Inference] Using cached category for "${normalizedPayee}": ${existingCategory}`);
+          // console.log(`[Inference] Using cached category for "${normalizedPayee}": ${existingCategory}`);
           updates['category'] = existingCategory;
           updates['inferredCategory'] = existingCategory;
         } else {
@@ -66,7 +66,7 @@ export const POST: RequestHandler = async ({request}) => {
           });
 
           if (suggestedCategoryName) {
-            console.log(`[Inference] NEW category for "${normalizedPayee}": ${suggestedCategoryName}`);
+            // console.log(`[Inference] NEW category for "${normalizedPayee}": ${suggestedCategoryName}`);
             updates['category'] = suggestedCategoryName;
             updates['inferredCategory'] = suggestedCategoryName;
             // Remember this payee-category mapping
@@ -74,7 +74,7 @@ export const POST: RequestHandler = async ({request}) => {
               payeeCategoryMap.set(normalizedPayee, suggestedCategoryName);
             }
           } else {
-            console.log(`[Inference] No suggestion for "${normalizedPayee}", leaving uncategorized`);
+            // console.log(`[Inference] No suggestion for "${normalizedPayee}", leaving uncategorized`);
             // No suggestion found - leave it without a category (don't set "Uncategorized")
             // The UI will display it as uncategorized/empty, but we don't store that as data
           }

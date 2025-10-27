@@ -2,7 +2,7 @@
   import {cn} from "$lib/utils";
   import {currencyFormatter} from "$lib/utils/formatters";
 
-  type BudgetStatus = "on_track" | "approaching" | "over" | "paused";
+  type BudgetStatus = "on_track" | "approaching" | "over" | "paused" | "setup_needed";
   type BudgetEnforcement = "none" | "warning" | "strict";
 
   interface Props {
@@ -52,6 +52,8 @@
         return "Over Budget";
       case "paused":
         return "Paused";
+      case "setup_needed":
+        return "Setup Needed";
       case "on_track":
       default:
         return "On Track";
@@ -66,6 +68,8 @@
         return "bg-[hsl(var(--budget-danger))] text-[hsl(var(--budget-danger-foreground))]";
       case "paused":
         return "bg-muted text-muted-foreground";
+      case "setup_needed":
+        return "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300";
       case "on_track":
       default:
         return "bg-[hsl(var(--budget-success))] text-[hsl(var(--budget-success-foreground))]";
@@ -80,6 +84,8 @@
         return "bg-[hsl(var(--budget-danger))]";
       case "paused":
         return "bg-muted-foreground";
+      case "setup_needed":
+        return "bg-blue-500";
       case "on_track":
       default:
         return "bg-[hsl(var(--budget-success))]";
@@ -107,6 +113,15 @@
       case "md":
       default:
         return "p-4 text-sm";
+    }
+  });
+
+  const statusHelpText = $derived.by(() => {
+    switch (status) {
+      case "setup_needed":
+        return "Add a period template to start tracking.";
+      default:
+        return null;
     }
   });
 
@@ -152,17 +167,22 @@
     </div>
 
     {#if showStatus}
-      <button
-        type="button"
-        class={cn(
-          "inline-flex w-max items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-medium capitalize",
-          statusClasses
-        )}
-        onclick={handleStatusClick}
-      >
-        <span class="size-1.5 rounded-full bg-current"></span>
-        {statusLabel}
-      </button>
+      <div class="flex flex-col gap-1">
+        <button
+          type="button"
+          class={cn(
+            "inline-flex w-max items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-medium capitalize",
+            statusClasses
+          )}
+          onclick={handleStatusClick}
+        >
+          <span class="size-1.5 rounded-full bg-current"></span>
+          {statusLabel}
+        </button>
+        {#if statusHelpText}
+          <p class="text-xs text-muted-foreground">{statusHelpText}</p>
+        {/if}
+      </div>
     {/if}
   </div>
 </div>

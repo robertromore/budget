@@ -18,7 +18,7 @@ interface Props {
 }
 
 let {
-  acceptedFormats = ['.csv', '.xlsx', '.xls', '.qif', '.ofx'],
+  acceptedFormats = ['.csv', '.xlsx', '.xls', '.qif', '.ofx', '.qfx', '.iif', '.qbo'],
   maxFileSize = 10 * 1024 * 1024,
   onFileSelected,
   onFileRejected,

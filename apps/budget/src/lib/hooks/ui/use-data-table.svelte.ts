@@ -14,6 +14,9 @@ import type {
   GroupingState,
   ExpandedState,
   ColumnPinningState,
+} from "@tanstack/table-core";
+
+import {
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,

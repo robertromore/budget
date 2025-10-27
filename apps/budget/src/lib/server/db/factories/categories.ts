@@ -17,7 +17,10 @@ export const categoryFactory = async (
         notes: faker.lorem.text(),
       })
       .returning();
-    categories_collection.push(new_category[0]);
+    const category = new_category[0];
+    if (category) {
+      categories_collection.push(category);
+    }
   }
   return categories_collection;
 };

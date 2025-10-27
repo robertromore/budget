@@ -13,11 +13,12 @@ import { isoWeekdayOptions, monthStringOptions } from '$lib/utils/date-options';
 
 interface Props {
   budgetId: number;
+  defaultAllocatedAmount?: number;
   onSuccess?: (template: BudgetPeriodTemplate) => void;
   onCancel?: () => void;
 }
 
-let { budgetId, onSuccess, onCancel }: Props = $props();
+let { budgetId, defaultAllocatedAmount = 0, onSuccess, onCancel }: Props = $props();
 
 // Mutations - must be called during component initialization
 const createMutation = createPeriodTemplate.options();
@@ -28,6 +29,7 @@ let intervalCount = $state(1);
 let startDayOfWeek = $state(1);
 let startDayOfMonth = $state(1);
 let startMonth = $state(1);
+let allocatedAmount = $state(defaultAllocatedAmount);
 
 // String bindings for Select components (which require string values)
 let startDayOfWeekStr = $state<string>('1');
@@ -128,6 +130,7 @@ async function handleSubmit(e: SubmitEvent) {
     budgetId,
     type,
     intervalCount,
+    allocatedAmount,
   };
 
   // Only include optional fields when they have values
@@ -186,6 +189,22 @@ async function handleSubmit(e: SubmitEvent) {
         </span>
       </div>
     </div>
+  </div>
+
+  <!-- Allocated Amount -->
+  <div class="space-y-2">
+    <Label for="allocated-amount">Allocated Amount Per Period</Label>
+    <Input
+      id="allocated-amount"
+      type="number"
+      bind:value={allocatedAmount}
+      min="0"
+      step="0.01"
+      placeholder="0.00"
+    />
+    <p class="text-sm text-muted-foreground">
+      The budget amount for each period. Leave as 0 to set later.
+    </p>
   </div>
 
   <!-- Period-specific configuration -->

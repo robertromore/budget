@@ -1,11 +1,11 @@
 import type { View } from "$lib/schema";
+import { superformInsertPayeeSchema } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
 import { currentDate } from "$lib/utils/dates";
-import { superformInsertPayeeSchema } from "$lib/schema/superforms";
-import { superValidate } from "sveltekit-superforms/client";
-import { zod4 } from "sveltekit-superforms/adapters";
 import { fail } from "@sveltejs/kit";
+import { zod4 } from "sveltekit-superforms/adapters";
+import { superValidate } from "sveltekit-superforms/client";
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
@@ -23,12 +23,8 @@ export const load: PageServerLoad = async (event) => {
         grouping: [],
         sort: [
           {
-            id: "id",
-            desc: false,
-          },
-          {
             id: "date",
-            desc: false,
+            desc: true,
           }
         ],
       },
@@ -48,7 +44,12 @@ export const load: PageServerLoad = async (event) => {
       ],
       display: {
         grouping: [],
-        sort: [],
+        sort: [
+          {
+            id: "date",
+            desc: true,
+          }
+        ],
       },
       icon: "",
       dirty: false,
@@ -56,21 +57,22 @@ export const load: PageServerLoad = async (event) => {
     {
       id: -2,
       name: "Upcoming",
-      description: "Upcoming transactions for this account",
+      description: "Uncleared future transactions for this account",
       filters: [
         {
           column: "date",
           filter: "dateIn",
           value: [{operator: "after", date: currentDate.toString()}],
         },
+        {
+          column: "status",
+          filter: "equalsString",
+          value: ["pending", "scheduled"],
+        },
       ],
       display: {
         grouping: [],
         sort: [
-          {
-            id: "id",
-            desc: false,
-          },
           {
             id: "date",
             desc: false,

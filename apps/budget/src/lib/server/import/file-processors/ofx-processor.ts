@@ -27,7 +27,7 @@ interface OFXTransaction {
 
 export class OFXProcessor implements FileProcessor {
   private readonly maxFileSize = 5 * 1024 * 1024; // 5MB
-  private readonly supportedFormats = ['.ofx', '.qfx'];
+  private readonly supportedFormats = ['.ofx', '.qfx', '.qbo']; // .qbo files can contain OFX data
 
   getSupportedFormats(): string[] {
     return this.supportedFormats;

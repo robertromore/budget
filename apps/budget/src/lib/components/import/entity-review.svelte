@@ -96,7 +96,7 @@ const selectedCategoriesCount = $derived(
         </div>
       </Card.CardHeader>
       <Card.CardContent>
-        <div class="space-y-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {#each payees as payee (payee.name)}
             <div
               class="flex items-center justify-between rounded-lg border p-3 transition-colors {payee.existing
@@ -168,7 +168,7 @@ const selectedCategoriesCount = $derived(
         </div>
       </Card.CardHeader>
       <Card.CardContent>
-        <div class="space-y-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {#each categories as category (category.name)}
             <div
               class="flex items-center justify-between rounded-lg border p-3 transition-colors {category.existing

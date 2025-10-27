@@ -1,37 +1,37 @@
-import {CalendarDate, type DateValue} from "@internationalized/date";
 import {
+  budgetEnforcementLevels,
+  budgets,
+  budgetScopes,
+  budgetStatuses,
+  budgetTransactions,
+  budgetTypes,
   type Budget,
-  type BudgetMetadata,
-  type BudgetTransaction,
-  type NewBudgetTransaction,
-  type BudgetPeriodTemplate,
-  type BudgetPeriodInstance,
-  type BudgetType,
-  type BudgetScope,
   type BudgetEnforcementLevel,
   type BudgetGroup,
+  type BudgetMetadata,
+  type BudgetPeriodInstance,
+  type BudgetPeriodTemplate,
+  type BudgetScope,
+  type BudgetTransaction,
+  type BudgetType,
   type NewBudgetGroup,
-  budgetTypes,
-  budgetScopes,
-  budgetEnforcementLevels,
-  budgetStatuses,
-  budgets,
-  budgetTransactions,
+  type NewBudgetTransaction,
 } from "$lib/schema/budgets";
-import type {Transaction} from "$lib/schema/transactions";
-import {transactions} from "$lib/schema/transactions";
-import {payees} from "$lib/schema/payees";
-import {db} from "$lib/server/db";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {BudgetRepository, type BudgetWithRelations, type DbClient} from "./repository";
-import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {currentDate as defaultCurrentDate, timezone as defaultTimezone} from "$lib/utils/dates";
-import {and, eq, sql} from "drizzle-orm";
-import {EnvelopeService, type EnvelopeAllocationRequest} from "./envelope-service";
-import type {DeficitRecoveryPlan} from "./deficit-recovery";
-import {PeriodManager} from "./period-manager";
-import {BudgetAnalysisService, type AnalysisParams} from "./budget-analysis-service";
-import {RecommendationService, type RecommendationFilters} from "./recommendation-service";
+import { payees } from "$lib/schema/payees";
+import type { Transaction } from "$lib/schema/transactions";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { currentDate as defaultCurrentDate, timezone as defaultTimezone } from "$lib/utils/dates";
+import { CalendarDate, type DateValue } from "@internationalized/date";
+import { and, eq, sql } from "drizzle-orm";
+import { BudgetAnalysisService, type AnalysisParams } from "./budget-analysis-service";
+import type { DeficitRecoveryPlan } from "./deficit-recovery";
+import { EnvelopeService, type EnvelopeAllocationRequest } from "./envelope-service";
+import { PeriodManager } from "./period-manager";
+import { RecommendationService, type RecommendationFilters } from "./recommendation-service";
+import { BudgetRepository, type BudgetWithRelations, type DbClient } from "./repository";
 
 /* ------------------------------------------------------------------ */
 /* Budget Service                                                     */
@@ -74,8 +74,8 @@ export class BudgetService {
     private goalTrackingService: GoalTrackingService,
     private forecastService: BudgetForecastService,
     private intelligenceService: BudgetIntelligenceService,
-    private analysisService?: BudgetAnalysisService,
-    private recommendationService?: RecommendationService
+    private analysisService: BudgetAnalysisService,
+    private recommendationService: RecommendationService
   ) {}
 
   private generateSlug(name: string): string {
@@ -250,6 +250,10 @@ export class BudgetService {
   }
 
   async deleteBudget(id: number): Promise<void> {
+    // Before deleting, check if this budget was created from a recommendation
+    // If so, reset the recommendation status to 'pending' so it can be reapplied
+    await this.recommendationService.resetRecommendationForBudget(id);
+
     await this.repository.deleteBudget(id);
   }
 
@@ -771,16 +775,19 @@ export class BudgetService {
       const payee = await db.query.payees.findFirst({
         where: eq(payees.id, metadata.payeeIds[0]),
       });
-      if (payee) {
+      if (payee?.name) {
         budgetName = payee.name;
       }
     }
 
     // Fallback to category or account name (without "Budget" suffix for non-scheduled types)
-    if (!budgetName && recommendation.category?.name) {
-      budgetName = recommendation.category.name;
-    } else if (!budgetName && recommendation.account?.name) {
-      budgetName = recommendation.account.name;
+    const categoryName = recommendation.category?.name;
+    const accountName = recommendation.account?.name;
+
+    if (!budgetName && categoryName) {
+      budgetName = categoryName;
+    } else if (!budgetName && accountName) {
+      budgetName = accountName;
     } else if (!budgetName) {
       // Extract from title as last resort
       budgetName = recommendation.title.replace(/^Create (scheduled )?budget for /i, '');
@@ -805,9 +812,9 @@ export class BudgetService {
     }
 
     // Create the budget
+    // Don't pass description to avoid validation issues - it's optional anyway
     const newBudget = await this.createBudget({
       name: budgetName,
-      description: budgetDescription || undefined,
       type: suggestedType,
       scope: metadata?.suggestedScope || (recommendation.categoryId ? 'category' : 'account'),
       status: 'active',
@@ -825,6 +832,14 @@ export class BudgetService {
           }
         })
       }
+    });
+
+    // Create default monthly period template with the allocated amount
+    await this.createPeriodTemplate({
+      budgetId: newBudget.id,
+      type: 'monthly',
+      startDayOfMonth: 1,
+      allocatedAmount: suggestedAmount,
     });
 
     // Mark recommendation as applied
@@ -857,6 +872,7 @@ export class BudgetService {
     startDayOfMonth?: number;
     startMonth?: number;
     timezone?: string;
+    allocatedAmount?: number;
   }): Promise<BudgetPeriodTemplate> {
     // Validate budget exists
     const budget = await this.repository.findById(data.budgetId);
@@ -910,13 +926,20 @@ export class BudgetService {
 
     // Automatically create the first period instance
     const periodManager = new PeriodManager();
-    await periodManager.createPeriodsAutomatically(data.budgetId, {
+    const periodOptions: any = {
       lookAheadMonths: 3,
       lookBehindMonths: 0,
       autoCreateEnvelopes: false,
       copyPreviousPeriodSettings: false,
       enableRollover: false,
-    });
+    };
+
+    // Only add allocatedAmount if it exists
+    if (data.allocatedAmount !== undefined) {
+      periodOptions.allocatedAmount = data.allocatedAmount;
+    }
+
+    await periodManager.createPeriodsAutomatically(data.budgetId, periodOptions);
 
     return template;
   }
@@ -1625,9 +1648,18 @@ export class BudgetForecastService {
       return null;
     }
 
-    const occurrencesInPeriod = this.calculateOccurrences(dateConfig, periodStart, periodEnd);
+    const frequencyConfig: { frequency?: string } = {};
+    if (dateConfig.frequency) {
+      frequencyConfig.frequency = dateConfig.frequency;
+    }
+
+    const occurrencesInPeriod = this.calculateOccurrences(
+      frequencyConfig,
+      periodStart,
+      periodEnd
+    );
     const amount = schedule.amount_type === 'range'
-      ? (schedule.amount + schedule.amount_2) / 2
+      ? (schedule.amount + (schedule.amount_2 || 0)) / 2
       : schedule.amount;
 
     const totalImpact = Math.abs(amount) * occurrencesInPeriod;
@@ -1635,7 +1667,7 @@ export class BudgetForecastService {
     return {
       scheduleId: schedule.id,
       scheduleName: schedule.name,
-      nextOccurrence: this.calculateNextOccurrence(dateConfig, periodStart),
+      nextOccurrence: this.calculateNextOccurrence({ startDate: dateConfig.start }, periodStart),
       amount,
       frequency: dateConfig.frequency || 'once',
       occurrencesInPeriod,

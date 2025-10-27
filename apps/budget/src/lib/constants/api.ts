@@ -2,7 +2,7 @@
 export const RATE_LIMIT = {
   WINDOW_MS: 60 * 1000, // 1 minute
   MUTATION_MAX_REQUESTS: 30,
-  BULK_OPERATION_MAX_REQUESTS: 10,
+  BULK_OPERATION_MAX_REQUESTS: 1000, // Very high limit since bulk operations are already limited by request size
   STRICT_MAX_REQUESTS: 5,
 } as const;
 

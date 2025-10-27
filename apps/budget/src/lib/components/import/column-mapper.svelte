@@ -4,7 +4,6 @@ import * as Card from '$lib/components/ui/card';
 import { Button } from '$lib/components/ui/button';
 import type { ColumnMapping } from '$lib/types/import';
 import { formatPreviewAmount } from '$lib/utils/import';
-import { createRecordAccessors } from '$lib/utils/bind-helpers';
 
 interface Props {
   rawColumns: string[];
@@ -70,8 +69,13 @@ let debitSelectValue = $state<string>('');
 let creditSelectValue = $state<string>('');
 let fieldSelectValues = $state<Record<string, string>>({});
 
-// Initialize with provided mapping or attempt auto-detection
+// Track if initialization is complete to prevent effect loops
+let initialized = $state(false);
+
+// Initialize with provided mapping or attempt auto-detection (only runs once)
 $effect(() => {
+  if (initialized) return;
+
   if (initialMapping) {
     columnMapping = { ...initialMapping };
   } else {
@@ -121,57 +125,52 @@ $effect(() => {
       }
     }
   });
+
+  initialized = true;
 });
 
-// Handle debit select value changes
-$effect(() => {
-  if (debitSelectValue !== undefined) {
-    // Clear any existing debit mapping
-    Object.entries(columnMapping).forEach(([col, target]) => {
-      if (target === 'debit/credit' && col.toLowerCase().includes('debit')) {
-        columnMapping[col] = '';
-      }
-    });
-    // Set new debit mapping
-    if (debitSelectValue) {
-      columnMapping[debitSelectValue] = 'debit/credit';
-    }
-  }
-});
-
-// Handle credit select value changes
-$effect(() => {
-  if (creditSelectValue !== undefined) {
-    // Clear any existing credit mapping
-    Object.entries(columnMapping).forEach(([col, target]) => {
-      if (target === 'debit/credit' && col.toLowerCase().includes('credit')) {
-        columnMapping[col] = '';
-      }
-    });
-    // Set new credit mapping
-    if (creditSelectValue) {
-      columnMapping[creditSelectValue] = 'debit/credit';
-    }
-  }
-});
-
-// Handle field select value changes
-$effect(() => {
-  Object.entries(fieldSelectValues).forEach(([field, column]) => {
-    if (column !== undefined) {
-      // Clear any existing mapping to this target field
-      Object.entries(columnMapping).forEach(([col, target]) => {
-        if (target === field) {
-          columnMapping[col] = '';
-        }
-      });
-      // Set new mapping
-      if (column) {
-        columnMapping[column] = field;
-      }
+// Handler functions for select changes (called directly, not in effects)
+function handleDebitChange(newValue: string) {
+  // Clear any existing debit mapping
+  Object.keys(columnMapping).forEach((col) => {
+    if (columnMapping[col] === 'debit/credit' && col.toLowerCase().includes('debit')) {
+      columnMapping[col] = '';
     }
   });
-});
+  // Set new debit mapping
+  if (newValue) {
+    columnMapping[newValue] = 'debit/credit';
+  }
+  debitSelectValue = newValue;
+}
+
+function handleCreditChange(newValue: string) {
+  // Clear any existing credit mapping
+  Object.keys(columnMapping).forEach((col) => {
+    if (columnMapping[col] === 'debit/credit' && col.toLowerCase().includes('credit')) {
+      columnMapping[col] = '';
+    }
+  });
+  // Set new credit mapping
+  if (newValue) {
+    columnMapping[newValue] = 'debit/credit';
+  }
+  creditSelectValue = newValue;
+}
+
+function handleFieldChange(field: string, newValue: string) {
+  // Clear any existing mapping to this target field
+  Object.keys(columnMapping).forEach((col) => {
+    if (columnMapping[col] === field) {
+      columnMapping[col] = '';
+    }
+  });
+  // Set new mapping
+  if (newValue) {
+    columnMapping[newValue] = field;
+  }
+  fieldSelectValues[field] = newValue;
+}
 
 // Check if mapping is valid (at minimum needs date and either amount OR debit/credit)
 const isValidMapping = $derived.by(() => {
@@ -249,7 +248,8 @@ function handleNext() {
                     <div class="flex-1">
                       <Select.Root
                         type="single"
-                        bind:value={debitSelectValue}>
+                        value={debitSelectValue}
+                        onValueChange={handleDebitChange}>
                         <Select.Trigger class="w-full">
                           <span class="truncate text-xs">
                             Debit: {debitSelectValue || 'Select...'}
@@ -266,7 +266,8 @@ function handleNext() {
                     <div class="flex-1">
                       <Select.Root
                         type="single"
-                        bind:value={creditSelectValue}>
+                        value={creditSelectValue}
+                        onValueChange={handleCreditChange}>
                         <Select.Trigger class="w-full">
                           <span class="truncate text-xs">
                             Credit: {creditSelectValue || 'Select...'}
@@ -283,11 +284,11 @@ function handleNext() {
                   </div>
                 {:else}
                   {@const fieldKey = field.value}
-                  {@const accessors = createRecordAccessors(fieldSelectValues, fieldKey)}
-                  {@const currentFieldValue = accessors.get()}
+                  {@const currentFieldValue = fieldSelectValues[fieldKey] || ''}
                   <Select.Root
                     type="single"
-                    bind:value={accessors.get, accessors.set}>
+                    value={currentFieldValue}
+                    onValueChange={(newValue) => handleFieldChange(fieldKey, newValue || '')}>
                     <Select.Trigger class="w-full">
                       <span class="truncate">
                         {currentFieldValue || 'Select CSV column...'}

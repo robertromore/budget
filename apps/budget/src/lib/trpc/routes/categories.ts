@@ -3,11 +3,11 @@ import {
   removeCategoriesSchema,
   removeCategorySchema,
 } from "$lib/schema";
-import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
-import {z} from "zod";
-import {categoryIdSchema, searchCategoriesSchema} from "$lib/server/domains/categories";
-import {serviceFactory} from "$lib/server/shared/container/service-factory";
-import {withErrorHandler} from "$lib/trpc/shared/errors";
+import { categoryIdSchema, searchCategoriesSchema } from "$lib/server/domains/categories";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
+import { withErrorHandler } from "$lib/trpc/shared/errors";
+import { z } from "zod";
 
 const categoryService = serviceFactory.getCategoryService();
 
@@ -15,6 +15,8 @@ export const categoriesRoutes = t.router({
   all: publicProcedure.query(withErrorHandler(async () => categoryService.getAllCategories())),
 
   allWithStats: publicProcedure.query(withErrorHandler(async () => categoryService.getAllCategoriesWithStats())),
+
+  allWithGroups: publicProcedure.query(withErrorHandler(async () => categoryService.getAllCategoriesWithGroups())),
 
   load: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input}) => categoryService.getCategoryById(input.id))),
 
@@ -121,4 +123,16 @@ export const categoriesRoutes = t.router({
       parentId: z.number().positive().nullable(),
     }))
     .mutation(withErrorHandler(async ({input}) => categoryService.setCategoryParent(input.categoryId, input.parentId))),
+
+  seedDefaults: rateLimitedProcedure
+    .input(z.object({
+      slugs: z.array(z.string()).optional(),
+    }).optional())
+    .mutation(withErrorHandler(async ({input}) => categoryService.seedDefaultCategories(input?.slugs))),
+
+  defaultCategoriesStatus: publicProcedure
+    .query(withErrorHandler(async () => categoryService.getDefaultCategoriesStatus())),
+
+  availableDefaults: publicProcedure
+    .query(withErrorHandler(async () => categoryService.getAvailableDefaultCategories())),
 });

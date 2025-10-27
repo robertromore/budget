@@ -14,41 +14,46 @@
  */
 
 import { AccountRepository } from '$lib/server/domains/accounts/repository';
-import { TransactionRepository } from '$lib/server/domains/transactions/repository';
-import { CategoryRepository } from '$lib/server/domains/categories/repository';
-import { PayeeRepository } from '$lib/server/domains/payees/repository';
 import { BudgetRepository } from '$lib/server/domains/budgets/repository';
-import { PatternRepository } from '$lib/server/domains/patterns/repository';
-import { ScheduleRepository } from '$lib/server/domains/schedules/repository';
+import { CategoryRepository } from '$lib/server/domains/categories/repository';
+import { CategoryGroupMembershipRepository, CategoryGroupRecommendationRepository, CategoryGroupRepository, CategoryGroupSettingsRepository } from '$lib/server/domains/category-groups/repository';
 import { MedicalExpenseRepository } from '$lib/server/domains/medical-expenses/repository';
+import { PatternRepository } from '$lib/server/domains/patterns/repository';
+import { PayeeRepository } from '$lib/server/domains/payees/repository';
+import { ScheduleRepository } from '$lib/server/domains/schedules/repository';
+import { TransactionRepository } from '$lib/server/domains/transactions/repository';
 
-import { CategoryService } from '$lib/server/domains/categories/services';
-import { PatternDetectionService } from '$lib/server/domains/patterns/services';
-import { BudgetTransactionService, BudgetService, GoalTrackingService, BudgetForecastService, BudgetPeriodService } from '$lib/server/domains/budgets/services';
-import { BudgetIntelligenceService } from '$lib/server/domains/budgets/intelligence-service';
-import { BudgetCalculationService } from '$lib/server/domains/budgets/calculation-service';
-import { EnvelopeService } from '$lib/server/domains/budgets/envelope-service';
-import { BudgetTemplateService } from '$lib/server/domains/budgets/template-service';
-import { PeriodManager } from '$lib/server/domains/budgets/period-manager';
-import { RolloverCalculator } from '$lib/server/domains/budgets/rollover-calculator';
-import { DeficitRecoveryService } from '$lib/server/domains/budgets/deficit-recovery';
-import { BudgetAnalysisService } from '$lib/server/domains/budgets/budget-analysis-service';
-import { RecommendationService } from '$lib/server/domains/budgets/recommendation-service';
-import { TransactionService } from '$lib/server/domains/transactions/services';
-import { PayeeService } from '$lib/server/domains/payees/services';
-import { PayeeIntelligenceService } from '$lib/server/domains/payees/intelligence';
-import { CategoryLearningService } from '$lib/server/domains/payees/category-learning';
-import { BudgetAllocationService } from '$lib/server/domains/payees/budget-allocation';
-import { PayeeMLCoordinator } from '$lib/server/domains/payees/ml-coordinator';
-import { ContactManagementService } from '$lib/server/domains/payees/contact-management';
-import { SubscriptionManagementService } from '$lib/server/domains/payees/subscription-management';
 import { AccountService } from '$lib/server/domains/accounts/services';
-import { ScheduleService } from '$lib/server/domains/schedules/services';
-import { MedicalExpenseService } from '$lib/server/domains/medical-expenses/services';
-import { ClaimService } from '$lib/server/domains/medical-expenses/claim-service';
+import { BudgetAnalysisService } from '$lib/server/domains/budgets/budget-analysis-service';
+import { BudgetGroupAutomationService } from '$lib/server/domains/budgets/budget-group-automation-service';
+import { BudgetCalculationService } from '$lib/server/domains/budgets/calculation-service';
+import { DeficitRecoveryService } from '$lib/server/domains/budgets/deficit-recovery';
+import { EnvelopeService } from '$lib/server/domains/budgets/envelope-service';
+import { BudgetIntelligenceService as BudgetDetectionService } from '$lib/server/domains/budgets/intelligence-service';
+import { PeriodManager } from '$lib/server/domains/budgets/period-manager';
+import { RecommendationService } from '$lib/server/domains/budgets/recommendation-service';
+import { RolloverCalculator } from '$lib/server/domains/budgets/rollover-calculator';
+import { BudgetForecastService, BudgetIntelligenceService, BudgetPeriodService, BudgetService, BudgetTransactionService, GoalTrackingService } from '$lib/server/domains/budgets/services';
+import { BudgetTemplateService } from '$lib/server/domains/budgets/template-service';
+import { CategoryService } from '$lib/server/domains/categories/services';
+import { CategoryGroupRecommendationService } from '$lib/server/domains/category-groups/recommendation-service';
+import { CategoryGroupService } from '$lib/server/domains/category-groups/services';
+import { CategoryGroupSettingsService } from '$lib/server/domains/category-groups/settings-service';
 import { ClaimRepository } from '$lib/server/domains/medical-expenses/claim-repository';
-import { ReceiptService } from '$lib/server/domains/medical-expenses/receipt-service';
+import { ClaimService } from '$lib/server/domains/medical-expenses/claim-service';
 import { ReceiptRepository } from '$lib/server/domains/medical-expenses/receipt-repository';
+import { ReceiptService } from '$lib/server/domains/medical-expenses/receipt-service';
+import { MedicalExpenseService } from '$lib/server/domains/medical-expenses/services';
+import { PatternDetectionService } from '$lib/server/domains/patterns/services';
+import { BudgetAllocationService } from '$lib/server/domains/payees/budget-allocation';
+import { CategoryLearningService } from '$lib/server/domains/payees/category-learning';
+import { ContactManagementService } from '$lib/server/domains/payees/contact-management';
+import { PayeeIntelligenceService } from '$lib/server/domains/payees/intelligence';
+import { PayeeMLCoordinator } from '$lib/server/domains/payees/ml-coordinator';
+import { PayeeService } from '$lib/server/domains/payees/services';
+import { SubscriptionManagementService } from '$lib/server/domains/payees/subscription-management';
+import { ScheduleService } from '$lib/server/domains/schedules/services';
+import { TransactionService } from '$lib/server/domains/transactions/services';
 
 export class ServiceFactory {
   private instances = new Map<string, unknown>();
@@ -368,11 +373,17 @@ export class ServiceFactory {
   getBudgetIntelligenceService(): BudgetIntelligenceService {
     const key = 'BudgetIntelligenceService';
     if (!this.instances.has(key)) {
-      this.instances.set(key, new BudgetIntelligenceService(
-        this.getBudgetRepository()
-      ));
+      this.instances.set(key, new BudgetIntelligenceService(this.getBudgetRepository()));
     }
     return this.instances.get(key) as BudgetIntelligenceService;
+  }
+
+  getBudgetDetectionService(): BudgetDetectionService {
+    const key = 'BudgetDetectionService';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new BudgetDetectionService());
+    }
+    return this.instances.get(key) as BudgetDetectionService;
   }
 
   getBudgetPeriodService(): BudgetPeriodService {
@@ -417,6 +428,16 @@ export class ServiceFactory {
     return this.instances.get(key) as RecommendationService;
   }
 
+  getBudgetGroupAutomationService(): BudgetGroupAutomationService {
+    const key = 'BudgetGroupAutomationService';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new BudgetGroupAutomationService(
+        this.getBudgetService()
+      ));
+    }
+    return this.instances.get(key) as BudgetGroupAutomationService;
+  }
+
   getBudgetService(): BudgetService {
     const key = 'BudgetService';
     if (!this.instances.has(key)) {
@@ -442,6 +463,74 @@ export class ServiceFactory {
       ));
     }
     return this.instances.get(key) as ReceiptService;
+  }
+
+  // Category Groups Repositories
+  getCategoryGroupRepository(): CategoryGroupRepository {
+    const key = 'CategoryGroupRepository';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new CategoryGroupRepository());
+    }
+    return this.instances.get(key) as CategoryGroupRepository;
+  }
+
+  getCategoryGroupMembershipRepository(): CategoryGroupMembershipRepository {
+    const key = 'CategoryGroupMembershipRepository';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new CategoryGroupMembershipRepository());
+    }
+    return this.instances.get(key) as CategoryGroupMembershipRepository;
+  }
+
+  getCategoryGroupRecommendationRepository(): CategoryGroupRecommendationRepository {
+    const key = 'CategoryGroupRecommendationRepository';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new CategoryGroupRecommendationRepository());
+    }
+    return this.instances.get(key) as CategoryGroupRecommendationRepository;
+  }
+
+  getCategoryGroupSettingsRepository(): CategoryGroupSettingsRepository {
+    const key = 'CategoryGroupSettingsRepository';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new CategoryGroupSettingsRepository());
+    }
+    return this.instances.get(key) as CategoryGroupSettingsRepository;
+  }
+
+  // Category Groups Services
+  getCategoryGroupService(): CategoryGroupService {
+    const key = 'CategoryGroupService';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new CategoryGroupService(
+        this.getCategoryGroupRepository(),
+        this.getCategoryGroupMembershipRepository()
+      ));
+    }
+    return this.instances.get(key) as CategoryGroupService;
+  }
+
+  getCategoryGroupRecommendationService(): CategoryGroupRecommendationService {
+    const key = 'CategoryGroupRecommendationService';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new CategoryGroupRecommendationService(
+        this.getCategoryGroupRecommendationRepository(),
+        this.getCategoryGroupRepository(),
+        this.getCategoryRepository(),
+        this.getCategoryGroupSettingsRepository()
+      ));
+    }
+    return this.instances.get(key) as CategoryGroupRecommendationService;
+  }
+
+  getCategoryGroupSettingsService(): CategoryGroupSettingsService {
+    const key = 'CategoryGroupSettingsService';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new CategoryGroupSettingsService(
+        this.getCategoryGroupSettingsRepository()
+      ));
+    }
+    return this.instances.get(key) as CategoryGroupSettingsService;
   }
 
   // ==================== Testing Utilities ====================

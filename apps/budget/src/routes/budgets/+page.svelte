@@ -52,6 +52,7 @@
   let templatePickerOpen = $state(false);
   let groupDialogOpen = $state(false);
   let selectedGroup = $state<BudgetGroup | undefined>(undefined);
+  let activeTab = $state<string>("overview");
 
   // Delete confirmation dialogs
   let deleteDialogOpen = $state(false);
@@ -318,7 +319,7 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-xs sm:text-sm font-medium">Total Allocated</Card.Title>
-        <DollarSign class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+        <DollarSign class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
       </Card.Header>
       <Card.Content>
         <div class="text-lg sm:text-2xl font-bold break-all">{formatCurrency(summaryMetrics.totalAllocated)}</div>
@@ -331,7 +332,7 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-xs sm:text-sm font-medium">Total Spent</Card.Title>
-        <TrendingUp class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+        <TrendingUp class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
       </Card.Header>
       <Card.Content>
         <div class="text-lg sm:text-2xl font-bold break-all">{formatCurrency(summaryMetrics.totalConsumed)}</div>
@@ -344,7 +345,7 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-xs sm:text-sm font-medium">Remaining</Card.Title>
-        <CircleCheck class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+        <CircleCheck class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
       </Card.Header>
       <Card.Content>
         <div class="text-lg sm:text-2xl font-bold break-all {summaryMetrics.remaining < 0 ? 'text-destructive' : ''}">
@@ -359,7 +360,7 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-xs sm:text-sm font-medium">Alerts</Card.Title>
-        <TriangleAlert class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+        <TriangleAlert class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
       </Card.Header>
       <Card.Content>
         <div class="text-lg sm:text-2xl font-bold">
@@ -396,7 +397,7 @@
     </div>
   {:else}
   <!-- Show tabs even when there are no budgets so users can access Recommendations -->
-  <Tabs.Root value={budgets.length === 0 ? "recommendations" : "overview"} class="space-y-6">
+  <Tabs.Root bind:value={activeTab} class="space-y-6">
     <Tabs.List class="grid w-full grid-cols-6">
       <Tabs.Trigger value="overview" class="flex items-center gap-2">
         <Grid3x3 class="h-4 w-4" />
@@ -449,10 +450,7 @@
                 <Plus class="mr-2 h-4 w-4" />
                 Create Your First Budget
               </Button>
-              <Button variant="outline" onclick={() => {
-                const tabs = document.querySelector('[value="recommendations"]');
-                if (tabs) tabs.click();
-              }}>
+              <Button variant="outline" onclick={() => activeTab = "recommendations"}>
                 <Sparkles class="mr-2 h-4 w-4" />
                 View Recommendations
               </Button>

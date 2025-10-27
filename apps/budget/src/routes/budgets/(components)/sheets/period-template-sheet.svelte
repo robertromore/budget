@@ -9,6 +9,7 @@
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     budgetId: number;
+    defaultAllocatedAmount?: number;
     onSuccess?: (template: BudgetPeriodTemplate) => void;
   }
 
@@ -16,6 +17,7 @@
     open = $bindable(false),
     onOpenChange,
     budgetId,
+    defaultAllocatedAmount,
     onSuccess,
   }: Props = $props();
 
@@ -41,6 +43,7 @@
   {#snippet content()}
     <BudgetPeriodTemplateForm
       {budgetId}
+      {...(defaultAllocatedAmount !== undefined ? { defaultAllocatedAmount } : {})}
       onSuccess={handleSuccess}
       onCancel={handleCancel}
     />

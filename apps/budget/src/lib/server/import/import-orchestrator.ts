@@ -5,19 +5,19 @@
  * to transaction creation. Provides progress tracking and error handling.
  */
 
-import type { ImportRow, ImportResult, ImportOptions } from '$lib/types/import';
-import type { selectTransactionSchema } from '$lib/schema/transactions';
-import type { Payee } from '$lib/schema/payees';
 import type { Category } from '$lib/schema/categories';
-import type { z } from 'zod/v4';
-import { TransactionValidator } from './validators/transaction-validator';
-import { PayeeMatcher } from './matchers/payee-matcher';
-import { CategoryMatcher } from './matchers/category-matcher';
-import { db } from '$lib/server/db';
-import { transactions as transactionTable } from '$lib/schema/transactions';
-import { payees as payeeTable } from '$lib/schema/payees';
 import { categories as categoryTable } from '$lib/schema/categories';
-import { eq, and, isNull } from 'drizzle-orm';
+import type { Payee } from '$lib/schema/payees';
+import { payees as payeeTable } from '$lib/schema/payees';
+import type { selectTransactionSchema } from '$lib/schema/transactions';
+import { transactions as transactionTable } from '$lib/schema/transactions';
+import { db } from '$lib/server/db';
+import type { ImportOptions, ImportResult, ImportRow } from '$lib/types/import';
+import { and, eq, isNull } from 'drizzle-orm';
+import type { z } from 'zod/v4';
+import { CategoryMatcher } from './matchers/category-matcher';
+import { PayeeMatcher } from './matchers/payee-matcher';
+import { TransactionValidator } from './validators/transaction-validator';
 
 export interface ImportProgress {
   stage: 'validating' | 'matching' | 'creating' | 'complete';
@@ -53,7 +53,8 @@ export class ImportOrchestrator {
     selectedEntities?: {
       payees: string[];
       categories: string[];
-    }
+    },
+    scheduleMatches?: Array<{ rowIndex: number; scheduleId: number }>
   ): Promise<ImportResult> {
 
     const result: ImportResult = {
@@ -120,6 +121,10 @@ export class ImportOrchestrator {
       // Stage 3: Transaction Creation
       for (const row of rowsToImport) {
         try {
+          // Check if this row has a schedule match
+          const scheduleMatch = scheduleMatches?.find(m => m.rowIndex === row.rowIndex);
+          const scheduleId = scheduleMatch?.scheduleId;
+
           const transaction = await this.createTransaction(
             accountId,
             row,
@@ -127,7 +132,8 @@ export class ImportOrchestrator {
             existingCategories,
             options,
             selectedEntities,
-            result.entitiesCreated
+            result.entitiesCreated,
+            scheduleId
           );
 
           if (transaction) {
@@ -179,7 +185,8 @@ export class ImportOrchestrator {
     entitiesCreated?: {
       payees: number;
       categories: number;
-    }
+    },
+    scheduleId?: number
   ): Promise<z.infer<typeof selectTransactionSchema> | null> {
     const normalized = row.normalizedData;
 
@@ -306,8 +313,8 @@ export class ImportOrchestrator {
               console.error(`Failed to create category "${normalized['category']}":`, error);
               // If it failed due to unique constraint, check for soft-deleted category
               const existing = await db.select().from(categoryTable).where(eq(categoryTable.slug, slug)).limit(1);
-              if (existing && existing.length > 0) {
-                const category = existing[0];
+              const category = existing[0];
+              if (category) {
                 if (category.deletedAt) {
                   // Restore soft-deleted category
                   console.log(`Restoring soft-deleted category "${category.name}" (slug: ${slug})`);
@@ -385,8 +392,8 @@ export class ImportOrchestrator {
                   console.error(`Failed to create inferred category "${suggestedCategoryName}":`, error);
                   // Check for soft-deleted category
                   const existing = await db.select().from(categoryTable).where(eq(categoryTable.slug, slug)).limit(1);
-                  if (existing && existing.length > 0) {
-                    const category = existing[0];
+                  const category = existing[0];
+                  if (category) {
                     if (category.deletedAt) {
                       // Restore soft-deleted category
                       const [restored] = await db
@@ -436,6 +443,7 @@ export class ImportOrchestrator {
       categoryId,
       notes,
       status: normalized['status'] || 'cleared',
+      scheduleId: scheduleId || null, // Link to schedule if matched
     };
 
     // Add import metadata if this was an imported transaction

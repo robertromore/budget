@@ -4,23 +4,18 @@
  * Manages budget recommendations: create, read, update, delete, apply, dismiss
  */
 
-import { db } from "$lib/server/db";
 import {
   budgetRecommendations,
-  type BudgetRecommendation,
-  type NewBudgetRecommendation,
   type BudgetRecommendationWithRelations,
+  type RecommendationPriority,
   type RecommendationStatus,
   type RecommendationType,
-  type RecommendationPriority,
 } from "$lib/schema/recommendations";
-import { budgets } from "$lib/schema/budgets";
-import { categories } from "$lib/schema/categories";
-import { accounts } from "$lib/schema/accounts";
-import { and, eq, gte, lte, isNull, or, sql, desc } from "drizzle-orm";
+import { db } from "$lib/server/db";
 import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { getCurrentTimestamp } from "$lib/utils/dates";
+import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import type { BudgetRecommendationDraft } from "./budget-analysis-service";
 
 export interface RecommendationFilters {
@@ -105,7 +100,7 @@ export class RecommendationService {
         });
       }
 
-      // Step 1: Get recently dismissed/applied recommendations (last 30 days)
+      // Step 1: Get existing recommendations (pending, dismissed, or applied in last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
@@ -114,34 +109,74 @@ export class RecommendationService {
         .select()
         .from(budgetRecommendations)
         .where(
-          and(
-            or(
-              eq(budgetRecommendations.status, "dismissed"),
-              eq(budgetRecommendations.status, "applied")
-            ),
-            gte(budgetRecommendations.updatedAt, thirtyDaysAgoStr)
-          )
+          or(
+            // Pending recommendations (regardless of age)
+            eq(budgetRecommendations.status, "pending"),
+            // Dismissed/applied in last 30 days
+            and(
+              or(
+                eq(budgetRecommendations.status, "dismissed"),
+                eq(budgetRecommendations.status, "applied")
+              ),
+              gte(budgetRecommendations.updatedAt, thirtyDaysAgoStr)
+            )
+          )!
         );
 
-      // Step 2: Filter out drafts that match dismissed/applied recommendations
-      // Match by: type, categoryId, accountId, and suggestedType in metadata
+      logger.info("Found existing recommendations for duplicate check", {
+        total: existingRecommendations.length,
+        pending: existingRecommendations.filter((r) => r.status === "pending").length,
+        dismissed: existingRecommendations.filter((r) => r.status === "dismissed").length,
+        applied: existingRecommendations.filter((r) => r.status === "applied").length,
+        existingIds: existingRecommendations.map(r => r.id),
+      });
+
+      // Step 2: Filter out drafts that match existing recommendations
+      // Match by: type, categoryId, accountId, budgetId, and metadata details
       const filteredDrafts = drafts.filter((draft) => {
+        const draftMetadata = draft.metadata as Record<string, any> | null;
+        const draftSuggestedType = draftMetadata?.['suggestedType'];
+        const draftPayeeIds = draftMetadata?.['payeeIds'] as number[] | undefined;
+
         const isDuplicate = existingRecommendations.some((existing) => {
+          const existingMetadata = existing.metadata as Record<string, any> | null;
+          const existingSuggestedType = existingMetadata?.['suggestedType'];
+          const existingPayeeIds = existingMetadata?.['payeeIds'] as number[] | undefined;
+
           // Must match type
           if (existing.type !== draft.type) return false;
 
-          // Must match category (both null or both same ID)
-          if (existing.categoryId !== draft.categoryId) return false;
+          // Must match budget (both null/undefined or both same ID)
+          const existingBudgetId = existing.budgetId ?? null;
+          const draftBudgetId = draft.budgetId ?? null;
+          if (existingBudgetId !== draftBudgetId) return false;
 
-          // Must match account (both null or both same ID)
-          if (existing.accountId !== draft.accountId) return false;
+          // Must match category (both null/undefined or both same ID)
+          const existingCategoryId = existing.categoryId ?? null;
+          const draftCategoryId = draft.categoryId ?? null;
+          if (existingCategoryId !== draftCategoryId) return false;
+
+          // Must match account (both null/undefined or both same ID)
+          const existingAccountId = existing.accountId ?? null;
+          const draftAccountId = draft.accountId ?? null;
+          if (existingAccountId !== draftAccountId) return false;
+
+          // If both have suggestedType, they must match
+          if (existingSuggestedType && draftSuggestedType && existingSuggestedType !== draftSuggestedType) {
+            return false;
+          }
 
           // For scheduled expenses, also check payee
-          if (draft.metadata?.suggestedType === "scheduled-expense") {
-            const existingPayeeIds = existing.metadata?.["payeeIds"] as number[] | undefined;
-            const draftPayeeIds = draft.metadata?.payeeIds as number[] | undefined;
-
+          if (draftSuggestedType === "scheduled-expense") {
             if (existingPayeeIds?.[0] !== draftPayeeIds?.[0]) return false;
+          }
+
+          // For goal-based budgets, check goal details
+          if (draftSuggestedType === "goal-based") {
+            const existingGoal = existingMetadata?.['goalMetadata'] as Record<string, any> | undefined;
+            const draftGoal = draftMetadata?.['goalMetadata'] as Record<string, any> | undefined;
+
+            if (existingGoal?.['targetAmount'] !== draftGoal?.['targetAmount']) return false;
           }
 
           return true;
@@ -151,34 +186,79 @@ export class RecommendationService {
       });
 
       if (filteredDrafts.length < drafts.length) {
-        logger.info("Filtered out dismissed/applied recommendations", {
+        logger.info("Filtered out duplicate recommendations", {
           total: drafts.length,
           filtered: drafts.length - filteredDrafts.length,
           remaining: filteredDrafts.length,
         });
       }
 
-      // Step 3: Expire all old pending recommendations before creating new ones
-      await db
-        .update(budgetRecommendations)
-        .set({
-          status: "expired",
-          updatedAt: now,
-        })
-        .where(
-          and(
-            eq(budgetRecommendations.status, "pending"),
-            lte(budgetRecommendations.createdAt, sql`datetime('now', '-5 seconds')`)
-          )
-        );
-
-      logger.info("Expired old pending recommendations before creating new ones");
-
-      // Step 4: Create new recommendations (only ones that weren't dismissed/applied)
+      // Step 3: If NO new recommendations to create, just return existing pending ones
       if (filteredDrafts.length === 0) {
-        logger.info("No new recommendations to create after filtering");
+        logger.info("No new recommendations to create after filtering - keeping existing pending");
         return await this.listRecommendations({ status: "pending" });
       }
+
+      // Step 4: Expire old pending recommendations that DON'T match any incoming drafts
+      // We keep recommendations that match drafts (they were already filtered out)
+      const oldPendingRecommendations = existingRecommendations.filter(
+        (r) => r.status === "pending" && new Date(r.createdAt) < new Date(Date.now() - 5000)
+      );
+
+      // Find which old pending recommendations should be expired (don't match any draft)
+      const idsToExpire = oldPendingRecommendations
+        .filter((existing) => {
+          // Check if this recommendation matches ANY of the original drafts
+          const matchesDraft = drafts.some((draft) => {
+            if (existing.type !== draft.type) return false;
+
+            // Normalize null/undefined for comparison
+            if ((existing.budgetId ?? null) !== (draft.budgetId ?? null)) return false;
+            if ((existing.categoryId ?? null) !== (draft.categoryId ?? null)) return false;
+            if ((existing.accountId ?? null) !== (draft.accountId ?? null)) return false;
+
+            const existingMetadata = existing.metadata as Record<string, any> | null;
+            const draftMetadata = draft.metadata as Record<string, any> | null;
+            const existingSuggestedType = existingMetadata?.['suggestedType'];
+            const draftSuggestedType = draftMetadata?.['suggestedType'];
+
+            if (existingSuggestedType && draftSuggestedType && existingSuggestedType !== draftSuggestedType) {
+              return false;
+            }
+
+            if (draftSuggestedType === "scheduled-expense") {
+              const existingPayeeIds = existingMetadata?.['payeeIds'] as number[] | undefined;
+              const draftPayeeIds = draftMetadata?.['payeeIds'] as number[] | undefined;
+              if (existingPayeeIds?.[0] !== draftPayeeIds?.[0]) return false;
+            }
+
+            return true;
+          });
+
+          return !matchesDraft; // Expire if it doesn't match any draft
+        })
+        .map((r) => r.id);
+
+      if (idsToExpire.length > 0) {
+        await db
+          .update(budgetRecommendations)
+          .set({
+            status: "expired",
+            updatedAt: now,
+          })
+          .where(
+            and(
+              eq(budgetRecommendations.status, "pending"),
+              sql`${budgetRecommendations.id} IN (${idsToExpire.join(",")})`
+            )
+          );
+
+        logger.info("Expired stale pending recommendations that don't match current analysis", {
+          count: idsToExpire.length,
+        });
+      }
+
+      // Step 5: Create new recommendations (only ones that weren't duplicates)
 
       const values = filteredDrafts.map((data) => ({
         type: data.type,
@@ -201,7 +281,11 @@ export class RecommendationService {
         .values(values)
         .returning();
 
-      logger.info("Created new recommendations", { count: created.length });
+      logger.info("Created new recommendations", {
+        count: created.length,
+        newIds: created.map(r => r.id),
+        titles: created.map(r => r.title),
+      });
 
       return await this.listRecommendations({
         status: "pending",
@@ -496,5 +580,40 @@ export class RecommendationService {
       priority: "high",
       includeExpired: false,
     });
+  }
+
+  /**
+   * Reset recommendation status to 'pending' when the budget created from it is deleted
+   * This allows the recommendation to be reapplied
+   * IMPORTANT: Must be called BEFORE the budget is deleted to avoid cascade delete
+   */
+  async resetRecommendationForBudget(budgetId: number): Promise<void> {
+    const now = getCurrentTimestamp();
+
+    // Find any applied recommendations that reference this budget
+    // We need to do this BEFORE the budget is deleted
+    const recommendations = await db
+      .select()
+      .from(budgetRecommendations)
+      .where(
+        and(
+          eq(budgetRecommendations.budgetId, budgetId),
+          eq(budgetRecommendations.status, "applied")
+        )
+      );
+
+    // Reset each recommendation to pending status and clear the budget reference
+    // This prevents the cascade delete from removing the recommendation
+    for (const rec of recommendations) {
+      await db
+        .update(budgetRecommendations)
+        .set({
+          status: "pending",
+          appliedAt: null,
+          budgetId: null, // Clear the budget reference to prevent cascade delete
+          updatedAt: now,
+        })
+        .where(eq(budgetRecommendations.id, rec.id));
+    }
   }
 }

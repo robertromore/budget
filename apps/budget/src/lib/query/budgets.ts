@@ -2,29 +2,29 @@ import type {
   Budget,
   BudgetPeriodInstance,
   BudgetPeriodTemplate,
-  BudgetTransaction,
   BudgetTemplate,
+  BudgetTransaction,
 } from "$lib/schema/budgets";
-import type { BudgetWithRelations } from "$lib/server/domains/budgets";
 import type {
-  AllocationValidationResult,
-  CreateBudgetRequest,
-  EnsurePeriodInstanceOptions,
-  UpdateBudgetRequest,
-  GoalProgress,
-  ContributionPlan,
-} from "$lib/server/domains/budgets/services";
+  BudgetRecommendationWithRelations,
+  RecommendationPriority,
+  RecommendationStatus,
+  RecommendationType
+} from "$lib/schema/recommendations";
+import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+import type { BudgetRecommendationDraft } from "$lib/server/domains/budgets/budget-analysis-service";
 import type {
   PeriodAnalytics,
   PeriodComparison,
 } from "$lib/server/domains/budgets/period-manager";
-import type { BudgetRecommendationDraft } from "$lib/server/domains/budgets/budget-analysis-service";
 import type {
-  BudgetRecommendationWithRelations,
-  RecommendationType,
-  RecommendationPriority,
-  RecommendationStatus
-} from "$lib/schema/recommendations";
+  AllocationValidationResult,
+  ContributionPlan,
+  CreateBudgetRequest,
+  EnsurePeriodInstanceOptions,
+  GoalProgress,
+  UpdateBudgetRequest,
+} from "$lib/server/domains/budgets/services";
 import { BudgetState } from "$lib/states/budgets.svelte";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryPresets } from "./_client";
@@ -71,6 +71,8 @@ export const budgetKeys = createQueryKeys("budgets", {
   recommendationsCount: () => ["budgets", "recommendations", "count"] as const,
   recommendationsPendingCount: () => ["budgets", "recommendations", "count", "pending"] as const,
   analysisHistory: (params?: Record<string, unknown>) => ["budgets", "analysis", "history", params ?? "all"] as const,
+  automationSettings: () => ["budgets", "automation", "settings"] as const,
+  automationActivity: (filters?: Record<string, unknown>) => ["budgets", "automation", "activity", filters ?? "all"] as const,
 });
 
 function getState(): BudgetState | null {
@@ -730,11 +732,8 @@ export const createPeriodTemplate = defineMutation<
   onSuccess: (template) => {
     // Invalidate period template list
     cachePatterns.invalidatePrefix(budgetKeys.periodTemplateList(template.budgetId));
-    // Invalidate both numeric ID and slug-based budget detail queries
-    cachePatterns.invalidatePrefix(budgetKeys.detail(template.budgetId));
-    cachePatterns.invalidateMatching((key) =>
-      Array.isArray(key) && key[0] === 'budgets' && key[1] === 'detailBySlug'
-    );
+    // Invalidate period instances list
+    cachePatterns.invalidateDomain('budgets');
   },
   successMessage: "Period template created",
   errorMessage: "Failed to create period template",
@@ -767,6 +766,8 @@ export const deletePeriodTemplate = defineMutation<number, {success: boolean}>({
   onSuccess: (_, id) => {
     cachePatterns.removeQuery(budgetKeys.periodTemplateDetail(id));
     cachePatterns.invalidatePrefix(budgetKeys.periodTemplates());
+    // Invalidate all budget queries to refresh the page
+    cachePatterns.invalidateDomain('budgets');
   },
   successMessage: "Period template deleted",
   errorMessage: "Failed to delete period template",
@@ -975,8 +976,8 @@ export interface BudgetSuggestion {
   budgetId: number;
   budgetName: string;
   confidence: number;
-  reason: "payee_default" | "category_link" | "account_scope" | "historical_pattern" | "smart_fallback";
-  reasonText: string;
+  reason: string;
+  reasonText?: string;
 }
 
 export const getBudgetSuggestions = defineQuery<
@@ -1074,7 +1075,7 @@ export const restoreRecommendation = defineMutation<number, BudgetRecommendation
   errorMessage: "Failed to restore recommendation",
 });
 
-export const applyRecommendation = defineMutation<number, BudgetRecommendationWithRelations>({
+export const applyRecommendation = defineMutation<number, BudgetWithRelations>({
   mutationFn: (id) => trpc().budgetRoutes.applyRecommendation.mutate({id}),
   onSuccess: (_, id) => {
     cachePatterns.invalidatePrefix(budgetKeys.recommendations());
@@ -1107,3 +1108,101 @@ export const getRecommendationCounts = () =>
       ...queryPresets.static,
     },
   });
+
+// ==================== Budget Group Automation ====================
+
+export const getAutomationSettings = () =>
+  defineQuery<{
+    id: number;
+    autoCreateGroups: boolean;
+    autoAssignToGroups: boolean;
+    autoAdjustGroupLimits: boolean;
+    requireConfirmationThreshold: "high" | "medium" | "low";
+    enableSmartGrouping: boolean;
+    groupingStrategy: "category-based" | "account-based" | "spending-pattern" | "hybrid";
+    minSimilarityScore: number;
+    minGroupSize: number;
+    createdAt: string;
+    updatedAt: string;
+  }>({
+    queryKey: budgetKeys.automationSettings(),
+    queryFn: () => trpc().budgetRoutes.getAutomationSettings.query(),
+    options: {
+      ...queryPresets.static,
+    },
+  });
+
+export const updateAutomationSettings = defineMutation<
+  Partial<{
+    autoCreateGroups: boolean;
+    autoAssignToGroups: boolean;
+    autoAdjustGroupLimits: boolean;
+    requireConfirmationThreshold: "high" | "medium" | "low";
+    enableSmartGrouping: boolean;
+    groupingStrategy: "category-based" | "account-based" | "spending-pattern" | "hybrid";
+    minSimilarityScore: number;
+    minGroupSize: number;
+  }>,
+  any
+>({
+  mutationFn: (updates) => trpc().budgetRoutes.updateAutomationSettings.mutate(updates),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(budgetKeys.automationSettings());
+  },
+  successMessage: "Automation settings updated",
+  errorMessage: "Failed to update automation settings",
+});
+
+export const listAutomationActivity = (filters?: {
+  status?: "pending" | "success" | "failed" | "rolled_back";
+  actionType?: "create_group" | "assign_to_group" | "adjust_limit" | "merge_groups";
+  limit?: number;
+}) =>
+  defineQuery<
+    Array<{
+      id: number;
+      actionType: "create_group" | "assign_to_group" | "adjust_limit" | "merge_groups";
+      recommendationId: number | null;
+      groupId: number | null;
+      budgetIds: number[] | null;
+      status: "pending" | "success" | "failed" | "rolled_back";
+      errorMessage: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: string;
+      rolledBackAt: string | null;
+    }>
+  >({
+    queryKey: budgetKeys.automationActivity(filters),
+    queryFn: () => trpc().budgetRoutes.listAutomationActivity.query(filters ?? {}),
+    options: {
+      staleTime: 10 * 1000, // 10 seconds
+    },
+  });
+
+export const rollbackAutomation = defineMutation<number, { success: boolean }>({
+  mutationFn: (activityId) => trpc().budgetRoutes.rollbackAutomation.mutate({ activityId }),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(budgetKeys.automationActivity());
+    cachePatterns.invalidatePrefix(budgetKeys.lists()); // Budgets/groups may have changed
+    cachePatterns.invalidatePrefix(budgetKeys.groups());
+  },
+  successMessage: "Automation rolled back successfully",
+  errorMessage: "Failed to rollback automation",
+});
+
+export const autoApplyGroupRecommendation = defineMutation<
+  number,
+  { success: boolean; activityId?: number }
+>({
+  mutationFn: (recommendationId) =>
+    trpc().budgetRoutes.autoApplyGroupRecommendation.mutate({ recommendationId }),
+  onSuccess: (_, recommendationId) => {
+    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
+    cachePatterns.invalidatePrefix(budgetKeys.recommendationDetail(recommendationId));
+    cachePatterns.invalidatePrefix(budgetKeys.automationActivity());
+    cachePatterns.invalidatePrefix(budgetKeys.groups());
+    cachePatterns.invalidatePrefix(budgetKeys.lists());
+  },
+  successMessage: "Group recommendation applied",
+  errorMessage: "Failed to apply group recommendation",
+});

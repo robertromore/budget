@@ -2,6 +2,7 @@ import { categories, transactions } from "$lib/schema";
 import { budgets } from "$lib/schema/budgets";
 import { envelopeAllocations } from "$lib/schema/budgets/envelope-allocations";
 import type { Category, CategoryType, IncomeReliability, NewCategory, SpendingPriority, TaxCategory } from "$lib/schema/categories";
+import { categoryGroupMemberships, categoryGroups } from "$lib/schema/category-groups";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { NotFoundError } from "$lib/server/shared/types/errors";
@@ -60,6 +61,13 @@ export interface CategoryWithBudgets extends Category {
 
 export interface CategoryWithChildren extends Category {
   children: Category[];
+}
+
+export interface CategoryWithGroup extends Category {
+  groupId: number | null;
+  groupName: string | null;
+  groupColor: string | null;
+  groupIcon: string | null;
 }
 
 /**
@@ -517,5 +525,82 @@ export class CategoryRepository extends BaseRepository<
     }
 
     return descendantIds;
+  }
+
+  /**
+   * Find all categories with their assigned group information
+   */
+  async findAllWithGroups(): Promise<CategoryWithGroup[]> {
+    const results = await db
+      .select({
+        // Category fields
+        id: categories.id,
+        slug: categories.slug,
+        name: categories.name,
+        notes: categories.notes,
+        parentId: categories.parentId,
+        categoryType: categories.categoryType,
+        categoryIcon: categories.categoryIcon,
+        categoryColor: categories.categoryColor,
+        isActive: categories.isActive,
+        displayOrder: categories.displayOrder,
+        isTaxDeductible: categories.isTaxDeductible,
+        taxCategory: categories.taxCategory,
+        deductiblePercentage: categories.deductiblePercentage,
+        isSeasonal: categories.isSeasonal,
+        seasonalMonths: categories.seasonalMonths,
+        expectedMonthlyMin: categories.expectedMonthlyMin,
+        expectedMonthlyMax: categories.expectedMonthlyMax,
+        spendingPriority: categories.spendingPriority,
+        incomeReliability: categories.incomeReliability,
+        createdAt: categories.createdAt,
+        updatedAt: categories.updatedAt,
+        deletedAt: categories.deletedAt,
+        // Group fields
+        groupId: categoryGroups.id,
+        groupName: categoryGroups.name,
+        groupColor: categoryGroups.groupColor,
+        groupIcon: categoryGroups.groupIcon,
+      })
+      .from(categories)
+      .leftJoin(
+        categoryGroupMemberships,
+        eq(categories.id, categoryGroupMemberships.categoryId)
+      )
+      .leftJoin(
+        categoryGroups,
+        eq(categoryGroupMemberships.categoryGroupId, categoryGroups.id)
+      )
+      .where(isNull(categories.deletedAt))
+      .orderBy(categories.name);
+
+    return results.map(row => ({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      notes: row.notes,
+      parentId: row.parentId,
+      categoryType: row.categoryType,
+      categoryIcon: row.categoryIcon,
+      categoryColor: row.categoryColor,
+      isActive: row.isActive,
+      displayOrder: row.displayOrder,
+      isTaxDeductible: row.isTaxDeductible,
+      taxCategory: row.taxCategory,
+      deductiblePercentage: row.deductiblePercentage,
+      isSeasonal: row.isSeasonal,
+      seasonalMonths: row.seasonalMonths,
+      expectedMonthlyMin: row.expectedMonthlyMin,
+      expectedMonthlyMax: row.expectedMonthlyMax,
+      spendingPriority: row.spendingPriority,
+      incomeReliability: row.incomeReliability,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      deletedAt: row.deletedAt,
+      groupId: row.groupId,
+      groupName: row.groupName,
+      groupColor: row.groupColor,
+      groupIcon: row.groupIcon,
+    }));
   }
 }

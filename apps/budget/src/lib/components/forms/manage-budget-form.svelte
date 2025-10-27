@@ -449,9 +449,9 @@ const scheduleAccessors = createTransformAccessors(
               {/each}
             </Select.Content>
           </Select.Root>
-          <Form.Description>
+          <p class="text-sm text-muted-foreground">
             Link this budget to a recurring schedule for automatic tracking
-          </Form.Description>
+          </p>
           {#if selectedSchedule}
             <div class="p-3 bg-muted rounded-md">
               <p class="text-sm font-medium">{selectedSchedule.name}</p>

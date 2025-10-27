@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { schedules } from '$lib/schema';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -13,6 +13,7 @@ export const load: PageServerLoad = async ({ params }) => {
       payee: true,
       scheduleDate: true,
       transactions: {
+        where: (transactions, { isNull }) => isNull(transactions.deletedAt),
         with: {
           payee: true,
           category: true,

@@ -20,21 +20,23 @@ export const transactionFactory = async (
     const payees: Payee[] = [];
     const categories: Category[] = [];
 
-    let new_payee: Payee;
-    let new_category: Category;
+    let new_payee: Payee | undefined;
+    let new_category: Category | undefined;
     if (
       payees.length === 0 ||
       categories.length === 0 ||
       faker.helpers.rangeToNumber({min: 1, max: 100}) % 2 === 0
     ) {
       new_payee = await payeeFactory(1).then((payees) => payees[0]);
-      payees.push(new_payee);
+      if (new_payee) payees.push(new_payee);
       new_category = await categoryFactory(1).then((categories) => categories[0]);
-      categories.push(new_category);
+      if (new_category) categories.push(new_category);
     } else {
       new_payee = faker.helpers.arrayElement(payees);
       new_category = faker.helpers.arrayElement(categories);
     }
+
+    if (!new_payee || !new_category) continue;
 
     const new_transaction = await db
       .insert(transactions)
@@ -55,7 +57,10 @@ export const transactionFactory = async (
         ).toString(),
       })
       .returning();
-    transactions_collection.push(new_transaction[0]);
+    const transaction = new_transaction[0];
+    if (transaction) {
+      transactions_collection.push(transaction);
+    }
   }
   return transactions_collection;
 };

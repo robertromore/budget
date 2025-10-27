@@ -1,11 +1,19 @@
+import { payees as payeeTable } from '$lib/schema/payees';
+import { schedules as scheduleTable } from '$lib/schema/schedules';
 import { transactions as transactionTable } from '$lib/schema/transactions';
 import { db } from '$lib/server/db';
 import { CSVProcessor } from '$lib/server/import/file-processors/csv-processor';
 import { ExcelProcessor } from '$lib/server/import/file-processors/excel-processor';
+import { IIFProcessor } from '$lib/server/import/file-processors/iif-processor';
 import { OFXProcessor } from '$lib/server/import/file-processors/ofx-processor';
+import { QBCSVProcessor } from '$lib/server/import/file-processors/qb-csv-processor';
+import { QBOProcessor } from '$lib/server/import/file-processors/qbo-processor';
 import { QIFProcessor } from '$lib/server/import/file-processors/qif-processor';
+import { PayeeMatcher } from '$lib/server/import/matchers/payee-matcher';
+import { ScheduleMatcher } from '$lib/server/import/matchers/schedule-matcher';
+import { isQuickBooksCSV } from '$lib/server/import/utils';
 import { TransactionValidator } from '$lib/server/import/validators/transaction-validator';
-import type { ParseResult } from '$lib/types/import';
+import type { ParseResult, ScheduleMatch } from '$lib/types/import';
 import { json } from '@sveltejs/kit';
 import { and, eq, isNull } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
@@ -21,13 +29,20 @@ export const POST: RequestHandler = async ({ request, url }) => {
       return json({ error: 'No file provided' }, { status: 400 });
     }
 
+    // For CSV and QBO files, read content first to detect the actual format
+    let fileContent: string | undefined;
+    const extension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+    if (extension === '.csv' || extension === '.txt' || extension === '.qbo') {
+      fileContent = await file.text();
+    }
+
     // Determine file type and get appropriate processor
-    const processor = getFileProcessor(file.name);
+    const processor = await getFileProcessor(file.name, fileContent);
 
     if (!processor) {
       return json(
         {
-          error: 'Unsupported file type. Supported formats: .csv, .txt, .xlsx, .xls, .qif, .ofx, .qfx',
+          error: 'Unsupported file type. Supported formats: .csv, .txt, .xlsx, .xls, .qif, .ofx, .qfx, .iif, .qbo',
         },
         { status: 400 }
       );
@@ -40,7 +55,21 @@ export const POST: RequestHandler = async ({ request, url }) => {
     }
 
     // Parse file
-    const rawData = await processor.parseFile(file);
+    let rawData = await processor.parseFile(file);
+
+    // Sort by date (oldest first) - most bank exports are newest first
+    // This ensures transactions are imported in chronological order
+    rawData = rawData.sort((a, b) => {
+      const dateA = a.normalizedData['date'];
+      const dateB = b.normalizedData['date'];
+
+      if (!dateA || !dateB) return 0;
+
+      const timeA = typeof dateA === 'string' ? new Date(dateA).getTime() : dateA instanceof Date ? dateA.getTime() : 0;
+      const timeB = typeof dateB === 'string' ? new Date(dateB).getTime() : dateB instanceof Date ? dateB.getTime() : 0;
+
+      return timeA - timeB; // Ascending order (oldest first)
+    });
 
     // If accountId is provided, validate with duplicate checking
     let validatedData = rawData;
@@ -79,6 +108,108 @@ export const POST: RequestHandler = async ({ request, url }) => {
       ? Object.keys(validatedData[0]?.rawData || {})
       : [];
 
+    // Detect schedule matches if accountId is provided
+    let scheduleMatches: ScheduleMatch[] | undefined;
+    if (accountIdParam) {
+      const accountId = parseInt(accountIdParam);
+      console.log('[Schedule Matching] Account ID:', accountId);
+      if (!isNaN(accountId)) {
+        // Fetch existing schedules and payees for matching
+        const existingSchedules = await db
+          .select()
+          .from(scheduleTable)
+          .where(and(eq(scheduleTable.accountId, accountId), eq(scheduleTable.status, 'active')));
+
+        console.log('[Schedule Matching] Found schedules:', existingSchedules.length);
+
+        const existingPayees = await db
+          .select()
+          .from(payeeTable)
+          .where(isNull(payeeTable.deletedAt));
+
+        if (existingSchedules.length > 0) {
+          const scheduleMatcher = new ScheduleMatcher();
+          const payeeMatcher = new PayeeMatcher();
+          scheduleMatches = [];
+
+          // Check each transaction for schedule matches
+          validatedData.forEach((row, index) => {
+            const normalized = row.normalizedData;
+
+            if (!normalized['date'] || !normalized['amount']) {
+              return; // Skip rows without date or amount
+            }
+
+            // Normalize the payee name for better matching
+            // Transaction payee names are often raw (e.g., "TST*GATEWAY MARKET")
+            // Schedule payee names are clean (e.g., "Gateway Market")
+            const rawPayeeName = normalized['payee'];
+            let normalizedPayeeName = rawPayeeName;
+            if (normalizedPayeeName && typeof normalizedPayeeName === 'string') {
+              const { name } = payeeMatcher.normalizePayeeName(normalizedPayeeName);
+              if (name !== normalizedPayeeName) {
+                console.log(`[Schedule Matching] Normalized payee: "${normalizedPayeeName}" → "${name}"`);
+              }
+              normalizedPayeeName = name;
+            }
+
+            // Prepare matching criteria
+            const criteria = {
+              date: normalized['date'],
+              amount: Math.abs(normalized['amount'] as number),
+              payeeName: normalizedPayeeName,
+              categoryId: normalized['categoryId'],
+              accountId,
+            };
+
+            console.log(`[Schedule Matching] Checking row ${index}:`, {
+              payee: criteria.payeeName,
+              amount: criteria.amount,
+              date: criteria.date,
+            });
+
+            // Find the best match (only high or exact confidence)
+            const match = scheduleMatcher.findBestMatch(criteria, existingSchedules as any, existingPayees as any);
+
+            console.log(`[Schedule Matching] Row ${index} match result:`, {
+              hasSchedule: !!match.schedule,
+              scheduleName: match.schedule?.name,
+              confidence: match.confidence,
+              score: match.score,
+              matchedOn: match.matchedOn,
+              reasons: match.reasons,
+            });
+
+            if (match.schedule && match.confidence !== 'none') {
+              scheduleMatches!.push({
+                rowIndex: row.rowIndex, // Use row.rowIndex instead of loop index to preserve original position
+                scheduleId: match.schedule.id,
+                scheduleName: match.schedule.name,
+                confidence: match.confidence,
+                score: match.score,
+                matchedOn: match.matchedOn,
+                reasons: match.reasons,
+                selected: match.confidence !== 'low', // Auto-select non-low confidence matches
+                transactionData: {
+                  date: normalized['date'],
+                  amount: normalized['amount'] as number,
+                  payee: normalized['payee'],
+                },
+                scheduleData: {
+                  name: match.schedule.name,
+                  amount: match.schedule.amount,
+                  amount_type: match.schedule.amount_type,
+                  recurring: match.schedule.recurring ?? false,
+                },
+              });
+            }
+          });
+
+          console.log(`[Schedule Matching] Found ${scheduleMatches.length} schedule matches`);
+        }
+      }
+    }
+
     // Create parse result
     const result: ParseResult = {
       fileName: file.name,
@@ -88,6 +219,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
       columns,
       rows: validatedData,
       parseErrors: [],
+      ...(scheduleMatches ? { scheduleMatches } : {}),
     };
 
     return json(result);
@@ -102,12 +234,19 @@ export const POST: RequestHandler = async ({ request, url }) => {
   }
 };
 
-function getFileProcessor(fileName: string) {
+async function getFileProcessor(fileName: string, fileContent?: string) {
   const extension = `.${fileName.split('.').pop()?.toLowerCase()}`;
 
   switch (extension) {
     case '.csv':
     case '.txt':
+      if (fileContent) {
+        const lines = fileContent.split('\n');
+        const headers = lines[0]?.split(',') || [];
+        if (isQuickBooksCSV(headers)) {
+          return new QBCSVProcessor();
+        }
+      }
       return new CSVProcessor();
     case '.xlsx':
     case '.xls':
@@ -117,6 +256,20 @@ function getFileProcessor(fileName: string) {
     case '.ofx':
     case '.qfx':
       return new OFXProcessor();
+    case '.iif':
+      return new IIFProcessor();
+    case '.qbo':
+      // QBO files can actually be OFX files with a .qbo extension
+      // Check the content to determine the actual format
+      if (fileContent) {
+        const trimmed = fileContent.trim();
+        // Check if it starts with OFX header or contains <OFX> tag
+        if (trimmed.startsWith('OFXHEADER:') || trimmed.includes('<OFX>')) {
+          console.log('[File Detection] .qbo file is actually OFX format, using OFXProcessor');
+          return new OFXProcessor();
+        }
+      }
+      return new QBOProcessor();
     default:
       return null;
   }

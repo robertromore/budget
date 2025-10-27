@@ -27,7 +27,6 @@ interface DateGenerationConfig {
  */
 const DEFAULT_STATE: RepeatingDate = {
   start: currentDate,
-  end: undefined,
   end_type: null,
   frequency: "daily",
   interval: 1,
@@ -41,7 +40,7 @@ const DEFAULT_STATE: RepeatingDate = {
   specific_dates: [],
   on: false,
   on_type: "day",
-};
+} as RepeatingDate;
 
 /**
  * Publicly exported option lists – used by the UI.
@@ -701,9 +700,10 @@ export default class RepeatingDateInput {
 
     // "on the nth weekday"
     if (this.value.on && this.value.on_type === "the" && weeks?.length && weeksDays?.length) {
+      const firstWeek = weeks[0];
       const weekPart =
-        weeks.length === 1
-          ? (weekOptions[weeks[0] - 1]?.label ?? "")
+        weeks.length === 1 && firstWeek !== undefined
+          ? (weekOptions[firstWeek - 1]?.label ?? "")
           : listFmt.format(weeks.map((w) => weekOptions[w - 1]?.label ?? ""));
 
       const dayPart = listFmt.format((weeksDays || []).map((d) => weekdayOptions[d]?.label ?? ""));
@@ -807,7 +807,11 @@ export default class RepeatingDateInput {
     this.value.start = value;
   }
   set end(value: DateValue | null | undefined) {
-    this.value.end = value ?? undefined;
+    if (value) {
+      this.value.end = value;
+    } else {
+      delete (this.value as any).end;
+    }
   }
   set end_type(value: "limit" | "until" | null) {
     this.value.end_type = value;

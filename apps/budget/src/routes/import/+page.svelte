@@ -9,14 +9,18 @@ import {Checkbox} from '$lib/components/ui/checkbox';
 import * as Card from '$lib/components/ui/card';
 import * as Empty from '$lib/components/ui/empty';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import * as Badge from '$lib/components/ui/badge';
+import {Slider} from '$lib/components/ui/slider';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Circle from '@lucide/svelte/icons/circle';
 import Wallet from '@lucide/svelte/icons/wallet';
+import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 import type {
   ParseResult,
   ImportResult,
   ImportPreviewData,
   ColumnMapping,
+  ScheduleMatch,
 } from '$lib/types/import';
 import type {Account} from '$lib/schema/accounts';
 import {useQueryClient} from '@tanstack/svelte-query';
@@ -41,7 +45,7 @@ const accounts = $derived(data.accounts);
 const importableAccounts = $derived(accounts.filter((a: Account) => a.accountType !== 'hsa'));
 const hasImportableAccounts = $derived(importableAccounts.length > 0);
 
-type Step = 'upload' | 'map-columns' | 'preview' | 'review-entities' | 'complete';
+type Step = 'upload' | 'map-columns' | 'preview' | 'review-schedules' | 'review-entities' | 'complete';
 
 let currentStep = $state<Step>('upload');
 let selectedFile = $state<File | null>(null);
@@ -54,6 +58,44 @@ let importResult = $state<ImportResult | null>(null);
 let isProcessing = $state(false);
 let error = $state<string | null>(null);
 let selectedRows = $state<Set<number>>(new Set());
+let scheduleMatches = $state<ScheduleMatch[]>([]);
+let scheduleMatchThreshold = $state(0.75); // Default to 75% minimum match (array for Slider component)
+
+// Filter schedule matches based on threshold
+const filteredScheduleMatches = $derived(
+  scheduleMatches.filter((match) => match.score >= scheduleMatchThreshold)
+);
+
+// Group schedule matches by schedule ID
+const groupedScheduleMatches = $derived.by(() => {
+  const grouped = new Map<number, { scheduleName: string; matches: ScheduleMatch[] }>();
+
+  filteredScheduleMatches.forEach((match) => {
+    if (!grouped.has(match.scheduleId)) {
+      grouped.set(match.scheduleId, {
+        scheduleName: match.scheduleName,
+        matches: [],
+      });
+    }
+    grouped.get(match.scheduleId)!.matches.push(match);
+  });
+
+  // Convert to array and sort by average match score (highest first)
+  return Array.from(grouped.entries())
+    .map(([scheduleId, data]) => {
+      const sortedMatches = data.matches.sort((a, b) =>
+        new Date(a.transactionData.date).getTime() - new Date(b.transactionData.date).getTime()
+      );
+      const avgScore = sortedMatches.reduce((sum, m) => sum + m.score, 0) / sortedMatches.length;
+      return {
+        scheduleId,
+        scheduleName: data.scheduleName,
+        matches: sortedMatches,
+        avgScore,
+      };
+    })
+    .sort((a, b) => b.avgScore - a.avgScore); // Sort by average score descending
+});
 
 // Entity overrides - track user-selected payee/category/description for each row
 let entityOverrides = $state<Record<number, {payeeId?: number | null; payeeName?: string | null; categoryId?: number | null; categoryName?: string | null; description?: string | null}>>({});
@@ -343,6 +385,50 @@ function cancelProcessorFilter() {
   processorFilterDialog.open = false;
 }
 
+// Handler for schedule match toggle
+function handleScheduleMatchToggle(rowIndex: number, selected: boolean) {
+  scheduleMatches = scheduleMatches.map(match =>
+    match.rowIndex === rowIndex
+      ? { ...match, selected }
+      : match
+  );
+}
+
+// Select all schedule matches
+function selectAllScheduleMatches() {
+  scheduleMatches = scheduleMatches.map(match => ({ ...match, selected: true }));
+}
+
+// Deselect all schedule matches
+function deselectAllScheduleMatches() {
+  scheduleMatches = scheduleMatches.map(match => ({ ...match, selected: false }));
+}
+
+// Get confidence badge color
+function getConfidenceBadgeVariant(confidence: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  switch (confidence) {
+    case 'exact': return 'default';
+    case 'high': return 'secondary';
+    default: return 'outline';
+  }
+}
+
+function getScoreBorderColor(score: number): string {
+  if (score >= 0.9) return 'border-l-4 border-l-green-500';
+  if (score >= 0.8) return 'border-l-4 border-l-green-400';
+  if (score >= 0.75) return 'border-l-4 border-l-yellow-500';
+  if (score >= 0.65) return 'border-l-4 border-l-orange-500';
+  return 'border-l-4 border-l-red-500';
+}
+
+function getScoreAllBorderColor(score: number): string {
+  if (score >= 0.9) return 'border-green-500 border-l-4';
+  if (score >= 0.8) return 'border-green-400 border-l-4';
+  if (score >= 0.75) return 'border-yellow-500 border-l-4';
+  if (score >= 0.65) return 'border-orange-500 border-l-4';
+  return 'border-red-500 border-l-4';
+}
+
 // Handler for category updates from the table
 function handleCategoryUpdate(rowIndex: number, categoryId: number | null, categoryName: string | null) {
   // Create a new object to trigger reactivity
@@ -605,8 +691,11 @@ async function handleFileSelected(file: File) {
 
     // Add accountId and reverseAmountSigns as query parameters for duplicate checking
     const url = new URL('/api/import/upload', window.location.origin);
+    console.log('[Client] File upload - selectedAccountId:', selectedAccountId);
+    console.log('[Client] Selected account:', importableAccounts.find((a: Account) => a.id.toString() === selectedAccountId));
     if (selectedAccountId) {
       url.searchParams.set('accountId', selectedAccountId);
+      console.log('[Client] Upload URL:', url.toString());
     }
     // Pass reverseAmountSigns so duplicate detection can compare final amounts
     url.searchParams.set('reverseAmountSigns', reverseAmountSigns.toString());
@@ -621,6 +710,11 @@ async function handleFileSelected(file: File) {
     if (response.ok) {
       parseResults = result;
       rawCSVData = result.rows.map((row: any) => row.rawData);
+
+      // Store schedule matches if detected
+      if (result.scheduleMatches) {
+        scheduleMatches = result.scheduleMatches;
+      }
 
       // Apply smart categorization to rows without explicit categories
       await applySmartCategorization();
@@ -686,6 +780,12 @@ async function handleColumnMappingComplete(mapping: ColumnMapping) {
       parseResults = result;
       // Update raw data with remapped results
       rawCSVData = result.rows.map((row: any) => row.rawData);
+
+      // Store schedule matches if detected
+      if (result.scheduleMatches) {
+        scheduleMatches = result.scheduleMatches;
+      }
+
       currentStep = 'preview';
     } else {
       error = result.error || 'Failed to remap CSV with custom column mapping';
@@ -694,6 +794,18 @@ async function handleColumnMappingComplete(mapping: ColumnMapping) {
     error = err instanceof Error ? err.message : 'Failed to remap CSV';
   } finally {
     isProcessing = false;
+  }
+}
+
+function proceedToScheduleReview() {
+  if (!parseResults) return;
+
+  // If there are schedule matches, go to schedule review
+  if (scheduleMatches.length > 0) {
+    currentStep = 'review-schedules';
+  } else {
+    // Otherwise skip directly to entity review
+    proceedToEntityReview();
   }
 }
 
@@ -820,6 +932,7 @@ async function processImport() {
         payees: selectedPayeeNames,
         categories: selectedCategoryNames,
       },
+      scheduleMatches: scheduleMatches.filter(m => m.selected),
       options: {
         allowPartialImport,
         createMissingEntities: createMissingPayees || createMissingCategories,
@@ -867,6 +980,7 @@ function startNewImport() {
   importResult = null;
   selectedAccountId = '';
   selectedRows = new Set();
+  scheduleMatches = [];
   error = null;
 }
 
@@ -874,16 +988,23 @@ const steps = [
   {id: 'upload', label: 'Upload File'},
   {id: 'map-columns', label: 'Map Columns'},
   {id: 'preview', label: 'Preview Data'},
+  {id: 'review-schedules', label: 'Review Schedules'},
   {id: 'review-entities', label: 'Review Entities'},
   {id: 'complete', label: 'Complete'},
 ];
 
 const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
+
+// Scroll to top when step changes
+$effect(() => {
+  currentStep;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 </script>
 
 <svelte:head>
   <title>Import Transactions - Budget App</title>
-  <meta name="description" content="Import financial data from CSV, Excel, QIF, or OFX files" />
+  <meta name="description" content="Import financial data from CSV, Excel, QIF, OFX, IIF, or QBO files" />
 </svelte:head>
 
 <div class="container mx-auto py-8">
@@ -973,7 +1094,7 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
         <div>
           <h1 class="text-3xl font-bold">Import Financial Data</h1>
           <p class="text-muted-foreground mt-2">
-            Upload your financial data from CSV, Excel (.xlsx, .xls), QIF, or OFX/QFX files
+            Upload your financial data from CSV, Excel (.xlsx, .xls), QIF, OFX/QFX, IIF, or QBO files
           </p>
         </div>
 
@@ -1009,7 +1130,7 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
 
         <!-- File Upload -->
         <FileUploadDropzone
-          acceptedFormats={['.csv', '.txt', '.xlsx', '.xls', '.qif', '.ofx', '.qfx']}
+          acceptedFormats={['.csv', '.txt', '.xlsx', '.xls', '.qif', '.ofx', '.qfx', '.iif', '.qbo']}
           maxFileSize={10 * 1024 * 1024}
           onFileSelected={handleFileSelected}
           onFileRejected={handleFileRejected}
@@ -1118,12 +1239,12 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
         </div>
 
         <!-- Right Content - Stats and Preview -->
-        <div class="flex-1 min-w-0 pr-8">
+        <div class="flex-1 min-w-0 pr-8 space-y-6">
           {#if previewData}
             <ImportDataTable
               data={previewData.rows}
               fileName={previewData.fileName}
-              onNext={proceedToEntityReview}
+              onNext={proceedToScheduleReview}
               onBack={goBackToUpload}
               bind:selectedRows
               onPayeeUpdate={handlePayeeUpdateWithSimilar}
@@ -1151,6 +1272,155 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
           </Card.Root>
         </div>
       {/if}
+    {:else if currentStep === 'review-schedules'}
+      <div class="space-y-6">
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <CalendarClock class="h-8 w-8 text-primary" />
+            <h2 class="text-2xl font-bold">Review Schedule Matches</h2>
+          </div>
+          <p class="text-muted-foreground mt-2">
+            We found {scheduleMatches.length} transaction{scheduleMatches.length !== 1 ? 's' : ''} that match existing schedules. Select which ones you'd like to link.
+          </p>
+        </div>
+
+        <!-- Match Threshold Slider -->
+        <Card.Root>
+          <Card.Header class="pb-4">
+            <Card.Title class="text-base">Match Threshold</Card.Title>
+            <Card.Description class="text-sm">
+              Adjust to show matches above {Math.round(scheduleMatchThreshold * 100)}% confidence
+              · Showing {filteredScheduleMatches.length} of {scheduleMatches.length} matches
+            </Card.Description>
+          </Card.Header>
+          <Card.Content>
+            <div class="space-y-4">
+              <Slider
+                type="single"
+                bind:value={scheduleMatchThreshold}
+                min={0.2}
+                max={1.0}
+                step={0.05}
+                class="w-full"
+              />
+              <div class="flex justify-between text-xs text-muted-foreground">
+                <span>20%</span>
+                <span>40%</span>
+                <span>60%</span>
+                <span>80%</span>
+                <span>100%</span>
+              </div>
+            </div>
+          </Card.Content>
+        </Card.Root>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {#each groupedScheduleMatches as group (group.scheduleId)}
+            <Card.Root class="flex flex-col {getScoreBorderColor(group.avgScore)}">
+              <Card.Header class="pb-3">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-start gap-2 min-w-0">
+                    <CalendarClock class="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div class="min-w-0">
+                      <Card.Title class="text-base truncate">{group.scheduleName}</Card.Title>
+                      <Card.Description class="text-xs">
+                        {group.matches.length} match{group.matches.length !== 1 ? 'es' : ''} · {Math.round(group.avgScore * 100)}% avg
+                      </Card.Description>
+                    </div>
+                  </div>
+                  <div class="flex flex-col gap-1 flex-shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      class="h-7 px-2 text-xs"
+                      onclick={() => {
+                        group.matches.forEach(match => {
+                          match.selected = true;
+                        });
+                        scheduleMatches = [...scheduleMatches];
+                      }}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      class="h-7 px-2 text-xs"
+                      onclick={() => {
+                        group.matches.forEach(match => {
+                          match.selected = false;
+                        });
+                        scheduleMatches = [...scheduleMatches];
+                      }}
+                    >
+                      None
+                    </Button>
+                  </div>
+                </div>
+              </Card.Header>
+              <Card.Content>
+                <div class="space-y-3">
+                  {#each group.matches as match (match.rowIndex)}
+                    <div
+                      class="flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition-colors {getScoreAllBorderColor(match.score)}
+                             {match.selected ? 'bg-primary/5' : 'bg-card hover:bg-accent/50'}"
+                      onclick={() => handleScheduleMatchToggle(match.rowIndex, !match.selected)}
+                      onkeydown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleScheduleMatchToggle(match.rowIndex, !match.selected);
+                        }
+                      }}
+                      role="button"
+                      tabindex="0"
+                      aria-pressed={match.selected}
+                    >
+                      <Checkbox
+                        checked={match.selected}
+                        onCheckedChange={(checked) => handleScheduleMatchToggle(match.rowIndex, checked === true)}
+                        class="mt-1"
+                      />
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                          <div class="text-sm font-medium truncate">
+                            {new Date(match.transactionData.date).toLocaleDateString()}
+                          </div>
+                          <Badge.Badge variant={getConfidenceBadgeVariant(match.confidence)} class="flex-shrink-0">
+                            {Math.round(match.score * 100)}%
+                          </Badge.Badge>
+                        </div>
+                        <div class="space-y-1">
+                          <div class="flex items-center justify-between text-sm">
+                            <span class="text-muted-foreground text-xs">Transaction</span>
+                            <span class="font-mono font-medium">${Math.abs(match.transactionData.amount).toFixed(2)}</span>
+                          </div>
+                          <div class="flex items-center justify-between text-sm">
+                            <span class="text-muted-foreground text-xs">Schedule</span>
+                            <span class="font-mono">${Math.abs(match.scheduleData.amount).toFixed(2)}</span>
+                          </div>
+                        </div>
+                        {#if match.transactionData.payee}
+                          <div class="text-muted-foreground text-xs mt-2 truncate">{match.transactionData.payee}</div>
+                        {/if}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </Card.Content>
+            </Card.Root>
+          {/each}
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-between">
+          <Button variant="outline" onclick={goBackToPreview}>
+            Back
+          </Button>
+          <Button onclick={proceedToEntityReview}>
+            Continue to Entity Review
+          </Button>
+        </div>
+      </div>
     {:else if currentStep === 'review-entities' && entityPreview}
       <div class="space-y-6">
         <div>

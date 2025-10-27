@@ -154,19 +154,17 @@ $effect(() => {
         </Button>
       {/snippet}
     </Popover.Trigger>
-    <Popover.Content class="p-0 overflow-hidden" align="start">
+    <Popover.Content class="p-0 overflow-hidden relative" align="start">
       {#if management?.enable}
         <!-- Entity List with Management Actions -->
         <Command.Root shouldFilter={false}>
-          <div class="flex">
-            <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} />
-            <Button
-              size="icon"
-              class="rounded-none border-l-0 border-b shadow-none"
-              onclick={addNew}>
-              <Plus />
-            </Button>
-          </div>
+          <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} class="pr-12" />
+          <Button
+            size="icon"
+            class="absolute top-0 right-0 rounded-none rounded-tr-md"
+            onclick={addNew}>
+            <Plus />
+          </Button>
           <Command.List class="max-h-[300px] overflow-auto">
             <Command.Empty>No results found.</Command.Empty>
             <Command.Group>

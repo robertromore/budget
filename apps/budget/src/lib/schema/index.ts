@@ -1,28 +1,29 @@
 export * from "./accounts";
-export * from "./categories";
+export * from "./budget-automation-settings";
 export * from "./budgets";
-// export * from './category_groups';
-export * from "./payees";
+export * from "./categories";
+export * from "./category-groups";
+export * from "./detected-patterns";
 export * from "./payee-category-corrections";
-export * from "./schedules";
+export * from "./payees";
+export * from "./recommendations";
 export * from "./schedule-dates";
+export * from "./schedules";
 export * from "./transactions";
 export * from "./views";
-export * from "./detected-patterns";
-export * from "./recommendations";
 
 // HSA-related schemas
-export * from "./medical-expenses";
 export * from "./expense-receipts";
 export * from "./hsa-claims";
+export * from "./medical-expenses";
 
 // Import table definitions for HSA relations
 import { relations } from "drizzle-orm";
-import { medicalExpenses } from "./medical-expenses";
+import { accounts } from "./accounts";
 import { expenseReceipts } from "./expense-receipts";
 import { hsaClaims } from "./hsa-claims";
+import { medicalExpenses } from "./medical-expenses";
 import { transactions } from "./transactions";
-import { accounts } from "./accounts";
 
 // Define HSA-related relations here to avoid circular dependencies
 export const medicalExpensesRelations = relations(medicalExpenses, ({ one, many }) => ({

@@ -17,6 +17,7 @@ export interface PeriodCreationOptions {
   autoCreateEnvelopes?: boolean;
   copyPreviousPeriodSettings?: boolean;
   enableRollover?: boolean;
+  allocatedAmount?: number;
 }
 
 export interface PeriodBoundaryConfig {
@@ -70,6 +71,7 @@ export class PeriodManager {
       autoCreateEnvelopes = true,
       copyPreviousPeriodSettings = true,
       enableRollover = true,
+      allocatedAmount,
     } = options;
 
     const templates = await this.getBudgetTemplates(budgetId);
@@ -90,6 +92,11 @@ export class PeriodManager {
         );
 
         if (!existing) {
+          // Override allocated amount if provided in options
+          if (allocatedAmount !== undefined) {
+            periodData.allocatedAmount = allocatedAmount;
+          }
+
           const created = await this.createPeriodInstance(template, periodData, {
             autoCreateEnvelopes,
             copyPreviousPeriodSettings,

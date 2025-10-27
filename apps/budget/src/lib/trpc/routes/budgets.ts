@@ -1,15 +1,19 @@
 import {
   budgetEnforcementLevels,
+  budgetPeriodInstances,
   budgetScopes,
   budgetStatuses,
   budgetTypes,
   periodTemplateTypes,
 } from "$lib/schema/budgets";
-import {serviceFactory} from "$lib/server/shared/container/service-factory";
-import {publicProcedure, t} from "$lib/trpc";
-import {TRPCError} from "@trpc/server";
-import {z} from "zod";
-import {translateDomainError} from "$lib/trpc/shared/errors";
+import { db } from "$lib/server/db";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import { publicProcedure, t } from "$lib/trpc";
+import { translateDomainError } from "$lib/trpc/shared/errors";
+import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
 
 const budgetIdSchema = z.object({
   id: z.number().int().positive(),
@@ -191,7 +195,8 @@ const periodService = serviceFactory.getBudgetPeriodService();
 const transactionService = serviceFactory.getBudgetTransactionService();
 const periodManager = serviceFactory.getPeriodManager();
 const templateService = serviceFactory.getBudgetTemplateService();
-const intelligenceService = serviceFactory.getBudgetIntelligenceService();
+const intelligenceService = serviceFactory.getBudgetDetectionService();
+const automationService = serviceFactory.getBudgetGroupAutomationService();
 
 export const budgetRoutes = t.router({
   count: publicProcedure.query(async () => {
@@ -250,7 +255,7 @@ export const budgetRoutes = t.router({
     )
     .query(async ({input}) => {
       try {
-        return await intelligenceService.detectBudgetsForTransactions(input.transactions);
+        return await intelligenceService.detectBudgetsForTransactions(input.transactions as any);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -273,7 +278,7 @@ export const budgetRoutes = t.router({
   }),
   create: publicProcedure.input(createBudgetSchema).mutation(async ({input}) => {
     try {
-      return await budgetService.createBudget(input);
+      return await budgetService.createBudget(input as any);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -281,7 +286,7 @@ export const budgetRoutes = t.router({
   update: publicProcedure.input(updateBudgetSchema).mutation(async ({input}) => {
     try {
       const {id, ...updates} = input;
-      return await budgetService.updateBudget(id, updates);
+      return await budgetService.updateBudget(id, updates as any);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -330,12 +335,15 @@ export const budgetRoutes = t.router({
     }),
   ensurePeriodInstance: publicProcedure.input(ensurePeriodSchema).mutation(async ({input}) => {
     try {
-      return await periodService.ensureInstanceForDate(input.templateId, {
-        referenceDate: input.referenceDate,
+      const options: any = {
         allocatedAmount: input.allocatedAmount,
         rolloverAmount: input.rolloverAmount,
         actualAmount: input.actualAmount,
-      });
+      };
+      if (input.referenceDate) {
+        options.referenceDate = input.referenceDate;
+      }
+      return await periodService.ensureInstanceForDate(input.templateId, options);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -419,7 +427,7 @@ export const budgetRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
-        return await budgetService.createEnvelopeAllocation(input);
+        return await budgetService.createEnvelopeAllocation(input as any);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -429,7 +437,7 @@ export const budgetRoutes = t.router({
     .input(z.object({
       envelopeId: z.number().int().positive(),
       allocatedAmount: z.number(),
-      metadata: z.record(z.unknown()).optional(),
+      metadata: z.record(z.string(), z.unknown()).optional(),
     }))
     .mutation(async ({input}) => {
       try {
@@ -447,17 +455,18 @@ export const budgetRoutes = t.router({
     .input(z.object({
       envelopeId: z.number().int().positive(),
       rolloverMode: z.enum(['unlimited', 'limited', 'reset']).optional(),
-      metadata: z.record(z.unknown()).optional(),
+      metadata: z.record(z.string(), z.unknown()).optional(),
     }))
     .mutation(async ({input}) => {
       try {
-        return await budgetService.updateEnvelopeSettings(
-          input.envelopeId,
-          {
-            rolloverMode: input.rolloverMode,
-            metadata: input.metadata,
-          }
-        );
+        const settings: any = {};
+        if (input.rolloverMode !== undefined) {
+          settings.rolloverMode = input.rolloverMode;
+        }
+        if (input.metadata !== undefined) {
+          settings.metadata = input.metadata;
+        }
+        return await budgetService.updateEnvelopeSettings(input.envelopeId, settings);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -675,7 +684,7 @@ export const budgetRoutes = t.router({
     }))
     .mutation(async ({input}) => {
       try {
-        const budget = await budgetService.getById(input.budgetId);
+        const budget = await budgetService.getBudget(input.budgetId);
         if (!budget) {
           throw new NotFoundError("Budget", input.budgetId);
         }
@@ -683,12 +692,12 @@ export const budgetRoutes = t.router({
         const updatedMetadata = {
           ...budget.metadata,
           rolloverSettings: {
-            ...(budget.metadata?.rolloverSettings ?? {}),
+            ...(budget.metadata?.['rolloverSettings'] ?? {}),
             ...input.settings,
           },
         };
 
-        return await budgetService.update(input.budgetId, {
+        return await budgetService.updateBudget(input.budgetId, {
           metadata: updatedMetadata,
         });
       } catch (error) {
@@ -734,7 +743,7 @@ export const budgetRoutes = t.router({
   // Budget group operations
   createGroup: publicProcedure.input(createBudgetGroupSchema).mutation(async ({input}) => {
     try {
-      return await budgetService.createBudgetGroup(input);
+      return await budgetService.createBudgetGroup(input as any);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -768,7 +777,7 @@ export const budgetRoutes = t.router({
   updateGroup: publicProcedure.input(updateBudgetGroupSchema).mutation(async ({input}) => {
     try {
       const {id, ...updates} = input;
-      return await budgetService.updateBudgetGroup(id, updates);
+      return await budgetService.updateBudgetGroup(id, updates as any);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -864,7 +873,7 @@ export const budgetRoutes = t.router({
     .input(createPeriodTemplateSchema)
     .mutation(async ({input}) => {
       try {
-        return await budgetService.createPeriodTemplate(input);
+        return await budgetService.createPeriodTemplate(input as any);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -875,7 +884,7 @@ export const budgetRoutes = t.router({
     .mutation(async ({input}) => {
       try {
         const {id, ...updates} = input;
-        return await budgetService.updatePeriodTemplate(id, updates);
+        return await budgetService.updatePeriodTemplate(id, updates as any);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1008,14 +1017,11 @@ export const budgetRoutes = t.router({
       icon: z.string().optional(),
       suggestedAmount: z.number().optional(),
       enforcementLevel: z.enum(budgetEnforcementLevels).optional(),
-      metadata: z.record(z.unknown()).optional(),
+      metadata: z.record(z.string(), z.unknown()).optional(),
     }))
     .mutation(async ({input}) => {
       try {
-        return await templateService.createTemplate({
-          ...input,
-          description: input.description ?? undefined,
-        });
+        return await templateService.createTemplate(input as any);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1029,18 +1035,18 @@ export const budgetRoutes = t.router({
       icon: z.string().optional(),
       suggestedAmount: z.number().optional(),
       enforcementLevel: z.enum(budgetEnforcementLevels).optional(),
-      metadata: z.record(z.unknown()).optional(),
+      metadata: z.record(z.string(), z.unknown()).optional(),
     }))
     .mutation(async ({input}) => {
       try {
         const {id, name, description, icon, suggestedAmount, enforcementLevel, metadata} = input;
         const updates: Record<string, unknown> = {};
-        if (name !== undefined) updates.name = name;
-        if (description !== undefined) updates.description = description ?? undefined;
-        if (icon !== undefined) updates.icon = icon;
-        if (suggestedAmount !== undefined) updates.suggestedAmount = suggestedAmount;
-        if (enforcementLevel !== undefined) updates.enforcementLevel = enforcementLevel;
-        if (metadata !== undefined) updates.metadata = metadata;
+        if (name !== undefined) updates['name'] = name;
+        if (description !== undefined) updates['description'] = description ?? undefined;
+        if (icon !== undefined) updates['icon'] = icon;
+        if (suggestedAmount !== undefined) updates['suggestedAmount'] = suggestedAmount;
+        if (enforcementLevel !== undefined) updates['enforcementLevel'] = enforcementLevel;
+        if (metadata !== undefined) updates['metadata'] = metadata;
         return await templateService.updateTemplate(id, updates as any);
       } catch (error) {
         throw translateDomainError(error);
@@ -1086,7 +1092,7 @@ export const budgetRoutes = t.router({
     .input(z.object({periodId: z.number().int().positive()}))
     .query(async ({input}) => {
       try {
-        const periodManager = new PeriodManager();
+        const periodManager = serviceFactory.getPeriodManager();
         return await periodManager.getPeriodAnalytics(input.periodId);
       } catch (error) {
         throw translateDomainError(error);
@@ -1102,7 +1108,7 @@ export const budgetRoutes = t.router({
     )
     .query(async ({input}) => {
       try {
-        const periodManager = new PeriodManager();
+        const periodManager = serviceFactory.getPeriodManager();
         return await periodManager.comparePeriods(input.currentPeriodId, input.previousPeriodId);
       } catch (error) {
         throw translateDomainError(error);
@@ -1118,7 +1124,7 @@ export const budgetRoutes = t.router({
     )
     .query(async ({input}) => {
       try {
-        const periodManager = new PeriodManager();
+        const periodManager = serviceFactory.getPeriodManager();
         return await periodManager.getPeriodHistory(input.budgetId, input.limit);
       } catch (error) {
         throw translateDomainError(error);
@@ -1129,7 +1135,7 @@ export const budgetRoutes = t.router({
     .input(z.object({templateId: z.number().int().positive()}))
     .mutation(async ({input}) => {
       try {
-        const periodManager = new PeriodManager();
+        const periodManager = serviceFactory.getPeriodManager();
         const periods = await periodManager.createPeriodsAutomatically(input.templateId, {
           lookAheadMonths: 1,
           autoCreateEnvelopes: true,
@@ -1181,7 +1187,7 @@ export const budgetRoutes = t.router({
     .query(async ({input}) => {
       try {
         const budgetService = serviceFactory.getBudgetService();
-        return await budgetService.analyzeSpendingHistory(input);
+        return await budgetService.analyzeSpendingHistory(input as any);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1199,7 +1205,7 @@ export const budgetRoutes = t.router({
     .mutation(async ({input}) => {
       try {
         const budgetService = serviceFactory.getBudgetService();
-        return await budgetService.generateRecommendations(input);
+        return await budgetService.generateRecommendations(input as any);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1209,7 +1215,7 @@ export const budgetRoutes = t.router({
     .input(
       z.object({
         status: z.enum(['pending', 'dismissed', 'applied', 'expired']).or(z.array(z.enum(['pending', 'dismissed', 'applied', 'expired']))).optional(),
-        type: z.enum(['create_budget', 'increase_budget', 'decrease_budget', 'merge_budgets', 'seasonal_adjustment', 'missing_category']).or(z.array(z.enum(['create_budget', 'increase_budget', 'decrease_budget', 'merge_budgets', 'seasonal_adjustment', 'missing_category']))).optional(),
+        type: z.enum(['create_budget', 'increase_budget', 'decrease_budget', 'merge_budgets', 'seasonal_adjustment', 'missing_category', 'create_budget_group', 'add_to_budget_group', 'merge_budget_groups', 'adjust_group_limit']).or(z.array(z.enum(['create_budget', 'increase_budget', 'decrease_budget', 'merge_budgets', 'seasonal_adjustment', 'missing_category', 'create_budget_group', 'add_to_budget_group', 'merge_budget_groups', 'adjust_group_limit']))).optional(),
         priority: z.enum(['high', 'medium', 'low']).or(z.array(z.enum(['high', 'medium', 'low']))).optional(),
         budgetId: z.number().int().positive().optional(),
         accountId: z.number().int().positive().optional(),
@@ -1220,7 +1226,7 @@ export const budgetRoutes = t.router({
     .query(async ({input}) => {
       try {
         const budgetService = serviceFactory.getBudgetService();
-        return await budgetService.listRecommendations(input);
+        return await budgetService.listRecommendations(input as any);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1285,6 +1291,101 @@ export const budgetRoutes = t.router({
       try {
         const budgetService = serviceFactory.getBudgetService();
         return await budgetService.getRecommendationCounts();
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  // Budget Group Automation Routes
+
+  getAutomationSettings: publicProcedure
+    .query(async () => {
+      try {
+        return await automationService.getSettings();
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  updateAutomationSettings: publicProcedure
+    .input(
+      z.object({
+        autoCreateGroups: z.boolean().optional(),
+        autoAssignToGroups: z.boolean().optional(),
+        autoAdjustGroupLimits: z.boolean().optional(),
+        requireConfirmationThreshold: z.enum(['high', 'medium', 'low']).optional(),
+        enableSmartGrouping: z.boolean().optional(),
+        groupingStrategy: z.enum(['category-based', 'account-based', 'spending-pattern', 'hybrid']).optional(),
+        minSimilarityScore: z.number().min(50).max(95).optional(),
+        minGroupSize: z.number().int().min(2).max(10).optional(),
+      })
+    )
+    .mutation(async ({input}) => {
+      try {
+        return await automationService.updateSettings(input as any);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  listAutomationActivity: publicProcedure
+    .input(
+      z.object({
+        status: z.enum(['pending', 'success', 'failed', 'rolled_back']).optional(),
+        actionType: z.enum(['create_group', 'assign_to_group', 'adjust_limit', 'merge_groups']).optional(),
+        limit: z.number().int().positive().max(100).optional().default(50),
+      })
+    )
+    .query(async ({input}) => {
+      try {
+        // For now, directly query the database
+        // In Phase 6 we can add this to the service layer
+        const {db} = await import('$lib/server/db');
+        const {budgetAutomationActivity} = await import('$lib/schema/budget-automation-settings');
+        const {desc, eq, and} = await import('drizzle-orm');
+
+        const conditions = [];
+        if (input.status) {
+          conditions.push(eq(budgetAutomationActivity.status, input.status));
+        }
+        if (input.actionType) {
+          conditions.push(eq(budgetAutomationActivity.actionType, input.actionType));
+        }
+
+        return await db
+          .select()
+          .from(budgetAutomationActivity)
+          .where(conditions.length > 0 ? and(...conditions) : undefined)
+          .orderBy(desc(budgetAutomationActivity.createdAt))
+          .limit(input.limit);
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  rollbackAutomation: publicProcedure
+    .input(z.object({activityId: z.number().int().positive()}))
+    .mutation(async ({input}) => {
+      try {
+        await automationService.rollbackAutomation(input.activityId);
+        return {success: true};
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  autoApplyGroupRecommendation: publicProcedure
+    .input(z.object({recommendationId: z.number().int().positive()}))
+    .mutation(async ({input}) => {
+      try {
+        // First get the recommendation
+        const recommendation = await budgetService.getRecommendation(input.recommendationId);
+        if (!recommendation) {
+          throw new TRPCError({code: 'NOT_FOUND', message: 'Recommendation not found'});
+        }
+
+        // Auto-apply it via automation service
+        return await automationService.autoApplyGroupRecommendation(recommendation);
       } catch (error) {
         throw translateDomainError(error);
       }

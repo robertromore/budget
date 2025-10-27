@@ -237,7 +237,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
         throw transformError(error);
       }
     },
-    onSuccess: (data: TData, variables: TVariables) => {
+    onSuccess: (data: TData, variables: TVariables, context: unknown) => {
       // Call custom onSuccess if provided
       if (onSuccess) {
         onSuccess(data, variables);
@@ -253,10 +253,10 @@ export function defineMutation<TVariables, TData, TError = Error>(
 
       // Call original onSuccess from options
       if (options.onSuccess) {
-        options.onSuccess(data, variables);
+        options.onSuccess(data, variables, context);
       }
     },
-    onError: (error: TError, variables: TVariables) => {
+    onError: (error: TError, variables: TVariables, context: unknown) => {
       // Call custom onError if provided
       if (onError) {
         onError(error, variables);
@@ -270,7 +270,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
 
       // Call original onError from options
       if (options.onError) {
-        options.onError(error, variables);
+        options.onError(error, variables, context);
       }
     },
     ...options,

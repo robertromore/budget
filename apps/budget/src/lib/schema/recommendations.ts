@@ -1,16 +1,15 @@
 import { relations, sql } from "drizzle-orm";
 import {
-  sqliteTable,
-  integer,
-  text,
-  real,
   index,
+  integer,
+  real,
+  sqliteTable,
+  text,
 } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { budgets } from "./budgets";
 import { accounts } from "./accounts";
+import { budgets } from "./budgets";
 import { categories } from "./categories";
-import { z } from "zod";
 
 export const recommendationTypes = [
   "create_budget",
@@ -19,6 +18,10 @@ export const recommendationTypes = [
   "merge_budgets",
   "seasonal_adjustment",
   "missing_category",
+  "create_budget_group",
+  "add_to_budget_group",
+  "merge_budget_groups",
+  "adjust_group_limit",
 ] as const;
 
 export const recommendationPriorities = ["high", "medium", "low"] as const;
@@ -78,6 +81,25 @@ export interface RecommendationMetadata {
   // For missing_category
   uncategorizedCount?: number;
   suggestedCategoryName?: string;
+
+  // For budget groups
+  suggestedGroupName?: string;
+  suggestedGroupMembers?: number[]; // budget IDs
+  suggestedGroupColor?: string;
+  groupSimilarityScore?: number; // 0-100
+  groupSpendingLimit?: number;
+  parentGroupId?: number;
+  budgetIdsToGroup?: number[];
+  categoryPatternMatch?: string[];
+  accountPatternMatch?: number[];
+  spendingPatternSimilarity?: number;
+  groupingReason?: "category_hierarchy" | "account_clustering" | "spending_pattern" | "name_similarity" | "manual";
+  confidenceFactors?: {
+    categoryMatch: number;
+    accountMatch: number;
+    amountSimilarity: number;
+    nameSimilarity: number;
+  };
 
   [key: string]: unknown;
 }

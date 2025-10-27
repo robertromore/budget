@@ -1,5 +1,5 @@
-import {createLocalStorageState} from '$lib/utils/local-storage.svelte';
-import type {Category} from '$lib/schema';
+import type { Category } from '$lib/schema';
+import { createLocalStorageState } from '$lib/utils/local-storage.svelte';
 
 export interface CategorySearchFilters {
   hasParent?: boolean;
@@ -18,7 +18,7 @@ interface CategorySearchState {
   isLoading: boolean;
   totalCount: number;
   hasMore: boolean;
-  sortBy: 'name' | 'created' | 'lastTransaction' | 'totalAmount';
+  sortBy: 'name' | 'created' | 'group';
   sortOrder: 'asc' | 'desc';
   viewMode: 'grid' | 'list';
 }
@@ -29,7 +29,7 @@ interface CategorySearchState {
 class CategorySearchStateManager {
   // Persistent state
   private viewModeState = createLocalStorageState('category-search-view-mode', 'list' as 'grid' | 'list');
-  private sortByState = createLocalStorageState('category-search-sort-by', 'name' as 'name' | 'created' | 'lastTransaction' | 'totalAmount');
+  private sortByState = createLocalStorageState('category-search-sort-by', 'name' as 'name' | 'created' | 'group');
   private sortOrderState = createLocalStorageState('category-search-sort-order', 'asc' as 'asc' | 'desc');
 
   // Reactive state
@@ -45,7 +45,7 @@ class CategorySearchStateManager {
   set viewMode(value: 'grid' | 'list') { this.viewModeState.value = value; }
 
   get sortBy() { return this.sortByState.value; }
-  set sortBy(value: 'name' | 'created' | 'lastTransaction' | 'totalAmount') { this.sortByState.value = value; }
+  set sortBy(value: 'name' | 'created' | 'group') { this.sortByState.value = value; }
 
   get sortOrder() { return this.sortOrderState.value; }
   set sortOrder(value: 'asc' | 'desc') { this.sortOrderState.value = value; }

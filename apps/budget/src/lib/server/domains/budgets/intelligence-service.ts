@@ -6,19 +6,28 @@
  * category mappings, account scope, and historical patterns.
  */
 
-import {db} from "$lib/server/db";
-import {budgets, budgetAccounts, budgetCategories, budgetTransactions} from "$lib/schema/budgets";
-import {transactions} from "$lib/schema/transactions";
-import {payees} from "$lib/schema/payees";
-import {eq, and, desc, sql, inArray} from "drizzle-orm";
-import {logger} from "$lib/server/shared/logging";
+import { budgetAccounts, budgetCategories, budgets, budgetTransactions } from "$lib/schema/budgets";
+import { payees } from "$lib/schema/payees";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { logger } from "$lib/server/shared/logging";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 export interface BudgetSuggestion {
   budgetId: number;
   budgetName: string;
   confidence: number;
-  reason: "payee_default" | "category_link" | "account_scope" | "historical_pattern";
-  reasonText: string;
+  reason: "payee_default" | "category_link" | "account_scope" | "historical_pattern" | string;
+  reasonText?: string;
+}
+
+export interface BudgetUsagePattern {
+  budgetId: number;
+  budgetName: string;
+  usageCount: number;
+  totalAmount: number;
+  avgAmount: number;
+  lastUsedDate: string;
 }
 
 export interface DetectBudgetParams {
@@ -339,5 +348,70 @@ export class BudgetIntelligenceService {
     }
 
     return results;
+  }
+
+  /**
+   * Analyzes transaction history for a payee to suggest the most appropriate budget.
+   */
+  async suggestBudgetForPayee(payeeId: number): Promise<BudgetSuggestion | null> {
+    const patterns = await this.getBudgetUsagePatternsForPayee(payeeId);
+
+    if (patterns.length === 0) {
+      return null;
+    }
+
+    // Sort by usage count (most frequently used)
+    const sorted = patterns.sort((a, b) => b.usageCount - a.usageCount);
+    const mostUsed = sorted[0];
+
+    if (!mostUsed) {
+      return null;
+    }
+
+    // Calculate confidence based on usage frequency
+    const totalTransactions = patterns.reduce((sum, p) => sum + p.usageCount, 0);
+    const confidence = Math.min(100, Math.round((mostUsed.usageCount / totalTransactions) * 100));
+
+    return {
+      budgetId: mostUsed.budgetId,
+      budgetName: mostUsed.budgetName,
+      confidence,
+      reason: `Used in ${mostUsed.usageCount} of ${totalTransactions} transactions (${confidence}%)`,
+    };
+  }
+
+  /**
+   * Gets budget usage patterns for a specific payee.
+   */
+  private async getBudgetUsagePatternsForPayee(payeeId: number): Promise<BudgetUsagePattern[]> {
+    try {
+      const results = await db
+        .select({
+          budgetId: budgetTransactions.budgetId,
+          budgetName: budgets.name,
+          usageCount: sql<number>`COUNT(DISTINCT ${budgetTransactions.transactionId})`,
+          totalAmount: sql<number>`COALESCE(SUM(ABS(${budgetTransactions.allocatedAmount})), 0)`,
+          avgAmount: sql<number>`COALESCE(AVG(ABS(${budgetTransactions.allocatedAmount})), 0)`,
+          lastUsedDate: sql<string>`MAX(${transactions.date})`,
+        })
+        .from(budgetTransactions)
+        .innerJoin(budgets, eq(budgetTransactions.budgetId, budgets.id))
+        .innerJoin(transactions, eq(budgetTransactions.transactionId, transactions.id))
+        .where(eq(transactions.payeeId, payeeId))
+        .groupBy(budgetTransactions.budgetId, budgets.name)
+        .orderBy(sql`COUNT(DISTINCT ${budgetTransactions.transactionId}) DESC`);
+
+      return results.map(r => ({
+        budgetId: r.budgetId,
+        budgetName: r.budgetName,
+        usageCount: Number(r.usageCount),
+        totalAmount: Number(r.totalAmount),
+        avgAmount: Number(r.avgAmount),
+        lastUsedDate: r.lastUsedDate,
+      }));
+    } catch (error) {
+      logger.warn("Error getting budget usage patterns for payee", {error, payeeId});
+      return [];
+    }
   }
 }

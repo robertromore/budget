@@ -1,10 +1,10 @@
-import {createLocalStorageState} from '$lib/utils/local-storage.svelte';
 import type {
   BudgetRecommendationWithRelations,
+  RecommendationPriority,
   RecommendationStatus,
-  RecommendationType,
-  RecommendationPriority
+  RecommendationType
 } from '$lib/schema/recommendations';
+import { createLocalStorageState } from '$lib/utils/local-storage.svelte';
 
 export interface RecommendationSearchFilters {
   status?: RecommendationStatus;
@@ -26,7 +26,7 @@ interface RecommendationSearchState {
   hasMore: boolean;
   sortBy: 'created' | 'confidence' | 'priority' | 'type';
   sortOrder: 'asc' | 'desc';
-  viewMode: 'grid' | 'list' | 'table';
+  viewMode: 'grid' | 'list';
 }
 
 /**
@@ -34,13 +34,13 @@ interface RecommendationSearchState {
  */
 class RecommendationSearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState('recommendation-search-view-mode', 'grid' as const);
+  private viewModeState = createLocalStorageState<'grid' | 'list'>('recommendation-search-view-mode', 'grid');
   private sortByState = createLocalStorageState<'created' | 'confidence' | 'priority' | 'type'>('recommendation-search-sort-by', 'priority');
   private sortOrderState = createLocalStorageState<'asc' | 'desc'>('recommendation-search-sort-order', 'desc');
 
   // Reactive state
   query = $state('');
-  filters = $state<RecommendationSearchFilters>({});
+  filters = $state<RecommendationSearchFilters>({ status: 'pending' }); // Default to pending recommendations only
   results = $state<BudgetRecommendationWithRelations[]>([]);
   isLoading = $state(false);
   totalCount = $state(0);
@@ -48,7 +48,7 @@ class RecommendationSearchStateManager {
 
   // Getters for persistent state
   get viewMode() { return this.viewModeState.value; }
-  set viewMode(value: 'grid' | 'list' | 'table') { this.viewModeState.value = value; }
+  set viewMode(value: 'grid' | 'list') { this.viewModeState.value = value; }
 
   get sortBy() { return this.sortByState.value; }
   set sortBy(value: 'created' | 'confidence' | 'priority' | 'type') { this.sortByState.value = value; }
@@ -138,8 +138,6 @@ class RecommendationSearchStateManager {
   toggleViewMode() {
     if (this.viewMode === 'grid') {
       this.viewMode = 'list';
-    } else if (this.viewMode === 'list') {
-      this.viewMode = 'table';
     } else {
       this.viewMode = 'grid';
     }

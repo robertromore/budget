@@ -107,9 +107,14 @@ export abstract class BaseRepository<
       }
 
       return result[0];
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof DatabaseError) throw error;
-      throw new DatabaseError(`Failed to create ${this.entityName}`, "create");
+
+      // Preserve the original error properties for SQLite constraint errors
+      const dbError = new DatabaseError(`Failed to create ${this.entityName}`, "create");
+      if (error?.code) (dbError as any).code = error.code;
+      if (error?.errno !== undefined) (dbError as any).errno = error.errno;
+      throw dbError;
     }
   }
 

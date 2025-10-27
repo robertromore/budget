@@ -18,6 +18,7 @@ import * as Tabs from '$lib/components/ui/tabs';
 import {Badge} from '$lib/components/ui/badge';
 import {Separator} from '$lib/components/ui/separator';
 import * as Dialog from '$lib/components/ui/dialog';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import {Input} from '$lib/components/ui/input';
 import {Label} from '$lib/components/ui/label';
 import BudgetProgress from '$lib/components/budgets/budget-progress.svelte';
@@ -49,6 +50,8 @@ import {
   generateNextPeriod,
   updatePeriodTemplate,
   schedulePeriodMaintenance,
+  updateBudget,
+  deletePeriodTemplate,
 } from '$lib/query/budgets';
 import {listCategories} from '$lib/query/categories';
 import {trpc} from '$lib/trpc/client';
@@ -74,6 +77,8 @@ import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 import List from '@lucide/svelte/icons/list';
 import Columns3 from '@lucide/svelte/icons/columns-3';
 import Plus from '@lucide/svelte/icons/plus';
+import Pause from '@lucide/svelte/icons/pause';
+import Play from '@lucide/svelte/icons/play';
 
 let {data} = $props();
 
@@ -81,6 +86,9 @@ const budgetSlug = $derived(data.budgetSlug);
 let budgetQuery = $derived(getBudgetDetail(budgetSlug).options());
 let budget = $derived(budgetQuery.data);
 let isLoading = $derived(budgetQuery.isLoading);
+
+// Mutation for toggling budget status
+const updateBudgetMutation = updateBudget.options();
 
 const isEnvelopeBudget = $derived(budget?.type === 'category-envelope');
 
@@ -296,6 +304,7 @@ let isCreatingDeficitPlan = $state(false);
 let isExecutingDeficitPlan = $state(false);
 let isProcessingRollover = $state(false);
 let editTemplateDialogOpen = $state(false);
+let deleteTemplateDialogOpen = $state(false);
 
 // Template editing form state
 let templateForm = $state({
@@ -399,14 +408,18 @@ const rolloverMutation = processEnvelopeRollover.options();
 const generatePeriodMutation = generateNextPeriod.options();
 const updateTemplateMutation = updatePeriodTemplate.options();
 const maintenanceMutation = schedulePeriodMaintenance.options();
+const deleteTemplateMutation = deletePeriodTemplate.options();
 
 function formatCurrency(value: number) {
   return currencyFormatter.format(Math.abs(value ?? 0));
 }
 
 function getStatus() {
-  if (!budget || budget.status !== 'active') return 'paused' as const;
-  if (!allocatedAmount) return 'paused' as const;
+  if (!budget) return 'paused' as const;
+  // If budget is inactive, show as paused
+  if (budget.status === 'inactive') return 'paused' as const;
+  // If budget is active but has no allocated amount, show setup needed
+  if (!allocatedAmount) return 'setup_needed' as const;
   const ratio = actualAmount / allocatedAmount;
   if (ratio > 1) return 'over' as const;
   if (ratio >= 0.8) return 'approaching' as const;
@@ -523,6 +536,16 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
   // TODO: Implement inline transfer UI
   console.log('Transfer from envelope:', envelope.id);
 }
+
+async function toggleBudgetStatus() {
+  if (!budget) return;
+
+  const newStatus = budget.status === 'active' ? 'inactive' : 'active';
+  await updateBudgetMutation.mutateAsync({
+    id: budget.id,
+    data: { status: newStatus }
+  });
+}
 </script>
 
 <svelte:head>
@@ -552,15 +575,15 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
   <!-- 1. Quick Status Hero -->
   <div class="flex items-start justify-between gap-4 mb-6">
     <div class="flex items-start gap-4 flex-1 min-w-0">
-      <Button variant="ghost" size="icon" href="/budgets" class="mt-1 flex-shrink-0">
+      <Button variant="ghost" size="icon" href="/budgets" class="mt-1 shrink-0">
         <ArrowLeft class="h-4 w-4" />
         <span class="sr-only">Back to Budgets</span>
       </Button>
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-3 mb-1">
-          <PiggyBank class="h-6 w-6 text-muted-foreground flex-shrink-0" />
+          <PiggyBank class="h-6 w-6 text-muted-foreground shrink-0" />
           <h1 class="text-2xl md:text-3xl font-bold tracking-tight truncate">{budget.name}</h1>
-          <Badge variant={budget.status === 'active' ? 'default' : 'secondary'} class="flex-shrink-0">
+          <Badge variant={budget.status === 'active' ? 'default' : 'secondary'} class="shrink-0">
             {budget.status}
           </Badge>
         </div>
@@ -570,7 +593,7 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
       </div>
     </div>
 
-    <div class="flex items-center gap-2 flex-shrink-0">
+    <div class="flex items-center gap-2 shrink-0">
       {#if isEnvelopeBudget && periods.length > 0}
         <div class="flex items-center gap-1">
           <!-- Previous Period Button -->
@@ -633,6 +656,21 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
           </Button>
         </div>
       {/if}
+
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={toggleBudgetStatus}
+        disabled={updateBudgetMutation.isPending}
+      >
+        {#if budget.status === 'active'}
+          <Pause class="h-4 w-4" />
+          <span class="hidden sm:inline ml-2">Pause</span>
+        {:else}
+          <Play class="h-4 w-4" />
+          <span class="hidden sm:inline ml-2">Resume</span>
+        {/if}
+      </Button>
 
       <Button variant="outline" size="sm" href="/budgets/{budget.slug}/edit">
         <SquarePen class="h-4 w-4" />
@@ -968,7 +1006,7 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
                         </span>
                       </div>
                     </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="flex items-center gap-2 shrink-0">
                       <Button
                         size="sm"
                         variant="outline"
@@ -1011,7 +1049,7 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
               <div class="overflow-x-auto">
                 <div class="flex gap-4 min-w-max pb-4">
                   <!-- Overspent Column -->
-                  <div class="space-y-3 w-80 flex-shrink-0">
+                  <div class="space-y-3 w-80 shrink-0">
                     <div class="flex items-center justify-between px-3 py-2 bg-destructive/5 border border-destructive/20 rounded-lg">
                       <div class="flex items-center gap-2">
                         <TriangleAlert class="h-4 w-4 text-destructive" />
@@ -1040,7 +1078,7 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
                   </div>
 
                   <!-- Depleted Column -->
-                  <div class="space-y-3 w-80 flex-shrink-0">
+                  <div class="space-y-3 w-80 shrink-0">
                     <div class="flex items-center justify-between px-3 py-2 bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg">
                       <div class="flex items-center gap-2">
                         <TriangleAlert class="h-4 w-4 text-orange-600" />
@@ -1068,7 +1106,7 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
                   </div>
 
                   <!-- Active Column -->
-                  <div class="space-y-3 w-80 flex-shrink-0">
+                  <div class="space-y-3 w-80 shrink-0">
                     <div class="flex items-center justify-between px-3 py-2 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-lg">
                       <div class="flex items-center gap-2">
                         <CircleCheck class="h-4 w-4 text-emerald-600" />
@@ -1096,7 +1134,7 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
                   </div>
 
                   <!-- Paused Column -->
-                  <div class="space-y-3 w-80 flex-shrink-0">
+                  <div class="space-y-3 w-80 shrink-0">
                     <div class="flex items-center justify-between px-3 py-2 bg-muted/50 border border-muted-foreground/20 rounded-lg">
                       <div class="flex items-center gap-2">
                         <TrendingUp class="h-4 w-4 text-muted-foreground" />
@@ -1321,6 +1359,18 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
                 <Settings2 class="h-4 w-4 mr-2" />
                 Edit Template
               </Button>
+              <Button
+                variant="outline"
+                class="w-full justify-start text-destructive hover:text-destructive"
+                size="sm"
+                disabled={!firstTemplateId}
+                onclick={() => {
+                  deleteTemplateDialogOpen = true;
+                }}
+              >
+                <Trash2 class="h-4 w-4 mr-2" />
+                Delete Template
+              </Button>
               {#if previousToSelectedPeriod && selectedPeriod && !isRolloverProcessed(previousToSelectedPeriod.id, selectedPeriod.id)}
                 <Separator />
                 <Button
@@ -1495,6 +1545,7 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
   <PeriodTemplateSheet
     bind:open={periodTemplateDialogOpen}
     budgetId={budget.id}
+    defaultAllocatedAmount={allocatedAmount}
     onSuccess={() => {
       // TanStack Query will automatically refetch after mutation
       periodTemplateDialogOpen = false;
@@ -1585,3 +1636,29 @@ function handleTransferRequest(envelope: typeof envelopes[0]) {
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
+
+<!-- Delete Template Confirmation Dialog -->
+<AlertDialog.Root bind:open={deleteTemplateDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete Period Template?</AlertDialog.Title>
+      <AlertDialog.Description>
+        This will permanently delete this period template and remove all automated period creation.
+        This action cannot be undone.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={async () => {
+          if (!firstTemplateId) return;
+          await deleteTemplateMutation.mutateAsync(firstTemplateId);
+          deleteTemplateDialogOpen = false;
+        }}
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      >
+        {deleteTemplateMutation.isPending ? 'Deleting...' : 'Delete Template'}
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

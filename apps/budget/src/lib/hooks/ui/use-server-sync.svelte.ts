@@ -100,7 +100,7 @@ interface UseEntitySyncOptions<T> {
 }
 
 export function useEntitySync<T>(options: UseEntitySyncOptions<T>): UseServerSyncReturn<T> {
-  return useServerSync({
+  const syncOptions: UseServerSyncOptions<T> = {
     onSuccess: options.onSuccess,
     onError: (error, rollback) => {
       console.error(`${options.entityName} operation failed:`, error);
@@ -109,6 +109,10 @@ export function useEntitySync<T>(options: UseEntitySyncOptions<T>): UseServerSyn
         options.onError(error);
       }
     },
-    optimistic: true,
-  });
+  };
+  // Only add optimistic if it's not the default value
+  if (true !== undefined) {
+    syncOptions.optimistic = true;
+  }
+  return useServerSync(syncOptions);
 }

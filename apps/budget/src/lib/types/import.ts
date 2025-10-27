@@ -167,6 +167,7 @@ export interface ParseResult {
   columns: string[];
   rows: ImportRow[];
   parseErrors: string[];
+  scheduleMatches?: ScheduleMatch[]; // Detected schedule matches
 }
 
 // Validated row after processing
@@ -242,4 +243,64 @@ export interface ImportPreviewData {
 // Enhanced parse result with preview data
 export interface ParseResultWithPreview extends ParseResult {
   preview: ImportPreviewData;
+}
+
+// IIF (Intuit Interchange Format) transaction structure
+export interface IIFTransaction {
+  type: string; // TRNS, SPL, ENDTRNS, etc.
+  date: string;
+  account: string;
+  name: string;
+  amount: number;
+  memo?: string;
+  category?: string;
+  cleared?: boolean;
+  number?: string;
+  splits?: IIFSplit[];
+}
+
+export interface IIFSplit {
+  account: string;
+  amount: number;
+  memo?: string;
+  category?: string;
+}
+
+// QBO (QuickBooks Online Backup) transaction structure
+export interface QBOTransaction {
+  type: string; // Check, Deposit, Payment, etc.
+  date: string;
+  amount: number;
+  account: string;
+  vendor?: string;
+  customer?: string;
+  memo?: string;
+  category?: string;
+  checkNumber?: string;
+  txnId?: string;
+}
+
+// Schedule matching
+export type ScheduleMatchConfidence = 'exact' | 'high' | 'medium' | 'low' | 'none';
+
+export interface ScheduleMatch {
+  rowIndex: number;
+  scheduleId: number;
+  scheduleName: string;
+  confidence: ScheduleMatchConfidence;
+  score: number;
+  matchedOn: string[];
+  reasons: string[];
+  selected: boolean; // User selection state
+  transactionData: {
+    date: string;
+    amount: number;
+    payee?: string;
+  };
+  scheduleData: {
+    name: string;
+    amount: number;
+    amount_type: 'exact' | 'approximate' | 'range';
+    recurring: boolean;
+  };
 }

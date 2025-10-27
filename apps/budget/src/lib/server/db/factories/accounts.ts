@@ -19,6 +19,8 @@ export const accountFactory = async (count: number = faker.number.int({min: 1, m
           id: accounts.id,
         })
     )[0];
-    await transactionFactory(account);
+    if (account) {
+      await transactionFactory(account);
+    }
   }
 };

@@ -1,29 +1,32 @@
 <script lang="ts">
   import {Button} from "$lib/components/ui/button";
-  import {Sparkles} from "@lucide/svelte/icons";
+  import {Badge} from "$lib/components/ui/badge";
+  import * as Select from "$lib/components/ui/select";
+  import {Sparkles, Users, Filter} from "@lucide/svelte/icons";
   import AnalyzeSpendingSheet from "./analyze-spending-sheet.svelte";
-  import RecommendationSearchFilters from "./recommendation-search-filters.svelte";
-  import RecommendationSearchResults from "./recommendation-search-results.svelte";
-  import EntitySearchToolbar from "$lib/components/shared/search/entity-search-toolbar.svelte";
+  import GroupRecommendationPreviewModal from "./group-recommendation-preview-modal.svelte";
   import {listRecommendations, applyRecommendation, dismissRecommendation} from "$lib/query/budgets";
-  import {recommendationSearchState} from "$lib/states/ui/recommendation-search.svelte";
+  import RecommendationDataTable from "./recommendations/recommendation-data-table.svelte";
+  import {columns} from "./recommendations/data/columns.svelte";
+  import type {BudgetRecommendationWithRelations} from "$lib/schema/recommendations";
 
   interface Props {
     budgetId?: number;
     accountId?: number;
     categoryId?: number;
+    budgets?: any[]; // For preview modal
   }
 
-  let {budgetId, accountId, categoryId}: Props = $props();
+  let {budgetId, accountId, categoryId, budgets = []}: Props = $props();
 
   let analyzeDialogOpen = $state(false);
+  let previewModalOpen = $state(false);
+  let selectedRecommendation = $state<BudgetRecommendationWithRelations | null>(null);
+  let typeFilter = $state<string>("all");
 
-  // Use centralized search state
-  const search = recommendationSearchState;
-
-  // Merge props with filters
+  // Build filters
   const filters = $derived.by(() => {
-    const f = {...search.filters};
+    const f: any = {};
     if (budgetId) f.budgetId = budgetId;
     if (accountId) f.accountId = accountId;
     if (categoryId) f.categoryId = categoryId;
@@ -31,83 +34,110 @@
   });
 
   const recommendationsQuery = $derived(listRecommendations(filters).options());
-  const recommendations = $derived(recommendationsQuery.data ?? []);
+  const allRecommendations = $derived(recommendationsQuery.data ?? []);
   const isLoading = $derived(recommendationsQuery.isLoading);
 
-  // Sort options for toolbar
-  const sortOptions = [
-    {value: 'priority' as const, label: 'Priority', order: 'desc' as const},
-    {value: 'priority' as const, label: 'Priority', order: 'asc' as const},
-    {value: 'confidence' as const, label: 'Confidence', order: 'desc' as const},
-    {value: 'confidence' as const, label: 'Confidence', order: 'asc' as const},
-    {value: 'created' as const, label: 'Created', order: 'desc' as const},
-    {value: 'created' as const, label: 'Created', order: 'asc' as const},
-  ];
+  // Filter recommendations by type
+  const recommendations = $derived(() => {
+    if (typeFilter === "all") return allRecommendations;
 
-  // Apply filter to search state
-  const filteredRecommendations = $derived.by(() => {
-    let filtered = [...recommendations];
-
-    // Apply search filter
-    if (search.query.trim()) {
-      const term = search.query.toLowerCase();
-      filtered = filtered.filter(rec =>
-        rec.title.toLowerCase().includes(term) ||
-        rec.description.toLowerCase().includes(term)
+    if (typeFilter === "groups") {
+      return allRecommendations.filter((rec) =>
+        rec.type === "create_budget_group" ||
+        rec.type === "add_to_budget_group" ||
+        rec.type === "merge_budget_groups" ||
+        rec.type === "adjust_group_limit"
       );
     }
 
-    // Apply client-side sorting
-    filtered.sort((a, b) => {
-      // First, always sort by status: pending/applied/expired first, dismissed last
-      const statusOrder = {
-        pending: 1,
-        applied: 2,
-        expired: 3,
-        dismissed: 4
-      };
-      const statusComparison = (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
-      if (statusComparison !== 0) {
-        return statusComparison;
-      }
+    if (typeFilter === "budgets") {
+      return allRecommendations.filter((rec) =>
+        rec.type === "create_budget" ||
+        rec.type === "increase_budget" ||
+        rec.type === "decrease_budget" ||
+        rec.type === "merge_budgets" ||
+        rec.type === "seasonal_adjustment" ||
+        rec.type === "missing_category"
+      );
+    }
 
-      // Then apply the selected sort field
-      let comparison = 0;
-      switch (search.sortBy) {
-        case 'created':
-          comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
-          break;
-        case 'confidence':
-          comparison = (a.confidence || 0) - (b.confidence || 0);
-          break;
-        case 'priority': {
-          const priorityOrder = {high: 3, medium: 2, low: 1};
-          comparison = (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0);
-          break;
-        }
-        case 'type':
-          comparison = a.type.localeCompare(b.type);
-          break;
-        default:
-          comparison = 0;
-      }
-      return search.sortOrder === 'asc' ? comparison : -comparison;
-    });
-
-    return filtered;
+    return allRecommendations;
   });
+
+  // Count recommendations by type
+  const groupRecommendationsCount = $derived(
+    allRecommendations.filter((rec) =>
+      rec.type === "create_budget_group" ||
+      rec.type === "add_to_budget_group" ||
+      rec.type === "merge_budget_groups" ||
+      rec.type === "adjust_group_limit"
+    ).length
+  );
+
+  const budgetRecommendationsCount = $derived(
+    allRecommendations.filter((rec) =>
+      rec.type === "create_budget" ||
+      rec.type === "increase_budget" ||
+      rec.type === "decrease_budget" ||
+      rec.type === "merge_budgets" ||
+      rec.type === "seasonal_adjustment" ||
+      rec.type === "missing_category"
+    ).length
+  );
 
   // Mutations
   const applyMutation = applyRecommendation.options();
   const dismissMutation = dismissRecommendation.options();
 
-  function handleApply(recommendation: typeof recommendations[0]) {
-    applyMutation.mutate(recommendation.id);
+  function handleApply(recommendation: BudgetRecommendationWithRelations) {
+    // Show preview modal for group recommendations
+    const isGroupRecommendation =
+      recommendation.type === "create_budget_group" ||
+      recommendation.type === "add_to_budget_group" ||
+      recommendation.type === "merge_budget_groups" ||
+      recommendation.type === "adjust_group_limit";
+
+    if (isGroupRecommendation) {
+      selectedRecommendation = recommendation;
+      previewModalOpen = true;
+    } else {
+      applyMutation.mutate(recommendation.id);
+    }
   }
 
-  function handleDismiss(recommendation: typeof recommendations[0]) {
+  function handleDismiss(recommendation: BudgetRecommendationWithRelations) {
     dismissMutation.mutate(recommendation.id);
   }
+
+  function handleBulkApply(recommendations: BudgetRecommendationWithRelations[]) {
+    // Apply all recommendations sequentially
+    recommendations.forEach((rec) => {
+      applyMutation.mutate(rec.id);
+    });
+  }
+
+  function handleBulkDismiss(recommendations: BudgetRecommendationWithRelations[]) {
+    // Dismiss all recommendations sequentially
+    recommendations.forEach((rec) => {
+      dismissMutation.mutate(rec.id);
+    });
+  }
+
+  async function handleAcceptGroupRecommendation(recommendationId: number) {
+    applyMutation.mutate(recommendationId);
+  }
+
+  async function handleRejectGroupRecommendation(recommendationId: number) {
+    dismissMutation.mutate(recommendationId);
+  }
+
+  function handleClosePreviewModal() {
+    selectedRecommendation = null;
+    previewModalOpen = false;
+  }
+
+  // Create columns with handlers
+  const tableColumns = $derived(columns(handleApply, handleDismiss));
 </script>
 
 <div class="space-y-4">
@@ -116,6 +146,11 @@
     <div class="flex items-center gap-2">
       <Sparkles class="h-5 w-5 text-primary" />
       <h2 class="text-lg font-semibold">Budget Recommendations</h2>
+      {#if allRecommendations.length > 0}
+        <span class="text-sm text-muted-foreground">
+          ({allRecommendations.length} total)
+        </span>
+      {/if}
     </div>
     <Button size="sm" onclick={() => (analyzeDialogOpen = true)}>
       <Sparkles class="mr-2 h-4 w-4" />
@@ -123,42 +158,97 @@
     </Button>
   </div>
 
-  <!-- Search Toolbar -->
-  <EntitySearchToolbar
-    bind:searchQuery={search.query}
-    bind:filters={search.filters}
-    bind:viewMode={search.viewMode}
-    bind:sortBy={search.sortBy}
-    bind:sortOrder={search.sortOrder}
-    searchPlaceholder="Search recommendations..."
-    {sortOptions}
-    activeFilterCount={search.hasActiveFilters ? Object.keys(search.filters).length : 0}
-    onSearchChange={(query) => search.updateQuery(query)}
-    onFiltersChange={(filters) => search.updateFilters(filters)}
-    onViewModeChange={(mode) => (search.viewMode = mode)}
-    onSortChange={(sortBy, sortOrder) => {
-      search.sortBy = sortBy as any;
-      search.sortOrder = sortOrder;
-    }}
-    onClearAll={() => search.clearAllFilters()}>
-    {#snippet filterContent()}
-      <RecommendationSearchFilters
-        filters={search.filters}
-        onFilterChange={(key, value) => search.updateFilter(key, value)}
-      />
-    {/snippet}
-  </EntitySearchToolbar>
+  <!-- Filters -->
+  {#if allRecommendations.length > 0}
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 text-sm text-muted-foreground">
+        <Filter class="h-4 w-4" />
+        <span>Filter by:</span>
+      </div>
+      <Select.Root type="single" bind:value={typeFilter}>
+        <Select.Trigger class="w-[200px]">
+          {#if typeFilter === "all"}
+            All Recommendations
+          {:else if typeFilter === "groups"}
+            Group Recommendations
+          {:else}
+            Budget Recommendations
+          {/if}
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="all">
+            <div class="flex items-center justify-between w-full gap-3">
+              <span>All Recommendations</span>
+              {#if allRecommendations.length > 0}
+                <Badge variant="secondary" class="text-xs">
+                  {allRecommendations.length}
+                </Badge>
+              {/if}
+            </div>
+          </Select.Item>
+          <Select.Item value="groups">
+            <div class="flex items-center justify-between w-full gap-3">
+              <div class="flex items-center gap-2">
+                <Users class="h-3 w-3" />
+                <span>Group Recommendations</span>
+              </div>
+              {#if groupRecommendationsCount > 0}
+                <Badge variant="secondary" class="text-xs">
+                  {groupRecommendationsCount}
+                </Badge>
+              {/if}
+            </div>
+          </Select.Item>
+          <Select.Item value="budgets">
+            <div class="flex items-center justify-between w-full gap-3">
+              <span>Budget Recommendations</span>
+              {#if budgetRecommendationsCount > 0}
+                <Badge variant="secondary" class="text-xs">
+                  {budgetRecommendationsCount}
+                </Badge>
+              {/if}
+            </div>
+          </Select.Item>
+        </Select.Content>
+      </Select.Root>
 
-  <!-- Recommendations List -->
-  <RecommendationSearchResults
-    recommendations={filteredRecommendations}
-    {isLoading}
-    searchQuery={search.query}
-    viewMode={search.viewMode}
-    onApply={handleApply}
-    onDismiss={handleDismiss}
-  />
+      {#if typeFilter === "groups" && groupRecommendationsCount > 0}
+        <Badge variant="outline" class="gap-1.5">
+          <Users class="h-3 w-3" />
+          {groupRecommendationsCount} group recommendation{groupRecommendationsCount !== 1 ? 's' : ''}
+        </Badge>
+      {:else if typeFilter === "budgets" && budgetRecommendationsCount > 0}
+        <Badge variant="outline">
+          {budgetRecommendationsCount} budget recommendation{budgetRecommendationsCount !== 1 ? 's' : ''}
+        </Badge>
+      {/if}
+    </div>
+  {/if}
+
+  <!-- Data Table -->
+  {#if isLoading}
+    <div class="flex items-center justify-center py-12">
+      <div class="text-sm text-muted-foreground">Loading recommendations...</div>
+    </div>
+  {:else}
+    <RecommendationDataTable
+      columns={tableColumns}
+      recommendations={recommendations()}
+      onBulkApply={handleBulkApply}
+      onBulkDismiss={handleBulkDismiss}
+    />
+  {/if}
 </div>
 
 <!-- Analyze Sheet -->
 <AnalyzeSpendingSheet bind:open={analyzeDialogOpen} onOpenChange={(open) => (analyzeDialogOpen = open)} />
+
+<!-- Group Recommendation Preview Modal -->
+<GroupRecommendationPreviewModal
+  bind:open={previewModalOpen}
+  recommendation={selectedRecommendation}
+  {budgets}
+  onAccept={handleAcceptGroupRecommendation}
+  onReject={handleRejectGroupRecommendation}
+  onClose={handleClosePreviewModal}
+/>

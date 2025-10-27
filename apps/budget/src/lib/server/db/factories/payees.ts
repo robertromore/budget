@@ -14,7 +14,10 @@ export const payeeFactory = async (
         notes: faker.lorem.text(),
       })
       .returning();
-    payees_collection.push(new_payee[0]);
+    const payee = new_payee[0];
+    if (payee) {
+      payees_collection.push(payee);
+    }
   }
   return payees_collection;
 };

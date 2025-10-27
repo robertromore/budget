@@ -1,12 +1,16 @@
-import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
-import { cachePatterns } from "./_client";
+import type { Category } from "$lib/schema/categories";
+import { formInsertCategorySchema } from "$lib/schema/categories";
+import type { CategoryWithBudgets, CategoryWithChildren, CategoryWithGroup, CategoryWithStats } from "$lib/server/domains/categories/repository";
 import { trpc } from "$lib/trpc/client";
-import type {Category, NewCategory} from "$lib/schema/categories";
-import type {CategoryWithBudgets, CategoryWithChildren, CategoryTreeNode, CategoryWithStats} from "$lib/server/domains/categories/repository";
+import type { CategoryTreeNode } from "$lib/types/categories";
+import { z } from "zod";
+import { cachePatterns } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 export const categoryKeys = createQueryKeys("categories", {
   all: () => ["categories", "all"] as const,
   allWithStats: () => ["categories", "all", "stats"] as const,
+  allWithGroups: () => ["categories", "all", "groups"] as const,
   detail: (id: number) => ["categories", "detail", id] as const,
   search: (query: string) => ["categories", "search", query] as const,
   allWithBudgets: () => ["categories", "all", "budgets"] as const,
@@ -16,6 +20,8 @@ export const categoryKeys = createQueryKeys("categories", {
   children: (parentId: number) => ["categories", "children", parentId] as const,
   withChildren: (id: number) => ["categories", "withChildren", id] as const,
   hierarchyTree: () => ["categories", "hierarchy"] as const,
+  defaultCategoriesStatus: () => ["categories", "defaults", "status"] as const,
+  availableDefaults: () => ["categories", "defaults", "available"] as const,
 });
 
 export const listCategories = () =>
@@ -30,6 +36,12 @@ export const listCategoriesWithStats = () =>
     queryFn: () => trpc().categoriesRoutes.allWithStats.query(),
   });
 
+export const listCategoriesWithGroups = () =>
+  defineQuery<CategoryWithGroup[]>({
+    queryKey: categoryKeys.allWithGroups(),
+    queryFn: () => trpc().categoriesRoutes.allWithGroups.query(),
+  });
+
 export const getCategoryById = (id: number) =>
   defineQuery<Category>({
     queryKey: categoryKeys.detail(id),
@@ -42,8 +54,10 @@ export const searchCategories = (query: string) =>
     queryFn: () => trpc().categoriesRoutes.search.query({query}),
   });
 
-export const createCategory = defineMutation<NewCategory, Category>({
-  mutationFn: (input) => trpc().categoriesRoutes.save.mutate({...input}),
+type FormCategoryInput = z.infer<typeof formInsertCategorySchema>;
+
+export const createCategory = defineMutation<FormCategoryInput, Category>({
+  mutationFn: (input) => trpc().categoriesRoutes.save.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryKeys.all());
   },
@@ -51,11 +65,13 @@ export const createCategory = defineMutation<NewCategory, Category>({
   errorMessage: "Failed to create category",
 });
 
-export const updateCategory = defineMutation<{id: number} & Partial<NewCategory>, Category>({
+export const updateCategory = defineMutation<FormCategoryInput, Category>({
   mutationFn: (input) => trpc().categoriesRoutes.save.mutate(input),
   onSuccess: (_, variables) => {
     cachePatterns.invalidatePrefix(categoryKeys.all());
-    cachePatterns.invalidatePrefix(categoryKeys.detail(variables.id));
+    if (variables.id) {
+      cachePatterns.invalidatePrefix(categoryKeys.detail(variables.id));
+    }
   },
   successMessage: "Category updated",
   errorMessage: "Failed to update category",
@@ -144,4 +160,35 @@ export const setCategoryParent = defineMutation<{categoryId: number; parentId: n
   },
   successMessage: "Category parent updated",
   errorMessage: "Failed to update category parent",
+});
+
+export const getDefaultCategoriesStatus = () =>
+  defineQuery<{
+    total: number;
+    installed: number;
+    available: number;
+    categories: Array<{
+      name: string;
+      slug: string;
+      categoryType: string;
+      installed: boolean;
+    }>;
+  }>({
+    queryKey: categoryKeys.defaultCategoriesStatus(),
+    queryFn: () => trpc().categoriesRoutes.defaultCategoriesStatus.query(),
+  });
+
+export const seedDefaultCategories = defineMutation<{slugs?: string[]}, {created: number; skipped: number; errors: string[]}>({
+  mutationFn: (input) => trpc().categoriesRoutes.seedDefaults.mutate(input),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(categoryKeys.all());
+    cachePatterns.invalidatePrefix(categoryKeys.defaultCategoriesStatus());
+  },
+  successMessage: (data) => {
+    if (data.created > 0) {
+      return `Added ${data.created} default ${data.created === 1 ? 'category' : 'categories'}`;
+    }
+    return "No new categories to add";
+  },
+  errorMessage: "Failed to add default categories",
 });
