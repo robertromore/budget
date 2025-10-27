@@ -1,13 +1,11 @@
 <script lang="ts">
 import {Button, buttonVariants} from '$lib/components/ui/button';
-import * as ButtonGroup from '$lib/components/ui/button-group';
 import * as Empty from '$lib/components/ui/empty';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import Plus from '@lucide/svelte/icons/plus';
 import Tag from '@lucide/svelte/icons/tag';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
-import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
-import FolderTree from '@lucide/svelte/icons/folder-tree';
+import FolderCog from '@lucide/svelte/icons/folder-cog';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import {
   deleteCategoryDialog,
@@ -18,11 +16,13 @@ import EntitySearchToolbar from '$lib/components/shared/search/entity-search-too
 import CategorySearchFilters from './(components)/search/category-search-filters.svelte';
 import CategorySearchResults from './(components)/search/category-search-results.svelte';
 import CategoryTreeView from './(components)/tree/category-tree-view.svelte';
-import type {CategoryTreeNode} from '$lib/types';
+import SeedDefaultCategoriesButton from './(components)/seed-default-categories-button.svelte';
+import GroupManagementSheet from './(components)/group-management-sheet.svelte';
+import type {CategoryTreeNode} from '$lib/types/categories';
 import {goto} from '$app/navigation';
 import type {Category} from '$lib/schema';
-import {reorderCategories, getCategoryHierarchyTree, bulkDeleteCategories as bulkDeleteCategoriesMutation, listCategoriesWithStats} from '$lib/query/categories';
-import type {CategoryWithStats} from '$lib/server/domains/categories/repository';
+import {reorderCategories, getCategoryHierarchyTree, bulkDeleteCategories as bulkDeleteCategoriesMutation} from '$lib/query/categories';
+import type {CategoryWithGroup} from '$lib/server/domains/categories/repository';
 import {rpc} from '$lib/query';
 
 const categoriesState = $derived(CategoriesState.get());
@@ -30,9 +30,9 @@ const categories = $derived(categoriesState.categories.values());
 const categoriesArray = $derived(Array.from(categories));
 const hasNoCategories = $derived(categoriesArray.length === 0);
 
-// Fetch categories with transaction stats for sorting
-const categoriesWithStatsQuery = rpc.categories.listCategoriesWithStats().options();
-const categoriesWithStats = $derived(categoriesWithStatsQuery.data ?? []);
+// Fetch categories with group information
+const categoriesWithGroupsQuery = rpc.categories.listCategoriesWithGroups().options();
+const categoriesWithGroups = $derived(categoriesWithGroupsQuery.data ?? []);
 
 // Search state
 const search = categorySearchState;
@@ -40,6 +40,7 @@ let searchResults = $state<Category[]>([]);
 let isSearching = $state(false);
 let isReorderMode = $state(false);
 let showHierarchyView = $state(false);
+let groupManagementSheetOpen = $state(false);
 
 // Load hierarchy tree
 const hierarchyTreeQuery = getCategoryHierarchyTree().options();
@@ -47,26 +48,23 @@ const hierarchyTree = $derived(hierarchyTreeQuery.data ?? []);
 
 // Sort categories based on user selection or displayOrder
 const sortedCategoriesArray = $derived.by(() => {
-  // Create a map of category stats for quick lookup
-  const statsMap = new Map(categoriesWithStats.map(c => [c.id, c.stats]));
+  // Create a map of category groups for quick lookup
+  const groupsMap = new Map(categoriesWithGroups.map(c => [c.id, c.groupName || '']));
 
   return [...categoriesArray].sort((a, b) => {
     let comparison = 0;
-    const statsA = statsMap.get(a.id);
-    const statsB = statsMap.get(b.id);
+    const groupA = groupsMap.get(a.id);
+    const groupB = groupsMap.get(b.id);
 
     switch (search.sortBy) {
       case 'name':
         comparison = (a.name || '').localeCompare(b.name || '');
         break;
+      case 'group':
+        comparison = (groupA || '').localeCompare(groupB || '');
+        break;
       case 'created':
         comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
-        break;
-      case 'lastTransaction':
-        comparison = (statsA?.lastTransactionDate || '').localeCompare(statsB?.lastTransactionDate || '');
-        break;
-      case 'totalAmount':
-        comparison = (statsA?.totalAmount || 0) - (statsB?.totalAmount || 0);
         break;
       default:
         // Default to displayOrder
@@ -79,17 +77,34 @@ const sortedCategoriesArray = $derived.by(() => {
   });
 });
 
-// Computed values
+// Computed values - merge group data into categories
 const displayedCategories = $derived.by(() => {
-  return search.isSearchActive ? searchResults : sortedCategoriesArray;
+  const baseCategories = search.isSearchActive ? searchResults : sortedCategoriesArray;
+  const groupsMap = new Map(categoriesWithGroups.map(c => [c.id, {
+    groupId: c.groupId,
+    groupName: c.groupName,
+    groupColor: c.groupColor,
+    groupIcon: c.groupIcon
+  }]));
+
+  return baseCategories.map(cat => {
+    const groupData = groupsMap.get(cat.id);
+    return {
+      ...cat,
+      groupId: groupData?.groupId || null,
+      groupName: groupData?.groupName || null,
+      groupColor: groupData?.groupColor || null,
+      groupIcon: groupData?.groupIcon || null
+    };
+  });
 });
 
 // Sort options for toolbar
 const categorySortOptions = [
   {value: 'name' as const, label: 'Name', order: 'asc' as const},
   {value: 'name' as const, label: 'Name', order: 'desc' as const},
-  {value: 'lastTransaction' as const, label: 'Last Transaction', order: 'desc' as const},
-  {value: 'totalAmount' as const, label: 'Total Amount', order: 'desc' as const},
+  {value: 'group' as const, label: 'Group', order: 'asc' as const},
+  {value: 'group' as const, label: 'Group', order: 'desc' as const},
   {value: 'created' as const, label: 'Created', order: 'desc' as const},
 ];
 
@@ -173,24 +188,21 @@ const performSearch = () => {
     }
 
     // Sort results
-    const statsMap = new Map(categoriesWithStats.map(c => [c.id, c.stats]));
+    const groupsMap = new Map(categoriesWithGroups.map(c => [c.id, c.groupName || '']));
     results.sort((a, b) => {
       let comparison = 0;
-      const statsA = statsMap.get(a.id);
-      const statsB = statsMap.get(b.id);
+      const groupA = groupsMap.get(a.id);
+      const groupB = groupsMap.get(b.id);
 
       switch (search.sortBy) {
         case 'name':
           comparison = (a.name || '').localeCompare(b.name || '');
           break;
+        case 'group':
+          comparison = (groupA || '').localeCompare(groupB || '');
+          break;
         case 'created':
           comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
-          break;
-        case 'lastTransaction':
-          comparison = (statsA?.lastTransactionDate || '').localeCompare(statsB?.lastTransactionDate || '');
-          break;
-        case 'totalAmount':
-          comparison = (statsA?.totalAmount || 0) - (statsB?.totalAmount || 0);
           break;
         default:
           comparison = (a.name || '').localeCompare(b.name || '');
@@ -336,6 +348,11 @@ const addSubcategory = (parent: CategoryTreeNode) => {
       </p>
     </div>
     <div class="flex items-center gap-2">
+      <SeedDefaultCategoriesButton />
+      <Button variant="outline" onclick={() => groupManagementSheetOpen = true}>
+        <FolderCog class="mr-2 h-4 w-4" />
+        Group Management
+      </Button>
       <Button variant="outline" href="/categories/analytics">
         <BarChart3 class="mr-2 h-4 w-4" />
         Analytics Dashboard
@@ -393,10 +410,14 @@ const addSubcategory = (parent: CategoryTreeNode) => {
         </Empty.EmptyDescription>
       </Empty.EmptyHeader>
       <Empty.EmptyContent>
-        <Button href="/categories/new">
-          <Plus class="mr-2 h-4 w-4" />
-          Create Your First Category
-        </Button>
+        <div class="flex flex-col items-center gap-2 sm:flex-row">
+          <SeedDefaultCategoriesButton />
+          <span class="text-sm text-muted-foreground">or</span>
+          <Button href="/categories/new">
+            <Plus class="mr-2 h-4 w-4" />
+            Create Your First Category
+          </Button>
+        </div>
       </Empty.EmptyContent>
     </Empty.Empty>
   {:else if showHierarchyView}
@@ -462,3 +483,6 @@ const addSubcategory = (parent: CategoryTreeNode) => {
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
+
+<!-- Group Management Sheet -->
+<GroupManagementSheet bind:open={groupManagementSheetOpen} />

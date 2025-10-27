@@ -10,6 +10,7 @@ import TrendingDown from '@lucide/svelte/icons/trending-down';
 import ArrowLeftRight from '@lucide/svelte/icons/arrow-left-right';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
 import FolderTree from '@lucide/svelte/icons/folder-tree';
+import Folder from '@lucide/svelte/icons/folder';
 import Receipt from '@lucide/svelte/icons/receipt';
 import Calendar from '@lucide/svelte/icons/calendar';
 import type {Category} from '$lib/schema';
@@ -108,6 +109,8 @@ const getPriorityColor = (priority: string | null) => {
     {@const typeInfo = getCategoryTypeInfo(category.categoryType)}
     {@const iconData = category.categoryIcon ? getIconByName(category.categoryIcon) : null}
     {@const IconComponent = iconData?.icon || Tag}
+    {@const groupIconData = category.groupIcon ? getIconByName(category.groupIcon) : null}
+    {@const GroupIconComponent = groupIconData?.icon || Folder}
 
     <EntityCard
       entity={category}
@@ -122,6 +125,15 @@ const getPriorityColor = (priority: string | null) => {
       {#snippet header(c)}
         <!-- Name and Icon -->
         <Card.Title class="flex items-start gap-2">
+          {#if c.groupIcon}
+            <div
+              class="flex h-5 w-5 items-center justify-center rounded flex-shrink-0 mt-0.5"
+              style:background-color={c.groupColor || '#6b7280'}
+              title={c.groupName || 'Group'}
+            >
+              <GroupIconComponent class="h-3 w-3 text-white" />
+            </div>
+          {/if}
           <div class="relative flex-shrink-0">
             <IconComponent
               class="h-5 w-5 mt-0.5"
