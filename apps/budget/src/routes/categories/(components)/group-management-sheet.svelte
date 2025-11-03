@@ -16,13 +16,15 @@ import {
 	List,
 	X,
 	Tag,
+	GripVertical,
 } from '@lucide/svelte/icons';
 import ManageCategoryGroupForm from '$lib/components/forms/manage-category-group-form.svelte';
 import {RecommendationsPanel} from '$lib/components/category-groups';
-import {deleteCategoryGroup, removeCategoryFromGroup} from '$lib/query/category-groups';
+import {deleteCategoryGroup, removeCategoryFromGroup, moveCategoryToGroup} from '$lib/query/category-groups';
 import {rpc} from '$lib/query';
 import type {CategoryGroupWithCounts} from '$lib/schema/category-groups';
 import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import type {Category} from '$lib/schema/categories';
 
 interface Props {
 	open: boolean;
@@ -43,6 +45,7 @@ const isCategoriesLoading = $derived(categoriesQuery.isLoading);
 // Mutations
 const deleteMutation = deleteCategoryGroup.options();
 const removeCategoryMutation = removeCategoryFromGroup.options();
+const moveMutation = moveCategoryToGroup.options();
 
 // UI State
 let activeTab = $state('manage');
@@ -50,6 +53,11 @@ let deleteDialogOpen = $state(false);
 let selectedGroup = $state<CategoryGroupWithCounts | null>(null);
 let isCreatingNew = $state(false);
 let isEditingGroup = $state(false);
+
+// Drag and Drop State
+let draggedCategory = $state<(Category & {groupId: number | null}) | null>(null);
+let dragOverGroupId = $state<number | null>(null);
+let isDragging = $state(false);
 
 // Handlers
 function handleCreateNew() {
@@ -88,6 +96,8 @@ function handleSave() {
 	isCreatingNew = false;
 	isEditingGroup = false;
 	activeTab = 'manage';
+	// Refetch to ensure the list is up to date
+	groupsQuery.refetch();
 }
 
 function handleCancelEdit() {
@@ -99,6 +109,75 @@ function handleCancelEdit() {
 
 function handleRemoveCategory(categoryId: number) {
 	removeCategoryMutation.mutate({categoryId});
+}
+
+// Drag and Drop Handlers
+function handleDragStart(event: DragEvent, category: Category & {groupId: number | null}) {
+	draggedCategory = category;
+	isDragging = true;
+	if (event.dataTransfer) {
+		event.dataTransfer.effectAllowed = 'move';
+		event.dataTransfer.setData('text/plain', category.id.toString());
+
+		// Create a custom drag image from the entire category row
+		const target = event.target as HTMLElement;
+		const categoryRow = target.closest('.category-row') as HTMLElement;
+		if (categoryRow) {
+			const clone = categoryRow.cloneNode(true) as HTMLElement;
+			clone.style.position = 'absolute';
+			clone.style.top = '-9999px';
+			clone.style.width = categoryRow.offsetWidth + 'px';
+			clone.style.backgroundColor = 'white';
+			clone.style.border = '1px solid #e5e7eb';
+			clone.style.borderRadius = '0.5rem';
+			clone.style.opacity = '0.9';
+			document.body.appendChild(clone);
+
+			// Set the drag image
+			event.dataTransfer.setDragImage(clone, 0, 0);
+
+			// Remove the clone after a brief delay
+			setTimeout(() => document.body.removeChild(clone), 0);
+		}
+	}
+}
+
+function handleDragEnd() {
+	draggedCategory = null;
+	isDragging = false;
+	dragOverGroupId = null;
+}
+
+function handleDragOver(event: DragEvent, groupId: number) {
+	event.preventDefault();
+	if (event.dataTransfer) {
+		event.dataTransfer.dropEffect = 'move';
+	}
+	dragOverGroupId = groupId;
+}
+
+function handleDragLeave() {
+	dragOverGroupId = null;
+}
+
+function handleDrop(event: DragEvent, targetGroupId: number) {
+	event.preventDefault();
+
+	if (!draggedCategory) return;
+
+	// Don't do anything if dropping on the same group
+	if (draggedCategory.groupId === targetGroupId) {
+		handleDragEnd();
+		return;
+	}
+
+	// Move the category to the new group
+	moveMutation.mutate({
+		categoryId: draggedCategory.id,
+		newGroupId: targetGroupId
+	});
+
+	handleDragEnd();
 }
 
 // Group categories by their assigned group
@@ -147,78 +226,97 @@ const groupedCategories = $derived.by(() => {
 
 			<!-- Manage Tab -->
 			<Tabs.Content value="manage" class="space-y-4 mt-4">
-				<!-- Create Button -->
-				<Button onclick={handleCreateNew} class="w-full">
-					<Plus class="mr-2 h-4 w-4" />
-					Create New Group
-				</Button>
-
 				<!-- Loading State -->
-				{#if isCategoriesLoading}
+				{#if isLoading}
 					<div class="flex items-center justify-center py-8">
 						<LoaderCircle class="h-6 w-6 animate-spin text-muted-foreground" />
 					</div>
 
-				<!-- Categories Grouped by Group -->
-				{:else if categories.length > 0}
-					{@const ungroupedCategories = groupedCategories.get('ungrouped') ?? []}
-					<div class="space-y-4">
-						<!-- Iterate through each group -->
+				<!-- Group List -->
+				{:else if groups.length > 0}
+					<div class="space-y-3">
 						{#each groups as group (group.id)}
 							{@const groupKey = `group-${group.id}`}
 							{@const groupCategories = groupedCategories.get(groupKey) ?? []}
-							{#if groupCategories.length > 0}
-								{@const iconData = group.groupIcon ? getIconByName(group.groupIcon) : null}
-								{@const GroupIcon = iconData?.icon ?? FolderOpen}
+							{@const iconData = group.groupIcon ? getIconByName(group.groupIcon) : null}
+							{@const GroupIcon = iconData?.icon ?? FolderOpen}
+							{@const isDropTarget = dragOverGroupId === group.id}
 
-								<div class="rounded-lg border bg-card">
-									<!-- Group Header -->
-									<div class="border-b bg-muted/30 px-4 py-3">
-										<div class="flex items-center justify-between gap-4">
-											<div class="flex items-center gap-3">
-												<div
-													class="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
-													style="background-color: {group.groupColor}20; border: 1px solid {group.groupColor}"
-												>
-													<GroupIcon class="h-4 w-4" style="color: {group.groupColor}" />
-												</div>
-												<div>
-													<h3 class="font-semibold text-sm">{group.name}</h3>
-													<span class="text-xs text-muted-foreground">
-														{groupCategories.length} {groupCategories.length === 1 ? 'category' : 'categories'}
-													</span>
-												</div>
+							<div
+								class="rounded-lg border bg-card transition-all {isDropTarget ? 'ring-2 ring-primary border-primary' : ''}"
+								role="button"
+								tabindex="0"
+								ondragover={(e) => handleDragOver(e, group.id)}
+								ondragleave={handleDragLeave}
+								ondrop={(e) => handleDrop(e, group.id)}
+							>
+								<!-- Group Header -->
+								<div class="bg-muted/30 px-4 py-3 {groupCategories.length > 0 ? 'border-b' : ''}">
+									<div class="flex items-center justify-between gap-4">
+										<div class="flex items-center gap-3 flex-1 min-w-0">
+											<div
+												class="flex h-10 w-10 items-center justify-center rounded-lg shrink-0"
+												style="background-color: {group.groupColor}20; border: 1px solid {group.groupColor}"
+											>
+												<GroupIcon class="h-5 w-5" style="color: {group.groupColor}" />
 											</div>
-											<div class="flex items-center gap-1 shrink-0">
-												<Button
-													variant="ghost"
-													size="icon"
-													class="h-7 w-7"
-													onclick={() => handleEdit(group)}
-												>
-													<Pencil class="h-3.5 w-3.5" />
-												</Button>
-												<Button
-													variant="ghost"
-													size="icon"
-													class="h-7 w-7"
-													onclick={() => handleDelete(group)}
-												>
-													<Trash2 class="h-3.5 w-3.5 text-destructive" />
-												</Button>
+											<div class="min-w-0 flex-1">
+												<h3 class="font-semibold text-sm truncate">{group.name}</h3>
+												{#if group.description}
+													<p class="text-xs text-muted-foreground line-clamp-1">{group.description}</p>
+												{/if}
+												<span class="text-xs text-muted-foreground">
+													{group.memberCount} {group.memberCount === 1 ? 'category' : 'categories'}
+												</span>
 											</div>
 										</div>
+										<div class="flex items-center gap-1 shrink-0">
+											<Button
+												variant="ghost"
+												size="icon"
+												class="h-8 w-8"
+												onclick={() => handleEdit(group)}
+											>
+												<Pencil class="h-4 w-4" />
+											</Button>
+											<Button
+												variant="ghost"
+												size="icon"
+												class="h-8 w-8"
+												onclick={() => handleDelete(group)}
+											>
+												<Trash2 class="h-4 w-4 text-destructive" />
+											</Button>
+										</div>
 									</div>
+								</div>
 
-									<!-- Category List -->
+								<!-- Category List (if group has categories) -->
+								{#if groupCategories.length > 0}
 									<div class="divide-y">
 										{#each groupCategories as category (category.id)}
 											{@const catIconData = category.categoryIcon ? getIconByName(category.categoryIcon) : null}
 											{@const CategoryIcon = catIconData?.icon ?? Tag}
-											<div class="p-3 hover:bg-muted/50 transition-colors">
+											{@const isDraggedItem = isDragging && draggedCategory?.id === category.id}
+											<div
+												class="category-row p-3 hover:bg-muted/50 transition-colors {isDraggedItem ? 'opacity-50' : ''}"
+											>
 												<div class="flex items-center justify-between gap-3">
 													<div class="flex items-center gap-3 flex-1 min-w-0">
-														<CategoryIcon class="h-5 w-5 text-muted-foreground shrink-0" />
+														<div
+															role="button"
+															tabindex="0"
+															class="shrink-0 cursor-grab active:cursor-grabbing"
+															draggable="true"
+															ondragstart={(e) => handleDragStart(e, {...category, groupId: group.id})}
+															ondragend={handleDragEnd}
+														>
+															<GripVertical class="h-4 w-4 text-muted-foreground/50" />
+														</div>
+														<CategoryIcon
+															class="h-5 w-5 shrink-0 {category.categoryColor ? '' : 'text-muted-foreground'}"
+															style={category.categoryColor ? `color: ${category.categoryColor}` : ''}
+														/>
 														<div class="min-w-0 flex-1">
 															<p class="font-medium text-sm truncate">{category.name}</p>
 															{#if category.notes}
@@ -242,57 +340,23 @@ const groupedCategories = $derived.by(() => {
 											</div>
 										{/each}
 									</div>
-								</div>
-							{/if}
-						{/each}
-
-						<!-- Ungrouped Categories -->
-						{#if ungroupedCategories.length > 0}
-							<div class="rounded-lg border bg-card">
-								<!-- Ungrouped Header -->
-								<div class="border-b bg-muted/30 px-4 py-3">
-									<div class="flex items-center gap-3">
-										<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted shrink-0">
-											<FolderOpen class="h-4 w-4 text-muted-foreground" />
-										</div>
-										<div>
-											<h3 class="font-semibold text-sm">Ungrouped</h3>
-											<span class="text-xs text-muted-foreground">
-												{ungroupedCategories.length} {ungroupedCategories.length === 1 ? 'category' : 'categories'}
-											</span>
-										</div>
-									</div>
-								</div>
-
-								<!-- Ungrouped Category List -->
-								<div class="divide-y">
-									{#each ungroupedCategories as category (category.id)}
-										{@const catIconData = category.categoryIcon ? getIconByName(category.categoryIcon) : null}
-										{@const CategoryIcon = catIconData?.icon ?? Tag}
-										<div class="p-3 hover:bg-muted/50 transition-colors">
-											<div class="flex items-center gap-3">
-												<CategoryIcon class="h-5 w-5 text-muted-foreground shrink-0" />
-												<div class="min-w-0 flex-1">
-													<p class="font-medium text-sm truncate">{category.name}</p>
-													{#if category.notes}
-														<p class="text-xs text-muted-foreground line-clamp-1">
-															{category.notes}
-														</p>
-													{/if}
-												</div>
-											</div>
-										</div>
-									{/each}
-								</div>
+								{/if}
 							</div>
-						{/if}
+						{/each}
 					</div>
 
 				<!-- Empty State -->
 				{:else}
-					<div class="text-center py-8 text-muted-foreground">
-						<FolderOpen class="h-12 w-12 mx-auto mb-2 opacity-50" />
-						<p>No categories yet.</p>
+					<div class="flex flex-col items-center justify-center py-12 text-center">
+						<FolderOpen class="h-12 w-12 text-muted-foreground/50 mb-4" />
+						<h3 class="font-semibold mb-1">No groups yet</h3>
+						<p class="text-sm text-muted-foreground mb-4">
+							Create your first category group to get started
+						</p>
+						<Button onclick={handleCreateNew} size="sm">
+							<Plus class="mr-2 h-4 w-4" />
+							Create Group
+						</Button>
 					</div>
 				{/if}
 			</Tabs.Content>
@@ -304,15 +368,10 @@ const groupedCategories = $derived.by(() => {
 						id={selectedGroup.id}
 						initialData={selectedGroup}
 						onSave={handleSave}
+						onCancel={handleCancelEdit}
 					/>
-					<Button variant="outline" onclick={handleCancelEdit} class="w-full">
-						Cancel
-					</Button>
 				{:else}
-					<ManageCategoryGroupForm onSave={handleSave} />
-					<Button variant="outline" onclick={handleCancelEdit} class="w-full">
-						Cancel
-					</Button>
+					<ManageCategoryGroupForm onSave={handleSave} onCancel={handleCancelEdit} />
 				{/if}
 			</Tabs.Content>
 

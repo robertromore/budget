@@ -142,9 +142,10 @@ export const columns = (
     {
       accessorKey: "date",
       id: "date",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Date",
         }),
       cell: (info) => {
@@ -172,9 +173,10 @@ export const columns = (
     {
       accessorKey: "provider",
       id: "provider",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Provider",
         }),
       cell: (info) => {
@@ -199,9 +201,10 @@ export const columns = (
     {
       accessorKey: "patientName",
       id: "patientName",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Patient",
         }),
       cell: (info) => {
@@ -226,9 +229,10 @@ export const columns = (
     {
       accessorKey: "expenseType",
       id: "expenseType",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Type",
         }),
       cell: (info) => {
@@ -255,9 +259,10 @@ export const columns = (
     {
       accessorKey: "diagnosis",
       id: "diagnosis",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Diagnosis",
         }),
       cell: (info) => {
@@ -278,9 +283,10 @@ export const columns = (
     {
       accessorKey: "treatmentDescription",
       id: "treatmentDescription",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Treatment",
         }),
       cell: (info) => {
@@ -301,9 +307,10 @@ export const columns = (
     {
       accessorKey: "amount",
       id: "amount",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Amount",
         }),
       cell: (info) => {
@@ -331,9 +338,10 @@ export const columns = (
     {
       accessorKey: "insuranceCovered",
       id: "insuranceCovered",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Insurance",
         }),
       cell: (info) => {
@@ -361,9 +369,10 @@ export const columns = (
     {
       accessorKey: "outOfPocket",
       id: "outOfPocket",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Out of Pocket",
         }),
       cell: (info) => {
@@ -386,9 +395,10 @@ export const columns = (
     {
       accessorKey: "claimStatus",
       id: "status",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Status",
         }),
       cell: (info) => {
@@ -417,9 +427,10 @@ export const columns = (
     {
       accessorKey: "notes",
       id: "notes",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader, {
           column,
+          table,
           title: "Notes",
         }),
       cell: (info) => {

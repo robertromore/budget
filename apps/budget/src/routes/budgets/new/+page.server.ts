@@ -11,7 +11,7 @@ import { superValidate } from "sveltekit-superforms/client";
 
 export const load = async (event) => {
   const { url } = event;
-  const context = await createContext();
+  const context = await createContext(event);
   const caller = createCaller(context);
 
   // Check for template parameter and prefill form data
@@ -95,7 +95,7 @@ export const actions: Actions = {
         ...(form.data.categoryIds && { categoryIds: form.data.categoryIds }),
       };
 
-      const caller = createCaller(await createContext());
+      const caller = createCaller(await createContext(event));
       const newBudget = await caller.budgetRoutes.create(budgetData);
 
       // If a schedule was linked, update the schedule's budgetId and link it via the service

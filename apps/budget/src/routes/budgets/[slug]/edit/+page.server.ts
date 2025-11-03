@@ -14,7 +14,7 @@ export const load: PageServerLoad = async (event) => {
     throw redirect(303, '/budgets');
   }
 
-  const context = await createContext();
+  const context = await createContext(event);
   const caller = createCaller(context);
 
   try {
@@ -82,7 +82,7 @@ export const actions: Actions = {
     }
 
     try {
-      const context = await createContext();
+      const context = await createContext(event);
       const caller = createCaller(context);
 
       // Get the budget to retrieve its ID
