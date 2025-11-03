@@ -30,6 +30,7 @@ export const load: PageServerLoad = async (event) => {
       },
       icon: "",
       dirty: false,
+      isDefault: true,
     },
     {
       id: -3,
@@ -53,6 +54,7 @@ export const load: PageServerLoad = async (event) => {
       },
       icon: "",
       dirty: false,
+      isDefault: true,
     },
     {
       id: -2,
@@ -81,6 +83,7 @@ export const load: PageServerLoad = async (event) => {
       },
       icon: "",
       dirty: false,
+      isDefault: true,
     },
     {
       id: -1,
@@ -104,6 +107,7 @@ export const load: PageServerLoad = async (event) => {
       },
       icon: "",
       dirty: false,
+      isDefault: true,
     },
   ] as View[];
 
@@ -132,6 +136,7 @@ export const load: PageServerLoad = async (event) => {
       },
       icon: "",
       dirty: false,
+      isDefault: true,
     },
     {
       id: -11,
@@ -163,6 +168,7 @@ export const load: PageServerLoad = async (event) => {
       },
       icon: "",
       dirty: false,
+      isDefault: true,
     },
     {
       id: -12,
@@ -194,6 +200,7 @@ export const load: PageServerLoad = async (event) => {
       },
       icon: "",
       dirty: false,
+      isDefault: true,
     },
     {
       id: -13,
@@ -225,12 +232,13 @@ export const load: PageServerLoad = async (event) => {
       },
       icon: "",
       dirty: false,
+      isDefault: true,
     },
   ] as View[];
 
   // Load user-created views from database
   const caller = createCaller(await createContext(event));
-  const userViews = await caller.viewsRoutes.all();
+  const userViews = await caller.viewsRoutes.all({ entityType: 'transactions' });
 
   // Load active budgets for transaction form
   const budgets = await caller.budgetRoutes.list({status: "active"});
