@@ -1,6 +1,6 @@
 <script lang="ts">
 import {NumericInput} from '$lib/components/input';
-import {useEditableCell} from '$lib/hooks/ui';
+import {useEditableCell} from '$lib/hooks/ui/use-editable-cell.svelte';
 import {currencyFormatter} from '$lib/utils/formatters';
 
 interface Props {

@@ -6,7 +6,7 @@ import type {Snippet, Component} from 'svelte';
 import {Button} from '$lib/components/ui/button';
 
 // Hook imports
-import {useEditableCell} from '$lib/hooks/ui';
+import {useEditableCell} from '$lib/hooks/ui/use-editable-cell.svelte';
 
 // Type imports
 import type {HTMLAttributes} from 'svelte/elements';
