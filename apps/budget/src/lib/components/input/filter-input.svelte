@@ -4,8 +4,7 @@ import {buttonVariants} from '$lib/components/ui/button/index.js';
 import ListFilterPlus from '@lucide/svelte/icons/list-filter-plus';
 import {cn} from '$lib/utils';
 import type {FilterInputOption, TransactionsFormat, ViewFilter} from '$lib/types';
-import {getContext} from 'svelte';
-import type {CurrentViewsState} from '$lib/states/views';
+import {currentViews} from '$lib/states/views';
 
 let {
   value = $bindable(),
@@ -15,7 +14,8 @@ let {
   availableFilters: FilterInputOption<TransactionsFormat>[];
 } = $props();
 
-const currentViewsState = getContext<CurrentViewsState<any>>('current_views');
+// Use runed Context API instead of Svelte's getContext
+const currentViewsState = $derived(currentViews.get());
 const currentView = $derived(currentViewsState?.activeView);
 const _selectedFilters = $derived(
   currentView?.view

@@ -3,6 +3,7 @@ export * from "./base";
 export * from "./filter";
 export * from "./transactions";
 export * from "./dates";
+export * from "./analytics";
 
 // Enhanced types and utilities
 export * from "./enhanced-types";

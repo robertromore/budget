@@ -14,9 +14,11 @@ interface Props {
   open?: boolean;
   buttonClass?: string;
   id?: string;
+  /** Optional formatter function for displaying the value. Defaults to currency formatter. */
+  formatter?: (value: number) => string;
 }
 
-let {value = $bindable(), onSubmit, open = $bindable(), buttonClass, id}: Props = $props();
+let {value = $bindable(), onSubmit, open = $bindable(), buttonClass, id, formatter = currencyFormatter.format}: Props = $props();
 
 // --- State ---
 let dialogOpen = $state(open || false);
@@ -168,7 +170,7 @@ const handlePaste = (event: ClipboardEvent) => {
             !new_amount && 'text-muted-foreground',
             buttonClass || 'w-36'
           )}>
-          {currencyFormatter.format(parseFloat(new_amount) || 0)}
+          {formatter(parseFloat(new_amount) || 0)}
         </Button>
       {/snippet}
     </Popover.Trigger>

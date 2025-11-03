@@ -21,8 +21,7 @@ import {Button} from '$lib/components/ui/button';
 import {Badge} from '$lib/components/ui/badge';
 import {cn} from '$lib/utils';
 import {currencyFormatter} from '$lib/utils/formatters';
-import {getContext} from 'svelte';
-import type {CurrentViewsState} from '$lib/states/views';
+import {currentViews} from '$lib/states/views';
 import X from '@lucide/svelte/icons/x';
 import type {AmountFilterValue} from '$lib/types/filter';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
@@ -30,15 +29,20 @@ import NumericInput from '$lib/components/input/numeric-input.svelte';
 /**
  * Component props interface
  */
-let {
-  column,
-  title = 'Amount',
-}: {
+export interface Props<TData, TValue> {
   /** TanStack table column instance for applying filters */
   column: Column<TData, TValue>;
   /** Display title for the filter component */
   title?: string;
-} = $props();
+  /** Optional formatter function for displaying values. Defaults to currency formatter. */
+  formatter?: (value: number) => string;
+}
+
+let {
+  column,
+  title = 'Amount',
+  formatter = currencyFormatter.format,
+}: Props<TData, TValue> = $props();
 
 /** Controls visibility of operator selection popover */
 let operatorOpen = $state(false);
@@ -55,7 +59,14 @@ const filterTypes = [
   {value: 'notEquals', label: 'not equals'}, // Amount != value
 ];
 
-const currentViewsState = getContext<CurrentViewsState<TData>>('current_views');
+// Use runed Context API instead of Svelte's getContext (optional - may not be available)
+let currentViewsState = $derived.by(() => {
+  try {
+    return currentViews.get();
+  } catch {
+    return undefined;
+  }
+});
 const activeView = $derived(currentViewsState?.activeView);
 const activeViewModel = $derived(activeView?.view);
 
@@ -64,8 +75,8 @@ const hasFilter = $derived(currentFilter !== undefined);
 
 // Initialize filter with default operator when component mounts
 $effect(() => {
-  if (!currentFilter) {
-    const newFilter: AmountFilterValue = {type: 'equals', value: undefined};
+  if (!currentFilter || !currentFilter.type) {
+    const newFilter: AmountFilterValue = {type: 'equals'};
     column.setFilterValue(newFilter);
   }
 });
@@ -104,10 +115,10 @@ const clearFilter = () => {
   if (hasValues) {
     // First click: reset to default values (undefined, which displays as 0)
     if (currentFilter.type === 'between') {
-      const newFilter: AmountFilterValue = {type: currentFilter.type, min: undefined, max: undefined};
+      const newFilter: AmountFilterValue = {type: currentFilter.type};
       column.setFilterValue(newFilter);
     } else {
-      const newFilter: AmountFilterValue = {type: currentFilter.type, value: undefined};
+      const newFilter: AmountFilterValue = {type: currentFilter.type};
       column.setFilterValue(newFilter);
     }
   } else {
@@ -155,14 +166,23 @@ const applySingleValue = () => {
     return;
   }
 
-  const newFilter: AmountFilterValue = {...currentFilter, value: inputValue};
+  // Explicitly extract properties to avoid Proxy spreading issues
+  const newFilter: AmountFilterValue = {
+    type: currentFilter.type,
+    value: inputValue
+  };
   column.setFilterValue(newFilter);
 };
 
 const applyRangeValue = () => {
   if (!currentFilter) return;
 
-  const newFilter: AmountFilterValue = {...currentFilter, min: rangeMin, max: rangeMax};
+  // Explicitly extract properties to avoid Proxy spreading issues
+  const newFilter: AmountFilterValue = {
+    type: currentFilter.type,
+    min: rangeMin,
+    max: rangeMax
+  };
   column.setFilterValue(newFilter);
 };
 
@@ -222,17 +242,20 @@ $effect(() => {
         id="amount-min"
         bind:value={rangeMin}
         onSubmit={applyRangeValue}
+        {formatter}
         buttonClass="h-8 rounded-none w-20" />
       <NumericInput
         id="amount-max"
         bind:value={rangeMax}
         onSubmit={applyRangeValue}
+        {formatter}
         buttonClass="h-8 rounded-none w-20" />
     {:else}
       <NumericInput
         id="amount-value"
         bind:value={inputValue}
         onSubmit={applySingleValue}
+        {formatter}
         buttonClass="h-8 rounded-none" />
     {/if}
 
@@ -251,7 +274,7 @@ $effect(() => {
       size="sm"
       class="h-8 rounded-none"
       onclick={() => {
-        const newFilter: AmountFilterValue = {type: 'equals', value: undefined};
+        const newFilter: AmountFilterValue = {type: 'equals'};
         column.setFilterValue(newFilter);
       }}>
       Select value
