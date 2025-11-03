@@ -1,15 +1,15 @@
-import {BaseRepository} from "$lib/server/shared/database/base-repository";
-import {db} from "$lib/server/shared/database";
-import {accounts} from "$lib/schema/accounts";
-import type {Account} from "$lib/schema/accounts";
-import {transactions} from "$lib/schema/transactions";
-import {categories} from "$lib/schema/categories";
-import {payees} from "$lib/schema/payees";
-import {eq, like, and, isNull, desc} from "drizzle-orm";
-import {NotFoundError} from "$lib/server/shared/types/errors";
+import type { Account, AccountType } from "$lib/schema/accounts";
+import { accounts } from "$lib/schema/accounts";
+import { categories } from "$lib/schema/categories";
+import { payees } from "$lib/schema/payees";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/shared/database";
+import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import type {
-  AccountWithTransactions,
   AccountTransactionDbResult,
+  AccountWithTransactions,
   TransactionWithBalance
 } from "./types";
 
@@ -19,6 +19,7 @@ export interface CreateAccountInput {
   slug: string;
   notes?: string | undefined;
   onBudget?: boolean | undefined;
+  accountType?: AccountType | undefined;
 }
 
 export interface UpdateAccountInput {
@@ -26,7 +27,9 @@ export interface UpdateAccountInput {
   slug?: string | undefined;
   notes?: string | undefined;
   onBudget?: boolean | undefined;
-}
+  accountIcon?: string | undefined;
+  accountColor?: string | undefined;
+  initialBalance?: number | undefined;}
 
 /**
  * Account repository with domain-specific operations
@@ -133,7 +136,7 @@ export class AccountRepository extends BaseRepository<
   /**
    * Get all accounts with their transactions
    */
-  async findAllWithTransactions(): Promise<Account[]> {
+  async findAllWithTransactions(): Promise<AccountWithTransactions[]> {
     try {
       // First get all active accounts
       const accountList = await this.findActive();
@@ -202,7 +205,7 @@ export class AccountRepository extends BaseRepository<
             ...account,
             transactions: transactionsWithBalance,
             balance: runningBalance,
-          } as Account;
+          } as AccountWithTransactions;
         })
       );
 

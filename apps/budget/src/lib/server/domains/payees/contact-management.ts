@@ -777,13 +777,13 @@ export class ContactManagementService {
   async auditContactAccess(
     payeeId: number,
     action: 'view' | 'update' | 'validate' | 'enrich' | 'delete',
-    userId?: string,
+    workspaceId?: string,
     details?: Record<string, any>
   ): Promise<{
     auditId: string;
     timestamp: string;
     action: string;
-    userId?: string;
+    workspaceId?: string;
     payeeId: number;
     details: Record<string, any>;
     complianceFlags: string[];
@@ -812,13 +812,13 @@ export class ContactManagementService {
     retentionDate.setFullYear(retentionDate.getFullYear() + 7);
 
     // In a real implementation, this would be stored in an audit log table
-    logger.info('Payee audit log', {action, payeeId, userId: userId || 'system'});
+    logger.info('Payee audit log', {action, payeeId, workspaceId: workspaceId || 'system'});
 
     const result: {
       auditId: string;
       timestamp: string;
       action: string;
-      userId?: string;
+      workspaceId?: string;
       payeeId: number;
       details: Record<string, any>;
       complianceFlags: string[];
@@ -833,7 +833,7 @@ export class ContactManagementService {
       retentionDate: retentionDate.toISOString()
     };
 
-    if (userId) result.userId = userId;
+    if (workspaceId) result.workspaceId = workspaceId;
 
     return result;
   }

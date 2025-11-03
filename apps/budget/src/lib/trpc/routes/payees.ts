@@ -20,22 +20,22 @@ import {withErrorHandler} from "$lib/trpc/shared/errors";
 const payeeService = serviceFactory.getPayeeService();
 
 export const payeeRoutes = t.router({
-  all: publicProcedure.query(withErrorHandler(async () => payeeService.getAllPayees())),
+  all: publicProcedure.query(withErrorHandler(async ({ctx}) => payeeService.getAllPayees(ctx.workspaceId))),
 
-  allWithStats: publicProcedure.query(withErrorHandler(async () => payeeService.getAllPayeesWithStats())),
+  allWithStats: publicProcedure.query(withErrorHandler(async ({ctx}) => payeeService.getAllPayeesWithStats(ctx.workspaceId))),
 
-  load: publicProcedure.input(payeeIdSchema).query(withErrorHandler(async ({input}) => payeeService.getPayeeById(input.id))),
+  load: publicProcedure.input(payeeIdSchema).query(withErrorHandler(async ({input, ctx}) => payeeService.getPayeeById(input.id, ctx.workspaceId))),
 
-  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(withErrorHandler(async ({input}) => payeeService.getPayeeBySlug(input.slug))),
+  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(withErrorHandler(async ({input, ctx}) => payeeService.getPayeeBySlug(input.slug, ctx.workspaceId))),
 
-  search: publicProcedure.input(searchPayeesSchema).query(withErrorHandler(async ({input}) => payeeService.searchPayees(input.query))),
+  search: publicProcedure.input(searchPayeesSchema).query(withErrorHandler(async ({input, ctx}) => payeeService.searchPayees(input.query, ctx.workspaceId))),
 
-  remove: rateLimitedProcedure.input(removePayeeSchema).mutation(withErrorHandler(async ({input}) => payeeService.deletePayee(input.id, {force: false}))),
+  remove: rateLimitedProcedure.input(removePayeeSchema).mutation(withErrorHandler(async ({input, ctx}) => payeeService.deletePayee(input.id, ctx.workspaceId, {force: false}))),
 
   delete: bulkOperationProcedure
     .input(removePayeesSchema)
-    .mutation(withErrorHandler(async ({input: {entities}}) => {
-      const result = await payeeService.bulkDeletePayees(entities, {force: false});
+    .mutation(withErrorHandler(async ({input: {entities}, ctx}) => {
+      const result = await payeeService.bulkDeletePayees(entities, ctx.workspaceId, {force: false});
       return {
         deletedCount: result.deletedCount,
         errors: result.errors,
@@ -44,18 +44,18 @@ export const payeeRoutes = t.router({
 
   create: rateLimitedProcedure
     .input(createPayeeSchema)
-    .mutation(withErrorHandler(async ({input}) => payeeService.createPayee(input))),
+    .mutation(withErrorHandler(async ({input, ctx}) => payeeService.createPayee(input, ctx.workspaceId))),
 
   update: rateLimitedProcedure
     .input(updatePayeeSchema.safeExtend({id: z.number().int().positive()}))
-    .mutation(withErrorHandler(async ({input}) => {
+    .mutation(withErrorHandler(async ({input, ctx}) => {
       const {id, ...updateData} = input;
-      return await payeeService.updatePayee(id, updateData);
+      return await payeeService.updatePayee(id, updateData, ctx.workspaceId);
     })),
 
   save: rateLimitedProcedure
     .input(superformInsertPayeeSchema)
-    .mutation(withErrorHandler(async ({input}) => {
+    .mutation(withErrorHandler(async ({input, ctx}) => {
       const {id, address, ...payeeData} = input;
 
       // Ensure name is properly typed and required
@@ -78,72 +78,73 @@ export const payeeRoutes = t.router({
           ...payeeData,
           name: name.trim(),
           address: parsedAddress
-        });
+        }, ctx.workspaceId);
       } else {
         // Create new payee
         return await payeeService.createPayee({
           ...payeeData,
           name: name.trim(),
           address: parsedAddress
-        });
+        }, ctx.workspaceId);
       }
     })),
 
   // Enhanced search and filtering endpoints
   searchAdvanced: publicProcedure
     .input(advancedSearchPayeesSchema)
-    .query(withErrorHandler(async ({input}) => {
+    .query(withErrorHandler(async ({input, ctx}) => {
       console.log('tRPC searchAdvanced called with input:', JSON.stringify(input, null, 2));
-      const result = await payeeService.searchPayeesAdvanced(input);
+      const result = await payeeService.searchPayeesAdvanced(input, ctx.workspaceId);
       console.log('tRPC searchAdvanced result count:', result.length);
       return result;
     })),
 
   byType: publicProcedure
     .input(getPayeesByTypeSchema)
-    .query(withErrorHandler(async ({input}) => payeeService.getPayeesByType(input.payeeType))),
+    .query(withErrorHandler(async ({input, ctx}) => payeeService.getPayeesByType(input.payeeType, ctx.workspaceId))),
 
   withRelations: publicProcedure
-    .query(withErrorHandler(async () => payeeService.getPayeesWithRelations())),
+    .query(withErrorHandler(async ({ctx}) => payeeService.getPayeesWithRelations(ctx.workspaceId))),
 
   needingAttention: publicProcedure
-    .query(withErrorHandler(async () => payeeService.getPayeesNeedingAttention())),
+    .query(withErrorHandler(async ({ctx}) => payeeService.getPayeesNeedingAttention(ctx.workspaceId))),
 
   // Intelligence and analytics endpoints
   stats: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({input}) => payeeService.getPayeeStats(input.id))),
+    .query(withErrorHandler(async ({input, ctx}) => payeeService.getPayeeStats(input.id, ctx.workspaceId))),
 
   suggestions: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({input}) => payeeService.generatePayeeSuggestions(input.id))),
+    .query(withErrorHandler(async ({input, ctx}) => payeeService.generatePayeeSuggestions(input.id, ctx.workspaceId))),
 
   intelligence: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({input}) => payeeService.getPayeeIntelligence(input.id))),
+    .query(withErrorHandler(async ({input, ctx}) => payeeService.getPayeeIntelligence(input.id, ctx.workspaceId))),
 
   analytics: publicProcedure
-    .query(withErrorHandler(async () => payeeService.getPayeeAnalytics())),
+    .query(withErrorHandler(async ({ctx}) => payeeService.getPayeeAnalytics(ctx.workspaceId))),
 
   // Management and automation endpoints
   merge: rateLimitedProcedure
     .input(mergePayeesSchema)
-    .mutation(withErrorHandler(async ({input}) => {
-      await payeeService.mergePayees(input.sourceId, input.targetId);
+    .mutation(withErrorHandler(async ({input, ctx}) => {
+      await payeeService.mergePayees(input.sourceId, input.targetId, ctx.workspaceId);
       return {success: true};
     })),
 
   applyIntelligentDefaults: rateLimitedProcedure
     .input(applyIntelligentDefaultsSchema)
-    .mutation(withErrorHandler(async ({input}) => payeeService.applyIntelligentDefaults(
+    .mutation(withErrorHandler(async ({input, ctx}) => payeeService.applyIntelligentDefaults(
       input.id,
+      ctx.workspaceId,
       input.applyCategory ?? true,
       input.applyBudget ?? true
     ))),
 
   updateCalculatedFields: rateLimitedProcedure
     .input(updateCalculatedFieldsSchema)
-    .mutation(withErrorHandler(async ({input}) => payeeService.updateCalculatedFields(input.payeeId))),
+    .mutation(withErrorHandler(async ({input, ctx}) => payeeService.updateCalculatedFields(input.payeeId, ctx.workspaceId))),
 
   // =====================================
   // Category Learning Routes

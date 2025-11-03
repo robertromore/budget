@@ -199,18 +199,18 @@ const intelligenceService = serviceFactory.getBudgetDetectionService();
 const automationService = serviceFactory.getBudgetGroupAutomationService();
 
 export const budgetRoutes = t.router({
-  count: publicProcedure.query(async () => {
+  count: publicProcedure.query(async ({ctx}) => {
     try {
-      const budgets = await budgetService.listBudgets();
+      const budgets = await budgetService.listBudgets(ctx.workspaceId);
       return { count: budgets.length };
     } catch (error) {
       throw translateDomainError(error);
     }
   }),
-  list: publicProcedure.input(listBudgetSchema).query(async ({input}) => {
+  list: publicProcedure.input(listBudgetSchema).query(async ({input, ctx}) => {
     try {
       const status = input?.status;
-      return await budgetService.listBudgets(status);
+      return await budgetService.listBudgets(ctx.workspaceId, status);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -260,40 +260,40 @@ export const budgetRoutes = t.router({
         throw translateDomainError(error);
       }
     }),
-  get: publicProcedure.input(budgetIdSchema).query(async ({input}) => {
+  get: publicProcedure.input(budgetIdSchema).query(async ({input, ctx}) => {
     try {
-      return await budgetService.getBudget(input.id);
+      return await budgetService.getBudget(input.id, ctx.workspaceId);
     } catch (error) {
       if (error instanceof TRPCError) throw error;
       throw translateDomainError(error);
     }
   }),
-  getBySlug: publicProcedure.input(budgetSlugSchema).query(async ({input}) => {
+  getBySlug: publicProcedure.input(budgetSlugSchema).query(async ({input, ctx}) => {
     try {
-      return await budgetService.getBudgetBySlug(input.slug);
+      return await budgetService.getBudgetBySlug(input.slug, ctx.workspaceId);
     } catch (error) {
       if (error instanceof TRPCError) throw error;
       throw translateDomainError(error);
     }
   }),
-  create: publicProcedure.input(createBudgetSchema).mutation(async ({input}) => {
+  create: publicProcedure.input(createBudgetSchema).mutation(async ({input, ctx}) => {
     try {
-      return await budgetService.createBudget(input as any);
+      return await budgetService.createBudget(input as any, ctx.workspaceId);
     } catch (error) {
       throw translateDomainError(error);
     }
   }),
-  update: publicProcedure.input(updateBudgetSchema).mutation(async ({input}) => {
+  update: publicProcedure.input(updateBudgetSchema).mutation(async ({input, ctx}) => {
     try {
       const {id, ...updates} = input;
-      return await budgetService.updateBudget(id, updates as any);
+      return await budgetService.updateBudget(id, updates as any, ctx.workspaceId);
     } catch (error) {
       throw translateDomainError(error);
     }
   }),
-  delete: publicProcedure.input(budgetIdSchema).mutation(async ({input}) => {
+  delete: publicProcedure.input(budgetIdSchema).mutation(async ({input, ctx}) => {
     try {
-      await budgetService.deleteBudget(input.id);
+      await budgetService.deleteBudget(input.id, ctx.workspaceId);
       return {success: true};
     } catch (error) {
       throw translateDomainError(error);
@@ -304,9 +304,9 @@ export const budgetRoutes = t.router({
       id: z.number().int().positive(),
       newName: z.string().trim().min(2).max(80).optional(),
     }))
-    .mutation(async ({input}) => {
+    .mutation(async ({input, ctx}) => {
       try {
-        return await budgetService.duplicateBudget(input.id, input.newName);
+        return await budgetService.duplicateBudget(input.id, ctx.workspaceId, input.newName);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -315,9 +315,9 @@ export const budgetRoutes = t.router({
     .input(z.object({
       ids: z.array(z.number().int().positive()).min(1),
     }))
-    .mutation(async ({input}) => {
+    .mutation(async ({input, ctx}) => {
       try {
-        return await budgetService.bulkArchive(input.ids);
+        return await budgetService.bulkArchive(input.ids, ctx.workspaceId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -326,9 +326,9 @@ export const budgetRoutes = t.router({
     .input(z.object({
       ids: z.array(z.number().int().positive()).min(1),
     }))
-    .mutation(async ({input}) => {
+    .mutation(async ({input, ctx}) => {
       try {
-        return await budgetService.bulkDelete(input.ids);
+        return await budgetService.bulkDelete(input.ids, ctx.workspaceId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -871,9 +871,9 @@ export const budgetRoutes = t.router({
 
   createPeriodTemplate: publicProcedure
     .input(createPeriodTemplateSchema)
-    .mutation(async ({input}) => {
+    .mutation(async ({input, ctx}) => {
       try {
-        return await budgetService.createPeriodTemplate(input as any);
+        return await budgetService.createPeriodTemplate(input as any, ctx.workspaceId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1184,10 +1184,13 @@ export const budgetRoutes = t.router({
         minConfidence: z.number().int().min(0).max(100).optional().default(40),
       })
     )
-    .query(async ({input}) => {
+    .query(async ({input, ctx}) => {
       try {
         const budgetService = serviceFactory.getBudgetService();
-        return await budgetService.analyzeSpendingHistory(input as any);
+        return await budgetService.analyzeSpendingHistory({
+          ...input,
+          workspaceId: ctx.workspaceId,
+        } as any);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1202,10 +1205,13 @@ export const budgetRoutes = t.router({
         minConfidence: z.number().int().min(0).max(100).optional().default(40),
       })
     )
-    .mutation(async ({input}) => {
+    .mutation(async ({input, ctx}) => {
       try {
         const budgetService = serviceFactory.getBudgetService();
-        return await budgetService.generateRecommendations(input as any);
+        return await budgetService.generateRecommendations({
+          ...input,
+          workspaceId: ctx.workspaceId,
+        } as any);
       } catch (error) {
         throw translateDomainError(error);
       }

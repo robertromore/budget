@@ -9,6 +9,7 @@ import {
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { budgetGroups } from "./budgets";
 import { budgetRecommendations } from "./recommendations";
+import { workspaces } from "./workspaces";
 
 /**
  * Budget Automation Settings
@@ -19,6 +20,9 @@ import { budgetRecommendations } from "./recommendations";
  */
 export const budgetAutomationSettings = sqliteTable("budget_automation_settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  workspaceId: integer("workspace_id")
+    .notNull()
+    .references(() => workspaces.id, {onDelete: "cascade"}),
 
   // Automation toggles
   autoCreateGroups: integer("auto_create_groups", { mode: "boolean" })
@@ -51,7 +55,9 @@ export const budgetAutomationSettings = sqliteTable("budget_automation_settings"
   // Timestamps
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => [
+  index("budget_automation_settings_workspace_id_idx").on(table.workspaceId),
+]);
 
 /**
  * Budget Automation Activity
@@ -99,6 +105,16 @@ export const budgetAutomationActivity = sqliteTable(
 );
 
 // Relations
+export const budgetAutomationSettingsRelations = relations(
+  budgetAutomationSettings,
+  ({ one }) => ({
+    workspace: one(workspaces, {
+      fields: [budgetAutomationSettings.workspaceId],
+      references: [workspaces.id],
+    }),
+  })
+);
+
 export const budgetAutomationActivityRelations = relations(
   budgetAutomationActivity,
   ({ one }) => ({
@@ -116,6 +132,9 @@ export const budgetAutomationActivityRelations = relations(
 // Zod schemas for validation
 export const selectAutomationSettingsSchema = createSelectSchema(budgetAutomationSettings);
 export const insertAutomationSettingsSchema = createInsertSchema(budgetAutomationSettings);
+export const formInsertAutomationSettingsSchema = createInsertSchema(budgetAutomationSettings, {
+  workspaceId: (schema) => schema.optional(),
+});
 
 export const selectAutomationActivitySchema = createSelectSchema(budgetAutomationActivity);
 export const insertAutomationActivitySchema = createInsertSchema(budgetAutomationActivity);

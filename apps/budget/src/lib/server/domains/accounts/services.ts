@@ -1,12 +1,12 @@
-import {AccountRepository} from "./repository";
-import type {Account} from "$lib/schema/accounts";
-import {ConflictError, ValidationError} from "$lib/server/shared/types/errors";
-import {InputSanitizer} from "$lib/server/shared/validation";
+import type { Account } from "$lib/schema/accounts";
+import { ConflictError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { generateUniqueSlug } from "$lib/utils/generate-unique-slug";
+import { getLocalTimeZone, today } from "@internationalized/date";
 import slugify from "@sindresorhus/slugify";
-import {generateUniqueSlug} from "$lib/utils/generate-unique-slug";
-import {TransactionService} from "../transactions/services";
-import {today, getLocalTimeZone} from "@internationalized/date";
-
+import { TransactionService } from "../transactions/services";
+import { AccountRepository } from "./repository";
+import type {AccountWithTransactions} from "./types";
 import type { AccountType } from "$lib/schema/accounts";
 
 // Service input types
@@ -40,7 +40,7 @@ export class AccountService {
   /**
    * Create a new account
    */
-  async createAccount(data: CreateAccountData): Promise<Account> {
+  async createAccount(data: CreateAccountData, workspaceId: number): Promise<Account> {
     // Sanitize and validate inputs
     const sanitizedName = InputSanitizer.sanitizeAccountName(data.name);
     const sanitizedNotes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : undefined;
@@ -68,7 +68,8 @@ export class AccountService {
       slug: uniqueSlug,
       notes: sanitizedNotes,
       onBudget,
-    });
+      accountType: data.accountType,
+    }, workspaceId);
 
     // Create initial balance transaction if balance is non-zero
     if (initialBalance !== 0) {
@@ -82,11 +83,11 @@ export class AccountService {
         status: "cleared",
         payeeId: null,
         categoryId: null
-      });
+      }, workspaceId.toString());
     }
 
     // Return the account (balance will be updated by the transaction)
-    return this.repository.findByIdOrThrow(account.id);
+    return this.repository.findByIdOrThrow(account.id, workspaceId);
   }
 
   /**
@@ -100,7 +101,7 @@ export class AccountService {
     interface AccountUpdateFields {
       name?: string;
       slug?: string;
-      notes?: string | null;
+      notes?: string | undefined;
       balance?: number;
       onBudget?: boolean;
     }
@@ -120,7 +121,7 @@ export class AccountService {
 
     // Sanitize notes if provided
     if (data.notes !== undefined) {
-      updateData.notes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : null;
+      updateData.notes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : undefined;
     }
 
     // Validate balance if provided
@@ -161,7 +162,7 @@ export class AccountService {
   /**
    * Get all accounts with their transactions
    */
-  async getAllAccountsWithTransactions(): Promise<Account[]> {
+  async getAllAccountsWithTransactions(): Promise<AccountWithTransactions[]> {
     return await this.repository.findAllWithTransactions();
   }
 
@@ -220,5 +221,70 @@ export class AccountService {
     return await generateUniqueSlug(baseSlug, async (slug: string) => {
       return await this.repository.isSlugUnique(slug, excludeId);
     });
+  }
+
+  /**
+   * Get status of default accounts (which are available vs already installed)
+   */
+  async getDefaultAccountsStatus() {
+    const { defaultAccounts } = await import("./default-accounts");
+    const existingAccounts = await this.repository.findActive();
+    const existingNames = new Set(existingAccounts.map((a) => a.name.toLowerCase()));
+
+    const accounts = defaultAccounts.map((defaultAccount) => ({
+      ...defaultAccount,
+      installed: existingNames.has(defaultAccount.name.toLowerCase()),
+    }));
+
+    return {
+      accounts,
+      total: defaultAccounts.length,
+      installed: accounts.filter((a) => a.installed).length,
+      available: accounts.filter((a) => !a.installed).length,
+    };
+  }
+
+  /**
+   * Seed default accounts by their slugs
+   */
+  async seedDefaultAccounts(slugs: string[], workspaceId: number): Promise<Account[]> {
+    const { defaultAccounts } = await import("./default-accounts");
+    const accountsToCreate = defaultAccounts.filter((a) => slugs.includes(a.slug));
+
+    if (accountsToCreate.length === 0) {
+      return [];
+    }
+
+    const existingAccounts = await this.repository.findActive();
+    const existingNames = new Set(existingAccounts.map((a) => a.name.toLowerCase()));
+
+    const createdAccounts: Account[] = [];
+
+    for (const defaultAccount of accountsToCreate) {
+      // Check by name instead of slug to prevent duplicates even if slug is modified
+      if (existingNames.has(defaultAccount.name.toLowerCase())) {
+        continue;
+      }
+
+      const account = await this.createAccount({
+        name: defaultAccount.name,
+        notes: defaultAccount.description,
+        initialBalance: 0,
+        accountType: defaultAccount.accountType,
+        onBudget: defaultAccount.onBudget,
+      }, workspaceId);
+
+      await this.repository.update(account.id, {
+        accountIcon: defaultAccount.accountIcon,
+        accountColor: defaultAccount.accountColor,
+      });
+
+      const updatedAccount = await this.repository.findById(account.id);
+      if (updatedAccount) {
+        createdAccounts.push(updatedAccount);
+      }
+    }
+
+    return createdAccounts;
   }
 }

@@ -6,9 +6,8 @@ import type {LayoutData} from './$types';
 import type {Snippet} from 'svelte';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {dev} from '$app/environment';
-import {RenderScan} from 'svelte-render-scan';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
+import {CurrentWorkspaceState, currentWorkspace} from '$lib/states/current-workspace.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
 import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog.svelte';
 import DeleteBudgetDialog from '$lib/components/dialogs/delete-budget-dialog.svelte';
@@ -40,6 +39,19 @@ const payeesState = PayeesState.set(data.payees);
 const categoriesState = CategoriesState.set(data.categories);
 SchedulesState.set(data.schedules);
 BudgetState.set(data.budgets);
+
+// Initialize current workspace state
+const currentWorkspaceState = new CurrentWorkspaceState(data.currentWorkspace);
+currentWorkspace.set(currentWorkspaceState);
+
+// Keep current workspace state in sync with data changes
+$effect(() => {
+  if (data.currentWorkspace) {
+    currentWorkspaceState.setWorkspace(data.currentWorkspace);
+  } else {
+    currentWorkspaceState.clearWorkspace();
+  }
+});
 
 // Keep states in sync with query data
 $effect(() => {

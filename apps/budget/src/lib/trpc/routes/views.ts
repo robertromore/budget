@@ -1,21 +1,29 @@
-import {eq, inArray} from "drizzle-orm";
+import {and, eq, inArray} from "drizzle-orm";
 import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
 import {z} from "zod";
 import {TRPCError} from "@trpc/server";
 import {removeViewSchema, removeViewsSchema, insertViewSchema, views} from "$lib/schema";
 
 export const viewsRoutes = t.router({
-  all: publicProcedure.query(async ({ctx}) => {
-    return await ctx.db.select().from(views);
-    // return (await ctx.db.select().from(views)).map((view) => {
-    //   return Object.assign({}, view, {
-    //     filters: new SvelteMap(view.filters?.map((filter) => [filter.column, filter]))
-    //   });
-    // });
-  }),
+  all: publicProcedure
+    .input(z.object({
+      entityType: z.enum(["transactions", "top_categories"]).optional()
+    }).optional())
+    .query(async ({ctx, input}) => {
+      const whereClause = input?.entityType
+        ? and(eq(views.workspaceId, ctx.workspaceId), eq(views.entityType, input.entityType))
+        : eq(views.workspaceId, ctx.workspaceId);
+
+      return await ctx.db.select().from(views).where(whereClause);
+      // return (await ctx.db.select().from(views)).map((view) => {
+      //   return Object.assign({}, view, {
+      //     filters: new SvelteMap(view.filters?.map((filter) => [filter.column, filter]))
+      //   });
+      // });
+    }),
   load: publicProcedure.input(z.object({id: z.coerce.number()})).query(async ({ctx, input}) => {
     const result = await ctx.db.query.views.findMany({
-      where: eq(views.id, input.id),
+      where: (views, {eq, and}) => and(eq(views.id, input.id), eq(views.workspaceId, ctx.workspaceId)),
     });
     if (!result[0]) {
       throw new TRPCError({
@@ -32,7 +40,7 @@ export const viewsRoutes = t.router({
         message: "View ID is required for deletion",
       });
     }
-    const result = await ctx.db.delete(views).where(eq(views.id, input.id)).returning();
+    const result = await ctx.db.delete(views).where(and(eq(views.id, input.id), eq(views.workspaceId, ctx.workspaceId))).returning();
     if (!result[0]) {
       throw new TRPCError({
         code: "NOT_FOUND",
@@ -43,13 +51,13 @@ export const viewsRoutes = t.router({
   }),
   delete: bulkOperationProcedure
     .input(removeViewsSchema)
-    .mutation(async ({input: {entities}, ctx: {db}}) => {
-      return await db.delete(views).where(inArray(views.id, entities)).returning();
+    .mutation(async ({input: {entities}, ctx}) => {
+      return await ctx.db.delete(views).where(and(inArray(views.id, entities), eq(views.workspaceId, ctx.workspaceId))).returning();
     }),
   save: rateLimitedProcedure
     .input(insertViewSchema)
     .mutation(
-      async ({input: {id, name, description, icon, filters, display, dirty}, ctx: {db}}) => {
+      async ({input: {id, entityType, name, description, icon, filters, display, dirty}, ctx}) => {
         // Transform display object to match database schema
         const transformedDisplay = display
           ? {
@@ -60,9 +68,10 @@ export const viewsRoutes = t.router({
           : display;
         let entities;
         if (id) {
-          entities = await db
+          entities = await ctx.db
             .update(views)
             .set({
+              entityType,
               name,
               description,
               icon,
@@ -70,18 +79,20 @@ export const viewsRoutes = t.router({
               display: transformedDisplay,
               dirty,
             })
-            .where(eq(views.id, id))
+            .where(and(eq(views.id, id), eq(views.workspaceId, ctx.workspaceId)))
             .returning();
         } else {
-          entities = await db
+          entities = await ctx.db
             .insert(views)
             .values({
+              entityType,
               name,
               description,
               icon,
               filters,
               display: transformedDisplay,
               dirty,
+              workspaceId: ctx.workspaceId,
             })
             .returning();
         }

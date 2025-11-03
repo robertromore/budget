@@ -87,7 +87,7 @@ export class BudgetService {
       .trim();
   }
 
-  async createBudget(input: CreateBudgetRequest): Promise<BudgetWithRelations> {
+  async createBudget(input: CreateBudgetRequest, workspaceId: number): Promise<BudgetWithRelations> {
     const name = InputSanitizer.sanitizeText(input.name, {
       required: true,
       minLength: 2,
@@ -115,7 +115,7 @@ export class BudgetService {
     let slug = baseSlug;
     let counter = 1;
 
-    while (await this.repository.slugExists(slug)) {
+    while (await this.repository.slugExists(slug, workspaceId)) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
@@ -157,10 +157,10 @@ export class BudgetService {
       createInput.groupIds = input.groupIds;
     }
 
-    return await this.repository.createBudget(createInput);
+    return await this.repository.createBudget(createInput, workspaceId);
   }
 
-  async updateBudget(id: number, input: UpdateBudgetRequest): Promise<BudgetWithRelations> {
+  async updateBudget(id: number, input: UpdateBudgetRequest, workspaceId: number): Promise<BudgetWithRelations> {
     const updates: Record<string, unknown> = {};
 
     if (input.name !== undefined) {
@@ -218,30 +218,30 @@ export class BudgetService {
       relations.groupIds = input.groupIds;
     }
 
-    return await this.repository.updateBudget(id, updates, relations);
+    return await this.repository.updateBudget(id, updates, workspaceId, relations);
   }
 
-  async listBudgets(status?: Budget["status"]): Promise<BudgetWithRelations[]> {
+  async listBudgets(workspaceId: number, status?: Budget["status"]): Promise<BudgetWithRelations[]> {
     if (status) {
       this.validateEnumValue("Budget status", status, budgetStatuses);
     }
-    return await this.repository.listBudgets(status ? {status} : {});
+    return await this.repository.listBudgets(workspaceId, status ? {status} : {});
   }
 
-  async getBudget(id: number): Promise<BudgetWithRelations> {
-    const budget = await this.repository.findById(id);
+  async getBudget(id: number, workspaceId: number): Promise<BudgetWithRelations> {
+    const budget = await this.repository.findById(id, workspaceId);
     if (!budget) {
       throw new NotFoundError("Budget", id);
     }
     return budget;
   }
 
-  async getBudgetBySlug(slug: string): Promise<BudgetWithRelations> {
+  async getBudgetBySlug(slug: string, workspaceId: number): Promise<BudgetWithRelations> {
     if (!slug?.trim()) {
       throw new ValidationError("Invalid budget slug");
     }
 
-    const budget = await this.repository.findBySlug(slug);
+    const budget = await this.repository.findBySlug(slug, workspaceId);
     if (!budget) {
       throw new NotFoundError("Budget", slug);
     }
@@ -249,16 +249,16 @@ export class BudgetService {
     return budget;
   }
 
-  async deleteBudget(id: number): Promise<void> {
+  async deleteBudget(id: number, workspaceId: number): Promise<void> {
     // Before deleting, check if this budget was created from a recommendation
     // If so, reset the recommendation status to 'pending' so it can be reapplied
     await this.recommendationService.resetRecommendationForBudget(id);
 
-    await this.repository.deleteBudget(id);
+    await this.repository.deleteBudget(id, workspaceId);
   }
 
-  async duplicateBudget(id: number, newName?: string): Promise<BudgetWithRelations> {
-    const originalBudget = await this.getBudget(id);
+  async duplicateBudget(id: number, workspaceId: number, newName?: string): Promise<BudgetWithRelations> {
+    const originalBudget = await this.getBudget(id, workspaceId);
 
     const duplicatedName = newName || `${originalBudget.name} (Copy)`;
 
@@ -267,7 +267,7 @@ export class BudgetService {
     let slug = baseSlug;
     let counter = 1;
 
-    while (await this.repository.slugExists(slug)) {
+    while (await this.repository.slugExists(slug, workspaceId)) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
@@ -315,17 +315,17 @@ export class BudgetService {
       createInput.groupIds = groupIds;
     }
 
-    return await this.repository.createBudget(createInput);
+    return await this.repository.createBudget(createInput, workspaceId);
   }
 
-  async bulkArchive(ids: number[]): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
+  async bulkArchive(ids: number[], workspaceId: number): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
     let success = 0;
     let failed = 0;
     const errors: Array<{id: number; error: string}> = [];
 
     for (const id of ids) {
       try {
-        await this.updateBudget(id, { status: 'archived' });
+        await this.updateBudget(id, { status: 'archived' }, workspaceId);
         success++;
       } catch (error) {
         failed++;
@@ -339,14 +339,14 @@ export class BudgetService {
     return { success, failed, errors };
   }
 
-  async bulkDelete(ids: number[]): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
+  async bulkDelete(ids: number[], workspaceId: number): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
     let success = 0;
     let failed = 0;
     const errors: Array<{id: number; error: string}> = [];
 
     for (const id of ids) {
       try {
-        await this.deleteBudget(id);
+        await this.deleteBudget(id, workspaceId);
         success++;
       } catch (error) {
         failed++;
@@ -392,13 +392,14 @@ export class BudgetService {
 
   async createEnvelopeBudget(
     budgetData: CreateBudgetRequest,
-    envelopeAllocations: EnvelopeAllocationRequest[]
+    envelopeAllocations: EnvelopeAllocationRequest[],
+    workspaceId: number
   ): Promise<BudgetWithRelations> {
     if (budgetData.type !== "category-envelope") {
       throw new ValidationError("Envelope allocations only supported for category-envelope budgets", "type");
     }
 
-    const budget = await this.createBudget(budgetData);
+    const budget = await this.createBudget(budgetData, workspaceId);
 
     for (const allocation of envelopeAllocations) {
       await this.envelopeService.createEnvelopeAllocation({
@@ -722,8 +723,17 @@ export class BudgetService {
       throw new Error("Analysis or recommendation service not available");
     }
 
-    const drafts = await this.analysisService.analyzeTransactionHistory(params);
-    return await this.recommendationService.createRecommendations(drafts);
+    try {
+      console.log('[BudgetService] generateRecommendations called with params:', params);
+      const drafts = await this.analysisService.analyzeTransactionHistory(params);
+      console.log('[BudgetService] Analysis complete, got', drafts.length, 'drafts');
+      const recommendations = await this.recommendationService.createRecommendations(drafts);
+      console.log('[BudgetService] Recommendations created:', recommendations.length);
+      return recommendations;
+    } catch (error) {
+      console.error('[BudgetService] Error in generateRecommendations:', error);
+      throw error;
+    }
   }
 
   async listRecommendations(filters?: RecommendationFilters) {
@@ -811,6 +821,9 @@ export class BudgetService {
       budgetDescription = budgetDescription.charAt(0).toUpperCase() + budgetDescription.slice(1);
     }
 
+    // Get workspaceId from recommendation
+    const workspaceId = recommendation.workspaceId;
+
     // Create the budget
     // Don't pass description to avoid validation issues - it's optional anyway
     const newBudget = await this.createBudget({
@@ -832,7 +845,7 @@ export class BudgetService {
           }
         })
       }
-    });
+    }, workspaceId);
 
     // Create default monthly period template with the allocated amount
     await this.createPeriodTemplate({
@@ -873,9 +886,9 @@ export class BudgetService {
     startMonth?: number;
     timezone?: string;
     allocatedAmount?: number;
-  }): Promise<BudgetPeriodTemplate> {
+  }, workspaceId: number): Promise<BudgetPeriodTemplate> {
     // Validate budget exists
-    const budget = await this.repository.findById(data.budgetId);
+    const budget = await this.repository.findById(data.budgetId, workspaceId);
     if (!budget) {
       throw new NotFoundError("Budget", data.budgetId);
     }

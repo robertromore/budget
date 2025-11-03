@@ -65,6 +65,7 @@ export class BudgetIntelligenceService {
       // 4. Check historical patterns
       if (params.payeeId || params.categoryId) {
         const historical = await this.detectFromHistoricalPattern(
+          params.accountId,
           params.payeeId,
           params.categoryId
         );
@@ -173,13 +174,23 @@ export class BudgetIntelligenceService {
    * Analyze historical transaction patterns
    */
   private async detectFromHistoricalPattern(
+    accountId: number,
     payeeId: number | null | undefined,
     categoryId: number | null | undefined
   ): Promise<BudgetSuggestion | null> {
     if (!payeeId && !categoryId) return null;
 
     try {
-      // Find last 10 transactions with same payee and/or category
+      // Get workspace for this account to ensure we only look at same-workspace transactions
+      const { accounts } = await import("$lib/schema/accounts");
+      const account = await db.query.accounts.findFirst({
+        where: eq(accounts.id, accountId),
+        columns: { workspaceId: true }
+      });
+
+      if (!account) return null;
+
+      // Find last 10 transactions with same payee and/or category in the same workspace
       const conditions = [];
       if (payeeId) conditions.push(eq(transactions.payeeId, payeeId));
       if (categoryId) conditions.push(eq(transactions.categoryId, categoryId));
@@ -187,9 +198,11 @@ export class BudgetIntelligenceService {
       const recentTransactions = await db
         .select({
           transactionId: transactions.id,
+          accountId: transactions.accountId,
         })
         .from(transactions)
-        .where(and(...conditions))
+        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+        .where(and(...conditions, eq(accounts.workspaceId, account.workspaceId)))
         .orderBy(desc(transactions.date))
         .limit(10);
 

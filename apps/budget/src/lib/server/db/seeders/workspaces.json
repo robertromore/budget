@@ -1,0 +1,8 @@
+[
+  {
+    "id": 1,
+    "displayName": "Default Workspace",
+    "slug": "default-workspace",
+    "preferences": "{\"locale\":\"en-US\",\"dateFormat\":\"MM/DD/YYYY\",\"currency\":\"USD\",\"theme\":\"system\"}"
+  }
+]

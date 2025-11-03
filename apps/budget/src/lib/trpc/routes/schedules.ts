@@ -7,7 +7,7 @@ import { getCurrentTimestamp } from "$lib/utils/dates";
 import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
 import slugify from "@sindresorhus/slugify";
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 const scheduleService = serviceFactory.getScheduleService();
@@ -15,15 +15,30 @@ const scheduleService = serviceFactory.getScheduleService();
 export const scheduleRoutes = t.router({
   all: publicProcedure.query(async ({ctx}) => {
     return await ctx.db.query.schedules.findMany({
+      where: (schedules, {eq}) => eq(schedules.workspaceId, ctx.workspaceId),
       with: {
         payee: true,
         scheduleDate: true,
       },
     });
   }),
+  getByAccount: publicProcedure.input(z.object({accountId: z.number()})).query(async ({ctx, input}) => {
+    return await ctx.db.query.schedules.findMany({
+      where: (schedules, {eq, and}) => and(
+        eq(schedules.workspaceId, ctx.workspaceId),
+        eq(schedules.accountId, input.accountId)
+      ),
+      with: {
+        payee: true,
+        category: true,
+        scheduleDate: true,
+      },
+      orderBy: (schedules, { desc }) => [desc(schedules.createdAt)],
+    });
+  }),
   load: publicProcedure.input(z.object({id: z.coerce.number()})).query(async ({ctx, input}) => {
     const result = await ctx.db.query.schedules.findMany({
-      where: eq(schedules.id, input.id),
+      where: (schedules, {eq, and}) => and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
       with: {
         account: true,
         payee: true,
@@ -113,7 +128,7 @@ export const scheduleRoutes = t.router({
         }
       } else {
         const currentSchedule = await ctx.db.query.schedules.findFirst({
-          where: eq(schedules.id, input.id)
+          where: (schedules, {eq, and}) => and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId))
         });
 
         if (currentSchedule?.dateId) {
@@ -126,11 +141,11 @@ export const scheduleRoutes = t.router({
       await ctx.db
         .update(schedules)
         .set(updateData)
-        .where(eq(schedules.id, input.id));
+        .where(and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)));
 
       // Return the full schedule with relationships
       const updatedSchedule = await ctx.db.query.schedules.findFirst({
-        where: eq(schedules.id, input.id),
+        where: (schedules, {eq, and}) => and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
         with: {
           scheduleDate: true,
         },
@@ -150,6 +165,7 @@ export const scheduleRoutes = t.router({
     // Generate unique slug
     const insertData = {
       ...scheduleData,
+      workspaceId: ctx.workspaceId,
       slug: await generateUniqueSlugForDB(
         ctx.db,
         "schedules",
@@ -173,12 +189,12 @@ export const scheduleRoutes = t.router({
         await ctx.db
           .update(schedules)
           .set({ dateId })
-          .where(eq(schedules.id, new_schedule.id));
+          .where(and(eq(schedules.id, new_schedule.id), eq(schedules.workspaceId, ctx.workspaceId)));
       }
     }
 
     const finalSchedule = await ctx.db.query.schedules.findFirst({
-      where: eq(schedules.id, new_schedule.id),
+      where: (schedules, {eq, and}) => and(eq(schedules.id, new_schedule.id), eq(schedules.workspaceId, ctx.workspaceId)),
       with: {
         scheduleDate: true,
       },
@@ -193,7 +209,7 @@ export const scheduleRoutes = t.router({
         message: "Schedule ID is required for deletion",
       });
     }
-    const result = await ctx.db.delete(schedules).where(eq(schedules.id, input.id)).returning();
+    const result = await ctx.db.delete(schedules).where(and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId))).returning();
     if (!result[0]) {
       throw new TRPCError({
         code: "NOT_FOUND",
@@ -205,7 +221,7 @@ export const scheduleRoutes = t.router({
   duplicate: rateLimitedProcedure.input(duplicateScheduleSchema).mutation(async ({ctx, input}) => {
     // Get the original schedule with all its related data
     const originalSchedule = await ctx.db.query.schedules.findFirst({
-      where: eq(schedules.id, input.id),
+      where: (schedules, {eq, and}) => and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
       with: {
         scheduleDate: true,
       },
@@ -242,6 +258,7 @@ export const scheduleRoutes = t.router({
       recurring: originalSchedule.recurring,
       auto_add: originalSchedule.auto_add,
       dateId: null, // Will be set if we duplicate the schedule date
+      workspaceId: ctx.workspaceId,
     };
 
     // Insert the new schedule
@@ -280,7 +297,7 @@ export const scheduleRoutes = t.router({
         const updatedSchedule = await ctx.db
           .update(schedules)
           .set({ dateId: scheduleDateResult[0].id })
-          .where(eq(schedules.id, newSchedule.id))
+          .where(and(eq(schedules.id, newSchedule.id), eq(schedules.workspaceId, ctx.workspaceId)))
           .returning();
 
         return updatedSchedule[0] || newSchedule;
@@ -308,7 +325,7 @@ export const scheduleRoutes = t.router({
       try {
         // Get current schedule
         const currentSchedule = await ctx.db.query.schedules.findFirst({
-          where: eq(schedules.id, input.scheduleId)
+          where: (schedules, {eq, and}) => and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
         });
 
         if (!currentSchedule) {
@@ -325,7 +342,7 @@ export const scheduleRoutes = t.router({
         const result = await ctx.db
           .update(schedules)
           .set({ status: newStatus })
-          .where(eq(schedules.id, input.scheduleId))
+          .where(and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)))
           .returning();
 
         if (!result[0]) {
@@ -359,7 +376,7 @@ export const scheduleRoutes = t.router({
         const result = await ctx.db
           .update(schedules)
           .set({budgetId: input.budgetId})
-          .where(eq(schedules.id, input.scheduleId))
+          .where(and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)))
           .returning();
 
         if (!result[0]) {
@@ -388,7 +405,7 @@ export const scheduleRoutes = t.router({
         const result = await ctx.db
           .update(schedules)
           .set({budgetId: null})
-          .where(eq(schedules.id, input.scheduleId))
+          .where(and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)))
           .returning();
 
         if (!result[0]) {

@@ -4,6 +4,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import validator from "validator";
 import { z } from "zod/v4";
 import { isValidIconName } from "$lib/utils/icon-validation";
+import { workspaces } from "./workspaces";
 
 export const categoryTypeEnum = [
   "income",      // Salary, freelance, investments, gifts received
@@ -50,6 +51,9 @@ export const categories = sqliteTable(
   "categories",
   {
     id: integer("id").primaryKey({autoIncrement: true}),
+    workspaceId: integer("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {onDelete: "cascade"}),
     parentId: integer("parent_id").references((): AnySQLiteColumn => categories.id),
     name: text("name"),
     slug: text("slug").notNull().unique(),
@@ -91,6 +95,7 @@ export const categories = sqliteTable(
     deletedAt: text("deleted_at"),
   },
   (table) => [
+    index("category_workspace_id_idx").on(table.workspaceId),
     index("category_name_idx").on(table.name),
     index("category_slug_idx").on(table.slug),
     index("category_parent_idx").on(table.parentId),
@@ -107,6 +112,10 @@ export const categories = sqliteTable(
 );
 
 export const categoriesRelations = relations(categories, ({one}) => ({
+  workspace: one(workspaces, {
+    fields: [categories.workspaceId],
+    references: [workspaces.id],
+  }),
   parent: one(categories, {
     fields: [categories.parentId],
     references: [categories.id],
@@ -116,6 +125,7 @@ export const categoriesRelations = relations(categories, ({one}) => ({
 export const selectCategorySchema = createSelectSchema(categories);
 export const insertCategorySchema = createInsertSchema(categories);
 export const formInsertCategorySchema = createInsertSchema(categories, {
+  workspaceId: (schema) => schema.optional(),
   name: (schema) =>
     schema
       .transform((val) => val?.trim())

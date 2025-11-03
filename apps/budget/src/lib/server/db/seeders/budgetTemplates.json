@@ -1,5 +1,6 @@
 [
   {
+    "workspaceId": 1,
     "name": "Monthly Groceries",
     "description": "Track monthly grocery spending with a set budget limit",
     "type": "account-monthly",
@@ -11,6 +12,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Emergency Fund",
     "description": "Build up savings for unexpected expenses",
     "type": "goal-based",
@@ -22,6 +24,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Vacation Savings",
     "description": "Save for your next vacation or travel adventure",
     "type": "goal-based",
@@ -33,6 +36,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Dining & Restaurants",
     "description": "Manage spending on dining out and restaurants",
     "type": "category-envelope",
@@ -44,6 +48,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Entertainment",
     "description": "Budget for movies, concerts, games, and other entertainment",
     "type": "category-envelope",
@@ -55,6 +60,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Monthly Utilities",
     "description": "Track recurring utility bills and expenses",
     "type": "scheduled-expense",
@@ -66,6 +72,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Rent/Mortgage",
     "description": "Track monthly housing payments",
     "type": "scheduled-expense",
@@ -77,6 +84,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Transportation",
     "description": "Budget for gas, public transit, and vehicle expenses",
     "type": "category-envelope",
@@ -88,6 +96,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Healthcare & Medical",
     "description": "Budget for medical expenses, prescriptions, and insurance",
     "type": "category-envelope",
@@ -99,6 +108,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Debt Payoff",
     "description": "Track progress paying down loans or credit card debt",
     "type": "goal-based",
@@ -110,6 +120,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Home Improvement",
     "description": "Save for home repairs, renovations, or improvements",
     "type": "goal-based",
@@ -121,6 +132,7 @@
     "is_system": true
   },
   {
+    "workspaceId": 1,
     "name": "Education & Learning",
     "description": "Budget for courses, books, and educational materials",
     "type": "category-envelope",

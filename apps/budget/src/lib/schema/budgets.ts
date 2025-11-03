@@ -12,6 +12,7 @@ import {createInsertSchema, createSelectSchema} from "drizzle-zod";
 import {accounts} from "./accounts";
 import {categories} from "./categories";
 import {transactions} from "./transactions";
+import {workspaces} from "./workspaces";
 
 export const budgetTypes = [
   "account-monthly",
@@ -74,6 +75,9 @@ export const budgets = sqliteTable(
   "budget",
   {
     id: integer("id").primaryKey({autoIncrement: true}),
+    workspaceId: integer("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {onDelete: "cascade"}),
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     description: text("description"),
@@ -96,6 +100,7 @@ export const budgets = sqliteTable(
     deletedAt: text("deleted_at"),
   },
   (table) => [
+    index("budget_workspace_id_idx").on(table.workspaceId),
     index("budget_name_idx").on(table.name),
     index("budget_slug_idx").on(table.slug),
     index("budget_type_idx").on(table.type),
@@ -254,7 +259,11 @@ export const budgetTransactions = sqliteTable(
   ]
 );
 
-export const budgetsRelations = relations(budgets, ({many}) => ({
+export const budgetsRelations = relations(budgets, ({one, many}) => ({
+  workspace: one(workspaces, {
+    fields: [budgets.workspaceId],
+    references: [workspaces.id],
+  }),
   periodTemplates: many(budgetPeriodTemplates),
   accounts: many(budgetAccounts),
   categories: many(budgetCategories),
@@ -367,6 +376,7 @@ export const selectBudgetTransactionSchema = createSelectSchema(budgetTransactio
 export const insertBudgetTransactionSchema = createInsertSchema(budgetTransactions);
 
 export const formBudgetSchema = createInsertSchema(budgets, {
+  workspaceId: (schema) => schema.optional(),
   name: (schema) => schema.min(2).max(60),
   description: (schema) => schema.max(500).optional().nullable(),
   metadata: (schema) => schema.optional(),

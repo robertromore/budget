@@ -33,7 +33,7 @@ export const serverAccountsRoutes = t.router({
       const result = await trackQuery("account-summary", async () => {
         const account = await ctx.db.query.accounts.findFirst({
           where: (accounts, {eq, and, isNull}) =>
-            and(eq(accounts.id, input.id), isNull(accounts.deletedAt)),
+            and(eq(accounts.id, input.id), eq(accounts.workspaceId, ctx.workspaceId), isNull(accounts.deletedAt)),
         });
 
         if (!account) {
@@ -80,7 +80,8 @@ export const serverAccountsRoutes = t.router({
     const result = await trackQuery("all-account-summaries", async () => {
       // Get all accounts
       const accountsData = await ctx.db.query.accounts.findMany({
-        where: isNull(accounts.deletedAt),
+        where: (accounts, {eq, and, isNull}) =>
+          and(eq(accounts.workspaceId, ctx.workspaceId), isNull(accounts.deletedAt)),
         orderBy: [accounts.name],
       });
 
@@ -92,7 +93,8 @@ export const serverAccountsRoutes = t.router({
           transactionCount: count(transactions.id),
         })
         .from(transactions)
-        .where(isNull(transactions.deletedAt))
+        .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+        .where(and(eq(accounts.workspaceId, ctx.workspaceId), isNull(transactions.deletedAt)))
         .groupBy(transactions.accountId);
 
       // Combine account data with balances
@@ -146,6 +148,18 @@ export const serverAccountsRoutes = t.router({
       }
 
       const result = await trackQuery("paginated-transactions", async () => {
+        // First verify account belongs to user
+        const accountCheck = await ctx.db.query.accounts.findFirst({
+          where: (accounts, {eq, and}) => and(eq(accounts.id, accountId), eq(accounts.workspaceId, ctx.workspaceId)),
+        });
+
+        if (!accountCheck) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Account not found",
+          });
+        }
+
         // Build where conditions
         let whereConditions = [
           eq(transactions.accountId, accountId),
@@ -284,6 +298,18 @@ export const serverAccountsRoutes = t.router({
       }
 
       const result = await trackQuery("all-transactions", async () => {
+        // First verify account belongs to user
+        const accountCheck = await ctx.db.query.accounts.findFirst({
+          where: (accounts, {eq, and}) => and(eq(accounts.id, accountId), eq(accounts.workspaceId, ctx.workspaceId)),
+        });
+
+        if (!accountCheck) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Account not found",
+          });
+        }
+
         // Build where conditions
         const whereConditions = [
           eq(transactions.accountId, accountId),
@@ -397,6 +423,18 @@ export const serverAccountsRoutes = t.router({
       }
 
       const result = await trackQuery("recent-transactions", async () => {
+        // First verify account belongs to user
+        const accountCheck = await ctx.db.query.accounts.findFirst({
+          where: (accounts, {eq, and}) => and(eq(accounts.id, input.accountId), eq(accounts.workspaceId, ctx.workspaceId)),
+        });
+
+        if (!accountCheck) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Account not found",
+          });
+        }
+
         return ctx.db.query.transactions.findMany({
           where: and(eq(transactions.accountId, input.accountId), isNull(transactions.deletedAt)),
           with: {
@@ -434,6 +472,18 @@ export const serverAccountsRoutes = t.router({
       const {accountId, fromDate, toDate, groupBy} = input;
 
       return trackQuery("balance-history", async () => {
+        // First verify account belongs to user
+        const accountCheck = await ctx.db.query.accounts.findFirst({
+          where: (accounts, {eq, and}) => and(eq(accounts.id, accountId), eq(accounts.workspaceId, ctx.workspaceId)),
+        });
+
+        if (!accountCheck) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Account not found",
+          });
+        }
+
         let whereConditions = [
           eq(transactions.accountId, accountId),
           isNull(transactions.deletedAt),

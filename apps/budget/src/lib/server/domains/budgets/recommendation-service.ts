@@ -193,20 +193,14 @@ export class RecommendationService {
         });
       }
 
-      // Step 3: If NO new recommendations to create, just return existing pending ones
-      if (filteredDrafts.length === 0) {
-        logger.info("No new recommendations to create after filtering - keeping existing pending");
-        return await this.listRecommendations({ status: "pending" });
-      }
-
-      // Step 4: Expire old pending recommendations that DON'T match any incoming drafts
-      // We keep recommendations that match drafts (they were already filtered out)
+      // Step 3: Delete old pending recommendations that DON'T match any incoming drafts
+      // This provides aggressive cleanup - if the analysis doesn't generate a recommendation anymore, delete it
       const oldPendingRecommendations = existingRecommendations.filter(
         (r) => r.status === "pending" && new Date(r.createdAt) < new Date(Date.now() - 5000)
       );
 
-      // Find which old pending recommendations should be expired (don't match any draft)
-      const idsToExpire = oldPendingRecommendations
+      // Find which old pending recommendations should be deleted (don't match any draft)
+      const idsToDelete = oldPendingRecommendations
         .filter((existing) => {
           // Check if this recommendation matches ANY of the original drafts
           const matchesDraft = drafts.some((draft) => {
@@ -235,27 +229,31 @@ export class RecommendationService {
             return true;
           });
 
-          return !matchesDraft; // Expire if it doesn't match any draft
+          return !matchesDraft; // Delete if it doesn't match any draft
         })
         .map((r) => r.id);
 
-      if (idsToExpire.length > 0) {
+      if (idsToDelete.length > 0) {
         await db
-          .update(budgetRecommendations)
-          .set({
-            status: "expired",
-            updatedAt: now,
-          })
+          .delete(budgetRecommendations)
           .where(
             and(
               eq(budgetRecommendations.status, "pending"),
-              sql`${budgetRecommendations.id} IN (${idsToExpire.join(",")})`
+              sql`${budgetRecommendations.id} IN (${idsToDelete.join(",")})`
             )
           );
 
-        logger.info("Expired stale pending recommendations that don't match current analysis", {
-          count: idsToExpire.length,
+        logger.info("Deleted stale pending recommendations that don't match current analysis", {
+          count: idsToDelete.length,
+          deletedIds: idsToDelete,
         });
+      }
+
+      // Step 4: If NO new recommendations to create after cleanup, return empty array
+      // This ensures that when all transactions are deleted, all pending recommendations are cleared
+      if (filteredDrafts.length === 0) {
+        logger.info("No new recommendations to create after filtering and cleanup");
+        return [];
       }
 
       // Step 5: Create new recommendations (only ones that weren't duplicates)

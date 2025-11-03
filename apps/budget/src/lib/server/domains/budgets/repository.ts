@@ -1,32 +1,32 @@
-import {db} from "$lib/server/db";
-import {getCurrentTimestamp} from "$lib/utils/dates";
+import { accounts, categories, transactions } from "$lib/schema";
 import {
-  budgets,
-  budgetGroups,
-  budgetGroupMemberships,
   budgetAccounts,
   budgetCategories,
-  budgetPeriodTemplates,
+  budgetGroupMemberships,
+  budgetGroups,
   budgetPeriodInstances,
+  budgetPeriodTemplates,
+  budgets,
   budgetTransactions,
   type Budget,
-  type NewBudget,
   type BudgetAccount,
-  type NewBudgetAccount,
   type BudgetCategory,
-  type NewBudgetCategory,
   type BudgetGroup,
-  type NewBudgetGroup,
-  type BudgetPeriodTemplate,
-  type NewBudgetPeriodTemplate,
   type BudgetPeriodInstance,
-  type NewBudgetPeriodInstance,
+  type BudgetPeriodTemplate,
   type BudgetTransaction,
+  type NewBudget,
+  type NewBudgetAccount,
+  type NewBudgetCategory,
+  type NewBudgetGroup,
+  type NewBudgetPeriodInstance,
+  type NewBudgetPeriodTemplate,
   type NewBudgetTransaction,
 } from "$lib/schema/budgets";
-import {accounts, categories, transactions} from "$lib/schema";
-import {NotFoundError, DatabaseError} from "$lib/server/shared/types/errors";
-import {and, eq, inArray, isNull, sql} from "drizzle-orm";
+import { db } from "$lib/server/db";
+import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 type TransactionClient = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export type DbClient = typeof db | TransactionClient;
@@ -69,7 +69,7 @@ export class BudgetRepository {
   /**
    * Create a budget with optional relationships in a single transaction.
    */
-  async createBudget(input: CreateBudgetInput): Promise<BudgetWithRelations> {
+  async createBudget(input: CreateBudgetInput, workspaceId: number): Promise<BudgetWithRelations> {
     try {
       return await db.transaction(async (tx) => {
         const now = getCurrentTimestamp();
@@ -77,6 +77,7 @@ export class BudgetRepository {
           .insert(budgets)
           .values({
             ...input.budget,
+            workspaceId,
             createdAt: input.budget.createdAt ?? now,
             updatedAt: input.budget.updatedAt ?? now,
           })
@@ -90,7 +91,7 @@ export class BudgetRepository {
         await this.syncBudgetCategories(tx, created.id, input.categoryIds);
         await this.syncBudgetGroups(tx, created.id, input.groupIds);
 
-        const budget = await this.findById(created.id, tx);
+        const budget = await this.findById(created.id, workspaceId, tx);
         if (!budget) {
           throw new DatabaseError("Budget not found after creation", "createBudget");
         }
@@ -111,6 +112,7 @@ export class BudgetRepository {
   async updateBudget(
     id: number,
     updates: UpdateBudgetInput,
+    workspaceId: number,
     relationships?: {
       accountIds?: number[];
       categoryIds?: number[];
@@ -119,7 +121,7 @@ export class BudgetRepository {
   ): Promise<BudgetWithRelations> {
     try {
       return await db.transaction(async (tx) => {
-        const existing = await this.findById(id, tx);
+        const existing = await this.findById(id, workspaceId, tx);
         if (!existing) {
           throw new NotFoundError("Budget", id);
         }
@@ -131,7 +133,7 @@ export class BudgetRepository {
             ...updates,
             updatedAt: now,
           })
-          .where(eq(budgets.id, id))
+          .where(and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId)))
           .returning();
 
         if (!updated) {
@@ -150,7 +152,7 @@ export class BudgetRepository {
           }
         }
 
-        const budget = await this.findById(id, tx);
+        const budget = await this.findById(id, workspaceId, tx);
         if (!budget) {
           throw new DatabaseError("Budget not found after update", "updateBudget");
         }
@@ -167,11 +169,16 @@ export class BudgetRepository {
   /**
    * Retrieve budgets with optional status filtering.
    */
-  async listBudgets(options: {status?: Budget["status"]} = {}): Promise<BudgetWithRelations[]> {
+  async listBudgets(workspaceId: number, options: {status?: Budget["status"]} = {}): Promise<BudgetWithRelations[]> {
     const {status} = options;
 
+    const conditions = [eq(budgets.workspaceId, workspaceId)];
+    if (status) {
+      conditions.push(eq(budgets.status, status));
+    }
+
     const result = await db.query.budgets.findMany({
-      where: status ? eq(budgets.status, status) : undefined,
+      where: and(...conditions),
       with: this.defaultRelations(),
       orderBy: (budget, {asc}) => asc(budget.name),
     });
@@ -182,9 +189,9 @@ export class BudgetRepository {
   /**
    * Find budget by ID including relations.
    */
-  async findById(id: number, client: DbClient = db): Promise<BudgetWithRelations | null> {
+  async findById(id: number, workspaceId: number, client: DbClient = db): Promise<BudgetWithRelations | null> {
     const result = await client.query.budgets.findFirst({
-      where: eq(budgets.id, id),
+      where: and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId)),
       with: this.defaultRelations(),
     });
 
@@ -194,9 +201,9 @@ export class BudgetRepository {
   /**
    * Find budget by slug including relations.
    */
-  async findBySlug(slug: string, client: DbClient = db): Promise<BudgetWithRelations | null> {
+  async findBySlug(slug: string, workspaceId: number, client: DbClient = db): Promise<BudgetWithRelations | null> {
     const result = await client.query.budgets.findFirst({
-      where: and(eq(budgets.slug, slug), isNull(budgets.deletedAt)),
+      where: and(eq(budgets.slug, slug), eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt)),
       with: this.defaultRelations(),
     });
 
@@ -206,11 +213,11 @@ export class BudgetRepository {
   /**
    * Check if a slug exists (excluding deleted budgets).
    */
-  async slugExists(slug: string): Promise<boolean> {
+  async slugExists(slug: string, workspaceId: number): Promise<boolean> {
     const [result] = await db
       .select()
       .from(budgets)
-      .where(eq(budgets.slug, slug))
+      .where(and(eq(budgets.slug, slug), eq(budgets.workspaceId, workspaceId)))
       .limit(1);
     return !!result;
   }
@@ -218,11 +225,11 @@ export class BudgetRepository {
   /**
    * Soft delete a budget (mark as deleted and archive slug).
    */
-  async softDelete(id: number): Promise<Budget> {
+  async softDelete(id: number, workspaceId: number): Promise<Budget> {
     const [existingBudget] = await db
       .select()
       .from(budgets)
-      .where(and(eq(budgets.id, id), isNull(budgets.deletedAt)))
+      .where(and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt)))
       .limit(1);
 
     if (!existingBudget) {
@@ -239,7 +246,7 @@ export class BudgetRepository {
         deletedAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
       })
-      .where(and(eq(budgets.id, id), isNull(budgets.deletedAt)))
+      .where(and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt)))
       .returning();
 
     if (!budget) {
@@ -252,9 +259,9 @@ export class BudgetRepository {
   /**
    * Permanently delete a budget and all dependent records.
    */
-  async deleteBudget(id: number): Promise<void> {
+  async deleteBudget(id: number, workspaceId: number): Promise<void> {
     await db.transaction(async (tx) => {
-      const existing = await this.findById(id, tx);
+      const existing = await this.findById(id, workspaceId, tx);
       if (!existing) {
         throw new NotFoundError("Budget", id);
       }
@@ -281,7 +288,7 @@ export class BudgetRepository {
           );
       }
       await tx.delete(budgetPeriodTemplates).where(eq(budgetPeriodTemplates.budgetId, id));
-      await tx.delete(budgets).where(eq(budgets.id, id));
+      await tx.delete(budgets).where(and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId)));
     });
   }
 

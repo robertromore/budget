@@ -11,8 +11,10 @@ import { medicalExpensesRouter } from "./routes/medical-expenses";
 import { patternRoutes } from "./routes/patterns";
 import { scheduleRoutes } from "./routes/schedules";
 import { viewsRoutes } from "./routes/views";
+import { workspaceRoutes } from "./routes/workspaces";
 
 export const router = t.router({
+  workspaceRoutes,
   accountRoutes,
   serverAccountsRoutes,
   categoriesRoutes,

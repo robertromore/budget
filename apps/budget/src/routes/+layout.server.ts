@@ -1,11 +1,11 @@
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import {superValidate} from "sveltekit-superforms";
-import type {LayoutServerLoad} from "./$types";
-import {zod4} from "sveltekit-superforms/adapters";
-import {formInsertScheduleSchema} from "$lib/schema";
-import {superformInsertAccountSchema} from "$lib/schema/superforms";
-import {getLocalTimeZone, today} from "@internationalized/date";
+import { formInsertScheduleSchema } from "$lib/schema";
+import { superformInsertAccountSchema } from "$lib/schema/superforms";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
+import { getLocalTimeZone, today } from "@internationalized/date";
+import { superValidate } from "sveltekit-superforms";
+import { zod4 } from "sveltekit-superforms/adapters";
+import type { LayoutServerLoad } from "./$types";
 
 const thisday = today(getLocalTimeZone());
 export const load: LayoutServerLoad = async (event) => {
@@ -13,6 +13,7 @@ export const load: LayoutServerLoad = async (event) => {
   const caller = createCaller(ctx);
 
   return {
+    currentWorkspace: await caller.workspaceRoutes.getCurrent(),
     accounts: await caller.accountRoutes.all(),
     payees: await caller.payeeRoutes.all(),
     categories: await caller.categoriesRoutes.all(),

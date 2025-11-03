@@ -60,19 +60,19 @@ export class CategoryGroupService {
 	/**
 	 * List all groups with member counts and pending recommendation counts
 	 */
-	async listGroupsWithCounts(): Promise<CategoryGroupWithCounts[]> {
-		return await this.groupRepository.findAllWithCounts();
+	async listGroupsWithCounts(workspaceId: number): Promise<CategoryGroupWithCounts[]> {
+		return await this.groupRepository.findAllWithCounts(workspaceId);
 	}
 
 	/**
 	 * Get a group by slug
 	 */
-	async getGroupBySlug(slug: string): Promise<CategoryGroup> {
+	async getGroupBySlug(slug: string, workspaceId: number): Promise<CategoryGroup> {
 		if (!slug?.trim()) {
 			throw new ValidationError("Category group slug is required");
 		}
 
-		const group = await this.groupRepository.findBySlug(slug);
+		const group = await this.groupRepository.findBySlug(slug, workspaceId);
 		if (!group) {
 			throw new NotFoundError("CategoryGroup", slug);
 		}
@@ -83,8 +83,8 @@ export class CategoryGroupService {
 	/**
 	 * Get a group with all its member categories
 	 */
-	async getGroupWithCategories(slug: string): Promise<CategoryGroupWithCategories> {
-		const group = await this.groupRepository.findBySlugWithCategories(slug);
+	async getGroupWithCategories(slug: string, workspaceId: number): Promise<CategoryGroupWithCategories> {
+		const group = await this.groupRepository.findBySlugWithCategories(slug, workspaceId);
 		if (!group) {
 			throw new NotFoundError("CategoryGroup", slug);
 		}
@@ -95,14 +95,14 @@ export class CategoryGroupService {
 	/**
 	 * Get all categories for a group
 	 */
-	async getCategoriesForGroup(groupId: number): Promise<Category[]> {
+	async getCategoriesForGroup(groupId: number, workspaceId: number): Promise<Category[]> {
 		// Validate group exists
-		const group = await this.groupRepository.findById(groupId);
+		const group = await this.groupRepository.findById(groupId, workspaceId);
 		if (!group) {
 			throw new NotFoundError("CategoryGroup", groupId);
 		}
 
-		return await this.membershipRepository.findCategoriesForGroup(groupId);
+		return await this.membershipRepository.findCategoriesForGroup(groupId, workspaceId);
 	}
 
 	// ================================================================================
@@ -112,7 +112,7 @@ export class CategoryGroupService {
 	/**
 	 * Create a new category group
 	 */
-	async createGroup(data: CreateCategoryGroupData): Promise<CategoryGroup> {
+	async createGroup(data: CreateCategoryGroupData, workspaceId: number): Promise<CategoryGroup> {
 		// Validate and sanitize name
 		if (!data.name?.trim()) {
 			throw new ValidationError("Category group name is required");
@@ -128,79 +128,51 @@ export class CategoryGroupService {
 			? InputSanitizer.sanitizeDescription(data.description)
 			: null;
 
-		// Generate unique slug with retry logic for race conditions
-		let baseSlug = this.generateSlug(sanitizedName);
-		let slug = baseSlug;
-		let counter = 1;
-		const maxRetries = 10;
-		let retries = 0;
+		// Check for duplicate name/slug and make both unique if needed
+		let uniqueName = sanitizedName;
+		let uniqueSlug = this.generateSlug(sanitizedName);
+		let attempt = 0;
+		const maxAttempts = 100;
 
-		while (retries < maxRetries) {
-			// Check if slug exists
-			const existing = await this.groupRepository.findBySlug(slug);
-			if (existing) {
-				// Slug already exists, try next one
-				slug = `${baseSlug}-${counter}`;
-				counter++;
-				continue;
+		// Keep checking until both name AND slug are unique
+		while (attempt < maxAttempts) {
+			const [nameExists, slugExists] = await Promise.all([
+				this.groupRepository.findByName(uniqueName, workspaceId),
+				this.groupRepository.findBySlug(uniqueSlug, workspaceId),
+			]);
+
+			if (!nameExists && !slugExists) {
+				break; // Both are unique
 			}
 
-			// Try to create with this slug
-			const newGroup: NewCategoryGroup = {
-				name: sanitizedName,
-				slug,
-				description: sanitizedDescription,
-				groupIcon: data.groupIcon ?? null,
-				groupColor: data.groupColor ?? null,
-				sortOrder: data.sortOrder ?? 0,
-			};
-
-			try {
-				return await this.groupRepository.create(newGroup);
-			} catch (error: any) {
-				// Check if it's a UNIQUE constraint error
-				const isUniqueConstraint =
-					error?.code === 'SQLITE_CONSTRAINT_UNIQUE' ||
-					error?.errno === 2067 ||
-					error?.message?.includes('UNIQUE constraint failed');
-
-				if (isUniqueConstraint) {
-					// Check if it's a name conflict vs slug conflict
-					const isNameConflict = error?.message?.includes('category_groups_name_unique') ||
-						error?.message?.includes('UNIQUE constraint failed: category_groups.name');
-
-					if (isNameConflict) {
-						// A group with this name already exists (race condition)
-						// Find and return it instead of retrying
-						const existing = await this.groupRepository.findBySlug(baseSlug);
-						if (existing) {
-							return existing;
-						}
-						// If not found by slug, search by name
-						// This shouldn't happen, but handle it gracefully
-						throw error;
-					} else {
-						// Slug conflict - try next slug
-						slug = `${baseSlug}-${counter}`;
-						counter++;
-						retries++;
-						continue;
-					}
-				}
-				// Different error, rethrow
-				throw error;
-			}
+			// Append number to make both unique
+			attempt++;
+			uniqueName = `${sanitizedName} ${attempt}`;
+			uniqueSlug = `${this.generateSlug(sanitizedName)}-${attempt}`;
 		}
 
-		throw new ValidationError(`Failed to generate unique slug after ${maxRetries} attempts`);
+		if (attempt >= maxAttempts) {
+			throw new ConflictError(`Failed to generate unique name/slug after ${maxAttempts} attempts`);
+		}
+
+		const newGroup: NewCategoryGroup = {
+			name: uniqueName,
+			slug: uniqueSlug,
+			description: sanitizedDescription,
+			groupIcon: data.groupIcon ?? null,
+			groupColor: data.groupColor ?? null,
+			sortOrder: data.sortOrder ?? 0,
+		};
+
+		return await this.groupRepository.create(newGroup, workspaceId);
 	}
 
 	/**
 	 * Update a category group
 	 */
-	async updateGroup(id: number, data: UpdateCategoryGroupData): Promise<CategoryGroup> {
+	async updateGroup(id: number, data: UpdateCategoryGroupData, workspaceId: number): Promise<CategoryGroup> {
 		// Check group exists
-		const existing = await this.groupRepository.findById(id);
+		const existing = await this.groupRepository.findById(id, workspaceId);
 		if (!existing) {
 			throw new NotFoundError("CategoryGroup", id);
 		}
@@ -221,7 +193,7 @@ export class CategoryGroupService {
 				let slug = baseSlug;
 				let counter = 1;
 
-				while (await this.groupRepository.findBySlug(slug)) {
+				while (await this.groupRepository.findBySlug(slug, workspaceId)) {
 					slug = `${baseSlug}-${counter}`;
 					counter++;
 				}
@@ -239,15 +211,15 @@ export class CategoryGroupService {
 		if (data.groupColor !== undefined) updates.groupColor = data.groupColor;
 		if (data.sortOrder !== undefined) updates.sortOrder = data.sortOrder;
 
-		return await this.groupRepository.update(id, updates);
+		return await this.groupRepository.update(id, updates, workspaceId);
 	}
 
 	/**
 	 * Delete a category group
 	 */
-	async deleteGroup(id: number): Promise<void> {
+	async deleteGroup(id: number, workspaceId: number): Promise<void> {
 		// Check group exists
-		const group = await this.groupRepository.findById(id);
+		const group = await this.groupRepository.findById(id, workspaceId);
 		if (!group) {
 			throw new NotFoundError("CategoryGroup", id);
 		}
@@ -261,15 +233,15 @@ export class CategoryGroupService {
 			.where(eq(categoryGroupRecommendations.suggestedGroupId, id));
 
 		// Delete the group
-		await this.groupRepository.delete(id);
+		await this.groupRepository.delete(id, workspaceId);
 	}
 
 	/**
 	 * Add categories to a group
 	 */
-	async addCategoriesToGroup(groupId: number, categoryIds: number[]): Promise<void> {
+	async addCategoriesToGroup(groupId: number, categoryIds: number[], workspaceId: number): Promise<void> {
 		// Validate group exists
-		const group = await this.groupRepository.findById(groupId);
+		const group = await this.groupRepository.findById(groupId, workspaceId);
 		if (!group) {
 			throw new NotFoundError("CategoryGroup", groupId);
 		}
@@ -310,9 +282,9 @@ export class CategoryGroupService {
 	/**
 	 * Move a category to a different group
 	 */
-	async moveCategoryToGroup(categoryId: number, newGroupId: number): Promise<void> {
+	async moveCategoryToGroup(categoryId: number, newGroupId: number, workspaceId: number): Promise<void> {
 		// Validate new group exists
-		const group = await this.groupRepository.findById(newGroupId);
+		const group = await this.groupRepository.findById(newGroupId, workspaceId);
 		if (!group) {
 			throw new NotFoundError("CategoryGroup", newGroupId);
 		}
@@ -324,10 +296,10 @@ export class CategoryGroupService {
 	/**
 	 * Reorder groups
 	 */
-	async reorderGroups(updates: Array<{id: number; sortOrder: number}>): Promise<void> {
+	async reorderGroups(updates: Array<{id: number; sortOrder: number}>, workspaceId: number): Promise<void> {
 		await db.transaction(async (tx) => {
 			for (const {id, sortOrder} of updates) {
-				await this.groupRepository.update(id, {sortOrder});
+				await this.groupRepository.update(id, {sortOrder}, workspaceId);
 			}
 		});
 	}

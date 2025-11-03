@@ -1,5 +1,7 @@
 import type { Account } from "$lib/schema";
 import { trpc } from "$lib/trpc/client";
+import { accountKeys } from "$lib/query/accounts";
+import { cachePatterns } from "$lib/query/_client";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
@@ -126,11 +128,11 @@ export class AccountsState {
       initialBalance: account.initialBalance ?? undefined,
     };
     const result = await trpc().accountRoutes.save.mutate(accountForMutation);
-    // The API now returns balance, but we still need to add transactions field
+    // The API returns balance but TypeScript doesn't infer the extended type
     const accountWithDefaults: Account = {
-      ...result,
-      transactions: result.transactions ?? account.transactions ?? [],
-      balance: result.balance ?? 0, // API should always return balance now
+      ...(result as any),
+      transactions: (result as any).transactions ?? account.transactions ?? [],
+      balance: (result as any).balance ?? 0,
     };
     this.updateAccount(accountWithDefaults);
     return accountWithDefaults;
@@ -139,6 +141,9 @@ export class AccountsState {
   async deleteAccount(id: number): Promise<void> {
     await trpc().accountRoutes.remove.mutate({id});
     this.removeAccount(id);
+    // Invalidate caches to update default accounts status
+    cachePatterns.invalidatePrefix(accountKeys.all());
+    cachePatterns.invalidatePrefix(accountKeys.defaultAccountsStatus());
   }
 
   async deleteAccounts(ids: number[]): Promise<void> {

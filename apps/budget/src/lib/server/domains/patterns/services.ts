@@ -27,7 +27,7 @@ export class PatternDetectionService {
    */
   async detectPatternsForAccount(
     accountId: number,
-    userId?: string,
+    workspaceId: string,
     criteria?: Partial<DetectionCriteria>
   ): Promise<DetectedPatternData[]> {
     const fullCriteria: DetectionCriteria = {...DEFAULT_DETECTION_CRITERIA, ...criteria};
@@ -53,21 +53,20 @@ export class PatternDetectionService {
 
   /**
    * Detect patterns across all user accounts
-   * NOTE: Single-user mode - analyzes all accounts
    */
   async detectPatternsForUserAccounts(
-    userId?: string,
+    workspaceId: string,
     criteria?: Partial<DetectionCriteria>
   ): Promise<DetectedPatternData[]> {
     const fullCriteria: DetectionCriteria = {...DEFAULT_DETECTION_CRITERIA, ...criteria};
 
     // Get all account IDs (in single-user mode, gets all accounts)
-    const accountIds = await this.repository.findUserAccountIds(userId);
+    const accountIds = await this.repository.findUserAccountIds(workspaceId);
 
     // Detect patterns for each account
     const allPatterns: DetectedPatternData[] = [];
     for (const accountId of accountIds) {
-      const patterns = await this.detectPatternsForAccount(accountId, userId, criteria);
+      const patterns = await this.detectPatternsForAccount(accountId, workspaceId, criteria);
       allPatterns.push(...patterns);
     }
 
@@ -452,22 +451,22 @@ export class PatternDetectionService {
   /**
    * Save detected pattern to database
    */
-  async saveDetectedPattern(pattern: DetectedPatternData, userId?: string): Promise<number> {
-    return await this.repository.create(pattern, userId);
+  async saveDetectedPattern(pattern: DetectedPatternData, workspaceId: string): Promise<number> {
+    return await this.repository.create(pattern, workspaceId);
   }
 
   /**
    * Save or update detected pattern (with deduplication)
    * If a similar pending pattern exists, update it. Otherwise, create a new one.
    */
-  async saveOrUpdatePattern(pattern: DetectedPatternData, userId?: string): Promise<number> {
+  async saveOrUpdatePattern(pattern: DetectedPatternData, workspaceId: string): Promise<number> {
     // Check if a similar pending pattern already exists
     const existingPattern = await this.repository.findSimilarPattern(
       pattern.accountId,
       pattern.payeeId || null,
       pattern.categoryId || null,
       pattern.patternType,
-      userId
+      workspaceId
     );
 
     if (existingPattern) {
@@ -485,12 +484,12 @@ export class PatternDetectionService {
           sampleTransactionIds: pattern.sampleTransactionIds,
           suggestedScheduleConfig: pattern.suggestedScheduleConfig,
         },
-        userId
+        workspaceId
       );
       return existingPattern.id;
     } else {
       // Create a new pattern
-      return await this.repository.create(pattern, userId);
+      return await this.repository.create(pattern, workspaceId);
     }
   }
 
@@ -498,21 +497,21 @@ export class PatternDetectionService {
    * Get all detected patterns with optional filtering
    */
   async getDetectedPatterns(
-    userId?: string,
+    workspaceId: string,
     accountId?: number,
     status?: string
   ): Promise<DetectedPattern[]> {
-    return await this.repository.findByAccount(accountId, userId, status);
+    return await this.repository.findByAccount(accountId, workspaceId, status);
   }
 
   /**
    * Delete all detected patterns (optionally filtered by status)
    */
   async deleteAllPatterns(
-    userId?: string,
+    workspaceId: string,
     status?: "pending" | "accepted" | "dismissed" | "converted"
   ): Promise<number> {
-    return await this.repository.deleteAll(userId, status);
+    return await this.repository.deleteAll(workspaceId, status);
   }
 
   /**
@@ -520,10 +519,10 @@ export class PatternDetectionService {
    */
   async updatePatternStatus(
     patternId: number,
-    userId?: string,
+    workspaceId: string,
     status: "accepted" | "dismissed" | "converted" = "accepted"
   ): Promise<void> {
-    await this.repository.updateStatus(patternId, userId, status);
+    await this.repository.updateStatus(patternId, workspaceId, status);
   }
 
   /**
@@ -586,8 +585,8 @@ export class PatternDetectionService {
   /**
    * Convert pattern to schedule
    */
-  async convertPatternToSchedule(patternId: number, userId?: string): Promise<number> {
-    const pattern = await this.repository.findById(patternId, userId);
+  async convertPatternToSchedule(patternId: number, workspaceId: string): Promise<number> {
+    const pattern = await this.repository.findById(patternId, workspaceId);
 
     if (!pattern) {
       throw new Error("Pattern not found");
@@ -688,9 +687,9 @@ export class PatternDetectionService {
   /**
    * Dismiss a pattern and optionally delete associated schedule
    */
-  async dismissPattern(patternId: number, userId?: string): Promise<void> {
+  async dismissPattern(patternId: number, workspaceId: string): Promise<void> {
     // Get the pattern to check if it has an associated schedule
-    const pattern = await this.repository.findById(patternId, userId);
+    const pattern = await this.repository.findById(patternId, workspaceId);
 
     if (!pattern) {
       throw new Error("Pattern not found");
@@ -706,13 +705,13 @@ export class PatternDetectionService {
     }
 
     // Mark pattern as dismissed
-    await this.repository.updateStatus(patternId, userId, "dismissed");
+    await this.repository.updateStatus(patternId, workspaceId, "dismissed");
   }
 
   /**
    * Expire stale patterns
    */
-  async expireStalePatterns(userId?: string, daysSinceLastMatch = 90): Promise<number> {
-    return await this.repository.expireStalePatterns(daysSinceLastMatch, userId);
+  async expireStalePatterns(workspaceId: string, daysSinceLastMatch = 90): Promise<number> {
+    return await this.repository.expireStalePatterns(daysSinceLastMatch, workspaceId);
   }
 }

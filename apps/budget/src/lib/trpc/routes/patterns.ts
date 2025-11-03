@@ -23,41 +23,31 @@ export const patternRoutes = t.router({
         criteria: detectionCriteriaSchema.optional(),
       })
     )
-    .mutation(async ({input}) => {
-      // NOTE: Single-user mode - authentication not yet implemented
-      // When multi-user support is added, uncomment this:
-      // if (!ctx.user?.id) {
-      //   throw new TRPCError({
-      //     code: "UNAUTHORIZED",
-      //     message: "Authentication required",
-      //   });
-      // }
-
+    .mutation(async ({input, ctx}) => {
       try {
         let detectedPatterns;
         if (input.accountId) {
           // Single account detection
           detectedPatterns = await patternService.detectPatternsForAccount(
             input.accountId,
-            undefined, // Single-user mode
+            ctx.workspaceId,
             input.criteria
           );
         } else {
           // Detect patterns for all accounts
           detectedPatterns = await patternService.detectPatternsForUserAccounts(
-            undefined, // Single-user mode
+            ctx.workspaceId,
             input.criteria
           );
         }
 
         // Save all detected patterns to database (with deduplication)
         for (const pattern of detectedPatterns) {
-          await patternService.saveOrUpdatePattern(pattern, undefined);
+          await patternService.saveOrUpdatePattern(pattern, ctx.workspaceId);
         }
 
         return detectedPatterns;
       } catch (error: any) {
-        // Multi-user error handling (ready for when auth is added)
         if (error.statusCode === 403) {
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -79,19 +69,10 @@ export const patternRoutes = t.router({
         status: z.enum(["pending", "accepted", "dismissed", "converted"]).optional(),
       })
     )
-    .query(async ({input}) => {
-      // NOTE: Single-user mode - authentication not yet implemented
-      // When multi-user support is added, uncomment this:
-      // if (!ctx.user?.id) {
-      //   throw new TRPCError({
-      //     code: "UNAUTHORIZED",
-      //     message: "Authentication required",
-      //   });
-      // }
-
+    .query(async ({input, ctx}) => {
       try {
         return await patternService.getDetectedPatterns(
-          undefined, // Single-user mode
+          ctx.workspaceId,
           input.accountId,
           input.status
         );
@@ -99,7 +80,6 @@ export const patternRoutes = t.router({
         console.error('[patterns.list] Error fetching patterns:', error);
         console.error('[patterns.list] Error stack:', error.stack);
 
-        // Multi-user error handling (ready for when auth is added)
         if (error.statusCode === 403) {
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -116,20 +96,11 @@ export const patternRoutes = t.router({
   // Convert pattern to schedule
   convertToSchedule: rateLimitedProcedure
     .input(z.object({patternId: z.number().positive()}))
-    .mutation(async ({input}) => {
-      // NOTE: Single-user mode - authentication not yet implemented
-      // When multi-user support is added, uncomment this:
-      // if (!ctx.user?.id) {
-      //   throw new TRPCError({
-      //     code: "UNAUTHORIZED",
-      //     message: "Authentication required",
-      //   });
-      // }
-
+    .mutation(async ({input, ctx}) => {
       try {
         return await patternService.convertPatternToSchedule(
           input.patternId,
-          undefined // Single-user mode
+          ctx.workspaceId
         );
       } catch (error: any) {
         if (error.message === "Pattern not found") {
@@ -138,7 +109,6 @@ export const patternRoutes = t.router({
             message: error.message,
           });
         }
-        // Multi-user error handling (ready for when auth is added)
         if (error.statusCode === 403) {
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -155,24 +125,14 @@ export const patternRoutes = t.router({
   // Dismiss pattern
   dismiss: rateLimitedProcedure
     .input(z.object({patternId: z.number().positive()}))
-    .mutation(async ({input}) => {
-      // NOTE: Single-user mode - authentication not yet implemented
-      // When multi-user support is added, uncomment this:
-      // if (!ctx.user?.id) {
-      //   throw new TRPCError({
-      //     code: "UNAUTHORIZED",
-      //     message: "Authentication required",
-      //   });
-      // }
-
+    .mutation(async ({input, ctx}) => {
       try {
         await patternService.dismissPattern(
           input.patternId,
-          undefined // Single-user mode
+          ctx.workspaceId
         );
         return {success: true};
       } catch (error: any) {
-        // Multi-user error handling (ready for when auth is added)
         if (error.statusCode === 403) {
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -193,19 +153,10 @@ export const patternRoutes = t.router({
         daysSinceLastMatch: z.number().min(1).optional(),
       })
     )
-    .mutation(async ({input}) => {
-      // NOTE: Single-user mode - authentication not yet implemented
-      // When multi-user support is added, uncomment this:
-      // if (!ctx.user?.id) {
-      //   throw new TRPCError({
-      //     code: "UNAUTHORIZED",
-      //     message: "Authentication required",
-      //   });
-      // }
-
+    .mutation(async ({input, ctx}) => {
       try {
         const count = await patternService.expireStalePatterns(
-          undefined, // Single-user mode
+          ctx.workspaceId,
           input.daysSinceLastMatch
         );
         return {count};
@@ -224,18 +175,9 @@ export const patternRoutes = t.router({
         status: z.enum(["pending", "accepted", "dismissed", "converted"]).optional(),
       })
     )
-    .mutation(async ({input}) => {
-      // NOTE: Single-user mode - authentication not yet implemented
-      // When multi-user support is added, uncomment this:
-      // if (!ctx.user?.id) {
-      //   throw new TRPCError({
-      //     code: "UNAUTHORIZED",
-      //     message: "Authentication required",
-      //   });
-      // }
-
+    .mutation(async ({input, ctx}) => {
       try {
-        const count = await patternService.deleteAllPatterns(undefined, input.status);
+        const count = await patternService.deleteAllPatterns(ctx.workspaceId, input.status);
         return {count};
       } catch (error: any) {
         throw new TRPCError({

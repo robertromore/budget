@@ -1,3 +1,4 @@
+export * from "./workspaces";
 export * from "./accounts";
 export * from "./budget-automation-settings";
 export * from "./budgets";

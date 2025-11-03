@@ -64,10 +64,27 @@ export class CategoryGroupRepository extends BaseRepository<
 	}
 
 	/**
+	 * Find a group by name (case-sensitive)
+	 */
+	async findByName(name: string, workspaceId: number): Promise<CategoryGroup | null> {
+		const [result] = await db
+			.select()
+			.from(categoryGroups)
+			.where(and(eq(categoryGroups.name, name), eq(categoryGroups.workspaceId, workspaceId)))
+			.limit(1);
+
+		return result || null;
+	}
+
+	/**
 	 * Get all groups with member counts and pending recommendation counts
 	 */
-	async findAllWithCounts(): Promise<CategoryGroupWithCounts[]> {
-		const groups = await db.select().from(categoryGroups).orderBy(categoryGroups.sortOrder, categoryGroups.name);
+	async findAllWithCounts(workspaceId: number): Promise<CategoryGroupWithCounts[]> {
+		const groups = await db
+			.select()
+			.from(categoryGroups)
+			.where(eq(categoryGroups.workspaceId, workspaceId))
+			.orderBy(categoryGroups.sortOrder, categoryGroups.name);
 
 		const groupsWithCounts = await Promise.all(
 			groups.map(async (group: CategoryGroup) => {
@@ -88,8 +105,8 @@ export class CategoryGroupRepository extends BaseRepository<
 	/**
 	 * Get a group with all its member categories
 	 */
-	async findByIdWithCategories(id: number): Promise<CategoryGroupWithCategories | null> {
-		const group = await this.findById(id);
+	async findByIdWithCategories(id: number, workspaceId: number): Promise<CategoryGroupWithCategories | null> {
+		const group = await this.findById(id, workspaceId);
 		if (!group) return null;
 
 		const memberCategories = await db
@@ -120,7 +137,11 @@ export class CategoryGroupRepository extends BaseRepository<
 			})
 			.from(categoryGroupMemberships)
 			.innerJoin(categories, eq(categoryGroupMemberships.categoryId, categories.id))
-			.where(and(eq(categoryGroupMemberships.categoryGroupId, id), isNull(categories.deletedAt)))
+			.where(and(
+				eq(categoryGroupMemberships.categoryGroupId, id),
+				isNull(categories.deletedAt),
+				eq(categories.workspaceId, workspaceId)
+			))
 			.orderBy(categoryGroupMemberships.sortOrder, categories.name);
 
 		return {
@@ -132,11 +153,11 @@ export class CategoryGroupRepository extends BaseRepository<
 	/**
 	 * Get a group with all its member categories (by slug)
 	 */
-	async findBySlugWithCategories(slug: string): Promise<CategoryGroupWithCategories | null> {
-		const group = await this.findBySlug(slug);
+	async findBySlugWithCategories(slug: string, workspaceId: number): Promise<CategoryGroupWithCategories | null> {
+		const group = await this.findBySlug(slug, workspaceId);
 		if (!group) return null;
 
-		return this.findByIdWithCategories(group.id);
+		return this.findByIdWithCategories(group.id, workspaceId);
 	}
 
 	/**
@@ -238,10 +259,11 @@ export class CategoryGroupMembershipRepository extends BaseRepository<
 	/**
 	 * Get the group that a category belongs to
 	 */
-	async findGroupForCategory(categoryId: number): Promise<CategoryGroup | null> {
+	async findGroupForCategory(categoryId: number, workspaceId: number): Promise<CategoryGroup | null> {
 		const [result] = await db
 			.select({
 				id: categoryGroups.id,
+				workspaceId: categoryGroups.workspaceId,
 				name: categoryGroups.name,
 				slug: categoryGroups.slug,
 				description: categoryGroups.description,
@@ -253,7 +275,10 @@ export class CategoryGroupMembershipRepository extends BaseRepository<
 			})
 			.from(categoryGroupMemberships)
 			.innerJoin(categoryGroups, eq(categoryGroupMemberships.categoryGroupId, categoryGroups.id))
-			.where(eq(categoryGroupMemberships.categoryId, categoryId))
+			.where(and(
+				eq(categoryGroupMemberships.categoryId, categoryId),
+				eq(categoryGroups.workspaceId, workspaceId)
+			))
 			.limit(1);
 
 		return result || null;
@@ -275,10 +300,11 @@ export class CategoryGroupMembershipRepository extends BaseRepository<
 	/**
 	 * Get all categories for a group
 	 */
-	async findCategoriesForGroup(groupId: number): Promise<Category[]> {
+	async findCategoriesForGroup(groupId: number, workspaceId: number): Promise<Category[]> {
 		const results = await db
 			.select({
 				id: categories.id,
+				workspaceId: categories.workspaceId,
 				name: categories.name,
 				slug: categories.slug,
 				notes: categories.notes,
@@ -304,7 +330,11 @@ export class CategoryGroupMembershipRepository extends BaseRepository<
 			})
 			.from(categoryGroupMemberships)
 			.innerJoin(categories, eq(categoryGroupMemberships.categoryId, categories.id))
-			.where(and(eq(categoryGroupMemberships.categoryGroupId, groupId), isNull(categories.deletedAt)))
+			.where(and(
+				eq(categoryGroupMemberships.categoryGroupId, groupId),
+				isNull(categories.deletedAt),
+				eq(categories.workspaceId, workspaceId)
+			))
 			.orderBy(categoryGroupMemberships.sortOrder, categories.name);
 
 		return results;

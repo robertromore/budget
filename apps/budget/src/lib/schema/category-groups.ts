@@ -4,6 +4,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import validator from "validator";
 import { z } from "zod/v4";
 import { categories } from "./categories";
+import { workspaces } from "./workspaces";
 
 // ================================================================================
 // Table: category_groups
@@ -13,6 +14,9 @@ export const categoryGroups = sqliteTable(
 	"category_groups",
 	{
 		id: integer("id").primaryKey({autoIncrement: true}),
+		workspaceId: integer("workspace_id")
+			.notNull()
+			.references(() => workspaces.id, {onDelete: "cascade"}),
 		name: text("name").notNull().unique(),
 		slug: text("slug").notNull().unique(),
 		description: text("description"),
@@ -27,12 +31,17 @@ export const categoryGroups = sqliteTable(
 			.default(sql`(datetime('now'))`),
 	},
 	(table) => [
+		index("category_groups_workspace_id_idx").on(table.workspaceId),
 		index("idx_category_groups_slug").on(table.slug),
 		index("idx_category_groups_sort_order").on(table.sortOrder),
 	]
 );
 
-export const categoryGroupsRelations = relations(categoryGroups, ({many}) => ({
+export const categoryGroupsRelations = relations(categoryGroups, ({one, many}) => ({
+	workspace: one(workspaces, {
+		fields: [categoryGroups.workspaceId],
+		references: [workspaces.id],
+	}),
 	memberships: many(categoryGroupMemberships),
 	recommendations: many(categoryGroupRecommendations),
 }));

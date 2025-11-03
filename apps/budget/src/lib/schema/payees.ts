@@ -9,6 +9,7 @@ import {createInsertSchema, createSelectSchema} from "drizzle-zod";
 import {transactions} from "./transactions";
 import {categories} from "./categories";
 import {budgets} from "./budgets";
+import {workspaces} from "./workspaces";
 import {z} from "zod/v4";
 
 // Enum definitions for payee fields
@@ -38,6 +39,9 @@ export const payees = sqliteTable(
   "payee",
   {
     id: integer("id").primaryKey({autoIncrement: true}),
+    workspaceId: integer("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {onDelete: "cascade"}),
     name: text("name"),
     slug: text("slug").notNull().unique(),
     notes: text("notes"),
@@ -88,6 +92,7 @@ export const payees = sqliteTable(
   },
   (table) => [
     // Existing indexes
+    index("payee_workspace_id_idx").on(table.workspaceId),
     index("payee_name_idx").on(table.name),
     index("payee_slug_idx").on(table.slug),
     index("payee_deleted_at_idx").on(table.deletedAt),
@@ -110,6 +115,10 @@ export const payees = sqliteTable(
 );
 
 export const payeesRelations = relations(payees, ({many, one}) => ({
+  workspace: one(workspaces, {
+    fields: [payees.workspaceId],
+    references: [workspaces.id],
+  }),
   transactions: many(transactions),
   defaultCategory: one(categories, {
     fields: [payees.defaultCategoryId],
@@ -124,6 +133,7 @@ export const payeesRelations = relations(payees, ({many, one}) => ({
 export const selectPayeeSchema = createSelectSchema(payees);
 export const insertPayeeSchema = createInsertSchema(payees);
 export const formInsertPayeeSchema = createInsertSchema(payees, {
+  workspaceId: (schema) => schema.optional(),
   name: (schema) =>
     schema
       .min(1, "Payee name is required")

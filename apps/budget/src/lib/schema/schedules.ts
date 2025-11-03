@@ -15,11 +15,15 @@ import {categories} from "./categories";
 import {accounts} from "./accounts";
 import {scheduleDates} from "./schedule-dates";
 import {budgets} from "./budgets";
+import {workspaces} from "./workspaces";
 
 export const schedules = sqliteTable(
   "schedules",
   {
     id: integer("id").primaryKey({autoIncrement: true}),
+    workspaceId: integer("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {onDelete: "cascade"}),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     status: text("status", {enum: ["active", "inactive"]}).default("active"),
@@ -48,6 +52,7 @@ export const schedules = sqliteTable(
       .default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
+    index("schedules_workspace_id_idx").on(table.workspaceId),
     index("relations_schedule_schedule_date_idx").on(table.dateId),
     index("relations_schedule_account_idx").on(table.accountId),
     index("relations_schedule_payee_idx").on(table.payeeId),
@@ -60,6 +65,10 @@ export const schedules = sqliteTable(
 );
 
 export const schedulesRelations = relations(schedules, ({many, one}) => ({
+  workspace: one(workspaces, {
+    fields: [schedules.workspaceId],
+    references: [workspaces.id],
+  }),
   transactions: many(transactions),
   account: one(accounts, {
     fields: [schedules.accountId],
@@ -86,6 +95,7 @@ export const schedulesRelations = relations(schedules, ({many, one}) => ({
 export const selectScheduleSchema = createSelectSchema(schedules);
 export const insertScheduleSchema = createInsertSchema(schedules);
 export const formInsertScheduleSchema = createInsertSchema(schedules, {
+  workspaceId: (schema) => schema.optional(),
   name: (schema) => schema.min(2).max(30),
 });
 export const removeScheduleSchema = z.object({id: z.number().nonnegative()});

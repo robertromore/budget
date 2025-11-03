@@ -1,5 +1,6 @@
 [
   {
+    "workspaceId": 1,
     "budgetId": 1,
     "type": "monthly",
     "intervalCount": 1,
@@ -7,6 +8,7 @@
     "timezone": "America/New_York"
   },
   {
+    "workspaceId": 1,
     "budgetId": 2,
     "type": "monthly",
     "intervalCount": 1,
@@ -14,6 +16,7 @@
     "timezone": "America/New_York"
   },
   {
+    "workspaceId": 1,
     "budgetId": 3,
     "type": "yearly",
     "intervalCount": 1,

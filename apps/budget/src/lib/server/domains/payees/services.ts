@@ -167,7 +167,7 @@ export class PayeeService {
   /**
    * Create a new payee with enhanced budgeting integration
    */
-  async createPayee(data: CreatePayeeData): Promise<Payee> {
+  async createPayee(data: CreatePayeeData, workspaceId: number): Promise<Payee> {
     // Validate and sanitize input
     if (!data.name?.trim()) {
       throw new ValidationError("Payee name is required");
@@ -186,11 +186,11 @@ export class PayeeService {
 
     // Validate related entities if provided
     if (data.defaultCategoryId) {
-      await this.validateCategoryExists(data.defaultCategoryId);
+      await this.validateCategoryExists(data.defaultCategoryId, workspaceId);
     }
 
     if (data.defaultBudgetId) {
-      await this.validateBudgetExists(data.defaultBudgetId);
+      await this.validateBudgetExists(data.defaultBudgetId, workspaceId);
     }
 
     // Sanitize and validate additional fields
@@ -202,7 +202,7 @@ export class PayeeService {
     let counter = 1;
 
     // Ensure slug uniqueness (only checking active payees since deleted ones have modified slugs)
-    while (await this.repository.findBySlug(slug)) {
+    while (await this.repository.findBySlug(slug, workspaceId)) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
@@ -216,18 +216,18 @@ export class PayeeService {
       taxRelevant: data.taxRelevant || false,
     };
 
-    return await this.repository.create(newPayee);
+    return await this.repository.create(newPayee, workspaceId);
   }
 
   /**
    * Get payee by ID
    */
-  async getPayeeById(id: number): Promise<Payee> {
+  async getPayeeById(id: number, workspaceId: number): Promise<Payee> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid payee ID");
     }
 
-    const payee = await this.repository.findById(id);
+    const payee = await this.repository.findById(id, workspaceId);
     if (!payee) {
       throw new NotFoundError("Payee", id);
     }
@@ -238,12 +238,12 @@ export class PayeeService {
   /**
    * Get payee by slug
    */
-  async getPayeeBySlug(slug: string): Promise<Payee> {
+  async getPayeeBySlug(slug: string, workspaceId: number): Promise<Payee> {
     if (!slug?.trim()) {
       throw new ValidationError("Invalid payee slug");
     }
 
-    const payee = await this.repository.findBySlug(slug);
+    const payee = await this.repository.findBySlug(slug, workspaceId);
     if (!payee) {
       throw new NotFoundError("Payee", slug);
     }
@@ -254,9 +254,9 @@ export class PayeeService {
   /**
    * Get payee by ID with statistics
    */
-  async getPayeeWithStats(id: number): Promise<PayeeWithStats> {
-    const payee = await this.getPayeeById(id);
-    const stats = await this.repository.getStats(id);
+  async getPayeeWithStats(id: number, workspaceId: number): Promise<PayeeWithStats> {
+    const payee = await this.getPayeeById(id, workspaceId);
+    const stats = await this.repository.getStats(id, workspaceId);
 
     return {
       ...payee,
@@ -267,21 +267,21 @@ export class PayeeService {
   /**
    * Get all payees
    */
-  async getAllPayees(): Promise<Payee[]> {
+  async getAllPayees(workspaceId: number): Promise<Payee[]> {
     // Fetch all payees without pagination
-    return await this.repository.findAllPayees();
+    return await this.repository.findAllPayees(workspaceId);
   }
 
   /**
    * Get all payees with transaction statistics
    */
-  async getAllPayeesWithStats(): Promise<PayeeWithStats[]> {
+  async getAllPayeesWithStats(workspaceId: number): Promise<PayeeWithStats[]> {
     // Fetch all payees without pagination
-    const payees = await this.repository.findAllPayees();
+    const payees = await this.repository.findAllPayees(workspaceId);
 
     return await Promise.all(
       payees.map(async (payee) => {
-        const stats = await this.repository.getStats(payee.id);
+        const stats = await this.repository.getStats(payee.id, workspaceId);
         return {
           ...payee,
           stats,
@@ -293,13 +293,13 @@ export class PayeeService {
   /**
    * Update payee with enhanced validation and field support
    */
-  async updatePayee(id: number, data: UpdatePayeeData): Promise<Payee> {
+  async updatePayee(id: number, data: UpdatePayeeData, workspaceId: number): Promise<Payee> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid payee ID");
     }
 
     // Verify payee exists
-    await this.getPayeeById(id);
+    await this.getPayeeById(id, workspaceId);
 
     const updateData: UpdatePayeeData = {};
 
@@ -328,14 +328,14 @@ export class PayeeService {
     // Validate related entities
     if (data.defaultCategoryId !== undefined) {
       if (data.defaultCategoryId) {
-        await this.validateCategoryExists(data.defaultCategoryId);
+        await this.validateCategoryExists(data.defaultCategoryId, workspaceId);
       }
       updateData.defaultCategoryId = data.defaultCategoryId;
     }
 
     if (data.defaultBudgetId !== undefined) {
       if (data.defaultBudgetId) {
-        await this.validateBudgetExists(data.defaultBudgetId);
+        await this.validateBudgetExists(data.defaultBudgetId, workspaceId);
       }
       updateData.defaultBudgetId = data.defaultBudgetId;
     }
@@ -367,23 +367,23 @@ export class PayeeService {
       throw new ValidationError("No valid fields to update");
     }
 
-    return await this.repository.update(id, updateData);
+    return await this.repository.update(id, updateData, workspaceId);
   }
 
   /**
    * Delete payee (soft delete)
    */
-  async deletePayee(id: number, options: {force?: boolean} = {}): Promise<Payee> {
+  async deletePayee(id: number, workspaceId: number, options: {force?: boolean} = {}): Promise<Payee> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid payee ID");
     }
 
     // Verify payee exists
-    await this.getPayeeById(id);
+    await this.getPayeeById(id, workspaceId);
 
     // Check for associated transactions unless force delete
     if (!options.force) {
-      const hasTransactions = await this.repository.hasTransactions(id);
+      const hasTransactions = await this.repository.hasTransactions(id, workspaceId);
       if (hasTransactions) {
         throw new ConflictError(
           "Cannot delete payee with associated transactions. Use force delete or reassign transactions first."
@@ -391,7 +391,7 @@ export class PayeeService {
       }
     }
 
-    return await this.repository.softDelete(id);
+    return await this.repository.softDelete(id, workspaceId);
   }
 
   /**
@@ -399,6 +399,7 @@ export class PayeeService {
    */
   async bulkDeletePayees(
     ids: number[],
+    workspaceId: number,
     options: {force?: boolean} = {}
   ): Promise<{deletedCount: number; errors: string[]}> {
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -416,10 +417,10 @@ export class PayeeService {
     // Validate each payee and check for conflicts
     for (const id of validIds) {
       try {
-        await this.getPayeeById(id);
+        await this.getPayeeById(id, workspaceId);
 
         if (!options.force) {
-          const hasTransactions = await this.repository.hasTransactions(id);
+          const hasTransactions = await this.repository.hasTransactions(id, workspaceId);
           if (hasTransactions) {
             errors.push(`Payee ${id}: Has associated transactions`);
             continue;
@@ -433,7 +434,7 @@ export class PayeeService {
     }
 
     if (deleteableIds.length > 0) {
-      await this.repository.bulkDelete(deleteableIds);
+      await this.repository.bulkSoftDeleteWithSlugArchive(deleteableIds, workspaceId);
     }
 
     return {deletedCount: deleteableIds.length, errors};
@@ -442,64 +443,64 @@ export class PayeeService {
   /**
    * Search payees
    */
-  async searchPayees(query: string): Promise<Payee[]> {
+  async searchPayees(query: string, workspaceId: number): Promise<Payee[]> {
     const sanitizedQuery = query?.trim() || '';
-    return await this.repository.search(sanitizedQuery);
+    return await this.repository.search(sanitizedQuery, workspaceId);
   }
 
   /**
    * Get payees used in account transactions
    */
-  async getPayeesByAccount(accountId: number): Promise<Payee[]> {
+  async getPayeesByAccount(accountId: number, workspaceId: number): Promise<Payee[]> {
     if (!accountId || accountId <= 0) {
       throw new ValidationError("Invalid account ID");
     }
 
-    return await this.repository.findByAccountTransactions(accountId);
+    return await this.repository.findByAccountTransactions(accountId, workspaceId);
   }
 
   /**
    * Verify payee exists
    */
-  async verifyPayeeExists(id: number): Promise<boolean> {
+  async verifyPayeeExists(id: number, workspaceId: number): Promise<boolean> {
     if (!id || id <= 0) return false;
-    return await this.repository.exists(id);
+    return await this.repository.exists(id, workspaceId);
   }
 
   /**
    * Get comprehensive payee statistics
    */
-  async getPayeeStats(id: number): Promise<PayeeStats> {
-    await this.getPayeeById(id); // Verify exists
-    return await this.repository.getStats(id);
+  async getPayeeStats(id: number, workspaceId: number): Promise<PayeeStats> {
+    await this.getPayeeById(id, workspaceId); // Verify exists
+    return await this.repository.getStats(id, workspaceId);
   }
 
   /**
    * Merge two payees (move all transactions from source to target)
    */
-  async mergePayees(sourceId: number, targetId: number): Promise<void> {
+  async mergePayees(sourceId: number, targetId: number, workspaceId: number): Promise<void> {
     if (!sourceId || !targetId || sourceId === targetId) {
       throw new ValidationError("Invalid payee IDs for merge operation");
     }
 
     // Verify both payees exist
-    const sourcePayee = await this.getPayeeById(sourceId);
-    const targetPayee = await this.getPayeeById(targetId);
+    const sourcePayee = await this.getPayeeById(sourceId, workspaceId);
+    const targetPayee = await this.getPayeeById(targetId, workspaceId);
 
     // Get source payee stats before merge
-    const sourceStats = await this.repository.getStats(sourceId);
+    const sourceStats = await this.repository.getStats(sourceId, workspaceId);
     if (sourceStats.transactionCount === 0) {
       throw new ValidationError("Source payee has no transactions to merge");
     }
 
     // Reassign all transactions from source to target payee
-    const reassignedCount = await this.repository.reassignTransactions(sourceId, targetId);
+    const reassignedCount = await this.repository.reassignTransactions(sourceId, targetId, workspaceId);
 
     // Soft delete the source payee
-    await this.repository.softDelete(sourceId);
+    await this.repository.softDelete(sourceId, workspaceId);
 
     // Update calculated fields for target payee
-    await this.repository.updateCalculatedFields(targetId);
+    await this.repository.updateCalculatedFields(targetId, workspaceId);
 
     logger.info('Payee merge completed', {
       sourceId,
@@ -513,44 +514,44 @@ export class PayeeService {
   /**
    * Get payees with their default category/budget relations
    */
-  async getPayeesWithRelations(): Promise<PayeeWithRelations[]> {
-    return await this.repository.findWithRelations();
+  async getPayeesWithRelations(workspaceId: number): Promise<PayeeWithRelations[]> {
+    return await this.repository.findWithRelations(workspaceId);
   }
 
   /**
    * Advanced search with comprehensive filters
    */
-  async searchPayeesAdvanced(filters: PayeeSearchFilters): Promise<Payee[]> {
-    return await this.repository.searchWithFilters(filters);
+  async searchPayeesAdvanced(filters: PayeeSearchFilters, workspaceId: number): Promise<Payee[]> {
+    return await this.repository.searchWithFilters(filters, workspaceId);
   }
 
   /**
    * Get payees by type
    */
-  async getPayeesByType(payeeType: PayeeType): Promise<Payee[]> {
-    return await this.repository.findByType(payeeType);
+  async getPayeesByType(payeeType: PayeeType, workspaceId: number): Promise<Payee[]> {
+    return await this.repository.findByType(payeeType, workspaceId);
   }
 
   /**
    * Get payees that need attention (missing defaults, old transactions, etc.)
    */
-  async getPayeesNeedingAttention(): Promise<Array<Payee & {reason: string}>> {
-    return await this.repository.findNeedingAttention();
+  async getPayeesNeedingAttention(workspaceId: number): Promise<Array<Payee & {reason: string}>> {
+    return await this.repository.findNeedingAttention(workspaceId);
   }
 
   /**
    * Generate intelligent suggestions for a payee
    */
-  async generatePayeeSuggestions(id: number): Promise<PayeeSuggestions> {
-    await this.getPayeeById(id); // Verify exists
-    return await this.repository.generateSuggestions(id);
+  async generatePayeeSuggestions(id: number, workspaceId: number): Promise<PayeeSuggestions> {
+    await this.getPayeeById(id, workspaceId); // Verify exists
+    return await this.repository.generateSuggestions(id, workspaceId);
   }
 
   /**
    * Get comprehensive payee intelligence data
    */
-  async getPayeeIntelligence(id: number): Promise<PayeeIntelligence> {
-    return await this.repository.getIntelligence(id);
+  async getPayeeIntelligence(id: number, workspaceId: number): Promise<PayeeIntelligence> {
+    return await this.repository.getIntelligence(id, workspaceId);
   }
 
   /**
@@ -722,13 +723,13 @@ export class PayeeService {
   /**
    * Validate that a category exists
    */
-  private async validateCategoryExists(categoryId: number): Promise<void> {
+  private async validateCategoryExists(categoryId: number, workspaceId: number): Promise<void> {
     if (categoryId <= 0) {
       throw new ValidationError("Invalid category ID");
     }
 
     if (this.categoryService) {
-      const exists = await this.categoryService.verifyCategoryExists(categoryId);
+      const exists = await this.categoryService.verifyCategoryExists(categoryId, workspaceId);
       if (!exists) {
         throw new NotFoundError("Category", categoryId);
       }
@@ -738,14 +739,14 @@ export class PayeeService {
   /**
    * Validate that a budget exists
    */
-  private async validateBudgetExists(budgetId: number): Promise<void> {
+  private async validateBudgetExists(budgetId: number, workspaceId: number): Promise<void> {
     if (budgetId <= 0) {
       throw new ValidationError("Invalid budget ID");
     }
 
     if (this.budgetService) {
       try {
-        await this.budgetService.getBudget(budgetId);
+        await this.budgetService.getBudget(budgetId, workspaceId);
       } catch (error) {
         if (error instanceof NotFoundError) {
           throw error;

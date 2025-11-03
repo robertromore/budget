@@ -4,6 +4,7 @@ import {createInsertSchema, createSelectSchema} from "drizzle-zod";
 import {payees} from "./payees";
 import {categories} from "./categories";
 import {transactions} from "./transactions";
+import {workspaces} from "./workspaces";
 import {z} from "zod/v4";
 
 // Enum definitions for correction context
@@ -40,6 +41,9 @@ export const payeeCategoryCorrections = sqliteTable(
   "payee_category_corrections",
   {
     id: integer("id").primaryKey({autoIncrement: true}),
+    workspaceId: integer("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {onDelete: "cascade"}),
 
     // Core correction data
     payeeId: integer("payee_id").notNull().references(() => payees.id),
@@ -87,6 +91,7 @@ export const payeeCategoryCorrections = sqliteTable(
   },
   (table) => [
     // Primary lookup indexes
+    index("payee_corrections_workspace_id_idx").on(table.workspaceId),
     index("payee_corrections_payee_idx").on(table.payeeId),
     index("payee_corrections_transaction_idx").on(table.transactionId),
     index("payee_corrections_from_category_idx").on(table.fromCategoryId),
@@ -119,6 +124,10 @@ export const payeeCategoryCorrections = sqliteTable(
 );
 
 export const payeeCategoryCorrectionsRelations = relations(payeeCategoryCorrections, ({one}) => ({
+  workspace: one(workspaces, {
+    fields: [payeeCategoryCorrections.workspaceId],
+    references: [workspaces.id],
+  }),
   payee: one(payees, {
     fields: [payeeCategoryCorrections.payeeId],
     references: [payees.id],
@@ -144,6 +153,7 @@ export const selectPayeeCategoryCorrectionSchema = createSelectSchema(payeeCateg
 export const insertPayeeCategoryCorrectionSchema = createInsertSchema(payeeCategoryCorrections);
 
 export const formInsertPayeeCategoryCorrectionSchema = createInsertSchema(payeeCategoryCorrections, {
+  workspaceId: (schema) => schema.optional(),
   payeeId: (schema) => schema.positive("Invalid payee ID"),
   transactionId: (schema) => schema.positive("Invalid transaction ID").optional().nullable(),
   toCategoryId: (schema) => schema.positive("Invalid category ID"),

@@ -12,24 +12,24 @@ import { z } from "zod";
 const categoryService = serviceFactory.getCategoryService();
 
 export const categoriesRoutes = t.router({
-  all: publicProcedure.query(withErrorHandler(async () => categoryService.getAllCategories())),
+  all: publicProcedure.query(withErrorHandler(async ({ctx}) => categoryService.getAllCategories(ctx.workspaceId))),
 
-  allWithStats: publicProcedure.query(withErrorHandler(async () => categoryService.getAllCategoriesWithStats())),
+  allWithStats: publicProcedure.query(withErrorHandler(async ({ctx}) => categoryService.getAllCategoriesWithStats(ctx.workspaceId))),
 
-  allWithGroups: publicProcedure.query(withErrorHandler(async () => categoryService.getAllCategoriesWithGroups())),
+  allWithGroups: publicProcedure.query(withErrorHandler(async ({ctx}) => categoryService.getAllCategoriesWithGroups(ctx.workspaceId))),
 
-  load: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input}) => categoryService.getCategoryById(input.id))),
+  load: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input, ctx}) => categoryService.getCategoryById(input.id, ctx.workspaceId))),
 
-  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(withErrorHandler(async ({input}) => categoryService.getCategoryBySlug(input.slug))),
+  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(withErrorHandler(async ({input, ctx}) => categoryService.getCategoryBySlug(input.slug, ctx.workspaceId))),
 
-  search: publicProcedure.input(searchCategoriesSchema).query(withErrorHandler(async ({input}) => categoryService.searchCategories(input.query))),
+  search: publicProcedure.input(searchCategoriesSchema).query(withErrorHandler(async ({input, ctx}) => categoryService.searchCategories(input.query, ctx.workspaceId))),
 
-  remove: rateLimitedProcedure.input(removeCategorySchema).mutation(withErrorHandler(async ({input}) => categoryService.deleteCategory(input.id, {force: false}))),
+  remove: rateLimitedProcedure.input(removeCategorySchema).mutation(withErrorHandler(async ({input, ctx}) => categoryService.deleteCategory(input.id, ctx.workspaceId, {force: false}))),
 
   delete: bulkOperationProcedure
     .input(removeCategoriesSchema)
-    .mutation(withErrorHandler(async ({input: {entities}}) => {
-      const result = await categoryService.bulkDeleteCategories(entities, {force: false});
+    .mutation(withErrorHandler(async ({input: {entities}, ctx}) => {
+      const result = await categoryService.bulkDeleteCategories(entities, ctx.workspaceId, {force: false});
       return {
         deletedCount: result.deletedCount,
         errors: result.errors,
@@ -38,7 +38,7 @@ export const categoriesRoutes = t.router({
 
   save: rateLimitedProcedure
     .input(formInsertCategorySchema)
-    .mutation(withErrorHandler(async ({input}) => {
+    .mutation(withErrorHandler(async ({input, ctx}) => {
       const {id, name, notes, categoryType, categoryIcon, categoryColor, isActive, displayOrder, isTaxDeductible, taxCategory, deductiblePercentage, isSeasonal, seasonalMonths, expectedMonthlyMin, expectedMonthlyMax, spendingPriority, incomeReliability} = input;
 
       if (id) {
@@ -60,7 +60,7 @@ export const categoriesRoutes = t.router({
           expectedMonthlyMax,
           spendingPriority,
           incomeReliability,
-        });
+        }, ctx.workspaceId);
         (category as any).is_new = false; // Maintain compatibility with existing UI
         return category;
       } else {
@@ -82,7 +82,7 @@ export const categoriesRoutes = t.router({
           expectedMonthlyMax,
           spendingPriority,
           incomeReliability,
-        });
+        }, ctx.workspaceId);
         (category as any).is_new = true; // Maintain compatibility with existing UI
         return category;
       }
@@ -95,43 +95,43 @@ export const categoriesRoutes = t.router({
         displayOrder: z.number().min(0),
       })).min(1),
     }))
-    .mutation(withErrorHandler(async ({input}) => {
-      const result = await categoryService.bulkUpdateDisplayOrder(input.updates);
+    .mutation(withErrorHandler(async ({input, ctx}) => {
+      const result = await categoryService.bulkUpdateDisplayOrder(input.updates, ctx.workspaceId);
       return {
         updatedCount: result.updatedCount,
         errors: result.errors,
       };
     })),
 
-  allWithBudgets: publicProcedure.query(withErrorHandler(async () => categoryService.getAllCategoriesWithBudgets())),
+  allWithBudgets: publicProcedure.query(withErrorHandler(async ({ctx}) => categoryService.getAllCategoriesWithBudgets(ctx.workspaceId))),
 
-  loadWithBudgets: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input}) => categoryService.getCategoryByIdWithBudgets(input.id))),
+  loadWithBudgets: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input, ctx}) => categoryService.getCategoryByIdWithBudgets(input.id, ctx.workspaceId))),
 
-  getBySlugWithBudgets: publicProcedure.input(z.object({slug: z.string()})).query(withErrorHandler(async ({input}) => categoryService.getCategoryBySlugWithBudgets(input.slug))),
+  getBySlugWithBudgets: publicProcedure.input(z.object({slug: z.string()})).query(withErrorHandler(async ({input, ctx}) => categoryService.getCategoryBySlugWithBudgets(input.slug, ctx.workspaceId))),
 
-  rootCategories: publicProcedure.query(withErrorHandler(async () => categoryService.getRootCategories())),
+  rootCategories: publicProcedure.query(withErrorHandler(async ({ctx}) => categoryService.getRootCategories(ctx.workspaceId))),
 
-  categoryChildren: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input}) => categoryService.getCategoryChildren(input.id))),
+  categoryChildren: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input, ctx}) => categoryService.getCategoryChildren(input.id, ctx.workspaceId))),
 
-  categoryWithChildren: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input}) => categoryService.getCategoryWithChildren(input.id))),
+  categoryWithChildren: publicProcedure.input(categoryIdSchema).query(withErrorHandler(async ({input, ctx}) => categoryService.getCategoryWithChildren(input.id, ctx.workspaceId))),
 
-  hierarchyTree: publicProcedure.query(withErrorHandler(async () => categoryService.getCategoryHierarchyTree())),
+  hierarchyTree: publicProcedure.query(withErrorHandler(async ({ctx}) => categoryService.getCategoryHierarchyTree(ctx.workspaceId))),
 
   setParent: rateLimitedProcedure
     .input(z.object({
       categoryId: z.number().positive(),
       parentId: z.number().positive().nullable(),
     }))
-    .mutation(withErrorHandler(async ({input}) => categoryService.setCategoryParent(input.categoryId, input.parentId))),
+    .mutation(withErrorHandler(async ({input, ctx}) => categoryService.setCategoryParent(input.categoryId, input.parentId, ctx.workspaceId))),
 
   seedDefaults: rateLimitedProcedure
     .input(z.object({
       slugs: z.array(z.string()).optional(),
     }).optional())
-    .mutation(withErrorHandler(async ({input}) => categoryService.seedDefaultCategories(input?.slugs))),
+    .mutation(withErrorHandler(async ({input, ctx}) => categoryService.seedDefaultCategories(ctx.workspaceId, input?.slugs))),
 
   defaultCategoriesStatus: publicProcedure
-    .query(withErrorHandler(async () => categoryService.getDefaultCategoriesStatus())),
+    .query(withErrorHandler(async ({ctx}) => categoryService.getDefaultCategoriesStatus(ctx.workspaceId))),
 
   availableDefaults: publicProcedure
     .query(withErrorHandler(async () => categoryService.getAvailableDefaultCategories())),

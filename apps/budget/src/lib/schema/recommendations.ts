@@ -10,6 +10,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { accounts } from "./accounts";
 import { budgets } from "./budgets";
 import { categories } from "./categories";
+import { workspaces } from "./workspaces";
 
 export const recommendationTypes = [
   "create_budget",
@@ -108,6 +109,9 @@ export const budgetRecommendations = sqliteTable(
   "budget_recommendation",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    workspaceId: integer("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {onDelete: "cascade"}),
     type: text("type", { enum: recommendationTypes }).notNull(),
     priority: text("priority", { enum: recommendationPriorities })
       .notNull()
@@ -142,6 +146,7 @@ export const budgetRecommendations = sqliteTable(
     dismissedAt: text("dismissed_at"),
   },
   (table) => [
+    index("recommendation_workspace_id_idx").on(table.workspaceId),
     index("recommendation_type_idx").on(table.type),
     index("recommendation_status_idx").on(table.status),
     index("recommendation_priority_idx").on(table.priority),
@@ -156,6 +161,10 @@ export const budgetRecommendations = sqliteTable(
 export const budgetRecommendationsRelations = relations(
   budgetRecommendations,
   ({ one }) => ({
+    workspace: one(workspaces, {
+      fields: [budgetRecommendations.workspaceId],
+      references: [workspaces.id],
+    }),
     budget: one(budgets, {
       fields: [budgetRecommendations.budgetId],
       references: [budgets.id],
@@ -173,6 +182,9 @@ export const budgetRecommendationsRelations = relations(
 
 export const selectRecommendationSchema = createSelectSchema(budgetRecommendations);
 export const insertRecommendationSchema = createInsertSchema(budgetRecommendations);
+export const formInsertRecommendationSchema = createInsertSchema(budgetRecommendations, {
+  workspaceId: (schema) => schema.optional(),
+});
 
 export type BudgetRecommendation = typeof budgetRecommendations.$inferSelect;
 export type NewBudgetRecommendation = typeof budgetRecommendations.$inferInsert;

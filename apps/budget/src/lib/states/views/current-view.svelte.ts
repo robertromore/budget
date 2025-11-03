@@ -2,6 +2,7 @@ import { default as ViewModel } from "$lib/models/view.svelte";
 import type { View } from "$lib/schema";
 import type { TransactionsFormat, ViewFilter } from "$lib/types";
 import type {
+  ColumnPinningState,
   ExpandedState,
   FilterFnOption,
   GroupingState,
@@ -30,6 +31,8 @@ export class CurrentViewState<TData> {
     this.table.setSorting(this.view.getSorting());
     this.table.setExpanded(this.view.getExpanded());
     this.table.setColumnVisibility(this.view.getVisibility());
+    this.table.setColumnPinning(this.view.getPinning());
+    this.table.setColumnOrder(this.view.getColumnOrder());
   }
 
   resetToInitialState() {
@@ -145,6 +148,31 @@ export class CurrentViewState<TData> {
 
   toggleColumnVisibility(column: string) {
     this.updateColumnVisibility(column, this.view.getVisibility()[column] ?? false);
+  }
+
+  updateTablePinning(pinning: ColumnPinningState) {
+    this.view.setPinning(pinning);
+    this.table.setColumnPinning(pinning);
+  }
+
+  syncPinningFromTable() {
+    const currentPinning = this.table.getState().columnPinning;
+    this.view.setPinning(currentPinning);
+  }
+
+  updateTableColumnOrder(columnOrder: string[]) {
+    this.view.setColumnOrder(columnOrder);
+    this.table.setColumnOrder(columnOrder);
+  }
+
+  syncColumnOrderFromTable() {
+    const currentOrder = this.table.getState().columnOrder;
+    this.view.setColumnOrder(currentOrder);
+  }
+
+  updateTableDensity(density: 'normal' | 'dense') {
+    this.view.setDensity(density);
+    // Note: Density affects styling only, not TanStack Table state
   }
 }
 

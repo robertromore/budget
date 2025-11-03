@@ -106,10 +106,10 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Create a new payee
    */
-  override async create(data: NewPayee): Promise<Payee> {
+  override async create(data: NewPayee, workspaceId: number): Promise<Payee> {
     const [payee] = await db
       .insert(payees)
-      .values(data)
+      .values({...data, workspaceId})
       .returning();
 
     if (!payee) {
@@ -127,11 +127,11 @@ export class PayeeRepository extends BaseRepository<
    * Note: This replaces the old slugExists() method with inverted logic
    * @deprecated Use isSlugUnique() inherited from BaseRepository instead
    */
-  async slugExists(slug: string): Promise<boolean> {
+  async slugExists(slug: string, workspaceId: number): Promise<boolean> {
     const [result] = await db
       .select()
       .from(payees)
-      .where(eq(payees.slug, slug))
+      .where(and(eq(payees.slug, slug), eq(payees.workspaceId, workspaceId)))
       .limit(1);
 
     return !!result;
@@ -140,18 +140,18 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Find all active payees without pagination
    */
-  async findAllPayees(): Promise<Payee[]> {
+  async findAllPayees(workspaceId: number): Promise<Payee[]> {
     return await db
       .select()
       .from(payees)
-      .where(isNull(payees.deletedAt))
+      .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)))
       .orderBy(payees.name);
   }
 
   /**
    * Find all active payees with pagination
    */
-  override async findAll(options?: PaginationOptions): Promise<PaginatedResult<Payee>> {
+  override async findAll(workspaceId: number, options?: PaginationOptions): Promise<PaginatedResult<Payee>> {
     const {
       page = 1,
       pageSize = DATABASE_CONFIG.LIMITS.DEFAULT_PAGE_SIZE,
@@ -167,14 +167,14 @@ export class PayeeRepository extends BaseRepository<
     const result = await db
       .select({total: count()})
       .from(payees)
-      .where(isNull(payees.deletedAt));
+      .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)));
     const total = result[0]?.total || 0;
 
     // Get paginated data
     const data = await db
       .select()
       .from(payees)
-      .where(isNull(payees.deletedAt))
+      .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)))
       .orderBy(payees.name)
       .limit(actualLimit)
       .offset(actualOffset);
@@ -192,7 +192,7 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Update payee
    */
-  override async update(id: number, data: UpdatePayeeData): Promise<Payee> {
+  override async update(id: number, data: UpdatePayeeData, workspaceId: number): Promise<Payee> {
     // Type-safe database update data
     interface PayeeDbUpdate extends Omit<UpdatePayeeData, 'address' | 'subscriptionInfo' | 'tags' | 'preferredPaymentMethods'> {
       address?: string | null;
@@ -226,7 +226,7 @@ export class PayeeRepository extends BaseRepository<
     const [payee] = await db
       .update(payees)
       .set(updateData)
-      .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
+      .where(and(eq(payees.id, id), eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)))
       .returning();
 
     if (!payee) {
@@ -256,9 +256,9 @@ export class PayeeRepository extends BaseRepository<
    * Search payees by name (enhanced with better ordering)
    * Filters for active payees only
    */
-  async search(query: string): Promise<Payee[]> {
+  async search(query: string, workspaceId: number): Promise<Payee[]> {
     if (!query.trim()) {
-      const result = await this.findAll();
+      const result = await this.findAll(workspaceId);
       return result.data;
     }
 
@@ -268,6 +268,7 @@ export class PayeeRepository extends BaseRepository<
       .from(payees)
       .where(
         and(
+          eq(payees.workspaceId, workspaceId),
           like(payees.name, `%${query}%`),
           eq(payees.isActive, true),
           isNull(payees.deletedAt)
@@ -280,7 +281,7 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Find payees used in account transactions
    */
-  async findByAccountTransactions(accountId: number): Promise<Payee[]> {
+  async findByAccountTransactions(accountId: number, workspaceId: number): Promise<Payee[]> {
     const payeeIds = await db
       .selectDistinct({payeeId: transactions.payeeId})
       .from(transactions)
@@ -301,6 +302,7 @@ export class PayeeRepository extends BaseRepository<
       .select()
       .from(payees)
       .where(and(
+        eq(payees.workspaceId, workspaceId),
         inArray(payees.id, validPayeeIds),
         isNull(payees.deletedAt)
       ))
@@ -310,7 +312,7 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Get comprehensive payee statistics
    */
-  async getStats(id: number): Promise<PayeeStats> {
+  async getStats(id: number, workspaceId: number): Promise<PayeeStats> {
     // Get basic transaction stats
     const [basicStats] = await db
       .select({
@@ -380,7 +382,7 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Check if payee has associated transactions
    */
-  async hasTransactions(id: number): Promise<boolean> {
+  async hasTransactions(id: number, workspaceId: number): Promise<boolean> {
     const [result] = await db
       .select({id: transactions.id})
       .from(transactions)
@@ -396,7 +398,7 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Find payees with their default category/budget relations
    */
-  async findWithRelations(): Promise<Array<Payee & {defaultCategory?: any; defaultBudget?: any}>> {
+  async findWithRelations(workspaceId: number): Promise<Array<Payee & {defaultCategory?: any; defaultBudget?: any}>> {
     return await db
       .select({
         id: payees.id,
@@ -426,6 +428,7 @@ export class PayeeRepository extends BaseRepository<
         createdAt: payees.createdAt,
         updatedAt: payees.updatedAt,
         deletedAt: payees.deletedAt,
+        workspaceId: payees.workspaceId,
         defaultCategory: {
           id: categories.id,
           name: categories.name,
@@ -438,16 +441,16 @@ export class PayeeRepository extends BaseRepository<
       .from(payees)
       .leftJoin(categories, eq(payees.defaultCategoryId, categories.id))
       .leftJoin(budgets, eq(payees.defaultBudgetId, budgets.id))
-      .where(isNull(payees.deletedAt))
+      .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)))
       .orderBy(payees.name);
   }
 
   /**
    * Advanced search with filters
    */
-  async searchWithFilters(filters: PayeeSearchFilters): Promise<Payee[]> {
+  async searchWithFilters(filters: PayeeSearchFilters, workspaceId: number): Promise<Payee[]> {
     logger.debug('Repository searchWithFilters called', {filters});
-    const conditions = [isNull(payees.deletedAt)];
+    const conditions = [eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)];
 
     if (filters.query) {
       conditions.push(like(payees.name, `%${filters.query}%`));
@@ -512,11 +515,12 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Get payees by type
    */
-  async findByType(payeeType: PayeeType): Promise<Payee[]> {
+  async findByType(payeeType: PayeeType, workspaceId: number): Promise<Payee[]> {
     return await db
       .select()
       .from(payees)
       .where(and(
+        eq(payees.workspaceId, workspaceId),
         eq(payees.payeeType, payeeType),
         isNull(payees.deletedAt)
       ))
@@ -526,7 +530,7 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Get payees that need attention (old transactions, missing defaults, etc.)
    */
-  async findNeedingAttention(): Promise<Array<Payee & {reason: string}>> {
+  async findNeedingAttention(workspaceId: number): Promise<Array<Payee & {reason: string}>> {
     const cutoffDateValue = currentDate.subtract({months: 3});
     const cutoffDateStr = `${cutoffDateValue.year}-${String(cutoffDateValue.month).padStart(2, '0')}-${String(cutoffDateValue.day).padStart(2, '0')}`;
 
@@ -535,6 +539,7 @@ export class PayeeRepository extends BaseRepository<
       .select()
       .from(payees)
       .where(and(
+        eq(payees.workspaceId, workspaceId),
         isNull(payees.deletedAt),
         eq(payees.isActive, true)
       ))
@@ -569,9 +574,9 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Calculate and update derived fields for a payee
    */
-  async updateCalculatedFields(id: number): Promise<Payee> {
+  async updateCalculatedFields(id: number, workspaceId: number): Promise<Payee> {
     // Get transaction statistics
-    const stats = await this.getStats(id);
+    const stats = await this.getStats(id, workspaceId);
 
     // Determine payment frequency based on transaction patterns
     const frequencyAnalysis = await this.analyzePaymentFrequency(id);
@@ -608,7 +613,7 @@ export class PayeeRepository extends BaseRepository<
     const [payee] = await db
       .update(payees)
       .set(dbUpdateData)
-      .where(and(eq(payees.id, id), isNull(payees.deletedAt)))
+      .where(and(eq(payees.id, id), eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)))
       .returning();
 
     if (!payee) {
@@ -683,8 +688,8 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Generate intelligent suggestions for a payee based on transaction history
    */
-  async generateSuggestions(id: number): Promise<PayeeSuggestions> {
-    const stats = await this.getStats(id);
+  async generateSuggestions(id: number, workspaceId: number): Promise<PayeeSuggestions> {
+    const stats = await this.getStats(id, workspaceId);
     const frequencyAnalysis = await this.analyzePaymentFrequency(id);
 
     // Find most common category
@@ -717,14 +722,14 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Get payee intelligence data for analytics
    */
-  async getIntelligence(id: number): Promise<PayeeIntelligence> {
-    const payee = await this.findById(id);
+  async getIntelligence(id: number, workspaceId: number): Promise<PayeeIntelligence> {
+    const payee = await this.findById(id, workspaceId);
     if (!payee) {
       throw new NotFoundError("Payee", id);
     }
 
-    const stats = await this.getStats(id);
-    const suggestions = await this.generateSuggestions(id);
+    const stats = await this.getStats(id, workspaceId);
+    const suggestions = await this.generateSuggestions(id, workspaceId);
     const patterns = await this.analyzePatterns(id);
 
     return {
@@ -820,7 +825,7 @@ export class PayeeRepository extends BaseRepository<
    * Reassign all transactions from source payee to target payee.
    * Used during payee merging operations.
    */
-  async reassignTransactions(sourcePayeeId: number, targetPayeeId: number): Promise<number> {
+  async reassignTransactions(sourcePayeeId: number, targetPayeeId: number, workspaceId: number): Promise<number> {
     await db
       .update(transactions)
       .set({
@@ -848,7 +853,7 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Get total transaction count across all payees for analytics.
    */
-  async getTotalTransactionCount(): Promise<number> {
+  async getTotalTransactionCount(workspaceId: number): Promise<number> {
     const result = await db
       .select({count: count()})
       .from(transactions)

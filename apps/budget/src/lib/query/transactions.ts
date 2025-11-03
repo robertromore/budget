@@ -458,7 +458,7 @@ export const createTransfer = defineMutation({
     categoryId?: number | null;
     payeeId?: number | null;
   }) => {
-    const result = await trpc.transactions.createTransfer.mutate(params);
+    const result = await trpc().transactionRoutes.createTransfer.mutate(params);
     return result;
   },
   onSuccess: (_data, variables) => {
@@ -483,7 +483,7 @@ export const updateTransfer = defineMutation({
     categoryId?: number | null;
     payeeId?: number | null;
   }) => {
-    const result = await trpc.transactions.updateTransfer.mutate(params);
+    const result = await trpc().transactionRoutes.updateTransfer.mutate(params);
     return result;
   },
   onSuccess: (data) => {
@@ -503,9 +503,121 @@ export const updateTransfer = defineMutation({
  */
 export const deleteTransfer = defineMutation({
   mutationFn: async (params: { transferId: string }) => {
-    await trpc.transactions.deleteTransfer.mutate(params);
+    await trpc().transactionRoutes.deleteTransfer.mutate(params);
   },
   onSuccess: () => {
     cachePatterns.invalidateQueries(transactionKeys.lists());
   },
 });
+
+/**
+ * Bulk update payee for all transactions with matching payee name
+ */
+export const bulkUpdatePayee = defineMutation<
+  {
+    accountId: number;
+    transactionId: number;
+    newPayeeId: number | null;
+    originalPayeeName: string;
+  },
+  { count: number }
+>({
+  mutationFn: (params) => trpc().transactionRoutes.bulkUpdatePayee.mutate(params),
+  onSuccess: (_result, variables) => {
+    // Invalidate all queries for this account
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.accountId]);
+    cachePatterns.invalidatePrefix(transactionKeys.summary(variables.accountId));
+    cachePatterns.invalidatePrefix(transactionKeys.lists());
+    // Invalidate accounts list to update balances in sidebar
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: (result) =>
+    result.count > 0
+      ? `Updated payee for ${result.count + 1} transaction${result.count + 1 > 1 ? "s" : ""}`
+      : "Updated payee for 1 transaction",
+  errorMessage: "Failed to update payee",
+});
+
+/**
+ * Bulk update category for transactions matching criteria
+ */
+export const bulkUpdateCategory = defineMutation<
+  {
+    accountId: number;
+    transactionId: number;
+    newCategoryId: number | null;
+    matchBy: "payee" | "category";
+    matchValue?: string | number;
+  },
+  { count: number }
+>({
+  mutationFn: (params) => trpc().transactionRoutes.bulkUpdateCategory.mutate(params),
+  onSuccess: (_result, variables) => {
+    // Invalidate all queries for this account
+    cachePatterns.invalidatePrefix(["transactions", "account", variables.accountId]);
+    cachePatterns.invalidatePrefix(["transactions", "all", variables.accountId]);
+    cachePatterns.invalidatePrefix(transactionKeys.summary(variables.accountId));
+    cachePatterns.invalidatePrefix(transactionKeys.lists());
+    // Invalidate accounts list to update balances in sidebar
+    cachePatterns.invalidatePrefix(["accounts", "list"]);
+  },
+  successMessage: (result) =>
+    result.count > 0
+      ? `Updated category for ${result.count + 1} transaction${result.count + 1 > 1 ? "s" : ""}`
+      : "Updated category for 1 transaction",
+  errorMessage: "Failed to update category",
+});
+
+/**
+ * Get top payees by transaction count and amount for an account
+ */
+export const getTopPayees = (
+  accountId: number,
+  options?: {
+    dateFrom?: string;
+    dateTo?: string;
+    limit?: number;
+  }
+) =>
+  defineQuery({
+    queryKey: ["transactions", "topPayees", accountId, options] as const,
+    queryFn: () =>
+      trpc().transactionRoutes.getTopPayees.query({
+        accountId,
+        ...options,
+      }),
+  });
+
+/**
+ * Get top categories by transaction count and amount for an account
+ */
+export const getTopCategories = (
+  accountId: number,
+  options?: {
+    dateFrom?: string;
+    dateTo?: string;
+    limit?: number;
+  }
+) =>
+  defineQuery({
+    queryKey: ["transactions", "topCategories", accountId, options] as const,
+    queryFn: () =>
+      trpc().transactionRoutes.getTopCategories.query({
+        accountId,
+        ...options,
+      }),
+  });
+
+/**
+ * Get recent activity summary for an account
+ */
+export const getRecentActivity = (accountId: number, days?: number) =>
+  defineQuery({
+    queryKey: ["transactions", "recentActivity", accountId, days] as const,
+    queryFn: () =>
+      trpc().transactionRoutes.getRecentActivity.query({
+        accountId,
+        days,
+      }),
+  });

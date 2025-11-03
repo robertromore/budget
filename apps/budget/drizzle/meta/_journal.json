@@ -55,7 +55,7 @@
       "idx": 7,
       "version": "6",
       "when": 1761410523366,
-      "tag": "0007_romantic_colonel_america",
+      "tag": "0007_category_groups",
       "breakpoints": true
     },
     {
@@ -63,6 +63,27 @@
       "version": "6",
       "when": 1761521869344,
       "tag": "0008_daily_zaladane",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1761616023403,
+      "tag": "0009_mean_franklin_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1730222400000,
+      "tag": "0010_rename_user_to_workspace",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1730305000000,
+      "tag": "0011_add_workspace_to_recommendations",
       "breakpoints": true
     }
   ]

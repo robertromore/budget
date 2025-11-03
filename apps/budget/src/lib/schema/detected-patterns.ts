@@ -5,6 +5,7 @@ import {accounts} from "./accounts";
 import {payees} from "./payees";
 import {categories} from "./categories";
 import {schedules} from "./schedules";
+import {workspaces} from "./workspaces";
 
 export interface SuggestedScheduleConfig {
   // Core schedule fields
@@ -36,6 +37,9 @@ export const detectedPatterns = sqliteTable(
   "detected_patterns",
   {
     id: integer("id").primaryKey({autoIncrement: true}),
+    workspaceId: integer("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {onDelete: "cascade"}),
     accountId: integer("account_id")
       .notNull()
       .references(() => accounts.id, {onDelete: "cascade"}),
@@ -66,6 +70,7 @@ export const detectedPatterns = sqliteTable(
     nextExpected: text("next_expected"),
   },
   (table) => [
+    index("detected_patterns_workspace_id_idx").on(table.workspaceId),
     index("idx_detected_patterns_account").on(table.accountId),
     index("idx_detected_patterns_status").on(table.status),
     index("idx_detected_patterns_confidence").on(table.confidenceScore),
@@ -73,6 +78,10 @@ export const detectedPatterns = sqliteTable(
 );
 
 export const detectedPatternsRelations = relations(detectedPatterns, ({one}) => ({
+  workspace: one(workspaces, {
+    fields: [detectedPatterns.workspaceId],
+    references: [workspaces.id],
+  }),
   account: one(accounts, {
     fields: [detectedPatterns.accountId],
     references: [accounts.id],
@@ -93,6 +102,9 @@ export const detectedPatternsRelations = relations(detectedPatterns, ({one}) => 
 
 export const selectDetectedPatternSchema = createSelectSchema(detectedPatterns);
 export const insertDetectedPatternSchema = createInsertSchema(detectedPatterns);
+export const formInsertDetectedPatternSchema = createInsertSchema(detectedPatterns, {
+  workspaceId: (schema) => schema.optional(),
+});
 
 export type DetectedPattern = typeof detectedPatterns.$inferSelect;
 export type NewDetectedPattern = typeof detectedPatterns.$inferInsert;

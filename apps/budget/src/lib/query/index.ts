@@ -12,6 +12,9 @@ import * as categories from "./categories";
 import * as categoryGroups from "./category-groups";
 import * as patterns from "./patterns";
 import * as medicalExpenses from "./medical-expenses";
+import * as workspaces from "./workspaces";
+import * as schedules from "./schedules";
+import * as views from "./views";
 
 /**
  * Centralized RPC interface aggregating all query modules
@@ -27,6 +30,9 @@ export const rpc = {
   categoryGroups,
   patterns,
   medicalExpenses,
+  workspaces,
+  schedules,
+  views,
 } as const;
 
 /**
@@ -50,6 +56,9 @@ export type CategoryQueries = typeof categories;
 export type CategoryGroupQueries = typeof categoryGroups;
 export type PatternQueries = typeof patterns;
 export type MedicalExpenseQueries = typeof medicalExpenses;
+export type WorkspaceQueries = typeof workspaces;
+export type ScheduleQueries = typeof schedules;
+export type ViewQueries = typeof views;
 
 /**
  * Convenience re-exports for specific domains
@@ -62,6 +71,9 @@ export { categoryKeys } from "./categories";
 export { categoryGroupKeys } from "./category-groups";
 export { patternKeys } from "./patterns";
 export { medicalExpenseKeys } from "./medical-expenses";
+export { workspaceKeys } from "./workspaces";
+export { scheduleKeys } from "./schedules";
+export { viewKeys } from "./views";
 
 /**
  * Development helpers

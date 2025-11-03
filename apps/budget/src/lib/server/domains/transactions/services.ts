@@ -7,8 +7,11 @@ import type {TransactionFilters, PaginationParams, PaginatedResult} from "./repo
 import {invalidateAccountCache} from "$lib/utils/cache";
 import {db} from "$lib/server/db";
 import {accounts, transactions} from "$lib/schema";
+import {payees} from "$lib/schema/payees";
+import {categories} from "$lib/schema/categories";
+import {categoryGroups} from "$lib/schema/category-groups";
 import {budgetTransactions} from "$lib/schema/budgets";
-import {eq, and, isNull, sql} from "drizzle-orm";
+import {eq, and, isNull, sql, gte, lte} from "drizzle-orm";
 import {PayeeService} from "../payees/services";
 import {CategoryService} from "../categories/services";
 import {ScheduleService, type UpcomingScheduledTransaction} from "../schedules/services";
@@ -153,7 +156,7 @@ export class TransactionService {
   /**
    * Create a new transaction with enhanced payee defaults integration
    */
-  async createTransactionWithPayeeDefaults(data: CreateTransactionWithAutoPopulationData): Promise<Transaction> {
+  async createTransactionWithPayeeDefaults(data: CreateTransactionWithAutoPopulationData, workspaceId: string): Promise<Transaction> {
     // Get payee intelligence if payeeId is provided and auto-population is enabled
     let suggestions: TransactionSuggestion | null = null;
 
@@ -180,12 +183,12 @@ export class TransactionService {
     }
 
     // Create the transaction using the enhanced data
-    const transaction = await this.createTransaction(data);
+    const transaction = await this.createTransaction(data, workspaceId);
 
     // Update payee statistics after successful transaction creation
     if (data.payeeId && data.updatePayeeStats !== false) {
       try {
-        await this.updatePayeeAfterTransaction(data.payeeId);
+        await this.updatePayeeAfterTransaction(data.payeeId, workspaceId);
       } catch (error) {
         console.warn(`Failed to update payee stats for payee ${data.payeeId}:`, error);
       }
@@ -197,7 +200,7 @@ export class TransactionService {
   /**
    * Create a new transaction
    */
-  async createTransaction(data: CreateTransactionData): Promise<Transaction> {
+  async createTransaction(data: CreateTransactionData, workspaceId: string): Promise<Transaction> {
     // Validate required fields
     if (!data.accountId) {
       throw new ValidationError("Account ID is required");
@@ -232,7 +235,7 @@ export class TransactionService {
 
     // Verify payee exists if provided
     if (data.payeeId) {
-      const payeeExists = await this.payeeService.verifyPayeeExists(data.payeeId);
+      const payeeExists = await this.payeeService.verifyPayeeExists(data.payeeId, Number(workspaceId));
       if (!payeeExists) {
         throw new NotFoundError("Payee", data.payeeId);
       }
@@ -240,7 +243,7 @@ export class TransactionService {
 
     // Verify category exists if provided
     if (data.categoryId) {
-      const categoryExists = await this.categoryService.verifyCategoryExists(data.categoryId);
+      const categoryExists = await this.categoryService.verifyCategoryExists(data.categoryId, Number(workspaceId));
       if (!categoryExists) {
         throw new NotFoundError("Category", data.categoryId);
       }
@@ -255,7 +258,7 @@ export class TransactionService {
       categoryId: data.categoryId || null,
       notes,
       status,
-    });
+    }, workspaceId);
 
     // Handle budget allocations
     const budgetAllocationsToCreate = data.budgetAllocations || [];
@@ -306,9 +309,9 @@ export class TransactionService {
   /**
    * Update an existing transaction
    */
-  async updateTransaction(id: number, data: UpdateTransactionData): Promise<Transaction> {
+  async updateTransaction(id: number, data: UpdateTransactionData, workspaceId: string): Promise<Transaction> {
     // Verify transaction exists
-    const existingTransaction = await this.repository.findByIdOrThrow(id);
+    const existingTransaction = await this.repository.findByIdOrThrow(id, workspaceId);
 
     const updateData: Partial<NewTransaction> = {};
 
@@ -349,7 +352,7 @@ export class TransactionService {
     // Verify payee exists if provided
     if (data.payeeId !== undefined) {
       if (data.payeeId) {
-        const payeeExists = await this.payeeService.verifyPayeeExists(data.payeeId);
+        const payeeExists = await this.payeeService.verifyPayeeExists(data.payeeId, Number(workspaceId));
         if (!payeeExists) {
           throw new NotFoundError("Payee", data.payeeId);
         }
@@ -360,7 +363,7 @@ export class TransactionService {
     // Verify category exists if provided
     if (data.categoryId !== undefined) {
       if (data.categoryId) {
-        const categoryExists = await this.categoryService.verifyCategoryExists(data.categoryId);
+        const categoryExists = await this.categoryService.verifyCategoryExists(data.categoryId, Number(workspaceId));
         if (!categoryExists) {
           throw new NotFoundError("Category", data.categoryId);
         }
@@ -369,7 +372,7 @@ export class TransactionService {
     }
 
     // Update transaction
-    const updatedTransaction = await this.repository.update(id, updateData);
+    const updatedTransaction = await this.repository.update(id, updateData, workspaceId);
 
     // Handle budget allocations
     if (data.budgetAllocations !== undefined) {
@@ -448,11 +451,11 @@ export class TransactionService {
     const payeeIdToUpdate = updateData.payeeId ?? existingTransaction.payeeId;
     if (payeeIdToUpdate && (updateData.amount !== undefined || updateData.date !== undefined || updateData.payeeId !== undefined)) {
       try {
-        await this.updatePayeeAfterTransaction(payeeIdToUpdate);
+        await this.updatePayeeAfterTransaction(payeeIdToUpdate, workspaceId);
 
         // If payee changed, also update the old payee's stats
         if (updateData.payeeId !== undefined && existingTransaction.payeeId && existingTransaction.payeeId !== updateData.payeeId) {
-          await this.updatePayeeAfterTransaction(existingTransaction.payeeId);
+          await this.updatePayeeAfterTransaction(existingTransaction.payeeId, workspaceId);
         }
       } catch (error) {
         console.warn(`Failed to update payee stats after transaction update:`, error);
@@ -476,20 +479,177 @@ export class TransactionService {
    */
   async updateTransactionWithRecalculatedBalance(
     id: number,
-    data: UpdateTransactionData
+    data: UpdateTransactionData,
+    workspaceId: string
   ): Promise<Array<Transaction & {balance: number}>> {
     // First update the transaction using the existing method
-    const updatedTransaction = await this.updateTransaction(id, data);
+    const updatedTransaction = await this.updateTransaction(id, data, workspaceId);
 
     // Then return all account transactions with recalculated running balances
-    return await this.repository.findWithRunningBalance(updatedTransaction.accountId);
+    return await this.repository.findWithRunningBalance(updatedTransaction.accountId, workspaceId);
+  }
+
+  /**
+   * Bulk update payee for all transactions with matching payee name
+   */
+  async bulkUpdatePayeeByName(
+    accountId: number,
+    transactionId: number,
+    newPayeeId: number | null,
+    originalPayeeName: string,
+    workspaceId: string
+  ): Promise<{count: number}> {
+    // Verify account exists and belongs to workspace
+    const accountExists = await db.query.accounts.findFirst({
+      where: and(
+        eq(accounts.id, accountId),
+        isNull(accounts.deletedAt)
+      ),
+    });
+
+    if (!accountExists) {
+      throw new NotFoundError("Account not found");
+    }
+
+    // Find all transactions in this account with matching payee name (exact case-insensitive match)
+    // Exclude the original transaction that was already updated
+    const matchingTransactions = await db.query.transactions.findMany({
+      where: and(
+        eq(transactions.accountId, accountId),
+        isNull(transactions.deletedAt)
+      ),
+      with: {
+        payee: true,
+      },
+    });
+
+    const normalizedSearchName = originalPayeeName.toLowerCase().trim();
+    const transactionsToUpdate = matchingTransactions.filter(
+      (t) =>
+        t.id !== transactionId &&
+        t.payee?.name &&
+        t.payee.name.toLowerCase().trim() === normalizedSearchName
+    );
+
+    // Update all matching transactions
+    const updatePromises = transactionsToUpdate.map((t) =>
+      db
+        .update(transactions)
+        .set({
+          payeeId: newPayeeId,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(transactions.id, t.id))
+    );
+
+    await Promise.all(updatePromises);
+
+    // Update payee statistics if needed
+    if (newPayeeId) {
+      await this.updatePayeeAfterTransaction(newPayeeId, workspaceId);
+    }
+
+    invalidateAccountCache(accountId);
+
+    return {count: transactionsToUpdate.length};
+  }
+
+  /**
+   * Bulk update category for transactions matching criteria (by payee or by previous category)
+   */
+  async bulkUpdateCategory(
+    accountId: number,
+    transactionId: number,
+    newCategoryId: number | null,
+    matchBy: "payee" | "category",
+    matchValue: string | number | undefined,
+    workspaceId: string
+  ): Promise<{count: number}> {
+    // Verify account exists and belongs to workspace
+    const accountExists = await db.query.accounts.findFirst({
+      where: and(
+        eq(accounts.id, accountId),
+        isNull(accounts.deletedAt)
+      ),
+    });
+
+    if (!accountExists) {
+      throw new NotFoundError("Account not found");
+    }
+
+    // Get the original transaction to determine matching criteria
+    const originalTransaction = await db.query.transactions.findFirst({
+      where: and(
+        eq(transactions.id, transactionId),
+        isNull(transactions.deletedAt)
+      ),
+      with: {
+        payee: true,
+      },
+    });
+
+    if (!originalTransaction) {
+      throw new NotFoundError("Original transaction not found");
+    }
+
+    // Find all transactions in this account
+    const allTransactions = await db.query.transactions.findMany({
+      where: and(
+        eq(transactions.accountId, accountId),
+        isNull(transactions.deletedAt)
+      ),
+      with: {
+        payee: true,
+      },
+    });
+
+    let transactionsToUpdate: typeof allTransactions = [];
+
+    if (matchBy === "payee") {
+      // Match by payee name (exact case-insensitive match)
+      const payeeName = originalTransaction.payee?.name;
+      if (!payeeName) {
+        return {count: 0};
+      }
+
+      const normalizedPayeeName = payeeName.toLowerCase().trim();
+      transactionsToUpdate = allTransactions.filter(
+        (t) =>
+          t.id !== transactionId &&
+          t.payee?.name &&
+          t.payee.name.toLowerCase().trim() === normalizedPayeeName
+      );
+    } else if (matchBy === "category") {
+      // Match by previous category ID
+      const previousCategoryId = typeof matchValue === "number" ? matchValue : null;
+      transactionsToUpdate = allTransactions.filter(
+        (t) => t.id !== transactionId && t.categoryId === previousCategoryId
+      );
+    }
+
+    // Update all matching transactions
+    const updatePromises = transactionsToUpdate.map((t) =>
+      db
+        .update(transactions)
+        .set({
+          categoryId: newCategoryId,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(transactions.id, t.id))
+    );
+
+    await Promise.all(updatePromises);
+
+    invalidateAccountCache(accountId);
+
+    return {count: transactionsToUpdate.length};
   }
 
   /**
    * Get transaction by ID
    */
-  async getTransactionById(id: number): Promise<Transaction> {
-    return await this.repository.findByIdWithRelations(id);
+  async getTransactionById(id: number, workspaceId: string): Promise<Transaction> {
+    return await this.repository.findByIdWithRelations(id, workspaceId);
   }
 
   /**
@@ -497,7 +657,8 @@ export class TransactionService {
    */
   async getTransactions(
     filters: TransactionFilters,
-    pagination?: PaginationParams
+    pagination: PaginationParams | undefined,
+    workspaceId: string
   ): Promise<PaginatedResult<Transaction>> {
     // Sanitize search query if provided
     if (filters.searchQuery) {
@@ -508,20 +669,14 @@ export class TransactionService {
       });
     }
 
-    return await this.repository.findWithFilters(filters, pagination);
+    return await this.repository.findWithFilters(filters, pagination, workspaceId);
   }
 
   /**
    * Get all transactions for an account
    */
-  async getAccountTransactions(accountId: number): Promise<Transaction[]> {
-    // Verify account exists
-    const accountExists = await this.verifyAccountExists(accountId);
-    if (!accountExists) {
-      throw new NotFoundError("Account", accountId);
-    }
-
-    const rawTransactions = await this.repository.findByAccountId(accountId);
+  async getAccountTransactions(accountId: number, workspaceId: string): Promise<Transaction[]> {
+    const rawTransactions = await this.repository.findByAccountId(accountId, workspaceId);
 
     // Transform budget allocations for each transaction
     return rawTransactions.map((t) => ({
@@ -533,15 +688,9 @@ export class TransactionService {
   /**
    * Get account transactions including upcoming scheduled transactions
    */
-  async getAccountTransactionsWithUpcoming(accountId: number): Promise<(Transaction | UpcomingScheduledTransaction)[]> {
-    // Verify account exists
-    const accountExists = await this.verifyAccountExists(accountId);
-    if (!accountExists) {
-      throw new NotFoundError("Account", accountId);
-    }
-
+  async getAccountTransactionsWithUpcoming(accountId: number, workspaceId: string): Promise<(Transaction | UpcomingScheduledTransaction)[]> {
     // Get actual transactions with running balance
-    const rawTransactions = await this.repository.findWithRunningBalance(accountId);
+    const rawTransactions = await this.repository.findWithRunningBalance(accountId, workspaceId);
     console.log(`Found ${rawTransactions.length} actual transactions for account ${accountId}`);
 
     // Enrich actual transactions with schedule metadata if they have a scheduleId
@@ -591,20 +740,14 @@ export class TransactionService {
   /**
    * Get transactions with running balance
    */
-  async getTransactionsWithBalance(accountId: number, limit?: number): Promise<Array<Transaction & {balance: number}>> {
-    // Verify account exists
-    const accountExists = await this.verifyAccountExists(accountId);
-    if (!accountExists) {
-      throw new NotFoundError("Account", accountId);
-    }
-
-    return await this.repository.findWithRunningBalance(accountId, limit);
+  async getTransactionsWithBalance(accountId: number, workspaceId: string, limit?: number): Promise<Array<Transaction & {balance: number}>> {
+    return await this.repository.findWithRunningBalance(accountId, workspaceId, limit);
   }
 
   /**
    * Get account summary
    */
-  async getAccountSummary(accountId: number): Promise<TransactionSummary> {
+  async getAccountSummary(accountId: number, workspaceId: string): Promise<TransactionSummary> {
     // Fetch account info and verify it exists
     const account = await db
       .select({
@@ -620,9 +763,9 @@ export class TransactionService {
     }
 
     const [balance, pendingBalance, transactions] = await Promise.all([
-      this.repository.getAccountBalance(accountId),
-      this.repository.getPendingBalance(accountId),
-      this.repository.findByAccountId(accountId),
+      this.repository.getAccountBalance(accountId, workspaceId),
+      this.repository.getPendingBalance(accountId, workspaceId),
+      this.repository.findByAccountId(accountId, workspaceId),
     ]);
 
     const clearedCount = transactions.filter((t) => t.status === "cleared").length;
@@ -649,10 +792,10 @@ export class TransactionService {
   /**
    * Delete transaction (soft delete)
    */
-  async deleteTransaction(id: number): Promise<void> {
+  async deleteTransaction(id: number, workspaceId: string): Promise<void> {
     // Soft delete the transaction
-    const transaction = await this.repository.findByIdOrThrow(id);
-    await this.repository.softDelete(id);
+    const transaction = await this.repository.findByIdOrThrow(id, workspaceId);
+    await this.repository.softDelete(id, workspaceId);
 
     // Trigger budget consumption recalculation
     try {
@@ -667,16 +810,16 @@ export class TransactionService {
   /**
    * Bulk delete transactions
    */
-  async deleteTransactions(ids: number[]): Promise<void> {
+  async deleteTransactions(ids: number[], workspaceId: string): Promise<void> {
     if (ids.length === 0) {
       throw new ValidationError("No transaction IDs provided");
     }
 
     // Load transactions to validate existence and capture account IDs for cache invalidation
-    const transactions = await Promise.all(ids.map((id) => this.repository.findByIdOrThrow(id)));
+    const transactions = await Promise.all(ids.map((id) => this.repository.findByIdOrThrow(id, workspaceId)));
 
     // Bulk soft delete
-    await this.repository.bulkSoftDelete(ids);
+    await this.repository.bulkSoftDelete(ids, workspaceId);
 
     // Trigger budget consumption recalculation for each deleted transaction
     for (const id of ids) {
@@ -694,15 +837,15 @@ export class TransactionService {
   /**
    * Clear pending transactions for an account
    */
-  async clearPendingTransactions(accountId: number): Promise<number> {
-    const pendingTransactions = await this.repository.findByAccountId(accountId);
+  async clearPendingTransactions(accountId: number, workspaceId: string): Promise<number> {
+    const pendingTransactions = await this.repository.findByAccountId(accountId, workspaceId);
     const pendingIds = pendingTransactions
       .filter((t) => t.status === "pending")
       .map((t) => t.id);
 
     let clearedCount = 0;
     for (const id of pendingIds) {
-      await this.repository.update(id, {status: "cleared"});
+      await this.repository.update(id, {status: "cleared"}, workspaceId);
 
       // Trigger budget consumption recalculation (status change may affect period calculations)
       try {
@@ -720,17 +863,14 @@ export class TransactionService {
   /**
    * Get monthly spending aggregates for analytics (all data, not paginated)
    */
-  async getMonthlySpendingAggregates(accountId: number): Promise<Array<{
+  async getMonthlySpendingAggregates(accountId: number, workspaceId: string): Promise<Array<{
     month: string;
     monthLabel: string;
     spending: number;
     transactionCount: number;
   }>> {
-    // Verify account exists
-    const accountExists = await this.verifyAccountExists(accountId);
-    if (!accountExists) {
-      throw new NotFoundError("Account", accountId);
-    }
+    // Verify account belongs to user (through repository)
+    await this.repository.findByAccountId(accountId, workspaceId);
 
     const result = await db
       .select({
@@ -827,7 +967,7 @@ export class TransactionService {
   /**
    * Get comprehensive payee transaction intelligence
    */
-  async getPayeeTransactionIntelligence(payeeId: number): Promise<PayeeTransactionIntelligence> {
+  async getPayeeTransactionIntelligence(payeeId: number, workspaceId: string): Promise<PayeeTransactionIntelligence> {
     // Get all transactions for this payee
     const payeeTransactions = await db
       .select({
@@ -949,9 +1089,9 @@ export class TransactionService {
   /**
    * Update payee calculated fields after transaction creation/update
    */
-  async updatePayeeAfterTransaction(payeeId: number): Promise<void> {
+  async updatePayeeAfterTransaction(payeeId: number, workspaceId: string): Promise<void> {
     // Get latest transaction data for this payee
-    const intelligence = await this.getPayeeTransactionIntelligence(payeeId);
+    const intelligence = await this.getPayeeTransactionIntelligence(payeeId, workspaceId);
 
     // Prepare update data with proper typing
     interface PayeeIntelligenceUpdate {
@@ -1040,7 +1180,7 @@ export class TransactionService {
     notes?: string;
     categoryId?: number | null;
     payeeId?: number | null;
-  }): Promise<{transferId: string; fromTransaction: Transaction; toTransaction: Transaction}> {
+  }, workspaceId: string): Promise<{transferId: string; fromTransaction: Transaction; toTransaction: Transaction}> {
     const {createId} = await import("@paralleldrive/cuid2");
 
     // Validate accounts exist
@@ -1099,7 +1239,7 @@ export class TransactionService {
       transferAccountId: params.toAccountId,
       isTransfer: true,
       status: "cleared", // Transfers are typically cleared immediately
-    });
+    }, workspaceId);
 
     // Create TO transaction (money in - positive amount)
     const toTransaction = await this.repository.create({
@@ -1113,16 +1253,16 @@ export class TransactionService {
       transferAccountId: params.fromAccountId,
       isTransfer: true,
       status: "cleared",
-    });
+    }, workspaceId);
 
     // Link the transactions together
     await this.repository.update(fromTransaction.id, {
       transferTransactionId: toTransaction.id,
-    });
+    }, workspaceId);
 
     await this.repository.update(toTransaction.id, {
       transferTransactionId: fromTransaction.id,
-    });
+    }, workspaceId);
 
     // Invalidate both account caches
     invalidateAccountCache(params.fromAccountId);
@@ -1130,8 +1270,8 @@ export class TransactionService {
 
     return {
       transferId,
-      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id),
-      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id),
+      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, workspaceId),
+      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, workspaceId),
     };
   }
 
@@ -1146,7 +1286,8 @@ export class TransactionService {
       notes?: string;
       categoryId?: number | null;
       payeeId?: number | null;
-    }
+    },
+    workspaceId: string
   ): Promise<{fromTransaction: Transaction; toTransaction: Transaction}> {
     // Find both transactions using shared transferId
     const transferTransactions = await db
@@ -1197,29 +1338,29 @@ export class TransactionService {
     if (updates.amount !== undefined) {
       fromUpdateData.amount = -updates.amount; // Negative for outgoing
     }
-    await this.repository.update(fromTransaction.id, fromUpdateData);
+    await this.repository.update(fromTransaction.id, fromUpdateData, workspaceId);
 
     // Update TO transaction
     const toUpdateData = {...updateData};
     if (updates.amount !== undefined) {
       toUpdateData.amount = updates.amount; // Positive for incoming
     }
-    await this.repository.update(toTransaction.id, toUpdateData);
+    await this.repository.update(toTransaction.id, toUpdateData, workspaceId);
 
     // Invalidate both account caches
     invalidateAccountCache(fromTransaction.accountId);
     invalidateAccountCache(toTransaction.accountId);
 
     return {
-      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id),
-      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id),
+      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, workspaceId),
+      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, workspaceId),
     };
   }
 
   /**
    * Delete a transfer (soft deletes both transactions)
    */
-  async deleteTransfer(transferId: string): Promise<void> {
+  async deleteTransfer(transferId: string, workspaceId: string): Promise<void> {
     // Find both transactions using shared transferId
     const transferTransactions = await db
       .select()
@@ -1233,12 +1374,152 @@ export class TransactionService {
     // Soft delete both transactions
     const accountIds = new Set<number>();
     for (const transaction of transferTransactions) {
-      await this.repository.softDelete(transaction.id);
+      await this.repository.softDelete(transaction.id, workspaceId);
       accountIds.add(transaction.accountId);
     }
 
     // Invalidate all affected account caches
     accountIds.forEach(accountId => invalidateAccountCache(accountId));
+  }
+
+  /**
+   * Get top payees by transaction count and amount for an account
+   */
+  async getTopPayees(
+    accountId: number,
+    options: { dateFrom?: string; dateTo?: string; limit?: number },
+    workspaceId: number
+  ) {
+    const {dateFrom, dateTo, limit = 20} = options;
+
+    // Build date filter conditions
+    const dateConditions = [];
+    if (dateFrom) {
+      dateConditions.push(gte(transactions.date, dateFrom));
+    }
+    if (dateTo) {
+      dateConditions.push(lte(transactions.date, dateTo));
+    }
+
+    const result = await db
+      .select({
+        payeeId: transactions.payeeId,
+        payeeName: payees.name,
+        transactionCount: sql<number>`COUNT(*)`,
+        totalAmount: sql<number>`SUM(ABS(${transactions.amount}))`,
+        avgAmount: sql<number>`AVG(ABS(${transactions.amount}))`,
+      })
+      .from(transactions)
+      .leftJoin(payees, eq(transactions.payeeId, payees.id))
+      .where(
+        and(
+          eq(transactions.accountId, accountId),
+          eq(payees.workspaceId, workspaceId),
+          isNull(transactions.deletedAt),
+          sql`${transactions.payeeId} IS NOT NULL`,
+          ...dateConditions
+        )
+      )
+      .groupBy(transactions.payeeId, payees.name)
+      .orderBy(sql`COUNT(*) DESC`)
+      .limit(limit);
+
+    return result;
+  }
+
+  /**
+   * Get top categories by transaction count and amount for an account
+   */
+  async getTopCategories(
+    accountId: number,
+    options: { dateFrom?: string; dateTo?: string; limit?: number },
+    workspaceId: number
+  ) {
+    const {dateFrom, dateTo, limit = 20} = options;
+
+    // Build date filter conditions
+    const dateConditions = [];
+    if (dateFrom) {
+      dateConditions.push(gte(transactions.date, dateFrom));
+    }
+    if (dateTo) {
+      dateConditions.push(lte(transactions.date, dateTo));
+    }
+
+    // Get total spending for percentage calculation
+    const totalResult = await db
+      .select({
+        total: sql<number>`SUM(ABS(${transactions.amount}))`,
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.accountId, accountId),
+          isNull(transactions.deletedAt),
+          ...dateConditions
+        )
+      );
+
+    const totalSpending = totalResult[0]?.total || 0;
+
+    const result = await db
+      .select({
+        categoryId: transactions.categoryId,
+        categoryName: categories.name,
+        categoryGroupName: sql<string | null>`NULL`,
+        transactionCount: sql<number>`COUNT(*)`,
+        totalAmount: sql<number>`SUM(ABS(${transactions.amount}))`,
+        avgAmount: sql<number>`AVG(ABS(${transactions.amount}))`,
+        percentage: sql<number>`CASE WHEN ${totalSpending} > 0 THEN (SUM(ABS(${transactions.amount})) * 100.0 / ${totalSpending}) ELSE 0 END`,
+      })
+      .from(transactions)
+      .leftJoin(categories, eq(transactions.categoryId, categories.id))
+      .where(
+        and(
+          eq(transactions.accountId, accountId),
+          eq(categories.workspaceId, workspaceId),
+          isNull(transactions.deletedAt),
+          sql`${transactions.categoryId} IS NOT NULL`,
+          ...dateConditions
+        )
+      )
+      .groupBy(transactions.categoryId, categories.name)
+      .orderBy(sql`SUM(ABS(${transactions.amount})) DESC`)
+      .limit(limit);
+
+    return result;
+  }
+
+  /**
+   * Get recent activity summary for an account
+   */
+  async getRecentActivity(
+    accountId: number,
+    days: number,
+    workspaceId: number
+  ) {
+    const dateFrom = today(getLocalTimeZone()).subtract({days}).toString();
+
+    const result = await db
+      .select({
+        transactionCount: sql<number>`COUNT(*)`,
+        totalSpent: sql<number>`SUM(CASE WHEN ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE 0 END)`,
+        totalReceived: sql<number>`SUM(CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END)`,
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.accountId, accountId),
+          isNull(transactions.deletedAt),
+          gte(transactions.date, dateFrom)
+        )
+      );
+
+    return result[0] || {
+      transactionCount: 0,
+      totalSpent: 0,
+      totalReceived: 0,
+    };
   }
 
 }

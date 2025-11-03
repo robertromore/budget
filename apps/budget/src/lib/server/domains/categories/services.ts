@@ -58,7 +58,7 @@ export class CategoryService {
   /**
    * Create a new category
    */
-  async createCategory(data: CreateCategoryData): Promise<Category> {
+  async createCategory(data: CreateCategoryData, workspaceId: number): Promise<Category> {
     // Validate and sanitize input
     if (!data.name?.trim()) {
       throw new ValidationError("Category name is required");
@@ -75,11 +75,11 @@ export class CategoryService {
 
     // Validate parent if provided
     if (data.parentId !== undefined && data.parentId !== null) {
-      await this.validateParentAssignment(data.parentId);
+      await this.validateParentAssignment(data.parentId, workspaceId);
     }
 
     // Check for duplicate names (case-insensitive)
-    await this.validateUniqueCategoryName(sanitizedName);
+    await this.validateUniqueCategoryName(sanitizedName, workspaceId);
 
     // Generate unique slug
     let baseSlug = this.generateSlug(sanitizedName);
@@ -87,7 +87,7 @@ export class CategoryService {
     let counter = 1;
 
     // Ensure slug uniqueness (only checking active categories since deleted ones have modified slugs)
-    while (await this.repository.findBySlug(slug)) {
+    while (await this.repository.findBySlug(slug, workspaceId)) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
@@ -113,18 +113,18 @@ export class CategoryService {
       incomeReliability: data.incomeReliability ?? null,
     };
 
-    return await this.repository.create(newCategory);
+    return await this.repository.create(newCategory, workspaceId);
   }
 
   /**
    * Get category by ID
    */
-  async getCategoryById(id: number): Promise<Category> {
+  async getCategoryById(id: number, workspaceId: number): Promise<Category> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid category ID");
     }
 
-    const category = await this.repository.findById(id);
+    const category = await this.repository.findById(id, workspaceId);
     if (!category) {
       throw new NotFoundError("Category", id);
     }
@@ -135,12 +135,12 @@ export class CategoryService {
   /**
    * Get category by slug
    */
-  async getCategoryBySlug(slug: string): Promise<Category> {
+  async getCategoryBySlug(slug: string, workspaceId: number): Promise<Category> {
     if (!slug?.trim()) {
       throw new ValidationError("Invalid category slug");
     }
 
-    const category = await this.repository.findBySlug(slug);
+    const category = await this.repository.findBySlug(slug, workspaceId);
     if (!category) {
       throw new NotFoundError("Category", slug);
     }
@@ -151,9 +151,9 @@ export class CategoryService {
   /**
    * Get category by ID with statistics
    */
-  async getCategoryWithStats(id: number): Promise<CategoryWithStats> {
-    const category = await this.getCategoryById(id);
-    const stats = await this.repository.getStats(id);
+  async getCategoryWithStats(id: number, workspaceId: number): Promise<CategoryWithStats> {
+    const category = await this.getCategoryById(id, workspaceId);
+    const stats = await this.repository.getStats(id, workspaceId);
 
     return {
       ...category,
@@ -164,34 +164,34 @@ export class CategoryService {
   /**
    * Get all categories
    */
-  async getAllCategories(): Promise<Category[]> {
-    return await this.repository.findAllCategories();
+  async getAllCategories(workspaceId: number): Promise<Category[]> {
+    return await this.repository.findAllCategories(workspaceId);
   }
 
   /**
    * Get all categories with statistics
    */
-  async getAllCategoriesWithStats(): Promise<CategoryWithStats[]> {
-    return await this.repository.findAllWithStats();
+  async getAllCategoriesWithStats(workspaceId: number): Promise<CategoryWithStats[]> {
+    return await this.repository.findAllWithStats(workspaceId);
   }
 
   /**
    * Get all categories with their assigned group information
    */
-  async getAllCategoriesWithGroups(): Promise<CategoryWithGroup[]> {
-    return await this.repository.findAllWithGroups();
+  async getAllCategoriesWithGroups(workspaceId: number): Promise<CategoryWithGroup[]> {
+    return await this.repository.findAllWithGroups(workspaceId);
   }
 
   /**
    * Update category
    */
-  async updateCategory(id: number, data: UpdateCategoryData): Promise<Category> {
+  async updateCategory(id: number, data: UpdateCategoryData, workspaceId: number): Promise<Category> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid category ID");
     }
 
     // Verify category exists
-    await this.getCategoryById(id);
+    await this.getCategoryById(id, workspaceId);
 
     const updateData: UpdateCategoryData = {};
 
@@ -207,7 +207,7 @@ export class CategoryService {
       }
 
       // Check for duplicate names (excluding current category)
-      await this.validateUniqueCategoryName(sanitizedName, id);
+      await this.validateUniqueCategoryName(sanitizedName, workspaceId, id);
       updateData.name = sanitizedName;
     }
 
@@ -220,7 +220,7 @@ export class CategoryService {
 
     // Validate and handle parentId if provided
     if (data.parentId !== undefined) {
-      await this.validateParentAssignment(data.parentId, id);
+      await this.validateParentAssignment(data.parentId, workspaceId, id);
       updateData.parentId = data.parentId;
     }
 
@@ -285,23 +285,23 @@ export class CategoryService {
       throw new ValidationError("No valid fields to update");
     }
 
-    return await this.repository.update(id, updateData);
+    return await this.repository.update(id, updateData, workspaceId);
   }
 
   /**
    * Delete category (soft delete)
    */
-  async deleteCategory(id: number, options: {force?: boolean} = {}): Promise<Category> {
+  async deleteCategory(id: number, workspaceId: number, options: {force?: boolean} = {}): Promise<Category> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid category ID");
     }
 
     // Verify category exists
-    await this.getCategoryById(id);
+    await this.getCategoryById(id, workspaceId);
 
     // Check for associated transactions unless force delete
     if (!options.force) {
-      const hasTransactions = await this.repository.hasTransactions(id);
+      const hasTransactions = await this.repository.hasTransactions(id, workspaceId);
       if (hasTransactions) {
         throw new ConflictError(
           "Cannot delete category with associated transactions. Use force delete or reassign transactions first."
@@ -309,7 +309,7 @@ export class CategoryService {
       }
     }
 
-    return await this.repository.softDelete(id);
+    return await this.repository.softDelete(id, workspaceId);
   }
 
   /**
@@ -317,6 +317,7 @@ export class CategoryService {
    */
   async bulkDeleteCategories(
     ids: number[],
+    workspaceId: number,
     options: {force?: boolean} = {}
   ): Promise<{deletedCount: number; errors: string[]}> {
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -334,10 +335,10 @@ export class CategoryService {
     // Validate each category and check for conflicts
     for (const id of validIds) {
       try {
-        await this.getCategoryById(id);
+        await this.getCategoryById(id, workspaceId);
 
         if (!options.force) {
-          const hasTransactions = await this.repository.hasTransactions(id);
+          const hasTransactions = await this.repository.hasTransactions(id, workspaceId);
           if (hasTransactions) {
             errors.push(`Category ${id}: Has associated transactions`);
             continue;
@@ -351,7 +352,7 @@ export class CategoryService {
     }
 
     const deletedCount = deleteableIds.length > 0
-      ? await this.repository.bulkDeleteCategories(deleteableIds)
+      ? await this.repository.bulkDeleteCategories(deleteableIds, workspaceId)
       : 0;
 
     return {deletedCount, errors};
@@ -361,7 +362,8 @@ export class CategoryService {
    * Bulk update category display order
    */
   async bulkUpdateDisplayOrder(
-    updates: Array<{id: number; displayOrder: number}>
+    updates: Array<{id: number; displayOrder: number}>,
+    workspaceId: number
   ): Promise<{updatedCount: number; errors: string[]}> {
     if (!Array.isArray(updates) || updates.length === 0) {
       throw new ValidationError("No category updates provided");
@@ -384,10 +386,10 @@ export class CategoryService {
         }
 
         // Verify category exists
-        await this.getCategoryById(update.id);
+        await this.getCategoryById(update.id, workspaceId);
 
         // Update display order
-        await this.repository.update(update.id, {displayOrder: update.displayOrder});
+        await this.repository.update(update.id, {displayOrder: update.displayOrder}, workspaceId);
         updatedCount++;
       } catch (error) {
         errors.push(`Category ${update.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -400,26 +402,27 @@ export class CategoryService {
   /**
    * Search categories
    */
-  async searchCategories(query: string): Promise<Category[]> {
+  async searchCategories(query: string, workspaceId: number): Promise<Category[]> {
     const sanitizedQuery = query?.trim() || '';
-    return await this.repository.search(sanitizedQuery);
+    return await this.repository.search(sanitizedQuery, workspaceId);
   }
 
   /**
    * Get categories used in account transactions
    */
-  async getCategoriesByAccount(accountId: number): Promise<Category[]> {
+  async getCategoriesByAccount(accountId: number, workspaceId: number): Promise<Category[]> {
     if (!accountId || accountId <= 0) {
       throw new ValidationError("Invalid account ID");
     }
 
-    return await this.repository.findByAccountTransactions(accountId);
+    return await this.repository.findByAccountTransactions(accountId, workspaceId);
   }
 
   /**
    * Get top categories by spending
    */
   async getTopCategories(
+    workspaceId: number,
     limit: number = 10,
     accountId?: number
   ): Promise<CategoryWithStats[]> {
@@ -431,30 +434,31 @@ export class CategoryService {
       throw new ValidationError("Invalid account ID");
     }
 
-    return await this.repository.getTopCategories(limit, accountId);
+    return await this.repository.getTopCategories(workspaceId, limit, accountId);
   }
 
   /**
    * Verify category exists
    */
-  async verifyCategoryExists(id: number): Promise<boolean> {
+  async verifyCategoryExists(id: number, workspaceId: number): Promise<boolean> {
     if (!id || id <= 0) return false;
-    return await this.repository.exists(id);
+    const category = await this.repository.findById(id, workspaceId);
+    return category !== null;
   }
 
   /**
    * Get category statistics
    */
-  async getCategoryStats(id: number): Promise<CategoryStats> {
-    await this.getCategoryById(id); // Verify exists
-    return await this.repository.getStats(id);
+  async getCategoryStats(id: number, workspaceId: number): Promise<CategoryStats> {
+    await this.getCategoryById(id, workspaceId); // Verify exists
+    return await this.repository.getStats(id, workspaceId);
   }
 
   /**
    * Get category analytics with trends
    */
-  async getCategoryAnalytics(id: number): Promise<CategoryAnalytics> {
-    const stats = await this.getCategoryStats(id);
+  async getCategoryAnalytics(id: number, workspaceId: number): Promise<CategoryAnalytics> {
+    const stats = await this.repository.getStats(id, workspaceId);
 
     // Calculate monthly average (assuming data spans multiple months)
     const monthlyAverage = stats.totalAmount / Math.max(1, 12); // Simplified calculation
@@ -479,14 +483,14 @@ export class CategoryService {
   /**
    * Merge two categories (move all transactions from source to target)
    */
-  async mergeCategories(sourceId: number, targetId: number): Promise<void> {
+  async mergeCategories(sourceId: number, targetId: number, workspaceId: number): Promise<void> {
     if (!sourceId || !targetId || sourceId === targetId) {
       throw new ValidationError("Invalid category IDs for merge operation");
     }
 
     // Verify both categories exist
-    await this.getCategoryById(sourceId);
-    await this.getCategoryById(targetId);
+    await this.getCategoryById(sourceId, workspaceId);
+    await this.getCategoryById(targetId, workspaceId);
 
     // Note: Transaction reassignment would be handled by TransactionService
     // This is a placeholder for the merge operation business logic
@@ -496,14 +500,14 @@ export class CategoryService {
   /**
    * Get category usage summary
    */
-  async getCategoryUsageSummary(): Promise<{
+  async getCategoryUsageSummary(workspaceId: number): Promise<{
     totalCategories: number;
     categoriesWithTransactions: number;
     averageTransactionsPerCategory: number;
     topCategory: CategoryWithStats | null;
   }> {
-    const allCategories = await this.repository.findAllCategories();
-    const categoriesWithStats = await this.repository.findAllWithStats();
+    const allCategories = await this.repository.findAllCategories(workspaceId);
+    const categoriesWithStats = await this.repository.findAllWithStats(workspaceId);
 
     const categoriesWithTransactions = categoriesWithStats.filter(
       cat => cat.stats.transactionCount > 0
@@ -533,12 +537,12 @@ export class CategoryService {
   /**
    * Get category by ID with budget data
    */
-  async getCategoryByIdWithBudgets(id: number) {
+  async getCategoryByIdWithBudgets(id: number, workspaceId: number) {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid category ID");
     }
 
-    const category = await this.repository.findByIdWithBudgets(id);
+    const category = await this.repository.findByIdWithBudgets(id, workspaceId);
     if (!category) {
       throw new NotFoundError("Category", id);
     }
@@ -549,17 +553,17 @@ export class CategoryService {
   /**
    * Get category by slug with budget data
    */
-  async getCategoryBySlugWithBudgets(slug: string) {
+  async getCategoryBySlugWithBudgets(slug: string, workspaceId: number) {
     if (!slug?.trim()) {
       throw new ValidationError("Invalid category slug");
     }
 
-    const category = await this.repository.findBySlug(slug);
+    const category = await this.repository.findBySlug(slug, workspaceId);
     if (!category) {
       throw new NotFoundError("Category", slug);
     }
 
-    const budgetSummaries = await this.repository.getBudgetSummary(category.id);
+    const budgetSummaries = await this.repository.getBudgetSummary(category.id, workspaceId);
 
     return {
       ...category,
@@ -570,38 +574,38 @@ export class CategoryService {
   /**
    * Get all categories with budget data
    */
-  async getAllCategoriesWithBudgets() {
-    return await this.repository.findAllWithBudgets();
+  async getAllCategoriesWithBudgets(workspaceId: number) {
+    return await this.repository.findAllWithBudgets(workspaceId);
   }
 
   /**
    * Get root categories (no parent)
    */
-  async getRootCategories() {
-    return await this.repository.findRootCategories();
+  async getRootCategories(workspaceId: number) {
+    return await this.repository.findRootCategories(workspaceId);
   }
 
   /**
    * Get children of a category
    */
-  async getCategoryChildren(parentId: number) {
+  async getCategoryChildren(parentId: number, workspaceId: number) {
     if (!parentId || parentId <= 0) {
       throw new ValidationError("Invalid parent category ID");
     }
 
-    await this.getCategoryById(parentId);
-    return await this.repository.findChildren(parentId);
+    await this.getCategoryById(parentId, workspaceId);
+    return await this.repository.findChildren(parentId, workspaceId);
   }
 
   /**
    * Get category with its children
    */
-  async getCategoryWithChildren(id: number) {
+  async getCategoryWithChildren(id: number, workspaceId: number) {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid category ID");
     }
 
-    const category = await this.repository.findWithChildren(id);
+    const category = await this.repository.findWithChildren(id, workspaceId);
     if (!category) {
       throw new NotFoundError("Category", id);
     }
@@ -612,20 +616,20 @@ export class CategoryService {
   /**
    * Get full category hierarchy tree
    */
-  async getCategoryHierarchyTree() {
-    return await this.repository.getHierarchyTree();
+  async getCategoryHierarchyTree(workspaceId: number) {
+    return await this.repository.getHierarchyTree(workspaceId);
   }
 
   /**
    * Set category parent (with circular reference validation)
    */
-  async setCategoryParent(categoryId: number, parentId: number | null) {
+  async setCategoryParent(categoryId: number, parentId: number | null, workspaceId: number) {
     if (!categoryId || categoryId <= 0) {
       throw new ValidationError("Invalid category ID");
     }
 
     // Verify category exists
-    await this.getCategoryById(categoryId);
+    await this.getCategoryById(categoryId, workspaceId);
 
     // If setting a parent, validate it
     if (parentId !== null) {
@@ -634,7 +638,7 @@ export class CategoryService {
       }
 
       // Verify parent exists
-      await this.getCategoryById(parentId);
+      await this.getCategoryById(parentId, workspaceId);
 
       // Prevent self-reference
       if (categoryId === parentId) {
@@ -642,7 +646,7 @@ export class CategoryService {
       }
 
       // Prevent circular reference
-      const descendantIds = await this.repository.getDescendantIds(categoryId);
+      const descendantIds = await this.repository.getDescendantIds(categoryId, workspaceId);
       if (descendantIds.includes(parentId)) {
         throw new ValidationError(
           "Cannot set parent: This would create a circular reference"
@@ -651,27 +655,27 @@ export class CategoryService {
     }
 
     // Update the parent
-    return await this.repository.update(categoryId, {parentId});
+    return await this.repository.update(categoryId, {parentId}, workspaceId);
   }
 
   /**
    * Check if category has children
    */
-  async categoryHasChildren(id: number): Promise<boolean> {
+  async categoryHasChildren(id: number, workspaceId: number): Promise<boolean> {
     if (!id || id <= 0) return false;
-    return await this.repository.hasChildren(id);
+    return await this.repository.hasChildren(id, workspaceId);
   }
 
   /**
    * Get descendant IDs of a category
    */
-  async getCategoryDescendantIds(id: number): Promise<number[]> {
+  async getCategoryDescendantIds(id: number, workspaceId: number): Promise<number[]> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid category ID");
     }
 
-    await this.getCategoryById(id);
-    return await this.repository.getDescendantIds(id);
+    await this.getCategoryById(id, workspaceId);
+    return await this.repository.getDescendantIds(id, workspaceId);
   }
 
   /**
@@ -679,6 +683,7 @@ export class CategoryService {
    */
   private async validateParentAssignment(
     parentId: number | null | undefined,
+    workspaceId: number,
     categoryId?: number
   ): Promise<void> {
     if (parentId === null || parentId === undefined) return;
@@ -688,7 +693,7 @@ export class CategoryService {
     }
 
     // Verify parent exists
-    await this.getCategoryById(parentId);
+    await this.getCategoryById(parentId, workspaceId);
 
     // If updating, check for circular reference
     if (categoryId) {
@@ -696,7 +701,7 @@ export class CategoryService {
         throw new ValidationError("Category cannot be its own parent");
       }
 
-      const descendantIds = await this.repository.getDescendantIds(categoryId);
+      const descendantIds = await this.repository.getDescendantIds(categoryId, workspaceId);
       if (descendantIds.includes(parentId)) {
         throw new ValidationError(
           "Cannot set parent: This would create a circular reference"
@@ -708,8 +713,8 @@ export class CategoryService {
   /**
    * Private: Validate unique category name
    */
-  private async validateUniqueCategoryName(name: string, excludeId?: number): Promise<void> {
-    const existingCategories = await this.repository.findAllCategories();
+  private async validateUniqueCategoryName(name: string, workspaceId: number, excludeId?: number): Promise<void> {
+    const existingCategories = await this.repository.findAllCategories(workspaceId);
 
     const duplicate = existingCategories.find(category =>
       category.name?.toLowerCase() === name.toLowerCase() &&
@@ -726,7 +731,7 @@ export class CategoryService {
    * Only creates categories that don't already exist (by slug)
    * @param slugs - Optional array of slugs to seed. If not provided, seeds all default categories.
    */
-  async seedDefaultCategories(slugs?: string[]): Promise<{
+  async seedDefaultCategories(workspaceId: number, slugs?: string[]): Promise<{
     created: number;
     skipped: number;
     errors: string[];
@@ -743,7 +748,7 @@ export class CategoryService {
     for (const defaultCategory of categoriesToSeed) {
       try {
         // Check if category with this slug already exists
-        const existing = await this.repository.findBySlug(defaultCategory.slug);
+        const existing = await this.repository.findBySlug(defaultCategory.slug, workspaceId);
 
         if (existing) {
           skipped++;
@@ -758,7 +763,7 @@ export class CategoryService {
           createdAt: undefined,
           updatedAt: undefined,
           deletedAt: undefined,
-        });
+        }, workspaceId);
 
         created++;
       } catch (error) {
@@ -780,7 +785,7 @@ export class CategoryService {
   /**
    * Check which default categories are already installed
    */
-  async getDefaultCategoriesStatus(): Promise<{
+  async getDefaultCategoriesStatus(workspaceId: number): Promise<{
     total: number;
     installed: number;
     available: number;
@@ -791,7 +796,7 @@ export class CategoryService {
       installed: boolean;
     }>;
   }> {
-    const existingCategories = await this.repository.findAllCategories();
+    const existingCategories = await this.repository.findAllCategories(workspaceId);
     const existingSlugs = new Set(existingCategories.map(c => c.slug));
 
     const categories = defaultCategories.map(dc => ({

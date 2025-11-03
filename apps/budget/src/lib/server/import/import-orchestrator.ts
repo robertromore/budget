@@ -11,6 +11,7 @@ import type { Payee } from '$lib/schema/payees';
 import { payees as payeeTable } from '$lib/schema/payees';
 import type { selectTransactionSchema } from '$lib/schema/transactions';
 import { transactions as transactionTable } from '$lib/schema/transactions';
+import { accounts as accountTable } from '$lib/schema/accounts';
 import { db } from '$lib/server/db';
 import type { ImportOptions, ImportResult, ImportRow } from '$lib/types/import';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -80,6 +81,19 @@ export class ImportOrchestrator {
     console.log('Options:', options);
 
     try {
+      // Get the account's workspaceId first
+      const [account] = await db
+        .select({ workspaceId: accountTable.workspaceId })
+        .from(accountTable)
+        .where(eq(accountTable.id, accountId))
+        .limit(1);
+
+      if (!account) {
+        throw new Error(`Account with ID ${accountId} not found`);
+      }
+
+      const workspaceId = account.workspaceId;
+
       // Stage 1: Validation
       const existingTransactions = await this.getExistingTransactions(accountId);
       const validatedRows = this.validator.validateRows(rows, existingTransactions);
@@ -115,8 +129,8 @@ export class ImportOrchestrator {
       }
 
       // Stage 2: Entity Matching
-      const existingPayees = await this.getExistingPayees();
-      const existingCategories = await this.getExistingCategories();
+      const existingPayees = await this.getExistingPayees(workspaceId);
+      const existingCategories = await this.getExistingCategories(workspaceId);
 
       // Stage 3: Transaction Creation
       for (const row of rowsToImport) {
@@ -127,6 +141,7 @@ export class ImportOrchestrator {
 
           const transaction = await this.createTransaction(
             accountId,
+            workspaceId,
             row,
             existingPayees,
             existingCategories,
@@ -174,6 +189,7 @@ export class ImportOrchestrator {
    */
   private async createTransaction(
     accountId: number,
+    workspaceId: number,
     row: ImportRow,
     existingPayees: Payee[],
     existingCategories: Category[],
@@ -206,29 +222,67 @@ export class ImportOrchestrator {
         payeeId = payeeMatch.payee.id;
       } else if (_options.createMissingPayees ?? _options.createMissingEntities) {
         // Check if this payee is in the selected entities list
-        const isSelected = !selectedEntities || selectedEntities.payees.includes(cleanedPayeeName);
+        // If selectedEntities is not provided OR payees array is empty, select all payees
+        const isSelected = !selectedEntities || !selectedEntities.payees || selectedEntities.payees.length === 0 || selectedEntities.payees.includes(cleanedPayeeName);
 
         if (isSelected) {
-          // Create new payee with slug
+          // Generate slug for the payee
           const slug = cleanedPayeeName
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '');
 
-          const [newPayee] = await db
-            .insert(payeeTable)
-            .values({
-              name: cleanedPayeeName,
-              slug,
-            })
-            .returning();
+          // Check if payee with this slug already exists (could be from previous import or soft-deleted)
+          const existingBySlug = existingPayees.find(p => p.slug === slug);
+          if (existingBySlug) {
+            // Use existing payee
+            payeeId = existingBySlug.id;
+          } else {
+            try {
+              const [newPayee] = await db
+                .insert(payeeTable)
+                .values({
+                  name: cleanedPayeeName,
+                  slug,
+                  workspaceId,
+                })
+                .returning();
 
-          if (newPayee) {
-            payeeId = newPayee.id;
-            existingPayees.push(newPayee);
-            if (entitiesCreated) entitiesCreated.payees++;
+              if (newPayee) {
+                payeeId = newPayee.id;
+                existingPayees.push(newPayee);
+                if (entitiesCreated) entitiesCreated.payees++;
+              }
+            } catch (error) {
+              // If it failed due to unique constraint, check for existing or soft-deleted payee
+              // Filter by workspaceId to only use payees from the current workspace
+              const existing = await db.select().from(payeeTable).where(and(eq(payeeTable.slug, slug), eq(payeeTable.workspaceId, workspaceId))).limit(1);
+              const payee = existing[0];
+              if (payee) {
+                if (payee.deletedAt) {
+                  // Restore soft-deleted payee
+                  const [restored] = await db
+                    .update(payeeTable)
+                    .set({ deletedAt: null, name: cleanedPayeeName })
+                    .where(eq(payeeTable.id, payee.id))
+                    .returning();
+                  if (restored) {
+                    payeeId = restored.id;
+                    existingPayees.push(restored);
+                    if (entitiesCreated) entitiesCreated.payees++;
+                  }
+                } else {
+                  // Use existing active payee
+                  payeeId = payee.id;
+                  existingPayees.push(payee);
+                }
+              } else {
+                // If payee doesn't exist in this workspace, log and continue without payee
+                // This can happen if slug is taken by another workspace
+                console.warn(`Payee slug "${slug}" exists but not in current workspace ${workspaceId}, skipping payee creation`);
+              }
+            }
           }
-        } else {
         }
       }
     }
@@ -267,8 +321,9 @@ export class ImportOrchestrator {
       if (!categoryId && normalized['category'] && normalized['category'].toLowerCase() !== 'uncategorized' && (_options.createMissingCategories ?? _options.createMissingEntities)) {
         // Skip "Uncategorized" - it's just a placeholder for no category
         // Check if this category is in the selected entities list (case-insensitive)
+        // If selectedEntities is not provided OR categories array is empty, select all categories
         const normalizedCategoryName = normalized['category'].trim();
-        const isSelected = !selectedEntities || selectedEntities.categories.some(
+        const isSelected = !selectedEntities || !selectedEntities.categories || selectedEntities.categories.length === 0 || selectedEntities.categories.some(
           selected => selected.trim().toLowerCase() === normalizedCategoryName.toLowerCase()
         );
 
@@ -300,6 +355,7 @@ export class ImportOrchestrator {
                 .values({
                   name: normalized['category'],
                   slug,
+                  workspaceId,
                 })
                 .returning();
 
@@ -312,7 +368,8 @@ export class ImportOrchestrator {
             } catch (error) {
               console.error(`Failed to create category "${normalized['category']}":`, error);
               // If it failed due to unique constraint, check for soft-deleted category
-              const existing = await db.select().from(categoryTable).where(eq(categoryTable.slug, slug)).limit(1);
+              // Filter by workspaceId to only use categories from the current workspace
+              const existing = await db.select().from(categoryTable).where(and(eq(categoryTable.slug, slug), eq(categoryTable.workspaceId, workspaceId))).limit(1);
               const category = existing[0];
               if (category) {
                 if (category.deletedAt) {
@@ -334,6 +391,10 @@ export class ImportOrchestrator {
                   categoryId = category.id;
                   existingCategories.push(category);
                 }
+              } else {
+                // If category doesn't exist in this workspace, log and continue without category
+                // This can happen if slug is taken by another workspace
+                console.warn(`Category slug "${slug}" exists but not in current workspace ${workspaceId}, skipping category creation`);
               }
             }
           }
@@ -358,7 +419,8 @@ export class ImportOrchestrator {
             categoryId = existingCategory.id;
           } else {
             // Check if this inferred category is in the selected entities list (case-insensitive)
-            const isSelected = !selectedEntities || selectedEntities.categories.some(
+            // If selectedEntities is not provided OR categories array is empty, select all categories
+            const isSelected = !selectedEntities || !selectedEntities.categories || selectedEntities.categories.length === 0 || selectedEntities.categories.some(
               selected => selected.trim().toLowerCase() === suggestedCategoryName.trim().toLowerCase()
             );
 
@@ -380,6 +442,7 @@ export class ImportOrchestrator {
                     .values({
                       name: suggestedCategoryName,
                       slug,
+                      workspaceId,
                     })
                     .returning();
 
@@ -391,7 +454,8 @@ export class ImportOrchestrator {
                 } catch (error) {
                   console.error(`Failed to create inferred category "${suggestedCategoryName}":`, error);
                   // Check for soft-deleted category
-                  const existing = await db.select().from(categoryTable).where(eq(categoryTable.slug, slug)).limit(1);
+                  // Filter by workspaceId to only use categories from the current workspace
+                  const existing = await db.select().from(categoryTable).where(and(eq(categoryTable.slug, slug), eq(categoryTable.workspaceId, workspaceId))).limit(1);
                   const category = existing[0];
                   if (category) {
                     if (category.deletedAt) {
@@ -410,6 +474,9 @@ export class ImportOrchestrator {
                       categoryId = category.id;
                       existingCategories.push(category);
                     }
+                  } else {
+                    // If category doesn't exist in this workspace, log and continue without category
+                    console.warn(`Inferred category slug "${slug}" exists but not in current workspace ${workspaceId}, skipping category creation`);
                   }
                 }
               }
@@ -516,15 +583,21 @@ export class ImportOrchestrator {
   /**
    * Get existing payees for matching
    */
-  private async getExistingPayees(): Promise<Payee[]> {
-    return db.select().from(payeeTable).where(isNull(payeeTable.deletedAt));
+  private async getExistingPayees(workspaceId: number): Promise<Payee[]> {
+    return db
+      .select()
+      .from(payeeTable)
+      .where(and(isNull(payeeTable.deletedAt), eq(payeeTable.workspaceId, workspaceId)));
   }
 
   /**
    * Get existing categories for matching
    */
-  private async getExistingCategories(): Promise<Category[]> {
-    return db.select().from(categoryTable).where(isNull(categoryTable.deletedAt));
+  private async getExistingCategories(workspaceId: number): Promise<Category[]> {
+    return db
+      .select()
+      .from(categoryTable)
+      .where(and(isNull(categoryTable.deletedAt), eq(categoryTable.workspaceId, workspaceId)));
   }
 
   /**
@@ -560,6 +633,19 @@ export class ImportOrchestrator {
     potentialCategories: { name: string; match: string | null }[];
     estimatedTransactions: number;
   }> {
+    // Get the account's workspaceId
+    const [account] = await db
+      .select({ workspaceId: accountTable.workspaceId })
+      .from(accountTable)
+      .where(eq(accountTable.id, accountId))
+      .limit(1);
+
+    if (!account) {
+      throw new Error(`Account with ID ${accountId} not found`);
+    }
+
+    const workspaceId = account.workspaceId;
+
     // Validation
     const existingTransactions = await this.getExistingTransactions(accountId);
     const validatedRows = this.validator.validateRows(rows, existingTransactions);
@@ -567,8 +653,8 @@ export class ImportOrchestrator {
     const summary = this.validator.getValidationSummary(validatedRows);
 
     // Entity matching preview
-    const existingPayees = await this.getExistingPayees();
-    const existingCategories = await this.getExistingCategories();
+    const existingPayees = await this.getExistingPayees(workspaceId);
+    const existingCategories = await this.getExistingCategories(workspaceId);
 
     const potentialPayees: { name: string; match: string | null }[] = [];
     const potentialCategories: { name: string; match: string | null }[] = [];

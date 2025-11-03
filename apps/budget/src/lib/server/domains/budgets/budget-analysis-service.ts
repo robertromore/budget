@@ -5,6 +5,7 @@
  * intelligent budget recommendations for creation and optimization.
  */
 
+import { accounts } from "$lib/schema/accounts";
 import { budgetAccounts, budgetCategories, budgets } from "$lib/schema/budgets";
 import { categories } from "$lib/schema/categories";
 import { payees } from "$lib/schema/payees";
@@ -21,6 +22,7 @@ import { BudgetGroupAnalysisService } from "./budget-group-analysis-service";
 
 export interface AnalysisParams {
   accountIds?: number[];
+  workspaceId?: number; // Workspace to filter transactions by
   months?: number; // Default 6
   minTransactions?: number; // Minimum transactions to consider a pattern (default 3)
   minConfidence?: number; // Minimum confidence % to generate recommendation (default 40)
@@ -93,6 +95,7 @@ export interface BudgetRecommendationDraft {
   description: string;
   confidence: number;
   metadata: RecommendationMetadata;
+  workspaceId?: number;
   budgetId?: number;
   accountId?: number;
   categoryId?: number;
@@ -106,6 +109,7 @@ export class BudgetAnalysisService {
   async analyzeTransactionHistory(params: AnalysisParams = {}): Promise<BudgetRecommendationDraft[]> {
     const {
       accountIds,
+      workspaceId,
       months = 6,
       minTransactions = 3,
       minConfidence = 40,
@@ -125,6 +129,7 @@ export class BudgetAnalysisService {
       const endDateStr = endDate.toISOString().split("T")[0]!;
       const detectionParams = {
         ...(accountIds && { accountIds }),
+        ...(workspaceId && { workspaceId }),
         startDate: startDateStr,
         endDate: endDateStr,
         minTransactions,
@@ -248,6 +253,11 @@ export class BudgetAnalysisService {
         recommendationsGenerated: recommendations.length,
       });
 
+      // Add workspaceId to all recommendations
+      if (workspaceId) {
+        return recommendations.map(rec => ({ ...rec, workspaceId }));
+      }
+
       return recommendations;
     } catch (error) {
       logger.error("Error analyzing transaction history", {
@@ -264,11 +274,12 @@ export class BudgetAnalysisService {
    */
   async detectSpendingPatterns(params: {
     accountIds?: number[];
+    workspaceId?: number;
     startDate: string;
     endDate: string;
     minTransactions: number;
   }): Promise<SpendingPattern[]> {
-    const { accountIds, startDate, endDate, minTransactions } = params;
+    const { accountIds, workspaceId, startDate, endDate, minTransactions } = params;
 
     // Build query conditions
     const conditions = [
@@ -277,7 +288,32 @@ export class BudgetAnalysisService {
       isNull(transactions.deletedAt),
     ];
 
-    if (accountIds && accountIds.length > 0) {
+    // Filter by workspace using account IDs
+    if (workspaceId) {
+      // Get account IDs for this workspace
+      const workspaceAccounts = await db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(eq(accounts.workspaceId, workspaceId));
+
+      const workspaceAccountIds = workspaceAccounts.map(a => a.id);
+
+      if (workspaceAccountIds.length === 0) {
+        // No accounts in this workspace, return empty
+        return [];
+      }
+
+      // If specific accountIds provided, intersect with workspace accounts
+      if (accountIds && accountIds.length > 0) {
+        const filteredAccountIds = accountIds.filter(id => workspaceAccountIds.includes(id));
+        if (filteredAccountIds.length === 0) {
+          return [];
+        }
+        conditions.push(inArray(transactions.accountId, filteredAccountIds));
+      } else {
+        conditions.push(inArray(transactions.accountId, workspaceAccountIds));
+      }
+    } else if (accountIds && accountIds.length > 0) {
       conditions.push(inArray(transactions.accountId, accountIds));
     }
 
@@ -674,11 +710,12 @@ export class BudgetAnalysisService {
    */
   async detectScheduledExpenses(params: {
     accountIds?: number[];
+    workspaceId?: number;
     startDate: string;
     endDate: string;
     minTransactions: number;
   }): Promise<RecurringExpense[]> {
-    const { accountIds, startDate, endDate, minTransactions } = params;
+    const { accountIds, workspaceId, startDate, endDate, minTransactions } = params;
 
     // Build query conditions
     const conditions = [
@@ -687,7 +724,32 @@ export class BudgetAnalysisService {
       isNull(transactions.deletedAt),
     ];
 
-    if (accountIds && accountIds.length > 0) {
+    // Filter by workspace using account IDs
+    if (workspaceId) {
+      // Get account IDs for this workspace
+      const workspaceAccounts = await db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(eq(accounts.workspaceId, workspaceId));
+
+      const workspaceAccountIds = workspaceAccounts.map(a => a.id);
+
+      if (workspaceAccountIds.length === 0) {
+        // No accounts in this workspace, return empty
+        return [];
+      }
+
+      // If specific accountIds provided, intersect with workspace accounts
+      if (accountIds && accountIds.length > 0) {
+        const filteredAccountIds = accountIds.filter(id => workspaceAccountIds.includes(id));
+        if (filteredAccountIds.length === 0) {
+          return [];
+        }
+        conditions.push(inArray(transactions.accountId, filteredAccountIds));
+      } else {
+        conditions.push(inArray(transactions.accountId, workspaceAccountIds));
+      }
+    } else if (accountIds && accountIds.length > 0) {
       conditions.push(inArray(transactions.accountId, accountIds));
     }
 

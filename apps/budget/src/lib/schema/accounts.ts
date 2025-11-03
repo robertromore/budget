@@ -8,6 +8,7 @@ import {sqliteTable, integer, text, index, real} from "drizzle-orm/sqlite-core";
 import {createInsertSchema, createSelectSchema} from "drizzle-zod";
 import {transactions} from "./transactions";
 import type {Transaction} from "./transactions";
+import {workspaces} from "./workspaces";
 import {z} from "zod/v4";
 import { isValidIconName } from "$lib/utils/icon-validation";
 
@@ -30,6 +31,9 @@ export const accounts = sqliteTable(
   {
     id: integer("id").primaryKey({autoIncrement: true}),
     cuid: text("cuid").$defaultFn(() => createId()),
+    workspaceId: integer("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {onDelete: "cascade"}),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     // @todo maybe change to enum to allow for archiving?
@@ -71,6 +75,7 @@ export const accounts = sqliteTable(
     deletedAt: text("deleted_at"),
   },
   (table) => [
+    index("account_workspace_id_idx").on(table.workspaceId),
     index("account_name_idx").on(table.name),
     index("account_slug_idx").on(table.slug),
     index("account_closed_idx").on(table.closed),
@@ -79,7 +84,11 @@ export const accounts = sqliteTable(
   ]
 );
 
-export const accountsRelations = relations(accounts, ({many}) => ({
+export const accountsRelations = relations(accounts, ({one, many}) => ({
+  workspace: one(workspaces, {
+    fields: [accounts.workspaceId],
+    references: [workspaces.id],
+  }),
   transactions: many(transactions),
 }));
 
@@ -87,6 +96,7 @@ export const selectAccountSchema = createSelectSchema(accounts);
 export const insertAccountSchema = createInsertSchema(accounts);
 // Schema for creating new accounts (name is required)
 export const formInsertAccountSchema = createInsertSchema(accounts, {
+  workspaceId: (schema) => schema.optional(),
   name: (schema) =>
     schema
       .transform((val) => val?.trim()) // Trim whitespace

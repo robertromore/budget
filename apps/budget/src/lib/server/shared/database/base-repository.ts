@@ -30,12 +30,19 @@ export abstract class BaseRepository<
   /**
    * Find entity by ID
    */
-  async findById(id: number): Promise<TEntity | null> {
+  async findById(id: number, workspaceId?: number): Promise<TEntity | null> {
     try {
+      const conditions = [eq((this.table as any).id, id)];
+
+      // Add workspaceId filtering if provided and table has workspaceId column
+      if (workspaceId !== undefined && (this.table as any).workspaceId) {
+        conditions.push(eq((this.table as any).workspaceId, workspaceId));
+      }
+
       const result = await this.db
         .select()
         .from(this.table)
-        .where(eq((this.table as any).id, id))
+        .where(and(...conditions))
         .limit(1);
 
       return result[0] || null;
@@ -47,8 +54,8 @@ export abstract class BaseRepository<
   /**
    * Find entity by ID or throw NotFoundError
    */
-  async findByIdOrThrow(id: number): Promise<TEntity> {
-    const entity = await this.findById(id);
+  async findByIdOrThrow(id: number, workspaceId?: number): Promise<TEntity> {
+    const entity = await this.findById(id, workspaceId);
     if (!entity) {
       throw new NotFoundError(this.entityName, id);
     }
@@ -98,9 +105,14 @@ export abstract class BaseRepository<
   /**
    * Create new entity
    */
-  async create(data: TCreateInput): Promise<TEntity> {
+  async create(data: TCreateInput, workspaceId?: number): Promise<TEntity> {
     try {
-      const result = await this.db.insert(this.table).values(data).returning();
+      // Add workspaceId to data if provided and table has workspaceId column
+      const values = workspaceId !== undefined && (this.table as any).workspaceId
+        ? {...data as any, workspaceId}
+        : data;
+
+      const result = await this.db.insert(this.table).values(values).returning();
 
       if (!result[0]) {
         throw new DatabaseError(`Failed to create ${this.entityName}`, "create");
@@ -121,15 +133,22 @@ export abstract class BaseRepository<
   /**
    * Update entity by ID
    */
-  async update(id: number, data: TUpdateInput): Promise<TEntity> {
+  async update(id: number, data: TUpdateInput, workspaceId?: number): Promise<TEntity> {
     try {
       // Verify entity exists
-      await this.findByIdOrThrow(id);
+      await this.findByIdOrThrow(id, workspaceId);
+
+      const conditions = [eq((this.table as any).id, id)];
+
+      // Add workspaceId filtering if provided and table has workspaceId column
+      if (workspaceId !== undefined && (this.table as any).workspaceId) {
+        conditions.push(eq((this.table as any).workspaceId, workspaceId));
+      }
 
       const result = await this.db
         .update(this.table)
         .set(data)
-        .where(eq((this.table as any).id, id))
+        .where(and(...conditions))
         .returning();
 
       if (!result[0]) {
@@ -146,12 +165,19 @@ export abstract class BaseRepository<
   /**
    * Delete entity by ID (hard delete)
    */
-  async delete(id: number): Promise<void> {
+  async delete(id: number, workspaceId?: number): Promise<void> {
     try {
       // Verify entity exists
-      await this.findByIdOrThrow(id);
+      await this.findByIdOrThrow(id, workspaceId);
 
-      const result = await this.db.delete(this.table).where(eq((this.table as any).id, id));
+      const conditions = [eq((this.table as any).id, id)];
+
+      // Add workspaceId filtering if provided and table has workspaceId column
+      if (workspaceId !== undefined && (this.table as any).workspaceId) {
+        conditions.push(eq((this.table as any).workspaceId, workspaceId));
+      }
+
+      const result = await this.db.delete(this.table).where(and(...conditions));
 
       if (result.changes === 0) {
         throw new DatabaseError(`Failed to delete ${this.entityName}`, "delete");
@@ -249,7 +275,7 @@ export abstract class BaseRepository<
    * Find entity by slug
    * Assumes table has a 'slug' column and optionally 'deletedAt' for soft deletes
    */
-  async findBySlug(slug: string): Promise<TEntity | null> {
+  async findBySlug(slug: string, workspaceId?: number): Promise<TEntity | null> {
     try {
       // Import isNull dynamically to avoid circular dependency
       const {isNull} = await import('drizzle-orm');
@@ -259,6 +285,11 @@ export abstract class BaseRepository<
       // Add deletedAt check if table supports soft deletes
       if ((this.table as any).deletedAt) {
         conditions.push(isNull((this.table as any).deletedAt));
+      }
+
+      // Add workspaceId filtering if provided and table has workspaceId column
+      if (workspaceId !== undefined && (this.table as any).workspaceId) {
+        conditions.push(eq((this.table as any).workspaceId, workspaceId));
       }
 
       const result = await this.db

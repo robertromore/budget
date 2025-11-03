@@ -60,9 +60,28 @@ export interface PaginatedResult<T> {
  */
 export class TransactionRepository {
   /**
+   * Verify account ownership
+   */
+  private async verifyAccountOwnership(accountId: number, workspaceId: string): Promise<void> {
+    const account = await db.query.accounts.findFirst({
+      where: and(
+        eq(accounts.id, accountId),
+        eq(accounts.workspaceId, workspaceId),
+        isNull(accounts.deletedAt)
+      ),
+    });
+
+    if (!account) {
+      throw new NotFoundError("Account", accountId);
+    }
+  }
+
+  /**
    * Create a new transaction
    */
-  async create(data: NewTransaction): Promise<Transaction> {
+  async create(data: NewTransaction, workspaceId: string): Promise<Transaction> {
+    // Verify account belongs to user
+    await this.verifyAccountOwnership(data.accountId, workspaceId);
     const [transaction] = await db
       .insert(transactions)
       .values(data)
@@ -78,7 +97,13 @@ export class TransactionRepository {
   /**
    * Update an existing transaction
    */
-  async update(id: number, data: Partial<NewTransaction>): Promise<Transaction> {
+  async update(id: number, data: Partial<NewTransaction>, workspaceId: string): Promise<Transaction> {
+    // Verify transaction belongs to user (through account)
+    const existing = await this.findById(id, workspaceId);
+    if (!existing) {
+      throw new NotFoundError("Transaction", id);
+    }
+
     const [updated] = await db
       .update(transactions)
       .set(data)
@@ -89,13 +114,13 @@ export class TransactionRepository {
       throw new NotFoundError("Transaction", id);
     }
 
-    return this.findByIdWithRelations(id);
+    return this.findByIdWithRelations(id, workspaceId);
   }
 
   /**
    * Find transaction by ID with relations
    */
-  async findByIdWithRelations(id: number): Promise<Transaction> {
+  async findByIdWithRelations(id: number, workspaceId: string): Promise<Transaction> {
     const transaction = await db.query.transactions.findFirst({
       where: and(eq(transactions.id, id), isNull(transactions.deletedAt)),
       with: {
@@ -114,13 +139,18 @@ export class TransactionRepository {
       throw new NotFoundError("Transaction", id);
     }
 
+    // Verify account belongs to user
+    if (transaction.account?.workspaceId !== workspaceId) {
+      throw new NotFoundError("Transaction", id);
+    }
+
     return toTransaction(transaction);
   }
 
   /**
    * Find transaction by ID
    */
-  async findById(id: number): Promise<Transaction | null> {
+  async findById(id: number, workspaceId: string): Promise<Transaction | null> {
     const transaction = await db.query.transactions.findFirst({
       where: and(eq(transactions.id, id), isNull(transactions.deletedAt)),
       with: {
@@ -130,14 +160,23 @@ export class TransactionRepository {
       },
     });
 
-    return transaction ? toTransaction(transaction) : null;
+    if (!transaction) {
+      return null;
+    }
+
+    // Verify account belongs to user
+    if (transaction.account?.workspaceId !== workspaceId) {
+      return null;
+    }
+
+    return toTransaction(transaction);
   }
 
   /**
    * Find transaction by ID or throw
    */
-  async findByIdOrThrow(id: number): Promise<Transaction> {
-    const transaction = await this.findById(id);
+  async findByIdOrThrow(id: number, workspaceId: string): Promise<Transaction> {
+    const transaction = await this.findById(id, workspaceId);
 
     if (!transaction) {
       throw new NotFoundError("Transaction", id);
@@ -151,8 +190,13 @@ export class TransactionRepository {
    */
   async findWithFilters(
     filters: TransactionFilters,
-    pagination?: PaginationParams
+    pagination: PaginationParams | undefined,
+    workspaceId: string
   ): Promise<PaginatedResult<Transaction>> {
+    // If accountId is provided, verify ownership
+    if (filters.accountId) {
+      await this.verifyAccountOwnership(filters.accountId, workspaceId);
+    }
     const page = pagination?.page ?? 0;
     const pageSize = pagination?.pageSize ?? 50;
     const offset = page * pageSize;
@@ -242,7 +286,10 @@ export class TransactionRepository {
   /**
    * Find all transactions for an account
    */
-  async findByAccountId(accountId: number): Promise<Transaction[]> {
+  async findByAccountId(accountId: number, workspaceId: string): Promise<Transaction[]> {
+    // Verify account belongs to user
+    await this.verifyAccountOwnership(accountId, workspaceId);
+
     const data = await db.query.transactions.findMany({
       where: and(
         eq(transactions.accountId, accountId),
@@ -266,7 +313,10 @@ export class TransactionRepository {
   /**
    * Get account balance from transactions
    */
-  async getAccountBalance(accountId: number): Promise<number> {
+  async getAccountBalance(accountId: number, workspaceId: string): Promise<number> {
+    // Verify account belongs to user
+    await this.verifyAccountOwnership(accountId, workspaceId);
+
     // Get account to check type and initial balance
     const [account] = await db
       .select({
@@ -311,7 +361,10 @@ export class TransactionRepository {
   /**
    * Get pending balance for an account
    */
-  async getPendingBalance(accountId: number): Promise<number> {
+  async getPendingBalance(accountId: number, workspaceId: string): Promise<number> {
+    // Verify account belongs to user
+    await this.verifyAccountOwnership(accountId, workspaceId);
+
     // Get account to check type
     const [account] = await db
       .select({
@@ -351,7 +404,10 @@ export class TransactionRepository {
   /**
    * Count transactions for an account
    */
-  async countByAccountId(accountId: number): Promise<number> {
+  async countByAccountId(accountId: number, workspaceId: string): Promise<number> {
+    // Verify account belongs to user
+    await this.verifyAccountOwnership(accountId, workspaceId);
+
     const [result] = await db
       .select({count: sql<number>`count(*)`})
       .from(transactions)
@@ -368,7 +424,13 @@ export class TransactionRepository {
   /**
    * Soft delete a transaction
    */
-  async softDelete(id: number): Promise<void> {
+  async softDelete(id: number, workspaceId: string): Promise<void> {
+    // Verify transaction belongs to user (through account)
+    const transaction = await this.findById(id, workspaceId);
+    if (!transaction) {
+      throw new NotFoundError("Transaction", id);
+    }
+
     const [deleted] = await db
       .update(transactions)
       .set({deletedAt: getCurrentTimestamp()})
@@ -383,8 +445,16 @@ export class TransactionRepository {
   /**
    * Bulk soft delete transactions
    */
-  async bulkSoftDelete(ids: number[]): Promise<void> {
+  async bulkSoftDelete(ids: number[], workspaceId: string): Promise<void> {
     if (ids.length === 0) return;
+
+    // Verify all transactions belong to user
+    for (const id of ids) {
+      const transaction = await this.findById(id, workspaceId);
+      if (!transaction) {
+        throw new NotFoundError("Transaction", id);
+      }
+    }
 
     await db
       .update(transactions)
@@ -395,14 +465,9 @@ export class TransactionRepository {
   /**
    * Check if transaction exists
    */
-  async exists(id: number): Promise<boolean> {
-    const [result] = await db
-      .select({id: transactions.id})
-      .from(transactions)
-      .where(and(eq(transactions.id, id), isNull(transactions.deletedAt)))
-      .limit(1);
-
-    return !!result;
+  async exists(id: number, workspaceId: string): Promise<boolean> {
+    const transaction = await this.findById(id, workspaceId);
+    return !!transaction;
   }
 
   /**
@@ -410,8 +475,12 @@ export class TransactionRepository {
    */
   async findWithRunningBalance(
     accountId: number,
+    workspaceId: string,
     limit?: number
   ): Promise<Array<Transaction & {balance: number}>> {
+    // Verify account belongs to user
+    await this.verifyAccountOwnership(accountId, workspaceId);
+
     // Get account to check type and initial balance
     const [account] = await db
       .select({

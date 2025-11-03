@@ -18,20 +18,20 @@ export const categoryGroupsRoutes = t.router({
 	// ================================================================================
 
 	list: publicProcedure.query(
-		withErrorHandler(async () => {
-			return await categoryGroupService.listGroupsWithCounts();
+		withErrorHandler(async ({ctx}) => {
+			return await categoryGroupService.listGroupsWithCounts(ctx.workspaceId);
 		})
 	),
 
 	getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(
-		withErrorHandler(async ({input}) => {
-			return await categoryGroupService.getGroupBySlug(input.slug);
+		withErrorHandler(async ({input, ctx}) => {
+			return await categoryGroupService.getGroupBySlug(input.slug, ctx.workspaceId);
 		})
 	),
 
 	getGroupCategories: publicProcedure.input(z.object({groupId: z.number()})).query(
-		withErrorHandler(async ({input}) => {
-			return await categoryGroupService.getCategoriesForGroup(input.groupId);
+		withErrorHandler(async ({input, ctx}) => {
+			return await categoryGroupService.getCategoriesForGroup(input.groupId, ctx.workspaceId);
 		})
 	),
 
@@ -40,21 +40,21 @@ export const categoryGroupsRoutes = t.router({
 	// ================================================================================
 
 	create: rateLimitedProcedure.input(formInsertCategoryGroupSchema).mutation(
-		withErrorHandler(async ({input}) => {
-			return await categoryGroupService.createGroup(input as any);
+		withErrorHandler(async ({input, ctx}) => {
+			return await categoryGroupService.createGroup(input as any, ctx.workspaceId);
 		})
 	),
 
 	update: rateLimitedProcedure.input(formUpdateCategoryGroupSchema).mutation(
-		withErrorHandler(async ({input}) => {
+		withErrorHandler(async ({input, ctx}) => {
 			const {id, ...updates} = input;
-			return await categoryGroupService.updateGroup(id, updates as any);
+			return await categoryGroupService.updateGroup(id, updates as any, ctx.workspaceId);
 		})
 	),
 
 	delete: rateLimitedProcedure.input(z.object({id: z.number()})).mutation(
-		withErrorHandler(async ({input}) => {
-			await categoryGroupService.deleteGroup(input.id);
+		withErrorHandler(async ({input, ctx}) => {
+			await categoryGroupService.deleteGroup(input.id, ctx.workspaceId);
 			return {success: true};
 		})
 	),
@@ -67,8 +67,8 @@ export const categoryGroupsRoutes = t.router({
 			})
 		)
 		.mutation(
-			withErrorHandler(async ({input}) => {
-				await categoryGroupService.addCategoriesToGroup(input.groupId, input.categoryIds);
+			withErrorHandler(async ({input, ctx}) => {
+				await categoryGroupService.addCategoriesToGroup(input.groupId, input.categoryIds, ctx.workspaceId);
 				return {success: true};
 			})
 		),
@@ -94,8 +94,8 @@ export const categoryGroupsRoutes = t.router({
 			})
 		)
 		.mutation(
-			withErrorHandler(async ({input}) => {
-				await categoryGroupService.moveCategoryToGroup(input.categoryId, input.newGroupId);
+			withErrorHandler(async ({input, ctx}) => {
+				await categoryGroupService.moveCategoryToGroup(input.categoryId, input.newGroupId, ctx.workspaceId);
 				return {success: true};
 			})
 		),
@@ -112,8 +112,8 @@ export const categoryGroupsRoutes = t.router({
 			})
 		)
 		.mutation(
-			withErrorHandler(async ({input}) => {
-				await categoryGroupService.reorderGroups(input.updates);
+			withErrorHandler(async ({input, ctx}) => {
+				await categoryGroupService.reorderGroups(input.updates, ctx.workspaceId);
 				return {success: true};
 			})
 		),

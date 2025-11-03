@@ -85,10 +85,10 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Create a new category
    */
-  override async create(data: NewCategory): Promise<Category> {
+  override async create(data: NewCategory, workspaceId: number): Promise<Category> {
     const [category] = await db
       .insert(categories)
-      .values(data)
+      .values({...data, workspaceId})
       .returning();
 
     if (!category) {
@@ -98,18 +98,47 @@ export class CategoryRepository extends BaseRepository<
     return category;
   }
 
-  // findById() inherited from BaseRepository
-  // findBySlug() inherited from BaseRepository
+  /**
+   * Find category by ID with workspaceId filtering
+   */
+  override async findById(id: number, workspaceId: number): Promise<Category | null> {
+    const result = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, id), eq(categories.workspaceId, workspaceId)))
+      .limit(1);
+
+    return result[0] || null;
+  }
+
+  /**
+   * Find category by slug with workspaceId filtering
+   */
+  override async findBySlug(slug: string, workspaceId: number): Promise<Category | null> {
+    const {isNull} = await import('drizzle-orm');
+
+    const result = await db
+      .select()
+      .from(categories)
+      .where(and(
+        eq(categories.slug, slug),
+        eq(categories.workspaceId, workspaceId),
+        isNull(categories.deletedAt)
+      ))
+      .limit(1);
+
+    return result[0] || null;
+  }
 
   /**
    * Check if slug exists (including deleted categories)
    * @deprecated Use isSlugUnique() inherited from BaseRepository instead
    */
-  async slugExists(slug: string): Promise<boolean> {
+  async slugExists(slug: string, workspaceId: number): Promise<boolean> {
     const [result] = await db
       .select()
       .from(categories)
-      .where(eq(categories.slug, slug))
+      .where(and(eq(categories.slug, slug), eq(categories.workspaceId, workspaceId)))
       .limit(1);
 
     return !!result;
@@ -118,25 +147,25 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Find all active categories (without pagination)
    */
-  async findAllCategories(): Promise<Category[]> {
+  async findAllCategories(workspaceId: number): Promise<Category[]> {
     return await db
       .select()
       .from(categories)
-      .where(isNull(categories.deletedAt))
+      .where(and(eq(categories.workspaceId, workspaceId), isNull(categories.deletedAt)))
       .orderBy(categories.name);
   }
 
   /**
    * Update category
    */
-  override async update(id: number, data: UpdateCategoryData): Promise<Category> {
+  override async update(id: number, data: UpdateCategoryData, workspaceId: number): Promise<Category> {
     const [category] = await db
       .update(categories)
       .set({
         ...data,
         updatedAt: getCurrentTimestamp(),
       })
-      .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
+      .where(and(eq(categories.id, id), eq(categories.workspaceId, workspaceId), isNull(categories.deletedAt)))
       .returning();
 
     if (!category) {
@@ -148,39 +177,97 @@ export class CategoryRepository extends BaseRepository<
 
   /**
    * Soft delete category with slug archiving
-   * Now uses the inherited softDeleteWithSlugArchive() method from BaseRepository
    */
-  override async softDelete(id: number): Promise<Category> {
-    return await this.softDeleteWithSlugArchive(id);
+  override async softDelete(id: number, workspaceId: number): Promise<Category> {
+    // Get existing entity
+    const entity = await this.findById(id, workspaceId);
+    if (!entity) {
+      throw new NotFoundError("Category", id);
+    }
+
+    const slug = entity.slug;
+    const timestamp = Date.now();
+    const archivedSlug = `${slug}-deleted-${timestamp}`;
+
+    // Update with archived slug and deletedAt
+    return await this.update(id, {
+      slug: archivedSlug,
+      deletedAt: getCurrentTimestamp(),
+    }, workspaceId);
   }
 
   /**
    * Bulk soft delete categories with slug archiving
-   * Now uses the inherited bulkSoftDeleteWithSlugArchive() method from BaseRepository
    * Returns the number of categories deleted
    */
-  async bulkDeleteCategories(ids: number[]): Promise<number> {
-    return await this.bulkSoftDeleteWithSlugArchive(ids);
+  async bulkDeleteCategories(ids: number[], workspaceId: number): Promise<number> {
+    if (ids.length === 0) return 0;
+
+    // Get existing entities to access their slugs
+    const entities = await db
+      .select()
+      .from(categories)
+      .where(
+        and(
+          inArray(categories.id, ids),
+          eq(categories.workspaceId, workspaceId),
+          isNull(categories.deletedAt)
+        )
+      );
+
+    if (entities.length === 0) return 0;
+
+    // Delete each entity with slug modification
+    const timestamp = Date.now();
+    let deletedCount = 0;
+
+    for (const entity of entities) {
+      const slug = entity.slug;
+      const id = entity.id;
+      const archivedSlug = `${slug}-deleted-${timestamp}`;
+
+      try {
+        await this.update(id, {
+          slug: archivedSlug,
+          deletedAt: getCurrentTimestamp(),
+        }, workspaceId);
+        deletedCount++;
+      } catch (error) {
+        // Continue with other entities
+        console.error(`Failed to delete category ${id}:`, error);
+      }
+    }
+
+    return deletedCount;
   }
 
   /**
    * Search categories by name
-   * Now uses the inherited searchByName() method from BaseRepository
    */
-  async search(query: string): Promise<Category[]> {
+  async search(query: string, workspaceId: number): Promise<Category[]> {
     if (!query.trim()) {
-      return this.findAllCategories();
+      return this.findAllCategories(workspaceId);
     }
 
-    return await this.searchByName(query, {
-      limit: 50
-    });
+    const {isNull} = await import('drizzle-orm');
+    const {like} = await import('drizzle-orm');
+
+    return await db
+      .select()
+      .from(categories)
+      .where(and(
+        like(categories.name, `%${query}%`),
+        eq(categories.workspaceId, workspaceId),
+        isNull(categories.deletedAt)
+      ))
+      .limit(50)
+      .orderBy(categories.name);
   }
 
   /**
    * Find categories used in account transactions
    */
-  async findByAccountTransactions(accountId: number): Promise<Category[]> {
+  async findByAccountTransactions(accountId: number, workspaceId: number): Promise<Category[]> {
     const categoryIds = await db
       .selectDistinct({categoryId: transactions.categoryId})
       .from(transactions)
@@ -202,6 +289,7 @@ export class CategoryRepository extends BaseRepository<
       .from(categories)
       .where(and(
         inArray(categories.id, validCategoryIds),
+        eq(categories.workspaceId, workspaceId),
         isNull(categories.deletedAt)
       ))
       .orderBy(categories.name);
@@ -210,7 +298,7 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Get category statistics
    */
-  async getStats(id: number): Promise<CategoryStats> {
+  async getStats(id: number, workspaceId: number): Promise<CategoryStats> {
     const [stats] = await db
       .select({
         transactionCount: count(transactions.id),
@@ -235,13 +323,13 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Get categories with statistics
    */
-  async findAllWithStats(): Promise<CategoryWithStats[]> {
-    const categoriesData = await this.findAllCategories();
+  async findAllWithStats(workspaceId: number): Promise<CategoryWithStats[]> {
+    const categoriesData = await this.findAllCategories(workspaceId);
 
     const categoriesWithStats: CategoryWithStats[] = [];
 
     for (const category of categoriesData) {
-      const stats = await this.getStats(category.id);
+      const stats = await this.getStats(category.id, workspaceId);
       categoriesWithStats.push({
         ...category,
         stats,
@@ -255,6 +343,7 @@ export class CategoryRepository extends BaseRepository<
    * Get top categories by transaction amount
    */
   async getTopCategories(
+    workspaceId: number,
     limit: number = 10,
     accountId?: number
   ): Promise<CategoryWithStats[]> {
@@ -288,13 +377,14 @@ export class CategoryRepository extends BaseRepository<
       .from(categories)
       .where(and(
         inArray(categories.id, categoryIds),
+        eq(categories.workspaceId, workspaceId),
         isNull(categories.deletedAt)
       ));
 
     const categoriesWithStats: CategoryWithStats[] = [];
 
     for (const category of categoriesData) {
-      const stats = await this.getStats(category.id);
+      const stats = await this.getStats(category.id, workspaceId);
       categoriesWithStats.push({
         ...category,
         stats,
@@ -312,7 +402,7 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Check if category has associated transactions
    */
-  async hasTransactions(id: number): Promise<boolean> {
+  async hasTransactions(id: number, workspaceId: number): Promise<boolean> {
     const [result] = await db
       .select({id: transactions.id})
       .from(transactions)
@@ -328,7 +418,7 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Get category transaction count
    */
-  async getTransactionCount(id: number): Promise<number> {
+  async getTransactionCount(id: number, workspaceId: number): Promise<number> {
     const [result] = await db
       .select({count: count(transactions.id)})
       .from(transactions)
@@ -343,7 +433,7 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Get budget summary for a category
    */
-  async getBudgetSummary(categoryId: number): Promise<CategoryBudgetSummary[]> {
+  async getBudgetSummary(categoryId: number, workspaceId: number): Promise<CategoryBudgetSummary[]> {
     const results = await db
       .select({
         budgetId: budgets.id,
@@ -381,11 +471,11 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Get category with budget data
    */
-  async findByIdWithBudgets(id: number): Promise<CategoryWithBudgets | null> {
-    const category = await this.findById(id);
+  async findByIdWithBudgets(id: number, workspaceId: number): Promise<CategoryWithBudgets | null> {
+    const category = await this.findById(id, workspaceId);
     if (!category) return null;
 
-    const budgetSummaries = await this.getBudgetSummary(id);
+    const budgetSummaries = await this.getBudgetSummary(id, workspaceId);
 
     return {
       ...category,
@@ -396,12 +486,12 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Get all categories with budget data
    */
-  async findAllWithBudgets(): Promise<CategoryWithBudgets[]> {
-    const allCategories = await this.findAllCategories();
+  async findAllWithBudgets(workspaceId: number): Promise<CategoryWithBudgets[]> {
+    const allCategories = await this.findAllCategories(workspaceId);
 
     const categoriesWithBudgets = await Promise.all(
       allCategories.map(async (category) => {
-        const budgetSummaries = await this.getBudgetSummary(category.id);
+        const budgetSummaries = await this.getBudgetSummary(category.id, workspaceId);
         return {
           ...category,
           budgets: budgetSummaries,
@@ -415,11 +505,12 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Find all root categories (no parent)
    */
-  async findRootCategories(): Promise<Category[]> {
+  async findRootCategories(workspaceId: number): Promise<Category[]> {
     return await db
       .select()
       .from(categories)
       .where(and(
+        eq(categories.workspaceId, workspaceId),
         isNull(categories.parentId),
         isNull(categories.deletedAt)
       ))
@@ -429,12 +520,13 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Find direct children of a category
    */
-  async findChildren(parentId: number): Promise<Category[]> {
+  async findChildren(parentId: number, workspaceId: number): Promise<Category[]> {
     return await db
       .select()
       .from(categories)
       .where(and(
         eq(categories.parentId, parentId),
+        eq(categories.workspaceId, workspaceId),
         isNull(categories.deletedAt)
       ))
       .orderBy(categories.displayOrder, categories.name);
@@ -443,11 +535,11 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Find category with its direct children
    */
-  async findWithChildren(id: number): Promise<CategoryWithChildren | null> {
-    const category = await this.findById(id);
+  async findWithChildren(id: number, workspaceId: number): Promise<CategoryWithChildren | null> {
+    const category = await this.findById(id, workspaceId);
     if (!category) return null;
 
-    const children = await this.findChildren(id);
+    const children = await this.findChildren(id, workspaceId);
 
     return {
       ...category,
@@ -458,8 +550,8 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Build full category hierarchy tree
    */
-  async getHierarchyTree(): Promise<CategoryTreeNode[]> {
-    const allCategories = await this.findAllCategories();
+  async getHierarchyTree(workspaceId: number): Promise<CategoryTreeNode[]> {
+    const allCategories = await this.findAllCategories(workspaceId);
 
     // Create a map for quick lookup
     const categoryMap = new Map<number, CategoryTreeNode>();
@@ -499,12 +591,13 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Check if category has children
    */
-  async hasChildren(id: number): Promise<boolean> {
+  async hasChildren(id: number, workspaceId: number): Promise<boolean> {
     const [result] = await db
       .select({id: categories.id})
       .from(categories)
       .where(and(
         eq(categories.parentId, id),
+        eq(categories.workspaceId, workspaceId),
         isNull(categories.deletedAt)
       ))
       .limit(1);
@@ -515,12 +608,12 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Get all descendant IDs of a category (recursive)
    */
-  async getDescendantIds(id: number): Promise<number[]> {
-    const children = await this.findChildren(id);
+  async getDescendantIds(id: number, workspaceId: number): Promise<number[]> {
+    const children = await this.findChildren(id, workspaceId);
     let descendantIds: number[] = children.map(c => c.id);
 
     for (const child of children) {
-      const childDescendants = await this.getDescendantIds(child.id);
+      const childDescendants = await this.getDescendantIds(child.id, workspaceId);
       descendantIds = [...descendantIds, ...childDescendants];
     }
 
@@ -530,7 +623,7 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Find all categories with their assigned group information
    */
-  async findAllWithGroups(): Promise<CategoryWithGroup[]> {
+  async findAllWithGroups(workspaceId: number): Promise<CategoryWithGroup[]> {
     const results = await db
       .select({
         // Category fields
@@ -571,7 +664,7 @@ export class CategoryRepository extends BaseRepository<
         categoryGroups,
         eq(categoryGroupMemberships.categoryGroupId, categoryGroups.id)
       )
-      .where(isNull(categories.deletedAt))
+      .where(and(eq(categories.workspaceId, workspaceId), isNull(categories.deletedAt)))
       .orderBy(categories.name);
 
     return results.map(row => ({
@@ -579,6 +672,7 @@ export class CategoryRepository extends BaseRepository<
       slug: row.slug,
       name: row.name,
       notes: row.notes,
+      workspaceId: workspaceId,
       parentId: row.parentId,
       categoryType: row.categoryType,
       categoryIcon: row.categoryIcon,
@@ -594,6 +688,7 @@ export class CategoryRepository extends BaseRepository<
       expectedMonthlyMax: row.expectedMonthlyMax,
       spendingPriority: row.spendingPriority,
       incomeReliability: row.incomeReliability,
+      dateCreated: row.createdAt,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       deletedAt: row.deletedAt,

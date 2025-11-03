@@ -1,5 +1,6 @@
 [
   {
+    "workspaceId": 1,
     "name": "Monthly Checking Budget",
     "description": "Overall monthly spending limit for checking account",
     "type": "account-monthly",
@@ -15,6 +16,7 @@
     }
   },
   {
+    "workspaceId": 1,
     "name": "Grocery Envelope",
     "description": "Monthly envelope budget for grocery expenses",
     "type": "category-envelope",
@@ -31,6 +33,7 @@
     }
   },
   {
+    "workspaceId": 1,
     "name": "Emergency Fund Goal",
     "description": "Savings goal for emergency expenses",
     "type": "goal-based",
