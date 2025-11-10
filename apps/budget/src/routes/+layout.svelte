@@ -22,6 +22,8 @@ import {autoScheduler} from '$lib/stores/auto-scheduler.svelte';
 import {onMount} from 'svelte';
 import {rpc} from '$lib/query';
 import {Toaster} from 'svelte-sonner';
+import {ModeWatcher} from 'mode-watcher';
+import ThemeToggle from '$lib/components/layout/theme-toggle.svelte';
 
 let {data, children}: {data: LayoutData; children: Snippet} = $props();
 
@@ -83,6 +85,7 @@ onMount(() => {
 	<RenderScan />
 {/if} -->
 
+<ModeWatcher />
 <Toaster richColors position="top-center" />
 
 <DeleteAccountDialog />
@@ -97,8 +100,9 @@ onMount(() => {
     <Sidebar.Provider>
       <AppSidebar />
       <main class="w-full">
-        <div class="fixed">
+        <div class="fixed flex flex-col items-start gap-2">
           <Sidebar.Trigger />
+          <ThemeToggle />
         </div>
         <div class="col-span-3 lg:col-span-4">
           <div class="h-full px-4 py-6 lg:px-8">
