@@ -447,10 +447,10 @@ export const payeeRoutes = t.router({
       .input(z.object({
         payeeId: z.number().positive(),
         contactOverrides: z.object({
-          phone: z.string().optional(),
-          email: z.string().optional(),
-          website: z.string().optional(),
-          address: z.any().optional(),
+          phone: z.string().nullish(),
+          email: z.string().nullish(),
+          website: z.string().nullish(),
+          address: z.any().nullish(),
         }).optional(),
       }))
       .query(async ({input}) => {

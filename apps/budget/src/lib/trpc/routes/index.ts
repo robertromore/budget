@@ -2,6 +2,7 @@
 export {accountRoutes} from "./accounts";
 export {serverAccountsRoutes as accountsServerRoutes} from "./accounts-server";
 export {categoryRoutes} from "./categories";
+export {payeeCategoriesRoutes} from "./payee-categories";
 export {payeeRoutes} from "./payees";
 export {scheduleRoutes} from "./schedules";
 export {transactionRoutes} from "./transactions";

@@ -5,6 +5,7 @@ import * as Empty from '$lib/components/ui/empty';
 import Plus from '@lucide/svelte/icons/plus';
 import User from '@lucide/svelte/icons/user';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
+import FolderCog from '@lucide/svelte/icons/folder-cog';
 import {PayeesState} from '$lib/states/entities/payees.svelte';
 import {
   deletePayeeDialog,
@@ -247,9 +248,13 @@ const frequencyOptions = [
       </p>
     </div>
     <div class="flex items-center gap-2">
+      <Button variant="outline" href="/payees/categories">
+        <FolderCog class="mr-2 h-4 w-4" />
+        Manage Categories
+      </Button>
       <Button variant="outline" href="/payees/analytics">
         <BarChart3 class="mr-2 h-4 w-4" />
-        Analytics Dashboard
+        Analytics
       </Button>
       <Button href="/payees/new">
         <Plus class="mr-2 h-4 w-4" />

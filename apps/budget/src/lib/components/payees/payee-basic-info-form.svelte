@@ -10,12 +10,15 @@ import {payeeTypes, paymentFrequencies} from '$lib/schema/payees';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import EntityInput from '$lib/components/input/entity-input.svelte';
 import ManageCategoryForm from '$lib/components/forms/manage-category-form.svelte';
+import ManagePayeeCategoryForm from '$lib/components/forms/manage-payee-category-form.svelte';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
+import {PayeeCategoriesState} from '$lib/states/entities/payee-categories.svelte';
 import type {EditableEntityItem} from '$lib/types';
 
 // Icons
 import User from '@lucide/svelte/icons/user';
 import Tag from '@lucide/svelte/icons/tag';
+import FolderOpen from '@lucide/svelte/icons/folder-open';
 
 interface Props {
 	formData: any; // Store type from superform
@@ -57,6 +60,43 @@ const handleCategoryDelete = async (id: number) => {
 	await categoriesState.deleteCategory(id);
 	if ($formData.defaultCategoryId === id.toString()) {
 		$formData.defaultCategoryId = '0';
+	}
+};
+
+// Payee Category state and handlers
+const payeeCategoriesState = PayeeCategoriesState.get();
+
+// Make payee categories reactive by deriving from state
+const reactivePayeeCategories = $derived((payeeCategoriesState?.all ?? []) as EditableEntityItem[]);
+
+let selectedPayeeCategory = $derived.by(() => {
+	if (!$formData.payeeCategoryId) return undefined;
+	return reactivePayeeCategories.find(cat => cat.id === Number($formData.payeeCategoryId)) as EditableEntityItem | undefined;
+});
+
+const handlePayeeCategorySelect = (category?: EditableEntityItem) => {
+	if (category) {
+		$formData.payeeCategoryId = category.id.toString();
+	} else {
+		$formData.payeeCategoryId = null;
+	}
+};
+
+const handlePayeeCategorySave = (category: EditableEntityItem, isNew: boolean) => {
+	if (!payeeCategoriesState) return;
+	if (isNew) {
+		payeeCategoriesState.addCategory(category as any);
+	} else {
+		payeeCategoriesState.updateCategory(category as any);
+	}
+	$formData.payeeCategoryId = category.id.toString();
+};
+
+const handlePayeeCategoryDelete = async (id: number) => {
+	if (!payeeCategoriesState) return;
+	await payeeCategoriesState.deleteCategory(id);
+	if ($formData.payeeCategoryId === id.toString()) {
+		$formData.payeeCategoryId = null;
 	}
 };
 
@@ -105,7 +145,7 @@ const paymentFrequencyOptions = paymentFrequencies.map(freq => ({
 					{#snippet children({props})}
 						<Form.Label>Payee Type</Form.Label>
 						<Select.Root type="single" bind:value={$formData.payeeType}>
-							<Select.Trigger {...props}>
+							<Select.Trigger {...props} class="w-full">
 								<span>{$formData.payeeType ? payeeTypeOptions.find(opt => opt.value === $formData.payeeType)?.label : "Select type"}</span>
 							</Select.Trigger>
 							<Select.Content>
@@ -114,6 +154,36 @@ const paymentFrequencyOptions = paymentFrequencies.map(freq => ({
 								{/each}
 							</Select.Content>
 						</Select.Root>
+						<Form.Description class="text-xs">
+							Business entity type (individual, business, etc.)
+						</Form.Description>
+						<Form.FieldErrors />
+					{/snippet}
+				</Form.Control>
+			</Form.Field>
+
+			<!-- Payee Category (UI Organization) -->
+			<Form.Field form={entityForm} name="payeeCategoryId">
+				<Form.Control>
+					{#snippet children({props})}
+						<Form.Label>Payee Category (Optional)</Form.Label>
+						<EntityInput
+							entityLabel="Payee Category"
+							entities={reactivePayeeCategories}
+							bind:value={selectedPayeeCategory}
+							handleSubmit={handlePayeeCategorySelect}
+							buttonClass="w-full"
+							icon={FolderOpen}
+							management={{
+								enable: true,
+								component: ManagePayeeCategoryForm,
+								onSave: handlePayeeCategorySave,
+								onDelete: handlePayeeCategoryDelete
+							}}
+						/>
+						<Form.Description class="text-xs">
+							Organize payees in lists (e.g., Utilities, Subscriptions). For UI organization only, not budgeting.
+						</Form.Description>
 						<Form.FieldErrors />
 					{/snippet}
 				</Form.Control>
@@ -125,7 +195,7 @@ const paymentFrequencyOptions = paymentFrequencies.map(freq => ({
 					{#snippet children({props})}
 						<Form.Label>Payment Frequency</Form.Label>
 						<Select.Root type="single" bind:value={$formData.paymentFrequency}>
-							<Select.Trigger {...props}>
+							<Select.Trigger {...props} class="w-full">
 								<span>{$formData.paymentFrequency ? paymentFrequencyOptions.find(opt => opt.value === $formData.paymentFrequency)?.label : "Select frequency"}</span>
 							</Select.Trigger>
 							<Select.Content>
@@ -134,6 +204,9 @@ const paymentFrequencyOptions = paymentFrequencies.map(freq => ({
 								{/each}
 							</Select.Content>
 						</Select.Root>
+						<Form.Description class="text-xs">
+							How often you typically pay this payee
+						</Form.Description>
 						<Form.FieldErrors />
 					{/snippet}
 				</Form.Control>
@@ -158,6 +231,9 @@ const paymentFrequencyOptions = paymentFrequencies.map(freq => ({
 								onDelete: handleCategoryDelete
 							}}
 						/>
+						<Form.Description class="text-xs">
+							Budget category for transactions (e.g., Groceries, Entertainment). Auto-applied to new transactions.
+						</Form.Description>
 						<Form.FieldErrors />
 					{/snippet}
 				</Form.Control>
@@ -187,19 +263,51 @@ const paymentFrequencyOptions = paymentFrequencies.map(freq => ({
 		</Form.Field>
 
 		<!-- Flags -->
-		<div class="flex flex-wrap gap-4">
-			<div class="flex items-center space-x-2">
-				<Switch id="payee-tax-relevant" bind:checked={$formData.taxRelevant} />
-				<Label for="payee-tax-relevant">Tax Relevant</Label>
-			</div>
-			<div class="flex items-center space-x-2">
-				<Switch id="payee-seasonal" bind:checked={$formData.isSeasonal} />
-				<Label for="payee-seasonal">Seasonal Payee</Label>
-			</div>
-			<div class="flex items-center space-x-2">
-				<Switch id="payee-active" bind:checked={$formData.isActive} />
-				<Label for="payee-active">Active</Label>
-			</div>
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+			<!-- Tax Relevant -->
+			<label for="payee-tax-relevant" class="relative flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors cursor-pointer">
+				<div class="flex h-5 items-center">
+					<Switch id="payee-tax-relevant" bind:checked={$formData.taxRelevant} />
+				</div>
+				<div class="flex-1">
+					<div class="font-medium">
+						Tax Relevant
+					</div>
+					<p class="text-xs text-muted-foreground mt-1">
+						Mark if expenses to this payee are tax-deductible or need to be reported
+					</p>
+				</div>
+			</label>
+
+			<!-- Seasonal -->
+			<label for="payee-seasonal" class="relative flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors cursor-pointer">
+				<div class="flex h-5 items-center">
+					<Switch id="payee-seasonal" bind:checked={$formData.isSeasonal} />
+				</div>
+				<div class="flex-1">
+					<div class="font-medium">
+						Seasonal Payee
+					</div>
+					<p class="text-xs text-muted-foreground mt-1">
+						Payments only occur during specific times of year (e.g., landscaping, heating)
+					</p>
+				</div>
+			</label>
+
+			<!-- Active -->
+			<label for="payee-active" class="relative flex items-start space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors cursor-pointer">
+				<div class="flex h-5 items-center">
+					<Switch id="payee-active" bind:checked={$formData.isActive} />
+				</div>
+				<div class="flex-1">
+					<div class="font-medium">
+						Active
+					</div>
+					<p class="text-xs text-muted-foreground mt-1">
+						Uncheck to archive this payee and hide it from active lists
+					</p>
+				</div>
+			</label>
 		</div>
 	</Card.Content>
 </Card.Root>

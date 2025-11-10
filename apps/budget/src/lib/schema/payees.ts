@@ -4,12 +4,13 @@
 // for automatic categorization, transaction automation, and analytics support.
 
 import {relations, sql} from "drizzle-orm";
-import {sqliteTable, integer, text, real, index} from "drizzle-orm/sqlite-core";
+import {sqliteTable, integer, text, real, index, type AnySQLiteColumn} from "drizzle-orm/sqlite-core";
 import {createInsertSchema, createSelectSchema} from "drizzle-zod";
 import {transactions} from "./transactions";
 import {categories} from "./categories";
 import {budgets} from "./budgets";
 import {workspaces} from "./workspaces";
+import {payeeCategories} from "./payee-categories";
 import {z} from "zod/v4";
 
 // Enum definitions for payee fields
@@ -50,6 +51,9 @@ export const payees = sqliteTable(
     defaultCategoryId: integer("default_category_id").references(() => categories.id),
     defaultBudgetId: integer("default_budget_id").references(() => budgets.id),
     payeeType: text("payee_type", {enum: payeeTypes}),
+
+    // Organization Fields
+    payeeCategoryId: integer("payee_category_id").references(() => payeeCategories.id, {onDelete: "set null"}),
 
     // Transaction Automation Fields
     avgAmount: real("avg_amount"),
@@ -100,6 +104,7 @@ export const payees = sqliteTable(
     // Foreign key indexes for performance
     index("payee_default_category_idx").on(table.defaultCategoryId),
     index("payee_default_budget_idx").on(table.defaultBudgetId),
+    index("payee_category_id_idx").on(table.payeeCategoryId),
 
     // Frequently queried fields
     index("payee_type_idx").on(table.payeeType),
@@ -128,6 +133,10 @@ export const payeesRelations = relations(payees, ({many, one}) => ({
     fields: [payees.defaultBudgetId],
     references: [budgets.id],
   }),
+  payeeCategory: one(payeeCategories, {
+    fields: [payees.payeeCategoryId],
+    references: [payeeCategories.id],
+  }),
 }));
 
 export const selectPayeeSchema = createSelectSchema(payees);
@@ -146,6 +155,9 @@ export const formInsertPayeeSchema = createInsertSchema(payees, {
   defaultCategoryId: (schema) => schema.optional().nullable(),
   defaultBudgetId: (schema) => schema.optional().nullable(),
   payeeType: (schema) => schema.optional().nullable(),
+
+  // Organization Fields validation
+  payeeCategoryId: (schema) => schema.optional().nullable(),
 
   // Transaction Automation Fields validation
   avgAmount: (schema) => schema.optional().nullable(),
