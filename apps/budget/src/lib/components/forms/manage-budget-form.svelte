@@ -22,6 +22,12 @@ import type {Account} from '$lib/schema/accounts';
 import type {Category} from '$lib/schema/categories';
 import type {Schedule} from '$lib/schema/schedules';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import MultiSelectEntityInput from '$lib/components/input/multi-select-entity-input.svelte';
+import {ManageCategoryForm} from '$lib/components/forms';
+import {CategoriesState} from '$lib/states/entities/categories.svelte';
+import Tag from '@lucide/svelte/icons/tag';
+import CircleX from '@lucide/svelte/icons/circle-x';
+import type {EditableEntityItem} from '$lib/types';
 
 let {
   formData,
@@ -72,6 +78,26 @@ const selectedCategories = $derived.by(() =>
     .map((id: number) => availableCategories.find(category => category.id === id))
     .filter(Boolean) as Category[]
 );
+
+// Categories state for entity management
+const categoriesState = CategoriesState.get();
+
+// Category management handlers
+const handleCategorySave = (newCategory: EditableEntityItem, isNew: boolean) => {
+  if (isNew) {
+    categoriesState.addCategory(newCategory as Category);
+    // Auto-add to selected categories
+    addCategory(newCategory.id);
+  } else {
+    categoriesState.updateCategory(newCategory as Category);
+  }
+};
+
+const handleCategoryDelete = (id: number) => {
+  categoriesState.deleteCategory(id);
+  // Remove from selected categories if it was selected
+  removeCategory(id);
+};
 
 // Budget type configurations
 const budgetTypeConfigs: Record<BudgetType, {
@@ -151,9 +177,8 @@ const typeAccessors = createTransformAccessors(
   }
 );
 
-// Account/category selection state with accessors
+// Account selection state with accessors
 let selectedAccountValue = $state('');
-let selectedCategoryValue = $state('');
 
 const accountAccessors = createTransformAccessors(
   () => selectedAccountValue,
@@ -163,18 +188,6 @@ const accountAccessors = createTransformAccessors(
       selectedAccountValue = ''; // Reset after adding
     } else {
       selectedAccountValue = value;
-    }
-  }
-);
-
-const categoryAccessors = createTransformAccessors(
-  () => selectedCategoryValue,
-  (value: string) => {
-    if (value) {
-      addCategory(parseInt(value));
-      selectedCategoryValue = ''; // Reset after adding
-    } else {
-      selectedCategoryValue = value;
     }
   }
 );
@@ -468,36 +481,38 @@ const scheduleAccessors = createTransformAccessors(
       {#if currentBudgetConfig.requiresCategories}
         <div class="space-y-2 pt-4 border-t border-border">
           <Label>Categories</Label>
-          <Select.Root
-            type="single"
-            bind:value={categoryAccessors.get, categoryAccessors.set}
-          >
-            <Select.Trigger>
-              Select categories to include
-            </Select.Trigger>
-            <Select.Content>
-              {#each availableCategories as category (category.id)}
-                {#if !selectedCategoryIds.includes(category.id)}
-                  <Select.Item value={String(category.id)}>
-                    {category.name}
-                  </Select.Item>
-                {/if}
-              {/each}
-            </Select.Content>
-          </Select.Root>
+          <p class="text-sm text-muted-foreground mb-2">
+            Select categories to include in this budget. Click the + button to create a new category.
+          </p>
+          <MultiSelectEntityInput
+            entityLabel="category"
+            entities={availableCategories}
+            value={selectedCategoryIds}
+            icon={Tag}
+            buttonClass="w-full"
+            management={{
+              enable: true,
+              component: ManageCategoryForm,
+              onSave: handleCategorySave,
+              onDelete: handleCategoryDelete,
+            }}
+            handleChange={(selectedIds) => {
+              $formStore.categoryIds = selectedIds;
+            }}
+          />
 
           {#if selectedCategories.length > 0}
             <div class="flex flex-wrap gap-2 mt-2">
               {#each selectedCategories as category (category.id)}
-                <Badge variant="secondary" class="flex items-center gap-1">
+                <Badge variant="secondary" class="flex items-center gap-1.5 pr-1">
                   {category.name}
                   <button
                     type="button"
                     onclick={() => removeCategory(category.id)}
-                    class="ml-1 rounded-full hover:bg-secondary-foreground/20"
+                    class="rounded-full hover:bg-destructive/20 p-0.5 transition-colors"
                   >
+                    <CircleX class="h-3.5 w-3.5" />
                     <span class="sr-only">Remove {category.name}</span>
-                    ×
                   </button>
                 </Badge>
               {/each}

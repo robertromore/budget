@@ -20,11 +20,13 @@
 		initialData,
 		onDelete,
 		onSave,
+		onCancel,
 	}: {
 		id?: number | undefined;
 		initialData?: CategoryGroup | undefined;
 		onDelete?: (id: number) => void;
 		onSave?: () => void;
+		onCancel?: () => void;
 	} = $props();
 
 	const isUpdate = $derived(id !== undefined && id > 0);
@@ -228,7 +230,12 @@
 		</div>
 
 		<div class="flex items-center gap-2">
-			<Button type="submit" disabled={isSaving}>
+			{#if onCancel}
+				<Button type="button" variant="destructive" onclick={onCancel} class="flex-1">
+					Cancel
+				</Button>
+			{/if}
+			<Button type="submit" disabled={isSaving} class={onCancel ? 'flex-1' : ''}>
 				{#if isSaving}
 					Saving...
 				{:else}

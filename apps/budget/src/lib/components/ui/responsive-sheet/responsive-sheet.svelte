@@ -14,6 +14,7 @@ interface Props {
   footer?: Snippet;
   children?: Snippet;
   class?: string;
+  triggerClass?: string;
   resizable?: boolean;
   defaultWidth?: number;
   minWidth?: number;
@@ -30,6 +31,7 @@ let {
   footer,
   children,
   class: className,
+  triggerClass,
   resizable = true,
   defaultWidth = 640,
   minWidth = 400,
@@ -99,7 +101,7 @@ $effect(() => {
 {#if isDesktop.current}
   <Sheet.Root bind:open>
     {#if trigger}
-      <Sheet.Trigger type="button">
+      <Sheet.Trigger type="button" class={triggerClass}>
         {@render trigger()}
       </Sheet.Trigger>
     {/if}
@@ -145,7 +147,7 @@ $effect(() => {
 {:else}
   <Drawer.Root bind:open>
     {#if trigger}
-      <Drawer.Trigger type="button">
+      <Drawer.Trigger type="button" class={triggerClass}>
         {@render trigger()}
       </Drawer.Trigger>
     {/if}
