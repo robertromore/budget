@@ -112,7 +112,7 @@ table = createSvelteTable({
           <Table.Row>
             {#each headerGroup.headers as header}
               <Table.Head>
-                {#if !header.isPlaceholder}
+                {#if !header.isPlaceholder && header.column.columnDef.header}
                   <FlexRender content={header.column.columnDef.header} context={header.getContext()} />
                 {/if}
               </Table.Head>
@@ -126,7 +126,9 @@ table = createSvelteTable({
             <Table.Row data-state={row.getIsSelected() && 'selected'}>
               {#each row.getVisibleCells() as cell}
                 <Table.Cell>
-                  <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+                  {#if cell.column.columnDef.cell}
+                    <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+                  {/if}
                 </Table.Cell>
               {/each}
             </Table.Row>

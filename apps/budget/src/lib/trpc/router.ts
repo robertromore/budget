@@ -2,6 +2,7 @@ import { accountRoutes } from "$lib/trpc/routes/accounts";
 import { serverAccountsRoutes } from "$lib/trpc/routes/accounts-server";
 import { categoriesRoutes } from "$lib/trpc/routes/categories";
 import { categoryGroupsRoutes } from "$lib/trpc/routes/category-groups";
+import { payeeCategoriesRoutes } from "$lib/trpc/routes/payee-categories";
 import { payeeRoutes } from "$lib/trpc/routes/payees";
 import { transactionRoutes } from "$lib/trpc/routes/transactions";
 import { t } from "$lib/trpc/t";
@@ -19,6 +20,7 @@ export const router = t.router({
   serverAccountsRoutes,
   categoriesRoutes,
   categoryGroupsRoutes,
+  payeeCategoriesRoutes,
   payeeRoutes,
   scheduleRoutes,
   transactionRoutes,

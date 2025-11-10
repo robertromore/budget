@@ -46,8 +46,9 @@ export function normalizeHeader(header: string): string {
 
     // Category variations
     'category': 'category',
-    'type': 'category',
     'classification': 'category',
+    'transaction category': 'category',
+    'expense category': 'category',
 
     // Account variations
     'account': 'account',

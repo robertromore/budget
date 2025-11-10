@@ -16,6 +16,7 @@ export const load: LayoutServerLoad = async (event) => {
     currentWorkspace: await caller.workspaceRoutes.getCurrent(),
     accounts: await caller.accountRoutes.all(),
     payees: await caller.payeeRoutes.all(),
+    payeeCategories: await caller.payeeCategoriesRoutes.list(),
     categories: await caller.categoriesRoutes.all(),
     schedules: await caller.scheduleRoutes.all(),
     budgets: await caller.budgetRoutes.list(),

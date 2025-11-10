@@ -48,7 +48,7 @@ let {
       </div>
     </div>
 
-    <div class="flex gap-2 flex-shrink-0">
+    <div class="flex gap-2 shrink-0">
       <Button variant="outline" onclick={toggleStatus}>
         {#if schedule.status === 'active'}
           <Pause class="mr-2 h-4 w-4" />

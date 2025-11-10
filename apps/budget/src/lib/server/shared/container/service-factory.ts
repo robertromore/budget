@@ -17,6 +17,7 @@ import { AccountRepository } from '$lib/server/domains/accounts/repository';
 import { BudgetRepository } from '$lib/server/domains/budgets/repository';
 import { CategoryRepository } from '$lib/server/domains/categories/repository';
 import { CategoryGroupMembershipRepository, CategoryGroupRecommendationRepository, CategoryGroupRepository, CategoryGroupSettingsRepository } from '$lib/server/domains/category-groups/repository';
+import { PayeeCategoryRepository } from '$lib/server/domains/payee-categories/repository';
 import { MedicalExpenseRepository } from '$lib/server/domains/medical-expenses/repository';
 import { PatternRepository } from '$lib/server/domains/patterns/repository';
 import { PayeeRepository } from '$lib/server/domains/payees/repository';
@@ -39,6 +40,7 @@ import { CategoryService } from '$lib/server/domains/categories/services';
 import { CategoryGroupRecommendationService } from '$lib/server/domains/category-groups/recommendation-service';
 import { CategoryGroupService } from '$lib/server/domains/category-groups/services';
 import { CategoryGroupSettingsService } from '$lib/server/domains/category-groups/settings-service';
+import { PayeeCategoryService } from '$lib/server/domains/payee-categories/services';
 import { ClaimRepository } from '$lib/server/domains/medical-expenses/claim-repository';
 import { ClaimService } from '$lib/server/domains/medical-expenses/claim-service';
 import { ReceiptRepository } from '$lib/server/domains/medical-expenses/receipt-repository';
@@ -498,6 +500,15 @@ export class ServiceFactory {
     return this.instances.get(key) as CategoryGroupSettingsRepository;
   }
 
+  // Payee Categories Repository
+  getPayeeCategoryRepository(): PayeeCategoryRepository {
+    const key = 'PayeeCategoryRepository';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new PayeeCategoryRepository());
+    }
+    return this.instances.get(key) as PayeeCategoryRepository;
+  }
+
   // Category Groups Services
   getCategoryGroupService(): CategoryGroupService {
     const key = 'CategoryGroupService';
@@ -531,6 +542,17 @@ export class ServiceFactory {
       ));
     }
     return this.instances.get(key) as CategoryGroupSettingsService;
+  }
+
+  // Payee Categories Service
+  getPayeeCategoryService(): PayeeCategoryService {
+    const key = 'PayeeCategoryService';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new PayeeCategoryService(
+        this.getPayeeCategoryRepository()
+      ));
+    }
+    return this.instances.get(key) as PayeeCategoryService;
   }
 
   // ==================== Testing Utilities ====================
