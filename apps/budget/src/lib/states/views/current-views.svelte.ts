@@ -19,27 +19,27 @@ export class CurrentViewsState<T> {
   editableViews = $derived(
     Array.from(this.viewsStates
       .values())
-      .filter((viewState) => viewState.view.id > 0)
+      .filter((viewState) => !viewState.view.isDefault)
   );
   nonEditableViews = $derived(
     Array.from(this.viewsStates
       .values())
-      .filter((viewState) => viewState.view.id < 0)
+      .filter((viewState) => viewState.view.isDefault)
   );
 
   constructor(viewsStates: CurrentViewState<T>[] | null) {
     if (viewsStates) {
       this.viewsStates = new SvelteMap(
-        viewsStates.map((viewsState) => [viewsState.view.id, viewsState])
+        viewsStates.map((viewsState) => [viewsState.view.id!, viewsState])
       );
       this.activeViewId = viewsStates[0]?.view.id ?? -100;
     }
   }
 
   add(viewState: CurrentViewState<T>, active: boolean = true) {
-    this.viewsStates.set(viewState.view.id, viewState);
+    this.viewsStates.set(viewState.view.id!, viewState);
     if (active) {
-      this.activeViewId = viewState.view.id;
+      this.activeViewId = viewState.view.id!;
     }
     return this;
   }
@@ -48,7 +48,7 @@ export class CurrentViewsState<T> {
     if (Array.isArray(id)) {
       return Array.from(this.viewsStates
         .values())
-        .filter((viewState) => id.includes(viewState.view.id));
+        .filter((viewState) => id.includes(viewState.view.id!));
     }
     return Array.from(this.viewsStates.values()).find((viewState) => viewState.view.id === id);
   }
@@ -60,7 +60,7 @@ export class CurrentViewsState<T> {
       this.viewsStates.delete(viewState);
     } else {
       _viewState = viewState;
-      this.viewsStates.delete((viewState as CurrentViewState<T>).view.id);
+      this.viewsStates.delete((viewState as CurrentViewState<T>).view.id!);
     }
 
     _viewState?.view.deleteView();
@@ -78,7 +78,7 @@ export class CurrentViewsState<T> {
       this.activeViewId = viewState;
       targetViewState = this.viewsStates.get(viewState)!;
     } else {
-      this.activeViewId = (viewState as CurrentViewState<T>).view.id;
+      this.activeViewId = (viewState as CurrentViewState<T>).view.id!;
       targetViewState = viewState as CurrentViewState<T>;
     }
 
@@ -90,7 +90,7 @@ export class CurrentViewsState<T> {
   }
 
   addTemporaryView = (table: Table<T>) => {
-    this.previousViewId = this.activeView.view.id;
+    this.previousViewId = this.activeView.view.id!;
 
     // Get current filters directly from table columns to preserve complex values
     const tableFilters: ViewFilter[] = [];
@@ -130,12 +130,15 @@ export class CurrentViewsState<T> {
     const newViewState = new CurrentViewState(
       {
         id: 0,
+        workspaceId: this.activeView.view.view.workspaceId,
+        entityType: this.activeView.view.view.entityType,
         name: "",
         description: "",
         icon: null,
         filters: tableFilters,
         display: {},
         dirty: true,
+        isDefault: false,
       },
       table
     );

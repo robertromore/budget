@@ -36,6 +36,12 @@ export const superformInsertViewSchema = z.object({
         ),
         expanded: z.literal(true).default(true).or(z.record(z.string(), z.boolean())),
         visibility: z.literal(true).default(true).or(z.record(z.string(), z.boolean())),
+        pinning: z.optional(
+          z.object({
+            left: z.array(z.string()),
+            right: z.array(z.string()),
+          })
+        ),
       })
       .or(z.null())
   ),
@@ -76,6 +82,12 @@ export const superformUpdateViewSchema = z.object({
         ),
         expanded: z.literal(true).default(true).or(z.record(z.string(), z.boolean())),
         visibility: z.literal(true).default(true).or(z.record(z.string(), z.boolean())),
+        pinning: z.optional(
+          z.object({
+            left: z.array(z.string()),
+            right: z.array(z.string()),
+          })
+        ),
       })
       .or(z.null())
   ),

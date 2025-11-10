@@ -14,16 +14,16 @@ export class CurrentViewsState<T> {
   >;
   activeViewId: number = $state() as number;
   activeView: CurrentViewState<T> = $derived(this.viewsStates.get(this.activeViewId))!;
-  previousViewId?: number = $state();
+  previousViewId: number | undefined = $state();
 
   editableViews = $derived(
     Array.from(this.viewsStates
       .values())
-      .filter((viewState) => viewState.view.id > 0)
+      .filter((viewState) => !viewState.view.isDefault)
   );
   nonEditableViews = $derived(
     Array.from(this.viewsStates.values())
-      .filter((viewState) => viewState.view.id < 0)
+      .filter((viewState) => viewState.view.isDefault)
   );
 
   constructor(viewsStates: CurrentViewState<T>[] | null) {
@@ -88,12 +88,15 @@ export class CurrentViewsState<T> {
       new CurrentViewState(
         {
           id: 0,
+          workspaceId: this.activeView.view.view.workspaceId,
+          entityType: this.activeView.view.view.entityType,
           name: "",
           description: "",
           icon: null,
           filters: [],
           display: {},
           dirty: true,
+          isDefault: false,
         },
         table
       )
@@ -102,10 +105,10 @@ export class CurrentViewsState<T> {
 
   removeTemporaryView = () => {
     this.remove(0, false);
-    if (this.previousViewId) {
+    if (this.previousViewId !== undefined) {
       this.setActive(this.previousViewId);
-      this.previousViewId = undefined;
     }
+    this.previousViewId = undefined;
   };
 }
 

@@ -3,6 +3,7 @@ import { trpc } from "$lib/trpc/client";
 import type { ViewFilter, ViewFilterWithSet } from "$lib/types";
 import deeplyEqual, { equalArray } from "$lib/utils";
 import type {
+  ColumnPinningState,
   ExpandedState,
   GroupingState,
   SortingState,
@@ -25,6 +26,12 @@ export default class View {
       !equalArray(this.view.display?.sort || [], this.initial.display?.sort || []) ||
       !deeplyEqual(this.view.display?.expanded, this.initial.display?.expanded) ||
       !deeplyEqual(this.view.display?.visibility, this.initial.display?.visibility) ||
+      !deeplyEqual(this.view.display?.pinning, this.initial.display?.pinning) ||
+      !equalArray(this.view.display?.columnOrder || [], this.initial.display?.columnOrder || []) ||
+      this.view.display?.density !== this.initial.display?.density ||
+      this.view.display?.stickyHeader !== this.initial.display?.stickyHeader ||
+      this.view.display?.pageSize !== this.initial.display?.pageSize ||
+      this.view.display?.viewMode !== this.initial.display?.viewMode ||
       // Same filter count?
       this.#filterValues.size !== this.initial.filters?.length ||
       // Same filters?
@@ -60,6 +67,10 @@ export default class View {
     return this.view.description;
   }
 
+  get isDefault() {
+    return this.view.isDefault;
+  }
+
   constructor(view: ViewSchema) {
     this.view = view;
     this.view.filters = this.view.filters || [];
@@ -68,9 +79,22 @@ export default class View {
       sort: [],
       expanded: {},
       visibility: {},
+      pinning: {left: [], right: []},
+      columnOrder: [],
     };
 
-    this.initial = view;
+    // Ensure pinning is always initialized (for views created before pinning was added)
+    if (!this.view.display.pinning) {
+      this.view.display.pinning = {left: [], right: []};
+    }
+
+    // Ensure columnOrder is always initialized (for views created before columnOrder was added)
+    if (!this.view.display.columnOrder) {
+      this.view.display.columnOrder = [];
+    }
+
+    // Take snapshot after initializing all fields
+    this.initial = $state.snapshot(this.view);
     this.#filterValues = new SvelteMap<string, ViewFilterWithSet>(
       (this.view.filters as Array<Omit<ViewFilterWithSet, "view"> & {view?: Array<unknown>}>).map(
         (filter) => [
@@ -142,6 +166,60 @@ export default class View {
     this.view.display.visibility = Object.assign({}, this.view.display?.visibility || {}, {
       [column]: visible,
     });
+  }
+
+  getPinning(): ColumnPinningState {
+    return this.view.display?.pinning || {left: [], right: []};
+  }
+
+  setPinning(pinning: ColumnPinningState) {
+    this.view.display!.pinning = pinning;
+    return this;
+  }
+
+  getColumnOrder(): string[] {
+    return this.view.display?.columnOrder || [];
+  }
+
+  setColumnOrder(columnOrder: string[]) {
+    this.view.display!.columnOrder = columnOrder;
+    return this;
+  }
+
+  getDensity(): 'normal' | 'dense' {
+    return this.view.display?.density || 'normal';
+  }
+
+  setDensity(density: 'normal' | 'dense') {
+    this.view.display!.density = density;
+    return this;
+  }
+
+  getStickyHeader(): boolean {
+    return this.view.display?.stickyHeader || false;
+  }
+
+  setStickyHeader(stickyHeader: boolean) {
+    this.view.display!.stickyHeader = stickyHeader;
+    return this;
+  }
+
+  getPageSize(): number {
+    return this.view.display?.pageSize || 25;
+  }
+
+  setPageSize(pageSize: number) {
+    this.view.display!.pageSize = pageSize;
+    return this;
+  }
+
+  getViewMode(): 'table' | 'cards' {
+    return this.view.display?.viewMode || 'table';
+  }
+
+  setViewMode(viewMode: 'table' | 'cards') {
+    this.view.display!.viewMode = viewMode;
+    return this;
   }
 
   getFilter(filter: string) {
@@ -295,6 +373,7 @@ export default class View {
       this.view.display.sort = this.initial.display?.sort || [];
       this.view.display.expanded = this.initial.display?.expanded || {};
       this.view.display.visibility = this.initial.display?.visibility || {};
+      this.view.display.pinning = this.initial.display?.pinning || {left: [], right: []};
       this.view.filters = this.initial.filters;
       this.view.dirty = false;
       this.#filterValues = new SvelteMap<string, ViewFilterWithSet>(

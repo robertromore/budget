@@ -3,6 +3,7 @@ import type {Column} from "@tanstack/table-core";
 import type {SvelteSet} from "svelte/reactivity";
 import type {RenderComponentConfig} from "$lib/components/ui/data-table";
 import type {Component} from "svelte";
+import type {TableDensity} from "$lib/components/data-table/state/types";
 
 /**
  * The raw filter applied to a column.
@@ -57,4 +58,10 @@ export type ViewDisplayState = {
   sort?: import("@tanstack/table-core").SortingState;
   expanded?: import("@tanstack/table-core").ExpandedState;
   visibility?: import("@tanstack/table-core").VisibilityState;
+  pinning?: import("@tanstack/table-core").ColumnPinningState;
+  columnOrder?: string[];
+  density?: TableDensity;
+  stickyHeader?: boolean;
+  pageSize?: number;
+  viewMode?: 'table' | 'cards';
 };
