@@ -20,17 +20,16 @@ import * as Popover from '$lib/components/ui/popover';
 import {Button} from '$lib/components/ui/button';
 import {Badge} from '$lib/components/ui/badge';
 import {cn} from '$lib/utils';
-import {getContext} from 'svelte';
-import type {CurrentViewsState} from '$lib/states/views';
+import {currentViews} from '$lib/states/views';
 import X from '@lucide/svelte/icons/x';
 import CalendarIcon from '@lucide/svelte/icons/calendar';
 import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
 import type {FacetedFilterOption} from '$lib/types';
 import * as Command from '$lib/components/ui/command';
 import {AdvancedDateDialog} from '$lib/components/dialogs';
-import {SvelteSet} from 'svelte/reactivity';
-import {parseDate, type DateValue, getLocalTimeZone, today} from '@internationalized/date';
+import {parseDate} from '@internationalized/date';
 import {dayFmt} from '$lib/utils/date-formatters';
+import {currentDate, timezone} from '$lib/utils/dates';
 import DateInput from '$lib/components/input/date-input.svelte';
 import {RangeCalendar} from '$lib/components/ui/range-calendar';
 import type {DateRange} from 'bits-ui';
@@ -74,7 +73,8 @@ const filterTypes = [
   {value: 'between', label: 'between', description: 'Date range'},
 ];
 
-const currentViewsState = getContext<CurrentViewsState<TData>>('current_views');
+// Use runed Context API instead of Svelte's getContext
+const currentViewsState = $derived(currentViews.get());
 const activeView = $derived(currentViewsState?.activeView);
 
 const dateFiltersState = $derived(DateFiltersState.get());
@@ -82,7 +82,6 @@ const allDates = $derived(dateFiltersState?.dateFilters || []);
 
 // Get current filter value
 const currentFilter = $derived(column.getFilterValue() as DateFilterValue | undefined);
-const hasFilter = $derived(currentFilter !== undefined);
 
 // Initialize filter with default operator when component mounts
 $effect(() => {
@@ -186,7 +185,7 @@ const formatFilterValue = (filter: DateFilterValue | undefined): string => {
       if (filter.values.size === 0) return 'Select dates';
       if (filter.values.size === 1) {
         const date = Array.from(filter.values)[0];
-        return formatDate(date);
+        return date ? formatDate(date) : 'Select dates';
       }
       return `${filter.values.size} dates`;
 
@@ -212,7 +211,9 @@ const formatDate = (dateStr: string): string => {
   try {
     // Handle special date formats (month:, quarter:, etc.)
     if (dateStr.includes(':')) {
-      const [type, value] = dateStr.split(':');
+      const parts = dateStr.split(':');
+      const value = parts[1];
+      if (!value) return dateStr;
       const date = parseDate(value);
       return dayFmt.format(date.toDate(timezone));
     }
@@ -385,7 +386,7 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
         </Popover.Trigger>
         <Popover.Content class="w-auto p-0" align="start">
           <RangeCalendar
-            value={rangeDateValue}
+            {...(rangeDateValue ? { value: rangeDateValue } : {})}
             onValueChange={(newRange) => {
               if (newRange?.start && newRange?.end) {
                 column.setFilterValue({
@@ -395,7 +396,6 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
                 });
               }
             }}
-            initialFocus
             numberOfMonths={2} />
         </Popover.Content>
       </Popover.Root>

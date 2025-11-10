@@ -4,8 +4,6 @@ import { AnalyticsCard } from '$lib/components/ui/data-table';
 import { SimpleDataTable } from '$lib/components/data-table';
 import type { DataTableFeatures, DataTableState, DataTableStateHandlers } from '$lib/components/data-table';
 import { GenericToolbar } from '$lib/components/data-table/toolbar';
-import * as ToggleGroup from '$lib/components/ui/toggle-group';
-import * as Select from '$lib/components/ui/select';
 import * as Tabs from '$lib/components/ui/tabs';
 import type { TransactionsFormat, TopCategoryData } from '$lib/types';
 import { createTopCategoriesProcessor } from '../(analytics)/data-processors.svelte';
@@ -32,11 +30,9 @@ import type {
 
 interface Props {
 	transactions: TransactionsFormat[];
-	/** View selector type: 'tabs' for tabs, 'toggle' for toggle buttons, 'dropdown' for select dropdown */
-	viewSelectorType?: 'tabs' | 'toggle' | 'dropdown';
 }
 
-let { transactions, viewSelectorType = 'tabs' }: Props = $props();
+let { transactions }: Props = $props();
 
 // Process the data
 const processor = createTopCategoriesProcessor(transactions);
@@ -143,12 +139,13 @@ const handlers: DataTableStateHandlers = {
 // View management state
 let availableViews = $state<View[]>([]);
 let selectedViewId = $state<string>('');
-let currentViewName = $derived(
-	availableViews.find(v => v.id.toString() === selectedViewId)?.name || 'Default'
-);
 let currentView = $derived(
 	availableViews.find(v => v.id.toString() === selectedViewId)
 );
+
+// Separate views into default and editable
+const nonEditableViews = $derived(availableViews.filter(v => v.isDefault));
+const editableViews = $derived(availableViews.filter(v => !v.isDefault));
 
 // Load category views on mount
 onMount(async () => {
@@ -275,68 +272,6 @@ let viewMode = $state<'table' | 'cards'>('cards');
         </div>
       </div>
       <div class="flex items-center gap-2">
-        {#if availableViews.length > 0}
-          {#if viewSelectorType === 'dropdown'}
-            <Select.Root
-              allowDeselect={false}
-              type="single"
-              value={selectedViewId}
-              onValueChange={(value) => {
-                if (value) switchView(value);
-              }}>
-              <Select.Trigger class="w-[180px]">
-                {currentViewName}
-              </Select.Trigger>
-              <Select.Content>
-                {#each availableViews as view}
-                  <Select.Item value={view.id.toString()}>
-                    <div>
-                      <div class="font-medium">{view.name}</div>
-                      {#if view.description}
-                        <div class="text-xs text-muted-foreground">{view.description}</div>
-                      {/if}
-                    </div>
-                  </Select.Item>
-                {/each}
-              </Select.Content>
-            </Select.Root>
-          {:else if viewSelectorType === 'toggle'}
-            <ToggleGroup.Root
-              type="single"
-              value={selectedViewId}
-              onValueChange={(value) => {
-                if (value) switchView(value);
-              }}
-              class="gap-1">
-              {#each availableViews as view}
-                <ToggleGroup.Item
-                  value={view.id.toString()}
-                  aria-label={view.name}
-                  title={view.description || view.name}
-                  size="sm">
-                  {view.name}
-                </ToggleGroup.Item>
-              {/each}
-            </ToggleGroup.Root>
-          {:else}
-            <Tabs.Root
-              value={selectedViewId}
-              onValueChange={(value) => {
-                if (value) switchView(value);
-              }}
-              class="w-auto">
-              <Tabs.List>
-                {#each availableViews as view}
-                  <Tabs.Trigger
-                    value={view.id.toString()}
-                    title={view.description || view.name}>
-                    {view.name}
-                  </Tabs.Trigger>
-                {/each}
-              </Tabs.List>
-            </Tabs.Root>
-          {/if}
-        {/if}
         <Tabs.Root
           value={viewMode}
           onValueChange={(value) => {
@@ -415,6 +350,11 @@ let viewMode = $state<'table' | 'cards'>('cards');
 							currentView={currentView}
 							entityType="top_categories"
 							onViewSaved={handleViewSaved}
+							{availableViews}
+							{nonEditableViews}
+							{editableViews}
+							currentViewId={selectedViewId}
+							onViewChange={switchView}
 						/>
 					{/snippet}
 				</SimpleDataTable>

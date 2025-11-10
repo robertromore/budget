@@ -16,6 +16,7 @@ import Wallet from '@lucide/svelte/icons/wallet';
 import {getBudgetSuggestions, type BudgetSuggestion} from '$lib/query/budgets';
 import {Badge} from '$lib/components/ui/badge';
 import {toISOString} from '$lib/utils/dates';
+import {AdvancedPayeeSelector} from '$lib/components/payees/advanced-payee-selector';
 
 interface Props {
   accountId: number;
@@ -130,13 +131,30 @@ $effect(() => {
     <Form.Control>
       {#snippet children({props})}
         <Form.Label>Payee</Form.Label>
-        <EntityInput
-          {...props}
-          entityLabel="payees"
-          entities={payees as EditableEntityItem[]}
-          bind:value={payee}
-          icon={HandCoins as unknown as Component}
-          buttonClass="w-full" />
+        <AdvancedPayeeSelector
+          value={payee.id || null}
+          onValueChange={(id) => {
+            if (id) {
+              const selectedPayee = payees.find((p: any) => p.id === id);
+              if (selectedPayee) {
+                payee = {id: selectedPayee.id, name: selectedPayee.name};
+              }
+            } else {
+              payee = {id: 0, name: ''};
+            }
+          }}
+          transactionContext={{
+            amount: amount || 0,
+            categoryId: category.id || undefined,
+            accountId
+          }}
+          displayMode="normal"
+          groupStrategy="usage"
+          showQuickAccess={true}
+          allowCreate={false}
+          buttonClass="w-full"
+          placeholder="Select payee..."
+        />
         <Form.FieldErrors />
         <input hidden bind:value={$formData.payeeId} name={props.name} />
       {/snippet}

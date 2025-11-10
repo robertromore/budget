@@ -9,8 +9,7 @@ import {cn} from '$lib/utils';
 import {Badge} from '$lib/components/ui/badge';
 import X from '@lucide/svelte/icons/x';
 import type {AvailableFilters, FacetedFilterOption} from '$lib/types';
-import {getContext} from 'svelte';
-import type {CurrentViewsState} from '$lib/states/views';
+import {currentViews} from '$lib/states/views';
 import type {SvelteMap} from 'svelte/reactivity';
 
 interface Props<TData, TValue> {
@@ -45,7 +44,8 @@ const showOptions: FacetedFilterOption[] = $derived(
 );
 const notIn = $derived((allOptions?.size || 0) - (options?.size || 0));
 
-const currentViewsState = getContext<CurrentViewsState<TData>>('current_views');
+// Use runed Context API instead of Svelte's getContext
+const currentViewsState = $derived(currentViews.get());
 const activeView = $derived(currentViewsState?.activeView);
 const activeViewModel = $derived(activeView?.view);
 const selectedValues = $derived<Set<string | number>>(activeViewModel?.getFilterValue(column.id) as Set<string | number> || new Set());

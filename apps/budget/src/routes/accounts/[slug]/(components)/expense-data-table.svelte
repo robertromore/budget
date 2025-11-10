@@ -25,7 +25,7 @@ import {visibility, setVisibility} from '../(data)/expense-visibility.svelte';
 import {grouping, setGrouping} from '../(data)/groups.svelte';
 import {expanded, setExpanded} from '../(data)/expanded.svelte';
 import {pinning, setPinning} from '../(data)/pinning.svelte';
-import {setContext} from 'svelte';
+import {columnOrder, setColumnOrder} from '../(data)/column-order.svelte';
 import {currentViews, CurrentViewsState, CurrentViewState} from '$lib/states/views';
 import type {View} from '$lib/schema';
 import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
@@ -108,6 +108,9 @@ table = createSvelteTable<ExpenseFormat>({
     get columnPinning() {
       return pinning();
     },
+    get columnOrder() {
+      return columnOrder();
+    },
   },
   columns,
   enableRowSelection: true,
@@ -120,6 +123,7 @@ table = createSvelteTable<ExpenseFormat>({
   onGroupingChange: setGrouping,
   onExpandedChange: setExpanded,
   onColumnPinningChange: setPinning,
+  onColumnOrderChange: setColumnOrder,
   getCoreRowModel: getCoreRowModel(),
   getFilteredRowModel: getFilteredRowModel(),
   getPaginationRowModel: getPaginationRowModel(),
@@ -143,11 +147,10 @@ const selectedExpenses = $derived(
 // Initialize current views state for expense table
 let currentViewsStateValue = new CurrentViewsState<ExpenseFormat>(null);
 
-// Set the context immediately so child components can access it
-// Note: We use a separate context key to avoid conflicts with transaction table
-setContext('current_views', currentViewsStateValue);
-// Don't set the global currentViews store - let child components use context instead
-// currentViews.set(currentViewsStateValue);
+// Set context using runed Context API (not Svelte's setContext)
+// This makes the context available to child components via currentViews.get()
+// Type assertion needed because currentViews is typed for TransactionsFormat
+currentViews.set(currentViewsStateValue as any);
 
 let viewList = $derived(views || []);
 let lastViewSignature: string | null = null;
@@ -205,6 +208,43 @@ $effect(() => {
     });
   }
 });
+
+// Sync local state when active view changes
+$effect(() => {
+  const activeView = currentViewsStateValue.activeView;
+  if (!activeView) return;
+
+  // Sync local state from the active view's display settings
+  const viewColumnOrder = activeView.view.getColumnOrder();
+  const viewPinning = activeView.view.getPinning();
+  const viewSorting = activeView.view.getSorting();
+  const viewGrouping = activeView.view.getGrouping();
+  const viewExpanded = activeView.view.getExpanded();
+  const viewVisibility = activeView.view.getVisibility();
+
+  // Only update if different to avoid unnecessary state changes
+  if (JSON.stringify(viewColumnOrder) !== JSON.stringify(columnOrder())) {
+    setColumnOrder(viewColumnOrder);
+  }
+  if (JSON.stringify(viewPinning) !== JSON.stringify(pinning())) {
+    setPinning(viewPinning);
+  }
+  if (JSON.stringify(viewSorting) !== JSON.stringify(sorting())) {
+    setSorting(viewSorting);
+  }
+  if (JSON.stringify(viewGrouping) !== JSON.stringify(grouping())) {
+    setGrouping(viewGrouping);
+  }
+  if (JSON.stringify(viewExpanded) !== JSON.stringify(expanded())) {
+    setExpanded(viewExpanded);
+  }
+  if (JSON.stringify(viewVisibility) !== JSON.stringify(visibility())) {
+    setVisibility(viewVisibility);
+  }
+});
+
+// Get density from current view
+const density = $derived(currentViewsStateValue?.activeView?.view.getDensity() ?? 'normal');
 </script>
 
 <div class="space-y-4">
@@ -220,7 +260,7 @@ $effect(() => {
         {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
           <Table.Row>
             {#each headerGroup.headers as header (header.id)}
-              <Table.Head colspan={header.colSpan}>
+              <Table.Head colspan={header.colSpan} {density}>
                 {#if !header.isPlaceholder && header.column.columnDef.header}
                   <FlexRender
                     content={header.column.columnDef.header}
@@ -233,28 +273,28 @@ $effect(() => {
       </Table.Header>
       <Table.Body>
         {#each table.getRowModel().rows as row (row.id)}
-          <Table.Row data-state={row.getIsSelected() && 'selected'}>
+          <Table.Row data-state={row.getIsSelected() && 'selected'} class="data-[state=selected]:border-l-4 data-[state=selected]:border-l-primary">
             {#each row.getVisibleCells() as cell (cell.id)}
               {#if cell.getIsAggregated() && cell.column.columnDef.aggregatedCell}
-                <Table.Cell>
+                <Table.Cell {density}>
                   <FlexRender
                     content={cell.column.columnDef.aggregatedCell}
                     context={cell.getContext()} />
                 </Table.Cell>
               {:else if cell.getIsPlaceholder()}
-                <Table.Cell></Table.Cell>
+                <Table.Cell {density}></Table.Cell>
               {:else if cell.column.columnDef.cell}
-                <Table.Cell>
+                <Table.Cell {density}>
                   <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
                 </Table.Cell>
               {:else}
-                <Table.Cell></Table.Cell>
+                <Table.Cell {density}></Table.Cell>
               {/if}
             {/each}
           </Table.Row>
         {:else}
           <Table.Row>
-            <Table.Cell colspan={columns.length} class="h-24 text-center">No results.</Table.Cell>
+            <Table.Cell colspan={columns.length} class="h-24 text-center" {density}>No results.</Table.Cell>
           </Table.Row>
         {/each}
       </Table.Body>

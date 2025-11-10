@@ -23,6 +23,7 @@ import DataTableEditableCell from "../(components)/(cells)/data-table-editable-c
 import DataTableEditableStatusCell from "../(components)/(cells)/data-table-editable-status-cell.svelte";
 import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
 import EditableEntityCell from "../(components)/(cells)/editable-entity-cell.svelte";
+import EditablePayeeCell from "../(components)/(cells)/editable-payee-cell.svelte";
 import EditableNumericCell from "../(components)/(cells)/editable-numeric-cell.svelte";
 import ReadOnlyCellWithIcon from "../(components)/(cells)/read-only-cell-with-icon.svelte";
 import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";
@@ -33,7 +34,6 @@ import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-fa
 import DataTableActions from "../(components)/data-table-actions.svelte";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
 import ManageCategoryForm from "$lib/components/forms/manage-category-form.svelte";
-import ManagePayeeForm from "$lib/components/forms/manage-payee-form.svelte";
 import BudgetAllocationSimpleCell from "../(components)/(cells)/budget-allocation-simple-cell.svelte";
 import EditableCategoryCell from "../(components)/(cells)/editable-category-cell.svelte";
 import ReadOnlyCategoryCell from "../(components)/(cells)/read-only-category-cell.svelte";
@@ -127,6 +127,9 @@ export const columns = (
       enableGrouping: false,
       enableSorting: false,
       enableHiding: false,
+      meta: {
+        label: "Select",
+      },
     },
     {
       id: "expand-contract-col",
@@ -154,6 +157,9 @@ export const columns = (
       enableGrouping: false,
       enableSorting: false,
       enableHiding: false,
+      meta: {
+        label: "Expand/Contract",
+      },
     },
     {
       accessorKey: "id",
@@ -166,9 +172,10 @@ export const columns = (
         return info.getValue();
       },
       aggregatedCell: () => {},
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
+          table,
           title: "ID",
         }),
       sortingFn: "alphanumeric",
@@ -206,10 +213,11 @@ export const columns = (
         });
       },
       aggregatedCell: () => {},
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           title: "Date",
           column,
+          table,
         }),
       sortingFn: (rowA, rowB) => {
         const dateA = rowA.getValue("date") as DateValue;
@@ -257,6 +265,7 @@ export const columns = (
       id: "payee",
       cell: (info) => {
         const payee = payees.getById(info.getValue() as number);
+        const transaction = info.row.original;
 
         return renderEditableCell(info, {
           scheduledRenderer: () => ({
@@ -264,35 +273,24 @@ export const columns = (
             icon: HandCoins
           }),
           editableRenderer: () => ({
-            component: EditableEntityCell,
+            component: EditablePayeeCell,
             props: {
-              value: payee as EditableEntityItem,
-              entityLabel: "payee",
+              value: info.getValue() as number | null,
               onUpdateValue: (new_value) => updateHandler(info, "payeeId", new_value),
-              entities: payees.all as EditableEntityItem[],
-              icon: HandCoins as unknown as Component,
-              management: {
-                enable: true,
-                component: ManagePayeeForm,
-                onSave: (new_value: EditableEntityItem, is_new: boolean) => {
-                  if (is_new) {
-                    payees.addPayee(new_value as Payee);
-                  } else {
-                    payees.updatePayee(new_value as Payee);
-                  }
-                },
-                onDelete: (id: number) => {
-                  payees.deletePayee(id);
-                },
+              transactionContext: {
+                amount: transaction.amount,
+                categoryId: transaction.categoryId,
+                accountId: transaction.accountId,
               },
             }
           })
         });
       },
       aggregatedCell: () => {},
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
+          table,
           title: "Payee",
         }),
       sortingFn: (rowA, rowB) => {
@@ -355,9 +353,10 @@ export const columns = (
         });
       },
       aggregatedCell: () => {},
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
+          table,
           title: "Notes",
         }),
       enableSorting: false,
@@ -418,9 +417,10 @@ export const columns = (
         });
       },
       aggregatedCell: () => {},
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
+          table,
           title: "Category",
         }),
       sortingFn: (rowA, rowB) => {
@@ -464,9 +464,10 @@ export const columns = (
           transaction
         });
       },
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
+          table,
           title: "Budget",
         }),
       size: 120,
@@ -500,9 +501,10 @@ export const columns = (
         const value = info.getValue() as number;
         return currencyFormatter.format(isNaN(value) ? 0 : (value ?? 0));
       },
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
+          table,
           title: "Amount",
         }),
       sortingFn: (rowA, rowB) =>
@@ -535,9 +537,10 @@ export const columns = (
     {
       accessorKey: "balance",
       id: "balance",
-      header: ({column}) =>
+      header: ({column, table}) =>
         renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
           column,
+          table,
           title: "Balance",
         }),
       cell: (info) => {
@@ -622,6 +625,9 @@ export const columns = (
       enableSorting: false,
       enableGrouping: false,
       enableHiding: false,
+      meta: {
+        label: "Actions",
+      },
     },
   ];
 };

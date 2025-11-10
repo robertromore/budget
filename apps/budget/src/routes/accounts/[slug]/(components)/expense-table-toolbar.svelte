@@ -4,8 +4,7 @@ import type {ExpenseFormat} from '../(data)/expense-columns.svelte';
 import type {FilterInputOption} from '$lib/types';
 import {Separator} from '$lib/components/ui/separator';
 import {FilterInput, DisplayInput} from '$lib/components/input';
-import {getContext} from 'svelte';
-import type {CurrentViewsState} from '$lib/states/views';
+import {currentViews} from '$lib/states/views';
 import * as Tabs from '$lib/components/ui/tabs';
 
 interface Props {
@@ -24,7 +23,8 @@ let filterComponents: FilterInputOption<ExpenseFormat>[] = $derived.by(() => {
     });
 });
 
-const _currentViews = getContext<CurrentViewsState<ExpenseFormat>>('current_views');
+// Use runed Context API instead of Svelte's getContext
+const _currentViews = $derived(currentViews.get());
 const firstViewId = $derived(_currentViews?.viewsStates.values().next().value?.view.id);
 let currentViewValue = $state('');
 

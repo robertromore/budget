@@ -1,5 +1,6 @@
 <script lang="ts">
 import type {Account} from '$lib/schema/accounts';
+import type {TransactionsFormat} from '$lib/types';
 import {formatCurrency, formatPercentage} from '$lib/utils/account-display';
 import {formatDayOrdinal} from '$lib/utils/date-formatters';
 import {
@@ -32,8 +33,9 @@ import {trpc} from '$lib/trpc/client';
 import {toast} from 'svelte-sonner';
 import {useQueryClient} from '@tanstack/svelte-query';
 import {accountKeys} from '$lib/query/accounts';
+import TopCategoriesView from '../../../routes/accounts/[slug]/(components)/(charts)/top-categories-view.svelte';
 
-let {account} = $props<{account: Account}>();
+let {account, transactions = []} = $props<{account: Account; transactions?: TransactionsFormat[]}>();
 
 let showConfigDialog = $state(false);
 const queryClient = useQueryClient();
@@ -242,6 +244,13 @@ function getMetricValueClass(metricId: MetricId, calculatedMetrics: ReturnType<t
         {/if}
       {/each}
     </div>
+
+    <!-- Top Spending Categories -->
+    {#if transactions.length > 0 && enabledMetricIds.includes('topCategories')}
+      <div class="mt-6">
+        <TopCategoriesView {transactions} />
+      </div>
+    {/if}
   </div>
 
   <!-- Configuration Dialog -->

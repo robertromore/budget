@@ -9,14 +9,15 @@ import {Button} from '$lib/components/ui/button';
 
 let {table}: {table: Table<TData>} = $props();
 
-// Page size state
-let pageSizeValue = $state('10');
+// Initialize page size from table state to avoid overwriting view settings
+let pageSizeValue = $state(String(table.getState().pagination.pageSize));
 
-// Sync page size changes
+// Sync page size FROM table state TO local state (for display)
 $effect(() => {
   const currentSize = table.getState().pagination.pageSize;
-  if (pageSizeValue !== String(currentSize)) {
-    table.setPageSize(Number(pageSizeValue));
+  const currentValueStr = String(currentSize);
+  if (pageSizeValue !== currentValueStr) {
+    pageSizeValue = currentValueStr;
   }
 });
 </script>
@@ -32,12 +33,17 @@ $effect(() => {
       <Select.Root
         allowDeselect={false}
         type="single"
-        bind:value={pageSizeValue}>
+        value={pageSizeValue}
+        onValueChange={(value) => {
+          if (value) {
+            table.setPageSize(Number(value));
+          }
+        }}>
         <Select.Trigger class="h-8 w-[70px]">
           {String(table.getState().pagination.pageSize)}
         </Select.Trigger>
         <Select.Content side="top">
-          {#each [10, 20, 30, 40, 50] as pageSize (pageSize)}
+          {#each [10, 20, 25, 30, 40, 50, 100] as pageSize (pageSize)}
             <Select.Item value={`${pageSize}`}>
               {pageSize}
             </Select.Item>
@@ -46,8 +52,7 @@ $effect(() => {
       </Select.Root>
     </div>
     <div class="flex w-[100px] items-center justify-center text-sm font-medium">
-      Page {table.getState().pagination.pageIndex + 1} of
-      {table.getPageCount()}
+      Page {table.getState().pagination.pageIndex + 1} of {Math.max(1, table.getPageCount())}
     </div>
     <div class="flex items-center space-x-2">
       <Button

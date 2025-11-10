@@ -10,6 +10,7 @@ import {
 } from '$lib/states/ui/global.svelte';
 import {currencyFormatter} from '$lib/utils/formatters';
 import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import SeedDefaultAccountsButton from './(components)/seed-default-accounts-button.svelte';
 
 const accountsState = $derived(AccountsState.get());
 const accounts = $derived(accountsState.accounts.values());
@@ -34,10 +35,13 @@ const deleteAccount = (id: number) => {
   <!-- Header -->
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold tracking-tight">Accounts</h1>
-    <Button href="/accounts/new">
-      <Plus class="mr-2 h-4 w-4" />
-      Add Account
-    </Button>
+    <div class="flex items-center gap-2">
+      <SeedDefaultAccountsButton />
+      <Button href="/accounts/new">
+        <Plus class="mr-2 h-4 w-4" />
+        Add Account
+      </Button>
+    </div>
   </div>
 
   <!-- Content -->
@@ -52,12 +56,16 @@ const deleteAccount = (id: number) => {
         Get started by creating your first account. You can add checking accounts, savings accounts,
         credit cards, or any other financial account you want to track.
       </p>
-      <Button
-        href="/accounts/new"
-        class="bg-blue-600 hover:bg-blue-700">
-        <Plus class="mr-2 h-4 w-4" />
-        Create Your First Account
-      </Button>
+      <div class="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+        <SeedDefaultAccountsButton />
+        <span class="text-sm text-blue-700">or</span>
+        <Button
+          href="/accounts/new"
+          class="bg-blue-600 hover:bg-blue-700">
+          <Plus class="mr-2 h-4 w-4" />
+          Create Your First Account
+        </Button>
+      </div>
     </div>
   {:else}
     <!-- Accounts Grid -->

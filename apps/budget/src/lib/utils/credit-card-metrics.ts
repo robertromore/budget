@@ -18,13 +18,15 @@ export type MetricId =
   | "transactionCount"
   // Financial Health (future)
   | "interestCharges"
-  | "payoffTimeline";
+  | "payoffTimeline"
+  // Analytics
+  | "topCategories";
 
 export interface MetricDefinition {
   id: MetricId;
   label: string;
   description: string;
-  category: "credit-health" | "payment" | "balance" | "spending" | "financial";
+  category: "credit-health" | "payment" | "balance" | "spending" | "financial" | "analytics";
   icon: string; // Lucide icon name
   defaultEnabled: boolean;
   requiresField?: keyof Account; // Required account field to display this metric
@@ -153,6 +155,16 @@ export const AVAILABLE_METRICS: MetricDefinition[] = [
     icon: "CalendarDays",
     defaultEnabled: false,
     requiresField: "minimumPayment",
+  },
+
+  // Analytics
+  {
+    id: "topCategories",
+    label: "Top Spending Categories",
+    description: "Interactive table showing your highest expense categories",
+    category: "analytics",
+    icon: "TrendingDown",
+    defaultEnabled: true,
   },
 ];
 

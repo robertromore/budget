@@ -220,3 +220,73 @@ export function createCashFlowProcessor(transactions: TransactionsFormat[]) {
     },
   };
 }
+
+export function createTopCategoriesProcessor(transactions: TransactionsFormat[]) {
+  let processTopCategories = $state<
+    Array<{
+      id: number;
+      name: string;
+      amount: number;
+      count: number;
+      percentage: number;
+      icon?: string;
+      color?: string;
+    }>
+  >([]);
+
+  $effect(() => {
+    if (!transactions?.length) {
+      processTopCategories = [];
+      return;
+    }
+
+    const categoryData: Record<
+      number,
+      {
+        name: string;
+        amount: number;
+        count: number;
+        icon?: string;
+        color?: string;
+      }
+    > = {};
+
+    // Calculate total expenses for percentage
+    let totalExpenses = 0;
+
+    transactions.forEach((t) => {
+      if (t.amount < 0 && t.category) {
+        const categoryId = t.category.id;
+        const absAmount = Math.abs(t.amount);
+        totalExpenses += absAmount;
+
+        if (!categoryData[categoryId]) {
+          categoryData[categoryId] = {
+            name: t.category.name,
+            amount: 0,
+            count: 0,
+            icon: t.category.categoryIcon || undefined,
+            color: t.category.categoryColor || undefined,
+          };
+        }
+        categoryData[categoryId].amount += absAmount;
+        categoryData[categoryId].count += 1;
+      }
+    });
+
+    processTopCategories = Object.entries(categoryData)
+      .map(([id, data]) => ({
+        id: parseInt(id),
+        ...data,
+        percentage: totalExpenses > 0 ? (data.amount / totalExpenses) * 100 : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 10); // Top 10 categories
+  });
+
+  return {
+    get data() {
+      return processTopCategories;
+    },
+  };
+}

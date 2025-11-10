@@ -39,6 +39,13 @@ export const analyticsTypes = [
     icon: ChartPie,
     category: "Category Analysis",
   },
+  {
+    id: "top-categories",
+    title: "Top Spending Categories",
+    description: "Highest expense categories",
+    icon: TrendingDown,
+    category: "Category Analysis",
+  },
 ];
 
 // Full analytics types (temporarily disabled for focused testing)
