@@ -63,7 +63,7 @@ export const colorUtils = {
 	 * Colors are pre-resolved HSL strings that work with LayerChart components
 	 */
 	getChartColor(index: number): string {
-		return CHART_COLORS[index % CHART_COLORS.length];
+		return CHART_COLORS[index % CHART_COLORS.length]!;
 	},
 
 	/**
@@ -118,7 +118,7 @@ export const colorUtils = {
 
 		// 1. Check custom color overrides first
 		if (resolvedConfig.customColors && resolvedConfig.customColors[trimmed]) {
-			return resolvedConfig.customColors[trimmed];
+			return resolvedConfig.customColors[trimmed]!;
 		}
 
 		// 2. Check if it's already a resolved color value (pass through)
@@ -129,7 +129,7 @@ export const colorUtils = {
 		// 3. Try to parse CSS variable in hsl(var(--name)) format
 		const cssVarMatch = trimmed.match(/^hsl\(var\(--(.+?)\)\)$/);
 		if (cssVarMatch) {
-			return this._resolveVariable(cssVarMatch[1], resolvedConfig);
+			return this._resolveVariable(cssVarMatch[1]!, resolvedConfig);
 		}
 
 		// 4. Try to parse as Tailwind utility class
@@ -244,10 +244,9 @@ export const colorUtils = {
 
 		if (match) {
 			const [, varName, opacityStr] = match;
-			return {
-				varName,
-				opacity: opacityStr ? parseInt(opacityStr) / 100 : undefined
-			};
+			return opacityStr
+				? { varName: varName!, opacity: parseInt(opacityStr) / 100 }
+				: { varName: varName! };
 		}
 
 		// Also support just color/opacity without prefix (e.g., 'primary/50')
@@ -255,8 +254,8 @@ export const colorUtils = {
 		if (simpleMatch) {
 			const [, varName, opacityStr] = simpleMatch;
 			return {
-				varName,
-				opacity: parseInt(opacityStr) / 100
+				varName: varName!,
+				opacity: parseInt(opacityStr!) / 100
 			};
 		}
 
@@ -347,9 +346,9 @@ export const colorUtils = {
 	_hexToRgb(hex: string): { r: number; g: number; b: number } | null {
 		const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 		return result ? {
-			r: parseInt(result[1], 16),
-			g: parseInt(result[2], 16),
-			b: parseInt(result[3], 16)
+			r: parseInt(result[1]!, 16),
+			g: parseInt(result[2]!, 16),
+			b: parseInt(result[3]!, 16)
 		} : null;
 	},
 
@@ -449,6 +448,124 @@ export const colorUtils = {
 		}
 	},
 };
+
+/**
+ * Calculate relative luminance of a color
+ * Used to determine if text should be light or dark
+ * @param hex - Hex color string (with or without #)
+ * @returns Luminance value between 0 (black) and 1 (white)
+ */
+export function getLuminance(hex: string): number {
+	// Remove # if present
+	hex = hex.replace('#', '');
+
+	// Convert to RGB
+	const r = parseInt(hex.substring(0, 2), 16) / 255;
+	const g = parseInt(hex.substring(2, 4), 16) / 255;
+	const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+	// Apply gamma correction
+	const gammaCorrected = (c: number) => {
+		return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+	};
+
+	// Calculate relative luminance using ITU-R BT.709 coefficients
+	return 0.2126 * gammaCorrected(r) + 0.7152 * gammaCorrected(g) + 0.0722 * gammaCorrected(b);
+}
+
+/**
+ * Convert hex color to HSL string for CSS variables
+ * @param hex - Hex color string (with or without #)
+ * @returns HSL string in format "h s% l%" (without hsl() wrapper)
+ */
+export function hexToHSL(hex: string): string {
+	// Remove # if present
+	hex = hex.replace('#', '');
+
+	// Convert to RGB
+	const r = parseInt(hex.substring(0, 2), 16) / 255;
+	const g = parseInt(hex.substring(2, 4), 16) / 255;
+	const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+	const max = Math.max(r, g, b);
+	const min = Math.min(r, g, b);
+	let h = 0,
+		s = 0,
+		l = (max + min) / 2;
+
+	if (max !== min) {
+		const d = max - min;
+		s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+		switch (max) {
+			case r:
+				h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+				break;
+			case g:
+				h = ((b - r) / d + 2) / 6;
+				break;
+			case b:
+				h = ((r - g) / d + 4) / 6;
+				break;
+		}
+	}
+
+	h = Math.round(h * 360);
+	s = Math.round(s * 100);
+	l = Math.round(l * 100);
+
+	return `${h} ${s}% ${l}%`;
+}
+
+/**
+ * Convert hex color to OKLCH string for CSS variables
+ * @param hex - Hex color string (with or without #)
+ * @returns OKLCH string in format "L C H" (without oklch() wrapper)
+ */
+export function hexToOKLCH(hex: string): string {
+	// Remove # if present
+	hex = hex.replace('#', '');
+
+	// Convert to RGB (0-1 range)
+	const r = parseInt(hex.substring(0, 2), 16) / 255;
+	const g = parseInt(hex.substring(2, 4), 16) / 255;
+	const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+	// Convert RGB to linear RGB
+	const toLinear = (c: number) => {
+		return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+	};
+
+	const rLinear = toLinear(r);
+	const gLinear = toLinear(g);
+	const bLinear = toLinear(b);
+
+	// Convert linear RGB to XYZ (D65 illuminant)
+	const x = 0.4124564 * rLinear + 0.3575761 * gLinear + 0.1804375 * bLinear;
+	const y = 0.2126729 * rLinear + 0.7151522 * gLinear + 0.0721750 * bLinear;
+	const z = 0.0193339 * rLinear + 0.1191920 * gLinear + 0.9503041 * bLinear;
+
+	// Convert XYZ to OKLab
+	const l_ = Math.cbrt(0.8189330101 * x + 0.3618667424 * y - 0.1288597137 * z);
+	const m_ = Math.cbrt(0.0329845436 * x + 0.9293118715 * y + 0.0361456387 * z);
+	const s_ = Math.cbrt(0.0482003018 * x + 0.2643662691 * y + 0.6338517070 * z);
+
+	const L = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
+	const a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_;
+	const b_ = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_;
+
+	// Convert OKLab to OKLCH
+	const C = Math.sqrt(a * a + b_ * b_);
+	let H = Math.atan2(b_, a) * 180 / Math.PI;
+	if (H < 0) H += 360;
+
+	// Round to 3 decimal places for L and C, integer for H
+	const lightness = Math.round(L * 1000) / 1000;
+	const chroma = Math.round(C * 1000) / 1000;
+	const hue = Math.round(H * 10) / 10;
+
+	return `${lightness} ${chroma} ${hue}`;
+}
 
 /**
  * Chart color theme for consistent styling

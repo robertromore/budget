@@ -282,7 +282,7 @@
       <div class="flex items-center gap-2">
         {#if value && isValidHexColor(value)}
           <div
-            class="h-5 w-5 rounded-md border border-border flex-shrink-0"
+            class="h-5 w-5 rounded-md border border-border shrink-0"
             style="background-color: {value}"
           ></div>
           <span class="text-sm font-mono uppercase">{value}</span>

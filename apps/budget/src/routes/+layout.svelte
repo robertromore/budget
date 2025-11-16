@@ -24,6 +24,7 @@ import {rpc} from '$lib/query';
 import {Toaster} from 'svelte-sonner';
 import {ModeWatcher} from 'mode-watcher';
 import ThemeToggle from '$lib/components/layout/theme-toggle.svelte';
+import ThemeButton from '$lib/components/layout/theme-button.svelte';
 
 let {data, children}: {data: LayoutData; children: Snippet} = $props();
 
@@ -103,9 +104,10 @@ onMount(() => {
         <div class="fixed flex flex-col items-start gap-2">
           <Sidebar.Trigger />
           <ThemeToggle />
+          <ThemeButton />
         </div>
         <div class="col-span-3 lg:col-span-4">
-          <div class="h-full px-4 py-6 lg:px-8">
+          <div class="h-full pl-6 pr-4 py-6 lg:pl-10 lg:pr-8">
             {@render children?.()}
           </div>
         </div>
