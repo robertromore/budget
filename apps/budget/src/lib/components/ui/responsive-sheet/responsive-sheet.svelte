@@ -87,6 +87,7 @@ $effect(() => {
       document.body.style.userSelect = '';
     };
   }
+  return undefined;
 });
 </script>
 
@@ -126,7 +127,7 @@ $effect(() => {
           {@render header()}
         </Sheet.Header>
       {/if}
-      <div class="flex-1 overflow-auto">
+      <div class="flex-1 overflow-auto @container">
         {#if content}
           <div class="px-6 py-6">
             {@render content()}
@@ -157,7 +158,7 @@ $effect(() => {
           {@render header()}
         </Drawer.Header>
       {/if}
-      <div class="flex-1 overflow-auto">
+      <div class="flex-1 overflow-auto @container">
         {#if content}
           <div class="px-6 py-6">
             {@render content()}
