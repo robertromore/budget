@@ -6,15 +6,13 @@
   "description": "Shared configuration files for budget monorepo",
   "files": [
     "eslint.config.cjs",
-    ".prettierrc",
     ".prettierignore",
     "tsconfig.base.json",
     "vite.base.ts"
   ],
   "exports": {
     "./eslint": "./eslint.config.cjs",
-    "./prettier": "./.prettierrc",
-    "./prettier-ignore": "./.prettierignore", 
+    "./prettier-ignore": "./.prettierignore",
     "./tsconfig": "./tsconfig.base.json",
     "./vite": "./vite.base.ts"
   },
