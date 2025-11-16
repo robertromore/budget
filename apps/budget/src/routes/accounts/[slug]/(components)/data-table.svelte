@@ -377,42 +377,46 @@ $effect(() => {
 	const activeView = currentViewsStateValue.activeView;
 	if (!activeView) return;
 
-	// Sync local state from the active view's display settings
-	const viewColumnOrder = activeView.view.getColumnOrder();
-	const viewPinning = activeView.view.getPinning();
-	const viewSorting = activeView.view.getSorting();
-	const viewGrouping = activeView.view.getGrouping();
-	const viewExpanded = activeView.view.getExpanded();
-	const viewVisibility = activeView.view.getVisibility();
-	const viewPageSize = activeView.view.getPageSize();
+	// Use untrack to prevent this effect from depending on table state
+	// We only want this to run when the active VIEW changes, not when table state changes
+	untrack(() => {
+		// Sync local state from the active view's display settings
+		const viewColumnOrder = activeView.view.getColumnOrder();
+		const viewPinning = activeView.view.getPinning();
+		const viewSorting = activeView.view.getSorting();
+		const viewGrouping = activeView.view.getGrouping();
+		const viewExpanded = activeView.view.getExpanded();
+		const viewVisibility = activeView.view.getVisibility();
+		const viewPageSize = activeView.view.getPageSize();
 
-	// Only update if different to avoid unnecessary state changes
-	if (JSON.stringify(viewColumnOrder) !== JSON.stringify(columnOrder())) {
-		setColumnOrder(viewColumnOrder);
-	}
-	if (JSON.stringify(viewPinning) !== JSON.stringify(pinning())) {
-		setPinning(viewPinning);
-	}
-	if (JSON.stringify(viewSorting) !== JSON.stringify(sorting())) {
-		setSorting(viewSorting);
-	}
-	if (JSON.stringify(viewGrouping) !== JSON.stringify(grouping())) {
-		setGrouping(viewGrouping);
-	}
-	if (JSON.stringify(viewExpanded) !== JSON.stringify(expanded())) {
-		setExpanded(viewExpanded);
-	}
-	if (JSON.stringify(viewVisibility) !== JSON.stringify(visibility())) {
-		setVisibility(viewVisibility);
-	}
-	// Sync page size from view
-	const currentPag = pagination();
-	if (currentPag.pageSize !== viewPageSize) {
-		setPagination({
-			pageIndex: currentPag.pageIndex,
-			pageSize: viewPageSize
-		});
-	}
+		// Only update if different to avoid unnecessary state changes
+		if (JSON.stringify(viewColumnOrder) !== JSON.stringify(columnOrder())) {
+			setColumnOrder(viewColumnOrder);
+		}
+		if (JSON.stringify(viewPinning) !== JSON.stringify(pinning())) {
+			setPinning(viewPinning);
+		}
+		if (JSON.stringify(viewSorting) !== JSON.stringify(sorting())) {
+			setSorting(viewSorting);
+		}
+		if (JSON.stringify(viewGrouping) !== JSON.stringify(grouping())) {
+			setGrouping(viewGrouping);
+		}
+		if (JSON.stringify(viewExpanded) !== JSON.stringify(expanded())) {
+			setExpanded(viewExpanded);
+		}
+		if (JSON.stringify(viewVisibility) !== JSON.stringify(visibility())) {
+			setVisibility(viewVisibility);
+		}
+		// Sync page size from view
+		const currentPag = pagination();
+		if (currentPag.pageSize !== viewPageSize) {
+			setPagination({
+				pageIndex: currentPag.pageIndex,
+				pageSize: viewPageSize
+			});
+		}
+	});
 });
 
 // Get density from current view

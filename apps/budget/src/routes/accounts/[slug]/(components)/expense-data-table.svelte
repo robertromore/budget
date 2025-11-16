@@ -33,6 +33,7 @@ import type {FacetedFilterOption} from '$lib/types';
 import {dayFmt} from '$lib/utils/date-formatters';
 import {parseDate} from '@internationalized/date';
 import {timezone} from '$lib/utils/dates';
+import {untrack} from 'svelte';
 
 interface Props {
   columns: ColumnDef<ExpenseFormat, TValue>[];
@@ -214,33 +215,37 @@ $effect(() => {
   const activeView = currentViewsStateValue.activeView;
   if (!activeView) return;
 
-  // Sync local state from the active view's display settings
-  const viewColumnOrder = activeView.view.getColumnOrder();
-  const viewPinning = activeView.view.getPinning();
-  const viewSorting = activeView.view.getSorting();
-  const viewGrouping = activeView.view.getGrouping();
-  const viewExpanded = activeView.view.getExpanded();
-  const viewVisibility = activeView.view.getVisibility();
+  // Use untrack to prevent this effect from depending on table state
+  // We only want this to run when the active VIEW changes, not when table state changes
+  untrack(() => {
+    // Sync local state from the active view's display settings
+    const viewColumnOrder = activeView.view.getColumnOrder();
+    const viewPinning = activeView.view.getPinning();
+    const viewSorting = activeView.view.getSorting();
+    const viewGrouping = activeView.view.getGrouping();
+    const viewExpanded = activeView.view.getExpanded();
+    const viewVisibility = activeView.view.getVisibility();
 
-  // Only update if different to avoid unnecessary state changes
-  if (JSON.stringify(viewColumnOrder) !== JSON.stringify(columnOrder())) {
-    setColumnOrder(viewColumnOrder);
-  }
-  if (JSON.stringify(viewPinning) !== JSON.stringify(pinning())) {
-    setPinning(viewPinning);
-  }
-  if (JSON.stringify(viewSorting) !== JSON.stringify(sorting())) {
-    setSorting(viewSorting);
-  }
-  if (JSON.stringify(viewGrouping) !== JSON.stringify(grouping())) {
-    setGrouping(viewGrouping);
-  }
-  if (JSON.stringify(viewExpanded) !== JSON.stringify(expanded())) {
-    setExpanded(viewExpanded);
-  }
-  if (JSON.stringify(viewVisibility) !== JSON.stringify(visibility())) {
-    setVisibility(viewVisibility);
-  }
+    // Only update if different to avoid unnecessary state changes
+    if (JSON.stringify(viewColumnOrder) !== JSON.stringify(columnOrder())) {
+      setColumnOrder(viewColumnOrder);
+    }
+    if (JSON.stringify(viewPinning) !== JSON.stringify(pinning())) {
+      setPinning(viewPinning);
+    }
+    if (JSON.stringify(viewSorting) !== JSON.stringify(sorting())) {
+      setSorting(viewSorting);
+    }
+    if (JSON.stringify(viewGrouping) !== JSON.stringify(grouping())) {
+      setGrouping(viewGrouping);
+    }
+    if (JSON.stringify(viewExpanded) !== JSON.stringify(expanded())) {
+      setExpanded(viewExpanded);
+    }
+    if (JSON.stringify(viewVisibility) !== JSON.stringify(visibility())) {
+      setVisibility(viewVisibility);
+    }
+  });
 });
 
 // Get density from current view
