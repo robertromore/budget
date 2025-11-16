@@ -1,18 +1,17 @@
 <script lang="ts">
+import { Badge } from '$lib/components/ui/badge';
 import * as Dialog from '$lib/components/ui/dialog';
-import {Badge} from '$lib/components/ui/badge';
-import type {Transaction} from '$lib/schema';
-import {formatCurrency} from '$lib/utils/formatters';
-import {parseDate} from '@internationalized/date';
-import {Separator} from '$lib/components/ui/separator';
+import { Separator } from '$lib/components/ui/separator';
+import type { Transaction } from '$lib/schema';
+import { formatCurrency } from '$lib/utils/formatters';
 import Calendar from '@lucide/svelte/icons/calendar';
-import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import User from '@lucide/svelte/icons/user';
-import Tag from '@lucide/svelte/icons/tag';
-import FileText from '@lucide/svelte/icons/file-text';
 import Clock from '@lucide/svelte/icons/clock';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import FileInput from '@lucide/svelte/icons/file-input';
+import FileText from '@lucide/svelte/icons/file-text';
 import Info from '@lucide/svelte/icons/info';
+import Tag from '@lucide/svelte/icons/tag';
+import User from '@lucide/svelte/icons/user';
 
 // Helper to format date strings
 function formatDate(dateStr: string | null | undefined, includeTime = false): string {
@@ -99,7 +98,7 @@ const hasImportMetadata = $derived(
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="flex min-w-0 items-start gap-2">
-              <Calendar class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+              <Calendar class="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
               <div class="min-w-0 flex-1">
                 <div class="text-muted-foreground text-xs">Date</div>
                 <div class="text-sm font-medium">{formatDate(transaction.date)}</div>
@@ -107,7 +106,7 @@ const hasImportMetadata = $derived(
             </div>
 
             <div class="flex min-w-0 items-start gap-2">
-              <DollarSign class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+              <DollarSign class="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
               <div class="min-w-0 flex-1">
                 <div class="text-muted-foreground text-xs">Amount</div>
                 <div
@@ -120,7 +119,7 @@ const hasImportMetadata = $derived(
             </div>
 
             <div class="flex min-w-0 items-start gap-2">
-              <User class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+              <User class="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
               <div class="min-w-0 flex-1">
                 <div class="text-muted-foreground text-xs">Payee</div>
                 <div class="text-sm font-medium break-all">{transaction.payee?.name || 'None'}</div>
@@ -128,7 +127,7 @@ const hasImportMetadata = $derived(
             </div>
 
             <div class="flex min-w-0 items-start gap-2">
-              <Tag class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+              <Tag class="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
               <div class="min-w-0 flex-1">
                 <div class="text-muted-foreground text-xs">Category</div>
                 <div class="text-sm font-medium break-all">
@@ -140,7 +139,7 @@ const hasImportMetadata = $derived(
 
           {#if transaction.notes}
             <div class="flex min-w-0 items-start gap-2">
-              <FileText class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+              <FileText class="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
               <div class="min-w-0 flex-1">
                 <div class="text-muted-foreground text-xs">Notes</div>
                 <div class="text-sm break-words">{transaction.notes}</div>
@@ -328,7 +327,7 @@ const hasImportMetadata = $derived(
         <!-- Audit Trail -->
         <div class="space-y-3">
           <h3 class="text-muted-foreground flex items-center gap-2 text-sm font-semibold uppercase">
-            <Clock class="h-4 w-4 flex-shrink-0" />
+            <Clock class="h-4 w-4 shrink-0" />
             Audit Trail
           </h3>
 

@@ -1,16 +1,16 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {cn} from '$lib/utils';
+import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
-import type {EditableEntityItem} from '$lib/types';
 import SuggestionBadge from '$lib/components/ui/suggestion-badge.svelte';
-import Plus from '@lucide/svelte/icons/plus';
-import Pencil from '@lucide/svelte/icons/pencil';
-import MoveLeft from '@lucide/svelte/icons/move-left';
+import type { EditableEntityItem } from '$lib/types';
+import { cn } from '$lib/utils';
 import Check from '@lucide/svelte/icons/check';
-import type {Component as ComponentType} from 'svelte';
+import MoveLeft from '@lucide/svelte/icons/move-left';
+import Pencil from '@lucide/svelte/icons/pencil';
+import Plus from '@lucide/svelte/icons/plus';
 import Fuse from 'fuse.js';
+import type { Component as ComponentType } from 'svelte';
 
 interface IntelligenceSuggestion {
   type: 'smart' | 'intelligent' | 'insight' | 'auto' | 'info';
@@ -267,7 +267,7 @@ $effect(() => {
                       open = false;
                     }}>
                     <Check class="text-accent" />
-                    <div class="flex-grow font-medium">
+                    <div class="grow font-medium">
                       {suggestion.suggestedValue.name}
                     </div>
                     <span class="text-muted-foreground text-xs">Suggested</span>
@@ -294,7 +294,7 @@ $effect(() => {
                         open = false;
                       }}>
                       <Check class={cn(selected?.id != entity.id && 'text-transparent')} />
-                      <div class="flex-grow">
+                      <div class="grow">
                         {entity.name}
                       </div>
                       {#if suggestion?.suggestedValue?.id === entity.id}

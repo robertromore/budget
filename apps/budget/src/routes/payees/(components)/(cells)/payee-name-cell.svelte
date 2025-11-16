@@ -1,9 +1,9 @@
 <script lang="ts">
-import type {Payee} from '$lib/schema';
-import {Badge} from '$lib/components/ui/badge';
-import User from '@lucide/svelte/icons/user';
+import { Badge } from '$lib/components/ui/badge';
+import type { Payee } from '$lib/schema';
 import Building from '@lucide/svelte/icons/building';
 import FolderTree from '@lucide/svelte/icons/folder-tree';
+import User from '@lucide/svelte/icons/user';
 
 interface Props {
   payee: Payee;
@@ -29,7 +29,7 @@ const IconComponent = $derived(() => {
 {#snippet payeeNameContent()}
   {@const Icon = IconComponent()}
   <div class="flex items-center gap-2">
-    <Icon class="text-muted-foreground h-4 w-4 flex-shrink-0" />
+    <Icon class="text-muted-foreground h-4 w-4 shrink-0" />
     <a href="/payees/{payee.slug}" class="font-medium hover:underline">
       {payee.name || 'Unnamed Payee'}
     </a>

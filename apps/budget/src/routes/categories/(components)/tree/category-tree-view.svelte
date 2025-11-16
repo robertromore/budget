@@ -1,14 +1,14 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import ChevronRight from '@lucide/svelte/icons/chevron-right';
-import ChevronDown from '@lucide/svelte/icons/chevron-down';
-import FolderOpen from '@lucide/svelte/icons/folder-open';
-import Folder from '@lucide/svelte/icons/folder';
-import Tag from '@lucide/svelte/icons/tag';
-import MoreVertical from '@lucide/svelte/icons/more-vertical';
+import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import type { CategoryTreeNode } from '$lib/types/categories';
+import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import ChevronRight from '@lucide/svelte/icons/chevron-right';
+import Folder from '@lucide/svelte/icons/folder';
+import FolderOpen from '@lucide/svelte/icons/folder-open';
+import MoreVertical from '@lucide/svelte/icons/more-vertical';
+import Tag from '@lucide/svelte/icons/tag';
 import Self from './category-tree-view.svelte';
-import type {CategoryTreeNode} from '$lib/types/categories';
 
 type Props = {
   nodes: CategoryTreeNode[];
@@ -61,7 +61,7 @@ const isExpanded = (nodeId: number) => expandedNodes.has(nodeId);
         </button>
 
         <!-- Icon -->
-        <div class="flex-shrink-0">
+        <div class="shrink-0">
           {#if hasChildren}
             {#if expanded}
               <FolderOpen class="text-muted-foreground h-4 w-4" />

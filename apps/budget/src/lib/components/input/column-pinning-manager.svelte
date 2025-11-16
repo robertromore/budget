@@ -1,16 +1,15 @@
 <script lang="ts">
-import {Label} from '$lib/components/ui/label';
-import {Button} from '$lib/components/ui/button';
-import * as Popover from '$lib/components/ui/popover';
-import {Badge} from '$lib/components/ui/badge';
-import ChevronUp from '@lucide/svelte/icons/chevron-up';
-import ChevronDown from '@lucide/svelte/icons/chevron-down';
-import GripVertical from '@lucide/svelte/icons/grip-vertical';
-import X from '@lucide/svelte/icons/x';
-import Plus from '@lucide/svelte/icons/plus';
-import type {Column} from '@tanstack/table-core';
+import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
-import {cn} from '$lib/utils';
+import { Label } from '$lib/components/ui/label';
+import * as Popover from '$lib/components/ui/popover';
+import { cn } from '$lib/utils';
+import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import ChevronUp from '@lucide/svelte/icons/chevron-up';
+import GripVertical from '@lucide/svelte/icons/grip-vertical';
+import Plus from '@lucide/svelte/icons/plus';
+import X from '@lucide/svelte/icons/x';
+import type { Column } from '@tanstack/table-core';
 
 interface Props {
   label?: string;

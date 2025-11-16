@@ -1,6 +1,6 @@
 <script lang="ts">
-import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
+import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
 
 interface Props {
   recommendation: BudgetRecommendationWithRelations;

@@ -1,6 +1,6 @@
 <script lang="ts">
-import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
+import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
 import Check from '@lucide/svelte/icons/check';
 import X from '@lucide/svelte/icons/x';
 

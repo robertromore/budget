@@ -1,19 +1,19 @@
 <script lang="ts">
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Separator} from '$lib/components/ui/separator';
+import { Separator } from '$lib/components/ui/separator';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
 import {
-  CircleCheck,
-  TrendingUp,
-  RotateCcw,
   AlertTriangle,
-  X,
   ChevronDown,
   ChevronUp,
+  CircleCheck,
+  RotateCcw,
+  TrendingUp,
+  X,
 } from '@lucide/svelte/icons';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {cn} from '$lib/utils';
-import {slide} from 'svelte/transition';
+import { slide } from 'svelte/transition';
 
 interface RolloverHistoryItem {
   id: number;
@@ -192,7 +192,7 @@ function toggleExpanded() {
                   {/if}
                 </div>
               </div>
-              <div class="flex-shrink-0 text-right">
+              <div class="shrink-0 text-right">
                 <div
                   class={cn(
                     'text-sm font-medium',

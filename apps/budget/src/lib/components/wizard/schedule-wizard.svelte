@@ -1,37 +1,34 @@
 <script lang="ts">
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Label} from '$lib/components/ui/label';
-import {Switch} from '$lib/components/ui/switch';
-import * as Card from '$lib/components/ui/card';
-import * as Select from '$lib/components/ui/select';
-import {Badge} from '$lib/components/ui/badge';
-import {
-  Calendar,
-  FileText,
-  CheckCircle2,
-  Info,
-  RefreshCw,
-  DollarSign,
-  Building2,
-  Tag,
-  HandCoins,
-} from '@lucide/svelte/icons';
-import WizardStep from './wizard-step.svelte';
-import RepeatingDateInput from '$lib/components/input/repeating-date-input.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
 import MultiNumericInput from '$lib/components/input/multi-numeric-input.svelte';
+import RepeatingDateInput from '$lib/components/input/repeating-date-input.svelte';
+import { Badge } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import { Switch } from '$lib/components/ui/switch';
 import RepeatingDateInputModel from '$lib/models/repeating_date.svelte';
-import type {DateValue} from '@internationalized/date';
-import {timezone, currentDate} from '$lib/utils/dates';
+import type { Schedule } from '$lib/schema/schedules';
 import {
   scheduleWizardStore,
   type WizardStep as WizardStepType,
 } from '$lib/stores/wizardStore.svelte';
-import {createScheduleValidationEngine} from '$lib/utils/wizardValidation';
-import type {Schedule} from '$lib/schema/schedules';
-import type {EditableEntityItem} from '$lib/types';
-import {createTransformAccessors} from '$lib/utils/bind-helpers';
+import type { EditableEntityItem } from '$lib/types';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import { currentDate } from '$lib/utils/dates';
+import { createScheduleValidationEngine } from '$lib/utils/wizardValidation';
+import type { DateValue } from '@internationalized/date';
+import {
+  Building2,
+  Calendar,
+  CheckCircle2,
+  HandCoins,
+  Info,
+  RefreshCw,
+  Tag
+} from '@lucide/svelte/icons';
+import WizardStep from './wizard-step.svelte';
 
 interface Props {
   initialData?: Partial<Schedule>;
@@ -598,7 +595,7 @@ const scheduleTypes = [
         <div
           class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div class="flex items-start gap-3">
-            <Info class="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+            <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
             <div class="space-y-1">
               <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
                 Ready to Create Schedule

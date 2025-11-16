@@ -1,9 +1,9 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
 import * as Popover from '$lib/components/ui/popover';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {cn} from '$lib/utils';
+import { Textarea } from '$lib/components/ui/textarea';
+import { cn } from '$lib/utils';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 
 interface Props {
@@ -39,7 +39,7 @@ $effect(() => {
           'block w-full max-w-48 justify-start overflow-hidden text-left font-normal text-ellipsis whitespace-nowrap',
           !value && 'text-muted-foreground'
         )}>
-        <SquarePen class="mr-1 inline-block size-4 flex-shrink-0 align-top" />
+        <SquarePen class="mr-1 inline-block size-4 shrink-0 align-top" />
         <span class="truncate">{value || placeholder}</span>
       </Button>
     {/snippet}

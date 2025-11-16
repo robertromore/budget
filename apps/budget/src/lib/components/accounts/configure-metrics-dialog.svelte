@@ -1,15 +1,15 @@
 <script lang="ts">
-import type {Account} from '$lib/schema/accounts';
-import {AVAILABLE_METRICS, getEnabledMetrics, type MetricId} from '$lib/utils/credit-card-metrics';
+import { Button } from '$lib/components/ui/button';
+import { Checkbox } from '$lib/components/ui/checkbox';
 import * as Dialog from '$lib/components/ui/dialog';
-import {Button} from '$lib/components/ui/button';
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {Label} from '$lib/components/ui/label';
+import { Label } from '$lib/components/ui/label';
 import * as Separator from '$lib/components/ui/separator';
+import type { Account } from '$lib/schema/accounts';
+import { AVAILABLE_METRICS, getEnabledMetrics, type MetricId } from '$lib/utils/credit-card-metrics';
+import Calendar from '@lucide/svelte/icons/calendar';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Percent from '@lucide/svelte/icons/percent';
-import Calendar from '@lucide/svelte/icons/calendar';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 
 interface Props {

@@ -1,8 +1,8 @@
 <script lang="ts">
-import type {WidgetProps} from '$lib/types/widgets';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {parseISOString, formatDateDisplay} from '$lib/utils/dates';
-import {ArrowDownLeft, ArrowUpRight} from '$lib/components/icons';
+import { ArrowDownLeft, ArrowUpRight } from '$lib/components/icons';
+import type { WidgetProps } from '$lib/types/widgets';
+import { formatDateDisplay, parseISOString } from '$lib/utils/dates';
+import { currencyFormatter } from '$lib/utils/formatters';
 import WidgetCard from './widget-card.svelte';
 
 let {config, data, onUpdate, onRemove, editMode = false}: WidgetProps = $props();
@@ -29,7 +29,7 @@ const totalAmount = data?.['recentActivity'] ?? 0;
         <div class="text-muted-foreground text-xs font-medium">Recent Transactions</div>
         {#each transactions.slice(0, config.size === 'large' ? 5 : 3) as transaction}
           <div class="bg-muted/50 flex items-center gap-2 rounded p-2">
-            <div class="flex-shrink-0">
+            <div class="shrink-0">
               {#if transaction.amount > 0}
                 <ArrowUpRight class="h-4 w-4 text-green-600" />
               {:else}

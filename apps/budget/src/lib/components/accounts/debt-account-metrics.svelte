@@ -1,39 +1,39 @@
 <script lang="ts">
-import type {Account} from '$lib/schema/accounts';
-import type {TransactionsFormat} from '$lib/types';
-import {formatCurrency, formatPercentage} from '$lib/utils/account-display';
-import {formatDayOrdinal} from '$lib/utils/date-formatters';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Progress } from '$lib/components/ui/progress';
+import { accountKeys } from '$lib/query/accounts';
+import type { Account } from '$lib/schema/accounts';
+import { trpc } from '$lib/trpc/client';
+import type { TransactionsFormat } from '$lib/types';
+import { formatCurrency, formatPercentage } from '$lib/utils/account-display';
 import {
+  AVAILABLE_METRICS,
   calculateAllMetrics,
   getEnabledMetrics,
-  AVAILABLE_METRICS,
   type MetricId,
 } from '$lib/utils/credit-card-metrics';
-import ConfigureMetricsDialog from './configure-metrics-dialog.svelte';
-import * as Card from '$lib/components/ui/card';
-import {Progress} from '$lib/components/ui/progress';
-import {Button} from '$lib/components/ui/button';
-import Settings from '@lucide/svelte/icons/settings';
-import CreditCard from '@lucide/svelte/icons/credit-card';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
-import TrendingDown from '@lucide/svelte/icons/trending-down';
-import CircleAlert from '@lucide/svelte/icons/circle-alert';
-import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import Percent from '@lucide/svelte/icons/percent';
+import { formatDayOrdinal } from '$lib/utils/date-formatters';
 import Calendar from '@lucide/svelte/icons/calendar';
-import Clock from '@lucide/svelte/icons/clock';
-import Wallet from '@lucide/svelte/icons/wallet';
-import Target from '@lucide/svelte/icons/target';
-import ShoppingCart from '@lucide/svelte/icons/shopping-cart';
-import Hash from '@lucide/svelte/icons/hash';
 import CalendarDays from '@lucide/svelte/icons/calendar-days';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import Clock from '@lucide/svelte/icons/clock';
+import CreditCard from '@lucide/svelte/icons/credit-card';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Hash from '@lucide/svelte/icons/hash';
 import HelpCircle from '@lucide/svelte/icons/help-circle';
-import type {Component} from 'svelte';
-import {trpc} from '$lib/trpc/client';
-import {toast} from 'svelte-sonner';
-import {useQueryClient} from '@tanstack/svelte-query';
-import {accountKeys} from '$lib/query/accounts';
+import Percent from '@lucide/svelte/icons/percent';
+import Settings from '@lucide/svelte/icons/settings';
+import ShoppingCart from '@lucide/svelte/icons/shopping-cart';
+import Target from '@lucide/svelte/icons/target';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Wallet from '@lucide/svelte/icons/wallet';
+import { useQueryClient } from '@tanstack/svelte-query';
+import type { Component } from 'svelte';
+import { toast } from 'svelte-sonner';
 import TopCategoriesView from '../../../routes/accounts/[slug]/(components)/(charts)/top-categories-view.svelte';
+import ConfigureMetricsDialog from './configure-metrics-dialog.svelte';
 
 let {account, transactions = []} = $props<{
   account: Account;

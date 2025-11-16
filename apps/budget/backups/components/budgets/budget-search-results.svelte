@@ -1,26 +1,23 @@
 <script lang="ts">
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
-import {Button} from '$lib/components/ui/button';
-import {Skeleton} from '$lib/components/ui/skeleton';
-import {cn, currencyFormatter} from '$lib/utils';
-import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
+import { Skeleton } from '$lib/components/ui/skeleton';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { cn, currencyFormatter } from '$lib/utils';
+import { calculateActualSpent } from '$lib/utils/budget-calculations';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
-import ChartBar from '@lucide/svelte/icons/chart-bar';
-import Pencil from '@lucide/svelte/icons/pencil';
-import Trash2 from '@lucide/svelte/icons/trash-2';
 import Copy from '@lucide/svelte/icons/copy';
-import Archive from '@lucide/svelte/icons/archive';
-import Wallet from '@lucide/svelte/icons/wallet';
-import Target from '@lucide/svelte/icons/target';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Pencil from '@lucide/svelte/icons/pencil';
 import Repeat from '@lucide/svelte/icons/repeat';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import {calculateActualSpent} from '$lib/utils/budget-calculations';
-import BudgetProgress from './budget-progress.svelte';
+import Target from '@lucide/svelte/icons/target';
+import Trash2 from '@lucide/svelte/icons/trash-2';
+import Wallet from '@lucide/svelte/icons/wallet';
 import BudgetDataTableContainer from '../../../routes/budgets/(components)/budget-data-table-container.svelte';
-import {columns} from '../../../routes/budgets/(data)/columns.svelte';
+import { columns } from '../../../routes/budgets/(data)/columns.svelte';
+import BudgetProgress from './budget-progress.svelte';
 
 export type ViewMode = 'list' | 'grid';
 
@@ -204,7 +201,7 @@ function highlightMatches(text: string, query: string) {
 
           <!-- Name and Type -->
           <Card.Title class="flex items-start gap-2 pr-24">
-            <TypeIcon class="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <TypeIcon class="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
             <div class="min-w-0 flex-1">
               <a
                 href="/budgets/{budget.slug}"

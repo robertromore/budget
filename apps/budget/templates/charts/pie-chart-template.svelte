@@ -1,8 +1,8 @@
 <script lang="ts">
   import { ChartWrapper } from '$lib/components/charts';
-  import { ChartPie, ChartBar } from '$lib/components/icons';
-  import { colorUtils } from '$lib/utils/colors';
+  import { ChartBar, ChartPie } from '$lib/components/icons';
   import type { ChartSeries, ChartType } from '$lib/types/widgets';
+  import { colorUtils } from '$lib/utils/colors';
 
   interface Props {
     data: Array<{
@@ -17,7 +17,7 @@
     class?: string;
   }
 
-  let { 
+  let {
     data,
     title = '{{CHART_TITLE}}',
     chartType = $bindable('pie'),
@@ -29,7 +29,7 @@
   // Transform data for chart consumption
   const chartData = $derived.by(() => {
     const total = data.reduce((sum, item) => sum + item.value, 0);
-    
+
     return data.map((item, index) => ({
       name: item.name,
       value: item.value,
@@ -57,13 +57,13 @@
   // Calculate statistics
   const stats = $derived.by(() => {
     const total = chartData.reduce((sum, item) => sum + item.value, 0);
-    const largest = chartData.reduce((max, item) => 
+    const largest = chartData.reduce((max, item) =>
       item.value > max.value ? item : max, chartData[0] || { name: '', value: 0 }
     );
-    
-    return { 
-      total, 
-      count: chartData.length, 
+
+    return {
+      total,
+      count: chartData.length,
       largest: largest?.name,
       largestValue: largest?.value || 0,
       largestPercent: largest?.percentage || 0
@@ -77,7 +77,7 @@
     <h3 class="text-lg font-semibold">{title}</h3>
     {#if stats.total > 0}
       <div class="text-sm text-muted-foreground">
-        Total: <span class="font-semibold">${stats.total.toFixed(2)}</span> 
+        Total: <span class="font-semibold">${stats.total.toFixed(2)}</span>
         • {stats.count} categories
       </div>
     {/if}
@@ -109,7 +109,7 @@
         <!-- Largest category info -->
         {#if stats.largest}
           <div class="text-muted-foreground">
-            Largest: <span class="font-medium">{stats.largest}</span> 
+            Largest: <span class="font-medium">{stats.largest}</span>
             ({stats.largestPercent.toFixed(1)}%)
           </div>
         {/if}
@@ -150,12 +150,12 @@
             <div class="flex items-center justify-between text-sm">
               <div class="flex items-center gap-2 min-w-0 flex-1">
                 <div
-                  class="w-3 h-3 rounded-full flex-shrink-0"
+                  class="w-3 h-3 rounded-full shrink-0"
                   style="background-color: {item.color}"
                 ></div>
                 <span class="truncate font-medium">{item.name}</span>
               </div>
-              <div class="flex items-center gap-1 flex-shrink-0">
+              <div class="flex items-center gap-1 shrink-0">
                 <span class="font-semibold">${item.value.toFixed(0)}</span>
                 <span class="text-muted-foreground">({item.percentage.toFixed(1)}%)</span>
               </div>

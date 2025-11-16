@@ -1,15 +1,15 @@
 <script lang="ts">
   import * as Card from "$lib/components/ui/card";
+  import { Separator } from "$lib/components/ui/separator";
   import * as Tabs from "$lib/components/ui/tabs";
-  import {Target, Wallet, TrendingUp, Calendar, Activity, ChartBar} from "@lucide/svelte/icons";
-  import {Separator} from "$lib/components/ui/separator";
-  import BudgetMetricCard from "../budget-metric-card.svelte";
+  import type { BudgetHealthStatus } from "$lib/schema/budgets";
+  import type { Category } from "$lib/schema/categories";
+  import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+  import { calculateActualSpent } from "$lib/utils/budget-calculations";
+  import { Activity, Calendar, ChartBar, Target, TrendingUp, Wallet } from "@lucide/svelte/icons";
   import BudgetChartPlaceholder from "../budget-chart-placeholder.svelte";
+  import BudgetMetricCard from "../budget-metric-card.svelte";
   import EnvelopeBudgetAdvanced from "../envelope-budget-advanced.svelte";
-  import {calculateActualSpent} from "$lib/utils/budget-calculations";
-  import type {BudgetWithRelations} from "$lib/server/domains/budgets";
-  import type {Category} from "$lib/schema/categories";
-  import type {BudgetHealthStatus} from "$lib/schema/budgets";
 
   interface Props {
     budget: BudgetWithRelations;
@@ -43,7 +43,7 @@
 
 <div class="flex gap-6 {className}">
   <!-- Left Panel: Budget Overview (40%) -->
-  <div class="w-2/5 space-y-4 flex-shrink-0">
+  <div class="w-2/5 space-y-4 shrink-0">
     <!-- Budget Metadata -->
     <Card.Root>
       <Card.Header class="pb-4">

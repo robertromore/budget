@@ -34,6 +34,7 @@ import {
   calculateDebtMetrics,
 } from '$lib/utils/account-display';
 import {isDebtAccount} from '$lib/schema/accounts';
+import WorkspaceSwitcher from '../../../routes/workspaces/(components)/workspace-switcher.svelte';
 
 const accountsState = $derived(AccountsState.get());
 const accounts = $derived(accountsState.sorted);
@@ -56,6 +57,9 @@ const _deleteBudgetId = $derived(deleteBudgetId);
 </script>
 
 <Sidebar.Root>
+  <Sidebar.Header>
+    <WorkspaceSwitcher />
+  </Sidebar.Header>
   <Sidebar.Content>
     <Sidebar.Group>
       <Sidebar.GroupContent>
@@ -161,7 +165,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
                   <a href="/accounts/{account.slug}" {...props} class="flex min-w-0 gap-3 py-2">
                     <!-- Account Icon with colored background -->
                     <div
-                      class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
+                      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
                       style="background-color: {(account as any).accountColor
                         ? `${(account as any).accountColor}15`
                         : 'hsl(var(--muted))'}">
@@ -268,7 +272,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
                     </div>
 
                     {#if account.name === 'Test Account'}
-                      <Receipt class="text-destructive ml-2 h-4 w-4 flex-shrink-0" />
+                      <Receipt class="text-destructive ml-2 h-4 w-4 shrink-0" />
                     {/if}
                   </a>
                 {/snippet}

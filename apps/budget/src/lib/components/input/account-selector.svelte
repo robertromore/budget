@@ -1,17 +1,17 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {cn} from '$lib/utils';
+import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import * as Popover from '$lib/components/ui/popover';
-import type {EditableEntityItem} from '$lib/types';
-import Plus from '@lucide/svelte/icons/plus';
-import Pencil from '@lucide/svelte/icons/pencil';
-import MoveLeft from '@lucide/svelte/icons/move-left';
+import type { EditableEntityItem } from '$lib/types';
+import { cn } from '$lib/utils';
 import Check from '@lucide/svelte/icons/check';
 import CreditCard from '@lucide/svelte/icons/credit-card';
-import type {Component as ComponentType} from 'svelte';
+import MoveLeft from '@lucide/svelte/icons/move-left';
+import Pencil from '@lucide/svelte/icons/pencil';
+import Plus from '@lucide/svelte/icons/plus';
 import Fuse from 'fuse.js';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import type { Component as ComponentType } from 'svelte';
 
 interface ManagementOptions {
   enable: boolean;
@@ -176,7 +176,7 @@ function getAccountIcon(account: AccountEntity) {
                       open = false;
                     }}>
                     <Check class={cn(selected?.id != entity.id && 'text-transparent')} />
-                    <div class="flex flex-grow items-center gap-2">
+                    <div class="flex grow items-center gap-2">
                       <AccountIcon
                         class="h-4 w-4"
                         style={entity.accountColor ? `color: ${entity.accountColor}` : ''} />

@@ -1,20 +1,18 @@
 <script lang="ts">
-import * as Dialog from '$lib/components/ui/dialog';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
+import * as Dialog from '$lib/components/ui/dialog';
+import type { BudgetRecommendation } from '$lib/schema/recommendations';
 import {
-  Users,
-  TrendingUp,
-  Calendar,
-  DollarSign,
-  CheckCircle2,
-  XCircle,
   AlertTriangle,
+  CheckCircle2,
+  DollarSign,
   Sparkles,
+  TrendingUp,
+  Users,
+  XCircle
 } from '@lucide/svelte/icons';
-import type {BudgetRecommendation} from '$lib/schema/recommendations';
 
 interface Budget {
   id: number;
@@ -339,7 +337,7 @@ function formatCurrency(amount: number): string {
           <Card.Root class="border-yellow-500/50 bg-yellow-500/10">
             <Card.Content class="pt-4">
               <div class="flex gap-3">
-                <AlertTriangle class="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
+                <AlertTriangle class="mt-0.5 h-5 w-5 shrink-0 text-yellow-600" />
                 <div class="space-y-1">
                   <p class="text-sm font-medium">Medium confidence recommendation</p>
                   <p class="text-muted-foreground text-sm">

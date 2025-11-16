@@ -1,22 +1,22 @@
 <script lang="ts">
-  import {AlertTriangle, CheckCircle, Plus, X, Wallet} from "@lucide/svelte/icons";
+  import { Badge } from "$lib/components/ui/badge";
+  import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
-  import {Button} from "$lib/components/ui/button";
-  import {Input} from "$lib/components/ui/input";
+  import { Input } from "$lib/components/ui/input";
   import Label from "$lib/components/ui/label/label.svelte";
-  import {Badge} from "$lib/components/ui/badge";
-  import {cn} from "$lib/utils";
-  import {currencyFormatter, toSignedAmount, formatBudgetName} from "$lib/utils/formatters";
-  import BudgetSelector from "./budget-selector.svelte";
   import {
-    listBudgets,
-    validateAllocation,
     createAllocation,
     deleteAllocation,
+    listBudgets,
+    validateAllocation,
   } from "$lib/query/budgets";
-  import type {BudgetTransaction} from "$lib/schema/budgets";
-  import type {AllocationValidationResult} from "$lib/server/domains/budgets/services";
-  import type {BudgetWithRelations} from "$lib/server/domains/budgets";
+  import type { BudgetTransaction } from "$lib/schema/budgets";
+  import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+  import type { AllocationValidationResult } from "$lib/server/domains/budgets/services";
+  import { cn } from "$lib/utils";
+  import { currencyFormatter, formatBudgetName, toSignedAmount } from "$lib/utils/formatters";
+  import { AlertTriangle, CheckCircle, Plus, Wallet, X } from "@lucide/svelte/icons";
+  import BudgetSelector from "./budget-selector.svelte";
 
   interface Props {
     transactionId: number;
@@ -279,9 +279,9 @@
           )}
         >
           {#if validationResult.isValid}
-            <CheckCircle class="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <CheckCircle class="mt-0.5 h-4 w-4 shrink-0" />
           {:else}
-            <AlertTriangle class="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
           {/if}
           <div class="flex-1 space-y-1 text-sm">
             <p class="font-medium">
@@ -313,7 +313,7 @@
         </div>
       {:else if validationError}
         <div class="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-          <AlertTriangle class="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
           <span>{validationError}</span>
         </div>
       {/if}

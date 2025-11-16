@@ -1,22 +1,22 @@
 <script lang="ts">
-import {EntitySearchResults, EntityCard} from '$lib/components/shared/search';
-import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
-import {Button} from '$lib/components/ui/button';
-import {cn, currencyFormatter} from '$lib/utils';
-import {highlightMatches} from '$lib/utils/search';
-import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
-import CircleCheck from '@lucide/svelte/icons/circle-check';
-import Wallet from '@lucide/svelte/icons/wallet';
-import Target from '@lucide/svelte/icons/target';
-import Repeat from '@lucide/svelte/icons/repeat';
-import Copy from '@lucide/svelte/icons/copy';
-import Pencil from '@lucide/svelte/icons/pencil';
-import Trash2 from '@lucide/svelte/icons/trash-2';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import {calculateActualSpent} from '$lib/utils/budget-calculations';
 import BudgetProgress from '$lib/components/budgets/budget-progress.svelte';
+import { EntityCard, EntitySearchResults } from '$lib/components/shared/search';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { cn, currencyFormatter } from '$lib/utils';
+import { calculateActualSpent } from '$lib/utils/budget-calculations';
+import { highlightMatches } from '$lib/utils/search';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
+import Copy from '@lucide/svelte/icons/copy';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Pencil from '@lucide/svelte/icons/pencil';
+import Repeat from '@lucide/svelte/icons/repeat';
+import Target from '@lucide/svelte/icons/target';
+import Trash2 from '@lucide/svelte/icons/trash-2';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+import Wallet from '@lucide/svelte/icons/wallet';
 import BudgetDataTableContainer from '../budget-data-table-container.svelte';
 
 export type ViewMode = 'list' | 'grid';
@@ -190,7 +190,7 @@ function formatBudgetType(type: string) {
 
         <!-- Name and Type -->
         <Card.Title class="flex min-w-0 items-start gap-2 pr-24">
-          <TypeIcon class="text-muted-foreground mt-0.5 h-5 w-5 flex-shrink-0" />
+          <TypeIcon class="text-muted-foreground mt-0.5 h-5 w-5 shrink-0" />
           <div class="min-w-0 flex-1 overflow-hidden">
             <a href="/budgets/{b.slug}" class="block truncate font-medium hover:underline">
               {@html highlightMatches(b.name || 'Unnamed Budget', searchQuery)}
@@ -219,17 +219,17 @@ function formatBudgetType(type: string) {
         <!-- Budget Amounts -->
         <div class="space-y-2">
           <div class="flex min-w-0 justify-between gap-2 text-sm">
-            <span class="text-muted-foreground flex-shrink-0">Allocated:</span>
+            <span class="text-muted-foreground shrink-0">Allocated:</span>
             <span class="truncate text-right font-medium"
               >{currencyFormatter.format(allocated)}</span>
           </div>
           <div class="flex min-w-0 justify-between gap-2 text-sm">
-            <span class="text-muted-foreground flex-shrink-0">Consumed:</span>
+            <span class="text-muted-foreground shrink-0">Consumed:</span>
             <span class="truncate text-right font-medium"
               >{currencyFormatter.format(consumed)}</span>
           </div>
           <div class="flex min-w-0 justify-between gap-2 text-sm">
-            <span class="text-muted-foreground flex-shrink-0">Remaining:</span>
+            <span class="text-muted-foreground shrink-0">Remaining:</span>
             <span
               class={cn('truncate text-right font-medium', remaining < 0 && 'text-destructive')}>
               {currencyFormatter.format(remaining)}

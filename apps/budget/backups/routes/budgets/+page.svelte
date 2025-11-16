@@ -1,36 +1,36 @@
 <script lang="ts">
-  import * as Card from "$lib/components/ui/card";
-  import {Button} from "$lib/components/ui/button";
-  import * as Tabs from "$lib/components/ui/tabs";
-  import BudgetManageDialog from "$lib/components/budgets/budget-manage-dialog.svelte";
+  import { goto } from "$app/navigation";
+  import { BudgetForecastDisplay, BudgetSearchResults } from "$lib/components/budgets";
   import BudgetAnalyticsDashboard from "$lib/components/budgets/budget-analytics-dashboard.svelte";
   import BudgetFundTransfer from "$lib/components/budgets/budget-fund-transfer.svelte";
-  import BudgetRolloverManager from "$lib/components/budgets/budget-rollover-manager.svelte";
-  import BudgetTemplatePicker from "$lib/components/budgets/budget-template-picker.svelte";
-  import BudgetGroupsSection from "$lib/components/budgets/budget-groups-section.svelte";
   import BudgetGroupDialog from "$lib/components/budgets/budget-group-dialog.svelte";
+  import BudgetGroupsSection from "$lib/components/budgets/budget-groups-section.svelte";
+  import BudgetManageDialog from "$lib/components/budgets/budget-manage-dialog.svelte";
+  import BudgetRolloverManager from "$lib/components/budgets/budget-rollover-manager.svelte";
   import BudgetSearchToolbar from "$lib/components/budgets/budget-search-toolbar.svelte";
-  import {BudgetForecastDisplay, BudgetSearchResults} from "$lib/components/budgets";
-  import {listBudgets, duplicateBudget, updateBudget, deleteBudget, bulkArchiveBudgets, bulkDeleteBudgets} from "$lib/query/budgets";
-  import type {BudgetWithRelations} from "$lib/server/domains/budgets";
-  import type {BudgetGroup} from "$lib/schema/budgets";
-  import {currencyFormatter} from "$lib/utils/formatters";
-  import {calculateActualSpent} from "$lib/utils/budget-calculations";
-  import {goto} from "$app/navigation";
+  import BudgetTemplatePicker from "$lib/components/budgets/budget-template-picker.svelte";
+  import { Button } from "$lib/components/ui/button";
+  import * as Card from "$lib/components/ui/card";
   import * as Select from "$lib/components/ui/select";
+  import * as Tabs from "$lib/components/ui/tabs";
+  import { bulkArchiveBudgets, bulkDeleteBudgets, deleteBudget, duplicateBudget, listBudgets, updateBudget } from "$lib/query/budgets";
+  import type { BudgetGroup } from "$lib/schema/budgets";
+  import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+  import { calculateActualSpent } from "$lib/utils/budget-calculations";
+  import { currencyFormatter } from "$lib/utils/formatters";
   import {
-    ChartBar,
-    Grid3X3,
-    ArrowRightLeft,
-    RotateCcw,
-    DollarSign,
-    TrendingUp,
     AlertTriangle,
+    ArrowRightLeft,
+    ChartBar,
     CheckCircle2,
-    Sparkles,
-    FolderTree,
-    Plus,
+    DollarSign,
     Filter,
+    FolderTree,
+    Grid3X3,
+    Plus,
+    RotateCcw,
+    Sparkles,
+    TrendingUp,
   } from "@lucide/svelte/icons";
 
   // Use reactive client-side query instead of server data
@@ -269,7 +269,7 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-xs sm:text-sm font-medium">Total Allocated</Card.Title>
-        <DollarSign class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+        <DollarSign class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
       </Card.Header>
       <Card.Content>
         <div class="text-lg sm:text-2xl font-bold break-all">{formatCurrency(summaryMetrics.totalAllocated)}</div>
@@ -282,7 +282,7 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-xs sm:text-sm font-medium">Total Spent</Card.Title>
-        <TrendingUp class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+        <TrendingUp class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
       </Card.Header>
       <Card.Content>
         <div class="text-lg sm:text-2xl font-bold break-all">{formatCurrency(summaryMetrics.totalConsumed)}</div>
@@ -295,7 +295,7 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-xs sm:text-sm font-medium">Remaining</Card.Title>
-        <CheckCircle2 class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+        <CheckCircle2 class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
       </Card.Header>
       <Card.Content>
         <div class="text-lg sm:text-2xl font-bold break-all {summaryMetrics.remaining < 0 ? 'text-destructive' : ''}">
@@ -310,7 +310,7 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-xs sm:text-sm font-medium">Alerts</Card.Title>
-        <AlertTriangle class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+        <AlertTriangle class="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
       </Card.Header>
       <Card.Content>
         <div class="text-lg sm:text-2xl font-bold">

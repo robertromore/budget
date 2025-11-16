@@ -1,37 +1,37 @@
 <script lang="ts">
+import ColumnMapper from '$lib/components/import/column-mapper.svelte';
+import EntityReview from '$lib/components/import/entity-review.svelte';
 import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svelte';
 import ImportDataTable from '$lib/components/import/import-data-table.svelte';
-import EntityReview from '$lib/components/import/entity-review.svelte';
-import ColumnMapper from '$lib/components/import/column-mapper.svelte';
-import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
-import {Checkbox} from '$lib/components/ui/checkbox';
-import * as Card from '$lib/components/ui/card';
-import * as Empty from '$lib/components/ui/empty';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Badge from '$lib/components/ui/badge';
-import {Slider} from '$lib/components/ui/slider';
-import CircleCheck from '@lucide/svelte/icons/circle-check';
-import Circle from '@lucide/svelte/icons/circle';
-import Wallet from '@lucide/svelte/icons/wallet';
-import CalendarClock from '@lucide/svelte/icons/calendar-clock';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import * as Empty from '$lib/components/ui/empty';
+import * as Select from '$lib/components/ui/select';
+import { Slider } from '$lib/components/ui/slider';
+import type { Account } from '$lib/schema/accounts';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
 import type {
-  ParseResult,
-  ImportResult,
-  ImportPreviewData,
   ColumnMapping,
+  ImportPreviewData,
+  ImportResult,
+  ParseResult,
   ScheduleMatch,
 } from '$lib/types/import';
-import type {Account} from '$lib/schema/accounts';
-import {useQueryClient} from '@tanstack/svelte-query';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {toast} from 'svelte-sonner';
 import {
   PAYMENT_PROCESSORS,
-  detectPaymentProcessor,
   countProcessorTransactions,
+  detectPaymentProcessor,
 } from '$lib/utils/import/payment-processor-filter';
+import CalendarClock from '@lucide/svelte/icons/calendar-clock';
+import Circle from '@lucide/svelte/icons/circle';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
+import Wallet from '@lucide/svelte/icons/wallet';
+import { useQueryClient } from '@tanstack/svelte-query';
+import { toast } from 'svelte-sonner';
 
 let {data} = $props();
 const queryClient = useQueryClient();
@@ -1273,7 +1273,7 @@ $effect(() => {
       {:else if currentStep === 'preview' && parseResults}
         <div class="-mx-8 flex gap-6">
           <!-- Left Sidebar - Import Options -->
-          <div class="w-80 flex-shrink-0 pl-8">
+          <div class="w-80 shrink-0 pl-8">
             <Card.Root class="sticky top-6">
               <Card.Header>
                 <Card.Title>Import Options</Card.Title>
@@ -1438,7 +1438,7 @@ $effect(() => {
                 <Card.Header class="pb-3">
                   <div class="flex items-start justify-between gap-2">
                     <div class="flex min-w-0 items-start gap-2">
-                      <CalendarClock class="text-primary mt-0.5 h-5 w-5 flex-shrink-0" />
+                      <CalendarClock class="text-primary mt-0.5 h-5 w-5 shrink-0" />
                       <div class="min-w-0">
                         <Card.Title class="truncate text-base">{group.scheduleName}</Card.Title>
                         <Card.Description class="text-xs">
@@ -1448,7 +1448,7 @@ $effect(() => {
                         </Card.Description>
                       </div>
                     </div>
-                    <div class="flex flex-shrink-0 flex-col gap-1">
+                    <div class="flex shrink-0 flex-col gap-1">
                       <Button
                         variant="outline"
                         size="sm"
@@ -1506,7 +1506,7 @@ $effect(() => {
                             </div>
                             <Badge.Badge
                               variant={getConfidenceBadgeVariant(match.confidence)}
-                              class="flex-shrink-0">
+                              class="shrink-0">
                               {Math.round(match.score * 100)}%
                             </Badge.Badge>
                           </div>

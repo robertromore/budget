@@ -1,15 +1,15 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {cn} from '$lib/utils';
+import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
-import type {EditableEntityItem} from '$lib/types';
-import Plus from '@lucide/svelte/icons/plus';
-import Pencil from '@lucide/svelte/icons/pencil';
+import type { EditableEntityItem } from '$lib/types';
+import { cn } from '$lib/utils';
 import Check from '@lucide/svelte/icons/check';
-import type {Component as ComponentType} from 'svelte';
+import Pencil from '@lucide/svelte/icons/pencil';
+import Plus from '@lucide/svelte/icons/plus';
 import Fuse from 'fuse.js';
+import type { Component as ComponentType } from 'svelte';
 
 interface ManagementOptions {
   enable: boolean;
@@ -185,7 +185,7 @@ $effect(() => {
                     open = false;
                   }}>
                   <Check class={cn(selected?.id != entity.id && 'text-transparent')} />
-                  <div class="flex-grow">
+                  <div class="grow">
                     {entity.name}
                   </div>
                   <div
@@ -232,7 +232,7 @@ $effect(() => {
                     open = false;
                   }}>
                   <Check class={cn(selected?.id != entity.id && 'text-transparent')} />
-                  <div class="flex-grow">
+                  <div class="grow">
                     {entity.name}
                   </div>
                 </Command.Item>

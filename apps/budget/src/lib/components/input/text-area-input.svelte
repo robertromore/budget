@@ -1,11 +1,11 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Popover from '$lib/components/ui/popover';
-import {Textarea} from '$lib/components/ui/textarea';
-import X from '@lucide/svelte/icons/x';
-import {cn} from '$lib/utils';
-import type {Component as ComponentType} from 'svelte';
+import { Textarea } from '$lib/components/ui/textarea';
+import { cn } from '$lib/utils';
 import FileText from '@lucide/svelte/icons/file-text';
+import X from '@lucide/svelte/icons/x';
+import type { Component as ComponentType } from 'svelte';
 
 interface Props {
   value?: string | null;
@@ -86,7 +86,7 @@ function handleCancel() {
             !hasValue && 'text-muted-foreground',
             buttonClass
           )}>
-          <Icon class="mr-2 h-3 w-3 flex-shrink-0" />
+          <Icon class="mr-2 h-3 w-3 shrink-0" />
           <span class="truncate">{displayText}</span>
         </Button>
       {/snippet}

@@ -1,12 +1,12 @@
 <script lang="ts">
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {Switch} from '$lib/components/ui/switch';
-import {Label} from '$lib/components/ui/label';
+import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Sparkles, Settings2, Save, RotateCcw} from '@lucide/svelte/icons';
-import type {BudgetAutomationSettings} from '$lib/schema/budget-automation-settings';
+import { Switch } from '$lib/components/ui/switch';
+import type { BudgetAutomationSettings } from '$lib/schema/budget-automation-settings';
+import { RotateCcw, Save, Settings2, Sparkles } from '@lucide/svelte/icons';
 
 interface Props {
   settings: BudgetAutomationSettings;
@@ -285,7 +285,7 @@ function handleReset() {
   <Card.Root class="bg-muted/50">
     <Card.Content class="pt-6">
       <div class="flex gap-3">
-        <Sparkles class="text-primary mt-0.5 h-5 w-5 flex-shrink-0" />
+        <Sparkles class="text-primary mt-0.5 h-5 w-5 shrink-0" />
         <div class="space-y-1">
           <p class="text-sm font-medium">How automation works</p>
           <p class="text-muted-foreground text-sm">

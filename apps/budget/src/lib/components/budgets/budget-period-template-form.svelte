@@ -1,22 +1,22 @@
 <script lang="ts">
-import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {CalendarDays} from '@lucide/svelte/icons';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import { createPeriodTemplate } from '$lib/query/budgets';
+import type { BudgetPeriodTemplate } from '$lib/schema/budgets';
+import { isoWeekdayOptions, monthStringOptions } from '$lib/utils/date-options';
 import {
-  parseISOString,
   currentDate,
-  toISOString,
-  getIsoWeekday,
-  getDaysInMonth,
   formatDateDisplay,
+  getDaysInMonth,
+  getIsoWeekday,
+  parseISOString,
+  toISOString,
 } from '$lib/utils/dates';
-import type {CalendarDate} from '@internationalized/date';
-import type {BudgetPeriodTemplate} from '$lib/schema/budgets';
-import {createPeriodTemplate} from '$lib/query/budgets';
-import {isoWeekdayOptions, monthStringOptions} from '$lib/utils/date-options';
+import type { CalendarDate } from '@internationalized/date';
+import { CalendarDays } from '@lucide/svelte/icons';
 
 interface Props {
   budgetId: number;
@@ -189,7 +189,7 @@ async function handleSubmit(e: SubmitEvent) {
           bind:value={intervalCount}
           min="1"
           max={type === 'weekly' ? 52 : 12}
-          class="w-16 flex-shrink-0" />
+          class="w-16 shrink-0" />
         <span class="text-muted-foreground truncate text-sm">
           {intervalCount === 1 ? String(type).slice(0, -2) : String(type)}
         </span>

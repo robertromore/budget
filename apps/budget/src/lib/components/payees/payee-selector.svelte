@@ -1,36 +1,35 @@
 <script lang="ts">
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
-import * as Popover from '$lib/components/ui/popover';
 import * as Dialog from '$lib/components/ui/dialog';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
+import * as Popover from '$lib/components/ui/popover';
+import { Separator } from '$lib/components/ui/separator';
 
-import {trpc} from '$lib/trpc/client';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import type {Payee} from '$lib/schema/payees';
 import ManagePayeeForm from '$lib/components/forms/manage-payee-form.svelte';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {formatDateDisplay, parseISOString} from '$lib/utils/dates';
-
+import type { Payee } from '$lib/schema/payees';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { trpc } from '$lib/trpc/client';
+import { formatDateDisplay, parseISOString } from '$lib/utils/dates';
+import { currencyFormatter } from '$lib/utils/formatters';
 // Icons
+import Brain from '@lucide/svelte/icons/brain';
+import Building from '@lucide/svelte/icons/building';
+import Calendar from '@lucide/svelte/icons/calendar';
 import Check from '@lucide/svelte/icons/check';
 import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
-import Search from '@lucide/svelte/icons/search';
-import Plus from '@lucide/svelte/icons/plus';
-import User from '@lucide/svelte/icons/user';
-import Building from '@lucide/svelte/icons/building';
-import CreditCard from '@lucide/svelte/icons/credit-card';
-import Phone from '@lucide/svelte/icons/phone';
-import Mail from '@lucide/svelte/icons/mail';
-import Globe from '@lucide/svelte/icons/globe';
-import Calendar from '@lucide/svelte/icons/calendar';
-import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Clock from '@lucide/svelte/icons/clock';
-import Brain from '@lucide/svelte/icons/brain';
-import Sparkles from '@lucide/svelte/icons/sparkles';
+import CreditCard from '@lucide/svelte/icons/credit-card';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Globe from '@lucide/svelte/icons/globe';
 import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+import Mail from '@lucide/svelte/icons/mail';
+import Phone from '@lucide/svelte/icons/phone';
+import Plus from '@lucide/svelte/icons/plus';
+import Search from '@lucide/svelte/icons/search';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import User from '@lucide/svelte/icons/user';
 
 let {
   value = null,
@@ -304,9 +303,9 @@ $effect(() => {
           <div class="flex min-w-0 items-center gap-2">
             {#if selectedPayee.payeeType}
               {@const Icon = getPayeeTypeIcon(selectedPayee.payeeType)}
-              <Icon class="h-4 w-4 {getPayeeTypeColor(selectedPayee.payeeType)} flex-shrink-0" />
+              <Icon class="h-4 w-4 {getPayeeTypeColor(selectedPayee.payeeType)} shrink-0" />
             {:else}
-              <User class="h-4 w-4 flex-shrink-0 text-gray-500" />
+              <User class="h-4 w-4 shrink-0 text-gray-500" />
             {/if}
             <span class="truncate">{selectedPayee.name}</span>
             {#if selectedPayee.payeeType}

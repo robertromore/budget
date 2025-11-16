@@ -1,18 +1,18 @@
 <script lang="ts">
-import {rpc} from '$lib/query';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
 import * as Select from '$lib/components/ui/select';
-import {Badge} from '$lib/components/ui/badge';
-import {ResponsiveSheet} from '$lib/components/ui/responsive-sheet';
-import Upload from '@lucide/svelte/icons/upload';
+import { rpc } from '$lib/query';
+import { receiptTypeEnum, type ReceiptType } from '$lib/schema';
+import Download from '@lucide/svelte/icons/download';
 import FileText from '@lucide/svelte/icons/file-text';
 import Image from '@lucide/svelte/icons/image';
-import X from '@lucide/svelte/icons/x';
-import Download from '@lucide/svelte/icons/download';
 import Trash2 from '@lucide/svelte/icons/trash-2';
-import {receiptTypeEnum, type ReceiptType} from '$lib/schema';
+import Upload from '@lucide/svelte/icons/upload';
+import X from '@lucide/svelte/icons/x';
 
 // Receipt type keys array
 const receiptTypeKeys = Object.keys(receiptTypeEnum) as Array<ReceiptType>;
@@ -262,7 +262,7 @@ function handleOpenChange(newOpen: boolean) {
             {@const IconComponent = getFileIcon(receipt.mimeType)}
             <div class="bg-muted flex items-center justify-between rounded-md p-3">
               <div class="flex min-w-0 flex-1 items-center gap-3">
-                <IconComponent class="text-muted-foreground h-5 w-5 flex-shrink-0" />
+                <IconComponent class="text-muted-foreground h-5 w-5 shrink-0" />
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm font-medium">{receipt.fileName}</p>
                   <div class="text-muted-foreground flex items-center gap-2 text-xs">

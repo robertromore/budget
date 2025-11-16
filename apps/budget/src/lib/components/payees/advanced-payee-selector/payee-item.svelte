@@ -1,12 +1,11 @@
 <script lang="ts">
-import type {Payee} from '$lib/schema/payees';
-import type {DisplayMode, PayeeWithMetadata} from './types';
-import {Badge} from '$lib/components/ui/badge';
-import {cn} from '$lib/utils';
+import { Badge } from '$lib/components/ui/badge';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
 import Check from '@lucide/svelte/icons/check';
 import Sparkles from '@lucide/svelte/icons/sparkles';
-import {formatPayeeType} from './utils';
-import {currencyFormatter} from '$lib/utils/formatters';
+import type { DisplayMode, PayeeWithMetadata } from './types';
+import { formatPayeeType } from './utils';
 
 let {
   payee,
@@ -47,7 +46,7 @@ const lastUsed = $derived.by(() => {
     displayMode === 'detailed' && 'py-3'
   )}>
   <!-- Check icon -->
-  <Check class={cn('h-4 w-4 flex-shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
+  <Check class={cn('h-4 w-4 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
 
   <!-- Payee info -->
   <div class="min-w-0 flex-1">
@@ -57,12 +56,12 @@ const lastUsed = $derived.by(() => {
 
       <!-- ML Suggestion badge -->
       {#if payee._isSuggested}
-        <Sparkles class="text-primary h-3 w-3 flex-shrink-0" />
+        <Sparkles class="text-primary h-3 w-3 shrink-0" />
       {/if}
 
       <!-- Type badge (normal/detailed modes) -->
       {#if displayMode !== 'compact' && payee.payeeType}
-        <Badge variant="outline" class="flex-shrink-0 px-1.5 py-0 text-xs">
+        <Badge variant="outline" class="shrink-0 px-1.5 py-0 text-xs">
           {formatPayeeType(payee.payeeType)}
         </Badge>
       {/if}

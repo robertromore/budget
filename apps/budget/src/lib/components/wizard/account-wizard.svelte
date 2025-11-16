@@ -1,30 +1,30 @@
 <script lang="ts">
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Label} from '$lib/components/ui/label';
-import {Switch} from '$lib/components/ui/switch';
-import * as Select from '$lib/components/ui/select';
-import {Badge} from '$lib/components/ui/badge';
-import {
-  Building2,
-  FileText,
-  CircleCheck,
-  Info,
-  Palette,
-  CreditCard,
-  Banknote,
-  Wallet,
-} from '@lucide/svelte/icons';
-import WizardStep from './wizard-step.svelte';
+import { Badge } from '$lib/components/ui/badge';
+import { ColorPicker } from '$lib/components/ui/color-picker';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import IconPicker from '$lib/components/ui/icon-picker/icon-picker.svelte';
-import {ColorPicker} from '$lib/components/ui/color-picker';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import { Switch } from '$lib/components/ui/switch';
+import { Textarea } from '$lib/components/ui/textarea';
+import { accountTypeEnum, type Account } from '$lib/schema';
 import {
   accountWizardStore,
   type WizardStep as WizardStepType,
 } from '$lib/stores/wizardStore.svelte';
-import {createAccountValidationEngine} from '$lib/utils/wizardValidation';
-import {accountTypeEnum, type Account} from '$lib/schema';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import { createAccountValidationEngine } from '$lib/utils/wizardValidation';
+import {
+  Banknote,
+  Building2,
+  CircleCheck,
+  CreditCard,
+  FileText,
+  Info,
+  Palette,
+  Wallet,
+} from '@lucide/svelte/icons';
+import WizardStep from './wizard-step.svelte';
 
 interface Props {
   initialData?: Partial<Account>;
@@ -898,7 +898,7 @@ const selectedIcon = $derived(() => {
       <div
         class="mt-3 rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
         <div class="flex items-start gap-2">
-          <Info class="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+          <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
           <div class="space-y-1">
             <p class="text-xs font-medium text-blue-900 dark:text-blue-100">
               When to use off-budget accounts:
@@ -1211,7 +1211,7 @@ const selectedIcon = $derived(() => {
       <div
         class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
         <div class="flex items-start gap-3">
-          <Info class="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+          <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
           <div class="space-y-1">
             <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
               Ready to Create Account

@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import {formatCurrency} from '$lib/utils/formatters';
-import {cn} from '$lib/utils';
-import type {Component} from 'svelte';
+import { cn } from '$lib/utils';
+import { formatCurrency } from '$lib/utils/formatters';
+import type { Component } from 'svelte';
 
 interface AnalyticsData {
   id: number;
@@ -38,7 +38,7 @@ const borderColor = $derived(data.color ? `border-l-[${data.color}]` : '');
       <div class="flex min-w-0 flex-1 items-center gap-2">
         {#if data.icon}
           <data.icon
-            class="h-5 w-5 flex-shrink-0"
+            class="h-5 w-5 shrink-0"
             style={data.color ? `color: ${data.color};` : ''} />
         {/if}
         <Card.Title class="truncate text-base font-semibold">

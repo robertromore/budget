@@ -1,24 +1,23 @@
 <script lang="ts">
-import {EntitySearchResults, EntityCard} from '$lib/components/shared/search';
+import { EntityCard, EntitySearchResults } from '$lib/components/shared/search';
+import { Badge } from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
-import {cn} from '$lib/utils';
-import {highlightMatches} from '$lib/utils/search';
-import Tag from '@lucide/svelte/icons/tag';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
-import TrendingDown from '@lucide/svelte/icons/trending-down';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
+import type { Category } from '$lib/schema';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { highlightMatches } from '$lib/utils/search';
 import ArrowLeftRight from '@lucide/svelte/icons/arrow-left-right';
-import PiggyBank from '@lucide/svelte/icons/piggy-bank';
-import FolderTree from '@lucide/svelte/icons/folder-tree';
-import Folder from '@lucide/svelte/icons/folder';
-import Receipt from '@lucide/svelte/icons/receipt';
 import Calendar from '@lucide/svelte/icons/calendar';
-import type {Category} from '$lib/schema';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import Folder from '@lucide/svelte/icons/folder';
+import FolderTree from '@lucide/svelte/icons/folder-tree';
+import PiggyBank from '@lucide/svelte/icons/piggy-bank';
+import Receipt from '@lucide/svelte/icons/receipt';
+import Tag from '@lucide/svelte/icons/tag';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import type { Table as TanStackTable } from '@tanstack/table-core';
+import { columns } from '../../(data)/columns.svelte';
 import CategoryDataTableContainer from '../category-data-table-container.svelte';
-import {columns} from '../../(data)/columns.svelte';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import type {Table as TanStackTable} from '@tanstack/table-core';
 
 export type ViewMode = 'list' | 'grid';
 
@@ -150,13 +149,13 @@ const getPriorityColor = (priority: string | null) => {
         <Card.Title class="flex items-start gap-2">
           {#if c.groupIcon}
             <div
-              class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded"
+              class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded"
               style:background-color={c.groupColor || '#6b7280'}
               title={c.groupName || 'Group'}>
               <GroupIconComponent class="h-3 w-3 text-white" />
             </div>
           {/if}
-          <div class="relative flex-shrink-0">
+          <div class="relative shrink-0">
             <IconComponent
               class="mt-0.5 h-5 w-5"
               style={c.categoryColor ? `color: ${c.categoryColor};` : ''} />
@@ -222,7 +221,7 @@ const getPriorityColor = (priority: string | null) => {
 
         {#if c.isSeasonal && c.seasonalMonths}
           <div class="text-muted-foreground flex items-start gap-2 text-xs">
-            <Calendar class="mt-0.5 h-3 w-3 flex-shrink-0" />
+            <Calendar class="mt-0.5 h-3 w-3 shrink-0" />
             <span class="line-clamp-1">Seasonal: {c.seasonalMonths}</span>
           </div>
         {/if}

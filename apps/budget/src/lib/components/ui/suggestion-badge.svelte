@@ -1,14 +1,13 @@
 <script lang="ts">
-import {cn} from '$lib/utils';
-import {Badge} from '$lib/components/ui/badge';
-import Sparkles from '@lucide/svelte/icons/sparkles';
+import { cn } from '$lib/utils';
 import Brain from '@lucide/svelte/icons/brain';
-import Lightbulb from '@lucide/svelte/icons/lightbulb';
-import Zap from '@lucide/svelte/icons/zap';
-import Info from '@lucide/svelte/icons/info';
-import X from '@lucide/svelte/icons/x';
 import Check from '@lucide/svelte/icons/check';
-import type {Component} from 'svelte';
+import Info from '@lucide/svelte/icons/info';
+import Lightbulb from '@lucide/svelte/icons/lightbulb';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import X from '@lucide/svelte/icons/x';
+import Zap from '@lucide/svelte/icons/zap';
+import type { Component } from 'svelte';
 
 type SuggestionType = 'smart' | 'intelligent' | 'insight' | 'auto' | 'info';
 type SuggestionVariant = 'default' | 'success' | 'warning' | 'info' | 'accent';
@@ -91,7 +90,7 @@ const confidencePercentage = $derived(() => {
   style="animation-duration: 400ms;"
   title={reason ||
     `${type} suggestion${confidence ? ` (${confidencePercentage}% confidence)` : ''}`}>
-  <Icon class="h-3 w-3 flex-shrink-0" />
+  <Icon class="h-3 w-3 shrink-0" />
 
   {#if children}
     {@render children()}

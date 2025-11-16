@@ -1,27 +1,20 @@
 <script lang="ts">
-import * as Dialog from '$lib/components/ui/dialog';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Kbd} from '$lib/components/ui/kbd';
-import {Separator} from '$lib/components/ui/separator';
-import {ScrollArea} from '$lib/components/ui/scroll-area';
+import * as Dialog from '$lib/components/ui/dialog';
+import { Kbd } from '$lib/components/ui/kbd';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
 
-import {PayeeBulkOperationsState} from '$lib/states/ui/payee-bulk-operations.svelte';
-
+import { PayeeBulkOperationsState } from '$lib/states/ui/payee-bulk-operations.svelte';
 // Icons
-import Keyboard from '@lucide/svelte/icons/keyboard';
-import Zap from '@lucide/svelte/icons/zap';
-import MousePointer from '@lucide/svelte/icons/mouse-pointer';
-import Command from '@lucide/svelte/icons/command';
-import ArrowUp from '@lucide/svelte/icons/arrow-up';
-import ArrowDown from '@lucide/svelte/icons/arrow-down';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
-import ArrowRight from '@lucide/svelte/icons/arrow-right';
-import CornerDownLeft from '@lucide/svelte/icons/corner-down-left';
-import Space from '@lucide/svelte/icons/space';
-import Delete from '@lucide/svelte/icons/delete';
+import ArrowUp from '@lucide/svelte/icons/arrow-up';
+import Command from '@lucide/svelte/icons/command';
 import Copy from '@lucide/svelte/icons/copy';
+import Keyboard from '@lucide/svelte/icons/keyboard';
+import MousePointer from '@lucide/svelte/icons/mouse-pointer';
 import X from '@lucide/svelte/icons/x';
+import Zap from '@lucide/svelte/icons/zap';
 
 export interface KeyboardShortcut {
   keys: string[];
@@ -489,19 +482,19 @@ $effect(() => {
       <h4 class="text-sm font-medium">Tips</h4>
       <div class="text-muted-foreground grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
         <div class="flex items-start gap-2">
-          <MousePointer class="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <MousePointer class="mt-0.5 h-4 w-4 shrink-0" />
           <span>Hold <Kbd>Ctrl/Cmd</Kbd> while clicking to select multiple payees</span>
         </div>
         <div class="flex items-start gap-2">
-          <Keyboard class="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <Keyboard class="mt-0.5 h-4 w-4 shrink-0" />
           <span>Press <Kbd>?</Kbd> anytime to show this dialog</span>
         </div>
         <div class="flex items-start gap-2">
-          <Zap class="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <Zap class="mt-0.5 h-4 w-4 shrink-0" />
           <span>Bulk operations work on all selected payees at once</span>
         </div>
         <div class="flex items-start gap-2">
-          <ArrowLeft class="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <ArrowLeft class="mt-0.5 h-4 w-4 shrink-0" />
           <span>Use <Kbd>Ctrl/Cmd</Kbd> + <Kbd>Z</Kbd> to undo bulk operations</span>
         </div>
       </div>

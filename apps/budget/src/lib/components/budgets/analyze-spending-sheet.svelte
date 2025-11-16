@@ -1,11 +1,11 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import * as Select from '$lib/components/ui/select';
-import {Label} from '$lib/components/ui/label';
-import {LoaderCircle, Sparkles, TrendingUp} from '@lucide/svelte/icons';
+import { Button } from '$lib/components/ui/button';
+import { Label } from '$lib/components/ui/label';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
-import {generateRecommendations} from '$lib/query/budgets';
-import {listAccounts} from '$lib/query/accounts';
+import * as Select from '$lib/components/ui/select';
+import { listAccounts } from '$lib/query/accounts';
+import { generateRecommendations } from '$lib/query/budgets';
+import { LoaderCircle, Sparkles, TrendingUp } from '@lucide/svelte/icons';
 
 interface Props {
   open: boolean;
@@ -126,7 +126,7 @@ function handleAnalyze() {
       <!-- Info Box -->
       <div class="bg-muted rounded-lg p-4">
         <div class="flex items-start gap-3">
-          <TrendingUp class="text-primary mt-0.5 h-5 w-5 flex-shrink-0" />
+          <TrendingUp class="text-primary mt-0.5 h-5 w-5 shrink-0" />
           <div class="space-y-1 text-sm">
             <p class="font-medium">What to expect:</p>
             <ul class="text-muted-foreground list-inside list-disc space-y-1">

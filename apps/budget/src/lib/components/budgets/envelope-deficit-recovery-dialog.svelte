@@ -1,29 +1,29 @@
 <script lang="ts">
-import * as Dialog from '$lib/components/ui/dialog';
-import * as Tabs from '$lib/components/ui/tabs';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import * as Dialog from '$lib/components/ui/dialog';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
 import * as RadioGroup from '$lib/components/ui/radio-group';
 import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
+import { Separator } from '$lib/components/ui/separator';
+import * as Tabs from '$lib/components/ui/tabs';
+import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
+import { trpc } from '$lib/trpc/client';
+import { cn } from '$lib/utils';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import { currencyFormatter } from '$lib/utils/formatters';
 import {
-  TriangleAlert,
-  TrendingDown,
   ArrowRight,
   CircleCheck,
-  LoaderCircle,
   Info,
+  LoaderCircle,
+  TrendingDown,
+  TriangleAlert,
   Zap,
 } from '@lucide/svelte/icons';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {cn} from '$lib/utils';
-import {toast} from 'svelte-sonner';
-import {trpc} from '$lib/trpc/client';
-import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
-import {createTransformAccessors} from '$lib/utils/bind-helpers';
+import { toast } from 'svelte-sonner';
 
 interface DeficitAnalysis {
   envelopeId: number;
@@ -477,7 +477,7 @@ async function handleResetEnvelope() {
                     <div
                       class="bg-muted/30 flex items-start gap-3 rounded-lg border-l-4 p-3 {stepTypeConfig.color}">
                       <div
-                        class="bg-primary text-primary-foreground mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold">
+                        class="bg-primary text-primary-foreground mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
                         {step.order}
                       </div>
                       <div class="min-w-0 flex-1">

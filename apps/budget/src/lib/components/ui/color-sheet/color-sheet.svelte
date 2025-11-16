@@ -8,11 +8,11 @@ export interface ColorSheetActions {
 </script>
 
 <script lang="ts">
-import {StackedSheet} from '$lib/components/ui/stacked-sheet';
-import {buttonVariants} from '$lib/components/ui/button';
-import {Palette} from '@lucide/svelte/icons';
-import type {Snippet} from 'svelte';
-import {cn} from '$lib/utils';
+import { buttonVariants } from '$lib/components/ui/button';
+import { StackedSheet } from '$lib/components/ui/stacked-sheet';
+import { cn } from '$lib/utils';
+import { Palette } from '@lucide/svelte/icons';
+import type { Snippet } from 'svelte';
 
 interface Props {
   value?: string;
@@ -97,7 +97,7 @@ const sheets = [
       <div class="flex items-center gap-2">
         {#if value && isValidHexColor(value)}
           <div
-            class="border-border h-5 w-5 flex-shrink-0 rounded-md border"
+            class="border-border h-5 w-5 shrink-0 rounded-md border"
             style="background-color: {value}">
           </div>
           <span class="font-mono text-sm uppercase">{value}</span>

@@ -1,5 +1,5 @@
 <script lang="ts">
-import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
+import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
 
 interface Props {
   recommendation: BudgetRecommendationWithRelations;

@@ -2520,7 +2520,7 @@ Since the current wizard doesn't support conditional steps, add the HSA fields t
     <!-- HSA Benefits Info Box -->
     <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
       <div class="flex items-start gap-2">
-        <Info class="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+        <Info class="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
         <div class="space-y-1">
           <p class="text-xs font-medium text-blue-900 dark:text-blue-100">
             HSA Triple Tax Advantage

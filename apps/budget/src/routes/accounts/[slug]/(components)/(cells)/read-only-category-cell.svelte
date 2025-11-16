@@ -1,8 +1,7 @@
 <script lang="ts">
-import type {Component as ComponentType} from 'svelte';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
+import type { Category } from '$lib/schema';
 import Tag from '@lucide/svelte/icons/tag';
-import type {Category} from '$lib/schema';
 
 let {
   category,
@@ -29,7 +28,7 @@ const categoryData = $derived.by(() => {
     <div class="h-6 w-1 rounded" style={`background-color: ${categoryData.color};`}></div>
   {/if}
   <categoryData.icon
-    class="h-4 w-4 flex-shrink-0"
+    class="h-4 w-4 shrink-0"
     style={categoryData.color ? `color: ${categoryData.color};` : ''} />
   <span class="truncate">{categoryData.name}</span>
 </div>

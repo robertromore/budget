@@ -1,13 +1,13 @@
 <script lang="ts">
-import {ArrowUpDown, TriangleAlert, TrendingUp, Star, Settings2} from '@lucide/svelte/icons';
-import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Progress} from '$lib/components/ui/progress';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
-import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Progress } from '$lib/components/ui/progress';
+import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { ArrowUpDown, Settings2, Star, TrendingUp, TriangleAlert } from '@lucide/svelte/icons';
 
 interface Props {
   envelope: EnvelopeAllocation;
@@ -99,7 +99,7 @@ const isEmergencyFund = $derived.by(() => (envelope.metadata as any)?.isEmergenc
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0 flex-1">
         <div class="mb-1 flex items-center gap-2">
-          <statusConfig.icon class="h-4 w-4 flex-shrink-0" />
+          <statusConfig.icon class="h-4 w-4 shrink-0" />
           <Card.Title class="truncate text-lg">{categoryName}</Card.Title>
         </div>
         <div class="text-muted-foreground flex items-center gap-2 text-xs">
@@ -113,7 +113,7 @@ const isEmergencyFund = $derived.by(() => (envelope.metadata as any)?.isEmergenc
           {/if}
         </div>
       </div>
-      <div class="flex flex-shrink-0 items-center gap-2">
+      <div class="flex shrink-0 items-center gap-2">
         <Badge variant={statusConfig.badge}>{statusConfig.label}</Badge>
         {#if onSettingsClick}
           <Button

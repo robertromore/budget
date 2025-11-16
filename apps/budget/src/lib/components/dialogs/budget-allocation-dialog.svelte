@@ -1,35 +1,34 @@
 <script lang="ts">
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import Progress from '$lib/components/ui/progress/progress.svelte';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
 import * as Tooltip from '$lib/components/ui/tooltip';
-import {cn} from '$lib/utils';
 import {
-  CircleDollarSign,
-  Plus,
-  TriangleAlert,
-  Trash2,
-  Target,
-  PieChart,
-  Wallet,
-  ArrowRightLeft,
-} from '@lucide/svelte/icons';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {
-  listBudgets,
   createAllocation,
   deleteAllocation,
   getBudgetSuggestions,
+  listBudgets,
   type BudgetSuggestion,
 } from '$lib/query/budgets';
-import type {TransactionsFormat} from '$lib/types';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import Progress from '$lib/components/ui/progress/progress.svelte';
-import {Lightbulb} from '@lucide/svelte/icons';
-import {toISOString} from '$lib/utils/dates';
+import type { TransactionsFormat } from '$lib/types';
+import { cn } from '$lib/utils';
+import { toISOString } from '$lib/utils/dates';
+import { currencyFormatter } from '$lib/utils/formatters';
+import {
+  ArrowRightLeft,
+  CircleDollarSign,
+  Lightbulb,
+  PieChart,
+  Plus,
+  Target,
+  Trash2,
+  TriangleAlert,
+  Wallet,
+} from '@lucide/svelte/icons';
 
 interface Props {
   open?: boolean;
@@ -427,7 +426,7 @@ const availableBudgetOptions = $derived.by(() => {
               {#if topSuggestion}
                 <div
                   class="flex items-center gap-2 rounded-lg border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-3 dark:border-amber-800 dark:from-amber-950/20 dark:to-yellow-950/20">
-                  <Lightbulb class="h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                  <Lightbulb class="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                   <div class="min-w-0 flex-1">
                     <div class="flex flex-wrap items-center gap-2">
                       <span class="text-sm font-medium text-amber-900 dark:text-amber-100"

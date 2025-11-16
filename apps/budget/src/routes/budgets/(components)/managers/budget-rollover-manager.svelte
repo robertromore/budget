@@ -1,40 +1,38 @@
 <script lang="ts">
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Dialog from '$lib/components/ui/dialog';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
+import { Switch } from '$lib/components/ui/switch';
 import * as Tabs from '$lib/components/ui/tabs';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Switch} from '$lib/components/ui/switch';
-import Progress from '$lib/components/ui/progress/progress.svelte';
+import { Textarea } from '$lib/components/ui/textarea';
 import {
-  RotateCcw,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  Settings,
-  Clock,
-  ArrowRight,
-  LoaderCircle,
-  TriangleAlert,
-} from '@lucide/svelte/icons';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import {
-  getRolloverSummary,
   estimateRolloverImpact,
-  processEnvelopeRollover,
-  listPeriodInstances,
-  updateRolloverSettings,
   getBudgetRolloverHistory,
+  getRolloverSummary,
+  listPeriodInstances,
   previewRollover,
+  processEnvelopeRollover,
+  updateRolloverSettings,
 } from '$lib/query/budgets';
-import {toast} from 'svelte-sonner';
-import {createTransformAccessors} from '$lib/utils/bind-helpers';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { cn } from '$lib/utils';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import { currencyFormatter } from '$lib/utils/formatters';
+import {
+  Calendar,
+  Clock,
+  LoaderCircle,
+  RotateCcw,
+  Settings,
+  TrendingDown,
+  TrendingUp,
+  TriangleAlert
+} from '@lucide/svelte/icons';
+import { toast } from 'svelte-sonner';
 
 interface Props {
   budgets: BudgetWithRelations[];
@@ -519,7 +517,7 @@ async function handleSaveSettings() {
                       {transition.rolloverReason}
                     </p>
                   </div>
-                  <div class="flex flex-shrink-0 items-center gap-4">
+                  <div class="flex shrink-0 items-center gap-4">
                     {#if hasDeficit}
                       <div class="text-right">
                         <div class="text-sm font-medium text-red-600">

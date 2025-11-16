@@ -1,23 +1,23 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
-import {
-  Check,
-  X,
-  Sparkles,
-  CircleAlert,
-  LoaderCircle,
-  CheckCircle2,
-  Users,
-} from '@lucide/svelte/icons';
 import {
   approveRecommendation,
   dismissRecommendation,
-  rejectRecommendation,
   generateRecommendations,
   listRecommendations,
+  rejectRecommendation,
 } from '$lib/query/category-groups';
+import {
+  Check,
+  CheckCircle2,
+  CircleAlert,
+  LoaderCircle,
+  Sparkles,
+  Users,
+  X,
+} from '@lucide/svelte/icons';
 
 const recommendationsQuery = listRecommendations().options();
 const approveMutation = approveRecommendation.options();
@@ -210,7 +210,7 @@ function formatConfidence(score: number): string {
                     {/if}
                   </div>
 
-                  <div class="flex flex-shrink-0 items-center gap-1">
+                  <div class="flex shrink-0 items-center gap-1">
                     <Button
                       size="icon"
                       variant="ghost"

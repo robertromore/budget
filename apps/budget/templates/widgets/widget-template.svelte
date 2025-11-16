@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ChartWrapper } from '$lib/components/charts';
-  import type { WidgetProps, ChartType } from '$lib/types/widgets';
+  import type { ChartType, WidgetProps } from '$lib/types/widgets';
   import { colorUtils } from '$lib/utils/colors';
   import WidgetCard from './widget-card.svelte';
 
@@ -49,9 +49,9 @@
   const itemCount = $derived(processedData.length);
 </script>
 
-<WidgetCard 
-  {config} 
-  {data} 
+<WidgetCard
+  {config}
+  {data}
   {editMode}
   {...(onUpdate && { onUpdate })}
   {...(onRemove && { onRemove })}
@@ -102,7 +102,7 @@
               {#each processedData.slice(0, 4) as item, i}
                 <div class="flex items-center gap-1">
                   <div
-                    class="w-2 h-2 rounded-full flex-shrink-0"
+                    class="w-2 h-2 rounded-full shrink-0"
                     style="background-color: {item.color}"
                   ></div>
                   <span class="truncate text-xs">{item.name}</span>
@@ -141,12 +141,12 @@
                 <div class="flex items-center justify-between text-xs">
                   <div class="flex items-center gap-2 min-w-0 flex-1">
                     <div
-                      class="w-2 h-2 rounded-full flex-shrink-0"
+                      class="w-2 h-2 rounded-full shrink-0"
                       style="background-color: {item.color}"
                     ></div>
                     <span class="truncate font-medium">{item.name}</span>
                   </div>
-                  <div class="flex items-center gap-1 flex-shrink-0">
+                  <div class="flex items-center gap-1 shrink-0">
                     <span class="font-semibold">${item.value.toFixed(0)}</span>
                     <span class="text-muted-foreground">({((item.value / totalValue) * 100).toFixed(1)}%)</span>
                   </div>

@@ -1,25 +1,23 @@
 <script lang="ts">
-import {EntitySearchResults, EntityCard} from '$lib/components/shared/search';
+import { EntityCard, EntitySearchResults } from '$lib/components/shared/search';
+import { Badge } from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
-import {Button} from '$lib/components/ui/button';
-import {cn, currencyFormatter} from '$lib/utils';
-import {highlightMatches} from '$lib/utils/search';
-import User from '@lucide/svelte/icons/user';
+import type { Payee } from '$lib/schema';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { cn, currencyFormatter } from '$lib/utils';
+import { highlightMatches } from '$lib/utils/search';
 import Building from '@lucide/svelte/icons/building';
-import Phone from '@lucide/svelte/icons/phone';
-import Mail from '@lucide/svelte/icons/mail';
-import Globe from '@lucide/svelte/icons/globe';
 import Calendar from '@lucide/svelte/icons/calendar';
-import CreditCard from '@lucide/svelte/icons/credit-card';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
+import CreditCard from '@lucide/svelte/icons/credit-card';
+import Globe from '@lucide/svelte/icons/globe';
+import Mail from '@lucide/svelte/icons/mail';
+import Phone from '@lucide/svelte/icons/phone';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
-import Eye from '@lucide/svelte/icons/eye';
-import type {Payee} from '$lib/schema';
+import User from '@lucide/svelte/icons/user';
+import type { Table as TanStackTable } from '@tanstack/table-core';
+import { columns } from '../../(data)/columns.svelte';
 import PayeeDataTableContainer from '../payee-data-table-container.svelte';
-import {columns} from '../../(data)/columns.svelte';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import type {Table as TanStackTable} from '@tanstack/table-core';
 
 export type ViewMode = 'list' | 'grid';
 
@@ -129,7 +127,7 @@ const formatLastTransaction = (date: string | null) => {
 
         <!-- Name and Type -->
         <Card.Title class="flex items-start gap-2 pr-20">
-          <TypeIcon class="text-muted-foreground mt-0.5 h-5 w-5 flex-shrink-0" />
+          <TypeIcon class="text-muted-foreground mt-0.5 h-5 w-5 shrink-0" />
           <div class="min-w-0 flex-1">
             <a href="/payees/{p.slug}" class="block truncate font-medium hover:underline">
               {@html highlightMatches(p.name || 'Unnamed Payee', searchQuery)}
