@@ -1,4 +1,4 @@
-import {isDebtAccount, type Account} from "$lib/schema/accounts";
+import { isDebtAccount, type Account } from "$lib/schema/accounts";
 
 export type BalanceColor = "positive" | "negative" | "neutral";
 

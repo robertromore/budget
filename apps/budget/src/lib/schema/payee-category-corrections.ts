@@ -1,11 +1,11 @@
-import {relations, sql} from "drizzle-orm";
-import {sqliteTable, integer, text, real, index} from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {payees} from "./payees";
-import {categories} from "./categories";
-import {transactions} from "./transactions";
-import {workspaces} from "./workspaces";
-import {z} from "zod/v4";
+import { relations, sql } from "drizzle-orm";
+import { sqliteTable, integer, text, real, index } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { payees } from "./payees";
+import { categories } from "./categories";
+import { transactions } from "./transactions";
+import { workspaces } from "./workspaces";
+import { z } from "zod/v4";
 
 // Enum definitions for correction context
 export const correctionTriggers = [
@@ -40,10 +40,10 @@ export type CorrectionContext = (typeof correctionContexts)[number];
 export const payeeCategoryCorrections = sqliteTable(
   "payee_category_corrections",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
 
     // Core correction data
     payeeId: integer("payee_id")
@@ -58,8 +58,8 @@ export const payeeCategoryCorrections = sqliteTable(
       .references(() => categories.id),
 
     // Context and trigger information
-    correctionTrigger: text("correction_trigger", {enum: correctionTriggers}).notNull(),
-    correctionContext: text("correction_context", {enum: correctionContexts}),
+    correctionTrigger: text("correction_trigger", { enum: correctionTriggers }).notNull(),
+    correctionContext: text("correction_context", { enum: correctionContexts }),
 
     // Transaction context for learning
     transactionAmount: real("transaction_amount"),
@@ -71,18 +71,18 @@ export const payeeCategoryCorrections = sqliteTable(
     correctionWeight: real("correction_weight").default(1.0).notNull(), // Learning weight
 
     // Pattern analysis fields
-    amountRange: text("amount_range", {mode: "json"}), // {min, max} for amount clustering
-    temporalContext: text("temporal_context", {mode: "json"}), // Season, day of week, etc.
-    payeePatternContext: text("payee_pattern_context", {mode: "json"}), // Frequency, regularity
+    amountRange: text("amount_range", { mode: "json" }), // {min, max} for amount clustering
+    temporalContext: text("temporal_context", { mode: "json" }), // Season, day of week, etc.
+    payeePatternContext: text("payee_pattern_context", { mode: "json" }), // Frequency, regularity
 
     // Learning state tracking
-    isProcessed: integer("is_processed", {mode: "boolean"}).default(false).notNull(),
+    isProcessed: integer("is_processed", { mode: "boolean" }).default(false).notNull(),
     processedAt: text("processed_at"),
     learningEpoch: integer("learning_epoch").default(1).notNull(), // For model versioning
 
     // Administrative fields
     notes: text("notes"),
-    isOverride: integer("is_override", {mode: "boolean"}).default(false).notNull(), // Permanent override
+    isOverride: integer("is_override", { mode: "boolean" }).default(false).notNull(), // Permanent override
 
     // Timestamps
     createdAt: text("created_at")
@@ -131,7 +131,7 @@ export const payeeCategoryCorrections = sqliteTable(
   ]
 );
 
-export const payeeCategoryCorrectionsRelations = relations(payeeCategoryCorrections, ({one}) => ({
+export const payeeCategoryCorrectionsRelations = relations(payeeCategoryCorrections, ({ one }) => ({
   workspace: one(workspaces, {
     fields: [payeeCategoryCorrections.workspaceId],
     references: [workspaces.id],
@@ -243,7 +243,7 @@ export interface CategoryCorrection {
   userConfidence: number | null;
   systemConfidence: number | null;
   correctionWeight: number;
-  amountRange: {min: number; max: number} | null;
+  amountRange: { min: number; max: number } | null;
   temporalContext: {
     month?: number;
     dayOfWeek?: number;
@@ -279,7 +279,7 @@ export interface CorrectionPattern {
     percentage: number;
   }>;
   amountPatterns: Array<{
-    range: {min: number; max: number};
+    range: { min: number; max: number };
     count: number;
     confidence: number;
   }>;

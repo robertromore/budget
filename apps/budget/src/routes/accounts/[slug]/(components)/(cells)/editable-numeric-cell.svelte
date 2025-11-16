@@ -1,7 +1,7 @@
 <script lang="ts">
-import {NumericInput} from '$lib/components/input';
-import {useEditableCell} from '$lib/hooks/ui/use-editable-cell.svelte';
-import {currencyFormatter} from '$lib/utils/formatters';
+import { NumericInput } from '$lib/components/input';
+import { useEditableCell } from '$lib/hooks/ui/use-editable-cell.svelte';
+import { currencyFormatter } from '$lib/utils/formatters';
 
 interface Props {
   value: number;
@@ -9,7 +9,7 @@ interface Props {
   onSave: (newValue: number) => Promise<void>;
 }
 
-let {value = $bindable(), format = 'currency', onSave}: Props = $props();
+let { value = $bindable(), format = 'currency', onSave }: Props = $props();
 
 const formatter =
   format === 'currency'

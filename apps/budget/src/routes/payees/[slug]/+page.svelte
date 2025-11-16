@@ -1,7 +1,7 @@
 <script lang="ts">
-import {goto} from '$app/navigation';
-import {page} from '$app/state';
-import {Button, buttonVariants} from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
@@ -10,7 +10,7 @@ import SquarePen from '@lucide/svelte/icons/square-pen';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import Phone from '@lucide/svelte/icons/phone';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
 
 // Get payee slug from URL parameter
 const payeeSlug = $derived(page.params['slug'] || '');
@@ -261,7 +261,7 @@ $effect(() => {
       <AlertDialog.Action
         onclick={handleDelete}
         disabled={isDeleting}
-        class={buttonVariants({variant: 'destructive'})}>
+        class={buttonVariants({ variant: 'destructive' })}>
         {isDeleting ? 'Deleting...' : 'Delete'}
       </AlertDialog.Action>
     </AlertDialog.Footer>

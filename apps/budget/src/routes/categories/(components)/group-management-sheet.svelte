@@ -1,11 +1,11 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Sheet from '$lib/components/ui/sheet';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import {
   Plus,
   Pencil,
@@ -19,22 +19,22 @@ import {
   GripVertical,
 } from '@lucide/svelte/icons';
 import ManageCategoryGroupForm from '$lib/components/forms/manage-category-group-form.svelte';
-import {RecommendationsPanel} from '$lib/components/category-groups';
+import { RecommendationsPanel } from '$lib/components/category-groups';
 import {
   deleteCategoryGroup,
   removeCategoryFromGroup,
   moveCategoryToGroup,
 } from '$lib/query/category-groups';
-import {rpc} from '$lib/query';
-import type {CategoryGroupWithCounts} from '$lib/schema/category-groups';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
-import type {Category} from '$lib/schema/categories';
+import { rpc } from '$lib/query';
+import type { CategoryGroupWithCounts } from '$lib/schema/category-groups';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
+import type { Category } from '$lib/schema/categories';
 
 interface Props {
   open: boolean;
 }
 
-let {open = $bindable()}: Props = $props();
+let { open = $bindable() }: Props = $props();
 
 // Query for category groups
 const groupsQuery = rpc.categoryGroups.listCategoryGroups().options();
@@ -59,7 +59,7 @@ let isCreatingNew = $state(false);
 let isEditingGroup = $state(false);
 
 // Drag and Drop State
-let draggedCategory = $state<(Category & {groupId: number | null}) | null>(null);
+let draggedCategory = $state<(Category & { groupId: number | null }) | null>(null);
 let dragOverGroupId = $state<number | null>(null);
 let isDragging = $state(false);
 
@@ -112,11 +112,11 @@ function handleCancelEdit() {
 }
 
 function handleRemoveCategory(categoryId: number) {
-  removeCategoryMutation.mutate({categoryId});
+  removeCategoryMutation.mutate({ categoryId });
 }
 
 // Drag and Drop Handlers
-function handleDragStart(event: DragEvent, category: Category & {groupId: number | null}) {
+function handleDragStart(event: DragEvent, category: Category & { groupId: number | null }) {
   draggedCategory = category;
   isDragging = true;
   if (event.dataTransfer) {
@@ -315,7 +315,7 @@ const groupedCategories = $derived.by(() => {
                               class="shrink-0 cursor-grab active:cursor-grabbing"
                               draggable="true"
                               ondragstart={(e) =>
-                                handleDragStart(e, {...category, groupId: group.id})}
+                                handleDragStart(e, { ...category, groupId: group.id })}
                               ondragend={handleDragEnd}>
                               <GripVertical class="text-muted-foreground/50 h-4 w-4" />
                             </div>

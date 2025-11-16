@@ -1,10 +1,13 @@
-import type {Category} from "$lib/schema/categories";
-import type {CategoryGroup, NewCategoryGroup} from "$lib/schema/category-groups";
-import {categoryGroupMemberships, categoryGroupRecommendations} from "$lib/schema/category-groups";
-import {db} from "$lib/server/db";
-import {ConflictError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {eq, inArray} from "drizzle-orm";
+import type { Category } from "$lib/schema/categories";
+import type { CategoryGroup, NewCategoryGroup } from "$lib/schema/category-groups";
+import {
+  categoryGroupMemberships,
+  categoryGroupRecommendations,
+} from "$lib/schema/category-groups";
+import { db } from "$lib/server/db";
+import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { eq, inArray } from "drizzle-orm";
 import {
   CategoryGroupMembershipRepository,
   CategoryGroupRepository,
@@ -316,12 +319,12 @@ export class CategoryGroupService {
    * Reorder groups
    */
   async reorderGroups(
-    updates: Array<{id: number; sortOrder: number}>,
+    updates: Array<{ id: number; sortOrder: number }>,
     workspaceId: number
   ): Promise<void> {
     await db.transaction(async (tx) => {
-      for (const {id, sortOrder} of updates) {
-        await this.groupRepository.update(id, {sortOrder}, workspaceId);
+      for (const { id, sortOrder } of updates) {
+        await this.groupRepository.update(id, { sortOrder }, workspaceId);
       }
     });
   }
@@ -330,7 +333,7 @@ export class CategoryGroupService {
    * Reorder categories within a group
    */
   async reorderCategoriesInGroup(
-    updates: Array<{categoryId: number; sortOrder: number}>
+    updates: Array<{ categoryId: number; sortOrder: number }>
   ): Promise<void> {
     await this.membershipRepository.updateSortOrders(updates);
   }

@@ -1,10 +1,10 @@
 <script lang="ts">
-import {EntitySearchResults} from '$lib/components/shared/search';
+import { EntitySearchResults } from '$lib/components/shared/search';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
-import {currencyFormatter, recurringFormatter} from '$lib/utils/formatters';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
+import { currencyFormatter, recurringFormatter } from '$lib/utils/formatters';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Clock from '@lucide/svelte/icons/clock';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
@@ -12,9 +12,9 @@ import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash from '@lucide/svelte/icons/trash';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
 import Eye from '@lucide/svelte/icons/eye';
-import type {Schedule} from '$lib/schema/schedules';
-import type {SchedulesState} from '$lib/states/entities/schedules.svelte';
-import type {ColumnDef} from '@tanstack/table-core';
+import type { Schedule } from '$lib/schema/schedules';
+import type { SchedulesState } from '$lib/states/entities/schedules.svelte';
+import type { ColumnDef } from '@tanstack/table-core';
 import ScheduleDataTableContainer from '../schedule-data-table-container.svelte';
 
 export type ViewMode = 'list' | 'grid';

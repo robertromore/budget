@@ -10,7 +10,7 @@ let {
 } = $props();
 
 const categoryData = $derived.by(() => {
-  if (!category) return {icon: Tag, color: null, name: '—'};
+  if (!category) return { icon: Tag, color: null, name: '—' };
 
   const iconData = category.categoryIcon ? getIconByName(category.categoryIcon) : null;
   const IconComponent = iconData?.icon || Tag;

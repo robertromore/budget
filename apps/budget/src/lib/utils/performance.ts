@@ -71,7 +71,7 @@ class PerformanceMonitor {
     const metrics = name ? this.metrics.filter((m) => m.name === name) : this.metrics;
 
     if (metrics.length === 0) {
-      return {count: 0, avg: 0, min: 0, max: 0, p50: 0, p95: 0, p99: 0};
+      return { count: 0, avg: 0, min: 0, max: 0, p50: 0, p95: 0, p99: 0 };
     }
 
     const values = metrics.map((m) => m.value).sort((a, b) => a - b);
@@ -136,17 +136,17 @@ export function measureRender(componentName: string, renderFn: () => void): numb
 // Bundle size analysis helper
 export function analyzeBundleSize(): Promise<{
   totalSize: number;
-  chunks: Array<{name: string; size: number; gzipSize: number}>;
+  chunks: Array<{ name: string; size: number; gzipSize: number }>;
 }> {
   // This would integrate with build tools in production
   // For now, return mock data based on our vite build
   return Promise.resolve({
     totalSize: 1200000, // ~1.2MB total
     chunks: [
-      {name: "vendor-ui", size: 450000, gzipSize: 120000},
-      {name: "vendor-trpc", size: 200000, gzipSize: 60000},
-      {name: "data-table", size: 275000, gzipSize: 65000},
-      {name: "main", size: 275000, gzipSize: 70000},
+      { name: "vendor-ui", size: 450000, gzipSize: 120000 },
+      { name: "vendor-trpc", size: 200000, gzipSize: 60000 },
+      { name: "data-table", size: 275000, gzipSize: 65000 },
+      { name: "main", size: 275000, gzipSize: 70000 },
     ],
   });
 }
@@ -163,7 +163,7 @@ export class WebVitalsMonitor {
         const lastEntry = entries[entries.length - 1];
         this.vitals.lcp = lastEntry.startTime;
         perfMonitor.recordMetric("web-vitals.lcp", lastEntry.startTime);
-      }).observe({type: "largest-contentful-paint", buffered: true});
+      }).observe({ type: "largest-contentful-paint", buffered: true });
 
       // First Input Delay
       new PerformanceObserver((list) => {
@@ -172,7 +172,7 @@ export class WebVitalsMonitor {
           this.vitals.fid = entry.processingStart - entry.startTime;
           perfMonitor.recordMetric("web-vitals.fid", entry.processingStart - entry.startTime);
         });
-      }).observe({type: "first-input", buffered: true});
+      }).observe({ type: "first-input", buffered: true });
 
       // Cumulative Layout Shift
       new PerformanceObserver((list) => {
@@ -185,12 +185,12 @@ export class WebVitalsMonitor {
         });
         this.vitals.cls = clsValue;
         perfMonitor.recordMetric("web-vitals.cls", clsValue);
-      }).observe({type: "layout-shift", buffered: true});
+      }).observe({ type: "layout-shift", buffered: true });
     }
   }
 
   getVitals(): Record<string, number> {
-    return {...this.vitals};
+    return { ...this.vitals };
   }
 }
 

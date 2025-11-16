@@ -1,7 +1,7 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {cn} from '$lib/utils';
+import { cn } from '$lib/utils';
 import Upload from '@lucide/svelte/icons/upload';
 import FileText from '@lucide/svelte/icons/file-text';
 import X from '@lucide/svelte/icons/x';
@@ -42,7 +42,7 @@ function formatFileSize(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
-function validateFile(file: File): {valid: boolean; error?: string} {
+function validateFile(file: File): { valid: boolean; error?: string } {
   // Check file type
   const extension = `.${file.name.split('.').pop()?.toLowerCase()}`;
   if (!acceptedFormats.includes(extension)) {
@@ -68,7 +68,7 @@ function validateFile(file: File): {valid: boolean; error?: string} {
     };
   }
 
-  return {valid: true};
+  return { valid: true };
 }
 
 function handleFileSelect(files: FileList | null) {

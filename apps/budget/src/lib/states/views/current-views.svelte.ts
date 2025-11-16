@@ -1,8 +1,8 @@
-import type {TransactionsFormat, ViewFilter} from "$lib/types";
-import type {Table} from "@tanstack/table-core";
-import {Context} from "runed";
-import {SvelteMap} from "svelte/reactivity";
-import {CurrentViewState} from "./current-view.svelte";
+import type { TransactionsFormat, ViewFilter } from "$lib/types";
+import type { Table } from "@tanstack/table-core";
+import { Context } from "runed";
+import { SvelteMap } from "svelte/reactivity";
+import { CurrentViewState } from "./current-view.svelte";
 
 /**
  * A state class representing multiple active views.

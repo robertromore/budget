@@ -3,11 +3,11 @@ import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
 import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
-import type {Table} from '@tanstack/table-core';
+import type { Table } from '@tanstack/table-core';
 import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 
-let {table}: {table: Table<TData>} = $props();
+let { table }: { table: Table<TData> } = $props();
 
 // Page size state
 let pageSizeValue = $state('10');

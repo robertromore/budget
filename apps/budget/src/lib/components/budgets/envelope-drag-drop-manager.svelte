@@ -1,12 +1,12 @@
 <script lang="ts">
-import {ArrowUpDown, Grip, DollarSign} from '@lucide/svelte/icons';
+import { ArrowUpDown, Grip, DollarSign } from '@lucide/svelte/icons';
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
-import {Progress} from '$lib/components/ui/progress';
+import { Badge } from '$lib/components/ui/badge';
+import { Progress } from '$lib/components/ui/progress';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
-import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
 
 interface Props {
   envelopes: EnvelopeAllocation[];
@@ -15,7 +15,7 @@ interface Props {
   class?: string;
 }
 
-let {envelopes, getCategoryName, onFundTransfer, class: className}: Props = $props();
+let { envelopes, getCategoryName, onFundTransfer, class: className }: Props = $props();
 
 let draggedEnvelope = $state<EnvelopeAllocation | null>(null);
 let draggedAmount = $state<number>(0);

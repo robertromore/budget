@@ -1,7 +1,7 @@
 <script lang="ts" generics="TData">
-import type {Snippet} from 'svelte';
-import type {Table} from '@tanstack/table-core';
-import {cn} from '$lib/utils';
+import type { Snippet } from 'svelte';
+import type { Table } from '@tanstack/table-core';
+import { cn } from '$lib/utils';
 
 interface Props {
   /** The TanStack table instance */

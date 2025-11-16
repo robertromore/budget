@@ -14,7 +14,7 @@ interface Props {
   onReset?: () => void;
 }
 
-let {settings, onSave, onReset}: Props = $props();
+let { settings, onSave, onReset }: Props = $props();
 
 // Local state for editing
 let localSettings = $state({

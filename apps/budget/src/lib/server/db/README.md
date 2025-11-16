@@ -61,7 +61,7 @@ relationships.
 #### Basic Factory Usage
 
 ```typescript
-import {workspaceFactory, accountFactory} from '$lib/server/db/factories';
+import { workspaceFactory, accountFactory } from '$lib/server/db/factories';
 
 // Create a workspace
 const [workspace] = await workspaceFactory(1);
@@ -75,7 +75,7 @@ const accounts = await accountFactory(3, workspace.id);
 #### Custom Transaction Count
 
 ```typescript
-import {accountFactory, transactionFactory} from '$lib/server/db/factories';
+import { accountFactory, transactionFactory } from '$lib/server/db/factories';
 
 const [account] = await accountFactory(1, workspaceId);
 
@@ -111,7 +111,7 @@ await categoryFactory(5);
 Factories use sequences to ensure unique values:
 
 ```typescript
-import {sequence} from './utils/sequence';
+import { sequence } from './utils/sequence';
 
 const slug = `${slugify(name)}-${sequence('account')}`;
 // Results: "checking-account-1", "checking-account-2", etc.
@@ -252,7 +252,7 @@ snapshot/restore capabilities.
 ### Setup
 
 ```typescript
-import {TestDatabase} from '$lib/server/db/test-utils';
+import { TestDatabase } from '$lib/server/db/test-utils';
 
 describe('My Test Suite', () => {
   const testDb = new TestDatabase();
@@ -405,7 +405,7 @@ When querying transactions, always filter by workspace:
 ```typescript
 // Get workspace account IDs first
 const workspaceAccounts = await db
-  .select({id: accounts.id})
+  .select({ id: accounts.id })
   .from(accounts)
   .where(eq(accounts.workspaceId, workspaceId));
 
@@ -455,8 +455,8 @@ bun run db:factory
 
 ```typescript
 // Create custom seed script
-import {workspaceFactory} from './factories/workspaces';
-import {accountFactory} from './factories/accounts';
+import { workspaceFactory } from './factories/workspaces';
+import { accountFactory } from './factories/accounts';
 
 const [workspace] = await workspaceFactory(1);
 
@@ -490,7 +490,7 @@ await accountFactory(5, workspace.id);
 **Solution**: Sequences already handle this, but if manually creating:
 
 ```typescript
-import {sequence} from './factories/utils/sequence';
+import { sequence } from './factories/utils/sequence';
 
 const slug = `${slugify(name)}-${sequence('account')}`;
 ```

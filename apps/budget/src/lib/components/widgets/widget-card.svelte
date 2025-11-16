@@ -1,10 +1,10 @@
 <script lang="ts">
-import {Settings} from '$lib/components/icons';
-import {Button} from '$lib/components/ui/button';
+import { Settings } from '$lib/components/icons';
+import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import type {WidgetProps} from '$lib/types/widgets';
-import {WIDGET_CHART_TYPES, WIDGET_DEFINITIONS} from '$lib/types/widgets';
-import {cn} from '$lib/utils';
+import type { WidgetProps } from '$lib/types/widgets';
+import { WIDGET_CHART_TYPES, WIDGET_DEFINITIONS } from '$lib/types/widgets';
+import { cn } from '$lib/utils';
 
 let {
   config,
@@ -13,7 +13,7 @@ let {
   onRemove = undefined,
   editMode = false,
   children,
-}: WidgetProps & {children: any} = $props();
+}: WidgetProps & { children: any } = $props();
 
 const sizeClasses = {
   small: 'widget-size-small',
@@ -54,7 +54,7 @@ const currentChartType = $derived(config.settings?.['chartType']);
             <DropdownMenu.Label>Size</DropdownMenu.Label>
             {#each availableSizes as size}
               <DropdownMenu.Item
-                onclick={() => onUpdate?.({size})}
+                onclick={() => onUpdate?.({ size })}
                 class={config.size === size ? 'bg-accent' : ''}>
                 {size.charAt(0).toUpperCase() + size.slice(1)}
               </DropdownMenu.Item>
@@ -67,7 +67,7 @@ const currentChartType = $derived(config.settings?.['chartType']);
             {#each availableChartTypes as chartType}
               <DropdownMenu.Item
                 onclick={() =>
-                  onUpdate?.({settings: {...config.settings, chartType: chartType.value}})}
+                  onUpdate?.({ settings: { ...config.settings, chartType: chartType.value } })}
                 class={currentChartType === chartType.value ? 'bg-accent' : ''}>
                 <div class="flex items-center gap-2">
                   <chartType.icon class="size-3" />

@@ -1,10 +1,10 @@
 <script lang="ts">
-import {TriangleAlert, Plus, ArrowUpDown, Wallet, Grip} from '@lucide/svelte/icons';
+import { TriangleAlert, Plus, ArrowUpDown, Wallet, Grip } from '@lucide/svelte/icons';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import Label from '$lib/components/ui/label/label.svelte';
-import {Badge} from '$lib/components/ui/badge';
-import {Progress} from '$lib/components/ui/progress';
+import { Badge } from '$lib/components/ui/badge';
+import { Progress } from '$lib/components/ui/progress';
 import * as Dialog from '$lib/components/ui/dialog';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as Select from '$lib/components/ui/select';
@@ -13,13 +13,13 @@ import EnvelopeAllocationCard from '$lib/components/budgets/envelope-allocation-
 import FundAllocationPanel from '$lib/components/budgets/fund-allocation-panel.svelte';
 import EnvelopeDragDropManager from '$lib/components/budgets/envelope-drag-drop-manager.svelte';
 import EnvelopeCreateSheet from '$lib/components/budgets/envelope-create-sheet.svelte';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
-import type {Category} from '$lib/schema/categories';
-import type {BudgetPeriodInstance} from '$lib/schema/budgets';
-import type {EnvelopeAllocationRequest} from '$lib/server/domains/budgets/envelope-service';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
+import type { Category } from '$lib/schema/categories';
+import type { BudgetPeriodInstance } from '$lib/schema/budgets';
+import type { EnvelopeAllocationRequest } from '$lib/server/domains/budgets/envelope-service';
 
 interface Props {
   budget: BudgetWithRelations;

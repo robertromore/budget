@@ -1,12 +1,12 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import {FolderOpen, EllipsisVertical, Pencil, Trash2, Users} from '@lucide/svelte/icons';
-import type {CategoryGroupWithCounts} from '$lib/schema/category-groups';
-import {goto} from '$app/navigation';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import { FolderOpen, EllipsisVertical, Pencil, Trash2, Users } from '@lucide/svelte/icons';
+import type { CategoryGroupWithCounts } from '$lib/schema/category-groups';
+import { goto } from '$app/navigation';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 
 interface Props {
   group: CategoryGroupWithCounts;
@@ -15,7 +15,7 @@ interface Props {
   onManageCategories?: (group: CategoryGroupWithCounts) => void;
 }
 
-let {group, onEdit, onDelete, onManageCategories}: Props = $props();
+let { group, onEdit, onDelete, onManageCategories }: Props = $props();
 
 // Get dynamic icon or use default
 const iconData = $derived(group.groupIcon ? getIconByName(group.groupIcon) : null);
@@ -48,7 +48,7 @@ function viewGroup() {
 
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
-          {#snippet child({props})}
+          {#snippet child({ props })}
             <Button
               {...props}
               variant="ghost"

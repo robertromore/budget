@@ -1,10 +1,10 @@
 <script lang="ts">
-import {EntitySearchToolbar, type SortOption} from '$lib/components/shared/search';
+import { EntitySearchToolbar, type SortOption } from '$lib/components/shared/search';
 import * as Select from '$lib/components/ui/select';
-import {Input} from '$lib/components/ui/input';
-import {Button} from '$lib/components/ui/button';
-import type {PayeeSearchFilters} from '$lib/server/domains/payees/repository';
-import type {PayeeType, PaymentFrequency} from '$lib/schema';
+import { Input } from '$lib/components/ui/input';
+import { Button } from '$lib/components/ui/button';
+import type { PayeeSearchFilters } from '$lib/server/domains/payees/repository';
+import type { PayeeType, PaymentFrequency } from '$lib/schema';
 
 type PayeeSortBy = 'name' | 'lastTransaction' | 'avgAmount' | 'created';
 type SortOrder = 'asc' | 'desc';
@@ -37,34 +37,34 @@ let {
 
 // Payee type options
 const payeeTypeOptions = [
-  {value: 'merchant', label: 'Merchant'},
-  {value: 'person', label: 'Person'},
-  {value: 'company', label: 'Company'},
-  {value: 'government', label: 'Government'},
-  {value: 'charity', label: 'Charity'},
-  {value: 'bank', label: 'Bank'},
-  {value: 'investment', label: 'Investment'},
-  {value: 'other', label: 'Other'},
+  { value: 'merchant', label: 'Merchant' },
+  { value: 'person', label: 'Person' },
+  { value: 'company', label: 'Company' },
+  { value: 'government', label: 'Government' },
+  { value: 'charity', label: 'Charity' },
+  { value: 'bank', label: 'Bank' },
+  { value: 'investment', label: 'Investment' },
+  { value: 'other', label: 'Other' },
 ] as const;
 
 // Payment frequency options
 const frequencyOptions = [
-  {value: 'one_time', label: 'One Time'},
-  {value: 'weekly', label: 'Weekly'},
-  {value: 'bi_weekly', label: 'Bi-Weekly'},
-  {value: 'monthly', label: 'Monthly'},
-  {value: 'quarterly', label: 'Quarterly'},
-  {value: 'yearly', label: 'Yearly'},
+  { value: 'one_time', label: 'One Time' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'bi_weekly', label: 'Bi-Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'yearly', label: 'Yearly' },
 ] as const;
 
 // Sort options
 const sortOptions: SortOption<PayeeSortBy>[] = [
-  {value: 'name', label: 'Name', order: 'asc'},
-  {value: 'name', label: 'Name', order: 'desc'},
-  {value: 'lastTransaction', label: 'Recently Active', order: 'desc'},
-  {value: 'avgAmount', label: 'Amount (High)', order: 'desc'},
-  {value: 'avgAmount', label: 'Amount (Low)', order: 'asc'},
-  {value: 'created', label: 'Date Created', order: 'desc'},
+  { value: 'name', label: 'Name', order: 'asc' },
+  { value: 'name', label: 'Name', order: 'desc' },
+  { value: 'lastTransaction', label: 'Recently Active', order: 'desc' },
+  { value: 'avgAmount', label: 'Amount (High)', order: 'desc' },
+  { value: 'avgAmount', label: 'Amount (Low)', order: 'asc' },
+  { value: 'created', label: 'Date Created', order: 'desc' },
 ];
 
 // Count active filters
@@ -89,11 +89,11 @@ const filterSummaries = $derived(() => {
 
   if (filters.payeeType) {
     const type = payeeTypeOptions.find((opt) => opt.value === filters.payeeType);
-    if (type) summary.push({key: 'payeeType', label: `Type: ${type.label}`});
+    if (type) summary.push({ key: 'payeeType', label: `Type: ${type.label}` });
   }
 
   if (filters.isActive !== undefined) {
-    summary.push({key: 'isActive', label: `Status: ${filters.isActive ? 'Active' : 'Inactive'}`});
+    summary.push({ key: 'isActive', label: `Status: ${filters.isActive ? 'Active' : 'Inactive'}` });
   }
 
   if (filters.taxRelevant !== undefined) {
@@ -105,20 +105,20 @@ const filterSummaries = $derived(() => {
 
   if (filters.paymentFrequency) {
     const freq = frequencyOptions.find((opt) => opt.value === filters.paymentFrequency);
-    if (freq) summary.push({key: 'paymentFrequency', label: `Frequency: ${freq.label}`});
+    if (freq) summary.push({ key: 'paymentFrequency', label: `Frequency: ${freq.label}` });
   }
 
   if (filters.minAvgAmount !== undefined || filters.maxAvgAmount !== undefined) {
     const min = filters.minAvgAmount ? `$${filters.minAvgAmount}` : '0';
     const max = filters.maxAvgAmount ? `$${filters.maxAvgAmount}` : '∞';
-    summary.push({key: 'amount', label: `Amount: ${min} - ${max}`});
+    summary.push({ key: 'amount', label: `Amount: ${min} - ${max}` });
   }
 
   return summary;
 });
 
 const updateFilter = <K extends keyof PayeeSearchFilters>(key: K, value: PayeeSearchFilters[K]) => {
-  const newFilters = {...filters};
+  const newFilters = { ...filters };
   if (value === undefined || value === null || value === '') {
     delete newFilters[key];
   } else {

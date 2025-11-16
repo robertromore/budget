@@ -1,12 +1,12 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import Ellipsis from '@lucide/svelte/icons/ellipsis';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import FileText from '@lucide/svelte/icons/file-text';
 import Receipt from '@lucide/svelte/icons/receipt';
-import type {ExpenseFormat} from '../../(data)/expense-columns.svelte';
+import type { ExpenseFormat } from '../../(data)/expense-columns.svelte';
 
 interface Props {
   expense: ExpenseFormat;
@@ -16,12 +16,12 @@ interface Props {
   onAddReceipt: () => void;
 }
 
-let {expense, onEdit, onDelete, onManageClaims, onAddReceipt}: Props = $props();
+let { expense, onEdit, onDelete, onManageClaims, onAddReceipt }: Props = $props();
 </script>
 
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>
-    {#snippet child({props})}
+    {#snippet child({ props })}
       <Button {...props} variant="ghost" size="icon">
         <Ellipsis class="size-4" />
         <span class="sr-only">Open menu</span>

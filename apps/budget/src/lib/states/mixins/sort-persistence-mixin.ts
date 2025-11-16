@@ -13,7 +13,7 @@ export interface SortPersistenceMixin<TSortField = string, TSortDirection = "asc
   setSortDirection(direction: TSortDirection): void;
 
   // Combined operations
-  getSort(): {field: TSortField; direction: TSortDirection};
+  getSort(): { field: TSortField; direction: TSortDirection };
   setSort(field: TSortField, direction: TSortDirection): void;
   toggleSortDirection(): TSortDirection;
   toggleSortField(field: TSortField): void;
@@ -120,7 +120,7 @@ export function createSortPersistence<TSortField = string, TSortDirection = "asc
     },
 
     // Combined operations
-    getSort(): {field: TSortField; direction: TSortDirection} {
+    getSort(): { field: TSortField; direction: TSortDirection } {
       return {
         field: getSortField(),
         direction: getSortDirection(),

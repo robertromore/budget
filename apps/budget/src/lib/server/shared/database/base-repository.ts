@@ -1,6 +1,6 @@
-import type {Database} from "bun:sqlite";
-import {eq, desc, asc, like, and, or, count} from "drizzle-orm";
-import {DatabaseError, NotFoundError} from "$lib/server/shared/types";
+import type { Database } from "bun:sqlite";
+import { eq, desc, asc, like, and, or, count } from "drizzle-orm";
+import { DatabaseError, NotFoundError } from "$lib/server/shared/types";
 import type {
   PaginationOptions,
   PaginatedResult,
@@ -8,9 +8,9 @@ import type {
   FilterOptions,
   SearchOptions,
 } from "$lib/server/shared/types";
-import {DATABASE_CONFIG} from "$lib/server/config/database";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {logger} from "$lib/server/shared/logging";
+import { DATABASE_CONFIG } from "$lib/server/config/database";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { logger } from "$lib/server/shared/logging";
 
 /**
  * Base repository class providing common database operations
@@ -79,7 +79,7 @@ export abstract class BaseRepository<
       const actualOffset = offset !== undefined ? offset : (page - 1) * actualLimit;
 
       // Get total count
-      const [{total}] = await this.db.select({total: count()}).from(this.table);
+      const [{ total }] = await this.db.select({ total: count() }).from(this.table);
 
       // Get paginated data
       const data = await this.db
@@ -110,7 +110,7 @@ export abstract class BaseRepository<
       // Add workspaceId to data if provided and table has workspaceId column
       const values =
         workspaceId !== undefined && (this.table as any).workspaceId
-          ? {...(data as any), workspaceId}
+          ? { ...(data as any), workspaceId }
           : data;
 
       const result = await this.db.insert(this.table).values(values).returning();
@@ -199,7 +199,7 @@ export abstract class BaseRepository<
         throw new DatabaseError(`Soft delete not supported for ${this.entityName}`, "softDelete");
       }
 
-      return await this.update(id, {deletedAt: getCurrentTimestamp()} as TUpdateInput);
+      return await this.update(id, { deletedAt: getCurrentTimestamp() } as TUpdateInput);
     } catch (error) {
       if (error instanceof DatabaseError || error instanceof NotFoundError) throw error;
       throw new DatabaseError(`Failed to soft delete ${this.entityName}`, "softDelete");
@@ -252,7 +252,7 @@ export abstract class BaseRepository<
    */
   async count(): Promise<number> {
     try {
-      const [{total}] = await this.db.select({total: count()}).from(this.table);
+      const [{ total }] = await this.db.select({ total: count() }).from(this.table);
 
       return total || 0;
     } catch (error) {
@@ -279,7 +279,7 @@ export abstract class BaseRepository<
   async findBySlug(slug: string, workspaceId?: number): Promise<TEntity | null> {
     try {
       // Import isNull dynamically to avoid circular dependency
-      const {isNull} = await import("drizzle-orm");
+      const { isNull } = await import("drizzle-orm");
 
       const conditions = [eq((this.table as any).slug, slug)];
 
@@ -312,7 +312,7 @@ export abstract class BaseRepository<
    */
   async isSlugUnique(slug: string, excludeId?: number): Promise<boolean> {
     try {
-      const {ne} = await import("drizzle-orm");
+      const { ne } = await import("drizzle-orm");
 
       const conditions = [eq((this.table as any).slug, slug)];
 
@@ -388,7 +388,7 @@ export abstract class BaseRepository<
         );
       }
 
-      const {inArray, isNull, and} = await import("drizzle-orm");
+      const { inArray, isNull, and } = await import("drizzle-orm");
 
       // Get existing entities to access their slugs
       const entities = await this.db
@@ -435,11 +435,11 @@ export abstract class BaseRepository<
    */
   async searchByName(
     query: string,
-    options?: {limit?: number; excludeDeleted?: boolean}
+    options?: { limit?: number; excludeDeleted?: boolean }
   ): Promise<TEntity[]> {
     try {
-      const {limit = 50, excludeDeleted = true} = options || {};
-      const {isNull} = await import("drizzle-orm");
+      const { limit = 50, excludeDeleted = true } = options || {};
+      const { isNull } = await import("drizzle-orm");
 
       if (!("name" in (this.table as any))) {
         throw new DatabaseError(

@@ -1,4 +1,4 @@
-import {browser} from "$app/environment";
+import { browser } from "$app/environment";
 
 /**
  * Creates a reactive state that persists to localStorage

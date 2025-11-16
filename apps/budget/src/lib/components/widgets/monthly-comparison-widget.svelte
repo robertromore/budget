@@ -1,10 +1,10 @@
 <script lang="ts">
-import type {WidgetProps} from '$lib/types/widgets';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {TrendingDown, TrendingUp} from '$lib/components/icons';
+import type { WidgetProps } from '$lib/types/widgets';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { TrendingDown, TrendingUp } from '$lib/components/icons';
 import WidgetCard from './widget-card.svelte';
 
-let {config, data, onUpdate, onRemove, editMode = false}: WidgetProps = $props();
+let { config, data, onUpdate, onRemove, editMode = false }: WidgetProps = $props();
 
 const monthData = data?.['monthlyComparison'] ?? [];
 const compareMonths = config.settings?.['compareMonths'] ?? 3;
@@ -18,7 +18,7 @@ const monthChange =
 const changePercent = previousMonth?.spending ? (monthChange / previousMonth.spending) * 100 : 0;
 </script>
 
-<WidgetCard {config} {data} {editMode} {...onUpdate && {onUpdate}} {...onRemove && {onRemove}}>
+<WidgetCard {config} {data} {editMode} {...onUpdate && { onUpdate }} {...onRemove && { onRemove }}>
   <div class="space-y-3">
     <div class="text-muted-foreground text-sm font-medium">{config.title}</div>
 

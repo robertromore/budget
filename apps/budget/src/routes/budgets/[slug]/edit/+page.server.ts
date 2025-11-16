@@ -1,13 +1,13 @@
-import {redirect, fail} from "@sveltejs/kit";
-import {superformInsertBudgetSchema} from "$lib/schema/superforms";
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import {superValidate} from "sveltekit-superforms/client";
-import {zod4} from "sveltekit-superforms/adapters";
-import type {Actions, PageServerLoad, RequestEvent} from "./$types";
+import { redirect, fail } from "@sveltejs/kit";
+import { superformInsertBudgetSchema } from "$lib/schema/superforms";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
+import { superValidate } from "sveltekit-superforms/client";
+import { zod4 } from "sveltekit-superforms/adapters";
+import type { Actions, PageServerLoad, RequestEvent } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
-  const {params} = event;
+  const { params } = event;
   const budgetSlug = params.slug;
 
   if (!budgetSlug) {
@@ -18,7 +18,7 @@ export const load: PageServerLoad = async (event) => {
   const caller = createCaller(context);
 
   try {
-    const budget = await caller.budgetRoutes.getBySlug({slug: budgetSlug});
+    const budget = await caller.budgetRoutes.getBySlug({ slug: budgetSlug });
 
     if (!budget) {
       throw redirect(303, "/budgets");
@@ -27,7 +27,7 @@ export const load: PageServerLoad = async (event) => {
     // Extract metadata fields for the form
     const metadata = (budget.metadata || {}) as Record<string, unknown>;
     const defaultPeriod = metadata["defaultPeriod"] as
-      | {type?: string; startDay?: number}
+      | { type?: string; startDay?: number }
       | undefined;
 
     // Build form data with defaults for optional fields
@@ -64,12 +64,12 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
   default: async (event: RequestEvent) => {
-    const {request, params} = event;
+    const { request, params } = event;
     const budgetSlug = params.slug;
     const form = await superValidate(request, zod4(superformInsertBudgetSchema));
 
     if (!form.valid) {
-      return fail(400, {form});
+      return fail(400, { form });
     }
 
     const metadata: Record<string, unknown> = {
@@ -88,7 +88,7 @@ export const actions: Actions = {
       const caller = createCaller(context);
 
       // Get the budget to retrieve its ID
-      const budget = await caller.budgetRoutes.getBySlug({slug: budgetSlug});
+      const budget = await caller.budgetRoutes.getBySlug({ slug: budgetSlug });
       if (!budget) {
         throw new Error("Budget not found");
       }

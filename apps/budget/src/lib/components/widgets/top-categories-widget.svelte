@@ -1,12 +1,12 @@
 <script lang="ts">
-import type {WidgetProps} from '$lib/types/widgets';
-import {colorUtils} from '$lib/utils/colors';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import type { WidgetProps } from '$lib/types/widgets';
+import { colorUtils } from '$lib/utils/colors';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import Tag from '@lucide/svelte/icons/tag';
 import WidgetCard from './widget-card.svelte';
 
-let {config, data, onUpdate, onRemove, editMode = false}: WidgetProps = $props();
+let { config, data, onUpdate, onRemove, editMode = false }: WidgetProps = $props();
 
 const categories = data?.['topCategories'] ?? [];
 const limit = config.settings?.['limit'] ?? 5;
@@ -23,7 +23,7 @@ const getCategoryIcon = (iconName: string | null | undefined) => {
 };
 </script>
 
-<WidgetCard {config} {data} {editMode} {...onUpdate && {onUpdate}} {...onRemove && {onRemove}}>
+<WidgetCard {config} {data} {editMode} {...onUpdate && { onUpdate }} {...onRemove && { onRemove }}>
   <div class="space-y-3">
     <div class="flex items-center justify-between">
       <div class="text-muted-foreground text-sm font-medium">{config.title}</div>

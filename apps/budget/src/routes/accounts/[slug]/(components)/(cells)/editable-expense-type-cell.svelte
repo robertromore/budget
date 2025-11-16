@@ -1,18 +1,18 @@
 <script lang="ts">
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import Check from '@lucide/svelte/icons/check';
 import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
-import {medicalExpenseCategories} from '$lib/schema/medical-expenses';
-import {cn} from '$lib/utils';
+import { medicalExpenseCategories } from '$lib/schema/medical-expenses';
+import { cn } from '$lib/utils';
 
 interface Props {
   value: string;
   onSave: (newValue: string) => Promise<void>;
 }
 
-let {value, onSave}: Props = $props();
+let { value, onSave }: Props = $props();
 
 let open = $state(false);
 let searchQuery = $state('');
@@ -34,7 +34,7 @@ const filteredCategories = $derived.by(() => {
   }
 
   const query = searchQuery.toLowerCase();
-  const filtered: Record<string, Array<{key: string; label: string}>> = {};
+  const filtered: Record<string, Array<{ key: string; label: string }>> = {};
 
   Object.entries(medicalExpenseCategories).forEach(([category, items]) => {
     const matchingItems = items.filter(
@@ -65,7 +65,7 @@ const selectedLabel = $derived(allExpenses.find((e) => e.key === value)?.label |
 
 <Popover.Root bind:open>
   <Popover.Trigger>
-    {#snippet child({props})}
+    {#snippet child({ props })}
       <Button
         {...props}
         variant="ghost"

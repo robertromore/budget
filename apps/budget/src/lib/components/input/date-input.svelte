@@ -15,7 +15,7 @@ interface Props {
   buttonClass?: string;
 }
 
-let {value = $bindable(), handleSubmit, buttonClass}: Props = $props();
+let { value = $bindable(), handleSubmit, buttonClass }: Props = $props();
 
 // Create accessors for Calendar binding to handle optional DateValue
 const valueAccessors = createTransformAccessors(
@@ -42,7 +42,7 @@ $effect(() => {
 
 <Popover.Root>
   <Popover.Trigger>
-    {#snippet child({props})}
+    {#snippet child({ props })}
       <Button
         {...props}
         variant="outline"

@@ -10,7 +10,7 @@ interface Props {
   onDismiss: (recommendation: BudgetRecommendationWithRelations) => void;
 }
 
-let {recommendation, onApply, onDismiss}: Props = $props();
+let { recommendation, onApply, onDismiss }: Props = $props();
 </script>
 
 {#if recommendation.status === 'pending'}

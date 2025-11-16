@@ -1,4 +1,4 @@
-import type {AccountType} from "$lib/schema/accounts";
+import type { AccountType } from "$lib/schema/accounts";
 
 export interface DefaultAccount {
   slug: string;

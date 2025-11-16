@@ -1,7 +1,7 @@
 import slugify from "@sindresorhus/slugify";
-import {db} from "..";
-import {workspaces, type Workspace, type WorkspacePreferences} from "$lib/schema/workspaces";
-import {faker} from "@faker-js/faker";
+import { db } from "..";
+import { workspaces, type Workspace, type WorkspacePreferences } from "$lib/schema/workspaces";
+import { faker } from "@faker-js/faker";
 
 /**
  * Creates workspace(s) with realistic names and preferences
@@ -27,7 +27,7 @@ export const workspaceFactory = async (count: number = 1): Promise<Workspace[]> 
     const businessTypes = ["Financial", "Budget", "Accounting", "Money", "Wealth"];
 
     const displayName =
-      faker.helpers.maybe(() => `${faker.company.name()}`, {probability: 0.7}) ??
+      faker.helpers.maybe(() => `${faker.company.name()}`, { probability: 0.7 }) ??
       `${faker.person.lastName()} ${faker.helpers.arrayElement(businessTypes)}`;
 
     const slug = slugify(displayName);

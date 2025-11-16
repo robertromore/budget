@@ -11,29 +11,34 @@ import {
   getSortedRowModel,
   type Table as TTable,
 } from '@tanstack/table-core';
-import {createSvelteTable, FlexRender} from '$lib/components/ui/data-table';
+import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
-import type {ExpenseFormat} from '../(data)/expense-columns.svelte';
+import type { ExpenseFormat } from '../(data)/expense-columns.svelte';
 import ExpenseTableToolbar from './expense-table-toolbar.svelte';
 import ExpenseTablePagination from './expense-table-pagination.svelte';
 import ExpenseBulkActions from './expense-bulk-actions.svelte';
-import {filtering, filters, setFiltering, setGlobalFilter} from '../(data)/expense-filters.svelte';
-import {pagination, setPagination} from '../(data)/pagination.svelte';
-import {selection, setSelection} from '../(data)/selection.svelte';
-import {setSorting, sorting} from '../(data)/sorts.svelte';
-import {visibility, setVisibility} from '../(data)/expense-visibility.svelte';
-import {grouping, setGrouping} from '../(data)/groups.svelte';
-import {expanded, setExpanded} from '../(data)/expanded.svelte';
-import {pinning, setPinning} from '../(data)/pinning.svelte';
-import {columnOrder, setColumnOrder} from '../(data)/column-order.svelte';
-import {currentViews, CurrentViewsState, CurrentViewState} from '$lib/states/views';
-import type {View} from '$lib/schema';
-import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
-import type {FacetedFilterOption} from '$lib/types';
-import {dayFmt} from '$lib/utils/date-formatters';
-import {parseDate} from '@internationalized/date';
-import {timezone} from '$lib/utils/dates';
-import {untrack} from 'svelte';
+import {
+  filtering,
+  filters,
+  setFiltering,
+  setGlobalFilter,
+} from '../(data)/expense-filters.svelte';
+import { pagination, setPagination } from '../(data)/pagination.svelte';
+import { selection, setSelection } from '../(data)/selection.svelte';
+import { setSorting, sorting } from '../(data)/sorts.svelte';
+import { visibility, setVisibility } from '../(data)/expense-visibility.svelte';
+import { grouping, setGrouping } from '../(data)/groups.svelte';
+import { expanded, setExpanded } from '../(data)/expanded.svelte';
+import { pinning, setPinning } from '../(data)/pinning.svelte';
+import { columnOrder, setColumnOrder } from '../(data)/column-order.svelte';
+import { currentViews, CurrentViewsState, CurrentViewState } from '$lib/states/views';
+import type { View } from '$lib/schema';
+import { DateFiltersState } from '$lib/states/ui/date-filters.svelte';
+import type { FacetedFilterOption } from '$lib/types';
+import { dayFmt } from '$lib/utils/date-formatters';
+import { parseDate } from '@internationalized/date';
+import { timezone } from '$lib/utils/dates';
+import { untrack } from 'svelte';
 
 interface Props {
   columns: ColumnDef<ExpenseFormat, TValue>[];
@@ -43,7 +48,7 @@ interface Props {
   onBulkDelete?: (expenses: ExpenseFormat[]) => void;
 }
 
-let {columns, expenses, views = [], table = $bindable(), onBulkDelete}: Props = $props();
+let { columns, expenses, views = [], table = $bindable(), onBulkDelete }: Props = $props();
 
 // Generate date filters from actual expense dates
 const generateDateFilters = (expenses: ExpenseFormat[]): FacetedFilterOption[] => {
@@ -133,7 +138,7 @@ table = createSvelteTable<ExpenseFormat>({
   getGroupedRowModel: getGroupedRowModel(),
   getExpandedRowModel: getExpandedRowModel(),
   getFacetedUniqueValues: getFacetedUniqueValues<ExpenseFormat>(),
-  filterFns: {...filters},
+  filterFns: { ...filters },
   groupedColumnMode: 'reorder',
   autoResetPageIndex: false,
   autoResetExpanded: false,

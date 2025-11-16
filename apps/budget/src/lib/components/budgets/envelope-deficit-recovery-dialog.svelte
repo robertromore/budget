@@ -107,19 +107,19 @@ let surplusEnvelopes = $state<EnvelopeAllocation[]>([]);
 let isLoadingSurplus = $state<boolean>(false);
 
 const severityConfig = $derived.by(() => {
-  if (!analysis) return {color: 'text-muted-foreground', label: 'Unknown', icon: Info};
+  if (!analysis) return { color: 'text-muted-foreground', label: 'Unknown', icon: Info };
 
   switch (analysis.deficitSeverity) {
     case 'critical':
-      return {color: 'text-red-600', label: 'Critical', icon: TriangleAlert};
+      return { color: 'text-red-600', label: 'Critical', icon: TriangleAlert };
     case 'severe':
-      return {color: 'text-orange-600', label: 'Severe', icon: TriangleAlert};
+      return { color: 'text-orange-600', label: 'Severe', icon: TriangleAlert };
     case 'moderate':
-      return {color: 'text-yellow-600', label: 'Moderate', icon: TrendingDown};
+      return { color: 'text-yellow-600', label: 'Moderate', icon: TrendingDown };
     case 'mild':
-      return {color: 'text-blue-600', label: 'Mild', icon: Info};
+      return { color: 'text-blue-600', label: 'Mild', icon: Info };
     default:
-      return {color: 'text-muted-foreground', label: analysis.deficitSeverity, icon: Info};
+      return { color: 'text-muted-foreground', label: analysis.deficitSeverity, icon: Info };
   }
 });
 
@@ -258,7 +258,7 @@ async function handleResetEnvelope() {
 }
 </script>
 
-<Dialog.Root bind:open {...onOpenChange ? {onOpenChange} : {}}>
+<Dialog.Root bind:open {...onOpenChange ? { onOpenChange } : {}}>
   <Dialog.Content class="max-h-[90vh] max-w-3xl overflow-y-auto">
     <Dialog.Header>
       <div class="flex items-center gap-3">
@@ -376,7 +376,7 @@ async function handleResetEnvelope() {
                         icon: TrendingDown,
                         label: 'Reset',
                       },
-                    }[option.type] || {color: '', icon: Info, label: option.type}}
+                    }[option.type] || { color: '', icon: Info, label: option.type }}
                     {@const isSelected = selectedOptionIndex === String(index)}
                     <label
                       class={cn(
@@ -461,19 +461,23 @@ async function handleResetEnvelope() {
                   <h4 class="text-sm font-medium">Recovery Steps</h4>
                   {#each recoveryPlan.recoverySteps as step}
                     {@const stepTypeConfig = {
-                      transfer: {color: 'border-blue-500', icon: ArrowRight, label: 'Transfer'},
+                      transfer: { color: 'border-blue-500', icon: ArrowRight, label: 'Transfer' },
                       emergency_fund: {
                         color: 'border-red-500',
                         icon: TriangleAlert,
                         label: 'Emergency Fund',
                       },
-                      reallocation: {color: 'border-purple-500', icon: Zap, label: 'Reallocation'},
+                      reallocation: {
+                        color: 'border-purple-500',
+                        icon: Zap,
+                        label: 'Reallocation',
+                      },
                       external_injection: {
                         color: 'border-green-500',
                         icon: CircleCheck,
                         label: 'External Funds',
                       },
-                    }[step.type] || {color: 'border-gray-500', icon: Info, label: step.type}}
+                    }[step.type] || { color: 'border-gray-500', icon: Info, label: step.type }}
                     <div
                       class="bg-muted/30 flex items-start gap-3 rounded-lg border-l-4 p-3 {stepTypeConfig.color}">
                       <div

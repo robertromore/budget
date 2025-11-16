@@ -1,5 +1,5 @@
-import {MediaQuery} from "svelte/reactivity";
-import {MOBILE_BREAKPOINT} from "$lib/constants/ui";
+import { MediaQuery } from "svelte/reactivity";
+import { MOBILE_BREAKPOINT } from "$lib/constants/ui";
 
 export class IsMobile extends MediaQuery {
   constructor() {

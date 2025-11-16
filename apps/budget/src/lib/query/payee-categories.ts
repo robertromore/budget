@@ -1,8 +1,8 @@
-import type {PayeeCategory, NewPayeeCategory} from "$lib/schema/payee-categories";
-import type {PayeeCategoryWithCounts} from "$lib/server/domains/payee-categories/repository";
-import {trpc} from "$lib/trpc/client";
-import {cachePatterns} from "./_client";
-import {createQueryKeys, defineMutation, defineQuery} from "./_factory";
+import type { PayeeCategory, NewPayeeCategory } from "$lib/schema/payee-categories";
+import type { PayeeCategoryWithCounts } from "$lib/server/domains/payee-categories/repository";
+import { trpc } from "$lib/trpc/client";
+import { cachePatterns } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 // ================================================================================
 // Query Keys
@@ -40,13 +40,13 @@ export const listPayeeCategoriesWithCounts = () =>
 export const getPayeeCategoryById = (id: number) =>
   defineQuery<PayeeCategory>({
     queryKey: payeeCategoryKeys.detail(id),
-    queryFn: () => trpc().payeeCategoriesRoutes.getById.query({id}),
+    queryFn: () => trpc().payeeCategoriesRoutes.getById.query({ id }),
   });
 
 export const getPayeeCategoryBySlug = (slug: string) =>
   defineQuery<PayeeCategory>({
     queryKey: payeeCategoryKeys.slug(slug),
-    queryFn: () => trpc().payeeCategoriesRoutes.getBySlug.query({slug}),
+    queryFn: () => trpc().payeeCategoriesRoutes.getBySlug.query({ slug }),
   });
 
 // ================================================================================
@@ -54,7 +54,7 @@ export const getPayeeCategoryBySlug = (slug: string) =>
 // ================================================================================
 
 export const createPayeeCategory = defineMutation<NewPayeeCategory, PayeeCategory>({
-  mutationFn: (input) => trpc().payeeCategoriesRoutes.create.mutate({...input}),
+  mutationFn: (input) => trpc().payeeCategoriesRoutes.create.mutate({ ...input }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(payeeCategoryKeys.all());
     cachePatterns.invalidatePrefix(payeeCategoryKeys.allWithCounts());
@@ -66,7 +66,7 @@ export const createPayeeCategory = defineMutation<NewPayeeCategory, PayeeCategor
 });
 
 export const updatePayeeCategory = defineMutation<
-  {id: number; name: string} & Partial<Omit<NewPayeeCategory, "name">>,
+  { id: number; name: string } & Partial<Omit<NewPayeeCategory, "name">>,
   PayeeCategory
 >({
   mutationFn: (input) => trpc().payeeCategoriesRoutes.update.mutate(input),
@@ -82,8 +82,8 @@ export const updatePayeeCategory = defineMutation<
 });
 
 export const savePayeeCategory = defineMutation<
-  {name: string} & Partial<Omit<NewPayeeCategory, "name">> & {id?: number},
-  PayeeCategory & {is_new?: boolean}
+  { name: string } & Partial<Omit<NewPayeeCategory, "name">> & { id?: number },
+  PayeeCategory & { is_new?: boolean }
 >({
   mutationFn: (input) => trpc().payeeCategoriesRoutes.save.mutate(input),
   onSuccess: (_, variables) => {
@@ -99,8 +99,8 @@ export const savePayeeCategory = defineMutation<
   errorMessage: "Failed to save payee category",
 });
 
-export const deletePayeeCategory = defineMutation<number, {success: boolean}>({
-  mutationFn: (id) => trpc().payeeCategoriesRoutes.delete.mutate({id}),
+export const deletePayeeCategory = defineMutation<number, { success: boolean }>({
+  mutationFn: (id) => trpc().payeeCategoriesRoutes.delete.mutate({ id }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(payeeCategoryKeys.all());
     cachePatterns.invalidatePrefix(payeeCategoryKeys.allWithCounts());
@@ -113,9 +113,9 @@ export const deletePayeeCategory = defineMutation<number, {success: boolean}>({
 
 export const bulkDeletePayeeCategories = defineMutation<
   number[],
-  {deletedCount: number; errors: string[]}
+  { deletedCount: number; errors: string[] }
 >({
-  mutationFn: (ids) => trpc().payeeCategoriesRoutes.bulkDelete.mutate({entities: ids}),
+  mutationFn: (ids) => trpc().payeeCategoriesRoutes.bulkDelete.mutate({ entities: ids }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(payeeCategoryKeys.all());
     cachePatterns.invalidatePrefix(payeeCategoryKeys.allWithCounts());
@@ -128,8 +128,8 @@ export const bulkDeletePayeeCategories = defineMutation<
 });
 
 export const reorderPayeeCategories = defineMutation<
-  {updates: Array<{id: number; displayOrder: number}>},
-  {success: boolean}
+  { updates: Array<{ id: number; displayOrder: number }> },
+  { success: boolean }
 >({
   mutationFn: (input) => trpc().payeeCategoriesRoutes.reorder.mutate(input),
   onSuccess: () => {
@@ -162,8 +162,8 @@ export const getDefaultPayeeCategoriesStatus = () =>
   });
 
 export const seedDefaultPayeeCategories = defineMutation<
-  {slugs?: string[]},
-  {created: number; skipped: number; errors: string[]}
+  { slugs?: string[] },
+  { created: number; skipped: number; errors: string[] }
 >({
   mutationFn: (input) => trpc().payeeCategoriesRoutes.seedDefaults.mutate(input),
   onSuccess: () => {
@@ -208,18 +208,18 @@ export const getUncategorizedPayeesCount = () =>
 export const getPayeeCategoryRecommendation = (payeeId: number) =>
   defineQuery<PayeeCategoryRecommendation>({
     queryKey: payeeCategoryKeys.recommendation(payeeId),
-    queryFn: () => trpc().payeeCategoriesRoutes.getRecommendation.query({payeeId}),
+    queryFn: () => trpc().payeeCategoriesRoutes.getRecommendation.query({ payeeId }),
   });
 
 export const getBulkPayeeCategoryRecommendations = (limit?: number) =>
   defineQuery<PayeeCategoryRecommendation[]>({
     queryKey: payeeCategoryKeys.bulkRecommendations(limit),
-    queryFn: () => trpc().payeeCategoriesRoutes.getBulkRecommendations.query({limit}),
+    queryFn: () => trpc().payeeCategoriesRoutes.getBulkRecommendations.query({ limit }),
   });
 
 export const bulkAssignPayeeCategories = defineMutation<
-  {payeeIds: number[]; categoryId: number},
-  {success: boolean; updatedCount: number}
+  { payeeIds: number[]; categoryId: number },
+  { success: boolean; updatedCount: number }
 >({
   mutationFn: (input) => trpc().payeeCategoriesRoutes.bulkAssignPayees.mutate(input),
   onSuccess: () => {

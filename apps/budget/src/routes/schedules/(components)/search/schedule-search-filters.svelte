@@ -1,16 +1,16 @@
 <script lang="ts">
 import * as Select from '$lib/components/ui/select';
-import type {ScheduleSearchFilters} from '$lib/states/ui/schedule-search.svelte';
-import {AccountsState, PayeesState, CategoriesState} from '$lib/states/entities';
-import {BudgetState} from '$lib/states/budgets.svelte';
-import {rpc} from '$lib/query';
+import type { ScheduleSearchFilters } from '$lib/states/ui/schedule-search.svelte';
+import { AccountsState, PayeesState, CategoriesState } from '$lib/states/entities';
+import { BudgetState } from '$lib/states/budgets.svelte';
+import { rpc } from '$lib/query';
 
 interface Props {
   filters: ScheduleSearchFilters;
   onFilterChange: (key: keyof ScheduleSearchFilters, value: any) => void;
 }
 
-let {filters, onFilterChange}: Props = $props();
+let { filters, onFilterChange }: Props = $props();
 
 // Get entity states
 const accountsState = $derived(AccountsState.get());

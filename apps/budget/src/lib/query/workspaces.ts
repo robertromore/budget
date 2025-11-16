@@ -1,7 +1,7 @@
-import {defineQuery, defineMutation, createQueryKeys} from "./_factory";
-import {queryPresets, queryClient} from "./_client";
-import {trpc} from "$lib/trpc/client";
-import type {Workspace} from "$lib/schema/workspaces";
+import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
+import { queryPresets, queryClient } from "./_client";
+import { trpc } from "$lib/trpc/client";
+import type { Workspace } from "$lib/schema/workspaces";
 
 export const workspaceKeys = createQueryKeys("workspaces", {
   lists: () => ["workspaces", "list"] as const,
@@ -50,7 +50,7 @@ export const createWorkspace = () =>
     mutationFn: (data: any) => trpc().workspaceRoutes.create.mutate(data),
     onSuccess: async () => {
       // Invalidate workspace lists
-      await queryClient.invalidateQueries({queryKey: workspaceKeys.lists()});
+      await queryClient.invalidateQueries({ queryKey: workspaceKeys.lists() });
     },
   });
 
@@ -59,11 +59,11 @@ export const createWorkspace = () =>
  */
 export const switchWorkspace = () =>
   defineMutation({
-    mutationFn: ({workspaceId}: {workspaceId: number}) =>
-      trpc().workspaceRoutes.switchWorkspace.mutate({workspaceId}),
+    mutationFn: ({ workspaceId }: { workspaceId: number }) =>
+      trpc().workspaceRoutes.switchWorkspace.mutate({ workspaceId }),
     onSuccess: async () => {
       // Invalidate current workspace query
-      await queryClient.invalidateQueries({queryKey: workspaceKeys.current()});
+      await queryClient.invalidateQueries({ queryKey: workspaceKeys.current() });
     },
   });
 
@@ -78,12 +78,12 @@ export const updateWorkspacePreferences = () =>
     }: {
       workspaceId: number;
       preferences: Record<string, any>;
-    }) => trpc().workspaceRoutes.updatePreferences.mutate({workspaceId, preferences}),
+    }) => trpc().workspaceRoutes.updatePreferences.mutate({ workspaceId, preferences }),
     onSuccess: async () => {
       // Invalidate current workspace and list
       await Promise.all([
-        queryClient.invalidateQueries({queryKey: workspaceKeys.current()}),
-        queryClient.invalidateQueries({queryKey: workspaceKeys.lists()}),
+        queryClient.invalidateQueries({ queryKey: workspaceKeys.current() }),
+        queryClient.invalidateQueries({ queryKey: workspaceKeys.lists() }),
       ]);
     },
   });
@@ -93,9 +93,10 @@ export const updateWorkspacePreferences = () =>
  */
 export const deleteWorkspace = () =>
   defineMutation({
-    mutationFn: ({id}: {id: number}) => trpc().workspaceRoutes.delete.mutate({workspaceId: id}),
+    mutationFn: ({ id }: { id: number }) =>
+      trpc().workspaceRoutes.delete.mutate({ workspaceId: id }),
     onSuccess: async () => {
       // Invalidate workspace lists
-      await queryClient.invalidateQueries({queryKey: workspaceKeys.lists()});
+      await queryClient.invalidateQueries({ queryKey: workspaceKeys.lists() });
     },
   });

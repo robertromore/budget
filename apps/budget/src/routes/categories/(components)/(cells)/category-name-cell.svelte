@@ -10,7 +10,7 @@ interface Props {
   category: CategoryWithGroup;
 }
 
-let {category}: Props = $props();
+let { category }: Props = $props();
 
 const iconData = $derived(category.categoryIcon ? getIconByName(category.categoryIcon) : null);
 const IconComponent = $derived(iconData?.icon || Tag);

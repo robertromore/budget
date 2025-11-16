@@ -3,14 +3,14 @@
  */
 
 // Utility types for better type constraints
-export type NonEmptyString = string & {__brand: "NonEmptyString"};
-export type PositiveNumber = number & {__brand: "PositiveNumber"};
-export type ValidEmail = string & {__brand: "ValidEmail"};
-export type ISODateString = string & {__brand: "ISODateString"};
-export type CurrencyAmount = number & {__brand: "CurrencyAmount"};
+export type NonEmptyString = string & { __brand: "NonEmptyString" };
+export type PositiveNumber = number & { __brand: "PositiveNumber" };
+export type ValidEmail = string & { __brand: "ValidEmail" };
+export type ISODateString = string & { __brand: "ISODateString" };
+export type CurrencyAmount = number & { __brand: "CurrencyAmount" };
 
 // Brand type helpers
-export type Brand<T, TBrand> = T & {__brand: TBrand};
+export type Brand<T, TBrand> = T & { __brand: TBrand };
 
 // Utility type for creating branded types
 export const brand = <T, TBrand>(value: T): Brand<T, TBrand> => value as Brand<T, TBrand>;
@@ -115,7 +115,7 @@ export type UpdateInput<T> = Partial<Omit<T, "id" | "createdAt" | "updatedAt">>;
 // Pagination types with strict constraints
 export interface PaginationParams {
   page: PositiveNumber;
-  pageSize: PositiveNumber & {__constraint: "max100"};
+  pageSize: PositiveNumber & { __constraint: "max100" };
   sortBy?: NonEmptyString;
   sortOrder?: "asc" | "desc";
 }
@@ -204,11 +204,11 @@ export interface AppEvent<TType extends string = string, TPayload = unknown> {
 
 export type AccountCreatedEvent = AppEvent<"account:created", EnhancedAccount>;
 export type AccountUpdatedEvent = AppEvent<"account:updated", EnhancedAccount>;
-export type AccountDeletedEvent = AppEvent<"account:deleted", {id: PositiveNumber}>;
+export type AccountDeletedEvent = AppEvent<"account:deleted", { id: PositiveNumber }>;
 
 export type TransactionCreatedEvent = AppEvent<"transaction:created", EnhancedTransaction>;
 export type TransactionUpdatedEvent = AppEvent<"transaction:updated", EnhancedTransaction>;
-export type TransactionDeletedEvent = AppEvent<"transaction:deleted", {id: PositiveNumber}>;
+export type TransactionDeletedEvent = AppEvent<"transaction:deleted", { id: PositiveNumber }>;
 
 // Helper types for working with readonly data
 export type Mutable<T> = {
@@ -261,7 +261,7 @@ export interface AppConfig {
     readonly retryAttempts: PositiveNumber;
   };
   readonly ui: {
-    readonly pageSize: PositiveNumber & {__constraint: "max100"};
+    readonly pageSize: PositiveNumber & { __constraint: "max100" };
     readonly debounceMs: PositiveNumber;
     readonly animationDuration: PositiveNumber;
   };

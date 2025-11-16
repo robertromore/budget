@@ -11,12 +11,12 @@ import {
   type RecommendationStatus,
   type RecommendationType,
 } from "$lib/schema/recommendations";
-import {db} from "$lib/server/db";
-import {logger} from "$lib/server/shared/logging";
-import {NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {and, desc, eq, gte, isNull, lte, or, sql} from "drizzle-orm";
-import type {BudgetRecommendationDraft} from "./budget-analysis-service";
+import { db } from "$lib/server/db";
+import { logger } from "$lib/server/shared/logging";
+import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
+import type { BudgetRecommendationDraft } from "./budget-analysis-service";
 
 export interface RecommendationFilters {
   status?: RecommendationStatus | RecommendationStatus[];
@@ -63,7 +63,7 @@ export class RecommendationService {
 
       return await this.getRecommendation(created.id);
     } catch (error) {
-      logger.error("Error creating recommendation", {error, data});
+      logger.error("Error creating recommendation", { error, data });
       throw error;
     }
   }
@@ -296,7 +296,7 @@ export class RecommendationService {
         status: "pending",
       });
     } catch (error) {
-      logger.error("Error creating bulk recommendations", {error, count: drafts.length});
+      logger.error("Error creating bulk recommendations", { error, count: drafts.length });
       throw error;
     }
   }
@@ -502,7 +502,7 @@ export class RecommendationService {
       )
       .returning();
 
-    logger.info("Expired old recommendations", {count: expired.length});
+    logger.info("Expired old recommendations", { count: expired.length });
 
     return expired.length;
   }
@@ -552,7 +552,7 @@ export class RecommendationService {
    */
   async getPendingCount(): Promise<number> {
     const result = await db
-      .select({count: sql<number>`count(*)`})
+      .select({ count: sql<number>`count(*)` })
       .from(budgetRecommendations)
       .where(
         and(

@@ -1,10 +1,10 @@
 <script lang="ts">
 import * as Form from '$lib/components/ui/form';
 import * as Card from '$lib/components/ui/card';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
 
 // Icons
 import Phone from '@lucide/svelte/icons/phone';
@@ -96,7 +96,7 @@ let {
       <!-- Phone -->
       <Form.Field form={entityForm} name="phone">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Phone Number</Form.Label>
             <Input {...props} bind:value={$formData.phone} placeholder="+1 (555) 123-4567" />
             <Form.FieldErrors />
@@ -107,7 +107,7 @@ let {
       <!-- Email -->
       <Form.Field form={entityForm} name="email">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Email Address</Form.Label>
             <Input
               {...props}
@@ -122,7 +122,7 @@ let {
       <!-- Website -->
       <Form.Field form={entityForm} name="website">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Website</Form.Label>
             <Input {...props} bind:value={$formData.website} placeholder="https://example.com" />
             <Form.FieldErrors />
@@ -133,7 +133,7 @@ let {
       <!-- Account Number -->
       <Form.Field form={entityForm} name="accountNumber">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Account Number</Form.Label>
             <Input
               {...props}
@@ -148,7 +148,7 @@ let {
     <!-- Address -->
     <Form.Field form={entityForm} name="address">
       <Form.Control>
-        {#snippet children({props})}
+        {#snippet children({ props })}
           <Form.Label>Address</Form.Label>
           <Textarea
             {...props}

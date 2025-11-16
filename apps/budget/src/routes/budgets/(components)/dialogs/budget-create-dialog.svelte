@@ -1,21 +1,21 @@
 <script lang="ts">
-import {SvelteMap} from 'svelte/reactivity';
+import { SvelteMap } from 'svelte/reactivity';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Select from '$lib/components/ui/select';
-import {Input} from '$lib/components/ui/input';
+import { Input } from '$lib/components/ui/input';
 import Label from '$lib/components/ui/label/label.svelte';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Badge} from '$lib/components/ui/badge';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Badge } from '$lib/components/ui/badge';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import BudgetWizard from '$lib/components/wizard/budget-wizard.svelte';
-import {WizardFormWrapper} from '$lib/components/wizard';
-import {createBudget} from '$lib/query/budgets';
-import {AccountsState} from '$lib/states/entities/accounts.svelte';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {newBudgetDialog, managingBudgetId} from '$lib/states/ui/global.svelte';
-import type {CreateBudgetRequest} from '$lib/server/domains/budgets/services';
-import type {Account} from '$lib/schema/accounts';
-import type {Category} from '$lib/schema/categories';
+import { WizardFormWrapper } from '$lib/components/wizard';
+import { createBudget } from '$lib/query/budgets';
+import { AccountsState } from '$lib/states/entities/accounts.svelte';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { newBudgetDialog, managingBudgetId } from '$lib/states/ui/global.svelte';
+import type { CreateBudgetRequest } from '$lib/server/domains/budgets/services';
+import type { Account } from '$lib/schema/accounts';
+import type { Category } from '$lib/schema/categories';
 import {
   budgetTypes,
   budgetEnforcementLevels,
@@ -26,7 +26,7 @@ import {
   type PeriodTemplateType,
   type BudgetMetadata,
 } from '$lib/schema/budgets';
-import {budgetWizardStore} from '$lib/stores/wizardStore.svelte';
+import { budgetWizardStore } from '$lib/stores/wizardStore.svelte';
 
 const _newBudgetDialog = $derived(newBudgetDialog);
 const _managingBudgetId = $derived(managingBudgetId);
@@ -172,8 +172,8 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
     status: 'active',
     enforcementLevel: wizardFormData['enforcementLevel'] || 'warning',
     metadata,
-    ...(config?.requiresAccounts && {accountIds: wizardFormData['accountIds'] || []}),
-    ...(config?.requiresCategories && {categoryIds: wizardFormData['categoryIds'] || []}),
+    ...(config?.requiresAccounts && { accountIds: wizardFormData['accountIds'] || [] }),
+    ...(config?.requiresCategories && { categoryIds: wizardFormData['categoryIds'] || [] }),
   };
 
   try {

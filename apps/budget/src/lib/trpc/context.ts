@@ -1,7 +1,7 @@
-import type {RequestEvent} from "@sveltejs/kit";
-import {db} from "$lib/server/db";
-import {workspaces} from "$lib/schema/workspaces";
-import {eq} from "drizzle-orm";
+import type { RequestEvent } from "@sveltejs/kit";
+import { db } from "$lib/server/db";
+import { workspaces } from "$lib/schema/workspaces";
+import { eq } from "drizzle-orm";
 
 /**
  * Get the current workspace ID from the request

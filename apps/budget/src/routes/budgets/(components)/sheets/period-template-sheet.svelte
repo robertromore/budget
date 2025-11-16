@@ -2,8 +2,8 @@
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Sheet from '$lib/components/ui/sheet';
 import BudgetPeriodTemplateForm from '$lib/components/budgets/budget-period-template-form.svelte';
-import type {BudgetPeriodTemplate} from '$lib/schema/budgets';
-import {toast} from 'svelte-sonner';
+import type { BudgetPeriodTemplate } from '$lib/schema/budgets';
+import { toast } from 'svelte-sonner';
 
 interface Props {
   open?: boolean;
@@ -46,7 +46,7 @@ function handleCancel() {
   {#snippet content()}
     <BudgetPeriodTemplateForm
       {budgetId}
-      {...defaultAllocatedAmount !== undefined ? {defaultAllocatedAmount} : {}}
+      {...defaultAllocatedAmount !== undefined ? { defaultAllocatedAmount } : {}}
       onSuccess={handleSuccess}
       onCancel={handleCancel} />
   {/snippet}

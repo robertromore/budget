@@ -1,10 +1,10 @@
 <script lang="ts">
-import {browser} from '$app/environment';
-import type {Schedule} from '$lib/schema/schedules';
-import type {SchedulesState} from '$lib/states/entities/schedules.svelte';
-import type {ColumnDef} from '@tanstack/table-core';
+import { browser } from '$app/environment';
+import type { Schedule } from '$lib/schema/schedules';
+import type { SchedulesState } from '$lib/states/entities/schedules.svelte';
+import type { ColumnDef } from '@tanstack/table-core';
 import ScheduleDataTable from './schedule-data-table.svelte';
-import {Skeleton} from '$lib/components/ui/skeleton';
+import { Skeleton } from '$lib/components/ui/skeleton';
 
 interface Props {
   isLoading: boolean;

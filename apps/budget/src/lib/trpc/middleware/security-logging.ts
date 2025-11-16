@@ -1,6 +1,6 @@
-import {TRPCError} from "@trpc/server";
-import {initTRPC} from "@trpc/server";
-import type {Context} from "$lib/trpc";
+import { TRPCError } from "@trpc/server";
+import { initTRPC } from "@trpc/server";
+import type { Context } from "$lib/trpc";
 
 // Initialize tRPC instance for middleware creation
 const t = initTRPC.context<Context>().create();
@@ -73,17 +73,17 @@ function detectSuspiciousPatterns(input: any, operation: string): string[] {
 
   // Check for common attack patterns
   const patterns = [
-    {pattern: /<script/i, indicator: "XSS_SCRIPT_TAG"},
-    {pattern: /javascript:/i, indicator: "XSS_JAVASCRIPT_PROTOCOL"},
-    {pattern: /on\w+\s*=/i, indicator: "XSS_EVENT_HANDLER"},
-    {pattern: /union\s+select/i, indicator: "SQL_INJECTION_UNION"},
-    {pattern: /drop\s+table/i, indicator: "SQL_INJECTION_DROP"},
-    {pattern: /\.\.\/\.\.\//g, indicator: "PATH_TRAVERSAL"},
-    {pattern: /eval\s*\(/i, indicator: "CODE_INJECTION_EVAL"},
-    {pattern: /Function\s*\(/i, indicator: "CODE_INJECTION_FUNCTION"},
+    { pattern: /<script/i, indicator: "XSS_SCRIPT_TAG" },
+    { pattern: /javascript:/i, indicator: "XSS_JAVASCRIPT_PROTOCOL" },
+    { pattern: /on\w+\s*=/i, indicator: "XSS_EVENT_HANDLER" },
+    { pattern: /union\s+select/i, indicator: "SQL_INJECTION_UNION" },
+    { pattern: /drop\s+table/i, indicator: "SQL_INJECTION_DROP" },
+    { pattern: /\.\.\/\.\.\//g, indicator: "PATH_TRAVERSAL" },
+    { pattern: /eval\s*\(/i, indicator: "CODE_INJECTION_EVAL" },
+    { pattern: /Function\s*\(/i, indicator: "CODE_INJECTION_FUNCTION" },
   ];
 
-  for (const {pattern, indicator} of patterns) {
+  for (const { pattern, indicator } of patterns) {
     if (pattern.test(inputStr)) {
       suspiciousIndicators.push(indicator);
     }
@@ -120,7 +120,7 @@ function extractClientInfo(ctx: Context) {
  * Security logging middleware for tRPC
  * Logs all requests and detects suspicious activity
  */
-export const securityLogging = t.middleware(async ({next, input, ctx, type, path}) => {
+export const securityLogging = t.middleware(async ({ next, input, ctx, type, path }) => {
   const startTime = Date.now();
   const clientInfo = extractClientInfo(ctx);
 
@@ -141,7 +141,7 @@ export const securityLogging = t.middleware(async ({next, input, ctx, type, path
         operationType: type,
         ...clientInfo,
         inputSize: JSON.stringify(input || {}).length,
-        metadata: {suspiciousPatterns},
+        metadata: { suspiciousPatterns },
       });
     }
 

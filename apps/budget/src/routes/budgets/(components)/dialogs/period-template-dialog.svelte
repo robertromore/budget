@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as Dialog from '$lib/components/ui/dialog';
 import BudgetPeriodTemplateForm from '$lib/components/budgets/budget-period-template-form.svelte';
-import type {BudgetPeriodTemplate} from '$lib/schema/budgets';
-import {toast} from 'svelte-sonner';
+import type { BudgetPeriodTemplate } from '$lib/schema/budgets';
+import { toast } from 'svelte-sonner';
 
 interface Props {
   open?: boolean;
@@ -11,7 +11,7 @@ interface Props {
   onSuccess?: (template: BudgetPeriodTemplate) => void;
 }
 
-let {open = $bindable(false), onOpenChange, budgetId, onSuccess}: Props = $props();
+let { open = $bindable(false), onOpenChange, budgetId, onSuccess }: Props = $props();
 
 function handleSuccess(template: BudgetPeriodTemplate) {
   toast.success('Period template created successfully!');

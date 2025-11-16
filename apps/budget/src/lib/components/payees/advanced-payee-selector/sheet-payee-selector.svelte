@@ -1,9 +1,9 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
-import {Input} from '$lib/components/ui/input';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
+import { Input } from '$lib/components/ui/input';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
 import {
   User,
   Search,
@@ -14,12 +14,12 @@ import {
   TrendingUp,
 } from '@lucide/svelte/icons';
 import Fuse from 'fuse.js';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {PayeeCategoriesState} from '$lib/states/entities/payee-categories.svelte';
-import {cn} from '$lib/utils';
-import type {Payee} from '$lib/schema/payees';
-import type {TransactionContext, GroupStrategy, DisplayMode} from './types';
-import {groupPayees, getRecentPayees, saveToRecentPayees, formatLastUsed} from './utils';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { PayeeCategoriesState } from '$lib/states/entities/payee-categories.svelte';
+import { cn } from '$lib/utils';
+import type { Payee } from '$lib/schema/payees';
+import type { TransactionContext, GroupStrategy, DisplayMode } from './types';
+import { groupPayees, getRecentPayees, saveToRecentPayees, formatLastUsed } from './utils';
 
 interface Props {
   value?: number | null;

@@ -1,4 +1,4 @@
-import type {PaginationState, Updater} from "@tanstack/table-core";
+import type { PaginationState, Updater } from "@tanstack/table-core";
 
 let _pagination = $state<PaginationState>({
   pageIndex: 0,

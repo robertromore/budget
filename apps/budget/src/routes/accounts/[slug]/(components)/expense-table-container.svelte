@@ -1,7 +1,7 @@
 <script lang="ts">
-import {rpc} from '$lib/query';
-import {parseDate} from '@internationalized/date';
-import {columns, type ExpenseFormat} from '../(data)/expense-columns.svelte';
+import { rpc } from '$lib/query';
+import { parseDate } from '@internationalized/date';
+import { columns, type ExpenseFormat } from '../(data)/expense-columns.svelte';
 import ExpenseDataTable from './expense-data-table.svelte';
 import ExpenseSkeleton from './expense-skeleton.svelte';
 import ClaimManagementSheet from './claim-management-sheet.svelte';
@@ -13,7 +13,7 @@ interface Props {
   onEdit?: (expense: any) => void;
 }
 
-let {hsaAccountId, views = [], onEdit}: Props = $props();
+let { hsaAccountId, views = [], onEdit }: Props = $props();
 
 // State for dialogs
 let claimDialogOpen = $state(false);

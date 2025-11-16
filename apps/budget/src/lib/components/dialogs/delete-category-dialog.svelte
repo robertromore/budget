@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {buttonVariants} from '$lib/components/ui/button';
-import {deleteCategoryDialog, deleteCategoryId} from '$lib/states/ui/categories.svelte';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
+import { buttonVariants } from '$lib/components/ui/button';
+import { deleteCategoryDialog, deleteCategoryId } from '$lib/states/ui/categories.svelte';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
 
 const _deleteCategoryDialog = $derived(deleteCategoryDialog);
 const _deleteCategoryId = $derived(deleteCategoryId);
@@ -30,7 +30,7 @@ const confirmDeleteCategory = async () => {
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={confirmDeleteCategory}
-        class={buttonVariants({variant: 'destructive'})}>Continue</AlertDialog.Action>
+        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

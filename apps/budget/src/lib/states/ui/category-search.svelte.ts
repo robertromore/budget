@@ -1,5 +1,5 @@
-import type {Category} from "$lib/schema";
-import {createLocalStorageState} from "$lib/utils/local-storage.svelte";
+import type { Category } from "$lib/schema";
+import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 
 export interface CategorySearchFilters {
   hasParent?: boolean;
@@ -96,7 +96,7 @@ class CategorySearchStateManager {
   }
 
   updateFilter<K extends keyof CategorySearchFilters>(key: K, value: CategorySearchFilters[K]) {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
     // Remove filter if value is undefined, null, or empty string
     if (value === undefined || value === null) {
       delete newFilters[key];
@@ -122,7 +122,7 @@ class CategorySearchStateManager {
   }
 
   clearFilter(key: keyof CategorySearchFilters) {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
     delete newFilters[key];
     this.filters = newFilters;
   }

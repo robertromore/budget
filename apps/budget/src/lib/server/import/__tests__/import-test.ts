@@ -3,12 +3,12 @@
  * Run with: bun run src/lib/server/import/__tests__/import-test.ts
  */
 
-import {CSVProcessor} from "../file-processors/csv-processor";
-import {PayeeMatcher} from "../matchers/payee-matcher";
-import {CategoryMatcher} from "../matchers/category-matcher";
-import {TransactionValidator} from "../validators/transaction-validator";
-import {readFileSync} from "fs";
-import {join} from "path";
+import { CSVProcessor } from "../file-processors/csv-processor";
+import { PayeeMatcher } from "../matchers/payee-matcher";
+import { CategoryMatcher } from "../matchers/category-matcher";
+import { TransactionValidator } from "../validators/transaction-validator";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 async function testImportSystem() {
   console.log("🧪 Testing Financial Import System\n");
@@ -20,7 +20,7 @@ async function testImportSystem() {
     const csvContent = readFileSync(csvPath, "utf-8");
 
     const csvProcessor = new CSVProcessor();
-    const file = new File([csvContent], "sample-transactions.csv", {type: "text/csv"});
+    const file = new File([csvContent], "sample-transactions.csv", { type: "text/csv" });
     const parsedRows = await csvProcessor.parseFile(file);
 
     console.log(`✅ Parsed ${parsedRows.length} rows`);
@@ -47,8 +47,8 @@ async function testImportSystem() {
 
     // Test with sample payees
     const existingPayees = [
-      {id: 1, name: "Walmart", slug: "walmart", deletedAt: null} as any,
-      {id: 2, name: "Starbucks", slug: "starbucks", deletedAt: null} as any,
+      { id: 1, name: "Walmart", slug: "walmart", deletedAt: null } as any,
+      { id: 2, name: "Starbucks", slug: "starbucks", deletedAt: null } as any,
     ];
 
     const testPayeeName = "WALMART #1234 PURCHASE";
@@ -67,9 +67,9 @@ async function testImportSystem() {
     const categoryMatcher = new CategoryMatcher();
 
     const existingCategories = [
-      {id: 1, name: "Groceries", slug: "groceries", deletedAt: null} as any,
-      {id: 2, name: "Dining Out", slug: "dining-out", deletedAt: null} as any,
-      {id: 3, name: "Transportation", slug: "transportation", deletedAt: null} as any,
+      { id: 1, name: "Groceries", slug: "groceries", deletedAt: null } as any,
+      { id: 2, name: "Dining Out", slug: "dining-out", deletedAt: null } as any,
+      { id: 3, name: "Transportation", slug: "transportation", deletedAt: null } as any,
     ];
 
     const categoryMatch = categoryMatcher.findBestMatch(

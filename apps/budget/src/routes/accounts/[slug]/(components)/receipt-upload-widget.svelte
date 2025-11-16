@@ -23,7 +23,7 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
 }
 
-let {medicalExpenseId, open = $bindable(false), onOpenChange}: Props = $props();
+let { medicalExpenseId, open = $bindable(false), onOpenChange }: Props = $props();
 
 // Query receipts
 const receiptsQuery = $derived(rpc.medicalExpenses.getReceipts(medicalExpenseId).options());

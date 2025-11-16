@@ -1,20 +1,20 @@
 <script lang="ts">
 import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
-import {CalendarDate, DateFormatter} from '@internationalized/date';
-import {Calendar} from '$lib/components/ui/calendar/index.js';
-import {Label} from '$lib/components/ui/label';
-import {SvelteMap} from 'svelte/reactivity';
-import type {FacetedFilterOption} from '$lib/types';
-import {Button} from '$lib/components/ui/button';
-import {dayFmt} from '$lib/utils/date-formatters';
-import {timezone, currentDate} from '$lib/utils/dates';
+import { CalendarDate, DateFormatter } from '@internationalized/date';
+import { Calendar } from '$lib/components/ui/calendar/index.js';
+import { Label } from '$lib/components/ui/label';
+import { SvelteMap } from 'svelte/reactivity';
+import type { FacetedFilterOption } from '$lib/types';
+import { Button } from '$lib/components/ui/button';
+import { dayFmt } from '$lib/utils/date-formatters';
+import { timezone, currentDate } from '$lib/utils/dates';
 
 type Props = {
   onSubmit: (new_value: FacetedFilterOption) => void;
   disabled?: boolean;
   ariaLabel?: string;
 };
-let {onSubmit, disabled = false, ariaLabel = 'Advanced date input'}: Props = $props();
+let { onSubmit, disabled = false, ariaLabel = 'Advanced date input' }: Props = $props();
 
 let dateType = $state('day');
 
@@ -34,31 +34,31 @@ const monthFmt = new DateFormatter(userLocale, {
   month: 'long',
 });
 
-const monthOptions = Array.from({length: 12}, (_, i) => {
-  const month = currentDate.set({month: i + 1});
+const monthOptions = Array.from({ length: 12 }, (_, i) => {
+  const month = currentDate.set({ month: i + 1 });
   return {
     value: month.month,
     label: monthFmt.format(month.toDate(timezone)),
   };
 });
 
-const quarterOptions = Array.from({length: 4}, (_, i) => {
-  const month = currentDate.set({month: i * MONTHS_PER_QUARTER + 1});
+const quarterOptions = Array.from({ length: 4 }, (_, i) => {
+  const month = currentDate.set({ month: i * MONTHS_PER_QUARTER + 1 });
   return {
     value: month.month,
     label: `Q${i + 1}`,
   };
 });
 
-const halfYearOptions = Array.from({length: 2}, (_, i) => {
-  const month = currentDate.set({month: i * MONTHS_PER_HALF_YEAR + 1});
+const halfYearOptions = Array.from({ length: 2 }, (_, i) => {
+  const month = currentDate.set({ month: i * MONTHS_PER_HALF_YEAR + 1 });
   return {
     value: month.month,
     label: `H${i + 1}`,
   };
 });
 
-const yearOptions = Array.from({length: YEARS_TO_SHOW}, (_, i) => ({
+const yearOptions = Array.from({ length: YEARS_TO_SHOW }, (_, i) => ({
   label: String(new Date().getFullYear() - i),
   value: new Date().getFullYear() - i,
 }));

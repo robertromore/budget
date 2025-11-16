@@ -1,11 +1,11 @@
 <script lang="ts">
-import {ResponsiveSheet} from '$lib/components/ui/responsive-sheet';
+import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
 import Button from '$lib/components/ui/button/button.svelte';
 import Badge from '$lib/components/ui/badge/badge.svelte';
 import Calendar from '@lucide/svelte/icons/calendar';
 import ExternalLink from '@lucide/svelte/icons/external-link';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {goto} from '$app/navigation';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { goto } from '$app/navigation';
 
 interface Props {
   open?: boolean;

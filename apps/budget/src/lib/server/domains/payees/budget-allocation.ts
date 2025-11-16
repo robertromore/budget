@@ -1,9 +1,9 @@
-import {db} from "$lib/server/db";
-import {payees, transactions, categories, budgets} from "$lib/schema";
-import {eq, and, isNull, sql, desc, asc, gte, lte, count, avg, sum, min, max} from "drizzle-orm";
-import {PayeeIntelligenceService} from "./intelligence";
-import {CategoryLearningService} from "./category-learning";
-import type {PaymentFrequency} from "$lib/schema";
+import { db } from "$lib/server/db";
+import { payees, transactions, categories, budgets } from "$lib/schema";
+import { eq, and, isNull, sql, desc, asc, gte, lte, count, avg, sum, min, max } from "drizzle-orm";
+import { PayeeIntelligenceService } from "./intelligence";
+import { CategoryLearningService } from "./category-learning";
+import type { PaymentFrequency } from "$lib/schema";
 
 // Budget optimization analysis interfaces
 export interface BudgetOptimizationAnalysis {
@@ -97,9 +97,9 @@ export interface BudgetForecast {
     confidenceScore: number; // Overall confidence in forecast
   };
   scenarios: {
-    conservative: Array<{period: string; amount: number}>;
-    optimistic: Array<{period: string; amount: number}>;
-    realistic: Array<{period: string; amount: number}>;
+    conservative: Array<{ period: string; amount: number }>;
+    optimistic: Array<{ period: string; amount: number }>;
+    realistic: Array<{ period: string; amount: number }>;
   };
 }
 
@@ -175,9 +175,9 @@ export interface BudgetRebalancingPlan {
     confidence: number;
   }>;
   implementationPlan: {
-    phase1: Array<{payeeId: number; adjustment: number; reason: string}>;
-    phase2: Array<{payeeId: number; adjustment: number; reason: string}>;
-    phase3: Array<{payeeId: number; adjustment: number; reason: string}>;
+    phase1: Array<{ payeeId: number; adjustment: number; reason: string }>;
+    phase2: Array<{ payeeId: number; adjustment: number; reason: string }>;
+    phase3: Array<{ payeeId: number; adjustment: number; reason: string }>;
   };
   monitoring: {
     reviewPeriod: number; // Days
@@ -285,7 +285,7 @@ export class BudgetAllocationService {
       timeHorizon?: number; // months
     } = {}
   ): Promise<BudgetAllocationSuggestion[]> {
-    const {strategy = "balanced", riskTolerance = 0.5, timeHorizon = 12} = options;
+    const { strategy = "balanced", riskTolerance = 0.5, timeHorizon = 12 } = options;
 
     // Get all payees for the account or globally
     const payeeIds = await this.getRelevantPayees(accountId);
@@ -313,7 +313,7 @@ export class BudgetAllocationService {
 
     // Sort by priority and confidence
     return suggestions.sort((a, b) => {
-      const priorityOrder = {critical: 4, high: 3, medium: 2, low: 1};
+      const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
       const aPriority = priorityOrder[a.priority];
       const bPriority = priorityOrder[b.priority];
 
@@ -406,12 +406,12 @@ export class BudgetAllocationService {
 
     // Calculate total current budget and optimal budget
     const totalCurrentBudget = payeeAnalyses.reduce(
-      (sum, {analysis}) => sum + (analysis.currentBudgetAllocation || 0),
+      (sum, { analysis }) => sum + (analysis.currentBudgetAllocation || 0),
       0
     );
 
     const totalOptimizedBudget = payeeAnalyses.reduce(
-      (sum, {analysis}) => sum + analysis.recommendations.optimizedAllocation,
+      (sum, { analysis }) => sum + analysis.recommendations.optimizedAllocation,
       0
     );
 
@@ -420,7 +420,7 @@ export class BudgetAllocationService {
       totalCurrentBudget > 0 ? (totalAdjustment / totalCurrentBudget) * 100 : 0;
 
     // Generate payee-specific adjustments
-    const payeeAdjustments = payeeAnalyses.map(({payeeId, analysis}) => {
+    const payeeAdjustments = payeeAnalyses.map(({ payeeId, analysis }) => {
       const currentAllocation = analysis.currentBudgetAllocation || 0;
       const newAllocation = analysis.recommendations.optimizedAllocation;
       const adjustment = newAllocation - currentAllocation;
@@ -619,7 +619,7 @@ export class BudgetAllocationService {
     const unconstrainedAllocations: Record<number, number> = {};
     let totalUnconstrained = 0;
 
-    analyses.forEach(({payeeId, analysis}) => {
+    analyses.forEach(({ payeeId, analysis }) => {
       const allocation = analysis.recommendations.optimizedAllocation;
       unconstrainedAllocations[payeeId] = allocation;
       totalUnconstrained += allocation;
@@ -665,14 +665,14 @@ export class BudgetAllocationService {
 
   // Private helper methods
 
-  private async getPayeeInfo(payeeId: number): Promise<{name: string}> {
+  private async getPayeeInfo(payeeId: number): Promise<{ name: string }> {
     const payee = await db
-      .select({name: payees.name})
+      .select({ name: payees.name })
       .from(payees)
       .where(eq(payees.id, payeeId))
       .limit(1);
 
-    return {name: payee[0]?.name || "Unknown Payee"};
+    return { name: payee[0]?.name || "Unknown Payee" };
   }
 
   private async getCurrentBudgetAllocation(payeeId: number): Promise<number | null> {
@@ -887,7 +887,7 @@ export class BudgetAllocationService {
     if (accountId) {
       // Query payees with transactions in specific account
       const result = await db
-        .select({id: payees.id})
+        .select({ id: payees.id })
         .from(payees)
         .leftJoin(transactions, eq(transactions.payeeId, payees.id))
         .where(
@@ -901,7 +901,10 @@ export class BudgetAllocationService {
       return result.map((p) => p.id);
     } else {
       // Query all non-deleted payees
-      const result = await db.select({id: payees.id}).from(payees).where(isNull(payees.deletedAt));
+      const result = await db
+        .select({ id: payees.id })
+        .from(payees)
+        .where(isNull(payees.deletedAt));
 
       return result.map((p) => p.id);
     }
@@ -909,7 +912,7 @@ export class BudgetAllocationService {
 
   private async getPayeeCategoryInfo(
     payeeId: number
-  ): Promise<{categoryId: number | null; categoryName: string | null}> {
+  ): Promise<{ categoryId: number | null; categoryName: string | null }> {
     const payee = await db
       .select({
         defaultCategoryId: payees.defaultCategoryId,
@@ -919,11 +922,11 @@ export class BudgetAllocationService {
       .limit(1);
 
     if (!payee[0]?.defaultCategoryId) {
-      return {categoryId: null, categoryName: null};
+      return { categoryId: null, categoryName: null };
     }
 
     const category = await db
-      .select({name: categories.name})
+      .select({ name: categories.name })
       .from(categories)
       .where(eq(categories.id, payee[0].defaultCategoryId))
       .limit(1);
@@ -936,7 +939,7 @@ export class BudgetAllocationService {
 
   private async calculateAllocationSuggestion(
     optimization: BudgetOptimizationAnalysis,
-    categoryInfo: {categoryId: number | null; categoryName: string | null},
+    categoryInfo: { categoryId: number | null; categoryName: string | null },
     strategy: string,
     riskTolerance: number,
     timeHorizon: number
@@ -977,7 +980,7 @@ export class BudgetAllocationService {
     }
 
     // Map priority
-    const priorityMap = {high: "high" as const, medium: "medium" as const, low: "low" as const};
+    const priorityMap = { high: "high" as const, medium: "medium" as const, low: "low" as const };
     const priority =
       optimization.efficiency.score < 0.3
         ? ("critical" as const)
@@ -1143,10 +1146,10 @@ export class BudgetAllocationService {
     };
   }
 
-  private async getAccountInfo(accountId: number): Promise<{name: string} | null> {
+  private async getAccountInfo(accountId: number): Promise<{ name: string } | null> {
     // This would query the accounts table when available
     // For now, return placeholder
-    return {name: `Account ${accountId}`};
+    return { name: `Account ${accountId}` };
   }
 
   private calculateRebalancingPriority(analysis: BudgetOptimizationAnalysis): number {
@@ -1219,15 +1222,15 @@ export class BudgetAllocationService {
     const sortedAdjustments = [...payeeAdjustments].sort((a, b) => {
       if (a.priority !== b.priority) return b.priority - a.priority;
       if (a.riskLevel !== b.riskLevel) {
-        const riskOrder = {low: 3, medium: 2, high: 1};
+        const riskOrder = { low: 3, medium: 2, high: 1 };
         return riskOrder[b.riskLevel] - riskOrder[a.riskLevel];
       }
       return Math.abs(b.adjustmentPercent) - Math.abs(a.adjustmentPercent);
     });
 
-    const phase1: Array<{payeeId: number; adjustment: number; reason: string}> = [];
-    const phase2: Array<{payeeId: number; adjustment: number; reason: string}> = [];
-    const phase3: Array<{payeeId: number; adjustment: number; reason: string}> = [];
+    const phase1: Array<{ payeeId: number; adjustment: number; reason: string }> = [];
+    const phase2: Array<{ payeeId: number; adjustment: number; reason: string }> = [];
+    const phase3: Array<{ payeeId: number; adjustment: number; reason: string }> = [];
 
     // Distribute adjustments across phases based on strategy
     sortedAdjustments.forEach((adjustment, index) => {
@@ -1255,11 +1258,11 @@ export class BudgetAllocationService {
       }
     });
 
-    return {phase1, phase2, phase3};
+    return { phase1, phase2, phase3 };
   }
 
   private applyBudgetConstraint(
-    analyses: Array<{payeeId: number; analysis: BudgetOptimizationAnalysis}>,
+    analyses: Array<{ payeeId: number; analysis: BudgetOptimizationAnalysis }>,
     totalBudgetConstraint: number,
     objectives: any
   ): Record<number, number> {
@@ -1286,7 +1289,7 @@ export class BudgetAllocationService {
     let remainingBudget = totalBudgetConstraint;
 
     // First pass: allocate minimum viable amounts
-    for (const {payeeId, analysis} of sortedAnalyses) {
+    for (const { payeeId, analysis } of sortedAnalyses) {
       const minAllocation = analysis.recommendations.optimizedAllocation * 0.6;
       const allocation = Math.min(minAllocation, remainingBudget);
       allocations[payeeId] = allocation;
@@ -1294,7 +1297,7 @@ export class BudgetAllocationService {
     }
 
     // Second pass: distribute remaining budget by priority
-    for (const {payeeId, analysis} of sortedAnalyses) {
+    for (const { payeeId, analysis } of sortedAnalyses) {
       if (remainingBudget <= 0) break;
 
       const currentAllocation = allocations[payeeId] ?? 0;
@@ -1312,14 +1315,14 @@ export class BudgetAllocationService {
   }
 
   private calculateOptimizationScore(
-    analyses: Array<{payeeId: number; analysis: BudgetOptimizationAnalysis}>,
+    analyses: Array<{ payeeId: number; analysis: BudgetOptimizationAnalysis }>,
     optimizedAllocations: Record<number, number>
   ): number {
     // Calculate weighted average of efficiency improvements
     let totalWeight = 0;
     let weightedScore = 0;
 
-    analyses.forEach(({payeeId, analysis}) => {
+    analyses.forEach(({ payeeId, analysis }) => {
       const allocation = optimizedAllocations[payeeId] ?? 0;
       const weight = allocation; // Weight by allocation amount
       const currentEfficiency = analysis.efficiency.score;
@@ -1336,7 +1339,7 @@ export class BudgetAllocationService {
   }
 
   private generateMultiPayeeRecommendations(
-    analyses: Array<{payeeId: number; analysis: BudgetOptimizationAnalysis}>,
+    analyses: Array<{ payeeId: number; analysis: BudgetOptimizationAnalysis }>,
     optimizedAllocations: Record<number, number>,
     totalBudgetConstraint?: number,
     constraintsSatisfied?: boolean
@@ -1439,7 +1442,7 @@ export class BudgetAllocationService {
 
     const status = score > 0.8 ? "excellent" : score > 0.6 ? "good" : score > 0.4 ? "fair" : "poor";
 
-    return {score, status, issues, recommendations};
+    return { score, status, issues, recommendations };
   }
 
   private assessUtilizationHealth(
@@ -1480,7 +1483,7 @@ export class BudgetAllocationService {
 
     const status = score > 0.8 ? "excellent" : score > 0.6 ? "good" : score > 0.4 ? "fair" : "poor";
 
-    return {score, status, issues, recommendations};
+    return { score, status, issues, recommendations };
   }
 
   private assessPredictabilityHealth(
@@ -1522,7 +1525,7 @@ export class BudgetAllocationService {
 
     const status = score > 0.8 ? "excellent" : score > 0.6 ? "good" : score > 0.4 ? "fair" : "poor";
 
-    return {score, status, issues, recommendations};
+    return { score, status, issues, recommendations };
   }
 
   private assessEfficiencyHealth(
@@ -1553,7 +1556,7 @@ export class BudgetAllocationService {
 
     const status = score > 0.8 ? "excellent" : score > 0.6 ? "good" : score > 0.4 ? "fair" : "poor";
 
-    return {score, status, issues, recommendations};
+    return { score, status, issues, recommendations };
   }
 
   private async analyzeBudgetHealthTrends(payeeId: number): Promise<BudgetHealthMetrics["trends"]> {

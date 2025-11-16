@@ -1,11 +1,11 @@
-import {relations, sql} from "drizzle-orm";
-import {sqliteTable, integer, text, real, index} from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {accounts} from "./accounts";
-import {payees} from "./payees";
-import {categories} from "./categories";
-import {schedules} from "./schedules";
-import {workspaces} from "./workspaces";
+import { relations, sql } from "drizzle-orm";
+import { sqliteTable, integer, text, real, index } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { accounts } from "./accounts";
+import { payees } from "./payees";
+import { categories } from "./categories";
+import { schedules } from "./schedules";
+import { workspaces } from "./workspaces";
 
 export interface SuggestedScheduleConfig {
   // Core schedule fields
@@ -36,22 +36,22 @@ export interface SuggestedScheduleConfig {
 export const detectedPatterns = sqliteTable(
   "detected_patterns",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     accountId: integer("account_id")
       .notNull()
-      .references(() => accounts.id, {onDelete: "cascade"}),
+      .references(() => accounts.id, { onDelete: "cascade" }),
     patternType: text("pattern_type", {
       enum: ["daily", "weekly", "monthly", "yearly"],
     }).notNull(),
     confidenceScore: real("confidence_score").notNull(),
-    sampleTransactionIds: text("sample_transaction_ids", {mode: "json"})
+    sampleTransactionIds: text("sample_transaction_ids", { mode: "json" })
       .notNull()
       .$type<number[]>(),
-    payeeId: integer("payee_id").references(() => payees.id, {onDelete: "set null"}),
-    categoryId: integer("category_id").references(() => categories.id, {onDelete: "set null"}),
+    payeeId: integer("payee_id").references(() => payees.id, { onDelete: "set null" }),
+    categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
     amountMin: real("amount_min"),
     amountMax: real("amount_max"),
     amountAvg: real("amount_avg"),
@@ -59,7 +59,7 @@ export const detectedPatterns = sqliteTable(
     status: text("status", {
       enum: ["pending", "accepted", "dismissed", "converted"],
     }).default("pending"),
-    scheduleId: integer("schedule_id").references(() => schedules.id, {onDelete: "set null"}),
+    scheduleId: integer("schedule_id").references(() => schedules.id, { onDelete: "set null" }),
     suggestedScheduleConfig: text("suggested_schedule_config", {
       mode: "json",
     }).$type<SuggestedScheduleConfig>(),
@@ -77,7 +77,7 @@ export const detectedPatterns = sqliteTable(
   ]
 );
 
-export const detectedPatternsRelations = relations(detectedPatterns, ({one}) => ({
+export const detectedPatternsRelations = relations(detectedPatterns, ({ one }) => ({
   workspace: one(workspaces, {
     fields: [detectedPatterns.workspaceId],
     references: [workspaces.id],

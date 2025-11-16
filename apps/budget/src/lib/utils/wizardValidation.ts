@@ -111,10 +111,10 @@ export class WizardValidationEngine {
   validateStep(
     stepId: string,
     formData: Record<string, any>
-  ): {isValid: boolean; errors: string[]} {
+  ): { isValid: boolean; errors: string[] } {
     const stepValidation = this.validations.get(stepId);
     if (!stepValidation) {
-      return {isValid: true, errors: []};
+      return { isValid: true, errors: [] };
     }
 
     const errors: string[] = [];
@@ -127,7 +127,7 @@ export class WizardValidationEngine {
       }
     }
 
-    return {isValid: errors.length === 0, errors};
+    return { isValid: errors.length === 0, errors };
   }
 
   validateAllSteps(formData: Record<string, any>): {
@@ -145,7 +145,7 @@ export class WizardValidationEngine {
       }
     }
 
-    return {isValid, stepErrors};
+    return { isValid, stepErrors };
   }
 
   // Check if step dependencies are satisfied
@@ -164,28 +164,28 @@ export const accountValidations: StepValidation[] = [
   {
     stepId: "account-basics",
     rules: [
-      {field: "name", validator: validators.required("Account name")},
-      {field: "name", validator: validators.minLength("Account name", 2)},
-      {field: "name", validator: validators.maxLength("Account name", 100)},
+      { field: "name", validator: validators.required("Account name") },
+      { field: "name", validator: validators.minLength("Account name", 2) },
+      { field: "name", validator: validators.maxLength("Account name", 100) },
     ],
   },
   {
     stepId: "account-details",
-    rules: [{field: "notes", validator: validators.maxLength("Notes", 500)}],
+    rules: [{ field: "notes", validator: validators.maxLength("Notes", 500) }],
   },
 ];
 
 export const scheduleValidations: StepValidation[] = [
   {
     stepId: "schedule-type",
-    rules: [{field: "recurring", validator: validators.required("Schedule type")}],
+    rules: [{ field: "recurring", validator: validators.required("Schedule type") }],
   },
   {
     stepId: "transaction-details",
     rules: [
-      {field: "name", validator: validators.required("Schedule name")},
-      {field: "name", validator: validators.minLength("Schedule name", 2)},
-      {field: "amount", validator: validators.positiveNumber("Amount")},
+      { field: "name", validator: validators.required("Schedule name") },
+      { field: "name", validator: validators.minLength("Schedule name", 2) },
+      { field: "amount", validator: validators.positiveNumber("Amount") },
     ],
   },
   {
@@ -245,9 +245,9 @@ export const budgetValidations: StepValidation[] = [
   {
     stepId: "budget-details",
     rules: [
-      {field: "name", validator: validators.required("Budget name")},
-      {field: "name", validator: validators.minLength("Budget name", 2)},
-      {field: "name", validator: validators.maxLength("Budget name", 100)},
+      { field: "name", validator: validators.required("Budget name") },
+      { field: "name", validator: validators.minLength("Budget name", 2) },
+      { field: "name", validator: validators.maxLength("Budget name", 100) },
     ],
   },
   {
@@ -354,7 +354,7 @@ export const transactionValidations: StepValidation[] = [
   {
     stepId: "date-amount",
     rules: [
-      {field: "date", validator: validators.required("Date")},
+      { field: "date", validator: validators.required("Date") },
       {
         field: "amount",
         validator: validators.custom(
@@ -376,7 +376,7 @@ export const transactionValidations: StepValidation[] = [
   },
   {
     stepId: "notes-status",
-    rules: [{field: "notes", validator: validators.maxLength("Notes", 500)}],
+    rules: [{ field: "notes", validator: validators.maxLength("Notes", 500) }],
   },
   {
     stepId: "review",

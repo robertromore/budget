@@ -6,10 +6,10 @@
  * duplicate detection, and data quality checks.
  */
 
-import type {ImportRow, ValidationError, NormalizedTransaction} from "$lib/types/import";
-import {parseDate, isValidDate} from "../utils";
-import type {selectTransactionSchema} from "$lib/schema/transactions";
-import type {z} from "zod/v4";
+import type { ImportRow, ValidationError, NormalizedTransaction } from "$lib/types/import";
+import { parseDate, isValidDate } from "../utils";
+import type { selectTransactionSchema } from "$lib/schema/transactions";
+import type { z } from "zod/v4";
 
 export interface ValidationOptions {
   requireDate?: boolean;
@@ -37,7 +37,7 @@ export class TransactionValidator {
   private options: Required<ValidationOptions>;
 
   constructor(options: ValidationOptions = {}) {
-    this.options = {...DEFAULT_OPTIONS, ...options};
+    this.options = { ...DEFAULT_OPTIONS, ...options };
   }
 
   /**

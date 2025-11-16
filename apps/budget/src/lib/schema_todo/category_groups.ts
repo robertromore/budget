@@ -1,18 +1,18 @@
 // A "category group" represents a collection of related categories.
 
-import {relations} from "drizzle-orm";
-import {sqliteTable, integer, text} from "drizzle-orm/sqlite-core";
-import {createSelectSchema} from "drizzle-zod";
-import {categories} from "$lib/schema/categories";
+import { relations } from "drizzle-orm";
+import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { createSelectSchema } from "drizzle-zod";
+import { categories } from "$lib/schema/categories";
 // import { z } from 'zod';
 
 export const categoryGroups = sqliteTable("category_group", {
-  id: integer("id").primaryKey({autoIncrement: true}),
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name"),
   notes: text("notes"),
 });
 
-export const categoryGroupsRelations = relations(categoryGroups, ({many}) => ({
+export const categoryGroupsRelations = relations(categoryGroups, ({ many }) => ({
   categories: many(categories),
 }));
 

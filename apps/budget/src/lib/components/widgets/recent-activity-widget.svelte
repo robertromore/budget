@@ -5,14 +5,14 @@ import { formatDateDisplay, parseISOString } from '$lib/utils/dates';
 import { currencyFormatter } from '$lib/utils/formatters';
 import WidgetCard from './widget-card.svelte';
 
-let {config, data, onUpdate, onRemove, editMode = false}: WidgetProps = $props();
+let { config, data, onUpdate, onRemove, editMode = false }: WidgetProps = $props();
 
 const days = config.settings?.['days'] ?? 30;
 const transactions = data?.['recentTransactions'] ?? [];
 const totalAmount = data?.['recentActivity'] ?? 0;
 </script>
 
-<WidgetCard {config} {data} {editMode} {...onUpdate && {onUpdate}} {...onRemove && {onRemove}}>
+<WidgetCard {config} {data} {editMode} {...onUpdate && { onUpdate }} {...onRemove && { onRemove }}>
   <div class="space-y-3">
     <div class="flex items-center justify-between">
       <div class="text-muted-foreground text-sm font-medium">{config.title}</div>

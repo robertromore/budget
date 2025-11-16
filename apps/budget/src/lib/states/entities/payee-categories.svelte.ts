@@ -1,7 +1,7 @@
-import {type PayeeCategory} from "$lib/schema/payee-categories";
-import {trpc} from "$lib/trpc/client";
-import {getContext, setContext} from "svelte";
-import {SvelteMap} from "svelte/reactivity";
+import { type PayeeCategory } from "$lib/schema/payee-categories";
+import { trpc } from "$lib/trpc/client";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("payee-categories");
 
@@ -115,12 +115,12 @@ export class PayeeCategoriesState {
   }
 
   async deleteCategory(id: number): Promise<void> {
-    await trpc().payeeCategoriesRoutes.delete.mutate({id});
+    await trpc().payeeCategoriesRoutes.delete.mutate({ id });
     this.removeCategory(id);
   }
 
   async deleteCategories(ids: number[]): Promise<void> {
-    await trpc().payeeCategoriesRoutes.bulkDelete.mutate({entities: ids});
+    await trpc().payeeCategoriesRoutes.bulkDelete.mutate({ entities: ids });
     this.removeCategories(ids);
   }
 

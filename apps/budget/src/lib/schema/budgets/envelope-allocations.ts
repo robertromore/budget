@@ -1,8 +1,8 @@
-import {relations, sql} from "drizzle-orm";
-import {index, integer, real, sqliteTable, text, uniqueIndex} from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {budgetPeriodInstances, budgets} from "../budgets";
-import {categories} from "../categories";
+import { relations, sql } from "drizzle-orm";
+import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { budgetPeriodInstances, budgets } from "../budgets";
+import { categories } from "../categories";
 
 export const envelopeStatuses = ["active", "paused", "depleted", "overspent"] as const;
 export const rolloverModes = ["unlimited", "reset", "limited"] as const;
@@ -22,24 +22,24 @@ export interface EnvelopeMetadata {
 export const envelopeAllocations = sqliteTable(
   "envelope_allocation",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     budgetId: integer("budget_id")
       .notNull()
-      .references(() => budgets.id, {onDelete: "cascade"}),
+      .references(() => budgets.id, { onDelete: "cascade" }),
     categoryId: integer("category_id")
       .notNull()
-      .references(() => categories.id, {onDelete: "cascade"}),
+      .references(() => categories.id, { onDelete: "cascade" }),
     periodInstanceId: integer("period_instance_id")
       .notNull()
-      .references(() => budgetPeriodInstances.id, {onDelete: "cascade"}),
+      .references(() => budgetPeriodInstances.id, { onDelete: "cascade" }),
     allocatedAmount: real("allocated_amount").default(0).notNull(),
     spentAmount: real("spent_amount").default(0).notNull(),
     rolloverAmount: real("rollover_amount").default(0).notNull(),
     availableAmount: real("available_amount").default(0).notNull(),
     deficitAmount: real("deficit_amount").default(0).notNull(),
-    status: text("status", {enum: envelopeStatuses}).default("active").notNull(),
-    rolloverMode: text("rollover_mode", {enum: rolloverModes}).default("unlimited").notNull(),
-    metadata: text("metadata", {mode: "json"}).$type<EnvelopeMetadata>().default({}).notNull(),
+    status: text("status", { enum: envelopeStatuses }).default("active").notNull(),
+    rolloverMode: text("rollover_mode", { enum: rolloverModes }).default("unlimited").notNull(),
+    metadata: text("metadata", { mode: "json" }).$type<EnvelopeMetadata>().default({}).notNull(),
     lastCalculated: text("last_calculated"),
     createdAt: text("created_at")
       .notNull()
@@ -64,13 +64,13 @@ export const envelopeAllocations = sqliteTable(
 export const envelopeTransfers = sqliteTable(
   "envelope_transfer",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     fromEnvelopeId: integer("from_envelope_id")
       .notNull()
-      .references(() => envelopeAllocations.id, {onDelete: "cascade"}),
+      .references(() => envelopeAllocations.id, { onDelete: "cascade" }),
     toEnvelopeId: integer("to_envelope_id")
       .notNull()
-      .references(() => envelopeAllocations.id, {onDelete: "cascade"}),
+      .references(() => envelopeAllocations.id, { onDelete: "cascade" }),
     amount: real("amount").notNull(),
     reason: text("reason"),
     transferredBy: text("transferred_by").notNull(),
@@ -88,16 +88,16 @@ export const envelopeTransfers = sqliteTable(
 export const envelopeRolloverHistory = sqliteTable(
   "envelope_rollover_history",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     envelopeId: integer("envelope_id")
       .notNull()
-      .references(() => envelopeAllocations.id, {onDelete: "cascade"}),
+      .references(() => envelopeAllocations.id, { onDelete: "cascade" }),
     fromPeriodId: integer("from_period_id")
       .notNull()
-      .references(() => budgetPeriodInstances.id, {onDelete: "cascade"}),
+      .references(() => budgetPeriodInstances.id, { onDelete: "cascade" }),
     toPeriodId: integer("to_period_id")
       .notNull()
-      .references(() => budgetPeriodInstances.id, {onDelete: "cascade"}),
+      .references(() => budgetPeriodInstances.id, { onDelete: "cascade" }),
     rolledAmount: real("rolled_amount").notNull(),
     resetAmount: real("reset_amount").default(0).notNull(),
     processedAt: text("processed_at")
@@ -111,7 +111,7 @@ export const envelopeRolloverHistory = sqliteTable(
   ]
 );
 
-export const envelopeAllocationsRelations = relations(envelopeAllocations, ({one, many}) => ({
+export const envelopeAllocationsRelations = relations(envelopeAllocations, ({ one, many }) => ({
   budget: one(budgets, {
     fields: [envelopeAllocations.budgetId],
     references: [budgets.id],
@@ -133,7 +133,7 @@ export const envelopeAllocationsRelations = relations(envelopeAllocations, ({one
   rolloverHistory: many(envelopeRolloverHistory),
 }));
 
-export const envelopeTransfersRelations = relations(envelopeTransfers, ({one}) => ({
+export const envelopeTransfersRelations = relations(envelopeTransfers, ({ one }) => ({
   fromEnvelope: one(envelopeAllocations, {
     fields: [envelopeTransfers.fromEnvelopeId],
     references: [envelopeAllocations.id],
@@ -146,7 +146,7 @@ export const envelopeTransfersRelations = relations(envelopeTransfers, ({one}) =
   }),
 }));
 
-export const envelopeRolloverHistoryRelations = relations(envelopeRolloverHistory, ({one}) => ({
+export const envelopeRolloverHistoryRelations = relations(envelopeRolloverHistory, ({ one }) => ({
   envelope: one(envelopeAllocations, {
     fields: [envelopeRolloverHistory.envelopeId],
     references: [envelopeAllocations.id],

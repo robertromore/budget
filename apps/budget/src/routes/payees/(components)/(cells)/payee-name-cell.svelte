@@ -9,7 +9,7 @@ interface Props {
   payee: Payee;
 }
 
-let {payee}: Props = $props();
+let { payee }: Props = $props();
 
 const IconComponent = $derived(() => {
   switch (payee.payeeType) {

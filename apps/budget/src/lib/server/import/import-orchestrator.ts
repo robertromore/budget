@@ -5,20 +5,20 @@
  * to transaction creation. Provides progress tracking and error handling.
  */
 
-import type {Category} from "$lib/schema/categories";
-import {categories as categoryTable} from "$lib/schema/categories";
-import type {Payee} from "$lib/schema/payees";
-import {payees as payeeTable} from "$lib/schema/payees";
-import type {selectTransactionSchema} from "$lib/schema/transactions";
-import {transactions as transactionTable} from "$lib/schema/transactions";
-import {accounts as accountTable} from "$lib/schema/accounts";
-import {db} from "$lib/server/db";
-import type {ImportOptions, ImportResult, ImportRow} from "$lib/types/import";
-import {and, eq, isNull} from "drizzle-orm";
-import type {z} from "zod/v4";
-import {CategoryMatcher} from "./matchers/category-matcher";
-import {PayeeMatcher} from "./matchers/payee-matcher";
-import {TransactionValidator} from "./validators/transaction-validator";
+import type { Category } from "$lib/schema/categories";
+import { categories as categoryTable } from "$lib/schema/categories";
+import type { Payee } from "$lib/schema/payees";
+import { payees as payeeTable } from "$lib/schema/payees";
+import type { selectTransactionSchema } from "$lib/schema/transactions";
+import { transactions as transactionTable } from "$lib/schema/transactions";
+import { accounts as accountTable } from "$lib/schema/accounts";
+import { db } from "$lib/server/db";
+import type { ImportOptions, ImportResult, ImportRow } from "$lib/types/import";
+import { and, eq, isNull } from "drizzle-orm";
+import type { z } from "zod/v4";
+import { CategoryMatcher } from "./matchers/category-matcher";
+import { PayeeMatcher } from "./matchers/payee-matcher";
+import { TransactionValidator } from "./validators/transaction-validator";
 
 export interface ImportProgress {
   stage: "validating" | "matching" | "creating" | "complete";
@@ -29,8 +29,8 @@ export interface ImportProgress {
     payees: number;
     categories: number;
   };
-  errors: Array<{row: number; message: string}>;
-  warnings: Array<{row: number; message: string}>;
+  errors: Array<{ row: number; message: string }>;
+  warnings: Array<{ row: number; message: string }>;
 }
 
 export class ImportOrchestrator {
@@ -55,7 +55,7 @@ export class ImportOrchestrator {
       payees: string[];
       categories: string[];
     },
-    scheduleMatches?: Array<{rowIndex: number; scheduleId: number}>
+    scheduleMatches?: Array<{ rowIndex: number; scheduleId: number }>
   ): Promise<ImportResult> {
     const result: ImportResult = {
       success: true,
@@ -85,7 +85,7 @@ export class ImportOrchestrator {
     try {
       // Get the account's workspaceId first
       const [account] = await db
-        .select({workspaceId: accountTable.workspaceId})
+        .select({ workspaceId: accountTable.workspaceId })
         .from(accountTable)
         .where(eq(accountTable.id, accountId))
         .limit(1);
@@ -211,7 +211,7 @@ export class ImportOrchestrator {
     let payeeDetails: string | null = null;
     if (normalized["payee"]) {
       // Normalize the payee name and extract details
-      const {name: cleanedPayeeName, details} = this.payeeMatcher.normalizePayeeName(
+      const { name: cleanedPayeeName, details } = this.payeeMatcher.normalizePayeeName(
         normalized["payee"]
       );
       payeeDetails = details;
@@ -276,7 +276,7 @@ export class ImportOrchestrator {
                   // Restore soft-deleted payee
                   const [restored] = await db
                     .update(payeeTable)
-                    .set({deletedAt: null, name: cleanedPayeeName})
+                    .set({ deletedAt: null, name: cleanedPayeeName })
                     .where(eq(payeeTable.id, payee.id))
                     .returning();
                   if (restored) {
@@ -411,7 +411,7 @@ export class ImportOrchestrator {
                   console.log(`Restoring soft-deleted category "${category.name}" (slug: ${slug})`);
                   const [restored] = await db
                     .update(categoryTable)
-                    .set({deletedAt: null, name: normalized["category"]})
+                    .set({ deletedAt: null, name: normalized["category"] })
                     .where(eq(categoryTable.id, category.id))
                     .returning();
                   if (restored) {
@@ -519,7 +519,7 @@ export class ImportOrchestrator {
                       // Restore soft-deleted category
                       const [restored] = await db
                         .update(categoryTable)
-                        .set({deletedAt: null, name: suggestedCategoryName})
+                        .set({ deletedAt: null, name: suggestedCategoryName })
                         .where(eq(categoryTable.id, category.id))
                         .returning();
                       if (restored) {
@@ -595,7 +595,7 @@ export class ImportOrchestrator {
 
     // Store additional import details (transaction IDs, location, etc.)
     if (payeeDetails) {
-      const detailsObj: any = {extractedDetails: payeeDetails};
+      const detailsObj: any = { extractedDetails: payeeDetails };
       if (normalized["fitid"]) {
         detailsObj.fitid = normalized["fitid"];
       }
@@ -685,13 +685,13 @@ export class ImportOrchestrator {
     validRows: number;
     invalidRows: number;
     warnings: number;
-    potentialPayees: {name: string; match: string | null}[];
-    potentialCategories: {name: string; match: string | null}[];
+    potentialPayees: { name: string; match: string | null }[];
+    potentialCategories: { name: string; match: string | null }[];
     estimatedTransactions: number;
   }> {
     // Get the account's workspaceId
     const [account] = await db
-      .select({workspaceId: accountTable.workspaceId})
+      .select({ workspaceId: accountTable.workspaceId })
       .from(accountTable)
       .where(eq(accountTable.id, accountId))
       .limit(1);
@@ -712,8 +712,8 @@ export class ImportOrchestrator {
     const existingPayees = await this.getExistingPayees(workspaceId);
     const existingCategories = await this.getExistingCategories(workspaceId);
 
-    const potentialPayees: {name: string; match: string | null}[] = [];
-    const potentialCategories: {name: string; match: string | null}[] = [];
+    const potentialPayees: { name: string; match: string | null }[] = [];
+    const potentialCategories: { name: string; match: string | null }[] = [];
 
     validatedRows
       .filter((row) => row.validationStatus !== "invalid")

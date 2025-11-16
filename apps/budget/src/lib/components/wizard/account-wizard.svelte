@@ -31,7 +31,7 @@ interface Props {
   onComplete?: (formData: Record<string, any>) => Promise<void>;
 }
 
-let {initialData = {}, onComplete}: Props = $props();
+let { initialData = {}, onComplete }: Props = $props();
 
 // Initialize wizard steps
 const steps: WizardStepType[] = [
@@ -143,7 +143,7 @@ function generateCreditCardDescription(): string | null {
   }
 
   if (formData['minimumPayment']) {
-    const formatter = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'});
+    const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
     parts.push(`${formatter.format(formData['minimumPayment'])} minimum payment`);
   }
 
@@ -310,24 +310,24 @@ const exampleNotesByCategory: Record<string, string[]> = {
 };
 
 const noteCategories = [
-  {value: 'all', label: 'All', color: 'border-l-gray-500'},
-  {value: 'checking', label: 'Checking', color: 'border-l-blue-500'},
-  {value: 'savings', label: 'Savings', color: 'border-l-green-500'},
-  {value: 'credit_card', label: 'Credit Card', color: 'border-l-purple-500'},
-  {value: 'investment', label: 'Investment', color: 'border-l-orange-500'},
-  {value: 'loan', label: 'Loan', color: 'border-l-red-500'},
-  {value: 'hsa', label: 'HSA', color: 'border-l-teal-500'},
+  { value: 'all', label: 'All', color: 'border-l-gray-500' },
+  { value: 'checking', label: 'Checking', color: 'border-l-blue-500' },
+  { value: 'savings', label: 'Savings', color: 'border-l-green-500' },
+  { value: 'credit_card', label: 'Credit Card', color: 'border-l-purple-500' },
+  { value: 'investment', label: 'Investment', color: 'border-l-orange-500' },
+  { value: 'loan', label: 'Loan', color: 'border-l-red-500' },
+  { value: 'hsa', label: 'HSA', color: 'border-l-teal-500' },
 ];
 
 // Default icons and colors for account types
-const accountTypeDefaults: Record<string, {icon: string; color?: string}> = {
-  checking: {icon: 'credit-card', color: '#3B82F6'}, // blue
-  savings: {icon: 'piggy-bank', color: '#10B981'}, // green
-  credit_card: {icon: 'credit-card', color: '#8B5CF6'}, // purple
-  investment: {icon: 'trending-up', color: '#F59E0B'}, // orange
-  loan: {icon: 'banknote', color: '#EF4444'}, // red
-  cash: {icon: 'wallet', color: '#6B7280'}, // gray
-  hsa: {icon: 'heart-pulse', color: '#14B8A6'}, // teal
+const accountTypeDefaults: Record<string, { icon: string; color?: string }> = {
+  checking: { icon: 'credit-card', color: '#3B82F6' }, // blue
+  savings: { icon: 'piggy-bank', color: '#10B981' }, // green
+  credit_card: { icon: 'credit-card', color: '#8B5CF6' }, // purple
+  investment: { icon: 'trending-up', color: '#F59E0B' }, // orange
+  loan: { icon: 'banknote', color: '#EF4444' }, // red
+  cash: { icon: 'wallet', color: '#6B7280' }, // gray
+  hsa: { icon: 'heart-pulse', color: '#14B8A6' }, // teal
 };
 
 // Handle account type selection
@@ -500,7 +500,7 @@ const accountTypeAccessors = {
   set: (value: string) => handleAccountTypeChange(value),
 };
 
-function handleIconChange(event: CustomEvent<{value: string; icon: any}>) {
+function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
   updateField('accountIcon', event.detail.value);
 }
 

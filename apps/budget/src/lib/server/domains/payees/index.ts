@@ -1,9 +1,9 @@
-export {PayeeRepository} from "./repository";
-export {PayeeService} from "./services";
-export {PayeeIntelligenceService} from "./intelligence";
-export {CategoryLearningService} from "./category-learning";
-export {BudgetAllocationService} from "./budget-allocation";
-export {PayeeMLCoordinator} from "./ml-coordinator";
+export { PayeeRepository } from "./repository";
+export { PayeeService } from "./services";
+export { PayeeIntelligenceService } from "./intelligence";
+export { CategoryLearningService } from "./category-learning";
+export { BudgetAllocationService } from "./budget-allocation";
+export { PayeeMLCoordinator } from "./ml-coordinator";
 
 export type {
   UpdatePayeeData,
@@ -77,7 +77,7 @@ export type {
   MLDataQualityReport,
 } from "./ml-types";
 
-export type {SubscriptionInfo, PayeeAddress, PaymentMethodReference, PayeeTags} from "./types";
+export type { SubscriptionInfo, PayeeAddress, PaymentMethodReference, PayeeTags } from "./types";
 
 export {
   createPayeeSchema,

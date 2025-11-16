@@ -1,8 +1,8 @@
 <script lang="ts">
-import type {Table} from '@tanstack/table-core';
-import type {ExpenseFormat} from '../(data)/columns.svelte';
-import {Input} from '$lib/components/ui/input';
-import {Button} from '$lib/components/ui/button';
+import type { Table } from '@tanstack/table-core';
+import type { ExpenseFormat } from '../(data)/columns.svelte';
+import { Input } from '$lib/components/ui/input';
+import { Button } from '$lib/components/ui/button';
 import X from '@lucide/svelte/icons/x';
 import DataTableViewOptions from './expense-table-view-options.svelte';
 
@@ -10,7 +10,7 @@ interface Props {
   table: Table<ExpenseFormat>;
 }
 
-let {table}: Props = $props();
+let { table }: Props = $props();
 
 const isFiltered = $derived(table.getState().columnFilters.length > 0);
 </script>

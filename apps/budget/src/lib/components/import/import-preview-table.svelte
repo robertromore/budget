@@ -1,16 +1,16 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
 import * as Table from '$lib/components/ui/table';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {ScrollArea} from '$lib/components/ui/scroll-area';
-import {Checkbox} from '$lib/components/ui/checkbox';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
+import { Checkbox } from '$lib/components/ui/checkbox';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Clock from '@lucide/svelte/icons/clock';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
-import type {ImportRow} from '$lib/types/import';
-import {formatCurrency} from '$lib/utils/formatters';
+import type { ImportRow } from '$lib/types/import';
+import { formatCurrency } from '$lib/utils/formatters';
 
 interface Props {
   data: ImportRow[];

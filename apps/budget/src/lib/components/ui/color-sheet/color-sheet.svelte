@@ -20,7 +20,7 @@ interface Props {
   disabled?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  onchange?: (event: CustomEvent<{value: string}>) => void;
+  onchange?: (event: CustomEvent<{ value: string }>) => void;
   basicContent: Snippet;
   advancedContent: Snippet;
   class?: string;
@@ -58,7 +58,7 @@ export function showBasic() {
 // Handle color change events from child components
 export function handleColorChange(color: string) {
   if (onchange) {
-    const event = new CustomEvent('change', {detail: {value: color}});
+    const event = new CustomEvent('change', { detail: { value: color } });
     onchange(event);
   }
 }
@@ -93,7 +93,7 @@ const sheets = [
   class="sm:max-w-md {className}"
   onSheetChange={handleSheetChange}>
   {#snippet trigger()}
-    <div class={cn(buttonVariants({variant: 'outline'}), 'justify-start', className)}>
+    <div class={cn(buttonVariants({ variant: 'outline' }), 'justify-start', className)}>
       <div class="flex items-center gap-2">
         {#if value && isValidHexColor(value)}
           <div

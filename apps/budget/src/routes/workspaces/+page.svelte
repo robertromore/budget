@@ -1,19 +1,19 @@
 <script lang="ts">
 import CreateWorkspaceForm from './(components)/create-workspace-form.svelte';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
 import UserCircle from '@lucide/svelte/icons/user-circle';
 import Check from '@lucide/svelte/icons/check';
-import {goto} from '$app/navigation';
-import {toast} from 'svelte-sonner';
-import type {PageData} from './$types';
+import { goto } from '$app/navigation';
+import { toast } from 'svelte-sonner';
+import type { PageData } from './$types';
 
 interface Props {
   data: PageData;
 }
 
-let {data}: Props = $props();
+let { data }: Props = $props();
 
 const currentWorkspaceId = $derived(data.currentWorkspace?.id);
 
@@ -28,7 +28,7 @@ async function switchWorkspace(workspaceId: number) {
 
   if (response.ok) {
     toast.success('Switched workspace successfully');
-    goto('/', {invalidateAll: true});
+    goto('/', { invalidateAll: true });
   } else {
     toast.error('Failed to switch workspace');
   }

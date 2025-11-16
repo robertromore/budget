@@ -1,5 +1,5 @@
-import {eq, and, isNull, ne} from "drizzle-orm";
-import {generateUniqueSlug as generateUniqueSlugGeneric} from "./generate-unique-slug";
+import { eq, and, isNull, ne } from "drizzle-orm";
+import { generateUniqueSlug as generateUniqueSlugGeneric } from "./generate-unique-slug";
 
 /**
  * Database-specific wrapper for generating unique slugs
@@ -22,7 +22,7 @@ export async function generateUniqueSlugForDB(
     deletedAtColumn?: any;
   } = {}
 ): Promise<string> {
-  const {excludeId, idColumn, deletedAtColumn} = options;
+  const { excludeId, idColumn, deletedAtColumn } = options;
 
   // Create a database-specific uniqueness checker
   const isUnique = async (slug: string): Promise<boolean> => {

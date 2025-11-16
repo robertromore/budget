@@ -1,9 +1,9 @@
 <script lang="ts">
 import * as Select from '$lib/components/ui/select';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import type {ColumnMapping} from '$lib/types/import';
-import {formatPreviewAmount} from '$lib/utils/import';
+import { Button } from '$lib/components/ui/button';
+import type { ColumnMapping } from '$lib/types/import';
+import { formatPreviewAmount } from '$lib/utils/import';
 
 interface Props {
   rawColumns: string[];
@@ -13,7 +13,7 @@ interface Props {
   onBack: () => void;
 }
 
-let {rawColumns, initialMapping, sampleData = [], onNext, onBack}: Props = $props();
+let { rawColumns, initialMapping, sampleData = [], onNext, onBack }: Props = $props();
 
 // Filter out header rows from sample data
 const filteredSampleData = $derived.by(() => {
@@ -32,29 +32,29 @@ const filteredSampleData = $derived.by(() => {
 const targetFields = $derived(
   (() => {
     const fields = [
-      {value: '', label: 'Skip Column'},
-      {value: 'date', label: 'Date'},
+      { value: '', label: 'Skip Column' },
+      { value: 'date', label: 'Date' },
     ];
 
     // Check if we have both debit and credit columns in the CSV
     const hasDebitCol = rawColumns.some((col) => col.toLowerCase().includes('debit'));
     const hasCreditCol = rawColumns.some((col) => col.toLowerCase().includes('credit'));
 
-    console.log('Column detection:', {rawColumns, hasDebitCol, hasCreditCol});
+    console.log('Column detection:', { rawColumns, hasDebitCol, hasCreditCol });
 
     if (hasDebitCol && hasCreditCol) {
       // If both debit and credit columns exist, offer combined option
-      fields.push({value: 'debit/credit', label: 'Debit/Credit (Amount)'});
+      fields.push({ value: 'debit/credit', label: 'Debit/Credit (Amount)' });
     } else {
       // Otherwise offer standard amount field
-      fields.push({value: 'amount', label: 'Amount'});
+      fields.push({ value: 'amount', label: 'Amount' });
     }
 
     fields.push(
-      {value: 'payee', label: 'Payee/Merchant'},
-      {value: 'notes', label: 'Notes/Memo'},
-      {value: 'category', label: 'Category'},
-      {value: 'status', label: 'Status'}
+      { value: 'payee', label: 'Payee/Merchant' },
+      { value: 'notes', label: 'Notes/Memo' },
+      { value: 'category', label: 'Category' },
+      { value: 'status', label: 'Status' }
     );
 
     console.log('Generated fields:', fields);
@@ -79,7 +79,7 @@ $effect(() => {
   if (initialized) return;
 
   if (initialMapping) {
-    columnMapping = {...initialMapping};
+    columnMapping = { ...initialMapping };
   } else {
     // Check if we have both debit and credit columns
     const hasDebitCol = rawColumns.some((col) => col.toLowerCase().includes('debit'));

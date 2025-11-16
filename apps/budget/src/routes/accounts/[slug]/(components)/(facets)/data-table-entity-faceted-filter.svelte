@@ -1,10 +1,10 @@
 <script lang="ts" generics="TData, TValue, TEntity">
-import type {Column} from '@tanstack/table-core';
-import {DataTableFacetedFilter} from '..';
-import type {Component} from 'svelte';
-import {currentViews} from '$lib/states/views';
-import {SvelteMap} from 'svelte/reactivity';
-import type {FacetedFilterOption} from '$lib/types';
+import type { Column } from '@tanstack/table-core';
+import { DataTableFacetedFilter } from '..';
+import type { Component } from 'svelte';
+import { currentViews } from '$lib/states/views';
+import { SvelteMap } from 'svelte/reactivity';
+import type { FacetedFilterOption } from '$lib/types';
 
 type EntityConfig<TEntity> = {
   // Data source for all entities
@@ -26,7 +26,7 @@ type Props<TData, TValue, TEntity> = {
   config: EntityConfig<TEntity>;
 };
 
-let {column, config}: Props<TData, TValue, TEntity> = $props();
+let { column, config }: Props<TData, TValue, TEntity> = $props();
 
 const activeView = $derived(currentViews.get().activeView);
 const activeViewModel = $derived(activeView.view);

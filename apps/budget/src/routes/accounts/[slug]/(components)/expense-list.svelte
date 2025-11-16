@@ -1,8 +1,8 @@
 <script lang="ts">
-import {rpc} from '$lib/query';
-import {Button} from '$lib/components/ui/button';
+import { rpc } from '$lib/query';
+import { Button } from '$lib/components/ui/button';
 import * as Table from '$lib/components/ui/table';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import * as Select from '$lib/components/ui/select';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import FileText from '@lucide/svelte/icons/file-text';
@@ -24,7 +24,7 @@ interface Props {
   onViewClaims?: (expenseId: number) => void;
 }
 
-let {hsaAccountId, onEdit, onAddReceipt, onViewClaims}: Props = $props();
+let { hsaAccountId, onEdit, onAddReceipt, onViewClaims }: Props = $props();
 
 // Claim management dialog state
 let claimDialogOpen = $state(false);
@@ -105,7 +105,7 @@ const summaryQuery = $derived(
 const summary = $derived(summaryQuery.data);
 
 // Generate tax year options (last 5 years + current + next year)
-const taxYearOptions = Array.from({length: 7}, (_, i) => currentYear - 5 + i);
+const taxYearOptions = Array.from({ length: 7 }, (_, i) => currentYear - 5 + i);
 
 async function handleDelete(expense: any) {
   if (!confirm(`Delete medical expense for ${expense.provider || 'this expense'}?`)) return;
@@ -317,7 +317,7 @@ function getClaimStatus(expense: any): {
                 {@const claimStatus = getClaimStatus(expense)}
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger>
-                    {#snippet child({props})}
+                    {#snippet child({ props })}
                       <Button {...props} variant="ghost" size="sm" class="h-auto px-2 py-0">
                         <Badge variant={claimStatus.variant}>{claimStatus.label}</Badge>
                       </Button>

@@ -1,4 +1,4 @@
-import type {VisibilityState, Updater} from "@tanstack/table-core";
+import type { VisibilityState, Updater } from "@tanstack/table-core";
 
 // Initialize with certain columns hidden by default for expense table
 let _visibility = $state<VisibilityState>({

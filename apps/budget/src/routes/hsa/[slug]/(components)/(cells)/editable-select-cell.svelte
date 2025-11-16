@@ -1,5 +1,5 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import Check from '@lucide/svelte/icons/check';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -15,7 +15,7 @@ interface Props {
   onSave: (newValue: string) => Promise<void>;
 }
 
-let {value, options, onSave}: Props = $props();
+let { value, options, onSave }: Props = $props();
 
 const currentLabel = $derived(options.find((opt) => opt.value === value)?.label || value);
 
@@ -28,7 +28,7 @@ const handleSelect = async (newValue: string) => {
 
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>
-    {#snippet child({props})}
+    {#snippet child({ props })}
       <Button {...props} variant="ghost" size="sm" class="justify-start text-left font-normal">
         <span class="truncate">{currentLabel}</span>
         <ChevronDown class="ml-2 size-4 opacity-50" />

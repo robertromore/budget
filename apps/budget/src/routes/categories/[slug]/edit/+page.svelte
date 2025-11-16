@@ -1,17 +1,17 @@
 <script lang="ts">
-import {goto} from '$app/navigation';
-import {page} from '$app/state';
-import {Button} from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Tag from '@lucide/svelte/icons/tag';
-import {ManageCategoryForm} from '$lib/components/forms';
-import type {Category} from '$lib/schema';
-import type {EditableEntityItem} from '$lib/types';
-import type {PageData} from './$types';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
+import { ManageCategoryForm } from '$lib/components/forms';
+import type { Category } from '$lib/schema';
+import type { EditableEntityItem } from '$lib/types';
+import type { PageData } from './$types';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
 
-let {data}: {data: PageData} = $props();
+let { data }: { data: PageData } = $props();
 
 const slug = $derived(page.params['slug']);
 const category = $derived(data.category);
@@ -25,7 +25,7 @@ const handleSave = (entity: EditableEntityItem) => {
 
   // Navigate back to the category detail page
   setTimeout(() => {
-    goto(`/categories/${updatedCategory.slug}`, {replaceState: true});
+    goto(`/categories/${updatedCategory.slug}`, { replaceState: true });
   }, 100);
 };
 </script>

@@ -1,10 +1,17 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {FolderTree, Plus, ChevronRight, ChevronDown, SquarePen, Trash2} from '@lucide/svelte/icons';
-import {listBudgetGroups, deleteBudgetGroup} from '$lib/query/budgets';
-import type {BudgetGroup} from '$lib/schema/budgets';
+import {
+  FolderTree,
+  Plus,
+  ChevronRight,
+  ChevronDown,
+  SquarePen,
+  Trash2,
+} from '@lucide/svelte/icons';
+import { listBudgetGroups, deleteBudgetGroup } from '$lib/query/budgets';
+import type { BudgetGroup } from '$lib/schema/budgets';
 
 let {
   onCreateGroup,
@@ -67,7 +74,7 @@ const hierarchy = $derived.by(() => {
     }
   });
 
-  return {rootGroups, childMap};
+  return { rootGroups, childMap };
 });
 </script>
 

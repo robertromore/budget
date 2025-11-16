@@ -1,10 +1,10 @@
 <script lang="ts">
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {buttonVariants} from '$lib/components/ui/button';
-import {goto} from '$app/navigation';
-import {page} from '$app/state';
-import {deleteBudgetDialog, deleteBudgetId} from '$lib/states/ui/global.svelte';
-import {deleteBudget} from '$lib/query/budgets';
+import { buttonVariants } from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { deleteBudgetDialog, deleteBudgetId } from '$lib/states/ui/global.svelte';
+import { deleteBudget } from '$lib/query/budgets';
 
 const _deleteBudgetDialog = $derived(deleteBudgetDialog);
 const _deleteBudgetId = $derived(deleteBudgetId);
@@ -40,7 +40,7 @@ const confirmDeleteBudget = async () => {
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={confirmDeleteBudget}
-        class={buttonVariants({variant: 'destructive'})}>Continue</AlertDialog.Action>
+        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

@@ -1,6 +1,6 @@
-import {createQuery, createMutation, useQueryClient} from "@tanstack/svelte-query";
-import {trpc} from "$lib/trpc/client";
-import {toast} from "svelte-sonner";
+import { createQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
+import { trpc } from "$lib/trpc/client";
+import { toast } from "svelte-sonner";
 
 /**
  * Query Keys
@@ -24,7 +24,7 @@ export function createScheduleDetailQuery(
 ) {
   return createQuery(() => ({
     queryKey: scheduleKeys.detail(scheduleId),
-    queryFn: () => trpc().scheduleRoutes.load.query({id: scheduleId}),
+    queryFn: () => trpc().scheduleRoutes.load.query({ id: scheduleId }),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5, // 5 minutes
   }));
@@ -38,7 +38,7 @@ export function createToggleScheduleStatusMutation() {
     const queryClient = useQueryClient();
 
     return {
-      mutationFn: (scheduleId: number) => trpc().scheduleRoutes.toggleStatus.mutate({scheduleId}),
+      mutationFn: (scheduleId: number) => trpc().scheduleRoutes.toggleStatus.mutate({ scheduleId }),
       onSuccess: (updatedSchedule, scheduleId) => {
         // Update the detail query cache with the fresh data
         queryClient.setQueryData(scheduleKeys.detail(scheduleId), updatedSchedule);
@@ -69,7 +69,8 @@ export function createExecuteAutoAddMutation() {
     const queryClient = useQueryClient();
 
     return {
-      mutationFn: (scheduleId: number) => trpc().scheduleRoutes.executeAutoAdd.mutate({scheduleId}),
+      mutationFn: (scheduleId: number) =>
+        trpc().scheduleRoutes.executeAutoAdd.mutate({ scheduleId }),
       onSuccess: (result, scheduleId) => {
         // Invalidate the schedule detail to refresh transaction data
         queryClient.invalidateQueries({
@@ -100,7 +101,7 @@ export function createDeleteScheduleMutation() {
     const queryClient = useQueryClient();
 
     return {
-      mutationFn: (scheduleId: number) => trpc().scheduleRoutes.remove.mutate({id: scheduleId}),
+      mutationFn: (scheduleId: number) => trpc().scheduleRoutes.remove.mutate({ id: scheduleId }),
       onSuccess: (_, scheduleId) => {
         // Remove the schedule from all caches
         queryClient.removeQueries({
@@ -130,7 +131,8 @@ export function createDuplicateScheduleMutation() {
     const queryClient = useQueryClient();
 
     return {
-      mutationFn: (scheduleId: number) => trpc().scheduleRoutes.duplicate.mutate({id: scheduleId}),
+      mutationFn: (scheduleId: number) =>
+        trpc().scheduleRoutes.duplicate.mutate({ id: scheduleId }),
       onSuccess: (duplicatedSchedule) => {
         // Invalidate the schedules list to show the new duplicate
         queryClient.invalidateQueries({

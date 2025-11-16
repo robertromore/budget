@@ -1,7 +1,7 @@
 // Widget component registry for dynamic loading
 
-import type {WidgetType, WidgetProps} from "$lib/types/widgets";
-import type {Component} from "svelte";
+import type { WidgetType, WidgetProps } from "$lib/types/widgets";
+import type { Component } from "svelte";
 
 import AccountHealthWidget from "./account-health-widget.svelte";
 import BalanceWidget from "./balance-widget.svelte";

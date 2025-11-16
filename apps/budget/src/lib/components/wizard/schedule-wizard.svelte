@@ -26,7 +26,7 @@ import {
   HandCoins,
   Info,
   RefreshCw,
-  Tag
+  Tag,
 } from '@lucide/svelte/icons';
 import WizardStep from './wizard-step.svelte';
 
@@ -37,7 +37,7 @@ interface Props {
   categories?: EditableEntityItem[];
 }
 
-let {initialData = {}, accounts = [], payees = [], categories = []}: Props = $props();
+let { initialData = {}, accounts = [], payees = [], categories = [] }: Props = $props();
 
 // Date input variables
 let recurringDateModel = $state(new RepeatingDateInputModel());

@@ -1,12 +1,12 @@
 <script lang="ts">
 import * as Tabs from '$lib/components/ui/tabs';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {FileText, Wand, RotateCcw} from '@lucide/svelte/icons';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { FileText, Wand, RotateCcw } from '@lucide/svelte/icons';
 import WizardProgress from './wizard-progress.svelte';
-import {cn} from '$lib/utils';
-import type {Snippet} from 'svelte';
-import type {WizardStore} from '$lib/stores/wizardStore.svelte';
+import { cn } from '$lib/utils';
+import type { Snippet } from 'svelte';
+import type { WizardStore } from '$lib/stores/wizardStore.svelte';
 
 interface Props {
   title: string;
@@ -66,7 +66,7 @@ $effect(() => {
 $effect(() => {
   if (currentMode === 'wizard') {
     currentStepIndex;
-    window.scrollTo({top: 0, behavior: 'smooth'});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 });
 

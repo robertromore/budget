@@ -1,5 +1,5 @@
-import {z} from "zod";
-import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
+import { z } from "zod";
+import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "$lib/trpc";
 import {
   createTransactionSchema,
   createTransactionWithAutoPopulationSchema,
@@ -10,8 +10,8 @@ import {
   transactionSuggestionRequestSchema,
   payeeIntelligenceRequestSchema,
 } from "$lib/server/domains/transactions";
-import {serviceFactory} from "$lib/server/shared/container/service-factory";
-import {withErrorHandler} from "$lib/trpc/shared/errors";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { withErrorHandler } from "$lib/trpc/shared/errors";
 
 const transactionService = serviceFactory.getTransactionService();
 
@@ -24,7 +24,7 @@ export const transactionRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.getAccountTransactions(input.accountId, ctx.workspaceId)
       )
     ),
@@ -37,7 +37,7 @@ export const transactionRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.getAccountTransactionsWithUpcoming(input.accountId, ctx.workspaceId)
       )
     ),
@@ -51,7 +51,7 @@ export const transactionRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.getTransactions(input.filters || {}, input.pagination, ctx.workspaceId)
       )
     ),
@@ -64,7 +64,7 @@ export const transactionRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.getTransactionById(input.id, ctx.workspaceId)
       )
     ),
@@ -77,7 +77,7 @@ export const transactionRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.getAccountSummary(input.accountId, ctx.workspaceId)
       )
     ),
@@ -90,7 +90,7 @@ export const transactionRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.getMonthlySpendingAggregates(input.accountId, ctx.workspaceId)
       )
     ),
@@ -99,7 +99,7 @@ export const transactionRoutes = t.router({
   create: rateLimitedProcedure
     .input(createTransactionSchema)
     .mutation(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.createTransaction(input, ctx.workspaceId)
       )
     ),
@@ -113,7 +113,7 @@ export const transactionRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.updateTransaction(input.id, input.data, ctx.workspaceId)
       )
     ),
@@ -127,7 +127,7 @@ export const transactionRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.updateTransactionWithRecalculatedBalance(
           input.id,
           input.data,
@@ -144,17 +144,17 @@ export const transactionRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({input, ctx}) => {
+      withErrorHandler(async ({ input, ctx }) => {
         await transactionService.deleteTransaction(input.id, ctx.workspaceId);
-        return {success: true};
+        return { success: true };
       })
     ),
 
   // Bulk delete transactions
   bulkDelete: bulkOperationProcedure.input(bulkDeleteSchema).mutation(
-    withErrorHandler(async ({input, ctx}) => {
+    withErrorHandler(async ({ input, ctx }) => {
       await transactionService.deleteTransactions(input.ids, ctx.workspaceId);
-      return {success: true, count: input.ids.length};
+      return { success: true, count: input.ids.length };
     })
   ),
 
@@ -174,11 +174,11 @@ export const transactionRoutes = t.router({
         budgetAllocation: z.number().nullable().optional(),
       })
     )
-    .mutation(async ({input, ctx}) => {
+    .mutation(async ({ input, ctx }) => {
       try {
         if (input.id) {
           // Update existing transaction
-          const {id, accountId, ...updateData} = input;
+          const { id, accountId, ...updateData } = input;
           return await transactionService.updateTransaction(id, updateData, ctx.workspaceId);
         } else {
           // Create new transaction
@@ -188,7 +188,7 @@ export const transactionRoutes = t.router({
               message: "Account ID is required for new transaction",
             });
           }
-          const {id, ...createData} = input;
+          const { id, ...createData } = input;
           return await transactionService.createTransaction(
             {
               ...createData,
@@ -212,7 +212,7 @@ export const transactionRoutes = t.router({
   createWithAutoPopulation: rateLimitedProcedure
     .input(createTransactionWithAutoPopulationSchema)
     .mutation(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.createTransactionWithPayeeDefaults(input, ctx.workspaceId)
       )
     ),
@@ -221,7 +221,7 @@ export const transactionRoutes = t.router({
   getSuggestions: publicProcedure
     .input(transactionSuggestionRequestSchema)
     .query(
-      withErrorHandler(async ({input}) =>
+      withErrorHandler(async ({ input }) =>
         transactionService.suggestTransactionDetails(input.payeeId, input.amount)
       )
     ),
@@ -230,7 +230,7 @@ export const transactionRoutes = t.router({
   getPayeeIntelligence: publicProcedure
     .input(payeeIntelligenceRequestSchema)
     .query(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.getPayeeTransactionIntelligence(input.payeeId, ctx.workspaceId)
       )
     ),
@@ -243,9 +243,9 @@ export const transactionRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({input, ctx}) => {
+      withErrorHandler(async ({ input, ctx }) => {
         await transactionService.updatePayeeAfterTransaction(input.payeeId, ctx.workspaceId);
-        return {success: true};
+        return { success: true };
       })
     ),
 
@@ -263,7 +263,7 @@ export const transactionRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.createTransfer(
           {
             fromAccountId: input.fromAccountId,
@@ -292,8 +292,8 @@ export const transactionRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({input, ctx}) => {
-        const {transferId, ...updates} = input;
+      withErrorHandler(async ({ input, ctx }) => {
+        const { transferId, ...updates } = input;
         return await transactionService.updateTransfer(transferId, updates, ctx.workspaceId);
       })
     ),
@@ -306,9 +306,9 @@ export const transactionRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({input, ctx}) => {
+      withErrorHandler(async ({ input, ctx }) => {
         await transactionService.deleteTransfer(input.transferId, ctx.workspaceId);
-        return {success: true};
+        return { success: true };
       })
     ),
 
@@ -323,7 +323,7 @@ export const transactionRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({input, ctx}) => {
+      withErrorHandler(async ({ input, ctx }) => {
         return await transactionService.bulkUpdatePayeeByName(
           input.accountId,
           input.transactionId,
@@ -346,7 +346,7 @@ export const transactionRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({input, ctx}) => {
+      withErrorHandler(async ({ input, ctx }) => {
         return await transactionService.bulkUpdateCategory(
           input.accountId,
           input.transactionId,
@@ -369,7 +369,7 @@ export const transactionRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.getTopPayees(
           input.accountId,
           {
@@ -393,7 +393,7 @@ export const transactionRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.getTopCategories(
           input.accountId,
           {
@@ -415,7 +415,7 @@ export const transactionRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({input, ctx}) =>
+      withErrorHandler(async ({ input, ctx }) =>
         transactionService.getRecentActivity(input.accountId, input.days, ctx.workspaceId)
       )
     ),

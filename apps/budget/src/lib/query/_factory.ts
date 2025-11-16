@@ -1,8 +1,8 @@
-import {createQuery, createMutation} from "@tanstack/svelte-query";
-import type {CreateQueryOptions, CreateMutationOptions, QueryKey} from "@tanstack/svelte-query";
-import {TRPCError} from "@trpc/server";
-import {toast} from "svelte-sonner";
-import {queryClient} from "./_client";
+import { createQuery, createMutation } from "@tanstack/svelte-query";
+import type { CreateQueryOptions, CreateMutationOptions, QueryKey } from "@tanstack/svelte-query";
+import { TRPCError } from "@trpc/server";
+import { toast } from "svelte-sonner";
+import { queryClient } from "./_client";
 
 /**
  * Configuration for defineQuery wrapper
@@ -199,7 +199,7 @@ export function defineQuery<TParams, TData, TError = Error>(
 
   // Non-parameterized query
   const simpleConfig = config as DefineQueryConfig<TData, TError>;
-  const {queryKey, queryFn, options = {}} = simpleConfig;
+  const { queryKey, queryFn, options = {} } = simpleConfig;
 
   return {
     queryKey,
@@ -248,7 +248,7 @@ export function defineQuery<TParams, TData, TError = Error>(
 export function defineMutation<TVariables, TData, TError = Error>(
   config: DefineMutationConfig<TVariables, TData, TError>
 ): MutationWrapper<TVariables, TData, TError> {
-  const {mutationFn, options = {}, onSuccess, onError, successMessage, errorMessage} = config;
+  const { mutationFn, options = {}, onSuccess, onError, successMessage, errorMessage } = config;
 
   // Create the mutation with enhanced error handling and notifications
   const createMutationWithConfig = () =>
@@ -325,7 +325,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
 export function createQueryKeys<T extends Record<string, (...args: any[]) => QueryKey>>(
   domain: string,
   keys: T
-): T & {all: () => QueryKey} {
+): T & { all: () => QueryKey } {
   return {
     all: () => [domain] as const,
     ...keys,

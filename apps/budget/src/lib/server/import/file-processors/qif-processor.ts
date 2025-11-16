@@ -5,9 +5,9 @@
  * QIF format uses single-letter codes followed by data on each line.
  */
 
-import type {FileProcessor, ImportRow, NormalizedTransaction} from "$lib/types/import";
-import {FileValidationError, ParseError} from "../errors";
-import {normalizeHeader, parseDate, parseAmount, sanitizeText, validateFileType} from "../utils";
+import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
+import { FileValidationError, ParseError } from "../errors";
+import { normalizeHeader, parseDate, parseAmount, sanitizeText, validateFileType } from "../utils";
 
 interface QIFTransaction {
   date?: string;
@@ -27,7 +27,7 @@ export class QIFProcessor implements FileProcessor {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): {valid: boolean; error?: string} {
+  validateFile(file: File): { valid: boolean; error?: string } {
     // Check file type
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
@@ -52,7 +52,7 @@ export class QIFProcessor implements FileProcessor {
       };
     }
 
-    return {valid: true};
+    return { valid: true };
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {

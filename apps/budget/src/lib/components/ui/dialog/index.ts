@@ -1,4 +1,4 @@
-import {Dialog as DialogPrimitive} from "bits-ui";
+import { Dialog as DialogPrimitive } from "bits-ui";
 import Title from "./dialog-title.svelte";
 import Footer from "./dialog-footer.svelte";
 import Header from "./dialog-header.svelte";

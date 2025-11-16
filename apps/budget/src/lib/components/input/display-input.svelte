@@ -2,20 +2,20 @@
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import * as Select from '$lib/components/ui/select';
 import * as Popover from '$lib/components/ui/popover';
-import {buttonVariants} from '$lib/components/ui/button';
+import { buttonVariants } from '$lib/components/ui/button';
 import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
-import {cn} from '$lib/utils';
-import {Label} from '$lib/components/ui/label';
-import {Badge} from '$lib/components/ui/badge';
-import type {SortingState, VisibilityState, ColumnPinningState} from '@tanstack/table-core';
+import { cn } from '$lib/utils';
+import { Label } from '$lib/components/ui/label';
+import { Badge } from '$lib/components/ui/badge';
+import type { SortingState, VisibilityState, ColumnPinningState } from '@tanstack/table-core';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import CircleChevronUp from '@lucide/svelte/icons/chevron-up';
 import CircleChevronDown from '@lucide/svelte/icons/chevron-down';
-import {Switch} from '$lib/components/ui/switch';
-import {currentViews} from '$lib/states/views';
+import { Switch } from '$lib/components/ui/switch';
+import { currentViews } from '$lib/states/views';
 import ColumnPinningManager from './column-pinning-manager.svelte';
 import ColumnOrderManager from './column-order-manager.svelte';
-import {Separator} from '$lib/components/ui/separator';
+import { Separator } from '$lib/components/ui/separator';
 import * as Collapsible from '$lib/components/ui/collapsible';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 
@@ -51,7 +51,7 @@ const pinnableColumns = $derived(
 
 const sorting = $derived(currentView?.view.getSorting() ?? []);
 const visibility = $derived(currentView?.view.getVisibility() ?? {});
-const pinning = $derived(currentView?.view.getPinning() ?? {left: [], right: []});
+const pinning = $derived(currentView?.view.getPinning() ?? { left: [], right: [] });
 const columnOrder = $derived(currentView?.view.getColumnOrder() ?? []);
 const visibleColumns = $derived(
   visiableColumns.filter(
@@ -94,10 +94,10 @@ const visibilityValue = {
     const visibility = Object.assign(
       {},
       ...visiableColumns.map((column) => {
-        return {[column.id as string]: false};
+        return { [column.id as string]: false };
       }),
       ...newVisibility.map((id) => {
-        return {[id as string]: true};
+        return { [id as string]: true };
       })
     ) as VisibilityState;
     currentView.updateTableVisibility(visibility);
@@ -149,7 +149,7 @@ const hasContext = $derived(!!currentView?.view && !!table);
 
 {#if hasContext}
   <Popover.Root>
-    <Popover.Trigger class={cn(buttonVariants({variant: 'outline'}), 'h-8')}>
+    <Popover.Trigger class={cn(buttonVariants({ variant: 'outline' }), 'h-8')}>
       <SlidersHorizontal />
       Display
     </Popover.Trigger>
@@ -244,7 +244,7 @@ const hasContext = $derived(!!currentView?.view && !!table);
                               return false;
                             }
                             if (sorter.desc === false) {
-                              return Object.assign({}, sorter, {desc: true});
+                              return Object.assign({}, sorter, { desc: true });
                             }
                             return {
                               id: column.id,

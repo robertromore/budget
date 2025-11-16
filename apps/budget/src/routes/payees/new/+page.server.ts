@@ -1,14 +1,14 @@
-import {fail, redirect} from "@sveltejs/kit";
-import {removePayeeSchema} from "$lib/schema";
-import {superformInsertPayeeSchema} from "$lib/schema/superforms";
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import {superValidate} from "sveltekit-superforms/client";
-import {zod4} from "sveltekit-superforms/adapters";
-import type {Actions} from "@sveltejs/kit";
+import { fail, redirect } from "@sveltejs/kit";
+import { removePayeeSchema } from "$lib/schema";
+import { superformInsertPayeeSchema } from "$lib/schema/superforms";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
+import { superValidate } from "sveltekit-superforms/client";
+import { zod4 } from "sveltekit-superforms/adapters";
+import type { Actions } from "@sveltejs/kit";
 
 export const load = async (event: any) => {
-  const {url} = event;
+  const { url } = event;
   // Check if we're duplicating from an existing payee
   const duplicateFromId = url.searchParams.get("from");
   const isDuplicating = url.searchParams.get("duplicate") === "true";
@@ -24,7 +24,7 @@ export const load = async (event: any) => {
 
 export const actions: Actions = {
   "save-payee": async (event) => {
-    const {request} = event;
+    const { request } = event;
     const form = await superValidate(request, zod4(superformInsertPayeeSchema));
     if (!form.valid) {
       return fail(400, {
@@ -40,7 +40,7 @@ export const actions: Actions = {
       entity,
     };
   },
-  "delete-payee": async ({request}) => {
+  "delete-payee": async ({ request }) => {
     const form = await superValidate(request, zod4(removePayeeSchema));
     if (!form.valid) {
       return fail(400, {

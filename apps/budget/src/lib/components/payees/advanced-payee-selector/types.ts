@@ -1,4 +1,4 @@
-import type {Payee} from "$lib/schema/payees";
+import type { Payee } from "$lib/schema/payees";
 
 export type GroupStrategy =
   | "none" // Flat virtualized list

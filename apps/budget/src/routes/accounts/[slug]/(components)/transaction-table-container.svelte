@@ -1,8 +1,8 @@
 <script lang="ts">
-import {browser} from '$app/environment';
-import {Input} from '$lib/components/ui/input';
+import { browser } from '$app/environment';
+import { Input } from '$lib/components/ui/input';
 import TransactionSkeleton from './transaction-skeleton.svelte';
-import {DataTable} from '.';
+import { DataTable } from '.';
 
 let {
   isLoading = false,

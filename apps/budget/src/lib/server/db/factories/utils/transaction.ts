@@ -1,4 +1,4 @@
-import {db} from "../..";
+import { db } from "../..";
 
 /**
  * Wraps factory operations in a database transaction for atomic execution

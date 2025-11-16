@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as Select from '$lib/components/ui/select';
-import {currentUser} from '$lib/states/current-user.svelte';
-import {rpc} from '$lib/query';
-import {goto} from '$app/navigation';
+import { currentUser } from '$lib/states/current-user.svelte';
+import { rpc } from '$lib/query';
+import { goto } from '$app/navigation';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import UserCircle from '@lucide/svelte/icons/user-circle';
 import Plus from '@lucide/svelte/icons/plus';
@@ -36,7 +36,7 @@ async function handleSelection(value: number | string | undefined) {
 
     if (response.ok) {
       // Reload the page to reflect the new workspace
-      goto('/', {invalidateAll: true});
+      goto('/', { invalidateAll: true });
     }
   }
 }

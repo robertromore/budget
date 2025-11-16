@@ -1,9 +1,9 @@
 <script lang="ts" generics="TEntity">
 import * as Table from '$lib/components/ui/table';
-import {Skeleton} from '$lib/components/ui/skeleton';
-import type {ViewMode} from './entity-search-state.svelte';
-import type {Snippet} from 'svelte';
-import type {ComponentType, SvelteComponent} from 'svelte';
+import { Skeleton } from '$lib/components/ui/skeleton';
+import type { ViewMode } from './entity-search-state.svelte';
+import type { Snippet } from 'svelte';
+import type { ComponentType, SvelteComponent } from 'svelte';
 
 interface Props {
   entities: TEntity[];

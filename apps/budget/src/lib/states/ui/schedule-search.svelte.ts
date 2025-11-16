@@ -1,5 +1,5 @@
-import type {Schedule} from "$lib/schema/schedules";
-import {createLocalStorageState} from "$lib/utils/local-storage.svelte";
+import type { Schedule } from "$lib/schema/schedules";
+import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 
 export interface ScheduleSearchFilters {
   status?: "active" | "inactive";
@@ -97,7 +97,7 @@ class ScheduleSearchStateManager {
   }
 
   updateFilter<K extends keyof ScheduleSearchFilters>(key: K, value: ScheduleSearchFilters[K]) {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
     // Remove filter if value is undefined, null, or empty string
     if (value === undefined || value === null) {
       delete newFilters[key];
@@ -123,7 +123,7 @@ class ScheduleSearchStateManager {
   }
 
   clearFilter(key: keyof ScheduleSearchFilters) {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
     delete newFilters[key];
     this.filters = newFilters;
   }

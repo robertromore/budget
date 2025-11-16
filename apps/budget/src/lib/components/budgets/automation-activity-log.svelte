@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
 import * as Table from '$lib/components/ui/table';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
 import * as Select from '$lib/components/ui/select';
 import {
   Undo2,
@@ -16,7 +16,7 @@ import {
   GitMerge,
   Settings2,
 } from '@lucide/svelte/icons';
-import type {BudgetAutomationActivity} from '$lib/schema/budget-automation-settings';
+import type { BudgetAutomationActivity } from '$lib/schema/budget-automation-settings';
 
 interface Props {
   activities: BudgetAutomationActivity[];
@@ -24,7 +24,7 @@ interface Props {
   onRefresh?: () => void;
 }
 
-let {activities, onRollback, onRefresh}: Props = $props();
+let { activities, onRollback, onRefresh }: Props = $props();
 
 // Filter state
 let statusFilter = $state<string>('all');

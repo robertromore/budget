@@ -2,7 +2,7 @@
 // from one account to another. Transactions can be "split" into multiple
 // transactions. Split transactions have the same parent transaction.
 
-import {relations, sql} from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   sqliteTable,
   integer,
@@ -11,13 +11,13 @@ import {
   type AnySQLiteColumn,
   index,
 } from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {categories, type Category} from "./categories";
-import {payees, type Payee} from "./payees";
-import {accounts} from "./accounts";
-import {z} from "zod/v4";
-import {schedules} from "./schedules";
-import {budgetTransactions} from "./budgets";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { categories, type Category } from "./categories";
+import { payees, type Payee } from "./payees";
+import { accounts } from "./accounts";
+import { z } from "zod/v4";
+import { schedules } from "./schedules";
+import { budgetTransactions } from "./budgets";
 import validator from "validator";
 
 export const transactions = sqliteTable(
@@ -25,10 +25,10 @@ export const transactions = sqliteTable(
   {
     id: integer("id").primaryKey().notNull(),
     accountId: integer("account_id")
-      .references(() => accounts.id, {onDelete: "cascade"})
+      .references(() => accounts.id, { onDelete: "cascade" })
       .notNull(),
     parentId: integer("parent_id").references((): AnySQLiteColumn => transactions.id),
-    status: text("status", {enum: ["cleared", "pending", "scheduled"]}).default("pending"),
+    status: text("status", { enum: ["cleared", "pending", "scheduled"] }).default("pending"),
     payeeId: integer("payee_id").references(() => payees.id),
     amount: real("amount").default(0).notNull(),
     categoryId: integer("category_id").references(() => categories.id),
@@ -44,7 +44,7 @@ export const transactions = sqliteTable(
     transferTransactionId: integer("transfer_transaction_id").references(
       (): AnySQLiteColumn => transactions.id
     ), // The linked transaction
-    isTransfer: integer("is_transfer", {mode: "boolean"}).default(false), // Quick check for transfers
+    isTransfer: integer("is_transfer", { mode: "boolean" }).default(false), // Quick check for transfers
 
     // Import metadata
     importedFrom: text("imported_from"), // File name or source of import
@@ -79,7 +79,7 @@ export const transactions = sqliteTable(
   ]
 );
 
-export const transactionsRelations = relations(transactions, ({many, one}) => ({
+export const transactionsRelations = relations(transactions, ({ many, one }) => ({
   parent: one(transactions, {
     fields: [transactions.parentId],
     references: [transactions.id],

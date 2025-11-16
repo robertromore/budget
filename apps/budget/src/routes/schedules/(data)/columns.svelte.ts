@@ -1,8 +1,8 @@
-import {Checkbox} from "$lib/components/ui/checkbox";
-import {renderComponent} from "$lib/components/ui/data-table";
-import type {Schedule} from "$lib/schema/schedules";
-import type {SchedulesState} from "$lib/states/entities/schedules.svelte";
-import type {ColumnDef} from "@tanstack/table-core";
+import { Checkbox } from "$lib/components/ui/checkbox";
+import { renderComponent } from "$lib/components/ui/data-table";
+import type { Schedule } from "$lib/schema/schedules";
+import type { SchedulesState } from "$lib/states/entities/schedules.svelte";
+import type { ColumnDef } from "@tanstack/table-core";
 import ScheduleColumnHeader from "../(components)/schedule-column-header.svelte";
 import ScheduleNameCell from "../(components)/(cells)/schedule-name-cell.svelte";
 import ScheduleAmountCell from "../(components)/(cells)/schedule-amount-cell.svelte";
@@ -19,7 +19,7 @@ export const columns = (
   return [
     {
       id: "select-col",
-      header: ({table}) => {
+      header: ({ table }) => {
         const allPageRowsSelected = table.getIsAllPageRowsSelected();
         const somePageRowsSelected = table.getIsSomePageRowsSelected();
 
@@ -37,7 +37,7 @@ export const columns = (
           "aria-label": "Select all on page",
         });
       },
-      cell: ({row}) => {
+      cell: ({ row }) => {
         return renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
@@ -52,7 +52,7 @@ export const columns = (
     },
     {
       accessorKey: "id",
-      header: ({column}) =>
+      header: ({ column }) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
           title: "ID",
@@ -67,14 +67,14 @@ export const columns = (
     {
       accessorKey: "name",
       id: "name",
-      header: ({column}) =>
+      header: ({ column }) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
           title: "Name",
         }),
       cell: (info) => {
         const schedule = info.row.original;
-        return renderComponent(ScheduleNameCell, {schedule});
+        return renderComponent(ScheduleNameCell, { schedule });
       },
       sortingFn: "alphanumeric",
       enableColumnFilter: true,
@@ -85,14 +85,14 @@ export const columns = (
     {
       accessorKey: "amount",
       id: "amount",
-      header: ({column}) =>
+      header: ({ column }) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
           title: "Amount",
         }),
       cell: (info) => {
         const schedule = info.row.original;
-        return renderComponent(ScheduleAmountCell, {schedule});
+        return renderComponent(ScheduleAmountCell, { schedule });
       },
       sortingFn: "alphanumeric",
       enableColumnFilter: false,
@@ -103,14 +103,14 @@ export const columns = (
     {
       accessorKey: "scheduleDate",
       id: "pattern",
-      header: ({column}) =>
+      header: ({ column }) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
           title: "Pattern",
         }),
       cell: (info) => {
         const schedule = info.row.original;
-        return renderComponent(SchedulePatternCell, {schedule});
+        return renderComponent(SchedulePatternCell, { schedule });
       },
       sortingFn: (rowA, rowB) => {
         const a = rowA.original.scheduleDate?.frequency || "";
@@ -125,7 +125,7 @@ export const columns = (
     {
       accessorKey: "payee",
       id: "payee",
-      header: ({column}) =>
+      header: ({ column }) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
           title: "Payee",
@@ -147,7 +147,7 @@ export const columns = (
     {
       accessorKey: "account",
       id: "account",
-      header: ({column}) =>
+      header: ({ column }) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
           title: "Account",
@@ -169,14 +169,14 @@ export const columns = (
     {
       accessorKey: "status",
       id: "status",
-      header: ({column}) =>
+      header: ({ column }) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
           title: "Status",
         }),
       cell: (info) => {
         const schedule = info.row.original;
-        return renderComponent(ScheduleStatusCell, {schedule});
+        return renderComponent(ScheduleStatusCell, { schedule });
       },
       sortingFn: "alphanumeric",
       enableColumnFilter: true,

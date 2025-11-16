@@ -1,17 +1,17 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {ResponsiveSheet} from '$lib/components/ui/responsive-sheet';
-import {Separator} from '$lib/components/ui/separator';
-import {Badge} from '$lib/components/ui/badge';
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {Label} from '$lib/components/ui/label';
-import {Input} from '$lib/components/ui/input';
-import {ScrollArea} from '$lib/components/ui/scroll-area';
+import { Button } from '$lib/components/ui/button';
+import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
+import { Separator } from '$lib/components/ui/separator';
+import { Badge } from '$lib/components/ui/badge';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import { Label } from '$lib/components/ui/label';
+import { Input } from '$lib/components/ui/input';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
 import PackagePlus from '@lucide/svelte/icons/package-plus';
 import Search from '@lucide/svelte/icons/search';
-import {seedDefaultCategories} from '$lib/query/categories';
-import {rpc} from '$lib/query';
-import {SvelteSet} from 'svelte/reactivity';
+import { seedDefaultCategories } from '$lib/query/categories';
+import { rpc } from '$lib/query';
+import { SvelteSet } from 'svelte/reactivity';
 
 let sheetOpen = $state(false);
 let searchQuery = $state('');
@@ -26,7 +26,7 @@ const seedMutation = seedDefaultCategories.options();
 
 const handleSeed = async () => {
   const slugsArray = Array.from(selectedSlugs);
-  await seedMutation.mutateAsync({slugs: slugsArray});
+  await seedMutation.mutateAsync({ slugs: slugsArray });
   sheetOpen = false;
   selectedSlugs.clear();
   searchQuery = '';

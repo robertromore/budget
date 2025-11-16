@@ -1,14 +1,14 @@
-import {removeAccountSchema} from "$lib/schema";
+import { removeAccountSchema } from "$lib/schema";
 import {
   superformInsertAccountSchema,
   superformInsertTransactionSchema,
 } from "$lib/schema/superforms";
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import {superValidate} from "sveltekit-superforms/client";
-import type {Actions, PageServerLoad} from "./$types";
-import {fail} from "@sveltejs/kit";
-import {zod4} from "sveltekit-superforms/adapters";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
+import { superValidate } from "sveltekit-superforms/client";
+import type { Actions, PageServerLoad } from "./$types";
+import { fail } from "@sveltejs/kit";
+import { zod4 } from "sveltekit-superforms/adapters";
 
 export const load: PageServerLoad = async (event) => ({
   manageAccountForm: await superValidate(zod4(superformInsertAccountSchema)),

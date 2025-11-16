@@ -1,10 +1,10 @@
-import {db} from "..";
-import {transactions, type Category, type NewTransaction} from "$lib/schema";
-import {faker} from "@faker-js/faker";
-import {payeeFactory} from "./payees";
-import type {Payee} from "$lib/schema/payees";
-import {categoryFactory} from "./categories";
-import {CalendarDate} from "@internationalized/date";
+import { db } from "..";
+import { transactions, type Category, type NewTransaction } from "$lib/schema";
+import { faker } from "@faker-js/faker";
+import { payeeFactory } from "./payees";
+import type { Payee } from "$lib/schema/payees";
+import { categoryFactory } from "./categories";
+import { CalendarDate } from "@internationalized/date";
 
 /**
  * Creates transaction(s) for a specific account with realistic data distribution
@@ -26,9 +26,9 @@ import {CalendarDate} from "@internationalized/date";
  * ```
  */
 export const transactionFactory = async (
-  account: {id: number},
+  account: { id: number },
   workspaceId: number,
-  count: number = faker.number.int({min: 1, max: 50})
+  count: number = faker.number.int({ min: 1, max: 50 })
 ): Promise<NewTransaction[]> => {
   const transactions_collection: NewTransaction[] = [];
 
@@ -37,7 +37,7 @@ export const transactionFactory = async (
   const categories: Category[] = [];
 
   const random_dates = faker.date.betweens({
-    from: faker.date.past({years: 5}),
+    from: faker.date.past({ years: 5 }),
     to: faker.date.recent(),
     count,
   });

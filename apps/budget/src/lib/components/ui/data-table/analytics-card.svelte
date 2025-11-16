@@ -22,7 +22,7 @@ interface Props {
   class?: string;
 }
 
-let {data, onclick, class: className}: Props = $props();
+let { data, onclick, class: className }: Props = $props();
 
 // Determine color classes
 const colorStyle = $derived(data.color ? `border-l-4` : '');
@@ -37,9 +37,7 @@ const borderColor = $derived(data.color ? `border-l-[${data.color}]` : '');
     <div class="flex items-start justify-between">
       <div class="flex min-w-0 flex-1 items-center gap-2">
         {#if data.icon}
-          <data.icon
-            class="h-5 w-5 shrink-0"
-            style={data.color ? `color: ${data.color};` : ''} />
+          <data.icon class="h-5 w-5 shrink-0" style={data.color ? `color: ${data.color};` : ''} />
         {/if}
         <Card.Title class="truncate text-base font-semibold">
           {data.name}

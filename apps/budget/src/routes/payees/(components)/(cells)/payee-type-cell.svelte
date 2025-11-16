@@ -1,5 +1,5 @@
 <script lang="ts">
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import User from '@lucide/svelte/icons/user';
 import Building from '@lucide/svelte/icons/building';
 import Landmark from '@lucide/svelte/icons/landmark';
@@ -9,24 +9,24 @@ interface Props {
   payeeType: string | null;
 }
 
-let {payeeType}: Props = $props();
+let { payeeType }: Props = $props();
 
 const typeInfo = $derived(() => {
   switch (payeeType) {
     case 'merchant':
-      return {icon: Building, label: 'Merchant', variant: 'default' as const};
+      return { icon: Building, label: 'Merchant', variant: 'default' as const };
     case 'utility':
-      return {icon: Building, label: 'Utility', variant: 'secondary' as const};
+      return { icon: Building, label: 'Utility', variant: 'secondary' as const };
     case 'employer':
-      return {icon: Briefcase, label: 'Employer', variant: 'default' as const};
+      return { icon: Briefcase, label: 'Employer', variant: 'default' as const };
     case 'financial_institution':
-      return {icon: Landmark, label: 'Financial', variant: 'outline' as const};
+      return { icon: Landmark, label: 'Financial', variant: 'outline' as const };
     case 'government':
-      return {icon: Landmark, label: 'Government', variant: 'outline' as const};
+      return { icon: Landmark, label: 'Government', variant: 'outline' as const };
     case 'individual':
-      return {icon: User, label: 'Individual', variant: 'secondary' as const};
+      return { icon: User, label: 'Individual', variant: 'secondary' as const };
     default:
-      return {icon: User, label: 'Other', variant: 'outline' as const};
+      return { icon: User, label: 'Other', variant: 'outline' as const };
   }
 });
 </script>

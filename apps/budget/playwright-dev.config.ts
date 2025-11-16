@@ -1,5 +1,5 @@
-import type {PlaywrightTestConfig} from "@playwright/test";
-import {devices} from "@playwright/test";
+import type { PlaywrightTestConfig } from "@playwright/test";
+import { devices } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
   // No webServer - we'll use the existing dev server
@@ -29,7 +29,7 @@ const config: PlaywrightTestConfig = {
 
     // Browser optimizations - run headless by default, headed when explicitly requested
     headless: false,
-    viewport: {width: 1280, height: 720},
+    viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
 
     // Base URL for the dev server

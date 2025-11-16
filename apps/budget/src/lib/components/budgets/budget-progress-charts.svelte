@@ -1,18 +1,18 @@
 <script lang="ts">
-import {TrendingUp, TrendingDown, Target, ChartPie, ChartBar} from '@lucide/svelte/icons';
+import { TrendingUp, TrendingDown, Target, ChartPie, ChartBar } from '@lucide/svelte/icons';
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import * as Tabs from '$lib/components/ui/tabs';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {calculateActualSpent} from '$lib/utils/budget-calculations';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { calculateActualSpent } from '$lib/utils/budget-calculations';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 
 // LayerChart imports
-import {Chart, Svg, Area, Spline, Axis, Grid, Highlight} from 'layerchart';
+import { Chart, Svg, Area, Spline, Axis, Grid, Highlight } from 'layerchart';
 import ChartContainer from '$lib/components/ui/chart/chart-container.svelte';
-import {colorUtils} from '$lib/utils/colors';
-import {pie, arc as d3arc} from 'd3-shape';
+import { colorUtils } from '$lib/utils/colors';
+import { pie, arc as d3arc } from 'd3-shape';
 
 interface Props {
   budgets: BudgetWithRelations[];
@@ -64,7 +64,7 @@ const budgetProgressData = $derived.by(() => {
     }
 
     // Generate trend data (simulated for demo)
-    const trendData = Array.from({length: 30}, (_, i) => {
+    const trendData = Array.from({ length: 30 }, (_, i) => {
       const day = i + 1;
       const expectedDaily = allocated / 30;
       const actualSpent = (spent / 30) * day + (Math.random() - 0.5) * expectedDaily * 0.3;
@@ -102,7 +102,7 @@ const aggregateData = $derived.by(() => {
   const overallProgress = totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0;
 
   // Create combined trend data
-  const combinedTrend = Array.from({length: 30}, (_, i) => {
+  const combinedTrend = Array.from({ length: 30 }, (_, i) => {
     const day = i + 1;
     const allocated = budgetProgressData.reduce(
       (sum, b) => sum + (b.trendData[i]?.allocated ?? 0),
@@ -174,7 +174,7 @@ const donutChartConfig = $derived.by(() => {
       };
       return config;
     },
-    {} as Record<string, {label: string; color: string}>
+    {} as Record<string, { label: string; color: string }>
   );
 });
 </script>
@@ -360,8 +360,8 @@ const donutChartConfig = $derived.by(() => {
                 x="day"
                 y="allocated"
                 yDomain={[0, null]}
-                padding={{left: 48, bottom: 24, right: 12, top: 12}}
-                tooltip={{mode: 'bisect-x'}}>
+                padding={{ left: 48, bottom: 24, right: 12, top: 12 }}
+                tooltip={{ mode: 'bisect-x' }}>
                 <Svg>
                   <Grid class="stroke-muted/20" />
 
@@ -369,11 +369,11 @@ const donutChartConfig = $derived.by(() => {
                     placement="left"
                     label="Amount ($)"
                     format={(value: number) => currencyFormatter.format(value).replace('$', '')}
-                    labelProps={{class: 'text-xs fill-muted-foreground'}} />
+                    labelProps={{ class: 'text-xs fill-muted-foreground' }} />
                   <Axis
                     placement="bottom"
                     label="Day of Month"
-                    labelProps={{class: 'text-xs fill-muted-foreground'}} />
+                    labelProps={{ class: 'text-xs fill-muted-foreground' }} />
 
                   <!-- Allocated budget line (target) -->
                   <Spline
@@ -391,7 +391,7 @@ const donutChartConfig = $derived.by(() => {
                     style="stroke: {colorUtils.getFinancialColor('negative')}; fill: none;" />
 
                   <Highlight points lines>
-                    {#snippet tooltip({data})}
+                    {#snippet tooltip({ data })}
                       <div
                         class="bg-background/95 pointer-events-none rounded-lg border px-3 py-2 shadow-xl backdrop-blur-sm">
                         <div class="space-y-1 text-xs">

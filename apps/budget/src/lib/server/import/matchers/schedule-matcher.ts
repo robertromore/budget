@@ -5,9 +5,9 @@
  * using payee, amount, date, and account matching with confidence scoring.
  */
 
-import type {Schedule} from "$lib/schema/schedules";
-import type {Payee} from "$lib/schema/payees";
-import {PayeeMatcher} from "./payee-matcher";
+import type { Schedule } from "$lib/schema/schedules";
+import type { Payee } from "$lib/schema/payees";
+import { PayeeMatcher } from "./payee-matcher";
 
 export type ScheduleMatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 
@@ -51,7 +51,7 @@ export class ScheduleMatcher {
   private payeeMatcher: PayeeMatcher;
 
   constructor(options: ScheduleMatcherOptions = {}) {
-    this.options = {...DEFAULT_OPTIONS, ...options};
+    this.options = { ...DEFAULT_OPTIONS, ...options };
     this.payeeMatcher = new PayeeMatcher();
   }
 
@@ -135,7 +135,7 @@ export class ScheduleMatcher {
     criteria: ScheduleMatchCriteria,
     schedule: Schedule,
     existingPayees: Payee[]
-  ): {schedule: Schedule; score: number; matchedOn: string[]; reasons: string[]} {
+  ): { schedule: Schedule; score: number; matchedOn: string[]; reasons: string[] } {
     let score = 0;
     const matchedOn: string[] = [];
     const reasons: string[] = [];
@@ -178,7 +178,7 @@ export class ScheduleMatcher {
       );
     }
 
-    return {schedule, score, matchedOn, reasons};
+    return { schedule, score, matchedOn, reasons };
   }
 
   /**

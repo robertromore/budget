@@ -7,17 +7,17 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
 } from '@tanstack/table-core';
-import {createSvelteTable, FlexRender} from '$lib/components/ui/data-table';
+import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Select from '$lib/components/ui/select';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
 import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
-import type {ImportRow} from '$lib/types/import';
-import {createColumns} from './import-data-table-columns';
+import type { ImportRow } from '$lib/types/import';
+import { createColumns } from './import-data-table-columns';
 
 interface Props {
   data: ImportRow[];
@@ -54,9 +54,9 @@ let {
 // Create columns with entity update callbacks - make reactive to prop changes
 const columns = $derived(
   createColumns({
-    ...(onPayeeUpdate ? {onPayeeUpdate} : {}),
-    ...(onCategoryUpdate ? {onCategoryUpdate} : {}),
-    ...(onDescriptionUpdate ? {onDescriptionUpdate} : {}),
+    ...(onPayeeUpdate ? { onPayeeUpdate } : {}),
+    ...(onCategoryUpdate ? { onCategoryUpdate } : {}),
+    ...(onDescriptionUpdate ? { onDescriptionUpdate } : {}),
     temporaryCategories,
     temporaryPayees,
   })
@@ -67,7 +67,7 @@ let sorting = $state<any[]>([]);
 let columnFilters = $state<any[]>([]);
 let columnVisibility = $state({});
 let rowSelection = $state<Record<string, boolean>>({});
-let pagination = $state({pageIndex: 0, pageSize: 50});
+let pagination = $state({ pageIndex: 0, pageSize: 50 });
 
 // Status filter state
 let statusFilter = $state<'all' | 'valid' | 'warning' | 'invalid'>('all');
@@ -299,7 +299,7 @@ const warningSelectedCount = $derived(
                 {#if !header.isPlaceholder}
                   {@const headerContent = header.column.columnDef.header}
                   <FlexRender
-                    {...headerContent ? {content: headerContent} : {}}
+                    {...headerContent ? { content: headerContent } : {}}
                     context={header.getContext()} />
                 {/if}
               </Table.Head>
@@ -318,7 +318,7 @@ const warningSelectedCount = $derived(
                   {#if cell.column.columnDef.cell}
                     {@const cellContent = cell.column.columnDef.cell}
                     <FlexRender
-                      {...cellContent ? {content: cellContent} : {}}
+                      {...cellContent ? { content: cellContent } : {}}
                       context={cell.getContext()} />
                   {/if}
                 </Table.Cell>

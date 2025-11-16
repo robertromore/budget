@@ -1,11 +1,11 @@
 <script lang="ts">
-import {currencyFormatter} from '$lib/utils';
+import { currencyFormatter } from '$lib/utils';
 
 interface Props {
   avgAmount: number | null;
 }
 
-let {avgAmount}: Props = $props();
+let { avgAmount }: Props = $props();
 </script>
 
 {#if avgAmount}

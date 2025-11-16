@@ -1,9 +1,9 @@
 <script lang="ts">
 import * as Select from '$lib/components/ui/select';
 import Label from '$lib/components/ui/label/label.svelte';
-import {cn} from '$lib/utils';
-import {BudgetState} from '$lib/states/budgets.svelte';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
+import { cn } from '$lib/utils';
+import { BudgetState } from '$lib/states/budgets.svelte';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 
 interface Props {
   value?: string;

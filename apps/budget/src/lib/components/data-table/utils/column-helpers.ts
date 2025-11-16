@@ -1,5 +1,5 @@
-import type {ColumnDef} from "@tanstack/table-core";
-import type {SimpleColumnDef} from "../state/types";
+import type { ColumnDef } from "@tanstack/table-core";
+import type { SimpleColumnDef } from "../state/types";
 
 /**
  * Converts a simplified column definition to a full TanStack Table column definition
@@ -8,10 +8,10 @@ export function createColumn<TData>(config: SimpleColumnDef<TData>): ColumnDef<T
   const column: ColumnDef<TData> = {
     id: config.id,
     header: config.header,
-    ...(config.accessorKey && {accessorKey: config.accessorKey as string}),
-    ...(config.cell && {cell: config.cell}),
-    ...(config.sortingFn && {sortingFn: config.sortingFn}),
-    ...(config.filterFn && {filterFn: config.filterFn}),
+    ...(config.accessorKey && { accessorKey: config.accessorKey as string }),
+    ...(config.cell && { cell: config.cell }),
+    ...(config.sortingFn && { sortingFn: config.sortingFn }),
+    ...(config.filterFn && { filterFn: config.filterFn }),
     meta: {
       ...config.meta,
       headerClass: config.headerClass,

@@ -1,41 +1,41 @@
 <script lang="ts">
 import * as Select from '$lib/components/ui/select';
-import {Label} from '$lib/components/ui/label';
-import {Slider} from '$lib/components/ui/slider';
+import { Label } from '$lib/components/ui/label';
+import { Slider } from '$lib/components/ui/slider';
 import type {
   RecommendationType,
   RecommendationStatus,
   RecommendationPriority,
 } from '$lib/schema/recommendations';
-import type {RecommendationSearchFilters} from '$lib/states/ui/recommendation-search.svelte';
+import type { RecommendationSearchFilters } from '$lib/states/ui/recommendation-search.svelte';
 
 interface Props {
   filters: RecommendationSearchFilters;
   onFilterChange: (key: keyof RecommendationSearchFilters, value: any) => void;
 }
 
-let {filters, onFilterChange}: Props = $props();
+let { filters, onFilterChange }: Props = $props();
 
-const statusOptions: Array<{value: RecommendationStatus; label: string}> = [
-  {value: 'pending', label: 'Pending'},
-  {value: 'applied', label: 'Applied'},
-  {value: 'dismissed', label: 'Dismissed'},
-  {value: 'expired', label: 'Expired'},
+const statusOptions: Array<{ value: RecommendationStatus; label: string }> = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'applied', label: 'Applied' },
+  { value: 'dismissed', label: 'Dismissed' },
+  { value: 'expired', label: 'Expired' },
 ];
 
-const typeOptions: Array<{value: RecommendationType; label: string}> = [
-  {value: 'create_budget', label: 'Create Budget'},
-  {value: 'increase_budget', label: 'Increase Budget'},
-  {value: 'decrease_budget', label: 'Decrease Budget'},
-  {value: 'merge_budgets', label: 'Merge Budgets'},
-  {value: 'seasonal_adjustment', label: 'Seasonal Adjustment'},
-  {value: 'missing_category', label: 'Missing Category'},
+const typeOptions: Array<{ value: RecommendationType; label: string }> = [
+  { value: 'create_budget', label: 'Create Budget' },
+  { value: 'increase_budget', label: 'Increase Budget' },
+  { value: 'decrease_budget', label: 'Decrease Budget' },
+  { value: 'merge_budgets', label: 'Merge Budgets' },
+  { value: 'seasonal_adjustment', label: 'Seasonal Adjustment' },
+  { value: 'missing_category', label: 'Missing Category' },
 ];
 
-const priorityOptions: Array<{value: RecommendationPriority; label: string}> = [
-  {value: 'high', label: 'High'},
-  {value: 'medium', label: 'Medium'},
-  {value: 'low', label: 'Low'},
+const priorityOptions: Array<{ value: RecommendationPriority; label: string }> = [
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
 ];
 
 let minConfidence = $state(filters.minConfidence ?? 0);

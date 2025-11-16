@@ -1,9 +1,9 @@
-import {Checkbox} from "$lib/components/ui/checkbox";
-import {renderComponent} from "$lib/components/ui/data-table";
-import type {BudgetWithRelations} from "$lib/server/domains/budgets";
-import type {ColumnDef} from "@tanstack/table-core";
-import {formatCurrency} from "$lib/utils/formatters";
-import {calculateActualSpent} from "$lib/utils/budget-calculations";
+import { Checkbox } from "$lib/components/ui/checkbox";
+import { renderComponent } from "$lib/components/ui/data-table";
+import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+import type { ColumnDef } from "@tanstack/table-core";
+import { formatCurrency } from "$lib/utils/formatters";
+import { calculateActualSpent } from "$lib/utils/budget-calculations";
 import BudgetProgress from "$lib/components/budgets/budget-progress.svelte";
 import BudgetTypeCell from "../(components)/(cells)/budget-type-cell.svelte";
 import BudgetStatusCell from "../(components)/(cells)/budget-status-cell.svelte";
@@ -58,7 +58,7 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
   return [
     {
       id: "select-col",
-      header: ({table}) => {
+      header: ({ table }) => {
         const allPageRowsSelected = table.getIsAllPageRowsSelected();
         const somePageRowsSelected = table.getIsSomePageRowsSelected();
 
@@ -76,7 +76,7 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
           "aria-label": "Select all on page",
         });
       },
-      cell: ({row}) => {
+      cell: ({ row }) => {
         return renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),

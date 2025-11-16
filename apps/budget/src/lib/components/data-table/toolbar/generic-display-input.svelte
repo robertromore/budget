@@ -3,13 +3,13 @@ import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import * as Select from '$lib/components/ui/select';
 import * as Popover from '$lib/components/ui/popover';
 import * as Collapsible from '$lib/components/ui/collapsible';
-import {buttonVariants} from '$lib/components/ui/button';
-import {Label} from '$lib/components/ui/label';
-import {Badge} from '$lib/components/ui/badge';
-import {Switch} from '$lib/components/ui/switch';
-import {Separator} from '$lib/components/ui/separator';
-import {cn} from '$lib/utils';
-import type {TableDensity} from '../state/types';
+import { buttonVariants } from '$lib/components/ui/button';
+import { Label } from '$lib/components/ui/label';
+import { Badge } from '$lib/components/ui/badge';
+import { Switch } from '$lib/components/ui/switch';
+import { Separator } from '$lib/components/ui/separator';
+import { cn } from '$lib/utils';
+import type { TableDensity } from '../state/types';
 import type {
   Table,
   SortingState,
@@ -77,7 +77,7 @@ let {
   onSortingChange,
   columnVisibility = {},
   onVisibilityChange,
-  columnPinning = {left: [], right: []},
+  columnPinning = { left: [], right: [] },
   onColumnPinningChange,
   columnOrder = [],
   onColumnOrderChange,
@@ -159,8 +159,8 @@ const visibilityValue = {
   set value(newVisibility: string[]) {
     const visibility = Object.assign(
       {},
-      ...hidableColumns.map((column) => ({[column.id]: false})),
-      ...newVisibility.map((id) => ({[id]: true}))
+      ...hidableColumns.map((column) => ({ [column.id]: false })),
+      ...newVisibility.map((id) => ({ [id]: true }))
     ) as VisibilityState;
     onVisibilityChange?.(visibility);
   },
@@ -173,12 +173,12 @@ function toggleSort(columnId: string) {
 
   if (existingIndex === -1) {
     // Add new sort
-    newSorting.push({id: columnId, desc: false});
+    newSorting.push({ id: columnId, desc: false });
   } else {
     const existing = newSorting[existingIndex];
     if (!existing.desc) {
       // Toggle to descending
-      newSorting[existingIndex] = {...existing, desc: true};
+      newSorting[existingIndex] = { ...existing, desc: true };
     } else {
       // Remove sort
       newSorting = newSorting.filter((_, i) => i !== existingIndex);
@@ -213,7 +213,7 @@ function updateColumnOrder(newOrder: string[]) {
 </script>
 
 <Popover.Root>
-  <Popover.Trigger class={cn(buttonVariants({variant: 'outline'}), 'h-8')}>
+  <Popover.Trigger class={cn(buttonVariants({ variant: 'outline' }), 'h-8')}>
     <SlidersHorizontal />
     Display
   </Popover.Trigger>

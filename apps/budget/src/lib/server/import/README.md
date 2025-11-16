@@ -25,7 +25,7 @@ Navigate to `/import` to access the import wizard:
 ### 2. Programmatic Usage
 
 ```typescript
-import {ImportOrchestrator} from '$lib/server/import/import-orchestrator';
+import { ImportOrchestrator } from '$lib/server/import/import-orchestrator';
 
 const orchestrator = new ImportOrchestrator();
 const result = await orchestrator.processImport(accountId, importRows, {
@@ -81,7 +81,7 @@ Open Financial Exchange format (both XML 2.x and SGML 1.x).
 The system uses fuzzy string matching with confidence scoring:
 
 ```typescript
-import {PayeeMatcher} from '$lib/server/import/matchers/payee-matcher';
+import { PayeeMatcher } from '$lib/server/import/matchers/payee-matcher';
 
 const matcher = new PayeeMatcher();
 const match = matcher.findBestMatch('WALMART #1234', existingPayees);
@@ -107,7 +107,7 @@ const match = matcher.findBestMatch('WALMART #1234', existingPayees);
 Keyword-based matching with 10+ default patterns:
 
 ```typescript
-import {CategoryMatcher} from '$lib/server/import/matchers/category-matcher';
+import { CategoryMatcher } from '$lib/server/import/matchers/category-matcher';
 
 const matcher = new CategoryMatcher();
 const match = matcher.findBestMatch(
@@ -159,7 +159,7 @@ const matcher = new CategoryMatcher(
 Comprehensive validation with duplicate detection:
 
 ```typescript
-import {TransactionValidator} from '$lib/server/import/validators/transaction-validator';
+import { TransactionValidator } from '$lib/server/import/validators/transaction-validator';
 
 const validator = new TransactionValidator({
   requireDate: true,

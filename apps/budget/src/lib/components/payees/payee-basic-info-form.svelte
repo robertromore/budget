@@ -2,18 +2,18 @@
 import * as Form from '$lib/components/ui/form';
 import * as Card from '$lib/components/ui/card';
 import * as Select from '$lib/components/ui/select';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Switch} from '$lib/components/ui/switch';
-import {Label} from '$lib/components/ui/label';
-import {payeeTypes, paymentFrequencies} from '$lib/schema/payees';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Switch } from '$lib/components/ui/switch';
+import { Label } from '$lib/components/ui/label';
+import { payeeTypes, paymentFrequencies } from '$lib/schema/payees';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import EntityInput from '$lib/components/input/entity-input.svelte';
 import ManageCategoryForm from '$lib/components/forms/manage-category-form.svelte';
 import ManagePayeeCategoryForm from '$lib/components/forms/manage-payee-category-form.svelte';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {PayeeCategoriesState} from '$lib/states/entities/payee-categories.svelte';
-import type {EditableEntityItem} from '$lib/types';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { PayeeCategoriesState } from '$lib/states/entities/payee-categories.svelte';
+import type { EditableEntityItem } from '$lib/types';
 
 // Icons
 import User from '@lucide/svelte/icons/user';
@@ -26,7 +26,7 @@ interface Props {
   categories: any[];
 }
 
-let {formData, entityForm, categories}: Props = $props();
+let { formData, entityForm, categories }: Props = $props();
 
 // Category state and handlers
 const categoriesState = CategoriesState.get();
@@ -137,7 +137,7 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
       <!-- Payee Name -->
       <Form.Field form={entityForm} name="name">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Payee Name</Form.Label>
             <Input
               {...props}
@@ -151,7 +151,7 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
       <!-- Payee Type -->
       <Form.Field form={entityForm} name="payeeType">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Payee Type</Form.Label>
             <Select.Root type="single" bind:value={$formData.payeeType}>
               <Select.Trigger {...props} class="w-full">
@@ -177,7 +177,7 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
       <!-- Payee Category (UI Organization) -->
       <Form.Field form={entityForm} name="payeeCategoryId">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Payee Category (Optional)</Form.Label>
             <EntityInput
               entityLabel="Payee Category"
@@ -204,7 +204,7 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
       <!-- Payment Frequency -->
       <Form.Field form={entityForm} name="paymentFrequency">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Payment Frequency</Form.Label>
             <Select.Root type="single" bind:value={$formData.paymentFrequency}>
               <Select.Trigger {...props} class="w-full">
@@ -232,7 +232,7 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
       <!-- Default Category -->
       <Form.Field form={entityForm} name="defaultCategoryId">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Default Category</Form.Label>
             <EntityInput
               entityLabel="Category"
@@ -259,7 +259,7 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
       <!-- Average Amount -->
       <Form.Field form={entityForm} name="avgAmount">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Average Transaction Amount</Form.Label>
             <NumericInput bind:value={$formData.avgAmount} buttonClass="w-full" />
             <Form.FieldErrors />
@@ -271,7 +271,7 @@ const paymentFrequencyOptions = paymentFrequencies.map((freq) => ({
     <!-- Notes -->
     <Form.Field form={entityForm} name="notes">
       <Form.Control>
-        {#snippet children({props})}
+        {#snippet children({ props })}
           <Form.Label>Notes</Form.Label>
           <Textarea
             {...props}

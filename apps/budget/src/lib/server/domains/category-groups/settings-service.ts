@@ -1,6 +1,6 @@
-import type {CategoryGroupSettings} from "$lib/schema/category-groups";
-import {ValidationError} from "$lib/server/shared/types/errors";
-import {CategoryGroupSettingsRepository} from "./repository";
+import type { CategoryGroupSettings } from "$lib/schema/category-groups";
+import { ValidationError } from "$lib/server/shared/types/errors";
+import { CategoryGroupSettingsRepository } from "./repository";
 
 // ================================================================================
 // DTOs

@@ -1,15 +1,15 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
 import Check from '@lucide/svelte/icons/check';
 import User from '@lucide/svelte/icons/user';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import X from '@lucide/svelte/icons/x';
-import type {Row} from '@tanstack/table-core';
-import type {ImportRow} from '$lib/types/import';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {cn} from '$lib/utils';
+import type { Row } from '@tanstack/table-core';
+import type { ImportRow } from '$lib/types/import';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { cn } from '$lib/utils';
 import Fuse from 'fuse.js';
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
   temporaryPayees?: string[];
 }
 
-let {row, onUpdate, temporaryPayees = []}: Props = $props();
+let { row, onUpdate, temporaryPayees = [] }: Props = $props();
 
 const payeeState = PayeesState.get();
 const payeesArray = $derived(payeeState ? Array.from(payeeState.payees.values()) : []);
@@ -49,12 +49,12 @@ const combinedItems = $derived.by(() => {
   }));
   const temporary = temporaryPayees
     .filter((name) => !payeesArray.some((p) => p.name?.toLowerCase() === name.toLowerCase()))
-    .map((name) => ({type: 'temporary' as const, name}));
+    .map((name) => ({ type: 'temporary' as const, name }));
   return [...existing, ...temporary];
 });
 
 const fused = $derived(
-  new Fuse(combinedItems, {keys: ['name'], includeScore: true, threshold: 0.3})
+  new Fuse(combinedItems, { keys: ['name'], includeScore: true, threshold: 0.3 })
 );
 
 let visibleItems = $derived.by(() => {
@@ -100,7 +100,7 @@ function handleSelect(payeeId: number, payeeName: string) {
 function handleCreateNew() {
   const nameToCreate = searchValue.trim();
   if (nameToCreate) {
-    console.log('PayeeCell handleCreateNew:', {rowIndex, payeeId: null, payeeName: nameToCreate});
+    console.log('PayeeCell handleCreateNew:', { rowIndex, payeeId: null, payeeName: nameToCreate });
     onUpdate?.(rowIndex, null, nameToCreate);
     searchValue = '';
     open = false;
@@ -111,7 +111,7 @@ function handleSelectTemporary(payeeName: string) {
   const hasChanged = selectedPayeeName !== payeeName;
 
   if (hasChanged) {
-    console.log('PayeeCell handleSelectTemporary:', {rowIndex, payeeId: null, payeeName});
+    console.log('PayeeCell handleSelectTemporary:', { rowIndex, payeeId: null, payeeName });
     onUpdate?.(rowIndex, null, payeeName);
   }
 
@@ -129,7 +129,7 @@ function handleClear() {
 <div class="w-full min-w-[200px]">
   <Popover.Root bind:open>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button
           {...props}
           variant="outline"

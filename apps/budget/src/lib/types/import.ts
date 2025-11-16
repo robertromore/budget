@@ -63,7 +63,7 @@ export interface EntityMatch {
   entityId?: number;
   entityName: string;
   created: boolean;
-  alternatives?: Array<{id: number; name: string; confidence: number}>;
+  alternatives?: Array<{ id: number; name: string; confidence: number }>;
 }
 
 export interface EntityMatches {
@@ -152,13 +152,13 @@ export interface ImportProgress {
   total: number;
   percentage: number;
   currentRow?: number;
-  errors: Array<{row: number; message: string}>;
+  errors: Array<{ row: number; message: string }>;
 }
 
 // File processor interface
 export interface FileProcessor {
   parseFile(file: File): Promise<ImportRow[]>;
-  validateFile(file: File): {valid: boolean; error?: string};
+  validateFile(file: File): { valid: boolean; error?: string };
   getSupportedFormats(): string[];
 }
 

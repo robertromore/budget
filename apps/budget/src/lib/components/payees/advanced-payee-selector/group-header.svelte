@@ -1,7 +1,7 @@
 <script lang="ts">
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
-import {Badge} from '$lib/components/ui/badge';
-import {cn} from '$lib/utils';
+import { Badge } from '$lib/components/ui/badge';
+import { cn } from '$lib/utils';
 
 let {
   label,

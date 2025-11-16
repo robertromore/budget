@@ -1,9 +1,9 @@
 <script lang="ts">
 // --- Imports ---
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
-import {tick} from 'svelte';
+import { tick } from 'svelte';
 import NumericInput from './numeric-input.svelte';
 
 // --- Props ---
@@ -19,9 +19,9 @@ let {
 } = $props();
 
 let types = $state([
-  {value: 'exact', label: 'is exactly'},
-  {value: 'approximate', label: 'is approximately'},
-  {value: 'range', label: 'is between'},
+  { value: 'exact', label: 'is exactly' },
+  { value: 'approximate', label: 'is approximately' },
+  { value: 'range', label: 'is between' },
 ]);
 let triggerRef = $state<HTMLButtonElement>(null!);
 let typeOpen = $state(false);
@@ -60,7 +60,7 @@ $effect(() => {
     <span class="text-sm font-medium">Amount Type</span>
     <Popover.Root bind:open={typeOpen}>
       <Popover.Trigger bind:ref={triggerRef}>
-        {#snippet child({props})}
+        {#snippet child({ props })}
           <Button
             variant="outline"
             size="sm"

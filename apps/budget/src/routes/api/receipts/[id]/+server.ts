@@ -1,12 +1,12 @@
-import {error} from "@sveltejs/kit";
-import type {RequestHandler} from "./$types";
-import {ReceiptService} from "$lib/server/domains/medical-expenses";
-import {readFile} from "fs/promises";
-import {existsSync} from "fs";
+import { error } from "@sveltejs/kit";
+import type { RequestHandler } from "./$types";
+import { ReceiptService } from "$lib/server/domains/medical-expenses";
+import { readFile } from "fs/promises";
+import { existsSync } from "fs";
 
 const receiptService = new ReceiptService();
 
-export const GET: RequestHandler = async ({params}) => {
+export const GET: RequestHandler = async ({ params }) => {
   try {
     const receiptId = parseInt(params.id, 10);
 

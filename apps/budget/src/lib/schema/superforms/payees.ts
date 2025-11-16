@@ -1,4 +1,4 @@
-import {z} from "zod";
+import { z } from "zod";
 
 // Import enum types from main payee schema
 const payeeTypes = [
@@ -186,7 +186,7 @@ export const superformUpdatePayeeSchema = z.object({
       (val) =>
         !val ||
         val.trim() === "" ||
-        z.string().url({message: "Invalid website URL"}).safeParse(val).success,
+        z.string().url({ message: "Invalid website URL" }).safeParse(val).success,
       {
         message: "Invalid website URL",
       }
@@ -206,7 +206,7 @@ export const superformUpdatePayeeSchema = z.object({
       (val) =>
         !val ||
         val.trim() === "" ||
-        z.string().email({message: "Invalid email address"}).safeParse(val).success,
+        z.string().email({ message: "Invalid email address" }).safeParse(val).success,
       {
         message: "Invalid email address",
       }

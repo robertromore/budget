@@ -12,12 +12,12 @@
  * Run with: bun run ./src/lib/server/db/factories
  */
 
-import {workspaceFactory} from "./workspaces";
-import {accountFactory} from "./accounts";
-import {budgetFactory} from "./budgets";
-import {scheduleFactory} from "./schedules";
-import {viewFactory} from "./views";
-import {categoryGroupFactory} from "./category-groups";
+import { workspaceFactory } from "./workspaces";
+import { accountFactory } from "./accounts";
+import { budgetFactory } from "./budgets";
+import { scheduleFactory } from "./schedules";
+import { viewFactory } from "./views";
+import { categoryGroupFactory } from "./category-groups";
 
 console.log("🏭 Starting comprehensive factory data generation...\n");
 

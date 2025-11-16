@@ -1,4 +1,4 @@
-import type {BudgetWithRelations} from "$lib/server/domains/budgets/repository";
+import type { BudgetWithRelations } from "$lib/server/domains/budgets/repository";
 
 /**
  * Checks if a budget has any invalid (deleted) category associations

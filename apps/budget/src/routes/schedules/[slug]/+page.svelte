@@ -1,9 +1,9 @@
 <script lang="ts">
-import type {PageData} from './$types';
-import {Button} from '$lib/components/ui/button';
+import type { PageData } from './$types';
+import { Button } from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {goto} from '$app/navigation';
+import { goto } from '$app/navigation';
 import {
   createScheduleDetailQuery,
   createToggleScheduleStatusMutation,
@@ -21,7 +21,7 @@ import {
 } from './(components)';
 
 // Import data processing functions
-import {generateCumulativeBalanceData, generateFutureProjections} from './(data)';
+import { generateCumulativeBalanceData, generateFutureProjections } from './(data)';
 
 // Icons
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -30,7 +30,7 @@ import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Receipt from '@lucide/svelte/icons/receipt';
 import Settings from '@lucide/svelte/icons/settings';
 
-let {data}: {data: PageData} = $props();
+let { data }: { data: PageData } = $props();
 
 // Create reactive query that updates when the data prop changes (route changes)
 const scheduleQuery = $derived(

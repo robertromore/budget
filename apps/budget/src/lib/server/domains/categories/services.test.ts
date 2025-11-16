@@ -1,7 +1,7 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {CategoryService} from "./services";
-import type {CategoryRepository} from "./repository";
-import type {Category} from "$lib/schema/categories";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { CategoryService } from "./services";
+import type { CategoryRepository } from "./repository";
+import type { Category } from "$lib/schema/categories";
 
 /**
  * Unit tests for CategoryService

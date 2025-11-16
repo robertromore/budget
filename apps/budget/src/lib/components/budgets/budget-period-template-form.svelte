@@ -25,7 +25,7 @@ interface Props {
   onCancel?: () => void;
 }
 
-let {budgetId, defaultAllocatedAmount = 0, onSuccess, onCancel}: Props = $props();
+let { budgetId, defaultAllocatedAmount = 0, onSuccess, onCancel }: Props = $props();
 
 // Mutations - must be called during component initialization
 const createMutation = createPeriodTemplate.options();
@@ -53,7 +53,7 @@ $effect(() => {
 
 // Calculate preview periods using form data
 const previewPeriods = $derived.by(() => {
-  const periods: Array<{start: string; end: string}> = [];
+  const periods: Array<{ start: string; end: string }> = [];
   let current: CalendarDate = currentDate;
   const periodType = type;
   const interval = intervalCount || 1;
@@ -67,60 +67,60 @@ const previewPeriods = $derived.by(() => {
         // Adjust to start day of week
         const dayOfWeek = getIsoWeekday(current);
         const daysToAdd = (startDayOfWeek - dayOfWeek + 7) % 7;
-        const periodStart = daysToAdd > 0 ? current.add({days: daysToAdd}) : current;
-        periodEnd = periodStart.add({weeks: interval}).subtract({days: 1});
+        const periodStart = daysToAdd > 0 ? current.add({ days: daysToAdd }) : current;
+        periodEnd = periodStart.add({ weeks: interval }).subtract({ days: 1 });
         periods.push({
           start: toISOString(periodStart),
           end: toISOString(periodEnd),
         });
-        current = periodEnd.add({days: 1});
+        current = periodEnd.add({ days: 1 });
         break;
       }
 
       case 'monthly': {
         // Start on specific day of month
-        const monthStart = current.set({day: Math.min(startDayOfMonth, getDaysInMonth(current))});
-        periodEnd = monthStart.add({months: interval}).subtract({days: 1});
+        const monthStart = current.set({ day: Math.min(startDayOfMonth, getDaysInMonth(current)) });
+        periodEnd = monthStart.add({ months: interval }).subtract({ days: 1 });
         periods.push({
           start: toISOString(monthStart),
           end: toISOString(periodEnd),
         });
-        current = periodEnd.add({days: 1});
+        current = periodEnd.add({ days: 1 });
         break;
       }
 
       case 'quarterly': {
         // 3-month periods
-        const quarterStart = current.set({day: 1});
-        periodEnd = quarterStart.add({months: 3 * interval}).subtract({days: 1});
+        const quarterStart = current.set({ day: 1 });
+        periodEnd = quarterStart.add({ months: 3 * interval }).subtract({ days: 1 });
         periods.push({
           start: toISOString(quarterStart),
           end: toISOString(periodEnd),
         });
-        current = periodEnd.add({days: 1});
+        current = periodEnd.add({ days: 1 });
         break;
       }
 
       case 'yearly': {
         // Start on specific month and day
-        const yearStart = current.set({month: startMonth, day: startDayOfMonth});
-        periodEnd = yearStart.add({years: interval}).subtract({days: 1});
+        const yearStart = current.set({ month: startMonth, day: startDayOfMonth });
+        periodEnd = yearStart.add({ years: interval }).subtract({ days: 1 });
         periods.push({
           start: toISOString(yearStart),
           end: toISOString(periodEnd),
         });
-        current = periodEnd.add({days: 1});
+        current = periodEnd.add({ days: 1 });
         break;
       }
 
       case 'custom': {
         // Custom period - not used in this form but keeping for compatibility
-        periodEnd = current.add({days: 30 - 1});
+        periodEnd = current.add({ days: 30 - 1 });
         periods.push({
           start: toISOString(current),
           end: toISOString(periodEnd),
         });
-        current = periodEnd.add({days: 1});
+        current = periodEnd.add({ days: 1 });
         break;
       }
     }

@@ -1,8 +1,8 @@
-import type {PayeeCategory} from "$lib/schema/payee-categories";
-import {payeeCategories} from "$lib/schema/payee-categories";
-import {payees} from "$lib/schema/payees";
-import {db} from "$lib/server/db";
-import {and, count, eq, isNull} from "drizzle-orm";
+import type { PayeeCategory } from "$lib/schema/payee-categories";
+import { payeeCategories } from "$lib/schema/payee-categories";
+import { payees } from "$lib/schema/payees";
+import { db } from "$lib/server/db";
+import { and, count, eq, isNull } from "drizzle-orm";
 
 // ================================================================================
 // Types
@@ -202,12 +202,12 @@ export class PayeeCategoryRepository {
    * Bulk update display orders
    */
   async bulkUpdateDisplayOrder(
-    updates: Array<{id: number; displayOrder: number}>,
+    updates: Array<{ id: number; displayOrder: number }>,
     workspaceId: number
   ): Promise<void> {
     // Use a transaction to ensure all updates succeed or none do
     await db.transaction(async (tx) => {
-      for (const {id, displayOrder} of updates) {
+      for (const { id, displayOrder } of updates) {
         await tx
           .update(payeeCategories)
           .set({

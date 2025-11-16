@@ -1,7 +1,7 @@
-import type {View as ViewSchema} from "$lib/schema";
-import {trpc} from "$lib/trpc/client";
-import type {ViewFilter, ViewFilterWithSet} from "$lib/types";
-import deeplyEqual, {equalArray} from "$lib/utils";
+import type { View as ViewSchema } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import type { ViewFilter, ViewFilterWithSet } from "$lib/types";
+import deeplyEqual, { equalArray } from "$lib/utils";
 import type {
   ColumnPinningState,
   ExpandedState,
@@ -9,7 +9,7 @@ import type {
   SortingState,
   VisibilityState,
 } from "@tanstack/table-core";
-import {SvelteMap, SvelteSet} from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 export default class View {
   view: ViewSchema = $state() as ViewSchema;
@@ -43,7 +43,7 @@ export default class View {
         Array.from(this.#filterValues.values()).map((filterValue) => filterValue.filter),
         this.view.filters?.map((filter) => filter.filter) || []
       ) ||
-      Array.from(this.#filterValues.values()).some(({column, value}) => {
+      Array.from(this.#filterValues.values()).some(({ column, value }) => {
         const initialFilters = this.initial?.filters?.find(
           (filter) => filter.column === column
         )?.value;
@@ -79,13 +79,13 @@ export default class View {
       sort: [],
       expanded: {},
       visibility: {},
-      pinning: {left: [], right: []},
+      pinning: { left: [], right: [] },
       columnOrder: [],
     };
 
     // Ensure pinning is always initialized (for views created before pinning was added)
     if (!this.view.display.pinning) {
-      this.view.display.pinning = {left: [], right: []};
+      this.view.display.pinning = { left: [], right: [] };
     }
 
     // Ensure columnOrder is always initialized (for views created before columnOrder was added)
@@ -96,7 +96,7 @@ export default class View {
     // Take snapshot after initializing all fields
     this.initial = $state.snapshot(this.view);
     this.#filterValues = new SvelteMap<string, ViewFilterWithSet>(
-      (this.view.filters as Array<Omit<ViewFilterWithSet, "view"> & {view?: Array<unknown>}>).map(
+      (this.view.filters as Array<Omit<ViewFilterWithSet, "view"> & { view?: Array<unknown> }>).map(
         (filter) => [
           filter.column,
           Object.assign({}, filter, {
@@ -136,10 +136,10 @@ export default class View {
         if (sorter.id !== column) {
           return sorter;
         }
-        return Object.assign({}, sorter, {desc: value});
+        return Object.assign({}, sorter, { desc: value });
       }) || [];
     if (!this.view.display.sort?.find((sorter) => sorter.id === column)) {
-      this.view.display.sort = this.view.display.sort?.concat({id: column, desc: value});
+      this.view.display.sort = this.view.display.sort?.concat({ id: column, desc: value });
     }
   };
 
@@ -169,7 +169,7 @@ export default class View {
   }
 
   getPinning(): ColumnPinningState {
-    return this.view.display?.pinning || {left: [], right: []};
+    return this.view.display?.pinning || { left: [], right: [] };
   }
 
   setPinning(pinning: ColumnPinningState) {
@@ -304,7 +304,7 @@ export default class View {
 
   getAllFilterValues() {
     return Array.from(this.#filterValues.values()).map((filter) =>
-      Object.assign({}, filter, {value: Array.from(filter.value)})
+      Object.assign({}, filter, { value: Array.from(filter.value) })
     );
   }
 
@@ -379,18 +379,18 @@ export default class View {
       this.view.display.sort = this.initial.display?.sort || [];
       this.view.display.expanded = this.initial.display?.expanded || {};
       this.view.display.visibility = this.initial.display?.visibility || {};
-      this.view.display.pinning = this.initial.display?.pinning || {left: [], right: []};
+      this.view.display.pinning = this.initial.display?.pinning || { left: [], right: [] };
       this.view.filters = this.initial.filters;
       this.view.dirty = false;
       this.#filterValues = new SvelteMap<string, ViewFilterWithSet>(
-        (this.view.filters as Array<Omit<ViewFilterWithSet, "view"> & {view?: Array<unknown>}>).map(
-          (filter) => [
-            filter.column,
-            Object.assign({}, filter, {
-              value: new SvelteSet(filter.value || []),
-            }),
-          ]
-        )
+        (
+          this.view.filters as Array<Omit<ViewFilterWithSet, "view"> & { view?: Array<unknown> }>
+        ).map((filter) => [
+          filter.column,
+          Object.assign({}, filter, {
+            value: new SvelteSet(filter.value || []),
+          }),
+        ])
       );
     }
   }
@@ -398,13 +398,13 @@ export default class View {
   async saveView() {
     const snapshot = $state.snapshot(this.#filterValues);
     this.view.filters = Array.from(snapshot.values()).map((filter) => {
-      return Object.assign({}, filter, {value: Array.from(filter.value)});
+      return Object.assign({}, filter, { value: Array.from(filter.value) });
     });
     this.initial = $state.snapshot(this.view);
     await trpc().viewsRoutes.save.mutate(this.view);
   }
 
   async deleteView() {
-    await trpc().viewsRoutes.delete.mutate({entities: [this.view.id]});
+    await trpc().viewsRoutes.delete.mutate({ entities: [this.view.id] });
   }
 }

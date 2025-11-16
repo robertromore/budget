@@ -1,19 +1,19 @@
 <script lang="ts">
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Sheet from '$lib/components/ui/sheet';
-import {Button} from '$lib/components/ui/button';
-import {Label} from '$lib/components/ui/label';
-import {Switch} from '$lib/components/ui/switch';
-import {Slider} from '$lib/components/ui/slider';
-import {Settings, LoaderCircle} from '@lucide/svelte/icons';
-import {getCategoryGroupSettings, updateCategoryGroupSettings} from '$lib/query/category-groups';
+import { Button } from '$lib/components/ui/button';
+import { Label } from '$lib/components/ui/label';
+import { Switch } from '$lib/components/ui/switch';
+import { Slider } from '$lib/components/ui/slider';
+import { Settings, LoaderCircle } from '@lucide/svelte/icons';
+import { getCategoryGroupSettings, updateCategoryGroupSettings } from '$lib/query/category-groups';
 
 interface Props {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-let {open = $bindable(false), onOpenChange}: Props = $props();
+let { open = $bindable(false), onOpenChange }: Props = $props();
 
 const settingsQuery = getCategoryGroupSettings().options();
 const updateMutation = updateCategoryGroupSettings.options();

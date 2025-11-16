@@ -1,8 +1,8 @@
-import type {ColumnDef, Column} from "@tanstack/table-core";
-import type {TopCategoryData} from "$lib/types";
-import {renderComponent} from "$lib/components/ui/data-table";
-import {Checkbox} from "$lib/components/ui/checkbox";
-import {formatCurrency} from "$lib/utils/formatters";
+import type { ColumnDef, Column } from "@tanstack/table-core";
+import type { TopCategoryData } from "$lib/types";
+import { renderComponent } from "$lib/components/ui/data-table";
+import { Checkbox } from "$lib/components/ui/checkbox";
+import { formatCurrency } from "$lib/utils/formatters";
 import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";
 import DollarSign from "@lucide/svelte/icons/dollar-sign";
 import Hash from "@lucide/svelte/icons/hash";
@@ -22,7 +22,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
     // Selection column
     {
       id: "select",
-      header: ({table}) => {
+      header: ({ table }) => {
         const allPageRowsSelected = table.getIsAllPageRowsSelected();
         const somePageRowsSelected = table.getIsSomePageRowsSelected();
 
@@ -40,7 +40,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
           "aria-label": "Select all on page",
         });
       },
-      cell: ({row}) =>
+      cell: ({ row }) =>
         renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
@@ -72,7 +72,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
       id: "amount",
       accessorKey: "amount",
       header: "Amount",
-      cell: ({row}) => formatCurrency(row.original.amount),
+      cell: ({ row }) => formatCurrency(row.original.amount),
       enableSorting: true,
       enableHiding: true,
       enableColumnFilter: true,
@@ -101,7 +101,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
       id: "count",
       accessorKey: "count",
       header: "Transactions",
-      cell: ({row}) => row.original.count.toString(),
+      cell: ({ row }) => row.original.count.toString(),
       enableSorting: true,
       enableHiding: true,
       enableColumnFilter: true,
@@ -131,7 +131,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
       id: "percentage",
       accessorKey: "percentage",
       header: "Percentage",
-      cell: ({row}) => `${row.original.percentage.toFixed(1)}%`,
+      cell: ({ row }) => `${row.original.percentage.toFixed(1)}%`,
       enableSorting: true,
       enableHiding: true,
       enableColumnFilter: true,

@@ -10,17 +10,17 @@
  * 5. Inline editing: Reduce modal dialogs
  */
 
-import {SvelteSet} from 'svelte/reactivity';
-import {Button} from '$lib/components/ui/button';
+import { SvelteSet } from 'svelte/reactivity';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Select from '$lib/components/ui/select';
 import * as Tabs from '$lib/components/ui/tabs';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
 import * as Dialog from '$lib/components/ui/dialog';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
 import BudgetProgress from '$lib/components/budgets/budget-progress.svelte';
 import EnvelopeAllocationCard from '$lib/components/budgets/envelope-allocation-card.svelte';
 import EnvelopeSettingsSheet from '$lib/components/budgets/envelope-settings-sheet.svelte';
@@ -30,12 +30,12 @@ import BudgetPeriodInstanceManager from '$lib/components/budgets/budget-period-i
 import PeriodAutomation from '../(components)/managers/period-automation.svelte';
 import BudgetRolloverManager from '../(components)/managers/budget-rollover-manager.svelte';
 import PeriodTemplateSheet from '../(components)/sheets/period-template-sheet.svelte';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {calculateActualSpent, calculateAllocated} from '$lib/utils/budget-calculations';
-import {parseDate, getLocalTimeZone} from '@internationalized/date';
-import {parseISOString, currentDate} from '$lib/utils/dates';
-import {monthYearFmt, dayFmt} from '$lib/utils/date-formatters';
-import {getBudgetValidationIssues} from '$lib/utils/budget-validation';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
+import { parseDate, getLocalTimeZone } from '@internationalized/date';
+import { parseISOString, currentDate } from '$lib/utils/dates';
+import { monthYearFmt, dayFmt } from '$lib/utils/date-formatters';
+import { getBudgetValidationIssues } from '$lib/utils/budget-validation';
 import * as Alert from '$lib/components/ui/alert';
 import {
   getBudgetDetail,
@@ -53,11 +53,11 @@ import {
   updateBudget,
   deletePeriodTemplate,
 } from '$lib/query/budgets';
-import {listCategories} from '$lib/query/categories';
-import {trpc} from '$lib/trpc/client';
-import {deleteBudgetDialog, deleteBudgetId} from '$lib/states/ui/global.svelte';
-import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
-import type {Schedule} from '$lib/schema/schedules';
+import { listCategories } from '$lib/query/categories';
+import { trpc } from '$lib/trpc/client';
+import { deleteBudgetDialog, deleteBudgetId } from '$lib/states/ui/global.svelte';
+import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
+import type { Schedule } from '$lib/schema/schedules';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash2 from '@lucide/svelte/icons/trash-2';
@@ -80,7 +80,7 @@ import Plus from '@lucide/svelte/icons/plus';
 import Pause from '@lucide/svelte/icons/pause';
 import Play from '@lucide/svelte/icons/play';
 
-let {data} = $props();
+let { data } = $props();
 
 const budgetSlug = $derived(data.budgetSlug);
 let budgetQuery = $derived(getBudgetDetail(budgetSlug).options());
@@ -101,7 +101,7 @@ let linkedSchedule = $state<Schedule | null>(null);
 $effect(() => {
   if (linkedScheduleId) {
     trpc()
-      .scheduleRoutes.load.query({id: linkedScheduleId})
+      .scheduleRoutes.load.query({ id: linkedScheduleId })
       .then((schedule) => (linkedSchedule = schedule))
       .catch((err) => {
         console.error('Failed to load linked schedule:', err);
@@ -116,7 +116,7 @@ $effect(() => {
 const validation = $derived(
   budget
     ? getBudgetValidationIssues(budget)
-    : {hasIssues: false, invalidCategories: 0, invalidAccounts: 0, messages: []}
+    : { hasIssues: false, invalidCategories: 0, invalidAccounts: 0, messages: [] }
 );
 
 // Active tab state
@@ -562,7 +562,7 @@ async function toggleBudgetStatus() {
   const newStatus = budget.status === 'active' ? 'inactive' : 'active';
   await updateBudgetMutation.mutateAsync({
     id: budget.id,
-    data: {status: newStatus},
+    data: { status: newStatus },
   });
 }
 </script>
@@ -1384,7 +1384,7 @@ async function toggleBudgetStatus() {
                     ...(template.startDayOfMonth != null && {
                       startDayOfMonth: template.startDayOfMonth,
                     }),
-                    ...(template.startMonth != null && {startMonth: template.startMonth}),
+                    ...(template.startMonth != null && { startMonth: template.startMonth }),
                   },
                 }}
                 hideCurrentPeriod={true}

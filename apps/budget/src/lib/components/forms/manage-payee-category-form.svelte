@@ -1,19 +1,19 @@
 <script lang="ts">
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Form from '$lib/components/ui/form';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import type {PayeeCategory} from '$lib/schema';
-import {superformInsertPayeeCategorySchema} from '$lib/schema/superforms';
-import {superForm} from 'sveltekit-superforms';
-import {zod4Client} from 'sveltekit-superforms/adapters';
-import {IconPicker} from '$lib/components/ui/icon-picker';
-import {ColorPicker} from '$lib/components/ui/color-picker';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import type { PayeeCategory } from '$lib/schema';
+import { superformInsertPayeeCategorySchema } from '$lib/schema/superforms';
+import { superForm } from 'sveltekit-superforms';
+import { zod4Client } from 'sveltekit-superforms/adapters';
+import { IconPicker } from '$lib/components/ui/icon-picker';
+import { ColorPicker } from '$lib/components/ui/color-picker';
 import FolderOpen from '@lucide/svelte/icons/folder-open';
 import Palette from '@lucide/svelte/icons/palette';
-import {savePayeeCategory, deletePayeeCategory} from '$lib/query/payee-categories';
+import { savePayeeCategory, deletePayeeCategory } from '$lib/query/payee-categories';
 
 let {
   id,
@@ -50,7 +50,7 @@ const defaults = {
 const form = superForm(defaults, {
   id: formId,
   validators: zod4Client(superformInsertPayeeCategorySchema),
-  onSubmit: async ({formData, cancel}) => {
+  onSubmit: async ({ formData, cancel }) => {
     cancel(); // Prevent default form submission
 
     const data = {
@@ -64,7 +64,7 @@ const form = superForm(defaults, {
 
     try {
       if (isUpdate && id) {
-        await saveMutation.mutateAsync({id, ...data});
+        await saveMutation.mutateAsync({ id, ...data });
       } else {
         await saveMutation.mutateAsync(data);
       }
@@ -76,17 +76,17 @@ const form = superForm(defaults, {
   },
 });
 
-const {form: formData, enhance, submitting} = form;
+const { form: formData, enhance, submitting } = form;
 const isSaving = $derived(saveMutation.isPending);
 
-function handleIconChange(event: CustomEvent<{value: string}>) {
+function handleIconChange(event: CustomEvent<{ value: string }>) {
   const iconValue = event.detail.value;
   if (typeof iconValue === 'string') {
     $formData.icon = iconValue;
   }
 }
 
-function handleColorChange(event: CustomEvent<{value: string}>) {
+function handleColorChange(event: CustomEvent<{ value: string }>) {
   const colorValue = event.detail.value;
   if (typeof colorValue === 'string') {
     $formData.color = colorValue;
@@ -131,7 +131,7 @@ const handleDelete = async (id: number) => {
         <!-- Category Name -->
         <Form.Field {form} name="name">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Form.Label>Name</Form.Label>
               <Input
                 {...props}
@@ -145,7 +145,7 @@ const handleDelete = async (id: number) => {
         <!-- Description -->
         <Form.Field {form} name="description">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Form.Label>Description (Optional)</Form.Label>
               <Textarea
                 {...props}
@@ -174,7 +174,7 @@ const handleDelete = async (id: number) => {
         <!-- Icon Picker -->
         <Form.Field {form} name="icon">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Form.Label>Icon</Form.Label>
               <IconPicker value={$formData.icon ?? ''} onchange={handleIconChange} />
               <Form.Description>Choose an icon to represent this category</Form.Description>
@@ -186,7 +186,7 @@ const handleDelete = async (id: number) => {
         <!-- Color Picker -->
         <Form.Field {form} name="color">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Form.Label>Color</Form.Label>
               <ColorPicker value={$formData.color ?? ''} onchange={handleColorChange} />
               <Form.Description>Select a color for the category badge</Form.Description>
@@ -204,7 +204,7 @@ const handleDelete = async (id: number) => {
       {#if id}
         <AlertDialog.Root bind:open={alertDialogOpen}>
           <AlertDialog.Trigger asChild>
-            {#snippet child({builder})}
+            {#snippet child({ builder })}
               <Button builders={[builder]} variant="destructive" type="button">
                 Delete Category
               </Button>

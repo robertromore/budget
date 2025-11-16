@@ -1,4 +1,4 @@
-import {relations, sql} from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   sqliteTable,
   integer,
@@ -8,11 +8,11 @@ import {
   uniqueIndex,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {accounts} from "./accounts";
-import {categories} from "./categories";
-import {transactions} from "./transactions";
-import {workspaces} from "./workspaces";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { accounts } from "./accounts";
+import { categories } from "./categories";
+import { transactions } from "./transactions";
+import { workspaces } from "./workspaces";
 
 export const budgetTypes = [
   "account-monthly",
@@ -63,20 +63,20 @@ export interface BudgetMetadata {
 export const budgets = sqliteTable(
   "budget",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     description: text("description"),
-    type: text("type", {enum: budgetTypes}).notNull(),
-    scope: text("scope", {enum: budgetScopes}).notNull(),
-    status: text("status", {enum: budgetStatuses}).default("active").notNull(),
-    enforcementLevel: text("enforcement_level", {enum: budgetEnforcementLevels})
+    type: text("type", { enum: budgetTypes }).notNull(),
+    scope: text("scope", { enum: budgetScopes }).notNull(),
+    status: text("status", { enum: budgetStatuses }).default("active").notNull(),
+    enforcementLevel: text("enforcement_level", { enum: budgetEnforcementLevels })
       .default("warning")
       .notNull(),
-    metadata: text("metadata", {mode: "json"}).$type<BudgetMetadata>().default({}).notNull(),
+    metadata: text("metadata", { mode: "json" }).$type<BudgetMetadata>().default({}).notNull(),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -100,13 +100,13 @@ export const budgets = sqliteTable(
 export const budgetGroups = sqliteTable(
   "budget_group",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
     description: text("description"),
     parentId: integer("parent_id").references((): AnySQLiteColumn => budgetGroups.id),
     color: text("color"),
     spendingLimit: real("spending_limit"),
-    inheritParentSettings: integer("inherit_parent_settings", {mode: "boolean"})
+    inheritParentSettings: integer("inherit_parent_settings", { mode: "boolean" })
       .default(true)
       .notNull(),
     createdAt: text("created_at")
@@ -125,13 +125,13 @@ export const budgetGroups = sqliteTable(
 export const budgetGroupMemberships = sqliteTable(
   "budget_group_membership",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     budgetId: integer("budget_id")
       .notNull()
-      .references(() => budgets.id, {onDelete: "cascade"}),
+      .references(() => budgets.id, { onDelete: "cascade" }),
     groupId: integer("group_id")
       .notNull()
-      .references(() => budgetGroups.id, {onDelete: "cascade"}),
+      .references(() => budgetGroups.id, { onDelete: "cascade" }),
   },
   (table) => [uniqueIndex("budget_group_membership_unique").on(table.budgetId, table.groupId)]
 );
@@ -139,11 +139,11 @@ export const budgetGroupMemberships = sqliteTable(
 export const budgetPeriodTemplates = sqliteTable(
   "budget_period_template",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     budgetId: integer("budget_id")
       .notNull()
-      .references(() => budgets.id, {onDelete: "cascade"}),
-    type: text("type", {enum: periodTemplateTypes}).notNull(),
+      .references(() => budgets.id, { onDelete: "cascade" }),
+    type: text("type", { enum: periodTemplateTypes }).notNull(),
     intervalCount: integer("interval_count").default(1).notNull(),
     startDayOfWeek: integer("start_day_of_week"),
     startDayOfMonth: integer("start_day_of_month"),
@@ -162,10 +162,10 @@ export const budgetPeriodTemplates = sqliteTable(
 export const budgetPeriodInstances = sqliteTable(
   "budget_period_instance",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     templateId: integer("template_id")
       .notNull()
-      .references(() => budgetPeriodTemplates.id, {onDelete: "cascade"}),
+      .references(() => budgetPeriodTemplates.id, { onDelete: "cascade" }),
     startDate: text("start_date").notNull(),
     endDate: text("end_date").notNull(),
     allocatedAmount: real("allocated_amount").notNull(),
@@ -185,13 +185,13 @@ export const budgetPeriodInstances = sqliteTable(
 export const budgetAccounts = sqliteTable(
   "budget_account",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     budgetId: integer("budget_id")
       .notNull()
-      .references(() => budgets.id, {onDelete: "cascade"}),
+      .references(() => budgets.id, { onDelete: "cascade" }),
     accountId: integer("account_id")
       .notNull()
-      .references(() => accounts.id, {onDelete: "cascade"}),
+      .references(() => accounts.id, { onDelete: "cascade" }),
   },
   (table) => [
     uniqueIndex("budget_account_unique").on(table.budgetId, table.accountId),
@@ -202,13 +202,13 @@ export const budgetAccounts = sqliteTable(
 export const budgetCategories = sqliteTable(
   "budget_category",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     budgetId: integer("budget_id")
       .notNull()
-      .references(() => budgets.id, {onDelete: "cascade"}),
+      .references(() => budgets.id, { onDelete: "cascade" }),
     categoryId: integer("category_id")
       .notNull()
-      .references(() => categories.id, {onDelete: "cascade"}),
+      .references(() => categories.id, { onDelete: "cascade" }),
   },
   (table) => [
     uniqueIndex("budget_category_unique").on(table.budgetId, table.categoryId),
@@ -219,15 +219,15 @@ export const budgetCategories = sqliteTable(
 export const budgetTransactions = sqliteTable(
   "budget_transaction",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     transactionId: integer("transaction_id")
       .notNull()
-      .references(() => transactions.id, {onDelete: "cascade"}),
+      .references(() => transactions.id, { onDelete: "cascade" }),
     budgetId: integer("budget_id")
       .notNull()
-      .references(() => budgets.id, {onDelete: "cascade"}),
+      .references(() => budgets.id, { onDelete: "cascade" }),
     allocatedAmount: real("allocated_amount").notNull(),
-    autoAssigned: integer("auto_assigned", {mode: "boolean"}).default(true).notNull(),
+    autoAssigned: integer("auto_assigned", { mode: "boolean" }).default(true).notNull(),
     assignedAt: text("assigned_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -243,7 +243,7 @@ export const budgetTransactions = sqliteTable(
   ]
 );
 
-export const budgetsRelations = relations(budgets, ({one, many}) => ({
+export const budgetsRelations = relations(budgets, ({ one, many }) => ({
   workspace: one(workspaces, {
     fields: [budgets.workspaceId],
     references: [workspaces.id],
@@ -255,7 +255,7 @@ export const budgetsRelations = relations(budgets, ({one, many}) => ({
   groupMemberships: many(budgetGroupMemberships),
 }));
 
-export const budgetGroupRelations = relations(budgetGroups, ({many, one}) => ({
+export const budgetGroupRelations = relations(budgetGroups, ({ many, one }) => ({
   parent: one(budgetGroups, {
     fields: [budgetGroups.parentId],
     references: [budgetGroups.id],
@@ -267,7 +267,7 @@ export const budgetGroupRelations = relations(budgetGroups, ({many, one}) => ({
   }),
 }));
 
-export const budgetGroupMembershipRelations = relations(budgetGroupMemberships, ({one}) => ({
+export const budgetGroupMembershipRelations = relations(budgetGroupMemberships, ({ one }) => ({
   group: one(budgetGroups, {
     fields: [budgetGroupMemberships.groupId],
     references: [budgetGroups.id],
@@ -278,7 +278,7 @@ export const budgetGroupMembershipRelations = relations(budgetGroupMemberships, 
   }),
 }));
 
-export const budgetPeriodTemplateRelations = relations(budgetPeriodTemplates, ({many, one}) => ({
+export const budgetPeriodTemplateRelations = relations(budgetPeriodTemplates, ({ many, one }) => ({
   budget: one(budgets, {
     fields: [budgetPeriodTemplates.budgetId],
     references: [budgets.id],
@@ -286,14 +286,14 @@ export const budgetPeriodTemplateRelations = relations(budgetPeriodTemplates, ({
   periods: many(budgetPeriodInstances),
 }));
 
-export const budgetPeriodInstanceRelations = relations(budgetPeriodInstances, ({one}) => ({
+export const budgetPeriodInstanceRelations = relations(budgetPeriodInstances, ({ one }) => ({
   template: one(budgetPeriodTemplates, {
     fields: [budgetPeriodInstances.templateId],
     references: [budgetPeriodTemplates.id],
   }),
 }));
 
-export const budgetAccountRelations = relations(budgetAccounts, ({one}) => ({
+export const budgetAccountRelations = relations(budgetAccounts, ({ one }) => ({
   budget: one(budgets, {
     fields: [budgetAccounts.budgetId],
     references: [budgets.id],
@@ -304,7 +304,7 @@ export const budgetAccountRelations = relations(budgetAccounts, ({one}) => ({
   }),
 }));
 
-export const budgetCategoryRelations = relations(budgetCategories, ({one}) => ({
+export const budgetCategoryRelations = relations(budgetCategories, ({ one }) => ({
   budget: one(budgets, {
     fields: [budgetCategories.budgetId],
     references: [budgets.id],
@@ -315,7 +315,7 @@ export const budgetCategoryRelations = relations(budgetCategories, ({one}) => ({
   }),
 }));
 
-export const budgetTransactionRelations = relations(budgetTransactions, ({one}) => ({
+export const budgetTransactionRelations = relations(budgetTransactions, ({ one }) => ({
   budget: one(budgets, {
     fields: [budgetTransactions.budgetId],
     references: [budgets.id],
@@ -356,18 +356,18 @@ export const formBudgetSchema = createInsertSchema(budgets, {
 
 // Budget Templates Table
 export const budgetTemplates = sqliteTable("budget_template", {
-  id: integer("id", {mode: "number"}).primaryKey({autoIncrement: true}),
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   description: text("description"),
-  type: text("type", {enum: budgetTypes}).notNull(),
-  scope: text("scope", {enum: budgetScopes}).notNull(),
+  type: text("type", { enum: budgetTypes }).notNull(),
+  scope: text("scope", { enum: budgetScopes }).notNull(),
   icon: text("icon").default("📊"),
   suggestedAmount: real("suggested_amount"),
-  enforcementLevel: text("enforcement_level", {enum: budgetEnforcementLevels})
+  enforcementLevel: text("enforcement_level", { enum: budgetEnforcementLevels })
     .notNull()
     .default("warning"),
-  metadata: text("metadata", {mode: "json"}).$type<Record<string, unknown>>(),
-  isSystem: integer("is_system", {mode: "boolean"}).notNull().default(false),
+  metadata: text("metadata", { mode: "json" }).$type<Record<string, unknown>>(),
+  isSystem: integer("is_system", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),

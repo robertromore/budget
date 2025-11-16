@@ -1,12 +1,12 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import Plus from '@lucide/svelte/icons/plus';
 import Wallet from '@lucide/svelte/icons/wallet';
-import {AccountsState} from '$lib/states/entities/accounts.svelte';
-import {deleteAccountDialog, deleteAccountId} from '$lib/states/ui/global.svelte';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import { AccountsState } from '$lib/states/entities/accounts.svelte';
+import { deleteAccountDialog, deleteAccountId } from '$lib/states/ui/global.svelte';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import SeedDefaultAccountsButton from './(components)/seed-default-accounts-button.svelte';
 
 const accountsState = $derived(AccountsState.get());

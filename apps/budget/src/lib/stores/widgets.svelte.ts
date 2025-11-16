@@ -1,8 +1,8 @@
 // Widget management store for dashboard customization
 
-import {browser} from "$app/environment";
-import type {WidgetConfig} from "$lib/types/widgets";
-import {DEFAULT_WIDGETS, WIDGET_DEFINITIONS} from "$lib/types/widgets";
+import { browser } from "$app/environment";
+import type { WidgetConfig } from "$lib/types/widgets";
+import { DEFAULT_WIDGETS, WIDGET_DEFINITIONS } from "$lib/types/widgets";
 
 const STORAGE_KEY = "account-dashboard-widgets";
 
@@ -51,7 +51,7 @@ class WidgetStore {
       enabled: true,
       position: this.widgets.length,
       size: definition.defaultSize,
-      settings: {...definition.defaultSettings},
+      settings: { ...definition.defaultSettings },
       ...customConfig,
     };
 
@@ -146,7 +146,7 @@ class WidgetStore {
     DEFAULT_WIDGETS.forEach((defaultWidget) => {
       if (!merged.find((w) => w.type === defaultWidget.type)) {
         console.log(`[Widget Store] Adding new default widget: ${defaultWidget.type}`);
-        merged.push({...defaultWidget});
+        merged.push({ ...defaultWidget });
       }
     });
 
@@ -234,7 +234,7 @@ class WidgetStore {
       const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
       const amount = Math.abs(monthlyTrends[monthKey] || 0);
       spendingTrend.push({
-        label: date.toLocaleDateString("en-US", {month: "short", year: "2-digit"}),
+        label: date.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
         amount: amount,
       });
     }
@@ -267,7 +267,7 @@ class WidgetStore {
       });
 
       incomeExpenses.push({
-        period: date.toLocaleDateString("en-US", {month: "short"}),
+        period: date.toLocaleDateString("en-US", { month: "short" }),
         income: income,
         expenses: expenses,
       });
@@ -344,17 +344,17 @@ class WidgetStore {
       ),
       factors: [
         monthlyCashFlow > 0
-          ? {type: "positive", description: "Positive monthly cash flow"}
-          : {type: "negative", description: "Negative monthly cash flow"},
+          ? { type: "positive", description: "Positive monthly cash flow" }
+          : { type: "negative", description: "Negative monthly cash flow" },
         pendingBalance === 0
-          ? {type: "positive", description: "No pending transactions"}
+          ? { type: "positive", description: "No pending transactions" }
           : {
               type: "warning",
               description: `$${Math.abs(pendingBalance).toFixed(2)} in pending transactions`,
             },
         recentActivity > 0
-          ? {type: "positive", description: "Active account usage"}
-          : {type: "warning", description: "Low account activity"},
+          ? { type: "positive", description: "Active account usage" }
+          : { type: "warning", description: "Low account activity" },
       ],
     };
 
@@ -385,7 +385,7 @@ class WidgetStore {
       const spending = Math.abs(monthlyTrends[monthKey] || 0);
 
       monthlyComparison.push({
-        name: date.toLocaleDateString("en-US", {month: "long"}),
+        name: date.toLocaleDateString("en-US", { month: "long" }),
         spending: spending,
       });
     }
@@ -394,7 +394,7 @@ class WidgetStore {
       // Original widget data
       balance: summary?.balance ?? 0,
       previousBalance: (summary?.balance ?? 0) - monthlyCashFlow, // Estimate previous balance
-      accounts: {"Main Account": summary?.balance ?? 0}, // Mock account breakdown
+      accounts: { "Main Account": summary?.balance ?? 0 }, // Mock account breakdown
       transactionCount: transactions.length,
       monthlyCashFlow,
       pendingBalance,

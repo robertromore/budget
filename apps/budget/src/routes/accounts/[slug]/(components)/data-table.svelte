@@ -11,33 +11,33 @@ import {
   getSortedRowModel,
   type Table as TTable,
 } from '@tanstack/table-core';
-import {createSvelteTable, FlexRender} from '$lib/components/ui/data-table';
+import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
-import type {TransactionsFormat} from '$lib/types';
-import {DataTablePagination} from '.';
+import type { TransactionsFormat } from '$lib/types';
+import { DataTablePagination } from '.';
 import DataTableToolbar from './data-table-toolbar.svelte';
 import TransactionBulkActions from './transaction-bulk-actions.svelte';
-import {filtering, filters, setFiltering, setGlobalFilter} from '../(data)/filters.svelte';
-import {pagination, setPagination} from '../(data)/pagination.svelte';
-import {selection, setSelection} from '../(data)/selection.svelte';
-import {setSorting, sorting} from '../(data)/sorts.svelte';
-import {visibility, setVisibility} from '../(data)/visibility.svelte';
-import {grouping, setGrouping} from '../(data)/groups.svelte';
-import {expanded, setExpanded} from '../(data)/expanded.svelte';
-import {pinning, setPinning} from '../(data)/pinning.svelte';
-import {columnOrder, setColumnOrder} from '../(data)/column-order.svelte';
-import type {View} from '$lib/schema';
-import {CurrentViewState, CurrentViewsState} from '$lib/states/views';
-import {page} from '$app/state';
-import {untrack} from 'svelte';
-import {currentViews} from '$lib/states/views';
-import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
-import type {FacetedFilterOption} from '$lib/types';
-import {dayFmt} from '$lib/utils/date-formatters';
-import {parseDate} from '@internationalized/date';
-import {timezone, currentDate} from '$lib/utils/dates';
+import { filtering, filters, setFiltering, setGlobalFilter } from '../(data)/filters.svelte';
+import { pagination, setPagination } from '../(data)/pagination.svelte';
+import { selection, setSelection } from '../(data)/selection.svelte';
+import { setSorting, sorting } from '../(data)/sorts.svelte';
+import { visibility, setVisibility } from '../(data)/visibility.svelte';
+import { grouping, setGrouping } from '../(data)/groups.svelte';
+import { expanded, setExpanded } from '../(data)/expanded.svelte';
+import { pinning, setPinning } from '../(data)/pinning.svelte';
+import { columnOrder, setColumnOrder } from '../(data)/column-order.svelte';
+import type { View } from '$lib/schema';
+import { CurrentViewState, CurrentViewsState } from '$lib/states/views';
+import { page } from '$app/state';
+import { untrack } from 'svelte';
+import { currentViews } from '$lib/states/views';
+import { DateFiltersState } from '$lib/states/ui/date-filters.svelte';
+import type { FacetedFilterOption } from '$lib/types';
+import { dayFmt } from '$lib/utils/date-formatters';
+import { parseDate } from '@internationalized/date';
+import { timezone, currentDate } from '$lib/utils/dates';
 import LoaderCircle from '@lucide/svelte/icons/loader-circle';
-import {cn} from '$lib/utils';
+import { cn } from '$lib/utils';
 import SortableHeader from './sortable-header.svelte';
 import {
   DndContext,
@@ -48,15 +48,19 @@ import {
   rectIntersection,
   type DragEndEvent,
 } from '@dnd-kit-svelte/core';
-import {SortableContext, horizontalListSortingStrategy, arrayMove} from '@dnd-kit-svelte/sortable';
-import {restrictToHorizontalAxis} from '@dnd-kit-svelte/modifiers';
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit-svelte/sortable';
+import { restrictToHorizontalAxis } from '@dnd-kit-svelte/modifiers';
 
 interface Props {
   columns: ColumnDef<TransactionsFormat, TValue>[];
   transactions?: TransactionsFormat[];
   views?: View[];
   table?: TTable<TransactionsFormat>;
-  serverPagination?: {page: number; pageSize: number; totalCount?: number; totalPages?: number};
+  serverPagination?: { page: number; pageSize: number; totalCount?: number; totalPages?: number };
   updatePagination?: (pageIndex: number, pageSize: number) => void;
   budgetCount?: number;
   onBulkDelete?: (transactions: TransactionsFormat[]) => void;
@@ -170,12 +174,12 @@ const columnVisibility = () => {
 
   // Hide balance column when sorting by columns other than id or date
   if (sortingState.length > 0 && firstSort && firstSort.id !== 'id' && firstSort.id !== 'date') {
-    visibleColumns = Object.assign({}, visibleColumns, {balance: false});
+    visibleColumns = Object.assign({}, visibleColumns, { balance: false });
   }
 
   // Hide budget column by default if no budgets exist
   if (budgetCount === 0 && !('budget' in visibleColumns)) {
-    visibleColumns = Object.assign({}, visibleColumns, {budget: false});
+    visibleColumns = Object.assign({}, visibleColumns, { budget: false });
   }
 
   return visibleColumns;
@@ -262,7 +266,7 @@ table = createSvelteTable<TransactionsFormat>({
       const column = table.getColumn(columnId);
       const filterFn = column?.getFilterFn();
 
-      for (const {value: date} of allDates || []) {
+      for (const { value: date } of allDates || []) {
         let count = 0;
         for (const row of rows) {
           // Use the exact same filter function that TanStack Table uses
@@ -284,7 +288,7 @@ table = createSvelteTable<TransactionsFormat>({
     return getFacetedUniqueValues<TransactionsFormat>()(table, columnId)();
   },
   // globalFilterFn: fuzzyFilter,
-  filterFns: {...filters},
+  filterFns: { ...filters },
   groupedColumnMode: 'reorder',
   autoResetPageIndex: false,
   autoResetExpanded: false,
@@ -448,7 +452,7 @@ function handleDragStart(event: any) {
 }
 
 function handleDragEnd(event: DragEndEvent) {
-  const {active, over} = event;
+  const { active, over } = event;
 
   if (over && active.id !== over.id && table) {
     const headerGroup = table.getHeaderGroups()[0];

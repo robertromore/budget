@@ -3,19 +3,19 @@ import * as Dialog from '$lib/components/ui/dialog';
 import * as Card from '$lib/components/ui/card';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as Alert from '$lib/components/ui/alert';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Progress} from '$lib/components/ui/progress';
-import {Separator} from '$lib/components/ui/separator';
-import {ScrollArea} from '$lib/components/ui/scroll-area';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {Textarea} from '$lib/components/ui/textarea';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Progress } from '$lib/components/ui/progress';
+import { Separator } from '$lib/components/ui/separator';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import { Textarea } from '$lib/components/ui/textarea';
 
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {bulkExport, bulkImport} from '$lib/query/payees';
-import type {Payee} from '$lib/schema/payees';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { bulkExport, bulkImport } from '$lib/query/payees';
+import type { Payee } from '$lib/schema/payees';
 
 // Icons
 import Download from '@lucide/svelte/icons/download';

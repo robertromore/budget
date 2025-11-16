@@ -6,39 +6,39 @@ import type {
   BudgetScope,
   BudgetEnforcementLevel,
 } from '$lib/schema/budgets';
-import type {BudgetSearchFilters} from '$lib/states/ui/budget-search.svelte';
+import type { BudgetSearchFilters } from '$lib/states/ui/budget-search.svelte';
 
 interface Props {
   filters: BudgetSearchFilters;
   onFilterChange: (key: keyof BudgetSearchFilters, value: any) => void;
 }
 
-let {filters, onFilterChange}: Props = $props();
+let { filters, onFilterChange }: Props = $props();
 
-const typeOptions: Array<{value: BudgetType; label: string}> = [
-  {value: 'account-monthly', label: 'Account Monthly'},
-  {value: 'category-envelope', label: 'Category Envelope'},
-  {value: 'goal-based', label: 'Goal Based'},
-  {value: 'scheduled-expense', label: 'Scheduled Expense'},
+const typeOptions: Array<{ value: BudgetType; label: string }> = [
+  { value: 'account-monthly', label: 'Account Monthly' },
+  { value: 'category-envelope', label: 'Category Envelope' },
+  { value: 'goal-based', label: 'Goal Based' },
+  { value: 'scheduled-expense', label: 'Scheduled Expense' },
 ];
 
-const statusOptions: Array<{value: BudgetStatus; label: string}> = [
-  {value: 'active', label: 'Active'},
-  {value: 'inactive', label: 'Inactive'},
-  {value: 'archived', label: 'Archived'},
+const statusOptions: Array<{ value: BudgetStatus; label: string }> = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'archived', label: 'Archived' },
 ];
 
-const scopeOptions: Array<{value: BudgetScope; label: string}> = [
-  {value: 'account', label: 'Account'},
-  {value: 'category', label: 'Category'},
-  {value: 'global', label: 'Global'},
-  {value: 'mixed', label: 'Mixed'},
+const scopeOptions: Array<{ value: BudgetScope; label: string }> = [
+  { value: 'account', label: 'Account' },
+  { value: 'category', label: 'Category' },
+  { value: 'global', label: 'Global' },
+  { value: 'mixed', label: 'Mixed' },
 ];
 
-const enforcementOptions: Array<{value: BudgetEnforcementLevel; label: string}> = [
-  {value: 'none', label: 'None'},
-  {value: 'warning', label: 'Warning'},
-  {value: 'strict', label: 'Strict'},
+const enforcementOptions: Array<{ value: BudgetEnforcementLevel; label: string }> = [
+  { value: 'none', label: 'None' },
+  { value: 'warning', label: 'Warning' },
+  { value: 'strict', label: 'Strict' },
 ];
 </script>
 

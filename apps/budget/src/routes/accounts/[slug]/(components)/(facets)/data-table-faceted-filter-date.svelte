@@ -1,20 +1,20 @@
 <script lang="ts" generics="TData, TValue">
-import type {Column} from '@tanstack/table-core';
-import {DataTableFacetedFilter} from '..';
+import type { Column } from '@tanstack/table-core';
+import { DataTableFacetedFilter } from '..';
 import UsersRound from '@lucide/svelte/icons/users-round';
-import type {Component} from 'svelte';
-import type {HTMLAttributes} from 'svelte/elements';
-import type {FacetedFilterOption} from '$lib/types';
-import {SvelteMap} from 'svelte/reactivity';
+import type { Component } from 'svelte';
+import type { HTMLAttributes } from 'svelte/elements';
+import type { FacetedFilterOption } from '$lib/types';
+import { SvelteMap } from 'svelte/reactivity';
 import * as Command from '$lib/components/ui/command';
-import {AdvancedDateDialog} from '$lib/components/dialogs';
-import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
+import { AdvancedDateDialog } from '$lib/components/dialogs';
+import { DateFiltersState } from '$lib/states/ui/date-filters.svelte';
 
 type Props<TData, TValue> = HTMLAttributes<HTMLDivElement> & {
   column: Column<TData, TValue>;
 };
 
-let {column}: Props<TData, TValue> = $props();
+let { column }: Props<TData, TValue> = $props();
 
 const dateFiltersState = $derived(DateFiltersState.get());
 const allDates = $derived(dateFiltersState?.dateFilters);

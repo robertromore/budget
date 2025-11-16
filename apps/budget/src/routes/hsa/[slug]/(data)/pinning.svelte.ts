@@ -1,4 +1,4 @@
-import type {ColumnPinningState, Updater} from "@tanstack/table-core";
+import type { ColumnPinningState, Updater } from "@tanstack/table-core";
 
 let _pinning = $state<ColumnPinningState>({
   left: ["select-col", "expand-contract-col"],

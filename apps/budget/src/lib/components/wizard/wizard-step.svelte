@@ -1,9 +1,9 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {ChevronLeft, ChevronRight, SkipForward} from '@lucide/svelte/icons';
-import {cn} from '$lib/utils';
-import type {Snippet} from 'svelte';
-import type {WizardStore} from '$lib/stores/wizardStore.svelte';
+import { Button } from '$lib/components/ui/button';
+import { ChevronLeft, ChevronRight, SkipForward } from '@lucide/svelte/icons';
+import { cn } from '$lib/utils';
+import type { Snippet } from 'svelte';
+import type { WizardStore } from '$lib/stores/wizardStore.svelte';
 
 interface Props {
   wizardStore: WizardStore;

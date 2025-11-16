@@ -1,14 +1,14 @@
 <script lang="ts">
-import {Button, buttonVariants} from '$lib/components/ui/button';
+import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Empty from '$lib/components/ui/empty';
 import Plus from '@lucide/svelte/icons/plus';
 import User from '@lucide/svelte/icons/user';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import FolderCog from '@lucide/svelte/icons/folder-cog';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {deletePayeeDialog, deletePayeeId} from '$lib/states/ui/payees.svelte';
-import {payeeSearchState} from '$lib/states/ui/payee-search.svelte';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { deletePayeeDialog, deletePayeeId } from '$lib/states/ui/payees.svelte';
+import { payeeSearchState } from '$lib/states/ui/payee-search.svelte';
 import EntitySearchToolbar from '$lib/components/shared/search/entity-search-toolbar.svelte';
 import PayeeSearchFilters from './(components)/search/payee-search-filters.svelte';
 import PayeeSearchResults from './(components)/search/payee-search-results.svelte';
@@ -18,9 +18,9 @@ import {
   bulkDeletePayees as bulkDeletePayeesMutation,
   listPayeesWithStats,
 } from '$lib/query/payees';
-import {goto} from '$app/navigation';
-import type {Payee, PayeeType, PaymentFrequency} from '$lib/schema';
-import {rpc} from '$lib/query';
+import { goto } from '$app/navigation';
+import type { Payee, PayeeType, PaymentFrequency } from '$lib/schema';
+import { rpc } from '$lib/query';
 
 const payeesState = $derived(PayeesState.get());
 const allPayees = $derived(payeesState.payees.values());
@@ -87,11 +87,11 @@ const displayedPayees = $derived.by(() => {
 
 // Sort options for toolbar
 const payeeSortOptions = [
-  {value: 'name' as const, label: 'Name', order: 'asc' as const},
-  {value: 'name' as const, label: 'Name', order: 'desc' as const},
-  {value: 'lastTransaction' as const, label: 'Last Transaction', order: 'desc' as const},
-  {value: 'avgAmount' as const, label: 'Avg Amount', order: 'desc' as const},
-  {value: 'created' as const, label: 'Created', order: 'desc' as const},
+  { value: 'name' as const, label: 'Name', order: 'asc' as const },
+  { value: 'name' as const, label: 'Name', order: 'desc' as const },
+  { value: 'lastTransaction' as const, label: 'Last Transaction', order: 'desc' as const },
+  { value: 'avgAmount' as const, label: 'Avg Amount', order: 'desc' as const },
+  { value: 'created' as const, label: 'Created', order: 'desc' as const },
 ];
 
 const shouldShowNoPayees = $derived.by(() => {
@@ -206,27 +206,27 @@ const viewAnalytics = (payee: Payee) => {
 };
 
 const payeeTypeOptions = [
-  {label: 'Merchant', value: 'merchant'},
-  {label: 'Utility', value: 'utility'},
-  {label: 'Employer', value: 'employer'},
-  {label: 'Financial Institution', value: 'financial_institution'},
-  {label: 'Government', value: 'government'},
-  {label: 'Individual', value: 'individual'},
-  {label: 'Other', value: 'other'},
+  { label: 'Merchant', value: 'merchant' },
+  { label: 'Utility', value: 'utility' },
+  { label: 'Employer', value: 'employer' },
+  { label: 'Financial Institution', value: 'financial_institution' },
+  { label: 'Government', value: 'government' },
+  { label: 'Individual', value: 'individual' },
+  { label: 'Other', value: 'other' },
 ];
 
 const statusOptions = [
-  {label: 'Active', value: 'true'},
-  {label: 'Inactive', value: 'false'},
+  { label: 'Active', value: 'true' },
+  { label: 'Inactive', value: 'false' },
 ];
 
 const frequencyOptions = [
-  {label: 'Weekly', value: 'weekly'},
-  {label: 'Bi-Weekly', value: 'bi_weekly'},
-  {label: 'Monthly', value: 'monthly'},
-  {label: 'Quarterly', value: 'quarterly'},
-  {label: 'Annual', value: 'annual'},
-  {label: 'Irregular', value: 'irregular'},
+  { label: 'Weekly', value: 'weekly' },
+  { label: 'Bi-Weekly', value: 'bi_weekly' },
+  { label: 'Monthly', value: 'monthly' },
+  { label: 'Quarterly', value: 'quarterly' },
+  { label: 'Annual', value: 'annual' },
+  { label: 'Irregular', value: 'irregular' },
 ];
 </script>
 
@@ -386,7 +386,7 @@ const frequencyOptions = [
       <AlertDialog.Action
         onclick={confirmBulkDelete}
         disabled={isDeletingBulk}
-        class={buttonVariants({variant: 'destructive'})}>
+        class={buttonVariants({ variant: 'destructive' })}>
         {isDeletingBulk ? 'Deleting...' : 'Delete'}
       </AlertDialog.Action>
     </AlertDialog.Footer>

@@ -1,13 +1,13 @@
-import {z} from "zod";
+import { z } from "zod";
 import {
   publicProcedure,
   authenticatedProcedure,
   rateLimitedProcedure,
   bulkProcedure,
 } from "$lib/server/shared/trpc/procedures";
-import {AccountService} from "./services";
-import {t} from "$lib/trpc/t";
-import {removeAccountSchema} from "$lib/schema/accounts";
+import { AccountService } from "./services";
+import { t } from "$lib/trpc/t";
+import { removeAccountSchema } from "$lib/schema/accounts";
 
 // Initialize service
 const accountService = new AccountService();
@@ -54,35 +54,35 @@ export const accountRoutes = t.router({
   }),
 
   // Get account by ID
-  getById: publicProcedure.input(accountByIdSchema).query(async ({input}) => {
+  getById: publicProcedure.input(accountByIdSchema).query(async ({ input }) => {
     return await accountService.getAccountById(input.id);
   }),
 
   // Get account by slug
-  getBySlug: publicProcedure.input(accountBySlugSchema).query(async ({input}) => {
+  getBySlug: publicProcedure.input(accountBySlugSchema).query(async ({ input }) => {
     return await accountService.getAccountBySlug(input.slug);
   }),
 
   // Search accounts
-  search: authenticatedProcedure.input(searchAccountsSchema).query(async ({input}) => {
+  search: authenticatedProcedure.input(searchAccountsSchema).query(async ({ input }) => {
     return await accountService.searchAccounts(input.query, input.limit);
   }),
 
   // Create new account
-  create: rateLimitedProcedure.input(createAccountSchema).mutation(async ({input}) => {
+  create: rateLimitedProcedure.input(createAccountSchema).mutation(async ({ input }) => {
     return await accountService.createAccount(input);
   }),
 
   // Update account
-  update: rateLimitedProcedure.input(updateAccountSchema).mutation(async ({input}) => {
-    const {id, ...updateData} = input;
+  update: rateLimitedProcedure.input(updateAccountSchema).mutation(async ({ input }) => {
+    const { id, ...updateData } = input;
     return await accountService.updateAccount(id, updateData);
   }),
 
   // Delete account (soft delete)
-  remove: rateLimitedProcedure.input(removeAccountSchema).mutation(async ({input}) => {
+  remove: rateLimitedProcedure.input(removeAccountSchema).mutation(async ({ input }) => {
     await accountService.deleteAccount(input.id);
-    return {success: true};
+    return { success: true };
   }),
 
   // Update account balance
@@ -93,7 +93,7 @@ export const accountRoutes = t.router({
         balance: z.number(),
       })
     )
-    .mutation(async ({input}) => {
+    .mutation(async ({ input }) => {
       return await accountService.updateAccountBalance(input.id, input.balance);
     }),
 });

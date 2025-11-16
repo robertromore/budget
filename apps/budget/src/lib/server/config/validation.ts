@@ -1,31 +1,31 @@
 // Validation configuration constants
 export const VALIDATION_CONFIG = {
   ACCOUNT: {
-    NAME: {MIN: 2, MAX: 50},
-    SLUG: {MIN: 2, MAX: 30},
-    NOTES: {MAX: 500},
+    NAME: { MIN: 2, MAX: 50 },
+    SLUG: { MIN: 2, MAX: 30 },
+    NOTES: { MAX: 500 },
   },
   TRANSACTION: {
-    AMOUNT: {MIN: -1000000, MAX: 1000000},
-    DESCRIPTION: {MAX: 200},
-    NOTES: {MAX: 500},
+    AMOUNT: { MIN: -1000000, MAX: 1000000 },
+    DESCRIPTION: { MAX: 200 },
+    NOTES: { MAX: 500 },
   },
   CATEGORY: {
-    NAME: {MIN: 1, MAX: 50},
-    DESCRIPTION: {MAX: 200},
+    NAME: { MIN: 1, MAX: 50 },
+    DESCRIPTION: { MAX: 200 },
   },
   PAYEE: {
-    NAME: {MIN: 1, MAX: 100},
-    DESCRIPTION: {MAX: 200},
+    NAME: { MIN: 1, MAX: 100 },
+    DESCRIPTION: { MAX: 200 },
   },
   SCHEDULE: {
-    NAME: {MIN: 1, MAX: 100},
-    AMOUNT: {MIN: -1000000, MAX: 1000000},
-    NOTES: {MAX: 500},
+    NAME: { MIN: 1, MAX: 100 },
+    AMOUNT: { MIN: -1000000, MAX: 1000000 },
+    NOTES: { MAX: 500 },
   },
   VIEW: {
-    NAME: {MIN: 1, MAX: 50},
-    DESCRIPTION: {MAX: 200},
+    NAME: { MIN: 1, MAX: 50 },
+    DESCRIPTION: { MAX: 200 },
   },
 } as const;
 

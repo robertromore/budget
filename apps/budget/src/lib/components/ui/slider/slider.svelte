@@ -1,6 +1,6 @@
 <script lang="ts">
-import {cn, type WithoutChildrenOrChild} from '$lib/utils';
-import {Slider as SliderPrimitive} from 'bits-ui';
+import { cn, type WithoutChildrenOrChild } from '$lib/utils';
+import { Slider as SliderPrimitive } from 'bits-ui';
 
 let {
   ref = $bindable(null),
@@ -25,7 +25,7 @@ get along, so we shut typescript up by casting `value` to `never`.
     className
   )}
   {...restProps}>
-  {#snippet children({thumbs})}
+  {#snippet children({ thumbs })}
     <span
       data-orientation={orientation}
       data-slot="slider-track"

@@ -1,17 +1,17 @@
 <script lang="ts" generics="TFilters extends Record<string, any>, TSortBy extends string">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as InputGroup from '$lib/components/ui/input-group';
 import * as Popover from '$lib/components/ui/popover';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import Search from '@lucide/svelte/icons/search';
 import Filter from '@lucide/svelte/icons/filter';
 import X from '@lucide/svelte/icons/x';
 import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 import List from '@lucide/svelte/icons/list';
 import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
-import type {ViewMode, SortOrder} from './entity-search-state.svelte';
-import type {SortOption, FilterSummary} from './types';
-import type {Snippet} from 'svelte';
+import type { ViewMode, SortOrder } from './entity-search-state.svelte';
+import type { SortOption, FilterSummary } from './types';
+import type { Snippet } from 'svelte';
 
 interface Props {
   // Search query
@@ -116,7 +116,7 @@ const clearAllFilters = () => {
     {#if filterContent}
       <Popover.Root bind:open={filtersOpen}>
         <Popover.Trigger>
-          {#snippet child({props})}
+          {#snippet child({ props })}
             <Button variant="outline" {...props} class="relative">
               <Filter class="mr-2 h-4 w-4" />
               Filters
@@ -166,7 +166,7 @@ const clearAllFilters = () => {
     {#if sortOptions.length > 0 && onSortChange}
       <Popover.Root>
         <Popover.Trigger>
-          {#snippet child({props})}
+          {#snippet child({ props })}
             <Button variant="outline" {...props} class="h-9 w-[180px] justify-start">
               <ArrowUpDown class="mr-2 h-4 w-4" />
               {getCurrentSortLabel}

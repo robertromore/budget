@@ -1,4 +1,4 @@
-import type {NewCategory} from "$lib/schema";
+import type { NewCategory } from "$lib/schema";
 
 /**
  * Default popular categories that users can optionally seed into their budget

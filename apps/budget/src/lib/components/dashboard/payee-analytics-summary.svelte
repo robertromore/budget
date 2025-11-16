@@ -1,16 +1,16 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Skeleton} from '$lib/components/ui/skeleton';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Skeleton } from '$lib/components/ui/skeleton';
 import Brain from '@lucide/svelte/icons/brain';
 import Users from '@lucide/svelte/icons/users';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import ArrowRight from '@lucide/svelte/icons/arrow-right';
-import {getPayeeAnalytics} from '$lib/query/payees';
-import {currencyFormatter} from '$lib/utils/formatters';
+import { getPayeeAnalytics } from '$lib/query/payees';
+import { currencyFormatter } from '$lib/utils/formatters';
 
 // Analytics query
 const analyticsQuery = getPayeeAnalytics().options();

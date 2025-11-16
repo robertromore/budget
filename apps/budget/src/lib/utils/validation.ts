@@ -1,4 +1,4 @@
-import {z} from "zod";
+import { z } from "zod";
 
 /**
  * Sanitizes HTML content by removing all HTML tags and trimming whitespace

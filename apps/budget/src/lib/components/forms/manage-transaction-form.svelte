@@ -1,31 +1,31 @@
 <script lang="ts">
 import * as Form from '$lib/components/ui/form';
-import {type Transaction} from '$lib/schema';
-import {superformInsertTransactionSchema} from '$lib/schema/superforms';
-import {currentDate} from '$lib/utils/dates';
-import type {EditableDateItem, EditableEntityItem} from '$lib/types';
-import type {Payee} from '$lib/schema/payees';
-import {Textarea} from '$lib/components/ui/textarea';
+import { type Transaction } from '$lib/schema';
+import { superformInsertTransactionSchema } from '$lib/schema/superforms';
+import { currentDate } from '$lib/utils/dates';
+import type { EditableDateItem, EditableEntityItem } from '$lib/types';
+import type { Payee } from '$lib/schema/payees';
+import { Textarea } from '$lib/components/ui/textarea';
 import DateInput from '$lib/components/input/date-input.svelte';
 import IntelligentEntityInput from '$lib/components/input/intelligent-entity-input.svelte';
 import IntelligentNumericInput from '$lib/components/input/intelligent-numeric-input.svelte';
-import {page} from '$app/state';
+import { page } from '$app/state';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
-import type {Component} from 'svelte';
+import type { Component } from 'svelte';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
-import {useEntityForm} from '$lib/hooks/forms/use-entity-form';
-import {usePayeeIntelligence} from '$lib/hooks/use-payee-intelligence.svelte';
-import {Switch} from '$lib/components/ui/switch';
-import {Label} from '$lib/components/ui/label';
+import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
+import { usePayeeIntelligence } from '$lib/hooks/use-payee-intelligence.svelte';
+import { Switch } from '$lib/components/ui/switch';
+import { Label } from '$lib/components/ui/label';
 import Settings from '@lucide/svelte/icons/settings';
-import {getApplicableBudgets, validateTransactionStrict} from '$lib/query/budgets';
+import { getApplicableBudgets, validateTransactionStrict } from '$lib/query/budgets';
 import * as Select from '$lib/components/ui/select';
 import * as Alert from '$lib/components/ui/alert';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import Plus from '@lucide/svelte/icons/plus';
 import X from '@lucide/svelte/icons/x';
-import {formatCurrency} from '$lib/utils';
+import { formatCurrency } from '$lib/utils';
 import BudgetImpactPreview from '$lib/components/budgets/budget-impact-preview.svelte';
 
 let {
@@ -38,17 +38,17 @@ let {
 } = $props();
 
 const {
-  data: {payees, categories, manageTransactionForm},
+  data: { payees, categories, manageTransactionForm },
 } = page;
 
 const form = useEntityForm({
   formData: manageTransactionForm,
   schema: superformInsertTransactionSchema,
   formId: 'transaction-form',
-  ...(onSave && {onSave}),
+  ...(onSave && { onSave }),
 });
 
-const {form: formData, enhance} = form;
+const { form: formData, enhance } = form;
 
 // Initialize account ID
 $effect(() => {
@@ -70,7 +70,7 @@ let category = $state<EditableEntityItem>({
 });
 
 // Payee intelligence integration
-const {getPayeeSuggestionsFor, generateBasicSuggestions} = usePayeeIntelligence();
+const { getPayeeSuggestionsFor, generateBasicSuggestions } = usePayeeIntelligence();
 
 // Get selected payee data for intelligence
 const selectedPayee = $derived.by(() => {
@@ -255,7 +255,7 @@ function addAllocation() {
   if (applicableBudgets.length > 0) {
     budgetAllocations = [
       ...budgetAllocations,
-      {budgetId: applicableBudgets[0]!.id, amount: remainingAmount},
+      { budgetId: applicableBudgets[0]!.id, amount: remainingAmount },
     ];
   }
 }
@@ -274,7 +274,7 @@ function updateAllocationBudget(index: number, budgetId: number) {
 
 function getBudgetName(budgetId: number): string {
   return (
-    applicableBudgets.find((b: {id: number; name: string}) => b.id === budgetId)?.name ??
+    applicableBudgets.find((b: { id: number; name: string }) => b.id === budgetId)?.name ??
     'Select budget'
   );
 }
@@ -326,7 +326,7 @@ $effect(() => {
     <input hidden value={$formData?.accountId || accountId} name="accountId" />
     <Form.Field {form} name="date">
       <Form.Control>
-        {#snippet children({props})}
+        {#snippet children({ props })}
           <Form.Label>Date</Form.Label>
           <DateInput {...props} bind:value={dateValue} />
           <Form.FieldErrors />
@@ -336,13 +336,13 @@ $effect(() => {
     </Form.Field>
     <Form.Field {form} name="amount">
       <Form.Control>
-        {#snippet children({props})}
+        {#snippet children({ props })}
           <Form.Label>Amount</Form.Label>
           <IntelligentNumericInput
             {...props}
             bind:value={amount}
             buttonClass="w-full"
-            {...amountSuggestion && {suggestion: amountSuggestion}} />
+            {...amountSuggestion && { suggestion: amountSuggestion }} />
           <Form.FieldErrors />
           <input hidden value={$formData?.amount || amount} name={props.name} />
         {/snippet}
@@ -350,7 +350,7 @@ $effect(() => {
     </Form.Field>
     <Form.Field {form} name="payeeId">
       <Form.Control>
-        {#snippet children({props})}
+        {#snippet children({ props })}
           <Form.Label>Payee</Form.Label>
           <IntelligentEntityInput
             {...props}
@@ -366,7 +366,7 @@ $effect(() => {
     </Form.Field>
     <Form.Field {form} name="categoryId">
       <Form.Control>
-        {#snippet children({props})}
+        {#snippet children({ props })}
           <Form.Label>Category</Form.Label>
           <IntelligentEntityInput
             {...props}
@@ -375,7 +375,7 @@ $effect(() => {
             bind:value={category}
             icon={SquareMousePointer as unknown as Component}
             buttonClass="w-full"
-            {...categorySuggestion && {suggestion: categorySuggestion}} />
+            {...categorySuggestion && { suggestion: categorySuggestion }} />
           <Form.FieldErrors />
           <input hidden value={$formData?.categoryId || category.id} name={props.name} />
         {/snippet}
@@ -496,7 +496,7 @@ $effect(() => {
 
     <Form.Field {form} name="notes" class="col-span-full">
       <Form.Control>
-        {#snippet children({props})}
+        {#snippet children({ props })}
           <Form.Label>Notes</Form.Label>
           <Textarea
             {...props}

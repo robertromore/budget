@@ -1,5 +1,5 @@
-import {Context} from "runed";
-import type {User, UserPreferences} from "$lib/schema/users";
+import { Context } from "runed";
+import type { User, UserPreferences } from "$lib/schema/users";
 
 /**
  * State class representing the currently active user workspace
@@ -39,7 +39,7 @@ export class CurrentUserState {
   }
 
   updatePreferences(newPrefs: Partial<UserPreferences>) {
-    this.preferences = {...this.preferences, ...newPrefs};
+    this.preferences = { ...this.preferences, ...newPrefs };
   }
 }
 

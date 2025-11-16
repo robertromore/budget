@@ -1,23 +1,23 @@
-import {createId} from "@paralleldrive/cuid2";
-import {relations, sql} from "drizzle-orm";
-import {sqliteTable, integer, text, index} from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {z} from "zod/v4";
-import {accounts} from "./accounts";
-import {categories} from "./categories";
-import {categoryGroups} from "./category-groups";
-import {payees} from "./payees";
-import {budgets} from "./budgets";
-import {schedules} from "./schedules";
-import {views} from "./views";
-import {budgetAutomationSettings} from "./budget-automation-settings";
-import {detectedPatterns} from "./detected-patterns";
-import {payeeCategoryCorrections} from "./payee-category-corrections";
+import { createId } from "@paralleldrive/cuid2";
+import { relations, sql } from "drizzle-orm";
+import { sqliteTable, integer, text, index } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod/v4";
+import { accounts } from "./accounts";
+import { categories } from "./categories";
+import { categoryGroups } from "./category-groups";
+import { payees } from "./payees";
+import { budgets } from "./budgets";
+import { schedules } from "./schedules";
+import { views } from "./views";
+import { budgetAutomationSettings } from "./budget-automation-settings";
+import { detectedPatterns } from "./detected-patterns";
+import { payeeCategoryCorrections } from "./payee-category-corrections";
 
 export const workspaces = sqliteTable(
   "workspace",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     cuid: text("cuid").$defaultFn(() => createId()),
 
     // Basic Info
@@ -94,7 +94,7 @@ export const formInsertWorkspaceSchema = insertWorkspaceSchema.omit({
 });
 
 // Relations
-export const workspacesRelations = relations(workspaces, ({many}) => ({
+export const workspacesRelations = relations(workspaces, ({ many }) => ({
   accounts: many(accounts),
   categories: many(categories),
   categoryGroups: many(categoryGroups),

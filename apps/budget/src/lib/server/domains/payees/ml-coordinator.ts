@@ -1,11 +1,11 @@
-import {db} from "$lib/server/db";
-import {payees, transactions} from "$lib/schema";
-import {eq, and, isNull, count, gte, lte} from "drizzle-orm";
-import {currentDate, toISOString} from "$lib/utils/dates";
-import {PayeeIntelligenceService} from "./intelligence";
-import {CategoryLearningService} from "./category-learning";
-import {BudgetAllocationService} from "./budget-allocation";
-import {logger} from "$lib/server/shared/logging";
+import { db } from "$lib/server/db";
+import { payees, transactions } from "$lib/schema";
+import { eq, and, isNull, count, gte, lte } from "drizzle-orm";
+import { currentDate, toISOString } from "$lib/utils/dates";
+import { PayeeIntelligenceService } from "./intelligence";
+import { CategoryLearningService } from "./category-learning";
+import { BudgetAllocationService } from "./budget-allocation";
+import { logger } from "$lib/server/shared/logging";
 
 // Unified ML Recommendation Interfaces
 export interface UnifiedRecommendations {
@@ -540,7 +540,7 @@ export class PayeeMLCoordinator {
         },
       };
     } catch (error) {
-      logger.error("Adaptive optimization failed", error, {payeeId});
+      logger.error("Adaptive optimization failed", error, { payeeId });
       throw new Error(
         `Adaptive optimization failed: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -635,8 +635,8 @@ export class PayeeMLCoordinator {
 
     // Define time periods for comparison
     const now = currentDate;
-    const splitDate = now.subtract({months: Math.floor(lookbackMonths / 2)});
-    const startDate = now.subtract({months: lookbackMonths});
+    const splitDate = now.subtract({ months: Math.floor(lookbackMonths / 2) });
+    const startDate = now.subtract({ months: lookbackMonths });
 
     // Get data for both periods
     const [beforeData, afterData] = await Promise.all([
@@ -786,7 +786,7 @@ export class PayeeMLCoordinator {
 
     // Sort by priority and confidence
     return insights.sort((a, b) => {
-      const priorityOrder = {critical: 4, high: 3, medium: 2, low: 1};
+      const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
       const aPriority = priorityOrder[a.priority];
       const bPriority = priorityOrder[b.priority];
 
@@ -799,7 +799,7 @@ export class PayeeMLCoordinator {
 
   private async getPayeeInfo(
     payeeId: number
-  ): Promise<{name: string; defaultCategoryId: number | null}> {
+  ): Promise<{ name: string; defaultCategoryId: number | null }> {
     const payee = await db
       .select({
         name: payees.name,
@@ -1199,7 +1199,7 @@ export class PayeeMLCoordinator {
 
   private async updatePayeeBudgetAllocation(payeeId: number, allocation: number): Promise<void> {
     // This would update the budget system when implemented
-    logger.debug("Budget allocation update placeholder", {payeeId, allocation});
+    logger.debug("Budget allocation update placeholder", { payeeId, allocation });
   }
 
   private async applyAutomationRules(
@@ -1207,7 +1207,7 @@ export class PayeeMLCoordinator {
     automationSuggestions: any[],
     confidenceThreshold: number,
     dryRun: boolean
-  ): Promise<{applied: any[]; skipped: any[]}> {
+  ): Promise<{ applied: any[]; skipped: any[] }> {
     const applied = [];
     const skipped = [];
 
@@ -1239,13 +1239,13 @@ export class PayeeMLCoordinator {
       }
     }
 
-    return {applied, skipped};
+    return { applied, skipped };
   }
 
   private async assessDataQuality(payeeId: number): Promise<any> {
     // Assess various data quality metrics
     const transactionCount = await db
-      .select({count: count()})
+      .select({ count: count() })
       .from(transactions)
       .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)));
 
@@ -1461,12 +1461,15 @@ export class PayeeMLCoordinator {
     };
   }
 
-  private getTopCategory(categories: Record<number, number>): {categoryId: number; count: number} {
-    let topCategory = {categoryId: 0, count: 0};
+  private getTopCategory(categories: Record<number, number>): {
+    categoryId: number;
+    count: number;
+  } {
+    let topCategory = { categoryId: 0, count: 0 };
 
     for (const [categoryId, count] of Object.entries(categories)) {
       if (count > topCategory.count) {
-        topCategory = {categoryId: parseInt(categoryId), count};
+        topCategory = { categoryId: parseInt(categoryId), count };
       }
     }
 
@@ -1617,7 +1620,7 @@ export class PayeeMLCoordinator {
           },
         ],
         generatedAt: toISOString(currentDate),
-        expiresAt: toISOString(currentDate.add({days: 30})),
+        expiresAt: toISOString(currentDate.add({ days: 30 })),
         status: "active" as const,
       });
     }
@@ -1684,7 +1687,7 @@ export class PayeeMLCoordinator {
           },
         ],
         generatedAt: toISOString(currentDate),
-        expiresAt: toISOString(currentDate.add({days: 14})),
+        expiresAt: toISOString(currentDate.add({ days: 14 })),
         status: "active" as const,
       });
     }
@@ -1757,7 +1760,7 @@ export class PayeeMLCoordinator {
           },
         ],
         generatedAt: toISOString(currentDate),
-        expiresAt: toISOString(currentDate.add({days: 60})),
+        expiresAt: toISOString(currentDate.add({ days: 60 })),
         status: "active" as const,
       });
     }
@@ -1824,7 +1827,7 @@ export class PayeeMLCoordinator {
           },
         ],
         generatedAt: toISOString(currentDate),
-        expiresAt: toISOString(currentDate.add({days: 30})),
+        expiresAt: toISOString(currentDate.add({ days: 30 })),
         status: "active" as const,
       });
     }
@@ -1897,7 +1900,7 @@ export class PayeeMLCoordinator {
           },
         ],
         generatedAt: toISOString(currentDate),
-        expiresAt: toISOString(currentDate.add({days: 7})),
+        expiresAt: toISOString(currentDate.add({ days: 7 })),
         status: "active" as const,
       });
     }

@@ -1,4 +1,4 @@
-import type {ColumnOrderState, Updater} from "@tanstack/table-core";
+import type { ColumnOrderState, Updater } from "@tanstack/table-core";
 
 let _columnOrder = $state<ColumnOrderState>([]);
 export let columnOrder = () => _columnOrder;

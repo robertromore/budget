@@ -1,6 +1,6 @@
 // $lib/types/repeating.ts
-import type {monthOptions} from "$lib/utils/date-options";
-import type {DateValue} from "@internationalized/date";
+import type { monthOptions } from "$lib/utils/date-options";
+import type { DateValue } from "@internationalized/date";
 
 export type Month = (typeof monthOptions)[number];
 

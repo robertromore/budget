@@ -1,5 +1,5 @@
-import {QueryClient} from "@tanstack/svelte-query";
-import {browser} from "$app/environment";
+import { QueryClient } from "@tanstack/svelte-query";
+import { browser } from "$app/environment";
 
 /**
  * Centralized TanStack Query client with SSR-safe configuration

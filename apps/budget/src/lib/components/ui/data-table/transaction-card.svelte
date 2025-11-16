@@ -40,7 +40,7 @@ let {
 
 // Derive category display data
 const categoryData = $derived.by(() => {
-  if (!transaction.category) return {icon: Tag, color: null, name: null};
+  if (!transaction.category) return { icon: Tag, color: null, name: null };
 
   const iconData = transaction.category.categoryIcon
     ? getIconByName(transaction.category.categoryIcon)

@@ -66,8 +66,8 @@ export function getIsoWeekday(date: DateValue): number {
  * const febDays = getDaysInMonth(feb); // Returns 29 (leap year)
  */
 export function getDaysInMonth(date: DateValue): number {
-  const nextMonth = date.add({months: 1}).set({day: 1});
-  const lastDayOfMonth = nextMonth.subtract({days: 1});
+  const nextMonth = date.add({ months: 1 }).set({ day: 1 });
+  const lastDayOfMonth = nextMonth.subtract({ days: 1 });
   return lastDayOfMonth.day;
 }
 
@@ -157,14 +157,14 @@ export function getFirstSpecifiedWeekdayInMonth(
   }
 
   // Add the calculated days to the first of the month
-  return firstOfMonth.add({days: daysToAdd});
+  return firstOfMonth.add({ days: daysToAdd });
 }
 
 export function getFirstWeekday(date: DateValue): DateValue {
   const targetWeekday = getDayOfWeek(date);
 
   // Get the first day of the same month
-  const firstOfMonth = date.set({day: 1});
+  const firstOfMonth = date.set({ day: 1 });
   const firstDayWeekday = getDayOfWeek(firstOfMonth);
 
   // Calculate how many days to add to reach the target weekday
@@ -174,7 +174,7 @@ export function getFirstWeekday(date: DateValue): DateValue {
   }
 
   // Add the calculated days to the first of the month
-  return firstOfMonth.add({days: daysToAdd});
+  return firstOfMonth.add({ days: daysToAdd });
 }
 
 /* ------------------------------------------------------------------ */
@@ -218,7 +218,7 @@ export function getNextWeekday(fromDate: DateValue, targetWeekday: number): Date
   }
 
   // Add the calculated days to the original date
-  return fromDate.add({days: daysToAdd});
+  return fromDate.add({ days: daysToAdd });
 }
 
 /**
@@ -266,7 +266,7 @@ export function getNextWeekdayFlexible(
   }
 
   // Add the calculated days to the original date
-  return fromDate.add({days: daysToAdd});
+  return fromDate.add({ days: daysToAdd });
 }
 
 /**
@@ -334,7 +334,7 @@ export function getNthWeekdayOfMonth(
     }
 
     // Find the first day of the month
-    const firstOfMonth = today(timezone).set({year, month, day: 1});
+    const firstOfMonth = today(timezone).set({ year, month, day: 1 });
     const firstWeekDay = getDayOfWeek(firstOfMonth);
 
     // Calculate the first occurrence of the target weekday
@@ -346,7 +346,7 @@ export function getNthWeekdayOfMonth(
     // Add additional weeks to get to the nth occurrence
     daysToAdd += (week - 1) * 7;
 
-    const targetDate = firstOfMonth.add({days: daysToAdd});
+    const targetDate = firstOfMonth.add({ days: daysToAdd });
 
     // Verify the date is still in the same month
     if (targetDate.month === month) {
@@ -375,12 +375,12 @@ export function getLastWeekdayOfMonth(
     // Get the last day of the month
     const nextMonth = month === 12 ? 1 : month + 1;
     const nextYear = month === 12 ? year + 1 : year;
-    const firstOfNextMonth = today(timezone).set({year: nextYear, month: nextMonth, day: 1});
-    const lastOfMonth = firstOfNextMonth.subtract({days: 1});
+    const firstOfNextMonth = today(timezone).set({ year: nextYear, month: nextMonth, day: 1 });
+    const lastOfMonth = firstOfNextMonth.subtract({ days: 1 });
 
     // Work backwards from the last day to find the last occurrence of weekDay
     for (let i = 0; i < 7; i++) {
-      const candidateDate = lastOfMonth.subtract({days: i});
+      const candidateDate = lastOfMonth.subtract({ days: i });
       if (getDayOfWeek(candidateDate) === weekDay) {
         return candidateDate;
       }

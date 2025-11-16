@@ -1,4 +1,4 @@
-import {relations, sql} from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   sqliteTable,
   integer,
@@ -7,33 +7,33 @@ import {
   index,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {transactions} from "./transactions";
-import {z} from "zod/v4";
-import {payees} from "./payees";
-import {categories} from "./categories";
-import {accounts} from "./accounts";
-import {scheduleDates} from "./schedule-dates";
-import {budgets} from "./budgets";
-import {workspaces} from "./workspaces";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { transactions } from "./transactions";
+import { z } from "zod/v4";
+import { payees } from "./payees";
+import { categories } from "./categories";
+import { accounts } from "./accounts";
+import { scheduleDates } from "./schedule-dates";
+import { budgets } from "./budgets";
+import { workspaces } from "./workspaces";
 
 export const schedules = sqliteTable(
   "schedules",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
-    status: text("status", {enum: ["active", "inactive"]}).default("active"),
+    status: text("status", { enum: ["active", "inactive"] }).default("active"),
     amount: real("amount").default(0).notNull(),
     amount_2: real("amount_2").default(0).notNull(),
-    amount_type: text("amount_type", {enum: ["exact", "approximate", "range"]})
+    amount_type: text("amount_type", { enum: ["exact", "approximate", "range"] })
       .default("exact")
       .notNull(),
-    recurring: integer("recurring", {mode: "boolean"}).default(false),
-    auto_add: integer({mode: "boolean"}).default(false),
+    recurring: integer("recurring", { mode: "boolean" }).default(false),
+    auto_add: integer({ mode: "boolean" }).default(false),
     dateId: integer("schedule_date_id").references((): AnySQLiteColumn => scheduleDates.id),
     payeeId: integer("payee_id")
       .notNull()
@@ -63,7 +63,7 @@ export const schedules = sqliteTable(
   ]
 );
 
-export const schedulesRelations = relations(schedules, ({many, one}) => ({
+export const schedulesRelations = relations(schedules, ({ many, one }) => ({
   workspace: one(workspaces, {
     fields: [schedules.workspaceId],
     references: [workspaces.id],
@@ -97,8 +97,8 @@ export const formInsertScheduleSchema = createInsertSchema(schedules, {
   workspaceId: (schema) => schema.optional(),
   name: (schema) => schema.min(2).max(30),
 });
-export const removeScheduleSchema = z.object({id: z.number().nonnegative()});
-export const duplicateScheduleSchema = z.object({id: z.number().nonnegative()});
+export const removeScheduleSchema = z.object({ id: z.number().nonnegative() });
+export const duplicateScheduleSchema = z.object({ id: z.number().nonnegative() });
 
 interface SchedulesExtraFields {
   payee?: any;

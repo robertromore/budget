@@ -1,8 +1,8 @@
-import type {View} from "$lib/schema/views";
-import {trpc} from "$lib/trpc/client";
-import type {TableEntityType} from "$lib/types";
-import {queryClient, queryPresets} from "./_client";
-import {createQueryKeys, defineMutation, defineQuery} from "./_factory";
+import type { View } from "$lib/schema/views";
+import { trpc } from "$lib/trpc/client";
+import type { TableEntityType } from "$lib/types";
+import { queryClient, queryPresets } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 export const viewKeys = createQueryKeys("views", {
   lists: () => ["views", "list"] as const,
@@ -22,7 +22,7 @@ export const listViews = (entityType?: TableEntityType) =>
   defineQuery<View[]>({
     queryKey: viewKeys.list(entityType),
     queryFn: () =>
-      trpc().viewsRoutes.all.query(entityType ? {entityType} : undefined) as Promise<View[]>,
+      trpc().viewsRoutes.all.query(entityType ? { entityType } : undefined) as Promise<View[]>,
     options: {
       ...queryPresets.static,
     },
@@ -34,7 +34,7 @@ export const listViews = (entityType?: TableEntityType) =>
 export const listTransactionViews = () =>
   defineQuery<View[]>({
     queryKey: viewKeys.transactions(),
-    queryFn: () => trpc().viewsRoutes.all.query({entityType: "transactions"}) as Promise<View[]>,
+    queryFn: () => trpc().viewsRoutes.all.query({ entityType: "transactions" }) as Promise<View[]>,
     options: {
       ...queryPresets.static,
     },
@@ -46,7 +46,8 @@ export const listTransactionViews = () =>
 export const listCategoryViews = () =>
   defineQuery<View[]>({
     queryKey: viewKeys.categories(),
-    queryFn: () => trpc().viewsRoutes.all.query({entityType: "top_categories"}) as Promise<View[]>,
+    queryFn: () =>
+      trpc().viewsRoutes.all.query({ entityType: "top_categories" }) as Promise<View[]>,
     options: {
       ...queryPresets.static,
     },
@@ -58,7 +59,7 @@ export const listCategoryViews = () =>
 export const getViewDetail = (id: number) =>
   defineQuery<View>({
     queryKey: viewKeys.detail(id),
-    queryFn: () => trpc().viewsRoutes.load.query({id}) as Promise<View>,
+    queryFn: () => trpc().viewsRoutes.load.query({ id }) as Promise<View>,
     options: {
       ...queryPresets.static,
     },
@@ -72,8 +73,8 @@ export const saveView = defineMutation<any, View>({
   onSuccess: async (data) => {
     // Invalidate all view lists to ensure fresh data
     await Promise.all([
-      queryClient.invalidateQueries({queryKey: viewKeys.lists()}),
-      queryClient.invalidateQueries({queryKey: viewKeys.list(data.entityType)}),
+      queryClient.invalidateQueries({ queryKey: viewKeys.lists() }),
+      queryClient.invalidateQueries({ queryKey: viewKeys.list(data.entityType) }),
     ]);
   },
 });
@@ -86,8 +87,8 @@ export const deleteView = defineMutation<any, View>({
   onSuccess: async (data) => {
     // Invalidate all view lists
     await Promise.all([
-      queryClient.invalidateQueries({queryKey: viewKeys.lists()}),
-      queryClient.invalidateQueries({queryKey: viewKeys.list(data.entityType)}),
+      queryClient.invalidateQueries({ queryKey: viewKeys.lists() }),
+      queryClient.invalidateQueries({ queryKey: viewKeys.list(data.entityType) }),
     ]);
   },
 });
@@ -99,6 +100,6 @@ export const deleteViews = defineMutation<any, View[]>({
   mutationFn: (variables) => trpc().viewsRoutes.delete.mutate(variables),
   onSuccess: async () => {
     // Invalidate all view lists
-    await queryClient.invalidateQueries({queryKey: viewKeys.lists()});
+    await queryClient.invalidateQueries({ queryKey: viewKeys.lists() });
   },
 });

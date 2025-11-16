@@ -1,6 +1,6 @@
-import type {PageData} from "../$types";
-import {nextDaily, nextWeekly, nextMonthly, nextYearly} from "$lib/utils/date-frequency";
-import {parseISOString, currentDate} from "$lib/utils/dates";
+import type { PageData } from "../$types";
+import { nextDaily, nextWeekly, nextMonthly, nextYearly } from "$lib/utils/date-frequency";
+import { parseISOString, currentDate } from "$lib/utils/dates";
 
 export interface ChartDataPoint {
   date: string;
@@ -68,7 +68,7 @@ export function generateCumulativeBalanceData(schedule: PageData["schedule"]): C
         date: nextDate.toISOString().split("T")[0]!,
         amount: schedule.amount,
         type: "projected",
-        dateLabel: nextDate.toLocaleDateString("en-US", {month: "short", day: "numeric"}),
+        dateLabel: nextDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
       });
 
       // Calculate next occurrence
@@ -165,7 +165,7 @@ export function generateFutureProjections(schedule: PageData["schedule"]): Proje
 
   // Calculate date range for projections (next 12 months from today)
   const today = currentDate;
-  const futureLimit = today.add({months: 12});
+  const futureLimit = today.add({ months: 12 });
 
   // Use proper date generation based on frequency
   let futureDates;

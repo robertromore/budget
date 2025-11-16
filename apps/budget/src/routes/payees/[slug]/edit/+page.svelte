@@ -1,15 +1,15 @@
 <script lang="ts">
-import {goto} from '$app/navigation';
-import {page} from '$app/state';
-import {Button} from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import User from '@lucide/svelte/icons/user';
-import {ManagePayeeForm} from '$lib/components/forms';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import type {PageData} from './$types';
+import { ManagePayeeForm } from '$lib/components/forms';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import type { PageData } from './$types';
 
-let {data}: {data: PageData} = $props();
+let { data }: { data: PageData } = $props();
 
 // Get payee from page data
 const payee = $derived(data.payee);

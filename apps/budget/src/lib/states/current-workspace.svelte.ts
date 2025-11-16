@@ -1,5 +1,5 @@
-import {Context} from "runed";
-import type {Workspace, WorkspacePreferences} from "$lib/schema/workspaces";
+import { Context } from "runed";
+import type { Workspace, WorkspacePreferences } from "$lib/schema/workspaces";
 
 /**
  * State class representing the currently active workspace
@@ -39,7 +39,7 @@ export class CurrentWorkspaceState {
   }
 
   updatePreferences(newPrefs: Partial<WorkspacePreferences>) {
-    this.preferences = {...this.preferences, ...newPrefs};
+    this.preferences = { ...this.preferences, ...newPrefs };
   }
 }
 

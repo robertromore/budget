@@ -1,16 +1,16 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import type {ExpenseFormat} from '../../(data)/expense-columns.svelte';
-import {claimStatusEnum, type ClaimStatus} from '$lib/schema/hsa-claims';
+import type { ExpenseFormat } from '../../(data)/expense-columns.svelte';
+import { claimStatusEnum, type ClaimStatus } from '$lib/schema/hsa-claims';
 
 interface Props {
   expense: ExpenseFormat;
   onManageClaims: () => void;
 }
 
-let {expense, onManageClaims}: Props = $props();
+let { expense, onManageClaims }: Props = $props();
 
 // Determine claim status
 const claimStatus = $derived(() => {
@@ -49,7 +49,7 @@ const claimStatus = $derived(() => {
 
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>
-    {#snippet child({props})}
+    {#snippet child({ props })}
       <Button {...props} variant="ghost" size="sm">
         <Badge variant={claimStatus().variant}>{claimStatus().label}</Badge>
       </Button>

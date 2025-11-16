@@ -1,12 +1,12 @@
-import {defineQuery, defineMutation, createQueryKeys} from "./_factory";
-import {cachePatterns} from "./_client";
-import {trpc} from "$lib/trpc/client";
-import type {MedicalExpense} from "$lib/schema/medical-expenses";
-import {medicalExpenseTypeEnum} from "$lib/schema/medical-expenses";
-import type {ExpenseReceipt, ReceiptType} from "$lib/schema/expense-receipts";
-import {receiptTypeEnum} from "$lib/schema/expense-receipts";
-import type {HsaClaim, ClaimStatus} from "$lib/schema/hsa-claims";
-import {claimStatusEnum} from "$lib/schema/hsa-claims";
+import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
+import { cachePatterns } from "./_client";
+import { trpc } from "$lib/trpc/client";
+import type { MedicalExpense } from "$lib/schema/medical-expenses";
+import { medicalExpenseTypeEnum } from "$lib/schema/medical-expenses";
+import type { ExpenseReceipt, ReceiptType } from "$lib/schema/expense-receipts";
+import { receiptTypeEnum } from "$lib/schema/expense-receipts";
+import type { HsaClaim, ClaimStatus } from "$lib/schema/hsa-claims";
+import { claimStatusEnum } from "$lib/schema/hsa-claims";
 
 /**
  * Query Keys for medical expense operations
@@ -39,7 +39,7 @@ export const medicalExpenseKeys = createQueryKeys("medical-expenses", {
 export const getMedicalExpenseById = (id: number) => {
   return defineQuery({
     queryKey: medicalExpenseKeys.detail(id),
-    queryFn: () => trpc().medicalExpensesRouter.getById.query({id}),
+    queryFn: () => trpc().medicalExpensesRouter.getById.query({ id }),
     options: {
       staleTime: 60 * 1000, // 1 minute
     },
@@ -52,7 +52,7 @@ export const getMedicalExpenseById = (id: number) => {
 export const getMedicalExpensesByAccount = (hsaAccountId: number) => {
   return defineQuery({
     queryKey: medicalExpenseKeys.byAccount(hsaAccountId),
-    queryFn: () => trpc().medicalExpensesRouter.getByAccount.query({hsaAccountId}),
+    queryFn: () => trpc().medicalExpensesRouter.getByAccount.query({ hsaAccountId }),
     options: {
       staleTime: 30 * 1000, // 30 seconds
     },
@@ -65,7 +65,7 @@ export const getMedicalExpensesByAccount = (hsaAccountId: number) => {
 export const getMedicalExpensesByTaxYear = (hsaAccountId: number, taxYear: number) => {
   return defineQuery({
     queryKey: medicalExpenseKeys.byTaxYear(hsaAccountId, taxYear),
-    queryFn: () => trpc().medicalExpensesRouter.getByTaxYear.query({hsaAccountId, taxYear}),
+    queryFn: () => trpc().medicalExpensesRouter.getByTaxYear.query({ hsaAccountId, taxYear }),
     options: {
       staleTime: 60 * 1000, // 1 minute
     },
@@ -78,7 +78,7 @@ export const getMedicalExpensesByTaxYear = (hsaAccountId: number, taxYear: numbe
 export const getTaxYearSummary = (hsaAccountId: number, taxYear: number) => {
   return defineQuery({
     queryKey: medicalExpenseKeys.taxYearSummary(hsaAccountId, taxYear),
-    queryFn: () => trpc().medicalExpensesRouter.getTaxYearSummary.query({hsaAccountId, taxYear}),
+    queryFn: () => trpc().medicalExpensesRouter.getTaxYearSummary.query({ hsaAccountId, taxYear }),
     options: {
       staleTime: 60 * 1000, // 1 minute
     },
@@ -91,7 +91,7 @@ export const getTaxYearSummary = (hsaAccountId: number, taxYear: number) => {
 export const getAllExpensesWithRelations = (hsaAccountId: number) => {
   return defineQuery({
     queryKey: medicalExpenseKeys.allWithRelations(hsaAccountId),
-    queryFn: () => trpc().medicalExpensesRouter.getAllWithRelations.query({hsaAccountId}),
+    queryFn: () => trpc().medicalExpensesRouter.getAllWithRelations.query({ hsaAccountId }),
     options: {
       staleTime: 30 * 1000, // 30 seconds
     },
@@ -237,10 +237,10 @@ export const updateMedicalExpense = defineMutation<
  * Delete medical expense
  */
 export const deleteMedicalExpense = defineMutation<
-  {id: number; hsaAccountId: number; taxYear?: number},
-  {success: boolean}
+  { id: number; hsaAccountId: number; taxYear?: number },
+  { success: boolean }
 >({
-  mutationFn: ({id}) => trpc().medicalExpensesRouter.delete.mutate({id}),
+  mutationFn: ({ id }) => trpc().medicalExpensesRouter.delete.mutate({ id }),
   onSuccess: (_result, variables) => {
     // Remove from detail cache
     cachePatterns.invalidateQueries(medicalExpenseKeys.detail(variables.id));
@@ -271,7 +271,7 @@ export const deleteMedicalExpense = defineMutation<
 export const getReceipts = (medicalExpenseId: number) => {
   return defineQuery({
     queryKey: medicalExpenseKeys.receipts(medicalExpenseId),
-    queryFn: () => trpc().medicalExpensesRouter.getReceipts.query({medicalExpenseId}),
+    queryFn: () => trpc().medicalExpensesRouter.getReceipts.query({ medicalExpenseId }),
     options: {
       staleTime: 60 * 1000, // 1 minute
     },
@@ -284,7 +284,7 @@ export const getReceipts = (medicalExpenseId: number) => {
 export const getReceipt = (id: number) => {
   return defineQuery({
     queryKey: medicalExpenseKeys.receipt(id),
-    queryFn: () => trpc().medicalExpensesRouter.getReceipt.query({id}),
+    queryFn: () => trpc().medicalExpensesRouter.getReceipt.query({ id }),
     options: {
       staleTime: 60 * 1000, // 1 minute
     },
@@ -297,7 +297,7 @@ export const getReceipt = (id: number) => {
 export const getReceiptCount = (medicalExpenseId: number) => {
   return defineQuery({
     queryKey: medicalExpenseKeys.receiptCount(medicalExpenseId),
-    queryFn: () => trpc().medicalExpensesRouter.countReceipts.query({medicalExpenseId}),
+    queryFn: () => trpc().medicalExpensesRouter.countReceipts.query({ medicalExpenseId }),
     options: {
       staleTime: 60 * 1000, // 1 minute
     },
@@ -318,7 +318,7 @@ export const uploadReceipt = defineMutation<
     receiptType?: string;
     description?: string;
   },
-  {success: boolean; receipt: ExpenseReceipt}
+  { success: boolean; receipt: ExpenseReceipt }
 >({
   mutationFn: async (variables) => {
     const formData = new FormData();
@@ -337,7 +337,7 @@ export const uploadReceipt = defineMutation<
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({message: "Upload failed"}));
+      const error = await response.json().catch(() => ({ message: "Upload failed" }));
       throw new Error(error.message || "Failed to upload receipt");
     }
 
@@ -367,7 +367,7 @@ export const updateReceipt = defineMutation<
   },
   ExpenseReceipt
 >({
-  mutationFn: ({id, receiptType, description}) =>
+  mutationFn: ({ id, receiptType, description }) =>
     trpc().medicalExpensesRouter.updateReceipt.mutate({
       id,
       receiptType,
@@ -388,10 +388,10 @@ export const updateReceipt = defineMutation<
  * Delete receipt
  */
 export const deleteReceipt = defineMutation<
-  {id: number; medicalExpenseId: number},
-  {success: boolean}
+  { id: number; medicalExpenseId: number },
+  { success: boolean }
 >({
-  mutationFn: ({id}) => trpc().medicalExpensesRouter.deleteReceipt.mutate({id}),
+  mutationFn: ({ id }) => trpc().medicalExpensesRouter.deleteReceipt.mutate({ id }),
   onSuccess: (_result, variables) => {
     // Remove from detail cache
     cachePatterns.invalidateQueries(medicalExpenseKeys.receipt(variables.id));
@@ -415,7 +415,7 @@ export const deleteReceipt = defineMutation<
 export const getClaims = (medicalExpenseId: number) => {
   return defineQuery({
     queryKey: medicalExpenseKeys.claims(medicalExpenseId),
-    queryFn: () => trpc().medicalExpensesRouter.getClaims.query({medicalExpenseId}),
+    queryFn: () => trpc().medicalExpensesRouter.getClaims.query({ medicalExpenseId }),
     options: {
       staleTime: 30 * 1000, // 30 seconds (claims change more frequently)
     },
@@ -476,8 +476,8 @@ export const submitClaim = defineMutation<
   },
   HsaClaim
 >({
-  mutationFn: ({id, claimNumber, submittedDate}) =>
-    trpc().medicalExpensesRouter.submitClaim.mutate({id, claimNumber, submittedDate}),
+  mutationFn: ({ id, claimNumber, submittedDate }) =>
+    trpc().medicalExpensesRouter.submitClaim.mutate({ id, claimNumber, submittedDate }),
   onSuccess: (updatedClaim, variables) => {
     // Invalidate claims list
     cachePatterns.invalidatePrefix(medicalExpenseKeys.claims(variables.medicalExpenseId));
@@ -499,8 +499,8 @@ export const markClaimInReview = defineMutation<
   },
   HsaClaim
 >({
-  mutationFn: ({id, reviewDate}) =>
-    trpc().medicalExpensesRouter.markClaimInReview.mutate({id, reviewDate}),
+  mutationFn: ({ id, reviewDate }) =>
+    trpc().medicalExpensesRouter.markClaimInReview.mutate({ id, reviewDate }),
   onSuccess: (updatedClaim, variables) => {
     cachePatterns.invalidatePrefix(medicalExpenseKeys.claims(variables.medicalExpenseId));
     cachePatterns.invalidatePrefix(medicalExpenseKeys.pendingClaims());
@@ -522,7 +522,7 @@ export const approveClaim = defineMutation<
   },
   HsaClaim
 >({
-  mutationFn: ({id, approvedAmount, deniedAmount, approvalDate}) =>
+  mutationFn: ({ id, approvedAmount, deniedAmount, approvalDate }) =>
     trpc().medicalExpensesRouter.approveClaim.mutate({
       id,
       approvedAmount,
@@ -549,8 +549,8 @@ export const denyClaim = defineMutation<
   },
   HsaClaim
 >({
-  mutationFn: ({id, denialReason, denialCode}) =>
-    trpc().medicalExpensesRouter.denyClaim.mutate({id, denialReason, denialCode}),
+  mutationFn: ({ id, denialReason, denialCode }) =>
+    trpc().medicalExpensesRouter.denyClaim.mutate({ id, denialReason, denialCode }),
   onSuccess: (updatedClaim, variables) => {
     cachePatterns.invalidatePrefix(medicalExpenseKeys.claims(variables.medicalExpenseId));
     cachePatterns.invalidatePrefix(medicalExpenseKeys.pendingClaims());
@@ -571,8 +571,8 @@ export const markClaimPaid = defineMutation<
   },
   HsaClaim
 >({
-  mutationFn: ({id, paidAmount, paymentDate}) =>
-    trpc().medicalExpensesRouter.markClaimPaid.mutate({id, paidAmount, paymentDate}),
+  mutationFn: ({ id, paidAmount, paymentDate }) =>
+    trpc().medicalExpensesRouter.markClaimPaid.mutate({ id, paidAmount, paymentDate }),
   onSuccess: (updatedClaim, variables) => {
     cachePatterns.invalidatePrefix(medicalExpenseKeys.claims(variables.medicalExpenseId));
     cachePatterns.invalidatePrefix(medicalExpenseKeys.pendingClaims());
@@ -592,8 +592,8 @@ export const requestResubmission = defineMutation<
   },
   HsaClaim
 >({
-  mutationFn: ({id, reason}) =>
-    trpc().medicalExpensesRouter.requestResubmission.mutate({id, reason}),
+  mutationFn: ({ id, reason }) =>
+    trpc().medicalExpensesRouter.requestResubmission.mutate({ id, reason }),
   onSuccess: (updatedClaim, variables) => {
     cachePatterns.invalidatePrefix(medicalExpenseKeys.claims(variables.medicalExpenseId));
     cachePatterns.invalidatePrefix(medicalExpenseKeys.pendingClaims());
@@ -612,7 +612,7 @@ export const withdrawClaim = defineMutation<
   },
   HsaClaim
 >({
-  mutationFn: ({id}) => trpc().medicalExpensesRouter.withdrawClaim.mutate({id}),
+  mutationFn: ({ id }) => trpc().medicalExpensesRouter.withdrawClaim.mutate({ id }),
   onSuccess: (updatedClaim, variables) => {
     cachePatterns.invalidatePrefix(medicalExpenseKeys.claims(variables.medicalExpenseId));
     cachePatterns.invalidatePrefix(medicalExpenseKeys.pendingClaims());
@@ -659,9 +659,9 @@ export const deleteClaim = defineMutation<
     id: number;
     medicalExpenseId: number;
   },
-  {success: boolean}
+  { success: boolean }
 >({
-  mutationFn: ({id}) => trpc().medicalExpensesRouter.deleteClaim.mutate({id}),
+  mutationFn: ({ id }) => trpc().medicalExpensesRouter.deleteClaim.mutate({ id }),
   onSuccess: (_result, variables) => {
     cachePatterns.invalidatePrefix(medicalExpenseKeys.claims(variables.medicalExpenseId));
     cachePatterns.invalidatePrefix(medicalExpenseKeys.pendingClaims());

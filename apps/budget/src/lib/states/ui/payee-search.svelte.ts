@@ -1,6 +1,6 @@
-import {createLocalStorageState} from "$lib/utils/local-storage.svelte";
-import type {PayeeSearchFilters} from "$lib/server/domains/payees/repository";
-import type {Payee} from "$lib/schema";
+import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
+import type { PayeeSearchFilters } from "$lib/server/domains/payees/repository";
+import type { Payee } from "$lib/schema";
 
 interface PayeeSearchState {
   query: string;
@@ -86,7 +86,7 @@ class PayeeSearchStateManager {
   }
 
   updateFilter<K extends keyof PayeeSearchFilters>(key: K, value: PayeeSearchFilters[K]) {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
     if (value === undefined || value === null || value === "") {
       delete newFilters[key];
     } else {
@@ -105,7 +105,7 @@ class PayeeSearchStateManager {
   }
 
   clearFilter(key: keyof PayeeSearchFilters) {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
     delete newFilters[key];
     this.filters = newFilters;
   }

@@ -1,16 +1,16 @@
-import {db} from "$lib/server/db";
-import {users} from "$lib/schema/users";
-import {accounts} from "$lib/schema/accounts";
-import {categories} from "$lib/schema/categories";
-import {categoryGroups} from "$lib/schema/category-groups";
-import {payees} from "$lib/schema/payees";
-import {schedules} from "$lib/schema/schedules";
-import {views} from "$lib/schema/views";
-import {budgetAutomationSettings} from "$lib/schema/budget-automation-settings";
-import {budgetRecommendations} from "$lib/schema/recommendations";
-import {detectedPatterns} from "$lib/schema/detected-patterns";
-import {payeeCategoryCorrections} from "$lib/schema/payee-category-corrections";
-import {eq, isNull} from "drizzle-orm";
+import { db } from "$lib/server/db";
+import { users } from "$lib/schema/users";
+import { accounts } from "$lib/schema/accounts";
+import { categories } from "$lib/schema/categories";
+import { categoryGroups } from "$lib/schema/category-groups";
+import { payees } from "$lib/schema/payees";
+import { schedules } from "$lib/schema/schedules";
+import { views } from "$lib/schema/views";
+import { budgetAutomationSettings } from "$lib/schema/budget-automation-settings";
+import { budgetRecommendations } from "$lib/schema/recommendations";
+import { detectedPatterns } from "$lib/schema/detected-patterns";
+import { payeeCategoryCorrections } from "$lib/schema/payee-category-corrections";
+import { eq, isNull } from "drizzle-orm";
 
 /**
  * Migration: Add multi-user support
@@ -57,37 +57,37 @@ export async function migrateToMultiUser() {
 
   const accountsUpdated = await db
     .update(accounts)
-    .set({userId: defaultUserId})
+    .set({ userId: defaultUserId })
     .where(isNull(accounts.userId));
   console.log(`  ✓ Accounts updated: ${accountsUpdated.changes} rows`);
 
   const categoriesUpdated = await db
     .update(categories)
-    .set({userId: defaultUserId})
+    .set({ userId: defaultUserId })
     .where(isNull(categories.userId));
   console.log(`  ✓ Categories updated: ${categoriesUpdated.changes} rows`);
 
   const categoryGroupsUpdated = await db
     .update(categoryGroups)
-    .set({userId: defaultUserId})
+    .set({ userId: defaultUserId })
     .where(isNull(categoryGroups.userId));
   console.log(`  ✓ Category groups updated: ${categoryGroupsUpdated.changes} rows`);
 
   const payeesUpdated = await db
     .update(payees)
-    .set({userId: defaultUserId})
+    .set({ userId: defaultUserId })
     .where(isNull(payees.userId));
   console.log(`  ✓ Payees updated: ${payeesUpdated.changes} rows`);
 
   const schedulesUpdated = await db
     .update(schedules)
-    .set({userId: defaultUserId})
+    .set({ userId: defaultUserId })
     .where(isNull(schedules.userId));
   console.log(`  ✓ Schedules updated: ${schedulesUpdated.changes} rows`);
 
   const viewsUpdated = await db
     .update(views)
-    .set({userId: defaultUserId})
+    .set({ userId: defaultUserId })
     .where(isNull(views.userId));
   console.log(`  ✓ Views updated: ${viewsUpdated.changes} rows`);
 
@@ -95,7 +95,7 @@ export async function migrateToMultiUser() {
   try {
     const automationUpdated = await db
       .update(budgetAutomationSettings)
-      .set({userId: defaultUserId})
+      .set({ userId: defaultUserId })
       .where(isNull(budgetAutomationSettings.userId));
     console.log(`  ✓ Budget automation settings updated: ${automationUpdated.changes} rows`);
   } catch (e) {
@@ -105,7 +105,7 @@ export async function migrateToMultiUser() {
   try {
     const patternsUpdated = await db
       .update(detectedPatterns)
-      .set({userId: defaultUserId})
+      .set({ userId: defaultUserId })
       .where(isNull(detectedPatterns.userId));
     console.log(`  ✓ Detected patterns updated: ${patternsUpdated.changes} rows`);
   } catch (e) {
@@ -115,7 +115,7 @@ export async function migrateToMultiUser() {
   try {
     const correctionsUpdated = await db
       .update(payeeCategoryCorrections)
-      .set({userId: defaultUserId})
+      .set({ userId: defaultUserId })
       .where(isNull(payeeCategoryCorrections.userId));
     console.log(`  ✓ Payee category corrections updated: ${correctionsUpdated.changes} rows`);
   } catch (e) {

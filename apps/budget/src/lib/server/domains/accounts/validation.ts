@@ -1,5 +1,5 @@
-import {z} from "zod";
-import {VALIDATION_CONFIG} from "$lib/server/config/validation";
+import { z } from "zod";
+import { VALIDATION_CONFIG } from "$lib/server/config/validation";
 
 /**
  * Account-specific validation schemas

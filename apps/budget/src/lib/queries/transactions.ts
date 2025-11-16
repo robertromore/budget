@@ -1,12 +1,12 @@
-import {createQuery, createMutation, useQueryClient} from "@tanstack/svelte-query";
-import {trpc} from "$lib/trpc/client";
+import { createQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
+import { trpc } from "$lib/trpc/client";
 import type {
   CreateTransactionData,
   UpdateTransactionData,
   TransactionFilters,
   PaginationParams,
 } from "$lib/server/domains/transactions";
-import {toast} from "svelte-sonner";
+import { toast } from "svelte-sonner";
 
 /**
  * Query Keys
@@ -15,7 +15,7 @@ export const transactionKeys = {
   all: ["transactions"] as const,
   lists: () => [...transactionKeys.all, "list"] as const,
   list: (filters?: TransactionFilters, pagination?: PaginationParams) =>
-    [...transactionKeys.lists(), {filters, pagination}] as const,
+    [...transactionKeys.lists(), { filters, pagination }] as const,
   details: () => [...transactionKeys.all, "detail"] as const,
   detail: (id: number) => [...transactionKeys.details(), id] as const,
   byAccount: (accountId: number, params?: any) =>
@@ -41,9 +41,9 @@ export function createAllAccountTransactionsQuery(
       accountId,
       sortBy: options?.sortBy ?? "date",
       sortOrder: options?.sortOrder ?? "desc",
-      ...(options?.searchQuery && {searchQuery: options.searchQuery}),
-      ...(options?.dateFrom && {dateFrom: options.dateFrom}),
-      ...(options?.dateTo && {dateTo: options.dateTo}),
+      ...(options?.searchQuery && { searchQuery: options.searchQuery }),
+      ...(options?.dateFrom && { dateFrom: options.dateFrom }),
+      ...(options?.dateTo && { dateTo: options.dateTo }),
     };
 
     return {
@@ -69,7 +69,7 @@ export function createAllAccountTransactionsWithUpcomingQuery(
 ) {
   return createQuery(() => ({
     queryKey: ["transactions", "all-with-upcoming", accountId, options],
-    queryFn: () => trpc().transactionRoutes.forAccountWithUpcoming.query({accountId}),
+    queryFn: () => trpc().transactionRoutes.forAccountWithUpcoming.query({ accountId }),
     staleTime: 30 * 1000, // 30 seconds
     select: (data) => {
       // Client-side filtering and sorting since we get everything from the server
@@ -148,9 +148,9 @@ export function createAccountTransactionsQuery(
       pageSize: options?.pageSize ?? 50,
       sortBy: options?.sortBy ?? "date",
       sortOrder: options?.sortOrder ?? "desc",
-      ...(options?.searchQuery && {searchQuery: options.searchQuery}),
-      ...(options?.dateFrom && {dateFrom: options.dateFrom}),
-      ...(options?.dateTo && {dateTo: options.dateTo}),
+      ...(options?.searchQuery && { searchQuery: options.searchQuery }),
+      ...(options?.dateFrom && { dateFrom: options.dateFrom }),
+      ...(options?.dateTo && { dateTo: options.dateTo }),
     };
 
     return {
@@ -171,7 +171,7 @@ export function createTransactionsListQuery(
 ) {
   return createQuery(() => ({
     queryKey: transactionKeys.list(filters, pagination),
-    queryFn: () => trpc().transactionRoutes.list.query({filters, pagination}),
+    queryFn: () => trpc().transactionRoutes.list.query({ filters, pagination }),
     staleTime: 30 * 1000,
   }));
 }
@@ -182,7 +182,7 @@ export function createTransactionsListQuery(
 export function createTransactionDetailQuery(id: number) {
   return createQuery(() => ({
     queryKey: transactionKeys.detail(id),
-    queryFn: () => trpc().transactionRoutes.byId.query({id}),
+    queryFn: () => trpc().transactionRoutes.byId.query({ id }),
     staleTime: 60 * 1000, // 1 minute
   }));
 }
@@ -193,7 +193,7 @@ export function createTransactionDetailQuery(id: number) {
 export function createAccountSummaryQuery(accountId: number) {
   return createQuery(() => ({
     queryKey: transactionKeys.summary(accountId),
-    queryFn: () => trpc().transactionRoutes.summary.query({accountId}),
+    queryFn: () => trpc().transactionRoutes.summary.query({ accountId }),
     staleTime: 30 * 1000,
   }));
 }
@@ -246,9 +246,9 @@ export function createUpdateTransactionMutation() {
         id: number;
         data: UpdateTransactionData;
         accountId: number;
-      }) => trpc().transactionRoutes.update.mutate({id, data}),
+      }) => trpc().transactionRoutes.update.mutate({ id, data }),
       onMutate: async (variables) => {
-        const {accountId} = variables;
+        const { accountId } = variables;
 
         // Find the specific query for this account ID
         let targetQuery: any = null;
@@ -289,14 +289,14 @@ export function createUpdateTransactionMutation() {
         const currentData = targetQuery.state.data;
 
         // Cancel any outgoing refetches
-        await client.cancelQueries({queryKey});
+        await client.cancelQueries({ queryKey });
 
         // Snapshot the previous value
         const previousData = currentData;
 
         // Optimistically update the transactions array
         const optimisticTransactions = transactionsArray.map((t: any) =>
-          t.id === variables.id ? {...t, ...variables.data} : t
+          t.id === variables.id ? { ...t, ...variables.data } : t
         );
 
         // Recalculate running balances if amount changed
@@ -326,11 +326,11 @@ export function createUpdateTransactionMutation() {
         // Preserve the cache data structure
         const optimisticData = Array.isArray(currentData)
           ? optimisticTransactions
-          : {...currentData, transactions: optimisticTransactions};
+          : { ...currentData, transactions: optimisticTransactions };
 
         client.setQueryData(queryKey, optimisticData);
 
-        return {previousData, queryKey};
+        return { previousData, queryKey };
       },
       onError: (error, variables, context) => {
         // Roll back optimistic update on error
@@ -374,8 +374,8 @@ export function createUpdateTransactionWithBalanceMutation() {
     const client = useQueryClient();
 
     return {
-      mutationFn: ({id, data}: {id: number; data: UpdateTransactionData}) =>
-        trpc().transactionRoutes.updateWithBalance.mutate({id, data}),
+      mutationFn: ({ id, data }: { id: number; data: UpdateTransactionData }) =>
+        trpc().transactionRoutes.updateWithBalance.mutate({ id, data }),
       onSuccess: (transactionsWithBalance) => {
         if (!Array.isArray(transactionsWithBalance) || !transactionsWithBalance.length) return;
 
@@ -411,7 +411,7 @@ export function createDeleteTransactionMutation() {
     const client = useQueryClient();
 
     return {
-      mutationFn: (id: number) => trpc().transactionRoutes.delete.mutate({id}),
+      mutationFn: (id: number) => trpc().transactionRoutes.delete.mutate({ id }),
       onSuccess: (_, id) => {
         // Remove from cache
         client.removeQueries({
@@ -440,7 +440,7 @@ export function createBulkDeleteTransactionsMutation() {
     const client = useQueryClient();
 
     return {
-      mutationFn: (ids: number[]) => trpc().transactionRoutes.bulkDelete.mutate({ids}),
+      mutationFn: (ids: number[]) => trpc().transactionRoutes.bulkDelete.mutate({ ids }),
       onSuccess: (result, ids) => {
         // Remove individual transaction queries
         ids.forEach((id) => {

@@ -1,21 +1,21 @@
 <script lang="ts">
-import {Zap, Target, Shuffle, TrendingUp, TriangleAlert} from '@lucide/svelte/icons';
+import { Zap, Target, Shuffle, TrendingUp, TriangleAlert } from '@lucide/svelte/icons';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Select from '$lib/components/ui/select';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import Label from '$lib/components/ui/label/label.svelte';
-import {Badge} from '$lib/components/ui/badge';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {createNumericRecordAccessors} from '$lib/utils/bind-helpers';
-import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
+import { Badge } from '$lib/components/ui/badge';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { createNumericRecordAccessors } from '$lib/utils/bind-helpers';
+import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
 
 interface Props {
   envelopes: EnvelopeAllocation[];
   getCategoryName: (categoryId: number) => string;
   availableFunds?: number;
-  onBulkAllocate?: (allocations: {envelopeId: number; amount: number}[]) => void;
+  onBulkAllocate?: (allocations: { envelopeId: number; amount: number }[]) => void;
   onAutoBalance?: () => void;
   onEmergencyFill?: () => void;
   class?: string;

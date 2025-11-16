@@ -1,4 +1,4 @@
-import {budgetPeriodInstances} from "$lib/schema/budgets";
+import { budgetPeriodInstances } from "$lib/schema/budgets";
 import {
   type EnvelopeAllocation,
   type EnvelopeRolloverHistory,
@@ -6,9 +6,9 @@ import {
   envelopeAllocations,
   envelopeRolloverHistory,
 } from "$lib/schema/budgets/envelope-allocations";
-import {db} from "$lib/server/db";
-import {NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {and, asc, desc, eq, inArray, sql} from "drizzle-orm";
+import { db } from "$lib/server/db";
+import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 export interface RolloverCalculationResult {
   envelopeId: number;
@@ -53,7 +53,7 @@ export interface RolloverSummary {
 
 export class RolloverCalculator {
   async calculateBulkRollover(options: BulkRolloverOptions): Promise<RolloverSummary> {
-    const {fromPeriodId, toPeriodId, policy = {}, selectedEnvelopeIds, dryRun = false} = options;
+    const { fromPeriodId, toPeriodId, policy = {}, selectedEnvelopeIds, dryRun = false } = options;
 
     await this.validatePeriods(fromPeriodId, toPeriodId);
 
@@ -261,7 +261,7 @@ export class RolloverCalculator {
   ): Promise<EnvelopeRolloverHistory[]> {
     // Get all envelopes for this budget
     const envelopes = await db
-      .select({id: envelopeAllocations.id})
+      .select({ id: envelopeAllocations.id })
       .from(envelopeAllocations)
       .where(eq(envelopeAllocations.budgetId, budgetId));
 

@@ -6,17 +6,17 @@ import {
   type Account,
   type Transaction,
 } from "$lib/schema";
-import {serviceFactory} from "$lib/server/shared/container/service-factory";
-import {publicProcedure, rateLimitedProcedure, t} from "$lib/trpc";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {isValidIconName} from "$lib/utils/icon-validation";
-import {generateUniqueSlugForDB} from "$lib/utils/slug-utils";
-import {getLocalTimeZone, now} from "@internationalized/date";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { isValidIconName } from "$lib/utils/icon-validation";
+import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
+import { getLocalTimeZone, now } from "@internationalized/date";
 import slugify from "@sindresorhus/slugify";
-import {TRPCError} from "@trpc/server";
-import {and, desc, eq, isNull, sql} from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import validator from "validator";
-import {z} from "zod";
+import { z } from "zod";
 
 const accountService = serviceFactory.getAccountService();
 
@@ -140,10 +140,10 @@ export interface AccountRecordWithTransactionAmounts extends AccountRecord {
 }
 
 export const accountRoutes = t.router({
-  all: publicProcedure.query(async ({ctx}) => {
+  all: publicProcedure.query(async ({ ctx }) => {
     // Simplified query using standard Drizzle methods
     const accountsData = await ctx.db.query.accounts.findMany({
-      where: (accounts, {eq, and, isNull}) =>
+      where: (accounts, { eq, and, isNull }) =>
         and(eq(accounts.workspaceId, ctx.workspaceId), isNull(accounts.deletedAt)),
       with: {
         transactions: {
@@ -176,9 +176,9 @@ export const accountRoutes = t.router({
       };
     }) as Account[];
   }),
-  load: publicProcedure.input(z.object({id: z.coerce.number()})).query(async ({ctx, input}) => {
+  load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
     const account = await ctx.db.query.accounts.findFirst({
-      where: (accounts, {eq, and, isNull}) =>
+      where: (accounts, { eq, and, isNull }) =>
         and(
           eq(accounts.id, input.id),
           eq(accounts.workspaceId, ctx.workspaceId),
@@ -221,9 +221,9 @@ export const accountRoutes = t.router({
 
     return accountWithBalance as Account;
   }),
-  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({ctx, input}) => {
+  getBySlug: publicProcedure.input(z.object({ slug: z.string() })).query(async ({ ctx, input }) => {
     const account = await ctx.db.query.accounts.findFirst({
-      where: (accounts, {eq, and, isNull}) =>
+      where: (accounts, { eq, and, isNull }) =>
         and(
           eq(accounts.slug, input.slug),
           eq(accounts.workspaceId, ctx.workspaceId),
@@ -257,11 +257,11 @@ export const accountRoutes = t.router({
 
     return accountWithBalance as Account;
   }),
-  save: rateLimitedProcedure.input(accountSaveSchema).mutation(async ({ctx, input}) => {
+  save: rateLimitedProcedure.input(accountSaveSchema).mutation(async ({ ctx, input }) => {
     if (input.id) {
       // For updates, get existing account first
       const existingAccount = await ctx.db.query.accounts.findFirst({
-        where: (accounts, {eq, and, isNull}) =>
+        where: (accounts, { eq, and, isNull }) =>
           and(
             eq(accounts.id, input.id!),
             eq(accounts.workspaceId, ctx.workspaceId),
@@ -419,7 +419,7 @@ export const accountRoutes = t.router({
       const createdAccount = await accountService.createAccount(
         {
           name: input.name,
-          ...(input.notes && {notes: input.notes}),
+          ...(input.notes && { notes: input.notes }),
           initialBalance: input.initialBalance || 0.0,
         },
         ctx.workspaceId
@@ -486,7 +486,7 @@ export const accountRoutes = t.router({
         // Re-fetch the account with proper balance calculation after update
         // Use the same logic as the load route to get account with calculated balance
         const accountWithBalance = await ctx.db.query.accounts.findFirst({
-          where: (accounts, {eq, and, isNull}) =>
+          where: (accounts, { eq, and, isNull }) =>
             and(
               eq(accounts.id, createdAccount.id),
               eq(accounts.workspaceId, ctx.workspaceId),
@@ -494,12 +494,12 @@ export const accountRoutes = t.router({
             ),
           with: {
             transactions: {
-              where: (transactions, {isNull}) => isNull(transactions.deletedAt),
+              where: (transactions, { isNull }) => isNull(transactions.deletedAt),
               with: {
                 payee: true,
                 category: true,
               },
-              orderBy: (transactions, {asc}) => [transactions.date, transactions.id],
+              orderBy: (transactions, { asc }) => [transactions.date, transactions.id],
             },
           },
         });
@@ -530,7 +530,7 @@ export const accountRoutes = t.router({
 
       // Even if no additional fields to update, we still need to return account with calculated balance
       const accountWithBalance = await ctx.db.query.accounts.findFirst({
-        where: (accounts, {eq, and, isNull}) =>
+        where: (accounts, { eq, and, isNull }) =>
           and(
             eq(accounts.id, createdAccount.id),
             eq(accounts.workspaceId, ctx.workspaceId),
@@ -538,12 +538,12 @@ export const accountRoutes = t.router({
           ),
         with: {
           transactions: {
-            where: (transactions, {isNull}) => isNull(transactions.deletedAt),
+            where: (transactions, { isNull }) => isNull(transactions.deletedAt),
             with: {
               payee: true,
               category: true,
             },
-            orderBy: (transactions, {asc}) => [transactions.date, transactions.id],
+            orderBy: (transactions, { asc }) => [transactions.date, transactions.id],
           },
         },
       });
@@ -579,7 +579,7 @@ export const accountRoutes = t.router({
       });
     }
   }),
-  remove: rateLimitedProcedure.input(removeAccountSchema).mutation(async ({ctx, input}) => {
+  remove: rateLimitedProcedure.input(removeAccountSchema).mutation(async ({ ctx, input }) => {
     if (!input) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -588,7 +588,7 @@ export const accountRoutes = t.router({
     }
     const result = await ctx.db
       .update(accounts)
-      .set({deletedAt: getCurrentTimestamp()})
+      .set({ deletedAt: getCurrentTimestamp() })
       .where(and(eq(accounts.id, input.id), eq(accounts.workspaceId, ctx.workspaceId)))
       .returning();
     if (!result[0]) {
@@ -606,7 +606,7 @@ export const accountRoutes = t.router({
         enabledMetrics: z.array(z.string()),
       })
     )
-    .mutation(async ({ctx, input}) => {
+    .mutation(async ({ ctx, input }) => {
       // Validate account exists and is not deleted
       const account = await ctx.db.query.accounts.findFirst({
         where: and(
@@ -648,7 +648,7 @@ export const accountRoutes = t.router({
         slugs: z.array(z.string()),
       })
     )
-    .mutation(async ({input, ctx}) => {
+    .mutation(async ({ input, ctx }) => {
       try {
         const createdAccounts = await accountService.seedDefaultAccounts(
           input.slugs,

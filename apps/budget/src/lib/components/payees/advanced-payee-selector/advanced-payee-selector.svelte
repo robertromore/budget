@@ -1,10 +1,10 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
-import {cn} from '$lib/utils';
-import type {Payee} from '$lib/schema/payees';
-import type {AdvancedPayeeSelectorProps, PayeeGroup, QuickAccessSections} from './types';
+import { cn } from '$lib/utils';
+import type { Payee } from '$lib/schema/payees';
+import type { AdvancedPayeeSelectorProps, PayeeGroup, QuickAccessSections } from './types';
 import {
   groupPayees,
   getRecentPayees,
@@ -17,7 +17,7 @@ import QuickAccessSection from './quick-access-section.svelte';
 import GroupHeader from './group-header.svelte';
 import PayeeItem from './payee-item.svelte';
 import Fuse from 'fuse.js';
-import {rpc} from '$lib/query';
+import { rpc } from '$lib/query';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 
 let {
@@ -72,7 +72,7 @@ const quickAccessSections = $derived.by((): QuickAccessSections => {
   const frequent = showQuickAccess ? getFrequentPayees(allPayees, 5) : [];
   const suggested: Payee[] = []; // TODO: Implement ML suggestions
 
-  return {recent, frequent, suggested};
+  return { recent, frequent, suggested };
 });
 
 // Group payees
@@ -149,7 +149,7 @@ const contentWidth = $derived.by(() => {
 
 <Popover.Root bind:open>
   <Popover.Trigger>
-    {#snippet child({props})}
+    {#snippet child({ props })}
       <Button
         {...props}
         variant="outline"

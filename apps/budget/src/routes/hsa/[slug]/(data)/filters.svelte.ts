@@ -1,8 +1,8 @@
-import type {ExpenseFormat} from "./columns.svelte";
-import {getSpecialDateValue} from "$lib/utils";
-import type {DateValue} from "@internationalized/date";
-import {dateDifference, isSamePeriod, parseISOString} from "$lib/utils/dates";
-import type {ColumnFiltersState, Row, Updater} from "@tanstack/table-core";
+import type { ExpenseFormat } from "./columns.svelte";
+import { getSpecialDateValue } from "$lib/utils";
+import type { DateValue } from "@internationalized/date";
+import { dateDifference, isSamePeriod, parseISOString } from "$lib/utils/dates";
+import type { ColumnFiltersState, Row, Updater } from "@tanstack/table-core";
 
 function compareDate(originalDate: DateValue, compareDate: string) {
   const [range, stringDate] = compareDate.includes(":")
@@ -118,7 +118,7 @@ export const filters = {
   amountFilter: (
     row: Row<ExpenseFormat>,
     columnId: string,
-    filterValue: {type: string; value?: number; min?: number; max?: number},
+    filterValue: { type: string; value?: number; min?: number; max?: number },
     addMeta: (meta: any) => void
   ) => {
     const amount = row.original[columnId as keyof ExpenseFormat] as number;

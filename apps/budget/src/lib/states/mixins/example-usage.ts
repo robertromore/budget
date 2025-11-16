@@ -1,7 +1,7 @@
 // Example Usage - Demonstrates how to integrate mixins with Svelte 5 reactive state
 // This file shows patterns for using mixins in .svelte.ts files with runes
 
-import {SvelteMap, SvelteSet} from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import {
   createEntityStore,
   createSelectionMixin,

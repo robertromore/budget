@@ -1,14 +1,14 @@
 <script lang="ts">
 import * as Select from '$lib/components/ui/select';
-import type {CategorySearchFilters} from '$lib/server/domains/categories/repository';
-import type {CategoryType} from '$lib/schema/categories';
+import type { CategorySearchFilters } from '$lib/server/domains/categories/repository';
+import type { CategoryType } from '$lib/schema/categories';
 
 interface Props {
   filters: CategorySearchFilters;
   onFilterChange: (key: keyof CategorySearchFilters, value: any) => void;
 }
 
-let {filters, onFilterChange}: Props = $props();
+let { filters, onFilterChange }: Props = $props();
 </script>
 
 <!-- Basic Filters Section -->

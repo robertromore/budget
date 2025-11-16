@@ -1,8 +1,8 @@
 import slugify from "@sindresorhus/slugify";
-import {db} from "..";
-import {accounts, type Account} from "$lib/schema";
-import {faker} from "@faker-js/faker";
-import {transactionFactory} from "./transactions";
+import { db } from "..";
+import { accounts, type Account } from "$lib/schema";
+import { faker } from "@faker-js/faker";
+import { transactionFactory } from "./transactions";
 
 let accountSequence = 0;
 
@@ -25,7 +25,7 @@ let accountSequence = 0;
  * ```
  */
 export const accountFactory = async (
-  count: number = faker.number.int({min: 1, max: 10}),
+  count: number = faker.number.int({ min: 1, max: 10 }),
   workspaceId: number
 ): Promise<Account[]> => {
   const accounts_collection: Account[] = [];

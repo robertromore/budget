@@ -1,28 +1,28 @@
 <script lang="ts">
-import type {Table} from '@tanstack/table-core';
-import type {FilterInputOption, TransactionsFormat} from '$lib/types';
-import {Separator} from '$lib/components/ui/separator';
+import type { Table } from '@tanstack/table-core';
+import type { FilterInputOption, TransactionsFormat } from '$lib/types';
+import { Separator } from '$lib/components/ui/separator';
 import CirclePlus from '@lucide/svelte/icons/circle-plus';
 import Layers from '@lucide/svelte/icons/layers';
 import PencilLine from '@lucide/svelte/icons/pencil-line';
 import Toggle from '$lib/components/ui/toggle/toggle.svelte';
 import ManageViewForm from './manage-view-form.svelte';
-import {FilterInput, DisplayInput} from '$lib/components/input';
-import {currentViews} from '$lib/states/views';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
+import { FilterInput, DisplayInput } from '$lib/components/input';
+import { currentViews } from '$lib/states/views';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
 import * as Tooltip from '$lib/components/ui/tooltip';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Settings2 from '@lucide/svelte/icons/settings-2';
-import {cn} from '$lib/utils';
-import {CurrentViewState} from '$lib/states/views/current-view.svelte';
+import { cn } from '$lib/utils';
+import { CurrentViewState } from '$lib/states/views/current-view.svelte';
 import * as Tabs from '$lib/components/ui/tabs';
 
 interface Props {
   table: Table<TransactionsFormat>;
 }
 
-let {table}: Props = $props();
+let { table }: Props = $props();
 
 let manageViewForm = $state(false);
 let editViewId = $state(0);
@@ -103,7 +103,7 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
               {#if viewState.view.dirty}
                 <Tooltip.Root>
                   <Tooltip.Trigger>
-                    {#snippet child({props})}
+                    {#snippet child({ props })}
                       <Badge
                         variant="destructive"
                         class="h-4 px-1.5 text-[10px] font-medium"

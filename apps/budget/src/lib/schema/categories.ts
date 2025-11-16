@@ -1,4 +1,4 @@
-import {relations, sql} from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -7,11 +7,11 @@ import {
   text,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import validator from "validator";
-import {z} from "zod/v4";
-import {isValidIconName} from "$lib/utils/icon-validation";
-import {workspaces} from "./workspaces";
+import { z } from "zod/v4";
+import { isValidIconName } from "$lib/utils/icon-validation";
+import { workspaces } from "./workspaces";
 
 export const categoryTypeEnum = [
   "income", // Salary, freelance, investments, gifts received
@@ -57,38 +57,38 @@ export type IncomeReliability = (typeof incomeReliabilityEnum)[number];
 export const categories = sqliteTable(
   "categories",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     parentId: integer("parent_id").references((): AnySQLiteColumn => categories.id),
     name: text("name"),
     slug: text("slug").notNull().unique(),
     notes: text("notes"),
 
     // Type classification
-    categoryType: text("category_type", {enum: categoryTypeEnum}).notNull().default("expense"),
+    categoryType: text("category_type", { enum: categoryTypeEnum }).notNull().default("expense"),
 
     // Visual customization
     categoryIcon: text("category_icon"),
     categoryColor: text("category_color"),
-    isActive: integer("is_active", {mode: "boolean"}).notNull().default(true),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
     displayOrder: integer("display_order").notNull().default(0),
 
     // Tax tracking
-    isTaxDeductible: integer("is_tax_deductible", {mode: "boolean"}).notNull().default(false),
-    taxCategory: text("tax_category", {enum: taxCategories}),
+    isTaxDeductible: integer("is_tax_deductible", { mode: "boolean" }).notNull().default(false),
+    taxCategory: text("tax_category", { enum: taxCategories }),
     deductiblePercentage: integer("deductible_percentage"),
 
     // Spending patterns (for expenses)
-    isSeasonal: integer("is_seasonal", {mode: "boolean"}).notNull().default(false),
-    seasonalMonths: text("seasonal_months", {mode: "json"}).$type<string[]>(),
+    isSeasonal: integer("is_seasonal", { mode: "boolean" }).notNull().default(false),
+    seasonalMonths: text("seasonal_months", { mode: "json" }).$type<string[]>(),
     expectedMonthlyMin: real("expected_monthly_min"),
     expectedMonthlyMax: real("expected_monthly_max"),
-    spendingPriority: text("spending_priority", {enum: spendingPriorityEnum}),
+    spendingPriority: text("spending_priority", { enum: spendingPriorityEnum }),
 
     // Income patterns (for income)
-    incomeReliability: text("income_reliability", {enum: incomeReliabilityEnum}),
+    incomeReliability: text("income_reliability", { enum: incomeReliabilityEnum }),
 
     dateCreated: text("date_created")
       .notNull()
@@ -118,7 +118,7 @@ export const categories = sqliteTable(
   ]
 );
 
-export const categoriesRelations = relations(categories, ({one}) => ({
+export const categoriesRelations = relations(categories, ({ one }) => ({
   workspace: one(workspaces, {
     fields: [categories.workspaceId],
     references: [workspaces.id],
@@ -227,8 +227,8 @@ export const formInsertCategorySchema = createInsertSchema(categories, {
       .optional()
       .nullable(),
 });
-export const removeCategorySchema = z.object({id: z.number().nonnegative()});
-export const removeCategoriesSchema = z.object({entities: z.array(z.number().nonnegative())});
+export const removeCategorySchema = z.object({ id: z.number().nonnegative() });
+export const removeCategoriesSchema = z.object({ entities: z.array(z.number().nonnegative()) });
 
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;

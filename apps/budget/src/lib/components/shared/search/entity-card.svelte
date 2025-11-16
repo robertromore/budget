@@ -1,13 +1,13 @@
 <script lang="ts" generics="TEntity">
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {cn} from '$lib/utils';
+import { Button } from '$lib/components/ui/button';
+import { cn } from '$lib/utils';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Eye from '@lucide/svelte/icons/eye';
-import type {Snippet} from 'svelte';
-import type {HTMLAttributes} from 'svelte/elements';
+import type { Snippet } from 'svelte';
+import type { HTMLAttributes } from 'svelte/elements';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   entity: TEntity;

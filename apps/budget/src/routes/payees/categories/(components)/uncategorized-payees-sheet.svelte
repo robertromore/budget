@@ -1,10 +1,10 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {ResponsiveSheet} from '$lib/components/ui/responsive-sheet';
-import {Separator} from '$lib/components/ui/separator';
-import {Badge} from '$lib/components/ui/badge';
-import {ScrollArea} from '$lib/components/ui/scroll-area';
-import {Skeleton} from '$lib/components/ui/skeleton';
+import { Button } from '$lib/components/ui/button';
+import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
+import { Separator } from '$lib/components/ui/separator';
+import { Badge } from '$lib/components/ui/badge';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
+import { Skeleton } from '$lib/components/ui/skeleton';
 import Lightbulb from '@lucide/svelte/icons/lightbulb';
 import Check from '@lucide/svelte/icons/check';
 import X from '@lucide/svelte/icons/x';
@@ -15,9 +15,9 @@ import {
   bulkAssignPayeeCategories,
   payeeCategoryKeys,
 } from '$lib/query/payee-categories';
-import {queryClient} from '$lib/query';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
-import type {PayeeCategoryRecommendation} from '$lib/query/payee-categories';
+import { queryClient } from '$lib/query';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
+import type { PayeeCategoryRecommendation } from '$lib/query/payee-categories';
 
 interface Props {
   open: boolean;
@@ -25,7 +25,7 @@ interface Props {
   uncategorizedCount: number;
 }
 
-let {open = $bindable(), onOpenChange, uncategorizedCount}: Props = $props();
+let { open = $bindable(), onOpenChange, uncategorizedCount }: Props = $props();
 
 // State management
 let acceptedPayeeIds = $state<Set<number>>(new Set());
@@ -99,7 +99,7 @@ const acceptAllHighConfidence = async () => {
 
   // Execute bulk assignments
   for (const [categoryId, payeeIds] of byCategory.entries()) {
-    await assignMutation.mutateAsync({payeeIds, categoryId});
+    await assignMutation.mutateAsync({ payeeIds, categoryId });
     payeeIds.forEach((id) => acceptedPayeeIds.add(id));
   }
 };
@@ -118,10 +118,11 @@ const handleOpenChange = (newOpen: boolean) => {
 
 // Get confidence badge variant
 const getConfidenceBadge = (confidence: number) => {
-  if (confidence >= 0.7) return {variant: 'default' as const, label: 'High', class: 'bg-green-500'};
+  if (confidence >= 0.7)
+    return { variant: 'default' as const, label: 'High', class: 'bg-green-500' };
   if (confidence >= 0.4)
-    return {variant: 'secondary' as const, label: 'Medium', class: 'bg-yellow-500'};
-  return {variant: 'outline' as const, label: 'Low', class: 'bg-orange-500'};
+    return { variant: 'secondary' as const, label: 'Medium', class: 'bg-yellow-500' };
+  return { variant: 'outline' as const, label: 'Low', class: 'bg-orange-500' };
 };
 
 // Format percentage

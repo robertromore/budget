@@ -1,19 +1,19 @@
-import {payees as payeeTable} from "$lib/schema/payees";
-import {schedules as scheduleTable} from "$lib/schema/schedules";
-import {transactions as transactionTable} from "$lib/schema/transactions";
-import {db} from "$lib/server/db";
-import {CSVProcessor} from "$lib/server/import/file-processors/csv-processor";
-import {PayeeMatcher} from "$lib/server/import/matchers/payee-matcher";
-import {ScheduleMatcher} from "$lib/server/import/matchers/schedule-matcher";
-import {TransactionValidator} from "$lib/server/import/validators/transaction-validator";
-import type {ParseResult, ScheduleMatch} from "$lib/types/import";
-import {json} from "@sveltejs/kit";
-import {and, eq, isNull} from "drizzle-orm";
-import type {RequestHandler} from "./$types";
+import { payees as payeeTable } from "$lib/schema/payees";
+import { schedules as scheduleTable } from "$lib/schema/schedules";
+import { transactions as transactionTable } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { CSVProcessor } from "$lib/server/import/file-processors/csv-processor";
+import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
+import { ScheduleMatcher } from "$lib/server/import/matchers/schedule-matcher";
+import { TransactionValidator } from "$lib/server/import/validators/transaction-validator";
+import type { ParseResult, ScheduleMatch } from "$lib/types/import";
+import { json } from "@sveltejs/kit";
+import { and, eq, isNull } from "drizzle-orm";
+import type { RequestHandler } from "./$types";
 
-export const POST: RequestHandler = async ({request}) => {
+export const POST: RequestHandler = async ({ request }) => {
   try {
-    const {file: fileData, columnMapping, accountId} = await request.json();
+    const { file: fileData, columnMapping, accountId } = await request.json();
 
     console.log("Remap request:", {
       hasFile: !!fileData,
@@ -22,13 +22,13 @@ export const POST: RequestHandler = async ({request}) => {
     });
 
     if (!fileData || !columnMapping) {
-      console.error("Missing data:", {hasFile: !!fileData, hasMapping: !!columnMapping});
-      return json({error: "Missing file data or column mapping"}, {status: 400});
+      console.error("Missing data:", { hasFile: !!fileData, hasMapping: !!columnMapping });
+      return json({ error: "Missing file data or column mapping" }, { status: 400 });
     }
 
     // Reconstruct File object from base64 data
     const fileBytes = Uint8Array.from(atob(fileData.data), (c) => c.charCodeAt(0));
-    const file = new File([fileBytes], fileData.name, {type: fileData.type});
+    const file = new File([fileBytes], fileData.name, { type: fileData.type });
 
     // Create processor with custom column mapping
     const processor = new CSVProcessor(columnMapping);
@@ -36,7 +36,7 @@ export const POST: RequestHandler = async ({request}) => {
     // Validate file
     const validation = processor.validateFile(file);
     if (!validation.valid) {
-      return json({error: validation.error || "File validation failed"}, {status: 400});
+      return json({ error: validation.error || "File validation failed" }, { status: 400 });
     }
 
     // Parse file with custom column mapping
@@ -109,7 +109,7 @@ export const POST: RequestHandler = async ({request}) => {
             // Schedule payee names are clean (e.g., "Gateway Market")
             let normalizedPayeeName = normalized["payee"];
             if (normalizedPayeeName && typeof normalizedPayeeName === "string") {
-              const {name} = payeeMatcher.normalizePayeeName(normalizedPayeeName);
+              const { name } = payeeMatcher.normalizePayeeName(normalizedPayeeName);
               normalizedPayeeName = name;
             }
 
@@ -173,7 +173,7 @@ export const POST: RequestHandler = async ({request}) => {
       columns,
       rows: validatedData,
       parseErrors: [],
-      ...(scheduleMatches ? {scheduleMatches} : {}),
+      ...(scheduleMatches ? { scheduleMatches } : {}),
     };
 
     return json(result);
@@ -184,7 +184,7 @@ export const POST: RequestHandler = async ({request}) => {
         error:
           error instanceof Error ? error.message : "Failed to process file with custom mapping",
       },
-      {status: 500}
+      { status: 500 }
     );
   }
 };

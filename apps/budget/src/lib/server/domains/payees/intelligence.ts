@@ -1,7 +1,7 @@
-import {db} from "$lib/server/db";
-import {payees, transactions, categories, budgets} from "$lib/schema";
-import {eq, and, isNull, sql, desc, asc, gte, lte, count, avg, sum, min, max} from "drizzle-orm";
-import type {PayeeType, PaymentFrequency} from "$lib/schema";
+import { db } from "$lib/server/db";
+import { payees, transactions, categories, budgets } from "$lib/schema";
+import { eq, and, isNull, sql, desc, asc, gte, lte, count, avg, sum, min, max } from "drizzle-orm";
+import type { PayeeType, PaymentFrequency } from "$lib/schema";
 
 // Comprehensive analysis interfaces for payee intelligence
 export interface SpendingAnalysis {
@@ -13,7 +13,7 @@ export interface SpendingAnalysis {
   standardDeviation: number;
   minAmount: number;
   maxAmount: number;
-  amountRange: {min: number; max: number; quartiles: [number, number, number]};
+  amountRange: { min: number; max: number; quartiles: [number, number, number] };
   trendDirection: "increasing" | "decreasing" | "stable";
   trendStrength: number; // 0-1 scale
   volatility: number; // 0-1 scale, based on coefficient of variation
@@ -75,7 +75,7 @@ export interface FrequencyAnalysis {
 export interface TransactionPrediction {
   nextTransactionDate: string | null;
   predictedAmount: number | null;
-  amountRange: {min: number; max: number} | null;
+  amountRange: { min: number; max: number } | null;
   confidence: number; // 0-1 confidence in prediction
   predictionMethod: "frequency_based" | "seasonal_based" | "trend_based" | "insufficient_data";
   reasoning: string;
@@ -89,7 +89,7 @@ export interface TransactionPrediction {
 
 export interface BudgetAllocationSuggestion {
   suggestedMonthlyAllocation: number;
-  allocationRange: {min: number; max: number};
+  allocationRange: { min: number; max: number };
   confidence: number;
   reasoning: string;
   seasonalAdjustments: Array<{
@@ -229,7 +229,7 @@ export class PayeeIntelligenceService {
     const quartiles = this.calculateQuartiles(sortedAmounts);
 
     // Analyze trend
-    const {trendDirection, trendStrength} = this.analyzeTrend(transactionData);
+    const { trendDirection, trendStrength } = this.analyzeTrend(transactionData);
 
     // Calculate volatility (coefficient of variation)
     const volatility = averageAmount !== 0 ? standardDeviation / Math.abs(averageAmount) : 0;
@@ -386,7 +386,7 @@ export class PayeeIntelligenceService {
    */
   async analyzeFrequencyPattern(payeeId: number): Promise<FrequencyAnalysis> {
     const transactionDates = await db
-      .select({date: transactions.date})
+      .select({ date: transactions.date })
       .from(transactions)
       .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
       .orderBy(asc(transactions.date));
@@ -431,7 +431,7 @@ export class PayeeIntelligenceService {
     const regularityScore = Math.max(0, 1 - Math.min(1, coefficientOfVariation));
 
     // Detect frequency based on average interval
-    const {detectedFrequency, confidence} = this.detectFrequencyFromInterval(
+    const { detectedFrequency, confidence } = this.detectFrequencyFromInterval(
       averageDaysBetween,
       regularityScore
     );
@@ -712,12 +712,12 @@ export class PayeeIntelligenceService {
     return Math.sqrt(variance);
   }
 
-  private analyzeTrend(transactionData: Array<{date: string; amount: number | null}>): {
+  private analyzeTrend(transactionData: Array<{ date: string; amount: number | null }>): {
     trendDirection: "increasing" | "decreasing" | "stable";
     trendStrength: number;
   } {
     if (transactionData.length < 3) {
-      return {trendDirection: "stable", trendStrength: 0};
+      return { trendDirection: "stable", trendStrength: 0 };
     }
 
     // Use linear regression to detect trend
@@ -748,19 +748,19 @@ export class PayeeIntelligenceService {
       Math.abs(slope) < 0.01 ? "stable" : slope > 0 ? "increasing" : "decreasing";
     const trendStrength = Math.min(1, Math.abs(rSquared));
 
-    return {trendDirection, trendStrength};
+    return { trendDirection, trendStrength };
   }
 
   private detectFrequencyFromInterval(
     averageInterval: number,
     regularityScore: number
-  ): {detectedFrequency: PaymentFrequency | null; confidence: number} {
+  ): { detectedFrequency: PaymentFrequency | null; confidence: number } {
     const frequencyRanges = [
-      {frequency: "weekly" as const, min: 6, max: 8, ideal: 7},
-      {frequency: "bi_weekly" as const, min: 13, max: 15, ideal: 14},
-      {frequency: "monthly" as const, min: 28, max: 32, ideal: 30},
-      {frequency: "quarterly" as const, min: 85, max: 95, ideal: 90},
-      {frequency: "annual" as const, min: 350, max: 380, ideal: 365},
+      { frequency: "weekly" as const, min: 6, max: 8, ideal: 7 },
+      { frequency: "bi_weekly" as const, min: 13, max: 15, ideal: 14 },
+      { frequency: "monthly" as const, min: 28, max: 32, ideal: 30 },
+      { frequency: "quarterly" as const, min: 85, max: 95, ideal: 90 },
+      { frequency: "annual" as const, min: 350, max: 380, ideal: 365 },
     ];
 
     for (const range of frequencyRanges) {
@@ -784,11 +784,11 @@ export class PayeeIntelligenceService {
 
   private analyzeIntervalClusters(
     intervals: number[]
-  ): Array<{averageInterval: number; count: number; description: string}> {
+  ): Array<{ averageInterval: number; count: number; description: string }> {
     if (intervals.length === 0) return [];
 
     // Simple clustering: group intervals within 20% of each other
-    const clusters: Array<{intervals: number[]; center: number}> = [];
+    const clusters: Array<{ intervals: number[]; center: number }> = [];
 
     for (const interval of intervals) {
       let foundCluster = false;
@@ -805,7 +805,7 @@ export class PayeeIntelligenceService {
       }
 
       if (!foundCluster) {
-        clusters.push({intervals: [interval], center: interval});
+        clusters.push({ intervals: [interval], center: interval });
       }
     }
 
@@ -831,10 +831,11 @@ export class PayeeIntelligenceService {
   }
 
   private findUnusualGaps(
-    transactionDates: Array<{date: string}>,
+    transactionDates: Array<{ date: string }>,
     averageInterval: number
-  ): Array<{startDate: string; endDate: string; gapDays: number; reason?: string}> {
-    const gaps: Array<{startDate: string; endDate: string; gapDays: number; reason?: string}> = [];
+  ): Array<{ startDate: string; endDate: string; gapDays: number; reason?: string }> {
+    const gaps: Array<{ startDate: string; endDate: string; gapDays: number; reason?: string }> =
+      [];
     const threshold = Math.max(60, averageInterval * 2); // At least 60 days or 2x average
 
     for (let i = 1; i < transactionDates.length; i++) {
@@ -878,7 +879,7 @@ export class PayeeIntelligenceService {
   }
 
   private detectSeasonalBreaks(
-    transactionDates: Array<{date: string}>,
+    transactionDates: Array<{ date: string }>,
     averageInterval: number
   ): boolean {
     // Look for consistent gaps during specific seasons
@@ -934,9 +935,13 @@ export class PayeeIntelligenceService {
     spendingAnalysis: SpendingAnalysis,
     frequencyAnalysis: FrequencyAnalysis,
     lastTransactionDate: string
-  ): Array<{scenario: string; date: string; amount: number; probability: number}> {
-    const scenarios: Array<{scenario: string; date: string; amount: number; probability: number}> =
-      [];
+  ): Array<{ scenario: string; date: string; amount: number; probability: number }> {
+    const scenarios: Array<{
+      scenario: string;
+      date: string;
+      amount: number;
+      probability: number;
+    }> = [];
     const lastDate = new Date(lastTransactionDate);
 
     // Early scenario (if interval varies)
@@ -1147,7 +1152,7 @@ export class PayeeIntelligenceService {
       standardDeviation: 0,
       minAmount: 0,
       maxAmount: 0,
-      amountRange: {min: 0, max: 0, quartiles: [0, 0, 0]},
+      amountRange: { min: 0, max: 0, quartiles: [0, 0, 0] },
       trendDirection: "stable",
       trendStrength: 0,
       volatility: 0,
@@ -1173,7 +1178,7 @@ export class PayeeIntelligenceService {
   private createEmptyBudgetSuggestion(): BudgetAllocationSuggestion {
     return {
       suggestedMonthlyAllocation: 0,
-      allocationRange: {min: 0, max: 0},
+      allocationRange: { min: 0, max: 0 },
       confidence: 0,
       reasoning: "No transaction history available for budget allocation suggestion",
       seasonalAdjustments: [],

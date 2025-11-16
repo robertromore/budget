@@ -12,7 +12,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-let {open = $bindable(false), onOpenChange}: Props = $props();
+let { open = $bindable(false), onOpenChange }: Props = $props();
 
 const accountsQuery = listAccounts().options();
 
@@ -28,7 +28,7 @@ const isAnalyzing = $derived(mutation.isPending);
 function handleAnalyze() {
   mutation.mutate(
     {
-      ...(selectedAccountIds.length > 0 && {accountIds: selectedAccountIds}),
+      ...(selectedAccountIds.length > 0 && { accountIds: selectedAccountIds }),
       months: parseInt(months),
       minTransactions: parseInt(minTransactions),
       minConfidence: parseInt(minConfidence),

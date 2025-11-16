@@ -1,11 +1,11 @@
-import {removeCategorySchema} from "$lib/schema";
-import {superformInsertCategorySchema} from "$lib/schema/superforms";
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import {superValidate} from "sveltekit-superforms/client";
-import type {Actions, PageServerLoad} from "./$types";
-import {fail} from "@sveltejs/kit";
-import {zod4} from "sveltekit-superforms/adapters";
+import { removeCategorySchema } from "$lib/schema";
+import { superformInsertCategorySchema } from "$lib/schema/superforms";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
+import { superValidate } from "sveltekit-superforms/client";
+import type { Actions, PageServerLoad } from "./$types";
+import { fail } from "@sveltejs/kit";
+import { zod4 } from "sveltekit-superforms/adapters";
 
 export const load: PageServerLoad = async (event) => ({
   categories: await createCaller(await createContext(event)).categoriesRoutes.all(),

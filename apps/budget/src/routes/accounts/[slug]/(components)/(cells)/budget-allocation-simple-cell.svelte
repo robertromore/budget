@@ -1,20 +1,20 @@
 <script lang="ts">
 import * as Tooltip from '$lib/components/ui/tooltip';
-import {Button} from '$lib/components/ui/button';
-import {CircleDollarSign, Plus, TriangleAlert} from '@lucide/svelte/icons';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {listBudgets} from '$lib/query/budgets';
+import { Button } from '$lib/components/ui/button';
+import { CircleDollarSign, Plus, TriangleAlert } from '@lucide/svelte/icons';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { listBudgets } from '$lib/query/budgets';
 import BudgetAllocationDialog from '$lib/components/dialogs/budget-allocation-dialog.svelte';
-import type {TransactionsFormat} from '$lib/types';
-import {getQueryClient} from '$lib/query/_client';
-import {transactionKeys} from '$lib/query/transactions';
+import type { TransactionsFormat } from '$lib/types';
+import { getQueryClient } from '$lib/query/_client';
+import { transactionKeys } from '$lib/query/transactions';
 
 interface Props {
   transaction: TransactionsFormat;
   onManageClick?: () => void;
 }
 
-let {transaction, onManageClick}: Props = $props();
+let { transaction, onManageClick }: Props = $props();
 
 // Dialog state
 let allocationDialogOpen = $state(false);

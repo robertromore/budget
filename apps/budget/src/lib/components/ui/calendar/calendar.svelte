@@ -1,10 +1,10 @@
 <script lang="ts">
-import {Calendar as CalendarPrimitive} from 'bits-ui';
+import { Calendar as CalendarPrimitive } from 'bits-ui';
 import * as Calendar from './index.js';
-import {cn, type WithoutChildrenOrChild} from '$lib/utils';
-import type {ButtonVariant} from '$lib/components/ui/button';
-import {isEqualMonth, type DateValue} from '@internationalized/date';
-import type {Snippet} from 'svelte';
+import { cn, type WithoutChildrenOrChild } from '$lib/utils';
+import type { ButtonVariant } from '$lib/components/ui/button';
+import { isEqualMonth, type DateValue } from '@internationalized/date';
+import type { Snippet } from 'svelte';
 let {
   ref = $bindable(null),
   value = $bindable(),
@@ -28,7 +28,7 @@ let {
   years?: CalendarPrimitive.YearSelectProps['years'];
   monthFormat?: CalendarPrimitive.MonthSelectProps['monthFormat'];
   yearFormat?: CalendarPrimitive.YearSelectProps['yearFormat'];
-  day?: Snippet<[{day: DateValue; outsideMonth: boolean}]>;
+  day?: Snippet<[{ day: DateValue; outsideMonth: boolean }]>;
 } = $props();
 const monthFormat = $derived.by(() => {
   if (monthFormatProp) return monthFormatProp;
@@ -55,7 +55,7 @@ get along, so we shut typescript up by casting `value` to `never`.
   {monthFormat}
   {yearFormat}
   {...restProps}>
-  {#snippet children({months, weekdays})}
+  {#snippet children({ months, weekdays })}
     <Calendar.Months>
       <Calendar.Nav>
         <Calendar.PrevButton variant={buttonVariant} />

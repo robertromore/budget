@@ -1,9 +1,9 @@
 <script lang="ts">
 import * as Form from '$lib/components/ui/form';
 import * as Card from '$lib/components/ui/card';
-import {Input} from '$lib/components/ui/input';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
+import { Input } from '$lib/components/ui/input';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
 
 // Icons
 import Building from '@lucide/svelte/icons/building';
@@ -44,7 +44,7 @@ let {
       <!-- Merchant Category Code -->
       <Form.Field form={entityForm} name="merchantCategoryCode">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Merchant Category Code</Form.Label>
             <Input
               {...props}
@@ -60,7 +60,7 @@ let {
       <!-- Alert Threshold -->
       <Form.Field form={entityForm} name="alertThreshold">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Alert Threshold</Form.Label>
             <Input
               {...props}
@@ -133,7 +133,7 @@ let {
     <!-- Tags -->
     <Form.Field form={entityForm} name="tags">
       <Form.Control>
-        {#snippet children({props})}
+        {#snippet children({ props })}
           <Form.Label>Tags</Form.Label>
           <Input {...props} bind:value={$formData.tags} placeholder="comma, separated, tags" />
           <Form.Description>Comma-separated tags for organization</Form.Description>
@@ -145,7 +145,7 @@ let {
     <!-- Preferred Payment Methods -->
     <Form.Field form={entityForm} name="preferredPaymentMethods">
       <Form.Control>
-        {#snippet children({props})}
+        {#snippet children({ props })}
           <Form.Label>Preferred Payment Methods</Form.Label>
           <Input
             {...props}

@@ -1,8 +1,8 @@
-import {z} from "zod";
-import {rateLimitedProcedure, t} from "$lib/trpc";
-import {PatternDetectionService, PatternRepository} from "$lib/server/domains/patterns";
-import {withErrorHandler} from "$lib/trpc/shared/errors";
-import {TRPCError} from "@trpc/server";
+import { z } from "zod";
+import { rateLimitedProcedure, t } from "$lib/trpc";
+import { PatternDetectionService, PatternRepository } from "$lib/server/domains/patterns";
+import { withErrorHandler } from "$lib/trpc/shared/errors";
+import { TRPCError } from "@trpc/server";
 
 const patternRepository = new PatternRepository();
 const patternService = new PatternDetectionService(patternRepository);
@@ -23,7 +23,7 @@ export const patternRoutes = t.router({
         criteria: detectionCriteriaSchema.optional(),
       })
     )
-    .mutation(async ({input, ctx}) => {
+    .mutation(async ({ input, ctx }) => {
       try {
         let detectedPatterns;
         if (input.accountId) {
@@ -69,7 +69,7 @@ export const patternRoutes = t.router({
         status: z.enum(["pending", "accepted", "dismissed", "converted"]).optional(),
       })
     )
-    .query(async ({input, ctx}) => {
+    .query(async ({ input, ctx }) => {
       try {
         return await patternService.getDetectedPatterns(
           ctx.workspaceId,
@@ -95,8 +95,8 @@ export const patternRoutes = t.router({
 
   // Convert pattern to schedule
   convertToSchedule: rateLimitedProcedure
-    .input(z.object({patternId: z.number().positive()}))
-    .mutation(async ({input, ctx}) => {
+    .input(z.object({ patternId: z.number().positive() }))
+    .mutation(async ({ input, ctx }) => {
       try {
         return await patternService.convertPatternToSchedule(input.patternId, ctx.workspaceId);
       } catch (error: any) {
@@ -121,11 +121,11 @@ export const patternRoutes = t.router({
 
   // Dismiss pattern
   dismiss: rateLimitedProcedure
-    .input(z.object({patternId: z.number().positive()}))
-    .mutation(async ({input, ctx}) => {
+    .input(z.object({ patternId: z.number().positive() }))
+    .mutation(async ({ input, ctx }) => {
       try {
         await patternService.dismissPattern(input.patternId, ctx.workspaceId);
-        return {success: true};
+        return { success: true };
       } catch (error: any) {
         if (error.statusCode === 403) {
           throw new TRPCError({
@@ -147,13 +147,13 @@ export const patternRoutes = t.router({
         daysSinceLastMatch: z.number().min(1).optional(),
       })
     )
-    .mutation(async ({input, ctx}) => {
+    .mutation(async ({ input, ctx }) => {
       try {
         const count = await patternService.expireStalePatterns(
           ctx.workspaceId,
           input.daysSinceLastMatch
         );
-        return {count};
+        return { count };
       } catch (error: any) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -169,10 +169,10 @@ export const patternRoutes = t.router({
         status: z.enum(["pending", "accepted", "dismissed", "converted"]).optional(),
       })
     )
-    .mutation(async ({input, ctx}) => {
+    .mutation(async ({ input, ctx }) => {
       try {
         const count = await patternService.deleteAllPatterns(ctx.workspaceId, input.status);
-        return {count};
+        return { count };
       } catch (error: any) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

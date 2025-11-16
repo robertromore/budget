@@ -9,13 +9,13 @@
  * Run with: bun run ./src/lib/server/db/seeders
  */
 
-import type {TableConfig} from "drizzle-orm/mysql-core";
-import {db} from "..";
+import type { TableConfig } from "drizzle-orm/mysql-core";
+import { db } from "..";
 import * as schema from "$lib/schema";
 
-import {Glob} from "bun";
+import { Glob } from "bun";
 import * as path from "node:path";
-import type {SQLiteTable} from "drizzle-orm/sqlite-core";
+import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 
 // Define seeding order based on dependencies
 const SEEDING_ORDER = [

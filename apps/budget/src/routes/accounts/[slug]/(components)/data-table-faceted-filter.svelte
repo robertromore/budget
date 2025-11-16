@@ -1,16 +1,16 @@
 <script lang="ts" generics="TData, TValue">
 import Check from '@lucide/svelte/icons/check';
-import type {Column, FilterFns} from '@tanstack/table-core';
-import type {Component, Snippet} from 'svelte';
+import type { Column, FilterFns } from '@tanstack/table-core';
+import type { Component, Snippet } from 'svelte';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
-import {Button} from '$lib/components/ui/button';
-import {cn} from '$lib/utils';
-import {Badge} from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { cn } from '$lib/utils';
+import { Badge } from '$lib/components/ui/badge';
 import X from '@lucide/svelte/icons/x';
-import type {AvailableFilters, FacetedFilterOption} from '$lib/types';
-import {currentViews} from '$lib/states/views';
-import type {SvelteMap} from 'svelte/reactivity';
+import type { AvailableFilters, FacetedFilterOption } from '$lib/types';
+import { currentViews } from '$lib/states/views';
+import type { SvelteMap } from 'svelte/reactivity';
 
 interface Props<TData, TValue> {
   column: Column<TData, TValue>;
@@ -21,7 +21,7 @@ interface Props<TData, TValue> {
   customValueSnippet?: Snippet;
 }
 
-let {column, title, options, allOptions, allIcon, customValueSnippet}: Props<TData, TValue> =
+let { column, title, options, allOptions, allIcon, customValueSnippet }: Props<TData, TValue> =
   $props();
 
 const facets = $derived(column?.getFacetedUniqueValues());
@@ -58,7 +58,7 @@ const selectedValues = $derived<Set<string | number>>(
   <Badge variant="outline" class="h-8 rounded-r-none">{title}</Badge>
   <Popover.Root>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button
           {...props}
           variant="outline"
@@ -103,7 +103,7 @@ const selectedValues = $derived<Set<string | number>>(
   </Popover.Root>
   <Popover.Root>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button {...props} variant="outline" size="sm" class="h-8 rounded-none">
           {#if selectedValues.size === 0}
             <Badge variant="secondary">none selected</Badge>

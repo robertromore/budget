@@ -6,12 +6,12 @@
  * category mappings, account scope, and historical patterns.
  */
 
-import {budgetAccounts, budgetCategories, budgets, budgetTransactions} from "$lib/schema/budgets";
-import {payees} from "$lib/schema/payees";
-import {transactions} from "$lib/schema/transactions";
-import {db} from "$lib/server/db";
-import {logger} from "$lib/server/shared/logging";
-import {and, desc, eq, inArray, sql} from "drizzle-orm";
+import { budgetAccounts, budgetCategories, budgets, budgetTransactions } from "$lib/schema/budgets";
+import { payees } from "$lib/schema/payees";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { logger } from "$lib/server/shared/logging";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 export interface BudgetSuggestion {
   budgetId: number;
@@ -76,7 +76,7 @@ export class BudgetIntelligenceService {
       // Note: Smart fallback removed - only suggest budgets with meaningful relationships
       return this.deduplicateAndSort(suggestions);
     } catch (error) {
-      logger.error("Error detecting budgets for transaction", {error, params});
+      logger.error("Error detecting budgets for transaction", { error, params });
       return [];
     }
   }
@@ -108,7 +108,7 @@ export class BudgetIntelligenceService {
         };
       }
     } catch (error) {
-      logger.warn("Error detecting payee default budget", {error, payeeId});
+      logger.warn("Error detecting payee default budget", { error, payeeId });
     }
 
     return null;
@@ -137,7 +137,7 @@ export class BudgetIntelligenceService {
         reasonText: "Budget linked to transaction category",
       }));
     } catch (error) {
-      logger.warn("Error detecting category-linked budgets", {error, categoryId});
+      logger.warn("Error detecting category-linked budgets", { error, categoryId });
       return [];
     }
   }
@@ -165,7 +165,7 @@ export class BudgetIntelligenceService {
         reasonText: "Account-level budget",
       }));
     } catch (error) {
-      logger.warn("Error detecting account-scope budgets", {error, accountId});
+      logger.warn("Error detecting account-scope budgets", { error, accountId });
       return [];
     }
   }
@@ -182,10 +182,10 @@ export class BudgetIntelligenceService {
 
     try {
       // Get workspace for this account to ensure we only look at same-workspace transactions
-      const {accounts} = await import("$lib/schema/accounts");
+      const { accounts } = await import("$lib/schema/accounts");
       const account = await db.query.accounts.findFirst({
         where: eq(accounts.id, accountId),
-        columns: {workspaceId: true},
+        columns: { workspaceId: true },
       });
 
       if (!account) return null;
@@ -225,7 +225,7 @@ export class BudgetIntelligenceService {
         );
 
       // Count budget occurrences
-      const budgetCounts = new Map<number, {name: string; count: number}>();
+      const budgetCounts = new Map<number, { name: string; count: number }>();
       for (const allocation of allocations) {
         const current = budgetCounts.get(allocation.budgetId) || {
           name: allocation.budgetName,
@@ -236,10 +236,10 @@ export class BudgetIntelligenceService {
       }
 
       // Find budget with highest occurrence
-      let maxBudget: {id: number; name: string; count: number} | null = null;
-      for (const [budgetId, {name, count}] of budgetCounts.entries()) {
+      let maxBudget: { id: number; name: string; count: number } | null = null;
+      for (const [budgetId, { name, count }] of budgetCounts.entries()) {
         if (!maxBudget || count > maxBudget.count) {
-          maxBudget = {id: budgetId, name, count};
+          maxBudget = { id: budgetId, name, count };
         }
       }
 
@@ -258,7 +258,7 @@ export class BudgetIntelligenceService {
         };
       }
     } catch (error) {
-      logger.warn("Error detecting historical pattern budget", {error, payeeId, categoryId});
+      logger.warn("Error detecting historical pattern budget", { error, payeeId, categoryId });
     }
 
     return null;
@@ -431,7 +431,7 @@ export class BudgetIntelligenceService {
         lastUsedDate: r.lastUsedDate,
       }));
     } catch (error) {
-      logger.warn("Error getting budget usage patterns for payee", {error, payeeId});
+      logger.warn("Error getting budget usage patterns for payee", { error, payeeId });
       return [];
     }
   }

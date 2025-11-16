@@ -166,7 +166,7 @@ Example:
     onclick?: (data: TData) => void;
   }
 
-  let {data, onclick}: Props = $props();
+  let { data, onclick }: Props = $props();
 </script>
 
 <Card.Root

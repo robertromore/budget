@@ -1,12 +1,12 @@
 <script lang="ts">
-import {buttonVariants} from '$lib/components/ui/button/index.js';
+import { buttonVariants } from '$lib/components/ui/button/index.js';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 import {
   AccountsState,
   type AccountSortField,
   type SortDirection,
 } from '$lib/states/entities/accounts.svelte';
-import {cn} from '$lib/utils';
+import { cn } from '$lib/utils';
 import ArrowDown from '@lucide/svelte/icons/arrow-down';
 import ArrowUp from '@lucide/svelte/icons/arrow-up';
 import Check from '@lucide/svelte/icons/check';
@@ -23,12 +23,12 @@ const accountsState = $derived(AccountsState.get());
 const currentSortField = $derived(accountsState.sortField);
 const currentSortDirection = $derived(accountsState.sortDirection);
 
-const sortOptions: {field: AccountSortField; label: string; description: string}[] = [
-  {field: 'name', label: 'Name', description: 'Sort by account name'},
-  {field: 'balance', label: 'Balance', description: 'Sort by account balance'},
-  {field: 'dateOpened', label: 'Date Opened', description: 'Sort by when account was opened'},
-  {field: 'status', label: 'Status', description: 'Sort by active/closed status'},
-  {field: 'createdAt', label: 'Date Created', description: 'Sort by creation date'},
+const sortOptions: { field: AccountSortField; label: string; description: string }[] = [
+  { field: 'name', label: 'Name', description: 'Sort by account name' },
+  { field: 'balance', label: 'Balance', description: 'Sort by account balance' },
+  { field: 'dateOpened', label: 'Date Opened', description: 'Sort by when account was opened' },
+  { field: 'status', label: 'Status', description: 'Sort by active/closed status' },
+  { field: 'createdAt', label: 'Date Created', description: 'Sort by creation date' },
 ];
 
 const getCurrentSortIcon = $derived.by(() => {
@@ -48,7 +48,7 @@ const getCurrentSortLabel = $derived.by(() => {
 <DropdownMenu.Root>
   <DropdownMenu.Trigger
     class={cn(
-      buttonVariants({variant, size}),
+      buttonVariants({ variant, size }),
       'data-[state=open]:bg-accent w-auto gap-1',
       size === 'icon' ? 'size-8' : 'px-2'
     )}

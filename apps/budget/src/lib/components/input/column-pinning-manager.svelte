@@ -18,7 +18,7 @@ interface Props {
   onUpdate: (newPinning: string[]) => void;
 }
 
-let {label, pinnedColumns, availableColumns, onUpdate}: Props = $props();
+let { label, pinnedColumns, availableColumns, onUpdate }: Props = $props();
 
 let draggedIndex = $state<number | null>(null);
 let addColumnOpen = $state(false);
@@ -165,7 +165,7 @@ const handleDragEnd = () => {
   {#if unpinnedColumns.length > 0}
     <Popover.Root bind:open={addColumnOpen}>
       <Popover.Trigger>
-        {#snippet child({props})}
+        {#snippet child({ props })}
           <Button variant="outline" size="sm" class="w-full" {...props}>
             <Plus class="mr-2 size-4" />
             Add Column

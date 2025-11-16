@@ -1,9 +1,9 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
-import type {PageData} from '../$types';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
+import type { PageData } from '../$types';
 
 // Icons
 import Settings from '@lucide/svelte/icons/settings';

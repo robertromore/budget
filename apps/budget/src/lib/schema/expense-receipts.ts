@@ -1,9 +1,9 @@
-import {sqliteTable, integer, text, index} from "drizzle-orm/sqlite-core";
-import {sql} from "drizzle-orm";
-import {createId} from "@paralleldrive/cuid2";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {z} from "zod/v4";
-import {medicalExpenses} from "./medical-expenses";
+import { sqliteTable, integer, text, index } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod/v4";
+import { medicalExpenses } from "./medical-expenses";
 
 export const receiptTypeEnum = {
   receipt: "Receipt",
@@ -40,15 +40,15 @@ export const MAX_RECEIPT_SIZE = 10 * 1024 * 1024; // 10MB
 export const expenseReceipts = sqliteTable(
   "expense_receipt",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     cuid: text("cuid").$defaultFn(() => createId()),
 
     medicalExpenseId: integer("medical_expense_id")
-      .references(() => medicalExpenses.id, {onDelete: "restrict"})
+      .references(() => medicalExpenses.id, { onDelete: "restrict" })
       .notNull(),
 
     // File metadata
-    receiptType: text("receipt_type", {enum: receiptTypeKeys}).default("receipt"),
+    receiptType: text("receipt_type", { enum: receiptTypeKeys }).default("receipt"),
     fileName: text("file_name").notNull(),
     fileSize: integer("file_size").notNull(), // Size in bytes
     mimeType: text("mime_type").notNull(), // image/jpeg, image/png, application/pdf

@@ -1,4 +1,4 @@
-import {z} from "zod";
+import { z } from "zod";
 
 // Superform-compatible schemas for schedules (not using drizzle-zod)
 export const superformInsertScheduleSchema = z.object({

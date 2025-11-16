@@ -3,7 +3,7 @@
  * Runs automatically when users load the app - no external dependencies required
  */
 
-import {trpc} from "$lib/trpc/client";
+import { trpc } from "$lib/trpc/client";
 
 class AutoScheduler {
   private static readonly STORAGE_KEY = "budget-app-last-auto-add-run";
@@ -130,7 +130,7 @@ class AutoScheduler {
   /**
    * Get status information
    */
-  getStatus(): {lastRun: string | null; shouldRunToday: boolean} {
+  getStatus(): { lastRun: string | null; shouldRunToday: boolean } {
     const lastRun = this.getLastRunDate();
     const today = this.getTodayString();
     return {

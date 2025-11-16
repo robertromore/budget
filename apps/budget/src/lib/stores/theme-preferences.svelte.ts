@@ -1,6 +1,6 @@
-import {browser} from "$app/environment";
-import {getThemePreset, type ThemePreset} from "$lib/config/theme-presets";
-import {getLuminance, hexToOKLCH} from "$lib/utils/colors";
+import { browser } from "$app/environment";
+import { getThemePreset, type ThemePreset } from "$lib/config/theme-presets";
+import { getLuminance, hexToOKLCH } from "$lib/utils/colors";
 
 const STORAGE_KEY = "theme-preference";
 

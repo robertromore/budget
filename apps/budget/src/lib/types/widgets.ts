@@ -10,7 +10,7 @@ import {
   TrendingUp,
   Zap,
 } from "$lib/components/icons";
-import type {Component} from "svelte";
+import type { Component } from "svelte";
 
 export interface WidgetConfig {
   id: string;
@@ -95,7 +95,7 @@ export const DEFAULT_WIDGETS: WidgetConfig[] = [
     enabled: true,
     position: 3,
     size: "small",
-    settings: {days: 30},
+    settings: { days: 30 },
   },
   {
     id: "pending-balance",
@@ -147,7 +147,7 @@ export const WIDGET_DEFINITIONS: Record<WidgetType, WidgetDefinition> = {
     icon: Zap,
     defaultSize: "small",
     availableSizes: ["small", "medium"],
-    defaultSettings: {days: 30},
+    defaultSettings: { days: 30 },
     configurable: true,
   },
   "pending-balance": {
@@ -167,7 +167,7 @@ export const WIDGET_DEFINITIONS: Record<WidgetType, WidgetDefinition> = {
     icon: Tag,
     defaultSize: "medium",
     availableSizes: ["medium", "large"],
-    defaultSettings: {limit: 5, period: "month"},
+    defaultSettings: { limit: 5, period: "month" },
     configurable: true,
   },
   "spending-trend": {
@@ -177,7 +177,7 @@ export const WIDGET_DEFINITIONS: Record<WidgetType, WidgetDefinition> = {
     icon: TrendingDown,
     defaultSize: "large",
     availableSizes: ["medium", "large"],
-    defaultSettings: {period: "month", showAverage: true},
+    defaultSettings: { period: "month", showAverage: true },
     configurable: true,
   },
   "monthly-comparison": {
@@ -187,7 +187,7 @@ export const WIDGET_DEFINITIONS: Record<WidgetType, WidgetDefinition> = {
     icon: Calendar,
     defaultSize: "medium",
     availableSizes: ["medium", "large"],
-    defaultSettings: {compareMonths: 3},
+    defaultSettings: { compareMonths: 3 },
     configurable: true,
   },
   "account-health": {
@@ -207,7 +207,7 @@ export const WIDGET_DEFINITIONS: Record<WidgetType, WidgetDefinition> = {
     icon: Zap,
     defaultSize: "large",
     availableSizes: ["medium", "large"],
-    defaultSettings: {metrics: ["avgTransaction", "highestExpense", "lastActivity"]},
+    defaultSettings: { metrics: ["avgTransaction", "highestExpense", "lastActivity"] },
     configurable: true,
   },
 };

@@ -1,5 +1,5 @@
-import type {DateValue} from "@internationalized/date";
-import {CalendarDate} from "@internationalized/date";
+import type { DateValue } from "@internationalized/date";
+import { CalendarDate } from "@internationalized/date";
 
 /**
  * US Federal Holidays utility
@@ -43,10 +43,10 @@ function getNthWeekdayOfMonth(
   // Find the first occurrence of the target weekday
   let currentWeekday = date.toDate("UTC").getDay();
   let daysToAdd = (weekday - currentWeekday + 7) % 7;
-  date = date.add({days: daysToAdd});
+  date = date.add({ days: daysToAdd });
 
   // Add weeks to get to the nth occurrence
-  date = date.add({weeks: n - 1});
+  date = date.add({ weeks: n - 1 });
 
   return date;
 }
@@ -59,12 +59,12 @@ function getNthWeekdayOfMonth(
  */
 function getLastWeekdayOfMonth(year: number, month: number, weekday: number): CalendarDate {
   // Start with the last day of the month
-  let date = new CalendarDate(year, month, 1).add({months: 1}).subtract({days: 1});
+  let date = new CalendarDate(year, month, 1).add({ months: 1 }).subtract({ days: 1 });
 
   // Walk backwards until we find the target weekday
   let currentWeekday = date.toDate("UTC").getDay();
   let daysToSubtract = (currentWeekday - weekday + 7) % 7;
-  date = date.subtract({days: daysToSubtract});
+  date = date.subtract({ days: daysToSubtract });
 
   return date;
 }
@@ -118,8 +118,8 @@ export function getHolidayName(date: DateValue): string | null {
 export function getHolidaysInRange(
   start: DateValue,
   end: DateValue
-): Array<{name: string; date: CalendarDate}> {
-  const holidays: Array<{name: string; date: CalendarDate}> = [];
+): Array<{ name: string; date: CalendarDate }> {
+  const holidays: Array<{ name: string; date: CalendarDate }> = [];
 
   // Get holidays for all years in the range
   const startYear = start.year;
@@ -131,7 +131,7 @@ export function getHolidaysInRange(
     for (const [name, date] of yearHolidays.entries()) {
       // Check if holiday falls within the range
       if (date.compare(start) >= 0 && date.compare(end) <= 0) {
-        holidays.push({name, date});
+        holidays.push({ name, date });
       }
     }
   }

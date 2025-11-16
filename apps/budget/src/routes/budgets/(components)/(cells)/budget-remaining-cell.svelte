@@ -1,14 +1,14 @@
 <script lang="ts">
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import {formatCurrency} from '$lib/utils/formatters';
-import {calculateActualSpent} from '$lib/utils/budget-calculations';
-import {cn} from '$lib/utils';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { formatCurrency } from '$lib/utils/formatters';
+import { calculateActualSpent } from '$lib/utils/budget-calculations';
+import { cn } from '$lib/utils';
 
 interface Props {
   budget: BudgetWithRelations;
 }
 
-let {budget}: Props = $props();
+let { budget }: Props = $props();
 
 function getAllocated(budget: BudgetWithRelations): number {
   const templates = budget.periodTemplates ?? [];

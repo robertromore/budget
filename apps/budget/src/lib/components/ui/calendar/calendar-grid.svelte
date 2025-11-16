@@ -1,7 +1,11 @@
 <script lang="ts">
-import {Calendar as CalendarPrimitive} from 'bits-ui';
-import {cn} from '$lib/utils';
-let {ref = $bindable(null), class: className, ...restProps}: CalendarPrimitive.GridProps = $props();
+import { Calendar as CalendarPrimitive } from 'bits-ui';
+import { cn } from '$lib/utils';
+let {
+  ref = $bindable(null),
+  class: className,
+  ...restProps
+}: CalendarPrimitive.GridProps = $props();
 </script>
 
 <CalendarPrimitive.Grid

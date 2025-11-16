@@ -2,12 +2,12 @@
 import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
 import Pin from '@lucide/svelte/icons/pin';
 import PinOff from '@lucide/svelte/icons/pin-off';
-import type {Table} from '@tanstack/table-core';
-import {buttonVariants} from '$lib/components/ui/button';
+import type { Table } from '@tanstack/table-core';
+import { buttonVariants } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import {currentViews} from '$lib/states/views';
+import { currentViews } from '$lib/states/views';
 
-let {table}: {table: Table<TData>} = $props();
+let { table }: { table: Table<TData> } = $props();
 
 // Get context during component initialization
 const _currentViews = currentViews.get();

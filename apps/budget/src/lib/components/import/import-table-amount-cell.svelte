@@ -1,13 +1,13 @@
 <script lang="ts">
-import {formatCurrency} from '$lib/utils/formatters';
-import type {Row} from '@tanstack/table-core';
-import type {ImportRow} from '$lib/types/import';
+import { formatCurrency } from '$lib/utils/formatters';
+import type { Row } from '@tanstack/table-core';
+import type { ImportRow } from '$lib/types/import';
 
 interface Props {
   row: Row<ImportRow>;
 }
 
-let {row}: Props = $props();
+let { row }: Props = $props();
 
 const amount = $derived(row.original.normalizedData['amount']);
 const isNegative = $derived(amount < 0);

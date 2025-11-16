@@ -1,12 +1,12 @@
 <script lang="ts">
-import type {Component} from 'svelte';
+import type { Component } from 'svelte';
 
 interface Props {
   value: string;
   icon?: Component;
 }
 
-let {value, icon: Icon}: Props = $props();
+let { value, icon: Icon }: Props = $props();
 </script>
 
 <div class="flex items-center">

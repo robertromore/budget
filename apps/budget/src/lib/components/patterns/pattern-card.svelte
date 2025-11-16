@@ -1,16 +1,16 @@
 <script lang="ts">
-import type {DetectedPattern} from '$lib/schema/detected-patterns';
-import {Badge} from '$lib/components/ui/badge';
-import {Button} from '$lib/components/ui/button';
-import {Card, CardContent, CardHeader, CardTitle} from '$lib/components/ui/card';
+import type { DetectedPattern } from '$lib/schema/detected-patterns';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 import Calendar from '@lucide/svelte/icons/calendar';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Check from '@lucide/svelte/icons/check';
 import X from '@lucide/svelte/icons/x';
-import {convertPatternToSchedule, dismissPattern} from '$lib/query/patterns';
-import {formatCurrency} from '$lib/utils/formatters';
-import {parseISOString, formatDateDisplay} from '$lib/utils/dates';
+import { convertPatternToSchedule, dismissPattern } from '$lib/query/patterns';
+import { formatCurrency } from '$lib/utils/formatters';
+import { parseISOString, formatDateDisplay } from '$lib/utils/dates';
 
 interface PatternCardProps {
   pattern: DetectedPattern;
@@ -18,7 +18,7 @@ interface PatternCardProps {
   onDismiss?: (() => void) | undefined;
 }
 
-let {pattern, onConvert, onDismiss}: PatternCardProps = $props();
+let { pattern, onConvert, onDismiss }: PatternCardProps = $props();
 
 const convertMutation = convertPatternToSchedule.options();
 const dismissMutation = dismissPattern.options();
@@ -52,14 +52,14 @@ const patternTitle = $derived.by(() => {
 });
 
 async function handleConvert() {
-  const result = await convertMutation.mutateAsync({patternId: pattern.id});
+  const result = await convertMutation.mutateAsync({ patternId: pattern.id });
   if (result && onConvert) {
     onConvert(result);
   }
 }
 
 async function handleDismiss() {
-  await dismissMutation.mutateAsync({patternId: pattern.id});
+  await dismissMutation.mutateAsync({ patternId: pattern.id });
   if (onDismiss) {
     onDismiss();
   }

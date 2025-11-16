@@ -1,18 +1,18 @@
 <script lang="ts">
 import * as Popover from '$lib/components/ui/popover';
 import * as Select from '$lib/components/ui/select';
-import {Input} from '$lib/components/ui/input';
-import {Button, buttonVariants} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Search, X} from '@lucide/svelte/icons';
-import {ICON_CATEGORIES, searchIcons, getIconByName, type IconOption} from './icon-categories';
+import { Input } from '$lib/components/ui/input';
+import { Button, buttonVariants } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Search, X } from '@lucide/svelte/icons';
+import { ICON_CATEGORIES, searchIcons, getIconByName, type IconOption } from './icon-categories';
 
 interface Props {
   value?: string;
   placeholder?: string;
   disabled?: boolean;
   class?: string;
-  onchange?: (event: CustomEvent<{value: string; icon: IconOption | undefined}>) => void;
+  onchange?: (event: CustomEvent<{ value: string; icon: IconOption | undefined }>) => void;
 }
 
 let {
@@ -30,13 +30,13 @@ let selectedCategory = $state('Finance & Banking');
 // Get currently selected icon with safe rendering
 const selectedIconData = $derived.by(() => {
   if (!value || typeof value !== 'string' || value.trim() === '') {
-    return {hasIcon: false, name: '', component: null};
+    return { hasIcon: false, name: '', component: null };
   }
   const icon = getIconByName(value);
   if (!icon || !icon.icon || typeof icon.icon !== 'function') {
-    return {hasIcon: false, name: '', component: null};
+    return { hasIcon: false, name: '', component: null };
   }
-  return {hasIcon: true, name: icon.name, component: icon.icon};
+  return { hasIcon: true, name: icon.name, component: icon.icon };
 });
 
 // Filter icons based on search
@@ -51,14 +51,14 @@ const filteredIcons = $derived(() => {
 
 function handleIconSelect(iconName: string) {
   const icon = getIconByName(iconName);
-  const event = new CustomEvent('change', {detail: {value: iconName, icon}});
+  const event = new CustomEvent('change', { detail: { value: iconName, icon } });
   onchange?.(event);
   open = false;
   searchQuery = '';
 }
 
 function handleClear() {
-  const event = new CustomEvent('change', {detail: {value: '', icon: undefined}});
+  const event = new CustomEvent('change', { detail: { value: '', icon: undefined } });
   onchange?.(event);
   open = false;
   searchQuery = '';
@@ -78,7 +78,7 @@ function handleKeydown(event: KeyboardEvent, iconName: string) {
 </script>
 
 <Popover.Root bind:open>
-  <Popover.Trigger class={buttonVariants({variant: 'outline'})}>
+  <Popover.Trigger class={buttonVariants({ variant: 'outline' })}>
     <div class="flex items-center gap-2">
       {#if selectedIconData.hasIcon}
         <selectedIconData.component class="h-4 w-4" />

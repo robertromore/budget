@@ -1,5 +1,5 @@
 <script lang="ts">
-import {SheetPayeeSelector} from '$lib/components/payees/advanced-payee-selector';
+import { SheetPayeeSelector } from '$lib/components/payees/advanced-payee-selector';
 
 let {
   value,

@@ -1,4 +1,4 @@
-import {Config, defineConfig} from "drizzle-kit";
+import { Config, defineConfig } from "drizzle-kit";
 
 // Read DATABASE_URL from environment, fallback to default path
 const databaseUrl = process.env.DATABASE_URL || "./drizzle/db/sqlite.db";

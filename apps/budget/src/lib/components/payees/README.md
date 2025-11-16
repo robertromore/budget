@@ -23,7 +23,7 @@ details.
 
 ```svelte
 <script>
-  import {ManagePayeeForm} from '$lib/components/payees';
+  import { ManagePayeeForm } from '$lib/components/payees';
 
   function handlePayeeSaved(payee) {
     console.log('Payee saved:', payee);
@@ -71,7 +71,7 @@ details.
 
 ```svelte
 <script>
-  import {PayeeSelector} from '$lib/components/payees';
+  import { PayeeSelector } from '$lib/components/payees';
 
   let selectedPayeeId = $state(null);
 
@@ -140,7 +140,7 @@ Comprehensive analytics dashboard with ML insights and performance metrics.
 
 ```svelte
 <script>
-  import {PayeeAnalyticsDashboard} from '$lib/components/payees';
+  import { PayeeAnalyticsDashboard } from '$lib/components/payees';
 </script>
 
 <!-- Individual payee analytics -->

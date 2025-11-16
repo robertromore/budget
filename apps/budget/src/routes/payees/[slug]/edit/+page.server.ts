@@ -1,21 +1,21 @@
-import {redirect, fail} from "@sveltejs/kit";
-import {removePayeeSchema} from "$lib/schema";
-import {superformInsertPayeeSchema} from "$lib/schema/superforms";
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import {superValidate} from "sveltekit-superforms/client";
-import {zod4} from "sveltekit-superforms/adapters";
-import type {Actions} from "@sveltejs/kit";
+import { redirect, fail } from "@sveltejs/kit";
+import { removePayeeSchema } from "$lib/schema";
+import { superformInsertPayeeSchema } from "$lib/schema/superforms";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
+import { superValidate } from "sveltekit-superforms/client";
+import { zod4 } from "sveltekit-superforms/adapters";
+import type { Actions } from "@sveltejs/kit";
 
 export const load = async (event: any) => {
-  const {params} = event;
+  const { params } = event;
   const slug = params.slug;
 
   if (!slug) {
     throw redirect(303, "/payees");
   }
 
-  const payee = await createCaller(await createContext(event)).payeeRoutes.getBySlug({slug});
+  const payee = await createCaller(await createContext(event)).payeeRoutes.getBySlug({ slug });
 
   return {
     payee,
@@ -27,7 +27,7 @@ export const load = async (event: any) => {
 
 export const actions: Actions = {
   "save-payee": async (event) => {
-    const {request} = event;
+    const { request } = event;
     const form = await superValidate(request, zod4(superformInsertPayeeSchema));
     if (!form.valid) {
       return fail(400, {
@@ -42,7 +42,7 @@ export const actions: Actions = {
     };
   },
   "delete-payee": async (event) => {
-    const {request} = event;
+    const { request } = event;
     const form = await superValidate(request, zod4(removePayeeSchema));
     if (!form.valid) {
       return fail(400, {

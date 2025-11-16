@@ -5,7 +5,7 @@ interface Props {
   recommendation: BudgetRecommendationWithRelations;
 }
 
-let {recommendation}: Props = $props();
+let { recommendation }: Props = $props();
 </script>
 
 <div class="space-y-1">

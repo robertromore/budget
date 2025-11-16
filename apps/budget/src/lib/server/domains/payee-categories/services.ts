@@ -1,7 +1,7 @@
-import type {PayeeCategory} from "$lib/schema/payee-categories";
-import {ConflictError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {defaultPayeeCategories} from "./default-payee-categories";
+import type { PayeeCategory } from "$lib/schema/payee-categories";
+import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { defaultPayeeCategories } from "./default-payee-categories";
 import {
   PayeeCategoryRepository,
   type PayeeCategoryWithCounts,
@@ -247,7 +247,7 @@ export class PayeeCategoryService {
    * Reorder payee categories
    */
   async reorderCategories(
-    updates: Array<{id: number; displayOrder: number}>,
+    updates: Array<{ id: number; displayOrder: number }>,
     workspaceId: number
   ): Promise<void> {
     // Validate all categories exist
@@ -319,7 +319,7 @@ export class PayeeCategoryService {
       }
     }
 
-    return {created, skipped, errors};
+    return { created, skipped, errors };
   }
 
   /**

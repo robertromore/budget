@@ -1,11 +1,11 @@
 <script lang="ts">
-import type {EditableEntityItem} from '$lib/types';
-import {EntityInput} from '$lib/components/input';
-import type {Component as ComponentType} from 'svelte';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import type { EditableEntityItem } from '$lib/types';
+import { EntityInput } from '$lib/components/input';
+import type { Component as ComponentType } from 'svelte';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import Tag from '@lucide/svelte/icons/tag';
-import type {Category} from '$lib/schema';
-import {cn} from '$lib/utils';
+import type { Category } from '$lib/schema';
+import { cn } from '$lib/utils';
 
 let {
   value,
@@ -35,7 +35,7 @@ const handleSubmit = (entity?: EditableEntityItem) => {
 // Get category-specific icon and color
 const categoryData = $derived.by(() => {
   const category = value as Category | undefined;
-  if (!category) return {icon: Tag, color: null};
+  if (!category) return { icon: Tag, color: null };
 
   const iconData = category.categoryIcon ? getIconByName(category.categoryIcon) : null;
   const IconComponent = iconData?.icon || Tag;

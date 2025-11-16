@@ -5,7 +5,11 @@ import * as Dialog from '$lib/components/ui/dialog';
 import { Label } from '$lib/components/ui/label';
 import * as Separator from '$lib/components/ui/separator';
 import type { Account } from '$lib/schema/accounts';
-import { AVAILABLE_METRICS, getEnabledMetrics, type MetricId } from '$lib/utils/credit-card-metrics';
+import {
+  AVAILABLE_METRICS,
+  getEnabledMetrics,
+  type MetricId,
+} from '$lib/utils/credit-card-metrics';
 import Calendar from '@lucide/svelte/icons/calendar';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
@@ -19,7 +23,7 @@ interface Props {
   onSave?: (enabledMetrics: MetricId[]) => void;
 }
 
-let {account, open = $bindable(false), onOpenChange, onSave}: Props = $props();
+let { account, open = $bindable(false), onOpenChange, onSave }: Props = $props();
 
 // Initialize selected metrics from account or defaults
 let selectedMetrics = $state<Set<MetricId>>(new Set(getEnabledMetrics(account)));

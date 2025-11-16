@@ -1,8 +1,8 @@
 <script lang="ts">
-import {Checkbox as CheckboxPrimitive, type WithoutChildrenOrChild} from 'bits-ui';
+import { Checkbox as CheckboxPrimitive, type WithoutChildrenOrChild } from 'bits-ui';
 import Check from '@lucide/svelte/icons/check';
 import Minus from '@lucide/svelte/icons/minus';
-import {cn} from '$lib/utils';
+import { cn } from '$lib/utils';
 
 let {
   ref = $bindable(null),
@@ -22,7 +22,7 @@ let {
   bind:ref
   bind:indeterminate
   {...restProps}>
-  {#snippet children({checked, indeterminate})}
+  {#snippet children({ checked, indeterminate })}
     <span class="flex items-center justify-center text-current">
       {#if indeterminate}
         <Minus class="size-4" />

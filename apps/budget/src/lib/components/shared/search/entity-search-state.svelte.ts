@@ -3,7 +3,7 @@
  * Reusable search state management for entity overview pages
  */
 
-import {countActiveFilters} from "$lib/utils/search";
+import { countActiveFilters } from "$lib/utils/search";
 
 export type ViewMode = "list" | "grid";
 export type SortOrder = "asc" | "desc";
@@ -48,11 +48,11 @@ export class EntitySearchState<
 
   // Filter methods
   updateFilters(newFilters: Partial<TFilters>): void {
-    this.filters = {...this.filters, ...newFilters};
+    this.filters = { ...this.filters, ...newFilters };
   }
 
   updateFilter<K extends keyof TFilters>(key: K, value: TFilters[K]): void {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
 
     if (value === undefined || value === null || value === "") {
       delete newFilters[key];
@@ -107,7 +107,7 @@ export class EntitySearchState<
     return countActiveFilters(this.filters);
   }
 
-  getSearchParams(): {query: string; filters: TFilters} {
+  getSearchParams(): { query: string; filters: TFilters } {
     return {
       query: this.query,
       filters: this.filters,

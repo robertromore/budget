@@ -1,10 +1,10 @@
 <script lang="ts">
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-import {buttonVariants} from '$lib/components/ui/button/index.js';
+import { buttonVariants } from '$lib/components/ui/button/index.js';
 import ListFilterPlus from '@lucide/svelte/icons/list-filter-plus';
-import {cn} from '$lib/utils';
-import type {FilterInputOption, TransactionsFormat, ViewFilter} from '$lib/types';
-import {currentViews} from '$lib/states/views';
+import { cn } from '$lib/utils';
+import type { FilterInputOption, TransactionsFormat, ViewFilter } from '$lib/types';
+import { currentViews } from '$lib/states/views';
 
 let {
   value = $bindable(),
@@ -36,13 +36,13 @@ let selectableFilters = $derived(
 <div class="flex gap-2">
   {#each _selectedFilters as filter}
     {#if filter}
-      {@const {component: Component, props} = filter.component()}
+      {@const { component: Component, props } = filter.component()}
       <Component {...props}></Component>
     {/if}
   {/each}
 
   <DropdownMenu.Root>
-    <DropdownMenu.Trigger class={cn(buttonVariants({variant: 'outline'}), 'h-8')}>
+    <DropdownMenu.Trigger class={cn(buttonVariants({ variant: 'outline' }), 'h-8')}>
       <ListFilterPlus />
       Filter
     </DropdownMenu.Trigger>

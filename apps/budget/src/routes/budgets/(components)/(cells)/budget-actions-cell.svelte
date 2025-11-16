@@ -1,6 +1,6 @@
 <script lang="ts">
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import {Button} from '$lib/components/ui/button';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import MoreVertical from '@lucide/svelte/icons/ellipsis-vertical';
 import ChartBar from '@lucide/svelte/icons/chart-bar';
@@ -18,12 +18,12 @@ interface Props {
   onDelete: (budget: BudgetWithRelations) => void;
 }
 
-let {budget, onView, onEdit, onDuplicate, onArchive, onDelete}: Props = $props();
+let { budget, onView, onEdit, onDuplicate, onArchive, onDelete }: Props = $props();
 </script>
 
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>
-    {#snippet child({props})}
+    {#snippet child({ props })}
       <Button variant="ghost" size="icon" class="h-8 w-8 p-0" {...props}>
         <MoreVertical class="h-4 w-4" />
         <span class="sr-only">Open menu</span>

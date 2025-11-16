@@ -1,12 +1,12 @@
 <script lang="ts">
-import {Label} from '$lib/components/ui/label';
+import { Label } from '$lib/components/ui/label';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import Check from '@lucide/svelte/icons/check';
 import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
-import {medicalExpenseCategories} from '$lib/schema/medical-expenses';
-import {cn} from '$lib/utils';
+import { medicalExpenseCategories } from '$lib/schema/medical-expenses';
+import { cn } from '$lib/utils';
 
 interface Props {
   value: string;
@@ -15,7 +15,7 @@ interface Props {
   buttonClass?: string;
 }
 
-let {value = $bindable(), onValueChange, disabled = false, buttonClass}: Props = $props();
+let { value = $bindable(), onValueChange, disabled = false, buttonClass }: Props = $props();
 
 let open = $state(false);
 let searchQuery = $state('');
@@ -37,7 +37,7 @@ const filteredCategories = $derived.by(() => {
   }
 
   const query = searchQuery.toLowerCase();
-  const filtered: Record<string, Array<{key: string; label: string}>> = {};
+  const filtered: Record<string, Array<{ key: string; label: string }>> = {};
 
   Object.entries(medicalExpenseCategories).forEach(([category, items]) => {
     const matchingItems = items.filter(
@@ -71,7 +71,7 @@ const selectedLabel = $derived(
   <Label for="expense-type">Expense Type *</Label>
   <Popover.Root bind:open>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button
           {...props}
           variant="outline"

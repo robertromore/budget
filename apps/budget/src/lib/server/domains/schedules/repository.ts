@@ -1,13 +1,13 @@
-import {db} from "$lib/server/db";
-import {schedules, transactions} from "$lib/schema";
-import {eq, and} from "drizzle-orm";
-import type {Schedule} from "$lib/schema/schedules";
-import type {NewTransaction} from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { schedules, transactions } from "$lib/schema";
+import { eq, and } from "drizzle-orm";
+import type { Schedule } from "$lib/schema/schedules";
+import type { NewTransaction } from "$lib/schema/transactions";
 
 export interface ScheduleWithDetails extends Schedule {
-  account: {id: number; name: string | null};
-  payee: {id: number; name: string | null};
-  category: {id: number; name: string | null} | null;
+  account: { id: number; name: string | null };
+  payee: { id: number; name: string | null };
+  category: { id: number; name: string | null } | null;
   scheduleDate: {
     id: number;
     start: string;
@@ -100,7 +100,7 @@ export class ScheduleRepository {
   async getRecentTransactionsForSchedule(scheduleId: number, limit: number = 5) {
     return await db.query.transactions.findMany({
       where: eq(transactions.scheduleId, scheduleId),
-      orderBy: (transactions, {desc}) => [desc(transactions.date)],
+      orderBy: (transactions, { desc }) => [desc(transactions.date)],
       limit,
     });
   }

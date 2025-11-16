@@ -1,9 +1,9 @@
 <script lang="ts">
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
-import {Badge} from '$lib/components/ui/badge';
-import type {TransactionsFormat} from '$lib/types';
+import { Badge } from '$lib/components/ui/badge';
+import type { TransactionsFormat } from '$lib/types';
 
-let {transaction} = $props<{transaction: TransactionsFormat}>();
+let { transaction } = $props<{ transaction: TransactionsFormat }>();
 
 const isTransfer = $derived((transaction as any).isTransfer === true);
 const transferAccountId = $derived((transaction as any).transferAccountId);

@@ -2,12 +2,12 @@
 import * as Card from '$lib/components/ui/card';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as Alert from '$lib/components/ui/alert';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
 
-import {PayeeBulkOperationsState} from '$lib/states/ui/payee-bulk-operations.svelte';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
+import { PayeeBulkOperationsState } from '$lib/states/ui/payee-bulk-operations.svelte';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
 
 // Import all bulk operations components
 import PayeeListWithSelection from '../bulk-operations/payee-list-with-selection.svelte';

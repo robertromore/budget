@@ -1,7 +1,7 @@
-import type {Account} from "$lib/schema/accounts";
-import {trpc} from "$lib/trpc/client";
-import {cachePatterns, queryPresets} from "./_client";
-import {createQueryKeys, defineMutation, defineQuery} from "./_factory";
+import type { Account } from "$lib/schema/accounts";
+import { trpc } from "$lib/trpc/client";
+import { cachePatterns, queryPresets } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 export const accountKeys = createQueryKeys("accounts", {
   lists: () => ["accounts", "list"] as const,
@@ -30,8 +30,8 @@ export const getAccountDetail = (idOrSlug: number | string) =>
         : accountKeys.detailBySlug(idOrSlug),
     queryFn: () =>
       (typeof idOrSlug === "number"
-        ? trpc().accountRoutes.load.query({id: idOrSlug})
-        : trpc().accountRoutes.getBySlug.query({slug: idOrSlug})) as Promise<Account>,
+        ? trpc().accountRoutes.load.query({ id: idOrSlug })
+        : trpc().accountRoutes.getBySlug.query({ slug: idOrSlug })) as Promise<Account>,
     options: {
       staleTime: 60 * 1000,
     },
@@ -58,7 +58,7 @@ export const getDefaultAccountsStatus = () =>
     queryFn: () => trpc().accountRoutes.defaultAccountsStatus.query(),
   });
 
-export const seedDefaultAccounts = defineMutation<{slugs: string[]}, Account[]>({
+export const seedDefaultAccounts = defineMutation<{ slugs: string[] }, Account[]>({
   mutationFn: (input) =>
     trpc().accountRoutes.seedDefaultAccounts.mutate(input) as Promise<Account[]>,
   onSuccess: () => {
@@ -74,7 +74,7 @@ export const seedDefaultAccounts = defineMutation<{slugs: string[]}, Account[]>(
   errorMessage: "Failed to add default accounts",
 });
 
-export const deleteAccount = defineMutation<{id: number}, any>({
+export const deleteAccount = defineMutation<{ id: number }, any>({
   mutationFn: async (input) => {
     await trpc().accountRoutes.remove.mutate(input);
   },

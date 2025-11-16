@@ -1,10 +1,10 @@
-import {TRPCError} from "@trpc/server";
-import {initTRPC} from "@trpc/server";
-import type {Context} from "$lib/trpc";
-import {RATE_LIMIT} from "$lib/constants/api";
+import { TRPCError } from "@trpc/server";
+import { initTRPC } from "@trpc/server";
+import type { Context } from "$lib/trpc";
+import { RATE_LIMIT } from "$lib/constants/api";
 
 // Simple in-memory rate limiter - in production, use Redis or similar
-const rateLimitStore = new Map<string, {count: number; resetTime: number}>();
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 interface RateLimitOptions {
   windowMs: number;
@@ -26,17 +26,17 @@ const t = initTRPC.context<Context>().create();
  * @param options - Configuration options for rate limiting
  */
 export const rateLimit = (options: RateLimitOptions) => {
-  const {windowMs, maxRequests, keyGenerator = defaultKeyGenerator} = options;
+  const { windowMs, maxRequests, keyGenerator = defaultKeyGenerator } = options;
 
-  return t.middleware(async ({ctx, next, type}) => {
+  return t.middleware(async ({ ctx, next, type }) => {
     // Skip rate limiting for tests
     if ((ctx as any).isTest) {
-      return next({ctx});
+      return next({ ctx });
     }
 
     // Only apply rate limiting to mutations
     if (type !== "mutation") {
-      return next({ctx});
+      return next({ ctx });
     }
 
     const key = keyGenerator(ctx);
@@ -53,7 +53,7 @@ export const rateLimit = (options: RateLimitOptions) => {
 
     if (!rateData || rateData.resetTime < now) {
       // Create new window
-      rateData = {count: 1, resetTime: now + windowMs};
+      rateData = { count: 1, resetTime: now + windowMs };
       rateLimitStore.set(key, rateData);
     } else {
       // Increment count in current window
@@ -68,7 +68,7 @@ export const rateLimit = (options: RateLimitOptions) => {
       });
     }
 
-    return next({ctx});
+    return next({ ctx });
   });
 };
 

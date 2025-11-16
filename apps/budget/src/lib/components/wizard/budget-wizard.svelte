@@ -1,10 +1,10 @@
 <script lang="ts">
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Label} from '$lib/components/ui/label';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Label } from '$lib/components/ui/label';
 import * as Card from '$lib/components/ui/card';
 import * as Select from '$lib/components/ui/select';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import {
   Target,
   DollarSign,
@@ -21,11 +21,14 @@ import {
 } from '@lucide/svelte/icons';
 import WizardStep from './wizard-step.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
-import {budgetWizardStore, type WizardStep as WizardStepType} from '$lib/stores/wizardStore.svelte';
-import {createBudgetValidationEngine} from '$lib/utils/wizardValidation';
-import type {CreateBudgetRequest} from '$lib/server/domains/budgets/services';
-import type {Account} from '$lib/schema/accounts';
-import type {Category} from '$lib/schema/categories';
+import {
+  budgetWizardStore,
+  type WizardStep as WizardStepType,
+} from '$lib/stores/wizardStore.svelte';
+import { createBudgetValidationEngine } from '$lib/utils/wizardValidation';
+import type { CreateBudgetRequest } from '$lib/server/domains/budgets/services';
+import type { Account } from '$lib/schema/accounts';
+import type { Category } from '$lib/schema/categories';
 import {
   budgetTypes,
   budgetEnforcementLevels,
@@ -35,7 +38,7 @@ import {
   type PeriodTemplateType,
   type BudgetMetadata,
 } from '$lib/schema/budgets';
-import {createTransformAccessors} from '$lib/utils/bind-helpers';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
 interface Props {
   initialData?: Partial<CreateBudgetRequest>;
@@ -44,7 +47,7 @@ interface Props {
   onComplete?: (data: CreateBudgetRequest) => void;
 }
 
-let {initialData = {}, accounts = [], categories = [], onComplete}: Props = $props();
+let { initialData = {}, accounts = [], categories = [], onComplete }: Props = $props();
 
 // Local state for form fields that need binding
 let allocatedAmount = $state(initialData?.metadata?.allocatedAmount || 0);

@@ -1,5 +1,5 @@
 <script lang="ts">
-import {Skeleton} from '$lib/components/ui/skeleton';
+import { Skeleton } from '$lib/components/ui/skeleton';
 import * as Table from '$lib/components/ui/table';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   columns?: number;
 }
 
-let {rows = 10, columns = 8}: Props = $props();
+let { rows = 10, columns = 8 }: Props = $props();
 </script>
 
 <div class="space-y-4">

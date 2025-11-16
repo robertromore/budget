@@ -1,7 +1,7 @@
 <script lang="ts">
-import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
-import type {Table} from '@tanstack/table-core';
-import {Button} from '$lib/components/ui/button';
+import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
+import type { Table } from '@tanstack/table-core';
+import { Button } from '$lib/components/ui/button';
 import Check from '@lucide/svelte/icons/check';
 import X from '@lucide/svelte/icons/x';
 import XIcon from '@lucide/svelte/icons/x';
@@ -12,7 +12,7 @@ interface Props {
   onBulkDismiss: (recommendations: BudgetRecommendationWithRelations[]) => void;
 }
 
-let {table, onBulkApply, onBulkDismiss}: Props = $props();
+let { table, onBulkApply, onBulkDismiss }: Props = $props();
 
 const selectedRows = $derived(table.getSelectedRowModel().rows);
 const selectedCount = $derived(selectedRows.length);

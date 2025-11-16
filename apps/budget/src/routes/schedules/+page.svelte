@@ -1,18 +1,18 @@
 <script lang="ts">
-import {Button, buttonVariants} from '$lib/components/ui/button';
+import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Empty from '$lib/components/ui/empty';
 import Plus from '@lucide/svelte/icons/plus';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Sparkles from '@lucide/svelte/icons/sparkles';
-import type {Schedule} from '$lib/schema/schedules';
-import {SchedulesState} from '$lib/states/entities';
-import {scheduleSearchState} from '$lib/states/ui/schedule-search.svelte';
+import type { Schedule } from '$lib/schema/schedules';
+import { SchedulesState } from '$lib/states/entities';
+import { scheduleSearchState } from '$lib/states/ui/schedule-search.svelte';
 import EntitySearchToolbar from '$lib/components/shared/search/entity-search-toolbar.svelte';
 import ScheduleSearchFilters from './(components)/search/schedule-search-filters.svelte';
 import ScheduleSearchResults from './(components)/search/schedule-search-results.svelte';
-import {columns} from './(data)/columns.svelte';
-import {goto} from '$app/navigation';
+import { columns } from './(data)/columns.svelte';
+import { goto } from '$app/navigation';
 
 // Get existing schedules state from layout context
 const schedulesState = SchedulesState.get();
@@ -57,12 +57,12 @@ const displayedSchedules = $derived.by(() => {
 
 // Sort options for toolbar
 const scheduleSortOptions = [
-  {value: 'name' as const, label: 'Name', order: 'asc' as const},
-  {value: 'name' as const, label: 'Name', order: 'desc' as const},
-  {value: 'amount' as const, label: 'Amount', order: 'asc' as const},
-  {value: 'amount' as const, label: 'Amount', order: 'desc' as const},
-  {value: 'status' as const, label: 'Status', order: 'asc' as const},
-  {value: 'created' as const, label: 'Created', order: 'desc' as const},
+  { value: 'name' as const, label: 'Name', order: 'asc' as const },
+  { value: 'name' as const, label: 'Name', order: 'desc' as const },
+  { value: 'amount' as const, label: 'Amount', order: 'asc' as const },
+  { value: 'amount' as const, label: 'Amount', order: 'desc' as const },
+  { value: 'status' as const, label: 'Status', order: 'asc' as const },
+  { value: 'created' as const, label: 'Created', order: 'desc' as const },
 ];
 
 const shouldShowNoSchedules = $derived.by(() => {
@@ -397,7 +397,7 @@ function cancelDelete() {
       <AlertDialog.Action
         onclick={confirmBulkDelete}
         disabled={isDeletingBulk}
-        class={buttonVariants({variant: 'destructive'})}>
+        class={buttonVariants({ variant: 'destructive' })}>
         {isDeletingBulk ? 'Deleting...' : 'Delete'}
       </AlertDialog.Action>
     </AlertDialog.Footer>

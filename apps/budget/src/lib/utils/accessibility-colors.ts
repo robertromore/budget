@@ -3,7 +3,7 @@
  * Ensures WCAG compliance across light/dark themes and color schemes
  */
 
-import {browser} from "$app/environment";
+import { browser } from "$app/environment";
 
 export type ThemeMode = "light" | "dark" | "auto";
 export type ColorScheme = "default" | "blue" | "green" | "orange" | "red" | "purple";
@@ -11,7 +11,7 @@ export type ColorScheme = "default" | "blue" | "green" | "orange" | "red" | "pur
 /**
  * Convert hex color to RGB values
  */
-function hexToRgb(hex: string): {r: number; g: number; b: number} | null {
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
@@ -146,7 +146,7 @@ export function calculateOptimalOpacity(
 export function getOptimalCrosshairColor(
   colorScheme: ColorScheme = "default",
   themeMode?: ThemeMode
-): {color: string; opacity: number} {
+): { color: string; opacity: number } {
   const mode = themeMode || detectThemeMode();
   const baseColor = COLOR_SCHEME_COLORS[colorScheme];
   const opacity = calculateOptimalOpacity(colorScheme, mode);

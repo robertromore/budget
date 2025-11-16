@@ -2,31 +2,31 @@
 import * as Sidebar from '$ui/lib/components/ui/sidebar/index.js';
 import AppSidebar from '$lib/components/layout/app-sidebar.svelte';
 import '../app.css';
-import type {LayoutData} from './$types';
-import type {Snippet} from 'svelte';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {AccountsState} from '$lib/states/entities/accounts.svelte';
-import {CurrentWorkspaceState, currentWorkspace} from '$lib/states/current-workspace.svelte';
+import type { LayoutData } from './$types';
+import type { Snippet } from 'svelte';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { AccountsState } from '$lib/states/entities/accounts.svelte';
+import { CurrentWorkspaceState, currentWorkspace } from '$lib/states/current-workspace.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
 import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog.svelte';
 import DeleteBudgetDialog from '$lib/components/dialogs/delete-budget-dialog.svelte';
 import AddPayeeDialog from '$lib/components/dialogs/add-payee-dialog.svelte';
 import DeletePayeeDialog from '$lib/components/dialogs/delete-payee-dialog.svelte';
 import DeleteCategoryDialog from '$lib/components/dialogs/delete-category-dialog.svelte';
-import {SchedulesState} from '$lib/states/entities/schedules.svelte';
-import {BudgetState} from '$lib/states/budgets.svelte';
-import {setQueryClientContext} from '@tanstack/svelte-query';
-import {queryClient} from '$lib/query';
-import {autoScheduler} from '$lib/stores/auto-scheduler.svelte';
-import {onMount} from 'svelte';
-import {rpc} from '$lib/query';
-import {Toaster} from 'svelte-sonner';
-import {ModeWatcher} from 'mode-watcher';
+import { SchedulesState } from '$lib/states/entities/schedules.svelte';
+import { BudgetState } from '$lib/states/budgets.svelte';
+import { setQueryClientContext } from '@tanstack/svelte-query';
+import { queryClient } from '$lib/query';
+import { autoScheduler } from '$lib/stores/auto-scheduler.svelte';
+import { onMount } from 'svelte';
+import { rpc } from '$lib/query';
+import { Toaster } from 'svelte-sonner';
+import { ModeWatcher } from 'mode-watcher';
 import ThemeToggle from '$lib/components/layout/theme-toggle.svelte';
 import ThemeButton from '$lib/components/layout/theme-button.svelte';
 
-let {data, children}: {data: LayoutData; children: Snippet} = $props();
+let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
 // Set QueryClient context immediately using centralized client
 setQueryClientContext(queryClient);

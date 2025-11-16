@@ -1,16 +1,16 @@
 <script lang="ts">
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
-import type {TransactionsFormat} from '$lib/types';
-import {monthYearFmt, monthYearShortFmt} from '$lib/utils/date-formatters';
-import {timezone} from '$lib/utils/dates';
-import {currencyFormatter} from '$lib/utils/formatters';
+import type { TransactionsFormat } from '$lib/types';
+import { monthYearFmt, monthYearShortFmt } from '$lib/utils/date-formatters';
+import { timezone } from '$lib/utils/dates';
+import { currencyFormatter } from '$lib/utils/formatters';
 import AnalyticsChartShell from './analytics-chart-shell.svelte';
 
 interface Props {
   transactions: TransactionsFormat[];
 }
 
-let {transactions}: Props = $props();
+let { transactions }: Props = $props();
 
 // Transform transaction data into monthly income vs expenses
 const chartData = $derived.by(() => {
@@ -66,10 +66,10 @@ const chartData = $derived.by(() => {
 const summaryStats = $derived.by(() => {
   if (!chartData.length) {
     return [
-      {label: 'Avg Monthly Income', value: '$0.00'},
-      {label: 'Avg Monthly Expenses', value: '$0.00'},
-      {label: 'Net Income', value: '$0.00'},
-      {label: 'Income Ratio', value: '0%'},
+      { label: 'Avg Monthly Income', value: '$0.00' },
+      { label: 'Avg Monthly Expenses', value: '$0.00' },
+      { label: 'Net Income', value: '$0.00' },
+      { label: 'Income Ratio', value: '0%' },
     ];
   }
 
@@ -128,7 +128,7 @@ const chartConfig: ChartConfig = {
     Monthly comparison of income and expense patterns
   {/snippet}
 
-  {#snippet chart({data}: {data: typeof chartData})}
+  {#snippet chart({ data }: { data: typeof chartData })}
     <ChartPlaceholder class="h-full" title="Income vs Expenses Chart" />
   {/snippet}
 </AnalyticsChartShell>

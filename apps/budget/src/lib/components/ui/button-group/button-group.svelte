@@ -1,5 +1,5 @@
 <script lang="ts" module>
-import {tv, type VariantProps} from 'tailwind-variants';
+import { tv, type VariantProps } from 'tailwind-variants';
 
 const buttonGroupVariants = tv({
   base: "flex w-fit items-stretch has-[>[data-slot=button-group]]:gap-2 [&>*]:focus-visible:relative [&>*]:focus-visible:z-10 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
@@ -20,8 +20,8 @@ export type ButtonGroupOrientation = VariantProps<typeof buttonGroupVariants>['o
 </script>
 
 <script lang="ts">
-import {cn} from '$lib/utils';
-import type {HTMLAttributes} from 'svelte/elements';
+import { cn } from '$lib/utils';
+import type { HTMLAttributes } from 'svelte/elements';
 
 let {
   class: className,
@@ -37,7 +37,7 @@ let {
   role="group"
   data-slot="button-group"
   data-orientation={orientation}
-  class={cn(buttonGroupVariants({orientation}), className)}
+  class={cn(buttonGroupVariants({ orientation }), className)}
   {...restProps}>
   {@render children?.()}
 </div>

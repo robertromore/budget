@@ -1,7 +1,7 @@
 import slugify from "@sindresorhus/slugify";
-import {categories, type Category} from "$lib/schema";
-import {db} from "..";
-import {faker} from "@faker-js/faker";
+import { categories, type Category } from "$lib/schema";
+import { db } from "..";
+import { faker } from "@faker-js/faker";
 
 let categorySequence = 0;
 
@@ -23,12 +23,12 @@ let categorySequence = 0;
  */
 export const categoryFactory = async (
   workspaceId: number,
-  count: number = faker.number.int({min: 1, max: 10})
+  count: number = faker.number.int({ min: 1, max: 10 })
 ): Promise<Category[]> => {
   const categories_collection: Category[] = [];
 
   for (let i = 0; i < count; i++) {
-    const name = faker.lorem.words({min: 1, max: 3});
+    const name = faker.lorem.words({ min: 1, max: 3 });
     const slug = `${slugify(name)}-${++categorySequence}`;
 
     const new_category = await db

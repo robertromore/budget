@@ -1,11 +1,11 @@
-import {superValidate} from "sveltekit-superforms";
-import {zod4} from "sveltekit-superforms/adapters";
-import {fail} from "@sveltejs/kit";
-import {formInsertWorkspaceSchema} from "$lib/schema/workspaces";
-import type {Actions, PageServerLoad} from "./$types";
-import {workspaces} from "$lib/schema/workspaces";
-import {eq, isNull} from "drizzle-orm";
-import {db} from "$lib/server/db";
+import { superValidate } from "sveltekit-superforms";
+import { zod4 } from "sveltekit-superforms/adapters";
+import { fail } from "@sveltejs/kit";
+import { formInsertWorkspaceSchema } from "$lib/schema/workspaces";
+import type { Actions, PageServerLoad } from "./$types";
+import { workspaces } from "$lib/schema/workspaces";
+import { eq, isNull } from "drizzle-orm";
+import { db } from "$lib/server/db";
 
 export const load: PageServerLoad = async () => {
   const form = await superValidate(zod4(formInsertWorkspaceSchema));
@@ -24,11 +24,11 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-  create: async ({request, cookies}) => {
+  create: async ({ request, cookies }) => {
     const form = await superValidate(request, zod4(formInsertWorkspaceSchema));
 
     if (!form.valid) {
-      return fail(400, {form});
+      return fail(400, { form });
     }
 
     try {
@@ -72,7 +72,7 @@ export const actions: Actions = {
         secure: process.env.NODE_ENV === "production",
       });
 
-      return {form, success: true, workspaceId: newWorkspace.id};
+      return { form, success: true, workspaceId: newWorkspace.id };
     } catch (error) {
       console.error("Failed to create workspace:", error);
       return fail(500, {
@@ -82,12 +82,12 @@ export const actions: Actions = {
     }
   },
 
-  switchWorkspace: async ({request, cookies}) => {
+  switchWorkspace: async ({ request, cookies }) => {
     const formData = await request.formData();
     const workspaceId = Number(formData.get("workspaceId"));
 
     if (!workspaceId || isNaN(workspaceId)) {
-      return fail(400, {error: "Invalid workspace ID"});
+      return fail(400, { error: "Invalid workspace ID" });
     }
 
     try {
@@ -99,7 +99,7 @@ export const actions: Actions = {
         .limit(1);
 
       if (!workspace) {
-        return fail(404, {error: "Workspace not found"});
+        return fail(404, { error: "Workspace not found" });
       }
 
       // Set cookie
@@ -111,7 +111,7 @@ export const actions: Actions = {
         secure: process.env.NODE_ENV === "production",
       });
 
-      return {success: true, workspaceId};
+      return { success: true, workspaceId };
     } catch (error) {
       console.error("Failed to switch workspace:", error);
       return fail(500, {

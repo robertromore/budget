@@ -1,9 +1,9 @@
-import {sqliteTable, integer, text, real, index} from "drizzle-orm/sqlite-core";
-import {sql} from "drizzle-orm";
-import {createId} from "@paralleldrive/cuid2";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {z} from "zod/v4";
-import {medicalExpenses} from "./medical-expenses";
+import { sqliteTable, integer, text, real, index } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod/v4";
+import { medicalExpenses } from "./medical-expenses";
 
 export const claimStatusEnum = {
   not_submitted: "Not Submitted",
@@ -35,16 +35,16 @@ export const claimStatusKeys = [
 export const hsaClaims = sqliteTable(
   "hsa_claim",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     cuid: text("cuid").$defaultFn(() => createId()),
 
     medicalExpenseId: integer("medical_expense_id")
-      .references(() => medicalExpenses.id, {onDelete: "restrict"})
+      .references(() => medicalExpenses.id, { onDelete: "restrict" })
       .notNull(),
 
     // Claim details
     claimNumber: text("claim_number"), // External claim number from HSA administrator
-    status: text("status", {enum: claimStatusKeys}).default("not_submitted").notNull(),
+    status: text("status", { enum: claimStatusKeys }).default("not_submitted").notNull(),
 
     // Financial details
     claimedAmount: real("claimed_amount").notNull(),

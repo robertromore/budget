@@ -1,28 +1,28 @@
 <script lang="ts">
-import {superForm} from 'sveltekit-superforms';
-import {zod4Client} from 'sveltekit-superforms/adapters';
-import {formInsertWorkspaceSchema, type FormInsertWorkspaceSchema} from '$lib/schema/workspaces';
+import { superForm } from 'sveltekit-superforms';
+import { zod4Client } from 'sveltekit-superforms/adapters';
+import { formInsertWorkspaceSchema, type FormInsertWorkspaceSchema } from '$lib/schema/workspaces';
 import * as Form from '$lib/components/ui/form';
-import {Input} from '$lib/components/ui/input';
-import {Button} from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {toast} from 'svelte-sonner';
-import {goto} from '$app/navigation';
-import type {SuperValidated} from 'sveltekit-superforms';
+import { toast } from 'svelte-sonner';
+import { goto } from '$app/navigation';
+import type { SuperValidated } from 'sveltekit-superforms';
 
 interface Props {
   data: SuperValidated<FormInsertWorkspaceSchema>;
   onSuccess?: () => void;
 }
 
-let {data, onSuccess}: Props = $props();
+let { data, onSuccess }: Props = $props();
 
 const form = superForm(data, {
   validators: zod4Client(formInsertWorkspaceSchema),
   dataType: 'json',
   resetForm: true,
   invalidateAll: 'force',
-  onUpdate({form}) {
+  onUpdate({ form }) {
     if (form.valid && form.message) {
       toast.success('Workspace created successfully');
       if (onSuccess) {
@@ -30,14 +30,14 @@ const form = superForm(data, {
       }
     }
   },
-  onError({result}) {
+  onError({ result }) {
     if (result.type === 'error') {
       toast.error(result.error.message || 'Failed to create workspace');
     }
   },
 });
 
-const {form: formData, enhance, errors, delayed, submitting} = form;
+const { form: formData, enhance, errors, delayed, submitting } = form;
 
 // Auto-generate slug from display name
 let slugTouched = $state(false);
@@ -65,7 +65,7 @@ function handleDisplayNameInput(value: string) {
     <form method="POST" action="?/create" use:enhance class="space-y-4">
       <Form.Field {form} name="displayName">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Workspace Name</Form.Label>
             <Input
               {...props}
@@ -80,7 +80,7 @@ function handleDisplayNameInput(value: string) {
 
       <Form.Field {form} name="slug">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Slug</Form.Label>
             <Input
               {...props}

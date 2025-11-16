@@ -1,8 +1,8 @@
-import type {TransactionsFormat} from "$lib/types";
-import {getSpecialDateValue} from "$lib/utils";
-import type {DateValue} from "@internationalized/date";
-import {dateDifference, isSamePeriod, parseISOString} from "$lib/utils/dates";
-import type {ColumnFiltersState, Row, Updater} from "@tanstack/table-core";
+import type { TransactionsFormat } from "$lib/types";
+import { getSpecialDateValue } from "$lib/utils";
+import type { DateValue } from "@internationalized/date";
+import { dateDifference, isSamePeriod, parseISOString } from "$lib/utils/dates";
+import type { ColumnFiltersState, Row, Updater } from "@tanstack/table-core";
 
 function compareDate(originalDate: DateValue, compareDate: string) {
   // @todo? cache results so comparison is only done once
@@ -65,7 +65,7 @@ export const filters = {
     filterValue: Set<string | number>,
     addMeta: (meta: any) => void
   ) => {
-    type validType = {[key: string]: any};
+    type validType = { [key: string]: any };
     const entityId = (row.original as validType)[columnId + "Id"];
     const entityIdStr = entityId === null ? "null" : entityId.toString();
     return filterValue.has(entityIdStr);
@@ -76,7 +76,7 @@ export const filters = {
     filterValue: Set<string | number>,
     addMeta: (meta: any) => void
   ) => {
-    type validType = {[key: string]: any};
+    type validType = { [key: string]: any };
     const entityId = (row.original as validType)[columnId + "Id"];
     const entityIdStr = entityId === null ? "null" : entityId.toString();
     return !filterValue.has(entityIdStr);
@@ -86,7 +86,7 @@ export const filters = {
     columnId: string,
     filterValue:
       | Set<string>
-      | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
+      | { operator: string; date?: string; from?: string; to?: string; values?: Set<string> },
     addMeta: (meta: any) => void
   ) => {
     // Handle new DateFilterValue format
@@ -109,7 +109,7 @@ export const filters = {
     columnId: string,
     filterValue:
       | Set<string>
-      | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
+      | { operator: string; date?: string; from?: string; to?: string; values?: Set<string> },
     addMeta: (meta: any) => void
   ) => {
     // Handle new DateFilterValue format
@@ -132,7 +132,7 @@ export const filters = {
     columnId: string,
     filterValue:
       | Set<string>
-      | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
+      | { operator: string; date?: string; from?: string; to?: string; values?: Set<string> },
     addMeta: (meta: any) => void
   ) => {
     // Handle new DateFilterValue format
@@ -159,8 +159,8 @@ export const filters = {
     columnId: string,
     filterValue:
       | Set<string>
-      | Set<{operator: string; date?: string; from?: string; to?: string; values?: Set<string>}>
-      | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
+      | Set<{ operator: string; date?: string; from?: string; to?: string; values?: Set<string> }>
+      | { operator: string; date?: string; from?: string; to?: string; values?: Set<string> },
     addMeta: (meta: any) => void
   ) => {
     // Handle Set (from view system)
@@ -282,7 +282,7 @@ export const filters = {
   amountFilter: (
     row: Row<TransactionsFormat>,
     columnId: string,
-    filterValue: {type: string; value?: number; min?: number; max?: number},
+    filterValue: { type: string; value?: number; min?: number; max?: number },
     addMeta: (meta: any) => void
   ) => {
     const amount = row.original.amount;

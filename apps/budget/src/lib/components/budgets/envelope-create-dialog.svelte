@@ -1,14 +1,14 @@
 <script lang="ts">
 import * as Dialog from '$lib/components/ui/dialog';
 import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
 import Label from '$lib/components/ui/label/label.svelte';
-import {Badge} from '$lib/components/ui/badge';
-import type {EnvelopeAllocationRequest} from '$lib/server/domains/budgets/envelope-service';
-import type {RolloverMode} from '$lib/schema/budgets/envelope-allocations';
-import type {Category} from '$lib/schema/categories';
-import type {BudgetPeriodInstance} from '$lib/schema/budgets';
+import { Badge } from '$lib/components/ui/badge';
+import type { EnvelopeAllocationRequest } from '$lib/server/domains/budgets/envelope-service';
+import type { RolloverMode } from '$lib/schema/budgets/envelope-allocations';
+import type { Category } from '$lib/schema/categories';
+import type { BudgetPeriodInstance } from '$lib/schema/budgets';
 
 interface Props {
   open?: boolean;
@@ -38,9 +38,9 @@ let autoRefill = $state(false);
 let autoRefillAmount = $state('');
 
 const rolloverModeOptions = [
-  {value: 'unlimited', label: 'Unlimited', description: 'Rollover all unused funds indefinitely'},
-  {value: 'limited', label: 'Limited', description: 'Rollover for a specific number of months'},
-  {value: 'reset', label: 'Reset', description: 'Clear unused funds at period end'},
+  { value: 'unlimited', label: 'Unlimited', description: 'Rollover all unused funds indefinitely' },
+  { value: 'limited', label: 'Limited', description: 'Rollover for a specific number of months' },
+  { value: 'reset', label: 'Reset', description: 'Clear unused funds at period end' },
 ];
 
 const isFormValid = $derived(() => {

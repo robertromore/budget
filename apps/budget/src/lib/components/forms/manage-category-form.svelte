@@ -1,12 +1,12 @@
 <script lang="ts">
 // Form data is now handled locally
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {Button, buttonVariants} from '$lib/components/ui/button';
+import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Form from '$lib/components/ui/form';
 import * as Select from '$lib/components/ui/select';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
 import {
   type Category,
   categoryTypeEnum,
@@ -16,23 +16,23 @@ import {
   spendingPriorityEnum,
   incomeReliabilityEnum,
 } from '$lib/schema';
-import {superformInsertCategorySchema} from '$lib/schema/superforms';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import type {EditableEntityItem} from '$lib/types';
-import {superForm} from 'sveltekit-superforms';
-import {zod4Client} from 'sveltekit-superforms/adapters';
-import {IconPicker} from '$lib/components/ui/icon-picker';
-import {ColorPicker} from '$lib/components/ui/color-picker';
-import {Checkbox} from '$lib/components/ui/checkbox';
+import { superformInsertCategorySchema } from '$lib/schema/superforms';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import type { EditableEntityItem } from '$lib/types';
+import { superForm } from 'sveltekit-superforms';
+import { zod4Client } from 'sveltekit-superforms/adapters';
+import { IconPicker } from '$lib/components/ui/icon-picker';
+import { ColorPicker } from '$lib/components/ui/color-picker';
+import { Checkbox } from '$lib/components/ui/checkbox';
 import Tag from '@lucide/svelte/icons/tag';
 import Palette from '@lucide/svelte/icons/palette';
 import Receipt from '@lucide/svelte/icons/receipt';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Settings from '@lucide/svelte/icons/settings';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
-import {ParentCategorySelector} from '$lib/components/categories';
-import {Slider} from '$lib/components/ui/slider';
-import {createTransformAccessors} from '$lib/utils/bind-helpers';
+import { ParentCategorySelector } from '$lib/components/categories';
+import { Slider } from '$lib/components/ui/slider';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
 let {
   id,
@@ -101,7 +101,7 @@ if (id) {
 const form = superForm(defaults, {
   id: formId,
   validators: zod4Client(superformInsertCategorySchema),
-  onResult: async ({result}) => {
+  onResult: async ({ result }) => {
     if (onSave) {
       if (result.type === 'success' && result.data) {
         onSave(result.data['entity'], (id ?? 0) === 0);
@@ -112,7 +112,7 @@ const form = superForm(defaults, {
   timeoutMs: 8000,
 });
 
-const {form: formData, enhance, submitting} = form;
+const { form: formData, enhance, submitting } = form;
 
 // Category type options for the dropdown
 const categoryTypeOptions = categoryTypeEnum.map((type) => ({
@@ -141,7 +141,7 @@ const incomeReliabilityOptions = incomeReliabilityEnum.map((reliability) => ({
   label: reliability.charAt(0).toUpperCase() + reliability.slice(1),
 }));
 
-function handleIconChange(event: CustomEvent<{value: string}>) {
+function handleIconChange(event: CustomEvent<{ value: string }>) {
   const iconValue = event.detail.value;
   if (typeof iconValue === 'string') {
     $formData.categoryIcon = iconValue;
@@ -210,7 +210,7 @@ const deleteCategory = async (id: number) => {
         <!-- Category Name -->
         <Form.Field {form} name="name">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Form.Label>Name</Form.Label>
               <Input
                 {...props}
@@ -224,7 +224,7 @@ const deleteCategory = async (id: number) => {
         <!-- Category Type -->
         <Form.Field {form} name="categoryType">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Form.Label>Category Type</Form.Label>
               <Select.Root
                 type="single"
@@ -267,7 +267,7 @@ const deleteCategory = async (id: number) => {
       <!-- Notes (full width) -->
       <Form.Field {form} name="notes" class="col-span-full">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Notes</Form.Label>
             <Textarea
               {...props}
@@ -340,7 +340,7 @@ const deleteCategory = async (id: number) => {
         <!-- Active Status Checkbox -->
         <Form.Field {form} name="isActive" class="flex flex-row items-start space-y-0 space-x-3">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Checkbox
                 {...props}
                 checked={isActiveValue}
@@ -359,7 +359,7 @@ const deleteCategory = async (id: number) => {
         <!-- Display Order -->
         <Form.Field {form} name="displayOrder">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Form.Label>Display Order</Form.Label>
               <Input
                 {...props}
@@ -399,7 +399,7 @@ const deleteCategory = async (id: number) => {
         name="isTaxDeductible"
         class="flex flex-row items-start space-y-0 space-x-3">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Checkbox
               {...props}
               checked={isTaxDeductibleValue}
@@ -420,7 +420,7 @@ const deleteCategory = async (id: number) => {
           <!-- Tax Category -->
           <Form.Field {form} name="taxCategory">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Tax Category</Form.Label>
                 <Select.Root type="single" bind:value={$formData.taxCategory as string}>
                   <Select.Trigger {...props}>
@@ -489,7 +489,7 @@ const deleteCategory = async (id: number) => {
           <!-- Spending Priority -->
           <Form.Field {form} name="spendingPriority">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Spending Priority</Form.Label>
                 <Select.Root type="single" bind:value={$formData.spendingPriority as string}>
                   <Select.Trigger {...props}>
@@ -521,7 +521,7 @@ const deleteCategory = async (id: number) => {
             name="isSeasonal"
             class="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Checkbox
                   {...props}
                   checked={isSeasonalValue}
@@ -543,7 +543,7 @@ const deleteCategory = async (id: number) => {
           <!-- Seasonal Months -->
           <Form.Field {form} name="seasonalMonths">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Seasonal Months</Form.Label>
                 <Input
                   {...props}
@@ -561,7 +561,7 @@ const deleteCategory = async (id: number) => {
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Form.Field {form} name="expectedMonthlyMin">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Expected Monthly Min</Form.Label>
                 <NumericInput {...props} bind:value={$formData.expectedMonthlyMin as number} />
                 <Form.FieldErrors />
@@ -571,7 +571,7 @@ const deleteCategory = async (id: number) => {
 
           <Form.Field {form} name="expectedMonthlyMax">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Expected Monthly Max</Form.Label>
                 <NumericInput {...props} bind:value={$formData.expectedMonthlyMax as number} />
                 <Form.FieldErrors />
@@ -600,7 +600,7 @@ const deleteCategory = async (id: number) => {
           <!-- Income Reliability -->
           <Form.Field {form} name="incomeReliability">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Income Reliability</Form.Label>
                 <Select.Root type="single" bind:value={$formData.incomeReliability as string}>
                   <Select.Trigger {...props}>
@@ -632,7 +632,7 @@ const deleteCategory = async (id: number) => {
             name="isSeasonal"
             class="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Checkbox
                   {...props}
                   checked={isSeasonalValue}
@@ -654,7 +654,7 @@ const deleteCategory = async (id: number) => {
           <!-- Seasonal Months -->
           <Form.Field {form} name="seasonalMonths">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Seasonal Months</Form.Label>
                 <Input
                   {...props}
@@ -672,7 +672,7 @@ const deleteCategory = async (id: number) => {
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Form.Field {form} name="expectedMonthlyMin">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Expected Monthly Min</Form.Label>
                 <NumericInput {...props} bind:value={$formData.expectedMonthlyMin as number} />
                 <Form.FieldErrors />
@@ -682,7 +682,7 @@ const deleteCategory = async (id: number) => {
 
           <Form.Field {form} name="expectedMonthlyMax">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Expected Monthly Max</Form.Label>
                 <NumericInput {...props} bind:value={$formData.expectedMonthlyMax as number} />
                 <Form.FieldErrors />
@@ -716,7 +716,7 @@ const deleteCategory = async (id: number) => {
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={() => deleteCategory(id!)}
-        class={buttonVariants({variant: 'destructive'})}>Continue</AlertDialog.Action>
+        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

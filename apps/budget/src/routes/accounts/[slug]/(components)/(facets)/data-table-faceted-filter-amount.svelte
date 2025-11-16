@@ -15,15 +15,15 @@
   ```
 -->
 <script lang="ts" generics="TData, TValue">
-import type {Column} from '@tanstack/table-core';
+import type { Column } from '@tanstack/table-core';
 import * as Popover from '$lib/components/ui/popover';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {currentViews} from '$lib/states/views';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { currentViews } from '$lib/states/views';
 import X from '@lucide/svelte/icons/x';
-import type {AmountFilterValue} from '$lib/types/filter';
+import type { AmountFilterValue } from '$lib/types/filter';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 
 /**
@@ -52,11 +52,11 @@ let operatorOpen = $state(false);
  * Each type represents a different mathematical comparison operation.
  */
 const filterTypes = [
-  {value: 'equals', label: 'equals'}, // Exact match
-  {value: 'greaterThan', label: 'greater than'}, // Amount > value
-  {value: 'lessThan', label: 'less than'}, // Amount < value
-  {value: 'between', label: 'between'}, // value1 <= Amount <= value2
-  {value: 'notEquals', label: 'not equals'}, // Amount != value
+  { value: 'equals', label: 'equals' }, // Exact match
+  { value: 'greaterThan', label: 'greater than' }, // Amount > value
+  { value: 'lessThan', label: 'less than' }, // Amount < value
+  { value: 'between', label: 'between' }, // value1 <= Amount <= value2
+  { value: 'notEquals', label: 'not equals' }, // Amount != value
 ];
 
 // Use runed Context API instead of Svelte's getContext (optional - may not be available)
@@ -76,7 +76,7 @@ const hasFilter = $derived(currentFilter !== undefined);
 // Initialize filter with default operator when component mounts
 $effect(() => {
   if (!currentFilter || !currentFilter.type) {
-    const newFilter: AmountFilterValue = {type: 'equals'};
+    const newFilter: AmountFilterValue = { type: 'equals' };
     column.setFilterValue(newFilter);
   }
 });
@@ -89,11 +89,11 @@ const activeOperator = $derived.by(() => {
 const setOperator = (operator: (typeof filterTypes)[0]) => {
   if (currentFilter) {
     // When switching types, create new filter with just the type (no default values)
-    const newFilter: AmountFilterValue = {type: operator.value};
+    const newFilter: AmountFilterValue = { type: operator.value };
     column.setFilterValue(newFilter);
   } else {
     // Create new filter with just the type (no default values)
-    const newFilter: AmountFilterValue = {type: operator.value};
+    const newFilter: AmountFilterValue = { type: operator.value };
     column.setFilterValue(newFilter);
   }
   operatorOpen = false;
@@ -116,10 +116,10 @@ const clearFilter = () => {
   if (hasValues) {
     // First click: reset to default values (undefined, which displays as 0)
     if (currentFilter.type === 'between') {
-      const newFilter: AmountFilterValue = {type: currentFilter.type};
+      const newFilter: AmountFilterValue = { type: currentFilter.type };
       column.setFilterValue(newFilter);
     } else {
-      const newFilter: AmountFilterValue = {type: currentFilter.type};
+      const newFilter: AmountFilterValue = { type: currentFilter.type };
       column.setFilterValue(newFilter);
     }
   } else {
@@ -211,7 +211,7 @@ $effect(() => {
   <!-- Operator Selection -->
   <Popover.Root bind:open={operatorOpen}>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button
           {...props}
           variant="outline"
@@ -275,7 +275,7 @@ $effect(() => {
       size="sm"
       class="h-8 rounded-none"
       onclick={() => {
-        const newFilter: AmountFilterValue = {type: 'equals'};
+        const newFilter: AmountFilterValue = { type: 'equals' };
         column.setFilterValue(newFilter);
       }}>
       Select value

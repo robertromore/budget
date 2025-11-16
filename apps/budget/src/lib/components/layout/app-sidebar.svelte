@@ -1,39 +1,28 @@
 <script lang="ts">
+import { goto } from '$app/navigation';
+import { Badge } from '$lib/components/ui/badge';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-import CalendarSync from '@lucide/svelte/icons/calendar-sync';
-import Ellipsis from '@lucide/svelte/icons/ellipsis';
-import HandCoins from '@lucide/svelte/icons/hand-coins';
-import Plus from '@lucide/svelte/icons/plus';
-import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
-import Tags from '@lucide/svelte/icons/tags';
-import FolderTree from '@lucide/svelte/icons/folder-tree';
-import Wallet from '@lucide/svelte/icons/wallet';
-import Download from '@lucide/svelte/icons/download';
-import {goto} from '$app/navigation';
+import { isDebtAccount } from '$lib/schema/accounts';
+import { AccountsState } from '$lib/states/entities/accounts.svelte';
+import { deleteAccountDialog, deleteAccountId } from '$lib/states/ui/global.svelte';
 import {
-  deleteAccountDialog,
-  deleteAccountId,
-  deleteScheduleDialog,
-  deleteScheduleId,
-  deleteBudgetDialog,
-  deleteBudgetId,
-} from '$lib/states/ui/global.svelte';
-import {AccountsState} from '$lib/states/entities/accounts.svelte';
-import {SchedulesState} from '$lib/states/entities/schedules.svelte';
-import {BudgetState} from '$lib/states/budgets.svelte';
-import {rpc} from '$lib/query';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
-import {currencyFormatter} from '$lib/utils/formatters';
-import CreditCard from '@lucide/svelte/icons/credit-card';
-import Receipt from '@lucide/svelte/icons/receipt';
-import {Badge} from '$lib/components/ui/badge';
-import {
+  calculateDebtMetrics,
   formatAccountBalance,
   getBalanceColorClass,
-  calculateDebtMetrics,
 } from '$lib/utils/account-display';
-import {isDebtAccount} from '$lib/schema/accounts';
+import { currencyFormatter } from '$lib/utils/formatters';
+import CalendarSync from '@lucide/svelte/icons/calendar-sync';
+import CreditCard from '@lucide/svelte/icons/credit-card';
+import Download from '@lucide/svelte/icons/download';
+import Ellipsis from '@lucide/svelte/icons/ellipsis';
+import HandCoins from '@lucide/svelte/icons/hand-coins';
+import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
+import Plus from '@lucide/svelte/icons/plus';
+import Receipt from '@lucide/svelte/icons/receipt';
+import Tags from '@lucide/svelte/icons/tags';
+import Wallet from '@lucide/svelte/icons/wallet';
 import WorkspaceSwitcher from '../../../routes/workspaces/(components)/workspace-switcher.svelte';
 
 const accountsState = $derived(AccountsState.get());
@@ -43,17 +32,6 @@ const onBudgetBalance = $derived(accountsState.getOnBudgetBalance());
 
 const _deleteAccountDialog = $derived(deleteAccountDialog);
 const _deleteAccountId = $derived(deleteAccountId);
-
-const schedulesState = $derived(SchedulesState.get());
-const schedules = $derived(schedulesState.schedules.values());
-const _deleteScheduleDialog = $derived(deleteScheduleDialog);
-const _deleteScheduleId = $derived(deleteScheduleId);
-
-const budgetState = $derived(BudgetState.get());
-const budgetsQuery = $derived(rpc.budgets.listBudgets().options());
-const budgets = $derived(budgetsQuery.data ?? budgetState.all);
-const _deleteBudgetDialog = $derived(deleteBudgetDialog);
-const _deleteBudgetId = $derived(deleteBudgetId);
 </script>
 
 <Sidebar.Root>
@@ -66,7 +44,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
         <Sidebar.Menu>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
-              {#snippet child({props})}
+              {#snippet child({ props })}
                 <a href="/" {...props} class="flex items-center gap-3">
                   <LayoutDashboard class="h-4 w-4"></LayoutDashboard>
                   <span class="font-medium">Dashboard</span>
@@ -76,7 +54,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
-              {#snippet child({props})}
+              {#snippet child({ props })}
                 <a href="/budgets" {...props} class="flex items-center gap-3">
                   <Wallet class="h-4 w-4"></Wallet>
                   <span class="font-medium">Budgets</span>
@@ -86,7 +64,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
-              {#snippet child({props})}
+              {#snippet child({ props })}
                 <a href="/schedules" {...props} class="flex items-center gap-3">
                   <CalendarSync class="h-4 w-4"></CalendarSync>
                   <span class="font-medium">Schedules</span>
@@ -96,7 +74,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
-              {#snippet child({props})}
+              {#snippet child({ props })}
                 <a href="/payees" {...props} class="flex items-center gap-3">
                   <HandCoins class="h-4 w-4"></HandCoins>
                   <span class="font-medium">Payees</span>
@@ -106,7 +84,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
-              {#snippet child({props})}
+              {#snippet child({ props })}
                 <a href="/categories" {...props} class="flex items-center gap-3">
                   <Tags class="h-4 w-4"></Tags>
                   <span class="font-medium">Categories</span>
@@ -116,7 +94,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
-              {#snippet child({props})}
+              {#snippet child({ props })}
                 <a href="/import" {...props} class="flex items-center gap-3">
                   <Download class="h-4 w-4"></Download>
                   <span class="font-medium">Import</span>
@@ -160,7 +138,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
           {#each accounts as account}
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
-                {#snippet child({props})}
+                {#snippet child({ props })}
                   {@const formattedBalance = formatAccountBalance(account)}
                   <a href="/accounts/{account.slug}" {...props} class="flex min-w-0 gap-3 py-2">
                     <!-- Account Icon with colored background -->
@@ -279,7 +257,7 @@ const _deleteBudgetId = $derived(deleteBudgetId);
               </Sidebar.MenuButton>
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger>
-                  {#snippet child({props})}
+                  {#snippet child({ props })}
                     <Sidebar.MenuAction {...props}>
                       <Ellipsis />
                     </Sidebar.MenuAction>

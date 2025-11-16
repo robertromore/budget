@@ -6,7 +6,7 @@ interface Props {
   recommendation: BudgetRecommendationWithRelations;
 }
 
-let {recommendation}: Props = $props();
+let { recommendation }: Props = $props();
 
 const getPriorityVariant = (priority: string) => {
   switch (priority) {

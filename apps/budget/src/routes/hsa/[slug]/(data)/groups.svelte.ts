@@ -1,4 +1,4 @@
-import type {GroupingState, Updater} from "@tanstack/table-core";
+import type { GroupingState, Updater } from "@tanstack/table-core";
 
 let _grouping = $state<GroupingState>([]);
 export let grouping = () => _grouping;

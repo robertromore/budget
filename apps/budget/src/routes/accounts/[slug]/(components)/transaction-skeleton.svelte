@@ -1,5 +1,5 @@
 <script lang="ts">
-let {rows = 5}: {rows?: number} = $props();
+let { rows = 5 }: { rows?: number } = $props();
 </script>
 
 <!-- Transaction Table Skeleton -->

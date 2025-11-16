@@ -5,9 +5,9 @@
  * ML intelligence, contact management, subscriptions, and budget allocation.
  */
 
-import type {Payee, PayeeType, PaymentFrequency} from "$lib/schema/payees";
-import type {Category} from "$lib/schema/categories";
-import type {Budget} from "$lib/schema/budgets";
+import type { Payee, PayeeType, PaymentFrequency } from "$lib/schema/payees";
+import type { Category } from "$lib/schema/categories";
+import type { Budget } from "$lib/schema/budgets";
 
 /**
  * Subscription information for recurring payees
@@ -205,8 +205,8 @@ export interface StandardizedAddress {
  */
 export interface ContactValidationResult {
   isValid: boolean;
-  errors: Array<{field: string; message: string}>;
-  suggestions: Array<{field: string; value: unknown; confidence: number}>;
+  errors: Array<{ field: string; message: string }>;
+  suggestions: Array<{ field: string; value: unknown; confidence: number }>;
 }
 
 /**
@@ -302,7 +302,7 @@ export interface AppliedChange {
 export interface IntelligenceApplicationResult {
   applied: AppliedChange[];
   skipped: string[];
-  errors: Array<{field: string; error: string}>;
+  errors: Array<{ field: string; error: string }>;
 }
 
 /**

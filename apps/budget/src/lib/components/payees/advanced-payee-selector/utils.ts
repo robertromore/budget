@@ -1,5 +1,5 @@
-import type {Payee} from "$lib/schema/payees";
-import type {GroupStrategy, PayeeGroup, PayeeWithMetadata} from "./types";
+import type { Payee } from "$lib/schema/payees";
+import type { GroupStrategy, PayeeGroup, PayeeWithMetadata } from "./types";
 
 /**
  * Group payees by the specified strategy

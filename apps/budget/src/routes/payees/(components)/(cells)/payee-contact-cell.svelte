@@ -7,7 +7,7 @@ interface Props {
   phone: string | null;
 }
 
-let {email, phone}: Props = $props();
+let { email, phone }: Props = $props();
 </script>
 
 <div class="space-y-1 text-sm">

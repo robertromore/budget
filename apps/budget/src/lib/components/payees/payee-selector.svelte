@@ -155,16 +155,16 @@ async function loadPayeeStats(payeeIds: number[]) {
     const stats = await Promise.all(
       payeeIds.map(async (id) => {
         try {
-          const stat = await trpc().payeeRoutes.stats.query({id});
-          return {id, stat};
+          const stat = await trpc().payeeRoutes.stats.query({ id });
+          return { id, stat };
         } catch {
-          return {id, stat: null};
+          return { id, stat: null };
         }
       })
     );
 
     const statsMap: Record<number, any> = {};
-    stats.forEach(({id, stat}) => {
+    stats.forEach(({ id, stat }) => {
       statsMap[id] = stat;
     });
     payeeStats = statsMap;
@@ -178,12 +178,12 @@ async function loadPayeeDetails(payeeId: number) {
   isLoadingDetails = true;
   try {
     const [intelligence, suggestions, stats] = await Promise.all([
-      trpc().payeeRoutes.intelligence.query({id: payeeId}),
-      trpc().payeeRoutes.suggestions.query({id: payeeId}),
-      trpc().payeeRoutes.stats.query({id: payeeId}),
+      trpc().payeeRoutes.intelligence.query({ id: payeeId }),
+      trpc().payeeRoutes.suggestions.query({ id: payeeId }),
+      trpc().payeeRoutes.stats.query({ id: payeeId }),
     ]);
 
-    payeeDetails = {intelligence, suggestions, stats};
+    payeeDetails = { intelligence, suggestions, stats };
   } catch (error) {
     console.error('Failed to load payee details:', error);
   } finally {

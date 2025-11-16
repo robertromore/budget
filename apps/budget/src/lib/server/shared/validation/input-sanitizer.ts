@@ -1,6 +1,6 @@
 import validator from "validator";
-import {ValidationError} from "$lib/server/shared/types";
-import {VALIDATION_CONFIG, SANITIZATION_PATTERNS} from "$lib/server/config/validation";
+import { ValidationError } from "$lib/server/shared/types";
+import { VALIDATION_CONFIG, SANITIZATION_PATTERNS } from "$lib/server/config/validation";
 
 /**
  * Input sanitization and validation utilities

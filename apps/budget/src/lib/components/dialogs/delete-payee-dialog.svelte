@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {buttonVariants} from '$lib/components/ui/button';
-import {deletePayeeDialog, deletePayeeId} from '$lib/states/ui/payees.svelte';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
+import { buttonVariants } from '$lib/components/ui/button';
+import { deletePayeeDialog, deletePayeeId } from '$lib/states/ui/payees.svelte';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
 
 const _deletePayeeDialog = $derived(deletePayeeDialog);
 const _deletePayeeId = $derived(deletePayeeId);
@@ -28,7 +28,7 @@ const confirmDeletePayee = async () => {
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={confirmDeletePayee}
-        class={buttonVariants({variant: 'destructive'})}>Continue</AlertDialog.Action>
+        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

@@ -1,7 +1,7 @@
 <script lang="ts">
 import * as FormPrimitive from 'formsnap';
-import {Label} from '$lib/components/ui/label';
-import {cn, type WithoutChild} from '$lib/utils';
+import { Label } from '$lib/components/ui/label';
+import { cn, type WithoutChild } from '$lib/utils';
 let {
   ref = $bindable(null),
   children,
@@ -11,7 +11,7 @@ let {
 </script>
 
 <FormPrimitive.Label {...restProps} bind:ref>
-  {#snippet child({props})}
+  {#snippet child({ props })}
     <Label
       {...props}
       data-slot="form-label"

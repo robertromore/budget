@@ -1,9 +1,9 @@
 // Input components barrel export for clean imports
-export {default as AdvancedDateInput} from "./advanced-date-input.svelte";
-export {default as DateInput} from "./date-input.svelte";
-export {default as DisplayInput} from "./display-input.svelte";
-export {default as EntityInput} from "./entity-input.svelte";
-export {default as FilterInput} from "./filter-input.svelte";
-export {default as MultiNumericInput} from "./multi-numeric-input.svelte";
-export {default as NumericInput} from "./numeric-input.svelte";
-export {default as RepeatingDateInput} from "./repeating-date-input.svelte";
+export { default as AdvancedDateInput } from "./advanced-date-input.svelte";
+export { default as DateInput } from "./date-input.svelte";
+export { default as DisplayInput } from "./display-input.svelte";
+export { default as EntityInput } from "./entity-input.svelte";
+export { default as FilterInput } from "./filter-input.svelte";
+export { default as MultiNumericInput } from "./multi-numeric-input.svelte";
+export { default as NumericInput } from "./numeric-input.svelte";
+export { default as RepeatingDateInput } from "./repeating-date-input.svelte";

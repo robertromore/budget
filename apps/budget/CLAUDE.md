@@ -187,7 +187,7 @@ Use when binding to a field in a Record that might be undefined:
 
 ```svelte
 <script lang="ts">
-  import {createRecordAccessors} from '$lib/utils/bind-helpers';
+  import { createRecordAccessors } from '$lib/utils/bind-helpers';
 
   let formData = $state<Record<string, string>>({});
   const nameAccessors = createRecordAccessors(formData, 'name', '');
@@ -202,7 +202,7 @@ Use when binding to a Map entry:
 
 ```svelte
 <script lang="ts">
-  import {createMapAccessors} from '$lib/utils/bind-helpers';
+  import { createMapAccessors } from '$lib/utils/bind-helpers';
 
   let myMap = $state(new Map<string, number>());
   const countAccessors = createMapAccessors(myMap, 'count', 0);
@@ -217,7 +217,7 @@ Use when binding to numeric Record values:
 
 ```svelte
 <script lang="ts">
-  import {createNumericRecordAccessors} from '$lib/utils/bind-helpers';
+  import { createNumericRecordAccessors } from '$lib/utils/bind-helpers';
 
   let allocations = $state<Record<number, number>>({});
   const accessors = createNumericRecordAccessors(allocations, categoryId, 0);
@@ -233,7 +233,7 @@ getter/setter logic:
 
 ```svelte
 <script lang="ts">
-  import {createTransformAccessors} from '$lib/utils/bind-helpers';
+  import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
   let periodType = $state<'monthly' | 'yearly'>('monthly');
   const accessors = createTransformAccessors(
@@ -753,7 +753,7 @@ for dynamic, user-friendly chart interfaces.**
 **✅ Always use global definitions:**
 
 ```typescript
-import {ALL_CHART_TYPES} from '$lib/components/charts/chart-types';
+import { ALL_CHART_TYPES } from '$lib/components/charts/chart-types';
 
 const availableChartTypes = $derived(() => {
   const supportedTypes = ['bar', 'line', 'area'];
@@ -803,7 +803,7 @@ operations.**
 #### Core Date Utilities (`$lib/utils/dates.ts`)
 
 ```typescript
-import {CalendarDate, type DateValue} from '@internationalized/date';
+import { CalendarDate, type DateValue } from '@internationalized/date';
 import {
   parseDateValue,
   parseISOString,
@@ -1407,7 +1407,7 @@ classes.**
 
 ```typescript
 let count = $state(0);
-let user = $state({name: 'John', email: 'john@example.com'});
+let user = $state({ name: 'John', email: 'john@example.com' });
 
 class AccountsState {
   accounts = $state<Account[]>([]);
@@ -1438,7 +1438,7 @@ $effect(() => {
 
 ```typescript
 // src/lib/states/accounts.svelte.ts
-import {getContext, setContext} from 'svelte';
+import { getContext, setContext } from 'svelte';
 
 const ACCOUNTS_STATE_KEY = Symbol('accounts-state');
 
@@ -1473,31 +1473,31 @@ export function getAccountsState(): AccountsState {
 #### defineQuery Pattern
 
 ```typescript
-import {createQuery} from '@tanstack/svelte-query';
-import {trpc} from '$lib/trpc/client';
+import { createQuery } from '@tanstack/svelte-query';
+import { trpc } from '$lib/trpc/client';
 
 export function getAllAccountTransactions(accountId: number) {
   // Reactive query options
   const options = () => ({
     queryKey: ['transactions', 'account', accountId],
-    queryFn: () => trpc.transactions.forAccount.query({accountId}),
+    queryFn: () => trpc.transactions.forAccount.query({ accountId }),
     enabled: accountId > 0,
   });
 
   // Imperative execution
   async function execute() {
-    return await trpc.transactions.forAccount.query({accountId});
+    return await trpc.transactions.forAccount.query({ accountId });
   }
 
-  return {options, execute};
+  return { options, execute };
 }
 ```
 
 #### defineMutation Pattern
 
 ```typescript
-import {createMutation, useQueryClient} from '@tanstack/svelte-query';
-import {toast} from 'svelte-sonner';
+import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+import { toast } from 'svelte-sonner';
 
 export function createTransaction() {
   const queryClient = useQueryClient();
@@ -1528,7 +1528,7 @@ export function createTransaction() {
     }
   }
 
-  return {options, execute};
+  return { options, execute };
 }
 ```
 
@@ -1540,9 +1540,9 @@ export function createTransaction() {
 
 ```typescript
 // src/lib/server/domains/transactions/repository.ts
-import {db} from '$lib/server/db';
-import {transactions, accounts, categories, payees} from '$lib/schema';
-import {eq, and, gte, lte, desc} from 'drizzle-orm';
+import { db } from '$lib/server/db';
+import { transactions, accounts, categories, payees } from '$lib/schema';
+import { eq, and, gte, lte, desc } from 'drizzle-orm';
 
 export async function findById(id: number) {
   const [transaction] = await db
@@ -1569,7 +1569,7 @@ export async function create(data: InsertTransaction) {
 ```typescript
 // src/lib/server/domains/transactions/services.ts
 import * as repository from './repository';
-import {ValidationError, NotFoundError} from '$lib/server/shared/errors';
+import { ValidationError, NotFoundError } from '$lib/server/shared/errors';
 
 export async function createTransaction(data: CreateTransactionInput) {
   // Validation
@@ -1623,11 +1623,11 @@ src/lib/components/
 
 ```typescript
 // src/lib/components/accounts/index.ts
-export {default as AccountSelector} from './account-selector.svelte';
-export {default as AccountCard} from './account-card.svelte';
+export { default as AccountSelector } from './account-selector.svelte';
+export { default as AccountCard } from './account-card.svelte';
 
 // Usage
-import {AccountSelector, AccountCard} from '$lib/components/accounts';
+import { AccountSelector, AccountCard } from '$lib/components/accounts';
 ```
 
 ## Import System Architecture
@@ -1639,7 +1639,7 @@ import {AccountSelector, AccountCard} from '$lib/components/accounts';
 #### OFX/QFX Processor
 
 ```typescript
-import {XMLParser} from 'fast-xml-parser';
+import { XMLParser } from 'fast-xml-parser';
 
 export function parseOFX(fileContent: string) {
   const parser = new XMLParser({
@@ -1849,8 +1849,8 @@ apps/budget/src/tests/
 #### Unit Test Example
 
 ```typescript
-import {describe, it, expect} from 'vitest';
-import {parseDateValue, dateDifference} from '$lib/utils/dates';
+import { describe, it, expect } from 'vitest';
+import { parseDateValue, dateDifference } from '$lib/utils/dates';
 
 describe('parseDateValue', () => {
   it('parses ISO string to DateValue', () => {
@@ -1865,7 +1865,7 @@ describe('parseDateValue', () => {
 #### Integration Test Example
 
 ```typescript
-import {describe, it, expect, beforeEach, afterEach} from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as repository from '$lib/server/domains/transactions/repository';
 
 describe('Transaction Repository', () => {
@@ -1896,10 +1896,10 @@ describe('Transaction Repository', () => {
 #### E2E Test Example
 
 ```typescript
-import {test, expect} from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Account Management', () => {
-  test('creates new account', async ({page}) => {
+  test('creates new account', async ({ page }) => {
     await page.goto('/accounts');
     await page.click('button:has-text("New Account")');
     await page.fill('input[name="name"]', 'Test Checking');

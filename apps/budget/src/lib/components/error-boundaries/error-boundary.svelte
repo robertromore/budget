@@ -1,6 +1,6 @@
 <script lang="ts">
-import {onMount} from 'svelte';
-import {writable} from 'svelte/store';
+import { onMount } from 'svelte';
+import { writable } from 'svelte/store';
 
 interface Props {
   fallback?: import('svelte').Snippet;
@@ -8,7 +8,7 @@ interface Props {
   children: import('svelte').Snippet;
 }
 
-let {fallback, onError, children}: Props = $props();
+let { fallback, onError, children }: Props = $props();
 
 const error = writable<Error | null>(null);
 const hasError = $derived($error !== null);
@@ -17,13 +17,13 @@ onMount(() => {
   const handleError = (event: ErrorEvent) => {
     const err = event.error || new Error(event.message);
     error.set(err);
-    onError?.(err, {componentStack: event.filename});
+    onError?.(err, { componentStack: event.filename });
   };
 
   const handleRejection = (event: PromiseRejectionEvent) => {
     const err = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
     error.set(err);
-    onError?.(err, {type: 'promise'});
+    onError?.(err, { type: 'promise' });
   };
 
   window.addEventListener('error', handleError);

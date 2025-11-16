@@ -1,8 +1,8 @@
 <script lang="ts">
-import {cn} from '$lib/utils';
-import type {WithElementRef} from 'bits-ui';
-import type {Snippet} from 'svelte';
-import type {HTMLButtonAttributes} from 'svelte/elements';
+import { cn } from '$lib/utils';
+import type { WithElementRef } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import type { HTMLButtonAttributes } from 'svelte/elements';
 
 let {
   ref = $bindable(null),
@@ -12,7 +12,7 @@ let {
   child,
   ...restProps
 }: WithElementRef<HTMLButtonAttributes> & {
-  child?: Snippet<[{props: Record<string, unknown>}]>;
+  child?: Snippet<[{ props: Record<string, unknown> }]>;
   showOnHover?: boolean;
 } = $props();
 
@@ -35,7 +35,7 @@ const mergedProps = $derived({
 </script>
 
 {#if child}
-  {@render child({props: mergedProps})}
+  {@render child({ props: mergedProps })}
 {:else}
   <button bind:this={ref} {...mergedProps}>
     {@render children?.()}

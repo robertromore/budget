@@ -1,7 +1,7 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
-import {Button} from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import Progress from '$lib/components/ui/progress/progress.svelte';
 import {
   Target,
@@ -12,16 +12,16 @@ import {
   CircleCheck,
   CircleAlert,
 } from '@lucide/svelte/icons';
-import {currencyFormatter} from '$lib/utils/formatters';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import {getBudgetSummaryStats} from '$lib/query/budgets';
+import { currencyFormatter } from '$lib/utils/formatters';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { getBudgetSummaryStats } from '$lib/query/budgets';
 
 interface Props {
   budget: BudgetWithRelations;
   className?: string;
 }
 
-let {budget, className}: Props = $props();
+let { budget, className }: Props = $props();
 
 const isGoalBudget = $derived(budget.type === 'goal-based');
 

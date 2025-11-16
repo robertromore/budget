@@ -1,22 +1,22 @@
-import {TransactionRepository} from "./repository";
-import type {Transaction, NewTransaction} from "$lib/schema/transactions";
-import {ValidationError, NotFoundError, ConflictError} from "$lib/server/shared/types/errors";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {getLocalTimeZone, parseDate, today} from "@internationalized/date";
-import type {TransactionFilters, PaginationParams, PaginatedResult} from "./repository";
-import {invalidateAccountCache} from "$lib/utils/cache";
-import {db} from "$lib/server/db";
-import {accounts, transactions} from "$lib/schema";
-import {payees} from "$lib/schema/payees";
-import {categories} from "$lib/schema/categories";
-import {categoryGroups} from "$lib/schema/category-groups";
-import {budgetTransactions} from "$lib/schema/budgets";
-import {eq, and, isNull, sql, gte, lte} from "drizzle-orm";
-import {PayeeService} from "../payees/services";
-import {CategoryService} from "../categories/services";
-import {ScheduleService, type UpcomingScheduledTransaction} from "../schedules/services";
-import {BudgetTransactionService} from "../budgets/services";
-import {BudgetCalculationService} from "../budgets/calculation-service";
+import { TransactionRepository } from "./repository";
+import type { Transaction, NewTransaction } from "$lib/schema/transactions";
+import { ValidationError, NotFoundError, ConflictError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
+import type { TransactionFilters, PaginationParams, PaginatedResult } from "./repository";
+import { invalidateAccountCache } from "$lib/utils/cache";
+import { db } from "$lib/server/db";
+import { accounts, transactions } from "$lib/schema";
+import { payees } from "$lib/schema/payees";
+import { categories } from "$lib/schema/categories";
+import { categoryGroups } from "$lib/schema/category-groups";
+import { budgetTransactions } from "$lib/schema/budgets";
+import { eq, and, isNull, sql, gte, lte } from "drizzle-orm";
+import { PayeeService } from "../payees/services";
+import { CategoryService } from "../categories/services";
+import { ScheduleService, type UpcomingScheduledTransaction } from "../schedules/services";
+import { BudgetTransactionService } from "../budgets/services";
+import { BudgetCalculationService } from "../budgets/calculation-service";
 
 // Service input types
 export interface BudgetAllocationData {
@@ -56,13 +56,13 @@ export interface TransactionSuggestion {
 }
 
 export interface PayeeTransactionIntelligence {
-  mostUsedCategory: {id: number; name: string; usage: number} | null;
-  mostUsedBudget: {id: number; name: string; usage: number} | null;
+  mostUsedCategory: { id: number; name: string; usage: number } | null;
+  mostUsedBudget: { id: number; name: string; usage: number } | null;
   averageAmount: number | null;
   typicalFrequency: string | null;
   lastTransactionDate: string | null;
   transactionCount: number;
-  amountRange: {min: number; max: number} | null;
+  amountRange: { min: number; max: number } | null;
 }
 
 export interface UpdateTransactionData {
@@ -131,7 +131,7 @@ export class TransactionService {
       allocatedAmount: number;
       autoAssigned?: boolean;
       assignedBy?: string | null;
-      budget?: {name: string} | null;
+      budget?: { name: string } | null;
     }>
   ): Array<{
     id: number;
@@ -533,7 +533,7 @@ export class TransactionService {
     id: number,
     data: UpdateTransactionData,
     workspaceId: string
-  ): Promise<Array<Transaction & {balance: number}>> {
+  ): Promise<Array<Transaction & { balance: number }>> {
     // First update the transaction using the existing method
     const updatedTransaction = await this.updateTransaction(id, data, workspaceId);
 
@@ -550,7 +550,7 @@ export class TransactionService {
     newPayeeId: number | null,
     originalPayeeName: string,
     workspaceId: string
-  ): Promise<{count: number}> {
+  ): Promise<{ count: number }> {
     // Verify account exists and belongs to workspace
     const accountExists = await db.query.accounts.findFirst({
       where: and(eq(accounts.id, accountId), isNull(accounts.deletedAt)),
@@ -597,7 +597,7 @@ export class TransactionService {
 
     invalidateAccountCache(accountId);
 
-    return {count: transactionsToUpdate.length};
+    return { count: transactionsToUpdate.length };
   }
 
   /**
@@ -610,7 +610,7 @@ export class TransactionService {
     matchBy: "payee" | "category",
     matchValue: string | number | undefined,
     workspaceId: string
-  ): Promise<{count: number}> {
+  ): Promise<{ count: number }> {
     // Verify account exists and belongs to workspace
     const accountExists = await db.query.accounts.findFirst({
       where: and(eq(accounts.id, accountId), isNull(accounts.deletedAt)),
@@ -646,7 +646,7 @@ export class TransactionService {
       // Match by payee name (exact case-insensitive match)
       const payeeName = originalTransaction.payee?.name;
       if (!payeeName) {
-        return {count: 0};
+        return { count: 0 };
       }
 
       const normalizedPayeeName = payeeName.toLowerCase().trim();
@@ -679,7 +679,7 @@ export class TransactionService {
 
     invalidateAccountCache(accountId);
 
-    return {count: transactionsToUpdate.length};
+    return { count: transactionsToUpdate.length };
   }
 
   /**
@@ -756,10 +756,10 @@ export class TransactionService {
           } catch (error) {
             // If schedule not found, just return transaction as-is
             console.warn(`Schedule ${t.scheduleId} not found for transaction ${t.id}`);
-            return {...t, budgetAllocations} as Transaction;
+            return { ...t, budgetAllocations } as Transaction;
           }
         }
-        return {...t, budgetAllocations} as Transaction;
+        return { ...t, budgetAllocations } as Transaction;
       })
     );
 
@@ -789,7 +789,7 @@ export class TransactionService {
     accountId: number,
     workspaceId: string,
     limit?: number
-  ): Promise<Array<Transaction & {balance: number}>> {
+  ): Promise<Array<Transaction & { balance: number }>> {
     return await this.repository.findWithRunningBalance(accountId, workspaceId, limit);
   }
 
@@ -900,7 +900,7 @@ export class TransactionService {
 
     let clearedCount = 0;
     for (const id of pendingIds) {
-      await this.repository.update(id, {status: "cleared"}, workspaceId);
+      await this.repository.update(id, { status: "cleared" }, workspaceId);
 
       // Trigger budget consumption recalculation (status change may affect period calculations)
       try {
@@ -1079,7 +1079,7 @@ export class TransactionService {
     }
 
     // Find most used category
-    let mostUsedCategory: {id: number; name: string; usage: number} | null = null;
+    let mostUsedCategory: { id: number; name: string; usage: number } | null = null;
     if (categoryUsage.size > 0) {
       const sortedCategories = Array.from(categoryUsage.entries()).sort(([, a], [, b]) => b - a);
 
@@ -1126,7 +1126,7 @@ export class TransactionService {
       );
     } else {
       // Fallback for backward compatibility
-      const {BudgetIntelligenceService} = await import("$lib/server/domains/budgets/services");
+      const { BudgetIntelligenceService } = await import("$lib/server/domains/budgets/services");
       const intelligenceService = new BudgetIntelligenceService();
       budgetPattern = await intelligenceService.getMostUsedBudget(
         payeeId,
@@ -1135,7 +1135,7 @@ export class TransactionService {
     }
 
     // Transform budget pattern to match interface
-    let mostUsedBudget: {id: number; name: string; usage: number} | null = null;
+    let mostUsedBudget: { id: number; name: string; usage: number } | null = null;
     if (budgetPattern) {
       mostUsedBudget = {
         id: budgetPattern.budgetId,
@@ -1151,7 +1151,7 @@ export class TransactionService {
       typicalFrequency,
       lastTransactionDate: payeeTransactions[0]?.date || null,
       transactionCount: payeeTransactions.length,
-      amountRange: minAmount === Infinity ? null : {min: minAmount, max: maxAmount},
+      amountRange: minAmount === Infinity ? null : { min: minAmount, max: maxAmount },
     };
   }
 
@@ -1201,7 +1201,7 @@ export class TransactionService {
   /**
    * Calculate average days between transactions for frequency detection
    */
-  private calculateAverageTransactionInterval(transactions: Array<{date: string}>): number {
+  private calculateAverageTransactionInterval(transactions: Array<{ date: string }>): number {
     if (transactions.length < 2) return 0;
 
     const dates = transactions
@@ -1227,12 +1227,12 @@ export class TransactionService {
   private async verifyAccountExists(accountId: number): Promise<boolean> {
     // This would typically call the account repository
     // For now, we'll use a simple check
-    const {db} = await import("$lib/server/db");
-    const {accounts} = await import("$lib/schema");
-    const {eq, isNull, and} = await import("drizzle-orm");
+    const { db } = await import("$lib/server/db");
+    const { accounts } = await import("$lib/schema");
+    const { eq, isNull, and } = await import("drizzle-orm");
 
     const [account] = await db
-      .select({id: accounts.id})
+      .select({ id: accounts.id })
       .from(accounts)
       .where(and(eq(accounts.id, accountId), isNull(accounts.deletedAt)))
       .limit(1);
@@ -1254,8 +1254,8 @@ export class TransactionService {
       payeeId?: number | null;
     },
     workspaceId: string
-  ): Promise<{transferId: string; fromTransaction: Transaction; toTransaction: Transaction}> {
-    const {createId} = await import("@paralleldrive/cuid2");
+  ): Promise<{ transferId: string; fromTransaction: Transaction; toTransaction: Transaction }> {
+    const { createId } = await import("@paralleldrive/cuid2");
 
     // Validate accounts exist
     const fromAccountExists = await this.verifyAccountExists(params.fromAccountId);
@@ -1286,13 +1286,13 @@ export class TransactionService {
     if (!userNotes) {
       // Fetch account names for automatic descriptive notes
       const [fromAccount] = await db
-        .select({name: accounts.name})
+        .select({ name: accounts.name })
         .from(accounts)
         .where(eq(accounts.id, params.fromAccountId))
         .limit(1);
 
       const [toAccount] = await db
-        .select({name: accounts.name})
+        .select({ name: accounts.name })
         .from(accounts)
         .where(eq(accounts.id, params.toAccountId))
         .limit(1);
@@ -1376,7 +1376,7 @@ export class TransactionService {
       payeeId?: number | null;
     },
     workspaceId: string
-  ): Promise<{fromTransaction: Transaction; toTransaction: Transaction}> {
+  ): Promise<{ fromTransaction: Transaction; toTransaction: Transaction }> {
     // Find both transactions using shared transferId
     const transferTransactions = await db
       .select()
@@ -1424,14 +1424,14 @@ export class TransactionService {
     }
 
     // Update FROM transaction
-    const fromUpdateData = {...updateData};
+    const fromUpdateData = { ...updateData };
     if (updates.amount !== undefined) {
       fromUpdateData.amount = -updates.amount; // Negative for outgoing
     }
     await this.repository.update(fromTransaction.id, fromUpdateData, workspaceId);
 
     // Update TO transaction
-    const toUpdateData = {...updateData};
+    const toUpdateData = { ...updateData };
     if (updates.amount !== undefined) {
       toUpdateData.amount = updates.amount; // Positive for incoming
     }
@@ -1479,10 +1479,10 @@ export class TransactionService {
    */
   async getTopPayees(
     accountId: number,
-    options: {dateFrom?: string; dateTo?: string; limit?: number},
+    options: { dateFrom?: string; dateTo?: string; limit?: number },
     workspaceId: number
   ) {
-    const {dateFrom, dateTo, limit = 20} = options;
+    const { dateFrom, dateTo, limit = 20 } = options;
 
     // Build date filter conditions
     const dateConditions = [];
@@ -1524,10 +1524,10 @@ export class TransactionService {
    */
   async getTopCategories(
     accountId: number,
-    options: {dateFrom?: string; dateTo?: string; limit?: number},
+    options: { dateFrom?: string; dateTo?: string; limit?: number },
     workspaceId: number
   ) {
-    const {dateFrom, dateTo, limit = 20} = options;
+    const { dateFrom, dateTo, limit = 20 } = options;
 
     // Build date filter conditions
     const dateConditions = [];
@@ -1586,7 +1586,7 @@ export class TransactionService {
    * Get recent activity summary for an account
    */
   async getRecentActivity(accountId: number, days: number, workspaceId: number) {
-    const dateFrom = today(getLocalTimeZone()).subtract({days}).toString();
+    const dateFrom = today(getLocalTimeZone()).subtract({ days }).toString();
 
     const result = await db
       .select({

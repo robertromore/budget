@@ -1,6 +1,6 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as Empty from '$lib/components/ui/empty';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
@@ -24,14 +24,14 @@ import {
   bulkDeleteBudgets,
   getPendingRecommendationsCount,
 } from '$lib/query/budgets';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import type {BudgetGroup} from '$lib/schema/budgets';
-import {budgetSearchState} from '$lib/states/ui/budget-search.svelte';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {calculateActualSpent} from '$lib/utils/budget-calculations';
-import {goto} from '$app/navigation';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { BudgetGroup } from '$lib/schema/budgets';
+import { budgetSearchState } from '$lib/states/ui/budget-search.svelte';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { calculateActualSpent } from '$lib/utils/budget-calculations';
+import { goto } from '$app/navigation';
 import BudgetRecommendationsPanel from '$lib/components/budgets/budget-recommendations-panel.svelte';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import {
   ChartBar,
   Grid3x3,
@@ -75,11 +75,11 @@ const search = budgetSearchState;
 
 // Sort options for toolbar
 const budgetSortOptions = [
-  {value: 'name' as const, label: 'Name', order: 'asc' as const},
-  {value: 'name' as const, label: 'Name', order: 'desc' as const},
-  {value: 'allocated' as const, label: 'Allocated', order: 'desc' as const},
-  {value: 'consumed' as const, label: 'Consumed', order: 'desc' as const},
-  {value: 'remaining' as const, label: 'Remaining', order: 'desc' as const},
+  { value: 'name' as const, label: 'Name', order: 'asc' as const },
+  { value: 'name' as const, label: 'Name', order: 'desc' as const },
+  { value: 'allocated' as const, label: 'Allocated', order: 'desc' as const },
+  { value: 'consumed' as const, label: 'Consumed', order: 'desc' as const },
+  { value: 'remaining' as const, label: 'Remaining', order: 'desc' as const },
 ];
 
 function getAllocated(budget: BudgetWithRelations) {
@@ -113,11 +113,11 @@ const bulkArchiveMutation = bulkArchiveBudgets.options();
 const bulkDeleteMutation = bulkDeleteBudgets.options();
 
 async function handleDuplicateBudget(budget: BudgetWithRelations) {
-  await duplicateMutation.mutateAsync({id: budget.id});
+  await duplicateMutation.mutateAsync({ id: budget.id });
 }
 
 async function handleArchiveBudget(budget: BudgetWithRelations) {
-  await updateMutation.mutateAsync({id: budget.id, data: {status: 'archived'}});
+  await updateMutation.mutateAsync({ id: budget.id, data: { status: 'archived' } });
 }
 
 function handleDeleteBudget(budget: BudgetWithRelations) {

@@ -30,7 +30,7 @@ import {
   Settings,
   TrendingDown,
   TrendingUp,
-  TriangleAlert
+  TriangleAlert,
 } from '@lucide/svelte/icons';
 import { toast } from 'svelte-sonner';
 
@@ -41,7 +41,7 @@ interface Props {
   hideMetrics?: boolean;
 }
 
-let {budgets = [], className, hidePeriodInfo = false, hideMetrics = false}: Props = $props();
+let { budgets = [], className, hidePeriodInfo = false, hideMetrics = false }: Props = $props();
 
 // Get the first budget with periods
 const primaryBudget = $derived(

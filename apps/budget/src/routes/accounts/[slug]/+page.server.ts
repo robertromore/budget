@@ -1,15 +1,15 @@
-import type {View} from "$lib/schema";
-import {superformInsertPayeeSchema} from "$lib/schema/superforms";
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import {currentDate} from "$lib/utils/dates";
-import {fail} from "@sveltejs/kit";
-import {zod4} from "sveltekit-superforms/adapters";
-import {superValidate} from "sveltekit-superforms/client";
-import type {Actions, PageServerLoad} from "./$types";
+import type { View } from "$lib/schema";
+import { superformInsertPayeeSchema } from "$lib/schema/superforms";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
+import { currentDate } from "$lib/utils/dates";
+import { fail } from "@sveltejs/kit";
+import { zod4 } from "sveltekit-superforms/adapters";
+import { superValidate } from "sveltekit-superforms/client";
+import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
-  const {params} = event;
+  const { params } = event;
   // Load minimal data required for the data table
   // Views are needed for the DataTable component view management
 
@@ -64,7 +64,7 @@ export const load: PageServerLoad = async (event) => {
         {
           column: "date",
           filter: "dateIn",
-          value: [{operator: "after", date: currentDate.toString()}],
+          value: [{ operator: "after", date: currentDate.toString() }],
         },
         {
           column: "status",
@@ -146,7 +146,7 @@ export const load: PageServerLoad = async (event) => {
         {
           column: "date",
           filter: "dateIn",
-          value: [{operator: "after", date: currentDate.subtract({days: 30}).toString()}],
+          value: [{ operator: "after", date: currentDate.subtract({ days: 30 }).toString() }],
         },
       ],
       display: {
@@ -178,7 +178,7 @@ export const load: PageServerLoad = async (event) => {
         {
           column: "amount",
           filter: "amountFilter",
-          value: [{operator: "greaterThan", value: 500}],
+          value: [{ operator: "greaterThan", value: 500 }],
         },
       ],
       display: {
@@ -238,10 +238,10 @@ export const load: PageServerLoad = async (event) => {
 
   // Load user-created views from database
   const caller = createCaller(await createContext(event));
-  const userViews = await caller.viewsRoutes.all({entityType: "transactions"});
+  const userViews = await caller.viewsRoutes.all({ entityType: "transactions" });
 
   // Load active budgets for transaction form
-  const budgets = await caller.budgetRoutes.list({status: "active"});
+  const budgets = await caller.budgetRoutes.list({ status: "active" });
 
   return {
     accountSlug: params.slug,

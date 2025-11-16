@@ -1,26 +1,26 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Table from '$lib/components/ui/table';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Sheet from '$lib/components/ui/sheet';
 import * as Empty from '$lib/components/ui/empty';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import FolderOpen from '@lucide/svelte/icons/folder-open';
 import Plus from '@lucide/svelte/icons/plus';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
-import {PayeeCategoriesState} from '$lib/states/entities/payee-categories.svelte';
+import { PayeeCategoriesState } from '$lib/states/entities/payee-categories.svelte';
 import ManagePayeeCategoryForm from '$lib/components/forms/manage-payee-category-form.svelte';
 import SeedDefaultPayeeCategoriesButton from './(components)/seed-default-payee-categories-button.svelte';
 import UncategorizedPayeesSheet from './(components)/uncategorized-payees-sheet.svelte';
-import type {PayeeCategory} from '$lib/schema';
-import type {PayeeCategoryWithCounts} from '$lib/server/domains/payee-categories/repository';
-import {rpc} from '$lib/query';
-import {deletePayeeCategory, getUncategorizedPayeesCount} from '$lib/query/payee-categories';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import type { PayeeCategory } from '$lib/schema';
+import type { PayeeCategoryWithCounts } from '$lib/server/domains/payee-categories/repository';
+import { rpc } from '$lib/query';
+import { deletePayeeCategory, getUncategorizedPayeesCount } from '$lib/query/payee-categories';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import Lightbulb from '@lucide/svelte/icons/lightbulb';
 
 // Fetch categories with counts

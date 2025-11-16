@@ -1,8 +1,8 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import type {TransactionsFormat} from '$lib/types';
-import {analyticsTypes} from './(analytics)/analytics-types';
+import type { TransactionsFormat } from '$lib/types';
+import { analyticsTypes } from './(analytics)/analytics-types';
 import MonthlySpendingChart from './(charts)/monthly-spending-chart.svelte';
 import IncomeVsExpensesChart from './(charts)/income-vs-expenses-chart.svelte';
 import TopCategoriesView from './(charts)/top-categories-view.svelte';
@@ -12,7 +12,7 @@ interface Props {
   accountId: string;
 }
 
-let {transactions, accountId}: Props = $props();
+let { transactions, accountId }: Props = $props();
 
 // Current selection
 let selectedAnalytic = $state('monthly-spending');

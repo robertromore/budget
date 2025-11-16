@@ -5,10 +5,10 @@
  * for bank statement downloads.
  */
 
-import {XMLParser} from "fast-xml-parser";
-import type {FileProcessor, ImportRow, NormalizedTransaction} from "$lib/types/import";
-import {FileValidationError, ParseError} from "../errors";
-import {parseDate, parseAmount, sanitizeText, validateFileType} from "../utils";
+import { XMLParser } from "fast-xml-parser";
+import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
+import { FileValidationError, ParseError } from "../errors";
+import { parseDate, parseAmount, sanitizeText, validateFileType } from "../utils";
 
 interface OFXTransaction {
   TRNTYPE?: string;
@@ -28,7 +28,7 @@ export class OFXProcessor implements FileProcessor {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): {valid: boolean; error?: string} {
+  validateFile(file: File): { valid: boolean; error?: string } {
     // Check file type
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
@@ -53,7 +53,7 @@ export class OFXProcessor implements FileProcessor {
       };
     }
 
-    return {valid: true};
+    return { valid: true };
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {

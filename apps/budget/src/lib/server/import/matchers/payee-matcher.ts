@@ -5,8 +5,8 @@
  * using fuzzy string matching and confidence scoring.
  */
 
-import type {Payee} from "$lib/schema/payees";
-import {calculateStringSimilarity, normalizeText} from "../utils";
+import type { Payee } from "$lib/schema/payees";
+import { calculateStringSimilarity, normalizeText } from "../utils";
 
 export type MatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 
@@ -35,7 +35,7 @@ export class PayeeMatcher {
   private options: Required<PayeeMatcherOptions>;
 
   constructor(options: PayeeMatcherOptions = {}) {
-    this.options = {...DEFAULT_OPTIONS, ...options};
+    this.options = { ...DEFAULT_OPTIONS, ...options };
   }
 
   /**
@@ -176,9 +176,9 @@ export class PayeeMatcher {
    * Normalize payee name and extract details for notes field
    * Uses general pattern recognition without hardcoding specific merchants
    */
-  normalizePayeeName(rawName: string): {name: string; details: string | null} {
+  normalizePayeeName(rawName: string): { name: string; details: string | null } {
     if (!rawName || !rawName.trim()) {
-      return {name: "", details: null};
+      return { name: "", details: null };
     }
 
     let text = rawName.trim();

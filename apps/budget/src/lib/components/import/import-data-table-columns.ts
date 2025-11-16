@@ -1,7 +1,7 @@
-import type {ColumnDef} from "@tanstack/table-core";
-import type {ImportRow} from "$lib/types/import";
-import {renderComponent} from "$lib/components/ui/data-table";
-import {Checkbox} from "$lib/components/ui/checkbox";
+import type { ColumnDef } from "@tanstack/table-core";
+import type { ImportRow } from "$lib/types/import";
+import { renderComponent } from "$lib/components/ui/data-table";
+import { Checkbox } from "$lib/components/ui/checkbox";
 import ImportTableColumnHeader from "./import-table-column-header.svelte";
 import ImportTableStatusCell from "./import-table-status-cell.svelte";
 import ImportTableAmountCell from "./import-table-amount-cell.svelte";
@@ -31,7 +31,7 @@ export function createColumns(options?: {
   return [
     {
       id: "select",
-      header: ({table}) => {
+      header: ({ table }) => {
         const allPageRowsSelected = table.getIsAllPageRowsSelected();
         const somePageRowsSelected = table.getIsSomePageRowsSelected();
 
@@ -43,7 +43,7 @@ export function createColumns(options?: {
           },
         });
       },
-      cell: ({row}) => {
+      cell: ({ row }) => {
         return renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
@@ -58,14 +58,14 @@ export function createColumns(options?: {
     {
       accessorKey: "rowIndex",
       header: "#",
-      cell: ({row}) => row.original.rowIndex + 1,
+      cell: ({ row }) => row.original.rowIndex + 1,
     },
     {
       accessorKey: "validationStatus",
-      header: ({column}) => renderComponent(ImportTableColumnHeader, {column, label: "Status"}),
-      cell: ({row}) => renderComponent(ImportTableStatusCell, {row}),
+      header: ({ column }) => renderComponent(ImportTableColumnHeader, { column, label: "Status" }),
+      cell: ({ row }) => renderComponent(ImportTableStatusCell, { row }),
       sortingFn: (rowA, rowB) => {
-        const statusOrder = {invalid: 0, warning: 1, pending: 2, valid: 3};
+        const statusOrder = { invalid: 0, warning: 1, pending: 2, valid: 3 };
         const statusA =
           statusOrder[rowA.original.validationStatus as keyof typeof statusOrder] || 0;
         const statusB =
@@ -75,35 +75,36 @@ export function createColumns(options?: {
     },
     {
       accessorKey: "date",
-      header: ({column}) => renderComponent(ImportTableColumnHeader, {column, label: "Date"}),
-      cell: ({row}) => row.original.normalizedData["date"] || "—",
+      header: ({ column }) => renderComponent(ImportTableColumnHeader, { column, label: "Date" }),
+      cell: ({ row }) => row.original.normalizedData["date"] || "—",
       accessorFn: (row) => row.normalizedData["date"],
     },
     {
       accessorKey: "payee",
-      header: ({column}) => renderComponent(ImportTableColumnHeader, {column, label: "Payee"}),
-      cell: ({row}) =>
+      header: ({ column }) => renderComponent(ImportTableColumnHeader, { column, label: "Payee" }),
+      cell: ({ row }) =>
         renderComponent(ImportTablePayeeCell, {
           row,
-          ...(onPayeeUpdate ? {onUpdate: onPayeeUpdate} : {}),
-          ...(temporaryPayees ? {temporaryPayees} : {}),
+          ...(onPayeeUpdate ? { onUpdate: onPayeeUpdate } : {}),
+          ...(temporaryPayees ? { temporaryPayees } : {}),
         }),
       accessorFn: (row) => row.normalizedData["payee"],
     },
     {
       accessorKey: "amount",
-      header: ({column}) => renderComponent(ImportTableColumnHeader, {column, label: "Amount"}),
-      cell: ({row}) => renderComponent(ImportTableAmountCell, {row}),
+      header: ({ column }) => renderComponent(ImportTableColumnHeader, { column, label: "Amount" }),
+      cell: ({ row }) => renderComponent(ImportTableAmountCell, { row }),
       accessorFn: (row) => row.normalizedData["amount"],
     },
     {
       accessorKey: "category",
-      header: ({column}) => renderComponent(ImportTableColumnHeader, {column, label: "Category"}),
-      cell: ({row}) =>
+      header: ({ column }) =>
+        renderComponent(ImportTableColumnHeader, { column, label: "Category" }),
+      cell: ({ row }) =>
         renderComponent(ImportTableCategoryCell, {
           row,
-          ...(onCategoryUpdate ? {onUpdate: onCategoryUpdate} : {}),
-          ...(temporaryCategories ? {temporaryCategories} : {}),
+          ...(onCategoryUpdate ? { onUpdate: onCategoryUpdate } : {}),
+          ...(temporaryCategories ? { temporaryCategories } : {}),
         }),
       accessorFn: (row) => row.normalizedData["category"],
       sortingFn: (rowA, rowB) => {
@@ -114,12 +115,12 @@ export function createColumns(options?: {
     },
     {
       accessorKey: "description",
-      header: ({column}) =>
-        renderComponent(ImportTableColumnHeader, {column, label: "Description"}),
-      cell: ({row}) =>
+      header: ({ column }) =>
+        renderComponent(ImportTableColumnHeader, { column, label: "Description" }),
+      cell: ({ row }) =>
         renderComponent(ImportTableDescriptionCell, {
           row,
-          ...(onDescriptionUpdate ? {onUpdate: onDescriptionUpdate} : {}),
+          ...(onDescriptionUpdate ? { onUpdate: onDescriptionUpdate } : {}),
         }),
       accessorFn: (row) => row.normalizedData["description"] || row.normalizedData["notes"],
     },

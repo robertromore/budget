@@ -1,14 +1,14 @@
-import type {Category} from "$lib/schema/categories";
+import type { Category } from "$lib/schema/categories";
 import type {
   CategoryGroup,
   CategoryGroupRecommendation,
   CategoryGroupSettings,
   NewCategoryGroup,
 } from "$lib/schema/category-groups";
-import type {CategoryGroupWithCounts} from "$lib/server/domains/category-groups/repository";
-import {trpc} from "$lib/trpc/client";
-import {cachePatterns} from "./_client";
-import {createQueryKeys, defineMutation, defineQuery} from "./_factory";
+import type { CategoryGroupWithCounts } from "$lib/server/domains/category-groups/repository";
+import { trpc } from "$lib/trpc/client";
+import { cachePatterns } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 // ================================================================================
 // Query Keys
@@ -36,13 +36,13 @@ export const listCategoryGroups = () =>
 export const getCategoryGroupBySlug = (slug: string) =>
   defineQuery<CategoryGroup>({
     queryKey: categoryGroupKeys.slug(slug),
-    queryFn: () => trpc().categoryGroupsRoutes.getBySlug.query({slug}),
+    queryFn: () => trpc().categoryGroupsRoutes.getBySlug.query({ slug }),
   });
 
 export const getGroupCategories = (groupId: number) =>
   defineQuery<Category[]>({
     queryKey: categoryGroupKeys.categories(groupId),
-    queryFn: () => trpc().categoryGroupsRoutes.getGroupCategories.query({groupId}),
+    queryFn: () => trpc().categoryGroupsRoutes.getGroupCategories.query({ groupId }),
   });
 
 export const listRecommendations = () =>
@@ -62,7 +62,7 @@ export const getCategoryGroupSettings = () =>
 // ================================================================================
 
 export const createCategoryGroup = defineMutation<NewCategoryGroup, CategoryGroup>({
-  mutationFn: (input) => trpc().categoryGroupsRoutes.create.mutate({...input}),
+  mutationFn: (input) => trpc().categoryGroupsRoutes.create.mutate({ ...input }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryGroupKeys.all());
   },
@@ -71,7 +71,7 @@ export const createCategoryGroup = defineMutation<NewCategoryGroup, CategoryGrou
 });
 
 export const updateCategoryGroup = defineMutation<
-  {id: number} & Partial<NewCategoryGroup>,
+  { id: number } & Partial<NewCategoryGroup>,
   CategoryGroup
 >({
   mutationFn: (input) => trpc().categoryGroupsRoutes.update.mutate(input),
@@ -85,8 +85,8 @@ export const updateCategoryGroup = defineMutation<
   errorMessage: "Failed to update category group",
 });
 
-export const deleteCategoryGroup = defineMutation<number, {success: boolean}>({
-  mutationFn: (id) => trpc().categoryGroupsRoutes.delete.mutate({id}),
+export const deleteCategoryGroup = defineMutation<number, { success: boolean }>({
+  mutationFn: (id) => trpc().categoryGroupsRoutes.delete.mutate({ id }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryGroupKeys.all());
   },
@@ -95,8 +95,8 @@ export const deleteCategoryGroup = defineMutation<number, {success: boolean}>({
 });
 
 export const addCategoriesToGroup = defineMutation<
-  {groupId: number; categoryIds: number[]},
-  {success: boolean}
+  { groupId: number; categoryIds: number[] },
+  { success: boolean }
 >({
   mutationFn: (input) => trpc().categoryGroupsRoutes.addCategories.mutate(input),
   onSuccess: (_, variables) => {
@@ -108,19 +108,21 @@ export const addCategoriesToGroup = defineMutation<
   errorMessage: "Failed to add categories",
 });
 
-export const removeCategoryFromGroup = defineMutation<{categoryId: number}, {success: boolean}>({
-  mutationFn: (input) => trpc().categoryGroupsRoutes.removeCategory.mutate(input),
-  onSuccess: () => {
-    cachePatterns.invalidatePrefix(categoryGroupKeys.all());
-    cachePatterns.invalidatePrefix(["categories"]);
-  },
-  successMessage: "Category removed from group",
-  errorMessage: "Failed to remove category",
-});
+export const removeCategoryFromGroup = defineMutation<{ categoryId: number }, { success: boolean }>(
+  {
+    mutationFn: (input) => trpc().categoryGroupsRoutes.removeCategory.mutate(input),
+    onSuccess: () => {
+      cachePatterns.invalidatePrefix(categoryGroupKeys.all());
+      cachePatterns.invalidatePrefix(["categories"]);
+    },
+    successMessage: "Category removed from group",
+    errorMessage: "Failed to remove category",
+  }
+);
 
 export const moveCategoryToGroup = defineMutation<
-  {categoryId: number; newGroupId: number},
-  {success: boolean}
+  { categoryId: number; newGroupId: number },
+  { success: boolean }
 >({
   mutationFn: (input) => trpc().categoryGroupsRoutes.moveCategory.mutate(input),
   onSuccess: (_, variables) => {
@@ -133,8 +135,8 @@ export const moveCategoryToGroup = defineMutation<
 });
 
 export const reorderGroups = defineMutation<
-  {updates: Array<{id: number; sortOrder: number}>},
-  {success: boolean}
+  { updates: Array<{ id: number; sortOrder: number }> },
+  { success: boolean }
 >({
   mutationFn: (input) => trpc().categoryGroupsRoutes.reorderGroups.mutate(input),
   onSuccess: () => {
@@ -157,8 +159,8 @@ export const generateRecommendations = defineMutation<void, CategoryGroupRecomme
   errorMessage: "Failed to generate recommendations",
 });
 
-export const approveRecommendation = defineMutation<number, {success: boolean}>({
-  mutationFn: (id) => trpc().categoryGroupsRoutes.recommendationsApprove.mutate({id}),
+export const approveRecommendation = defineMutation<number, { success: boolean }>({
+  mutationFn: (id) => trpc().categoryGroupsRoutes.recommendationsApprove.mutate({ id }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryGroupKeys.recommendations());
     cachePatterns.invalidatePrefix(categoryGroupKeys.all());
@@ -168,8 +170,8 @@ export const approveRecommendation = defineMutation<number, {success: boolean}>(
   errorMessage: "Failed to approve recommendation",
 });
 
-export const dismissRecommendation = defineMutation<number, {success: boolean}>({
-  mutationFn: (id) => trpc().categoryGroupsRoutes.recommendationsDismiss.mutate({id}),
+export const dismissRecommendation = defineMutation<number, { success: boolean }>({
+  mutationFn: (id) => trpc().categoryGroupsRoutes.recommendationsDismiss.mutate({ id }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryGroupKeys.recommendations());
   },
@@ -177,8 +179,8 @@ export const dismissRecommendation = defineMutation<number, {success: boolean}>(
   errorMessage: "Failed to dismiss recommendation",
 });
 
-export const rejectRecommendation = defineMutation<number, {success: boolean}>({
-  mutationFn: (id) => trpc().categoryGroupsRoutes.recommendationsReject.mutate({id}),
+export const rejectRecommendation = defineMutation<number, { success: boolean }>({
+  mutationFn: (id) => trpc().categoryGroupsRoutes.recommendationsReject.mutate({ id }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryGroupKeys.recommendations());
   },
@@ -191,7 +193,7 @@ export const rejectRecommendation = defineMutation<number, {success: boolean}>({
 // ================================================================================
 
 export const updateCategoryGroupSettings = defineMutation<
-  {recommendationsEnabled?: boolean; minConfidenceScore?: number},
+  { recommendationsEnabled?: boolean; minConfidenceScore?: number },
   CategoryGroupSettings
 >({
   mutationFn: (input) => trpc().categoryGroupsRoutes.settingsUpdate.mutate(input),

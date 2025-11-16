@@ -1,9 +1,9 @@
 <script lang="ts">
 // Framework imports
-import type {Component} from 'svelte';
+import type { Component } from 'svelte';
 
 // SvelteKit imports
-import {page} from '$app/state';
+import { page } from '$app/state';
 
 // Third-party library imports
 import HandCoins from '@lucide/svelte/icons/hand-coins';
@@ -12,42 +12,42 @@ import CreditCard from '@lucide/svelte/icons/credit-card';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Building from '@lucide/svelte/icons/building';
 import Tag from '@lucide/svelte/icons/tag';
-import {fieldProxy} from 'sveltekit-superforms';
-import {CalendarDate} from '@internationalized/date';
-import {useEntityForm} from '$lib/hooks/forms/use-entity-form';
+import { fieldProxy } from 'sveltekit-superforms';
+import { CalendarDate } from '@internationalized/date';
+import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
 
 // UI component imports
 import * as Form from '$lib/components/ui/form';
 import * as Card from '$lib/components/ui/card';
-import {Input} from '$lib/components/ui/input';
-import {Switch} from '$lib/components/ui/switch';
-import {Label} from '$lib/components/ui/label';
-import {EntityInput, MultiNumericInput} from '$lib/components/input';
+import { Input } from '$lib/components/ui/input';
+import { Switch } from '$lib/components/ui/switch';
+import { Label } from '$lib/components/ui/label';
+import { EntityInput, MultiNumericInput } from '$lib/components/input';
 
 // Model imports
 import RepeatingDateInputModel from '$lib/models/repeating_date.svelte';
 
 // Schema imports
-import {type Schedule} from '$lib/schema/schedules';
-import {type Payee, type Category} from '$lib/schema';
-import {superformInsertScheduleSchema} from '$lib/schema/superforms';
+import { type Schedule } from '$lib/schema/schedules';
+import { type Payee, type Category } from '$lib/schema';
+import { superformInsertScheduleSchema } from '$lib/schema/superforms';
 
 // State imports
-import {SchedulesState} from '$lib/states/entities';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {useQueryClient} from '@tanstack/svelte-query';
-import {scheduleKeys} from '$lib/queries/schedules';
+import { SchedulesState } from '$lib/states/entities';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { useQueryClient } from '@tanstack/svelte-query';
+import { scheduleKeys } from '$lib/queries/schedules';
 
 // Type imports
-import type {EditableEntityItem} from '$lib/types';
+import type { EditableEntityItem } from '$lib/types';
 
 // Local component imports
-import {RepeatingDateInput} from '$lib/components/input';
+import { RepeatingDateInput } from '$lib/components/input';
 import AccountSelector from '$lib/components/input/account-selector.svelte';
-import {WizardFormWrapper} from '$lib/components/wizard';
+import { WizardFormWrapper } from '$lib/components/wizard';
 import ScheduleWizard from '$lib/components/wizard/schedule-wizard.svelte';
-import {scheduleWizardStore} from '$lib/stores/wizardStore.svelte';
+import { scheduleWizardStore } from '$lib/stores/wizardStore.svelte';
 import ManagePayeeForm from '$lib/components/forms/manage-payee-form.svelte';
 import ManageCategoryForm from '$lib/components/forms/manage-category-form.svelte';
 
@@ -66,7 +66,7 @@ let {
 
 // Page data
 const {
-  data: {accounts, payees, categories, manageScheduleForm},
+  data: { accounts, payees, categories, manageScheduleForm },
 } = page;
 
 // State
@@ -76,9 +76,9 @@ const categoriesState = CategoriesState.get();
 const queryClient = useQueryClient();
 
 // Empty defaults for lookups
-const EMPTY_PAYEE: EditableEntityItem = {id: 0, name: ''};
-const EMPTY_ACCOUNT: EditableEntityItem = {id: 0, name: ''};
-const EMPTY_CATEGORY: EditableEntityItem = {id: 0, name: ''};
+const EMPTY_PAYEE: EditableEntityItem = { id: 0, name: '' };
+const EMPTY_ACCOUNT: EditableEntityItem = { id: 0, name: '' };
+const EMPTY_CATEGORY: EditableEntityItem = { id: 0, name: '' };
 
 // Generate unique form ID if not provided
 const uniqueFormId =
@@ -118,7 +118,7 @@ const form = useEntityForm({
   },
 });
 
-const {form: formData, enhance} = form;
+const { form: formData, enhance } = form;
 
 // Derive current values from formData (single source of truth)
 const payeeValue: EditableEntityItem = $derived.by(() => {
@@ -248,19 +248,19 @@ $effect(() => {
 // Sync derived values to local state (one-way: formData -> local state)
 $effect.pre(() => {
   if (payee.id !== payeeValue.id || payee.name !== payeeValue.name) {
-    payee = {...payeeValue};
+    payee = { ...payeeValue };
   }
 });
 
 $effect.pre(() => {
   if (account.id !== accountValue.id || account.name !== accountValue.name) {
-    account = {...accountValue};
+    account = { ...accountValue };
   }
 });
 
 $effect.pre(() => {
   if (category.id !== categoryValue.id || category.name !== categoryValue.name) {
-    category = {...categoryValue};
+    category = { ...categoryValue };
   }
 });
 
@@ -341,7 +341,7 @@ $effect(() => {
         <Card.Content>
           <Form.Field {form} name="name">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Schedule Name</Form.Label>
                 <Input
                   {...props}
@@ -369,7 +369,7 @@ $effect(() => {
           <!-- Amount Field -->
           <Form.Field {form} name="amount">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Transaction Amount</Form.Label>
                 <MultiNumericInput
                   {...props}
@@ -385,7 +385,7 @@ $effect(() => {
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Form.Field {form} name="accountId">
               <Form.Control>
-                {#snippet children({props})}
+                {#snippet children({ props })}
                   <Form.Label>{$formData.amount >= 0 ? 'To' : 'From'} Account</Form.Label>
                   <AccountSelector
                     entityLabel="account"
@@ -402,7 +402,7 @@ $effect(() => {
 
             <Form.Field {form} name="payeeId">
               <Form.Control>
-                {#snippet children({props})}
+                {#snippet children({ props })}
                   <Form.Label>{$formData.amount >= 0 ? 'From' : 'To'} Payee</Form.Label>
                   <EntityInput
                     entityLabel="payees"
@@ -434,7 +434,7 @@ $effect(() => {
 
             <Form.Field {form} name="categoryId">
               <Form.Control>
-                {#snippet children({props})}
+                {#snippet children({ props })}
                   <Form.Label>Category</Form.Label>
                   <EntityInput
                     entityLabel="categories"
@@ -481,7 +481,7 @@ $effect(() => {
         <Card.Content class="space-y-4">
           <Form.Field {form} name="repeating_date">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <RepeatingDateInput
                   {...props}
                   bind:value={repeating_date}
@@ -511,7 +511,7 @@ $effect(() => {
       <!-- Hidden fields for required form data -->
       <Form.Field {form} name="amount_2">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <input hidden bind:value={$formData.amount_2} name={props.name} />
           {/snippet}
         </Form.Control>
@@ -519,7 +519,7 @@ $effect(() => {
 
       <Form.Field {form} name="amount_type">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <input hidden bind:value={$formData.amount_type} name={props.name} />
           {/snippet}
         </Form.Control>
@@ -527,7 +527,7 @@ $effect(() => {
 
       <Form.Field {form} name="status">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <input hidden bind:value={$formData.status} name={props.name} />
           {/snippet}
         </Form.Control>
@@ -535,7 +535,7 @@ $effect(() => {
 
       <Form.Field {form} name="recurring">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <input hidden bind:value={$formData.recurring} name={props.name} />
           {/snippet}
         </Form.Control>
@@ -543,7 +543,7 @@ $effect(() => {
 
       <Form.Field {form} name="auto_add">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <input hidden bind:value={$formData.auto_add} name={props.name} />
           {/snippet}
         </Form.Control>

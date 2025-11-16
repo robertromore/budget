@@ -1,6 +1,6 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import PayeeAnalyticsSummary from '$lib/components/dashboard/payee-analytics-summary.svelte';
 import Home from '@lucide/svelte/icons/home';
 import CreditCard from '@lucide/svelte/icons/credit-card';
@@ -8,10 +8,10 @@ import Receipt from '@lucide/svelte/icons/receipt';
 import Users from '@lucide/svelte/icons/users';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Calendar from '@lucide/svelte/icons/calendar';
-import {AccountsState} from '$lib/states/entities/accounts.svelte';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {SchedulesState} from '$lib/states/entities/schedules.svelte';
-import {currencyFormatter} from '$lib/utils/formatters';
+import { AccountsState } from '$lib/states/entities/accounts.svelte';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { SchedulesState } from '$lib/states/entities/schedules.svelte';
+import { currencyFormatter } from '$lib/utils/formatters';
 
 // Get state data
 const accountsState = $derived(AccountsState.get());

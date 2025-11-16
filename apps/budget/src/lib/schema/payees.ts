@@ -3,7 +3,7 @@
 // government entities, or individuals. Enhanced with budgeting integration fields
 // for automatic categorization, transaction automation, and analytics support.
 
-import {relations, sql} from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   sqliteTable,
   integer,
@@ -12,13 +12,13 @@ import {
   index,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {transactions} from "./transactions";
-import {categories} from "./categories";
-import {budgets} from "./budgets";
-import {workspaces} from "./workspaces";
-import {payeeCategories} from "./payee-categories";
-import {z} from "zod/v4";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { transactions } from "./transactions";
+import { categories } from "./categories";
+import { budgets } from "./budgets";
+import { workspaces } from "./workspaces";
+import { payeeCategories } from "./payee-categories";
+import { z } from "zod/v4";
 
 // Enum definitions for payee fields
 export const payeeTypes = [
@@ -46,10 +46,10 @@ export type PaymentFrequency = (typeof paymentFrequencies)[number];
 export const payees = sqliteTable(
   "payee",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     name: text("name"),
     slug: text("slug").notNull().unique(),
     notes: text("notes"),
@@ -57,7 +57,7 @@ export const payees = sqliteTable(
     // Budgeting Integration Fields
     defaultCategoryId: integer("default_category_id").references(() => categories.id),
     defaultBudgetId: integer("default_budget_id").references(() => budgets.id),
-    payeeType: text("payee_type", {enum: payeeTypes}),
+    payeeType: text("payee_type", { enum: payeeTypes }),
 
     // Organization Fields
     payeeCategoryId: integer("payee_category_id").references(() => payeeCategories.id, {
@@ -66,12 +66,12 @@ export const payees = sqliteTable(
 
     // Transaction Automation Fields
     avgAmount: real("avg_amount"),
-    paymentFrequency: text("payment_frequency", {enum: paymentFrequencies}),
+    paymentFrequency: text("payment_frequency", { enum: paymentFrequencies }),
     lastTransactionDate: text("last_transaction_date"),
 
     // Analytics Support Fields
-    taxRelevant: integer("tax_relevant", {mode: "boolean"}).default(false).notNull(),
-    isActive: integer("is_active", {mode: "boolean"}).default(true).notNull(),
+    taxRelevant: integer("tax_relevant", { mode: "boolean" }).default(false).notNull(),
+    isActive: integer("is_active", { mode: "boolean" }).default(true).notNull(),
 
     // Contact Information Fields
     website: text("website"),
@@ -79,13 +79,13 @@ export const payees = sqliteTable(
     email: text("email"),
 
     // Organization Fields
-    address: text("address", {mode: "json"}),
+    address: text("address", { mode: "json" }),
     accountNumber: text("account_number"),
 
     // Advanced Features Fields
     alertThreshold: real("alert_threshold"),
-    isSeasonal: integer("is_seasonal", {mode: "boolean"}).default(false).notNull(),
-    subscriptionInfo: text("subscription_info", {mode: "json"}),
+    isSeasonal: integer("is_seasonal", { mode: "boolean" }).default(false).notNull(),
+    subscriptionInfo: text("subscription_info", { mode: "json" }),
     tags: text("tags"),
 
     // Payment Processing Fields
@@ -128,7 +128,7 @@ export const payees = sqliteTable(
   ]
 );
 
-export const payeesRelations = relations(payees, ({many, one}) => ({
+export const payeesRelations = relations(payees, ({ many, one }) => ({
   workspace: one(workspaces, {
     fields: [payees.workspaceId],
     references: [workspaces.id],
@@ -217,8 +217,8 @@ export const formInsertPayeeSchema = createInsertSchema(payees, {
       .optional()
       .nullable(),
 });
-export const removePayeeSchema = z.object({id: z.number().nonnegative()});
-export const removePayeesSchema = z.object({entities: z.array(z.number().nonnegative())});
+export const removePayeeSchema = z.object({ id: z.number().nonnegative() });
+export const removePayeesSchema = z.object({ entities: z.array(z.number().nonnegative()) });
 
 export type Payee = typeof payees.$inferSelect;
 export type NewPayee = typeof payees.$inferInsert;

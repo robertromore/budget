@@ -1,7 +1,7 @@
-import {initTRPC} from "@trpc/server";
-import type {Context} from "$lib/trpc/context";
-import {errorHandler} from "$lib/server/shared/middleware";
-import {requireAuth, requireAdmin} from "$lib/server/shared/middleware";
+import { initTRPC } from "@trpc/server";
+import type { Context } from "$lib/trpc/context";
+import { errorHandler } from "$lib/server/shared/middleware";
+import { requireAuth, requireAdmin } from "$lib/server/shared/middleware";
 import {
   mutationRateLimit,
   bulkOperationRateLimit,

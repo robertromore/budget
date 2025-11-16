@@ -2,22 +2,22 @@
 // This is separate from transaction categories which categorize transactions.
 // Examples: "Utilities", "Subscriptions", "Local Businesses", "Healthcare Providers"
 
-import {relations, sql} from "drizzle-orm";
-import {index, integer, sqliteTable, text} from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
+import { relations, sql } from "drizzle-orm";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import validator from "validator";
-import {z} from "zod/v4";
-import {isValidIconName} from "$lib/utils/icon-validation";
-import {workspaces} from "./workspaces";
-import {payees} from "./payees";
+import { z } from "zod/v4";
+import { isValidIconName } from "$lib/utils/icon-validation";
+import { workspaces } from "./workspaces";
+import { payees } from "./payees";
 
 export const payeeCategories = sqliteTable(
   "payee_categories",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     description: text("description"),
@@ -28,7 +28,7 @@ export const payeeCategories = sqliteTable(
 
     // Organization
     displayOrder: integer("display_order").notNull().default(0),
-    isActive: integer("is_active", {mode: "boolean"}).notNull().default(true),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 
     dateCreated: text("date_created")
       .notNull()
@@ -51,7 +51,7 @@ export const payeeCategories = sqliteTable(
   ]
 );
 
-export const payeeCategoriesRelations = relations(payeeCategories, ({one, many}) => ({
+export const payeeCategoriesRelations = relations(payeeCategories, ({ one, many }) => ({
   workspace: one(workspaces, {
     fields: [payeeCategories.workspaceId],
     references: [workspaces.id],
@@ -113,8 +113,10 @@ export const formInsertPayeeCategorySchema = createInsertSchema(payeeCategories,
   displayOrder: (schema) => schema.pipe(z.number()).default(0),
 });
 
-export const removePayeeCategorySchema = z.object({id: z.number().nonnegative()});
-export const removePayeeCategoriesSchema = z.object({entities: z.array(z.number().nonnegative())});
+export const removePayeeCategorySchema = z.object({ id: z.number().nonnegative() });
+export const removePayeeCategoriesSchema = z.object({
+  entities: z.array(z.number().nonnegative()),
+});
 
 export type PayeeCategory = typeof payeeCategories.$inferSelect;
 export type NewPayeeCategory = typeof payeeCategories.$inferInsert;

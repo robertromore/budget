@@ -1,10 +1,10 @@
 <script lang="ts">
-import {browser} from '$app/environment';
-import type {Category} from '$lib/schema';
-import type {CategoriesState} from '$lib/states/entities/categories.svelte';
-import type {ColumnDef} from '@tanstack/table-core';
+import { browser } from '$app/environment';
+import type { Category } from '$lib/schema';
+import type { CategoriesState } from '$lib/states/entities/categories.svelte';
+import type { ColumnDef } from '@tanstack/table-core';
 import CategoryDataTable from './category-data-table.svelte';
-import {Skeleton} from '$lib/components/ui/skeleton';
+import { Skeleton } from '$lib/components/ui/skeleton';
 
 interface Props {
   isLoading: boolean;

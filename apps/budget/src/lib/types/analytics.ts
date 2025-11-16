@@ -1,4 +1,4 @@
-import type {Component} from "svelte";
+import type { Component } from "svelte";
 
 /**
  * Data structure for top spending categories analytics

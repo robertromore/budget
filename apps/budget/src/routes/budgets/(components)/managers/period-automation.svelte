@@ -12,20 +12,20 @@ import {
 import * as Card from '$lib/components/ui/card';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Input} from '$lib/components/ui/input';
-import {Switch} from '$lib/components/ui/switch';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Input } from '$lib/components/ui/input';
+import { Switch } from '$lib/components/ui/switch';
 import Label from '$lib/components/ui/label/label.svelte';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
 import {
   ensurePeriodInstance,
   listPeriodInstances,
   processEnvelopeRollover,
 } from '$lib/query/budgets';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import {CalendarDate} from '@internationalized/date';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { CalendarDate } from '@internationalized/date';
 
 interface Props {
   budget: BudgetWithRelations;
@@ -42,7 +42,7 @@ interface AutomationSettings {
   maxPeriodsAhead: number;
 }
 
-let {budget, class: className, hideStatus = false}: Props = $props();
+let { budget, class: className, hideStatus = false }: Props = $props();
 
 const periodsQuery = listPeriodInstances(budget.id).options();
 const ensurePeriodMutation = ensurePeriodInstance.options();
@@ -112,7 +112,7 @@ function getFrequencyDescription(frequency: string): string {
   }
 }
 
-function calculateNextPeriodDates(): {start: Date; end: Date} {
+function calculateNextPeriodDates(): { start: Date; end: Date } {
   if (!currentPeriod) {
     // If no current period, start from today
     const start = new Date();
@@ -130,7 +130,7 @@ function calculateNextPeriodDates(): {start: Date; end: Date} {
         break;
     }
 
-    return {start, end};
+    return { start, end };
   }
 
   // Calculate next period based on current period end
@@ -152,11 +152,11 @@ function calculateNextPeriodDates(): {start: Date; end: Date} {
       break;
   }
 
-  return {start, end};
+  return { start, end };
 }
 
 async function createNextPeriod() {
-  const {start, end} = calculateNextPeriodDates();
+  const { start, end } = calculateNextPeriodDates();
 
   try {
     const newPeriod = await ensurePeriodMutation.mutateAsync({
@@ -182,7 +182,7 @@ async function createNextPeriod() {
 }
 
 async function previewNextPeriod() {
-  const {start, end} = calculateNextPeriodDates();
+  const { start, end } = calculateNextPeriodDates();
   nextPeriodPreview = {
     startDate: start.toISOString(),
     endDate: end.toISOString(),

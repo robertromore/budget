@@ -1,27 +1,27 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import {AnalyticsCard} from '$lib/components/ui/data-table';
-import {SimpleDataTable} from '$lib/components/data-table';
+import { AnalyticsCard } from '$lib/components/ui/data-table';
+import { SimpleDataTable } from '$lib/components/data-table';
 import type {
   DataTableFeatures,
   DataTableState,
   DataTableStateHandlers,
 } from '$lib/components/data-table';
-import {GenericToolbar} from '$lib/components/data-table/toolbar';
+import { GenericToolbar } from '$lib/components/data-table/toolbar';
 import * as Tabs from '$lib/components/ui/tabs';
-import type {TransactionsFormat, TopCategoryData} from '$lib/types';
-import {createTopCategoriesProcessor} from '../(analytics)/data-processors.svelte';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import type { TransactionsFormat, TopCategoryData } from '$lib/types';
+import { createTopCategoriesProcessor } from '../(analytics)/data-processors.svelte';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import Tag from '@lucide/svelte/icons/tag';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
 import TableIcon from '@lucide/svelte/icons/table';
 import LayoutGrid from '@lucide/svelte/icons/layout-grid';
-import {createCategoryColumns} from '../../(data)/category-columns';
-import {categoryFilters} from '$lib/components/data-table/filters';
-import {rpc} from '$lib/query';
-import {onMount} from 'svelte';
-import type {View} from '$lib/schema';
-import type {FilterInputOption} from '$lib/types';
+import { createCategoryColumns } from '../../(data)/category-columns';
+import { categoryFilters } from '$lib/components/data-table/filters';
+import { rpc } from '$lib/query';
+import { onMount } from 'svelte';
+import type { View } from '$lib/schema';
+import type { FilterInputOption } from '$lib/types';
 import type {
   SortingState,
   VisibilityState,
@@ -36,7 +36,7 @@ interface Props {
   transactions: TransactionsFormat[];
 }
 
-let {transactions}: Props = $props();
+let { transactions }: Props = $props();
 
 // Process the data
 const processor = createTopCategoriesProcessor(transactions);
@@ -82,7 +82,7 @@ const features: DataTableFeatures = {
 let sorting = $state<SortingState>([]);
 let columnVisibility = $state<VisibilityState>({});
 let columnFilters = $state<ColumnFiltersState>([]);
-let pagination = $state<PaginationState>({pageIndex: 0, pageSize: 10});
+let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
 let rowSelection = $state<Record<string, boolean>>({});
 let columnPinning = $state<ColumnPinningState>({});
 let columnOrder = $state<string[]>([]);
@@ -213,7 +213,7 @@ function applyView(view: View) {
 
     // Apply pagination
     if (view.display.pageSize) {
-      pagination = {...pagination, pageSize: view.display.pageSize};
+      pagination = { ...pagination, pageSize: view.display.pageSize };
     }
 
     // Apply view mode
@@ -367,7 +367,7 @@ let viewMode = $state<'table' | 'cards'>('cards');
               }}
               pageSize={pagination.pageSize}
               onPageSizeChange={(newSize) => {
-                pagination = {...pagination, pageSize: newSize};
+                pagination = { ...pagination, pageSize: newSize };
               }}
               {globalFilter}
               onGlobalFilterChange={(newFilter) => {

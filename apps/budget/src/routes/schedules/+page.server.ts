@@ -1,12 +1,12 @@
-import {removeScheduleSchema} from "$lib/schema";
-import {superformInsertScheduleSchema} from "$lib/schema/superforms";
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import {superValidate} from "sveltekit-superforms/client";
-import type {Actions, PageServerLoad} from "./$types";
-import {fail} from "@sveltejs/kit";
-import {zod4} from "sveltekit-superforms/adapters";
-import {insertFormSchema} from "./schema";
+import { removeScheduleSchema } from "$lib/schema";
+import { superformInsertScheduleSchema } from "$lib/schema/superforms";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
+import { superValidate } from "sveltekit-superforms/client";
+import type { Actions, PageServerLoad } from "./$types";
+import { fail } from "@sveltejs/kit";
+import { zod4 } from "sveltekit-superforms/adapters";
+import { insertFormSchema } from "./schema";
 
 export const load: PageServerLoad = async (event) => ({
   schedules: await createCaller(await createContext(event)).scheduleRoutes.all(),

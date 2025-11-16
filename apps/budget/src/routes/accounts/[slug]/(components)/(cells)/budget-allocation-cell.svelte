@@ -1,12 +1,12 @@
 <script lang="ts">
 import * as Select from '$lib/components/ui/select';
 import * as Tooltip from '$lib/components/ui/tooltip';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {CircleDollarSign, Plus, TriangleAlert} from '@lucide/svelte/icons';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {listBudgets} from '$lib/query/budgets';
-import type {TransactionsFormat} from '$lib/types';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { CircleDollarSign, Plus, TriangleAlert } from '@lucide/svelte/icons';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { listBudgets } from '$lib/query/budgets';
+import type { TransactionsFormat } from '$lib/types';
 
 interface Props {
   transaction: TransactionsFormat;
@@ -14,7 +14,7 @@ interface Props {
   onDeleteAllocation?: (allocationId: number) => Promise<void>;
 }
 
-let {transaction, onAddAllocation, onDeleteAllocation}: Props = $props();
+let { transaction, onAddAllocation, onDeleteAllocation }: Props = $props();
 
 const budgetsQuery = listBudgets().options();
 const availableBudgets = $derived.by(() => budgetsQuery.data ?? []);
@@ -85,7 +85,7 @@ function getBudgetName(budgetId: number): string {
       {#each budgetAllocations as allocation (allocation.id)}
         <Tooltip.Root>
           <Tooltip.Trigger>
-            {#snippet child({props})}
+            {#snippet child({ props })}
               <Badge
                 {...props}
                 variant="secondary"

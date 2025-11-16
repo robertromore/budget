@@ -1,6 +1,6 @@
 <script lang="ts">
-import type {Payee} from '$lib/schema';
-import {Button} from '$lib/components/ui/button';
+import type { Payee } from '$lib/schema';
+import { Button } from '$lib/components/ui/button';
 import User from '@lucide/svelte/icons/user';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Pencil from '@lucide/svelte/icons/pencil';
@@ -14,7 +14,7 @@ interface Props {
   onViewAnalytics: (payee: Payee) => void;
 }
 
-let {payee, onView, onEdit, onDelete, onViewAnalytics}: Props = $props();
+let { payee, onView, onEdit, onDelete, onViewAnalytics }: Props = $props();
 </script>
 
 <div class="flex items-center justify-end gap-1">

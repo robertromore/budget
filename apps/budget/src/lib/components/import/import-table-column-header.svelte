@@ -1,17 +1,17 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
 import ArrowUp from '@lucide/svelte/icons/arrow-up';
 import ArrowDown from '@lucide/svelte/icons/arrow-down';
-import type {Column} from '@tanstack/table-core';
-import type {ImportRow} from '$lib/types/import';
+import type { Column } from '@tanstack/table-core';
+import type { ImportRow } from '$lib/types/import';
 
 interface Props {
   column: Column<ImportRow, unknown>;
   label: string;
 }
 
-let {column, label}: Props = $props();
+let { column, label }: Props = $props();
 
 const isSorted = $derived(column.getIsSorted());
 </script>

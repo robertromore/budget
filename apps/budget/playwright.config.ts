@@ -1,5 +1,5 @@
-import type {PlaywrightTestConfig} from "@playwright/test";
-import {devices} from "@playwright/test";
+import type { PlaywrightTestConfig } from "@playwright/test";
+import { devices } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
   webServer: {
@@ -34,7 +34,7 @@ const config: PlaywrightTestConfig = {
 
     // Browser optimizations
     headless: true, // Always run headless for speed
-    viewport: {width: 1280, height: 720}, // Standard viewport
+    viewport: { width: 1280, height: 720 }, // Standard viewport
     ignoreHTTPSErrors: true, // Skip HTTPS validation for speed
 
     // Reduce resource loading

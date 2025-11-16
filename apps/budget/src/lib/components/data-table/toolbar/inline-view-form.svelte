@@ -1,10 +1,10 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import type {View} from '$lib/schema/views';
-import type {ViewDisplayState, ViewFilter, TableEntityType} from '$lib/types';
-import {saveView} from '$lib/query/views';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import type { View } from '$lib/schema/views';
+import type { ViewDisplayState, ViewFilter, TableEntityType } from '$lib/types';
+import { saveView } from '$lib/query/views';
 import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 
 interface Props {
@@ -22,7 +22,7 @@ interface Props {
   onSave?: (view: View) => void;
 }
 
-let {view, entityType, filters = [], display, onCancel, onSave}: Props = $props();
+let { view, entityType, filters = [], display, onCancel, onSave }: Props = $props();
 
 const isUpdate = $derived(view !== undefined && view.id !== undefined);
 const mutation = saveView.options();
@@ -49,7 +49,7 @@ async function handleSave() {
 
   try {
     const viewData = {
-      ...(view?.id ? {id: view.id} : {}),
+      ...(view?.id ? { id: view.id } : {}),
       entityType,
       name: name.trim(),
       description: description.trim() || null,

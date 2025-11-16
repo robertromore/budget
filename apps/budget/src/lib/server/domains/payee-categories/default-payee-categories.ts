@@ -1,4 +1,4 @@
-import type {NewPayeeCategory} from "$lib/schema/payee-categories";
+import type { NewPayeeCategory } from "$lib/schema/payee-categories";
 
 /**
  * Default payee categories that users can optionally seed

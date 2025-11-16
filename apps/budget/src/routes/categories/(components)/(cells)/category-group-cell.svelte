@@ -1,7 +1,7 @@
 <script lang="ts">
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import FolderOpen from '@lucide/svelte/icons/folder-open';
-import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 
 interface Props {
   groupName: string | null;
@@ -9,7 +9,7 @@ interface Props {
   groupIcon: string | null;
 }
 
-let {groupName, groupColor, groupIcon}: Props = $props();
+let { groupName, groupColor, groupIcon }: Props = $props();
 
 const iconData = $derived(() => {
   if (!groupIcon) return null;

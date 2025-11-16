@@ -1,31 +1,31 @@
 <script lang="ts">
 import * as Select from '$lib/components/ui/select';
-import type {PayeeSearchFilters} from '$lib/server/domains/payees/repository';
-import type {PayeeType, PaymentFrequency} from '$lib/schema/payees';
+import type { PayeeSearchFilters } from '$lib/server/domains/payees/repository';
+import type { PayeeType, PaymentFrequency } from '$lib/schema/payees';
 
 interface Props {
   filters: PayeeSearchFilters;
   onFilterChange: (key: keyof PayeeSearchFilters, value: any) => void;
 }
 
-let {filters, onFilterChange}: Props = $props();
+let { filters, onFilterChange }: Props = $props();
 
-const payeeTypeOptions: Array<{value: PayeeType; label: string}> = [
-  {value: 'person', label: 'Person'},
-  {value: 'company', label: 'Company'},
-  {value: 'merchant', label: 'Merchant'},
-  {value: 'government', label: 'Government'},
-  {value: 'other', label: 'Other'},
+const payeeTypeOptions: Array<{ value: PayeeType; label: string }> = [
+  { value: 'person', label: 'Person' },
+  { value: 'company', label: 'Company' },
+  { value: 'merchant', label: 'Merchant' },
+  { value: 'government', label: 'Government' },
+  { value: 'other', label: 'Other' },
 ];
 
-const frequencyOptions: Array<{value: PaymentFrequency; label: string}> = [
-  {value: 'one_time', label: 'One Time'},
-  {value: 'weekly', label: 'Weekly'},
-  {value: 'bi_weekly', label: 'Bi-Weekly'},
-  {value: 'monthly', label: 'Monthly'},
-  {value: 'quarterly', label: 'Quarterly'},
-  {value: 'annual', label: 'Annual'},
-  {value: 'irregular', label: 'Irregular'},
+const frequencyOptions: Array<{ value: PaymentFrequency; label: string }> = [
+  { value: 'one_time', label: 'One Time' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'bi_weekly', label: 'Bi-Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'annual', label: 'Annual' },
+  { value: 'irregular', label: 'Irregular' },
 ];
 </script>
 

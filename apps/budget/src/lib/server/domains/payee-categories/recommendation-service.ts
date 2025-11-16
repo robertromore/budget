@@ -1,8 +1,8 @@
-import type {Payee, PayeeCategory} from "$lib/schema";
-import {categories, payeeCategories, payees, transactions} from "$lib/schema";
-import {db} from "$lib/server/db";
-import {and, count, desc, eq, isNotNull, isNull, sql} from "drizzle-orm";
-import {logger} from "$lib/server/shared/logging";
+import type { Payee, PayeeCategory } from "$lib/schema";
+import { categories, payeeCategories, payees, transactions } from "$lib/schema";
+import { db } from "$lib/server/db";
+import { and, count, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { logger } from "$lib/server/shared/logging";
 
 // ================================================================================
 // Types
@@ -420,7 +420,7 @@ export class PayeeCategoryRecommendationService {
     payeeId: number,
     category: PayeeCategory,
     workspaceId: number
-  ): Promise<{score: number; factors: string[]}> {
+  ): Promise<{ score: number; factors: string[] }> {
     // Get the most common transaction category for this payee
     // Note: We don't need to filter by workspaceId because payeeId is already workspace-scoped
     const categoryDistribution = await db
@@ -444,7 +444,7 @@ export class PayeeCategoryRecommendationService {
     categoryDistribution.sort((a, b) => b.count - a.count);
 
     if (categoryDistribution.length === 0) {
-      return {score: 0, factors: []};
+      return { score: 0, factors: [] };
     }
 
     const topTransactionCategory = categoryDistribution[0]!;
@@ -491,7 +491,7 @@ export class PayeeCategoryRecommendationService {
       };
     }
 
-    return {score: 0, factors: []};
+    return { score: 0, factors: [] };
   }
 
   /**
@@ -550,7 +550,7 @@ export class PayeeCategoryRecommendationService {
     payee: Payee,
     categoryId: number,
     workspaceId: number
-  ): Promise<{score: number; factors: string[]}> {
+  ): Promise<{ score: number; factors: string[] }> {
     // Find payees in this category with similar names or characteristics
     const similarPayees = await db
       .select({
@@ -569,7 +569,7 @@ export class PayeeCategoryRecommendationService {
       );
 
     if (similarPayees.length === 0) {
-      return {score: 0, factors: []};
+      return { score: 0, factors: [] };
     }
 
     let similarityScore = 0;
@@ -601,7 +601,7 @@ export class PayeeCategoryRecommendationService {
       }
     }
 
-    return {score: similarityScore, factors};
+    return { score: similarityScore, factors };
   }
 
   /**
@@ -640,7 +640,7 @@ export class PayeeCategoryRecommendationService {
    */
   async getUncategorizedCount(workspaceId: number): Promise<number> {
     const result = await db
-      .select({count: count()})
+      .select({ count: count() })
       .from(payees)
       .where(
         and(

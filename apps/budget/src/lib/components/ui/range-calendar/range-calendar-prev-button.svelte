@@ -1,8 +1,8 @@
 <script lang="ts">
-import {RangeCalendar as RangeCalendarPrimitive} from 'bits-ui';
+import { RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
 import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
-import {buttonVariants, type ButtonVariant} from '$lib/components/ui/button/index.js';
-import {cn} from '$lib/utils';
+import { buttonVariants, type ButtonVariant } from '$lib/components/ui/button/index.js';
+import { cn } from '$lib/utils';
 let {
   ref = $bindable(null),
   class: className,
@@ -20,7 +20,7 @@ let {
 <RangeCalendarPrimitive.PrevButton
   bind:ref
   class={cn(
-    buttonVariants({variant}),
+    buttonVariants({ variant }),
     'size-(--cell-size) bg-transparent p-0 select-none disabled:opacity-50 rtl:rotate-180',
     className
   )}

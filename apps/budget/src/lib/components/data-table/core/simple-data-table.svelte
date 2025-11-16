@@ -1,10 +1,10 @@
 <script lang="ts" generics="TData">
-import type {ColumnDef, Table as TableInstance} from '@tanstack/table-core';
-import type {Snippet} from 'svelte';
+import type { ColumnDef, Table as TableInstance } from '@tanstack/table-core';
+import type { Snippet } from 'svelte';
 import DataTable from './data-table.svelte';
 import DataTableColumnHeader from './data-table-column-header.svelte';
 import DataTablePagination from './data-table-pagination.svelte';
-import {FlexRender} from '$lib/components/ui/data-table';
+import { FlexRender } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
 import type {
   DataTableFeatures,
@@ -73,8 +73,8 @@ let {
     {data}
     {columns}
     {features}
-    {...state ? {state} : {}}
-    {...handlers ? {handlers} : {}}
+    {...state ? { state } : {}}
+    {...handlers ? { handlers } : {}}
     {uiSettings}
     {serverPagination}
     {rowCount}

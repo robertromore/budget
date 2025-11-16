@@ -1,8 +1,8 @@
 <script lang="ts">
-import type {Transaction} from '$lib/schema';
-import type {Table} from '@tanstack/table-core';
-import type {TransactionsFormat} from '$lib/types';
-import {Button} from '$lib/components/ui/button';
+import type { Transaction } from '$lib/schema';
+import type { Table } from '@tanstack/table-core';
+import type { TransactionsFormat } from '$lib/types';
+import { Button } from '$lib/components/ui/button';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import X from '@lucide/svelte/icons/x';
 
@@ -12,7 +12,7 @@ interface Props {
   onBulkDelete: (transactions: TransactionsFormat[]) => void;
 }
 
-let {table, allTransactions, onBulkDelete}: Props = $props();
+let { table, allTransactions, onBulkDelete }: Props = $props();
 
 const selectedRows = $derived(table.getSelectedRowModel().rows);
 const selectedCount = $derived(selectedRows.length);

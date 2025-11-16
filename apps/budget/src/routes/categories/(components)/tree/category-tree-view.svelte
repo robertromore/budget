@@ -19,7 +19,7 @@ type Props = {
   level?: number | undefined;
 };
 
-let {nodes, onView, onEdit, onDelete, onAddChild, level = 0}: Props = $props();
+let { nodes, onView, onEdit, onDelete, onAddChild, level = 0 }: Props = $props();
 
 let expandedNodes = $state(new Set<number>());
 

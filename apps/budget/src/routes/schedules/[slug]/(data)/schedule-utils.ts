@@ -1,7 +1,7 @@
-import type {PageData} from "../$types";
-import {currencyFormatter, recurringFormatter} from "$lib/utils/formatters";
-import {nextDaily, nextWeekly, nextMonthly, nextYearly} from "$lib/utils/date-frequency";
-import {parseISOString, currentDate} from "$lib/utils/dates";
+import type { PageData } from "../$types";
+import { currencyFormatter, recurringFormatter } from "$lib/utils/formatters";
+import { nextDaily, nextWeekly, nextMonthly, nextYearly } from "$lib/utils/date-frequency";
+import { parseISOString, currentDate } from "$lib/utils/dates";
 
 export function formatAmount(schedule: PageData["schedule"]): string {
   if (!schedule || schedule.amount == null) {

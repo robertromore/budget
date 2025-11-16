@@ -15,33 +15,33 @@
   ```
 -->
 <script lang="ts" generics="TData, TValue">
-import type {Column} from '@tanstack/table-core';
+import type { Column } from '@tanstack/table-core';
 import * as Popover from '$lib/components/ui/popover';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {cn} from '$lib/utils';
-import {currentViews} from '$lib/states/views';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { cn } from '$lib/utils';
+import { currentViews } from '$lib/states/views';
 import X from '@lucide/svelte/icons/x';
 import CalendarIcon from '@lucide/svelte/icons/calendar';
-import {DateFiltersState} from '$lib/states/ui/date-filters.svelte';
-import type {FacetedFilterOption} from '$lib/types';
+import { DateFiltersState } from '$lib/states/ui/date-filters.svelte';
+import type { FacetedFilterOption } from '$lib/types';
 import * as Command from '$lib/components/ui/command';
-import {AdvancedDateDialog} from '$lib/components/dialogs';
-import {parseDate} from '@internationalized/date';
-import {dayFmt} from '$lib/utils/date-formatters';
-import {currentDate, timezone} from '$lib/utils/dates';
+import { AdvancedDateDialog } from '$lib/components/dialogs';
+import { parseDate } from '@internationalized/date';
+import { dayFmt } from '$lib/utils/date-formatters';
+import { currentDate, timezone } from '$lib/utils/dates';
 import DateInput from '$lib/components/input/date-input.svelte';
-import {RangeCalendar} from '$lib/components/ui/range-calendar';
-import type {DateRange} from 'bits-ui';
+import { RangeCalendar } from '$lib/components/ui/range-calendar';
+import type { DateRange } from 'bits-ui';
 
 /**
  * Date filter value structure supporting multiple operators
  */
 type DateFilterValue =
-  | {operator: 'in'; values: Set<string>} // Multiple specific dates
-  | {operator: 'before'; date: string} // Before a date
-  | {operator: 'after'; date: string} // After a date
-  | {operator: 'between'; from: string; to: string}; // Between two dates
+  | { operator: 'in'; values: Set<string> } // Multiple specific dates
+  | { operator: 'before'; date: string } // Before a date
+  | { operator: 'after'; date: string } // After a date
+  | { operator: 'between'; from: string; to: string }; // Between two dates
 
 /**
  * Component props interface
@@ -67,10 +67,10 @@ let advancedDateDialogOpen = $state(false);
  * Available filter operation types for date comparisons.
  */
 const filterTypes = [
-  {value: 'in', label: 'in', description: 'Select specific dates'},
-  {value: 'before', label: 'before', description: 'Before a date'},
-  {value: 'after', label: 'after', description: 'After a date'},
-  {value: 'between', label: 'between', description: 'Date range'},
+  { value: 'in', label: 'in', description: 'Select specific dates' },
+  { value: 'before', label: 'before', description: 'Before a date' },
+  { value: 'after', label: 'after', description: 'After a date' },
+  { value: 'between', label: 'between', description: 'Date range' },
 ];
 
 // Use runed Context API instead of Svelte's getContext
@@ -86,7 +86,7 @@ const currentFilter = $derived(column.getFilterValue() as DateFilterValue | unde
 // Initialize filter with default operator when component mounts
 $effect(() => {
   if (!currentFilter) {
-    const newFilter: DateFilterValue = {operator: 'in', values: new Set()};
+    const newFilter: DateFilterValue = { operator: 'in', values: new Set() };
     column.setFilterValue(newFilter);
   }
 });
@@ -101,19 +101,19 @@ const setOperator = (operator: (typeof filterTypes)[0]) => {
 
   switch (operator.value) {
     case 'in':
-      newFilter = {operator: 'in', values: new Set()};
+      newFilter = { operator: 'in', values: new Set() };
       break;
     case 'before':
-      newFilter = {operator: 'before', date: ''};
+      newFilter = { operator: 'before', date: '' };
       break;
     case 'after':
-      newFilter = {operator: 'after', date: ''};
+      newFilter = { operator: 'after', date: '' };
       break;
     case 'between':
-      newFilter = {operator: 'between', from: '', to: ''};
+      newFilter = { operator: 'between', from: '', to: '' };
       break;
     default:
-      newFilter = {operator: 'in', values: new Set()};
+      newFilter = { operator: 'in', values: new Set() };
   }
 
   // Update the column filterFn based on operator
@@ -158,16 +158,16 @@ const clearFilter = () => {
     let newFilter: DateFilterValue;
     switch (currentFilter.operator) {
       case 'in':
-        newFilter = {operator: 'in', values: new Set()};
+        newFilter = { operator: 'in', values: new Set() };
         break;
       case 'before':
-        newFilter = {operator: 'before', date: ''};
+        newFilter = { operator: 'before', date: '' };
         break;
       case 'after':
-        newFilter = {operator: 'after', date: ''};
+        newFilter = { operator: 'after', date: '' };
         break;
       case 'between':
-        newFilter = {operator: 'between', from: '', to: ''};
+        newFilter = { operator: 'between', from: '', to: '' };
         break;
     }
     column.setFilterValue(newFilter);
@@ -234,7 +234,7 @@ const toggleDateValue = (dateValue: string) => {
     } else {
       newValues.add(dateValue);
     }
-    column.setFilterValue({operator: 'in', values: newValues});
+    column.setFilterValue({ operator: 'in', values: newValues });
   }
 };
 
@@ -281,7 +281,7 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
   <!-- Operator Selection -->
   <Popover.Root bind:open={operatorOpen}>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button {...props} variant="outline" size="sm" class="h-8 rounded-none border-l-0">
           {activeOperator?.label}
         </Button>
@@ -312,7 +312,7 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
       <!-- Multi-select for 'in' operator -->
       <Popover.Root bind:open={datePickerOpen}>
         <Popover.Trigger>
-          {#snippet child({props})}
+          {#snippet child({ props })}
             <Button {...props} variant="outline" size="sm" class="h-8 min-w-32 rounded-none">
               <CalendarIcon class="mr-2 h-4 w-4" />
               {formatFilterValue(currentFilter)}
@@ -363,9 +363,9 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
           if (newValue) {
             const dateStr = newValue.toString();
             if (currentFilter.operator === 'before') {
-              column.setFilterValue({operator: 'before', date: dateStr});
+              column.setFilterValue({ operator: 'before', date: dateStr });
             } else if (currentFilter.operator === 'after') {
-              column.setFilterValue({operator: 'after', date: dateStr});
+              column.setFilterValue({ operator: 'after', date: dateStr });
             }
           }
         }}
@@ -374,7 +374,7 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
       <!-- Range date picker using RangeCalendar -->
       <Popover.Root>
         <Popover.Trigger>
-          {#snippet child({props})}
+          {#snippet child({ props })}
             <Button
               {...props}
               variant="outline"
@@ -387,7 +387,7 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
         </Popover.Trigger>
         <Popover.Content class="w-auto p-0" align="start">
           <RangeCalendar
-            {...rangeDateValue ? {value: rangeDateValue} : {}}
+            {...rangeDateValue ? { value: rangeDateValue } : {}}
             onValueChange={(newRange) => {
               if (newRange?.start && newRange?.end) {
                 column.setFilterValue({

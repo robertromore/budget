@@ -6,7 +6,7 @@ interface Props {
   recommendation: BudgetRecommendationWithRelations;
 }
 
-let {recommendation}: Props = $props();
+let { recommendation }: Props = $props();
 
 const getConfidenceVariant = (confidence: number) => {
   if (confidence >= 80) return 'default';

@@ -1,7 +1,7 @@
-import {ValidationError} from "$lib/server/shared/types/errors";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import type {Payee} from "$lib/schema";
-import {logger} from "$lib/server/shared/logging";
+import { ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import type { Payee } from "$lib/schema";
+import { logger } from "$lib/server/shared/logging";
 
 // ==================== CORE CONTACT INTERFACES ====================
 
@@ -111,7 +111,7 @@ export interface ContactAnalytics {
       standardized: boolean;
       validated: boolean;
       geocoded: boolean;
-      coordinates?: {lat: number; lng: number};
+      coordinates?: { lat: number; lng: number };
     };
   };
   lastAnalyzed: string;
@@ -422,7 +422,7 @@ export class ContactManagementService {
     standardized: any;
     confidence: number;
     geocoded: boolean;
-    coordinates?: {lat: number; lng: number};
+    coordinates?: { lat: number; lng: number };
     completeness: number;
     suggestions: string[];
     components: {
@@ -486,7 +486,7 @@ export class ContactManagementService {
 
     // Mock geocoding (would use real service in production)
     const geocoded = completeness >= 0.75;
-    const coordinates = geocoded ? {lat: 40.7128, lng: -74.006} : undefined;
+    const coordinates = geocoded ? { lat: 40.7128, lng: -74.006 } : undefined;
 
     const confidence = completeness * (geocoded ? 1.0 : 0.8);
 
@@ -494,7 +494,7 @@ export class ContactManagementService {
       standardized: any;
       confidence: number;
       geocoded: boolean;
-      coordinates?: {lat: number; lng: number};
+      coordinates?: { lat: number; lng: number };
       completeness: number;
       suggestions: string[];
       components: {
@@ -835,7 +835,7 @@ export class ContactManagementService {
     retentionDate.setFullYear(retentionDate.getFullYear() + 7);
 
     // In a real implementation, this would be stored in an audit log table
-    logger.info("Payee audit log", {action, payeeId, workspaceId: workspaceId || "system"});
+    logger.info("Payee audit log", { action, payeeId, workspaceId: workspaceId || "system" });
 
     const result: {
       auditId: string;
@@ -864,7 +864,11 @@ export class ContactManagementService {
   /**
    * Encrypt sensitive contact information
    */
-  async encryptContactData(contactData: {phone?: string; email?: string; address?: any}): Promise<{
+  async encryptContactData(contactData: {
+    phone?: string;
+    email?: string;
+    address?: any;
+  }): Promise<{
     encryptedPhone?: string;
     encryptedEmail?: string;
     encryptedAddress?: string;
@@ -1353,7 +1357,7 @@ export class ContactManagementService {
       confidence: standardization.valid ? 0.9 : 0.1,
       metadata: {
         format: standardization.format,
-        ...(standardization.region ? {region: standardization.region} : {}),
+        ...(standardization.region ? { region: standardization.region } : {}),
       },
     };
 

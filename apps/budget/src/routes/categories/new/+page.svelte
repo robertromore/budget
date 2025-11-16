@@ -1,14 +1,14 @@
 <script lang="ts">
-import {goto} from '$app/navigation';
-import {page} from '$app/state';
-import {Button} from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Tag from '@lucide/svelte/icons/tag';
-import {ManageCategoryForm} from '$lib/components/forms';
-import type {Category} from '$lib/schema';
-import type {EditableEntityItem} from '$lib/types';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
+import { ManageCategoryForm } from '$lib/components/forms';
+import type { Category } from '$lib/schema';
+import type { EditableEntityItem } from '$lib/types';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
 
 const categoriesState = CategoriesState.get();
 
@@ -25,7 +25,7 @@ const handleSave = (entity: EditableEntityItem, isNew: boolean) => {
 
     // Navigate to the new category's detail page
     setTimeout(() => {
-      goto(`/categories/${category.slug}`, {replaceState: true});
+      goto(`/categories/${category.slug}`, { replaceState: true });
     }, 100);
   } else {
     // Navigate back to categories list

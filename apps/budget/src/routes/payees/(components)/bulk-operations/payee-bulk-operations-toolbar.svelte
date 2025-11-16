@@ -2,15 +2,15 @@
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import * as Select from '$lib/components/ui/select';
 import * as Dialog from '$lib/components/ui/dialog';
-import {Button} from '$lib/components/ui/button';
-import {Separator} from '$lib/components/ui/separator';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Checkbox} from '$lib/components/ui/checkbox';
+import { Button } from '$lib/components/ui/button';
+import { Separator } from '$lib/components/ui/separator';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Checkbox } from '$lib/components/ui/checkbox';
 
-import {PayeeBulkOperationsState} from '$lib/states/ui/payee-bulk-operations.svelte';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import type {Payee} from '$lib/schema/payees';
+import { PayeeBulkOperationsState } from '$lib/states/ui/payee-bulk-operations.svelte';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import type { Payee } from '$lib/schema/payees';
 
 // Icons
 import ChevronDown from '@lucide/svelte/icons/chevron-down';

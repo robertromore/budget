@@ -1,30 +1,30 @@
 <script lang="ts">
-import {Button, buttonVariants} from '$lib/components/ui/button';
+import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as Empty from '$lib/components/ui/empty';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import Plus from '@lucide/svelte/icons/plus';
 import Tag from '@lucide/svelte/icons/tag';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import FolderCog from '@lucide/svelte/icons/folder-cog';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {deleteCategoryDialog, deleteCategoryId} from '$lib/states/ui/categories.svelte';
-import {categorySearchState} from '$lib/states/ui/category-search.svelte';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { deleteCategoryDialog, deleteCategoryId } from '$lib/states/ui/categories.svelte';
+import { categorySearchState } from '$lib/states/ui/category-search.svelte';
 import EntitySearchToolbar from '$lib/components/shared/search/entity-search-toolbar.svelte';
 import CategorySearchFilters from './(components)/search/category-search-filters.svelte';
 import CategorySearchResults from './(components)/search/category-search-results.svelte';
 import CategoryTreeView from './(components)/tree/category-tree-view.svelte';
 import SeedDefaultCategoriesButton from './(components)/seed-default-categories-button.svelte';
 import GroupManagementSheet from './(components)/group-management-sheet.svelte';
-import type {CategoryTreeNode} from '$lib/types/categories';
-import {goto} from '$app/navigation';
-import type {Category} from '$lib/schema';
+import type { CategoryTreeNode } from '$lib/types/categories';
+import { goto } from '$app/navigation';
+import type { Category } from '$lib/schema';
 import {
   reorderCategories,
   getCategoryHierarchyTree,
   bulkDeleteCategories as bulkDeleteCategoriesMutation,
 } from '$lib/query/categories';
-import type {CategoryWithGroup} from '$lib/server/domains/categories/repository';
-import {rpc} from '$lib/query';
+import type { CategoryWithGroup } from '$lib/server/domains/categories/repository';
+import { rpc } from '$lib/query';
 
 const categoriesState = $derived(CategoriesState.get());
 const categories = $derived(categoriesState.categories.values());
@@ -107,11 +107,11 @@ const displayedCategories = $derived.by(() => {
 
 // Sort options for toolbar
 const categorySortOptions = [
-  {value: 'name' as const, label: 'Name', order: 'asc' as const},
-  {value: 'name' as const, label: 'Name', order: 'desc' as const},
-  {value: 'group' as const, label: 'Group', order: 'asc' as const},
-  {value: 'group' as const, label: 'Group', order: 'desc' as const},
-  {value: 'created' as const, label: 'Created', order: 'desc' as const},
+  { value: 'name' as const, label: 'Name', order: 'asc' as const },
+  { value: 'name' as const, label: 'Name', order: 'desc' as const },
+  { value: 'group' as const, label: 'Group', order: 'asc' as const },
+  { value: 'group' as const, label: 'Group', order: 'desc' as const },
+  { value: 'created' as const, label: 'Created', order: 'desc' as const },
 ];
 
 const shouldShowNoCategories = $derived.by(() => {
@@ -481,7 +481,7 @@ const addSubcategory = (parent: CategoryTreeNode) => {
       <AlertDialog.Action
         onclick={confirmBulkDelete}
         disabled={isDeletingBulk}
-        class={buttonVariants({variant: 'destructive'})}>
+        class={buttonVariants({ variant: 'destructive' })}>
         {isDeletingBulk ? 'Deleting...' : 'Delete'}
       </AlertDialog.Action>
     </AlertDialog.Footer>

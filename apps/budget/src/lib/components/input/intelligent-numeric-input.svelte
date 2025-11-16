@@ -1,10 +1,10 @@
 <script lang="ts">
 // --- Imports ---
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
 import * as Popover from '$lib/components/ui/popover';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {cn} from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { cn } from '$lib/utils';
 import SuggestionBadge from '$lib/components/ui/suggestion-badge.svelte';
 import Delete from '@lucide/svelte/icons/delete';
 
@@ -150,7 +150,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
       <SuggestionBadge
         type={suggestion?.type || 'info'}
         variant="accent"
-        {...suggestion?.confidence !== undefined && {confidence: suggestion.confidence}}
+        {...suggestion?.confidence !== undefined && { confidence: suggestion.confidence }}
         reason={suggestion?.reason || 'Suggested amount'}
         dismissible={true}
         onDismiss={dismissSuggestion}
@@ -171,7 +171,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
         }
       }}>
       <Popover.Trigger>
-        {#snippet child({props})}
+        {#snippet child({ props })}
           <Button
             {...props}
             variant="outline"
@@ -203,7 +203,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
                 <span class="text-muted-foreground text-xs">Suggested amount:</span>
                 <SuggestionBadge
                   type={suggestion?.type || 'info'}
-                  {...suggestion?.confidence !== undefined && {confidence: suggestion.confidence}}
+                  {...suggestion?.confidence !== undefined && { confidence: suggestion.confidence }}
                   class="text-xs" />
               </div>
               <Button
@@ -221,7 +221,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
           <Input bind:value={new_amount} class="mb-2" bind:ref={input} placeholder="0.00" />
 
           <div class="keypad grid grid-cols-3 grid-rows-3 gap-2">
-            {#each Array.from({length: 9}, (_, i) => i + 1) as i}
+            {#each Array.from({ length: 9 }, (_, i) => i + 1) as i}
               <Button
                 variant="outline"
                 disabled={valueWellFormatted()}

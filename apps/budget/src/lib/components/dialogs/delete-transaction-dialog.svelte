@@ -1,7 +1,7 @@
 <script lang="ts">
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {buttonVariants} from '$lib/components/ui/button';
-import {CurrentAccountState} from '$lib/states/current-account.svelte';
+import { buttonVariants } from '$lib/components/ui/button';
+import { CurrentAccountState } from '$lib/states/current-account.svelte';
 
 let {
   transactions,
@@ -38,7 +38,7 @@ let confirmDeleteTransaction = async () => {
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={confirmDeleteTransaction}
-        class={buttonVariants({variant: 'destructive'})}>Continue</AlertDialog.Action>
+        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

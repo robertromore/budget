@@ -3,7 +3,7 @@ interface Props {
   notes: string | null;
 }
 
-let {notes}: Props = $props();
+let { notes }: Props = $props();
 
 const truncated = $derived(() => {
   if (!notes) return null;

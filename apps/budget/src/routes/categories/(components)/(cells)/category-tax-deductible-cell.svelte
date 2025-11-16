@@ -1,12 +1,12 @@
 <script lang="ts">
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import Receipt from '@lucide/svelte/icons/receipt';
 
 interface Props {
   isTaxDeductible: boolean;
 }
 
-let {isTaxDeductible}: Props = $props();
+let { isTaxDeductible }: Props = $props();
 </script>
 
 {#if isTaxDeductible}

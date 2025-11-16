@@ -11,7 +11,7 @@ import type {
   NormalizedTransaction,
   IIFTransaction,
 } from "$lib/types/import";
-import {FileValidationError, ParseError} from "../errors";
+import { FileValidationError, ParseError } from "../errors";
 import {
   parseIIFDate,
   parseAmount,
@@ -28,7 +28,7 @@ export class IIFProcessor implements FileProcessor {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): {valid: boolean; error?: string} {
+  validateFile(file: File): { valid: boolean; error?: string } {
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
         valid: false,
@@ -50,7 +50,7 @@ export class IIFProcessor implements FileProcessor {
       };
     }
 
-    return {valid: true};
+    return { valid: true };
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {
@@ -246,7 +246,7 @@ export class IIFProcessor implements FileProcessor {
 
       return {
         rowIndex: index,
-        rawData: {...txn},
+        rawData: { ...txn },
         normalizedData: normalized as Record<string, any>,
         validationStatus: errors.length > 0 ? "invalid" : "valid",
         validationErrors: errors.length > 0 ? errors : undefined,

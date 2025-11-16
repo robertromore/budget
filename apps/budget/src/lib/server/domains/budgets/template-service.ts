@@ -1,8 +1,8 @@
-import {db} from "$lib/server/db";
-import {budgetTemplates, type BudgetTemplate, type NewBudgetTemplate} from "$lib/schema/budgets";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {eq, desc} from "drizzle-orm";
+import { db } from "$lib/server/db";
+import { budgetTemplates, type BudgetTemplate, type NewBudgetTemplate } from "$lib/schema/budgets";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { eq, desc } from "drizzle-orm";
 
 export interface CreateBudgetTemplateRequest {
   name: string;
@@ -187,7 +187,7 @@ export class BudgetTemplateService {
         suggestedAmount: null,
         enforcementLevel: "warning",
         metadata: {
-          defaultPeriod: {type: "monthly", startDay: 1},
+          defaultPeriod: { type: "monthly", startDay: 1 },
         },
         isSystem: true,
       },
@@ -200,7 +200,7 @@ export class BudgetTemplateService {
         suggestedAmount: null,
         enforcementLevel: "none",
         metadata: {
-          goal: {contributionFrequency: "monthly"},
+          goal: { contributionFrequency: "monthly" },
         },
         isSystem: true,
       },
@@ -291,7 +291,7 @@ export class BudgetTemplateService {
         suggestedAmount: null,
         enforcementLevel: "strict",
         metadata: {
-          defaultPeriod: {type: "monthly"},
+          defaultPeriod: { type: "monthly" },
         },
         isSystem: true,
       },
@@ -304,7 +304,7 @@ export class BudgetTemplateService {
         suggestedAmount: null,
         enforcementLevel: "none",
         metadata: {
-          goal: {contributionFrequency: "monthly", autoContribute: true},
+          goal: { contributionFrequency: "monthly", autoContribute: true },
         },
         isSystem: true,
       },
@@ -312,7 +312,7 @@ export class BudgetTemplateService {
 
     for (const template of systemTemplates) {
       const existing = await db.query.budgetTemplates.findFirst({
-        where: (t, {and, eq}) => and(eq(t.name, template.name), eq(t.isSystem, true)),
+        where: (t, { and, eq }) => and(eq(t.name, template.name), eq(t.isSystem, true)),
       });
 
       if (!existing) {

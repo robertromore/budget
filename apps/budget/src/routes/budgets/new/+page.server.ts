@@ -1,16 +1,16 @@
-import {getBudgetTemplateById} from "$lib/constants/budget-templates";
-import type {BudgetMetadata} from "$lib/schema/budgets";
-import {superformInsertBudgetSchema} from "$lib/schema/superforms";
-import type {CreateBudgetRequest} from "$lib/server/domains/budgets/services";
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
-import type {Actions} from "@sveltejs/kit";
-import {fail, redirect} from "@sveltejs/kit";
-import {zod4} from "sveltekit-superforms/adapters";
-import {superValidate} from "sveltekit-superforms/client";
+import { getBudgetTemplateById } from "$lib/constants/budget-templates";
+import type { BudgetMetadata } from "$lib/schema/budgets";
+import { superformInsertBudgetSchema } from "$lib/schema/superforms";
+import type { CreateBudgetRequest } from "$lib/server/domains/budgets/services";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
+import type { Actions } from "@sveltejs/kit";
+import { fail, redirect } from "@sveltejs/kit";
+import { zod4 } from "sveltekit-superforms/adapters";
+import { superValidate } from "sveltekit-superforms/client";
 
 export const load = async (event) => {
-  const {url} = event;
+  const { url } = event;
   const context = await createContext(event);
   const caller = createCaller(context);
 
@@ -55,11 +55,11 @@ export const load = async (event) => {
 
 export const actions: Actions = {
   default: async (event) => {
-    const {request} = event;
+    const { request } = event;
     const form = await superValidate(request, zod4(superformInsertBudgetSchema));
 
     if (!form.valid) {
-      return fail(400, {form});
+      return fail(400, { form });
     }
 
     try {
@@ -91,8 +91,8 @@ export const actions: Actions = {
         status: form.data.status || "active",
         enforcementLevel: form.data.enforcementLevel || "warning",
         metadata,
-        ...(form.data.accountIds && {accountIds: form.data.accountIds}),
-        ...(form.data.categoryIds && {categoryIds: form.data.categoryIds}),
+        ...(form.data.accountIds && { accountIds: form.data.accountIds }),
+        ...(form.data.categoryIds && { categoryIds: form.data.categoryIds }),
       };
 
       const caller = createCaller(await createContext(event));
@@ -108,7 +108,7 @@ export const actions: Actions = {
           });
 
           // Update the schedule to reference the budget
-          const schedule = await caller.scheduleRoutes.load({id: form.data.linkedScheduleId});
+          const schedule = await caller.scheduleRoutes.load({ id: form.data.linkedScheduleId });
           await caller.scheduleRoutes.save({
             id: schedule.id,
             name: schedule.name,

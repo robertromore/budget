@@ -1,10 +1,10 @@
-import {relations, sql} from "drizzle-orm";
-import {index, integer, real, sqliteTable, text, uniqueIndex} from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
+import { relations, sql } from "drizzle-orm";
+import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import validator from "validator";
-import {z} from "zod/v4";
-import {categories} from "./categories";
-import {workspaces} from "./workspaces";
+import { z } from "zod/v4";
+import { categories } from "./categories";
+import { workspaces } from "./workspaces";
 
 // ================================================================================
 // Table: category_groups
@@ -13,10 +13,10 @@ import {workspaces} from "./workspaces";
 export const categoryGroups = sqliteTable(
   "category_groups",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     name: text("name").notNull().unique(),
     slug: text("slug").notNull().unique(),
     description: text("description"),
@@ -37,7 +37,7 @@ export const categoryGroups = sqliteTable(
   ]
 );
 
-export const categoryGroupsRelations = relations(categoryGroups, ({one, many}) => ({
+export const categoryGroupsRelations = relations(categoryGroups, ({ one, many }) => ({
   workspace: one(workspaces, {
     fields: [categoryGroups.workspaceId],
     references: [workspaces.id],
@@ -62,13 +62,13 @@ export interface CategoryGroupWithCounts extends CategoryGroup {
 export const categoryGroupMemberships = sqliteTable(
   "category_group_memberships",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     categoryGroupId: integer("category_group_id")
       .notNull()
-      .references(() => categoryGroups.id, {onDelete: "cascade"}),
+      .references(() => categoryGroups.id, { onDelete: "cascade" }),
     categoryId: integer("category_id")
       .notNull()
-      .references(() => categories.id, {onDelete: "cascade"}),
+      .references(() => categories.id, { onDelete: "cascade" }),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: text("created_at")
       .notNull()
@@ -82,7 +82,7 @@ export const categoryGroupMemberships = sqliteTable(
   ]
 );
 
-export const categoryGroupMembershipsRelations = relations(categoryGroupMemberships, ({one}) => ({
+export const categoryGroupMembershipsRelations = relations(categoryGroupMemberships, ({ one }) => ({
   categoryGroup: one(categoryGroups, {
     fields: [categoryGroupMemberships.categoryGroupId],
     references: [categoryGroups.id],
@@ -112,17 +112,17 @@ export type CategoryGroupRecommendationStatus =
 export const categoryGroupRecommendations = sqliteTable(
   "category_group_recommendations",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     categoryId: integer("category_id")
       .notNull()
-      .references(() => categories.id, {onDelete: "cascade"}),
+      .references(() => categories.id, { onDelete: "cascade" }),
     suggestedGroupId: integer("suggested_group_id").references(() => categoryGroups.id, {
       onDelete: "set null",
     }),
     suggestedGroupName: text("suggested_group_name"),
     confidenceScore: real("confidence_score").notNull(),
     reasoning: text("reasoning"),
-    status: text("status", {enum: categoryGroupRecommendationStatusEnum})
+    status: text("status", { enum: categoryGroupRecommendationStatusEnum })
       .notNull()
       .default("pending"),
     createdAt: text("created_at")
@@ -141,7 +141,7 @@ export const categoryGroupRecommendations = sqliteTable(
 
 export const categoryGroupRecommendationsRelations = relations(
   categoryGroupRecommendations,
-  ({one}) => ({
+  ({ one }) => ({
     category: one(categories, {
       fields: [categoryGroupRecommendations.categoryId],
       references: [categories.id],
@@ -161,8 +161,8 @@ export type NewCategoryGroupRecommendation = typeof categoryGroupRecommendations
 // ================================================================================
 
 export const categoryGroupSettings = sqliteTable("category_group_settings", {
-  id: integer("id").primaryKey({autoIncrement: true}),
-  recommendationsEnabled: integer("recommendations_enabled", {mode: "boolean"})
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  recommendationsEnabled: integer("recommendations_enabled", { mode: "boolean" })
     .notNull()
     .default(true),
   minConfidenceScore: real("min_confidence_score").notNull().default(0.7),
@@ -206,7 +206,7 @@ export const selectCategoryGroupSchema = createSelectSchema(categoryGroups);
 
 export const updateCategoryGroupSchema = insertCategoryGroupSchema
   .partial()
-  .extend({id: z.number()});
+  .extend({ id: z.number() });
 
 // Membership schemas
 export const insertCategoryGroupMembershipSchema = createInsertSchema(categoryGroupMemberships);
@@ -231,7 +231,7 @@ export const insertCategoryGroupSettingsSchema = createInsertSchema(categoryGrou
 export const selectCategoryGroupSettingsSchema = createSelectSchema(categoryGroupSettings);
 export const updateCategoryGroupSettingsSchema = insertCategoryGroupSettingsSchema
   .partial()
-  .omit({id: true});
+  .omit({ id: true });
 
 // ================================================================================
 // Form Schemas (for tRPC and Superforms)

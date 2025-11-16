@@ -1,7 +1,7 @@
 <script lang="ts">
-import {cn} from '$lib/utils';
-import type {HTMLAttributes} from 'svelte/elements';
-import type {Snippet} from 'svelte';
+import { cn } from '$lib/utils';
+import type { HTMLAttributes } from 'svelte/elements';
+import type { Snippet } from 'svelte';
 
 let {
   class: className,
@@ -10,7 +10,7 @@ let {
   ...restProps
 }: HTMLAttributes<HTMLDivElement> & {
   children?: Snippet;
-  errors?: {message?: string}[];
+  errors?: { message?: string }[];
 } = $props();
 
 const hasContent = $derived.by(() => {

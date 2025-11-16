@@ -1,11 +1,11 @@
-import {superValidate} from "sveltekit-superforms";
-import {zod4} from "sveltekit-superforms/adapters";
-import {fail} from "@sveltejs/kit";
-import {formInsertUserSchema} from "$lib/schema/users";
-import type {Actions, PageServerLoad} from "./$types";
-import {users} from "$lib/schema/users";
-import {eq, isNull} from "drizzle-orm";
-import {db} from "$lib/server/db";
+import { superValidate } from "sveltekit-superforms";
+import { zod4 } from "sveltekit-superforms/adapters";
+import { fail } from "@sveltejs/kit";
+import { formInsertUserSchema } from "$lib/schema/users";
+import type { Actions, PageServerLoad } from "./$types";
+import { users } from "$lib/schema/users";
+import { eq, isNull } from "drizzle-orm";
+import { db } from "$lib/server/db";
 
 export const load: PageServerLoad = async () => {
   const form = await superValidate(zod4(formInsertUserSchema));
@@ -24,11 +24,11 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-  create: async ({request, cookies}) => {
+  create: async ({ request, cookies }) => {
     const form = await superValidate(request, zod4(formInsertUserSchema));
 
     if (!form.valid) {
-      return fail(400, {form});
+      return fail(400, { form });
     }
 
     try {
@@ -69,7 +69,7 @@ export const actions: Actions = {
         secure: process.env.NODE_ENV === "production",
       });
 
-      return {form, success: true, userId: newUser.id};
+      return { form, success: true, userId: newUser.id };
     } catch (error) {
       console.error("Failed to create user:", error);
       return fail(500, {
@@ -79,12 +79,12 @@ export const actions: Actions = {
     }
   },
 
-  switchUser: async ({request, cookies}) => {
+  switchUser: async ({ request, cookies }) => {
     const formData = await request.formData();
     const userId = Number(formData.get("userId"));
 
     if (!userId || isNaN(userId)) {
-      return fail(400, {error: "Invalid user ID"});
+      return fail(400, { error: "Invalid user ID" });
     }
 
     try {
@@ -92,7 +92,7 @@ export const actions: Actions = {
       const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
       if (!user) {
-        return fail(404, {error: "User not found"});
+        return fail(404, { error: "User not found" });
       }
 
       // Set cookie
@@ -104,7 +104,7 @@ export const actions: Actions = {
         secure: process.env.NODE_ENV === "production",
       });
 
-      return {success: true, userId};
+      return { success: true, userId };
     } catch (error) {
       console.error("Failed to switch user:", error);
       return fail(500, {

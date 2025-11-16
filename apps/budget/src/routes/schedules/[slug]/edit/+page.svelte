@@ -1,13 +1,13 @@
 <script lang="ts">
-import {goto} from '$app/navigation';
-import {page} from '$app/state';
-import {Button} from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Calendar from '@lucide/svelte/icons/calendar';
-import {ManageScheduleForm} from '$lib/components/forms';
-import type {Schedule} from '$lib/schema/schedules';
-import {SchedulesState} from '$lib/states/entities/schedules.svelte';
+import { ManageScheduleForm } from '$lib/components/forms';
+import type { Schedule } from '$lib/schema/schedules';
+import { SchedulesState } from '$lib/states/entities/schedules.svelte';
 
 const slug = $derived(page.params['slug']);
 const schedulesState = $derived(SchedulesState.get());
@@ -17,7 +17,7 @@ const handleSave = (updatedSchedule?: Schedule) => {
   // Navigate back to the schedule detail page
   if (updatedSchedule?.slug) {
     setTimeout(() => {
-      goto(`/schedules/${updatedSchedule.slug}`, {replaceState: true});
+      goto(`/schedules/${updatedSchedule.slug}`, { replaceState: true });
     }, 100);
   } else if (schedule) {
     goto(`/schedules/${schedule.slug}`);

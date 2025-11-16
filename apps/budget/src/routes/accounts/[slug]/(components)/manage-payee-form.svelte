@@ -1,16 +1,16 @@
 <script lang="ts">
-import type {EditableEntityItem} from '$lib/types';
-import {type Payee} from '$lib/schema';
-import {superformInsertPayeeSchema} from '$lib/schema/superforms';
-import {page} from '$app/state';
+import type { EditableEntityItem } from '$lib/types';
+import { type Payee } from '$lib/schema';
+import { superformInsertPayeeSchema } from '$lib/schema/superforms';
+import { page } from '$app/state';
 import * as Form from '$lib/components/ui/form';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {Button, buttonVariants} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {superForm} from 'sveltekit-superforms';
-import {zod4Client} from 'sveltekit-superforms/adapters';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
+import { Button, buttonVariants } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import { superForm } from 'sveltekit-superforms';
+import { zod4Client } from 'sveltekit-superforms/adapters';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
 
 let {
   id,
@@ -23,12 +23,12 @@ let {
 } = $props();
 
 const {
-  data: {managePayeeForm},
+  data: { managePayeeForm },
 } = page;
-const form = superForm(managePayeeForm || {name: '', notes: ''}, {
+const form = superForm(managePayeeForm || { name: '', notes: '' }, {
   id: 'payee-form',
   validators: zod4Client(superformInsertPayeeSchema),
-  onResult: async ({result}) => {
+  onResult: async ({ result }) => {
     if (onSave) {
       if (result.type === 'success' && result.data) {
         onSave(result.data['entity'], (id ?? 0) === 0);
@@ -37,7 +37,7 @@ const form = superForm(managePayeeForm || {name: '', notes: ''}, {
   },
 });
 
-const {form: formData, enhance} = form;
+const { form: formData, enhance } = form;
 if (id) {
   const payee: Payee = PayeesState.get().getById(id)!;
   $formData.name = payee.name;
@@ -60,7 +60,7 @@ const deletePayee = async (id: number) => {
   {/if}
   <Form.Field {form} name="name">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Name</Form.Label>
         <Input {...props} bind:value={$formData.name} />
         <Form.FieldErrors />
@@ -69,7 +69,7 @@ const deletePayee = async (id: number) => {
   </Form.Field>
   <Form.Field {form} name="notes" class="col-span-full">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Notes</Form.Label>
         <Textarea {...props} bind:value={$formData.notes} />
         <Form.FieldErrors />
@@ -94,7 +94,7 @@ const deletePayee = async (id: number) => {
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={() => deletePayee(id!)}
-        class={buttonVariants({variant: 'destructive'})}>Continue</AlertDialog.Action>
+        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

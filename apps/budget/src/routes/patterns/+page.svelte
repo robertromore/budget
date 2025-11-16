@@ -1,11 +1,11 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
-import {PatternList} from '$lib/components/patterns';
-import {detectPatterns, listPatterns, deleteAllPatterns} from '$lib/query/patterns';
-import {trpc} from '$lib/trpc/client';
-import {SchedulesState} from '$lib/states/entities';
+import { Badge } from '$lib/components/ui/badge';
+import { PatternList } from '$lib/components/patterns';
+import { detectPatterns, listPatterns, deleteAllPatterns } from '$lib/query/patterns';
+import { trpc } from '$lib/trpc/client';
+import { SchedulesState } from '$lib/states/entities';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
@@ -41,7 +41,7 @@ async function handlePatternConvert(scheduleId: number) {
   await patternsQuery.refetch();
 
   // Fetch the newly created schedule and add it to the state
-  const newSchedule = await trpc().scheduleRoutes.load.query({id: scheduleId});
+  const newSchedule = await trpc().scheduleRoutes.load.query({ id: scheduleId });
   schedulesState.addSchedule(newSchedule as any);
 }
 

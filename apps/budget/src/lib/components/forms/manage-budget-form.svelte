@@ -1,16 +1,16 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Select from '$lib/components/ui/select';
 import * as Form from '$lib/components/ui/form';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Badge} from '$lib/components/ui/badge';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Badge } from '$lib/components/ui/badge';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
-import {superForm} from 'sveltekit-superforms';
-import {zod4Client} from 'sveltekit-superforms/adapters';
-import {superformInsertBudgetSchema} from '$lib/schema/superforms';
+import { superForm } from 'sveltekit-superforms';
+import { zod4Client } from 'sveltekit-superforms/adapters';
+import { superformInsertBudgetSchema } from '$lib/schema/superforms';
 import {
   budgetTypes,
   budgetEnforcementLevels,
@@ -18,16 +18,16 @@ import {
   type BudgetType,
   type BudgetScope,
 } from '$lib/schema/budgets';
-import type {Account} from '$lib/schema/accounts';
-import type {Category} from '$lib/schema/categories';
-import type {Schedule} from '$lib/schema/schedules';
-import {createTransformAccessors} from '$lib/utils/bind-helpers';
+import type { Account } from '$lib/schema/accounts';
+import type { Category } from '$lib/schema/categories';
+import type { Schedule } from '$lib/schema/schedules';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
 import MultiSelectEntityInput from '$lib/components/input/multi-select-entity-input.svelte';
-import {ManageCategoryForm} from '$lib/components/forms';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
+import { ManageCategoryForm } from '$lib/components/forms';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import Tag from '@lucide/svelte/icons/tag';
 import CircleX from '@lucide/svelte/icons/circle-x';
-import type {EditableEntityItem} from '$lib/types';
+import type { EditableEntityItem } from '$lib/types';
 
 let {
   formData,
@@ -57,7 +57,7 @@ const form = superForm(formData, {
   taintedMessage: null,
 });
 
-const {form: formStore, enhance, submitting} = form;
+const { form: formStore, enhance, submitting } = form;
 
 // Reactive state from form data
 const selectedBudgetType = $derived(($formStore.type || 'account-monthly') as BudgetType);
@@ -225,7 +225,7 @@ const scheduleAccessors = createTransformAccessors(
       <!-- Budget Type Selection -->
       <Form.Field {form} name="type">
         <Form.Control>
-          {#snippet children({props})}
+          {#snippet children({ props })}
             <Form.Label>Budget Type</Form.Label>
             <Select.Root type="single" bind:value={typeAccessors.get, typeAccessors.set}>
               <Select.Trigger {...props}>
@@ -253,7 +253,7 @@ const scheduleAccessors = createTransformAccessors(
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Form.Field {form} name="name" class="md:col-span-2">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Form.Label>Budget Name</Form.Label>
               <Input {...props} bind:value={$formStore.name} placeholder="e.g., Monthly Expenses" />
               <Form.FieldErrors />
@@ -263,7 +263,7 @@ const scheduleAccessors = createTransformAccessors(
 
         <Form.Field {form} name="description" class="md:col-span-2">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Form.Label>Description (optional)</Form.Label>
               <Textarea
                 {...props}
@@ -277,7 +277,7 @@ const scheduleAccessors = createTransformAccessors(
 
         <Form.Field {form} name="enforcementLevel">
           <Form.Control>
-            {#snippet children({props})}
+            {#snippet children({ props })}
               <Form.Label>Enforcement Level</Form.Label>
               <Select.Root type="single" bind:value={$formStore.enforcementLevel}>
                 <Select.Trigger {...props}>
@@ -324,7 +324,7 @@ const scheduleAccessors = createTransformAccessors(
         {#if currentBudgetConfig.requiresAmount}
           <Form.Field {form} name="allocatedAmount">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>
                   {selectedBudgetType === 'goal-based' ? 'Goal Amount' : 'Budget Amount'}
                 </Form.Label>
@@ -342,7 +342,7 @@ const scheduleAccessors = createTransformAccessors(
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Form.Field {form} name="periodType">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Period Type</Form.Label>
                 <Select.Root type="single" bind:value={$formStore.periodType}>
                   <Select.Trigger {...props}>
@@ -382,7 +382,7 @@ const scheduleAccessors = createTransformAccessors(
 
           <Form.Field {form} name="startDay">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Start Day</Form.Label>
                 <Input
                   {...props}

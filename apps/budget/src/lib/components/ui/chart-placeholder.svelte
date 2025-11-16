@@ -1,12 +1,12 @@
 <script lang="ts">
-import {BarChart3} from '@lucide/svelte/icons';
+import { BarChart3 } from '@lucide/svelte/icons';
 
 interface Props {
   class?: string;
   title?: string;
 }
 
-let {class: className, title = 'Chart Visualization'}: Props = $props();
+let { class: className, title = 'Chart Visualization' }: Props = $props();
 </script>
 
 <div

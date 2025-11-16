@@ -1,13 +1,13 @@
-import {fail, type Actions} from "@sveltejs/kit";
-import type {PageServerLoad} from "./$types";
-import {CSVProcessor} from "$lib/server/import/file-processors/csv-processor";
-import {ExcelProcessor} from "$lib/server/import/file-processors/excel-processor";
-import {QIFProcessor} from "$lib/server/import/file-processors/qif-processor";
-import {OFXProcessor} from "$lib/server/import/file-processors/ofx-processor";
-import {ImportOrchestrator} from "$lib/server/import/import-orchestrator";
-import type {ParseResult} from "$lib/types/import";
-import {createContext} from "$lib/trpc/context";
-import {createCaller} from "$lib/trpc/router";
+import { fail, type Actions } from "@sveltejs/kit";
+import type { PageServerLoad } from "./$types";
+import { CSVProcessor } from "$lib/server/import/file-processors/csv-processor";
+import { ExcelProcessor } from "$lib/server/import/file-processors/excel-processor";
+import { QIFProcessor } from "$lib/server/import/file-processors/qif-processor";
+import { OFXProcessor } from "$lib/server/import/file-processors/ofx-processor";
+import { ImportOrchestrator } from "$lib/server/import/import-orchestrator";
+import type { ParseResult } from "$lib/types/import";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
 
 export const load: PageServerLoad = async (event) => {
   // Load accounts, payees, and categories for import
@@ -28,13 +28,13 @@ export const load: PageServerLoad = async (event) => {
 };
 
 export const actions: Actions = {
-  "upload-file": async ({request}) => {
+  "upload-file": async ({ request }) => {
     try {
       const formData = await request.formData();
       const file = formData.get("importFile") as File;
 
       if (!file) {
-        return fail(400, {error: "No file provided"});
+        return fail(400, { error: "No file provided" });
       }
 
       // Determine file type and get appropriate processor
@@ -50,7 +50,7 @@ export const actions: Actions = {
       // Validate file
       const validation = processor.validateFile(file);
       if (!validation.valid) {
-        return fail(400, {error: validation.error || "File validation failed"});
+        return fail(400, { error: validation.error || "File validation failed" });
       }
 
       // Parse file
@@ -69,8 +69,8 @@ export const actions: Actions = {
         columns,
         rows: rawData.map((row) => ({
           rowIndex: row.rowIndex,
-          rawData: {...row.rawData},
-          normalizedData: {...row.normalizedData},
+          rawData: { ...row.rawData },
+          normalizedData: { ...row.normalizedData },
           validationStatus: row.validationStatus,
           validationErrors: row.validationErrors,
         })),
@@ -86,13 +86,13 @@ export const actions: Actions = {
     }
   },
 
-  "process-import": async ({request, locals}) => {
+  "process-import": async ({ request, locals }) => {
     try {
       const formData = await request.formData();
       const importDataStr = formData.get("importData") as string;
 
       if (!importDataStr) {
-        return fail(400, {error: "No import data provided"});
+        return fail(400, { error: "No import data provided" });
       }
 
       const importData = JSON.parse(importDataStr);
@@ -106,7 +106,7 @@ export const actions: Actions = {
       );
 
       // Return the result directly - SvelteKit will wrap it
-      return {result};
+      return { result };
     } catch (error) {
       console.error("Import processing error:", error);
       return fail(500, {

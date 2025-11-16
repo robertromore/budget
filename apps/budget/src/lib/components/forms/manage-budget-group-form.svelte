@@ -1,13 +1,13 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Select from '$lib/components/ui/select';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Textarea} from '$lib/components/ui/textarea';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Textarea } from '$lib/components/ui/textarea';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
-import {createBudgetGroup, updateBudgetGroup, listBudgetGroups} from '$lib/query/budgets';
-import type {BudgetGroup} from '$lib/schema/budgets';
-import {createTransformAccessors} from '$lib/utils/bind-helpers';
+import { createBudgetGroup, updateBudgetGroup, listBudgetGroups } from '$lib/query/budgets';
+import type { BudgetGroup } from '$lib/schema/budgets';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
 let {
   budgetGroup,

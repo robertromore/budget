@@ -1,18 +1,18 @@
 <script lang="ts">
-import {rpc} from '$lib/query';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Badge} from '$lib/components/ui/badge';
+import { rpc } from '$lib/query';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Badge } from '$lib/components/ui/badge';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Separator from '$lib/components/ui/separator';
 import * as Card from '$lib/components/ui/card';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
-import {timezone, currentDate} from '$lib/utils/dates';
-import {claimStatusEnum, type ClaimStatus} from '$lib/schema/hsa-claims';
+import { timezone, currentDate } from '$lib/utils/dates';
+import { claimStatusEnum, type ClaimStatus } from '$lib/schema/hsa-claims';
 import Plus from '@lucide/svelte/icons/plus';
 import Send from '@lucide/svelte/icons/send';
 import CheckCircle from '@lucide/svelte/icons/check-circle';
@@ -27,7 +27,7 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
 }
 
-let {expense, open = $bindable(), onOpenChange}: Props = $props();
+let { expense, open = $bindable(), onOpenChange }: Props = $props();
 
 // Query claims for this expense
 const claimsQuery = $derived(rpc.medicalExpenses.getClaims(expense.id).options());
@@ -115,19 +115,19 @@ async function handleCreateClaim() {
         id: editingClaim.id,
         medicalExpenseId: expense.id,
         claimedAmount,
-        ...(claimNumber && {claimNumber}),
-        ...(administratorName && {administratorName}),
-        ...(notes && {notes}),
-        ...(internalNotes && {internalNotes}),
+        ...(claimNumber && { claimNumber }),
+        ...(administratorName && { administratorName }),
+        ...(notes && { notes }),
+        ...(internalNotes && { internalNotes }),
       });
     } else {
       await createClaimMutation.mutateAsync({
         medicalExpenseId: expense.id,
         claimedAmount,
-        ...(claimNumber && {claimNumber}),
-        ...(administratorName && {administratorName}),
-        ...(notes && {notes}),
-        ...(internalNotes && {internalNotes}),
+        ...(claimNumber && { claimNumber }),
+        ...(administratorName && { administratorName }),
+        ...(notes && { notes }),
+        ...(internalNotes && { internalNotes }),
       });
     }
     resetForm();
@@ -169,7 +169,7 @@ async function submitStatusUpdate() {
         await submitClaimMutation.mutateAsync({
           id: selectedClaim.id,
           medicalExpenseId: expense.id,
-          ...(claimNumber && {claimNumber}),
+          ...(claimNumber && { claimNumber }),
           submittedDate: dateStr,
         });
         break;
@@ -188,7 +188,7 @@ async function submitStatusUpdate() {
           id: selectedClaim.id,
           medicalExpenseId: expense.id,
           approvedAmount,
-          ...(deniedAmount && {deniedAmount}),
+          ...(deniedAmount && { deniedAmount }),
           approvalDate: dateStr,
         });
         break;
@@ -198,7 +198,7 @@ async function submitStatusUpdate() {
           id: selectedClaim.id,
           medicalExpenseId: expense.id,
           denialReason,
-          ...(denialCode && {denialCode}),
+          ...(denialCode && { denialCode }),
         });
         break;
 

@@ -3,19 +3,19 @@ import Plus from '@lucide/svelte/icons/plus';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import Upload from '@lucide/svelte/icons/upload';
 import HeartPulse from '@lucide/svelte/icons/heart-pulse';
-import {Button, buttonVariants} from '$lib/components/ui/button';
+import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as ResponsiveSheet from '$lib/components/ui/responsive-sheet';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import Wand from '@lucide/svelte/icons/wand';
 import FileText from '@lucide/svelte/icons/file-text';
-import {parseDate} from '@internationalized/date';
-import type {Table as TanStackTable} from '@tanstack/table-core';
-import {CategoriesState, PayeesState} from '$lib/states/entities';
-import {ServerAccountState} from '$lib/states/views';
-import type {TransactionsFormat} from '$lib/types';
-import type {Transaction} from '$lib/schema';
+import { parseDate } from '@internationalized/date';
+import type { Table as TanStackTable } from '@tanstack/table-core';
+import { CategoriesState, PayeesState } from '$lib/states/entities';
+import { ServerAccountState } from '$lib/states/views';
+import type { TransactionsFormat } from '$lib/types';
+import type { Transaction } from '$lib/schema';
 
 // Local component imports
 import {
@@ -26,15 +26,15 @@ import {
   MedicalExpenseForm,
   ExpenseWizard,
 } from './(components)';
-import {columns} from './(data)/columns.svelte';
-import {rpc} from '$lib/query';
-import {useQueryClient} from '@tanstack/svelte-query';
+import { columns } from './(data)/columns.svelte';
+import { rpc } from '$lib/query';
+import { useQueryClient } from '@tanstack/svelte-query';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
 import DebtAccountMetrics from '$lib/components/accounts/debt-account-metrics.svelte';
-import {isDebtAccount} from '$lib/schema/accounts';
+import { isDebtAccount } from '$lib/schema/accounts';
 
-let {data} = $props();
+let { data } = $props();
 
 // Get account slug from URL parameter
 const accountSlug = $derived(data.accountSlug);
@@ -66,7 +66,7 @@ const transactionsQuery = $derived.by(() => {
           ...(serverAccountState.filters.dateFrom && {
             dateFrom: serverAccountState.filters.dateFrom,
           }),
-          ...(serverAccountState.filters.dateTo && {dateTo: serverAccountState.filters.dateTo}),
+          ...(serverAccountState.filters.dateTo && { dateTo: serverAccountState.filters.dateTo }),
         })
         .options()
     : undefined;
@@ -110,7 +110,9 @@ const isAccountNotFound = $derived.by(() => {
   );
 });
 const summary = $derived(summaryQuery ? summaryQuery.data : undefined);
-const account = $derived(summary ? {id: summary.accountId, name: summary.accountName} : undefined);
+const account = $derived(
+  summary ? { id: summary.accountId, name: summary.accountName } : undefined
+);
 const budgetCount = $derived(budgetCountQuery.data?.count ?? 0);
 
 // Entity states
@@ -390,7 +392,7 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
             ...(serverAccountState.filters.dateFrom && {
               dateFrom: serverAccountState.filters.dateFrom,
             }),
-            ...(serverAccountState.filters.dateTo && {dateTo: serverAccountState.filters.dateTo}),
+            ...(serverAccountState.filters.dateTo && { dateTo: serverAccountState.filters.dateTo }),
           }
         : undefined;
 
@@ -640,8 +642,8 @@ $effect(() => {
         <AddTransactionDialog
           bind:open={addTransactionDialogOpen}
           account={account || null}
-          payees={payees.map((p) => ({id: p.id, name: p.name || 'Unknown Payee'}))}
-          categories={categories.map((c) => ({id: c.id, name: c.name || 'Unknown Category'}))}
+          payees={payees.map((p) => ({ id: p.id, name: p.name || 'Unknown Payee' }))}
+          categories={categories.map((c) => ({ id: c.id, name: c.name || 'Unknown Category' }))}
           onSubmit={submitTransaction} />
       </Tabs.Content>
 
@@ -706,7 +708,7 @@ $effect(() => {
           <AlertDialog.Action
             onclick={confirmBulkDelete}
             disabled={isDeletingBulk}
-            class={buttonVariants({variant: 'destructive'})}>
+            class={buttonVariants({ variant: 'destructive' })}>
             {isDeletingBulk ? 'Deleting...' : 'Delete'}
           </AlertDialog.Action>
         </AlertDialog.Footer>

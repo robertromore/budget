@@ -1,6 +1,6 @@
 <script lang="ts">
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
 
 type BudgetStatus = 'on_track' | 'approaching' | 'over' | 'paused' | 'setup_needed';
 type BudgetEnforcement = 'none' | 'warning' | 'strict';

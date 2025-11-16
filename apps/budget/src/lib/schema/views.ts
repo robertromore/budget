@@ -1,17 +1,17 @@
-import type {ViewFilter, ViewDisplayState} from "$lib/types";
-import {integer, text, sqliteTable, index} from "drizzle-orm/sqlite-core";
-import {createSelectSchema, createInsertSchema} from "drizzle-zod";
-import {z} from "zod/v4";
-import {relations} from "drizzle-orm";
-import {workspaces} from "./workspaces";
+import type { ViewFilter, ViewDisplayState } from "$lib/types";
+import { integer, text, sqliteTable, index } from "drizzle-orm/sqlite-core";
+import { createSelectSchema, createInsertSchema } from "drizzle-zod";
+import { z } from "zod/v4";
+import { relations } from "drizzle-orm";
+import { workspaces } from "./workspaces";
 
 export const views = sqliteTable(
   "views",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     entityType: text("entity_type", {
       enum: ["transactions", "top_categories"],
     })
@@ -21,10 +21,10 @@ export const views = sqliteTable(
     // label: text('label').notNull(),
     description: text("description"),
     icon: text("icon"),
-    filters: text("filters", {mode: "json"}).$type<ViewFilter[]>(),
-    display: text("display", {mode: "json"}).$type<ViewDisplayState>(),
-    dirty: integer("dirty", {mode: "boolean"}),
-    isDefault: integer("is_default", {mode: "boolean"}).notNull().default(false),
+    filters: text("filters", { mode: "json" }).$type<ViewFilter[]>(),
+    display: text("display", { mode: "json" }).$type<ViewDisplayState>(),
+    dirty: integer("dirty", { mode: "boolean" }),
+    isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
   },
   (table) => [
     index("views_workspace_id_idx").on(table.workspaceId),
@@ -32,7 +32,7 @@ export const views = sqliteTable(
   ]
 );
 
-export const viewsRelations = relations(views, ({one}) => ({
+export const viewsRelations = relations(views, ({ one }) => ({
   workspace: one(workspaces, {
     fields: [views.workspaceId],
     references: [workspaces.id],
@@ -85,8 +85,8 @@ export const insertViewSchema = createInsertSchema(views, {
       })
       .or(z.null())
   ),
-}).omit({workspaceId: true, isDefault: true});
-export const removeViewSchema = z.object({id: z.number().nonnegative()});
-export const removeViewsSchema = z.object({entities: z.array(z.number().nonnegative())});
+}).omit({ workspaceId: true, isDefault: true });
+export const removeViewSchema = z.object({ id: z.number().nonnegative() });
+export const removeViewsSchema = z.object({ entities: z.array(z.number().nonnegative()) });
 
 export type View = typeof views.$inferSelect;

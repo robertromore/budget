@@ -1,14 +1,14 @@
 <script lang="ts">
-import {cn} from '$lib/utils';
-import type {HTMLAttributes} from 'svelte/elements';
-import type {Snippet} from 'svelte';
+import { cn } from '$lib/utils';
+import type { HTMLAttributes } from 'svelte/elements';
+import type { Snippet } from 'svelte';
 
 let {
   class: className,
   child,
   ...restProps
 }: HTMLAttributes<HTMLDivElement> & {
-  child?: Snippet<[{props: Record<string, unknown>}]>;
+  child?: Snippet<[{ props: Record<string, unknown> }]>;
 } = $props();
 
 const classes = $derived(
@@ -25,7 +25,7 @@ const mergedProps = $derived({
 </script>
 
 {#if child}
-  {@render child({props: mergedProps})}
+  {@render child({ props: mergedProps })}
 {:else}
   <div {...mergedProps}>
     {@render mergedProps.children?.()}

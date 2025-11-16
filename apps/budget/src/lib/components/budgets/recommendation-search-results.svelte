@@ -1,9 +1,9 @@
 <script lang="ts">
-import {EntitySearchResults} from '$lib/components/shared/search';
+import { EntitySearchResults } from '$lib/components/shared/search';
 import BudgetRecommendationCard from './budget-recommendation-card.svelte';
 import * as Empty from '$lib/components/ui/empty';
-import {Lightbulb, Sparkles} from '@lucide/svelte/icons';
-import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
+import { Lightbulb, Sparkles } from '@lucide/svelte/icons';
+import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
 
 export type ViewMode = 'grid' | 'list' | 'table';
 

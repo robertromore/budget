@@ -21,7 +21,7 @@ export class FileValidationError extends ImportError {
     message: string,
     public fileType?: string
   ) {
-    super(message, {fileType}, "FILE_VALIDATION_ERROR");
+    super(message, { fileType }, "FILE_VALIDATION_ERROR");
     this.name = "FileValidationError";
   }
 }
@@ -32,7 +32,7 @@ export class ParseError extends ImportError {
     public row?: number,
     public column?: string
   ) {
-    super(message, {row, column}, "PARSE_ERROR");
+    super(message, { row, column }, "PARSE_ERROR");
     this.name = "ParseError";
   }
 }
@@ -44,7 +44,7 @@ export class ValidationError extends ImportError {
     public value?: any,
     public row?: number
   ) {
-    super(message, {field, value, row}, "VALIDATION_ERROR");
+    super(message, { field, value, row }, "VALIDATION_ERROR");
     this.name = "ValidationError";
   }
 }
@@ -55,7 +55,7 @@ export class EntityMatchError extends ImportError {
     public entityType: "payee" | "category",
     public searchTerm: string
   ) {
-    super(message, {entityType, searchTerm}, "ENTITY_MATCH_ERROR");
+    super(message, { entityType, searchTerm }, "ENTITY_MATCH_ERROR");
     this.name = "EntityMatchError";
   }
 }
@@ -66,7 +66,7 @@ export class DuplicateTransactionError extends ImportError {
     public duplicateId: number,
     public confidence: number
   ) {
-    super(message, {duplicateId, confidence}, "DUPLICATE_TRANSACTION_ERROR");
+    super(message, { duplicateId, confidence }, "DUPLICATE_TRANSACTION_ERROR");
     this.name = "DuplicateTransactionError";
   }
 }

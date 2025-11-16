@@ -1,16 +1,16 @@
 <script lang="ts">
-import {goto} from '$app/navigation';
-import {Button} from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import CreditCard from '@lucide/svelte/icons/credit-card';
-import {ManageAccountForm} from '$lib/components/forms';
-import type {Account} from '$lib/schema';
+import { ManageAccountForm } from '$lib/components/forms';
+import type { Account } from '$lib/schema';
 
 const handleSave = (account: Account) => {
   // Navigate to the new account's detail page
   setTimeout(() => {
-    goto(`/accounts/${account.slug}`, {replaceState: true});
+    goto(`/accounts/${account.slug}`, { replaceState: true });
   }, 100);
 };
 </script>

@@ -1,21 +1,21 @@
 <script lang="ts">
-import {rpc} from '$lib/query';
-import {Button} from '$lib/components/ui/button';
-import {Label} from '$lib/components/ui/label';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {Badge} from '$lib/components/ui/badge';
+import { rpc } from '$lib/query';
+import { Button } from '$lib/components/ui/button';
+import { Label } from '$lib/components/ui/label';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import { Badge } from '$lib/components/ui/badge';
 import ExpenseTypeSelector from './expense-type-selector.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
-import {parseDate, type DateValue} from '@internationalized/date';
-import {medicalExpenseTypeEnum} from '$lib/schema/medical-expenses';
+import { parseDate, type DateValue } from '@internationalized/date';
+import { medicalExpenseTypeEnum } from '$lib/schema/medical-expenses';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import Check from '@lucide/svelte/icons/check';
-import {cn} from '$lib/utils';
-import {untrack} from 'svelte';
+import { cn } from '$lib/utils';
+import { untrack } from 'svelte';
 
 interface Props {
   hsaAccountId: number;
@@ -24,7 +24,7 @@ interface Props {
   onCancel?: () => void;
 }
 
-let {hsaAccountId, accountId, onSuccess, onCancel}: Props = $props();
+let { hsaAccountId, accountId, onSuccess, onCancel }: Props = $props();
 
 // Wizard state
 let currentStep = $state(1);
@@ -148,7 +148,7 @@ function canProceedFromStep(step: number): boolean {
 
 // Clear field error when field is edited
 function clearFieldError(field: string) {
-  const {[field]: _, ...rest} = fieldErrors;
+  const { [field]: _, ...rest } = fieldErrors;
   fieldErrors = rest;
 }
 

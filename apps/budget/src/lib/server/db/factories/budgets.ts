@@ -1,5 +1,5 @@
 import slugify from "@sindresorhus/slugify";
-import {db} from "..";
+import { db } from "..";
 import {
   budgets,
   budgetPeriodTemplates,
@@ -11,8 +11,8 @@ import {
   type BudgetScope,
   type PeriodTemplateType,
 } from "$lib/schema/budgets";
-import {faker} from "@faker-js/faker";
-import {sequence} from "./utils/sequence";
+import { faker } from "@faker-js/faker";
+import { sequence } from "./utils/sequence";
 
 export interface BudgetFactoryOptions {
   accountIds?: number[];
@@ -175,7 +175,7 @@ export const budgetFactory = async (
         templateId: template.id,
         startDate: period.startDate,
         endDate: period.endDate,
-        allocatedAmount: faker.number.float({min: 500, max: 5000, fractionDigits: 2}),
+        allocatedAmount: faker.number.float({ min: 500, max: 5000, fractionDigits: 2 }),
         rolloverAmount: 0,
         actualAmount: 0,
       });
@@ -198,18 +198,18 @@ function generateBudgetMetadata(type: BudgetType, periodType?: PeriodTemplateTyp
 
   switch (type) {
     case "account-monthly":
-      metadata.allocatedAmount = faker.number.float({min: 1000, max: 5000, fractionDigits: 2});
+      metadata.allocatedAmount = faker.number.float({ min: 1000, max: 5000, fractionDigits: 2 });
       break;
 
     case "category-envelope":
-      metadata.allocatedAmount = faker.number.float({min: 500, max: 3000, fractionDigits: 2});
+      metadata.allocatedAmount = faker.number.float({ min: 500, max: 3000, fractionDigits: 2 });
       metadata.rolloverMode = faker.helpers.arrayElement(["unlimited", "reset", "limited"]);
       break;
 
     case "goal-based":
-      const targetDate = faker.date.future({years: 2});
+      const targetDate = faker.date.future({ years: 2 });
       metadata.goal = {
-        targetAmount: faker.number.float({min: 5000, max: 50000, fractionDigits: 2}),
+        targetAmount: faker.number.float({ min: 5000, max: 50000, fractionDigits: 2 }),
         targetDate: targetDate.toISOString().split("T")[0],
         startDate: new Date().toISOString().split("T")[0],
         contributionFrequency: "monthly",
@@ -219,7 +219,7 @@ function generateBudgetMetadata(type: BudgetType, periodType?: PeriodTemplateTyp
 
     case "scheduled-expense":
       metadata.scheduledExpense = {
-        expectedAmount: faker.number.float({min: 50, max: 500, fractionDigits: 2}),
+        expectedAmount: faker.number.float({ min: 50, max: 500, fractionDigits: 2 }),
         frequency: faker.helpers.arrayElement(["weekly", "monthly", "quarterly", "yearly"]),
         autoTrack: true,
       };
@@ -236,8 +236,8 @@ function generatePeriodDates(
   type: PeriodTemplateType,
   startDate: Date,
   count: number
-): Array<{startDate: string; endDate: string}> {
-  const periods: Array<{startDate: string; endDate: string}> = [];
+): Array<{ startDate: string; endDate: string }> {
+  const periods: Array<{ startDate: string; endDate: string }> = [];
 
   for (let i = 0; i < count; i++) {
     let start: Date;

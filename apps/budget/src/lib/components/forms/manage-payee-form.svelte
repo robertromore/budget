@@ -3,19 +3,19 @@ import * as Form from '$lib/components/ui/form';
 import * as Card from '$lib/components/ui/card';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {Button, buttonVariants} from '$lib/components/ui/button';
-import {Separator} from '$lib/components/ui/separator';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Badge} from '$lib/components/ui/badge';
+import { Button, buttonVariants } from '$lib/components/ui/button';
+import { Separator } from '$lib/components/ui/separator';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Badge } from '$lib/components/ui/badge';
 
-import {page} from '$app/state';
-import {useEntityForm} from '$lib/hooks/forms/use-entity-form';
-import {superformInsertPayeeSchema} from '$lib/schema/superforms';
-import type {Payee} from '$lib/schema/payees';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {trpc} from '$lib/trpc/client';
-import type {EditableEntityItem} from '$lib/types';
-import {PayeeBasicInfoForm, PayeeContactForm, PayeeBusinessForm} from '$lib/components/payees';
+import { page } from '$app/state';
+import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
+import { superformInsertPayeeSchema } from '$lib/schema/superforms';
+import type { Payee } from '$lib/schema/payees';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { trpc } from '$lib/trpc/client';
+import type { EditableEntityItem } from '$lib/types';
+import { PayeeBasicInfoForm, PayeeContactForm, PayeeBusinessForm } from '$lib/components/payees';
 
 // Icons
 import User from '@lucide/svelte/icons/user';
@@ -49,7 +49,7 @@ const pageData = page?.data || {};
 const payees = PayeesState.get();
 
 // Create a minimal form data structure for compatibility
-const managePayeeForm = pageData['form'] || {name: '', notes: ''};
+const managePayeeForm = pageData['form'] || { name: '', notes: '' };
 const categories = pageData['categories'] || [];
 
 // Form setup
@@ -75,7 +75,7 @@ const entityForm = useEntityForm({
     dataType: 'json',
     transformData: (data: any) => {
       // Transform empty strings to null for optional fields
-      const transformed = {...data};
+      const transformed = { ...data };
 
       // Handle string fields that should be null when empty
       const nullableStringFields = [
@@ -116,7 +116,7 @@ const entityForm = useEntityForm({
   },
 });
 
-const {form: formData, enhance, submitting, errors} = entityForm;
+const { form: formData, enhance, submitting, errors } = entityForm;
 
 // Local state
 let activeTab = $state('basic');
@@ -236,12 +236,12 @@ async function loadRecommendations() {
   isLoadingRecommendations = true;
   try {
     const [intelligence, suggestions, stats] = await Promise.all([
-      trpc().payeeRoutes.intelligence.query({id}),
-      trpc().payeeRoutes.suggestions.query({id}),
-      trpc().payeeRoutes.stats.query({id}),
+      trpc().payeeRoutes.intelligence.query({ id }),
+      trpc().payeeRoutes.suggestions.query({ id }),
+      trpc().payeeRoutes.stats.query({ id }),
     ]);
 
-    recommendations = {intelligence, suggestions, stats};
+    recommendations = { intelligence, suggestions, stats };
   } catch (error) {
     console.error('Failed to load ML recommendations:', error);
   } finally {
@@ -583,7 +583,7 @@ $effect(() => {
           <!-- Subscription Information -->
           <Form.Field form={entityForm} name="subscriptionInfo">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Subscription Metadata</Form.Label>
                 <Textarea
                   {...props}
@@ -712,7 +712,7 @@ $effect(() => {
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={() => deletePayee(id!)}
-        class={buttonVariants({variant: 'destructive'})}>Continue</AlertDialog.Action>
+        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

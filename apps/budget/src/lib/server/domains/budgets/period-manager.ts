@@ -4,12 +4,12 @@ import {
   type BudgetPeriodTemplate,
   budgetPeriodTemplates,
 } from "$lib/schema/budgets";
-import {db} from "$lib/server/db";
-import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {currentDate as defaultCurrentDate, parseISOString, toISOString} from "$lib/utils/dates";
-import {CalendarDate, type DateValue} from "@internationalized/date";
-import {and, desc, eq, sql} from "drizzle-orm";
-import {BudgetPeriodCalculator, type PeriodBoundary} from "./services";
+import { db } from "$lib/server/db";
+import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { currentDate as defaultCurrentDate, parseISOString, toISOString } from "$lib/utils/dates";
+import { CalendarDate, type DateValue } from "@internationalized/date";
+import { and, desc, eq, sql } from "drizzle-orm";
+import { BudgetPeriodCalculator, type PeriodBoundary } from "./services";
 
 export interface PeriodCreationOptions {
   lookAheadMonths?: number;
@@ -270,13 +270,13 @@ export class PeriodManager {
     template: BudgetPeriodTemplate,
     lookAheadMonths: number,
     lookBehindMonths: number
-  ): Promise<Array<{startDate: string; endDate: string; allocatedAmount: number}>> {
-    const periods: Array<{startDate: string; endDate: string; allocatedAmount: number}> = [];
+  ): Promise<Array<{ startDate: string; endDate: string; allocatedAmount: number }>> {
+    const periods: Array<{ startDate: string; endDate: string; allocatedAmount: number }> = [];
     const today = defaultCurrentDate;
 
     // Generate periods for the specified range
-    let currentDate = today.subtract({months: lookBehindMonths});
-    const endDate = today.add({months: lookAheadMonths});
+    let currentDate = today.subtract({ months: lookBehindMonths });
+    const endDate = today.add({ months: lookAheadMonths });
 
     while (currentDate.compare(endDate) <= 0) {
       try {
@@ -291,23 +291,23 @@ export class PeriodManager {
         // Move to next period
         switch (template.type) {
           case "weekly":
-            currentDate = currentDate.add({weeks: template.intervalCount || 1});
+            currentDate = currentDate.add({ weeks: template.intervalCount || 1 });
             break;
           case "monthly":
-            currentDate = currentDate.add({months: template.intervalCount || 1});
+            currentDate = currentDate.add({ months: template.intervalCount || 1 });
             break;
           case "quarterly":
-            currentDate = currentDate.add({months: (template.intervalCount || 1) * 3});
+            currentDate = currentDate.add({ months: (template.intervalCount || 1) * 3 });
             break;
           case "yearly":
-            currentDate = currentDate.add({years: template.intervalCount || 1});
+            currentDate = currentDate.add({ years: template.intervalCount || 1 });
             break;
           default:
-            currentDate = currentDate.add({months: 1});
+            currentDate = currentDate.add({ months: 1 });
         }
       } catch (error) {
         // Skip periods that can't be calculated
-        currentDate = currentDate.add({days: 1});
+        currentDate = currentDate.add({ days: 1 });
       }
     }
 
@@ -336,7 +336,7 @@ export class PeriodManager {
 
   private async createPeriodInstance(
     template: BudgetPeriodTemplate,
-    periodData: {startDate: string; endDate: string; allocatedAmount: number},
+    periodData: { startDate: string; endDate: string; allocatedAmount: number },
     options: PeriodCreationOptions
   ): Promise<BudgetPeriodInstance> {
     let allocatedAmount = periodData.allocatedAmount;
@@ -399,7 +399,7 @@ export class PeriodManager {
         const fiscalStart = config.fiscalYearStart || 1;
         const currentYear = defaultCurrentDate.year;
         const fiscalStartDate = new CalendarDate(currentYear, fiscalStart, 1);
-        const fiscalEndDate = fiscalStartDate.add({years: 1}).subtract({days: 1});
+        const fiscalEndDate = fiscalStartDate.add({ years: 1 }).subtract({ days: 1 });
 
         return {
           start: fiscalStartDate,
@@ -419,16 +419,16 @@ export class PeriodManager {
 
         return {
           start: anchor,
-          end: anchor.add({months: 1}).subtract({days: 1}),
+          end: anchor.add({ months: 1 }).subtract({ days: 1 }),
           timezone,
         };
 
       default:
         // Standard boundary (current month)
         const start = new CalendarDate(defaultCurrentDate.year, defaultCurrentDate.month, 1);
-        const end = start.add({months: 1}).subtract({days: 1});
+        const end = start.add({ months: 1 }).subtract({ days: 1 });
 
-        return {start, end, timezone};
+        return { start, end, timezone };
     }
   }
 

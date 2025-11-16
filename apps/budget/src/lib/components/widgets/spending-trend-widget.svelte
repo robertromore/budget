@@ -1,10 +1,10 @@
 <script lang="ts">
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
-import type {WidgetProps} from '$lib/types/widgets';
-import {currencyFormatter} from '$lib/utils/formatters';
+import type { WidgetProps } from '$lib/types/widgets';
+import { currencyFormatter } from '$lib/utils/formatters';
 import WidgetCard from './widget-card.svelte';
 
-let {config, data, onUpdate, onRemove, editMode = false}: WidgetProps = $props();
+let { config, data, onUpdate, onRemove, editMode = false }: WidgetProps = $props();
 
 const spendingData = data?.['spendingTrend'] ?? [];
 const period = config.settings?.['period'] ?? 'month';
@@ -31,7 +31,7 @@ const chartData = spendingData.map((item: any, index: number) => ({
 }));
 </script>
 
-<WidgetCard {config} {data} {editMode} {...onUpdate && {onUpdate}} {...onRemove && {onRemove}}>
+<WidgetCard {config} {data} {editMode} {...onUpdate && { onUpdate }} {...onRemove && { onRemove }}>
   <div class="space-y-3">
     <div class="flex items-center justify-between">
       <div class="text-muted-foreground text-sm font-medium">{config.title}</div>

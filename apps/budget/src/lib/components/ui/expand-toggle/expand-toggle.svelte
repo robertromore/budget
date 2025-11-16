@@ -1,8 +1,8 @@
 <script lang="ts">
-import {Checkbox as CheckboxPrimitive, type WithoutChildrenOrChild} from 'bits-ui';
+import { Checkbox as CheckboxPrimitive, type WithoutChildrenOrChild } from 'bits-ui';
 import Minimize from '@lucide/svelte/icons/minimize-2';
 import Expand from '@lucide/svelte/icons/expand';
-import {cn} from '$lib/utils';
+import { cn } from '$lib/utils';
 
 let {
   ref = $bindable(null),
@@ -20,7 +20,7 @@ let {
   )}
   bind:checked
   {...restProps}>
-  {#snippet children({checked})}
+  {#snippet children({ checked })}
     <div class="flex items-center justify-center text-current">
       {#if checked}
         <Minimize class="size-4 text-slate-500" />

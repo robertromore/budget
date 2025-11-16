@@ -1,6 +1,6 @@
 <script lang="ts">
-import {onMount} from 'svelte';
-import {writable} from 'svelte/store';
+import { onMount } from 'svelte';
+import { writable } from 'svelte/store';
 import ErrorBoundary from './error-boundary.svelte';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   children: import('svelte').Snippet;
 }
 
-let {query, fallback, onError, children}: Props = $props();
+let { query, fallback, onError, children }: Props = $props();
 
 const queryError = writable<Error | null>(null);
 

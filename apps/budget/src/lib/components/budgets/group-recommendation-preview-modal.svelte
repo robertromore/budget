@@ -11,14 +11,14 @@ import {
   Sparkles,
   TrendingUp,
   Users,
-  XCircle
+  XCircle,
 } from '@lucide/svelte/icons';
 
 interface Budget {
   id: number;
   name: string;
   amount?: number;
-  category?: {name: string};
+  category?: { name: string };
 }
 
 interface Props {

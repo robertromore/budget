@@ -1,7 +1,7 @@
-import {initTRPC} from "@trpc/server";
-import type {Context} from "$lib/trpc/context";
-import {UnauthorizedError, ForbiddenError} from "$lib/server/shared/types";
-import type {Permission, UserRole} from "$lib/server/config/auth";
+import { initTRPC } from "@trpc/server";
+import type { Context } from "$lib/trpc/context";
+import { UnauthorizedError, ForbiddenError } from "$lib/server/shared/types";
+import type { Permission, UserRole } from "$lib/server/config/auth";
 
 // Initialize tRPC for middleware creation
 const t = initTRPC.context<Context>().create();
@@ -9,13 +9,13 @@ const t = initTRPC.context<Context>().create();
 /**
  * Authentication middleware - requires valid user session
  */
-export const requireAuth = t.middleware(async ({ctx, next}) => {
+export const requireAuth = t.middleware(async ({ ctx, next }) => {
   // Skip auth for tests
   if ((ctx as any).isTest) {
     return next({
       ctx: {
         ...ctx,
-        user: {id: "test-user", role: "admin" as UserRole},
+        user: { id: "test-user", role: "admin" as UserRole },
       },
     });
   }
@@ -36,7 +36,7 @@ export const requireAuth = t.middleware(async ({ctx, next}) => {
  * Permission-based authorization middleware
  */
 export const requirePermission = (permission: Permission) =>
-  t.middleware(async ({ctx, next}) => {
+  t.middleware(async ({ ctx, next }) => {
     // This middleware should be used after requireAuth
     if (!ctx.user) {
       throw new UnauthorizedError("Authentication required");
@@ -47,14 +47,14 @@ export const requirePermission = (permission: Permission) =>
       throw new ForbiddenError(`Permission '${permission}' required`);
     }
 
-    return next({ctx});
+    return next({ ctx });
   });
 
 /**
  * Role-based authorization middleware
  */
 export const requireRole = (role: UserRole | UserRole[]) =>
-  t.middleware(async ({ctx, next}) => {
+  t.middleware(async ({ ctx, next }) => {
     // This middleware should be used after requireAuth
     if (!ctx.user) {
       throw new UnauthorizedError("Authentication required");
@@ -65,7 +65,7 @@ export const requireRole = (role: UserRole | UserRole[]) =>
       throw new ForbiddenError(`Role '${requiredRoles.join(" or ")}' required`);
     }
 
-    return next({ctx});
+    return next({ ctx });
   });
 
 /**

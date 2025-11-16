@@ -17,21 +17,21 @@ import {
   type NewBudgetGroup,
   type NewBudgetTransaction,
 } from "$lib/schema/budgets";
-import {payees} from "$lib/schema/payees";
-import type {Transaction} from "$lib/schema/transactions";
-import {transactions} from "$lib/schema/transactions";
-import {db} from "$lib/server/db";
-import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {currentDate as defaultCurrentDate, timezone as defaultTimezone} from "$lib/utils/dates";
-import {CalendarDate, type DateValue} from "@internationalized/date";
-import {and, eq, sql} from "drizzle-orm";
-import {BudgetAnalysisService, type AnalysisParams} from "./budget-analysis-service";
-import type {DeficitRecoveryPlan} from "./deficit-recovery";
-import {EnvelopeService, type EnvelopeAllocationRequest} from "./envelope-service";
-import {PeriodManager} from "./period-manager";
-import {RecommendationService, type RecommendationFilters} from "./recommendation-service";
-import {BudgetRepository, type BudgetWithRelations, type DbClient} from "./repository";
+import { payees } from "$lib/schema/payees";
+import type { Transaction } from "$lib/schema/transactions";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { currentDate as defaultCurrentDate, timezone as defaultTimezone } from "$lib/utils/dates";
+import { CalendarDate, type DateValue } from "@internationalized/date";
+import { and, eq, sql } from "drizzle-orm";
+import { BudgetAnalysisService, type AnalysisParams } from "./budget-analysis-service";
+import type { DeficitRecoveryPlan } from "./deficit-recovery";
+import { EnvelopeService, type EnvelopeAllocationRequest } from "./envelope-service";
+import { PeriodManager } from "./period-manager";
+import { RecommendationService, type RecommendationFilters } from "./recommendation-service";
+import { BudgetRepository, type BudgetWithRelations, type DbClient } from "./repository";
 
 /* ------------------------------------------------------------------ */
 /* Budget Service                                                     */
@@ -235,7 +235,7 @@ export class BudgetService {
     if (status) {
       this.validateEnumValue("Budget status", status, budgetStatuses);
     }
-    return await this.repository.listBudgets(workspaceId, status ? {status} : {});
+    return await this.repository.listBudgets(workspaceId, status ? { status } : {});
   }
 
   async getBudget(id: number, workspaceId: number): Promise<BudgetWithRelations> {
@@ -335,14 +335,14 @@ export class BudgetService {
   async bulkArchive(
     ids: number[],
     workspaceId: number
-  ): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
+  ): Promise<{ success: number; failed: number; errors: Array<{ id: number; error: string }> }> {
     let success = 0;
     let failed = 0;
-    const errors: Array<{id: number; error: string}> = [];
+    const errors: Array<{ id: number; error: string }> = [];
 
     for (const id of ids) {
       try {
-        await this.updateBudget(id, {status: "archived"}, workspaceId);
+        await this.updateBudget(id, { status: "archived" }, workspaceId);
         success++;
       } catch (error) {
         failed++;
@@ -353,16 +353,16 @@ export class BudgetService {
       }
     }
 
-    return {success, failed, errors};
+    return { success, failed, errors };
   }
 
   async bulkDelete(
     ids: number[],
     workspaceId: number
-  ): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
+  ): Promise<{ success: number; failed: number; errors: Array<{ id: number; error: string }> }> {
     let success = 0;
     let failed = 0;
-    const errors: Array<{id: number; error: string}> = [];
+    const errors: Array<{ id: number; error: string }> = [];
 
     for (const id of ids) {
       try {
@@ -377,7 +377,7 @@ export class BudgetService {
       }
     }
 
-    return {success, failed, errors};
+    return { success, failed, errors };
   }
 
   private validateEnumValue<T extends string>(
@@ -399,9 +399,9 @@ export class BudgetService {
 
     // Query the database to check which categories still exist (not deleted)
     const existingCategories = await db.query.categories.findMany({
-      where: (categories, {inArray, isNull}) =>
+      where: (categories, { inArray, isNull }) =>
         and(inArray(categories.id, categoryIds), isNull(categories.deletedAt)),
-      columns: {id: true},
+      columns: { id: true },
     });
 
     return existingCategories.map((c) => c.id);
@@ -554,7 +554,7 @@ export class BudgetService {
     transactionId?: number
   ): Promise<{
     allowed: boolean;
-    violations: Array<{budgetId: number; budgetName: string; exceeded: number}>;
+    violations: Array<{ budgetId: number; budgetName: string; exceeded: number }>;
   }> {
     const applicableBudgets = await this.repository.findApplicableBudgets(accountId, categoryId);
     const strictBudgets = applicableBudgets.filter(
@@ -562,10 +562,10 @@ export class BudgetService {
     );
 
     if (strictBudgets.length === 0) {
-      return {allowed: true, violations: []};
+      return { allowed: true, violations: [] };
     }
 
-    const violations: Array<{budgetId: number; budgetName: string; exceeded: number}> = [];
+    const violations: Array<{ budgetId: number; budgetName: string; exceeded: number }> = [];
 
     for (const budget of strictBudgets) {
       const latestPeriod = this.getLatestPeriodInstance(budget);
@@ -912,7 +912,7 @@ export class BudgetService {
 
   async getRecommendationCounts() {
     if (!this.recommendationService) {
-      return {pending: 0, dismissed: 0, applied: 0, expired: 0};
+      return { pending: 0, dismissed: 0, applied: 0, expired: 0 };
     }
     return await this.recommendationService.getRecommendationCounts();
   }
@@ -1141,10 +1141,10 @@ export class BudgetPeriodCalculator {
       daysToSubtract += 7;
     }
 
-    const start = reference.subtract({days: daysToSubtract});
-    const end = start.add({days: interval * 7}).subtract({days: 1});
+    const start = reference.subtract({ days: daysToSubtract });
+    const end = start.add({ days: interval * 7 }).subtract({ days: 1 });
 
-    return {start, end, timezone};
+    return { start, end, timezone };
   }
 
   private static calculateMonthlyLikeBoundary(
@@ -1167,9 +1167,9 @@ export class BudgetPeriodCalculator {
     const startMonthIndex = referenceMonthIndex - remainder;
 
     const start = this.dateFromMonthIndex(startMonthIndex, targetDay);
-    const end = start.add({months: interval}).subtract({days: 1});
+    const end = start.add({ months: interval }).subtract({ days: 1 });
 
-    return {start, end, timezone};
+    return { start, end, timezone };
   }
 
   private static calculateYearlyBoundary(
@@ -1194,9 +1194,9 @@ export class BudgetPeriodCalculator {
     const startMonthIndex = referenceMonthIndex - remainder;
 
     const start = this.dateFromMonthIndex(startMonthIndex, startDay);
-    const end = start.add({months: monthsPerPeriod}).subtract({days: 1});
+    const end = start.add({ months: monthsPerPeriod }).subtract({ days: 1 });
 
-    return {start, end, timezone};
+    return { start, end, timezone };
   }
 
   private static normalizeIsoDay(day: number): number {
@@ -1235,7 +1235,7 @@ export class BudgetPeriodCalculator {
 
   private static daysInMonth(year: number, month: number): number {
     const firstOfMonth = new CalendarDate(year, month, 1);
-    const endOfMonth = firstOfMonth.add({months: 1}).subtract({days: 1});
+    const endOfMonth = firstOfMonth.add({ months: 1 }).subtract({ days: 1 });
     return endOfMonth.day;
   }
 
@@ -1371,7 +1371,7 @@ export class GoalTrackingService {
       daysRemaining
     );
 
-    const {status, projectedCompletionDate} = this.calculateGoalStatus(
+    const { status, projectedCompletionDate } = this.calculateGoalStatus(
       currentAmount,
       targetAmount,
       daysRemaining,
@@ -1433,7 +1433,7 @@ export class GoalTrackingService {
     monthly: number;
   } {
     if (daysRemaining <= 0 || remainingAmount <= 0) {
-      return {daily: 0, weekly: 0, monthly: 0};
+      return { daily: 0, weekly: 0, monthly: 0 };
     }
 
     const daily = remainingAmount / daysRemaining;
@@ -1452,13 +1452,13 @@ export class GoalTrackingService {
     targetAmount: number,
     daysRemaining: number,
     goalMetadata: NonNullable<BudgetMetadata["goal"]>
-  ): {status: GoalProgress["status"]; projectedCompletionDate?: string} {
+  ): { status: GoalProgress["status"]; projectedCompletionDate?: string } {
     if (currentAmount >= targetAmount) {
-      return {status: "completed"};
+      return { status: "completed" };
     }
 
     if (daysRemaining <= 0) {
-      return {status: "at-risk"};
+      return { status: "at-risk" };
     }
 
     const percentComplete = (currentAmount / targetAmount) * 100;
@@ -1472,7 +1472,7 @@ export class GoalTrackingService {
       );
       const projectedDate = new Date();
       projectedDate.setDate(projectedDate.getDate() + daysToComplete);
-      const result: {status: GoalProgress["status"]; projectedCompletionDate?: string} = {
+      const result: { status: GoalProgress["status"]; projectedCompletionDate?: string } = {
         status: "ahead",
       };
       const dateStr = projectedDate.toISOString().split("T")[0];
@@ -1483,14 +1483,14 @@ export class GoalTrackingService {
     }
 
     if (percentComplete < expectedPercent - 20) {
-      return {status: "at-risk"};
+      return { status: "at-risk" };
     }
 
     if (percentComplete < expectedPercent - 10) {
-      return {status: "behind"};
+      return { status: "behind" };
     }
 
-    return {status: "on-track"};
+    return { status: "on-track" };
   }
 
   private getElapsedDays(startDate?: string): number {
@@ -1569,7 +1569,7 @@ export class GoalTrackingService {
     goal.linkedScheduleId = scheduleId;
     goal.autoContribute = true;
 
-    return await this.repository.updateBudget(budgetId, {metadata}, {});
+    return await this.repository.updateBudget(budgetId, { metadata }, {});
   }
 
   async linkScheduleToScheduledExpense(
@@ -1596,7 +1596,7 @@ export class GoalTrackingService {
     metadata.scheduledExpense.linkedScheduleId = scheduleId;
     metadata.scheduledExpense.autoTrack = true;
 
-    return await this.repository.updateBudget(budgetId, {metadata}, {});
+    return await this.repository.updateBudget(budgetId, { metadata }, {});
   }
 }
 
@@ -1685,7 +1685,7 @@ export class BudgetForecastService {
 
   private async getSchedulesForBudget(budgetId: number): Promise<any[]> {
     const schedulesModule = await import("$lib/schema/schedules");
-    const {schedules} = schedulesModule;
+    const { schedules } = schedulesModule;
     const results = await db.select().from(schedules).where(eq(schedules.budgetId, budgetId));
     return results;
   }
@@ -1708,7 +1708,7 @@ export class BudgetForecastService {
     }
 
     const scheduleDatesModule = await import("$lib/schema/schedule-dates");
-    const {scheduleDates} = scheduleDatesModule;
+    const { scheduleDates } = scheduleDatesModule;
 
     const dateConfig = await db.query.scheduleDates.findFirst({
       where: eq(scheduleDates.id, schedule.dateId),
@@ -1718,7 +1718,7 @@ export class BudgetForecastService {
       return null;
     }
 
-    const frequencyConfig: {frequency?: string} = {};
+    const frequencyConfig: { frequency?: string } = {};
     if (dateConfig.frequency) {
       frequencyConfig.frequency = dateConfig.frequency;
     }
@@ -1734,7 +1734,7 @@ export class BudgetForecastService {
     return {
       scheduleId: schedule.id,
       scheduleName: schedule.name,
-      nextOccurrence: this.calculateNextOccurrence({startDate: dateConfig.start}, periodStart),
+      nextOccurrence: this.calculateNextOccurrence({ startDate: dateConfig.start }, periodStart),
       amount,
       frequency: dateConfig.frequency || "once",
       occurrencesInPeriod,
@@ -1743,7 +1743,7 @@ export class BudgetForecastService {
   }
 
   private calculateOccurrences(
-    dateConfig: {frequency?: string},
+    dateConfig: { frequency?: string },
     periodStart: string,
     periodEnd: string
   ): number {
@@ -1766,7 +1766,7 @@ export class BudgetForecastService {
     }
   }
 
-  private calculateNextOccurrence(dateConfig: {startDate?: string}, fromDate: string): string {
+  private calculateNextOccurrence(dateConfig: { startDate?: string }, fromDate: string): string {
     const startDate = dateConfig.startDate || fromDate;
     return startDate;
   }
@@ -1784,7 +1784,7 @@ export class BudgetForecastService {
       allocatedAmount: forecast.projectedScheduledExpenses,
     };
 
-    return await this.repository.updateBudget(budgetId, {metadata}, {});
+    return await this.repository.updateBudget(budgetId, { metadata }, {});
   }
 }
 
@@ -2014,7 +2014,7 @@ export class BudgetTransactionService {
 
   async isTransactionFullyAllocated(transactionId: number): Promise<boolean> {
     return await db.transaction(async (tx) => {
-      const {allocations, transaction} = await this.fetchTransactionContext(tx, transactionId);
+      const { allocations, transaction } = await this.fetchTransactionContext(tx, transactionId);
       const totalAllocated = allocations.reduce(
         (sum, allocation) => sum + Number(allocation.allocatedAmount || 0),
         0
@@ -2029,14 +2029,14 @@ export class BudgetTransactionService {
     excludeAllocationId?: number
   ): Promise<AllocationValidationResult> {
     return await db.transaction(async (tx) => {
-      const {allocations, transaction} = await this.fetchTransactionContext(tx, transactionId);
+      const { allocations, transaction } = await this.fetchTransactionContext(tx, transactionId);
       return this.validateWithContext(allocations, transaction, newAmount, excludeAllocationId);
     });
   }
 
   async createAllocation(allocation: NewBudgetTransaction): Promise<BudgetTransaction> {
     return await db.transaction(async (tx) => {
-      const {allocations, transaction} = await this.fetchTransactionContext(
+      const { allocations, transaction } = await this.fetchTransactionContext(
         tx,
         allocation.transactionId
       );
@@ -2071,7 +2071,7 @@ export class BudgetTransactionService {
         throw new NotFoundError("Budget allocation", allocationId);
       }
 
-      const {allocations, transaction} = await this.fetchTransactionContext(
+      const { allocations, transaction } = await this.fetchTransactionContext(
         tx,
         existing.transactionId
       );
@@ -2108,7 +2108,7 @@ export class BudgetTransactionService {
   private async fetchTransactionContext(
     client: DbClient,
     transactionId: number
-  ): Promise<{allocations: BudgetTransaction[]; transaction: Transaction}> {
+  ): Promise<{ allocations: BudgetTransaction[]; transaction: Transaction }> {
     const allocations = await client
       .select()
       .from(budgetTransactions)

@@ -3,30 +3,30 @@ import EyeNone from '@lucide/svelte/icons/eye-off';
 import ArrowDown from '@lucide/svelte/icons/arrow-down';
 import ArrowUp from '@lucide/svelte/icons/arrow-up';
 import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
-import type {HTMLAttributes} from 'svelte/elements';
-import type {Column} from '@tanstack/table-core';
-import type {WithoutChildren} from 'bits-ui';
-import {cn} from '$lib/utils';
+import type { HTMLAttributes } from 'svelte/elements';
+import type { Column } from '@tanstack/table-core';
+import type { WithoutChildren } from 'bits-ui';
+import { cn } from '$lib/utils';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import Button, {buttonVariants} from '$lib/components/ui/button/button.svelte';
+import Button, { buttonVariants } from '$lib/components/ui/button/button.svelte';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
   title: string;
 }
 
-let {column, class: className, title, ...restProps}: WithoutChildren<Props> = $props();
+let { column, class: className, title, ...restProps }: WithoutChildren<Props> = $props();
 </script>
 
 {#if !column?.getCanSort() && !column?.getCanHide()}
-  <div class={cn(buttonVariants({variant: 'ghost', size: 'sm'}), className)} {...restProps}>
+  <div class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), className)} {...restProps}>
     {title}
   </div>
 {:else}
   <div class={cn('flex items-center', className)} {...restProps}>
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
-        {#snippet child({props})}
+        {#snippet child({ props })}
           <Button
             {...props}
             variant="ghost"

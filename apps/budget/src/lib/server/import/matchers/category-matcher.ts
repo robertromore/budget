@@ -5,8 +5,8 @@
  * using keyword patterns, fuzzy string matching, and confidence scoring.
  */
 
-import type {Category} from "$lib/schema/categories";
-import {calculateStringSimilarity, normalizeText} from "../utils";
+import type { Category } from "$lib/schema/categories";
+import { calculateStringSimilarity, normalizeText } from "../utils";
 
 export type MatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 
@@ -139,8 +139,8 @@ export class CategoryMatcher {
     options: CategoryMatcherOptions = {},
     customKeywordPatterns: Record<string, string[]> = {}
   ) {
-    this.options = {...DEFAULT_OPTIONS, ...options};
-    this.keywordPatterns = {...DEFAULT_KEYWORD_PATTERNS, ...customKeywordPatterns};
+    this.options = { ...DEFAULT_OPTIONS, ...options };
+    this.keywordPatterns = { ...DEFAULT_KEYWORD_PATTERNS, ...customKeywordPatterns };
   }
 
   /**
@@ -384,14 +384,17 @@ export class CategoryMatcher {
    * Get all keyword patterns (useful for debugging or user configuration)
    */
   getKeywordPatterns(): Record<string, string[]> {
-    return {...this.keywordPatterns};
+    return { ...this.keywordPatterns };
   }
 
   /**
    * Suggest a category name based on transaction data when no explicit category is provided
    * Returns the best matching category pattern name if confidence is high enough
    */
-  suggestCategoryName(transactionData: {payeeName?: string; description?: string}): string | null {
+  suggestCategoryName(transactionData: {
+    payeeName?: string;
+    description?: string;
+  }): string | null {
     // Combine payee and description for keyword matching
     const searchText = normalizeText(
       [transactionData.payeeName || "", transactionData.description || ""].join(" ")
@@ -401,7 +404,7 @@ export class CategoryMatcher {
       return null;
     }
 
-    let bestMatch: {categoryName: string; score: number} | null = null;
+    let bestMatch: { categoryName: string; score: number } | null = null;
 
     // Check each category pattern's keywords
     for (const [categoryPattern, keywords] of Object.entries(this.keywordPatterns)) {

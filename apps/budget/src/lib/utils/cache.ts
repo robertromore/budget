@@ -170,6 +170,6 @@ export function getCacheMetrics() {
   return {
     queryCache: queryCache.getStats(),
     dataCache: dataCache.getStats(),
-    totalMemoryUsage: process.memoryUsage?.() || {heapUsed: 0, heapTotal: 0},
+    totalMemoryUsage: process.memoryUsage?.() || { heapUsed: 0, heapTotal: 0 },
   };
 }

@@ -1,10 +1,10 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {formatAmount, formatRecurringPattern, calculateNextOccurrence} from '../(data)';
-import type {ScheduleWithDetails} from '$lib/server/domains/schedules';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { formatAmount, formatRecurringPattern, calculateNextOccurrence } from '../(data)';
+import type { ScheduleWithDetails } from '$lib/server/domains/schedules';
 
 // Icons
 import Calendar from '@lucide/svelte/icons/calendar';

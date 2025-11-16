@@ -1,7 +1,7 @@
-import {type Category} from "$lib/schema";
-import {trpc} from "$lib/trpc/client";
-import {getContext, setContext} from "svelte";
-import {SvelteMap} from "svelte/reactivity";
+import { type Category } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("categories");
 
@@ -110,12 +110,12 @@ export class CategoriesState {
   }
 
   async deleteCategory(id: number): Promise<void> {
-    await trpc().categoriesRoutes.delete.mutate({entities: [id]});
+    await trpc().categoriesRoutes.delete.mutate({ entities: [id] });
     this.removeCategory(id);
   }
 
   async deleteCategories(ids: number[]): Promise<void> {
-    await trpc().categoriesRoutes.delete.mutate({entities: ids});
+    await trpc().categoriesRoutes.delete.mutate({ entities: ids });
     this.removeCategories(ids);
   }
 

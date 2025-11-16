@@ -1,11 +1,11 @@
 <script lang="ts">
-import {browser} from '$app/environment';
-import {Button} from '$lib/components/ui/button';
+import { browser } from '$app/environment';
+import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import {widgetStore} from '$lib/stores/widgets.svelte';
-import type {WidgetConfig} from '$lib/types/widgets';
-import {Plus, Settings} from '$lib/components/icons';
-import {getWidgetComponent} from './widget-registry';
+import { widgetStore } from '$lib/stores/widgets.svelte';
+import type { WidgetConfig } from '$lib/types/widgets';
+import { Plus, Settings } from '$lib/components/icons';
+import { getWidgetComponent } from './widget-registry';
 
 let {
   accountId,
@@ -245,7 +245,7 @@ function getGridPosition(x: number, y: number, gridContainer: HTMLElement) {
 
 // Calculate absolute position for a grid slot
 function _getSlotPosition(index: number, gridContainer: HTMLElement) {
-  if (!gridContainer) return {x: 0, y: 0};
+  if (!gridContainer) return { x: 0, y: 0 };
 
   const rect = gridContainer.getBoundingClientRect();
   const cellWidth = (rect.width - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS;

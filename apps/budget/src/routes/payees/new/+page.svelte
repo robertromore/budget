@@ -1,11 +1,11 @@
 <script lang="ts">
-import {goto} from '$app/navigation';
-import {page} from '$app/state';
-import {Button} from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import User from '@lucide/svelte/icons/user';
-import {ManagePayeeForm} from '$lib/components/forms';
+import { ManagePayeeForm } from '$lib/components/forms';
 
 // Get duplication data from page data
 const duplicateFromId = $derived(page.data?.['duplicateFromId']);
@@ -24,7 +24,7 @@ const handleSave = (payee: any, isNew: boolean) => {
     // Navigate to the new payee's detail page after a brief delay
     // The timeout ensures form submission completes before redirect
     setTimeout(() => {
-      goto(`/payees/${payee.slug}`, {replaceState: true});
+      goto(`/payees/${payee.slug}`, { replaceState: true });
     }, 100);
   } else {
     // Navigate back to payees list

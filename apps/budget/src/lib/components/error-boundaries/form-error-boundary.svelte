@@ -1,6 +1,6 @@
 <script lang="ts">
-import {onMount} from 'svelte';
-import {writable} from 'svelte/store';
+import { onMount } from 'svelte';
+import { writable } from 'svelte/store';
 import ErrorBoundary from './error-boundary.svelte';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   children: import('svelte').Snippet;
 }
 
-let {form, fallback, onError, children}: Props = $props();
+let { form, fallback, onError, children }: Props = $props();
 
 const formError = writable<Error | null>(null);
 

@@ -1,13 +1,13 @@
 <script lang="ts">
-import {goto} from '$app/navigation';
-import {page} from '$app/state';
-import {Button} from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import CreditCard from '@lucide/svelte/icons/credit-card';
-import {ManageAccountForm} from '$lib/components/forms';
-import type {Account} from '$lib/schema';
-import {AccountsState} from '$lib/states/entities/accounts.svelte';
+import { ManageAccountForm } from '$lib/components/forms';
+import type { Account } from '$lib/schema';
+import { AccountsState } from '$lib/states/entities/accounts.svelte';
 
 const accountSlug = $derived(page.params['slug']);
 const accountsState = $derived(AccountsState.get());
@@ -16,7 +16,7 @@ const account = $derived(accountsState.getBySlug(accountSlug || ''));
 const handleSave = (updatedAccount: Account) => {
   // Navigate back to the account detail page
   setTimeout(() => {
-    goto(`/accounts/${updatedAccount.slug}`, {replaceState: true});
+    goto(`/accounts/${updatedAccount.slug}`, { replaceState: true });
   }, 100);
 };
 </script>

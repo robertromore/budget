@@ -1,4 +1,4 @@
-import {db} from "$lib/server/db";
+import { db } from "$lib/server/db";
 import {
   payeeCategoryCorrections,
   payees,
@@ -12,8 +12,8 @@ import {
   type CorrectionTrigger,
   type CorrectionContext,
 } from "$lib/schema";
-import {eq, and, isNull, sql, desc, gte, lte, count, max, inArray} from "drizzle-orm";
-import {currentDate, toISOString} from "$lib/utils/dates";
+import { eq, and, isNull, sql, desc, gte, lte, count, max, inArray } from "drizzle-orm";
+import { currentDate, toISOString } from "$lib/utils/dates";
 
 /**
  * Category Learning Service
@@ -81,7 +81,7 @@ export class CategoryLearningService {
 
     return {
       ...insertedCorrection,
-      amountRange: insertedCorrection.amountRange as {min: number; max: number} | null,
+      amountRange: insertedCorrection.amountRange as { min: number; max: number } | null,
       temporalContext: insertedCorrection.temporalContext as CategoryCorrection["temporalContext"],
       payeePatternContext:
         insertedCorrection.payeePatternContext as CategoryCorrection["payeePatternContext"],
@@ -99,9 +99,9 @@ export class CategoryLearningService {
       includeProcessed?: boolean;
     } = {}
   ): Promise<CorrectionPattern[]> {
-    const {timeframeMonths = 12, minConfidence = 0.1, includeProcessed = true} = options;
+    const { timeframeMonths = 12, minConfidence = 0.1, includeProcessed = true } = options;
 
-    const cutoffDate = currentDate.subtract({months: timeframeMonths});
+    const cutoffDate = currentDate.subtract({ months: timeframeMonths });
 
     // Get all corrections for the payee within timeframe
     const corrections = await db
@@ -197,7 +197,7 @@ export class CategoryLearningService {
 
     // Base confidence from correction frequency
     const totalCorrections = await db
-      .select({count: count()})
+      .select({ count: count() })
       .from(payeeCategoryCorrections)
       .where(
         and(
@@ -238,7 +238,7 @@ export class CategoryLearningService {
    */
   async detectCategoryDrift(payeeId: number): Promise<CategoryDrift | null> {
     // Get recent corrections (last 3 months)
-    const recentDate = currentDate.subtract({months: 3});
+    const recentDate = currentDate.subtract({ months: 3 });
 
     const recentCorrections = await db
       .select()
@@ -253,8 +253,8 @@ export class CategoryLearningService {
       .orderBy(desc(payeeCategoryCorrections.createdAt));
 
     // Get historical baseline (6-18 months ago)
-    const baselineStartDate = currentDate.subtract({months: 18});
-    const baselineEndDate = currentDate.subtract({months: 6});
+    const baselineStartDate = currentDate.subtract({ months: 18 });
+    const baselineEndDate = currentDate.subtract({ months: 6 });
 
     const baselineCorrections = await db
       .select()
@@ -281,7 +281,7 @@ export class CategoryLearningService {
     if (driftAnalysis.isDriftDetected) {
       // Get payee name for the drift record
       const payee = await db
-        .select({name: payees.name})
+        .select({ name: payees.name })
         .from(payees)
         .where(eq(payees.id, payeeId))
         .limit(1);
@@ -396,7 +396,7 @@ export class CategoryLearningService {
    * Get comprehensive learning metrics
    */
   async getLearningMetrics(timeframeMonths: number = 6): Promise<LearningMetrics> {
-    const cutoffDate = currentDate.subtract({months: timeframeMonths});
+    const cutoffDate = currentDate.subtract({ months: timeframeMonths });
 
     // Basic correction statistics
     const correctionStats = await db
@@ -412,7 +412,7 @@ export class CategoryLearningService {
         )
       );
 
-    const stats = correctionStats[0] || {totalCorrections: 0, uniquePayees: 0};
+    const stats = correctionStats[0] || { totalCorrections: 0, uniquePayees: 0 };
 
     // Calculate accuracy and improvement metrics
     const accuracyMetrics = await this.calculateAccuracyMetrics();
@@ -503,10 +503,10 @@ export class CategoryLearningService {
   private async calculateAmountRangeContext(
     payeeId: number,
     amount: number
-  ): Promise<{min: number; max: number} | null> {
+  ): Promise<{ min: number; max: number } | null> {
     // Get recent transaction amounts for this payee
     const recentAmounts = await db
-      .select({amount: transactions.amount})
+      .select({ amount: transactions.amount })
       .from(transactions)
       .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
       .orderBy(desc(transactions.date))
@@ -530,11 +530,11 @@ export class CategoryLearningService {
     }
 
     if (amount <= q1) {
-      return {min: 0, max: q1};
+      return { min: 0, max: q1 };
     } else if (amount >= q3) {
-      return {min: q3, max: Math.max(...amounts) * 1.5};
+      return { min: q3, max: Math.max(...amounts) * 1.5 };
     } else {
-      return {min: q1, max: q3};
+      return { min: q1, max: q3 };
     }
   }
 
@@ -705,7 +705,7 @@ export class CategoryLearningService {
 
   private analyzeAmountPatterns(
     corrections: any[]
-  ): Array<{range: {min: number; max: number}; count: number; confidence: number}> {
+  ): Array<{ range: { min: number; max: number }; count: number; confidence: number }> {
     const amounts = corrections
       .filter((c) => c.transactionAmount !== null)
       .map((c) => c.transactionAmount)
@@ -723,7 +723,7 @@ export class CategoryLearningService {
     const lowRange = amounts.filter((a) => a <= q1);
     if (lowRange.length > 0) {
       patterns.push({
-        range: {min: Math.min(...amounts), max: q1},
+        range: { min: Math.min(...amounts), max: q1 },
         count: lowRange.length,
         confidence: lowRange.length / amounts.length,
       });
@@ -733,7 +733,7 @@ export class CategoryLearningService {
     const highRange = amounts.filter((a) => a >= q3);
     if (highRange.length > 0) {
       patterns.push({
-        range: {min: q3, max: Math.max(...amounts)},
+        range: { min: q3, max: Math.max(...amounts) },
         count: highRange.length,
         confidence: highRange.length / amounts.length,
       });
@@ -744,7 +744,7 @@ export class CategoryLearningService {
 
   private analyzeTemporalPatterns(
     corrections: any[]
-  ): Array<{context: string; count: number; confidence: number}> {
+  ): Array<{ context: string; count: number; confidence: number }> {
     const patterns = new Map<string, number>();
 
     corrections.forEach((correction) => {
@@ -817,7 +817,7 @@ export class CategoryLearningService {
 
     // Get category name
     const category = await db
-      .select({name: categories.name})
+      .select({ name: categories.name })
       .from(categories)
       .where(eq(categories.id, topPattern.toCategoryId))
       .limit(1);
@@ -889,7 +889,7 @@ export class CategoryLearningService {
     }
 
     const category = await db
-      .select({name: categories.name})
+      .select({ name: categories.name })
       .from(categories)
       .where(eq(categories.id, defaultCategoryId))
       .limit(1);
@@ -1019,12 +1019,12 @@ export class CategoryLearningService {
     count: number;
     percentage: number;
   } {
-    let topCategory = {categoryId: 0, count: 0};
+    let topCategory = { categoryId: 0, count: 0 };
     const total = Array.from(distribution.values()).reduce((sum, count) => sum + count, 0);
 
     for (const [categoryId, count] of Array.from(distribution.entries())) {
       if (count > topCategory.count) {
-        topCategory = {categoryId, count};
+        topCategory = { categoryId, count };
       }
     }
 
@@ -1051,7 +1051,7 @@ export class CategoryLearningService {
     if (validIds.length === 0) return {};
 
     const categoryResults = await db
-      .select({id: categories.id, name: categories.name})
+      .select({ id: categories.id, name: categories.name })
       .from(categories)
       .where(inArray(categories.id, validIds));
 
@@ -1063,7 +1063,7 @@ export class CategoryLearningService {
     return nameMap;
   }
 
-  private async calculateAccuracyMetrics(): Promise<{accuracy: number; improvement: number}> {
+  private async calculateAccuracyMetrics(): Promise<{ accuracy: number; improvement: number }> {
     // This would require tracking prediction accuracy over time
     // For now, return placeholder values
     return {
@@ -1085,10 +1085,10 @@ export class CategoryLearningService {
   private async calculateConfidenceDistribution(
     timeframeMonths: number
   ): Promise<LearningMetrics["confidenceDistribution"]> {
-    const cutoffDate = currentDate.subtract({months: timeframeMonths});
+    const cutoffDate = currentDate.subtract({ months: timeframeMonths });
 
     const corrections = await db
-      .select({userConfidence: payeeCategoryCorrections.userConfidence})
+      .select({ userConfidence: payeeCategoryCorrections.userConfidence })
       .from(payeeCategoryCorrections)
       .where(
         and(
@@ -1100,7 +1100,7 @@ export class CategoryLearningService {
 
     const total = corrections.length;
     if (total === 0) {
-      return {high: 0, medium: 0, low: 0};
+      return { high: 0, medium: 0, low: 0 };
     }
 
     let high = 0,

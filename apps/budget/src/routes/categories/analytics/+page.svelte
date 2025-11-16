@@ -1,12 +1,12 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import PieChart from '@lucide/svelte/icons/pie-chart';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
 
 const categoriesState = $derived(CategoriesState.get());
 const categories = $derived(Array.from(categoriesState.categories.values()));

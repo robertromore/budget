@@ -1,14 +1,14 @@
 <script lang="ts">
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {getMonthlySpendingAggregates} from '$lib/query/transactions';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { getMonthlySpendingAggregates } from '$lib/query/transactions';
 import AnalyticsChartShell from './analytics-chart-shell.svelte';
 
 interface Props {
   accountId: number;
 }
 
-let {accountId}: Props = $props();
+let { accountId }: Props = $props();
 
 // Fetch monthly spending aggregates from dedicated endpoint
 const monthlySpendingQuery = getMonthlySpendingAggregates(accountId).options();
@@ -61,10 +61,10 @@ const chartConfig: ChartConfig = {
 const summaryStats = $derived.by(() => {
   if (!monthlySpendingData.length) {
     return [
-      {label: 'Average Monthly', value: '$0.00'},
-      {label: 'Highest', value: '$0.00'},
-      {label: 'Lowest', value: '$0.00'},
-      {label: 'Total', value: '$0.00'},
+      { label: 'Average Monthly', value: '$0.00' },
+      { label: 'Highest', value: '$0.00' },
+      { label: 'Lowest', value: '$0.00' },
+      { label: 'Total', value: '$0.00' },
     ];
   }
 
@@ -122,7 +122,7 @@ const summaryStats = $derived.by(() => {
     Expense patterns and analytics over time
   {/snippet}
 
-  {#snippet chart({data}: {data: typeof monthlySpendingData})}
+  {#snippet chart({ data }: { data: typeof monthlySpendingData })}
     <ChartPlaceholder class="h-full" title="Monthly Spending Trends Chart" />
   {/snippet}
 </AnalyticsChartShell>

@@ -1,4 +1,4 @@
-import type {SuggestedScheduleConfig} from "$lib/schema/detected-patterns";
+import type { SuggestedScheduleConfig } from "$lib/schema/detected-patterns";
 
 /**
  * Detection criteria for pattern analysis

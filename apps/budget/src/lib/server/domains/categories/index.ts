@@ -1,9 +1,9 @@
-export {CategoryRepository} from "./repository";
-export {CategoryService} from "./services";
+export { CategoryRepository } from "./repository";
+export { CategoryService } from "./services";
 
-export type {UpdateCategoryData, CategoryStats, CategoryWithStats} from "./repository";
+export type { UpdateCategoryData, CategoryStats, CategoryWithStats } from "./repository";
 
-export type {CreateCategoryData, CategoryAnalytics} from "./services";
+export type { CreateCategoryData, CategoryAnalytics } from "./services";
 
 export {
   createCategorySchema,

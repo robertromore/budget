@@ -2,22 +2,22 @@
 import * as Table from '$lib/components/ui/table';
 import * as Card from '$lib/components/ui/card';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {Input} from '$lib/components/ui/input';
-import {Separator} from '$lib/components/ui/separator';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import { Input } from '$lib/components/ui/input';
+import { Separator } from '$lib/components/ui/separator';
 
-import {PayeeBulkOperationsState} from '$lib/states/ui/payee-bulk-operations.svelte';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
+import { PayeeBulkOperationsState } from '$lib/states/ui/payee-bulk-operations.svelte';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
 import PayeeBulkOperationsToolbar from './payee-bulk-operations-toolbar.svelte';
 import PayeeBulkOperationsProgress from './payee-bulk-operations-progress.svelte';
 import PayeeBulkOperationsConfirmation, {
   type ConfirmationOptions,
 } from './payee-bulk-operations-confirmation.svelte';
-import type {Payee} from '$lib/schema/payees';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {formatDateDisplay} from '$lib/utils/dates';
+import type { Payee } from '$lib/schema/payees';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { formatDateDisplay } from '$lib/utils/dates';
 
 // Bulk operation mutations
 import {
@@ -285,7 +285,7 @@ async function handleBulkStatusChange(payeeIds: number[], status: 'active' | 'in
   progressDialogOpen = true;
 
   try {
-    const result = await bulkStatusChangeMutation.mutateAsync({payeeIds, status});
+    const result = await bulkStatusChangeMutation.mutateAsync({ payeeIds, status });
 
     // Process results
     result.results?.forEach((r: any) => {
@@ -340,7 +340,7 @@ async function handleBulkTagManagement(
   progressDialogOpen = true;
 
   try {
-    const result = await bulkTagManagementMutation.mutateAsync({payeeIds, tags, operation});
+    const result = await bulkTagManagementMutation.mutateAsync({ payeeIds, tags, operation });
 
     result.results?.forEach((r: any) => {
       bulkOpsState.updateOperationProgress({
@@ -363,7 +363,7 @@ async function handleBulkIntelligenceApplication(payeeIds: number[], options: an
   progressDialogOpen = true;
 
   try {
-    const result = await bulkIntelligenceApplicationMutation.mutateAsync({payeeIds, options});
+    const result = await bulkIntelligenceApplicationMutation.mutateAsync({ payeeIds, options });
 
     result.results?.forEach((r: any) => {
       bulkOpsState.updateOperationProgress({

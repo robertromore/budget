@@ -1,19 +1,24 @@
-import {json} from "@sveltejs/kit";
-import type {RequestHandler} from "./$types";
-import {db} from "$lib/server/db";
-import {payees as payeeTable} from "$lib/schema/payees";
-import {categories as categoryTable} from "$lib/schema/categories";
-import type {ImportRow, PayeePreview, CategoryPreview, ImportPreviewData} from "$lib/types/import";
-import {isNull} from "drizzle-orm";
-import {CategoryMatcher} from "$lib/server/import/matchers/category-matcher";
-import {PayeeMatcher} from "$lib/server/import/matchers/payee-matcher";
+import { json } from "@sveltejs/kit";
+import type { RequestHandler } from "./$types";
+import { db } from "$lib/server/db";
+import { payees as payeeTable } from "$lib/schema/payees";
+import { categories as categoryTable } from "$lib/schema/categories";
+import type {
+  ImportRow,
+  PayeePreview,
+  CategoryPreview,
+  ImportPreviewData,
+} from "$lib/types/import";
+import { isNull } from "drizzle-orm";
+import { CategoryMatcher } from "$lib/server/import/matchers/category-matcher";
+import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
 
-export const POST: RequestHandler = async ({request}) => {
+export const POST: RequestHandler = async ({ request }) => {
   try {
-    const {rows} = (await request.json()) as {rows: ImportRow[]};
+    const { rows } = (await request.json()) as { rows: ImportRow[] };
 
     if (!rows || !Array.isArray(rows)) {
-      return json({error: "Invalid request: rows array required"}, {status: 400});
+      return json({ error: "Invalid request: rows array required" }, { status: 400 });
     }
 
     // Get all existing payees and categories
@@ -27,8 +32,8 @@ export const POST: RequestHandler = async ({request}) => {
     const categoryMatcher = new CategoryMatcher();
 
     // Analyze rows to find unique payees and categories
-    const payeeMap = new Map<string, {occurrences: number; source: "import" | "inferred"}>();
-    const categoryMap = new Map<string, {occurrences: number; source: "import" | "inferred"}>();
+    const payeeMap = new Map<string, { occurrences: number; source: "import" | "inferred" }>();
+    const categoryMap = new Map<string, { occurrences: number; source: "import" | "inferred" }>();
 
     for (const row of rows) {
       const data = row.normalizedData;
@@ -49,7 +54,7 @@ export const POST: RequestHandler = async ({request}) => {
         const normalized = payeeMatcher.normalizePayeeName(data.payee);
         const payeeName = normalized.name;
         if (payeeName) {
-          const current = payeeMap.get(payeeName) || {occurrences: 0, source: "import" as const};
+          const current = payeeMap.get(payeeName) || { occurrences: 0, source: "import" as const };
           payeeMap.set(payeeName, {
             ...current,
             occurrences: current.occurrences + 1,
@@ -124,7 +129,7 @@ export const POST: RequestHandler = async ({request}) => {
     const categoryPreviews: CategoryPreview[] = Array.from(categoryMap.entries())
       .map(([name, info]) => {
         // Use fuzzy matcher to find existing categories
-        const match = categoryMatcher.findBestMatch({categoryName: name}, existingCategories);
+        const match = categoryMatcher.findBestMatch({ categoryName: name }, existingCategories);
 
         // Consider it existing if a match was found
         const existing = match.category || undefined;
@@ -167,7 +172,7 @@ export const POST: RequestHandler = async ({request}) => {
       {
         error: error instanceof Error ? error.message : "Failed to generate entity preview",
       },
-      {status: 500}
+      { status: 500 }
     );
   }
 };

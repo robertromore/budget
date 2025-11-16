@@ -1,9 +1,9 @@
 <script lang="ts">
-import {DropdownMenu as DropdownMenuPrimitive} from 'bits-ui';
+import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 import CheckIcon from '@lucide/svelte/icons/check';
 import MinusIcon from '@lucide/svelte/icons/minus';
-import {cn, type WithoutChildrenOrChild} from '$lib/utils';
-import type {Snippet} from 'svelte';
+import { cn, type WithoutChildrenOrChild } from '$lib/utils';
+import type { Snippet } from 'svelte';
 let {
   ref = $bindable(null),
   checked = $bindable(false),
@@ -26,7 +26,7 @@ let {
     className
   )}
   {...restProps}>
-  {#snippet children({checked, indeterminate})}
+  {#snippet children({ checked, indeterminate })}
     <span class="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
       {#if indeterminate}
         <MinusIcon class="size-4" />

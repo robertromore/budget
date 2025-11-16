@@ -1,9 +1,9 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Popover from '$lib/components/ui/popover';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {cn} from '$lib/utils';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import { cn } from '$lib/utils';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
   onSave: (newValue: string) => Promise<void>;
 }
 
-let {value, placeholder = '', multiline = false, onSave}: Props = $props();
+let { value, placeholder = '', multiline = false, onSave }: Props = $props();
 let open = $state(false);
 let newValue = $state(value || '');
 
@@ -31,7 +31,7 @@ $effect(() => {
 
 <Popover.Root bind:open>
   <Popover.Trigger>
-    {#snippet child({props})}
+    {#snippet child({ props })}
       <Button
         {...props}
         variant="ghost"

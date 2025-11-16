@@ -1,5 +1,5 @@
 <script lang="ts">
-import {SvelteMap} from 'svelte/reactivity';
+import { SvelteMap } from 'svelte/reactivity';
 import {
   ArrowRightLeft,
   DollarSign,
@@ -9,15 +9,15 @@ import {
   CircleCheck,
 } from '@lucide/svelte/icons';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Badge} from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Badge } from '$lib/components/ui/badge';
 import * as Dialog from '$lib/components/ui/dialog';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {calculateActualSpent} from '$lib/utils/budget-calculations';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { calculateActualSpent } from '$lib/utils/budget-calculations';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 
 interface BudgetEnvelope {
   id: number;
@@ -35,7 +35,7 @@ interface Props {
   class?: string;
 }
 
-let {budgets = [], onFundTransfer, class: className}: Props = $props();
+let { budgets = [], onFundTransfer, class: className }: Props = $props();
 
 // State for drag and drop
 let draggedBudget = $state<BudgetEnvelope | null>(null);
@@ -43,7 +43,7 @@ let dragOverBudget = $state<number | null>(null);
 let showTransferDialog = $state(false);
 let transferAmount = $state('');
 let isTransferring = $state(false);
-let transferResult = $state<{success: boolean; message: string} | null>(null);
+let transferResult = $state<{ success: boolean; message: string } | null>(null);
 
 // Convert budget data to envelope format
 const envelopes = $derived.by(() => {

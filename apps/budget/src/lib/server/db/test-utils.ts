@@ -5,10 +5,10 @@
  * All utilities ensure tests remain isolated and don't pollute the main database.
  */
 
-import {Database} from "bun:sqlite";
-import {drizzle} from "drizzle-orm/bun-sqlite";
-import {migrate} from "drizzle-orm/bun-sqlite/migrator";
-import {sql} from "drizzle-orm";
+import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/bun-sqlite";
+import { migrate } from "drizzle-orm/bun-sqlite/migrator";
+import { sql } from "drizzle-orm";
 import * as schema from "$lib/schema";
 
 export class TestDatabase {
@@ -34,10 +34,10 @@ export class TestDatabase {
     // Create in-memory database
     this.testDb = new Database(":memory:");
 
-    const db = drizzle(this.testDb, {schema});
+    const db = drizzle(this.testDb, { schema });
 
     // Apply all migrations
-    await migrate(db, {migrationsFolder: "drizzle"});
+    await migrate(db, { migrationsFolder: "drizzle" });
 
     return db;
   }
@@ -130,7 +130,7 @@ export class TestDatabase {
    */
   async truncateAll(db: ReturnType<typeof drizzle>) {
     // Get all table names
-    const tables = await db.all<{name: string}>(sql`
+    const tables = await db.all<{ name: string }>(sql`
       SELECT name FROM sqlite_master
       WHERE type='table'
       AND name NOT LIKE 'sqlite_%'
@@ -140,7 +140,7 @@ export class TestDatabase {
     // Disable foreign keys, delete all, re-enable
     await db.run(sql`PRAGMA foreign_keys = OFF`);
 
-    for (const {name} of tables) {
+    for (const { name } of tables) {
       await db.run(sql.raw(`DELETE FROM "${name}"`));
     }
 
@@ -162,7 +162,7 @@ export class TestDatabase {
    * ```
    */
   async getRowCount(db: ReturnType<typeof drizzle>, tableName: string): Promise<number> {
-    const result = await db.get<{count: number}>(
+    const result = await db.get<{ count: number }>(
       sql.raw(`SELECT COUNT(*) as count FROM "${tableName}"`)
     );
     return result?.count ?? 0;
@@ -182,14 +182,14 @@ export class TestDatabase {
    * ```
    */
   async verifyEmpty(db: ReturnType<typeof drizzle>): Promise<boolean> {
-    const tables = await db.all<{name: string}>(sql`
+    const tables = await db.all<{ name: string }>(sql`
       SELECT name FROM sqlite_master
       WHERE type='table'
       AND name NOT LIKE 'sqlite_%'
       AND name NOT LIKE '__drizzle%'
     `);
 
-    for (const {name} of tables) {
+    for (const { name } of tables) {
       const count = await this.getRowCount(db, name);
       if (count > 0) {
         console.log(`Table ${name} has ${count} row(s)`);

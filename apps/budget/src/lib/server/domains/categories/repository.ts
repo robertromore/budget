@@ -1,6 +1,6 @@
-import {categories, transactions} from "$lib/schema";
-import {budgets} from "$lib/schema/budgets";
-import {envelopeAllocations} from "$lib/schema/budgets/envelope-allocations";
+import { categories, transactions } from "$lib/schema";
+import { budgets } from "$lib/schema/budgets";
+import { envelopeAllocations } from "$lib/schema/budgets/envelope-allocations";
 import type {
   Category,
   CategoryType,
@@ -9,13 +9,13 @@ import type {
   SpendingPriority,
   TaxCategory,
 } from "$lib/schema/categories";
-import {categoryGroupMemberships, categoryGroups} from "$lib/schema/category-groups";
-import {db} from "$lib/server/db";
-import {BaseRepository} from "$lib/server/shared/database/base-repository";
-import {NotFoundError} from "$lib/server/shared/types/errors";
-import type {CategoryTreeNode} from "$lib/types/categories";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {and, count, desc, eq, inArray, isNull, sql} from "drizzle-orm";
+import { categoryGroupMemberships, categoryGroups } from "$lib/schema/category-groups";
+import { db } from "$lib/server/db";
+import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import type { CategoryTreeNode } from "$lib/types/categories";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 export interface UpdateCategoryData {
   name?: string | undefined;
@@ -95,7 +95,7 @@ export class CategoryRepository extends BaseRepository<
   override async create(data: NewCategory, workspaceId: number): Promise<Category> {
     const [category] = await db
       .insert(categories)
-      .values({...data, workspaceId})
+      .values({ ...data, workspaceId })
       .returning();
 
     if (!category) {
@@ -122,7 +122,7 @@ export class CategoryRepository extends BaseRepository<
    * Find category by slug with workspaceId filtering
    */
   override async findBySlug(slug: string, workspaceId: number): Promise<Category | null> {
-    const {isNull} = await import("drizzle-orm");
+    const { isNull } = await import("drizzle-orm");
 
     const result = await db
       .select()
@@ -276,8 +276,8 @@ export class CategoryRepository extends BaseRepository<
       return this.findAllCategories(workspaceId);
     }
 
-    const {isNull} = await import("drizzle-orm");
-    const {like} = await import("drizzle-orm");
+    const { isNull } = await import("drizzle-orm");
+    const { like } = await import("drizzle-orm");
 
     return await db
       .select()
@@ -298,7 +298,7 @@ export class CategoryRepository extends BaseRepository<
    */
   async findByAccountTransactions(accountId: number, workspaceId: number): Promise<Category[]> {
     const categoryIds = await db
-      .selectDistinct({categoryId: transactions.categoryId})
+      .selectDistinct({ categoryId: transactions.categoryId })
       .from(transactions)
       .where(and(eq(transactions.accountId, accountId), isNull(transactions.deletedAt)));
 
@@ -428,7 +428,7 @@ export class CategoryRepository extends BaseRepository<
    */
   async hasTransactions(id: number, workspaceId: number): Promise<boolean> {
     const [result] = await db
-      .select({id: transactions.id})
+      .select({ id: transactions.id })
       .from(transactions)
       .where(and(eq(transactions.categoryId, id), isNull(transactions.deletedAt)))
       .limit(1);
@@ -441,7 +441,7 @@ export class CategoryRepository extends BaseRepository<
    */
   async getTransactionCount(id: number, workspaceId: number): Promise<number> {
     const [result] = await db
-      .select({count: count(transactions.id)})
+      .select({ count: count(transactions.id) })
       .from(transactions)
       .where(and(eq(transactions.categoryId, id), isNull(transactions.deletedAt)));
 
@@ -618,7 +618,7 @@ export class CategoryRepository extends BaseRepository<
    */
   async hasChildren(id: number, workspaceId: number): Promise<boolean> {
     const [result] = await db
-      .select({id: categories.id})
+      .select({ id: categories.id })
       .from(categories)
       .where(
         and(

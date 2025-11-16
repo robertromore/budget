@@ -1,6 +1,6 @@
 <script lang="ts">
-import type {Payee} from '$lib/schema/payees';
-import type {DisplayMode, QuickAccessSections} from './types';
+import type { Payee } from '$lib/schema/payees';
+import type { DisplayMode, QuickAccessSections } from './types';
 import PayeeItem from './payee-item.svelte';
 import GroupHeader from './group-header.svelte';
 
@@ -50,7 +50,7 @@ const hasAnyItems = $derived(
         <div class="py-1">
           {#each sections.suggested as payee (payee.id)}
             <PayeeItem
-              payee={{...payee, _isSuggested: true}}
+              payee={{ ...payee, _isSuggested: true }}
               {displayMode}
               isSelected={payee.id === selectedPayeeId}
               onSelect={() => onSelect(payee.id)} />
@@ -70,7 +70,7 @@ const hasAnyItems = $derived(
         <div class="py-1">
           {#each sections.recent as payee (payee.id)}
             <PayeeItem
-              payee={{...payee, _isRecent: true}}
+              payee={{ ...payee, _isRecent: true }}
               {displayMode}
               isSelected={payee.id === selectedPayeeId}
               onSelect={() => onSelect(payee.id)} />
@@ -90,7 +90,7 @@ const hasAnyItems = $derived(
         <div class="py-1">
           {#each sections.frequent as payee (payee.id)}
             <PayeeItem
-              payee={{...payee, _isFrequent: true}}
+              payee={{ ...payee, _isFrequent: true }}
               {displayMode}
               isSelected={payee.id === selectedPayeeId}
               onSelect={() => onSelect(payee.id)} />

@@ -8,14 +8,14 @@ import type {
   GroupingState,
   ExpandedState,
 } from '@tanstack/table-core';
-import type {FilterInputOption, TableEntityType} from '$lib/types';
-import type {View} from '$lib/schema/views';
-import type {TableDensity} from '../state/types';
+import type { FilterInputOption, TableEntityType } from '$lib/types';
+import type { View } from '$lib/schema/views';
+import type { TableDensity } from '../state/types';
 import GenericFilterInput from './generic-filter-input.svelte';
 import GenericDisplayInput from './generic-display-input.svelte';
 import InlineViewForm from './inline-view-form.svelte';
-import {Button} from '$lib/components/ui/button';
-import {Separator} from '$lib/components/ui/separator';
+import { Button } from '$lib/components/ui/button';
+import { Separator } from '$lib/components/ui/separator';
 import * as Tabs from '$lib/components/ui/tabs';
 import Toggle from '$lib/components/ui/toggle/toggle.svelte';
 import X from '@lucide/svelte/icons/x';
@@ -108,7 +108,7 @@ let {
   onSortingChange,
   columnVisibility = {},
   onVisibilityChange,
-  columnPinning = {left: [], right: []},
+  columnPinning = { left: [], right: [] },
   onColumnPinningChange,
   columnOrder = [],
   onColumnOrderChange,

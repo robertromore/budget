@@ -1,5 +1,5 @@
 <script lang="ts">
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -10,7 +10,7 @@ import {
   getSortedRowModel,
   type Table as TTable,
 } from '@tanstack/table-core';
-import {createSvelteTable, FlexRender} from '$lib/components/ui/data-table';
+import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
 import DataTablePagination from '../../accounts/[slug]/(components)/data-table-pagination.svelte';
 import BudgetBulkActions from './budget-bulk-actions.svelte';
@@ -23,14 +23,14 @@ interface Props {
   table?: TTable<BudgetWithRelations> | undefined;
 }
 
-let {columns, budgets, onBulkDelete, onBulkArchive, table = $bindable()}: Props = $props();
+let { columns, budgets, onBulkDelete, onBulkArchive, table = $bindable() }: Props = $props();
 
 // Table state
 let sorting = $state<any[]>([]);
 let columnFilters = $state<any[]>([]);
 let columnVisibility = $state<Record<string, boolean>>({});
 let rowSelection = $state<Record<string, boolean>>({});
-let pagination = $state({pageIndex: 0, pageSize: 50});
+let pagination = $state({ pageIndex: 0, pageSize: 50 });
 
 // Create the table instance
 table = createSvelteTable({

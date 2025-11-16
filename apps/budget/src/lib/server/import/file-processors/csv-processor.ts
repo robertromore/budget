@@ -12,7 +12,7 @@ import type {
   NormalizedTransaction,
   ColumnMapping,
 } from "$lib/types/import";
-import {FileValidationError, ParseError} from "../errors";
+import { FileValidationError, ParseError } from "../errors";
 import {
   normalizeHeader,
   parseDate,
@@ -35,7 +35,7 @@ export class CSVProcessor implements FileProcessor {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): {valid: boolean; error?: string} {
+  validateFile(file: File): { valid: boolean; error?: string } {
     // Check file type
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
@@ -60,7 +60,7 @@ export class CSVProcessor implements FileProcessor {
       };
     }
 
-    return {valid: true};
+    return { valid: true };
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {

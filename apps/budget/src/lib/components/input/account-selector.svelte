@@ -89,7 +89,7 @@ const addNew = () => {
 };
 
 let searchValue = $state('');
-const fused = $derived(new Fuse(entities, {keys: ['name'], includeScore: true}));
+const fused = $derived(new Fuse(entities, { keys: ['name'], includeScore: true }));
 
 let visibleEntities = $state(entities);
 $effect(() => {
@@ -120,7 +120,7 @@ function getAccountIcon(account: AccountEntity) {
       }
     }}>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button
           {...props}
           variant="outline"

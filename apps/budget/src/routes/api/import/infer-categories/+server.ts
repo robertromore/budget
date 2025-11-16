@@ -1,15 +1,15 @@
-import {CategoryMatcher} from "$lib/server/import/matchers/category-matcher";
-import {PayeeMatcher} from "$lib/server/import/matchers/payee-matcher";
-import type {ImportRow} from "$lib/types/import";
-import {json} from "@sveltejs/kit";
-import type {RequestHandler} from "./$types";
+import { CategoryMatcher } from "$lib/server/import/matchers/category-matcher";
+import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
+import type { ImportRow } from "$lib/types/import";
+import { json } from "@sveltejs/kit";
+import type { RequestHandler } from "./$types";
 
-export const POST: RequestHandler = async ({request}) => {
+export const POST: RequestHandler = async ({ request }) => {
   try {
-    const {rows} = (await request.json()) as {rows: ImportRow[]};
+    const { rows } = (await request.json()) as { rows: ImportRow[] };
 
     if (!rows || !Array.isArray(rows)) {
-      return json({error: "Invalid request: rows array required"}, {status: 400});
+      return json({ error: "Invalid request: rows array required" }, { status: 400 });
     }
 
     // Initialize matchers
@@ -27,7 +27,7 @@ export const POST: RequestHandler = async ({request}) => {
       // Normalize payee name and extract details
       if (data["payee"] && typeof data["payee"] === "string") {
         const originalPayee = data["payee"] as string;
-        const {name, details} = payeeMatcher.normalizePayeeName(originalPayee);
+        const { name, details } = payeeMatcher.normalizePayeeName(originalPayee);
         // console.log(`[Payee Normalization] Original: "${originalPayee}" -> Normalized: "${name}"`);
         updates["payee"] = name;
         updates["originalPayee"] = originalPayee; // Keep original for reference
@@ -67,8 +67,8 @@ export const POST: RequestHandler = async ({request}) => {
           // First time seeing this payee, suggest a category
           const description = (updates["notes"] || data["notes"] || data["description"]) as string;
           const suggestedCategoryName = categoryMatcher.suggestCategoryName({
-            ...(normalizedPayee && {payeeName: normalizedPayee}),
-            ...(description && {description}),
+            ...(normalizedPayee && { payeeName: normalizedPayee }),
+            ...(description && { description }),
           });
 
           if (suggestedCategoryName) {
@@ -102,14 +102,14 @@ export const POST: RequestHandler = async ({request}) => {
       return row;
     });
 
-    return json({rows: updatedRows});
+    return json({ rows: updatedRows });
   } catch (error) {
     console.error("Data enrichment error:", error);
     return json(
       {
         error: error instanceof Error ? error.message : "Failed to enrich import data",
       },
-      {status: 500}
+      { status: 500 }
     );
   }
 };

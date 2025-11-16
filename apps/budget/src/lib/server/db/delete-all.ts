@@ -16,23 +16,23 @@
  *   bun run ./src/lib/server/db/delete-all.ts --dry-run
  */
 
-import {sql} from "drizzle-orm";
-import {db} from ".";
-import {parseArgs} from "util";
+import { sql } from "drizzle-orm";
+import { db } from ".";
+import { parseArgs } from "util";
 
-const {values} = parseArgs({
+const { values } = parseArgs({
   args: Bun.argv,
   options: {
-    confirm: {type: "boolean", default: false},
-    tables: {type: "string"},
-    "dry-run": {type: "boolean", default: false},
+    confirm: { type: "boolean", default: false },
+    tables: { type: "string" },
+    "dry-run": { type: "boolean", default: false },
   },
   strict: true,
   allowPositionals: true,
 });
 
 // Get all table names from sqlite_master
-const allTables = await db.all<{name: string}>(sql`
+const allTables = await db.all<{ name: string }>(sql`
   SELECT name FROM sqlite_master
   WHERE type='table'
   AND name NOT LIKE 'sqlite_%'

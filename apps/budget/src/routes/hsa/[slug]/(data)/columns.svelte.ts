@@ -1,13 +1,13 @@
-import {Checkbox} from "$lib/components/ui/checkbox";
-import {renderComponent} from "$lib/components/ui/data-table";
-import {ExpandToggle} from "$lib/components/ui/expand-toggle";
-import {currencyFormatter} from "$lib/utils/formatters";
-import {dateFormatter} from "$lib/utils/date-formatters";
-import {type DateValue, getLocalTimeZone} from "@internationalized/date";
-import type {CellContext, ColumnDef} from "@tanstack/table-core";
-import type {Component} from "svelte";
-import {medicalExpenseTypeEnum, type MedicalExpenseType} from "$lib/schema/medical-expenses";
-import {claimStatusEnum, type ClaimStatus} from "$lib/schema/hsa-claims";
+import { Checkbox } from "$lib/components/ui/checkbox";
+import { renderComponent } from "$lib/components/ui/data-table";
+import { ExpandToggle } from "$lib/components/ui/expand-toggle";
+import { currencyFormatter } from "$lib/utils/formatters";
+import { dateFormatter } from "$lib/utils/date-formatters";
+import { type DateValue, getLocalTimeZone } from "@internationalized/date";
+import type { CellContext, ColumnDef } from "@tanstack/table-core";
+import type { Component } from "svelte";
+import { medicalExpenseTypeEnum, type MedicalExpenseType } from "$lib/schema/medical-expenses";
+import { claimStatusEnum, type ClaimStatus } from "$lib/schema/hsa-claims";
 
 // Import cell components
 import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
@@ -68,7 +68,7 @@ export const columns = (
     // Selection column
     {
       id: "select-col",
-      header: ({table}) => {
+      header: ({ table }) => {
         const allPageRowsSelected = table.getIsAllPageRowsSelected();
         const somePageRowsSelected = table.getIsSomePageRowsSelected();
 
@@ -86,7 +86,7 @@ export const columns = (
           "aria-label": "Select all on page",
         });
       },
-      cell: ({row}) => {
+      cell: ({ row }) => {
         return renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
@@ -95,7 +95,7 @@ export const columns = (
           "aria-label": "Select row",
         });
       },
-      aggregatedCell: ({row}) =>
+      aggregatedCell: ({ row }) =>
         renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
@@ -112,7 +112,7 @@ export const columns = (
     // Expand/Contract column
     {
       id: "expand-contract-col",
-      header: ({table}) =>
+      header: ({ table }) =>
         table.getCanSomeRowsExpand()
           ? renderComponent(ExpandToggle, {
               checked: table.getIsAllRowsExpanded(),
@@ -121,7 +121,7 @@ export const columns = (
               "aria-label": "Expand/contract all",
             })
           : "",
-      aggregatedCell: ({row}) =>
+      aggregatedCell: ({ row }) =>
         row.getCanExpand()
           ? renderComponent(ExpandToggle, {
               checked: row.getIsExpanded(),
@@ -141,7 +141,7 @@ export const columns = (
     {
       accessorKey: "date",
       id: "date",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,
@@ -162,7 +162,7 @@ export const columns = (
         return dateA.compare(dateB);
       },
       enableGrouping: true,
-      aggregatedCell: ({row}) => {
+      aggregatedCell: ({ row }) => {
         const date = row.original.date;
         return date ? dateFormatter.format(date.toDate(getLocalTimeZone())) : "";
       },
@@ -172,7 +172,7 @@ export const columns = (
     {
       accessorKey: "provider",
       id: "provider",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,
@@ -193,14 +193,14 @@ export const columns = (
         return value.includes(provider);
       },
       enableGrouping: true,
-      aggregatedCell: ({row}) => row.original.provider || "",
+      aggregatedCell: ({ row }) => row.original.provider || "",
     },
 
     // Patient Name column
     {
       accessorKey: "patientName",
       id: "patientName",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,
@@ -221,14 +221,14 @@ export const columns = (
         return value.includes(patient);
       },
       enableGrouping: true,
-      aggregatedCell: ({row}) => row.original.patientName || "",
+      aggregatedCell: ({ row }) => row.original.patientName || "",
     },
 
     // Expense Type column
     {
       accessorKey: "expenseType",
       id: "expenseType",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,
@@ -248,7 +248,7 @@ export const columns = (
         return value.includes(expenseType);
       },
       enableGrouping: true,
-      aggregatedCell: ({row}) => {
+      aggregatedCell: ({ row }) => {
         const type = row.original.expenseType;
         return medicalExpenseTypeEnum[type] || type;
       },
@@ -258,7 +258,7 @@ export const columns = (
     {
       accessorKey: "diagnosis",
       id: "diagnosis",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,
@@ -282,7 +282,7 @@ export const columns = (
     {
       accessorKey: "treatmentDescription",
       id: "treatmentDescription",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,
@@ -306,7 +306,7 @@ export const columns = (
     {
       accessorKey: "amount",
       id: "amount",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,
@@ -321,7 +321,7 @@ export const columns = (
           },
         });
       },
-      aggregatedCell: ({row}) => {
+      aggregatedCell: ({ row }) => {
         const subRows = row.subRows;
         if (subRows && subRows.length > 0) {
           const total = subRows.reduce((sum, subRow) => sum + (subRow.original.amount || 0), 0);
@@ -337,7 +337,7 @@ export const columns = (
     {
       accessorKey: "insuranceCovered",
       id: "insuranceCovered",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,
@@ -352,7 +352,7 @@ export const columns = (
           },
         });
       },
-      aggregatedCell: ({row}) => {
+      aggregatedCell: ({ row }) => {
         const subRows = row.subRows;
         if (subRows && subRows.length > 0) {
           const total = subRows.reduce(
@@ -371,7 +371,7 @@ export const columns = (
     {
       accessorKey: "outOfPocket",
       id: "outOfPocket",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,
@@ -381,7 +381,7 @@ export const columns = (
         const value = info.getValue() as number;
         return currencyFormatter.format(value);
       },
-      aggregatedCell: ({row}) => {
+      aggregatedCell: ({ row }) => {
         const subRows = row.subRows;
         if (subRows && subRows.length > 0) {
           const total = subRows.reduce(
@@ -400,7 +400,7 @@ export const columns = (
     {
       accessorKey: "claimStatus",
       id: "status",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,
@@ -421,7 +421,7 @@ export const columns = (
       },
       enableGrouping: true,
       enableSorting: false,
-      aggregatedCell: ({row}) => {
+      aggregatedCell: ({ row }) => {
         const expense = row.original;
         const status = expense.claimStatus || "not_submitted";
         return claimStatusEnum[status] || status;
@@ -432,7 +432,7 @@ export const columns = (
     {
       accessorKey: "notes",
       id: "notes",
-      header: ({column, table}) =>
+      header: ({ column, table }) =>
         renderComponent(DataTableColumnHeader, {
           column,
           table,

@@ -1,16 +1,16 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
 import Check from '@lucide/svelte/icons/check';
 import Tag from '@lucide/svelte/icons/tag';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import X from '@lucide/svelte/icons/x';
-import type {Row} from '@tanstack/table-core';
-import type {ImportRow} from '$lib/types/import';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {cn} from '$lib/utils';
-import {createTransformAccessors} from '$lib/utils/bind-helpers';
+import type { Row } from '@tanstack/table-core';
+import type { ImportRow } from '$lib/types/import';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { cn } from '$lib/utils';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
 import Fuse from 'fuse.js';
 
 interface Props {
@@ -19,7 +19,7 @@ interface Props {
   temporaryCategories?: string[];
 }
 
-let {row, onUpdate, temporaryCategories = []}: Props = $props();
+let { row, onUpdate, temporaryCategories = [] }: Props = $props();
 
 const categoryState = CategoriesState.get();
 const categoriesArray = $derived(
@@ -77,12 +77,12 @@ const combinedItems = $derived.by(() => {
   }));
   const temporary = temporaryCategories
     .filter((name) => !categoriesArray.some((c) => c.name?.toLowerCase() === name.toLowerCase()))
-    .map((name) => ({type: 'temporary' as const, name}));
+    .map((name) => ({ type: 'temporary' as const, name }));
   return [...existing, ...temporary];
 });
 
 const fused = $derived(
-  new Fuse(combinedItems, {keys: ['name'], includeScore: true, threshold: 0.3})
+  new Fuse(combinedItems, { keys: ['name'], includeScore: true, threshold: 0.3 })
 );
 
 let visibleItems = $derived.by(() => {
@@ -169,7 +169,7 @@ function handleClear() {
 <div class="w-full min-w-[200px]">
   <Popover.Root bind:open>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button
           {...props}
           variant="outline"

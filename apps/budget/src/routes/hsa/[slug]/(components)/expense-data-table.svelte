@@ -11,20 +11,20 @@ import {
   getSortedRowModel,
   type Table as TTable,
 } from '@tanstack/table-core';
-import {createSvelteTable, FlexRender} from '$lib/components/ui/data-table';
+import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
-import type {ExpenseFormat} from '../(data)/columns.svelte';
+import type { ExpenseFormat } from '../(data)/columns.svelte';
 import ExpenseTableToolbar from './expense-table-toolbar.svelte';
 import ExpenseTablePagination from './expense-table-pagination.svelte';
 import ExpenseBulkActions from './expense-bulk-actions.svelte';
-import {filtering, filters, setFiltering, setGlobalFilter} from '../(data)/filters.svelte';
-import {pagination, setPagination} from '../(data)/pagination.svelte';
-import {selection, setSelection} from '../(data)/selection.svelte';
-import {setSorting, sorting} from '../(data)/sorts.svelte';
-import {visibility, setVisibility} from '../(data)/visibility.svelte';
-import {grouping, setGrouping} from '../(data)/groups.svelte';
-import {expanded, setExpanded} from '../(data)/expanded.svelte';
-import {pinning, setPinning} from '../(data)/pinning.svelte';
+import { filtering, filters, setFiltering, setGlobalFilter } from '../(data)/filters.svelte';
+import { pagination, setPagination } from '../(data)/pagination.svelte';
+import { selection, setSelection } from '../(data)/selection.svelte';
+import { setSorting, sorting } from '../(data)/sorts.svelte';
+import { visibility, setVisibility } from '../(data)/visibility.svelte';
+import { grouping, setGrouping } from '../(data)/groups.svelte';
+import { expanded, setExpanded } from '../(data)/expanded.svelte';
+import { pinning, setPinning } from '../(data)/pinning.svelte';
 
 interface Props {
   columns: ColumnDef<ExpenseFormat, TValue>[];
@@ -33,7 +33,7 @@ interface Props {
   onBulkDelete?: (expenses: ExpenseFormat[]) => void;
 }
 
-let {columns, expenses, table = $bindable(), onBulkDelete}: Props = $props();
+let { columns, expenses, table = $bindable(), onBulkDelete }: Props = $props();
 
 table = createSvelteTable<ExpenseFormat>({
   get data() {
@@ -85,7 +85,7 @@ table = createSvelteTable<ExpenseFormat>({
   getGroupedRowModel: getGroupedRowModel(),
   getExpandedRowModel: getExpandedRowModel(),
   getFacetedUniqueValues: getFacetedUniqueValues<ExpenseFormat>(),
-  filterFns: {...filters},
+  filterFns: { ...filters },
   groupedColumnMode: 'reorder',
   autoResetPageIndex: false,
   autoResetExpanded: false,

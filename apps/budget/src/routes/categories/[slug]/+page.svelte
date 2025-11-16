@@ -1,10 +1,10 @@
 <script lang="ts">
-import {goto} from '$app/navigation';
-import {page} from '$app/state';
-import {Button, buttonVariants} from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {Separator} from '$lib/components/ui/separator';
+import { Separator } from '$lib/components/ui/separator';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
@@ -13,11 +13,11 @@ import Trash2 from '@lucide/svelte/icons/trash-2';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Receipt from '@lucide/svelte/icons/receipt';
 import Wallet from '@lucide/svelte/icons/wallet';
-import type {PageData} from './$types';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {formatCurrency} from '$lib/utils/formatters';
+import type { PageData } from './$types';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { formatCurrency } from '$lib/utils/formatters';
 
-let {data}: {data: PageData} = $props();
+let { data }: { data: PageData } = $props();
 
 const slug = $derived(page.params['slug']);
 const category = $derived(data.category);
@@ -246,7 +246,7 @@ const handleDelete = async () => {
       <AlertDialog.Action
         onclick={handleDelete}
         disabled={isDeleting}
-        class={buttonVariants({variant: 'destructive'})}>
+        class={buttonVariants({ variant: 'destructive' })}>
         {isDeleting ? 'Deleting...' : 'Delete'}
       </AlertDialog.Action>
     </AlertDialog.Footer>

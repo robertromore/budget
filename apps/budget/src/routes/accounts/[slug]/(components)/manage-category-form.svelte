@@ -1,16 +1,16 @@
 <script lang="ts">
-import {page} from '$app/state';
+import { page } from '$app/state';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {Button, buttonVariants} from '$lib/components/ui/button';
+import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as Form from '$lib/components/ui/form';
-import {Input} from '$lib/components/ui/input';
-import {Textarea} from '$lib/components/ui/textarea';
-import {type Category} from '$lib/schema';
-import {superformInsertCategorySchema} from '$lib/schema/superforms';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import type {EditableEntityItem} from '$lib/types';
-import {superForm} from 'sveltekit-superforms';
-import {zod4Client} from 'sveltekit-superforms/adapters';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import { type Category } from '$lib/schema';
+import { superformInsertCategorySchema } from '$lib/schema/superforms';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import type { EditableEntityItem } from '$lib/types';
+import { superForm } from 'sveltekit-superforms';
+import { zod4Client } from 'sveltekit-superforms/adapters';
 
 let {
   id,
@@ -25,10 +25,10 @@ let {
 // Get form data from page if available, otherwise use defaults
 const pageData = page.data['manageCategoryForm'];
 
-const form = superForm(pageData || {name: '', notes: ''}, {
+const form = superForm(pageData || { name: '', notes: '' }, {
   id: 'category-form',
   validators: zod4Client(superformInsertCategorySchema),
-  onResult: async ({result}) => {
+  onResult: async ({ result }) => {
     if (onSave) {
       if (result.type === 'success' && result.data) {
         onSave(result.data['entity'], (id ?? 0) === 0);
@@ -37,7 +37,7 @@ const form = superForm(pageData || {name: '', notes: ''}, {
   },
 });
 
-const {form: formData, enhance} = form;
+const { form: formData, enhance } = form;
 if (id) {
   const category: Category = CategoriesState.get().getById(id)!;
   $formData.name = category.name;
@@ -59,7 +59,7 @@ const deleteCategory = async (id: number) => {
   {/if}
   <Form.Field {form} name="name">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Name</Form.Label>
         <Input {...props} bind:value={$formData.name} />
         <Form.FieldErrors />
@@ -68,7 +68,7 @@ const deleteCategory = async (id: number) => {
   </Form.Field>
   <Form.Field {form} name="notes" class="col-span-full">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Notes</Form.Label>
         <Textarea {...props} bind:value={$formData.notes} />
         <Form.FieldErrors />
@@ -93,7 +93,7 @@ const deleteCategory = async (id: number) => {
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={() => deleteCategory(id!)}
-        class={buttonVariants({variant: 'destructive'})}>Continue</AlertDialog.Action>
+        class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

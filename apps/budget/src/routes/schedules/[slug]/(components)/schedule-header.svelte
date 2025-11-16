@@ -1,8 +1,8 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import type {PageData} from '../$types';
-import {formatAmount, formatRecurringPattern, getStatusVariant} from '../(data)';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import type { PageData } from '../$types';
+import { formatAmount, formatRecurringPattern, getStatusVariant } from '../(data)';
 
 // Icons
 import Activity from '@lucide/svelte/icons/activity';

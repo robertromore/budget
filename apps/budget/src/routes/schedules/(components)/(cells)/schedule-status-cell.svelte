@@ -1,12 +1,12 @@
 <script lang="ts">
-import {Badge} from '$lib/components/ui/badge';
-import type {Schedule} from '$lib/schema/schedules';
+import { Badge } from '$lib/components/ui/badge';
+import type { Schedule } from '$lib/schema/schedules';
 
 interface Props {
   schedule: Schedule;
 }
 
-let {schedule}: Props = $props();
+let { schedule }: Props = $props();
 
 function getStatusVariant(status: string | null) {
   return status === 'active' ? 'default' : 'secondary';

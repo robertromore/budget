@@ -1,16 +1,16 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
-import {TrendingDown, Target, TriangleAlert} from '@lucide/svelte/icons';
-import {currencyFormatter} from '$lib/utils/formatters';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
+import { TrendingDown, Target, TriangleAlert } from '@lucide/svelte/icons';
+import { currencyFormatter } from '$lib/utils/formatters';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 
 interface Props {
   budget: BudgetWithRelations;
   className?: string;
 }
 
-let {budget, className}: Props = $props();
+let { budget, className }: Props = $props();
 
 const allocatedAmount = $derived(
   ((budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number) ?? 0

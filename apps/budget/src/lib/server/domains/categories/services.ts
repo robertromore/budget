@@ -6,9 +6,9 @@ import type {
   SpendingPriority,
   TaxCategory,
 } from "$lib/schema/categories";
-import {ConflictError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {defaultCategories} from "./default-categories";
+import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { defaultCategories } from "./default-categories";
 import {
   CategoryRepository,
   type CategoryStats,
@@ -305,7 +305,7 @@ export class CategoryService {
   async deleteCategory(
     id: number,
     workspaceId: number,
-    options: {force?: boolean} = {}
+    options: { force?: boolean } = {}
   ): Promise<Category> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid category ID");
@@ -333,8 +333,8 @@ export class CategoryService {
   async bulkDeleteCategories(
     ids: number[],
     workspaceId: number,
-    options: {force?: boolean} = {}
-  ): Promise<{deletedCount: number; errors: string[]}> {
+    options: { force?: boolean } = {}
+  ): Promise<{ deletedCount: number; errors: string[] }> {
     if (!Array.isArray(ids) || ids.length === 0) {
       throw new ValidationError("No category IDs provided");
     }
@@ -371,16 +371,16 @@ export class CategoryService {
         ? await this.repository.bulkDeleteCategories(deleteableIds, workspaceId)
         : 0;
 
-    return {deletedCount, errors};
+    return { deletedCount, errors };
   }
 
   /**
    * Bulk update category display order
    */
   async bulkUpdateDisplayOrder(
-    updates: Array<{id: number; displayOrder: number}>,
+    updates: Array<{ id: number; displayOrder: number }>,
     workspaceId: number
-  ): Promise<{updatedCount: number; errors: string[]}> {
+  ): Promise<{ updatedCount: number; errors: string[] }> {
     if (!Array.isArray(updates) || updates.length === 0) {
       throw new ValidationError("No category updates provided");
     }
@@ -405,7 +405,7 @@ export class CategoryService {
         await this.getCategoryById(update.id, workspaceId);
 
         // Update display order
-        await this.repository.update(update.id, {displayOrder: update.displayOrder}, workspaceId);
+        await this.repository.update(update.id, { displayOrder: update.displayOrder }, workspaceId);
         updatedCount++;
       } catch (error) {
         errors.push(
@@ -414,7 +414,7 @@ export class CategoryService {
       }
     }
 
-    return {updatedCount, errors};
+    return { updatedCount, errors };
   }
 
   /**
@@ -673,7 +673,7 @@ export class CategoryService {
     }
 
     // Update the parent
-    return await this.repository.update(categoryId, {parentId}, workspaceId);
+    return await this.repository.update(categoryId, { parentId }, workspaceId);
   }
 
   /**
@@ -797,7 +797,7 @@ export class CategoryService {
       }
     }
 
-    return {created, skipped, errors};
+    return { created, skipped, errors };
   }
 
   /**

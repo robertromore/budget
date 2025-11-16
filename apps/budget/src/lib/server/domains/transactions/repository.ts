@@ -1,11 +1,11 @@
-import {db} from "$lib/server/db";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {transactions, accounts, categories, payees} from "$lib/schema";
-import {eq, and, isNull, desc, asc, like, between, sql, inArray} from "drizzle-orm";
-import type {Transaction, NewTransaction} from "$lib/schema/transactions";
-import {NotFoundError} from "$lib/server/shared/types/errors";
-import {isDebtAccount} from "$lib/schema/accounts";
-import type {TransactionDbResult} from "./types";
+import { db } from "$lib/server/db";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { transactions, accounts, categories, payees } from "$lib/schema";
+import { eq, and, isNull, desc, asc, like, between, sql, inArray } from "drizzle-orm";
+import type { Transaction, NewTransaction } from "$lib/schema/transactions";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import { isDebtAccount } from "$lib/schema/accounts";
+import type { TransactionDbResult } from "./types";
 
 /**
  * Convert database query result to Transaction type
@@ -25,12 +25,12 @@ function toTransaction(dbResult: TransactionDbResult): Transaction {
   return {
     ...rest,
     balance: rest.balance ?? null,
-    ...(scheduleId != null && {scheduleId}),
-    ...(scheduleName != null && {scheduleName}),
-    ...(scheduleSlug != null && {scheduleSlug}),
-    ...(scheduleFrequency != null && {scheduleFrequency}),
-    ...(scheduleInterval != null && {scheduleInterval}),
-    ...(scheduleNextOccurrence != null && {scheduleNextOccurrence}),
+    ...(scheduleId != null && { scheduleId }),
+    ...(scheduleName != null && { scheduleName }),
+    ...(scheduleSlug != null && { scheduleSlug }),
+    ...(scheduleFrequency != null && { scheduleFrequency }),
+    ...(scheduleInterval != null && { scheduleInterval }),
+    ...(scheduleNextOccurrence != null && { scheduleNextOccurrence }),
   } as Transaction;
 }
 
@@ -246,7 +246,7 @@ export class TransactionRepository {
 
     // Get total count
     const [countResult] = await db
-      .select({count: sql<number>`count(*)`})
+      .select({ count: sql<number>`count(*)` })
       .from(transactions)
       .where(whereClause);
 
@@ -416,7 +416,7 @@ export class TransactionRepository {
     await this.verifyAccountOwnership(accountId, workspaceId);
 
     const [result] = await db
-      .select({count: sql<number>`count(*)`})
+      .select({ count: sql<number>`count(*)` })
       .from(transactions)
       .where(and(eq(transactions.accountId, accountId), isNull(transactions.deletedAt)));
 
@@ -435,7 +435,7 @@ export class TransactionRepository {
 
     const [deleted] = await db
       .update(transactions)
-      .set({deletedAt: getCurrentTimestamp()})
+      .set({ deletedAt: getCurrentTimestamp() })
       .where(and(eq(transactions.id, id), isNull(transactions.deletedAt)))
       .returning();
 
@@ -460,7 +460,7 @@ export class TransactionRepository {
 
     await db
       .update(transactions)
-      .set({deletedAt: getCurrentTimestamp()})
+      .set({ deletedAt: getCurrentTimestamp() })
       .where(and(inArray(transactions.id, ids), isNull(transactions.deletedAt)));
   }
 
@@ -479,7 +479,7 @@ export class TransactionRepository {
     accountId: number,
     workspaceId: string,
     limit?: number
-  ): Promise<Array<Transaction & {balance: number}>> {
+  ): Promise<Array<Transaction & { balance: number }>> {
     // Verify account belongs to user
     await this.verifyAccountOwnership(accountId, workspaceId);
 

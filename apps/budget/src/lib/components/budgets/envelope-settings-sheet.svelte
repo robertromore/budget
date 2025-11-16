@@ -2,13 +2,13 @@
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Sheet from '$lib/components/ui/sheet';
 import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
 import Label from '$lib/components/ui/label/label.svelte';
-import {Badge} from '$lib/components/ui/badge';
-import {Switch} from '$lib/components/ui/switch';
-import type {EnvelopeAllocation, RolloverMode} from '$lib/schema/budgets/envelope-allocations';
-import {Settings2} from '@lucide/svelte/icons';
+import { Badge } from '$lib/components/ui/badge';
+import { Switch } from '$lib/components/ui/switch';
+import type { EnvelopeAllocation, RolloverMode } from '$lib/schema/budgets/envelope-allocations';
+import { Settings2 } from '@lucide/svelte/icons';
 
 interface Props {
   open?: boolean;
@@ -35,9 +35,9 @@ let autoRefill = $state(!!(envelope.metadata as any)?.autoRefill);
 let autoRefillAmount = $state(String((envelope.metadata as any)?.autoRefill ?? ''));
 
 const rolloverModeOptions = [
-  {value: 'unlimited', label: 'Unlimited', description: 'Rollover all unused funds indefinitely'},
-  {value: 'limited', label: 'Limited', description: 'Rollover for a specific number of months'},
-  {value: 'reset', label: 'Reset', description: 'Clear unused funds at period end'},
+  { value: 'unlimited', label: 'Unlimited', description: 'Rollover all unused funds indefinitely' },
+  { value: 'limited', label: 'Limited', description: 'Rollover for a specific number of months' },
+  { value: 'reset', label: 'Reset', description: 'Clear unused funds at period end' },
 ];
 
 // Reset form when envelope changes

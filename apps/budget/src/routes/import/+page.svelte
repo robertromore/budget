@@ -33,7 +33,7 @@ import Wallet from '@lucide/svelte/icons/wallet';
 import { useQueryClient } from '@tanstack/svelte-query';
 import { toast } from 'svelte-sonner';
 
-let {data} = $props();
+let { data } = $props();
 const queryClient = useQueryClient();
 
 // Initialize entity states for the import page
@@ -55,7 +55,7 @@ type Step =
 
 let currentStep = $state<Step>('upload');
 let selectedFile = $state<File | null>(null);
-let fileData = $state<{data: string; name: string; type: string} | null>(null);
+let fileData = $state<{ data: string; name: string; type: string } | null>(null);
 let parseResults = $state<ParseResult | null>(null);
 let rawCSVData = $state<Record<string, any>[] | null>(null);
 let columnMapping = $state<ColumnMapping | null>(null);
@@ -74,7 +74,7 @@ const filteredScheduleMatches = $derived(
 
 // Group schedule matches by schedule ID
 const groupedScheduleMatches = $derived.by(() => {
-  const grouped = new Map<number, {scheduleName: string; matches: ScheduleMatch[]}>();
+  const grouped = new Map<number, { scheduleName: string; matches: ScheduleMatch[] }>();
 
   filteredScheduleMatches.forEach((match) => {
     if (!grouped.has(match.scheduleId)) {
@@ -231,7 +231,7 @@ let bulkPayeeUpdateDialog = $state({
   previousPayeeId: null as number | null,
   previousPayeeName: null as string | null,
   matchCount: 0,
-  matches: [] as Array<{item: any}>,
+  matches: [] as Array<{ item: any }>,
 });
 
 // Apply payee update to all similar transactions (fuzzy matched by original payee)
@@ -271,7 +271,7 @@ function handlePayeeUpdateWithSimilar(
         rowPayee.toLowerCase() === originalPayeeName.toLowerCase()
       );
     })
-    .map((item) => ({item}));
+    .map((item) => ({ item }));
 
   // If there are similar transactions, ask user if they want to update them
   if (matchesToUpdate.length > 0) {
@@ -322,7 +322,7 @@ function cancelBulkPayeeUpdate() {
 
 // Revert the payee update entirely
 function revertPayeeUpdate() {
-  const {rowIndex, previousPayeeId, previousPayeeName} = bulkPayeeUpdateDialog;
+  const { rowIndex, previousPayeeId, previousPayeeName } = bulkPayeeUpdateDialog;
 
   // Revert the single row to its previous value
   handlePayeeUpdate(rowIndex, previousPayeeId, previousPayeeName);
@@ -339,7 +339,7 @@ let processorFilterDialog = $state({
 
 // Analyze payee names for payment processors
 const processorAnalysis = $derived.by(() => {
-  if (!parseResults) return {total: 0, byProcessor: new Map<string, number>()};
+  if (!parseResults) return { total: 0, byProcessor: new Map<string, number>() };
 
   const payeeNames = parseResults.rows
     .map((row) => row.normalizedData['payee'])
@@ -430,18 +430,18 @@ function cancelProcessorFilter() {
 // Handler for schedule match toggle
 function handleScheduleMatchToggle(rowIndex: number, selected: boolean) {
   scheduleMatches = scheduleMatches.map((match) =>
-    match.rowIndex === rowIndex ? {...match, selected} : match
+    match.rowIndex === rowIndex ? { ...match, selected } : match
   );
 }
 
 // Select all schedule matches
 function selectAllScheduleMatches() {
-  scheduleMatches = scheduleMatches.map((match) => ({...match, selected: true}));
+  scheduleMatches = scheduleMatches.map((match) => ({ ...match, selected: true }));
 }
 
 // Deselect all schedule matches
 function deselectAllScheduleMatches() {
-  scheduleMatches = scheduleMatches.map((match) => ({...match, selected: false}));
+  scheduleMatches = scheduleMatches.map((match) => ({ ...match, selected: false }));
 }
 
 // Get confidence badge color
@@ -513,8 +513,8 @@ let bulkUpdateDialog = $state({
   payeeName: '',
   matchCountByPayee: 0,
   matchCountByCategory: 0,
-  matchesByPayee: [] as Array<{item: any}>,
-  matchesByCategory: [] as Array<{item: any}>,
+  matchesByPayee: [] as Array<{ item: any }>,
+  matchesByCategory: [] as Array<{ item: any }>,
 });
 
 // Apply category update to all similar transactions (fuzzy matched by payee)
@@ -565,16 +565,16 @@ function handleCategoryUpdateWithSimilar(
         rowPayee.toLowerCase() === payeeName.toLowerCase()
       );
     })
-    .map((item) => ({item}));
+    .map((item) => ({ item }));
 
   // Find matches by previous category (for "rename category" option)
   // Only allow this if the previous category was a real category (not uncategorized/null/empty)
-  let matchesByCategory: Array<{item: any}> = [];
+  let matchesByCategory: Array<{ item: any }> = [];
 
   if (hasRealPreviousCategory) {
     matchesByCategory = parseResults.rows
-      .map((row, idx) => ({item: row, index: idx}))
-      .filter(({item, index}) => {
+      .map((row, idx) => ({ item: row, index: idx }))
+      .filter(({ item, index }) => {
         if (item.rowIndex === rowIndex) return false;
         const rowCategory =
           entityOverrides[item.rowIndex]?.categoryName || item.normalizedData['category'];
@@ -747,7 +747,7 @@ async function applySmartCategorization() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({rows: parseResults.rows}),
+      body: JSON.stringify({ rows: parseResults.rows }),
     });
 
     if (response.ok) {
@@ -928,7 +928,7 @@ async function proceedToEntityReview() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({rows: selectedRowsData}),
+      body: JSON.stringify({ rows: selectedRowsData }),
     });
 
     const result = await response.json();
@@ -1067,10 +1067,10 @@ async function processImport() {
       currentStep = 'complete';
 
       // Invalidate all account-related queries to refresh balances everywhere
-      await queryClient.invalidateQueries({queryKey: ['accounts']});
-      await queryClient.invalidateQueries({queryKey: ['transactions']});
-      await queryClient.invalidateQueries({queryKey: ['payees']});
-      await queryClient.invalidateQueries({queryKey: ['categories']});
+      await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      await queryClient.invalidateQueries({ queryKey: ['payees'] });
+      await queryClient.invalidateQueries({ queryKey: ['categories'] });
     } else {
       error = result.error || 'Failed to process import';
     }
@@ -1094,12 +1094,12 @@ function startNewImport() {
 }
 
 const steps = [
-  {id: 'upload', label: 'Upload File'},
-  {id: 'map-columns', label: 'Map Columns'},
-  {id: 'preview', label: 'Preview Data'},
-  {id: 'review-schedules', label: 'Review Schedules'},
-  {id: 'review-entities', label: 'Review Entities'},
-  {id: 'complete', label: 'Complete'},
+  { id: 'upload', label: 'Upload File' },
+  { id: 'map-columns', label: 'Map Columns' },
+  { id: 'preview', label: 'Preview Data' },
+  { id: 'review-schedules', label: 'Review Schedules' },
+  { id: 'review-entities', label: 'Review Entities' },
+  { id: 'complete', label: 'Complete' },
 ];
 
 const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
@@ -1107,7 +1107,7 @@ const currentStepIndex = $derived(steps.findIndex((s) => s.id === currentStep));
 // Scroll to top when step changes
 $effect(() => {
   currentStep;
-  window.scrollTo({top: 0, behavior: 'smooth'});
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 </script>
 

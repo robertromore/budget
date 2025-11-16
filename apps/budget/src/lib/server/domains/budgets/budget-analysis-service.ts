@@ -5,20 +5,20 @@
  * intelligent budget recommendations for creation and optimization.
  */
 
-import {accounts} from "$lib/schema/accounts";
-import {budgetAccounts, budgetCategories, budgets} from "$lib/schema/budgets";
-import {categories} from "$lib/schema/categories";
-import {payees} from "$lib/schema/payees";
+import { accounts } from "$lib/schema/accounts";
+import { budgetAccounts, budgetCategories, budgets } from "$lib/schema/budgets";
+import { categories } from "$lib/schema/categories";
+import { payees } from "$lib/schema/payees";
 import type {
   RecommendationMetadata,
   RecommendationPriority,
   RecommendationType,
 } from "$lib/schema/recommendations";
-import {transactions} from "$lib/schema/transactions";
-import {db} from "$lib/server/db";
-import {logger} from "$lib/server/shared/logging";
-import {and, eq, gte, inArray, isNull, lte, sql} from "drizzle-orm";
-import {BudgetGroupAnalysisService} from "./budget-group-analysis-service";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { logger } from "$lib/server/shared/logging";
+import { and, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
+import { BudgetGroupAnalysisService } from "./budget-group-analysis-service";
 
 export interface AnalysisParams {
   accountIds?: number[];
@@ -84,7 +84,7 @@ export interface AccountSpendingData {
   accountName: string;
   monthlyAverage: number;
   transactionCount: number;
-  categoryBreakdown: {categoryName: string; amount: number}[];
+  categoryBreakdown: { categoryName: string; amount: number }[];
   hasExistingBudget: boolean;
 }
 
@@ -109,10 +109,10 @@ export class BudgetAnalysisService {
   async analyzeTransactionHistory(
     params: AnalysisParams = {}
   ): Promise<BudgetRecommendationDraft[]> {
-    const {accountIds, workspaceId, months = 6, minTransactions = 3, minConfidence = 40} = params;
+    const { accountIds, workspaceId, months = 6, minTransactions = 3, minConfidence = 40 } = params;
 
     try {
-      logger.info("Starting transaction history analysis", {params});
+      logger.info("Starting transaction history analysis", { params });
 
       const recommendations: BudgetRecommendationDraft[] = [];
 
@@ -124,8 +124,8 @@ export class BudgetAnalysisService {
       const startDateStr = startDate.toISOString().split("T")[0]!;
       const endDateStr = endDate.toISOString().split("T")[0]!;
       const detectionParams = {
-        ...(accountIds && {accountIds}),
-        ...(workspaceId && {workspaceId}),
+        ...(accountIds && { accountIds }),
+        ...(workspaceId && { workspaceId }),
         startDate: startDateStr,
         endDate: endDateStr,
         minTransactions,
@@ -180,7 +180,7 @@ export class BudgetAnalysisService {
       // 3. Detect account-level spending for account-monthly budgets
       try {
         const accountSpending = await this.detectAccountLevelSpending({
-          ...(accountIds && {accountIds}),
+          ...(accountIds && { accountIds }),
           startDate: startDateStr,
           endDate: endDateStr,
         });
@@ -223,7 +223,7 @@ export class BudgetAnalysisService {
       try {
         const groupAnalysis = new BudgetGroupAnalysisService();
         const groupRecommendations = await groupAnalysis.generateAllGroupRecommendations({
-          ...(accountIds !== undefined && {accountIds}),
+          ...(accountIds !== undefined && { accountIds }),
           minSimilarityScore: minConfidence,
         });
         recommendations.push(
@@ -244,7 +244,7 @@ export class BudgetAnalysisService {
 
       // Add workspaceId to all recommendations
       if (workspaceId) {
-        return recommendations.map((rec) => ({...rec, workspaceId}));
+        return recommendations.map((rec) => ({ ...rec, workspaceId }));
       }
 
       return recommendations;
@@ -268,7 +268,7 @@ export class BudgetAnalysisService {
     endDate: string;
     minTransactions: number;
   }): Promise<SpendingPattern[]> {
-    const {accountIds, workspaceId, startDate, endDate, minTransactions} = params;
+    const { accountIds, workspaceId, startDate, endDate, minTransactions } = params;
 
     // Build query conditions
     const conditions = [
@@ -281,7 +281,7 @@ export class BudgetAnalysisService {
     if (workspaceId) {
       // Get account IDs for this workspace
       const workspaceAccounts = await db
-        .select({id: accounts.id})
+        .select({ id: accounts.id })
         .from(accounts)
         .where(eq(accounts.workspaceId, workspaceId));
 
@@ -625,8 +625,8 @@ export class BudgetAnalysisService {
     const budget = await db.query.budgets.findFirst({
       where: eq(budgets.id, budgetId),
       with: {
-        categories: {with: {category: true}},
-        periodTemplates: {with: {periods: true}},
+        categories: { with: { category: true } },
+        periodTemplates: { with: { periods: true } },
       },
     });
 
@@ -701,7 +701,7 @@ export class BudgetAnalysisService {
     endDate: string;
     minTransactions: number;
   }): Promise<RecurringExpense[]> {
-    const {accountIds, workspaceId, startDate, endDate, minTransactions} = params;
+    const { accountIds, workspaceId, startDate, endDate, minTransactions } = params;
 
     // Build query conditions
     const conditions = [
@@ -714,7 +714,7 @@ export class BudgetAnalysisService {
     if (workspaceId) {
       // Get account IDs for this workspace
       const workspaceAccounts = await db
-        .select({id: accounts.id})
+        .select({ id: accounts.id })
         .from(accounts)
         .where(eq(accounts.workspaceId, workspaceId));
 
@@ -865,7 +865,7 @@ export class BudgetAnalysisService {
     endDate: string;
     minTransactions: number;
   }): Promise<GoalPattern[]> {
-    const {accountIds, startDate, endDate, minTransactions} = params;
+    const { accountIds, startDate, endDate, minTransactions } = params;
 
     // Goal patterns are typically:
     // 1. Regular positive amounts (transfers/deposits)
@@ -956,7 +956,7 @@ export class BudgetAnalysisService {
 
     // Get account names
     const accountsData = await db.query.accounts.findMany({
-      columns: {id: true, name: true},
+      columns: { id: true, name: true },
     });
     const accountNamesMap = new Map(accountsData.map((a) => [a.id, a.name]));
 
@@ -1009,7 +1009,7 @@ export class BudgetAnalysisService {
     startDate: string;
     endDate: string;
   }): Promise<AccountSpendingData[]> {
-    const {accountIds, startDate, endDate} = params;
+    const { accountIds, startDate, endDate } = params;
 
     const conditions = [
       gte(transactions.date, startDate),
@@ -1066,7 +1066,7 @@ export class BudgetAnalysisService {
 
     // Get account names and check for existing budgets
     const accountsData = await db.query.accounts.findMany({
-      columns: {id: true, name: true},
+      columns: { id: true, name: true },
     });
     const accountNamesMap = new Map(accountsData.map((a) => [a.id, a.name]));
 
@@ -1104,7 +1104,7 @@ export class BudgetAnalysisService {
       if (monthlyAverage < 2000) continue;
 
       const categoryBreakdown = Array.from(data.categoryBreakdown.entries())
-        .map(([categoryName, amount]) => ({categoryName, amount}))
+        .map(([categoryName, amount]) => ({ categoryName, amount }))
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 5); // Top 5 categories
 

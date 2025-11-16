@@ -1,10 +1,10 @@
 <script lang="ts" generics="TData, TValue">
-import {useSortable} from '@dnd-kit-svelte/sortable';
-import {CSS} from '@dnd-kit-svelte/utilities';
-import type {Header} from '@tanstack/table-core';
-import {FlexRender} from '$lib/components/ui/data-table';
+import { useSortable } from '@dnd-kit-svelte/sortable';
+import { CSS } from '@dnd-kit-svelte/utilities';
+import type { Header } from '@tanstack/table-core';
+import { FlexRender } from '$lib/components/ui/data-table';
 import GripVertical from '@lucide/svelte/icons/grip-vertical';
-import {cn} from '$lib/utils';
+import { cn } from '$lib/utils';
 
 interface Props {
   header: Header<TData, TValue>;
@@ -14,7 +14,7 @@ interface Props {
   onTransformChange?: (columnId: string, transform: string) => void;
 }
 
-let {header, density, isDraggable, stickyHeader = false, onTransformChange}: Props = $props();
+let { header, density, isDraggable, stickyHeader = false, onTransformChange }: Props = $props();
 
 const sortable = useSortable({
   id: header.id,

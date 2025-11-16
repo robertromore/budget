@@ -4,10 +4,10 @@ import {
   envelopeAllocations,
   envelopeTransfers,
 } from "$lib/schema/budgets/envelope-allocations";
-import {categories} from "$lib/schema/categories";
-import {db} from "$lib/server/db";
-import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {and, desc, eq, gt, sql} from "drizzle-orm";
+import { categories } from "$lib/schema/categories";
+import { db } from "$lib/server/db";
+import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { and, desc, eq, gt, sql } from "drizzle-orm";
 
 export interface DeficitAnalysis {
   envelopeId: number;
@@ -79,7 +79,7 @@ export class DeficitRecoveryService {
   };
 
   async analyzeDeficit(envelopeId: number, policy: DeficitPolicy = {}): Promise<DeficitAnalysis> {
-    const mergedPolicy = {...this.defaultPolicy, ...policy};
+    const mergedPolicy = { ...this.defaultPolicy, ...policy };
     const envelope = await this.getEnvelopeById(envelopeId);
 
     if (envelope.deficitAmount <= 0) {
@@ -110,7 +110,7 @@ export class DeficitRecoveryService {
     envelopeId: number,
     policy: DeficitPolicy = {}
   ): Promise<DeficitRecoveryPlan> {
-    const mergedPolicy = {...this.defaultPolicy, ...policy};
+    const mergedPolicy = { ...this.defaultPolicy, ...policy };
     const analysis = await this.analyzeDeficit(envelopeId, mergedPolicy);
 
     const recoverySteps = await this.generateRecoverySteps(analysis, mergedPolicy);
@@ -416,7 +416,7 @@ export class DeficitRecoveryService {
 
       steps.push({
         type: stepType,
-        ...(option.sourceEnvelopeId != null && {sourceEnvelopeId: option.sourceEnvelopeId}),
+        ...(option.sourceEnvelopeId != null && { sourceEnvelopeId: option.sourceEnvelopeId }),
         amount: stepAmount,
         description: option.description,
         order: stepOrder++,
@@ -528,7 +528,7 @@ export class DeficitRecoveryService {
 
   private async getCategoryName(categoryId: number): Promise<string> {
     const category = await db
-      .select({name: categories.name})
+      .select({ name: categories.name })
       .from(categories)
       .where(eq(categories.id, categoryId))
       .limit(1);

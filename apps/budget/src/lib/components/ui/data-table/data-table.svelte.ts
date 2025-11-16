@@ -80,7 +80,7 @@ type Intersection<T extends readonly unknown[]> = (T extends [infer H, ...infer 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
   ...sources: Sources
-): Intersection<{[K in keyof Sources]: Sources[K]}> {
+): Intersection<{ [K in keyof Sources]: Sources[K] }> {
   const resolve = <T extends object>(src: MaybeThunk<T>): T | undefined =>
     typeof src === "function" ? (src() ?? undefined) : src;
   const findSourceWithKey = (key: PropertyKey) => {
@@ -121,5 +121,5 @@ export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
         writable: true,
       };
     },
-  }) as Intersection<{[K in keyof Sources]: Sources[K]}>;
+  }) as Intersection<{ [K in keyof Sources]: Sources[K] }>;
 }

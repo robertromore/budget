@@ -3,10 +3,10 @@ import * as Dialog from '$lib/components/ui/dialog';
 import * as Card from '$lib/components/ui/card';
 import * as Progress from '$lib/components/ui/progress';
 import * as Alert from '$lib/components/ui/alert';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
-import {ScrollArea} from '$lib/components/ui/scroll-area';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
 
 import {
   PayeeBulkOperationsState,
@@ -55,13 +55,13 @@ const isRunning = $derived.by(() => bulkOpsState.isOperationRunning);
 // Progress calculations
 const progressPercentage = $derived.by(() => {
   if (!currentOperation) return 0;
-  const {completed, failed, total} = currentOperation;
+  const { completed, failed, total } = currentOperation;
   return Math.round(((completed + failed) / total) * 100);
 });
 
 const successRate = $derived.by(() => {
   if (!currentOperation || currentOperation.completed === 0) return 0;
-  const {completed, failed} = currentOperation;
+  const { completed, failed } = currentOperation;
   return Math.round((completed / (completed + failed)) * 100);
 });
 

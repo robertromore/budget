@@ -1,14 +1,14 @@
 <script lang="ts">
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Sheet from '$lib/components/ui/sheet';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {toast} from 'svelte-sonner';
-import {trpc} from '$lib/trpc/client';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {formatDateDisplay, parseISOString, currentDate} from '$lib/utils/dates';
-import type {BudgetPeriodInstance} from '$lib/schema/budgets';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { toast } from 'svelte-sonner';
+import { trpc } from '$lib/trpc/client';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { formatDateDisplay, parseISOString, currentDate } from '$lib/utils/dates';
+import type { BudgetPeriodInstance } from '$lib/schema/budgets';
 
 interface Props {
   open?: boolean;
@@ -17,7 +17,7 @@ interface Props {
   onSuccess?: () => void;
 }
 
-let {open = $bindable(false), onOpenChange, instance, onSuccess}: Props = $props();
+let { open = $bindable(false), onOpenChange, instance, onSuccess }: Props = $props();
 
 let allocatedAmount = $state(0);
 let isSubmitting = $state(false);

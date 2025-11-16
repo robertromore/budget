@@ -1,13 +1,13 @@
 <script lang="ts">
-import {recurringFormatter} from '$lib/utils/formatters';
+import { recurringFormatter } from '$lib/utils/formatters';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
-import type {Schedule} from '$lib/schema/schedules';
+import type { Schedule } from '$lib/schema/schedules';
 
 interface Props {
   schedule: Schedule;
 }
 
-let {schedule}: Props = $props();
+let { schedule }: Props = $props();
 
 function formatRecurringPattern(schedule: Schedule): string {
   if (!schedule.scheduleDate || !schedule.scheduleDate.frequency) return 'One-time';

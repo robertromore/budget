@@ -1,14 +1,18 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
 import * as Select from '$lib/components/ui/select';
-import {Sparkles, Users, Filter} from '@lucide/svelte/icons';
+import { Sparkles, Users, Filter } from '@lucide/svelte/icons';
 import AnalyzeSpendingSheet from './analyze-spending-sheet.svelte';
 import GroupRecommendationPreviewModal from './group-recommendation-preview-modal.svelte';
-import {listRecommendations, applyRecommendation, dismissRecommendation} from '$lib/query/budgets';
+import {
+  listRecommendations,
+  applyRecommendation,
+  dismissRecommendation,
+} from '$lib/query/budgets';
 import RecommendationDataTable from './recommendations/recommendation-data-table.svelte';
-import {columns} from './recommendations/data/columns.svelte';
-import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
+import { columns } from './recommendations/data/columns.svelte';
+import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
 
 interface Props {
   budgetId?: number;
@@ -17,7 +21,7 @@ interface Props {
   budgets?: any[]; // For preview modal
 }
 
-let {budgetId, accountId, categoryId, budgets = []}: Props = $props();
+let { budgetId, accountId, categoryId, budgets = [] }: Props = $props();
 
 let analyzeDialogOpen = $state(false);
 let previewModalOpen = $state(false);

@@ -1,7 +1,7 @@
 <script lang="ts">
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import type {Table} from '@tanstack/table-core';
-import {Button} from '$lib/components/ui/button';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import type { Table } from '@tanstack/table-core';
+import { Button } from '$lib/components/ui/button';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import Archive from '@lucide/svelte/icons/archive';
 import X from '@lucide/svelte/icons/x';
@@ -13,7 +13,7 @@ interface Props {
   onBulkArchive: (budgets: BudgetWithRelations[]) => void;
 }
 
-let {table, allBudgets, onBulkDelete, onBulkArchive}: Props = $props();
+let { table, allBudgets, onBulkDelete, onBulkArchive }: Props = $props();
 
 const selectedRows = $derived(table.getSelectedRowModel().rows);
 const selectedCount = $derived(selectedRows.length);

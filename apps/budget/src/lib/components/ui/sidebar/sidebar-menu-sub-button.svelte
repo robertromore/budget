@@ -1,8 +1,8 @@
 <script lang="ts">
-import {cn} from '$lib/utils';
-import type {WithElementRef} from 'bits-ui';
-import type {Snippet} from 'svelte';
-import type {HTMLAnchorAttributes} from 'svelte/elements';
+import { cn } from '$lib/utils';
+import type { WithElementRef } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import type { HTMLAnchorAttributes } from 'svelte/elements';
 
 let {
   ref = $bindable(null),
@@ -13,7 +13,7 @@ let {
   isActive,
   ...restProps
 }: WithElementRef<HTMLAnchorAttributes> & {
-  child?: Snippet<[{props: Record<string, unknown>}]>;
+  child?: Snippet<[{ props: Record<string, unknown> }]>;
   size?: 'sm' | 'md';
   isActive?: boolean;
 } = $props();
@@ -35,7 +35,7 @@ const mergedProps = $derived({
 </script>
 
 {#if child}
-  {@render child({props: mergedProps})}
+  {@render child({ props: mergedProps })}
 {:else}
   <a bind:this={ref} {...mergedProps}>
     {@render children?.()}

@@ -1,7 +1,7 @@
 import slugify from "@sindresorhus/slugify";
-import {payees, type Payee} from "$lib/schema";
-import {db} from "..";
-import {faker} from "@faker-js/faker";
+import { payees, type Payee } from "$lib/schema";
+import { db } from "..";
+import { faker } from "@faker-js/faker";
 
 let payeeSequence = 0;
 
@@ -23,7 +23,7 @@ let payeeSequence = 0;
  */
 export const payeeFactory = async (
   workspaceId: number,
-  count: number = faker.number.int({min: 1, max: 10})
+  count: number = faker.number.int({ min: 1, max: 10 })
 ): Promise<Payee[]> => {
   const payees_collection: Payee[] = [];
 

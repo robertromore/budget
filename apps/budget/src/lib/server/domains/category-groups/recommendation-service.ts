@@ -1,20 +1,20 @@
-import {categories, categoryGroupMemberships, categoryGroups} from "$lib/schema";
-import type {Category} from "$lib/schema/categories";
+import { categories, categoryGroupMemberships, categoryGroups } from "$lib/schema";
+import type { Category } from "$lib/schema/categories";
 import type {
   CategoryGroupRecommendation,
   NewCategoryGroupRecommendation,
 } from "$lib/schema/category-groups";
-import {db} from "$lib/server/db";
-import {CategoryRepository} from "$lib/server/domains/categories/repository";
-import {NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {and, eq, isNull} from "drizzle-orm";
+import { db } from "$lib/server/db";
+import { CategoryRepository } from "$lib/server/domains/categories/repository";
+import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { and, eq, isNull } from "drizzle-orm";
 import {
   CategoryGroupMembershipRepository,
   CategoryGroupRecommendationRepository,
   CategoryGroupRepository,
   CategoryGroupSettingsRepository,
 } from "./repository";
-import {CategoryGroupService} from "./services";
+import { CategoryGroupService } from "./services";
 
 // ================================================================================
 // HELPERS
@@ -23,28 +23,28 @@ import {CategoryGroupService} from "./services";
 /**
  * Get default icon and color for a group based on its name
  */
-function getDefaultGroupAppearance(groupName: string): {icon: string; color: string} {
-  const defaults: Record<string, {icon: string; color: string}> = {
-    "Food & Dining": {icon: "utensils", color: "#f97316"}, // orange
-    Transportation: {icon: "car", color: "#3b82f6"}, // blue
-    Housing: {icon: "home", color: "#8b5cf6"}, // purple
-    Utilities: {icon: "zap", color: "#eab308"}, // yellow
-    Entertainment: {icon: "film", color: "#ec4899"}, // pink
-    Clothing: {icon: "shirt", color: "#6366f1"}, // indigo
-    Healthcare: {icon: "heart-pulse", color: "#ef4444"}, // red
-    Insurance: {icon: "shield", color: "#0891b2"}, // cyan
-    "Fitness & Recreation": {icon: "dumbbell", color: "#10b981"}, // green
-    Education: {icon: "graduation-cap", color: "#0ea5e9"}, // sky
-    Travel: {icon: "plane", color: "#06b6d4"}, // cyan
-    "Gifts & Donations": {icon: "gift", color: "#d946ef"}, // fuchsia
-    "Home & Garden": {icon: "flower", color: "#84cc16"}, // lime
-    Pets: {icon: "paw-print", color: "#f59e0b"}, // amber
-    "Fees & Taxes": {icon: "receipt", color: "#64748b"}, // slate
-    Income: {icon: "trending-up", color: "#22c55e"}, // green
-    "Additional Income": {icon: "coins", color: "#10b981"}, // emerald
-    "Investment Income": {icon: "chart-line", color: "#14b8a6"}, // teal
-    Savings: {icon: "piggy-bank", color: "#8b5cf6"}, // purple
-    Retirement: {icon: "landmark", color: "#6366f1"}, // indigo
+function getDefaultGroupAppearance(groupName: string): { icon: string; color: string } {
+  const defaults: Record<string, { icon: string; color: string }> = {
+    "Food & Dining": { icon: "utensils", color: "#f97316" }, // orange
+    Transportation: { icon: "car", color: "#3b82f6" }, // blue
+    Housing: { icon: "home", color: "#8b5cf6" }, // purple
+    Utilities: { icon: "zap", color: "#eab308" }, // yellow
+    Entertainment: { icon: "film", color: "#ec4899" }, // pink
+    Clothing: { icon: "shirt", color: "#6366f1" }, // indigo
+    Healthcare: { icon: "heart-pulse", color: "#ef4444" }, // red
+    Insurance: { icon: "shield", color: "#0891b2" }, // cyan
+    "Fitness & Recreation": { icon: "dumbbell", color: "#10b981" }, // green
+    Education: { icon: "graduation-cap", color: "#0ea5e9" }, // sky
+    Travel: { icon: "plane", color: "#06b6d4" }, // cyan
+    "Gifts & Donations": { icon: "gift", color: "#d946ef" }, // fuchsia
+    "Home & Garden": { icon: "flower", color: "#84cc16" }, // lime
+    Pets: { icon: "paw-print", color: "#f59e0b" }, // amber
+    "Fees & Taxes": { icon: "receipt", color: "#64748b" }, // slate
+    Income: { icon: "trending-up", color: "#22c55e" }, // green
+    "Additional Income": { icon: "coins", color: "#10b981" }, // emerald
+    "Investment Income": { icon: "chart-line", color: "#14b8a6" }, // teal
+    Savings: { icon: "piggy-bank", color: "#8b5cf6" }, // purple
+    Retirement: { icon: "landmark", color: "#6366f1" }, // indigo
   };
 
   // Try exact match first
@@ -62,7 +62,7 @@ function getDefaultGroupAppearance(groupName: string): {icon: string; color: str
   }
 
   // Default fallback
-  return {icon: "folder", color: "#6b7280"}; // gray
+  return { icon: "folder", color: "#6b7280" }; // gray
 }
 
 // ================================================================================
@@ -225,8 +225,8 @@ export class CategoryGroupRecommendationService {
         groupName: "Home & Garden",
         confidence: 0.8,
       },
-      {pattern: /\b(pet|dog|cat|vet|veterinary)\b/i, groupName: "Pets", confidence: 0.9},
-      {pattern: /\b(tax|fee|fine|penalty)\b/i, groupName: "Fees & Taxes", confidence: 0.85},
+      { pattern: /\b(pet|dog|cat|vet|veterinary)\b/i, groupName: "Pets", confidence: 0.9 },
+      { pattern: /\b(tax|fee|fine|penalty)\b/i, groupName: "Fees & Taxes", confidence: 0.85 },
 
       // Income categories
       {
@@ -246,7 +246,7 @@ export class CategoryGroupRecommendationService {
       },
 
       // Savings categories
-      {pattern: /\b(saving|savings|emergency|fund)\b/i, groupName: "Savings", confidence: 0.9},
+      { pattern: /\b(saving|savings|emergency|fund)\b/i, groupName: "Savings", confidence: 0.9 },
       {
         pattern: /\b(retirement|401k|ira|pension)\b/i,
         groupName: "Retirement",
@@ -258,7 +258,7 @@ export class CategoryGroupRecommendationService {
     const recommendations: NewCategoryGroupRecommendation[] = [];
 
     for (const category of ungroupedCategories) {
-      let bestMatch: {groupName: string; confidence: number; reasoning: string} | null = null;
+      let bestMatch: { groupName: string; confidence: number; reasoning: string } | null = null;
 
       const catName = (category as any).name || "";
       const catId = (category as any).id;

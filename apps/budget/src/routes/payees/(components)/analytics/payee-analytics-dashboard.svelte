@@ -2,14 +2,14 @@
 import * as Card from '$lib/components/ui/card';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as Select from '$lib/components/ui/select';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
-import {Progress} from '$lib/components/ui/progress';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
+import { Progress } from '$lib/components/ui/progress';
 
-import {trpc} from '$lib/trpc/client';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {formatDateDisplay} from '$lib/utils/dates';
+import { trpc } from '$lib/trpc/client';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { formatDateDisplay } from '$lib/utils/dates';
 
 // Icons
 import TrendingUp from '@lucide/svelte/icons/trending-up';
@@ -52,11 +52,11 @@ let performanceMetrics = $state<any>(null);
 
 // Timeframe options
 const timeframeOptions = [
-  {value: '3', label: 'Last 3 months'},
-  {value: '6', label: 'Last 6 months'},
-  {value: '12', label: 'Last 12 months'},
-  {value: '24', label: 'Last 24 months'},
-  {value: 'all', label: 'All time'},
+  { value: '3', label: 'Last 3 months' },
+  { value: '6', label: 'Last 6 months' },
+  { value: '12', label: 'Last 12 months' },
+  { value: '24', label: 'Last 24 months' },
+  { value: 'all', label: 'All time' },
 ];
 
 // Load analytics data
@@ -67,7 +67,7 @@ async function loadAnalytics() {
       // Load overall payee analytics
       const [overallAnalytics, mlDashboard, learningMetrics] = await Promise.all([
         trpc().payeeRoutes.analytics.query(),
-        trpc().payeeRoutes.mlInsightsDashboard.query({filters: {}}),
+        trpc().payeeRoutes.mlInsightsDashboard.query({ filters: {} }),
         trpc().payeeRoutes.getLearningMetrics.query({
           timeframeMonths: selectedTimeframe === 'all' ? undefined : parseInt(selectedTimeframe),
         }),
@@ -79,13 +79,13 @@ async function loadAnalytics() {
     } else if (payeeId) {
       // Load individual payee analytics
       const [payeeAnalytics, intelligence, suggestions, stats] = await Promise.all([
-        trpc().payeeRoutes.getContactAnalytics.query({payeeId}),
-        trpc().payeeRoutes.intelligence.query({id: payeeId}),
-        trpc().payeeRoutes.suggestions.query({id: payeeId}),
-        trpc().payeeRoutes.stats.query({id: payeeId}),
+        trpc().payeeRoutes.getContactAnalytics.query({ payeeId }),
+        trpc().payeeRoutes.intelligence.query({ id: payeeId }),
+        trpc().payeeRoutes.suggestions.query({ id: payeeId }),
+        trpc().payeeRoutes.stats.query({ id: payeeId }),
       ]);
 
-      analytics = {payeeAnalytics, intelligence, suggestions, stats};
+      analytics = { payeeAnalytics, intelligence, suggestions, stats };
     }
   } catch (error) {
     console.error('Failed to load analytics:', error);
@@ -106,7 +106,7 @@ async function loadMLInsights() {
           riskTolerance: 0.5,
         },
       }),
-      trpc().payeeRoutes.crossSystemLearning.query({id: payeeId}),
+      trpc().payeeRoutes.crossSystemLearning.query({ id: payeeId }),
       trpc().payeeRoutes.detectBehaviorChanges.query({
         payeeId,
         lookbackMonths: parseInt(selectedTimeframe) || 6,
@@ -129,7 +129,7 @@ async function loadRecommendations() {
 
   try {
     const [budgetOptimization, actionableInsights, categoryRecommendation] = await Promise.all([
-      trpc().payeeRoutes.budgetOptimizationAnalysis.query({id: payeeId}),
+      trpc().payeeRoutes.budgetOptimizationAnalysis.query({ id: payeeId }),
       trpc().payeeRoutes.actionableInsights.query({
         payeeId,
         insightTypes: ['optimization', 'prediction', 'automation'],

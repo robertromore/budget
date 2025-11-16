@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Progress} from '$lib/components/ui/progress';
-import {Badge} from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { Progress } from '$lib/components/ui/progress';
+import { Badge } from '$lib/components/ui/badge';
 import {
   Calendar,
   Plus,
@@ -14,8 +14,8 @@ import {
   ChevronRight,
   Trash2,
 } from '@lucide/svelte/icons';
-import {parseISOString, formatDateDisplay} from '$lib/utils/dates';
-import {formatCurrency} from '$lib/utils';
+import { parseISOString, formatDateDisplay } from '$lib/utils/dates';
+import { formatCurrency } from '$lib/utils';
 
 interface BudgetPeriodTemplate {
   id: number;

@@ -1,9 +1,13 @@
-import type {Context} from "$lib/trpc/context";
-import {initTRPC} from "@trpc/server";
-import {mutationRateLimit, bulkOperationRateLimit, strictRateLimit} from "./middleware/rate-limit";
-import {inputSanitization, strictInputSanitization} from "./middleware/input-sanitization";
-import {standardLimits, bulkOperationLimits, strictLimits} from "./middleware/request-limits";
-import {securityLogging} from "./middleware/security-logging";
+import type { Context } from "$lib/trpc/context";
+import { initTRPC } from "@trpc/server";
+import {
+  mutationRateLimit,
+  bulkOperationRateLimit,
+  strictRateLimit,
+} from "./middleware/rate-limit";
+import { inputSanitization, strictInputSanitization } from "./middleware/input-sanitization";
+import { standardLimits, bulkOperationLimits, strictLimits } from "./middleware/request-limits";
+import { securityLogging } from "./middleware/security-logging";
 
 export const t = initTRPC.context<Context>().create();
 

@@ -1,13 +1,13 @@
-import {defineQuery, defineMutation, createQueryKeys} from "./_factory";
-import {cachePatterns} from "./_client";
-import {trpc} from "$lib/trpc/client";
+import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
+import { cachePatterns } from "./_client";
+import { trpc } from "$lib/trpc/client";
 import type {
   CreateTransactionData,
   UpdateTransactionData,
   TransactionFilters,
   PaginationParams,
 } from "$lib/server/domains/transactions";
-import type {Transaction} from "$lib/schema";
+import type { Transaction } from "$lib/schema";
 
 /**
  * Query Keys for transaction operations
@@ -15,7 +15,7 @@ import type {Transaction} from "$lib/schema";
 export const transactionKeys = createQueryKeys("transactions", {
   lists: () => ["transactions", "list"] as const,
   list: (filters?: TransactionFilters, pagination?: PaginationParams) =>
-    ["transactions", "list", {filters, pagination}] as const,
+    ["transactions", "list", { filters, pagination }] as const,
   details: () => ["transactions", "detail"] as const,
   detail: (id: number) => ["transactions", "detail", id] as const,
   byAccount: (accountId: number, params?: any) =>
@@ -42,9 +42,9 @@ export const getAllAccountTransactions = (
     accountId,
     sortBy: options?.sortBy ?? "date",
     sortOrder: options?.sortOrder ?? "desc",
-    ...(options?.searchQuery && {searchQuery: options.searchQuery}),
-    ...(options?.dateFrom && {dateFrom: options.dateFrom}),
-    ...(options?.dateTo && {dateTo: options.dateTo}),
+    ...(options?.searchQuery && { searchQuery: options.searchQuery }),
+    ...(options?.dateFrom && { dateFrom: options.dateFrom }),
+    ...(options?.dateTo && { dateTo: options.dateTo }),
   };
 
   return defineQuery({
@@ -71,7 +71,7 @@ export const getAllAccountTransactionsWithUpcoming = (
 ) => {
   return defineQuery({
     queryKey: [...transactionKeys.allByAccount(accountId, options), "with-upcoming"],
-    queryFn: () => trpc().transactionRoutes.forAccountWithUpcoming.query({accountId}),
+    queryFn: () => trpc().transactionRoutes.forAccountWithUpcoming.query({ accountId }),
     options: {
       staleTime: 30 * 1000, // 30 seconds
       select: (data: any[]) => {
@@ -153,9 +153,9 @@ export const getAccountTransactions = (
     pageSize: options?.pageSize ?? 50,
     sortBy: options?.sortBy ?? "date",
     sortOrder: options?.sortOrder ?? "desc",
-    ...(options?.searchQuery && {searchQuery: options.searchQuery}),
-    ...(options?.dateFrom && {dateFrom: options.dateFrom}),
-    ...(options?.dateTo && {dateTo: options.dateTo}),
+    ...(options?.searchQuery && { searchQuery: options.searchQuery }),
+    ...(options?.dateFrom && { dateFrom: options.dateFrom }),
+    ...(options?.dateTo && { dateTo: options.dateTo }),
   };
 
   return defineQuery({
@@ -177,7 +177,7 @@ export const getTransactionsList = (
 ) => {
   return defineQuery({
     queryKey: transactionKeys.list(filters, pagination),
-    queryFn: () => trpc().transactionRoutes.list.query({filters, pagination}),
+    queryFn: () => trpc().transactionRoutes.list.query({ filters, pagination }),
     options: {
       staleTime: 30 * 1000,
     },
@@ -190,7 +190,7 @@ export const getTransactionsList = (
 export const getTransactionDetail = (id: number) => {
   return defineQuery({
     queryKey: transactionKeys.detail(id),
-    queryFn: () => trpc().transactionRoutes.byId.query({id}),
+    queryFn: () => trpc().transactionRoutes.byId.query({ id }),
     options: {
       staleTime: 60 * 1000, // 1 minute
     },
@@ -203,7 +203,7 @@ export const getTransactionDetail = (id: number) => {
 export const getAccountSummary = (accountId: number) => {
   return defineQuery({
     queryKey: transactionKeys.summary(accountId),
-    queryFn: () => trpc().transactionRoutes.summary.query({accountId}),
+    queryFn: () => trpc().transactionRoutes.summary.query({ accountId }),
     options: {
       staleTime: 30 * 1000,
     },
@@ -216,7 +216,7 @@ export const getAccountSummary = (accountId: number) => {
 export const getMonthlySpendingAggregates = (accountId: number) => {
   return defineQuery({
     queryKey: ["transactions", "analytics", "monthlySpending", accountId],
-    queryFn: () => trpc().transactionRoutes.monthlySpendingAggregates.query({accountId}),
+    queryFn: () => trpc().transactionRoutes.monthlySpendingAggregates.query({ accountId }),
     options: {
       staleTime: 60 * 1000, // 1 minute cache for analytics data
     },
@@ -243,10 +243,10 @@ export const createTransaction = defineMutation<CreateTransactionData, Transacti
  * Update transaction
  */
 export const updateTransaction = defineMutation<
-  {id: number; data: UpdateTransactionData},
+  { id: number; data: UpdateTransactionData },
   Transaction
 >({
-  mutationFn: ({id, data}) => trpc().transactionRoutes.update.mutate({id, data}),
+  mutationFn: ({ id, data }) => trpc().transactionRoutes.update.mutate({ id, data }),
   onSuccess: (updatedTransaction) => {
     if (updatedTransaction.accountId) {
       // Update the detail query cache
@@ -272,10 +272,10 @@ export const updateTransaction = defineMutation<
  * Update transaction and get all account transactions with recalculated running balances
  */
 export const updateTransactionWithBalance = defineMutation<
-  {id: number; data: UpdateTransactionData},
+  { id: number; data: UpdateTransactionData },
   Transaction[]
 >({
-  mutationFn: ({id, data}) => trpc().transactionRoutes.updateWithBalance.mutate({id, data}),
+  mutationFn: ({ id, data }) => trpc().transactionRoutes.updateWithBalance.mutate({ id, data }),
   onSuccess: (transactionsWithBalance, _variables) => {
     if (!Array.isArray(transactionsWithBalance) || !transactionsWithBalance.length) return;
 
@@ -332,8 +332,8 @@ export const updateTransactionWithBalance = defineMutation<
 /**
  * Delete transaction
  */
-export const deleteTransaction = defineMutation<number, {success: boolean}>({
-  mutationFn: (id) => trpc().transactionRoutes.delete.mutate({id}),
+export const deleteTransaction = defineMutation<number, { success: boolean }>({
+  mutationFn: (id) => trpc().transactionRoutes.delete.mutate({ id }),
   onSuccess: (_, id) => {
     // Remove from cache
     cachePatterns.removeQuery(transactionKeys.detail(id));
@@ -350,8 +350,8 @@ export const deleteTransaction = defineMutation<number, {success: boolean}>({
 /**
  * Bulk delete transactions
  */
-export const bulkDeleteTransactions = defineMutation<number[], {count: number}>({
-  mutationFn: (ids) => trpc().transactionRoutes.bulkDelete.mutate({ids}),
+export const bulkDeleteTransactions = defineMutation<number[], { count: number }>({
+  mutationFn: (ids) => trpc().transactionRoutes.bulkDelete.mutate({ ids }),
   onSuccess: (_result, ids) => {
     // Remove individual transaction queries
     ids.forEach((id) => {
@@ -498,7 +498,7 @@ export const updateTransfer = defineMutation({
  * Delete a transfer transaction
  */
 export const deleteTransfer = defineMutation({
-  mutationFn: async (params: {transferId: string}) => {
+  mutationFn: async (params: { transferId: string }) => {
     await trpc().transactionRoutes.deleteTransfer.mutate(params);
   },
   onSuccess: () => {
@@ -516,7 +516,7 @@ export const bulkUpdatePayee = defineMutation<
     newPayeeId: number | null;
     originalPayeeName: string;
   },
-  {count: number}
+  { count: number }
 >({
   mutationFn: (params) => trpc().transactionRoutes.bulkUpdatePayee.mutate(params),
   onSuccess: (_result, variables) => {
@@ -546,7 +546,7 @@ export const bulkUpdateCategory = defineMutation<
     matchBy: "payee" | "category";
     matchValue?: string | number;
   },
-  {count: number}
+  { count: number }
 >({
   mutationFn: (params) => trpc().transactionRoutes.bulkUpdateCategory.mutate(params),
   onSuccess: (_result, variables) => {

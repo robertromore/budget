@@ -1,6 +1,6 @@
 <script lang="ts" generics="TEntity">
-import type {Table} from '@tanstack/table-core';
-import {Button} from '$lib/components/ui/button';
+import type { Table } from '@tanstack/table-core';
+import { Button } from '$lib/components/ui/button';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import X from '@lucide/svelte/icons/x';
 
@@ -12,7 +12,7 @@ interface Props {
   entityNamePlural?: string;
 }
 
-let {table, allEntities, onBulkDelete, entityName, entityNamePlural}: Props = $props();
+let { table, allEntities, onBulkDelete, entityName, entityNamePlural }: Props = $props();
 
 const selectedRows = $derived(table.getSelectedRowModel().rows);
 const selectedCount = $derived(selectedRows.length);

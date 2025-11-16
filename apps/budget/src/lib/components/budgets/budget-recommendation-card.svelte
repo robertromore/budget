@@ -1,7 +1,7 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import {
   TrendingUp,
   TrendingDown,
@@ -16,19 +16,19 @@ import {
   Wallet,
   Repeat,
 } from '@lucide/svelte/icons';
-import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
+import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
 import {
   applyRecommendation,
   dismissRecommendation,
   restoreRecommendation,
 } from '$lib/query/budgets';
-import {formatCurrency} from '$lib/utils/formatters';
+import { formatCurrency } from '$lib/utils/formatters';
 
 interface Props {
   recommendation: BudgetRecommendationWithRelations;
 }
 
-let {recommendation}: Props = $props();
+let { recommendation }: Props = $props();
 
 const applyMutation = applyRecommendation.options();
 const dismissMutation = dismissRecommendation.options();

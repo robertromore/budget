@@ -8,12 +8,12 @@ import type {
   Payee,
   PayeeType,
 } from "$lib/schema";
-import {logger} from "$lib/server/shared/logging";
-import {ConflictError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {InputSanitizer} from "$lib/server/shared/validation";
-import {currentDate, toISOString} from "$lib/utils/dates";
-import {BudgetAllocationService} from "./budget-allocation";
-import {CategoryLearningService} from "./category-learning";
+import { logger } from "$lib/server/shared/logging";
+import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { currentDate, toISOString } from "$lib/utils/dates";
+import { BudgetAllocationService } from "./budget-allocation";
+import { CategoryLearningService } from "./category-learning";
 import {
   ContactManagementService,
   type ContactAnalytics,
@@ -64,7 +64,7 @@ import {
   type SubscriptionRenewalPrediction,
   type SubscriptionUsageAnalysis,
 } from "./subscription-management";
-import type {PayeeAddress, PayeeTags, PaymentMethodReference, SubscriptionInfo} from "./types";
+import type { PayeeAddress, PayeeTags, PaymentMethodReference, SubscriptionInfo } from "./types";
 
 export interface CreatePayeeData {
   name: string;
@@ -91,15 +91,15 @@ export interface PayeeWithStats extends Payee {
 }
 
 export interface PayeeWithRelations extends Payee {
-  defaultCategory?: {id: number; name: string} | null;
-  defaultBudget?: {id: number; name: string} | null;
+  defaultCategory?: { id: number; name: string } | null;
+  defaultBudget?: { id: number; name: string } | null;
   stats?: PayeeStats;
   suggestions?: PayeeSuggestions;
 }
 
 export interface BulkUpdateResult {
   successCount: number;
-  errors: Array<{id: number; error: string}>;
+  errors: Array<{ id: number; error: string }>;
 }
 
 export interface PayeeAnalytics {
@@ -107,7 +107,7 @@ export interface PayeeAnalytics {
   activePayees: number;
   payeesWithDefaults: number;
   payeesNeedingAttention: number;
-  topCategories: Array<{categoryId: number; categoryName: string; payeeCount: number}>;
+  topCategories: Array<{ categoryId: number; categoryName: string; payeeCount: number }>;
   averageTransactionsPerPayee: number;
   recentlyActiveCount: number;
 }
@@ -115,8 +115,8 @@ export interface PayeeAnalytics {
 /**
  * Service for payee business logic with advanced intelligence capabilities
  */
-import type {CategoryService} from "../categories/services";
-import type {BudgetService} from "../budgets/services";
+import type { CategoryService } from "../categories/services";
+import type { BudgetService } from "../budgets/services";
 
 /**
  * Payee service containing business logic with advanced intelligence capabilities
@@ -394,7 +394,7 @@ export class PayeeService {
   async deletePayee(
     id: number,
     workspaceId: number,
-    options: {force?: boolean} = {}
+    options: { force?: boolean } = {}
   ): Promise<Payee> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid payee ID");
@@ -422,8 +422,8 @@ export class PayeeService {
   async bulkDeletePayees(
     ids: number[],
     workspaceId: number,
-    options: {force?: boolean} = {}
-  ): Promise<{deletedCount: number; errors: string[]}> {
+    options: { force?: boolean } = {}
+  ): Promise<{ deletedCount: number; errors: string[] }> {
     if (!Array.isArray(ids) || ids.length === 0) {
       throw new ValidationError("No payee IDs provided");
     }
@@ -459,7 +459,7 @@ export class PayeeService {
       await this.repository.bulkSoftDeleteWithSlugArchive(deleteableIds, workspaceId);
     }
 
-    return {deletedCount: deleteableIds.length, errors};
+    return { deletedCount: deleteableIds.length, errors };
   }
 
   /**
@@ -561,7 +561,7 @@ export class PayeeService {
   /**
    * Get payees that need attention (missing defaults, old transactions, etc.)
    */
-  async getPayeesNeedingAttention(workspaceId: number): Promise<Array<Payee & {reason: string}>> {
+  async getPayeesNeedingAttention(workspaceId: number): Promise<Array<Payee & { reason: string }>> {
     return await this.repository.findNeedingAttention(workspaceId);
   }
 
@@ -587,11 +587,13 @@ export class PayeeService {
     if (payeeId) {
       try {
         await this.repository.updateCalculatedFields(payeeId);
-        return {successCount: 1, errors: []};
+        return { successCount: 1, errors: [] };
       } catch (error) {
         return {
           successCount: 0,
-          errors: [{id: payeeId, error: error instanceof Error ? error.message : "Unknown error"}],
+          errors: [
+            { id: payeeId, error: error instanceof Error ? error.message : "Unknown error" },
+          ],
         };
       }
     }
@@ -599,7 +601,7 @@ export class PayeeService {
     // Update all payees
     const allPayeesResult = await this.repository.findAll();
     const allPayees = allPayeesResult.data;
-    const result: BulkUpdateResult = {successCount: 0, errors: []};
+    const result: BulkUpdateResult = { successCount: 0, errors: [] };
 
     for (const payee of allPayees) {
       try {
@@ -627,7 +629,7 @@ export class PayeeService {
     const needingAttention = await this.repository.findNeedingAttention();
 
     // Calculate category distribution
-    const categoryMap = new Map<number, {name: string; count: number}>();
+    const categoryMap = new Map<number, { name: string; count: number }>();
     for (const payee of allPayees) {
       if (payee.defaultCategoryId) {
         const existing = categoryMap.get(payee.defaultCategoryId);
@@ -653,7 +655,7 @@ export class PayeeService {
       .slice(0, 5);
 
     // Calculate recent activity (payees with transactions in last 30 days)
-    const thirtyDaysAgo = currentDate.subtract({days: 30});
+    const thirtyDaysAgo = currentDate.subtract({ days: 30 });
     const cutoffDate = toISOString(thirtyDaysAgo);
 
     const recentlyActiveCount = allPayees.filter(
@@ -935,7 +937,7 @@ export class PayeeService {
       updateAmount?: boolean;
       minConfidence?: number;
     } = {}
-  ): Promise<PayeeIntelligenceSummary & {updated: boolean}> {
+  ): Promise<PayeeIntelligenceSummary & { updated: boolean }> {
     const {
       updateCategory = true,
       updateBudget = true,
@@ -1448,7 +1450,7 @@ export class PayeeService {
     updatedPayees: Array<{
       payeeId: number;
       payeeName: string;
-      changes: Array<{field: string; oldValue: unknown; newValue: unknown; confidence: number}>;
+      changes: Array<{ field: string; oldValue: unknown; newValue: unknown; confidence: number }>;
     }>;
     skippedPayees: Array<{
       payeeId: number;
@@ -1456,7 +1458,7 @@ export class PayeeService {
       reason: string;
     }>;
   }> {
-    const {minConfidence = 0.7, minCorrectionCount = 5, dryRun = false} = options;
+    const { minConfidence = 0.7, minCorrectionCount = 5, dryRun = false } = options;
 
     const suggestions = await this.getDefaultCategoryUpdateSuggestions();
 
@@ -1700,7 +1702,7 @@ export class PayeeService {
       includeInactive?: boolean;
     } = {}
   ) {
-    const {minTransactionCount = 5, minSpendingAmount = 100, includeInactive = false} = filters;
+    const { minTransactionCount = 5, minSpendingAmount = 100, includeInactive = false } = filters;
 
     // Get payees that meet the criteria
     const accountPayeesResult = accountId
@@ -1715,11 +1717,11 @@ export class PayeeService {
     const payeesWithStats = await Promise.all(
       accountPayees.map(async (payee) => {
         const stats = await this.repository.getStats(payee.id);
-        return {...payee, stats};
+        return { ...payee, stats };
       })
     );
 
-    const eligiblePayees = payeesWithStats.filter((payee: Payee & {stats: PayeeStats}) => {
+    const eligiblePayees = payeesWithStats.filter((payee: Payee & { stats: PayeeStats }) => {
       if (!includeInactive && !payee.isActive) return false;
 
       const stats = payee.stats;
@@ -1887,8 +1889,8 @@ export class PayeeService {
       confidenceThreshold?: number;
       maxResults?: number;
     } = {}
-  ): Promise<Array<{payeeId: number; recommendations: UnifiedRecommendations}>> {
-    const {priorityFilter, confidenceThreshold = 0.5, maxResults = 50} = options;
+  ): Promise<Array<{ payeeId: number; recommendations: UnifiedRecommendations }>> {
+    const { priorityFilter, confidenceThreshold = 0.5, maxResults = 50 } = options;
 
     // Validate all payee IDs exist
     await Promise.all(payeeIds.map((id) => this.validatePayeeExists(id)));
@@ -1904,7 +1906,7 @@ export class PayeeService {
           (!priorityFilter || recommendations.overall.priority === priorityFilter);
 
         if (meetsCriteria) {
-          results.push({payeeId, recommendations});
+          results.push({ payeeId, recommendations });
         }
       } catch (error) {
         logger.warn("Recommendation generation failed", {
@@ -1916,7 +1918,7 @@ export class PayeeService {
 
     // Sort by priority and confidence
     return results.sort((a, b) => {
-      const priorityOrder = {critical: 4, high: 3, medium: 2, low: 1};
+      const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
       const aPriority = priorityOrder[a.recommendations.overall.priority];
       const bPriority = priorityOrder[b.recommendations.overall.priority];
 
@@ -1953,7 +1955,7 @@ export class PayeeService {
     return systems.map((system) => ({
       system,
       period: period || {
-        startDate: toISOString(currentDate.subtract({days: 30})),
+        startDate: toISOString(currentDate.subtract({ days: 30 })),
         endDate: toISOString(currentDate),
         periodType: "monthly",
       },
@@ -2086,10 +2088,10 @@ export class PayeeService {
       payeeIds?: number[];
       insightTypes?: Array<"optimization" | "correction" | "prediction" | "automation" | "alert">;
       priorityFilter?: "critical" | "high" | "medium" | "low";
-      timeRange?: {startDate: string; endDate: string};
+      timeRange?: { startDate: string; endDate: string };
     } = {}
   ) {
-    const {payeeIds, insightTypes, priorityFilter, timeRange} = filters;
+    const { payeeIds, insightTypes, priorityFilter, timeRange } = filters;
 
     // Get relevant payees
     const targetPayeeIds = payeeIds || (await this.repository.findAll()).data.map((p) => p.id);
@@ -2134,7 +2136,7 @@ export class PayeeService {
 
     // Sort insights by priority and confidence
     allInsights.sort((a, b) => {
-      const priorityOrder = {critical: 4, high: 3, medium: 2, low: 1};
+      const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
       const aPriority = priorityOrder[a.priority];
       const bPriority = priorityOrder[b.priority];
 
@@ -2260,13 +2262,13 @@ export class PayeeService {
 
     // Generate specific suggestions for this payee
     const payeeSuggestions = await this.contactService.generateContactSuggestions(payeeId, {
-      ...(payee.name && {name: payee.name}),
+      ...(payee.name && { name: payee.name }),
       ...serviceContactData,
     });
 
     // Merge suggestions
     const allSuggestions = [
-      ...enrichmentResult.enrichmentSuggestions.map((s) => ({...s, payeeId})),
+      ...enrichmentResult.enrichmentSuggestions.map((s) => ({ ...s, payeeId })),
       ...payeeSuggestions,
     ];
 
@@ -2303,7 +2305,7 @@ export class PayeeService {
     // Auto-update payee if standardization improved the format and no override provided
     let updated = false;
     if (!phone && result.valid && result.standardized !== payee.phone) {
-      await this.updatePayee(payeeId, {phone: result.standardized});
+      await this.updatePayee(payeeId, { phone: result.standardized });
       updated = true;
     }
 
@@ -2363,7 +2365,7 @@ export class PayeeService {
     standardized: AddressData;
     confidence: number;
     geocoded: boolean;
-    coordinates?: {lat: number; lng: number};
+    coordinates?: { lat: number; lng: number };
     completeness: number;
     suggestions: string[];
     updated?: boolean;
@@ -2380,7 +2382,7 @@ export class PayeeService {
       enrichment.confidence > 0.7 &&
       JSON.stringify(enrichment.standardized) !== JSON.stringify(payee.address)
     ) {
-      await this.updatePayee(payeeId, {address: enrichment.standardized});
+      await this.updatePayee(payeeId, { address: enrichment.standardized });
       updated = true;
     }
 
@@ -2469,7 +2471,7 @@ export class PayeeService {
       validation.standardizedValue &&
       validation.standardizedValue !== payee.website
     ) {
-      await this.updatePayee(payeeId, {website: validation.standardizedValue});
+      await this.updatePayee(payeeId, { website: validation.standardizedValue });
       updated = true;
     }
 
@@ -2698,8 +2700,8 @@ export class PayeeService {
       payeeName: string;
       validationResults: ContactValidationResult[];
       suggestions: ContactSuggestion[];
-      applied: Array<{field: string; oldValue: unknown; newValue: unknown}>;
-      skipped: Array<{field: string; reason: string}>;
+      applied: Array<{ field: string; oldValue: unknown; newValue: unknown }>;
+      skipped: Array<{ field: string; reason: string }>;
     }>;
     summary: {
       totalProcessed: number;
@@ -2708,7 +2710,7 @@ export class PayeeService {
       totalSuggestions: number;
     };
   }> {
-    const {autoFix = false, minConfidence = 0.8} = options;
+    const { autoFix = false, minConfidence = 0.8 } = options;
 
     const results = [];
     let totalValid = 0;
@@ -2725,8 +2727,8 @@ export class PayeeService {
           const payee = await this.getPayeeById(payeeId);
           const validation = await this.validateAndEnrichPayeeContact(payeeId);
 
-          const applied: Array<{field: string; oldValue: unknown; newValue: unknown}> = [];
-          const skipped: Array<{field: string; reason: string}> = [];
+          const applied: Array<{ field: string; oldValue: unknown; newValue: unknown }> = [];
+          const skipped: Array<{ field: string; reason: string }> = [];
 
           // Apply automatic fixes if enabled
           if (autoFix) {
@@ -2828,7 +2830,7 @@ export class PayeeService {
     }>;
     preservedData: Record<string, unknown>;
   }> {
-    const {dryRun = false, preserveHistory = true, conflictResolution = "best"} = options;
+    const { dryRun = false, preserveHistory = true, conflictResolution = "best" } = options;
 
     const primaryPayee = await this.getPayeeById(duplicateDetection.primaryPayeeId);
     const duplicatePayee = await this.getPayeeById(duplicateDetection.duplicatePayeeId);

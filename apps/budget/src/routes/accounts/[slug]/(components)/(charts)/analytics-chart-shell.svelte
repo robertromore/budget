@@ -1,6 +1,6 @@
 <script lang="ts" generics="TData">
 import * as Card from '$lib/components/ui/card';
-import {Skeleton} from '$lib/components/ui/skeleton';
+import { Skeleton } from '$lib/components/ui/skeleton';
 
 type Props<TData> = {
   loading?: boolean;
@@ -96,7 +96,7 @@ const showEmpty = $derived(!loading && !error && !hasData);
         </div>
       {:else if showChart}
         <div class="h-[400px] w-full">
-          {@render chart?.({data})}
+          {@render chart?.({ data })}
         </div>
       {/if}
     </Card.Content>

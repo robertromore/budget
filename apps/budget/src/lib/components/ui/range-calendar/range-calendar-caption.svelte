@@ -1,9 +1,9 @@
 <script lang="ts">
-import type {ComponentProps} from 'svelte';
+import type { ComponentProps } from 'svelte';
 import type RangeCalendar from './range-calendar.svelte';
 import RangeCalendarMonthSelect from './range-calendar-month-select.svelte';
 import RangeCalendarYearSelect from './range-calendar-year-select.svelte';
-import {DateFormatter, getLocalTimeZone, type DateValue} from '@internationalized/date';
+import { DateFormatter, getLocalTimeZone, type DateValue } from '@internationalized/date';
 let {
   captionLayout,
   months,
@@ -28,12 +28,12 @@ let {
 function formatYear(date: DateValue) {
   const dateObj = date.toDate(getLocalTimeZone());
   if (typeof yearFormat === 'function') return yearFormat(dateObj.getFullYear());
-  return new DateFormatter(locale, {year: yearFormat}).format(dateObj);
+  return new DateFormatter(locale, { year: yearFormat }).format(dateObj);
 }
 function formatMonth(date: DateValue) {
   const dateObj = date.toDate(getLocalTimeZone());
   if (typeof monthFormat === 'function') return monthFormat(dateObj.getMonth() + 1);
-  return new DateFormatter(locale, {month: monthFormat}).format(dateObj);
+  return new DateFormatter(locale, { month: monthFormat }).format(dateObj);
 }
 </script>
 
@@ -45,8 +45,8 @@ function formatMonth(date: DateValue) {
     onchange={(e) => {
       if (!placeholder) return;
       const v = Number.parseInt(e.currentTarget.value);
-      const newPlaceholder = placeholder.set({month: v});
-      placeholder = newPlaceholder.subtract({months: monthIndex});
+      const newPlaceholder = placeholder.set({ month: v });
+      placeholder = newPlaceholder.subtract({ months: monthIndex });
     }} />
 {/snippet}
 {#snippet YearSelect()}

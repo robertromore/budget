@@ -1,10 +1,10 @@
-import {sqliteTable, integer, text, real, index, uniqueIndex} from "drizzle-orm/sqlite-core";
-import {sql} from "drizzle-orm";
-import {createId} from "@paralleldrive/cuid2";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {z} from "zod/v4";
-import {transactions} from "./transactions";
-import {accounts} from "./accounts";
+import { sqliteTable, integer, text, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod/v4";
+import { transactions } from "./transactions";
+import { accounts } from "./accounts";
 
 // Medical expense categories based on IRS Publication 502
 // Comprehensive list of HSA-qualified medical expenses organized by category
@@ -12,105 +12,105 @@ import {accounts} from "./accounts";
 export const medicalExpenseCategories = {
   // Medical Services
   "Medical Services": [
-    {key: "doctor_visit", label: "Doctor Visit (General Practitioner)"},
-    {key: "specialist_visit", label: "Specialist Visit"},
-    {key: "urgent_care", label: "Urgent Care"},
-    {key: "emergency_room", label: "Emergency Room"},
-    {key: "hospital_stay", label: "Hospital Stay (Inpatient)"},
-    {key: "surgery", label: "Surgery / Surgical Procedures"},
-    {key: "lab_tests", label: "Laboratory Tests"},
-    {key: "imaging", label: "Imaging (X-ray, MRI, CT Scan, Ultrasound)"},
-    {key: "ambulance", label: "Ambulance Services"},
-    {key: "telemedicine", label: "Telemedicine / Virtual Visits"},
+    { key: "doctor_visit", label: "Doctor Visit (General Practitioner)" },
+    { key: "specialist_visit", label: "Specialist Visit" },
+    { key: "urgent_care", label: "Urgent Care" },
+    { key: "emergency_room", label: "Emergency Room" },
+    { key: "hospital_stay", label: "Hospital Stay (Inpatient)" },
+    { key: "surgery", label: "Surgery / Surgical Procedures" },
+    { key: "lab_tests", label: "Laboratory Tests" },
+    { key: "imaging", label: "Imaging (X-ray, MRI, CT Scan, Ultrasound)" },
+    { key: "ambulance", label: "Ambulance Services" },
+    { key: "telemedicine", label: "Telemedicine / Virtual Visits" },
   ],
 
   // Dental Care
   "Dental Care": [
-    {key: "dental_exam", label: "Dental Exam / Cleaning"},
-    {key: "dental_filling", label: "Dental Fillings"},
-    {key: "dental_crown", label: "Crowns / Caps"},
-    {key: "dental_extraction", label: "Tooth Extraction"},
-    {key: "dental_root_canal", label: "Root Canal"},
-    {key: "dental_braces", label: "Braces / Orthodontics"},
-    {key: "dental_implant", label: "Dental Implants"},
-    {key: "dental_dentures", label: "Dentures"},
-    {key: "dental_surgery", label: "Oral Surgery"},
+    { key: "dental_exam", label: "Dental Exam / Cleaning" },
+    { key: "dental_filling", label: "Dental Fillings" },
+    { key: "dental_crown", label: "Crowns / Caps" },
+    { key: "dental_extraction", label: "Tooth Extraction" },
+    { key: "dental_root_canal", label: "Root Canal" },
+    { key: "dental_braces", label: "Braces / Orthodontics" },
+    { key: "dental_implant", label: "Dental Implants" },
+    { key: "dental_dentures", label: "Dentures" },
+    { key: "dental_surgery", label: "Oral Surgery" },
   ],
 
   // Vision Care
   "Vision Care": [
-    {key: "eye_exam", label: "Eye Exam / Vision Test"},
-    {key: "eyeglasses", label: "Eyeglasses / Prescription Glasses"},
-    {key: "contact_lenses", label: "Contact Lenses"},
-    {key: "laser_eye_surgery", label: "Laser Eye Surgery (LASIK, PRK)"},
-    {key: "vision_therapy", label: "Vision Therapy"},
+    { key: "eye_exam", label: "Eye Exam / Vision Test" },
+    { key: "eyeglasses", label: "Eyeglasses / Prescription Glasses" },
+    { key: "contact_lenses", label: "Contact Lenses" },
+    { key: "laser_eye_surgery", label: "Laser Eye Surgery (LASIK, PRK)" },
+    { key: "vision_therapy", label: "Vision Therapy" },
   ],
 
   // Medications
   Medications: [
-    {key: "prescription", label: "Prescription Medication"},
-    {key: "otc_medicine", label: "Over-the-Counter Medicine"},
-    {key: "insulin", label: "Insulin"},
+    { key: "prescription", label: "Prescription Medication" },
+    { key: "otc_medicine", label: "Over-the-Counter Medicine" },
+    { key: "insulin", label: "Insulin" },
   ],
 
   // Therapy & Rehabilitation
   "Therapy & Rehabilitation": [
-    {key: "physical_therapy", label: "Physical Therapy"},
-    {key: "occupational_therapy", label: "Occupational Therapy"},
-    {key: "speech_therapy", label: "Speech Therapy"},
-    {key: "mental_health", label: "Mental Health / Psychiatric Care"},
-    {key: "addiction_treatment", label: "Addiction / Substance Abuse Treatment"},
-    {key: "chiropractor", label: "Chiropractor"},
-    {key: "acupuncture", label: "Acupuncture"},
+    { key: "physical_therapy", label: "Physical Therapy" },
+    { key: "occupational_therapy", label: "Occupational Therapy" },
+    { key: "speech_therapy", label: "Speech Therapy" },
+    { key: "mental_health", label: "Mental Health / Psychiatric Care" },
+    { key: "addiction_treatment", label: "Addiction / Substance Abuse Treatment" },
+    { key: "chiropractor", label: "Chiropractor" },
+    { key: "acupuncture", label: "Acupuncture" },
   ],
 
   // Medical Equipment & Supplies
   "Medical Equipment & Supplies": [
-    {key: "hearing_aids", label: "Hearing Aids"},
-    {key: "wheelchair", label: "Wheelchair"},
-    {key: "crutches_walker", label: "Crutches / Walker / Cane"},
-    {key: "prosthetic", label: "Prosthetic Limbs / Devices"},
-    {key: "medical_supplies", label: "Medical Supplies (Bandages, etc.)"},
-    {key: "glucose_monitor", label: "Blood Glucose Monitor / Test Strips"},
-    {key: "breast_pump", label: "Breast Pump / Lactation Supplies"},
+    { key: "hearing_aids", label: "Hearing Aids" },
+    { key: "wheelchair", label: "Wheelchair" },
+    { key: "crutches_walker", label: "Crutches / Walker / Cane" },
+    { key: "prosthetic", label: "Prosthetic Limbs / Devices" },
+    { key: "medical_supplies", label: "Medical Supplies (Bandages, etc.)" },
+    { key: "glucose_monitor", label: "Blood Glucose Monitor / Test Strips" },
+    { key: "breast_pump", label: "Breast Pump / Lactation Supplies" },
   ],
 
   // Reproductive Health
   "Reproductive Health": [
-    {key: "prenatal_care", label: "Prenatal Care"},
-    {key: "childbirth", label: "Childbirth / Delivery"},
-    {key: "fertility_treatment", label: "Fertility Treatment / IVF"},
-    {key: "birth_control", label: "Birth Control (Prescription)"},
-    {key: "pregnancy_test", label: "Pregnancy Test"},
+    { key: "prenatal_care", label: "Prenatal Care" },
+    { key: "childbirth", label: "Childbirth / Delivery" },
+    { key: "fertility_treatment", label: "Fertility Treatment / IVF" },
+    { key: "birth_control", label: "Birth Control (Prescription)" },
+    { key: "pregnancy_test", label: "Pregnancy Test" },
   ],
 
   // Long-term & Home Care
   "Long-term & Home Care": [
-    {key: "home_health_care", label: "Home Health Care"},
-    {key: "nursing_home", label: "Nursing Home / Assisted Living (Medical Care)"},
-    {key: "long_term_care", label: "Long-term Care Services"},
+    { key: "home_health_care", label: "Home Health Care" },
+    { key: "nursing_home", label: "Nursing Home / Assisted Living (Medical Care)" },
+    { key: "long_term_care", label: "Long-term Care Services" },
   ],
 
   // Insurance & Premiums
   "Insurance & Premiums": [
-    {key: "health_insurance_premiums", label: "Health Insurance Premiums"},
-    {key: "cobra_premiums", label: "COBRA Premiums"},
-    {key: "medicare_premiums", label: "Medicare Premiums (Parts A, B, C, D)"},
-    {key: "long_term_care_insurance", label: "Long-term Care Insurance Premiums"},
+    { key: "health_insurance_premiums", label: "Health Insurance Premiums" },
+    { key: "cobra_premiums", label: "COBRA Premiums" },
+    { key: "medicare_premiums", label: "Medicare Premiums (Parts A, B, C, D)" },
+    { key: "long_term_care_insurance", label: "Long-term Care Insurance Premiums" },
   ],
 
   // Preventive Care & Screenings
   "Preventive Care & Screenings": [
-    {key: "annual_physical", label: "Annual Physical / Wellness Exam"},
-    {key: "immunizations", label: "Immunizations / Vaccinations"},
-    {key: "cancer_screening", label: "Cancer Screening (Mammogram, Colonoscopy, etc.)"},
-    {key: "diagnostic_tests", label: "Diagnostic Tests / Health Screenings"},
+    { key: "annual_physical", label: "Annual Physical / Wellness Exam" },
+    { key: "immunizations", label: "Immunizations / Vaccinations" },
+    { key: "cancer_screening", label: "Cancer Screening (Mammogram, Colonoscopy, etc.)" },
+    { key: "diagnostic_tests", label: "Diagnostic Tests / Health Screenings" },
   ],
 
   // Other Qualified
   Other: [
-    {key: "other_qualified", label: "Other Qualified Expense"},
-    {key: "non_qualified", label: "Non-Qualified Expense"},
+    { key: "other_qualified", label: "Other Qualified Expense" },
+    { key: "non_qualified", label: "Non-Qualified Expense" },
   ],
 } as const;
 
@@ -133,20 +133,20 @@ export const medicalExpenseTypeKeys = Object.values(medicalExpenseCategories)
 export const medicalExpenses = sqliteTable(
   "medical_expense",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     cuid: text("cuid").$defaultFn(() => createId()),
 
     // Core expense details
     transactionId: integer("transaction_id")
-      .references(() => transactions.id, {onDelete: "restrict"})
+      .references(() => transactions.id, { onDelete: "restrict" })
       .notNull(),
     hsaAccountId: integer("hsa_account_id")
-      .references(() => accounts.id, {onDelete: "restrict"})
+      .references(() => accounts.id, { onDelete: "restrict" })
       .notNull(),
 
     // Medical expense classification
-    expenseType: text("expense_type", {enum: medicalExpenseTypeKeys}).notNull(),
-    isQualified: integer("is_qualified", {mode: "boolean"}).default(true).notNull(),
+    expenseType: text("expense_type", { enum: medicalExpenseTypeKeys }).notNull(),
+    isQualified: integer("is_qualified", { mode: "boolean" }).default(true).notNull(),
 
     // Expense details
     provider: text("provider"), // Doctor, hospital, pharmacy name

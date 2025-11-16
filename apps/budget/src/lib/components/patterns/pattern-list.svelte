@@ -1,8 +1,8 @@
 <script lang="ts">
-import type {DetectedPattern} from '$lib/schema/detected-patterns';
+import type { DetectedPattern } from '$lib/schema/detected-patterns';
 import PatternCard from './pattern-card.svelte';
-import {Button} from '$lib/components/ui/button';
-import {Tabs, TabsContent, TabsList, TabsTrigger} from '$lib/components/ui/tabs';
+import { Button } from '$lib/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 
@@ -13,7 +13,7 @@ interface PatternListProps {
   onDismiss?: () => void;
 }
 
-let {patterns, isLoading = false, onConvert, onDismiss}: PatternListProps = $props();
+let { patterns, isLoading = false, onConvert, onDismiss }: PatternListProps = $props();
 
 const pendingPatterns = $derived(patterns.filter((p) => p.status === 'pending'));
 const convertedPatterns = $derived(patterns.filter((p) => p.status === 'converted'));

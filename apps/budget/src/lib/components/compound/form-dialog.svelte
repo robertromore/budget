@@ -1,16 +1,16 @@
 <script lang="ts">
 // Framework imports
-import type {Component, Snippet} from 'svelte';
-import {browser} from '$app/environment';
+import type { Component, Snippet } from 'svelte';
+import { browser } from '$app/environment';
 
 // UI component imports
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Dialog from '$lib/components/ui/dialog';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import {Spinner} from '$lib/components/ui/spinner';
+import { Spinner } from '$lib/components/ui/spinner';
 
 // Type imports
-import type {HTMLAttributes} from 'svelte/elements';
+import type { HTMLAttributes } from 'svelte/elements';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   // Dialog configuration
@@ -42,7 +42,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   // Snippets
   content: Snippet;
   actions?: Snippet<
-    [{save: () => Promise<void>; cancel: () => void; delete?: () => Promise<void>}]
+    [{ save: () => Promise<void>; cancel: () => void; delete?: () => Promise<void> }]
   >;
 
   // Styling
@@ -200,7 +200,7 @@ const sizeClasses = {
         {@render actions({
           save: handleSave,
           cancel: handleCancel,
-          ...(onDelete && {delete: handleDelete}),
+          ...(onDelete && { delete: handleDelete }),
         })}
       {:else}
         <div class="flex w-full flex-col gap-3 sm:flex-row sm:justify-between">

@@ -1,24 +1,24 @@
-import {payees as payeeTable} from "$lib/schema/payees";
-import {schedules as scheduleTable} from "$lib/schema/schedules";
-import {transactions as transactionTable} from "$lib/schema/transactions";
-import {db} from "$lib/server/db";
-import {CSVProcessor} from "$lib/server/import/file-processors/csv-processor";
-import {ExcelProcessor} from "$lib/server/import/file-processors/excel-processor";
-import {IIFProcessor} from "$lib/server/import/file-processors/iif-processor";
-import {OFXProcessor} from "$lib/server/import/file-processors/ofx-processor";
-import {QBCSVProcessor} from "$lib/server/import/file-processors/qb-csv-processor";
-import {QBOProcessor} from "$lib/server/import/file-processors/qbo-processor";
-import {QIFProcessor} from "$lib/server/import/file-processors/qif-processor";
-import {PayeeMatcher} from "$lib/server/import/matchers/payee-matcher";
-import {ScheduleMatcher} from "$lib/server/import/matchers/schedule-matcher";
-import {isQuickBooksCSV} from "$lib/server/import/utils";
-import {TransactionValidator} from "$lib/server/import/validators/transaction-validator";
-import type {ParseResult, ScheduleMatch} from "$lib/types/import";
-import {json} from "@sveltejs/kit";
-import {and, eq, isNull} from "drizzle-orm";
-import type {RequestHandler} from "./$types";
+import { payees as payeeTable } from "$lib/schema/payees";
+import { schedules as scheduleTable } from "$lib/schema/schedules";
+import { transactions as transactionTable } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { CSVProcessor } from "$lib/server/import/file-processors/csv-processor";
+import { ExcelProcessor } from "$lib/server/import/file-processors/excel-processor";
+import { IIFProcessor } from "$lib/server/import/file-processors/iif-processor";
+import { OFXProcessor } from "$lib/server/import/file-processors/ofx-processor";
+import { QBCSVProcessor } from "$lib/server/import/file-processors/qb-csv-processor";
+import { QBOProcessor } from "$lib/server/import/file-processors/qbo-processor";
+import { QIFProcessor } from "$lib/server/import/file-processors/qif-processor";
+import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
+import { ScheduleMatcher } from "$lib/server/import/matchers/schedule-matcher";
+import { isQuickBooksCSV } from "$lib/server/import/utils";
+import { TransactionValidator } from "$lib/server/import/validators/transaction-validator";
+import type { ParseResult, ScheduleMatch } from "$lib/types/import";
+import { json } from "@sveltejs/kit";
+import { and, eq, isNull } from "drizzle-orm";
+import type { RequestHandler } from "./$types";
 
-export const POST: RequestHandler = async ({request, url}) => {
+export const POST: RequestHandler = async ({ request, url }) => {
   try {
     const formData = await request.formData();
     const file = formData.get("importFile") as File;
@@ -26,7 +26,7 @@ export const POST: RequestHandler = async ({request, url}) => {
     const reverseAmountSignsParam = url.searchParams.get("reverseAmountSigns");
 
     if (!file) {
-      return json({error: "No file provided"}, {status: 400});
+      return json({ error: "No file provided" }, { status: 400 });
     }
 
     // For CSV and QBO files, read content first to detect the actual format
@@ -45,14 +45,14 @@ export const POST: RequestHandler = async ({request, url}) => {
           error:
             "Unsupported file type. Supported formats: .csv, .txt, .xlsx, .xls, .qif, .ofx, .qfx, .iif, .qbo",
         },
-        {status: 400}
+        { status: 400 }
       );
     }
 
     // Validate file
     const validation = processor.validateFile(file);
     if (!validation.valid) {
-      return json({error: validation.error || "File validation failed"}, {status: 400});
+      return json({ error: validation.error || "File validation failed" }, { status: 400 });
     }
 
     // Parse file
@@ -158,7 +158,7 @@ export const POST: RequestHandler = async ({request, url}) => {
             const rawPayeeName = normalized["payee"];
             let normalizedPayeeName = rawPayeeName;
             if (normalizedPayeeName && typeof normalizedPayeeName === "string") {
-              const {name} = payeeMatcher.normalizePayeeName(normalizedPayeeName);
+              const { name } = payeeMatcher.normalizePayeeName(normalizedPayeeName);
               if (name !== normalizedPayeeName) {
                 console.log(
                   `[Schedule Matching] Normalized payee: "${normalizedPayeeName}" → "${name}"`
@@ -237,7 +237,7 @@ export const POST: RequestHandler = async ({request, url}) => {
       columns,
       rows: validatedData,
       parseErrors: [],
-      ...(scheduleMatches ? {scheduleMatches} : {}),
+      ...(scheduleMatches ? { scheduleMatches } : {}),
     };
 
     return json(result);
@@ -247,7 +247,7 @@ export const POST: RequestHandler = async ({request, url}) => {
       {
         error: error instanceof Error ? error.message : "Failed to process file",
       },
-      {status: 500}
+      { status: 500 }
     );
   }
 };

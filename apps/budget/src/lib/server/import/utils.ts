@@ -5,7 +5,7 @@
  * and normalization during the import process.
  */
 
-import {ValidationError} from "./errors";
+import { ValidationError } from "./errors";
 
 /**
  * Normalize header names from various CSV formats

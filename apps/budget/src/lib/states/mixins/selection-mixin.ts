@@ -1,7 +1,7 @@
 // Selection Mixin - Multi-select functionality with SvelteSet reactivity
 // Plain TypeScript utilities with no rune dependencies
 
-import type {SvelteSet} from "svelte/reactivity";
+import type { SvelteSet } from "svelte/reactivity";
 
 /**
  * Selection mixin interface - provides multi-select functionality

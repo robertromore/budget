@@ -1,6 +1,6 @@
-import {t} from "$lib/trpc/t";
+import { t } from "$lib/trpc/t";
 
-export const logger = t.middleware(async ({path, type, next}) => {
+export const logger = t.middleware(async ({ path, type, next }) => {
   const start = Date.now();
   const result = await next();
   const ms = Date.now() - start;

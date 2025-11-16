@@ -2,20 +2,20 @@
 import * as Form from '$lib/components/ui/form';
 import * as Select from '$lib/components/ui/select';
 import * as Card from '$lib/components/ui/card';
-import {type Account, accountTypeEnum, type AccountType} from '$lib/schema';
-import {superformInsertAccountSchema} from '$lib/schema/superforms';
-import {Textarea} from '$lib/components/ui/textarea';
-import {page} from '$app/state';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Switch} from '$lib/components/ui/switch';
-import {AccountsState} from '$lib/states/entities/accounts.svelte';
-import {useEntityForm} from '$lib/hooks/forms/use-entity-form';
-import {WizardFormWrapper} from '$lib/components/wizard';
+import { type Account, accountTypeEnum, type AccountType } from '$lib/schema';
+import { superformInsertAccountSchema } from '$lib/schema/superforms';
+import { Textarea } from '$lib/components/ui/textarea';
+import { page } from '$app/state';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Switch } from '$lib/components/ui/switch';
+import { AccountsState } from '$lib/states/entities/accounts.svelte';
+import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
+import { WizardFormWrapper } from '$lib/components/wizard';
 import AccountWizard from '$lib/components/wizard/account-wizard.svelte';
-import {accountWizardStore} from '$lib/stores/wizardStore.svelte';
-import {IconPicker} from '$lib/components/ui/icon-picker';
-import {ColorPicker} from '$lib/components/ui/color-picker';
+import { accountWizardStore } from '$lib/stores/wizardStore.svelte';
+import { IconPicker } from '$lib/components/ui/icon-picker';
+import { ColorPicker } from '$lib/components/ui/color-picker';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Palette from '@lucide/svelte/icons/palette';
@@ -37,7 +37,7 @@ let {
 
 // Get form data from accounts page (not layout) to match the action schema
 const {
-  data: {manageAccountForm},
+  data: { manageAccountForm },
 } = page;
 
 const accounts = AccountsState.get();
@@ -50,7 +50,7 @@ const resolvedFormId =
 // Keep mode as 'manual' during SSR and initial hydration
 let mode = $state<'manual' | 'wizard'>('manual');
 
-import {browser} from '$app/environment';
+import { browser } from '$app/environment';
 
 const entityForm = useEntityForm({
   formData: manageAccountForm,
@@ -66,7 +66,7 @@ const entityForm = useEntityForm({
     if (onSave) onSave(entity);
   },
   customOptions: {
-    onResult: async ({result}) => {
+    onResult: async ({ result }) => {
       if (result.type === 'success') {
         // Call the original useEntityForm logic manually
         if (result.data && result.data.entity) {
@@ -87,7 +87,7 @@ const entityForm = useEntityForm({
   },
 });
 
-const {form: formData, enhance} = entityForm;
+const { form: formData, enhance } = entityForm;
 
 // Initialize form data for existing account
 const initialData: Partial<Account> = {};
@@ -187,7 +187,7 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
 }
 
 // Helper functions for form field handling
-function handleIconChange(event: CustomEvent<{value: string; icon: any}>) {
+function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
   // Ensure we only set valid icon names
   const iconValue = event.detail.value;
   if (typeof iconValue === 'string') {
@@ -214,14 +214,14 @@ const accountTypeOptions = accountTypeEnum.map((type) => ({
 }));
 
 // Default icons and colors for account types
-const accountTypeDefaults: Record<string, {icon: string; color?: string}> = {
-  checking: {icon: 'credit-card', color: '#3B82F6'}, // blue
-  savings: {icon: 'piggy-bank', color: '#10B981'}, // green
-  credit_card: {icon: 'credit-card', color: '#8B5CF6'}, // purple
-  investment: {icon: 'trending-up', color: '#F59E0B'}, // orange
-  loan: {icon: 'banknote', color: '#EF4444'}, // red
-  cash: {icon: 'wallet', color: '#6B7280'}, // gray
-  hsa: {icon: 'heart-pulse', color: '#14B8A6'}, // teal
+const accountTypeDefaults: Record<string, { icon: string; color?: string }> = {
+  checking: { icon: 'credit-card', color: '#3B82F6' }, // blue
+  savings: { icon: 'piggy-bank', color: '#10B981' }, // green
+  credit_card: { icon: 'credit-card', color: '#8B5CF6' }, // purple
+  investment: { icon: 'trending-up', color: '#F59E0B' }, // orange
+  loan: { icon: 'banknote', color: '#EF4444' }, // red
+  cash: { icon: 'wallet', color: '#6B7280' }, // gray
+  hsa: { icon: 'heart-pulse', color: '#14B8A6' }, // teal
 };
 
 // Auto-detect account type from name
@@ -417,7 +417,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
             <!-- Account Name -->
             <Form.Field form={entityForm} name="name">
               <Form.Control>
-                {#snippet children({props})}
+                {#snippet children({ props })}
                   <Form.Label>Account Name</Form.Label>
                   <Input
                     {...props}
@@ -432,7 +432,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
             <!-- Account Type -->
             <Form.Field form={entityForm} name="accountType">
               <Form.Control>
-                {#snippet children({props})}
+                {#snippet children({ props })}
                   <Form.Label>Account Type</Form.Label>
                   <Select.Root type="single" bind:value={$formData.accountType}>
                     <Select.Trigger {...props}>
@@ -455,7 +455,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
             <!-- Institution -->
             <Form.Field form={entityForm} name="institution">
               <Form.Control>
-                {#snippet children({props})}
+                {#snippet children({ props })}
                   <Form.Label>Bank/Institution</Form.Label>
                   <Input
                     {...props}
@@ -469,7 +469,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
             <!-- Account Number Last 4 -->
             <Form.Field form={entityForm} name="accountNumberLast4">
               <Form.Control>
-                {#snippet children({props})}
+                {#snippet children({ props })}
                   <Form.Label>Last 4 Digits</Form.Label>
                   <Input
                     {...props}
@@ -601,7 +601,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
               <!-- Interest Rate -->
               <Form.Field form={entityForm} name="interestRate">
                 <Form.Control>
-                  {#snippet children({props})}
+                  {#snippet children({ props })}
                     <Form.Label>Interest Rate (APR %)</Form.Label>
                     <Input
                       {...props}
@@ -630,7 +630,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
               <!-- Payment Due Day -->
               <Form.Field form={entityForm} name="paymentDueDay">
                 <Form.Control>
-                  {#snippet children({props})}
+                  {#snippet children({ props })}
                     <Form.Label>Payment Due Day</Form.Label>
                     <Input
                       {...props}
@@ -693,7 +693,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
         <Card.Content>
           <Form.Field form={entityForm} name="notes">
             <Form.Control>
-              {#snippet children({props})}
+              {#snippet children({ props })}
                 <Form.Label>Notes</Form.Label>
                 <Textarea
                   {...props}

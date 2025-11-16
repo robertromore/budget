@@ -1,22 +1,22 @@
 <script lang="ts">
 import * as Form from '$lib/components/ui/form';
-import {type Transaction} from '$lib/schema';
-import {superformInsertTransactionSchema} from '$lib/schema/superforms';
-import {superForm} from 'sveltekit-superforms/client';
-import {currentDate} from '$lib/utils/dates';
-import type {EditableDateItem, EditableEntityItem} from '$lib/types';
-import {Textarea} from '$lib/components/ui/textarea';
-import {zod4Client} from 'sveltekit-superforms/adapters';
-import {DateInput, EntityInput, NumericInput} from '$lib/components/input';
-import {page} from '$app/state';
+import { type Transaction } from '$lib/schema';
+import { superformInsertTransactionSchema } from '$lib/schema/superforms';
+import { superForm } from 'sveltekit-superforms/client';
+import { currentDate } from '$lib/utils/dates';
+import type { EditableDateItem, EditableEntityItem } from '$lib/types';
+import { Textarea } from '$lib/components/ui/textarea';
+import { zod4Client } from 'sveltekit-superforms/adapters';
+import { DateInput, EntityInput, NumericInput } from '$lib/components/input';
+import { page } from '$app/state';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
-import type {Component} from 'svelte';
+import type { Component } from 'svelte';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
 import Wallet from '@lucide/svelte/icons/wallet';
-import {getBudgetSuggestions, type BudgetSuggestion} from '$lib/query/budgets';
-import {Badge} from '$lib/components/ui/badge';
-import {toISOString} from '$lib/utils/dates';
-import {AdvancedPayeeSelector} from '$lib/components/payees/advanced-payee-selector';
+import { getBudgetSuggestions, type BudgetSuggestion } from '$lib/query/budgets';
+import { Badge } from '$lib/components/ui/badge';
+import { toISOString } from '$lib/utils/dates';
+import { AdvancedPayeeSelector } from '$lib/components/payees/advanced-payee-selector';
 
 interface Props {
   accountId: number;
@@ -24,16 +24,16 @@ interface Props {
   onSave?: (new_entity: Transaction) => void;
 }
 
-let {accountId, onSave}: Props = $props();
+let { accountId, onSave }: Props = $props();
 
 const {
-  data: {payees, categories, manageTransactionForm},
+  data: { payees, categories, manageTransactionForm },
 } = page;
 
 const form = superForm(manageTransactionForm, {
   id: 'transaction-form',
   validators: zod4Client(superformInsertTransactionSchema),
-  onResult: async ({result}) => {
+  onResult: async ({ result }) => {
     if (onSave) {
       if (result.type === 'success' && result.data) {
         onSave(result.data['entity']);
@@ -42,7 +42,7 @@ const form = superForm(manageTransactionForm, {
   },
 });
 
-const {form: formData, enhance} = form;
+const { form: formData, enhance } = form;
 
 $formData.accountId = accountId;
 
@@ -109,7 +109,7 @@ $effect(() => {
   <input hidden value={$formData.accountId} name="accountId" />
   <Form.Field {form} name="date">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Date</Form.Label>
         <DateInput {...props} bind:value={dateValue} />
         <Form.FieldErrors />
@@ -119,7 +119,7 @@ $effect(() => {
   </Form.Field>
   <Form.Field {form} name="amount">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Amount</Form.Label>
         <NumericInput {...props} bind:value={amount} buttonClass="w-full" />
         <Form.FieldErrors />
@@ -129,7 +129,7 @@ $effect(() => {
   </Form.Field>
   <Form.Field {form} name="payeeId">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Payee</Form.Label>
         <AdvancedPayeeSelector
           value={payee.id || null}
@@ -137,10 +137,10 @@ $effect(() => {
             if (id) {
               const selectedPayee = payees.find((p: any) => p.id === id);
               if (selectedPayee) {
-                payee = {id: selectedPayee.id, name: selectedPayee.name};
+                payee = { id: selectedPayee.id, name: selectedPayee.name };
               }
             } else {
-              payee = {id: 0, name: ''};
+              payee = { id: 0, name: '' };
             }
           }}
           transactionContext={{
@@ -161,7 +161,7 @@ $effect(() => {
   </Form.Field>
   <Form.Field {form} name="categoryId">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Category</Form.Label>
         <EntityInput
           {...props}
@@ -177,7 +177,7 @@ $effect(() => {
   </Form.Field>
   <Form.Field {form} name="budgetId" class="col-span-full">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <div class="flex items-center gap-2">
           <Form.Label>Budget</Form.Label>
           {#if topSuggestion}
@@ -201,7 +201,7 @@ $effect(() => {
   </Form.Field>
   <Form.Field {form} name="notes" class="col-span-full">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Notes</Form.Label>
         <Textarea {...props} bind:value={$formData.notes} />
         <Form.FieldErrors />

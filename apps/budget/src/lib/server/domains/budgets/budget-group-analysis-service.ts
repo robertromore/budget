@@ -9,12 +9,12 @@
  * - Name keyword similarity
  */
 
-import {budgets} from "$lib/schema/budgets";
-import type {RecommendationMetadata, RecommendationPriority} from "$lib/schema/recommendations";
-import {db} from "$lib/server/db";
-import {logger} from "$lib/server/shared/logging";
-import {eq} from "drizzle-orm";
-import type {BudgetWithRelations} from "./repository";
+import { budgets } from "$lib/schema/budgets";
+import type { RecommendationMetadata, RecommendationPriority } from "$lib/schema/recommendations";
+import { db } from "$lib/server/db";
+import { logger } from "$lib/server/shared/logging";
+import { eq } from "drizzle-orm";
+import type { BudgetWithRelations } from "./repository";
 
 export interface AnalysisParams {
   accountIds?: number[];
@@ -70,10 +70,10 @@ export class BudgetGroupAnalysisService {
   async generateAllGroupRecommendations(
     params: AnalysisParams = {}
   ): Promise<BudgetRecommendationDraft[]> {
-    const {minSimilarityScore = 70, minGroupSize = 2} = params;
+    const { minSimilarityScore = 70, minGroupSize = 2 } = params;
 
     try {
-      logger.info("Starting budget group analysis", {params});
+      logger.info("Starting budget group analysis", { params });
 
       const recommendations: BudgetRecommendationDraft[] = [];
 
@@ -125,19 +125,19 @@ export class BudgetGroupAnalysisService {
       where: eq(budgets.status, "active"),
       with: {
         categories: {
-          with: {category: true},
+          with: { category: true },
         },
         accounts: {
-          with: {account: true},
+          with: { account: true },
         },
         groupMemberships: {
-          with: {group: true},
+          with: { group: true },
         },
         transactions: {
-          with: {transaction: true},
+          with: { transaction: true },
         },
         periodTemplates: {
-          with: {periods: true},
+          with: { periods: true },
         },
       },
     });
@@ -231,7 +231,7 @@ export class BudgetGroupAnalysisService {
       .map(([accId, _]) => accId);
 
     // Determine grouping reason and suggested name
-    const {reason, suggestedName, confidenceFactors} = this.determineGroupingReason(
+    const { reason, suggestedName, confidenceFactors } = this.determineGroupingReason(
       budgets,
       commonCategories,
       commonAccounts
@@ -545,11 +545,11 @@ export class BudgetGroupAnalysisService {
 
     // Find common parent or theme
     const commonThemes = [
-      {keywords: ["home", "house", "rent", "mortgage", "utilities"], name: "Housing"},
-      {keywords: ["car", "auto", "vehicle", "gas", "transport"], name: "Transportation"},
-      {keywords: ["health", "medical", "dental"], name: "Healthcare"},
-      {keywords: ["food", "grocery", "dining"], name: "Food & Dining"},
-      {keywords: ["entertainment", "leisure", "hobby"], name: "Entertainment"},
+      { keywords: ["home", "house", "rent", "mortgage", "utilities"], name: "Housing" },
+      { keywords: ["car", "auto", "vehicle", "gas", "transport"], name: "Transportation" },
+      { keywords: ["health", "medical", "dental"], name: "Healthcare" },
+      { keywords: ["food", "grocery", "dining"], name: "Food & Dining" },
+      { keywords: ["entertainment", "leisure", "hobby"], name: "Entertainment" },
     ];
 
     for (const theme of commonThemes) {

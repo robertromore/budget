@@ -1,4 +1,4 @@
-import type {Payee} from "$lib/schema";
+import type { Payee } from "$lib/schema";
 
 // ==================== SUBSCRIPTION INTERFACES ====================
 
@@ -298,40 +298,40 @@ export class SubscriptionManagementService {
       ],
       merchantCodes: ["5815", "5735"], // Cable/Satellite, Record Shops
       frequencies: ["monthly", "annual"],
-      typicalCosts: {min: 5, max: 200},
+      typicalCosts: { min: 5, max: 200 },
     },
     utilities: {
       keywords: ["electric", "gas", "water", "internet", "phone", "cable", "utilities", "power"],
       merchantCodes: ["4814", "4899", "4900"], // Utilities, Telecom
       frequencies: ["monthly"],
-      typicalCosts: {min: 20, max: 500},
+      typicalCosts: { min: 20, max: 500 },
     },
     software: {
       keywords: ["adobe", "microsoft", "google", "dropbox", "zoom", "slack", "saas", "software"],
       merchantCodes: ["5734", "5045"], // Computer Software, Computers
       frequencies: ["monthly", "annual"],
-      typicalCosts: {min: 10, max: 1000},
+      typicalCosts: { min: 10, max: 1000 },
     },
     membership: {
       keywords: ["gym", "fitness", "club", "membership", "costco", "amazon prime", "aaa"],
       merchantCodes: ["7991", "7996"], // Health Clubs, Amusement Parks
       frequencies: ["monthly", "annual"],
-      typicalCosts: {min: 15, max: 300},
+      typicalCosts: { min: 15, max: 300 },
     },
     communication: {
       keywords: ["verizon", "att", "tmobile", "sprint", "phone", "cellular", "mobile"],
       merchantCodes: ["4814"], // Telecommunications
       frequencies: ["monthly"],
-      typicalCosts: {min: 25, max: 200},
+      typicalCosts: { min: 25, max: 200 },
     },
   };
 
   // Common subscription billing patterns
   private readonly billingPatterns = {
-    monthly: {frequency: 30, tolerance: 3},
-    quarterly: {frequency: 90, tolerance: 7},
-    semiAnnual: {frequency: 180, tolerance: 14},
-    annual: {frequency: 365, tolerance: 30},
+    monthly: { frequency: 30, tolerance: 3 },
+    quarterly: { frequency: 90, tolerance: 7 },
+    semiAnnual: { frequency: 180, tolerance: 14 },
+    annual: { frequency: 365, tolerance: 30 },
   };
 
   /**
@@ -495,8 +495,8 @@ export class SubscriptionManagementService {
       payeeId,
       totalAnnualCost: 359.88,
       monthlyBreakdown: [
-        {month: "2023-01", cost: 29.99, transactions: 1},
-        {month: "2023-02", cost: 29.99, transactions: 1},
+        { month: "2023-01", cost: 29.99, transactions: 1 },
+        { month: "2023-02", cost: 29.99, transactions: 1 },
         // ... more months
       ],
       costTrends: {
@@ -938,7 +938,7 @@ export class SubscriptionManagementService {
   } {
     const lowercaseName = name.toLowerCase();
     const evidence: string[] = [];
-    let bestMatch: {type: SubscriptionDetection["subscriptionType"]; confidence: number} = {
+    let bestMatch: { type: SubscriptionDetection["subscriptionType"]; confidence: number } = {
       type: "other",
       confidence: 0,
     };
@@ -985,7 +985,7 @@ export class SubscriptionManagementService {
       }
     }
 
-    return {confidence, evidence};
+    return { confidence, evidence };
   }
 
   private analyzePaymentFrequency(frequency: string): {
@@ -999,7 +999,7 @@ export class SubscriptionManagementService {
         ? [`${frequency} frequency typical of subscriptions`]
         : [`${frequency} frequency less common for subscriptions`];
 
-    return {confidence, evidence};
+    return { confidence, evidence };
   }
 
   private mapPaymentFrequencyToBillingCycle(

@@ -1,14 +1,14 @@
 <script lang="ts">
-import {Check, Circle, CircleDot} from '@lucide/svelte/icons';
-import {cn} from '$lib/utils';
-import type {WizardStore} from '$lib/stores/wizardStore.svelte';
+import { Check, Circle, CircleDot } from '@lucide/svelte/icons';
+import { cn } from '$lib/utils';
+import type { WizardStore } from '$lib/stores/wizardStore.svelte';
 
 interface Props {
   wizardStore: WizardStore;
   class?: string;
 }
 
-let {wizardStore, class: className}: Props = $props();
+let { wizardStore, class: className }: Props = $props();
 
 const steps = $derived(wizardStore.steps);
 const currentStepIndex = $derived(wizardStore.currentStepIndex);

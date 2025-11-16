@@ -1,10 +1,10 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
-import {currencyFormatter} from '$lib/utils/formatters';
-import type {PageData} from '../$types';
-import {formatAmount} from '../(data)';
+import { currencyFormatter } from '$lib/utils/formatters';
+import type { PageData } from '../$types';
+import { formatAmount } from '../(data)';
 
 // Icons
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';

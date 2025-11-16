@@ -80,7 +80,7 @@ const addNew = () => {
 };
 
 let searchValue = $state('');
-const fused = $derived(new Fuse(entities, {keys: ['name'], includeScore: true}));
+const fused = $derived(new Fuse(entities, { keys: ['name'], includeScore: true }));
 
 // Use $derived instead of $effect for computed filtering
 const visibleEntities = $derived.by(() => {
@@ -141,7 +141,7 @@ $effect(() => {
 <div class={cn('flex items-center space-x-4', className)}>
   <Popover.Root bind:open>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button
           {...props}
           variant="outline"

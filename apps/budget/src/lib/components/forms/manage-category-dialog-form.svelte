@@ -1,12 +1,12 @@
 <script lang="ts">
 import * as Form from '$lib/components/ui/form';
-import {type Category} from '$lib/schema';
-import {superformInsertCategorySchema} from '$lib/schema/superforms';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Input} from '$lib/components/ui/input';
-import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {superForm} from 'sveltekit-superforms';
-import {zod4Client} from 'sveltekit-superforms/adapters';
+import { type Category } from '$lib/schema';
+import { superformInsertCategorySchema } from '$lib/schema/superforms';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Input } from '$lib/components/ui/input';
+import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import { superForm } from 'sveltekit-superforms';
+import { zod4Client } from 'sveltekit-superforms/adapters';
 
 let {
   categoryId,
@@ -23,7 +23,7 @@ const categories = CategoriesState.get();
 const isUpdate = categoryId && categoryId > 0;
 
 // Initialize form data
-let initialData = {name: '', notes: ''};
+let initialData = { name: '', notes: '' };
 if (isUpdate && categoryId) {
   const existingCategory = categories.getById(categoryId);
   if (existingCategory) {
@@ -37,7 +37,7 @@ if (isUpdate && categoryId) {
 const form = superForm(initialData, {
   id: formId,
   validators: zod4Client(superformInsertCategorySchema),
-  onResult: async ({result}) => {
+  onResult: async ({ result }) => {
     if (result.type === 'success' && result.data) {
       const entity = result.data['entity'] as Category;
       if (isUpdate) {
@@ -52,7 +52,7 @@ const form = superForm(initialData, {
   timeoutMs: 8000,
 });
 
-const {enhance, form: formData, submitting} = form;
+const { enhance, form: formData, submitting } = form;
 </script>
 
 <form method="post" action="/categories?/save-category" use:enhance class="space-y-4">
@@ -62,7 +62,7 @@ const {enhance, form: formData, submitting} = form;
 
   <Form.Field {form} name="name">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Name</Form.Label>
         <Input {...props} bind:value={$formData.name} />
         <Form.FieldErrors />
@@ -72,7 +72,7 @@ const {enhance, form: formData, submitting} = form;
 
   <Form.Field {form} name="notes">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Notes</Form.Label>
         <Textarea {...props} bind:value={$formData.notes} />
         <Form.FieldErrors />

@@ -4,14 +4,14 @@
  * Handles parsing of QBO XML files with support for various transaction types.
  */
 
-import {XMLParser} from "fast-xml-parser";
+import { XMLParser } from "fast-xml-parser";
 import type {
   FileProcessor,
   ImportRow,
   NormalizedTransaction,
   QBOTransaction,
 } from "$lib/types/import";
-import {FileValidationError, ParseError} from "../errors";
+import { FileValidationError, ParseError } from "../errors";
 import {
   parseQBODate,
   parseAmount,
@@ -28,7 +28,7 @@ export class QBOProcessor implements FileProcessor {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): {valid: boolean; error?: string} {
+  validateFile(file: File): { valid: boolean; error?: string } {
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
         valid: false,
@@ -50,7 +50,7 @@ export class QBOProcessor implements FileProcessor {
       };
     }
 
-    return {valid: true};
+    return { valid: true };
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {
@@ -230,7 +230,7 @@ export class QBOProcessor implements FileProcessor {
 
       return {
         rowIndex: index,
-        rawData: {...txn},
+        rawData: { ...txn },
         normalizedData: normalized as Record<string, any>,
         validationStatus: errors.length > 0 ? "invalid" : "valid",
         validationErrors: errors.length > 0 ? errors : undefined,

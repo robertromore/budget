@@ -1,5 +1,5 @@
-import {z} from "zod";
-import {accountTypeEnum} from "../accounts";
+import { z } from "zod";
+import { accountTypeEnum } from "../accounts";
 
 // Superform-compatible schemas for accounts (not using drizzle-zod)
 export const superformInsertAccountSchema = z.object({

@@ -1,15 +1,15 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Select from '$lib/components/ui/select';
 import Label from '$lib/components/ui/label/label.svelte';
-import {cn} from '$lib/utils';
-import {rawDateFormatter} from '$lib/utils/date-formatters';
-import {parseDate} from '@internationalized/date';
-import {timezone as defaultTimezone} from '$lib/utils/dates';
+import { cn } from '$lib/utils';
+import { rawDateFormatter } from '$lib/utils/date-formatters';
+import { parseDate } from '@internationalized/date';
+import { timezone as defaultTimezone } from '$lib/utils/dates';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
-import type {BudgetPeriodInstance} from '$lib/schema/budgets';
-import {currencyFormatter} from '$lib/utils/formatters';
+import type { BudgetPeriodInstance } from '$lib/schema/budgets';
+import { currencyFormatter } from '$lib/utils/formatters';
 
 interface Props {
   periods?: BudgetPeriodInstance[];

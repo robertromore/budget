@@ -1,10 +1,10 @@
 <script lang="ts">
-import {page} from '$app/state';
-import {rpc} from '$lib/query';
+import { page } from '$app/state';
+import { rpc } from '$lib/query';
 import * as Tabs from '$lib/components/ui/tabs';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as ResponsiveSheet from '$lib/components/ui/responsive-sheet';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import HeartPulse from '@lucide/svelte/icons/heart-pulse';
 import Wand from '@lucide/svelte/icons/wand';
 import FileText from '@lucide/svelte/icons/file-text';

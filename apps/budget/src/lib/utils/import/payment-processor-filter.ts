@@ -161,5 +161,5 @@ export function countProcessorTransactions(payeeNames: string[]): {
     }
   }
 
-  return {total, byProcessor};
+  return { total, byProcessor };
 }

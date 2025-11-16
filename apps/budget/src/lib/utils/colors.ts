@@ -7,8 +7,8 @@
  * - Direct color values: '#3b82f6', 'hsl(217 91% 60%)'
  */
 
-import {browser} from "$app/environment";
-import {resolveColorConfig, themeColorMappings, type ColorConfig} from "./chart-color-config";
+import { browser } from "$app/environment";
+import { resolveColorConfig, themeColorMappings, type ColorConfig } from "./chart-color-config";
 
 /**
  * Chart color palette - pre-resolved HSL strings for LayerChart compatibility
@@ -70,7 +70,7 @@ export const colorUtils = {
    * Get multiple chart colors for multi-series data
    */
   getChartColors(count: number): string[] {
-    return Array.from({length: count}, (_, i) => this.getChartColor(i));
+    return Array.from({ length: count }, (_, i) => this.getChartColor(i));
   },
 
   /**
@@ -135,7 +135,7 @@ export const colorUtils = {
     // 4. Try to parse as Tailwind utility class
     const parsed = this._parseTailwindClass(trimmed);
     if (parsed) {
-      const {varName, opacity} = parsed;
+      const { varName, opacity } = parsed;
       const baseColor = this._resolveVariable(varName, resolvedConfig);
       return opacity !== undefined ? this._applyOpacity(baseColor, opacity) : baseColor;
     }
@@ -240,15 +240,15 @@ export const colorUtils = {
    * Parse Tailwind utility class format
    * @private
    */
-  _parseTailwindClass(input: string): {varName: string; opacity?: number} | null {
+  _parseTailwindClass(input: string): { varName: string; opacity?: number } | null {
     // Match patterns like: bg-primary, text-chart-1, border-muted/50
     const match = input.match(/^(?:bg|text|border|fill|stroke|ring|outline)-(.+?)(?:\/(\d+))?$/);
 
     if (match) {
       const [, varName, opacityStr] = match;
       return opacityStr
-        ? {varName: varName!, opacity: parseInt(opacityStr) / 100}
-        : {varName: varName!};
+        ? { varName: varName!, opacity: parseInt(opacityStr) / 100 }
+        : { varName: varName! };
     }
 
     // Also support just color/opacity without prefix (e.g., 'primary/50')
@@ -345,7 +345,7 @@ export const colorUtils = {
    * Convert hex color to RGB components
    * @private
    */
-  _hexToRgb(hex: string): {r: number; g: number; b: number} | null {
+  _hexToRgb(hex: string): { r: number; g: number; b: number } | null {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
       ? {

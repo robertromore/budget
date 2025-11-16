@@ -1,7 +1,7 @@
 // Entity Store Mixin - Basic CRUD operations for reactive entity collections
 // Plain TypeScript utilities with no rune dependencies
 
-import type {SvelteMap} from "svelte/reactivity";
+import type { SvelteMap } from "svelte/reactivity";
 
 /**
  * Generic entity interface requiring an id property

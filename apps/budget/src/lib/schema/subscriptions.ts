@@ -1,4 +1,4 @@
-import {z} from "zod/v4";
+import { z } from "zod/v4";
 
 // ==================== SUBSCRIPTION ENUMS ====================
 
@@ -160,8 +160,8 @@ export const subscriptionMetadataSchema = z.object({
     .object({
       customerServicePhone: z.string().optional(),
       cancellationPhone: z.string().optional(),
-      email: z.string().email({message: "Invalid email format"}).optional(),
-      website: z.string().url({message: "Invalid URL format"}).optional(),
+      email: z.string().email({ message: "Invalid email format" }).optional(),
+      website: z.string().url({ message: "Invalid URL format" }).optional(),
       accountNumber: z.string().optional(),
     })
     .optional(),
@@ -366,8 +366,8 @@ export const subscriptionCancellationAssistanceSchema = z.object({
   contactInformation: z.object({
     customerService: z.string().optional(),
     cancellationLine: z.string().optional(),
-    email: z.string().email({message: "Invalid email format"}).optional(),
-    website: z.string().url({message: "Invalid URL format"}).optional(),
+    email: z.string().email({ message: "Invalid email format" }).optional(),
+    website: z.string().url({ message: "Invalid URL format" }).optional(),
     hours: z.string().optional(),
   }),
   importantNotes: z.array(

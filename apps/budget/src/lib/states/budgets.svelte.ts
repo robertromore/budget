@@ -8,9 +8,9 @@ import type {
   BudgetPeriodTemplate,
   BudgetTransaction,
 } from "$lib/schema/budgets";
-import type {BudgetWithRelations} from "$lib/server/domains/budgets";
-import {getContext, setContext} from "svelte";
-import {SvelteMap} from "svelte/reactivity";
+import type { BudgetWithRelations } from "$lib/server/domains/budgets";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("budget_state");
 

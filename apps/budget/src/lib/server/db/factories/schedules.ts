@@ -1,11 +1,11 @@
 import slugify from "@sindresorhus/slugify";
-import {db} from "..";
-import {schedules, type Schedule} from "$lib/schema/schedules";
-import {scheduleDates} from "$lib/schema/schedule-dates";
-import {faker} from "@faker-js/faker";
-import {sequence} from "./utils/sequence";
-import {payeeFactory} from "./payees";
-import {categoryFactory} from "./categories";
+import { db } from "..";
+import { schedules, type Schedule } from "$lib/schema/schedules";
+import { scheduleDates } from "$lib/schema/schedule-dates";
+import { faker } from "@faker-js/faker";
+import { sequence } from "./utils/sequence";
+import { payeeFactory } from "./payees";
+import { categoryFactory } from "./categories";
 
 type ScheduleDate = typeof scheduleDates.$inferSelect;
 
@@ -46,7 +46,7 @@ export interface ScheduleFactoryOptions {
 export const scheduleFactory = async (
   workspaceId: number,
   accountId: number,
-  count: number = faker.number.int({min: 1, max: 5}),
+  count: number = faker.number.int({ min: 1, max: 5 }),
   options: ScheduleFactoryOptions = {}
 ): Promise<Schedule[]> => {
   const schedules_collection: Schedule[] = [];
@@ -79,16 +79,16 @@ export const scheduleFactory = async (
     const name = faker.helpers.arrayElement(scheduleTypes);
     const slug = `${slugify(name)}-${sequence("schedule")}`;
 
-    const recurring = options.recurring ?? faker.datatype.boolean({probability: 0.7});
+    const recurring = options.recurring ?? faker.datatype.boolean({ probability: 0.7 });
     const frequency =
       options.frequency ?? faker.helpers.arrayElement(["weekly", "monthly", "yearly"] as const);
 
     // Generate realistic amounts
     const amountType = faker.helpers.arrayElement(["exact", "approximate", "range"]);
-    const amount = faker.number.float({min: 20, max: 2000, fractionDigits: 2});
+    const amount = faker.number.float({ min: 20, max: 2000, fractionDigits: 2 });
     const amount_2 =
       amountType === "range"
-        ? faker.number.float({min: amount, max: amount * 1.5, fractionDigits: 2})
+        ? faker.number.float({ min: amount, max: amount * 1.5, fractionDigits: 2 })
         : 0;
 
     // Create schedule
@@ -161,7 +161,7 @@ async function createScheduleDate(
       days: generateDaysForFrequency(frequency),
       weeks: [],
       weeks_days: [],
-      week_days: frequency === "weekly" ? [faker.number.int({min: 0, max: 6})] : [],
+      week_days: frequency === "weekly" ? [faker.number.int({ min: 0, max: 6 })] : [],
     })
     .returning();
 
@@ -175,10 +175,10 @@ function generateDaysForFrequency(frequency: string): number[] {
   switch (frequency) {
     case "monthly":
       // Random day of month (1-28 to avoid month-end issues)
-      return [faker.number.int({min: 1, max: 28})];
+      return [faker.number.int({ min: 1, max: 28 })];
     case "yearly":
       // Random day of year
-      return [faker.number.int({min: 1, max: 365})];
+      return [faker.number.int({ min: 1, max: 365 })];
     case "weekly":
     case "daily":
     default:

@@ -1,9 +1,9 @@
-import type {Category, Payee} from "$lib/schema";
-import {NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
-import {PayeeService} from "../payees/services";
-import {CategoryService} from "../categories/services";
-import {TransactionService, type CreateTransactionData} from "../transactions/services";
-import {ScheduleRepository, type ScheduleWithDetails} from "./repository";
+import type { Category, Payee } from "$lib/schema";
+import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { PayeeService } from "../payees/services";
+import { CategoryService } from "../categories/services";
+import { TransactionService, type CreateTransactionData } from "../transactions/services";
+import { ScheduleRepository, type ScheduleWithDetails } from "./repository";
 
 export interface AutoAddResult {
   scheduleId: number;
@@ -50,10 +50,10 @@ interface FrequencyLimits {
 }
 
 const FREQUENCY_DISPLAY_LIMITS: Record<string, FrequencyLimits> = {
-  daily: {maxOccurrences: 7, maxDaysAhead: 14},
-  weekly: {maxOccurrences: 6, maxDaysAhead: 45},
-  monthly: {maxOccurrences: 6, maxDaysAhead: 180},
-  yearly: {maxOccurrences: 3, maxDaysAhead: 1095},
+  daily: { maxOccurrences: 7, maxDaysAhead: 14 },
+  weekly: { maxOccurrences: 6, maxDaysAhead: 45 },
+  monthly: { maxOccurrences: 6, maxDaysAhead: 180 },
+  yearly: { maxOccurrences: 3, maxDaysAhead: 1095 },
 };
 
 /**

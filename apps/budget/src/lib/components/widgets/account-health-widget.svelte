@@ -1,11 +1,11 @@
 <script lang="ts">
-import type {WidgetProps} from '$lib/types/widgets';
+import type { WidgetProps } from '$lib/types/widgets';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import WidgetCard from './widget-card.svelte';
 
-let {config, data, onUpdate, onRemove, editMode = false}: WidgetProps = $props();
+let { config, data, onUpdate, onRemove, editMode = false }: WidgetProps = $props();
 
 const health = data?.['accountHealth'] ?? {};
 const score = health.score ?? 0;
@@ -13,16 +13,16 @@ const factors = health.factors ?? [];
 
 // Determine health status
 const getHealthStatus = (score: number) => {
-  if (score >= 80) return {label: 'Excellent', color: 'text-green-600', bg: 'bg-green-100'};
-  if (score >= 60) return {label: 'Good', color: 'text-blue-600', bg: 'bg-blue-100'};
-  if (score >= 40) return {label: 'Fair', color: 'text-yellow-600', bg: 'bg-yellow-100'};
-  return {label: 'Needs Attention', color: 'text-red-600', bg: 'bg-red-100'};
+  if (score >= 80) return { label: 'Excellent', color: 'text-green-600', bg: 'bg-green-100' };
+  if (score >= 60) return { label: 'Good', color: 'text-blue-600', bg: 'bg-blue-100' };
+  if (score >= 40) return { label: 'Fair', color: 'text-yellow-600', bg: 'bg-yellow-100' };
+  return { label: 'Needs Attention', color: 'text-red-600', bg: 'bg-red-100' };
 };
 
 const status = getHealthStatus(score);
 </script>
 
-<WidgetCard {config} {data} {editMode} {...onUpdate && {onUpdate}} {...onRemove && {onRemove}}>
+<WidgetCard {config} {data} {editMode} {...onUpdate && { onUpdate }} {...onRemove && { onRemove }}>
   <div class="space-y-3">
     <div class="text-muted-foreground text-sm font-medium">{config.title}</div>
 

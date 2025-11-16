@@ -1,20 +1,20 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Tabs from '$lib/components/ui/tabs';
-import {Label} from '$lib/components/ui/label';
-import {Textarea} from '$lib/components/ui/textarea';
+import { Label } from '$lib/components/ui/label';
+import { Textarea } from '$lib/components/ui/textarea';
 import DateInput from '$lib/components/input/date-input.svelte';
 import EntityInput from '$lib/components/input/entity-input.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import TransactionWizard from '$lib/components/wizard/transaction-wizard.svelte';
-import {currentDate} from '$lib/utils/dates';
-import type {EditableDateItem, EditableEntityItem} from '$lib/types';
+import { currentDate } from '$lib/utils/dates';
+import type { EditableDateItem, EditableEntityItem } from '$lib/types';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
 import CircleDollarSign from '@lucide/svelte/icons/circle-dollar-sign';
-import type {Component} from 'svelte';
-import {BudgetSelector} from '$lib/components/budgets';
+import type { Component } from 'svelte';
+import { BudgetSelector } from '$lib/components/budgets';
 import TransferTransactionForm from '$lib/components/forms/transfer-transaction-form.svelte';
 
 // Currency formatter
@@ -31,9 +31,9 @@ let {
   onSubmit,
 }: {
   open: boolean;
-  account?: {id: number; name: string} | null;
-  payees?: Array<{id: number; name: string}>;
-  categories?: Array<{id: number; name: string}>;
+  account?: { id: number; name: string } | null;
+  payees?: Array<{ id: number; name: string }>;
+  categories?: Array<{ id: number; name: string }>;
   onSubmit: (formData: TransactionFormData) => Promise<void>;
 } = $props();
 
@@ -104,8 +104,8 @@ function resetForm() {
   // Reset component state
   dateValue = currentDate;
   amount = 0;
-  payee = {id: 0, name: ''};
-  category = {id: 0, name: ''};
+  payee = { id: 0, name: '' };
+  category = { id: 0, name: '' };
   selectedBudgetId = '';
 }
 

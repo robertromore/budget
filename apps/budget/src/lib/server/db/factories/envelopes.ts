@@ -1,4 +1,4 @@
-import {db} from "..";
+import { db } from "..";
 import {
   envelopeAllocations,
   type EnvelopeAllocation,
@@ -6,7 +6,7 @@ import {
   type RolloverMode,
   type EnvelopeMetadata,
 } from "$lib/schema/budgets/envelope-allocations";
-import {faker} from "@faker-js/faker";
+import { faker } from "@faker-js/faker";
 
 export interface EnvelopeFactoryOptions {
   allocatedAmount?: number;
@@ -61,7 +61,7 @@ export const envelopeFactory = async (
 ): Promise<EnvelopeAllocation> => {
   // Generate realistic amounts
   const allocatedAmount =
-    options.allocatedAmount ?? faker.number.float({min: 50, max: 1000, fractionDigits: 2});
+    options.allocatedAmount ?? faker.number.float({ min: 50, max: 1000, fractionDigits: 2 });
 
   // Generate spending scenarios
   let spentAmount: number;
@@ -123,17 +123,17 @@ export const envelopeFactory = async (
 
   // Generate metadata
   const metadata: EnvelopeMetadata = {
-    priority: options.priority ?? faker.number.int({min: 1, max: 10}),
+    priority: options.priority ?? faker.number.int({ min: 1, max: 10 }),
     isEmergencyFund: options.isEmergencyFund ?? false,
-    autoRefill: faker.datatype.boolean({probability: 0.3}),
+    autoRefill: faker.datatype.boolean({ probability: 0.3 }),
   };
 
   if (rolloverMode === "limited") {
-    metadata.maxRolloverMonths = faker.number.int({min: 1, max: 6});
+    metadata.maxRolloverMonths = faker.number.int({ min: 1, max: 6 });
   }
 
   if (metadata.isEmergencyFund) {
-    metadata.target = allocatedAmount * faker.number.int({min: 3, max: 12});
+    metadata.target = allocatedAmount * faker.number.int({ min: 3, max: 12 });
   }
 
   const [envelope] = await db

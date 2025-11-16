@@ -1,12 +1,12 @@
 <script lang="ts">
 import * as Form from '$lib/components/ui/form';
-import {type Payee} from '$lib/schema';
-import {superformInsertPayeeSchema} from '$lib/schema/superforms';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Input} from '$lib/components/ui/input';
-import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {superForm} from 'sveltekit-superforms';
-import {zod4Client} from 'sveltekit-superforms/adapters';
+import { type Payee } from '$lib/schema';
+import { superformInsertPayeeSchema } from '$lib/schema/superforms';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Input } from '$lib/components/ui/input';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { superForm } from 'sveltekit-superforms';
+import { zod4Client } from 'sveltekit-superforms/adapters';
 
 let {
   payeeId,
@@ -23,7 +23,7 @@ const payees = PayeesState.get();
 const isUpdate = payeeId && payeeId > 0;
 
 // Initialize form data
-let initialData = {name: '', notes: ''};
+let initialData = { name: '', notes: '' };
 if (isUpdate && payeeId) {
   const existingPayee = payees.getById(payeeId);
   if (existingPayee) {
@@ -37,7 +37,7 @@ if (isUpdate && payeeId) {
 const form = superForm(initialData, {
   id: formId,
   validators: zod4Client(superformInsertPayeeSchema),
-  onResult: async ({result}) => {
+  onResult: async ({ result }) => {
     if (result.type === 'success' && result.data) {
       const entity = result.data['entity'] as Payee;
       if (isUpdate) {
@@ -52,7 +52,7 @@ const form = superForm(initialData, {
   timeoutMs: 8000,
 });
 
-const {enhance, form: formData, submitting} = form;
+const { enhance, form: formData, submitting } = form;
 </script>
 
 <form method="post" action="/payees?/save-payee" use:enhance class="space-y-4">
@@ -62,7 +62,7 @@ const {enhance, form: formData, submitting} = form;
 
   <Form.Field {form} name="name">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Name</Form.Label>
         <Input {...props} bind:value={$formData.name} />
         <Form.FieldErrors />
@@ -72,7 +72,7 @@ const {enhance, form: formData, submitting} = form;
 
   <Form.Field {form} name="notes">
     <Form.Control>
-      {#snippet children({props})}
+      {#snippet children({ props })}
         <Form.Label>Notes</Form.Label>
         <Textarea {...props} bind:value={$formData.notes} />
         <Form.FieldErrors />

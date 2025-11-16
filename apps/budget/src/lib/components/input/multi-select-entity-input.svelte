@@ -89,7 +89,7 @@ const addNew = () => {
 
 // Search functionality
 let searchValue = $state('');
-const fused = $derived(new Fuse(entities, {keys: ['name'], includeScore: true}));
+const fused = $derived(new Fuse(entities, { keys: ['name'], includeScore: true }));
 
 const visibleEntities = $derived.by(() => {
   if (searchValue) {
@@ -102,7 +102,7 @@ const visibleEntities = $derived.by(() => {
 <div class={cn('flex items-center space-x-4', className)}>
   <Popover.Root bind:open>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button
           {...props}
           variant="outline"

@@ -1,7 +1,7 @@
-import {type Category} from "$lib/schema";
-import {trpc} from "$lib/trpc/client";
-import {without} from "$lib/utils";
-import {Context} from "runed";
+import { type Category } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { without } from "$lib/utils";
+import { Context } from "runed";
 
 export class CategoriesState {
   categories: Category[] = $state() as Category[];

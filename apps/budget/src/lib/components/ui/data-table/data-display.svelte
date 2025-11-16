@@ -1,8 +1,8 @@
 <script lang="ts" generics="TData">
-import type {Snippet} from 'svelte';
-import type {Table} from '@tanstack/table-core';
+import type { Snippet } from 'svelte';
+import type { Table } from '@tanstack/table-core';
 import DataCardGrid from './data-card-grid.svelte';
-import {cn} from '$lib/utils';
+import { cn } from '$lib/utils';
 
 interface Props {
   /** The TanStack table instance */

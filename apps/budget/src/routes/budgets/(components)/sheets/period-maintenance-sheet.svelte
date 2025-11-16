@@ -1,13 +1,13 @@
 <script lang="ts">
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Sheet from '$lib/components/ui/sheet';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {toast} from 'svelte-sonner';
-import {Clock, Calendar, TrendingUp, DollarSign, RefreshCw} from '@lucide/svelte/icons';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import { toast } from 'svelte-sonner';
+import { Clock, Calendar, TrendingUp, DollarSign, RefreshCw } from '@lucide/svelte/icons';
 
 interface Props {
   open?: boolean;
@@ -16,7 +16,7 @@ interface Props {
   onSuccess?: () => void;
 }
 
-let {open = $bindable(false), onOpenChange, budgetId, onSuccess}: Props = $props();
+let { open = $bindable(false), onOpenChange, budgetId, onSuccess }: Props = $props();
 
 // Maintenance configuration
 let frequency = $state<'daily' | 'weekly' | 'monthly'>('weekly');
@@ -35,19 +35,19 @@ let cleanupExpired = $state(true);
 let isSubmitting = $state(false);
 
 const frequencyOptions = [
-  {value: 'daily', label: 'Daily', description: 'Run every day'},
-  {value: 'weekly', label: 'Weekly', description: 'Run once per week'},
-  {value: 'monthly', label: 'Monthly', description: 'Run once per month'},
+  { value: 'daily', label: 'Daily', description: 'Run every day' },
+  { value: 'weekly', label: 'Weekly', description: 'Run once per week' },
+  { value: 'monthly', label: 'Monthly', description: 'Run once per month' },
 ];
 
 const dayOfWeekOptions = [
-  {value: '0', label: 'Sunday'},
-  {value: '1', label: 'Monday'},
-  {value: '2', label: 'Tuesday'},
-  {value: '3', label: 'Wednesday'},
-  {value: '4', label: 'Thursday'},
-  {value: '5', label: 'Friday'},
-  {value: '6', label: 'Saturday'},
+  { value: '0', label: 'Sunday' },
+  { value: '1', label: 'Monday' },
+  { value: '2', label: 'Tuesday' },
+  { value: '3', label: 'Wednesday' },
+  { value: '4', label: 'Thursday' },
+  { value: '5', label: 'Friday' },
+  { value: '6', label: 'Saturday' },
 ];
 
 async function handleSubmit(e: Event) {

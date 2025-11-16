@@ -1,19 +1,19 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {ResponsiveSheet} from '$lib/components/ui/responsive-sheet';
-import {ScrollArea} from '$lib/components/ui/scroll-area';
-import {Separator} from '$lib/components/ui/separator';
+import { Button } from '$lib/components/ui/button';
+import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
+import { Separator } from '$lib/components/ui/separator';
 import ColorPicker from '$lib/components/ui/color-picker/color-picker.svelte';
 import Check from '@lucide/svelte/icons/check';
-import {THEME_PRESETS, getThemePreviewColor} from '$lib/config/theme-presets';
-import {themePreferences} from '$lib/stores/theme-preferences.svelte';
+import { THEME_PRESETS, getThemePreviewColor } from '$lib/config/theme-presets';
+import { themePreferences } from '$lib/stores/theme-preferences.svelte';
 
 interface Props {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-let {open = $bindable(false), onOpenChange}: Props = $props();
+let { open = $bindable(false), onOpenChange }: Props = $props();
 
 // State for custom color picker
 let showCustomPicker = $state(false);

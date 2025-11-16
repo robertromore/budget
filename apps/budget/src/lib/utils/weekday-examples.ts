@@ -1,5 +1,5 @@
 // Example usage of weekday utility functions
-import {CalendarDate, today, getLocalTimeZone, type DateValue} from "@internationalized/date";
+import { CalendarDate, today, getLocalTimeZone, type DateValue } from "@internationalized/date";
 import {
   getNextWeekday,
   getNextWeekdayFlexible,
@@ -118,7 +118,7 @@ export function realWorldExamples() {
   let currentMonday = getNextWeekday(currentDate, 1);
   for (let i = 0; i < 4; i++) {
     recurringMondays.push(currentMonday);
-    currentMonday = currentMonday.add({days: 7});
+    currentMonday = currentMonday.add({ days: 7 });
   }
   console.log(
     "Next 4 Mondays:",
@@ -140,7 +140,7 @@ export function realWorldExamples() {
       // Sunday
       return getNextWeekday(fromDate, 1); // Next Monday
     } else {
-      return fromDate.add({days: 1}); // Next day
+      return fromDate.add({ days: 1 }); // Next day
     }
   }
 
@@ -149,13 +149,13 @@ export function realWorldExamples() {
 
   // Working with your existing weekdayOptions
   const weekdayOptions = [
-    {value: 1, label: "Monday"},
-    {value: 2, label: "Tuesday"},
-    {value: 3, label: "Wednesday"},
-    {value: 4, label: "Thursday"},
-    {value: 5, label: "Friday"},
-    {value: 6, label: "Saturday"},
-    {value: 7, label: "Sunday"},
+    { value: 1, label: "Monday" },
+    { value: 2, label: "Tuesday" },
+    { value: 3, label: "Wednesday" },
+    { value: 4, label: "Thursday" },
+    { value: 5, label: "Friday" },
+    { value: 6, label: "Saturday" },
+    { value: 7, label: "Sunday" },
   ];
 
   // Find next occurrence for each weekday option
@@ -169,7 +169,7 @@ export function realWorldExamples() {
   // Find first occurrence of each weekday in the current month
   const allFirstWeekdays = weekdayOptions.map((option) => {
     // Create a date in current month with the target weekday
-    const sampleDate = currentDate.set({day: 15}); // Middle of month to ensure we're in the right month
+    const sampleDate = currentDate.set({ day: 15 }); // Middle of month to ensure we're in the right month
     // We need to find a date that falls on the target weekday first
     const targetWeekdayDate = getNextWeekdayFlexible(sampleDate, option.value, true);
     // If it's not in the same month, use the next occurrence
@@ -238,7 +238,7 @@ export function integrationExamples() {
   let fridayDate = getNextWeekday(currentDate, 5);
   for (let i = 0; i < 5; i++) {
     nextFridays.push(fridayDate);
-    fridayDate = fridayDate.add({days: 7});
+    fridayDate = fridayDate.add({ days: 7 });
   }
   console.log(
     "Next 5 Fridays:",
@@ -255,7 +255,7 @@ export function integrationExamples() {
         date: transactionDate,
         // ... other transaction properties
       });
-      transactionDate = transactionDate.add({days: 7});
+      transactionDate = transactionDate.add({ days: 7 });
     }
 
     return transactions;

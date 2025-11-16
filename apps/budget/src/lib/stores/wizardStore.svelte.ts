@@ -75,7 +75,7 @@ export class WizardStore {
       isValid: false,
       isVisited: index === 0,
     }));
-    this.state.formData = {...initialData};
+    this.state.formData = { ...initialData };
     this.state.currentStepIndex = 0;
     this.state.validationErrors = {};
     this.state.isCompleting = false;

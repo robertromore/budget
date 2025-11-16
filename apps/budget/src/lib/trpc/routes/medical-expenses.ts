@@ -1,6 +1,6 @@
-import {z} from "zod";
-import {publicProcedure, t} from "$lib/trpc";
-import {TRPCError} from "@trpc/server";
+import { z } from "zod";
+import { publicProcedure, t } from "$lib/trpc";
+import { TRPCError } from "@trpc/server";
 import {
   medicalExpenseTypeEnum,
   medicalExpenseTypeKeys,
@@ -9,7 +9,7 @@ import {
   claimStatusEnum,
   claimStatusKeys,
 } from "$lib/schema";
-import {serviceFactory} from "$lib/server/shared/container/service-factory";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
 
 // PERFORMANCE: Removed module-level service initialization to prevent eager loading
 // Services are now retrieved on-demand inside each route handler
@@ -133,7 +133,7 @@ const updateReceiptSchema = z.object({
 
 export const medicalExpensesRouter = t.router({
   // Create medical expense
-  create: publicProcedure.input(createMedicalExpenseSchema).mutation(async ({input}) => {
+  create: publicProcedure.input(createMedicalExpenseSchema).mutation(async ({ input }) => {
     try {
       const medicalExpenseService = serviceFactory.getMedicalExpenseService();
       // Build data object conditionally for exactOptionalPropertyTypes
@@ -169,7 +169,7 @@ export const medicalExpensesRouter = t.router({
   // Create medical expense with transaction (all-in-one)
   createWithTransaction: publicProcedure
     .input(createMedicalExpenseWithTransactionSchema)
-    .mutation(async ({input}) => {
+    .mutation(async ({ input }) => {
       try {
         const medicalExpenseService = serviceFactory.getMedicalExpenseService();
         // Build data object conditionally for exactOptionalPropertyTypes
@@ -204,10 +204,10 @@ export const medicalExpensesRouter = t.router({
     }),
 
   // Update medical expense
-  update: publicProcedure.input(updateMedicalExpenseSchema).mutation(async ({input}) => {
+  update: publicProcedure.input(updateMedicalExpenseSchema).mutation(async ({ input }) => {
     try {
       const medicalExpenseService = serviceFactory.getMedicalExpenseService();
-      const {id, ...inputData} = input;
+      const { id, ...inputData } = input;
 
       // Build data object conditionally for exactOptionalPropertyTypes
       const data: any = {};
@@ -238,29 +238,31 @@ export const medicalExpensesRouter = t.router({
   }),
 
   // Get medical expense by ID with relations
-  getById: publicProcedure.input(z.object({id: z.number().positive()})).query(async ({input}) => {
-    try {
-      const medicalExpenseService = serviceFactory.getMedicalExpenseService();
-      const expense = await medicalExpenseService.getMedicalExpenseWithRelations(input.id);
-      if (!expense) {
+  getById: publicProcedure
+    .input(z.object({ id: z.number().positive() }))
+    .query(async ({ input }) => {
+      try {
+        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        const expense = await medicalExpenseService.getMedicalExpenseWithRelations(input.id);
+        if (!expense) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Medical expense not found",
+          });
+        }
+        return expense;
+      } catch (error: any) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Medical expense not found",
+          code: error.code || "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to fetch medical expense",
         });
       }
-      return expense;
-    } catch (error: any) {
-      throw new TRPCError({
-        code: error.code || "INTERNAL_SERVER_ERROR",
-        message: error.message || "Failed to fetch medical expense",
-      });
-    }
-  }),
+    }),
 
   // Get all medical expenses for an HSA account
   getByAccount: publicProcedure
-    .input(z.object({hsaAccountId: z.number().positive()}))
-    .query(async ({input}) => {
+    .input(z.object({ hsaAccountId: z.number().positive() }))
+    .query(async ({ input }) => {
       try {
         const medicalExpenseService = serviceFactory.getMedicalExpenseService();
         const expenses = await medicalExpenseService.getMedicalExpensesByAccount(
@@ -283,7 +285,7 @@ export const medicalExpensesRouter = t.router({
         taxYear: z.number().min(2000).max(2100),
       })
     )
-    .query(async ({input}) => {
+    .query(async ({ input }) => {
       try {
         const medicalExpenseService = serviceFactory.getMedicalExpenseService();
         const expenses = await medicalExpenseService.getMedicalExpensesByTaxYear(
@@ -301,8 +303,8 @@ export const medicalExpensesRouter = t.router({
 
   // Get all expenses with claims and receipts for data table
   getAllWithRelations: publicProcedure
-    .input(z.object({hsaAccountId: z.number().positive()}))
-    .query(async ({input}) => {
+    .input(z.object({ hsaAccountId: z.number().positive() }))
+    .query(async ({ input }) => {
       try {
         const medicalExpenseService = serviceFactory.getMedicalExpenseService();
         const expenses = await medicalExpenseService.getAllExpensesWithRelations(
@@ -325,7 +327,7 @@ export const medicalExpensesRouter = t.router({
         taxYear: z.number().min(2000).max(2100),
       })
     )
-    .query(async ({input}) => {
+    .query(async ({ input }) => {
       try {
         const medicalExpenseService = serviceFactory.getMedicalExpenseService();
         const summary = await medicalExpenseService.getTaxYearSummary(
@@ -342,18 +344,20 @@ export const medicalExpensesRouter = t.router({
     }),
 
   // Delete medical expense
-  delete: publicProcedure.input(z.object({id: z.number().positive()})).mutation(async ({input}) => {
-    try {
-      const medicalExpenseService = serviceFactory.getMedicalExpenseService();
-      await medicalExpenseService.deleteMedicalExpense(input.id);
-      return {success: true};
-    } catch (error: any) {
-      throw new TRPCError({
-        code: error.statusCode === 404 ? "NOT_FOUND" : "BAD_REQUEST",
-        message: error.message || "Failed to delete medical expense",
-      });
-    }
-  }),
+  delete: publicProcedure
+    .input(z.object({ id: z.number().positive() }))
+    .mutation(async ({ input }) => {
+      try {
+        const medicalExpenseService = serviceFactory.getMedicalExpenseService();
+        await medicalExpenseService.deleteMedicalExpense(input.id);
+        return { success: true };
+      } catch (error: any) {
+        throw new TRPCError({
+          code: error.statusCode === 404 ? "NOT_FOUND" : "BAD_REQUEST",
+          message: error.message || "Failed to delete medical expense",
+        });
+      }
+    }),
 
   // ============================================================================
   // Receipt Routes
@@ -361,8 +365,8 @@ export const medicalExpensesRouter = t.router({
 
   // Get receipts for a medical expense
   getReceipts: publicProcedure
-    .input(z.object({medicalExpenseId: z.number().positive()}))
-    .query(async ({input}) => {
+    .input(z.object({ medicalExpenseId: z.number().positive() }))
+    .query(async ({ input }) => {
       try {
         const receiptService = serviceFactory.getReceiptService();
         const receipts = await receiptService.getReceiptsByExpense(input.medicalExpenseId);
@@ -377,8 +381,8 @@ export const medicalExpensesRouter = t.router({
 
   // Get receipt by ID
   getReceipt: publicProcedure
-    .input(z.object({id: z.number().positive()}))
-    .query(async ({input}) => {
+    .input(z.object({ id: z.number().positive() }))
+    .query(async ({ input }) => {
       try {
         const receiptService = serviceFactory.getReceiptService();
         const receipt = await receiptService.getReceipt(input.id);
@@ -392,10 +396,10 @@ export const medicalExpensesRouter = t.router({
     }),
 
   // Update receipt
-  updateReceipt: publicProcedure.input(updateReceiptSchema).mutation(async ({input}) => {
+  updateReceipt: publicProcedure.input(updateReceiptSchema).mutation(async ({ input }) => {
     try {
       const receiptService = serviceFactory.getReceiptService();
-      const {id, ...inputData} = input;
+      const { id, ...inputData } = input;
 
       // Build data object conditionally for exactOptionalPropertyTypes
       const data: any = {};
@@ -414,12 +418,12 @@ export const medicalExpensesRouter = t.router({
 
   // Delete receipt
   deleteReceipt: publicProcedure
-    .input(z.object({id: z.number().positive()}))
-    .mutation(async ({input}) => {
+    .input(z.object({ id: z.number().positive() }))
+    .mutation(async ({ input }) => {
       try {
         const receiptService = serviceFactory.getReceiptService();
         await receiptService.deleteReceipt(input.id);
-        return {success: true};
+        return { success: true };
       } catch (error: any) {
         throw new TRPCError({
           code: error.statusCode === 404 ? "NOT_FOUND" : "BAD_REQUEST",
@@ -430,12 +434,12 @@ export const medicalExpensesRouter = t.router({
 
   // Count receipts for an expense
   countReceipts: publicProcedure
-    .input(z.object({medicalExpenseId: z.number().positive()}))
-    .query(async ({input}) => {
+    .input(z.object({ medicalExpenseId: z.number().positive() }))
+    .query(async ({ input }) => {
       try {
         const receiptService = serviceFactory.getReceiptService();
         const count = await receiptService.countReceipts(input.medicalExpenseId);
-        return {count};
+        return { count };
       } catch (error: any) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -449,7 +453,7 @@ export const medicalExpensesRouter = t.router({
   // ============================================================================
 
   // Create claim
-  createClaim: publicProcedure.input(createClaimSchema).mutation(async ({input}) => {
+  createClaim: publicProcedure.input(createClaimSchema).mutation(async ({ input }) => {
     try {
       const claimService = serviceFactory.getClaimService();
       // Build data object conditionally for exactOptionalPropertyTypes
@@ -474,10 +478,10 @@ export const medicalExpensesRouter = t.router({
   }),
 
   // Submit claim
-  submitClaim: publicProcedure.input(submitClaimSchema).mutation(async ({input}) => {
+  submitClaim: publicProcedure.input(submitClaimSchema).mutation(async ({ input }) => {
     try {
       const claimService = serviceFactory.getClaimService();
-      const {id, ...inputData} = input;
+      const { id, ...inputData } = input;
 
       // Build data object conditionally for exactOptionalPropertyTypes
       const data: any = {};
@@ -502,7 +506,7 @@ export const medicalExpensesRouter = t.router({
         reviewDate: z.string().datetime().optional(),
       })
     )
-    .mutation(async ({input}) => {
+    .mutation(async ({ input }) => {
       try {
         const claimService = serviceFactory.getClaimService();
         const claim = await claimService.markInReview(input.id, input.reviewDate);
@@ -516,10 +520,10 @@ export const medicalExpensesRouter = t.router({
     }),
 
   // Approve claim
-  approveClaim: publicProcedure.input(approveClaimSchema).mutation(async ({input}) => {
+  approveClaim: publicProcedure.input(approveClaimSchema).mutation(async ({ input }) => {
     try {
       const claimService = serviceFactory.getClaimService();
-      const {id, ...inputData} = input;
+      const { id, ...inputData } = input;
 
       // Build data object conditionally for exactOptionalPropertyTypes
       const data: any = {
@@ -540,10 +544,10 @@ export const medicalExpensesRouter = t.router({
   }),
 
   // Deny claim
-  denyClaim: publicProcedure.input(denyClaimSchema).mutation(async ({input}) => {
+  denyClaim: publicProcedure.input(denyClaimSchema).mutation(async ({ input }) => {
     try {
       const claimService = serviceFactory.getClaimService();
-      const {id, ...inputData} = input;
+      const { id, ...inputData } = input;
 
       // Build data object conditionally for exactOptionalPropertyTypes
       const data: any = {
@@ -563,10 +567,10 @@ export const medicalExpensesRouter = t.router({
   }),
 
   // Mark claim paid
-  markClaimPaid: publicProcedure.input(markClaimPaidSchema).mutation(async ({input}) => {
+  markClaimPaid: publicProcedure.input(markClaimPaidSchema).mutation(async ({ input }) => {
     try {
       const claimService = serviceFactory.getClaimService();
-      const {id, ...inputData} = input;
+      const { id, ...inputData } = input;
 
       // Build data object conditionally for exactOptionalPropertyTypes
       const data: any = {
@@ -593,7 +597,7 @@ export const medicalExpensesRouter = t.router({
         reason: z.string().min(1).max(1000),
       })
     )
-    .mutation(async ({input}) => {
+    .mutation(async ({ input }) => {
       try {
         const claimService = serviceFactory.getClaimService();
         const claim = await claimService.requestResubmission(input.id, input.reason);
@@ -608,8 +612,8 @@ export const medicalExpensesRouter = t.router({
 
   // Withdraw claim
   withdrawClaim: publicProcedure
-    .input(z.object({id: z.number().positive()}))
-    .mutation(async ({input}) => {
+    .input(z.object({ id: z.number().positive() }))
+    .mutation(async ({ input }) => {
       try {
         const claimService = serviceFactory.getClaimService();
         const claim = await claimService.withdrawClaim(input.id);
@@ -623,10 +627,10 @@ export const medicalExpensesRouter = t.router({
     }),
 
   // Update claim
-  updateClaim: publicProcedure.input(updateClaimSchema).mutation(async ({input}) => {
+  updateClaim: publicProcedure.input(updateClaimSchema).mutation(async ({ input }) => {
     try {
       const claimService = serviceFactory.getClaimService();
-      const {id, ...inputData} = input;
+      const { id, ...inputData } = input;
 
       // Build data object conditionally for exactOptionalPropertyTypes
       const data: any = {};
@@ -655,8 +659,8 @@ export const medicalExpensesRouter = t.router({
 
   // Get claims for a medical expense
   getClaims: publicProcedure
-    .input(z.object({medicalExpenseId: z.number().positive()}))
-    .query(async ({input}) => {
+    .input(z.object({ medicalExpenseId: z.number().positive() }))
+    .query(async ({ input }) => {
       try {
         const claimService = serviceFactory.getClaimService();
         const claims = await claimService.getClaimsByExpense(input.medicalExpenseId);
@@ -685,12 +689,12 @@ export const medicalExpensesRouter = t.router({
 
   // Delete claim
   deleteClaim: publicProcedure
-    .input(z.object({id: z.number().positive()}))
-    .mutation(async ({input}) => {
+    .input(z.object({ id: z.number().positive() }))
+    .mutation(async ({ input }) => {
       try {
         const claimService = serviceFactory.getClaimService();
         await claimService.deleteClaim(input.id);
-        return {success: true};
+        return { success: true };
       } catch (error: any) {
         throw new TRPCError({
           code: error.statusCode === 404 ? "NOT_FOUND" : "BAD_REQUEST",

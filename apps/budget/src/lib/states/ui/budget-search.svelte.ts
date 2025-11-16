@@ -1,5 +1,5 @@
-import {createLocalStorageState} from "$lib/utils/local-storage.svelte";
-import type {Budget, BudgetType, BudgetStatus, BudgetEnforcementLevel} from "$lib/schema/budgets";
+import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
+import type { Budget, BudgetType, BudgetStatus, BudgetEnforcementLevel } from "$lib/schema/budgets";
 
 export interface BudgetSearchFilters {
   type?: BudgetType;
@@ -89,7 +89,7 @@ class BudgetSearchStateManager {
   }
 
   updateFilter<K extends keyof BudgetSearchFilters>(key: K, value: BudgetSearchFilters[K]) {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
     if (value === undefined || value === null) {
       delete newFilters[key];
     } else {
@@ -108,7 +108,7 @@ class BudgetSearchStateManager {
   }
 
   clearFilter(key: keyof BudgetSearchFilters) {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
     delete newFilters[key];
     this.filters = newFilters;
   }

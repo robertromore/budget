@@ -1,13 +1,13 @@
 <script lang="ts">
-import {Badge} from '$lib/components/ui/badge';
-import {currencyFormatter} from '$lib/utils/formatters';
-import type {Schedule} from '$lib/schema/schedules';
+import { Badge } from '$lib/components/ui/badge';
+import { currencyFormatter } from '$lib/utils/formatters';
+import type { Schedule } from '$lib/schema/schedules';
 
 interface Props {
   schedule: Schedule;
 }
 
-let {schedule}: Props = $props();
+let { schedule }: Props = $props();
 
 function formatAmount(schedule: Schedule): string {
   if (schedule.amount_type === 'range') {

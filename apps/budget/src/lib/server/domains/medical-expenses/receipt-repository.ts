@@ -1,7 +1,11 @@
-import {BaseRepository} from "$lib/server/shared/database/base-repository";
-import {db} from "$lib/server/shared/database";
-import {expenseReceipts, type ExpenseReceipt, type ReceiptType} from "$lib/schema/expense-receipts";
-import {eq, and, isNull, desc} from "drizzle-orm";
+import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { db } from "$lib/server/shared/database";
+import {
+  expenseReceipts,
+  type ExpenseReceipt,
+  type ReceiptType,
+} from "$lib/schema/expense-receipts";
+import { eq, and, isNull, desc } from "drizzle-orm";
 
 // Types for receipt operations
 export interface CreateReceiptInput {
@@ -75,7 +79,7 @@ export class ReceiptRepository extends BaseRepository<
    */
   async countByMedicalExpenseId(medicalExpenseId: number): Promise<number> {
     const result = await db
-      .select({count: db.$count(expenseReceipts.id)})
+      .select({ count: db.$count(expenseReceipts.id) })
       .from(expenseReceipts)
       .where(
         and(

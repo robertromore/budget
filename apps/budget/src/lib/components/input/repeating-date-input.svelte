@@ -37,24 +37,24 @@
   - Calendar highlighting of recurring dates
 -->
 <script lang="ts">
-import {getLocalTimeZone, type DateValue} from '@internationalized/date';
-import {cn} from '$lib/utils';
-import {Button} from '$lib/components/ui/button';
+import { getLocalTimeZone, type DateValue } from '@internationalized/date';
+import { cn } from '$lib/utils';
+import { Button } from '$lib/components/ui/button';
 import * as Calendar from '$lib/components/ui/calendar';
 import * as Popover from '$lib/components/ui/popover';
 import * as Card from '$lib/components/ui/card';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as RadioGroup from '$lib/components/ui/radio-group';
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {Switch} from '$lib/components/ui/switch';
-import {Label} from '$lib/components/ui/label';
-import {Input} from '$lib/components/ui/input';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
-import {dateFormatter, pluralRules} from '$lib/utils/date-formatters';
-import {weekOptions, weekdayOptions} from '$lib/utils/date-options';
-import {nextDaily, nextWeekly, nextMonthly, nextYearly} from '$lib/utils/date-frequency';
-import {currentDate} from '$lib/utils/dates';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import { Switch } from '$lib/components/ui/switch';
+import { Label } from '$lib/components/ui/label';
+import { Input } from '$lib/components/ui/input';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
+import { dateFormatter, pluralRules } from '$lib/utils/date-formatters';
+import { weekOptions, weekdayOptions } from '$lib/utils/date-options';
+import { nextDaily, nextWeekly, nextMonthly, nextYearly } from '$lib/utils/date-frequency';
+import { currentDate } from '$lib/utils/dates';
 
 import CalendarDays from '@lucide/svelte/icons/calendar-days';
 import Repeat from '@lucide/svelte/icons/repeat';
@@ -135,7 +135,7 @@ const nextOccurrences = $derived.by(() => {
   const startDate = value.start;
 
   // Generate enough dates for display (50 should be more than enough for the first 5)
-  const endDate = startDate.add({years: 2});
+  const endDate = startDate.add({ years: 2 });
   const limit = 50;
 
   try {
@@ -389,7 +389,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                           <Label for="on-day">On day(s) of the month</Label>
 
                           <div class="grid grid-cols-7 gap-0.5">
-                            {#each Array.from({length: 31}, (_, i) => i + 1) as day}
+                            {#each Array.from({ length: 31 }, (_, i) => i + 1) as day}
                               <Button
                                 variant={(value.days || []).includes(day) ? 'default' : 'outline'}
                                 size="sm"
@@ -690,7 +690,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                 readonly
                 bind:placeholder={value.placeholder}
                 captionLayout="dropdown">
-                {#snippet day({day, outsideMonth})}
+                {#snippet day({ day, outsideMonth })}
                   {@const isStartDate =
                     value.start &&
                     day.year === value.start.year &&
@@ -703,8 +703,8 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                     day.year === todayDate.year &&
                     day.month === todayDate.month &&
                     day.day === todayDate.day}
-                  {@const prevDay = day.subtract({days: 1})}
-                  {@const nextDay = day.add({days: 1})}
+                  {@const prevDay = day.subtract({ days: 1 })}
+                  {@const nextDay = day.add({ days: 1 })}
                   {@const isPrevRecurring = isUpcomingDate(prevDay)}
                   {@const isNextRecurring = isUpcomingDate(nextDay)}
                   {@const isPrevSpecific = isSpecificDate(prevDay)}

@@ -77,7 +77,7 @@ function handleCancel() {
 <div class="w-full">
   <Popover.Root bind:open onOpenChange={handleOpenChange}>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button
           {...props}
           variant={buttonVariant}

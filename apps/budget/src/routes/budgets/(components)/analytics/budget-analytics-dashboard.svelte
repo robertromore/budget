@@ -1,14 +1,14 @@
 <script lang="ts">
-import {SvelteMap} from 'svelte/reactivity';
+import { SvelteMap } from 'svelte/reactivity';
 import * as Card from '$lib/components/ui/card';
-import {Badge, type BadgeVariant} from '$lib/components/ui/badge';
+import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
 import Progress from '$lib/components/ui/progress/progress.svelte';
 import * as Tabs from '$lib/components/ui/tabs';
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {calculateActualSpent, calculateAllocated} from '$lib/utils/budget-calculations';
-import {listBudgets, getSpendingTrends} from '$lib/query/budgets';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
+import { listBudgets, getSpendingTrends } from '$lib/query/budgets';
 import {
   TrendingUp,
   TriangleAlert,
@@ -21,14 +21,14 @@ import {
   ChartPie,
   DollarSign,
 } from '@lucide/svelte/icons';
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 
 interface Props {
   budgets?: BudgetWithRelations[];
   className?: string;
 }
 
-let {budgets = [], className}: Props = $props();
+let { budgets = [], className }: Props = $props();
 
 const budgetsQuery = listBudgets().options();
 const allBudgets = $derived.by(() => (budgets.length > 0 ? budgets : (budgetsQuery.data ?? [])));
@@ -102,7 +102,7 @@ const spendingTrendData = $derived.by(() => {
   }
 
   return trendsData.map((period) => ({
-    month: new Date(period.startDate).toLocaleDateString('en-US', {month: 'short'}),
+    month: new Date(period.startDate).toLocaleDateString('en-US', { month: 'short' }),
     allocated: period.allocated,
     spent: period.actual,
     date: new Date(period.startDate),
@@ -142,7 +142,7 @@ const categoryBreakdown = $derived.by(() => {
       acc[type].count += 1;
       return acc;
     },
-    {} as Record<string, {name: string; value: number; count: number; color: string}>
+    {} as Record<string, { name: string; value: number; count: number; color: string }>
   );
 
   return Object.values(categories);
@@ -189,7 +189,7 @@ const pieChartConfig = $derived.by(() => {
       };
       return config;
     },
-    {} as Record<string, {label: string; color: string}>
+    {} as Record<string, { label: string; color: string }>
   );
 });
 </script>

@@ -1,9 +1,9 @@
 <script lang="ts">
 import * as Sheet from '$lib/components/ui/sheet';
-import type {UseBoolean} from '$lib/hooks/ui/use-boolean.svelte';
-import type {UseNumber} from '$lib/hooks/ui/use-number.svelte';
-import {managingCategoryId, newCategoryDialog} from '$lib/states/ui/categories.svelte';
-import {ManageCategoryDialogForm} from '$lib/components/forms';
+import type { UseBoolean } from '$lib/hooks/ui/use-boolean.svelte';
+import type { UseNumber } from '$lib/hooks/ui/use-number.svelte';
+import { managingCategoryId, newCategoryDialog } from '$lib/states/ui/categories.svelte';
+import { ManageCategoryDialogForm } from '$lib/components/forms';
 
 const dialogOpen: UseBoolean = $derived(newCategoryDialog);
 const categoryId: UseNumber = $derived(managingCategoryId);

@@ -1,12 +1,12 @@
-import type {Account, AccountType} from "$lib/schema/accounts";
-import {accounts} from "$lib/schema/accounts";
-import {categories} from "$lib/schema/categories";
-import {payees} from "$lib/schema/payees";
-import {transactions} from "$lib/schema/transactions";
-import {db} from "$lib/server/shared/database";
-import {BaseRepository} from "$lib/server/shared/database/base-repository";
-import {NotFoundError} from "$lib/server/shared/types/errors";
-import {and, desc, eq, isNull} from "drizzle-orm";
+import type { Account, AccountType } from "$lib/schema/accounts";
+import { accounts } from "$lib/schema/accounts";
+import { categories } from "$lib/schema/categories";
+import { payees } from "$lib/schema/payees";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/shared/database";
+import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import type {
   AccountTransactionDbResult,
   AccountWithTransactions,
@@ -83,7 +83,7 @@ export class AccountRepository extends BaseRepository<
    * Search accounts by name
    * Overrides BaseRepository searchByName to use different default limit
    */
-  override async searchByName(query: string, options?: {limit?: number}): Promise<Account[]> {
+  override async searchByName(query: string, options?: { limit?: number }): Promise<Account[]> {
     return await super.searchByName(query, {
       limit: options?.limit ?? 10,
     });
@@ -225,6 +225,6 @@ export class AccountRepository extends BaseRepository<
    * Update account initial balance
    */
   async updateBalance(id: number, newBalance: number): Promise<Account> {
-    return await this.update(id, {initialBalance: newBalance});
+    return await this.update(id, { initialBalance: newBalance });
   }
 }

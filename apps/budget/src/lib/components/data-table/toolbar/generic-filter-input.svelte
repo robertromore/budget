@@ -1,10 +1,10 @@
 <script lang="ts" generics="TData">
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import {buttonVariants} from '$lib/components/ui/button';
+import { buttonVariants } from '$lib/components/ui/button';
 import ListFilterPlus from '@lucide/svelte/icons/list-filter-plus';
-import {cn} from '$lib/utils';
-import type {FilterInputOption} from '$lib/types';
-import type {ColumnFiltersState, Table} from '@tanstack/table-core';
+import { cn } from '$lib/utils';
+import type { FilterInputOption } from '$lib/types';
+import type { ColumnFiltersState, Table } from '@tanstack/table-core';
 
 interface Props {
   /** The table instance */
@@ -17,7 +17,7 @@ interface Props {
   onColumnFiltersChange?: (filters: ColumnFiltersState) => void;
 }
 
-let {table, availableFilters, columnFilters = [], onColumnFiltersChange}: Props = $props();
+let { table, availableFilters, columnFilters = [], onColumnFiltersChange }: Props = $props();
 
 // Get the list of currently active filter column IDs
 const activeFilterColumnIds = $derived(new Set(columnFilters.map((f) => f.id)));
@@ -54,7 +54,7 @@ function removeFilter(columnId: string) {
 
 // Update a filter value
 function updateFilter(columnId: string, value: unknown) {
-  const newFilters = columnFilters.map((f) => (f.id === columnId ? {...f, value} : f));
+  const newFilters = columnFilters.map((f) => (f.id === columnId ? { ...f, value } : f));
   onColumnFiltersChange?.(newFilters);
 }
 </script>
@@ -62,7 +62,7 @@ function updateFilter(columnId: string, value: unknown) {
 <div class="flex gap-2">
   {#each selectedFilters as filter}
     {#if filter}
-      {@const {component: Component, props} = filter.component()}
+      {@const { component: Component, props } = filter.component()}
       <Component
         {...props}
         onRemove={() => removeFilter(filter.column.id)}
@@ -71,7 +71,7 @@ function updateFilter(columnId: string, value: unknown) {
   {/each}
 
   <DropdownMenu.Root>
-    <DropdownMenu.Trigger class={cn(buttonVariants({variant: 'outline'}), 'h-8')}>
+    <DropdownMenu.Trigger class={cn(buttonVariants({ variant: 'outline' }), 'h-8')}>
       <ListFilterPlus />
       Filter
     </DropdownMenu.Trigger>

@@ -1,9 +1,9 @@
-import type {Account} from "$lib/schema";
-import {trpc} from "$lib/trpc/client";
-import {accountKeys} from "$lib/query/accounts";
-import {cachePatterns} from "$lib/query/_client";
-import {getContext, setContext} from "svelte";
-import {SvelteMap} from "svelte/reactivity";
+import type { Account } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { accountKeys } from "$lib/query/accounts";
+import { cachePatterns } from "$lib/query/_client";
+import { getContext, setContext } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 
 const KEY = Symbol("accounts");
 
@@ -142,7 +142,7 @@ export class AccountsState {
   }
 
   async deleteAccount(id: number): Promise<void> {
-    await trpc().accountRoutes.remove.mutate({id});
+    await trpc().accountRoutes.remove.mutate({ id });
     this.removeAccount(id);
     // Invalidate caches to update default accounts status
     cachePatterns.invalidatePrefix(accountKeys.all());
@@ -171,7 +171,7 @@ export class AccountsState {
       try {
         const saved = localStorage.getItem("accounts-sort-preferences");
         if (saved) {
-          const {field, direction} = JSON.parse(saved);
+          const { field, direction } = JSON.parse(saved);
           if (this.isValidSortField(field) && this.isValidSortDirection(direction)) {
             this.sortField = field;
             this.sortDirection = direction;

@@ -1,13 +1,13 @@
 <script lang="ts">
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
 import Info from '@lucide/svelte/icons/info';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import DeleteTransactionDialog from '../(dialogs)/delete-transaction-dialog.svelte';
 import TransactionDetailsDialog from '../(dialogs)/transaction-details-dialog.svelte';
-import {getTransactionDetail} from '$lib/query/transactions';
-import type {Transaction} from '$lib/schema';
+import { getTransactionDetail } from '$lib/query/transactions';
+import type { Transaction } from '$lib/schema';
 
 let {
   id,
@@ -35,7 +35,7 @@ $effect(() => {
 
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>
-    {#snippet child({props})}
+    {#snippet child({ props })}
       <Button variant="ghost" size="icon" class="relative size-8 p-0" {...props}>
         <span class="sr-only">Open menu</span>
         <MoreHorizontal class="size-4" />

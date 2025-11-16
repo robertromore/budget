@@ -35,7 +35,7 @@ import { toast } from 'svelte-sonner';
 import TopCategoriesView from '../../../routes/accounts/[slug]/(components)/(charts)/top-categories-view.svelte';
 import ConfigureMetricsDialog from './configure-metrics-dialog.svelte';
 
-let {account, transactions = []} = $props<{
+let { account, transactions = [] } = $props<{
   account: Account;
   transactions?: TransactionsFormat[];
 }>();

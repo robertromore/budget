@@ -1,8 +1,8 @@
-import {and, eq, inArray} from "drizzle-orm";
-import {publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t} from "$lib/trpc";
-import {z} from "zod";
-import {TRPCError} from "@trpc/server";
-import {removeViewSchema, removeViewsSchema, insertViewSchema, views} from "$lib/schema";
+import { and, eq, inArray } from "drizzle-orm";
+import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "$lib/trpc";
+import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { removeViewSchema, removeViewsSchema, insertViewSchema, views } from "$lib/schema";
 
 export const viewsRoutes = t.router({
   all: publicProcedure
@@ -13,7 +13,7 @@ export const viewsRoutes = t.router({
         })
         .optional()
     )
-    .query(async ({ctx, input}) => {
+    .query(async ({ ctx, input }) => {
       const whereClause = input?.entityType
         ? and(eq(views.workspaceId, ctx.workspaceId), eq(views.entityType, input.entityType))
         : eq(views.workspaceId, ctx.workspaceId);
@@ -25,9 +25,9 @@ export const viewsRoutes = t.router({
       //   });
       // });
     }),
-  load: publicProcedure.input(z.object({id: z.coerce.number()})).query(async ({ctx, input}) => {
+  load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
     const result = await ctx.db.query.views.findMany({
-      where: (views, {eq, and}) =>
+      where: (views, { eq, and }) =>
         and(eq(views.id, input.id), eq(views.workspaceId, ctx.workspaceId)),
     });
     if (!result[0]) {
@@ -38,7 +38,7 @@ export const viewsRoutes = t.router({
     }
     return result[0];
   }),
-  remove: rateLimitedProcedure.input(removeViewSchema).mutation(async ({ctx, input}) => {
+  remove: rateLimitedProcedure.input(removeViewSchema).mutation(async ({ ctx, input }) => {
     if (!input) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -59,7 +59,7 @@ export const viewsRoutes = t.router({
   }),
   delete: bulkOperationProcedure
     .input(removeViewsSchema)
-    .mutation(async ({input: {entities}, ctx}) => {
+    .mutation(async ({ input: { entities }, ctx }) => {
       return await ctx.db
         .delete(views)
         .where(and(inArray(views.id, entities), eq(views.workspaceId, ctx.workspaceId)))
@@ -68,7 +68,10 @@ export const viewsRoutes = t.router({
   save: rateLimitedProcedure
     .input(insertViewSchema)
     .mutation(
-      async ({input: {id, entityType, name, description, icon, filters, display, dirty}, ctx}) => {
+      async ({
+        input: { id, entityType, name, description, icon, filters, display, dirty },
+        ctx,
+      }) => {
         // Transform display object to match database schema
         const transformedDisplay = display
           ? {

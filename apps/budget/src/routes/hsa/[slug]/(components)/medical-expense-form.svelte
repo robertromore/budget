@@ -1,17 +1,17 @@
 <script lang="ts">
-import {rpc} from '$lib/query';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Textarea} from '$lib/components/ui/textarea';
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {medicalExpenseTypeEnum, medicalExpenseTypeKeys} from '$lib/schema/medical-expenses';
+import { rpc } from '$lib/query';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import { medicalExpenseTypeEnum, medicalExpenseTypeKeys } from '$lib/schema/medical-expenses';
 import ReceiptUploadWidget from './receipt-upload-widget.svelte';
 import * as Separator from '$lib/components/ui/separator';
 import ExpenseTypeSelector from './expense-type-selector.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
-import {parseDate} from '@internationalized/date';
+import { parseDate } from '@internationalized/date';
 import Upload from '@lucide/svelte/icons/upload';
 
 interface Props {
@@ -23,7 +23,7 @@ interface Props {
   onCancel?: () => void;
 }
 
-let {hsaAccountId, accountId, transactionId, existingExpense, onSuccess, onCancel}: Props =
+let { hsaAccountId, accountId, transactionId, existingExpense, onSuccess, onCancel }: Props =
   $props();
 
 // Form state - Medical Expense fields

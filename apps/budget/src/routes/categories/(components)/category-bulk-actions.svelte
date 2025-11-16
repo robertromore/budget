@@ -1,7 +1,7 @@
 <script lang="ts">
-import type {Category} from '$lib/schema';
-import type {Table} from '@tanstack/table-core';
-import {Button} from '$lib/components/ui/button';
+import type { Category } from '$lib/schema';
+import type { Table } from '@tanstack/table-core';
+import { Button } from '$lib/components/ui/button';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import X from '@lucide/svelte/icons/x';
 
@@ -11,7 +11,7 @@ interface Props {
   onBulkDelete: (categories: Category[]) => void;
 }
 
-let {table, allCategories, onBulkDelete}: Props = $props();
+let { table, allCategories, onBulkDelete }: Props = $props();
 
 const selectedRows = $derived(table.getSelectedRowModel().rows);
 const selectedCount = $derived(selectedRows.length);

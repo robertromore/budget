@@ -1,16 +1,16 @@
 <script lang="ts" generics="T">
 // Framework imports
-import type {Snippet, Component} from 'svelte';
+import type { Snippet, Component } from 'svelte';
 
 // UI component imports
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 
 // Hook imports
-import {useEditableCell} from '$lib/hooks/ui/use-editable-cell.svelte';
+import { useEditableCell } from '$lib/hooks/ui/use-editable-cell.svelte';
 
 // Type imports
-import type {HTMLAttributes} from 'svelte/elements';
-import {cn} from '$lib/utils';
+import type { HTMLAttributes } from 'svelte/elements';
+import { cn } from '$lib/utils';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   // Core data
@@ -27,7 +27,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   onStartEdit?: () => void;
 
   // Snippets for custom rendering
-  display?: Snippet<[{value: T; displayValue: string; startEdit: () => void}]>;
+  display?: Snippet<[{ value: T; displayValue: string; startEdit: () => void }]>;
   editor: Snippet<
     [
       {
@@ -67,9 +67,9 @@ let {
 const cellState = useEditableCell({
   initialValue: value,
   onSave,
-  ...(onCancel && {onCancel}),
-  ...(validator && {validator}),
-  ...(formatter && {formatter}),
+  ...(onCancel && { onCancel }),
+  ...(validator && { validator }),
+  ...(formatter && { formatter }),
 });
 
 // Handle external value changes

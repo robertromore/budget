@@ -1,15 +1,15 @@
-import {t, publicProcedure} from "$lib/trpc";
-import {workspaces} from "$lib/schema/workspaces";
-import {formInsertWorkspaceSchema} from "$lib/schema/workspaces";
-import {eq, and, isNull} from "drizzle-orm";
-import {z} from "zod/v4";
-import {TRPCError} from "@trpc/server";
+import { t, publicProcedure } from "$lib/trpc";
+import { workspaces } from "$lib/schema/workspaces";
+import { formInsertWorkspaceSchema } from "$lib/schema/workspaces";
+import { eq, and, isNull } from "drizzle-orm";
+import { z } from "zod/v4";
+import { TRPCError } from "@trpc/server";
 
 export const workspaceRoutes = t.router({
   /**
    * Get current workspace (from context)
    */
-  getCurrent: publicProcedure.query(async ({ctx}) => {
+  getCurrent: publicProcedure.query(async ({ ctx }) => {
     const [workspace] = await ctx.db
       .select()
       .from(workspaces)
@@ -29,7 +29,7 @@ export const workspaceRoutes = t.router({
   /**
    * List all workspaces
    */
-  list: publicProcedure.query(async ({ctx}) => {
+  list: publicProcedure.query(async ({ ctx }) => {
     return await ctx.db
       .select()
       .from(workspaces)
@@ -40,7 +40,7 @@ export const workspaceRoutes = t.router({
   /**
    * Create new workspace
    */
-  create: publicProcedure.input(formInsertWorkspaceSchema).mutation(async ({ctx, input}) => {
+  create: publicProcedure.input(formInsertWorkspaceSchema).mutation(async ({ ctx, input }) => {
     // Check if slug is already taken
     const existing = await ctx.db
       .select()
@@ -72,8 +72,8 @@ export const workspaceRoutes = t.router({
    * Sets a cookie to persist the selection
    */
   switchWorkspace: publicProcedure
-    .input(z.object({workspaceId: z.number()}))
-    .mutation(async ({ctx, input}) => {
+    .input(z.object({ workspaceId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
       // Verify workspace exists
       const [workspace] = await ctx.db
         .select()
@@ -110,7 +110,7 @@ export const workspaceRoutes = t.router({
         preferences: z.record(z.any()),
       })
     )
-    .mutation(async ({ctx, input}) => {
+    .mutation(async ({ ctx, input }) => {
       const [updated] = await ctx.db
         .update(workspaces)
         .set({
@@ -127,8 +127,8 @@ export const workspaceRoutes = t.router({
    * Delete workspace (soft delete)
    */
   delete: publicProcedure
-    .input(z.object({workspaceId: z.number()}))
-    .mutation(async ({ctx, input}) => {
+    .input(z.object({ workspaceId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
       // Prevent deleting the current workspace
       if (input.workspaceId === ctx.workspaceId) {
         throw new TRPCError({
@@ -145,6 +145,6 @@ export const workspaceRoutes = t.router({
         })
         .where(eq(workspaces.id, input.workspaceId));
 
-      return {success: true};
+      return { success: true };
     }),
 });

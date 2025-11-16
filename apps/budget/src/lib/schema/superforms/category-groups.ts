@@ -1,5 +1,5 @@
 import validator from "validator";
-import {z} from "zod";
+import { z } from "zod";
 
 // Superform-compatible schemas for category groups (not using drizzle-zod)
 export const superformInsertCategoryGroupSchema = z.object({

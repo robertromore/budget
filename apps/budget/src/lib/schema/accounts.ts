@@ -2,15 +2,15 @@
 // resources, with an overall balance, and transactions to and from the account
 // that affect the account's balance.
 
-import {createId} from "@paralleldrive/cuid2";
-import {relations, sql} from "drizzle-orm";
-import {sqliteTable, integer, text, index, real} from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {transactions} from "./transactions";
-import type {Transaction} from "./transactions";
-import {workspaces} from "./workspaces";
-import {z} from "zod/v4";
-import {isValidIconName} from "$lib/utils/icon-validation";
+import { createId } from "@paralleldrive/cuid2";
+import { relations, sql } from "drizzle-orm";
+import { sqliteTable, integer, text, index, real } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { transactions } from "./transactions";
+import type { Transaction } from "./transactions";
+import { workspaces } from "./workspaces";
+import { z } from "zod/v4";
+import { isValidIconName } from "$lib/utils/icon-validation";
 
 // Account type enum for type safety
 export const accountTypeEnum = [
@@ -29,28 +29,28 @@ export type AccountType = (typeof accountTypeEnum)[number];
 export const accounts = sqliteTable(
   "account",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     cuid: text("cuid").$defaultFn(() => createId()),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     // @todo maybe change to enum to allow for archiving?
-    closed: integer("closed", {mode: "boolean"}).default(false),
+    closed: integer("closed", { mode: "boolean" }).default(false),
     // @todo decide if it's better to calculate and store this value or aggregate
     // the value based on the transaction rows.
     // balance: real('balance').default(0.0).notNull(),
     notes: text("notes"),
 
     // Enhanced account fields
-    accountType: text("account_type", {enum: accountTypeEnum}).default("checking"),
+    accountType: text("account_type", { enum: accountTypeEnum }).default("checking"),
     institution: text("institution"), // Bank/institution name
     accountIcon: text("account_icon"), // Lucide icon name
     accountColor: text("account_color"), // Hex color code
     initialBalance: real("initial_balance").default(0.0), // Starting balance
     accountNumberLast4: text("account_number_last4"), // Last 4 digits for reference
-    onBudget: integer("on_budget", {mode: "boolean"}).default(true).notNull(), // Include in budget calculations
+    onBudget: integer("on_budget", { mode: "boolean" }).default(true).notNull(), // Include in budget calculations
 
     // Debt account-specific fields (credit cards & loans)
     debtLimit: real("debt_limit"), // Credit limit (credit cards) or principal amount (loans)
@@ -84,7 +84,7 @@ export const accounts = sqliteTable(
   ]
 );
 
-export const accountsRelations = relations(accounts, ({one, many}) => ({
+export const accountsRelations = relations(accounts, ({ one, many }) => ({
   workspace: one(workspaces, {
     fields: [accounts.workspaceId],
     references: [workspaces.id],
@@ -260,7 +260,7 @@ export const formUpdateAccountSchema = z.object({
 
 // Combined schema that handles both create and update
 export const formAccountSchema = z.union([formInsertAccountSchema, formUpdateAccountSchema]);
-export const removeAccountSchema = z.object({id: z.number().nonnegative()});
+export const removeAccountSchema = z.object({ id: z.number().nonnegative() });
 
 type WithTransactions = {
   transactions: Transaction[];

@@ -1,15 +1,15 @@
 <script lang="ts">
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import {Badge} from '$lib/components/ui/badge';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { Badge } from '$lib/components/ui/badge';
 import * as Tooltip from '$lib/components/ui/tooltip';
-import {getBudgetValidationIssues} from '$lib/utils/budget-validation';
+import { getBudgetValidationIssues } from '$lib/utils/budget-validation';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 
 interface Props {
   budget: BudgetWithRelations;
 }
 
-let {budget}: Props = $props();
+let { budget }: Props = $props();
 
 const validation = $derived(getBudgetValidationIssues(budget));
 </script>

@@ -1,23 +1,28 @@
 <script lang="ts">
-import {ResponsiveSheet} from '$lib/components/ui/responsive-sheet';
+import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
 import * as Collapsible from '$lib/components/ui/collapsible';
 import * as Select from '$lib/components/ui/select';
-import {Button, buttonVariants} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Badge} from '$lib/components/ui/badge';
-import {Slider} from '$lib/components/ui/slider';
-import {Check, ChevronDown, Palette} from '@lucide/svelte/icons';
-import {cn} from '$lib/utils';
+import { Button, buttonVariants } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Badge } from '$lib/components/ui/badge';
+import { Slider } from '$lib/components/ui/slider';
+import { Check, ChevronDown, Palette } from '@lucide/svelte/icons';
+import { cn } from '$lib/utils';
 
 interface Props {
   value?: string;
   placeholder?: string;
   class?: string;
-  onchange?: (event: CustomEvent<{value: string}>) => void;
+  onchange?: (event: CustomEvent<{ value: string }>) => void;
 }
 
-let {value = '', placeholder = 'Select a color', class: className = '', onchange}: Props = $props();
+let {
+  value = '',
+  placeholder = 'Select a color',
+  class: className = '',
+  onchange,
+}: Props = $props();
 
 let open = $state(false);
 let advancedOpen = $state(false);
@@ -299,7 +304,7 @@ const colorPalette = [
 function handleColorSelect(color: string) {
   const normalized = normalizeHexColor(color);
   if (onchange) {
-    const event = new CustomEvent('change', {detail: {value: normalized}});
+    const event = new CustomEvent('change', { detail: { value: normalized } });
     onchange(event);
   }
   open = false;
@@ -314,7 +319,7 @@ function handleCustomColorChange(event: Event) {
   if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
     initializeFromHex(color);
     if (onchange) {
-      const changeEvent = new CustomEvent('change', {detail: {value: color}});
+      const changeEvent = new CustomEvent('change', { detail: { value: color } });
       onchange(changeEvent);
     }
   }
@@ -322,7 +327,7 @@ function handleCustomColorChange(event: Event) {
 
 function handleClear() {
   if (onchange) {
-    const event = new CustomEvent('change', {detail: {value: ''}});
+    const event = new CustomEvent('change', { detail: { value: '' } });
     onchange(event);
   }
   open = false;
@@ -330,7 +335,7 @@ function handleClear() {
 
 function handleAdvancedColorChange(color: string) {
   if (onchange) {
-    const event = new CustomEvent('change', {detail: {value: color}});
+    const event = new CustomEvent('change', { detail: { value: color } });
     onchange(event);
   }
 }
@@ -378,7 +383,7 @@ $effect(() => {
 });
 
 // Color conversion utilities
-function hexToRgb(hex: string): {r: number; g: number; b: number} | null {
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   // Normalize 3-digit hex to 6-digit
   const normalized = normalizeHexColor(hex);
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(normalized);
@@ -395,7 +400,7 @@ function rgbToHex(r: number, g: number, b: number): string {
   return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
-function rgbToHsl(r: number, g: number, b: number): {h: number; s: number; l: number} {
+function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: number } {
   r /= 255;
   g /= 255;
   b /= 255;
@@ -422,10 +427,10 @@ function rgbToHsl(r: number, g: number, b: number): {h: number; s: number; l: nu
     h /= 6;
   }
 
-  return {h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100)};
+  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
 
-function hslToRgb(h: number, s: number, l: number): {r: number; g: number; b: number} {
+function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: number } {
   h = h / 360;
   s = s / 100;
   l = l / 100;
@@ -459,7 +464,7 @@ function hslToRgb(h: number, s: number, l: number): {r: number; g: number; b: nu
 }
 
 function formatColorValue(format: string): string {
-  const rgb = {r: red, g: green, b: blue};
+  const rgb = { r: red, g: green, b: blue };
   const hsl = rgbToHsl(red, green, blue);
 
   switch (format) {
@@ -507,7 +512,7 @@ function normalizeHexColor(color: string): string {
 
 <ResponsiveSheet bind:open class={className}>
   {#snippet trigger()}
-    <div class={cn(buttonVariants({variant: 'outline'}), 'justify-start')}>
+    <div class={cn(buttonVariants({ variant: 'outline' }), 'justify-start')}>
       <div class="flex items-center gap-2">
         {#if value && isValidHexColor(value)}
           <div

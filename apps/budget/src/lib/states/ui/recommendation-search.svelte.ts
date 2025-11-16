@@ -4,7 +4,7 @@ import type {
   RecommendationStatus,
   RecommendationType,
 } from "$lib/schema/recommendations";
-import {createLocalStorageState} from "$lib/utils/local-storage.svelte";
+import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 
 export interface RecommendationSearchFilters {
   status?: RecommendationStatus;
@@ -49,7 +49,7 @@ class RecommendationSearchStateManager {
 
   // Reactive state
   query = $state("");
-  filters = $state<RecommendationSearchFilters>({status: "pending"}); // Default to pending recommendations only
+  filters = $state<RecommendationSearchFilters>({ status: "pending" }); // Default to pending recommendations only
   results = $state<BudgetRecommendationWithRelations[]>([]);
   isLoading = $state(false);
   totalCount = $state(0);
@@ -105,7 +105,7 @@ class RecommendationSearchStateManager {
     key: K,
     value: RecommendationSearchFilters[K]
   ) {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
     if (value === undefined || value === null) {
       delete newFilters[key];
     } else {
@@ -124,7 +124,7 @@ class RecommendationSearchStateManager {
   }
 
   clearFilter(key: keyof RecommendationSearchFilters) {
-    const newFilters = {...this.filters};
+    const newFilters = { ...this.filters };
     delete newFilters[key];
     this.filters = newFilters;
   }

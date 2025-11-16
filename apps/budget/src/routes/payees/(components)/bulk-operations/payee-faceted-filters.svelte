@@ -1,12 +1,12 @@
 <script lang="ts">
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Separator} from '$lib/components/ui/separator';
-import {cn} from '$lib/utils';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
+import { cn } from '$lib/utils';
 import PlusCircle from '@lucide/svelte/icons/plus-circle';
-import type {PayeeType, PaymentFrequency, Payee} from '$lib/schema';
-import type {PayeeSearchFilters} from '$lib/server/domains/payees/repository';
+import type { PayeeType, PaymentFrequency, Payee } from '$lib/schema';
+import type { PayeeSearchFilters } from '$lib/server/domains/payees/repository';
 
 interface FilterOption {
   label: string;
@@ -89,7 +89,7 @@ const facetCounts = $derived.by(() => {
 
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>
-    {#snippet child({props})}
+    {#snippet child({ props })}
       <Button {...props} {variant} size="sm" class="h-8 border-dashed">
         <PlusCircle class="mr-2 h-4 w-4" />
         {title}

@@ -1,10 +1,10 @@
 <script lang="ts" generics="TEntity extends { name: string }">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import User from '@lucide/svelte/icons/user';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Trash2 from '@lucide/svelte/icons/trash-2';
-import type {ComponentType} from 'svelte';
+import type { ComponentType } from 'svelte';
 
 interface Props {
   entity: TEntity;

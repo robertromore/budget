@@ -1,14 +1,14 @@
 <script lang="ts">
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {ScrollArea} from '$lib/components/ui/scroll-area';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
 
-import {PayeesState} from '$lib/states/entities/payees.svelte';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
 
 // Icons
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';

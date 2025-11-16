@@ -1,6 +1,6 @@
 <script lang="ts">
-import type {ExpenseFormat} from '../(data)/columns.svelte';
-import {Button} from '$lib/components/ui/button';
+import type { ExpenseFormat } from '../(data)/columns.svelte';
+import { Button } from '$lib/components/ui/button';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import X from '@lucide/svelte/icons/x';
 
@@ -9,7 +9,7 @@ interface Props {
   onBulkDelete: () => void;
 }
 
-let {expenses, onBulkDelete}: Props = $props();
+let { expenses, onBulkDelete }: Props = $props();
 
 const selectedCount = $derived(expenses.length);
 </script>

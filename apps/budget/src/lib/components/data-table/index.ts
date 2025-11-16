@@ -1,5 +1,5 @@
 // Core components
-export {DataTable, DataTableColumnHeader, DataTablePagination, SimpleDataTable} from "./core";
+export { DataTable, DataTableColumnHeader, DataTablePagination, SimpleDataTable } from "./core";
 
 // State types
 export type {

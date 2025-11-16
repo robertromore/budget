@@ -1,12 +1,12 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {DateInput, NumericInput} from '$lib/components/input';
-import {Textarea} from '$lib/components/ui/textarea';
+import { Button } from '$lib/components/ui/button';
+import { DateInput, NumericInput } from '$lib/components/input';
+import { Textarea } from '$lib/components/ui/textarea';
 import * as Select from '$lib/components/ui/select';
-import type {DateValue} from '@internationalized/date';
-import {toISOString, currentDate} from '$lib/utils/dates';
-import {createTransfer} from '$lib/query/transactions';
-import {AccountsState} from '$lib/states/entities/accounts.svelte';
+import type { DateValue } from '@internationalized/date';
+import { toISOString, currentDate } from '$lib/utils/dates';
+import { createTransfer } from '$lib/query/transactions';
+import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
   onCancel?: () => void;
 }
 
-let {fromAccountId, onSuccess, onCancel}: Props = $props();
+let { fromAccountId, onSuccess, onCancel }: Props = $props();
 
 // State
 let dateValue: DateValue = $state(currentDate);
@@ -63,7 +63,7 @@ async function handleSubmit() {
       date: toISOString(dateValue),
     };
 
-    const transferData = notes.trim() ? {...baseData, notes: notes.trim()} : baseData;
+    const transferData = notes.trim() ? { ...baseData, notes: notes.trim() } : baseData;
 
     await transferMutation.mutateAsync(transferData);
 

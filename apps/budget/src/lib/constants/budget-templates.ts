@@ -1,4 +1,4 @@
-import type {BudgetType, BudgetScope} from "$lib/schema/budgets";
+import type { BudgetType, BudgetScope } from "$lib/schema/budgets";
 
 export type TemplateCategory =
   | "essentials" // Housing, utilities, groceries, healthcare

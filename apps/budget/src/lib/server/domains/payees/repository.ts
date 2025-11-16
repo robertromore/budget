@@ -1,14 +1,14 @@
-import type {NewPayee, Payee, PayeeType, PaymentFrequency} from "$lib/schema";
-import {budgets, categories, payees, transactions} from "$lib/schema";
-import {DATABASE_CONFIG} from "$lib/server/config/database";
-import {db} from "$lib/server/db";
-import {BaseRepository} from "$lib/server/shared/database/base-repository";
-import {logger} from "$lib/server/shared/logging";
-import type {PaginatedResult, PaginationOptions} from "$lib/server/shared/types";
-import {NotFoundError} from "$lib/server/shared/types/errors";
-import {currentDate, getCurrentTimestamp} from "$lib/utils/dates";
-import {and, count, desc, eq, inArray, isNull, like, sql} from "drizzle-orm";
-import type {PayeeAddress, PayeeTags, PaymentMethodReference, SubscriptionInfo} from "./types";
+import type { NewPayee, Payee, PayeeType, PaymentFrequency } from "$lib/schema";
+import { budgets, categories, payees, transactions } from "$lib/schema";
+import { DATABASE_CONFIG } from "$lib/server/config/database";
+import { db } from "$lib/server/db";
+import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { logger } from "$lib/server/shared/logging";
+import type { PaginatedResult, PaginationOptions } from "$lib/server/shared/types";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import { currentDate, getCurrentTimestamp } from "$lib/utils/dates";
+import { and, count, desc, eq, inArray, isNull, like, sql } from "drizzle-orm";
+import type { PayeeAddress, PayeeTags, PaymentMethodReference, SubscriptionInfo } from "./types";
 
 export interface UpdatePayeeData {
   name?: string | undefined;
@@ -70,7 +70,7 @@ export interface PayeeIntelligence {
     isRegular: boolean;
     averageDaysBetween: number | null;
     mostCommonDay: number | null; // 0-6 for Sunday-Saturday
-    seasonalTrends: Array<{month: number; avgAmount: number; count: number}>;
+    seasonalTrends: Array<{ month: number; avgAmount: number; count: number }>;
   };
 }
 
@@ -109,7 +109,7 @@ export class PayeeRepository extends BaseRepository<
   override async create(data: NewPayee, workspaceId: number): Promise<Payee> {
     const [payee] = await db
       .insert(payees)
-      .values({...data, workspaceId})
+      .values({ ...data, workspaceId })
       .returning();
 
     if (!payee) {
@@ -168,7 +168,7 @@ export class PayeeRepository extends BaseRepository<
 
     // Get total count of active payees
     const result = await db
-      .select({total: count()})
+      .select({ total: count() })
       .from(payees)
       .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)));
     const total = result[0]?.total || 0;
@@ -210,7 +210,7 @@ export class PayeeRepository extends BaseRepository<
 
     // Serialize JSON fields to strings
     // Exclude fields that need JSON serialization from the spread
-    const {address, subscriptionInfo, tags, preferredPaymentMethods, ...rest} = data;
+    const { address, subscriptionInfo, tags, preferredPaymentMethods, ...rest } = data;
 
     const updateData: PayeeDbUpdate = {
       ...rest,
@@ -292,7 +292,7 @@ export class PayeeRepository extends BaseRepository<
    */
   async findByAccountTransactions(accountId: number, workspaceId: number): Promise<Payee[]> {
     const payeeIds = await db
-      .selectDistinct({payeeId: transactions.payeeId})
+      .selectDistinct({ payeeId: transactions.payeeId })
       .from(transactions)
       .where(and(eq(transactions.accountId, accountId), isNull(transactions.deletedAt)));
 
@@ -390,7 +390,7 @@ export class PayeeRepository extends BaseRepository<
    */
   async hasTransactions(id: number, workspaceId: number): Promise<boolean> {
     const [result] = await db
-      .select({id: transactions.id})
+      .select({ id: transactions.id })
       .from(transactions)
       .where(and(eq(transactions.payeeId, id), isNull(transactions.deletedAt)))
       .limit(1);
@@ -403,7 +403,7 @@ export class PayeeRepository extends BaseRepository<
    */
   async findWithRelations(
     workspaceId: number
-  ): Promise<Array<Payee & {defaultCategory?: any; defaultBudget?: any}>> {
+  ): Promise<Array<Payee & { defaultCategory?: any; defaultBudget?: any }>> {
     return await db
       .select({
         id: payees.id,
@@ -454,7 +454,7 @@ export class PayeeRepository extends BaseRepository<
    * Advanced search with filters
    */
   async searchWithFilters(filters: PayeeSearchFilters, workspaceId: number): Promise<Payee[]> {
-    logger.debug("Repository searchWithFilters called", {filters});
+    logger.debug("Repository searchWithFilters called", { filters });
     const conditions = [eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)];
 
     if (filters.query) {
@@ -537,8 +537,8 @@ export class PayeeRepository extends BaseRepository<
   /**
    * Get payees that need attention (old transactions, missing defaults, etc.)
    */
-  async findNeedingAttention(workspaceId: number): Promise<Array<Payee & {reason: string}>> {
-    const cutoffDateValue = currentDate.subtract({months: 3});
+  async findNeedingAttention(workspaceId: number): Promise<Array<Payee & { reason: string }>> {
+    const cutoffDateValue = currentDate.subtract({ months: 3 });
     const cutoffDateStr = `${cutoffDateValue.year}-${String(cutoffDateValue.month).padStart(2, "0")}-${String(cutoffDateValue.day).padStart(2, "0")}`;
 
     // Payees without default category or budget, or with old last transaction dates
@@ -643,15 +643,15 @@ export class PayeeRepository extends BaseRepository<
    */
   private async analyzePaymentFrequency(
     id: number
-  ): Promise<{suggestedFrequency: PaymentFrequency | null; confidence: number}> {
+  ): Promise<{ suggestedFrequency: PaymentFrequency | null; confidence: number }> {
     const transactionDates = await db
-      .select({date: transactions.date})
+      .select({ date: transactions.date })
       .from(transactions)
       .where(and(eq(transactions.payeeId, id), isNull(transactions.deletedAt)))
       .orderBy(transactions.date);
 
     if (transactionDates.length < 3) {
-      return {suggestedFrequency: null, confidence: 0};
+      return { suggestedFrequency: null, confidence: 0 };
     }
 
     // Calculate intervals between transactions
@@ -669,7 +669,7 @@ export class PayeeRepository extends BaseRepository<
     }
 
     if (intervals.length === 0) {
-      return {suggestedFrequency: null, confidence: 0};
+      return { suggestedFrequency: null, confidence: 0 };
     }
 
     const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
@@ -697,7 +697,7 @@ export class PayeeRepository extends BaseRepository<
       suggestedFrequency = "irregular";
     }
 
-    return {suggestedFrequency, confidence};
+    return { suggestedFrequency, confidence };
   }
 
   /**
@@ -717,7 +717,7 @@ export class PayeeRepository extends BaseRepository<
       budgetSuggestion = await this.budgetIntelligenceService.suggestBudgetForPayee(id);
     } else {
       // Fallback for backward compatibility
-      const {BudgetIntelligenceService} = await import("$lib/server/domains/budgets/services");
+      const { BudgetIntelligenceService } = await import("$lib/server/domains/budgets/services");
       const intelligenceService = new BudgetIntelligenceService();
       budgetSuggestion = await intelligenceService.suggestBudgetForPayee(id);
     }
@@ -780,7 +780,7 @@ export class PayeeRepository extends BaseRepository<
     // Calculate days between transactions
     const intervals: number[] = [];
     const dayOfWeekCounts = new Array(7).fill(0);
-    const monthlyData: {[month: number]: {total: number; count: number}} = {};
+    const monthlyData: { [month: number]: { total: number; count: number } } = {};
 
     for (let i = 1; i < transactionData.length; i++) {
       const prevDate = transactionData[i - 1]?.date;
@@ -800,7 +800,7 @@ export class PayeeRepository extends BaseRepository<
       // Track monthly data
       const month = curr.getMonth() + 1;
       if (!monthlyData[month]) {
-        monthlyData[month] = {total: 0, count: 0};
+        monthlyData[month] = { total: 0, count: 0 };
       }
       monthlyData[month].total += currAmount || 0;
       monthlyData[month].count++;
@@ -853,7 +853,7 @@ export class PayeeRepository extends BaseRepository<
     // Return count of updated transactions
     // Note: Drizzle doesn't return affected rows count directly, so we query after update
     const transactionCount = await db
-      .select({count: count()})
+      .select({ count: count() })
       .from(transactions)
       .where(eq(transactions.payeeId, targetPayeeId));
 
@@ -871,7 +871,7 @@ export class PayeeRepository extends BaseRepository<
    */
   async getTotalTransactionCount(workspaceId: number): Promise<number> {
     const result = await db
-      .select({count: count()})
+      .select({ count: count() })
       .from(transactions)
       .where(isNull(transactions.deletedAt));
 

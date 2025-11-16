@@ -1,5 +1,5 @@
-import type {Transaction} from "$lib/schema/transactions";
-import {getContext, setContext} from "svelte";
+import type { Transaction } from "$lib/schema/transactions";
+import { getContext, setContext } from "svelte";
 import {
   createAccountTransactionsQuery,
   createTransactionsListQuery,
@@ -22,7 +22,7 @@ export class TransactionsState {
   // Reactive state
   private accountId = $state<number | null>(null);
   private filters = $state<TransactionFilters>({});
-  private pagination = $state<PaginationParams>({page: 0, pageSize: 50});
+  private pagination = $state<PaginationParams>({ page: 0, pageSize: 50 });
 
   // Queries
   private accountTransactionsQuery = $state<ReturnType<
@@ -66,7 +66,7 @@ export class TransactionsState {
   }
 
   updateFilter<K extends keyof TransactionFilters>(key: K, value: TransactionFilters[K]) {
-    this.filters = {...this.filters, [key]: value};
+    this.filters = { ...this.filters, [key]: value };
     this.refreshList();
   }
 
@@ -83,18 +83,18 @@ export class TransactionsState {
 
   nextPage() {
     const currentPage = this.pagination.page || 0;
-    this.setPagination({...this.pagination, page: currentPage + 1});
+    this.setPagination({ ...this.pagination, page: currentPage + 1 });
   }
 
   previousPage() {
     const currentPage = this.pagination.page || 0;
     if (currentPage > 0) {
-      this.setPagination({...this.pagination, page: currentPage - 1});
+      this.setPagination({ ...this.pagination, page: currentPage - 1 });
     }
   }
 
   setPageSize(pageSize: number) {
-    this.setPagination({...this.pagination, pageSize, page: 0});
+    this.setPagination({ ...this.pagination, pageSize, page: 0 });
   }
 
   // Data refresh

@@ -1,8 +1,8 @@
 <script lang="ts">
-import {Label} from '$lib/components/ui/label';
-import {Textarea} from '$lib/components/ui/textarea';
+import { Label } from '$lib/components/ui/label';
+import { Textarea } from '$lib/components/ui/textarea';
 import * as Select from '$lib/components/ui/select';
-import {Badge} from '$lib/components/ui/badge';
+import { Badge } from '$lib/components/ui/badge';
 import {
   Calendar,
   DollarSign,
@@ -16,20 +16,20 @@ import WizardStep from './wizard-step.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
 import IntelligentNumericInput from '$lib/components/input/intelligent-numeric-input.svelte';
 import IntelligentEntityInput from '$lib/components/input/intelligent-entity-input.svelte';
-import type {DateValue} from '@internationalized/date';
-import {timezone, currentDate} from '$lib/utils/dates';
+import type { DateValue } from '@internationalized/date';
+import { timezone, currentDate } from '$lib/utils/dates';
 import {
   transactionWizardStore,
   type WizardStep as WizardStepType,
 } from '$lib/stores/wizardStore.svelte';
-import {createTransactionValidationEngine} from '$lib/utils/wizardValidation';
-import type {Transaction} from '$lib/schema';
-import type {EditableEntityItem} from '$lib/types';
-import type {Component} from 'svelte';
+import { createTransactionValidationEngine } from '$lib/utils/wizardValidation';
+import type { Transaction } from '$lib/schema';
+import type { EditableEntityItem } from '$lib/types';
+import type { Component } from 'svelte';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
-import {usePayeeIntelligence} from '$lib/hooks/use-payee-intelligence.svelte';
-import type {Payee} from '$lib/schema/payees';
-import {createTransformAccessors} from '$lib/utils/bind-helpers';
+import { usePayeeIntelligence } from '$lib/hooks/use-payee-intelligence.svelte';
+import type { Payee } from '$lib/schema/payees';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
 interface Props {
   accountId: number;
@@ -39,7 +39,7 @@ interface Props {
   onComplete?: (data: Record<string, any>) => Promise<void>;
 }
 
-let {accountId, initialData = {}, payees = [], categories = [], onComplete}: Props = $props();
+let { accountId, initialData = {}, payees = [], categories = [], onComplete }: Props = $props();
 
 // Initialize wizard steps
 const steps: WizardStepType[] = [
@@ -89,7 +89,7 @@ const statusAccessors = createTransformAccessors(
 );
 
 // Payee intelligence integration
-const {getPayeeSuggestionsFor, generateBasicSuggestions} = usePayeeIntelligence();
+const { getPayeeSuggestionsFor, generateBasicSuggestions } = usePayeeIntelligence();
 
 // Get selected payee data for intelligence
 const selectedPayee = $derived.by(() => {
@@ -159,7 +159,9 @@ const amountSuggestion = $derived.by(() => {
   return {
     type: suggestions.amount.type,
     reason: suggestions.amount.reason,
-    ...(suggestions.amount.confidence !== undefined && {confidence: suggestions.amount.confidence}),
+    ...(suggestions.amount.confidence !== undefined && {
+      confidence: suggestions.amount.confidence,
+    }),
     suggestedAmount: suggestions.amount.suggestedAmount || 0,
     onApply: () => {
       if (suggestions.amount?.suggestedAmount) {
@@ -234,8 +236,8 @@ $effect(() => {
 
 // Status options
 const statusOptions = [
-  {value: 'pending', label: 'Pending', description: 'Transaction is pending'},
-  {value: 'cleared', label: 'Cleared', description: 'Transaction has cleared'},
+  { value: 'pending', label: 'Pending', description: 'Transaction is pending' },
+  { value: 'cleared', label: 'Cleared', description: 'Transaction has cleared' },
 ];
 
 // Review data formatting
@@ -292,7 +294,7 @@ async function handleComplete() {
       <IntelligentNumericInput
         bind:value={amount}
         buttonClass="w-full"
-        {...amountSuggestion && {suggestion: amountSuggestion}} />
+        {...amountSuggestion && { suggestion: amountSuggestion }} />
       <p class="text-muted-foreground text-xs">
         Enter a negative amount for expenses, positive for income.
       </p>
@@ -330,7 +332,7 @@ async function handleComplete() {
         bind:value={category}
         icon={SquareMousePointer as unknown as Component}
         buttonClass="w-full"
-        {...categorySuggestion && {suggestion: categorySuggestion}} />
+        {...categorySuggestion && { suggestion: categorySuggestion }} />
       <p class="text-muted-foreground text-xs">
         Choose the category that best describes this transaction.
       </p>

@@ -1,6 +1,6 @@
 <script lang="ts">
-import {Tooltip as TooltipPrimitive} from 'bits-ui';
-import {cn} from '$lib/utils';
+import { Tooltip as TooltipPrimitive } from 'bits-ui';
+import { cn } from '$lib/utils';
 
 let {
   ref = $bindable(null),
@@ -28,7 +28,7 @@ let {
     {...restProps}>
     {@render children?.()}
     <TooltipPrimitive.Arrow>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <div
           class={cn(
             'bg-primary z-50 size-2.5 rotate-45 rounded-[2px]',

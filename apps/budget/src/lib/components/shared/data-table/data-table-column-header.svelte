@@ -5,12 +5,12 @@ import ArrowUp from '@lucide/svelte/icons/arrow-up';
 import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
-import type {HTMLAttributes} from 'svelte/elements';
-import type {Column, Table} from '@tanstack/table-core';
-import type {WithoutChildren} from 'bits-ui';
-import {cn} from '$lib/utils';
+import type { HTMLAttributes } from 'svelte/elements';
+import type { Column, Table } from '@tanstack/table-core';
+import type { WithoutChildren } from 'bits-ui';
+import { cn } from '$lib/utils';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import Button, {buttonVariants} from '$lib/components/ui/button/button.svelte';
+import Button, { buttonVariants } from '$lib/components/ui/button/button.svelte';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
@@ -18,7 +18,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   title: string;
 }
 
-let {column, table, class: className, title, ...restProps}: WithoutChildren<Props> = $props();
+let { column, table, class: className, title, ...restProps }: WithoutChildren<Props> = $props();
 
 const specialColumns = ['select-col', 'expand-contract-col', 'actions', 'transfer'];
 
@@ -146,14 +146,14 @@ function moveRight() {
 </script>
 
 {#if !column?.getCanSort() && !column?.getCanHide()}
-  <div class={cn(buttonVariants({variant: 'ghost', size: 'sm'}), className)} {...restProps}>
+  <div class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), className)} {...restProps}>
     {title}
   </div>
 {:else}
   <div class={cn('flex items-center', className)} {...restProps}>
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
-        {#snippet child({props})}
+        {#snippet child({ props })}
           <Button
             {...props}
             variant="ghost"

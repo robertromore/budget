@@ -1,6 +1,6 @@
-import {getContext, setContext} from "svelte";
-import {SvelteSet} from "svelte/reactivity";
-import type {Payee} from "$lib/schema/payees";
+import { getContext, setContext } from "svelte";
+import { SvelteSet } from "svelte/reactivity";
+import type { Payee } from "$lib/schema/payees";
 
 const KEY = Symbol("payee-bulk-operations");
 
@@ -46,7 +46,7 @@ export class PayeeBulkOperationsState {
   maxUndoOperations = 10;
 
   // Clipboard for copy/paste operations
-  clipboard = $state<{payeeIds: number[]; operation: "copy" | "cut" | null}>({
+  clipboard = $state<{ payeeIds: number[]; operation: "copy" | "cut" | null }>({
     payeeIds: [],
     operation: null,
   });
@@ -324,7 +324,7 @@ export class PayeeBulkOperationsState {
   getOperationSummary(): string {
     if (!this.currentOperation) return "";
 
-    const {operation, total, completed, failed} = this.currentOperation;
+    const { operation, total, completed, failed } = this.currentOperation;
     const inProgress = total - completed - failed;
 
     if (this.currentOperation.isRunning) {
@@ -337,7 +337,7 @@ export class PayeeBulkOperationsState {
   getEstimatedTimeRemaining(): number | null {
     if (!this.currentOperation?.isRunning || !this.currentOperation.startTime) return null;
 
-    const {completed, total, startTime} = this.currentOperation;
+    const { completed, total, startTime } = this.currentOperation;
     if (completed === 0) return null;
 
     const elapsed = Date.now() - startTime.getTime();

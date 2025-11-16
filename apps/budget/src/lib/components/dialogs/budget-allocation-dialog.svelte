@@ -37,7 +37,7 @@ interface Props {
   onAllocationChanged?: () => void;
 }
 
-let {open = $bindable(false), transaction, onOpenChange, onAllocationChanged}: Props = $props();
+let { open = $bindable(false), transaction, onOpenChange, onAllocationChanged }: Props = $props();
 
 const budgetsQuery = listBudgets().options();
 const availableBudgets = $derived.by(() => budgetsQuery.data ?? []);

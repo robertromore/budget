@@ -1,4 +1,4 @@
-import type {Account} from "$lib/schema/accounts";
+import type { Account } from "$lib/schema/accounts";
 
 /**
  * Database result type for account transaction queries with joined payee and category

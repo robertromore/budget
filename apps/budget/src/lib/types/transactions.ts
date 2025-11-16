@@ -1,6 +1,6 @@
 // $lib/types/transaction.ts
-import type {Category, Payee} from "$lib/schema";
-import type {DateValue} from "@internationalized/date";
+import type { Category, Payee } from "$lib/schema";
+import type { DateValue } from "@internationalized/date";
 
 /**
  * The shape of a single transaction record.
@@ -39,7 +39,7 @@ export type TransactionsFormat = {
 /**
  * Simple key/value pair used in filter dropdowns.
  */
-export type AvailableFiltersEntry = {id: string; label: string};
+export type AvailableFiltersEntry = { id: string; label: string };
 export type AvailableFilters = Array<AvailableFiltersEntry>;
 
 /**

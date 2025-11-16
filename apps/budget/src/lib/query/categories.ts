@@ -1,16 +1,16 @@
-import type {Category} from "$lib/schema/categories";
-import {formInsertCategorySchema} from "$lib/schema/categories";
+import type { Category } from "$lib/schema/categories";
+import { formInsertCategorySchema } from "$lib/schema/categories";
 import type {
   CategoryWithBudgets,
   CategoryWithChildren,
   CategoryWithGroup,
   CategoryWithStats,
 } from "$lib/server/domains/categories/repository";
-import {trpc} from "$lib/trpc/client";
-import type {CategoryTreeNode} from "$lib/types/categories";
-import {z} from "zod";
-import {cachePatterns} from "./_client";
-import {createQueryKeys, defineMutation, defineQuery} from "./_factory";
+import { trpc } from "$lib/trpc/client";
+import type { CategoryTreeNode } from "$lib/types/categories";
+import { z } from "zod";
+import { cachePatterns } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 export const categoryKeys = createQueryKeys("categories", {
   all: () => ["categories", "all"] as const,
@@ -50,13 +50,13 @@ export const listCategoriesWithGroups = () =>
 export const getCategoryById = (id: number) =>
   defineQuery<Category>({
     queryKey: categoryKeys.detail(id),
-    queryFn: () => trpc().categoriesRoutes.load.query({id}),
+    queryFn: () => trpc().categoriesRoutes.load.query({ id }),
   });
 
 export const searchCategories = (query: string) =>
   defineQuery<Category[]>({
     queryKey: categoryKeys.search(query),
-    queryFn: () => trpc().categoriesRoutes.search.query({query}),
+    queryFn: () => trpc().categoriesRoutes.search.query({ query }),
   });
 
 type FormCategoryInput = z.infer<typeof formInsertCategorySchema>;
@@ -83,7 +83,7 @@ export const updateCategory = defineMutation<FormCategoryInput, Category>({
 });
 
 export const deleteCategory = defineMutation<number, Category>({
-  mutationFn: (id) => trpc().categoriesRoutes.remove.mutate({id}),
+  mutationFn: (id) => trpc().categoriesRoutes.remove.mutate({ id }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryKeys.all());
   },
@@ -97,22 +97,23 @@ export const deleteCategory = defineMutation<number, Category>({
   },
 });
 
-export const bulkDeleteCategories = defineMutation<number[], {deletedCount: number; errors: any[]}>(
-  {
-    mutationFn: (entities) => trpc().categoriesRoutes.delete.mutate({entities}),
-    onSuccess: () => {
-      cachePatterns.invalidatePrefix(categoryKeys.all());
-    },
-    successMessage: "Categories deleted",
-    errorMessage: "Failed to delete categories",
-  }
-);
+export const bulkDeleteCategories = defineMutation<
+  number[],
+  { deletedCount: number; errors: any[] }
+>({
+  mutationFn: (entities) => trpc().categoriesRoutes.delete.mutate({ entities }),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(categoryKeys.all());
+  },
+  successMessage: "Categories deleted",
+  errorMessage: "Failed to delete categories",
+});
 
 export const reorderCategories = defineMutation<
-  Array<{id: number; displayOrder: number}>,
-  {updatedCount: number; errors: string[]}
+  Array<{ id: number; displayOrder: number }>,
+  { updatedCount: number; errors: string[] }
 >({
-  mutationFn: (updates) => trpc().categoriesRoutes.reorder.mutate({updates}),
+  mutationFn: (updates) => trpc().categoriesRoutes.reorder.mutate({ updates }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryKeys.all());
   },
@@ -129,13 +130,13 @@ export const listCategoriesWithBudgets = () =>
 export const getCategoryByIdWithBudgets = (id: number) =>
   defineQuery<CategoryWithBudgets>({
     queryKey: categoryKeys.detailWithBudgets(id),
-    queryFn: () => trpc().categoriesRoutes.loadWithBudgets.query({id}),
+    queryFn: () => trpc().categoriesRoutes.loadWithBudgets.query({ id }),
   });
 
 export const getCategoryBySlugWithBudgets = (slug: string) =>
   defineQuery<CategoryWithBudgets>({
     queryKey: categoryKeys.slugWithBudgets(slug),
-    queryFn: () => trpc().categoriesRoutes.getBySlugWithBudgets.query({slug}),
+    queryFn: () => trpc().categoriesRoutes.getBySlugWithBudgets.query({ slug }),
   });
 
 export const listRootCategories = () =>
@@ -147,13 +148,13 @@ export const listRootCategories = () =>
 export const getCategoryChildren = (parentId: number) =>
   defineQuery<Category[]>({
     queryKey: categoryKeys.children(parentId),
-    queryFn: () => trpc().categoriesRoutes.categoryChildren.query({id: parentId}),
+    queryFn: () => trpc().categoriesRoutes.categoryChildren.query({ id: parentId }),
   });
 
 export const getCategoryWithChildren = (id: number) =>
   defineQuery<CategoryWithChildren>({
     queryKey: categoryKeys.withChildren(id),
-    queryFn: () => trpc().categoriesRoutes.categoryWithChildren.query({id}),
+    queryFn: () => trpc().categoriesRoutes.categoryWithChildren.query({ id }),
   });
 
 export const getCategoryHierarchyTree = () =>
@@ -163,7 +164,7 @@ export const getCategoryHierarchyTree = () =>
   });
 
 export const setCategoryParent = defineMutation<
-  {categoryId: number; parentId: number | null},
+  { categoryId: number; parentId: number | null },
   Category
 >({
   mutationFn: (input) => trpc().categoriesRoutes.setParent.mutate(input),
@@ -192,8 +193,8 @@ export const getDefaultCategoriesStatus = () =>
   });
 
 export const seedDefaultCategories = defineMutation<
-  {slugs?: string[]},
-  {created: number; skipped: number; errors: string[]}
+  { slugs?: string[] },
+  { created: number; skipped: number; errors: string[] }
 >({
   mutationFn: (input) => trpc().categoriesRoutes.seedDefaults.mutate(input),
   onSuccess: () => {

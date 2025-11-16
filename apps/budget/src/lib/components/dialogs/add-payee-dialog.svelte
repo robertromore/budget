@@ -1,9 +1,9 @@
 <script lang="ts">
 import * as Sheet from '$lib/components/ui/sheet';
-import type {UseBoolean} from '$lib/hooks/ui/use-boolean.svelte';
-import type {UseNumber} from '$lib/hooks/ui/use-number.svelte';
-import {managingPayeeId, newPayeeDialog} from '$lib/states/ui/payees.svelte';
-import {ManagePayeeDialogForm} from '$lib/components/forms';
+import type { UseBoolean } from '$lib/hooks/ui/use-boolean.svelte';
+import type { UseNumber } from '$lib/hooks/ui/use-number.svelte';
+import { managingPayeeId, newPayeeDialog } from '$lib/states/ui/payees.svelte';
+import { ManagePayeeDialogForm } from '$lib/components/forms';
 
 const dialogOpen: UseBoolean = $derived(newPayeeDialog);
 const payeeId: UseNumber = $derived(managingPayeeId);

@@ -1,4 +1,4 @@
-import {z} from "zod";
+import { z } from "zod";
 import validator from "validator";
 
 // Superform-compatible schemas for transactions (not using drizzle-zod)

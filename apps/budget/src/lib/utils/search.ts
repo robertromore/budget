@@ -127,7 +127,7 @@ export function clearFilters<T extends Record<string, any>>(
   filters: T,
   keys: (keyof T)[]
 ): Partial<T> {
-  const newFilters = {...filters};
+  const newFilters = { ...filters };
 
   for (const key of keys) {
     delete newFilters[key];
@@ -144,7 +144,7 @@ export function updateFilters<T extends Record<string, any>>(
   currentFilters: T,
   updates: Partial<T>
 ): T {
-  const newFilters = {...currentFilters};
+  const newFilters = { ...currentFilters };
 
   for (const [key, value] of Object.entries(updates)) {
     if (!isActiveFilterValue(value)) {

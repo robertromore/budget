@@ -1,17 +1,17 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
-import {BudgetWizard, WizardFormWrapper, budgetWizardStore} from '$lib/components/wizard';
-import {ManageBudgetForm} from '$lib/components/forms';
-import {createBudget} from '$lib/query/budgets';
-import {getBudgetTemplateById} from '$lib/constants/budget-templates';
-import type {CreateBudgetRequest} from '$lib/server/domains/budgets/services';
+import { Button } from '$lib/components/ui/button';
+import { BudgetWizard, WizardFormWrapper, budgetWizardStore } from '$lib/components/wizard';
+import { ManageBudgetForm } from '$lib/components/forms';
+import { createBudget } from '$lib/query/budgets';
+import { getBudgetTemplateById } from '$lib/constants/budget-templates';
+import type { CreateBudgetRequest } from '$lib/server/domains/budgets/services';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
-import {goto} from '$app/navigation';
+import { goto } from '$app/navigation';
 
-import {browser} from '$app/environment';
+import { browser } from '$app/environment';
 
-let {data} = $props();
+let { data } = $props();
 
 // Check for template ID in URL params and get template from constants
 const templateId = $state(

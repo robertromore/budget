@@ -6,9 +6,9 @@
  */
 
 import * as XLSX from "xlsx";
-import type {FileProcessor, ImportRow, NormalizedTransaction} from "$lib/types/import";
-import {FileValidationError, ParseError} from "../errors";
-import {normalizeHeader, parseDate, parseAmount, sanitizeText, validateFileType} from "../utils";
+import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
+import { FileValidationError, ParseError } from "../errors";
+import { normalizeHeader, parseDate, parseAmount, sanitizeText, validateFileType } from "../utils";
 
 export class ExcelProcessor implements FileProcessor {
   private readonly maxFileSize = 10 * 1024 * 1024; // 10MB
@@ -18,7 +18,7 @@ export class ExcelProcessor implements FileProcessor {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): {valid: boolean; error?: string} {
+  validateFile(file: File): { valid: boolean; error?: string } {
     // Check file type
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
@@ -43,7 +43,7 @@ export class ExcelProcessor implements FileProcessor {
       };
     }
 
-    return {valid: true};
+    return { valid: true };
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {
@@ -58,7 +58,7 @@ export class ExcelProcessor implements FileProcessor {
       const arrayBuffer = await file.arrayBuffer();
 
       // Parse workbook
-      const workbook = XLSX.read(arrayBuffer, {type: "array"});
+      const workbook = XLSX.read(arrayBuffer, { type: "array" });
 
       // Get first sheet
       const firstSheetName = workbook.SheetNames[0];

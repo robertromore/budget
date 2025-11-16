@@ -1,7 +1,7 @@
-import type {Category, Payee, Transaction} from "$lib/schema";
-import {currencyFormatter, transactionFormatter} from "$lib/utils/formatters";
-import {getContext, setContext} from "svelte";
-import {trpc} from "$lib/trpc/client";
+import type { Category, Payee, Transaction } from "$lib/schema";
+import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
+import { getContext, setContext } from "svelte";
+import { trpc } from "$lib/trpc/client";
 
 const KEY = Symbol("server_account");
 
@@ -93,7 +93,7 @@ export class ServerAccountState {
     // Set transactions and pagination
     if (transactionsData?.transactions) {
       this.currentTransactions = transactionsData.transactions;
-      this.pagination = {...this.pagination, ...transactionsData.pagination};
+      this.pagination = { ...this.pagination, ...transactionsData.pagination };
     }
 
     // Mark as loaded
@@ -143,7 +143,7 @@ export class ServerAccountState {
     this.summaryError = null;
 
     try {
-      const summary = await trpc().serverAccountsRoutes.loadSummary.query({id: accountId});
+      const summary = await trpc().serverAccountsRoutes.loadSummary.query({ id: accountId });
       this.accountSummary = {
         id: summary.id,
         name: summary.name,
@@ -179,15 +179,15 @@ export class ServerAccountState {
         pageSize: this.pagination.pageSize,
         sortBy: this.filters.sortBy,
         sortOrder: this.filters.sortOrder,
-        ...(this.filters.searchQuery && {searchQuery: this.filters.searchQuery}),
-        ...(this.filters.dateFrom && {dateFrom: this.filters.dateFrom}),
-        ...(this.filters.dateTo && {dateTo: this.filters.dateTo}),
+        ...(this.filters.searchQuery && { searchQuery: this.filters.searchQuery }),
+        ...(this.filters.dateFrom && { dateFrom: this.filters.dateFrom }),
+        ...(this.filters.dateTo && { dateTo: this.filters.dateTo }),
       };
 
       const result = await trpc().serverAccountsRoutes.loadTransactions.query(transactionParams);
 
       this.currentTransactions = result.transactions;
-      this.pagination = {...this.pagination, ...result.pagination};
+      this.pagination = { ...this.pagination, ...result.pagination };
     } catch (error) {
       this.transactionsError =
         error instanceof Error ? error.message : "Failed to load transactions";
@@ -320,9 +320,9 @@ export class ServerAccountState {
         pageSize: this.pagination.pageSize,
         sortBy: this.filters.sortBy,
         sortOrder: this.filters.sortOrder,
-        ...(this.filters.searchQuery && {searchQuery: this.filters.searchQuery}),
-        ...(this.filters.dateFrom && {dateFrom: this.filters.dateFrom}),
-        ...(this.filters.dateTo && {dateTo: this.filters.dateTo}),
+        ...(this.filters.searchQuery && { searchQuery: this.filters.searchQuery }),
+        ...(this.filters.dateFrom && { dateFrom: this.filters.dateFrom }),
+        ...(this.filters.dateTo && { dateTo: this.filters.dateTo }),
       };
 
       // Prefetch silently in background
@@ -350,9 +350,9 @@ export class ServerAccountState {
         pageSize: this.pagination.pageSize,
         sortBy: this.filters.sortBy,
         sortOrder: this.filters.sortOrder,
-        ...(this.filters.searchQuery && {searchQuery: this.filters.searchQuery}),
-        ...(this.filters.dateFrom && {dateFrom: this.filters.dateFrom}),
-        ...(this.filters.dateTo && {dateTo: this.filters.dateTo}),
+        ...(this.filters.searchQuery && { searchQuery: this.filters.searchQuery }),
+        ...(this.filters.dateFrom && { dateFrom: this.filters.dateFrom }),
+        ...(this.filters.dateTo && { dateTo: this.filters.dateTo }),
       };
 
       // Prefetch silently in background

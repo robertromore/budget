@@ -1,15 +1,15 @@
 <script lang="ts">
-import {page} from '$app/state';
-import {Button} from '$lib/components/ui/button';
+import { page } from '$app/state';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Calendar from '@lucide/svelte/icons/calendar';
-import type {PageData} from './$types';
+import type { PageData } from './$types';
 
-let {data}: {data: PageData} = $props();
+let { data }: { data: PageData } = $props();
 
 const categoryId = $derived(Number(page.params.id));
 const category = $derived(data.category);

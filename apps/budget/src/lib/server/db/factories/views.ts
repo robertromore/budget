@@ -1,7 +1,7 @@
-import {db} from "..";
-import {views, type View} from "$lib/schema/views";
-import type {ViewFilter, ViewDisplayState} from "$lib/types";
-import {faker} from "@faker-js/faker";
+import { db } from "..";
+import { views, type View } from "$lib/schema/views";
+import type { ViewFilter, ViewDisplayState } from "$lib/types";
+import { faker } from "@faker-js/faker";
 
 export interface ViewFactoryOptions {
   withFilters?: boolean;
@@ -33,7 +33,7 @@ export interface ViewFactoryOptions {
  */
 export const viewFactory = async (
   workspaceId: number,
-  count: number = faker.number.int({min: 1, max: 5}),
+  count: number = faker.number.int({ min: 1, max: 5 }),
   options: ViewFactoryOptions = {}
 ): Promise<View[]> => {
   const views_collection: View[] = [];
@@ -112,7 +112,7 @@ function generateFilters(presetType: string): ViewFilter[] {
         {
           column: "categoryId",
           filter: "equals",
-          value: [faker.number.int({min: 1, max: 10})],
+          value: [faker.number.int({ min: 1, max: 10 })],
         },
       ];
 
@@ -171,7 +171,7 @@ function generateDisplayState(): ViewDisplayState {
   };
 
   // Only add grouping if enabled (avoid undefined assignment)
-  if (faker.datatype.boolean({probability: 0.3})) {
+  if (faker.datatype.boolean({ probability: 0.3 })) {
     state.grouping = ["date"];
   }
 

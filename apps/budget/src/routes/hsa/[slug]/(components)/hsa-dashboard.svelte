@@ -1,5 +1,5 @@
 <script lang="ts">
-import {rpc} from '$lib/query';
+import { rpc } from '$lib/query';
 import * as Card from '$lib/components/ui/card';
 import * as ResponsiveSheet from '$lib/components/ui/responsive-sheet';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
@@ -14,7 +14,7 @@ interface Props {
   account: any;
 }
 
-let {account}: Props = $props();
+let { account }: Props = $props();
 
 const hsaAccountId = $derived(account.id);
 const hsaAccount = $derived(account);

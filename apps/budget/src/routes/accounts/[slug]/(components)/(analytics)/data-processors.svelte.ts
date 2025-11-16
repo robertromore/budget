@@ -1,9 +1,9 @@
-import type {TransactionsFormat} from "$lib/types";
-import {CalendarDate} from "@internationalized/date";
-import {currentDate, parseDateValue} from "$lib/utils/dates";
+import type { TransactionsFormat } from "$lib/types";
+import { CalendarDate } from "@internationalized/date";
+import { currentDate, parseDateValue } from "$lib/utils/dates";
 
 export function createMonthlySpendingProcessor(transactions: TransactionsFormat[]) {
-  let processMonthlySpending = $state<Array<{month: CalendarDate; amount: number}>>([]);
+  let processMonthlySpending = $state<Array<{ month: CalendarDate; amount: number }>>([]);
 
   $effect(() => {
     if (!transactions?.length) {
@@ -11,7 +11,7 @@ export function createMonthlySpendingProcessor(transactions: TransactionsFormat[
       return;
     }
 
-    const monthlyData: Record<string, {amount: number; date: CalendarDate}> = {};
+    const monthlyData: Record<string, { amount: number; date: CalendarDate }> = {};
 
     transactions.forEach((t) => {
       if (t.amount < 0) {
@@ -50,7 +50,7 @@ export function createMonthlySpendingProcessor(transactions: TransactionsFormat[
 
 export function createIncomeVsExpensesProcessor(transactions: TransactionsFormat[]) {
   let processIncomeVsExpenses = $state<
-    Array<{month: CalendarDate; income: number; expenses: number}>
+    Array<{ month: CalendarDate; income: number; expenses: number }>
   >([]);
 
   $effect(() => {
@@ -59,7 +59,7 @@ export function createIncomeVsExpensesProcessor(transactions: TransactionsFormat
       return;
     }
 
-    const monthlyData: Record<string, {income: number; expenses: number}> = {};
+    const monthlyData: Record<string, { income: number; expenses: number }> = {};
 
     transactions.forEach((t) => {
       // Use parseDateValue for consistent date handling
@@ -70,7 +70,7 @@ export function createIncomeVsExpensesProcessor(transactions: TransactionsFormat
       const month = parsedDate.month;
       const monthKey = `${year}-${month.toString().padStart(2, "0")}`;
 
-      if (!monthlyData[monthKey]) monthlyData[monthKey] = {income: 0, expenses: 0};
+      if (!monthlyData[monthKey]) monthlyData[monthKey] = { income: 0, expenses: 0 };
 
       if (t.amount > 0) {
         monthlyData[monthKey].income += t.amount;
@@ -102,7 +102,7 @@ export function createIncomeVsExpensesProcessor(transactions: TransactionsFormat
 }
 
 export function createCategorySpendingProcessor(transactions: TransactionsFormat[]) {
-  let processCategorySpending = $state<Array<{category: string; amount: number}>>([]);
+  let processCategorySpending = $state<Array<{ category: string; amount: number }>>([]);
 
   $effect(() => {
     if (!transactions?.length) {
@@ -120,7 +120,7 @@ export function createCategorySpendingProcessor(transactions: TransactionsFormat
     });
 
     processCategorySpending = Object.entries(categoryData)
-      .map(([category, amount]) => ({category, amount}))
+      .map(([category, amount]) => ({ category, amount }))
       .sort((a, b) => b.amount - a.amount);
   });
 
@@ -132,7 +132,7 @@ export function createCategorySpendingProcessor(transactions: TransactionsFormat
 }
 
 export function createTopPayeesProcessor(transactions: TransactionsFormat[]) {
-  let processTopPayees = $state<Array<{payee: string; total: number; count: number}>>([]);
+  let processTopPayees = $state<Array<{ payee: string; total: number; count: number }>>([]);
 
   $effect(() => {
     if (!transactions?.length) {
@@ -140,19 +140,19 @@ export function createTopPayeesProcessor(transactions: TransactionsFormat[]) {
       return;
     }
 
-    const payeeData: Record<string, {total: number; count: number}> = {};
+    const payeeData: Record<string, { total: number; count: number }> = {};
 
     transactions.forEach((t) => {
       if (t.payee?.name) {
         const payee = t.payee.name;
-        if (!payeeData[payee]) payeeData[payee] = {total: 0, count: 0};
+        if (!payeeData[payee]) payeeData[payee] = { total: 0, count: 0 };
         payeeData[payee].total += Math.abs(t.amount);
         payeeData[payee].count += 1;
       }
     });
 
     processTopPayees = Object.entries(payeeData)
-      .map(([payee, data]) => ({payee, ...data}))
+      .map(([payee, data]) => ({ payee, ...data }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 10);
   });
@@ -166,7 +166,7 @@ export function createTopPayeesProcessor(transactions: TransactionsFormat[]) {
 
 export function createCashFlowProcessor(transactions: TransactionsFormat[]) {
   let processCashFlow = $state<
-    Array<{month: CalendarDate; cashFlow: number; income: number; expenses: number}>
+    Array<{ month: CalendarDate; cashFlow: number; income: number; expenses: number }>
   >([]);
 
   $effect(() => {
@@ -175,7 +175,7 @@ export function createCashFlowProcessor(transactions: TransactionsFormat[]) {
       return;
     }
 
-    const monthlyData: Record<string, {income: number; expenses: number}> = {};
+    const monthlyData: Record<string, { income: number; expenses: number }> = {};
 
     transactions.forEach((t) => {
       // Use parseDateValue for consistent date handling
@@ -186,7 +186,7 @@ export function createCashFlowProcessor(transactions: TransactionsFormat[]) {
       const month = parsedDate.month;
       const monthKey = `${year}-${month.toString().padStart(2, "0")}`;
 
-      if (!monthlyData[monthKey]) monthlyData[monthKey] = {income: 0, expenses: 0};
+      if (!monthlyData[monthKey]) monthlyData[monthKey] = { income: 0, expenses: 0 };
 
       if (t.amount > 0) {
         monthlyData[monthKey].income += t.amount;

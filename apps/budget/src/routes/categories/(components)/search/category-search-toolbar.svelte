@@ -1,7 +1,7 @@
 <script lang="ts">
-import {EntitySearchToolbar, type SortOption} from '$lib/components/shared/search';
+import { EntitySearchToolbar, type SortOption } from '$lib/components/shared/search';
 import * as Select from '$lib/components/ui/select';
-import type {CategorySearchFilters} from '$lib/states/ui/category-search.svelte';
+import type { CategorySearchFilters } from '$lib/states/ui/category-search.svelte';
 
 type CategorySortBy = 'name' | 'created' | 'lastTransaction' | 'totalAmount';
 type SortOrder = 'asc' | 'desc';
@@ -34,12 +34,12 @@ let {
 
 // Sort options
 const sortOptions: SortOption<CategorySortBy>[] = [
-  {value: 'name', label: 'Name', order: 'asc'},
-  {value: 'name', label: 'Name', order: 'desc'},
-  {value: 'created', label: 'Date Created', order: 'desc'},
-  {value: 'lastTransaction', label: 'Last Transaction', order: 'desc'},
-  {value: 'totalAmount', label: 'Amount (High)', order: 'desc'},
-  {value: 'totalAmount', label: 'Amount (Low)', order: 'asc'},
+  { value: 'name', label: 'Name', order: 'asc' },
+  { value: 'name', label: 'Name', order: 'desc' },
+  { value: 'created', label: 'Date Created', order: 'desc' },
+  { value: 'lastTransaction', label: 'Last Transaction', order: 'desc' },
+  { value: 'totalAmount', label: 'Amount (High)', order: 'desc' },
+  { value: 'totalAmount', label: 'Amount (Low)', order: 'asc' },
 ];
 
 // Count active filters
@@ -95,11 +95,11 @@ const filterSummaries = $derived(() => {
   }
 
   if (filters.isSeasonal !== undefined) {
-    summary.push({key: 'isSeasonal', label: filters.isSeasonal ? 'Seasonal' : 'Not Seasonal'});
+    summary.push({ key: 'isSeasonal', label: filters.isSeasonal ? 'Seasonal' : 'Not Seasonal' });
   }
 
   if (filters.isActive !== undefined) {
-    summary.push({key: 'isActive', label: filters.isActive ? 'Active Only' : 'Inactive Only'});
+    summary.push({ key: 'isActive', label: filters.isActive ? 'Active Only' : 'Inactive Only' });
   }
 
   return summary;
@@ -109,7 +109,7 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
   key: K,
   value: CategorySearchFilters[K]
 ) => {
-  const newFilters = {...filters};
+  const newFilters = { ...filters };
   if (value === undefined || value === null || value === '') {
     delete newFilters[key];
   } else {

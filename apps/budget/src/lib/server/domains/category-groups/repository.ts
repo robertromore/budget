@@ -1,4 +1,4 @@
-import {categories, type Category} from "$lib/schema/categories";
+import { categories, type Category } from "$lib/schema/categories";
 import {
   categoryGroupMemberships,
   categoryGroupRecommendations,
@@ -14,11 +14,11 @@ import {
   type NewCategoryGroupRecommendation,
   type NewCategoryGroupSettings,
 } from "$lib/schema/category-groups";
-import {db} from "$lib/server/db";
-import {BaseRepository} from "$lib/server/shared/database/base-repository";
-import {NotFoundError} from "$lib/server/shared/types/errors";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {and, count, desc, eq, isNull} from "drizzle-orm";
+import { db } from "$lib/server/db";
+import { BaseRepository } from "$lib/server/shared/database/base-repository";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 
 // ================================================================================
 // Types
@@ -173,7 +173,7 @@ export class CategoryGroupRepository extends BaseRepository<
    */
   private async getMemberCount(groupId: number): Promise<number> {
     const [result] = await db
-      .select({count: count(categoryGroupMemberships.id)})
+      .select({ count: count(categoryGroupMemberships.id) })
       .from(categoryGroupMemberships)
       .where(eq(categoryGroupMemberships.categoryGroupId, groupId));
 
@@ -185,7 +185,7 @@ export class CategoryGroupRepository extends BaseRepository<
    */
   private async getPendingRecommendationCount(groupId: number): Promise<number> {
     const [result] = await db
-      .select({count: count(categoryGroupRecommendations.id)})
+      .select({ count: count(categoryGroupRecommendations.id) })
       .from(categoryGroupRecommendations)
       .where(
         and(
@@ -302,7 +302,7 @@ export class CategoryGroupMembershipRepository extends BaseRepository<
    */
   async isCategoryInGroup(categoryId: number): Promise<boolean> {
     const [result] = await db
-      .select({id: categoryGroupMemberships.id})
+      .select({ id: categoryGroupMemberships.id })
       .from(categoryGroupMemberships)
       .where(eq(categoryGroupMemberships.categoryId, categoryId))
       .limit(1);
@@ -358,12 +358,12 @@ export class CategoryGroupMembershipRepository extends BaseRepository<
   /**
    * Update sort order for categories in a group
    */
-  async updateSortOrders(updates: Array<{categoryId: number; sortOrder: number}>): Promise<void> {
+  async updateSortOrders(updates: Array<{ categoryId: number; sortOrder: number }>): Promise<void> {
     await db.transaction(async (tx) => {
       for (const update of updates) {
         await tx
           .update(categoryGroupMemberships)
-          .set({sortOrder: update.sortOrder})
+          .set({ sortOrder: update.sortOrder })
           .where(eq(categoryGroupMemberships.categoryId, update.categoryId));
       }
     });
@@ -428,7 +428,7 @@ export class CategoryGroupRecommendationRepository extends BaseRepository<
   /**
    * Find all pending recommendations with category names
    */
-  async findPending(): Promise<(CategoryGroupRecommendation & {categoryName: string | null})[]> {
+  async findPending(): Promise<(CategoryGroupRecommendation & { categoryName: string | null })[]> {
     const results = await db
       .select({
         recommendation: categoryGroupRecommendations,
@@ -500,7 +500,7 @@ export class CategoryGroupRecommendationRepository extends BaseRepository<
    */
   async getPendingCount(): Promise<number> {
     const [result] = await db
-      .select({count: count(categoryGroupRecommendations.id)})
+      .select({ count: count(categoryGroupRecommendations.id) })
       .from(categoryGroupRecommendations)
       .where(eq(categoryGroupRecommendations.status, "pending"));
 
@@ -512,7 +512,7 @@ export class CategoryGroupRecommendationRepository extends BaseRepository<
    */
   async hasPendingRecommendations(categoryId: number): Promise<boolean> {
     const [result] = await db
-      .select({id: categoryGroupRecommendations.id})
+      .select({ id: categoryGroupRecommendations.id })
       .from(categoryGroupRecommendations)
       .where(
         and(

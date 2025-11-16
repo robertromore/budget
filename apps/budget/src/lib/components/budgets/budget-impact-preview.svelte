@@ -1,8 +1,8 @@
 <script lang="ts">
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
-import {formatCurrency} from '$lib/utils';
-import {Progress} from '$lib/components/ui/progress';
-import {TriangleAlert, TrendingUp, TrendingDown, Check} from '@lucide/svelte/icons';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { formatCurrency } from '$lib/utils';
+import { Progress } from '$lib/components/ui/progress';
+import { TriangleAlert, TrendingUp, TrendingDown, Check } from '@lucide/svelte/icons';
 
 interface BudgetAllocation {
   budgetId: number;
@@ -14,7 +14,7 @@ interface Props {
   allocations: BudgetAllocation[];
 }
 
-let {budgets, allocations}: Props = $props();
+let { budgets, allocations }: Props = $props();
 
 // Calculate impact for each budget
 const budgetImpacts = $derived.by(() => {

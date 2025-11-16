@@ -1,7 +1,7 @@
-import {db} from "$lib/server/db";
-import {detectedPatterns, accounts} from "$lib/schema";
-import {eq, and, desc, lt, inArray} from "drizzle-orm";
-import type {DetectedPattern, NewDetectedPattern} from "$lib/schema/detected-patterns";
+import { db } from "$lib/server/db";
+import { detectedPatterns, accounts } from "$lib/schema";
+import { eq, and, desc, lt, inArray } from "drizzle-orm";
+import type { DetectedPattern, NewDetectedPattern } from "$lib/schema/detected-patterns";
 
 export class PatternRepository {
   /**
@@ -104,7 +104,7 @@ export class PatternRepository {
     const [result] = await db
       .insert(detectedPatterns)
       .values(pattern as NewDetectedPattern)
-      .returning({id: detectedPatterns.id});
+      .returning({ id: detectedPatterns.id });
     return result.id;
   }
 
@@ -129,7 +129,7 @@ export class PatternRepository {
     // Verify pattern belongs to user
     await this.validatePatternOwnership(patternId, workspaceId);
 
-    await db.update(detectedPatterns).set({status}).where(eq(detectedPatterns.id, patternId));
+    await db.update(detectedPatterns).set({ status }).where(eq(detectedPatterns.id, patternId));
   }
 
   /**
@@ -206,7 +206,7 @@ export class PatternRepository {
   async findUserAccountIds(workspaceId: string): Promise<number[]> {
     const accountList = await db.query.accounts.findMany({
       where: eq(accounts.workspaceId, workspaceId),
-      columns: {id: true},
+      columns: { id: true },
     });
     return accountList.map((a) => a.id);
   }

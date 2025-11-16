@@ -1,6 +1,6 @@
 <script lang="ts" generics="TData">
-import type {Snippet} from 'svelte';
-import type {ColumnDef, Table} from '@tanstack/table-core';
+import type { Snippet } from 'svelte';
+import type { ColumnDef, Table } from '@tanstack/table-core';
 import {
   getCoreRowModel,
   getSortedRowModel,
@@ -10,7 +10,7 @@ import {
   getFacetedUniqueValues,
   getFacetedMinMaxValues,
 } from '@tanstack/table-core';
-import {createSvelteTable} from '$lib/components/ui/data-table';
+import { createSvelteTable } from '$lib/components/ui/data-table';
 import type {
   DataTableFeatures,
   DataTableState,
@@ -61,7 +61,7 @@ let {
 let internalSorting = $state(externalState?.sorting ?? []);
 let internalColumnVisibility = $state(externalState?.columnVisibility ?? {});
 let internalColumnFilters = $state(externalState?.columnFilters ?? []);
-let internalPagination = $state(externalState?.pagination ?? {pageIndex: 0, pageSize: 10});
+let internalPagination = $state(externalState?.pagination ?? { pageIndex: 0, pageSize: 10 });
 let internalRowSelection = $state(externalState?.rowSelection ?? {});
 let internalColumnPinning = $state(externalState?.columnPinning ?? {});
 let internalExpanded = $state(externalState?.expanded ?? {});
@@ -84,7 +84,7 @@ const currentColumnFilters = $derived(
 );
 const currentPagination = $derived(
   useExternalState
-    ? (externalState!.pagination ?? {pageIndex: 0, pageSize: 10})
+    ? (externalState!.pagination ?? { pageIndex: 0, pageSize: 10 })
     : internalPagination
 );
 const currentRowSelection = $derived(
@@ -241,16 +241,16 @@ const table = $derived(
     }),
     // Current state
     state: {
-      ...(features.sorting && {sorting: currentSorting}),
-      ...(features.filtering && {columnFilters: currentColumnFilters}),
-      ...(features.pagination && {pagination: currentPagination}),
-      ...(features.rowSelection && {rowSelection: currentRowSelection}),
-      ...(features.columnVisibility && {columnVisibility: currentColumnVisibility}),
-      ...(features.columnPinning && {columnPinning: currentColumnPinning}),
-      ...(features.expanding && {expanded: currentExpanded}),
-      ...(features.grouping && {grouping: currentGrouping}),
-      ...(features.globalFilter && {globalFilter: currentGlobalFilter}),
-      ...(features.columnReordering && {columnOrder: currentColumnOrder}),
+      ...(features.sorting && { sorting: currentSorting }),
+      ...(features.filtering && { columnFilters: currentColumnFilters }),
+      ...(features.pagination && { pagination: currentPagination }),
+      ...(features.rowSelection && { rowSelection: currentRowSelection }),
+      ...(features.columnVisibility && { columnVisibility: currentColumnVisibility }),
+      ...(features.columnPinning && { columnPinning: currentColumnPinning }),
+      ...(features.expanding && { expanded: currentExpanded }),
+      ...(features.grouping && { grouping: currentGrouping }),
+      ...(features.globalFilter && { globalFilter: currentGlobalFilter }),
+      ...(features.columnReordering && { columnOrder: currentColumnOrder }),
     },
     // Server-side pagination
     ...(serverPagination &&

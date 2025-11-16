@@ -1,5 +1,5 @@
-import {zod4Client} from "sveltekit-superforms/adapters";
-import {superForm} from "sveltekit-superforms/client";
+import { zod4Client } from "sveltekit-superforms/adapters";
+import { superForm } from "sveltekit-superforms/client";
 
 export interface EntityFormOptions<T = any> {
   formData: any;
@@ -32,7 +32,7 @@ export function useEntityForm<T = any>(options: EntityFormOptions<T>): any {
     warnings: {
       duplicateId: false,
     },
-    onResult: async ({result}) => {
+    onResult: async ({ result }) => {
       if (result.type === "success" && result.data) {
         const entity = result.data["entity"];
 

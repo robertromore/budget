@@ -1,13 +1,13 @@
 import slugify from "@sindresorhus/slugify";
-import {db} from "..";
+import { db } from "..";
 import {
   categoryGroups,
   categoryGroupMemberships,
   type CategoryGroup,
 } from "$lib/schema/category-groups";
-import {faker} from "@faker-js/faker";
-import {sequence} from "./utils/sequence";
-import {categoryFactory} from "./categories";
+import { faker } from "@faker-js/faker";
+import { sequence } from "./utils/sequence";
+import { categoryFactory } from "./categories";
 
 export interface CategoryGroupFactoryOptions {
   categoriesPerGroup?: number;
@@ -38,7 +38,7 @@ export interface CategoryGroupFactoryOptions {
  */
 export const categoryGroupFactory = async (
   workspaceId: number,
-  count: number = faker.number.int({min: 3, max: 8}),
+  count: number = faker.number.int({ min: 3, max: 8 }),
   options: CategoryGroupFactoryOptions = {}
 ): Promise<CategoryGroup[]> => {
   const groups_collection: CategoryGroup[] = [];
@@ -91,7 +91,7 @@ export const categoryGroupFactory = async (
     "💼",
   ];
 
-  const categoriesPerGroup = options.categoriesPerGroup ?? faker.number.int({min: 2, max: 5});
+  const categoriesPerGroup = options.categoriesPerGroup ?? faker.number.int({ min: 2, max: 5 });
 
   for (let i = 0; i < Math.min(count, groupNames.length); i++) {
     const name = groupNames[i]!;

@@ -1,7 +1,7 @@
 <script lang="ts">
-import {RangeCalendar as RangeCalendarPrimitive} from 'bits-ui';
-import {buttonVariants} from '$lib/components/ui/button/index.js';
-import {cn} from '$lib/utils';
+import { RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
+import { buttonVariants } from '$lib/components/ui/button/index.js';
+import { cn } from '$lib/utils';
 let {
   ref = $bindable(null),
   class: className,
@@ -12,7 +12,7 @@ let {
 <RangeCalendarPrimitive.Day
   bind:ref
   class={cn(
-    buttonVariants({variant: 'ghost'}),
+    buttonVariants({ variant: 'ghost' }),
     'flex size-(--cell-size) flex-col items-center justify-center gap-1 p-0 leading-none font-normal whitespace-nowrap select-none',
     '[&[data-today]:not([data-selected])]:bg-accent [&[data-today]:not([data-selected])]:text-accent-foreground [&[data-today][data-disabled]]:text-muted-foreground data-[range-middle]:rounded-none',
     // range Start

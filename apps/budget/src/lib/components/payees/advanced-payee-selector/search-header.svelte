@@ -1,5 +1,5 @@
 <script lang="ts">
-import {Button} from '$lib/components/ui/button';
+import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import Plus from '@lucide/svelte/icons/plus';
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-import {SvelteMap} from 'svelte/reactivity';
+import { SvelteMap } from 'svelte/reactivity';
 import {
   Calendar,
   Clock,
@@ -10,18 +10,18 @@ import {
   Minus,
 } from '@lucide/svelte/icons';
 import * as Card from '$lib/components/ui/card';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
-import {Progress} from '$lib/components/ui/progress';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Progress } from '$lib/components/ui/progress';
 import * as Dialog from '$lib/components/ui/dialog';
 import * as Select from '$lib/components/ui/select';
-import {Input} from '$lib/components/ui/input';
+import { Input } from '$lib/components/ui/input';
 import Label from '$lib/components/ui/label/label.svelte';
-import {cn} from '$lib/utils';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {formatDateDisplay, parseISOString, currentDate} from '$lib/utils/dates';
-import type {BudgetPeriodInstance} from '$lib/schema/budgets';
-import type {PeriodAnalytics, PeriodComparison} from '$lib/server/domains/budgets/period-manager';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { formatDateDisplay, parseISOString, currentDate } from '$lib/utils/dates';
+import type { BudgetPeriodInstance } from '$lib/schema/budgets';
+import type { PeriodAnalytics, PeriodComparison } from '$lib/server/domains/budgets/period-manager';
 
 interface Props {
   currentPeriod: BudgetPeriodInstance;
@@ -50,10 +50,10 @@ let autoCreateEnvelopes = $state(true);
 let enableRollover = $state(true);
 
 const periodTypeOptions = [
-  {value: 'standard', label: 'Standard Period', description: 'Use template settings'},
-  {value: 'custom', label: 'Custom Dates', description: 'Specify start and end dates'},
-  {value: 'fiscal', label: 'Fiscal Year', description: 'Align with fiscal year'},
-  {value: 'floating', label: 'Floating Period', description: 'Anchor to specific date'},
+  { value: 'standard', label: 'Standard Period', description: 'Use template settings' },
+  { value: 'custom', label: 'Custom Dates', description: 'Specify start and end dates' },
+  { value: 'fiscal', label: 'Fiscal Year', description: 'Align with fiscal year' },
+  { value: 'floating', label: 'Floating Period', description: 'Anchor to specific date' },
 ];
 
 const performanceColor = $derived(() => {

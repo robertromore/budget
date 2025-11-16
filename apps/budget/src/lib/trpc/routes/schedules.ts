@@ -1,21 +1,26 @@
-import {duplicateScheduleSchema, removeScheduleSchema, scheduleDates, schedules} from "$lib/schema";
-import {superformInsertScheduleSchema} from "$lib/schema/superforms";
-import {serviceFactory} from "$lib/server/shared/container/service-factory";
-import {publicProcedure, rateLimitedProcedure, t} from "$lib/trpc";
-import {withErrorHandler} from "$lib/trpc/shared/errors";
-import {getCurrentTimestamp} from "$lib/utils/dates";
-import {generateUniqueSlugForDB} from "$lib/utils/slug-utils";
+import {
+  duplicateScheduleSchema,
+  removeScheduleSchema,
+  scheduleDates,
+  schedules,
+} from "$lib/schema";
+import { superformInsertScheduleSchema } from "$lib/schema/superforms";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
+import { withErrorHandler } from "$lib/trpc/shared/errors";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
 import slugify from "@sindresorhus/slugify";
-import {TRPCError} from "@trpc/server";
-import {and, eq} from "drizzle-orm";
-import {z} from "zod";
+import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
+import { z } from "zod";
 
 const scheduleService = serviceFactory.getScheduleService();
 
 export const scheduleRoutes = t.router({
-  all: publicProcedure.query(async ({ctx}) => {
+  all: publicProcedure.query(async ({ ctx }) => {
     return await ctx.db.query.schedules.findMany({
-      where: (schedules, {eq}) => eq(schedules.workspaceId, ctx.workspaceId),
+      where: (schedules, { eq }) => eq(schedules.workspaceId, ctx.workspaceId),
       with: {
         payee: true,
         scheduleDate: true,
@@ -23,34 +28,34 @@ export const scheduleRoutes = t.router({
     });
   }),
   getByAccount: publicProcedure
-    .input(z.object({accountId: z.number()}))
-    .query(async ({ctx, input}) => {
+    .input(z.object({ accountId: z.number() }))
+    .query(async ({ ctx, input }) => {
       return await ctx.db.query.schedules.findMany({
-        where: (schedules, {eq, and}) =>
+        where: (schedules, { eq, and }) =>
           and(eq(schedules.workspaceId, ctx.workspaceId), eq(schedules.accountId, input.accountId)),
         with: {
           payee: true,
           category: true,
           scheduleDate: true,
         },
-        orderBy: (schedules, {desc}) => [desc(schedules.createdAt)],
+        orderBy: (schedules, { desc }) => [desc(schedules.createdAt)],
       });
     }),
-  load: publicProcedure.input(z.object({id: z.coerce.number()})).query(async ({ctx, input}) => {
+  load: publicProcedure.input(z.object({ id: z.coerce.number() })).query(async ({ ctx, input }) => {
     const result = await ctx.db.query.schedules.findMany({
-      where: (schedules, {eq, and}) =>
+      where: (schedules, { eq, and }) =>
         and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
       with: {
         account: true,
         payee: true,
         scheduleDate: true,
         transactions: {
-          where: (transactions, {isNull}) => isNull(transactions.deletedAt),
+          where: (transactions, { isNull }) => isNull(transactions.deletedAt),
           with: {
             payee: true,
             category: true,
           },
-          orderBy: (transactions, {desc}) => [desc(transactions.date)],
+          orderBy: (transactions, { desc }) => [desc(transactions.date)],
           limit: 50, // Get recent transactions for history
         },
       },
@@ -63,154 +68,161 @@ export const scheduleRoutes = t.router({
     }
     return result[0];
   }),
-  save: rateLimitedProcedure.input(superformInsertScheduleSchema).mutation(async ({ctx, input}) => {
-    const handleRepeatingDate = async (scheduleId: number, repeatingDateJson?: string) => {
-      if (!repeatingDateJson) return null;
+  save: rateLimitedProcedure
+    .input(superformInsertScheduleSchema)
+    .mutation(async ({ ctx, input }) => {
+      const handleRepeatingDate = async (scheduleId: number, repeatingDateJson?: string) => {
+        if (!repeatingDateJson) return null;
 
-      try {
-        const repeatingDate = JSON.parse(repeatingDateJson);
+        try {
+          const repeatingDate = JSON.parse(repeatingDateJson);
 
-        // Helper to convert DateValue object to Date
-        const convertDateValue = (dateValue: any) => {
-          if (!dateValue) return null;
-          if (typeof dateValue === "string") return new Date(dateValue);
-          if (dateValue.year && dateValue.month && dateValue.day) {
-            return new Date(dateValue.year, dateValue.month - 1, dateValue.day);
-          }
-          return new Date(dateValue);
+          // Helper to convert DateValue object to Date
+          const convertDateValue = (dateValue: any) => {
+            if (!dateValue) return null;
+            if (typeof dateValue === "string") return new Date(dateValue);
+            if (dateValue.year && dateValue.month && dateValue.day) {
+              return new Date(dateValue.year, dateValue.month - 1, dateValue.day);
+            }
+            return new Date(dateValue);
+          };
+
+          // Create schedule date record
+          const scheduleDateResult = await ctx.db
+            .insert(scheduleDates)
+            .values({
+              scheduleId,
+              start: repeatingDate.start
+                ? (convertDateValue(repeatingDate.start)?.toISOString() ?? getCurrentTimestamp())
+                : getCurrentTimestamp(),
+              end: repeatingDate.end
+                ? convertDateValue(repeatingDate.end)?.toISOString() || null
+                : null,
+              frequency: repeatingDate.frequency || "daily",
+              interval: repeatingDate.interval || 1,
+              limit: repeatingDate.limit || 0,
+              move_weekends: repeatingDate.move_weekends || "none",
+              move_holidays: repeatingDate.move_holidays || "none",
+              specific_dates: repeatingDate.specific_dates || [],
+              on: repeatingDate.on || false,
+              on_type: repeatingDate.on_type || "day",
+              days: repeatingDate.days || [],
+              weeks: repeatingDate.weeks || [],
+              weeks_days: repeatingDate.weeks_days || [],
+              week_days: repeatingDate.week_days || [],
+            })
+            .returning();
+
+          return scheduleDateResult[0]?.id || null;
+        } catch (error) {
+          console.warn("Failed to parse repeating date data:", error);
+          return null;
+        }
+      };
+
+      if (input.id) {
+        // For updates, generate new slug if name changed
+        const { repeating_date, ...scheduleData } = input;
+
+        const updateData = {
+          ...scheduleData,
+          slug: await generateUniqueSlugForDB(
+            ctx.db,
+            "schedules",
+            schedules.slug,
+            slugify(input.name),
+            { excludeId: input.id, idColumn: schedules.id }
+          ),
         };
 
-        // Create schedule date record
-        const scheduleDateResult = await ctx.db
-          .insert(scheduleDates)
-          .values({
-            scheduleId,
-            start: repeatingDate.start
-              ? (convertDateValue(repeatingDate.start)?.toISOString() ?? getCurrentTimestamp())
-              : getCurrentTimestamp(),
-            end: repeatingDate.end
-              ? convertDateValue(repeatingDate.end)?.toISOString() || null
-              : null,
-            frequency: repeatingDate.frequency || "daily",
-            interval: repeatingDate.interval || 1,
-            limit: repeatingDate.limit || 0,
-            move_weekends: repeatingDate.move_weekends || "none",
-            move_holidays: repeatingDate.move_holidays || "none",
-            specific_dates: repeatingDate.specific_dates || [],
-            on: repeatingDate.on || false,
-            on_type: repeatingDate.on_type || "day",
-            days: repeatingDate.days || [],
-            weeks: repeatingDate.weeks || [],
-            weeks_days: repeatingDate.weeks_days || [],
-            week_days: repeatingDate.week_days || [],
-          })
-          .returning();
+        // Handle repeating date for updates
+        if (repeating_date) {
+          const dateId = await handleRepeatingDate(input.id, repeating_date);
+          if (dateId) {
+            updateData.dateId = dateId;
+          }
+        } else {
+          const currentSchedule = await ctx.db.query.schedules.findFirst({
+            where: (schedules, { eq, and }) =>
+              and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+          });
 
-        return scheduleDateResult[0]?.id || null;
-      } catch (error) {
-        console.warn("Failed to parse repeating date data:", error);
-        return null;
+          if (currentSchedule?.dateId) {
+            await ctx.db.delete(scheduleDates).where(eq(scheduleDates.id, currentSchedule.dateId));
+          }
+
+          updateData.dateId = null;
+        }
+
+        await ctx.db
+          .update(schedules)
+          .set(updateData)
+          .where(and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)));
+
+        // Return the full schedule with relationships
+        const updatedSchedule = await ctx.db.query.schedules.findFirst({
+          where: (schedules, { eq, and }) =>
+            and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+          with: {
+            scheduleDate: true,
+          },
+        });
+
+        if (!updatedSchedule) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update schedule",
+          });
+        }
+        return updatedSchedule;
       }
-    };
 
-    if (input.id) {
-      // For updates, generate new slug if name changed
-      const {repeating_date, ...scheduleData} = input;
+      const { repeating_date, ...scheduleData } = input;
 
-      const updateData = {
+      // Generate unique slug
+      const insertData = {
         ...scheduleData,
+        workspaceId: ctx.workspaceId,
         slug: await generateUniqueSlugForDB(
           ctx.db,
           "schedules",
           schedules.slug,
-          slugify(input.name),
-          {excludeId: input.id, idColumn: schedules.id}
+          slugify(input.name)
         ),
       };
 
-      // Handle repeating date for updates
-      if (repeating_date) {
-        const dateId = await handleRepeatingDate(input.id, repeating_date);
-        if (dateId) {
-          updateData.dateId = dateId;
-        }
-      } else {
-        const currentSchedule = await ctx.db.query.schedules.findFirst({
-          where: (schedules, {eq, and}) =>
-            and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+      const insertResult = await ctx.db.insert(schedules).values(insertData).returning();
+      if (!insertResult[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create schedule",
         });
+      }
+      const new_schedule = insertResult[0];
 
-        if (currentSchedule?.dateId) {
-          await ctx.db.delete(scheduleDates).where(eq(scheduleDates.id, currentSchedule.dateId));
+      if (repeating_date) {
+        const dateId = await handleRepeatingDate(new_schedule.id, repeating_date);
+        if (dateId) {
+          await ctx.db
+            .update(schedules)
+            .set({ dateId })
+            .where(
+              and(eq(schedules.id, new_schedule.id), eq(schedules.workspaceId, ctx.workspaceId))
+            );
         }
-
-        updateData.dateId = null;
       }
 
-      await ctx.db
-        .update(schedules)
-        .set(updateData)
-        .where(and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)));
-
-      // Return the full schedule with relationships
-      const updatedSchedule = await ctx.db.query.schedules.findFirst({
-        where: (schedules, {eq, and}) =>
-          and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+      const finalSchedule = await ctx.db.query.schedules.findFirst({
+        where: (schedules, { eq, and }) =>
+          and(eq(schedules.id, new_schedule.id), eq(schedules.workspaceId, ctx.workspaceId)),
         with: {
           scheduleDate: true,
         },
       });
 
-      if (!updatedSchedule) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update schedule",
-        });
-      }
-      return updatedSchedule;
-    }
-
-    const {repeating_date, ...scheduleData} = input;
-
-    // Generate unique slug
-    const insertData = {
-      ...scheduleData,
-      workspaceId: ctx.workspaceId,
-      slug: await generateUniqueSlugForDB(ctx.db, "schedules", schedules.slug, slugify(input.name)),
-    };
-
-    const insertResult = await ctx.db.insert(schedules).values(insertData).returning();
-    if (!insertResult[0]) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create schedule",
-      });
-    }
-    const new_schedule = insertResult[0];
-
-    if (repeating_date) {
-      const dateId = await handleRepeatingDate(new_schedule.id, repeating_date);
-      if (dateId) {
-        await ctx.db
-          .update(schedules)
-          .set({dateId})
-          .where(
-            and(eq(schedules.id, new_schedule.id), eq(schedules.workspaceId, ctx.workspaceId))
-          );
-      }
-    }
-
-    const finalSchedule = await ctx.db.query.schedules.findFirst({
-      where: (schedules, {eq, and}) =>
-        and(eq(schedules.id, new_schedule.id), eq(schedules.workspaceId, ctx.workspaceId)),
-      with: {
-        scheduleDate: true,
-      },
-    });
-
-    return finalSchedule || new_schedule;
-  }),
-  remove: rateLimitedProcedure.input(removeScheduleSchema).mutation(async ({ctx, input}) => {
+      return finalSchedule || new_schedule;
+    }),
+  remove: rateLimitedProcedure.input(removeScheduleSchema).mutation(async ({ ctx, input }) => {
     if (!input) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -229,104 +241,108 @@ export const scheduleRoutes = t.router({
     }
     return result[0];
   }),
-  duplicate: rateLimitedProcedure.input(duplicateScheduleSchema).mutation(async ({ctx, input}) => {
-    // Get the original schedule with all its related data
-    const originalSchedule = await ctx.db.query.schedules.findFirst({
-      where: (schedules, {eq, and}) =>
-        and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
-      with: {
-        scheduleDate: true,
-      },
-    });
-
-    if (!originalSchedule) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Schedule not found",
+  duplicate: rateLimitedProcedure
+    .input(duplicateScheduleSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Get the original schedule with all its related data
+      const originalSchedule = await ctx.db.query.schedules.findFirst({
+        where: (schedules, { eq, and }) =>
+          and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+        with: {
+          scheduleDate: true,
+        },
       });
-    }
 
-    // Create a unique name for the duplicate
-    const duplicateName = `${originalSchedule.name} (Copy)`;
+      if (!originalSchedule) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Schedule not found",
+        });
+      }
 
-    // Generate unique slug for the duplicate
-    const duplicateSlug = await generateUniqueSlugForDB(
-      ctx.db,
-      "schedules",
-      schedules.slug,
-      slugify(duplicateName)
-    );
+      // Create a unique name for the duplicate
+      const duplicateName = `${originalSchedule.name} (Copy)`;
 
-    // Prepare the data for the new schedule (excluding id, createdAt, updatedAt)
-    const duplicateData = {
-      name: duplicateName,
-      slug: duplicateSlug,
-      amount: originalSchedule.amount,
-      amount_2: originalSchedule.amount_2,
-      amount_type: originalSchedule.amount_type,
-      status: "inactive" as const, // Set duplicates as inactive by default
-      accountId: originalSchedule.accountId,
-      payeeId: originalSchedule.payeeId,
-      recurring: originalSchedule.recurring,
-      auto_add: originalSchedule.auto_add,
-      dateId: null, // Will be set if we duplicate the schedule date
-      workspaceId: ctx.workspaceId,
-    };
+      // Generate unique slug for the duplicate
+      const duplicateSlug = await generateUniqueSlugForDB(
+        ctx.db,
+        "schedules",
+        schedules.slug,
+        slugify(duplicateName)
+      );
 
-    // Insert the new schedule
-    const insertResult = await ctx.db.insert(schedules).values(duplicateData).returning();
-    if (!insertResult[0]) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to duplicate schedule",
-      });
-    }
-    const newSchedule = insertResult[0];
-
-    // If the original schedule has a scheduleDate, duplicate it too
-    if (originalSchedule.scheduleDate) {
-      const scheduleDateData = {
-        scheduleId: newSchedule.id,
-        start: originalSchedule.scheduleDate.start,
-        end: originalSchedule.scheduleDate.end,
-        frequency: originalSchedule.scheduleDate.frequency,
-        interval: originalSchedule.scheduleDate.interval,
-        limit: originalSchedule.scheduleDate.limit,
-        move_weekends: originalSchedule.scheduleDate.move_weekends,
-        move_holidays: originalSchedule.scheduleDate.move_holidays,
-        specific_dates: originalSchedule.scheduleDate.specific_dates,
-        on: originalSchedule.scheduleDate.on,
-        on_type: originalSchedule.scheduleDate.on_type,
-        days: originalSchedule.scheduleDate.days,
-        weeks: originalSchedule.scheduleDate.weeks,
-        weeks_days: originalSchedule.scheduleDate.weeks_days,
-        week_days: originalSchedule.scheduleDate.week_days,
+      // Prepare the data for the new schedule (excluding id, createdAt, updatedAt)
+      const duplicateData = {
+        name: duplicateName,
+        slug: duplicateSlug,
+        amount: originalSchedule.amount,
+        amount_2: originalSchedule.amount_2,
+        amount_type: originalSchedule.amount_type,
+        status: "inactive" as const, // Set duplicates as inactive by default
+        accountId: originalSchedule.accountId,
+        payeeId: originalSchedule.payeeId,
+        recurring: originalSchedule.recurring,
+        auto_add: originalSchedule.auto_add,
+        dateId: null, // Will be set if we duplicate the schedule date
+        workspaceId: ctx.workspaceId,
       };
 
-      const scheduleDateResult = await ctx.db
-        .insert(scheduleDates)
-        .values(scheduleDateData)
-        .returning();
-      if (scheduleDateResult[0]) {
-        // Update the new schedule with the dateId
-        const updatedSchedule = await ctx.db
-          .update(schedules)
-          .set({dateId: scheduleDateResult[0].id})
-          .where(and(eq(schedules.id, newSchedule.id), eq(schedules.workspaceId, ctx.workspaceId)))
-          .returning();
-
-        return updatedSchedule[0] || newSchedule;
+      // Insert the new schedule
+      const insertResult = await ctx.db.insert(schedules).values(duplicateData).returning();
+      if (!insertResult[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to duplicate schedule",
+        });
       }
-    }
+      const newSchedule = insertResult[0];
 
-    return newSchedule;
-  }),
+      // If the original schedule has a scheduleDate, duplicate it too
+      if (originalSchedule.scheduleDate) {
+        const scheduleDateData = {
+          scheduleId: newSchedule.id,
+          start: originalSchedule.scheduleDate.start,
+          end: originalSchedule.scheduleDate.end,
+          frequency: originalSchedule.scheduleDate.frequency,
+          interval: originalSchedule.scheduleDate.interval,
+          limit: originalSchedule.scheduleDate.limit,
+          move_weekends: originalSchedule.scheduleDate.move_weekends,
+          move_holidays: originalSchedule.scheduleDate.move_holidays,
+          specific_dates: originalSchedule.scheduleDate.specific_dates,
+          on: originalSchedule.scheduleDate.on,
+          on_type: originalSchedule.scheduleDate.on_type,
+          days: originalSchedule.scheduleDate.days,
+          weeks: originalSchedule.scheduleDate.weeks,
+          weeks_days: originalSchedule.scheduleDate.weeks_days,
+          week_days: originalSchedule.scheduleDate.week_days,
+        };
+
+        const scheduleDateResult = await ctx.db
+          .insert(scheduleDates)
+          .values(scheduleDateData)
+          .returning();
+        if (scheduleDateResult[0]) {
+          // Update the new schedule with the dateId
+          const updatedSchedule = await ctx.db
+            .update(schedules)
+            .set({ dateId: scheduleDateResult[0].id })
+            .where(
+              and(eq(schedules.id, newSchedule.id), eq(schedules.workspaceId, ctx.workspaceId))
+            )
+            .returning();
+
+          return updatedSchedule[0] || newSchedule;
+        }
+      }
+
+      return newSchedule;
+    }),
 
   // Auto-add functionality
   executeAutoAdd: rateLimitedProcedure
-    .input(z.object({scheduleId: z.number()}))
+    .input(z.object({ scheduleId: z.number() }))
     .mutation(
-      withErrorHandler(async ({input}) =>
+      withErrorHandler(async ({ input }) =>
         scheduleService.executeAutoAddForSchedule(input.scheduleId)
       )
     ),
@@ -336,20 +352,20 @@ export const scheduleRoutes = t.router({
   ),
 
   previewAutoAdd: publicProcedure
-    .input(z.object({scheduleId: z.number()}))
+    .input(z.object({ scheduleId: z.number() }))
     .query(
-      withErrorHandler(async ({input}) =>
+      withErrorHandler(async ({ input }) =>
         scheduleService.previewAutoAddForSchedule(input.scheduleId)
       )
     ),
 
   toggleStatus: rateLimitedProcedure
-    .input(z.object({scheduleId: z.number()}))
-    .mutation(async ({ctx, input}) => {
+    .input(z.object({ scheduleId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
       try {
         // Get current schedule
         const currentSchedule = await ctx.db.query.schedules.findFirst({
-          where: (schedules, {eq, and}) =>
+          where: (schedules, { eq, and }) =>
             and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)),
         });
 
@@ -366,7 +382,7 @@ export const scheduleRoutes = t.router({
         // Update schedule status
         const result = await ctx.db
           .update(schedules)
-          .set({status: newStatus})
+          .set({ status: newStatus })
           .where(
             and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
           )
@@ -398,11 +414,11 @@ export const scheduleRoutes = t.router({
         budgetId: z.number().int().positive(),
       })
     )
-    .mutation(async ({ctx, input}) => {
+    .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db
           .update(schedules)
-          .set({budgetId: input.budgetId})
+          .set({ budgetId: input.budgetId })
           .where(
             and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
           )
@@ -428,12 +444,12 @@ export const scheduleRoutes = t.router({
     }),
 
   unlinkFromBudget: publicProcedure
-    .input(z.object({scheduleId: z.number().int().positive()}))
-    .mutation(async ({ctx, input}) => {
+    .input(z.object({ scheduleId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db
           .update(schedules)
-          .set({budgetId: null})
+          .set({ budgetId: null })
           .where(
             and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
           )

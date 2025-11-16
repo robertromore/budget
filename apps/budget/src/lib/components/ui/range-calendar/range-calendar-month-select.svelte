@@ -1,6 +1,6 @@
 <script lang="ts">
-import {RangeCalendar as RangeCalendarPrimitive} from 'bits-ui';
-import {cn, type WithoutChildrenOrChild} from '$lib/utils';
+import { RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
+import { cn, type WithoutChildrenOrChild } from '$lib/utils';
 import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 let {
   ref = $bindable(null),
@@ -17,7 +17,7 @@ let {
     className
   )}>
   <RangeCalendarPrimitive.MonthSelect bind:ref class="absolute inset-0 opacity-0" {...restProps}>
-    {#snippet child({props, monthItems, selectedMonthItem})}
+    {#snippet child({ props, monthItems, selectedMonthItem })}
       <select {...props} {value} {onchange}>
         {#each monthItems as monthItem (monthItem.value)}
           <option

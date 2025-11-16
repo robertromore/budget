@@ -1,10 +1,10 @@
 <script lang="ts">
 // --- Imports ---
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
 import * as Popover from '$lib/components/ui/popover';
-import {currencyFormatter} from '$lib/utils/formatters';
-import {cn} from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { cn } from '$lib/utils';
 import Delete from '@lucide/svelte/icons/delete';
 
 // --- Props ---
@@ -168,7 +168,7 @@ const handlePaste = (event: ClipboardEvent) => {
       }
     }}>
     <Popover.Trigger>
-      {#snippet child({props})}
+      {#snippet child({ props })}
         <Button
           {...props}
           variant="outline"
@@ -195,7 +195,7 @@ const handlePaste = (event: ClipboardEvent) => {
           onpaste={handlePaste} />
 
         <div class="keypad grid grid-cols-3 grid-rows-3 gap-2">
-          {#each Array.from({length: 9}, (_, i) => i + 1) as i}
+          {#each Array.from({ length: 9 }, (_, i) => i + 1) as i}
             <Button
               variant="outline"
               disabled={valueWellFormatted()}

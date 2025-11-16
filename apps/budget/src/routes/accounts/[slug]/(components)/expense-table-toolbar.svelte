@@ -1,17 +1,17 @@
 <script lang="ts">
-import type {Table} from '@tanstack/table-core';
-import type {ExpenseFormat} from '../(data)/expense-columns.svelte';
-import type {FilterInputOption} from '$lib/types';
-import {Separator} from '$lib/components/ui/separator';
-import {FilterInput, DisplayInput} from '$lib/components/input';
-import {currentViews} from '$lib/states/views';
+import type { Table } from '@tanstack/table-core';
+import type { ExpenseFormat } from '../(data)/expense-columns.svelte';
+import type { FilterInputOption } from '$lib/types';
+import { Separator } from '$lib/components/ui/separator';
+import { FilterInput, DisplayInput } from '$lib/components/input';
+import { currentViews } from '$lib/states/views';
 import * as Tabs from '$lib/components/ui/tabs';
 
 interface Props {
   table: Table<ExpenseFormat>;
 }
 
-let {table}: Props = $props();
+let { table }: Props = $props();
 
 // Get filter components from visible columns that have facetedFilter defined
 const columns = table.getAllColumns();

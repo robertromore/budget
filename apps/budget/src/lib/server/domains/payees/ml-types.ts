@@ -349,7 +349,7 @@ export interface MLAnalyticsReport {
     expectedImpact: string;
     effort: "low" | "medium" | "high";
   }>;
-  trends: Record<string, Array<{timestamp: string; value: number}>>;
+  trends: Record<string, Array<{ timestamp: string; value: number }>>;
 }
 
 export interface MLDataQualityReport {

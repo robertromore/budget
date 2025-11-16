@@ -9,7 +9,7 @@ import {
   getRequiredEnvironmentVariable,
   type PositiveNumber,
 } from "../types/enhanced-types";
-import {TypeValidator} from "../utils/type-validation";
+import { TypeValidator } from "../utils/type-validation";
 
 /**
  * Configuration validation and management
@@ -160,9 +160,9 @@ export class ConfigManager {
     this.config = {
       ...this.config!,
       ...updates,
-      api: {...this.config!.api, ...updates.api},
-      ui: {...this.config!.ui, ...updates.ui},
-      cache: {...this.config!.cache, ...updates.cache},
+      api: { ...this.config!.api, ...updates.api },
+      ui: { ...this.config!.ui, ...updates.ui },
+      cache: { ...this.config!.cache, ...updates.cache },
     };
 
     this.validateConfig(this.config);
@@ -201,7 +201,7 @@ export class ConfigManager {
     value: string | undefined,
     defaultValue: number,
     name: string
-  ): PositiveNumber & {__constraint: "max100"} {
+  ): PositiveNumber & { __constraint: "max100" } {
     if (!value) {
       const validated = TypeValidator.validatePageSize(defaultValue);
       if (!validated) {

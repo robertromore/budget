@@ -2,8 +2,8 @@
 import Sun from '@lucide/svelte/icons/sun';
 import Moon from '@lucide/svelte/icons/moon';
 import Monitor from '@lucide/svelte/icons/monitor';
-import {setMode, userPrefersMode} from 'mode-watcher';
-import {Button} from '$lib/components/ui/button/index.js';
+import { setMode, userPrefersMode } from 'mode-watcher';
+import { Button } from '$lib/components/ui/button/index.js';
 
 const currentMode = $derived(userPrefersMode.current);
 

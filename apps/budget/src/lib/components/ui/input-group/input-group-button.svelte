@@ -1,5 +1,5 @@
 <script lang="ts" module>
-import {tv, type VariantProps} from 'tailwind-variants';
+import { tv, type VariantProps } from 'tailwind-variants';
 
 const inputGroupButtonVariants = tv({
   base: 'flex items-center gap-2 text-sm shadow-none',
@@ -20,9 +20,9 @@ export type InputGroupButtonSize = VariantProps<typeof inputGroupButtonVariants>
 </script>
 
 <script lang="ts">
-import {cn} from '$lib/utils';
-import type {ComponentProps} from 'svelte';
-import {Button} from '$lib/components/ui/button/index.js';
+import { cn } from '$lib/utils';
+import type { ComponentProps } from 'svelte';
+import { Button } from '$lib/components/ui/button/index.js';
 
 let {
   class: className,
@@ -40,7 +40,7 @@ let {
   {type}
   data-size={size}
   {variant}
-  class={cn(inputGroupButtonVariants({size}), className)}
+  class={cn(inputGroupButtonVariants({ size }), className)}
   {...restProps}>
   {@render children?.()}
 </Button>

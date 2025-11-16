@@ -1,6 +1,6 @@
 import validator from "validator";
-import {z} from "zod";
-import {isValidIconName} from "$lib/utils/icon-validation";
+import { z } from "zod";
+import { isValidIconName } from "$lib/utils/icon-validation";
 
 // Superform-compatible schemas for payee categories (not using drizzle-zod)
 export const superformInsertPayeeCategorySchema = z.object({

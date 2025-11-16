@@ -1,7 +1,7 @@
 <script lang="ts">
 import PayeeAnalyticsDashboard from '../(components)/analytics/payee-analytics-dashboard.svelte';
-import {Button} from '$lib/components/ui/button';
-import {Badge} from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';

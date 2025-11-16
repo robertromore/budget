@@ -1,9 +1,9 @@
-import {relations, sql} from "drizzle-orm";
-import {index, integer, real, sqliteTable, text} from "drizzle-orm/sqlite-core";
-import {createInsertSchema, createSelectSchema} from "drizzle-zod";
-import {budgetGroups} from "./budgets";
-import {budgetRecommendations} from "./recommendations";
-import {workspaces} from "./workspaces";
+import { relations, sql } from "drizzle-orm";
+import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { budgetGroups } from "./budgets";
+import { budgetRecommendations } from "./recommendations";
+import { workspaces } from "./workspaces";
 
 /**
  * Budget Automation Settings
@@ -15,17 +15,17 @@ import {workspaces} from "./workspaces";
 export const budgetAutomationSettings = sqliteTable(
   "budget_automation_settings",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     workspaceId: integer("workspace_id")
       .notNull()
-      .references(() => workspaces.id, {onDelete: "cascade"}),
+      .references(() => workspaces.id, { onDelete: "cascade" }),
 
     // Automation toggles
-    autoCreateGroups: integer("auto_create_groups", {mode: "boolean"}).notNull().default(false),
-    autoAssignToGroups: integer("auto_assign_to_groups", {mode: "boolean"})
+    autoCreateGroups: integer("auto_create_groups", { mode: "boolean" }).notNull().default(false),
+    autoAssignToGroups: integer("auto_assign_to_groups", { mode: "boolean" })
       .notNull()
       .default(false),
-    autoAdjustGroupLimits: integer("auto_adjust_group_limits", {mode: "boolean"})
+    autoAdjustGroupLimits: integer("auto_adjust_group_limits", { mode: "boolean" })
       .notNull()
       .default(false),
 
@@ -36,7 +36,7 @@ export const budgetAutomationSettings = sqliteTable(
       .notNull()
       .default("medium"),
 
-    enableSmartGrouping: integer("enable_smart_grouping", {mode: "boolean"})
+    enableSmartGrouping: integer("enable_smart_grouping", { mode: "boolean" })
       .notNull()
       .default(true),
 
@@ -70,7 +70,7 @@ export const budgetAutomationSettings = sqliteTable(
 export const budgetAutomationActivity = sqliteTable(
   "budget_automation_activity",
   {
-    id: integer("id").primaryKey({autoIncrement: true}),
+    id: integer("id").primaryKey({ autoIncrement: true }),
 
     // Action details
     actionType: text("action_type", {
@@ -81,10 +81,10 @@ export const budgetAutomationActivity = sqliteTable(
     recommendationId: integer("recommendation_id").references(() => budgetRecommendations.id, {
       onDelete: "set null",
     }),
-    groupId: integer("group_id").references(() => budgetGroups.id, {onDelete: "set null"}),
+    groupId: integer("group_id").references(() => budgetGroups.id, { onDelete: "set null" }),
 
     // Affected entities (JSON arrays)
-    budgetIds: text("budget_ids", {mode: "json"}).$type<number[]>(),
+    budgetIds: text("budget_ids", { mode: "json" }).$type<number[]>(),
 
     // Status
     status: text("status", {
@@ -95,7 +95,7 @@ export const budgetAutomationActivity = sqliteTable(
     errorMessage: text("error_message"),
 
     // Audit data
-    metadata: text("metadata", {mode: "json"}).$type<Record<string, unknown>>(),
+    metadata: text("metadata", { mode: "json" }).$type<Record<string, unknown>>(),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -111,14 +111,14 @@ export const budgetAutomationActivity = sqliteTable(
 );
 
 // Relations
-export const budgetAutomationSettingsRelations = relations(budgetAutomationSettings, ({one}) => ({
+export const budgetAutomationSettingsRelations = relations(budgetAutomationSettings, ({ one }) => ({
   workspace: one(workspaces, {
     fields: [budgetAutomationSettings.workspaceId],
     references: [workspaces.id],
   }),
 }));
 
-export const budgetAutomationActivityRelations = relations(budgetAutomationActivity, ({one}) => ({
+export const budgetAutomationActivityRelations = relations(budgetAutomationActivity, ({ one }) => ({
   recommendation: one(budgetRecommendations, {
     fields: [budgetAutomationActivity.recommendationId],
     references: [budgetRecommendations.id],

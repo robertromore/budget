@@ -75,10 +75,10 @@ export class TypeValidator {
   /**
    * Validate page size with specific constraints
    */
-  static validatePageSize(value: unknown): (PositiveNumber & {__constraint: "max100"}) | null {
+  static validatePageSize(value: unknown): (PositiveNumber & { __constraint: "max100" }) | null {
     const positiveNumber = this.validatePositiveNumber(value);
     if (positiveNumber && positiveNumber <= 100) {
-      return positiveNumber as PositiveNumber & {__constraint: "max100"};
+      return positiveNumber as PositiveNumber & { __constraint: "max100" };
     }
     return null;
   }
@@ -98,7 +98,7 @@ export class TypeValidator {
         data: {} as T,
         validation: {
           isValid: false,
-          errors: {root: [brand("Input must be an object")]},
+          errors: { root: [brand("Input must be an object")] },
         },
       };
     }
@@ -166,16 +166,16 @@ export class ValidationSchemaBuilder<T extends Record<string, unknown>> {
 
       if (constraints.required && (value === undefined || value === null)) {
         errors.push(brand(`${String(field)} is required`));
-        return {isValid: false, errors};
+        return { isValid: false, errors };
       }
 
       if (value === undefined || value === null) {
-        return {isValid: true, errors: []};
+        return { isValid: true, errors: [] };
       }
 
       if (typeof value !== "string") {
         errors.push(brand(`${String(field)} must be a string`));
-        return {isValid: false, errors};
+        return { isValid: false, errors };
       }
 
       if (constraints.minLength && value.length < constraints.minLength) {
@@ -194,7 +194,7 @@ export class ValidationSchemaBuilder<T extends Record<string, unknown>> {
         errors.push(brand(`${String(field)} must be a valid email`));
       }
 
-      return {isValid: errors.length === 0, errors};
+      return { isValid: errors.length === 0, errors };
     };
 
     return this;
@@ -218,16 +218,16 @@ export class ValidationSchemaBuilder<T extends Record<string, unknown>> {
 
       if (constraints.required && (value === undefined || value === null)) {
         errors.push(brand(`${String(field)} is required`));
-        return {isValid: false, errors};
+        return { isValid: false, errors };
       }
 
       if (value === undefined || value === null) {
-        return {isValid: true, errors: []};
+        return { isValid: true, errors: [] };
       }
 
       if (typeof value !== "number" || !Number.isFinite(value)) {
         errors.push(brand(`${String(field)} must be a valid number`));
-        return {isValid: false, errors};
+        return { isValid: false, errors };
       }
 
       if (constraints.min !== undefined && value < constraints.min) {
@@ -246,7 +246,7 @@ export class ValidationSchemaBuilder<T extends Record<string, unknown>> {
         errors.push(brand(`${String(field)} must be positive`));
       }
 
-      return {isValid: errors.length === 0, errors};
+      return { isValid: errors.length === 0, errors };
     };
 
     return this;
@@ -269,11 +269,11 @@ export class ValidationSchemaBuilder<T extends Record<string, unknown>> {
 
       if (constraints.required && (value === undefined || value === null)) {
         errors.push(brand(`${String(field)} is required`));
-        return {isValid: false, errors};
+        return { isValid: false, errors };
       }
 
       if (value === undefined || value === null) {
-        return {isValid: true, errors: []};
+        return { isValid: true, errors: [] };
       }
 
       let date: Date;
@@ -281,19 +281,19 @@ export class ValidationSchemaBuilder<T extends Record<string, unknown>> {
       if (typeof value === "string") {
         if (constraints.isoString && !isISODateString(value)) {
           errors.push(brand(`${String(field)} must be a valid ISO date string`));
-          return {isValid: false, errors};
+          return { isValid: false, errors };
         }
         date = new Date(value);
       } else if (value instanceof Date) {
         date = value;
       } else {
         errors.push(brand(`${String(field)} must be a valid date`));
-        return {isValid: false, errors};
+        return { isValid: false, errors };
       }
 
       if (isNaN(date.getTime())) {
         errors.push(brand(`${String(field)} must be a valid date`));
-        return {isValid: false, errors};
+        return { isValid: false, errors };
       }
 
       if (constraints.minDate && date < constraints.minDate) {
@@ -304,7 +304,7 @@ export class ValidationSchemaBuilder<T extends Record<string, unknown>> {
         errors.push(brand(`${String(field)} must be before ${constraints.maxDate.toISOString()}`));
       }
 
-      return {isValid: errors.length === 0, errors};
+      return { isValid: errors.length === 0, errors };
     };
 
     return this;
@@ -327,16 +327,16 @@ export class ValidationSchemaBuilder<T extends Record<string, unknown>> {
 
       if (constraints.required && (value === undefined || value === null)) {
         errors.push(brand(`${String(field)} is required`));
-        return {isValid: false, errors};
+        return { isValid: false, errors };
       }
 
       if (value === undefined || value === null) {
-        return {isValid: true, errors: []};
+        return { isValid: true, errors: [] };
       }
 
       if (!Array.isArray(value)) {
         errors.push(brand(`${String(field)} must be an array`));
-        return {isValid: false, errors};
+        return { isValid: false, errors };
       }
 
       if (constraints.minLength && value.length < constraints.minLength) {
@@ -358,7 +358,7 @@ export class ValidationSchemaBuilder<T extends Record<string, unknown>> {
         }
       }
 
-      return {isValid: errors.length === 0, errors};
+      return { isValid: errors.length === 0, errors };
     };
 
     return this;
@@ -377,7 +377,7 @@ export class ValidationSchemaBuilder<T extends Record<string, unknown>> {
       }
 
       if (value === undefined || value === null) {
-        return {isValid: true, errors: []};
+        return { isValid: true, errors: [] };
       }
 
       return validator(value);
@@ -407,9 +407,9 @@ export class CommonValidationSchemas {
       type: string;
       balance: CurrencyAmount;
     }>()
-      .string("name", {required: true, minLength: 1, maxLength: 100})
-      .string("type", {required: true, pattern: /^(checking|savings|credit|investment)$/})
-      .number("balance", {required: true})
+      .string("name", { required: true, minLength: 1, maxLength: 100 })
+      .string("type", { required: true, pattern: /^(checking|savings|credit|investment)$/ })
+      .number("balance", { required: true })
       .build();
   }
 
@@ -425,12 +425,12 @@ export class CommonValidationSchemas {
       categoryId?: PositiveNumber;
       payeeId?: PositiveNumber;
     }>()
-      .number("accountId", {required: true, positive: true, integer: true})
-      .number("amount", {required: true})
-      .string("description", {required: true, minLength: 1, maxLength: 500})
-      .date("date", {required: true, isoString: true})
-      .number("categoryId", {positive: true, integer: true})
-      .number("payeeId", {positive: true, integer: true})
+      .number("accountId", { required: true, positive: true, integer: true })
+      .number("amount", { required: true })
+      .string("description", { required: true, minLength: 1, maxLength: 500 })
+      .date("date", { required: true, isoString: true })
+      .number("categoryId", { positive: true, integer: true })
+      .number("payeeId", { positive: true, integer: true })
       .build();
   }
 
@@ -442,8 +442,8 @@ export class CommonValidationSchemas {
       name: NonEmptyString;
       email: ValidEmail;
     }>()
-      .string("name", {required: true, minLength: 1, maxLength: 100})
-      .string("email", {required: true, email: true})
+      .string("name", { required: true, minLength: 1, maxLength: 100 })
+      .string("email", { required: true, email: true })
       .build();
   }
 
@@ -457,17 +457,17 @@ export class CommonValidationSchemas {
       sortBy?: NonEmptyString;
       sortOrder?: "asc" | "desc";
     }>()
-      .number("page", {required: true, positive: true, integer: true, min: 1})
-      .number("pageSize", {required: true, positive: true, integer: true, min: 1, max: 100})
-      .string("sortBy", {minLength: 1})
+      .number("page", { required: true, positive: true, integer: true, min: 1 })
+      .number("pageSize", { required: true, positive: true, integer: true, min: 1, max: 100 })
+      .string("sortBy", { minLength: 1 })
       .custom("sortOrder", (value): ValidationResult => {
         if (value !== undefined && value !== "asc" && value !== "desc") {
           return {
             isValid: false,
-            errors: {sortOrder: [brand('sortOrder must be either "asc" or "desc"')]},
+            errors: { sortOrder: [brand('sortOrder must be either "asc" or "desc"')] },
           };
         }
-        return {isValid: true, errors: {}};
+        return { isValid: true, errors: {} };
       })
       .build();
   }
@@ -493,14 +493,14 @@ export class RuntimeTypeChecker {
   static safeCast<T>(
     value: unknown,
     validator: (value: unknown) => value is T
-  ): {success: true; data: T} | {success: false; error: NonEmptyString} {
+  ): { success: true; data: T } | { success: false; error: NonEmptyString } {
     try {
       if (validator(value)) {
-        return {success: true, data: value};
+        return { success: true, data: value };
       }
-      return {success: false, error: brand("Value does not match expected type")};
+      return { success: false, error: brand("Value does not match expected type") };
     } catch (error) {
-      return {success: false, error: brand(`Validation error: ${error}`)};
+      return { success: false, error: brand(`Validation error: ${error}`) };
     }
   }
 
@@ -510,19 +510,19 @@ export class RuntimeTypeChecker {
   static validateAPIResponse<T>(
     response: unknown,
     dataValidator: (data: unknown) => data is T
-  ): {success: true; data: T} | {success: false; error: NonEmptyString} {
+  ): { success: true; data: T } | { success: false; error: NonEmptyString } {
     if (typeof response !== "object" || response === null) {
-      return {success: false, error: brand("Response must be an object")};
+      return { success: false, error: brand("Response must be an object") };
     }
 
     const obj = response as Record<string, unknown>;
 
     if ((obj as any).success !== true) {
-      return {success: false, error: brand("Response indicates failure")};
+      return { success: false, error: brand("Response indicates failure") };
     }
 
     if (!obj["data"]) {
-      return {success: false, error: brand("Response missing data")};
+      return { success: false, error: brand("Response missing data") };
     }
 
     return this.safeCast(obj["data"], dataValidator);

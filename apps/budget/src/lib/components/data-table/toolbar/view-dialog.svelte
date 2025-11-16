@@ -1,12 +1,12 @@
 <script lang="ts">
 import * as Dialog from '$lib/components/ui/dialog';
-import {Button} from '$lib/components/ui/button';
-import {Input} from '$lib/components/ui/input';
-import {Label} from '$lib/components/ui/label';
-import {Textarea} from '$lib/components/ui/textarea';
-import type {View} from '$lib/schema/views';
-import type {ViewDisplayState, ViewFilter, TableEntityType} from '$lib/types';
-import {saveView} from '$lib/query/views';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Textarea } from '$lib/components/ui/textarea';
+import type { View } from '$lib/schema/views';
+import type { ViewDisplayState, ViewFilter, TableEntityType } from '$lib/types';
+import { saveView } from '$lib/query/views';
 import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 
 interface Props {
@@ -61,7 +61,7 @@ async function handleSave() {
 
   try {
     const viewData = {
-      ...(view?.id ? {id: view.id} : {}),
+      ...(view?.id ? { id: view.id } : {}),
       entityType,
       name: name.trim(),
       description: description.trim() || null,

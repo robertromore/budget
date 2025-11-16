@@ -1,8 +1,8 @@
-import type {ExpenseFormat} from "./expense-columns.svelte";
-import {getSpecialDateValue} from "$lib/utils";
-import type {DateValue} from "@internationalized/date";
-import {dateDifference, isSamePeriod, parseISOString} from "$lib/utils/dates";
-import type {ColumnFiltersState, Row, Updater} from "@tanstack/table-core";
+import type { ExpenseFormat } from "./expense-columns.svelte";
+import { getSpecialDateValue } from "$lib/utils";
+import type { DateValue } from "@internationalized/date";
+import { dateDifference, isSamePeriod, parseISOString } from "$lib/utils/dates";
+import type { ColumnFiltersState, Row, Updater } from "@tanstack/table-core";
 
 function compareDate(originalDate: DateValue, compareDate: string) {
   const [range, stringDate] = compareDate.includes(":")
@@ -65,7 +65,7 @@ export const filters = {
   dateBefore: (
     row: Row<ExpenseFormat>,
     columnId: string,
-    filterValue: Set<string> | {operator: string; date?: string},
+    filterValue: Set<string> | { operator: string; date?: string },
     addMeta: (meta: any) => void
   ) => {
     // Handle new DateFilterValue format with operators
@@ -91,8 +91,8 @@ export const filters = {
     columnId: string,
     filterValue:
       | Set<string>
-      | {operator: string; date?: string}
-      | Set<{operator: string; date?: string}>,
+      | { operator: string; date?: string }
+      | Set<{ operator: string; date?: string }>,
     addMeta: (meta: any) => void
   ) => {
     // Handle Set (from view system)
@@ -131,7 +131,7 @@ export const filters = {
   dateBetween: (
     row: Row<ExpenseFormat>,
     columnId: string,
-    filterValue: {operator: string; from?: string; to?: string},
+    filterValue: { operator: string; from?: string; to?: string },
     addMeta: (meta: any) => void
   ) => {
     if (!filterValue || filterValue.operator !== "between") return true;
@@ -162,8 +162,8 @@ export const filters = {
     columnId: string,
     filterValue:
       | Set<string>
-      | Set<{operator: string; date?: string; from?: string; to?: string; values?: Set<string>}>
-      | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
+      | Set<{ operator: string; date?: string; from?: string; to?: string; values?: Set<string> }>
+      | { operator: string; date?: string; from?: string; to?: string; values?: Set<string> },
     addMeta: (meta: any) => void
   ) => {
     // Handle Set (from view system)
@@ -249,7 +249,7 @@ export const filters = {
   amountFilter: (
     row: Row<ExpenseFormat>,
     columnId: string,
-    filterValue: {type?: string; operator?: string; value?: number; min?: number; max?: number},
+    filterValue: { type?: string; operator?: string; value?: number; min?: number; max?: number },
     addMeta: (meta: any) => void
   ) => {
     const amount = row.original[columnId as keyof ExpenseFormat] as number;

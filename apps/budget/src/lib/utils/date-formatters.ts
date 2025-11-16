@@ -1,5 +1,10 @@
-import {DateFormatter, getLocalTimeZone, parseDate, type DateValue} from "@internationalized/date";
-import {getSpecialDateValue} from "./dates";
+import {
+  DateFormatter,
+  getLocalTimeZone,
+  parseDate,
+  type DateValue,
+} from "@internationalized/date";
+import { getSpecialDateValue } from "./dates";
 
 export const dayFmt = new DateFormatter("en-US", {
   day: "2-digit",
@@ -61,15 +66,15 @@ const suffixMap = {
 };
 
 // Create an Intl.PluralRules instance for ordinal numbers in English
-const pr = new Intl.PluralRules("en-US", {type: "ordinal"});
+const pr = new Intl.PluralRules("en-US", { type: "ordinal" });
 
 // Create an Intl.PluralRules instance for cardinal numbers (for pluralization)
-export const pluralRules = new Intl.PluralRules("en-US", {type: "cardinal"});
+export const pluralRules = new Intl.PluralRules("en-US", { type: "cardinal" });
 
 /** Formats a `Date` as “{short month}. {day}, {year}” e.g. “Aug. 1st, 2023” */
 export const formatDate = (d: Date): string => {
   // month abbreviation (e.g. "Aug")
-  const monthAbbr = new Intl.DateTimeFormat("en-US", {month: "short"}).format(d);
+  const monthAbbr = new Intl.DateTimeFormat("en-US", { month: "short" }).format(d);
   const monthWithDot = `${monthAbbr}.`;
 
   // day + ordinal suffix
@@ -79,7 +84,7 @@ export const formatDate = (d: Date): string => {
   const dayWithSuffix = `${day}${suffixMap[ordinalRule] ?? "th"}`;
 
   // year
-  const year = new Intl.DateTimeFormat("en-US", {year: "numeric"}).format(d);
+  const year = new Intl.DateTimeFormat("en-US", { year: "numeric" }).format(d);
 
   return `${monthWithDot} ${dayWithSuffix}, ${year}`;
 };
