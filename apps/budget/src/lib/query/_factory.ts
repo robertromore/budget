@@ -41,8 +41,9 @@ export interface DefineMutationConfig<TVariables, TData, TError = Error> {
 export interface QueryWrapper<TData, TError = Error> {
   /**
    * Reactive interface - returns Svelte store for component reactivity
+   * Accepts optional function returning additional options to merge with base options
    */
-  options(): ReturnType<typeof createQuery<TData, TError>>;
+  options(additionalOptions?: () => Partial<Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>>): ReturnType<typeof createQuery<TData, TError>>;
 
   /**
    * Imperative interface - executes query and returns promise
@@ -61,8 +62,9 @@ export interface QueryWrapper<TData, TError = Error> {
 export interface ParameterizedQueryWrapper<TParams, TData, TError = Error> {
   /**
    * Reactive interface - returns Svelte store for component reactivity
+   * Accepts optional function returning additional options to merge with base options
    */
-  options(params: TParams): ReturnType<typeof createQuery<TData, TError>>;
+  options(params: TParams, additionalOptions?: () => Partial<Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>>): ReturnType<typeof createQuery<TData, TError>>;
 
   /**
    * Imperative interface - executes query and returns promise
@@ -142,7 +144,7 @@ export function defineQuery<TParams, TData, TError = Error>(
     return {
       queryKey: paramConfig.queryKey,
 
-      options(params: TParams) {
+      options(params: TParams, additionalOptions?: () => Partial<Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>>) {
         const queryKey = paramConfig.queryKey(params);
         const enabled = paramConfig.enabled ? paramConfig.enabled(params) : true;
 
@@ -157,6 +159,7 @@ export function defineQuery<TParams, TData, TError = Error>(
           },
           enabled,
           ...paramConfig.options,
+          ...(additionalOptions ? additionalOptions() : {}),
         }));
       },
 
@@ -187,7 +190,7 @@ export function defineQuery<TParams, TData, TError = Error>(
   return {
     queryKey,
 
-    options() {
+    options(additionalOptions?: () => Partial<Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>>) {
       return createQuery(() => ({
         queryKey,
         queryFn: async () => {
@@ -198,6 +201,7 @@ export function defineQuery<TParams, TData, TError = Error>(
           }
         },
         ...options,
+        ...(additionalOptions ? additionalOptions() : {}),
       }));
     },
 
@@ -237,7 +241,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
         throw transformError(error);
       }
     },
-    onSuccess: (data: TData, variables: TVariables, context: unknown) => {
+    onSuccess: (data: TData, variables: TVariables, context: unknown, queryClient: any) => {
       // Call custom onSuccess if provided
       if (onSuccess) {
         onSuccess(data, variables);
@@ -253,10 +257,10 @@ export function defineMutation<TVariables, TData, TError = Error>(
 
       // Call original onSuccess from options
       if (options.onSuccess) {
-        options.onSuccess(data, variables, context);
+        options.onSuccess(data, variables, context, queryClient);
       }
     },
-    onError: (error: TError, variables: TVariables, context: unknown) => {
+    onError: (error: TError, variables: TVariables, context: unknown, queryClient: any) => {
       // Call custom onError if provided
       if (onError) {
         onError(error, variables);
@@ -270,7 +274,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
 
       // Call original onError from options
       if (options.onError) {
-        options.onError(error, variables, context);
+        options.onError(error, variables, context, queryClient);
       }
     },
     ...options,

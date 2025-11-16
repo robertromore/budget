@@ -15,16 +15,21 @@ import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import {PayeeCategoriesState} from '$lib/states/entities/payee-categories.svelte';
 import ManagePayeeCategoryForm from '$lib/components/forms/manage-payee-category-form.svelte';
 import SeedDefaultPayeeCategoriesButton from './(components)/seed-default-payee-categories-button.svelte';
+import UncategorizedPayeesSheet from './(components)/uncategorized-payees-sheet.svelte';
 import type {PayeeCategory} from '$lib/schema';
+import type {PayeeCategoryWithCounts} from '$lib/server/domains/payee-categories/repository';
 import {rpc} from '$lib/query';
-import {deletePayeeCategory} from '$lib/query/payee-categories';
+import {deletePayeeCategory, getUncategorizedPayeesCount} from '$lib/query/payee-categories';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
-
-const payeeCategoriesState = $derived(PayeeCategoriesState.get());
+import Lightbulb from '@lucide/svelte/icons/lightbulb';
 
 // Fetch categories with counts
 const categoriesWithCountsQuery = rpc.payeeCategories.listPayeeCategoriesWithCounts().options();
 const categoriesWithCounts = $derived(categoriesWithCountsQuery.data ?? []);
+
+// Fetch uncategorized payees count
+const uncategorizedCountQuery = getUncategorizedPayeesCount().options();
+const uncategorizedCount = $derived(uncategorizedCountQuery.data ?? 0);
 
 // Computed values
 const sortedCategories = $derived(
@@ -44,7 +49,8 @@ const hasNoCategories = $derived(categoriesWithCounts.length === 0);
 let editDialogOpen = $state(false);
 let selectedCategory = $state<PayeeCategory | undefined>(undefined);
 let deleteDialogOpen = $state(false);
-let categoryToDelete = $state<PayeeCategory | undefined>(undefined);
+let categoryToDelete = $state<PayeeCategoryWithCounts | undefined>(undefined);
+let uncategorizedSheetOpen = $state(false);
 
 // Mutations
 const deleteMutation = deletePayeeCategory.options();
@@ -108,6 +114,15 @@ const handleDeleteSuccess = (id: number) => {
 			</p>
 		</div>
 		<div class="flex items-center gap-2">
+			{#if uncategorizedCount > 0}
+				<Button variant="outline" onclick={() => uncategorizedSheetOpen = true}>
+					<Lightbulb class="mr-2 h-4 w-4" />
+					Review Uncategorized
+					<Badge variant="secondary" class="ml-2">
+						{uncategorizedCount}
+					</Badge>
+				</Button>
+			{/if}
 			<SeedDefaultPayeeCategoriesButton onCategoriesAdded={() => categoriesWithCountsQuery.refetch()} />
 			<Button onclick={handleCreate}>
 				<Plus class="mr-2 h-4 w-4" />
@@ -275,3 +290,17 @@ const handleDeleteSuccess = (id: number) => {
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>
+
+<!-- Uncategorized Payees Sheet -->
+<UncategorizedPayeesSheet
+	bind:open={uncategorizedSheetOpen}
+	onOpenChange={(open) => {
+		uncategorizedSheetOpen = open;
+		if (!open) {
+			// Refetch queries when sheet closes
+			uncategorizedCountQuery.refetch();
+			categoriesWithCountsQuery.refetch();
+		}
+	}}
+	{uncategorizedCount}
+/>

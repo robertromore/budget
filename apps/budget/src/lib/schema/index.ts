@@ -6,6 +6,7 @@ export * from "./categories";
 export * from "./category-groups";
 export * from "./detected-patterns";
 export * from "./payee-category-corrections";
+export * from "./payee-categories";
 export * from "./payees";
 export * from "./recommendations";
 export * from "./schedule-dates";

@@ -15,6 +15,9 @@ export const payeeCategoryKeys = createQueryKeys("payee-categories", {
   slug: (slug: string) => ["payee-categories", "slug", slug] as const,
   defaultCategoriesStatus: () => ["payee-categories", "defaults", "status"] as const,
   availableDefaults: () => ["payee-categories", "defaults", "available"] as const,
+  uncategorizedCount: () => ["payee-categories", "uncategorized-count"] as const,
+  recommendation: (payeeId: number) => ["payee-categories", "recommendation", payeeId] as const,
+  bulkRecommendations: (limit?: number) => ["payee-categories", "bulk-recommendations", limit] as const,
 });
 
 // ================================================================================
@@ -62,7 +65,7 @@ export const createPayeeCategory = defineMutation<NewPayeeCategory, PayeeCategor
 });
 
 export const updatePayeeCategory = defineMutation<
-  {id: number} & Partial<NewPayeeCategory>,
+  {id: number; name: string} & Partial<Omit<NewPayeeCategory, 'name'>>,
   PayeeCategory
 >({
   mutationFn: (input) => trpc().payeeCategoriesRoutes.update.mutate(input),
@@ -78,7 +81,7 @@ export const updatePayeeCategory = defineMutation<
 });
 
 export const savePayeeCategory = defineMutation<
-  Partial<NewPayeeCategory> & {id?: number},
+  {name: string} & Partial<Omit<NewPayeeCategory, 'name'>> & {id?: number},
   PayeeCategory & {is_new?: boolean}
 >({
   mutationFn: (input) => trpc().payeeCategoriesRoutes.save.mutate(input),
@@ -174,4 +177,58 @@ export const seedDefaultPayeeCategories = defineMutation<
     return "No new categories to add";
   },
   errorMessage: "Failed to add default payee categories",
+});
+
+// ================================================================================
+// Recommendations
+// ================================================================================
+
+export interface PayeeCategoryRecommendation {
+  payeeId: number;
+  payeeName: string;
+  recommendedCategoryId: number | null;
+  categoryName: string | null;
+  confidence: number;
+  reasoning: string;
+  supportingFactors: string[];
+  alternativeCategories: Array<{
+    id: number;
+    name: string;
+    confidence: number;
+  }>;
+}
+
+export const getUncategorizedPayeesCount = () =>
+  defineQuery<number>({
+    queryKey: payeeCategoryKeys.uncategorizedCount(),
+    queryFn: () => trpc().payeeCategoriesRoutes.getUncategorizedCount.query(),
+  });
+
+export const getPayeeCategoryRecommendation = (payeeId: number) =>
+  defineQuery<PayeeCategoryRecommendation>({
+    queryKey: payeeCategoryKeys.recommendation(payeeId),
+    queryFn: () => trpc().payeeCategoriesRoutes.getRecommendation.query({payeeId}),
+  });
+
+export const getBulkPayeeCategoryRecommendations = (limit?: number) =>
+  defineQuery<PayeeCategoryRecommendation[]>({
+    queryKey: payeeCategoryKeys.bulkRecommendations(limit),
+    queryFn: () => trpc().payeeCategoriesRoutes.getBulkRecommendations.query({limit}),
+  });
+
+export const bulkAssignPayeeCategories = defineMutation<
+  {payeeIds: number[]; categoryId: number},
+  {success: boolean; updatedCount: number}
+>({
+  mutationFn: (input) => trpc().payeeCategoriesRoutes.bulkAssignPayees.mutate(input),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(payeeCategoryKeys.allWithCounts());
+    cachePatterns.invalidatePrefix(payeeCategoryKeys.uncategorizedCount());
+    cachePatterns.invalidatePrefix(payeeCategoryKeys.bulkRecommendations());
+    // Also invalidate payees queries since they now have categories
+    cachePatterns.invalidatePrefix(["payees"]);
+  },
+  successMessage: (data) =>
+    `${data.updatedCount} ${data.updatedCount === 1 ? "payee" : "payees"} assigned to category`,
+  errorMessage: "Failed to assign payees to category",
 });

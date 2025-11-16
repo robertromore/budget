@@ -41,6 +41,7 @@ import { CategoryGroupRecommendationService } from '$lib/server/domains/category
 import { CategoryGroupService } from '$lib/server/domains/category-groups/services';
 import { CategoryGroupSettingsService } from '$lib/server/domains/category-groups/settings-service';
 import { PayeeCategoryService } from '$lib/server/domains/payee-categories/services';
+import { PayeeCategoryRecommendationService } from '$lib/server/domains/payee-categories/recommendation-service';
 import { ClaimRepository } from '$lib/server/domains/medical-expenses/claim-repository';
 import { ClaimService } from '$lib/server/domains/medical-expenses/claim-service';
 import { ReceiptRepository } from '$lib/server/domains/medical-expenses/receipt-repository';
@@ -553,6 +554,15 @@ export class ServiceFactory {
       ));
     }
     return this.instances.get(key) as PayeeCategoryService;
+  }
+
+  // Payee Category Recommendation Service
+  getPayeeCategoryRecommendationService(): PayeeCategoryRecommendationService {
+    const key = 'PayeeCategoryRecommendationService';
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new PayeeCategoryRecommendationService());
+    }
+    return this.instances.get(key) as PayeeCategoryRecommendationService;
   }
 
   // ==================== Testing Utilities ====================

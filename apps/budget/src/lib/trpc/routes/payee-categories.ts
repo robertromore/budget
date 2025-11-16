@@ -9,6 +9,7 @@ import {withErrorHandler} from "$lib/trpc/shared/errors";
 import {z} from "zod";
 
 const payeeCategoryService = serviceFactory.getPayeeCategoryService();
+const payeeCategoryRecommendationService = serviceFactory.getPayeeCategoryRecommendationService();
 
 export const payeeCategoriesRoutes = t.router({
   // ================================================================================
@@ -56,9 +57,9 @@ export const payeeCategoriesRoutes = t.router({
         const category = await payeeCategoryService.createCategory(
           {
             name: name!,
-            description,
-            icon,
-            color,
+            description: description ?? null,
+            icon: icon ?? null,
+            color: color ?? null,
             displayOrder,
             isActive,
           },
@@ -83,9 +84,9 @@ export const payeeCategoriesRoutes = t.router({
           id,
           {
             name,
-            description,
-            icon,
-            color,
+            description: description ?? null,
+            icon: icon ?? null,
+            color: color ?? null,
             displayOrder,
             isActive,
           },
@@ -110,9 +111,9 @@ export const payeeCategoriesRoutes = t.router({
             id,
             {
               name,
-              description,
-              icon,
-              color,
+              description: description ?? null,
+              icon: icon ?? null,
+              color: color ?? null,
               displayOrder,
               isActive,
             },
@@ -125,9 +126,9 @@ export const payeeCategoriesRoutes = t.router({
           const category = await payeeCategoryService.createCategory(
             {
               name: name!,
-              description,
-              icon,
-              color,
+              description: description ?? null,
+              icon: icon ?? null,
+              color: color ?? null,
               displayOrder,
               isActive,
             },
@@ -218,4 +219,77 @@ export const payeeCategoriesRoutes = t.router({
       return await payeeCategoryService.getAvailableDefaultPayeeCategories();
     })
   ),
+
+  // ================================================================================
+  // Recommendations
+  // ================================================================================
+
+  getRecommendation: publicProcedure
+    .input(z.object({payeeId: z.number().positive()}))
+    .query(
+      withErrorHandler(async ({input, ctx}) => {
+        return await payeeCategoryRecommendationService.getRecommendation(
+          input.payeeId,
+          ctx.workspaceId
+        );
+      })
+    ),
+
+  getBulkRecommendations: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().positive().optional(),
+      }).optional()
+    )
+    .query(
+      withErrorHandler(async ({input, ctx}) => {
+        return await payeeCategoryRecommendationService.getBulkRecommendations(
+          ctx.workspaceId,
+          input?.limit
+        );
+      })
+    ),
+
+  getUncategorizedCount: publicProcedure.query(
+    withErrorHandler(async ({ctx}) => {
+      return await payeeCategoryRecommendationService.getUncategorizedCount(ctx.workspaceId);
+    })
+  ),
+
+  // Bulk assign payees to a category
+  bulkAssignPayees: rateLimitedProcedure
+    .input(
+      z.object({
+        payeeIds: z.array(z.number().positive()).min(1),
+        categoryId: z.number().positive(),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({input, ctx}) => {
+        // Import payee repository to update payees
+        const {db} = await import("$lib/server/db");
+        const {payees} = await import("$lib/schema");
+        const {and, eq, inArray, isNull} = await import("drizzle-orm");
+
+        const updated = await db
+          .update(payees)
+          .set({
+            payeeCategoryId: input.categoryId,
+            updatedAt: new Date().toISOString(),
+          })
+          .where(
+            and(
+              inArray(payees.id, input.payeeIds),
+              eq(payees.workspaceId, ctx.workspaceId),
+              isNull(payees.deletedAt)
+            )
+          )
+          .returning({id: payees.id});
+
+        return {
+          success: true,
+          updatedCount: updated.length,
+        };
+      })
+    ),
 });
