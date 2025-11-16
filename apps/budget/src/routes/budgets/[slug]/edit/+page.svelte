@@ -13,7 +13,7 @@ let {data} = $props();
   <meta name="description" content="Edit budget details" />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -22,8 +22,8 @@ let {data} = $props();
         <span class="sr-only">Back to Budget</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <PiggyBank class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <PiggyBank class="text-muted-foreground h-8 w-8" />
           Edit Budget
         </h1>
         <p class="text-muted-foreground mt-1">Update budget configuration and settings</p>
@@ -37,6 +37,5 @@ let {data} = $props();
     accounts={data.accounts}
     categories={data.categories}
     budgetId={data.budgetId}
-    onCancel={() => goto(`/budgets/${data.budgetSlug}`)}
-  />
+    onCancel={() => goto(`/budgets/${data.budgetSlug}`)} />
 </div>

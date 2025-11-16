@@ -15,16 +15,14 @@ import {
   type AutomationActionType,
   type BudgetAutomationSettings,
 } from "$lib/schema/budget-automation-settings";
-import { budgetGroupMemberships, budgetGroups } from "$lib/schema/budgets";
-import {
-  type BudgetRecommendation,
-} from "$lib/schema/recommendations";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
-import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
-import { eq } from "drizzle-orm";
-import { BudgetService } from "./services";
+import {budgetGroupMemberships, budgetGroups} from "$lib/schema/budgets";
+import {type BudgetRecommendation} from "$lib/schema/recommendations";
+import {db} from "$lib/server/db";
+import {logger} from "$lib/server/shared/logging";
+import {DatabaseError, NotFoundError} from "$lib/server/shared/types/errors";
+import {getCurrentTimestamp} from "$lib/utils/dates";
+import {eq} from "drizzle-orm";
+import {BudgetService} from "./services";
 
 export interface AutomationResult {
   success: boolean;
@@ -34,9 +32,7 @@ export interface AutomationResult {
 }
 
 export class BudgetGroupAutomationService {
-  constructor(
-    private service: BudgetService
-  ) {}
+  constructor(private service: BudgetService) {}
 
   /**
    * Get automation settings (creates default if none exist)
@@ -69,7 +65,9 @@ export class BudgetGroupAutomationService {
   /**
    * Update automation settings
    */
-  async updateSettings(updates: Partial<BudgetAutomationSettings>): Promise<BudgetAutomationSettings> {
+  async updateSettings(
+    updates: Partial<BudgetAutomationSettings>
+  ): Promise<BudgetAutomationSettings> {
     const currentSettings = await this.getSettings();
 
     const [updated] = await db
@@ -95,7 +93,7 @@ export class BudgetGroupAutomationService {
     recommendation: BudgetRecommendation,
     settings?: BudgetAutomationSettings
   ): Promise<boolean> {
-    const automationSettings = settings ?? await this.getSettings();
+    const automationSettings = settings ?? (await this.getSettings());
 
     // Check if this type of automation is enabled
     const typeEnabled = this.isTypeEnabled(recommendation.type, automationSettings);
@@ -154,9 +152,9 @@ export class BudgetGroupAutomationService {
   ): boolean {
     // Required confidence based on threshold setting and priority
     const requirements = {
-      high: { high: 85, medium: 90, low: 95 },      // High priority needs less confidence
-      medium: { high: 75, medium: 80, low: 85 },    // Medium priority
-      low: { high: 65, medium: 70, low: 75 },       // Low priority needs more confidence
+      high: {high: 85, medium: 90, low: 95}, // High priority needs less confidence
+      medium: {high: 75, medium: 80, low: 85}, // Medium priority
+      low: {high: 65, medium: 70, low: 75}, // Low priority needs more confidence
     };
 
     const required = requirements[priority][threshold];
@@ -175,7 +173,7 @@ export class BudgetGroupAutomationService {
           where: eq(budgetGroups.name, suggestedName),
         });
         if (existing) {
-          logger.info("Group already exists with suggested name", { name: suggestedName });
+          logger.info("Group already exists with suggested name", {name: suggestedName});
           return true;
         }
       }
@@ -245,11 +243,7 @@ export class BudgetGroupAutomationService {
     const groupName = metadata.suggestedGroupName;
     const budgetIds = metadata.suggestedGroupMembers;
 
-    if (
-      typeof groupName !== "string" ||
-      !Array.isArray(budgetIds) ||
-      budgetIds.length === 0
-    ) {
+    if (typeof groupName !== "string" || !Array.isArray(budgetIds) || budgetIds.length === 0) {
       return {
         success: false,
         activityId,
@@ -261,26 +255,23 @@ export class BudgetGroupAutomationService {
     const group = await this.service.createBudgetGroup({
       name: groupName,
       description: `Auto-created group: ${recommendation.description}`,
-      spendingLimit: typeof metadata.groupSpendingLimit === "number"
-        ? metadata.groupSpendingLimit
-        : null,
-      parentId: typeof metadata.parentGroupId === "number"
-        ? metadata.parentGroupId
-        : null,
+      spendingLimit:
+        typeof metadata.groupSpendingLimit === "number" ? metadata.groupSpendingLimit : null,
+      parentId: typeof metadata.parentGroupId === "number" ? metadata.parentGroupId : null,
     });
 
     // Assign budgets to the group
     for (const budgetId of budgetIds) {
       await db
         .insert(budgetGroupMemberships)
-        .values({ budgetId, groupId: group.id })
+        .values({budgetId, groupId: group.id})
         .onConflictDoNothing();
     }
 
     // Update activity with group ID
     await db
       .update(budgetAutomationActivity)
-      .set({ groupId: group.id })
+      .set({groupId: group.id})
       .where(eq(budgetAutomationActivity.id, activityId));
 
     return {
@@ -340,7 +331,8 @@ export class BudgetGroupAutomationService {
    */
   private async logActivityStart(recommendation: BudgetRecommendation): Promise<number> {
     const actionType = this.mapRecommendationTypeToActionType(recommendation.type);
-    const budgetIds = recommendation.metadata.budgetIdsToGroup ?? recommendation.metadata.suggestedGroupMembers;
+    const budgetIds =
+      recommendation.metadata.budgetIdsToGroup ?? recommendation.metadata.suggestedGroupMembers;
 
     const [activity] = await db
       .insert(budgetAutomationActivity)
@@ -372,7 +364,7 @@ export class BudgetGroupAutomationService {
       .update(budgetAutomationActivity)
       .set({
         status: "success",
-        ...(message && { metadata: { message } }),
+        ...(message && {metadata: {message}}),
       })
       .where(eq(budgetAutomationActivity.id, activityId));
   }
@@ -419,8 +411,8 @@ export class BudgetGroupAutomationService {
     limit?: number;
     offset?: number;
     status?: "pending" | "success" | "failed" | "rolled_back";
-  }): Promise<typeof budgetAutomationActivity.$inferSelect[]> {
-    const { limit = 50, offset = 0, status } = params ?? {};
+  }): Promise<(typeof budgetAutomationActivity.$inferSelect)[]> {
+    const {limit = 50, offset = 0, status} = params ?? {};
 
     let query = db
       .select()
@@ -465,7 +457,7 @@ export class BudgetGroupAutomationService {
       throw new Error("This automation has already been rolled back");
     }
 
-    logger.info("Rolling back automation", { activityId, actionType: activity.actionType });
+    logger.info("Rolling back automation", {activityId, actionType: activity.actionType});
 
     try {
       switch (activity.actionType) {
@@ -492,7 +484,7 @@ export class BudgetGroupAutomationService {
         })
         .where(eq(budgetAutomationActivity.id, activityId));
 
-      logger.info("Automation rolled back successfully", { activityId });
+      logger.info("Automation rolled back successfully", {activityId});
     } catch (error) {
       logger.error("Failed to rollback automation", {
         activityId,
@@ -556,7 +548,7 @@ export class BudgetGroupAutomationService {
       return;
     }
 
-    logger.info("Checking for auto-assignment of budget to groups", { budgetId });
+    logger.info("Checking for auto-assignment of budget to groups", {budgetId});
 
     // TODO: Implement group matching logic
     // This would:

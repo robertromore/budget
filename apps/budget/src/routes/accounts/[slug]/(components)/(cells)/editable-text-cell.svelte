@@ -39,24 +39,16 @@ $effect(() => {
           'block w-full max-w-48 justify-start overflow-hidden text-left font-normal text-ellipsis whitespace-nowrap',
           !value && 'text-muted-foreground'
         )}>
-        <SquarePen class="mr-1 inline-block size-4 align-top flex-shrink-0" />
+        <SquarePen class="mr-1 inline-block size-4 shrink-0 align-top" />
         <span class="truncate">{value || placeholder}</span>
       </Button>
     {/snippet}
   </Popover.Trigger>
-  <Popover.Content class="grid !w-[800px] max-w-none gap-2 p-2" align="start">
+  <Popover.Content class="grid w-[800px]! max-w-none gap-2 p-2" align="start">
     {#if multiline}
-      <Textarea
-        {placeholder}
-        bind:value={newValue}
-        class="w-full min-h-[150px]"
-      />
+      <Textarea {placeholder} bind:value={newValue} class="min-h-[150px] w-full" />
     {:else}
-      <Input
-        {placeholder}
-        bind:value={newValue}
-        class="min-w-[200px]"
-      />
+      <Input {placeholder} bind:value={newValue} class="min-w-[200px]" />
     {/if}
     <Button onclick={handleSubmit}>Save</Button>
   </Popover.Content>

@@ -14,7 +14,9 @@ import {browser} from '$app/environment';
 let {data} = $props();
 
 // Check for template ID in URL params and get template from constants
-const templateId = $state(browser ? new URLSearchParams(window.location.search).get('templateId') : null);
+const templateId = $state(
+  browser ? new URLSearchParams(window.location.search).get('templateId') : null
+);
 const selectedTemplate = $derived(templateId ? getBudgetTemplateById(templateId) : null);
 
 // Merge template data with form data when template is loaded
@@ -81,7 +83,7 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
   <meta name="description" content="Create a new budget" />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -90,8 +92,8 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
         <span class="sr-only">Back to Budgets</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <PiggyBank class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <PiggyBank class="text-muted-foreground h-8 w-8" />
           New Budget
         </h1>
         <p class="text-muted-foreground mt-1">Create a new budget to track spending</p>
@@ -102,20 +104,20 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
   <!-- Budget Creation Form with Manual/Wizard Toggle -->
   <WizardFormWrapper
     title="Create Budget"
-    subtitle={selectedTemplate ? `Using template: ${selectedTemplate.name}` : "Choose between manual form entry or step-by-step wizard"}
+    subtitle={selectedTemplate
+      ? `Using template: ${selectedTemplate.name}`
+      : 'Choose between manual form entry or step-by-step wizard'}
     wizardStore={budgetWizardStore}
     onComplete={handleComplete}
     onCancel={() => goto('/budgets')}
-    defaultMode="wizard"
-  >
+    defaultMode="wizard">
     {#snippet formContent()}
       <ManageBudgetForm
         formData={data.form}
         accounts={data.accounts}
         categories={data.categories}
         schedules={data.schedules}
-        onCancel={() => goto('/budgets')}
-      />
+        onCancel={() => goto('/budgets')} />
     {/snippet}
 
     {#snippet wizardContent()}
@@ -124,8 +126,7 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
         accounts={data.accounts}
         categories={data.categories}
         schedules={data.schedules}
-        onComplete={handleComplete}
-      />
+        onComplete={handleComplete} />
     {/snippet}
   </WizardFormWrapper>
 </div>

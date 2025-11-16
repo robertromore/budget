@@ -13,16 +13,18 @@ const isDuplicating = $derived(page.data?.['isDuplicating'] && duplicateFromId !
 
 const pageTitle = $derived(isDuplicating ? 'Duplicate Payee' : 'New Payee');
 
-const pageDescription = $derived(isDuplicating
-  ? 'Create a new payee based on an existing one'
-  : 'Create a new payee for your transactions');
+const pageDescription = $derived(
+  isDuplicating
+    ? 'Create a new payee based on an existing one'
+    : 'Create a new payee for your transactions'
+);
 
 const handleSave = (payee: any, isNew: boolean) => {
   if (isNew && payee.slug) {
     // Navigate to the new payee's detail page after a brief delay
     // The timeout ensures form submission completes before redirect
     setTimeout(() => {
-      goto(`/payees/${payee.slug}`, { replaceState: true });
+      goto(`/payees/${payee.slug}`, {replaceState: true});
     }, 100);
   } else {
     // Navigate back to payees list
@@ -36,7 +38,7 @@ const handleSave = (payee: any, isNew: boolean) => {
   <meta name="description" content={pageDescription} />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -45,8 +47,8 @@ const handleSave = (payee: any, isNew: boolean) => {
         <span class="sr-only">Back to Payees</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <User class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <User class="text-muted-foreground h-8 w-8" />
           {pageTitle}
         </h1>
         <p class="text-muted-foreground mt-1">{pageDescription}</p>
@@ -59,14 +61,12 @@ const handleSave = (payee: any, isNew: boolean) => {
     <Card.Header>
       <Card.Title>Payee Information</Card.Title>
       <Card.Description>
-        Fill in the details for your new payee. Only the name is required - you can add more details later.
+        Fill in the details for your new payee. Only the name is required - you can add more details
+        later.
       </Card.Description>
     </Card.Header>
     <Card.Content>
-      <ManagePayeeForm
-        id={isDuplicating ? duplicateFromId : 0}
-        onSave={handleSave}
-      />
+      <ManagePayeeForm id={isDuplicating ? duplicateFromId : 0} onSave={handleSave} />
     </Card.Content>
   </Card.Root>
 </div>

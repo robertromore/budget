@@ -12,14 +12,17 @@ export class ImportError extends Error {
     public code?: string
   ) {
     super(message);
-    this.name = 'ImportError';
+    this.name = "ImportError";
   }
 }
 
 export class FileValidationError extends ImportError {
-  constructor(message: string, public fileType?: string) {
-    super(message, { fileType }, 'FILE_VALIDATION_ERROR');
-    this.name = 'FileValidationError';
+  constructor(
+    message: string,
+    public fileType?: string
+  ) {
+    super(message, {fileType}, "FILE_VALIDATION_ERROR");
+    this.name = "FileValidationError";
   }
 }
 
@@ -29,8 +32,8 @@ export class ParseError extends ImportError {
     public row?: number,
     public column?: string
   ) {
-    super(message, { row, column }, 'PARSE_ERROR');
-    this.name = 'ParseError';
+    super(message, {row, column}, "PARSE_ERROR");
+    this.name = "ParseError";
   }
 }
 
@@ -41,19 +44,19 @@ export class ValidationError extends ImportError {
     public value?: any,
     public row?: number
   ) {
-    super(message, { field, value, row }, 'VALIDATION_ERROR');
-    this.name = 'ValidationError';
+    super(message, {field, value, row}, "VALIDATION_ERROR");
+    this.name = "ValidationError";
   }
 }
 
 export class EntityMatchError extends ImportError {
   constructor(
     message: string,
-    public entityType: 'payee' | 'category',
+    public entityType: "payee" | "category",
     public searchTerm: string
   ) {
-    super(message, { entityType, searchTerm }, 'ENTITY_MATCH_ERROR');
-    this.name = 'EntityMatchError';
+    super(message, {entityType, searchTerm}, "ENTITY_MATCH_ERROR");
+    this.name = "EntityMatchError";
   }
 }
 
@@ -63,7 +66,7 @@ export class DuplicateTransactionError extends ImportError {
     public duplicateId: number,
     public confidence: number
   ) {
-    super(message, { duplicateId, confidence }, 'DUPLICATE_TRANSACTION_ERROR');
-    this.name = 'DuplicateTransactionError';
+    super(message, {duplicateId, confidence}, "DUPLICATE_TRANSACTION_ERROR");
+    this.name = "DuplicateTransactionError";
   }
 }

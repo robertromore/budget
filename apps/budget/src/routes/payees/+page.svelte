@@ -7,16 +7,17 @@ import User from '@lucide/svelte/icons/user';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import FolderCog from '@lucide/svelte/icons/folder-cog';
 import {PayeesState} from '$lib/states/entities/payees.svelte';
-import {
-  deletePayeeDialog,
-  deletePayeeId,
-} from '$lib/states/ui/payees.svelte';
+import {deletePayeeDialog, deletePayeeId} from '$lib/states/ui/payees.svelte';
 import {payeeSearchState} from '$lib/states/ui/payee-search.svelte';
 import EntitySearchToolbar from '$lib/components/shared/search/entity-search-toolbar.svelte';
 import PayeeSearchFilters from './(components)/search/payee-search-filters.svelte';
 import PayeeSearchResults from './(components)/search/payee-search-results.svelte';
 import PayeeFacetedFilters from './(components)/bulk-operations/payee-faceted-filters.svelte';
-import {searchPayeesAdvanced, bulkDeletePayees as bulkDeletePayeesMutation, listPayeesWithStats} from '$lib/query/payees';
+import {
+  searchPayeesAdvanced,
+  bulkDeletePayees as bulkDeletePayeesMutation,
+  listPayeesWithStats,
+} from '$lib/query/payees';
 import {goto} from '$app/navigation';
 import type {Payee, PayeeType, PaymentFrequency} from '$lib/schema';
 import {rpc} from '$lib/query';
@@ -38,7 +39,7 @@ let isSearching = $state(false);
 // Sort payees based on user selection
 const sortedPayeesArray = $derived.by(() => {
   // Create a map of payee stats for quick lookup
-  const statsMap = new Map(payeesWithStats.map(p => [p.id, p.stats]));
+  const statsMap = new Map(payeesWithStats.map((p) => [p.id, p.stats]));
 
   return [...allPayeesArray].sort((a, b) => {
     let comparison = 0;
@@ -53,7 +54,9 @@ const sortedPayeesArray = $derived.by(() => {
         comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
         break;
       case 'lastTransaction':
-        comparison = (statsA?.lastTransactionDate || '').localeCompare(statsB?.lastTransactionDate || '');
+        comparison = (statsA?.lastTransactionDate || '').localeCompare(
+          statsB?.lastTransactionDate || ''
+        );
         break;
       case 'avgAmount':
         comparison = (statsA?.avgAmount || 0) - (statsB?.avgAmount || 0);
@@ -68,9 +71,9 @@ const sortedPayeesArray = $derived.by(() => {
 
 // Merge stats into payees for display
 const payeesWithStatsData = $derived.by(() => {
-  const statsMap = new Map(payeesWithStats.map(p => [p.id, p.stats]));
+  const statsMap = new Map(payeesWithStats.map((p) => [p.id, p.stats]));
 
-  return sortedPayeesArray.map(payee => ({
+  return sortedPayeesArray.map((payee) => ({
     ...payee,
     avgAmount: statsMap.get(payee.id)?.avgAmount ?? null,
     lastTransactionDate: statsMap.get(payee.id)?.lastTransactionDate ?? null,
@@ -118,7 +121,7 @@ const performSearch = async () => {
     const finalParams = {
       ...params,
       query: params.query || '',
-      limit: 100
+      limit: 100,
     };
     const searchQuery = searchPayeesAdvanced(finalParams);
 
@@ -154,7 +157,6 @@ $effect(() => {
 
   return () => clearTimeout(timeoutId);
 });
-
 
 const deletePayee = (payee: Payee) => {
   deleteDialogId.current = payee.id;
@@ -203,7 +205,6 @@ const viewAnalytics = (payee: Payee) => {
   goto(`/payees/${payee.slug}/analytics`);
 };
 
-
 const payeeTypeOptions = [
   {label: 'Merchant', value: 'merchant'},
   {label: 'Utility', value: 'utility'},
@@ -211,12 +212,12 @@ const payeeTypeOptions = [
   {label: 'Financial Institution', value: 'financial_institution'},
   {label: 'Government', value: 'government'},
   {label: 'Individual', value: 'individual'},
-  {label: 'Other', value: 'other'}
+  {label: 'Other', value: 'other'},
 ];
 
 const statusOptions = [
   {label: 'Active', value: 'true'},
-  {label: 'Inactive', value: 'false'}
+  {label: 'Inactive', value: 'false'},
 ];
 
 const frequencyOptions = [
@@ -225,7 +226,7 @@ const frequencyOptions = [
   {label: 'Monthly', value: 'monthly'},
   {label: 'Quarterly', value: 'quarterly'},
   {label: 'Annual', value: 'annual'},
-  {label: 'Irregular', value: 'irregular'}
+  {label: 'Irregular', value: 'irregular'},
 ];
 </script>
 
@@ -286,8 +287,7 @@ const frequencyOptions = [
       {#snippet filterContent()}
         <PayeeSearchFilters
           filters={search.filters}
-          onFilterChange={(key, value) => search.updateFilter(key, value)}
-        />
+          onFilterChange={(key, value) => search.updateFilter(key, value)} />
       {/snippet}
     </EntitySearchToolbar>
 
@@ -301,20 +301,23 @@ const frequencyOptions = [
         fieldName="payeeType"
         onSelectionChange={(values) => {
           search.updateFilter('payeeType', (values[0] as PayeeType) || undefined);
-        }}
-      />
+        }} />
 
       <PayeeFacetedFilters
         title="Status"
         options={statusOptions}
-        selectedValues={search.filters.isActive !== undefined ? [search.filters.isActive.toString()] : []}
+        selectedValues={search.filters.isActive !== undefined
+          ? [search.filters.isActive.toString()]
+          : []}
         payees={allPayeesArray}
         fieldName="isActive"
         onSelectionChange={(values) => {
           const value = values[0];
-          search.updateFilter('isActive', value === 'true' ? true : value === 'false' ? false : undefined);
-        }}
-      />
+          search.updateFilter(
+            'isActive',
+            value === 'true' ? true : value === 'false' ? false : undefined
+          );
+        }} />
 
       <PayeeFacetedFilters
         title="Frequency"
@@ -324,8 +327,7 @@ const frequencyOptions = [
         fieldName="paymentFrequency"
         onSelectionChange={(values) => {
           search.updateFilter('paymentFrequency', (values[0] as PaymentFrequency) || undefined);
-        }}
-      />
+        }} />
     </div>
   </div>
 
@@ -339,8 +341,8 @@ const frequencyOptions = [
       <Empty.EmptyHeader>
         <Empty.EmptyTitle>No Payees Yet</Empty.EmptyTitle>
         <Empty.EmptyDescription>
-          Get started by creating your first payee. You can add merchants, companies, people, or any other
-          entity you pay or receive money from.
+          Get started by creating your first payee. You can add merchants, companies, people, or any
+          other entity you pay or receive money from.
         </Empty.EmptyDescription>
       </Empty.EmptyHeader>
       <Empty.EmptyContent>
@@ -361,8 +363,7 @@ const frequencyOptions = [
       onEdit={editPayee}
       onDelete={deletePayee}
       onBulkDelete={bulkDeletePayees}
-      onViewAnalytics={viewAnalytics}
-    />
+      onViewAnalytics={viewAnalytics} />
   {/if}
 </div>
 
@@ -370,9 +371,14 @@ const frequencyOptions = [
 <AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
   <AlertDialog.Content>
     <AlertDialog.Header>
-      <AlertDialog.Title>Delete {payeesToDelete.length} Payee{payeesToDelete.length > 1 ? 's' : ''}</AlertDialog.Title>
+      <AlertDialog.Title
+        >Delete {payeesToDelete.length} Payee{payeesToDelete.length > 1
+          ? 's'
+          : ''}</AlertDialog.Title>
       <AlertDialog.Description>
-        Are you sure you want to delete {payeesToDelete.length} payee{payeesToDelete.length > 1 ? 's' : ''}? This action cannot be undone.
+        Are you sure you want to delete {payeesToDelete.length} payee{payeesToDelete.length > 1
+          ? 's'
+          : ''}? This action cannot be undone.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

@@ -9,15 +9,12 @@
  * - Name keyword similarity
  */
 
-import { budgets } from "$lib/schema/budgets";
-import type {
-  RecommendationMetadata,
-  RecommendationPriority,
-} from "$lib/schema/recommendations";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
-import { eq } from "drizzle-orm";
-import type { BudgetWithRelations } from "./repository";
+import {budgets} from "$lib/schema/budgets";
+import type {RecommendationMetadata, RecommendationPriority} from "$lib/schema/recommendations";
+import {db} from "$lib/server/db";
+import {logger} from "$lib/server/shared/logging";
+import {eq} from "drizzle-orm";
+import type {BudgetWithRelations} from "./repository";
 
 export interface AnalysisParams {
   accountIds?: number[];
@@ -50,7 +47,11 @@ export interface SimilarityScore {
 }
 
 export interface BudgetRecommendationDraft {
-  type: "create_budget_group" | "add_to_budget_group" | "merge_budget_groups" | "adjust_group_limit";
+  type:
+    | "create_budget_group"
+    | "add_to_budget_group"
+    | "merge_budget_groups"
+    | "adjust_group_limit";
   priority: RecommendationPriority;
   title: string;
   description: string;
@@ -66,14 +67,13 @@ export class BudgetGroupAnalysisService {
   /**
    * Generate all group recommendations
    */
-  async generateAllGroupRecommendations(params: AnalysisParams = {}): Promise<BudgetRecommendationDraft[]> {
-    const {
-      minSimilarityScore = 70,
-      minGroupSize = 2,
-    } = params;
+  async generateAllGroupRecommendations(
+    params: AnalysisParams = {}
+  ): Promise<BudgetRecommendationDraft[]> {
+    const {minSimilarityScore = 70, minGroupSize = 2} = params;
 
     try {
-      logger.info("Starting budget group analysis", { params });
+      logger.info("Starting budget group analysis", {params});
 
       const recommendations: BudgetRecommendationDraft[] = [];
 
@@ -81,7 +81,10 @@ export class BudgetGroupAnalysisService {
       const patterns = await this.detectGroupingPatterns(params);
 
       for (const pattern of patterns) {
-        if (pattern.averageSimilarity >= minSimilarityScore && pattern.budgets.length >= minGroupSize) {
+        if (
+          pattern.averageSimilarity >= minSimilarityScore &&
+          pattern.budgets.length >= minGroupSize
+        ) {
           const rec = await this.generateGroupCreationRecommendation(pattern);
           recommendations.push(rec);
         }
@@ -89,7 +92,7 @@ export class BudgetGroupAnalysisService {
 
       // 2. Find budgets that should be added to existing groups
       const assignmentRecs = await this.generateGroupAssignmentRecommendations(params);
-      recommendations.push(...assignmentRecs.filter(r => r.confidence >= minSimilarityScore));
+      recommendations.push(...assignmentRecs.filter((r) => r.confidence >= minSimilarityScore));
 
       // 3. Find groups that should be merged
       const mergeRecs = await this.generateGroupMergeRecommendations();
@@ -122,26 +125,26 @@ export class BudgetGroupAnalysisService {
       where: eq(budgets.status, "active"),
       with: {
         categories: {
-          with: { category: true }
+          with: {category: true},
         },
         accounts: {
-          with: { account: true }
+          with: {account: true},
         },
         groupMemberships: {
-          with: { group: true }
+          with: {group: true},
         },
         transactions: {
-          with: { transaction: true }
+          with: {transaction: true},
         },
         periodTemplates: {
-          with: { periods: true }
+          with: {periods: true},
         },
       },
     });
 
     // Filter to budgets without groups or with incomplete grouping
-    const ungroupedBudgets = allBudgets.filter(b =>
-      !b.groupMemberships || b.groupMemberships.length === 0
+    const ungroupedBudgets = allBudgets.filter(
+      (b) => !b.groupMemberships || b.groupMemberships.length === 0
     );
 
     if (ungroupedBudgets.length < 2) {
@@ -165,7 +168,8 @@ export class BudgetGroupAnalysisService {
         const budget2 = ungroupedBudgets[j]!;
         const similarity = this.calculateBudgetSimilarity(budget1, budget2);
 
-        if (similarity.overall >= 60) { // Lower threshold for pattern detection
+        if (similarity.overall >= 60) {
+          // Lower threshold for pattern detection
           similarBudgets.push(budget2);
           processed.add(budget2.id);
         }
@@ -185,7 +189,9 @@ export class BudgetGroupAnalysisService {
   /**
    * Create a grouping pattern from similar budgets
    */
-  private async createGroupingPattern(budgets: BudgetWithRelations[]): Promise<GroupingPattern | null> {
+  private async createGroupingPattern(
+    budgets: BudgetWithRelations[]
+  ): Promise<GroupingPattern | null> {
     if (budgets.length < 2) return null;
 
     // Calculate average similarity
@@ -203,11 +209,11 @@ export class BudgetGroupAnalysisService {
     const averageSimilarity = comparisons > 0 ? totalSimilarity / comparisons : 0;
 
     // Find common categories
-    const allCategories = budgets.flatMap(b =>
-      b.categories.map(c => c.category?.name).filter(Boolean) as string[]
+    const allCategories = budgets.flatMap(
+      (b) => b.categories.map((c) => c.category?.name).filter(Boolean) as string[]
     );
     const categoryFreq = new Map<string, number>();
-    allCategories.forEach(cat => {
+    allCategories.forEach((cat) => {
       categoryFreq.set(cat, (categoryFreq.get(cat) || 0) + 1);
     });
     const commonCategories = Array.from(categoryFreq.entries())
@@ -215,11 +221,9 @@ export class BudgetGroupAnalysisService {
       .map(([cat, _]) => cat);
 
     // Find common accounts
-    const allAccounts = budgets.flatMap(b =>
-      b.accounts.map(a => a.accountId)
-    );
+    const allAccounts = budgets.flatMap((b) => b.accounts.map((a) => a.accountId));
     const accountFreq = new Map<number, number>();
-    allAccounts.forEach(accId => {
+    allAccounts.forEach((accId) => {
       accountFreq.set(accId, (accountFreq.get(accId) || 0) + 1);
     });
     const commonAccounts = Array.from(accountFreq.entries())
@@ -227,14 +231,14 @@ export class BudgetGroupAnalysisService {
       .map(([accId, _]) => accId);
 
     // Determine grouping reason and suggested name
-    const { reason, suggestedName, confidenceFactors } = this.determineGroupingReason(
+    const {reason, suggestedName, confidenceFactors} = this.determineGroupingReason(
       budgets,
       commonCategories,
       commonAccounts
     );
 
     return {
-      budgetIds: budgets.map(b => b.id),
+      budgetIds: budgets.map((b) => b.id),
       budgets,
       commonCategories,
       commonAccounts,
@@ -257,7 +261,7 @@ export class BudgetGroupAnalysisService {
     suggestedName: string;
     confidenceFactors: GroupingPattern["confidenceFactors"];
   } {
-    const names = budgets.map(b => b.name.toLowerCase());
+    const names = budgets.map((b) => b.name.toLowerCase());
 
     // Calculate confidence factors
     const categoryMatch = commonCategories.length > 0 ? 80 : 0;
@@ -330,32 +334,35 @@ export class BudgetGroupAnalysisService {
   /**
    * Calculate category similarity (0-40 points)
    */
-  private calculateCategorySimilarity(budget1: BudgetWithRelations, budget2: BudgetWithRelations): number {
-    const cats1 = budget1.categories.map(c => c.category);
-    const cats2 = budget2.categories.map(c => c.category);
+  private calculateCategorySimilarity(
+    budget1: BudgetWithRelations,
+    budget2: BudgetWithRelations
+  ): number {
+    const cats1 = budget1.categories.map((c) => c.category);
+    const cats2 = budget2.categories.map((c) => c.category);
 
     if (cats1.length === 0 || cats2.length === 0) return 0;
 
     // Check for exact category matches
-    const ids1 = cats1.map(c => c?.id).filter(Boolean);
-    const ids2 = cats2.map(c => c?.id).filter(Boolean);
-    const exactMatches = ids1.filter(id => ids2.includes(id));
+    const ids1 = cats1.map((c) => c?.id).filter(Boolean);
+    const ids2 = cats2.map((c) => c?.id).filter(Boolean);
+    const exactMatches = ids1.filter((id) => ids2.includes(id));
 
     if (exactMatches.length > 0) return 40;
 
     // Check for parent category matches
-    const parents1 = cats1.map(c => c?.parentId).filter(Boolean);
-    const parents2 = cats2.map(c => c?.parentId).filter(Boolean);
-    const parentMatches = parents1.filter(pid => parents2.includes(pid));
+    const parents1 = cats1.map((c) => c?.parentId).filter(Boolean);
+    const parents2 = cats2.map((c) => c?.parentId).filter(Boolean);
+    const parentMatches = parents1.filter((pid) => parents2.includes(pid));
 
     if (parentMatches.length > 0) return 28;
 
     // Check for keyword matches in category names
-    const names1 = cats1.map(c => c?.name?.toLowerCase()).filter(Boolean) as string[];
-    const names2 = cats2.map(c => c?.name?.toLowerCase()).filter(Boolean) as string[];
-    const keywords1 = names1.flatMap(n => this.extractKeywords(n));
-    const keywords2 = names2.flatMap(n => this.extractKeywords(n));
-    const keywordMatches = keywords1.filter(k => keywords2.includes(k));
+    const names1 = cats1.map((c) => c?.name?.toLowerCase()).filter(Boolean) as string[];
+    const names2 = cats2.map((c) => c?.name?.toLowerCase()).filter(Boolean) as string[];
+    const keywords1 = names1.flatMap((n) => this.extractKeywords(n));
+    const keywords2 = names2.flatMap((n) => this.extractKeywords(n));
+    const keywordMatches = keywords1.filter((k) => keywords2.includes(k));
 
     if (keywordMatches.length > 0) return 15;
 
@@ -365,23 +372,26 @@ export class BudgetGroupAnalysisService {
   /**
    * Calculate account similarity (0-30 points)
    */
-  private calculateAccountSimilarity(budget1: BudgetWithRelations, budget2: BudgetWithRelations): number {
-    const accs1 = budget1.accounts.map(a => a.account);
-    const accs2 = budget2.accounts.map(a => a.account);
+  private calculateAccountSimilarity(
+    budget1: BudgetWithRelations,
+    budget2: BudgetWithRelations
+  ): number {
+    const accs1 = budget1.accounts.map((a) => a.account);
+    const accs2 = budget2.accounts.map((a) => a.account);
 
     if (accs1.length === 0 || accs2.length === 0) return 0;
 
     // Check for exact account matches
-    const ids1 = accs1.map(a => a?.id).filter(Boolean);
-    const ids2 = accs2.map(a => a?.id).filter(Boolean);
-    const exactMatches = ids1.filter(id => ids2.includes(id));
+    const ids1 = accs1.map((a) => a?.id).filter(Boolean);
+    const ids2 = accs2.map((a) => a?.id).filter(Boolean);
+    const exactMatches = ids1.filter((id) => ids2.includes(id));
 
     if (exactMatches.length > 0) return 30;
 
     // Check for same account type
-    const types1 = accs1.map(a => a?.accountType).filter(Boolean);
-    const types2 = accs2.map(a => a?.accountType).filter(Boolean);
-    const typeMatches = types1.filter(type => types2.includes(type));
+    const types1 = accs1.map((a) => a?.accountType).filter(Boolean);
+    const types2 = accs2.map((a) => a?.accountType).filter(Boolean);
+    const typeMatches = types1.filter((type) => types2.includes(type));
 
     if (typeMatches.length > 0) return 15;
 
@@ -391,7 +401,10 @@ export class BudgetGroupAnalysisService {
   /**
    * Calculate amount similarity (0-20 points)
    */
-  private calculateAmountSimilarity(budget1: BudgetWithRelations, budget2: BudgetWithRelations): number {
+  private calculateAmountSimilarity(
+    budget1: BudgetWithRelations,
+    budget2: BudgetWithRelations
+  ): number {
     const amount1 = this.getBudgetAmount(budget1);
     const amount2 = this.getBudgetAmount(budget2);
 
@@ -429,13 +442,13 @@ export class BudgetGroupAnalysisService {
     ];
 
     for (const theme of themes) {
-      const matches1 = keywords1.filter(k => theme.includes(k));
-      const matches2 = keywords2.filter(k => theme.includes(k));
+      const matches1 = keywords1.filter((k) => theme.includes(k));
+      const matches2 = keywords2.filter((k) => theme.includes(k));
       if (matches1.length > 0 && matches2.length > 0) return 10;
     }
 
     // Check for direct keyword overlap
-    const overlap = keywords1.filter(k => keywords2.includes(k));
+    const overlap = keywords1.filter((k) => keywords2.includes(k));
     if (overlap.length > 0) return 7;
 
     return 0;
@@ -455,7 +468,7 @@ export class BudgetGroupAnalysisService {
   private calculateAmountSimilarityForGroup(budgets: BudgetWithRelations[]): number {
     if (budgets.length < 2) return 0;
 
-    const amounts = budgets.map(b => this.getBudgetAmount(b)).filter(a => a > 0);
+    const amounts = budgets.map((b) => this.getBudgetAmount(b)).filter((a) => a > 0);
     if (amounts.length < 2) return 0;
 
     const avg = amounts.reduce((sum, a) => sum + a, 0) / amounts.length;
@@ -478,10 +491,10 @@ export class BudgetGroupAnalysisService {
   private calculateNameSimilarityForGroup(names: string[]): number {
     if (names.length < 2) return 0;
 
-    const allKeywords = names.flatMap(n => this.extractKeywords(n));
+    const allKeywords = names.flatMap((n) => this.extractKeywords(n));
     const keywordFreq = new Map<string, number>();
 
-    allKeywords.forEach(kw => {
+    allKeywords.forEach((kw) => {
       keywordFreq.set(kw, (keywordFreq.get(kw) || 0) + 1);
     });
 
@@ -500,12 +513,27 @@ export class BudgetGroupAnalysisService {
    * Extract keywords from text
    */
   private extractKeywords(text: string): string[] {
-    const stopWords = new Set(["the", "a", "an", "and", "or", "but", "for", "of", "to", "in", "on", "at", "my", "our"]);
+    const stopWords = new Set([
+      "the",
+      "a",
+      "an",
+      "and",
+      "or",
+      "but",
+      "for",
+      "of",
+      "to",
+      "in",
+      "on",
+      "at",
+      "my",
+      "our",
+    ]);
 
     return text
       .toLowerCase()
       .split(/\s+/)
-      .filter(word => word.length > 2 && !stopWords.has(word));
+      .filter((word) => word.length > 2 && !stopWords.has(word));
   }
 
   /**
@@ -517,16 +545,16 @@ export class BudgetGroupAnalysisService {
 
     // Find common parent or theme
     const commonThemes = [
-      { keywords: ["home", "house", "rent", "mortgage", "utilities"], name: "Housing" },
-      { keywords: ["car", "auto", "vehicle", "gas", "transport"], name: "Transportation" },
-      { keywords: ["health", "medical", "dental"], name: "Healthcare" },
-      { keywords: ["food", "grocery", "dining"], name: "Food & Dining" },
-      { keywords: ["entertainment", "leisure", "hobby"], name: "Entertainment" },
+      {keywords: ["home", "house", "rent", "mortgage", "utilities"], name: "Housing"},
+      {keywords: ["car", "auto", "vehicle", "gas", "transport"], name: "Transportation"},
+      {keywords: ["health", "medical", "dental"], name: "Healthcare"},
+      {keywords: ["food", "grocery", "dining"], name: "Food & Dining"},
+      {keywords: ["entertainment", "leisure", "hobby"], name: "Entertainment"},
     ];
 
     for (const theme of commonThemes) {
-      const matches = categories.filter(cat =>
-        theme.keywords.some(kw => cat.toLowerCase().includes(kw))
+      const matches = categories.filter((cat) =>
+        theme.keywords.some((kw) => cat.toLowerCase().includes(kw))
       );
       if (matches.length >= categories.length / 2) {
         return theme.name;
@@ -543,7 +571,7 @@ export class BudgetGroupAnalysisService {
     if (accountIds.length === 0) return "Budget Group";
 
     const accountNames = budgets
-      .flatMap(b => b.accounts.map(a => a.account?.name))
+      .flatMap((b) => b.accounts.map((a) => a.account?.name))
       .filter(Boolean) as string[];
 
     if (accountNames.length > 0) {
@@ -557,15 +585,14 @@ export class BudgetGroupAnalysisService {
    * Extract common theme from budget names
    */
   private extractCommonTheme(names: string[]): string {
-    const allKeywords = names.flatMap(n => this.extractKeywords(n));
+    const allKeywords = names.flatMap((n) => this.extractKeywords(n));
     const keywordFreq = new Map<string, number>();
 
-    allKeywords.forEach(kw => {
+    allKeywords.forEach((kw) => {
       keywordFreq.set(kw, (keywordFreq.get(kw) || 0) + 1);
     });
 
-    const sortedKeywords = Array.from(keywordFreq.entries())
-      .sort((a, b) => b[1] - a[1]);
+    const sortedKeywords = Array.from(keywordFreq.entries()).sort((a, b) => b[1] - a[1]);
 
     if (sortedKeywords.length > 0) {
       const topKeyword = sortedKeywords[0]![0];
@@ -593,7 +620,7 @@ export class BudgetGroupAnalysisService {
     }
 
     // Generate description
-    const budgetNames = pattern.budgets.map(b => b.name).join(", ");
+    const budgetNames = pattern.budgets.map((b) => b.name).join(", ");
     const reasonText = this.getReasonText(pattern.reason);
 
     return {

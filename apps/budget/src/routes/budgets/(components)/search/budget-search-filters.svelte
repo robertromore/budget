@@ -1,45 +1,50 @@
 <script lang="ts">
-  import * as Select from '$lib/components/ui/select';
-  import type {BudgetType, BudgetStatus, BudgetScope, BudgetEnforcementLevel} from '$lib/schema/budgets';
-  import type {BudgetSearchFilters} from '$lib/states/ui/budget-search.svelte';
+import * as Select from '$lib/components/ui/select';
+import type {
+  BudgetType,
+  BudgetStatus,
+  BudgetScope,
+  BudgetEnforcementLevel,
+} from '$lib/schema/budgets';
+import type {BudgetSearchFilters} from '$lib/states/ui/budget-search.svelte';
 
-  interface Props {
-    filters: BudgetSearchFilters;
-    onFilterChange: (key: keyof BudgetSearchFilters, value: any) => void;
-  }
+interface Props {
+  filters: BudgetSearchFilters;
+  onFilterChange: (key: keyof BudgetSearchFilters, value: any) => void;
+}
 
-  let {filters, onFilterChange}: Props = $props();
+let {filters, onFilterChange}: Props = $props();
 
-  const typeOptions: Array<{value: BudgetType; label: string}> = [
-    {value: 'account-monthly', label: 'Account Monthly'},
-    {value: 'category-envelope', label: 'Category Envelope'},
-    {value: 'goal-based', label: 'Goal Based'},
-    {value: 'scheduled-expense', label: 'Scheduled Expense'},
-  ];
+const typeOptions: Array<{value: BudgetType; label: string}> = [
+  {value: 'account-monthly', label: 'Account Monthly'},
+  {value: 'category-envelope', label: 'Category Envelope'},
+  {value: 'goal-based', label: 'Goal Based'},
+  {value: 'scheduled-expense', label: 'Scheduled Expense'},
+];
 
-  const statusOptions: Array<{value: BudgetStatus; label: string}> = [
-    {value: 'active', label: 'Active'},
-    {value: 'inactive', label: 'Inactive'},
-    {value: 'archived', label: 'Archived'},
-  ];
+const statusOptions: Array<{value: BudgetStatus; label: string}> = [
+  {value: 'active', label: 'Active'},
+  {value: 'inactive', label: 'Inactive'},
+  {value: 'archived', label: 'Archived'},
+];
 
-  const scopeOptions: Array<{value: BudgetScope; label: string}> = [
-    {value: 'account', label: 'Account'},
-    {value: 'category', label: 'Category'},
-    {value: 'global', label: 'Global'},
-    {value: 'mixed', label: 'Mixed'},
-  ];
+const scopeOptions: Array<{value: BudgetScope; label: string}> = [
+  {value: 'account', label: 'Account'},
+  {value: 'category', label: 'Category'},
+  {value: 'global', label: 'Global'},
+  {value: 'mixed', label: 'Mixed'},
+];
 
-  const enforcementOptions: Array<{value: BudgetEnforcementLevel; label: string}> = [
-    {value: 'none', label: 'None'},
-    {value: 'warning', label: 'Warning'},
-    {value: 'strict', label: 'Strict'},
-  ];
+const enforcementOptions: Array<{value: BudgetEnforcementLevel; label: string}> = [
+  {value: 'none', label: 'None'},
+  {value: 'warning', label: 'Warning'},
+  {value: 'strict', label: 'Strict'},
+];
 </script>
 
 <!-- Basic Filters Section -->
 <div class="space-y-3">
-  <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Basic Filters</h5>
+  <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">Basic Filters</h5>
 
   <div class="grid grid-cols-2 gap-3">
     <!-- Budget Type Filter -->
@@ -49,7 +54,7 @@
         type="single"
         value={filters.type || ''}
         onValueChange={(value) => {
-          onFilterChange('type', value as BudgetType || undefined);
+          onFilterChange('type', (value as BudgetType) || undefined);
         }}>
         <Select.Trigger id="budget-type-filter" class="h-9 w-full">
           {filters.type
@@ -72,7 +77,7 @@
         type="single"
         value={filters.status || ''}
         onValueChange={(value) => {
-          onFilterChange('status', value as BudgetStatus || undefined);
+          onFilterChange('status', (value as BudgetStatus) || undefined);
         }}>
         <Select.Trigger id="budget-status-filter" class="h-9 w-full">
           {filters.status
@@ -97,7 +102,7 @@
         type="single"
         value={filters.scope || ''}
         onValueChange={(value) => {
-          onFilterChange('scope', value as BudgetScope || undefined);
+          onFilterChange('scope', (value as BudgetScope) || undefined);
         }}>
         <Select.Trigger id="budget-scope-filter" class="h-9 w-full">
           {filters.scope
@@ -120,11 +125,12 @@
         type="single"
         value={filters.enforcementLevel || ''}
         onValueChange={(value) => {
-          onFilterChange('enforcementLevel', value as BudgetEnforcementLevel || undefined);
+          onFilterChange('enforcementLevel', (value as BudgetEnforcementLevel) || undefined);
         }}>
         <Select.Trigger id="budget-enforcement-filter" class="h-9 w-full">
           {filters.enforcementLevel
-            ? enforcementOptions.find((opt) => opt.value === filters.enforcementLevel)?.label || 'All'
+            ? enforcementOptions.find((opt) => opt.value === filters.enforcementLevel)?.label ||
+              'All'
             : 'All'}
         </Select.Trigger>
         <Select.Content>

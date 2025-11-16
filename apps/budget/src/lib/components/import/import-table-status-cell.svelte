@@ -72,25 +72,26 @@ const badge = $derived(getStatusBadge(status));
 
 {#if hasWarning && warningMessages.length > 0}
   <Tooltip.Root>
-    <Tooltip.Trigger class="flex items-center gap-2 cursor-help">
+    <Tooltip.Trigger class="flex cursor-help items-center gap-2">
       <StatusIcon class={`h-4 w-4 ${getStatusColor(status)}`} />
       <Badge variant={badge.variant} class="text-xs">
         {badge.label}
       </Badge>
-      <span class="text-xs text-muted-foreground">
+      <span class="text-muted-foreground text-xs">
         ({warningCount})
       </span>
     </Tooltip.Trigger>
     <Tooltip.Content class="max-w-md">
       <div class="space-y-2">
-        <p class="font-semibold text-sm">Warnings:</p>
+        <p class="text-sm font-semibold">Warnings:</p>
         <ul class="space-y-1 text-xs">
           {#each warningMessages as warning}
             <li class="flex flex-col gap-1">
               <span class="font-medium">{warning.field}:</span>
               <span class="text-muted-foreground">{warning.message}</span>
               {#if warning.value !== undefined && warning.value !== null}
-                <span class="text-muted-foreground italic whitespace-pre-wrap">Value: {formatDisplayValue(warning.value)}</span>
+                <span class="text-muted-foreground whitespace-pre-wrap italic"
+                  >Value: {formatDisplayValue(warning.value)}</span>
               {/if}
             </li>
           {/each}
@@ -100,25 +101,26 @@ const badge = $derived(getStatusBadge(status));
   </Tooltip.Root>
 {:else if hasError && errorMessages.length > 0}
   <Tooltip.Root>
-    <Tooltip.Trigger class="flex items-center gap-2 cursor-help">
+    <Tooltip.Trigger class="flex cursor-help items-center gap-2">
       <StatusIcon class={`h-4 w-4 ${getStatusColor(status)}`} />
       <Badge variant={badge.variant} class="text-xs">
         {badge.label}
       </Badge>
-      <span class="text-xs text-muted-foreground">
+      <span class="text-muted-foreground text-xs">
         ({errorCount})
       </span>
     </Tooltip.Trigger>
     <Tooltip.Content class="max-w-md">
       <div class="space-y-2">
-        <p class="font-semibold text-sm text-destructive">Errors:</p>
+        <p class="text-destructive text-sm font-semibold">Errors:</p>
         <ul class="space-y-1 text-xs">
           {#each errorMessages as error}
             <li class="flex flex-col gap-1">
               <span class="font-medium">{error.field}:</span>
               <span class="text-muted-foreground">{error.message}</span>
               {#if error.value !== undefined && error.value !== null}
-                <span class="text-muted-foreground italic whitespace-pre-wrap">Value: {formatDisplayValue(error.value)}</span>
+                <span class="text-muted-foreground whitespace-pre-wrap italic"
+                  >Value: {formatDisplayValue(error.value)}</span>
               {/if}
             </li>
           {/each}

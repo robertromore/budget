@@ -47,11 +47,7 @@ export const transactionFactory = async (
     let new_category: Category | undefined;
 
     // 50% chance to create new entities, or always create if pools are empty
-    if (
-      payees.length === 0 ||
-      categories.length === 0 ||
-      faker.datatype.boolean()
-    ) {
+    if (payees.length === 0 || categories.length === 0 || faker.datatype.boolean()) {
       // Create new payee and category
       new_payee = await payeeFactory(workspaceId, 1).then((p) => p[0]);
       if (new_payee) payees.push(new_payee);

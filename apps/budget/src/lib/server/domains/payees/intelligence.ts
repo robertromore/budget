@@ -14,7 +14,7 @@ export interface SpendingAnalysis {
   minAmount: number;
   maxAmount: number;
   amountRange: {min: number; max: number; quartiles: [number, number, number]};
-  trendDirection: 'increasing' | 'decreasing' | 'stable';
+  trendDirection: "increasing" | "decreasing" | "stable";
   trendStrength: number; // 0-1 scale
   volatility: number; // 0-1 scale, based on coefficient of variation
   firstTransactionDate: string | null;
@@ -77,7 +77,7 @@ export interface TransactionPrediction {
   predictedAmount: number | null;
   amountRange: {min: number; max: number} | null;
   confidence: number; // 0-1 confidence in prediction
-  predictionMethod: 'frequency_based' | 'seasonal_based' | 'trend_based' | 'insufficient_data';
+  predictionMethod: "frequency_based" | "seasonal_based" | "trend_based" | "insufficient_data";
   reasoning: string;
   alternativeScenarios: Array<{
     scenario: string;
@@ -195,7 +195,6 @@ export interface AmountClustering {
  * Provides sophisticated analysis and prediction algorithms for payee behavior
  */
 export class PayeeIntelligenceService {
-
   /**
    * Analyze comprehensive spending patterns for a payee
    */
@@ -207,18 +206,15 @@ export class PayeeIntelligenceService {
         amount: transactions.amount,
       })
       .from(transactions)
-      .where(and(
-        eq(transactions.payeeId, payeeId),
-        isNull(transactions.deletedAt)
-      ))
+      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
       .orderBy(asc(transactions.date));
 
     if (transactionData.length === 0) {
       return this.createEmptySpendingAnalysis(payeeId);
     }
 
-    const amounts = transactionData.map(t => t.amount || 0);
-    const dates = transactionData.map(t => new Date(t.date));
+    const amounts = transactionData.map((t) => t.amount || 0);
+    const dates = transactionData.map((t) => new Date(t.date));
 
     // Calculate basic statistics
     const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0);
@@ -240,20 +236,23 @@ export class PayeeIntelligenceService {
 
     // Find outliers (transactions more than 2 standard deviations from mean)
     const outlierTransactions = transactionData
-      .filter(t => Math.abs((t.amount || 0) - averageAmount) > 2 * standardDeviation)
-      .map(t => ({
+      .filter((t) => Math.abs((t.amount || 0) - averageAmount) > 2 * standardDeviation)
+      .map((t) => ({
         date: t.date,
         amount: t.amount || 0,
-        deviationScore: Math.abs((t.amount || 0) - averageAmount) / standardDeviation
+        deviationScore: Math.abs((t.amount || 0) - averageAmount) / standardDeviation,
       }))
       .sort((a, b) => b.deviationScore - a.deviationScore);
 
     // Calculate time span
     const firstDate = dates[0];
     const lastDate = dates[dates.length - 1];
-    const timeSpanDays = dates.length > 1
-      ? Math.round((dates[dates.length - 1]!.getTime() - dates[0]!.getTime()) / (1000 * 60 * 60 * 24))
-      : 0;
+    const timeSpanDays =
+      dates.length > 1
+        ? Math.round(
+            (dates[dates.length - 1]!.getTime() - dates[0]!.getTime()) / (1000 * 60 * 60 * 24)
+          )
+        : 0;
 
     return {
       payeeId,
@@ -267,7 +266,7 @@ export class PayeeIntelligenceService {
       amountRange: {
         min: minAmount,
         max: maxAmount,
-        quartiles
+        quartiles,
       },
       trendDirection,
       trendStrength,
@@ -275,7 +274,7 @@ export class PayeeIntelligenceService {
       firstTransactionDate: transactionData[0]?.date || null,
       lastTransactionDate: transactionData[transactionData.length - 1]?.date || null,
       timeSpanDays,
-      outlierTransactions: outlierTransactions.slice(0, 10) // Limit to top 10 outliers
+      outlierTransactions: outlierTransactions.slice(0, 10), // Limit to top 10 outliers
     };
   }
 
@@ -291,10 +290,7 @@ export class PayeeIntelligenceService {
         averageAmount: sql<number>`COALESCE(AVG(${transactions.amount}), 0)`,
       })
       .from(transactions)
-      .where(and(
-        eq(transactions.payeeId, payeeId),
-        isNull(transactions.deletedAt)
-      ))
+      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
       .groupBy(sql`strftime('%m', ${transactions.date})`)
       .orderBy(sql`CAST(strftime('%m', ${transactions.date}) AS INTEGER)`);
 
@@ -303,31 +299,47 @@ export class PayeeIntelligenceService {
     }
 
     const totalYearlyAmount = monthlyData.reduce((sum, month) => sum + month.totalAmount, 0);
-    const totalYearlyTransactions = monthlyData.reduce((sum, month) => sum + month.transactionCount, 0);
+    const totalYearlyTransactions = monthlyData.reduce(
+      (sum, month) => sum + month.transactionCount,
+      0
+    );
     const yearlyAverageAmount = totalYearlyAmount / totalYearlyTransactions;
 
     const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
 
-    return monthlyData.map(month => {
-      const percentOfTotal = totalYearlyAmount > 0 ? (month.totalAmount / totalYearlyAmount) * 100 : 0;
-      const seasonalMultiplier = yearlyAverageAmount > 0 ? month.averageAmount / yearlyAverageAmount : 1;
+    return monthlyData.map((month) => {
+      const percentOfTotal =
+        totalYearlyAmount > 0 ? (month.totalAmount / totalYearlyAmount) * 100 : 0;
+      const seasonalMultiplier =
+        yearlyAverageAmount > 0 ? month.averageAmount / yearlyAverageAmount : 1;
 
       // Confidence based on transaction count and data spread
-      const confidence = Math.min(1, month.transactionCount / 10) *
-                        (monthlyData.length >= 6 ? 1 : monthlyData.length / 6);
+      const confidence =
+        Math.min(1, month.transactionCount / 10) *
+        (monthlyData.length >= 6 ? 1 : monthlyData.length / 6);
 
       return {
         month: month.month,
-        monthName: monthNames[month.month - 1] ?? 'Unknown',
+        monthName: monthNames[month.month - 1] ?? "Unknown",
         transactionCount: month.transactionCount,
         totalAmount: month.totalAmount,
         averageAmount: month.averageAmount,
         percentOfTotal,
         seasonalMultiplier,
-        confidence
+        confidence,
       };
     });
   }
@@ -344,10 +356,7 @@ export class PayeeIntelligenceService {
         averageAmount: sql<number>`COALESCE(AVG(${transactions.amount}), 0)`,
       })
       .from(transactions)
-      .where(and(
-        eq(transactions.payeeId, payeeId),
-        isNull(transactions.deletedAt)
-      ))
+      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
       .groupBy(sql`strftime('%w', ${transactions.date})`)
       .orderBy(sql`CAST(strftime('%w', ${transactions.date}) AS INTEGER)`);
 
@@ -356,18 +365,19 @@ export class PayeeIntelligenceService {
     }
 
     const totalTransactions = dayOfWeekData.reduce((sum, day) => sum + day.transactionCount, 0);
-    const maxTransactions = Math.max(...dayOfWeekData.map(day => day.transactionCount));
+    const maxTransactions = Math.max(...dayOfWeekData.map((day) => day.transactionCount));
 
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-    return dayOfWeekData.map(day => ({
+    return dayOfWeekData.map((day) => ({
       dayOfWeek: day.dayOfWeek,
-      dayName: dayNames[day.dayOfWeek] ?? 'Unknown',
+      dayName: dayNames[day.dayOfWeek] ?? "Unknown",
       transactionCount: day.transactionCount,
       totalAmount: day.totalAmount,
       averageAmount: day.averageAmount,
-      percentOfTransactions: totalTransactions > 0 ? (day.transactionCount / totalTransactions) * 100 : 0,
-      preference: maxTransactions > 0 ? day.transactionCount / maxTransactions : 0
+      percentOfTransactions:
+        totalTransactions > 0 ? (day.transactionCount / totalTransactions) * 100 : 0,
+      preference: maxTransactions > 0 ? day.transactionCount / maxTransactions : 0,
     }));
   }
 
@@ -378,10 +388,7 @@ export class PayeeIntelligenceService {
     const transactionDates = await db
       .select({date: transactions.date})
       .from(transactions)
-      .where(and(
-        eq(transactions.payeeId, payeeId),
-        isNull(transactions.deletedAt)
-      ))
+      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
       .orderBy(asc(transactions.date));
 
     if (transactionDates.length < 2) {
@@ -396,8 +403,8 @@ export class PayeeIntelligenceService {
         irregularPatterns: {
           clusters: [],
           hasSeasonalBreaks: false,
-          unusualGaps: []
-        }
+          unusualGaps: [],
+        },
       };
     }
 
@@ -414,15 +421,20 @@ export class PayeeIntelligenceService {
       }
     }
 
-    const averageDaysBetween = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+    const averageDaysBetween =
+      intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
     const standardDeviationDays = this.calculateStandardDeviation(intervals, averageDaysBetween);
 
     // Calculate regularity score (inverse of coefficient of variation)
-    const coefficientOfVariation = averageDaysBetween > 0 ? standardDeviationDays / averageDaysBetween : 1;
+    const coefficientOfVariation =
+      averageDaysBetween > 0 ? standardDeviationDays / averageDaysBetween : 1;
     const regularityScore = Math.max(0, 1 - Math.min(1, coefficientOfVariation));
 
     // Detect frequency based on average interval
-    const {detectedFrequency, confidence} = this.detectFrequencyFromInterval(averageDaysBetween, regularityScore);
+    const {detectedFrequency, confidence} = this.detectFrequencyFromInterval(
+      averageDaysBetween,
+      regularityScore
+    );
 
     // Analyze interval clusters
     const clusters = this.analyzeIntervalClusters(intervals);
@@ -447,8 +459,8 @@ export class PayeeIntelligenceService {
       irregularPatterns: {
         clusters,
         hasSeasonalBreaks,
-        unusualGaps
-      }
+        unusualGaps,
+      },
     };
   }
 
@@ -466,9 +478,9 @@ export class PayeeIntelligenceService {
         predictedAmount: null,
         amountRange: null,
         confidence: 0,
-        predictionMethod: 'insufficient_data',
-        reasoning: 'Insufficient transaction history for prediction',
-        alternativeScenarios: []
+        predictionMethod: "insufficient_data",
+        reasoning: "Insufficient transaction history for prediction",
+        alternativeScenarios: [],
       };
     }
 
@@ -478,9 +490,9 @@ export class PayeeIntelligenceService {
     }
 
     let nextTransactionDate: string | null = null;
-    let predictionMethod: TransactionPrediction['predictionMethod'] = 'insufficient_data';
+    let predictionMethod: TransactionPrediction["predictionMethod"] = "insufficient_data";
     let confidence = 0;
-    let reasoning = '';
+    let reasoning = "";
 
     // Method 1: Frequency-based prediction
     if (frequencyAnalysis.detectedFrequency && frequencyAnalysis.confidence > 0.5) {
@@ -488,8 +500,8 @@ export class PayeeIntelligenceService {
       const predictedDate = new Date(lastDate);
       predictedDate.setDate(lastDate.getDate() + Math.round(frequencyAnalysis.averageDaysBetween));
 
-      nextTransactionDate = predictedDate.toISOString().split('T')[0] ?? null;
-      predictionMethod = 'frequency_based';
+      nextTransactionDate = predictedDate.toISOString().split("T")[0] ?? null;
+      predictionMethod = "frequency_based";
       confidence = frequencyAnalysis.confidence * frequencyAnalysis.regularityScore;
       reasoning = `Based on ${frequencyAnalysis.detectedFrequency} payment pattern with ${Math.round(frequencyAnalysis.averageDaysBetween)} day average interval`;
     }
@@ -497,13 +509,13 @@ export class PayeeIntelligenceService {
     // Method 2: Seasonal adjustment
     if (seasonalPatterns.length > 0 && nextTransactionDate) {
       const predictedMonth = new Date(nextTransactionDate).getMonth() + 1;
-      const seasonalData = seasonalPatterns.find(sp => sp.month === predictedMonth);
+      const seasonalData = seasonalPatterns.find((sp) => sp.month === predictedMonth);
 
       if (seasonalData && seasonalData.confidence > 0.3) {
         // Adjust prediction confidence based on seasonal reliability
         confidence = Math.min(1, confidence * (1 + seasonalData.confidence * 0.3));
-        reasoning += `. Seasonal pattern suggests ${seasonalData.seasonalMultiplier > 1 ? 'higher' : 'lower'} activity in ${seasonalData.monthName}`;
-        predictionMethod = 'seasonal_based';
+        reasoning += `. Seasonal pattern suggests ${seasonalData.seasonalMultiplier > 1 ? "higher" : "lower"} activity in ${seasonalData.monthName}`;
+        predictionMethod = "seasonal_based";
       }
     }
 
@@ -512,7 +524,7 @@ export class PayeeIntelligenceService {
     const amountStdDev = spendingAnalysis.standardDeviation;
     const amountRange = {
       min: Math.max(0, predictedAmount - amountStdDev),
-      max: predictedAmount + amountStdDev
+      max: predictedAmount + amountStdDev,
     };
 
     // Generate alternative scenarios
@@ -529,7 +541,7 @@ export class PayeeIntelligenceService {
       confidence,
       predictionMethod,
       reasoning,
-      alternativeScenarios
+      alternativeScenarios,
     };
   }
 
@@ -547,15 +559,16 @@ export class PayeeIntelligenceService {
 
     // Calculate monthly allocation based on historical data
     const monthlyMultiplier = 30.44; // Average days per month
-    const suggestedMonthlyAllocation = spendingAnalysis.timeSpanDays > 0
-      ? (spendingAnalysis.totalAmount / spendingAnalysis.timeSpanDays) * monthlyMultiplier
-      : spendingAnalysis.averageAmount * 4; // Fallback: assume weekly frequency
+    const suggestedMonthlyAllocation =
+      spendingAnalysis.timeSpanDays > 0
+        ? (spendingAnalysis.totalAmount / spendingAnalysis.timeSpanDays) * monthlyMultiplier
+        : spendingAnalysis.averageAmount * 4; // Fallback: assume weekly frequency
 
     // Calculate range based on variability
     const volatilityBuffer = spendingAnalysis.volatility * suggestedMonthlyAllocation;
     const allocationRange = {
       min: Math.max(0, suggestedMonthlyAllocation - volatilityBuffer),
-      max: suggestedMonthlyAllocation + volatilityBuffer
+      max: suggestedMonthlyAllocation + volatilityBuffer,
     };
 
     // Calculate confidence based on data quality
@@ -564,15 +577,16 @@ export class PayeeIntelligenceService {
 
     // Generate seasonal adjustments
     const seasonalAdjustments = seasonalPatterns
-      .filter(sp => sp.seasonalMultiplier !== 1)
-      .map(sp => ({
+      .filter((sp) => sp.seasonalMultiplier !== 1)
+      .map((sp) => ({
         month: sp.month,
         monthName: sp.monthName,
         suggestedAdjustment: suggestedMonthlyAllocation * (sp.seasonalMultiplier - 1),
         adjustmentPercent: (sp.seasonalMultiplier - 1) * 100,
-        reason: sp.seasonalMultiplier > 1
-          ? `Higher spending typically occurs in ${sp.monthName}`
-          : `Lower spending typically occurs in ${sp.monthName}`
+        reason:
+          sp.seasonalMultiplier > 1
+            ? `Higher spending typically occurs in ${sp.monthName}`
+            : `Lower spending typically occurs in ${sp.monthName}`,
       }));
 
     const reasoning = this.generateBudgetReasoning(spendingAnalysis, seasonalPatterns, confidence);
@@ -583,7 +597,7 @@ export class PayeeIntelligenceService {
       confidence,
       reasoning,
       seasonalAdjustments,
-      budgetCategory: categoryConsistency
+      budgetCategory: categoryConsistency,
     };
   }
 
@@ -606,10 +620,7 @@ export class PayeeIntelligenceService {
     );
 
     // Prediction accuracy assessment
-    const predictionAccuracy = this.assessPredictionAccuracy(
-      spendingAnalysis,
-      frequencyAnalysis
-    );
+    const predictionAccuracy = this.assessPredictionAccuracy(spendingAnalysis, frequencyAnalysis);
 
     const overall = (dataQuality.score + patternReliability.score + predictionAccuracy.score) / 3;
 
@@ -625,14 +636,16 @@ export class PayeeIntelligenceService {
       dataQuality,
       patternReliability,
       predictionAccuracy,
-      explanation
+      explanation,
     };
   }
 
   /**
    * Analyze category usage consistency
    */
-  private async analyzeCategoryConsistency(payeeId: number): Promise<BudgetAllocationSuggestion['budgetCategory']> {
+  private async analyzeCategoryConsistency(
+    payeeId: number
+  ): Promise<BudgetAllocationSuggestion["budgetCategory"]> {
     const categoryData = await db
       .select({
         categoryId: transactions.categoryId,
@@ -642,10 +655,7 @@ export class PayeeIntelligenceService {
       })
       .from(transactions)
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
-      .where(and(
-        eq(transactions.payeeId, payeeId),
-        isNull(transactions.deletedAt)
-      ))
+      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
       .groupBy(transactions.categoryId, categories.name)
       .orderBy(desc(count(transactions.id)));
 
@@ -654,27 +664,28 @@ export class PayeeIntelligenceService {
         primaryCategoryId: null,
         primaryCategoryName: null,
         categoryConfidence: 0,
-        alternativeCategories: []
+        alternativeCategories: [],
       };
     }
 
     const totalTransactions = categoryData.reduce((sum, cat) => sum + cat.transactionCount, 0);
     const primaryCategory = categoryData[0]!; // Safe because we checked length above
 
-    const categoryConfidence = totalTransactions > 0 ? primaryCategory.transactionCount / totalTransactions : 0;
+    const categoryConfidence =
+      totalTransactions > 0 ? primaryCategory.transactionCount / totalTransactions : 0;
 
-    const alternativeCategories = categoryData.slice(1, 4).map(cat => ({
+    const alternativeCategories = categoryData.slice(1, 4).map((cat) => ({
       categoryId: cat.categoryId || 0,
-      categoryName: cat.categoryName || 'Uncategorized',
+      categoryName: cat.categoryName || "Uncategorized",
       usagePercent: totalTransactions > 0 ? (cat.transactionCount / totalTransactions) * 100 : 0,
-      confidence: totalTransactions > 0 ? cat.transactionCount / totalTransactions : 0
+      confidence: totalTransactions > 0 ? cat.transactionCount / totalTransactions : 0,
     }));
 
     return {
       primaryCategoryId: primaryCategory.categoryId,
-      primaryCategoryName: primaryCategory.categoryName || 'Uncategorized',
+      primaryCategoryName: primaryCategory.categoryName || "Uncategorized",
       categoryConfidence,
-      alternativeCategories
+      alternativeCategories,
     };
   }
 
@@ -683,7 +694,7 @@ export class PayeeIntelligenceService {
   private calculateMedian(sortedNumbers: number[]): number {
     const mid = Math.floor(sortedNumbers.length / 2);
     return sortedNumbers.length % 2 !== 0
-      ? sortedNumbers[mid] ?? 0
+      ? (sortedNumbers[mid] ?? 0)
       : ((sortedNumbers[mid - 1] ?? 0) + (sortedNumbers[mid] ?? 0)) / 2;
   }
 
@@ -692,27 +703,27 @@ export class PayeeIntelligenceService {
     const q2Index = Math.floor(sortedNumbers.length * 0.5);
     const q3Index = Math.floor(sortedNumbers.length * 0.75);
 
-    return [
-      sortedNumbers[q1Index] ?? 0,
-      sortedNumbers[q2Index] ?? 0,
-      sortedNumbers[q3Index] ?? 0
-    ];
+    return [sortedNumbers[q1Index] ?? 0, sortedNumbers[q2Index] ?? 0, sortedNumbers[q3Index] ?? 0];
   }
 
   private calculateStandardDeviation(numbers: number[], mean: number): number {
-    const variance = numbers.reduce((sum, num) => sum + Math.pow(num - mean, 2), 0) / numbers.length;
+    const variance =
+      numbers.reduce((sum, num) => sum + Math.pow(num - mean, 2), 0) / numbers.length;
     return Math.sqrt(variance);
   }
 
-  private analyzeTrend(transactionData: Array<{date: string; amount: number | null}>): {trendDirection: 'increasing' | 'decreasing' | 'stable'; trendStrength: number} {
+  private analyzeTrend(transactionData: Array<{date: string; amount: number | null}>): {
+    trendDirection: "increasing" | "decreasing" | "stable";
+    trendStrength: number;
+  } {
     if (transactionData.length < 3) {
-      return {trendDirection: 'stable', trendStrength: 0};
+      return {trendDirection: "stable", trendStrength: 0};
     }
 
     // Use linear regression to detect trend
     const points = transactionData.map((t, index) => ({
       x: index,
-      y: t.amount || 0
+      y: t.amount || 0,
     }));
 
     const n = points.length;
@@ -731,21 +742,25 @@ export class PayeeIntelligenceService {
       return sum + Math.pow(p.y - predicted, 2);
     }, 0);
 
-    const rSquared = ssTotal > 0 ? 1 - (ssResidual / ssTotal) : 0;
+    const rSquared = ssTotal > 0 ? 1 - ssResidual / ssTotal : 0;
 
-    const trendDirection = Math.abs(slope) < 0.01 ? 'stable' : slope > 0 ? 'increasing' : 'decreasing';
+    const trendDirection =
+      Math.abs(slope) < 0.01 ? "stable" : slope > 0 ? "increasing" : "decreasing";
     const trendStrength = Math.min(1, Math.abs(rSquared));
 
     return {trendDirection, trendStrength};
   }
 
-  private detectFrequencyFromInterval(averageInterval: number, regularityScore: number): {detectedFrequency: PaymentFrequency | null; confidence: number} {
+  private detectFrequencyFromInterval(
+    averageInterval: number,
+    regularityScore: number
+  ): {detectedFrequency: PaymentFrequency | null; confidence: number} {
     const frequencyRanges = [
-      {frequency: 'weekly' as const, min: 6, max: 8, ideal: 7},
-      {frequency: 'bi_weekly' as const, min: 13, max: 15, ideal: 14},
-      {frequency: 'monthly' as const, min: 28, max: 32, ideal: 30},
-      {frequency: 'quarterly' as const, min: 85, max: 95, ideal: 90},
-      {frequency: 'annual' as const, min: 350, max: 380, ideal: 365}
+      {frequency: "weekly" as const, min: 6, max: 8, ideal: 7},
+      {frequency: "bi_weekly" as const, min: 13, max: 15, ideal: 14},
+      {frequency: "monthly" as const, min: 28, max: 32, ideal: 30},
+      {frequency: "quarterly" as const, min: 85, max: 95, ideal: 90},
+      {frequency: "annual" as const, min: 350, max: 380, ideal: 365},
     ];
 
     for (const range of frequencyRanges) {
@@ -756,18 +771,20 @@ export class PayeeIntelligenceService {
 
         return {
           detectedFrequency: range.frequency,
-          confidence: Math.min(1, confidence)
+          confidence: Math.min(1, confidence),
         };
       }
     }
 
     return {
-      detectedFrequency: 'irregular',
-      confidence: Math.min(0.5, regularityScore)
+      detectedFrequency: "irregular",
+      confidence: Math.min(0.5, regularityScore),
     };
   }
 
-  private analyzeIntervalClusters(intervals: number[]): Array<{averageInterval: number; count: number; description: string}> {
+  private analyzeIntervalClusters(
+    intervals: number[]
+  ): Array<{averageInterval: number; count: number; description: string}> {
     if (intervals.length === 0) return [];
 
     // Simple clustering: group intervals within 20% of each other
@@ -780,7 +797,8 @@ export class PayeeIntelligenceService {
         const tolerance = cluster.center * 0.2;
         if (Math.abs(interval - cluster.center) <= tolerance) {
           cluster.intervals.push(interval);
-          cluster.center = cluster.intervals.reduce((sum, i) => sum + i, 0) / cluster.intervals.length;
+          cluster.center =
+            cluster.intervals.reduce((sum, i) => sum + i, 0) / cluster.intervals.length;
           foundCluster = true;
           break;
         }
@@ -792,27 +810,30 @@ export class PayeeIntelligenceService {
     }
 
     return clusters
-      .filter(cluster => cluster.intervals.length >= 2)
-      .map(cluster => ({
+      .filter((cluster) => cluster.intervals.length >= 2)
+      .map((cluster) => ({
         averageInterval: cluster.center,
         count: cluster.intervals.length,
-        description: this.describeInterval(cluster.center)
+        description: this.describeInterval(cluster.center),
       }))
       .sort((a, b) => b.count - a.count);
   }
 
   private describeInterval(days: number): string {
-    if (days <= 1) return 'Daily';
-    if (days <= 7) return 'Weekly';
-    if (days <= 14) return 'Bi-weekly';
-    if (days <= 31) return 'Monthly';
-    if (days <= 93) return 'Quarterly';
-    if (days <= 186) return 'Semi-annually';
-    if (days <= 380) return 'Annually';
-    return 'Very infrequent';
+    if (days <= 1) return "Daily";
+    if (days <= 7) return "Weekly";
+    if (days <= 14) return "Bi-weekly";
+    if (days <= 31) return "Monthly";
+    if (days <= 93) return "Quarterly";
+    if (days <= 186) return "Semi-annually";
+    if (days <= 380) return "Annually";
+    return "Very infrequent";
   }
 
-  private findUnusualGaps(transactionDates: Array<{date: string}>, averageInterval: number): Array<{startDate: string; endDate: string; gapDays: number; reason?: string}> {
+  private findUnusualGaps(
+    transactionDates: Array<{date: string}>,
+    averageInterval: number
+  ): Array<{startDate: string; endDate: string; gapDays: number; reason?: string}> {
     const gaps: Array<{startDate: string; endDate: string; gapDays: number; reason?: string}> = [];
     const threshold = Math.max(60, averageInterval * 2); // At least 60 days or 2x average
 
@@ -830,7 +851,7 @@ export class PayeeIntelligenceService {
           startDate: prevTransaction.date,
           endDate: currTransaction.date,
           gapDays,
-          reason: this.inferGapReason(gapDays, prev, curr)
+          reason: this.inferGapReason(gapDays, prev, curr),
         });
       }
     }
@@ -842,45 +863,55 @@ export class PayeeIntelligenceService {
     const startMonth = startDate.getMonth();
     const endMonth = endDate.getMonth();
 
-    if (gapDays >= 300) return 'Extended hiatus or service cancellation';
-    if (gapDays >= 150) return 'Possible seasonal break or temporary suspension';
+    if (gapDays >= 300) return "Extended hiatus or service cancellation";
+    if (gapDays >= 150) return "Possible seasonal break or temporary suspension";
     if (gapDays >= 60) {
       if ((startMonth >= 5 && startMonth <= 7) || (endMonth >= 5 && endMonth <= 7)) {
-        return 'Possible summer break';
+        return "Possible summer break";
       }
       if ((startMonth >= 10 && startMonth <= 11) || (endMonth >= 0 && endMonth <= 1)) {
-        return 'Possible holiday season break';
+        return "Possible holiday season break";
       }
-      return 'Extended gap in service or payments';
+      return "Extended gap in service or payments";
     }
-    return 'Unusual delay';
+    return "Unusual delay";
   }
 
-  private detectSeasonalBreaks(transactionDates: Array<{date: string}>, averageInterval: number): boolean {
+  private detectSeasonalBreaks(
+    transactionDates: Array<{date: string}>,
+    averageInterval: number
+  ): boolean {
     // Look for consistent gaps during specific seasons
-    const summerGaps = transactionDates.filter(t => {
+    const summerGaps = transactionDates.filter((t) => {
       const month = new Date(t.date).getMonth();
       return month >= 5 && month <= 7; // June, July, August
     });
 
-    const winterGaps = transactionDates.filter(t => {
+    const winterGaps = transactionDates.filter((t) => {
       const month = new Date(t.date).getMonth();
       return month === 11 || month === 0 || month === 1; // December, January, February
     });
 
     // If there are consistent gaps during these periods, it suggests seasonal breaks
-    return summerGaps.length < transactionDates.length * 0.1 ||
-           winterGaps.length < transactionDates.length * 0.1;
+    return (
+      summerGaps.length < transactionDates.length * 0.1 ||
+      winterGaps.length < transactionDates.length * 0.1
+    );
   }
 
-  private calculatePredictabilityScore(intervals: number[], detectedFrequency: PaymentFrequency | null): number {
+  private calculatePredictabilityScore(
+    intervals: number[],
+    detectedFrequency: PaymentFrequency | null
+  ): number {
     if (intervals.length < 3 || !detectedFrequency) return 0;
 
     const expectedInterval = this.getExpectedInterval(detectedFrequency);
     if (!expectedInterval) return 0;
 
     // Score based on how close intervals are to the expected frequency
-    const deviations = intervals.map(interval => Math.abs(interval - expectedInterval) / expectedInterval);
+    const deviations = intervals.map(
+      (interval) => Math.abs(interval - expectedInterval) / expectedInterval
+    );
     const averageDeviation = deviations.reduce((sum, dev) => sum + dev, 0) / deviations.length;
 
     return Math.max(0, 1 - averageDeviation);
@@ -893,7 +924,7 @@ export class PayeeIntelligenceService {
       monthly: 30,
       quarterly: 90,
       annual: 365,
-      irregular: 0
+      irregular: 0,
     };
 
     return frequencyMap[frequency] || null;
@@ -904,32 +935,39 @@ export class PayeeIntelligenceService {
     frequencyAnalysis: FrequencyAnalysis,
     lastTransactionDate: string
   ): Array<{scenario: string; date: string; amount: number; probability: number}> {
-    const scenarios: Array<{scenario: string; date: string; amount: number; probability: number}> = [];
+    const scenarios: Array<{scenario: string; date: string; amount: number; probability: number}> =
+      [];
     const lastDate = new Date(lastTransactionDate);
 
     // Early scenario (if interval varies)
     if (frequencyAnalysis.standardDeviationDays > 0) {
       const earlyDate = new Date(lastDate);
-      earlyDate.setDate(lastDate.getDate() + Math.round(frequencyAnalysis.averageDaysBetween - frequencyAnalysis.standardDeviationDays));
+      earlyDate.setDate(
+        lastDate.getDate() +
+          Math.round(frequencyAnalysis.averageDaysBetween - frequencyAnalysis.standardDeviationDays)
+      );
 
       scenarios.push({
-        scenario: 'Early payment',
-        date: earlyDate.toISOString().split('T')[0] ?? '',
+        scenario: "Early payment",
+        date: earlyDate.toISOString().split("T")[0] ?? "",
         amount: spendingAnalysis.averageAmount,
-        probability: 0.25
+        probability: 0.25,
       });
     }
 
     // Late scenario
     if (frequencyAnalysis.standardDeviationDays > 0) {
       const lateDate = new Date(lastDate);
-      lateDate.setDate(lastDate.getDate() + Math.round(frequencyAnalysis.averageDaysBetween + frequencyAnalysis.standardDeviationDays));
+      lateDate.setDate(
+        lastDate.getDate() +
+          Math.round(frequencyAnalysis.averageDaysBetween + frequencyAnalysis.standardDeviationDays)
+      );
 
       scenarios.push({
-        scenario: 'Delayed payment',
-        date: lateDate.toISOString().split('T')[0] ?? '',
+        scenario: "Delayed payment",
+        date: lateDate.toISOString().split("T")[0] ?? "",
         amount: spendingAnalysis.averageAmount,
-        probability: 0.25
+        probability: 0.25,
       });
     }
 
@@ -939,21 +977,25 @@ export class PayeeIntelligenceService {
       normalDate.setDate(lastDate.getDate() + Math.round(frequencyAnalysis.averageDaysBetween));
 
       scenarios.push({
-        scenario: 'Higher than average amount',
-        date: normalDate.toISOString().split('T')[0] ?? '',
+        scenario: "Higher than average amount",
+        date: normalDate.toISOString().split("T")[0] ?? "",
         amount: spendingAnalysis.averageAmount + spendingAnalysis.standardDeviation,
-        probability: 0.15
+        probability: 0.15,
       });
     }
 
     return scenarios;
   }
 
-  private assessDataQuality(spendingAnalysis: SpendingAnalysis, frequencyAnalysis: FrequencyAnalysis): ConfidenceMetrics['dataQuality'] {
+  private assessDataQuality(
+    spendingAnalysis: SpendingAnalysis,
+    frequencyAnalysis: FrequencyAnalysis
+  ): ConfidenceMetrics["dataQuality"] {
     const transactionCountScore = Math.min(1, spendingAnalysis.transactionCount / 20);
     const timeSpanScore = Math.min(1, spendingAnalysis.timeSpanDays / 365);
     const consistencyScore = frequencyAnalysis.regularityScore;
-    const outlierRatio = spendingAnalysis.outlierTransactions.length / spendingAnalysis.transactionCount;
+    const outlierRatio =
+      spendingAnalysis.outlierTransactions.length / spendingAnalysis.transactionCount;
     const outlierScore = Math.max(0, 1 - outlierRatio * 2);
 
     const score = (transactionCountScore + timeSpanScore + consistencyScore + outlierScore) / 4;
@@ -964,8 +1006,8 @@ export class PayeeIntelligenceService {
         transactionCount: spendingAnalysis.transactionCount,
         timeSpanMonths: Math.round(spendingAnalysis.timeSpanDays / 30.44),
         dataConsistency: consistencyScore,
-        outlierRatio
-      }
+        outlierRatio,
+      },
     };
   }
 
@@ -973,15 +1015,17 @@ export class PayeeIntelligenceService {
     spendingAnalysis: SpendingAnalysis,
     frequencyAnalysis: FrequencyAnalysis,
     seasonalPatterns: SeasonalPattern[]
-  ): ConfidenceMetrics['patternReliability'] {
+  ): ConfidenceMetrics["patternReliability"] {
     const frequencyConsistency = frequencyAnalysis.confidence;
     const amountConsistency = 1 - Math.min(1, spendingAnalysis.volatility);
-    const seasonalStability = seasonalPatterns.length > 0
-      ? seasonalPatterns.reduce((sum, sp) => sum + sp.confidence, 0) / seasonalPatterns.length
-      : 0;
+    const seasonalStability =
+      seasonalPatterns.length > 0
+        ? seasonalPatterns.reduce((sum, sp) => sum + sp.confidence, 0) / seasonalPatterns.length
+        : 0;
     const trendContinuity = spendingAnalysis.trendStrength;
 
-    const score = (frequencyConsistency + amountConsistency + seasonalStability + trendContinuity) / 4;
+    const score =
+      (frequencyConsistency + amountConsistency + seasonalStability + trendContinuity) / 4;
 
     return {
       score,
@@ -989,19 +1033,20 @@ export class PayeeIntelligenceService {
         frequencyConsistency,
         amountConsistency,
         seasonalStability,
-        trendContinuity
-      }
+        trendContinuity,
+      },
     };
   }
 
   private assessPredictionAccuracy(
     spendingAnalysis: SpendingAnalysis,
     frequencyAnalysis: FrequencyAnalysis
-  ): ConfidenceMetrics['predictionAccuracy'] {
+  ): ConfidenceMetrics["predictionAccuracy"] {
     // This would typically be based on historical prediction accuracy
     // For now, we'll estimate based on pattern strength
     const historicalAccuracy = 0.7; // Placeholder
-    const patternStrength = (frequencyAnalysis.regularityScore + frequencyAnalysis.predictabilityScore) / 2;
+    const patternStrength =
+      (frequencyAnalysis.regularityScore + frequencyAnalysis.predictabilityScore) / 2;
     const externalFactors = 0.8; // Placeholder for external factor consideration
 
     const score = (historicalAccuracy + patternStrength + externalFactors) / 3;
@@ -1011,37 +1056,38 @@ export class PayeeIntelligenceService {
       factors: {
         historicalAccuracy,
         patternStrength,
-        externalFactors
-      }
+        externalFactors,
+      },
     };
   }
 
   private generateConfidenceExplanation(
     overall: number,
-    dataQuality: ConfidenceMetrics['dataQuality'],
-    patternReliability: ConfidenceMetrics['patternReliability'],
-    predictionAccuracy: ConfidenceMetrics['predictionAccuracy']
+    dataQuality: ConfidenceMetrics["dataQuality"],
+    patternReliability: ConfidenceMetrics["patternReliability"],
+    predictionAccuracy: ConfidenceMetrics["predictionAccuracy"]
   ): string {
-    const confidenceLevel = overall > 0.8 ? 'High' : overall > 0.6 ? 'Medium' : overall > 0.4 ? 'Low' : 'Very Low';
+    const confidenceLevel =
+      overall > 0.8 ? "High" : overall > 0.6 ? "Medium" : overall > 0.4 ? "Low" : "Very Low";
 
     const explanations = [];
 
     if (dataQuality.score < 0.5) {
-      explanations.push('limited transaction history');
+      explanations.push("limited transaction history");
     }
 
     if (patternReliability.score < 0.5) {
-      explanations.push('irregular spending patterns');
+      explanations.push("irregular spending patterns");
     }
 
     if (predictionAccuracy.score < 0.5) {
-      explanations.push('unpredictable transaction timing');
+      explanations.push("unpredictable transaction timing");
     }
 
     const baseExplanation = `${confidenceLevel} confidence in predictions`;
 
     if (explanations.length > 0) {
-      return `${baseExplanation} due to ${explanations.join(', ')}.`;
+      return `${baseExplanation} due to ${explanations.join(", ")}.`;
     }
 
     return `${baseExplanation} based on consistent patterns and sufficient data.`;
@@ -1062,23 +1108,32 @@ export class PayeeIntelligenceService {
   ): string {
     const parts = [];
 
-    parts.push(`Based on ${spendingAnalysis.transactionCount} transactions over ${Math.round(spendingAnalysis.timeSpanDays / 30.44)} months`);
+    parts.push(
+      `Based on ${spendingAnalysis.transactionCount} transactions over ${Math.round(spendingAnalysis.timeSpanDays / 30.44)} months`
+    );
 
-    if (spendingAnalysis.trendDirection !== 'stable') {
+    if (spendingAnalysis.trendDirection !== "stable") {
       parts.push(`with ${spendingAnalysis.trendDirection} trend`);
     }
 
     if (seasonalPatterns.length > 0) {
-      const seasonalMonths = seasonalPatterns.filter(sp => Math.abs(sp.seasonalMultiplier - 1) > 0.2);
+      const seasonalMonths = seasonalPatterns.filter(
+        (sp) => Math.abs(sp.seasonalMultiplier - 1) > 0.2
+      );
       if (seasonalMonths.length > 0) {
         parts.push(`and seasonal variations`);
       }
     }
 
-    const confidenceText = confidence > 0.7 ? 'high confidence' : confidence > 0.4 ? 'medium confidence' : 'low confidence';
+    const confidenceText =
+      confidence > 0.7
+        ? "high confidence"
+        : confidence > 0.4
+          ? "medium confidence"
+          : "low confidence";
     parts.push(`(${confidenceText})`);
 
-    return parts.join(' ');
+    return parts.join(" ");
   }
 
   // Empty/fallback result creators
@@ -1093,13 +1148,13 @@ export class PayeeIntelligenceService {
       minAmount: 0,
       maxAmount: 0,
       amountRange: {min: 0, max: 0, quartiles: [0, 0, 0]},
-      trendDirection: 'stable',
+      trendDirection: "stable",
       trendStrength: 0,
       volatility: 0,
       firstTransactionDate: null,
       lastTransactionDate: null,
       timeSpanDays: 0,
-      outlierTransactions: []
+      outlierTransactions: [],
     };
   }
 
@@ -1109,9 +1164,9 @@ export class PayeeIntelligenceService {
       predictedAmount: null,
       amountRange: null,
       confidence: 0,
-      predictionMethod: 'insufficient_data',
-      reasoning: 'Insufficient transaction history for reliable prediction',
-      alternativeScenarios: []
+      predictionMethod: "insufficient_data",
+      reasoning: "Insufficient transaction history for reliable prediction",
+      alternativeScenarios: [],
     };
   }
 
@@ -1120,14 +1175,14 @@ export class PayeeIntelligenceService {
       suggestedMonthlyAllocation: 0,
       allocationRange: {min: 0, max: 0},
       confidence: 0,
-      reasoning: 'No transaction history available for budget allocation suggestion',
+      reasoning: "No transaction history available for budget allocation suggestion",
       seasonalAdjustments: [],
       budgetCategory: {
         primaryCategoryId: null,
         primaryCategoryName: null,
         categoryConfidence: 0,
-        alternativeCategories: []
-      }
+        alternativeCategories: [],
+      },
     };
   }
 }

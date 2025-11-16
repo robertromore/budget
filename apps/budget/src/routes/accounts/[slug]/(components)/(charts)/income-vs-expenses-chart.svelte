@@ -1,9 +1,9 @@
 <script lang="ts">
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
 import type {TransactionsFormat} from '$lib/types';
-import { monthYearFmt, monthYearShortFmt } from '$lib/utils/date-formatters';
-import { timezone } from '$lib/utils/dates';
-import { currencyFormatter } from '$lib/utils/formatters';
+import {monthYearFmt, monthYearShortFmt} from '$lib/utils/date-formatters';
+import {timezone} from '$lib/utils/dates';
+import {currencyFormatter} from '$lib/utils/formatters';
 import AnalyticsChartShell from './analytics-chart-shell.svelte';
 
 interface Props {
@@ -17,10 +17,16 @@ const chartData = $derived.by(() => {
   if (!transactions?.length) return [];
 
   // Group transactions by month and separate income/expenses
-  const monthlyData: Array<{month: string, monthDisplay: string, income: number, expenses: number, monthLabel: string}> = [];
+  const monthlyData: Array<{
+    month: string;
+    monthDisplay: string;
+    income: number;
+    expenses: number;
+    monthLabel: string;
+  }> = [];
   const seenMonths = new Set<string>();
 
-  transactions.forEach(transaction => {
+  transactions.forEach((transaction) => {
     const monthKey = `${transaction.date.year}-${String(transaction.date.month).padStart(2, '0')}`; // YYYY-MM format
 
     // If we haven't seen this month yet, create a new entry
@@ -32,13 +38,13 @@ const chartData = $derived.by(() => {
         monthDisplay,
         income: 0,
         expenses: 0,
-        monthLabel
+        monthLabel,
       });
       seenMonths.add(monthKey);
     }
 
     // Find existing entry and add to appropriate category
-    const existing = monthlyData.find(item => item.month === monthKey)!;
+    const existing = monthlyData.find((item) => item.month === monthKey)!;
     if (transaction.amount >= 0) {
       existing.income += transaction.amount;
     } else {
@@ -52,7 +58,7 @@ const chartData = $derived.by(() => {
     .map((item, index) => ({
       ...item,
       x: index,
-      y: item.income // Using income as primary y value for now
+      y: item.income, // Using income as primary y value for now
     }));
 });
 
@@ -60,10 +66,10 @@ const chartData = $derived.by(() => {
 const summaryStats = $derived.by(() => {
   if (!chartData.length) {
     return [
-      { label: 'Avg Monthly Income', value: '$0.00' },
-      { label: 'Avg Monthly Expenses', value: '$0.00' },
-      { label: 'Net Income', value: '$0.00' },
-      { label: 'Income Ratio', value: '0%' }
+      {label: 'Avg Monthly Income', value: '$0.00'},
+      {label: 'Avg Monthly Expenses', value: '$0.00'},
+      {label: 'Net Income', value: '$0.00'},
+      {label: 'Income Ratio', value: '0%'},
     ];
   }
 
@@ -73,28 +79,27 @@ const summaryStats = $derived.by(() => {
   const avgMonthlyIncome = totalIncome / chartData.length;
   const avgMonthlyExpenses = totalExpenses / chartData.length;
 
-  const incomeRatio = avgMonthlyExpenses > 0
-    ? (avgMonthlyIncome / avgMonthlyExpenses * 100).toFixed(0) + '%'
-    : '∞';
+  const incomeRatio =
+    avgMonthlyExpenses > 0 ? ((avgMonthlyIncome / avgMonthlyExpenses) * 100).toFixed(0) + '%' : '∞';
 
   return [
     {
       label: 'Avg Monthly Income',
-      value: currencyFormatter.format(avgMonthlyIncome)
+      value: currencyFormatter.format(avgMonthlyIncome),
     },
     {
       label: 'Avg Monthly Expenses',
-      value: currencyFormatter.format(avgMonthlyExpenses)
+      value: currencyFormatter.format(avgMonthlyExpenses),
     },
     {
       label: 'Net Income',
       value: currencyFormatter.format(netIncome),
-      description: `${chartData.length} months`
+      description: `${chartData.length} months`,
     },
     {
       label: 'Income Ratio',
-      value: incomeRatio
-    }
+      value: incomeRatio,
+    },
   ];
 });
 
@@ -102,21 +107,19 @@ const summaryStats = $derived.by(() => {
 const chartConfig: ChartConfig = {
   income: {
     label: 'Income',
-    color: 'hsl(var(--chart-1))'
+    color: 'hsl(var(--chart-1))',
   },
   expenses: {
     label: 'Expenses',
-    color: 'hsl(var(--chart-2))'
-  }
+    color: 'hsl(var(--chart-2))',
+  },
 };
-
 </script>
 
 <AnalyticsChartShell
   data={chartData}
   {summaryStats}
-  emptyMessage="Add some transactions to see income vs expense trends"
->
+  emptyMessage="Add some transactions to see income vs expense trends">
   {#snippet title()}
     Income vs Expenses
   {/snippet}
@@ -125,7 +128,7 @@ const chartConfig: ChartConfig = {
     Monthly comparison of income and expense patterns
   {/snippet}
 
-  {#snippet chart({ data }: { data: typeof chartData })}
+  {#snippet chart({data}: {data: typeof chartData})}
     <ChartPlaceholder class="h-full" title="Income vs Expenses Chart" />
   {/snippet}
 </AnalyticsChartShell>

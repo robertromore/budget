@@ -1,12 +1,12 @@
 <script lang="ts">
-import { Label } from '$lib/components/ui/label';
+import {Label} from '$lib/components/ui/label';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
-import { Button } from '$lib/components/ui/button';
+import {Button} from '$lib/components/ui/button';
 import Check from '@lucide/svelte/icons/check';
 import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
-import { medicalExpenseCategories } from '$lib/schema/medical-expenses';
-import { cn } from '$lib/utils';
+import {medicalExpenseCategories} from '$lib/schema/medical-expenses';
+import {cn} from '$lib/utils';
 
 interface Props {
   value: string;
@@ -15,7 +15,7 @@ interface Props {
   buttonClass?: string;
 }
 
-let { value = $bindable(), onValueChange, disabled = false, buttonClass }: Props = $props();
+let {value = $bindable(), onValueChange, disabled = false, buttonClass}: Props = $props();
 
 let open = $state(false);
 let searchQuery = $state('');
@@ -23,7 +23,7 @@ let searchQuery = $state('');
 // Flatten all expenses with their categories for search
 const allExpenses = $derived(
   Object.entries(medicalExpenseCategories).flatMap(([category, items]) =>
-    items.map(item => ({
+    items.map((item) => ({
       ...item,
       category,
     }))
@@ -37,11 +37,11 @@ const filteredCategories = $derived.by(() => {
   }
 
   const query = searchQuery.toLowerCase();
-  const filtered: Record<string, Array<{ key: string; label: string }>> = {};
+  const filtered: Record<string, Array<{key: string; label: string}>> = {};
 
   Object.entries(medicalExpenseCategories).forEach(([category, items]) => {
     const matchingItems = items.filter(
-      item =>
+      (item) =>
         item.label.toLowerCase().includes(query) ||
         item.key.toLowerCase().includes(query) ||
         category.toLowerCase().includes(query)
@@ -63,7 +63,7 @@ function handleSelect(selectedValue: string) {
 }
 
 const selectedLabel = $derived(
-  allExpenses.find(e => e.key === value)?.label || 'Select expense type...'
+  allExpenses.find((e) => e.key === value)?.label || 'Select expense type...'
 );
 </script>
 
@@ -71,15 +71,14 @@ const selectedLabel = $derived(
   <Label for="expense-type">Expense Type *</Label>
   <Popover.Root bind:open>
     <Popover.Trigger>
-      {#snippet child({ props })}
+      {#snippet child({props})}
         <Button
           {...props}
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          class={cn("w-full justify-between", buttonClass)}
-          {disabled}
-        >
+          class={cn('w-full justify-between', buttonClass)}
+          {disabled}>
           <span class="truncate">{selectedLabel}</span>
           <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -87,25 +86,15 @@ const selectedLabel = $derived(
     </Popover.Trigger>
     <Popover.Content class="w-[500px] p-0">
       <Command.Root>
-        <Command.Input
-          bind:value={searchQuery}
-          placeholder="Search expense types..."
-        />
+        <Command.Input bind:value={searchQuery} placeholder="Search expense types..." />
         <Command.Empty>No expense type found.</Command.Empty>
         <Command.List class="max-h-[400px]">
           {#each Object.entries(filteredCategories) as [category, items]}
             <Command.Group heading={category}>
               {#each items as item}
-                <Command.Item
-                  value={item.key}
-                  onSelect={() => handleSelect(item.key)}
-                >
+                <Command.Item value={item.key} onSelect={() => handleSelect(item.key)}>
                   <Check
-                    class={cn(
-                      'mr-2 h-4 w-4',
-                      value === item.key ? 'opacity-100' : 'opacity-0'
-                    )}
-                  />
+                    class={cn('mr-2 h-4 w-4', value === item.key ? 'opacity-100' : 'opacity-0')} />
                   <span class="flex-1">{item.label}</span>
                 </Command.Item>
               {/each}

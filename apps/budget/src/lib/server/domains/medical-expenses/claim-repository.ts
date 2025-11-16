@@ -1,7 +1,7 @@
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
-import { db } from "$lib/server/shared/database";
-import { hsaClaims, type HsaClaim, type ClaimStatus } from "$lib/schema/hsa-claims";
-import { eq, and, isNull, desc, inArray } from "drizzle-orm";
+import {BaseRepository} from "$lib/server/shared/database/base-repository";
+import {db} from "$lib/server/shared/database";
+import {hsaClaims, type HsaClaim, type ClaimStatus} from "$lib/schema/hsa-claims";
+import {eq, and, isNull, desc, inArray} from "drizzle-orm";
 
 // Types for claim operations
 export interface CreateClaimInput {
@@ -61,12 +61,7 @@ export class ClaimRepository extends BaseRepository<
     return await db
       .select()
       .from(hsaClaims)
-      .where(
-        and(
-          eq(hsaClaims.medicalExpenseId, medicalExpenseId),
-          isNull(hsaClaims.deletedAt)
-        )
-      )
+      .where(and(eq(hsaClaims.medicalExpenseId, medicalExpenseId), isNull(hsaClaims.deletedAt)))
       .orderBy(desc(hsaClaims.createdAt))
       .execute();
   }
@@ -78,12 +73,7 @@ export class ClaimRepository extends BaseRepository<
     return await db
       .select()
       .from(hsaClaims)
-      .where(
-        and(
-          eq(hsaClaims.status, status),
-          isNull(hsaClaims.deletedAt)
-        )
-      )
+      .where(and(eq(hsaClaims.status, status), isNull(hsaClaims.deletedAt)))
       .orderBy(desc(hsaClaims.submittedDate))
       .execute();
   }
@@ -95,12 +85,7 @@ export class ClaimRepository extends BaseRepository<
     return await db
       .select()
       .from(hsaClaims)
-      .where(
-        and(
-          inArray(hsaClaims.status, statuses),
-          isNull(hsaClaims.deletedAt)
-        )
-      )
+      .where(and(inArray(hsaClaims.status, statuses), isNull(hsaClaims.deletedAt)))
       .orderBy(desc(hsaClaims.submittedDate))
       .execute();
   }
@@ -117,14 +102,9 @@ export class ClaimRepository extends BaseRepository<
    */
   async countByStatus(status: ClaimStatus): Promise<number> {
     const result = await db
-      .select({ count: db.$count(hsaClaims.id) })
+      .select({count: db.$count(hsaClaims.id)})
       .from(hsaClaims)
-      .where(
-        and(
-          eq(hsaClaims.status, status),
-          isNull(hsaClaims.deletedAt)
-        )
-      )
+      .where(and(eq(hsaClaims.status, status), isNull(hsaClaims.deletedAt)))
       .execute();
 
     return result[0]?.count || 0;

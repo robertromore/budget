@@ -5,20 +5,20 @@ import {
   SquareCheck,
   SquareMousePointer,
 } from "$lib/components/icons";
-import StickyNote from '@lucide/svelte/icons/sticky-note';
-import { Checkbox } from "$lib/components/ui/checkbox";
-import { renderComponent } from "$lib/components/ui/data-table";
-import { ExpandToggle } from "$lib/components/ui/expand-toggle";
-import type { Category, Payee } from "$lib/schema";
-import type { CategoriesState } from "$lib/states/entities/categories.svelte";
-import type { PayeesState } from "$lib/states/entities/payees.svelte";
-import type { EditableEntityItem, TransactionsFormat } from "$lib/types";
-import { compareAlphanumeric } from "$lib/utils";
-import { currencyFormatter } from "$lib/utils/formatters";
-import { dateFormatter } from "$lib/utils/date-formatters";
-import { type DateValue, getLocalTimeZone } from "@internationalized/date";
-import type { CellContext, Column, ColumnDef, FilterFnOption } from "@tanstack/table-core";
-import type { Component } from "svelte";
+import StickyNote from "@lucide/svelte/icons/sticky-note";
+import {Checkbox} from "$lib/components/ui/checkbox";
+import {renderComponent} from "$lib/components/ui/data-table";
+import {ExpandToggle} from "$lib/components/ui/expand-toggle";
+import type {Category, Payee} from "$lib/schema";
+import type {CategoriesState} from "$lib/states/entities/categories.svelte";
+import type {PayeesState} from "$lib/states/entities/payees.svelte";
+import type {EditableEntityItem, TransactionsFormat} from "$lib/types";
+import {compareAlphanumeric} from "$lib/utils";
+import {currencyFormatter} from "$lib/utils/formatters";
+import {dateFormatter} from "$lib/utils/date-formatters";
+import {type DateValue, getLocalTimeZone} from "@internationalized/date";
+import type {CellContext, Column, ColumnDef, FilterFnOption} from "@tanstack/table-core";
+import type {Component} from "svelte";
 import DataTableEditableCell from "../(components)/(cells)/data-table-editable-cell.svelte";
 import DataTableEditableStatusCell from "../(components)/(cells)/data-table-editable-status-cell.svelte";
 import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
@@ -54,7 +54,7 @@ export const columns = (
   ) => {
     const id = info.row.original.id;
     // Only update for actual transactions (numeric IDs), not scheduled ones (string IDs)
-    if (typeof id === 'number') {
+    if (typeof id === "number") {
       return updateData(id, columnId, value_transformer(new_value));
     }
   };
@@ -63,20 +63,23 @@ export const columns = (
    * Helper function to render cells that are editable for normal transactions
    * but read-only with icon for scheduled transactions
    */
-  const renderEditableCell = (info: CellContext<TransactionsFormat, unknown>, config: {
-    scheduledRenderer: () => { value: string; icon?: Component };
-    editableRenderer: () => { component: any; props: Record<string, unknown> };
-  }) => {
+  const renderEditableCell = (
+    info: CellContext<TransactionsFormat, unknown>,
+    config: {
+      scheduledRenderer: () => {value: string; icon?: Component};
+      editableRenderer: () => {component: any; props: Record<string, unknown>};
+    }
+  ) => {
     const transaction = info.row.original;
 
     // Read-only for scheduled transactions
     if (transaction.status === "scheduled") {
-      const { value, icon } = config.scheduledRenderer();
-      return renderComponent(ReadOnlyCellWithIcon, { value, icon });
+      const {value, icon} = config.scheduledRenderer();
+      return renderComponent(ReadOnlyCellWithIcon, {value, icon});
     }
 
     // Editable for normal transactions
-    const { component, props } = config.editableRenderer();
+    const {component, props} = config.editableRenderer();
     return renderComponent(component, props);
   };
 
@@ -194,7 +197,7 @@ export const columns = (
         return renderEditableCell(info, {
           scheduledRenderer: () => ({
             value: dateValue ? dateFormatter.format(dateValue.toDate(getLocalTimeZone())) : "—",
-            icon: CalendarDays
+            icon: CalendarDays,
           }),
           editableRenderer: () => ({
             component: EditableDateCell,
@@ -208,8 +211,8 @@ export const columns = (
                   }
                   return new_value;
                 }),
-            }
-          })
+            },
+          }),
         });
       },
       aggregatedCell: () => {},
@@ -234,10 +237,13 @@ export const columns = (
             icon: CalendarDays,
             column,
             component: () =>
-              renderComponent(DataTableFacetedFilterDateWithOperators<TransactionsFormat, unknown>, {
-                column,
-                title: "Date",
-              }),
+              renderComponent(
+                DataTableFacetedFilterDateWithOperators<TransactionsFormat, unknown>,
+                {
+                  column,
+                  title: "Date",
+                }
+              ),
           };
         },
         availableFilters: [
@@ -270,7 +276,7 @@ export const columns = (
         return renderEditableCell(info, {
           scheduledRenderer: () => ({
             value: payee?.name || "—",
-            icon: HandCoins
+            icon: HandCoins,
           }),
           editableRenderer: () => ({
             component: EditablePayeeCell,
@@ -282,8 +288,8 @@ export const columns = (
                 categoryId: transaction.categoryId,
                 accountId: transaction.accountId,
               },
-            }
-          })
+            },
+          }),
         });
       },
       aggregatedCell: () => {},
@@ -336,7 +342,7 @@ export const columns = (
         return renderEditableCell(info, {
           scheduledRenderer: () => ({
             value: notes || "—",
-            icon: StickyNote
+            icon: StickyNote,
           }),
           editableRenderer: () => ({
             component: DataTableEditableCell,
@@ -344,12 +350,12 @@ export const columns = (
               value: notes,
               onUpdateValue: (new_value: string) => {
                 const id = info.row.original.id;
-                if (typeof id === 'number') {
+                if (typeof id === "number") {
                   return updateData(id, "notes", new_value);
                 }
               },
-            }
-          })
+            },
+          }),
         });
       },
       aggregatedCell: () => {},
@@ -369,7 +375,7 @@ export const columns = (
       id: "transfer",
       cell: (info) => {
         const transaction = info.row.original;
-        return renderComponent(TransferIndicatorCell, { transaction });
+        return renderComponent(TransferIndicatorCell, {transaction});
       },
       aggregatedCell: () => {},
       header: () => "",
@@ -390,7 +396,7 @@ export const columns = (
 
         // Read-only for scheduled transactions
         if (transaction.status === "scheduled") {
-          return renderComponent(ReadOnlyCategoryCell, { category });
+          return renderComponent(ReadOnlyCategoryCell, {category});
         }
 
         // Editable for normal transactions
@@ -461,7 +467,7 @@ export const columns = (
       cell: (info) => {
         const transaction = info.row.original;
         return renderComponent(BudgetAllocationSimpleCell, {
-          transaction
+          transaction,
         });
       },
       header: ({column, table}) =>
@@ -486,15 +492,15 @@ export const columns = (
 
         return renderEditableCell(info, {
           scheduledRenderer: () => ({
-            value: currencyFormatter.format(amount || 0)
+            value: currencyFormatter.format(amount || 0),
           }),
           editableRenderer: () => ({
             component: EditableNumericCell,
             props: {
               value: amount,
               onUpdateValue: (new_value) => updateHandler(info, "amount", new_value),
-            }
-          })
+            },
+          }),
         });
       },
       aggregatedCell: (info) => {
@@ -573,8 +579,10 @@ export const columns = (
         renderComponent(DataTableEditableStatusCell, {
           value: info.getValue() as string,
           onUpdateValue: (new_value) => updateHandler(info, "status", new_value),
-          onScheduleClick: info.row.original.status === "scheduled" && onScheduleClick ?
-            () => onScheduleClick(info.row.original) : undefined,
+          onScheduleClick:
+            info.row.original.status === "scheduled" && onScheduleClick
+              ? () => onScheduleClick(info.row.original)
+              : undefined,
         }),
       aggregatedCell: () => {},
       header: "",

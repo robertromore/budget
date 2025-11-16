@@ -13,7 +13,7 @@ export const correctionTriggers = [
   "transaction_creation",
   "bulk_categorization",
   "import_correction",
-  "scheduled_transaction"
+  "scheduled_transaction",
 ] as const;
 
 export const correctionContexts = [
@@ -24,7 +24,7 @@ export const correctionContexts = [
   "weekend_transaction",
   "weekday_transaction",
   "first_time_payee",
-  "recurring_payee"
+  "recurring_payee",
 ] as const;
 
 export type CorrectionTrigger = (typeof correctionTriggers)[number];
@@ -46,12 +46,16 @@ export const payeeCategoryCorrections = sqliteTable(
       .references(() => workspaces.id, {onDelete: "cascade"}),
 
     // Core correction data
-    payeeId: integer("payee_id").notNull().references(() => payees.id),
+    payeeId: integer("payee_id")
+      .notNull()
+      .references(() => payees.id),
     transactionId: integer("transaction_id").references(() => transactions.id),
 
     // Category change details
     fromCategoryId: integer("from_category_id").references(() => categories.id),
-    toCategoryId: integer("to_category_id").notNull().references(() => categories.id),
+    toCategoryId: integer("to_category_id")
+      .notNull()
+      .references(() => categories.id),
 
     // Context and trigger information
     correctionTrigger: text("correction_trigger", {enum: correctionTriggers}).notNull(),
@@ -115,7 +119,11 @@ export const payeeCategoryCorrections = sqliteTable(
 
     // Learning efficiency indexes
     index("payee_corrections_unprocessed_idx").on(table.isProcessed, table.createdAt),
-    index("payee_corrections_pattern_analysis_idx").on(table.payeeId, table.isProcessed, table.learningEpoch),
+    index("payee_corrections_pattern_analysis_idx").on(
+      table.payeeId,
+      table.isProcessed,
+      table.learningEpoch
+    ),
 
     // Administrative indexes
     index("payee_corrections_deleted_at_idx").on(table.deletedAt),
@@ -152,33 +160,37 @@ export const payeeCategoryCorrectionsRelations = relations(payeeCategoryCorrecti
 export const selectPayeeCategoryCorrectionSchema = createSelectSchema(payeeCategoryCorrections);
 export const insertPayeeCategoryCorrectionSchema = createInsertSchema(payeeCategoryCorrections);
 
-export const formInsertPayeeCategoryCorrectionSchema = createInsertSchema(payeeCategoryCorrections, {
-  workspaceId: (schema) => schema.optional(),
-  payeeId: (schema) => schema.positive("Invalid payee ID"),
-  transactionId: (schema) => schema.positive("Invalid transaction ID").optional().nullable(),
-  toCategoryId: (schema) => schema.positive("Invalid category ID"),
-  fromCategoryId: (schema) => schema.positive("Invalid category ID").optional().nullable(),
+export const formInsertPayeeCategoryCorrectionSchema = createInsertSchema(
+  payeeCategoryCorrections,
+  {
+    workspaceId: (schema) => schema.optional(),
+    payeeId: (schema) => schema.positive("Invalid payee ID"),
+    transactionId: (schema) => schema.positive("Invalid transaction ID").optional().nullable(),
+    toCategoryId: (schema) => schema.positive("Invalid category ID"),
+    fromCategoryId: (schema) => schema.positive("Invalid category ID").optional().nullable(),
 
-  correctionTrigger: (schema) => schema,
-  correctionContext: (schema) => schema.optional().nullable(),
+    correctionTrigger: (schema) => schema,
+    correctionContext: (schema) => schema.optional().nullable(),
 
-  transactionAmount: (schema) => schema.optional().nullable(),
-  transactionDate: (schema) => schema.optional().nullable(),
+    transactionAmount: (schema) => schema.optional().nullable(),
+    transactionDate: (schema) => schema.optional().nullable(),
 
-  userConfidence: (schema) => schema.min(1).max(10).optional().nullable(),
-  systemConfidence: (schema) => schema.min(0).max(1).optional().nullable(),
-  correctionWeight: (schema) => schema.min(0).max(10).default(1.0),
+    userConfidence: (schema) => schema.min(1).max(10).optional().nullable(),
+    systemConfidence: (schema) => schema.min(0).max(1).optional().nullable(),
+    correctionWeight: (schema) => schema.min(0).max(10).default(1.0),
 
-  amountRange: (schema) => schema.optional().nullable(),
-  temporalContext: (schema) => schema.optional().nullable(),
-  payeePatternContext: (schema) => schema.optional().nullable(),
+    amountRange: (schema) => schema.optional().nullable(),
+    temporalContext: (schema) => schema.optional().nullable(),
+    payeePatternContext: (schema) => schema.optional().nullable(),
 
-  isProcessed: (schema) => schema.default(false),
-  learningEpoch: (schema) => schema.positive().default(1),
+    isProcessed: (schema) => schema.default(false),
+    learningEpoch: (schema) => schema.positive().default(1),
 
-  notes: (schema) => schema.max(1000, "Notes must be less than 1000 characters").optional().nullable(),
-  isOverride: (schema) => schema.default(false),
-});
+    notes: (schema) =>
+      schema.max(1000, "Notes must be less than 1000 characters").optional().nullable(),
+    isOverride: (schema) => schema.default(false),
+  }
+);
 
 // Learning-specific schemas
 export const recordCorrectionSchema = z.object({
@@ -211,7 +223,8 @@ export const learningMetricsSchema = z.object({
 // Type exports
 export type PayeeCategoryCorrection = typeof payeeCategoryCorrections.$inferSelect;
 export type NewPayeeCategoryCorrection = typeof payeeCategoryCorrections.$inferInsert;
-export type FormInsertPayeeCategoryCorrectionSchema = typeof formInsertPayeeCategoryCorrectionSchema;
+export type FormInsertPayeeCategoryCorrectionSchema =
+  typeof formInsertPayeeCategoryCorrectionSchema;
 export type RecordCorrectionSchema = typeof recordCorrectionSchema;
 export type AnalyzeCorrectionsSchema = typeof analyzeCorrectionsSchema;
 export type LearningMetricsSchema = typeof learningMetricsSchema;
@@ -346,5 +359,5 @@ export interface CategoryDrift {
   confirmedAt: string | null;
   correctionCount: number;
   timespan: string;
-  suggestedAction: 'update_default' | 'create_rule' | 'manual_review' | 'ignore';
+  suggestedAction: "update_default" | "create_rule" | "manual_review" | "ignore";
 }

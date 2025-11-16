@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { cn } from "$lib/utils";
-	import type { HTMLAttributes } from "svelte/elements";
+import {cn} from '$lib/utils';
+import type {HTMLAttributes} from 'svelte/elements';
 
-	let { class: className, children, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
+let {class: className, children, ...restProps}: HTMLAttributes<HTMLDivElement> = $props();
 </script>
 
 <div
-	data-slot="field-content"
-	class={cn("group/field-content flex flex-1 flex-col gap-1.5 leading-snug", className)}
-	{...restProps}
->
-	{@render children?.()}
+  data-slot="field-content"
+  class={cn('group/field-content flex flex-1 flex-col gap-1.5 leading-snug', className)}
+  {...restProps}>
+  {@render children?.()}
 </div>

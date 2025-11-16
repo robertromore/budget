@@ -1,16 +1,16 @@
-import type { Account, AccountType } from "$lib/schema/accounts";
-import { accounts } from "$lib/schema/accounts";
-import { categories } from "$lib/schema/categories";
-import { payees } from "$lib/schema/payees";
-import { transactions } from "$lib/schema/transactions";
-import { db } from "$lib/server/shared/database";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
-import { NotFoundError } from "$lib/server/shared/types/errors";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import type {Account, AccountType} from "$lib/schema/accounts";
+import {accounts} from "$lib/schema/accounts";
+import {categories} from "$lib/schema/categories";
+import {payees} from "$lib/schema/payees";
+import {transactions} from "$lib/schema/transactions";
+import {db} from "$lib/server/shared/database";
+import {BaseRepository} from "$lib/server/shared/database/base-repository";
+import {NotFoundError} from "$lib/server/shared/types/errors";
+import {and, desc, eq, isNull} from "drizzle-orm";
 import type {
   AccountTransactionDbResult,
   AccountWithTransactions,
-  TransactionWithBalance
+  TransactionWithBalance,
 } from "./types";
 
 // Legacy type aliases for backward compatibility
@@ -29,7 +29,8 @@ export interface UpdateAccountInput {
   onBudget?: boolean | undefined;
   accountIcon?: string | undefined;
   accountColor?: string | undefined;
-  initialBalance?: number | undefined;}
+  initialBalance?: number | undefined;
+}
 
 /**
  * Account repository with domain-specific operations
@@ -84,7 +85,7 @@ export class AccountRepository extends BaseRepository<
    */
   override async searchByName(query: string, options?: {limit?: number}): Promise<Account[]> {
     return await super.searchByName(query, {
-      limit: options?.limit ?? 10
+      limit: options?.limit ?? 10,
     });
   }
 
@@ -185,21 +186,26 @@ export class AccountRepository extends BaseRepository<
           // Calculate running balances
           // Since transactions are ordered DESC (newest first), we start with total balance
           // and show that as the balance AFTER the first (newest) transaction
-          const totalBalance = accountTransactions.reduce((sum: number, t: AccountTransactionDbResult) => {
-            const amount = Number(t.amount) || 0;
-            return sum + amount;
-          }, 0);
+          const totalBalance = accountTransactions.reduce(
+            (sum: number, t: AccountTransactionDbResult) => {
+              const amount = Number(t.amount) || 0;
+              return sum + amount;
+            },
+            0
+          );
 
           let runningBalance = totalBalance;
-          const transactionsWithBalance: TransactionWithBalance[] = accountTransactions.map((transaction: AccountTransactionDbResult): TransactionWithBalance => {
-            const balanceAfterTransaction = runningBalance;
-            // For next transaction, subtract this transaction's amount
-            runningBalance -= Number(transaction.amount) || 0;
-            return {
-              ...transaction,
-              balance: balanceAfterTransaction,
-            };
-          });
+          const transactionsWithBalance: TransactionWithBalance[] = accountTransactions.map(
+            (transaction: AccountTransactionDbResult): TransactionWithBalance => {
+              const balanceAfterTransaction = runningBalance;
+              // For next transaction, subtract this transaction's amount
+              runningBalance -= Number(transaction.amount) || 0;
+              return {
+                ...transaction,
+                balance: balanceAfterTransaction,
+              };
+            }
+          );
 
           return {
             ...account,

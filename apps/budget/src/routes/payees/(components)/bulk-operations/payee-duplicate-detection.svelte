@@ -3,17 +3,17 @@ import * as Dialog from '$lib/components/ui/dialog';
 import * as Card from '$lib/components/ui/card';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as Alert from '$lib/components/ui/alert';
-import { Button } from '$lib/components/ui/button';
-import { Badge } from '$lib/components/ui/badge';
-import { Separator } from '$lib/components/ui/separator';
-import { ScrollArea } from '$lib/components/ui/scroll-area';
-import { Input } from '$lib/components/ui/input';
-import { Label } from '$lib/components/ui/label';
-import { Checkbox } from '$lib/components/ui/checkbox';
+import {Button} from '$lib/components/ui/button';
+import {Badge} from '$lib/components/ui/badge';
+import {Separator} from '$lib/components/ui/separator';
+import {ScrollArea} from '$lib/components/ui/scroll-area';
+import {Input} from '$lib/components/ui/input';
+import {Label} from '$lib/components/ui/label';
+import {Checkbox} from '$lib/components/ui/checkbox';
 
-import { PayeesState } from '$lib/states/entities/payees.svelte';
-import { getDuplicates, mergeDuplicates } from '$lib/query/payees';
-import type { Payee } from '$lib/schema/payees';
+import {PayeesState} from '$lib/states/entities/payees.svelte';
+import {getDuplicates, mergeDuplicates} from '$lib/query/payees';
+import type {Payee} from '$lib/schema/payees';
 
 // Icons
 import Search from '@lucide/svelte/icons/search';
@@ -62,7 +62,9 @@ const payeesState = PayeesState.get();
 let activeTab = $state('detection');
 let similarityThreshold = $state(0.8);
 let includeInactive = $state(false);
-let groupingStrategy = $state<'name' | 'contact' | 'transaction_pattern' | 'comprehensive'>('comprehensive');
+let groupingStrategy = $state<'name' | 'contact' | 'transaction_pattern' | 'comprehensive'>(
+  'comprehensive'
+);
 let isDetecting = $state(false);
 let duplicateGroups = $state<DuplicateGroup[]>([]);
 let selectedGroups = $state<Set<number>>(new Set());
@@ -77,7 +79,9 @@ let preserveContactInfo = $state(true);
 let preserveTransactionHistory = $state(true);
 
 // Query hooks - Get the reactive query results
-const duplicatesQuery = $derived(getDuplicates(similarityThreshold, includeInactive, groupingStrategy));
+const duplicatesQuery = $derived(
+  getDuplicates(similarityThreshold, includeInactive, groupingStrategy)
+);
 const mergeDuplicatesMutation = mergeDuplicates();
 
 // Get all payees
@@ -88,7 +92,7 @@ const filteredGroups = $derived.by(() => {
   let filtered = duplicateGroups;
 
   if (onlyHighConfidence) {
-    filtered = filtered.filter(group => group.similarityScore >= 0.8);
+    filtered = filtered.filter((group) => group.similarityScore >= 0.8);
   }
 
   return filtered.sort((a, b) => b.similarityScore - a.similarityScore);
@@ -96,16 +100,16 @@ const filteredGroups = $derived.by(() => {
 
 // Selection helpers
 const allGroupsSelected = $derived(
-  filteredGroups.length > 0 && filteredGroups.every(g => selectedGroups.has(g.primaryPayeeId))
+  filteredGroups.length > 0 && filteredGroups.every((g) => selectedGroups.has(g.primaryPayeeId))
 );
 
 const someGroupsSelected = $derived(
-  filteredGroups.some(g => selectedGroups.has(g.primaryPayeeId)) && !allGroupsSelected
+  filteredGroups.some((g) => selectedGroups.has(g.primaryPayeeId)) && !allGroupsSelected
 );
 
 // Get payee by ID
 function getPayee(id: number): Payee | undefined {
-  return allPayees.find(p => p.id === id);
+  return allPayees.find((p) => p.id === id);
 }
 
 // Get payee type icon
@@ -135,21 +139,30 @@ function getSimilarityColor(score: number): string {
 // Get risk level color
 function getRiskLevelColor(level: string): string {
   switch (level) {
-    case 'low': return 'text-green-600';
-    case 'medium': return 'text-yellow-600';
-    case 'high': return 'text-red-600';
-    default: return 'text-gray-600';
+    case 'low':
+      return 'text-green-600';
+    case 'medium':
+      return 'text-yellow-600';
+    case 'high':
+      return 'text-red-600';
+    default:
+      return 'text-gray-600';
   }
 }
 
 // Get match type display
 function getMatchTypeDisplay(type: string): string {
   switch (type) {
-    case 'exact': return 'Exact';
-    case 'fuzzy': return 'Fuzzy';
-    case 'normalized': return 'Normalized';
-    case 'semantic': return 'Semantic';
-    default: return type;
+    case 'exact':
+      return 'Exact';
+    case 'fuzzy':
+      return 'Fuzzy';
+    case 'normalized':
+      return 'Normalized';
+    case 'semantic':
+      return 'Semantic';
+    default:
+      return type;
   }
 }
 
@@ -165,8 +178,8 @@ async function runDetection() {
     if (autoMergeOnDetection && duplicateGroups.length > 0) {
       // Auto-select high confidence groups
       const autoSelected = duplicateGroups
-        .filter(g => g.similarityScore >= 0.9 && g.riskLevel === 'low')
-        .map(g => g.primaryPayeeId);
+        .filter((g) => g.similarityScore >= 0.9 && g.riskLevel === 'low')
+        .map((g) => g.primaryPayeeId);
 
       selectedGroups = new Set(autoSelected);
 
@@ -196,7 +209,7 @@ function selectAllGroups() {
   if (allGroupsSelected) {
     selectedGroups = new Set();
   } else {
-    selectedGroups = new Set(filteredGroups.map(g => g.primaryPayeeId));
+    selectedGroups = new Set(filteredGroups.map((g) => g.primaryPayeeId));
   }
 }
 
@@ -220,7 +233,7 @@ async function performMerge() {
   activeTab = 'results';
 
   try {
-    const selectedGroupsData = filteredGroups.filter(g => selectedGroups.has(g.primaryPayeeId));
+    const selectedGroupsData = filteredGroups.filter((g) => selectedGroups.has(g.primaryPayeeId));
 
     for (const group of selectedGroupsData) {
       try {
@@ -253,9 +266,9 @@ async function performMerge() {
     }
 
     // Remove successfully merged groups
-    const successfulMerges = mergeResults.filter(r => r.success);
-    duplicateGroups = duplicateGroups.filter(g =>
-      !successfulMerges.some(m => m.groupId === g.primaryPayeeId)
+    const successfulMerges = mergeResults.filter((r) => r.success);
+    duplicateGroups = duplicateGroups.filter(
+      (g) => !successfulMerges.some((m) => m.groupId === g.primaryPayeeId)
     );
 
     selectedGroups = new Set();
@@ -283,7 +296,7 @@ $effect(() => {
 </script>
 
 <Dialog.Root bind:open>
-  <Dialog.Content class="max-w-6xl max-h-[90vh] overflow-hidden">
+  <Dialog.Content class="max-h-[90vh] max-w-6xl overflow-hidden">
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">
         <Merge class="h-5 w-5" />
@@ -311,7 +324,7 @@ $effect(() => {
             </Card.Title>
           </Card.Header>
           <Card.Content class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div class="space-y-2">
                 <Label for="similarity-threshold">Similarity Threshold</Label>
                 <div class="flex items-center gap-2">
@@ -322,9 +335,8 @@ $effect(() => {
                     max="1"
                     step="0.1"
                     bind:value={similarityThreshold}
-                    class="w-20"
-                  />
-                  <span class="text-sm text-muted-foreground">
+                    class="w-20" />
+                  <span class="text-muted-foreground text-sm">
                     {Math.round(similarityThreshold * 100)}%
                   </span>
                 </div>
@@ -332,7 +344,7 @@ $effect(() => {
 
               <div class="space-y-2">
                 <Label for="grouping-strategy">Grouping Strategy</Label>
-                <select bind:value={groupingStrategy} class="w-full px-3 py-2 border rounded-md">
+                <select bind:value={groupingStrategy} class="w-full rounded-md border px-3 py-2">
                   <option value="name">Name Only</option>
                   <option value="contact">Contact Info</option>
                   <option value="transaction_pattern">Transaction Patterns</option>
@@ -360,7 +372,7 @@ $effect(() => {
 
             <Separator />
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div class="flex items-center space-x-2">
                 <Checkbox bind:checked={preserveContactInfo} id="preserve-contact" />
                 <Label for="preserve-contact">Preserve contact information when merging</Label>
@@ -375,17 +387,12 @@ $effect(() => {
         </Card.Root>
 
         <div class="flex justify-center">
-          <Button
-            onclick={runDetection}
-            disabled={isDetecting}
-            size="lg"
-            class="w-full md:w-auto"
-          >
+          <Button onclick={runDetection} disabled={isDetecting} size="lg" class="w-full md:w-auto">
             {#if isDetecting}
-              <LoaderCircle class="h-4 w-4 mr-2 animate-spin" />
+              <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
               Detecting Duplicates...
             {:else}
-              <Search class="h-4 w-4 mr-2" />
+              <Search class="mr-2 h-4 w-4" />
               Run Duplicate Detection
             {/if}
           </Button>
@@ -396,8 +403,9 @@ $effect(() => {
             <CircleCheck class="h-4 w-4" />
             <Alert.Title>Detection Complete</Alert.Title>
             <Alert.Description>
-              Found {duplicateGroups.length} potential duplicate group{duplicateGroups.length > 1 ? 's' : ''}.
-              Switch to the Review tab to examine and merge them.
+              Found {duplicateGroups.length} potential duplicate group{duplicateGroups.length > 1
+                ? 's'
+                : ''}. Switch to the Review tab to examine and merge them.
             </Alert.Description>
           </Alert.Root>
         {:else if !isDetecting && duplicateGroups.length === 0}
@@ -405,7 +413,8 @@ $effect(() => {
             <CircleCheck class="h-4 w-4 text-green-600" />
             <Alert.Title>No Duplicates Found</Alert.Title>
             <Alert.Description>
-              No duplicate payees were found with the current settings. Your payee data appears to be clean!
+              No duplicate payees were found with the current settings. Your payee data appears to
+              be clean!
             </Alert.Description>
           </Alert.Root>
         {/if}
@@ -420,8 +429,7 @@ $effect(() => {
               <Checkbox
                 checked={allGroupsSelected}
                 indeterminate={someGroupsSelected}
-                onCheckedChange={selectAllGroups}
-              />
+                onCheckedChange={selectAllGroups} />
               <span class="text-sm">
                 {selectedGroups.size} of {filteredGroups.length} groups selected
               </span>
@@ -430,13 +438,12 @@ $effect(() => {
             <Button
               onclick={performMerge}
               disabled={selectedGroups.size === 0 || mergeInProgress}
-              variant="default"
-            >
+              variant="default">
               {#if mergeInProgress}
-                <LoaderCircle class="h-4 w-4 mr-2 animate-spin" />
+                <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
                 Merging...
               {:else}
-                <Merge class="h-4 w-4 mr-2" />
+                <Merge class="mr-2 h-4 w-4" />
                 Merge Selected ({selectedGroups.size})
               {/if}
             </Button>
@@ -447,7 +454,9 @@ $effect(() => {
             <div class="space-y-4">
               {#each filteredGroups as group (group.primaryPayeeId)}
                 {@const primaryPayee = getPayee(group.primaryPayeeId)}
-                {@const duplicatePayees = group.duplicatePayeeIds.map(id => getPayee(id)).filter((p): p is Payee => p !== undefined)}
+                {@const duplicatePayees = group.duplicatePayeeIds
+                  .map((id) => getPayee(id))
+                  .filter((p): p is Payee => p !== undefined)}
                 {@const isSelected = selectedGroups.has(group.primaryPayeeId)}
                 {@const showGroupDetails = showDetails.has(group.primaryPayeeId)}
 
@@ -457,14 +466,15 @@ $effect(() => {
                       <div class="flex items-center gap-3">
                         <Checkbox
                           checked={isSelected}
-                          onCheckedChange={() => toggleGroupSelection(group.primaryPayeeId)}
-                        />
+                          onCheckedChange={() => toggleGroupSelection(group.primaryPayeeId)} />
                         <div>
                           <Card.Title class="text-lg">
                             Duplicate Group - {Math.round(group.similarityScore * 100)}% Match
                           </Card.Title>
                           <Card.Description class="flex items-center gap-2">
-                            <Badge variant="outline" class={getSimilarityColor(group.similarityScore)}>
+                            <Badge
+                              variant="outline"
+                              class={getSimilarityColor(group.similarityScore)}>
                               {group.recommendedAction}
                             </Badge>
                             <Badge variant="outline" class={getRiskLevelColor(group.riskLevel)}>
@@ -478,13 +488,12 @@ $effect(() => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onclick={() => toggleDetails(group.primaryPayeeId)}
-                      >
+                        onclick={() => toggleDetails(group.primaryPayeeId)}>
                         {#if showGroupDetails}
-                          <EyeOff class="h-4 w-4 mr-2" />
+                          <EyeOff class="mr-2 h-4 w-4" />
                           Hide Details
                         {:else}
-                          <Eye class="h-4 w-4 mr-2" />
+                          <Eye class="mr-2 h-4 w-4" />
                           Show Details
                         {/if}
                       </Button>
@@ -493,17 +502,17 @@ $effect(() => {
 
                   <Card.Content>
                     <!-- Primary and Duplicate Payees -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <!-- Primary Payee -->
                       {#if primaryPayee}
                         {@const Icon = getPayeeTypeIcon(primaryPayee.payeeType)}
-                        <div class="p-3 border-2 border-green-300 rounded-lg bg-green-50">
-                          <div class="flex items-center gap-2 mb-2">
+                        <div class="rounded-lg border-2 border-green-300 bg-green-50 p-3">
+                          <div class="mb-2 flex items-center gap-2">
                             <Badge variant="default" class="text-xs">Primary</Badge>
                             <Icon class="h-4 w-4" />
                             <span class="font-medium">{primaryPayee.name}</span>
                           </div>
-                          <div class="text-xs space-y-1 text-muted-foreground">
+                          <div class="text-muted-foreground space-y-1 text-xs">
                             {#if primaryPayee.email}
                               <div class="flex items-center gap-1">
                                 <Mail class="h-3 w-3" />
@@ -530,13 +539,13 @@ $effect(() => {
                       <div class="space-y-2">
                         {#each duplicatePayees as duplicate}
                           {@const Icon = getPayeeTypeIcon(duplicate.payeeType)}
-                          <div class="p-3 border-2 border-orange-300 rounded-lg bg-orange-50">
-                            <div class="flex items-center gap-2 mb-2">
+                          <div class="rounded-lg border-2 border-orange-300 bg-orange-50 p-3">
+                            <div class="mb-2 flex items-center gap-2">
                               <Badge variant="secondary" class="text-xs">Duplicate</Badge>
                               <Icon class="h-4 w-4" />
                               <span class="font-medium">{duplicate.name}</span>
                             </div>
-                            <div class="text-xs space-y-1 text-muted-foreground">
+                            <div class="text-muted-foreground space-y-1 text-xs">
                               {#if duplicate.email}
                                 <div class="flex items-center gap-1">
                                   <Mail class="h-3 w-3" />
@@ -565,10 +574,10 @@ $effect(() => {
                     {#if showGroupDetails && group.similarities.length > 0}
                       <Separator class="my-4" />
                       <div class="space-y-2">
-                        <h4 class="font-medium text-sm">Similarity Analysis</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <h4 class="text-sm font-medium">Similarity Analysis</h4>
+                        <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
                           {#each group.similarities as similarity}
-                            <div class="text-xs p-2 border rounded">
+                            <div class="rounded border p-2 text-xs">
                               <div class="flex items-center justify-between">
                                 <span class="font-medium capitalize">{similarity.field}</span>
                                 <Badge variant="outline" class="text-xs">
@@ -578,7 +587,9 @@ $effect(() => {
                               <div class="text-muted-foreground mt-1">
                                 <div>Primary: {similarity.primaryValue}</div>
                                 <div>Duplicate: {similarity.duplicateValue}</div>
-                                <div class="text-xs">Confidence: {Math.round(similarity.confidence * 100)}%</div>
+                                <div class="text-xs">
+                                  Confidence: {Math.round(similarity.confidence * 100)}%
+                                </div>
                               </div>
                             </div>
                           {/each}
@@ -591,8 +602,8 @@ $effect(() => {
             </div>
           </ScrollArea>
         {:else}
-          <div class="text-center py-8">
-            <Users class="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <div class="py-8 text-center">
+            <Users class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
             <p class="text-muted-foreground">
               No duplicate groups found. Run detection first or adjust your settings.
             </p>
@@ -603,8 +614,8 @@ $effect(() => {
       <!-- Results Tab -->
       <Tabs.Content value="results" class="space-y-4">
         {#if mergeResults.length > 0}
-          {@const successCount = mergeResults.filter(r => r.success).length}
-          {@const failCount = mergeResults.filter(r => !r.success).length}
+          {@const successCount = mergeResults.filter((r) => r.success).length}
+          {@const failCount = mergeResults.filter((r) => !r.success).length}
 
           <!-- Summary -->
           <Card.Root>
@@ -615,15 +626,15 @@ $effect(() => {
               <div class="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div class="text-2xl font-bold text-green-600">{successCount}</div>
-                  <div class="text-sm text-muted-foreground">Successful</div>
+                  <div class="text-muted-foreground text-sm">Successful</div>
                 </div>
                 <div>
                   <div class="text-2xl font-bold text-red-600">{failCount}</div>
-                  <div class="text-sm text-muted-foreground">Failed</div>
+                  <div class="text-muted-foreground text-sm">Failed</div>
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{mergeResults.length}</div>
-                  <div class="text-sm text-muted-foreground">Total</div>
+                  <div class="text-muted-foreground text-sm">Total</div>
                 </div>
               </div>
             </Card.Content>
@@ -634,7 +645,8 @@ $effect(() => {
             <div class="space-y-2">
               {#each mergeResults as result}
                 {@const primaryPayee = getPayee(result.group.primaryPayeeId)}
-                <Card.Root class="border-l-4 {result.success ? 'border-l-green-500' : 'border-l-red-500'}">
+                <Card.Root
+                  class="border-l-4 {result.success ? 'border-l-green-500' : 'border-l-red-500'}">
                   <Card.Content class="p-4">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2">
@@ -644,9 +656,12 @@ $effect(() => {
                           <XCircle class="h-4 w-4 text-red-500" />
                         {/if}
                         <span class="font-medium">{primaryPayee?.name || 'Unknown'}</span>
-                        <ArrowRight class="h-4 w-4 text-muted-foreground" />
-                        <span class="text-sm text-muted-foreground">
-                          {result.group.duplicatePayeeIds.length} duplicate{result.group.duplicatePayeeIds.length > 1 ? 's' : ''} merged
+                        <ArrowRight class="text-muted-foreground h-4 w-4" />
+                        <span class="text-muted-foreground text-sm">
+                          {result.group.duplicatePayeeIds.length} duplicate{result.group
+                            .duplicatePayeeIds.length > 1
+                            ? 's'
+                            : ''} merged
                         </span>
                       </div>
                       <Badge variant={result.success ? 'default' : 'destructive'}>
@@ -654,7 +669,7 @@ $effect(() => {
                       </Badge>
                     </div>
                     {#if !result.success && result.error}
-                      <div class="text-sm text-red-600 mt-2">
+                      <div class="mt-2 text-sm text-red-600">
                         Error: {result.error}
                       </div>
                     {/if}
@@ -664,25 +679,21 @@ $effect(() => {
             </div>
           </ScrollArea>
         {:else if mergeInProgress}
-          <div class="text-center py-8">
-            <LoaderCircle class="h-8 w-8 animate-spin mx-auto mb-4" />
+          <div class="py-8 text-center">
+            <LoaderCircle class="mx-auto mb-4 h-8 w-8 animate-spin" />
             <p class="text-muted-foreground">Merging duplicates in progress...</p>
           </div>
         {:else}
-          <div class="text-center py-8">
-            <Merge class="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p class="text-muted-foreground">
-              No merge operations have been performed yet.
-            </p>
+          <div class="py-8 text-center">
+            <Merge class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+            <p class="text-muted-foreground">No merge operations have been performed yet.</p>
           </div>
         {/if}
       </Tabs.Content>
     </Tabs.Root>
 
     <Dialog.Footer>
-      <Button variant="outline" onclick={() => open = false}>
-        Close
-      </Button>
+      <Button variant="outline" onclick={() => (open = false)}>Close</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

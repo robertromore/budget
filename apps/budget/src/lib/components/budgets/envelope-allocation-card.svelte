@@ -1,106 +1,108 @@
 <script lang="ts">
-  import {ArrowUpDown, TriangleAlert, TrendingUp, Star, Settings2} from "@lucide/svelte/icons";
-  import * as Card from "$lib/components/ui/card";
-  import {Button} from "$lib/components/ui/button";
-  import {Badge} from "$lib/components/ui/badge";
-  import {Progress} from "$lib/components/ui/progress";
-  import NumericInput from "$lib/components/input/numeric-input.svelte";
-  import {cn} from "$lib/utils";
-  import {currencyFormatter} from "$lib/utils/formatters";
-  import type {EnvelopeAllocation} from "$lib/schema/budgets/envelope-allocations";
+import {ArrowUpDown, TriangleAlert, TrendingUp, Star, Settings2} from '@lucide/svelte/icons';
+import * as Card from '$lib/components/ui/card';
+import {Button} from '$lib/components/ui/button';
+import {Badge} from '$lib/components/ui/badge';
+import {Progress} from '$lib/components/ui/progress';
+import NumericInput from '$lib/components/input/numeric-input.svelte';
+import {cn} from '$lib/utils';
+import {currencyFormatter} from '$lib/utils/formatters';
+import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
 
-  interface Props {
-    envelope: EnvelopeAllocation;
-    categoryName: string;
-    editable?: boolean;
-    onUpdateAllocation?: (newAmount: number) => void;
-    onTransferRequest?: () => void;
-    onDeficitRecover?: () => void;
-    onSettingsClick?: () => void;
-    class?: string;
+interface Props {
+  envelope: EnvelopeAllocation;
+  categoryName: string;
+  editable?: boolean;
+  onUpdateAllocation?: (newAmount: number) => void;
+  onTransferRequest?: () => void;
+  onDeficitRecover?: () => void;
+  onSettingsClick?: () => void;
+  class?: string;
+}
+
+let {
+  envelope,
+  categoryName,
+  editable = false,
+  onUpdateAllocation,
+  onTransferRequest,
+  onDeficitRecover,
+  onSettingsClick,
+  class: className,
+}: Props = $props();
+
+let editValue = $state(envelope.allocatedAmount);
+
+const progressPercentage = $derived.by(() => {
+  if (envelope.allocatedAmount <= 0) return 0;
+  return Math.min(100, (envelope.spentAmount / envelope.allocatedAmount) * 100);
+});
+
+const statusConfig = $derived.by(() => {
+  switch (envelope.status) {
+    case 'overspent':
+      return {
+        color: 'bg-destructive/10 border-destructive text-destructive',
+        badge: 'destructive' as const,
+        icon: TriangleAlert,
+        label: 'Overspent',
+      };
+    case 'depleted':
+      return {
+        color:
+          'bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-900 dark:border-orange-700 dark:text-orange-300',
+        badge: 'secondary' as const,
+        icon: TriangleAlert,
+        label: 'Depleted',
+      };
+    case 'active':
+      return {
+        color:
+          'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900 dark:border-emerald-700 dark:text-emerald-300',
+        badge: 'secondary' as const,
+        icon: TrendingUp,
+        label: 'Active',
+      };
+    case 'paused':
+      return {
+        color: 'bg-muted border-muted-foreground/20 text-muted-foreground',
+        badge: 'outline' as const,
+        icon: TrendingUp,
+        label: 'Paused',
+      };
+    default:
+      return {
+        color: 'bg-background border-border text-foreground',
+        badge: 'outline' as const,
+        icon: TrendingUp,
+        label: envelope.status,
+      };
   }
+});
 
-  let {
-    envelope,
-    categoryName,
-    editable = false,
-    onUpdateAllocation,
-    onTransferRequest,
-    onDeficitRecover,
-    onSettingsClick,
-    class: className,
-  }: Props = $props();
-
-  let editValue = $state(envelope.allocatedAmount);
-
-  const progressPercentage = $derived.by(() => {
-    if (envelope.allocatedAmount <= 0) return 0;
-    return Math.min(100, (envelope.spentAmount / envelope.allocatedAmount) * 100);
-  });
-
-  const statusConfig = $derived.by(() => {
-    switch (envelope.status) {
-      case "overspent":
-        return {
-          color: "bg-destructive/10 border-destructive text-destructive",
-          badge: "destructive" as const,
-          icon: TriangleAlert,
-          label: "Overspent",
-        };
-      case "depleted":
-        return {
-          color: "bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-900 dark:border-orange-700 dark:text-orange-300",
-          badge: "secondary" as const,
-          icon: TriangleAlert,
-          label: "Depleted",
-        };
-      case "active":
-        return {
-          color: "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900 dark:border-emerald-700 dark:text-emerald-300",
-          badge: "secondary" as const,
-          icon: TrendingUp,
-          label: "Active",
-        };
-      case "paused":
-        return {
-          color: "bg-muted border-muted-foreground/20 text-muted-foreground",
-          badge: "outline" as const,
-          icon: TrendingUp,
-          label: "Paused",
-        };
-      default:
-        return {
-          color: "bg-background border-border text-foreground",
-          badge: "outline" as const,
-          icon: TrendingUp,
-          label: envelope.status,
-        };
-    }
-  });
-
-  function handleAllocationSubmit() {
-    if (Number.isFinite(editValue) && editValue >= 0 && editValue !== envelope.allocatedAmount) {
-      onUpdateAllocation?.(editValue);
-    }
+function handleAllocationSubmit() {
+  if (Number.isFinite(editValue) && editValue >= 0 && editValue !== envelope.allocatedAmount) {
+    onUpdateAllocation?.(editValue);
   }
+}
 
-  $effect(() => {
-    editValue = envelope.allocatedAmount;
-  });
+$effect(() => {
+  editValue = envelope.allocatedAmount;
+});
 
-  const priority = $derived.by(() => (envelope.metadata as any)?.priority ?? null);
-  const isEmergencyFund = $derived.by(() => (envelope.metadata as any)?.isEmergencyFund ?? false);
+const priority = $derived.by(() => (envelope.metadata as any)?.priority ?? null);
+const isEmergencyFund = $derived.by(() => (envelope.metadata as any)?.isEmergencyFund ?? false);
 </script>
 
-<Card.Root class={cn("transition-all hover:shadow-md", statusConfig.color, className)}>
+<Card.Root class={cn('transition-all hover:shadow-md', statusConfig.color, className)}>
   <Card.Header class="pb-3">
     <div class="flex items-start justify-between gap-3">
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 mb-1">
+      <div class="min-w-0 flex-1">
+        <div class="mb-1 flex items-center gap-2">
           <statusConfig.icon class="h-4 w-4 flex-shrink-0" />
-          <Card.Title class="text-lg truncate">{categoryName}</Card.Title>
+          <Card.Title class="truncate text-lg">{categoryName}</Card.Title>
         </div>
-        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+        <div class="text-muted-foreground flex items-center gap-2 text-xs">
           {#if isEmergencyFund}
             <Badge variant="destructive" class="text-xs">Emergency</Badge>
           {:else if priority !== null}
@@ -111,7 +113,7 @@
           {/if}
         </div>
       </div>
-      <div class="flex items-center gap-2 flex-shrink-0">
+      <div class="flex flex-shrink-0 items-center gap-2">
         <Badge variant={statusConfig.badge}>{statusConfig.label}</Badge>
         {#if onSettingsClick}
           <Button
@@ -119,8 +121,7 @@
             size="icon"
             class="h-8 w-8"
             onclick={onSettingsClick}
-            title="Envelope Settings"
-          >
+            title="Envelope Settings">
             <Settings2 class="h-4 w-4" />
           </Button>
         {/if}
@@ -134,7 +135,10 @@
       <span class="text-sm font-medium">Allocated</span>
       <div class="flex items-center gap-2">
         {#if editable}
-          <NumericInput bind:value={editValue} onSubmit={handleAllocationSubmit} buttonClass="h-8 w-28" />
+          <NumericInput
+            bind:value={editValue}
+            onSubmit={handleAllocationSubmit}
+            buttonClass="h-8 w-28" />
         {:else}
           <span class="font-mono text-sm">
             {currencyFormatter.format(envelope.allocatedAmount)}
@@ -154,10 +158,11 @@
     <!-- Available Amount -->
     <div class="flex items-center justify-between">
       <span class="text-sm font-medium">Available</span>
-      <span class={cn(
-        "font-mono text-sm",
-        envelope.availableAmount > 0 ? "text-emerald-600" : "text-muted-foreground"
-      )}>
+      <span
+        class={cn(
+          'font-mono text-sm',
+          envelope.availableAmount > 0 ? 'text-emerald-600' : 'text-muted-foreground'
+        )}>
         {currencyFormatter.format(envelope.availableAmount)}
       </span>
     </div>
@@ -175,8 +180,8 @@
     <!-- Deficit Amount (if any) -->
     {#if envelope.deficitAmount > 0}
       <div class="flex items-center justify-between">
-        <span class="text-sm font-medium text-destructive">Deficit</span>
-        <span class="font-mono text-sm text-destructive">
+        <span class="text-destructive text-sm font-medium">Deficit</span>
+        <span class="text-destructive font-mono text-sm">
           {currencyFormatter.format(envelope.deficitAmount)}
         </span>
       </div>
@@ -184,23 +189,19 @@
 
     <!-- Progress Bar -->
     <div class="space-y-2">
-      <div class="flex items-center justify-between text-xs text-muted-foreground">
+      <div class="text-muted-foreground flex items-center justify-between text-xs">
         <span>Progress</span>
         <span>{progressPercentage.toFixed(0)}%</span>
       </div>
       <Progress
         value={progressPercentage}
-        class={cn(
-          "h-2",
-          envelope.status === "overspent" && "text-destructive"
-        )}
-      />
+        class={cn('h-2', envelope.status === 'overspent' && 'text-destructive')} />
     </div>
 
     <!-- Rollover Mode Info -->
-    <div class="flex items-center justify-between text-xs text-muted-foreground">
+    <div class="text-muted-foreground flex items-center justify-between text-xs">
       <span>Rollover Mode</span>
-      <span class="capitalize">{envelope.rolloverMode.replace("_", " ")}</span>
+      <span class="capitalize">{envelope.rolloverMode.replace('_', ' ')}</span>
     </div>
   </Card.Content>
 
@@ -211,19 +212,14 @@
         variant="outline"
         onclick={onTransferRequest}
         disabled={envelope.availableAmount <= 0}
-        class="flex-1"
-      >
-        <ArrowUpDown class="h-4 w-4 mr-1" />
+        class="flex-1">
+        <ArrowUpDown class="mr-1 h-4 w-4" />
         Transfer
       </Button>
 
-      {#if envelope.status === "overspent" && onDeficitRecover}
-        <Button
-          size="sm"
-          onclick={onDeficitRecover}
-          class="flex-1"
-        >
-          <TriangleAlert class="h-4 w-4 mr-1" />
+      {#if envelope.status === 'overspent' && onDeficitRecover}
+        <Button size="sm" onclick={onDeficitRecover} class="flex-1">
+          <TriangleAlert class="mr-1 h-4 w-4" />
           Recover
         </Button>
       {/if}

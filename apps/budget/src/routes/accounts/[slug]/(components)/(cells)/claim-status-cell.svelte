@@ -56,8 +56,6 @@ const claimStatus = $derived(() => {
     {/snippet}
   </DropdownMenu.Trigger>
   <DropdownMenu.Content align="start">
-    <DropdownMenu.Item onclick={onManageClaims}>
-      Manage Claims
-    </DropdownMenu.Item>
+    <DropdownMenu.Item onclick={onManageClaims}>Manage Claims</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

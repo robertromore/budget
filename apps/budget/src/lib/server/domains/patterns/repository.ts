@@ -159,10 +159,12 @@ export class PatternRepository {
     if (status) {
       const result = await db
         .delete(detectedPatterns)
-        .where(and(
-          eq(detectedPatterns.status, status),
-          inArray(detectedPatterns.accountId, userAccountIds)
-        ));
+        .where(
+          and(
+            eq(detectedPatterns.status, status),
+            inArray(detectedPatterns.accountId, userAccountIds)
+          )
+        );
       return result.changes || 0;
     } else {
       const result = await db
@@ -188,10 +190,12 @@ export class PatternRepository {
 
     const result = await db
       .delete(detectedPatterns)
-      .where(and(
-        lt(detectedPatterns.lastOccurrence, cutoffDate.toISOString()),
-        inArray(detectedPatterns.accountId, userAccountIds)
-      ));
+      .where(
+        and(
+          lt(detectedPatterns.lastOccurrence, cutoffDate.toISOString()),
+          inArray(detectedPatterns.accountId, userAccountIds)
+        )
+      );
 
     return result.changes;
   }
@@ -212,10 +216,7 @@ export class PatternRepository {
    */
   async validateAccountOwnership(accountId: number, workspaceId: string): Promise<boolean> {
     const account = await db.query.accounts.findFirst({
-      where: and(
-        eq(accounts.id, accountId),
-        eq(accounts.workspaceId, workspaceId)
-      ),
+      where: and(eq(accounts.id, accountId), eq(accounts.workspaceId, workspaceId)),
     });
     return !!account;
   }

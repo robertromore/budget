@@ -54,9 +54,7 @@ function handleMouseDown(e: MouseEvent) {
 function handleMouseMove(e: MouseEvent) {
   if (!isResizing) return;
 
-  const newWidth = side === 'right'
-    ? window.innerWidth - e.clientX
-    : e.clientX;
+  const newWidth = side === 'right' ? window.innerWidth - e.clientX : e.clientX;
 
   sheetWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
 }
@@ -91,14 +89,6 @@ $effect(() => {
 });
 </script>
 
-<style>
-  /* Prevent text selection during resize */
-  :global(body.resizing) {
-    user-select: none;
-    cursor: col-resize !important;
-  }
-</style>
-
 {#if isDesktop.current}
   <Sheet.Root bind:open>
     {#if trigger}
@@ -109,17 +99,22 @@ $effect(() => {
     <Sheet.Content
       {side}
       class="flex flex-col {className || ''}"
-      style="width: {sheetWidth}px; max-width: {sheetWidth}px;"
-    >
+      style="width: {sheetWidth}px; max-width: {sheetWidth}px;">
       {#if resizable}
         <button
           type="button"
-          class="absolute top-0 {side === 'right' ? 'left-0 -ml-1' : 'right-0 -mr-1'} h-full w-2 cursor-col-resize group z-50 border-0 bg-transparent p-0"
+          class="absolute top-0 {side === 'right'
+            ? 'left-0 -ml-1'
+            : 'right-0 -mr-1'} group z-50 h-full w-2 cursor-col-resize border-0 bg-transparent p-0"
           onmousedown={handleMouseDown}
-          aria-label="Resize panel"
-        >
-          <div class="absolute inset-0 hover:bg-primary/10 active:bg-primary/20 transition-colors"></div>
-          <div class="absolute top-1/2 {side === 'right' ? 'left-0' : 'right-0'} -translate-y-1/2 w-1 h-16 bg-border group-hover:bg-primary/50 transition-colors rounded-full"></div>
+          aria-label="Resize panel">
+          <div class="hover:bg-primary/10 active:bg-primary/20 absolute inset-0 transition-colors">
+          </div>
+          <div
+            class="absolute top-1/2 {side === 'right'
+              ? 'left-0'
+              : 'right-0'} bg-border group-hover:bg-primary/50 h-16 w-1 -translate-y-1/2 rounded-full transition-colors">
+          </div>
         </button>
       {/if}
       {#if header}
@@ -127,7 +122,7 @@ $effect(() => {
           {@render header()}
         </Sheet.Header>
       {/if}
-      <div class="flex-1 overflow-auto @container">
+      <div class="@container flex-1 overflow-auto">
         {#if content}
           <div class="px-6 py-6">
             {@render content()}
@@ -158,7 +153,7 @@ $effect(() => {
           {@render header()}
         </Drawer.Header>
       {/if}
-      <div class="flex-1 overflow-auto @container">
+      <div class="@container flex-1 overflow-auto">
         {#if content}
           <div class="px-6 py-6">
             {@render content()}
@@ -181,3 +176,11 @@ $effect(() => {
     </Drawer.Content>
   </Drawer.Root>
 {/if}
+
+<style>
+/* Prevent text selection during resize */
+:global(body.resizing) {
+  user-select: none;
+  cursor: col-resize !important;
+}
+</style>

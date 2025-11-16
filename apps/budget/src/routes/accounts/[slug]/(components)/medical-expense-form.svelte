@@ -1,17 +1,17 @@
 <script lang="ts">
-import { rpc } from '$lib/query';
-import { Button } from '$lib/components/ui/button';
-import { Input } from '$lib/components/ui/input';
-import { Label } from '$lib/components/ui/label';
-import { Textarea } from '$lib/components/ui/textarea';
-import { Checkbox } from '$lib/components/ui/checkbox';
-import { medicalExpenseTypeEnum, medicalExpenseTypeKeys } from '$lib/schema/medical-expenses';
+import {rpc} from '$lib/query';
+import {Button} from '$lib/components/ui/button';
+import {Input} from '$lib/components/ui/input';
+import {Label} from '$lib/components/ui/label';
+import {Textarea} from '$lib/components/ui/textarea';
+import {Checkbox} from '$lib/components/ui/checkbox';
+import {medicalExpenseTypeEnum, medicalExpenseTypeKeys} from '$lib/schema/medical-expenses';
 import ReceiptUploadWidget from './receipt-upload-widget.svelte';
 import * as Separator from '$lib/components/ui/separator';
 import ExpenseTypeSelector from './expense-type-selector.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
-import { parseDate } from '@internationalized/date';
+import {parseDate} from '@internationalized/date';
 import Upload from '@lucide/svelte/icons/upload';
 
 interface Props {
@@ -23,14 +23,8 @@ interface Props {
   onCancel?: () => void;
 }
 
-let {
-  hsaAccountId,
-  accountId,
-  transactionId,
-  existingExpense,
-  onSuccess,
-  onCancel
-}: Props = $props();
+let {hsaAccountId, accountId, transactionId, existingExpense, onSuccess, onCancel}: Props =
+  $props();
 
 // Form state - Medical Expense fields
 let expenseType = $state(existingExpense?.expenseType || 'doctor_visit');
@@ -53,9 +47,7 @@ let serviceDate = $state(
 // Note: new Date().toISOString() is fine here because we only use the date part
 // and immediately parse it with parseDate, avoiding timezone issues
 let paidDate = $state(
-  existingExpense?.paidDate
-    ? parseDate(existingExpense.paidDate.split('T')[0]!)
-    : undefined
+  existingExpense?.paidDate ? parseDate(existingExpense.paidDate.split('T')[0]!) : undefined
 );
 
 let taxYear = $state(existingExpense?.taxYear || new Date().getFullYear());
@@ -110,7 +102,10 @@ async function handleSubmit() {
   }
 
   // Validate "other" expense types require description
-  if ((expenseType === 'other_qualified' || expenseType === 'non_qualified') && !otherExpenseDescription.trim()) {
+  if (
+    (expenseType === 'other_qualified' || expenseType === 'non_qualified') &&
+    !otherExpenseDescription.trim()
+  ) {
     error = 'Please describe this expense';
     return;
   }
@@ -120,9 +115,10 @@ async function handleSubmit() {
 
   try {
     // Prepend "other" description to notes if applicable
-    const finalNotes = (expenseType === 'other_qualified' || expenseType === 'non_qualified')
-      ? `${otherExpenseDescription.trim()}${notes ? `\n\n${notes}` : ''}`
-      : notes;
+    const finalNotes =
+      expenseType === 'other_qualified' || expenseType === 'non_qualified'
+        ? `${otherExpenseDescription.trim()}${notes ? `\n\n${notes}` : ''}`
+        : notes;
 
     if (existingExpense) {
       // For updates, only include defined fields
@@ -188,12 +184,18 @@ async function handleSubmit() {
 }
 </script>
 
-<form class="space-y-6" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+<form
+  class="space-y-6"
+  onsubmit={(e) => {
+    e.preventDefault();
+    handleSubmit();
+  }}>
   <!-- Expense Type -->
   <ExpenseTypeSelector
     bind:value={expenseType}
-    onValueChange={(value) => { expenseType = value; }}
-  />
+    onValueChange={(value) => {
+      expenseType = value;
+    }} />
 
   <!-- Other Expense Description (only for "other" types) -->
   {#if expenseType === 'other_qualified' || expenseType === 'non_qualified'}
@@ -205,9 +207,8 @@ async function handleSubmit() {
         placeholder="Specify what type of medical expense this is..."
         maxlength={200}
         rows={2}
-        required
-      />
-      <p class="text-xs text-muted-foreground">
+        required />
+      <p class="text-muted-foreground text-xs">
         Please describe the specific type of medical expense
       </p>
     </div>
@@ -218,9 +219,10 @@ async function handleSubmit() {
     <Checkbox
       id="is-qualified"
       checked={isQualified}
-      onCheckedChange={(checked) => { isQualified = checked === true; }}
-    />
-    <Label for="is-qualified" class="text-sm font-normal cursor-pointer">
+      onCheckedChange={(checked) => {
+        isQualified = checked === true;
+      }} />
+    <Label for="is-qualified" class="cursor-pointer text-sm font-normal">
       IRS Qualified Medical Expense
     </Label>
   </div>
@@ -233,8 +235,7 @@ async function handleSubmit() {
       type="text"
       bind:value={provider}
       placeholder="Dr. Smith, ABC Hospital, etc."
-      maxlength={200}
-    />
+      maxlength={200} />
   </div>
 
   <!-- Patient Name -->
@@ -245,28 +246,19 @@ async function handleSubmit() {
       type="text"
       bind:value={patientName}
       placeholder="Who received care"
-      maxlength={100}
-    />
+      maxlength={100} />
   </div>
 
   <!-- Financial Details -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
     <div class="space-y-2">
       <Label for="amount">Total Amount *</Label>
-      <NumericInput
-        id="amount"
-        bind:value={amount}
-        buttonClass="w-full"
-      />
+      <NumericInput id="amount" bind:value={amount} buttonClass="w-full" />
     </div>
 
     <div class="space-y-2">
       <Label for="insurance-covered">Insurance Covered</Label>
-      <NumericInput
-        id="insurance-covered"
-        bind:value={insuranceCovered}
-        buttonClass="w-full"
-      />
+      <NumericInput id="insurance-covered" bind:value={insuranceCovered} buttonClass="w-full" />
     </div>
 
     <div class="space-y-2">
@@ -279,33 +271,22 @@ async function handleSubmit() {
         bind:value={outOfPocket}
         placeholder="0.00"
         readonly
-        class="bg-muted"
-      />
-      <p class="text-xs text-muted-foreground">
-        Auto-calculated
-      </p>
+        class="bg-muted" />
+      <p class="text-muted-foreground text-xs">Auto-calculated</p>
     </div>
   </div>
 
   <!-- Dates -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
     <div class="space-y-2">
       <Label for="service-date">Service Date *</Label>
-      <DateInput
-        bind:value={serviceDate}
-        buttonClass="w-full"
-      />
+      <DateInput bind:value={serviceDate} buttonClass="w-full" />
     </div>
 
     <div class="space-y-2">
       <Label for="paid-date">Payment Date</Label>
-      <DateInput
-        bind:value={paidDate}
-        buttonClass="w-full"
-      />
-      <p class="text-xs text-muted-foreground">
-        Used for tax year calculation
-      </p>
+      <DateInput bind:value={paidDate} buttonClass="w-full" />
+      <p class="text-muted-foreground text-xs">Used for tax year calculation</p>
     </div>
 
     <div class="space-y-2">
@@ -317,11 +298,8 @@ async function handleSubmit() {
         max="2100"
         bind:value={taxYear}
         readonly
-        class="bg-muted"
-      />
-      <p class="text-xs text-muted-foreground">
-        Auto-calculated from payment date
-      </p>
+        class="bg-muted" />
+      <p class="text-muted-foreground text-xs">Auto-calculated from payment date</p>
     </div>
   </div>
 
@@ -333,8 +311,7 @@ async function handleSubmit() {
       type="text"
       bind:value={diagnosis}
       placeholder="ICD code or description"
-      maxlength={500}
-    />
+      maxlength={500} />
   </div>
 
   <!-- Treatment Description -->
@@ -345,8 +322,7 @@ async function handleSubmit() {
       bind:value={treatmentDescription}
       placeholder="Details about the medical service"
       maxlength={1000}
-      rows={3}
-    />
+      rows={3} />
   </div>
 
   <!-- Notes -->
@@ -357,8 +333,7 @@ async function handleSubmit() {
       bind:value={notes}
       placeholder="Medical-specific notes (diagnosis details, treatment info, etc.)"
       maxlength={1000}
-      rows={2}
-    />
+      rows={2} />
   </div>
 
   <!-- Transaction Notes (only for new expenses) -->
@@ -370,11 +345,8 @@ async function handleSubmit() {
         bind:value={transactionNotes}
         placeholder="General transaction notes (optional)"
         maxlength={500}
-        rows={2}
-      />
-      <p class="text-xs text-muted-foreground">
-        These notes will appear in the transaction record
-      </p>
+        rows={2} />
+      <p class="text-muted-foreground text-xs">These notes will appear in the transaction record</p>
     </div>
   {/if}
 
@@ -382,24 +354,17 @@ async function handleSubmit() {
   {#if existingExpense}
     <Separator.Root class="my-6" />
     <div class="space-y-4">
-      <Button
-        variant="outline"
-        onclick={() => (receiptUploadOpen = true)}
-        class="w-full"
-      >
+      <Button variant="outline" onclick={() => (receiptUploadOpen = true)} class="w-full">
         <Upload class="mr-2 h-4 w-4" />
         Upload Receipts
       </Button>
-      <ReceiptUploadWidget
-        medicalExpenseId={existingExpense.id}
-        bind:open={receiptUploadOpen}
-      />
+      <ReceiptUploadWidget medicalExpenseId={existingExpense.id} bind:open={receiptUploadOpen} />
     </div>
   {/if}
 
   <!-- Error Message -->
   {#if error}
-    <div class="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+    <div class="bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm">
       {error}
     </div>
   {/if}
@@ -407,9 +372,7 @@ async function handleSubmit() {
   <!-- Actions -->
   <div class="flex justify-end gap-2">
     {#if onCancel}
-      <Button type="button" variant="outline" onclick={onCancel}>
-        Cancel
-      </Button>
+      <Button type="button" variant="outline" onclick={onCancel}>Cancel</Button>
     {/if}
     <Button type="submit" disabled={isSubmitting}>
       {isSubmitting ? 'Saving...' : existingExpense ? 'Update Expense' : 'Create Expense'}

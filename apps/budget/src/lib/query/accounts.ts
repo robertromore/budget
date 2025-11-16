@@ -1,7 +1,7 @@
-import type { Account } from "$lib/schema/accounts";
-import { trpc } from "$lib/trpc/client";
-import { cachePatterns, queryPresets } from "./_client";
-import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
+import type {Account} from "$lib/schema/accounts";
+import {trpc} from "$lib/trpc/client";
+import {cachePatterns, queryPresets} from "./_client";
+import {createQueryKeys, defineMutation, defineQuery} from "./_factory";
 
 export const accountKeys = createQueryKeys("accounts", {
   lists: () => ["accounts", "list"] as const,
@@ -24,10 +24,14 @@ export const listAccounts = () =>
 
 export const getAccountDetail = (idOrSlug: number | string) =>
   defineQuery<Account>({
-    queryKey: typeof idOrSlug === "number" ? accountKeys.detail(idOrSlug) : accountKeys.detailBySlug(idOrSlug),
-    queryFn: () => (typeof idOrSlug === "number"
-      ? trpc().accountRoutes.load.query({id: idOrSlug})
-      : trpc().accountRoutes.getBySlug.query({slug: idOrSlug})) as Promise<Account>,
+    queryKey:
+      typeof idOrSlug === "number"
+        ? accountKeys.detail(idOrSlug)
+        : accountKeys.detailBySlug(idOrSlug),
+    queryFn: () =>
+      (typeof idOrSlug === "number"
+        ? trpc().accountRoutes.load.query({id: idOrSlug})
+        : trpc().accountRoutes.getBySlug.query({slug: idOrSlug})) as Promise<Account>,
     options: {
       staleTime: 60 * 1000,
     },
@@ -55,14 +59,15 @@ export const getDefaultAccountsStatus = () =>
   });
 
 export const seedDefaultAccounts = defineMutation<{slugs: string[]}, Account[]>({
-  mutationFn: (input) => trpc().accountRoutes.seedDefaultAccounts.mutate(input) as Promise<Account[]>,
+  mutationFn: (input) =>
+    trpc().accountRoutes.seedDefaultAccounts.mutate(input) as Promise<Account[]>,
   onSuccess: () => {
     cachePatterns.invalidatePrefix(accountKeys.all());
     cachePatterns.invalidatePrefix(accountKeys.defaultAccountsStatus());
   },
   successMessage: (data) => {
     if (data.length > 0) {
-      return `Added ${data.length} default ${data.length === 1 ? 'account' : 'accounts'}`;
+      return `Added ${data.length} default ${data.length === 1 ? "account" : "accounts"}`;
     }
     return "No new accounts to add";
   },

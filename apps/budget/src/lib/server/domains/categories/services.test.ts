@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CategoryService } from './services';
-import type { CategoryRepository } from './repository';
-import type { Category } from '$lib/schema/categories';
+import {describe, it, expect, beforeEach, vi} from "vitest";
+import {CategoryService} from "./services";
+import type {CategoryRepository} from "./repository";
+import type {Category} from "$lib/schema/categories";
 
 /**
  * Unit tests for CategoryService
  *
  * Demonstrates how dependency injection enables easy testing with mocks.
  */
-describe('CategoryService', () => {
+describe("CategoryService", () => {
   let mockRepository: Partial<CategoryRepository>;
   let categoryService: CategoryService;
 
@@ -27,15 +27,15 @@ describe('CategoryService', () => {
     categoryService = new CategoryService(mockRepository as CategoryRepository);
   });
 
-  describe('getAllCategories', () => {
-    it('should return all categories from repository', async () => {
+  describe("getAllCategories", () => {
+    it("should return all categories from repository", async () => {
       const mockCategories: Category[] = [
         {
           id: 1,
-          name: 'Groceries',
-          slug: 'groceries',
+          name: "Groceries",
+          slug: "groceries",
           parentId: null,
-          categoryType: 'expense',
+          categoryType: "expense",
           categoryIcon: null,
           categoryColor: null,
           isActive: true,
@@ -50,8 +50,8 @@ describe('CategoryService', () => {
           spendingPriority: null,
           incomeReliability: null,
           notes: null,
-          createdAt: '2024-01-01',
-          updatedAt: '2024-01-01',
+          createdAt: "2024-01-01",
+          updatedAt: "2024-01-01",
           deletedAt: null,
         },
       ];
@@ -72,27 +72,25 @@ describe('CategoryService', () => {
       expect(result).toEqual(mockCategories);
     });
 
-    it('should handle repository errors gracefully', async () => {
+    it("should handle repository errors gracefully", async () => {
       // Setup mock to throw an error
-      vi.mocked(mockRepository.findAll!).mockRejectedValue(
-        new Error('Database connection failed')
-      );
+      vi.mocked(mockRepository.findAll!).mockRejectedValue(new Error("Database connection failed"));
 
       // Verify the error is propagated
       await expect(categoryService.getAllCategories()).rejects.toThrow(
-        'Database connection failed'
+        "Database connection failed"
       );
     });
   });
 
-  describe('getCategoryById', () => {
-    it('should return category when found', async () => {
+  describe("getCategoryById", () => {
+    it("should return category when found", async () => {
       const mockCategory: Category = {
         id: 1,
-        name: 'Groceries',
-        slug: 'groceries',
+        name: "Groceries",
+        slug: "groceries",
         parentId: null,
-        categoryType: 'expense',
+        categoryType: "expense",
         categoryIcon: null,
         categoryColor: null,
         isActive: true,
@@ -107,8 +105,8 @@ describe('CategoryService', () => {
         spendingPriority: null,
         incomeReliability: null,
         notes: null,
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-01',
+        createdAt: "2024-01-01",
+        updatedAt: "2024-01-01",
         deletedAt: null,
       };
 
@@ -120,26 +118,26 @@ describe('CategoryService', () => {
       expect(result).toEqual(mockCategory);
     });
 
-    it('should throw NotFoundError when category does not exist', async () => {
+    it("should throw NotFoundError when category does not exist", async () => {
       vi.mocked(mockRepository.findById!).mockResolvedValue(null);
 
-      await expect(categoryService.getCategoryById(999)).rejects.toThrow('Category not found');
+      await expect(categoryService.getCategoryById(999)).rejects.toThrow("Category not found");
     });
   });
 
-  describe('createCategory', () => {
-    it('should create category with valid data', async () => {
+  describe("createCategory", () => {
+    it("should create category with valid data", async () => {
       const createData = {
-        name: 'New Category',
-        notes: 'Test category',
+        name: "New Category",
+        notes: "Test category",
       };
 
       const mockCreatedCategory: Category = {
         id: 1,
-        name: 'New Category',
-        slug: 'new-category',
+        name: "New Category",
+        slug: "new-category",
         parentId: null,
-        categoryType: 'expense',
+        categoryType: "expense",
         categoryIcon: null,
         categoryColor: null,
         isActive: true,
@@ -153,9 +151,9 @@ describe('CategoryService', () => {
         expectedMonthlyMax: null,
         spendingPriority: null,
         incomeReliability: null,
-        notes: 'Test category',
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-01',
+        notes: "Test category",
+        createdAt: "2024-01-01",
+        updatedAt: "2024-01-01",
         deletedAt: null,
       };
 
@@ -169,30 +167,30 @@ describe('CategoryService', () => {
       expect(result).toEqual(mockCreatedCategory);
     });
 
-    it('should throw ValidationError for empty name', async () => {
+    it("should throw ValidationError for empty name", async () => {
       const createData = {
-        name: '',
+        name: "",
       };
 
       await expect(categoryService.createCategory(createData)).rejects.toThrow(
-        'Category name is required'
+        "Category name is required"
       );
 
       // Verify repository was never called
       expect(mockRepository.create).not.toHaveBeenCalled();
     });
 
-    it('should throw ConflictError for duplicate slug', async () => {
+    it("should throw ConflictError for duplicate slug", async () => {
       const createData = {
-        name: 'Groceries',
+        name: "Groceries",
       };
 
       const existingCategory: Category = {
         id: 1,
-        name: 'Groceries',
-        slug: 'groceries',
+        name: "Groceries",
+        slug: "groceries",
         parentId: null,
-        categoryType: 'expense',
+        categoryType: "expense",
         categoryIcon: null,
         categoryColor: null,
         isActive: true,
@@ -207,8 +205,8 @@ describe('CategoryService', () => {
         spendingPriority: null,
         incomeReliability: null,
         notes: null,
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-01',
+        createdAt: "2024-01-01",
+        updatedAt: "2024-01-01",
         deletedAt: null,
       };
 

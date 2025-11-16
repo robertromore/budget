@@ -33,5 +33,4 @@ function handleUpdate(description: string | null) {
   displayPlaceholder="—"
   rows={4}
   onUpdate={handleUpdate}
-  buttonVariant="outline"
-/>
+  buttonVariant="outline" />

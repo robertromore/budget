@@ -1,11 +1,11 @@
-import { json, error } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
-import { ReceiptService } from "$lib/server/domains/medical-expenses";
-import { ALLOWED_RECEIPT_MIMES, MAX_RECEIPT_SIZE } from "$lib/schema/expense-receipts";
+import {json, error} from "@sveltejs/kit";
+import type {RequestHandler} from "./$types";
+import {ReceiptService} from "$lib/server/domains/medical-expenses";
+import {ALLOWED_RECEIPT_MIMES, MAX_RECEIPT_SIZE} from "$lib/schema/expense-receipts";
 
 const receiptService = new ReceiptService();
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({request}) => {
   try {
     // Parse multipart form data
     const formData = await request.formData();
@@ -54,7 +54,7 @@ export const POST: RequestHandler = async ({ request }) => {
         success: true,
         receipt,
       },
-      { status: 201 }
+      {status: 201}
     );
   } catch (err: any) {
     console.error("Receipt upload error:", err);

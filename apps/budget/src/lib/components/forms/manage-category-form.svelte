@@ -7,15 +7,23 @@ import * as Form from '$lib/components/ui/form';
 import * as Select from '$lib/components/ui/select';
 import {Input} from '$lib/components/ui/input';
 import {Textarea} from '$lib/components/ui/textarea';
-import {type Category, categoryTypeEnum, type CategoryType, taxCategories, type TaxCategory, spendingPriorityEnum, incomeReliabilityEnum} from '$lib/schema';
+import {
+  type Category,
+  categoryTypeEnum,
+  type CategoryType,
+  taxCategories,
+  type TaxCategory,
+  spendingPriorityEnum,
+  incomeReliabilityEnum,
+} from '$lib/schema';
 import {superformInsertCategorySchema} from '$lib/schema/superforms';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
 import type {EditableEntityItem} from '$lib/types';
 import {superForm} from 'sveltekit-superforms';
 import {zod4Client} from 'sveltekit-superforms/adapters';
-import { IconPicker } from '$lib/components/ui/icon-picker';
-import { ColorPicker } from '$lib/components/ui/color-picker';
-import { Checkbox } from '$lib/components/ui/checkbox';
+import {IconPicker} from '$lib/components/ui/icon-picker';
+import {ColorPicker} from '$lib/components/ui/color-picker';
+import {Checkbox} from '$lib/components/ui/checkbox';
 import Tag from '@lucide/svelte/icons/tag';
 import Palette from '@lucide/svelte/icons/palette';
 import Receipt from '@lucide/svelte/icons/receipt';
@@ -24,7 +32,7 @@ import Settings from '@lucide/svelte/icons/settings';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import {ParentCategorySelector} from '$lib/components/categories';
 import {Slider} from '$lib/components/ui/slider';
-import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import {createTransformAccessors} from '$lib/utils/bind-helpers';
 
 let {
   id,
@@ -43,7 +51,9 @@ const categoriesState = CategoriesState.get();
 const allCategories = $derived(categoriesState.all);
 
 // Generate unique form ID based on category ID or a random value for new categories
-const formId = id ? `category-form-${id}` : `category-form-new-${Math.random().toString(36).slice(2, 9)}`;
+const formId = id
+  ? `category-form-${id}`
+  : `category-form-new-${Math.random().toString(36).slice(2, 9)}`;
 
 const defaults = {
   name: '',
@@ -62,8 +72,8 @@ const defaults = {
   seasonalMonths: [] as string[] | null | undefined,
   expectedMonthlyMin: 0 as number | null | undefined,
   expectedMonthlyMax: 0 as number | null | undefined,
-  spendingPriority: null as typeof spendingPriorityEnum[number] | null | undefined,
-  incomeReliability: null as typeof incomeReliabilityEnum[number] | null | undefined,
+  spendingPriority: null as (typeof spendingPriorityEnum)[number] | null | undefined,
+  incomeReliability: null as (typeof incomeReliabilityEnum)[number] | null | undefined,
   deletedAt: null as string | null | undefined,
 };
 
@@ -105,30 +115,33 @@ const form = superForm(defaults, {
 const {form: formData, enhance, submitting} = form;
 
 // Category type options for the dropdown
-const categoryTypeOptions = categoryTypeEnum.map(type => ({
+const categoryTypeOptions = categoryTypeEnum.map((type) => ({
   value: type,
-  label: type.charAt(0).toUpperCase() + type.slice(1)
+  label: type.charAt(0).toUpperCase() + type.slice(1),
 }));
 
 // Tax category options
-const taxCategoryOptions = taxCategories.map(cat => ({
+const taxCategoryOptions = taxCategories.map((cat) => ({
   value: cat,
-  label: cat.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  label: cat
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' '),
 }));
 
 // Spending priority options
-const spendingPriorityOptions = spendingPriorityEnum.map(priority => ({
+const spendingPriorityOptions = spendingPriorityEnum.map((priority) => ({
   value: priority,
-  label: priority.charAt(0).toUpperCase() + priority.slice(1)
+  label: priority.charAt(0).toUpperCase() + priority.slice(1),
 }));
 
 // Income reliability options
-const incomeReliabilityOptions = incomeReliabilityEnum.map(reliability => ({
+const incomeReliabilityOptions = incomeReliabilityEnum.map((reliability) => ({
   value: reliability,
-  label: reliability.charAt(0).toUpperCase() + reliability.slice(1)
+  label: reliability.charAt(0).toUpperCase() + reliability.slice(1),
 }));
 
-function handleIconChange(event: CustomEvent<{ value: string }>) {
+function handleIconChange(event: CustomEvent<{value: string}>) {
   const iconValue = event.detail.value;
   if (typeof iconValue === 'string') {
     $formData.categoryIcon = iconValue;
@@ -143,22 +156,29 @@ const isSeasonalValue = $derived($formData.isSeasonal ?? false);
 // Category type accessor - transforms between CategoryType and form data
 const categoryTypeAccessors = createTransformAccessors(
   () => $formData.categoryType ?? 'expense',
-  (value: CategoryType) => { $formData.categoryType = value; }
+  (value: CategoryType) => {
+    $formData.categoryType = value;
+  }
 );
 
 // Deductible percentage accessor - transforms between slider value and form data (0 becomes null)
 const deductiblePercentageAccessors = createTransformAccessors(
   () => $formData.deductiblePercentage ?? 0,
-  (value: number) => { $formData.deductiblePercentage = value === 0 ? null : value; }
+  (value: number) => {
+    $formData.deductiblePercentage = value === 0 ? null : value;
+  }
 );
 
 // Seasonal months accessor - transforms between comma-separated string and array
 const seasonalMonthsAccessors = createTransformAccessors(
-  () => Array.isArray($formData.seasonalMonths) ? $formData.seasonalMonths.join(', ') : '',
+  () => (Array.isArray($formData.seasonalMonths) ? $formData.seasonalMonths.join(', ') : ''),
   (value: string) => {
     $formData.seasonalMonths = !value?.trim()
       ? []
-      : value.split(',').map((m: string) => m.trim()).filter(Boolean);
+      : value
+          .split(',')
+          .map((m: string) => m.trim())
+          .filter(Boolean);
   }
 );
 
@@ -180,21 +200,22 @@ const deleteCategory = async (id: number) => {
   <Card.Root>
     <Card.Header class="pb-4">
       <div class="flex items-center gap-2">
-        <Tag class="h-5 w-5 text-primary" />
+        <Tag class="text-primary h-5 w-5" />
         <Card.Title class="text-lg">Category Information</Card.Title>
       </div>
-      <Card.Description>
-        Enter the basic details for your category.
-      </Card.Description>
+      <Card.Description>Enter the basic details for your category.</Card.Description>
     </Card.Header>
     <Card.Content class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- Category Name -->
         <Form.Field {form} name="name">
           <Form.Control>
             {#snippet children({props})}
               <Form.Label>Name</Form.Label>
-              <Input {...props} bind:value={$formData.name} placeholder="e.g., Groceries, Utilities, Entertainment" />
+              <Input
+                {...props}
+                bind:value={$formData.name}
+                placeholder="e.g., Groceries, Utilities, Entertainment" />
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
@@ -207,10 +228,11 @@ const deleteCategory = async (id: number) => {
               <Form.Label>Category Type</Form.Label>
               <Select.Root
                 type="single"
-                bind:value={categoryTypeAccessors.get, categoryTypeAccessors.set}
-              >
+                bind:value={categoryTypeAccessors.get, categoryTypeAccessors.set}>
                 <Select.Trigger {...props}>
-                  {categoryTypeOptions.find(opt => opt.value === ($formData.categoryType ?? 'expense'))?.label ?? "Select category type"}
+                  {categoryTypeOptions.find(
+                    (opt) => opt.value === ($formData.categoryType ?? 'expense')
+                  )?.label ?? 'Select category type'}
                 </Select.Trigger>
                 <Select.Content>
                   {#each categoryTypeOptions as option}
@@ -218,7 +240,10 @@ const deleteCategory = async (id: number) => {
                   {/each}
                 </Select.Content>
               </Select.Root>
-              <input type="hidden" name="categoryType" value={$formData.categoryType ?? 'expense'} />
+              <input
+                type="hidden"
+                name="categoryType"
+                value={$formData.categoryType ?? 'expense'} />
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
@@ -232,8 +257,7 @@ const deleteCategory = async (id: number) => {
             <ParentCategorySelector
               categories={allCategories}
               bind:value={$formData.parentId}
-              currentCategoryId={id ?? undefined}
-            />
+              currentCategoryId={id ?? undefined} />
             <input type="hidden" name="parentId" value={$formData.parentId || ''} />
             <Form.FieldErrors />
           {/snippet}
@@ -245,7 +269,10 @@ const deleteCategory = async (id: number) => {
         <Form.Control>
           {#snippet children({props})}
             <Form.Label>Notes</Form.Label>
-            <Textarea {...props} bind:value={$formData.notes} placeholder="Optional notes about this category" />
+            <Textarea
+              {...props}
+              bind:value={$formData.notes}
+              placeholder="Optional notes about this category" />
             <Form.FieldErrors />
           {/snippet}
         </Form.Control>
@@ -257,7 +284,7 @@ const deleteCategory = async (id: number) => {
   <Card.Root>
     <Card.Header class="pb-4">
       <div class="flex items-center gap-2">
-        <Palette class="h-5 w-5 text-primary" />
+        <Palette class="text-primary h-5 w-5" />
         <Card.Title class="text-lg">Visual Customization</Card.Title>
       </div>
       <Card.Description>
@@ -265,7 +292,7 @@ const deleteCategory = async (id: number) => {
       </Card.Description>
     </Card.Header>
     <Card.Content class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- Category Icon -->
         <Form.Field {form} name="categoryIcon">
           <Form.Control>
@@ -274,8 +301,7 @@ const deleteCategory = async (id: number) => {
               <IconPicker
                 value={$formData.categoryIcon ?? ''}
                 placeholder="Select an icon..."
-                onchange={handleIconChange}
-              />
+                onchange={handleIconChange} />
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
@@ -291,8 +317,7 @@ const deleteCategory = async (id: number) => {
                 placeholder="Choose category color"
                 onchange={(event) => {
                   $formData.categoryColor = event.detail.value;
-                }}
-              />
+                }} />
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
@@ -305,17 +330,15 @@ const deleteCategory = async (id: number) => {
   <Card.Root>
     <Card.Header class="pb-4">
       <div class="flex items-center gap-2">
-        <Settings class="h-5 w-5 text-primary" />
+        <Settings class="text-primary h-5 w-5" />
         <Card.Title class="text-lg">Status & Ordering</Card.Title>
       </div>
-      <Card.Description>
-        Control category visibility and display order in lists.
-      </Card.Description>
+      <Card.Description>Control category visibility and display order in lists.</Card.Description>
     </Card.Header>
     <Card.Content class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- Active Status Checkbox -->
-        <Form.Field {form} name="isActive" class="flex flex-row items-start space-x-3 space-y-0">
+        <Form.Field {form} name="isActive" class="flex flex-row items-start space-y-0 space-x-3">
           <Form.Control>
             {#snippet children({props})}
               <Checkbox
@@ -323,8 +346,7 @@ const deleteCategory = async (id: number) => {
                 checked={isActiveValue}
                 onCheckedChange={(checked) => {
                   $formData.isActive = checked === true;
-                }}
-              />
+                }} />
               <div class="space-y-1 leading-none">
                 <Form.Label>Active Category</Form.Label>
                 <Form.Description>Show this category in lists and dropdowns</Form.Description>
@@ -350,9 +372,9 @@ const deleteCategory = async (id: number) => {
                   const target = event.currentTarget as HTMLInputElement;
                   const value = target.value;
                   $formData.displayOrder = value === '' ? 0 : Number(value);
-                }}
-              />
-              <Form.Description>Lower numbers appear first. Leave empty for automatic ordering.</Form.Description>
+                }} />
+              <Form.Description
+                >Lower numbers appear first. Leave empty for automatic ordering.</Form.Description>
               <Form.FieldErrors />
             {/snippet}
           </Form.Control>
@@ -365,16 +387,17 @@ const deleteCategory = async (id: number) => {
   <Card.Root>
     <Card.Header class="pb-4">
       <div class="flex items-center gap-2">
-        <Receipt class="h-5 w-5 text-primary" />
+        <Receipt class="text-primary h-5 w-5" />
         <Card.Title class="text-lg">Tax Tracking</Card.Title>
       </div>
-      <Card.Description>
-        Track tax-deductible expenses for easier tax preparation.
-      </Card.Description>
+      <Card.Description>Track tax-deductible expenses for easier tax preparation.</Card.Description>
     </Card.Header>
     <Card.Content class="space-y-4">
       <!-- Tax Deductible Checkbox -->
-      <Form.Field {form} name="isTaxDeductible" class="flex flex-row items-start space-x-3 space-y-0">
+      <Form.Field
+        {form}
+        name="isTaxDeductible"
+        class="flex flex-row items-start space-y-0 space-x-3">
         <Form.Control>
           {#snippet children({props})}
             <Checkbox
@@ -382,8 +405,7 @@ const deleteCategory = async (id: number) => {
               checked={isTaxDeductibleValue}
               onCheckedChange={(checked) => {
                 $formData.isTaxDeductible = checked === true;
-              }}
-            />
+              }} />
             <div class="space-y-1 leading-none">
               <Form.Label>Tax Deductible</Form.Label>
               <Form.Description>Mark this category as tax-deductible</Form.Description>
@@ -394,7 +416,7 @@ const deleteCategory = async (id: number) => {
       </Form.Field>
 
       {#if $formData.isTaxDeductible}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <!-- Tax Category -->
           <Form.Field {form} name="taxCategory">
             <Form.Control>
@@ -402,7 +424,11 @@ const deleteCategory = async (id: number) => {
                 <Form.Label>Tax Category</Form.Label>
                 <Select.Root type="single" bind:value={$formData.taxCategory as string}>
                   <Select.Trigger {...props}>
-                    <span>{$formData.taxCategory ? taxCategoryOptions.find(opt => opt.value === $formData.taxCategory)?.label : "Select tax category"}</span>
+                    <span
+                      >{$formData.taxCategory
+                        ? taxCategoryOptions.find((opt) => opt.value === $formData.taxCategory)
+                            ?.label
+                        : 'Select tax category'}</span>
                   </Select.Trigger>
                   <Select.Content>
                     {#each taxCategoryOptions as option}
@@ -427,13 +453,15 @@ const deleteCategory = async (id: number) => {
                   </div>
                   <Slider
                     type="single"
-                    bind:value={deductiblePercentageAccessors.get, deductiblePercentageAccessors.set}
+                    bind:value={
+                      deductiblePercentageAccessors.get, deductiblePercentageAccessors.set
+                    }
                     min={0}
                     max={100}
                     step={1}
-                    class="w-full"
-                  />
-                  <Form.Description class="text-xs">Percentage of expenses that are tax deductible</Form.Description>
+                    class="w-full" />
+                  <Form.Description class="text-xs"
+                    >Percentage of expenses that are tax deductible</Form.Description>
                 </div>
                 <Form.FieldErrors />
               {/snippet}
@@ -446,206 +474,224 @@ const deleteCategory = async (id: number) => {
 
   <!-- Spending Patterns Section (for expenses) -->
   {#if $formData.categoryType === 'expense'}
-  <Card.Root>
-    <Card.Header class="pb-4">
-      <div class="flex items-center gap-2">
-        <TrendingUp class="h-5 w-5 text-primary" />
-        <Card.Title class="text-lg">Spending Patterns</Card.Title>
-      </div>
-      <Card.Description>
-        Set spending priorities and seasonal patterns for better planning.
-      </Card.Description>
-    </Card.Header>
-    <Card.Content class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Spending Priority -->
-        <Form.Field {form} name="spendingPriority">
-          <Form.Control>
-            {#snippet children({props})}
-              <Form.Label>Spending Priority</Form.Label>
-              <Select.Root type="single" bind:value={$formData.spendingPriority as string}>
-                <Select.Trigger {...props}>
-                  <span>{$formData.spendingPriority ? spendingPriorityOptions.find(opt => opt.value === $formData.spendingPriority)?.label : "Select priority"}</span>
-                </Select.Trigger>
-                <Select.Content>
-                  {#each spendingPriorityOptions as option}
-                    <Select.Item value={option.value}>{option.label}</Select.Item>
-                  {/each}
-                </Select.Content>
-              </Select.Root>
-              <input type="hidden" name="spendingPriority" value={$formData.spendingPriority || ''} />
-              <Form.FieldErrors />
-            {/snippet}
-          </Form.Control>
-        </Form.Field>
+    <Card.Root>
+      <Card.Header class="pb-4">
+        <div class="flex items-center gap-2">
+          <TrendingUp class="text-primary h-5 w-5" />
+          <Card.Title class="text-lg">Spending Patterns</Card.Title>
+        </div>
+        <Card.Description>
+          Set spending priorities and seasonal patterns for better planning.
+        </Card.Description>
+      </Card.Header>
+      <Card.Content class="space-y-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- Spending Priority -->
+          <Form.Field {form} name="spendingPriority">
+            <Form.Control>
+              {#snippet children({props})}
+                <Form.Label>Spending Priority</Form.Label>
+                <Select.Root type="single" bind:value={$formData.spendingPriority as string}>
+                  <Select.Trigger {...props}>
+                    <span
+                      >{$formData.spendingPriority
+                        ? spendingPriorityOptions.find(
+                            (opt) => opt.value === $formData.spendingPriority
+                          )?.label
+                        : 'Select priority'}</span>
+                  </Select.Trigger>
+                  <Select.Content>
+                    {#each spendingPriorityOptions as option}
+                      <Select.Item value={option.value}>{option.label}</Select.Item>
+                    {/each}
+                  </Select.Content>
+                </Select.Root>
+                <input
+                  type="hidden"
+                  name="spendingPriority"
+                  value={$formData.spendingPriority || ''} />
+                <Form.FieldErrors />
+              {/snippet}
+            </Form.Control>
+          </Form.Field>
 
-        <!-- Seasonal Toggle -->
-        <Form.Field {form} name="isSeasonal" class="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-          <Form.Control>
-            {#snippet children({props})}
-              <Checkbox
-                {...props}
-                checked={isSeasonalValue}
-                onCheckedChange={(checked) => {
-                  $formData.isSeasonal = checked === true;
-                }}
-              />
-              <div class="space-y-1 leading-none">
-                <Form.Label>Seasonal Category</Form.Label>
-                <Form.Description class="text-xs">This category has seasonal spending patterns</Form.Description>
-              </div>
-              <Form.FieldErrors />
-            {/snippet}
-          </Form.Control>
-        </Form.Field>
-      </div>
+          <!-- Seasonal Toggle -->
+          <Form.Field
+            {form}
+            name="isSeasonal"
+            class="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4">
+            <Form.Control>
+              {#snippet children({props})}
+                <Checkbox
+                  {...props}
+                  checked={isSeasonalValue}
+                  onCheckedChange={(checked) => {
+                    $formData.isSeasonal = checked === true;
+                  }} />
+                <div class="space-y-1 leading-none">
+                  <Form.Label>Seasonal Category</Form.Label>
+                  <Form.Description class="text-xs"
+                    >This category has seasonal spending patterns</Form.Description>
+                </div>
+                <Form.FieldErrors />
+              {/snippet}
+            </Form.Control>
+          </Form.Field>
+        </div>
 
-      {#if $formData.isSeasonal}
-        <!-- Seasonal Months -->
-        <Form.Field {form} name="seasonalMonths">
-          <Form.Control>
-            {#snippet children({props})}
-              <Form.Label>Seasonal Months</Form.Label>
-              <Input {...props} bind:value={seasonalMonthsAccessors.get, seasonalMonthsAccessors.set} placeholder="e.g., November, December" />
-              <Form.Description class="text-xs">Months when spending is higher (comma-separated)</Form.Description>
-              <Form.FieldErrors />
-            {/snippet}
-          </Form.Control>
-        </Form.Field>
-      {/if}
+        {#if $formData.isSeasonal}
+          <!-- Seasonal Months -->
+          <Form.Field {form} name="seasonalMonths">
+            <Form.Control>
+              {#snippet children({props})}
+                <Form.Label>Seasonal Months</Form.Label>
+                <Input
+                  {...props}
+                  bind:value={seasonalMonthsAccessors.get, seasonalMonthsAccessors.set}
+                  placeholder="e.g., November, December" />
+                <Form.Description class="text-xs"
+                  >Months when spending is higher (comma-separated)</Form.Description>
+                <Form.FieldErrors />
+              {/snippet}
+            </Form.Control>
+          </Form.Field>
+        {/if}
 
-      <!-- Expected Monthly Range -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Form.Field {form} name="expectedMonthlyMin">
-          <Form.Control>
-            {#snippet children({props})}
-              <Form.Label>Expected Monthly Min</Form.Label>
-              <NumericInput
-                {...props}
-                bind:value={$formData.expectedMonthlyMin as number}
-              />
-              <Form.FieldErrors />
-            {/snippet}
-          </Form.Control>
-        </Form.Field>
+        <!-- Expected Monthly Range -->
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Form.Field {form} name="expectedMonthlyMin">
+            <Form.Control>
+              {#snippet children({props})}
+                <Form.Label>Expected Monthly Min</Form.Label>
+                <NumericInput {...props} bind:value={$formData.expectedMonthlyMin as number} />
+                <Form.FieldErrors />
+              {/snippet}
+            </Form.Control>
+          </Form.Field>
 
-        <Form.Field {form} name="expectedMonthlyMax">
-          <Form.Control>
-            {#snippet children({props})}
-              <Form.Label>Expected Monthly Max</Form.Label>
-              <NumericInput
-                {...props}
-                bind:value={$formData.expectedMonthlyMax as number}
-              />
-              <Form.FieldErrors />
-            {/snippet}
-          </Form.Control>
-        </Form.Field>
-      </div>
-    </Card.Content>
-  </Card.Root>
+          <Form.Field {form} name="expectedMonthlyMax">
+            <Form.Control>
+              {#snippet children({props})}
+                <Form.Label>Expected Monthly Max</Form.Label>
+                <NumericInput {...props} bind:value={$formData.expectedMonthlyMax as number} />
+                <Form.FieldErrors />
+              {/snippet}
+            </Form.Control>
+          </Form.Field>
+        </div>
+      </Card.Content>
+    </Card.Root>
   {/if}
 
   <!-- Income Patterns Section (for income) -->
   {#if $formData.categoryType === 'income'}
-  <Card.Root>
-    <Card.Header class="pb-4">
-      <div class="flex items-center gap-2">
-        <TrendingUp class="h-5 w-5 text-primary" />
-        <Card.Title class="text-lg">Income Patterns</Card.Title>
-      </div>
-      <Card.Description>
-        Track income reliability and seasonal patterns for better planning.
-      </Card.Description>
-    </Card.Header>
-    <Card.Content class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Income Reliability -->
-        <Form.Field {form} name="incomeReliability">
-          <Form.Control>
-            {#snippet children({props})}
-              <Form.Label>Income Reliability</Form.Label>
-              <Select.Root type="single" bind:value={$formData.incomeReliability as string}>
-                <Select.Trigger {...props}>
-                  <span>{$formData.incomeReliability ? incomeReliabilityOptions.find(opt => opt.value === $formData.incomeReliability)?.label : "Select reliability"}</span>
-                </Select.Trigger>
-                <Select.Content>
-                  {#each incomeReliabilityOptions as option}
-                    <Select.Item value={option.value}>{option.label}</Select.Item>
-                  {/each}
-                </Select.Content>
-              </Select.Root>
-              <input type="hidden" name="incomeReliability" value={$formData.incomeReliability || ''} />
-              <Form.FieldErrors />
-            {/snippet}
-          </Form.Control>
-        </Form.Field>
+    <Card.Root>
+      <Card.Header class="pb-4">
+        <div class="flex items-center gap-2">
+          <TrendingUp class="text-primary h-5 w-5" />
+          <Card.Title class="text-lg">Income Patterns</Card.Title>
+        </div>
+        <Card.Description>
+          Track income reliability and seasonal patterns for better planning.
+        </Card.Description>
+      </Card.Header>
+      <Card.Content class="space-y-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- Income Reliability -->
+          <Form.Field {form} name="incomeReliability">
+            <Form.Control>
+              {#snippet children({props})}
+                <Form.Label>Income Reliability</Form.Label>
+                <Select.Root type="single" bind:value={$formData.incomeReliability as string}>
+                  <Select.Trigger {...props}>
+                    <span
+                      >{$formData.incomeReliability
+                        ? incomeReliabilityOptions.find(
+                            (opt) => opt.value === $formData.incomeReliability
+                          )?.label
+                        : 'Select reliability'}</span>
+                  </Select.Trigger>
+                  <Select.Content>
+                    {#each incomeReliabilityOptions as option}
+                      <Select.Item value={option.value}>{option.label}</Select.Item>
+                    {/each}
+                  </Select.Content>
+                </Select.Root>
+                <input
+                  type="hidden"
+                  name="incomeReliability"
+                  value={$formData.incomeReliability || ''} />
+                <Form.FieldErrors />
+              {/snippet}
+            </Form.Control>
+          </Form.Field>
 
-        <!-- Seasonal Toggle -->
-        <Form.Field {form} name="isSeasonal" class="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-          <Form.Control>
-            {#snippet children({props})}
-              <Checkbox
-                {...props}
-                checked={isSeasonalValue}
-                onCheckedChange={(checked) => {
-                  $formData.isSeasonal = checked === true;
-                }}
-              />
-              <div class="space-y-1 leading-none">
-                <Form.Label>Seasonal Income</Form.Label>
-                <Form.Description class="text-xs">This income has seasonal patterns</Form.Description>
-              </div>
-              <Form.FieldErrors />
-            {/snippet}
-          </Form.Control>
-        </Form.Field>
-      </div>
+          <!-- Seasonal Toggle -->
+          <Form.Field
+            {form}
+            name="isSeasonal"
+            class="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4">
+            <Form.Control>
+              {#snippet children({props})}
+                <Checkbox
+                  {...props}
+                  checked={isSeasonalValue}
+                  onCheckedChange={(checked) => {
+                    $formData.isSeasonal = checked === true;
+                  }} />
+                <div class="space-y-1 leading-none">
+                  <Form.Label>Seasonal Income</Form.Label>
+                  <Form.Description class="text-xs"
+                    >This income has seasonal patterns</Form.Description>
+                </div>
+                <Form.FieldErrors />
+              {/snippet}
+            </Form.Control>
+          </Form.Field>
+        </div>
 
-      {#if $formData.isSeasonal}
-        <!-- Seasonal Months -->
-        <Form.Field {form} name="seasonalMonths">
-          <Form.Control>
-            {#snippet children({props})}
-              <Form.Label>Seasonal Months</Form.Label>
-              <Input {...props} bind:value={seasonalMonthsAccessors.get, seasonalMonthsAccessors.set} placeholder="e.g., January (tax refund), December (bonus)" />
-              <Form.Description class="text-xs">Months when this income is received (comma-separated)</Form.Description>
-              <Form.FieldErrors />
-            {/snippet}
-          </Form.Control>
-        </Form.Field>
-      {/if}
+        {#if $formData.isSeasonal}
+          <!-- Seasonal Months -->
+          <Form.Field {form} name="seasonalMonths">
+            <Form.Control>
+              {#snippet children({props})}
+                <Form.Label>Seasonal Months</Form.Label>
+                <Input
+                  {...props}
+                  bind:value={seasonalMonthsAccessors.get, seasonalMonthsAccessors.set}
+                  placeholder="e.g., January (tax refund), December (bonus)" />
+                <Form.Description class="text-xs"
+                  >Months when this income is received (comma-separated)</Form.Description>
+                <Form.FieldErrors />
+              {/snippet}
+            </Form.Control>
+          </Form.Field>
+        {/if}
 
-      <!-- Expected Monthly Range -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Form.Field {form} name="expectedMonthlyMin">
-          <Form.Control>
-            {#snippet children({props})}
-              <Form.Label>Expected Monthly Min</Form.Label>
-              <NumericInput
-                {...props}
-                bind:value={$formData.expectedMonthlyMin as number}
-              />
-              <Form.FieldErrors />
-            {/snippet}
-          </Form.Control>
-        </Form.Field>
+        <!-- Expected Monthly Range -->
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Form.Field {form} name="expectedMonthlyMin">
+            <Form.Control>
+              {#snippet children({props})}
+                <Form.Label>Expected Monthly Min</Form.Label>
+                <NumericInput {...props} bind:value={$formData.expectedMonthlyMin as number} />
+                <Form.FieldErrors />
+              {/snippet}
+            </Form.Control>
+          </Form.Field>
 
-        <Form.Field {form} name="expectedMonthlyMax">
-          <Form.Control>
-            {#snippet children({props})}
-              <Form.Label>Expected Monthly Max</Form.Label>
-              <NumericInput
-                {...props}
-                bind:value={$formData.expectedMonthlyMax as number}
-              />
-              <Form.FieldErrors />
-            {/snippet}
-          </Form.Control>
-        </Form.Field>
-      </div>
-    </Card.Content>
-  </Card.Root>
+          <Form.Field {form} name="expectedMonthlyMax">
+            <Form.Control>
+              {#snippet children({props})}
+                <Form.Label>Expected Monthly Max</Form.Label>
+                <NumericInput {...props} bind:value={$formData.expectedMonthlyMax as number} />
+                <Form.FieldErrors />
+              {/snippet}
+            </Form.Control>
+          </Form.Field>
+        </div>
+      </Card.Content>
+    </Card.Root>
   {/if}
 
   <div class="flex gap-2">

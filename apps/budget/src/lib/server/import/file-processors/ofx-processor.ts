@@ -5,15 +5,10 @@
  * for bank statement downloads.
  */
 
-import { XMLParser } from 'fast-xml-parser';
-import type { FileProcessor, ImportRow, NormalizedTransaction } from '$lib/types/import';
-import { FileValidationError, ParseError } from '../errors';
-import {
-  parseDate,
-  parseAmount,
-  sanitizeText,
-  validateFileType,
-} from '../utils';
+import {XMLParser} from "fast-xml-parser";
+import type {FileProcessor, ImportRow, NormalizedTransaction} from "$lib/types/import";
+import {FileValidationError, ParseError} from "../errors";
+import {parseDate, parseAmount, sanitizeText, validateFileType} from "../utils";
 
 interface OFXTransaction {
   TRNTYPE?: string;
@@ -27,18 +22,18 @@ interface OFXTransaction {
 
 export class OFXProcessor implements FileProcessor {
   private readonly maxFileSize = 5 * 1024 * 1024; // 5MB
-  private readonly supportedFormats = ['.ofx', '.qfx', '.qbo']; // .qbo files can contain OFX data
+  private readonly supportedFormats = [".ofx", ".qfx", ".qbo"]; // .qbo files can contain OFX data
 
   getSupportedFormats(): string[] {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): { valid: boolean; error?: string } {
+  validateFile(file: File): {valid: boolean; error?: string} {
     // Check file type
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
         valid: false,
-        error: `Invalid file type. Supported formats: ${this.supportedFormats.join(', ')}`,
+        error: `Invalid file type. Supported formats: ${this.supportedFormats.join(", ")}`,
       };
     }
 
@@ -54,18 +49,18 @@ export class OFXProcessor implements FileProcessor {
     if (file.size === 0) {
       return {
         valid: false,
-        error: 'File is empty',
+        error: "File is empty",
       };
     }
 
-    return { valid: true };
+    return {valid: true};
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {
     // Validate file
     const validation = this.validateFile(file);
     if (!validation.valid) {
-      throw new FileValidationError(validation.error || 'File validation failed', 'ofx');
+      throw new FileValidationError(validation.error || "File validation failed", "ofx");
     }
 
     try {
@@ -73,19 +68,17 @@ export class OFXProcessor implements FileProcessor {
       let text = await file.text();
 
       if (!text || text.trim().length === 0) {
-        throw new ParseError('File is empty or contains no data');
+        throw new ParseError("File is empty or contains no data");
       }
-
 
       // Convert SGML to XML if needed
       text = this.convertSGMLToXML(text);
-
 
       // Parse OFX/XML content
       const transactions = this.parseOFXContent(text);
 
       if (transactions.length === 0) {
-        throw new ParseError('No transactions found in OFX file');
+        throw new ParseError("No transactions found in OFX file");
       }
 
       // Transform to ImportRows
@@ -97,20 +90,22 @@ export class OFXProcessor implements FileProcessor {
             rowIndex: index,
             rawData: transaction,
             normalizedData,
-            validationStatus: 'pending' as const,
+            validationStatus: "pending" as const,
           };
         } catch (error) {
           return {
             rowIndex: index,
             rawData: transaction,
             normalizedData: {},
-            validationStatus: 'invalid' as const,
-            validationErrors: [{
-              field: 'general',
-              message: error instanceof Error ? error.message : 'Failed to parse transaction',
-              value: transaction,
-              severity: 'error' as const,
-            }],
+            validationStatus: "invalid" as const,
+            validationErrors: [
+              {
+                field: "general",
+                message: error instanceof Error ? error.message : "Failed to parse transaction",
+                value: transaction,
+                severity: "error" as const,
+              },
+            ],
           };
         }
       });
@@ -120,14 +115,16 @@ export class OFXProcessor implements FileProcessor {
       if (error instanceof ParseError || error instanceof FileValidationError) {
         throw error;
       }
-      throw new ParseError(`Failed to parse OFX file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new ParseError(
+        `Failed to parse OFX file: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
   private convertSGMLToXML(content: string): string {
     // OFX 1.x uses SGML format, OFX 2.x uses XML
     // If it's already XML, return as is
-    if (content.trim().startsWith('<?xml')) {
+    if (content.trim().startsWith("<?xml")) {
       return content;
     }
 
@@ -135,14 +132,14 @@ export class OFXProcessor implements FileProcessor {
     let xml = content;
 
     // Remove headers before the first <OFX> tag
-    const ofxStart = xml.indexOf('<OFX>');
+    const ofxStart = xml.indexOf("<OFX>");
     if (ofxStart !== -1) {
       xml = xml.substring(ofxStart);
     }
 
     // SGML doesn't have closing tags - we need to add them
     // Split into lines and process each tag
-    const lines = xml.split('\n');
+    const lines = xml.split("\n");
     const result: string[] = [];
     const tagStack: string[] = [];
 
@@ -188,7 +185,7 @@ export class OFXProcessor implements FileProcessor {
       }
 
       // Value without tag (shouldn't happen in well-formed OFX)
-      if (trimmedLine && !trimmedLine.startsWith('<')) {
+      if (trimmedLine && !trimmedLine.startsWith("<")) {
         result.push(trimmedLine);
       }
     }
@@ -198,7 +195,7 @@ export class OFXProcessor implements FileProcessor {
       result.push(`</${tagStack.pop()}>`);
     }
 
-    return result.join('\n');
+    return result.join("\n");
   }
 
   private parseOFXContent(content: string): OFXTransaction[] {
@@ -217,48 +214,61 @@ export class OFXProcessor implements FileProcessor {
       // Navigate OFX structure to find transactions
       const ofx = parsed.OFX || parsed.ofx;
       if (!ofx) {
-        console.error('[OFXProcessor] No OFX root found. Top-level keys:', Object.keys(parsed));
-        throw new ParseError('Invalid OFX file structure - no OFX root element');
+        console.error("[OFXProcessor] No OFX root found. Top-level keys:", Object.keys(parsed));
+        throw new ParseError("Invalid OFX file structure - no OFX root element");
       }
-
 
       // Try different message container variations
       // Note: CREDITCARDMSGSRSV1 and BANKMSGSRSV1 are separate siblings in the OFX element
-      const bankMessages = ofx.BANKMSGSRSV1 || ofx.CREDITCARDMSGSRSV1 || ofx.bankmsgsrsv1 || ofx.creditcardmsgsrsv1;
+      const bankMessages =
+        ofx.BANKMSGSRSV1 || ofx.CREDITCARDMSGSRSV1 || ofx.bankmsgsrsv1 || ofx.creditcardmsgsrsv1;
       if (!bankMessages) {
-        console.error('[OFXProcessor] No bank messages found. Available keys:', Object.keys(ofx));
-        throw new ParseError('No bank messages found in OFX file');
+        console.error("[OFXProcessor] No bank messages found. Available keys:", Object.keys(ofx));
+        throw new ParseError("No bank messages found in OFX file");
       }
-
 
       // Try different statement response variations
-      const stmtResponse = bankMessages.STMTTRNRS || bankMessages.CCSTMTTRNRS || bankMessages.stmttrnrs || bankMessages.ccstmttrnrs;
+      const stmtResponse =
+        bankMessages.STMTTRNRS ||
+        bankMessages.CCSTMTTRNRS ||
+        bankMessages.stmttrnrs ||
+        bankMessages.ccstmttrnrs;
       if (!stmtResponse) {
-        console.error('[OFXProcessor] No statement response found. Available keys:', Object.keys(bankMessages));
-        throw new ParseError('No statement response found');
+        console.error(
+          "[OFXProcessor] No statement response found. Available keys:",
+          Object.keys(bankMessages)
+        );
+        throw new ParseError("No statement response found");
       }
-
 
       // Try different statement variations
-      const statement = stmtResponse.STMTRS || stmtResponse.CCSTMTRS || stmtResponse.stmtrs || stmtResponse.ccstmtrs;
+      const statement =
+        stmtResponse.STMTRS ||
+        stmtResponse.CCSTMTRS ||
+        stmtResponse.stmtrs ||
+        stmtResponse.ccstmtrs;
       if (!statement) {
-        console.error('[OFXProcessor] No statement found. Available keys:', Object.keys(stmtResponse));
-        throw new ParseError('No statement found');
+        console.error(
+          "[OFXProcessor] No statement found. Available keys:",
+          Object.keys(stmtResponse)
+        );
+        throw new ParseError("No statement found");
       }
-
 
       // Try different transaction list variations
       const tranList = statement.BANKTRANLIST || statement.banktranlist;
       if (!tranList) {
-        console.error('[OFXProcessor] No transaction list found. Available keys:', Object.keys(statement));
-        throw new ParseError('No transaction list found');
+        console.error(
+          "[OFXProcessor] No transaction list found. Available keys:",
+          Object.keys(statement)
+        );
+        throw new ParseError("No transaction list found");
       }
-
 
       // Try different transaction variations
       let transactions = tranList.STMTTRN || tranList.stmttrn;
       if (!transactions) {
-        console.warn('[OFXProcessor] No STMTTRN found. Available keys:', Object.keys(tranList));
+        console.warn("[OFXProcessor] No STMTTRN found. Available keys:", Object.keys(tranList));
         return [];
       }
 
@@ -269,8 +279,10 @@ export class OFXProcessor implements FileProcessor {
 
       return transactions;
     } catch (error) {
-      console.error('[OFXProcessor] Parse error:', error);
-      throw new ParseError(`Failed to parse OFX XML: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("[OFXProcessor] Parse error:", error);
+      throw new ParseError(
+        `Failed to parse OFX XML: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
@@ -294,9 +306,10 @@ export class OFXProcessor implements FileProcessor {
     // Amount
     if (transaction.TRNAMT !== undefined && transaction.TRNAMT !== null) {
       try {
-        normalized.amount = typeof transaction.TRNAMT === 'number'
-          ? transaction.TRNAMT
-          : parseFloat(String(transaction.TRNAMT));
+        normalized.amount =
+          typeof transaction.TRNAMT === "number"
+            ? transaction.TRNAMT
+            : parseFloat(String(transaction.TRNAMT));
       } catch (error) {
         normalized.amount = transaction.TRNAMT;
       }
@@ -318,7 +331,7 @@ export class OFXProcessor implements FileProcessor {
     }
 
     // OFX transactions are typically cleared by default
-    normalized.status = 'cleared';
+    normalized.status = "cleared";
 
     return normalized;
   }

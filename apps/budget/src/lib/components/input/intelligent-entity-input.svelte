@@ -1,15 +1,15 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
-import { cn } from '$lib/utils';
+import {Button} from '$lib/components/ui/button';
+import {cn} from '$lib/utils';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
-import type { EditableEntityItem } from '$lib/types';
+import type {EditableEntityItem} from '$lib/types';
 import SuggestionBadge from '$lib/components/ui/suggestion-badge.svelte';
 import Plus from '@lucide/svelte/icons/plus';
 import Pencil from '@lucide/svelte/icons/pencil';
 import MoveLeft from '@lucide/svelte/icons/move-left';
 import Check from '@lucide/svelte/icons/check';
-import type { Component as ComponentType } from 'svelte';
+import type {Component as ComponentType} from 'svelte';
 import Fuse from 'fuse.js';
 
 interface IntelligenceSuggestion {
@@ -111,7 +111,7 @@ const dismissSuggestion = () => {
 };
 
 let searchValue = $state('');
-const fused = $derived(new Fuse(entities, { keys: ['name'], includeScore: true }));
+const fused = $derived(new Fuse(entities, {keys: ['name'], includeScore: true}));
 
 // Use $derived instead of $effect for computed filtering
 const visibleEntities = $derived.by(() => {
@@ -128,10 +128,7 @@ const isSuggestionApplied = $derived.by(() => {
 
 // Show suggestion if it exists, hasn't been dismissed, and current value doesn't match suggestion
 const shouldShowSuggestion = $derived.by(() => {
-  return suggestion &&
-         showSuggestionBadge &&
-         !suggestionDismissed &&
-         !isSuggestionApplied;
+  return suggestion && showSuggestionBadge && !suggestionDismissed && !isSuggestionApplied;
 });
 
 // Scroll selected item into view when popover opens
@@ -148,9 +145,10 @@ $effect(() => {
 
           if (wrapper) {
             // Look for the actual item element
-            const item = wrapper.querySelector('[role="option"]') as HTMLElement ||
-                        wrapper.querySelector('[cmdk-item]') as HTMLElement ||
-                        wrapper.firstElementChild as HTMLElement;
+            const item =
+              (wrapper.querySelector('[role="option"]') as HTMLElement) ||
+              (wrapper.querySelector('[cmdk-item]') as HTMLElement) ||
+              (wrapper.firstElementChild as HTMLElement);
 
             if (item) {
               // Get the scrollable container (Command.List)
@@ -163,13 +161,13 @@ $effect(() => {
                 const containerHeight = scrollContainer.clientHeight;
 
                 // Center the item in the container
-                const scrollTo = itemTop - (containerHeight / 2) + (itemHeight / 2);
+                const scrollTo = itemTop - containerHeight / 2 + itemHeight / 2;
                 scrollContainer.scrollTop = scrollTo;
               } else {
                 // Fallback to scrollIntoView if we can't find the container
                 item.scrollIntoView({
                   block: 'center',
-                  behavior: 'instant'
+                  behavior: 'instant',
                 });
               }
             }
@@ -188,12 +186,11 @@ $effect(() => {
       <SuggestionBadge
         type={suggestion?.type || 'info'}
         variant="accent"
-        {...(suggestion?.confidence !== undefined && { confidence: suggestion.confidence })}
+        {...suggestion?.confidence !== undefined && {confidence: suggestion.confidence}}
         reason={suggestion?.reason || 'Suggested value'}
         dismissible={true}
         onDismiss={dismissSuggestion}
-        onApply={applySuggestion}
-      >
+        onApply={applySuggestion}>
         Suggested: {suggestion?.suggestedValue?.name || 'Auto-fill'}
       </SuggestionBadge>
     </div>
@@ -225,20 +222,16 @@ $effect(() => {
 
             <!-- Applied indicator -->
             {#if isSuggestionApplied}
-              <SuggestionBadge
-                type="smart"
-                variant="success"
-                applied={true}
-                class="ml-auto"
-              />
+              <SuggestionBadge type="smart" variant="success" applied={true} class="ml-auto" />
             {/if}
           </Button>
         {/snippet}
       </Popover.Trigger>
-      <Popover.Content class="p-0 overflow-hidden" align="start">
+      <Popover.Content class="overflow-hidden p-0" align="start">
         <!-- Sliding Panel Container -->
-        <div class="grid grid-cols-2 transition-transform duration-300 ease-in-out" style="width: 200%; transform: translateX({manage ? '-50%' : '0%'})">
-
+        <div
+          class="grid grid-cols-2 transition-transform duration-300 ease-in-out"
+          style="width: 200%; transform: translateX({manage ? '-50%' : '0%'})">
           <!-- Panel 1: Entity List -->
           <div class="w-full min-w-0">
             <Command.Root shouldFilter={false}>
@@ -247,7 +240,7 @@ $effect(() => {
                 {#if management?.enable}
                   <Button
                     size="icon"
-                    class="rounded-none border-l-0 border-b shadow-none"
+                    class="rounded-none border-b border-l-0 shadow-none"
                     onclick={addNew}>
                     <Plus />
                   </Button>
@@ -256,18 +249,19 @@ $effect(() => {
 
               <!-- Suggestion in dropdown -->
               {#if shouldShowSuggestion && suggestion?.suggestedValue}
-                <div class="border-b bg-accent/5 p-2">
+                <div class="bg-accent/5 border-b p-2">
                   <div class="flex items-center justify-between">
-                    <span class="text-xs text-muted-foreground">Suggested:</span>
+                    <span class="text-muted-foreground text-xs">Suggested:</span>
                     <SuggestionBadge
                       type={suggestion?.type || 'info'}
-                      {...(suggestion?.confidence !== undefined && { confidence: suggestion.confidence })}
-                      class="text-xs"
-                    />
+                      {...suggestion?.confidence !== undefined && {
+                        confidence: suggestion.confidence,
+                      }}
+                      class="text-xs" />
                   </div>
                   <Command.Item
                     value={suggestion.suggestedValue.id + ''}
-                    class="mt-1 bg-accent/10 border border-accent/20"
+                    class="bg-accent/10 border-accent/20 mt-1 border"
                     onSelect={() => {
                       applySuggestion();
                       open = false;
@@ -276,7 +270,7 @@ $effect(() => {
                     <div class="flex-grow font-medium">
                       {suggestion.suggestedValue.name}
                     </div>
-                    <span class="text-xs text-muted-foreground">Suggested</span>
+                    <span class="text-muted-foreground text-xs">Suggested</span>
                   </Command.Item>
                 </div>
               {/if}
@@ -290,7 +284,7 @@ $effect(() => {
                       data-value={entity.id}
                       class={cn(
                         value?.id == entity.id && 'bg-muted',
-                        suggestion?.suggestedValue?.id === entity.id && 'ring-1 ring-accent/30'
+                        suggestion?.suggestedValue?.id === entity.id && 'ring-accent/30 ring-1'
                       )}
                       onSelect={() => {
                         value = entity;
@@ -304,10 +298,7 @@ $effect(() => {
                         {entity.name}
                       </div>
                       {#if suggestion?.suggestedValue?.id === entity.id}
-                        <SuggestionBadge
-                          type="smart"
-                          class="ml-2 text-xs"
-                        />
+                        <SuggestionBadge type="smart" class="ml-2 text-xs" />
                       {/if}
                       {#if management?.enable}
                         <Button
@@ -331,7 +322,7 @@ $effect(() => {
 
           <!-- Panel 2: Management Form -->
           <div class="w-full min-w-0 p-4">
-            <div class="flex items-center gap-2 mb-4">
+            <div class="mb-4 flex items-center gap-2">
               <Button
                 variant="outline"
                 size="icon"
@@ -353,7 +344,6 @@ $effect(() => {
               {/if}
             {/if}
           </div>
-
         </div>
       </Popover.Content>
     </Popover.Root>

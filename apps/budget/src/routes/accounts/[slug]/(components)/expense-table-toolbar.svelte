@@ -92,7 +92,7 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
 
   <!-- Filter Components and Display Options Row -->
   <div class="flex items-center justify-between">
-    <div class="flex flex-1 items-center flex-wrap gap-2">
+    <div class="flex flex-1 flex-wrap items-center gap-2">
       {#if filterComponents.length > 0}
         <FilterInput availableFilters={filterComponents} />
       {/if}

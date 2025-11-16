@@ -1,4 +1,4 @@
-import {fail, redirect} from '@sveltejs/kit';
+import {fail, redirect} from "@sveltejs/kit";
 import {removePayeeSchema} from "$lib/schema";
 import {superformInsertPayeeSchema} from "$lib/schema/superforms";
 import {createContext} from "$lib/trpc/context";
@@ -10,8 +10,8 @@ import type {Actions} from "@sveltejs/kit";
 export const load = async (event: any) => {
   const {url} = event;
   // Check if we're duplicating from an existing payee
-  const duplicateFromId = url.searchParams.get('from');
-  const isDuplicating = url.searchParams.get('duplicate') === 'true';
+  const duplicateFromId = url.searchParams.get("from");
+  const isDuplicating = url.searchParams.get("duplicate") === "true";
 
   return {
     duplicateFromId: duplicateFromId ? parseInt(duplicateFromId) : null,
@@ -37,7 +37,7 @@ export const actions: Actions = {
     // Return the entity data for client-side handling
     return {
       form,
-      entity
+      entity,
     };
   },
   "delete-payee": async ({request}) => {

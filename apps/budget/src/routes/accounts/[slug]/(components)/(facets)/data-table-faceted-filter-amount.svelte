@@ -107,10 +107,11 @@ const clearFilter = () => {
   }
 
   // Check if filter has any actual values set (not at default/undefined)
-  const hasValues = currentFilter.type === 'between'
-    ? (currentFilter.min !== undefined && currentFilter.min !== 0) ||
-      (currentFilter.max !== undefined && currentFilter.max !== 0)
-    : (currentFilter.value !== undefined && currentFilter.value !== 0);
+  const hasValues =
+    currentFilter.type === 'between'
+      ? (currentFilter.min !== undefined && currentFilter.min !== 0) ||
+        (currentFilter.max !== undefined && currentFilter.max !== 0)
+      : currentFilter.value !== undefined && currentFilter.value !== 0;
 
   if (hasValues) {
     // First click: reset to default values (undefined, which displays as 0)
@@ -160,7 +161,7 @@ const applySingleValue = () => {
     // If no filter exists, create one with default operator
     const newFilter: AmountFilterValue = {
       type: 'equals',
-      value: inputValue
+      value: inputValue,
     };
     column.setFilterValue(newFilter);
     return;
@@ -169,7 +170,7 @@ const applySingleValue = () => {
   // Explicitly extract properties to avoid Proxy spreading issues
   const newFilter: AmountFilterValue = {
     type: currentFilter.type,
-    value: inputValue
+    value: inputValue,
   };
   column.setFilterValue(newFilter);
 };
@@ -181,7 +182,7 @@ const applyRangeValue = () => {
   const newFilter: AmountFilterValue = {
     type: currentFilter.type,
     min: rangeMin,
-    max: rangeMax
+    max: rangeMax,
   };
   column.setFilterValue(newFilter);
 };

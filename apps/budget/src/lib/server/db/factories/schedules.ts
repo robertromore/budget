@@ -80,18 +80,16 @@ export const scheduleFactory = async (
     const slug = `${slugify(name)}-${sequence("schedule")}`;
 
     const recurring = options.recurring ?? faker.datatype.boolean({probability: 0.7});
-    const frequency = options.frequency ?? faker.helpers.arrayElement([
-      "weekly",
-      "monthly",
-      "yearly",
-    ] as const);
+    const frequency =
+      options.frequency ?? faker.helpers.arrayElement(["weekly", "monthly", "yearly"] as const);
 
     // Generate realistic amounts
     const amountType = faker.helpers.arrayElement(["exact", "approximate", "range"]);
     const amount = faker.number.float({min: 20, max: 2000, fractionDigits: 2});
-    const amount_2 = amountType === "range"
-      ? faker.number.float({min: amount, max: amount * 1.5, fractionDigits: 2})
-      : 0;
+    const amount_2 =
+      amountType === "range"
+        ? faker.number.float({min: amount, max: amount * 1.5, fractionDigits: 2})
+        : 0;
 
     // Create schedule
     const [schedule] = await db

@@ -38,12 +38,7 @@ export class PayeeCategoryRepository {
     return await db
       .select()
       .from(payeeCategories)
-      .where(
-        and(
-          eq(payeeCategories.workspaceId, workspaceId),
-          isNull(payeeCategories.deletedAt)
-        )
-      )
+      .where(and(eq(payeeCategories.workspaceId, workspaceId), isNull(payeeCategories.deletedAt)))
       .orderBy(payeeCategories.displayOrder, payeeCategories.name);
   }
 
@@ -71,17 +66,9 @@ export class PayeeCategoryRepository {
       .from(payeeCategories)
       .leftJoin(
         payees,
-        and(
-          eq(payees.payeeCategoryId, payeeCategories.id),
-          isNull(payees.deletedAt)
-        )
+        and(eq(payees.payeeCategoryId, payeeCategories.id), isNull(payees.deletedAt))
       )
-      .where(
-        and(
-          eq(payeeCategories.workspaceId, workspaceId),
-          isNull(payeeCategories.deletedAt)
-        )
-      )
+      .where(and(eq(payeeCategories.workspaceId, workspaceId), isNull(payeeCategories.deletedAt)))
       .groupBy(payeeCategories.id)
       .orderBy(payeeCategories.displayOrder, payeeCategories.name);
 
@@ -208,12 +195,7 @@ export class PayeeCategoryRepository {
         deletedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
-      .where(
-        and(
-          eq(payeeCategories.id, id),
-          eq(payeeCategories.workspaceId, workspaceId)
-        )
-      );
+      .where(and(eq(payeeCategories.id, id), eq(payeeCategories.workspaceId, workspaceId)));
   }
 
   /**

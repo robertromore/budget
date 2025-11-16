@@ -82,7 +82,7 @@ function handleCancel() {
           {...props}
           variant={buttonVariant}
           class={cn(
-            'w-full h-8 text-xs justify-start overflow-hidden text-ellipsis whitespace-nowrap px-2',
+            'h-8 w-full justify-start overflow-hidden px-2 text-xs text-ellipsis whitespace-nowrap',
             !hasValue && 'text-muted-foreground',
             buttonClass
           )}>
@@ -102,11 +102,10 @@ function handleCancel() {
             bind:value={editValue}
             {placeholder}
             {rows}
-            class="resize-none"
-          />
+            class="resize-none" />
         </div>
 
-        <div class="flex gap-2 justify-end">
+        <div class="flex justify-end gap-2">
           {#if hasValue}
             <Button
               variant="ghost"
@@ -117,12 +116,8 @@ function handleCancel() {
               Clear
             </Button>
           {/if}
-          <Button variant="ghost" size="sm" onclick={handleCancel}>
-            Cancel
-          </Button>
-          <Button size="sm" onclick={handleSave}>
-            Save
-          </Button>
+          <Button variant="ghost" size="sm" onclick={handleCancel}>Cancel</Button>
+          <Button size="sm" onclick={handleSave}>Save</Button>
         </div>
       </div>
     </Popover.Content>

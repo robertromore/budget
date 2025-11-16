@@ -61,20 +61,21 @@ let {
   ...restProps
 }: Props = $props();
 
-const hasDefaultFooter = $derived(!footer && (showViewButton || showEditButton || showDeleteButton || showAnalyticsButton));
+const hasDefaultFooter = $derived(
+  !footer && (showViewButton || showEditButton || showDeleteButton || showAnalyticsButton)
+);
 </script>
 
 <Card.Root
   class={cn(
-    "relative transition-all duration-200",
-    !isReorderMode && "hover:shadow-md",
-    isDragging && "opacity-70 transform scale-98",
+    'relative transition-all duration-200',
+    !isReorderMode && 'hover:shadow-md',
+    isDragging && 'scale-98 transform opacity-70',
     cardClass,
     className
   )}
   style={cardStyle}
-  {...restProps}
->
+  {...restProps}>
   {#if header}
     <Card.Header class="pb-3">
       {@render header(entity)}
@@ -88,7 +89,7 @@ const hasDefaultFooter = $derived(!footer && (showViewButton || showEditButton |
   {/if}
 
   {#if badges}
-    <Card.Content class="pb-3 pt-0">
+    <Card.Content class="pt-0 pb-3">
       {@render badges(entity)}
     </Card.Content>
   {/if}

@@ -18,35 +18,32 @@ import {faker} from "@faker-js/faker";
  * const workspaces = await workspaceFactory(3);
  * ```
  */
-export const workspaceFactory = async (
-  count: number = 1
-): Promise<Workspace[]> => {
+export const workspaceFactory = async (count: number = 1): Promise<Workspace[]> => {
   const workspaces_collection: Workspace[] = [];
 
   for (let i = 0; i < count; i++) {
     // Generate realistic workspace names
-    const companyTypes = ['Corp', 'LLC', 'Inc', 'Group', 'Ventures', 'Partners'];
-    const businessTypes = ['Financial', 'Budget', 'Accounting', 'Money', 'Wealth'];
+    const companyTypes = ["Corp", "LLC", "Inc", "Group", "Ventures", "Partners"];
+    const businessTypes = ["Financial", "Budget", "Accounting", "Money", "Wealth"];
 
-    const displayName = faker.helpers.maybe(
-      () => `${faker.company.name()}`,
-      { probability: 0.7 }
-    ) ?? `${faker.person.lastName()} ${faker.helpers.arrayElement(businessTypes)}`;
+    const displayName =
+      faker.helpers.maybe(() => `${faker.company.name()}`, {probability: 0.7}) ??
+      `${faker.person.lastName()} ${faker.helpers.arrayElement(businessTypes)}`;
 
     const slug = slugify(displayName);
 
     // Generate realistic preferences
     const preferences: WorkspacePreferences = {
-      locale: faker.helpers.arrayElement(['en-US', 'en-GB', 'es-ES', 'fr-FR']),
-      dateFormat: faker.helpers.arrayElement(['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD']),
-      currency: faker.helpers.arrayElement(['USD', 'EUR', 'GBP']),
-      theme: faker.helpers.arrayElement(['light', 'dark', 'system']),
+      locale: faker.helpers.arrayElement(["en-US", "en-GB", "es-ES", "fr-FR"]),
+      dateFormat: faker.helpers.arrayElement(["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]),
+      currency: faker.helpers.arrayElement(["USD", "EUR", "GBP"]),
+      theme: faker.helpers.arrayElement(["light", "dark", "system"]),
       timezone: faker.helpers.arrayElement([
-        'America/New_York',
-        'America/Los_Angeles',
-        'Europe/London',
-        'Europe/Paris'
-      ])
+        "America/New_York",
+        "America/Los_Angeles",
+        "Europe/London",
+        "Europe/Paris",
+      ]),
     };
 
     const new_workspace = await db

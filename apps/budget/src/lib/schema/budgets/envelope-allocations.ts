@@ -1,15 +1,8 @@
-import { relations, sql } from "drizzle-orm";
-import {
-  index,
-  integer,
-  real,
-  sqliteTable,
-  text,
-  uniqueIndex,
-} from "drizzle-orm/sqlite-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { budgetPeriodInstances, budgets } from "../budgets";
-import { categories } from "../categories";
+import {relations, sql} from "drizzle-orm";
+import {index, integer, real, sqliteTable, text, uniqueIndex} from "drizzle-orm/sqlite-core";
+import {createInsertSchema, createSelectSchema} from "drizzle-zod";
+import {budgetPeriodInstances, budgets} from "../budgets";
+import {categories} from "../categories";
 
 export const envelopeStatuses = ["active", "paused", "depleted", "overspent"] as const;
 export const rolloverModes = ["unlimited", "reset", "limited"] as const;
@@ -46,10 +39,7 @@ export const envelopeAllocations = sqliteTable(
     deficitAmount: real("deficit_amount").default(0).notNull(),
     status: text("status", {enum: envelopeStatuses}).default("active").notNull(),
     rolloverMode: text("rollover_mode", {enum: rolloverModes}).default("unlimited").notNull(),
-    metadata: text("metadata", {mode: "json"})
-      .$type<EnvelopeMetadata>()
-      .default({})
-      .notNull(),
+    metadata: text("metadata", {mode: "json"}).$type<EnvelopeMetadata>().default({}).notNull(),
     lastCalculated: text("last_calculated"),
     createdAt: text("created_at")
       .notNull()
@@ -156,25 +146,22 @@ export const envelopeTransfersRelations = relations(envelopeTransfers, ({one}) =
   }),
 }));
 
-export const envelopeRolloverHistoryRelations = relations(
-  envelopeRolloverHistory,
-  ({one}) => ({
-    envelope: one(envelopeAllocations, {
-      fields: [envelopeRolloverHistory.envelopeId],
-      references: [envelopeAllocations.id],
-    }),
-    fromPeriod: one(budgetPeriodInstances, {
-      fields: [envelopeRolloverHistory.fromPeriodId],
-      references: [budgetPeriodInstances.id],
-      relationName: "rollover_from_period",
-    }),
-    toPeriod: one(budgetPeriodInstances, {
-      fields: [envelopeRolloverHistory.toPeriodId],
-      references: [budgetPeriodInstances.id],
-      relationName: "rollover_to_period",
-    }),
-  })
-);
+export const envelopeRolloverHistoryRelations = relations(envelopeRolloverHistory, ({one}) => ({
+  envelope: one(envelopeAllocations, {
+    fields: [envelopeRolloverHistory.envelopeId],
+    references: [envelopeAllocations.id],
+  }),
+  fromPeriod: one(budgetPeriodInstances, {
+    fields: [envelopeRolloverHistory.fromPeriodId],
+    references: [budgetPeriodInstances.id],
+    relationName: "rollover_from_period",
+  }),
+  toPeriod: one(budgetPeriodInstances, {
+    fields: [envelopeRolloverHistory.toPeriodId],
+    references: [budgetPeriodInstances.id],
+    relationName: "rollover_to_period",
+  }),
+}));
 
 export const selectEnvelopeAllocationSchema = createSelectSchema(envelopeAllocations);
 export const insertEnvelopeAllocationSchema = createInsertSchema(envelopeAllocations);

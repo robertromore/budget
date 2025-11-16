@@ -1,6 +1,6 @@
-import { getContext, setContext } from "svelte";
-import { SvelteSet } from "svelte/reactivity";
-import type { Payee } from "$lib/schema/payees";
+import {getContext, setContext} from "svelte";
+import {SvelteSet} from "svelte/reactivity";
+import type {Payee} from "$lib/schema/payees";
 
 const KEY = Symbol("payee-bulk-operations");
 
@@ -46,9 +46,9 @@ export class PayeeBulkOperationsState {
   maxUndoOperations = 10;
 
   // Clipboard for copy/paste operations
-  clipboard = $state<{payeeIds: number[], operation: 'copy' | 'cut' | null}>({
+  clipboard = $state<{payeeIds: number[]; operation: "copy" | "cut" | null}>({
     payeeIds: [],
-    operation: null
+    operation: null,
   });
 
   // Keyboard shortcuts state
@@ -119,13 +119,13 @@ export class PayeeBulkOperationsState {
 
   selectAll(payeeIds: number[]) {
     this.clearSelection();
-    payeeIds.forEach(id => this.selectedPayeeIds.add(id));
+    payeeIds.forEach((id) => this.selectedPayeeIds.add(id));
     this.isSelectAllMode = true;
   }
 
   selectAllFiltered(payeeIds: number[]) {
     this.clearSelection();
-    payeeIds.forEach(id => this.selectedPayeeIds.add(id));
+    payeeIds.forEach((id) => this.selectedPayeeIds.add(id));
     this.isSelectAllFilteredMode = true;
   }
 
@@ -138,7 +138,7 @@ export class PayeeBulkOperationsState {
 
   invertSelection(allPayeeIds: number[]) {
     const newSelection = new SvelteSet<number>();
-    allPayeeIds.forEach(id => {
+    allPayeeIds.forEach((id) => {
       if (!this.selectedPayeeIds.has(id)) {
         newSelection.add(id);
       }
@@ -157,7 +157,7 @@ export class PayeeBulkOperationsState {
       failed: 0,
       results: [],
       isRunning: true,
-      startTime: new Date()
+      startTime: new Date(),
     };
 
     this.isOperationRunning = true;
@@ -208,7 +208,7 @@ export class PayeeBulkOperationsState {
       payeeIds,
       originalData,
       timestamp: new Date(),
-      description
+      description,
     };
 
     this.undoStack.unshift(undoOp);
@@ -224,7 +224,7 @@ export class PayeeBulkOperationsState {
   }
 
   removeUndoOperation(operationId: string) {
-    const index = this.undoStack.findIndex(op => op.id === operationId);
+    const index = this.undoStack.findIndex((op) => op.id === operationId);
     if (index !== -1) {
       this.undoStack.splice(index, 1);
     }
@@ -238,21 +238,21 @@ export class PayeeBulkOperationsState {
   copyPayees(payeeIds: number[]) {
     this.clipboard = {
       payeeIds: [...payeeIds],
-      operation: 'copy'
+      operation: "copy",
     };
   }
 
   cutPayees(payeeIds: number[]) {
     this.clipboard = {
       payeeIds: [...payeeIds],
-      operation: 'cut'
+      operation: "cut",
     };
   }
 
   clearClipboard() {
     this.clipboard = {
       payeeIds: [],
-      operation: null
+      operation: null,
     };
   }
 
@@ -262,7 +262,7 @@ export class PayeeBulkOperationsState {
 
   // Keyboard shortcuts
   private initializeKeyboardHandlers() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       this.ctrlPressed = e.ctrlKey || e.metaKey;
@@ -271,26 +271,26 @@ export class PayeeBulkOperationsState {
       // Global shortcuts
       if (this.ctrlPressed) {
         switch (e.key.toLowerCase()) {
-          case 'a':
+          case "a":
             if (this.hasSelection) {
               e.preventDefault();
               // This would need to be connected to the current filtered payees
               // Will be implemented in the component layer
             }
             break;
-          case 'c':
+          case "c":
             if (this.hasSelection) {
               e.preventDefault();
               this.copyPayees(this.selectedPayeeIdsArray);
             }
             break;
-          case 'x':
+          case "x":
             if (this.hasSelection) {
               e.preventDefault();
               this.cutPayees(this.selectedPayeeIdsArray);
             }
             break;
-          case 'z':
+          case "z":
             e.preventDefault();
             // Undo operation - will be implemented in components
             break;
@@ -298,12 +298,12 @@ export class PayeeBulkOperationsState {
       }
 
       // Escape to clear selection
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         this.clearSelection();
       }
 
       // Delete key for bulk delete
-      if (e.key === 'Delete' && this.hasSelection) {
+      if (e.key === "Delete" && this.hasSelection) {
         e.preventDefault();
         // Trigger bulk delete - will be implemented in components
       }
@@ -314,30 +314,30 @@ export class PayeeBulkOperationsState {
       this.shiftPressed = e.shiftKey;
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
 
     // Cleanup is handled by Svelte's lifecycle
   }
 
   // Utility methods
   getOperationSummary(): string {
-    if (!this.currentOperation) return '';
+    if (!this.currentOperation) return "";
 
-    const { operation, total, completed, failed } = this.currentOperation;
+    const {operation, total, completed, failed} = this.currentOperation;
     const inProgress = total - completed - failed;
 
     if (this.currentOperation.isRunning) {
-      return `${operation}: ${completed}/${total} completed${failed > 0 ? `, ${failed} failed` : ''}`;
+      return `${operation}: ${completed}/${total} completed${failed > 0 ? `, ${failed} failed` : ""}`;
     } else {
-      return `${operation} completed: ${completed} success${failed > 0 ? `, ${failed} failed` : ''}`;
+      return `${operation} completed: ${completed} success${failed > 0 ? `, ${failed} failed` : ""}`;
     }
   }
 
   getEstimatedTimeRemaining(): number | null {
     if (!this.currentOperation?.isRunning || !this.currentOperation.startTime) return null;
 
-    const { completed, total, startTime } = this.currentOperation;
+    const {completed, total, startTime} = this.currentOperation;
     if (completed === 0) return null;
 
     const elapsed = Date.now() - startTime.getTime();
@@ -350,30 +350,30 @@ export class PayeeBulkOperationsState {
   // Filter helpers for operation validation
   getValidPayeesForOperation(
     allPayees: Payee[],
-    operationType: 'delete' | 'activate' | 'deactivate' | 'assign_category' | 'assign_budget'
+    operationType: "delete" | "activate" | "deactivate" | "assign_category" | "assign_budget"
   ): number[] {
-    const selectedPayees = allPayees.filter(p => this.isSelected(p.id));
+    const selectedPayees = allPayees.filter((p) => this.isSelected(p.id));
 
     switch (operationType) {
-      case 'delete':
+      case "delete":
         // Can delete any payee
-        return selectedPayees.map(p => p.id);
+        return selectedPayees.map((p) => p.id);
 
-      case 'activate':
+      case "activate":
         // Can only activate inactive payees
-        return selectedPayees.filter(p => !p.isActive).map(p => p.id);
+        return selectedPayees.filter((p) => !p.isActive).map((p) => p.id);
 
-      case 'deactivate':
+      case "deactivate":
         // Can only deactivate active payees
-        return selectedPayees.filter(p => p.isActive).map(p => p.id);
+        return selectedPayees.filter((p) => p.isActive).map((p) => p.id);
 
-      case 'assign_category':
-      case 'assign_budget':
+      case "assign_category":
+      case "assign_budget":
         // Can assign to any payee
-        return selectedPayees.map(p => p.id);
+        return selectedPayees.map((p) => p.id);
 
       default:
-        return selectedPayees.map(p => p.id);
+        return selectedPayees.map((p) => p.id);
     }
   }
 }

@@ -9,9 +9,11 @@ const dialogOpen: UseBoolean = $derived(newAccountDialog);
 const accountId: UseNumber = $derived(managingAccountId);
 </script>
 
-<Sheet.Root bind:open={dialogOpen.current} onOpenChange={(open) => {
-  dialogOpen.current = open;
-}}>
+<Sheet.Root
+  bind:open={dialogOpen.current}
+  onOpenChange={(open) => {
+    dialogOpen.current = open;
+  }}>
   <Sheet.Content preventScroll={false} class="overflow-auto sm:max-w-lg">
     <Sheet.Header>
       <Sheet.Title>

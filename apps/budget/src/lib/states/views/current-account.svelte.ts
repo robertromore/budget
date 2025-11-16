@@ -1,10 +1,10 @@
-import type { Category, Payee, Transaction } from "$lib/schema";
-import type { Account } from "$lib/schema/accounts";
-import { trpc } from "$lib/trpc/client";
-import type { TransactionsFormat } from "$lib/types";
-import { without } from "$lib/utils";
-import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
-import { getContext, setContext } from "svelte";
+import type {Category, Payee, Transaction} from "$lib/schema";
+import type {Account} from "$lib/schema/accounts";
+import {trpc} from "$lib/trpc/client";
+import type {TransactionsFormat} from "$lib/types";
+import {without} from "$lib/utils";
+import {currencyFormatter, transactionFormatter} from "$lib/utils/formatters";
+import {getContext, setContext} from "svelte";
 
 const KEY = Symbol("current_account");
 
@@ -95,7 +95,7 @@ export class CurrentAccountState {
 
   async deleteTransactions(transactions: number[], cb?: (id: Transaction[]) => void) {
     // Filter out any non-numeric IDs (scheduled transactions with string IDs)
-    const numericIds = transactions.filter((id) => typeof id === 'number');
+    const numericIds = transactions.filter((id) => typeof id === "number");
 
     if (numericIds.length === 0) {
       return; // No valid transactions to delete

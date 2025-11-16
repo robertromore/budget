@@ -1,19 +1,23 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
-import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
-import { Separator } from '$lib/components/ui/separator';
-import { Badge } from '$lib/components/ui/badge';
-import { ScrollArea } from '$lib/components/ui/scroll-area';
-import { Skeleton } from '$lib/components/ui/skeleton';
+import {Button} from '$lib/components/ui/button';
+import {ResponsiveSheet} from '$lib/components/ui/responsive-sheet';
+import {Separator} from '$lib/components/ui/separator';
+import {Badge} from '$lib/components/ui/badge';
+import {ScrollArea} from '$lib/components/ui/scroll-area';
+import {Skeleton} from '$lib/components/ui/skeleton';
 import Lightbulb from '@lucide/svelte/icons/lightbulb';
 import Check from '@lucide/svelte/icons/check';
 import X from '@lucide/svelte/icons/x';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import Info from '@lucide/svelte/icons/info';
-import { getBulkPayeeCategoryRecommendations, bulkAssignPayeeCategories, payeeCategoryKeys } from '$lib/query/payee-categories';
-import { queryClient } from '$lib/query';
-import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
-import type { PayeeCategoryRecommendation } from '$lib/query/payee-categories';
+import {
+  getBulkPayeeCategoryRecommendations,
+  bulkAssignPayeeCategories,
+  payeeCategoryKeys,
+} from '$lib/query/payee-categories';
+import {queryClient} from '$lib/query';
+import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
+import type {PayeeCategoryRecommendation} from '$lib/query/payee-categories';
 
 interface Props {
   open: boolean;
@@ -21,7 +25,7 @@ interface Props {
   uncategorizedCount: number;
 }
 
-let { open = $bindable(), onOpenChange, uncategorizedCount }: Props = $props();
+let {open = $bindable(), onOpenChange, uncategorizedCount}: Props = $props();
 
 // State management
 let acceptedPayeeIds = $state<Set<number>>(new Set());
@@ -41,13 +45,15 @@ const assignMutation = bulkAssignPayeeCategories.options();
 // Filter recommendations based on accepted/rejected
 const visibleRecommendations = $derived.by(() => {
   return recommendations.filter(
-    rec => !acceptedPayeeIds.has(rec.payeeId) && !rejectedPayeeIds.has(rec.payeeId)
+    (rec) => !acceptedPayeeIds.has(rec.payeeId) && !rejectedPayeeIds.has(rec.payeeId)
   );
 });
 
 // High confidence recommendations (>=70%)
 const highConfidenceRecommendations = $derived.by(() => {
-  return visibleRecommendations.filter(rec => rec.confidence >= 0.7 && rec.recommendedCategoryId !== null);
+  return visibleRecommendations.filter(
+    (rec) => rec.confidence >= 0.7 && rec.recommendedCategoryId !== null
+  );
 });
 
 // Accept a single recommendation
@@ -93,8 +99,8 @@ const acceptAllHighConfidence = async () => {
 
   // Execute bulk assignments
   for (const [categoryId, payeeIds] of byCategory.entries()) {
-    await assignMutation.mutateAsync({ payeeIds, categoryId });
-    payeeIds.forEach(id => acceptedPayeeIds.add(id));
+    await assignMutation.mutateAsync({payeeIds, categoryId});
+    payeeIds.forEach((id) => acceptedPayeeIds.add(id));
   }
 };
 
@@ -112,9 +118,10 @@ const handleOpenChange = (newOpen: boolean) => {
 
 // Get confidence badge variant
 const getConfidenceBadge = (confidence: number) => {
-  if (confidence >= 0.7) return { variant: 'default' as const, label: 'High', class: 'bg-green-500' };
-  if (confidence >= 0.4) return { variant: 'secondary' as const, label: 'Medium', class: 'bg-yellow-500' };
-  return { variant: 'outline' as const, label: 'Low', class: 'bg-orange-500' };
+  if (confidence >= 0.7) return {variant: 'default' as const, label: 'High', class: 'bg-green-500'};
+  if (confidence >= 0.4)
+    return {variant: 'secondary' as const, label: 'Medium', class: 'bg-yellow-500'};
+  return {variant: 'outline' as const, label: 'Low', class: 'bg-orange-500'};
 };
 
 // Format percentage
@@ -124,18 +131,21 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 <ResponsiveSheet bind:open onOpenChange={handleOpenChange}>
   {#snippet header()}
     <div>
-      <h2 class="text-lg font-semibold flex items-center gap-2">
+      <h2 class="flex items-center gap-2 text-lg font-semibold">
         <Lightbulb class="h-5 w-5" />
         Uncategorized Payees
       </h2>
-      <p class="text-sm text-muted-foreground">
-        Review AI-powered category recommendations for {uncategorizedCount} uncategorized {uncategorizedCount === 1 ? 'payee' : 'payees'}
+      <p class="text-muted-foreground text-sm">
+        Review AI-powered category recommendations for {uncategorizedCount} uncategorized {uncategorizedCount ===
+        1
+          ? 'payee'
+          : 'payees'}
       </p>
     </div>
   {/snippet}
 
   {#snippet content()}
-    <div class="flex flex-col gap-4 h-full">
+    <div class="flex h-full flex-col gap-4">
       <!-- Quick stats -->
       {#if !isLoading && visibleRecommendations.length > 0}
         <div class="flex items-center justify-between gap-2 text-sm">
@@ -147,8 +157,7 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
               variant="ghost"
               size="sm"
               onclick={acceptAllHighConfidence}
-              disabled={assignMutation.isPending}
-            >
+              disabled={assignMutation.isPending}>
               Accept All High Confidence ({highConfidenceRecommendations.length})
             </Button>
           {/if}
@@ -158,12 +167,12 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
       {/if}
 
       <!-- Recommendations list -->
-      <ScrollArea class="flex-1 -mx-6 px-6">
+      <ScrollArea class="-mx-6 flex-1 px-6">
         <div class="space-y-4 pb-4">
           {#if isLoading}
             <!-- Loading skeletons -->
             {#each Array(3) as _, i}
-              <div class="rounded-lg border p-4 space-y-3">
+              <div class="space-y-3 rounded-lg border p-4">
                 <Skeleton class="h-5 w-32" />
                 <Skeleton class="h-4 w-48" />
                 <Skeleton class="h-16 w-full" />
@@ -176,18 +185,21 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
             {/each}
           {:else if visibleRecommendations.length === 0}
             <!-- Empty state -->
-            <div class="text-center py-12">
+            <div class="py-12 text-center">
               {#if acceptedPayeeIds.size > 0}
-                <Check class="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <h3 class="text-lg font-semibold mb-2">All Done!</h3>
-                <p class="text-sm text-muted-foreground">
-                  You've reviewed all recommendations. {acceptedPayeeIds.size} {acceptedPayeeIds.size === 1 ? 'payee' : 'payees'} assigned.
+                <Check class="mx-auto mb-4 h-12 w-12 text-green-500" />
+                <h3 class="mb-2 text-lg font-semibold">All Done!</h3>
+                <p class="text-muted-foreground text-sm">
+                  You've reviewed all recommendations. {acceptedPayeeIds.size}
+                  {acceptedPayeeIds.size === 1 ? 'payee' : 'payees'} assigned.
                 </p>
               {:else if uncategorizedCount > 0 && recommendationsQuery.isSuccess}
-                <Info class="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 class="text-lg font-semibold mb-2">No Categories Available</h3>
-                <p class="text-sm text-muted-foreground mb-4">
-                  You have {uncategorizedCount} uncategorized {uncategorizedCount === 1 ? 'payee' : 'payees'}, but no payee categories exist yet.
+                <Info class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                <h3 class="mb-2 text-lg font-semibold">No Categories Available</h3>
+                <p class="text-muted-foreground mb-4 text-sm">
+                  You have {uncategorizedCount} uncategorized {uncategorizedCount === 1
+                    ? 'payee'
+                    : 'payees'}, but no payee categories exist yet.
                   <br />
                   Create some categories first to get AI-powered recommendations.
                 </p>
@@ -195,11 +207,9 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
                   Create Categories
                 </Button>
               {:else}
-                <Check class="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <h3 class="text-lg font-semibold mb-2">All Done!</h3>
-                <p class="text-sm text-muted-foreground">
-                  No uncategorized payees found.
-                </p>
+                <Check class="mx-auto mb-4 h-12 w-12 text-green-500" />
+                <h3 class="mb-2 text-lg font-semibold">All Done!</h3>
+                <p class="text-muted-foreground text-sm">No uncategorized payees found.</p>
               {/if}
             </div>
           {:else}
@@ -208,13 +218,13 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
               {@const confidenceBadge = getConfidenceBadge(recommendation.confidence)}
               {@const isProcessing = processingPayeeId === recommendation.payeeId}
 
-              <div class="rounded-lg border p-4 space-y-3 hover:bg-accent/50 transition-colors">
+              <div class="hover:bg-accent/50 space-y-3 rounded-lg border p-4 transition-colors">
                 <!-- Payee name -->
                 <div class="flex items-start justify-between gap-2">
                   <div class="flex-1">
-                    <h3 class="font-semibold text-base">{recommendation.payeeName}</h3>
+                    <h3 class="text-base font-semibold">{recommendation.payeeName}</h3>
                     {#if recommendation.supportingFactors.length > 0}
-                      <p class="text-xs text-muted-foreground mt-1">
+                      <p class="text-muted-foreground mt-1 text-xs">
                         {recommendation.supportingFactors[0]}
                       </p>
                     {/if}
@@ -226,16 +236,16 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
                 {#if recommendation.recommendedCategoryId}
                   <!-- Recommended category -->
-                  <div class="bg-primary/5 border border-primary/20 rounded-md p-3">
-                    <div class="flex items-center gap-2 mb-1">
-                      <Lightbulb class="h-4 w-4 text-primary" />
-                      <span class="text-xs font-medium text-primary">Recommended Category</span>
+                  <div class="bg-primary/5 border-primary/20 rounded-md border p-3">
+                    <div class="mb-1 flex items-center gap-2">
+                      <Lightbulb class="text-primary h-4 w-4" />
+                      <span class="text-primary text-xs font-medium">Recommended Category</span>
                     </div>
                     <div class="flex items-center gap-2 text-sm font-medium">
                       <ChevronRight class="h-4 w-4" />
                       <span>{recommendation.categoryName}</span>
                     </div>
-                    <p class="text-xs text-muted-foreground mt-2">
+                    <p class="text-muted-foreground mt-2 text-xs">
                       {recommendation.reasoning}
                     </p>
                   </div>
@@ -243,15 +253,20 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
                   <!-- Alternative categories -->
                   {#if recommendation.alternativeCategories.length > 0}
                     <details class="text-xs">
-                      <summary class="cursor-pointer text-muted-foreground hover:text-foreground flex items-center gap-1">
+                      <summary
+                        class="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1">
                         <Info class="h-3 w-3" />
-                        View {recommendation.alternativeCategories.length} alternative suggestion{recommendation.alternativeCategories.length !== 1 ? 's' : ''}
+                        View {recommendation.alternativeCategories.length} alternative suggestion{recommendation
+                          .alternativeCategories.length !== 1
+                          ? 's'
+                          : ''}
                       </summary>
-                      <div class="mt-2 pl-4 space-y-1">
+                      <div class="mt-2 space-y-1 pl-4">
                         {#each recommendation.alternativeCategories as alt}
                           <div class="flex items-center justify-between">
                             <span>{alt.name}</span>
-                            <span class="text-muted-foreground">{formatPercent(alt.confidence)}</span>
+                            <span class="text-muted-foreground"
+                              >{formatPercent(alt.confidence)}</span>
                           </div>
                         {/each}
                       </div>
@@ -265,33 +280,30 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
                       size="sm"
                       class="flex-1"
                       onclick={() => acceptRecommendation(recommendation)}
-                      disabled={isProcessing || assignMutation.isPending}
-                    >
-                      <Check class="h-4 w-4 mr-1" />
+                      disabled={isProcessing || assignMutation.isPending}>
+                      <Check class="mr-1 h-4 w-4" />
                       {isProcessing ? 'Accepting...' : 'Accept'}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onclick={() => skipRecommendation(recommendation.payeeId)}
-                      disabled={isProcessing || assignMutation.isPending}
-                    >
-                      <ChevronRight class="h-4 w-4 mr-1" />
+                      disabled={isProcessing || assignMutation.isPending}>
+                      <ChevronRight class="mr-1 h-4 w-4" />
                       Skip
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onclick={() => rejectRecommendation(recommendation.payeeId)}
-                      disabled={isProcessing || assignMutation.isPending}
-                    >
+                      disabled={isProcessing || assignMutation.isPending}>
                       <X class="h-4 w-4" />
                     </Button>
                   </div>
                 {:else}
                   <!-- No recommendation available -->
-                  <div class="bg-muted rounded-md p-3 text-sm text-muted-foreground">
-                    <Info class="h-4 w-4 inline mr-2" />
+                  <div class="bg-muted text-muted-foreground rounded-md p-3 text-sm">
+                    <Info class="mr-2 inline h-4 w-4" />
                     Unable to determine appropriate category. Manual assignment recommended.
                   </div>
                   <div class="flex gap-2 pt-2">
@@ -299,9 +311,8 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
                       variant="outline"
                       size="sm"
                       class="flex-1"
-                      onclick={() => skipRecommendation(recommendation.payeeId)}
-                    >
-                      <ChevronRight class="h-4 w-4 mr-1" />
+                      onclick={() => skipRecommendation(recommendation.payeeId)}>
+                      <ChevronRight class="mr-1 h-4 w-4" />
                       Skip
                     </Button>
                   </div>
@@ -315,18 +326,15 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
   {/snippet}
 
   {#snippet footer()}
-    <div class="flex gap-2 w-full">
-      <Button variant="outline" onclick={() => handleOpenChange(false)} class="flex-1">
-        Done
-      </Button>
+    <div class="flex w-full gap-2">
+      <Button variant="outline" onclick={() => handleOpenChange(false)} class="flex-1">Done</Button>
       {#if visibleRecommendations.length > 0}
         <Button
           variant="ghost"
           size="sm"
           onclick={() => {
-            visibleRecommendations.forEach(rec => skipRecommendation(rec.payeeId));
-          }}
-        >
+            visibleRecommendations.forEach((rec) => skipRecommendation(rec.payeeId));
+          }}>
           Skip All Remaining
         </Button>
       {/if}

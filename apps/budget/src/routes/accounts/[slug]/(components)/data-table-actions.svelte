@@ -20,9 +20,11 @@ let detailsOpen = $state(false);
 let selectedTransaction = $state<Transaction | null>(null);
 
 // Fetch transaction details when opening the details dialog
-const transactionQuery = $derived(getTransactionDetail(id).options({
-  enabled: detailsOpen,
-}));
+const transactionQuery = $derived(
+  getTransactionDetail(id).options({
+    enabled: detailsOpen,
+  })
+);
 
 $effect(() => {
   if (detailsOpen && transactionQuery.data) {
@@ -49,7 +51,9 @@ $effect(() => {
     </DropdownMenu.Group>
     <DropdownMenu.Separator />
     <DropdownMenu.Group>
-      <DropdownMenu.Item onSelect={() => (deleteOpen = true)} class="text-destructive focus:text-destructive">
+      <DropdownMenu.Item
+        onSelect={() => (deleteOpen = true)}
+        class="text-destructive focus:text-destructive">
         <Trash2 class="mr-2 h-4 w-4" />
         Delete
       </DropdownMenu.Item>

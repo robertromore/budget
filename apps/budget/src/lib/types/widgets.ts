@@ -59,7 +59,6 @@ export interface WidgetProps {
   editMode?: boolean;
 }
 
-
 // Default widget configurations
 export const DEFAULT_WIDGETS: WidgetConfig[] = [
   {

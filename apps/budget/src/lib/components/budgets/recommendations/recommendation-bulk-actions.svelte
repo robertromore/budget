@@ -1,35 +1,36 @@
 <script lang="ts">
-  import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
-  import type {Table} from '@tanstack/table-core';
-  import {Button} from '$lib/components/ui/button';
-  import Check from '@lucide/svelte/icons/check';
-  import X from '@lucide/svelte/icons/x';
-  import XIcon from '@lucide/svelte/icons/x';
+import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
+import type {Table} from '@tanstack/table-core';
+import {Button} from '$lib/components/ui/button';
+import Check from '@lucide/svelte/icons/check';
+import X from '@lucide/svelte/icons/x';
+import XIcon from '@lucide/svelte/icons/x';
 
-  interface Props {
-    table: Table<BudgetRecommendationWithRelations>;
-    onBulkApply: (recommendations: BudgetRecommendationWithRelations[]) => void;
-    onBulkDismiss: (recommendations: BudgetRecommendationWithRelations[]) => void;
-  }
+interface Props {
+  table: Table<BudgetRecommendationWithRelations>;
+  onBulkApply: (recommendations: BudgetRecommendationWithRelations[]) => void;
+  onBulkDismiss: (recommendations: BudgetRecommendationWithRelations[]) => void;
+}
 
-  let {table, onBulkApply, onBulkDismiss}: Props = $props();
+let {table, onBulkApply, onBulkDismiss}: Props = $props();
 
-  const selectedRows = $derived(table.getSelectedRowModel().rows);
-  const selectedCount = $derived(selectedRows.length);
-  const selectedRecommendations = $derived(selectedRows.map((row) => row.original));
+const selectedRows = $derived(table.getSelectedRowModel().rows);
+const selectedCount = $derived(selectedRows.length);
+const selectedRecommendations = $derived(selectedRows.map((row) => row.original));
 
-  // Only show bulk actions for pending recommendations
-  const pendingRecommendations = $derived(
-    selectedRecommendations.filter((r) => r.status === 'pending')
-  );
-  const pendingCount = $derived(pendingRecommendations.length);
+// Only show bulk actions for pending recommendations
+const pendingRecommendations = $derived(
+  selectedRecommendations.filter((r) => r.status === 'pending')
+);
+const pendingCount = $derived(pendingRecommendations.length);
 </script>
 
 {#if selectedCount > 0 && pendingCount > 0}
-  <div class="flex items-center gap-2 rounded-md border bg-muted px-4 py-2">
+  <div class="bg-muted flex items-center gap-2 rounded-md border px-4 py-2">
     <div class="flex items-center gap-2">
       <span class="text-sm font-medium">
-        {pendingCount} {pendingCount === 1 ? 'recommendation' : 'recommendations'} selected
+        {pendingCount}
+        {pendingCount === 1 ? 'recommendation' : 'recommendations'} selected
       </span>
     </div>
 

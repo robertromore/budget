@@ -6,8 +6,8 @@ export {
   createEntityStore,
   type Entity,
   type EntityStoreMixin,
-  type ExtractEntityType
-} from './entity-store-mixin';
+  type ExtractEntityType,
+} from "./entity-store-mixin";
 
 // Selection Mixin exports
 export {
@@ -16,8 +16,8 @@ export {
   type SelectionMixin,
   type ConfigurableSelectionMixin,
   type SelectionConfig,
-  type ExtractSelectionType
-} from './selection-mixin';
+  type ExtractSelectionType,
+} from "./selection-mixin";
 
 // Sort Persistence Mixin exports
 export {
@@ -30,5 +30,5 @@ export {
   type ExtractSortDirectionType,
   type CommonSortFields,
   type CommonSortDirections,
-  SORT_CONFIGS
-} from './sort-persistence-mixin';
+  SORT_CONFIGS,
+} from "./sort-persistence-mixin";

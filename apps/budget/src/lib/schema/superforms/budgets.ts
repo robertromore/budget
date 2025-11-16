@@ -1,5 +1,11 @@
 import {z} from "zod";
-import {budgetTypes, budgetScopes, budgetStatuses, budgetEnforcementLevels, periodTemplateTypes} from "$lib/schema/budgets";
+import {
+  budgetTypes,
+  budgetScopes,
+  budgetStatuses,
+  budgetEnforcementLevels,
+  periodTemplateTypes,
+} from "$lib/schema/budgets";
 
 // Superform-compatible schema for creating budgets
 export const superformInsertBudgetSchema = z.object({

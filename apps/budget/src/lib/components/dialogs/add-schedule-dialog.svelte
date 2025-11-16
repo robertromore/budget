@@ -2,7 +2,11 @@
 import * as Sheet from '$lib/components/ui/sheet';
 import type {UseBoolean} from '$lib/hooks/ui/use-boolean.svelte';
 import type {UseNumber} from '$lib/hooks/ui/use-number.svelte';
-import {managingScheduleId, newScheduleDialog, duplicatingSchedule} from '$lib/states/ui/global.svelte';
+import {
+  managingScheduleId,
+  newScheduleDialog,
+  duplicatingSchedule,
+} from '$lib/states/ui/global.svelte';
 import {ManageScheduleForm} from '$lib/components/forms';
 import {goto} from '$app/navigation';
 import type {Schedule} from '$lib/schema/schedules';
@@ -23,13 +27,15 @@ async function handleSave(savedSchedule?: Schedule) {
 }
 </script>
 
-<Sheet.Root bind:open={dialogOpen.current} onOpenChange={(open) => {
-  dialogOpen.current = open;
-  if (!open) {
-    // Reset duplication mode when dialog closes
-    duplicatingSchedule.current = false;
-  }
-}}>
+<Sheet.Root
+  bind:open={dialogOpen.current}
+  onOpenChange={(open) => {
+    dialogOpen.current = open;
+    if (!open) {
+      // Reset duplication mode when dialog closes
+      duplicatingSchedule.current = false;
+    }
+  }}>
   <Sheet.Content preventScroll={false} class="overflow-auto sm:max-w-lg">
     <Sheet.Header>
       <Sheet.Title>

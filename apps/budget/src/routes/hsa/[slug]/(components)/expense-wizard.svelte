@@ -1,21 +1,21 @@
 <script lang="ts">
-import { rpc } from '$lib/query';
-import { Button } from '$lib/components/ui/button';
-import { Label } from '$lib/components/ui/label';
-import { Input } from '$lib/components/ui/input';
-import { Textarea } from '$lib/components/ui/textarea';
-import { Checkbox } from '$lib/components/ui/checkbox';
-import { Badge } from '$lib/components/ui/badge';
+import {rpc} from '$lib/query';
+import {Button} from '$lib/components/ui/button';
+import {Label} from '$lib/components/ui/label';
+import {Input} from '$lib/components/ui/input';
+import {Textarea} from '$lib/components/ui/textarea';
+import {Checkbox} from '$lib/components/ui/checkbox';
+import {Badge} from '$lib/components/ui/badge';
 import ExpenseTypeSelector from './expense-type-selector.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
-import { parseDate, type DateValue } from '@internationalized/date';
-import { medicalExpenseTypeEnum } from '$lib/schema/medical-expenses';
+import {parseDate, type DateValue} from '@internationalized/date';
+import {medicalExpenseTypeEnum} from '$lib/schema/medical-expenses';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import Check from '@lucide/svelte/icons/check';
-import { cn } from '$lib/utils';
-import { untrack } from 'svelte';
+import {cn} from '$lib/utils';
+import {untrack} from 'svelte';
 
 interface Props {
   hsaAccountId: number;
@@ -24,7 +24,7 @@ interface Props {
   onCancel?: () => void;
 }
 
-let { hsaAccountId, accountId, onSuccess, onCancel }: Props = $props();
+let {hsaAccountId, accountId, onSuccess, onCancel}: Props = $props();
 
 // Wizard state
 let currentStep = $state(1);
@@ -116,7 +116,10 @@ function canProceedFromStep(step: number): boolean {
         return false;
       }
       // "Other" types require description
-      if ((expenseType === 'other_qualified' || expenseType === 'non_qualified') && !otherExpenseDescription.trim()) {
+      if (
+        (expenseType === 'other_qualified' || expenseType === 'non_qualified') &&
+        !otherExpenseDescription.trim()
+      ) {
         fieldErrors.otherExpenseDescription = 'Please describe this expense';
         return false;
       }
@@ -145,7 +148,7 @@ function canProceedFromStep(step: number): boolean {
 
 // Clear field error when field is edited
 function clearFieldError(field: string) {
-  const { [field]: _, ...rest } = fieldErrors;
+  const {[field]: _, ...rest} = fieldErrors;
   fieldErrors = rest;
 }
 
@@ -171,12 +174,17 @@ async function handleSubmit() {
   error = '';
 
   try {
-    const finalNotes = (expenseType === 'other_qualified' || expenseType === 'non_qualified')
-      ? `${otherExpenseDescription.trim()}${notes ? `\n\n${notes}` : ''}`
-      : notes;
+    const finalNotes =
+      expenseType === 'other_qualified' || expenseType === 'non_qualified'
+        ? `${otherExpenseDescription.trim()}${notes ? `\n\n${notes}` : ''}`
+        : notes;
 
     // Convert DateValue to ISO datetime string
-    const serviceDateStr = new Date(serviceDate.year, serviceDate.month - 1, serviceDate.day).toISOString();
+    const serviceDateStr = new Date(
+      serviceDate.year,
+      serviceDate.month - 1,
+      serviceDate.day
+    ).toISOString();
     const paidDateStr = paidDate
       ? new Date(paidDate.year, paidDate.month - 1, paidDate.day).toISOString()
       : undefined;
@@ -223,7 +231,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
       {@const isActive = stepNum === currentStep}
       {@const isCompleted = stepNum < currentStep}
 
-      <div class="flex items-center flex-1">
+      <div class="flex flex-1 items-center">
         <!-- Step Circle -->
         <button
           onclick={() => {
@@ -232,12 +240,13 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
               error = '';
             }
           }}
-          class="flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors
-            {isCompleted ? 'bg-primary border-primary text-primary-foreground' :
-             isActive ? 'border-primary text-primary' :
-             'border-muted text-muted-foreground'}"
-          disabled={stepNum > currentStep}
-        >
+          class="flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors
+            {isCompleted
+            ? 'bg-primary border-primary text-primary-foreground'
+            : isActive
+              ? 'border-primary text-primary'
+              : 'border-muted text-muted-foreground'}"
+          disabled={stepNum > currentStep}>
           {#if isCompleted}
             <Check class="h-5 w-5" />
           {:else}
@@ -246,13 +255,14 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
         </button>
 
         <!-- Step Label -->
-        <span class="ml-2 text-sm font-medium {isActive ? 'text-primary' : 'text-muted-foreground'}">
+        <span
+          class="ml-2 text-sm font-medium {isActive ? 'text-primary' : 'text-muted-foreground'}">
           {stepLabels[index]}
         </span>
 
         <!-- Connector Line -->
         {#if index < totalSteps - 1}
-          <div class="flex-1 h-0.5 mx-4 {stepNum < currentStep ? 'bg-primary' : 'bg-muted'}"></div>
+          <div class="mx-4 h-0.5 flex-1 {stepNum < currentStep ? 'bg-primary' : 'bg-muted'}"></div>
         {/if}
       </div>
     {/each}
@@ -260,7 +270,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
 
   <!-- Error Message -->
   {#if error}
-    <div class="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+    <div class="bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm">
       {error}
     </div>
   {/if}
@@ -271,7 +281,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
       <!-- Step 1: Expense Type -->
       <div class="space-y-6">
         <div>
-          <h2 class="text-2xl font-bold mb-2">What type of medical expense is this?</h2>
+          <h2 class="mb-2 text-2xl font-bold">What type of medical expense is this?</h2>
           <p class="text-muted-foreground">Select the category that best describes your expense</p>
         </div>
 
@@ -282,10 +292,9 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
               expenseType = value;
               clearFieldError('expenseType');
             }}
-            buttonClass={fieldErrors.expenseType ? 'border-destructive' : ''}
-          />
+            buttonClass={fieldErrors.expenseType ? 'border-destructive' : ''} />
           {#if fieldErrors.expenseType}
-            <p class="text-sm text-destructive">{fieldErrors.expenseType}</p>
+            <p class="text-destructive text-sm">{fieldErrors.expenseType}</p>
           {/if}
         </div>
 
@@ -299,10 +308,9 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
               placeholder="Specify what type of medical expense this is..."
               maxlength={200}
               rows={3}
-              class={fieldErrors.otherExpenseDescription ? 'border-destructive' : ''}
-            />
+              class={fieldErrors.otherExpenseDescription ? 'border-destructive' : ''} />
             {#if fieldErrors.otherExpenseDescription}
-              <p class="text-sm text-destructive">{fieldErrors.otherExpenseDescription}</p>
+              <p class="text-destructive text-sm">{fieldErrors.otherExpenseDescription}</p>
             {/if}
           </div>
         {/if}
@@ -311,19 +319,19 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
           <Checkbox
             id="is-qualified"
             checked={isQualified}
-            onCheckedChange={(checked) => { isQualified = checked === true; }}
-          />
-          <Label for="is-qualified" class="text-sm font-normal cursor-pointer">
+            onCheckedChange={(checked) => {
+              isQualified = checked === true;
+            }} />
+          <Label for="is-qualified" class="cursor-pointer text-sm font-normal">
             IRS Qualified Medical Expense
           </Label>
         </div>
       </div>
-
     {:else if currentStep === 2}
       <!-- Step 2: Basic Details -->
       <div class="space-y-6">
         <div>
-          <h2 class="text-2xl font-bold mb-2">Enter the expense details</h2>
+          <h2 class="mb-2 text-2xl font-bold">Enter the expense details</h2>
           <p class="text-muted-foreground">Who provided the service and when?</p>
         </div>
 
@@ -334,8 +342,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
             type="text"
             bind:value={provider}
             placeholder="Dr. Smith, ABC Hospital, pharmacy, etc."
-            maxlength={200}
-          />
+            maxlength={200} />
         </div>
 
         <div class="space-y-2">
@@ -345,20 +352,18 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
             type="text"
             bind:value={patientName}
             placeholder="Who received care"
-            maxlength={100}
-          />
+            maxlength={100} />
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div class="space-y-2">
             <Label for="amount">Total Amount *</Label>
             <NumericInput
               id="amount"
               bind:value={amount}
-              buttonClass={cn("w-full", fieldErrors.amount && 'border-destructive')}
-            />
+              buttonClass={cn('w-full', fieldErrors.amount && 'border-destructive')} />
             {#if fieldErrors.amount}
-              <p class="text-sm text-destructive">{fieldErrors.amount}</p>
+              <p class="text-destructive text-sm">{fieldErrors.amount}</p>
             {/if}
           </div>
 
@@ -367,8 +372,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
             <NumericInput
               id="insurance-covered"
               bind:value={insuranceCovered}
-              buttonClass="w-full"
-            />
+              buttonClass="w-full" />
           </div>
 
           <div class="space-y-2">
@@ -381,40 +385,32 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
               bind:value={outOfPocket}
               placeholder="0.00"
               readonly
-              class={cn("bg-muted", fieldErrors.outOfPocket && 'border-destructive')}
-            />
-            <p class="text-xs text-muted-foreground">Auto-calculated</p>
+              class={cn('bg-muted', fieldErrors.outOfPocket && 'border-destructive')} />
+            <p class="text-muted-foreground text-xs">Auto-calculated</p>
             {#if fieldErrors.outOfPocket}
-              <p class="text-sm text-destructive">{fieldErrors.outOfPocket}</p>
+              <p class="text-destructive text-sm">{fieldErrors.outOfPocket}</p>
             {/if}
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div class="space-y-2">
             <Label for="service-date">Service Date *</Label>
-            <DateInput
-              bind:value={serviceDate}
-              buttonClass="w-full"
-            />
+            <DateInput bind:value={serviceDate} buttonClass="w-full" />
           </div>
 
           <div class="space-y-2">
             <Label for="paid-date">Payment Date</Label>
-            <DateInput
-              bind:value={paidDate}
-              buttonClass="w-full"
-            />
-            <p class="text-xs text-muted-foreground">Optional - used for tax year</p>
+            <DateInput bind:value={paidDate} buttonClass="w-full" />
+            <p class="text-muted-foreground text-xs">Optional - used for tax year</p>
           </div>
         </div>
       </div>
-
     {:else if currentStep === 3}
       <!-- Step 3: Additional Info -->
       <div class="space-y-6">
         <div>
-          <h2 class="text-2xl font-bold mb-2">Additional information (optional)</h2>
+          <h2 class="mb-2 text-2xl font-bold">Additional information (optional)</h2>
           <p class="text-muted-foreground">Add any relevant medical details for your records</p>
         </div>
 
@@ -425,8 +421,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
             type="text"
             bind:value={diagnosis}
             placeholder="ICD code or description"
-            maxlength={500}
-          />
+            maxlength={500} />
         </div>
 
         <div class="space-y-2">
@@ -436,8 +431,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
             bind:value={treatmentDescription}
             placeholder="Details about the medical service"
             maxlength={1000}
-            rows={3}
-          />
+            rows={3} />
         </div>
 
         <div class="space-y-2">
@@ -447,8 +441,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
             bind:value={notes}
             placeholder="Additional notes for your records"
             maxlength={1000}
-            rows={3}
-          />
+            rows={3} />
         </div>
 
         <div class="space-y-2">
@@ -458,23 +451,21 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
             bind:value={transactionNotes}
             placeholder="Notes for the transaction record"
             maxlength={500}
-            rows={2}
-          />
+            rows={2} />
         </div>
       </div>
-
     {:else if currentStep === 4}
       <!-- Step 4: Review -->
       <div class="space-y-6">
         <div>
-          <h2 class="text-2xl font-bold mb-2">Review your expense</h2>
+          <h2 class="mb-2 text-2xl font-bold">Review your expense</h2>
           <p class="text-muted-foreground">Please verify all details before submitting</p>
         </div>
 
-        <div class="space-y-4 bg-muted p-6 rounded-lg">
+        <div class="bg-muted space-y-4 rounded-lg p-6">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <p class="text-sm text-muted-foreground">Expense Type</p>
+              <p class="text-muted-foreground text-sm">Expense Type</p>
               <p class="font-medium">{medicalExpenseTypeEnum[expenseType]}</p>
               {#if expenseType === 'other_qualified' || expenseType === 'non_qualified'}
                 <p class="text-sm italic">{otherExpenseDescription}</p>
@@ -482,7 +473,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
             </div>
 
             <div>
-              <p class="text-sm text-muted-foreground">Qualified?</p>
+              <p class="text-muted-foreground text-sm">Qualified?</p>
               <Badge variant={isQualified ? 'default' : 'secondary'}>
                 {isQualified ? 'Yes' : 'No'}
               </Badge>
@@ -490,56 +481,56 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
 
             {#if provider}
               <div>
-                <p class="text-sm text-muted-foreground">Provider</p>
+                <p class="text-muted-foreground text-sm">Provider</p>
                 <p class="font-medium">{provider}</p>
               </div>
             {/if}
 
             {#if patientName}
               <div>
-                <p class="text-sm text-muted-foreground">Patient</p>
+                <p class="text-muted-foreground text-sm">Patient</p>
                 <p class="font-medium">{patientName}</p>
               </div>
             {/if}
 
             <div>
-              <p class="text-sm text-muted-foreground">Total Amount</p>
-              <p class="font-medium text-lg">${amount.toFixed(2)}</p>
+              <p class="text-muted-foreground text-sm">Total Amount</p>
+              <p class="text-lg font-medium">${amount.toFixed(2)}</p>
             </div>
 
             <div>
-              <p class="text-sm text-muted-foreground">Out of Pocket</p>
-              <p class="font-medium text-lg text-primary">${outOfPocket.toFixed(2)}</p>
+              <p class="text-muted-foreground text-sm">Out of Pocket</p>
+              <p class="text-primary text-lg font-medium">${outOfPocket.toFixed(2)}</p>
             </div>
 
             <div>
-              <p class="text-sm text-muted-foreground">Service Date</p>
+              <p class="text-muted-foreground text-sm">Service Date</p>
               <p class="font-medium">{serviceDate.toString()}</p>
             </div>
 
             <div>
-              <p class="text-sm text-muted-foreground">Tax Year</p>
+              <p class="text-muted-foreground text-sm">Tax Year</p>
               <p class="font-medium">{taxYear}</p>
             </div>
           </div>
 
           {#if diagnosis || treatmentDescription || notes}
-            <div class="border-t pt-4 mt-4">
+            <div class="mt-4 border-t pt-4">
               {#if diagnosis}
                 <div class="mb-2">
-                  <p class="text-sm text-muted-foreground">Diagnosis</p>
+                  <p class="text-muted-foreground text-sm">Diagnosis</p>
                   <p class="text-sm">{diagnosis}</p>
                 </div>
               {/if}
               {#if treatmentDescription}
                 <div class="mb-2">
-                  <p class="text-sm text-muted-foreground">Treatment</p>
+                  <p class="text-muted-foreground text-sm">Treatment</p>
                   <p class="text-sm">{treatmentDescription}</p>
                 </div>
               {/if}
               {#if notes}
                 <div>
-                  <p class="text-sm text-muted-foreground">Notes</p>
+                  <p class="text-muted-foreground text-sm">Notes</p>
                   <p class="text-sm">{notes}</p>
                 </div>
               {/if}
@@ -551,7 +542,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
   </div>
 
   <!-- Navigation Buttons -->
-  <div class="flex justify-between pt-6 border-t">
+  <div class="flex justify-between border-t pt-6">
     <div>
       {#if currentStep > 1}
         <Button type="button" variant="outline" onclick={prevStep}>
@@ -559,9 +550,7 @@ const stepLabels = ['Type', 'Details', 'Info', 'Review'];
           Back
         </Button>
       {:else}
-        <Button type="button" variant="ghost" onclick={onCancel}>
-          Cancel
-        </Button>
+        <Button type="button" variant="ghost" onclick={onCancel}>Cancel</Button>
       {/if}
     </div>
 

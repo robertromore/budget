@@ -1,14 +1,14 @@
 <script lang="ts">
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
-import { currencyFormatter } from '$lib/utils/formatters';
-import { getMonthlySpendingAggregates } from '$lib/query/transactions';
+import {currencyFormatter} from '$lib/utils/formatters';
+import {getMonthlySpendingAggregates} from '$lib/query/transactions';
 import AnalyticsChartShell from './analytics-chart-shell.svelte';
 
 interface Props {
   accountId: number;
 }
 
-let { accountId }: Props = $props();
+let {accountId}: Props = $props();
 
 // Fetch monthly spending aggregates from dedicated endpoint
 const monthlySpendingQuery = getMonthlySpendingAggregates(accountId).options();
@@ -18,46 +18,53 @@ const monthlySpendingData = $derived.by(() => {
   const data = monthlySpendingQuery.data;
   if (!data?.length) return [];
 
-  return data.map((item: {
-    month: string;
-    monthLabel: string;
-    spending: number;
-    transactionCount: number;
-  }, index: number) => {
-    // Convert month string (YYYY-MM) to Date object for proper time scale
-    const [year, month] = item.month.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, 1); // month is 0-indexed in Date constructor
+  return data.map(
+    (
+      item: {
+        month: string;
+        monthLabel: string;
+        spending: number;
+        transactionCount: number;
+      },
+      index: number
+    ) => {
+      // Convert month string (YYYY-MM) to Date object for proper time scale
+      const [year, month] = item.month.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, 1); // month is 0-indexed in Date constructor
 
-    return {
-      month: item.month,
-      monthDisplay: item.monthLabel.split(' ').map((word: string, i: number) => i === 0 ? word.slice(0, 3) : word.slice(-2)).join(' '), // "Jan 25" format
-      spending: item.spending,
-      monthLabel: item.monthLabel,
-      transactionCount: item.transactionCount,
-      date: date, // Use date object for x-axis
-      x: date,
-      y: item.spending
-    };
-  });
+      return {
+        month: item.month,
+        monthDisplay: item.monthLabel
+          .split(' ')
+          .map((word: string, i: number) => (i === 0 ? word.slice(0, 3) : word.slice(-2)))
+          .join(' '), // "Jan 25" format
+        spending: item.spending,
+        monthLabel: item.monthLabel,
+        transactionCount: item.transactionCount,
+        date: date, // Use date object for x-axis
+        x: date,
+        y: item.spending,
+      };
+    }
+  );
 });
-
 
 // Chart configuration
 const chartConfig: ChartConfig = {
   spending: {
     label: 'Monthly Spending',
-    color: 'var(--color-primary)'
-  }
+    color: 'var(--color-primary)',
+  },
 };
 
 // Summary statistics for the shell component
 const summaryStats = $derived.by(() => {
   if (!monthlySpendingData.length) {
     return [
-      { label: 'Average Monthly', value: '$0.00' },
-      { label: 'Highest', value: '$0.00' },
-      { label: 'Lowest', value: '$0.00' },
-      { label: 'Total', value: '$0.00' }
+      {label: 'Average Monthly', value: '$0.00'},
+      {label: 'Highest', value: '$0.00'},
+      {label: 'Lowest', value: '$0.00'},
+      {label: 'Total', value: '$0.00'},
     ];
   }
 
@@ -72,28 +79,31 @@ const summaryStats = $derived.by(() => {
   const lowestMonth = monthlySpendingData.find((d: any) => d.spending === lowest)?.monthLabel;
 
   // Sum total transaction count
-  const totalTransactions = monthlySpendingData.reduce((sum: number, d: any) => sum + d.transactionCount, 0);
+  const totalTransactions = monthlySpendingData.reduce(
+    (sum: number, d: any) => sum + d.transactionCount,
+    0
+  );
 
   return [
     {
       label: 'Average Monthly',
-      value: currencyFormatter.format(average)
+      value: currencyFormatter.format(average),
     },
     {
       label: 'Highest',
       value: currencyFormatter.format(highest),
-      description: highestMonth || undefined
+      description: highestMonth || undefined,
     },
     {
       label: 'Lowest',
       value: currencyFormatter.format(lowest),
-      description: lowestMonth || undefined
+      description: lowestMonth || undefined,
     },
     {
       label: 'Total',
       value: currencyFormatter.format(total),
-      description: `${totalTransactions} transactions`
-    }
+      description: `${totalTransactions} transactions`,
+    },
   ];
 });
 </script>
@@ -103,8 +113,7 @@ const summaryStats = $derived.by(() => {
   error={monthlySpendingQuery.error?.message}
   data={monthlySpendingData}
   {summaryStats}
-  emptyMessage="Add some expense transactions to see spending trends"
->
+  emptyMessage="Add some expense transactions to see spending trends">
   {#snippet title()}
     Monthly Spending Trends
   {/snippet}
@@ -113,7 +122,7 @@ const summaryStats = $derived.by(() => {
     Expense patterns and analytics over time
   {/snippet}
 
-  {#snippet chart({ data }: { data: typeof monthlySpendingData })}
+  {#snippet chart({data}: {data: typeof monthlySpendingData})}
     <ChartPlaceholder class="h-full" title="Monthly Spending Trends Chart" />
   {/snippet}
 </AnalyticsChartShell>

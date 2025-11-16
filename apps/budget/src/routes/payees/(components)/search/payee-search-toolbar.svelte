@@ -32,7 +32,7 @@ let {
   onFiltersChange,
   onViewModeChange,
   onSortChange,
-  onClearAll
+  onClearAll,
 }: Props = $props();
 
 // Payee type options
@@ -44,7 +44,7 @@ const payeeTypeOptions = [
   {value: 'charity', label: 'Charity'},
   {value: 'bank', label: 'Bank'},
   {value: 'investment', label: 'Investment'},
-  {value: 'other', label: 'Other'}
+  {value: 'other', label: 'Other'},
 ] as const;
 
 // Payment frequency options
@@ -54,7 +54,7 @@ const frequencyOptions = [
   {value: 'bi_weekly', label: 'Bi-Weekly'},
   {value: 'monthly', label: 'Monthly'},
   {value: 'quarterly', label: 'Quarterly'},
-  {value: 'yearly', label: 'Yearly'}
+  {value: 'yearly', label: 'Yearly'},
 ] as const;
 
 // Sort options
@@ -64,7 +64,7 @@ const sortOptions: SortOption<PayeeSortBy>[] = [
   {value: 'lastTransaction', label: 'Recently Active', order: 'desc'},
   {value: 'avgAmount', label: 'Amount (High)', order: 'desc'},
   {value: 'avgAmount', label: 'Amount (Low)', order: 'asc'},
-  {value: 'created', label: 'Date Created', order: 'desc'}
+  {value: 'created', label: 'Date Created', order: 'desc'},
 ];
 
 // Count active filters
@@ -88,7 +88,7 @@ const filterSummaries = $derived(() => {
   const summary = [];
 
   if (filters.payeeType) {
-    const type = payeeTypeOptions.find(opt => opt.value === filters.payeeType);
+    const type = payeeTypeOptions.find((opt) => opt.value === filters.payeeType);
     if (type) summary.push({key: 'payeeType', label: `Type: ${type.label}`});
   }
 
@@ -97,11 +97,14 @@ const filterSummaries = $derived(() => {
   }
 
   if (filters.taxRelevant !== undefined) {
-    summary.push({key: 'taxRelevant', label: `Tax: ${filters.taxRelevant ? 'Relevant' : 'Not Relevant'}`});
+    summary.push({
+      key: 'taxRelevant',
+      label: `Tax: ${filters.taxRelevant ? 'Relevant' : 'Not Relevant'}`,
+    });
   }
 
   if (filters.paymentFrequency) {
-    const freq = frequencyOptions.find(opt => opt.value === filters.paymentFrequency);
+    const freq = frequencyOptions.find((opt) => opt.value === filters.paymentFrequency);
     if (freq) summary.push({key: 'paymentFrequency', label: `Frequency: ${freq.label}`});
   }
 
@@ -114,11 +117,8 @@ const filterSummaries = $derived(() => {
   return summary;
 });
 
-const updateFilter = <K extends keyof PayeeSearchFilters>(
-  key: K,
-  value: PayeeSearchFilters[K]
-) => {
-  const newFilters = { ...filters };
+const updateFilter = <K extends keyof PayeeSearchFilters>(key: K, value: PayeeSearchFilters[K]) => {
+  const newFilters = {...filters};
   if (value === undefined || value === null || value === '') {
     delete newFilters[key];
   } else {
@@ -143,12 +143,13 @@ const updateFilter = <K extends keyof PayeeSearchFilters>(
   {onFiltersChange}
   {onViewModeChange}
   {onSortChange}
-  {onClearAll}
->
+  {onClearAll}>
   {#snippet filterContent()}
     <!-- Basic Filters Section -->
     <div class="space-y-3">
-      <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Basic Filters</h5>
+      <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        Basic Filters
+      </h5>
 
       <div class="grid grid-cols-2 gap-3">
         <!-- Payee Type Filter -->
@@ -158,10 +159,12 @@ const updateFilter = <K extends keyof PayeeSearchFilters>(
             type="single"
             value={filters.payeeType || ''}
             onValueChange={(value) => {
-              updateFilter('payeeType', value as PayeeType || undefined);
+              updateFilter('payeeType', (value as PayeeType) || undefined);
             }}>
             <Select.Trigger id="payee-type-filter" class="h-9 w-full">
-              {filters.payeeType ? payeeTypeOptions.find(opt => opt.value === filters.payeeType)?.label || 'All' : 'All'}
+              {filters.payeeType
+                ? payeeTypeOptions.find((opt) => opt.value === filters.payeeType)?.label || 'All'
+                : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All types</Select.Item>
@@ -179,10 +182,17 @@ const updateFilter = <K extends keyof PayeeSearchFilters>(
             type="single"
             value={filters.isActive?.toString() || ''}
             onValueChange={(value) => {
-              updateFilter('isActive', value === 'true' ? true : value === 'false' ? false : undefined);
+              updateFilter(
+                'isActive',
+                value === 'true' ? true : value === 'false' ? false : undefined
+              );
             }}>
             <Select.Trigger id="status-filter" class="h-9 w-full">
-              {filters.isActive === true ? 'Active' : filters.isActive === false ? 'Inactive' : 'All'}
+              {filters.isActive === true
+                ? 'Active'
+                : filters.isActive === false
+                  ? 'Inactive'
+                  : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All</Select.Item>
@@ -201,10 +211,17 @@ const updateFilter = <K extends keyof PayeeSearchFilters>(
             type="single"
             value={filters.taxRelevant?.toString() || ''}
             onValueChange={(value) => {
-              updateFilter('taxRelevant', value === 'true' ? true : value === 'false' ? false : undefined);
+              updateFilter(
+                'taxRelevant',
+                value === 'true' ? true : value === 'false' ? false : undefined
+              );
             }}>
             <Select.Trigger id="tax-relevance-filter" class="h-9 w-full">
-              {filters.taxRelevant === true ? 'Relevant' : filters.taxRelevant === false ? 'Not Relevant' : 'All'}
+              {filters.taxRelevant === true
+                ? 'Relevant'
+                : filters.taxRelevant === false
+                  ? 'Not Relevant'
+                  : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All</Select.Item>
@@ -221,10 +238,13 @@ const updateFilter = <K extends keyof PayeeSearchFilters>(
             type="single"
             value={filters.paymentFrequency || ''}
             onValueChange={(value) => {
-              updateFilter('paymentFrequency', value as PaymentFrequency || undefined);
+              updateFilter('paymentFrequency', (value as PaymentFrequency) || undefined);
             }}>
             <Select.Trigger id="payment-frequency-filter" class="h-9 w-full">
-              {filters.paymentFrequency ? frequencyOptions.find(opt => opt.value === filters.paymentFrequency)?.label || 'All' : 'All'}
+              {filters.paymentFrequency
+                ? frequencyOptions.find((opt) => opt.value === filters.paymentFrequency)?.label ||
+                  'All'
+                : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All frequencies</Select.Item>
@@ -238,8 +258,10 @@ const updateFilter = <K extends keyof PayeeSearchFilters>(
     </div>
 
     <!-- Amount Range Section -->
-    <div class="space-y-3 pt-3 border-t">
-      <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Amount Range</h5>
+    <div class="space-y-3 border-t pt-3">
+      <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        Amount Range
+      </h5>
       <div class="grid grid-cols-2 gap-3">
         <div class="space-y-1.5">
           <label for="min-amount-filter" class="text-xs font-medium">Minimum</label>
@@ -252,8 +274,7 @@ const updateFilter = <K extends keyof PayeeSearchFilters>(
               const value = parseFloat((e.target as HTMLInputElement).value);
               updateFilter('minAvgAmount', isNaN(value) ? undefined : value);
             }}
-            class="h-9"
-          />
+            class="h-9" />
         </div>
         <div class="space-y-1.5">
           <label for="max-amount-filter" class="text-xs font-medium">Maximum</label>
@@ -266,27 +287,30 @@ const updateFilter = <K extends keyof PayeeSearchFilters>(
               const value = parseFloat((e.target as HTMLInputElement).value);
               updateFilter('maxAvgAmount', isNaN(value) ? undefined : value);
             }}
-            class="h-9"
-          />
+            class="h-9" />
         </div>
       </div>
     </div>
 
     <!-- Configuration Section -->
-    <div class="space-y-3 pt-3 border-t">
-      <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Configuration</h5>
+    <div class="space-y-3 border-t pt-3">
+      <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        Configuration
+      </h5>
       <div class="grid grid-cols-2 gap-2">
         <Button
-          variant={filters.hasDefaultCategory ? "default" : "outline"}
+          variant={filters.hasDefaultCategory ? 'default' : 'outline'}
           size="sm"
-          onclick={() => updateFilter('hasDefaultCategory', filters.hasDefaultCategory ? undefined : true)}
+          onclick={() =>
+            updateFilter('hasDefaultCategory', filters.hasDefaultCategory ? undefined : true)}
           class="h-9 justify-start text-xs">
           Default Category
         </Button>
         <Button
-          variant={filters.hasDefaultBudget ? "default" : "outline"}
+          variant={filters.hasDefaultBudget ? 'default' : 'outline'}
           size="sm"
-          onclick={() => updateFilter('hasDefaultBudget', filters.hasDefaultBudget ? undefined : true)}
+          onclick={() =>
+            updateFilter('hasDefaultBudget', filters.hasDefaultBudget ? undefined : true)}
           class="h-9 justify-start text-xs">
           Default Budget
         </Button>

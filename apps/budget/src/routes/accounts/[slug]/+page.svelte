@@ -24,7 +24,7 @@ import {
   HsaDashboard,
   ExpenseTableContainer,
   MedicalExpenseForm,
-  ExpenseWizard
+  ExpenseWizard,
 } from './(components)';
 import {columns} from './(data)/columns.svelte';
 import {rpc} from '$lib/query';
@@ -40,7 +40,9 @@ let {data} = $props();
 const accountSlug = $derived(data.accountSlug);
 
 // Fetch account by slug to get ID for queries
-const accountQuery = $derived(accountSlug ? rpc.accounts.getAccountDetail(accountSlug).options() : undefined);
+const accountQuery = $derived(
+  accountSlug ? rpc.accounts.getAccountDetail(accountSlug).options() : undefined
+);
 const accountData = $derived(accountQuery?.data);
 const accountId = $derived(accountData?.id);
 
@@ -53,15 +55,25 @@ let serverAccountState = $state<ServerAccountState | undefined>();
 
 // TanStack Query state - load ALL transactions including upcoming scheduled for client-side pagination
 const transactionsQuery = $derived.by(() => {
-  return serverAccountState && accountId ? rpc.transactions.getAllAccountTransactionsWithUpcoming(Number(accountId), {
-    sortBy: serverAccountState.filters.sortBy,
-    sortOrder: serverAccountState.filters.sortOrder,
-    ...(serverAccountState.filters.searchQuery && { searchQuery: serverAccountState.filters.searchQuery }),
-    ...(serverAccountState.filters.dateFrom && { dateFrom: serverAccountState.filters.dateFrom }),
-    ...(serverAccountState.filters.dateTo && { dateTo: serverAccountState.filters.dateTo }),
-  }).options() : undefined;
+  return serverAccountState && accountId
+    ? rpc.transactions
+        .getAllAccountTransactionsWithUpcoming(Number(accountId), {
+          sortBy: serverAccountState.filters.sortBy,
+          sortOrder: serverAccountState.filters.sortOrder,
+          ...(serverAccountState.filters.searchQuery && {
+            searchQuery: serverAccountState.filters.searchQuery,
+          }),
+          ...(serverAccountState.filters.dateFrom && {
+            dateFrom: serverAccountState.filters.dateFrom,
+          }),
+          ...(serverAccountState.filters.dateTo && {dateTo: serverAccountState.filters.dateTo}),
+        })
+        .options()
+    : undefined;
 });
-const summaryQuery = $derived(accountId ? rpc.transactions.getAccountSummary(Number(accountId)).options() : undefined);
+const summaryQuery = $derived(
+  accountId ? rpc.transactions.getAccountSummary(Number(accountId)).options() : undefined
+);
 const budgetCountQuery = $derived(rpc.budgets.getBudgetCount().options());
 
 // Create the mutations once
@@ -78,16 +90,24 @@ const transactions = $derived.by(() => {
   return Array.isArray(transactionsQuery?.data) ? transactionsQuery.data : [];
 });
 const isLoading = $derived.by(() => {
-  return (transactionsQuery ? transactionsQuery?.isLoading : false) || (summaryQuery ? summaryQuery.isLoading : false);
+  return (
+    (transactionsQuery ? transactionsQuery?.isLoading : false) ||
+    (summaryQuery ? summaryQuery.isLoading : false)
+  );
 });
 const error = $derived.by(() => {
-  return (transactionsQuery ? transactionsQuery?.error?.message : undefined) || (summaryQuery ? summaryQuery.error?.message : undefined);
+  return (
+    (transactionsQuery ? transactionsQuery?.error?.message : undefined) ||
+    (summaryQuery ? summaryQuery.error?.message : undefined)
+  );
 });
 const isAccountNotFound = $derived.by(() => {
   const summaryError = summaryQuery ? summaryQuery.error : undefined;
   const transactionsError = transactionsQuery ? transactionsQuery?.error : undefined;
-  return (summaryError?.message?.includes('NOT_FOUND')) ||
-         (transactionsError?.message?.includes('NOT_FOUND'));
+  return (
+    summaryError?.message?.includes('NOT_FOUND') ||
+    transactionsError?.message?.includes('NOT_FOUND')
+  );
 });
 const summary = $derived(summaryQuery ? summaryQuery.data : undefined);
 const account = $derived(summary ? {id: summary.accountId, name: summary.accountName} : undefined);
@@ -112,7 +132,7 @@ let bulkPayeeUpdateDialog = $state({
   payeeId: null as number | null,
   payeeName: null as string | null,
   originalPayeeName: '',
-  matchCount: 0
+  matchCount: 0,
 });
 
 let bulkCategoryUpdateDialog = $state({
@@ -123,7 +143,7 @@ let bulkCategoryUpdateDialog = $state({
   originalPayeeName: '',
   matchCountByPayee: 0,
   matchCountByCategory: 0,
-  previousCategoryId: null as number | null
+  previousCategoryId: null as number | null,
 });
 
 // HSA state (for HSA accounts only)
@@ -151,7 +171,11 @@ let selectedScheduleTransaction = $state<TransactionsFormat | null>(null);
 // Transform data for tables
 const formattedTransactions = $derived.by(() => {
   const currentTransactions = transactions;
-  if (!currentTransactions || !Array.isArray(currentTransactions) || currentTransactions.length === 0) {
+  if (
+    !currentTransactions ||
+    !Array.isArray(currentTransactions) ||
+    currentTransactions.length === 0
+  ) {
     return [];
   }
 
@@ -184,7 +208,6 @@ const formattedTransactions = $derived.by(() => {
     return formatted;
   });
 });
-
 
 // Initialize server account state
 $effect(() => {
@@ -235,11 +258,11 @@ const handleScheduleClick = (transaction: TransactionsFormat) => {
   schedulePreviewOpen = true;
 };
 
-
-
 const updateTransactionData = async (id: number, columnId: string, newValue?: unknown) => {
   try {
-    const transaction = Array.isArray(transactions) ? transactions.find((t: Transaction) => t.id === id) : undefined;
+    const transaction = Array.isArray(transactions)
+      ? transactions.find((t: Transaction) => t.id === id)
+      : undefined;
     if (!transaction) return;
 
     const fieldMap: Record<string, string> = {
@@ -266,14 +289,16 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
     if (actualField === 'payeeId') {
       const originalPayee = transaction.payee;
       const newPayeeId = updateData.payeeId;
-      const newPayee = payees.find(p => p.id === newPayeeId);
+      const newPayee = payees.find((p) => p.id === newPayeeId);
 
       if (originalPayee?.name) {
         // Find other transactions with same payee name (exact case-insensitive match)
         const similarTransactions = transactions.filter((t: Transaction) => {
-          return t.id !== id &&
-                 t.payee?.name &&
-                 t.payee.name.toLowerCase().trim() === originalPayee.name.toLowerCase().trim();
+          return (
+            t.id !== id &&
+            t.payee?.name &&
+            t.payee.name.toLowerCase().trim() === originalPayee.name.toLowerCase().trim()
+          );
         });
 
         if (similarTransactions.length > 0) {
@@ -290,7 +315,7 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
             payeeId: newPayeeId,
             payeeName: newPayee?.name || null,
             originalPayeeName: originalPayee.name,
-            matchCount: similarTransactions.length
+            matchCount: similarTransactions.length,
           };
           return;
         }
@@ -301,17 +326,21 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
     if (actualField === 'categoryId') {
       const originalCategory = transaction.category;
       const newCategoryId = updateData.categoryId;
-      const newCategory = categories.find(c => c.id === newCategoryId);
+      const newCategory = categories.find((c) => c.id === newCategoryId);
       const payeeName = transaction.payee?.name;
 
       // Only show bulk update dialog if there was an original category
       if (originalCategory) {
         // Find matches by payee
-        const matchesByPayee = payeeName ? transactions.filter((t: Transaction) => {
-          return t.id !== id &&
-                 t.payee?.name &&
-                 t.payee.name.toLowerCase().trim() === payeeName.toLowerCase().trim();
-        }) : [];
+        const matchesByPayee = payeeName
+          ? transactions.filter((t: Transaction) => {
+              return (
+                t.id !== id &&
+                t.payee?.name &&
+                t.payee.name.toLowerCase().trim() === payeeName.toLowerCase().trim()
+              );
+            })
+          : [];
 
         // Find matches by previous category
         const matchesByCategory = transactions.filter((t: Transaction) => {
@@ -334,7 +363,7 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
             originalPayeeName: payeeName || '',
             matchCountByPayee: matchesByPayee.length,
             matchCountByCategory: matchesByCategory.length,
-            previousCategoryId: originalCategory.id
+            previousCategoryId: originalCategory.id,
           };
           return;
         }
@@ -347,24 +376,36 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
       data: updateData,
     });
 
-    if (Array.isArray(updatedTransactionsWithBalance) && updatedTransactionsWithBalance.length > 0) {
-      const currentQueryParams = serverAccountState ? {
-        sortBy: serverAccountState.filters.sortBy,
-        sortOrder: serverAccountState.filters.sortOrder,
-        ...(serverAccountState.filters.searchQuery && { searchQuery: serverAccountState.filters.searchQuery }),
-        ...(serverAccountState.filters.dateFrom && { dateFrom: serverAccountState.filters.dateFrom }),
-        ...(serverAccountState.filters.dateTo && { dateTo: serverAccountState.filters.dateTo }),
-      } : undefined;
+    if (
+      Array.isArray(updatedTransactionsWithBalance) &&
+      updatedTransactionsWithBalance.length > 0
+    ) {
+      const currentQueryParams = serverAccountState
+        ? {
+            sortBy: serverAccountState.filters.sortBy,
+            sortOrder: serverAccountState.filters.sortOrder,
+            ...(serverAccountState.filters.searchQuery && {
+              searchQuery: serverAccountState.filters.searchQuery,
+            }),
+            ...(serverAccountState.filters.dateFrom && {
+              dateFrom: serverAccountState.filters.dateFrom,
+            }),
+            ...(serverAccountState.filters.dateTo && {dateTo: serverAccountState.filters.dateTo}),
+          }
+        : undefined;
 
-      const currentQuery = rpc.transactions.getAllAccountTransactionsWithUpcoming(Number(accountId), currentQueryParams);
+      const currentQuery = rpc.transactions.getAllAccountTransactionsWithUpcoming(
+        Number(accountId),
+        currentQueryParams
+      );
       const currentData = queryClient.getQueryData(currentQuery.queryKey);
 
       if (Array.isArray(currentData)) {
         const updatedTransactionsMap = new Map(
-          updatedTransactionsWithBalance.map(tx => [tx.id, tx])
+          updatedTransactionsWithBalance.map((tx) => [tx.id, tx])
         );
 
-        const newData = currentData.map(item => {
+        const newData = currentData.map((item) => {
           if (typeof item.id === 'number' && updatedTransactionsMap.has(item.id)) {
             return updatedTransactionsMap.get(item.id);
           }
@@ -394,8 +435,8 @@ const confirmBulkDelete = async () => {
   try {
     // Filter to only numeric IDs (exclude scheduled transactions with string IDs)
     const idsToDelete = transactionsToDelete
-      .filter(t => typeof t.id === 'number')
-      .map(t => t.id as number);
+      .filter((t) => typeof t.id === 'number')
+      .map((t) => t.id as number);
 
     if (idsToDelete.length > 0) {
       // Delete all transactions in a single batch request
@@ -420,7 +461,7 @@ const confirmBulkPayeeUpdate = async () => {
       accountId: Number(accountId),
       transactionId: bulkPayeeUpdateDialog.transactionId,
       newPayeeId: bulkPayeeUpdateDialog.payeeId,
-      originalPayeeName: bulkPayeeUpdateDialog.originalPayeeName
+      originalPayeeName: bulkPayeeUpdateDialog.originalPayeeName,
     });
 
     bulkPayeeUpdateDialog.open = false;
@@ -442,7 +483,7 @@ const confirmBulkCategoryUpdateByPayee = async () => {
       accountId: Number(accountId),
       transactionId: bulkCategoryUpdateDialog.transactionId,
       newCategoryId: bulkCategoryUpdateDialog.categoryId,
-      matchBy: 'payee'
+      matchBy: 'payee',
     });
 
     bulkCategoryUpdateDialog.open = false;
@@ -461,8 +502,8 @@ const confirmBulkCategoryUpdateByCategory = async () => {
       newCategoryId: bulkCategoryUpdateDialog.categoryId,
       matchBy: 'category',
       ...(bulkCategoryUpdateDialog.previousCategoryId && {
-        matchValue: bulkCategoryUpdateDialog.previousCategoryId
-      })
+        matchValue: bulkCategoryUpdateDialog.previousCategoryId,
+      }),
     });
 
     bulkCategoryUpdateDialog.open = false;
@@ -482,7 +523,7 @@ const cancelBulkCategoryUpdate = () => {
 let previousAccountId = $state<string | undefined>();
 
 $effect(() => {
-  if (accountId && (accountId + '') !== previousAccountId) {
+  if (accountId && accountId + '' !== previousAccountId) {
     if (serverAccountState) {
       serverAccountState.pagination.page = 0;
       serverAccountState.filters.searchQuery = '';
@@ -508,32 +549,31 @@ $effect(() => {
 
     <!-- Action Buttons (only show if account exists) -->
     {#if !isAccountNotFound}
-    <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-2">
+        <Button variant="outline" href="/accounts/{accountSlug}/edit">
+          <SquarePen class="mr-2 h-4 w-4" />
+          Edit
+        </Button>
 
-      <Button variant="outline" href="/accounts/{accountSlug}/edit">
-        <SquarePen class="mr-2 h-4 w-4" />
-        Edit
-      </Button>
+        {#if !isHsaAccount}
+          <Button variant="outline" href="/import?accountId={accountId}">
+            <Upload class="mr-2 h-4 w-4" />
+            Import
+          </Button>
+        {/if}
 
-      {#if !isHsaAccount}
-      <Button variant="outline" href="/import?accountId={accountId}">
-        <Upload class="mr-2 h-4 w-4" />
-        Import
-      </Button>
-      {/if}
-
-      {#if isHsaAccount}
-      <Button onclick={handleAddExpense}>
-        <HeartPulse class="mr-2 h-4 w-4" />
-        Add Expense
-      </Button>
-      {:else}
-      <Button onclick={() => (addTransactionDialogOpen = true)}>
-        <Plus class="mr-2 h-4 w-4" />
-        Add Transaction
-      </Button>
-      {/if}
-    </div>
+        {#if isHsaAccount}
+          <Button onclick={handleAddExpense}>
+            <HeartPulse class="mr-2 h-4 w-4" />
+            Add Expense
+          </Button>
+        {:else}
+          <Button onclick={() => (addTransactionDialogOpen = true)}>
+            <Plus class="mr-2 h-4 w-4" />
+            Add Transaction
+          </Button>
+        {/if}
+      </div>
     {/if}
   </div>
 
@@ -550,7 +590,7 @@ $effect(() => {
           <Plus class="mr-2 h-4 w-4" />
           Create Account
         </Button>
-        <a href="/accounts" class="text-blue-600 hover:text-blue-800 underline">
+        <a href="/accounts" class="text-blue-600 underline hover:text-blue-800">
           ← Go back to accounts list
         </a>
       </div>
@@ -567,278 +607,322 @@ $effect(() => {
 
   <!-- Main Content (only show if account exists) -->
   {#if !isAccountNotFound}
+    <!-- Tabs Structure -->
+    <Tabs.Root bind:value={activeTab} class="mb-1 w-full">
+      <Tabs.List class="inline-flex h-11">
+        <Tabs.Trigger value="transactions" class="px-6 font-medium">Transactions</Tabs.Trigger>
+        {#if isHsaAccount}
+          <Tabs.Trigger value="hsa-expenses" class="px-6 font-medium"
+            >Medical Expenses</Tabs.Trigger>
+          <Tabs.Trigger value="hsa-dashboard" class="px-6 font-medium">HSA Dashboard</Tabs.Trigger>
+        {/if}
+        <Tabs.Trigger value="analytics" class="px-6 font-medium">Analytics</Tabs.Trigger>
+      </Tabs.List>
 
-  <!-- Tabs Structure -->
-  <Tabs.Root bind:value={activeTab} class="mb-1 w-full">
-    <Tabs.List class="inline-flex h-11">
-      <Tabs.Trigger value="transactions" class="px-6 font-medium">Transactions</Tabs.Trigger>
+      <!-- Transactions Tab Content -->
+      <Tabs.Content value="transactions" class="space-y-4">
+        <TransactionTableContainer
+          {isLoading}
+          transactions={Array.isArray(transactions) ? transactions : []}
+          {categoriesState}
+          {payeesState}
+          views={data.views}
+          {columns}
+          {formattedTransactions}
+          {updateTransactionData}
+          {searchTransactions}
+          {budgetCount}
+          onScheduleClick={handleScheduleClick}
+          onBulkDelete={handleBulkDelete}
+          bind:table />
+
+        <!-- Add Transaction Dialog -->
+        <AddTransactionDialog
+          bind:open={addTransactionDialogOpen}
+          account={account || null}
+          payees={payees.map((p) => ({id: p.id, name: p.name || 'Unknown Payee'}))}
+          categories={categories.map((c) => ({id: c.id, name: c.name || 'Unknown Category'}))}
+          onSubmit={submitTransaction} />
+      </Tabs.Content>
+
+      <!-- HSA Medical Expenses Tab Content -->
       {#if isHsaAccount}
-      <Tabs.Trigger value="hsa-expenses" class="px-6 font-medium">Medical Expenses</Tabs.Trigger>
-      <Tabs.Trigger value="hsa-dashboard" class="px-6 font-medium">HSA Dashboard</Tabs.Trigger>
+        <Tabs.Content value="hsa-expenses" class="space-y-4">
+          {#if accountData}
+            <ExpenseTableContainer
+              hsaAccountId={accountData.id}
+              views={data.expenseViews || []}
+              onEdit={handleEditExpense} />
+          {/if}
+        </Tabs.Content>
+
+        <!-- HSA Dashboard Tab Content -->
+        <Tabs.Content value="hsa-dashboard" class="space-y-4">
+          {#if accountData}
+            <HsaDashboard account={accountData} />
+          {/if}
+        </Tabs.Content>
       {/if}
-      <Tabs.Trigger value="analytics" class="px-6 font-medium">Analytics</Tabs.Trigger>
-    </Tabs.List>
 
-    <!-- Transactions Tab Content -->
-    <Tabs.Content value="transactions" class="space-y-4">
-      <TransactionTableContainer
-        isLoading={isLoading}
-        transactions={Array.isArray(transactions) ? transactions : []}
-        {categoriesState}
-        {payeesState}
-        views={data.views}
-        {columns}
-        {formattedTransactions}
-        {updateTransactionData}
-        {searchTransactions}
-        {budgetCount}
-        onScheduleClick={handleScheduleClick}
-        onBulkDelete={handleBulkDelete}
-        bind:table />
+      <!-- Analytics Tab Content -->
+      <Tabs.Content value="analytics" class="space-y-4">
+        {#if transactions && !isLoading && activeTab === 'analytics'}
+          {#if accountData && accountData.accountType && isDebtAccount(accountData.accountType)}
+            <!-- Credit Card Metrics Dashboard -->
+            <DebtAccountMetrics account={accountData} transactions={formattedTransactions} />
+          {:else}
+            <!-- Standard Analytics Dashboard -->
+            <AnalyticsDashboard transactions={formattedTransactions} accountId={accountId + ''} />
+          {/if}
+        {:else if isLoading}
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
+              <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+            </div>
+            <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+          </div>
+        {/if}
+      </Tabs.Content>
+    </Tabs.Root>
 
-      <!-- Add Transaction Dialog -->
-      <AddTransactionDialog
-        bind:open={addTransactionDialogOpen}
-        account={account || null}
-        payees={payees.map(p => ({id: p.id, name: p.name || 'Unknown Payee'}))}
-        categories={categories.map(c => ({id: c.id, name: c.name || 'Unknown Category'}))}
-        onSubmit={submitTransaction} />
-    </Tabs.Content>
+    <!-- Bulk Delete Confirmation Dialog -->
+    <AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
+      <AlertDialog.Content>
+        <AlertDialog.Header>
+          <AlertDialog.Title
+            >Delete {transactionsToDelete.length} Transaction{transactionsToDelete.length > 1
+              ? 's'
+              : ''}</AlertDialog.Title>
+          <AlertDialog.Description>
+            Are you sure you want to delete {transactionsToDelete.length} transaction{transactionsToDelete.length >
+            1
+              ? 's'
+              : ''}? This action cannot be undone.
+          </AlertDialog.Description>
+        </AlertDialog.Header>
+        <AlertDialog.Footer>
+          <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+          <AlertDialog.Action
+            onclick={confirmBulkDelete}
+            disabled={isDeletingBulk}
+            class={buttonVariants({variant: 'destructive'})}>
+            {isDeletingBulk ? 'Deleting...' : 'Delete'}
+          </AlertDialog.Action>
+        </AlertDialog.Footer>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
 
-    <!-- HSA Medical Expenses Tab Content -->
-    {#if isHsaAccount}
-    <Tabs.Content value="hsa-expenses" class="space-y-4">
-      {#if accountData}
-        <ExpenseTableContainer
-          hsaAccountId={accountData.id}
-          views={data.expenseViews || []}
-          onEdit={handleEditExpense}
-        />
-      {/if}
-    </Tabs.Content>
+    <!-- Schedule Preview Sheet -->
+    <SchedulePreviewSheet
+      bind:open={schedulePreviewOpen}
+      scheduleId={selectedScheduleTransaction?.scheduleId}
+      scheduleSlug={selectedScheduleTransaction?.scheduleSlug}
+      scheduleName={selectedScheduleTransaction?.scheduleName}
+      amount={selectedScheduleTransaction?.amount}
+      frequency={selectedScheduleTransaction?.scheduleFrequency}
+      interval={selectedScheduleTransaction?.scheduleInterval}
+      nextOccurrence={selectedScheduleTransaction?.scheduleNextOccurrence} />
 
-    <!-- HSA Dashboard Tab Content -->
-    <Tabs.Content value="hsa-dashboard" class="space-y-4">
-      {#if accountData}
-        <HsaDashboard account={accountData} />
-      {/if}
-    </Tabs.Content>
+    <!-- HSA Add/Edit Expense Sheet -->
+    {#if isHsaAccount && accountData}
+      <ResponsiveSheet.Root bind:open={addExpenseOpen}>
+        {#snippet header()}
+          <div class="space-y-2">
+            <h2 class="text-lg font-semibold">
+              {editingExpense ? 'Edit Medical Expense' : 'Add Medical Expense'}
+            </h2>
+            <p class="text-muted-foreground text-sm">
+              {editingExpense
+                ? 'Update the medical expense details'
+                : useWizard
+                  ? 'Follow the guided wizard to add your expense'
+                  : 'Add a new medical expense to your HSA account'}
+            </p>
+          </div>
+        {/snippet}
+        {#snippet content()}
+          {#if editingExpense}
+            <!-- Editing uses regular form only -->
+            <MedicalExpenseForm
+              hsaAccountId={accountData.id}
+              accountId={accountData.id}
+              existingExpense={editingExpense}
+              onSuccess={() => {
+                addExpenseOpen = false;
+                editingExpense = null;
+              }}
+              onCancel={() => {
+                addExpenseOpen = false;
+                editingExpense = null;
+              }} />
+          {:else}
+            <!-- Adding new expense: tabs for wizard vs manual -->
+            <div class="space-y-6">
+              <Tabs.Root
+                value={useWizard ? 'wizard' : 'manual'}
+                onValueChange={(value) => {
+                  useWizard = value === 'wizard';
+                }}>
+                <Tabs.List class="grid w-full grid-cols-2">
+                  <Tabs.Trigger value="wizard" class="flex items-center gap-2">
+                    <Wand class="h-4 w-4" />
+                    Guided Setup
+                    <Badge variant="secondary" class="text-xs">Helpful</Badge>
+                  </Tabs.Trigger>
+                  <Tabs.Trigger value="manual" class="flex items-center gap-2">
+                    <FileText class="h-4 w-4" />
+                    Manual Form
+                    <Badge variant="secondary" class="text-xs">Quick</Badge>
+                  </Tabs.Trigger>
+                </Tabs.List>
+
+                <Tabs.Content value="wizard" class="mt-6">
+                  <div class="bg-muted/20 border-muted mb-4 rounded-lg border p-4">
+                    <p class="text-muted-foreground text-sm">
+                      Step-by-step guided setup. We'll walk you through each option with clear
+                      instructions.
+                    </p>
+                  </div>
+                  <ExpenseWizard
+                    hsaAccountId={accountData.id}
+                    accountId={accountData.id}
+                    onSuccess={() => {
+                      addExpenseOpen = false;
+                    }}
+                    onCancel={() => {
+                      addExpenseOpen = false;
+                    }} />
+                </Tabs.Content>
+
+                <Tabs.Content value="manual" class="mt-6">
+                  <div class="bg-muted/20 border-muted mb-4 rounded-lg border p-4">
+                    <p class="text-muted-foreground text-sm">
+                      Fill out the form directly if you're familiar with the options. Switch to <strong
+                        >Guided Setup</strong> for step-by-step help.
+                    </p>
+                  </div>
+                  <MedicalExpenseForm
+                    hsaAccountId={accountData.id}
+                    accountId={accountData.id}
+                    onSuccess={() => {
+                      addExpenseOpen = false;
+                    }}
+                    onCancel={() => {
+                      addExpenseOpen = false;
+                    }} />
+                </Tabs.Content>
+              </Tabs.Root>
+            </div>
+          {/if}
+        {/snippet}
+      </ResponsiveSheet.Root>
     {/if}
 
-    <!-- Analytics Tab Content -->
-    <Tabs.Content value="analytics" class="space-y-4">
-      {#if transactions && !isLoading && activeTab === 'analytics'}
-        {#if accountData && accountData.accountType && isDebtAccount(accountData.accountType)}
-          <!-- Credit Card Metrics Dashboard -->
-          <DebtAccountMetrics account={accountData} transactions={formattedTransactions} />
-        {:else}
-          <!-- Standard Analytics Dashboard -->
-          <AnalyticsDashboard transactions={formattedTransactions} accountId={accountId + ''} />
-        {/if}
-      {:else if isLoading}
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
-            <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
-          </div>
-          <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
-        </div>
-      {/if}
-    </Tabs.Content>
-  </Tabs.Root>
+    <!-- Bulk Payee Update Dialog -->
+    <AlertDialog.Root bind:open={bulkPayeeUpdateDialog.open}>
+      <AlertDialog.Content>
+        <AlertDialog.Header>
+          <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
+          <AlertDialog.Description>
+            Found {bulkPayeeUpdateDialog.matchCount} other transaction{bulkPayeeUpdateDialog.matchCount !==
+            1
+              ? 's'
+              : ''} with payee "{bulkPayeeUpdateDialog.originalPayeeName}".
+            <br /><br />
+            Would you like to update {bulkPayeeUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to payee
+            "{bulkPayeeUpdateDialog.payeeName || 'None'}" as well?
+          </AlertDialog.Description>
+        </AlertDialog.Header>
+        <AlertDialog.Footer class="flex-col gap-2 sm:flex-col">
+          <AlertDialog.Action onclick={confirmBulkPayeeUpdate} class="w-full">
+            Yes, Update All Similar ({bulkPayeeUpdateDialog.matchCount + 1} transactions)
+          </AlertDialog.Action>
+          <AlertDialog.Cancel onclick={cancelBulkPayeeUpdate} class="w-full">
+            No, Just This One
+          </AlertDialog.Cancel>
+        </AlertDialog.Footer>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
 
-  <!-- Bulk Delete Confirmation Dialog -->
-  <AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
-    <AlertDialog.Content>
-      <AlertDialog.Header>
-        <AlertDialog.Title>Delete {transactionsToDelete.length} Transaction{transactionsToDelete.length > 1 ? 's' : ''}</AlertDialog.Title>
-        <AlertDialog.Description>
-          Are you sure you want to delete {transactionsToDelete.length} transaction{transactionsToDelete.length > 1 ? 's' : ''}? This action cannot be undone.
-        </AlertDialog.Description>
-      </AlertDialog.Header>
-      <AlertDialog.Footer>
-        <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-        <AlertDialog.Action
-          onclick={confirmBulkDelete}
-          disabled={isDeletingBulk}
-          class={buttonVariants({variant: 'destructive'})}>
-          {isDeletingBulk ? 'Deleting...' : 'Delete'}
-        </AlertDialog.Action>
-      </AlertDialog.Footer>
-    </AlertDialog.Content>
-  </AlertDialog.Root>
+    <!-- Bulk Category Update Dialog -->
+    <AlertDialog.Root bind:open={bulkCategoryUpdateDialog.open}>
+      <AlertDialog.Content class="max-w-2xl">
+        <AlertDialog.Header>
+          <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
+          <AlertDialog.Description class="space-y-3">
+            {#if bulkCategoryUpdateDialog.categoryName}
+              <p>
+                You're changing the category to "<strong
+                  >{bulkCategoryUpdateDialog.categoryName}</strong
+                >". How would you like to apply this change?
+              </p>
+            {:else}
+              <p>
+                You're <strong>removing the category</strong> from this transaction. How would you like
+                to apply this change?
+              </p>
+            {/if}
 
-  <!-- Schedule Preview Sheet -->
-  <SchedulePreviewSheet
-    bind:open={schedulePreviewOpen}
-    scheduleId={selectedScheduleTransaction?.scheduleId}
-    scheduleSlug={selectedScheduleTransaction?.scheduleSlug}
-    scheduleName={selectedScheduleTransaction?.scheduleName}
-    amount={selectedScheduleTransaction?.amount}
-    frequency={selectedScheduleTransaction?.scheduleFrequency}
-    interval={selectedScheduleTransaction?.scheduleInterval}
-    nextOccurrence={selectedScheduleTransaction?.scheduleNextOccurrence} />
-
-  <!-- HSA Add/Edit Expense Sheet -->
-  {#if isHsaAccount && accountData}
-    <ResponsiveSheet.Root bind:open={addExpenseOpen}>
-      {#snippet header()}
-        <div class="space-y-2">
-          <h2 class="text-lg font-semibold">
-            {editingExpense ? 'Edit Medical Expense' : 'Add Medical Expense'}
-          </h2>
-          <p class="text-sm text-muted-foreground">
-            {editingExpense ? 'Update the medical expense details' : useWizard ? 'Follow the guided wizard to add your expense' : 'Add a new medical expense to your HSA account'}
-          </p>
-        </div>
-      {/snippet}
-      {#snippet content()}
-        {#if editingExpense}
-          <!-- Editing uses regular form only -->
-          <MedicalExpenseForm
-            hsaAccountId={accountData.id}
-            accountId={accountData.id}
-            existingExpense={editingExpense}
-            onSuccess={() => {
-              addExpenseOpen = false;
-              editingExpense = null;
-            }}
-            onCancel={() => {
-              addExpenseOpen = false;
-              editingExpense = null;
-            }}
-          />
-        {:else}
-          <!-- Adding new expense: tabs for wizard vs manual -->
-          <div class="space-y-6">
-            <Tabs.Root value={useWizard ? 'wizard' : 'manual'} onValueChange={(value) => {
-              useWizard = value === 'wizard';
-            }}>
-              <Tabs.List class="grid w-full grid-cols-2">
-                <Tabs.Trigger value="wizard" class="flex items-center gap-2">
-                  <Wand class="h-4 w-4" />
-                  Guided Setup
-                  <Badge variant="secondary" class="text-xs">Helpful</Badge>
-                </Tabs.Trigger>
-                <Tabs.Trigger value="manual" class="flex items-center gap-2">
-                  <FileText class="h-4 w-4" />
-                  Manual Form
-                  <Badge variant="secondary" class="text-xs">Quick</Badge>
-                </Tabs.Trigger>
-              </Tabs.List>
-
-              <Tabs.Content value="wizard" class="mt-6">
-                <div class="bg-muted/20 border border-muted rounded-lg p-4 mb-4">
-                  <p class="text-sm text-muted-foreground">
-                    Step-by-step guided setup. We'll walk you through each option with clear instructions.
-                  </p>
-                </div>
-                <ExpenseWizard
-                  hsaAccountId={accountData.id}
-                  accountId={accountData.id}
-                  onSuccess={() => {
-                    addExpenseOpen = false;
-                  }}
-                  onCancel={() => {
-                    addExpenseOpen = false;
-                  }}
-                />
-              </Tabs.Content>
-
-              <Tabs.Content value="manual" class="mt-6">
-                <div class="bg-muted/20 border border-muted rounded-lg p-4 mb-4">
-                  <p class="text-sm text-muted-foreground">
-                    Fill out the form directly if you're familiar with the options.
-                    Switch to <strong>Guided Setup</strong> for step-by-step help.
-                  </p>
-                </div>
-                <MedicalExpenseForm
-                  hsaAccountId={accountData.id}
-                  accountId={accountData.id}
-                  onSuccess={() => {
-                    addExpenseOpen = false;
-                  }}
-                  onCancel={() => {
-                    addExpenseOpen = false;
-                  }}
-                />
-              </Tabs.Content>
-            </Tabs.Root>
-          </div>
-        {/if}
-      {/snippet}
-    </ResponsiveSheet.Root>
-  {/if}
-
-  <!-- Bulk Payee Update Dialog -->
-  <AlertDialog.Root bind:open={bulkPayeeUpdateDialog.open}>
-    <AlertDialog.Content>
-      <AlertDialog.Header>
-        <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
-        <AlertDialog.Description>
-          Found {bulkPayeeUpdateDialog.matchCount} other transaction{bulkPayeeUpdateDialog.matchCount !== 1 ? 's' : ''} with payee "{bulkPayeeUpdateDialog.originalPayeeName}".
-          <br /><br />
-          Would you like to update {bulkPayeeUpdateDialog.matchCount !== 1 ? 'them' : 'it'} to payee "{bulkPayeeUpdateDialog.payeeName || 'None'}" as well?
-        </AlertDialog.Description>
-      </AlertDialog.Header>
-      <AlertDialog.Footer class="flex-col sm:flex-col gap-2">
-        <AlertDialog.Action onclick={confirmBulkPayeeUpdate} class="w-full">
-          Yes, Update All Similar ({bulkPayeeUpdateDialog.matchCount + 1} transactions)
-        </AlertDialog.Action>
-        <AlertDialog.Cancel onclick={cancelBulkPayeeUpdate} class="w-full">
-          No, Just This One
-        </AlertDialog.Cancel>
-      </AlertDialog.Footer>
-    </AlertDialog.Content>
-  </AlertDialog.Root>
-
-  <!-- Bulk Category Update Dialog -->
-  <AlertDialog.Root bind:open={bulkCategoryUpdateDialog.open}>
-    <AlertDialog.Content class="max-w-2xl">
-      <AlertDialog.Header>
-        <AlertDialog.Title>Update Similar Transactions?</AlertDialog.Title>
-        <AlertDialog.Description class="space-y-3">
-          {#if bulkCategoryUpdateDialog.categoryName}
-            <p>You're changing the category to "<strong>{bulkCategoryUpdateDialog.categoryName}</strong>". How would you like to apply this change?</p>
-          {:else}
-            <p>You're <strong>removing the category</strong> from this transaction. How would you like to apply this change?</p>
-          {/if}
-
+            {#if bulkCategoryUpdateDialog.matchCountByPayee > 0 && bulkCategoryUpdateDialog.matchCountByCategory > 0}
+              <div class="space-y-2 text-sm">
+                <p>
+                  • <strong>{bulkCategoryUpdateDialog.matchCountByPayee}</strong> other transaction{bulkCategoryUpdateDialog.matchCountByPayee !==
+                  1
+                    ? 's'
+                    : ''} with the same payee "<strong
+                    >{bulkCategoryUpdateDialog.originalPayeeName}</strong
+                  >"
+                </p>
+                <p>
+                  • <strong>{bulkCategoryUpdateDialog.matchCountByCategory}</strong> other
+                  transaction{bulkCategoryUpdateDialog.matchCountByCategory !== 1 ? 's' : ''} with the
+                  same previous category
+                </p>
+              </div>
+            {:else if bulkCategoryUpdateDialog.matchCountByPayee > 0}
+              <p class="text-sm">
+                Found <strong>{bulkCategoryUpdateDialog.matchCountByPayee}</strong> other
+                transaction{bulkCategoryUpdateDialog.matchCountByPayee !== 1 ? 's' : ''} with the same
+                payee "<strong>{bulkCategoryUpdateDialog.originalPayeeName}</strong>".
+              </p>
+            {:else if bulkCategoryUpdateDialog.matchCountByCategory > 0}
+              <p class="text-sm">
+                Found <strong>{bulkCategoryUpdateDialog.matchCountByCategory}</strong> other
+                transaction{bulkCategoryUpdateDialog.matchCountByCategory !== 1 ? 's' : ''} with the
+                same previous category.
+              </p>
+            {/if}
+          </AlertDialog.Description>
+        </AlertDialog.Header>
+        <AlertDialog.Footer class="flex-col gap-2 sm:flex-col">
           {#if bulkCategoryUpdateDialog.matchCountByPayee > 0 && bulkCategoryUpdateDialog.matchCountByCategory > 0}
-            <div class="space-y-2 text-sm">
-              <p>• <strong>{bulkCategoryUpdateDialog.matchCountByPayee}</strong> other transaction{bulkCategoryUpdateDialog.matchCountByPayee !== 1 ? 's' : ''} with the same payee "<strong>{bulkCategoryUpdateDialog.originalPayeeName}</strong>"</p>
-              <p>• <strong>{bulkCategoryUpdateDialog.matchCountByCategory}</strong> other transaction{bulkCategoryUpdateDialog.matchCountByCategory !== 1 ? 's' : ''} with the same previous category</p>
-            </div>
+            <AlertDialog.Action onclick={confirmBulkCategoryUpdateByPayee} class="w-full">
+              Update All Same Payee ({bulkCategoryUpdateDialog.matchCountByPayee + 1} transactions)
+            </AlertDialog.Action>
+            <AlertDialog.Action
+              onclick={confirmBulkCategoryUpdateByCategory}
+              class="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full">
+              Update All Same Category ({bulkCategoryUpdateDialog.matchCountByCategory + 1} transactions)
+            </AlertDialog.Action>
           {:else if bulkCategoryUpdateDialog.matchCountByPayee > 0}
-            <p class="text-sm">Found <strong>{bulkCategoryUpdateDialog.matchCountByPayee}</strong> other transaction{bulkCategoryUpdateDialog.matchCountByPayee !== 1 ? 's' : ''} with the same payee "<strong>{bulkCategoryUpdateDialog.originalPayeeName}</strong>".</p>
+            <AlertDialog.Action onclick={confirmBulkCategoryUpdateByPayee} class="w-full">
+              Update All Same Payee ({bulkCategoryUpdateDialog.matchCountByPayee + 1} transactions)
+            </AlertDialog.Action>
           {:else if bulkCategoryUpdateDialog.matchCountByCategory > 0}
-            <p class="text-sm">Found <strong>{bulkCategoryUpdateDialog.matchCountByCategory}</strong> other transaction{bulkCategoryUpdateDialog.matchCountByCategory !== 1 ? 's' : ''} with the same previous category.</p>
+            <AlertDialog.Action onclick={confirmBulkCategoryUpdateByCategory} class="w-full">
+              Update All Same Category ({bulkCategoryUpdateDialog.matchCountByCategory + 1} transactions)
+            </AlertDialog.Action>
           {/if}
-        </AlertDialog.Description>
-      </AlertDialog.Header>
-      <AlertDialog.Footer class="flex-col sm:flex-col gap-2">
-        {#if bulkCategoryUpdateDialog.matchCountByPayee > 0 && bulkCategoryUpdateDialog.matchCountByCategory > 0}
-          <AlertDialog.Action onclick={confirmBulkCategoryUpdateByPayee} class="w-full">
-            Update All Same Payee ({bulkCategoryUpdateDialog.matchCountByPayee + 1} transactions)
+          <AlertDialog.Action
+            onclick={confirmBulkCategoryUpdateJustOne}
+            class="bg-secondary text-secondary-foreground hover:bg-secondary/80 w-full">
+            Just This One
           </AlertDialog.Action>
-          <AlertDialog.Action onclick={confirmBulkCategoryUpdateByCategory} class="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80">
-            Update All Same Category ({bulkCategoryUpdateDialog.matchCountByCategory + 1} transactions)
-          </AlertDialog.Action>
-        {:else if bulkCategoryUpdateDialog.matchCountByPayee > 0}
-          <AlertDialog.Action onclick={confirmBulkCategoryUpdateByPayee} class="w-full">
-            Update All Same Payee ({bulkCategoryUpdateDialog.matchCountByPayee + 1} transactions)
-          </AlertDialog.Action>
-        {:else if bulkCategoryUpdateDialog.matchCountByCategory > 0}
-          <AlertDialog.Action onclick={confirmBulkCategoryUpdateByCategory} class="w-full">
-            Update All Same Category ({bulkCategoryUpdateDialog.matchCountByCategory + 1} transactions)
-          </AlertDialog.Action>
-        {/if}
-        <AlertDialog.Action onclick={confirmBulkCategoryUpdateJustOne} class="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80">
-          Just This One
-        </AlertDialog.Action>
-        <AlertDialog.Cancel onclick={cancelBulkCategoryUpdate} class="w-full">Cancel</AlertDialog.Cancel>
-      </AlertDialog.Footer>
-    </AlertDialog.Content>
-  </AlertDialog.Root>
+          <AlertDialog.Cancel onclick={cancelBulkCategoryUpdate} class="w-full"
+            >Cancel</AlertDialog.Cancel>
+        </AlertDialog.Footer>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
   {/if}
 </div>

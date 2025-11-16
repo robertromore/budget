@@ -133,8 +133,7 @@ function getAccountIcon(account: AccountEntity) {
             {@const AccountIcon = getAccountIcon(value)}
             <AccountIcon
               class="-mt-1 mr-1 inline-block size-4"
-              style={value.accountColor ? `color: ${value.accountColor}` : ''}
-            />
+              style={value.accountColor ? `color: ${value.accountColor}` : ''} />
           {:else}
             <CreditCard class="-mt-1 mr-1 inline-block size-4" />
           {/if}
@@ -142,10 +141,11 @@ function getAccountIcon(account: AccountEntity) {
         </Button>
       {/snippet}
     </Popover.Trigger>
-    <Popover.Content class="p-0 overflow-hidden" align="start">
+    <Popover.Content class="overflow-hidden p-0" align="start">
       <!-- Sliding Panel Container -->
-      <div class="grid grid-cols-2 transition-transform duration-300 ease-in-out" style="width: 200%; transform: translateX({manage ? '-50%' : '0%'})">
-
+      <div
+        class="grid grid-cols-2 transition-transform duration-300 ease-in-out"
+        style="width: 200%; transform: translateX({manage ? '-50%' : '0%'})">
         <!-- Panel 1: Account List -->
         <div class="w-full min-w-0">
           <Command.Root shouldFilter={false}>
@@ -154,7 +154,7 @@ function getAccountIcon(account: AccountEntity) {
               {#if management?.enable}
                 <Button
                   size="icon"
-                  class="rounded-none border-l-0 border-b shadow-none"
+                  class="rounded-none border-b border-l-0 shadow-none"
                   onclick={addNew}>
                   <Plus />
                 </Button>
@@ -176,15 +176,14 @@ function getAccountIcon(account: AccountEntity) {
                       open = false;
                     }}>
                     <Check class={cn(selected?.id != entity.id && 'text-transparent')} />
-                    <div class="flex items-center gap-2 flex-grow">
+                    <div class="flex flex-grow items-center gap-2">
                       <AccountIcon
                         class="h-4 w-4"
-                        style={entity.accountColor ? `color: ${entity.accountColor}` : ''}
-                      />
+                        style={entity.accountColor ? `color: ${entity.accountColor}` : ''} />
                       <div class="flex flex-col">
                         <span class="font-medium">{entity.name}</span>
                         {#if entity.accountType || entity.institution}
-                          <span class="text-xs text-muted-foreground">
+                          <span class="text-muted-foreground text-xs">
                             {#if entity.accountType}
                               <span class="capitalize">{entity.accountType.replace('_', ' ')}</span>
                             {/if}
@@ -217,7 +216,7 @@ function getAccountIcon(account: AccountEntity) {
 
         <!-- Panel 2: Management Form -->
         <div class="w-full min-w-0 p-4">
-          <div class="flex items-center gap-2 mb-4">
+          <div class="mb-4 flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -239,7 +238,6 @@ function getAccountIcon(account: AccountEntity) {
             {/if}
           {/if}
         </div>
-
       </div>
     </Popover.Content>
   </Popover.Root>

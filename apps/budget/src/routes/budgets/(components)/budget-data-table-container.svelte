@@ -26,23 +26,19 @@ let {
   onArchive,
   onBulkDelete,
   onBulkArchive,
-  table = $bindable()
+  table = $bindable(),
 }: Props = $props();
 
 // Create columns with action handlers
-const tableColumns = $derived(createColumns({
-  onView,
-  onEdit,
-  onDuplicate,
-  onArchive,
-  onDelete
-}));
+const tableColumns = $derived(
+  createColumns({
+    onView,
+    onEdit,
+    onDuplicate,
+    onArchive,
+    onDelete,
+  })
+);
 </script>
 
-<BudgetDataTable
-  columns={tableColumns}
-  {budgets}
-  {onBulkDelete}
-  {onBulkArchive}
-  bind:table
-/>
+<BudgetDataTable columns={tableColumns} {budgets} {onBulkDelete} {onBulkArchive} bind:table />

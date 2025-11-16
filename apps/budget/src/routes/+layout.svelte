@@ -107,7 +107,7 @@ onMount(() => {
           <ThemeButton />
         </div>
         <div class="col-span-3 lg:col-span-4">
-          <div class="h-full pl-6 pr-4 py-6 lg:pl-10 lg:pr-8">
+          <div class="h-full py-6 pr-4 pl-6 lg:pr-8 lg:pl-10">
             {@render children?.()}
           </div>
         </div>

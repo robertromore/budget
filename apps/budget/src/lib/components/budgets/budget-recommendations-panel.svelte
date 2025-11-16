@@ -1,153 +1,157 @@
 <script lang="ts">
-  import {Button} from "$lib/components/ui/button";
-  import {Badge} from "$lib/components/ui/badge";
-  import * as Select from "$lib/components/ui/select";
-  import {Sparkles, Users, Filter} from "@lucide/svelte/icons";
-  import AnalyzeSpendingSheet from "./analyze-spending-sheet.svelte";
-  import GroupRecommendationPreviewModal from "./group-recommendation-preview-modal.svelte";
-  import {listRecommendations, applyRecommendation, dismissRecommendation} from "$lib/query/budgets";
-  import RecommendationDataTable from "./recommendations/recommendation-data-table.svelte";
-  import {columns} from "./recommendations/data/columns.svelte";
-  import type {BudgetRecommendationWithRelations} from "$lib/schema/recommendations";
+import {Button} from '$lib/components/ui/button';
+import {Badge} from '$lib/components/ui/badge';
+import * as Select from '$lib/components/ui/select';
+import {Sparkles, Users, Filter} from '@lucide/svelte/icons';
+import AnalyzeSpendingSheet from './analyze-spending-sheet.svelte';
+import GroupRecommendationPreviewModal from './group-recommendation-preview-modal.svelte';
+import {listRecommendations, applyRecommendation, dismissRecommendation} from '$lib/query/budgets';
+import RecommendationDataTable from './recommendations/recommendation-data-table.svelte';
+import {columns} from './recommendations/data/columns.svelte';
+import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
 
-  interface Props {
-    budgetId?: number;
-    accountId?: number;
-    categoryId?: number;
-    budgets?: any[]; // For preview modal
+interface Props {
+  budgetId?: number;
+  accountId?: number;
+  categoryId?: number;
+  budgets?: any[]; // For preview modal
+}
+
+let {budgetId, accountId, categoryId, budgets = []}: Props = $props();
+
+let analyzeDialogOpen = $state(false);
+let previewModalOpen = $state(false);
+let selectedRecommendation = $state<BudgetRecommendationWithRelations | null>(null);
+let typeFilter = $state<string>('all');
+
+// Build filters
+const filters = $derived.by(() => {
+  const f: any = {};
+  if (budgetId) f.budgetId = budgetId;
+  if (accountId) f.accountId = accountId;
+  if (categoryId) f.categoryId = categoryId;
+  return f;
+});
+
+const recommendationsQuery = $derived(listRecommendations(filters).options());
+const allRecommendations = $derived(recommendationsQuery.data ?? []);
+const isLoading = $derived(recommendationsQuery.isLoading);
+
+// Filter recommendations by type
+const recommendations = $derived(() => {
+  if (typeFilter === 'all') return allRecommendations;
+
+  if (typeFilter === 'groups') {
+    return allRecommendations.filter(
+      (rec) =>
+        rec.type === 'create_budget_group' ||
+        rec.type === 'add_to_budget_group' ||
+        rec.type === 'merge_budget_groups' ||
+        rec.type === 'adjust_group_limit'
+    );
   }
 
-  let {budgetId, accountId, categoryId, budgets = []}: Props = $props();
+  if (typeFilter === 'budgets') {
+    return allRecommendations.filter(
+      (rec) =>
+        rec.type === 'create_budget' ||
+        rec.type === 'increase_budget' ||
+        rec.type === 'decrease_budget' ||
+        rec.type === 'merge_budgets' ||
+        rec.type === 'seasonal_adjustment' ||
+        rec.type === 'missing_category'
+    );
+  }
 
-  let analyzeDialogOpen = $state(false);
-  let previewModalOpen = $state(false);
-  let selectedRecommendation = $state<BudgetRecommendationWithRelations | null>(null);
-  let typeFilter = $state<string>("all");
+  return allRecommendations;
+});
 
-  // Build filters
-  const filters = $derived.by(() => {
-    const f: any = {};
-    if (budgetId) f.budgetId = budgetId;
-    if (accountId) f.accountId = accountId;
-    if (categoryId) f.categoryId = categoryId;
-    return f;
+// Count recommendations by type
+const groupRecommendationsCount = $derived(
+  allRecommendations.filter(
+    (rec) =>
+      rec.type === 'create_budget_group' ||
+      rec.type === 'add_to_budget_group' ||
+      rec.type === 'merge_budget_groups' ||
+      rec.type === 'adjust_group_limit'
+  ).length
+);
+
+const budgetRecommendationsCount = $derived(
+  allRecommendations.filter(
+    (rec) =>
+      rec.type === 'create_budget' ||
+      rec.type === 'increase_budget' ||
+      rec.type === 'decrease_budget' ||
+      rec.type === 'merge_budgets' ||
+      rec.type === 'seasonal_adjustment' ||
+      rec.type === 'missing_category'
+  ).length
+);
+
+// Mutations
+const applyMutation = applyRecommendation.options();
+const dismissMutation = dismissRecommendation.options();
+
+function handleApply(recommendation: BudgetRecommendationWithRelations) {
+  // Show preview modal for group recommendations
+  const isGroupRecommendation =
+    recommendation.type === 'create_budget_group' ||
+    recommendation.type === 'add_to_budget_group' ||
+    recommendation.type === 'merge_budget_groups' ||
+    recommendation.type === 'adjust_group_limit';
+
+  if (isGroupRecommendation) {
+    selectedRecommendation = recommendation;
+    previewModalOpen = true;
+  } else {
+    applyMutation.mutate(recommendation.id);
+  }
+}
+
+function handleDismiss(recommendation: BudgetRecommendationWithRelations) {
+  dismissMutation.mutate(recommendation.id);
+}
+
+function handleBulkApply(recommendations: BudgetRecommendationWithRelations[]) {
+  // Apply all recommendations sequentially
+  recommendations.forEach((rec) => {
+    applyMutation.mutate(rec.id);
   });
+}
 
-  const recommendationsQuery = $derived(listRecommendations(filters).options());
-  const allRecommendations = $derived(recommendationsQuery.data ?? []);
-  const isLoading = $derived(recommendationsQuery.isLoading);
-
-  // Filter recommendations by type
-  const recommendations = $derived(() => {
-    if (typeFilter === "all") return allRecommendations;
-
-    if (typeFilter === "groups") {
-      return allRecommendations.filter((rec) =>
-        rec.type === "create_budget_group" ||
-        rec.type === "add_to_budget_group" ||
-        rec.type === "merge_budget_groups" ||
-        rec.type === "adjust_group_limit"
-      );
-    }
-
-    if (typeFilter === "budgets") {
-      return allRecommendations.filter((rec) =>
-        rec.type === "create_budget" ||
-        rec.type === "increase_budget" ||
-        rec.type === "decrease_budget" ||
-        rec.type === "merge_budgets" ||
-        rec.type === "seasonal_adjustment" ||
-        rec.type === "missing_category"
-      );
-    }
-
-    return allRecommendations;
+function handleBulkDismiss(recommendations: BudgetRecommendationWithRelations[]) {
+  // Dismiss all recommendations sequentially
+  recommendations.forEach((rec) => {
+    dismissMutation.mutate(rec.id);
   });
+}
 
-  // Count recommendations by type
-  const groupRecommendationsCount = $derived(
-    allRecommendations.filter((rec) =>
-      rec.type === "create_budget_group" ||
-      rec.type === "add_to_budget_group" ||
-      rec.type === "merge_budget_groups" ||
-      rec.type === "adjust_group_limit"
-    ).length
-  );
+async function handleAcceptGroupRecommendation(recommendationId: number) {
+  applyMutation.mutate(recommendationId);
+}
 
-  const budgetRecommendationsCount = $derived(
-    allRecommendations.filter((rec) =>
-      rec.type === "create_budget" ||
-      rec.type === "increase_budget" ||
-      rec.type === "decrease_budget" ||
-      rec.type === "merge_budgets" ||
-      rec.type === "seasonal_adjustment" ||
-      rec.type === "missing_category"
-    ).length
-  );
+async function handleRejectGroupRecommendation(recommendationId: number) {
+  dismissMutation.mutate(recommendationId);
+}
 
-  // Mutations
-  const applyMutation = applyRecommendation.options();
-  const dismissMutation = dismissRecommendation.options();
+function handleClosePreviewModal() {
+  selectedRecommendation = null;
+  previewModalOpen = false;
+}
 
-  function handleApply(recommendation: BudgetRecommendationWithRelations) {
-    // Show preview modal for group recommendations
-    const isGroupRecommendation =
-      recommendation.type === "create_budget_group" ||
-      recommendation.type === "add_to_budget_group" ||
-      recommendation.type === "merge_budget_groups" ||
-      recommendation.type === "adjust_group_limit";
-
-    if (isGroupRecommendation) {
-      selectedRecommendation = recommendation;
-      previewModalOpen = true;
-    } else {
-      applyMutation.mutate(recommendation.id);
-    }
-  }
-
-  function handleDismiss(recommendation: BudgetRecommendationWithRelations) {
-    dismissMutation.mutate(recommendation.id);
-  }
-
-  function handleBulkApply(recommendations: BudgetRecommendationWithRelations[]) {
-    // Apply all recommendations sequentially
-    recommendations.forEach((rec) => {
-      applyMutation.mutate(rec.id);
-    });
-  }
-
-  function handleBulkDismiss(recommendations: BudgetRecommendationWithRelations[]) {
-    // Dismiss all recommendations sequentially
-    recommendations.forEach((rec) => {
-      dismissMutation.mutate(rec.id);
-    });
-  }
-
-  async function handleAcceptGroupRecommendation(recommendationId: number) {
-    applyMutation.mutate(recommendationId);
-  }
-
-  async function handleRejectGroupRecommendation(recommendationId: number) {
-    dismissMutation.mutate(recommendationId);
-  }
-
-  function handleClosePreviewModal() {
-    selectedRecommendation = null;
-    previewModalOpen = false;
-  }
-
-  // Create columns with handlers
-  const tableColumns = $derived(columns(handleApply, handleDismiss));
+// Create columns with handlers
+const tableColumns = $derived(columns(handleApply, handleDismiss));
 </script>
 
 <div class="space-y-4">
   <!-- Header -->
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div class="flex items-center gap-2">
-      <Sparkles class="h-5 w-5 text-primary" />
+      <Sparkles class="text-primary h-5 w-5" />
       <h2 class="text-lg font-semibold">Budget Recommendations</h2>
       {#if allRecommendations.length > 0}
-        <span class="text-sm text-muted-foreground">
+        <span class="text-muted-foreground text-sm">
           ({allRecommendations.length} total)
         </span>
       {/if}
@@ -161,15 +165,15 @@
   <!-- Filters -->
   {#if allRecommendations.length > 0}
     <div class="flex items-center gap-3">
-      <div class="flex items-center gap-2 text-sm text-muted-foreground">
+      <div class="text-muted-foreground flex items-center gap-2 text-sm">
         <Filter class="h-4 w-4" />
         <span>Filter by:</span>
       </div>
       <Select.Root type="single" bind:value={typeFilter}>
         <Select.Trigger class="w-[200px]">
-          {#if typeFilter === "all"}
+          {#if typeFilter === 'all'}
             All Recommendations
-          {:else if typeFilter === "groups"}
+          {:else if typeFilter === 'groups'}
             Group Recommendations
           {:else}
             Budget Recommendations
@@ -177,7 +181,7 @@
         </Select.Trigger>
         <Select.Content>
           <Select.Item value="all">
-            <div class="flex items-center justify-between w-full gap-3">
+            <div class="flex w-full items-center justify-between gap-3">
               <span>All Recommendations</span>
               {#if allRecommendations.length > 0}
                 <Badge variant="secondary" class="text-xs">
@@ -187,7 +191,7 @@
             </div>
           </Select.Item>
           <Select.Item value="groups">
-            <div class="flex items-center justify-between w-full gap-3">
+            <div class="flex w-full items-center justify-between gap-3">
               <div class="flex items-center gap-2">
                 <Users class="h-3 w-3" />
                 <span>Group Recommendations</span>
@@ -200,7 +204,7 @@
             </div>
           </Select.Item>
           <Select.Item value="budgets">
-            <div class="flex items-center justify-between w-full gap-3">
+            <div class="flex w-full items-center justify-between gap-3">
               <span>Budget Recommendations</span>
               {#if budgetRecommendationsCount > 0}
                 <Badge variant="secondary" class="text-xs">
@@ -212,14 +216,18 @@
         </Select.Content>
       </Select.Root>
 
-      {#if typeFilter === "groups" && groupRecommendationsCount > 0}
+      {#if typeFilter === 'groups' && groupRecommendationsCount > 0}
         <Badge variant="outline" class="gap-1.5">
           <Users class="h-3 w-3" />
-          {groupRecommendationsCount} group recommendation{groupRecommendationsCount !== 1 ? 's' : ''}
+          {groupRecommendationsCount} group recommendation{groupRecommendationsCount !== 1
+            ? 's'
+            : ''}
         </Badge>
-      {:else if typeFilter === "budgets" && budgetRecommendationsCount > 0}
+      {:else if typeFilter === 'budgets' && budgetRecommendationsCount > 0}
         <Badge variant="outline">
-          {budgetRecommendationsCount} budget recommendation{budgetRecommendationsCount !== 1 ? 's' : ''}
+          {budgetRecommendationsCount} budget recommendation{budgetRecommendationsCount !== 1
+            ? 's'
+            : ''}
         </Badge>
       {/if}
     </div>
@@ -228,20 +236,21 @@
   <!-- Data Table -->
   {#if isLoading}
     <div class="flex items-center justify-center py-12">
-      <div class="text-sm text-muted-foreground">Loading recommendations...</div>
+      <div class="text-muted-foreground text-sm">Loading recommendations...</div>
     </div>
   {:else}
     <RecommendationDataTable
       columns={tableColumns}
       recommendations={recommendations()}
       onBulkApply={handleBulkApply}
-      onBulkDismiss={handleBulkDismiss}
-    />
+      onBulkDismiss={handleBulkDismiss} />
   {/if}
 </div>
 
 <!-- Analyze Sheet -->
-<AnalyzeSpendingSheet bind:open={analyzeDialogOpen} onOpenChange={(open) => (analyzeDialogOpen = open)} />
+<AnalyzeSpendingSheet
+  bind:open={analyzeDialogOpen}
+  onOpenChange={(open) => (analyzeDialogOpen = open)} />
 
 <!-- Group Recommendation Preview Modal -->
 <GroupRecommendationPreviewModal
@@ -250,5 +259,4 @@
   {budgets}
   onAccept={handleAcceptGroupRecommendation}
   onReject={handleRejectGroupRecommendation}
-  onClose={handleClosePreviewModal}
-/>
+  onClose={handleClosePreviewModal} />

@@ -2,9 +2,9 @@ import type {
   BudgetRecommendationWithRelations,
   RecommendationPriority,
   RecommendationStatus,
-  RecommendationType
-} from '$lib/schema/recommendations';
-import { createLocalStorageState } from '$lib/utils/local-storage.svelte';
+  RecommendationType,
+} from "$lib/schema/recommendations";
+import {createLocalStorageState} from "$lib/utils/local-storage.svelte";
 
 export interface RecommendationSearchFilters {
   status?: RecommendationStatus;
@@ -24,9 +24,9 @@ interface RecommendationSearchState {
   isLoading: boolean;
   totalCount: number;
   hasMore: boolean;
-  sortBy: 'created' | 'confidence' | 'priority' | 'type';
-  sortOrder: 'asc' | 'desc';
-  viewMode: 'grid' | 'list';
+  sortBy: "created" | "confidence" | "priority" | "type";
+  sortOrder: "asc" | "desc";
+  viewMode: "grid" | "list";
 }
 
 /**
@@ -34,27 +34,48 @@ interface RecommendationSearchState {
  */
 class RecommendationSearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState<'grid' | 'list'>('recommendation-search-view-mode', 'grid');
-  private sortByState = createLocalStorageState<'created' | 'confidence' | 'priority' | 'type'>('recommendation-search-sort-by', 'priority');
-  private sortOrderState = createLocalStorageState<'asc' | 'desc'>('recommendation-search-sort-order', 'desc');
+  private viewModeState = createLocalStorageState<"grid" | "list">(
+    "recommendation-search-view-mode",
+    "grid"
+  );
+  private sortByState = createLocalStorageState<"created" | "confidence" | "priority" | "type">(
+    "recommendation-search-sort-by",
+    "priority"
+  );
+  private sortOrderState = createLocalStorageState<"asc" | "desc">(
+    "recommendation-search-sort-order",
+    "desc"
+  );
 
   // Reactive state
-  query = $state('');
-  filters = $state<RecommendationSearchFilters>({ status: 'pending' }); // Default to pending recommendations only
+  query = $state("");
+  filters = $state<RecommendationSearchFilters>({status: "pending"}); // Default to pending recommendations only
   results = $state<BudgetRecommendationWithRelations[]>([]);
   isLoading = $state(false);
   totalCount = $state(0);
   hasMore = $state(false);
 
   // Getters for persistent state
-  get viewMode() { return this.viewModeState.value; }
-  set viewMode(value: 'grid' | 'list') { this.viewModeState.value = value; }
+  get viewMode() {
+    return this.viewModeState.value;
+  }
+  set viewMode(value: "grid" | "list") {
+    this.viewModeState.value = value;
+  }
 
-  get sortBy() { return this.sortByState.value; }
-  set sortBy(value: 'created' | 'confidence' | 'priority' | 'type') { this.sortByState.value = value; }
+  get sortBy() {
+    return this.sortByState.value;
+  }
+  set sortBy(value: "created" | "confidence" | "priority" | "type") {
+    this.sortByState.value = value;
+  }
 
-  get sortOrder() { return this.sortOrderState.value; }
-  set sortOrder(value: 'asc' | 'desc') { this.sortOrderState.value = value; }
+  get sortOrder() {
+    return this.sortOrderState.value;
+  }
+  set sortOrder(value: "asc" | "desc") {
+    this.sortOrderState.value = value;
+  }
 
   // Computed properties
   hasActiveFilters = $derived.by(() => {
@@ -84,7 +105,7 @@ class RecommendationSearchStateManager {
     key: K,
     value: RecommendationSearchFilters[K]
   ) {
-    const newFilters = { ...this.filters };
+    const newFilters = {...this.filters};
     if (value === undefined || value === null) {
       delete newFilters[key];
     } else {
@@ -94,27 +115,35 @@ class RecommendationSearchStateManager {
   }
 
   clearAllFilters() {
-    this.query = '';
+    this.query = "";
     this.filters = {};
   }
 
   clearQuery() {
-    this.query = '';
+    this.query = "";
   }
 
   clearFilter(key: keyof RecommendationSearchFilters) {
-    const newFilters = { ...this.filters };
+    const newFilters = {...this.filters};
     delete newFilters[key];
     this.filters = newFilters;
   }
 
-  setResults(results: BudgetRecommendationWithRelations[], totalCount: number = results.length, hasMore: boolean = false) {
+  setResults(
+    results: BudgetRecommendationWithRelations[],
+    totalCount: number = results.length,
+    hasMore: boolean = false
+  ) {
     this.results = results;
     this.totalCount = totalCount;
     this.hasMore = hasMore;
   }
 
-  appendResults(newResults: BudgetRecommendationWithRelations[], totalCount: number, hasMore: boolean = false) {
+  appendResults(
+    newResults: BudgetRecommendationWithRelations[],
+    totalCount: number,
+    hasMore: boolean = false
+  ) {
     this.results = [...this.results, ...newResults];
     this.totalCount = totalCount;
     this.hasMore = hasMore;
@@ -125,10 +154,13 @@ class RecommendationSearchStateManager {
   }
 
   toggleSortOrder() {
-    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
   }
 
-  setSorting(sortBy: RecommendationSearchState['sortBy'], sortOrder?: RecommendationSearchState['sortOrder']) {
+  setSorting(
+    sortBy: RecommendationSearchState["sortBy"],
+    sortOrder?: RecommendationSearchState["sortOrder"]
+  ) {
     this.sortBy = sortBy;
     if (sortOrder) {
       this.sortOrder = sortOrder;
@@ -136,10 +168,10 @@ class RecommendationSearchStateManager {
   }
 
   toggleViewMode() {
-    if (this.viewMode === 'grid') {
-      this.viewMode = 'list';
+    if (this.viewMode === "grid") {
+      this.viewMode = "list";
     } else {
-      this.viewMode = 'grid';
+      this.viewMode = "grid";
     }
   }
 
@@ -149,13 +181,13 @@ class RecommendationSearchStateManager {
       query: this.query || undefined,
       ...this.filters,
       sortBy: this.sortBy,
-      sortOrder: this.sortOrder
+      sortOrder: this.sortOrder,
     };
   }
 
   // Reset to initial state
   reset() {
-    this.query = '';
+    this.query = "";
     this.filters = {};
     this.results = [];
     this.isLoading = false;
@@ -170,7 +202,7 @@ class RecommendationSearchStateManager {
       filters: this.filters,
       sortBy: this.sortBy,
       sortOrder: this.sortOrder,
-      viewMode: this.viewMode
+      viewMode: this.viewMode,
     };
   }
 

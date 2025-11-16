@@ -12,7 +12,15 @@ import type {TransactionDbResult} from "./types";
  * Converts null values to undefined for optional schedule fields
  */
 function toTransaction(dbResult: TransactionDbResult): Transaction {
-  const {scheduleId, scheduleName, scheduleSlug, scheduleFrequency, scheduleInterval, scheduleNextOccurrence, ...rest} = dbResult;
+  const {
+    scheduleId,
+    scheduleName,
+    scheduleSlug,
+    scheduleFrequency,
+    scheduleInterval,
+    scheduleNextOccurrence,
+    ...rest
+  } = dbResult;
 
   return {
     ...rest,
@@ -82,10 +90,7 @@ export class TransactionRepository {
   async create(data: NewTransaction, workspaceId: string): Promise<Transaction> {
     // Verify account belongs to user
     await this.verifyAccountOwnership(data.accountId, workspaceId);
-    const [transaction] = await db
-      .insert(transactions)
-      .values(data)
-      .returning();
+    const [transaction] = await db.insert(transactions).values(data).returning();
 
     if (!transaction) {
       throw new Error("Failed to create transaction");
@@ -97,7 +102,11 @@ export class TransactionRepository {
   /**
    * Update an existing transaction
    */
-  async update(id: number, data: Partial<NewTransaction>, workspaceId: string): Promise<Transaction> {
+  async update(
+    id: number,
+    data: Partial<NewTransaction>,
+    workspaceId: string
+  ): Promise<Transaction> {
     // Verify transaction belongs to user (through account)
     const existing = await this.findById(id, workspaceId);
     if (!existing) {
@@ -245,11 +254,12 @@ export class TransactionRepository {
     const totalPages = Math.ceil(totalCount / pageSize);
 
     // Get paginated data with relations
-    const sortColumn = filters.sortBy === "amount"
-      ? transactions.amount
-      : filters.sortBy === "status"
-      ? transactions.status
-      : transactions.date;
+    const sortColumn =
+      filters.sortBy === "amount"
+        ? transactions.amount
+        : filters.sortBy === "status"
+          ? transactions.status
+          : transactions.date;
 
     const orderBy = filters.sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn);
 
@@ -291,10 +301,7 @@ export class TransactionRepository {
     await this.verifyAccountOwnership(accountId, workspaceId);
 
     const data = await db.query.transactions.findMany({
-      where: and(
-        eq(transactions.accountId, accountId),
-        isNull(transactions.deletedAt)
-      ),
+      where: and(eq(transactions.accountId, accountId), isNull(transactions.deletedAt)),
       with: {
         category: true,
         payee: true,
@@ -351,7 +358,7 @@ export class TransactionRepository {
     // For debt accounts, invert the polarity
     if (account.accountType && isDebtAccount(account.accountType)) {
       // Start with negative initial balance (debt), then subtract transaction amounts
-      return -(initialBalance) - transactionSum;
+      return -initialBalance - transactionSum;
     }
 
     // For asset accounts, normal calculation
@@ -411,12 +418,7 @@ export class TransactionRepository {
     const [result] = await db
       .select({count: sql<number>`count(*)`})
       .from(transactions)
-      .where(
-        and(
-          eq(transactions.accountId, accountId),
-          isNull(transactions.deletedAt)
-        )
-      );
+      .where(and(eq(transactions.accountId, accountId), isNull(transactions.deletedAt)));
 
     return Number(result?.count ?? 0);
   }
@@ -492,10 +494,7 @@ export class TransactionRepository {
       .limit(1);
 
     const transactionList = await db.query.transactions.findMany({
-      where: and(
-        eq(transactions.accountId, accountId),
-        isNull(transactions.deletedAt)
-      ),
+      where: and(eq(transactions.accountId, accountId), isNull(transactions.deletedAt)),
       with: {
         category: true,
         payee: true,
@@ -517,15 +516,18 @@ export class TransactionRepository {
     // Start with initial balance (inverted for debt accounts)
     let runningBalance = isDebt ? -initialBalance : initialBalance;
 
-    const transactionsWithBalance = transactionList.reverse().map((t) => {
-      const amount = Number(t.amount);
-      // For debt accounts, invert transaction amounts
-      runningBalance += isDebt ? -amount : amount;
-      return {
-        ...toTransaction(t),
-        balance: runningBalance
-      };
-    }).reverse();
+    const transactionsWithBalance = transactionList
+      .reverse()
+      .map((t) => {
+        const amount = Number(t.amount);
+        // For debt accounts, invert transaction amounts
+        runningBalance += isDebt ? -amount : amount;
+        return {
+          ...toTransaction(t),
+          balance: runningBalance,
+        };
+      })
+      .reverse();
 
     return transactionsWithBalance;
   }

@@ -20,7 +20,7 @@ const category = $derived(data.category);
   <meta name="description" content="View category analytics and spending insights" />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -30,8 +30,8 @@ const category = $derived(data.category);
       </Button>
       {#if category}
         <div>
-          <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <BarChart3 class="h-8 w-8 text-muted-foreground" />
+          <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+            <BarChart3 class="text-muted-foreground h-8 w-8" />
             {category.name} Analytics
           </h1>
           <p class="text-muted-foreground mt-1">Spending trends and insights</p>
@@ -52,7 +52,7 @@ const category = $derived(data.category);
         </Card.Header>
         <Card.Content>
           <div class="text-2xl font-bold">Coming soon</div>
-          <p class="text-xs text-muted-foreground mt-1">All time</p>
+          <p class="text-muted-foreground mt-1 text-xs">All time</p>
         </Card.Content>
       </Card.Root>
 
@@ -66,7 +66,7 @@ const category = $derived(data.category);
         </Card.Header>
         <Card.Content>
           <div class="text-2xl font-bold">Coming soon</div>
-          <p class="text-xs text-muted-foreground mt-1">Last 12 months</p>
+          <p class="text-muted-foreground mt-1 text-xs">Last 12 months</p>
         </Card.Content>
       </Card.Root>
 
@@ -80,7 +80,7 @@ const category = $derived(data.category);
         </Card.Header>
         <Card.Content>
           <div class="text-2xl font-bold">Coming soon</div>
-          <p class="text-xs text-muted-foreground mt-1">Total count</p>
+          <p class="text-muted-foreground mt-1 text-xs">Total count</p>
         </Card.Content>
       </Card.Root>
 
@@ -94,7 +94,7 @@ const category = $derived(data.category);
         </Card.Header>
         <Card.Content>
           <div class="text-2xl font-bold">Coming soon</div>
-          <p class="text-xs text-muted-foreground mt-1">vs last month</p>
+          <p class="text-muted-foreground mt-1 text-xs">vs last month</p>
         </Card.Content>
       </Card.Root>
     </div>
@@ -103,12 +103,10 @@ const category = $derived(data.category);
     <Card.Root>
       <Card.Header>
         <Card.Title>Spending Over Time</Card.Title>
-        <Card.Description>
-          Monthly spending trend for this category
-        </Card.Description>
+        <Card.Description>Monthly spending trend for this category</Card.Description>
       </Card.Header>
       <Card.Content>
-        <div class="h-64 flex items-center justify-center text-muted-foreground">
+        <div class="text-muted-foreground flex h-64 items-center justify-center">
           Chart integration coming soon
         </div>
       </Card.Content>
@@ -118,21 +116,15 @@ const category = $derived(data.category);
     <Card.Root>
       <Card.Header>
         <Card.Title>Top Payees</Card.Title>
-        <Card.Description>
-          Most frequent payees in this category
-        </Card.Description>
+        <Card.Description>Most frequent payees in this category</Card.Description>
       </Card.Header>
       <Card.Content>
-        <div class="text-center text-muted-foreground py-8">
-          Payee integration coming soon
-        </div>
+        <div class="text-muted-foreground py-8 text-center">Payee integration coming soon</div>
       </Card.Content>
     </Card.Root>
   {:else}
     <Card.Root class="max-w-4xl">
-      <Card.Content class="py-8 text-center text-muted-foreground">
-        Category not found
-      </Card.Content>
+      <Card.Content class="text-muted-foreground py-8 text-center">Category not found</Card.Content>
     </Card.Root>
   {/if}
 </div>

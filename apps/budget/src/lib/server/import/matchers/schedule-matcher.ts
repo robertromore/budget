@@ -5,11 +5,11 @@
  * using payee, amount, date, and account matching with confidence scoring.
  */
 
-import type { Schedule } from '$lib/schema/schedules';
-import type { Payee } from '$lib/schema/payees';
-import { PayeeMatcher } from './payee-matcher';
+import type {Schedule} from "$lib/schema/schedules";
+import type {Payee} from "$lib/schema/payees";
+import {PayeeMatcher} from "./payee-matcher";
 
-export type ScheduleMatchConfidence = 'exact' | 'high' | 'medium' | 'low' | 'none';
+export type ScheduleMatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 
 export interface ScheduleMatch {
   schedule: Schedule | null;
@@ -39,7 +39,7 @@ export interface ScheduleMatcherOptions {
 
 const DEFAULT_OPTIONS: Required<ScheduleMatcherOptions> = {
   exactAmountTolerance: 0.02, // 2%
-  approximateAmountTolerance: 0.10, // 10%
+  approximateAmountTolerance: 0.1, // 10%
   dateTolerance: 7, // ±7 days
   exactThreshold: 1.0,
   highThreshold: 0.85,
@@ -51,7 +51,7 @@ export class ScheduleMatcher {
   private payeeMatcher: PayeeMatcher;
 
   constructor(options: ScheduleMatcherOptions = {}) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
+    this.options = {...DEFAULT_OPTIONS, ...options};
     this.payeeMatcher = new PayeeMatcher();
   }
 
@@ -66,25 +66,25 @@ export class ScheduleMatcher {
     if (!existingSchedules || existingSchedules.length === 0) {
       return {
         schedule: null,
-        confidence: 'none',
+        confidence: "none",
         score: 0,
         matchedOn: [],
-        reasons: ['No schedules available'],
+        reasons: ["No schedules available"],
       };
     }
 
     // Filter to only active schedules for the same account
     const candidateSchedules = existingSchedules.filter(
-      (s) => s.status === 'active' && s.accountId === criteria.accountId
+      (s) => s.status === "active" && s.accountId === criteria.accountId
     );
 
     if (candidateSchedules.length === 0) {
       return {
         schedule: null,
-        confidence: 'none',
+        confidence: "none",
         score: 0,
         matchedOn: [],
-        reasons: ['No active schedules for this account'],
+        reasons: ["No active schedules for this account"],
       };
     }
 
@@ -100,23 +100,23 @@ export class ScheduleMatcher {
     if (!bestMatch || bestMatch.score === 0) {
       return {
         schedule: null,
-        confidence: 'none',
+        confidence: "none",
         score: 0,
         matchedOn: [],
-        reasons: ['No schedules matched criteria'],
+        reasons: ["No schedules matched criteria"],
       };
     }
 
     // Determine confidence level
     let confidence: ScheduleMatchConfidence;
     if (bestMatch.score >= this.options.exactThreshold) {
-      confidence = 'exact';
+      confidence = "exact";
     } else if (bestMatch.score >= this.options.highThreshold) {
-      confidence = 'high';
+      confidence = "high";
     } else if (bestMatch.score >= this.options.mediumThreshold) {
-      confidence = 'medium';
+      confidence = "medium";
     } else {
-      confidence = 'low';
+      confidence = "low";
     }
 
     return {
@@ -135,7 +135,7 @@ export class ScheduleMatcher {
     criteria: ScheduleMatchCriteria,
     schedule: Schedule,
     existingPayees: Payee[]
-  ): { schedule: Schedule; score: number; matchedOn: string[]; reasons: string[] } {
+  ): {schedule: Schedule; score: number; matchedOn: string[]; reasons: string[]} {
     let score = 0;
     const matchedOn: string[] = [];
     const reasons: string[] = [];
@@ -144,7 +144,7 @@ export class ScheduleMatcher {
     const amountScore = this.scoreAmountMatch(criteria.amount, schedule);
     if (amountScore > 0) {
       score += amountScore * 0.5;
-      matchedOn.push('amount');
+      matchedOn.push("amount");
       reasons.push(`Amount match (${Math.round(amountScore * 100)}%)`);
     }
 
@@ -152,7 +152,7 @@ export class ScheduleMatcher {
     const dateScore = this.scoreDateMatch(criteria.date, schedule);
     if (dateScore > 0) {
       score += dateScore * 0.3;
-      matchedOn.push('date');
+      matchedOn.push("date");
       reasons.push(`Date proximity (${Math.round(dateScore * 100)}%)`);
     }
 
@@ -160,23 +160,25 @@ export class ScheduleMatcher {
     const payeeScore = this.scorePayeeMatch(criteria, schedule, existingPayees);
     if (payeeScore > 0) {
       score += payeeScore * 0.15;
-      matchedOn.push('payee');
+      matchedOn.push("payee");
       reasons.push(`Payee match (${Math.round(payeeScore * 100)}%)`);
     }
 
     // Category matching (5% weight) - small bonus if categories match
     if (criteria.categoryId && schedule.categoryId === criteria.categoryId) {
       score += 0.05;
-      matchedOn.push('category');
-      reasons.push('Category match (exact)');
+      matchedOn.push("category");
+      reasons.push("Category match (exact)");
     }
 
     // Only log matches above 60% to reduce noise
     if (score >= 0.6) {
-      console.log(`[ScheduleMatcher] Match: "${schedule.name}" | Score: ${(score * 100).toFixed(0)}% | Payee: "${criteria.payeeName}" | Amt: $${criteria.amount.toFixed(2)}`);
+      console.log(
+        `[ScheduleMatcher] Match: "${schedule.name}" | Score: ${(score * 100).toFixed(0)}% | Payee: "${criteria.payeeName}" | Amt: $${criteria.amount.toFixed(2)}`
+      );
     }
 
-    return { schedule, score, matchedOn, reasons };
+    return {schedule, score, matchedOn, reasons};
   }
 
   /**
@@ -197,9 +199,9 @@ export class ScheduleMatcher {
       const schedulePayee = existingPayees.find((p) => p.id === schedule.payeeId);
       if (schedulePayee) {
         const match = this.payeeMatcher.findBestMatch(criteria.payeeName, [schedulePayee]);
-        if (match.confidence === 'exact') return 1.0;
-        if (match.confidence === 'high') return 0.9;
-        if (match.confidence === 'medium') return 0.7;
+        if (match.confidence === "exact") return 1.0;
+        if (match.confidence === "high") return 0.9;
+        if (match.confidence === "medium") return 0.7;
         return 0;
       }
     }
@@ -217,7 +219,7 @@ export class ScheduleMatcher {
     if (scheduleAmount === 0) return 0;
 
     switch (schedule.amount_type) {
-      case 'exact': {
+      case "exact": {
         // Allow small tolerance for exact amounts (e.g., $100.00 vs $100.01)
         const tolerance = scheduleAmount * this.options.exactAmountTolerance;
         const diff = Math.abs(absAmount - scheduleAmount);
@@ -226,7 +228,7 @@ export class ScheduleMatcher {
         return 0;
       }
 
-      case 'approximate': {
+      case "approximate": {
         // Wider tolerance for approximate amounts
         const tolerance = scheduleAmount * this.options.approximateAmountTolerance;
         const diff = Math.abs(absAmount - scheduleAmount);
@@ -237,7 +239,7 @@ export class ScheduleMatcher {
         return 0;
       }
 
-      case 'range': {
+      case "range": {
         // Amount should fall within the range
         const minAmount = Math.min(scheduleAmount, schedule.amount_2 || 0);
         const maxAmount = Math.max(scheduleAmount, schedule.amount_2 || 0);
@@ -291,10 +293,10 @@ export class ScheduleMatcher {
     criteria: ScheduleMatchCriteria,
     existingSchedules: Schedule[],
     existingPayees: Payee[],
-    minConfidence: ScheduleMatchConfidence = 'medium'
+    minConfidence: ScheduleMatchConfidence = "medium"
   ): ScheduleMatch[] {
     const candidateSchedules = existingSchedules.filter(
-      (s) => s.status === 'active' && s.accountId === criteria.accountId
+      (s) => s.status === "active" && s.accountId === criteria.accountId
     );
 
     const matches = candidateSchedules
@@ -303,15 +305,15 @@ export class ScheduleMatcher {
 
         let confidence: ScheduleMatchConfidence;
         if (scoreResult.score >= this.options.exactThreshold) {
-          confidence = 'exact';
+          confidence = "exact";
         } else if (scoreResult.score >= this.options.highThreshold) {
-          confidence = 'high';
+          confidence = "high";
         } else if (scoreResult.score >= this.options.mediumThreshold) {
-          confidence = 'medium';
+          confidence = "medium";
         } else if (scoreResult.score > 0) {
-          confidence = 'low';
+          confidence = "low";
         } else {
-          confidence = 'none';
+          confidence = "none";
         }
 
         return {
@@ -324,7 +326,13 @@ export class ScheduleMatcher {
       })
       .filter((match) => {
         // Filter by minimum confidence
-        const confidenceLevels: ScheduleMatchConfidence[] = ['exact', 'high', 'medium', 'low', 'none'];
+        const confidenceLevels: ScheduleMatchConfidence[] = [
+          "exact",
+          "high",
+          "medium",
+          "low",
+          "none",
+        ];
         const minIndex = confidenceLevels.indexOf(minConfidence);
         const matchIndex = confidenceLevels.indexOf(match.confidence);
         return matchIndex <= minIndex && matchIndex < confidenceLevels.length - 1; // exclude 'none'

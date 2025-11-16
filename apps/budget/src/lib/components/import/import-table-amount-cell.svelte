@@ -16,7 +16,7 @@ const isNegative = $derived(amount < 0);
 {#if amount === undefined || amount === null}
   <span>—</span>
 {:else}
-  <span class={isNegative ? 'text-destructive font-medium' : 'text-green-600 font-medium'}>
+  <span class={isNegative ? 'text-destructive font-medium' : 'font-medium text-green-600'}>
     {formatCurrency(amount)}
   </span>
 {/if}

@@ -67,9 +67,7 @@ async function handleDismiss() {
 </script>
 
 <Card class="relative overflow-hidden">
-  <div
-    class="absolute left-0 top-0 h-full w-1"
-    style="background: hsl(var(--primary) / 0.5)"></div>
+  <div class="absolute top-0 left-0 h-full w-1" style="background: hsl(var(--primary) / 0.5)"></div>
 
   <CardHeader>
     <div class="flex items-start justify-between gap-4">
@@ -102,7 +100,7 @@ async function handleDismiss() {
   <CardContent class="space-y-4">
     <div class="grid gap-3 sm:grid-cols-2">
       <div class="flex items-center gap-2 text-sm">
-        <DollarSign class="h-4 w-4 text-muted-foreground"></DollarSign>
+        <DollarSign class="text-muted-foreground h-4 w-4"></DollarSign>
         <div>
           <div class="text-muted-foreground">Amount</div>
           {#if pattern.amountMin !== null && pattern.amountMax !== null}
@@ -116,11 +114,13 @@ async function handleDismiss() {
       </div>
 
       <div class="flex items-center gap-2 text-sm">
-        <Calendar class="h-4 w-4 text-muted-foreground"></Calendar>
+        <Calendar class="text-muted-foreground h-4 w-4"></Calendar>
         <div>
           <div class="text-muted-foreground">Frequency</div>
           {#if pattern.intervalDays !== null}
-            <div class="font-medium">Every {pattern.intervalDays} day{pattern.intervalDays !== 1 ? 's' : ''}</div>
+            <div class="font-medium">
+              Every {pattern.intervalDays} day{pattern.intervalDays !== 1 ? 's' : ''}
+            </div>
           {/if}
         </div>
       </div>
@@ -129,7 +129,7 @@ async function handleDismiss() {
     {#if pattern.lastOccurrence}
       {@const lastDate = parseISOString(pattern.lastOccurrence)}
       {#if lastDate}
-        <div class="text-sm text-muted-foreground">
+        <div class="text-muted-foreground text-sm">
           Last occurrence: {formatDateDisplay(lastDate, 'medium')}
         </div>
       {/if}

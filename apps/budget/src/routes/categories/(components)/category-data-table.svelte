@@ -9,10 +9,10 @@ import {
   getSortedRowModel,
   type Table as TTable,
 } from '@tanstack/table-core';
-import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
+import {createSvelteTable, FlexRender} from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
-import type { Category } from '$lib/schema';
-import type { CategoriesState } from '$lib/states/entities/categories.svelte';
+import type {Category} from '$lib/schema';
+import type {CategoriesState} from '$lib/states/entities/categories.svelte';
 import DataTablePagination from '../../accounts/[slug]/(components)/data-table-pagination.svelte';
 import CategoryBulkActions from './category-bulk-actions.svelte';
 
@@ -51,7 +51,7 @@ let sorting = $state<any[]>([]);
 let columnFilters = $state<any[]>([]);
 let columnVisibility = $state<Record<string, boolean>>({});
 let rowSelection = $state<Record<string, boolean>>({});
-let pagination = $state({ pageIndex: 0, pageSize: 50 });
+let pagination = $state({pageIndex: 0, pageSize: 50});
 
 // Create the table instance
 table = createSvelteTable({
@@ -116,7 +116,8 @@ table = createSvelteTable({
             {#each headerGroup.headers as header}
               <Table.Head>
                 {#if !header.isPlaceholder}
-                  <FlexRender content={header.column.columnDef.header} context={header.getContext()}></FlexRender>
+                  <FlexRender content={header.column.columnDef.header} context={header.getContext()}
+                  ></FlexRender>
                 {/if}
               </Table.Head>
             {/each}
@@ -129,14 +130,17 @@ table = createSvelteTable({
             <Table.Row data-state={row.getIsSelected() && 'selected'}>
               {#each row.getVisibleCells() as cell}
                 <Table.Cell>
-                  <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()}></FlexRender>
+                  <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()}
+                  ></FlexRender>
                 </Table.Cell>
               {/each}
             </Table.Row>
           {/each}
         {:else}
           <Table.Row>
-            <Table.Cell colspan={columns(categoriesState, onView, onEdit, onDelete, onViewAnalytics).length} class="h-24 text-center">
+            <Table.Cell
+              colspan={columns(categoriesState, onView, onEdit, onDelete, onViewAnalytics).length}
+              class="h-24 text-center">
               No categories found.
             </Table.Cell>
           </Table.Row>

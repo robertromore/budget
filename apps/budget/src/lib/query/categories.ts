@@ -1,11 +1,16 @@
-import type { Category } from "$lib/schema/categories";
-import { formInsertCategorySchema } from "$lib/schema/categories";
-import type { CategoryWithBudgets, CategoryWithChildren, CategoryWithGroup, CategoryWithStats } from "$lib/server/domains/categories/repository";
-import { trpc } from "$lib/trpc/client";
-import type { CategoryTreeNode } from "$lib/types/categories";
-import { z } from "zod";
-import { cachePatterns } from "./_client";
-import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
+import type {Category} from "$lib/schema/categories";
+import {formInsertCategorySchema} from "$lib/schema/categories";
+import type {
+  CategoryWithBudgets,
+  CategoryWithChildren,
+  CategoryWithGroup,
+  CategoryWithStats,
+} from "$lib/server/domains/categories/repository";
+import {trpc} from "$lib/trpc/client";
+import type {CategoryTreeNode} from "$lib/types/categories";
+import {z} from "zod";
+import {cachePatterns} from "./_client";
+import {createQueryKeys, defineMutation, defineQuery} from "./_factory";
 
 export const categoryKeys = createQueryKeys("categories", {
   all: () => ["categories", "all"] as const,
@@ -92,16 +97,21 @@ export const deleteCategory = defineMutation<number, Category>({
   },
 });
 
-export const bulkDeleteCategories = defineMutation<number[], {deletedCount: number; errors: any[]}>({
-  mutationFn: (entities) => trpc().categoriesRoutes.delete.mutate({entities}),
-  onSuccess: () => {
-    cachePatterns.invalidatePrefix(categoryKeys.all());
-  },
-  successMessage: "Categories deleted",
-  errorMessage: "Failed to delete categories",
-});
+export const bulkDeleteCategories = defineMutation<number[], {deletedCount: number; errors: any[]}>(
+  {
+    mutationFn: (entities) => trpc().categoriesRoutes.delete.mutate({entities}),
+    onSuccess: () => {
+      cachePatterns.invalidatePrefix(categoryKeys.all());
+    },
+    successMessage: "Categories deleted",
+    errorMessage: "Failed to delete categories",
+  }
+);
 
-export const reorderCategories = defineMutation<Array<{id: number; displayOrder: number}>, {updatedCount: number; errors: string[]}>({
+export const reorderCategories = defineMutation<
+  Array<{id: number; displayOrder: number}>,
+  {updatedCount: number; errors: string[]}
+>({
   mutationFn: (updates) => trpc().categoriesRoutes.reorder.mutate({updates}),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryKeys.all());
@@ -152,7 +162,10 @@ export const getCategoryHierarchyTree = () =>
     queryFn: () => trpc().categoriesRoutes.hierarchyTree.query(),
   });
 
-export const setCategoryParent = defineMutation<{categoryId: number; parentId: number | null}, Category>({
+export const setCategoryParent = defineMutation<
+  {categoryId: number; parentId: number | null},
+  Category
+>({
   mutationFn: (input) => trpc().categoriesRoutes.setParent.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryKeys.all());
@@ -178,7 +191,10 @@ export const getDefaultCategoriesStatus = () =>
     queryFn: () => trpc().categoriesRoutes.defaultCategoriesStatus.query(),
   });
 
-export const seedDefaultCategories = defineMutation<{slugs?: string[]}, {created: number; skipped: number; errors: string[]}>({
+export const seedDefaultCategories = defineMutation<
+  {slugs?: string[]},
+  {created: number; skipped: number; errors: string[]}
+>({
   mutationFn: (input) => trpc().categoriesRoutes.seedDefaults.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryKeys.all());
@@ -186,7 +202,7 @@ export const seedDefaultCategories = defineMutation<{slugs?: string[]}, {created
   },
   successMessage: (data) => {
     if (data.created > 0) {
-      return `Added ${data.created} default ${data.created === 1 ? 'category' : 'categories'}`;
+      return `Added ${data.created} default ${data.created === 1 ? "category" : "categories"}`;
     }
     return "No new categories to add";
   },

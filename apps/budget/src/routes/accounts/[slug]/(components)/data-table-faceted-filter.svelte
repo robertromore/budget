@@ -36,8 +36,9 @@ const showOptions: FacetedFilterOption[] = $derived(
   (showAll
     ? optionsValues?.concat(
         allOptions
-          ? Array.from(allOptions.values())
-          .filter((option: FacetedFilterOption) => !optionsRawValues?.includes(option.value))
+          ? Array.from(allOptions.values()).filter(
+              (option: FacetedFilterOption) => !optionsRawValues?.includes(option.value)
+            )
           : []
       )
     : optionsValues) || []
@@ -48,7 +49,9 @@ const notIn = $derived((allOptions?.size || 0) - (options?.size || 0));
 const currentViewsState = $derived(currentViews.get());
 const activeView = $derived(currentViewsState?.activeView);
 const activeViewModel = $derived(activeView?.view);
-const selectedValues = $derived<Set<string | number>>(activeViewModel?.getFilterValue(column.id) as Set<string | number> || new Set());
+const selectedValues = $derived<Set<string | number>>(
+  (activeViewModel?.getFilterValue(column.id) as Set<string | number>) || new Set()
+);
 </script>
 
 <div class="flex">
@@ -114,11 +117,11 @@ const selectedValues = $derived<Set<string | number>>(activeViewModel?.getFilter
                   {selectedValues.size} selected
                 </Badge>
               {:else}
-                {@const matchingOptions =
-                  allOptions
-                    ? Array.from(allOptions.values())
-                    .filter((opt: FacetedFilterOption) => selectedValues.has(opt.value))
-                    : []}
+                {@const matchingOptions = allOptions
+                  ? Array.from(allOptions.values()).filter((opt: FacetedFilterOption) =>
+                      selectedValues.has(opt.value)
+                    )
+                  : []}
                 {#if matchingOptions.length > 0}
                   {#each matchingOptions as option}
                     <Badge variant="secondary" class="rounded-sm px-1 font-normal">

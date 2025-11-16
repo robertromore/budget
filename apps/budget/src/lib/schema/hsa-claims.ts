@@ -1,9 +1,9 @@
-import { sqliteTable, integer, text, real, index } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
-import { createId } from "@paralleldrive/cuid2";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { z } from "zod/v4";
-import { medicalExpenses } from "./medical-expenses";
+import {sqliteTable, integer, text, real, index} from "drizzle-orm/sqlite-core";
+import {sql} from "drizzle-orm";
+import {createId} from "@paralleldrive/cuid2";
+import {createInsertSchema, createSelectSchema} from "drizzle-zod";
+import {z} from "zod/v4";
+import {medicalExpenses} from "./medical-expenses";
 
 export const claimStatusEnum = {
   not_submitted: "Not Submitted",
@@ -15,29 +15,36 @@ export const claimStatusEnum = {
   denied: "Denied",
   resubmission_required: "Resubmission Required",
   paid: "Paid",
-  withdrawn: "Withdrawn"
+  withdrawn: "Withdrawn",
 } as const;
 
 export type ClaimStatus = keyof typeof claimStatusEnum;
 export const claimStatusKeys = [
-  "not_submitted", "pending_submission", "submitted", "in_review",
-  "approved", "partially_approved", "denied", "resubmission_required",
-  "paid", "withdrawn"
+  "not_submitted",
+  "pending_submission",
+  "submitted",
+  "in_review",
+  "approved",
+  "partially_approved",
+  "denied",
+  "resubmission_required",
+  "paid",
+  "withdrawn",
 ] as const;
 
 export const hsaClaims = sqliteTable(
   "hsa_claim",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: integer("id").primaryKey({autoIncrement: true}),
     cuid: text("cuid").$defaultFn(() => createId()),
 
     medicalExpenseId: integer("medical_expense_id")
-      .references(() => medicalExpenses.id, { onDelete: "restrict" })
+      .references(() => medicalExpenses.id, {onDelete: "restrict"})
       .notNull(),
 
     // Claim details
     claimNumber: text("claim_number"), // External claim number from HSA administrator
-    status: text("status", { enum: claimStatusKeys }).default("not_submitted").notNull(),
+    status: text("status", {enum: claimStatusKeys}).default("not_submitted").notNull(),
 
     // Financial details
     claimedAmount: real("claimed_amount").notNull(),
@@ -62,8 +69,12 @@ export const hsaClaims = sqliteTable(
     notes: text("notes"),
     internalNotes: text("internal_notes"), // Private notes not for submission
 
-    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
     deletedAt: text("deleted_at"),
   },
   (table) => [
@@ -82,16 +93,11 @@ export const selectHsaClaimSchema = createSelectSchema(hsaClaims);
 export const insertHsaClaimSchema = createInsertSchema(hsaClaims);
 
 export const formInsertHsaClaimSchema = createInsertSchema(hsaClaims, {
-  status: (schema) =>
-    schema.pipe(z.enum(claimStatusKeys)),
-  claimedAmount: (schema) =>
-    schema.pipe(z.number().positive().max(1000000)),
-  approvedAmount: (schema) =>
-    schema.pipe(z.number().min(0).max(1000000)).optional(),
-  deniedAmount: (schema) =>
-    schema.pipe(z.number().min(0).max(1000000)).optional(),
-  paidAmount: (schema) =>
-    schema.pipe(z.number().min(0).max(1000000)).optional(),
+  status: (schema) => schema.pipe(z.enum(claimStatusKeys)),
+  claimedAmount: (schema) => schema.pipe(z.number().positive().max(1000000)),
+  approvedAmount: (schema) => schema.pipe(z.number().min(0).max(1000000)).optional(),
+  deniedAmount: (schema) => schema.pipe(z.number().min(0).max(1000000)).optional(),
+  paidAmount: (schema) => schema.pipe(z.number().min(0).max(1000000)).optional(),
   claimNumber: (schema) =>
     schema
       .transform((val) => val?.trim())

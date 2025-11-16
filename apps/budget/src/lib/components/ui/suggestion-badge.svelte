@@ -1,6 +1,6 @@
 <script lang="ts">
-import { cn } from '$lib/utils';
-import { Badge } from '$lib/components/ui/badge';
+import {cn} from '$lib/utils';
+import {Badge} from '$lib/components/ui/badge';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import Brain from '@lucide/svelte/icons/brain';
 import Lightbulb from '@lucide/svelte/icons/lightbulb';
@@ -8,7 +8,7 @@ import Zap from '@lucide/svelte/icons/zap';
 import Info from '@lucide/svelte/icons/info';
 import X from '@lucide/svelte/icons/x';
 import Check from '@lucide/svelte/icons/check';
-import type { Component } from 'svelte';
+import type {Component} from 'svelte';
 
 type SuggestionType = 'smart' | 'intelligent' | 'insight' | 'auto' | 'info';
 type SuggestionVariant = 'default' | 'success' | 'warning' | 'info' | 'accent';
@@ -36,7 +36,7 @@ let {
   class: className,
   onDismiss,
   onApply,
-  children
+  children,
 }: Props = $props();
 
 const typeIconMap: Record<SuggestionType, Component> = {
@@ -44,7 +44,7 @@ const typeIconMap: Record<SuggestionType, Component> = {
   intelligent: Brain,
   insight: Lightbulb,
   auto: Zap,
-  info: Info
+  info: Info,
 };
 
 const Icon = $derived(typeIconMap[type]);
@@ -82,15 +82,15 @@ const confidencePercentage = $derived(() => {
 
 <div
   class={cn(
-    'inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium transition-all duration-300 ease-out group',
+    'group inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-all duration-300 ease-out',
     'animate-in fade-in-0 slide-in-from-top-2',
     getVariantStyles(variant, applied),
-    applied && 'ring-1 ring-green-300 dark:ring-green-700 scale-105',
+    applied && 'scale-105 ring-1 ring-green-300 dark:ring-green-700',
     className
   )}
   style="animation-duration: 400ms;"
-  title={reason || `${type} suggestion${confidence ? ` (${confidencePercentage}% confidence)` : ''}`}
->
+  title={reason ||
+    `${type} suggestion${confidence ? ` (${confidencePercentage}% confidence)` : ''}`}>
   <Icon class="h-3 w-3 flex-shrink-0" />
 
   {#if children}
@@ -110,9 +110,8 @@ const confidencePercentage = $derived(() => {
     <button
       type="button"
       onclick={onApply}
-      class="ml-1 p-0.5 rounded hover:bg-white/20 dark:hover:bg-black/20 transition-colors"
-      title="Apply suggestion"
-    >
+      class="ml-1 rounded p-0.5 transition-colors hover:bg-white/20 dark:hover:bg-black/20"
+      title="Apply suggestion">
       <Check class="h-2.5 w-2.5" />
     </button>
   {/if}
@@ -121,9 +120,8 @@ const confidencePercentage = $derived(() => {
     <button
       type="button"
       onclick={onDismiss}
-      class="ml-1 p-0.5 rounded hover:bg-white/20 dark:hover:bg-black/20 transition-colors"
-      title="Dismiss suggestion"
-    >
+      class="ml-1 rounded p-0.5 transition-colors hover:bg-white/20 dark:hover:bg-black/20"
+      title="Dismiss suggestion">
       <X class="h-2.5 w-2.5" />
     </button>
   {/if}

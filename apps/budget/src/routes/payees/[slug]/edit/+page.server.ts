@@ -1,4 +1,4 @@
-import {redirect, fail} from '@sveltejs/kit';
+import {redirect, fail} from "@sveltejs/kit";
 import {removePayeeSchema} from "$lib/schema";
 import {superformInsertPayeeSchema} from "$lib/schema/superforms";
 import {createContext} from "$lib/trpc/context";
@@ -12,7 +12,7 @@ export const load = async (event: any) => {
   const slug = params.slug;
 
   if (!slug) {
-    throw redirect(303, '/payees');
+    throw redirect(303, "/payees");
   }
 
   const payee = await createCaller(await createContext(event)).payeeRoutes.getBySlug({slug});

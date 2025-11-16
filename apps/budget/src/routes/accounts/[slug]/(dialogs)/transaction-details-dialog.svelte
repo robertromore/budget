@@ -74,16 +74,16 @@ const rawImportDataObj = $derived.by(() => {
 // Check if transaction has import metadata
 const hasImportMetadata = $derived(
   transaction?.importedFrom ||
-  transaction?.originalPayeeName ||
-  transaction?.originalCategoryName ||
-  transaction?.inferredCategory ||
-  importDetailsObj ||
-  rawImportDataObj
+    transaction?.originalPayeeName ||
+    transaction?.originalCategoryName ||
+    transaction?.inferredCategory ||
+    importDetailsObj ||
+    rawImportDataObj
 );
 </script>
 
 <Dialog.Root bind:open={dialogOpen}>
-  <Dialog.Content class="max-w-2xl max-h-[90vh] overflow-y-auto">
+  <Dialog.Content class="max-h-[90vh] max-w-2xl overflow-y-auto">
     <Dialog.Header>
       <Dialog.Title>Transaction Details</Dialog.Title>
       <Dialog.Description>
@@ -95,56 +95,61 @@ const hasImportMetadata = $derived(
       <div class="space-y-6">
         <!-- Basic Information -->
         <div class="space-y-4">
-          <h3 class="text-sm font-semibold text-muted-foreground uppercase">Basic Information</h3>
+          <h3 class="text-muted-foreground text-sm font-semibold uppercase">Basic Information</h3>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="flex items-start gap-2 min-w-0">
-              <Calendar class="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-              <div class="flex-1 min-w-0">
-                <div class="text-xs text-muted-foreground">Date</div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="flex min-w-0 items-start gap-2">
+              <Calendar class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+              <div class="min-w-0 flex-1">
+                <div class="text-muted-foreground text-xs">Date</div>
                 <div class="text-sm font-medium">{formatDate(transaction.date)}</div>
               </div>
             </div>
 
-            <div class="flex items-start gap-2 min-w-0">
-              <DollarSign class="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-              <div class="flex-1 min-w-0">
-                <div class="text-xs text-muted-foreground">Amount</div>
-                <div class="text-sm font-medium" class:text-red-600={transaction.amount < 0} class:text-green-600={transaction.amount > 0}>
+            <div class="flex min-w-0 items-start gap-2">
+              <DollarSign class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+              <div class="min-w-0 flex-1">
+                <div class="text-muted-foreground text-xs">Amount</div>
+                <div
+                  class="text-sm font-medium"
+                  class:text-red-600={transaction.amount < 0}
+                  class:text-green-600={transaction.amount > 0}>
                   {formatCurrency(transaction.amount)}
                 </div>
               </div>
             </div>
 
-            <div class="flex items-start gap-2 min-w-0">
-              <User class="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-              <div class="flex-1 min-w-0">
-                <div class="text-xs text-muted-foreground">Payee</div>
+            <div class="flex min-w-0 items-start gap-2">
+              <User class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+              <div class="min-w-0 flex-1">
+                <div class="text-muted-foreground text-xs">Payee</div>
                 <div class="text-sm font-medium break-all">{transaction.payee?.name || 'None'}</div>
               </div>
             </div>
 
-            <div class="flex items-start gap-2 min-w-0">
-              <Tag class="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-              <div class="flex-1 min-w-0">
-                <div class="text-xs text-muted-foreground">Category</div>
-                <div class="text-sm font-medium break-all">{transaction.category?.name || 'Uncategorized'}</div>
+            <div class="flex min-w-0 items-start gap-2">
+              <Tag class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+              <div class="min-w-0 flex-1">
+                <div class="text-muted-foreground text-xs">Category</div>
+                <div class="text-sm font-medium break-all">
+                  {transaction.category?.name || 'Uncategorized'}
+                </div>
               </div>
             </div>
           </div>
 
           {#if transaction.notes}
-            <div class="flex items-start gap-2 min-w-0">
-              <FileText class="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-              <div class="flex-1 min-w-0">
-                <div class="text-xs text-muted-foreground">Notes</div>
+            <div class="flex min-w-0 items-start gap-2">
+              <FileText class="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+              <div class="min-w-0 flex-1">
+                <div class="text-muted-foreground text-xs">Notes</div>
                 <div class="text-sm break-words">{transaction.notes}</div>
               </div>
             </div>
           {/if}
 
           <div class="flex items-center gap-2">
-            <div class="text-xs text-muted-foreground">Status</div>
+            <div class="text-muted-foreground text-xs">Status</div>
             <Badge variant={transaction.status === 'cleared' ? 'default' : 'secondary'}>
               {transaction.status}
             </Badge>
@@ -156,21 +161,24 @@ const hasImportMetadata = $derived(
 
           <!-- Import Information -->
           <div class="space-y-3">
-            <h3 class="text-sm font-semibold text-muted-foreground uppercase flex items-center gap-2">
+            <h3
+              class="text-muted-foreground flex items-center gap-2 text-sm font-semibold uppercase">
               <FileInput class="h-4 w-4" />
               Import Information
             </h3>
 
             {#if transaction.importedFrom}
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div class="min-w-0">
-                  <div class="text-xs text-muted-foreground">Source File</div>
-                  <div class="text-sm font-medium font-mono text-xs break-all">{transaction.importedFrom}</div>
+                  <div class="text-muted-foreground text-xs">Source File</div>
+                  <div class="font-mono text-sm text-xs font-medium break-all">
+                    {transaction.importedFrom}
+                  </div>
                 </div>
 
                 {#if transaction.importedAt}
                   <div class="min-w-0">
-                    <div class="text-xs text-muted-foreground">Imported At</div>
+                    <div class="text-muted-foreground text-xs">Imported At</div>
                     <div class="text-sm">{formatDate(transaction.importedAt, true)}</div>
                   </div>
                 {/if}
@@ -179,29 +187,30 @@ const hasImportMetadata = $derived(
 
             {#if transaction.originalPayeeName}
               <div class="space-y-2">
-                <div class="text-xs text-muted-foreground">Original Payee Name</div>
-                <div class="text-sm font-mono text-xs bg-muted p-2 rounded-md break-all">
+                <div class="text-muted-foreground text-xs">Original Payee Name</div>
+                <div class="bg-muted rounded-md p-2 font-mono text-sm text-xs break-all">
                   {transaction.originalPayeeName}
                 </div>
-                <div class="text-xs text-muted-foreground">
-                  Normalized to: <span class="font-medium break-all">{transaction.payee?.name}</span>
+                <div class="text-muted-foreground text-xs">
+                  Normalized to: <span class="font-medium break-all"
+                    >{transaction.payee?.name}</span>
                 </div>
               </div>
             {/if}
 
             {#if transaction.originalCategoryName}
               <div>
-                <div class="text-xs text-muted-foreground">Original Category</div>
+                <div class="text-muted-foreground text-xs">Original Category</div>
                 <div class="text-sm">{transaction.originalCategoryName}</div>
               </div>
             {/if}
 
             {#if transaction.inferredCategory}
               <div>
-                <div class="text-xs text-muted-foreground">Inferred Category</div>
+                <div class="text-muted-foreground text-xs">Inferred Category</div>
                 <div class="text-sm">{transaction.inferredCategory}</div>
                 {#if transaction.category?.name !== transaction.inferredCategory}
-                  <div class="text-xs text-muted-foreground mt-1">
+                  <div class="text-muted-foreground mt-1 text-xs">
                     Category was manually changed
                   </div>
                 {/if}
@@ -210,16 +219,16 @@ const hasImportMetadata = $derived(
 
             {#if importDetailsObj}
               <div class="space-y-2">
-                <div class="text-xs text-muted-foreground">Additional Details</div>
-                <div class="bg-muted p-3 rounded-md space-y-2">
+                <div class="text-muted-foreground text-xs">Additional Details</div>
+                <div class="bg-muted space-y-2 rounded-md p-3">
                   {#if importDetailsObj.fitid}
-                    <div class="text-xs flex flex-col gap-1">
+                    <div class="flex flex-col gap-1 text-xs">
                       <span class="text-muted-foreground">Transaction ID:</span>
                       <span class="font-mono break-all">{importDetailsObj.fitid}</span>
                     </div>
                   {/if}
                   {#if importDetailsObj.extractedDetails}
-                    <div class="text-xs flex flex-col gap-1">
+                    <div class="flex flex-col gap-1 text-xs">
                       <span class="text-muted-foreground">Extracted Info:</span>
                       <span class="break-all">{importDetailsObj.extractedDetails}</span>
                     </div>
@@ -229,19 +238,20 @@ const hasImportMetadata = $derived(
             {/if}
 
             {#if rawImportDataObj}
-              <div class="space-y-4 mt-4">
-                <div class="text-xs text-muted-foreground font-semibold">Raw Import Data</div>
+              <div class="mt-4 space-y-4">
+                <div class="text-muted-foreground text-xs font-semibold">Raw Import Data</div>
 
                 <!-- Check if new structured format -->
                 {#if rawImportDataObj.originalFileData}
                   <!-- Original File Data -->
                   <div class="space-y-2">
                     <div class="text-xs font-medium">Original File Data</div>
-                    <div class="bg-muted p-3 rounded-md max-h-48 overflow-y-auto">
+                    <div class="bg-muted max-h-48 overflow-y-auto rounded-md p-3">
                       <div class="space-y-2">
                         {#each Object.entries(rawImportDataObj.originalFileData) as [key, value]}
-                          <div class="text-xs flex flex-col sm:flex-row gap-1">
-                            <span class="font-medium text-muted-foreground min-w-[120px]">{key}:</span>
+                          <div class="flex flex-col gap-1 text-xs sm:flex-row">
+                            <span class="text-muted-foreground min-w-[120px] font-medium"
+                              >{key}:</span>
                             <span class="font-mono break-all">
                               {typeof value === 'object' ? JSON.stringify(value) : value}
                             </span>
@@ -255,11 +265,12 @@ const hasImportMetadata = $derived(
                   {#if rawImportDataObj.normalizedBeforeImport}
                     <div class="space-y-2">
                       <div class="text-xs font-medium">Normalized (Before Import Adjustments)</div>
-                      <div class="bg-muted p-3 rounded-md max-h-48 overflow-y-auto">
+                      <div class="bg-muted max-h-48 overflow-y-auto rounded-md p-3">
                         <div class="space-y-2">
                           {#each Object.entries(rawImportDataObj.normalizedBeforeImport) as [key, value]}
-                            <div class="text-xs flex flex-col sm:flex-row gap-1">
-                              <span class="font-medium text-muted-foreground min-w-[120px]">{key}:</span>
+                            <div class="flex flex-col gap-1 text-xs sm:flex-row">
+                              <span class="text-muted-foreground min-w-[120px] font-medium"
+                                >{key}:</span>
                               <span class="font-mono break-all">
                                 {typeof value === 'object' ? JSON.stringify(value) : value}
                               </span>
@@ -274,12 +285,16 @@ const hasImportMetadata = $derived(
                   {#if rawImportDataObj.importAdjustments}
                     <div class="space-y-2">
                       <div class="text-xs font-medium">Import Adjustments Applied</div>
-                      <div class="bg-muted p-3 rounded-md">
+                      <div class="bg-muted rounded-md p-3">
                         <div class="space-y-2">
                           {#each Object.entries(rawImportDataObj.importAdjustments) as [key, value]}
-                            <div class="text-xs flex items-center gap-2">
-                              <span class="font-medium text-muted-foreground min-w-[180px]">{key}:</span>
-                              <span class="ml-auto {value ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}">
+                            <div class="flex items-center gap-2 text-xs">
+                              <span class="text-muted-foreground min-w-[180px] font-medium"
+                                >{key}:</span>
+                              <span
+                                class="ml-auto {value
+                                  ? 'text-green-600 dark:text-green-400'
+                                  : 'text-muted-foreground'}">
                                 {value ? 'Yes' : 'No'}
                               </span>
                             </div>
@@ -290,11 +305,11 @@ const hasImportMetadata = $derived(
                   {/if}
                 {:else}
                   <!-- Legacy format - just display all data -->
-                  <div class="bg-muted p-3 rounded-md max-h-48 overflow-y-auto">
+                  <div class="bg-muted max-h-48 overflow-y-auto rounded-md p-3">
                     <div class="space-y-2">
                       {#each Object.entries(rawImportDataObj) as [key, value]}
-                        <div class="text-xs flex flex-col gap-1">
-                          <span class="font-medium text-muted-foreground">{key}:</span>
+                        <div class="flex flex-col gap-1 text-xs">
+                          <span class="text-muted-foreground font-medium">{key}:</span>
                           <span class="font-mono break-all">
                             {typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
                           </span>
@@ -312,19 +327,19 @@ const hasImportMetadata = $derived(
 
         <!-- Audit Trail -->
         <div class="space-y-3">
-          <h3 class="text-sm font-semibold text-muted-foreground uppercase flex items-center gap-2">
+          <h3 class="text-muted-foreground flex items-center gap-2 text-sm font-semibold uppercase">
             <Clock class="h-4 w-4 flex-shrink-0" />
             Audit Trail
           </h3>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="min-w-0">
-              <div class="text-xs text-muted-foreground">Created</div>
+              <div class="text-muted-foreground text-xs">Created</div>
               <div class="text-sm break-words">{formatDate(transaction.createdAt, true)}</div>
             </div>
 
             <div class="min-w-0">
-              <div class="text-xs text-muted-foreground">Last Modified</div>
+              <div class="text-muted-foreground text-xs">Last Modified</div>
               <div class="text-sm break-words">{formatDate(transaction.updatedAt, true)}</div>
             </div>
           </div>
@@ -335,18 +350,22 @@ const hasImportMetadata = $derived(
 
           <!-- Budget Allocations -->
           <div class="space-y-3">
-            <h3 class="text-sm font-semibold text-muted-foreground uppercase">Budget Allocations</h3>
+            <h3 class="text-muted-foreground text-sm font-semibold uppercase">
+              Budget Allocations
+            </h3>
 
             <div class="space-y-2">
               {#each transaction.budgetAllocations as allocation}
-                <div class="flex items-center justify-between p-2 bg-muted rounded-md">
+                <div class="bg-muted flex items-center justify-between rounded-md p-2">
                   <div class="flex-1">
                     <div class="text-sm font-medium">{allocation.budgetName}</div>
-                    <div class="text-xs text-muted-foreground">
+                    <div class="text-muted-foreground text-xs">
                       {allocation.autoAssigned ? 'Auto-assigned' : 'Manually assigned'}
                     </div>
                   </div>
-                  <div class="text-sm font-medium">{formatCurrency(allocation.allocatedAmount)}</div>
+                  <div class="text-sm font-medium">
+                    {formatCurrency(allocation.allocatedAmount)}
+                  </div>
                 </div>
               {/each}
             </div>
@@ -358,7 +377,8 @@ const hasImportMetadata = $derived(
 
           <!-- Transfer Information -->
           <div class="space-y-3">
-            <h3 class="text-sm font-semibold text-muted-foreground uppercase flex items-center gap-2">
+            <h3
+              class="text-muted-foreground flex items-center gap-2 text-sm font-semibold uppercase">
               <Info class="h-4 w-4" />
               Transfer Information
             </h3>
@@ -373,9 +393,7 @@ const hasImportMetadata = $derived(
         {/if}
       </div>
     {:else}
-      <div class="text-center py-8 text-muted-foreground">
-        No transaction selected
-      </div>
+      <div class="text-muted-foreground py-8 text-center">No transaction selected</div>
     {/if}
   </Dialog.Content>
 </Dialog.Root>

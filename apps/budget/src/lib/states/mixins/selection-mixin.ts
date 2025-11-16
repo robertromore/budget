@@ -1,7 +1,7 @@
 // Selection Mixin - Multi-select functionality with SvelteSet reactivity
 // Plain TypeScript utilities with no rune dependencies
 
-import type { SvelteSet } from "svelte/reactivity";
+import type {SvelteSet} from "svelte/reactivity";
 
 /**
  * Selection mixin interface - provides multi-select functionality
@@ -62,9 +62,7 @@ export interface SelectionMixin<T = string> {
  * @param selection - The reactive SvelteSet containing selected items
  * @returns SelectionMixin interface with selection operations
  */
-export function createSelectionMixin<T = string>(
-  selection: SvelteSet<T>
-): SelectionMixin<T> {
+export function createSelectionMixin<T = string>(selection: SvelteSet<T>): SelectionMixin<T> {
   return {
     // Basic selection operations
     add(id: T): boolean {
@@ -94,13 +92,13 @@ export function createSelectionMixin<T = string>(
     // Bulk operations
     addMany(ids: T[]): number {
       const sizeBefore = selection.size;
-      ids.forEach(id => selection.add(id));
+      ids.forEach((id) => selection.add(id));
       return selection.size - sizeBefore;
     },
 
     removeMany(ids: T[]): number {
       let removed = 0;
-      ids.forEach(id => {
+      ids.forEach((id) => {
         if (selection.delete(id)) {
           removed++;
         }
@@ -110,7 +108,7 @@ export function createSelectionMixin<T = string>(
 
     toggleMany(ids: T[]): number {
       let toggled = 0;
-      ids.forEach(id => {
+      ids.forEach((id) => {
         if (selection.has(id)) {
           selection.delete(id);
         } else {
@@ -122,7 +120,7 @@ export function createSelectionMixin<T = string>(
     },
 
     selectAll(ids: T[]): void {
-      ids.forEach(id => selection.add(id));
+      ids.forEach((id) => selection.add(id));
     },
 
     selectNone(): void {
@@ -167,12 +165,12 @@ export function createSelectionMixin<T = string>(
 
     intersection(otherSelection: T[]): T[] {
       const otherSet = new Set(otherSelection);
-      return Array.from(selection).filter(id => otherSet.has(id));
+      return Array.from(selection).filter((id) => otherSet.has(id));
     },
 
     difference(otherSelection: T[]): T[] {
       const otherSet = new Set(otherSelection);
-      return Array.from(selection).filter(id => !otherSet.has(id));
+      return Array.from(selection).filter((id) => !otherSet.has(id));
     },
 
     // Iteration support
@@ -243,7 +241,7 @@ export function createSelectionMixin<T = string>(
         }
       }
       return selection.has(id);
-    }
+    },
   };
 }
 
@@ -286,7 +284,7 @@ export function createConfigurableSelectionMixin<T = string>(
     multiple: true,
     maxSelections: Number.MAX_SAFE_INTEGER,
     minSelections: 0,
-    ...config
+    ...config,
   };
 
   const baseMixin = createSelectionMixin(selection);
@@ -334,10 +332,10 @@ export function createConfigurableSelectionMixin<T = string>(
       }
 
       if (!baseConfig.multiple && size > 1) {
-        errors.push('Only single selection allowed');
+        errors.push("Only single selection allowed");
       }
 
       return errors;
-    }
+    },
   };
 }

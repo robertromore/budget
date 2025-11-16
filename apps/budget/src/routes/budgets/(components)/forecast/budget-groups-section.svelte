@@ -34,7 +34,7 @@ function toggleExpand(id: number) {
 
 function handleDelete(group: BudgetGroup) {
   const groups = groupsQuery.data || [];
-  const hasChildren = groups.some(g => g.parentId === group.id);
+  const hasChildren = groups.some((g) => g.parentId === group.id);
 
   groupToDelete = group;
   deleteConfirmMessage = hasChildren
@@ -56,10 +56,10 @@ async function confirmDelete() {
 
 const hierarchy = $derived.by(() => {
   const groups = groupsQuery.data || [];
-  const rootGroups = groups.filter(g => !g.parentId);
+  const rootGroups = groups.filter((g) => !g.parentId);
   const childMap = new Map<number, BudgetGroup[]>();
 
-  groups.forEach(group => {
+  groups.forEach((group) => {
     if (group.parentId) {
       const children = childMap.get(group.parentId) || [];
       children.push(group);
@@ -75,32 +75,30 @@ const hierarchy = $derived.by(() => {
   <div class="flex items-center justify-between">
     <div>
       <h2 class="text-lg font-semibold">Budget Groups</h2>
-      <p class="text-sm text-muted-foreground">
-        Organize your budgets hierarchically
-      </p>
+      <p class="text-muted-foreground text-sm">Organize your budgets hierarchically</p>
     </div>
     <Button onclick={onCreateGroup} size="sm">
-      <Plus class="h-4 w-4 mr-2" />
+      <Plus class="mr-2 h-4 w-4" />
       New Group
     </Button>
   </div>
 
   {#if groupsQuery.isLoading}
     <Card.Root>
-      <Card.Content class="p-8 text-center text-muted-foreground">
+      <Card.Content class="text-muted-foreground p-8 text-center">
         Loading budget groups...
       </Card.Content>
     </Card.Root>
   {:else if !groupsQuery.data || groupsQuery.data.length === 0}
     <Card.Root>
       <Card.Content class="p-8 text-center">
-        <FolderTree class="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-        <h3 class="font-medium mb-2">No Budget Groups</h3>
-        <p class="text-sm text-muted-foreground mb-4">
+        <FolderTree class="text-muted-foreground mx-auto mb-4 h-12 w-12 opacity-50" />
+        <h3 class="mb-2 font-medium">No Budget Groups</h3>
+        <p class="text-muted-foreground mb-4 text-sm">
           Create budget groups to organize your budgets hierarchically
         </p>
         <Button onclick={onCreateGroup} variant="outline" size="sm">
-          <Plus class="h-4 w-4 mr-2" />
+          <Plus class="mr-2 h-4 w-4" />
           Create Your First Group
         </Button>
       </Card.Content>
@@ -119,8 +117,7 @@ const hierarchy = $derived.by(() => {
                   variant="ghost"
                   size="sm"
                   class="h-6 w-6 p-0"
-                  onclick={() => toggleExpand(rootGroup.id)}
-                >
+                  onclick={() => toggleExpand(rootGroup.id)}>
                   {#if isExpanded}
                     <ChevronDown class="h-4 w-4" />
                   {:else}
@@ -134,23 +131,15 @@ const hierarchy = $derived.by(() => {
               <div class="flex-1">
                 <div class="font-medium">{rootGroup.name}</div>
                 {#if rootGroup.description}
-                  <div class="text-sm text-muted-foreground">{rootGroup.description}</div>
+                  <div class="text-muted-foreground text-sm">{rootGroup.description}</div>
                 {/if}
               </div>
 
               <div class="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onclick={() => onEditGroup?.(rootGroup)}
-                >
+                <Button variant="ghost" size="sm" onclick={() => onEditGroup?.(rootGroup)}>
                   <SquarePen class="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onclick={() => handleDelete(rootGroup)}
-                >
+                <Button variant="ghost" size="sm" onclick={() => handleDelete(rootGroup)}>
                   <Trash2 class="h-4 w-4" />
                 </Button>
               </div>
@@ -167,8 +156,7 @@ const hierarchy = $derived.by(() => {
                       variant="ghost"
                       size="sm"
                       class="h-6 w-6 p-0"
-                      onclick={() => toggleExpand(child.id)}
-                    >
+                      onclick={() => toggleExpand(child.id)}>
                       {#if childIsExpanded}
                         <ChevronDown class="h-4 w-4" />
                       {:else}
@@ -182,23 +170,15 @@ const hierarchy = $derived.by(() => {
                   <div class="flex-1">
                     <div class="font-medium">{child.name}</div>
                     {#if child.description}
-                      <div class="text-sm text-muted-foreground">{child.description}</div>
+                      <div class="text-muted-foreground text-sm">{child.description}</div>
                     {/if}
                   </div>
 
                   <div class="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onclick={() => onEditGroup?.(child)}
-                    >
+                    <Button variant="ghost" size="sm" onclick={() => onEditGroup?.(child)}>
                       <SquarePen class="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onclick={() => handleDelete(child)}
-                    >
+                    <Button variant="ghost" size="sm" onclick={() => handleDelete(child)}>
                       <Trash2 class="h-4 w-4" />
                     </Button>
                   </div>
@@ -226,8 +206,7 @@ const hierarchy = $derived.by(() => {
       <AlertDialog.Action
         onclick={confirmDelete}
         disabled={deleteMutation.isPending}
-        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-      >
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
         {#if deleteMutation.isPending}
           Deleting...
         {:else}

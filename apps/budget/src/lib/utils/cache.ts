@@ -122,7 +122,15 @@ export const dataCache = new MemoryCache(200, 60000); // 200 entries, cleanup ev
 // Cache key generators for consistency
 export const cacheKeys = {
   accountSummary: (id: number) => `account:${id}:summary`,
-  accountTransactions: (id: number, page: number, pageSize: number, sortBy?: string, sortOrder?: string, dateFrom?: string, dateTo?: string) =>
+  accountTransactions: (
+    id: number,
+    page: number,
+    pageSize: number,
+    sortBy?: string,
+    sortOrder?: string,
+    dateFrom?: string,
+    dateTo?: string
+  ) =>
     `account:${id}:transactions:${page}:${pageSize}:${sortBy || "date"}:${sortOrder || "desc"}:${dateFrom || "null"}:${dateTo || "null"}`,
   recentTransactions: (id: number, limit: number) => `account:${id}:recent:${limit}`,
   balanceHistory: (id: number, fromDate?: string, toDate?: string, groupBy?: string) =>

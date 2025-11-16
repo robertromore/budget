@@ -60,9 +60,9 @@ export const detectedPatterns = sqliteTable(
       enum: ["pending", "accepted", "dismissed", "converted"],
     }).default("pending"),
     scheduleId: integer("schedule_id").references(() => schedules.id, {onDelete: "set null"}),
-    suggestedScheduleConfig: text("suggested_schedule_config", {mode: "json"}).$type<
-      SuggestedScheduleConfig
-    >(),
+    suggestedScheduleConfig: text("suggested_schedule_config", {
+      mode: "json",
+    }).$type<SuggestedScheduleConfig>(),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),

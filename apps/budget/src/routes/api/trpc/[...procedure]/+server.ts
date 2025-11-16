@@ -1,11 +1,11 @@
-import type {RequestHandler} from './$types';
-import {fetchRequestHandler} from '@trpc/server/adapters/fetch';
-import {router} from '$lib/trpc/router';
-import {createContext} from '$lib/trpc/context';
+import type {RequestHandler} from "./$types";
+import {fetchRequestHandler} from "@trpc/server/adapters/fetch";
+import {router} from "$lib/trpc/router";
+import {createContext} from "$lib/trpc/context";
 
 const handler: RequestHandler = (event) => {
   return fetchRequestHandler({
-    endpoint: '/api/trpc',
+    endpoint: "/api/trpc",
     req: event.request,
     router,
     createContext: () => createContext(event),

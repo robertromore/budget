@@ -1,10 +1,10 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
+import {Button} from '$lib/components/ui/button';
 import Tag from '@lucide/svelte/icons/tag';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Trash2 from '@lucide/svelte/icons/trash-2';
-import type { Category } from '$lib/schema';
+import type {Category} from '$lib/schema';
 
 interface Props {
   category: Category;
@@ -14,7 +14,7 @@ interface Props {
   onViewAnalytics: (category: Category) => void;
 }
 
-let { category, onView, onEdit, onDelete, onViewAnalytics }: Props = $props();
+let {category, onView, onEdit, onDelete, onViewAnalytics}: Props = $props();
 </script>
 
 <div class="flex items-center justify-end gap-1">

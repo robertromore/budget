@@ -113,7 +113,9 @@ table = createSvelteTable({
             {#each headerGroup.headers as header}
               <Table.Head>
                 {#if !header.isPlaceholder && header.column.columnDef.header}
-                  <FlexRender content={header.column.columnDef.header} context={header.getContext()} />
+                  <FlexRender
+                    content={header.column.columnDef.header}
+                    context={header.getContext()} />
                 {/if}
               </Table.Head>
             {/each}
@@ -135,7 +137,9 @@ table = createSvelteTable({
           {/each}
         {:else}
           <Table.Row>
-            <Table.Cell colspan={columns(schedulesState, onView, onEdit, onDelete).length} class="h-24 text-center">
+            <Table.Cell
+              colspan={columns(schedulesState, onView, onEdit, onDelete).length}
+              class="h-24 text-center">
               No schedules found.
             </Table.Cell>
           </Table.Row>

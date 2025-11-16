@@ -1,6 +1,6 @@
-import { sveltekit } from "@sveltejs/kit/vite";
+import {sveltekit} from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
+import {defineConfig} from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
@@ -10,56 +10,58 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           // Vendor libraries
-          if (id.includes('node_modules')) {
-            if (id.includes('@tanstack') || id.includes('lucide')) {
-              return 'vendor-ui';
+          if (id.includes("node_modules")) {
+            if (id.includes("@tanstack") || id.includes("lucide")) {
+              return "vendor-ui";
             }
-            if (id.includes('@trpc') || id.includes('zod')) {
-              return 'vendor-trpc';
+            if (id.includes("@trpc") || id.includes("zod")) {
+              return "vendor-trpc";
             }
-            if (id.includes('@internationalized/date') || id.includes('date-fns')) {
-              return 'vendor-date';
+            if (id.includes("@internationalized/date") || id.includes("date-fns")) {
+              return "vendor-date";
             }
-            if (id.includes('sveltekit-superforms')) {
-              return 'vendor-forms';
+            if (id.includes("sveltekit-superforms")) {
+              return "vendor-forms";
             }
-            return 'vendor-misc';
+            return "vendor-misc";
           }
 
           // Application code splitting
-          if (id.includes('/routes/accounts/[id]/') &&
-              (id.includes('data-table') || id.includes('columns'))) {
-            return 'data-table';
+          if (
+            id.includes("/routes/accounts/[id]/") &&
+            (id.includes("data-table") || id.includes("columns"))
+          ) {
+            return "data-table";
           }
 
-          if (id.includes('/states/') || id.includes('/models/')) {
-            return 'app-state';
+          if (id.includes("/states/") || id.includes("/models/")) {
+            return "app-state";
           }
 
-          if (id.includes('/components/ui/')) {
-            return 'ui-components';
+          if (id.includes("/components/ui/")) {
+            return "ui-components";
           }
-        }
-      }
-    }
+        },
+      },
+    },
   },
   // Performance optimizations
   optimizeDeps: {
     include: [
-      '@tanstack/table-core',
-      '@tanstack/svelte-table',
-      '@tanstack/svelte-query',
-      '@trpc/client',
-      'zod',
-      '@lucide/svelte',
-      'lodash-es',
-      'lodash-es/get',
-      'layerchart',
-      'svelte-sonner'
-    ]
+      "@tanstack/table-core",
+      "@tanstack/svelte-table",
+      "@tanstack/svelte-query",
+      "@trpc/client",
+      "zod",
+      "@lucide/svelte",
+      "lodash-es",
+      "lodash-es/get",
+      "layerchart",
+      "svelte-sonner",
+    ],
   },
   ssr: {
     // Pre-bundle some dependencies for SSR
-    noExternal: ['@internationalized/date']
-  }
+    noExternal: ["@internationalized/date"],
+  },
 });

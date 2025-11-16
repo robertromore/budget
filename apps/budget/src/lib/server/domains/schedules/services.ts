@@ -1,9 +1,9 @@
-import type { Category, Payee } from "$lib/schema";
-import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { PayeeService } from "../payees/services";
-import { CategoryService } from "../categories/services";
-import { TransactionService, type CreateTransactionData } from "../transactions/services";
-import { ScheduleRepository, type ScheduleWithDetails } from "./repository";
+import type {Category, Payee} from "$lib/schema";
+import {NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
+import {PayeeService} from "../payees/services";
+import {CategoryService} from "../categories/services";
+import {TransactionService, type CreateTransactionData} from "../transactions/services";
+import {ScheduleRepository, type ScheduleWithDetails} from "./repository";
 
 export interface AutoAddResult {
   scheduleId: number;
@@ -50,10 +50,10 @@ interface FrequencyLimits {
 }
 
 const FREQUENCY_DISPLAY_LIMITS: Record<string, FrequencyLimits> = {
-  daily: { maxOccurrences: 7, maxDaysAhead: 14 },
-  weekly: { maxOccurrences: 6, maxDaysAhead: 45 },
-  monthly: { maxOccurrences: 6, maxDaysAhead: 180 },
-  yearly: { maxOccurrences: 3, maxDaysAhead: 1095 }
+  daily: {maxOccurrences: 7, maxDaysAhead: 14},
+  weekly: {maxOccurrences: 6, maxDaysAhead: 45},
+  monthly: {maxOccurrences: 6, maxDaysAhead: 180},
+  yearly: {maxOccurrences: 3, maxDaysAhead: 1095},
 };
 
 /**
@@ -136,10 +136,7 @@ export class ScheduleService {
 
       for (const dueDate of dueDates) {
         // Check if transaction already exists for this date
-        const hasTransaction = await this.repository.hasTransactionForDate(
-          schedule.id,
-          dueDate
-        );
+        const hasTransaction = await this.repository.hasTransactionForDate(schedule.id, dueDate);
 
         if (!hasTransaction) {
           // Create transaction
@@ -167,7 +164,7 @@ export class ScheduleService {
     }
 
     const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
+    const todayString = today.toISOString().split("T")[0];
     const startDate = new Date(schedule.scheduleDate.start);
     const endDate = schedule.scheduleDate.end ? new Date(schedule.scheduleDate.end) : null;
     const frequency = schedule.scheduleDate.frequency;
@@ -190,8 +187,12 @@ export class ScheduleService {
     }
 
     // Only include today's date if it matches the schedule
-    const currentDateString = currentDate.toISOString().split('T')[0];
-    if (currentDateString && currentDateString === todayString && (!endDate || currentDate <= endDate)) {
+    const currentDateString = currentDate.toISOString().split("T")[0];
+    if (
+      currentDateString &&
+      currentDateString === todayString &&
+      (!endDate || currentDate <= endDate)
+    ) {
       dueDates.push(currentDateString);
     }
 
@@ -230,7 +231,7 @@ export class ScheduleService {
       return null;
     }
 
-    return nextDate.toISOString().split('T')[0] || null;
+    return nextDate.toISOString().split("T")[0] || null;
   }
 
   /**
@@ -242,7 +243,7 @@ export class ScheduleService {
         date.setDate(date.getDate() + interval);
         break;
       case "weekly":
-        date.setDate(date.getDate() + (7 * interval));
+        date.setDate(date.getDate() + 7 * interval);
         break;
       case "monthly":
         date.setMonth(date.getMonth() + interval);
@@ -335,10 +336,13 @@ export class ScheduleService {
    * Shows transactions that will be created in the near future with intelligent frequency-based limits
    * Only includes schedules with auto_add enabled
    */
-  async getUpcomingScheduledTransactionsForAccount(accountId: number, useSmartLimits: boolean = true): Promise<UpcomingScheduledTransaction[]> {
+  async getUpcomingScheduledTransactionsForAccount(
+    accountId: number,
+    useSmartLimits: boolean = true
+  ): Promise<UpcomingScheduledTransaction[]> {
     // Get all active schedules with auto_add enabled for this account
     const schedules = await this.repository.getActiveAutoAddSchedules();
-    const accountSchedules = schedules.filter(schedule => schedule.accountId === accountId);
+    const accountSchedules = schedules.filter((schedule) => schedule.accountId === accountId);
 
     const upcomingTransactions: UpcomingScheduledTransaction[] = [];
 
@@ -357,7 +361,11 @@ export class ScheduleService {
         }
 
         // Get upcoming dates for this schedule within our calculated window
-        const upcomingDates = await this.calculateUpcomingDates(schedule, daysAhead, maxOccurrences);
+        const upcomingDates = await this.calculateUpcomingDates(
+          schedule,
+          daysAhead,
+          maxOccurrences
+        );
 
         for (const date of upcomingDates) {
           // Check if transaction already exists for this date
@@ -376,7 +384,10 @@ export class ScheduleService {
               try {
                 payee = await this.payeeService.getPayeeById(schedule.payeeId);
               } catch (error) {
-                console.warn(`Failed to load payee ${schedule.payeeId} for schedule ${schedule.id}:`, error);
+                console.warn(
+                  `Failed to load payee ${schedule.payeeId} for schedule ${schedule.id}:`,
+                  error
+                );
                 payee = null;
               }
             }
@@ -387,7 +398,10 @@ export class ScheduleService {
               try {
                 category = await this.categoryService.getCategoryById(schedule.categoryId);
               } catch (error) {
-                console.warn(`Failed to load category ${schedule.categoryId} for schedule ${schedule.id}:`, error);
+                console.warn(
+                  `Failed to load category ${schedule.categoryId} for schedule ${schedule.id}:`,
+                  error
+                );
                 category = null;
               }
             }
@@ -448,7 +462,14 @@ export class ScheduleService {
     const frequency = schedule.scheduleDate.frequency;
 
     // Handle monthly schedules with specific days
-    if (frequency === "monthly" && schedule.scheduleDate.on && schedule.scheduleDate.on_type === "day" && schedule.scheduleDate.days && Array.isArray(schedule.scheduleDate.days) && schedule.scheduleDate.days.length > 0) {
+    if (
+      frequency === "monthly" &&
+      schedule.scheduleDate.on &&
+      schedule.scheduleDate.on_type === "day" &&
+      schedule.scheduleDate.days &&
+      Array.isArray(schedule.scheduleDate.days) &&
+      schedule.scheduleDate.days.length > 0
+    ) {
       return this.calculateMonthlyOnDayDates(schedule, daysAhead, maxOccurrences);
     }
 
@@ -469,7 +490,9 @@ export class ScheduleService {
     endDate.setDate(today.getDate() + daysAhead);
 
     const startDate = new Date(schedule.scheduleDate!.start);
-    const scheduleEndDate = schedule.scheduleDate!.end ? new Date(schedule.scheduleDate!.end) : null;
+    const scheduleEndDate = schedule.scheduleDate!.end
+      ? new Date(schedule.scheduleDate!.end)
+      : null;
     const interval = schedule.scheduleDate!.interval || 1;
     const days = schedule.scheduleDate!.days as number[];
 
@@ -506,7 +529,7 @@ export class ScheduleService {
           return upcomingDates;
         }
 
-        const dateString = candidateDate.toISOString().split('T')[0];
+        const dateString = candidateDate.toISOString().split("T")[0];
         if (dateString) {
           upcomingDates.push(dateString);
         }
@@ -538,7 +561,9 @@ export class ScheduleService {
     endDate.setDate(today.getDate() + daysAhead);
 
     const startDate = new Date(schedule.scheduleDate!.start);
-    const scheduleEndDate = schedule.scheduleDate!.end ? new Date(schedule.scheduleDate!.end) : null;
+    const scheduleEndDate = schedule.scheduleDate!.end
+      ? new Date(schedule.scheduleDate!.end)
+      : null;
     const frequency = schedule.scheduleDate!.frequency;
     const interval = schedule.scheduleDate!.interval || 1;
 
@@ -580,7 +605,7 @@ export class ScheduleService {
         break;
       }
 
-      const dateString = currentDate.toISOString().split('T')[0];
+      const dateString = currentDate.toISOString().split("T")[0];
       if (dateString) {
         upcomingDates.push(dateString);
       }

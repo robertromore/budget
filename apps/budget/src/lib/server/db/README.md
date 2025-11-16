@@ -1,6 +1,7 @@
 # Database Layer Documentation
 
-Complete guide to the database factories, seeders, migrations, and testing utilities.
+Complete guide to the database factories, seeders, migrations, and testing
+utilities.
 
 ## Table of Contents
 
@@ -16,6 +17,7 @@ Complete guide to the database factories, seeders, migrations, and testing utili
 ## Overview
 
 The database layer provides:
+
 - **Factories**: Generate realistic test data programmatically
 - **Seeders**: Load predefined data from JSON files
 - **Migrations**: Version-controlled schema changes
@@ -41,24 +43,25 @@ bun run ./src/lib/server/db/delete-all.ts --confirm
 
 ## Factories
 
-Factories generate realistic test data with proper workspace isolation and relationships.
+Factories generate realistic test data with proper workspace isolation and
+relationships.
 
 ### Available Factories
 
-| Factory | Purpose | Example |
-|---------|---------|---------|
-| `workspaceFactory` | Create workspaces | `await workspaceFactory(1)` |
-| `accountFactory` | Create accounts with transactions | `await accountFactory(3, workspaceId)` |
-| `categoryFactory` | Create categories | `await categoryFactory(workspaceId, 5)` |
-| `payeeFactory` | Create payees | `await payeeFactory(workspaceId, 5)` |
-| `transactionFactory` | Create transactions | `await transactionFactory(account, workspaceId, 10)` |
+| Factory              | Purpose                           | Example                                              |
+| -------------------- | --------------------------------- | ---------------------------------------------------- |
+| `workspaceFactory`   | Create workspaces                 | `await workspaceFactory(1)`                          |
+| `accountFactory`     | Create accounts with transactions | `await accountFactory(3, workspaceId)`               |
+| `categoryFactory`    | Create categories                 | `await categoryFactory(workspaceId, 5)`              |
+| `payeeFactory`       | Create payees                     | `await payeeFactory(workspaceId, 5)`                 |
+| `transactionFactory` | Create transactions               | `await transactionFactory(account, workspaceId, 10)` |
 
 ### Usage Examples
 
 #### Basic Factory Usage
 
 ```typescript
-import {workspaceFactory, accountFactory} from "$lib/server/db/factories";
+import {workspaceFactory, accountFactory} from '$lib/server/db/factories';
 
 // Create a workspace
 const [workspace] = await workspaceFactory(1);
@@ -72,7 +75,7 @@ const accounts = await accountFactory(3, workspace.id);
 #### Custom Transaction Count
 
 ```typescript
-import {accountFactory, transactionFactory} from "$lib/server/db/factories";
+import {accountFactory, transactionFactory} from '$lib/server/db/factories';
 
 const [account] = await accountFactory(1, workspaceId);
 
@@ -84,7 +87,8 @@ await transactionFactory(account, workspaceId, 100);
 
 #### Workspace Isolation
 
-All factories now require `workspaceId` to ensure proper multi-workspace isolation:
+All factories now require `workspaceId` to ensure proper multi-workspace
+isolation:
 
 ```typescript
 // ✅ CORRECT
@@ -97,6 +101,7 @@ await categoryFactory(5);
 #### Smart Entity Reuse
 
 `transactionFactory` implements 50/50 logic:
+
 - 50% chance to create new payees/categories
 - 50% chance to reuse existing ones
 - Creates realistic transaction patterns
@@ -106,7 +111,7 @@ await categoryFactory(5);
 Factories use sequences to ensure unique values:
 
 ```typescript
-import {sequence} from "./utils/sequence";
+import {sequence} from './utils/sequence';
 
 const slug = `${slugify(name)}-${sequence('account')}`;
 // Results: "checking-account-1", "checking-account-2", etc.
@@ -241,14 +246,15 @@ bun run db:migrate
 
 ## Testing Utilities
 
-The `TestDatabase` class provides isolated test environments with snapshot/restore capabilities.
+The `TestDatabase` class provides isolated test environments with
+snapshot/restore capabilities.
 
 ### Setup
 
 ```typescript
-import {TestDatabase} from "$lib/server/db/test-utils";
+import {TestDatabase} from '$lib/server/db/test-utils';
 
-describe("My Test Suite", () => {
+describe('My Test Suite', () => {
   const testDb = new TestDatabase();
   let db: ReturnType<typeof testDb.setup>;
 
@@ -376,7 +382,8 @@ bun run ./src/lib/server/db/delete-all.ts --dry-run
 
 ### Critical Concept
 
-All data MUST be associated with a workspace. The multi-workspace migration (0010) renamed `user_id` to `workspace_id` across all tables.
+All data MUST be associated with a workspace. The multi-workspace migration
+(0010) renamed `user_id` to `workspace_id` across all tables.
 
 ### Ensuring Isolation
 
@@ -402,7 +409,7 @@ const workspaceAccounts = await db
   .from(accounts)
   .where(eq(accounts.workspaceId, workspaceId));
 
-const accountIds = workspaceAccounts.map(a => a.id);
+const accountIds = workspaceAccounts.map((a) => a.id);
 
 // Filter transactions by those accounts
 const transactions = await db
@@ -448,8 +455,8 @@ bun run db:factory
 
 ```typescript
 // Create custom seed script
-import {workspaceFactory} from "./factories/workspaces";
-import {accountFactory} from "./factories/accounts";
+import {workspaceFactory} from './factories/workspaces';
+import {accountFactory} from './factories/accounts';
 
 const [workspace] = await workspaceFactory(1);
 
@@ -483,7 +490,7 @@ await accountFactory(5, workspace.id);
 **Solution**: Sequences already handle this, but if manually creating:
 
 ```typescript
-import {sequence} from "./factories/utils/sequence";
+import {sequence} from './factories/utils/sequence';
 
 const slug = `${slugify(name)}-${sequence('account')}`;
 ```
@@ -550,13 +557,10 @@ bun run db:migrate
 
 The database layer now provides:
 
-✅ Complete workspace isolation
-✅ Transaction-safe factory operations
-✅ Smart entity reuse patterns
-✅ Comprehensive cleanup utilities
-✅ Isolated test environments
-✅ Snapshot/restore for tests
-✅ Dependency-ordered seeding
-✅ Environment-aware configuration
+✅ Complete workspace isolation ✅ Transaction-safe factory operations ✅ Smart
+entity reuse patterns ✅ Comprehensive cleanup utilities ✅ Isolated test
+environments ✅ Snapshot/restore for tests ✅ Dependency-ordered seeding ✅
+Environment-aware configuration
 
-**All factories** require `workspaceId` to ensure proper multi-workspace support.
+**All factories** require `workspaceId` to ensure proper multi-workspace
+support.

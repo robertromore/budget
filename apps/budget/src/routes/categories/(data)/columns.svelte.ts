@@ -1,10 +1,10 @@
-import { Checkbox } from "$lib/components/ui/checkbox";
-import { renderComponent } from "$lib/components/ui/data-table";
-import type { Category } from "$lib/schema";
-import type { CategoryWithGroup } from "$lib/server/domains/categories/repository";
-import type { CategoriesState } from "$lib/states/entities/categories.svelte";
-import { compareAlphanumeric } from "$lib/utils";
-import type { ColumnDef, FilterFnOption } from "@tanstack/table-core";
+import {Checkbox} from "$lib/components/ui/checkbox";
+import {renderComponent} from "$lib/components/ui/data-table";
+import type {Category} from "$lib/schema";
+import type {CategoryWithGroup} from "$lib/server/domains/categories/repository";
+import type {CategoriesState} from "$lib/states/entities/categories.svelte";
+import {compareAlphanumeric} from "$lib/utils";
+import type {ColumnDef, FilterFnOption} from "@tanstack/table-core";
 import CategoryActionsCell from "../(components)/(cells)/category-actions-cell.svelte";
 import CategoryExpectedRangeCell from "../(components)/(cells)/category-expected-range-cell.svelte";
 import CategoryGroupCell from "../(components)/(cells)/category-group-cell.svelte";
@@ -26,7 +26,7 @@ export const columns = (
   return [
     {
       id: "select-col",
-      header: ({ table }) => {
+      header: ({table}) => {
         const allPageRowsSelected = table.getIsAllPageRowsSelected();
         const somePageRowsSelected = table.getIsSomePageRowsSelected();
 
@@ -44,7 +44,7 @@ export const columns = (
           "aria-label": "Select all on page",
         });
       },
-      cell: ({ row }) => {
+      cell: ({row}) => {
         return renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
@@ -59,7 +59,7 @@ export const columns = (
     },
     {
       accessorKey: "id",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "ID",
@@ -74,16 +74,17 @@ export const columns = (
     {
       accessorKey: "name",
       id: "name",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Name",
         }),
       cell: (info) => {
         const category = info.row.original;
-        return renderComponent(CategoryNameCell, { category });
+        return renderComponent(CategoryNameCell, {category});
       },
-      sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.name || "", rowB.original.name || ""),
+      sortingFn: (rowA, rowB) =>
+        compareAlphanumeric(rowA.original.name || "", rowB.original.name || ""),
       enableColumnFilter: true,
       filterFn: "includesString" as FilterFnOption<CategoryWithGroup>,
       meta: {
@@ -93,7 +94,7 @@ export const columns = (
     {
       accessorKey: "groupName",
       id: "group",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Group",
@@ -106,7 +107,8 @@ export const columns = (
           groupIcon: category.groupIcon,
         });
       },
-      sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.groupName || "", rowB.original.groupName || ""),
+      sortingFn: (rowA, rowB) =>
+        compareAlphanumeric(rowA.original.groupName || "", rowB.original.groupName || ""),
       enableColumnFilter: true,
       filterFn: "includesString" as FilterFnOption<CategoryWithGroup>,
       meta: {
@@ -116,16 +118,17 @@ export const columns = (
     {
       accessorKey: "categoryType",
       id: "type",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Type",
         }),
       cell: (info) => {
         const category = info.row.original;
-        return renderComponent(CategoryTypeCell, { categoryType: category.categoryType });
+        return renderComponent(CategoryTypeCell, {categoryType: category.categoryType});
       },
-      sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.categoryType || "", rowB.original.categoryType || ""),
+      sortingFn: (rowA, rowB) =>
+        compareAlphanumeric(rowA.original.categoryType || "", rowB.original.categoryType || ""),
       enableColumnFilter: true,
       filterFn: "equalsString" as FilterFnOption<CategoryWithGroup>,
       meta: {
@@ -135,16 +138,20 @@ export const columns = (
     {
       accessorKey: "spendingPriority",
       id: "priority",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Priority",
         }),
       cell: (info) => {
         const category = info.row.original;
-        return renderComponent(CategoryPriorityCell, { priority: category.spendingPriority });
+        return renderComponent(CategoryPriorityCell, {priority: category.spendingPriority});
       },
-      sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.spendingPriority || "", rowB.original.spendingPriority || ""),
+      sortingFn: (rowA, rowB) =>
+        compareAlphanumeric(
+          rowA.original.spendingPriority || "",
+          rowB.original.spendingPriority || ""
+        ),
       enableColumnFilter: true,
       filterFn: "equalsString" as FilterFnOption<CategoryWithGroup>,
       meta: {
@@ -154,14 +161,14 @@ export const columns = (
     {
       accessorKey: "isTaxDeductible",
       id: "taxDeductible",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Tax Deductible",
         }),
       cell: (info) => {
         const isTaxDeductible = info.getValue() as boolean;
-        return renderComponent(CategoryTaxDeductibleCell, { isTaxDeductible });
+        return renderComponent(CategoryTaxDeductibleCell, {isTaxDeductible});
       },
       enableSorting: true,
       enableColumnFilter: true,
@@ -173,7 +180,7 @@ export const columns = (
     {
       accessorKey: "expectedMonthlyMin",
       id: "expectedRange",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Expected Range",
@@ -199,14 +206,14 @@ export const columns = (
     {
       accessorKey: "notes",
       id: "notes",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Notes",
         }),
       cell: (info) => {
         const notes = info.getValue() as string | null;
-        return renderComponent(CategoryNotesCell, { notes });
+        return renderComponent(CategoryNotesCell, {notes});
       },
       enableSorting: false,
       enableColumnFilter: false,
@@ -217,14 +224,14 @@ export const columns = (
     {
       accessorKey: "isActive",
       id: "status",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
           column,
           title: "Status",
         }),
       cell: (info) => {
         const isActive = info.getValue() as boolean;
-        return renderComponent(CategoryStatusCell, { isActive });
+        return renderComponent(CategoryStatusCell, {isActive});
       },
       enableSorting: true,
       enableColumnFilter: true,

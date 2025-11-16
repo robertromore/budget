@@ -11,7 +11,7 @@ const handleSave = (schedule?: Schedule) => {
   if (schedule?.slug) {
     // Navigate to the new schedule's detail page
     setTimeout(() => {
-      goto(`/schedules/${schedule.slug}`, { replaceState: true });
+      goto(`/schedules/${schedule.slug}`, {replaceState: true});
     }, 100);
   } else {
     // Navigate back to schedules list
@@ -25,7 +25,7 @@ const handleSave = (schedule?: Schedule) => {
   <meta name="description" content="Create a new recurring schedule" />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -34,8 +34,8 @@ const handleSave = (schedule?: Schedule) => {
         <span class="sr-only">Back to Schedules</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Calendar class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <Calendar class="text-muted-foreground h-8 w-8" />
           New Schedule
         </h1>
         <p class="text-muted-foreground mt-1">Create a new recurring schedule</p>
@@ -47,16 +47,10 @@ const handleSave = (schedule?: Schedule) => {
   <Card.Root class="max-w-4xl">
     <Card.Header>
       <Card.Title>Schedule Information</Card.Title>
-      <Card.Description>
-        Fill in the details for your new recurring schedule.
-      </Card.Description>
+      <Card.Description>Fill in the details for your new recurring schedule.</Card.Description>
     </Card.Header>
     <Card.Content>
-      <ManageScheduleForm
-        scheduleId={0}
-        duplicateMode={false}
-        onSave={handleSave}
-      />
+      <ManageScheduleForm scheduleId={0} duplicateMode={false} onSave={handleSave} />
     </Card.Content>
   </Card.Root>
 </div>

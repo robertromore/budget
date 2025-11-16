@@ -23,7 +23,7 @@ const availableCategories = $derived.by(() => {
 
   // For now, just filter out the current category
   // TODO: Also filter out descendants when editing
-  return categories.filter(cat => cat.id !== currentCategoryId);
+  return categories.filter((cat) => cat.id !== currentCategoryId);
 });
 
 // Use accessor pattern for type conversion between number|null and string
@@ -38,7 +38,7 @@ const selectValue = $state.raw({
       const categoryId = parseInt(newValue);
       value = isNaN(categoryId) ? null : categoryId;
     }
-  }
+  },
 });
 </script>
 
@@ -48,17 +48,10 @@ const selectValue = $state.raw({
     <span class="text-muted-foreground text-sm font-normal">(optional)</span>
   </Label>
 
-  <Select.Root
-    type="single"
-    bind:value={selectValue.value}
-    {disabled}
-  >
-    <Select.Trigger
-      id="parent-category"
-      class={error ? 'border-destructive' : ''}
-    >
+  <Select.Root type="single" bind:value={selectValue.value} {disabled}>
+    <Select.Trigger id="parent-category" class={error ? 'border-destructive' : ''}>
       {#if selectValue.value && selectValue.value !== ''}
-        {@const category = availableCategories.find(c => c.id.toString() === selectValue.value)}
+        {@const category = availableCategories.find((c) => c.id.toString() === selectValue.value)}
         {category?.name || 'Unnamed'}
       {:else}
         <span class="text-muted-foreground">None (Top Level)</span>
@@ -81,10 +74,8 @@ const selectValue = $state.raw({
   </Select.Root>
 
   {#if error}
-    <p class="text-sm text-destructive">{error}</p>
+    <p class="text-destructive text-sm">{error}</p>
   {/if}
 
-  <p class="text-xs text-muted-foreground">
-    Organize this category under a parent category
-  </p>
+  <p class="text-muted-foreground text-xs">Organize this category under a parent category</p>
 </div>

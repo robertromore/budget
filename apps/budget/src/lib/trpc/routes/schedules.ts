@@ -1,14 +1,14 @@
-import { duplicateScheduleSchema, removeScheduleSchema, scheduleDates, schedules } from "$lib/schema";
-import { superformInsertScheduleSchema } from "$lib/schema/superforms";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
-import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
-import { withErrorHandler } from "$lib/trpc/shared/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
-import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
+import {duplicateScheduleSchema, removeScheduleSchema, scheduleDates, schedules} from "$lib/schema";
+import {superformInsertScheduleSchema} from "$lib/schema/superforms";
+import {serviceFactory} from "$lib/server/shared/container/service-factory";
+import {publicProcedure, rateLimitedProcedure, t} from "$lib/trpc";
+import {withErrorHandler} from "$lib/trpc/shared/errors";
+import {getCurrentTimestamp} from "$lib/utils/dates";
+import {generateUniqueSlugForDB} from "$lib/utils/slug-utils";
 import slugify from "@sindresorhus/slugify";
-import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
-import { z } from "zod";
+import {TRPCError} from "@trpc/server";
+import {and, eq} from "drizzle-orm";
+import {z} from "zod";
 
 const scheduleService = serviceFactory.getScheduleService();
 
@@ -22,35 +22,36 @@ export const scheduleRoutes = t.router({
       },
     });
   }),
-  getByAccount: publicProcedure.input(z.object({accountId: z.number()})).query(async ({ctx, input}) => {
-    return await ctx.db.query.schedules.findMany({
-      where: (schedules, {eq, and}) => and(
-        eq(schedules.workspaceId, ctx.workspaceId),
-        eq(schedules.accountId, input.accountId)
-      ),
-      with: {
-        payee: true,
-        category: true,
-        scheduleDate: true,
-      },
-      orderBy: (schedules, { desc }) => [desc(schedules.createdAt)],
-    });
-  }),
+  getByAccount: publicProcedure
+    .input(z.object({accountId: z.number()}))
+    .query(async ({ctx, input}) => {
+      return await ctx.db.query.schedules.findMany({
+        where: (schedules, {eq, and}) =>
+          and(eq(schedules.workspaceId, ctx.workspaceId), eq(schedules.accountId, input.accountId)),
+        with: {
+          payee: true,
+          category: true,
+          scheduleDate: true,
+        },
+        orderBy: (schedules, {desc}) => [desc(schedules.createdAt)],
+      });
+    }),
   load: publicProcedure.input(z.object({id: z.coerce.number()})).query(async ({ctx, input}) => {
     const result = await ctx.db.query.schedules.findMany({
-      where: (schedules, {eq, and}) => and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+      where: (schedules, {eq, and}) =>
+        and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
       with: {
         account: true,
         payee: true,
         scheduleDate: true,
         transactions: {
-          where: (transactions, { isNull }) => isNull(transactions.deletedAt),
+          where: (transactions, {isNull}) => isNull(transactions.deletedAt),
           with: {
             payee: true,
             category: true,
           },
-          orderBy: (transactions, { desc }) => [desc(transactions.date)],
-          limit: 50 // Get recent transactions for history
+          orderBy: (transactions, {desc}) => [desc(transactions.date)],
+          limit: 50, // Get recent transactions for history
         },
       },
     });
@@ -72,7 +73,7 @@ export const scheduleRoutes = t.router({
         // Helper to convert DateValue object to Date
         const convertDateValue = (dateValue: any) => {
           if (!dateValue) return null;
-          if (typeof dateValue === 'string') return new Date(dateValue);
+          if (typeof dateValue === "string") return new Date(dateValue);
           if (dateValue.year && dateValue.month && dateValue.day) {
             return new Date(dateValue.year, dateValue.month - 1, dateValue.day);
           }
@@ -80,34 +81,41 @@ export const scheduleRoutes = t.router({
         };
 
         // Create schedule date record
-        const scheduleDateResult = await ctx.db.insert(scheduleDates).values({
-          scheduleId,
-          start: repeatingDate.start ? (convertDateValue(repeatingDate.start)?.toISOString() ?? getCurrentTimestamp()) : getCurrentTimestamp(),
-          end: repeatingDate.end ? convertDateValue(repeatingDate.end)?.toISOString() || null : null,
-          frequency: repeatingDate.frequency || 'daily',
-          interval: repeatingDate.interval || 1,
-          limit: repeatingDate.limit || 0,
-          move_weekends: repeatingDate.move_weekends || 'none',
-          move_holidays: repeatingDate.move_holidays || 'none',
-          specific_dates: repeatingDate.specific_dates || [],
-          on: repeatingDate.on || false,
-          on_type: repeatingDate.on_type || 'day',
-          days: repeatingDate.days || [],
-          weeks: repeatingDate.weeks || [],
-          weeks_days: repeatingDate.weeks_days || [],
-          week_days: repeatingDate.week_days || []
-        }).returning();
+        const scheduleDateResult = await ctx.db
+          .insert(scheduleDates)
+          .values({
+            scheduleId,
+            start: repeatingDate.start
+              ? (convertDateValue(repeatingDate.start)?.toISOString() ?? getCurrentTimestamp())
+              : getCurrentTimestamp(),
+            end: repeatingDate.end
+              ? convertDateValue(repeatingDate.end)?.toISOString() || null
+              : null,
+            frequency: repeatingDate.frequency || "daily",
+            interval: repeatingDate.interval || 1,
+            limit: repeatingDate.limit || 0,
+            move_weekends: repeatingDate.move_weekends || "none",
+            move_holidays: repeatingDate.move_holidays || "none",
+            specific_dates: repeatingDate.specific_dates || [],
+            on: repeatingDate.on || false,
+            on_type: repeatingDate.on_type || "day",
+            days: repeatingDate.days || [],
+            weeks: repeatingDate.weeks || [],
+            weeks_days: repeatingDate.weeks_days || [],
+            week_days: repeatingDate.week_days || [],
+          })
+          .returning();
 
         return scheduleDateResult[0]?.id || null;
       } catch (error) {
-        console.warn('Failed to parse repeating date data:', error);
+        console.warn("Failed to parse repeating date data:", error);
         return null;
       }
     };
 
     if (input.id) {
       // For updates, generate new slug if name changed
-      const { repeating_date, ...scheduleData } = input;
+      const {repeating_date, ...scheduleData} = input;
 
       const updateData = {
         ...scheduleData,
@@ -116,8 +124,8 @@ export const scheduleRoutes = t.router({
           "schedules",
           schedules.slug,
           slugify(input.name),
-          { excludeId: input.id, idColumn: schedules.id }
-        )
+          {excludeId: input.id, idColumn: schedules.id}
+        ),
       };
 
       // Handle repeating date for updates
@@ -128,7 +136,8 @@ export const scheduleRoutes = t.router({
         }
       } else {
         const currentSchedule = await ctx.db.query.schedules.findFirst({
-          where: (schedules, {eq, and}) => and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId))
+          where: (schedules, {eq, and}) =>
+            and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
         });
 
         if (currentSchedule?.dateId) {
@@ -145,7 +154,8 @@ export const scheduleRoutes = t.router({
 
       // Return the full schedule with relationships
       const updatedSchedule = await ctx.db.query.schedules.findFirst({
-        where: (schedules, {eq, and}) => and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+        where: (schedules, {eq, and}) =>
+          and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
         with: {
           scheduleDate: true,
         },
@@ -160,18 +170,13 @@ export const scheduleRoutes = t.router({
       return updatedSchedule;
     }
 
-    const { repeating_date, ...scheduleData } = input;
+    const {repeating_date, ...scheduleData} = input;
 
     // Generate unique slug
     const insertData = {
       ...scheduleData,
       workspaceId: ctx.workspaceId,
-      slug: await generateUniqueSlugForDB(
-        ctx.db,
-        "schedules",
-        schedules.slug,
-        slugify(input.name)
-      )
+      slug: await generateUniqueSlugForDB(ctx.db, "schedules", schedules.slug, slugify(input.name)),
     };
 
     const insertResult = await ctx.db.insert(schedules).values(insertData).returning();
@@ -188,13 +193,16 @@ export const scheduleRoutes = t.router({
       if (dateId) {
         await ctx.db
           .update(schedules)
-          .set({ dateId })
-          .where(and(eq(schedules.id, new_schedule.id), eq(schedules.workspaceId, ctx.workspaceId)));
+          .set({dateId})
+          .where(
+            and(eq(schedules.id, new_schedule.id), eq(schedules.workspaceId, ctx.workspaceId))
+          );
       }
     }
 
     const finalSchedule = await ctx.db.query.schedules.findFirst({
-      where: (schedules, {eq, and}) => and(eq(schedules.id, new_schedule.id), eq(schedules.workspaceId, ctx.workspaceId)),
+      where: (schedules, {eq, and}) =>
+        and(eq(schedules.id, new_schedule.id), eq(schedules.workspaceId, ctx.workspaceId)),
       with: {
         scheduleDate: true,
       },
@@ -209,7 +217,10 @@ export const scheduleRoutes = t.router({
         message: "Schedule ID is required for deletion",
       });
     }
-    const result = await ctx.db.delete(schedules).where(and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId))).returning();
+    const result = await ctx.db
+      .delete(schedules)
+      .where(and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)))
+      .returning();
     if (!result[0]) {
       throw new TRPCError({
         code: "NOT_FOUND",
@@ -221,7 +232,8 @@ export const scheduleRoutes = t.router({
   duplicate: rateLimitedProcedure.input(duplicateScheduleSchema).mutation(async ({ctx, input}) => {
     // Get the original schedule with all its related data
     const originalSchedule = await ctx.db.query.schedules.findFirst({
-      where: (schedules, {eq, and}) => and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+      where: (schedules, {eq, and}) =>
+        and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
       with: {
         scheduleDate: true,
       },
@@ -252,7 +264,7 @@ export const scheduleRoutes = t.router({
       amount: originalSchedule.amount,
       amount_2: originalSchedule.amount_2,
       amount_type: originalSchedule.amount_type,
-      status: 'inactive' as const, // Set duplicates as inactive by default
+      status: "inactive" as const, // Set duplicates as inactive by default
       accountId: originalSchedule.accountId,
       payeeId: originalSchedule.payeeId,
       recurring: originalSchedule.recurring,
@@ -291,12 +303,15 @@ export const scheduleRoutes = t.router({
         week_days: originalSchedule.scheduleDate.week_days,
       };
 
-      const scheduleDateResult = await ctx.db.insert(scheduleDates).values(scheduleDateData).returning();
+      const scheduleDateResult = await ctx.db
+        .insert(scheduleDates)
+        .values(scheduleDateData)
+        .returning();
       if (scheduleDateResult[0]) {
         // Update the new schedule with the dateId
         const updatedSchedule = await ctx.db
           .update(schedules)
-          .set({ dateId: scheduleDateResult[0].id })
+          .set({dateId: scheduleDateResult[0].id})
           .where(and(eq(schedules.id, newSchedule.id), eq(schedules.workspaceId, ctx.workspaceId)))
           .returning();
 
@@ -309,23 +324,33 @@ export const scheduleRoutes = t.router({
 
   // Auto-add functionality
   executeAutoAdd: rateLimitedProcedure
-    .input(z.object({ scheduleId: z.number() }))
-    .mutation(withErrorHandler(async ({ input }) => scheduleService.executeAutoAddForSchedule(input.scheduleId))),
+    .input(z.object({scheduleId: z.number()}))
+    .mutation(
+      withErrorHandler(async ({input}) =>
+        scheduleService.executeAutoAddForSchedule(input.scheduleId)
+      )
+    ),
 
-  executeAutoAddAll: rateLimitedProcedure
-    .mutation(withErrorHandler(async () => scheduleService.executeAutoAddForAllSchedules())),
+  executeAutoAddAll: rateLimitedProcedure.mutation(
+    withErrorHandler(async () => scheduleService.executeAutoAddForAllSchedules())
+  ),
 
   previewAutoAdd: publicProcedure
-    .input(z.object({ scheduleId: z.number() }))
-    .query(withErrorHandler(async ({ input }) => scheduleService.previewAutoAddForSchedule(input.scheduleId))),
+    .input(z.object({scheduleId: z.number()}))
+    .query(
+      withErrorHandler(async ({input}) =>
+        scheduleService.previewAutoAddForSchedule(input.scheduleId)
+      )
+    ),
 
   toggleStatus: rateLimitedProcedure
-    .input(z.object({ scheduleId: z.number() }))
-    .mutation(async ({ ctx, input }) => {
+    .input(z.object({scheduleId: z.number()}))
+    .mutation(async ({ctx, input}) => {
       try {
         // Get current schedule
         const currentSchedule = await ctx.db.query.schedules.findFirst({
-          where: (schedules, {eq, and}) => and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
+          where: (schedules, {eq, and}) =>
+            and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)),
         });
 
         if (!currentSchedule) {
@@ -336,13 +361,15 @@ export const scheduleRoutes = t.router({
         }
 
         // Toggle status
-        const newStatus = currentSchedule.status === 'active' ? 'inactive' : 'active';
+        const newStatus = currentSchedule.status === "active" ? "inactive" : "active";
 
         // Update schedule status
         const result = await ctx.db
           .update(schedules)
-          .set({ status: newStatus })
-          .where(and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)))
+          .set({status: newStatus})
+          .where(
+            and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
+          )
           .returning();
 
         if (!result[0]) {
@@ -376,7 +403,9 @@ export const scheduleRoutes = t.router({
         const result = await ctx.db
           .update(schedules)
           .set({budgetId: input.budgetId})
-          .where(and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)))
+          .where(
+            and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
+          )
           .returning();
 
         if (!result[0]) {
@@ -405,7 +434,9 @@ export const scheduleRoutes = t.router({
         const result = await ctx.db
           .update(schedules)
           .set({budgetId: null})
-          .where(and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId)))
+          .where(
+            and(eq(schedules.id, input.scheduleId), eq(schedules.workspaceId, ctx.workspaceId))
+          )
           .returning();
 
         if (!result[0]) {

@@ -20,7 +20,11 @@ const confirmDeleteSchedule = async () => {
   schedulesState.deleteSchedule(_deleteScheduleId.current);
 
   // Only redirect if we're currently viewing the schedule being deleted
-  if (scheduleToDelete && page.route.id === '/schedules/[slug]' && page.params['slug'] === scheduleToDelete.slug) {
+  if (
+    scheduleToDelete &&
+    page.route.id === '/schedules/[slug]' &&
+    page.params['slug'] === scheduleToDelete.slug
+  ) {
     await goto('/schedules');
   }
 };

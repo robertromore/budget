@@ -1,10 +1,13 @@
-import type { NewCategory } from "$lib/schema";
+import type {NewCategory} from "$lib/schema";
 
 /**
  * Default popular categories that users can optionally seed into their budget
  * Organized by category type with common subcategories
  */
-export const defaultCategories: Omit<NewCategory, 'id' | 'dateCreated' | 'createdAt' | 'updatedAt' | 'deletedAt'>[] = [
+export const defaultCategories: Omit<
+  NewCategory,
+  "id" | "dateCreated" | "createdAt" | "updatedAt" | "deletedAt"
+>[] = [
   // ============ INCOME CATEGORIES ============
   {
     name: "Income",

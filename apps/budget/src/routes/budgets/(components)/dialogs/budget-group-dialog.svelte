@@ -28,7 +28,7 @@ function handleCancel() {
       <h2 class="text-lg font-semibold">
         {isUpdate ? 'Edit Budget Group' : 'Create Budget Group'}
       </h2>
-      <p class="text-sm text-muted-foreground">
+      <p class="text-muted-foreground text-sm">
         {isUpdate
           ? 'Update the budget group details below'
           : 'Create a new budget group to organize your budgets'}
@@ -37,10 +37,6 @@ function handleCancel() {
   {/snippet}
 
   {#snippet content()}
-    <ManageBudgetGroupForm
-      {budgetGroup}
-      onSuccess={handleSuccess}
-      onCancel={handleCancel}
-    />
+    <ManageBudgetGroupForm {budgetGroup} onSuccess={handleSuccess} onCancel={handleCancel} />
   {/snippet}
 </ResponsiveSheet>

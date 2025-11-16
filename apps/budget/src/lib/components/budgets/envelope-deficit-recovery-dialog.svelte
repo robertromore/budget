@@ -1,268 +1,268 @@
 <script lang="ts">
-  import * as Dialog from '$lib/components/ui/dialog';
-  import * as Tabs from '$lib/components/ui/tabs';
-  import * as Card from '$lib/components/ui/card';
-  import * as RadioGroup from '$lib/components/ui/radio-group';
-  import * as Select from '$lib/components/ui/select';
-  import {Button} from '$lib/components/ui/button';
-  import {Badge} from '$lib/components/ui/badge';
-  import {Separator} from '$lib/components/ui/separator';
-  import {Input} from '$lib/components/ui/input';
-  import {Label} from '$lib/components/ui/label';
-  import {
-    TriangleAlert,
-    TrendingDown,
-    ArrowRight,
-    CircleCheck,
-    LoaderCircle,
-    Info,
-    Zap,
-  } from '@lucide/svelte/icons';
-  import {currencyFormatter} from '$lib/utils/formatters';
-  import {cn} from '$lib/utils';
-  import {toast} from 'svelte-sonner';
-  import {trpc} from '$lib/trpc/client';
-  import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
-  import {createTransformAccessors} from '$lib/utils/bind-helpers';
+import * as Dialog from '$lib/components/ui/dialog';
+import * as Tabs from '$lib/components/ui/tabs';
+import * as Card from '$lib/components/ui/card';
+import * as RadioGroup from '$lib/components/ui/radio-group';
+import * as Select from '$lib/components/ui/select';
+import {Button} from '$lib/components/ui/button';
+import {Badge} from '$lib/components/ui/badge';
+import {Separator} from '$lib/components/ui/separator';
+import {Input} from '$lib/components/ui/input';
+import {Label} from '$lib/components/ui/label';
+import {
+  TriangleAlert,
+  TrendingDown,
+  ArrowRight,
+  CircleCheck,
+  LoaderCircle,
+  Info,
+  Zap,
+} from '@lucide/svelte/icons';
+import {currencyFormatter} from '$lib/utils/formatters';
+import {cn} from '$lib/utils';
+import {toast} from 'svelte-sonner';
+import {trpc} from '$lib/trpc/client';
+import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
+import {createTransformAccessors} from '$lib/utils/bind-helpers';
 
-  interface DeficitAnalysis {
-    envelopeId: number;
-    categoryId: number;
-    deficitAmount: number;
-    daysSinceDeficit: number;
-    deficitSeverity: 'mild' | 'moderate' | 'severe' | 'critical';
-    suggestedSources: EnvelopeAllocation[];
-    autoRecoveryOptions: DeficitRecoveryOption[];
+interface DeficitAnalysis {
+  envelopeId: number;
+  categoryId: number;
+  deficitAmount: number;
+  daysSinceDeficit: number;
+  deficitSeverity: 'mild' | 'moderate' | 'severe' | 'critical';
+  suggestedSources: EnvelopeAllocation[];
+  autoRecoveryOptions: DeficitRecoveryOption[];
+}
+
+interface DeficitRecoveryOption {
+  type: 'transfer' | 'reallocation' | 'emergency_fund' | 'borrowing' | 'reset';
+  sourceEnvelopeId?: number;
+  amount: number;
+  description: string;
+  priority: number;
+  feasible: boolean;
+  impact: string;
+}
+
+interface DeficitRecoveryPlan {
+  targetEnvelopeId: number;
+  totalDeficit: number;
+  recoverySteps: DeficitRecoveryStep[];
+  estimatedTimeToRecover: number;
+  totalCost: number;
+  alternativePlans: DeficitRecoveryPlan[];
+}
+
+interface DeficitRecoveryStep {
+  type: 'transfer' | 'reallocation' | 'emergency_fund' | 'external_injection';
+  sourceEnvelopeId?: number;
+  amount: number;
+  description: string;
+  order: number;
+  automated: boolean;
+}
+
+interface Props {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  envelope: EnvelopeAllocation;
+  categoryName: string;
+  analysis?: DeficitAnalysis | null;
+  recoveryPlan?: DeficitRecoveryPlan | null;
+  isAnalyzing?: boolean;
+  isCreatingPlan?: boolean;
+  isExecuting?: boolean;
+  onAnalyze?: () => void;
+  onCreatePlan?: () => void;
+  onExecutePlan?: (plan: DeficitRecoveryPlan) => void;
+}
+
+let {
+  open = $bindable(false),
+  onOpenChange,
+  envelope,
+  categoryName,
+  analysis,
+  recoveryPlan,
+  isAnalyzing = false,
+  isCreatingPlan = false,
+  isExecuting = false,
+  onAnalyze,
+  onCreatePlan,
+  onExecutePlan,
+}: Props = $props();
+
+let selectedOptionIndex = $state<string | undefined>(undefined);
+const selectedOptionAccessors = createTransformAccessors(
+  () => selectedOptionIndex ?? '',
+  (value: string) => {
+    selectedOptionIndex = value || undefined;
+  }
+);
+let isPerformingQuickAction = $state<boolean>(false);
+let selectedTransferSource = $state<string>('');
+let transferAmount = $state<number>(envelope.deficitAmount);
+let surplusEnvelopes = $state<EnvelopeAllocation[]>([]);
+let isLoadingSurplus = $state<boolean>(false);
+
+const severityConfig = $derived.by(() => {
+  if (!analysis) return {color: 'text-muted-foreground', label: 'Unknown', icon: Info};
+
+  switch (analysis.deficitSeverity) {
+    case 'critical':
+      return {color: 'text-red-600', label: 'Critical', icon: TriangleAlert};
+    case 'severe':
+      return {color: 'text-orange-600', label: 'Severe', icon: TriangleAlert};
+    case 'moderate':
+      return {color: 'text-yellow-600', label: 'Moderate', icon: TrendingDown};
+    case 'mild':
+      return {color: 'text-blue-600', label: 'Mild', icon: Info};
+    default:
+      return {color: 'text-muted-foreground', label: analysis.deficitSeverity, icon: Info};
+  }
+});
+
+function handleClose() {
+  open = false;
+  selectedOptionIndex = undefined;
+  isPerformingQuickAction = false;
+  selectedTransferSource = '';
+  transferAmount = envelope.deficitAmount;
+  surplusEnvelopes = [];
+}
+
+function handleExecute() {
+  if (recoveryPlan && onExecutePlan) {
+    onExecutePlan(recoveryPlan);
+  }
+}
+
+async function loadSurplusEnvelopes() {
+  isLoadingSurplus = true;
+  try {
+    const result = await trpc().budgetRoutes.getSurplusEnvelopes.query({
+      budgetId: envelope.budgetId,
+      minimumSurplus: 10,
+    });
+    surplusEnvelopes = result;
+  } catch (error) {
+    console.error('Failed to load surplus envelopes:', error);
+    toast.error('Failed to load available envelopes');
+  } finally {
+    isLoadingSurplus = false;
+  }
+}
+
+async function handleTransferFromEnvelope() {
+  if (!selectedTransferSource || transferAmount <= 0) {
+    toast.error('Please select a source envelope and enter a valid amount');
+    return;
   }
 
-  interface DeficitRecoveryOption {
-    type: 'transfer' | 'reallocation' | 'emergency_fund' | 'borrowing' | 'reset';
-    sourceEnvelopeId?: number;
-    amount: number;
-    description: string;
-    priority: number;
-    feasible: boolean;
-    impact: string;
-  }
+  isPerformingQuickAction = true;
+  try {
+    await trpc().budgetRoutes.transferEnvelopeFunds.mutate({
+      fromEnvelopeId: Number(selectedTransferSource),
+      toEnvelopeId: envelope.id,
+      amount: transferAmount,
+      reason: `Deficit recovery transfer to ${categoryName}`,
+      transferredBy: 'user',
+    });
 
-  interface DeficitRecoveryPlan {
-    targetEnvelopeId: number;
-    totalDeficit: number;
-    recoverySteps: DeficitRecoveryStep[];
-    estimatedTimeToRecover: number;
-    totalCost: number;
-    alternativePlans: DeficitRecoveryPlan[];
-  }
-
-  interface DeficitRecoveryStep {
-    type: 'transfer' | 'reallocation' | 'emergency_fund' | 'external_injection';
-    sourceEnvelopeId?: number;
-    amount: number;
-    description: string;
-    order: number;
-    automated: boolean;
-  }
-
-  interface Props {
-    open?: boolean;
-    onOpenChange?: (open: boolean) => void;
-    envelope: EnvelopeAllocation;
-    categoryName: string;
-    analysis?: DeficitAnalysis | null;
-    recoveryPlan?: DeficitRecoveryPlan | null;
-    isAnalyzing?: boolean;
-    isCreatingPlan?: boolean;
-    isExecuting?: boolean;
-    onAnalyze?: () => void;
-    onCreatePlan?: () => void;
-    onExecutePlan?: (plan: DeficitRecoveryPlan) => void;
-  }
-
-  let {
-    open = $bindable(false),
-    onOpenChange,
-    envelope,
-    categoryName,
-    analysis,
-    recoveryPlan,
-    isAnalyzing = false,
-    isCreatingPlan = false,
-    isExecuting = false,
-    onAnalyze,
-    onCreatePlan,
-    onExecutePlan,
-  }: Props = $props();
-
-  let selectedOptionIndex = $state<string | undefined>(undefined);
-  const selectedOptionAccessors = createTransformAccessors(
-    () => selectedOptionIndex ?? '',
-    (value: string) => { selectedOptionIndex = value || undefined; }
-  );
-  let isPerformingQuickAction = $state<boolean>(false);
-  let selectedTransferSource = $state<string>('');
-  let transferAmount = $state<number>(envelope.deficitAmount);
-  let surplusEnvelopes = $state<EnvelopeAllocation[]>([]);
-  let isLoadingSurplus = $state<boolean>(false);
-
-  const severityConfig = $derived.by(() => {
-    if (!analysis) return {color: 'text-muted-foreground', label: 'Unknown', icon: Info};
-
-    switch (analysis.deficitSeverity) {
-      case 'critical':
-        return {color: 'text-red-600', label: 'Critical', icon: TriangleAlert};
-      case 'severe':
-        return {color: 'text-orange-600', label: 'Severe', icon: TriangleAlert};
-      case 'moderate':
-        return {color: 'text-yellow-600', label: 'Moderate', icon: TrendingDown};
-      case 'mild':
-        return {color: 'text-blue-600', label: 'Mild', icon: Info};
-      default:
-        return {color: 'text-muted-foreground', label: analysis.deficitSeverity, icon: Info};
-    }
-  });
-
-  function handleClose() {
-    open = false;
-    selectedOptionIndex = undefined;
+    toast.success(`Transferred ${currencyFormatter.format(transferAmount)} successfully`);
+    handleClose();
+    // Trigger re-fetch in parent
+    window.location.reload();
+  } catch (error) {
+    console.error('Transfer failed:', error);
+    toast.error('Failed to transfer funds');
+  } finally {
     isPerformingQuickAction = false;
-    selectedTransferSource = '';
-    transferAmount = envelope.deficitAmount;
-    surplusEnvelopes = [];
+  }
+}
+
+async function handleUseEmergencyFund() {
+  if (!analysis) {
+    toast.error('Please analyze the deficit first');
+    return;
   }
 
-  function handleExecute() {
-    if (recoveryPlan && onExecutePlan) {
-      onExecutePlan(recoveryPlan);
-    }
+  // Find emergency fund option
+  const emergencyOption = analysis.autoRecoveryOptions.find((opt) => opt.type === 'emergency_fund');
+
+  if (!emergencyOption || !emergencyOption.sourceEnvelopeId) {
+    toast.error('No emergency fund available');
+    return;
   }
 
-  async function loadSurplusEnvelopes() {
-    isLoadingSurplus = true;
-    try {
-      const result = await trpc().budgetRoutes.getSurplusEnvelopes.query({
-        budgetId: envelope.budgetId,
-        minimumSurplus: 10,
-      });
-      surplusEnvelopes = result;
-    } catch (error) {
-      console.error('Failed to load surplus envelopes:', error);
-      toast.error('Failed to load available envelopes');
-    } finally {
-      isLoadingSurplus = false;
-    }
+  isPerformingQuickAction = true;
+  try {
+    await trpc().budgetRoutes.transferEnvelopeFunds.mutate({
+      fromEnvelopeId: emergencyOption.sourceEnvelopeId,
+      toEnvelopeId: envelope.id,
+      amount: emergencyOption.amount,
+      reason: `Emergency fund withdrawal for ${categoryName} deficit`,
+      transferredBy: 'user',
+    });
+
+    toast.success(`Used ${currencyFormatter.format(emergencyOption.amount)} from emergency fund`);
+    handleClose();
+    window.location.reload();
+  } catch (error) {
+    console.error('Emergency fund transfer failed:', error);
+    toast.error('Failed to use emergency fund');
+  } finally {
+    isPerformingQuickAction = false;
   }
+}
 
-  async function handleTransferFromEnvelope() {
-    if (!selectedTransferSource || transferAmount <= 0) {
-      toast.error('Please select a source envelope and enter a valid amount');
-      return;
-    }
+async function handleReallocateBudget() {
+  isPerformingQuickAction = true;
+  try {
+    // Update the envelope allocation to increase the allocated amount
+    await trpc().budgetRoutes.updateEnvelopeAllocation.mutate({
+      envelopeId: envelope.id,
+      allocatedAmount: envelope.allocatedAmount + envelope.deficitAmount,
+    });
 
-    isPerformingQuickAction = true;
-    try {
-      await trpc().budgetRoutes.transferEnvelopeFunds.mutate({
-        fromEnvelopeId: Number(selectedTransferSource),
-        toEnvelopeId: envelope.id,
-        amount: transferAmount,
-        reason: `Deficit recovery transfer to ${categoryName}`,
-        transferredBy: 'user',
-      });
-
-      toast.success(`Transferred ${currencyFormatter.format(transferAmount)} successfully`);
-      handleClose();
-      // Trigger re-fetch in parent
-      window.location.reload();
-    } catch (error) {
-      console.error('Transfer failed:', error);
-      toast.error('Failed to transfer funds');
-    } finally {
-      isPerformingQuickAction = false;
-    }
+    toast.success('Budget reallocated successfully');
+    handleClose();
+    window.location.reload();
+  } catch (error) {
+    console.error('Reallocation failed:', error);
+    toast.error('Failed to reallocate budget');
+  } finally {
+    isPerformingQuickAction = false;
   }
+}
 
-  async function handleUseEmergencyFund() {
-    if (!analysis) {
-      toast.error('Please analyze the deficit first');
-      return;
-    }
+async function handleResetEnvelope() {
+  isPerformingQuickAction = true;
+  try {
+    // Reset envelope by setting deficit to 0
+    await trpc().budgetRoutes.updateEnvelopeAllocation.mutate({
+      envelopeId: envelope.id,
+      allocatedAmount: envelope.spentAmount, // Set allocated = spent to zero out deficit
+    });
 
-    // Find emergency fund option
-    const emergencyOption = analysis.autoRecoveryOptions.find(
-      (opt) => opt.type === 'emergency_fund'
-    );
-
-    if (!emergencyOption || !emergencyOption.sourceEnvelopeId) {
-      toast.error('No emergency fund available');
-      return;
-    }
-
-    isPerformingQuickAction = true;
-    try {
-      await trpc().budgetRoutes.transferEnvelopeFunds.mutate({
-        fromEnvelopeId: emergencyOption.sourceEnvelopeId,
-        toEnvelopeId: envelope.id,
-        amount: emergencyOption.amount,
-        reason: `Emergency fund withdrawal for ${categoryName} deficit`,
-        transferredBy: 'user',
-      });
-
-      toast.success(`Used ${currencyFormatter.format(emergencyOption.amount)} from emergency fund`);
-      handleClose();
-      window.location.reload();
-    } catch (error) {
-      console.error('Emergency fund transfer failed:', error);
-      toast.error('Failed to use emergency fund');
-    } finally {
-      isPerformingQuickAction = false;
-    }
+    toast.success('Envelope reset successfully');
+    handleClose();
+    window.location.reload();
+  } catch (error) {
+    console.error('Reset failed:', error);
+    toast.error('Failed to reset envelope');
+  } finally {
+    isPerformingQuickAction = false;
   }
-
-  async function handleReallocateBudget() {
-    isPerformingQuickAction = true;
-    try {
-      // Update the envelope allocation to increase the allocated amount
-      await trpc().budgetRoutes.updateEnvelopeAllocation.mutate({
-        envelopeId: envelope.id,
-        allocatedAmount: envelope.allocatedAmount + envelope.deficitAmount,
-      });
-
-      toast.success('Budget reallocated successfully');
-      handleClose();
-      window.location.reload();
-    } catch (error) {
-      console.error('Reallocation failed:', error);
-      toast.error('Failed to reallocate budget');
-    } finally {
-      isPerformingQuickAction = false;
-    }
-  }
-
-  async function handleResetEnvelope() {
-    isPerformingQuickAction = true;
-    try {
-      // Reset envelope by setting deficit to 0
-      await trpc().budgetRoutes.updateEnvelopeAllocation.mutate({
-        envelopeId: envelope.id,
-        allocatedAmount: envelope.spentAmount, // Set allocated = spent to zero out deficit
-      });
-
-      toast.success('Envelope reset successfully');
-      handleClose();
-      window.location.reload();
-    } catch (error) {
-      console.error('Reset failed:', error);
-      toast.error('Failed to reset envelope');
-    } finally {
-      isPerformingQuickAction = false;
-    }
-  }
+}
 </script>
 
-<Dialog.Root bind:open {...(onOpenChange ? {onOpenChange} : {})}>
-  <Dialog.Content class="max-w-3xl max-h-[90vh] overflow-y-auto">
+<Dialog.Root bind:open {...onOpenChange ? {onOpenChange} : {}}>
+  <Dialog.Content class="max-h-[90vh] max-w-3xl overflow-y-auto">
     <Dialog.Header>
       <div class="flex items-center gap-3">
-        <div class="p-2 bg-red-50 dark:bg-red-950/20 rounded-lg">
+        <div class="rounded-lg bg-red-50 p-2 dark:bg-red-950/20">
           <TriangleAlert class="h-5 w-5 text-red-600" />
         </div>
         <div>
@@ -278,7 +278,7 @@
       <!-- Deficit Overview -->
       <Card.Root class="border-red-200 dark:border-red-900">
         <Card.Header class="pb-3">
-          <Card.Title class="text-lg flex items-center gap-2">
+          <Card.Title class="flex items-center gap-2 text-lg">
             <TrendingDown class="h-5 w-5" />
             Deficit Overview
           </Card.Title>
@@ -297,7 +297,7 @@
               <div>
                 <span class="text-muted-foreground">Severity:</span>
                 <Badge variant="destructive" class="ml-2">
-                  <severityConfig.icon class="h-3 w-3 mr-1" />
+                  <severityConfig.icon class="mr-1 h-3 w-3" />
                   {severityConfig.label}
                 </Badge>
               </div>
@@ -318,12 +318,12 @@
         </Tabs.List>
 
         <!-- Recovery Options Tab -->
-        <Tabs.Content value="recovery-plan" class="space-y-4 mt-4">
+        <Tabs.Content value="recovery-plan" class="mt-4 space-y-4">
           {#if !analysis}
             <Card.Root>
               <Card.Content class="p-6 text-center">
-                <Info class="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                <p class="text-sm text-muted-foreground mb-4">
+                <Info class="text-muted-foreground mx-auto mb-3 h-12 w-12" />
+                <p class="text-muted-foreground mb-4 text-sm">
                   Analyze available recovery options for this deficit
                 </p>
                 <Button onclick={onAnalyze} disabled={isAnalyzing}>
@@ -342,38 +342,65 @@
                 <Card.Description>Choose which option to use to cover the deficit</Card.Description>
               </Card.Header>
               <Card.Content>
-                <RadioGroup.Root bind:value={selectedOptionAccessors.get, selectedOptionAccessors.set} class="space-y-3">
+                <RadioGroup.Root
+                  bind:value={selectedOptionAccessors.get, selectedOptionAccessors.set}
+                  class="space-y-3">
                   {#each analysis.autoRecoveryOptions as option, index}
                     {@const typeConfig = {
-                      transfer: {color: 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800', icon: ArrowRight, label: 'Transfer'},
-                      emergency_fund: {color: 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800', icon: TriangleAlert, label: 'Emergency Fund'},
-                      reallocation: {color: 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800', icon: Zap, label: 'Reallocation'},
-                      borrowing: {color: 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800', icon: Info, label: 'Borrowing'},
-                      reset: {color: 'bg-gray-50 dark:bg-gray-950/20 border-gray-200 dark:border-gray-800', icon: TrendingDown, label: 'Reset'},
+                      transfer: {
+                        color:
+                          'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800',
+                        icon: ArrowRight,
+                        label: 'Transfer',
+                      },
+                      emergency_fund: {
+                        color: 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800',
+                        icon: TriangleAlert,
+                        label: 'Emergency Fund',
+                      },
+                      reallocation: {
+                        color:
+                          'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800',
+                        icon: Zap,
+                        label: 'Reallocation',
+                      },
+                      borrowing: {
+                        color:
+                          'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800',
+                        icon: Info,
+                        label: 'Borrowing',
+                      },
+                      reset: {
+                        color:
+                          'bg-gray-50 dark:bg-gray-950/20 border-gray-200 dark:border-gray-800',
+                        icon: TrendingDown,
+                        label: 'Reset',
+                      },
                     }[option.type] || {color: '', icon: Info, label: option.type}}
                     {@const isSelected = selectedOptionIndex === String(index)}
                     <label
                       class={cn(
-                        'flex items-start gap-3 p-4 rounded-lg border text-left transition-all cursor-pointer',
+                        'flex cursor-pointer items-start gap-3 rounded-lg border p-4 text-left transition-all',
                         typeConfig.color,
-                        isSelected && 'ring-2 ring-primary ring-offset-2',
+                        isSelected && 'ring-primary ring-2 ring-offset-2',
                         'hover:shadow-md'
-                      )}
-                    >
+                      )}>
                       <RadioGroup.Item value={String(index)} class="mt-1" />
                       <div class="flex-1">
-                        <div class="flex items-start justify-between mb-2">
+                        <div class="mb-2 flex items-start justify-between">
                           <div class="flex items-center gap-2">
                             <typeConfig.icon class="h-4 w-4" />
                             <span class="font-medium">{typeConfig.label}</span>
-                            <Badge variant={option.feasible ? 'default' : 'secondary'} class="text-xs">
+                            <Badge
+                              variant={option.feasible ? 'default' : 'secondary'}
+                              class="text-xs">
                               {option.feasible ? 'Feasible' : 'Limited'}
                             </Badge>
                           </div>
                           <span class="font-bold">{currencyFormatter.format(option.amount)}</span>
                         </div>
-                        <p class="text-sm mb-2">{option.description}</p>
-                        <p class="text-xs text-muted-foreground">Impact: {option.impact}</p>
+                        <p class="mb-2 text-sm">{option.description}</p>
+                        <p class="text-muted-foreground text-xs">Impact: {option.impact}</p>
                       </div>
                     </label>
                   {/each}
@@ -384,14 +411,12 @@
                   variant="outline"
                   onclick={() => {
                     selectedOptionIndex = undefined;
-                  }}
-                >
+                  }}>
                   Clear Selection
                 </Button>
                 <Button
                   onclick={onCreatePlan}
-                  disabled={selectedOptionIndex === undefined || isCreatingPlan}
-                >
+                  disabled={selectedOptionIndex === undefined || isCreatingPlan}>
                   {#if isCreatingPlan}
                     <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
                   {/if}
@@ -405,23 +430,22 @@
               <Card.Header>
                 <Card.Title class="text-base">Recovery Plan</Card.Title>
                 <Card.Description>
-                  {recoveryPlan.recoverySteps.length} step{recoveryPlan.recoverySteps.length !==
-                  1
+                  {recoveryPlan.recoverySteps.length} step{recoveryPlan.recoverySteps.length !== 1
                     ? 's'
                     : ''} to recover {currencyFormatter.format(recoveryPlan.totalDeficit)}
                 </Card.Description>
               </Card.Header>
               <Card.Content class="space-y-4">
                 <div class="grid grid-cols-2 gap-4 text-sm">
-                  <div class="p-3 bg-muted/50 rounded-lg">
-                    <div class="text-muted-foreground text-xs mb-1">Total to Recover</div>
-                    <div class="font-bold text-lg">
+                  <div class="bg-muted/50 rounded-lg p-3">
+                    <div class="text-muted-foreground mb-1 text-xs">Total to Recover</div>
+                    <div class="text-lg font-bold">
                       {currencyFormatter.format(recoveryPlan.totalDeficit)}
                     </div>
                   </div>
-                  <div class="p-3 bg-muted/50 rounded-lg">
-                    <div class="text-muted-foreground text-xs mb-1">Estimated Time</div>
-                    <div class="font-bold text-lg">
+                  <div class="bg-muted/50 rounded-lg p-3">
+                    <div class="text-muted-foreground mb-1 text-xs">Estimated Time</div>
+                    <div class="text-lg font-bold">
                       {recoveryPlan.estimatedTimeToRecover} day{recoveryPlan.estimatedTimeToRecover !==
                       1
                         ? 's'
@@ -434,29 +458,37 @@
 
                 <!-- Recovery Steps -->
                 <div class="space-y-3">
-                  <h4 class="font-medium text-sm">Recovery Steps</h4>
+                  <h4 class="text-sm font-medium">Recovery Steps</h4>
                   {#each recoveryPlan.recoverySteps as step}
                     {@const stepTypeConfig = {
                       transfer: {color: 'border-blue-500', icon: ArrowRight, label: 'Transfer'},
-                      emergency_fund: {color: 'border-red-500', icon: TriangleAlert, label: 'Emergency Fund'},
+                      emergency_fund: {
+                        color: 'border-red-500',
+                        icon: TriangleAlert,
+                        label: 'Emergency Fund',
+                      },
                       reallocation: {color: 'border-purple-500', icon: Zap, label: 'Reallocation'},
-                      external_injection: {color: 'border-green-500', icon: CircleCheck, label: 'External Funds'},
+                      external_injection: {
+                        color: 'border-green-500',
+                        icon: CircleCheck,
+                        label: 'External Funds',
+                      },
                     }[step.type] || {color: 'border-gray-500', icon: Info, label: step.type}}
-                    <div class="flex items-start gap-3 p-3 rounded-lg border-l-4 bg-muted/30 {stepTypeConfig.color}">
+                    <div
+                      class="bg-muted/30 flex items-start gap-3 rounded-lg border-l-4 p-3 {stepTypeConfig.color}">
                       <div
-                        class="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex-shrink-0 mt-0.5"
-                      >
+                        class="bg-primary text-primary-foreground mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold">
                         {step.order}
                       </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-1">
+                      <div class="min-w-0 flex-1">
+                        <div class="mb-1 flex items-center gap-2">
                           <stepTypeConfig.icon class="h-4 w-4" />
-                          <span class="font-medium text-sm">{stepTypeConfig.label}</span>
+                          <span class="text-sm font-medium">{stepTypeConfig.label}</span>
                           {#if step.automated}
                             <Badge variant="secondary" class="text-xs">Automated</Badge>
                           {/if}
                         </div>
-                        <p class="text-sm text-muted-foreground mb-1">{step.description}</p>
+                        <p class="text-muted-foreground mb-1 text-sm">{step.description}</p>
                         <div class="text-sm font-medium">
                           {currencyFormatter.format(step.amount)}
                         </div>
@@ -472,8 +504,7 @@
                     // Go back to option selection
                     recoveryPlan = null;
                     selectedOptionIndex = undefined;
-                  }}
-                >
+                  }}>
                   Change Selection
                 </Button>
               </Card.Footer>
@@ -482,7 +513,7 @@
         </Tabs.Content>
 
         <!-- Quick Actions Tab -->
-        <Tabs.Content value="quick-actions" class="space-y-4 mt-4">
+        <Tabs.Content value="quick-actions" class="mt-4 space-y-4">
           <!-- Transfer from Another Envelope -->
           <Card.Root>
             <Card.Header>
@@ -502,8 +533,7 @@
                     variant="outline"
                     class="w-full"
                     onclick={loadSurplusEnvelopes}
-                    disabled={isLoadingSurplus}
-                  >
+                    disabled={isLoadingSurplus}>
                     {#if isLoadingSurplus}
                       <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
                     {/if}
@@ -513,9 +543,13 @@
                   <Select.Root type="single" bind:value={selectedTransferSource}>
                     <Select.Trigger>
                       {#if selectedTransferSource}
-                        {@const selectedEnv = surplusEnvelopes.find((e) => String(e.id) === selectedTransferSource)}
+                        {@const selectedEnv = surplusEnvelopes.find(
+                          (e) => String(e.id) === selectedTransferSource
+                        )}
                         {#if selectedEnv}
-                          Category {selectedEnv.categoryId} - {currencyFormatter.format(selectedEnv.availableAmount)} available
+                          Category {selectedEnv.categoryId} - {currencyFormatter.format(
+                            selectedEnv.availableAmount
+                          )} available
                         {:else}
                           Select an envelope
                         {/if}
@@ -526,7 +560,9 @@
                     <Select.Content>
                       {#each surplusEnvelopes as env}
                         <Select.Item value={String(env.id)}>
-                          Category {env.categoryId} - {currencyFormatter.format(env.availableAmount)} available
+                          Category {env.categoryId} - {currencyFormatter.format(
+                            env.availableAmount
+                          )} available
                         </Select.Item>
                       {/each}
                     </Select.Content>
@@ -542,9 +578,8 @@
                   min={0}
                   max={envelope.deficitAmount}
                   step={0.01}
-                  placeholder="Enter amount"
-                />
-                <p class="text-xs text-muted-foreground">
+                  placeholder="Enter amount" />
+                <p class="text-muted-foreground text-xs">
                   Deficit: {currencyFormatter.format(envelope.deficitAmount)}
                 </p>
               </div>
@@ -553,8 +588,7 @@
               <Button
                 onclick={handleTransferFromEnvelope}
                 disabled={!selectedTransferSource || transferAmount <= 0 || isPerformingQuickAction}
-                class="w-full"
-              >
+                class="w-full">
                 {#if isPerformingQuickAction}
                   <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
                 {/if}
@@ -576,7 +610,7 @@
             </Card.Header>
             <Card.Content>
               {#if !analysis}
-                <p class="text-sm text-muted-foreground">
+                <p class="text-muted-foreground text-sm">
                   Run analysis first to check emergency fund availability
                 </p>
               {:else}
@@ -584,10 +618,11 @@
                   (opt) => opt.type === 'emergency_fund'
                 )}
                 {#if emergencyOption && emergencyOption.sourceEnvelopeId}
-                  <div class="space-y-2 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
+                  <div class="space-y-2 rounded-lg bg-red-50 p-3 dark:bg-red-950/20">
                     <div class="flex justify-between text-sm">
                       <span class="text-muted-foreground">Available:</span>
-                      <span class="font-medium">{currencyFormatter.format(emergencyOption.amount)}</span>
+                      <span class="font-medium"
+                        >{currencyFormatter.format(emergencyOption.amount)}</span>
                     </div>
                     <div class="flex justify-between text-sm">
                       <span class="text-muted-foreground">Impact:</span>
@@ -595,7 +630,7 @@
                     </div>
                   </div>
                 {:else}
-                  <p class="text-sm text-muted-foreground">No emergency fund available</p>
+                  <p class="text-muted-foreground text-sm">No emergency fund available</p>
                 {/if}
               {/if}
             </Card.Content>
@@ -606,8 +641,7 @@
                   !analysis.autoRecoveryOptions.find((opt) => opt.type === 'emergency_fund') ||
                   isPerformingQuickAction}
                 variant="destructive"
-                class="w-full"
-              >
+                class="w-full">
                 {#if isPerformingQuickAction}
                   <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
                 {/if}
@@ -628,19 +662,24 @@
               </Card.Description>
             </Card.Header>
             <Card.Content>
-              <div class="space-y-2 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg text-sm">
+              <div class="space-y-2 rounded-lg bg-purple-50 p-3 text-sm dark:bg-purple-950/20">
                 <div class="flex justify-between">
                   <span class="text-muted-foreground">Current Allocation:</span>
-                  <span class="font-medium">{currencyFormatter.format(envelope.allocatedAmount)}</span>
+                  <span class="font-medium"
+                    >{currencyFormatter.format(envelope.allocatedAmount)}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-muted-foreground">Deficit:</span>
-                  <span class="font-medium text-red-600">{currencyFormatter.format(envelope.deficitAmount)}</span>
+                  <span class="font-medium text-red-600"
+                    >{currencyFormatter.format(envelope.deficitAmount)}</span>
                 </div>
                 <Separator />
                 <div class="flex justify-between font-bold">
                   <span>New Allocation:</span>
-                  <span>{currencyFormatter.format(envelope.allocatedAmount + envelope.deficitAmount)}</span>
+                  <span
+                    >{currencyFormatter.format(
+                      envelope.allocatedAmount + envelope.deficitAmount
+                    )}</span>
                 </div>
               </div>
             </Card.Content>
@@ -648,8 +687,7 @@
               <Button
                 onclick={handleReallocateBudget}
                 disabled={isPerformingQuickAction}
-                class="w-full"
-              >
+                class="w-full">
                 {#if isPerformingQuickAction}
                   <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
                 {/if}
@@ -670,10 +708,11 @@
               </Card.Description>
             </Card.Header>
             <Card.Content>
-              <div class="p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
-                <p class="text-sm text-muted-foreground">
-                  ⚠️ This will adjust the allocated amount to match spending, effectively accepting the overspend.
-                  The deficit will be removed but the overspending will remain recorded.
+              <div class="rounded-lg bg-yellow-50 p-3 dark:bg-yellow-950/20">
+                <p class="text-muted-foreground text-sm">
+                  ⚠️ This will adjust the allocated amount to match spending, effectively accepting
+                  the overspend. The deficit will be removed but the overspending will remain
+                  recorded.
                 </p>
               </div>
             </Card.Content>
@@ -682,8 +721,7 @@
                 onclick={handleResetEnvelope}
                 disabled={isPerformingQuickAction}
                 variant="outline"
-                class="w-full"
-              >
+                class="w-full">
                 {#if isPerformingQuickAction}
                   <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
                 {/if}
@@ -695,7 +733,7 @@
       </Tabs.Root>
     </div>
 
-    <Dialog.Footer class="flex-col sm:flex-row gap-2">
+    <Dialog.Footer class="flex-col gap-2 sm:flex-row">
       <Button variant="outline" onclick={handleClose} class="flex-1">Cancel</Button>
       {#if recoveryPlan}
         <Button onclick={handleExecute} disabled={isExecuting} class="flex-1">

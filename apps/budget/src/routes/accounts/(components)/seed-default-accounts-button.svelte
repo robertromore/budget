@@ -1,18 +1,18 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
-import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
-import { Separator } from '$lib/components/ui/separator';
-import { Badge } from '$lib/components/ui/badge';
-import { Checkbox } from '$lib/components/ui/checkbox';
-import { Label } from '$lib/components/ui/label';
-import { Input } from '$lib/components/ui/input';
-import { ScrollArea } from '$lib/components/ui/scroll-area';
+import {Button} from '$lib/components/ui/button';
+import {ResponsiveSheet} from '$lib/components/ui/responsive-sheet';
+import {Separator} from '$lib/components/ui/separator';
+import {Badge} from '$lib/components/ui/badge';
+import {Checkbox} from '$lib/components/ui/checkbox';
+import {Label} from '$lib/components/ui/label';
+import {Input} from '$lib/components/ui/input';
+import {ScrollArea} from '$lib/components/ui/scroll-area';
 import PackagePlus from '@lucide/svelte/icons/package-plus';
 import Search from '@lucide/svelte/icons/search';
-import { seedDefaultAccounts } from '$lib/query/accounts';
-import { rpc } from '$lib/query';
-import { SvelteSet } from 'svelte/reactivity';
-import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
+import {seedDefaultAccounts} from '$lib/query/accounts';
+import {rpc} from '$lib/query';
+import {SvelteSet} from 'svelte/reactivity';
+import {getIconByName} from '$lib/components/ui/icon-picker/icon-categories';
 
 let sheetOpen = $state(false);
 let searchQuery = $state('');
@@ -25,7 +25,7 @@ const seedMutation = seedDefaultAccounts.options();
 
 const handleSeed = async () => {
   const slugsArray = Array.from(selectedSlugs);
-  await seedMutation.mutateAsync({ slugs: slugsArray });
+  await seedMutation.mutateAsync({slugs: slugsArray});
   sheetOpen = false;
   selectedSlugs.clear();
   searchQuery = '';
@@ -56,14 +56,15 @@ const accountTypeColors: Record<string, string> = {
 const availableAccounts = $derived.by(() => {
   if (!status) return [];
 
-  let accounts = status.accounts.filter(a => !a.installed);
+  let accounts = status.accounts.filter((a) => !a.installed);
 
   if (searchQuery.trim()) {
     const query = searchQuery.toLowerCase();
-    accounts = accounts.filter(a =>
-      a.name.toLowerCase().includes(query) ||
-      a.accountType.toLowerCase().includes(query) ||
-      a.description.toLowerCase().includes(query)
+    accounts = accounts.filter(
+      (a) =>
+        a.name.toLowerCase().includes(query) ||
+        a.accountType.toLowerCase().includes(query) ||
+        a.description.toLowerCase().includes(query)
     );
   }
 
@@ -96,14 +97,14 @@ const toggleGroup = (type: string, checked: boolean) => {
   const groupAccounts = groupedAccounts[type] || [];
 
   if (checked) {
-    groupAccounts.forEach(a => selectedSlugs.add(a.slug));
+    groupAccounts.forEach((a) => selectedSlugs.add(a.slug));
   } else {
-    groupAccounts.forEach(a => selectedSlugs.delete(a.slug));
+    groupAccounts.forEach((a) => selectedSlugs.delete(a.slug));
   }
 };
 
 const selectAll = () => {
-  availableAccounts.forEach(a => selectedSlugs.add(a.slug));
+  availableAccounts.forEach((a) => selectedSlugs.add(a.slug));
 };
 
 const deselectAll = () => {
@@ -115,13 +116,13 @@ const shouldShowButton = $derived((status?.available ?? 0) > 0);
 const isGroupSelected = (type: string) => {
   const groupAccounts = groupedAccounts[type] || [];
   if (groupAccounts.length === 0) return false;
-  return groupAccounts.every(a => selectedSlugs.has(a.slug));
+  return groupAccounts.every((a) => selectedSlugs.has(a.slug));
 };
 
 const isGroupPartiallySelected = (type: string) => {
   const groupAccounts = groupedAccounts[type] || [];
   if (groupAccounts.length === 0) return false;
-  const selectedCount = groupAccounts.filter(a => selectedSlugs.has(a.slug)).length;
+  const selectedCount = groupAccounts.filter((a) => selectedSlugs.has(a.slug)).length;
   return selectedCount > 0 && selectedCount < groupAccounts.length;
 };
 
@@ -129,7 +130,7 @@ const selectedCount = $derived(selectedSlugs.size);
 </script>
 
 {#if shouldShowButton}
-  <Button variant="outline" onclick={() => sheetOpen = true}>
+  <Button variant="outline" onclick={() => (sheetOpen = true)}>
     <PackagePlus class="mr-2 h-4 w-4" />
     Add Default Accounts
     {#if status && status.available > 0}
@@ -140,13 +141,14 @@ const selectedCount = $derived(selectedSlugs.size);
   </Button>
 
   <ResponsiveSheet bind:open={sheetOpen}>
-
     {#snippet header()}
       <div>
         <h2 class="text-lg font-semibold">Add Default Accounts</h2>
-        <p class="text-sm text-muted-foreground">
+        <p class="text-muted-foreground text-sm">
           {#if status}
-            Select from {status.available} popular pre-configured account{status.available === 1 ? '' : 's'}.
+            Select from {status.available} popular pre-configured account{status.available === 1
+              ? ''
+              : 's'}.
             {#if status.installed > 0}
               ({status.installed} already added)
             {/if}
@@ -156,15 +158,14 @@ const selectedCount = $derived(selectedSlugs.size);
     {/snippet}
 
     {#snippet content()}
-      <div class="flex flex-col gap-4 h-full">
+      <div class="flex h-full flex-col gap-4">
         <div class="relative">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             type="search"
             placeholder="Search accounts..."
             bind:value={searchQuery}
-            class="pl-9"
-          />
+            class="pl-9" />
         </div>
 
         <div class="flex items-center justify-between gap-2 text-sm">
@@ -172,13 +173,9 @@ const selectedCount = $derived(selectedSlugs.size);
             {selectedCount} selected
           </div>
           <div class="flex gap-2">
-            <Button variant="ghost" size="sm" onclick={selectAll}>
-              Select All
-            </Button>
+            <Button variant="ghost" size="sm" onclick={selectAll}>Select All</Button>
             {#if selectedCount > 0}
-              <Button variant="ghost" size="sm" onclick={deselectAll}>
-                Clear
-              </Button>
+              <Button variant="ghost" size="sm" onclick={deselectAll}>Clear</Button>
             {/if}
           </div>
         </div>
@@ -188,7 +185,7 @@ const selectedCount = $derived(selectedSlugs.size);
         <ScrollArea class="flex-1">
           <div class="space-y-6 pb-4">
             {#if availableAccounts.length === 0}
-              <div class="text-center py-8 text-muted-foreground">
+              <div class="text-muted-foreground py-8 text-center">
                 {#if searchQuery}
                   No accounts found matching "{searchQuery}"
                 {:else}
@@ -198,21 +195,19 @@ const selectedCount = $derived(selectedSlugs.size);
             {:else}
               {#each Object.entries(groupedAccounts) as [type, accounts]}
                 <div>
-                  <div class="flex items-center gap-2 mb-3 sticky top-0 bg-background py-2 z-10">
+                  <div class="bg-background sticky top-0 z-10 mb-3 flex items-center gap-2 py-2">
                     <Checkbox
                       checked={isGroupSelected(type)}
                       indeterminate={isGroupPartiallySelected(type)}
                       onCheckedChange={(checked) => toggleGroup(type, checked ?? false)}
-                      id={`group-${type}`}
-                    />
+                      id={`group-${type}`} />
                     <Label
                       for={`group-${type}`}
-                      class="flex items-center gap-2 cursor-pointer font-semibold"
-                    >
+                      class="flex cursor-pointer items-center gap-2 font-semibold">
                       <Badge class={accountTypeColors[type]}>
                         {accountTypeLabels[type] || type}
                       </Badge>
-                      <span class="text-xs text-muted-foreground font-normal">
+                      <span class="text-muted-foreground text-xs font-normal">
                         ({accounts.length})
                       </span>
                     </Label>
@@ -225,25 +220,21 @@ const selectedCount = $derived(selectedSlugs.size);
                       <div class="flex items-center gap-2">
                         <Checkbox
                           checked={selectedSlugs.has(account.slug)}
-                          onCheckedChange={(checked) => toggleAccount(account.slug, checked ?? false)}
-                          id={account.slug}
-                        />
-                        <Label
-                          for={account.slug}
-                          class="flex-1 cursor-pointer"
-                        >
+                          onCheckedChange={(checked) =>
+                            toggleAccount(account.slug, checked ?? false)}
+                          id={account.slug} />
+                        <Label for={account.slug} class="flex-1 cursor-pointer">
                           <div class="flex items-center gap-2">
                             {#if IconComponent}
                               <div
                                 class="flex h-6 w-6 items-center justify-center rounded"
-                                style:background-color={account.accountColor}
-                              >
+                                style:background-color={account.accountColor}>
                                 <IconComponent class="h-3.5 w-3.5 text-white" />
                               </div>
                             {/if}
                             <div class="flex-1">
                               <div class="text-sm font-medium">{account.name}</div>
-                              <div class="text-xs text-muted-foreground">{account.description}</div>
+                              <div class="text-muted-foreground text-xs">{account.description}</div>
                             </div>
                           </div>
                         </Label>
@@ -259,16 +250,15 @@ const selectedCount = $derived(selectedSlugs.size);
     {/snippet}
 
     {#snippet footer()}
-      <div class="flex gap-2 w-full">
-        <Button variant="outline" onclick={() => sheetOpen = false} class="flex-1">
-          Cancel
-        </Button>
+      <div class="flex w-full gap-2">
+        <Button variant="outline" onclick={() => (sheetOpen = false)} class="flex-1">Cancel</Button>
         <Button
           onclick={handleSeed}
           disabled={seedMutation.isPending || selectedCount === 0}
-          class="flex-1"
-        >
-          {seedMutation.isPending ? 'Adding...' : `Add ${selectedCount} ${selectedCount === 1 ? 'Account' : 'Accounts'}`}
+          class="flex-1">
+          {seedMutation.isPending
+            ? 'Adding...'
+            : `Add ${selectedCount} ${selectedCount === 1 ? 'Account' : 'Accounts'}`}
         </Button>
       </div>
     {/snippet}

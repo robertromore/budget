@@ -1,8 +1,8 @@
-import type { ExpenseFormat } from "./columns.svelte";
-import { getSpecialDateValue } from "$lib/utils";
-import type { DateValue } from "@internationalized/date";
-import { dateDifference, isSamePeriod, parseISOString } from "$lib/utils/dates";
-import type { ColumnFiltersState, Row, Updater } from "@tanstack/table-core";
+import type {ExpenseFormat} from "./columns.svelte";
+import {getSpecialDateValue} from "$lib/utils";
+import type {DateValue} from "@internationalized/date";
+import {dateDifference, isSamePeriod, parseISOString} from "$lib/utils/dates";
+import type {ColumnFiltersState, Row, Updater} from "@tanstack/table-core";
 
 function compareDate(originalDate: DateValue, compareDate: string) {
   const [range, stringDate] = compareDate.includes(":")
@@ -13,16 +13,16 @@ function compareDate(originalDate: DateValue, compareDate: string) {
 
   switch (range) {
     case "month":
-      return dateDifference(originalDate, date, 'months');
+      return dateDifference(originalDate, date, "months");
     case "quarter":
-      return dateDifference(originalDate, date, 'quarters');
+      return dateDifference(originalDate, date, "quarters");
     case "half-year":
-      return Math.floor(dateDifference(originalDate, date, 'months') / 6);
+      return Math.floor(dateDifference(originalDate, date, "months") / 6);
     case "year":
-      return dateDifference(originalDate, date, 'years');
+      return dateDifference(originalDate, date, "years");
     case "day":
     default:
-      return dateDifference(originalDate, date, 'days');
+      return dateDifference(originalDate, date, "days");
   }
 }
 
@@ -35,16 +35,16 @@ function compareDateInterval(originalDate: DateValue, compareDate: string) {
 
   switch (range) {
     case "month":
-      return isSamePeriod(originalDate, date, 'month');
+      return isSamePeriod(originalDate, date, "month");
     case "quarter":
-      return isSamePeriod(originalDate, date, 'quarter');
+      return isSamePeriod(originalDate, date, "quarter");
     case "half-year":
       return null;
     case "year":
-      return isSamePeriod(originalDate, date, 'year');
+      return isSamePeriod(originalDate, date, "year");
     case "day":
     default:
-      return isSamePeriod(originalDate, date, 'day');
+      return isSamePeriod(originalDate, date, "day");
   }
 }
 

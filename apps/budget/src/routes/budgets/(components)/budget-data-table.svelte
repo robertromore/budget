@@ -23,13 +23,7 @@ interface Props {
   table?: TTable<BudgetWithRelations> | undefined;
 }
 
-let {
-  columns,
-  budgets,
-  onBulkDelete,
-  onBulkArchive,
-  table = $bindable(),
-}: Props = $props();
+let {columns, budgets, onBulkDelete, onBulkArchive, table = $bindable()}: Props = $props();
 
 // Table state
 let sorting = $state<any[]>([]);
@@ -101,7 +95,9 @@ table = createSvelteTable({
             {#each headerGroup.headers as header}
               <Table.Head>
                 {#if !header.isPlaceholder && header.column.columnDef.header}
-                  <FlexRender content={header.column.columnDef.header} context={header.getContext()} />
+                  <FlexRender
+                    content={header.column.columnDef.header}
+                    context={header.getContext()} />
                 {/if}
               </Table.Head>
             {/each}

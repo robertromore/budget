@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+import {TRPCError} from "@trpc/server";
 import {
   ConflictError,
   DatabaseError,
@@ -39,27 +39,27 @@ export function translateDomainError(error: unknown): TRPCError {
 
   // Validation errors (invalid input)
   if (error instanceof ValidationError) {
-    return new TRPCError({ code: "BAD_REQUEST", message: error.message });
+    return new TRPCError({code: "BAD_REQUEST", message: error.message});
   }
 
   // Not found errors (entity doesn't exist)
   if (error instanceof NotFoundError) {
-    return new TRPCError({ code: "NOT_FOUND", message: error.message });
+    return new TRPCError({code: "NOT_FOUND", message: error.message});
   }
 
   // Conflict errors (duplicate, constraint violation)
   if (error instanceof ConflictError) {
-    return new TRPCError({ code: "CONFLICT", message: error.message });
+    return new TRPCError({code: "CONFLICT", message: error.message});
   }
 
   // Domain errors (business logic violations, excluding database)
   if (error instanceof DomainError && !(error instanceof DatabaseError)) {
-    return new TRPCError({ code: "BAD_REQUEST", message: error.message });
+    return new TRPCError({code: "BAD_REQUEST", message: error.message});
   }
 
   // Database errors (persistence layer failures)
   if (error instanceof DatabaseError) {
-    return new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+    return new TRPCError({code: "INTERNAL_SERVER_ERROR", message: error.message});
   }
 
   // Unknown errors (fallback)

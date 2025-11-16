@@ -16,7 +16,7 @@ const account = $derived(accountsState.getBySlug(accountSlug || ''));
 const handleSave = (updatedAccount: Account) => {
   // Navigate back to the account detail page
   setTimeout(() => {
-    goto(`/accounts/${updatedAccount.slug}`, { replaceState: true });
+    goto(`/accounts/${updatedAccount.slug}`, {replaceState: true});
   }, 100);
 };
 </script>
@@ -26,7 +26,7 @@ const handleSave = (updatedAccount: Account) => {
   <meta name="description" content="Edit account details" />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -35,8 +35,8 @@ const handleSave = (updatedAccount: Account) => {
         <span class="sr-only">Back to Account</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <CreditCard class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <CreditCard class="text-muted-foreground h-8 w-8" />
           Edit Account
         </h1>
         {#if account}
@@ -51,22 +51,15 @@ const handleSave = (updatedAccount: Account) => {
     <Card.Root>
       <Card.Header>
         <Card.Title>Account Information</Card.Title>
-        <Card.Description>
-          Update the details for your account.
-        </Card.Description>
+        <Card.Description>Update the details for your account.</Card.Description>
       </Card.Header>
       <Card.Content>
-        <ManageAccountForm
-          accountId={account.id}
-          onSave={handleSave}
-        />
+        <ManageAccountForm accountId={account.id} onSave={handleSave} />
       </Card.Content>
     </Card.Root>
   {:else}
     <Card.Root class="max-w-4xl">
-      <Card.Content class="py-8 text-center text-muted-foreground">
-        Account not found
-      </Card.Content>
+      <Card.Content class="text-muted-foreground py-8 text-center">Account not found</Card.Content>
     </Card.Root>
   {/if}
 </div>

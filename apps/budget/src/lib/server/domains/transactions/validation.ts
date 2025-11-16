@@ -53,7 +53,10 @@ export const payeeIntelligenceRequestSchema = z.object({
  * Schema for updating a transaction
  */
 export const updateTransactionSchema = z.object({
-  amount: z.number().refine((val) => val !== 0, "Amount cannot be zero").optional(),
+  amount: z
+    .number()
+    .refine((val) => val !== 0, "Amount cannot be zero")
+    .optional(),
   date: z.string().min(1, "Date is required").optional(),
   payeeId: z.number().positive().nullable().optional(),
   categoryId: z.number().positive().nullable().optional(),

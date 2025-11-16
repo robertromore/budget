@@ -227,7 +227,9 @@ export class PatternDetectionService {
    * Calculate intervals between consecutive transactions
    */
   private calculateIntervals(transactions: TransactionForDetection[]): IntervalData[] {
-    const sorted = transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const sorted = transactions.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
 
     const intervals: IntervalData[] = [];
 
@@ -238,7 +240,9 @@ export class PatternDetectionService {
       const fromDate = new Date(from.date);
       const toDate = new Date(to.date);
 
-      const daysBetween = Math.round((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
+      const daysBetween = Math.round(
+        (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
       intervals.push({
         daysBetween,
@@ -319,7 +323,10 @@ export class PatternDetectionService {
     let score = 0;
 
     // Factor 1: Number of occurrences (max 40 points)
-    const occurrenceScore = Math.min((group.transactions.length / criteria.minOccurrences) * 20, 40);
+    const occurrenceScore = Math.min(
+      (group.transactions.length / criteria.minOccurrences) * 20,
+      40
+    );
     score += occurrenceScore;
 
     // Factor 2: Interval consistency (max 30 points)
@@ -609,13 +616,7 @@ export class PatternDetectionService {
 
     // Generate slug for the schedule
     const baseSlug = slugify(scheduleName);
-    const slug = await generateUniqueSlugForDB(
-      db,
-      "schedules",
-      schedules.slug,
-      baseSlug,
-      {}
-    );
+    const slug = await generateUniqueSlugForDB(db, "schedules", schedules.slug, baseSlug, {});
 
     // If pattern doesn't have a payeeId, we can't create a schedule
     if (!pattern.payeeId) {

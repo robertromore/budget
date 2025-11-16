@@ -13,50 +13,62 @@
  *   factory.override('TransactionService', mockService);
  */
 
-import { AccountRepository } from '$lib/server/domains/accounts/repository';
-import { BudgetRepository } from '$lib/server/domains/budgets/repository';
-import { CategoryRepository } from '$lib/server/domains/categories/repository';
-import { CategoryGroupMembershipRepository, CategoryGroupRecommendationRepository, CategoryGroupRepository, CategoryGroupSettingsRepository } from '$lib/server/domains/category-groups/repository';
-import { PayeeCategoryRepository } from '$lib/server/domains/payee-categories/repository';
-import { MedicalExpenseRepository } from '$lib/server/domains/medical-expenses/repository';
-import { PatternRepository } from '$lib/server/domains/patterns/repository';
-import { PayeeRepository } from '$lib/server/domains/payees/repository';
-import { ScheduleRepository } from '$lib/server/domains/schedules/repository';
-import { TransactionRepository } from '$lib/server/domains/transactions/repository';
+import {AccountRepository} from "$lib/server/domains/accounts/repository";
+import {BudgetRepository} from "$lib/server/domains/budgets/repository";
+import {CategoryRepository} from "$lib/server/domains/categories/repository";
+import {
+  CategoryGroupMembershipRepository,
+  CategoryGroupRecommendationRepository,
+  CategoryGroupRepository,
+  CategoryGroupSettingsRepository,
+} from "$lib/server/domains/category-groups/repository";
+import {PayeeCategoryRepository} from "$lib/server/domains/payee-categories/repository";
+import {MedicalExpenseRepository} from "$lib/server/domains/medical-expenses/repository";
+import {PatternRepository} from "$lib/server/domains/patterns/repository";
+import {PayeeRepository} from "$lib/server/domains/payees/repository";
+import {ScheduleRepository} from "$lib/server/domains/schedules/repository";
+import {TransactionRepository} from "$lib/server/domains/transactions/repository";
 
-import { AccountService } from '$lib/server/domains/accounts/services';
-import { BudgetAnalysisService } from '$lib/server/domains/budgets/budget-analysis-service';
-import { BudgetGroupAutomationService } from '$lib/server/domains/budgets/budget-group-automation-service';
-import { BudgetCalculationService } from '$lib/server/domains/budgets/calculation-service';
-import { DeficitRecoveryService } from '$lib/server/domains/budgets/deficit-recovery';
-import { EnvelopeService } from '$lib/server/domains/budgets/envelope-service';
-import { BudgetIntelligenceService as BudgetDetectionService } from '$lib/server/domains/budgets/intelligence-service';
-import { PeriodManager } from '$lib/server/domains/budgets/period-manager';
-import { RecommendationService } from '$lib/server/domains/budgets/recommendation-service';
-import { RolloverCalculator } from '$lib/server/domains/budgets/rollover-calculator';
-import { BudgetForecastService, BudgetIntelligenceService, BudgetPeriodService, BudgetService, BudgetTransactionService, GoalTrackingService } from '$lib/server/domains/budgets/services';
-import { BudgetTemplateService } from '$lib/server/domains/budgets/template-service';
-import { CategoryService } from '$lib/server/domains/categories/services';
-import { CategoryGroupRecommendationService } from '$lib/server/domains/category-groups/recommendation-service';
-import { CategoryGroupService } from '$lib/server/domains/category-groups/services';
-import { CategoryGroupSettingsService } from '$lib/server/domains/category-groups/settings-service';
-import { PayeeCategoryService } from '$lib/server/domains/payee-categories/services';
-import { PayeeCategoryRecommendationService } from '$lib/server/domains/payee-categories/recommendation-service';
-import { ClaimRepository } from '$lib/server/domains/medical-expenses/claim-repository';
-import { ClaimService } from '$lib/server/domains/medical-expenses/claim-service';
-import { ReceiptRepository } from '$lib/server/domains/medical-expenses/receipt-repository';
-import { ReceiptService } from '$lib/server/domains/medical-expenses/receipt-service';
-import { MedicalExpenseService } from '$lib/server/domains/medical-expenses/services';
-import { PatternDetectionService } from '$lib/server/domains/patterns/services';
-import { BudgetAllocationService } from '$lib/server/domains/payees/budget-allocation';
-import { CategoryLearningService } from '$lib/server/domains/payees/category-learning';
-import { ContactManagementService } from '$lib/server/domains/payees/contact-management';
-import { PayeeIntelligenceService } from '$lib/server/domains/payees/intelligence';
-import { PayeeMLCoordinator } from '$lib/server/domains/payees/ml-coordinator';
-import { PayeeService } from '$lib/server/domains/payees/services';
-import { SubscriptionManagementService } from '$lib/server/domains/payees/subscription-management';
-import { ScheduleService } from '$lib/server/domains/schedules/services';
-import { TransactionService } from '$lib/server/domains/transactions/services';
+import {AccountService} from "$lib/server/domains/accounts/services";
+import {BudgetAnalysisService} from "$lib/server/domains/budgets/budget-analysis-service";
+import {BudgetGroupAutomationService} from "$lib/server/domains/budgets/budget-group-automation-service";
+import {BudgetCalculationService} from "$lib/server/domains/budgets/calculation-service";
+import {DeficitRecoveryService} from "$lib/server/domains/budgets/deficit-recovery";
+import {EnvelopeService} from "$lib/server/domains/budgets/envelope-service";
+import {BudgetIntelligenceService as BudgetDetectionService} from "$lib/server/domains/budgets/intelligence-service";
+import {PeriodManager} from "$lib/server/domains/budgets/period-manager";
+import {RecommendationService} from "$lib/server/domains/budgets/recommendation-service";
+import {RolloverCalculator} from "$lib/server/domains/budgets/rollover-calculator";
+import {
+  BudgetForecastService,
+  BudgetIntelligenceService,
+  BudgetPeriodService,
+  BudgetService,
+  BudgetTransactionService,
+  GoalTrackingService,
+} from "$lib/server/domains/budgets/services";
+import {BudgetTemplateService} from "$lib/server/domains/budgets/template-service";
+import {CategoryService} from "$lib/server/domains/categories/services";
+import {CategoryGroupRecommendationService} from "$lib/server/domains/category-groups/recommendation-service";
+import {CategoryGroupService} from "$lib/server/domains/category-groups/services";
+import {CategoryGroupSettingsService} from "$lib/server/domains/category-groups/settings-service";
+import {PayeeCategoryService} from "$lib/server/domains/payee-categories/services";
+import {PayeeCategoryRecommendationService} from "$lib/server/domains/payee-categories/recommendation-service";
+import {ClaimRepository} from "$lib/server/domains/medical-expenses/claim-repository";
+import {ClaimService} from "$lib/server/domains/medical-expenses/claim-service";
+import {ReceiptRepository} from "$lib/server/domains/medical-expenses/receipt-repository";
+import {ReceiptService} from "$lib/server/domains/medical-expenses/receipt-service";
+import {MedicalExpenseService} from "$lib/server/domains/medical-expenses/services";
+import {PatternDetectionService} from "$lib/server/domains/patterns/services";
+import {BudgetAllocationService} from "$lib/server/domains/payees/budget-allocation";
+import {CategoryLearningService} from "$lib/server/domains/payees/category-learning";
+import {ContactManagementService} from "$lib/server/domains/payees/contact-management";
+import {PayeeIntelligenceService} from "$lib/server/domains/payees/intelligence";
+import {PayeeMLCoordinator} from "$lib/server/domains/payees/ml-coordinator";
+import {PayeeService} from "$lib/server/domains/payees/services";
+import {SubscriptionManagementService} from "$lib/server/domains/payees/subscription-management";
+import {ScheduleService} from "$lib/server/domains/schedules/services";
+import {TransactionService} from "$lib/server/domains/transactions/services";
 
 export class ServiceFactory {
   private instances = new Map<string, unknown>();
@@ -64,7 +76,7 @@ export class ServiceFactory {
   // ==================== Repositories ====================
 
   getAccountRepository(): AccountRepository {
-    const key = 'AccountRepository';
+    const key = "AccountRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new AccountRepository());
     }
@@ -72,7 +84,7 @@ export class ServiceFactory {
   }
 
   getTransactionRepository(): TransactionRepository {
-    const key = 'TransactionRepository';
+    const key = "TransactionRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new TransactionRepository());
     }
@@ -80,7 +92,7 @@ export class ServiceFactory {
   }
 
   getCategoryRepository(): CategoryRepository {
-    const key = 'CategoryRepository';
+    const key = "CategoryRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new CategoryRepository());
     }
@@ -88,17 +100,15 @@ export class ServiceFactory {
   }
 
   getPayeeRepository(): PayeeRepository {
-    const key = 'PayeeRepository';
+    const key = "PayeeRepository";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new PayeeRepository(
-        this.getBudgetIntelligenceService()
-      ));
+      this.instances.set(key, new PayeeRepository(this.getBudgetIntelligenceService()));
     }
     return this.instances.get(key) as PayeeRepository;
   }
 
   getBudgetRepository(): BudgetRepository {
-    const key = 'BudgetRepository';
+    const key = "BudgetRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new BudgetRepository());
     }
@@ -106,7 +116,7 @@ export class ServiceFactory {
   }
 
   getPatternRepository(): PatternRepository {
-    const key = 'PatternRepository';
+    const key = "PatternRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new PatternRepository());
     }
@@ -114,7 +124,7 @@ export class ServiceFactory {
   }
 
   getScheduleRepository(): ScheduleRepository {
-    const key = 'ScheduleRepository';
+    const key = "ScheduleRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new ScheduleRepository());
     }
@@ -122,7 +132,7 @@ export class ServiceFactory {
   }
 
   getMedicalExpenseRepository(): MedicalExpenseRepository {
-    const key = 'MedicalExpenseRepository';
+    const key = "MedicalExpenseRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new MedicalExpenseRepository());
     }
@@ -130,7 +140,7 @@ export class ServiceFactory {
   }
 
   getClaimRepository(): ClaimRepository {
-    const key = 'ClaimRepository';
+    const key = "ClaimRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new ClaimRepository());
     }
@@ -138,7 +148,7 @@ export class ServiceFactory {
   }
 
   getReceiptRepository(): ReceiptRepository {
-    const key = 'ReceiptRepository';
+    const key = "ReceiptRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new ReceiptRepository());
     }
@@ -148,37 +158,31 @@ export class ServiceFactory {
   // ==================== Services ====================
 
   getCategoryService(): CategoryService {
-    const key = 'CategoryService';
+    const key = "CategoryService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new CategoryService(
-        this.getCategoryRepository()
-      ));
+      this.instances.set(key, new CategoryService(this.getCategoryRepository()));
     }
     return this.instances.get(key) as CategoryService;
   }
 
   getPatternDetectionService(): PatternDetectionService {
-    const key = 'PatternDetectionService';
+    const key = "PatternDetectionService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new PatternDetectionService(
-        this.getPatternRepository()
-      ));
+      this.instances.set(key, new PatternDetectionService(this.getPatternRepository()));
     }
     return this.instances.get(key) as PatternDetectionService;
   }
 
   getBudgetTransactionService(): BudgetTransactionService {
-    const key = 'BudgetTransactionService';
+    const key = "BudgetTransactionService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new BudgetTransactionService(
-        this.getBudgetRepository()
-      ));
+      this.instances.set(key, new BudgetTransactionService(this.getBudgetRepository()));
     }
     return this.instances.get(key) as BudgetTransactionService;
   }
 
   getRolloverCalculator(): RolloverCalculator {
-    const key = 'RolloverCalculator';
+    const key = "RolloverCalculator";
     if (!this.instances.has(key)) {
       this.instances.set(key, new RolloverCalculator());
     }
@@ -186,7 +190,7 @@ export class ServiceFactory {
   }
 
   getDeficitRecoveryService(): DeficitRecoveryService {
-    const key = 'DeficitRecoveryService';
+    const key = "DeficitRecoveryService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new DeficitRecoveryService());
     }
@@ -194,30 +198,33 @@ export class ServiceFactory {
   }
 
   getEnvelopeService(): EnvelopeService {
-    const key = 'EnvelopeService';
+    const key = "EnvelopeService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new EnvelopeService(
-        this.getBudgetRepository(),
-        this.getRolloverCalculator(),
-        this.getDeficitRecoveryService()
-      ));
+      this.instances.set(
+        key,
+        new EnvelopeService(
+          this.getBudgetRepository(),
+          this.getRolloverCalculator(),
+          this.getDeficitRecoveryService()
+        )
+      );
     }
     return this.instances.get(key) as EnvelopeService;
   }
 
   getBudgetCalculationService(): BudgetCalculationService {
-    const key = 'BudgetCalculationService';
+    const key = "BudgetCalculationService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new BudgetCalculationService(
-        this.getBudgetRepository(),
-        this.getEnvelopeService()
-      ));
+      this.instances.set(
+        key,
+        new BudgetCalculationService(this.getBudgetRepository(), this.getEnvelopeService())
+      );
     }
     return this.instances.get(key) as BudgetCalculationService;
   }
 
   getPayeeIntelligenceService(): PayeeIntelligenceService {
-    const key = 'PayeeIntelligenceService';
+    const key = "PayeeIntelligenceService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new PayeeIntelligenceService());
     }
@@ -225,7 +232,7 @@ export class ServiceFactory {
   }
 
   getCategoryLearningService(): CategoryLearningService {
-    const key = 'CategoryLearningService';
+    const key = "CategoryLearningService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new CategoryLearningService());
     }
@@ -233,30 +240,36 @@ export class ServiceFactory {
   }
 
   getBudgetAllocationService(): BudgetAllocationService {
-    const key = 'BudgetAllocationService';
+    const key = "BudgetAllocationService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new BudgetAllocationService(
-        this.getPayeeIntelligenceService(),
-        this.getCategoryLearningService()
-      ));
+      this.instances.set(
+        key,
+        new BudgetAllocationService(
+          this.getPayeeIntelligenceService(),
+          this.getCategoryLearningService()
+        )
+      );
     }
     return this.instances.get(key) as BudgetAllocationService;
   }
 
   getPayeeMLCoordinator(): PayeeMLCoordinator {
-    const key = 'PayeeMLCoordinator';
+    const key = "PayeeMLCoordinator";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new PayeeMLCoordinator(
-        this.getPayeeIntelligenceService(),
-        this.getCategoryLearningService(),
-        this.getBudgetAllocationService()
-      ));
+      this.instances.set(
+        key,
+        new PayeeMLCoordinator(
+          this.getPayeeIntelligenceService(),
+          this.getCategoryLearningService(),
+          this.getBudgetAllocationService()
+        )
+      );
     }
     return this.instances.get(key) as PayeeMLCoordinator;
   }
 
   getContactManagementService(): ContactManagementService {
-    const key = 'ContactManagementService';
+    const key = "ContactManagementService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new ContactManagementService());
     }
@@ -264,7 +277,7 @@ export class ServiceFactory {
   }
 
   getSubscriptionManagementService(): SubscriptionManagementService {
-    const key = 'SubscriptionManagementService';
+    const key = "SubscriptionManagementService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new SubscriptionManagementService());
     }
@@ -272,109 +285,117 @@ export class ServiceFactory {
   }
 
   getPayeeService(): PayeeService {
-    const key = 'PayeeService';
+    const key = "PayeeService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new PayeeService(
-        this.getPayeeRepository(),
-        this.getPayeeIntelligenceService(),
-        this.getCategoryLearningService(),
-        this.getPayeeMLCoordinator(),
-        this.getContactManagementService(),
-        this.getSubscriptionManagementService(),
-        this.getCategoryService(),
-        this.getBudgetService(),
-        this.getBudgetAllocationService()
-      ));
+      this.instances.set(
+        key,
+        new PayeeService(
+          this.getPayeeRepository(),
+          this.getPayeeIntelligenceService(),
+          this.getCategoryLearningService(),
+          this.getPayeeMLCoordinator(),
+          this.getContactManagementService(),
+          this.getSubscriptionManagementService(),
+          this.getCategoryService(),
+          this.getBudgetService(),
+          this.getBudgetAllocationService()
+        )
+      );
     }
     return this.instances.get(key) as PayeeService;
   }
 
   getTransactionService(): TransactionService {
-    const key = 'TransactionService';
+    const key = "TransactionService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new TransactionService(
-        this.getTransactionRepository(),
-        this.getPayeeService(),
-        this.getCategoryService(),
-        this.getBudgetTransactionService(),
-        this.getBudgetCalculationService(),
-        // Pass ScheduleService getter to avoid circular dependency
-        () => this.getScheduleService(),
-        this.getBudgetIntelligenceService()
-      ));
+      this.instances.set(
+        key,
+        new TransactionService(
+          this.getTransactionRepository(),
+          this.getPayeeService(),
+          this.getCategoryService(),
+          this.getBudgetTransactionService(),
+          this.getBudgetCalculationService(),
+          // Pass ScheduleService getter to avoid circular dependency
+          () => this.getScheduleService(),
+          this.getBudgetIntelligenceService()
+        )
+      );
     }
     return this.instances.get(key) as TransactionService;
   }
 
   getAccountService(): AccountService {
-    const key = 'AccountService';
+    const key = "AccountService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new AccountService(
-        this.getAccountRepository(),
-        this.getTransactionService()
-      ));
+      this.instances.set(
+        key,
+        new AccountService(this.getAccountRepository(), this.getTransactionService())
+      );
     }
     return this.instances.get(key) as AccountService;
   }
 
   getScheduleService(): ScheduleService {
-    const key = 'ScheduleService';
+    const key = "ScheduleService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new ScheduleService(
-        this.getScheduleRepository(),
-        this.getTransactionService(),
-        this.getPayeeService(),
-        this.getCategoryService()
-      ));
+      this.instances.set(
+        key,
+        new ScheduleService(
+          this.getScheduleRepository(),
+          this.getTransactionService(),
+          this.getPayeeService(),
+          this.getCategoryService()
+        )
+      );
     }
     return this.instances.get(key) as ScheduleService;
   }
 
   getClaimService(): ClaimService {
-    const key = 'ClaimService';
+    const key = "ClaimService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new ClaimService(
-        this.getClaimRepository(),
-        this.getMedicalExpenseRepository()
-      ));
+      this.instances.set(
+        key,
+        new ClaimService(this.getClaimRepository(), this.getMedicalExpenseRepository())
+      );
     }
     return this.instances.get(key) as ClaimService;
   }
 
   getMedicalExpenseService(): MedicalExpenseService {
-    const key = 'MedicalExpenseService';
+    const key = "MedicalExpenseService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new MedicalExpenseService(
-        this.getMedicalExpenseRepository(),
-        this.getTransactionService(),
-        this.getClaimService()
-      ));
+      this.instances.set(
+        key,
+        new MedicalExpenseService(
+          this.getMedicalExpenseRepository(),
+          this.getTransactionService(),
+          this.getClaimService()
+        )
+      );
     }
     return this.instances.get(key) as MedicalExpenseService;
   }
 
   getGoalTrackingService(): GoalTrackingService {
-    const key = 'GoalTrackingService';
+    const key = "GoalTrackingService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new GoalTrackingService(
-        this.getBudgetRepository()
-      ));
+      this.instances.set(key, new GoalTrackingService(this.getBudgetRepository()));
     }
     return this.instances.get(key) as GoalTrackingService;
   }
 
   getBudgetForecastService(): BudgetForecastService {
-    const key = 'BudgetForecastService';
+    const key = "BudgetForecastService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new BudgetForecastService(
-        this.getBudgetRepository()
-      ));
+      this.instances.set(key, new BudgetForecastService(this.getBudgetRepository()));
     }
     return this.instances.get(key) as BudgetForecastService;
   }
 
   getBudgetIntelligenceService(): BudgetIntelligenceService {
-    const key = 'BudgetIntelligenceService';
+    const key = "BudgetIntelligenceService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new BudgetIntelligenceService(this.getBudgetRepository()));
     }
@@ -382,7 +403,7 @@ export class ServiceFactory {
   }
 
   getBudgetDetectionService(): BudgetDetectionService {
-    const key = 'BudgetDetectionService';
+    const key = "BudgetDetectionService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new BudgetDetectionService());
     }
@@ -390,17 +411,15 @@ export class ServiceFactory {
   }
 
   getBudgetPeriodService(): BudgetPeriodService {
-    const key = 'BudgetPeriodService';
+    const key = "BudgetPeriodService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new BudgetPeriodService(
-        this.getBudgetRepository()
-      ));
+      this.instances.set(key, new BudgetPeriodService(this.getBudgetRepository()));
     }
     return this.instances.get(key) as BudgetPeriodService;
   }
 
   getBudgetTemplateService(): BudgetTemplateService {
-    const key = 'BudgetTemplateService';
+    const key = "BudgetTemplateService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new BudgetTemplateService());
     }
@@ -408,7 +427,7 @@ export class ServiceFactory {
   }
 
   getPeriodManager(): PeriodManager {
-    const key = 'PeriodManager';
+    const key = "PeriodManager";
     if (!this.instances.has(key)) {
       this.instances.set(key, new PeriodManager());
     }
@@ -416,7 +435,7 @@ export class ServiceFactory {
   }
 
   getBudgetAnalysisService(): BudgetAnalysisService {
-    const key = 'BudgetAnalysisService';
+    const key = "BudgetAnalysisService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new BudgetAnalysisService());
     }
@@ -424,7 +443,7 @@ export class ServiceFactory {
   }
 
   getRecommendationService(): RecommendationService {
-    const key = 'RecommendationService';
+    const key = "RecommendationService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new RecommendationService());
     }
@@ -432,45 +451,46 @@ export class ServiceFactory {
   }
 
   getBudgetGroupAutomationService(): BudgetGroupAutomationService {
-    const key = 'BudgetGroupAutomationService';
+    const key = "BudgetGroupAutomationService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new BudgetGroupAutomationService(
-        this.getBudgetService()
-      ));
+      this.instances.set(key, new BudgetGroupAutomationService(this.getBudgetService()));
     }
     return this.instances.get(key) as BudgetGroupAutomationService;
   }
 
   getBudgetService(): BudgetService {
-    const key = 'BudgetService';
+    const key = "BudgetService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new BudgetService(
-        this.getBudgetRepository(),
-        this.getEnvelopeService(),
-        this.getGoalTrackingService(),
-        this.getBudgetForecastService(),
-        this.getBudgetIntelligenceService(),
-        this.getBudgetAnalysisService(),
-        this.getRecommendationService()
-      ));
+      this.instances.set(
+        key,
+        new BudgetService(
+          this.getBudgetRepository(),
+          this.getEnvelopeService(),
+          this.getGoalTrackingService(),
+          this.getBudgetForecastService(),
+          this.getBudgetIntelligenceService(),
+          this.getBudgetAnalysisService(),
+          this.getRecommendationService()
+        )
+      );
     }
     return this.instances.get(key) as BudgetService;
   }
 
   getReceiptService(): ReceiptService {
-    const key = 'ReceiptService';
+    const key = "ReceiptService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new ReceiptService(
-        this.getReceiptRepository(),
-        this.getMedicalExpenseRepository()
-      ));
+      this.instances.set(
+        key,
+        new ReceiptService(this.getReceiptRepository(), this.getMedicalExpenseRepository())
+      );
     }
     return this.instances.get(key) as ReceiptService;
   }
 
   // Category Groups Repositories
   getCategoryGroupRepository(): CategoryGroupRepository {
-    const key = 'CategoryGroupRepository';
+    const key = "CategoryGroupRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new CategoryGroupRepository());
     }
@@ -478,7 +498,7 @@ export class ServiceFactory {
   }
 
   getCategoryGroupMembershipRepository(): CategoryGroupMembershipRepository {
-    const key = 'CategoryGroupMembershipRepository';
+    const key = "CategoryGroupMembershipRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new CategoryGroupMembershipRepository());
     }
@@ -486,7 +506,7 @@ export class ServiceFactory {
   }
 
   getCategoryGroupRecommendationRepository(): CategoryGroupRecommendationRepository {
-    const key = 'CategoryGroupRecommendationRepository';
+    const key = "CategoryGroupRecommendationRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new CategoryGroupRecommendationRepository());
     }
@@ -494,7 +514,7 @@ export class ServiceFactory {
   }
 
   getCategoryGroupSettingsRepository(): CategoryGroupSettingsRepository {
-    const key = 'CategoryGroupSettingsRepository';
+    const key = "CategoryGroupSettingsRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new CategoryGroupSettingsRepository());
     }
@@ -503,7 +523,7 @@ export class ServiceFactory {
 
   // Payee Categories Repository
   getPayeeCategoryRepository(): PayeeCategoryRepository {
-    const key = 'PayeeCategoryRepository';
+    const key = "PayeeCategoryRepository";
     if (!this.instances.has(key)) {
       this.instances.set(key, new PayeeCategoryRepository());
     }
@@ -512,53 +532,58 @@ export class ServiceFactory {
 
   // Category Groups Services
   getCategoryGroupService(): CategoryGroupService {
-    const key = 'CategoryGroupService';
+    const key = "CategoryGroupService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new CategoryGroupService(
-        this.getCategoryGroupRepository(),
-        this.getCategoryGroupMembershipRepository()
-      ));
+      this.instances.set(
+        key,
+        new CategoryGroupService(
+          this.getCategoryGroupRepository(),
+          this.getCategoryGroupMembershipRepository()
+        )
+      );
     }
     return this.instances.get(key) as CategoryGroupService;
   }
 
   getCategoryGroupRecommendationService(): CategoryGroupRecommendationService {
-    const key = 'CategoryGroupRecommendationService';
+    const key = "CategoryGroupRecommendationService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new CategoryGroupRecommendationService(
-        this.getCategoryGroupRecommendationRepository(),
-        this.getCategoryGroupRepository(),
-        this.getCategoryRepository(),
-        this.getCategoryGroupSettingsRepository()
-      ));
+      this.instances.set(
+        key,
+        new CategoryGroupRecommendationService(
+          this.getCategoryGroupRecommendationRepository(),
+          this.getCategoryGroupRepository(),
+          this.getCategoryRepository(),
+          this.getCategoryGroupSettingsRepository()
+        )
+      );
     }
     return this.instances.get(key) as CategoryGroupRecommendationService;
   }
 
   getCategoryGroupSettingsService(): CategoryGroupSettingsService {
-    const key = 'CategoryGroupSettingsService';
+    const key = "CategoryGroupSettingsService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new CategoryGroupSettingsService(
-        this.getCategoryGroupSettingsRepository()
-      ));
+      this.instances.set(
+        key,
+        new CategoryGroupSettingsService(this.getCategoryGroupSettingsRepository())
+      );
     }
     return this.instances.get(key) as CategoryGroupSettingsService;
   }
 
   // Payee Categories Service
   getPayeeCategoryService(): PayeeCategoryService {
-    const key = 'PayeeCategoryService';
+    const key = "PayeeCategoryService";
     if (!this.instances.has(key)) {
-      this.instances.set(key, new PayeeCategoryService(
-        this.getPayeeCategoryRepository()
-      ));
+      this.instances.set(key, new PayeeCategoryService(this.getPayeeCategoryRepository()));
     }
     return this.instances.get(key) as PayeeCategoryService;
   }
 
   // Payee Category Recommendation Service
   getPayeeCategoryRecommendationService(): PayeeCategoryRecommendationService {
-    const key = 'PayeeCategoryRecommendationService';
+    const key = "PayeeCategoryRecommendationService";
     if (!this.instances.has(key)) {
       this.instances.set(key, new PayeeCategoryRecommendationService());
     }

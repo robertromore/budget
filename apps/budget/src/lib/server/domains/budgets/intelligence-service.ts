@@ -6,12 +6,12 @@
  * category mappings, account scope, and historical patterns.
  */
 
-import { budgetAccounts, budgetCategories, budgets, budgetTransactions } from "$lib/schema/budgets";
-import { payees } from "$lib/schema/payees";
-import { transactions } from "$lib/schema/transactions";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import {budgetAccounts, budgetCategories, budgets, budgetTransactions} from "$lib/schema/budgets";
+import {payees} from "$lib/schema/payees";
+import {transactions} from "$lib/schema/transactions";
+import {db} from "$lib/server/db";
+import {logger} from "$lib/server/shared/logging";
+import {and, desc, eq, inArray, sql} from "drizzle-orm";
 
 export interface BudgetSuggestion {
   budgetId: number;
@@ -182,10 +182,10 @@ export class BudgetIntelligenceService {
 
     try {
       // Get workspace for this account to ensure we only look at same-workspace transactions
-      const { accounts } = await import("$lib/schema/accounts");
+      const {accounts} = await import("$lib/schema/accounts");
       const account = await db.query.accounts.findFirst({
         where: eq(accounts.id, accountId),
-        columns: { workspaceId: true }
+        columns: {workspaceId: true},
       });
 
       if (!account) return null;
@@ -217,7 +217,12 @@ export class BudgetIntelligenceService {
         })
         .from(budgetTransactions)
         .innerJoin(budgets, eq(budgetTransactions.budgetId, budgets.id))
-        .where(and(inArray(budgetTransactions.transactionId, transactionIds), eq(budgets.status, "active")));
+        .where(
+          and(
+            inArray(budgetTransactions.transactionId, transactionIds),
+            eq(budgets.status, "active")
+          )
+        );
 
       // Count budget occurrences
       const budgetCounts = new Map<number, {name: string; count: number}>();
@@ -240,7 +245,10 @@ export class BudgetIntelligenceService {
 
       // If this budget appears in 70%+ of transactions, suggest it
       if (maxBudget && maxBudget.count / recentTransactions.length >= 0.7) {
-        const confidence = Math.min(65, Math.round((maxBudget.count / recentTransactions.length) * 100));
+        const confidence = Math.min(
+          65,
+          Math.round((maxBudget.count / recentTransactions.length) * 100)
+        );
         return {
           budgetId: maxBudget.id,
           budgetName: maxBudget.name,
@@ -414,7 +422,7 @@ export class BudgetIntelligenceService {
         .groupBy(budgetTransactions.budgetId, budgets.name)
         .orderBy(sql`COUNT(DISTINCT ${budgetTransactions.transactionId}) DESC`);
 
-      return results.map(r => ({
+      return results.map((r) => ({
         budgetId: r.budgetId,
         budgetName: r.budgetName,
         usageCount: Number(r.usageCount),

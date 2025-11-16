@@ -1,14 +1,14 @@
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {renderComponent} from '$lib/components/ui/data-table';
-import type {Schedule} from '$lib/schema/schedules';
-import type {SchedulesState} from '$lib/states/entities/schedules.svelte';
-import type {ColumnDef} from '@tanstack/table-core';
-import ScheduleColumnHeader from '../(components)/schedule-column-header.svelte';
-import ScheduleNameCell from '../(components)/(cells)/schedule-name-cell.svelte';
-import ScheduleAmountCell from '../(components)/(cells)/schedule-amount-cell.svelte';
-import SchedulePatternCell from '../(components)/(cells)/schedule-pattern-cell.svelte';
-import ScheduleStatusCell from '../(components)/(cells)/schedule-status-cell.svelte';
-import ScheduleActionsCell from '../(components)/(cells)/schedule-actions-cell.svelte';
+import {Checkbox} from "$lib/components/ui/checkbox";
+import {renderComponent} from "$lib/components/ui/data-table";
+import type {Schedule} from "$lib/schema/schedules";
+import type {SchedulesState} from "$lib/states/entities/schedules.svelte";
+import type {ColumnDef} from "@tanstack/table-core";
+import ScheduleColumnHeader from "../(components)/schedule-column-header.svelte";
+import ScheduleNameCell from "../(components)/(cells)/schedule-name-cell.svelte";
+import ScheduleAmountCell from "../(components)/(cells)/schedule-amount-cell.svelte";
+import SchedulePatternCell from "../(components)/(cells)/schedule-pattern-cell.svelte";
+import ScheduleStatusCell from "../(components)/(cells)/schedule-status-cell.svelte";
+import ScheduleActionsCell from "../(components)/(cells)/schedule-actions-cell.svelte";
 
 export const columns = (
   _schedulesState: SchedulesState,
@@ -18,7 +18,7 @@ export const columns = (
 ): ColumnDef<Schedule>[] => {
   return [
     {
-      id: 'select-col',
+      id: "select-col",
       header: ({table}) => {
         const allPageRowsSelected = table.getIsAllPageRowsSelected();
         const somePageRowsSelected = table.getIsSomePageRowsSelected();
@@ -34,7 +34,7 @@ export const columns = (
             }
           },
           controlledChecked: true,
-          'aria-label': 'Select all on page',
+          "aria-label": "Select all on page",
         });
       },
       cell: ({row}) => {
@@ -43,7 +43,7 @@ export const columns = (
           disabled: !row.getCanSelect(),
           onCheckedChange: (value) => row.toggleSelected(!!value),
           controlledChecked: true,
-          'aria-label': 'Select row',
+          "aria-label": "Select row",
         });
       },
       enableColumnFilter: false,
@@ -51,142 +51,142 @@ export const columns = (
       enableHiding: false,
     },
     {
-      accessorKey: 'id',
+      accessorKey: "id",
       header: ({column}) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
-          title: 'ID',
+          title: "ID",
         }),
       cell: (info) => info.getValue(),
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: false,
       meta: {
-        label: 'ID',
+        label: "ID",
       },
     },
     {
-      accessorKey: 'name',
-      id: 'name',
+      accessorKey: "name",
+      id: "name",
       header: ({column}) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
-          title: 'Name',
+          title: "Name",
         }),
       cell: (info) => {
         const schedule = info.row.original;
         return renderComponent(ScheduleNameCell, {schedule});
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: true,
       meta: {
-        label: 'Name',
+        label: "Name",
       },
     },
     {
-      accessorKey: 'amount',
-      id: 'amount',
+      accessorKey: "amount",
+      id: "amount",
       header: ({column}) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
-          title: 'Amount',
+          title: "Amount",
         }),
       cell: (info) => {
         const schedule = info.row.original;
         return renderComponent(ScheduleAmountCell, {schedule});
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: false,
       meta: {
-        label: 'Amount',
+        label: "Amount",
       },
     },
     {
-      accessorKey: 'scheduleDate',
-      id: 'pattern',
+      accessorKey: "scheduleDate",
+      id: "pattern",
       header: ({column}) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
-          title: 'Pattern',
+          title: "Pattern",
         }),
       cell: (info) => {
         const schedule = info.row.original;
         return renderComponent(SchedulePatternCell, {schedule});
       },
       sortingFn: (rowA, rowB) => {
-        const a = rowA.original.scheduleDate?.frequency || '';
-        const b = rowB.original.scheduleDate?.frequency || '';
+        const a = rowA.original.scheduleDate?.frequency || "";
+        const b = rowB.original.scheduleDate?.frequency || "";
         return a.localeCompare(b);
       },
       enableColumnFilter: false,
       meta: {
-        label: 'Pattern',
+        label: "Pattern",
       },
     },
     {
-      accessorKey: 'payee',
-      id: 'payee',
+      accessorKey: "payee",
+      id: "payee",
       header: ({column}) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
-          title: 'Payee',
+          title: "Payee",
         }),
       cell: (info) => {
         const schedule = info.row.original;
-        return schedule.payee?.name || '-';
+        return schedule.payee?.name || "-";
       },
       sortingFn: (rowA, rowB) => {
-        const a = rowA.original.payee?.name || '';
-        const b = rowB.original.payee?.name || '';
+        const a = rowA.original.payee?.name || "";
+        const b = rowB.original.payee?.name || "";
         return a.localeCompare(b);
       },
       enableColumnFilter: false,
       meta: {
-        label: 'Payee',
+        label: "Payee",
       },
     },
     {
-      accessorKey: 'account',
-      id: 'account',
+      accessorKey: "account",
+      id: "account",
       header: ({column}) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
-          title: 'Account',
+          title: "Account",
         }),
       cell: (info) => {
         const schedule = info.row.original;
-        return schedule.account?.name || '-';
+        return schedule.account?.name || "-";
       },
       sortingFn: (rowA, rowB) => {
-        const a = rowA.original.account?.name || '';
-        const b = rowB.original.account?.name || '';
+        const a = rowA.original.account?.name || "";
+        const b = rowB.original.account?.name || "";
         return a.localeCompare(b);
       },
       enableColumnFilter: false,
       meta: {
-        label: 'Account',
+        label: "Account",
       },
     },
     {
-      accessorKey: 'status',
-      id: 'status',
+      accessorKey: "status",
+      id: "status",
       header: ({column}) =>
         renderComponent(ScheduleColumnHeader<Schedule, unknown>, {
           column,
-          title: 'Status',
+          title: "Status",
         }),
       cell: (info) => {
         const schedule = info.row.original;
         return renderComponent(ScheduleStatusCell, {schedule});
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: true,
       meta: {
-        label: 'Status',
+        label: "Status",
       },
     },
     {
-      id: 'actions',
-      header: 'Actions',
+      id: "actions",
+      header: "Actions",
       cell: (info) => {
         const schedule = info.row.original;
         return renderComponent(ScheduleActionsCell, {

@@ -26,13 +26,15 @@ const payeesArray = $derived(payeeState ? Array.from(payeeState.payees.values())
 const rowIndex = $derived(row.original.rowIndex);
 
 // Access row data directly - get payee name from row (which includes overrides)
-const selectedPayeeName = $derived((row.original.normalizedData['payee'] as string | null | undefined) ?? '');
+const selectedPayeeName = $derived(
+  (row.original.normalizedData['payee'] as string | null | undefined) ?? ''
+);
 
 // Find matching payee ID from payee name
 const selectedPayeeId = $derived.by(() => {
   const payeeName = selectedPayeeName;
   if (!payeeName) return null;
-  const match = payeesArray.find(p => p.name?.toLowerCase() === payeeName.toLowerCase());
+  const match = payeesArray.find((p) => p.name?.toLowerCase() === payeeName.toLowerCase());
   return match?.id || null;
 });
 let open = $state(false);
@@ -40,14 +42,20 @@ let searchValue = $state('');
 
 // Combine existing payees with temporary ones for search
 const combinedItems = $derived.by(() => {
-  const existing = payeesArray.map(p => ({type: 'existing' as const, payee: p, name: p.name || ''}));
+  const existing = payeesArray.map((p) => ({
+    type: 'existing' as const,
+    payee: p,
+    name: p.name || '',
+  }));
   const temporary = temporaryPayees
-    .filter(name => !payeesArray.some(p => p.name?.toLowerCase() === name.toLowerCase()))
-    .map(name => ({type: 'temporary' as const, name}));
+    .filter((name) => !payeesArray.some((p) => p.name?.toLowerCase() === name.toLowerCase()))
+    .map((name) => ({type: 'temporary' as const, name}));
   return [...existing, ...temporary];
 });
 
-const fused = $derived(new Fuse(combinedItems, {keys: ['name'], includeScore: true, threshold: 0.3}));
+const fused = $derived(
+  new Fuse(combinedItems, {keys: ['name'], includeScore: true, threshold: 0.3})
+);
 
 let visibleItems = $derived.by(() => {
   if (searchValue) {
@@ -56,10 +64,14 @@ let visibleItems = $derived.by(() => {
   return combinedItems;
 });
 
-const visiblePayees = $derived(visibleItems.filter(item => item.type === 'existing').map(item => item.payee));
-const visibleTemporaryPayees = $derived(visibleItems.filter(item => item.type === 'temporary').map(item => item.name));
+const visiblePayees = $derived(
+  visibleItems.filter((item) => item.type === 'existing').map((item) => item.payee)
+);
+const visibleTemporaryPayees = $derived(
+  visibleItems.filter((item) => item.type === 'temporary').map((item) => item.name)
+);
 
-const selectedPayee = $derived(payeesArray.find(p => p.id === selectedPayeeId));
+const selectedPayee = $derived(payeesArray.find((p) => p.id === selectedPayeeId));
 const displayName = $derived(selectedPayee?.name || selectedPayeeName || 'Select payee...');
 
 // Show "Create" option when: there's search text AND no exact match exists (case-sensitive)
@@ -67,8 +79,9 @@ const showCreateOption = $derived.by(() => {
   if (!searchValue.trim()) return false;
   const searchTrimmed = searchValue.trim();
   // Check for exact match (case-sensitive) - allows creating "Hy-Vee" even if "Hy-vee" exists
-  const hasExactMatch = visiblePayees.some(p => p.name === searchTrimmed) ||
-                        visibleTemporaryPayees.some(t => t === searchTrimmed);
+  const hasExactMatch =
+    visiblePayees.some((p) => p.name === searchTrimmed) ||
+    visibleTemporaryPayees.some((t) => t === searchTrimmed);
   return !hasExactMatch;
 });
 
@@ -121,7 +134,7 @@ function handleClear() {
           {...props}
           variant="outline"
           class={cn(
-            'w-full h-8 text-xs justify-start overflow-hidden text-ellipsis whitespace-nowrap',
+            'h-8 w-full justify-start overflow-hidden text-xs text-ellipsis whitespace-nowrap',
             !selectedPayee && !selectedPayeeName && 'text-muted-foreground'
           )}>
           <User class="mr-2 h-3 w-3" />
@@ -144,10 +157,7 @@ function handleClear() {
               </Command.Item>
             {/if}
             {#if (selectedPayeeName || selectedPayeeId) && !searchValue.trim()}
-              <Command.Item
-                value="clear"
-                onSelect={() => handleClear()}
-                class="text-destructive">
+              <Command.Item value="clear" onSelect={() => handleClear()} class="text-destructive">
                 <X class="mr-2 h-4 w-4" />
                 Clear payee
               </Command.Item>

@@ -1,7 +1,7 @@
 // Example Usage - Demonstrates how to integrate mixins with Svelte 5 reactive state
 // This file shows patterns for using mixins in .svelte.ts files with runes
 
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import {SvelteMap, SvelteSet} from "svelte/reactivity";
 import {
   createEntityStore,
   createSelectionMixin,
@@ -10,8 +10,8 @@ import {
   type Entity,
   type EntityStoreMixin,
   type SelectionMixin,
-  type SortPersistenceMixin
-} from './index';
+  type SortPersistenceMixin,
+} from "./index";
 
 // Example entity interface
 interface ExampleEntity extends Entity {
@@ -30,15 +30,15 @@ export class ExampleEntityState {
   // Reactive state using Svelte 5 runes
   private entities = $state(new SvelteMap<number, ExampleEntity>());
   private selection = $state(new SvelteSet<string>());
-  private sortField = $state<'name' | 'amount' | 'createdAt'>('name');
-  private sortDirection = $state<'asc' | 'desc'>('asc');
+  private sortField = $state<"name" | "amount" | "createdAt">("name");
+  private sortDirection = $state<"asc" | "desc">("asc");
 
   // Mixin instances (plain TypeScript, no rune dependencies)
   private entityMixin: EntityStoreMixin<ExampleEntity>;
   private selectionMixin: SelectionMixin<string>;
-  private sortMixin: SortPersistenceMixin<'name' | 'amount' | 'createdAt', 'asc' | 'desc'>;
+  private sortMixin: SortPersistenceMixin<"name" | "amount" | "createdAt", "asc" | "desc">;
 
-  constructor(storageKey = 'example-sort') {
+  constructor(storageKey = "example-sort") {
     // Initialize mixins with reactive state instances
     this.entityMixin = createEntityStore(this.entities);
     this.selectionMixin = createSelectionMixin(this.selection);
@@ -47,14 +47,18 @@ export class ExampleEntityState {
     this.sortMixin = createSortPersistence(
       storageKey,
       () => this.sortField,
-      (field) => { this.sortField = field; },
+      (field) => {
+        this.sortField = field;
+      },
       () => this.sortDirection,
-      (direction) => { this.sortDirection = direction; },
+      (direction) => {
+        this.sortDirection = direction;
+      },
       {
-        validFields: ['name', 'amount', 'createdAt'],
-        validDirections: ['asc', 'desc'],
-        defaultField: 'name',
-        defaultDirection: 'asc'
+        validFields: ["name", "amount", "createdAt"],
+        validDirections: ["asc", "desc"],
+        defaultField: "name",
+        defaultDirection: "asc",
       }
     );
   }
@@ -74,9 +78,9 @@ export class ExampleEntityState {
   getSelectedIds = () => this.selectionMixin.getSelected();
 
   // Sort operations (delegated to mixin)
-  setSortField = (field: 'name' | 'amount' | 'createdAt') => this.sortMixin.setSortField(field);
-  setSortDirection = (direction: 'asc' | 'desc') => this.sortMixin.setSortDirection(direction);
-  toggleSort = (field: 'name' | 'amount' | 'createdAt') => this.sortMixin.toggleSortField(field);
+  setSortField = (field: "name" | "amount" | "createdAt") => this.sortMixin.setSortField(field);
+  setSortDirection = (direction: "asc" | "desc") => this.sortMixin.setSortDirection(direction);
+  toggleSort = (field: "name" | "amount" | "createdAt") => this.sortMixin.toggleSortField(field);
 
   // Computed properties using $derived
   sortedEntities = $derived.by(() => {
@@ -88,20 +92,20 @@ export class ExampleEntityState {
   selectedEntities = $derived.by(() => {
     const selectedIds = this.selectionMixin.getSelected();
     const allEntities = this.entityMixin.getAll();
-    return allEntities.filter(entity => selectedIds.includes(entity.id.toString()));
+    return allEntities.filter((entity) => selectedIds.includes(entity.id.toString()));
   });
 
   // Advanced computed properties
   selectionSummary = $derived.by(() => ({
     total: this.entityMixin.count(),
     selected: this.selectionMixin.size,
-    hasSelection: this.selectionMixin.isNotEmpty()
+    hasSelection: this.selectionMixin.isNotEmpty(),
   }));
 
   sortInfo = $derived.by(() => ({
     field: this.sortField,
     direction: this.sortDirection,
-    hasPersistence: this.sortMixin.hasPersistedState()
+    hasPersistence: this.sortMixin.hasPersistedState(),
   }));
 }
 
@@ -115,8 +119,8 @@ export class ExampleEntityState {
 export class AccountsStateExample {
   // Existing reactive state (unchanged)
   accounts = $state(new SvelteMap<number, any>()) as SvelteMap<number, any>;
-  sortField = $state<'name' | 'balance' | 'dateOpened' | 'status' | 'createdAt'>('name');
-  sortDirection = $state<'asc' | 'desc'>('asc');
+  sortField = $state<"name" | "balance" | "dateOpened" | "status" | "createdAt">("name");
+  sortDirection = $state<"asc" | "desc">("asc");
 
   // Optional mixin enhancements
   private entityMixin: EntityStoreMixin<any>;
@@ -157,7 +161,7 @@ export class AccountsStateExample {
   }
 
   selectAll() {
-    const allIds = this.all.map(account => account.id);
+    const allIds = this.all.map((account) => account.id);
     this.selectionMixin.selectAll(allIds);
   }
 
@@ -166,7 +170,10 @@ export class AccountsStateExample {
   }
 
   // Enhanced sorting (could use sort persistence mixin)
-  setSorting(field: 'name' | 'balance' | 'dateOpened' | 'status' | 'createdAt', direction: 'asc' | 'desc') {
+  setSorting(
+    field: "name" | "balance" | "dateOpened" | "status" | "createdAt",
+    direction: "asc" | "desc"
+  ) {
     this.sortField = field;
     this.sortDirection = direction;
     // Could use sort persistence mixin for automatic localStorage handling
@@ -175,13 +182,13 @@ export class AccountsStateExample {
   // Computed properties with mixin integration
   selectedAccounts = $derived.by(() => {
     const selected = this.selectionMixin.getSelected();
-    return this.all.filter(account => selected.includes(account.id));
+    return this.all.filter((account) => selected.includes(account.id));
   });
 
   selectionSummary = $derived.by(() => ({
     total: this.all.length,
     selected: this.selectionMixin.size,
-    hasSelection: this.selectionMixin.isNotEmpty()
+    hasSelection: this.selectionMixin.isNotEmpty(),
   }));
 }
 
@@ -249,5 +256,5 @@ export const USAGE_PATTERNS = {
       selectAccount = (id: number) => this.selectionMixin.add(id);
       getSelectedAccounts = () => this.selectionMixin.getSelected();
     }
-  `
+  `,
 };

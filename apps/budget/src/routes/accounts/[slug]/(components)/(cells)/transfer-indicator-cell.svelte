@@ -11,12 +11,14 @@ const transferAccountId = $derived((transaction as any).transferAccountId);
 
 {#if isTransfer}
   <div class="flex items-center gap-2">
-    <Badge variant="outline" class="flex items-center gap-1 text-xs border-blue-600/30 text-blue-600 dark:text-blue-400">
+    <Badge
+      variant="outline"
+      class="flex items-center gap-1 border-blue-600/30 text-xs text-blue-600 dark:text-blue-400">
       <ArrowRightLeft class="h-3 w-3"></ArrowRightLeft>
       <span>Transfer</span>
     </Badge>
     {#if transferAccountId}
-      <span class="text-xs text-muted-foreground">Account #{transferAccountId}</span>
+      <span class="text-muted-foreground text-xs">Account #{transferAccountId}</span>
     {/if}
   </div>
 {/if}

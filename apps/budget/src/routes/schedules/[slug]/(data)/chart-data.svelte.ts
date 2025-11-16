@@ -1,11 +1,11 @@
-import type { PageData } from '../$types';
-import { nextDaily, nextWeekly, nextMonthly, nextYearly } from '$lib/utils/date-frequency';
-import { parseISOString, currentDate } from '$lib/utils/dates';
+import type {PageData} from "../$types";
+import {nextDaily, nextWeekly, nextMonthly, nextYearly} from "$lib/utils/date-frequency";
+import {parseISOString, currentDate} from "$lib/utils/dates";
 
 export interface ChartDataPoint {
   date: string;
   amount: number;
-  type: 'historical' | 'projected';
+  type: "historical" | "projected";
   status?: string;
   dateLabel: string;
 }
@@ -13,7 +13,7 @@ export interface ChartDataPoint {
 export interface CalendarDataPoint {
   date: Date;
   value: number | null;
-  type: 'historical' | 'projected' | null;
+  type: "historical" | "projected" | null;
   amount: number;
   status?: string;
 }
@@ -26,7 +26,7 @@ export interface ProjectionData {
   monthsFromNow: number;
 }
 
-export function generateCumulativeBalanceData(schedule: PageData['schedule']): ChartDataPoint[] {
+export function generateCumulativeBalanceData(schedule: PageData["schedule"]): ChartDataPoint[] {
   const rawData: ChartDataPoint[] = [];
 
   // Add historical transactions
@@ -34,14 +34,17 @@ export function generateCumulativeBalanceData(schedule: PageData['schedule']): C
     rawData.push({
       date: transaction.date,
       amount: transaction.amount,
-      type: 'historical',
+      type: "historical",
       status: transaction.status,
-      dateLabel: new Date(transaction.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      dateLabel: new Date(transaction.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
     });
   });
 
   // Generate future projections if schedule is recurring
-  if (schedule.scheduleDate && schedule.scheduleDate.frequency && schedule.status === 'active') {
+  if (schedule.scheduleDate && schedule.scheduleDate.frequency && schedule.status === "active") {
     const endDate = schedule.scheduleDate.end ? new Date(schedule.scheduleDate.end) : null;
     const frequency = schedule.scheduleDate.frequency;
     const interval = schedule.scheduleDate.interval || 1;
@@ -52,28 +55,28 @@ export function generateCumulativeBalanceData(schedule: PageData['schedule']): C
     futureLimit.setMonth(futureLimit.getMonth() + 6);
 
     let nextDate = new Date(today);
-    if (frequency === 'monthly') {
+    if (frequency === "monthly") {
       nextDate.setMonth(nextDate.getMonth() + interval);
-    } else if (frequency === 'weekly') {
-      nextDate.setDate(nextDate.getDate() + (7 * interval));
-    } else if (frequency === 'daily') {
+    } else if (frequency === "weekly") {
+      nextDate.setDate(nextDate.getDate() + 7 * interval);
+    } else if (frequency === "daily") {
       nextDate.setDate(nextDate.getDate() + interval);
     }
 
     while (nextDate <= futureLimit && (!endDate || nextDate <= endDate)) {
       rawData.push({
-        date: nextDate.toISOString().split('T')[0]!,
+        date: nextDate.toISOString().split("T")[0]!,
         amount: schedule.amount,
-        type: 'projected',
-        dateLabel: nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        type: "projected",
+        dateLabel: nextDate.toLocaleDateString("en-US", {month: "short", day: "numeric"}),
       });
 
       // Calculate next occurrence
-      if (frequency === 'monthly') {
+      if (frequency === "monthly") {
         nextDate.setMonth(nextDate.getMonth() + interval);
-      } else if (frequency === 'weekly') {
-        nextDate.setDate(nextDate.getDate() + (7 * interval));
-      } else if (frequency === 'daily') {
+      } else if (frequency === "weekly") {
+        nextDate.setDate(nextDate.getDate() + 7 * interval);
+      } else if (frequency === "daily") {
         nextDate.setDate(nextDate.getDate() + interval);
       }
     }
@@ -89,14 +92,14 @@ export function generateCumulativeBalanceData(schedule: PageData['schedule']): C
     return {
       ...item,
       cumulativeBalance,
-      amount: cumulativeBalance // Use cumulative balance as the y-value for the chart
+      amount: cumulativeBalance, // Use cumulative balance as the y-value for the chart
     };
   });
 
   return cumulativeData;
 }
 
-export function generateCalendarData(schedule: PageData['schedule']): CalendarDataPoint[] {
+export function generateCalendarData(schedule: PageData["schedule"]): CalendarDataPoint[] {
   const data: CalendarDataPoint[] = [];
 
   // Add historical transactions
@@ -104,14 +107,14 @@ export function generateCalendarData(schedule: PageData['schedule']): CalendarDa
     data.push({
       date: new Date(transaction.date),
       value: Math.abs(transaction.amount), // Use absolute value for scale
-      type: 'historical',
+      type: "historical",
       amount: transaction.amount,
-      status: transaction.status
+      status: transaction.status,
     });
   });
 
   // Generate future projections if schedule is recurring
-  if (schedule.scheduleDate && schedule.scheduleDate.frequency && schedule.status === 'active') {
+  if (schedule.scheduleDate && schedule.scheduleDate.frequency && schedule.status === "active") {
     const endDate = schedule.scheduleDate.end ? new Date(schedule.scheduleDate.end) : null;
     const frequency = schedule.scheduleDate.frequency;
     const interval = schedule.scheduleDate.interval || 1;
@@ -122,11 +125,11 @@ export function generateCalendarData(schedule: PageData['schedule']): CalendarDa
     futureLimit.setMonth(futureLimit.getMonth() + 6);
 
     let nextDate = new Date(today);
-    if (frequency === 'monthly') {
+    if (frequency === "monthly") {
       nextDate.setMonth(nextDate.getMonth() + interval);
-    } else if (frequency === 'weekly') {
-      nextDate.setDate(nextDate.getDate() + (7 * interval));
-    } else if (frequency === 'daily') {
+    } else if (frequency === "weekly") {
+      nextDate.setDate(nextDate.getDate() + 7 * interval);
+    } else if (frequency === "daily") {
       nextDate.setDate(nextDate.getDate() + interval);
     }
 
@@ -134,16 +137,16 @@ export function generateCalendarData(schedule: PageData['schedule']): CalendarDa
       data.push({
         date: new Date(nextDate),
         value: Math.abs(schedule.amount),
-        type: 'projected',
-        amount: schedule.amount
+        type: "projected",
+        amount: schedule.amount,
       });
 
       // Calculate next occurrence
-      if (frequency === 'monthly') {
+      if (frequency === "monthly") {
         nextDate.setMonth(nextDate.getMonth() + interval);
-      } else if (frequency === 'weekly') {
-        nextDate.setDate(nextDate.getDate() + (7 * interval));
-      } else if (frequency === 'daily') {
+      } else if (frequency === "weekly") {
+        nextDate.setDate(nextDate.getDate() + 7 * interval);
+      } else if (frequency === "daily") {
         nextDate.setDate(nextDate.getDate() + interval);
       }
     }
@@ -152,8 +155,8 @@ export function generateCalendarData(schedule: PageData['schedule']): CalendarDa
   return data;
 }
 
-export function generateFutureProjections(schedule: PageData['schedule']): ProjectionData[] {
-  if (!schedule.scheduleDate || schedule.status !== 'active') return [];
+export function generateFutureProjections(schedule: PageData["schedule"]): ProjectionData[] {
+  if (!schedule.scheduleDate || schedule.status !== "active") return [];
 
   const frequency = schedule.scheduleDate.frequency!;
   const interval = schedule.scheduleDate.interval || 1;
@@ -162,7 +165,7 @@ export function generateFutureProjections(schedule: PageData['schedule']): Proje
 
   // Calculate date range for projections (next 12 months from today)
   const today = currentDate;
-  const futureLimit = today.add({ months: 12 });
+  const futureLimit = today.add({months: 12});
 
   // Use proper date generation based on frequency
   let futureDates;
@@ -198,7 +201,7 @@ export function generateFutureProjections(schedule: PageData['schedule']): Proje
   }
 
   // Filter to only future dates and apply end date if specified
-  const filteredDates = futureDates.filter(date => {
+  const filteredDates = futureDates.filter((date) => {
     if (date.compare(today) <= 0) return false; // Only future dates
     if (endDateValue && date.compare(endDateValue) > 0) return false; // Within end date
     return true;
@@ -206,16 +209,18 @@ export function generateFutureProjections(schedule: PageData['schedule']): Proje
 
   // Convert to projection data
   const todayJs = new Date();
-  const projections: ProjectionData[] = filteredDates.slice(0, 20).map(dateValue => {
+  const projections: ProjectionData[] = filteredDates.slice(0, 20).map((dateValue) => {
     const jsDate = new Date(dateValue.year, dateValue.month - 1, dateValue.day);
-    const monthsFromNow = Math.floor((jsDate.getTime() - todayJs.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    const monthsFromNow = Math.floor(
+      (jsDate.getTime() - todayJs.getTime()) / (1000 * 60 * 60 * 24 * 30)
+    );
 
     return {
       date: jsDate,
-      dateString: `${dateValue.year}-${String(dateValue.month).padStart(2, '0')}-${String(dateValue.day).padStart(2, '0')}`,
+      dateString: `${dateValue.year}-${String(dateValue.month).padStart(2, "0")}-${String(dateValue.day).padStart(2, "0")}`,
       amount: schedule.amount,
       description: `${schedule.name} - recurring`,
-      monthsFromNow
+      monthsFromNow,
     };
   });
 

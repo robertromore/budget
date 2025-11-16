@@ -3,7 +3,7 @@ interface Props {
   notes: string | null;
 }
 
-let { notes }: Props = $props();
+let {notes}: Props = $props();
 
 const truncated = $derived(() => {
   if (!notes) return null;
@@ -12,7 +12,7 @@ const truncated = $derived(() => {
 </script>
 
 {#if truncated()}
-  <span class="text-sm text-muted-foreground max-w-[200px] truncate">
+  <span class="text-muted-foreground max-w-[200px] truncate text-sm">
     {truncated()}
   </span>
 {:else}

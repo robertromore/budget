@@ -1,107 +1,107 @@
 <script lang="ts">
-  import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
-  import * as Sheet from '$lib/components/ui/sheet';
-  import * as Select from '$lib/components/ui/select';
-  import {Button} from '$lib/components/ui/button';
-  import {Input} from '$lib/components/ui/input';
-  import Label from '$lib/components/ui/label/label.svelte';
-  import {Badge} from '$lib/components/ui/badge';
-  import type {EnvelopeAllocationRequest} from '$lib/server/domains/budgets/envelope-service';
-  import type {RolloverMode} from '$lib/schema/budgets/envelope-allocations';
-  import type {Category} from '$lib/schema/categories';
-  import type {BudgetPeriodInstance} from '$lib/schema/budgets';
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import * as Sheet from '$lib/components/ui/sheet';
+import * as Select from '$lib/components/ui/select';
+import {Button} from '$lib/components/ui/button';
+import {Input} from '$lib/components/ui/input';
+import Label from '$lib/components/ui/label/label.svelte';
+import {Badge} from '$lib/components/ui/badge';
+import type {EnvelopeAllocationRequest} from '$lib/server/domains/budgets/envelope-service';
+import type {RolloverMode} from '$lib/schema/budgets/envelope-allocations';
+import type {Category} from '$lib/schema/categories';
+import type {BudgetPeriodInstance} from '$lib/schema/budgets';
 
-  interface Props {
-    open?: boolean;
-    onOpenChange?: (open: boolean) => void;
-    budgetId: number;
-    periodInstance: BudgetPeriodInstance;
-    availableCategories: Category[];
-    onEnvelopeCreated?: (envelope: EnvelopeAllocationRequest) => void;
+interface Props {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  budgetId: number;
+  periodInstance: BudgetPeriodInstance;
+  availableCategories: Category[];
+  onEnvelopeCreated?: (envelope: EnvelopeAllocationRequest) => void;
+}
+
+let {
+  open = $bindable(false),
+  onOpenChange,
+  budgetId,
+  periodInstance,
+  availableCategories,
+  onEnvelopeCreated,
+}: Props = $props();
+
+let selectedCategoryId = $state<string>('');
+let allocatedAmount = $state('');
+let rolloverMode = $state<RolloverMode>('unlimited');
+let isEmergencyFund = $state(false);
+let priority = $state('5');
+let maxRolloverMonths = $state('3');
+let autoRefill = $state(false);
+let autoRefillAmount = $state('');
+
+const rolloverModeOptions = [
+  {value: 'unlimited', label: 'Unlimited', description: 'Rollover all unused funds indefinitely'},
+  {value: 'limited', label: 'Limited', description: 'Rollover for a specific number of months'},
+  {value: 'reset', label: 'Reset', description: 'Clear unused funds at period end'},
+];
+
+const isFormValid = $derived(() => {
+  return (
+    selectedCategoryId &&
+    allocatedAmount &&
+    Number(allocatedAmount) >= 0 &&
+    (!rolloverMode || rolloverMode === 'limited' ? maxRolloverMonths : true)
+  );
+});
+
+const selectedCategory = $derived(() => {
+  return availableCategories.find((cat) => cat.id === Number(selectedCategoryId));
+});
+
+function resetForm() {
+  selectedCategoryId = '';
+  allocatedAmount = '';
+  rolloverMode = 'unlimited';
+  isEmergencyFund = false;
+  priority = '5';
+  maxRolloverMonths = '3';
+  autoRefill = false;
+  autoRefillAmount = '';
+}
+
+function handleClose() {
+  open = false;
+  resetForm();
+}
+
+async function handleSubmit(e: Event) {
+  e.preventDefault();
+  if (!isFormValid) return;
+
+  const metadata: Record<string, unknown> = {
+    priority: Number(priority),
+    isEmergencyFund,
+  };
+
+  if (rolloverMode === 'limited') {
+    metadata['maxRolloverMonths'] = Number(maxRolloverMonths);
   }
 
-  let {
-    open = $bindable(false),
-    onOpenChange,
+  if (autoRefill && autoRefillAmount) {
+    metadata['autoRefill'] = Number(autoRefillAmount);
+  }
+
+  const envelopeData: EnvelopeAllocationRequest = {
     budgetId,
-    periodInstance,
-    availableCategories,
-    onEnvelopeCreated,
-  }: Props = $props();
+    categoryId: Number(selectedCategoryId),
+    periodInstanceId: periodInstance.id,
+    allocatedAmount: Number(allocatedAmount),
+    rolloverMode,
+    metadata,
+  };
 
-  let selectedCategoryId = $state<string>('');
-  let allocatedAmount = $state('');
-  let rolloverMode = $state<RolloverMode>('unlimited');
-  let isEmergencyFund = $state(false);
-  let priority = $state('5');
-  let maxRolloverMonths = $state('3');
-  let autoRefill = $state(false);
-  let autoRefillAmount = $state('');
-
-  const rolloverModeOptions = [
-    {value: 'unlimited', label: 'Unlimited', description: 'Rollover all unused funds indefinitely'},
-    {value: 'limited', label: 'Limited', description: 'Rollover for a specific number of months'},
-    {value: 'reset', label: 'Reset', description: 'Clear unused funds at period end'},
-  ];
-
-  const isFormValid = $derived(() => {
-    return (
-      selectedCategoryId &&
-      allocatedAmount &&
-      Number(allocatedAmount) >= 0 &&
-      (!rolloverMode || rolloverMode === 'limited' ? maxRolloverMonths : true)
-    );
-  });
-
-  const selectedCategory = $derived(() => {
-    return availableCategories.find((cat) => cat.id === Number(selectedCategoryId));
-  });
-
-  function resetForm() {
-    selectedCategoryId = '';
-    allocatedAmount = '';
-    rolloverMode = 'unlimited';
-    isEmergencyFund = false;
-    priority = '5';
-    maxRolloverMonths = '3';
-    autoRefill = false;
-    autoRefillAmount = '';
-  }
-
-  function handleClose() {
-    open = false;
-    resetForm();
-  }
-
-  async function handleSubmit(e: Event) {
-    e.preventDefault();
-    if (!isFormValid) return;
-
-    const metadata: Record<string, unknown> = {
-      priority: Number(priority),
-      isEmergencyFund,
-    };
-
-    if (rolloverMode === 'limited') {
-      metadata['maxRolloverMonths'] = Number(maxRolloverMonths);
-    }
-
-    if (autoRefill && autoRefillAmount) {
-      metadata['autoRefill'] = Number(autoRefillAmount);
-    }
-
-    const envelopeData: EnvelopeAllocationRequest = {
-      budgetId,
-      categoryId: Number(selectedCategoryId),
-      periodInstanceId: periodInstance.id,
-      allocatedAmount: Number(allocatedAmount),
-      rolloverMode,
-      metadata,
-    };
-
-    onEnvelopeCreated?.(envelopeData);
-    handleClose();
-  }
+  onEnvelopeCreated?.(envelopeData);
+  handleClose();
+}
 </script>
 
 <ResponsiveSheet bind:open {onOpenChange}>
@@ -125,7 +125,7 @@
                 <div class="flex items-center gap-2">
                   <span>{category.name}</span>
                   {#if category.description}
-                    <span class="text-xs text-muted-foreground">- {category.description}</span>
+                    <span class="text-muted-foreground text-xs">- {category.description}</span>
                   {/if}
                 </div>
               </Select.Item>
@@ -144,8 +144,7 @@
           min="0"
           bind:value={allocatedAmount}
           placeholder="0.00"
-          required
-        />
+          required />
       </div>
 
       <!-- Rollover Mode -->
@@ -154,15 +153,14 @@
         <Select.Root type="single" bind:value={rolloverMode}>
           <Select.Trigger>
             <span
-              >{rolloverModeOptions.find((option) => option.value === rolloverMode)?.label}</span
-            >
+              >{rolloverModeOptions.find((option) => option.value === rolloverMode)?.label}</span>
           </Select.Trigger>
           <Select.Content>
             {#each rolloverModeOptions as option (option.value)}
               <Select.Item value={option.value}>
                 <div class="flex flex-col">
                   <span>{option.label}</span>
-                  <span class="text-xs text-muted-foreground">{option.description}</span>
+                  <span class="text-muted-foreground text-xs">{option.description}</span>
                 </div>
               </Select.Item>
             {/each}
@@ -180,9 +178,8 @@
             min="1"
             max="12"
             bind:value={maxRolloverMonths}
-            placeholder="3"
-          />
-          <p class="text-xs text-muted-foreground">
+            placeholder="3" />
+          <p class="text-muted-foreground text-xs">
             Maximum number of months to carry forward unused funds
           </p>
         </div>
@@ -203,8 +200,7 @@
                 'Normal Priority',
                 'Low Priority',
                 'Lowest Priority',
-              ][Number(priority) - 1]}</span
-            >
+              ][Number(priority) - 1]}</span>
           </Select.Trigger>
           <Select.Content>
             <Select.Item value="1">1 - Highest Priority</Select.Item>
@@ -216,7 +212,7 @@
             <Select.Item value="7">7 - Lowest Priority</Select.Item>
           </Select.Content>
         </Select.Root>
-        <p class="text-xs text-muted-foreground">
+        <p class="text-muted-foreground text-xs">
           Used for automatic fund allocation and deficit recovery
         </p>
       </div>
@@ -228,12 +224,11 @@
             id="emergency-fund"
             type="checkbox"
             bind:checked={isEmergencyFund}
-            class="rounded border-gray-300 text-primary focus:ring-primary"
-          />
+            class="text-primary focus:ring-primary rounded border-gray-300" />
           <Label for="emergency-fund" class="text-sm">Emergency Fund</Label>
         </div>
         {#if isEmergencyFund}
-          <p class="text-xs text-muted-foreground ml-6">
+          <p class="text-muted-foreground ml-6 text-xs">
             This envelope will be used as a source for deficit recovery and have special priority
             handling
           </p>
@@ -244,8 +239,7 @@
             id="auto-refill"
             type="checkbox"
             bind:checked={autoRefill}
-            class="rounded border-gray-300 text-primary focus:ring-primary"
-          />
+            class="text-primary focus:ring-primary rounded border-gray-300" />
           <Label for="auto-refill" class="text-sm">Auto-refill on rollover</Label>
         </div>
         {#if autoRefill}
@@ -258,9 +252,8 @@
               min="0"
               bind:value={autoRefillAmount}
               placeholder="0.00"
-              class="w-32"
-            />
-            <p class="text-xs text-muted-foreground">
+              class="w-32" />
+            <p class="text-muted-foreground text-xs">
               Minimum amount to maintain in this envelope after rollover
             </p>
           </div>
@@ -269,8 +262,8 @@
 
       <!-- Preview -->
       {#if selectedCategory}
-        <div class="rounded-lg border bg-muted/50 p-3">
-          <h4 class="font-medium mb-2">Envelope Preview</h4>
+        <div class="bg-muted/50 rounded-lg border p-3">
+          <h4 class="mb-2 font-medium">Envelope Preview</h4>
           <div class="space-y-1 text-sm">
             <div class="flex justify-between">
               <span>Category:</span>
@@ -300,7 +293,7 @@
   {/snippet}
 
   {#snippet footer()}
-    <div class="flex gap-2 w-full">
+    <div class="flex w-full gap-2">
       <Button type="button" variant="outline" onclick={handleClose} class="flex-1">Cancel</Button>
       <Button type="submit" onclick={handleSubmit} disabled={!isFormValid} class="flex-1">
         Create Envelope

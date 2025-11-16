@@ -1,12 +1,12 @@
-import type { View } from "$lib/schema";
-import { superformInsertPayeeSchema } from "$lib/schema/superforms";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
-import { currentDate } from "$lib/utils/dates";
-import { fail } from "@sveltejs/kit";
-import { zod4 } from "sveltekit-superforms/adapters";
-import { superValidate } from "sveltekit-superforms/client";
-import type { Actions, PageServerLoad } from "./$types";
+import type {View} from "$lib/schema";
+import {superformInsertPayeeSchema} from "$lib/schema/superforms";
+import {createContext} from "$lib/trpc/context";
+import {createCaller} from "$lib/trpc/router";
+import {currentDate} from "$lib/utils/dates";
+import {fail} from "@sveltejs/kit";
+import {zod4} from "sveltekit-superforms/adapters";
+import {superValidate} from "sveltekit-superforms/client";
+import type {Actions, PageServerLoad} from "./$types";
 
 export const load: PageServerLoad = async (event) => {
   const {params} = event;
@@ -25,7 +25,7 @@ export const load: PageServerLoad = async (event) => {
           {
             id: "date",
             desc: true,
-          }
+          },
         ],
       },
       icon: "",
@@ -49,7 +49,7 @@ export const load: PageServerLoad = async (event) => {
           {
             id: "date",
             desc: true,
-          }
+          },
         ],
       },
       icon: "",
@@ -78,7 +78,7 @@ export const load: PageServerLoad = async (event) => {
           {
             id: "date",
             desc: false,
-          }
+          },
         ],
       },
       icon: "",
@@ -102,7 +102,7 @@ export const load: PageServerLoad = async (event) => {
           {
             id: "date",
             desc: false,
-          }
+          },
         ],
       },
       icon: "",
@@ -123,7 +123,7 @@ export const load: PageServerLoad = async (event) => {
           {
             id: "date",
             desc: true,
-          }
+          },
         ],
         visibility: {
           id: false,
@@ -155,7 +155,7 @@ export const load: PageServerLoad = async (event) => {
           {
             id: "date",
             desc: true,
-          }
+          },
         ],
         visibility: {
           id: false,
@@ -187,7 +187,7 @@ export const load: PageServerLoad = async (event) => {
           {
             id: "amount",
             desc: true,
-          }
+          },
         ],
         visibility: {
           id: false,
@@ -219,7 +219,7 @@ export const load: PageServerLoad = async (event) => {
           {
             id: "date",
             desc: true,
-          }
+          },
         ],
         visibility: {
           id: false,
@@ -238,7 +238,7 @@ export const load: PageServerLoad = async (event) => {
 
   // Load user-created views from database
   const caller = createCaller(await createContext(event));
-  const userViews = await caller.viewsRoutes.all({ entityType: 'transactions' });
+  const userViews = await caller.viewsRoutes.all({entityType: "transactions"});
 
   // Load active budgets for transaction form
   const budgets = await caller.budgetRoutes.list({status: "active"});

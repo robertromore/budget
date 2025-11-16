@@ -1,6 +1,6 @@
-import {createLocalStorageState} from '$lib/utils/local-storage.svelte';
-import type {PayeeSearchFilters} from '$lib/server/domains/payees/repository';
-import type {Payee} from '$lib/schema';
+import {createLocalStorageState} from "$lib/utils/local-storage.svelte";
+import type {PayeeSearchFilters} from "$lib/server/domains/payees/repository";
+import type {Payee} from "$lib/schema";
 
 interface PayeeSearchState {
   query: string;
@@ -9,9 +9,9 @@ interface PayeeSearchState {
   isLoading: boolean;
   totalCount: number;
   hasMore: boolean;
-  sortBy: 'name' | 'lastTransaction' | 'avgAmount' | 'created';
-  sortOrder: 'asc' | 'desc';
-  viewMode: 'grid' | 'list';
+  sortBy: "name" | "lastTransaction" | "avgAmount" | "created";
+  sortOrder: "asc" | "desc";
+  viewMode: "grid" | "list";
 }
 
 /**
@@ -19,12 +19,20 @@ interface PayeeSearchState {
  */
 class PayeeSearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState<'grid' | 'list'>('payee-search-view-mode', 'list');
-  private sortByState = createLocalStorageState<'name' | 'lastTransaction' | 'avgAmount' | 'created'>('payee-search-sort-by', 'name');
-  private sortOrderState = createLocalStorageState<'asc' | 'desc'>('payee-search-sort-order', 'asc');
+  private viewModeState = createLocalStorageState<"grid" | "list">(
+    "payee-search-view-mode",
+    "list"
+  );
+  private sortByState = createLocalStorageState<
+    "name" | "lastTransaction" | "avgAmount" | "created"
+  >("payee-search-sort-by", "name");
+  private sortOrderState = createLocalStorageState<"asc" | "desc">(
+    "payee-search-sort-order",
+    "asc"
+  );
 
   // Reactive state
-  query = $state('');
+  query = $state("");
   filters = $state<PayeeSearchFilters>({});
   results = $state<Payee[]>([]);
   isLoading = $state(false);
@@ -32,14 +40,26 @@ class PayeeSearchStateManager {
   hasMore = $state(false);
 
   // Getters for persistent state
-  get viewMode() { return this.viewModeState.value; }
-  set viewMode(value: 'grid' | 'list') { this.viewModeState.value = value; }
+  get viewMode() {
+    return this.viewModeState.value;
+  }
+  set viewMode(value: "grid" | "list") {
+    this.viewModeState.value = value;
+  }
 
-  get sortBy() { return this.sortByState.value; }
-  set sortBy(value: 'name' | 'lastTransaction' | 'avgAmount' | 'created') { this.sortByState.value = value; }
+  get sortBy() {
+    return this.sortByState.value;
+  }
+  set sortBy(value: "name" | "lastTransaction" | "avgAmount" | "created") {
+    this.sortByState.value = value;
+  }
 
-  get sortOrder() { return this.sortOrderState.value; }
-  set sortOrder(value: 'asc' | 'desc') { this.sortOrderState.value = value; }
+  get sortOrder() {
+    return this.sortOrderState.value;
+  }
+  set sortOrder(value: "asc" | "desc") {
+    this.sortOrderState.value = value;
+  }
 
   // Computed properties
   hasActiveFilters = $derived.by(() => {
@@ -65,12 +85,9 @@ class PayeeSearchStateManager {
     this.filters = newFilters;
   }
 
-  updateFilter<K extends keyof PayeeSearchFilters>(
-    key: K,
-    value: PayeeSearchFilters[K]
-  ) {
-    const newFilters = { ...this.filters };
-    if (value === undefined || value === null || value === '') {
+  updateFilter<K extends keyof PayeeSearchFilters>(key: K, value: PayeeSearchFilters[K]) {
+    const newFilters = {...this.filters};
+    if (value === undefined || value === null || value === "") {
       delete newFilters[key];
     } else {
       newFilters[key] = value;
@@ -79,16 +96,16 @@ class PayeeSearchStateManager {
   }
 
   clearAllFilters() {
-    this.query = '';
+    this.query = "";
     this.filters = {};
   }
 
   clearQuery() {
-    this.query = '';
+    this.query = "";
   }
 
   clearFilter(key: keyof PayeeSearchFilters) {
-    const newFilters = { ...this.filters };
+    const newFilters = {...this.filters};
     delete newFilters[key];
     this.filters = newFilters;
   }
@@ -110,10 +127,10 @@ class PayeeSearchStateManager {
   }
 
   toggleSortOrder() {
-    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
   }
 
-  setSorting(sortBy: PayeeSearchState['sortBy'], sortOrder?: PayeeSearchState['sortOrder']) {
+  setSorting(sortBy: PayeeSearchState["sortBy"], sortOrder?: PayeeSearchState["sortOrder"]) {
     this.sortBy = sortBy;
     if (sortOrder) {
       this.sortOrder = sortOrder;
@@ -121,7 +138,7 @@ class PayeeSearchStateManager {
   }
 
   toggleViewMode() {
-    this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
+    this.viewMode = this.viewMode === "grid" ? "list" : "grid";
   }
 
   // Get current search parameters for API calls
@@ -130,13 +147,13 @@ class PayeeSearchStateManager {
       query: this.query || undefined,
       ...this.filters,
       sortBy: this.sortBy,
-      sortOrder: this.sortOrder
+      sortOrder: this.sortOrder,
     };
   }
 
   // Reset to initial state
   reset() {
-    this.query = '';
+    this.query = "";
     this.filters = {};
     this.results = [];
     this.isLoading = false;
@@ -151,7 +168,7 @@ class PayeeSearchStateManager {
       filters: this.filters,
       sortBy: this.sortBy,
       sortOrder: this.sortOrder,
-      viewMode: this.viewMode
+      viewMode: this.viewMode,
     };
   }
 

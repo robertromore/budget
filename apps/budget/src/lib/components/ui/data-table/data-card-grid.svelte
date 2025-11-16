@@ -62,7 +62,7 @@ const gridClass = $derived.by(() => {
 </div>
 
 {#if rows.length === 0}
-  <div class="text-center py-12">
+  <div class="py-12 text-center">
     <p class="text-muted-foreground text-sm">No results found.</p>
   </div>
 {/if}

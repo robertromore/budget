@@ -7,7 +7,7 @@ import {
   calculateAllMetrics,
   getEnabledMetrics,
   AVAILABLE_METRICS,
-  type MetricId
+  type MetricId,
 } from '$lib/utils/credit-card-metrics';
 import ConfigureMetricsDialog from './configure-metrics-dialog.svelte';
 import * as Card from '$lib/components/ui/card';
@@ -35,7 +35,10 @@ import {useQueryClient} from '@tanstack/svelte-query';
 import {accountKeys} from '$lib/query/accounts';
 import TopCategoriesView from '../../../routes/accounts/[slug]/(components)/(charts)/top-categories-view.svelte';
 
-let {account, transactions = []} = $props<{account: Account; transactions?: TransactionsFormat[]}>();
+let {account, transactions = []} = $props<{
+  account: Account;
+  transactions?: TransactionsFormat[];
+}>();
 
 let showConfigDialog = $state(false);
 const queryClient = useQueryClient();
@@ -67,8 +70,8 @@ const enabledMetricIds = $derived(isCreditCard ? getEnabledMetrics(account) : []
 // Get the metric definitions for enabled metrics
 const enabledMetrics = $derived(
   enabledMetricIds
-    .map(id => AVAILABLE_METRICS.find(m => m.id === id))
-    .filter((m): m is typeof AVAILABLE_METRICS[number] => m !== undefined)
+    .map((id) => AVAILABLE_METRICS.find((m) => m.id === id))
+    .filter((m): m is (typeof AVAILABLE_METRICS)[number] => m !== undefined)
 );
 
 // Icon mapping
@@ -95,7 +98,10 @@ function getIconComponent(iconName: string): Component {
 }
 
 // Helper to render metric value
-function renderMetricValue(metricId: MetricId, calculatedMetrics: ReturnType<typeof calculateAllMetrics>) {
+function renderMetricValue(
+  metricId: MetricId,
+  calculatedMetrics: ReturnType<typeof calculateAllMetrics>
+) {
   switch (metricId) {
     case 'availableCredit':
       return calculatedMetrics.availableCredit !== undefined
@@ -107,7 +113,9 @@ function renderMetricValue(metricId: MetricId, calculatedMetrics: ReturnType<typ
         : 'N/A';
     case 'overLimit':
       return calculatedMetrics.isOverLimit
-        ? formatCurrency((calculatedMetrics.currentBalance || 0) - (calculatedMetrics.creditLimit || 0))
+        ? formatCurrency(
+            (calculatedMetrics.currentBalance || 0) - (calculatedMetrics.creditLimit || 0)
+          )
         : null;
     case 'minimumPayment':
       return account.minimumPayment ? formatCurrency(account.minimumPayment) : 'N/A';
@@ -115,7 +123,10 @@ function renderMetricValue(metricId: MetricId, calculatedMetrics: ReturnType<typ
       return account.interestRate ? formatPercentage(account.interestRate) : 'N/A';
     case 'paymentDueDate':
       return calculatedMetrics.nextPaymentDue
-        ? new Date(calculatedMetrics.nextPaymentDue).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        ? new Date(calculatedMetrics.nextPaymentDue).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          })
         : 'N/A';
     case 'daysUntilDue':
       return calculatedMetrics.daysUntilDue !== undefined
@@ -147,7 +158,10 @@ function renderMetricValue(metricId: MetricId, calculatedMetrics: ReturnType<typ
 }
 
 // Helper to get additional description text
-function getMetricDescription(metricId: MetricId, calculatedMetrics: ReturnType<typeof calculateAllMetrics>) {
+function getMetricDescription(
+  metricId: MetricId,
+  calculatedMetrics: ReturnType<typeof calculateAllMetrics>
+) {
   switch (metricId) {
     case 'availableCredit':
       return `${formatCurrency(calculatedMetrics.currentBalance || 0)} of ${formatCurrency(calculatedMetrics.creditLimit || 0)} used`;
@@ -172,14 +186,20 @@ function getMetricDescription(metricId: MetricId, calculatedMetrics: ReturnType<
 }
 
 // Helper to determine card styling based on metric
-function getMetricCardClass(metricId: MetricId, calculatedMetrics: ReturnType<typeof calculateAllMetrics>) {
+function getMetricCardClass(
+  metricId: MetricId,
+  calculatedMetrics: ReturnType<typeof calculateAllMetrics>
+) {
   if (metricId === 'overLimit' && calculatedMetrics.isOverLimit) {
     return 'border-red-600 bg-red-50 dark:bg-red-950';
   }
   return '';
 }
 
-function getMetricValueClass(metricId: MetricId, calculatedMetrics: ReturnType<typeof calculateAllMetrics>) {
+function getMetricValueClass(
+  metricId: MetricId,
+  calculatedMetrics: ReturnType<typeof calculateAllMetrics>
+) {
   if (metricId === 'availableCredit') {
     const available = calculatedMetrics.availableCredit || 0;
     return available > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
@@ -205,7 +225,7 @@ function getMetricValueClass(metricId: MetricId, calculatedMetrics: ReturnType<t
     <div class="flex items-center justify-between">
       <h3 class="text-lg font-semibold">Credit Card Metrics</h3>
       <Button variant="outline" size="sm" onclick={() => (showConfigDialog = true)}>
-        <Settings class="h-4 w-4 mr-2" />
+        <Settings class="mr-2 h-4 w-4" />
         Configure Metrics
       </Button>
     </div>
@@ -219,10 +239,16 @@ function getMetricValueClass(metricId: MetricId, calculatedMetrics: ReturnType<t
         {#if metricValue !== null && (metric.id !== 'overLimit' || calculatedMetrics.isOverLimit)}
           <Card.Root class={getMetricCardClass(metric.id, calculatedMetrics)}>
             <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Card.Title class="text-sm font-medium {metric.id === 'overLimit' ? 'text-red-600 dark:text-red-400' : ''}">
+              <Card.Title
+                class="text-sm font-medium {metric.id === 'overLimit'
+                  ? 'text-red-600 dark:text-red-400'
+                  : ''}">
                 {metric.label}
               </Card.Title>
-              <Icon class="h-4 w-4 {metric.id === 'overLimit' ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}" />
+              <Icon
+                class="h-4 w-4 {metric.id === 'overLimit'
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-muted-foreground'}" />
             </Card.Header>
             <Card.Content>
               <div class="text-2xl font-bold {getMetricValueClass(metric.id, calculatedMetrics)}">
@@ -235,7 +261,10 @@ function getMetricValueClass(metricId: MetricId, calculatedMetrics: ReturnType<t
 
               {@const description = getMetricDescription(metric.id, calculatedMetrics)}
               {#if description}
-                <p class="mt-1 text-xs {metric.id === 'overLimit' ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}">
+                <p
+                  class="mt-1 text-xs {metric.id === 'overLimit'
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-muted-foreground'}">
                   {description}
                 </p>
               {/if}

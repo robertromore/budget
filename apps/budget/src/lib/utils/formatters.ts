@@ -70,10 +70,16 @@ export const recurringFormatter = {
       return frequency.charAt(0).toUpperCase() + frequency.slice(1); // "Daily", "Weekly", etc.
     } else {
       // For intervals > 1, use "Every X [units]"
-      const units = frequency === 'daily' ? 'days' :
-                    frequency === 'weekly' ? 'weeks' :
-                    frequency === 'monthly' ? 'months' :
-                    frequency === 'yearly' ? 'years' : frequency;
+      const units =
+        frequency === "daily"
+          ? "days"
+          : frequency === "weekly"
+            ? "weeks"
+            : frequency === "monthly"
+              ? "months"
+              : frequency === "yearly"
+                ? "years"
+                : frequency;
       return `Every ${interval} ${units}`;
     }
   },
@@ -82,21 +88,21 @@ export const recurringFormatter = {
 // Value formatter for displaying any type of value in UI (tooltips, errors, etc.)
 export function formatDisplayValue(value: any): string {
   if (value === undefined || value === null) {
-    return '';
+    return "";
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return value;
   }
 
-  if (typeof value === 'number' || typeof value === 'boolean') {
+  if (typeof value === "number" || typeof value === "boolean") {
     return String(value);
   }
 
-  if (typeof value === 'object') {
+  if (typeof value === "object") {
     // Handle arrays
     if (Array.isArray(value)) {
-      return value.length > 0 ? JSON.stringify(value, null, 2) : '[]';
+      return value.length > 0 ? JSON.stringify(value, null, 2) : "[]";
     }
 
     // Handle dates
@@ -108,10 +114,10 @@ export function formatDisplayValue(value: any): string {
     try {
       const stringified = JSON.stringify(value, null, 2);
       // Return empty string for empty objects
-      return stringified === '{}' ? '' : stringified;
+      return stringified === "{}" ? "" : stringified;
     } catch (error) {
       // Fallback for circular references or other JSON.stringify errors
-      return '[Complex Object]';
+      return "[Complex Object]";
     }
   }
 

@@ -1,10 +1,10 @@
 <script lang="ts">
 // --- Imports ---
-import { Button } from '$lib/components/ui/button';
-import { Input } from '$lib/components/ui/input';
+import {Button} from '$lib/components/ui/button';
+import {Input} from '$lib/components/ui/input';
 import * as Popover from '$lib/components/ui/popover';
-import { currencyFormatter } from '$lib/utils/formatters';
-import { cn } from '$lib/utils';
+import {currencyFormatter} from '$lib/utils/formatters';
+import {cn} from '$lib/utils';
 import SuggestionBadge from '$lib/components/ui/suggestion-badge.svelte';
 import Delete from '@lucide/svelte/icons/delete';
 
@@ -32,7 +32,7 @@ let {
   open = $bindable(),
   buttonClass,
   suggestion,
-  showSuggestionBadge = true
+  showSuggestionBadge = true,
 }: Props = $props();
 
 // --- State ---
@@ -92,16 +92,12 @@ const dismissSuggestion = () => {
 
 // Check if current value matches suggestion
 const isSuggestionApplied = $derived.by(() => {
-  return suggestion?.suggestedAmount &&
-         Math.abs(value - suggestion.suggestedAmount) < 0.01; // Account for floating point precision
+  return suggestion?.suggestedAmount && Math.abs(value - suggestion.suggestedAmount) < 0.01; // Account for floating point precision
 });
 
 // Show suggestion if it exists, hasn't been dismissed, and current value doesn't match suggestion
 const shouldShowSuggestion = $derived.by(() => {
-  return suggestion &&
-         showSuggestionBadge &&
-         !suggestionDismissed &&
-         !isSuggestionApplied;
+  return suggestion && showSuggestionBadge && !suggestionDismissed && !isSuggestionApplied;
 });
 
 // --- Functions: Keyboard Handling ---
@@ -154,12 +150,11 @@ const handleKeyDown = (event: KeyboardEvent) => {
       <SuggestionBadge
         type={suggestion?.type || 'info'}
         variant="accent"
-        {...(suggestion?.confidence !== undefined && { confidence: suggestion.confidence })}
+        {...suggestion?.confidence !== undefined && {confidence: suggestion.confidence}}
         reason={suggestion?.reason || 'Suggested amount'}
         dismissible={true}
         onDismiss={dismissSuggestion}
-        onApply={applySuggestion}
-      >
+        onApply={applySuggestion}>
         Suggested: {currencyFormatter.format(suggestion?.suggestedAmount || 0)}
       </SuggestionBadge>
     </div>
@@ -191,12 +186,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
             <!-- Applied indicator -->
             {#if isSuggestionApplied}
-              <SuggestionBadge
-                type="smart"
-                variant="success"
-                applied={true}
-                class="ml-auto"
-              />
+              <SuggestionBadge type="smart" variant="success" applied={true} class="ml-auto" />
             {/if}
           </Button>
         {/snippet}
@@ -208,18 +198,17 @@ const handleKeyDown = (event: KeyboardEvent) => {
         <div class="p-2">
           <!-- Suggestion in keypad -->
           {#if shouldShowSuggestion}
-            <div class="mb-2 p-2 bg-accent/5 border border-accent/20 rounded">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs text-muted-foreground">Suggested amount:</span>
+            <div class="bg-accent/5 border-accent/20 mb-2 rounded border p-2">
+              <div class="mb-2 flex items-center justify-between">
+                <span class="text-muted-foreground text-xs">Suggested amount:</span>
                 <SuggestionBadge
                   type={suggestion?.type || 'info'}
-                  {...(suggestion?.confidence !== undefined && { confidence: suggestion.confidence })}
-                  class="text-xs"
-                />
+                  {...suggestion?.confidence !== undefined && {confidence: suggestion.confidence}}
+                  class="text-xs" />
               </div>
               <Button
                 variant="outline"
-                class="w-full bg-accent/10 border-accent/20"
+                class="bg-accent/10 border-accent/20 w-full"
                 onclick={() => {
                   applySuggestion();
                   dialogOpen = false;
@@ -243,7 +232,8 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
             <Button variant="outline" disabled={new_amount?.includes('.')} onclick={select('.')}
               >.</Button>
-            <Button variant="outline" disabled={valueWellFormatted()} onclick={select('0')}>0</Button>
+            <Button variant="outline" disabled={valueWellFormatted()} onclick={select('0')}
+              >0</Button>
             <Button variant="outline" disabled={!new_amount} onclick={backspace}>
               <Delete />
             </Button>

@@ -55,14 +55,10 @@ const categoryData = $derived.by(() => {
 });
 
 // Format date for display
-const formattedDate = $derived(
-  formatDate(transaction.date.toDate(getLocalTimeZone()))
-);
+const formattedDate = $derived(formatDate(transaction.date.toDate(getLocalTimeZone())));
 
 // Determine amount color (negative = red, positive = green)
-const amountClass = $derived(
-  transaction.amount < 0 ? 'text-destructive' : 'text-green-600'
-);
+const amountClass = $derived(transaction.amount < 0 ? 'text-destructive' : 'text-green-600');
 
 // Status badge variant
 const statusVariant = $derived.by((): 'default' | 'secondary' | 'outline' => {
@@ -73,22 +69,21 @@ const statusVariant = $derived.by((): 'default' | 'secondary' | 'outline' => {
 </script>
 
 <Card.Root
-  class={cn('transition-all hover:shadow-md cursor-pointer', className)}
-  onclick={() => onclick?.(transaction)}
->
+  class={cn('cursor-pointer transition-all hover:shadow-md', className)}
+  onclick={() => onclick?.(transaction)}>
   <Card.Header class="pb-3">
     <div class="flex items-start justify-between">
-      <div class="flex-1 min-w-0">
-        <Card.Title class="text-base font-semibold truncate">
+      <div class="min-w-0 flex-1">
+        <Card.Title class="truncate text-base font-semibold">
           {#if visibleFields.payee && transaction.payee}
             {transaction.payee.name}
           {:else}
             Transaction
           {/if}
         </Card.Title>
-        <p class="text-muted-foreground text-xs mt-1">{formattedDate}</p>
+        <p class="text-muted-foreground mt-1 text-xs">{formattedDate}</p>
       </div>
-      <div class="text-right ml-2">
+      <div class="ml-2 text-right">
         <p class={cn('text-lg font-bold', amountClass)}>
           {formatCurrency(transaction.amount)}
         </p>
@@ -96,19 +91,15 @@ const statusVariant = $derived.by((): 'default' | 'secondary' | 'outline' => {
     </div>
   </Card.Header>
 
-  <Card.Content class="pb-3 space-y-2">
+  <Card.Content class="space-y-2 pb-3">
     {#if visibleFields.category && categoryData.name}
       <div class="flex items-center gap-2 text-sm">
         {#if categoryData.color}
-          <div
-            class="w-1 h-5 rounded"
-            style={`background-color: ${categoryData.color};`}
-          ></div>
+          <div class="h-5 w-1 rounded" style={`background-color: ${categoryData.color};`}></div>
         {/if}
         <categoryData.icon
           class="h-4 w-4 flex-shrink-0"
-          style={categoryData.color ? `color: ${categoryData.color};` : ''}
-        />
+          style={categoryData.color ? `color: ${categoryData.color};` : ''} />
         <span class="truncate">{categoryData.name}</span>
       </div>
     {/if}
@@ -122,13 +113,13 @@ const statusVariant = $derived.by((): 'default' | 'secondary' | 'outline' => {
     {/if}
 
     {#if visibleFields.notes && transaction.notes}
-      <p class="text-muted-foreground text-sm line-clamp-2">
+      <p class="text-muted-foreground line-clamp-2 text-sm">
         {transaction.notes}
       </p>
     {/if}
 
     {#if visibleFields.balance && transaction.balance !== null}
-      <div class="text-muted-foreground flex items-center justify-between text-xs pt-1 border-t">
+      <div class="text-muted-foreground flex items-center justify-between border-t pt-1 text-xs">
         <span>Balance:</span>
         <span class="font-medium">{formatCurrency(transaction.balance)}</span>
       </div>

@@ -58,8 +58,6 @@ const claimStatus = $derived(() => {
   <DropdownMenu.Content align="start">
     <DropdownMenu.Label>Claim Actions</DropdownMenu.Label>
     <DropdownMenu.Separator />
-    <DropdownMenu.Item onclick={onManageClaims}>
-      Manage Claims
-    </DropdownMenu.Item>
+    <DropdownMenu.Item onclick={onManageClaims}>Manage Claims</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

@@ -1,7 +1,7 @@
 <script lang="ts">
-import { rpc } from '$lib/query';
-import { parseDate } from '@internationalized/date';
-import { columns, type ExpenseFormat } from '../(data)/expense-columns.svelte';
+import {rpc} from '$lib/query';
+import {parseDate} from '@internationalized/date';
+import {columns, type ExpenseFormat} from '../(data)/expense-columns.svelte';
 import ExpenseDataTable from './expense-data-table.svelte';
 import ExpenseSkeleton from './expense-skeleton.svelte';
 import ClaimManagementSheet from './claim-management-sheet.svelte';
@@ -13,7 +13,7 @@ interface Props {
   onEdit?: (expense: any) => void;
 }
 
-let { hsaAccountId, views = [], onEdit }: Props = $props();
+let {hsaAccountId, views = [], onEdit}: Props = $props();
 
 // State for dialogs
 let claimDialogOpen = $state(false);
@@ -48,9 +48,12 @@ const expenses = $derived.by((): ExpenseFormat[] => {
 
     // Compute claim status - use most recent claim status if exists
     const claims = expense.claims || [];
-    const mostRecentClaim = claims.length > 0
-      ? claims.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
-      : null;
+    const mostRecentClaim =
+      claims.length > 0
+        ? claims.sort(
+            (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )[0]
+        : null;
     const claimStatus = mostRecentClaim?.status || 'not_submitted';
 
     return {
@@ -193,26 +196,15 @@ const tableColumns = $derived(
 {#if isLoading}
   <ExpenseSkeleton />
 {:else}
-  <ExpenseDataTable
-    columns={tableColumns}
-    expenses={expenses}
-    views={views}
-    onBulkDelete={handleBulkDelete}
-  />
+  <ExpenseDataTable columns={tableColumns} {expenses} {views} onBulkDelete={handleBulkDelete} />
 {/if}
 
 <!-- Claim Management Sheet -->
 {#if selectedExpense}
-  <ClaimManagementSheet
-    bind:open={claimDialogOpen}
-    expense={selectedExpense}
-  />
+  <ClaimManagementSheet bind:open={claimDialogOpen} expense={selectedExpense} />
 {/if}
 
 <!-- Receipt Upload Widget -->
 {#if selectedExpenseId !== null}
-  <ReceiptUploadWidget
-    medicalExpenseId={selectedExpenseId}
-    bind:open={receiptUploadOpen}
-  />
+  <ReceiptUploadWidget medicalExpenseId={selectedExpenseId} bind:open={receiptUploadOpen} />
 {/if}

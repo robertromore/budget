@@ -5,10 +5,10 @@
  * using fuzzy string matching and confidence scoring.
  */
 
-import type { Payee } from '$lib/schema/payees';
-import { calculateStringSimilarity, normalizeText } from '../utils';
+import type {Payee} from "$lib/schema/payees";
+import {calculateStringSimilarity, normalizeText} from "../utils";
 
-export type MatchConfidence = 'exact' | 'high' | 'medium' | 'low' | 'none';
+export type MatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 
 export interface PayeeMatch {
   payee: Payee | null;
@@ -35,7 +35,7 @@ export class PayeeMatcher {
   private options: Required<PayeeMatcherOptions>;
 
   constructor(options: PayeeMatcherOptions = {}) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
+    this.options = {...DEFAULT_OPTIONS, ...options};
   }
 
   /**
@@ -45,18 +45,18 @@ export class PayeeMatcher {
     if (!payeeName || !payeeName.trim()) {
       return {
         payee: null,
-        confidence: 'none',
+        confidence: "none",
         score: 0,
-        matchedOn: '',
+        matchedOn: "",
       };
     }
 
     const normalizedInput = normalizeText(payeeName);
     let bestMatch: PayeeMatch = {
       payee: null,
-      confidence: 'none',
+      confidence: "none",
       score: 0,
-      matchedOn: '',
+      matchedOn: "",
     };
 
     for (const payee of existingPayees) {
@@ -66,7 +66,7 @@ export class PayeeMatcher {
       }
 
       // If we found an exact match, no need to continue
-      if (match.confidence === 'exact') {
+      if (match.confidence === "exact") {
         break;
       }
     }
@@ -84,9 +84,9 @@ export class PayeeMatcher {
     if (normalizedInput === normalizedPayeeName) {
       return {
         payee,
-        confidence: 'exact',
+        confidence: "exact",
         score: 1.0,
-        matchedOn: 'name',
+        matchedOn: "name",
       };
     }
 
@@ -104,7 +104,7 @@ export class PayeeMatcher {
         payee,
         confidence: this.getConfidenceLevel(score),
         score,
-        matchedOn: 'name_substring',
+        matchedOn: "name_substring",
       };
     }
 
@@ -115,7 +115,7 @@ export class PayeeMatcher {
       payee,
       confidence: this.getConfidenceLevel(similarityScore),
       score: similarityScore,
-      matchedOn: 'name_fuzzy',
+      matchedOn: "name_fuzzy",
     };
   }
 
@@ -124,15 +124,15 @@ export class PayeeMatcher {
    */
   private getConfidenceLevel(score: number): MatchConfidence {
     if (score >= this.options.exactThreshold) {
-      return 'exact';
+      return "exact";
     } else if (score >= this.options.highThreshold) {
-      return 'high';
+      return "high";
     } else if (score >= this.options.mediumThreshold) {
-      return 'medium';
+      return "medium";
     } else if (score > 0.5) {
-      return 'low';
+      return "low";
     } else {
-      return 'none';
+      return "none";
     }
   }
 
@@ -160,9 +160,7 @@ export class PayeeMatcher {
     }
 
     // Sort by score (highest first) and return top results
-    return matches
-      .sort((a, b) => b.score - a.score)
-      .slice(0, maxResults);
+    return matches.sort((a, b) => b.score - a.score).slice(0, maxResults);
   }
 
   /**
@@ -178,9 +176,9 @@ export class PayeeMatcher {
    * Normalize payee name and extract details for notes field
    * Uses general pattern recognition without hardcoding specific merchants
    */
-  normalizePayeeName(rawName: string): { name: string; details: string | null } {
+  normalizePayeeName(rawName: string): {name: string; details: string | null} {
     if (!rawName || !rawName.trim()) {
-      return { name: '', details: null };
+      return {name: "", details: null};
     }
 
     let text = rawName.trim();
@@ -188,7 +186,7 @@ export class PayeeMatcher {
 
     // Step 1: Remove common transaction prefixes
     const prefixPattern = /^(DEBIT|CREDIT|POS|ATM|CHECK|SQ \*|TST\*|PYMT|PMT|ACH)\s+/i;
-    text = text.replace(prefixPattern, '');
+    text = text.replace(prefixPattern, "");
 
     // Step 2: Handle marketplace transaction IDs (e.g., AMAZON MKTPL*ABC123, PAYPAL *MERCHANT)
     // For PAYPAL *, preserve the merchant name as part of the payee
@@ -198,14 +196,19 @@ export class PayeeMatcher {
       // Keep "Paypal - MerchantName" format to distinguish different merchants
       text = `${paypalMerchantMatch[1]} - ${paypalMerchantMatch[2]}`;
     } else {
-      const marketplaceMatch = text.match(/^([A-Z]+(?:\s+[A-Z]+)?)\s*(?:MKTPL?|MARKETPLACE)?\s*[\*]([A-Z0-9*]+)$/i);
+      const marketplaceMatch = text.match(
+        /^([A-Z]+(?:\s+[A-Z]+)?)\s*(?:MKTPL?|MARKETPLACE)?\s*[\*]([A-Z0-9*]+)$/i
+      );
       if (marketplaceMatch) {
         text = marketplaceMatch[1]; // Base name (e.g., AMAZON)
         extractedDetails.push(marketplaceMatch[2]); // Transaction ID
       }
     }
 
-    if (!paypalMerchantMatch && !text.match(/^([A-Z]+(?:\s+[A-Z]+)?)\s*(?:MKTPL?|MARKETPLACE)?\s*[\*]([A-Z0-9*]+)$/i)) {
+    if (
+      !paypalMerchantMatch &&
+      !text.match(/^([A-Z]+(?:\s+[A-Z]+)?)\s*(?:MKTPL?|MARKETPLACE)?\s*[\*]([A-Z0-9*]+)$/i)
+    ) {
       // Step 3: Extract trailing transaction IDs, order numbers, etc.
       // Pattern: Long alphanumeric strings (8+ chars) at the end
       const trailingIdMatch = text.match(/^(.+?)\s+([A-Z0-9*]{8,})$/);
@@ -228,29 +231,29 @@ export class PayeeMatcher {
       if (nameEndIndex < parts.length - 1) {
         const nameParts = parts.slice(0, nameEndIndex + 1);
         const detailParts = parts.slice(nameEndIndex + 1);
-        text = nameParts.join(' ');
-        extractedDetails.push(detailParts.join(' '));
+        text = nameParts.join(" ");
+        extractedDetails.push(detailParts.join(" "));
       }
     }
 
     // Step 5: Remove remaining noise
     // Remove long number sequences (10+ digits - likely transaction IDs)
-    text = text.replace(/\s*\d{10,}\s*/g, ' ');
+    text = text.replace(/\s*\d{10,}\s*/g, " ");
 
     // Remove card numbers: ****1234
-    text = text.replace(/\s*\*{4}\d{4}\s*/g, ' ');
+    text = text.replace(/\s*\*{4}\d{4}\s*/g, " ");
 
     // Remove dates
-    text = text.replace(/\s*\d{1,2}\/\d{1,2}\/\d{2,4}\s*/g, ' ');
-    text = text.replace(/\s*\d{2,4}-\d{2}-\d{2}\s*/g, ' ');
+    text = text.replace(/\s*\d{1,2}\/\d{1,2}\/\d{2,4}\s*/g, " ");
+    text = text.replace(/\s*\d{2,4}-\d{2}-\d{2}\s*/g, " ");
 
     // Step 6: Remove common corporate suffixes
-    text = text.replace(/\s+(INC|LLC|LTD|CORP|CO|COMPANY)\.?$/i, '');
+    text = text.replace(/\s+(INC|LLC|LTD|CORP|CO|COMPANY)\.?$/i, "");
 
     // Step 7: Clean up whitespace and punctuation
-    text = text.replace(/\s+/g, ' ').trim();
-    text = text.replace(/^[*\s]+|[*\s]+$/g, '');
-    text = text.replace(/^[-\s]+|[-\s]+$/g, '');
+    text = text.replace(/\s+/g, " ").trim();
+    text = text.replace(/^[*\s]+|[*\s]+$/g, "");
+    text = text.replace(/^[-\s]+|[-\s]+$/g, "");
 
     // Step 8: Convert to Title Case if all caps or all lowercase
     if (text === text.toUpperCase() || text === text.toLowerCase()) {
@@ -259,7 +262,7 @@ export class PayeeMatcher {
 
     return {
       name: text,
-      details: extractedDetails.length > 0 ? extractedDetails.join(' ') : null,
+      details: extractedDetails.length > 0 ? extractedDetails.join(" ") : null,
     };
   }
 
@@ -293,12 +296,7 @@ export class PayeeMatcher {
 
       // If this part and next part are both short all-caps words followed by number
       // (e.g., "HY VEE GRIMES 1234" - "GRIMES 1234" is location)
-      if (
-        i >= 1 &&
-        nextPart &&
-        /^[A-Z]{2,}$/i.test(part) &&
-        /^\d+$/.test(nextPart)
-      ) {
+      if (i >= 1 && nextPart && /^[A-Z]{2,}$/i.test(part) && /^\d+$/.test(nextPart)) {
         return i - 1;
       }
     }
@@ -311,7 +309,21 @@ export class PayeeMatcher {
    */
   private toTitleCase(str: string): string {
     const lowercaseWords = new Set([
-      'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with'
+      "a",
+      "an",
+      "and",
+      "as",
+      "at",
+      "but",
+      "by",
+      "for",
+      "in",
+      "of",
+      "on",
+      "or",
+      "the",
+      "to",
+      "with",
     ]);
 
     return str
@@ -330,21 +342,23 @@ export class PayeeMatcher {
 
         // Handle words with apostrophes (e.g., "mcdonald's" -> "McDonald's")
         if (word.includes("'")) {
-          return word.split("'").map(part =>
-            part.charAt(0).toUpperCase() + part.slice(1)
-          ).join("'");
+          return word
+            .split("'")
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join("'");
         }
 
         // Handle hyphenated words (e.g., "hy-vee" -> "Hy-Vee")
-        if (word.includes('-')) {
-          return word.split('-').map(part =>
-            part.charAt(0).toUpperCase() + part.slice(1)
-          ).join('-');
+        if (word.includes("-")) {
+          return word
+            .split("-")
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join("-");
         }
 
         // Default: capitalize first letter
         return word.charAt(0).toUpperCase() + word.slice(1);
       })
-      .join(' ');
+      .join(" ");
   }
 }

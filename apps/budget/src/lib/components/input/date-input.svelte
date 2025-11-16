@@ -20,7 +20,9 @@ let {value = $bindable(), handleSubmit, buttonClass}: Props = $props();
 // Create accessors for Calendar binding to handle optional DateValue
 const valueAccessors = createTransformAccessors(
   () => value ?? currentDate,
-  (newValue: DateValue) => { value = newValue; }
+  (newValue: DateValue) => {
+    value = newValue;
+  }
 );
 
 // Track if this is the initial mount to avoid triggering submit on mount
@@ -46,18 +48,11 @@ $effect(() => {
         variant="outline"
         class={cn('w-full justify-start text-left font-normal', buttonClass)}>
         <CalendarDays class="-mt-1 mr-1 inline-block size-4" />
-        {dayFmt.format(
-          value
-            ? value.toDate(timezone)
-            : currentDate.toDate(timezone)
-        )}
+        {dayFmt.format(value ? value.toDate(timezone) : currentDate.toDate(timezone))}
       </Button>
     {/snippet}
   </Popover.Trigger>
   <Popover.Content class="w-auto p-0" align="start">
-    <Calendar
-      type="single"
-      bind:value={valueAccessors.get, valueAccessors.set}
-      initialFocus />
+    <Calendar type="single" bind:value={valueAccessors.get, valueAccessors.set} initialFocus />
   </Popover.Content>
 </Popover.Root>

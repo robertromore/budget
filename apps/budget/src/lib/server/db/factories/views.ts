@@ -57,17 +57,7 @@ export const viewFactory = async (
 
     const name = faker.helpers.arrayElement(viewNames);
     const description = faker.lorem.sentence();
-    const icon = faker.helpers.arrayElement([
-      "📊",
-      "📈",
-      "💰",
-      "🔍",
-      "📅",
-      "💳",
-      "🏦",
-      "📋",
-      null,
-    ]);
+    const icon = faker.helpers.arrayElement(["📊", "📈", "💰", "🔍", "📅", "💳", "🏦", "📋", null]);
 
     // Generate filters if requested
     const filters = options.withFilters

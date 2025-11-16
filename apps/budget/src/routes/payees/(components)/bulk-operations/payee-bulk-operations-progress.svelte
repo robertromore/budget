@@ -3,12 +3,15 @@ import * as Dialog from '$lib/components/ui/dialog';
 import * as Card from '$lib/components/ui/card';
 import * as Progress from '$lib/components/ui/progress';
 import * as Alert from '$lib/components/ui/alert';
-import { Button } from '$lib/components/ui/button';
-import { Badge } from '$lib/components/ui/badge';
-import { Separator } from '$lib/components/ui/separator';
-import { ScrollArea } from '$lib/components/ui/scroll-area';
+import {Button} from '$lib/components/ui/button';
+import {Badge} from '$lib/components/ui/badge';
+import {Separator} from '$lib/components/ui/separator';
+import {ScrollArea} from '$lib/components/ui/scroll-area';
 
-import { PayeeBulkOperationsState, type BulkOperationResult } from '$lib/states/ui/payee-bulk-operations.svelte';
+import {
+  PayeeBulkOperationsState,
+  type BulkOperationResult,
+} from '$lib/states/ui/payee-bulk-operations.svelte';
 
 // Icons
 import CircleCheck from '@lucide/svelte/icons/circle-check';
@@ -52,13 +55,13 @@ const isRunning = $derived.by(() => bulkOpsState.isOperationRunning);
 // Progress calculations
 const progressPercentage = $derived.by(() => {
   if (!currentOperation) return 0;
-  const { completed, failed, total } = currentOperation;
+  const {completed, failed, total} = currentOperation;
   return Math.round(((completed + failed) / total) * 100);
 });
 
 const successRate = $derived.by(() => {
   if (!currentOperation || currentOperation.completed === 0) return 0;
-  const { completed, failed } = currentOperation;
+  const {completed, failed} = currentOperation;
   return Math.round((completed / (completed + failed)) * 100);
 });
 
@@ -72,11 +75,11 @@ const operationSummary = $derived.by(() => {
 
 // Results filtering
 const successfulResults = $derived.by(() => {
-  return currentOperation?.results.filter(r => r.success) || [];
+  return currentOperation?.results.filter((r) => r.success) || [];
 });
 
 const failedResults = $derived.by(() => {
-  return currentOperation?.results.filter(r => !r.success) || [];
+  return currentOperation?.results.filter((r) => !r.success) || [];
 });
 
 const canRetryFailed = $derived.by(() => {
@@ -101,17 +104,19 @@ function formatTimeRemaining(milliseconds: number): string {
 // Get operation type display name
 function getOperationDisplayName(operation: string): string {
   const displayNames: Record<string, string> = {
-    'bulk_delete': 'Bulk Delete',
-    'bulk_status_change': 'Status Update',
-    'bulk_category_assignment': 'Category Assignment',
-    'bulk_tag_management': 'Tag Management',
-    'bulk_intelligence_application': 'Intelligence Application',
-    'bulk_export': 'Export',
-    'bulk_import': 'Import',
-    'bulk_cleanup': 'Cleanup',
-    'merge_duplicates': 'Merge Duplicates',
+    bulk_delete: 'Bulk Delete',
+    bulk_status_change: 'Status Update',
+    bulk_category_assignment: 'Category Assignment',
+    bulk_tag_management: 'Tag Management',
+    bulk_intelligence_application: 'Intelligence Application',
+    bulk_export: 'Export',
+    bulk_import: 'Import',
+    bulk_cleanup: 'Cleanup',
+    merge_duplicates: 'Merge Duplicates',
   };
-  return displayNames[operation] || operation.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  return (
+    displayNames[operation] || operation.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+  );
 }
 
 // Get result type icon and color
@@ -161,7 +166,7 @@ function toggleExpandedError(payeeId: number) {
 </script>
 
 <Dialog.Root bind:open>
-  <Dialog.Content class="max-w-4xl max-h-[90vh] overflow-hidden">
+  <Dialog.Content class="max-h-[90vh] max-w-4xl overflow-hidden">
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">
         {#if isRunning}
@@ -202,41 +207,39 @@ function toggleExpandedError(payeeId: number) {
                 <span>{operationSummary}</span>
                 <span>{progressPercentage}%</span>
               </div>
-              <Progress.Root
-                value={progressPercentage}
-                class="h-2"
-              />
+              <Progress.Root value={progressPercentage} class="h-2" />
             </div>
 
             <!-- Stats Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div class="text-center">
                 <div class="text-2xl font-bold text-green-500">{currentOperation.completed}</div>
-                <div class="text-sm text-muted-foreground">Successful</div>
+                <div class="text-muted-foreground text-sm">Successful</div>
               </div>
               <div class="text-center">
                 <div class="text-2xl font-bold text-red-500">{currentOperation.failed}</div>
-                <div class="text-sm text-muted-foreground">Failed</div>
+                <div class="text-muted-foreground text-sm">Failed</div>
               </div>
               <div class="text-center">
                 <div class="text-2xl font-bold">{currentOperation.total}</div>
-                <div class="text-sm text-muted-foreground">Total</div>
+                <div class="text-muted-foreground text-sm">Total</div>
               </div>
               <div class="text-center">
                 <div class="text-2xl font-bold text-blue-500">{successRate}%</div>
-                <div class="text-sm text-muted-foreground">Success Rate</div>
+                <div class="text-muted-foreground text-sm">Success Rate</div>
               </div>
             </div>
 
             <!-- Time Information -->
             {#if isRunning && estimatedTimeRemaining}
-              <div class="flex items-center gap-2 text-sm text-muted-foreground">
+              <div class="text-muted-foreground flex items-center gap-2 text-sm">
                 <Clock class="h-4 w-4" />
                 {formatTimeRemaining(estimatedTimeRemaining)}
               </div>
             {:else if currentOperation.startTime && currentOperation.endTime}
-              {@const duration = currentOperation.endTime.getTime() - currentOperation.startTime.getTime()}
-              <div class="flex items-center gap-2 text-sm text-muted-foreground">
+              {@const duration =
+                currentOperation.endTime.getTime() - currentOperation.startTime.getTime()}
+              <div class="text-muted-foreground flex items-center gap-2 text-sm">
                 <Clock class="h-4 w-4" />
                 Completed in {Math.round(duration / 1000)}s
               </div>
@@ -248,21 +251,16 @@ function toggleExpandedError(payeeId: number) {
           <!-- Results Summary -->
           <Card.Root>
             <Card.Header>
-              <Card.Title class="text-lg flex items-center justify-between">
+              <Card.Title class="flex items-center justify-between text-lg">
                 Results
                 <div class="flex gap-2">
                   {#if failedResults.length > 0}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onclick={toggleErrorDetails}
-                      class="h-8"
-                    >
+                    <Button variant="ghost" size="sm" onclick={toggleErrorDetails} class="h-8">
                       {#if showErrorDetails}
-                        <EyeOff class="h-4 w-4 mr-2" />
+                        <EyeOff class="mr-2 h-4 w-4" />
                         Hide Errors
                       {:else}
-                        <Eye class="h-4 w-4 mr-2" />
+                        <Eye class="mr-2 h-4 w-4" />
                         Show Errors
                       {/if}
                     </Button>
@@ -276,12 +274,12 @@ function toggleExpandedError(payeeId: number) {
                   {#if showErrorDetails && failedResults.length > 0}
                     <!-- Error Results -->
                     <div class="space-y-2">
-                      <h4 class="font-medium text-red-600 flex items-center gap-2">
+                      <h4 class="flex items-center gap-2 font-medium text-red-600">
                         <XCircle class="h-4 w-4" />
                         Failed Operations ({failedResults.length})
                       </h4>
                       {#each failedResults as result}
-                        <div class="border border-red-200 rounded-lg p-3 bg-red-50">
+                        <div class="rounded-lg border border-red-200 bg-red-50 p-3">
                           <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                               <XCircle class="h-4 w-4 text-red-500" />
@@ -294,17 +292,20 @@ function toggleExpandedError(payeeId: number) {
                               variant="ghost"
                               size="sm"
                               onclick={() => toggleExpandedError(result.payeeId)}
-                              class="h-6 px-2"
-                            >
+                              class="h-6 px-2">
                               {expandedErrorId === result.payeeId ? 'Less' : 'More'}
                             </Button>
                           </div>
                           {#if result.error}
-                            <p class="text-sm text-red-600 mt-1">{result.error}</p>
+                            <p class="mt-1 text-sm text-red-600">{result.error}</p>
                           {/if}
                           {#if expandedErrorId === result.payeeId && result.details}
-                            <div class="mt-2 text-xs text-muted-foreground">
-                              <pre class="whitespace-pre-wrap">{JSON.stringify(result.details, null, 2)}</pre>
+                            <div class="text-muted-foreground mt-2 text-xs">
+                              <pre class="whitespace-pre-wrap">{JSON.stringify(
+                                  result.details,
+                                  null,
+                                  2
+                                )}</pre>
                             </div>
                           {/if}
                         </div>
@@ -317,23 +318,25 @@ function toggleExpandedError(payeeId: number) {
                   <!-- Success Results (condensed view) -->
                   {#if successfulResults.length > 0}
                     <div class="space-y-2">
-                      <h4 class="font-medium text-green-600 flex items-center gap-2">
+                      <h4 class="flex items-center gap-2 font-medium text-green-600">
                         <CircleCheck class="h-4 w-4" />
                         Successful Operations ({successfulResults.length})
                       </h4>
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
                         {#each successfulResults.slice(0, 10) as result}
-                          <div class="flex items-center gap-2 text-sm p-2 border border-green-200 rounded bg-green-50">
+                          <div
+                            class="flex items-center gap-2 rounded border border-green-200 bg-green-50 p-2 text-sm">
                             <CircleCheck class="h-3 w-3 text-green-500" />
                             <span>Payee ID: {result.payeeId}</span>
                             {#if result.details?.payeeName}
-                              <Badge variant="outline" class="text-xs">{result.details.payeeName}</Badge>
+                              <Badge variant="outline" class="text-xs"
+                                >{result.details.payeeName}</Badge>
                             {/if}
                           </div>
                         {/each}
                       </div>
                       {#if successfulResults.length > 10}
-                        <p class="text-sm text-muted-foreground text-center">
+                        <p class="text-muted-foreground text-center text-sm">
                           ... and {successfulResults.length - 10} more successful operations
                         </p>
                       {/if}
@@ -357,8 +360,7 @@ function toggleExpandedError(payeeId: number) {
                   <Button
                     variant="outline"
                     onclick={handleRetryFailed}
-                    class="flex items-center gap-2"
-                  >
+                    class="flex items-center gap-2">
                     <TrendingUp class="h-4 w-4" />
                     Retry Failed ({failedResults.length})
                   </Button>
@@ -368,18 +370,13 @@ function toggleExpandedError(payeeId: number) {
                   <Button
                     variant="outline"
                     onclick={handleExportResults}
-                    class="flex items-center gap-2"
-                  >
+                    class="flex items-center gap-2">
                     <Download class="h-4 w-4" />
                     Export Results
                   </Button>
                 {/if}
 
-                <Button
-                  variant="secondary"
-                  onclick={handleClose}
-                  class="flex items-center gap-2"
-                >
+                <Button variant="secondary" onclick={handleClose} class="flex items-center gap-2">
                   <CircleCheck class="h-4 w-4" />
                   Close
                 </Button>
@@ -421,8 +418,8 @@ function toggleExpandedError(payeeId: number) {
         {/if}
       </div>
     {:else}
-      <div class="text-center py-8">
-        <Users class="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+      <div class="py-8 text-center">
+        <Users class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
         <p class="text-muted-foreground">No operation data available</p>
       </div>
     {/if}
@@ -430,12 +427,10 @@ function toggleExpandedError(payeeId: number) {
     <!-- Footer with Cancel/Close -->
     <Dialog.Footer>
       {#if isRunning}
-        <Button variant="destructive" onclick={handleCancel}>
-          Cancel Operation
-        </Button>
+        <Button variant="destructive" onclick={handleCancel}>Cancel Operation</Button>
       {:else}
         <Button variant="outline" onclick={handleClose}>
-          <X class="h-4 w-4 mr-2" />
+          <X class="mr-2 h-4 w-4" />
           Close
         </Button>
       {/if}

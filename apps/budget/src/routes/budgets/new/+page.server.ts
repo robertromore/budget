@@ -1,28 +1,28 @@
-import { getBudgetTemplateById } from "$lib/constants/budget-templates";
-import type { BudgetMetadata } from "$lib/schema/budgets";
-import { superformInsertBudgetSchema } from "$lib/schema/superforms";
-import type { CreateBudgetRequest } from "$lib/server/domains/budgets/services";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
-import type { Actions } from "@sveltejs/kit";
-import { fail, redirect } from '@sveltejs/kit';
-import { zod4 } from "sveltekit-superforms/adapters";
-import { superValidate } from "sveltekit-superforms/client";
+import {getBudgetTemplateById} from "$lib/constants/budget-templates";
+import type {BudgetMetadata} from "$lib/schema/budgets";
+import {superformInsertBudgetSchema} from "$lib/schema/superforms";
+import type {CreateBudgetRequest} from "$lib/server/domains/budgets/services";
+import {createContext} from "$lib/trpc/context";
+import {createCaller} from "$lib/trpc/router";
+import type {Actions} from "@sveltejs/kit";
+import {fail, redirect} from "@sveltejs/kit";
+import {zod4} from "sveltekit-superforms/adapters";
+import {superValidate} from "sveltekit-superforms/client";
 
 export const load = async (event) => {
-  const { url } = event;
+  const {url} = event;
   const context = await createContext(event);
   const caller = createCaller(context);
 
   // Check for template parameter and prefill form data
-  const templateId = url.searchParams.get('template');
+  const templateId = url.searchParams.get("template");
   let initialData: any = {
-    name: '',
+    name: "",
     description: null,
-    type: 'account-monthly',
-    scope: 'account',
-    enforcementLevel: 'warning',
-    periodType: 'monthly',
+    type: "account-monthly",
+    scope: "account",
+    enforcementLevel: "warning",
+    periodType: "monthly",
     startDay: 1,
     accountIds: [],
     categoryIds: [],
@@ -91,8 +91,8 @@ export const actions: Actions = {
         status: form.data.status || "active",
         enforcementLevel: form.data.enforcementLevel || "warning",
         metadata,
-        ...(form.data.accountIds && { accountIds: form.data.accountIds }),
-        ...(form.data.categoryIds && { categoryIds: form.data.categoryIds }),
+        ...(form.data.accountIds && {accountIds: form.data.accountIds}),
+        ...(form.data.categoryIds && {categoryIds: form.data.categoryIds}),
       };
 
       const caller = createCaller(await createContext(event));
@@ -113,7 +113,7 @@ export const actions: Actions = {
             id: schedule.id,
             name: schedule.name,
             slug: schedule.slug,
-            status: schedule.status ?? 'active',
+            status: schedule.status ?? "active",
             amount: schedule.amount,
             amount_2: schedule.amount_2,
             amount_type: schedule.amount_type,
@@ -132,7 +132,7 @@ export const actions: Actions = {
       }
 
       // Redirect to the budgets list on success
-      throw redirect(303, '/budgets');
+      throw redirect(303, "/budgets");
     } catch (error) {
       // If it's a redirect, rethrow it
       if (error instanceof Response && error.status === 303) {

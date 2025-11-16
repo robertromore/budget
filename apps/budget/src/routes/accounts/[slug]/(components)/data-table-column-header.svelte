@@ -46,7 +46,7 @@ const specialColumns = ['select-col', 'expand-contract-col', 'actions', 'transfe
 
 function getNormalizedColumnOrder<T>(table: Table<T>) {
   const leafColumns = table.getAllLeafColumns();
-  const existingColumnIds = new Set(leafColumns.map(col => col.id));
+  const existingColumnIds = new Set(leafColumns.map((col) => col.id));
   const stateOrder = table.getState().columnOrder ?? [];
   const normalized: string[] = [];
 
@@ -81,24 +81,22 @@ const visibleColumnOrder = $derived.by(() => {
   const visibleLeafColumns = table.getVisibleLeafColumns();
 
   const visibleIds = new Set(
-    visibleLeafColumns
-      .filter(col => !specialColumns.includes(col.id))
-      .map(col => col.id)
+    visibleLeafColumns.filter((col) => !specialColumns.includes(col.id)).map((col) => col.id)
   );
 
   if (visibleIds.size === 0) {
     return [];
   }
 
-  const orderedVisible = normalizedOrder.filter(id => visibleIds.has(id));
+  const orderedVisible = normalizedOrder.filter((id) => visibleIds.has(id));
 
   if (orderedVisible.length > 0) {
     return orderedVisible;
   }
 
   const fallback = visibleLeafColumns
-    .filter(col => !specialColumns.includes(col.id))
-    .map(col => col.id);
+    .filter((col) => !specialColumns.includes(col.id))
+    .map((col) => col.id);
   return fallback;
 });
 

@@ -6,13 +6,13 @@ export type {
   CrossSystemLearning,
   BehaviorChangeDetection,
   ActionableInsight,
-  MLPerformanceMetrics
-} from './ml-coordinator';
+  MLPerformanceMetrics,
+} from "./ml-coordinator";
 
 // Additional helper types for ML coordination
 export interface MLSystemStatus {
-  system: 'intelligence' | 'learning' | 'budget_allocation' | 'coordinator';
-  status: 'healthy' | 'degraded' | 'error' | 'offline';
+  system: "intelligence" | "learning" | "budget_allocation" | "coordinator";
+  status: "healthy" | "degraded" | "error" | "offline";
   lastUpdate: string;
   confidence: number;
   errorRate: number;
@@ -21,7 +21,7 @@ export interface MLSystemStatus {
 }
 
 export interface MLEnsembleConfig {
-  weightingStrategy: 'equal' | 'confidence_based' | 'performance_based' | 'hybrid';
+  weightingStrategy: "equal" | "confidence_based" | "performance_based" | "hybrid";
   minimumConfidence: number;
   agreementThreshold: number;
   outlierDetection: boolean;
@@ -32,7 +32,7 @@ export interface MLAutomationRule {
   id: string;
   name: string;
   description: string;
-  type: 'category' | 'budget' | 'alert' | 'prediction';
+  type: "category" | "budget" | "alert" | "prediction";
   conditions: {
     confidenceThreshold: number;
     minimumDataPoints: number;
@@ -56,9 +56,9 @@ export interface MLAutomationRule {
 }
 
 export interface MLDataPipeline {
-  source: 'transactions' | 'corrections' | 'budgets' | 'user_feedback';
-  stage: 'collection' | 'preprocessing' | 'feature_extraction' | 'model_training' | 'inference';
-  status: 'running' | 'paused' | 'error' | 'completed';
+  source: "transactions" | "corrections" | "budgets" | "user_feedback";
+  stage: "collection" | "preprocessing" | "feature_extraction" | "model_training" | "inference";
+  status: "running" | "paused" | "error" | "completed";
   progress: number; // 0-1
   recordsProcessed: number;
   errorsEncountered: number;
@@ -68,7 +68,7 @@ export interface MLDataPipeline {
 
 export interface MLModelMetadata {
   modelId: string;
-  modelType: 'classification' | 'regression' | 'clustering' | 'ensemble';
+  modelType: "classification" | "regression" | "clustering" | "ensemble";
   version: string;
   trainingDate: string;
   features: string[];
@@ -92,7 +92,13 @@ export interface MLModelMetadata {
 export interface MLFeatureImportance {
   feature: string;
   importance: number; // 0-1
-  category: 'transaction_amount' | 'frequency' | 'category' | 'seasonal' | 'behavioral' | 'contextual';
+  category:
+    | "transaction_amount"
+    | "frequency"
+    | "category"
+    | "seasonal"
+    | "behavioral"
+    | "contextual";
   description: string;
   stability: number; // How stable this importance is across different models
 }
@@ -133,7 +139,7 @@ export interface MLSystemConfiguration {
   };
   explainabilityRequirements: {
     requireExplanations: boolean;
-    detailLevel: 'basic' | 'detailed' | 'comprehensive';
+    detailLevel: "basic" | "detailed" | "comprehensive";
     userFacingExplanations: boolean;
   };
 }
@@ -142,7 +148,7 @@ export interface MLAuditLog {
   id: string;
   timestamp: string;
   system: string;
-  action: 'prediction' | 'recommendation' | 'automation' | 'training' | 'configuration_change';
+  action: "prediction" | "recommendation" | "automation" | "training" | "configuration_change";
   payeeId?: number;
   input: Record<string, any>;
   output: Record<string, any>;
@@ -161,22 +167,22 @@ export interface MLAuditLog {
 
 export interface MLSystemHealth {
   overall: {
-    status: 'healthy' | 'degraded' | 'critical';
+    status: "healthy" | "degraded" | "critical";
     score: number; // 0-100
     lastCheck: string;
   };
   systems: MLSystemStatus[];
   alerts: Array<{
-    severity: 'info' | 'warning' | 'error' | 'critical';
+    severity: "info" | "warning" | "error" | "critical";
     system: string;
     message: string;
     timestamp: string;
     acknowledged: boolean;
   }>;
   trends: {
-    accuracyTrend: 'improving' | 'stable' | 'declining';
-    performanceTrend: 'improving' | 'stable' | 'declining';
-    usageTrend: 'increasing' | 'stable' | 'decreasing';
+    accuracyTrend: "improving" | "stable" | "declining";
+    performanceTrend: "improving" | "stable" | "declining";
+    usageTrend: "increasing" | "stable" | "decreasing";
   };
   recommendations: string[];
 }
@@ -184,7 +190,7 @@ export interface MLSystemHealth {
 export interface MLTrainingJob {
   id: string;
   modelType: string;
-  status: 'queued' | 'running' | 'completed' | 'failed';
+  status: "queued" | "running" | "completed" | "failed";
   progress: number;
   startedAt?: string;
   completedAt?: string;
@@ -208,50 +214,60 @@ export interface MLExperiment {
     experiment: MLModelMetadata;
     improvement: number;
     significance: number;
-    recommendation: 'adopt' | 'reject' | 'continue_testing';
+    recommendation: "adopt" | "reject" | "continue_testing";
   };
-  status: 'running' | 'completed' | 'failed';
+  status: "running" | "completed" | "failed";
   startDate: string;
   endDate?: string;
   conclusions: string[];
 }
 
 // Utility types for ML operations
-export type MLConfidenceLevel = 'very_low' | 'low' | 'medium' | 'high' | 'very_high';
-export type MLPriority = 'critical' | 'high' | 'medium' | 'low';
-export type MLSystemType = 'intelligence' | 'learning' | 'budget_allocation' | 'coordinator' | 'ensemble';
-export type MLInsightType = 'optimization' | 'correction' | 'prediction' | 'automation' | 'alert';
-export type MLAutomationType = 'category' | 'budget' | 'alert' | 'prediction' | 'optimization';
+export type MLConfidenceLevel = "very_low" | "low" | "medium" | "high" | "very_high";
+export type MLPriority = "critical" | "high" | "medium" | "low";
+export type MLSystemType =
+  | "intelligence"
+  | "learning"
+  | "budget_allocation"
+  | "coordinator"
+  | "ensemble";
+export type MLInsightType = "optimization" | "correction" | "prediction" | "automation" | "alert";
+export type MLAutomationType = "category" | "budget" | "alert" | "prediction" | "optimization";
 
 // Type guards and validation helpers
 export const isMLConfidenceLevel = (value: any): value is MLConfidenceLevel => {
-  return ['very_low', 'low', 'medium', 'high', 'very_high'].includes(value);
+  return ["very_low", "low", "medium", "high", "very_high"].includes(value);
 };
 
 export const isMLPriority = (value: any): value is MLPriority => {
-  return ['critical', 'high', 'medium', 'low'].includes(value);
+  return ["critical", "high", "medium", "low"].includes(value);
 };
 
 export const isMLSystemType = (value: any): value is MLSystemType => {
-  return ['intelligence', 'learning', 'budget_allocation', 'coordinator', 'ensemble'].includes(value);
+  return ["intelligence", "learning", "budget_allocation", "coordinator", "ensemble"].includes(
+    value
+  );
 };
 
 // Helper functions for ML operations
 export const getMLConfidenceLevel = (confidence: number): MLConfidenceLevel => {
-  if (confidence >= 0.9) return 'very_high';
-  if (confidence >= 0.7) return 'high';
-  if (confidence >= 0.5) return 'medium';
-  if (confidence >= 0.3) return 'low';
-  return 'very_low';
+  if (confidence >= 0.9) return "very_high";
+  if (confidence >= 0.7) return "high";
+  if (confidence >= 0.5) return "medium";
+  if (confidence >= 0.3) return "low";
+  return "very_low";
 };
 
-export const getMLPriorityFromConfidence = (confidence: number, riskLevel: number = 0): MLPriority => {
+export const getMLPriorityFromConfidence = (
+  confidence: number,
+  riskLevel: number = 0
+): MLPriority => {
   const adjustedConfidence = confidence * (1 - riskLevel * 0.3);
 
-  if (adjustedConfidence >= 0.8) return 'critical';
-  if (adjustedConfidence >= 0.6) return 'high';
-  if (adjustedConfidence >= 0.4) return 'medium';
-  return 'low';
+  if (adjustedConfidence >= 0.8) return "critical";
+  if (adjustedConfidence >= 0.6) return "high";
+  if (adjustedConfidence >= 0.4) return "medium";
+  return "low";
 };
 
 // ML Coordinator Response Templates
@@ -301,7 +317,7 @@ export interface MLAnalyticsReport {
   period: {
     start: string;
     end: string;
-    type: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+    type: "daily" | "weekly" | "monthly" | "quarterly";
   };
   overview: {
     totalPredictions: number;
@@ -327,11 +343,11 @@ export interface MLAnalyticsReport {
     userProductivity: number;
   };
   recommendations: Array<{
-    category: 'performance' | 'accuracy' | 'user_experience' | 'cost_optimization';
+    category: "performance" | "accuracy" | "user_experience" | "cost_optimization";
     priority: MLPriority;
     recommendation: string;
     expectedImpact: string;
-    effort: 'low' | 'medium' | 'high';
+    effort: "low" | "medium" | "high";
   }>;
   trends: Record<string, Array<{timestamp: string; value: number}>>;
 }
@@ -339,7 +355,7 @@ export interface MLAnalyticsReport {
 export interface MLDataQualityReport {
   overall: {
     score: number; // 0-100
-    status: 'excellent' | 'good' | 'fair' | 'poor';
+    status: "excellent" | "good" | "fair" | "poor";
   };
   dimensions: {
     completeness: {
@@ -364,7 +380,7 @@ export interface MLDataQualityReport {
     };
   };
   issues: Array<{
-    severity: 'critical' | 'high' | 'medium' | 'low';
+    severity: "critical" | "high" | "medium" | "low";
     category: string;
     description: string;
     count: number;

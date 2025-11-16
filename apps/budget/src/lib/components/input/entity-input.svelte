@@ -104,9 +104,10 @@ $effect(() => {
 
           if (wrapper) {
             // Look for the actual item element
-            const item = wrapper.querySelector('[role="option"]') as HTMLElement ||
-                        wrapper.querySelector('[cmdk-item]') as HTMLElement ||
-                        wrapper.firstElementChild as HTMLElement;
+            const item =
+              (wrapper.querySelector('[role="option"]') as HTMLElement) ||
+              (wrapper.querySelector('[cmdk-item]') as HTMLElement) ||
+              (wrapper.firstElementChild as HTMLElement);
 
             if (item) {
               // Get the scrollable container (Command.List)
@@ -119,13 +120,13 @@ $effect(() => {
                 const containerHeight = scrollContainer.clientHeight;
 
                 // Center the item in the container
-                const scrollTo = itemTop - (containerHeight / 2) + (itemHeight / 2);
+                const scrollTo = itemTop - containerHeight / 2 + itemHeight / 2;
                 scrollContainer.scrollTop = scrollTo;
               } else {
                 // Fallback to scrollIntoView if we can't find the container
                 item.scrollIntoView({
                   block: 'center',
-                  behavior: 'instant'
+                  behavior: 'instant',
                 });
               }
             }
@@ -154,11 +155,14 @@ $effect(() => {
         </Button>
       {/snippet}
     </Popover.Trigger>
-    <Popover.Content class="p-0 overflow-hidden relative" align="start">
+    <Popover.Content class="relative overflow-hidden p-0" align="start">
       {#if management?.enable}
         <!-- Entity List with Management Actions -->
         <Command.Root shouldFilter={false}>
-          <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} class="pr-12" />
+          <Command.Input
+            placeholder="Search {entityLabel}..."
+            bind:value={searchValue}
+            class="pr-12" />
           <Button
             size="icon"
             class="absolute top-0 right-0 rounded-none rounded-tr-md"
@@ -187,7 +191,7 @@ $effect(() => {
                   <div
                     role="button"
                     tabindex="0"
-                    class="mr-1 p-1 text-xs inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    class="border-input bg-background hover:bg-accent hover:text-accent-foreground mr-1 inline-flex h-8 w-8 items-center justify-center rounded-md border p-1 text-xs"
                     onclick={(e: MouseEvent) => {
                       e.stopPropagation();
                       managingId = entity.id;

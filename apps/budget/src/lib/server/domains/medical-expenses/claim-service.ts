@@ -1,8 +1,8 @@
-import { ClaimRepository } from "./claim-repository";
-import { MedicalExpenseRepository } from "./repository";
-import type { HsaClaim, ClaimStatus } from "$lib/schema/hsa-claims";
-import { ValidationError, NotFoundError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
+import {ClaimRepository} from "./claim-repository";
+import {MedicalExpenseRepository} from "./repository";
+import type {HsaClaim, ClaimStatus} from "$lib/schema/hsa-claims";
+import {ValidationError, NotFoundError} from "$lib/server/shared/types/errors";
+import {InputSanitizer} from "$lib/server/shared/validation";
 
 // Service input types
 export interface CreateClaimData {
@@ -78,9 +78,7 @@ export class ClaimService {
     const sanitizedAdministrator = data.administratorName
       ? InputSanitizer.sanitizeText(data.administratorName)
       : undefined;
-    const sanitizedNotes = data.notes
-      ? InputSanitizer.sanitizeDescription(data.notes)
-      : undefined;
+    const sanitizedNotes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : undefined;
     const sanitizedInternalNotes = data.internalNotes
       ? InputSanitizer.sanitizeDescription(data.internalNotes)
       : undefined;
@@ -116,9 +114,7 @@ export class ClaimService {
 
     // Validate current status allows submission
     if (!["not_submitted", "resubmission_required"].includes(claim.status)) {
-      throw new ValidationError(
-        `Cannot submit claim with status: ${claim.status}`
-      );
+      throw new ValidationError(`Cannot submit claim with status: ${claim.status}`);
     }
 
     const sanitizedClaimNumber = data.claimNumber
@@ -153,9 +149,7 @@ export class ClaimService {
     }
 
     if (claim.status !== "submitted") {
-      throw new ValidationError(
-        `Cannot mark claim as in review. Current status: ${claim.status}`
-      );
+      throw new ValidationError(`Cannot mark claim as in review. Current status: ${claim.status}`);
     }
 
     const updated = await this.claimRepository.update(id, {
@@ -176,21 +170,18 @@ export class ClaimService {
     }
 
     if (!["in_review", "submitted"].includes(claim.status)) {
-      throw new ValidationError(
-        `Cannot approve claim with status: ${claim.status}`
-      );
+      throw new ValidationError(`Cannot approve claim with status: ${claim.status}`);
     }
 
     const approvedAmount = InputSanitizer.validateAmount(data.approvedAmount, "Approved amount");
-    const deniedAmount = data.deniedAmount !== undefined
-      ? InputSanitizer.validateAmount(data.deniedAmount, "Denied amount")
-      : 0;
+    const deniedAmount =
+      data.deniedAmount !== undefined
+        ? InputSanitizer.validateAmount(data.deniedAmount, "Denied amount")
+        : 0;
 
     // Validate amounts
     if (approvedAmount + deniedAmount > claim.claimedAmount) {
-      throw new ValidationError(
-        "Approved + denied amounts cannot exceed claimed amount"
-      );
+      throw new ValidationError("Approved + denied amounts cannot exceed claimed amount");
     }
 
     const status: ClaimStatus = deniedAmount > 0 ? "partially_approved" : "approved";
@@ -216,9 +207,7 @@ export class ClaimService {
     }
 
     if (!["in_review", "submitted"].includes(claim.status)) {
-      throw new ValidationError(
-        `Cannot deny claim with status: ${claim.status}`
-      );
+      throw new ValidationError(`Cannot deny claim with status: ${claim.status}`);
     }
 
     const sanitizedReason = InputSanitizer.sanitizeDescription(data.denialReason);
@@ -252,18 +241,14 @@ export class ClaimService {
     }
 
     if (!["approved", "partially_approved"].includes(claim.status)) {
-      throw new ValidationError(
-        `Cannot mark claim as paid. Current status: ${claim.status}`
-      );
+      throw new ValidationError(`Cannot mark claim as paid. Current status: ${claim.status}`);
     }
 
     const paidAmount = InputSanitizer.validateAmount(data.paidAmount, "Paid amount");
 
     // Validate paid amount doesn't exceed approved amount
     if (paidAmount > (claim.approvedAmount || 0)) {
-      throw new ValidationError(
-        "Paid amount cannot exceed approved amount"
-      );
+      throw new ValidationError("Paid amount cannot exceed approved amount");
     }
 
     const paymentDate = data.paymentDate || new Date().toISOString();
@@ -333,9 +318,7 @@ export class ClaimService {
     const sanitizedAdministrator = data.administratorName
       ? InputSanitizer.sanitizeText(data.administratorName)
       : undefined;
-    const sanitizedNotes = data.notes
-      ? InputSanitizer.sanitizeDescription(data.notes)
-      : undefined;
+    const sanitizedNotes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : undefined;
     const sanitizedInternalNotes = data.internalNotes
       ? InputSanitizer.sanitizeDescription(data.internalNotes)
       : undefined;
@@ -347,18 +330,22 @@ export class ClaimService {
       : undefined;
 
     // Validate amounts if provided
-    const claimedAmount = data.claimedAmount !== undefined
-      ? InputSanitizer.validateAmount(data.claimedAmount, "Claimed amount")
-      : undefined;
-    const approvedAmount = data.approvedAmount !== undefined
-      ? InputSanitizer.validateAmount(data.approvedAmount, "Approved amount")
-      : undefined;
-    const deniedAmount = data.deniedAmount !== undefined
-      ? InputSanitizer.validateAmount(data.deniedAmount, "Denied amount")
-      : undefined;
-    const paidAmount = data.paidAmount !== undefined
-      ? InputSanitizer.validateAmount(data.paidAmount, "Paid amount")
-      : undefined;
+    const claimedAmount =
+      data.claimedAmount !== undefined
+        ? InputSanitizer.validateAmount(data.claimedAmount, "Claimed amount")
+        : undefined;
+    const approvedAmount =
+      data.approvedAmount !== undefined
+        ? InputSanitizer.validateAmount(data.approvedAmount, "Approved amount")
+        : undefined;
+    const deniedAmount =
+      data.deniedAmount !== undefined
+        ? InputSanitizer.validateAmount(data.deniedAmount, "Denied amount")
+        : undefined;
+    const paidAmount =
+      data.paidAmount !== undefined
+        ? InputSanitizer.validateAmount(data.paidAmount, "Paid amount")
+        : undefined;
 
     // Build update object conditionally to satisfy exactOptionalPropertyTypes
     const updateData: any = {};

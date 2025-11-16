@@ -1,8 +1,8 @@
 // $lib/RepeatingDateInput.ts
-import { MoveToWeekday, type RepeatingDate } from "$lib/types";
-import { currentDate, sameMonthAndYear, timezone } from "$lib/utils";
-import { formatDate, formatDayOfMonth } from "$lib/utils/date-formatters";
-import { nextDaily, nextMonthly, nextWeekly, nextYearly } from "$lib/utils/date-frequency";
+import {MoveToWeekday, type RepeatingDate} from "$lib/types";
+import {currentDate, sameMonthAndYear, timezone} from "$lib/utils";
+import {formatDate, formatDayOfMonth} from "$lib/utils/date-formatters";
+import {nextDaily, nextMonthly, nextWeekly, nextYearly} from "$lib/utils/date-frequency";
 import {
   dayOptions,
   lastDayOption,
@@ -10,8 +10,8 @@ import {
   weekdayOptions,
   weekOptions,
 } from "$lib/utils/date-options";
-import { isHoliday } from "$lib/utils/holidays";
-import { endOfWeek, startOfWeek, type DateValue } from "@internationalized/date";
+import {isHoliday} from "$lib/utils/holidays";
+import {endOfWeek, startOfWeek, type DateValue} from "@internationalized/date";
 
 /**
  * Configuration for date generation
@@ -116,9 +116,7 @@ export default class RepeatingDateInput {
 
     // Use the earlier of: start date or first week of calendar view
     // This ensures we show all recurring dates in the visible calendar
-    const expandedStart = this.start.compare(firstWeekStart) < 0
-      ? this.start
-      : firstWeekStart;
+    const expandedStart = this.start.compare(firstWeekStart) < 0 ? this.start : firstWeekStart;
 
     const bounds = {
       start: expandedStart,
@@ -198,7 +196,9 @@ export default class RepeatingDateInput {
       // Use user-specified end date if available, otherwise use visible calendar end
       calendarEnd: constraints.end || bounds.end,
       // Use user-specified limit if available, otherwise calculate based on range
-      effectiveLimit: constraints.hasEndDate ? constraints.limit : this.calculateDynamicLimit(frequency, interval, bounds),
+      effectiveLimit: constraints.hasEndDate
+        ? constraints.limit
+        : this.calculateDynamicLimit(frequency, interval, bounds),
     };
 
     switch (frequency) {
@@ -224,8 +224,8 @@ export default class RepeatingDateInput {
     bounds: {start: DateValue; end: DateValue; originalStart: DateValue}
   ): number {
     // Calculate the approximate number of days in the range
-    const startDate = bounds.start.toDate('UTC');
-    const endDate = bounds.end.toDate('UTC');
+    const startDate = bounds.start.toDate("UTC");
+    const endDate = bounds.end.toDate("UTC");
     const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
     // Calculate a reasonable limit based on frequency and interval
@@ -235,13 +235,13 @@ export default class RepeatingDateInput {
         limit = Math.ceil(daysDiff / interval) + 10; // +10 for buffer
         break;
       case "weekly":
-        limit = Math.ceil((daysDiff / 7) / interval) * 7 + 10; // 7 days per week max
+        limit = Math.ceil(daysDiff / 7 / interval) * 7 + 10; // 7 days per week max
         break;
       case "monthly":
-        limit = Math.ceil((daysDiff / 30) / interval) * 31 + 10; // 31 days per month max
+        limit = Math.ceil(daysDiff / 30 / interval) * 31 + 10; // 31 days per month max
         break;
       case "yearly":
-        limit = Math.ceil((daysDiff / 365) / interval) * 366 + 10; // 366 days per year max (leap year)
+        limit = Math.ceil(daysDiff / 365 / interval) * 366 + 10; // 366 days per year max (leap year)
         break;
       default:
         limit = 1000;
@@ -288,8 +288,8 @@ export default class RepeatingDateInput {
     }
 
     // Calculate days between pattern start and target
-    const startJsDate = patternStart.toDate('UTC');
-    const targetJsDate = targetDate.toDate('UTC');
+    const startJsDate = patternStart.toDate("UTC");
+    const targetJsDate = targetDate.toDate("UTC");
     const daysDiff = Math.floor(
       (targetJsDate.getTime() - startJsDate.getTime()) / (1000 * 60 * 60 * 24)
     );
@@ -298,11 +298,11 @@ export default class RepeatingDateInput {
     const intervalsCompleted = Math.floor(daysDiff / interval);
 
     // Calculate the aligned date
-    const alignedDate = patternStart.add({ days: intervalsCompleted * interval });
+    const alignedDate = patternStart.add({days: intervalsCompleted * interval});
 
     // If aligned date is before target, move forward one interval
     if (alignedDate.compare(targetDate) < 0) {
-      return alignedDate.add({ days: interval });
+      return alignedDate.add({days: interval});
     }
 
     return alignedDate;
@@ -345,8 +345,8 @@ export default class RepeatingDateInput {
     }
 
     // Calculate days between pattern start and target
-    const startJsDate = patternStart.toDate('UTC');
-    const targetJsDate = targetDate.toDate('UTC');
+    const startJsDate = patternStart.toDate("UTC");
+    const targetJsDate = targetDate.toDate("UTC");
     const daysDiff = Math.floor(
       (targetJsDate.getTime() - startJsDate.getTime()) / (1000 * 60 * 60 * 24)
     );
@@ -355,7 +355,7 @@ export default class RepeatingDateInput {
     const weeksCompleted = Math.floor(daysDiff / (7 * interval));
 
     // Calculate the aligned week start
-    const alignedWeekStart = patternStart.add({ weeks: weeksCompleted * interval });
+    const alignedWeekStart = patternStart.add({weeks: weeksCompleted * interval});
 
     // If aligned week start is before target, it's the correct week to start from
     // The nextWeekly function will handle finding the specific weekdays within this week
@@ -364,7 +364,7 @@ export default class RepeatingDateInput {
     }
 
     // Otherwise, go back one interval to ensure we don't skip dates
-    return alignedWeekStart.subtract({ weeks: interval });
+    return alignedWeekStart.subtract({weeks: interval});
   }
 
   /**
@@ -380,7 +380,10 @@ export default class RepeatingDateInput {
     const calendarEnd = config.calendarEnd || bounds.end;
 
     const onDay =
-      this.value.on && this.value.on_type === "day" && this.value.days && this.value.days.length > 0;
+      this.value.on &&
+      this.value.on_type === "day" &&
+      this.value.days &&
+      this.value.days.length > 0;
     const onThe =
       this.value.on &&
       this.value.on_type === "the" &&
@@ -507,9 +510,9 @@ export default class RepeatingDateInput {
     // (don't worry about weekends here - they're handled separately)
     while (adjustmentCount < maxAdjustments) {
       if (this.value.move_holidays === MoveToWeekday.NextWeekday) {
-        adjustedDate = adjustedDate.add({ days: 1 });
+        adjustedDate = adjustedDate.add({days: 1});
       } else if (this.value.move_holidays === MoveToWeekday.PreviousWeekday) {
-        adjustedDate = adjustedDate.subtract({ days: 1 });
+        adjustedDate = adjustedDate.subtract({days: 1});
       }
 
       adjustmentCount++;
@@ -695,7 +698,7 @@ export default class RepeatingDateInput {
     if (this.value.on && this.value.on_type === "day" && days && days.length > 0) {
       const dayLabels = days.map((day: number) => dayOptions[day - 1]?.label ?? `${day}th`);
       const dayText = dayLabels.length === 1 ? dayLabels[0] : listFmt.format(dayLabels);
-      return `${prefix} on the ${dayText} day${dayLabels.length > 1 ? 's' : ''} starting from ${startFormatted} ${suffix}`.trim();
+      return `${prefix} on the ${dayText} day${dayLabels.length > 1 ? "s" : ""} starting from ${startFormatted} ${suffix}`.trim();
     }
 
     // "on the nth weekday"

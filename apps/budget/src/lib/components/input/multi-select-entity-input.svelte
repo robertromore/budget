@@ -47,16 +47,14 @@ let sheetOpen = $state(false);
 let managingId: number = $state(0);
 
 // Get selected entities
-const selectedEntities = $derived(
-  entities.filter(e => value.includes(e.id))
-);
+const selectedEntities = $derived(entities.filter((e) => value.includes(e.id)));
 
 // Compute trigger button text
 const triggerText = $derived.by(() => {
   if (selectedEntities.length === 0) {
     return `Select ${entityLabel}s...`;
   } else if (selectedEntities.length <= maxDisplayedNames) {
-    return selectedEntities.map(e => e.name).join(', ');
+    return selectedEntities.map((e) => e.name).join(', ');
   } else {
     return `${selectedEntities.length} ${entityLabel}s selected`;
   }
@@ -65,7 +63,7 @@ const triggerText = $derived.by(() => {
 // Toggle selection
 const toggleSelection = (entityId: number) => {
   const newValue = value.includes(entityId)
-    ? value.filter(id => id !== entityId)
+    ? value.filter((id) => id !== entityId)
     : [...value, entityId];
   handleChange(newValue);
 };
@@ -118,11 +116,14 @@ const visibleEntities = $derived.by(() => {
         </Button>
       {/snippet}
     </Popover.Trigger>
-    <Popover.Content class="p-0 overflow-hidden relative" align="start">
+    <Popover.Content class="relative overflow-hidden p-0" align="start">
       {#if management?.enable}
         <!-- Entity List with Management Actions -->
         <Command.Root shouldFilter={false}>
-          <Command.Input placeholder="Search {entityLabel}..." bind:value={searchValue} class="pr-12" />
+          <Command.Input
+            placeholder="Search {entityLabel}..."
+            bind:value={searchValue}
+            class="pr-12" />
           <Button
             size="icon"
             class="absolute top-0 right-0 rounded-none rounded-tr-md"
@@ -147,7 +148,7 @@ const visibleEntities = $derived.by(() => {
                   <div
                     role="button"
                     tabindex="0"
-                    class="mr-1 p-1 text-xs inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    class="border-input bg-background hover:bg-accent hover:text-accent-foreground mr-1 inline-flex h-8 w-8 items-center justify-center rounded-md border p-1 text-xs"
                     onclick={(e: MouseEvent) => {
                       e.stopPropagation();
                       managingId = entity.id;

@@ -1,8 +1,8 @@
-import { page } from "$app/state";
-import type { Account } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
-import { getContext, setContext } from "svelte";
-import { SvelteMap } from "svelte/reactivity";
+import {page} from "$app/state";
+import type {Account} from "$lib/schema";
+import {trpc} from "$lib/trpc/client";
+import {getContext, setContext} from "svelte";
+import {SvelteMap} from "svelte/reactivity";
 
 const KEY = Symbol("accounts");
 

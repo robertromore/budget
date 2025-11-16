@@ -52,11 +52,11 @@ let performanceMetrics = $state<any>(null);
 
 // Timeframe options
 const timeframeOptions = [
-  { value: '3', label: 'Last 3 months' },
-  { value: '6', label: 'Last 6 months' },
-  { value: '12', label: 'Last 12 months' },
-  { value: '24', label: 'Last 24 months' },
-  { value: 'all', label: 'All time' }
+  {value: '3', label: 'Last 3 months'},
+  {value: '6', label: 'Last 6 months'},
+  {value: '12', label: 'Last 12 months'},
+  {value: '24', label: 'Last 24 months'},
+  {value: 'all', label: 'All time'},
 ];
 
 // Load analytics data
@@ -67,10 +67,10 @@ async function loadAnalytics() {
       // Load overall payee analytics
       const [overallAnalytics, mlDashboard, learningMetrics] = await Promise.all([
         trpc().payeeRoutes.analytics.query(),
-        trpc().payeeRoutes.mlInsightsDashboard.query({ filters: {} }),
+        trpc().payeeRoutes.mlInsightsDashboard.query({filters: {}}),
         trpc().payeeRoutes.getLearningMetrics.query({
-          timeframeMonths: selectedTimeframe === 'all' ? undefined : parseInt(selectedTimeframe)
-        })
+          timeframeMonths: selectedTimeframe === 'all' ? undefined : parseInt(selectedTimeframe),
+        }),
       ]);
 
       analytics = overallAnalytics;
@@ -79,13 +79,13 @@ async function loadAnalytics() {
     } else if (payeeId) {
       // Load individual payee analytics
       const [payeeAnalytics, intelligence, suggestions, stats] = await Promise.all([
-        trpc().payeeRoutes.getContactAnalytics.query({ payeeId }),
-        trpc().payeeRoutes.intelligence.query({ id: payeeId }),
-        trpc().payeeRoutes.suggestions.query({ id: payeeId }),
-        trpc().payeeRoutes.stats.query({ id: payeeId })
+        trpc().payeeRoutes.getContactAnalytics.query({payeeId}),
+        trpc().payeeRoutes.intelligence.query({id: payeeId}),
+        trpc().payeeRoutes.suggestions.query({id: payeeId}),
+        trpc().payeeRoutes.stats.query({id: payeeId}),
       ]);
 
-      analytics = { payeeAnalytics, intelligence, suggestions, stats };
+      analytics = {payeeAnalytics, intelligence, suggestions, stats};
     }
   } catch (error) {
     console.error('Failed to load analytics:', error);
@@ -103,20 +103,20 @@ async function loadMLInsights() {
       trpc().payeeRoutes.unifiedMLRecommendations.query({
         payeeId,
         context: {
-          riskTolerance: 0.5
-        }
+          riskTolerance: 0.5,
+        },
       }),
-      trpc().payeeRoutes.crossSystemLearning.query({ id: payeeId }),
+      trpc().payeeRoutes.crossSystemLearning.query({id: payeeId}),
       trpc().payeeRoutes.detectBehaviorChanges.query({
         payeeId,
-        lookbackMonths: parseInt(selectedTimeframe) || 6
-      })
+        lookbackMonths: parseInt(selectedTimeframe) || 6,
+      }),
     ]);
 
     mlInsights = {
       unifiedRecommendations,
       crossSystemLearning,
-      behaviorChanges
+      behaviorChanges,
     };
   } catch (error) {
     console.error('Failed to load ML insights:', error);
@@ -129,20 +129,20 @@ async function loadRecommendations() {
 
   try {
     const [budgetOptimization, actionableInsights, categoryRecommendation] = await Promise.all([
-      trpc().payeeRoutes.budgetOptimizationAnalysis.query({ id: payeeId }),
+      trpc().payeeRoutes.budgetOptimizationAnalysis.query({id: payeeId}),
       trpc().payeeRoutes.actionableInsights.query({
         payeeId,
-        insightTypes: ['optimization', 'prediction', 'automation']
+        insightTypes: ['optimization', 'prediction', 'automation'],
       }),
       trpc().payeeRoutes.getCategoryRecommendation.query({
-        payeeId
-      })
+        payeeId,
+      }),
     ]);
 
     recommendations = {
       budgetOptimization,
       actionableInsights,
-      categoryRecommendation
+      categoryRecommendation,
     };
   } catch (error) {
     console.error('Failed to load recommendations:', error);
@@ -171,16 +171,16 @@ $effect(() => {
 // Chart configurations
 const chartConfig = {
   spending: {
-    label: "Spending",
-    color: "hsl(var(--chart-1))",
+    label: 'Spending',
+    color: 'hsl(var(--chart-1))',
   },
   income: {
-    label: "Income",
-    color: "hsl(var(--chart-2))",
+    label: 'Income',
+    color: 'hsl(var(--chart-2))',
   },
   transactions: {
-    label: "Transactions",
-    color: "hsl(var(--chart-3))",
+    label: 'Transactions',
+    color: 'hsl(var(--chart-3))',
   },
 };
 </script>
@@ -195,16 +195,15 @@ const chartConfig = {
       <p class="text-muted-foreground">
         {showOverallAnalytics
           ? 'Comprehensive insights across all payees with ML-powered recommendations'
-          : 'Detailed performance metrics and ML insights for this payee'
-        }
+          : 'Detailed performance metrics and ML insights for this payee'}
       </p>
     </div>
 
     <div class="flex items-center gap-2">
       <!-- Timeframe Selector -->
-      <Select.Root type="single" bind:value={selectedTimeframe} >
+      <Select.Root type="single" bind:value={selectedTimeframe}>
         <Select.Trigger class="w-40">
-          <span>{timeframeOptions.find(opt => opt.value === selectedTimeframe)?.label}</span>
+          <span>{timeframeOptions.find((opt) => opt.value === selectedTimeframe)?.label}</span>
         </Select.Trigger>
         <Select.Content>
           {#each timeframeOptions as option}
@@ -215,9 +214,9 @@ const chartConfig = {
 
       <Button variant="outline" size="sm" onclick={loadAnalytics} disabled={isLoading}>
         {#if isLoading}
-          <LoaderCircle class="h-4 w-4 animate-spin mr-2" />
+          <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
         {:else}
-          <RefreshCw class="h-4 w-4 mr-2" />
+          <RefreshCw class="mr-2 h-4 w-4" />
         {/if}
         Refresh
       </Button>
@@ -229,7 +228,7 @@ const chartConfig = {
       <LoaderCircle class="h-8 w-8 animate-spin" />
     </div>
   {:else}
-    <Tabs.Root value={activeTab} onValueChange={(tab) => activeTab = tab} class="w-full">
+    <Tabs.Root value={activeTab} onValueChange={(tab) => (activeTab = tab)} class="w-full">
       <Tabs.List class="grid w-full grid-cols-4">
         <Tabs.Trigger value="overview" class="flex items-center gap-2">
           <BarChart3 class="h-4 w-4" />
@@ -253,15 +252,15 @@ const chartConfig = {
       <Tabs.Content value="overview" class="space-y-6">
         {#if showOverallAnalytics && analytics}
           <!-- Overall Analytics Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Total Payees</Card.Title>
-                <Users class="h-4 w-4 text-muted-foreground" />
+                <Users class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
                 <div class="text-2xl font-bold">{analytics.totalPayees || 0}</div>
-                <p class="text-xs text-muted-foreground">
+                <p class="text-muted-foreground text-xs">
                   {analytics.activePayees || 0} active
                 </p>
               </Card.Content>
@@ -270,12 +269,15 @@ const chartConfig = {
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Total Spending</Card.Title>
-                <DollarSign class="h-4 w-4 text-muted-foreground" />
+                <DollarSign class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
-                <div class="text-2xl font-bold">{currencyFormatter.format(analytics.totalSpending || 0)}</div>
-                <p class="text-xs text-muted-foreground">
-                  {analytics.spendingTrend > 0 ? '+' : ''}{analytics.spendingTrend?.toFixed(1)}% from last period
+                <div class="text-2xl font-bold">
+                  {currencyFormatter.format(analytics.totalSpending || 0)}
+                </div>
+                <p class="text-muted-foreground text-xs">
+                  {analytics.spendingTrend > 0 ? '+' : ''}{analytics.spendingTrend?.toFixed(1)}%
+                  from last period
                 </p>
               </Card.Content>
             </Card.Root>
@@ -283,11 +285,13 @@ const chartConfig = {
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Avg Transaction</Card.Title>
-                <TrendingUp class="h-4 w-4 text-muted-foreground" />
+                <TrendingUp class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
-                <div class="text-2xl font-bold">{currencyFormatter.format(analytics.avgTransactionAmount || 0)}</div>
-                <p class="text-xs text-muted-foreground">
+                <div class="text-2xl font-bold">
+                  {currencyFormatter.format(analytics.avgTransactionAmount || 0)}
+                </div>
+                <p class="text-muted-foreground text-xs">
                   Across {analytics.totalTransactions || 0} transactions
                 </p>
               </Card.Content>
@@ -296,13 +300,13 @@ const chartConfig = {
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">ML Accuracy</Card.Title>
-                <Brain class="h-4 w-4 text-muted-foreground" />
+                <Brain class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
-                <div class="text-2xl font-bold">{Math.round((analytics.mlAccuracy || 0) * 100)}%</div>
-                <p class="text-xs text-muted-foreground">
-                  Category prediction accuracy
-                </p>
+                <div class="text-2xl font-bold">
+                  {Math.round((analytics.mlAccuracy || 0) * 100)}%
+                </div>
+                <p class="text-muted-foreground text-xs">Category prediction accuracy</p>
               </Card.Content>
             </Card.Root>
           </div>
@@ -312,24 +316,30 @@ const chartConfig = {
             <Card.Root>
               <Card.Header>
                 <Card.Title>Top Payees by Spending</Card.Title>
-                <Card.Description>Highest spending payees in the selected timeframe</Card.Description>
+                <Card.Description
+                  >Highest spending payees in the selected timeframe</Card.Description>
               </Card.Header>
               <Card.Content>
                 <div class="space-y-4">
                   {#each analytics.topPayees.slice(0, 10) as payee, index}
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+                        <div
+                          class="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
                           {index + 1}
                         </div>
                         <div>
                           <p class="font-medium">{payee.name}</p>
-                          <p class="text-sm text-muted-foreground">{payee.transactionCount} transactions</p>
+                          <p class="text-muted-foreground text-sm">
+                            {payee.transactionCount} transactions
+                          </p>
                         </div>
                       </div>
                       <div class="text-right">
                         <p class="font-medium">{currencyFormatter.format(payee.totalSpent)}</p>
-                        <p class="text-sm text-muted-foreground">{currencyFormatter.format(payee.avgAmount)} avg</p>
+                        <p class="text-muted-foreground text-sm">
+                          {currencyFormatter.format(payee.avgAmount)} avg
+                        </p>
                       </div>
                     </div>
                   {/each}
@@ -339,15 +349,17 @@ const chartConfig = {
           {/if}
         {:else if analytics}
           <!-- Individual Payee Analytics -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Total Spent</Card.Title>
-                <DollarSign class="h-4 w-4 text-muted-foreground" />
+                <DollarSign class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
-                <div class="text-2xl font-bold">{currencyFormatter.format(analytics.stats?.totalSpent || 0)}</div>
-                <p class="text-xs text-muted-foreground">
+                <div class="text-2xl font-bold">
+                  {currencyFormatter.format(analytics.stats?.totalSpent || 0)}
+                </div>
+                <p class="text-muted-foreground text-xs">
                   Across {analytics.stats?.transactionCount || 0} transactions
                 </p>
               </Card.Content>
@@ -356,11 +368,13 @@ const chartConfig = {
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Average Amount</Card.Title>
-                <TrendingUp class="h-4 w-4 text-muted-foreground" />
+                <TrendingUp class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
-                <div class="text-2xl font-bold">{currencyFormatter.format(analytics.stats?.avgAmount || 0)}</div>
-                <p class="text-xs text-muted-foreground">
+                <div class="text-2xl font-bold">
+                  {currencyFormatter.format(analytics.stats?.avgAmount || 0)}
+                </div>
+                <p class="text-muted-foreground text-xs">
                   {analytics.stats?.frequency || 'Unknown'} frequency
                 </p>
               </Card.Content>
@@ -369,33 +383,28 @@ const chartConfig = {
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Last Transaction</Card.Title>
-                <Calendar class="h-4 w-4 text-muted-foreground" />
+                <Calendar class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
                 <div class="text-2xl font-bold">
                   {analytics.stats?.lastTransactionDate
                     ? formatDateDisplay(analytics.stats.lastTransactionDate, 'short')
-                    : 'N/A'
-                  }
+                    : 'N/A'}
                 </div>
-                <p class="text-xs text-muted-foreground">
-                  Most recent activity
-                </p>
+                <p class="text-muted-foreground text-xs">Most recent activity</p>
               </Card.Content>
             </Card.Root>
 
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Prediction Confidence</Card.Title>
-                <Brain class="h-4 w-4 text-muted-foreground" />
+                <Brain class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
                 <div class="text-2xl font-bold">
                   {Math.round((analytics.intelligence?.confidence || 0) * 100)}%
                 </div>
-                <p class="text-xs text-muted-foreground">
-                  ML model confidence
-                </p>
+                <p class="text-muted-foreground text-xs">ML model confidence</p>
               </Card.Content>
             </Card.Root>
           </div>
@@ -411,27 +420,31 @@ const chartConfig = {
               </Card.Header>
               <Card.Content class="space-y-4">
                 {#if analytics.intelligence.categoryRecommendation}
-                  <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                  <div class="flex items-center gap-2 rounded-lg bg-blue-50 p-3">
                     <CircleCheck class="h-4 w-4 text-blue-500" />
                     <span class="text-sm">
-                      <strong>Category:</strong> {analytics.intelligence.categoryRecommendation.name}
-                      ({Math.round(analytics.intelligence.categoryRecommendation.confidence * 100)}% confidence)
+                      <strong>Category:</strong>
+                      {analytics.intelligence.categoryRecommendation.name}
+                      ({Math.round(analytics.intelligence.categoryRecommendation.confidence * 100)}%
+                      confidence)
                     </span>
                   </div>
                 {/if}
                 {#if analytics.intelligence.frequencyPrediction}
-                  <div class="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                  <div class="flex items-center gap-2 rounded-lg bg-green-50 p-3">
                     <Calendar class="h-4 w-4 text-green-500" />
                     <span class="text-sm">
-                      <strong>Frequency:</strong> {analytics.intelligence.frequencyPrediction}
+                      <strong>Frequency:</strong>
+                      {analytics.intelligence.frequencyPrediction}
                     </span>
                   </div>
                 {/if}
                 {#if analytics.intelligence.riskLevel}
-                  <div class="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
+                  <div class="flex items-center gap-2 rounded-lg bg-orange-50 p-3">
                     <CircleAlert class="h-4 w-4 text-orange-500" />
                     <span class="text-sm">
-                      <strong>Risk Level:</strong> {analytics.intelligence.riskLevel}
+                      <strong>Risk Level:</strong>
+                      {analytics.intelligence.riskLevel}
                     </span>
                   </div>
                 {/if}
@@ -459,26 +472,32 @@ const chartConfig = {
               <Card.Content>
                 <div class="space-y-4">
                   {#if mlInsights.unifiedRecommendations.categoryRecommendation}
-                    <div class="border rounded-lg p-4">
-                      <h4 class="font-medium mb-2">Category Recommendation</h4>
+                    <div class="rounded-lg border p-4">
+                      <h4 class="mb-2 font-medium">Category Recommendation</h4>
                       <div class="flex items-center justify-between">
                         <span>{mlInsights.unifiedRecommendations.categoryRecommendation.name}</span>
                         <Badge variant="secondary">
-                          {Math.round(mlInsights.unifiedRecommendations.categoryRecommendation.confidence * 100)}% confidence
+                          {Math.round(
+                            mlInsights.unifiedRecommendations.categoryRecommendation.confidence *
+                              100
+                          )}% confidence
                         </Badge>
                       </div>
                       <Progress
-                        value={mlInsights.unifiedRecommendations.categoryRecommendation.confidence * 100}
-                        class="mt-2"
-                      />
+                        value={mlInsights.unifiedRecommendations.categoryRecommendation.confidence *
+                          100}
+                        class="mt-2" />
                     </div>
                   {/if}
 
                   {#if mlInsights.unifiedRecommendations.budgetRecommendation}
-                    <div class="border rounded-lg p-4">
-                      <h4 class="font-medium mb-2">Budget Recommendation</h4>
+                    <div class="rounded-lg border p-4">
+                      <h4 class="mb-2 font-medium">Budget Recommendation</h4>
                       <div class="flex items-center justify-between">
-                        <span>{currencyFormatter.format(mlInsights.unifiedRecommendations.budgetRecommendation.amount)}/month</span>
+                        <span
+                          >{currencyFormatter.format(
+                            mlInsights.unifiedRecommendations.budgetRecommendation.amount
+                          )}/month</span>
                         <Badge variant="secondary">
                           {mlInsights.unifiedRecommendations.budgetRecommendation.reasoning}
                         </Badge>
@@ -487,8 +506,8 @@ const chartConfig = {
                   {/if}
 
                   {#if mlInsights.unifiedRecommendations.automationSuggestions}
-                    <div class="border rounded-lg p-4">
-                      <h4 class="font-medium mb-2">Automation Suggestions</h4>
+                    <div class="rounded-lg border p-4">
+                      <h4 class="mb-2 font-medium">Automation Suggestions</h4>
                       <div class="space-y-2">
                         {#each mlInsights.unifiedRecommendations.automationSuggestions as suggestion}
                           <div class="flex items-center gap-2">
@@ -515,27 +534,27 @@ const chartConfig = {
                 </Card.Description>
               </Card.Header>
               <Card.Content>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div class="text-center p-4 bg-muted/50 rounded-lg">
-                    <Brain class="h-6 w-6 mx-auto mb-2 text-blue-500" />
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div class="bg-muted/50 rounded-lg p-4 text-center">
+                    <Brain class="mx-auto mb-2 h-6 w-6 text-blue-500" />
                     <div class="text-lg font-bold">
                       {Math.round((mlInsights.crossSystemLearning.categoryAccuracy || 0) * 100)}%
                     </div>
-                    <div class="text-sm text-muted-foreground">Category Accuracy</div>
+                    <div class="text-muted-foreground text-sm">Category Accuracy</div>
                   </div>
-                  <div class="text-center p-4 bg-muted/50 rounded-lg">
-                    <Target class="h-6 w-6 mx-auto mb-2 text-green-500" />
+                  <div class="bg-muted/50 rounded-lg p-4 text-center">
+                    <Target class="mx-auto mb-2 h-6 w-6 text-green-500" />
                     <div class="text-lg font-bold">
                       {Math.round((mlInsights.crossSystemLearning.budgetAccuracy || 0) * 100)}%
                     </div>
-                    <div class="text-sm text-muted-foreground">Budget Accuracy</div>
+                    <div class="text-muted-foreground text-sm">Budget Accuracy</div>
                   </div>
-                  <div class="text-center p-4 bg-muted/50 rounded-lg">
-                    <Activity class="h-6 w-6 mx-auto mb-2 text-purple-500" />
+                  <div class="bg-muted/50 rounded-lg p-4 text-center">
+                    <Activity class="mx-auto mb-2 h-6 w-6 text-purple-500" />
                     <div class="text-lg font-bold">
                       {mlInsights.crossSystemLearning.improvementRate || 0}%
                     </div>
-                    <div class="text-sm text-muted-foreground">Improvement Rate</div>
+                    <div class="text-muted-foreground text-sm">Improvement Rate</div>
                   </div>
                 </div>
               </Card.Content>
@@ -555,7 +574,7 @@ const chartConfig = {
                 {#if mlInsights.behaviorChanges.changes && mlInsights.behaviorChanges.changes.length > 0}
                   <div class="space-y-3">
                     {#each mlInsights.behaviorChanges.changes as change}
-                      <div class="flex items-start gap-3 p-3 border rounded-lg">
+                      <div class="flex items-start gap-3 rounded-lg border p-3">
                         <div class="mt-0.5">
                           {#if change.type === 'increase'}
                             <TrendingUp class="h-4 w-4 text-green-500" />
@@ -567,19 +586,24 @@ const chartConfig = {
                         </div>
                         <div class="flex-1">
                           <p class="text-sm font-medium">{change.description}</p>
-                          <p class="text-xs text-muted-foreground">
+                          <p class="text-muted-foreground text-xs">
                             Detected on {formatDateDisplay(change.detectedDate, 'short')}
                             • Confidence: {Math.round(change.confidence * 100)}%
                           </p>
                         </div>
-                        <Badge variant={change.impact === 'high' ? 'destructive' : change.impact === 'medium' ? 'secondary' : 'outline'}>
+                        <Badge
+                          variant={change.impact === 'high'
+                            ? 'destructive'
+                            : change.impact === 'medium'
+                              ? 'secondary'
+                              : 'outline'}>
                           {change.impact}
                         </Badge>
                       </div>
                     {/each}
                   </div>
                 {:else}
-                  <p class="text-sm text-muted-foreground text-center py-4">
+                  <p class="text-muted-foreground py-4 text-center text-sm">
                     No significant behavior changes detected in the selected timeframe.
                   </p>
                 {/if}
@@ -588,9 +612,9 @@ const chartConfig = {
           {/if}
         {:else}
           <Card.Root>
-            <Card.Content class="text-center py-8">
-              <Brain class="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p class="text-sm text-muted-foreground">
+            <Card.Content class="py-8 text-center">
+              <Brain class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+              <p class="text-muted-foreground text-sm">
                 ML insights will be displayed here when available.
               </p>
             </Card.Content>
@@ -616,11 +640,16 @@ const chartConfig = {
               <Card.Content>
                 <div class="space-y-4">
                   {#if recommendations.budgetOptimization.currentEfficiency}
-                    <div class="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div class="bg-muted/50 flex items-center justify-between rounded-lg p-3">
                       <span class="text-sm font-medium">Current Budget Efficiency</span>
                       <div class="flex items-center gap-2">
-                        <Progress value={recommendations.budgetOptimization.currentEfficiency * 100} class="w-20" />
-                        <span class="text-sm">{Math.round(recommendations.budgetOptimization.currentEfficiency * 100)}%</span>
+                        <Progress
+                          value={recommendations.budgetOptimization.currentEfficiency * 100}
+                          class="w-20" />
+                        <span class="text-sm"
+                          >{Math.round(
+                            recommendations.budgetOptimization.currentEfficiency * 100
+                          )}%</span>
                       </div>
                     </div>
                   {/if}
@@ -628,11 +657,13 @@ const chartConfig = {
                   {#if recommendations.budgetOptimization.recommendations}
                     <div class="space-y-2">
                       {#each recommendations.budgetOptimization.recommendations as recommendation}
-                        <div class="flex items-start gap-3 p-3 border rounded-lg">
-                          <Sparkles class="h-4 w-4 text-blue-500 mt-0.5" />
+                        <div class="flex items-start gap-3 rounded-lg border p-3">
+                          <Sparkles class="mt-0.5 h-4 w-4 text-blue-500" />
                           <div class="flex-1">
                             <p class="text-sm font-medium">{recommendation.title}</p>
-                            <p class="text-xs text-muted-foreground">{recommendation.description}</p>
+                            <p class="text-muted-foreground text-xs">
+                              {recommendation.description}
+                            </p>
                           </div>
                           {#if recommendation.potentialSavings}
                             <Badge variant="secondary">
@@ -661,7 +692,7 @@ const chartConfig = {
                 {#if recommendations.actionableInsights.insights && recommendations.actionableInsights.insights.length > 0}
                   <div class="space-y-3">
                     {#each recommendations.actionableInsights.insights as insight}
-                      <div class="flex items-start gap-3 p-3 border rounded-lg">
+                      <div class="flex items-start gap-3 rounded-lg border p-3">
                         <div class="mt-0.5">
                           {#if insight.type === 'optimization'}
                             <TrendingUp class="h-4 w-4 text-green-500" />
@@ -675,21 +706,26 @@ const chartConfig = {
                         </div>
                         <div class="flex-1">
                           <p class="text-sm font-medium">{insight.title}</p>
-                          <p class="text-xs text-muted-foreground">{insight.description}</p>
+                          <p class="text-muted-foreground text-xs">{insight.description}</p>
                           {#if insight.action}
                             <Button variant="outline" size="sm" class="mt-2">
                               {insight.action}
                             </Button>
                           {/if}
                         </div>
-                        <Badge variant={insight.priority === 'high' ? 'destructive' : insight.priority === 'medium' ? 'secondary' : 'outline'}>
+                        <Badge
+                          variant={insight.priority === 'high'
+                            ? 'destructive'
+                            : insight.priority === 'medium'
+                              ? 'secondary'
+                              : 'outline'}>
                           {insight.priority}
                         </Badge>
                       </div>
                     {/each}
                   </div>
                 {:else}
-                  <p class="text-sm text-muted-foreground text-center py-4">
+                  <p class="text-muted-foreground py-4 text-center text-sm">
                     No actionable insights available at this time.
                   </p>
                 {/if}
@@ -707,16 +743,21 @@ const chartConfig = {
                 </Card.Description>
               </Card.Header>
               <Card.Content>
-                <div class="flex items-center justify-between p-4 border rounded-lg">
+                <div class="flex items-center justify-between rounded-lg border p-4">
                   <div>
                     <p class="font-medium">{recommendations.categoryRecommendation.category}</p>
-                    <p class="text-sm text-muted-foreground">{recommendations.categoryRecommendation.reasoning}</p>
+                    <p class="text-muted-foreground text-sm">
+                      {recommendations.categoryRecommendation.reasoning}
+                    </p>
                   </div>
                   <div class="text-right">
                     <Badge variant="secondary">
-                      {Math.round(recommendations.categoryRecommendation.confidence * 100)}% confidence
+                      {Math.round(recommendations.categoryRecommendation.confidence * 100)}%
+                      confidence
                     </Badge>
-                    <Progress value={recommendations.categoryRecommendation.confidence * 100} class="w-20 mt-2" />
+                    <Progress
+                      value={recommendations.categoryRecommendation.confidence * 100}
+                      class="mt-2 w-20" />
                   </div>
                 </div>
               </Card.Content>
@@ -724,9 +765,9 @@ const chartConfig = {
           {/if}
         {:else}
           <Card.Root>
-            <Card.Content class="text-center py-8">
-              <Target class="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p class="text-sm text-muted-foreground">
+            <Card.Content class="py-8 text-center">
+              <Target class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+              <p class="text-muted-foreground text-sm">
                 Recommendations will be displayed here when available.
               </p>
             </Card.Content>
@@ -738,56 +779,52 @@ const chartConfig = {
       <Tabs.Content value="performance" class="space-y-6">
         {#if performanceMetrics}
           <!-- Learning Performance Metrics -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Learning Rate</Card.Title>
-                <Brain class="h-4 w-4 text-muted-foreground" />
+                <Brain class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
                 <div class="text-2xl font-bold">{performanceMetrics.learningRate || 0}%</div>
-                <p class="text-xs text-muted-foreground">
-                  Model improvement over time
-                </p>
+                <p class="text-muted-foreground text-xs">Model improvement over time</p>
               </Card.Content>
             </Card.Root>
 
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Accuracy Score</Card.Title>
-                <CircleCheck class="h-4 w-4 text-muted-foreground" />
+                <CircleCheck class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
-                <div class="text-2xl font-bold">{Math.round((performanceMetrics.accuracy || 0) * 100)}%</div>
-                <p class="text-xs text-muted-foreground">
-                  Overall prediction accuracy
-                </p>
+                <div class="text-2xl font-bold">
+                  {Math.round((performanceMetrics.accuracy || 0) * 100)}%
+                </div>
+                <p class="text-muted-foreground text-xs">Overall prediction accuracy</p>
               </Card.Content>
             </Card.Root>
 
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Corrections</Card.Title>
-                <CircleAlert class="h-4 w-4 text-muted-foreground" />
+                <CircleAlert class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
                 <div class="text-2xl font-bold">{performanceMetrics.totalCorrections || 0}</div>
-                <p class="text-xs text-muted-foreground">
-                  Manual corrections processed
-                </p>
+                <p class="text-muted-foreground text-xs">Manual corrections processed</p>
               </Card.Content>
             </Card.Root>
 
             <Card.Root>
               <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Card.Title class="text-sm font-medium">Confidence</Card.Title>
-                <TrendingUp class="h-4 w-4 text-muted-foreground" />
+                <TrendingUp class="text-muted-foreground h-4 w-4" />
               </Card.Header>
               <Card.Content>
-                <div class="text-2xl font-bold">{Math.round((performanceMetrics.avgConfidence || 0) * 100)}%</div>
-                <p class="text-xs text-muted-foreground">
-                  Average model confidence
-                </p>
+                <div class="text-2xl font-bold">
+                  {Math.round((performanceMetrics.avgConfidence || 0) * 100)}%
+                </div>
+                <p class="text-muted-foreground text-xs">Average model confidence</p>
               </Card.Content>
             </Card.Root>
           </div>
@@ -802,14 +839,14 @@ const chartConfig = {
                 </Card.Description>
               </Card.Header>
               <Card.Content>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <!-- Accuracy Trend -->
                   <div>
-                    <h4 class="font-medium mb-3">Accuracy Trend</h4>
+                    <h4 class="mb-3 font-medium">Accuracy Trend</h4>
                     <div class="space-y-2">
                       {#each performanceMetrics.trends.accuracy as point}
                         <div class="flex items-center justify-between">
-                          <span class="text-sm text-muted-foreground">{point.period}</span>
+                          <span class="text-muted-foreground text-sm">{point.period}</span>
                           <div class="flex items-center gap-2">
                             <Progress value={point.value * 100} class="w-20" />
                             <span class="text-sm">{Math.round(point.value * 100)}%</span>
@@ -821,11 +858,11 @@ const chartConfig = {
 
                   <!-- Correction Rate -->
                   <div>
-                    <h4 class="font-medium mb-3">Correction Rate</h4>
+                    <h4 class="mb-3 font-medium">Correction Rate</h4>
                     <div class="space-y-2">
                       {#each performanceMetrics.trends.corrections as point}
                         <div class="flex items-center justify-between">
-                          <span class="text-sm text-muted-foreground">{point.period}</span>
+                          <span class="text-muted-foreground text-sm">{point.period}</span>
                           <div class="flex items-center gap-2">
                             <Progress value={point.rate * 100} class="w-20" />
                             <span class="text-sm">{point.count} corrections</span>
@@ -844,18 +881,16 @@ const chartConfig = {
             <Card.Root>
               <Card.Header>
                 <Card.Title>Model Performance Insights</Card.Title>
-                <Card.Description>
-                  Understanding how the AI learns and improves
-                </Card.Description>
+                <Card.Description>Understanding how the AI learns and improves</Card.Description>
               </Card.Header>
               <Card.Content>
                 <div class="space-y-3">
                   {#each performanceMetrics.insights as insight}
-                    <div class="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Brain class="h-4 w-4 text-blue-500 mt-0.5" />
+                    <div class="bg-muted/50 flex items-start gap-3 rounded-lg p-3">
+                      <Brain class="mt-0.5 h-4 w-4 text-blue-500" />
                       <div class="flex-1">
                         <p class="text-sm font-medium">{insight.title}</p>
-                        <p class="text-xs text-muted-foreground">{insight.description}</p>
+                        <p class="text-muted-foreground text-xs">{insight.description}</p>
                       </div>
                       {#if insight.impact}
                         <Badge variant="outline">{insight.impact}</Badge>
@@ -868,9 +903,9 @@ const chartConfig = {
           {/if}
         {:else}
           <Card.Root>
-            <Card.Content class="text-center py-8">
-              <Activity class="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p class="text-sm text-muted-foreground">
+            <Card.Content class="py-8 text-center">
+              <Activity class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+              <p class="text-muted-foreground text-sm">
                 Performance metrics will be displayed here when available.
               </p>
             </Card.Content>

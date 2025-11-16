@@ -57,6 +57,5 @@ let {
     card={cardView}
     columns={cardGridColumns}
     gap={cardGap}
-    class={cardGridClass}
-  />
+    class={cardGridClass} />
 {/if}

@@ -49,7 +49,7 @@ let {
   onEdit,
   onDelete,
   onBulkDelete,
-  table = $bindable()
+  table = $bindable(),
 }: Props = $props();
 
 // Helper function to format recurring pattern
@@ -93,48 +93,38 @@ function getStatusVariant(status: string | null) {
   onBulkDelete={onBulkDelete || (() => {})}
   gridColumns="grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
   {#snippet gridCard(schedule: Schedule)}
-    <Card.Root class="hover:shadow-md transition-shadow relative">
+    <Card.Root class="relative transition-shadow hover:shadow-md">
       <div class="absolute top-3 right-3 z-10 flex gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8"
-          onclick={() => onView(schedule)}>
+        <Button variant="ghost" size="icon" class="h-8 w-8" onclick={() => onView(schedule)}>
           <Eye class="h-4 w-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8"
-          onclick={() => onEdit(schedule)}>
+        <Button variant="ghost" size="icon" class="h-8 w-8" onclick={() => onEdit(schedule)}>
           <SquarePen class="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          class="h-8 w-8 text-destructive"
+          class="text-destructive h-8 w-8"
           onclick={() => onDelete(schedule)}>
           <Trash class="h-4 w-4" />
         </Button>
       </div>
 
-      <Card.Header class="pb-3 pr-24">
+      <Card.Header class="pr-24 pb-3">
         <div class="flex-1">
           <Card.Title class="text-lg">{schedule.name}</Card.Title>
-          <div class="flex items-center gap-2 mt-1 flex-wrap">
+          <div class="mt-1 flex flex-wrap items-center gap-2">
             <Badge variant={getStatusVariant(schedule.status)}>
               {schedule.status}
             </Badge>
             {#if schedule.scheduleDate}
               <Badge variant="outline" class="text-xs">
-                <RotateCw class="h-3 w-3 mr-1" />
+                <RotateCw class="mr-1 h-3 w-3" />
                 Recurring
               </Badge>
             {/if}
             {#if schedule.auto_add}
-              <Badge variant="outline" class="text-xs bg-blue-50 dark:bg-blue-950">
-                Auto-Add
-              </Badge>
+              <Badge variant="outline" class="bg-blue-50 text-xs dark:bg-blue-950">Auto-Add</Badge>
             {/if}
           </div>
         </div>
@@ -144,8 +134,8 @@ function getStatusVariant(status: string | null) {
         <div class="space-y-3">
           <!-- Amount Display -->
           <div class="flex items-center gap-2">
-            <DollarSign class="h-4 w-4 text-muted-foreground" />
-            <span class="font-semibold text-lg">{formatAmount(schedule)}</span>
+            <DollarSign class="text-muted-foreground h-4 w-4" />
+            <span class="text-lg font-semibold">{formatAmount(schedule)}</span>
             {#if schedule.amount_type !== 'exact'}
               <Badge variant="outline" class="text-xs">{schedule.amount_type}</Badge>
             {/if}
@@ -155,25 +145,25 @@ function getStatusVariant(status: string | null) {
 
           <!-- Recurring Pattern -->
           <div class="flex items-center gap-2 text-sm">
-            <Clock class="h-4 w-4 text-muted-foreground" />
+            <Clock class="text-muted-foreground h-4 w-4" />
             <span>{formatRecurringPattern(schedule)}</span>
           </div>
 
           <!-- Related Entities -->
           {#if schedule.payee}
-            <div class="text-xs text-muted-foreground">
+            <div class="text-muted-foreground text-xs">
               Payee: <span class="font-medium">{schedule.payee.name}</span>
             </div>
           {/if}
 
           {#if schedule.account}
-            <div class="text-xs text-muted-foreground">
+            <div class="text-muted-foreground text-xs">
               Account: <span class="font-medium">{schedule.account.name}</span>
             </div>
           {/if}
 
           {#if schedule.scheduleDate}
-            <div class="text-xs text-muted-foreground">
+            <div class="text-muted-foreground text-xs">
               Started: {new Date(schedule.scheduleDate.start).toLocaleDateString()}
               {#if schedule.scheduleDate.end}
                 • Ends: {new Date(schedule.scheduleDate.end).toLocaleDateString()}
@@ -195,7 +185,6 @@ function getStatusVariant(status: string | null) {
       {onEdit}
       {onDelete}
       onBulkDelete={onBulkDelete || (() => {})}
-      bind:table
-    />
+      bind:table />
   {/snippet}
 </EntitySearchResults>

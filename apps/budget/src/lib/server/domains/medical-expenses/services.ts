@@ -1,13 +1,13 @@
-import { MedicalExpenseRepository } from "./repository";
-import type { MedicalExpense, MedicalExpenseType } from "$lib/schema/medical-expenses";
-import { ConflictError, ValidationError, NotFoundError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
-import { db } from "$lib/server/shared/database";
-import { transactions } from "$lib/schema/transactions";
-import { accounts } from "$lib/schema/accounts";
-import { eq, and, isNull } from "drizzle-orm";
-import { TransactionService } from "../transactions/services";
-import { ClaimService } from "./claim-service";
+import {MedicalExpenseRepository} from "./repository";
+import type {MedicalExpense, MedicalExpenseType} from "$lib/schema/medical-expenses";
+import {ConflictError, ValidationError, NotFoundError} from "$lib/server/shared/types/errors";
+import {InputSanitizer} from "$lib/server/shared/validation";
+import {db} from "$lib/server/shared/database";
+import {transactions} from "$lib/schema/transactions";
+import {accounts} from "$lib/schema/accounts";
+import {eq, and, isNull} from "drizzle-orm";
+import {TransactionService} from "../transactions/services";
+import {ClaimService} from "./claim-service";
 
 // Service input types
 export interface CreateMedicalExpenseData {
@@ -116,12 +116,7 @@ export class MedicalExpenseService {
     const result = await db
       .select()
       .from(accounts)
-      .where(
-        and(
-          eq(accounts.id, hsaAccountId),
-          isNull(accounts.deletedAt)
-        )
-      )
+      .where(and(eq(accounts.id, hsaAccountId), isNull(accounts.deletedAt)))
       .limit(1)
       .execute();
 
@@ -171,15 +166,14 @@ export class MedicalExpenseService {
     const sanitizedTreatment = data.treatmentDescription
       ? InputSanitizer.sanitizeDescription(data.treatmentDescription)
       : undefined;
-    const sanitizedNotes = data.notes
-      ? InputSanitizer.sanitizeDescription(data.notes)
-      : undefined;
+    const sanitizedNotes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : undefined;
 
     // Validate amounts
     const amount = InputSanitizer.validateAmount(data.amount, "Amount");
-    const insuranceCovered = data.insuranceCovered !== undefined
-      ? InputSanitizer.validateAmount(data.insuranceCovered, "Insurance covered")
-      : 0;
+    const insuranceCovered =
+      data.insuranceCovered !== undefined
+        ? InputSanitizer.validateAmount(data.insuranceCovered, "Insurance covered")
+        : 0;
 
     // Calculate or validate out of pocket amount
     let outOfPocket = data.outOfPocket;
@@ -188,7 +182,7 @@ export class MedicalExpenseService {
     } else {
       outOfPocket = InputSanitizer.validateAmount(outOfPocket, "Out of pocket");
       // Validate that out of pocket + insurance = total amount
-      if (Math.abs((outOfPocket + insuranceCovered) - amount) > 0.01) {
+      if (Math.abs(outOfPocket + insuranceCovered - amount) > 0.01) {
         throw new ValidationError(
           "Out of pocket amount + insurance covered must equal total amount"
         );
@@ -242,7 +236,9 @@ export class MedicalExpenseService {
   /**
    * Create a new medical expense with transaction (all-in-one)
    */
-  async createMedicalExpenseWithTransaction(data: CreateMedicalExpenseWithTransactionData): Promise<MedicalExpense> {
+  async createMedicalExpenseWithTransaction(
+    data: CreateMedicalExpenseWithTransactionData
+  ): Promise<MedicalExpense> {
     // Validate HSA account
     await this.validateHsaAccount(data.hsaAccountId);
 
@@ -259,18 +255,17 @@ export class MedicalExpenseService {
     const sanitizedTreatment = data.treatmentDescription
       ? InputSanitizer.sanitizeDescription(data.treatmentDescription)
       : undefined;
-    const sanitizedNotes = data.notes
-      ? InputSanitizer.sanitizeDescription(data.notes)
-      : undefined;
+    const sanitizedNotes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : undefined;
     const sanitizedTransactionNotes = data.transactionNotes
       ? InputSanitizer.sanitizeDescription(data.transactionNotes)
       : undefined;
 
     // Validate amounts
     const amount = InputSanitizer.validateAmount(data.amount, "Amount");
-    const insuranceCovered = data.insuranceCovered !== undefined
-      ? InputSanitizer.validateAmount(data.insuranceCovered, "Insurance covered")
-      : 0;
+    const insuranceCovered =
+      data.insuranceCovered !== undefined
+        ? InputSanitizer.validateAmount(data.insuranceCovered, "Insurance covered")
+        : 0;
 
     // Calculate or validate out of pocket amount
     let outOfPocket = data.outOfPocket;
@@ -279,7 +274,7 @@ export class MedicalExpenseService {
     } else {
       outOfPocket = InputSanitizer.validateAmount(outOfPocket, "Out of pocket");
       // Validate that out of pocket + insurance = total amount
-      if (Math.abs((outOfPocket + insuranceCovered) - amount) > 0.01) {
+      if (Math.abs(outOfPocket + insuranceCovered - amount) > 0.01) {
         throw new ValidationError(
           "Out of pocket amount + insurance covered must equal total amount"
         );
@@ -291,7 +286,7 @@ export class MedicalExpenseService {
 
     // Create the transaction first
     // Extract just the date portion (YYYY-MM-DD) from the ISO datetime string
-    const transactionDate = data.serviceDate.split('T')[0];
+    const transactionDate = data.serviceDate.split("T")[0];
 
     const transactionData: {
       accountId: number;
@@ -362,7 +357,7 @@ export class MedicalExpenseService {
         });
       } catch (error) {
         // Log but don't fail the expense creation if claim creation fails
-        console.error('Failed to auto-create claim for expense', expense.id, error);
+        console.error("Failed to auto-create claim for expense", expense.id, error);
       }
     }
 
@@ -392,20 +387,19 @@ export class MedicalExpenseService {
     const sanitizedTreatment = data.treatmentDescription
       ? InputSanitizer.sanitizeDescription(data.treatmentDescription)
       : undefined;
-    const sanitizedNotes = data.notes
-      ? InputSanitizer.sanitizeDescription(data.notes)
-      : undefined;
+    const sanitizedNotes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : undefined;
 
     // Validate amounts if provided
-    const amount = data.amount !== undefined
-      ? InputSanitizer.validateAmount(data.amount, "Amount")
-      : undefined;
-    const insuranceCovered = data.insuranceCovered !== undefined
-      ? InputSanitizer.validateAmount(data.insuranceCovered, "Insurance covered")
-      : undefined;
-    const outOfPocket = data.outOfPocket !== undefined
-      ? InputSanitizer.validateAmount(data.outOfPocket, "Out of pocket")
-      : undefined;
+    const amount =
+      data.amount !== undefined ? InputSanitizer.validateAmount(data.amount, "Amount") : undefined;
+    const insuranceCovered =
+      data.insuranceCovered !== undefined
+        ? InputSanitizer.validateAmount(data.insuranceCovered, "Insurance covered")
+        : undefined;
+    const outOfPocket =
+      data.outOfPocket !== undefined
+        ? InputSanitizer.validateAmount(data.outOfPocket, "Out of pocket")
+        : undefined;
 
     // Recalculate tax year if paid date changed
     let taxYear = data.taxYear;

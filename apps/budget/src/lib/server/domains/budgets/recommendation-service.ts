@@ -11,12 +11,12 @@ import {
   type RecommendationStatus,
   type RecommendationType,
 } from "$lib/schema/recommendations";
-import { db } from "$lib/server/db";
-import { logger } from "$lib/server/shared/logging";
-import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
-import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
-import type { BudgetRecommendationDraft } from "./budget-analysis-service";
+import {db} from "$lib/server/db";
+import {logger} from "$lib/server/shared/logging";
+import {NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
+import {getCurrentTimestamp} from "$lib/utils/dates";
+import {and, desc, eq, gte, isNull, lte, or, sql} from "drizzle-orm";
+import type {BudgetRecommendationDraft} from "./budget-analysis-service";
 
 export interface RecommendationFilters {
   status?: RecommendationStatus | RecommendationStatus[];
@@ -63,7 +63,7 @@ export class RecommendationService {
 
       return await this.getRecommendation(created.id);
     } catch (error) {
-      logger.error("Error creating recommendation", { error, data });
+      logger.error("Error creating recommendation", {error, data});
       throw error;
     }
   }
@@ -128,20 +128,20 @@ export class RecommendationService {
         pending: existingRecommendations.filter((r) => r.status === "pending").length,
         dismissed: existingRecommendations.filter((r) => r.status === "dismissed").length,
         applied: existingRecommendations.filter((r) => r.status === "applied").length,
-        existingIds: existingRecommendations.map(r => r.id),
+        existingIds: existingRecommendations.map((r) => r.id),
       });
 
       // Step 2: Filter out drafts that match existing recommendations
       // Match by: type, categoryId, accountId, budgetId, and metadata details
       const filteredDrafts = drafts.filter((draft) => {
         const draftMetadata = draft.metadata as Record<string, any> | null;
-        const draftSuggestedType = draftMetadata?.['suggestedType'];
-        const draftPayeeIds = draftMetadata?.['payeeIds'] as number[] | undefined;
+        const draftSuggestedType = draftMetadata?.["suggestedType"];
+        const draftPayeeIds = draftMetadata?.["payeeIds"] as number[] | undefined;
 
         const isDuplicate = existingRecommendations.some((existing) => {
           const existingMetadata = existing.metadata as Record<string, any> | null;
-          const existingSuggestedType = existingMetadata?.['suggestedType'];
-          const existingPayeeIds = existingMetadata?.['payeeIds'] as number[] | undefined;
+          const existingSuggestedType = existingMetadata?.["suggestedType"];
+          const existingPayeeIds = existingMetadata?.["payeeIds"] as number[] | undefined;
 
           // Must match type
           if (existing.type !== draft.type) return false;
@@ -162,7 +162,11 @@ export class RecommendationService {
           if (existingAccountId !== draftAccountId) return false;
 
           // If both have suggestedType, they must match
-          if (existingSuggestedType && draftSuggestedType && existingSuggestedType !== draftSuggestedType) {
+          if (
+            existingSuggestedType &&
+            draftSuggestedType &&
+            existingSuggestedType !== draftSuggestedType
+          ) {
             return false;
           }
 
@@ -173,10 +177,12 @@ export class RecommendationService {
 
           // For goal-based budgets, check goal details
           if (draftSuggestedType === "goal-based") {
-            const existingGoal = existingMetadata?.['goalMetadata'] as Record<string, any> | undefined;
-            const draftGoal = draftMetadata?.['goalMetadata'] as Record<string, any> | undefined;
+            const existingGoal = existingMetadata?.["goalMetadata"] as
+              | Record<string, any>
+              | undefined;
+            const draftGoal = draftMetadata?.["goalMetadata"] as Record<string, any> | undefined;
 
-            if (existingGoal?.['targetAmount'] !== draftGoal?.['targetAmount']) return false;
+            if (existingGoal?.["targetAmount"] !== draftGoal?.["targetAmount"]) return false;
           }
 
           return true;
@@ -213,16 +219,20 @@ export class RecommendationService {
 
             const existingMetadata = existing.metadata as Record<string, any> | null;
             const draftMetadata = draft.metadata as Record<string, any> | null;
-            const existingSuggestedType = existingMetadata?.['suggestedType'];
-            const draftSuggestedType = draftMetadata?.['suggestedType'];
+            const existingSuggestedType = existingMetadata?.["suggestedType"];
+            const draftSuggestedType = draftMetadata?.["suggestedType"];
 
-            if (existingSuggestedType && draftSuggestedType && existingSuggestedType !== draftSuggestedType) {
+            if (
+              existingSuggestedType &&
+              draftSuggestedType &&
+              existingSuggestedType !== draftSuggestedType
+            ) {
               return false;
             }
 
             if (draftSuggestedType === "scheduled-expense") {
-              const existingPayeeIds = existingMetadata?.['payeeIds'] as number[] | undefined;
-              const draftPayeeIds = draftMetadata?.['payeeIds'] as number[] | undefined;
+              const existingPayeeIds = existingMetadata?.["payeeIds"] as number[] | undefined;
+              const draftPayeeIds = draftMetadata?.["payeeIds"] as number[] | undefined;
               if (existingPayeeIds?.[0] !== draftPayeeIds?.[0]) return false;
             }
 
@@ -274,22 +284,19 @@ export class RecommendationService {
         updatedAt: now,
       }));
 
-      const created = await db
-        .insert(budgetRecommendations)
-        .values(values)
-        .returning();
+      const created = await db.insert(budgetRecommendations).values(values).returning();
 
       logger.info("Created new recommendations", {
         count: created.length,
-        newIds: created.map(r => r.id),
-        titles: created.map(r => r.title),
+        newIds: created.map((r) => r.id),
+        titles: created.map((r) => r.title),
       });
 
       return await this.listRecommendations({
         status: "pending",
       });
     } catch (error) {
-      logger.error("Error creating bulk recommendations", { error, count: drafts.length });
+      logger.error("Error creating bulk recommendations", {error, count: drafts.length});
       throw error;
     }
   }
@@ -325,9 +332,7 @@ export class RecommendationService {
     // Status filter
     if (filters.status) {
       if (Array.isArray(filters.status)) {
-        conditions.push(
-          or(...filters.status.map((s) => eq(budgetRecommendations.status, s)))!
-        );
+        conditions.push(or(...filters.status.map((s) => eq(budgetRecommendations.status, s)))!);
       } else {
         conditions.push(eq(budgetRecommendations.status, filters.status));
       }
@@ -336,9 +341,7 @@ export class RecommendationService {
     // Type filter
     if (filters.type) {
       if (Array.isArray(filters.type)) {
-        conditions.push(
-          or(...filters.type.map((t) => eq(budgetRecommendations.type, t)))!
-        );
+        conditions.push(or(...filters.type.map((t) => eq(budgetRecommendations.type, t)))!);
       } else {
         conditions.push(eq(budgetRecommendations.type, filters.type));
       }
@@ -347,9 +350,7 @@ export class RecommendationService {
     // Priority filter
     if (filters.priority) {
       if (Array.isArray(filters.priority)) {
-        conditions.push(
-          or(...filters.priority.map((p) => eq(budgetRecommendations.priority, p)))!
-        );
+        conditions.push(or(...filters.priority.map((p) => eq(budgetRecommendations.priority, p)))!);
       } else {
         conditions.push(eq(budgetRecommendations.priority, filters.priority));
       }
@@ -497,14 +498,11 @@ export class RecommendationService {
         updatedAt: getCurrentTimestamp(),
       })
       .where(
-        and(
-          eq(budgetRecommendations.status, "pending"),
-          lte(budgetRecommendations.expiresAt, now)
-        )
+        and(eq(budgetRecommendations.status, "pending"), lte(budgetRecommendations.expiresAt, now))
       )
       .returning();
 
-    logger.info("Expired old recommendations", { count: expired.length });
+    logger.info("Expired old recommendations", {count: expired.length});
 
     return expired.length;
   }
@@ -554,7 +552,7 @@ export class RecommendationService {
    */
   async getPendingCount(): Promise<number> {
     const result = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({count: sql<number>`count(*)`})
       .from(budgetRecommendations)
       .where(
         and(

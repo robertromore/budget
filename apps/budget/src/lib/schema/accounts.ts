@@ -10,7 +10,7 @@ import {transactions} from "./transactions";
 import type {Transaction} from "./transactions";
 import {workspaces} from "./workspaces";
 import {z} from "zod/v4";
-import { isValidIconName } from "$lib/utils/icon-validation";
+import {isValidIconName} from "$lib/utils/icon-validation";
 
 // Account type enum for type safety
 export const accountTypeEnum = [
@@ -21,10 +21,10 @@ export const accountTypeEnum = [
   "loan",
   "cash",
   "hsa",
-  "other"
+  "other",
 ] as const;
 
-export type AccountType = typeof accountTypeEnum[number];
+export type AccountType = (typeof accountTypeEnum)[number];
 
 export const accounts = sqliteTable(
   "account",
@@ -44,7 +44,7 @@ export const accounts = sqliteTable(
     notes: text("notes"),
 
     // Enhanced account fields
-    accountType: text("account_type", { enum: accountTypeEnum }).default("checking"),
+    accountType: text("account_type", {enum: accountTypeEnum}).default("checking"),
     institution: text("institution"), // Bank/institution name
     accountIcon: text("account_icon"), // Lucide icon name
     accountColor: text("account_color"), // Hex color code
@@ -127,9 +127,13 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .optional()
       .nullable(),
   accountType: (schema) =>
-    schema.pipe(z.enum(accountTypeEnum, {
-      message: "Please select a valid account type"
-    })).default("checking"),
+    schema
+      .pipe(
+        z.enum(accountTypeEnum, {
+          message: "Please select a valid account type",
+        })
+      )
+      .default("checking"),
   institution: (schema) =>
     schema
       .transform((val) => val?.trim())
@@ -138,10 +142,7 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .nullable(),
   accountIcon: (schema) =>
     schema
-      .pipe(z.string().refine(
-        (val) => !val || isValidIconName(val),
-        "Invalid icon selection"
-      ))
+      .pipe(z.string().refine((val) => !val || isValidIconName(val), "Invalid icon selection"))
       .optional()
       .nullable(),
   accountColor: (schema) =>
@@ -149,16 +150,14 @@ export const formInsertAccountSchema = createInsertSchema(accounts, {
       .pipe(z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex code"))
       .optional()
       .nullable(),
-  initialBalance: (schema) =>
-    schema.pipe(z.number()).default(0.0),
+  initialBalance: (schema) => schema.pipe(z.number()).default(0.0),
   accountNumberLast4: (schema) =>
     schema
       .transform((val) => val?.trim())
       .pipe(z.string().regex(/^\d{4}$/, "Account number must be exactly 4 digits"))
       .optional()
       .nullable(),
-  onBudget: (schema) =>
-    schema.pipe(z.boolean()).default(true),
+  onBudget: (schema) => schema.pipe(z.boolean()).default(true),
   debtLimit: (schema) =>
     schema
       .pipe(z.number().positive("Credit limit must be a positive number"))
@@ -222,10 +221,7 @@ export const formUpdateAccountSchema = z.object({
     .nullable(),
   accountIcon: z
     .string()
-    .refine(
-      (val) => !val || isValidIconName(val),
-      "Invalid icon selection"
-    )
+    .refine((val) => !val || isValidIconName(val), "Invalid icon selection")
     .optional()
     .nullable(),
   accountColor: z
@@ -241,11 +237,7 @@ export const formUpdateAccountSchema = z.object({
     .optional()
     .nullable(),
   onBudget: z.boolean().optional(),
-  debtLimit: z
-    .number()
-    .positive("Credit limit must be a positive number")
-    .optional()
-    .nullable(),
+  debtLimit: z.number().positive("Credit limit must be a positive number").optional().nullable(),
   minimumPayment: z
     .number()
     .positive("Minimum payment must be a positive number")
@@ -287,13 +279,13 @@ export type RemoveAccountSchema = typeof removeAccountSchema;
 
 // Helper functions for account classification
 export function isDebtAccount(accountType: AccountType): boolean {
-  return accountType === 'credit_card' || accountType === 'loan';
+  return accountType === "credit_card" || accountType === "loan";
 }
 
 export function isHealthSavingsAccount(accountType: AccountType): boolean {
-  return accountType === 'hsa';
+  return accountType === "hsa";
 }
 
-export function getAccountNature(accountType: AccountType): 'asset' | 'liability' {
-  return isDebtAccount(accountType) ? 'liability' : 'asset';
+export function getAccountNature(accountType: AccountType): "asset" | "liability" {
+  return isDebtAccount(accountType) ? "liability" : "asset";
 }

@@ -23,13 +23,13 @@ const categories = CategoriesState.get();
 const isUpdate = categoryId && categoryId > 0;
 
 // Initialize form data
-let initialData = { name: '', notes: '' };
+let initialData = {name: '', notes: ''};
 if (isUpdate && categoryId) {
   const existingCategory = categories.getById(categoryId);
   if (existingCategory) {
     initialData = {
       name: existingCategory.name || '',
-      notes: existingCategory.notes || ''
+      notes: existingCategory.notes || '',
     };
   }
 }

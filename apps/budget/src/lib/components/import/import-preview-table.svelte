@@ -21,7 +21,14 @@ interface Props {
   onSelectionChange?: (selected: Set<number>) => void;
 }
 
-let {data, fileName, onNext, onBack, selectedRows = $bindable(new Set()), onSelectionChange}: Props = $props();
+let {
+  data,
+  fileName,
+  onNext,
+  onBack,
+  selectedRows = $bindable(new Set()),
+  onSelectionChange,
+}: Props = $props();
 
 // Track if we've already initialized to prevent infinite loop
 let hasInitialized = false;
@@ -45,12 +52,8 @@ const validRowCount = $derived(
   data.filter((row) => row.validationStatus === 'valid' || row.validationStatus === 'pending')
     .length
 );
-const invalidRowCount = $derived(
-  data.filter((row) => row.validationStatus === 'invalid').length
-);
-const warningRowCount = $derived(
-  data.filter((row) => row.validationStatus === 'warning').length
-);
+const invalidRowCount = $derived(data.filter((row) => row.validationStatus === 'invalid').length);
+const warningRowCount = $derived(data.filter((row) => row.validationStatus === 'warning').length);
 const selectedCount = $derived(selectedRows.size);
 
 function getStatusIcon(status: string) {
@@ -84,7 +87,7 @@ const columns = $derived(() => {
   if (data.length === 0) return [];
   // Find first row with normalized data that has more than just date
   // (skip beginning/ending balance rows that only have date)
-  const firstValidRow = data.find(row => {
+  const firstValidRow = data.find((row) => {
     const keys = Object.keys(row.normalizedData || {});
     return keys.length > 1; // Must have more than just 'date'
   });
@@ -105,19 +108,19 @@ function toggleRowSelection(rowIndex: number) {
 }
 
 function toggleAllRows() {
-  const selectableRows = data.filter(row => row.validationStatus !== 'invalid');
+  const selectableRows = data.filter((row) => row.validationStatus !== 'invalid');
   if (selectedRows.size === selectableRows.length) {
     // Deselect all
     selectedRows = new Set();
   } else {
     // Select all valid and warning rows
-    selectedRows = new Set(selectableRows.map(row => row.rowIndex));
+    selectedRows = new Set(selectableRows.map((row) => row.rowIndex));
   }
   onSelectionChange?.(selectedRows);
 }
 
 const allSelectableRowsSelected = $derived(() => {
-  const selectableRows = data.filter(row => row.validationStatus !== 'invalid');
+  const selectableRows = data.filter((row) => row.validationStatus !== 'invalid');
   return selectableRows.length > 0 && selectedRows.size === selectableRows.length;
 });
 
@@ -136,12 +139,12 @@ const someRowsSelected = $derived(() => {
   </div>
 
   <!-- Summary Stats -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
     <Card.Root>
       <Card.Content class="p-6">
         <div class="text-center">
           <div class="text-3xl font-bold">{data.length}</div>
-          <div class="text-sm text-muted-foreground mt-1">Total Rows</div>
+          <div class="text-muted-foreground mt-1 text-sm">Total Rows</div>
         </div>
       </Card.Content>
     </Card.Root>
@@ -150,7 +153,7 @@ const someRowsSelected = $derived(() => {
       <Card.Content class="p-6">
         <div class="text-center">
           <div class="text-3xl font-bold text-green-600">{validRowCount}</div>
-          <div class="text-sm text-muted-foreground mt-1">Valid Rows</div>
+          <div class="text-muted-foreground mt-1 text-sm">Valid Rows</div>
         </div>
       </Card.Content>
     </Card.Root>
@@ -159,7 +162,7 @@ const someRowsSelected = $derived(() => {
       <Card.Content class="p-6">
         <div class="text-center">
           <div class="text-3xl font-bold text-yellow-600">{warningRowCount}</div>
-          <div class="text-sm text-muted-foreground mt-1">Warnings</div>
+          <div class="text-muted-foreground mt-1 text-sm">Warnings</div>
         </div>
       </Card.Content>
     </Card.Root>
@@ -168,7 +171,7 @@ const someRowsSelected = $derived(() => {
       <Card.Content class="p-6">
         <div class="text-center">
           <div class="text-3xl font-bold text-blue-600">{selectedCount}</div>
-          <div class="text-sm text-muted-foreground mt-1">Selected</div>
+          <div class="text-muted-foreground mt-1 text-sm">Selected</div>
         </div>
       </Card.Content>
     </Card.Root>
@@ -192,8 +195,7 @@ const someRowsSelected = $derived(() => {
                   checked={allSelectableRowsSelected()}
                   indeterminate={someRowsSelected()}
                   onCheckedChange={toggleAllRows}
-                  aria-label="Select all rows"
-                />
+                  aria-label="Select all rows" />
               </Table.Head>
               <Table.Head class="w-12">#</Table.Head>
               <Table.Head class="w-20">Status</Table.Head>
@@ -214,20 +216,17 @@ const someRowsSelected = $derived(() => {
                     checked={isSelected}
                     disabled={isInvalid}
                     onCheckedChange={() => toggleRowSelection(row.rowIndex)}
-                    aria-label="Select row {row.rowIndex + 1}"
-                  />
+                    aria-label="Select row {row.rowIndex + 1}" />
                 </Table.Cell>
                 <Table.Cell class="text-muted-foreground">
                   {row.rowIndex + 1}
                 </Table.Cell>
                 <Table.Cell>
                   <div class="flex items-center gap-2">
-                    <StatusIcon
-                      class={`h-4 w-4 ${getStatusColor(row.validationStatus)}`}
-                    />
+                    <StatusIcon class={`h-4 w-4 ${getStatusColor(row.validationStatus)}`} />
                     {#if hasWarning && row.validationErrors}
                       <Badge variant="outline" class="text-xs">
-                        {row.validationErrors.filter(e => e.severity === 'warning').length} warning(s)
+                        {row.validationErrors.filter((e) => e.severity === 'warning').length} warning(s)
                       </Badge>
                     {/if}
                   </div>
@@ -262,16 +261,12 @@ const someRowsSelected = $derived(() => {
 
   <!-- Navigation -->
   <div class="flex items-center justify-between">
-    <Button variant="outline" onclick={onBack}>
-      Back
-    </Button>
+    <Button variant="outline" onclick={onBack}>Back</Button>
     <div class="flex items-center gap-3">
       {#if selectedCount === 0}
-        <p class="text-sm text-muted-foreground">
-          No rows selected
-        </p>
+        <p class="text-muted-foreground text-sm">No rows selected</p>
       {:else}
-        <p class="text-sm text-muted-foreground">
+        <p class="text-muted-foreground text-sm">
           {selectedCount} row{selectedCount !== 1 ? 's' : ''} will be imported
           {#if invalidRowCount > 0}
             · {invalidRowCount} invalid row{invalidRowCount !== 1 ? 's' : ''} skipped

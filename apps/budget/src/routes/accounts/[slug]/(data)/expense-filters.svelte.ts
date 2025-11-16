@@ -1,8 +1,8 @@
-import type { ExpenseFormat } from "./expense-columns.svelte";
-import { getSpecialDateValue } from "$lib/utils";
-import type { DateValue } from "@internationalized/date";
-import { dateDifference, isSamePeriod, parseISOString } from "$lib/utils/dates";
-import type { ColumnFiltersState, Row, Updater } from "@tanstack/table-core";
+import type {ExpenseFormat} from "./expense-columns.svelte";
+import {getSpecialDateValue} from "$lib/utils";
+import type {DateValue} from "@internationalized/date";
+import {dateDifference, isSamePeriod, parseISOString} from "$lib/utils/dates";
+import type {ColumnFiltersState, Row, Updater} from "@tanstack/table-core";
 
 function compareDate(originalDate: DateValue, compareDate: string) {
   const [range, stringDate] = compareDate.includes(":")
@@ -13,16 +13,16 @@ function compareDate(originalDate: DateValue, compareDate: string) {
 
   switch (range) {
     case "month":
-      return dateDifference(originalDate, date, 'months');
+      return dateDifference(originalDate, date, "months");
     case "quarter":
-      return dateDifference(originalDate, date, 'quarters');
+      return dateDifference(originalDate, date, "quarters");
     case "half-year":
-      return Math.floor(dateDifference(originalDate, date, 'months') / 6);
+      return Math.floor(dateDifference(originalDate, date, "months") / 6);
     case "year":
-      return dateDifference(originalDate, date, 'years');
+      return dateDifference(originalDate, date, "years");
     case "day":
     default:
-      return dateDifference(originalDate, date, 'days');
+      return dateDifference(originalDate, date, "days");
   }
 }
 
@@ -35,16 +35,16 @@ function compareDateInterval(originalDate: DateValue, compareDate: string) {
 
   switch (range) {
     case "month":
-      return isSamePeriod(originalDate, date, 'month');
+      return isSamePeriod(originalDate, date, "month");
     case "quarter":
-      return isSamePeriod(originalDate, date, 'quarter');
+      return isSamePeriod(originalDate, date, "quarter");
     case "half-year":
       return null;
     case "year":
-      return isSamePeriod(originalDate, date, 'year');
+      return isSamePeriod(originalDate, date, "year");
     case "day":
     default:
-      return isSamePeriod(originalDate, date, 'day');
+      return isSamePeriod(originalDate, date, "day");
   }
 }
 
@@ -69,8 +69,8 @@ export const filters = {
     addMeta: (meta: any) => void
   ) => {
     // Handle new DateFilterValue format with operators
-    if (filterValue && typeof filterValue === 'object' && 'operator' in filterValue) {
-      if (filterValue.operator === 'before' && filterValue.date) {
+    if (filterValue && typeof filterValue === "object" && "operator" in filterValue) {
+      if (filterValue.operator === "before" && filterValue.date) {
         const comparison = compareDate(row.original.date, filterValue.date);
         return comparison !== null && comparison < 0;
       }
@@ -89,7 +89,10 @@ export const filters = {
   dateAfter: (
     row: Row<ExpenseFormat>,
     columnId: string,
-    filterValue: Set<string> | {operator: string; date?: string} | Set<{operator: string; date?: string}>,
+    filterValue:
+      | Set<string>
+      | {operator: string; date?: string}
+      | Set<{operator: string; date?: string}>,
     addMeta: (meta: any) => void
   ) => {
     // Handle Set (from view system)
@@ -99,8 +102,8 @@ export const filters = {
 
       const firstValue = Array.from(setFilter.values())[0];
       // Check if it's a Set of objects with operator
-      if (typeof firstValue === 'object' && firstValue !== null && 'operator' in firstValue) {
-        if (firstValue.operator === 'after' && firstValue.date) {
+      if (typeof firstValue === "object" && firstValue !== null && "operator" in firstValue) {
+        if (firstValue.operator === "after" && firstValue.date) {
           const comparison = compareDate(row.original.date, firstValue.date);
           return comparison !== null && comparison > 0;
         }
@@ -114,8 +117,8 @@ export const filters = {
     }
 
     // Handle direct object format
-    if (filterValue && typeof filterValue === 'object' && 'operator' in filterValue) {
-      if (filterValue.operator === 'after' && filterValue.date) {
+    if (filterValue && typeof filterValue === "object" && "operator" in filterValue) {
+      if (filterValue.operator === "after" && filterValue.date) {
         const comparison = compareDate(row.original.date, filterValue.date);
         return comparison !== null && comparison > 0;
       }
@@ -131,7 +134,7 @@ export const filters = {
     filterValue: {operator: string; from?: string; to?: string},
     addMeta: (meta: any) => void
   ) => {
-    if (!filterValue || filterValue.operator !== 'between') return true;
+    if (!filterValue || filterValue.operator !== "between") return true;
     if (!filterValue.from || !filterValue.to) return true;
 
     const fromComparison = compareDate(row.original.date, filterValue.from) || 0;
@@ -157,7 +160,10 @@ export const filters = {
   dateIn: (
     row: Row<ExpenseFormat>,
     columnId: string,
-    filterValue: Set<string> | Set<{operator: string; date?: string; from?: string; to?: string; values?: Set<string>}> | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
+    filterValue:
+      | Set<string>
+      | Set<{operator: string; date?: string; from?: string; to?: string; values?: Set<string>}>
+      | {operator: string; date?: string; from?: string; to?: string; values?: Set<string>},
     addMeta: (meta: any) => void
   ) => {
     // Handle Set (from view system)
@@ -167,12 +173,18 @@ export const filters = {
 
       const firstValue = Array.from(setFilter.values())[0];
       // Check if it's a Set of objects with operator
-      if (typeof firstValue === 'object' && firstValue !== null && 'operator' in firstValue) {
-        const operatorValue = firstValue as {operator: string; date?: string; from?: string; to?: string; values?: Set<string>};
+      if (typeof firstValue === "object" && firstValue !== null && "operator" in firstValue) {
+        const operatorValue = firstValue as {
+          operator: string;
+          date?: string;
+          from?: string;
+          to?: string;
+          values?: Set<string>;
+        };
 
         // Handle different operators
         switch (operatorValue.operator) {
-          case 'in':
+          case "in":
             if (operatorValue.values) {
               return operatorValue.values.size === 0
                 ? true
@@ -183,21 +195,21 @@ export const filters = {
             }
             return true;
 
-          case 'after':
+          case "after":
             if (operatorValue.date) {
               const comparison = compareDate(row.original.date, operatorValue.date);
               return comparison !== null && comparison > 0;
             }
             return true;
 
-          case 'before':
+          case "before":
             if (operatorValue.date) {
               const comparison = compareDate(row.original.date, operatorValue.date);
               return comparison !== null && comparison < 0;
             }
             return true;
 
-          case 'between':
+          case "between":
             if (operatorValue.from && operatorValue.to) {
               const fromComparison = compareDate(row.original.date, operatorValue.from) || 0;
               const toComparison = compareDate(row.original.date, operatorValue.to) || 0;
@@ -218,8 +230,8 @@ export const filters = {
     }
 
     // Handle direct object format
-    if (filterValue && typeof filterValue === 'object' && 'operator' in filterValue) {
-      if (filterValue.operator === 'in' && filterValue.values) {
+    if (filterValue && typeof filterValue === "object" && "operator" in filterValue) {
+      if (filterValue.operator === "in" && filterValue.values) {
         return filterValue.values.size === 0
           ? true
           : Array.from(filterValue.values.values()).some((date: string) => {
@@ -275,7 +287,7 @@ export const filters = {
     if (!filterValue || filterValue.size === 0) return true;
     const value = row.original[columnId as keyof ExpenseFormat];
     // Handle claimStatus which might be undefined
-    const actualValue = value || 'not_submitted';
+    const actualValue = value || "not_submitted";
     return filterValue.has(actualValue as string | number);
   },
 
@@ -288,7 +300,7 @@ export const filters = {
     if (!filterValue || filterValue.size === 0) return true;
     const value = row.original[columnId as keyof ExpenseFormat];
     // Handle claimStatus which might be undefined
-    const actualValue = value || 'not_submitted';
+    const actualValue = value || "not_submitted";
     return !filterValue.has(actualValue as string | number);
   },
 };

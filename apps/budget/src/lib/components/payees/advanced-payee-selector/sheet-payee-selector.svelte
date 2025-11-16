@@ -4,23 +4,22 @@ import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-shee
 import {Input} from '$lib/components/ui/input';
 import {Badge} from '$lib/components/ui/badge';
 import {Separator} from '$lib/components/ui/separator';
-import {User, Search, ChevronDown, ChevronRight, Check, Clock, TrendingUp} from '@lucide/svelte/icons';
+import {
+  User,
+  Search,
+  ChevronDown,
+  ChevronRight,
+  Check,
+  Clock,
+  TrendingUp,
+} from '@lucide/svelte/icons';
 import Fuse from 'fuse.js';
 import {PayeesState} from '$lib/states/entities/payees.svelte';
 import {PayeeCategoriesState} from '$lib/states/entities/payee-categories.svelte';
 import {cn} from '$lib/utils';
 import type {Payee} from '$lib/schema/payees';
-import type {
-  TransactionContext,
-  GroupStrategy,
-  DisplayMode,
-} from './types';
-import {
-  groupPayees,
-  getRecentPayees,
-  saveToRecentPayees,
-  formatLastUsed,
-} from './utils';
+import type {TransactionContext, GroupStrategy, DisplayMode} from './types';
+import {groupPayees, getRecentPayees, saveToRecentPayees, formatLastUsed} from './utils';
 
 interface Props {
   value?: number | null;
@@ -156,210 +155,202 @@ function getTypeLabel(type?: string | null): string {
       <span class="truncate">{selectedPayee?.name || placeholder}</span>
     {/snippet}
 
-  {#snippet header()}
-    <div class="space-y-4">
-      <div>
-        <h2 class="text-lg font-semibold">Select Payee</h2>
-        <p class="text-sm text-muted-foreground">
-          Choose a payee or search to find one
-        </p>
-      </div>
+    {#snippet header()}
+      <div class="space-y-4">
+        <div>
+          <h2 class="text-lg font-semibold">Select Payee</h2>
+          <p class="text-muted-foreground text-sm">Choose a payee or search to find one</p>
+        </div>
 
-      <div class="relative">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Search payees..."
-          bind:value={searchValue}
-          class="pl-9"
-        />
+        <div class="relative">
+          <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <Input type="text" placeholder="Search payees..." bind:value={searchValue} class="pl-9" />
+        </div>
       </div>
-    </div>
-  {/snippet}
+    {/snippet}
 
-  {#snippet content()}
-    <div class="space-y-6">
-      <!-- Selected Payee (if any) -->
-      {#if selectedPayee}
-        <div class="space-y-2">
-          <div class="flex items-center justify-between text-sm font-medium">
-            <span>Current Selection</span>
-            <Button variant="ghost" size="sm" onclick={handleClear} class="h-7 text-xs">
-              Clear
-            </Button>
-          </div>
-          <div class="rounded-lg border bg-muted/50 p-3">
-            <div class="flex items-center gap-3">
-              <Check class="h-5 w-5 text-primary" />
-              <div class="flex-1 min-w-0">
-                <p class="font-medium truncate">{selectedPayee.name}</p>
-                <p class="text-xs text-muted-foreground">
-                  {getTypeLabel(selectedPayee.payeeType)}
-                </p>
+    {#snippet content()}
+      <div class="space-y-6">
+        <!-- Selected Payee (if any) -->
+        {#if selectedPayee}
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-sm font-medium">
+              <span>Current Selection</span>
+              <Button variant="ghost" size="sm" onclick={handleClear} class="h-7 text-xs">
+                Clear
+              </Button>
+            </div>
+            <div class="bg-muted/50 rounded-lg border p-3">
+              <div class="flex items-center gap-3">
+                <Check class="text-primary h-5 w-5" />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate font-medium">{selectedPayee.name}</p>
+                  <p class="text-muted-foreground text-xs">
+                    {getTypeLabel(selectedPayee.payeeType)}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <Separator />
-      {/if}
-
-      <!-- Quick Access: Recent Payees -->
-      {#if showQuickAccess && recentPayees.length > 0 && !searchValue}
-        <div class="space-y-3">
-          <button
-            type="button"
-            onclick={() => toggleGroup('Recent')}
-            class="flex items-center gap-2 text-sm font-semibold w-full hover:text-primary transition-colors">
-            {#if isGroupExpanded('Recent')}
-              <ChevronDown class="h-4 w-4" />
-            {:else}
-              <ChevronRight class="h-4 w-4" />
-            {/if}
-            <Clock class="h-4 w-4" />
-            Recent
-            <Badge variant="secondary" class="ml-auto text-xs">{recentPayees.length}</Badge>
-          </button>
-
-          {#if isGroupExpanded('Recent')}
-            <div class="grid grid-cols-2 gap-2">
-              {#each recentPayees as payee (payee.id)}
-                <button
-                  type="button"
-                  onclick={() => handleSelect(payee.id)}
-                  class={cn(
-                    'rounded-lg border p-3 text-left transition-all hover:border-primary hover:bg-accent',
-                    value === payee.id && 'border-primary bg-accent'
-                  )}>
-                  <p class="font-medium text-sm truncate">{payee.name}</p>
-                  <p class="text-xs text-muted-foreground">{getTypeLabel(payee.payeeType)}</p>
-                </button>
-              {/each}
-            </div>
-          {/if}
-        </div>
-      {/if}
-
-      <!-- Quick Access: Frequent Payees -->
-      {#if showQuickAccess && frequentPayees.length > 0 && !searchValue}
-        <div class="space-y-3">
-          <button
-            type="button"
-            onclick={() => toggleGroup('Frequent')}
-            class="flex items-center gap-2 text-sm font-semibold w-full hover:text-primary transition-colors">
-            {#if isGroupExpanded('Frequent')}
-              <ChevronDown class="h-4 w-4" />
-            {:else}
-              <ChevronRight class="h-4 w-4" />
-            {/if}
-            <TrendingUp class="h-4 w-4" />
-            Frequently Used
-            <Badge variant="secondary" class="ml-auto text-xs">{frequentPayees.length}</Badge>
-          </button>
-
-          {#if isGroupExpanded('Frequent')}
-            <div class="grid grid-cols-2 gap-2">
-              {#each frequentPayees as payee (payee.id)}
-                <button
-                  type="button"
-                  onclick={() => handleSelect(payee.id)}
-                  class={cn(
-                    'rounded-lg border p-3 text-left transition-all hover:border-primary hover:bg-accent',
-                    value === payee.id && 'border-primary bg-accent'
-                  )}>
-                  <p class="font-medium text-sm truncate">{payee.name}</p>
-                  <p class="text-xs text-muted-foreground mt-1">{getTypeLabel(payee.payeeType)}</p>
-                </button>
-              {/each}
-            </div>
-          {/if}
-        </div>
-      {/if}
-
-      <!-- Separator between quick access and main list -->
-      {#if showQuickAccess && (recentPayees.length > 0 || frequentPayees.length > 0) && !searchValue}
-        <Separator />
-      {/if}
-
-      <!-- Main Grouped List -->
-      <div class="space-y-4">
-        {#if searchValue}
-          <p class="text-sm font-semibold">
-            Search Results
-            <Badge variant="secondary" class="ml-2 text-xs">{filteredPayees.length}</Badge>
-          </p>
+          <Separator />
         {/if}
 
-        {#if groupedPayees.length === 0}
-          <div class="text-center py-8">
-            <p class="text-sm text-muted-foreground">No payees found</p>
-          </div>
-        {:else}
-          {#each groupedPayees as group (group.label)}
-            <div class="space-y-2">
-              <!-- Group Header -->
-              <button
-                type="button"
-                onclick={() => toggleGroup(group.label)}
-                class="flex items-center gap-2 text-sm font-semibold w-full hover:text-primary transition-colors">
-                {#if isGroupExpanded(group.label)}
-                  <ChevronDown class="h-4 w-4" />
-                {:else}
-                  <ChevronRight class="h-4 w-4" />
-                {/if}
-                {group.label}
-                <Badge variant="secondary" class="ml-auto text-xs">{group.count}</Badge>
-              </button>
+        <!-- Quick Access: Recent Payees -->
+        {#if showQuickAccess && recentPayees.length > 0 && !searchValue}
+          <div class="space-y-3">
+            <button
+              type="button"
+              onclick={() => toggleGroup('Recent')}
+              class="hover:text-primary flex w-full items-center gap-2 text-sm font-semibold transition-colors">
+              {#if isGroupExpanded('Recent')}
+                <ChevronDown class="h-4 w-4" />
+              {:else}
+                <ChevronRight class="h-4 w-4" />
+              {/if}
+              <Clock class="h-4 w-4" />
+              Recent
+              <Badge variant="secondary" class="ml-auto text-xs">{recentPayees.length}</Badge>
+            </button>
 
-              <!-- Group Items -->
-              {#if isGroupExpanded(group.label)}
-                <div class="space-y-1">
-                  {#each group.payees as payee (payee.id)}
-                    <button
-                      type="button"
-                      onclick={() => handleSelect(payee.id)}
-                      class={cn(
-                        'w-full rounded-lg border p-3 text-left transition-all hover:border-primary hover:bg-accent',
-                        value === payee.id && 'border-primary bg-accent'
-                      )}>
-                      <div class="flex items-center gap-3">
-                        <Check
-                          class={cn(
-                            'h-4 w-4 shrink-0',
-                            value === payee.id ? 'opacity-100 text-primary' : 'opacity-0'
-                          )}
-                        />
-                        <div class="flex-1 min-w-0">
-                          <p class="font-medium text-sm truncate">{payee.name}</p>
-                          <div class="flex items-center gap-2 mt-0.5">
-                            <p class="text-xs text-muted-foreground">
-                              {getTypeLabel(payee.payeeType)}
-                            </p>
-                            {#if payee.lastTransactionDate}
-                              <span class="text-xs text-muted-foreground">•</span>
-                              <p class="text-xs text-muted-foreground">
-                                {formatLastUsed(payee.lastTransactionDate)}
+            {#if isGroupExpanded('Recent')}
+              <div class="grid grid-cols-2 gap-2">
+                {#each recentPayees as payee (payee.id)}
+                  <button
+                    type="button"
+                    onclick={() => handleSelect(payee.id)}
+                    class={cn(
+                      'hover:border-primary hover:bg-accent rounded-lg border p-3 text-left transition-all',
+                      value === payee.id && 'border-primary bg-accent'
+                    )}>
+                    <p class="truncate text-sm font-medium">{payee.name}</p>
+                    <p class="text-muted-foreground text-xs">{getTypeLabel(payee.payeeType)}</p>
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/if}
+
+        <!-- Quick Access: Frequent Payees -->
+        {#if showQuickAccess && frequentPayees.length > 0 && !searchValue}
+          <div class="space-y-3">
+            <button
+              type="button"
+              onclick={() => toggleGroup('Frequent')}
+              class="hover:text-primary flex w-full items-center gap-2 text-sm font-semibold transition-colors">
+              {#if isGroupExpanded('Frequent')}
+                <ChevronDown class="h-4 w-4" />
+              {:else}
+                <ChevronRight class="h-4 w-4" />
+              {/if}
+              <TrendingUp class="h-4 w-4" />
+              Frequently Used
+              <Badge variant="secondary" class="ml-auto text-xs">{frequentPayees.length}</Badge>
+            </button>
+
+            {#if isGroupExpanded('Frequent')}
+              <div class="grid grid-cols-2 gap-2">
+                {#each frequentPayees as payee (payee.id)}
+                  <button
+                    type="button"
+                    onclick={() => handleSelect(payee.id)}
+                    class={cn(
+                      'hover:border-primary hover:bg-accent rounded-lg border p-3 text-left transition-all',
+                      value === payee.id && 'border-primary bg-accent'
+                    )}>
+                    <p class="truncate text-sm font-medium">{payee.name}</p>
+                    <p class="text-muted-foreground mt-1 text-xs">
+                      {getTypeLabel(payee.payeeType)}
+                    </p>
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/if}
+
+        <!-- Separator between quick access and main list -->
+        {#if showQuickAccess && (recentPayees.length > 0 || frequentPayees.length > 0) && !searchValue}
+          <Separator />
+        {/if}
+
+        <!-- Main Grouped List -->
+        <div class="space-y-4">
+          {#if searchValue}
+            <p class="text-sm font-semibold">
+              Search Results
+              <Badge variant="secondary" class="ml-2 text-xs">{filteredPayees.length}</Badge>
+            </p>
+          {/if}
+
+          {#if groupedPayees.length === 0}
+            <div class="py-8 text-center">
+              <p class="text-muted-foreground text-sm">No payees found</p>
+            </div>
+          {:else}
+            {#each groupedPayees as group (group.label)}
+              <div class="space-y-2">
+                <!-- Group Header -->
+                <button
+                  type="button"
+                  onclick={() => toggleGroup(group.label)}
+                  class="hover:text-primary flex w-full items-center gap-2 text-sm font-semibold transition-colors">
+                  {#if isGroupExpanded(group.label)}
+                    <ChevronDown class="h-4 w-4" />
+                  {:else}
+                    <ChevronRight class="h-4 w-4" />
+                  {/if}
+                  {group.label}
+                  <Badge variant="secondary" class="ml-auto text-xs">{group.count}</Badge>
+                </button>
+
+                <!-- Group Items -->
+                {#if isGroupExpanded(group.label)}
+                  <div class="space-y-1">
+                    {#each group.payees as payee (payee.id)}
+                      <button
+                        type="button"
+                        onclick={() => handleSelect(payee.id)}
+                        class={cn(
+                          'hover:border-primary hover:bg-accent w-full rounded-lg border p-3 text-left transition-all',
+                          value === payee.id && 'border-primary bg-accent'
+                        )}>
+                        <div class="flex items-center gap-3">
+                          <Check
+                            class={cn(
+                              'h-4 w-4 shrink-0',
+                              value === payee.id ? 'text-primary opacity-100' : 'opacity-0'
+                            )} />
+                          <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-medium">{payee.name}</p>
+                            <div class="mt-0.5 flex items-center gap-2">
+                              <p class="text-muted-foreground text-xs">
+                                {getTypeLabel(payee.payeeType)}
                               </p>
-                            {/if}
+                              {#if payee.lastTransactionDate}
+                                <span class="text-muted-foreground text-xs">•</span>
+                                <p class="text-muted-foreground text-xs">
+                                  {formatLastUsed(payee.lastTransactionDate)}
+                                </p>
+                              {/if}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  {/each}
-                </div>
-              {/if}
-            </div>
-          {/each}
-        {/if}
+                      </button>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          {/if}
+        </div>
       </div>
-    </div>
-  {/snippet}
+    {/snippet}
 
-  {#snippet footer()}
-    {#if allowCreate}
-      <Button variant="outline" class="w-full">
-        Create New Payee
-      </Button>
-    {/if}
-  {/snippet}
-</ResponsiveSheet>
+    {#snippet footer()}
+      {#if allowCreate}
+        <Button variant="outline" class="w-full">Create New Payee</Button>
+      {/if}
+    {/snippet}
+  </ResponsiveSheet>
 </div>

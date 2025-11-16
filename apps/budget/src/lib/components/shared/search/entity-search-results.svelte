@@ -52,7 +52,7 @@ let {
   onReorder,
   gridCard,
   listView,
-  gridColumns = 'grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+  gridColumns = 'grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
 }: Props = $props();
 </script>
 
@@ -61,7 +61,7 @@ let {
   {#if viewMode === 'grid'}
     <div class="grid {gridColumns}">
       {#each Array(8) as _}
-        <div class="rounded-lg border p-4 space-y-3">
+        <div class="space-y-3 rounded-lg border p-4">
           <Skeleton class="h-6 w-3/4" />
           <Skeleton class="h-4 w-full" />
           <div class="space-y-2">
@@ -100,13 +100,13 @@ let {
   {/if}
 {:else if entities.length === 0}
   <!-- Empty State -->
-  <div class="text-center py-12">
+  <div class="py-12 text-center">
     {#if emptyIcon}
       {@const Icon = emptyIcon}
-      <Icon class="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+      <Icon class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
     {/if}
-    <h3 class="text-lg font-medium text-muted-foreground mb-2">{emptyTitle}</h3>
-    <p class="text-sm text-muted-foreground">
+    <h3 class="text-muted-foreground mb-2 text-lg font-medium">{emptyTitle}</h3>
+    <p class="text-muted-foreground text-sm">
       {#if searchQuery && emptySearchDescription}
         {emptySearchDescription.replace('{query}', searchQuery)}
       {:else if searchQuery}
@@ -130,7 +130,7 @@ let {
   <!-- Fallback: Simple list -->
   <div class="space-y-2">
     {#each entities as entity}
-      <div class="p-4 border rounded-lg">
+      <div class="rounded-lg border p-4">
         <pre>{JSON.stringify(entity, null, 2)}</pre>
       </div>
     {/each}

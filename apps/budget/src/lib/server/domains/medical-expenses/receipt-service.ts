@@ -1,12 +1,12 @@
-import { ReceiptRepository } from "./receipt-repository";
-import { MedicalExpenseRepository } from "./repository";
-import type { ExpenseReceipt, ReceiptType } from "$lib/schema/expense-receipts";
-import { ALLOWED_RECEIPT_MIMES, MAX_RECEIPT_SIZE } from "$lib/schema/expense-receipts";
-import { ValidationError, NotFoundError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
-import { writeFile, mkdir, unlink } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
+import {ReceiptRepository} from "./receipt-repository";
+import {MedicalExpenseRepository} from "./repository";
+import type {ExpenseReceipt, ReceiptType} from "$lib/schema/expense-receipts";
+import {ALLOWED_RECEIPT_MIMES, MAX_RECEIPT_SIZE} from "$lib/schema/expense-receipts";
+import {ValidationError, NotFoundError} from "$lib/server/shared/types/errors";
+import {InputSanitizer} from "$lib/server/shared/validation";
+import {writeFile, mkdir, unlink} from "fs/promises";
+import {join} from "path";
+import {existsSync} from "fs";
 
 // Service input types
 export interface UploadReceiptData {
@@ -44,16 +44,12 @@ export class ReceiptService {
   private validateFile(file: File): void {
     // Check file size
     if (file.size > MAX_RECEIPT_SIZE) {
-      throw new ValidationError(
-        `File size must be less than ${MAX_RECEIPT_SIZE / 1024 / 1024}MB`
-      );
+      throw new ValidationError(`File size must be less than ${MAX_RECEIPT_SIZE / 1024 / 1024}MB`);
     }
 
     // Check MIME type
     if (!ALLOWED_RECEIPT_MIMES.includes(file.type as any)) {
-      throw new ValidationError(
-        "File type must be JPEG, PNG, WebP, or PDF"
-      );
+      throw new ValidationError("File type must be JPEG, PNG, WebP, or PDF");
     }
   }
 
@@ -64,11 +60,11 @@ export class ReceiptService {
   private generateStoragePath(medicalExpenseId: number, fileName: string): string {
     const now = new Date();
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, "0");
     const timestamp = now.getTime();
 
     // Sanitize filename to remove special characters
-    const sanitizedName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const sanitizedName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
 
     return join(
       year.toString(),
@@ -82,7 +78,7 @@ export class ReceiptService {
    */
   private async ensureDirectory(dirPath: string): Promise<void> {
     if (!existsSync(dirPath)) {
-      await mkdir(dirPath, { recursive: true });
+      await mkdir(dirPath, {recursive: true});
     }
   }
 
@@ -91,7 +87,7 @@ export class ReceiptService {
    */
   private async saveFile(file: File, storagePath: string): Promise<void> {
     const fullPath = join(this.uploadsDir, storagePath);
-    const dirPath = join(fullPath, '..');
+    const dirPath = join(fullPath, "..");
 
     // Ensure directory exists
     await this.ensureDirectory(dirPath);

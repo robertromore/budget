@@ -5,9 +5,9 @@
  * ML intelligence, contact management, subscriptions, and budget allocation.
  */
 
-import type { Payee, PayeeType, PaymentFrequency } from "$lib/schema/payees";
-import type { Category } from "$lib/schema/categories";
-import type { Budget } from "$lib/schema/budgets";
+import type {Payee, PayeeType, PaymentFrequency} from "$lib/schema/payees";
+import type {Category} from "$lib/schema/categories";
+import type {Budget} from "$lib/schema/budgets";
 
 /**
  * Subscription information for recurring payees
@@ -18,10 +18,10 @@ export interface SubscriptionInfo {
   cancellationInfo?: {
     url?: string;
     phone?: string;
-    method: 'online' | 'phone' | 'email';
+    method: "online" | "phone" | "email";
   };
   isActive: boolean;
-  billingCycle?: 'monthly' | 'quarterly' | 'yearly';
+  billingCycle?: "monthly" | "quarterly" | "yearly";
   trialEndDate?: string; // ISO date string
   notes?: string;
 }
@@ -205,8 +205,8 @@ export interface StandardizedAddress {
  */
 export interface ContactValidationResult {
   isValid: boolean;
-  errors: Array<{ field: string; message: string }>;
-  suggestions: Array<{ field: string; value: unknown; confidence: number }>;
+  errors: Array<{field: string; message: string}>;
+  suggestions: Array<{field: string; value: unknown; confidence: number}>;
 }
 
 /**
@@ -254,7 +254,12 @@ export interface FrequencyAnalysis {
  */
 export interface BehaviorChangeDetection {
   detected: boolean;
-  changeType: "category_shift" | "spending_pattern" | "frequency" | "seasonal_drift" | "amount_variance";
+  changeType:
+    | "category_shift"
+    | "spending_pattern"
+    | "frequency"
+    | "seasonal_drift"
+    | "amount_variance";
   significance: number; // 0-1 scale
   details: Record<string, unknown>;
   monitoringPlan?: {
@@ -297,7 +302,7 @@ export interface AppliedChange {
 export interface IntelligenceApplicationResult {
   applied: AppliedChange[];
   skipped: string[];
-  errors: Array<{ field: string; error: string }>;
+  errors: Array<{field: string; error: string}>;
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { Account } from "$lib/schema/accounts";
+import type {Account} from "$lib/schema/accounts";
 
 export type MetricId =
   // Credit Health
@@ -168,9 +168,9 @@ export const AVAILABLE_METRICS: MetricDefinition[] = [
   },
 ];
 
-export const DEFAULT_ENABLED_METRICS: MetricId[] = AVAILABLE_METRICS
-  .filter((m) => m.defaultEnabled)
-  .map((m) => m.id);
+export const DEFAULT_ENABLED_METRICS: MetricId[] = AVAILABLE_METRICS.filter(
+  (m) => m.defaultEnabled
+).map((m) => m.id);
 
 export function getEnabledMetrics(account: Account): MetricId[] {
   if (account.enabledMetrics) {
@@ -248,7 +248,7 @@ export function calculateAllMetrics(account: Account): CalculatedMetrics {
       dueDate = new Date(currentYear, currentMonth + 1, account.paymentDueDay);
     }
 
-    metrics.nextPaymentDue = dueDate.toISOString().split('T')[0];
+    metrics.nextPaymentDue = dueDate.toISOString().split("T")[0];
     metrics.daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   }
 

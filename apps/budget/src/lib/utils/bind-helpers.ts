@@ -22,11 +22,13 @@
 export function createRecordAccessors(
   record: Record<string, string>,
   key: string,
-  defaultValue: string = ''
+  defaultValue: string = ""
 ) {
   return {
     get: () => record[key] ?? defaultValue,
-    set: (value: string) => { record[key] = value; }
+    set: (value: string) => {
+      record[key] = value;
+    },
   };
 }
 
@@ -42,14 +44,12 @@ export function createRecordAccessors(
  * <Input bind:value={accessors.get, accessors.set}>
  * ```
  */
-export function createMapAccessors<K, V>(
-  map: Map<K, V>,
-  key: K,
-  defaultValue: V
-) {
+export function createMapAccessors<K, V>(map: Map<K, V>, key: K, defaultValue: V) {
   return {
     get: () => map.get(key) ?? defaultValue,
-    set: (value: V) => { map.set(key, value); }
+    set: (value: V) => {
+      map.set(key, value);
+    },
   };
 }
 
@@ -72,7 +72,9 @@ export function createNumericRecordAccessors(
 ) {
   return {
     get: () => record[key] ?? defaultValue,
-    set: (value: number) => { record[key] = value; }
+    set: (value: number) => {
+      record[key] = value;
+    },
   };
 }
 
@@ -91,12 +93,9 @@ export function createNumericRecordAccessors(
  * <NumberInput bind:value={accessors.get, accessors.set}>
  * ```
  */
-export function createTransformAccessors<T>(
-  getter: () => T,
-  setter: (value: T) => void
-) {
+export function createTransformAccessors<T>(getter: () => T, setter: (value: T) => void) {
   return {
     get: getter,
-    set: setter
+    set: setter,
   };
 }

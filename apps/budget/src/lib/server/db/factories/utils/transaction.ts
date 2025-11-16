@@ -19,9 +19,7 @@ import {db} from "../..";
  * });
  * ```
  */
-export async function withTransaction<T>(
-  fn: (tx: typeof db) => Promise<T>
-): Promise<T> {
+export async function withTransaction<T>(fn: (tx: typeof db) => Promise<T>): Promise<T> {
   return db.transaction(async (tx) => {
     try {
       return await fn(tx);

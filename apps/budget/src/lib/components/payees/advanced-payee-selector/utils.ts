@@ -1,42 +1,50 @@
-import type {Payee} from '$lib/schema/payees';
-import type {GroupStrategy, PayeeGroup, PayeeWithMetadata} from './types';
+import type {Payee} from "$lib/schema/payees";
+import type {GroupStrategy, PayeeGroup, PayeeWithMetadata} from "./types";
 
 /**
  * Group payees by the specified strategy
  */
-export function groupPayees(payees: Payee[], strategy: GroupStrategy, payeeCategoryMap?: Map<number, string>): PayeeGroup[] {
-  if (strategy === 'none') {
-    return [{
-      label: 'All Payees',
-      payees,
-      count: payees.length,
-      isExpanded: true
-    }];
+export function groupPayees(
+  payees: Payee[],
+  strategy: GroupStrategy,
+  payeeCategoryMap?: Map<number, string>
+): PayeeGroup[] {
+  if (strategy === "none") {
+    return [
+      {
+        label: "All Payees",
+        payees,
+        count: payees.length,
+        isExpanded: true,
+      },
+    ];
   }
 
-  if (strategy === 'type') {
+  if (strategy === "type") {
     return groupByType(payees);
   }
 
-  if (strategy === 'category') {
+  if (strategy === "category") {
     return groupByPayeeCategory(payees, payeeCategoryMap);
   }
 
-  if (strategy === 'alphabetical') {
+  if (strategy === "alphabetical") {
     return groupByAlphabet(payees);
   }
 
-  if (strategy === 'usage') {
+  if (strategy === "usage") {
     return groupByUsage(payees);
   }
 
   // Default to none
-  return [{
-    label: 'All Payees',
-    payees,
-    count: payees.length,
-    isExpanded: true
-  }];
+  return [
+    {
+      label: "All Payees",
+      payees,
+      count: payees.length,
+      isExpanded: true,
+    },
+  ];
 }
 
 /**
@@ -46,7 +54,7 @@ function groupByType(payees: Payee[]): PayeeGroup[] {
   const grouped = new Map<string, Payee[]>();
 
   for (const payee of payees) {
-    const type = payee.payeeType || 'other';
+    const type = payee.payeeType || "other";
     if (!grouped.has(type)) {
       grouped.set(type, []);
     }
@@ -59,14 +67,17 @@ function groupByType(payees: Payee[]): PayeeGroup[] {
       label: formatPayeeType(type),
       payees: sortPayeesByName(payees),
       count: payees.length,
-      isExpanded: true
+      isExpanded: true,
     }));
 }
 
 /**
  * Group payees by payee category (UI organization)
  */
-function groupByPayeeCategory(payees: Payee[], payeeCategoryMap?: Map<number, string>): PayeeGroup[] {
+function groupByPayeeCategory(
+  payees: Payee[],
+  payeeCategoryMap?: Map<number, string>
+): PayeeGroup[] {
   const grouped = new Map<string, Payee[]>();
   const uncategorized: Payee[] = [];
 
@@ -76,7 +87,8 @@ function groupByPayeeCategory(payees: Payee[], payeeCategoryMap?: Map<number, st
       continue;
     }
 
-    const categoryName = payeeCategoryMap?.get(payee.payeeCategoryId) || `Category ${payee.payeeCategoryId}`;
+    const categoryName =
+      payeeCategoryMap?.get(payee.payeeCategoryId) || `Category ${payee.payeeCategoryId}`;
     if (!grouped.has(categoryName)) {
       grouped.set(categoryName, []);
     }
@@ -89,16 +101,16 @@ function groupByPayeeCategory(payees: Payee[], payeeCategoryMap?: Map<number, st
       label: category,
       payees: sortPayeesByName(payees),
       count: payees.length,
-      isExpanded: true
+      isExpanded: true,
     }));
 
   // Add uncategorized group at the end if there are any
   if (uncategorized.length > 0) {
     groups.push({
-      label: 'Uncategorized',
+      label: "Uncategorized",
       payees: sortPayeesByName(uncategorized),
       count: uncategorized.length,
-      isExpanded: true
+      isExpanded: true,
     });
   }
 
@@ -112,8 +124,8 @@ function groupByAlphabet(payees: Payee[]): PayeeGroup[] {
   const grouped = new Map<string, Payee[]>();
 
   for (const payee of payees) {
-    const firstLetter = (payee.name?.[0] || '#').toUpperCase();
-    const key = /[A-Z]/.test(firstLetter) ? firstLetter : '#';
+    const firstLetter = (payee.name?.[0] || "#").toUpperCase();
+    const key = /[A-Z]/.test(firstLetter) ? firstLetter : "#";
     if (!grouped.has(key)) {
       grouped.set(key, []);
     }
@@ -122,15 +134,15 @@ function groupByAlphabet(payees: Payee[]): PayeeGroup[] {
 
   return Array.from(grouped.entries())
     .sort((a, b) => {
-      if (a[0] === '#') return 1;
-      if (b[0] === '#') return -1;
+      if (a[0] === "#") return 1;
+      if (b[0] === "#") return -1;
       return a[0].localeCompare(b[0]);
     })
     .map(([letter, payees]) => ({
       label: letter,
       payees: sortPayeesByName(payees),
       count: payees.length,
-      isExpanded: true
+      isExpanded: true,
     }));
 }
 
@@ -172,37 +184,37 @@ function groupByUsage(payees: Payee[]): PayeeGroup[] {
 
   if (frequent.length > 0) {
     groups.push({
-      label: 'Frequent',
+      label: "Frequent",
       payees: sortPayeesByName(frequent),
       count: frequent.length,
-      isExpanded: true
+      isExpanded: true,
     });
   }
 
   if (recent.length > 0) {
     groups.push({
-      label: 'Recent',
+      label: "Recent",
       payees: sortPayeesByName(recent),
       count: recent.length,
-      isExpanded: true
+      isExpanded: true,
     });
   }
 
   if (occasional.length > 0) {
     groups.push({
-      label: 'Occasional',
+      label: "Occasional",
       payees: sortPayeesByName(occasional),
       count: occasional.length,
-      isExpanded: false
+      isExpanded: false,
     });
   }
 
   if (rare.length > 0) {
     groups.push({
-      label: 'Rare',
+      label: "Rare",
       payees: sortPayeesByName(rare),
       count: rare.length,
-      isExpanded: false
+      isExpanded: false,
     });
   }
 
@@ -213,7 +225,7 @@ function groupByUsage(payees: Payee[]): PayeeGroup[] {
  * Sort payees by name alphabetically
  */
 export function sortPayeesByName(payees: Payee[]): Payee[] {
-  return [...payees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  return [...payees].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 }
 
 /**
@@ -231,7 +243,7 @@ export function sortPayeesByRelevance(payees: PayeeWithMetadata[]): PayeeWithMet
     if (scoreA !== scoreB) return scoreB - scoreA;
 
     // Then by name
-    return (a.name || '').localeCompare(b.name || '');
+    return (a.name || "").localeCompare(b.name || "");
   });
 }
 
@@ -240,13 +252,13 @@ export function sortPayeesByRelevance(payees: PayeeWithMetadata[]): PayeeWithMet
  */
 export function formatPayeeType(type: string): string {
   const typeMap: Record<string, string> = {
-    'merchant': 'Merchants',
-    'utility': 'Utilities',
-    'employer': 'Employers',
-    'financial_institution': 'Financial Institutions',
-    'government': 'Government',
-    'individual': 'Individuals',
-    'other': 'Other'
+    merchant: "Merchants",
+    utility: "Utilities",
+    employer: "Employers",
+    financial_institution: "Financial Institutions",
+    government: "Government",
+    individual: "Individuals",
+    other: "Other",
   };
 
   return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
@@ -257,11 +269,11 @@ export function formatPayeeType(type: string): string {
  */
 export function getRecentPayees(allPayees: Payee[], limit: number = 10): Payee[] {
   try {
-    const recentIds = JSON.parse(localStorage.getItem('recentPayeeIds') || '[]') as number[];
-    const payeeMap = new Map(allPayees.map(p => [p.id, p]));
+    const recentIds = JSON.parse(localStorage.getItem("recentPayeeIds") || "[]") as number[];
+    const payeeMap = new Map(allPayees.map((p) => [p.id, p]));
 
     return recentIds
-      .map(id => payeeMap.get(id))
+      .map((id) => payeeMap.get(id))
       .filter((p): p is Payee => p !== undefined)
       .slice(0, limit);
   } catch {
@@ -274,15 +286,15 @@ export function getRecentPayees(allPayees: Payee[], limit: number = 10): Payee[]
  */
 export function saveToRecentPayees(payeeId: number): void {
   try {
-    const recentIds = JSON.parse(localStorage.getItem('recentPayeeIds') || '[]') as number[];
+    const recentIds = JSON.parse(localStorage.getItem("recentPayeeIds") || "[]") as number[];
 
     // Remove if already exists
-    const filtered = recentIds.filter(id => id !== payeeId);
+    const filtered = recentIds.filter((id) => id !== payeeId);
 
     // Add to front
     const updated = [payeeId, ...filtered].slice(0, 20); // Keep last 20
 
-    localStorage.setItem('recentPayeeIds', JSON.stringify(updated));
+    localStorage.setItem("recentPayeeIds", JSON.stringify(updated));
   } catch {
     // Silently fail if localStorage unavailable
   }
@@ -293,7 +305,7 @@ export function saveToRecentPayees(payeeId: number): void {
  */
 export function getFrequentPayees(allPayees: Payee[], limit: number = 10): Payee[] {
   return [...allPayees]
-    .filter(p => p.paymentFrequency && p.paymentFrequency > 0)
+    .filter((p) => p.paymentFrequency && p.paymentFrequency > 0)
     .sort((a, b) => (b.paymentFrequency || 0) - (a.paymentFrequency || 0))
     .slice(0, limit);
 }
@@ -308,9 +320,9 @@ export function formatLastUsed(dateString: string): string {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    return 'Today';
+    return "Today";
   } else if (diffDays === 1) {
-    return 'Yesterday';
+    return "Yesterday";
   } else if (diffDays < 7) {
     return `${diffDays}d ago`;
   } else if (diffDays < 30) {

@@ -4,10 +4,10 @@ import {
   envelopeAllocations,
   envelopeTransfers,
 } from "$lib/schema/budgets/envelope-allocations";
-import { categories } from "$lib/schema/categories";
-import { db } from "$lib/server/db";
-import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { and, desc, eq, gt, sql } from "drizzle-orm";
+import {categories} from "$lib/schema/categories";
+import {db} from "$lib/server/db";
+import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
+import {and, desc, eq, gt, sql} from "drizzle-orm";
 
 export interface DeficitAnalysis {
   envelopeId: number;
@@ -89,7 +89,11 @@ export class DeficitRecoveryService {
     const daysSinceDeficit = await this.calculateDaysSinceDeficit(envelope);
     const deficitSeverity = this.calculateDeficitSeverity(envelope.deficitAmount, mergedPolicy);
     const suggestedSources = await this.findSuggestedSources(envelope, mergedPolicy);
-    const autoRecoveryOptions = await this.generateAutoRecoveryOptions(envelope, suggestedSources, mergedPolicy);
+    const autoRecoveryOptions = await this.generateAutoRecoveryOptions(
+      envelope,
+      suggestedSources,
+      mergedPolicy
+    );
 
     return {
       envelopeId,
@@ -164,7 +168,9 @@ export class DeficitRecoveryService {
           errors.push(`Cannot execute step: ${step.type} - requires manual intervention`);
         }
       } catch (error) {
-        errors.push(`Failed to execute step ${step.order}: ${error instanceof Error ? error.message : "Unknown error"}`);
+        errors.push(
+          `Failed to execute step ${step.order}: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
       }
     }
 
@@ -181,15 +187,15 @@ export class DeficitRecoveryService {
       .select()
       .from(envelopeAllocations)
       .where(
-        and(
-          eq(envelopeAllocations.budgetId, budgetId),
-          gt(envelopeAllocations.deficitAmount, 0)
-        )
+        and(eq(envelopeAllocations.budgetId, budgetId), gt(envelopeAllocations.deficitAmount, 0))
       )
       .orderBy(desc(envelopeAllocations.deficitAmount));
   }
 
-  async getSurplusEnvelopes(budgetId: number, minimumSurplus: number = 10): Promise<EnvelopeAllocation[]> {
+  async getSurplusEnvelopes(
+    budgetId: number,
+    minimumSurplus: number = 10
+  ): Promise<EnvelopeAllocation[]> {
     return await db
       .select()
       .from(envelopeAllocations)
@@ -359,7 +365,7 @@ export class DeficitRecoveryService {
     }
 
     // Emergency fund option
-    const emergencyFund = sources.find(s => (s.metadata as any)?.isEmergencyFund);
+    const emergencyFund = sources.find((s) => (s.metadata as any)?.isEmergencyFund);
     if (emergencyFund && policy.emergencyFundThreshold) {
       const availableEmergency = emergencyFund.availableAmount - policy.emergencyFundThreshold;
       if (availableEmergency > 0) {
@@ -410,7 +416,7 @@ export class DeficitRecoveryService {
 
       steps.push({
         type: stepType,
-        ...(option.sourceEnvelopeId != null && { sourceEnvelopeId: option.sourceEnvelopeId }),
+        ...(option.sourceEnvelopeId != null && {sourceEnvelopeId: option.sourceEnvelopeId}),
         amount: stepAmount,
         description: option.description,
         order: stepOrder++,
@@ -423,17 +429,19 @@ export class DeficitRecoveryService {
     return steps;
   }
 
-  private calculateRecoveryTime(
-    steps: DeficitRecoveryStep[],
-    analysis: DeficitAnalysis
-  ): number {
+  private calculateRecoveryTime(steps: DeficitRecoveryStep[], analysis: DeficitAnalysis): number {
     // Estimate days based on step complexity and deficit severity
-    const baseTime = analysis.deficitSeverity === "critical" ? 1 :
-                    analysis.deficitSeverity === "severe" ? 3 :
-                    analysis.deficitSeverity === "moderate" ? 7 : 14;
+    const baseTime =
+      analysis.deficitSeverity === "critical"
+        ? 1
+        : analysis.deficitSeverity === "severe"
+          ? 3
+          : analysis.deficitSeverity === "moderate"
+            ? 7
+            : 14;
 
-    const manualSteps = steps.filter(s => !s.automated).length;
-    return baseTime + (manualSteps * 2); // Add 2 days per manual step
+    const manualSteps = steps.filter((s) => !s.automated).length;
+    return baseTime + manualSteps * 2; // Add 2 days per manual step
   }
 
   private async generateAlternativePlans(

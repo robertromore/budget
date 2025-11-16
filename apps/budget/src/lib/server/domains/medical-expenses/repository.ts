@@ -1,9 +1,13 @@
-import { expenseReceipts } from "$lib/schema/expense-receipts";
-import { hsaClaims } from "$lib/schema/hsa-claims";
-import { medicalExpenses, type MedicalExpense, type MedicalExpenseType } from "$lib/schema/medical-expenses";
-import { db } from "$lib/server/shared/database";
-import { BaseRepository } from "$lib/server/shared/database/base-repository";
-import { and, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
+import {expenseReceipts} from "$lib/schema/expense-receipts";
+import {hsaClaims} from "$lib/schema/hsa-claims";
+import {
+  medicalExpenses,
+  type MedicalExpense,
+  type MedicalExpenseType,
+} from "$lib/schema/medical-expenses";
+import {db} from "$lib/server/shared/database";
+import {BaseRepository} from "$lib/server/shared/database/base-repository";
+import {and, desc, eq, gte, isNull, lte, sql} from "drizzle-orm";
 
 // Types for medical expense operations
 export interface CreateMedicalExpenseInput {
@@ -60,12 +64,7 @@ export class MedicalExpenseRepository extends BaseRepository<
     return await db
       .select()
       .from(medicalExpenses)
-      .where(
-        and(
-          eq(medicalExpenses.hsaAccountId, hsaAccountId),
-          isNull(medicalExpenses.deletedAt)
-        )
-      )
+      .where(and(eq(medicalExpenses.hsaAccountId, hsaAccountId), isNull(medicalExpenses.deletedAt)))
       .orderBy(desc(medicalExpenses.serviceDate))
       .execute();
   }
@@ -93,12 +92,7 @@ export class MedicalExpenseRepository extends BaseRepository<
         const claims = await db
           .select()
           .from(hsaClaims)
-          .where(
-            and(
-              eq(hsaClaims.medicalExpenseId, expense.id),
-              isNull(hsaClaims.deletedAt)
-            )
-          )
+          .where(and(eq(hsaClaims.medicalExpenseId, expense.id), isNull(hsaClaims.deletedAt)))
           .execute();
 
         return {
@@ -119,10 +113,7 @@ export class MedicalExpenseRepository extends BaseRepository<
       .select()
       .from(medicalExpenses)
       .where(
-        and(
-          eq(medicalExpenses.transactionId, transactionId),
-          isNull(medicalExpenses.deletedAt)
-        )
+        and(eq(medicalExpenses.transactionId, transactionId), isNull(medicalExpenses.deletedAt))
       )
       .limit(1)
       .execute();
@@ -141,24 +132,14 @@ export class MedicalExpenseRepository extends BaseRepository<
     const receipts = await db
       .select()
       .from(expenseReceipts)
-      .where(
-        and(
-          eq(expenseReceipts.medicalExpenseId, id),
-          isNull(expenseReceipts.deletedAt)
-        )
-      )
+      .where(and(eq(expenseReceipts.medicalExpenseId, id), isNull(expenseReceipts.deletedAt)))
       .execute();
 
     // Fetch claims
     const claims = await db
       .select()
       .from(hsaClaims)
-      .where(
-        and(
-          eq(hsaClaims.medicalExpenseId, id),
-          isNull(hsaClaims.deletedAt)
-        )
-      )
+      .where(and(eq(hsaClaims.medicalExpenseId, id), isNull(hsaClaims.deletedAt)))
       .execute();
 
     return {
@@ -194,7 +175,10 @@ export class MedicalExpenseRepository extends BaseRepository<
   /**
    * Get tax year summary for an HSA account
    */
-  async getTaxYearSummary(hsaAccountId: number, taxYear: number): Promise<{
+  async getTaxYearSummary(
+    hsaAccountId: number,
+    taxYear: number
+  ): Promise<{
     totalExpenses: number;
     qualifiedExpenses: number;
     nonQualifiedExpenses: number;
@@ -239,12 +223,7 @@ export class MedicalExpenseRepository extends BaseRepository<
     const expenses = await db
       .select()
       .from(medicalExpenses)
-      .where(
-        and(
-          eq(medicalExpenses.hsaAccountId, hsaAccountId),
-          isNull(medicalExpenses.deletedAt)
-        )
-      )
+      .where(and(eq(medicalExpenses.hsaAccountId, hsaAccountId), isNull(medicalExpenses.deletedAt)))
       .orderBy(desc(medicalExpenses.serviceDate))
       .execute();
 
@@ -255,12 +234,7 @@ export class MedicalExpenseRepository extends BaseRepository<
           db
             .select()
             .from(hsaClaims)
-            .where(
-              and(
-                eq(hsaClaims.medicalExpenseId, expense.id),
-                isNull(hsaClaims.deletedAt)
-              )
-            )
+            .where(and(eq(hsaClaims.medicalExpenseId, expense.id), isNull(hsaClaims.deletedAt)))
             .execute(),
           db
             .select()

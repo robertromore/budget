@@ -1,5 +1,5 @@
-import { UseBoolean } from "$lib/hooks/use-boolean.svelte";
-import { UseNumber } from "$lib/hooks/use-number.svelte";
+import {UseBoolean} from "$lib/hooks/use-boolean.svelte";
+import {UseNumber} from "$lib/hooks/use-number.svelte";
 
 export const newAccountDialog = $state(new UseBoolean(false));
 export const managingAccountId = $state(new UseNumber(0));

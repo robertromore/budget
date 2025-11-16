@@ -38,8 +38,9 @@ const getCategoryIcon = (iconName: string | null | undefined) => {
             {#if category.icon}
               <Icon
                 class="h-4 w-4"
-                style={category.color ? `color: ${category.color};` : `color: ${colorUtils.getChartColor(i)};`}
-              />
+                style={category.color
+                  ? `color: ${category.color};`
+                  : `color: ${colorUtils.getChartColor(i)};`} />
             {:else}
               <div
                 class="h-3 w-3 rounded-full"

@@ -21,15 +21,25 @@ export class WizardStore {
     steps: [],
     formData: {},
     validationErrors: {},
-    isCompleting: false
+    isCompleting: false,
   });
 
   // Getters
-  get currentStepIndex() { return this.state.currentStepIndex; }
-  get steps() { return this.state.steps; }
-  get formData() { return this.state.formData; }
-  get validationErrors() { return this.state.validationErrors; }
-  get isCompleting() { return this.state.isCompleting; }
+  get currentStepIndex() {
+    return this.state.currentStepIndex;
+  }
+  get steps() {
+    return this.state.steps;
+  }
+  get formData() {
+    return this.state.formData;
+  }
+  get validationErrors() {
+    return this.state.validationErrors;
+  }
+  get isCompleting() {
+    return this.state.isCompleting;
+  }
 
   get currentStep() {
     return this.state.steps[this.state.currentStepIndex];
@@ -54,7 +64,7 @@ export class WizardStore {
 
   get progress() {
     const total = this.state.steps.length;
-    const completed = this.state.steps.filter(step => step.isValid).length;
+    const completed = this.state.steps.filter((step) => step.isValid).length;
     return total > 0 ? (completed / total) * 100 : 0;
   }
 
@@ -63,9 +73,9 @@ export class WizardStore {
     this.state.steps = steps.map((step, index) => ({
       ...step,
       isValid: false,
-      isVisited: index === 0
+      isVisited: index === 0,
     }));
-    this.state.formData = { ...initialData };
+    this.state.formData = {...initialData};
     this.state.currentStepIndex = 0;
     this.state.validationErrors = {};
     this.state.isCompleting = false;
@@ -122,7 +132,7 @@ export class WizardStore {
   }
 
   setStepValidation(stepId: string, isValid: boolean, errors: string[] = []) {
-    const step = this.state.steps.find(s => s.id === stepId);
+    const step = this.state.steps.find((s) => s.id === stepId);
     if (step) {
       step.isValid = isValid;
       if (errors.length > 0) {
@@ -146,7 +156,7 @@ export class WizardStore {
     this.state.formData = {};
     this.state.validationErrors = {};
     this.state.isCompleting = false;
-    this.state.steps.forEach(step => {
+    this.state.steps.forEach((step) => {
       step.isValid = false;
       step.isVisited = false;
     });
@@ -161,15 +171,15 @@ export class WizardStore {
       const data = {
         currentStepIndex: this.state.currentStepIndex,
         formData: this.state.formData,
-        steps: this.state.steps.map(step => ({
+        steps: this.state.steps.map((step) => ({
           id: step.id,
           isValid: step.isValid,
-          isVisited: step.isVisited
-        }))
+          isVisited: step.isVisited,
+        })),
       };
       localStorage.setItem(key, JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save wizard state to localStorage:', error);
+      console.warn("Failed to save wizard state to localStorage:", error);
     }
   }
 
@@ -184,7 +194,7 @@ export class WizardStore {
         // Restore step state
         if (data.steps) {
           data.steps.forEach((savedStep: any) => {
-            const step = this.state.steps.find(s => s.id === savedStep.id);
+            const step = this.state.steps.find((s) => s.id === savedStep.id);
             if (step) {
               step.isValid = savedStep.isValid || false;
               step.isVisited = savedStep.isVisited || false;
@@ -195,7 +205,7 @@ export class WizardStore {
         return true;
       }
     } catch (error) {
-      console.warn('Failed to load wizard state from localStorage:', error);
+      console.warn("Failed to load wizard state from localStorage:", error);
     }
     return false;
   }
@@ -204,7 +214,7 @@ export class WizardStore {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.warn('Failed to clear wizard state from localStorage:', error);
+      console.warn("Failed to clear wizard state from localStorage:", error);
     }
   }
 }

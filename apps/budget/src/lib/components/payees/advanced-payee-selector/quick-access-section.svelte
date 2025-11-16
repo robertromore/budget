@@ -8,7 +8,7 @@ let {
   sections,
   selectedPayeeId,
   displayMode = 'normal',
-  onSelect
+  onSelect,
 }: {
   sections: QuickAccessSections;
   selectedPayeeId: number | null;
@@ -33,22 +33,19 @@ function toggleSuggested() {
 }
 
 const hasAnyItems = $derived(
-  sections.recent.length > 0 ||
-  sections.frequent.length > 0 ||
-  sections.suggested.length > 0
+  sections.recent.length > 0 || sections.frequent.length > 0 || sections.suggested.length > 0
 );
 </script>
 
 {#if hasAnyItems}
-  <div class="border-b border-border">
+  <div class="border-border border-b">
     <!-- Suggested Section -->
     {#if sections.suggested.length > 0}
       <GroupHeader
         label="Suggested"
         count={sections.suggested.length}
         isExpanded={showSuggested}
-        onToggle={toggleSuggested}
-      />
+        onToggle={toggleSuggested} />
       {#if showSuggested}
         <div class="py-1">
           {#each sections.suggested as payee (payee.id)}
@@ -56,8 +53,7 @@ const hasAnyItems = $derived(
               payee={{...payee, _isSuggested: true}}
               {displayMode}
               isSelected={payee.id === selectedPayeeId}
-              onSelect={() => onSelect(payee.id)}
-            />
+              onSelect={() => onSelect(payee.id)} />
           {/each}
         </div>
       {/if}
@@ -69,8 +65,7 @@ const hasAnyItems = $derived(
         label="Recent"
         count={sections.recent.length}
         isExpanded={showRecent}
-        onToggle={toggleRecent}
-      />
+        onToggle={toggleRecent} />
       {#if showRecent}
         <div class="py-1">
           {#each sections.recent as payee (payee.id)}
@@ -78,8 +73,7 @@ const hasAnyItems = $derived(
               payee={{...payee, _isRecent: true}}
               {displayMode}
               isSelected={payee.id === selectedPayeeId}
-              onSelect={() => onSelect(payee.id)}
-            />
+              onSelect={() => onSelect(payee.id)} />
           {/each}
         </div>
       {/if}
@@ -91,8 +85,7 @@ const hasAnyItems = $derived(
         label="Frequent"
         count={sections.frequent.length}
         isExpanded={showFrequent}
-        onToggle={toggleFrequent}
-      />
+        onToggle={toggleFrequent} />
       {#if showFrequent}
         <div class="py-1">
           {#each sections.frequent as payee (payee.id)}
@@ -100,8 +93,7 @@ const hasAnyItems = $derived(
               payee={{...payee, _isFrequent: true}}
               {displayMode}
               isSelected={payee.id === selectedPayeeId}
-              onSelect={() => onSelect(payee.id)}
-            />
+              onSelect={() => onSelect(payee.id)} />
           {/each}
         </div>
       {/if}

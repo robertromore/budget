@@ -1,7 +1,7 @@
-import type { View as ViewSchema } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
-import type { ViewFilter, ViewFilterWithSet } from "$lib/types";
-import deeplyEqual, { equalArray } from "$lib/utils";
+import type {View as ViewSchema} from "$lib/schema";
+import {trpc} from "$lib/trpc/client";
+import type {ViewFilter, ViewFilterWithSet} from "$lib/types";
+import deeplyEqual, {equalArray} from "$lib/utils";
 import type {
   ColumnPinningState,
   ExpandedState,
@@ -9,7 +9,7 @@ import type {
   SortingState,
   VisibilityState,
 } from "@tanstack/table-core";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import {SvelteMap, SvelteSet} from "svelte/reactivity";
 
 export default class View {
   view: ViewSchema = $state() as ViewSchema;
@@ -186,11 +186,11 @@ export default class View {
     return this;
   }
 
-  getDensity(): 'normal' | 'dense' {
-    return this.view.display?.density || 'normal';
+  getDensity(): "normal" | "dense" {
+    return this.view.display?.density || "normal";
   }
 
-  setDensity(density: 'normal' | 'dense') {
+  setDensity(density: "normal" | "dense") {
     this.view.display!.density = density;
     return this;
   }
@@ -213,11 +213,11 @@ export default class View {
     return this;
   }
 
-  getViewMode(): 'table' | 'cards' {
-    return this.view.display?.viewMode || 'table';
+  getViewMode(): "table" | "cards" {
+    return this.view.display?.viewMode || "table";
   }
 
-  setViewMode(viewMode: 'table' | 'cards') {
+  setViewMode(viewMode: "table" | "cards") {
     this.view.display!.viewMode = viewMode;
     return this;
   }
@@ -280,11 +280,17 @@ export default class View {
     if (!filter) return new Set();
 
     // Special handling for operator-based filters - they store single objects, not sets
-    const operatorBasedFilters = ['amountFilter', 'dateIn', 'dateAfter', 'dateBefore', 'dateBetween'];
-    if (operatorBasedFilters.includes(filter.filter || '') && filter.value.size === 1) {
+    const operatorBasedFilters = [
+      "amountFilter",
+      "dateIn",
+      "dateAfter",
+      "dateBefore",
+      "dateBetween",
+    ];
+    if (operatorBasedFilters.includes(filter.filter || "") && filter.value.size === 1) {
       const firstValue = Array.from(filter.value)[0];
       // Check if it's an operator object
-      if (typeof firstValue === 'object' && firstValue !== null && 'operator' in firstValue) {
+      if (typeof firstValue === "object" && firstValue !== null && "operator" in firstValue) {
         return firstValue;
       }
     }

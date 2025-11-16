@@ -27,38 +27,39 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
 
 <svelte:head>
   <title>Dashboard - Budget App</title>
-  <meta name="description" content="Your personal finance dashboard with comprehensive insights and analytics" />
+  <meta
+    name="description"
+    content="Your personal finance dashboard with comprehensive insights and analytics" />
 </svelte:head>
 
 <div class="space-y-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div>
-      <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-        <Home class="h-8 w-8 text-primary" />
+      <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+        <Home class="text-primary h-8 w-8" />
         Dashboard
       </h1>
-      <p class="text-muted-foreground mt-1">
-        Welcome to your personal finance overview
-      </p>
+      <p class="text-muted-foreground mt-1">Welcome to your personal finance overview</p>
     </div>
   </div>
 
   <!-- Quick Stats Overview -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Total Balance</Card.Title>
-        <CreditCard class="h-4 w-4 text-muted-foreground" />
+        <CreditCard class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
-        <div class="text-2xl font-bold"
-             class:text-green-600={totalBalance > 0}
-             class:text-red-600={totalBalance < 0}
-             class:text-muted-foreground={totalBalance === 0}>
+        <div
+          class="text-2xl font-bold"
+          class:text-green-600={totalBalance > 0}
+          class:text-red-600={totalBalance < 0}
+          class:text-muted-foreground={totalBalance === 0}>
           {currencyFormatter.format(totalBalance)}
         </div>
-        <p class="text-xs text-muted-foreground">
+        <p class="text-muted-foreground text-xs">
           Across {accounts.length} accounts
         </p>
       </Card.Content>
@@ -67,11 +68,11 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Active Accounts</Card.Title>
-        <CreditCard class="h-4 w-4 text-muted-foreground" />
+        <CreditCard class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
-        <div class="text-2xl font-bold">{accounts.filter(a => !a.closed).length}</div>
-        <p class="text-xs text-muted-foreground">
+        <div class="text-2xl font-bold">{accounts.filter((a) => !a.closed).length}</div>
+        <p class="text-muted-foreground text-xs">
           {accounts.length} total accounts
         </p>
       </Card.Content>
@@ -80,32 +81,28 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Payees</Card.Title>
-        <Users class="h-4 w-4 text-muted-foreground" />
+        <Users class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">{payees.length}</div>
-        <p class="text-xs text-muted-foreground">
-          Managed entities
-        </p>
+        <p class="text-muted-foreground text-xs">Managed entities</p>
       </Card.Content>
     </Card.Root>
 
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Schedules</Card.Title>
-        <Calendar class="h-4 w-4 text-muted-foreground" />
+        <Calendar class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">{schedules.length}</div>
-        <p class="text-xs text-muted-foreground">
-          Recurring transactions
-        </p>
+        <p class="text-muted-foreground text-xs">Recurring transactions</p>
       </Card.Content>
     </Card.Root>
   </div>
 
   <!-- Main Content Grid -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
     <!-- Payee Analytics Summary -->
     <PayeeAnalyticsSummary />
 
@@ -116,9 +113,7 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
           <Receipt class="h-5 w-5 text-green-500" />
           Quick Actions
         </Card.Title>
-        <Card.Description>
-          Common tasks and navigation shortcuts
-        </Card.Description>
+        <Card.Description>Common tasks and navigation shortcuts</Card.Description>
       </Card.Header>
       <Card.Content class="space-y-4">
         <div class="grid grid-cols-1 gap-3">
@@ -146,7 +141,7 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
   <!-- Additional Analytics Section -->
   <div class="space-y-4">
     <h2 class="text-xl font-bold tracking-tight">Financial Overview</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
       <Card.Root>
         <Card.Header>
           <Card.Title class="text-sm">Account Summary</Card.Title>
@@ -155,17 +150,18 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
           <div class="space-y-2">
             {#each accounts.slice(0, 5) as account}
               <div class="flex items-center justify-between">
-                <span class="text-sm font-medium truncate">{account.name}</span>
-                <span class="text-sm"
-                      class:text-green-600={account.balance && account.balance > 0}
-                      class:text-red-600={account.balance && account.balance < 0}
-                      class:text-muted-foreground={!account.balance || account.balance === 0}>
+                <span class="truncate text-sm font-medium">{account.name}</span>
+                <span
+                  class="text-sm"
+                  class:text-green-600={account.balance && account.balance > 0}
+                  class:text-red-600={account.balance && account.balance < 0}
+                  class:text-muted-foreground={!account.balance || account.balance === 0}>
                   {currencyFormatter.format(account.balance || 0)}
                 </span>
               </div>
             {/each}
             {#if accounts.length > 5}
-              <div class="text-xs text-muted-foreground text-center pt-2">
+              <div class="text-muted-foreground pt-2 text-center text-xs">
                 +{accounts.length - 5} more accounts
               </div>
             {/if}
@@ -181,14 +177,18 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
           <div class="space-y-2">
             {#each payees.slice(0, 5) as payee}
               <div class="flex items-center justify-between">
-                <span class="text-sm font-medium truncate">{payee.name}</span>
-                <Button variant="ghost" size="sm" href="/payees/{payee.slug}/analytics" class="h-6 px-2 text-xs">
+                <span class="truncate text-sm font-medium">{payee.name}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  href="/payees/{payee.slug}/analytics"
+                  class="h-6 px-2 text-xs">
                   Analytics
                 </Button>
               </div>
             {/each}
             {#if payees.length > 5}
-              <div class="text-xs text-muted-foreground text-center pt-2">
+              <div class="text-muted-foreground pt-2 text-center text-xs">
                 +{payees.length - 5} more payees
               </div>
             {/if}
@@ -204,14 +204,14 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
           <div class="space-y-2">
             {#each schedules.slice(0, 5) as schedule}
               <div class="flex items-center justify-between">
-                <span class="text-sm font-medium truncate">{schedule.name}</span>
-                <span class="text-xs text-muted-foreground capitalize">
+                <span class="truncate text-sm font-medium">{schedule.name}</span>
+                <span class="text-muted-foreground text-xs capitalize">
                   {schedule.status}
                 </span>
               </div>
             {/each}
             {#if schedules.length > 5}
-              <div class="text-xs text-muted-foreground text-center pt-2">
+              <div class="text-muted-foreground pt-2 text-center text-xs">
                 +{schedules.length - 5} more schedules
               </div>
             {/if}

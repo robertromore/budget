@@ -20,7 +20,7 @@ import TransferTransactionForm from '$lib/components/forms/transfer-transaction-
 // Currency formatter
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'USD'
+  currency: 'USD',
 });
 
 let {
@@ -104,14 +104,15 @@ function resetForm() {
   // Reset component state
   dateValue = currentDate;
   amount = 0;
-  payee = { id: 0, name: '' };
-  category = { id: 0, name: '' };
+  payee = {id: 0, name: ''};
+  category = {id: 0, name: ''};
   selectedBudgetId = '';
 }
 
 // Handle form submission
 async function handleSubmit() {
-  if (!account?.id || transactionForm.amount === null || transactionForm.amount === undefined) return;
+  if (!account?.id || transactionForm.amount === null || transactionForm.amount === undefined)
+    return;
 
   try {
     isSubmitting = true;
@@ -163,117 +164,116 @@ async function handleWizardComplete(data: Record<string, any>) {
 </script>
 
 <ResponsiveSheet bind:open>
-    {#snippet header()}
-      <div>
-        <h2 class="text-lg font-semibold">Add New Transaction</h2>
-        <p class="text-sm text-muted-foreground">
-          Create a new transaction for {account?.name || 'this account'}.
-        </p>
-      </div>
-    {/snippet}
+  {#snippet header()}
+    <div>
+      <h2 class="text-lg font-semibold">Add New Transaction</h2>
+      <p class="text-muted-foreground text-sm">
+        Create a new transaction for {account?.name || 'this account'}.
+      </p>
+    </div>
+  {/snippet}
 
-    <Tabs.Root bind:value={activeTab} class="w-full">
-      <Tabs.List class="grid w-full grid-cols-3">
-        <Tabs.Trigger value="manual">Manual</Tabs.Trigger>
-        <Tabs.Trigger value="transfer">Transfer</Tabs.Trigger>
-        <Tabs.Trigger value="guided">Guided</Tabs.Trigger>
-      </Tabs.List>
+  <Tabs.Root bind:value={activeTab} class="w-full">
+    <Tabs.List class="grid w-full grid-cols-3">
+      <Tabs.Trigger value="manual">Manual</Tabs.Trigger>
+      <Tabs.Trigger value="transfer">Transfer</Tabs.Trigger>
+      <Tabs.Trigger value="guided">Guided</Tabs.Trigger>
+    </Tabs.List>
 
-      <Tabs.Content value="manual" class="mt-4">
-        <div class="space-y-4">
-      <!-- Amount -->
-      <div class="space-y-2">
-        <Label for="amount">Amount</Label>
-        <NumericInput bind:value={amount} buttonClass="w-full" />
-      </div>
-
-      <!-- Date -->
-      <div class="space-y-2">
-        <Label for="date">Date</Label>
-        <DateInput bind:value={dateValue} />
-      </div>
-
-      <!-- Payee -->
-      <div class="space-y-2">
-        <Label for="payee">Payee</Label>
-        <EntityInput
-          entityLabel="payees"
-          entities={payees as EditableEntityItem[]}
-          bind:value={payee}
-          icon={HandCoins as unknown as Component}
-          buttonClass="w-full" />
-      </div>
-
-      <!-- Category -->
-      <div class="space-y-2">
-        <Label for="category">Category</Label>
-        <EntityInput
-          entityLabel="categories"
-          entities={categories as EditableEntityItem[]}
-          bind:value={category}
-          icon={SquareMousePointer as unknown as Component}
-          buttonClass="w-full" />
-      </div>
-
-      <!-- Budget -->
-      <div class="space-y-2">
-        <Label for="budget">Budget (Optional)</Label>
-        <BudgetSelector
-          bind:value={selectedBudgetId}
-          placeholder="Allocate to budget..."
-        />
-        {#if selectedBudgetId && transactionForm.budgetAllocation}
-          <div class="flex items-center gap-2 text-xs text-muted-foreground">
-            <CircleDollarSign class="h-3 w-3" />
-            <span>
-              Allocating {currencyFormatter.format(Math.abs(transactionForm.budgetAllocation))} to selected budget
-            </span>
-          </div>
-        {/if}
-      </div>
-
-      <!-- Status - Hidden, defaults to pending -->
-
-      <!-- Notes -->
-      <div class="space-y-2">
-        <Label for="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          placeholder="Transaction notes (optional)"
-          bind:value={transactionForm.notes}
-          rows={3} />
-      </div>
+    <Tabs.Content value="manual" class="mt-4">
+      <div class="space-y-4">
+        <!-- Amount -->
+        <div class="space-y-2">
+          <Label for="amount">Amount</Label>
+          <NumericInput bind:value={amount} buttonClass="w-full" />
         </div>
-      </Tabs.Content>
 
-      <Tabs.Content value="transfer" class="mt-4">
-        <TransferTransactionForm
-          fromAccountId={account?.id || 0}
-          onSuccess={handleClose}
-          onCancel={handleClose}
-        />
-      </Tabs.Content>
-
-      <Tabs.Content value="guided" class="mt-4">
-        <TransactionWizard
-          accountId={account?.id || 0}
-          payees={payees}
-          categories={categories}
-          onComplete={handleWizardComplete}
-        />
-      </Tabs.Content>
-    </Tabs.Root>
-
-    {#snippet footer()}
-      {#if activeTab === 'manual'}
-        <div class="flex gap-2">
-          <Button variant="outline" onclick={handleClose} disabled={isSubmitting} class="flex-1">
-            Cancel
-          </Button>
-          <Button onclick={handleSubmit} disabled={isSubmitting || !transactionForm.amount} class="flex-1">
-            {isSubmitting ? 'Adding...' : 'Add Transaction'}
-          </Button>
+        <!-- Date -->
+        <div class="space-y-2">
+          <Label for="date">Date</Label>
+          <DateInput bind:value={dateValue} />
         </div>
-      {/if}
-    {/snippet}
+
+        <!-- Payee -->
+        <div class="space-y-2">
+          <Label for="payee">Payee</Label>
+          <EntityInput
+            entityLabel="payees"
+            entities={payees as EditableEntityItem[]}
+            bind:value={payee}
+            icon={HandCoins as unknown as Component}
+            buttonClass="w-full" />
+        </div>
+
+        <!-- Category -->
+        <div class="space-y-2">
+          <Label for="category">Category</Label>
+          <EntityInput
+            entityLabel="categories"
+            entities={categories as EditableEntityItem[]}
+            bind:value={category}
+            icon={SquareMousePointer as unknown as Component}
+            buttonClass="w-full" />
+        </div>
+
+        <!-- Budget -->
+        <div class="space-y-2">
+          <Label for="budget">Budget (Optional)</Label>
+          <BudgetSelector bind:value={selectedBudgetId} placeholder="Allocate to budget..." />
+          {#if selectedBudgetId && transactionForm.budgetAllocation}
+            <div class="text-muted-foreground flex items-center gap-2 text-xs">
+              <CircleDollarSign class="h-3 w-3" />
+              <span>
+                Allocating {currencyFormatter.format(Math.abs(transactionForm.budgetAllocation))} to
+                selected budget
+              </span>
+            </div>
+          {/if}
+        </div>
+
+        <!-- Status - Hidden, defaults to pending -->
+
+        <!-- Notes -->
+        <div class="space-y-2">
+          <Label for="notes">Notes</Label>
+          <Textarea
+            id="notes"
+            placeholder="Transaction notes (optional)"
+            bind:value={transactionForm.notes}
+            rows={3} />
+        </div>
+      </div>
+    </Tabs.Content>
+
+    <Tabs.Content value="transfer" class="mt-4">
+      <TransferTransactionForm
+        fromAccountId={account?.id || 0}
+        onSuccess={handleClose}
+        onCancel={handleClose} />
+    </Tabs.Content>
+
+    <Tabs.Content value="guided" class="mt-4">
+      <TransactionWizard
+        accountId={account?.id || 0}
+        {payees}
+        {categories}
+        onComplete={handleWizardComplete} />
+    </Tabs.Content>
+  </Tabs.Root>
+
+  {#snippet footer()}
+    {#if activeTab === 'manual'}
+      <div class="flex gap-2">
+        <Button variant="outline" onclick={handleClose} disabled={isSubmitting} class="flex-1">
+          Cancel
+        </Button>
+        <Button
+          onclick={handleSubmit}
+          disabled={isSubmitting || !transactionForm.amount}
+          class="flex-1">
+          {isSubmitting ? 'Adding...' : 'Add Transaction'}
+        </Button>
+      </div>
+    {/if}
+  {/snippet}
 </ResponsiveSheet>

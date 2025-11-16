@@ -4,7 +4,14 @@
 // for automatic categorization, transaction automation, and analytics support.
 
 import {relations, sql} from "drizzle-orm";
-import {sqliteTable, integer, text, real, index, type AnySQLiteColumn} from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  integer,
+  text,
+  real,
+  index,
+  type AnySQLiteColumn,
+} from "drizzle-orm/sqlite-core";
 import {createInsertSchema, createSelectSchema} from "drizzle-zod";
 import {transactions} from "./transactions";
 import {categories} from "./categories";
@@ -21,7 +28,7 @@ export const payeeTypes = [
   "financial_institution",
   "government",
   "individual",
-  "other"
+  "other",
 ] as const;
 
 export const paymentFrequencies = [
@@ -30,7 +37,7 @@ export const paymentFrequencies = [
   "monthly",
   "quarterly",
   "annual",
-  "irregular"
+  "irregular",
 ] as const;
 
 export type PayeeType = (typeof payeeTypes)[number];
@@ -53,7 +60,9 @@ export const payees = sqliteTable(
     payeeType: text("payee_type", {enum: payeeTypes}),
 
     // Organization Fields
-    payeeCategoryId: integer("payee_category_id").references(() => payeeCategories.id, {onDelete: "set null"}),
+    payeeCategoryId: integer("payee_category_id").references(() => payeeCategories.id, {
+      onDelete: "set null",
+    }),
 
     // Transaction Automation Fields
     avgAmount: real("avg_amount"),
@@ -191,10 +200,7 @@ export const formInsertPayeeSchema = createInsertSchema(payees, {
   // Organization Fields validation
   address: (schema) => schema.optional().nullable(),
   accountNumber: (schema) =>
-    schema
-      .max(100, "Account number must be less than 100 characters")
-      .optional()
-      .nullable(),
+    schema.max(100, "Account number must be less than 100 characters").optional().nullable(),
 
   // Advanced Features Fields validation
   alertThreshold: (schema) => schema.optional().nullable(),

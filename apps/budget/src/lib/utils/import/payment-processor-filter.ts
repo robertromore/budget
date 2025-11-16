@@ -17,99 +17,67 @@ export interface ProcessorPattern {
  */
 export const PAYMENT_PROCESSORS: ProcessorPattern[] = [
   {
-    name: 'PayPal',
-    patterns: [
-      /^PayPal\s*[-*]\s*(.+)$/i,
-      /^PAYPAL\s*\*?\s*(.+)$/i,
-    ],
-    description: 'PayPal transactions'
+    name: "PayPal",
+    patterns: [/^PayPal\s*[-*]\s*(.+)$/i, /^PAYPAL\s*\*?\s*(.+)$/i],
+    description: "PayPal transactions",
   },
   {
-    name: 'Square',
-    patterns: [
-      /^SQ\s*\*\s*(.+)$/i,
-      /^Square\s*[-*]\s*(.+)$/i,
-    ],
-    description: 'Square payments'
+    name: "Square",
+    patterns: [/^SQ\s*\*\s*(.+)$/i, /^Square\s*[-*]\s*(.+)$/i],
+    description: "Square payments",
   },
   {
-    name: 'Stripe',
-    patterns: [
-      /^STRIPE\s*[-*]\s*(.+)$/i,
-    ],
-    description: 'Stripe payments'
+    name: "Stripe",
+    patterns: [/^STRIPE\s*[-*]\s*(.+)$/i],
+    description: "Stripe payments",
   },
   {
-    name: 'Venmo',
-    patterns: [
-      /^Venmo\s*[-*]\s*(.+)$/i,
-      /^VENMO\s+Payment\s+[-:]\s*(.+)$/i,
-    ],
-    description: 'Venmo payments'
+    name: "Venmo",
+    patterns: [/^Venmo\s*[-*]\s*(.+)$/i, /^VENMO\s+Payment\s+[-:]\s*(.+)$/i],
+    description: "Venmo payments",
   },
   {
-    name: 'Zelle',
-    patterns: [
-      /^Zelle\s*[-*:]\s*(.+)$/i,
-      /^ZELLE\s+Payment\s+[-:]\s*(.+)$/i,
-    ],
-    description: 'Zelle transfers'
+    name: "Zelle",
+    patterns: [/^Zelle\s*[-*:]\s*(.+)$/i, /^ZELLE\s+Payment\s+[-:]\s*(.+)$/i],
+    description: "Zelle transfers",
   },
   {
-    name: 'Cash App',
-    patterns: [
-      /^Cash\s*App\s*[-*]\s*(.+)$/i,
-      /^CASH\s*APP\s*\*?\s*(.+)$/i,
-    ],
-    description: 'Cash App payments'
+    name: "Cash App",
+    patterns: [/^Cash\s*App\s*[-*]\s*(.+)$/i, /^CASH\s*APP\s*\*?\s*(.+)$/i],
+    description: "Cash App payments",
   },
   {
-    name: 'Amazon',
+    name: "Amazon",
     patterns: [
       /^Amazon(?:\s+(?:MKTPL?|Marketplace))?\s*[-*]\s*(.+)$/i,
       /^AMZN\s+(?:MKTPL?|Marketplace)\s*[-*]?\s*(.+)$/i,
     ],
-    description: 'Amazon Marketplace sellers'
+    description: "Amazon Marketplace sellers",
   },
   {
-    name: 'eBay',
-    patterns: [
-      /^eBay\s*[-*]\s*(.+)$/i,
-      /^EBAY\s+(?:O|Purchase)\s*[-:]?\s*(.+)$/i,
-    ],
-    description: 'eBay sellers'
+    name: "eBay",
+    patterns: [/^eBay\s*[-*]\s*(.+)$/i, /^EBAY\s+(?:O|Purchase)\s*[-:]?\s*(.+)$/i],
+    description: "eBay sellers",
   },
   {
-    name: 'Etsy',
-    patterns: [
-      /^Etsy\.com\s*[-*]\s*(.+)$/i,
-      /^ETSY\s+(?:COM)?\s*[-*]?\s*(.+)$/i,
-    ],
-    description: 'Etsy sellers'
+    name: "Etsy",
+    patterns: [/^Etsy\.com\s*[-*]\s*(.+)$/i, /^ETSY\s+(?:COM)?\s*[-*]?\s*(.+)$/i],
+    description: "Etsy sellers",
   },
   {
-    name: 'Shopify',
-    patterns: [
-      /^Shopify\s*[-*]\s*(.+)$/i,
-      /^SHOPIFY\s*\*?\s*(.+)$/i,
-    ],
-    description: 'Shopify stores'
+    name: "Shopify",
+    patterns: [/^Shopify\s*[-*]\s*(.+)$/i, /^SHOPIFY\s*\*?\s*(.+)$/i],
+    description: "Shopify stores",
   },
   {
-    name: 'Apple Pay',
-    patterns: [
-      /^Apple\s*Pay\s*[-*]\s*(.+)$/i,
-      /^APPLE\.COM\/BILL\s*[-*]?\s*(.+)$/i,
-    ],
-    description: 'Apple Pay transactions'
+    name: "Apple Pay",
+    patterns: [/^Apple\s*Pay\s*[-*]\s*(.+)$/i, /^APPLE\.COM\/BILL\s*[-*]?\s*(.+)$/i],
+    description: "Apple Pay transactions",
   },
   {
-    name: 'Google Pay',
-    patterns: [
-      /^Google\s*Pay\s*[-*]\s*(.+)$/i,
-      /^GOOGLE\s*\*?\s*(.+)$/i,
-    ],
-    description: 'Google Pay transactions'
+    name: "Google Pay",
+    patterns: [/^Google\s*Pay\s*[-*]\s*(.+)$/i, /^GOOGLE\s*\*?\s*(.+)$/i],
+    description: "Google Pay transactions",
   },
 ];
 
@@ -193,5 +161,5 @@ export function countProcessorTransactions(payeeNames: string[]): {
     }
   }
 
-  return { total, byProcessor };
+  return {total, byProcessor};
 }

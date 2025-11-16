@@ -1,65 +1,68 @@
 <script lang="ts">
-  import {SvelteMap} from "svelte/reactivity";
-  import * as Card from "$lib/components/ui/card";
-  import {Badge, type BadgeVariant} from "$lib/components/ui/badge";
-  import Progress from "$lib/components/ui/progress/progress.svelte";
-  import * as Tabs from "$lib/components/ui/tabs";
-  import ChartPlaceholder from "$lib/components/ui/chart-placeholder.svelte";
-  import {cn} from "$lib/utils";
-  import {currencyFormatter} from "$lib/utils/formatters";
-  import {calculateActualSpent, calculateAllocated} from "$lib/utils/budget-calculations";
-  import {listBudgets, getSpendingTrends} from "$lib/query/budgets";
-  import {
-    TrendingUp,
-    TriangleAlert,
-    Target,
-    PiggyBank,
-    CreditCard,
-    Calendar,
-    ChartBar,
-    ChartLine,
-    ChartPie,
-    DollarSign
-  } from "@lucide/svelte/icons";
-  import type {BudgetWithRelations} from "$lib/server/domains/budgets";
+import {SvelteMap} from 'svelte/reactivity';
+import * as Card from '$lib/components/ui/card';
+import {Badge, type BadgeVariant} from '$lib/components/ui/badge';
+import Progress from '$lib/components/ui/progress/progress.svelte';
+import * as Tabs from '$lib/components/ui/tabs';
+import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
+import {cn} from '$lib/utils';
+import {currencyFormatter} from '$lib/utils/formatters';
+import {calculateActualSpent, calculateAllocated} from '$lib/utils/budget-calculations';
+import {listBudgets, getSpendingTrends} from '$lib/query/budgets';
+import {
+  TrendingUp,
+  TriangleAlert,
+  Target,
+  PiggyBank,
+  CreditCard,
+  Calendar,
+  ChartBar,
+  ChartLine,
+  ChartPie,
+  DollarSign,
+} from '@lucide/svelte/icons';
+import type {BudgetWithRelations} from '$lib/server/domains/budgets';
 
-  interface Props {
-    budgets?: BudgetWithRelations[];
-    className?: string;
-  }
+interface Props {
+  budgets?: BudgetWithRelations[];
+  className?: string;
+}
 
-  let {budgets = [], className}: Props = $props();
+let {budgets = [], className}: Props = $props();
 
-  const budgetsQuery = listBudgets().options();
-  const allBudgets = $derived.by(() => budgets.length > 0 ? budgets : (budgetsQuery.data ?? []));
+const budgetsQuery = listBudgets().options();
+const allBudgets = $derived.by(() => (budgets.length > 0 ? budgets : (budgetsQuery.data ?? [])));
 
-  // Analytics calculations
-  const totalAllocated = $derived.by(() => {
-    return allBudgets.reduce((sum, budget) => {
-      return sum + calculateAllocated(budget);
-    }, 0);
-  });
+// Analytics calculations
+const totalAllocated = $derived.by(() => {
+  return allBudgets.reduce((sum, budget) => {
+    return sum + calculateAllocated(budget);
+  }, 0);
+});
 
-  const totalSpent = $derived.by(() => {
-    return allBudgets.reduce((sum, budget) => {
-      return sum + calculateActualSpent(budget);
-    }, 0);
-  });
+const totalSpent = $derived.by(() => {
+  return allBudgets.reduce((sum, budget) => {
+    return sum + calculateActualSpent(budget);
+  }, 0);
+});
 
-  const totalRemaining = $derived.by(() => totalAllocated - totalSpent);
-  const overallProgress = $derived.by(() => totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0);
+const totalRemaining = $derived.by(() => totalAllocated - totalSpent);
+const overallProgress = $derived.by(() =>
+  totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0
+);
 
-  const activeBudgets = $derived.by(() => allBudgets.filter(b => b.status === 'active'));
-  const pausedBudgets = $derived.by(() => allBudgets.filter(b => b.status === 'inactive'));
-  const overdraftBudgets = $derived.by(() =>
-    allBudgets.filter(b => {
-      return calculateActualSpent(b) > calculateAllocated(b);
-    })
-  );
+const activeBudgets = $derived.by(() => allBudgets.filter((b) => b.status === 'active'));
+const pausedBudgets = $derived.by(() => allBudgets.filter((b) => b.status === 'inactive'));
+const overdraftBudgets = $derived.by(() =>
+  allBudgets.filter((b) => {
+    return calculateActualSpent(b) > calculateAllocated(b);
+  })
+);
 
-  // Budget performance insights
-  const budgetPerformance = $derived.by(() => {
-    return allBudgets.map(budget => {
+// Budget performance insights
+const budgetPerformance = $derived.by(() => {
+  return allBudgets
+    .map((budget) => {
       const allocated = calculateAllocated(budget);
       const spent = calculateActualSpent(budget);
       const remaining = allocated - spent;
@@ -76,51 +79,53 @@
         spent,
         remaining,
         utilizationRate,
-        status
+        status,
       };
-    }).sort((a, b) => b.utilizationRate - a.utilizationRate);
-  });
+    })
+    .sort((a, b) => b.utilizationRate - a.utilizationRate);
+});
 
-  // Fetch spending trends for the first budget (for demonstration)
-  const firstBudget = $derived(allBudgets[0]);
-  const spendingTrendsQuery = $derived.by(() => {
-    if (!firstBudget?.id) return null;
-    return getSpendingTrends(firstBudget.id).options();
-  });
+// Fetch spending trends for the first budget (for demonstration)
+const firstBudget = $derived(allBudgets[0]);
+const spendingTrendsQuery = $derived.by(() => {
+  if (!firstBudget?.id) return null;
+  return getSpendingTrends(firstBudget.id).options();
+});
 
-  // Chart data for spending trends
-  const spendingTrendData = $derived.by(() => {
-    const trendsData = spendingTrendsQuery ? spendingTrendsQuery.data : null;
+// Chart data for spending trends
+const spendingTrendData = $derived.by(() => {
+  const trendsData = spendingTrendsQuery ? spendingTrendsQuery.data : null;
 
-    if (!trendsData || trendsData.length === 0) {
-      // Fallback to empty data if no real data available
-      return [];
-    }
-
-    return trendsData.map((period) => ({
-      month: new Date(period.startDate).toLocaleDateString('en-US', { month: 'short' }),
-      allocated: period.allocated,
-      spent: period.actual,
-      date: new Date(period.startDate)
-    }));
-  });
-
-  // Color mapping for budget types
-  const typeColorMap = new SvelteMap([
-    ['account-monthly', 'hsl(var(--primary))'],
-    ['category-envelope', 'hsl(var(--secondary))'],
-    ['goal-based', 'hsl(var(--accent))'],
-    ['scheduled-expense', 'hsl(var(--muted))'],
-    ['general', 'hsl(var(--foreground))'],
-  ]);
-
-  function getTypeColor(type: string): string {
-    return typeColorMap.get(type) ?? 'hsl(var(--foreground))';
+  if (!trendsData || trendsData.length === 0) {
+    // Fallback to empty data if no real data available
+    return [];
   }
 
-  // Budget category breakdown
-  const categoryBreakdown = $derived.by(() => {
-    const categories = allBudgets.reduce((acc, budget) => {
+  return trendsData.map((period) => ({
+    month: new Date(period.startDate).toLocaleDateString('en-US', {month: 'short'}),
+    allocated: period.allocated,
+    spent: period.actual,
+    date: new Date(period.startDate),
+  }));
+});
+
+// Color mapping for budget types
+const typeColorMap = new SvelteMap([
+  ['account-monthly', 'hsl(var(--primary))'],
+  ['category-envelope', 'hsl(var(--secondary))'],
+  ['goal-based', 'hsl(var(--accent))'],
+  ['scheduled-expense', 'hsl(var(--muted))'],
+  ['general', 'hsl(var(--foreground))'],
+]);
+
+function getTypeColor(type: string): string {
+  return typeColorMap.get(type) ?? 'hsl(var(--foreground))';
+}
+
+// Budget category breakdown
+const categoryBreakdown = $derived.by(() => {
+  const categories = allBudgets.reduce(
+    (acc, budget) => {
       const type = budget.type || 'general';
       const allocated = Math.abs((budget.metadata as any)?.allocatedAmount ?? 0);
 
@@ -129,73 +134,78 @@
           name: type.charAt(0).toUpperCase() + type.slice(1),
           value: 0,
           count: 0,
-          color: getTypeColor(type)
+          color: getTypeColor(type),
         };
       }
 
       acc[type].value += allocated;
       acc[type].count += 1;
       return acc;
-    }, {} as Record<string, {name: string, value: number, count: number, color: string}>);
-
-    return Object.values(categories);
-  });
-
-  function getStatusColor(status: string): string {
-    const colors = {
-      excellent: 'text-green-600',
-      good: 'text-blue-600',
-      warning: 'text-orange-600',
-      danger: 'text-red-600'
-    };
-    return colors[status as keyof typeof colors] || colors.excellent;
-  }
-
-  function getStatusBadgeVariant(status: string): BadgeVariant {
-    const variants = {
-      excellent: 'default' as const,
-      good: 'secondary' as const,
-      warning: 'outline' as const,
-      danger: 'destructive' as const
-    };
-    return variants[status as keyof typeof variants] || 'default';
-  }
-
-  // Chart configurations
-  const chartConfig = {
-    allocated: {
-      label: "Allocated",
-      color: "hsl(var(--primary))"
     },
-    spent: {
-      label: "Spent",
-      color: "hsl(var(--destructive))"
-    }
-  };
+    {} as Record<string, {name: string; value: number; count: number; color: string}>
+  );
 
-  const pieChartConfig = $derived.by(() => {
-    return categoryBreakdown.reduce((config, category) => {
+  return Object.values(categories);
+});
+
+function getStatusColor(status: string): string {
+  const colors = {
+    excellent: 'text-green-600',
+    good: 'text-blue-600',
+    warning: 'text-orange-600',
+    danger: 'text-red-600',
+  };
+  return colors[status as keyof typeof colors] || colors.excellent;
+}
+
+function getStatusBadgeVariant(status: string): BadgeVariant {
+  const variants = {
+    excellent: 'default' as const,
+    good: 'secondary' as const,
+    warning: 'outline' as const,
+    danger: 'destructive' as const,
+  };
+  return variants[status as keyof typeof variants] || 'default';
+}
+
+// Chart configurations
+const chartConfig = {
+  allocated: {
+    label: 'Allocated',
+    color: 'hsl(var(--primary))',
+  },
+  spent: {
+    label: 'Spent',
+    color: 'hsl(var(--destructive))',
+  },
+};
+
+const pieChartConfig = $derived.by(() => {
+  return categoryBreakdown.reduce(
+    (config, category) => {
       config[category.name.toLowerCase()] = {
         label: category.name,
-        color: category.color
+        color: category.color,
       };
       return config;
-    }, {} as Record<string, {label: string, color: string}>);
-  });
+    },
+    {} as Record<string, {label: string; color: string}>
+  );
+});
 </script>
 
-<div class={cn("space-y-6", className)}>
+<div class={cn('space-y-6', className)}>
   <!-- Overview Cards -->
   <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
     <!-- Total Allocated -->
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Total Allocated</Card.Title>
-        <DollarSign class="h-4 w-4 text-muted-foreground" />
+        <DollarSign class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">{currencyFormatter.format(totalAllocated)}</div>
-        <p class="text-xs text-muted-foreground">
+        <p class="text-muted-foreground text-xs">
           Across {allBudgets.length} budget{allBudgets.length !== 1 ? 's' : ''}
         </p>
       </Card.Content>
@@ -205,11 +215,11 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Total Spent</Card.Title>
-        <CreditCard class="h-4 w-4 text-muted-foreground" />
+        <CreditCard class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">{currencyFormatter.format(totalSpent)}</div>
-        <p class="text-xs text-muted-foreground">
+        <p class="text-muted-foreground text-xs">
           {overallProgress.toFixed(1)}% of allocated funds
         </p>
       </Card.Content>
@@ -219,13 +229,14 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Remaining</Card.Title>
-        <PiggyBank class="h-4 w-4 text-muted-foreground" />
+        <PiggyBank class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
-        <div class="text-2xl font-bold {totalRemaining < 0 ? 'text-destructive' : 'text-green-600'}">
+        <div
+          class="text-2xl font-bold {totalRemaining < 0 ? 'text-destructive' : 'text-green-600'}">
           {currencyFormatter.format(Math.abs(totalRemaining))}
         </div>
-        <p class="text-xs text-muted-foreground">
+        <p class="text-muted-foreground text-xs">
           {totalRemaining < 0 ? 'Over budget' : 'Under budget'}
         </p>
       </Card.Content>
@@ -235,13 +246,13 @@
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Budget Health</Card.Title>
-        <Target class="h-4 w-4 text-muted-foreground" />
+        <Target class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">
           {activeBudgets.length}/{allBudgets.length}
         </div>
-        <p class="text-xs text-muted-foreground">
+        <p class="text-muted-foreground text-xs">
           Active budgets • {overdraftBudgets.length} over limit
         </p>
       </Card.Content>
@@ -270,9 +281,7 @@
       <Card.Root>
         <Card.Header>
           <Card.Title>Spending Trends</Card.Title>
-          <Card.Description>
-            Compare allocated vs actual spending over time
-          </Card.Description>
+          <Card.Description>Compare allocated vs actual spending over time</Card.Description>
         </Card.Header>
         <Card.Content>
           <ChartPlaceholder class="h-[300px]" title="Spending Trends Chart" />
@@ -287,9 +296,7 @@
         <Card.Root>
           <Card.Header>
             <Card.Title>Budget Types</Card.Title>
-            <Card.Description>
-              Distribution of allocated funds by budget type
-            </Card.Description>
+            <Card.Description>Distribution of allocated funds by budget type</Card.Description>
           </Card.Header>
           <Card.Content>
             <ChartPlaceholder class="h-[250px]" title="Budget Types Chart" />
@@ -300,22 +307,21 @@
         <Card.Root>
           <Card.Header>
             <Card.Title>Category Details</Card.Title>
-            <Card.Description>
-              Breakdown by budget type and count
-            </Card.Description>
+            <Card.Description>Breakdown by budget type and count</Card.Description>
           </Card.Header>
           <Card.Content>
             <div class="space-y-3">
               {#each categoryBreakdown as category}
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <div class="h-3 w-3 rounded-sm" style="background-color: {category.color}"></div>
+                    <div class="h-3 w-3 rounded-sm" style="background-color: {category.color}">
+                    </div>
                     <span class="text-sm font-medium">{category.name}</span>
                     <Badge variant="secondary" class="text-xs">
                       {category.count} budget{category.count !== 1 ? 's' : ''}
                     </Badge>
                   </div>
-                  <span class="text-sm font-mono">{currencyFormatter.format(category.value)}</span>
+                  <span class="font-mono text-sm">{currencyFormatter.format(category.value)}</span>
                 </div>
               {/each}
             </div>
@@ -329,9 +335,7 @@
       <Card.Root>
         <Card.Header>
           <Card.Title>Budget Performance</Card.Title>
-          <Card.Description>
-            Individual budget utilization and status
-          </Card.Description>
+          <Card.Description>Individual budget utilization and status</Card.Description>
         </Card.Header>
         <Card.Content>
           <div class="space-y-4">
@@ -340,12 +344,12 @@
                 <div class="flex flex-1 items-center gap-3">
                   <div class="flex flex-col">
                     <span class="font-medium">{budget.name}</span>
-                    <span class="text-xs text-muted-foreground">{budget.type}</span>
+                    <span class="text-muted-foreground text-xs">{budget.type}</span>
                   </div>
 
                   <div class="flex flex-1 items-center gap-2">
                     <Progress value={Math.min(budget.utilizationRate, 100)} class="flex-1" />
-                    <span class="text-xs font-mono text-muted-foreground">
+                    <span class="text-muted-foreground font-mono text-xs">
                       {budget.utilizationRate.toFixed(1)}%
                     </span>
                   </div>
@@ -353,10 +357,12 @@
 
                 <div class="flex items-center gap-2">
                   <div class="text-right">
-                    <div class="text-sm font-mono">
-                      {currencyFormatter.format(budget.spent)} / {currencyFormatter.format(budget.allocated)}
+                    <div class="font-mono text-sm">
+                      {currencyFormatter.format(budget.spent)} / {currencyFormatter.format(
+                        budget.allocated
+                      )}
                     </div>
-                    <div class="text-xs text-muted-foreground">
+                    <div class="text-muted-foreground text-xs">
                       {currencyFormatter.format(Math.abs(budget.remaining))}
                       {budget.remaining < 0 ? 'over' : 'left'}
                     </div>
@@ -370,7 +376,7 @@
             {/each}
 
             {#if budgetPerformance.length === 0}
-              <div class="py-8 text-center text-muted-foreground">
+              <div class="text-muted-foreground py-8 text-center">
                 No budget performance data available
               </div>
             {/if}
@@ -395,7 +401,8 @@
             <div class="flex items-center gap-2 text-sm">
               <TrendingUp class="h-4 w-4 text-red-600" />
               <span class="text-red-800 dark:text-red-200">
-                {overdraftBudgets.length} budget{overdraftBudgets.length !== 1 ? 's are' : ' is'} over limit
+                {overdraftBudgets.length} budget{overdraftBudgets.length !== 1 ? 's are' : ' is'} over
+                limit
               </span>
             </div>
           {/if}

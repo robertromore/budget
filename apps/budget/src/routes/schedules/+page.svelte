@@ -94,21 +94,17 @@ const performSearch = () => {
     // Filter by search query
     if (search.query.trim()) {
       const query = search.query.toLowerCase();
-      results = results.filter(schedule =>
-        schedule.name?.toLowerCase().includes(query)
-      );
+      results = results.filter((schedule) => schedule.name?.toLowerCase().includes(query));
     }
 
     // Filter by status
     if (search.filters.status) {
-      results = results.filter(schedule =>
-        schedule.status === search.filters.status
-      );
+      results = results.filter((schedule) => schedule.status === search.filters.status);
     }
 
     // Filter by recurring
     if (search.filters.recurring !== undefined) {
-      results = results.filter(schedule =>
+      results = results.filter((schedule) =>
         search.filters.recurring
           ? schedule.scheduleDate !== null && schedule.scheduleDate !== undefined
           : schedule.scheduleDate === null || schedule.scheduleDate === undefined
@@ -117,44 +113,32 @@ const performSearch = () => {
 
     // Filter by autoAdd
     if (search.filters.autoAdd !== undefined) {
-      results = results.filter(schedule =>
-        schedule.auto_add === search.filters.autoAdd
-      );
+      results = results.filter((schedule) => schedule.auto_add === search.filters.autoAdd);
     }
 
     // Filter by amountType
     if (search.filters.amountType) {
-      results = results.filter(schedule =>
-        schedule.amount_type === search.filters.amountType
-      );
+      results = results.filter((schedule) => schedule.amount_type === search.filters.amountType);
     }
 
     // Filter by accountId
     if (search.filters.accountId) {
-      results = results.filter(schedule =>
-        schedule.accountId === search.filters.accountId
-      );
+      results = results.filter((schedule) => schedule.accountId === search.filters.accountId);
     }
 
     // Filter by payeeId
     if (search.filters.payeeId) {
-      results = results.filter(schedule =>
-        schedule.payeeId === search.filters.payeeId
-      );
+      results = results.filter((schedule) => schedule.payeeId === search.filters.payeeId);
     }
 
     // Filter by categoryId
     if (search.filters.categoryId) {
-      results = results.filter(schedule =>
-        schedule.categoryId === search.filters.categoryId
-      );
+      results = results.filter((schedule) => schedule.categoryId === search.filters.categoryId);
     }
 
     // Filter by budgetId
     if (search.filters.budgetId) {
-      results = results.filter(schedule =>
-        schedule.budgetId === search.filters.budgetId
-      );
+      results = results.filter((schedule) => schedule.budgetId === search.filters.budgetId);
     }
 
     // Sort results
@@ -327,8 +311,7 @@ function cancelDelete() {
       {#snippet filterContent()}
         <ScheduleSearchFilters
           filters={search.filters}
-          onFilterChange={(key, value) => search.updateFilter(key, value)}
-        />
+          onFilterChange={(key, value) => search.updateFilter(key, value)} />
       {/snippet}
     </EntitySearchToolbar>
   </div>
@@ -343,7 +326,8 @@ function cancelDelete() {
       <Empty.EmptyHeader>
         <Empty.EmptyTitle>No Schedules Yet</Empty.EmptyTitle>
         <Empty.EmptyDescription>
-          Create your first schedule to track recurring transactions like bills, subscriptions, and regular income.
+          Create your first schedule to track recurring transactions like bills, subscriptions, and
+          regular income.
         </Empty.EmptyDescription>
       </Empty.EmptyHeader>
       <Empty.EmptyContent>
@@ -365,8 +349,7 @@ function cancelDelete() {
       onView={viewSchedule}
       onEdit={editSchedule}
       onDelete={deleteSchedule}
-      onBulkDelete={bulkDeleteSchedules}
-    />
+      onBulkDelete={bulkDeleteSchedules} />
   {/if}
 </div>
 
@@ -378,12 +361,15 @@ function cancelDelete() {
       <AlertDialog.Header>
         <AlertDialog.Title>Delete Schedule</AlertDialog.Title>
         <AlertDialog.Description>
-          Are you sure you want to delete the schedule "{scheduleToDelete?.name}"? This action cannot be undone.
+          Are you sure you want to delete the schedule "{scheduleToDelete?.name}"? This action
+          cannot be undone.
         </AlertDialog.Description>
       </AlertDialog.Header>
       <AlertDialog.Footer>
         <AlertDialog.Cancel onclick={cancelDelete}>Cancel</AlertDialog.Cancel>
-        <AlertDialog.Action onclick={confirmDeleteSchedule} class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+        <AlertDialog.Action
+          onclick={confirmDeleteSchedule}
+          class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
           Delete
         </AlertDialog.Action>
       </AlertDialog.Footer>
@@ -395,9 +381,15 @@ function cancelDelete() {
 <AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
   <AlertDialog.Content>
     <AlertDialog.Header>
-      <AlertDialog.Title>Delete {schedulesToDelete.length} Schedule{schedulesToDelete.length > 1 ? 's' : ''}</AlertDialog.Title>
+      <AlertDialog.Title
+        >Delete {schedulesToDelete.length} Schedule{schedulesToDelete.length > 1
+          ? 's'
+          : ''}</AlertDialog.Title>
       <AlertDialog.Description>
-        Are you sure you want to delete {schedulesToDelete.length} schedule{schedulesToDelete.length > 1 ? 's' : ''}? This action cannot be undone.
+        Are you sure you want to delete {schedulesToDelete.length} schedule{schedulesToDelete.length >
+        1
+          ? 's'
+          : ''}? This action cannot be undone.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

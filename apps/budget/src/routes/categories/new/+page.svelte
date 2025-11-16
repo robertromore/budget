@@ -25,7 +25,7 @@ const handleSave = (entity: EditableEntityItem, isNew: boolean) => {
 
     // Navigate to the new category's detail page
     setTimeout(() => {
-      goto(`/categories/${category.slug}`, { replaceState: true });
+      goto(`/categories/${category.slug}`, {replaceState: true});
     }, 100);
   } else {
     // Navigate back to categories list
@@ -39,7 +39,7 @@ const handleSave = (entity: EditableEntityItem, isNew: boolean) => {
   <meta name="description" content="Create a new category for your transactions" />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -48,11 +48,13 @@ const handleSave = (entity: EditableEntityItem, isNew: boolean) => {
         <span class="sr-only">Back to Categories</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Tag class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <Tag class="text-muted-foreground h-8 w-8" />
           New Category
         </h1>
-        <p class="text-muted-foreground mt-1">Create a new category to organize your transactions</p>
+        <p class="text-muted-foreground mt-1">
+          Create a new category to organize your transactions
+        </p>
       </div>
     </div>
   </div>
@@ -66,11 +68,7 @@ const handleSave = (entity: EditableEntityItem, isNew: boolean) => {
       </Card.Description>
     </Card.Header>
     <Card.Content>
-      <ManageCategoryForm
-        id={0}
-        initialParentId={initialParentId}
-        onSave={handleSave}
-      />
+      <ManageCategoryForm id={0} {initialParentId} onSave={handleSave} />
     </Card.Content>
   </Card.Root>
 </div>

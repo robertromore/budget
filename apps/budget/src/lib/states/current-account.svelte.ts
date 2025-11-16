@@ -1,10 +1,10 @@
-import type { Category, Payee, Transaction } from "$lib/schema";
-import type { Account } from "$lib/schema/accounts";
-import { trpc } from "$lib/trpc/client";
-import type { TransactionsFormat } from "$lib/types";
-import { without } from "$lib/utils";
-import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
-import { getContext, setContext } from "svelte";
+import type {Category, Payee, Transaction} from "$lib/schema";
+import type {Account} from "$lib/schema/accounts";
+import {trpc} from "$lib/trpc/client";
+import type {TransactionsFormat} from "$lib/types";
+import {without} from "$lib/utils";
+import {currencyFormatter, transactionFormatter} from "$lib/utils/formatters";
+import {getContext, setContext} from "svelte";
 
 const KEY = Symbol("current_account");
 

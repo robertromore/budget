@@ -1,4 +1,4 @@
-import { z } from "zod";
+import {z} from "zod";
 
 // Import enum types from main payee schema
 const payeeTypes = [
@@ -8,7 +8,7 @@ const payeeTypes = [
   "financial_institution",
   "government",
   "individual",
-  "other"
+  "other",
 ] as const;
 
 const paymentFrequencies = [
@@ -17,7 +17,7 @@ const paymentFrequencies = [
   "monthly",
   "quarterly",
   "annual",
-  "irregular"
+  "irregular",
 ] as const;
 
 // Superform-compatible schemas for payees (not using drizzle-zod)
@@ -43,17 +43,12 @@ export const superformInsertPayeeSchema = z.object({
 
   // Budgeting Integration Fields
   defaultCategoryId: z
-    .union([
-      z.string(),
-      z.number().nonnegative("Invalid category ID"),
-      z.null(),
-      z.undefined()
-    ])
+    .union([z.string(), z.number().nonnegative("Invalid category ID"), z.null(), z.undefined()])
     .optional()
     .nullable()
     .transform((val) => {
-      if (val === null || val === undefined || val === '' || val === '0') return null;
-      if (typeof val === 'string') return Number(val);
+      if (val === null || val === undefined || val === "" || val === "0") return null;
+      if (typeof val === "string") return Number(val);
       return val;
     }),
   defaultBudgetId: z.number().nonnegative("Invalid budget ID").optional().nullable(),
@@ -99,18 +94,14 @@ export const superformInsertPayeeSchema = z.object({
   isSeasonal: z.boolean().default(false),
   subscriptionInfo: z.string().optional().nullable(), // JSON: {cost, renewalDate, etc}
   tags: z
-    .union([
-      z.array(z.string()),
-      z.string(),
-      z.null()
-    ])
+    .union([z.array(z.string()), z.string(), z.null()])
     .optional()
     .nullable()
     .transform((val) => {
       if (Array.isArray(val)) {
-        return val.length > 0 ? val.join(', ') : null;
+        return val.length > 0 ? val.join(", ") : null;
       }
-      if (typeof val === 'string') {
+      if (typeof val === "string") {
         return val.trim() || null;
       }
       return null;
@@ -118,18 +109,14 @@ export const superformInsertPayeeSchema = z.object({
 
   // Payment Processing Fields
   preferredPaymentMethods: z
-    .union([
-      z.array(z.string()),
-      z.string(),
-      z.null()
-    ])
+    .union([z.array(z.string()), z.string(), z.null()])
     .optional()
     .nullable()
     .transform((val) => {
       if (Array.isArray(val)) {
-        return val.length > 0 ? val.join(', ') : null;
+        return val.length > 0 ? val.join(", ") : null;
       }
-      if (typeof val === 'string') {
+      if (typeof val === "string") {
         return val.trim() || null;
       }
       return null;
@@ -170,17 +157,12 @@ export const superformUpdatePayeeSchema = z.object({
 
   // Budgeting Integration Fields
   defaultCategoryId: z
-    .union([
-      z.string(),
-      z.number().nonnegative("Invalid category ID"),
-      z.null(),
-      z.undefined()
-    ])
+    .union([z.string(), z.number().nonnegative("Invalid category ID"), z.null(), z.undefined()])
     .optional()
     .nullable()
     .transform((val) => {
-      if (val === null || val === undefined || val === '' || val === '0') return null;
-      if (typeof val === 'string') return Number(val);
+      if (val === null || val === undefined || val === "" || val === "0") return null;
+      if (typeof val === "string") return Number(val);
       return val;
     }),
   defaultBudgetId: z.number().nonnegative("Invalid budget ID").optional().nullable(),
@@ -200,9 +182,15 @@ export const superformUpdatePayeeSchema = z.object({
     .string()
     .optional()
     .nullable()
-    .refine((val) => !val || val.trim() === '' || z.string().url({ message: "Invalid website URL" }).safeParse(val).success, {
-      message: "Invalid website URL"
-    })
+    .refine(
+      (val) =>
+        !val ||
+        val.trim() === "" ||
+        z.string().url({message: "Invalid website URL"}).safeParse(val).success,
+      {
+        message: "Invalid website URL",
+      }
+    )
     .transform((val) => val?.trim() || null),
   phone: z
     .string()
@@ -214,9 +202,15 @@ export const superformUpdatePayeeSchema = z.object({
     .string()
     .optional()
     .nullable()
-    .refine((val) => !val || val.trim() === '' || z.string().email({ message: "Invalid email address" }).safeParse(val).success, {
-      message: "Invalid email address"
-    })
+    .refine(
+      (val) =>
+        !val ||
+        val.trim() === "" ||
+        z.string().email({message: "Invalid email address"}).safeParse(val).success,
+      {
+        message: "Invalid email address",
+      }
+    )
     .transform((val) => val?.trim() || null),
 
   // Organization Fields
@@ -232,18 +226,14 @@ export const superformUpdatePayeeSchema = z.object({
   isSeasonal: z.boolean().optional(),
   subscriptionInfo: z.string().optional().nullable(),
   tags: z
-    .union([
-      z.array(z.string()),
-      z.string(),
-      z.null()
-    ])
+    .union([z.array(z.string()), z.string(), z.null()])
     .optional()
     .nullable()
     .transform((val) => {
       if (Array.isArray(val)) {
-        return val.length > 0 ? val.join(', ') : null;
+        return val.length > 0 ? val.join(", ") : null;
       }
-      if (typeof val === 'string') {
+      if (typeof val === "string") {
         return val.trim() || null;
       }
       return null;
@@ -251,18 +241,14 @@ export const superformUpdatePayeeSchema = z.object({
 
   // Payment Processing Fields
   preferredPaymentMethods: z
-    .union([
-      z.array(z.string()),
-      z.string(),
-      z.null()
-    ])
+    .union([z.array(z.string()), z.string(), z.null()])
     .optional()
     .nullable()
     .transform((val) => {
       if (Array.isArray(val)) {
-        return val.length > 0 ? val.join(', ') : null;
+        return val.length > 0 ? val.join(", ") : null;
       }
-      if (typeof val === 'string') {
+      if (typeof val === "string") {
         return val.trim() || null;
       }
       return null;

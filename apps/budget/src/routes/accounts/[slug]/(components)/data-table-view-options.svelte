@@ -65,15 +65,15 @@ function getPinIcon(columnId: string) {
         {@const pinState = getPinIcon(column.id)}
         <DropdownMenu.Item
           onclick={() => togglePinning(column.id)}
-          class="capitalize justify-between"
+          class="justify-between capitalize"
           closeOnSelect={false}>
           <span>{column.id}</span>
           {#if pinState === 'left'}
-            <Pin class="size-4 text-muted-foreground" />
+            <Pin class="text-muted-foreground size-4" />
           {:else if pinState === 'right'}
-            <Pin class="size-4 text-muted-foreground rotate-90" />
+            <Pin class="text-muted-foreground size-4 rotate-90" />
           {:else}
-            <PinOff class="size-4 text-muted-foreground" />
+            <PinOff class="text-muted-foreground size-4" />
           {/if}
         </DropdownMenu.Item>
       {/each}

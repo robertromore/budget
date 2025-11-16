@@ -48,4 +48,3 @@ export const formInsertScheduleDateSchema = createInsertSchema(scheduleDates, {
   // name: (schema) => schema.min(2).max(30),
 });
 export const removeScheduleDateSchema = z.object({id: z.number().nonnegative()});
-

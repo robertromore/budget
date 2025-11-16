@@ -25,7 +25,7 @@ const handleSave = (entity: EditableEntityItem) => {
 
   // Navigate back to the category detail page
   setTimeout(() => {
-    goto(`/categories/${updatedCategory.slug}`, { replaceState: true });
+    goto(`/categories/${updatedCategory.slug}`, {replaceState: true});
   }, 100);
 };
 </script>
@@ -35,7 +35,7 @@ const handleSave = (entity: EditableEntityItem) => {
   <meta name="description" content="Edit category details" />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -44,8 +44,8 @@ const handleSave = (entity: EditableEntityItem) => {
         <span class="sr-only">Back to Category</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Tag class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <Tag class="text-muted-foreground h-8 w-8" />
           Edit Category
         </h1>
         {#if category}
@@ -60,22 +60,15 @@ const handleSave = (entity: EditableEntityItem) => {
     <Card.Root class="max-w-4xl">
       <Card.Header>
         <Card.Title>Category Information</Card.Title>
-        <Card.Description>
-          Update the details for your category.
-        </Card.Description>
+        <Card.Description>Update the details for your category.</Card.Description>
       </Card.Header>
       <Card.Content>
-        <ManageCategoryForm
-          id={category.id}
-          onSave={handleSave}
-        />
+        <ManageCategoryForm id={category.id} onSave={handleSave} />
       </Card.Content>
     </Card.Root>
   {:else}
     <Card.Root class="max-w-4xl">
-      <Card.Content class="py-8 text-center text-muted-foreground">
-        Category not found
-      </Card.Content>
+      <Card.Content class="text-muted-foreground py-8 text-center">Category not found</Card.Content>
     </Card.Root>
   {/if}
 </div>

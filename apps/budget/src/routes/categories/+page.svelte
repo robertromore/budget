@@ -7,10 +7,7 @@ import Tag from '@lucide/svelte/icons/tag';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import FolderCog from '@lucide/svelte/icons/folder-cog';
 import {CategoriesState} from '$lib/states/entities/categories.svelte';
-import {
-  deleteCategoryDialog,
-  deleteCategoryId,
-} from '$lib/states/ui/categories.svelte';
+import {deleteCategoryDialog, deleteCategoryId} from '$lib/states/ui/categories.svelte';
 import {categorySearchState} from '$lib/states/ui/category-search.svelte';
 import EntitySearchToolbar from '$lib/components/shared/search/entity-search-toolbar.svelte';
 import CategorySearchFilters from './(components)/search/category-search-filters.svelte';
@@ -21,7 +18,11 @@ import GroupManagementSheet from './(components)/group-management-sheet.svelte';
 import type {CategoryTreeNode} from '$lib/types/categories';
 import {goto} from '$app/navigation';
 import type {Category} from '$lib/schema';
-import {reorderCategories, getCategoryHierarchyTree, bulkDeleteCategories as bulkDeleteCategoriesMutation} from '$lib/query/categories';
+import {
+  reorderCategories,
+  getCategoryHierarchyTree,
+  bulkDeleteCategories as bulkDeleteCategoriesMutation,
+} from '$lib/query/categories';
 import type {CategoryWithGroup} from '$lib/server/domains/categories/repository';
 import {rpc} from '$lib/query';
 
@@ -49,7 +50,7 @@ const hierarchyTree = $derived(hierarchyTreeQuery.data ?? []);
 // Sort categories based on user selection or displayOrder
 const sortedCategoriesArray = $derived.by(() => {
   // Create a map of category groups for quick lookup
-  const groupsMap = new Map(categoriesWithGroups.map(c => [c.id, c.groupName || '']));
+  const groupsMap = new Map(categoriesWithGroups.map((c) => [c.id, c.groupName || '']));
 
   return [...categoriesArray].sort((a, b) => {
     let comparison = 0;
@@ -80,21 +81,26 @@ const sortedCategoriesArray = $derived.by(() => {
 // Computed values - merge group data into categories
 const displayedCategories = $derived.by(() => {
   const baseCategories = search.isSearchActive ? searchResults : sortedCategoriesArray;
-  const groupsMap = new Map(categoriesWithGroups.map(c => [c.id, {
-    groupId: c.groupId,
-    groupName: c.groupName,
-    groupColor: c.groupColor,
-    groupIcon: c.groupIcon
-  }]));
+  const groupsMap = new Map(
+    categoriesWithGroups.map((c) => [
+      c.id,
+      {
+        groupId: c.groupId,
+        groupName: c.groupName,
+        groupColor: c.groupColor,
+        groupIcon: c.groupIcon,
+      },
+    ])
+  );
 
-  return baseCategories.map(cat => {
+  return baseCategories.map((cat) => {
     const groupData = groupsMap.get(cat.id);
     return {
       ...cat,
       groupId: groupData?.groupId || null,
       groupName: groupData?.groupName || null,
       groupColor: groupData?.groupColor || null,
-      groupIcon: groupData?.groupIcon || null
+      groupIcon: groupData?.groupIcon || null,
     };
   });
 });
@@ -137,58 +143,51 @@ const performSearch = () => {
     // Filter by search query
     if (search.query.trim()) {
       const query = search.query.toLowerCase();
-      results = results.filter(category =>
-        category.name?.toLowerCase().includes(query) ||
-        category.notes?.toLowerCase().includes(query)
+      results = results.filter(
+        (category) =>
+          category.name?.toLowerCase().includes(query) ||
+          category.notes?.toLowerCase().includes(query)
       );
     }
 
     // Filter by hasParent
     if (search.filters.hasParent !== undefined) {
-      results = results.filter(category =>
-        search.filters.hasParent
-          ? category.parentId !== null
-          : category.parentId === null
+      results = results.filter((category) =>
+        search.filters.hasParent ? category.parentId !== null : category.parentId === null
       );
     }
 
     // Filter by categoryType
     if (search.filters.categoryType) {
-      results = results.filter(category =>
-        category.categoryType === search.filters.categoryType
-      );
+      results = results.filter((category) => category.categoryType === search.filters.categoryType);
     }
 
     // Filter by isTaxDeductible
     if (search.filters.isTaxDeductible !== undefined) {
-      results = results.filter(category =>
-        category.isTaxDeductible === search.filters.isTaxDeductible
+      results = results.filter(
+        (category) => category.isTaxDeductible === search.filters.isTaxDeductible
       );
     }
 
     // Filter by spendingPriority
     if (search.filters.spendingPriority) {
-      results = results.filter(category =>
-        category.spendingPriority === search.filters.spendingPriority
+      results = results.filter(
+        (category) => category.spendingPriority === search.filters.spendingPriority
       );
     }
 
     // Filter by isSeasonal
     if (search.filters.isSeasonal !== undefined) {
-      results = results.filter(category =>
-        category.isSeasonal === search.filters.isSeasonal
-      );
+      results = results.filter((category) => category.isSeasonal === search.filters.isSeasonal);
     }
 
     // Filter by isActive
     if (search.filters.isActive !== undefined) {
-      results = results.filter(category =>
-        category.isActive === search.filters.isActive
-      );
+      results = results.filter((category) => category.isActive === search.filters.isActive);
     }
 
     // Sort results
-    const groupsMap = new Map(categoriesWithGroups.map(c => [c.id, c.groupName || '']));
+    const groupsMap = new Map(categoriesWithGroups.map((c) => [c.id, c.groupName || '']));
     results.sort((a, b) => {
       let comparison = 0;
       const groupA = groupsMap.get(a.id);
@@ -349,7 +348,7 @@ const addSubcategory = (parent: CategoryTreeNode) => {
     </div>
     <div class="flex items-center gap-2">
       <SeedDefaultCategoriesButton />
-      <Button variant="outline" onclick={() => groupManagementSheetOpen = true}>
+      <Button variant="outline" onclick={() => (groupManagementSheetOpen = true)}>
         <FolderCog class="mr-2 h-4 w-4" />
         Group Management
       </Button>
@@ -388,8 +387,7 @@ const addSubcategory = (parent: CategoryTreeNode) => {
         {#snippet filterContent()}
           <CategorySearchFilters
             filters={search.filters}
-            onFilterChange={(key, value) => search.updateFilter(key, value)}
-          />
+            onFilterChange={(key, value) => search.updateFilter(key, value)} />
         {/snippet}
       </EntitySearchToolbar>
     </div>
@@ -405,14 +403,14 @@ const addSubcategory = (parent: CategoryTreeNode) => {
       <Empty.EmptyHeader>
         <Empty.EmptyTitle>No Categories Yet</Empty.EmptyTitle>
         <Empty.EmptyDescription>
-          Get started by creating your first category. Organize your transactions by categories
-          like groceries, utilities, entertainment, and more.
+          Get started by creating your first category. Organize your transactions by categories like
+          groceries, utilities, entertainment, and more.
         </Empty.EmptyDescription>
       </Empty.EmptyHeader>
       <Empty.EmptyContent>
         <div class="flex flex-col items-center gap-2 sm:flex-row">
           <SeedDefaultCategoriesButton />
-          <span class="text-sm text-muted-foreground">or</span>
+          <span class="text-muted-foreground text-sm">or</span>
           <Button href="/categories/new">
             <Plus class="mr-2 h-4 w-4" />
             Create Your First Category
@@ -425,15 +423,14 @@ const addSubcategory = (parent: CategoryTreeNode) => {
     <div class="rounded-lg border p-6">
       <div class="mb-4">
         <h2 class="text-lg font-semibold">Category Hierarchy</h2>
-        <p class="text-sm text-muted-foreground">View and manage parent-child relationships</p>
+        <p class="text-muted-foreground text-sm">View and manage parent-child relationships</p>
       </div>
       <CategoryTreeView
         nodes={hierarchyTree}
         onView={viewCategory}
         onEdit={editCategory}
         onDelete={deleteCategory}
-        onAddChild={addSubcategory}
-      />
+        onAddChild={addSubcategory} />
     </div>
   {:else}
     <!-- Search Results -->
@@ -448,16 +445,17 @@ const addSubcategory = (parent: CategoryTreeNode) => {
       onDelete={deleteCategory}
       onBulkDelete={bulkDeleteCategories}
       onViewAnalytics={viewAnalytics}
-      onReorder={handleReorder}
-    />
+      onReorder={handleReorder} />
   {/if}
 
   <!-- Reorder Mode Help -->
   {#if isReorderMode}
     <div class="text-muted-foreground rounded-lg bg-blue-50 p-3 text-sm dark:bg-blue-950/30">
-      <strong>Reorder Mode:</strong> Drag categories to reorder them. Changes are saved automatically.
+      <strong>Reorder Mode:</strong> Drag categories to reorder them. Changes are saved
+      automatically.
       {#if search.viewMode === 'list'}
-        <span class="text-orange-600 dark:text-orange-400 ml-1">(Switch to grid view to enable drag and drop)</span>
+        <span class="ml-1 text-orange-600 dark:text-orange-400"
+          >(Switch to grid view to enable drag and drop)</span>
       {/if}
     </div>
   {/if}
@@ -467,9 +465,15 @@ const addSubcategory = (parent: CategoryTreeNode) => {
 <AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
   <AlertDialog.Content>
     <AlertDialog.Header>
-      <AlertDialog.Title>Delete {categoriesToDelete.length} Categor{categoriesToDelete.length > 1 ? 'ies' : 'y'}</AlertDialog.Title>
+      <AlertDialog.Title
+        >Delete {categoriesToDelete.length} Categor{categoriesToDelete.length > 1
+          ? 'ies'
+          : 'y'}</AlertDialog.Title>
       <AlertDialog.Description>
-        Are you sure you want to delete {categoriesToDelete.length} categor{categoriesToDelete.length > 1 ? 'ies' : 'y'}? This action cannot be undone.
+        Are you sure you want to delete {categoriesToDelete.length} categor{categoriesToDelete.length >
+        1
+          ? 'ies'
+          : 'y'}? This action cannot be undone.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

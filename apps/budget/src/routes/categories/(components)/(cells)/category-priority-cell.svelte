@@ -1,11 +1,11 @@
 <script lang="ts">
-import { Badge } from '$lib/components/ui/badge';
+import {Badge} from '$lib/components/ui/badge';
 
 interface Props {
   priority: string | null;
 }
 
-let { priority }: Props = $props();
+let {priority}: Props = $props();
 
 const getPriorityColor = (priority: string | null) => {
   switch (priority) {

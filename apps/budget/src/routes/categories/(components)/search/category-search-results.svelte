@@ -47,7 +47,7 @@ let {
   onDelete,
   onBulkDelete,
   onViewAnalytics,
-  onReorder
+  onReorder,
 }: Props = $props();
 
 // Get categories state from context
@@ -60,15 +60,40 @@ let table = $state<TanStackTable<Category>>();
 const getCategoryTypeInfo = (type: string | null) => {
   switch (type) {
     case 'income':
-      return { icon: TrendingUp, label: 'Income', variant: 'default' as const, color: 'text-green-600' };
+      return {
+        icon: TrendingUp,
+        label: 'Income',
+        variant: 'default' as const,
+        color: 'text-green-600',
+      };
     case 'expense':
-      return { icon: TrendingDown, label: 'Expense', variant: 'secondary' as const, color: 'text-red-600' };
+      return {
+        icon: TrendingDown,
+        label: 'Expense',
+        variant: 'secondary' as const,
+        color: 'text-red-600',
+      };
     case 'transfer':
-      return { icon: ArrowLeftRight, label: 'Transfer', variant: 'outline' as const, color: 'text-blue-600' };
+      return {
+        icon: ArrowLeftRight,
+        label: 'Transfer',
+        variant: 'outline' as const,
+        color: 'text-blue-600',
+      };
     case 'savings':
-      return { icon: PiggyBank, label: 'Savings', variant: 'default' as const, color: 'text-purple-600' };
+      return {
+        icon: PiggyBank,
+        label: 'Savings',
+        variant: 'default' as const,
+        color: 'text-purple-600',
+      };
     default:
-      return { icon: Tag, label: 'Expense', variant: 'secondary' as const, color: 'text-muted-foreground' };
+      return {
+        icon: Tag,
+        label: 'Expense',
+        variant: 'secondary' as const,
+        color: 'text-muted-foreground',
+      };
   }
 };
 
@@ -103,8 +128,7 @@ const getPriorityColor = (priority: string | null) => {
   {onDelete}
   {onBulkDelete}
   {onViewAnalytics}
-  {onReorder}
->
+  {onReorder}>
   {#snippet gridCard(category)}
     {@const typeInfo = getCategoryTypeInfo(category.categoryType)}
     {@const iconData = category.categoryIcon ? getIconByName(category.categoryIcon) : null}
@@ -120,48 +144,41 @@ const getPriorityColor = (priority: string | null) => {
       {onViewAnalytics}
       {isReorderMode}
       viewButtonLabel="View"
-      cardStyle={category.categoryColor ? `border-left: 4px solid ${category.categoryColor};` : ''}
-    >
+      cardStyle={category.categoryColor ? `border-left: 4px solid ${category.categoryColor};` : ''}>
       {#snippet header(c)}
         <!-- Name and Icon -->
         <Card.Title class="flex items-start gap-2">
           {#if c.groupIcon}
             <div
-              class="flex h-5 w-5 items-center justify-center rounded flex-shrink-0 mt-0.5"
+              class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded"
               style:background-color={c.groupColor || '#6b7280'}
-              title={c.groupName || 'Group'}
-            >
+              title={c.groupName || 'Group'}>
               <GroupIconComponent class="h-3 w-3 text-white" />
             </div>
           {/if}
           <div class="relative flex-shrink-0">
             <IconComponent
-              class="h-5 w-5 mt-0.5"
-              style={c.categoryColor ? `color: ${c.categoryColor};` : ''}
-            />
+              class="mt-0.5 h-5 w-5"
+              style={c.categoryColor ? `color: ${c.categoryColor};` : ''} />
             {#if c.categoryColor && !c.categoryIcon}
               <span
-                class="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-background"
-                style={`background-color: ${c.categoryColor};`}
-              ></span>
+                class="border-background absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-full border"
+                style={`background-color: ${c.categoryColor};`}></span>
             {/if}
           </div>
           <div class="min-w-0 flex-1">
-            <a
-              href="/categories/{c.slug}"
-              class="font-medium truncate hover:underline block"
-            >
+            <a href="/categories/{c.slug}" class="block truncate font-medium hover:underline">
               {@html highlightMatches(c.name || 'Unnamed Category', searchQuery)}
             </a>
-            <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+            <div class="mt-1 flex flex-wrap items-center gap-1.5">
               {#if c.parentId}
-                <div class="flex items-center gap-1 text-xs text-muted-foreground">
+                <div class="text-muted-foreground flex items-center gap-1 text-xs">
                   <FolderTree class="h-3 w-3" />
                   <span>Subcategory</span>
                 </div>
               {/if}
               {#if !c.isActive}
-                <Badge variant="outline" class="text-xs py-0 h-5">Inactive</Badge>
+                <Badge variant="outline" class="h-5 py-0 text-xs">Inactive</Badge>
               {/if}
             </div>
           </div>
@@ -169,7 +186,7 @@ const getPriorityColor = (priority: string | null) => {
 
         {#if c.notes}
           <Card.Description>
-            <span class="text-sm line-clamp-2">
+            <span class="line-clamp-2 text-sm">
               {@html highlightMatches(
                 c.notes.length > 100 ? c.notes.substring(0, 100) + '...' : c.notes,
                 searchQuery
@@ -181,14 +198,16 @@ const getPriorityColor = (priority: string | null) => {
 
       {#snippet content(c)}
         <!-- Category Type Badge -->
-        <div class="flex items-center gap-1.5 flex-wrap">
+        <div class="flex flex-wrap items-center gap-1.5">
           <Badge variant={typeInfo.variant} class="text-xs">
             <typeInfo.icon class="mr-1 h-3 w-3" />
             {typeInfo.label}
           </Badge>
 
           {#if c.isTaxDeductible}
-            <Badge variant="secondary" class="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">
+            <Badge
+              variant="secondary"
+              class="bg-green-100 text-xs text-green-800 dark:bg-green-900/30 dark:text-green-200">
               <Receipt class="mr-1 h-3 w-3" />
               Tax Deductible
             </Badge>
@@ -202,8 +221,8 @@ const getPriorityColor = (priority: string | null) => {
         </div>
 
         {#if c.isSeasonal && c.seasonalMonths}
-          <div class="flex items-start gap-2 text-xs text-muted-foreground">
-            <Calendar class="h-3 w-3 mt-0.5 flex-shrink-0" />
+          <div class="text-muted-foreground flex items-start gap-2 text-xs">
+            <Calendar class="mt-0.5 h-3 w-3 flex-shrink-0" />
             <span class="line-clamp-1">Seasonal: {c.seasonalMonths}</span>
           </div>
         {/if}
@@ -223,26 +242,25 @@ const getPriorityColor = (priority: string | null) => {
       {onDelete}
       {onViewAnalytics}
       {onBulkDelete}
-      bind:table
-    />
+      bind:table />
   {/snippet}
 </EntitySearchResults>
 
 <style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    word-break: break-word;
-  }
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
 
-  .line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 </style>

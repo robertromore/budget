@@ -1,37 +1,37 @@
 <script lang="ts">
-  import * as Select from '$lib/components/ui/select';
-  import type {PayeeSearchFilters} from '$lib/server/domains/payees/repository';
-  import type {PayeeType, PaymentFrequency} from '$lib/schema/payees';
+import * as Select from '$lib/components/ui/select';
+import type {PayeeSearchFilters} from '$lib/server/domains/payees/repository';
+import type {PayeeType, PaymentFrequency} from '$lib/schema/payees';
 
-  interface Props {
-    filters: PayeeSearchFilters;
-    onFilterChange: (key: keyof PayeeSearchFilters, value: any) => void;
-  }
+interface Props {
+  filters: PayeeSearchFilters;
+  onFilterChange: (key: keyof PayeeSearchFilters, value: any) => void;
+}
 
-  let {filters, onFilterChange}: Props = $props();
+let {filters, onFilterChange}: Props = $props();
 
-  const payeeTypeOptions: Array<{value: PayeeType; label: string}> = [
-    {value: 'person', label: 'Person'},
-    {value: 'company', label: 'Company'},
-    {value: 'merchant', label: 'Merchant'},
-    {value: 'government', label: 'Government'},
-    {value: 'other', label: 'Other'},
-  ];
+const payeeTypeOptions: Array<{value: PayeeType; label: string}> = [
+  {value: 'person', label: 'Person'},
+  {value: 'company', label: 'Company'},
+  {value: 'merchant', label: 'Merchant'},
+  {value: 'government', label: 'Government'},
+  {value: 'other', label: 'Other'},
+];
 
-  const frequencyOptions: Array<{value: PaymentFrequency; label: string}> = [
-    {value: 'one_time', label: 'One Time'},
-    {value: 'weekly', label: 'Weekly'},
-    {value: 'bi_weekly', label: 'Bi-Weekly'},
-    {value: 'monthly', label: 'Monthly'},
-    {value: 'quarterly', label: 'Quarterly'},
-    {value: 'annual', label: 'Annual'},
-    {value: 'irregular', label: 'Irregular'},
-  ];
+const frequencyOptions: Array<{value: PaymentFrequency; label: string}> = [
+  {value: 'one_time', label: 'One Time'},
+  {value: 'weekly', label: 'Weekly'},
+  {value: 'bi_weekly', label: 'Bi-Weekly'},
+  {value: 'monthly', label: 'Monthly'},
+  {value: 'quarterly', label: 'Quarterly'},
+  {value: 'annual', label: 'Annual'},
+  {value: 'irregular', label: 'Irregular'},
+];
 </script>
 
 <!-- Basic Filters Section -->
 <div class="space-y-3">
-  <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Basic Filters</h5>
+  <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">Basic Filters</h5>
 
   <div class="grid grid-cols-2 gap-3">
     <!-- Payee Type Filter -->
@@ -41,7 +41,7 @@
         type="single"
         value={filters.payeeType || ''}
         onValueChange={(value) => {
-          onFilterChange('payeeType', value as PayeeType || undefined);
+          onFilterChange('payeeType', (value as PayeeType) || undefined);
         }}>
         <Select.Trigger id="payee-type-filter" class="h-9 w-full">
           {filters.payeeType
@@ -64,7 +64,10 @@
         type="single"
         value={filters.isActive?.toString() || ''}
         onValueChange={(value) => {
-          onFilterChange('isActive', value === 'true' ? true : value === 'false' ? false : undefined);
+          onFilterChange(
+            'isActive',
+            value === 'true' ? true : value === 'false' ? false : undefined
+          );
         }}>
         <Select.Trigger id="status-filter" class="h-9 w-full">
           {filters.isActive === true ? 'Active' : filters.isActive === false ? 'Inactive' : 'All'}
@@ -86,7 +89,10 @@
         type="single"
         value={filters.taxRelevant?.toString() || ''}
         onValueChange={(value) => {
-          onFilterChange('taxRelevant', value === 'true' ? true : value === 'false' ? false : undefined);
+          onFilterChange(
+            'taxRelevant',
+            value === 'true' ? true : value === 'false' ? false : undefined
+          );
         }}>
         <Select.Trigger id="tax-relevance-filter" class="h-9 w-full">
           {filters.taxRelevant === true
@@ -110,7 +116,7 @@
         type="single"
         value={filters.paymentFrequency || ''}
         onValueChange={(value) => {
-          onFilterChange('paymentFrequency', value as PaymentFrequency || undefined);
+          onFilterChange('paymentFrequency', (value as PaymentFrequency) || undefined);
         }}>
         <Select.Trigger id="payment-frequency-filter" class="h-9 w-full">
           {filters.paymentFrequency

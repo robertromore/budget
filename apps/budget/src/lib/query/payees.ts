@@ -8,7 +8,7 @@ import type {
   PayeeSuggestions,
   PayeeStats,
   DuplicateGroup,
-  OperationHistory
+  OperationHistory,
 } from "./types/payees";
 
 export const payeeKeys = createQueryKeys("payees", {
@@ -101,18 +101,20 @@ export const searchPayeesAdvanced = (params: {
       return result as Payee[];
     },
     options: {
-      enabled: (params.query && params.query.length >= 2) || Boolean(
-        params.payeeType ||
-        params.isActive !== undefined ||
-        params.taxRelevant !== undefined ||
-        params.hasDefaultCategory !== undefined ||
-        params.hasDefaultBudget !== undefined ||
-        params.paymentFrequency ||
-        params.minAvgAmount !== undefined ||
-        params.maxAvgAmount !== undefined ||
-        params.lastTransactionBefore ||
-        params.lastTransactionAfter
-      ),
+      enabled:
+        (params.query && params.query.length >= 2) ||
+        Boolean(
+          params.payeeType ||
+            params.isActive !== undefined ||
+            params.taxRelevant !== undefined ||
+            params.hasDefaultCategory !== undefined ||
+            params.hasDefaultBudget !== undefined ||
+            params.paymentFrequency ||
+            params.minAvgAmount !== undefined ||
+            params.maxAvgAmount !== undefined ||
+            params.lastTransactionBefore ||
+            params.lastTransactionAfter
+        ),
       staleTime: 30 * 1000,
     },
   });
@@ -166,10 +168,11 @@ export const getUnifiedMLRecommendations = (
 ) =>
   defineQuery<Record<string, any>>({
     queryKey: ["payees", "unified-ml", payeeId, context],
-    queryFn: () => trpc().payeeRoutes.unifiedMLRecommendations.query({
-      payeeId,
-      context
-    }),
+    queryFn: () =>
+      trpc().payeeRoutes.unifiedMLRecommendations.query({
+        payeeId,
+        context,
+      }),
     options: {
       staleTime: 5 * 60 * 1000, // 5 minutes
     },
@@ -214,25 +217,24 @@ export const validatePayeeContact = (
 ) =>
   defineQuery<Record<string, any>>({
     queryKey: [...payeeKeys.contactValidation(payeeId), contactOverrides],
-    queryFn: () => trpc().payeeRoutes.validateAndEnrichContact.query({
-      payeeId,
-      contactOverrides
-    }),
+    queryFn: () =>
+      trpc().payeeRoutes.validateAndEnrichContact.query({
+        payeeId,
+        contactOverrides,
+      }),
     options: {
       staleTime: 30 * 60 * 1000, // 30 minutes
     },
   });
 
-export const detectContactDuplicates = (
-  includeInactive = false,
-  minimumSimilarity = 0.7
-) =>
+export const detectContactDuplicates = (includeInactive = false, minimumSimilarity = 0.7) =>
   defineQuery<Record<string, any>[]>({
     queryKey: ["payees", "contact-duplicates", includeInactive, minimumSimilarity],
-    queryFn: () => trpc().payeeRoutes.detectContactDuplicates.query({
-      includeInactive,
-      minimumSimilarity
-    }),
+    queryFn: () =>
+      trpc().payeeRoutes.detectContactDuplicates.query({
+        includeInactive,
+        minimumSimilarity,
+      }),
     options: {
       staleTime: 15 * 60 * 1000, // 15 minutes
     },
@@ -246,11 +248,12 @@ export const detectSubscriptions = (
 ) =>
   defineQuery<Record<string, any>[]>({
     queryKey: ["payees", "detect-subscriptions", payeeIds, includeInactive, minConfidence],
-    queryFn: () => trpc().payeeRoutes.detectSubscriptions.query({
-      payeeIds,
-      includeInactive,
-      minConfidence
-    }),
+    queryFn: () =>
+      trpc().payeeRoutes.detectSubscriptions.query({
+        payeeIds,
+        includeInactive,
+        minConfidence,
+      }),
     options: {
       staleTime: 10 * 60 * 1000, // 10 minutes
     },
@@ -266,10 +269,11 @@ export const classifySubscription = (
 ) =>
   defineQuery<Record<string, any>>({
     queryKey: [...payeeKeys.subscriptionDetection(payeeId), transactionData],
-    queryFn: () => trpc().payeeRoutes.classifySubscription.query({
-      payeeId,
-      transactionData
-    }),
+    queryFn: () =>
+      trpc().payeeRoutes.classifySubscription.query({
+        payeeId,
+        transactionData,
+      }),
     options: {
       staleTime: 15 * 60 * 1000, // 15 minutes
     },
@@ -286,10 +290,11 @@ export const getSubscriptionAnalysis = (
 ) =>
   defineQuery<Record<string, any>>({
     queryKey: ["payees", "subscription-analysis", payeeIds, analysisOptions],
-    queryFn: () => trpc().payeeRoutes.bulkSubscriptionAnalysis.query({
-      payeeIds,
-      analysisOptions
-    }),
+    queryFn: () =>
+      trpc().payeeRoutes.bulkSubscriptionAnalysis.query({
+        payeeIds,
+        analysisOptions,
+      }),
     options: {
       staleTime: 10 * 60 * 1000, // 10 minutes
     },
@@ -308,17 +313,18 @@ export const getBudgetOptimizationAnalysis = (id: number) =>
 export const getBudgetAllocationSuggestions = (
   accountId?: number,
   options?: {
-    strategy?: 'conservative' | 'aggressive' | 'balanced';
+    strategy?: "conservative" | "aggressive" | "balanced";
     riskTolerance?: number;
     timeHorizon?: number;
   }
 ) =>
   defineQuery<Record<string, any>>({
     queryKey: ["payees", "budget-allocation", accountId, options],
-    queryFn: () => trpc().payeeRoutes.budgetAllocationSuggestions.query({
-      accountId,
-      ...options
-    }),
+    queryFn: () =>
+      trpc().payeeRoutes.budgetAllocationSuggestions.query({
+        accountId,
+        ...options,
+      }),
     options: {
       staleTime: 15 * 60 * 1000, // 15 minutes
     },
@@ -376,15 +382,20 @@ export const bulkDeletePayees = defineMutation<number[], {deletedCount: number; 
 
 export const applyIntelligentDefaults = () =>
   defineMutation({
-    mutationFn: ({id, applyCategory = true, applyBudget = true}: {
+    mutationFn: ({
+      id,
+      applyCategory = true,
+      applyBudget = true,
+    }: {
       id: number;
       applyCategory?: boolean;
       applyBudget?: boolean;
-    }) => trpc().payeeRoutes.applyIntelligentDefaults.mutate({
-      id,
-      applyCategory,
-      applyBudget
-    }),
+    }) =>
+      trpc().payeeRoutes.applyIntelligentDefaults.mutate({
+        id,
+        applyCategory,
+        applyBudget,
+      }),
     onSuccess: async (_data, variables) => {
       // Invalidate intelligence-related queries
       await Promise.all([
@@ -397,7 +408,10 @@ export const applyIntelligentDefaults = () =>
 
 export const executeAdaptiveOptimization = () =>
   defineMutation({
-    mutationFn: ({payeeId, options}: {
+    mutationFn: ({
+      payeeId,
+      options,
+    }: {
       payeeId: number;
       options?: {
         applyCategorizationUpdates?: boolean;
@@ -406,10 +420,11 @@ export const executeAdaptiveOptimization = () =>
         confidenceThreshold?: number;
         dryRun?: boolean;
       };
-    }) => trpc().payeeRoutes.executeAdaptiveOptimization.mutate({
-      payeeId,
-      options
-    }),
+    }) =>
+      trpc().payeeRoutes.executeAdaptiveOptimization.mutate({
+        payeeId,
+        options,
+      }),
     onSuccess: async (_data, variables) => {
       // Invalidate payee data after optimization
       await Promise.all([
@@ -424,7 +439,10 @@ export const executeAdaptiveOptimization = () =>
 
 export const bulkContactValidation = () =>
   defineMutation({
-    mutationFn: ({payeeIds, options}: {
+    mutationFn: ({
+      payeeIds,
+      options,
+    }: {
       payeeIds: number[];
       options?: {
         autoFix?: boolean;
@@ -432,14 +450,15 @@ export const bulkContactValidation = () =>
         skipRecentlyValidated?: boolean;
         minConfidence?: number;
       };
-    }) => trpc().payeeRoutes.bulkContactValidation.mutate({
-      payeeIds,
-      options
-    }),
+    }) =>
+      trpc().payeeRoutes.bulkContactValidation.mutate({
+        payeeIds,
+        options,
+      }),
     onSuccess: () => {
       // Invalidate contact validation queries
       return queryClient.invalidateQueries({
-        queryKey: ["payees", "contact-validation"]
+        queryKey: ["payees", "contact-validation"],
       });
     },
   });
@@ -451,7 +470,12 @@ export const recordCategoryCorrection = () =>
       transactionId: number;
       fromCategoryId: number;
       toCategoryId: number;
-      correctionTrigger: 'manual_user_correction' | 'transaction_creation' | 'bulk_categorization' | 'import_correction' | 'scheduled_transaction';
+      correctionTrigger:
+        | "manual_user_correction"
+        | "transaction_creation"
+        | "bulk_categorization"
+        | "import_correction"
+        | "scheduled_transaction";
       correctionContext?: any;
       transactionAmount?: number;
       transactionDate?: string;
@@ -472,7 +496,7 @@ export const recordCategoryCorrection = () =>
 // Bulk Operations Mutations
 export const bulkStatusChange = () =>
   defineMutation({
-    mutationFn: ({payeeIds, status}: {payeeIds: number[], status: 'active' | 'inactive'}) =>
+    mutationFn: ({payeeIds, status}: {payeeIds: number[]; status: "active" | "inactive"}) =>
       trpc().payeeRoutes.bulkStatusChange.mutate({payeeIds, status}),
     onSuccess: async () => {
       await Promise.all([
@@ -484,15 +508,20 @@ export const bulkStatusChange = () =>
 
 export const bulkCategoryAssignment = () =>
   defineMutation({
-    mutationFn: ({payeeIds, categoryId, overwriteExisting = false}: {
+    mutationFn: ({
+      payeeIds,
+      categoryId,
+      overwriteExisting = false,
+    }: {
       payeeIds: number[];
       categoryId: number;
       overwriteExisting?: boolean;
-    }) => trpc().payeeRoutes.bulkCategoryAssignment.mutate({
-      payeeIds,
-      categoryId,
-      overwriteExisting
-    }),
+    }) =>
+      trpc().payeeRoutes.bulkCategoryAssignment.mutate({
+        payeeIds,
+        categoryId,
+        overwriteExisting,
+      }),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({queryKey: payeeKeys.lists()}),
@@ -503,15 +532,20 @@ export const bulkCategoryAssignment = () =>
 
 export const bulkTagManagement = () =>
   defineMutation({
-    mutationFn: ({payeeIds, tags, operation}: {
-      payeeIds: number[];
-      tags: string[];
-      operation: 'add' | 'remove' | 'replace';
-    }) => trpc().payeeRoutes.bulkTagManagement.mutate({
+    mutationFn: ({
       payeeIds,
       tags,
-      operation
-    }),
+      operation,
+    }: {
+      payeeIds: number[];
+      tags: string[];
+      operation: "add" | "remove" | "replace";
+    }) =>
+      trpc().payeeRoutes.bulkTagManagement.mutate({
+        payeeIds,
+        tags,
+        operation,
+      }),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({queryKey: payeeKeys.lists()}),
@@ -522,7 +556,10 @@ export const bulkTagManagement = () =>
 
 export const bulkIntelligenceApplication = () =>
   defineMutation({
-    mutationFn: ({payeeIds, options}: {
+    mutationFn: ({
+      payeeIds,
+      options,
+    }: {
       payeeIds: number[];
       options: {
         applyCategory?: boolean;
@@ -530,13 +567,14 @@ export const bulkIntelligenceApplication = () =>
         confidenceThreshold?: number;
         overwriteExisting?: boolean;
       };
-    }) => trpc().payeeRoutes.bulkIntelligenceApplication.mutate({
-      payeeIds,
-      options
-    }),
+    }) =>
+      trpc().payeeRoutes.bulkIntelligenceApplication.mutate({
+        payeeIds,
+        options,
+      }),
     onSuccess: async (_data, variables) => {
       // Invalidate intelligence data for affected payees
-      const invalidations = variables.payeeIds.flatMap(id => [
+      const invalidations = variables.payeeIds.flatMap((id) => [
         queryClient.invalidateQueries({queryKey: payeeKeys.detail(id)}),
         queryClient.invalidateQueries({queryKey: payeeKeys.intelligence(id)}),
         queryClient.invalidateQueries({queryKey: payeeKeys.suggestions(id)}),
@@ -552,35 +590,45 @@ export const bulkIntelligenceApplication = () =>
 
 export const bulkExport = () =>
   defineMutation({
-    mutationFn: ({payeeIds, format, ...options}: {
-      payeeIds: number[];
-      format: 'csv' | 'json';
-      includeTransactionStats?: boolean;
-      includeContactInfo?: boolean;
-      includeIntelligenceData?: boolean;
-    }) => trpc().payeeRoutes.bulkExport.query({
+    mutationFn: ({
       payeeIds,
       format,
       ...options
-    }),
+    }: {
+      payeeIds: number[];
+      format: "csv" | "json";
+      includeTransactionStats?: boolean;
+      includeContactInfo?: boolean;
+      includeIntelligenceData?: boolean;
+    }) =>
+      trpc().payeeRoutes.bulkExport.query({
+        payeeIds,
+        format,
+        ...options,
+      }),
   });
 
 export const bulkImport = () =>
   defineMutation({
-    mutationFn: ({data, format, options}: {
+    mutationFn: ({
+      data,
+      format,
+      options,
+    }: {
       data: string;
-      format: 'csv' | 'json';
+      format: "csv" | "json";
       options?: {
         skipDuplicates?: boolean;
         updateExisting?: boolean;
         applyIntelligentDefaults?: boolean;
         validateContactInfo?: boolean;
       };
-    }) => trpc().payeeRoutes.bulkImport.mutate({
-      data,
-      format,
-      options: options || {}
-    }),
+    }) =>
+      trpc().payeeRoutes.bulkImport.mutate({
+        data,
+        format,
+        options: options || {},
+      }),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({queryKey: payeeKeys.lists()}),
@@ -591,15 +639,27 @@ export const bulkImport = () =>
 
 export const bulkCleanup = () =>
   defineMutation({
-    mutationFn: ({operations, dryRun = true, confirmDestructive = false}: {
-      operations: Array<'remove_inactive' | 'remove_empty_payees' | 'normalize_names' | 'standardize_contact_info' | 'merge_duplicates' | 'update_calculated_fields'>;
+    mutationFn: ({
+      operations,
+      dryRun = true,
+      confirmDestructive = false,
+    }: {
+      operations: Array<
+        | "remove_inactive"
+        | "remove_empty_payees"
+        | "normalize_names"
+        | "standardize_contact_info"
+        | "merge_duplicates"
+        | "update_calculated_fields"
+      >;
       dryRun?: boolean;
       confirmDestructive?: boolean;
-    }) => trpc().payeeRoutes.bulkCleanup.mutate({
-      operations,
-      dryRun,
-      confirmDestructive
-    }),
+    }) =>
+      trpc().payeeRoutes.bulkCleanup.mutate({
+        operations,
+        dryRun,
+        confirmDestructive,
+      }),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({queryKey: payeeKeys.lists()}),
@@ -611,15 +671,16 @@ export const bulkCleanup = () =>
 export const getDuplicates = (
   similarityThreshold = 0.8,
   includeInactive = false,
-  groupingStrategy: 'name' | 'contact' | 'transaction_pattern' | 'comprehensive' = 'comprehensive'
+  groupingStrategy: "name" | "contact" | "transaction_pattern" | "comprehensive" = "comprehensive"
 ) =>
   defineQuery<DuplicateGroup[]>({
     queryKey: ["payees", "duplicates", similarityThreshold, includeInactive, groupingStrategy],
-    queryFn: () => trpc().payeeRoutes.getDuplicates.query({
-      similarityThreshold,
-      includeInactive,
-      groupingStrategy
-    }),
+    queryFn: () =>
+      trpc().payeeRoutes.getDuplicates.query({
+        similarityThreshold,
+        includeInactive,
+        groupingStrategy,
+      }),
     options: {
       staleTime: 5 * 60 * 1000, // 5 minutes
     },
@@ -627,26 +688,32 @@ export const getDuplicates = (
 
 export const mergeDuplicates = () =>
   defineMutation({
-    mutationFn: ({primaryPayeeId, duplicatePayeeIds, mergeStrategy, confirmMerge = false}: {
+    mutationFn: ({
+      primaryPayeeId,
+      duplicatePayeeIds,
+      mergeStrategy,
+      confirmMerge = false,
+    }: {
       primaryPayeeId: number;
       duplicatePayeeIds: number[];
       mergeStrategy?: {
         preserveTransactionHistory?: boolean;
-        conflictResolution?: 'primary' | 'latest' | 'best_quality' | 'manual';
+        conflictResolution?: "primary" | "latest" | "best_quality" | "manual";
         mergeContactInfo?: boolean;
         mergeIntelligenceData?: boolean;
       };
       confirmMerge?: boolean;
-    }) => trpc().payeeRoutes.mergeDuplicates.mutate({
-      primaryPayeeId,
-      duplicatePayeeIds,
-      mergeStrategy: mergeStrategy || {},
-      confirmMerge
-    }),
+    }) =>
+      trpc().payeeRoutes.mergeDuplicates.mutate({
+        primaryPayeeId,
+        duplicatePayeeIds,
+        mergeStrategy: mergeStrategy || {},
+        confirmMerge,
+      }),
     onSuccess: async (_data, variables) => {
       // Invalidate data for all affected payees
       const allPayeeIds = [variables.primaryPayeeId, ...variables.duplicatePayeeIds];
-      const invalidations = allPayeeIds.flatMap(id => [
+      const invalidations = allPayeeIds.flatMap((id) => [
         queryClient.invalidateQueries({queryKey: payeeKeys.detail(id)}),
         queryClient.invalidateQueries({queryKey: payeeKeys.intelligence(id)}),
         queryClient.invalidateQueries({queryKey: payeeKeys.suggestions(id)}),
@@ -664,13 +731,24 @@ export const mergeDuplicates = () =>
 
 export const undoOperation = () =>
   defineMutation({
-    mutationFn: ({operationId, operationType}: {
-      operationId: string;
-      operationType: 'bulk_delete' | 'bulk_status_change' | 'bulk_category_assignment' | 'bulk_tag_management' | 'bulk_intelligence_application' | 'bulk_cleanup' | 'merge_duplicates';
-    }) => trpc().payeeRoutes.undoOperation.mutate({
+    mutationFn: ({
       operationId,
-      operationType
-    }),
+      operationType,
+    }: {
+      operationId: string;
+      operationType:
+        | "bulk_delete"
+        | "bulk_status_change"
+        | "bulk_category_assignment"
+        | "bulk_tag_management"
+        | "bulk_intelligence_application"
+        | "bulk_cleanup"
+        | "merge_duplicates";
+    }) =>
+      trpc().payeeRoutes.undoOperation.mutate({
+        operationId,
+        operationType,
+      }),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({queryKey: payeeKeys.lists()}),
@@ -683,19 +761,27 @@ export const undoOperation = () =>
 export const getOperationHistory = (
   limit = 20,
   offset = 0,
-  operationType?: 'bulk_delete' | 'bulk_status_change' | 'bulk_category_assignment' | 'bulk_tag_management' | 'bulk_intelligence_application' | 'bulk_cleanup' | 'merge_duplicates',
+  operationType?:
+    | "bulk_delete"
+    | "bulk_status_change"
+    | "bulk_category_assignment"
+    | "bulk_tag_management"
+    | "bulk_intelligence_application"
+    | "bulk_cleanup"
+    | "merge_duplicates",
   startDate?: string,
   endDate?: string
 ) =>
   defineQuery<OperationHistory>({
     queryKey: ["payees", "operation-history", limit, offset, operationType, startDate, endDate],
-    queryFn: () => trpc().payeeRoutes.getOperationHistory.query({
-      limit,
-      offset,
-      operationType,
-      startDate,
-      endDate
-    }),
+    queryFn: () =>
+      trpc().payeeRoutes.getOperationHistory.query({
+        limit,
+        offset,
+        operationType,
+        startDate,
+        endDate,
+      }),
     options: {
       staleTime: 30 * 1000, // 30 seconds
     },

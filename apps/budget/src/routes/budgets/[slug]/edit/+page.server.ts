@@ -1,17 +1,17 @@
-import {redirect, fail} from '@sveltejs/kit';
-import {superformInsertBudgetSchema} from '$lib/schema/superforms';
-import {createContext} from '$lib/trpc/context';
-import {createCaller} from '$lib/trpc/router';
-import {superValidate} from 'sveltekit-superforms/client';
-import {zod4} from 'sveltekit-superforms/adapters';
-import type {Actions, PageServerLoad, RequestEvent} from './$types';
+import {redirect, fail} from "@sveltejs/kit";
+import {superformInsertBudgetSchema} from "$lib/schema/superforms";
+import {createContext} from "$lib/trpc/context";
+import {createCaller} from "$lib/trpc/router";
+import {superValidate} from "sveltekit-superforms/client";
+import {zod4} from "sveltekit-superforms/adapters";
+import type {Actions, PageServerLoad, RequestEvent} from "./$types";
 
 export const load: PageServerLoad = async (event) => {
   const {params} = event;
   const budgetSlug = params.slug;
 
   if (!budgetSlug) {
-    throw redirect(303, '/budgets');
+    throw redirect(303, "/budgets");
   }
 
   const context = await createContext(event);
@@ -21,12 +21,14 @@ export const load: PageServerLoad = async (event) => {
     const budget = await caller.budgetRoutes.getBySlug({slug: budgetSlug});
 
     if (!budget) {
-      throw redirect(303, '/budgets');
+      throw redirect(303, "/budgets");
     }
 
     // Extract metadata fields for the form
     const metadata = (budget.metadata || {}) as Record<string, unknown>;
-    const defaultPeriod = metadata['defaultPeriod'] as { type?: string; startDay?: number } | undefined;
+    const defaultPeriod = metadata["defaultPeriod"] as
+      | {type?: string; startDay?: number}
+      | undefined;
 
     // Build form data with defaults for optional fields
     const formData: Record<string, any> = {
@@ -36,15 +38,15 @@ export const load: PageServerLoad = async (event) => {
       scope: budget.scope,
       status: budget.status,
       enforcementLevel: budget.enforcementLevel,
-      accountIds: budget.accounts?.map(a => a.id) || [],
-      categoryIds: budget.categories?.map(c => c.id) || [],
-      periodType: defaultPeriod?.type || 'monthly',
+      accountIds: budget.accounts?.map((a) => a.id) || [],
+      categoryIds: budget.categories?.map((c) => c.id) || [],
+      periodType: defaultPeriod?.type || "monthly",
       startDay: defaultPeriod?.startDay ?? 1,
     };
 
     // Only include allocatedAmount if it has an actual value
-    if (metadata['allocatedAmount'] !== undefined) {
-      formData['allocatedAmount'] = metadata['allocatedAmount'] as number;
+    if (metadata["allocatedAmount"] !== undefined) {
+      formData["allocatedAmount"] = metadata["allocatedAmount"] as number;
     }
 
     return {
@@ -55,8 +57,8 @@ export const load: PageServerLoad = async (event) => {
       categories: await caller.categoriesRoutes.all(),
     };
   } catch (err) {
-    console.error('Error loading budget for edit:', err);
-    throw redirect(303, '/budgets');
+    console.error("Error loading budget for edit:", err);
+    throw redirect(303, "/budgets");
   }
 };
 
@@ -72,13 +74,13 @@ export const actions: Actions = {
 
     const metadata: Record<string, unknown> = {
       defaultPeriod: {
-        type: form.data.periodType || 'monthly',
+        type: form.data.periodType || "monthly",
         startDay: form.data.startDay || 1,
       },
     };
 
     if (form.data.allocatedAmount !== undefined) {
-      metadata['allocatedAmount'] = form.data.allocatedAmount;
+      metadata["allocatedAmount"] = form.data.allocatedAmount;
     }
 
     try {
@@ -88,7 +90,7 @@ export const actions: Actions = {
       // Get the budget to retrieve its ID
       const budget = await caller.budgetRoutes.getBySlug({slug: budgetSlug});
       if (!budget) {
-        throw new Error('Budget not found');
+        throw new Error("Budget not found");
       }
 
       await caller.budgetRoutes.update({
@@ -105,10 +107,10 @@ export const actions: Actions = {
       // Redirect after successful update (outside try-catch)
       throw redirect(303, `/budgets/${budgetSlug}`);
     } catch (error) {
-      console.error('Failed to update budget:', error);
+      console.error("Failed to update budget:", error);
       return fail(500, {
         form,
-        error: 'Failed to update budget. Please try again.',
+        error: "Failed to update budget. Please try again.",
       });
     }
   },

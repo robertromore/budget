@@ -1,10 +1,10 @@
 <script lang="ts">
-import { page } from '$app/state';
-import { rpc } from '$lib/query';
+import {page} from '$app/state';
+import {rpc} from '$lib/query';
 import * as Tabs from '$lib/components/ui/tabs';
-import { Button } from '$lib/components/ui/button';
+import {Button} from '$lib/components/ui/button';
 import * as ResponsiveSheet from '$lib/components/ui/responsive-sheet';
-import { Badge } from '$lib/components/ui/badge';
+import {Badge} from '$lib/components/ui/badge';
 import HeartPulse from '@lucide/svelte/icons/heart-pulse';
 import Wand from '@lucide/svelte/icons/wand';
 import FileText from '@lucide/svelte/icons/file-text';
@@ -18,9 +18,7 @@ import ExpenseWizard from './(components)/expense-wizard.svelte';
 const accountSlug = $derived(page.data['accountSlug']);
 
 // Query account data
-const accountQuery = $derived(
-  rpc.accounts.getAccountDetail(accountSlug).options()
-);
+const accountQuery = $derived(rpc.accounts.getAccountDetail(accountSlug).options());
 const accountData = $derived(accountQuery.data);
 
 // State for expense form
@@ -78,10 +76,7 @@ function handleAddExpense() {
     <!-- Expenses Tab -->
     <Tabs.Content value="expenses">
       {#if accountData}
-        <ExpenseTableContainer
-          hsaAccountId={accountData.id}
-          onEdit={handleEditExpense}
-        />
+        <ExpenseTableContainer hsaAccountId={accountData.id} onEdit={handleEditExpense} />
       {/if}
     </Tabs.Content>
 
@@ -101,8 +96,12 @@ function handleAddExpense() {
           <h2 class="text-lg font-semibold">
             {editingExpense ? 'Edit Medical Expense' : 'Add Medical Expense'}
           </h2>
-          <p class="text-sm text-muted-foreground">
-            {editingExpense ? 'Update the medical expense details' : useWizard ? 'Follow the guided wizard to add your expense' : 'Add a new medical expense to your HSA account'}
+          <p class="text-muted-foreground text-sm">
+            {editingExpense
+              ? 'Update the medical expense details'
+              : useWizard
+                ? 'Follow the guided wizard to add your expense'
+                : 'Add a new medical expense to your HSA account'}
           </p>
         </div>
       {/snippet}
@@ -120,14 +119,15 @@ function handleAddExpense() {
             onCancel={() => {
               addExpenseOpen = false;
               editingExpense = null;
-            }}
-          />
+            }} />
         {:else}
           <!-- Adding new expense: tabs for wizard vs manual -->
           <div class="space-y-6">
-            <Tabs.Root value={useWizard ? 'wizard' : 'manual'} onValueChange={(value) => {
-              useWizard = value === 'wizard';
-            }}>
+            <Tabs.Root
+              value={useWizard ? 'wizard' : 'manual'}
+              onValueChange={(value) => {
+                useWizard = value === 'wizard';
+              }}>
               <Tabs.List class="grid w-full grid-cols-2">
                 <Tabs.Trigger value="wizard" class="flex items-center gap-2">
                   <Wand class="h-4 w-4" />
@@ -142,9 +142,10 @@ function handleAddExpense() {
               </Tabs.List>
 
               <Tabs.Content value="wizard" class="mt-6">
-                <div class="bg-muted/20 border border-muted rounded-lg p-4 mb-4">
-                  <p class="text-sm text-muted-foreground">
-                    Step-by-step guided setup. We'll walk you through each option with clear instructions.
+                <div class="bg-muted/20 border-muted mb-4 rounded-lg border p-4">
+                  <p class="text-muted-foreground text-sm">
+                    Step-by-step guided setup. We'll walk you through each option with clear
+                    instructions.
                   </p>
                 </div>
                 <ExpenseWizard
@@ -155,15 +156,14 @@ function handleAddExpense() {
                   }}
                   onCancel={() => {
                     addExpenseOpen = false;
-                  }}
-                />
+                  }} />
               </Tabs.Content>
 
               <Tabs.Content value="manual" class="mt-6">
-                <div class="bg-muted/20 border border-muted rounded-lg p-4 mb-4">
-                  <p class="text-sm text-muted-foreground">
-                    Fill out the form directly if you're familiar with the options.
-                    Switch to <strong>Guided Setup</strong> for step-by-step help.
+                <div class="bg-muted/20 border-muted mb-4 rounded-lg border p-4">
+                  <p class="text-muted-foreground text-sm">
+                    Fill out the form directly if you're familiar with the options. Switch to <strong
+                      >Guided Setup</strong> for step-by-step help.
                   </p>
                 </div>
                 <MedicalExpenseForm
@@ -174,8 +174,7 @@ function handleAddExpense() {
                   }}
                   onCancel={() => {
                     addExpenseOpen = false;
-                  }}
-                />
+                  }} />
               </Tabs.Content>
             </Tabs.Root>
           </div>

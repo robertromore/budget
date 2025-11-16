@@ -77,12 +77,7 @@ export type {
   MLDataQualityReport,
 } from "./ml-types";
 
-export type {
-  SubscriptionInfo,
-  PayeeAddress,
-  PaymentMethodReference,
-  PayeeTags
-} from './types';
+export type {SubscriptionInfo, PayeeAddress, PaymentMethodReference, PayeeTags} from "./types";
 
 export {
   createPayeeSchema,

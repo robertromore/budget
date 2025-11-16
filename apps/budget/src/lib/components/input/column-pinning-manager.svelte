@@ -25,13 +25,11 @@ let draggedIndex = $state<number | null>(null);
 let addColumnOpen = $state(false);
 
 // Get columns that are not currently pinned
-const unpinnedColumns = $derived(
-  availableColumns.filter(col => !pinnedColumns.includes(col.id))
-);
+const unpinnedColumns = $derived(availableColumns.filter((col) => !pinnedColumns.includes(col.id)));
 
 // Get column label from meta
 const getColumnLabel = (columnId: string) => {
-  const column = availableColumns.find(col => col.id === columnId);
+  const column = availableColumns.find((col) => col.id === columnId);
   return column?.columnDef.meta?.label ?? columnId;
 };
 
@@ -109,7 +107,8 @@ const handleDragEnd = () => {
 
 {#snippet content()}
   {#if pinnedColumns.length === 0}
-    <div class="text-muted-foreground flex h-20 items-center justify-center rounded-md border border-dashed text-sm">
+    <div
+      class="text-muted-foreground flex h-20 items-center justify-center rounded-md border border-dashed text-sm">
       No columns pinned
     </div>
   {:else}
@@ -117,8 +116,8 @@ const handleDragEnd = () => {
       {#each pinnedColumns as columnId, index (columnId)}
         <div
           class={cn(
-            "border-input bg-background flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors",
-            draggedIndex === index && "opacity-50"
+            'border-input bg-background flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors',
+            draggedIndex === index && 'opacity-50'
           )}
           draggable="true"
           ondragstart={(e) => handleDragStart(e, index)}
@@ -167,7 +166,7 @@ const handleDragEnd = () => {
   {#if unpinnedColumns.length > 0}
     <Popover.Root bind:open={addColumnOpen}>
       <Popover.Trigger>
-        {#snippet child({ props })}
+        {#snippet child({props})}
           <Button variant="outline" size="sm" class="w-full" {...props}>
             <Plus class="mr-2 size-4" />
             Add Column
@@ -180,9 +179,7 @@ const handleDragEnd = () => {
           <Command.Empty>No column found.</Command.Empty>
           <Command.Group class="max-h-[200px] overflow-auto">
             {#each unpinnedColumns as column}
-              <Command.Item
-                value={column.id}
-                onSelect={() => addColumn(column.id)}>
+              <Command.Item value={column.id} onSelect={() => addColumn(column.id)}>
                 {column.columnDef.meta?.label ?? column.id}
               </Command.Item>
             {/each}

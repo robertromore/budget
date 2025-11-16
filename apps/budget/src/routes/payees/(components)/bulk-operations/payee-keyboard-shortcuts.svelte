@@ -1,12 +1,12 @@
 <script lang="ts">
 import * as Dialog from '$lib/components/ui/dialog';
 import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
-import { Kbd } from '$lib/components/ui/kbd';
-import { Separator } from '$lib/components/ui/separator';
-import { ScrollArea } from '$lib/components/ui/scroll-area';
+import {Button} from '$lib/components/ui/button';
+import {Kbd} from '$lib/components/ui/kbd';
+import {Separator} from '$lib/components/ui/separator';
+import {ScrollArea} from '$lib/components/ui/scroll-area';
 
-import { PayeeBulkOperationsState } from '$lib/states/ui/payee-bulk-operations.svelte';
+import {PayeeBulkOperationsState} from '$lib/states/ui/payee-bulk-operations.svelte';
 
 // Icons
 import Keyboard from '@lucide/svelte/icons/keyboard';
@@ -47,29 +47,29 @@ const shortcuts: KeyboardShortcut[] = [
     keys: ['Ctrl/Cmd', 'A'],
     description: 'Select all visible payees',
     category: 'Selection',
-    action: () => onTriggerAction?.('select-all')
+    action: () => onTriggerAction?.('select-all'),
   },
   {
     keys: ['Ctrl/Cmd', 'D'],
     description: 'Clear selection',
     category: 'Selection',
-    action: () => onTriggerAction?.('clear-selection')
+    action: () => onTriggerAction?.('clear-selection'),
   },
   {
     keys: ['Ctrl/Cmd', 'I'],
     description: 'Invert selection',
     category: 'Selection',
-    action: () => onTriggerAction?.('invert-selection')
+    action: () => onTriggerAction?.('invert-selection'),
   },
   {
     keys: ['Shift', 'Click'],
     description: 'Select range from last selected',
-    category: 'Selection'
+    category: 'Selection',
   },
   {
     keys: ['Ctrl/Cmd', 'Click'],
     description: 'Toggle individual selection',
-    category: 'Selection'
+    category: 'Selection',
   },
 
   // Bulk operations
@@ -77,25 +77,25 @@ const shortcuts: KeyboardShortcut[] = [
     keys: ['Delete'],
     description: 'Delete selected payees (with confirmation)',
     category: 'Bulk Operations',
-    action: () => onTriggerAction?.('bulk-delete')
+    action: () => onTriggerAction?.('bulk-delete'),
   },
   {
     keys: ['Ctrl/Cmd', 'T'],
     description: 'Assign tags to selected payees',
     category: 'Bulk Operations',
-    action: () => onTriggerAction?.('bulk-tags')
+    action: () => onTriggerAction?.('bulk-tags'),
   },
   {
     keys: ['Ctrl/Cmd', 'G'],
     description: 'Assign category to selected payees',
     category: 'Bulk Operations',
-    action: () => onTriggerAction?.('bulk-category')
+    action: () => onTriggerAction?.('bulk-category'),
   },
   {
     keys: ['Ctrl/Cmd', 'Shift', 'I'],
     description: 'Apply intelligence to selected payees',
     category: 'Bulk Operations',
-    action: () => onTriggerAction?.('bulk-intelligence')
+    action: () => onTriggerAction?.('bulk-intelligence'),
   },
 
   // Export/Import
@@ -103,42 +103,42 @@ const shortcuts: KeyboardShortcut[] = [
     keys: ['Ctrl/Cmd', 'E'],
     description: 'Export selected payees',
     category: 'Import/Export',
-    action: () => onTriggerAction?.('export')
+    action: () => onTriggerAction?.('export'),
   },
   {
     keys: ['Ctrl/Cmd', 'Shift', 'E'],
     description: 'Export all payees',
     category: 'Import/Export',
-    action: () => onTriggerAction?.('export-all')
+    action: () => onTriggerAction?.('export-all'),
   },
   {
     keys: ['Ctrl/Cmd', 'Shift', 'I'],
     description: 'Open import dialog',
     category: 'Import/Export',
-    action: () => onTriggerAction?.('import')
+    action: () => onTriggerAction?.('import'),
   },
 
   // Navigation
   {
     keys: ['↑', '↓'],
     description: 'Navigate through payee list',
-    category: 'Navigation'
+    category: 'Navigation',
   },
   {
     keys: ['Page Up', 'Page Down'],
     description: 'Navigate by page',
-    category: 'Navigation'
+    category: 'Navigation',
   },
   {
     keys: ['Home', 'End'],
     description: 'Go to first/last payee',
-    category: 'Navigation'
+    category: 'Navigation',
   },
   {
     keys: ['Enter'],
     description: 'Open payee details',
     category: 'Navigation',
-    action: () => onTriggerAction?.('view-payee')
+    action: () => onTriggerAction?.('view-payee'),
   },
 
   // Search and filters
@@ -146,25 +146,25 @@ const shortcuts: KeyboardShortcut[] = [
     keys: ['Ctrl/Cmd', 'F'],
     description: 'Focus search field',
     category: 'Search & Filters',
-    action: () => onTriggerAction?.('focus-search')
+    action: () => onTriggerAction?.('focus-search'),
   },
   {
     keys: ['Ctrl/Cmd', 'Shift', 'F'],
     description: 'Clear all filters',
     category: 'Search & Filters',
-    action: () => onTriggerAction?.('clear-filters')
+    action: () => onTriggerAction?.('clear-filters'),
   },
   {
     keys: ['F1'],
     description: 'Filter by active payees',
     category: 'Search & Filters',
-    action: () => onTriggerAction?.('filter-active')
+    action: () => onTriggerAction?.('filter-active'),
   },
   {
     keys: ['F2'],
     description: 'Filter by inactive payees',
     category: 'Search & Filters',
-    action: () => onTriggerAction?.('filter-inactive')
+    action: () => onTriggerAction?.('filter-inactive'),
   },
 
   // Undo/Redo
@@ -172,7 +172,7 @@ const shortcuts: KeyboardShortcut[] = [
     keys: ['Ctrl/Cmd', 'Z'],
     description: 'Undo last bulk operation',
     category: 'Undo/Redo',
-    action: () => onTriggerAction?.('undo')
+    action: () => onTriggerAction?.('undo'),
   },
 
   // Clipboard
@@ -180,13 +180,13 @@ const shortcuts: KeyboardShortcut[] = [
     keys: ['Ctrl/Cmd', 'C'],
     description: 'Copy selected payees to clipboard',
     category: 'Clipboard',
-    action: () => onTriggerAction?.('copy')
+    action: () => onTriggerAction?.('copy'),
   },
   {
     keys: ['Ctrl/Cmd', 'X'],
     description: 'Cut selected payees to clipboard',
     category: 'Clipboard',
-    action: () => onTriggerAction?.('cut')
+    action: () => onTriggerAction?.('cut'),
   },
 
   // Duplicates
@@ -194,7 +194,7 @@ const shortcuts: KeyboardShortcut[] = [
     keys: ['Ctrl/Cmd', 'Shift', 'D'],
     description: 'Open duplicate detection',
     category: 'Duplicates',
-    action: () => onTriggerAction?.('find-duplicates')
+    action: () => onTriggerAction?.('find-duplicates'),
   },
 
   // General
@@ -202,17 +202,17 @@ const shortcuts: KeyboardShortcut[] = [
     keys: ['Escape'],
     description: 'Cancel current operation or close dialogs',
     category: 'General',
-    action: () => onTriggerAction?.('cancel')
+    action: () => onTriggerAction?.('cancel'),
   },
   {
     keys: ['?'],
     description: 'Show keyboard shortcuts (this dialog)',
-    category: 'General'
+    category: 'General',
   },
   {
     keys: ['Ctrl/Cmd', 'Shift', 'K'],
     description: 'Show keyboard shortcuts (this dialog)',
-    category: 'General'
+    category: 'General',
   },
 ];
 
@@ -220,7 +220,7 @@ const shortcuts: KeyboardShortcut[] = [
 const shortcutsByCategory = $derived.by(() => {
   const categories = new Map<string, KeyboardShortcut[]>();
 
-  shortcuts.forEach(shortcut => {
+  shortcuts.forEach((shortcut) => {
     const category = shortcut.category;
     if (!categories.has(category)) {
       categories.set(category, []);
@@ -260,16 +260,26 @@ function formatKey(key: string): string {
 // Get icon for category
 function getCategoryIcon(category: string) {
   switch (category) {
-    case 'Selection': return MousePointer;
-    case 'Bulk Operations': return Zap;
-    case 'Import/Export': return Copy;
-    case 'Navigation': return ArrowUp;
-    case 'Search & Filters': return Keyboard;
-    case 'Undo/Redo': return ArrowLeft;
-    case 'Clipboard': return Copy;
-    case 'Duplicates': return Copy;
-    case 'General': return Command;
-    default: return Keyboard;
+    case 'Selection':
+      return MousePointer;
+    case 'Bulk Operations':
+      return Zap;
+    case 'Import/Export':
+      return Copy;
+    case 'Navigation':
+      return ArrowUp;
+    case 'Search & Filters':
+      return Keyboard;
+    case 'Undo/Redo':
+      return ArrowLeft;
+    case 'Clipboard':
+      return Copy;
+    case 'Duplicates':
+      return Copy;
+    case 'General':
+      return Command;
+    default:
+      return Keyboard;
   }
 }
 
@@ -288,7 +298,11 @@ $effect(() => {
   const handleKeyDown = (e: KeyboardEvent) => {
     // Don't handle shortcuts when typing in inputs
     const target = e.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
+    if (
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.contentEditable === 'true'
+    ) {
       // Only handle specific shortcuts in input fields
       if (e.key === 'Escape') {
         target.blur();
@@ -412,7 +426,7 @@ $effect(() => {
 </script>
 
 <Dialog.Root bind:open>
-  <Dialog.Content class="max-w-4xl max-h-[90vh] overflow-hidden">
+  <Dialog.Content class="max-h-[90vh] max-w-4xl overflow-hidden">
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">
         <Keyboard class="h-5 w-5" />
@@ -429,7 +443,7 @@ $effect(() => {
           {@const Icon = getCategoryIcon(category)}
           <Card.Root>
             <Card.Header class="pb-3">
-              <Card.Title class="text-lg flex items-center gap-2">
+              <Card.Title class="flex items-center gap-2 text-lg">
                 <Icon class="h-5 w-5" />
                 {category}
               </Card.Title>
@@ -437,14 +451,15 @@ $effect(() => {
             <Card.Content>
               <div class="space-y-3">
                 {#each categoryShortcuts as shortcut}
-                  <div class="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors group">
+                  <div
+                    class="hover:bg-muted/50 group flex items-center justify-between rounded-lg p-2 transition-colors">
                     <div class="flex-1">
                       <div class="text-sm font-medium">{shortcut.description}</div>
                     </div>
                     <div class="flex items-center gap-1">
                       {#each shortcut.keys as key, index}
                         {#if index > 0}
-                          <span class="text-xs text-muted-foreground mx-1">+</span>
+                          <span class="text-muted-foreground mx-1 text-xs">+</span>
                         {/if}
                         <Kbd>
                           {formatKey(key)}
@@ -455,8 +470,7 @@ $effect(() => {
                           variant="ghost"
                           size="sm"
                           onclick={() => executeShortcut(shortcut)}
-                          class="ml-2 h-6 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
+                          class="ml-2 h-6 px-2 opacity-0 transition-opacity group-hover:opacity-100">
                           Try
                         </Button>
                       {/if}
@@ -471,31 +485,31 @@ $effect(() => {
     </ScrollArea>
 
     <!-- Tips -->
-    <div class="space-y-3 pt-4 border-t">
-      <h4 class="font-medium text-sm">Tips</h4>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground">
+    <div class="space-y-3 border-t pt-4">
+      <h4 class="text-sm font-medium">Tips</h4>
+      <div class="text-muted-foreground grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
         <div class="flex items-start gap-2">
-          <MousePointer class="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <MousePointer class="mt-0.5 h-4 w-4 flex-shrink-0" />
           <span>Hold <Kbd>Ctrl/Cmd</Kbd> while clicking to select multiple payees</span>
         </div>
         <div class="flex items-start gap-2">
-          <Keyboard class="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <Keyboard class="mt-0.5 h-4 w-4 flex-shrink-0" />
           <span>Press <Kbd>?</Kbd> anytime to show this dialog</span>
         </div>
         <div class="flex items-start gap-2">
-          <Zap class="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <Zap class="mt-0.5 h-4 w-4 flex-shrink-0" />
           <span>Bulk operations work on all selected payees at once</span>
         </div>
         <div class="flex items-start gap-2">
-          <ArrowLeft class="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <ArrowLeft class="mt-0.5 h-4 w-4 flex-shrink-0" />
           <span>Use <Kbd>Ctrl/Cmd</Kbd> + <Kbd>Z</Kbd> to undo bulk operations</span>
         </div>
       </div>
     </div>
 
     <Dialog.Footer>
-      <Button variant="outline" onclick={() => open = false}>
-        <X class="h-4 w-4 mr-2" />
+      <Button variant="outline" onclick={() => (open = false)}>
+        <X class="mr-2 h-4 w-4" />
         Close
       </Button>
     </Dialog.Footer>

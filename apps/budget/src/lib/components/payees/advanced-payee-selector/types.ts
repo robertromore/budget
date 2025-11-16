@@ -1,14 +1,14 @@
-import type {Payee} from '$lib/schema/payees';
+import type {Payee} from "$lib/schema/payees";
 
 export type GroupStrategy =
-  | 'none'           // Flat virtualized list
-  | 'type'           // Group by payeeType
-  | 'category'       // Group by payeeCategory (UI organization)
-  | 'alphabetical'   // A-Z sections
-  | 'usage'          // Frequent, Recent, Occasional, Rare
-  | 'smart';         // ML-driven (future)
+  | "none" // Flat virtualized list
+  | "type" // Group by payeeType
+  | "category" // Group by payeeCategory (UI organization)
+  | "alphabetical" // A-Z sections
+  | "usage" // Frequent, Recent, Occasional, Rare
+  | "smart"; // ML-driven (future)
 
-export type DisplayMode = 'compact' | 'normal' | 'detailed';
+export type DisplayMode = "compact" | "normal" | "detailed";
 
 export interface TransactionContext {
   amount?: number;
@@ -56,9 +56,9 @@ export interface AdvancedPayeeSelectorProps {
 }
 
 export interface PayeeWithMetadata extends Payee {
-  _score?: number;          // Search/ML relevance score
-  _isSuggested?: boolean;   // ML suggestion
-  _isRecent?: boolean;      // Recently used
-  _isFrequent?: boolean;    // Frequently used
-  _matchedField?: string;   // Which field matched search
+  _score?: number; // Search/ML relevance score
+  _isSuggested?: boolean; // ML suggestion
+  _isRecent?: boolean; // Recently used
+  _isFrequent?: boolean; // Frequently used
+  _matchedField?: string; // Which field matched search
 }

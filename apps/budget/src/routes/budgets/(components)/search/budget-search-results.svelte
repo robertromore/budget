@@ -46,7 +46,7 @@ let {
   onDuplicate,
   onArchive,
   onBulkDelete,
-  onBulkArchive
+  onBulkArchive,
 }: Props = $props();
 
 // Table binding for list view
@@ -62,7 +62,9 @@ function getAllocated(budget: BudgetWithRelations): number {
   );
 
   if (latest) return Math.abs(latest.allocatedAmount ?? 0);
-  return Math.abs((budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number ?? 0);
+  return Math.abs(
+    ((budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number) ?? 0
+  );
 }
 
 function getConsumed(budget: BudgetWithRelations): number {
@@ -73,7 +75,9 @@ function getRemaining(budget: BudgetWithRelations): number {
   return getAllocated(budget) - getConsumed(budget);
 }
 
-function getBudgetStatus(budget: BudgetWithRelations): 'on_track' | 'approaching' | 'over' | 'paused' {
+function getBudgetStatus(
+  budget: BudgetWithRelations
+): 'on_track' | 'approaching' | 'over' | 'paused' {
   if (budget.status !== 'active') return 'paused';
   const allocated = getAllocated(budget);
   const consumed = getConsumed(budget);
@@ -88,15 +92,40 @@ function getBudgetStatus(budget: BudgetWithRelations): 'on_track' | 'approaching
 function getStatusDisplay(status: string) {
   switch (status) {
     case 'on_track':
-      return { icon: CircleCheck, color: 'text-green-600', bgColor: 'bg-green-50 dark:bg-green-950', label: 'On Track' };
+      return {
+        icon: CircleCheck,
+        color: 'text-green-600',
+        bgColor: 'bg-green-50 dark:bg-green-950',
+        label: 'On Track',
+      };
     case 'approaching':
-      return { icon: TriangleAlert, color: 'text-orange-600', bgColor: 'bg-orange-50 dark:bg-orange-950', label: 'Approaching Limit' };
+      return {
+        icon: TriangleAlert,
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-50 dark:bg-orange-950',
+        label: 'Approaching Limit',
+      };
     case 'over':
-      return { icon: TriangleAlert, color: 'text-red-600', bgColor: 'bg-red-50 dark:bg-red-950', label: 'Over Budget' };
+      return {
+        icon: TriangleAlert,
+        color: 'text-red-600',
+        bgColor: 'bg-red-50 dark:bg-red-950',
+        label: 'Over Budget',
+      };
     case 'paused':
-      return { icon: TriangleAlert, color: 'text-gray-600', bgColor: 'bg-gray-50 dark:bg-gray-950', label: 'Paused' };
+      return {
+        icon: TriangleAlert,
+        color: 'text-gray-600',
+        bgColor: 'bg-gray-50 dark:bg-gray-950',
+        label: 'Paused',
+      };
     default:
-      return { icon: CircleCheck, color: 'text-green-600', bgColor: 'bg-green-50 dark:bg-green-950', label: 'On Track' };
+      return {
+        icon: CircleCheck,
+        color: 'text-green-600',
+        bgColor: 'bg-green-50 dark:bg-green-950',
+        label: 'On Track',
+      };
   }
 }
 
@@ -128,11 +157,10 @@ function formatBudgetType(type: string) {
   emptyIcon={DollarSign}
   emptyTitle="No budgets found"
   emptyDescription="Try adjusting your filters or search terms"
-  onView={onView}
-  onEdit={onEdit}
-  onDelete={onDelete}
-  onBulkDelete={onBulkDelete}
->
+  {onView}
+  {onEdit}
+  {onDelete}
+  {onBulkDelete}>
   {#snippet gridCard(budget)}
     {@const TypeIcon = getBudgetTypeIcon(budget.type)}
     {@const budgetStatus = getBudgetStatus(budget)}
@@ -148,30 +176,26 @@ function formatBudgetType(type: string) {
       {onDelete}
       viewButtonLabel="View"
       showAnalyticsButton={false}
-      cardClass={cn(budget.status !== 'active' && "opacity-75")}
-    >
+      cardClass={cn(budget.status !== 'active' && 'opacity-75')}>
       {#snippet header(b)}
         <!-- Status Badge -->
         <div class="absolute top-3 right-3">
           <Badge
             variant="outline"
-            class={cn("text-xs", statusDisplay.color, statusDisplay.bgColor)}>
+            class={cn('text-xs', statusDisplay.color, statusDisplay.bgColor)}>
             <statusDisplay.icon class="mr-1 h-3 w-3" />
             {statusDisplay.label}
           </Badge>
         </div>
 
         <!-- Name and Type -->
-        <Card.Title class="flex items-start gap-2 pr-24 min-w-0">
-          <TypeIcon class="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+        <Card.Title class="flex min-w-0 items-start gap-2 pr-24">
+          <TypeIcon class="text-muted-foreground mt-0.5 h-5 w-5 flex-shrink-0" />
           <div class="min-w-0 flex-1 overflow-hidden">
-            <a
-              href="/budgets/{b.slug}"
-              class="font-medium truncate hover:underline block"
-            >
+            <a href="/budgets/{b.slug}" class="block truncate font-medium hover:underline">
               {@html highlightMatches(b.name || 'Unnamed Budget', searchQuery)}
             </a>
-            <div class="text-xs text-muted-foreground mt-0.5 truncate">
+            <div class="text-muted-foreground mt-0.5 truncate text-xs">
               {formatBudgetType(b.type)}
             </div>
           </div>
@@ -179,9 +203,11 @@ function formatBudgetType(type: string) {
 
         {#if b.description}
           <Card.Description>
-            <span class="text-sm line-clamp-2">
+            <span class="line-clamp-2 text-sm">
               {@html highlightMatches(
-                b.description.length > 100 ? b.description.substring(0, 100) + '...' : b.description,
+                b.description.length > 100
+                  ? b.description.substring(0, 100) + '...'
+                  : b.description,
                 searchQuery
               )}
             </span>
@@ -192,17 +218,20 @@ function formatBudgetType(type: string) {
       {#snippet content(b)}
         <!-- Budget Amounts -->
         <div class="space-y-2">
-          <div class="flex justify-between text-sm gap-2 min-w-0">
+          <div class="flex min-w-0 justify-between gap-2 text-sm">
             <span class="text-muted-foreground flex-shrink-0">Allocated:</span>
-            <span class="font-medium truncate text-right">{currencyFormatter.format(allocated)}</span>
+            <span class="truncate text-right font-medium"
+              >{currencyFormatter.format(allocated)}</span>
           </div>
-          <div class="flex justify-between text-sm gap-2 min-w-0">
+          <div class="flex min-w-0 justify-between gap-2 text-sm">
             <span class="text-muted-foreground flex-shrink-0">Consumed:</span>
-            <span class="font-medium truncate text-right">{currencyFormatter.format(consumed)}</span>
+            <span class="truncate text-right font-medium"
+              >{currencyFormatter.format(consumed)}</span>
           </div>
-          <div class="flex justify-between text-sm gap-2 min-w-0">
+          <div class="flex min-w-0 justify-between gap-2 text-sm">
             <span class="text-muted-foreground flex-shrink-0">Remaining:</span>
-            <span class={cn("font-medium truncate text-right", remaining < 0 && "text-destructive")}>
+            <span
+              class={cn('truncate text-right font-medium', remaining < 0 && 'text-destructive')}>
               {currencyFormatter.format(remaining)}
             </span>
           </div>
@@ -214,13 +243,12 @@ function formatBudgetType(type: string) {
           {allocated}
           status={budgetStatus}
           enforcementLevel={b.enforcementLevel ?? 'warning'}
-          label=""
-        />
+          label="" />
       {/snippet}
 
       {#snippet badges(b)}
         <!-- Scope and Status Badges -->
-        <div class="flex items-center gap-2 flex-wrap">
+        <div class="flex flex-wrap items-center gap-2">
           <Badge variant="secondary" class="text-xs">
             {b.scope.charAt(0).toUpperCase() + b.scope.slice(1)}
           </Badge>
@@ -283,18 +311,17 @@ function formatBudgetType(type: string) {
       {onArchive}
       {onBulkDelete}
       {onBulkArchive}
-      bind:table
-    />
+      bind:table />
   {/snippet}
 </EntitySearchResults>
 
 <style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    word-break: break-word;
-  }
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
 </style>

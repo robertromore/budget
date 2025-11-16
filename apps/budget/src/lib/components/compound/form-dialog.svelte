@@ -206,7 +206,12 @@ const sizeClasses = {
         <div class="flex w-full flex-col gap-3 sm:flex-row sm:justify-between">
           <!-- Delete button (left side on desktop, full width on mobile) -->
           {#if onDelete}
-            <Button type="button" variant="destructive" onclick={handleDelete} disabled={isLoading} class="sm:w-auto w-full sm:order-1 order-3">
+            <Button
+              type="button"
+              variant="destructive"
+              onclick={handleDelete}
+              disabled={isLoading}
+              class="order-3 w-full sm:order-1 sm:w-auto">
               {deleteLabel}
             </Button>
           {:else}
@@ -214,8 +219,13 @@ const sizeClasses = {
           {/if}
 
           <!-- Save/Cancel buttons (right side on desktop, stacked on mobile) -->
-          <div class="flex flex-col gap-2 sm:flex-row sm:order-2 order-1">
-            <Button type="button" variant="outline" onclick={handleCancel} disabled={isLoading} class="w-full sm:w-auto">
+          <div class="order-1 flex flex-col gap-2 sm:order-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              onclick={handleCancel}
+              disabled={isLoading}
+              class="w-full sm:w-auto">
               {cancelLabel}
             </Button>
             <Button
@@ -248,8 +258,7 @@ const sizeClasses = {
       <AlertDialog.Cancel>Continue Editing</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={confirmClose}
-        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-      >
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
         Discard Changes
       </AlertDialog.Action>
     </AlertDialog.Footer>

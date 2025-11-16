@@ -1,214 +1,231 @@
 <script lang="ts">
-  import {Zap, Target, Shuffle, TrendingUp, TriangleAlert} from "@lucide/svelte/icons";
-  import * as Card from "$lib/components/ui/card";
-  import {Button} from "$lib/components/ui/button";
-  import * as Select from "$lib/components/ui/select";
-  import NumericInput from "$lib/components/input/numeric-input.svelte";
-  import Label from "$lib/components/ui/label/label.svelte";
-  import {Badge} from "$lib/components/ui/badge";
-  import {cn} from "$lib/utils";
-  import {currencyFormatter} from "$lib/utils/formatters";
-  import {createNumericRecordAccessors} from "$lib/utils/bind-helpers";
-  import type {EnvelopeAllocation} from "$lib/schema/budgets/envelope-allocations";
+import {Zap, Target, Shuffle, TrendingUp, TriangleAlert} from '@lucide/svelte/icons';
+import * as Card from '$lib/components/ui/card';
+import {Button} from '$lib/components/ui/button';
+import * as Select from '$lib/components/ui/select';
+import NumericInput from '$lib/components/input/numeric-input.svelte';
+import Label from '$lib/components/ui/label/label.svelte';
+import {Badge} from '$lib/components/ui/badge';
+import {cn} from '$lib/utils';
+import {currencyFormatter} from '$lib/utils/formatters';
+import {createNumericRecordAccessors} from '$lib/utils/bind-helpers';
+import type {EnvelopeAllocation} from '$lib/schema/budgets/envelope-allocations';
 
-  interface Props {
-    envelopes: EnvelopeAllocation[];
-    getCategoryName: (categoryId: number) => string;
-    availableFunds?: number;
-    onBulkAllocate?: (allocations: {envelopeId: number, amount: number}[]) => void;
-    onAutoBalance?: () => void;
-    onEmergencyFill?: () => void;
-    class?: string;
+interface Props {
+  envelopes: EnvelopeAllocation[];
+  getCategoryName: (categoryId: number) => string;
+  availableFunds?: number;
+  onBulkAllocate?: (allocations: {envelopeId: number; amount: number}[]) => void;
+  onAutoBalance?: () => void;
+  onEmergencyFill?: () => void;
+  class?: string;
+}
+
+let {
+  envelopes,
+  getCategoryName,
+  availableFunds = 0,
+  onBulkAllocate,
+  onAutoBalance,
+  onEmergencyFill,
+  class: className,
+}: Props = $props();
+
+let allocationMode = $state<'equal' | 'priority' | 'percentage' | 'manual'>('priority');
+let totalToAllocate = $state(0);
+let manualAllocations = $state<Record<number, number>>({});
+
+const allocationModeLabel = $derived.by(() => {
+  switch (allocationMode) {
+    case 'priority':
+      return 'By Priority';
+    case 'equal':
+      return 'Equal Distribution';
+    case 'percentage':
+      return 'By Current Allocation %';
+    case 'manual':
+      return 'Manual Amounts';
+    default:
+      return 'Select Strategy';
   }
+});
 
-  let {
-    envelopes,
-    getCategoryName,
-    availableFunds = 0,
-    onBulkAllocate,
-    onAutoBalance,
-    onEmergencyFill,
-    class: className,
-  }: Props = $props();
-
-  let allocationMode = $state<"equal" | "priority" | "percentage" | "manual">("priority");
-  let totalToAllocate = $state(0);
-  let manualAllocations = $state<Record<number, number>>({});
-
-  const allocationModeLabel = $derived.by(() => {
-    switch (allocationMode) {
-      case "priority": return "By Priority";
-      case "equal": return "Equal Distribution";
-      case "percentage": return "By Current Allocation %";
-      case "manual": return "Manual Amounts";
-      default: return "Select Strategy";
-    }
+const sortedEnvelopes = $derived.by(() => {
+  return [...envelopes].sort((a, b) => {
+    const aPriority = (a.metadata as any)?.priority ?? 5;
+    const bPriority = (b.metadata as any)?.priority ?? 5;
+    return aPriority - bPriority; // Lower number = higher priority
   });
+});
 
-  const sortedEnvelopes = $derived.by(() => {
-    return [...envelopes].sort((a, b) => {
-      const aPriority = (a.metadata as any)?.priority ?? 5;
-      const bPriority = (b.metadata as any)?.priority ?? 5;
-      return aPriority - bPriority; // Lower number = higher priority
+const deficitEnvelopes = $derived.by(() => {
+  return envelopes.filter((env) => env.deficitAmount > 0);
+});
+
+const emergencyFunds = $derived.by(() => {
+  return envelopes.filter((env) => (env.metadata as any)?.isEmergencyFund);
+});
+
+const allocationPreview = $derived.by(() => {
+  if (!Number.isFinite(totalToAllocate) || totalToAllocate <= 0) return [];
+
+  switch (allocationMode) {
+    case 'equal':
+      return calculateEqualAllocation(totalToAllocate);
+    case 'priority':
+      return calculatePriorityAllocation(totalToAllocate);
+    case 'percentage':
+      return calculatePercentageAllocation(totalToAllocate);
+    case 'manual':
+      return calculateManualAllocation();
+    default:
+      return [];
+  }
+});
+
+const totalAllocated = $derived.by(() => {
+  return allocationPreview.reduce((sum, alloc) => sum + alloc.amount, 0);
+});
+
+const allocationDifference = $derived.by(() => {
+  return Number.isFinite(totalToAllocate) ? totalToAllocate - totalAllocated : 0;
+});
+
+function calculateEqualAllocation(totalAmount: number) {
+  const activeEnvelopes = envelopes.filter((env) => env.status === 'active');
+  if (activeEnvelopes.length === 0) return [];
+
+  const amountPerEnvelope = totalAmount / activeEnvelopes.length;
+  return activeEnvelopes.map((env) => ({
+    envelopeId: env.id,
+    categoryName: getCategoryName(env.categoryId),
+    amount: amountPerEnvelope,
+    reason: 'Equal distribution',
+  }));
+}
+
+function calculatePriorityAllocation(totalAmount: number) {
+  const allocations: Array<{
+    envelopeId: number;
+    categoryName: string;
+    amount: number;
+    reason: string;
+  }> = [];
+  let remainingAmount = totalAmount;
+
+  // First, fill deficit envelopes
+  for (const envelope of deficitEnvelopes) {
+    if (remainingAmount <= 0) break;
+    const fillAmount = Math.min(envelope.deficitAmount, remainingAmount);
+    allocations.push({
+      envelopeId: envelope.id,
+      categoryName: getCategoryName(envelope.categoryId),
+      amount: fillAmount,
+      reason: 'Deficit recovery',
     });
-  });
-
-  const deficitEnvelopes = $derived.by(() => {
-    return envelopes.filter(env => env.deficitAmount > 0);
-  });
-
-  const emergencyFunds = $derived.by(() => {
-    return envelopes.filter(env => (env.metadata as any)?.isEmergencyFund);
-  });
-
-  const allocationPreview = $derived.by(() => {
-    if (!Number.isFinite(totalToAllocate) || totalToAllocate <= 0) return [];
-
-    switch (allocationMode) {
-      case "equal":
-        return calculateEqualAllocation(totalToAllocate);
-      case "priority":
-        return calculatePriorityAllocation(totalToAllocate);
-      case "percentage":
-        return calculatePercentageAllocation(totalToAllocate);
-      case "manual":
-        return calculateManualAllocation();
-      default:
-        return [];
-    }
-  });
-
-  const totalAllocated = $derived.by(() => {
-    return allocationPreview.reduce((sum, alloc) => sum + alloc.amount, 0);
-  });
-
-  const allocationDifference = $derived.by(() => {
-    return Number.isFinite(totalToAllocate) ? totalToAllocate - totalAllocated : 0;
-  });
-
-  function calculateEqualAllocation(totalAmount: number) {
-    const activeEnvelopes = envelopes.filter(env => env.status === "active");
-    if (activeEnvelopes.length === 0) return [];
-
-    const amountPerEnvelope = totalAmount / activeEnvelopes.length;
-    return activeEnvelopes.map(env => ({
-      envelopeId: env.id,
-      categoryName: getCategoryName(env.categoryId),
-      amount: amountPerEnvelope,
-      reason: "Equal distribution",
-    }));
+    remainingAmount -= fillAmount;
   }
 
-  function calculatePriorityAllocation(totalAmount: number) {
-    const allocations: Array<{envelopeId: number, categoryName: string, amount: number, reason: string}> = [];
-    let remainingAmount = totalAmount;
+  // Then allocate by priority
+  const activeEnvelopes = sortedEnvelopes.filter(
+    (env) => env.status === 'active' && env.deficitAmount === 0
+  );
 
-    // First, fill deficit envelopes
-    for (const envelope of deficitEnvelopes) {
+  if (remainingAmount > 0 && activeEnvelopes.length > 0) {
+    // Calculate priority weights (inverse of priority number)
+    const totalWeight = activeEnvelopes.reduce((sum, env) => {
+      const priority = (env.metadata as any)?.priority ?? 5;
+      return sum + (10 - priority); // Higher weight for lower priority numbers
+    }, 0);
+
+    for (const envelope of activeEnvelopes) {
       if (remainingAmount <= 0) break;
-      const fillAmount = Math.min(envelope.deficitAmount, remainingAmount);
+      const priority = (envelope.metadata as any)?.priority ?? 5;
+      const weight = (10 - priority) / totalWeight;
+      const allocationAmount = remainingAmount * weight;
+
       allocations.push({
         envelopeId: envelope.id,
         categoryName: getCategoryName(envelope.categoryId),
-        amount: fillAmount,
-        reason: "Deficit recovery",
+        amount: allocationAmount,
+        reason: `Priority ${priority}`,
       });
-      remainingAmount -= fillAmount;
-    }
-
-    // Then allocate by priority
-    const activeEnvelopes = sortedEnvelopes.filter(env =>
-      env.status === "active" && env.deficitAmount === 0
-    );
-
-    if (remainingAmount > 0 && activeEnvelopes.length > 0) {
-      // Calculate priority weights (inverse of priority number)
-      const totalWeight = activeEnvelopes.reduce((sum, env) => {
-        const priority = (env.metadata as any)?.priority ?? 5;
-        return sum + (10 - priority); // Higher weight for lower priority numbers
-      }, 0);
-
-      for (const envelope of activeEnvelopes) {
-        if (remainingAmount <= 0) break;
-        const priority = (envelope.metadata as any)?.priority ?? 5;
-        const weight = (10 - priority) / totalWeight;
-        const allocationAmount = remainingAmount * weight;
-
-        allocations.push({
-          envelopeId: envelope.id,
-          categoryName: getCategoryName(envelope.categoryId),
-          amount: allocationAmount,
-          reason: `Priority ${priority}`,
-        });
-      }
-    }
-
-    return allocations;
-  }
-
-  function calculatePercentageAllocation(totalAmount: number) {
-    // Allocate based on current allocation percentages
-    const totalCurrentAllocation = envelopes.reduce((sum, env) => sum + env.allocatedAmount, 0);
-    if (totalCurrentAllocation === 0) return calculateEqualAllocation(totalAmount);
-
-    return envelopes
-      .filter(env => env.status === "active")
-      .map(env => {
-        const percentage = env.allocatedAmount / totalCurrentAllocation;
-        return {
-          envelopeId: env.id,
-          categoryName: getCategoryName(env.categoryId),
-          amount: totalAmount * percentage,
-          reason: `${(percentage * 100).toFixed(1)}% allocation`,
-        };
-      });
-  }
-
-  function calculateManualAllocation() {
-    return Object.entries(manualAllocations)
-      .map(([envelopeIdStr, amount]) => {
-        const envelopeId = parseInt(envelopeIdStr);
-        if (!Number.isFinite(amount) || amount <= 0) return null;
-
-        const envelope = envelopes.find(env => env.id === envelopeId);
-        return envelope ? {
-          envelopeId,
-          categoryName: getCategoryName(envelope.categoryId),
-          amount,
-          reason: "Manual allocation",
-        } : null;
-      })
-      .filter(Boolean) as Array<{envelopeId: number, categoryName: string, amount: number, reason: string}>;
-  }
-
-  function executeBulkAllocation() {
-    if (allocationPreview.length === 0) return;
-
-    const allocations = allocationPreview.map(alloc => ({
-      envelopeId: alloc.envelopeId,
-      amount: alloc.amount,
-    }));
-
-    onBulkAllocate?.(allocations);
-
-    // Reset form
-    totalToAllocate = 0;
-    manualAllocations = {};
-  }
-
-  function handleQuickAction(action: "balance" | "emergency") {
-    switch (action) {
-      case "balance":
-        onAutoBalance?.();
-        break;
-      case "emergency":
-        onEmergencyFill?.();
-        break;
     }
   }
+
+  return allocations;
+}
+
+function calculatePercentageAllocation(totalAmount: number) {
+  // Allocate based on current allocation percentages
+  const totalCurrentAllocation = envelopes.reduce((sum, env) => sum + env.allocatedAmount, 0);
+  if (totalCurrentAllocation === 0) return calculateEqualAllocation(totalAmount);
+
+  return envelopes
+    .filter((env) => env.status === 'active')
+    .map((env) => {
+      const percentage = env.allocatedAmount / totalCurrentAllocation;
+      return {
+        envelopeId: env.id,
+        categoryName: getCategoryName(env.categoryId),
+        amount: totalAmount * percentage,
+        reason: `${(percentage * 100).toFixed(1)}% allocation`,
+      };
+    });
+}
+
+function calculateManualAllocation() {
+  return Object.entries(manualAllocations)
+    .map(([envelopeIdStr, amount]) => {
+      const envelopeId = parseInt(envelopeIdStr);
+      if (!Number.isFinite(amount) || amount <= 0) return null;
+
+      const envelope = envelopes.find((env) => env.id === envelopeId);
+      return envelope
+        ? {
+            envelopeId,
+            categoryName: getCategoryName(envelope.categoryId),
+            amount,
+            reason: 'Manual allocation',
+          }
+        : null;
+    })
+    .filter(Boolean) as Array<{
+    envelopeId: number;
+    categoryName: string;
+    amount: number;
+    reason: string;
+  }>;
+}
+
+function executeBulkAllocation() {
+  if (allocationPreview.length === 0) return;
+
+  const allocations = allocationPreview.map((alloc) => ({
+    envelopeId: alloc.envelopeId,
+    amount: alloc.amount,
+  }));
+
+  onBulkAllocate?.(allocations);
+
+  // Reset form
+  totalToAllocate = 0;
+  manualAllocations = {};
+}
+
+function handleQuickAction(action: 'balance' | 'emergency') {
+  switch (action) {
+    case 'balance':
+      onAutoBalance?.();
+      break;
+    case 'emergency':
+      onEmergencyFill?.();
+      break;
+  }
+}
 </script>
 
-<div class={cn("space-y-6", className)}>
+<div class={cn('space-y-6', className)}>
   <!-- Quick Actions -->
   <Card.Root>
     <Card.Header>
@@ -221,40 +238,42 @@
       <div class="grid gap-3 md:grid-cols-3">
         <Button
           variant="outline"
-          onclick={() => handleQuickAction("balance")}
-          class="h-auto p-4 flex flex-col items-center gap-2"
-        >
+          onclick={() => handleQuickAction('balance')}
+          class="flex h-auto flex-col items-center gap-2 p-4">
           <Shuffle class="h-6 w-6" />
           <div class="text-center">
             <div class="font-medium">Auto Balance</div>
-            <div class="text-xs text-muted-foreground">Optimize fund distribution</div>
+            <div class="text-muted-foreground text-xs">Optimize fund distribution</div>
           </div>
         </Button>
 
         <Button
           variant="outline"
-          onclick={() => handleQuickAction("emergency")}
-          class="h-auto p-4 flex flex-col items-center gap-2"
-          disabled={emergencyFunds.length === 0}
-        >
+          onclick={() => handleQuickAction('emergency')}
+          class="flex h-auto flex-col items-center gap-2 p-4"
+          disabled={emergencyFunds.length === 0}>
           <TriangleAlert class="h-6 w-6" />
           <div class="text-center">
             <div class="font-medium">Emergency Fill</div>
-            <div class="text-xs text-muted-foreground">Fill emergency funds first</div>
+            <div class="text-muted-foreground text-xs">Fill emergency funds first</div>
           </div>
         </Button>
 
         <Button
           variant="outline"
-          onclick={() => { allocationMode = "priority"; totalToAllocate = deficitEnvelopes.reduce((sum, env) => sum + env.deficitAmount, 0); }}
-          class="h-auto p-4 flex flex-col items-center gap-2"
-          disabled={deficitEnvelopes.length === 0}
-        >
+          onclick={() => {
+            allocationMode = 'priority';
+            totalToAllocate = deficitEnvelopes.reduce((sum, env) => sum + env.deficitAmount, 0);
+          }}
+          class="flex h-auto flex-col items-center gap-2 p-4"
+          disabled={deficitEnvelopes.length === 0}>
           <Target class="h-6 w-6" />
           <div class="text-center">
             <div class="font-medium">Cover Deficits</div>
-            <div class="text-xs text-muted-foreground">
-              {currencyFormatter.format(deficitEnvelopes.reduce((sum, env) => sum + env.deficitAmount, 0))} needed
+            <div class="text-muted-foreground text-xs">
+              {currencyFormatter.format(
+                deficitEnvelopes.reduce((sum, env) => sum + env.deficitAmount, 0)
+              )} needed
             </div>
           </div>
         </Button>
@@ -278,12 +297,9 @@
       <div class="grid gap-4 md:grid-cols-2">
         <div class="space-y-2">
           <Label for="total-amount">Total Amount to Allocate</Label>
-          <NumericInput
-            id="total-amount"
-            bind:value={totalToAllocate}
-          />
+          <NumericInput id="total-amount" bind:value={totalToAllocate} />
           {#if availableFunds > 0}
-            <p class="text-xs text-muted-foreground">
+            <p class="text-muted-foreground text-xs">
               Available funds: {currencyFormatter.format(availableFunds)}
             </p>
           {/if}
@@ -306,20 +322,19 @@
       </div>
 
       <!-- Manual Allocation Mode -->
-      {#if allocationMode === "manual"}
+      {#if allocationMode === 'manual'}
         <div class="space-y-3">
           <Label>Manual Allocations</Label>
           <div class="grid gap-3 md:grid-cols-2">
-            {#each envelopes.filter(env => env.status === "active") as envelope (envelope.id)}
+            {#each envelopes.filter((env) => env.status === 'active') as envelope (envelope.id)}
               {@const accessors = createNumericRecordAccessors(manualAllocations, envelope.id, 0)}
               <div class="flex items-center gap-2">
-                <span class="text-sm font-medium min-w-0 flex-1 truncate">
+                <span class="min-w-0 flex-1 truncate text-sm font-medium">
                   {getCategoryName(envelope.categoryId)}
                 </span>
                 <NumericInput
                   bind:value={accessors.get, accessors.set}
-                  buttonClass="w-24 h-8 text-sm"
-                />
+                  buttonClass="w-24 h-8 text-sm" />
               </div>
             {/each}
           </div>
@@ -334,16 +349,18 @@
             <div class="flex items-center gap-2">
               <span class="text-sm">Total: {currencyFormatter.format(totalAllocated)}</span>
               {#if Math.abs(allocationDifference) > 0.01}
-                <Badge variant="outline" class={cn(
-                  allocationDifference > 0 ? "text-orange-600" : "text-emerald-600"
-                )}>
-                  {allocationDifference > 0 ? "+" : ""}{currencyFormatter.format(allocationDifference)} remaining
+                <Badge
+                  variant="outline"
+                  class={cn(allocationDifference > 0 ? 'text-orange-600' : 'text-emerald-600')}>
+                  {allocationDifference > 0 ? '+' : ''}{currencyFormatter.format(
+                    allocationDifference
+                  )} remaining
                 </Badge>
               {/if}
             </div>
           </div>
 
-          <div class="max-h-48 overflow-y-auto space-y-2 border rounded-md p-3">
+          <div class="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3">
             {#each allocationPreview as allocation (allocation.envelopeId)}
               <div class="flex items-center justify-between text-sm">
                 <div class="flex items-center gap-2">
@@ -357,9 +374,9 @@
 
           <Button
             onclick={executeBulkAllocation}
-            disabled={allocationPreview.length === 0 || Math.abs(allocationDifference) > totalToAllocate * 0.01}
-            class="w-full"
-          >
+            disabled={allocationPreview.length === 0 ||
+              Math.abs(allocationDifference) > totalToAllocate * 0.01}
+            class="w-full">
             Execute Allocation ({allocationPreview.length} envelopes)
           </Button>
         </div>
@@ -381,15 +398,17 @@
           {#each deficitEnvelopes as envelope (envelope.id)}
             <div class="flex items-center justify-between">
               <span class="text-sm font-medium">{getCategoryName(envelope.categoryId)}</span>
-              <span class="text-sm font-mono text-destructive">
+              <span class="text-destructive font-mono text-sm">
                 -{currencyFormatter.format(envelope.deficitAmount)}
               </span>
             </div>
           {/each}
-          <div class="border-t pt-2 flex items-center justify-between font-medium">
+          <div class="flex items-center justify-between border-t pt-2 font-medium">
             <span>Total Deficit</span>
             <span class="text-destructive">
-              -{currencyFormatter.format(deficitEnvelopes.reduce((sum, env) => sum + env.deficitAmount, 0))}
+              -{currencyFormatter.format(
+                deficitEnvelopes.reduce((sum, env) => sum + env.deficitAmount, 0)
+              )}
             </span>
           </div>
         </div>

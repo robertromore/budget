@@ -3,10 +3,10 @@
  * Runs automatically when users load the app - no external dependencies required
  */
 
-import { trpc } from '$lib/trpc/client';
+import {trpc} from "$lib/trpc/client";
 
 class AutoScheduler {
-  private static readonly STORAGE_KEY = 'budget-app-last-auto-add-run';
+  private static readonly STORAGE_KEY = "budget-app-last-auto-add-run";
   private static readonly RETRY_DELAY = 5000; // 5 seconds
   private static readonly MAX_RETRIES = 3;
 
@@ -20,11 +20,11 @@ class AutoScheduler {
 
       // Only run once per day
       if (lastRun === today) {
-        console.log('📅 Auto-add already ran today');
+        console.log("📅 Auto-add already ran today");
         return;
       }
 
-      console.log('🔄 Running daily auto-add for scheduled transactions...');
+      console.log("🔄 Running daily auto-add for scheduled transactions...");
 
       // Execute auto-add for all eligible schedules
       // @ts-ignore - tRPC router access pattern used throughout codebase
@@ -32,16 +32,19 @@ class AutoScheduler {
 
       // Log results
       if (result.totalTransactionsCreated > 0) {
-        console.log(`✅ Auto-add completed: Created ${result.totalTransactionsCreated} transactions from ${result.totalSchedulesProcessed} schedules`);
+        console.log(
+          `✅ Auto-add completed: Created ${result.totalTransactionsCreated} transactions from ${result.totalSchedulesProcessed} schedules`
+        );
       } else {
-        console.log(`✅ Auto-add completed: No new transactions needed (checked ${result.totalSchedulesProcessed} schedules)`);
+        console.log(
+          `✅ Auto-add completed: No new transactions needed (checked ${result.totalSchedulesProcessed} schedules)`
+        );
       }
 
       // Mark as completed for today
       this.setLastRunDate(today);
-
     } catch (error) {
-      console.error('❌ Auto-add failed:', error);
+      console.error("❌ Auto-add failed:", error);
       // Don't mark as completed on failure - will retry next time app is opened
     }
   }
@@ -54,12 +57,14 @@ class AutoScheduler {
       await this.checkAndRunDailyAutoAdd();
     } catch (error) {
       if (retryCount < AutoScheduler.MAX_RETRIES) {
-        console.log(`🔄 Auto-add failed, retrying in ${AutoScheduler.RETRY_DELAY/1000}s... (attempt ${retryCount + 1}/${AutoScheduler.MAX_RETRIES})`);
+        console.log(
+          `🔄 Auto-add failed, retrying in ${AutoScheduler.RETRY_DELAY / 1000}s... (attempt ${retryCount + 1}/${AutoScheduler.MAX_RETRIES})`
+        );
         setTimeout(() => {
           this.runWithRetries(retryCount + 1);
         }, AutoScheduler.RETRY_DELAY);
       } else {
-        console.error('❌ Auto-add failed after maximum retries');
+        console.error("❌ Auto-add failed after maximum retries");
       }
     }
   }
@@ -68,14 +73,14 @@ class AutoScheduler {
    * Get today's date as YYYY-MM-DD string
    */
   private getTodayString(): string {
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0];
   }
 
   /**
    * Get the last run date from localStorage
    */
   private getLastRunDate(): string | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === "undefined") return null;
     return localStorage.getItem(AutoScheduler.STORAGE_KEY);
   }
 
@@ -83,7 +88,7 @@ class AutoScheduler {
    * Set the last run date in localStorage
    */
   private setLastRunDate(date: string): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     localStorage.setItem(AutoScheduler.STORAGE_KEY, date);
   }
 
@@ -91,13 +96,15 @@ class AutoScheduler {
    * Manually trigger auto-add (for testing or user-initiated runs)
    */
   async forceRun(): Promise<void> {
-    console.log('🔄 Manually triggering auto-add...');
+    console.log("🔄 Manually triggering auto-add...");
     try {
       // @ts-ignore - tRPC router access pattern used throughout codebase
       const result = await trpc().scheduleRoutes.executeAutoAddAll.mutate();
 
       if (result.totalTransactionsCreated > 0) {
-        console.log(`✅ Manual auto-add completed: Created ${result.totalTransactionsCreated} transactions`);
+        console.log(
+          `✅ Manual auto-add completed: Created ${result.totalTransactionsCreated} transactions`
+        );
       } else {
         console.log(`✅ Manual auto-add completed: No new transactions needed`);
       }
@@ -106,7 +113,7 @@ class AutoScheduler {
       this.setLastRunDate(this.getTodayString());
       return result;
     } catch (error) {
-      console.error('❌ Manual auto-add failed:', error);
+      console.error("❌ Manual auto-add failed:", error);
       throw error;
     }
   }
@@ -115,20 +122,20 @@ class AutoScheduler {
    * Reset the last run date (for testing)
    */
   reset(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     localStorage.removeItem(AutoScheduler.STORAGE_KEY);
-    console.log('🔄 Auto-add scheduler reset');
+    console.log("🔄 Auto-add scheduler reset");
   }
 
   /**
    * Get status information
    */
-  getStatus(): { lastRun: string | null; shouldRunToday: boolean } {
+  getStatus(): {lastRun: string | null; shouldRunToday: boolean} {
     const lastRun = this.getLastRunDate();
     const today = this.getTodayString();
     return {
       lastRun,
-      shouldRunToday: lastRun !== today
+      shouldRunToday: lastRun !== today,
     };
   }
 }

@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
-import { Progress } from '$lib/components/ui/progress';
-import { Badge } from '$lib/components/ui/badge';
+import {Button} from '$lib/components/ui/button';
+import {Progress} from '$lib/components/ui/progress';
+import {Badge} from '$lib/components/ui/badge';
 import {
   Calendar,
   Plus,
@@ -12,10 +12,10 @@ import {
   Clock,
   SquarePen,
   ChevronRight,
-  Trash2
+  Trash2,
 } from '@lucide/svelte/icons';
-import { parseISOString, formatDateDisplay } from '$lib/utils/dates';
-import { formatCurrency } from '$lib/utils';
+import {parseISOString, formatDateDisplay} from '$lib/utils/dates';
+import {formatCurrency} from '$lib/utils';
 
 interface BudgetPeriodTemplate {
   id: number;
@@ -63,7 +63,7 @@ let {
   onGenerateNext,
   onEditPeriod,
   onEditTemplate,
-  onDeleteTemplate
+  onDeleteTemplate,
 }: Props = $props();
 
 // Format period type for display
@@ -81,9 +81,10 @@ function safeFormatDate(isoString: string, format: 'short' | 'medium' | 'long' =
 
 // Get period type description
 function getPeriodDescription(template: BudgetPeriodTemplate): string {
-  const intervalText = template.interval === 1
-    ? template.periodType.slice(0, -2) // Remove 'ly' ending
-    : `${template.interval} ${template.periodType}`;
+  const intervalText =
+    template.interval === 1
+      ? template.periodType.slice(0, -2) // Remove 'ly' ending
+      : `${template.interval} ${template.periodType}`;
 
   switch (template.periodType) {
     case 'weekly':
@@ -94,7 +95,20 @@ function getPeriodDescription(template: BudgetPeriodTemplate): string {
     case 'quarterly':
       return `Every ${intervalText}`;
     case 'yearly':
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       return `Every ${intervalText}, starting ${months[(template.startMonth || 1) - 1]} ${template.startDayOfMonth || 1}`;
     case 'custom':
       return `Every ${template.customDuration} days`;
@@ -105,17 +119,17 @@ function getPeriodDescription(template: BudgetPeriodTemplate): string {
 
 // Get current period instance
 const currentPeriod = $derived.by(() => {
-  return instances.find(p => p.status === 'active');
+  return instances.find((p) => p.status === 'active');
 });
 
 // Get upcoming periods
 const upcomingPeriods = $derived.by(() => {
-  return instances.filter(p => p.status === 'upcoming').slice(0, 3);
+  return instances.filter((p) => p.status === 'upcoming').slice(0, 3);
 });
 
 // Get past periods (last 5)
 const pastPeriods = $derived.by(() => {
-  return instances.filter(p => p.status === 'completed').slice(0, 5);
+  return instances.filter((p) => p.status === 'completed').slice(0, 5);
 });
 
 // Calculate period progress percentage
@@ -140,57 +154,58 @@ function getProgressColorClass(spent: number, allocated: number): string {
 <div class="space-y-6">
   <!-- Template Configuration Card -->
   {#if !hideConfiguration}
-  <Card.Root>
-    <Card.Header>
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <Calendar class="h-5 w-5 text-muted-foreground" />
-          <div>
-            <Card.Title>Period Configuration</Card.Title>
-            <Card.Description>
-              {template ? getPeriodDescription(template) : 'No period template configured'}
-            </Card.Description>
+    <Card.Root>
+      <Card.Header>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <Calendar class="text-muted-foreground h-5 w-5" />
+            <div>
+              <Card.Title>Period Configuration</Card.Title>
+              <Card.Description>
+                {template ? getPeriodDescription(template) : 'No period template configured'}
+              </Card.Description>
+            </div>
           </div>
+          {#if template && (onEditTemplate || onDeleteTemplate)}
+            <div class="flex gap-2">
+              {#if onEditTemplate}
+                <Button variant="ghost" size="sm" onclick={onEditTemplate}>
+                  <SquarePen class="h-4 w-4" />
+                  Edit
+                </Button>
+              {/if}
+              {#if onDeleteTemplate}
+                <Button variant="ghost" size="sm" onclick={onDeleteTemplate}>
+                  <Trash2 class="h-4 w-4" />
+                  Delete
+                </Button>
+              {/if}
+            </div>
+          {/if}
         </div>
-        {#if template && (onEditTemplate || onDeleteTemplate)}
-          <div class="flex gap-2">
-            {#if onEditTemplate}
-              <Button variant="ghost" size="sm" onclick={onEditTemplate}>
-                <SquarePen class="h-4 w-4" />
-                Edit
-              </Button>
-            {/if}
-            {#if onDeleteTemplate}
-              <Button variant="ghost" size="sm" onclick={onDeleteTemplate}>
-                <Trash2 class="h-4 w-4" />
-                Delete
-              </Button>
-            {/if}
+      </Card.Header>
+      {#if template}
+        <Card.Content>
+          <div class="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <span class="text-muted-foreground">Type:</span>
+              <span class="ml-2 font-medium">{formatPeriodType(template.periodType)}</span>
+            </div>
+            <div>
+              <span class="text-muted-foreground">Interval:</span>
+              <span class="ml-2 font-medium">
+                Every {template.interval}
+                {template.interval === 1 ? template.periodType.slice(0, -2) : template.periodType}
+              </span>
+            </div>
+            <div>
+              <span class="text-muted-foreground">Total Periods:</span>
+              <span class="ml-2 font-medium">{instances.length}</span>
+            </div>
           </div>
-        {/if}
-      </div>
-    </Card.Header>
-    {#if template}
-      <Card.Content>
-        <div class="grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <span class="text-muted-foreground">Type:</span>
-            <span class="ml-2 font-medium">{formatPeriodType(template.periodType)}</span>
-          </div>
-          <div>
-            <span class="text-muted-foreground">Interval:</span>
-            <span class="ml-2 font-medium">
-              Every {template.interval} {template.interval === 1 ? template.periodType.slice(0, -2) : template.periodType}
-            </span>
-          </div>
-          <div>
-            <span class="text-muted-foreground">Total Periods:</span>
-            <span class="ml-2 font-medium">{instances.length}</span>
-          </div>
-        </div>
-      </Card.Content>
-    {/if}
-  </Card.Root>
+        </Card.Content>
+      {/if}
+    </Card.Root>
   {/if}
 
   <!-- Current Period -->
@@ -199,7 +214,7 @@ function getProgressColorClass(spent: number, allocated: number): string {
       <Card.Header>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <Clock class="h-5 w-5 text-primary" />
+            <Clock class="text-primary h-5 w-5" />
             <div>
               <Card.Title class="text-primary">Current Period</Card.Title>
               <Card.Description>
@@ -216,15 +231,15 @@ function getProgressColorClass(spent: number, allocated: number): string {
         <!-- Spending Overview -->
         <div class="grid grid-cols-3 gap-4">
           <div class="space-y-1">
-            <p class="text-sm text-muted-foreground">Allocated</p>
+            <p class="text-muted-foreground text-sm">Allocated</p>
             <p class="text-2xl font-bold">{formatCurrency(currentPeriod.allocated)}</p>
           </div>
           <div class="space-y-1">
-            <p class="text-sm text-muted-foreground">Spent</p>
+            <p class="text-muted-foreground text-sm">Spent</p>
             <p class="text-2xl font-bold">{formatCurrency(currentPeriod.spent)}</p>
           </div>
           <div class="space-y-1">
-            <p class="text-sm text-muted-foreground">Remaining</p>
+            <p class="text-muted-foreground text-sm">Remaining</p>
             <p class="text-2xl font-bold" class:text-destructive={currentPeriod.remaining < 0}>
               {formatCurrency(currentPeriod.remaining)}
             </p>
@@ -241,13 +256,12 @@ function getProgressColorClass(spent: number, allocated: number): string {
           </div>
           <Progress
             value={calculateProgress(currentPeriod.spent, currentPeriod.allocated)}
-            class="h-3 {getProgressColorClass(currentPeriod.spent, currentPeriod.allocated)}"
-          />
+            class="h-3 {getProgressColorClass(currentPeriod.spent, currentPeriod.allocated)}" />
         </div>
 
         <!-- Rollover Info -->
         {#if currentPeriod.rolloverAmount && currentPeriod.rolloverAmount !== 0}
-          <div class="flex items-center gap-2 p-3 rounded-md bg-muted/30 text-sm">
+          <div class="bg-muted/30 flex items-center gap-2 rounded-md p-3 text-sm">
             <TrendingUp class="h-4 w-4 text-green-600" />
             <span>
               Rolled over {formatCurrency(currentPeriod.rolloverAmount)} from previous period
@@ -272,12 +286,12 @@ function getProgressColorClass(spent: number, allocated: number): string {
       <Card.Header>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <Calendar class="h-5 w-5 text-muted-foreground" />
+            <Calendar class="text-muted-foreground h-5 w-5" />
             <Card.Title>Upcoming Periods</Card.Title>
           </div>
           {#if onGenerateNext}
             <Button variant="outline" size="sm" onclick={onGenerateNext}>
-              <Plus class="h-4 w-4 mr-2" />
+              <Plus class="mr-2 h-4 w-4" />
               Generate Next
             </Button>
           {/if}
@@ -286,7 +300,8 @@ function getProgressColorClass(spent: number, allocated: number): string {
       <Card.Content>
         <div class="space-y-3">
           {#each upcomingPeriods as period}
-            <div class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/5 transition-colors">
+            <div
+              class="border-border hover:bg-accent/5 flex items-center justify-between rounded-lg border p-3 transition-colors">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   <Badge variant="secondary">Upcoming</Badge>
@@ -296,7 +311,7 @@ function getProgressColorClass(spent: number, allocated: number): string {
                     {safeFormatDate(period.endDate, 'short')}
                   </span>
                 </div>
-                <p class="text-sm text-muted-foreground">
+                <p class="text-muted-foreground text-sm">
                   Allocated: {formatCurrency(period.allocated)}
                 </p>
               </div>
@@ -317,14 +332,15 @@ function getProgressColorClass(spent: number, allocated: number): string {
     <Card.Root>
       <Card.Header>
         <div class="flex items-center gap-2">
-          <Check class="h-5 w-5 text-muted-foreground" />
+          <Check class="text-muted-foreground h-5 w-5" />
           <Card.Title>Past Periods</Card.Title>
         </div>
       </Card.Header>
       <Card.Content>
         <div class="space-y-3">
           {#each pastPeriods as period}
-            <div class="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/5 transition-colors">
+            <div
+              class="border-border hover:bg-accent/5 flex items-center justify-between rounded-lg border p-3 transition-colors">
               <div class="flex-1 space-y-1">
                 <div class="flex items-center gap-2">
                   <Badge variant="outline">Completed</Badge>
@@ -334,11 +350,15 @@ function getProgressColorClass(spent: number, allocated: number): string {
                     {safeFormatDate(period.endDate, 'short')}
                   </span>
                 </div>
-                <div class="flex items-center gap-4 text-sm text-muted-foreground">
+                <div class="text-muted-foreground flex items-center gap-4 text-sm">
                   <span>Spent: {formatCurrency(period.spent)}</span>
                   <span>Budget: {formatCurrency(period.allocated)}</span>
-                  <span class:text-green-600={period.remaining > 0} class:text-destructive={period.remaining < 0}>
-                    {period.remaining >= 0 ? 'Under' : 'Over'} by {formatCurrency(Math.abs(period.remaining))}
+                  <span
+                    class:text-green-600={period.remaining > 0}
+                    class:text-destructive={period.remaining < 0}>
+                    {period.remaining >= 0 ? 'Under' : 'Over'} by {formatCurrency(
+                      Math.abs(period.remaining)
+                    )}
                   </span>
                 </div>
               </div>
@@ -358,15 +378,15 @@ function getProgressColorClass(spent: number, allocated: number): string {
   {#if instances.length === 0}
     <Card.Root>
       <Card.Content class="flex flex-col items-center justify-center py-12 text-center">
-        <CircleAlert class="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 class="text-lg font-semibold mb-2">No Periods Yet</h3>
-        <p class="text-sm text-muted-foreground mb-6 max-w-md">
-          Create a period template to start tracking your budget over time.
-          Periods will be automatically generated based on your configuration.
+        <CircleAlert class="text-muted-foreground mb-4 h-12 w-12" />
+        <h3 class="mb-2 text-lg font-semibold">No Periods Yet</h3>
+        <p class="text-muted-foreground mb-6 max-w-md text-sm">
+          Create a period template to start tracking your budget over time. Periods will be
+          automatically generated based on your configuration.
         </p>
         {#if onEditTemplate}
           <Button onclick={onEditTemplate}>
-            <Plus class="h-4 w-4 mr-2" />
+            <Plus class="mr-2 h-4 w-4" />
             Configure Period Template
           </Button>
         {/if}

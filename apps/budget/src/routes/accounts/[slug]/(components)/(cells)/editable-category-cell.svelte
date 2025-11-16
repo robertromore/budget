@@ -35,14 +35,14 @@ const handleSubmit = (entity?: EditableEntityItem) => {
 // Get category-specific icon and color
 const categoryData = $derived.by(() => {
   const category = value as Category | undefined;
-  if (!category) return { icon: Tag, color: null };
+  if (!category) return {icon: Tag, color: null};
 
   const iconData = category.categoryIcon ? getIconByName(category.categoryIcon) : null;
   const IconComponent = iconData?.icon || Tag;
 
   return {
     icon: IconComponent,
-    color: category.categoryColor || null
+    color: category.categoryColor || null,
   };
 });
 </script>
@@ -50,9 +50,9 @@ const categoryData = $derived.by(() => {
 <div class="relative">
   {#if categoryData.color}
     <div
-      class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l"
-      style={`background-color: ${categoryData.color};`}
-    ></div>
+      class="absolute top-1/2 left-0 h-8 w-1 -translate-y-1/2 rounded-l"
+      style={`background-color: ${categoryData.color};`}>
+    </div>
   {/if}
   <EntityInput
     bind:entityLabel
@@ -61,6 +61,5 @@ const categoryData = $derived.by(() => {
     icon={categoryData.icon}
     {handleSubmit}
     {management}
-    buttonClass={cn("w-48", categoryData.color && "pl-3")}
-  />
+    buttonClass={cn('w-48', categoryData.color && 'pl-3')} />
 </div>

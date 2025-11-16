@@ -1,13 +1,13 @@
-import type { Account } from "$lib/schema/accounts";
-import { ConflictError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
-import { generateUniqueSlug } from "$lib/utils/generate-unique-slug";
-import { getLocalTimeZone, today } from "@internationalized/date";
+import type {Account} from "$lib/schema/accounts";
+import {ConflictError, ValidationError} from "$lib/server/shared/types/errors";
+import {InputSanitizer} from "$lib/server/shared/validation";
+import {generateUniqueSlug} from "$lib/utils/generate-unique-slug";
+import {getLocalTimeZone, today} from "@internationalized/date";
 import slugify from "@sindresorhus/slugify";
-import { TransactionService } from "../transactions/services";
-import { AccountRepository } from "./repository";
+import {TransactionService} from "../transactions/services";
+import {AccountRepository} from "./repository";
 import type {AccountWithTransactions} from "./types";
-import type { AccountType } from "$lib/schema/accounts";
+import type {AccountType} from "$lib/schema/accounts";
 
 // Service input types
 export interface CreateAccountData {
@@ -54,36 +54,43 @@ export class AccountService {
     // Determine onBudget value with smart defaults
     // If explicitly provided, use that value
     // Otherwise, default to false for investment/loan accounts, true for all others
-    const onBudget = data.onBudget !== undefined
-      ? data.onBudget
-      : !['investment', 'loan'].includes(data.accountType || 'checking');
+    const onBudget =
+      data.onBudget !== undefined
+        ? data.onBudget
+        : !["investment", "loan"].includes(data.accountType || "checking");
 
     // Generate unique slug
     const baseSlug = slugify(sanitizedName);
     const uniqueSlug = await this.generateUniqueSlug(baseSlug);
 
     // Create account
-    const account = await this.repository.create({
-      name: sanitizedName,
-      slug: uniqueSlug,
-      notes: sanitizedNotes,
-      onBudget,
-      accountType: data.accountType,
-    }, workspaceId);
+    const account = await this.repository.create(
+      {
+        name: sanitizedName,
+        slug: uniqueSlug,
+        notes: sanitizedNotes,
+        onBudget,
+        accountType: data.accountType,
+      },
+      workspaceId
+    );
 
     // Create initial balance transaction if balance is non-zero
     if (initialBalance !== 0) {
       const todayDate = today(getLocalTimeZone()).toString();
 
-      await this.transactionService.createTransaction({
-        accountId: account.id,
-        amount: initialBalance,
-        date: todayDate,
-        notes: "Initial balance",
-        status: "cleared",
-        payeeId: null,
-        categoryId: null
-      }, workspaceId.toString());
+      await this.transactionService.createTransaction(
+        {
+          accountId: account.id,
+          amount: initialBalance,
+          date: todayDate,
+          notes: "Initial balance",
+          status: "cleared",
+          payeeId: null,
+          categoryId: null,
+        },
+        workspaceId.toString()
+      );
     }
 
     // Return the account (balance will be updated by the transaction)
@@ -180,7 +187,10 @@ export class AccountService {
       fieldName: "Search query",
     });
 
-    return await this.repository.searchByName(sanitizedQuery, limit !== undefined ? {limit} : undefined);
+    return await this.repository.searchByName(
+      sanitizedQuery,
+      limit !== undefined ? {limit} : undefined
+    );
   }
 
   /**
@@ -227,7 +237,7 @@ export class AccountService {
    * Get status of default accounts (which are available vs already installed)
    */
   async getDefaultAccountsStatus() {
-    const { defaultAccounts } = await import("./default-accounts");
+    const {defaultAccounts} = await import("./default-accounts");
     const existingAccounts = await this.repository.findActive();
     const existingNames = new Set(existingAccounts.map((a) => a.name.toLowerCase()));
 
@@ -248,7 +258,7 @@ export class AccountService {
    * Seed default accounts by their slugs
    */
   async seedDefaultAccounts(slugs: string[], workspaceId: number): Promise<Account[]> {
-    const { defaultAccounts } = await import("./default-accounts");
+    const {defaultAccounts} = await import("./default-accounts");
     const accountsToCreate = defaultAccounts.filter((a) => slugs.includes(a.slug));
 
     if (accountsToCreate.length === 0) {
@@ -266,13 +276,16 @@ export class AccountService {
         continue;
       }
 
-      const account = await this.createAccount({
-        name: defaultAccount.name,
-        notes: defaultAccount.description,
-        initialBalance: 0,
-        accountType: defaultAccount.accountType,
-        onBudget: defaultAccount.onBudget,
-      }, workspaceId);
+      const account = await this.createAccount(
+        {
+          name: defaultAccount.name,
+          notes: defaultAccount.description,
+          initialBalance: 0,
+          accountType: defaultAccount.accountType,
+          onBudget: defaultAccount.onBudget,
+        },
+        workspaceId
+      );
 
       await this.repository.update(account.id, {
         accountIcon: defaultAccount.accountIcon,

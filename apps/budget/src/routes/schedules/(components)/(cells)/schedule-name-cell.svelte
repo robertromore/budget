@@ -13,6 +13,6 @@ let {schedule}: Props = $props();
     {schedule.name}
   </a>
   {#if schedule.account}
-    <div class="text-xs text-muted-foreground">{schedule.account.name}</div>
+    <div class="text-muted-foreground text-xs">{schedule.account.name}</div>
   {/if}
 </div>

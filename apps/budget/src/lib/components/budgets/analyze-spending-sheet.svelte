@@ -1,57 +1,57 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
-  import * as Select from "$lib/components/ui/select";
-  import { Label } from "$lib/components/ui/label";
-  import { LoaderCircle, Sparkles, TrendingUp } from "@lucide/svelte/icons";
-  import ResponsiveSheet from "$lib/components/ui/responsive-sheet/responsive-sheet.svelte";
-  import { generateRecommendations } from "$lib/query/budgets";
-  import { listAccounts } from "$lib/query/accounts";
+import {Button} from '$lib/components/ui/button';
+import * as Select from '$lib/components/ui/select';
+import {Label} from '$lib/components/ui/label';
+import {LoaderCircle, Sparkles, TrendingUp} from '@lucide/svelte/icons';
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import {generateRecommendations} from '$lib/query/budgets';
+import {listAccounts} from '$lib/query/accounts';
 
-  interface Props {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-  }
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
-  let { open = $bindable(false), onOpenChange }: Props = $props();
+let {open = $bindable(false), onOpenChange}: Props = $props();
 
-  const accountsQuery = listAccounts().options();
+const accountsQuery = listAccounts().options();
 
-  // Analysis parameters
-  let selectedAccountIds = $state<number[]>([]);
-  let months = $state<string>("6");
-  let minTransactions = $state<string>("3");
-  let minConfidence = $state<string>("40");
+// Analysis parameters
+let selectedAccountIds = $state<number[]>([]);
+let months = $state<string>('6');
+let minTransactions = $state<string>('3');
+let minConfidence = $state<string>('40');
 
-  const mutation = generateRecommendations.options();
-  const isAnalyzing = $derived(mutation.isPending);
+const mutation = generateRecommendations.options();
+const isAnalyzing = $derived(mutation.isPending);
 
-  function handleAnalyze() {
-    mutation.mutate(
-      {
-        ...(selectedAccountIds.length > 0 && { accountIds: selectedAccountIds }),
-        months: parseInt(months),
-        minTransactions: parseInt(minTransactions),
-        minConfidence: parseInt(minConfidence),
+function handleAnalyze() {
+  mutation.mutate(
+    {
+      ...(selectedAccountIds.length > 0 && {accountIds: selectedAccountIds}),
+      months: parseInt(months),
+      minTransactions: parseInt(minTransactions),
+      minConfidence: parseInt(minConfidence),
+    },
+    {
+      onSuccess: (recommendations) => {
+        if (recommendations.length > 0) {
+          onOpenChange(false);
+        }
       },
-      {
-        onSuccess: (recommendations) => {
-          if (recommendations.length > 0) {
-            onOpenChange(false);
-          }
-        },
-      }
-    );
-  }
+    }
+  );
+}
 </script>
 
 <ResponsiveSheet bind:open {onOpenChange} side="right" resizable={false}>
   {#snippet header()}
     <div>
-      <h2 class="text-lg font-semibold flex items-center gap-2">
-        <Sparkles class="h-5 w-5 text-primary" />
+      <h2 class="flex items-center gap-2 text-lg font-semibold">
+        <Sparkles class="text-primary h-5 w-5" />
         Analyze Spending & Get Recommendations
       </h2>
-      <p class="text-sm text-muted-foreground mt-1">
+      <p class="text-muted-foreground mt-1 text-sm">
         Analyze your transaction history to discover smart budget recommendations based on your
         spending patterns.
       </p>
@@ -63,9 +63,7 @@
       <!-- Account Selection - Skip for now, multi-select is complex -->
       <div class="space-y-2">
         <Label>Accounts</Label>
-        <p class="text-sm text-muted-foreground">
-          All accounts will be analyzed
-        </p>
+        <p class="text-muted-foreground text-sm">All accounts will be analyzed</p>
       </div>
 
       <!-- Time Range -->
@@ -82,7 +80,7 @@
             <Select.Item value="24">24 months</Select.Item>
           </Select.Content>
         </Select.Root>
-        <p class="text-xs text-muted-foreground">
+        <p class="text-muted-foreground text-xs">
           Longer periods provide more accurate recommendations
         </p>
       </div>
@@ -101,7 +99,7 @@
             <Select.Item value="10">10 transactions</Select.Item>
           </Select.Content>
         </Select.Root>
-        <p class="text-xs text-muted-foreground">
+        <p class="text-muted-foreground text-xs">
           Higher values reduce noise but may miss patterns
         </p>
       </div>
@@ -120,18 +118,18 @@
             <Select.Item value="80">80% (Very high confidence)</Select.Item>
           </Select.Content>
         </Select.Root>
-        <p class="text-xs text-muted-foreground">
+        <p class="text-muted-foreground text-xs">
           Higher values show only the most reliable recommendations
         </p>
       </div>
 
       <!-- Info Box -->
-      <div class="rounded-lg bg-muted p-4">
+      <div class="bg-muted rounded-lg p-4">
         <div class="flex items-start gap-3">
-          <TrendingUp class="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+          <TrendingUp class="text-primary mt-0.5 h-5 w-5 flex-shrink-0" />
           <div class="space-y-1 text-sm">
             <p class="font-medium">What to expect:</p>
-            <ul class="list-disc list-inside text-muted-foreground space-y-1">
+            <ul class="text-muted-foreground list-inside list-disc space-y-1">
               <li>Budget creation suggestions for uncovered categories</li>
               <li>Amount adjustments for over/under-budgeted categories</li>
               <li>Pattern-based insights and optimizations</li>
@@ -144,7 +142,11 @@
 
   {#snippet footer()}
     <div class="flex gap-2">
-      <Button variant="outline" onclick={() => onOpenChange(false)} disabled={isAnalyzing} class="flex-1">
+      <Button
+        variant="outline"
+        onclick={() => onOpenChange(false)}
+        disabled={isAnalyzing}
+        class="flex-1">
         Cancel
       </Button>
       <Button onclick={handleAnalyze} disabled={isAnalyzing} class="flex-1">

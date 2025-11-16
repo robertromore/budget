@@ -1,6 +1,6 @@
 <script lang="ts" generics="TEntity">
-import type { Table } from '@tanstack/table-core';
-import { Button } from '$lib/components/ui/button';
+import type {Table} from '@tanstack/table-core';
+import {Button} from '$lib/components/ui/button';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import X from '@lucide/svelte/icons/x';
 
@@ -12,11 +12,11 @@ interface Props {
   entityNamePlural?: string;
 }
 
-let { table, allEntities, onBulkDelete, entityName, entityNamePlural }: Props = $props();
+let {table, allEntities, onBulkDelete, entityName, entityNamePlural}: Props = $props();
 
 const selectedRows = $derived(table.getSelectedRowModel().rows);
 const selectedCount = $derived(selectedRows.length);
-const selectedEntities = $derived(selectedRows.map(row => row.original));
+const selectedEntities = $derived(selectedRows.map((row) => row.original));
 const totalCount = $derived(allEntities.length);
 const pageRowCount = $derived(table.getRowModel().rows.length);
 const allPageRowsSelected = $derived(table.getIsAllPageRowsSelected());
@@ -43,29 +43,26 @@ const pluralName = $derived(entityNamePlural ?? `${entityName}s`);
 </script>
 
 {#if selectedCount > 0}
-  <div class="flex items-center gap-2 rounded-md border bg-muted px-4 py-2">
+  <div class="bg-muted flex items-center gap-2 rounded-md border px-4 py-2">
     <div class="flex items-center gap-2">
       <span class="text-sm font-medium">
-        {displayCount} {displayCount === 1 ? entityName : pluralName} selected
+        {displayCount}
+        {displayCount === 1 ? entityName : pluralName} selected
       </span>
 
       {#if canSelectAll}
         <Button
-          variant={selectingAll ? "default" : "outline"}
+          variant={selectingAll ? 'default' : 'outline'}
           size="sm"
           class="h-7 px-3 text-xs font-medium"
-          onclick={() => selectingAll = !selectingAll}
-        >
+          onclick={() => (selectingAll = !selectingAll)}>
           {selectingAll ? `All pages (${totalCount})` : `This page (${pageRowCount})`}
         </Button>
       {/if}
     </div>
 
     <div class="ml-auto flex items-center gap-2">
-      <Button
-        onclick={() => onBulkDelete(selectedOrAllEntities)}
-        variant="destructive"
-        size="sm">
+      <Button onclick={() => onBulkDelete(selectedOrAllEntities)} variant="destructive" size="sm">
         <Trash2 class="mr-2 h-4 w-4" />
         Delete Selected
       </Button>

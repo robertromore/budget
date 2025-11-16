@@ -1,4 +1,7 @@
-# Extend base prettier ignore from shared config
-../../packages/config/.prettierignore
-
-# App-specific ignores can be added here
+# App-specific ignores
+templates/
+docs/
+backups/
+.svelte-kit/
+build/
+*.d.ts

@@ -31,13 +31,13 @@ let {
   onSelectionChange,
   variant = 'outline',
   payees = [],
-  fieldName
+  fieldName,
 }: Props = $props();
 
 const toggleOption = (value: string, checked: boolean) => {
   const newValues = checked
     ? [...selectedValues, value]
-    : selectedValues.filter(v => v !== value);
+    : selectedValues.filter((v) => v !== value);
 
   selectedValues = newValues;
   onSelectionChange(newValues);
@@ -50,7 +50,7 @@ const clearSelection = () => {
 
 const selectedLabels = $derived.by(() => {
   return selectedValues
-    .map(value => options.find(option => option.value === value)?.label)
+    .map((value) => options.find((option) => option.value === value)?.label)
     .filter(Boolean);
 });
 
@@ -62,11 +62,11 @@ const facetCounts = $derived.by(() => {
   // Count actual occurrences of each option value in the payee data
   const counts: Record<string, number> = {};
 
-  options.forEach(option => {
+  options.forEach((option) => {
     counts[option.value] = 0;
   });
 
-  payees.forEach(payee => {
+  payees.forEach((payee) => {
     const fieldValue = payee[fieldName];
 
     if (fieldName === 'isActive') {
@@ -89,8 +89,8 @@ const facetCounts = $derived.by(() => {
 
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>
-    {#snippet child({ props })}
-      <Button {...props} variant={variant} size="sm" class="h-8 border-dashed">
+    {#snippet child({props})}
+      <Button {...props} {variant} size="sm" class="h-8 border-dashed">
         <PlusCircle class="mr-2 h-4 w-4" />
         {title}
         {#if selectedValues.length > 0}
@@ -120,14 +120,14 @@ const facetCounts = $derived.by(() => {
     {#each options as option}
       <DropdownMenu.CheckboxItem
         checked={selectedValues.includes(option.value)}
-        onCheckedChange={(checked) => toggleOption(option.value, checked)}
-      >
+        onCheckedChange={(checked) => toggleOption(option.value, checked)}>
         {#if option.icon}
-          <option.icon class="mr-2 h-4 w-4 text-muted-foreground"></option.icon>
+          <option.icon class="text-muted-foreground mr-2 h-4 w-4"></option.icon>
         {/if}
         <span>{option.label}</span>
         {#if facetCounts[option.value]}
-          <span class="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs text-muted-foreground">
+          <span
+            class="text-muted-foreground ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
             {facetCounts[option.value]}
           </span>
         {/if}

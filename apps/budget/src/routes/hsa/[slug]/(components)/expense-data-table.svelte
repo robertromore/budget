@@ -91,20 +91,18 @@ table = createSvelteTable<ExpenseFormat>({
   autoResetExpanded: false,
 });
 
-const selectedExpenses = $derived(
-  table
-    .getSelectedRowModel()
-    .flatRows.map((row) => row.original)
-);
+const selectedExpenses = $derived(table.getSelectedRowModel().flatRows.map((row) => row.original));
 </script>
 
 <div class="space-y-4">
   <ExpenseTableToolbar {table} />
-  <ExpenseBulkActions expenses={selectedExpenses} onBulkDelete={() => {
-    if (onBulkDelete) {
-      onBulkDelete(selectedExpenses);
-    }
-  }} />
+  <ExpenseBulkActions
+    expenses={selectedExpenses}
+    onBulkDelete={() => {
+      if (onBulkDelete) {
+        onBulkDelete(selectedExpenses);
+      }
+    }} />
   <div class="rounded-md border">
     <Table.Root>
       <Table.Header>
@@ -113,7 +111,9 @@ const selectedExpenses = $derived(
             {#each headerGroup.headers as header}
               <Table.Head>
                 {#if !header.isPlaceholder}
-                  <FlexRender content={header.column.columnDef.header} context={header.getContext()} />
+                  <FlexRender
+                    content={header.column.columnDef.header}
+                    context={header.getContext()} />
                 {/if}
               </Table.Head>
             {/each}
@@ -129,8 +129,7 @@ const selectedExpenses = $derived(
                   {#if cell.getIsAggregated()}
                     <FlexRender
                       content={cell.column.columnDef.aggregatedCell ?? cell.column.columnDef.cell}
-                      context={cell.getContext()}
-                    />
+                      context={cell.getContext()} />
                   {:else if cell.getIsPlaceholder()}
                     <!-- Nothing to render for placeholder -->
                   {:else}

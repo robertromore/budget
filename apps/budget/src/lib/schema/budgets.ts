@@ -24,20 +24,9 @@ export const budgetTypes = [
 export const budgetScopes = ["account", "category", "global", "mixed"] as const;
 export const budgetStatuses = ["active", "inactive", "archived"] as const;
 export const budgetEnforcementLevels = ["none", "warning", "strict"] as const;
-export const periodTemplateTypes = [
-  "weekly",
-  "monthly",
-  "quarterly",
-  "yearly",
-  "custom",
-] as const;
+export const periodTemplateTypes = ["weekly", "monthly", "quarterly", "yearly", "custom"] as const;
 
-export const budgetHealthStatuses = [
-  "excellent",
-  "good",
-  "warning",
-  "danger",
-] as const;
+export const budgetHealthStatuses = ["excellent", "good", "warning", "danger"] as const;
 
 export type BudgetType = (typeof budgetTypes)[number];
 export type BudgetScope = (typeof budgetScopes)[number];
@@ -57,14 +46,14 @@ export interface BudgetMetadata {
     targetAmount: number;
     targetDate: string;
     startDate?: string;
-    contributionFrequency?: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+    contributionFrequency?: "weekly" | "monthly" | "quarterly" | "yearly";
     autoContribute?: boolean;
     linkedScheduleId?: number;
   };
   scheduledExpense?: {
     linkedScheduleId?: number;
     expectedAmount?: number;
-    frequency?: 'weekly' | 'bi-weekly' | 'monthly' | 'quarterly' | 'yearly';
+    frequency?: "weekly" | "bi-weekly" | "monthly" | "quarterly" | "yearly";
     payeeId?: number;
     autoTrack?: boolean;
   };
@@ -87,10 +76,7 @@ export const budgets = sqliteTable(
     enforcementLevel: text("enforcement_level", {enum: budgetEnforcementLevels})
       .default("warning")
       .notNull(),
-    metadata: text("metadata", {mode: "json"})
-      .$type<BudgetMetadata>()
-      .default({})
-      .notNull(),
+    metadata: text("metadata", {mode: "json"}).$type<BudgetMetadata>().default({}).notNull(),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -147,9 +133,7 @@ export const budgetGroupMemberships = sqliteTable(
       .notNull()
       .references(() => budgetGroups.id, {onDelete: "cascade"}),
   },
-  (table) => [
-    uniqueIndex("budget_group_membership_unique").on(table.budgetId, table.groupId),
-  ]
+  (table) => [uniqueIndex("budget_group_membership_unique").on(table.budgetId, table.groupId)]
 );
 
 export const budgetPeriodTemplates = sqliteTable(
@@ -283,40 +267,31 @@ export const budgetGroupRelations = relations(budgetGroups, ({many, one}) => ({
   }),
 }));
 
-export const budgetGroupMembershipRelations = relations(
-  budgetGroupMemberships,
-  ({one}) => ({
-    group: one(budgetGroups, {
-      fields: [budgetGroupMemberships.groupId],
-      references: [budgetGroups.id],
-    }),
-    budget: one(budgets, {
-      fields: [budgetGroupMemberships.budgetId],
-      references: [budgets.id],
-    }),
-  })
-);
+export const budgetGroupMembershipRelations = relations(budgetGroupMemberships, ({one}) => ({
+  group: one(budgetGroups, {
+    fields: [budgetGroupMemberships.groupId],
+    references: [budgetGroups.id],
+  }),
+  budget: one(budgets, {
+    fields: [budgetGroupMemberships.budgetId],
+    references: [budgets.id],
+  }),
+}));
 
-export const budgetPeriodTemplateRelations = relations(
-  budgetPeriodTemplates,
-  ({many, one}) => ({
-    budget: one(budgets, {
-      fields: [budgetPeriodTemplates.budgetId],
-      references: [budgets.id],
-    }),
-    periods: many(budgetPeriodInstances),
-  })
-);
+export const budgetPeriodTemplateRelations = relations(budgetPeriodTemplates, ({many, one}) => ({
+  budget: one(budgets, {
+    fields: [budgetPeriodTemplates.budgetId],
+    references: [budgets.id],
+  }),
+  periods: many(budgetPeriodInstances),
+}));
 
-export const budgetPeriodInstanceRelations = relations(
-  budgetPeriodInstances,
-  ({one}) => ({
-    template: one(budgetPeriodTemplates, {
-      fields: [budgetPeriodInstances.templateId],
-      references: [budgetPeriodTemplates.id],
-    }),
-  })
-);
+export const budgetPeriodInstanceRelations = relations(budgetPeriodInstances, ({one}) => ({
+  template: one(budgetPeriodTemplates, {
+    fields: [budgetPeriodInstances.templateId],
+    references: [budgetPeriodTemplates.id],
+  }),
+}));
 
 export const budgetAccountRelations = relations(budgetAccounts, ({one}) => ({
   budget: one(budgets, {
@@ -340,19 +315,16 @@ export const budgetCategoryRelations = relations(budgetCategories, ({one}) => ({
   }),
 }));
 
-export const budgetTransactionRelations = relations(
-  budgetTransactions,
-  ({one}) => ({
-    budget: one(budgets, {
-      fields: [budgetTransactions.budgetId],
-      references: [budgets.id],
-    }),
-    transaction: one(transactions, {
-      fields: [budgetTransactions.transactionId],
-      references: [transactions.id],
-    }),
-  })
-);
+export const budgetTransactionRelations = relations(budgetTransactions, ({one}) => ({
+  budget: one(budgets, {
+    fields: [budgetTransactions.budgetId],
+    references: [budgets.id],
+  }),
+  transaction: one(transactions, {
+    fields: [budgetTransactions.transactionId],
+    references: [transactions.id],
+  }),
+}));
 
 export const selectBudgetSchema = createSelectSchema(budgets);
 export const insertBudgetSchema = createInsertSchema(budgets);
@@ -396,8 +368,12 @@ export const budgetTemplates = sqliteTable("budget_template", {
     .default("warning"),
   metadata: text("metadata", {mode: "json"}).$type<Record<string, unknown>>(),
   isSystem: integer("is_system", {mode: "boolean"}).notNull().default(false),
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export type Budget = typeof budgets.$inferSelect;
@@ -420,4 +396,4 @@ export type BudgetTemplate = typeof budgetTemplates.$inferSelect;
 export type NewBudgetTemplate = typeof budgetTemplates.$inferInsert;
 
 // Re-export envelope allocations
-export * from './budgets/envelope-allocations';
+export * from "./budgets/envelope-allocations";

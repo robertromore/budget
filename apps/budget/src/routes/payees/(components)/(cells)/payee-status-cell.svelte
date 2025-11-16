@@ -5,7 +5,7 @@ interface Props {
   isActive: boolean;
 }
 
-let { isActive }: Props = $props();
+let {isActive}: Props = $props();
 </script>
 
 <EntityStatusCell {isActive} />

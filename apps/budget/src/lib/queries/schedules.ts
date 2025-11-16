@@ -24,7 +24,7 @@ export function createScheduleDetailQuery(
 ) {
   return createQuery(() => ({
     queryKey: scheduleKeys.detail(scheduleId),
-    queryFn: () => trpc().scheduleRoutes.load.query({ id: scheduleId }),
+    queryFn: () => trpc().scheduleRoutes.load.query({id: scheduleId}),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5, // 5 minutes
   }));
@@ -38,28 +38,24 @@ export function createToggleScheduleStatusMutation() {
     const queryClient = useQueryClient();
 
     return {
-      mutationFn: (scheduleId: number) =>
-        trpc().scheduleRoutes.toggleStatus.mutate({ scheduleId }),
+      mutationFn: (scheduleId: number) => trpc().scheduleRoutes.toggleStatus.mutate({scheduleId}),
       onSuccess: (updatedSchedule, scheduleId) => {
         // Update the detail query cache with the fresh data
-        queryClient.setQueryData(
-          scheduleKeys.detail(scheduleId),
-          updatedSchedule
-        );
+        queryClient.setQueryData(scheduleKeys.detail(scheduleId), updatedSchedule);
 
         // Invalidate to trigger reactivity and refetch
         queryClient.invalidateQueries({
           queryKey: scheduleKeys.detail(scheduleId),
-          refetchType: 'active'
+          refetchType: "active",
         });
 
         toast.success(
-          `Schedule ${updatedSchedule.status === 'active' ? 'activated' : 'paused'} successfully`
+          `Schedule ${updatedSchedule.status === "active" ? "activated" : "paused"} successfully`
         );
       },
       onError: (error) => {
-        console.error('Failed to toggle schedule status:', error);
-        toast.error('Failed to update schedule status');
+        console.error("Failed to toggle schedule status:", error);
+        toast.error("Failed to update schedule status");
       },
     };
   });
@@ -73,25 +69,24 @@ export function createExecuteAutoAddMutation() {
     const queryClient = useQueryClient();
 
     return {
-      mutationFn: (scheduleId: number) =>
-        trpc().scheduleRoutes.executeAutoAdd.mutate({ scheduleId }),
+      mutationFn: (scheduleId: number) => trpc().scheduleRoutes.executeAutoAdd.mutate({scheduleId}),
       onSuccess: (result, scheduleId) => {
         // Invalidate the schedule detail to refresh transaction data
         queryClient.invalidateQueries({
-          queryKey: scheduleKeys.detail(scheduleId)
+          queryKey: scheduleKeys.detail(scheduleId),
         });
 
         if (result.transactionsCreated > 0) {
           toast.success(
-            `Created ${result.transactionsCreated} transaction${result.transactionsCreated === 1 ? '' : 's'}`
+            `Created ${result.transactionsCreated} transaction${result.transactionsCreated === 1 ? "" : "s"}`
           );
         } else {
           toast.info("No new transactions needed");
         }
       },
       onError: (error) => {
-        console.error('Auto-add failed:', error);
-        toast.error('Failed to create transactions');
+        console.error("Auto-add failed:", error);
+        toast.error("Failed to create transactions");
       },
     };
   });
@@ -105,24 +100,23 @@ export function createDeleteScheduleMutation() {
     const queryClient = useQueryClient();
 
     return {
-      mutationFn: (scheduleId: number) =>
-        trpc().scheduleRoutes.remove.mutate({ id: scheduleId }),
+      mutationFn: (scheduleId: number) => trpc().scheduleRoutes.remove.mutate({id: scheduleId}),
       onSuccess: (_, scheduleId) => {
         // Remove the schedule from all caches
         queryClient.removeQueries({
-          queryKey: scheduleKeys.detail(scheduleId)
+          queryKey: scheduleKeys.detail(scheduleId),
         });
 
         // Invalidate the schedules list to refresh
         queryClient.invalidateQueries({
-          queryKey: scheduleKeys.lists()
+          queryKey: scheduleKeys.lists(),
         });
 
-        toast.success('Schedule deleted successfully');
+        toast.success("Schedule deleted successfully");
       },
       onError: (error) => {
-        console.error('Failed to delete schedule:', error);
-        toast.error('Failed to delete schedule');
+        console.error("Failed to delete schedule:", error);
+        toast.error("Failed to delete schedule");
       },
     };
   });
@@ -136,25 +130,21 @@ export function createDuplicateScheduleMutation() {
     const queryClient = useQueryClient();
 
     return {
-      mutationFn: (scheduleId: number) =>
-        trpc().scheduleRoutes.duplicate.mutate({ id: scheduleId }),
+      mutationFn: (scheduleId: number) => trpc().scheduleRoutes.duplicate.mutate({id: scheduleId}),
       onSuccess: (duplicatedSchedule) => {
         // Invalidate the schedules list to show the new duplicate
         queryClient.invalidateQueries({
-          queryKey: scheduleKeys.lists()
+          queryKey: scheduleKeys.lists(),
         });
 
         // Add the new schedule to the detail cache
-        queryClient.setQueryData(
-          scheduleKeys.detail(duplicatedSchedule.id),
-          duplicatedSchedule
-        );
+        queryClient.setQueryData(scheduleKeys.detail(duplicatedSchedule.id), duplicatedSchedule);
 
         toast.success(`Schedule duplicated as "${duplicatedSchedule.name}"`);
       },
       onError: (error) => {
-        console.error('Failed to duplicate schedule:', error);
-        toast.error('Failed to duplicate schedule');
+        console.error("Failed to duplicate schedule:", error);
+        toast.error("Failed to duplicate schedule");
       },
     };
   });

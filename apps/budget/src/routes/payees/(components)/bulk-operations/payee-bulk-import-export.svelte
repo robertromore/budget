@@ -3,19 +3,19 @@ import * as Dialog from '$lib/components/ui/dialog';
 import * as Card from '$lib/components/ui/card';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as Alert from '$lib/components/ui/alert';
-import { Button } from '$lib/components/ui/button';
-import { Badge } from '$lib/components/ui/badge';
-import { Progress } from '$lib/components/ui/progress';
-import { Separator } from '$lib/components/ui/separator';
-import { ScrollArea } from '$lib/components/ui/scroll-area';
-import { Input } from '$lib/components/ui/input';
-import { Label } from '$lib/components/ui/label';
-import { Checkbox } from '$lib/components/ui/checkbox';
-import { Textarea } from '$lib/components/ui/textarea';
+import {Button} from '$lib/components/ui/button';
+import {Badge} from '$lib/components/ui/badge';
+import {Progress} from '$lib/components/ui/progress';
+import {Separator} from '$lib/components/ui/separator';
+import {ScrollArea} from '$lib/components/ui/scroll-area';
+import {Input} from '$lib/components/ui/input';
+import {Label} from '$lib/components/ui/label';
+import {Checkbox} from '$lib/components/ui/checkbox';
+import {Textarea} from '$lib/components/ui/textarea';
 
-import { PayeesState } from '$lib/states/entities/payees.svelte';
-import { bulkExport, bulkImport } from '$lib/query/payees';
-import type { Payee } from '$lib/schema/payees';
+import {PayeesState} from '$lib/states/entities/payees.svelte';
+import {bulkExport, bulkImport} from '$lib/query/payees';
+import type {Payee} from '$lib/schema/payees';
 
 // Icons
 import Download from '@lucide/svelte/icons/download';
@@ -75,12 +75,13 @@ const allPayees = $derived(Array.from(payeesState.payees.values()));
 
 // Filter payees for export
 const exportPayees = $derived.by(() => {
-  let payees = selectedPayeeIds.length > 0
-    ? allPayees.filter(p => selectedPayeeIds.includes(p.id))
-    : allPayees;
+  let payees =
+    selectedPayeeIds.length > 0
+      ? allPayees.filter((p) => selectedPayeeIds.includes(p.id))
+      : allPayees;
 
   if (!includeInactive) {
-    payees = payees.filter(p => p.isActive);
+    payees = payees.filter((p) => p.isActive);
   }
 
   return payees;
@@ -93,26 +94,30 @@ const csvTemplate = `name,payeeType,email,phone,website,notes,isActive
 "Utility Company","utility","billing@utility.com","555-0125","https://utility.com","Monthly service",true`;
 
 // JSON template
-const jsonTemplate = JSON.stringify([
-  {
-    name: "Example Store",
-    payeeType: "merchant",
-    email: "store@example.com",
-    phone: "555-0123",
-    website: "https://example.com",
-    notes: "Sample merchant",
-    isActive: true
-  },
-  {
-    name: "John Doe",
-    payeeType: "individual",
-    email: "john@example.com",
-    phone: "555-0124",
-    website: "",
-    notes: "Individual payee",
-    isActive: true
-  }
-], null, 2);
+const jsonTemplate = JSON.stringify(
+  [
+    {
+      name: 'Example Store',
+      payeeType: 'merchant',
+      email: 'store@example.com',
+      phone: '555-0123',
+      website: 'https://example.com',
+      notes: 'Sample merchant',
+      isActive: true,
+    },
+    {
+      name: 'John Doe',
+      payeeType: 'individual',
+      email: 'john@example.com',
+      phone: '555-0124',
+      website: '',
+      notes: 'Individual payee',
+      isActive: true,
+    },
+  ],
+  null,
+  2
+);
 
 // Export functionality
 async function performExport() {
@@ -123,7 +128,7 @@ async function performExport() {
 
   try {
     const result = await bulkExportMutation.mutateAsync({
-      payeeIds: exportPayees.map(p => p.id),
+      payeeIds: exportPayees.map((p) => p.id),
       format: exportFormat,
       includeTransactionStats,
       includeContactInfo,
@@ -134,7 +139,7 @@ async function performExport() {
 
     // Auto-download the file
     const blob = new Blob([result.data], {
-      type: exportFormat === 'csv' ? 'text/csv' : 'application/json'
+      type: exportFormat === 'csv' ? 'text/csv' : 'application/json',
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -161,7 +166,7 @@ function handleFileUpload(event: Event) {
     importFile = file;
     const reader = new FileReader();
     reader.onload = (e) => {
-      importData = e.target?.result as string || '';
+      importData = (e.target?.result as string) || '';
       parsePreviewData();
     };
     reader.readAsText(file);
@@ -182,15 +187,15 @@ function parsePreviewData() {
       previewData = Array.isArray(parsed) ? parsed.slice(0, 5) : [parsed];
     } else {
       // Parse CSV
-      const lines = importData.split('\n').filter(line => line.trim());
+      const lines = importData.split('\n').filter((line) => line.trim());
       if (lines.length < 2) {
         previewData = [];
         return;
       }
 
-      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-      previewData = lines.slice(1, 6).map(line => {
-        const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+      const headers = lines[0].split(',').map((h) => h.replace(/"/g, '').trim());
+      previewData = lines.slice(1, 6).map((line) => {
+        const values = line.split(',').map((v) => v.replace(/"/g, '').trim());
         const obj: any = {};
         headers.forEach((header, index) => {
           obj[header] = values[index] || '';
@@ -277,7 +282,7 @@ $effect(() => {
 </script>
 
 <Dialog.Root bind:open>
-  <Dialog.Content class="max-w-5xl max-h-[90vh] overflow-hidden">
+  <Dialog.Content class="max-h-[90vh] max-w-5xl overflow-hidden">
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">
         <Database class="h-5 w-5" />
@@ -296,7 +301,7 @@ $effect(() => {
 
       <!-- Export Tab -->
       <Tabs.Content value="export" class="space-y-4">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <!-- Export Settings -->
           <Card.Root>
             <Card.Header>
@@ -310,17 +315,15 @@ $effect(() => {
                   <Button
                     variant={exportFormat === 'csv' ? 'default' : 'outline'}
                     size="sm"
-                    onclick={() => exportFormat = 'csv'}
-                  >
-                    <FileText class="h-4 w-4 mr-2" />
+                    onclick={() => (exportFormat = 'csv')}>
+                    <FileText class="mr-2 h-4 w-4" />
                     CSV
                   </Button>
                   <Button
                     variant={exportFormat === 'json' ? 'default' : 'outline'}
                     size="sm"
-                    onclick={() => exportFormat = 'json'}
-                  >
-                    <Database class="h-4 w-4 mr-2" />
+                    onclick={() => (exportFormat = 'json')}>
+                    <Database class="mr-2 h-4 w-4" />
                     JSON
                   </Button>
                 </div>
@@ -329,11 +332,13 @@ $effect(() => {
               <!-- Payee Selection -->
               <div class="space-y-2">
                 <Label>Payees to Export</Label>
-                <div class="text-sm text-muted-foreground">
+                <div class="text-muted-foreground text-sm">
                   {#if selectedPayeeIds.length > 0}
                     <div class="flex items-center gap-2">
                       <CircleCheck class="h-4 w-4 text-green-500" />
-                      {selectedPayeeIds.length} selected payee{selectedPayeeIds.length > 1 ? 's' : ''}
+                      {selectedPayeeIds.length} selected payee{selectedPayeeIds.length > 1
+                        ? 's'
+                        : ''}
                     </div>
                   {:else}
                     <div class="flex items-center gap-2">
@@ -374,13 +379,12 @@ $effect(() => {
               <Button
                 onclick={performExport}
                 disabled={exportInProgress || exportPayees.length === 0}
-                class="w-full"
-              >
+                class="w-full">
                 {#if exportInProgress}
-                  <LoaderCircle class="h-4 w-4 mr-2 animate-spin" />
+                  <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
                   Exporting...
                 {:else}
-                  <Download class="h-4 w-4 mr-2" />
+                  <Download class="mr-2 h-4 w-4" />
                   Export {exportPayees.length} Payee{exportPayees.length > 1 ? 's' : ''}
                 {/if}
               </Button>
@@ -397,12 +401,8 @@ $effect(() => {
                 <div class="space-y-2">
                   <div class="flex items-center justify-between">
                     <Label>Export Result</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onclick={() => copyTemplate(exportResult)}
-                    >
-                      <Copy class="h-4 w-4 mr-2" />
+                    <Button variant="ghost" size="sm" onclick={() => copyTemplate(exportResult)}>
+                      <Copy class="mr-2 h-4 w-4" />
                       Copy
                     </Button>
                   </div>
@@ -410,12 +410,11 @@ $effect(() => {
                     value={exportResult}
                     readonly
                     class="h-[300px] font-mono text-xs"
-                    placeholder="Export results will appear here..."
-                  />
+                    placeholder="Export results will appear here..." />
                 </div>
               {:else}
-                <div class="text-center py-8 text-muted-foreground">
-                  <Download class="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <div class="text-muted-foreground py-8 text-center">
+                  <Download class="mx-auto mb-4 h-12 w-12 opacity-50" />
                   <p>Export results will appear here</p>
                   <p class="text-sm">File will be automatically downloaded</p>
                 </div>
@@ -427,7 +426,7 @@ $effect(() => {
 
       <!-- Import Tab -->
       <Tabs.Content value="import" class="space-y-4">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <!-- Import Data -->
           <Card.Root>
             <Card.Header>
@@ -441,17 +440,15 @@ $effect(() => {
                   <Button
                     variant={importFormat === 'csv' ? 'default' : 'outline'}
                     size="sm"
-                    onclick={() => importFormat = 'csv'}
-                  >
-                    <FileText class="h-4 w-4 mr-2" />
+                    onclick={() => (importFormat = 'csv')}>
+                    <FileText class="mr-2 h-4 w-4" />
                     CSV
                   </Button>
                   <Button
                     variant={importFormat === 'json' ? 'default' : 'outline'}
                     size="sm"
-                    onclick={() => importFormat = 'json'}
-                  >
-                    <Database class="h-4 w-4 mr-2" />
+                    onclick={() => (importFormat = 'json')}>
+                    <Database class="mr-2 h-4 w-4" />
                     JSON
                   </Button>
                 </div>
@@ -464,16 +461,15 @@ $effect(() => {
                   id="import-file"
                   type="file"
                   accept={importFormat === 'csv' ? '.csv' : '.json'}
-                  onchange={handleFileUpload}
-                />
+                  onchange={handleFileUpload} />
                 {#if importFile}
-                  <div class="text-sm text-muted-foreground">
+                  <div class="text-muted-foreground text-sm">
                     Loaded: {importFile.name} ({Math.round(importFile.size / 1024)} KB)
                   </div>
                 {/if}
               </div>
 
-              <div class="text-center text-muted-foreground">
+              <div class="text-muted-foreground text-center">
                 <span class="text-sm">or</span>
               </div>
 
@@ -484,8 +480,7 @@ $effect(() => {
                   id="import-data"
                   bind:value={importData}
                   placeholder={`Paste your ${importFormat.toUpperCase()} data here...`}
-                  class="h-[200px] font-mono text-xs"
-                />
+                  class="h-[200px] font-mono text-xs" />
               </div>
 
               <!-- Preview Toggle -->
@@ -493,14 +488,13 @@ $effect(() => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onclick={() => showPreview = !showPreview}
-                  class="w-full"
-                >
+                  onclick={() => (showPreview = !showPreview)}
+                  class="w-full">
                   {#if showPreview}
-                    <EyeOff class="h-4 w-4 mr-2" />
+                    <EyeOff class="mr-2 h-4 w-4" />
                     Hide Preview
                   {:else}
-                    <Eye class="h-4 w-4 mr-2" />
+                    <Eye class="mr-2 h-4 w-4" />
                     Show Preview
                   {/if}
                 </Button>
@@ -541,24 +535,19 @@ $effect(() => {
               <Button
                 onclick={performImport}
                 disabled={importInProgress || !importData.trim()}
-                class="w-full"
-              >
+                class="w-full">
                 {#if importInProgress}
-                  <LoaderCircle class="h-4 w-4 mr-2 animate-spin" />
+                  <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
                   Importing...
                 {:else}
-                  <Upload class="h-4 w-4 mr-2" />
+                  <Upload class="mr-2 h-4 w-4" />
                   Import Data
                 {/if}
               </Button>
 
               <!-- Clear Button -->
               {#if importData}
-                <Button
-                  variant="outline"
-                  onclick={clearImportData}
-                  class="w-full"
-                >
+                <Button variant="outline" onclick={clearImportData} class="w-full">
                   Clear Data
                 </Button>
               {/if}
@@ -608,7 +597,7 @@ $effect(() => {
             </Card.Header>
             <Card.Content>
               <ScrollArea class="h-[200px]">
-                <div class="text-xs font-mono">
+                <div class="font-mono text-xs">
                   <pre>{JSON.stringify(previewData, null, 2)}</pre>
                 </div>
               </ScrollArea>
@@ -625,45 +614,29 @@ $effect(() => {
             </Card.Description>
           </Card.Header>
           <Card.Content class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <!-- CSV Template -->
               <div class="space-y-2">
                 <div class="flex items-center justify-between">
                   <Label>CSV Template</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onclick={() => copyTemplate(csvTemplate)}
-                  >
-                    <Copy class="h-4 w-4 mr-2" />
+                  <Button variant="ghost" size="sm" onclick={() => copyTemplate(csvTemplate)}>
+                    <Copy class="mr-2 h-4 w-4" />
                     Copy
                   </Button>
                 </div>
-                <Textarea
-                  value={csvTemplate}
-                  readonly
-                  class="h-[120px] font-mono text-xs"
-                />
+                <Textarea value={csvTemplate} readonly class="h-[120px] font-mono text-xs" />
               </div>
 
               <!-- JSON Template -->
               <div class="space-y-2">
                 <div class="flex items-center justify-between">
                   <Label>JSON Template</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onclick={() => copyTemplate(jsonTemplate)}
-                  >
-                    <Copy class="h-4 w-4 mr-2" />
+                  <Button variant="ghost" size="sm" onclick={() => copyTemplate(jsonTemplate)}>
+                    <Copy class="mr-2 h-4 w-4" />
                     Copy
                   </Button>
                 </div>
-                <Textarea
-                  value={jsonTemplate}
-                  readonly
-                  class="h-[120px] font-mono text-xs"
-                />
+                <Textarea value={jsonTemplate} readonly class="h-[120px] font-mono text-xs" />
               </div>
             </div>
 
@@ -672,9 +645,9 @@ $effect(() => {
               <Info class="h-4 w-4" />
               <Alert.Title>Required Fields</Alert.Title>
               <Alert.Description>
-                <strong>name</strong> is the only required field. Optional fields include:
-                payeeType, email, phone, website, notes, isActive.
-                Valid payeeTypes: merchant, utility, employer, financial_institution, government, individual.
+                <strong>name</strong> is the only required field. Optional fields include: payeeType,
+                email, phone, website, notes, isActive. Valid payeeTypes: merchant, utility, employer,
+                financial_institution, government, individual.
               </Alert.Description>
             </Alert.Root>
           </Card.Content>
@@ -683,9 +656,7 @@ $effect(() => {
     </Tabs.Root>
 
     <Dialog.Footer>
-      <Button variant="outline" onclick={() => open = false}>
-        Close
-      </Button>
+      <Button variant="outline" onclick={() => (open = false)}>Close</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

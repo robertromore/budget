@@ -23,7 +23,6 @@ import {currentDate, toISOString} from "$lib/utils/dates";
  * pattern recognition, confidence scoring, and adaptive learning.
  */
 export class CategoryLearningService {
-
   /**
    * Record a user category correction and extract learning context
    */
@@ -69,7 +68,7 @@ export class CategoryLearningService {
       .returning();
 
     if (!insertedCorrection) {
-      throw new Error('Failed to insert category correction');
+      throw new Error("Failed to insert category correction");
     }
 
     // Trigger immediate pattern analysis for high-confidence corrections
@@ -83,8 +82,9 @@ export class CategoryLearningService {
     return {
       ...insertedCorrection,
       amountRange: insertedCorrection.amountRange as {min: number; max: number} | null,
-      temporalContext: insertedCorrection.temporalContext as CategoryCorrection['temporalContext'],
-      payeePatternContext: insertedCorrection.payeePatternContext as CategoryCorrection['payeePatternContext'],
+      temporalContext: insertedCorrection.temporalContext as CategoryCorrection["temporalContext"],
+      payeePatternContext:
+        insertedCorrection.payeePatternContext as CategoryCorrection["payeePatternContext"],
     };
   }
 
@@ -101,18 +101,20 @@ export class CategoryLearningService {
   ): Promise<CorrectionPattern[]> {
     const {timeframeMonths = 12, minConfidence = 0.1, includeProcessed = true} = options;
 
-    const cutoffDate = currentDate.subtract({ months: timeframeMonths });
+    const cutoffDate = currentDate.subtract({months: timeframeMonths});
 
     // Get all corrections for the payee within timeframe
     const corrections = await db
       .select()
       .from(payeeCategoryCorrections)
-      .where(and(
-        eq(payeeCategoryCorrections.payeeId, payeeId),
-        gte(payeeCategoryCorrections.createdAt, toISOString(cutoffDate)),
-        isNull(payeeCategoryCorrections.deletedAt),
-        includeProcessed ? undefined : eq(payeeCategoryCorrections.isProcessed, false)
-      ))
+      .where(
+        and(
+          eq(payeeCategoryCorrections.payeeId, payeeId),
+          gte(payeeCategoryCorrections.createdAt, toISOString(cutoffDate)),
+          isNull(payeeCategoryCorrections.deletedAt),
+          includeProcessed ? undefined : eq(payeeCategoryCorrections.isProcessed, false)
+        )
+      )
       .orderBy(desc(payeeCategoryCorrections.createdAt));
 
     if (corrections.length === 0) {
@@ -160,10 +162,7 @@ export class CategoryLearningService {
     const contextualPatterns = this.filterPatternsByContext(patterns, context);
 
     // Calculate recommendation with confidence weighting
-    const recommendation = await this.calculateWeightedRecommendation(
-      payeeId,
-      contextualPatterns
-    );
+    const recommendation = await this.calculateWeightedRecommendation(payeeId, contextualPatterns);
 
     return recommendation;
   }
@@ -183,11 +182,13 @@ export class CategoryLearningService {
     const corrections = await db
       .select()
       .from(payeeCategoryCorrections)
-      .where(and(
-        eq(payeeCategoryCorrections.payeeId, payeeId),
-        eq(payeeCategoryCorrections.toCategoryId, categoryId),
-        isNull(payeeCategoryCorrections.deletedAt)
-      ))
+      .where(
+        and(
+          eq(payeeCategoryCorrections.payeeId, payeeId),
+          eq(payeeCategoryCorrections.toCategoryId, categoryId),
+          isNull(payeeCategoryCorrections.deletedAt)
+        )
+      )
       .orderBy(desc(payeeCategoryCorrections.createdAt));
 
     if (corrections.length === 0) {
@@ -198,18 +199,21 @@ export class CategoryLearningService {
     const totalCorrections = await db
       .select({count: count()})
       .from(payeeCategoryCorrections)
-      .where(and(
-        eq(payeeCategoryCorrections.payeeId, payeeId),
-        isNull(payeeCategoryCorrections.deletedAt)
-      ));
+      .where(
+        and(
+          eq(payeeCategoryCorrections.payeeId, payeeId),
+          isNull(payeeCategoryCorrections.deletedAt)
+        )
+      );
 
     const frequencyConfidence = corrections.length / (totalCorrections[0]?.count || 1);
 
     // User confidence weighting
-    const userConfidenceAvg = corrections
-      .filter(c => c.userConfidence !== null)
-      .reduce((sum, c) => sum + (c.userConfidence || 0), 0) /
-      Math.max(1, corrections.filter(c => c.userConfidence !== null).length);
+    const userConfidenceAvg =
+      corrections
+        .filter((c) => c.userConfidence !== null)
+        .reduce((sum, c) => sum + (c.userConfidence || 0), 0) /
+      Math.max(1, corrections.filter((c) => c.userConfidence !== null).length);
 
     const userConfidenceScore = userConfidenceAvg / 10; // Normalize to 0-1
 
@@ -220,12 +224,11 @@ export class CategoryLearningService {
     const contextScore = context ? this.calculateContextMatchScore(corrections, context) : 0.5;
 
     // Combined confidence with weighted factors
-    const confidence = (
+    const confidence =
       frequencyConfidence * 0.3 +
       userConfidenceScore * 0.25 +
       recencyScore * 0.25 +
-      contextScore * 0.2
-    );
+      contextScore * 0.2;
 
     return Math.min(1, Math.max(0, confidence));
   }
@@ -235,31 +238,35 @@ export class CategoryLearningService {
    */
   async detectCategoryDrift(payeeId: number): Promise<CategoryDrift | null> {
     // Get recent corrections (last 3 months)
-    const recentDate = currentDate.subtract({ months: 3 });
+    const recentDate = currentDate.subtract({months: 3});
 
     const recentCorrections = await db
       .select()
       .from(payeeCategoryCorrections)
-      .where(and(
-        eq(payeeCategoryCorrections.payeeId, payeeId),
-        gte(payeeCategoryCorrections.createdAt, toISOString(recentDate)),
-        isNull(payeeCategoryCorrections.deletedAt)
-      ))
+      .where(
+        and(
+          eq(payeeCategoryCorrections.payeeId, payeeId),
+          gte(payeeCategoryCorrections.createdAt, toISOString(recentDate)),
+          isNull(payeeCategoryCorrections.deletedAt)
+        )
+      )
       .orderBy(desc(payeeCategoryCorrections.createdAt));
 
     // Get historical baseline (6-18 months ago)
-    const baselineStartDate = currentDate.subtract({ months: 18 });
-    const baselineEndDate = currentDate.subtract({ months: 6 });
+    const baselineStartDate = currentDate.subtract({months: 18});
+    const baselineEndDate = currentDate.subtract({months: 6});
 
     const baselineCorrections = await db
       .select()
       .from(payeeCategoryCorrections)
-      .where(and(
-        eq(payeeCategoryCorrections.payeeId, payeeId),
-        gte(payeeCategoryCorrections.createdAt, toISOString(baselineStartDate)),
-        lte(payeeCategoryCorrections.createdAt, toISOString(baselineEndDate)),
-        isNull(payeeCategoryCorrections.deletedAt)
-      ));
+      .where(
+        and(
+          eq(payeeCategoryCorrections.payeeId, payeeId),
+          gte(payeeCategoryCorrections.createdAt, toISOString(baselineStartDate)),
+          lte(payeeCategoryCorrections.createdAt, toISOString(baselineEndDate)),
+          isNull(payeeCategoryCorrections.deletedAt)
+        )
+      );
 
     if (recentCorrections.length < 3 || baselineCorrections.length < 3) {
       return null; // Insufficient data for drift detection
@@ -281,16 +288,19 @@ export class CategoryLearningService {
 
       const categoryNames = await this.getCategoryNames([
         driftAnalysis.previousCategoryId,
-        driftAnalysis.newCategoryId
+        driftAnalysis.newCategoryId,
       ]);
 
       return {
         payeeId,
-        payeeName: payee[0]?.name || 'Unknown',
+        payeeName: payee[0]?.name || "Unknown",
         previousCategoryId: driftAnalysis.previousCategoryId,
-        previousCategoryName: driftAnalysis.previousCategoryId !== null ? categoryNames[driftAnalysis.previousCategoryId] || null : null,
+        previousCategoryName:
+          driftAnalysis.previousCategoryId !== null
+            ? categoryNames[driftAnalysis.previousCategoryId] || null
+            : null,
         newCategoryId: driftAnalysis.newCategoryId,
-        newCategoryName: categoryNames[driftAnalysis.newCategoryId] || 'Unknown',
+        newCategoryName: categoryNames[driftAnalysis.newCategoryId] || "Unknown",
         driftConfidence: driftAnalysis.confidence,
         driftReason: driftAnalysis.reason,
         detectedAt: toISOString(currentDate),
@@ -307,18 +317,20 @@ export class CategoryLearningService {
   /**
    * Suggest when payee default categories should be updated
    */
-  async suggestDefaultCategoryUpdates(): Promise<Array<{
-    payeeId: number;
-    payeeName: string;
-    currentDefaultCategoryId: number | null;
-    currentDefaultCategoryName: string | null;
-    suggestedCategoryId: number;
-    suggestedCategoryName: string;
-    confidence: number;
-    reasoning: string;
-    correctionCount: number;
-    lastCorrectionDate: string;
-  }>> {
+  async suggestDefaultCategoryUpdates(): Promise<
+    Array<{
+      payeeId: number;
+      payeeName: string;
+      currentDefaultCategoryId: number | null;
+      currentDefaultCategoryName: string | null;
+      suggestedCategoryId: number;
+      suggestedCategoryName: string;
+      confidence: number;
+      reasoning: string;
+      correctionCount: number;
+      lastCorrectionDate: string;
+    }>
+  > {
     // Find payees with significant correction patterns
     const candidatePayees = await db
       .select({
@@ -327,12 +339,15 @@ export class CategoryLearningService {
         lastCorrectionDate: max(payeeCategoryCorrections.createdAt),
       })
       .from(payeeCategoryCorrections)
-      .where(and(
-        gte(payeeCategoryCorrections.createdAt,
-          new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000).toISOString() // Last 6 months
-        ),
-        isNull(payeeCategoryCorrections.deletedAt)
-      ))
+      .where(
+        and(
+          gte(
+            payeeCategoryCorrections.createdAt,
+            new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000).toISOString() // Last 6 months
+          ),
+          isNull(payeeCategoryCorrections.deletedAt)
+        )
+      )
       .groupBy(payeeCategoryCorrections.payeeId)
       .having(gte(count(), 3)); // At least 3 corrections
 
@@ -355,12 +370,12 @@ export class CategoryLearningService {
         if (payee[0] && payee[0].defaultCategoryId !== recommendation.recommendedCategoryId) {
           const categoryNames = await this.getCategoryNames([
             payee[0].defaultCategoryId,
-            recommendation.recommendedCategoryId
+            recommendation.recommendedCategoryId,
           ]);
 
           suggestions.push({
             payeeId: candidate.payeeId,
-            payeeName: payee[0].name || 'Unknown',
+            payeeName: payee[0].name || "Unknown",
             currentDefaultCategoryId: payee[0].defaultCategoryId,
             currentDefaultCategoryName: categoryNames[payee[0].defaultCategoryId || 0] || null,
             suggestedCategoryId: recommendation.recommendedCategoryId,
@@ -368,7 +383,7 @@ export class CategoryLearningService {
             confidence: recommendation.confidence,
             reasoning: recommendation.reasoning,
             correctionCount: candidate.correctionCount,
-            lastCorrectionDate: candidate.lastCorrectionDate || '',
+            lastCorrectionDate: candidate.lastCorrectionDate || "",
           });
         }
       }
@@ -381,7 +396,7 @@ export class CategoryLearningService {
    * Get comprehensive learning metrics
    */
   async getLearningMetrics(timeframeMonths: number = 6): Promise<LearningMetrics> {
-    const cutoffDate = currentDate.subtract({ months: timeframeMonths });
+    const cutoffDate = currentDate.subtract({months: timeframeMonths});
 
     // Basic correction statistics
     const correctionStats = await db
@@ -390,10 +405,12 @@ export class CategoryLearningService {
         uniquePayees: sql<number>`COUNT(DISTINCT ${payeeCategoryCorrections.payeeId})`,
       })
       .from(payeeCategoryCorrections)
-      .where(and(
-        gte(payeeCategoryCorrections.createdAt, toISOString(cutoffDate)),
-        isNull(payeeCategoryCorrections.deletedAt)
-      ));
+      .where(
+        and(
+          gte(payeeCategoryCorrections.createdAt, toISOString(cutoffDate)),
+          isNull(payeeCategoryCorrections.deletedAt)
+        )
+      );
 
     const stats = correctionStats[0] || {totalCorrections: 0, uniquePayees: 0};
 
@@ -408,7 +425,8 @@ export class CategoryLearningService {
     return {
       totalCorrections: stats.totalCorrections,
       uniquePayees: stats.uniquePayees,
-      averageCorrectionsPerPayee: stats.uniquePayees > 0 ? stats.totalCorrections / stats.uniquePayees : 0,
+      averageCorrectionsPerPayee:
+        stats.uniquePayees > 0 ? stats.totalCorrections / stats.uniquePayees : 0,
       correctionAccuracy: accuracyMetrics.accuracy,
       systemImprovement: accuracyMetrics.improvement,
       categoryDriftDetection: driftDetections,
@@ -465,12 +483,12 @@ export class CategoryLearningService {
     }
 
     // Higher weight for manual corrections vs automatic
-    if (correction.correctionTrigger === 'manual_user_correction') {
+    if (correction.correctionTrigger === "manual_user_correction") {
       weight *= 1.5;
     }
 
     // Lower weight for bulk operations
-    if (correction.correctionTrigger === 'bulk_categorization') {
+    if (correction.correctionTrigger === "bulk_categorization") {
       weight *= 0.7;
     }
 
@@ -482,15 +500,15 @@ export class CategoryLearningService {
     return Math.min(10, Math.max(0.1, weight));
   }
 
-  private async calculateAmountRangeContext(payeeId: number, amount: number): Promise<{min: number; max: number} | null> {
+  private async calculateAmountRangeContext(
+    payeeId: number,
+    amount: number
+  ): Promise<{min: number; max: number} | null> {
     // Get recent transaction amounts for this payee
     const recentAmounts = await db
       .select({amount: transactions.amount})
       .from(transactions)
-      .where(and(
-        eq(transactions.payeeId, payeeId),
-        isNull(transactions.deletedAt)
-      ))
+      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
       .orderBy(desc(transactions.date))
       .limit(20);
 
@@ -498,7 +516,7 @@ export class CategoryLearningService {
       return null;
     }
 
-    const amounts = recentAmounts.map(t => t.amount || 0).filter(a => a > 0);
+    const amounts = recentAmounts.map((t) => t.amount || 0).filter((a) => a > 0);
     if (amounts.length === 0) return null;
 
     // Determine if this amount is low, medium, or high for this payee
@@ -527,10 +545,10 @@ export class CategoryLearningService {
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
     // Determine season
-    let season = 'winter';
-    if (month >= 3 && month <= 5) season = 'spring';
-    else if (month >= 6 && month <= 8) season = 'summer';
-    else if (month >= 9 && month <= 11) season = 'fall';
+    let season = "winter";
+    if (month >= 3 && month <= 5) season = "spring";
+    else if (month >= 6 && month <= 8) season = "summer";
+    else if (month >= 9 && month <= 11) season = "fall";
 
     return {
       month,
@@ -548,10 +566,7 @@ export class CategoryLearningService {
         amount: transactions.amount,
       })
       .from(transactions)
-      .where(and(
-        eq(transactions.payeeId, payeeId),
-        isNull(transactions.deletedAt)
-      ))
+      .where(and(eq(transactions.payeeId, payeeId), isNull(transactions.deletedAt)))
       .orderBy(desc(transactions.date))
       .limit(10);
 
@@ -560,31 +575,35 @@ export class CategoryLearningService {
     }
 
     // Calculate frequency pattern
-    const dates = recentTransactions.map(t => new Date(t.date));
+    const dates = recentTransactions.map((t) => new Date(t.date));
     const intervals = [];
     for (let i = 1; i < dates.length; i++) {
-      const prevDate = dates[i-1];
+      const prevDate = dates[i - 1];
       const currentDate = dates[i];
       if (prevDate && currentDate) {
-        const daysDiff = Math.round((prevDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+        const daysDiff = Math.round(
+          (prevDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
         intervals.push(daysDiff);
       }
     }
 
     const avgInterval = intervals.reduce((sum, i) => sum + i, 0) / intervals.length;
-    const amounts = recentTransactions.map(t => t.amount || 0).filter(a => a > 0);
+    const amounts = recentTransactions.map((t) => t.amount || 0).filter((a) => a > 0);
     const avgAmount = amounts.reduce((sum, a) => sum + a, 0) / amounts.length;
 
     // Determine frequency description
-    let frequency = 'irregular';
-    if (avgInterval <= 7) frequency = 'weekly';
-    else if (avgInterval <= 14) frequency = 'bi_weekly';
-    else if (avgInterval <= 31) frequency = 'monthly';
-    else if (avgInterval <= 93) frequency = 'quarterly';
+    let frequency = "irregular";
+    if (avgInterval <= 7) frequency = "weekly";
+    else if (avgInterval <= 14) frequency = "bi_weekly";
+    else if (avgInterval <= 31) frequency = "monthly";
+    else if (avgInterval <= 93) frequency = "quarterly";
 
     // Calculate regularity (inverse of coefficient of variation)
-    const stdDev = Math.sqrt(intervals.reduce((sum, i) => sum + Math.pow(i - avgInterval, 2), 0) / intervals.length);
-    const regularity = avgInterval > 0 ? Math.max(0, 1 - (stdDev / avgInterval)) : 0;
+    const stdDev = Math.sqrt(
+      intervals.reduce((sum, i) => sum + Math.pow(i - avgInterval, 2), 0) / intervals.length
+    );
+    const regularity = avgInterval > 0 ? Math.max(0, 1 - stdDev / avgInterval) : 0;
 
     return {
       frequency,
@@ -614,38 +633,45 @@ export class CategoryLearningService {
     const groups = new Map<string, any[]>();
 
     for (const correction of corrections) {
-      const key = `${correction.fromCategoryId || 'null'}-${correction.toCategoryId}`;
+      const key = `${correction.fromCategoryId || "null"}-${correction.toCategoryId}`;
       if (!groups.has(key)) {
         groups.set(key, []);
       }
       groups.get(key)!.push(correction);
     }
 
-    return Array.from(groups.values()).filter(group => group.length >= 2);
+    return Array.from(groups.values()).filter((group) => group.length >= 2);
   }
 
-  private async analyzeCorrectionGroup(group: any[], totalCorrections: number): Promise<CorrectionPattern> {
+  private async analyzeCorrectionGroup(
+    group: any[],
+    totalCorrections: number
+  ): Promise<CorrectionPattern> {
     const firstCorrection = group[0];
     const frequency = group.length;
     const confidence = Math.min(1, frequency / Math.max(5, totalCorrections * 0.3));
 
     // Calculate average user confidence
-    const userConfidences = group.filter(c => c.userConfidence !== null).map(c => c.userConfidence);
-    const averageUserConfidence = userConfidences.length > 0
-      ? userConfidences.reduce((sum, c) => sum + c, 0) / userConfidences.length
-      : 0;
+    const userConfidences = group
+      .filter((c) => c.userConfidence !== null)
+      .map((c) => c.userConfidence);
+    const averageUserConfidence =
+      userConfidences.length > 0
+        ? userConfidences.reduce((sum, c) => sum + c, 0) / userConfidences.length
+        : 0;
 
     // Calculate decay factor based on recency
-    const now = currentDate.toDate('UTC');
-    const decayFactor = group.reduce((sum, correction) => {
-      const correctionDate = new Date(correction.createdAt);
-      const ageMonths = (now.getTime() - correctionDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
-      return sum + Math.exp(-ageMonths / 6); // 6-month half-life
-    }, 0) / group.length;
+    const now = currentDate.toDate("UTC");
+    const decayFactor =
+      group.reduce((sum, correction) => {
+        const correctionDate = new Date(correction.createdAt);
+        const ageMonths = (now.getTime() - correctionDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+        return sum + Math.exp(-ageMonths / 6); // 6-month half-life
+      }, 0) / group.length;
 
     // Analyze triggers
     const triggerCounts = new Map<string, number>();
-    group.forEach(c => {
+    group.forEach((c) => {
       const trigger = c.correctionTrigger;
       triggerCounts.set(trigger, (triggerCounts.get(trigger) || 0) + 1);
     });
@@ -677,10 +703,12 @@ export class CategoryLearningService {
     };
   }
 
-  private analyzeAmountPatterns(corrections: any[]): Array<{range: {min: number; max: number}; count: number; confidence: number}> {
+  private analyzeAmountPatterns(
+    corrections: any[]
+  ): Array<{range: {min: number; max: number}; count: number; confidence: number}> {
     const amounts = corrections
-      .filter(c => c.transactionAmount !== null)
-      .map(c => c.transactionAmount)
+      .filter((c) => c.transactionAmount !== null)
+      .map((c) => c.transactionAmount)
       .sort((a, b) => a - b);
 
     if (amounts.length === 0) return [];
@@ -692,7 +720,7 @@ export class CategoryLearningService {
     const patterns = [];
 
     // Low range
-    const lowRange = amounts.filter(a => a <= q1);
+    const lowRange = amounts.filter((a) => a <= q1);
     if (lowRange.length > 0) {
       patterns.push({
         range: {min: Math.min(...amounts), max: q1},
@@ -702,7 +730,7 @@ export class CategoryLearningService {
     }
 
     // High range
-    const highRange = amounts.filter(a => a >= q3);
+    const highRange = amounts.filter((a) => a >= q3);
     if (highRange.length > 0) {
       patterns.push({
         range: {min: q3, max: Math.max(...amounts)},
@@ -714,10 +742,12 @@ export class CategoryLearningService {
     return patterns;
   }
 
-  private analyzeTemporalPatterns(corrections: any[]): Array<{context: string; count: number; confidence: number}> {
+  private analyzeTemporalPatterns(
+    corrections: any[]
+  ): Array<{context: string; count: number; confidence: number}> {
     const patterns = new Map<string, number>();
 
-    corrections.forEach(correction => {
+    corrections.forEach((correction) => {
       if (correction.temporalContext) {
         try {
           const context = JSON.parse(correction.temporalContext);
@@ -726,7 +756,7 @@ export class CategoryLearningService {
             patterns.set(key, (patterns.get(key) || 0) + 1);
           }
           if (context.isWeekend !== undefined) {
-            const key = context.isWeekend ? 'weekend' : 'weekday';
+            const key = context.isWeekend ? "weekend" : "weekday";
             patterns.set(key, (patterns.get(key) || 0) + 1);
           }
         } catch (e) {
@@ -741,17 +771,21 @@ export class CategoryLearningService {
         count,
         confidence: count / corrections.length,
       }))
-      .filter(p => p.confidence >= 0.3); // Only patterns with >30% frequency
+      .filter((p) => p.confidence >= 0.3); // Only patterns with >30% frequency
   }
 
-  private filterPatternsByContext(patterns: CorrectionPattern[], context?: any): CorrectionPattern[] {
+  private filterPatternsByContext(
+    patterns: CorrectionPattern[],
+    context?: any
+  ): CorrectionPattern[] {
     if (!context) return patterns;
 
-    return patterns.filter(pattern => {
+    return patterns.filter((pattern) => {
       // Filter by amount if provided
       if (context.transactionAmount) {
-        const matchingAmountPattern = pattern.amountPatterns.find(ap =>
-          context.transactionAmount >= ap.range.min && context.transactionAmount <= ap.range.max
+        const matchingAmountPattern = pattern.amountPatterns.find(
+          (ap) =>
+            context.transactionAmount >= ap.range.min && context.transactionAmount <= ap.range.max
         );
         if (!matchingAmountPattern) return false;
       }
@@ -771,7 +805,7 @@ export class CategoryLearningService {
     }
 
     // Weight patterns by confidence and recency
-    const weightedPatterns = patterns.map(pattern => ({
+    const weightedPatterns = patterns.map((pattern) => ({
       ...pattern,
       weight: pattern.confidence * pattern.decayFactor * pattern.frequency,
     }));
@@ -788,15 +822,15 @@ export class CategoryLearningService {
       .where(eq(categories.id, topPattern.toCategoryId))
       .limit(1);
 
-    const categoryName = category[0]?.name || 'Unknown';
+    const categoryName = category[0]?.name || "Unknown";
 
     // Generate alternative recommendations
     const alternatives = weightedPatterns
       .slice(0, 3)
-      .filter(p => p.toCategoryId !== topPattern.toCategoryId)
-      .map(p => ({
+      .filter((p) => p.toCategoryId !== topPattern.toCategoryId)
+      .map((p) => ({
         categoryId: p.toCategoryId,
-        categoryName: 'Category', // Would need to fetch actual names
+        categoryName: "Category", // Would need to fetch actual names
         confidence: p.confidence,
         reasoning: `${p.frequency} corrections with ${Math.round(p.confidence * 100)}% confidence`,
       }));
@@ -809,19 +843,19 @@ export class CategoryLearningService {
       reasoning: `Based on ${topPattern.frequency} corrections with ${Math.round(topPattern.averageUserConfidence * 10)}/10 user confidence`,
       supportingFactors: [
         {
-          factor: 'correction_frequency',
+          factor: "correction_frequency",
           weight: topPattern.frequency / 10,
           description: `${topPattern.frequency} user corrections`,
         },
         {
-          factor: 'user_confidence',
+          factor: "user_confidence",
           weight: topPattern.averageUserConfidence / 10,
           description: `Average user confidence: ${Math.round(topPattern.averageUserConfidence * 10)}/10`,
         },
         {
-          factor: 'recency',
+          factor: "recency",
           weight: topPattern.decayFactor,
-          description: 'Recent correction patterns',
+          description: "Recent correction patterns",
         },
       ],
       alternativeCategories: alternatives,
@@ -845,9 +879,9 @@ export class CategoryLearningService {
       return {
         payeeId,
         recommendedCategoryId: 0,
-        recommendedCategoryName: 'Uncategorized',
+        recommendedCategoryName: "Uncategorized",
         confidence: 0,
-        reasoning: 'No correction history or default category available',
+        reasoning: "No correction history or default category available",
         supportingFactors: [],
         alternativeCategories: [],
         contextualRecommendations: [],
@@ -863,14 +897,14 @@ export class CategoryLearningService {
     return {
       payeeId,
       recommendedCategoryId: defaultCategoryId,
-      recommendedCategoryName: category[0]?.name || 'Unknown',
+      recommendedCategoryName: category[0]?.name || "Unknown",
       confidence: 0.3, // Low confidence as it's just the default
-      reasoning: 'Using payee default category (no correction history available)',
+      reasoning: "Using payee default category (no correction history available)",
       supportingFactors: [
         {
-          factor: 'default_category',
+          factor: "default_category",
           weight: 0.3,
-          description: 'Payee default category',
+          description: "Payee default category",
         },
       ],
       alternativeCategories: [],
@@ -881,8 +915,8 @@ export class CategoryLearningService {
   private calculateRecencyScore(corrections: any[]): number {
     if (corrections.length === 0) return 0;
 
-    const now = currentDate.toDate('UTC');
-    const scores = corrections.map(correction => {
+    const now = currentDate.toDate("UTC");
+    const scores = corrections.map((correction) => {
       const correctionDate = new Date(correction.createdAt);
       const ageMonths = (now.getTime() - correctionDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
       return Math.exp(-ageMonths / 6); // 6-month half-life
@@ -895,14 +929,16 @@ export class CategoryLearningService {
     let matches = 0;
     let total = 0;
 
-    corrections.forEach(correction => {
+    corrections.forEach((correction) => {
       total++;
 
       // Check amount context match
       if (context.transactionAmount && correction.transactionAmount) {
         const amountDiff = Math.abs(context.transactionAmount - correction.transactionAmount);
-        const relativeDiff = amountDiff / Math.max(context.transactionAmount, correction.transactionAmount);
-        if (relativeDiff <= 0.3) { // Within 30%
+        const relativeDiff =
+          amountDiff / Math.max(context.transactionAmount, correction.transactionAmount);
+        if (relativeDiff <= 0.3) {
+          // Within 30%
           matches += 0.5;
         }
       }
@@ -923,7 +959,10 @@ export class CategoryLearningService {
     return total > 0 ? matches / total : 0;
   }
 
-  private analyzeCategoryDistributionShift(baseline: any[], recent: any[]): {
+  private analyzeCategoryDistributionShift(
+    baseline: any[],
+    recent: any[]
+  ): {
     isDriftDetected: boolean;
     previousCategoryId: number | null;
     newCategoryId: number;
@@ -939,9 +978,10 @@ export class CategoryLearningService {
     const recentTop = this.getTopCategory(recentDistribution);
 
     // Check for significant shift
-    const isDriftDetected = baselineTop.categoryId !== recentTop.categoryId &&
-                            recentTop.percentage >= 0.6 && // New category is dominant
-                            (baselineTop.percentage - recentTop.percentage) >= 0.3; // Significant shift
+    const isDriftDetected =
+      baselineTop.categoryId !== recentTop.categoryId &&
+      recentTop.percentage >= 0.6 && // New category is dominant
+      baselineTop.percentage - recentTop.percentage >= 0.3; // Significant shift
 
     if (isDriftDetected) {
       const confidence = Math.min(0.95, recentTop.percentage);
@@ -961,20 +1001,24 @@ export class CategoryLearningService {
       previousCategoryId: null,
       newCategoryId: recentTop.categoryId,
       confidence: 0,
-      reason: 'No significant category drift detected',
+      reason: "No significant category drift detected",
     };
   }
 
   private calculateCategoryDistribution(corrections: any[]): Map<number, number> {
     const distribution = new Map<number, number>();
-    corrections.forEach(correction => {
+    corrections.forEach((correction) => {
       const categoryId = correction.toCategoryId;
       distribution.set(categoryId, (distribution.get(categoryId) || 0) + 1);
     });
     return distribution;
   }
 
-  private getTopCategory(distribution: Map<number, number>): {categoryId: number; count: number; percentage: number} {
+  private getTopCategory(distribution: Map<number, number>): {
+    categoryId: number;
+    count: number;
+    percentage: number;
+  } {
     let topCategory = {categoryId: 0, count: 0};
     const total = Array.from(distribution.values()).reduce((sum, count) => sum + count, 0);
 
@@ -990,15 +1034,15 @@ export class CategoryLearningService {
     };
   }
 
-  private determineSuggestedAction(driftAnalysis: any): CategoryDrift['suggestedAction'] {
+  private determineSuggestedAction(driftAnalysis: any): CategoryDrift["suggestedAction"] {
     if (driftAnalysis.confidence >= 0.8) {
-      return 'update_default';
+      return "update_default";
     } else if (driftAnalysis.confidence >= 0.6) {
-      return 'create_rule';
+      return "create_rule";
     } else if (driftAnalysis.confidence >= 0.4) {
-      return 'manual_review';
+      return "manual_review";
     } else {
-      return 'ignore';
+      return "ignore";
     }
   }
 
@@ -1012,8 +1056,8 @@ export class CategoryLearningService {
       .where(inArray(categories.id, validIds));
 
     const nameMap: Record<number, string> = {};
-    categoryResults.forEach(category => {
-      nameMap[category.id] = category.name ?? 'Unknown Category';
+    categoryResults.forEach((category) => {
+      nameMap[category.id] = category.name ?? "Unknown Category";
     });
 
     return nameMap;
@@ -1028,7 +1072,7 @@ export class CategoryLearningService {
     };
   }
 
-  private async calculateLearningVelocity(): Promise<LearningMetrics['learningVelocity']> {
+  private async calculateLearningVelocity(): Promise<LearningMetrics["learningVelocity"]> {
     // Calculate learning velocity metrics
     // This would require more sophisticated tracking
     return {
@@ -1038,26 +1082,32 @@ export class CategoryLearningService {
     };
   }
 
-  private async calculateConfidenceDistribution(timeframeMonths: number): Promise<LearningMetrics['confidenceDistribution']> {
-    const cutoffDate = currentDate.subtract({ months: timeframeMonths });
+  private async calculateConfidenceDistribution(
+    timeframeMonths: number
+  ): Promise<LearningMetrics["confidenceDistribution"]> {
+    const cutoffDate = currentDate.subtract({months: timeframeMonths});
 
     const corrections = await db
       .select({userConfidence: payeeCategoryCorrections.userConfidence})
       .from(payeeCategoryCorrections)
-      .where(and(
-        gte(payeeCategoryCorrections.createdAt, toISOString(cutoffDate)),
-        isNull(payeeCategoryCorrections.deletedAt),
-        isNull(payeeCategoryCorrections.userConfidence)
-      ));
+      .where(
+        and(
+          gte(payeeCategoryCorrections.createdAt, toISOString(cutoffDate)),
+          isNull(payeeCategoryCorrections.deletedAt),
+          isNull(payeeCategoryCorrections.userConfidence)
+        )
+      );
 
     const total = corrections.length;
     if (total === 0) {
       return {high: 0, medium: 0, low: 0};
     }
 
-    let high = 0, medium = 0, low = 0;
+    let high = 0,
+      medium = 0,
+      low = 0;
 
-    corrections.forEach(c => {
+    corrections.forEach((c) => {
       const confidence = (c.userConfidence || 0) / 10; // Normalize to 0-1
       if (confidence > 0.8) high++;
       else if (confidence >= 0.4) medium++;
@@ -1071,7 +1121,7 @@ export class CategoryLearningService {
     };
   }
 
-  private async getAllCategoryDrifts(): Promise<LearningMetrics['categoryDriftDetection']> {
+  private async getAllCategoryDrifts(): Promise<LearningMetrics["categoryDriftDetection"]> {
     // This would require running drift detection across all payees
     // For now, return empty array as placeholder
     return [];

@@ -1,10 +1,10 @@
 <script lang="ts">
-import type { Payee } from '$lib/schema';
-import type { PayeesState } from '$lib/states/entities/payees.svelte';
-import type { ColumnDef, Table } from '@tanstack/table-core';
+import type {Payee} from '$lib/schema';
+import type {PayeesState} from '$lib/states/entities/payees.svelte';
+import type {ColumnDef, Table} from '@tanstack/table-core';
 import PayeeDataTable from './payee-data-table.svelte';
-import { Skeleton } from '$lib/components/ui/skeleton';
-import { browser } from '$app/environment';
+import {Skeleton} from '$lib/components/ui/skeleton';
+import {browser} from '$app/environment';
 
 interface Props {
   isLoading: boolean;
@@ -35,7 +35,7 @@ let {
   onDelete,
   onViewAnalytics,
   onBulkDelete,
-  table = $bindable()
+  table = $bindable(),
 }: Props = $props();
 </script>
 
@@ -55,6 +55,5 @@ let {
     {onDelete}
     {onViewAnalytics}
     {onBulkDelete}
-    bind:table
-  />
+    bind:table />
 {/if}

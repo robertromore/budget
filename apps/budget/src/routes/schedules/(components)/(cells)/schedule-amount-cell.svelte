@@ -23,6 +23,6 @@ function formatAmount(schedule: Schedule): string {
 <div class="flex flex-col gap-1">
   <div class="font-medium">{formatAmount(schedule)}</div>
   {#if schedule.amount_type !== 'exact'}
-    <Badge variant="outline" class="text-xs w-fit">{schedule.amount_type}</Badge>
+    <Badge variant="outline" class="w-fit text-xs">{schedule.amount_type}</Badge>
   {/if}
 </div>

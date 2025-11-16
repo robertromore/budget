@@ -1,6 +1,7 @@
 # Claude Code Configuration
 
-This file contains configuration and preferences for Claude Code agents working on this project.
+This file contains configuration and preferences for Claude Code agents working
+on this project.
 
 ## Package Manager Preference
 
@@ -22,7 +23,8 @@ This is a SvelteKit budget management application with:
 - **Frontend**: SvelteKit with Svelte 5, TypeScript, Tailwind CSS, shadcn-svelte
 - **Backend**: tRPC, Drizzle ORM, Better Auth, domain-driven architecture
 - **Database**: SQLite (with migrations via Drizzle)
-- **Architecture**: Domain-separated frontend and backend with comprehensive error handling
+- **Architecture**: Domain-separated frontend and backend with comprehensive
+  error handling
 
 ## Import Preferences
 
@@ -39,7 +41,8 @@ This is a SvelteKit budget management application with:
 
 ## Comment and Documentation Standards
 
-**NEVER reference previous work, changes, or transitions in comments or documentation.**
+**NEVER reference previous work, changes, or transitions in comments or
+documentation.**
 
 ### Comment Principles
 
@@ -63,11 +66,13 @@ This is a SvelteKit budget management application with:
 
 ## Markdown Documentation Standards
 
-**ALWAYS follow Google's documentation style guidelines and run markdownlint when creating or editing markdown content.**
+**ALWAYS follow Google's documentation style guidelines and run markdownlint
+when creating or editing markdown content.**
 
 ### Style Guidelines
 
-- Follow [Google's documentation style guide](https://google.github.io/styleguide/docguide/style.html)
+- Follow
+  [Google's documentation style guide](https://google.github.io/styleguide/docguide/style.html)
 - Use markdownlint to validate markdown syntax and formatting
 - Ensure proper heading hierarchy (H1 → H2 → H3)
 - Add language specifications to fenced code blocks
@@ -76,11 +81,12 @@ This is a SvelteKit budget management application with:
 
 ### Markdown Quality Standards
 
-- Use language tags: ```typescript, ```bash, ```text
+- Use language tags: `typescript, `bash, ```text
 - Proper heading structure with blank lines
 - Consistent list formatting with proper spacing
 - Professional tone following Google's style principles
-- **Never use emoticons or symbols** (like checkmarks, X marks, arrows) in documentation
+- **Never use emoticons or symbols** (like checkmarks, X marks, arrows) in
+  documentation
 - No bare URLs without proper link formatting
 - No missing language specifications in code blocks
 - No inconsistent heading spacing
@@ -97,22 +103,31 @@ This is a SvelteKit budget management application with:
 
 ## Svelte MCP Server
 
-**You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation.**
+**You are able to use the Svelte MCP server, where you have access to
+comprehensive Svelte 5 and SvelteKit documentation.**
 
 ### Available MCP Tools
 
 1. **list-sections**: Use FIRST to discover all available documentation sections
-2. **get-documentation**: Retrieves full documentation content for specific sections
-3. **svelte-autofixer**: Analyzes Svelte code and returns issues and suggestions (MUST use before sending code to user)
-4. **playground-link**: Generates a Svelte Playground link (ask user first, never use if code written to files)
+2. **get-documentation**: Retrieves full documentation content for specific
+   sections
+3. **svelte-autofixer**: Analyzes Svelte code and returns issues and suggestions
+   (MUST use before sending code to user)
+4. **playground-link**: Generates a Svelte Playground link (ask user first,
+   never use if code written to files)
 
 ### Svelte MCP Usage Pattern
 
-1. **Discover Sections**: Use `mcp__svelte-llm__list_sections` to see all available documentation
-2. **Analyze Relevance**: Review the use_cases field to identify which sections are needed
-3. **Fetch Documentation**: Use `mcp__svelte-llm__get_documentation` to retrieve all relevant sections
-4. **Validate Code**: Use `svelte-autofixer` to check Svelte code before delivery
-5. **Share Playground**: Optionally generate playground links for user experimentation
+1. **Discover Sections**: Use `mcp__svelte-llm__list_sections` to see all
+   available documentation
+2. **Analyze Relevance**: Review the use_cases field to identify which sections
+   are needed
+3. **Fetch Documentation**: Use `mcp__svelte-llm__get_documentation` to retrieve
+   all relevant sections
+4. **Validate Code**: Use `svelte-autofixer` to check Svelte code before
+   delivery
+5. **Share Playground**: Optionally generate playground links for user
+   experimentation
 
 ## Form Handling Standards
 
@@ -120,12 +135,14 @@ This is a SvelteKit budget management application with:
 
 ### SvelteKit Superforms Best Practices
 
-- Use `superForm()` for client-side form management with proper validation adapters
+- Use `superForm()` for client-side form management with proper validation
+  adapters
 - Implement server-side validation with Zod schemas in form actions
 - Handle form errors gracefully with proper error display
 - Use `enhance` for progressive enhancement of forms
 - Implement proper loading states and form submission feedback
-- Follow the validation flow: client validation → server validation → success/error handling
+- Follow the validation flow: client validation → server validation →
+  success/error handling
 
 ## Code Style Standards
 
@@ -144,9 +161,11 @@ This is a SvelteKit budget management application with:
 
 ### Component Usage
 
-- ✅ `<MyComponent class="styles"></MyComponent>` - Use proper opening/closing tags
+- ✅ `<MyComponent class="styles"></MyComponent>` - Use proper opening/closing
+  tags
 - ❌ `<MyComponent class="styles" />` - Avoid self-closing syntax for components
-- ✅ `<dynamicComponent class="styles"></dynamicComponent>` - Components are dynamic by default
+- ✅ `<dynamicComponent class="styles"></dynamicComponent>` - Components are
+  dynamic by default
 - ❌ `<svelte:component this={dynamicComponent} />` - Deprecated in Svelte 5
 
 ### Dynamic Component Patterns
@@ -157,7 +176,8 @@ This is a SvelteKit budget management application with:
 
 ### Binding with Getter/Setter Pairs
 
-**Svelte 5 supports `bind:value={get, set}` syntax for components that need bidirectional binding.**
+**Svelte 5 supports `bind:value={get, set}` syntax for components that need
+bidirectional binding.**
 
 Available utility functions in `$lib/utils/bind-helpers.ts`:
 
@@ -167,7 +187,7 @@ Use when binding to a field in a Record that might be undefined:
 
 ```svelte
 <script lang="ts">
-  import { createRecordAccessors } from '$lib/utils/bind-helpers';
+  import {createRecordAccessors} from '$lib/utils/bind-helpers';
 
   let formData = $state<Record<string, string>>({});
   const nameAccessors = createRecordAccessors(formData, 'name', '');
@@ -182,7 +202,7 @@ Use when binding to a Map entry:
 
 ```svelte
 <script lang="ts">
-  import { createMapAccessors } from '$lib/utils/bind-helpers';
+  import {createMapAccessors} from '$lib/utils/bind-helpers';
 
   let myMap = $state(new Map<string, number>());
   const countAccessors = createMapAccessors(myMap, 'count', 0);
@@ -197,7 +217,7 @@ Use when binding to numeric Record values:
 
 ```svelte
 <script lang="ts">
-  import { createNumericRecordAccessors } from '$lib/utils/bind-helpers';
+  import {createNumericRecordAccessors} from '$lib/utils/bind-helpers';
 
   let allocations = $state<Record<number, number>>({});
   const accessors = createNumericRecordAccessors(allocations, categoryId, 0);
@@ -208,16 +228,19 @@ Use when binding to numeric Record values:
 
 #### createTransformAccessors
 
-Use when binding to local state with type transformations or simple getter/setter logic:
+Use when binding to local state with type transformations or simple
+getter/setter logic:
 
 ```svelte
 <script lang="ts">
-  import { createTransformAccessors } from '$lib/utils/bind-helpers';
+  import {createTransformAccessors} from '$lib/utils/bind-helpers';
 
   let periodType = $state<'monthly' | 'yearly'>('monthly');
   const accessors = createTransformAccessors(
     () => periodType,
-    (value: string) => { periodType = value as 'monthly' | 'yearly'; }
+    (value: string) => {
+      periodType = value as 'monthly' | 'yearly';
+    }
   );
 </script>
 
@@ -271,7 +294,7 @@ Use when binding to local state with type transformations or simple getter/sette
 
   const typeAccessors = {
     get: () => accountType,
-    set: (value: string) => handleAccountTypeChange(value)
+    set: (value: string) => handleAccountTypeChange(value),
   };
 </script>
 
@@ -282,7 +305,8 @@ Use when binding to local state with type transformations or simple getter/sette
 
 #### Never Use $derived for Accessors
 
-Do NOT wrap accessor objects in `$derived` unless the object itself needs to be recreated when dependencies change (very rare):
+Do NOT wrap accessor objects in `$derived` unless the object itself needs to be
+recreated when dependencies change (very rare):
 
 ```svelte
 <!-- ❌ WRONG - Unnecessary overhead -->
@@ -298,7 +322,8 @@ const accessors = {
 };
 ```
 
-The getter function is already reactive because it reads from reactive `$state`. The accessor object doesn't need to be reactive.
+The getter function is already reactive because it reads from reactive `$state`.
+The accessor object doesn't need to be reactive.
 
 ## Error Handling and Validation
 
@@ -420,14 +445,17 @@ The getter function is already reactive because it reads from reactive `$state`.
 
 ## Development Workflow Best Practices
 
-**ALWAYS follow incremental development patterns for complex changes to ensure reliability and maintainability.**
+**ALWAYS follow incremental development patterns for complex changes to ensure
+reliability and maintainability.**
 
 ### Planning and Implementation Strategy
 
 #### Break Down Complex Changes
 
-- **❌ Don't ask for**: "Implement a complete authentication system with all features"
-- **✅ Do ask for**: "Create a plan for authentication, then implement it step by step"
+- **❌ Don't ask for**: "Implement a complete authentication system with all
+  features"
+- **✅ Do ask for**: "Create a plan for authentication, then implement it step
+  by step"
 - Request a detailed plan first, then implement each step incrementally
 - Test each step thoroughly before proceeding to the next
 - Validate functionality at each milestone before adding complexity
@@ -444,9 +472,12 @@ Plan → Implement Step 1 → Test → Implement Step 2 → Test → Continue...
 
 For intricate algorithms, data transformations, or architectural decisions:
 
-- **Request code to visualize the problem**: Create debugging utilities, data loggers, or visual representations
-- **Generate comprehensive test data**: Build datasets that expose edge cases and boundary conditions
-- **Create debugging tools**: Implement logging, state snapshots, or step-by-step execution traces
+- **Request code to visualize the problem**: Create debugging utilities, data
+  loggers, or visual representations
+- **Generate comprehensive test data**: Build datasets that expose edge cases
+  and boundary conditions
+- **Create debugging tools**: Implement logging, state snapshots, or
+  step-by-step execution traces
 - **Document decision trees**: Map out conditional logic and data flow patterns
 
 #### Systematic Debugging Process
@@ -474,31 +505,43 @@ When implementations fail or behave unexpectedly:
 
 Before implementing new features:
 
-- **Analyze existing codebase**: Understand current architecture and design patterns
-- **Follow established conventions**: Match existing file organization, naming patterns, and separation of concerns
-- **Avoid monolithic solutions**: Don't put all changes in one file if the codebase uses distributed architecture
-- **Maintain consistency**: Use the same state management, error handling, and data flow patterns
+- **Analyze existing codebase**: Understand current architecture and design
+  patterns
+- **Follow established conventions**: Match existing file organization, naming
+  patterns, and separation of concerns
+- **Avoid monolithic solutions**: Don't put all changes in one file if the
+  codebase uses distributed architecture
+- **Maintain consistency**: Use the same state management, error handling, and
+  data flow patterns
 
 ## Always Works™ Implementation Standards
 
-**ALWAYS ensure implementations are thoroughly tested and verified before claiming completion.**
+**ALWAYS ensure implementations are thoroughly tested and verified before
+claiming completion.**
 
 ### Core Philosophy
 
-- **"Should work" ≠ "does work"** - Pattern matching and theoretical correctness aren't sufficient
-- **Problem-solving focus** - The goal is solving problems, not just writing code
+- **"Should work" ≠ "does work"** - Pattern matching and theoretical correctness
+  aren't sufficient
+- **Problem-solving focus** - The goal is solving problems, not just writing
+  code
 - **Verification requirement** - Untested code is just a guess, not a solution
-- **User trust priority** - Every failed implementation erodes confidence and wastes time
+- **User trust priority** - Every failed implementation erodes confidence and
+  wastes time
 
 ### The 30-Second Reality Check
 
 **Must answer YES to ALL before claiming completion:**
 
 - ✅ **Did I run/build the code?** - Actual execution, not theoretical analysis
-- ✅ **Did I trigger the exact feature I changed?** - Test the specific functionality modified
-- ✅ **Did I see the expected result with my own observation?** - Visual/GUI confirmation included
-- ✅ **Did I check for error messages?** - Console, logs, and user-facing errors reviewed
-- ✅ **Would I bet $100 this works?** - Personal confidence test for thoroughness
+- ✅ **Did I trigger the exact feature I changed?** - Test the specific
+  functionality modified
+- ✅ **Did I see the expected result with my own observation?** - Visual/GUI
+  confirmation included
+- ✅ **Did I check for error messages?** - Console, logs, and user-facing errors
+  reviewed
+- ✅ **Would I bet $100 this works?** - Personal confidence test for
+  thoroughness
 
 ### Phrases to Avoid
 
@@ -549,9 +592,11 @@ These phrases indicate insufficient verification:
 
 ### The Embarrassment Test
 
-**Ask yourself:** "If the user records themselves trying this feature and it fails, will I feel embarrassed watching their frustration?"
+**Ask yourself:** "If the user records themselves trying this feature and it
+fails, will I feel embarrassed watching their frustration?"
 
-This test ensures you're considering the user experience and the impact of failed implementations.
+This test ensures you're considering the user experience and the impact of
+failed implementations.
 
 ### Time Reality Check
 
@@ -588,7 +633,8 @@ Before marking any task as complete:
 
 ## CSS and Styling Standards
 
-**ALWAYS use predefined CSS variables from the theme instead of hardcoded colors.**
+**ALWAYS use predefined CSS variables from the theme instead of hardcoded
+colors.**
 
 ### Color Usage Guidelines
 
@@ -611,11 +657,13 @@ box-shadow: 0 4px 12px hsl(var(--foreground) / 0.1);
 
 ## Drag-and-Drop Implementation Patterns
 
-**ALWAYS implement drag-and-drop with proper event handling and state management to prevent conflicts.**
+**ALWAYS implement drag-and-drop with proper event handling and state management
+to prevent conflicts.**
 
 ### Key Anti-Patterns to Avoid
 
-- **❌ Competing event handlers**: Multiple dragover handlers updating the same state
+- **❌ Competing event handlers**: Multiple dragover handlers updating the same
+  state
 - **❌ Rapid state toggling**: Frequent updates causing visual flickering
 - **❌ Missing event propagation control**: Events bubbling uncontrolled
 - **❌ Hardcoded positioning logic**: Complex conditionals for insertion points
@@ -653,34 +701,43 @@ if (draggedWidget && dragOverDropZone !== index) {
 
 ## Widget System Architecture
 
-**ALWAYS follow the established widget patterns for dashboard functionality and data visualization.**
+**ALWAYS follow the established widget patterns for dashboard functionality and
+data visualization.**
 
 ### Widget System Components
 
-- **Widget Store** (`src/lib/stores/widgets.svelte.ts`): Svelte 5 reactive store managing widget configuration and data calculation
-- **Widget Registry** (`src/lib/components/widgets/widget-registry.ts`): Dynamic component loading system
-- **Widget Types** (`src/lib/types/widgets.ts`): TypeScript definitions and widget catalog
-- **Individual Widgets**: Specialized components for different data visualizations
+- **Widget Store** (`src/lib/stores/widgets.svelte.ts`): Svelte 5 reactive store
+  managing widget configuration and data calculation
+- **Widget Registry** (`src/lib/components/widgets/widget-registry.ts`): Dynamic
+  component loading system
+- **Widget Types** (`src/lib/types/widgets.ts`): TypeScript definitions and
+  widget catalog
+- **Individual Widgets**: Specialized components for different data
+  visualizations
 
 ### Widget Configuration Standards
 
 #### Widget Definitions
 
-- **Default widgets**: Balance, transaction count, monthly cash flow, recent activity, pending balance
-- **Chart widgets**: Spending trend, income/expenses, category pie chart, balance trend
+- **Default widgets**: Balance, transaction count, monthly cash flow, recent
+  activity, pending balance
+- **Chart widgets**: Spending trend, income/expenses, category pie chart,
+  balance trend
 - **Advanced widgets**: Account health, quick stats, monthly comparison
 - **Size options**: Small, medium, large with responsive content
 - **Settings**: Configurable periods, limits, and display options
 
 #### Storage and Persistence
 
-- **LocalStorage**: Widget configurations persisted with `account-dashboard-widgets` key
+- **LocalStorage**: Widget configurations persisted with
+  `account-dashboard-widgets` key
 - **Default merging**: New widgets added when definitions expand
 - **Graceful degradation**: Fallbacks for missing or invalid configurations
 
 ## Chart System Architecture
 
-**ALWAYS use global chart type definitions and implement proper period filtering for dynamic, user-friendly chart interfaces.**
+**ALWAYS use global chart type definitions and implement proper period filtering
+for dynamic, user-friendly chart interfaces.**
 
 ### Core Chart Components
 
@@ -696,12 +753,12 @@ if (draggedWidget && dragOverDropZone !== index) {
 **✅ Always use global definitions:**
 
 ```typescript
-import { ALL_CHART_TYPES } from '$lib/components/charts/chart-types';
+import {ALL_CHART_TYPES} from '$lib/components/charts/chart-types';
 
 const availableChartTypes = $derived(() => {
   const supportedTypes = ['bar', 'line', 'area'];
-  return ALL_CHART_TYPES.flatMap(group =>
-    group.options.filter(option => supportedTypes.includes(option.value))
+  return ALL_CHART_TYPES.flatMap((group) =>
+    group.options.filter((option) => supportedTypes.includes(option.value))
   );
 });
 ```
@@ -713,7 +770,10 @@ const availableChartTypes = $derived(() => {
 **✅ Use dynamic period generation:**
 
 ```typescript
-import { generatePeriodOptions, filterDataByPeriod } from '$lib/utils/chart-periods';
+import {
+  generatePeriodOptions,
+  filterDataByPeriod,
+} from '$lib/utils/chart-periods';
 
 const availablePeriods = $derived.by(() => {
   if (!enablePeriodFiltering) return [];
@@ -728,19 +788,22 @@ const filteredData = $derived.by(() => {
 
 ### Date Handling Standards
 
-**ALWAYS use @internationalized/date as the primary date library for all date operations.**
+**ALWAYS use @internationalized/date as the primary date library for all date
+operations.**
 
 #### Consolidated Date Library Architecture
 
 - **Primary Library**: `@internationalized/date` for all date operations
-- **Chart Integration**: Native Date objects only for LayerChart/D3 compatibility
+- **Chart Integration**: Native Date objects only for LayerChart/D3
+  compatibility
 - **Database**: ISO string storage with @internationalized/date parsing
-- **Removed Libraries**: `date-fns` has been completely eliminated (~30KB bundle reduction)
+- **Removed Libraries**: `date-fns` has been completely eliminated (~30KB bundle
+  reduction)
 
 #### Core Date Utilities (`$lib/utils/dates.ts`)
 
 ```typescript
-import { CalendarDate, type DateValue } from "@internationalized/date";
+import {CalendarDate, type DateValue} from '@internationalized/date';
 import {
   parseDateValue,
   parseISOString,
@@ -748,14 +811,14 @@ import {
   formatDateDisplay,
   dateDifference,
   isSamePeriod,
-  currentDate
-} from "$lib/utils/dates";
+  currentDate,
+} from '$lib/utils/dates';
 
 // Parse various date formats to DateValue
 const dateValue = parseDateValue(someDate) || currentDate;
 
 // Parse ISO strings from database
-const dbDate = parseISOString("2024-01-15");
+const dbDate = parseISOString('2024-01-15');
 
 // Convert DateValue to ISO string for storage
 const isoString = toISOString(dateValue);
@@ -775,41 +838,50 @@ const sameMonth = isSamePeriod(date1, date2, 'month');
 const jsDate = dateValue.toDate(timezone);
 
 // Use in chart data processing
-const chartData = data.map(item => ({
+const chartData = data.map((item) => ({
   date: parseISOString(item.date)?.toDate(timezone),
-  value: item.amount
+  value: item.amount,
 }));
 ```
 
 ## Request Quality and Accountability Standards
 
-**ALWAYS hold the user accountable to follow best practices and challenge requests that don't meet quality standards.**
+**ALWAYS hold the user accountable to follow best practices and challenge
+requests that don't meet quality standards.**
 
 ### When User Requests Are Too Broad
 
 Instead of immediately implementing broad requests, Claude should:
 
-- **Pause and clarify**: "This request is quite broad. Let me break it down into specific steps first. Would you like me to create a plan for [specific task], or did you have a particular aspect in mind?"
-- **Suggest planning**: "This involves multiple files/components. Should I create a plan first so you can review the approach before I start implementing?"
-- **Ask for specifics**: "Can you share the specific error message or file you're referring to? This will help me give you a more targeted solution."
+- **Pause and clarify**: "This request is quite broad. Let me break it down into
+  specific steps first. Would you like me to create a plan for [specific task],
+  or did you have a particular aspect in mind?"
+- **Suggest planning**: "This involves multiple files/components. Should I
+  create a plan first so you can review the approach before I start
+  implementing?"
+- **Ask for specifics**: "Can you share the specific error message or file
+  you're referring to? This will help me give you a more targeted solution."
 
 ### When User Skips Planning for Complex Tasks
 
 For multi-step changes involving 3+ files or significant architecture changes:
 
-- **Recommend incremental approach**: "This is a substantial change. Would you prefer I implement this in steps so we can test each part, or do you want the full implementation at once?"
-- **Suggest breaking down**: "I notice you're asking me to modify multiple unrelated files. Based on your guidelines, would you prefer I tackle these as separate, focused tasks instead?"
+- **Recommend incremental approach**: "This is a substantial change. Would you
+  prefer I implement this in steps so we can test each part, or do you want the
+  full implementation at once?"
+- **Suggest breaking down**: "I notice you're asking me to modify multiple
+  unrelated files. Based on your guidelines, would you prefer I tackle these as
+  separate, focused tasks instead?"
 
 ### Accountability Enforcement
 
 Claude must:
 
-✅ **Pause and ask** before diving into broad requests
-✅ **Suggest planning** for complex multi-step tasks
-✅ **Ask for specifics** when requests are vague
-✅ **Recommend incremental approaches** for large changes
-✅ **Follow established patterns** and remind user when something might break them
-✅ **Challenge anti-patterns** and suggest better approaches
+✅ **Pause and ask** before diving into broad requests ✅ **Suggest planning**
+for complex multi-step tasks ✅ **Ask for specifics** when requests are vague ✅
+**Recommend incremental approaches** for large changes ✅ **Follow established
+patterns** and remind user when something might break them ✅ **Challenge
+anti-patterns** and suggest better approaches
 
 ## Specialized Agents
 
@@ -817,24 +889,34 @@ Claude must:
 
 Available specialized agents:
 
-- **backend-api-architect** - Expert in tRPC backend, API routes, Drizzle ORM database operations, Better Auth authentication, and backend service integration
-- **code-review-specialist** - Expert in conducting thorough code reviews, analyzing code quality, and ensuring adherence to project standards
-- **documentation-specialist** - Expert in creating, editing, and maintaining markdown documentation files following Google's style guide
-- **frontend-ui-specialist** - Expert in building user interfaces using Shadcn Svelte, Tailwind CSS, and UI components
-- **layerchart-specialist** - Expert in LayerChart components, data visualization, and chart system architecture
-- **query-layer-specialist** - Expert in the query layer including defineQuery/defineMutation, error transformations, and cache updates
+- **backend-api-architect** - Expert in tRPC backend, API routes, Drizzle ORM
+  database operations, Better Auth authentication, and backend service
+  integration
+- **code-review-specialist** - Expert in conducting thorough code reviews,
+  analyzing code quality, and ensuring adherence to project standards
+- **documentation-specialist** - Expert in creating, editing, and maintaining
+  markdown documentation files following Google's style guide
+- **frontend-ui-specialist** - Expert in building user interfaces using Shadcn
+  Svelte, Tailwind CSS, and UI components
+- **layerchart-specialist** - Expert in LayerChart components, data
+  visualization, and chart system architecture
+- **query-layer-specialist** - Expert in the query layer including
+  defineQuery/defineMutation, error transformations, and cache updates
 
-**Usage:** Claude Code automatically uses specialized agents when tasks match their expertise areas.
+**Usage:** Claude Code automatically uses specialized agents when tasks match
+their expertise areas.
 
 ## Project Structure Overview
 
-**The budget application follows a monorepo architecture with clear separation between application and shared packages.**
+**The budget application follows a monorepo architecture with clear separation
+between application and shared packages.**
 
 ### Monorepo Structure
 
 - **apps/budget**: Main SvelteKit budget application
 - **packages/ui**: Shared UI components library (shadcn-svelte components)
-- **Root Configuration**: Shared tooling configuration (TypeScript, ESLint, Tailwind)
+- **Root Configuration**: Shared tooling configuration (TypeScript, ESLint,
+  Tailwind)
 
 ### Main Application Directories
 
@@ -881,7 +963,8 @@ apps/budget/
 
 - **Business logic**: Validation, transformation, and orchestration
 - **Cross-domain coordination**: Services can call other domain services
-- **Error handling**: Custom error types (ValidationError, NotFoundError, ConflictError)
+- **Error handling**: Custom error types (ValidationError, NotFoundError,
+  ConflictError)
 
 #### Query Layer
 
@@ -891,7 +974,8 @@ apps/budget/
 
 ## Technology Stack Reference
 
-**Complete technology stack with versions and usage patterns for the budget application.**
+**Complete technology stack with versions and usage patterns for the budget
+application.**
 
 ### Framework and Runtime
 
@@ -977,7 +1061,8 @@ apps/budget/
 
 ## Core Domain Models
 
-**Comprehensive entity descriptions and database relationships for the budget application.**
+**Comprehensive entity descriptions and database relationships for the budget
+application.**
 
 ### Database Architecture
 
@@ -986,12 +1071,16 @@ apps/budget/
 Primary entity for financial account management.
 
 **Core Fields:**
-- `id`, `name`, `type` (checking, savings, credit_card, investment, hsa, debt_account)
+
+- `id`, `name`, `type` (checking, savings, credit_card, investment, hsa,
+  debt_account)
 - `balance`, `initial_balance`, `is_budget`, `currency`, `notes`
 
-**HSA-Specific:** `is_hsa`, `hsa_contribution_limit`, `hsa_employer_contribution`
+**HSA-Specific:** `is_hsa`, `hsa_contribution_limit`,
+`hsa_employer_contribution`
 
-**Debt-Specific:** `debt_type`, `debt_interest_rate`, `debt_minimum_payment`, `debt_payoff_goal_date`
+**Debt-Specific:** `debt_type`, `debt_interest_rate`, `debt_minimum_payment`,
+`debt_payoff_goal_date`
 
 **Metadata:** `created_at`, `updated_at`, `deleted_at`
 
@@ -1000,15 +1089,20 @@ Primary entity for financial account management.
 Financial transaction records with import support.
 
 **Core Fields:**
-- `id`, `account_id`, `amount`, `date`, `status` (cleared, pending, scheduled, reconciled), `notes`
+
+- `id`, `account_id`, `amount`, `date`, `status` (cleared, pending, scheduled,
+  reconciled), `notes`
 
 **Relationships:**
+
 - `payee_id`, `category_id`, `transfer_id` (foreign keys, nullable)
 
 **Import Metadata:**
+
 - `imported` (boolean), `rawImportData` (JSON field)
 
 **Split Transaction Support:**
+
 - `parent_transaction_id`, `is_split`
 
 **Timestamps:** `created_at`, `updated_at`, `deleted_at`
@@ -1018,7 +1112,9 @@ Financial transaction records with import support.
 Hierarchical category organization with tax tracking.
 
 **Core Fields:**
-- `id`, `name`, `parent_category_id`, `is_income`, `is_tax_related`, `color`, `icon`
+
+- `id`, `name`, `parent_category_id`, `is_income`, `is_tax_related`, `color`,
+  `icon`
 
 **Analytics:** `average_spending`, `total_spending`, `transaction_count`
 
@@ -1029,9 +1125,11 @@ Hierarchical category organization with tax tracking.
 Entity representing transaction payees with normalization support.
 
 **Core Fields:**
+
 - `id`, `name`, `normalized_name`
 
 **Default Associations:**
+
 - `default_category_id` (nullable)
 
 **Analytics:** `transaction_count`, `total_amount`
@@ -1043,9 +1141,12 @@ Entity representing transaction payees with normalization support.
 Recurring transaction templates.
 
 **Core Fields:**
-- `id`, `name`, `account_id`, `amount`, `amount_min`, `amount_max`, `status` (active, paused, completed)
+
+- `id`, `name`, `account_id`, `amount`, `amount_min`, `amount_max`, `status`
+  (active, paused, completed)
 
 **Relationships:**
+
 - `payee_id`, `category_id`, `schedule_date_id`
 
 **Automation:** `auto_add` (boolean)
@@ -1057,7 +1158,9 @@ Recurring transaction templates.
 Frequency configuration for recurring schedules.
 
 **Core Fields:**
-- `id`, `start_date`, `end_date`, `frequency` (daily, weekly, monthly, yearly), `interval`
+
+- `id`, `start_date`, `end_date`, `frequency` (daily, weekly, monthly, yearly),
+  `interval`
 
 **Weekly Configuration:** `days_of_week` (JSON array)
 
@@ -1072,12 +1175,15 @@ Frequency configuration for recurring schedules.
 Budget tracking with multiple types (in design phase).
 
 **Core Fields:**
-- `id`, `name`, `type` (account_monthly, category_envelope, goal_based, scheduled_expense)
+
+- `id`, `name`, `type` (account_monthly, category_envelope, goal_based,
+  scheduled_expense)
 - `enforcement` (none, warning, strict), `metadata` (JSON)
 
 **Period Configuration:** `budget_period_template_id`
 
-**Junction Tables:** `budget_accounts`, `budget_categories`, `budget_transactions`, `budget_group_memberships`
+**Junction Tables:** `budget_accounts`, `budget_categories`,
+`budget_transactions`, `budget_group_memberships`
 
 **Metadata:** `created_at`, `updated_at`, `deleted_at`
 
@@ -1086,10 +1192,13 @@ Budget tracking with multiple types (in design phase).
 Saved table configurations with filters and sorting.
 
 **Core Fields:**
+
 - `id`, `name`, `entity_type`, `is_default`, `is_global`
 
 **Configuration:**
-- `filters` (JSON), `sort_column`, `sort_direction`, `visible_columns` (JSON), `grouping` (JSON)
+
+- `filters` (JSON), `sort_column`, `sort_direction`, `visible_columns` (JSON),
+  `grouping` (JSON)
 
 **Metadata:** `created_at`, `updated_at`, `deleted_at`
 
@@ -1098,6 +1207,7 @@ Saved table configurations with filters and sorting.
 HSA-specific expense tracking.
 
 **Core Fields:**
+
 - `id`, `transaction_id`, `amount`, `date`, `provider`, `description`
 - `claim_status` (pending, submitted, approved, denied, paid)
 
@@ -1137,12 +1247,16 @@ Views (scoped to entity types)
 ### Key Design Patterns
 
 - **Soft Deletes**: All entities support `deleted_at` for reversible deletions
-- **Normalized Payees**: Fuzzy matching on `normalized_name` for import intelligence
-- **Hierarchical Categories**: Unlimited nesting depth with parent-child relationships
-- **Transfer Linking**: Bidirectional transaction references for account transfers
+- **Normalized Payees**: Fuzzy matching on `normalized_name` for import
+  intelligence
+- **Hierarchical Categories**: Unlimited nesting depth with parent-child
+  relationships
+- **Transfer Linking**: Bidirectional transaction references for account
+  transfers
 - **Import Metadata**: Raw import data preserved for auditing and re-processing
 - **Flexible Schedules**: Complex recurring patterns with date configuration
-- **Type-Specific Fields**: HSA and debt fields coexist with standard account fields
+- **Type-Specific Fields**: HSA and debt fields coexist with standard account
+  fields
 
 ## Key Features and Architecture
 
@@ -1155,7 +1269,8 @@ Views (scoped to entity types)
 - **Checking/Savings**: Standard banking accounts with balance tracking
 - **Credit Cards**: Negative balance accounts with debt management
 - **Investment Accounts**: Portfolio tracking with goal integration
-- **HSA Accounts**: Healthcare savings with contribution limits and expense tracking
+- **HSA Accounts**: Healthcare savings with contribution limits and expense
+  tracking
 - **Debt Accounts**: Loan and mortgage tracking with payoff calculations
 
 #### Balance Tracking
@@ -1167,7 +1282,8 @@ Views (scoped to entity types)
 
 ### Transaction System
 
-**Comprehensive transaction management with import capabilities and real-time updates.**
+**Comprehensive transaction management with import capabilities and real-time
+updates.**
 
 #### Import System
 
@@ -1193,7 +1309,8 @@ Views (scoped to entity types)
 
 ##### Intelligent Matching
 
-- **Payee Matching**: Fuzzy matching with confidence scores (exact, high, medium)
+- **Payee Matching**: Fuzzy matching with confidence scores (exact, high,
+  medium)
 - **Category Suggestions**: Based on payee history and transaction patterns
 - **Duplicate Detection**: Prevents importing same transactions twice
 - **Metadata Preservation**: Raw import data stored for auditing
@@ -1281,7 +1398,8 @@ Views (scoped to entity types)
 
 ### State Management
 
-**Multi-layered reactive state using Svelte 5 runes and context-based state classes.**
+**Multi-layered reactive state using Svelte 5 runes and context-based state
+classes.**
 
 #### Svelte 5 Runes
 
@@ -1289,7 +1407,7 @@ Views (scoped to entity types)
 
 ```typescript
 let count = $state(0);
-let user = $state({ name: 'John', email: 'john@example.com' });
+let user = $state({name: 'John', email: 'john@example.com'});
 
 class AccountsState {
   accounts = $state<Account[]>([]);
@@ -1303,7 +1421,7 @@ class AccountsState {
 let doubled = $derived(count * 2);
 
 let filteredAccounts = $derived.by(() => {
-  return accounts.filter(account => account.balance > 0);
+  return accounts.filter((account) => account.balance > 0);
 });
 ```
 
@@ -1320,7 +1438,7 @@ $effect(() => {
 
 ```typescript
 // src/lib/states/accounts.svelte.ts
-import { getContext, setContext } from 'svelte';
+import {getContext, setContext} from 'svelte';
 
 const ACCOUNTS_STATE_KEY = Symbol('accounts-state');
 
@@ -1329,7 +1447,7 @@ export class AccountsState {
   selectedAccountId = $state<number | null>(null);
 
   selectedAccount = $derived.by(() => {
-    return this.accounts.find(a => a.id === this.selectedAccountId);
+    return this.accounts.find((a) => a.id === this.selectedAccountId);
   });
 
   setAccounts(accounts: Account[]) {
@@ -1355,31 +1473,31 @@ export function getAccountsState(): AccountsState {
 #### defineQuery Pattern
 
 ```typescript
-import { createQuery } from '@tanstack/svelte-query';
-import { trpc } from '$lib/trpc/client';
+import {createQuery} from '@tanstack/svelte-query';
+import {trpc} from '$lib/trpc/client';
 
 export function getAllAccountTransactions(accountId: number) {
   // Reactive query options
   const options = () => ({
     queryKey: ['transactions', 'account', accountId],
-    queryFn: () => trpc.transactions.forAccount.query({ accountId }),
-    enabled: accountId > 0
+    queryFn: () => trpc.transactions.forAccount.query({accountId}),
+    enabled: accountId > 0,
   });
 
   // Imperative execution
   async function execute() {
-    return await trpc.transactions.forAccount.query({ accountId });
+    return await trpc.transactions.forAccount.query({accountId});
   }
 
-  return { options, execute };
+  return {options, execute};
 }
 ```
 
 #### defineMutation Pattern
 
 ```typescript
-import { createMutation, useQueryClient } from '@tanstack/svelte-query';
-import { toast } from 'svelte-sonner';
+import {createMutation, useQueryClient} from '@tanstack/svelte-query';
+import {toast} from 'svelte-sonner';
 
 export function createTransaction() {
   const queryClient = useQueryClient();
@@ -1390,12 +1508,12 @@ export function createTransaction() {
     onSuccess: (transaction) => {
       toast.success('Transaction created successfully');
       queryClient.invalidateQueries({
-        queryKey: ['transactions', 'account', transaction.accountId]
+        queryKey: ['transactions', 'account', transaction.accountId],
       });
     },
     onError: (error: TRPCError) => {
       toast.error(error.message || 'Failed to create transaction');
-    }
+    },
   });
 
   async function execute(data: CreateTransactionInput) {
@@ -1410,7 +1528,7 @@ export function createTransaction() {
     }
   }
 
-  return { options, execute };
+  return {options, execute};
 }
 ```
 
@@ -1422,9 +1540,9 @@ export function createTransaction() {
 
 ```typescript
 // src/lib/server/domains/transactions/repository.ts
-import { db } from '$lib/server/db';
-import { transactions, accounts, categories, payees } from '$lib/schema';
-import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import {db} from '$lib/server/db';
+import {transactions, accounts, categories, payees} from '$lib/schema';
+import {eq, and, gte, lte, desc} from 'drizzle-orm';
 
 export async function findById(id: number) {
   const [transaction] = await db
@@ -1433,20 +1551,14 @@ export async function findById(id: number) {
     .leftJoin(accounts, eq(transactions.accountId, accounts.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .leftJoin(payees, eq(transactions.payeeId, payees.id))
-    .where(and(
-      eq(transactions.id, id),
-      eq(transactions.deletedAt, null)
-    ))
+    .where(and(eq(transactions.id, id), eq(transactions.deletedAt, null)))
     .limit(1);
 
   return transaction;
 }
 
 export async function create(data: InsertTransaction) {
-  const [transaction] = await db
-    .insert(transactions)
-    .values(data)
-    .returning();
+  const [transaction] = await db.insert(transactions).values(data).returning();
 
   return transaction;
 }
@@ -1457,7 +1569,7 @@ export async function create(data: InsertTransaction) {
 ```typescript
 // src/lib/server/domains/transactions/services.ts
 import * as repository from './repository';
-import { ValidationError, NotFoundError } from '$lib/server/shared/errors';
+import {ValidationError, NotFoundError} from '$lib/server/shared/errors';
 
 export async function createTransaction(data: CreateTransactionInput) {
   // Validation
@@ -1470,7 +1582,7 @@ export async function createTransaction(data: CreateTransactionInput) {
     ...data,
     status: data.status ?? 'pending',
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   });
 
   // Update account balance
@@ -1511,11 +1623,11 @@ src/lib/components/
 
 ```typescript
 // src/lib/components/accounts/index.ts
-export { default as AccountSelector } from './account-selector.svelte';
-export { default as AccountCard } from './account-card.svelte';
+export {default as AccountSelector} from './account-selector.svelte';
+export {default as AccountCard} from './account-card.svelte';
 
 // Usage
-import { AccountSelector, AccountCard } from '$lib/components/accounts';
+import {AccountSelector, AccountCard} from '$lib/components/accounts';
 ```
 
 ## Import System Architecture
@@ -1527,24 +1639,24 @@ import { AccountSelector, AccountCard } from '$lib/components/accounts';
 #### OFX/QFX Processor
 
 ```typescript
-import { XMLParser } from 'fast-xml-parser';
+import {XMLParser} from 'fast-xml-parser';
 
 export function parseOFX(fileContent: string) {
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '',
-    textNodeName: 'value'
+    textNodeName: 'value',
   });
 
   const parsed = parser.parse(fileContent);
   const transactions = extractTransactions(parsed);
 
-  return transactions.map(t => ({
+  return transactions.map((t) => ({
     date: parseOFXDate(t.DTPOSTED),
     amount: parseFloat(t.TRNAMT),
     payee: t.NAME || t.MEMO,
     memo: t.MEMO,
-    fitid: t.FITID
+    fitid: t.FITID,
   }));
 }
 ```
@@ -1558,13 +1670,13 @@ export function parseCSV(fileContent: string) {
   const result = Papa.parse(fileContent, {
     header: true,
     skipEmptyLines: true,
-    dynamicTyping: true
+    dynamicTyping: true,
   });
 
   return {
     headers: result.meta.fields || [],
     rows: result.data,
-    errors: result.errors
+    errors: result.errors,
   };
 }
 ```
@@ -1585,21 +1697,19 @@ export class PayeeMatcher {
     const normalized = this.normalize(payeeName);
 
     // Exact match
-    const exactMatch = this.payees.find(
-      p => p.normalizedName === normalized
-    );
+    const exactMatch = this.payees.find((p) => p.normalizedName === normalized);
     if (exactMatch) {
       return {
         payeeId: exactMatch.id,
         payeeName: exactMatch.name,
-        confidence: 'exact'
+        confidence: 'exact',
       };
     }
 
     // Fuzzy match
     const results = fuzzysort.go(normalized, this.payees, {
       key: 'normalizedName',
-      threshold: -10000
+      threshold: -10000,
     });
 
     if (results.length === 0) return null;
@@ -1616,7 +1726,7 @@ export class PayeeMatcher {
       payeeId: bestMatch.obj.id,
       payeeName: bestMatch.obj.name,
       confidence,
-      score
+      score,
     };
   }
 
@@ -1632,7 +1742,8 @@ export class PayeeMatcher {
 
 #### Server Commands
 
-- **Start Dev Server**: `bun run dev` - Starts SvelteKit dev server on http://localhost:5173
+- **Start Dev Server**: `bun run dev` - Starts SvelteKit dev server on
+  http://localhost:5173
 - **Build for Production**: `bun run build` - Creates optimized production build
 - **Preview Production**: `bun run preview` - Serves production build locally
 - **Type Checking**: `bun run check` - Runs svelte-check
@@ -1640,10 +1751,12 @@ export class PayeeMatcher {
 
 #### Database Commands
 
-- **Generate Migration**: `bun run db:generate` - Creates new migration from schema changes
+- **Generate Migration**: `bun run db:generate` - Creates new migration from
+  schema changes
 - **Run Migrations**: `bun run db:migrate` - Applies pending migrations
 - **Seed Database**: `bun run db:seed` - Populates database with test data
-- **Restart Database**: `bun run db:restart` - Drops, migrates, and reseeds database
+- **Restart Database**: `bun run db:restart` - Drops, migrates, and reseeds
+  database
 - **Database Studio**: `bun run db:studio` - Opens Drizzle Studio web interface
 
 #### Testing Commands
@@ -1736,8 +1849,8 @@ apps/budget/src/tests/
 #### Unit Test Example
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { parseDateValue, dateDifference } from '$lib/utils/dates';
+import {describe, it, expect} from 'vitest';
+import {parseDateValue, dateDifference} from '$lib/utils/dates';
 
 describe('parseDateValue', () => {
   it('parses ISO string to DateValue', () => {
@@ -1752,7 +1865,7 @@ describe('parseDateValue', () => {
 #### Integration Test Example
 
 ```typescript
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import * as repository from '$lib/server/domains/transactions/repository';
 
 describe('Transaction Repository', () => {
@@ -1769,13 +1882,13 @@ describe('Transaction Repository', () => {
   it('creates transaction in database', async () => {
     const transaction = await repository.create({
       accountId: testAccountId,
-      amount: -50.00,
+      amount: -50.0,
       date: '2024-01-15',
-      status: 'cleared'
+      status: 'cleared',
     });
 
     expect(transaction.id).toBeDefined();
-    expect(transaction.amount).toBe(-50.00);
+    expect(transaction.amount).toBe(-50.0);
   });
 });
 ```
@@ -1783,27 +1896,31 @@ describe('Transaction Repository', () => {
 #### E2E Test Example
 
 ```typescript
-import { test, expect } from '@playwright/test';
+import {test, expect} from '@playwright/test';
 
 test.describe('Account Management', () => {
-  test('creates new account', async ({ page }) => {
+  test('creates new account', async ({page}) => {
     await page.goto('/accounts');
     await page.click('button:has-text("New Account")');
     await page.fill('input[name="name"]', 'Test Checking');
     await page.selectOption('select[name="type"]', 'checking');
     await page.click('button[type="submit"]');
-    await expect(page.locator('text=Account created successfully')).toBeVisible();
+    await expect(
+      page.locator('text=Account created successfully')
+    ).toBeVisible();
   });
 });
 ```
 
 ## Scheduled Transactions Feature
 
-**Upcoming scheduled transactions are displayed in the accounts transactions tab with visual indicators.**
+**Upcoming scheduled transactions are displayed in the accounts transactions tab
+with visual indicators.**
 
 ### Feature Overview
 
-Shows upcoming transactions that will be created automatically based on schedule configurations (30-day window).
+Shows upcoming transactions that will be created automatically based on schedule
+configurations (30-day window).
 
 ### Implementation Architecture
 
@@ -1838,14 +1955,15 @@ export interface UpcomingScheduledTransaction {
   payeeId: number | null;
   categoryId: number | null;
   notes: string; // Format: "Scheduled: {scheduleName}"
-  status: "scheduled";
+  status: 'scheduled';
   balance: null; // No balance for future transactions
 }
 ```
 
 ## Budget System Implementation
 
-**Comprehensive budget system supporting multiple budget types, configurable enforcement, and seamless integration.**
+**Comprehensive budget system supporting multiple budget types, configurable
+enforcement, and seamless integration.**
 
 ### Implementation Status
 
@@ -1858,17 +1976,20 @@ Comprehensive system design documented in `docs/plans/budget-system-design.md`
 #### Phase 1: Foundation (Database & Core Services) - PENDING
 
 **Database Schema** (`src/lib/schema/budgets/`):
+
 - Core budget table with type enum and metadata JSON
 - Budget groups with parent-child relationships
 - Flexible period definitions and instances
 - Junction tables for accounts, categories, transactions
 
 **Domain Services** (`src/lib/server/domains/budgets/`):
+
 - Repository for database queries
 - Service layer for business logic
 - Type definitions and validation schemas
 
 **tRPC Integration** (`src/lib/trpc/routes/budgets.ts`):
+
 - CRUD operations for budgets and groups
 - Budget summary and progress queries
 - Transaction validation endpoints
@@ -1876,13 +1997,16 @@ Comprehensive system design documented in `docs/plans/budget-system-design.md`
 #### Phase 2: Basic UI (Account-Monthly Budgets) - PENDING
 
 **State Management**:
+
 - Reactive budget store
 - TanStack Query integration
 
 **Core Components** (`src/lib/components/budgets/`):
+
 - BudgetProgress, BudgetSelector, BudgetPeriodPicker
 
 **Management Pages** (`src/routes/budgets/`):
+
 - Budget list/dashboard, creation forms, detail pages
 
 #### Phase 3: Advanced Features (Category Envelopes) - PENDING
@@ -1927,4 +2051,5 @@ Comprehensive system design documented in `docs/plans/budget-system-design.md`
 
 ---
 
-*This configuration ensures consistent tooling and accountability across all Claude Code sessions.*
+_This configuration ensures consistent tooling and accountability across all
+Claude Code sessions._

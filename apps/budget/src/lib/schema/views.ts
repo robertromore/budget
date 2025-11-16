@@ -5,26 +5,32 @@ import {z} from "zod/v4";
 import {relations} from "drizzle-orm";
 import {workspaces} from "./workspaces";
 
-export const views = sqliteTable("views", {
-  id: integer("id").primaryKey({autoIncrement: true}),
-  workspaceId: integer("workspace_id")
-    .notNull()
-    .references(() => workspaces.id, {onDelete: "cascade"}),
-  entityType: text("entity_type", {
-    enum: ["transactions", "top_categories"]
-  }).notNull().default("transactions"),
-  name: text("name").notNull(),
-  // label: text('label').notNull(),
-  description: text("description"),
-  icon: text("icon"),
-  filters: text("filters", {mode: "json"}).$type<ViewFilter[]>(),
-  display: text("display", {mode: "json"}).$type<ViewDisplayState>(),
-  dirty: integer("dirty", {mode: "boolean"}),
-  isDefault: integer("is_default", {mode: "boolean"}).notNull().default(false),
-}, (table) => [
-  index("views_workspace_id_idx").on(table.workspaceId),
-  index("idx_views_workspace_entity").on(table.workspaceId, table.entityType),
-]);
+export const views = sqliteTable(
+  "views",
+  {
+    id: integer("id").primaryKey({autoIncrement: true}),
+    workspaceId: integer("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {onDelete: "cascade"}),
+    entityType: text("entity_type", {
+      enum: ["transactions", "top_categories"],
+    })
+      .notNull()
+      .default("transactions"),
+    name: text("name").notNull(),
+    // label: text('label').notNull(),
+    description: text("description"),
+    icon: text("icon"),
+    filters: text("filters", {mode: "json"}).$type<ViewFilter[]>(),
+    display: text("display", {mode: "json"}).$type<ViewDisplayState>(),
+    dirty: integer("dirty", {mode: "boolean"}),
+    isDefault: integer("is_default", {mode: "boolean"}).notNull().default(false),
+  },
+  (table) => [
+    index("views_workspace_id_idx").on(table.workspaceId),
+    index("idx_views_workspace_entity").on(table.workspaceId, table.entityType),
+  ]
+);
 
 export const viewsRelations = relations(views, ({one}) => ({
   workspace: one(workspaces, {
@@ -72,10 +78,10 @@ export const insertViewSchema = createInsertSchema(views, {
           })
         ),
         columnOrder: z.optional(z.array(z.string())),
-        density: z.optional(z.enum(['normal', 'dense']).default('normal')),
+        density: z.optional(z.enum(["normal", "dense"]).default("normal")),
         stickyHeader: z.optional(z.boolean().default(false)),
         pageSize: z.optional(z.number().int().positive().default(25)),
-        viewMode: z.optional(z.enum(['table', 'cards']).default('table')),
+        viewMode: z.optional(z.enum(["table", "cards"]).default("table")),
       })
       .or(z.null())
   ),

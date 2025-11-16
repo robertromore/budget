@@ -1,4 +1,4 @@
-import type {BudgetWithRelations} from '$lib/server/domains/budgets';
+import type {BudgetWithRelations} from "$lib/server/domains/budgets";
 
 /**
  * Calculate the actual amount spent from budget transactions.

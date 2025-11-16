@@ -4,30 +4,35 @@
  * Handles parsing of QBO XML files with support for various transaction types.
  */
 
-import { XMLParser } from 'fast-xml-parser';
-import type { FileProcessor, ImportRow, NormalizedTransaction, QBOTransaction } from '$lib/types/import';
-import { FileValidationError, ParseError } from '../errors';
+import {XMLParser} from "fast-xml-parser";
+import type {
+  FileProcessor,
+  ImportRow,
+  NormalizedTransaction,
+  QBOTransaction,
+} from "$lib/types/import";
+import {FileValidationError, ParseError} from "../errors";
 import {
   parseQBODate,
   parseAmount,
   sanitizeText,
   validateFileType,
   extractQBOTransactions,
-} from '../utils';
+} from "../utils";
 
 export class QBOProcessor implements FileProcessor {
   private readonly maxFileSize = 20 * 1024 * 1024; // 20MB (QBO files can be large)
-  private readonly supportedFormats = ['.qbo'];
+  private readonly supportedFormats = [".qbo"];
 
   getSupportedFormats(): string[] {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): { valid: boolean; error?: string } {
+  validateFile(file: File): {valid: boolean; error?: string} {
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
         valid: false,
-        error: `Invalid file type. Supported formats: ${this.supportedFormats.join(', ')}`,
+        error: `Invalid file type. Supported formats: ${this.supportedFormats.join(", ")}`,
       };
     }
 
@@ -41,46 +46,46 @@ export class QBOProcessor implements FileProcessor {
     if (file.size === 0) {
       return {
         valid: false,
-        error: 'File is empty',
+        error: "File is empty",
       };
     }
 
-    return { valid: true };
+    return {valid: true};
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {
     const validation = this.validateFile(file);
     if (!validation.valid) {
-      throw new FileValidationError(validation.error || 'File validation failed', 'qbo');
+      throw new FileValidationError(validation.error || "File validation failed", "qbo");
     }
 
     try {
       let text = await file.text();
 
       if (!text || text.trim().length === 0) {
-        throw new ParseError('File is empty or contains no data');
+        throw new ParseError("File is empty or contains no data");
       }
 
       text = text.trim();
 
       const parser = new XMLParser({
         ignoreAttributes: false,
-        attributeNamePrefix: '@_',
-        textNodeName: '#text',
+        attributeNamePrefix: "@_",
+        textNodeName: "#text",
         parseAttributeValue: true,
         parseTagValue: true,
       });
 
       const xmlData = parser.parse(text);
 
-      if (!xmlData || typeof xmlData !== 'object') {
-        throw new ParseError('Invalid QBO XML structure');
+      if (!xmlData || typeof xmlData !== "object") {
+        throw new ParseError("Invalid QBO XML structure");
       }
 
       const transactions = this.extractTransactions(xmlData);
 
       if (transactions.length === 0) {
-        throw new ParseError('No transactions found in QBO file');
+        throw new ParseError("No transactions found in QBO file");
       }
 
       return this.convertToImportRows(transactions);
@@ -88,7 +93,9 @@ export class QBOProcessor implements FileProcessor {
       if (error instanceof FileValidationError || error instanceof ParseError) {
         throw error;
       }
-      throw new ParseError(`Failed to parse QBO file: ${error instanceof Error ? error.message : String(error)}`);
+      throw new ParseError(
+        `Failed to parse QBO file: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -123,25 +130,25 @@ export class QBOProcessor implements FileProcessor {
 
   private extractTxnType(txn: any): string {
     if (txn.TxnType) return txn.TxnType;
-    if (txn.CheckTxn) return 'Check';
-    if (txn.DepositTxn) return 'Deposit';
-    if (txn.PaymentTxn) return 'Payment';
-    return 'Transaction';
+    if (txn.CheckTxn) return "Check";
+    if (txn.DepositTxn) return "Deposit";
+    if (txn.PaymentTxn) return "Payment";
+    return "Transaction";
   }
 
   private extractDate(txn: any): string {
-    return txn.TxnDate || txn.Date || txn.TimeCreated || '';
+    return txn.TxnDate || txn.Date || txn.TimeCreated || "";
   }
 
   private extractAmount(txn: any): number {
-    const amountStr = txn.Amount || txn.TxnAmount || '0';
+    const amountStr = txn.Amount || txn.TxnAmount || "0";
     return parseFloat(String(amountStr));
   }
 
   private extractAccount(txn: any): string {
     if (txn.AccountRef?.FullName) return txn.AccountRef.FullName;
     if (txn.Account) return txn.Account;
-    return '';
+    return "";
   }
 
   private extractVendor(txn: any): string | undefined {
@@ -181,13 +188,13 @@ export class QBOProcessor implements FileProcessor {
 
       try {
         const date = parseQBODate(txn.date);
-        normalized.date = date.toISOString().split('T')[0];
+        normalized.date = date.toISOString().split("T")[0];
       } catch (error) {
         errors.push({
-          field: 'date',
-          message: error instanceof Error ? error.message : 'Invalid date',
+          field: "date",
+          message: error instanceof Error ? error.message : "Invalid date",
           value: txn.date,
-          severity: 'error',
+          severity: "error",
         });
       }
 
@@ -195,10 +202,10 @@ export class QBOProcessor implements FileProcessor {
         normalized.amount = txn.amount;
       } catch (error) {
         errors.push({
-          field: 'amount',
-          message: error instanceof Error ? error.message : 'Invalid amount',
+          field: "amount",
+          message: error instanceof Error ? error.message : "Invalid amount",
           value: txn.amount,
-          severity: 'error',
+          severity: "error",
         });
       }
 
@@ -219,13 +226,13 @@ export class QBOProcessor implements FileProcessor {
         normalized.fitid = sanitizeText(txn.txnId, 50);
       }
 
-      normalized.status = 'cleared';
+      normalized.status = "cleared";
 
       return {
         rowIndex: index,
-        rawData: { ...txn },
+        rawData: {...txn},
         normalizedData: normalized as Record<string, any>,
-        validationStatus: errors.length > 0 ? 'invalid' : 'valid',
+        validationStatus: errors.length > 0 ? "invalid" : "valid",
         validationErrors: errors.length > 0 ? errors : undefined,
       };
     });

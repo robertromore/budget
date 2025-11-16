@@ -41,7 +41,7 @@ const handleWizardComplete = async (data: Record<string, any>) => {
     payeeId: data.payeeId || null,
     categoryId: data.categoryId || null,
     notes: data.notes || null,
-    status: data.status || 'pending'
+    status: data.status || 'pending',
   };
 
   await onSave(transaction as Transaction);
@@ -52,9 +52,7 @@ const handleWizardComplete = async (data: Record<string, any>) => {
   <Dialog.Content class="max-w-2xl">
     <Dialog.Header>
       <Dialog.Title>Add Transaction</Dialog.Title>
-      <Dialog.Description>
-        Choose your preferred method to add a transaction.
-      </Dialog.Description>
+      <Dialog.Description>Choose your preferred method to add a transaction.</Dialog.Description>
     </Dialog.Header>
 
     <Tabs.Root bind:value={activeTab} class="w-full">
@@ -72,8 +70,7 @@ const handleWizardComplete = async (data: Record<string, any>) => {
           accountId={account?.id || 0}
           {payees}
           {categories}
-          onComplete={handleWizardComplete}
-        />
+          onComplete={handleWizardComplete} />
       </Tabs.Content>
     </Tabs.Root>
   </Dialog.Content>

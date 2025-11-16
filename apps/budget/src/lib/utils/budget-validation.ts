@@ -1,4 +1,4 @@
-import type { BudgetWithRelations } from '$lib/server/domains/budgets/repository';
+import type {BudgetWithRelations} from "$lib/server/domains/budgets/repository";
 
 /**
  * Checks if a budget has any invalid (deleted) category associations
@@ -43,14 +43,12 @@ export function getBudgetValidationIssues(budget: BudgetWithRelations): {
 
   if (invalidCategories > 0) {
     messages.push(
-      `${invalidCategories} deleted ${invalidCategories === 1 ? 'category' : 'categories'}`
+      `${invalidCategories} deleted ${invalidCategories === 1 ? "category" : "categories"}`
     );
   }
 
   if (invalidAccounts > 0) {
-    messages.push(
-      `${invalidAccounts} deleted ${invalidAccounts === 1 ? 'account' : 'accounts'}`
-    );
+    messages.push(`${invalidAccounts} deleted ${invalidAccounts === 1 ? "account" : "accounts"}`);
   }
 
   return {

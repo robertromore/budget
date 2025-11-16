@@ -17,13 +17,14 @@ export const patternKeys = createQueryKeys("patterns", {
  */
 export const listPatterns = (accountId?: number, status?: string) =>
   defineQuery<DetectedPattern[]>({
-    queryKey: accountId && status
-      ? patternKeys.byAccountAndStatus(accountId, status)
-      : accountId
-        ? patternKeys.byAccount(accountId)
-        : status
-          ? patternKeys.byStatus(status)
-          : patternKeys.all(),
+    queryKey:
+      accountId && status
+        ? patternKeys.byAccountAndStatus(accountId, status)
+        : accountId
+          ? patternKeys.byAccount(accountId)
+          : status
+            ? patternKeys.byStatus(status)
+            : patternKeys.all(),
     queryFn: () => trpc().patternRoutes.list.query({accountId, status}),
   });
 

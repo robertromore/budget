@@ -56,12 +56,14 @@ export const budgetFactory = async (
   type?: BudgetType,
   options: BudgetFactoryOptions = {}
 ): Promise<Budget> => {
-  const budgetType = type ?? faker.helpers.arrayElement([
-    "account-monthly",
-    "category-envelope",
-    "goal-based",
-    "scheduled-expense",
-  ] as const);
+  const budgetType =
+    type ??
+    faker.helpers.arrayElement([
+      "account-monthly",
+      "category-envelope",
+      "goal-based",
+      "scheduled-expense",
+    ] as const);
 
   // Generate realistic name based on type
   const names = {
@@ -77,12 +79,7 @@ export const budgetFactory = async (
       "Category Allocations",
       "Zero-Based Budget",
     ],
-    "goal-based": [
-      "Emergency Fund",
-      "Vacation Savings",
-      "Down Payment Goal",
-      "Investment Fund",
-    ],
+    "goal-based": ["Emergency Fund", "Vacation Savings", "Down Payment Goal", "Investment Fund"],
     "scheduled-expense": [
       "Recurring Bills",
       "Monthly Subscriptions",
@@ -95,12 +92,15 @@ export const budgetFactory = async (
   const slug = `${slugify(name)}-${sequence("budget")}`;
 
   // Determine scope
-  const scope: BudgetScope = options.scope ?? (
-    budgetType === "account-monthly" ? "account" :
-    budgetType === "category-envelope" ? "category" :
-    budgetType === "goal-based" ? "global" :
-    "mixed"
-  );
+  const scope: BudgetScope =
+    options.scope ??
+    (budgetType === "account-monthly"
+      ? "account"
+      : budgetType === "category-envelope"
+        ? "category"
+        : budgetType === "goal-based"
+          ? "global"
+          : "mixed");
 
   // Generate metadata based on type
   const metadata = generateBudgetMetadata(budgetType, options.periodType);

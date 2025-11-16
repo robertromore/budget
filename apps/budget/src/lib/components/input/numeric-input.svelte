@@ -18,7 +18,14 @@ interface Props {
   formatter?: (value: number) => string;
 }
 
-let {value = $bindable(), onSubmit, open = $bindable(), buttonClass, id, formatter = currencyFormatter.format}: Props = $props();
+let {
+  value = $bindable(),
+  onSubmit,
+  open = $bindable(),
+  buttonClass,
+  id,
+  formatter = currencyFormatter.format,
+}: Props = $props();
 
 // --- State ---
 let dialogOpen = $state(open || false);
@@ -179,7 +186,13 @@ const handlePaste = (event: ClipboardEvent) => {
       align="start"
       onEscapeKeydown={() => (new_amount = (value || 0).toString())}>
       <div class="p-2">
-        <Input bind:value={new_amount} class="mb-2" bind:ref={input} placeholder="0.00" id={id} onpaste={handlePaste} />
+        <Input
+          bind:value={new_amount}
+          class="mb-2"
+          bind:ref={input}
+          placeholder="0.00"
+          {id}
+          onpaste={handlePaste} />
 
         <div class="keypad grid grid-cols-3 grid-rows-3 gap-2">
           {#each Array.from({length: 9}, (_, i) => i + 1) as i}

@@ -50,7 +50,7 @@ const generateDateFilters = (expenses: ExpenseFormat[]): FacetedFilterOption[] =
   if (!expenses || expenses.length === 0) return [];
 
   const uniqueDates = new Set<string>();
-  expenses.forEach(expense => {
+  expenses.forEach((expense) => {
     if (expense.date) {
       const dateStr = expense.date.toString();
       uniqueDates.add(dateStr);
@@ -59,12 +59,12 @@ const generateDateFilters = (expenses: ExpenseFormat[]): FacetedFilterOption[] =
 
   return Array.from(uniqueDates)
     .sort((a, b) => b.localeCompare(a)) // Sort descending (most recent first)
-    .map(dateStr => {
-      const count = expenses.filter(e => e.date?.toString() === dateStr).length;
+    .map((dateStr) => {
+      const count = expenses.filter((e) => e.date?.toString() === dateStr).length;
       return {
         value: dateStr,
         label: dayFmt.format(parseDate(dateStr).toDate(timezone)),
-        count
+        count,
       };
     });
 };
@@ -139,11 +139,7 @@ table = createSvelteTable<ExpenseFormat>({
   autoResetExpanded: false,
 });
 
-const selectedExpenses = $derived(
-  table
-    .getSelectedRowModel()
-    .flatRows.map((row) => row.original)
-);
+const selectedExpenses = $derived(table.getSelectedRowModel().flatRows.map((row) => row.original));
 
 // Initialize current views state for expense table
 let currentViewsStateValue = new CurrentViewsState<ExpenseFormat>(null);
@@ -162,9 +158,8 @@ let lastActiveViewId: number | undefined;
 $effect(() => {
   const signature = viewList
     .map((view: View) => {
-      const sortSignature = view.display?.sort
-        ?.map((sort) => `${sort.id}:${sort.desc ?? false}`)
-        .join('|') ?? '';
+      const sortSignature =
+        view.display?.sort?.map((sort) => `${sort.id}:${sort.desc ?? false}`).join('|') ?? '';
       return `${view.id}:${sortSignature}`;
     })
     .join(';');
@@ -189,7 +184,7 @@ $effect(() => {
   }
 
   const targetViewState = lastActiveViewId
-    ? currentViewsStateValue.viewsStates.get(lastActiveViewId) ?? _currentViewStates[0]!
+    ? (currentViewsStateValue.viewsStates.get(lastActiveViewId) ?? _currentViewStates[0]!)
     : _currentViewStates[0]!;
 
   if (!targetViewState) {
@@ -254,11 +249,13 @@ const density = $derived(currentViewsStateValue?.activeView?.view.getDensity() ?
 
 <div class="space-y-4">
   <ExpenseTableToolbar {table} />
-  <ExpenseBulkActions expenses={selectedExpenses} onBulkDelete={() => {
-    if (onBulkDelete) {
-      onBulkDelete(selectedExpenses);
-    }
-  }} />
+  <ExpenseBulkActions
+    expenses={selectedExpenses}
+    onBulkDelete={() => {
+      if (onBulkDelete) {
+        onBulkDelete(selectedExpenses);
+      }
+    }} />
   <div class="w-full rounded-md border">
     <Table.Root>
       <Table.Header>
@@ -278,7 +275,9 @@ const density = $derived(currentViewsStateValue?.activeView?.view.getDensity() ?
       </Table.Header>
       <Table.Body>
         {#each table.getRowModel().rows as row (row.id)}
-          <Table.Row data-state={row.getIsSelected() && 'selected'} class="data-[state=selected]:border-l-4 data-[state=selected]:border-l-primary">
+          <Table.Row
+            data-state={row.getIsSelected() && 'selected'}
+            class="data-[state=selected]:border-l-primary data-[state=selected]:border-l-4">
             {#each row.getVisibleCells() as cell (cell.id)}
               {#if cell.getIsAggregated() && cell.column.columnDef.aggregatedCell}
                 <Table.Cell {density}>
@@ -299,7 +298,8 @@ const density = $derived(currentViewsStateValue?.activeView?.view.getDensity() ?
           </Table.Row>
         {:else}
           <Table.Row>
-            <Table.Cell colspan={columns.length} class="h-24 text-center" {density}>No results.</Table.Cell>
+            <Table.Cell colspan={columns.length} class="h-24 text-center" {density}
+              >No results.</Table.Cell>
           </Table.Row>
         {/each}
       </Table.Body>

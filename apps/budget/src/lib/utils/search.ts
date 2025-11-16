@@ -10,16 +10,16 @@
  * @returns HTML string with highlighted matches
  */
 export function highlightMatches(text: string, query: string): string {
-	if (!query || !text) return text;
+  if (!query || !text) return text;
 
-	// Escape special regex characters in the query
-	const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-	const regex = new RegExp(`(${escapedQuery})`, 'gi');
+  // Escape special regex characters in the query
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`(${escapedQuery})`, "gi");
 
-	return text.replace(
-		regex,
-		'<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-1">$1</mark>'
-	);
+  return text.replace(
+    regex,
+    '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-1">$1</mark>'
+  );
 }
 
 /**
@@ -29,16 +29,16 @@ export function highlightMatches(text: string, query: string): string {
  * @returns Number of active filters
  */
 export function countActiveFilters(filters: Record<string, any>): number {
-	return Object.values(filters).filter(
-		(value) => value !== undefined && value !== null && value !== ''
-	).length;
+  return Object.values(filters).filter(
+    (value) => value !== undefined && value !== null && value !== ""
+  ).length;
 }
 
 /**
  * Type guard to check if a filter value is considered "active"
  */
 export function isActiveFilterValue(value: any): boolean {
-	return value !== undefined && value !== null && value !== '';
+  return value !== undefined && value !== null && value !== "";
 }
 
 /**
@@ -49,22 +49,22 @@ export function isActiveFilterValue(value: any): boolean {
  * @returns A debounced version of the function
  */
 export function debounce<T extends (...args: any[]) => any>(
-	func: T,
-	wait: number
+  func: T,
+  wait: number
 ): (...args: Parameters<T>) => void {
-	let timeout: ReturnType<typeof setTimeout> | null = null;
+  let timeout: ReturnType<typeof setTimeout> | null = null;
 
-	return function (this: any, ...args: Parameters<T>) {
-		const context = this;
+  return function (this: any, ...args: Parameters<T>) {
+    const context = this;
 
-		if (timeout !== null) {
-			clearTimeout(timeout);
-		}
+    if (timeout !== null) {
+      clearTimeout(timeout);
+    }
 
-		timeout = setTimeout(() => {
-			func.apply(context, args);
-		}, wait);
-	};
+    timeout = setTimeout(() => {
+      func.apply(context, args);
+    }, wait);
+  };
 }
 
 /**
@@ -72,19 +72,19 @@ export function debounce<T extends (...args: any[]) => any>(
  * Handles booleans, arrays, and objects
  */
 export function formatFilterValue(value: any): string {
-	if (typeof value === 'boolean') {
-		return value ? 'Yes' : 'No';
-	}
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
 
-	if (Array.isArray(value)) {
-		return value.join(', ');
-	}
+  if (Array.isArray(value)) {
+    return value.join(", ");
+  }
 
-	if (typeof value === 'object' && value !== null) {
-		return JSON.stringify(value);
-	}
+  if (typeof value === "object" && value !== null) {
+    return JSON.stringify(value);
+  }
 
-	return String(value);
+  return String(value);
 }
 
 /**
@@ -92,10 +92,10 @@ export function formatFilterValue(value: any): string {
  * Converts camelCase to Title Case
  */
 export function getFilterLabel(key: string): string {
-	return key
-		.replace(/([A-Z])/g, ' $1')
-		.replace(/^./, (str) => str.toUpperCase())
-		.trim();
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
 }
 
 /**
@@ -103,37 +103,37 @@ export function getFilterLabel(key: string): string {
  * Returns an array of human-readable filter descriptions
  */
 export function getFilterSummaries(
-	filters: Record<string, any>,
-	labelMap?: Record<string, string>
+  filters: Record<string, any>,
+  labelMap?: Record<string, string>
 ): string[] {
-	const summaries: string[] = [];
+  const summaries: string[] = [];
 
-	for (const [key, value] of Object.entries(filters)) {
-		if (!isActiveFilterValue(value)) continue;
+  for (const [key, value] of Object.entries(filters)) {
+    if (!isActiveFilterValue(value)) continue;
 
-		const label = labelMap?.[key] || getFilterLabel(key);
-		const formattedValue = formatFilterValue(value);
+    const label = labelMap?.[key] || getFilterLabel(key);
+    const formattedValue = formatFilterValue(value);
 
-		summaries.push(`${label}: ${formattedValue}`);
-	}
+    summaries.push(`${label}: ${formattedValue}`);
+  }
 
-	return summaries;
+  return summaries;
 }
 
 /**
  * Clears specific filters from a filters object
  */
 export function clearFilters<T extends Record<string, any>>(
-	filters: T,
-	keys: (keyof T)[]
+  filters: T,
+  keys: (keyof T)[]
 ): Partial<T> {
-	const newFilters = { ...filters };
+  const newFilters = {...filters};
 
-	for (const key of keys) {
-		delete newFilters[key];
-	}
+  for (const key of keys) {
+    delete newFilters[key];
+  }
 
-	return newFilters;
+  return newFilters;
 }
 
 /**
@@ -141,18 +141,18 @@ export function clearFilters<T extends Record<string, any>>(
  * Removes filters with undefined/null values
  */
 export function updateFilters<T extends Record<string, any>>(
-	currentFilters: T,
-	updates: Partial<T>
+  currentFilters: T,
+  updates: Partial<T>
 ): T {
-	const newFilters = { ...currentFilters };
+  const newFilters = {...currentFilters};
 
-	for (const [key, value] of Object.entries(updates)) {
-		if (!isActiveFilterValue(value)) {
-			delete newFilters[key as keyof T];
-		} else {
-			newFilters[key as keyof T] = value as T[keyof T];
-		}
-	}
+  for (const [key, value] of Object.entries(updates)) {
+    if (!isActiveFilterValue(value)) {
+      delete newFilters[key as keyof T];
+    } else {
+      newFilters[key as keyof T] = value as T[keyof T];
+    }
+  }
 
-	return newFilters;
+  return newFilters;
 }

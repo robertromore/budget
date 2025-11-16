@@ -41,7 +41,9 @@ export const transactions = sqliteTable(
     // Transfer transaction fields
     transferId: text("transfer_id"), // Shared ID for both transactions in the pair (CUID)
     transferAccountId: integer("transfer_account_id").references(() => accounts.id), // The OTHER account in the transfer
-    transferTransactionId: integer("transfer_transaction_id").references((): AnySQLiteColumn => transactions.id), // The linked transaction
+    transferTransactionId: integer("transfer_transaction_id").references(
+      (): AnySQLiteColumn => transactions.id
+    ), // The linked transaction
     isTransfer: integer("is_transfer", {mode: "boolean"}).default(false), // Quick check for transfers
 
     // Import metadata
@@ -151,14 +153,16 @@ type TransactionExtraFields = {
   scheduleInterval?: number | undefined;
   scheduleNextOccurrence?: string | undefined;
   // Budget allocation data (only present when loaded with relation)
-  budgetAllocations?: Array<{
-    id: number;
-    budgetId: number;
-    budgetName: string;
-    allocatedAmount: number;
-    autoAssigned: boolean;
-    assignedBy: string | null;
-  }> | undefined;
+  budgetAllocations?:
+    | Array<{
+        id: number;
+        budgetId: number;
+        budgetName: string;
+        allocatedAmount: number;
+        autoAssigned: boolean;
+        assignedBy: string | null;
+      }>
+    | undefined;
 };
 
 export type Transaction = typeof transactions.$inferSelect & TransactionExtraFields;

@@ -1,10 +1,10 @@
-import type { BudgetType, BudgetScope } from "$lib/schema/budgets";
+import type {BudgetType, BudgetScope} from "$lib/schema/budgets";
 
 export type TemplateCategory =
-  | "essentials"      // Housing, utilities, groceries, healthcare
-  | "lifestyle"       // Dining, entertainment, education
-  | "transportation"  // Car, gas, transit
-  | "savings-goals";  // Emergency fund, vacation, debt payoff, home improvement
+  | "essentials" // Housing, utilities, groceries, healthcare
+  | "lifestyle" // Dining, entertainment, education
+  | "transportation" // Car, gas, transit
+  | "savings-goals"; // Emergency fund, vacation, debt payoff, home improvement
 
 export interface BudgetTemplate {
   id: string;

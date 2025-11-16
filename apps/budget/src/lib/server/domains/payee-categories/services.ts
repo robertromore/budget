@@ -221,7 +221,9 @@ export class PayeeCategoryService {
 
     // Remove undefined values
     Object.keys(updateData).forEach(
-      (key) => updateData[key as keyof UpdatePayeeCategoryData] === undefined && delete updateData[key as keyof UpdatePayeeCategoryData]
+      (key) =>
+        updateData[key as keyof UpdatePayeeCategoryData] === undefined &&
+        delete updateData[key as keyof UpdatePayeeCategoryData]
     );
 
     return await this.repository.update(id, updateData, workspaceId);
@@ -271,7 +273,10 @@ export class PayeeCategoryService {
    * Only creates categories that don't already exist (by slug)
    * @param slugs - Optional array of slugs to seed. If not provided, seeds all default categories.
    */
-  async seedDefaultPayeeCategories(workspaceId: number, slugs?: string[]): Promise<{
+  async seedDefaultPayeeCategories(
+    workspaceId: number,
+    slugs?: string[]
+  ): Promise<{
     created: number;
     skipped: number;
     errors: string[];
@@ -282,7 +287,7 @@ export class PayeeCategoryService {
 
     // Filter categories if specific slugs are provided
     const categoriesToSeed = slugs
-      ? defaultPayeeCategories.filter(cat => slugs.includes(cat.slug))
+      ? defaultPayeeCategories.filter((cat) => slugs.includes(cat.slug))
       : defaultPayeeCategories;
 
     for (const defaultCategory of categoriesToSeed) {
@@ -309,12 +314,12 @@ export class PayeeCategoryService {
 
         created++;
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        const message = error instanceof Error ? error.message : "Unknown error";
         errors.push(`Failed to create "${defaultCategory.name}": ${message}`);
       }
     }
 
-    return { created, skipped, errors };
+    return {created, skipped, errors};
   }
 
   /**
@@ -340,17 +345,17 @@ export class PayeeCategoryService {
     }>;
   }> {
     const existingCategories = await this.repository.findAll(workspaceId);
-    const existingSlugs = new Set(existingCategories.map(c => c.slug));
+    const existingSlugs = new Set(existingCategories.map((c) => c.slug));
 
-    const categories = defaultPayeeCategories.map(dc => ({
+    const categories = defaultPayeeCategories.map((dc) => ({
       name: dc.name,
       slug: dc.slug,
-      description: dc.description ?? '',
+      description: dc.description ?? "",
       icon: dc.icon ?? null,
       installed: existingSlugs.has(dc.slug),
     }));
 
-    const installedCount = categories.filter(c => c.installed).length;
+    const installedCount = categories.filter((c) => c.installed).length;
 
     return {
       total: defaultPayeeCategories.length,

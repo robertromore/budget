@@ -6,9 +6,13 @@ import {removeViewSchema, removeViewsSchema, insertViewSchema, views} from "$lib
 
 export const viewsRoutes = t.router({
   all: publicProcedure
-    .input(z.object({
-      entityType: z.enum(["transactions", "top_categories"]).optional()
-    }).optional())
+    .input(
+      z
+        .object({
+          entityType: z.enum(["transactions", "top_categories"]).optional(),
+        })
+        .optional()
+    )
     .query(async ({ctx, input}) => {
       const whereClause = input?.entityType
         ? and(eq(views.workspaceId, ctx.workspaceId), eq(views.entityType, input.entityType))
@@ -23,7 +27,8 @@ export const viewsRoutes = t.router({
     }),
   load: publicProcedure.input(z.object({id: z.coerce.number()})).query(async ({ctx, input}) => {
     const result = await ctx.db.query.views.findMany({
-      where: (views, {eq, and}) => and(eq(views.id, input.id), eq(views.workspaceId, ctx.workspaceId)),
+      where: (views, {eq, and}) =>
+        and(eq(views.id, input.id), eq(views.workspaceId, ctx.workspaceId)),
     });
     if (!result[0]) {
       throw new TRPCError({
@@ -40,7 +45,10 @@ export const viewsRoutes = t.router({
         message: "View ID is required for deletion",
       });
     }
-    const result = await ctx.db.delete(views).where(and(eq(views.id, input.id), eq(views.workspaceId, ctx.workspaceId))).returning();
+    const result = await ctx.db
+      .delete(views)
+      .where(and(eq(views.id, input.id), eq(views.workspaceId, ctx.workspaceId)))
+      .returning();
     if (!result[0]) {
       throw new TRPCError({
         code: "NOT_FOUND",
@@ -52,7 +60,10 @@ export const viewsRoutes = t.router({
   delete: bulkOperationProcedure
     .input(removeViewsSchema)
     .mutation(async ({input: {entities}, ctx}) => {
-      return await ctx.db.delete(views).where(and(inArray(views.id, entities), eq(views.workspaceId, ctx.workspaceId))).returning();
+      return await ctx.db
+        .delete(views)
+        .where(and(inArray(views.id, entities), eq(views.workspaceId, ctx.workspaceId)))
+        .returning();
     }),
   save: rateLimitedProcedure
     .input(insertViewSchema)

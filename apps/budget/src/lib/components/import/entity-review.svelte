@@ -47,7 +47,7 @@ const selectedCategoriesCount = $derived(
         <Card.CardTitle class="text-3xl">{selectedPayeesCount}/{newPayeesCount}</Card.CardTitle>
       </Card.CardHeader>
       <Card.CardContent>
-        <p class="text-sm text-muted-foreground">Selected for creation</p>
+        <p class="text-muted-foreground text-sm">Selected for creation</p>
       </Card.CardContent>
     </Card.Card>
 
@@ -59,7 +59,7 @@ const selectedCategoriesCount = $derived(
         </Card.CardTitle>
       </Card.CardHeader>
       <Card.CardContent>
-        <p class="text-sm text-muted-foreground">Selected for creation</p>
+        <p class="text-muted-foreground text-sm">Selected for creation</p>
       </Card.CardContent>
     </Card.Card>
 
@@ -71,7 +71,7 @@ const selectedCategoriesCount = $derived(
         </Card.CardTitle>
       </Card.CardHeader>
       <Card.CardContent>
-        <p class="text-sm text-muted-foreground">Will be reused</p>
+        <p class="text-muted-foreground text-sm">Will be reused</p>
       </Card.CardContent>
     </Card.Card>
   </div>
@@ -84,37 +84,37 @@ const selectedCategoriesCount = $derived(
           <div>
             <Card.CardTitle>Payees</Card.CardTitle>
             <Card.CardDescription>
-              Review and select payees to create ({newPayeesCount} new, {payees.filter((p) => p.existing).length} existing)
+              Review and select payees to create ({newPayeesCount} new, {payees.filter(
+                (p) => p.existing
+              ).length} existing)
             </Card.CardDescription>
           </div>
           {#if newPayeesCount > 0}
             <div class="flex gap-2">
               <Button variant="outline" size="sm" onclick={onSelectAllPayees}>Select All</Button>
-              <Button variant="outline" size="sm" onclick={onDeselectAllPayees}>Deselect All</Button>
+              <Button variant="outline" size="sm" onclick={onDeselectAllPayees}
+                >Deselect All</Button>
             </div>
           {/if}
         </div>
       </Card.CardHeader>
       <Card.CardContent>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
           {#each payees as payee (payee.name)}
             <div
               class="flex items-center justify-between rounded-lg border p-3 transition-colors {payee.existing
                 ? 'bg-muted/50'
                 : payee.selected
                   ? 'bg-accent/5'
-                  : ''}"
-            >
-              <div class="flex items-center gap-3 flex-1">
+                  : ''}">
+              <div class="flex flex-1 items-center gap-3">
                 {#if !payee.existing}
                   <Checkbox
                     checked={payee.selected}
-                    onCheckedChange={(checked) =>
-                      onPayeeToggle(payee.name, checked === true)}
-                    aria-label="Select payee for creation"
-                  />
+                    onCheckedChange={(checked) => onPayeeToggle(payee.name, checked === true)}
+                    aria-label="Select payee for creation" />
                 {:else}
-                  <div class="w-5 h-5 flex items-center justify-center">
+                  <div class="flex h-5 w-5 items-center justify-center">
                     <CircleCheck class="h-5 w-5 text-green-500" />
                   </div>
                 {/if}
@@ -132,7 +132,7 @@ const selectedCategoriesCount = $derived(
                       <Badge.Badge variant="default">Exists</Badge.Badge>
                     {/if}
                   </div>
-                  <p class="text-sm text-muted-foreground">
+                  <p class="text-muted-foreground text-sm">
                     {payee.occurrences} transaction{payee.occurrences > 1 ? 's' : ''}
                   </p>
                 </div>
@@ -152,7 +152,9 @@ const selectedCategoriesCount = $derived(
           <div>
             <Card.CardTitle>Categories</Card.CardTitle>
             <Card.CardDescription>
-              Review and select categories to create ({newCategoriesCount} new, {categories.filter((c) => c.existing).length} existing)
+              Review and select categories to create ({newCategoriesCount} new, {categories.filter(
+                (c) => c.existing
+              ).length} existing)
             </Card.CardDescription>
           </div>
           {#if newCategoriesCount > 0}
@@ -168,25 +170,22 @@ const selectedCategoriesCount = $derived(
         </div>
       </Card.CardHeader>
       <Card.CardContent>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
           {#each categories as category (category.name)}
             <div
               class="flex items-center justify-between rounded-lg border p-3 transition-colors {category.existing
                 ? 'bg-muted/50'
                 : category.selected
                   ? 'bg-accent/5'
-                  : ''}"
-            >
-              <div class="flex items-center gap-3 flex-1">
+                  : ''}">
+              <div class="flex flex-1 items-center gap-3">
                 {#if !category.existing}
                   <Checkbox
                     checked={category.selected}
-                    onCheckedChange={(checked) =>
-                      onCategoryToggle(category.name, checked === true)}
-                    aria-label="Select category for creation"
-                  />
+                    onCheckedChange={(checked) => onCategoryToggle(category.name, checked === true)}
+                    aria-label="Select category for creation" />
                 {:else}
-                  <div class="w-5 h-5 flex items-center justify-center">
+                  <div class="flex h-5 w-5 items-center justify-center">
                     <CircleCheck class="h-5 w-5 text-green-500" />
                   </div>
                 {/if}
@@ -204,7 +203,7 @@ const selectedCategoriesCount = $derived(
                       <Badge.Badge variant="default">Exists</Badge.Badge>
                     {/if}
                   </div>
-                  <p class="text-sm text-muted-foreground">
+                  <p class="text-muted-foreground text-sm">
                     {category.occurrences} transaction{category.occurrences > 1 ? 's' : ''}
                   </p>
                 </div>
@@ -219,10 +218,10 @@ const selectedCategoriesCount = $derived(
   {#if payees.length === 0 && categories.length === 0}
     <Card.Card>
       <Card.CardContent class="pt-6">
-        <div class="text-center text-muted-foreground">
-          <Circle class="mx-auto h-12 w-12 mb-4" />
+        <div class="text-muted-foreground text-center">
+          <Circle class="mx-auto mb-4 h-12 w-12" />
           <p>No new entities to review</p>
-          <p class="text-sm mt-2">All payees and categories in your import already exist.</p>
+          <p class="mt-2 text-sm">All payees and categories in your import already exist.</p>
         </div>
       </Card.CardContent>
     </Card.Card>

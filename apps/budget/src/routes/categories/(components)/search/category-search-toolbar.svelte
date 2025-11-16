@@ -29,7 +29,7 @@ let {
   onFiltersChange,
   onViewModeChange,
   onSortChange,
-  onClearAll
+  onClearAll,
 }: Props = $props();
 
 // Sort options
@@ -39,7 +39,7 @@ const sortOptions: SortOption<CategorySortBy>[] = [
   {value: 'created', label: 'Date Created', order: 'desc'},
   {value: 'lastTransaction', label: 'Last Transaction', order: 'desc'},
   {value: 'totalAmount', label: 'Amount (High)', order: 'desc'},
-  {value: 'totalAmount', label: 'Amount (Low)', order: 'asc'}
+  {value: 'totalAmount', label: 'Amount (Low)', order: 'asc'},
 ];
 
 // Count active filters
@@ -60,23 +60,38 @@ const filterSummaries = $derived(() => {
   const summary = [];
 
   if (filters.hasParent !== undefined) {
-    summary.push({key: 'hasParent', label: filters.hasParent ? 'Subcategories Only' : 'Top-level Only'});
+    summary.push({
+      key: 'hasParent',
+      label: filters.hasParent ? 'Subcategories Only' : 'Top-level Only',
+    });
   }
 
   if (filters.hasTransactions !== undefined) {
-    summary.push({key: 'hasTransactions', label: filters.hasTransactions ? 'Has Transactions' : 'No Transactions'});
+    summary.push({
+      key: 'hasTransactions',
+      label: filters.hasTransactions ? 'Has Transactions' : 'No Transactions',
+    });
   }
 
   if (filters.categoryType) {
-    summary.push({key: 'categoryType', label: `Type: ${filters.categoryType.charAt(0).toUpperCase() + filters.categoryType.slice(1)}`});
+    summary.push({
+      key: 'categoryType',
+      label: `Type: ${filters.categoryType.charAt(0).toUpperCase() + filters.categoryType.slice(1)}`,
+    });
   }
 
   if (filters.isTaxDeductible !== undefined) {
-    summary.push({key: 'isTaxDeductible', label: filters.isTaxDeductible ? 'Tax Deductible' : 'Not Tax Deductible'});
+    summary.push({
+      key: 'isTaxDeductible',
+      label: filters.isTaxDeductible ? 'Tax Deductible' : 'Not Tax Deductible',
+    });
   }
 
   if (filters.spendingPriority) {
-    summary.push({key: 'spendingPriority', label: `Priority: ${filters.spendingPriority.charAt(0).toUpperCase() + filters.spendingPriority.slice(1)}`});
+    summary.push({
+      key: 'spendingPriority',
+      label: `Priority: ${filters.spendingPriority.charAt(0).toUpperCase() + filters.spendingPriority.slice(1)}`,
+    });
   }
 
   if (filters.isSeasonal !== undefined) {
@@ -94,7 +109,7 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
   key: K,
   value: CategorySearchFilters[K]
 ) => {
-  const newFilters = { ...filters };
+  const newFilters = {...filters};
   if (value === undefined || value === null || value === '') {
     delete newFilters[key];
   } else {
@@ -119,12 +134,13 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
   {onFiltersChange}
   {onViewModeChange}
   {onSortChange}
-  {onClearAll}
->
+  {onClearAll}>
   {#snippet filterContent()}
     <!-- Basic Filters Section -->
     <div class="space-y-3">
-      <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Basic Filters</h5>
+      <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        Basic Filters
+      </h5>
 
       <div class="grid grid-cols-2 gap-3">
         <!-- Parent Category Filter -->
@@ -134,10 +150,17 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
             type="single"
             value={filters.hasParent?.toString() || ''}
             onValueChange={(value) => {
-              updateFilter('hasParent', value === 'true' ? true : value === 'false' ? false : undefined);
+              updateFilter(
+                'hasParent',
+                value === 'true' ? true : value === 'false' ? false : undefined
+              );
             }}>
             <Select.Trigger id="parent-filter" class="h-9 w-full">
-              {filters.hasParent === true ? 'Subcategories' : filters.hasParent === false ? 'Top-level' : 'All'}
+              {filters.hasParent === true
+                ? 'Subcategories'
+                : filters.hasParent === false
+                  ? 'Top-level'
+                  : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All</Select.Item>
@@ -154,10 +177,17 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
             type="single"
             value={filters.hasTransactions?.toString() || ''}
             onValueChange={(value) => {
-              updateFilter('hasTransactions', value === 'true' ? true : value === 'false' ? false : undefined);
+              updateFilter(
+                'hasTransactions',
+                value === 'true' ? true : value === 'false' ? false : undefined
+              );
             }}>
             <Select.Trigger id="transactions-filter" class="h-9 w-full">
-              {filters.hasTransactions === true ? 'Has Transactions' : filters.hasTransactions === false ? 'No Transactions' : 'All'}
+              {filters.hasTransactions === true
+                ? 'Has Transactions'
+                : filters.hasTransactions === false
+                  ? 'No Transactions'
+                  : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All</Select.Item>
@@ -177,7 +207,9 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
               updateFilter('categoryType', value || undefined);
             }}>
             <Select.Trigger id="type-filter" class="h-9 w-full">
-              {filters.categoryType ? filters.categoryType.charAt(0).toUpperCase() + filters.categoryType.slice(1) : 'All'}
+              {filters.categoryType
+                ? filters.categoryType.charAt(0).toUpperCase() + filters.categoryType.slice(1)
+                : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All</Select.Item>
@@ -196,10 +228,17 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
             type="single"
             value={filters.isActive?.toString() || ''}
             onValueChange={(value) => {
-              updateFilter('isActive', value === 'true' ? true : value === 'false' ? false : undefined);
+              updateFilter(
+                'isActive',
+                value === 'true' ? true : value === 'false' ? false : undefined
+              );
             }}>
             <Select.Trigger id="active-filter" class="h-9 w-full">
-              {filters.isActive === true ? 'Active' : filters.isActive === false ? 'Inactive' : 'All'}
+              {filters.isActive === true
+                ? 'Active'
+                : filters.isActive === false
+                  ? 'Inactive'
+                  : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All</Select.Item>
@@ -212,8 +251,10 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
     </div>
 
     <!-- Advanced Filters Section -->
-    <div class="space-y-3 pt-3 border-t">
-      <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Advanced Filters</h5>
+    <div class="space-y-3 border-t pt-3">
+      <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        Advanced Filters
+      </h5>
 
       <div class="grid grid-cols-2 gap-3">
         <!-- Tax Deductible Filter -->
@@ -223,10 +264,17 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
             type="single"
             value={filters.isTaxDeductible?.toString() || ''}
             onValueChange={(value) => {
-              updateFilter('isTaxDeductible', value === 'true' ? true : value === 'false' ? false : undefined);
+              updateFilter(
+                'isTaxDeductible',
+                value === 'true' ? true : value === 'false' ? false : undefined
+              );
             }}>
             <Select.Trigger id="tax-filter" class="h-9 w-full">
-              {filters.isTaxDeductible === true ? 'Tax Deductible' : filters.isTaxDeductible === false ? 'Not Deductible' : 'All'}
+              {filters.isTaxDeductible === true
+                ? 'Tax Deductible'
+                : filters.isTaxDeductible === false
+                  ? 'Not Deductible'
+                  : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All</Select.Item>
@@ -243,10 +291,17 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
             type="single"
             value={filters.isSeasonal?.toString() || ''}
             onValueChange={(value) => {
-              updateFilter('isSeasonal', value === 'true' ? true : value === 'false' ? false : undefined);
+              updateFilter(
+                'isSeasonal',
+                value === 'true' ? true : value === 'false' ? false : undefined
+              );
             }}>
             <Select.Trigger id="seasonal-filter" class="h-9 w-full">
-              {filters.isSeasonal === true ? 'Seasonal' : filters.isSeasonal === false ? 'Not Seasonal' : 'All'}
+              {filters.isSeasonal === true
+                ? 'Seasonal'
+                : filters.isSeasonal === false
+                  ? 'Not Seasonal'
+                  : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All</Select.Item>
@@ -257,7 +312,7 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
         </div>
 
         <!-- Spending Priority Filter (full width) -->
-        <div class="space-y-1.5 col-span-2">
+        <div class="col-span-2 space-y-1.5">
           <label for="priority-filter" class="text-xs font-medium">Spending Priority</label>
           <Select.Root
             type="single"
@@ -266,7 +321,10 @@ const updateFilter = <K extends keyof CategorySearchFilters>(
               updateFilter('spendingPriority', value || undefined);
             }}>
             <Select.Trigger id="priority-filter" class="h-9 w-full">
-              {filters.spendingPriority ? filters.spendingPriority.charAt(0).toUpperCase() + filters.spendingPriority.slice(1) : 'All'}
+              {filters.spendingPriority
+                ? filters.spendingPriority.charAt(0).toUpperCase() +
+                  filters.spendingPriority.slice(1)
+                : 'All'}
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="">All</Select.Item>

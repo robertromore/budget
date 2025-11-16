@@ -15,7 +15,7 @@ export const createPayeeSchema = z.object({
     .max(1000, "Notes must be less than 1000 characters")
     .optional()
     .nullable()
-    .transform(val => val || null),
+    .transform((val) => val || null),
 
   // Budgeting Integration Fields
   defaultCategoryId: z.number().int().optional().nullable(),
@@ -26,13 +26,21 @@ export const createPayeeSchema = z.object({
   taxRelevant: z.boolean().optional().default(false),
 
   // Contact Information Fields
-  website: z.string().optional().nullable().refine((val) => !val || val.trim() === '' || z.string().url().safeParse(val).success, {
-    message: "Invalid website URL"
-  }),
+  website: z
+    .string()
+    .optional()
+    .nullable()
+    .refine((val) => !val || val.trim() === "" || z.string().url().safeParse(val).success, {
+      message: "Invalid website URL",
+    }),
   phone: z.string().max(20).optional().nullable(),
-  email: z.string().optional().nullable().refine((val) => !val || val.trim() === '' || z.string().email().safeParse(val).success, {
-    message: "Invalid email address"
-  }),
+  email: z
+    .string()
+    .optional()
+    .nullable()
+    .refine((val) => !val || val.trim() === "" || z.string().email().safeParse(val).success, {
+      message: "Invalid email address",
+    }),
 
   // Organization Fields
   address: z.any().optional().nullable(), // JSON field
@@ -46,66 +54,85 @@ export const createPayeeSchema = z.object({
 
   // Payment Processing Fields
   preferredPaymentMethods: z.any().optional().nullable(), // JSON field
-  merchantCategoryCode: z.string().length(4).regex(/^\d{4}$/).optional().nullable(),
+  merchantCategoryCode: z
+    .string()
+    .length(4)
+    .regex(/^\d{4}$/)
+    .optional()
+    .nullable(),
 });
 
 /**
  * Update payee validation schema with all enhanced fields
  */
-export const updatePayeeSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Payee name cannot be empty")
-    .max(255, "Payee name must be less than 255 characters")
-    .trim()
-    .optional(),
-  notes: z
-    .string()
-    .max(1000, "Notes must be less than 1000 characters")
-    .optional()
-    .nullable()
-    .transform(val => val || null),
+export const updatePayeeSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, "Payee name cannot be empty")
+      .max(255, "Payee name must be less than 255 characters")
+      .trim()
+      .optional(),
+    notes: z
+      .string()
+      .max(1000, "Notes must be less than 1000 characters")
+      .optional()
+      .nullable()
+      .transform((val) => val || null),
 
-  // Budgeting Integration Fields
-  defaultCategoryId: z.number().int().optional().nullable(),
-  defaultBudgetId: z.number().int().optional().nullable(),
-  payeeType: z.enum(payeeTypes).optional().nullable(),
+    // Budgeting Integration Fields
+    defaultCategoryId: z.number().int().optional().nullable(),
+    defaultBudgetId: z.number().int().optional().nullable(),
+    payeeType: z.enum(payeeTypes).optional().nullable(),
 
-  // Transaction Automation Fields
-  avgAmount: z.number().optional().nullable(),
-  paymentFrequency: z.enum(paymentFrequencies).optional().nullable(),
-  lastTransactionDate: z.string().optional().nullable(),
+    // Transaction Automation Fields
+    avgAmount: z.number().optional().nullable(),
+    paymentFrequency: z.enum(paymentFrequencies).optional().nullable(),
+    lastTransactionDate: z.string().optional().nullable(),
 
-  // Analytics Support Fields
-  taxRelevant: z.boolean().optional(),
-  isActive: z.boolean().optional(),
+    // Analytics Support Fields
+    taxRelevant: z.boolean().optional(),
+    isActive: z.boolean().optional(),
 
-  // Contact Information Fields
-  website: z.string().optional().nullable().refine((val) => !val || val.trim() === '' || z.string().url().safeParse(val).success, {
-    message: "Invalid website URL"
-  }),
-  phone: z.string().max(20).optional().nullable(),
-  email: z.string().optional().nullable().refine((val) => !val || val.trim() === '' || z.string().email().safeParse(val).success, {
-    message: "Invalid email address"
-  }),
+    // Contact Information Fields
+    website: z
+      .string()
+      .optional()
+      .nullable()
+      .refine((val) => !val || val.trim() === "" || z.string().url().safeParse(val).success, {
+        message: "Invalid website URL",
+      }),
+    phone: z.string().max(20).optional().nullable(),
+    email: z
+      .string()
+      .optional()
+      .nullable()
+      .refine((val) => !val || val.trim() === "" || z.string().email().safeParse(val).success, {
+        message: "Invalid email address",
+      }),
 
-  // Organization Fields
-  address: z.any().optional().nullable(),
-  accountNumber: z.string().max(100).optional().nullable(),
+    // Organization Fields
+    address: z.any().optional().nullable(),
+    accountNumber: z.string().max(100).optional().nullable(),
 
-  // Advanced Features Fields
-  alertThreshold: z.number().min(0).optional().nullable(),
-  isSeasonal: z.boolean().optional(),
-  subscriptionInfo: z.any().optional().nullable(),
-  tags: z.any().optional().nullable(),
+    // Advanced Features Fields
+    alertThreshold: z.number().min(0).optional().nullable(),
+    isSeasonal: z.boolean().optional(),
+    subscriptionInfo: z.any().optional().nullable(),
+    tags: z.any().optional().nullable(),
 
-  // Payment Processing Fields
-  preferredPaymentMethods: z.any().optional().nullable(),
-  merchantCategoryCode: z.string().length(4).regex(/^\d{4}$/).optional().nullable(),
-}).refine(
-  data => Object.keys(data).length > 0,
-  {message: "At least one field must be provided for update"}
-);
+    // Payment Processing Fields
+    preferredPaymentMethods: z.any().optional().nullable(),
+    merchantCategoryCode: z
+      .string()
+      .length(4)
+      .regex(/^\d{4}$/)
+      .optional()
+      .nullable(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update",
+  });
 
 /**
  * Delete payee validation schema
@@ -135,13 +162,7 @@ export const searchPayeesSchema = z.object({
     .max(255, "Search query must be less than 255 characters")
     .optional()
     .default(""),
-  limit: z
-    .number()
-    .int()
-    .positive()
-    .max(100, "Limit cannot exceed 100")
-    .optional()
-    .default(50),
+  limit: z.number().int().positive().max(100, "Limit cannot exceed 100").optional().default(50),
 });
 
 /**
@@ -181,13 +202,14 @@ export const getPayeesByAccountSchema = z.object({
 /**
  * Merge payees validation schema
  */
-export const mergePayeesSchema = z.object({
-  sourceId: z.number().int().positive("Invalid source payee ID"),
-  targetId: z.number().int().positive("Invalid target payee ID"),
-}).refine(
-  data => data.sourceId !== data.targetId,
-  {message: "Source and target payee cannot be the same"}
-);
+export const mergePayeesSchema = z
+  .object({
+    sourceId: z.number().int().positive("Invalid source payee ID"),
+    targetId: z.number().int().positive("Invalid target payee ID"),
+  })
+  .refine((data) => data.sourceId !== data.targetId, {
+    message: "Source and target payee cannot be the same",
+  });
 
 /**
  * Payee ID parameter validation
@@ -240,19 +262,22 @@ export const comprehensiveIntelligenceSchema = z.object({
  */
 export const applyIntelligentOptimizationsSchema = z.object({
   payeeId: z.number().int().positive(),
-  options: z.object({
-    updateCategory: z.boolean().optional().default(true),
-    updateBudget: z.boolean().optional().default(true),
-    updateFrequency: z.boolean().optional().default(true),
-    updateAmount: z.boolean().optional().default(true),
-    minConfidence: z.number().min(0).max(1).optional().default(0.7),
-  }).optional().default({
-    updateCategory: true,
-    updateBudget: true,
-    updateFrequency: true,
-    updateAmount: true,
-    minConfidence: 0.7,
-  }),
+  options: z
+    .object({
+      updateCategory: z.boolean().optional().default(true),
+      updateBudget: z.boolean().optional().default(true),
+      updateFrequency: z.boolean().optional().default(true),
+      updateAmount: z.boolean().optional().default(true),
+      minConfidence: z.number().min(0).max(1).optional().default(0.7),
+    })
+    .optional()
+    .default({
+      updateCategory: true,
+      updateBudget: true,
+      updateFrequency: true,
+      updateAmount: true,
+      minConfidence: 0.7,
+    }),
 });
 
 /**
@@ -260,19 +285,22 @@ export const applyIntelligentOptimizationsSchema = z.object({
  */
 export const bulkIntelligenceAnalysisSchema = z.object({
   payeeIds: z.array(z.number().int().positive()).min(1).max(50), // Limit to 50 payees at once
-  options: z.object({
-    includeSpendingAnalysis: z.boolean().optional().default(true),
-    includeSeasonalPatterns: z.boolean().optional().default(false),
-    includeFrequencyAnalysis: z.boolean().optional().default(false),
-    includePredictions: z.boolean().optional().default(false),
-    minTransactionCount: z.number().int().min(1).optional().default(3),
-  }).optional().default({
-    includeSpendingAnalysis: true,
-    includeSeasonalPatterns: false,
-    includeFrequencyAnalysis: false,
-    includePredictions: false,
-    minTransactionCount: 3,
-  }),
+  options: z
+    .object({
+      includeSpendingAnalysis: z.boolean().optional().default(true),
+      includeSeasonalPatterns: z.boolean().optional().default(false),
+      includeFrequencyAnalysis: z.boolean().optional().default(false),
+      includePredictions: z.boolean().optional().default(false),
+      minTransactionCount: z.number().int().min(1).optional().default(3),
+    })
+    .optional()
+    .default({
+      includeSpendingAnalysis: true,
+      includeSeasonalPatterns: false,
+      includeFrequencyAnalysis: false,
+      includePredictions: false,
+      minTransactionCount: 3,
+    }),
 });
 
 /**
@@ -344,7 +372,9 @@ export type UpdateCalculatedFieldsInput = z.infer<typeof updateCalculatedFieldsS
 // Intelligence validation type exports
 export type IntelligenceAnalysisInput = z.infer<typeof intelligenceAnalysisSchema>;
 export type ComprehensiveIntelligenceInput = z.infer<typeof comprehensiveIntelligenceSchema>;
-export type ApplyIntelligentOptimizationsInput = z.infer<typeof applyIntelligentOptimizationsSchema>;
+export type ApplyIntelligentOptimizationsInput = z.infer<
+  typeof applyIntelligentOptimizationsSchema
+>;
 export type BulkIntelligenceAnalysisInput = z.infer<typeof bulkIntelligenceAnalysisSchema>;
 export type TransactionPredictionInput = z.infer<typeof transactionPredictionSchema>;
 export type BudgetAllocationSuggestionInput = z.infer<typeof budgetAllocationSuggestionSchema>;

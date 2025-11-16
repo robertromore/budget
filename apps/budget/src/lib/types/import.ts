@@ -7,9 +7,13 @@
  */
 
 // Import row states
-export type ImportRowStatus = 'pending' | 'valid' | 'invalid' | 'warning' | 'duplicate' | 'skipped';
-export type ImportPhase = 'validation' | 'entity_matching' | 'transaction_creation' | 'finalization';
-export type MatchType = 'exact' | 'fuzzy' | 'created' | 'none';
+export type ImportRowStatus = "pending" | "valid" | "invalid" | "warning" | "duplicate" | "skipped";
+export type ImportPhase =
+  | "validation"
+  | "entity_matching"
+  | "transaction_creation"
+  | "finalization";
+export type MatchType = "exact" | "fuzzy" | "created" | "none";
 
 // Raw import data from file parsing
 export interface ImportRow {
@@ -28,7 +32,7 @@ export interface NormalizedTransaction {
   payee?: string;
   notes?: string;
   category?: string;
-  status?: 'pending' | 'cleared';
+  status?: "pending" | "cleared";
   fitid?: string; // OFX Financial Institution Transaction ID
 }
 
@@ -37,7 +41,7 @@ export interface ValidationError {
   field: string;
   message: string;
   value?: any;
-  severity: 'error' | 'warning';
+  severity: "error" | "warning";
 }
 
 // Column mapping for flexible CSV structures
@@ -59,7 +63,7 @@ export interface EntityMatch {
   entityId?: number;
   entityName: string;
   created: boolean;
-  alternatives?: Array<{ id: number; name: string; confidence: number }>;
+  alternatives?: Array<{id: number; name: string; confidence: number}>;
 }
 
 export interface EntityMatches {
@@ -148,13 +152,13 @@ export interface ImportProgress {
   total: number;
   percentage: number;
   currentRow?: number;
-  errors: Array<{ row: number; message: string }>;
+  errors: Array<{row: number; message: string}>;
 }
 
 // File processor interface
 export interface FileProcessor {
   parseFile(file: File): Promise<ImportRow[]>;
-  validateFile(file: File): { valid: boolean; error?: string };
+  validateFile(file: File): {valid: boolean; error?: string};
   getSupportedFormats(): string[];
 }
 
@@ -211,7 +215,7 @@ export interface OFXData {
 // Entity preview for review before creation
 export interface EntityPreview {
   name: string;
-  source: 'import' | 'inferred'; // Whether explicitly provided or inferred from transaction data
+  source: "import" | "inferred"; // Whether explicitly provided or inferred from transaction data
   occurrences: number; // How many transactions use this entity
   selected: boolean; // Whether user selected to create this entity
   existing?: {
@@ -221,11 +225,11 @@ export interface EntityPreview {
 }
 
 export interface PayeePreview extends EntityPreview {
-  suggestedType?: 'individual' | 'business';
+  suggestedType?: "individual" | "business";
 }
 
 export interface CategoryPreview extends EntityPreview {
-  suggestedType?: 'income' | 'expense' | 'transfer';
+  suggestedType?: "income" | "expense" | "transfer";
 }
 
 // Preview data returned before actual import
@@ -281,7 +285,7 @@ export interface QBOTransaction {
 }
 
 // Schedule matching
-export type ScheduleMatchConfidence = 'exact' | 'high' | 'medium' | 'low' | 'none';
+export type ScheduleMatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 
 export interface ScheduleMatch {
   rowIndex: number;
@@ -300,7 +304,7 @@ export interface ScheduleMatch {
   scheduleData: {
     name: string;
     amount: number;
-    amount_type: 'exact' | 'approximate' | 'range';
+    amount_type: "exact" | "approximate" | "range";
     recurring: boolean;
   };
 }

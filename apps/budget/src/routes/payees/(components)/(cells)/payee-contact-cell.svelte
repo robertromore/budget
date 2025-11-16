@@ -7,18 +7,18 @@ interface Props {
   phone: string | null;
 }
 
-let { email, phone }: Props = $props();
+let {email, phone}: Props = $props();
 </script>
 
 <div class="space-y-1 text-sm">
   {#if email}
-    <div class="flex items-center gap-1 text-muted-foreground">
+    <div class="text-muted-foreground flex items-center gap-1">
       <Mail class="h-3 w-3" />
-      <span class="truncate max-w-[200px]">{email}</span>
+      <span class="max-w-[200px] truncate">{email}</span>
     </div>
   {/if}
   {#if phone}
-    <div class="flex items-center gap-1 text-muted-foreground">
+    <div class="text-muted-foreground flex items-center gap-1">
       <Phone class="h-3 w-3" />
       <span>{phone}</span>
     </div>

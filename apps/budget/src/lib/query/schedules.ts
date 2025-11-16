@@ -1,5 +1,5 @@
-import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
-import { trpc } from "$lib/trpc/client";
+import {defineQuery, defineMutation, createQueryKeys} from "./_factory";
+import {trpc} from "$lib/trpc/client";
 
 /**
  * Query Keys for schedule operations
@@ -27,7 +27,7 @@ export const getAll = () =>
 export const getByAccount = (accountId: number) =>
   defineQuery({
     queryKey: scheduleKeys.byAccount(accountId),
-    queryFn: () => trpc().scheduleRoutes.getByAccount.query({ accountId }),
+    queryFn: () => trpc().scheduleRoutes.getByAccount.query({accountId}),
   });
 
 /**
@@ -36,5 +36,5 @@ export const getByAccount = (accountId: number) =>
 export const getById = (id: number) =>
   defineQuery({
     queryKey: scheduleKeys.detail(id),
-    queryFn: () => trpc().scheduleRoutes.load.query({ id }),
+    queryFn: () => trpc().scheduleRoutes.load.query({id}),
   });

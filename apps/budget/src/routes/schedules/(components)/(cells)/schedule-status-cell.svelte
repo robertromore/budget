@@ -13,7 +13,7 @@ function getStatusVariant(status: string | null) {
 }
 </script>
 
-<div class="flex gap-1 flex-wrap">
+<div class="flex flex-wrap gap-1">
   <Badge variant={getStatusVariant(schedule.status)}>
     {schedule.status}
   </Badge>

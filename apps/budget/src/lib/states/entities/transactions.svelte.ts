@@ -25,7 +25,9 @@ export class TransactionsState {
   private pagination = $state<PaginationParams>({page: 0, pageSize: 50});
 
   // Queries
-  private accountTransactionsQuery = $state<ReturnType<typeof createAccountTransactionsQuery> | null>(null);
+  private accountTransactionsQuery = $state<ReturnType<
+    typeof createAccountTransactionsQuery
+  > | null>(null);
   private listQuery = $state<ReturnType<typeof createTransactionsListQuery> | null>(null);
   private summaryQuery = $state<ReturnType<typeof createAccountSummaryQuery> | null>(null);
 
@@ -63,10 +65,7 @@ export class TransactionsState {
     this.refreshList();
   }
 
-  updateFilter<K extends keyof TransactionFilters>(
-    key: K,
-    value: TransactionFilters[K]
-  ) {
+  updateFilter<K extends keyof TransactionFilters>(key: K, value: TransactionFilters[K]) {
     this.filters = {...this.filters, [key]: value};
     this.refreshList();
   }
@@ -147,7 +146,11 @@ export class TransactionsState {
   }
 
   async updateTransaction(id: number, data: UpdateTransactionData) {
-    return await this.updateMutation.mutateAsync({id, data, accountId: data.accountId || this.accountId!});
+    return await this.updateMutation.mutateAsync({
+      id,
+      data,
+      accountId: data.accountId || this.accountId!,
+    });
   }
 
   async deleteTransaction(id: number) {
@@ -199,9 +202,7 @@ export class TransactionsState {
       const payee = t.payee?.name?.toLowerCase() || "";
       const category = t.category?.name?.toLowerCase() || "";
       return (
-        notes.includes(searchLower) ||
-        payee.includes(searchLower) ||
-        category.includes(searchLower)
+        notes.includes(searchLower) || payee.includes(searchLower) || category.includes(searchLower)
       );
     });
   }

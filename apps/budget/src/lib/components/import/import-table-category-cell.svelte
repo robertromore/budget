@@ -22,7 +22,9 @@ interface Props {
 let {row, onUpdate, temporaryCategories = []}: Props = $props();
 
 const categoryState = CategoriesState.get();
-const categoriesArray = $derived(categoryState ? Array.from(categoryState.categories.values()) : []);
+const categoriesArray = $derived(
+  categoryState ? Array.from(categoryState.categories.values()) : []
+);
 
 // Get the current value from the row data
 const initialCategoryName = $derived(row.original.normalizedData['category'] as string | undefined);
@@ -39,7 +41,7 @@ $effect(() => {
     _selectedCategoryName = initName;
 
     if (initName) {
-      const match = categoriesArray.find(c => c.name?.toLowerCase() === initName.toLowerCase());
+      const match = categoriesArray.find((c) => c.name?.toLowerCase() === initName.toLowerCase());
       _selectedCategoryId = match?.id || null;
     }
 
@@ -50,12 +52,16 @@ $effect(() => {
 // Create accessors to allow controlled access without triggering effect loops
 const selectedCategoryName = createTransformAccessors(
   () => _selectedCategoryName,
-  (value: string) => { _selectedCategoryName = value; }
+  (value: string) => {
+    _selectedCategoryName = value;
+  }
 );
 
 const selectedCategoryId = createTransformAccessors(
   () => _selectedCategoryId,
-  (value: number | null) => { _selectedCategoryId = value; }
+  (value: number | null) => {
+    _selectedCategoryId = value;
+  }
 );
 
 const rowIndex = $derived(row.original.rowIndex);
@@ -64,14 +70,20 @@ let searchValue = $state('');
 
 // Combine existing categories with temporary ones for search
 const combinedItems = $derived.by(() => {
-  const existing = categoriesArray.map(c => ({type: 'existing' as const, category: c, name: c.name || ''}));
+  const existing = categoriesArray.map((c) => ({
+    type: 'existing' as const,
+    category: c,
+    name: c.name || '',
+  }));
   const temporary = temporaryCategories
-    .filter(name => !categoriesArray.some(c => c.name?.toLowerCase() === name.toLowerCase()))
-    .map(name => ({type: 'temporary' as const, name}));
+    .filter((name) => !categoriesArray.some((c) => c.name?.toLowerCase() === name.toLowerCase()))
+    .map((name) => ({type: 'temporary' as const, name}));
   return [...existing, ...temporary];
 });
 
-const fused = $derived(new Fuse(combinedItems, {keys: ['name'], includeScore: true, threshold: 0.3}));
+const fused = $derived(
+  new Fuse(combinedItems, {keys: ['name'], includeScore: true, threshold: 0.3})
+);
 
 let visibleItems = $derived.by(() => {
   if (searchValue) {
@@ -80,19 +92,26 @@ let visibleItems = $derived.by(() => {
   return combinedItems;
 });
 
-const visibleCategories = $derived(visibleItems.filter(item => item.type === 'existing').map(item => item.category));
-const visibleTemporaryCategories = $derived(visibleItems.filter(item => item.type === 'temporary').map(item => item.name));
+const visibleCategories = $derived(
+  visibleItems.filter((item) => item.type === 'existing').map((item) => item.category)
+);
+const visibleTemporaryCategories = $derived(
+  visibleItems.filter((item) => item.type === 'temporary').map((item) => item.name)
+);
 
-const selectedCategory = $derived(categoriesArray.find(c => c.id === selectedCategoryId.get()));
-const displayName = $derived(selectedCategory?.name || selectedCategoryName.get() || 'Select category...');
+const selectedCategory = $derived(categoriesArray.find((c) => c.id === selectedCategoryId.get()));
+const displayName = $derived(
+  selectedCategory?.name || selectedCategoryName.get() || 'Select category...'
+);
 
 // Show "Create" option when: there's search text AND no exact match exists (case-sensitive)
 const showCreateOption = $derived.by(() => {
   if (!searchValue.trim()) return false;
   const searchTrimmed = searchValue.trim();
   // Check for exact match (case-sensitive) - allows creating different capitalizations
-  const hasExactMatch = visibleCategories.some(c => c.name === searchTrimmed) ||
-                        visibleTemporaryCategories.some(t => t === searchTrimmed);
+  const hasExactMatch =
+    visibleCategories.some((c) => c.name === searchTrimmed) ||
+    visibleTemporaryCategories.some((t) => t === searchTrimmed);
   return !hasExactMatch;
 });
 
@@ -155,7 +174,7 @@ function handleClear() {
           {...props}
           variant="outline"
           class={cn(
-            'w-full h-8 text-xs justify-start overflow-hidden text-ellipsis whitespace-nowrap',
+            'h-8 w-full justify-start overflow-hidden text-xs text-ellipsis whitespace-nowrap',
             !selectedCategory && !selectedCategoryName.get() && 'text-muted-foreground'
           )}>
           <Tag class="mr-2 h-3 w-3" />
@@ -169,10 +188,7 @@ function handleClear() {
         <Command.List class="max-h-[300px]">
           <Command.Group>
             {#if selectedCategoryName.get() || selectedCategoryId.get()}
-              <Command.Item
-                value="clear"
-                onSelect={() => handleClear()}
-                class="text-destructive">
+              <Command.Item value="clear" onSelect={() => handleClear()} class="text-destructive">
                 <X class="mr-2 h-4 w-4" />
                 Clear category
               </Command.Item>

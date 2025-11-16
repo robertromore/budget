@@ -1,10 +1,10 @@
-import type { PageServerLoad } from './$types';
-import { error } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
-import { eq, isNull } from 'drizzle-orm';
-import { schedules } from '$lib/schema';
+import type {PageServerLoad} from "./$types";
+import {error} from "@sveltejs/kit";
+import {db} from "$lib/server/db";
+import {eq, isNull} from "drizzle-orm";
+import {schedules} from "$lib/schema";
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({params}) => {
   // Load schedule by slug with all related data
   const schedule = await db.query.schedules.findFirst({
     where: eq(schedules.slug, params.slug),
@@ -13,19 +13,19 @@ export const load: PageServerLoad = async ({ params }) => {
       payee: true,
       scheduleDate: true,
       transactions: {
-        where: (transactions, { isNull }) => isNull(transactions.deletedAt),
+        where: (transactions, {isNull}) => isNull(transactions.deletedAt),
         with: {
           payee: true,
           category: true,
         },
-        orderBy: (transactions, { desc }) => [desc(transactions.date)],
-        limit: 50 // Get recent transactions for history
+        orderBy: (transactions, {desc}) => [desc(transactions.date)],
+        limit: 50, // Get recent transactions for history
       },
     },
   });
 
   if (!schedule) {
-    throw error(404, 'Schedule not found');
+    throw error(404, "Schedule not found");
   }
 
   // Calculate statistics
@@ -38,11 +38,11 @@ export const load: PageServerLoad = async ({ params }) => {
     totalTransactions,
     totalAmount,
     averageAmount,
-    lastExecuted
+    lastExecuted,
   };
 
   return {
     schedule,
-    statistics
+    statistics,
   };
 };

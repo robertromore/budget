@@ -1,16 +1,10 @@
-import { relations, sql } from "drizzle-orm";
-import {
-  index,
-  integer,
-  real,
-  sqliteTable,
-  text,
-} from "drizzle-orm/sqlite-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { accounts } from "./accounts";
-import { budgets } from "./budgets";
-import { categories } from "./categories";
-import { workspaces } from "./workspaces";
+import {relations, sql} from "drizzle-orm";
+import {index, integer, real, sqliteTable, text} from "drizzle-orm/sqlite-core";
+import {createInsertSchema, createSelectSchema} from "drizzle-zod";
+import {accounts} from "./accounts";
+import {budgets} from "./budgets";
+import {categories} from "./categories";
+import {workspaces} from "./workspaces";
 
 export const recommendationTypes = [
   "create_budget",
@@ -27,12 +21,7 @@ export const recommendationTypes = [
 
 export const recommendationPriorities = ["high", "medium", "low"] as const;
 
-export const recommendationStatuses = [
-  "pending",
-  "dismissed",
-  "applied",
-  "expired",
-] as const;
+export const recommendationStatuses = ["pending", "dismissed", "applied", "expired"] as const;
 
 export type RecommendationType = (typeof recommendationTypes)[number];
 export type RecommendationPriority = (typeof recommendationPriorities)[number];
@@ -94,7 +83,12 @@ export interface RecommendationMetadata {
   categoryPatternMatch?: string[];
   accountPatternMatch?: number[];
   spendingPatternSimilarity?: number;
-  groupingReason?: "category_hierarchy" | "account_clustering" | "spending_pattern" | "name_similarity" | "manual";
+  groupingReason?:
+    | "category_hierarchy"
+    | "account_clustering"
+    | "spending_pattern"
+    | "name_similarity"
+    | "manual";
   confidenceFactors?: {
     categoryMatch: number;
     accountMatch: number;
@@ -108,24 +102,20 @@ export interface RecommendationMetadata {
 export const budgetRecommendations = sqliteTable(
   "budget_recommendation",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: integer("id").primaryKey({autoIncrement: true}),
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspaces.id, {onDelete: "cascade"}),
-    type: text("type", { enum: recommendationTypes }).notNull(),
-    priority: text("priority", { enum: recommendationPriorities })
-      .notNull()
-      .default("medium"),
+    type: text("type", {enum: recommendationTypes}).notNull(),
+    priority: text("priority", {enum: recommendationPriorities}).notNull().default("medium"),
     title: text("title").notNull(),
     description: text("description").notNull(),
     confidence: real("confidence").notNull(), // 0-100
-    metadata: text("metadata", { mode: "json" })
+    metadata: text("metadata", {mode: "json"})
       .$type<RecommendationMetadata>()
       .default({})
       .notNull(),
-    status: text("status", { enum: recommendationStatuses })
-      .notNull()
-      .default("pending"),
+    status: text("status", {enum: recommendationStatuses}).notNull().default("pending"),
     budgetId: integer("budget_id").references(() => budgets.id, {
       onDelete: "cascade",
     }),
@@ -158,27 +148,24 @@ export const budgetRecommendations = sqliteTable(
   ]
 );
 
-export const budgetRecommendationsRelations = relations(
-  budgetRecommendations,
-  ({ one }) => ({
-    workspace: one(workspaces, {
-      fields: [budgetRecommendations.workspaceId],
-      references: [workspaces.id],
-    }),
-    budget: one(budgets, {
-      fields: [budgetRecommendations.budgetId],
-      references: [budgets.id],
-    }),
-    account: one(accounts, {
-      fields: [budgetRecommendations.accountId],
-      references: [accounts.id],
-    }),
-    category: one(categories, {
-      fields: [budgetRecommendations.categoryId],
-      references: [categories.id],
-    }),
-  })
-);
+export const budgetRecommendationsRelations = relations(budgetRecommendations, ({one}) => ({
+  workspace: one(workspaces, {
+    fields: [budgetRecommendations.workspaceId],
+    references: [workspaces.id],
+  }),
+  budget: one(budgets, {
+    fields: [budgetRecommendations.budgetId],
+    references: [budgets.id],
+  }),
+  account: one(accounts, {
+    fields: [budgetRecommendations.accountId],
+    references: [accounts.id],
+  }),
+  category: one(categories, {
+    fields: [budgetRecommendations.categoryId],
+    references: [categories.id],
+  }),
+}));
 
 export const selectRecommendationSchema = createSelectSchema(budgetRecommendations);
 export const insertRecommendationSchema = createInsertSchema(budgetRecommendations);

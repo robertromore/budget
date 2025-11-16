@@ -58,17 +58,19 @@ async function handlePatternDismiss() {
 
 <div class="container mx-auto p-6">
   <div class="mb-8">
-    <h1 class="text-3xl font-bold tracking-tight mb-2">Pattern Detection</h1>
-    <p class="text-muted-foreground">Analyze your data to discover recurring patterns and insights</p>
+    <h1 class="mb-2 text-3xl font-bold tracking-tight">Pattern Detection</h1>
+    <p class="text-muted-foreground">
+      Analyze your data to discover recurring patterns and insights
+    </p>
   </div>
 
   <!-- Schedule Patterns - Active Feature -->
-  <Card.Root class="mb-8 border-primary/50">
+  <Card.Root class="border-primary/50 mb-8">
     <Card.Header>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="p-2 rounded-lg bg-primary/10">
-            <RotateCw class="h-6 w-6 text-primary" />
+          <div class="bg-primary/10 rounded-lg p-2">
+            <RotateCw class="text-primary h-6 w-6" />
           </div>
           <div>
             <Card.Title class="text-2xl">Schedule Patterns</Card.Title>
@@ -82,11 +84,13 @@ async function handlePatternDismiss() {
             variant="outline"
             onclick={clearAndRegeneratePatterns}
             disabled={detectMutation.isPending || deleteAllMutation.isPending}>
-            <RotateCw class="h-4 w-4 mr-2" />
-            {detectMutation.isPending || deleteAllMutation.isPending ? 'Regenerating...' : 'Regenerate'}
+            <RotateCw class="mr-2 h-4 w-4" />
+            {detectMutation.isPending || deleteAllMutation.isPending
+              ? 'Regenerating...'
+              : 'Regenerate'}
           </Button>
           <Button onclick={runPatternDetection} disabled={detectMutation.isPending}>
-            <Sparkles class="h-4 w-4 mr-2" />
+            <Sparkles class="mr-2 h-4 w-4" />
             {detectMutation.isPending ? 'Detecting...' : 'Detect Patterns'}
           </Button>
         </div>
@@ -95,18 +99,21 @@ async function handlePatternDismiss() {
     <Card.Content class="pt-0">
       {#if patternsQuery.isLoading}
         <div class="p-8 text-center">
-          <div class="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p class="text-sm text-muted-foreground">Loading patterns...</p>
+          <div
+            class="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent">
+          </div>
+          <p class="text-muted-foreground text-sm">Loading patterns...</p>
         </div>
       {:else if patterns.length === 0 && !detectMutation.isPending}
         <div class="p-8 text-center">
-          <TrendingUp class="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 class="text-lg font-semibold mb-2">No patterns detected yet</h3>
+          <TrendingUp class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+          <h3 class="mb-2 text-lg font-semibold">No patterns detected yet</h3>
           <p class="text-muted-foreground mb-4">
-            Run pattern detection to analyze your transaction history and discover recurring patterns
+            Run pattern detection to analyze your transaction history and discover recurring
+            patterns
           </p>
           <Button onclick={runPatternDetection} disabled={detectMutation.isPending}>
-            <Sparkles class="h-4 w-4 mr-2" />
+            <Sparkles class="mr-2 h-4 w-4" />
             {detectMutation.isPending ? 'Detecting...' : 'Detect Patterns'}
           </Button>
         </div>
@@ -115,15 +122,14 @@ async function handlePatternDismiss() {
           {patterns}
           isLoading={patternsQuery.isLoading}
           onConvert={handlePatternConvert}
-          onDismiss={handlePatternDismiss}
-        />
+          onDismiss={handlePatternDismiss} />
       {/if}
     </Card.Content>
   </Card.Root>
 
   <!-- Coming Soon Patterns -->
   <div>
-    <h2 class="text-xl font-semibold mb-4">More Pattern Types Coming Soon</h2>
+    <h2 class="mb-4 text-xl font-semibold">More Pattern Types Coming Soon</h2>
     <div class="grid gap-6 md:grid-cols-3">
       <!-- Spending Patterns -->
       <Card.Root class="relative overflow-hidden">
@@ -131,8 +137,8 @@ async function handlePatternDismiss() {
           <Badge variant="outline" class="text-xs">Coming Soon</Badge>
         </div>
         <Card.Header>
-          <div class="p-2 rounded-lg bg-muted w-fit mb-2">
-            <TrendingUp class="h-5 w-5 text-muted-foreground" />
+          <div class="bg-muted mb-2 w-fit rounded-lg p-2">
+            <TrendingUp class="text-muted-foreground h-5 w-5" />
           </div>
           <Card.Title class="text-lg">Spending Patterns</Card.Title>
           <Card.Description class="text-sm">
@@ -140,7 +146,7 @@ async function handlePatternDismiss() {
           </Card.Description>
         </Card.Header>
         <Card.Content>
-          <p class="text-sm text-muted-foreground">
+          <p class="text-muted-foreground text-sm">
             Analyze your spending to identify trends, anomalies, and opportunities to save
           </p>
         </Card.Content>
@@ -152,8 +158,8 @@ async function handlePatternDismiss() {
           <Badge variant="outline" class="text-xs">Coming Soon</Badge>
         </div>
         <Card.Header>
-          <div class="p-2 rounded-lg bg-muted w-fit mb-2">
-            <TrendingUp class="h-5 w-5 text-muted-foreground" />
+          <div class="bg-muted mb-2 w-fit rounded-lg p-2">
+            <TrendingUp class="text-muted-foreground h-5 w-5" />
           </div>
           <Card.Title class="text-lg">Budget Patterns</Card.Title>
           <Card.Description class="text-sm">
@@ -161,7 +167,7 @@ async function handlePatternDismiss() {
           </Card.Description>
         </Card.Header>
         <Card.Content>
-          <p class="text-sm text-muted-foreground">
+          <p class="text-muted-foreground text-sm">
             Get intelligent budget recommendations based on your historical spending patterns
           </p>
         </Card.Content>
@@ -173,8 +179,8 @@ async function handlePatternDismiss() {
           <Badge variant="outline" class="text-xs">Coming Soon</Badge>
         </div>
         <Card.Header>
-          <div class="p-2 rounded-lg bg-muted w-fit mb-2">
-            <TrendingUp class="h-5 w-5 text-muted-foreground" />
+          <div class="bg-muted mb-2 w-fit rounded-lg p-2">
+            <TrendingUp class="text-muted-foreground h-5 w-5" />
           </div>
           <Card.Title class="text-lg">Category Patterns</Card.Title>
           <Card.Description class="text-sm">
@@ -182,7 +188,7 @@ async function handlePatternDismiss() {
           </Card.Description>
         </Card.Header>
         <Card.Content>
-          <p class="text-sm text-muted-foreground">
+          <p class="text-muted-foreground text-sm">
             Learn from your categorization habits to auto-categorize similar transactions
           </p>
         </Card.Content>

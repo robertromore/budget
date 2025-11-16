@@ -27,7 +27,7 @@ const columnFacetedValues = $derived.by(() => {
   return Array.from(facetedUniqueValues.entries()).map(([value, count]) => ({
     value: value as string,
     label: value as string, // Will be formatted properly by the actual date formatter
-    count
+    count,
   }));
 });
 

@@ -1,11 +1,13 @@
 # Financial Data Import System
 
-Complete multi-format import system for importing financial transactions from various sources.
+Complete multi-format import system for importing financial transactions from
+various sources.
 
 ## Features
 
 - **Multi-Format Support**: CSV, Excel (.xlsx, .xls), QIF, OFX/QFX
-- **Smart Entity Matching**: Automatic fuzzy matching for payees and keyword-based category matching
+- **Smart Entity Matching**: Automatic fuzzy matching for payees and
+  keyword-based category matching
 - **Auto-Creation**: Creates missing payees and categories automatically
 - **Validation**: Comprehensive data validation with duplicate detection
 - **Error Handling**: Detailed error collection with partial import support
@@ -23,17 +25,13 @@ Navigate to `/import` to access the import wizard:
 ### 2. Programmatic Usage
 
 ```typescript
-import { ImportOrchestrator } from '$lib/server/import/import-orchestrator';
+import {ImportOrchestrator} from '$lib/server/import/import-orchestrator';
 
 const orchestrator = new ImportOrchestrator();
-const result = await orchestrator.processImport(
-  accountId,
-  importRows,
-  {
-    allowPartialImport: true,
-    createMissingEntities: true,
-  }
-);
+const result = await orchestrator.processImport(accountId, importRows, {
+  allowPartialImport: true,
+  createMissingEntities: true,
+});
 
 console.log(`Imported ${result.transactionsCreated} transactions`);
 ```
@@ -49,6 +47,7 @@ Date,Amount,Payee,Description,Category
 ```
 
 **Automatically recognized headers:**
+
 - Date: "Date", "Trans Date", "Transaction Date", "Posted Date"
 - Amount: "Amount", "Debit", "Credit", "Transaction Amount"
 - Payee: "Payee", "Merchant", "Vendor", "Name"
@@ -62,6 +61,7 @@ Standard Excel spreadsheets with headers in the first row.
 ### QIF Files (.qif)
 
 Quicken Interchange Format with standard transaction codes:
+
 - D = Date
 - T = Transaction amount
 - P = Payee
@@ -81,7 +81,7 @@ Open Financial Exchange format (both XML 2.x and SGML 1.x).
 The system uses fuzzy string matching with confidence scoring:
 
 ```typescript
-import { PayeeMatcher } from '$lib/server/import/matchers/payee-matcher';
+import {PayeeMatcher} from '$lib/server/import/matchers/payee-matcher';
 
 const matcher = new PayeeMatcher();
 const match = matcher.findBestMatch('WALMART #1234', existingPayees);
@@ -96,6 +96,7 @@ const match = matcher.findBestMatch('WALMART #1234', existingPayees);
 ```
 
 **Features:**
+
 - Fuzzy matching using Levenshtein distance
 - Automatic name cleaning (removes transaction IDs, prefixes, dates)
 - Confidence levels: exact, high, medium, low, none
@@ -106,7 +107,7 @@ const match = matcher.findBestMatch('WALMART #1234', existingPayees);
 Keyword-based matching with 10+ default patterns:
 
 ```typescript
-import { CategoryMatcher } from '$lib/server/import/matchers/category-matcher';
+import {CategoryMatcher} from '$lib/server/import/matchers/category-matcher';
 
 const matcher = new CategoryMatcher();
 const match = matcher.findBestMatch(
@@ -127,6 +128,7 @@ const match = matcher.findBestMatch(
 ```
 
 **Default Category Patterns:**
+
 - Groceries: walmart, kroger, safeway, whole foods, etc.
 - Dining Out: restaurant, starbucks, chipotle, etc.
 - Transportation: gas, uber, lyft, parking, etc.
@@ -141,10 +143,13 @@ const match = matcher.findBestMatch(
 **Custom Patterns:**
 
 ```typescript
-const matcher = new CategoryMatcher({}, {
-  'Coffee': ['starbucks', 'dunkin', 'coffee shop'],
-  'Subscriptions': ['netflix', 'spotify', 'adobe'],
-});
+const matcher = new CategoryMatcher(
+  {},
+  {
+    Coffee: ['starbucks', 'dunkin', 'coffee shop'],
+    Subscriptions: ['netflix', 'spotify', 'adobe'],
+  }
+);
 ```
 
 ## Validation
@@ -154,7 +159,7 @@ const matcher = new CategoryMatcher({}, {
 Comprehensive validation with duplicate detection:
 
 ```typescript
-import { TransactionValidator } from '$lib/server/import/validators/transaction-validator';
+import {TransactionValidator} from '$lib/server/import/validators/transaction-validator';
 
 const validator = new TransactionValidator({
   requireDate: true,
@@ -169,6 +174,7 @@ const summary = validator.getValidationSummary(validatedRows);
 ```
 
 **Validation Checks:**
+
 - Required fields (date, amount, optional payee)
 - Date format (YYYY-MM-DD) and range validation
 - Amount thresholds and numeric validation
@@ -244,34 +250,34 @@ The system collects errors without stopping the import:
 
 ```typescript
 interface ImportOptions {
-  allowPartialImport?: boolean;      // Continue on errors (default: true)
-  createMissingEntities?: boolean;   // Auto-create payees/categories (default: true)
+  allowPartialImport?: boolean; // Continue on errors (default: true)
+  createMissingEntities?: boolean; // Auto-create payees/categories (default: true)
 }
 
 interface ValidationOptions {
-  requireDate?: boolean;              // Date is required (default: true)
-  requireAmount?: boolean;            // Amount is required (default: true)
-  requirePayee?: boolean;             // Payee is required (default: false)
-  checkDuplicates?: boolean;          // Detect duplicates (default: true)
-  maxAmountThreshold?: number;        // Max amount (default: $1M)
-  minAmountThreshold?: number;        // Min amount (default: $0.01)
-  allowFutureDates?: boolean;         // Allow future dates (default: true)
-  futureMonths?: number;              // Max future months (default: 3)
+  requireDate?: boolean; // Date is required (default: true)
+  requireAmount?: boolean; // Amount is required (default: true)
+  requirePayee?: boolean; // Payee is required (default: false)
+  checkDuplicates?: boolean; // Detect duplicates (default: true)
+  maxAmountThreshold?: number; // Max amount (default: $1M)
+  minAmountThreshold?: number; // Min amount (default: $0.01)
+  allowFutureDates?: boolean; // Allow future dates (default: true)
+  futureMonths?: number; // Max future months (default: 3)
 }
 
 interface PayeeMatcherOptions {
-  exactThreshold?: number;            // Exact match threshold (default: 1.0)
-  highThreshold?: number;             // High confidence (default: 0.9)
-  mediumThreshold?: number;           // Medium confidence (default: 0.7)
-  createIfNoMatch?: boolean;          // Auto-create (default: true)
+  exactThreshold?: number; // Exact match threshold (default: 1.0)
+  highThreshold?: number; // High confidence (default: 0.9)
+  mediumThreshold?: number; // Medium confidence (default: 0.7)
+  createIfNoMatch?: boolean; // Auto-create (default: true)
 }
 
 interface CategoryMatcherOptions {
-  exactThreshold?: number;            // Exact match threshold (default: 1.0)
-  highThreshold?: number;             // High confidence (default: 0.9)
-  mediumThreshold?: number;           // Medium confidence (default: 0.7)
-  useKeywordPatterns?: boolean;       // Use keywords (default: true)
-  usePayeeName?: boolean;             // Match on payee (default: true)
+  exactThreshold?: number; // Exact match threshold (default: 1.0)
+  highThreshold?: number; // High confidence (default: 0.9)
+  mediumThreshold?: number; // Medium confidence (default: 0.7)
+  useKeywordPatterns?: boolean; // Use keywords (default: true)
+  usePayeeName?: boolean; // Match on payee (default: true)
 }
 ```
 
@@ -288,21 +294,25 @@ interface CategoryMatcherOptions {
 ## Troubleshooting
 
 **Issue**: CSV not parsing correctly
+
 - Check file encoding (UTF-8 recommended)
 - Verify headers are in the first row
 - Check for special characters in delimiter
 
 **Issue**: Dates not recognized
+
 - Use YYYY-MM-DD format
 - Check for Excel serial dates (auto-converted)
 - Verify date column is properly mapped
 
 **Issue**: Amounts not calculating correctly
+
 - Remove currency symbols and formatting
 - Use negative numbers for expenses
 - Check for thousands separators (auto-removed)
 
 **Issue**: Duplicate transactions detected
+
 - This is a safety feature to prevent double imports
 - Review flagged duplicates before importing
 - Adjust duplicate detection thresholds if needed
@@ -319,6 +329,7 @@ interface CategoryMatcherOptions {
 ## Support
 
 For issues or questions, please check:
+
 - Test files in `test-data/`
 - Example implementations in `__tests__/`
 - Type definitions in `$lib/types/import.ts`

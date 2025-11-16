@@ -5,15 +5,9 @@
  * QIF format uses single-letter codes followed by data on each line.
  */
 
-import type { FileProcessor, ImportRow, NormalizedTransaction } from '$lib/types/import';
-import { FileValidationError, ParseError } from '../errors';
-import {
-  normalizeHeader,
-  parseDate,
-  parseAmount,
-  sanitizeText,
-  validateFileType,
-} from '../utils';
+import type {FileProcessor, ImportRow, NormalizedTransaction} from "$lib/types/import";
+import {FileValidationError, ParseError} from "../errors";
+import {normalizeHeader, parseDate, parseAmount, sanitizeText, validateFileType} from "../utils";
 
 interface QIFTransaction {
   date?: string;
@@ -27,18 +21,18 @@ interface QIFTransaction {
 
 export class QIFProcessor implements FileProcessor {
   private readonly maxFileSize = 5 * 1024 * 1024; // 5MB
-  private readonly supportedFormats = ['.qif'];
+  private readonly supportedFormats = [".qif"];
 
   getSupportedFormats(): string[] {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): { valid: boolean; error?: string } {
+  validateFile(file: File): {valid: boolean; error?: string} {
     // Check file type
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
         valid: false,
-        error: `Invalid file type. Supported formats: ${this.supportedFormats.join(', ')}`,
+        error: `Invalid file type. Supported formats: ${this.supportedFormats.join(", ")}`,
       };
     }
 
@@ -54,18 +48,18 @@ export class QIFProcessor implements FileProcessor {
     if (file.size === 0) {
       return {
         valid: false,
-        error: 'File is empty',
+        error: "File is empty",
       };
     }
 
-    return { valid: true };
+    return {valid: true};
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {
     // Validate file
     const validation = this.validateFile(file);
     if (!validation.valid) {
-      throw new FileValidationError(validation.error || 'File validation failed', 'qif');
+      throw new FileValidationError(validation.error || "File validation failed", "qif");
     }
 
     try {
@@ -73,14 +67,14 @@ export class QIFProcessor implements FileProcessor {
       const text = await file.text();
 
       if (!text || text.trim().length === 0) {
-        throw new ParseError('File is empty or contains no data');
+        throw new ParseError("File is empty or contains no data");
       }
 
       // Parse QIF transactions
       const transactions = this.parseQIFContent(text);
 
       if (transactions.length === 0) {
-        throw new ParseError('No transactions found in QIF file');
+        throw new ParseError("No transactions found in QIF file");
       }
 
       // Transform to ImportRows
@@ -92,20 +86,22 @@ export class QIFProcessor implements FileProcessor {
             rowIndex: index,
             rawData: transaction,
             normalizedData,
-            validationStatus: 'pending' as const,
+            validationStatus: "pending" as const,
           };
         } catch (error) {
           return {
             rowIndex: index,
             rawData: transaction,
             normalizedData: {},
-            validationStatus: 'invalid' as const,
-            validationErrors: [{
-              field: 'general',
-              message: error instanceof Error ? error.message : 'Failed to parse transaction',
-              value: transaction,
-              severity: 'error' as const,
-            }],
+            validationStatus: "invalid" as const,
+            validationErrors: [
+              {
+                field: "general",
+                message: error instanceof Error ? error.message : "Failed to parse transaction",
+                value: transaction,
+                severity: "error" as const,
+              },
+            ],
           };
         }
       });
@@ -115,7 +111,9 @@ export class QIFProcessor implements FileProcessor {
       if (error instanceof ParseError || error instanceof FileValidationError) {
         throw error;
       }
-      throw new ParseError(`Failed to parse QIF file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new ParseError(
+        `Failed to parse QIF file: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
@@ -132,13 +130,13 @@ export class QIFProcessor implements FileProcessor {
       if (!trimmedLine) continue;
 
       // Check for header/account type (skip these lines)
-      if (trimmedLine.startsWith('!Type:')) {
+      if (trimmedLine.startsWith("!Type:")) {
         inTransaction = true;
         continue;
       }
 
       // Transaction delimiter
-      if (trimmedLine === '^') {
+      if (trimmedLine === "^") {
         if (Object.keys(currentTransaction).length > 0) {
           transactions.push(currentTransaction);
           currentTransaction = {};
@@ -153,25 +151,25 @@ export class QIFProcessor implements FileProcessor {
       const value = trimmedLine.substring(1).trim();
 
       switch (code) {
-        case 'D': // Date
+        case "D": // Date
           currentTransaction.date = value;
           break;
-        case 'T': // Transaction amount
+        case "T": // Transaction amount
           currentTransaction.amount = this.parseQIFAmount(value);
           break;
-        case 'P': // Payee
+        case "P": // Payee
           currentTransaction.payee = value;
           break;
-        case 'M': // Memo
+        case "M": // Memo
           currentTransaction.memo = value;
           break;
-        case 'L': // Category
+        case "L": // Category
           currentTransaction.category = value;
           break;
-        case 'C': // Cleared status
+        case "C": // Cleared status
           currentTransaction.clearedStatus = value;
           break;
-        case 'N': // Check number
+        case "N": // Check number
           currentTransaction.checkNumber = value;
           break;
         // Ignore other codes for now
@@ -188,7 +186,7 @@ export class QIFProcessor implements FileProcessor {
 
   private parseQIFAmount(value: string): number {
     // QIF amounts can have commas as thousands separators
-    const cleaned = value.replace(/,/g, '');
+    const cleaned = value.replace(/,/g, "");
     return parseFloat(cleaned) || 0;
   }
 
@@ -223,18 +221,18 @@ export class QIFProcessor implements FileProcessor {
     // Category
     if (transaction.category) {
       // QIF categories can include subcategories with : separator
-      const categoryParts = transaction.category.split(':');
-      normalized.category = sanitizeText(categoryParts[0] || '', 100);
+      const categoryParts = transaction.category.split(":");
+      normalized.category = sanitizeText(categoryParts[0] || "", 100);
     }
 
     // Status
     if (transaction.clearedStatus) {
       const status = transaction.clearedStatus.toLowerCase();
       // QIF cleared status: * = cleared, c = cleared, x = reconciled
-      if (status === '*' || status === 'c' || status === 'x') {
-        normalized.status = 'cleared';
+      if (status === "*" || status === "c" || status === "x") {
+        normalized.status = "cleared";
       } else {
-        normalized.status = 'pending';
+        normalized.status = "pending";
       }
     }
 

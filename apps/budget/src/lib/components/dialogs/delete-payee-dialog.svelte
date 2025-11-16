@@ -15,9 +15,7 @@ const confirmDeletePayee = async () => {
 </script>
 
 <AlertDialog.Root
-  bind:open={
-    () => _deletePayeeDialog.current, (newOpen) => (_deletePayeeDialog.current = newOpen)
-  }>
+  bind:open={() => _deletePayeeDialog.current, (newOpen) => (_deletePayeeDialog.current = newOpen)}>
   <AlertDialog.Content>
     <AlertDialog.Header>
       <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>

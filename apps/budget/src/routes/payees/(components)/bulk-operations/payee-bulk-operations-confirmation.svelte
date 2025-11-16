@@ -1,14 +1,14 @@
 <script lang="ts">
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
-import { Badge } from '$lib/components/ui/badge';
-import { Checkbox } from '$lib/components/ui/checkbox';
-import { ScrollArea } from '$lib/components/ui/scroll-area';
-import { Input } from '$lib/components/ui/input';
-import { Label } from '$lib/components/ui/label';
+import {Button} from '$lib/components/ui/button';
+import {Badge} from '$lib/components/ui/badge';
+import {Checkbox} from '$lib/components/ui/checkbox';
+import {ScrollArea} from '$lib/components/ui/scroll-area';
+import {Input} from '$lib/components/ui/input';
+import {Label} from '$lib/components/ui/label';
 
-import { PayeesState } from '$lib/states/entities/payees.svelte';
+import {PayeesState} from '$lib/states/entities/payees.svelte';
 
 // Icons
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
@@ -63,13 +63,12 @@ const affectedPayees = $derived.by(() => {
   const allPayees = Array.from(payeesState.payees.values());
 
   if (options.payeeIds) {
-    return allPayees.filter(p => options.payeeIds!.includes(p.id));
+    return allPayees.filter((p) => options.payeeIds!.includes(p.id));
   }
 
   if (options.primaryPayeeId && options.duplicatePayeeIds) {
-    return allPayees.filter(p =>
-      p.id === options.primaryPayeeId ||
-      options.duplicatePayeeIds!.includes(p.id)
+    return allPayees.filter(
+      (p) => p.id === options.primaryPayeeId || options.duplicatePayeeIds!.includes(p.id)
     );
   }
 
@@ -96,32 +95,47 @@ const canConfirm = $derived.by(() => {
 // Get operation icon and color
 function getOperationIcon(type: string) {
   switch (type) {
-    case 'delete': return Trash2;
-    case 'merge': return Merge;
-    case 'cleanup': return Building;
-    default: return TriangleAlert;
+    case 'delete':
+      return Trash2;
+    case 'merge':
+      return Merge;
+    case 'cleanup':
+      return Building;
+    default:
+      return TriangleAlert;
   }
 }
 
 function getOperationColor(destructiveLevel?: string): string {
   switch (destructiveLevel) {
-    case 'high': return 'text-red-600';
-    case 'medium': return 'text-orange-600';
-    case 'low': return 'text-yellow-600';
-    default: return 'text-gray-600';
+    case 'high':
+      return 'text-red-600';
+    case 'medium':
+      return 'text-orange-600';
+    case 'low':
+      return 'text-yellow-600';
+    default:
+      return 'text-gray-600';
   }
 }
 
 // Get payee type icon
 function getPayeeTypeIcon(payeeType?: string | null) {
   switch (payeeType) {
-    case 'merchant': return Building;
-    case 'utility': return Building;
-    case 'employer': return Building;
-    case 'financial_institution': return Building;
-    case 'government': return Building;
-    case 'individual': return Users;
-    default: return Users;
+    case 'merchant':
+      return Building;
+    case 'utility':
+      return Building;
+    case 'employer':
+      return Building;
+    case 'financial_institution':
+      return Building;
+    case 'government':
+      return Building;
+    case 'individual':
+      return Users;
+    default:
+      return Users;
   }
 }
 
@@ -187,7 +201,7 @@ function togglePayeeDetails() {
 
 {#if options}
   <AlertDialog.Root bind:open>
-    <AlertDialog.Content class="max-w-2xl max-h-[90vh] overflow-hidden">
+    <AlertDialog.Content class="max-h-[90vh] max-w-2xl overflow-hidden">
       <AlertDialog.Header>
         <AlertDialog.Title class="flex items-center gap-2">
           {@const Icon = getOperationIcon(options.type)}
@@ -199,13 +213,13 @@ function togglePayeeDetails() {
         </AlertDialog.Description>
       </AlertDialog.Header>
 
-      <div class="space-y-4 max-h-[60vh] overflow-auto">
+      <div class="max-h-[60vh] space-y-4 overflow-auto">
         <!-- Impact Warning -->
         {#if options.showImpactWarning}
           {@const warnings = getImpactWarnings(options.type, affectedPayees.length)}
           <Card.Root class="border-orange-200 bg-orange-50">
             <Card.Header>
-              <Card.Title class="text-lg text-orange-800 flex items-center gap-2">
+              <Card.Title class="flex items-center gap-2 text-lg text-orange-800">
                 <TriangleAlert class="h-5 w-5" />
                 Impact Assessment
               </Card.Title>
@@ -213,8 +227,8 @@ function togglePayeeDetails() {
             <Card.Content>
               <ul class="space-y-1">
                 {#each warnings as warning}
-                  <li class="text-sm text-orange-700 flex items-start gap-2">
-                    <span class="text-orange-500 mt-1">•</span>
+                  <li class="flex items-start gap-2 text-sm text-orange-700">
+                    <span class="mt-1 text-orange-500">•</span>
                     {warning}
                   </li>
                 {/each}
@@ -227,19 +241,14 @@ function togglePayeeDetails() {
         {#if options.showAffectedPayees && affectedPayees.length > 0}
           <Card.Root>
             <Card.Header>
-              <Card.Title class="text-lg flex items-center justify-between">
+              <Card.Title class="flex items-center justify-between text-lg">
                 Affected Payees ({affectedPayees.length})
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onclick={togglePayeeDetails}
-                  class="h-8"
-                >
+                <Button variant="ghost" size="sm" onclick={togglePayeeDetails} class="h-8">
                   {#if showPayeeDetails}
-                    <EyeOff class="h-4 w-4 mr-2" />
+                    <EyeOff class="mr-2 h-4 w-4" />
                     Hide Details
                   {:else}
-                    <Eye class="h-4 w-4 mr-2" />
+                    <Eye class="mr-2 h-4 w-4" />
                     Show Details
                   {/if}
                 </Button>
@@ -251,11 +260,15 @@ function togglePayeeDetails() {
                   <div class="space-y-2">
                     {#each affectedPayees as payee}
                       {@const Icon = getPayeeTypeIcon(payee.payeeType)}
-                      <div class="flex items-center gap-3 p-2 border rounded-lg {payee.id === options.primaryPayeeId ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}">
-                        <Icon class="h-4 w-4 text-muted-foreground" />
-                        <div class="flex-1 min-w-0">
+                      <div
+                        class="flex items-center gap-3 rounded-lg border p-2 {payee.id ===
+                        options.primaryPayeeId
+                          ? 'border-blue-300 bg-blue-50'
+                          : 'border-gray-200'}">
+                        <Icon class="text-muted-foreground h-4 w-4" />
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-center gap-2">
-                            <span class="font-medium truncate">{payee.name}</span>
+                            <span class="truncate font-medium">{payee.name}</span>
                             {#if payee.id === options.primaryPayeeId}
                               <Badge variant="default" class="text-xs">Primary</Badge>
                             {:else if options.duplicatePayeeIds?.includes(payee.id)}
@@ -268,21 +281,21 @@ function togglePayeeDetails() {
                             {/if}
                           </div>
                           {#if payee.notes}
-                            <p class="text-xs text-muted-foreground truncate">{payee.notes}</p>
+                            <p class="text-muted-foreground truncate text-xs">{payee.notes}</p>
                           {/if}
                         </div>
-                        <div class="text-xs text-muted-foreground">
+                        <div class="text-muted-foreground text-xs">
                           ID: {payee.id}
                         </div>
                       </div>
                     {/each}
                   </div>
                 {:else}
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
                     {#each affectedPayees.slice(0, 8) as payee}
                       {@const Icon = getPayeeTypeIcon(payee.payeeType)}
-                      <div class="flex items-center gap-2 text-sm p-2 border rounded">
-                        <Icon class="h-3 w-3 text-muted-foreground" />
+                      <div class="flex items-center gap-2 rounded border p-2 text-sm">
+                        <Icon class="text-muted-foreground h-3 w-3" />
                         <span class="truncate">{payee.name}</span>
                         {#if payee.id === options.primaryPayeeId}
                           <Badge variant="default" class="text-xs">Primary</Badge>
@@ -291,7 +304,7 @@ function togglePayeeDetails() {
                     {/each}
                   </div>
                   {#if affectedPayees.length > 8}
-                    <p class="text-sm text-muted-foreground text-center mt-2">
+                    <p class="text-muted-foreground mt-2 text-center text-sm">
                       ... and {affectedPayees.length - 8} more payees
                     </p>
                   {/if}
@@ -310,9 +323,12 @@ function togglePayeeDetails() {
             <Card.Content>
               <div class="space-y-2">
                 {#each options.cleanupOperations as operation}
-                  <div class="flex items-center gap-2 p-2 border rounded-lg">
+                  <div class="flex items-center gap-2 rounded-lg border p-2">
                     <CircleCheck class="h-4 w-4 text-green-500" />
-                    <span class="text-sm">{operation.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                    <span class="text-sm"
+                      >{operation
+                        .replace(/_/g, ' ')
+                        .replace(/\b\w/g, (l) => l.toUpperCase())}</span>
                   </div>
                 {/each}
               </div>
@@ -324,7 +340,8 @@ function togglePayeeDetails() {
         {#if options.destructiveLevel === 'high'}
           <Card.Root class="border-red-200 bg-red-50">
             <Card.Header>
-              <Card.Title class="text-lg text-red-800">Additional Confirmations Required</Card.Title>
+              <Card.Title class="text-lg text-red-800"
+                >Additional Confirmations Required</Card.Title>
             </Card.Header>
             <Card.Content class="space-y-3">
               <div class="flex items-start space-x-2">
@@ -357,10 +374,11 @@ function togglePayeeDetails() {
                 id="confirmation-input"
                 bind:value={confirmationText}
                 placeholder={options.expectedText}
-                class="font-mono"
-              />
+                class="font-mono" />
               {#if confirmationText && confirmationText.trim() !== options.expectedText}
-                <p class="text-sm text-red-600">Text does not match. Please type exactly: {options.expectedText}</p>
+                <p class="text-sm text-red-600">
+                  Text does not match. Please type exactly: {options.expectedText}
+                </p>
               {/if}
             </Card.Content>
           </Card.Root>
@@ -369,23 +387,20 @@ function togglePayeeDetails() {
 
       <AlertDialog.Footer class="flex-col gap-2">
         {#if !canConfirm}
-          <p class="text-sm text-muted-foreground text-center">
+          <p class="text-muted-foreground text-center text-sm">
             Please complete all confirmations above to proceed.
           </p>
         {/if}
 
-        <div class="flex justify-end gap-2 w-full">
+        <div class="flex w-full justify-end gap-2">
           <AlertDialog.Cancel>
-            <Button variant="outline" onclick={handleCancel}>
-              Cancel
-            </Button>
+            <Button variant="outline" onclick={handleCancel}>Cancel</Button>
           </AlertDialog.Cancel>
           <AlertDialog.Action>
             <Button
               variant={options.destructiveLevel === 'high' ? 'destructive' : 'default'}
               onclick={handleConfirm}
-              disabled={!canConfirm}
-            >
+              disabled={!canConfirm}>
               {options.confirmText || 'Confirm'}
             </Button>
           </AlertDialog.Action>

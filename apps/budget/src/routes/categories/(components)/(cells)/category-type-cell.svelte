@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Badge } from '$lib/components/ui/badge';
+import {Badge} from '$lib/components/ui/badge';
 import Tag from '@lucide/svelte/icons/tag';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
@@ -10,20 +10,20 @@ interface Props {
   categoryType: string | null;
 }
 
-let { categoryType }: Props = $props();
+let {categoryType}: Props = $props();
 
 const typeInfo = $derived(() => {
   switch (categoryType) {
     case 'income':
-      return { icon: TrendingUp, label: 'Income', variant: 'default' as const };
+      return {icon: TrendingUp, label: 'Income', variant: 'default' as const};
     case 'expense':
-      return { icon: TrendingDown, label: 'Expense', variant: 'secondary' as const };
+      return {icon: TrendingDown, label: 'Expense', variant: 'secondary' as const};
     case 'transfer':
-      return { icon: ArrowLeftRight, label: 'Transfer', variant: 'outline' as const };
+      return {icon: ArrowLeftRight, label: 'Transfer', variant: 'outline' as const};
     case 'savings':
-      return { icon: PiggyBank, label: 'Savings', variant: 'default' as const };
+      return {icon: PiggyBank, label: 'Savings', variant: 'default' as const};
     default:
-      return { icon: Tag, label: 'Expense', variant: 'secondary' as const };
+      return {icon: Tag, label: 'Expense', variant: 'secondary' as const};
   }
 });
 </script>

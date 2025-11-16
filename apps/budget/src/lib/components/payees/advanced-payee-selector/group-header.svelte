@@ -8,7 +8,7 @@ let {
   count,
   isExpanded = true,
   onToggle,
-  class: className
+  class: className,
 }: {
   label: string;
   count: number;
@@ -22,21 +22,15 @@ let {
   type="button"
   onclick={onToggle}
   class={cn(
-    'sticky top-0 z-10 w-full flex items-center justify-between px-3 py-2 text-sm font-medium',
-    'bg-muted/50 backdrop-blur-sm hover:bg-muted/70 transition-colors',
-    'border-b border-border',
+    'sticky top-0 z-10 flex w-full items-center justify-between px-3 py-2 text-sm font-medium',
+    'bg-muted/50 hover:bg-muted/70 backdrop-blur-sm transition-colors',
+    'border-border border-b',
     className
-  )}
->
+  )}>
   <div class="flex items-center gap-2">
-    <ChevronDown
-      class={cn(
-        'h-4 w-4 transition-transform',
-        !isExpanded && '-rotate-90'
-      )}
-    />
+    <ChevronDown class={cn('h-4 w-4 transition-transform', !isExpanded && '-rotate-90')} />
     <span>{label}</span>
-    <Badge variant="secondary" class="text-xs px-1.5 py-0">
+    <Badge variant="secondary" class="px-1.5 py-0 text-xs">
       {count}
     </Badge>
   </div>

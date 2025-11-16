@@ -1,6 +1,6 @@
-import type { RenderComponentConfig } from "$lib/components/ui/data-table/render-helpers";
-import type { FilterInputOption } from "$lib/types";
-import type { Component } from "svelte";
+import type {RenderComponentConfig} from "$lib/components/ui/data-table/render-helpers";
+import type {FilterInputOption} from "$lib/types";
+import type {Component} from "svelte";
 
 declare global {
   namespace App {

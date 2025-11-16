@@ -1,4 +1,4 @@
-import {browser} from '$app/environment';
+import {browser} from "$app/environment";
 
 /**
  * Creates a reactive state that persists to localStorage
@@ -34,6 +34,6 @@ export function createLocalStorageState<T>(key: string, defaultValue: T) {
           console.warn(`Failed to save ${key} to localStorage:`, e);
         }
       }
-    }
+    },
   };
 }

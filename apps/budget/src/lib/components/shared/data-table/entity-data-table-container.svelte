@@ -1,7 +1,7 @@
 <script lang="ts" generics="TEntity, TState">
-import type { ColumnDef, Table } from '@tanstack/table-core';
-import { Skeleton } from '$lib/components/ui/skeleton';
-import { browser } from '$app/environment';
+import type {ColumnDef, Table} from '@tanstack/table-core';
+import {Skeleton} from '$lib/components/ui/skeleton';
+import {browser} from '$app/environment';
 
 interface Props {
   isLoading: boolean;
@@ -34,7 +34,7 @@ let {
   onViewAnalytics,
   onBulkDelete,
   table = $bindable(),
-  dataTableComponent
+  dataTableComponent,
 }: Props = $props();
 </script>
 
@@ -54,6 +54,5 @@ let {
     {onDelete}
     {onViewAnalytics}
     {onBulkDelete}
-    bind:table
-  />
+    bind:table />
 {/if}

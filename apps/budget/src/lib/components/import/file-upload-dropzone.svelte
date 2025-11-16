@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
+import {Button} from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import {cn} from '$lib/utils';
 import Upload from '@lucide/svelte/icons/upload';
@@ -42,7 +42,7 @@ function formatFileSize(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
-function validateFile(file: File): { valid: boolean; error?: string } {
+function validateFile(file: File): {valid: boolean; error?: string} {
   // Check file type
   const extension = `.${file.name.split('.').pop()?.toLowerCase()}`;
   if (!acceptedFormats.includes(extension)) {
@@ -68,7 +68,7 @@ function validateFile(file: File): { valid: boolean; error?: string } {
     };
   }
 
-  return { valid: true };
+  return {valid: true};
 }
 
 function handleFileSelect(files: FileList | null) {
@@ -132,9 +132,9 @@ function openFilePicker() {
     role="button"
     tabindex="0"
     class={cn(
-      'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
+      'cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors',
       'hover:border-primary/50 hover:bg-accent/5',
-      'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+      'focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none',
       isDragging && 'border-primary bg-accent/10',
       error && 'border-destructive bg-destructive/5'
     )}
@@ -147,20 +147,18 @@ function openFilePicker() {
         e.preventDefault();
         openFilePicker();
       }
-    }}
-  >
+    }}>
     <input
       bind:this={fileInputRef}
       type="file"
       accept={acceptedFormats.join(',')}
       multiple={allowMultiple}
       onchange={handleFileInputChange}
-      class="hidden"
-    />
+      class="hidden" />
 
     <div class="flex flex-col items-center justify-center gap-4">
       {#if error}
-        <CircleAlert class="h-12 w-12 text-destructive" />
+        <CircleAlert class="text-destructive h-12 w-12" />
       {:else}
         <Upload class={cn('h-12 w-12', isDragging ? 'text-primary' : 'text-muted-foreground')} />
       {/if}
@@ -176,30 +174,32 @@ function openFilePicker() {
           {/if}
         </p>
         {#if !error}
-          <p class="text-sm text-muted-foreground">
-            or click to browse
-          </p>
+          <p class="text-muted-foreground text-sm">or click to browse</p>
         {/if}
       </div>
 
-      <div class="text-xs text-muted-foreground space-y-1">
+      <div class="text-muted-foreground space-y-1 text-xs">
         <p>Accepted formats: {acceptedFormats.join(', ').toUpperCase()}</p>
         <p>Maximum file size: {formatFileSize(maxFileSize)}</p>
       </div>
 
       {#if !error}
-        <Button variant="outline" onclick={(e) => {
-          e.stopPropagation();
-          openFilePicker();
-        }}>
+        <Button
+          variant="outline"
+          onclick={(e) => {
+            e.stopPropagation();
+            openFilePicker();
+          }}>
           Select File
         </Button>
       {:else}
-        <Button variant="outline" onclick={(e) => {
-          e.stopPropagation();
-          clearFile();
-          openFilePicker();
-        }}>
+        <Button
+          variant="outline"
+          onclick={(e) => {
+            e.stopPropagation();
+            clearFile();
+            openFilePicker();
+          }}>
           Try Again
         </Button>
       {/if}
@@ -215,21 +215,17 @@ function openFilePicker() {
       <Card.Content>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <FileText class="h-5 w-5 text-primary" />
+            <div class="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+              <FileText class="text-primary h-5 w-5" />
             </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-medium truncate">{selectedFile.name}</p>
-              <p class="text-sm text-muted-foreground">
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-medium">{selectedFile.name}</p>
+              <p class="text-muted-foreground text-sm">
                 {formatFileSize(selectedFile.size)}
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onclick={clearFile}
-          >
+          <Button variant="ghost" size="sm" onclick={clearFile}>
             <X class="h-4 w-4" />
           </Button>
         </div>

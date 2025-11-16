@@ -1,7 +1,7 @@
 <script lang="ts">
-import { cn, type WithElementRef } from '$lib/utils';
-import { badgeVariants, type BadgeVariant } from './types';
-import type { HTMLAnchorAttributes } from 'svelte/elements';
+import {cn, type WithElementRef} from '$lib/utils';
+import {badgeVariants, type BadgeVariant} from './types';
+import type {HTMLAnchorAttributes} from 'svelte/elements';
 let {
   ref = $bindable(null),
   href,

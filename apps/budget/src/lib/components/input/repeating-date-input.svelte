@@ -135,7 +135,7 @@ const nextOccurrences = $derived.by(() => {
   const startDate = value.start;
 
   // Generate enough dates for display (50 should be more than enough for the first 5)
-  const endDate = startDate.add({ years: 2 });
+  const endDate = startDate.add({years: 2});
   const limit = 50;
 
   try {
@@ -151,7 +151,15 @@ const nextOccurrences = $derived.by(() => {
         break;
       }
       case 'monthly':
-        dates = nextMonthly(startDate, endDate, interval, value.days || null, value.weeks || [], value.weeks_days || [], limit);
+        dates = nextMonthly(
+          startDate,
+          endDate,
+          interval,
+          value.days || null,
+          value.weeks || [],
+          value.weeks_days || [],
+          limit
+        );
         break;
       case 'yearly':
         dates = nextYearly(startDate, startDate, endDate, interval, limit);
@@ -238,8 +246,13 @@ const handleDayToggle = (day: number) => {
 
 const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
   const current = value.specific_dates || [];
-  value.specific_dates = current.filter(d =>
-    !(d.year === dateToRemove.year && d.month === dateToRemove.month && d.day === dateToRemove.day)
+  value.specific_dates = current.filter(
+    (d) =>
+      !(
+        d.year === dateToRemove.year &&
+        d.month === dateToRemove.month &&
+        d.day === dateToRemove.day
+      )
   );
 };
 </script>
@@ -249,7 +262,9 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
   <div class="space-y-2">
     <Label for="start-date" class="text-sm font-medium">Start Date</Label>
     <Popover.Root>
-      <Popover.Trigger class="inline-flex h-10 w-full items-center justify-start whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-left text-sm font-normal ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" {disabled}>
+      <Popover.Trigger
+        class="border-input bg-background ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-10 w-full items-center justify-start rounded-md border px-3 py-2 text-left text-sm font-normal whitespace-nowrap focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+        {disabled}>
         <CalendarDays class="mr-2 h-4 w-4" />
         {value.start ? formatDate(value.start) : 'Select a date'}
       </Popover.Trigger>
@@ -360,7 +375,8 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
               <div class="space-y-4">
                 <div class="flex items-center gap-2">
                   <Switch bind:checked={value.on} {disabled} id="specify-occurrence-pattern" />
-                  <Label class="text-sm font-medium" for="specify-occurrence-pattern">Specify occurrence pattern</Label>
+                  <Label class="text-sm font-medium" for="specify-occurrence-pattern"
+                    >Specify occurrence pattern</Label>
                 </div>
 
                 {#if value.on}
@@ -379,13 +395,13 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                                 size="sm"
                                 onclick={() => handleDayToggle(day)}
                                 disabled={value.on_type !== 'day' || !value.on || disabled}
-                                class="text-xs h-8 w-8 p-0">
+                                class="h-8 w-8 p-0 text-xs">
                                 {day}
                               </Button>
                             {/each}
                           </div>
 
-                          <p class="text-xs text-muted-foreground">
+                          <p class="text-muted-foreground text-xs">
                             Select multiple days (e.g., 10th and 25th for bi-monthly)
                           </p>
                         </div>
@@ -474,11 +490,13 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                 </div>
                 <div class="flex items-center space-x-2">
                   <RadioGroup.Item value="next_weekday" id="move-weekends-next" />
-                  <Label class="text-sm" for="move-weekends-next">Move to next weekday (Monday)</Label>
+                  <Label class="text-sm" for="move-weekends-next"
+                    >Move to next weekday (Monday)</Label>
                 </div>
                 <div class="flex items-center space-x-2">
                   <RadioGroup.Item value="previous_weekday" id="move-weekends-previous" />
-                  <Label class="text-sm" for="move-weekends-previous">Move to previous weekday (Friday)</Label>
+                  <Label class="text-sm" for="move-weekends-previous"
+                    >Move to previous weekday (Friday)</Label>
                 </div>
               </div>
             </RadioGroup.Root>
@@ -490,7 +508,9 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
           <div class="space-y-4">
             <div class="space-y-2">
               <Label class="text-sm font-medium">Holiday Handling</Label>
-              <p class="text-muted-foreground text-xs">Adjust dates that fall on US federal holidays</p>
+              <p class="text-muted-foreground text-xs">
+                Adjust dates that fall on US federal holidays
+              </p>
             </div>
 
             <RadioGroup.Root bind:value={value.moveHolidays} {disabled}>
@@ -505,7 +525,8 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                 </div>
                 <div class="flex items-center space-x-2">
                   <RadioGroup.Item value="previous_weekday" id="move-holidays-previous" />
-                  <Label class="text-sm" for="move-holidays-previous">Move to previous weekday</Label>
+                  <Label class="text-sm" for="move-holidays-previous"
+                    >Move to previous weekday</Label>
                 </div>
               </div>
             </RadioGroup.Root>
@@ -517,11 +538,15 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
           <div class="space-y-4">
             <div class="space-y-2">
               <Label class="text-sm font-medium">Additional Dates</Label>
-              <p class="text-muted-foreground text-xs">Add specific dates to include in the schedule</p>
+              <p class="text-muted-foreground text-xs">
+                Add specific dates to include in the schedule
+              </p>
             </div>
 
             <Popover.Root>
-              <Popover.Trigger class="inline-flex h-10 w-full items-center justify-start whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" {disabled}>
+              <Popover.Trigger
+                class="border-input bg-background ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-10 w-full items-center justify-start rounded-md border px-3 py-2 text-sm whitespace-nowrap focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                {disabled}>
                 <CalendarDays class="mr-2 h-4 w-4" />
                 {specificDatesButtonText}
               </Popover.Trigger>
@@ -579,8 +604,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
             </Label>
 
             {#if hasEndCondition}
-              <Tabs.Root
-                bind:value={value.end_type as string | undefined}>
+              <Tabs.Root bind:value={value.end_type as string | undefined}>
                 <Tabs.List class="grid w-full grid-cols-2">
                   <Tabs.Trigger value="limit" {disabled}>Limit occurrences</Tabs.Trigger>
                   <Tabs.Trigger value="until" {disabled}>End on date</Tabs.Trigger>
@@ -603,7 +627,9 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                 <Tabs.Content value="until" class="space-y-2">
                   Repeat until
                   <Popover.Root>
-                    <Popover.Trigger class="ml-1 inline-flex h-10 w-full items-center justify-start whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-left text-sm font-normal ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" {disabled}>
+                    <Popover.Trigger
+                      class="border-input bg-background ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring ml-1 inline-flex h-10 w-full items-center justify-start rounded-md border px-3 py-2 text-left text-sm font-normal whitespace-nowrap focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                      {disabled}>
                       <CalendarDays class="mr-2 h-4 w-4" />
                       {value.end ? formatDate(value.end) : 'Select end date'}
                     </Popover.Trigger>
@@ -655,7 +681,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
         <!-- Calendar Preview -->
         <div class="space-y-2">
           <Label class="text-muted-foreground text-xs font-medium">Calendar preview:</Label>
-          <div class="flex flex-col md:flex-row gap-4 items-start">
+          <div class="flex flex-col items-start gap-4 md:flex-row">
             <div class="inline-block">
               <Calendar.Calendar
                 type="single"
@@ -665,13 +691,20 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                 bind:placeholder={value.placeholder}
                 captionLayout="dropdown">
                 {#snippet day({day, outsideMonth})}
-                  {@const isStartDate = value.start && day.year === value.start.year && day.month === value.start.month && day.day === value.start.day}
+                  {@const isStartDate =
+                    value.start &&
+                    day.year === value.start.year &&
+                    day.month === value.start.month &&
+                    day.day === value.start.day}
                   {@const isRecurring = isUpcomingDate(day)}
                   {@const isSpecific = isSpecificDate(day)}
                   {@const todayDate = currentDate}
-                  {@const isToday = day.year === todayDate.year && day.month === todayDate.month && day.day === todayDate.day}
-                  {@const prevDay = day.subtract({ days: 1 })}
-                  {@const nextDay = day.add({ days: 1 })}
+                  {@const isToday =
+                    day.year === todayDate.year &&
+                    day.month === todayDate.month &&
+                    day.day === todayDate.day}
+                  {@const prevDay = day.subtract({days: 1})}
+                  {@const nextDay = day.add({days: 1})}
                   {@const isPrevRecurring = isUpcomingDate(prevDay)}
                   {@const isNextRecurring = isUpcomingDate(nextDay)}
                   {@const isPrevSpecific = isSpecificDate(prevDay)}
@@ -681,20 +714,20 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                     class={cn(
                       isStartDate
                         ? outsideMonth
-                          ? '!bg-white dark:!bg-transparent ring-2 ring-green-500/40 !text-green-600/50 dark:!text-green-400/50 font-semibold'
-                          : '!bg-white dark:!bg-transparent ring-2 ring-green-500 !text-green-600 dark:!text-green-400 font-semibold'
+                          ? '!bg-white font-semibold !text-green-600/50 ring-2 ring-green-500/40 dark:!bg-transparent dark:!text-green-400/50'
+                          : '!bg-white font-semibold !text-green-600 ring-2 ring-green-500 dark:!bg-transparent dark:!text-green-400'
                         : isSpecific
                           ? outsideMonth
-                            ? 'bg-amber-500/30 text-amber-700 hover:bg-amber-500/40 border-2 border-dotted border-amber-500/50'
-                            : 'bg-amber-500 text-white hover:bg-amber-600 border-2 border-dotted border-amber-300'
+                            ? 'border-2 border-dotted border-amber-500/50 bg-amber-500/30 text-amber-700 hover:bg-amber-500/40'
+                            : 'border-2 border-dotted border-amber-300 bg-amber-500 text-white hover:bg-amber-600'
                           : isRecurring
                             ? outsideMonth
                               ? 'bg-primary/30 text-primary hover:bg-primary/40 border-primary/50 border'
                               : 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
                             : isToday
                               ? outsideMonth
-                                ? 'border-2 border-blue-500/40 !text-blue-600/50 dark:!text-blue-400/50 font-medium'
-                                : 'border-2 border-blue-500 !text-blue-600 dark:!text-blue-400 font-medium'
+                                ? 'border-2 border-blue-500/40 font-medium !text-blue-600/50 dark:!text-blue-400/50'
+                                : 'border-2 border-blue-500 font-medium !text-blue-600 dark:!text-blue-400'
                               : outsideMonth
                                 ? 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
                                 : '',
@@ -712,13 +745,15 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
 
             <!-- Next Occurrences List -->
             {#if nextOccurrences.length > 0}
-              <div class="space-y-3 flex-1">
+              <div class="flex-1 space-y-3">
                 <div class="space-y-2">
                   <Label class="text-muted-foreground text-xs font-medium">Next occurrences:</Label>
                   <div class="space-y-1.5">
                     {#each nextOccurrences as date, index}
                       <div class="flex items-center gap-2 text-sm">
-                        <Badge variant="outline" class="w-6 h-6 p-0 flex items-center justify-center text-xs">
+                        <Badge
+                          variant="outline"
+                          class="flex h-6 w-6 items-center justify-center p-0 text-xs">
                           {index + 1}
                         </Badge>
                         <span>{formatDate(date)}</span>
@@ -729,28 +764,28 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
 
                 <!-- Weekend/Holiday Adjustments -->
                 {#if value.moveWeekends !== 'none' || value.moveHolidays !== 'none'}
-                  <div class="space-y-2 pt-2 border-t">
+                  <div class="space-y-2 border-t pt-2">
                     <Label class="text-muted-foreground text-xs font-medium">Adjustments:</Label>
                     <div class="space-y-1.5 text-xs">
                       {#if value.moveWeekends === 'next_weekday'}
-                        <div class="flex items-center gap-2 text-muted-foreground">
-                          <Badge variant="secondary" class="text-xs px-1.5 py-0">Weekend</Badge>
+                        <div class="text-muted-foreground flex items-center gap-2">
+                          <Badge variant="secondary" class="px-1.5 py-0 text-xs">Weekend</Badge>
                           <span>Move to next weekday (Monday)</span>
                         </div>
                       {:else if value.moveWeekends === 'previous_weekday'}
-                        <div class="flex items-center gap-2 text-muted-foreground">
-                          <Badge variant="secondary" class="text-xs px-1.5 py-0">Weekend</Badge>
+                        <div class="text-muted-foreground flex items-center gap-2">
+                          <Badge variant="secondary" class="px-1.5 py-0 text-xs">Weekend</Badge>
                           <span>Move to previous weekday (Friday)</span>
                         </div>
                       {/if}
                       {#if value.moveHolidays === 'next_weekday'}
-                        <div class="flex items-center gap-2 text-muted-foreground">
-                          <Badge variant="secondary" class="text-xs px-1.5 py-0">Holiday</Badge>
+                        <div class="text-muted-foreground flex items-center gap-2">
+                          <Badge variant="secondary" class="px-1.5 py-0 text-xs">Holiday</Badge>
                           <span>Move to next weekday</span>
                         </div>
                       {:else if value.moveHolidays === 'previous_weekday'}
-                        <div class="flex items-center gap-2 text-muted-foreground">
-                          <Badge variant="secondary" class="text-xs px-1.5 py-0">Holiday</Badge>
+                        <div class="text-muted-foreground flex items-center gap-2">
+                          <Badge variant="secondary" class="px-1.5 py-0 text-xs">Holiday</Badge>
                           <span>Move to previous weekday</span>
                         </div>
                       {/if}
@@ -767,7 +802,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
           <Label class="text-muted-foreground text-xs font-medium">Legend:</Label>
           <div class="flex flex-wrap gap-3 text-xs">
             <div class="flex items-center gap-1">
-              <div class="bg-white dark:bg-transparent ring-2 ring-green-500 h-3 w-3 rounded"></div>
+              <div class="h-3 w-3 rounded bg-white ring-2 ring-green-500 dark:bg-transparent"></div>
               <span>Start date</span>
             </div>
             <div class="flex items-center gap-1">
@@ -780,12 +815,13 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
             </div>
             {#if value.specific_dates && value.specific_dates.length > 0}
               <div class="flex items-center gap-1">
-                <div class="bg-amber-500 border-2 border-dotted border-amber-300 h-3 w-3 rounded"></div>
+                <div class="h-3 w-3 rounded border-2 border-dotted border-amber-300 bg-amber-500">
+                </div>
                 <span>Specific dates</span>
               </div>
             {/if}
             <div class="flex items-center gap-1">
-              <div class="border-2 border-blue-500 h-3 w-3 rounded"></div>
+              <div class="h-3 w-3 rounded border-2 border-blue-500"></div>
               <span>Today</span>
             </div>
           </div>

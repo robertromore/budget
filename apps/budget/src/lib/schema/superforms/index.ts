@@ -8,4 +8,3 @@ export * from "./payees";
 export * from "./schedules";
 export * from "./transactions";
 export * from "./views";
-

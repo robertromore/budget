@@ -17,7 +17,8 @@ export const payeeCategoryKeys = createQueryKeys("payee-categories", {
   availableDefaults: () => ["payee-categories", "defaults", "available"] as const,
   uncategorizedCount: () => ["payee-categories", "uncategorized-count"] as const,
   recommendation: (payeeId: number) => ["payee-categories", "recommendation", payeeId] as const,
-  bulkRecommendations: (limit?: number) => ["payee-categories", "bulk-recommendations", limit] as const,
+  bulkRecommendations: (limit?: number) =>
+    ["payee-categories", "bulk-recommendations", limit] as const,
 });
 
 // ================================================================================
@@ -65,7 +66,7 @@ export const createPayeeCategory = defineMutation<NewPayeeCategory, PayeeCategor
 });
 
 export const updatePayeeCategory = defineMutation<
-  {id: number; name: string} & Partial<Omit<NewPayeeCategory, 'name'>>,
+  {id: number; name: string} & Partial<Omit<NewPayeeCategory, "name">>,
   PayeeCategory
 >({
   mutationFn: (input) => trpc().payeeCategoriesRoutes.update.mutate(input),
@@ -81,7 +82,7 @@ export const updatePayeeCategory = defineMutation<
 });
 
 export const savePayeeCategory = defineMutation<
-  {name: string} & Partial<Omit<NewPayeeCategory, 'name'>> & {id?: number},
+  {name: string} & Partial<Omit<NewPayeeCategory, "name">> & {id?: number},
   PayeeCategory & {is_new?: boolean}
 >({
   mutationFn: (input) => trpc().payeeCategoriesRoutes.save.mutate(input),
@@ -94,7 +95,7 @@ export const savePayeeCategory = defineMutation<
     // Also invalidate payees queries since they include category info
     cachePatterns.invalidatePrefix(["payees"]);
   },
-  successMessage: (data) => data.is_new ? "Payee category created" : "Payee category updated",
+  successMessage: (data) => (data.is_new ? "Payee category created" : "Payee category updated"),
   errorMessage: "Failed to save payee category",
 });
 
@@ -172,7 +173,7 @@ export const seedDefaultPayeeCategories = defineMutation<
   },
   successMessage: (data) => {
     if (data.created > 0) {
-      return `Added ${data.created} default ${data.created === 1 ? 'category' : 'categories'}`;
+      return `Added ${data.created} default ${data.created === 1 ? "category" : "categories"}`;
     }
     return "No new categories to add";
   },

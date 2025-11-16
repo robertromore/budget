@@ -11,7 +11,8 @@ import Users from '@lucide/svelte/icons/users';
 
 // Page metadata
 const title = 'Payee Analytics Dashboard';
-const description = 'Comprehensive analytics and insights across all payees with ML-powered recommendations';
+const description =
+  'Comprehensive analytics and insights across all payees with ML-powered recommendations';
 </script>
 
 <svelte:head>
@@ -39,43 +40,37 @@ const description = 'Comprehensive analytics and insights across all payees with
   </div>
 
   <!-- Overview Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Total Insights</Card.Title>
-        <BarChart3 class="h-4 w-4 text-muted-foreground" />
+        <BarChart3 class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">Comprehensive</div>
-        <p class="text-xs text-muted-foreground">
-          ML-powered payee intelligence
-        </p>
+        <p class="text-muted-foreground text-xs">ML-powered payee intelligence</p>
       </Card.Content>
     </Card.Root>
 
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Analytics Scope</Card.Title>
-        <Users class="h-4 w-4 text-muted-foreground" />
+        <Users class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">All Payees</div>
-        <p class="text-xs text-muted-foreground">
-          Cross-payee pattern analysis
-        </p>
+        <p class="text-muted-foreground text-xs">Cross-payee pattern analysis</p>
       </Card.Content>
     </Card.Root>
 
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Intelligence Level</Card.Title>
-        <TrendingUp class="h-4 w-4 text-muted-foreground" />
+        <TrendingUp class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
         <div class="text-2xl font-bold">Advanced</div>
-        <p class="text-xs text-muted-foreground">
-          Real-time ML insights
-        </p>
+        <p class="text-muted-foreground text-xs">Real-time ML insights</p>
       </Card.Content>
     </Card.Root>
   </div>

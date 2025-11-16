@@ -5,9 +5,14 @@
  * Handles various QB CSV export formats (Transaction List, Register Report, etc.)
  */
 
-import Papa from 'papaparse';
-import type { FileProcessor, ImportRow, NormalizedTransaction, ColumnMapping } from '$lib/types/import';
-import { FileValidationError, ParseError } from '../errors';
+import Papa from "papaparse";
+import type {
+  FileProcessor,
+  ImportRow,
+  NormalizedTransaction,
+  ColumnMapping,
+} from "$lib/types/import";
+import {FileValidationError, ParseError} from "../errors";
 import {
   normalizeHeader,
   parseDate,
@@ -16,11 +21,11 @@ import {
   validateFileType,
   detectCSVDelimiter,
   isQuickBooksCSV,
-} from '../utils';
+} from "../utils";
 
 export class QBCSVProcessor implements FileProcessor {
   private readonly maxFileSize = 10 * 1024 * 1024; // 10MB
-  private readonly supportedFormats = ['.csv', '.txt'];
+  private readonly supportedFormats = [".csv", ".txt"];
   private columnMapping: ColumnMapping | undefined;
 
   constructor(columnMapping?: ColumnMapping) {
@@ -31,11 +36,11 @@ export class QBCSVProcessor implements FileProcessor {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): { valid: boolean; error?: string } {
+  validateFile(file: File): {valid: boolean; error?: string} {
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
         valid: false,
-        error: `Invalid file type. Supported formats: ${this.supportedFormats.join(', ')}`,
+        error: `Invalid file type. Supported formats: ${this.supportedFormats.join(", ")}`,
       };
     }
 
@@ -49,23 +54,23 @@ export class QBCSVProcessor implements FileProcessor {
     if (file.size === 0) {
       return {
         valid: false,
-        error: 'File is empty',
+        error: "File is empty",
       };
     }
 
-    return { valid: true };
+    return {valid: true};
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {
     const validation = this.validateFile(file);
     if (!validation.valid) {
-      throw new FileValidationError(validation.error || 'File validation failed', 'csv');
+      throw new FileValidationError(validation.error || "File validation failed", "csv");
     }
 
     const text = await file.text();
 
     if (!text || text.trim().length === 0) {
-      throw new ParseError('File is empty or contains no data');
+      throw new ParseError("File is empty or contains no data");
     }
 
     const delimiter = detectCSVDelimiter(text);
@@ -79,13 +84,13 @@ export class QBCSVProcessor implements FileProcessor {
         complete: (results) => {
           try {
             if (!results.data || results.data.length === 0) {
-              throw new ParseError('No data rows found in CSV');
+              throw new ParseError("No data rows found in CSV");
             }
 
             const headers = Object.keys(results.data[0] as object);
 
             if (!isQuickBooksCSV(headers)) {
-              throw new ParseError('This does not appear to be a QuickBooks CSV export');
+              throw new ParseError("This does not appear to be a QuickBooks CSV export");
             }
 
             const qbMapping = this.detectQBMapping(headers);
@@ -107,14 +112,14 @@ export class QBCSVProcessor implements FileProcessor {
     const mapping: Partial<ColumnMapping> = {};
 
     const headerMap: Record<string, string[]> = {
-      date: ['date', 'transaction date', 'txn date'],
-      amount: ['amount', 'total', 'amt'],
-      debit: ['debit', 'payment', 'decrease'],
-      credit: ['credit', 'deposit', 'increase'],
-      payee: ['name', 'payee', 'vendor', 'customer', 'entity'],
-      notes: ['memo', 'description', 'memo/description', 'notes'],
-      category: ['account', 'category', 'class', 'split'],
-      status: ['clr', 'cleared', 'status', 'c'],
+      date: ["date", "transaction date", "txn date"],
+      amount: ["amount", "total", "amt"],
+      debit: ["debit", "payment", "decrease"],
+      credit: ["credit", "deposit", "increase"],
+      payee: ["name", "payee", "vendor", "customer", "entity"],
+      notes: ["memo", "description", "memo/description", "notes"],
+      category: ["account", "category", "class", "split"],
+      status: ["clr", "cleared", "status", "c"],
     };
 
     for (const [field, keywords] of Object.entries(headerMap)) {
@@ -131,11 +136,11 @@ export class QBCSVProcessor implements FileProcessor {
     }
 
     if (!mapping.date) {
-      throw new ParseError('Could not find date column in QuickBooks CSV');
+      throw new ParseError("Could not find date column in QuickBooks CSV");
     }
 
     if (!mapping.amount && !mapping.debit && !mapping.credit) {
-      throw new ParseError('Could not find amount/debit/credit columns in QuickBooks CSV');
+      throw new ParseError("Could not find amount/debit/credit columns in QuickBooks CSV");
     }
 
     return mapping as ColumnMapping;
@@ -152,16 +157,16 @@ export class QBCSVProcessor implements FileProcessor {
       try {
         const dateStr = rawRow[mapping.date];
         if (!dateStr) {
-          throw new Error('Date is required');
+          throw new Error("Date is required");
         }
         const date = parseDate(dateStr);
-        normalized.date = date.toISOString().split('T')[0];
+        normalized.date = date.toISOString().split("T")[0];
       } catch (error) {
         errors.push({
-          field: 'date',
-          message: error instanceof Error ? error.message : 'Invalid date',
+          field: "date",
+          message: error instanceof Error ? error.message : "Invalid date",
           value: rawRow[mapping.date],
-          severity: 'error',
+          severity: "error",
         });
       }
 
@@ -170,18 +175,18 @@ export class QBCSVProcessor implements FileProcessor {
           const amountStr = rawRow[mapping.amount];
           normalized.amount = parseAmount(amountStr);
         } else if (mapping.debit && mapping.credit) {
-          const debitStr = rawRow[mapping.debit] || '0';
-          const creditStr = rawRow[mapping.credit] || '0';
+          const debitStr = rawRow[mapping.debit] || "0";
+          const creditStr = rawRow[mapping.credit] || "0";
           const debit = parseAmount(debitStr);
           const credit = parseAmount(creditStr);
           normalized.amount = credit - debit;
         }
       } catch (error) {
         errors.push({
-          field: 'amount',
-          message: error instanceof Error ? error.message : 'Invalid amount',
+          field: "amount",
+          message: error instanceof Error ? error.message : "Invalid amount",
           value: rawRow[mapping.amount] || `${rawRow[mapping.debit]}/${rawRow[mapping.credit]}`,
-          severity: 'error',
+          severity: "error",
         });
       }
 
@@ -195,23 +200,24 @@ export class QBCSVProcessor implements FileProcessor {
 
       if (mapping.category && rawRow[mapping.category]) {
         const category = rawRow[mapping.category];
-        if (category && category !== '-SPLIT-' && category !== 'SPLIT') {
+        if (category && category !== "-SPLIT-" && category !== "SPLIT") {
           normalized.category = sanitizeText(category, 50);
         }
       }
 
       if (mapping.status && rawRow[mapping.status]) {
         const status = rawRow[mapping.status].toString().toUpperCase();
-        normalized.status = (status === 'X' || status === 'R' || status === 'C') ? 'cleared' : 'pending';
+        normalized.status =
+          status === "X" || status === "R" || status === "C" ? "cleared" : "pending";
       } else {
-        normalized.status = 'pending';
+        normalized.status = "pending";
       }
 
       rows.push({
         rowIndex: i,
         rawData: rawRow,
         normalizedData: normalized as Record<string, any>,
-        validationStatus: errors.length > 0 ? 'invalid' : 'valid',
+        validationStatus: errors.length > 0 ? "invalid" : "valid",
         validationErrors: errors.length > 0 ? errors : undefined,
       });
     }

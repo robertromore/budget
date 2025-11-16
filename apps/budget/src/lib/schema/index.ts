@@ -20,15 +20,15 @@ export * from "./hsa-claims";
 export * from "./medical-expenses";
 
 // Import table definitions for HSA relations
-import { relations } from "drizzle-orm";
-import { accounts } from "./accounts";
-import { expenseReceipts } from "./expense-receipts";
-import { hsaClaims } from "./hsa-claims";
-import { medicalExpenses } from "./medical-expenses";
-import { transactions } from "./transactions";
+import {relations} from "drizzle-orm";
+import {accounts} from "./accounts";
+import {expenseReceipts} from "./expense-receipts";
+import {hsaClaims} from "./hsa-claims";
+import {medicalExpenses} from "./medical-expenses";
+import {transactions} from "./transactions";
 
 // Define HSA-related relations here to avoid circular dependencies
-export const medicalExpensesRelations = relations(medicalExpenses, ({ one, many }) => ({
+export const medicalExpensesRelations = relations(medicalExpenses, ({one, many}) => ({
   transaction: one(transactions, {
     fields: [medicalExpenses.transactionId],
     references: [transactions.id],
@@ -41,14 +41,14 @@ export const medicalExpensesRelations = relations(medicalExpenses, ({ one, many 
   claims: many(hsaClaims),
 }));
 
-export const expenseReceiptsRelations = relations(expenseReceipts, ({ one }) => ({
+export const expenseReceiptsRelations = relations(expenseReceipts, ({one}) => ({
   medicalExpense: one(medicalExpenses, {
     fields: [expenseReceipts.medicalExpenseId],
     references: [medicalExpenses.id],
   }),
 }));
 
-export const hsaClaimsRelations = relations(hsaClaims, ({ one }) => ({
+export const hsaClaimsRelations = relations(hsaClaims, ({one}) => ({
   medicalExpense: one(medicalExpenses, {
     fields: [hsaClaims.medicalExpenseId],
     references: [medicalExpenses.id],

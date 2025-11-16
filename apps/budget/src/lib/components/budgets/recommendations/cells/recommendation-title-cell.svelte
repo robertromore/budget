@@ -1,16 +1,16 @@
 <script lang="ts">
-  import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
+import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
 
-  interface Props {
-    recommendation: BudgetRecommendationWithRelations;
-  }
+interface Props {
+  recommendation: BudgetRecommendationWithRelations;
+}
 
-  let {recommendation}: Props = $props();
+let {recommendation}: Props = $props();
 </script>
 
 <div class="space-y-1">
   <div class="font-medium">{recommendation.title}</div>
-  <div class="text-sm text-muted-foreground whitespace-pre-line line-clamp-3">
+  <div class="text-muted-foreground line-clamp-3 text-sm whitespace-pre-line">
     {recommendation.description}
   </div>
 </div>

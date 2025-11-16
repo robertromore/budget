@@ -45,7 +45,7 @@ $effect(() => {
   <meta name="description" content={pageDescription} />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -54,8 +54,8 @@ $effect(() => {
         <span class="sr-only">Back to Payee</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <User class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <User class="text-muted-foreground h-8 w-8" />
           {pageTitle}
         </h1>
         <p class="text-muted-foreground mt-1">{pageDescription}</p>
@@ -73,20 +73,14 @@ $effect(() => {
         </Card.Description>
       </Card.Header>
       <Card.Content>
-        <ManagePayeeForm
-          id={payee.id}
-          onSave={handleSave}
-          onDelete={handleDelete}
-        />
+        <ManagePayeeForm id={payee.id} onSave={handleSave} onDelete={handleDelete} />
       </Card.Content>
     </Card.Root>
   {:else}
     <!-- Loading or Error State -->
     <Card.Root class="max-w-4xl">
-      <Card.Content class="text-center py-8">
-        <p class="text-muted-foreground">
-          Payee not found
-        </p>
+      <Card.Content class="py-8 text-center">
+        <p class="text-muted-foreground">Payee not found</p>
       </Card.Content>
     </Card.Root>
   {/if}

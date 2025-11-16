@@ -1,13 +1,13 @@
-import {Checkbox} from '$lib/components/ui/checkbox';
-import {renderComponent} from '$lib/components/ui/data-table';
-import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
-import type {ColumnDef} from '@tanstack/table-core';
-import RecommendationColumnHeader from '../recommendation-column-header.svelte';
-import RecommendationTitleCell from '../cells/recommendation-title-cell.svelte';
-import RecommendationConfidenceCell from '../cells/recommendation-confidence-cell.svelte';
-import RecommendationPriorityCell from '../cells/recommendation-priority-cell.svelte';
-import RecommendationStatusCell from '../cells/recommendation-status-cell.svelte';
-import RecommendationActionsCell from '../cells/recommendation-actions-cell.svelte';
+import {Checkbox} from "$lib/components/ui/checkbox";
+import {renderComponent} from "$lib/components/ui/data-table";
+import type {BudgetRecommendationWithRelations} from "$lib/schema/recommendations";
+import type {ColumnDef} from "@tanstack/table-core";
+import RecommendationColumnHeader from "../recommendation-column-header.svelte";
+import RecommendationTitleCell from "../cells/recommendation-title-cell.svelte";
+import RecommendationConfidenceCell from "../cells/recommendation-confidence-cell.svelte";
+import RecommendationPriorityCell from "../cells/recommendation-priority-cell.svelte";
+import RecommendationStatusCell from "../cells/recommendation-status-cell.svelte";
+import RecommendationActionsCell from "../cells/recommendation-actions-cell.svelte";
 
 export const columns = (
   onApply: (recommendation: BudgetRecommendationWithRelations) => void,
@@ -15,7 +15,7 @@ export const columns = (
 ): ColumnDef<BudgetRecommendationWithRelations>[] => {
   return [
     {
-      id: 'select-col',
+      id: "select-col",
       size: 50,
       header: ({table}) => {
         const allPageRowsSelected = table.getIsAllPageRowsSelected();
@@ -32,7 +32,7 @@ export const columns = (
             }
           },
           controlledChecked: true,
-          'aria-label': 'Select all on page',
+          "aria-label": "Select all on page",
         });
       },
       cell: ({row}) => {
@@ -41,7 +41,7 @@ export const columns = (
           disabled: !row.getCanSelect(),
           onCheckedChange: (value) => row.toggleSelected(!!value),
           controlledChecked: true,
-          'aria-label': 'Select row',
+          "aria-label": "Select row",
         });
       },
       enableColumnFilter: false,
@@ -49,85 +49,85 @@ export const columns = (
       enableHiding: false,
     },
     {
-      accessorKey: 'title',
-      id: 'title',
+      accessorKey: "title",
+      id: "title",
       size: 200,
       header: ({column}) =>
         renderComponent(RecommendationColumnHeader<BudgetRecommendationWithRelations, unknown>, {
           column,
-          title: 'Recommendation',
+          title: "Recommendation",
         }),
       cell: (info) => {
         const recommendation = info.row.original;
         return renderComponent(RecommendationTitleCell, {recommendation});
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: true,
       meta: {
-        label: 'Recommendation',
+        label: "Recommendation",
       },
     },
     {
-      accessorKey: 'confidence',
-      id: 'confidence',
+      accessorKey: "confidence",
+      id: "confidence",
       size: 120,
       header: ({column}) =>
         renderComponent(RecommendationColumnHeader<BudgetRecommendationWithRelations, unknown>, {
           column,
-          title: 'Confidence',
+          title: "Confidence",
         }),
       cell: (info) => {
         const recommendation = info.row.original;
         return renderComponent(RecommendationConfidenceCell, {recommendation});
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: false,
       meta: {
-        label: 'Confidence',
+        label: "Confidence",
       },
     },
     {
-      accessorKey: 'priority',
-      id: 'priority',
+      accessorKey: "priority",
+      id: "priority",
       size: 110,
       header: ({column}) =>
         renderComponent(RecommendationColumnHeader<BudgetRecommendationWithRelations, unknown>, {
           column,
-          title: 'Priority',
+          title: "Priority",
         }),
       cell: (info) => {
         const recommendation = info.row.original;
         return renderComponent(RecommendationPriorityCell, {recommendation});
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: true,
       meta: {
-        label: 'Priority',
+        label: "Priority",
       },
     },
     {
-      accessorKey: 'status',
-      id: 'status',
+      accessorKey: "status",
+      id: "status",
       size: 110,
       header: ({column}) =>
         renderComponent(RecommendationColumnHeader<BudgetRecommendationWithRelations, unknown>, {
           column,
-          title: 'Status',
+          title: "Status",
         }),
       cell: (info) => {
         const recommendation = info.row.original;
         return renderComponent(RecommendationStatusCell, {recommendation});
       },
-      sortingFn: 'alphanumeric',
+      sortingFn: "alphanumeric",
       enableColumnFilter: true,
       meta: {
-        label: 'Status',
+        label: "Status",
       },
     },
     {
-      id: 'actions',
+      id: "actions",
       size: 180,
-      header: () => '',
+      header: () => "",
       cell: (info) => {
         const recommendation = info.row.original;
         return renderComponent(RecommendationActionsCell, {

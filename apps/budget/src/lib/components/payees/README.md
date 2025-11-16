@@ -1,14 +1,18 @@
 # Payee Management UI Components
 
-This directory contains comprehensive payee management UI components that integrate all Phase 2 and Phase 3 features including ML insights, contact validation, subscription detection, and advanced analytics.
+This directory contains comprehensive payee management UI components that
+integrate all Phase 2 and Phase 3 features including ML insights, contact
+validation, subscription detection, and advanced analytics.
 
 ## Components
 
 ### 1. ManagePayeeForm
 
-A comprehensive form component with tabbed interface for managing all payee details.
+A comprehensive form component with tabbed interface for managing all payee
+details.
 
 **Features:**
+
 - **Basic Info Tab**: Essential payee details and categorization
 - **Contact Tab**: Contact information with validation and enrichment
 - **Business Tab**: Business details and subscription detection
@@ -16,9 +20,10 @@ A comprehensive form component with tabbed interface for managing all payee deta
 - **Automation Tab**: Quick actions and intelligent defaults
 
 **Usage:**
+
 ```svelte
 <script>
-  import { ManagePayeeForm } from '$lib/components/payees';
+  import {ManagePayeeForm} from '$lib/components/payees';
 
   function handlePayeeSaved(payee) {
     console.log('Payee saved:', payee);
@@ -30,21 +35,18 @@ A comprehensive form component with tabbed interface for managing all payee deta
 </script>
 
 <!-- Create new payee -->
-<ManagePayeeForm
-  onSave={handlePayeeSaved}
-  formId="create-payee"
-/>
+<ManagePayeeForm onSave={handlePayeeSaved} formId="create-payee" />
 
 <!-- Edit existing payee -->
 <ManagePayeeForm
   id={123}
   onSave={handlePayeeSaved}
   onDelete={handlePayeeDeleted}
-  formId="edit-payee"
-/>
+  formId="edit-payee" />
 ```
 
 **Props:**
+
 - `id?: number` - Payee ID for editing (omit for creation)
 - `onSave?: (payee: Payee) => void` - Callback when payee is saved
 - `onDelete?: (id: number) => void` - Callback when payee is deleted
@@ -52,9 +54,11 @@ A comprehensive form component with tabbed interface for managing all payee deta
 
 ### 2. PayeeSelector
 
-Enhanced payee selection component with search, ML suggestions, and inline details.
+Enhanced payee selection component with search, ML suggestions, and inline
+details.
 
 **Features:**
+
 - Advanced search with tRPC backend integration
 - ML-powered payee suggestions based on transaction context
 - Recent activity display
@@ -64,9 +68,10 @@ Enhanced payee selection component with search, ML suggestions, and inline detai
 - Inline payee creation
 
 **Usage:**
+
 ```svelte
 <script>
-  import { PayeeSelector } from '$lib/components/payees';
+  import {PayeeSelector} from '$lib/components/payees';
 
   let selectedPayeeId = $state(null);
 
@@ -80,8 +85,7 @@ Enhanced payee selection component with search, ML suggestions, and inline detai
 <PayeeSelector
   value={selectedPayeeId}
   onValueChange={handlePayeeChange}
-  placeholder="Select a payee..."
-/>
+  placeholder="Select a payee..." />
 
 <!-- With ML suggestions and transaction context -->
 <PayeeSelector
@@ -92,20 +96,19 @@ Enhanced payee selection component with search, ML suggestions, and inline detai
   transactionContext={{
     amount: 29.99,
     date: '2024-01-15',
-    description: 'Subscription payment'
-  }}
-/>
+    description: 'Subscription payment',
+  }} />
 
 <!-- Read-only with details -->
 <PayeeSelector
   value={selectedPayeeId}
   disabled={true}
   showDetails={true}
-  allowCreate={false}
-/>
+  allowCreate={false} />
 ```
 
 **Props:**
+
 - `value?: number | null` - Selected payee ID
 - `onValueChange?: (payeeId: number | null) => void` - Selection callback
 - `placeholder?: string` - Placeholder text
@@ -124,6 +127,7 @@ Enhanced payee selection component with search, ML suggestions, and inline detai
 Comprehensive analytics dashboard with ML insights and performance metrics.
 
 **Features:**
+
 - Overview with key statistics
 - ML insights and unified recommendations
 - Cross-system learning analysis
@@ -133,32 +137,30 @@ Comprehensive analytics dashboard with ML insights and performance metrics.
 - Budget optimization analysis
 
 **Usage:**
+
 ```svelte
 <script>
-  import { PayeeAnalyticsDashboard } from '$lib/components/payees';
+  import {PayeeAnalyticsDashboard} from '$lib/components/payees';
 </script>
 
 <!-- Individual payee analytics -->
-<PayeeAnalyticsDashboard
-  payeeId={123}
-  timeframe="12"
-/>
+<PayeeAnalyticsDashboard payeeId={123} timeframe="12" />
 
 <!-- Overall analytics dashboard -->
-<PayeeAnalyticsDashboard
-  showOverallAnalytics={true}
-  timeframe="6"
-/>
+<PayeeAnalyticsDashboard showOverallAnalytics={true} timeframe="6" />
 ```
 
 **Props:**
+
 - `payeeId?: number` - Specific payee ID for individual analytics
 - `showOverallAnalytics?: boolean` - Show system-wide analytics (default: false)
-- `timeframe?: string` - Time period ('3', '6', '12', '24', 'all') (default: '12')
+- `timeframe?: string` - Time period ('3', '6', '12', '24', 'all') (default:
+  '12')
 
 ## Integration with Query Layer
 
-All components integrate seamlessly with the query layer for efficient data fetching and caching:
+All components integrate seamlessly with the query layer for efficient data
+fetching and caching:
 
 ```typescript
 import {
@@ -167,7 +169,7 @@ import {
   getUnifiedMLRecommendations,
   applyIntelligentDefaults,
   validatePayeeContact,
-  classifySubscription
+  classifySubscription,
 } from '$lib/query/payees';
 
 // Use in components
@@ -179,24 +181,28 @@ const mlRecommendations = getUnifiedMLRecommendations(payeeId, context);
 ## ML Features Integration
 
 ### Category Learning
+
 - Automatic category recommendations based on transaction history
 - User correction recording and learning
 - Confidence scoring and improvement over time
 - Cross-payee pattern recognition
 
 ### Contact Validation
+
 - Phone number standardization and validation
 - Email domain verification
 - Website accessibility checking
 - Address enrichment with geocoding
 
 ### Subscription Detection
+
 - Recurring pattern analysis
 - Subscription classification and metadata
 - Cost analysis and optimization suggestions
 - Cancellation assistance
 
 ### Budget Optimization
+
 - Spending pattern analysis
 - Budget allocation recommendations
 - Multi-payee optimization strategies
@@ -205,6 +211,7 @@ const mlRecommendations = getUnifiedMLRecommendations(payeeId, context);
 ## Accessibility Features
 
 All components follow WCAG 2.1 AA standards:
+
 - Full keyboard navigation support
 - Screen reader compatibility
 - High contrast mode support
@@ -215,6 +222,7 @@ All components follow WCAG 2.1 AA standards:
 ## Responsive Design
 
 Components are fully responsive and work across all device sizes:
+
 - Mobile-first design approach
 - Flexible grid layouts
 - Touch-friendly interactions
@@ -223,6 +231,7 @@ Components are fully responsive and work across all device sizes:
 ## Error Handling
 
 Comprehensive error handling with user-friendly messages:
+
 - Network error recovery
 - Validation error display
 - Loading states and feedback

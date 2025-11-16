@@ -18,11 +18,7 @@ let {
 <thead
   bind:this={ref}
   data-slot="table-header"
-  class={cn(
-    '[&_tr]:border-b',
-    stickyHeader && 'sticky top-0 z-10 bg-background',
-    className
-  )}
+  class={cn('[&_tr]:border-b', stickyHeader && 'bg-background sticky top-0 z-10', className)}
   {...restProps}>
   {@render children?.()}
 </thead>

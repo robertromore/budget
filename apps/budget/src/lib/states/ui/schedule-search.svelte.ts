@@ -1,11 +1,11 @@
-import type { Schedule } from '$lib/schema/schedules';
-import { createLocalStorageState } from '$lib/utils/local-storage.svelte';
+import type {Schedule} from "$lib/schema/schedules";
+import {createLocalStorageState} from "$lib/utils/local-storage.svelte";
 
 export interface ScheduleSearchFilters {
-  status?: 'active' | 'inactive';
+  status?: "active" | "inactive";
   recurring?: boolean;
   autoAdd?: boolean;
-  amountType?: 'exact' | 'approximate' | 'range';
+  amountType?: "exact" | "approximate" | "range";
   accountId?: number;
   payeeId?: number;
   categoryId?: number;
@@ -19,9 +19,9 @@ interface ScheduleSearchState {
   isLoading: boolean;
   totalCount: number;
   hasMore: boolean;
-  sortBy: 'name' | 'amount' | 'created' | 'status';
-  sortOrder: 'asc' | 'desc';
-  viewMode: 'grid' | 'list';
+  sortBy: "name" | "amount" | "created" | "status";
+  sortOrder: "asc" | "desc";
+  viewMode: "grid" | "list";
 }
 
 /**
@@ -29,12 +29,21 @@ interface ScheduleSearchState {
  */
 class ScheduleSearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState('schedule-search-view-mode', 'grid' as 'grid' | 'list');
-  private sortByState = createLocalStorageState('schedule-search-sort-by', 'name' as 'name' | 'amount' | 'created' | 'status');
-  private sortOrderState = createLocalStorageState('schedule-search-sort-order', 'asc' as 'asc' | 'desc');
+  private viewModeState = createLocalStorageState(
+    "schedule-search-view-mode",
+    "grid" as "grid" | "list"
+  );
+  private sortByState = createLocalStorageState(
+    "schedule-search-sort-by",
+    "name" as "name" | "amount" | "created" | "status"
+  );
+  private sortOrderState = createLocalStorageState(
+    "schedule-search-sort-order",
+    "asc" as "asc" | "desc"
+  );
 
   // Reactive state
-  query = $state('');
+  query = $state("");
   filters = $state<ScheduleSearchFilters>({});
   results = $state<Schedule[]>([]);
   isLoading = $state(false);
@@ -42,14 +51,26 @@ class ScheduleSearchStateManager {
   hasMore = $state(false);
 
   // Getters for persistent state
-  get viewMode() { return this.viewModeState.value; }
-  set viewMode(value: 'grid' | 'list') { this.viewModeState.value = value; }
+  get viewMode() {
+    return this.viewModeState.value;
+  }
+  set viewMode(value: "grid" | "list") {
+    this.viewModeState.value = value;
+  }
 
-  get sortBy() { return this.sortByState.value; }
-  set sortBy(value: 'name' | 'amount' | 'created' | 'status') { this.sortByState.value = value; }
+  get sortBy() {
+    return this.sortByState.value;
+  }
+  set sortBy(value: "name" | "amount" | "created" | "status") {
+    this.sortByState.value = value;
+  }
 
-  get sortOrder() { return this.sortOrderState.value; }
-  set sortOrder(value: 'asc' | 'desc') { this.sortOrderState.value = value; }
+  get sortOrder() {
+    return this.sortOrderState.value;
+  }
+  set sortOrder(value: "asc" | "desc") {
+    this.sortOrderState.value = value;
+  }
 
   // Computed properties
   hasActiveFilters = $derived.by(() => {
@@ -75,15 +96,12 @@ class ScheduleSearchStateManager {
     this.filters = newFilters;
   }
 
-  updateFilter<K extends keyof ScheduleSearchFilters>(
-    key: K,
-    value: ScheduleSearchFilters[K]
-  ) {
-    const newFilters = { ...this.filters };
+  updateFilter<K extends keyof ScheduleSearchFilters>(key: K, value: ScheduleSearchFilters[K]) {
+    const newFilters = {...this.filters};
     // Remove filter if value is undefined, null, or empty string
     if (value === undefined || value === null) {
       delete newFilters[key];
-    } else if (typeof value === 'string') {
+    } else if (typeof value === "string") {
       if (value.length === 0) {
         delete newFilters[key];
       } else {
@@ -96,16 +114,16 @@ class ScheduleSearchStateManager {
   }
 
   clearAllFilters() {
-    this.query = '';
+    this.query = "";
     this.filters = {};
   }
 
   clearQuery() {
-    this.query = '';
+    this.query = "";
   }
 
   clearFilter(key: keyof ScheduleSearchFilters) {
-    const newFilters = { ...this.filters };
+    const newFilters = {...this.filters};
     delete newFilters[key];
     this.filters = newFilters;
   }
@@ -127,10 +145,10 @@ class ScheduleSearchStateManager {
   }
 
   toggleSortOrder() {
-    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
   }
 
-  setSorting(sortBy: ScheduleSearchState['sortBy'], sortOrder?: ScheduleSearchState['sortOrder']) {
+  setSorting(sortBy: ScheduleSearchState["sortBy"], sortOrder?: ScheduleSearchState["sortOrder"]) {
     this.sortBy = sortBy;
     if (sortOrder) {
       this.sortOrder = sortOrder;
@@ -138,7 +156,7 @@ class ScheduleSearchStateManager {
   }
 
   toggleViewMode() {
-    this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
+    this.viewMode = this.viewMode === "grid" ? "list" : "grid";
   }
 
   // Get current search parameters for API calls
@@ -147,13 +165,13 @@ class ScheduleSearchStateManager {
       query: this.query || undefined,
       ...this.filters,
       sortBy: this.sortBy,
-      sortOrder: this.sortOrder
+      sortOrder: this.sortOrder,
     };
   }
 
   // Reset to initial state
   reset() {
-    this.query = '';
+    this.query = "";
     this.filters = {};
     this.results = [];
     this.isLoading = false;
@@ -168,7 +186,7 @@ class ScheduleSearchStateManager {
       filters: this.filters,
       sortBy: this.sortBy,
       sortOrder: this.sortOrder,
-      viewMode: this.viewMode
+      viewMode: this.viewMode,
     };
   }
 

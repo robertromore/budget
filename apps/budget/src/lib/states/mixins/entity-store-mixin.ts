@@ -1,7 +1,7 @@
 // Entity Store Mixin - Basic CRUD operations for reactive entity collections
 // Plain TypeScript utilities with no rune dependencies
 
-import type { SvelteMap } from "svelte/reactivity";
+import type {SvelteMap} from "svelte/reactivity";
 
 /**
  * Generic entity interface requiring an id property
@@ -43,7 +43,7 @@ export interface EntityStoreMixin<T extends Entity> {
 
   // Sorting operations
   sort(compareFn: (a: T, b: T) => number): T[];
-  sortBy<K extends keyof T>(field: K, direction?: 'asc' | 'desc'): T[];
+  sortBy<K extends keyof T>(field: K, direction?: "asc" | "desc"): T[];
 }
 
 /**
@@ -78,11 +78,11 @@ export function createEntityStore<T extends Entity>(
 
     // Bulk operations
     addMany(entitiesToAdd: T[]): void {
-      entitiesToAdd.forEach(entity => entities.set(entity.id, entity));
+      entitiesToAdd.forEach((entity) => entities.set(entity.id, entity));
     },
 
     updateMany(entitiesToUpdate: T[]): void {
-      entitiesToUpdate.forEach(entity => {
+      entitiesToUpdate.forEach((entity) => {
         if (entities.has(entity.id)) {
           entities.set(entity.id, entity);
         }
@@ -91,7 +91,7 @@ export function createEntityStore<T extends Entity>(
 
     removeMany(ids: number[]): number {
       let removed = 0;
-      ids.forEach(id => {
+      ids.forEach((id) => {
         if (entities.delete(id)) {
           removed++;
         }
@@ -109,11 +109,11 @@ export function createEntityStore<T extends Entity>(
     },
 
     findBy<K extends keyof T>(key: K, value: T[K]): T[] {
-      return Array.from(entities.values()).filter(entity => entity[key] === value);
+      return Array.from(entities.values()).filter((entity) => entity[key] === value);
     },
 
     findOne<K extends keyof T>(key: K, value: T[K]): T | undefined {
-      return Array.from(entities.values()).find(entity => entity[key] === value);
+      return Array.from(entities.values()).find((entity) => entity[key] === value);
     },
 
     // Collection operations
@@ -123,7 +123,7 @@ export function createEntityStore<T extends Entity>(
 
     replace(newEntities: T[]): void {
       entities.clear();
-      newEntities.forEach(entity => entities.set(entity.id, entity));
+      newEntities.forEach((entity) => entities.set(entity.id, entity));
     },
 
     count(): number {
@@ -141,13 +141,13 @@ export function createEntityStore<T extends Entity>(
 
     search(searchTerm: string, fields: (keyof T)[]): T[] {
       const searchLower = searchTerm.toLowerCase();
-      return Array.from(entities.values()).filter(entity => {
-        return fields.some(field => {
+      return Array.from(entities.values()).filter((entity) => {
+        return fields.some((field) => {
           const value = entity[field];
-          if (typeof value === 'string') {
+          if (typeof value === "string") {
             return value.toLowerCase().includes(searchLower);
           }
-          if (typeof value === 'number') {
+          if (typeof value === "number") {
             return value.toString().includes(searchLower);
           }
           return false;
@@ -160,16 +160,16 @@ export function createEntityStore<T extends Entity>(
       return Array.from(entities.values()).sort(compareFn);
     },
 
-    sortBy<K extends keyof T>(field: K, direction: 'asc' | 'desc' = 'asc'): T[] {
+    sortBy<K extends keyof T>(field: K, direction: "asc" | "desc" = "asc"): T[] {
       return Array.from(entities.values()).sort((a, b) => {
         const aValue = a[field];
         const bValue = b[field];
 
-        if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+        if (aValue < bValue) return direction === "asc" ? -1 : 1;
+        if (aValue > bValue) return direction === "asc" ? 1 : -1;
         return 0;
       });
-    }
+    },
   };
 }
 

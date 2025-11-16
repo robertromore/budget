@@ -1,11 +1,11 @@
-import { formInsertScheduleSchema } from "$lib/schema";
-import { superformInsertAccountSchema } from "$lib/schema/superforms";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
-import { getLocalTimeZone, today } from "@internationalized/date";
-import { superValidate } from "sveltekit-superforms";
-import { zod4 } from "sveltekit-superforms/adapters";
-import type { LayoutServerLoad } from "./$types";
+import {formInsertScheduleSchema} from "$lib/schema";
+import {superformInsertAccountSchema} from "$lib/schema/superforms";
+import {createContext} from "$lib/trpc/context";
+import {createCaller} from "$lib/trpc/router";
+import {getLocalTimeZone, today} from "@internationalized/date";
+import {superValidate} from "sveltekit-superforms";
+import {zod4} from "sveltekit-superforms/adapters";
+import type {LayoutServerLoad} from "./$types";
 
 const thisday = today(getLocalTimeZone());
 export const load: LayoutServerLoad = async (event) => {

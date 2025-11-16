@@ -1,13 +1,13 @@
-import { db } from "$lib/server/db";
-import { schedules, transactions } from "$lib/schema";
-import { eq, and } from "drizzle-orm";
-import type { Schedule } from "$lib/schema/schedules";
-import type { NewTransaction } from "$lib/schema/transactions";
+import {db} from "$lib/server/db";
+import {schedules, transactions} from "$lib/schema";
+import {eq, and} from "drizzle-orm";
+import type {Schedule} from "$lib/schema/schedules";
+import type {NewTransaction} from "$lib/schema/transactions";
 
 export interface ScheduleWithDetails extends Schedule {
-  account: { id: number; name: string | null };
-  payee: { id: number; name: string | null };
-  category: { id: number; name: string | null } | null;
+  account: {id: number; name: string | null};
+  payee: {id: number; name: string | null};
+  category: {id: number; name: string | null} | null;
   scheduleDate: {
     id: number;
     start: string;
@@ -49,10 +49,7 @@ export class ScheduleRepository {
    */
   async getActiveAutoAddSchedules(): Promise<ScheduleWithDetails[]> {
     return await db.query.schedules.findMany({
-      where: and(
-        eq(schedules.status, "active"),
-        eq(schedules.auto_add, true)
-      ),
+      where: and(eq(schedules.status, "active"), eq(schedules.auto_add, true)),
       with: {
         account: true,
         payee: true,
@@ -82,10 +79,7 @@ export class ScheduleRepository {
    */
   async hasTransactionForDate(scheduleId: number, date: string): Promise<boolean> {
     const existingTransaction = await db.query.transactions.findFirst({
-      where: and(
-        eq(transactions.scheduleId, scheduleId),
-        eq(transactions.date, date)
-      ),
+      where: and(eq(transactions.scheduleId, scheduleId), eq(transactions.date, date)),
     });
     return !!existingTransaction;
   }
@@ -106,7 +100,7 @@ export class ScheduleRepository {
   async getRecentTransactionsForSchedule(scheduleId: number, limit: number = 5) {
     return await db.query.transactions.findMany({
       where: eq(transactions.scheduleId, scheduleId),
-      orderBy: (transactions, { desc }) => [desc(transactions.date)],
+      orderBy: (transactions, {desc}) => [desc(transactions.date)],
       limit,
     });
   }

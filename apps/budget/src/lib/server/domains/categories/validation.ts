@@ -14,29 +14,30 @@ export const createCategorySchema = z.object({
     .max(1000, "Notes must be less than 1000 characters")
     .optional()
     .nullable()
-    .transform(val => val || null),
+    .transform((val) => val || null),
 });
 
 /**
  * Update category validation schema
  */
-export const updateCategorySchema = z.object({
-  name: z
-    .string()
-    .min(1, "Category name cannot be empty")
-    .max(255, "Category name must be less than 255 characters")
-    .trim()
-    .optional(),
-  notes: z
-    .string()
-    .max(1000, "Notes must be less than 1000 characters")
-    .optional()
-    .nullable()
-    .transform(val => val || null),
-}).refine(
-  data => Object.keys(data).length > 0,
-  {message: "At least one field must be provided for update"}
-);
+export const updateCategorySchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, "Category name cannot be empty")
+      .max(255, "Category name must be less than 255 characters")
+      .trim()
+      .optional(),
+    notes: z
+      .string()
+      .max(1000, "Notes must be less than 1000 characters")
+      .optional()
+      .nullable()
+      .transform((val) => val || null),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update",
+  });
 
 /**
  * Delete category validation schema
@@ -66,13 +67,7 @@ export const searchCategoriesSchema = z.object({
     .max(255, "Search query must be less than 255 characters")
     .optional()
     .default(""),
-  limit: z
-    .number()
-    .int()
-    .positive()
-    .max(100, "Limit cannot exceed 100")
-    .optional()
-    .default(50),
+  limit: z.number().int().positive().max(100, "Limit cannot exceed 100").optional().default(50),
 });
 
 /**
@@ -94,30 +89,21 @@ export const getCategoriesByAccountSchema = z.object({
  * Get top categories validation schema
  */
 export const getTopCategoriesSchema = z.object({
-  limit: z
-    .number()
-    .int()
-    .positive()
-    .max(100, "Limit cannot exceed 100")
-    .optional()
-    .default(10),
-  accountId: z
-    .number()
-    .int()
-    .positive("Invalid account ID")
-    .optional(),
+  limit: z.number().int().positive().max(100, "Limit cannot exceed 100").optional().default(10),
+  accountId: z.number().int().positive("Invalid account ID").optional(),
 });
 
 /**
  * Merge categories validation schema
  */
-export const mergeCategoriesSchema = z.object({
-  sourceId: z.number().int().positive("Invalid source category ID"),
-  targetId: z.number().int().positive("Invalid target category ID"),
-}).refine(
-  data => data.sourceId !== data.targetId,
-  {message: "Source and target category cannot be the same"}
-);
+export const mergeCategoriesSchema = z
+  .object({
+    sourceId: z.number().int().positive("Invalid source category ID"),
+    targetId: z.number().int().positive("Invalid target category ID"),
+  })
+  .refine((data) => data.sourceId !== data.targetId, {
+    message: "Source and target category cannot be the same",
+  });
 
 /**
  * Category analytics validation schema

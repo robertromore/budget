@@ -65,7 +65,7 @@ let budget: EditableEntityItem = $state({
 const budgets = $derived<EditableEntityItem[]>(
   page.data['budgets']?.map((b: any) => ({
     id: b.id,
-    name: b.name
+    name: b.name,
   })) || []
 );
 
@@ -92,7 +92,7 @@ $effect(() => {
   if (topSuggestion && !budget.id) {
     budget = {
       id: topSuggestion.budgetId,
-      name: topSuggestion.budgetName
+      name: topSuggestion.budgetName,
     };
   }
 });
@@ -146,15 +146,14 @@ $effect(() => {
           transactionContext={{
             amount: amount || 0,
             categoryId: category.id || undefined,
-            accountId
+            accountId,
           }}
           displayMode="normal"
           groupStrategy="usage"
           showQuickAccess={true}
           allowCreate={false}
           buttonClass="w-full"
-          placeholder="Select payee..."
-        />
+          placeholder="Select payee..." />
         <Form.FieldErrors />
         <input hidden bind:value={$formData.payeeId} name={props.name} />
       {/snippet}

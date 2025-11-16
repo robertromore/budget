@@ -63,5 +63,5 @@ export type ViewDisplayState = {
   density?: TableDensity;
   stickyHeader?: boolean;
   pageSize?: number;
-  viewMode?: 'table' | 'cards';
+  viewMode?: "table" | "cards";
 };

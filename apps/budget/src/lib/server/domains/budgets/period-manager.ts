@@ -4,12 +4,12 @@ import {
   type BudgetPeriodTemplate,
   budgetPeriodTemplates,
 } from "$lib/schema/budgets";
-import { db } from "$lib/server/db";
-import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { currentDate as defaultCurrentDate, parseISOString, toISOString } from "$lib/utils/dates";
-import { CalendarDate, type DateValue } from "@internationalized/date";
-import { and, desc, eq, sql } from "drizzle-orm";
-import { BudgetPeriodCalculator, type PeriodBoundary } from "./services";
+import {db} from "$lib/server/db";
+import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
+import {currentDate as defaultCurrentDate, parseISOString, toISOString} from "$lib/utils/dates";
+import {CalendarDate, type DateValue} from "@internationalized/date";
+import {and, desc, eq, sql} from "drizzle-orm";
+import {BudgetPeriodCalculator, type PeriodBoundary} from "./services";
 
 export interface PeriodCreationOptions {
   lookAheadMonths?: number;
@@ -133,14 +133,16 @@ export class PeriodManager {
     const period = await this.getPeriodById(periodId);
 
     // Get envelope data for this period
-    const envelopeData = await db.select({
-      totalAllocated: sql<number>`COALESCE(SUM(allocated_amount), 0)`,
-      totalSpent: sql<number>`COALESCE(SUM(spent_amount), 0)`,
-      totalRollover: sql<number>`COALESCE(SUM(rollover_amount), 0)`,
-      deficitCount: sql<number>`COUNT(CASE WHEN deficit_amount > 0 THEN 1 END)`,
-      surplusCount: sql<number>`COUNT(CASE WHEN available_amount > 0 THEN 1 END)`,
-    }).from(sql`envelope_allocation`)
-     .where(sql`period_instance_id = ${periodId}`);
+    const envelopeData = await db
+      .select({
+        totalAllocated: sql<number>`COALESCE(SUM(allocated_amount), 0)`,
+        totalSpent: sql<number>`COALESCE(SUM(spent_amount), 0)`,
+        totalRollover: sql<number>`COALESCE(SUM(rollover_amount), 0)`,
+        deficitCount: sql<number>`COUNT(CASE WHEN deficit_amount > 0 THEN 1 END)`,
+        surplusCount: sql<number>`COUNT(CASE WHEN available_amount > 0 THEN 1 END)`,
+      })
+      .from(sql`envelope_allocation`)
+      .where(sql`period_instance_id = ${periodId}`);
 
     const data = envelopeData[0] || {
       totalAllocated: 0,
@@ -152,11 +154,16 @@ export class PeriodManager {
 
     const startDate = parseISOString(period.startDate);
     const endDate = parseISOString(period.endDate);
-    const duration = startDate && endDate ?
-      Math.ceil((endDate.toDate('UTC').getTime() - startDate.toDate('UTC').getTime()) / (1000 * 60 * 60 * 24)) : 0;
+    const duration =
+      startDate && endDate
+        ? Math.ceil(
+            (endDate.toDate("UTC").getTime() - startDate.toDate("UTC").getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        : 0;
 
-    const utilizationRate = data.totalAllocated > 0 ?
-      (data.totalSpent / data.totalAllocated) * 100 : 0;
+    const utilizationRate =
+      data.totalAllocated > 0 ? (data.totalSpent / data.totalAllocated) * 100 : 0;
 
     const performanceScore = this.calculatePerformanceScore({
       utilizationRate,
@@ -208,14 +215,14 @@ export class PeriodManager {
     };
   }
 
-  async getPeriodHistory(
-    budgetId: number,
-    limit: number = 12
-  ): Promise<PeriodAnalytics[]> {
+  async getPeriodHistory(budgetId: number, limit: number = 12): Promise<PeriodAnalytics[]> {
     const periods = await db
       .select()
       .from(budgetPeriodInstances)
-      .innerJoin(budgetPeriodTemplates, eq(budgetPeriodInstances.templateId, budgetPeriodTemplates.id))
+      .innerJoin(
+        budgetPeriodTemplates,
+        eq(budgetPeriodInstances.templateId, budgetPeriodTemplates.id)
+      )
       .where(eq(budgetPeriodTemplates.budgetId, budgetId))
       .orderBy(desc(budgetPeriodInstances.startDate))
       .limit(limit);
@@ -263,8 +270,8 @@ export class PeriodManager {
     template: BudgetPeriodTemplate,
     lookAheadMonths: number,
     lookBehindMonths: number
-  ): Promise<Array<{startDate: string, endDate: string, allocatedAmount: number}>> {
-    const periods: Array<{startDate: string, endDate: string, allocatedAmount: number}> = [];
+  ): Promise<Array<{startDate: string; endDate: string; allocatedAmount: number}>> {
+    const periods: Array<{startDate: string; endDate: string; allocatedAmount: number}> = [];
     const today = defaultCurrentDate;
 
     // Generate periods for the specified range
@@ -329,7 +336,7 @@ export class PeriodManager {
 
   private async createPeriodInstance(
     template: BudgetPeriodTemplate,
-    periodData: {startDate: string, endDate: string, allocatedAmount: number},
+    periodData: {startDate: string; endDate: string; allocatedAmount: number},
     options: PeriodCreationOptions
   ): Promise<BudgetPeriodInstance> {
     let allocatedAmount = periodData.allocatedAmount;
@@ -366,9 +373,7 @@ export class PeriodManager {
     return created;
   }
 
-  private async calculateCustomBoundaries(
-    config: PeriodBoundaryConfig
-  ): Promise<PeriodBoundary> {
+  private async calculateCustomBoundaries(config: PeriodBoundaryConfig): Promise<PeriodBoundary> {
     const timezone = "UTC"; // Default timezone
 
     switch (config.type) {
@@ -482,15 +487,21 @@ export class PeriodManager {
     }
 
     if (current.deficitCount > previous.deficitCount) {
-      insights.push(`${current.deficitCount - previous.deficitCount} more envelopes are in deficit`);
+      insights.push(
+        `${current.deficitCount - previous.deficitCount} more envelopes are in deficit`
+      );
     } else if (current.deficitCount < previous.deficitCount) {
-      insights.push(`${previous.deficitCount - current.deficitCount} fewer envelopes are in deficit`);
+      insights.push(
+        `${previous.deficitCount - current.deficitCount} fewer envelopes are in deficit`
+      );
     }
 
     if (changes.allocatedChange > 0) {
-      insights.push(`Budget allocation increased by ${(changes.allocatedChange).toFixed(2)}`);
+      insights.push(`Budget allocation increased by ${changes.allocatedChange.toFixed(2)}`);
     } else if (changes.allocatedChange < 0) {
-      insights.push(`Budget allocation decreased by ${Math.abs(changes.allocatedChange).toFixed(2)}`);
+      insights.push(
+        `Budget allocation decreased by ${Math.abs(changes.allocatedChange).toFixed(2)}`
+      );
     }
 
     return insights;

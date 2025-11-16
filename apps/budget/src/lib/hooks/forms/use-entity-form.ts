@@ -1,5 +1,5 @@
-import { zod4Client } from 'sveltekit-superforms/adapters';
-import { superForm } from 'sveltekit-superforms/client';
+import {zod4Client} from "sveltekit-superforms/adapters";
+import {superForm} from "sveltekit-superforms/client";
 
 export interface EntityFormOptions<T = any> {
   formData: any;
@@ -21,7 +21,7 @@ export function useEntityForm<T = any>(options: EntityFormOptions<T>): any {
     onUpdate,
     onDelete,
     entityId,
-    customOptions = {}
+    customOptions = {},
   } = options;
 
   const isUpdate = entityId && entityId > 0;
@@ -30,11 +30,11 @@ export function useEntityForm<T = any>(options: EntityFormOptions<T>): any {
     id: formId,
     validators: zod4Client(schema),
     warnings: {
-      duplicateId: false
+      duplicateId: false,
     },
-    onResult: async ({ result }) => {
-      if (result.type === 'success' && result.data) {
-        const entity = result.data['entity'];
+    onResult: async ({result}) => {
+      if (result.type === "success" && result.data) {
+        const entity = result.data["entity"];
 
         if (isUpdate && onUpdate) {
           onUpdate(entity);
@@ -46,22 +46,22 @@ export function useEntityForm<T = any>(options: EntityFormOptions<T>): any {
         }
       }
     },
-    ...customOptions
+    ...customOptions,
   });
 
   return {
     ...form,
     isUpdate,
-    onDelete
+    onDelete,
   };
 }
 
 export function createEntityFormConfig<T = any>(
-  baseOptions: Omit<EntityFormOptions<T>, 'customOptions'>,
+  baseOptions: Omit<EntityFormOptions<T>, "customOptions">,
   customOptions?: any
 ): EntityFormOptions<T> {
   return {
     ...baseOptions,
-    customOptions: customOptions || {}
+    customOptions: customOptions || {},
   };
 }

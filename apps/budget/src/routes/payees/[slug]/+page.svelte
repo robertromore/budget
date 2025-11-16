@@ -20,7 +20,9 @@ const payeesState = PayeesState.get();
 const payee = $derived(payeeSlug ? payeesState.getBySlug(payeeSlug) : null);
 
 const pageTitle = $derived(payee ? payee.name : 'Payee Not Found');
-const pageDescription = $derived(payee ? 'View and manage payee information' : 'The requested payee could not be found');
+const pageDescription = $derived(
+  payee ? 'View and manage payee information' : 'The requested payee could not be found'
+);
 
 // Delete dialog state
 let deleteDialogOpen = $state(false);
@@ -53,7 +55,7 @@ $effect(() => {
   <meta name="description" content={pageDescription} />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -62,8 +64,8 @@ $effect(() => {
         <span class="sr-only">Back to Payees</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <User class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <User class="text-muted-foreground h-8 w-8" />
           {pageTitle}
         </h1>
         <p class="text-muted-foreground mt-1">{pageDescription}</p>
@@ -80,7 +82,7 @@ $effect(() => {
           <SquarePen class="mr-2 h-4 w-4" />
           Edit
         </Button>
-        <Button variant="destructive" onclick={() => deleteDialogOpen = true}>
+        <Button variant="destructive" onclick={() => (deleteDialogOpen = true)}>
           <Trash2 class="mr-2 h-4 w-4" />
           Delete
         </Button>
@@ -90,7 +92,7 @@ $effect(() => {
 
   {#if payee}
     <!-- Payee Details -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Basic Information -->
       <Card.Root>
         <Card.Header>
@@ -101,26 +103,26 @@ $effect(() => {
         </Card.Header>
         <Card.Content class="space-y-3">
           <div>
-            <span class="text-sm font-medium text-muted-foreground">Name</span>
+            <span class="text-muted-foreground text-sm font-medium">Name</span>
             <p class="text-sm">{payee.name}</p>
           </div>
 
           {#if payee.notes}
             <div>
-              <span class="text-sm font-medium text-muted-foreground">Notes</span>
+              <span class="text-muted-foreground text-sm font-medium">Notes</span>
               <p class="text-sm">{payee.notes}</p>
             </div>
           {/if}
 
           {#if payee.payeeType}
             <div>
-              <span class="text-sm font-medium text-muted-foreground">Type</span>
+              <span class="text-muted-foreground text-sm font-medium">Type</span>
               <p class="text-sm capitalize">{payee.payeeType.replace('_', ' ')}</p>
             </div>
           {/if}
 
           <div>
-            <span class="text-sm font-medium text-muted-foreground">Status</span>
+            <span class="text-muted-foreground text-sm font-medium">Status</span>
             <p class="text-sm">{payee.isActive ? 'Active' : 'Inactive'}</p>
           </div>
         </Card.Content>
@@ -137,23 +139,27 @@ $effect(() => {
         <Card.Content class="space-y-3">
           {#if payee.email}
             <div>
-              <span class="text-sm font-medium text-muted-foreground">Email</span>
+              <span class="text-muted-foreground text-sm font-medium">Email</span>
               <p class="text-sm">{payee.email}</p>
             </div>
           {/if}
 
           {#if payee.phone}
             <div>
-              <span class="text-sm font-medium text-muted-foreground">Phone</span>
+              <span class="text-muted-foreground text-sm font-medium">Phone</span>
               <p class="text-sm">{payee.phone}</p>
             </div>
           {/if}
 
           {#if payee.website}
             <div>
-              <span class="text-sm font-medium text-muted-foreground">Website</span>
+              <span class="text-muted-foreground text-sm font-medium">Website</span>
               <p class="text-sm">
-                <a href={payee.website} target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
+                <a
+                  href={payee.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-blue-600 hover:underline">
                   {payee.website}
                 </a>
               </p>
@@ -162,7 +168,7 @@ $effect(() => {
 
           {#if payee.address}
             <div>
-              <span class="text-sm font-medium text-muted-foreground">Address</span>
+              <span class="text-muted-foreground text-sm font-medium">Address</span>
               <p class="text-sm whitespace-pre-line">{payee.address}</p>
             </div>
           {/if}
@@ -180,25 +186,25 @@ $effect(() => {
         <Card.Content class="space-y-3">
           {#if payee.avgAmount}
             <div>
-              <span class="text-sm font-medium text-muted-foreground">Average Amount</span>
+              <span class="text-muted-foreground text-sm font-medium">Average Amount</span>
               <p class="text-sm">${payee.avgAmount.toFixed(2)}</p>
             </div>
           {/if}
 
           {#if payee.paymentFrequency}
             <div>
-              <span class="text-sm font-medium text-muted-foreground">Payment Frequency</span>
+              <span class="text-muted-foreground text-sm font-medium">Payment Frequency</span>
               <p class="text-sm capitalize">{payee.paymentFrequency.replace('_', ' ')}</p>
             </div>
           {/if}
 
           <div>
-            <span class="text-sm font-medium text-muted-foreground">Tax Relevant</span>
+            <span class="text-muted-foreground text-sm font-medium">Tax Relevant</span>
             <p class="text-sm">{payee.taxRelevant ? 'Yes' : 'No'}</p>
           </div>
 
           <div>
-            <span class="text-sm font-medium text-muted-foreground">Seasonal</span>
+            <span class="text-muted-foreground text-sm font-medium">Seasonal</span>
             <p class="text-sm">{payee.isSeasonal ? 'Yes' : 'No'}</p>
           </div>
         </Card.Content>
@@ -214,7 +220,7 @@ $effect(() => {
         </Card.Description>
       </Card.Header>
       <Card.Content>
-        <div class="text-center py-8 text-muted-foreground">
+        <div class="text-muted-foreground py-8 text-center">
           <p>Transaction history will be displayed here.</p>
           <Button variant="outline" href="/payees/{payee.slug}/analytics" class="mt-4">
             <BarChart3 class="mr-2 h-4 w-4" />
@@ -226,9 +232,9 @@ $effect(() => {
   {:else}
     <!-- Error State -->
     <Card.Root class="max-w-4xl">
-      <Card.Content class="text-center py-8">
-        <User class="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h2 class="text-xl font-semibold mb-2">Payee Not Found</h2>
+      <Card.Content class="py-8 text-center">
+        <User class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+        <h2 class="mb-2 text-xl font-semibold">Payee Not Found</h2>
         <p class="text-muted-foreground mb-4">
           The payee you're looking for doesn't exist or may have been deleted.
         </p>
@@ -252,7 +258,10 @@ $effect(() => {
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action onclick={handleDelete} disabled={isDeleting} class={buttonVariants({variant: 'destructive'})}>
+      <AlertDialog.Action
+        onclick={handleDelete}
+        disabled={isDeleting}
+        class={buttonVariants({variant: 'destructive'})}>
         {isDeleting ? 'Deleting...' : 'Delete'}
       </AlertDialog.Action>
     </AlertDialog.Footer>

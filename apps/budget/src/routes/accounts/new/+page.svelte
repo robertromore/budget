@@ -10,7 +10,7 @@ import type {Account} from '$lib/schema';
 const handleSave = (account: Account) => {
   // Navigate to the new account's detail page
   setTimeout(() => {
-    goto(`/accounts/${account.slug}`, { replaceState: true });
+    goto(`/accounts/${account.slug}`, {replaceState: true});
   }, 100);
 };
 </script>
@@ -20,7 +20,7 @@ const handleSave = (account: Account) => {
   <meta name="description" content="Create a new account to track your finances" />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -29,8 +29,8 @@ const handleSave = (account: Account) => {
         <span class="sr-only">Back to Accounts</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <CreditCard class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <CreditCard class="text-muted-foreground h-8 w-8" />
           New Account
         </h1>
         <p class="text-muted-foreground mt-1">Add a new account to track your finances</p>
@@ -47,10 +47,7 @@ const handleSave = (account: Account) => {
       </Card.Description>
     </Card.Header>
     <Card.Content>
-      <ManageAccountForm
-        accountId={0}
-        onSave={handleSave}
-      />
+      <ManageAccountForm accountId={0} onSave={handleSave} />
     </Card.Content>
   </Card.Root>
 </div>

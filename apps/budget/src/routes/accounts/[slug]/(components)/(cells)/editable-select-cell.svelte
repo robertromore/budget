@@ -17,7 +17,7 @@ interface Props {
 
 let {value, options, onSave}: Props = $props();
 
-const currentLabel = $derived(options.find(opt => opt.value === value)?.label || value);
+const currentLabel = $derived(options.find((opt) => opt.value === value)?.label || value);
 
 const handleSelect = async (newValue: string) => {
   if (newValue !== value) {

@@ -29,10 +29,7 @@ $effect(() => {
   <div class="flex items-center space-x-6 lg:space-x-8">
     <div class="flex items-center space-x-2">
       <p class="text-sm font-medium">Rows per page</p>
-      <Select.Root
-        allowDeselect={false}
-        type="single"
-        bind:value={pageSizeValue}>
+      <Select.Root allowDeselect={false} type="single" bind:value={pageSizeValue}>
         <Select.Trigger class="h-8 w-[70px]">
           {String(table.getState().pagination.pageSize)}
         </Select.Trigger>

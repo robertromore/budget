@@ -1,8 +1,8 @@
-import type { TransactionsFormat } from "$lib/types";
-import type { Table } from "@tanstack/table-core";
-import { Context } from "runed";
-import { SvelteMap } from "svelte/reactivity";
-import { CurrentViewState } from "./current-view.svelte";
+import type {TransactionsFormat} from "$lib/types";
+import type {Table} from "@tanstack/table-core";
+import {Context} from "runed";
+import {SvelteMap} from "svelte/reactivity";
+import {CurrentViewState} from "./current-view.svelte";
 
 /**
  * A state class representing multiple active views.
@@ -17,13 +17,10 @@ export class CurrentViewsState<T> {
   previousViewId: number | undefined = $state();
 
   editableViews = $derived(
-    Array.from(this.viewsStates
-      .values())
-      .filter((viewState) => !viewState.view.isDefault)
+    Array.from(this.viewsStates.values()).filter((viewState) => !viewState.view.isDefault)
   );
   nonEditableViews = $derived(
-    Array.from(this.viewsStates.values())
-      .filter((viewState) => viewState.view.isDefault)
+    Array.from(this.viewsStates.values()).filter((viewState) => viewState.view.isDefault)
   );
 
   constructor(viewsStates: CurrentViewState<T>[] | null) {
@@ -45,9 +42,9 @@ export class CurrentViewsState<T> {
 
   get(id: number | number[]) {
     if (Array.isArray(id)) {
-      return Array.from(this.viewsStates
-        .values())
-        .filter((viewState) => id.includes(viewState.view.id));
+      return Array.from(this.viewsStates.values()).filter((viewState) =>
+        id.includes(viewState.view.id)
+      );
     }
     return Array.from(this.viewsStates.values()).find((viewState) => viewState.view.id === id);
   }

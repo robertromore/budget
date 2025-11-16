@@ -27,7 +27,11 @@ let {
   views: any[];
   columns: any;
   formattedTransactions: any[];
-  updateTransactionData?: (transactionId: number, columnId: string, newValue?: unknown) => Promise<void>;
+  updateTransactionData?: (
+    transactionId: number,
+    columnId: string,
+    newValue?: unknown
+  ) => Promise<void>;
   searchTransactions?: (query: string) => void;
   onScheduleClick?: (transaction: any) => void;
   budgetCount?: number;
@@ -41,7 +45,13 @@ let {
 {:else if browser && categoriesState && payeesState}
   <!-- Show the data table (with filtering controls) regardless of data presence -->
   <DataTable
-    columns={columns(categoriesState, payeesState, updateTransactionData, onScheduleClick, budgetCount)}
+    columns={columns(
+      categoriesState,
+      payeesState,
+      updateTransactionData,
+      onScheduleClick,
+      budgetCount
+    )}
     transactions={formattedTransactions}
     {views}
     {budgetCount}

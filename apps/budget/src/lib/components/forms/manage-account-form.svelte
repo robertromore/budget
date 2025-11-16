@@ -11,11 +11,11 @@ import {Label} from '$lib/components/ui/label';
 import {Switch} from '$lib/components/ui/switch';
 import {AccountsState} from '$lib/states/entities/accounts.svelte';
 import {useEntityForm} from '$lib/hooks/forms/use-entity-form';
-import { WizardFormWrapper } from '$lib/components/wizard';
+import {WizardFormWrapper} from '$lib/components/wizard';
 import AccountWizard from '$lib/components/wizard/account-wizard.svelte';
-import { accountWizardStore } from '$lib/stores/wizardStore.svelte';
-import { IconPicker } from '$lib/components/ui/icon-picker';
-import { ColorPicker } from '$lib/components/ui/color-picker';
+import {accountWizardStore} from '$lib/stores/wizardStore.svelte';
+import {IconPicker} from '$lib/components/ui/icon-picker';
+import {ColorPicker} from '$lib/components/ui/color-picker';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Palette from '@lucide/svelte/icons/palette';
@@ -44,12 +44,13 @@ const accounts = AccountsState.get();
 
 const isUpdate = accountId && accountId > 0;
 
-const resolvedFormId = formId ?? (accountId && accountId > 0 ? `account-form-${accountId}` : 'account-form-new');
+const resolvedFormId =
+  formId ?? (accountId && accountId > 0 ? `account-form-${accountId}` : 'account-form-new');
 
 // Keep mode as 'manual' during SSR and initial hydration
 let mode = $state<'manual' | 'wizard'>('manual');
 
-import { browser } from '$app/environment';
+import {browser} from '$app/environment';
 
 const entityForm = useEntityForm({
   formData: manageAccountForm,
@@ -65,7 +66,7 @@ const entityForm = useEntityForm({
     if (onSave) onSave(entity);
   },
   customOptions: {
-    onResult: async ({ result }) => {
+    onResult: async ({result}) => {
       if (result.type === 'success') {
         // Call the original useEntityForm logic manually
         if (result.data && result.data.entity) {
@@ -82,8 +83,8 @@ const entityForm = useEntityForm({
           }
         }
       }
-    }
-  }
+    },
+  },
 });
 
 const {form: formData, enhance} = entityForm;
@@ -151,7 +152,7 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
   $formData.interestRate = wizardFormData['interestRate'] || null;
 
   // Wait a tick to ensure reactive updates complete
-  await new Promise(resolve => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
 
   // Submit the wizard form programmatically
   const form = document.getElementById(`${resolvedFormId}-wizard`) as HTMLFormElement;
@@ -163,8 +164,12 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
     const institutionInput = form.querySelector('input[name="institution"]') as HTMLInputElement;
     const accountIconInput = form.querySelector('input[name="accountIcon"]') as HTMLInputElement;
     const accountColorInput = form.querySelector('input[name="accountColor"]') as HTMLInputElement;
-    const initialBalanceInput = form.querySelector('input[name="initialBalance"]') as HTMLInputElement;
-    const accountNumberLast4Input = form.querySelector('input[name="accountNumberLast4"]') as HTMLInputElement;
+    const initialBalanceInput = form.querySelector(
+      'input[name="initialBalance"]'
+    ) as HTMLInputElement;
+    const accountNumberLast4Input = form.querySelector(
+      'input[name="accountNumberLast4"]'
+    ) as HTMLInputElement;
     const onBudgetInput = form.querySelector('input[name="onBudget"]') as HTMLInputElement;
 
     if (nameInput) nameInput.value = $formData.name;
@@ -182,7 +187,7 @@ async function handleWizardComplete(wizardFormData: Record<string, any>) {
 }
 
 // Helper functions for form field handling
-function handleIconChange(event: CustomEvent<{ value: string; icon: any }>) {
+function handleIconChange(event: CustomEvent<{value: string; icon: any}>) {
   // Ensure we only set valid icon names
   const iconValue = event.detail.value;
   if (typeof iconValue === 'string') {
@@ -199,24 +204,24 @@ const accountTypeLabels: Record<string, string> = {
   loan: 'Loan',
   cash: 'Cash',
   hsa: 'Health Savings Account',
-  other: 'Other'
+  other: 'Other',
 };
 
 // Account type options for the dropdown
-const accountTypeOptions = accountTypeEnum.map(type => ({
+const accountTypeOptions = accountTypeEnum.map((type) => ({
   value: type,
-  label: accountTypeLabels[type] || type
+  label: accountTypeLabels[type] || type,
 }));
 
 // Default icons and colors for account types
-const accountTypeDefaults: Record<string, { icon: string; color?: string }> = {
-  checking: { icon: 'credit-card', color: '#3B82F6' },      // blue
-  savings: { icon: 'piggy-bank', color: '#10B981' },        // green
-  credit_card: { icon: 'credit-card', color: '#8B5CF6' },   // purple
-  investment: { icon: 'trending-up', color: '#F59E0B' },    // orange
-  loan: { icon: 'banknote', color: '#EF4444' },             // red
-  cash: { icon: 'wallet', color: '#6B7280' },               // gray
-  hsa: { icon: 'heart-pulse', color: '#14B8A6' }            // teal
+const accountTypeDefaults: Record<string, {icon: string; color?: string}> = {
+  checking: {icon: 'credit-card', color: '#3B82F6'}, // blue
+  savings: {icon: 'piggy-bank', color: '#10B981'}, // green
+  credit_card: {icon: 'credit-card', color: '#8B5CF6'}, // purple
+  investment: {icon: 'trending-up', color: '#F59E0B'}, // orange
+  loan: {icon: 'banknote', color: '#EF4444'}, // red
+  cash: {icon: 'wallet', color: '#6B7280'}, // gray
+  hsa: {icon: 'heart-pulse', color: '#14B8A6'}, // teal
 };
 
 // Auto-detect account type from name
@@ -225,42 +230,42 @@ function detectAccountTypeFromName(name: string): AccountType | null {
 
   // Account type keywords and their mappings
   const typeKeywords: Record<string, AccountType> = {
-    'checking': 'checking',
-    'check': 'checking',
-    'chk': 'checking',
-    'current': 'checking',
+    checking: 'checking',
+    check: 'checking',
+    chk: 'checking',
+    current: 'checking',
 
-    'savings': 'savings',
-    'save': 'savings',
-    'sav': 'savings',
-    'saving': 'savings',
+    savings: 'savings',
+    save: 'savings',
+    sav: 'savings',
+    saving: 'savings',
 
-    'credit': 'credit_card',
-    'card': 'credit_card',
-    'cc': 'credit_card',
-    'mastercard': 'credit_card',
-    'visa': 'credit_card',
-    'amex': 'credit_card',
-    'discover': 'credit_card',
+    credit: 'credit_card',
+    card: 'credit_card',
+    cc: 'credit_card',
+    mastercard: 'credit_card',
+    visa: 'credit_card',
+    amex: 'credit_card',
+    discover: 'credit_card',
 
-    'investment': 'investment',
-    'invest': 'investment',
-    'brokerage': 'investment',
-    'portfolio': 'investment',
-    'ira': 'investment',
+    investment: 'investment',
+    invest: 'investment',
+    brokerage: 'investment',
+    portfolio: 'investment',
+    ira: 'investment',
     '401k': 'investment',
-    'roth': 'investment',
+    roth: 'investment',
 
-    'loan': 'loan',
-    'mortgage': 'loan',
-    'auto': 'loan',
-    'car': 'loan',
-    'student': 'loan',
-    'personal': 'loan',
+    loan: 'loan',
+    mortgage: 'loan',
+    auto: 'loan',
+    car: 'loan',
+    student: 'loan',
+    personal: 'loan',
 
-    'cash': 'cash',
-    'wallet': 'cash',
-    'petty': 'cash'
+    cash: 'cash',
+    wallet: 'cash',
+    petty: 'cash',
   };
 
   // Check each keyword
@@ -305,7 +310,11 @@ $effect(() => {
       $formData.onBudget = false;
     } else if (currentType === 'hsa' && !accountId) {
       $formData.onBudget = false;
-    } else if (previousAccountType === 'credit_card' || previousAccountType === 'loan' || previousAccountType === 'hsa') {
+    } else if (
+      previousAccountType === 'credit_card' ||
+      previousAccountType === 'loan' ||
+      previousAccountType === 'hsa'
+    ) {
       // If switching FROM credit card/loan/hsa to another type, default back to on-budget
       if (!accountId) {
         $formData.onBudget = true;
@@ -326,17 +335,17 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
   const currentColor = $formData.accountColor;
   const previousDefaults = previousAccountType ? accountTypeDefaults[previousAccountType] : null;
 
-  const shouldUpdateIcon = defaults && (
-    !currentIcon ||
-    currentIcon === '' ||
-    (previousDefaults && currentIcon === previousDefaults.icon)
-  );
+  const shouldUpdateIcon =
+    defaults &&
+    (!currentIcon ||
+      currentIcon === '' ||
+      (previousDefaults && currentIcon === previousDefaults.icon));
 
-  const shouldUpdateColor = defaults?.color && (
-    !currentColor ||
-    currentColor === '' ||
-    (previousDefaults?.color && currentColor === previousDefaults.color)
-  );
+  const shouldUpdateColor =
+    defaults?.color &&
+    (!currentColor ||
+      currentColor === '' ||
+      (previousDefaults?.color && currentColor === previousDefaults.color));
 
   if (shouldUpdateIcon) {
     $formData.accountIcon = defaults.icon;
@@ -349,8 +358,8 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
 </script>
 
 <WizardFormWrapper
-  title={isUpdate ? "Edit Account" : "Create New Account"}
-  subtitle={isUpdate ? "Update your account details" : "Add a new account to track your finances"}
+  title={isUpdate ? 'Edit Account' : 'Create New Account'}
+  subtitle={isUpdate ? 'Update your account details' : 'Add a new account to track your finances'}
   wizardStore={accountWizardStore}
   onComplete={handleWizardComplete}
   defaultMode="wizard"
@@ -369,12 +378,16 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
     debtLimit: $formData.debtLimit,
     minimumPayment: $formData.minimumPayment,
     paymentDueDay: $formData.paymentDueDay,
-    interestRate: $formData.interestRate
+    interestRate: $formData.interestRate,
   }}
-  bind:currentMode={mode}
->
+  bind:currentMode={mode}>
   {#snippet formContent()}
-    <form id={`${resolvedFormId}-manual`} method="post" action="/accounts?/add-account" use:enhance class="space-y-6">
+    <form
+      id={`${resolvedFormId}-manual`}
+      method="post"
+      action="/accounts?/add-account"
+      use:enhance
+      class="space-y-6">
       <input hidden value={$formData.id} name="id" />
       <input hidden value={$formData.accountType} name="accountType" />
       <input hidden value={$formData.institution} name="institution" />
@@ -392,7 +405,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <Card.Root>
         <Card.Header class="pb-4">
           <div class="flex items-center gap-2">
-            <CreditCard class="h-5 w-5 text-primary" />
+            <CreditCard class="text-primary h-5 w-5" />
             <Card.Title class="text-lg">Account Information</Card.Title>
           </div>
           <Card.Description>
@@ -400,7 +413,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
           </Card.Description>
         </Card.Header>
         <Card.Content class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <!-- Account Name -->
             <Form.Field form={entityForm} name="name">
               <Form.Control>
@@ -410,8 +423,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
                     {...props}
                     bind:value={$formData.name}
                     oninput={handleNameChange}
-                    placeholder="e.g., Chase Checking, Wells Fargo Savings, Amex Credit Card"
-                  />
+                    placeholder="e.g., Chase Checking, Wells Fargo Savings, Amex Credit Card" />
                   <Form.FieldErrors />
                 {/snippet}
               </Form.Control>
@@ -424,7 +436,10 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
                   <Form.Label>Account Type</Form.Label>
                   <Select.Root type="single" bind:value={$formData.accountType}>
                     <Select.Trigger {...props}>
-                      {$formData.accountType ? accountTypeOptions.find(opt => opt.value === $formData.accountType)?.label : "Select account type"}
+                      {$formData.accountType
+                        ? accountTypeOptions.find((opt) => opt.value === $formData.accountType)
+                            ?.label
+                        : 'Select account type'}
                     </Select.Trigger>
                     <Select.Content>
                       {#each accountTypeOptions as option}
@@ -442,7 +457,10 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
               <Form.Control>
                 {#snippet children({props})}
                   <Form.Label>Bank/Institution</Form.Label>
-                  <Input {...props} bind:value={$formData.institution} placeholder="e.g., Chase Bank" />
+                  <Input
+                    {...props}
+                    bind:value={$formData.institution}
+                    placeholder="e.g., Chase Bank" />
                   <Form.FieldErrors />
                 {/snippet}
               </Form.Control>
@@ -453,7 +471,13 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
               <Form.Control>
                 {#snippet children({props})}
                   <Form.Label>Last 4 Digits</Form.Label>
-                  <Input {...props} bind:value={$formData.accountNumberLast4} placeholder="1234" maxlength={4} type="text" inputmode="numeric" />
+                  <Input
+                    {...props}
+                    bind:value={$formData.accountNumberLast4}
+                    placeholder="1234"
+                    maxlength={4}
+                    type="text"
+                    inputmode="numeric" />
                   <Form.FieldErrors />
                 {/snippet}
               </Form.Control>
@@ -466,7 +490,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <Card.Root>
         <Card.Header class="pb-4">
           <div class="flex items-center gap-2">
-            <Palette class="h-5 w-5 text-primary" />
+            <Palette class="text-primary h-5 w-5" />
             <Card.Title class="text-lg">Visual Customization</Card.Title>
           </div>
           <Card.Description>
@@ -474,7 +498,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
           </Card.Description>
         </Card.Header>
         <Card.Content class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <!-- Account Icon -->
             <Form.Field form={entityForm} name="accountIcon">
               <Form.Control>
@@ -483,8 +507,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
                   <IconPicker
                     value={$formData.accountIcon}
                     placeholder="Select an icon..."
-                    onchange={handleIconChange}
-                  />
+                    onchange={handleIconChange} />
                   <Form.FieldErrors />
                 {/snippet}
               </Form.Control>
@@ -500,8 +523,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
                     placeholder="Choose account color"
                     onchange={(event) => {
                       $formData.accountColor = event.detail.value;
-                    }}
-                  />
+                    }} />
                   <Form.FieldErrors />
                 {/snippet}
               </Form.Control>
@@ -515,11 +537,12 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
         <Card.Root>
           <Card.Header class="pb-4">
             <div class="flex items-center gap-2">
-              <DollarSign class="h-5 w-5 text-primary" />
+              <DollarSign class="text-primary h-5 w-5" />
               <Card.Title class="text-lg">Starting Balance</Card.Title>
             </div>
             <Card.Description>
-              Set the initial balance for this account. This will be your starting point for tracking.
+              Set the initial balance for this account. This will be your starting point for
+              tracking.
             </Card.Description>
           </Card.Header>
           <Card.Content>
@@ -529,8 +552,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
                   <Form.Label>Initial Balance</Form.Label>
                   <NumericInput
                     bind:value={$formData.initialBalance}
-                    buttonClass="w-full max-w-xs"
-                  />
+                    buttonClass="w-full max-w-xs" />
                   <Form.Description>The starting balance for this account</Form.Description>
                   <Form.FieldErrors />
                 {/snippet}
@@ -545,7 +567,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
         <Card.Root>
           <Card.Header class="pb-4">
             <div class="flex items-center gap-2">
-              <CreditCard class="h-5 w-5 text-primary" />
+              <CreditCard class="text-primary h-5 w-5" />
               <Card.Title class="text-lg">
                 {$formData.accountType === 'credit_card' ? 'Credit Card' : 'Loan'} Details
               </Card.Title>
@@ -557,7 +579,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
             </Card.Description>
           </Card.Header>
           <Card.Content>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <!-- Credit Limit / Loan Amount -->
               <Form.Field form={entityForm} name="debtLimit">
                 <Form.Control>
@@ -565,10 +587,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
                     <Form.Label>
                       {$formData.accountType === 'credit_card' ? 'Credit Limit' : 'Loan Amount'}
                     </Form.Label>
-                    <NumericInput
-                      bind:value={$formData.debtLimit}
-                      buttonClass="w-full"
-                    />
+                    <NumericInput bind:value={$formData.debtLimit} buttonClass="w-full" />
                     <Form.Description>
                       {$formData.accountType === 'credit_card'
                         ? 'Maximum credit available on this card'
@@ -589,8 +608,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
                       type="number"
                       step="0.01"
                       bind:value={$formData.interestRate}
-                      placeholder="0.00"
-                    />
+                      placeholder="0.00" />
                     <Form.Description>Annual percentage rate</Form.Description>
                     <Form.FieldErrors />
                   {/snippet}
@@ -602,10 +620,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
                 <Form.Control>
                   {#snippet children({})}
                     <Form.Label>Minimum Payment</Form.Label>
-                    <NumericInput
-                      bind:value={$formData.minimumPayment}
-                      buttonClass="w-full"
-                    />
+                    <NumericInput bind:value={$formData.minimumPayment} buttonClass="w-full" />
                     <Form.Description>Minimum monthly payment required</Form.Description>
                     <Form.FieldErrors />
                   {/snippet}
@@ -623,8 +638,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
                       min="1"
                       max="31"
                       bind:value={$formData.paymentDueDay}
-                      placeholder="e.g., 15"
-                    />
+                      placeholder="e.g., 15" />
                     <Form.Description>Day of month payment is due (1-31)</Form.Description>
                     <Form.FieldErrors />
                   {/snippet}
@@ -639,21 +653,24 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
       <Card.Root>
         <Card.Header class="pb-4">
           <div class="flex items-center gap-2">
-            <Wallet class="h-5 w-5 text-primary" />
+            <Wallet class="text-primary h-5 w-5" />
             <Card.Title class="text-lg">Budget Inclusion</Card.Title>
           </div>
           <Card.Description>
-            Control whether this account is included in budget calculations. Off-budget accounts are tracked for net worth only.
+            Control whether this account is included in budget calculations. Off-budget accounts are
+            tracked for net worth only.
           </Card.Description>
         </Card.Header>
         <Card.Content>
           <div class="flex items-center space-x-3">
             <Switch id="account-on-budget" bind:checked={$formData.onBudget} />
             <div class="flex-1">
-              <Label for="account-on-budget" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <Label
+                for="account-on-budget"
+                class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Include in budget calculations
               </Label>
-              <p class="text-sm text-muted-foreground mt-1">
+              <p class="text-muted-foreground mt-1 text-sm">
                 {#if $formData.onBudget}
                   This account will be included in your budget totals and spending reports.
                 {:else}
@@ -678,7 +695,10 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
             <Form.Control>
               {#snippet children({props})}
                 <Form.Label>Notes</Form.Label>
-                <Textarea {...props} bind:value={$formData.notes} placeholder="Optional notes about this account..." />
+                <Textarea
+                  {...props}
+                  bind:value={$formData.notes}
+                  placeholder="Optional notes about this account..." />
                 <Form.FieldErrors />
               {/snippet}
             </Form.Control>
@@ -688,7 +708,7 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
 
       <!-- Submit Button -->
       <div class="flex justify-end">
-        <Form.Button class="w-full sm:w-auto px-8">
+        <Form.Button class="w-full px-8 sm:w-auto">
           {isUpdate ? 'Update Account' : 'Create Account'}
         </Form.Button>
       </div>
@@ -696,13 +716,15 @@ function updateIconForAccountType(newAccountType: string, previousAccountType: s
   {/snippet}
 
   {#snippet wizardContent()}
-    <AccountWizard
-      initialData={initialData}
-      onComplete={handleWizardComplete}
-    />
+    <AccountWizard {initialData} onComplete={handleWizardComplete} />
 
     <!-- Hidden form for wizard submission -->
-    <form id={`${resolvedFormId}-wizard`} method="post" action="/accounts?/add-account" use:enhance class="hidden">
+    <form
+      id={`${resolvedFormId}-wizard`}
+      method="post"
+      action="/accounts?/add-account"
+      use:enhance
+      class="hidden">
       <input hidden value={$formData.id} name="id" />
       <input hidden value={$formData.name} name="name" />
       <input hidden value={$formData.notes} name="notes" />

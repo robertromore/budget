@@ -1,10 +1,13 @@
-import type { NewPayeeCategory } from "$lib/schema/payee-categories";
+import type {NewPayeeCategory} from "$lib/schema/payee-categories";
 
 /**
  * Default payee categories that users can optionally seed
  * These help organize payees in the UI (different from transaction categories)
  */
-export const defaultPayeeCategories: Omit<NewPayeeCategory, 'id' | 'workspaceId' | 'dateCreated' | 'createdAt' | 'updatedAt' | 'deletedAt'>[] = [
+export const defaultPayeeCategories: Omit<
+  NewPayeeCategory,
+  "id" | "workspaceId" | "dateCreated" | "createdAt" | "updatedAt" | "deletedAt"
+>[] = [
   // ============ UTILITIES & SERVICES ============
   {
     name: "Utilities",

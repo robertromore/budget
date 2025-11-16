@@ -6,10 +6,10 @@
  * duplicate detection, and data quality checks.
  */
 
-import type { ImportRow, ValidationError, NormalizedTransaction } from '$lib/types/import';
-import { parseDate, isValidDate } from '../utils';
-import type { selectTransactionSchema } from '$lib/schema/transactions';
-import type { z } from 'zod/v4';
+import type {ImportRow, ValidationError, NormalizedTransaction} from "$lib/types/import";
+import {parseDate, isValidDate} from "../utils";
+import type {selectTransactionSchema} from "$lib/schema/transactions";
+import type {z} from "zod/v4";
 
 export interface ValidationOptions {
   requireDate?: boolean;
@@ -37,7 +37,7 @@ export class TransactionValidator {
   private options: Required<ValidationOptions>;
 
   constructor(options: ValidationOptions = {}) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
+    this.options = {...DEFAULT_OPTIONS, ...options};
   }
 
   /**
@@ -51,13 +51,13 @@ export class TransactionValidator {
     errors.push(...this.validateRequiredFields(normalized, row.rowIndex));
 
     // Validate date format and range
-    if (normalized['date']) {
-      errors.push(...this.validateDate(normalized['date'], row.rowIndex));
+    if (normalized["date"]) {
+      errors.push(...this.validateDate(normalized["date"], row.rowIndex));
     }
 
     // Validate amount
-    if (normalized['amount'] !== undefined && normalized['amount'] !== null) {
-      errors.push(...this.validateAmount(normalized['amount'], row.rowIndex));
+    if (normalized["amount"] !== undefined && normalized["amount"] !== null) {
+      errors.push(...this.validateAmount(normalized["amount"], row.rowIndex));
     }
 
     // Validate text field lengths
@@ -66,7 +66,7 @@ export class TransactionValidator {
     // Update row with validation results
     const result: ImportRow = {
       ...row,
-      validationStatus: errors.length === 0 ? 'valid' : 'invalid',
+      validationStatus: errors.length === 0 ? "valid" : "invalid",
     };
 
     if (errors.length > 0) {
@@ -79,7 +79,10 @@ export class TransactionValidator {
   /**
    * Validate multiple rows and detect duplicates
    */
-  validateRows(rows: ImportRow[], existingTransactions: z.infer<typeof selectTransactionSchema>[] = []): ImportRow[] {
+  validateRows(
+    rows: ImportRow[],
+    existingTransactions: z.infer<typeof selectTransactionSchema>[] = []
+  ): ImportRow[] {
     // First pass: validate each row individually
     const validatedRows = rows.map((row) => this.validateRow(row));
 
@@ -102,28 +105,31 @@ export class TransactionValidator {
 
     if (this.options.requireDate && !normalized.date) {
       errors.push({
-        field: 'date',
-        message: 'Date is required',
+        field: "date",
+        message: "Date is required",
         value: normalized.date,
-        severity: 'error',
+        severity: "error",
       });
     }
 
-    if (this.options.requireAmount && (normalized.amount === undefined || normalized.amount === null)) {
+    if (
+      this.options.requireAmount &&
+      (normalized.amount === undefined || normalized.amount === null)
+    ) {
       errors.push({
-        field: 'amount',
-        message: 'Amount is required',
+        field: "amount",
+        message: "Amount is required",
         value: normalized.amount,
-        severity: 'error',
+        severity: "error",
       });
     }
 
     if (this.options.requirePayee && !normalized.payee) {
       errors.push({
-        field: 'payee',
-        message: 'Payee is required',
+        field: "payee",
+        message: "Payee is required",
         value: normalized.payee,
-        severity: 'error',
+        severity: "error",
       });
     }
 
@@ -139,7 +145,7 @@ export class TransactionValidator {
     // Try to parse the date
     let parsedDate: string | null = null;
     try {
-      if (typeof dateValue === 'string') {
+      if (typeof dateValue === "string") {
         parsedDate = parseDate(dateValue);
       }
     } catch (error) {
@@ -149,10 +155,10 @@ export class TransactionValidator {
     // Check if date is valid
     if (!parsedDate || !isValidDate(parsedDate)) {
       errors.push({
-        field: 'date',
-        message: 'Invalid date format. Expected YYYY-MM-DD',
+        field: "date",
+        message: "Invalid date format. Expected YYYY-MM-DD",
         value: dateValue,
-        severity: 'error',
+        severity: "error",
       });
       return errors;
     }
@@ -165,20 +171,20 @@ export class TransactionValidator {
     // Check if date is too far in the past (before 1900)
     if (date.getFullYear() < 1900) {
       errors.push({
-        field: 'date',
-        message: 'Date cannot be before year 1900',
+        field: "date",
+        message: "Date cannot be before year 1900",
         value: parsedDate,
-        severity: 'error',
+        severity: "error",
       });
     }
 
     // Check if date is in the future (if not allowed)
     if (!this.options.allowFutureDates && date > today) {
       errors.push({
-        field: 'date',
-        message: 'Future dates are not allowed',
+        field: "date",
+        message: "Future dates are not allowed",
         value: parsedDate,
-        severity: 'error',
+        severity: "error",
       });
     }
 
@@ -189,10 +195,10 @@ export class TransactionValidator {
 
       if (date > maxFutureDate) {
         errors.push({
-          field: 'date',
+          field: "date",
           message: `Date cannot be more than ${this.options.futureMonths} months in the future`,
           value: parsedDate,
-          severity: 'warning',
+          severity: "warning",
         });
       }
     }
@@ -207,14 +213,14 @@ export class TransactionValidator {
     const errors: ValidationError[] = [];
 
     // Check if amount is a valid number
-    const numericAmount = typeof amount === 'number' ? amount : parseFloat(String(amount));
+    const numericAmount = typeof amount === "number" ? amount : parseFloat(String(amount));
 
     if (isNaN(numericAmount)) {
       errors.push({
-        field: 'amount',
-        message: 'Amount must be a valid number',
+        field: "amount",
+        message: "Amount must be a valid number",
         value: amount,
-        severity: 'error',
+        severity: "error",
       });
       return errors;
     }
@@ -222,30 +228,30 @@ export class TransactionValidator {
     // Check if amount is zero
     if (numericAmount === 0) {
       errors.push({
-        field: 'amount',
-        message: 'Amount cannot be zero',
+        field: "amount",
+        message: "Amount cannot be zero",
         value: amount,
-        severity: 'warning',
+        severity: "warning",
       });
     }
 
     // Check if amount is below minimum threshold
     if (Math.abs(numericAmount) < this.options.minAmountThreshold) {
       errors.push({
-        field: 'amount',
+        field: "amount",
         message: `Amount is below minimum threshold of $${this.options.minAmountThreshold}`,
         value: amount,
-        severity: 'warning',
+        severity: "warning",
       });
     }
 
     // Check if amount is above maximum threshold
     if (Math.abs(numericAmount) > this.options.maxAmountThreshold) {
       errors.push({
-        field: 'amount',
+        field: "amount",
         message: `Amount exceeds maximum threshold of $${this.options.maxAmountThreshold}`,
         value: amount,
-        severity: 'warning',
+        severity: "warning",
       });
     }
 
@@ -264,30 +270,30 @@ export class TransactionValidator {
     // Payee validation
     if (normalized.payee && normalized.payee.length > 200) {
       errors.push({
-        field: 'payee',
-        message: 'Payee name is too long (max 200 characters)',
+        field: "payee",
+        message: "Payee name is too long (max 200 characters)",
         value: normalized.payee,
-        severity: 'error',
+        severity: "error",
       });
     }
 
     // Category validation
     if (normalized.category && normalized.category.length > 100) {
       errors.push({
-        field: 'category',
-        message: 'Category name is too long (max 100 characters)',
+        field: "category",
+        message: "Category name is too long (max 100 characters)",
         value: normalized.category,
-        severity: 'error',
+        severity: "error",
       });
     }
 
     // Notes validation
     if (normalized.notes && normalized.notes.length > 500) {
       errors.push({
-        field: 'notes',
-        message: 'Notes is too long (max 500 characters)',
+        field: "notes",
+        message: "Notes is too long (max 500 characters)",
         value: normalized.notes,
-        severity: 'warning',
+        severity: "warning",
       });
     }
 
@@ -303,7 +309,7 @@ export class TransactionValidator {
   ): ImportRow[] {
     return rows.map((row) => {
       // Skip if row is already invalid
-      if (row.validationStatus === 'invalid') {
+      if (row.validationStatus === "invalid") {
         return row;
       }
 
@@ -317,15 +323,15 @@ export class TransactionValidator {
 
       if (hasDuplicate) {
         errors.push({
-          field: 'general',
-          message: 'Potential duplicate transaction detected',
+          field: "general",
+          message: "Potential duplicate transaction detected",
           value: normalized,
-          severity: 'warning',
+          severity: "warning",
         });
 
         return {
           ...row,
-          validationStatus: 'warning',
+          validationStatus: "warning",
           validationErrors: errors,
         };
       }
@@ -340,15 +346,15 @@ export class TransactionValidator {
 
       if (duplicateInBatch) {
         errors.push({
-          field: 'general',
-          message: 'Duplicate transaction detected in this import',
+          field: "general",
+          message: "Duplicate transaction detected in this import",
           value: normalized,
-          severity: 'warning',
+          severity: "warning",
         });
 
         return {
           ...row,
-          validationStatus: 'warning',
+          validationStatus: "warning",
           validationErrors: errors,
         };
       }
@@ -391,36 +397,40 @@ export class TransactionValidator {
   private getTransactionDate(
     transaction: z.infer<typeof selectTransactionSchema> | Partial<NormalizedTransaction>
   ): string | undefined {
-    if ('date' in transaction) {
+    if ("date" in transaction) {
       return transaction.date as string;
     }
     return undefined;
   }
 
-  private getTransactionAmount(transaction: z.infer<typeof selectTransactionSchema> | Partial<NormalizedTransaction>): number {
-    if ('amount' in transaction) {
-      return typeof transaction.amount === 'number' ? transaction.amount : 0;
+  private getTransactionAmount(
+    transaction: z.infer<typeof selectTransactionSchema> | Partial<NormalizedTransaction>
+  ): number {
+    if ("amount" in transaction) {
+      return typeof transaction.amount === "number" ? transaction.amount : 0;
     }
     return 0;
   }
 
-  private getTransactionPayee(transaction: z.infer<typeof selectTransactionSchema> | Partial<NormalizedTransaction>): string {
-    if ('payee' in transaction) {
-      return transaction.payee as string || '';
+  private getTransactionPayee(
+    transaction: z.infer<typeof selectTransactionSchema> | Partial<NormalizedTransaction>
+  ): string {
+    if ("payee" in transaction) {
+      return (transaction.payee as string) || "";
     }
-    return '';
+    return "";
   }
 
   private getTransactionDescription(
     transaction: z.infer<typeof selectTransactionSchema> | Partial<NormalizedTransaction>
   ): string {
-    if ('description' in transaction) {
-      return (transaction.description as string) || '';
+    if ("description" in transaction) {
+      return (transaction.description as string) || "";
     }
-    if ('notes' in transaction) {
-      return (transaction.notes as string) || '';
+    if ("notes" in transaction) {
+      return (transaction.notes as string) || "";
     }
-    return '';
+    return "";
   }
 
   /**
@@ -439,11 +449,11 @@ export class TransactionValidator {
     let warnings = 0;
 
     rows.forEach((row) => {
-      if (row.validationStatus === 'valid') {
+      if (row.validationStatus === "valid") {
         valid++;
-      } else if (row.validationStatus === 'invalid') {
+      } else if (row.validationStatus === "invalid") {
         invalid++;
-      } else if (row.validationStatus === 'warning') {
+      } else if (row.validationStatus === "warning") {
         warnings++;
       }
 

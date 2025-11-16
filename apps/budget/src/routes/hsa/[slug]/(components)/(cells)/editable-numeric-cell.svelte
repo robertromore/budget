@@ -11,9 +11,10 @@ interface Props {
 
 let {value = $bindable(), format = 'currency', onSave}: Props = $props();
 
-const formatter = format === 'currency'
-  ? (amount: number) => currencyFormatter.format(amount)
-  : (amount: number) => String(amount);
+const formatter =
+  format === 'currency'
+    ? (amount: number) => currencyFormatter.format(amount)
+    : (amount: number) => String(amount);
 
 const cellState = useEditableCell({
   initialValue: value,

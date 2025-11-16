@@ -47,7 +47,7 @@ export function getDayOfWeek(date: DateValue): number {
  * const isoDay = getIsoWeekday(date); // Returns 1
  */
 export function getIsoWeekday(date: DateValue): number {
-  const jsDate = date.toDate('UTC');
+  const jsDate = date.toDate("UTC");
   const day = jsDate.getUTCDay();
   return day === 0 ? 7 : day; // Convert Sunday from 0 to 7
 }
@@ -66,8 +66,8 @@ export function getIsoWeekday(date: DateValue): number {
  * const febDays = getDaysInMonth(feb); // Returns 29 (leap year)
  */
 export function getDaysInMonth(date: DateValue): number {
-  const nextMonth = date.add({ months: 1 }).set({ day: 1 });
-  const lastDayOfMonth = nextMonth.subtract({ days: 1 });
+  const nextMonth = date.add({months: 1}).set({day: 1});
+  const lastDayOfMonth = nextMonth.subtract({days: 1});
   return lastDayOfMonth.day;
 }
 
@@ -480,20 +480,23 @@ export function dateValueToJSDate(dateValue: DateValue, timeZone: string = "UTC"
 export function dateDifference(
   date1: DateValue,
   date2: DateValue,
-  unit: 'days' | 'months' | 'quarters' | 'years'
+  unit: "days" | "months" | "quarters" | "years"
 ): number {
   switch (unit) {
-    case 'days':
-      return Math.floor((date1.toDate(timezone).getTime() - date2.toDate(timezone).getTime()) / (1000 * 60 * 60 * 24));
+    case "days":
+      return Math.floor(
+        (date1.toDate(timezone).getTime() - date2.toDate(timezone).getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
 
-    case 'months':
+    case "months":
       return (date1.year - date2.year) * 12 + (date1.month - date2.month);
 
-    case 'quarters':
+    case "quarters":
       const quarterDiff = Math.floor((date1.month - 1) / 3) - Math.floor((date2.month - 1) / 3);
       return (date1.year - date2.year) * 4 + quarterDiff;
 
-    case 'years':
+    case "years":
       return date1.year - date2.year;
 
     default:
@@ -511,21 +514,21 @@ export function dateDifference(
 export function isSamePeriod(
   date1: DateValue,
   date2: DateValue,
-  unit: 'day' | 'month' | 'quarter' | 'year'
+  unit: "day" | "month" | "quarter" | "year"
 ): boolean {
   switch (unit) {
-    case 'day':
+    case "day":
       return date1.year === date2.year && date1.month === date2.month && date1.day === date2.day;
 
-    case 'month':
+    case "month":
       return date1.year === date2.year && date1.month === date2.month;
 
-    case 'quarter':
+    case "quarter":
       const quarter1 = Math.floor((date1.month - 1) / 3);
       const quarter2 = Math.floor((date2.month - 1) / 3);
       return date1.year === date2.year && quarter1 === quarter2;
 
-    case 'year':
+    case "year":
       return date1.year === date2.year;
 
     default:
@@ -554,9 +557,9 @@ export function parseISOString(isoString: string): DateValue | null {
  * @returns ISO string (e.g., "2024-01-15")
  */
 export function toISOString(dateValue: DateValue): string {
-  const year = dateValue.year.toString().padStart(4, '0');
-  const month = dateValue.month.toString().padStart(2, '0');
-  const day = dateValue.day.toString().padStart(2, '0');
+  const year = dateValue.year.toString().padStart(4, "0");
+  const month = dateValue.month.toString().padStart(2, "0");
+  const day = dateValue.day.toString().padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -566,28 +569,31 @@ export function toISOString(dateValue: DateValue): string {
  * @param format - Format type ('short', 'medium', 'long')
  * @returns Formatted date string
  */
-export function formatDateDisplay(dateValue: DateValue, format: 'short' | 'medium' | 'long' = 'medium'): string {
+export function formatDateDisplay(
+  dateValue: DateValue,
+  format: "short" | "medium" | "long" = "medium"
+): string {
   const jsDate = dateValue.toDate(timezone);
 
   switch (format) {
-    case 'short':
-      return new Intl.DateTimeFormat('en-US', {
-        month: '2-digit',
-        day: '2-digit',
-        year: 'numeric'
+    case "short":
+      return new Intl.DateTimeFormat("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
       }).format(jsDate);
 
-    case 'long':
-      return new Intl.DateTimeFormat('en-US', {
-        dateStyle: 'long'
+    case "long":
+      return new Intl.DateTimeFormat("en-US", {
+        dateStyle: "long",
       }).format(jsDate);
 
-    case 'medium':
+    case "medium":
     default:
-      return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
       }).format(jsDate);
   }
 }

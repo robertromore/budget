@@ -1,18 +1,18 @@
 <script lang="ts">
-import { rpc } from '$lib/query';
-import { Button } from '$lib/components/ui/button';
-import { Input } from '$lib/components/ui/input';
-import { Label } from '$lib/components/ui/label';
-import { Textarea } from '$lib/components/ui/textarea';
-import { Badge } from '$lib/components/ui/badge';
+import {rpc} from '$lib/query';
+import {Button} from '$lib/components/ui/button';
+import {Input} from '$lib/components/ui/input';
+import {Label} from '$lib/components/ui/label';
+import {Textarea} from '$lib/components/ui/textarea';
+import {Badge} from '$lib/components/ui/badge';
 import * as Dialog from '$lib/components/ui/dialog';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Separator from '$lib/components/ui/separator';
 import * as Card from '$lib/components/ui/card';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
-import { timezone, currentDate } from '$lib/utils/dates';
-import { claimStatusEnum, type ClaimStatus } from '$lib/schema/hsa-claims';
+import {timezone, currentDate} from '$lib/utils/dates';
+import {claimStatusEnum, type ClaimStatus} from '$lib/schema/hsa-claims';
 import Plus from '@lucide/svelte/icons/plus';
 import Send from '@lucide/svelte/icons/send';
 import CheckCircle from '@lucide/svelte/icons/check-circle';
@@ -27,12 +27,10 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
 }
 
-let { expense, open = $bindable(), onOpenChange }: Props = $props();
+let {expense, open = $bindable(), onOpenChange}: Props = $props();
 
 // Query claims for this expense
-const claimsQuery = $derived(
-  rpc.medicalExpenses.getClaims(expense.id).options()
-);
+const claimsQuery = $derived(rpc.medicalExpenses.getClaims(expense.id).options());
 const claims = $derived(claimsQuery.data ?? []);
 const isLoading = $derived(claimsQuery.isLoading);
 
@@ -105,19 +103,19 @@ async function handleCreateClaim() {
         id: editingClaim.id,
         medicalExpenseId: expense.id,
         claimedAmount,
-        ...(claimNumber && { claimNumber }),
-        ...(administratorName && { administratorName }),
-        ...(notes && { notes }),
-        ...(internalNotes && { internalNotes }),
+        ...(claimNumber && {claimNumber}),
+        ...(administratorName && {administratorName}),
+        ...(notes && {notes}),
+        ...(internalNotes && {internalNotes}),
       });
     } else {
       await rpc.medicalExpenses.createClaim.execute({
         medicalExpenseId: expense.id,
         claimedAmount,
-        ...(claimNumber && { claimNumber }),
-        ...(administratorName && { administratorName }),
-        ...(notes && { notes }),
-        ...(internalNotes && { internalNotes }),
+        ...(claimNumber && {claimNumber}),
+        ...(administratorName && {administratorName}),
+        ...(notes && {notes}),
+        ...(internalNotes && {internalNotes}),
       });
     }
     resetForm();
@@ -159,7 +157,7 @@ async function submitStatusUpdate() {
         await rpc.medicalExpenses.submitClaim.execute({
           id: selectedClaim.id,
           medicalExpenseId: expense.id,
-          ...(claimNumber && { claimNumber }),
+          ...(claimNumber && {claimNumber}),
           submittedDate: dateStr,
         });
         break;
@@ -178,7 +176,7 @@ async function submitStatusUpdate() {
           id: selectedClaim.id,
           medicalExpenseId: expense.id,
           approvedAmount,
-          ...(deniedAmount && { deniedAmount }),
+          ...(deniedAmount && {deniedAmount}),
           approvalDate: dateStr,
         });
         break;
@@ -188,7 +186,7 @@ async function submitStatusUpdate() {
           id: selectedClaim.id,
           medicalExpenseId: expense.id,
           denialReason,
-          ...(denialCode && { denialCode }),
+          ...(denialCode && {denialCode}),
         });
         break;
 
@@ -264,7 +262,9 @@ function formatDate(dateString: string | undefined): string {
   });
 }
 
-function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+function getStatusBadgeVariant(
+  status: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
     not_submitted: 'outline',
     pending_submission: 'secondary',
@@ -281,13 +281,11 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
 }
 </script>
 
-<Dialog.Root bind:open {...(onOpenChange && { onOpenChange })}>
-  <Dialog.Content class="max-w-3xl max-h-[90vh] overflow-y-auto">
+<Dialog.Root bind:open {...onOpenChange && {onOpenChange}}>
+  <Dialog.Content class="max-h-[90vh] max-w-3xl overflow-y-auto">
     <Dialog.Header>
       <Dialog.Title>Claim Management</Dialog.Title>
-      <Dialog.Description>
-        Manage HSA reimbursement claims for this expense
-      </Dialog.Description>
+      <Dialog.Description>Manage HSA reimbursement claims for this expense</Dialog.Description>
     </Dialog.Header>
 
     <div class="space-y-6">
@@ -315,7 +313,7 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
           </div>
           <div class="flex justify-between">
             <span class="text-muted-foreground">Out of Pocket:</span>
-            <span class="font-semibold text-lg">{formatCurrency(expense.outOfPocket)}</span>
+            <span class="text-lg font-semibold">{formatCurrency(expense.outOfPocket)}</span>
           </div>
         </Card.Content>
       </Card.Root>
@@ -324,14 +322,14 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
 
       <!-- Existing Claims List -->
       {#if isLoading}
-        <div class="text-center py-4 text-muted-foreground">Loading claims...</div>
+        <div class="text-muted-foreground py-4 text-center">Loading claims...</div>
       {:else if claims.length > 0}
         <div class="space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold">Claims ({claims.length})</h3>
             {#if !showNewClaimForm && !selectedClaim}
               <Button size="sm" onclick={startNewClaim}>
-                <Plus class="h-4 w-4 mr-2" />
+                <Plus class="mr-2 h-4 w-4" />
                 New Claim
               </Button>
             {/if}
@@ -355,7 +353,7 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
                       </Badge>
                     </div>
                     {#if claim.administratorName}
-                      <p class="text-sm text-muted-foreground">{claim.administratorName}</p>
+                      <p class="text-muted-foreground text-sm">{claim.administratorName}</p>
                     {/if}
                   </div>
                   <div class="flex gap-1">
@@ -378,19 +376,22 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
                   {#if claim.approvedAmount && claim.approvedAmount > 0}
                     <div>
                       <span class="text-muted-foreground">Approved:</span>
-                      <span class="ml-2 font-medium text-green-600">{formatCurrency(claim.approvedAmount)}</span>
+                      <span class="ml-2 font-medium text-green-600"
+                        >{formatCurrency(claim.approvedAmount)}</span>
                     </div>
                   {/if}
                   {#if claim.deniedAmount && claim.deniedAmount > 0}
                     <div>
                       <span class="text-muted-foreground">Denied:</span>
-                      <span class="ml-2 font-medium text-red-600">{formatCurrency(claim.deniedAmount)}</span>
+                      <span class="ml-2 font-medium text-red-600"
+                        >{formatCurrency(claim.deniedAmount)}</span>
                     </div>
                   {/if}
                   {#if claim.paidAmount && claim.paidAmount > 0}
                     <div>
                       <span class="text-muted-foreground">Paid:</span>
-                      <span class="ml-2 font-medium text-green-600">{formatCurrency(claim.paidAmount)}</span>
+                      <span class="ml-2 font-medium text-green-600"
+                        >{formatCurrency(claim.paidAmount)}</span>
                     </div>
                   {/if}
                 </div>
@@ -427,11 +428,11 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
 
                 <!-- Denial Info -->
                 {#if claim.denialReason}
-                  <div class="text-sm bg-destructive/10 p-3 rounded-md">
-                    <span class="font-medium text-destructive">Denial Reason:</span>
+                  <div class="bg-destructive/10 rounded-md p-3 text-sm">
+                    <span class="text-destructive font-medium">Denial Reason:</span>
                     <p class="mt-1">{claim.denialReason}</p>
                     {#if claim.denialCode}
-                      <p class="mt-1 text-muted-foreground">Code: {claim.denialCode}</p>
+                      <p class="text-muted-foreground mt-1">Code: {claim.denialCode}</p>
                     {/if}
                   </div>
                 {/if}
@@ -440,47 +441,74 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
                 {#if !selectedClaim && !showNewClaimForm}
                   <div class="flex flex-wrap gap-2 pt-2">
                     {#if claim.status === 'not_submitted' || claim.status === 'pending_submission'}
-                      <Button size="sm" variant="outline" onclick={() => handleStatusUpdate(claim, 'submitted')}>
-                        <Send class="h-4 w-4 mr-2" />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onclick={() => handleStatusUpdate(claim, 'submitted')}>
+                        <Send class="mr-2 h-4 w-4" />
                         Submit
                       </Button>
                     {/if}
                     {#if claim.status === 'submitted'}
-                      <Button size="sm" variant="outline" onclick={() => handleStatusUpdate(claim, 'in_review')}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onclick={() => handleStatusUpdate(claim, 'in_review')}>
                         In Review
                       </Button>
-                      <Button size="sm" variant="outline" onclick={() => handleStatusUpdate(claim, 'approved')}>
-                        <CheckCircle class="h-4 w-4 mr-2" />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onclick={() => handleStatusUpdate(claim, 'approved')}>
+                        <CheckCircle class="mr-2 h-4 w-4" />
                         Approve
                       </Button>
-                      <Button size="sm" variant="outline" onclick={() => handleStatusUpdate(claim, 'denied')}>
-                        <XCircle class="h-4 w-4 mr-2" />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onclick={() => handleStatusUpdate(claim, 'denied')}>
+                        <XCircle class="mr-2 h-4 w-4" />
                         Deny
                       </Button>
                     {/if}
                     {#if claim.status === 'in_review'}
-                      <Button size="sm" variant="outline" onclick={() => handleStatusUpdate(claim, 'approved')}>
-                        <CheckCircle class="h-4 w-4 mr-2" />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onclick={() => handleStatusUpdate(claim, 'approved')}>
+                        <CheckCircle class="mr-2 h-4 w-4" />
                         Approve
                       </Button>
-                      <Button size="sm" variant="outline" onclick={() => handleStatusUpdate(claim, 'denied')}>
-                        <XCircle class="h-4 w-4 mr-2" />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onclick={() => handleStatusUpdate(claim, 'denied')}>
+                        <XCircle class="mr-2 h-4 w-4" />
                         Deny
                       </Button>
                     {/if}
                     {#if claim.status === 'approved' || claim.status === 'partially_approved'}
-                      <Button size="sm" variant="outline" onclick={() => handleStatusUpdate(claim, 'paid')}>
-                        <DollarSign class="h-4 w-4 mr-2" />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onclick={() => handleStatusUpdate(claim, 'paid')}>
+                        <DollarSign class="mr-2 h-4 w-4" />
                         Mark Paid
                       </Button>
                     {/if}
                     {#if claim.status === 'denied'}
-                      <Button size="sm" variant="outline" onclick={() => handleStatusUpdate(claim, 'resubmission_required')}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onclick={() => handleStatusUpdate(claim, 'resubmission_required')}>
                         Request Resubmission
                       </Button>
                     {/if}
                     {#if claim.status !== 'paid' && claim.status !== 'withdrawn'}
-                      <Button size="sm" variant="outline" onclick={() => handleStatusUpdate(claim, 'withdrawn')}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onclick={() => handleStatusUpdate(claim, 'withdrawn')}>
                         Withdraw
                       </Button>
                     {/if}
@@ -491,10 +519,10 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
           {/each}
         </div>
       {:else if !showNewClaimForm}
-        <div class="text-center py-8">
+        <div class="py-8 text-center">
           <p class="text-muted-foreground mb-4">No claims filed for this expense yet</p>
           <Button onclick={startNewClaim}>
-            <Plus class="h-4 w-4 mr-2" />
+            <Plus class="mr-2 h-4 w-4" />
             Create First Claim
           </Button>
         </div>
@@ -511,7 +539,7 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
           </Card.Header>
           <Card.Content class="space-y-4">
             {#if error}
-              <div class="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+              <div class="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
                 {error}
               </div>
             {/if}
@@ -519,19 +547,12 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
                 <Label for="claimedAmount">Claimed Amount *</Label>
-                <NumericInput
-                  id="claimedAmount"
-                  bind:value={claimedAmount}
-                />
+                <NumericInput id="claimedAmount" bind:value={claimedAmount} />
               </div>
 
               <div class="space-y-2">
                 <Label for="claimNumber">Claim Number</Label>
-                <Input
-                  id="claimNumber"
-                  bind:value={claimNumber}
-                  placeholder="Optional"
-                />
+                <Input id="claimNumber" bind:value={claimNumber} placeholder="Optional" />
               </div>
             </div>
 
@@ -540,8 +561,7 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
               <Input
                 id="administratorName"
                 bind:value={administratorName}
-                placeholder="e.g., Fidelity, HSA Bank"
-              />
+                placeholder="e.g., Fidelity, HSA Bank" />
             </div>
 
             <div class="space-y-2">
@@ -550,8 +570,7 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
                 id="notes"
                 bind:value={notes}
                 placeholder="Public notes about this claim"
-                rows={2}
-              />
+                rows={2} />
             </div>
 
             <div class="space-y-2">
@@ -560,8 +579,7 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
                 id="internalNotes"
                 bind:value={internalNotes}
                 placeholder="Private notes (not for submission)"
-                rows={2}
-              />
+                rows={2} />
             </div>
 
             <div class="flex gap-2">
@@ -580,12 +598,13 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
           <Card.Header>
             <Card.Title>Update Claim Status</Card.Title>
             <Card.Description>
-              Update status to: <Badge variant={getStatusBadgeVariant(newStatus)}>{claimStatusEnum[newStatus]}</Badge>
+              Update status to: <Badge variant={getStatusBadgeVariant(newStatus)}
+                >{claimStatusEnum[newStatus]}</Badge>
             </Card.Description>
           </Card.Header>
           <Card.Content class="space-y-4">
             {#if error}
-              <div class="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+              <div class="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
                 {error}
               </div>
             {/if}
@@ -596,8 +615,7 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
                 <Input
                   id="claimNumberSubmit"
                   bind:value={claimNumber}
-                  placeholder="Enter claim number from HSA administrator"
-                />
+                  placeholder="Enter claim number from HSA administrator" />
               </div>
             {/if}
 
@@ -605,17 +623,11 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
               <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-2">
                   <Label for="approvedAmount">Approved Amount *</Label>
-                  <NumericInput
-                    id="approvedAmount"
-                    bind:value={approvedAmount}
-                  />
+                  <NumericInput id="approvedAmount" bind:value={approvedAmount} />
                 </div>
                 <div class="space-y-2">
                   <Label for="deniedAmount">Denied Amount</Label>
-                  <NumericInput
-                    id="deniedAmount"
-                    bind:value={deniedAmount}
-                  />
+                  <NumericInput id="deniedAmount" bind:value={deniedAmount} />
                 </div>
               </div>
             {/if}
@@ -628,16 +640,14 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
                     id="denialReason"
                     bind:value={denialReason}
                     placeholder="Explain why the claim was denied"
-                    rows={3}
-                  />
+                    rows={3} />
                 </div>
                 <div class="space-y-2">
                   <Label for="denialCode">Denial Code</Label>
                   <Input
                     id="denialCode"
                     bind:value={denialCode}
-                    placeholder="Optional denial code"
-                  />
+                    placeholder="Optional denial code" />
                 </div>
               </div>
             {/if}
@@ -645,19 +655,14 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
             {#if newStatus === 'paid'}
               <div class="space-y-2">
                 <Label for="paidAmount">Paid Amount *</Label>
-                <NumericInput
-                  id="paidAmount"
-                  bind:value={paidAmount}
-                />
+                <NumericInput id="paidAmount" bind:value={paidAmount} />
               </div>
             {/if}
 
             {#if newStatus !== 'withdrawn'}
               <div class="space-y-2">
                 <Label for="statusDate">Date</Label>
-                <DateInput
-                  bind:value={statusDate}
-                />
+                <DateInput bind:value={statusDate} />
               </div>
             {/if}
 
@@ -687,8 +692,7 @@ function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destr
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
         onclick={confirmDeleteClaim}
-        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-      >
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
         Delete Claim
       </AlertDialog.Action>
     </AlertDialog.Footer>

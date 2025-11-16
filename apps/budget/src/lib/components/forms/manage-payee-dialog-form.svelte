@@ -23,13 +23,13 @@ const payees = PayeesState.get();
 const isUpdate = payeeId && payeeId > 0;
 
 // Initialize form data
-let initialData = { name: '', notes: '' };
+let initialData = {name: '', notes: ''};
 if (isUpdate && payeeId) {
   const existingPayee = payees.getById(payeeId);
   if (existingPayee) {
     initialData = {
       name: existingPayee.name ?? '',
-      notes: existingPayee.notes || ''
+      notes: existingPayee.notes || '',
     };
   }
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { currencyFormatter } from '$lib/utils/formatters';
+import {currencyFormatter} from '$lib/utils/formatters';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 
 interface Props {
@@ -7,12 +7,12 @@ interface Props {
   max: number | null;
 }
 
-let { min, max }: Props = $props();
+let {min, max}: Props = $props();
 </script>
 
 {#if min || max}
   <div class="flex items-center gap-1 text-sm">
-    <DollarSign class="h-3 w-3 text-muted-foreground" />
+    <DollarSign class="text-muted-foreground h-3 w-3" />
     {#if min && max}
       <span>{currencyFormatter.format(min)} - {currencyFormatter.format(max)}</span>
     {:else if min}

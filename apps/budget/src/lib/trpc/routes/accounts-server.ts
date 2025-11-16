@@ -1,10 +1,10 @@
-import { accounts, transactions } from "$lib/schema";
-import { publicProcedure, t } from "$lib/trpc";
-import { cacheKeys, queryCache } from "$lib/utils/cache";
-import { trackQuery } from "$lib/utils/performance";
-import { TRPCError } from "@trpc/server";
-import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
-import { z } from "zod";
+import {accounts, transactions} from "$lib/schema";
+import {publicProcedure, t} from "$lib/trpc";
+import {cacheKeys, queryCache} from "$lib/utils/cache";
+import {trackQuery} from "$lib/utils/performance";
+import {TRPCError} from "@trpc/server";
+import {and, asc, count, desc, eq, isNull, sql} from "drizzle-orm";
+import {z} from "zod";
 
 /**
  * Optimized account routes with performance improvements:
@@ -33,7 +33,11 @@ export const serverAccountsRoutes = t.router({
       const result = await trackQuery("account-summary", async () => {
         const account = await ctx.db.query.accounts.findFirst({
           where: (accounts, {eq, and, isNull}) =>
-            and(eq(accounts.id, input.id), eq(accounts.workspaceId, ctx.workspaceId), isNull(accounts.deletedAt)),
+            and(
+              eq(accounts.id, input.id),
+              eq(accounts.workspaceId, ctx.workspaceId),
+              isNull(accounts.deletedAt)
+            ),
         });
 
         if (!account) {
@@ -137,7 +141,15 @@ export const serverAccountsRoutes = t.router({
       // Create cache key based on all parameters
       const cacheKey = searchQuery
         ? cacheKeys.searchTransactions(accountId, searchQuery)
-        : cacheKeys.accountTransactions(accountId, page, pageSize, sortBy, sortOrder, dateFrom, dateTo);
+        : cacheKeys.accountTransactions(
+            accountId,
+            page,
+            pageSize,
+            sortBy,
+            sortOrder,
+            dateFrom,
+            dateTo
+          );
 
       // Check cache first (skip for searches to get real-time results)
       if (!searchQuery) {
@@ -150,7 +162,8 @@ export const serverAccountsRoutes = t.router({
       const result = await trackQuery("paginated-transactions", async () => {
         // First verify account belongs to user
         const accountCheck = await ctx.db.query.accounts.findFirst({
-          where: (accounts, {eq, and}) => and(eq(accounts.id, accountId), eq(accounts.workspaceId, ctx.workspaceId)),
+          where: (accounts, {eq, and}) =>
+            and(eq(accounts.id, accountId), eq(accounts.workspaceId, ctx.workspaceId)),
         });
 
         if (!accountCheck) {
@@ -300,7 +313,8 @@ export const serverAccountsRoutes = t.router({
       const result = await trackQuery("all-transactions", async () => {
         // First verify account belongs to user
         const accountCheck = await ctx.db.query.accounts.findFirst({
-          where: (accounts, {eq, and}) => and(eq(accounts.id, accountId), eq(accounts.workspaceId, ctx.workspaceId)),
+          where: (accounts, {eq, and}) =>
+            and(eq(accounts.id, accountId), eq(accounts.workspaceId, ctx.workspaceId)),
         });
 
         if (!accountCheck) {
@@ -318,8 +332,8 @@ export const serverAccountsRoutes = t.router({
 
         if (searchQuery) {
           whereConditions.push(
-            sql`(${transactions.notes} LIKE ${'%' + searchQuery + '%'} OR
-                 ${accounts.name} LIKE ${'%' + searchQuery + '%'})`
+            sql`(${transactions.notes} LIKE ${"%" + searchQuery + "%"} OR
+                 ${accounts.name} LIKE ${"%" + searchQuery + "%"})`
           );
         }
 
@@ -425,7 +439,8 @@ export const serverAccountsRoutes = t.router({
       const result = await trackQuery("recent-transactions", async () => {
         // First verify account belongs to user
         const accountCheck = await ctx.db.query.accounts.findFirst({
-          where: (accounts, {eq, and}) => and(eq(accounts.id, input.accountId), eq(accounts.workspaceId, ctx.workspaceId)),
+          where: (accounts, {eq, and}) =>
+            and(eq(accounts.id, input.accountId), eq(accounts.workspaceId, ctx.workspaceId)),
         });
 
         if (!accountCheck) {
@@ -474,7 +489,8 @@ export const serverAccountsRoutes = t.router({
       return trackQuery("balance-history", async () => {
         // First verify account belongs to user
         const accountCheck = await ctx.db.query.accounts.findFirst({
-          where: (accounts, {eq, and}) => and(eq(accounts.id, accountId), eq(accounts.workspaceId, ctx.workspaceId)),
+          where: (accounts, {eq, and}) =>
+            and(eq(accounts.id, accountId), eq(accounts.workspaceId, ctx.workspaceId)),
         });
 
         if (!accountCheck) {

@@ -38,8 +38,7 @@ export const schedules = sqliteTable(
     payeeId: integer("payee_id")
       .notNull()
       .references(() => payees.id),
-    categoryId: integer("category_id")
-      .references(() => categories.id),
+    categoryId: integer("category_id").references(() => categories.id),
     accountId: integer("account_id")
       .notNull()
       .references(() => accounts.id),

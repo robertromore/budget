@@ -1,9 +1,9 @@
-import type { Account } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
-import { accountKeys } from "$lib/query/accounts";
-import { cachePatterns } from "$lib/query/_client";
-import { getContext, setContext } from "svelte";
-import { SvelteMap } from "svelte/reactivity";
+import type {Account} from "$lib/schema";
+import {trpc} from "$lib/trpc/client";
+import {accountKeys} from "$lib/query/accounts";
+import {cachePatterns} from "$lib/query/_client";
+import {getContext, setContext} from "svelte";
+import {SvelteMap} from "svelte/reactivity";
 
 const KEY = Symbol("accounts");
 
@@ -97,7 +97,10 @@ export class AccountsState {
   }
 
   getOffBudgetBalance(): number {
-    return this.getOffBudgetAccounts().reduce((total, account) => total + (account.balance || 0), 0);
+    return this.getOffBudgetAccounts().reduce(
+      (total, account) => total + (account.balance || 0),
+      0
+    );
   }
 
   // CRUD operations

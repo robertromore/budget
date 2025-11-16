@@ -59,7 +59,7 @@ let {
   onViewModeChange,
   onSortChange,
   onClearAll,
-  filterContent
+  filterContent,
 }: Props = $props();
 
 let filtersOpen = $state(false);
@@ -67,10 +67,16 @@ let filtersOpen = $state(false);
 const getCurrentSortLabel = $derived.by(() => {
   if (!sortBy || !sortOptions.length) return 'Sort';
 
-  const option = sortOptions.find(opt => opt.value === sortBy && opt.order === sortOrder);
+  const option = sortOptions.find((opt) => opt.value === sortBy && opt.order === sortOrder);
   if (option) {
-    return option.label + (option.order === 'asc' && option.value === 'name' ? ' (A-Z)' :
-                          option.order === 'desc' && option.value === 'name' ? ' (Z-A)' : '');
+    return (
+      option.label +
+      (option.order === 'asc' && option.value === 'name'
+        ? ' (A-Z)'
+        : option.order === 'desc' && option.value === 'name'
+          ? ' (Z-A)'
+          : '')
+    );
   }
   return 'Sort';
 });
@@ -93,7 +99,7 @@ const clearAllFilters = () => {
   <!-- Search and Filter Row -->
   <div class="flex items-center gap-2">
     <!-- Search Input -->
-    <div class="flex-1 max-w-sm">
+    <div class="max-w-sm flex-1">
       <InputGroup.InputGroup>
         <InputGroup.InputGroupAddon align="inline-start">
           <Search class="h-4 w-4" />
@@ -102,8 +108,7 @@ const clearAllFilters = () => {
           type="text"
           placeholder={searchPlaceholder}
           value={searchQuery}
-          oninput={handleSearchInput}
-        />
+          oninput={handleSearchInput} />
       </InputGroup.InputGroup>
     </div>
 
@@ -127,7 +132,7 @@ const clearAllFilters = () => {
         <Popover.Content class="w-96" align="end">
           <div class="space-y-4">
             <!-- Header -->
-            <div class="flex items-center justify-between pb-3 border-b">
+            <div class="flex items-center justify-between border-b pb-3">
               <h4 class="font-semibold">Filters</h4>
               {#if activeFilterCount > 0}
                 <Button
@@ -145,12 +150,8 @@ const clearAllFilters = () => {
 
             <!-- Clear Filters Button -->
             {#if activeFilterCount > 0}
-              <div class="pt-3 border-t">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onclick={clearAllFilters}
-                  class="w-full h-9">
+              <div class="border-t pt-3">
+                <Button variant="outline" size="sm" onclick={clearAllFilters} class="h-9 w-full">
                   <X class="mr-2 h-3.5 w-3.5" />
                   Clear All Filters ({activeFilterCount})
                 </Button>
@@ -176,7 +177,9 @@ const clearAllFilters = () => {
           <div class="space-y-1">
             {#each sortOptions as option}
               <Button
-                variant={sortBy === option.value && sortOrder === option.order ? "default" : "ghost"}
+                variant={sortBy === option.value && sortOrder === option.order
+                  ? 'default'
+                  : 'ghost'}
                 size="sm"
                 onclick={() => {
                   sortBy = option.value;
@@ -197,7 +200,7 @@ const clearAllFilters = () => {
 
     <!-- View Mode Toggle -->
     {#if showViewModeToggle && onViewModeChange}
-      <div class="flex items-center border rounded-md">
+      <div class="flex items-center rounded-md border">
         <Button
           variant={viewMode === 'list' ? 'default' : 'ghost'}
           size="sm"
@@ -224,8 +227,8 @@ const clearAllFilters = () => {
 
   <!-- Active Filters Summary -->
   {#if activeFilterCount > 0 && filterSummaries.length > 0}
-    <div class="flex items-center gap-2 flex-wrap">
-      <span class="text-sm text-muted-foreground">Active filters:</span>
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-muted-foreground text-sm">Active filters:</span>
       {#each filterSummaries as filter}
         <Badge variant="secondary" class="text-xs">
           {filter.label}
@@ -235,7 +238,7 @@ const clearAllFilters = () => {
         variant="ghost"
         size="sm"
         onclick={clearAllFilters}
-        class="h-6 text-xs text-muted-foreground hover:text-foreground">
+        class="text-muted-foreground hover:text-foreground h-6 text-xs">
         <X class="mr-1 h-3 w-3" />
         Clear all
       </Button>

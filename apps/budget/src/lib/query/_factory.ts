@@ -1,8 +1,8 @@
-import { createQuery, createMutation } from "@tanstack/svelte-query";
-import type { CreateQueryOptions, CreateMutationOptions, QueryKey } from "@tanstack/svelte-query";
-import { TRPCError } from "@trpc/server";
-import { toast } from "svelte-sonner";
-import { queryClient } from "./_client";
+import {createQuery, createMutation} from "@tanstack/svelte-query";
+import type {CreateQueryOptions, CreateMutationOptions, QueryKey} from "@tanstack/svelte-query";
+import {TRPCError} from "@trpc/server";
+import {toast} from "svelte-sonner";
+import {queryClient} from "./_client";
 
 /**
  * Configuration for defineQuery wrapper
@@ -10,7 +10,7 @@ import { queryClient } from "./_client";
 export interface DefineQueryConfig<TData, TError = Error> {
   queryKey: QueryKey;
   queryFn: () => Promise<TData>;
-  options?: Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>;
+  options?: Omit<CreateQueryOptions<TData, TError>, "queryKey" | "queryFn">;
 }
 
 /**
@@ -20,7 +20,7 @@ export interface DefineParameterizedQueryConfig<TParams, TData, TError = Error> 
   queryKey: (params: TParams) => QueryKey;
   queryFn: (params: TParams) => Promise<TData>;
   enabled?: (params: TParams) => boolean;
-  options?: Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn' | 'enabled'>;
+  options?: Omit<CreateQueryOptions<TData, TError>, "queryKey" | "queryFn" | "enabled">;
 }
 
 /**
@@ -43,7 +43,11 @@ export interface QueryWrapper<TData, TError = Error> {
    * Reactive interface - returns Svelte store for component reactivity
    * Accepts optional function returning additional options to merge with base options
    */
-  options(additionalOptions?: () => Partial<Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>>): ReturnType<typeof createQuery<TData, TError>>;
+  options(
+    additionalOptions?: () => Partial<
+      Omit<CreateQueryOptions<TData, TError>, "queryKey" | "queryFn">
+    >
+  ): ReturnType<typeof createQuery<TData, TError>>;
 
   /**
    * Imperative interface - executes query and returns promise
@@ -64,7 +68,12 @@ export interface ParameterizedQueryWrapper<TParams, TData, TError = Error> {
    * Reactive interface - returns Svelte store for component reactivity
    * Accepts optional function returning additional options to merge with base options
    */
-  options(params: TParams, additionalOptions?: () => Partial<Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>>): ReturnType<typeof createQuery<TData, TError>>;
+  options(
+    params: TParams,
+    additionalOptions?: () => Partial<
+      Omit<CreateQueryOptions<TData, TError>, "queryKey" | "queryFn">
+    >
+  ): ReturnType<typeof createQuery<TData, TError>>;
 
   /**
    * Imperative interface - executes query and returns promise
@@ -107,15 +116,15 @@ function transformError(error: unknown): TRPCError {
 
   if (error instanceof Error) {
     return new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       message: error.message,
       cause: error,
     });
   }
 
   return new TRPCError({
-    code: 'INTERNAL_SERVER_ERROR',
-    message: 'An unexpected error occurred',
+    code: "INTERNAL_SERVER_ERROR",
+    message: "An unexpected error occurred",
     cause: error,
   });
 }
@@ -139,12 +148,17 @@ export function defineQuery<TParams, TData, TError = Error>(
   config: DefineQueryConfig<TData, TError> | DefineParameterizedQueryConfig<TParams, TData, TError>
 ): QueryWrapper<TData, TError> | ParameterizedQueryWrapper<TParams, TData, TError> {
   // Check if this is a parameterized query
-  if (typeof config.queryKey === 'function') {
+  if (typeof config.queryKey === "function") {
     const paramConfig = config as DefineParameterizedQueryConfig<TParams, TData, TError>;
     return {
       queryKey: paramConfig.queryKey,
 
-      options(params: TParams, additionalOptions?: () => Partial<Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>>) {
+      options(
+        params: TParams,
+        additionalOptions?: () => Partial<
+          Omit<CreateQueryOptions<TData, TError>, "queryKey" | "queryFn">
+        >
+      ) {
         const queryKey = paramConfig.queryKey(params);
         const enabled = paramConfig.enabled ? paramConfig.enabled(params) : true;
 
@@ -185,12 +199,16 @@ export function defineQuery<TParams, TData, TError = Error>(
 
   // Non-parameterized query
   const simpleConfig = config as DefineQueryConfig<TData, TError>;
-  const { queryKey, queryFn, options = {} } = simpleConfig;
+  const {queryKey, queryFn, options = {}} = simpleConfig;
 
   return {
     queryKey,
 
-    options(additionalOptions?: () => Partial<Omit<CreateQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>>) {
+    options(
+      additionalOptions?: () => Partial<
+        Omit<CreateQueryOptions<TData, TError>, "queryKey" | "queryFn">
+      >
+    ) {
       return createQuery(() => ({
         queryKey,
         queryFn: async () => {
@@ -230,55 +248,59 @@ export function defineQuery<TParams, TData, TError = Error>(
 export function defineMutation<TVariables, TData, TError = Error>(
   config: DefineMutationConfig<TVariables, TData, TError>
 ): MutationWrapper<TVariables, TData, TError> {
-  const { mutationFn, options = {}, onSuccess, onError, successMessage, errorMessage } = config;
+  const {mutationFn, options = {}, onSuccess, onError, successMessage, errorMessage} = config;
 
   // Create the mutation with enhanced error handling and notifications
-  const createMutationWithConfig = () => createMutation(() => ({
-    mutationFn: async (variables: TVariables) => {
-      try {
-        return await mutationFn(variables);
-      } catch (error) {
-        throw transformError(error);
-      }
-    },
-    onSuccess: (data: TData, variables: TVariables, context: unknown, queryClient: any) => {
-      // Call custom onSuccess if provided
-      if (onSuccess) {
-        onSuccess(data, variables);
-      }
+  const createMutationWithConfig = () =>
+    createMutation(() => ({
+      mutationFn: async (variables: TVariables) => {
+        try {
+          return await mutationFn(variables);
+        } catch (error) {
+          throw transformError(error);
+        }
+      },
+      onSuccess: (data: TData, variables: TVariables, context: unknown, queryClient: any) => {
+        // Call custom onSuccess if provided
+        if (onSuccess) {
+          onSuccess(data, variables);
+        }
 
-      // Show success toast if message provided
-      if (successMessage) {
-        const message = typeof successMessage === 'function'
-          ? successMessage(data, variables)
-          : successMessage;
-        toast.success(message);
-      }
+        // Show success toast if message provided
+        if (successMessage) {
+          const message =
+            typeof successMessage === "function" ? successMessage(data, variables) : successMessage;
+          toast.success(message);
+        }
 
-      // Call original onSuccess from options
-      if (options.onSuccess) {
-        options.onSuccess(data, variables, context, queryClient);
-      }
-    },
-    onError: (error: TError, variables: TVariables, context: unknown, queryClient: any) => {
-      // Call custom onError if provided
-      if (onError) {
-        onError(error, variables);
-      }
+        // Call original onSuccess from options
+        if (options.onSuccess) {
+          options.onSuccess(data, variables, context, queryClient);
+        }
+      },
+      onError: (error: TError, variables: TVariables, context: unknown, queryClient: any) => {
+        // Call custom onError if provided
+        if (onError) {
+          onError(error, variables);
+        }
 
-      // Show error toast
-      const message = errorMessage
-        ? (typeof errorMessage === 'function' ? errorMessage(error, variables) : errorMessage)
-        : (error instanceof Error ? error.message : 'An error occurred');
-      toast.error(message);
+        // Show error toast
+        const message = errorMessage
+          ? typeof errorMessage === "function"
+            ? errorMessage(error, variables)
+            : errorMessage
+          : error instanceof Error
+            ? error.message
+            : "An error occurred";
+        toast.error(message);
 
-      // Call original onError from options
-      if (options.onError) {
-        options.onError(error, variables, context, queryClient);
-      }
-    },
-    ...options,
-  }));
+        // Call original onError from options
+        if (options.onError) {
+          options.onError(error, variables, context, queryClient);
+        }
+      },
+      ...options,
+    }));
 
   return {
     options() {
@@ -303,7 +325,7 @@ export function defineMutation<TVariables, TData, TError = Error>(
 export function createQueryKeys<T extends Record<string, (...args: any[]) => QueryKey>>(
   domain: string,
   keys: T
-): T & { all: () => QueryKey } {
+): T & {all: () => QueryKey} {
   return {
     all: () => [domain] as const,
     ...keys,
@@ -315,9 +337,9 @@ export function createQueryKeys<T extends Record<string, (...args: any[]) => Que
  */
 export function createMutationKeys(domain: string) {
   return {
-    create: () => [domain, 'create'] as const,
-    update: () => [domain, 'update'] as const,
-    delete: () => [domain, 'delete'] as const,
-    bulkDelete: () => [domain, 'bulk-delete'] as const,
+    create: () => [domain, "create"] as const,
+    update: () => [domain, "update"] as const,
+    delete: () => [domain, "delete"] as const,
+    bulkDelete: () => [domain, "bulk-delete"] as const,
   };
 }

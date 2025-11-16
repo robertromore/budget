@@ -1,8 +1,8 @@
 <script lang="ts">
-import { rpc } from '$lib/query';
-import { Button } from '$lib/components/ui/button';
+import {rpc} from '$lib/query';
+import {Button} from '$lib/components/ui/button';
 import * as Table from '$lib/components/ui/table';
-import { Badge } from '$lib/components/ui/badge';
+import {Badge} from '$lib/components/ui/badge';
 import * as Select from '$lib/components/ui/select';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import FileText from '@lucide/svelte/icons/file-text';
@@ -24,7 +24,7 @@ interface Props {
   onViewClaims?: (expenseId: number) => void;
 }
 
-let { hsaAccountId, onEdit, onAddReceipt, onViewClaims }: Props = $props();
+let {hsaAccountId, onEdit, onAddReceipt, onViewClaims}: Props = $props();
 
 // Claim management dialog state
 let claimDialogOpen = $state(false);
@@ -99,7 +99,7 @@ const summaryQuery = $derived(
 const summary = $derived(summaryQuery.data);
 
 // Generate tax year options (last 5 years + current + next year)
-const taxYearOptions = Array.from({ length: 7 }, (_, i) => currentYear - 5 + i);
+const taxYearOptions = Array.from({length: 7}, (_, i) => currentYear - 5 + i);
 
 async function handleDelete(expense: any) {
   if (!confirm(`Delete medical expense for ${expense.provider || 'this expense'}?`)) return;
@@ -159,38 +159,46 @@ const expenseTypeLabels: Record<string, string> = {
 
 // Claim status labels and variants
 const claimStatusLabels: Record<string, string> = {
-  not_submitted: "No Claim",
-  pending_submission: "Pending",
-  submitted: "Submitted",
-  in_review: "In Review",
-  approved: "Approved",
-  partially_approved: "Partial",
-  denied: "Denied",
-  resubmission_required: "Resubmit",
-  paid: "Paid",
-  withdrawn: "Withdrawn",
+  not_submitted: 'No Claim',
+  pending_submission: 'Pending',
+  submitted: 'Submitted',
+  in_review: 'In Review',
+  approved: 'Approved',
+  partially_approved: 'Partial',
+  denied: 'Denied',
+  resubmission_required: 'Resubmit',
+  paid: 'Paid',
+  withdrawn: 'Withdrawn',
 };
 
 const claimStatusVariants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  not_submitted: "outline",
-  pending_submission: "secondary",
-  submitted: "secondary",
-  in_review: "secondary",
-  approved: "default",
-  partially_approved: "default",
-  denied: "destructive",
-  resubmission_required: "destructive",
-  paid: "default",
-  withdrawn: "outline",
+  not_submitted: 'outline',
+  pending_submission: 'secondary',
+  submitted: 'secondary',
+  in_review: 'secondary',
+  approved: 'default',
+  partially_approved: 'default',
+  denied: 'destructive',
+  resubmission_required: 'destructive',
+  paid: 'default',
+  withdrawn: 'outline',
 };
 
-function getClaimStatus(expense: any): { status: string; label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } {
+function getClaimStatus(expense: any): {
+  status: string;
+  label: string;
+  variant: 'default' | 'secondary' | 'destructive' | 'outline';
+} {
   // If no claims, show "No Claim"
   if (!expense.claims || expense.claims.length === 0) {
     return {
       status: 'not_submitted',
       label: claimStatusLabels['not_submitted'] || 'No Claim',
-      variant: (claimStatusVariants['not_submitted'] || 'outline') as 'default' | 'secondary' | 'destructive' | 'outline',
+      variant: (claimStatusVariants['not_submitted'] || 'outline') as
+        | 'default'
+        | 'secondary'
+        | 'destructive'
+        | 'outline',
     };
   }
 
@@ -201,7 +209,11 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
   return {
     status,
     label: claimStatusLabels[status] || status,
-    variant: (claimStatusVariants[status] || 'outline') as 'default' | 'secondary' | 'destructive' | 'outline',
+    variant: (claimStatusVariants[status] || 'outline') as
+      | 'default'
+      | 'secondary'
+      | 'destructive'
+      | 'outline',
   };
 }
 </script>
@@ -211,9 +223,7 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
   <div class="flex items-center justify-between">
     <div>
       <h2 class="text-2xl font-bold">Medical Expenses</h2>
-      <p class="text-sm text-muted-foreground">
-        HSA medical expenses for tax reporting
-      </p>
+      <p class="text-muted-foreground text-sm">HSA medical expenses for tax reporting</p>
     </div>
     <div class="flex items-center gap-4">
       <Select.Root
@@ -221,8 +231,7 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
         value={selectedTaxYear.toString()}
         onValueChange={(value) => {
           if (value) selectedTaxYear = parseInt(value);
-        }}
-      >
+        }}>
         <Select.Trigger class="w-32">
           {selectedTaxYear}
         </Select.Trigger>
@@ -237,21 +246,21 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
 
   <!-- Summary Cards -->
   {#if summary}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-muted p-4 rounded-lg">
-        <p class="text-sm text-muted-foreground">Total Expenses</p>
+    <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div class="bg-muted rounded-lg p-4">
+        <p class="text-muted-foreground text-sm">Total Expenses</p>
         <p class="text-2xl font-bold">{formatCurrency(summary.totalExpenses)}</p>
       </div>
-      <div class="bg-muted p-4 rounded-lg">
-        <p class="text-sm text-muted-foreground">Out of Pocket</p>
+      <div class="bg-muted rounded-lg p-4">
+        <p class="text-muted-foreground text-sm">Out of Pocket</p>
         <p class="text-2xl font-bold">{formatCurrency(summary.totalOutOfPocket)}</p>
       </div>
-      <div class="bg-muted p-4 rounded-lg">
-        <p class="text-sm text-muted-foreground">Insurance Covered</p>
+      <div class="bg-muted rounded-lg p-4">
+        <p class="text-muted-foreground text-sm">Insurance Covered</p>
         <p class="text-2xl font-bold">{formatCurrency(summary.insuranceCovered)}</p>
       </div>
-      <div class="bg-muted p-4 rounded-lg">
-        <p class="text-sm text-muted-foreground">Qualified Expenses</p>
+      <div class="bg-muted rounded-lg p-4">
+        <p class="text-muted-foreground text-sm">Qualified Expenses</p>
         <p class="text-2xl font-bold">{formatCurrency(summary.qualifiedExpenses)}</p>
       </div>
     </div>
@@ -260,16 +269,12 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
   <!-- Data Table -->
   <div class="rounded-md border">
     {#if isLoading}
-      <div class="text-center py-8 text-muted-foreground">
-        Loading expenses...
-      </div>
+      <div class="text-muted-foreground py-8 text-center">Loading expenses...</div>
     {:else if expenses.length === 0}
-      <div class="text-center py-12">
-        <FileText class="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-        <p class="text-lg font-medium mb-2">No expenses for {selectedTaxYear}</p>
-        <p class="text-sm text-muted-foreground">
-          Medical expenses will appear here once recorded
-        </p>
+      <div class="py-12 text-center">
+        <FileText class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+        <p class="mb-2 text-lg font-medium">No expenses for {selectedTaxYear}</p>
+        <p class="text-muted-foreground text-sm">Medical expenses will appear here once recorded</p>
       </div>
     {:else}
       <Table.Root>
@@ -306,8 +311,8 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
                 {@const claimStatus = getClaimStatus(expense)}
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger>
-                    {#snippet child({ props })}
-                      <Button {...props} variant="ghost" size="sm" class="h-auto py-0 px-2">
+                    {#snippet child({props})}
+                      <Button {...props} variant="ghost" size="sm" class="h-auto px-2 py-0">
                         <Badge variant={claimStatus.variant}>{claimStatus.label}</Badge>
                       </Button>
                     {/snippet}
@@ -317,29 +322,29 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
                     <DropdownMenu.Separator />
                     {#if claimStatus.status === 'not_submitted' || claimStatus.status === 'pending_submission'}
                       <DropdownMenu.Item onclick={() => quickUpdateStatus(expense, 'submitted')}>
-                        <Send class="h-4 w-4 mr-2" />
+                        <Send class="mr-2 h-4 w-4" />
                         Mark Submitted
                       </DropdownMenu.Item>
                     {/if}
                     {#if claimStatus.status === 'submitted' || claimStatus.status === 'in_review'}
                       <DropdownMenu.Item onclick={() => quickUpdateStatus(expense, 'approved')}>
-                        <CheckCircle class="h-4 w-4 mr-2" />
+                        <CheckCircle class="mr-2 h-4 w-4" />
                         Mark Approved
                       </DropdownMenu.Item>
                       <DropdownMenu.Item onclick={() => quickUpdateStatus(expense, 'denied')}>
-                        <XCircle class="h-4 w-4 mr-2" />
+                        <XCircle class="mr-2 h-4 w-4" />
                         Mark Denied
                       </DropdownMenu.Item>
                     {/if}
                     {#if claimStatus.status === 'approved' || claimStatus.status === 'partially_approved'}
                       <DropdownMenu.Item onclick={() => quickUpdateStatus(expense, 'paid')}>
-                        <DollarSign class="h-4 w-4 mr-2" />
+                        <DollarSign class="mr-2 h-4 w-4" />
                         Mark Paid
                       </DropdownMenu.Item>
                     {/if}
                     <DropdownMenu.Separator />
                     <DropdownMenu.Item onclick={() => handleManageClaims(expense)}>
-                      <MoreHorizontal class="h-4 w-4 mr-2" />
+                      <MoreHorizontal class="mr-2 h-4 w-4" />
                       Advanced Options
                     </DropdownMenu.Item>
                   </DropdownMenu.Content>
@@ -351,8 +356,7 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
                     variant="ghost"
                     size="sm"
                     onclick={() => handleManageClaims(expense)}
-                    title="Manage claims"
-                  >
+                    title="Manage claims">
                     <ClipboardList class="h-4 w-4" />
                   </Button>
                   {#if onAddReceipt}
@@ -360,8 +364,7 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
                       variant="ghost"
                       size="sm"
                       onclick={() => onAddReceipt?.(expense.id)}
-                      title="Add receipt"
-                    >
+                      title="Add receipt">
                       <Receipt class="h-4 w-4" />
                     </Button>
                   {/if}
@@ -370,8 +373,7 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
                       variant="ghost"
                       size="sm"
                       onclick={() => onEdit?.(expense)}
-                      title="Edit"
-                    >
+                      title="Edit">
                       <Edit class="h-4 w-4" />
                     </Button>
                   {/if}
@@ -379,8 +381,7 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
                     variant="ghost"
                     size="sm"
                     onclick={() => handleDelete(expense)}
-                    title="Delete"
-                  >
+                    title="Delete">
                     <Trash2 class="h-4 w-4" />
                   </Button>
                 </div>
@@ -395,8 +396,5 @@ function getClaimStatus(expense: any): { status: string; label: string; variant:
 
 <!-- Claim Management Sheet -->
 {#if selectedExpenseForClaim}
-  <ClaimManagementSheet
-    expense={selectedExpenseForClaim}
-    bind:open={claimDialogOpen}
-  />
+  <ClaimManagementSheet expense={selectedExpenseForClaim} bind:open={claimDialogOpen} />
 {/if}

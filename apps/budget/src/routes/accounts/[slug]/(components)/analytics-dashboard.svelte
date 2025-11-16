@@ -65,18 +65,16 @@ const currentAnalytic = $derived(analyticsTypes.find((a) => a.id === selectedAna
           <Card.Description>{currentAnalytic.description}</Card.Description>
         </Card.Header>
         <Card.Content class="p-6">
-          <div class="h-[400px] w-full flex items-center justify-center">
-            <div class="text-center space-y-4">
+          <div class="flex h-[400px] w-full items-center justify-center">
+            <div class="space-y-4 text-center">
               {#if currentAnalytic?.icon}
-                <currentAnalytic.icon class="h-12 w-12 mx-auto text-muted-foreground/30" />
+                <currentAnalytic.icon class="text-muted-foreground/30 mx-auto h-12 w-12" />
               {/if}
               <div>
-                <h3 class="text-lg font-semibold text-muted-foreground">
+                <h3 class="text-muted-foreground text-lg font-semibold">
                   {currentAnalytic?.title || 'Coming Soon'}
                 </h3>
-                <p class="text-sm text-muted-foreground/70">
-                  This chart is not yet implemented.
-                </p>
+                <p class="text-muted-foreground/70 text-sm">This chart is not yet implemented.</p>
               </div>
             </div>
           </div>

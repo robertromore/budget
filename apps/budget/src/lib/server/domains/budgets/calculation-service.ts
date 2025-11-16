@@ -1,18 +1,18 @@
-import { isDebtAccount, type Account } from "$lib/schema/accounts";
+import {isDebtAccount, type Account} from "$lib/schema/accounts";
 import {
   budgetPeriodInstances,
   budgetPeriodTemplates,
   budgets,
-  budgetTransactions
+  budgetTransactions,
 } from "$lib/schema/budgets";
-import { envelopeAllocations } from "$lib/schema/budgets/envelope-allocations";
-import { transactions, type Transaction } from "$lib/schema/transactions";
-import { db } from "$lib/server/db";
-import { NotFoundError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
-import { and, between, eq, sum as sqlSum } from "drizzle-orm";
-import { EnvelopeService } from "./envelope-service";
-import { BudgetRepository } from "./repository";
+import {envelopeAllocations} from "$lib/schema/budgets/envelope-allocations";
+import {transactions, type Transaction} from "$lib/schema/transactions";
+import {db} from "$lib/server/db";
+import {NotFoundError} from "$lib/server/shared/types/errors";
+import {getCurrentTimestamp} from "$lib/utils/dates";
+import {and, between, eq, sum as sqlSum} from "drizzle-orm";
+import {EnvelopeService} from "./envelope-service";
+import {BudgetRepository} from "./repository";
 
 export interface PeriodCalculationResult {
   periodInstanceId: number;
@@ -64,7 +64,10 @@ export class BudgetCalculationService {
    * Calculate the budget impact of a transaction.
    * For debt accounts, inverts the amount to show purchases as positive spending.
    */
-  private calculateBudgetImpact(transaction: Transaction, accountType: Account["accountType"]): number {
+  private calculateBudgetImpact(
+    transaction: Transaction,
+    accountType: Account["accountType"]
+  ): number {
     if (!this.shouldCountAgainstBudget(transaction)) return 0;
 
     // For debt accounts: Invert the amount so purchases (negative) become positive spending

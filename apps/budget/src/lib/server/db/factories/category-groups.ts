@@ -75,9 +75,20 @@ export const categoryGroupFactory = async (
 
   // Group icons
   const icons = [
-    "🏠", "🚗", "🍔", "🎬", "🏥",
-    "💇", "🛍️", "✈️", "💰", "💳",
-    "🛡️", "📚", "🎁", "💼",
+    "🏠",
+    "🚗",
+    "🍔",
+    "🎬",
+    "🏥",
+    "💇",
+    "🛍️",
+    "✈️",
+    "💰",
+    "💳",
+    "🛡️",
+    "📚",
+    "🎁",
+    "💼",
   ];
 
   const categoriesPerGroup = options.categoriesPerGroup ?? faker.number.int({min: 2, max: 5});

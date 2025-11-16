@@ -21,14 +21,9 @@ const isFiltered = $derived(table.getState().columnFilters.length > 0);
       placeholder="Search expenses..."
       value={table.getState().globalFilter ?? ''}
       oninput={(e) => table.setGlobalFilter(e.currentTarget.value)}
-      class="h-8 w-[150px] lg:w-[250px]"
-    />
+      class="h-8 w-[150px] lg:w-[250px]" />
     {#if isFiltered}
-      <Button
-        variant="ghost"
-        onclick={() => table.resetColumnFilters()}
-        class="h-8 px-2 lg:px-3"
-      >
+      <Button variant="ghost" onclick={() => table.resetColumnFilters()} class="h-8 px-2 lg:px-3">
         Reset
         <X class="ml-2 size-4" />
       </Button>

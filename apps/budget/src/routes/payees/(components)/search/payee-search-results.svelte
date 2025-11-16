@@ -44,7 +44,7 @@ let {
   onEdit,
   onDelete,
   onBulkDelete,
-  onViewAnalytics
+  onViewAnalytics,
 }: Props = $props();
 
 // Get payees state from context
@@ -80,7 +80,7 @@ const getStatusDisplay = (isActive: boolean) => {
     icon: isActive ? CircleCheck : TriangleAlert,
     color: isActive ? 'text-green-600' : 'text-orange-600',
     bgColor: isActive ? 'bg-green-50 dark:bg-green-950' : 'bg-orange-50 dark:bg-orange-950',
-    label: isActive ? 'Active' : 'Inactive'
+    label: isActive ? 'Active' : 'Inactive',
   };
 };
 
@@ -103,8 +103,7 @@ const formatLastTransaction = (date: string | null) => {
   {onEdit}
   {onDelete}
   {onBulkDelete}
-  {onViewAnalytics}
->
+  {onViewAnalytics}>
   {#snippet gridCard(payee)}
     {@const TypeIcon = getPayeeTypeIcon(payee.payeeType)}
     {@const statusDisplay = getStatusDisplay(payee.isActive)}
@@ -116,14 +115,13 @@ const formatLastTransaction = (date: string | null) => {
       {onDelete}
       {onViewAnalytics}
       viewButtonLabel="View"
-      cardClass={cn(!payee.isActive && "opacity-75")}
-    >
+      cardClass={cn(!payee.isActive && 'opacity-75')}>
       {#snippet header(p)}
         <!-- Status Badge -->
         <div class="absolute top-3 right-3">
           <Badge
             variant="outline"
-            class={cn("text-xs", statusDisplay.color, statusDisplay.bgColor)}>
+            class={cn('text-xs', statusDisplay.color, statusDisplay.bgColor)}>
             <statusDisplay.icon class="mr-1 h-3 w-3" />
             {statusDisplay.label}
           </Badge>
@@ -131,16 +129,13 @@ const formatLastTransaction = (date: string | null) => {
 
         <!-- Name and Type -->
         <Card.Title class="flex items-start gap-2 pr-20">
-          <TypeIcon class="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <TypeIcon class="text-muted-foreground mt-0.5 h-5 w-5 flex-shrink-0" />
           <div class="min-w-0 flex-1">
-            <a
-              href="/payees/{p.slug}"
-              class="font-medium truncate hover:underline block"
-            >
+            <a href="/payees/{p.slug}" class="block truncate font-medium hover:underline">
               {@html highlightMatches(p.name || 'Unnamed Payee', searchQuery)}
             </a>
             {#if p.payeeType}
-              <div class="text-xs text-muted-foreground mt-0.5">
+              <div class="text-muted-foreground mt-0.5 text-xs">
                 {formatPayeeType(p.payeeType)}
               </div>
             {/if}
@@ -149,7 +144,7 @@ const formatLastTransaction = (date: string | null) => {
 
         {#if p.notes}
           <Card.Description>
-            <span class="text-sm line-clamp-2">
+            <span class="line-clamp-2 text-sm">
               {@html highlightMatches(
                 p.notes.length > 100 ? p.notes.substring(0, 100) + '...' : p.notes,
                 searchQuery
@@ -163,21 +158,21 @@ const formatLastTransaction = (date: string | null) => {
         <!-- Contact Information -->
         <div class="space-y-1.5">
           {#if p.email}
-            <div class="flex items-center gap-2 text-xs text-muted-foreground">
+            <div class="text-muted-foreground flex items-center gap-2 text-xs">
               <Mail class="h-3 w-3" />
               <span class="truncate">{p.email}</span>
             </div>
           {/if}
 
           {#if p.phone}
-            <div class="flex items-center gap-2 text-xs text-muted-foreground">
+            <div class="text-muted-foreground flex items-center gap-2 text-xs">
               <Phone class="h-3 w-3" />
               <span>{p.phone}</span>
             </div>
           {/if}
 
           {#if p.website}
-            <div class="flex items-center gap-2 text-xs text-muted-foreground">
+            <div class="text-muted-foreground flex items-center gap-2 text-xs">
               <Globe class="h-3 w-3" />
               <span class="truncate">{p.website}</span>
             </div>
@@ -188,14 +183,14 @@ const formatLastTransaction = (date: string | null) => {
         <div class="space-y-1.5">
           {#if p.avgAmount}
             <div class="flex items-center gap-2 text-xs">
-              <CreditCard class="h-3 w-3 text-muted-foreground" />
+              <CreditCard class="text-muted-foreground h-3 w-3" />
               <span class="font-medium">{currencyFormatter.format(p.avgAmount)}</span>
               <span class="text-muted-foreground">avg</span>
             </div>
           {/if}
 
           {#if p.lastTransactionDate}
-            <div class="flex items-center gap-2 text-xs text-muted-foreground">
+            <div class="text-muted-foreground flex items-center gap-2 text-xs">
               <Calendar class="h-3 w-3" />
               <span>Last: {formatLastTransaction(p.lastTransactionDate)}</span>
             </div>
@@ -238,18 +233,17 @@ const formatLastTransaction = (date: string | null) => {
       {onDelete}
       {onBulkDelete}
       {onViewAnalytics}
-      bind:table
-    />
+      bind:table />
   {/snippet}
 </EntitySearchResults>
 
 <style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    word-break: break-word;
-  }
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
 </style>

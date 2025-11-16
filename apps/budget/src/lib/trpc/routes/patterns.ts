@@ -77,8 +77,8 @@ export const patternRoutes = t.router({
           input.status
         );
       } catch (error: any) {
-        console.error('[patterns.list] Error fetching patterns:', error);
-        console.error('[patterns.list] Error stack:', error.stack);
+        console.error("[patterns.list] Error fetching patterns:", error);
+        console.error("[patterns.list] Error stack:", error.stack);
 
         if (error.statusCode === 403) {
           throw new TRPCError({
@@ -98,10 +98,7 @@ export const patternRoutes = t.router({
     .input(z.object({patternId: z.number().positive()}))
     .mutation(async ({input, ctx}) => {
       try {
-        return await patternService.convertPatternToSchedule(
-          input.patternId,
-          ctx.workspaceId
-        );
+        return await patternService.convertPatternToSchedule(input.patternId, ctx.workspaceId);
       } catch (error: any) {
         if (error.message === "Pattern not found") {
           throw new TRPCError({
@@ -127,10 +124,7 @@ export const patternRoutes = t.router({
     .input(z.object({patternId: z.number().positive()}))
     .mutation(async ({input, ctx}) => {
       try {
-        await patternService.dismissPattern(
-          input.patternId,
-          ctx.workspaceId
-        );
+        await patternService.dismissPattern(input.patternId, ctx.workspaceId);
         return {success: true};
       } catch (error: any) {
         if (error.statusCode === 403) {

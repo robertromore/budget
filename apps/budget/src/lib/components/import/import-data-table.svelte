@@ -27,7 +27,11 @@ interface Props {
   selectedRows?: Set<number>;
   onSelectionChange?: (selected: Set<number>) => void;
   onPayeeUpdate?: (rowIndex: number, payeeId: number | null, payeeName: string | null) => void;
-  onCategoryUpdate?: (rowIndex: number, categoryId: number | null, categoryName: string | null) => void;
+  onCategoryUpdate?: (
+    rowIndex: number,
+    categoryId: number | null,
+    categoryName: string | null
+  ) => void;
   onDescriptionUpdate?: (rowIndex: number, description: string | null) => void;
   temporaryCategories?: string[];
   temporaryPayees?: string[];
@@ -48,13 +52,15 @@ let {
 }: Props = $props();
 
 // Create columns with entity update callbacks - make reactive to prop changes
-const columns = $derived(createColumns({
-  ...(onPayeeUpdate ? {onPayeeUpdate} : {}),
-  ...(onCategoryUpdate ? {onCategoryUpdate} : {}),
-  ...(onDescriptionUpdate ? {onDescriptionUpdate} : {}),
-  temporaryCategories,
-  temporaryPayees,
-}));
+const columns = $derived(
+  createColumns({
+    ...(onPayeeUpdate ? {onPayeeUpdate} : {}),
+    ...(onCategoryUpdate ? {onCategoryUpdate} : {}),
+    ...(onDescriptionUpdate ? {onDescriptionUpdate} : {}),
+    temporaryCategories,
+    temporaryPayees,
+  })
+);
 
 // Table state
 let sorting = $state<any[]>([]);
@@ -162,16 +168,16 @@ $effect(() => {
 
 // Toggle warnings selection
 function toggleWarningSelection() {
-  const warningRows = data.filter(row => row.validationStatus === 'warning');
-  const allWarningsSelected = warningRows.every(row => selectedRows.has(row.rowIndex));
+  const warningRows = data.filter((row) => row.validationStatus === 'warning');
+  const allWarningsSelected = warningRows.every((row) => selectedRows.has(row.rowIndex));
 
   const newSelection = new Set(selectedRows);
   if (allWarningsSelected) {
     // Deselect all warnings
-    warningRows.forEach(row => newSelection.delete(row.rowIndex));
+    warningRows.forEach((row) => newSelection.delete(row.rowIndex));
   } else {
     // Select all warnings
-    warningRows.forEach(row => newSelection.add(row.rowIndex));
+    warningRows.forEach((row) => newSelection.add(row.rowIndex));
   }
 
   selectedRows = newSelection;
@@ -187,7 +193,7 @@ const invalidRowCount = $derived(data.filter((row) => row.validationStatus === '
 const warningRowCount = $derived(data.filter((row) => row.validationStatus === 'warning').length);
 const selectedCount = $derived(selectedRows.size);
 const warningSelectedCount = $derived(
-  data.filter(row => row.validationStatus === 'warning' && selectedRows.has(row.rowIndex)).length
+  data.filter((row) => row.validationStatus === 'warning' && selectedRows.has(row.rowIndex)).length
 );
 </script>
 
@@ -201,12 +207,12 @@ const warningSelectedCount = $derived(
   </div>
 
   <!-- Summary Stats -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
     <Card.Root>
       <Card.Content class="p-6">
         <div class="text-center">
           <div class="text-3xl font-bold">{data.length}</div>
-          <div class="text-sm text-muted-foreground mt-1">Total Rows</div>
+          <div class="text-muted-foreground mt-1 text-sm">Total Rows</div>
         </div>
       </Card.Content>
     </Card.Root>
@@ -215,7 +221,7 @@ const warningSelectedCount = $derived(
       <Card.Content class="p-6">
         <div class="text-center">
           <div class="text-3xl font-bold text-green-600">{validRowCount}</div>
-          <div class="text-sm text-muted-foreground mt-1">Valid Rows</div>
+          <div class="text-muted-foreground mt-1 text-sm">Valid Rows</div>
         </div>
       </Card.Content>
     </Card.Root>
@@ -224,7 +230,7 @@ const warningSelectedCount = $derived(
       <Card.Content class="p-6">
         <div class="text-center">
           <div class="text-3xl font-bold text-yellow-600">{warningRowCount}</div>
-          <div class="text-sm text-muted-foreground mt-1">Warnings</div>
+          <div class="text-muted-foreground mt-1 text-sm">Warnings</div>
         </div>
       </Card.Content>
     </Card.Root>
@@ -233,7 +239,7 @@ const warningSelectedCount = $derived(
       <Card.Content class="p-6">
         <div class="text-center">
           <div class="text-3xl font-bold text-blue-600">{selectedCount}</div>
-          <div class="text-sm text-muted-foreground mt-1">Selected</div>
+          <div class="text-muted-foreground mt-1 text-sm">Selected</div>
         </div>
       </Card.Content>
     </Card.Root>
@@ -245,12 +251,18 @@ const warningSelectedCount = $derived(
       <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-2">
           <span class="text-sm font-medium">Filter by status:</span>
-          <Select.Root
-            type="single"
-            bind:value={statusFilter}
-          >
+          <Select.Root type="single" bind:value={statusFilter}>
             <Select.Trigger class="w-[140px]">
-              {statusFilter === 'all' ? 'All' : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} ({statusFilter === 'all' ? data.length : statusFilter === 'valid' ? validRowCount : statusFilter === 'warning' ? warningRowCount : invalidRowCount})
+              {statusFilter === 'all'
+                ? 'All'
+                : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} ({statusFilter ===
+              'all'
+                ? data.length
+                : statusFilter === 'valid'
+                  ? validRowCount
+                  : statusFilter === 'warning'
+                    ? warningRowCount
+                    : invalidRowCount})
             </Select.Trigger>
             <Select.Content>
               <Select.Item value="all">All ({data.length})</Select.Item>
@@ -261,18 +273,14 @@ const warningSelectedCount = $derived(
           </Select.Root>
 
           {#if warningRowCount > 0}
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={toggleWarningSelection}
-            >
+            <Button variant="outline" size="sm" onclick={toggleWarningSelection}>
               {warningSelectedCount === warningRowCount ? 'Deselect' : 'Select'} Warnings ({warningSelectedCount}/{warningRowCount})
             </Button>
           {/if}
         </div>
 
         <div class="flex items-center gap-2">
-          <span class="text-sm text-muted-foreground">
+          <span class="text-muted-foreground text-sm">
             Showing {table.getRowModel().rows.length} of {filteredData.length} rows
           </span>
         </div>
@@ -290,7 +298,9 @@ const warningSelectedCount = $derived(
               <Table.Head>
                 {#if !header.isPlaceholder}
                   {@const headerContent = header.column.columnDef.header}
-                  <FlexRender {...(headerContent ? {content: headerContent} : {})} context={header.getContext()} />
+                  <FlexRender
+                    {...headerContent ? {content: headerContent} : {}}
+                    context={header.getContext()} />
                 {/if}
               </Table.Head>
             {/each}
@@ -307,7 +317,9 @@ const warningSelectedCount = $derived(
                 <Table.Cell>
                   {#if cell.column.columnDef.cell}
                     {@const cellContent = cell.column.columnDef.cell}
-                    <FlexRender {...(cellContent ? {content: cellContent} : {})} context={cell.getContext()} />
+                    <FlexRender
+                      {...cellContent ? {content: cellContent} : {}}
+                      context={cell.getContext()} />
                   {/if}
                 </Table.Cell>
               {/each}
@@ -315,9 +327,7 @@ const warningSelectedCount = $derived(
           {/each}
         {:else}
           <Table.Row>
-            <Table.Cell colspan={columns.length} class="h-24 text-center">
-              No results.
-            </Table.Cell>
+            <Table.Cell colspan={columns.length} class="h-24 text-center">No results.</Table.Cell>
           </Table.Row>
         {/if}
       </Table.Body>
@@ -326,17 +336,14 @@ const warningSelectedCount = $derived(
 
   <!-- Pagination -->
   <div class="flex items-center justify-between px-2">
-    <div class="flex-1 text-sm text-muted-foreground">
+    <div class="text-muted-foreground flex-1 text-sm">
       {table.getFilteredSelectedRowModel().rows.length} of{' '}
       {table.getFilteredRowModel().rows.length} row(s) selected.
     </div>
     <div class="flex items-center space-x-6 lg:space-x-8">
       <div class="flex items-center space-x-2">
         <p class="text-sm font-medium">Rows per page</p>
-        <Select.Root
-          type="single"
-          bind:value={pageSizeValue}
-        >
+        <Select.Root type="single" bind:value={pageSizeValue}>
           <Select.Trigger class="h-8 w-[70px]">
             {table.getState().pagination.pageSize}
           </Select.Trigger>
@@ -358,8 +365,7 @@ const warningSelectedCount = $derived(
           variant="outline"
           class="hidden h-8 w-8 p-0 lg:flex"
           onclick={() => table.setPageIndex(0)}
-          disabled={!table.getCanPreviousPage()}
-        >
+          disabled={!table.getCanPreviousPage()}>
           <span class="sr-only">Go to first page</span>
           <ChevronsLeft class="h-4 w-4" />
         </Button>
@@ -367,8 +373,7 @@ const warningSelectedCount = $derived(
           variant="outline"
           class="h-8 w-8 p-0"
           onclick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
+          disabled={!table.getCanPreviousPage()}>
           <span class="sr-only">Go to previous page</span>
           <ChevronLeft class="h-4 w-4" />
         </Button>
@@ -376,8 +381,7 @@ const warningSelectedCount = $derived(
           variant="outline"
           class="h-8 w-8 p-0"
           onclick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
+          disabled={!table.getCanNextPage()}>
           <span class="sr-only">Go to next page</span>
           <ChevronRight class="h-4 w-4" />
         </Button>
@@ -385,8 +389,7 @@ const warningSelectedCount = $derived(
           variant="outline"
           class="hidden h-8 w-8 p-0 lg:flex"
           onclick={() => table.setPageIndex(table.getPageCount() - 1)}
-          disabled={!table.getCanNextPage()}
-        >
+          disabled={!table.getCanNextPage()}>
           <span class="sr-only">Go to last page</span>
           <ChevronsRight class="h-4 w-4" />
         </Button>
@@ -396,14 +399,12 @@ const warningSelectedCount = $derived(
 
   <!-- Navigation -->
   <div class="flex items-center justify-between">
-    <Button variant="outline" onclick={onBack}>
-      Back
-    </Button>
+    <Button variant="outline" onclick={onBack}>Back</Button>
     <div class="flex items-center gap-3">
       {#if selectedCount === 0}
-        <p class="text-sm text-muted-foreground">No rows selected</p>
+        <p class="text-muted-foreground text-sm">No rows selected</p>
       {:else}
-        <p class="text-sm text-muted-foreground">
+        <p class="text-muted-foreground text-sm">
           {selectedCount} row{selectedCount !== 1 ? 's' : ''} will be imported
           {#if invalidRowCount > 0}
             · {invalidRowCount} invalid row{invalidRowCount !== 1 ? 's' : ''} skipped

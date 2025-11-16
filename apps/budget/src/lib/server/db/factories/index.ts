@@ -34,9 +34,9 @@ console.log(`✓ Created ${accounts.length} accounts with transactions\n`);
 // Create budgets with periods
 console.log("💰 Creating budgets...");
 const budget = await budgetFactory(workspace.id, "category-envelope", {
-  accountIds: accounts.map(a => a.id),
+  accountIds: accounts.map((a) => a.id),
   withPeriod: true,
-  periodType: "monthly"
+  periodType: "monthly",
 });
 console.log(`✓ Created envelope budget with monthly periods\n`);
 
@@ -44,14 +44,14 @@ console.log(`✓ Created envelope budget with monthly periods\n`);
 console.log("📅 Creating schedules...");
 const schedules = await scheduleFactory(workspace.id, accounts[0].id, 3, {
   frequency: "monthly",
-  recurring: true
+  recurring: true,
 });
 console.log(`✓ Created ${schedules.length} recurring schedules\n`);
 
 // Create category groups
 console.log("📁 Creating category groups...");
 const categoryGroups = await categoryGroupFactory(workspace.id, 5, {
-  categoriesPerGroup: 3
+  categoriesPerGroup: 3,
 });
 console.log(`✓ Created ${categoryGroups.length} category groups\n`);
 
@@ -59,7 +59,7 @@ console.log(`✓ Created ${categoryGroups.length} category groups\n`);
 console.log("👁️  Creating saved views...");
 const views = await viewFactory(workspace.id, 3, {
   withFilters: true,
-  presetType: "date-range"
+  presetType: "date-range",
 });
 console.log(`✓ Created ${views.length} saved views\n`);
 

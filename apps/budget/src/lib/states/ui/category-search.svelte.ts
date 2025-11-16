@@ -1,12 +1,12 @@
-import type { Category } from '$lib/schema';
-import { createLocalStorageState } from '$lib/utils/local-storage.svelte';
+import type {Category} from "$lib/schema";
+import {createLocalStorageState} from "$lib/utils/local-storage.svelte";
 
 export interface CategorySearchFilters {
   hasParent?: boolean;
   hasTransactions?: boolean;
-  categoryType?: 'income' | 'expense' | 'transfer' | 'savings';
+  categoryType?: "income" | "expense" | "transfer" | "savings";
   isTaxDeductible?: boolean;
-  spendingPriority?: 'essential' | 'important' | 'discretionary' | 'luxury';
+  spendingPriority?: "essential" | "important" | "discretionary" | "luxury";
   isSeasonal?: boolean;
   isActive?: boolean;
 }
@@ -18,9 +18,9 @@ interface CategorySearchState {
   isLoading: boolean;
   totalCount: number;
   hasMore: boolean;
-  sortBy: 'name' | 'created' | 'group';
-  sortOrder: 'asc' | 'desc';
-  viewMode: 'grid' | 'list';
+  sortBy: "name" | "created" | "group";
+  sortOrder: "asc" | "desc";
+  viewMode: "grid" | "list";
 }
 
 /**
@@ -28,12 +28,21 @@ interface CategorySearchState {
  */
 class CategorySearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState('category-search-view-mode', 'list' as 'grid' | 'list');
-  private sortByState = createLocalStorageState('category-search-sort-by', 'name' as 'name' | 'created' | 'group');
-  private sortOrderState = createLocalStorageState('category-search-sort-order', 'asc' as 'asc' | 'desc');
+  private viewModeState = createLocalStorageState(
+    "category-search-view-mode",
+    "list" as "grid" | "list"
+  );
+  private sortByState = createLocalStorageState(
+    "category-search-sort-by",
+    "name" as "name" | "created" | "group"
+  );
+  private sortOrderState = createLocalStorageState(
+    "category-search-sort-order",
+    "asc" as "asc" | "desc"
+  );
 
   // Reactive state
-  query = $state('');
+  query = $state("");
   filters = $state<CategorySearchFilters>({});
   results = $state<Category[]>([]);
   isLoading = $state(false);
@@ -41,14 +50,26 @@ class CategorySearchStateManager {
   hasMore = $state(false);
 
   // Getters for persistent state
-  get viewMode() { return this.viewModeState.value; }
-  set viewMode(value: 'grid' | 'list') { this.viewModeState.value = value; }
+  get viewMode() {
+    return this.viewModeState.value;
+  }
+  set viewMode(value: "grid" | "list") {
+    this.viewModeState.value = value;
+  }
 
-  get sortBy() { return this.sortByState.value; }
-  set sortBy(value: 'name' | 'created' | 'group') { this.sortByState.value = value; }
+  get sortBy() {
+    return this.sortByState.value;
+  }
+  set sortBy(value: "name" | "created" | "group") {
+    this.sortByState.value = value;
+  }
 
-  get sortOrder() { return this.sortOrderState.value; }
-  set sortOrder(value: 'asc' | 'desc') { this.sortOrderState.value = value; }
+  get sortOrder() {
+    return this.sortOrderState.value;
+  }
+  set sortOrder(value: "asc" | "desc") {
+    this.sortOrderState.value = value;
+  }
 
   // Computed properties
   hasActiveFilters = $derived.by(() => {
@@ -74,15 +95,12 @@ class CategorySearchStateManager {
     this.filters = newFilters;
   }
 
-  updateFilter<K extends keyof CategorySearchFilters>(
-    key: K,
-    value: CategorySearchFilters[K]
-  ) {
-    const newFilters = { ...this.filters };
+  updateFilter<K extends keyof CategorySearchFilters>(key: K, value: CategorySearchFilters[K]) {
+    const newFilters = {...this.filters};
     // Remove filter if value is undefined, null, or empty string
     if (value === undefined || value === null) {
       delete newFilters[key];
-    } else if (typeof value === 'string') {
+    } else if (typeof value === "string") {
       if (value.length === 0) {
         delete newFilters[key];
       } else {
@@ -95,16 +113,16 @@ class CategorySearchStateManager {
   }
 
   clearAllFilters() {
-    this.query = '';
+    this.query = "";
     this.filters = {};
   }
 
   clearQuery() {
-    this.query = '';
+    this.query = "";
   }
 
   clearFilter(key: keyof CategorySearchFilters) {
-    const newFilters = { ...this.filters };
+    const newFilters = {...this.filters};
     delete newFilters[key];
     this.filters = newFilters;
   }
@@ -126,10 +144,10 @@ class CategorySearchStateManager {
   }
 
   toggleSortOrder() {
-    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
   }
 
-  setSorting(sortBy: CategorySearchState['sortBy'], sortOrder?: CategorySearchState['sortOrder']) {
+  setSorting(sortBy: CategorySearchState["sortBy"], sortOrder?: CategorySearchState["sortOrder"]) {
     this.sortBy = sortBy;
     if (sortOrder) {
       this.sortOrder = sortOrder;
@@ -137,7 +155,7 @@ class CategorySearchStateManager {
   }
 
   toggleViewMode() {
-    this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
+    this.viewMode = this.viewMode === "grid" ? "list" : "grid";
   }
 
   // Get current search parameters for API calls
@@ -146,13 +164,13 @@ class CategorySearchStateManager {
       query: this.query || undefined,
       ...this.filters,
       sortBy: this.sortBy,
-      sortOrder: this.sortOrder
+      sortOrder: this.sortOrder,
     };
   }
 
   // Reset to initial state
   reset() {
-    this.query = '';
+    this.query = "";
     this.filters = {};
     this.results = [];
     this.isLoading = false;
@@ -167,7 +185,7 @@ class CategorySearchStateManager {
       filters: this.filters,
       sortBy: this.sortBy,
       sortOrder: this.sortOrder,
-      viewMode: this.viewMode
+      viewMode: this.viewMode,
     };
   }
 

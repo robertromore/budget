@@ -1,8 +1,8 @@
-import type { TransactionsFormat, ViewFilter } from "$lib/types";
-import type { Table } from "@tanstack/table-core";
-import { Context } from "runed";
-import { SvelteMap } from "svelte/reactivity";
-import { CurrentViewState } from "./current-view.svelte";
+import type {TransactionsFormat, ViewFilter} from "$lib/types";
+import type {Table} from "@tanstack/table-core";
+import {Context} from "runed";
+import {SvelteMap} from "svelte/reactivity";
+import {CurrentViewState} from "./current-view.svelte";
 
 /**
  * A state class representing multiple active views.
@@ -17,14 +17,10 @@ export class CurrentViewsState<T> {
   previousViewId: number | undefined = $state();
 
   editableViews = $derived(
-    Array.from(this.viewsStates
-      .values())
-      .filter((viewState) => !viewState.view.isDefault)
+    Array.from(this.viewsStates.values()).filter((viewState) => !viewState.view.isDefault)
   );
   nonEditableViews = $derived(
-    Array.from(this.viewsStates
-      .values())
-      .filter((viewState) => viewState.view.isDefault)
+    Array.from(this.viewsStates.values()).filter((viewState) => viewState.view.isDefault)
   );
 
   constructor(viewsStates: CurrentViewState<T>[] | null) {
@@ -46,9 +42,9 @@ export class CurrentViewsState<T> {
 
   get(id: number | number[]) {
     if (Array.isArray(id)) {
-      return Array.from(this.viewsStates
-        .values())
-        .filter((viewState) => id.includes(viewState.view.id!));
+      return Array.from(this.viewsStates.values()).filter((viewState) =>
+        id.includes(viewState.view.id!)
+      );
     }
     return Array.from(this.viewsStates.values()).find((viewState) => viewState.view.id === id);
   }
@@ -94,17 +90,22 @@ export class CurrentViewsState<T> {
 
     // Get current filters directly from table columns to preserve complex values
     const tableFilters: ViewFilter[] = [];
-    table.getVisibleFlatColumns()
+    table
+      .getVisibleFlatColumns()
       .filter((column) => column.getCanFilter())
       .forEach((column) => {
         const filterValue = column.getFilterValue();
         if (filterValue !== undefined) {
           // Get the filter function name from the current view
-          const filterFn = this.activeView.view.getFilterFn(column.id) || '';
+          const filterFn = this.activeView.view.getFilterFn(column.id) || "";
 
           // Handle different filter types appropriately
           let value: unknown[];
-          if (filterFn === 'amountFilter' && typeof filterValue === 'object' && filterValue !== null) {
+          if (
+            filterFn === "amountFilter" &&
+            typeof filterValue === "object" &&
+            filterValue !== null
+          ) {
             // For amount filters, wrap the single object in an array
             value = [filterValue];
           } else if (filterValue instanceof Set) {
@@ -121,11 +122,10 @@ export class CurrentViewsState<T> {
           tableFilters.push({
             column: column.id,
             filter: filterFn,
-            value: value
+            value: value,
           });
         }
       });
-
 
     const newViewState = new CurrentViewState(
       {
@@ -147,7 +147,6 @@ export class CurrentViewsState<T> {
 
     // Apply the copied filters to the table
     newViewState.updateTableFilters();
-
   };
 
   removeTemporaryView = () => {

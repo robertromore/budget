@@ -54,11 +54,7 @@ export class PayeeCategoryRecommendationService {
         .select()
         .from(payees)
         .where(
-          and(
-            eq(payees.id, payeeId),
-            eq(payees.workspaceId, workspaceId),
-            isNull(payees.deletedAt)
-          )
+          and(eq(payees.id, payeeId), eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt))
         );
 
       if (!payee) {
@@ -71,10 +67,7 @@ export class PayeeCategoryRecommendationService {
         .select()
         .from(payeeCategories)
         .where(
-          and(
-            eq(payeeCategories.workspaceId, workspaceId),
-            isNull(payeeCategories.deletedAt)
-          )
+          and(eq(payeeCategories.workspaceId, workspaceId), isNull(payeeCategories.deletedAt))
         );
 
       if (allCategories.length === 0) {
@@ -175,14 +168,13 @@ export class PayeeCategoryRecommendationService {
         .select()
         .from(payeeCategories)
         .where(
-          and(
-            eq(payeeCategories.workspaceId, workspaceId),
-            isNull(payeeCategories.deletedAt)
-          )
+          and(eq(payeeCategories.workspaceId, workspaceId), isNull(payeeCategories.deletedAt))
         );
 
       if (allCategories.length === 0) {
-        logger.warn(`No payee categories available in workspace ${workspaceId} - cannot generate recommendations`);
+        logger.warn(
+          `No payee categories available in workspace ${workspaceId} - cannot generate recommendations`
+        );
         return [];
       }
 
@@ -193,7 +185,10 @@ export class PayeeCategoryRecommendationService {
           const recommendation = await this.getRecommendation(payee.id, workspaceId);
           recommendations.push(recommendation);
         } catch (error) {
-          logger.error(`Error getting recommendation for payee ${payee.id} (${payee.name}):`, error);
+          logger.error(
+            `Error getting recommendation for payee ${payee.id} (${payee.name}):`,
+            error
+          );
           // Continue with other payees
         }
       }
@@ -256,11 +251,7 @@ export class PayeeCategoryRecommendationService {
       }
 
       // Factor 5: Similarity to already-categorized payees (up to 20 points)
-      const similarityScore = await this.scoreSimilarPayees(
-        payee,
-        category.id,
-        workspaceId
-      );
+      const similarityScore = await this.scoreSimilarPayees(payee, category.id, workspaceId);
       if (similarityScore.score > 0) {
         score += similarityScore.score;
         factors.push(...similarityScore.factors);
@@ -288,27 +279,118 @@ export class PayeeCategoryRecommendationService {
 
     // Define keyword mappings
     const keywordMap: Record<string, string[]> = {
-      "restaurants & dining": ["restaurant", "cafe", "coffee", "pizza", "burger", "food", "diner", "grill", "kitchen", "bistro"],
-      "restaurants": ["restaurant", "cafe", "coffee", "pizza", "burger", "food", "diner", "grill", "kitchen", "bistro"],
-      "dining": ["restaurant", "cafe", "coffee", "pizza", "burger", "food", "diner", "grill", "kitchen", "bistro"],
-      "groceries": ["grocery", "market", "foods", "supermarket", "trader joe", "whole foods", "safeway", "kroger"],
-      "utilities": ["electric", "water", "gas", "power", "utility", "energy", "pge", "waste"],
-      "subscriptions": ["subscription", "netflix", "spotify", "prime", "hulu", "disney", "youtube", "premium"],
-      "healthcare": ["health", "medical", "doctor", "hospital", "pharmacy", "dental", "cvs", "walgreens", "clinic"],
-      "transportation": ["uber", "lyft", "gas", "fuel", "parking", "transit", "metro", "taxi", "shell", "chevron"],
-      "entertainment": ["movie", "theater", "cinema", "game", "entertainment", "amc", "regal", "steam"],
-      "shopping": ["shop", "store", "retail", "amazon", "target", "walmart", "mall", "boutique"],
-      "insurance": ["insurance", "allstate", "geico", "progressive", "state farm"],
-      "financial": ["bank", "credit", "loan", "mortgage", "investment", "capital"],
-      "telecom": ["phone", "wireless", "mobile", "internet", "cable", "verizon", "att", "tmobile", "comcast"],
-      "travel": ["hotel", "airline", "flight", "airbnb", "booking", "expedia", "marriott", "hilton"],
-      "home": ["home depot", "lowes", "hardware", "furniture", "ikea", "repair", "maintenance"],
+      "restaurants & dining": [
+        "restaurant",
+        "cafe",
+        "coffee",
+        "pizza",
+        "burger",
+        "food",
+        "diner",
+        "grill",
+        "kitchen",
+        "bistro",
+      ],
+      restaurants: [
+        "restaurant",
+        "cafe",
+        "coffee",
+        "pizza",
+        "burger",
+        "food",
+        "diner",
+        "grill",
+        "kitchen",
+        "bistro",
+      ],
+      dining: [
+        "restaurant",
+        "cafe",
+        "coffee",
+        "pizza",
+        "burger",
+        "food",
+        "diner",
+        "grill",
+        "kitchen",
+        "bistro",
+      ],
+      groceries: [
+        "grocery",
+        "market",
+        "foods",
+        "supermarket",
+        "trader joe",
+        "whole foods",
+        "safeway",
+        "kroger",
+      ],
+      utilities: ["electric", "water", "gas", "power", "utility", "energy", "pge", "waste"],
+      subscriptions: [
+        "subscription",
+        "netflix",
+        "spotify",
+        "prime",
+        "hulu",
+        "disney",
+        "youtube",
+        "premium",
+      ],
+      healthcare: [
+        "health",
+        "medical",
+        "doctor",
+        "hospital",
+        "pharmacy",
+        "dental",
+        "cvs",
+        "walgreens",
+        "clinic",
+      ],
+      transportation: [
+        "uber",
+        "lyft",
+        "gas",
+        "fuel",
+        "parking",
+        "transit",
+        "metro",
+        "taxi",
+        "shell",
+        "chevron",
+      ],
+      entertainment: [
+        "movie",
+        "theater",
+        "cinema",
+        "game",
+        "entertainment",
+        "amc",
+        "regal",
+        "steam",
+      ],
+      shopping: ["shop", "store", "retail", "amazon", "target", "walmart", "mall", "boutique"],
+      insurance: ["insurance", "allstate", "geico", "progressive", "state farm"],
+      financial: ["bank", "credit", "loan", "mortgage", "investment", "capital"],
+      telecom: [
+        "phone",
+        "wireless",
+        "mobile",
+        "internet",
+        "cable",
+        "verizon",
+        "att",
+        "tmobile",
+        "comcast",
+      ],
+      travel: ["hotel", "airline", "flight", "airbnb", "booking", "expedia", "marriott", "hilton"],
+      home: ["home depot", "lowes", "hardware", "furniture", "ikea", "repair", "maintenance"],
       "personal care": ["salon", "spa", "barber", "beauty", "gym", "fitness", "massage"],
-      "education": ["school", "university", "college", "tuition", "learning", "course", "education"],
-      "pets": ["pet", "vet", "veterinary", "petco", "petsmart", "animal"],
-      "charity": ["charity", "donation", "nonprofit", "foundation", "church", "temple"],
-      "government": ["dmv", "tax", "irs", "license", "permit", "city of", "county of"],
-      "business": ["office", "supply", "business", "service", "corp", "inc", "llc"],
+      education: ["school", "university", "college", "tuition", "learning", "course", "education"],
+      pets: ["pet", "vet", "veterinary", "petco", "petsmart", "animal"],
+      charity: ["charity", "donation", "nonprofit", "foundation", "church", "temple"],
+      government: ["dmv", "tax", "irs", "license", "permit", "city of", "county of"],
+      business: ["office", "supply", "business", "service", "corp", "inc", "llc"],
     };
 
     // Check if category has keyword mappings
@@ -366,33 +448,30 @@ export class PayeeCategoryRecommendationService {
     }
 
     const topTransactionCategory = categoryDistribution[0]!;
-    const totalTransactions = categoryDistribution.reduce(
-      (sum, cat) => sum + cat.count,
-      0
-    );
+    const totalTransactions = categoryDistribution.reduce((sum, cat) => sum + cat.count, 0);
     const percentage = (topTransactionCategory.count / totalTransactions) * 100;
 
     // Map transaction categories to payee categories
     const categoryMapping: Record<string, string[]> = {
-      "restaurants": ["food", "dining", "restaurants", "groceries"],
-      "groceries": ["food", "groceries", "household"],
-      "utilities": ["utilities", "bills", "electricity", "water", "gas"],
-      "subscriptions": ["entertainment", "subscriptions", "streaming", "software"],
-      "healthcare": ["health", "medical", "healthcare", "pharmacy", "dental"],
-      "transportation": ["transportation", "auto", "gas", "fuel", "parking"],
-      "entertainment": ["entertainment", "fun", "recreation", "hobbies"],
-      "shopping": ["shopping", "clothing", "retail", "personal"],
-      "insurance": ["insurance", "protection"],
-      "financial": ["financial", "fees", "interest", "investment"],
-      "telecom": ["phone", "internet", "cable", "communication"],
-      "travel": ["travel", "vacation", "lodging", "hotels"],
-      "home": ["home", "housing", "maintenance", "repairs", "garden"],
+      restaurants: ["food", "dining", "restaurants", "groceries"],
+      groceries: ["food", "groceries", "household"],
+      utilities: ["utilities", "bills", "electricity", "water", "gas"],
+      subscriptions: ["entertainment", "subscriptions", "streaming", "software"],
+      healthcare: ["health", "medical", "healthcare", "pharmacy", "dental"],
+      transportation: ["transportation", "auto", "gas", "fuel", "parking"],
+      entertainment: ["entertainment", "fun", "recreation", "hobbies"],
+      shopping: ["shopping", "clothing", "retail", "personal"],
+      insurance: ["insurance", "protection"],
+      financial: ["financial", "fees", "interest", "investment"],
+      telecom: ["phone", "internet", "cable", "communication"],
+      travel: ["travel", "vacation", "lodging", "hotels"],
+      home: ["home", "housing", "maintenance", "repairs", "garden"],
       "personal care": ["personal", "beauty", "grooming", "fitness", "wellness"],
-      "education": ["education", "learning", "tuition", "books"],
-      "pets": ["pets", "pet care", "vet"],
-      "charity": ["charity", "donations", "giving"],
-      "government": ["taxes", "fees", "government"],
-      "business": ["business", "office", "professional"],
+      education: ["education", "learning", "tuition", "books"],
+      pets: ["pets", "pet care", "vet"],
+      charity: ["charity", "donations", "giving"],
+      government: ["taxes", "fees", "government"],
+      business: ["business", "office", "professional"],
     };
 
     const payeeCategoryName = category.name.toLowerCase();
@@ -400,9 +479,7 @@ export class PayeeCategoryRecommendationService {
 
     // Check if transaction category maps to this payee category
     const mappedCategories = categoryMapping[payeeCategoryName] || [];
-    const isMatch = mappedCategories.some((mapped) =>
-      transactionCategoryName.includes(mapped)
-    );
+    const isMatch = mappedCategories.some((mapped) => transactionCategoryName.includes(mapped));
 
     if (isMatch) {
       const score = percentage >= 50 ? 30 : percentage >= 30 ? 20 : 10;
@@ -446,14 +523,14 @@ export class PayeeCategoryRecommendationService {
   private scoreMerchantCode(mcc: string, categoryName: string): number {
     // Common MCC ranges
     const mccMapping: Record<string, string[]> = {
-      "restaurants": ["5811", "5812", "5813", "5814"],
-      "groceries": ["5411", "5422", "5451"],
-      "utilities": ["4900", "4814"],
-      "gas": ["5541", "5542"],
-      "hotels": ["3501", "3502", "7011"],
-      "airlines": ["3000", "3001", "3002"],
-      "healthcare": ["8011", "8021", "8031", "8041", "8042", "5912", "5976"],
-      "insurance": ["6300"],
+      restaurants: ["5811", "5812", "5813", "5814"],
+      groceries: ["5411", "5422", "5451"],
+      utilities: ["4900", "4814"],
+      gas: ["5541", "5542"],
+      hotels: ["3501", "3502", "7011"],
+      airlines: ["3000", "3001", "3002"],
+      healthcare: ["8011", "8021", "8031", "8041", "8042", "5912", "5976"],
+      insurance: ["6300"],
     };
 
     const categoryLower = categoryName.toLowerCase();
@@ -517,9 +594,7 @@ export class PayeeCategoryRecommendationService {
 
     // Check payee type similarity
     if (payee.payeeType) {
-      const sameTypeCount = similarPayees.filter(
-        (s) => s.payeeType === payee.payeeType
-      ).length;
+      const sameTypeCount = similarPayees.filter((s) => s.payeeType === payee.payeeType).length;
       if (sameTypeCount > 0) {
         similarityScore += 10;
         factors.push(`Same payee type as others in category`);
@@ -552,7 +627,10 @@ export class PayeeCategoryRecommendationService {
     }
 
     const main = factors.slice(0, 2).join(". ");
-    const additional = factors.length > 2 ? ` Plus ${factors.length - 2} other factor${factors.length > 3 ? "s" : ""}.` : "";
+    const additional =
+      factors.length > 2
+        ? ` Plus ${factors.length - 2} other factor${factors.length > 3 ? "s" : ""}.`
+        : "";
 
     return main + additional;
   }

@@ -28,11 +28,11 @@ let error: string = $state('');
 // Get accounts for selection (excluding the source account)
 const accountsState = $derived(AccountsState.get());
 const accounts = $derived(accountsState.sorted);
-const targetAccounts = $derived(accounts.filter(a => a.id !== fromAccountId));
+const targetAccounts = $derived(accounts.filter((a) => a.id !== fromAccountId));
 
 // Convert string to number for finding selected account
 const toAccountId = $derived(toAccountIdString ? parseInt(toAccountIdString, 10) : 0);
-const selectedAccount = $derived(targetAccounts.find(a => a.id === toAccountId));
+const selectedAccount = $derived(targetAccounts.find((a) => a.id === toAccountId));
 
 // Get mutation
 const transferMutation = createTransfer.options();
@@ -63,9 +63,7 @@ async function handleSubmit() {
       date: toISOString(dateValue),
     };
 
-    const transferData = notes.trim()
-      ? { ...baseData, notes: notes.trim() }
-      : baseData;
+    const transferData = notes.trim() ? {...baseData, notes: notes.trim()} : baseData;
 
     await transferMutation.mutateAsync(transferData);
 
@@ -79,7 +77,7 @@ async function handleSubmit() {
 </script>
 
 <div class="space-y-4">
-  <div class="flex items-center gap-2 pb-2 border-b">
+  <div class="flex items-center gap-2 border-b pb-2">
     <ArrowRightLeft class="h-5 w-5 text-blue-600"></ArrowRightLeft>
     <h3 class="text-lg font-semibold">Transfer Money</h3>
   </div>
@@ -90,7 +88,12 @@ async function handleSubmit() {
     </div>
   {/if}
 
-  <form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">
+  <form
+    onsubmit={(e) => {
+      e.preventDefault();
+      handleSubmit();
+    }}
+    class="space-y-4">
     <!-- Date -->
     <div class="space-y-2">
       <label for="date" class="text-sm font-medium">Date</label>
@@ -106,10 +109,7 @@ async function handleSubmit() {
     <!-- To Account -->
     <div class="space-y-2">
       <label for="toAccount" class="text-sm font-medium">To Account</label>
-      <Select.Root
-        type="single"
-        bind:value={toAccountIdString}
-      >
+      <Select.Root type="single" bind:value={toAccountIdString}>
         <Select.Trigger class="w-full">
           {selectedAccount?.name ?? 'Select destination account'}
         </Select.Trigger>
@@ -118,7 +118,7 @@ async function handleSubmit() {
             <Select.Item value={account.id.toString()}>
               <div class="flex items-center gap-2">
                 <span>{account.name}</span>
-                <span class="text-xs text-muted-foreground capitalize">
+                <span class="text-muted-foreground text-xs capitalize">
                   ({account.accountType?.replace('_', ' ')})
                 </span>
               </div>
@@ -136,18 +136,11 @@ async function handleSubmit() {
 
     <!-- Actions -->
     <div class="flex items-center gap-2 pt-2">
-      <Button
-        type="submit"
-        disabled={isSubmitting || amount <= 0 || !toAccountId}
-        class="flex-1">
+      <Button type="submit" disabled={isSubmitting || amount <= 0 || !toAccountId} class="flex-1">
         {isSubmitting ? 'Creating Transfer...' : 'Create Transfer'}
       </Button>
       {#if onCancel}
-        <Button
-          type="button"
-          variant="outline"
-          onclick={onCancel}
-          disabled={isSubmitting}>
+        <Button type="button" variant="outline" onclick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
       {/if}

@@ -35,7 +35,7 @@ import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 let {
   value = null,
   onValueChange,
-  placeholder = "Select payee...",
+  placeholder = 'Select payee...',
   showDetails = true,
   showMLSuggestions = true,
   showRecentActivity = true,
@@ -79,9 +79,7 @@ const allPayees = $derived(payeesState.payees);
 const payeeArray = $derived(Array.from(allPayees.values()));
 
 // Selected payee
-const selectedPayee = $derived(
-  value ? payeeArray.find(p => p.id === value) : null
-);
+const selectedPayee = $derived(value ? payeeArray.find((p) => p.id === value) : null);
 
 // Search and filter payees
 const filteredPayees = $derived(() => {
@@ -89,10 +87,11 @@ const filteredPayees = $derived(() => {
 
   const query = searchValue.toLowerCase();
   return payeeArray
-    .filter(payee =>
-      payee.name?.toLowerCase().includes(query) ||
-      payee.notes?.toLowerCase().includes(query) ||
-      (payee.payeeType && payee.payeeType.toLowerCase().includes(query))
+    .filter(
+      (payee) =>
+        payee.name?.toLowerCase().includes(query) ||
+        payee.notes?.toLowerCase().includes(query) ||
+        (payee.payeeType && payee.payeeType.toLowerCase().includes(query))
     )
     .slice(0, 50); // Limit results for performance
 });
@@ -106,7 +105,7 @@ async function performAdvancedSearch(query: string) {
     const results = await trpc().payeeRoutes.searchAdvanced.query({
       query,
       isActive: true,
-      payeeType: undefined
+      payeeType: undefined,
     });
 
     searchResults = results as Payee[];
@@ -124,12 +123,12 @@ async function loadMLSuggestions() {
   try {
     // Get intelligent payee suggestions based on transaction context
     const suggestions = await trpc().payeeRoutes.bulkUnifiedRecommendations.query({
-      payeeIds: payeeArray.slice(0, 10).map(p => p.id), // Top 10 payees
+      payeeIds: payeeArray.slice(0, 10).map((p) => p.id), // Top 10 payees
       options: {
         priorityFilter: 'high',
         confidenceThreshold: 0.6,
-        maxResults: 5
-      }
+        maxResults: 5,
+      },
     });
 
     mlSuggestions = suggestions;
@@ -182,7 +181,7 @@ async function loadPayeeDetails(payeeId: number) {
     const [intelligence, suggestions, stats] = await Promise.all([
       trpc().payeeRoutes.intelligence.query({id: payeeId}),
       trpc().payeeRoutes.suggestions.query({id: payeeId}),
-      trpc().payeeRoutes.stats.query({id: payeeId})
+      trpc().payeeRoutes.stats.query({id: payeeId}),
     ]);
 
     payeeDetails = {intelligence, suggestions, stats};
@@ -224,26 +223,40 @@ function handlePayeeCreated(newPayee: any) {
 // Get payee icon based on type
 function getPayeeTypeIcon(payeeType?: string | null) {
   switch (payeeType) {
-    case 'merchant': return Building;
-    case 'utility': return Building;
-    case 'employer': return Building;
-    case 'financial_institution': return CreditCard;
-    case 'government': return Building;
-    case 'individual': return User;
-    default: return User;
+    case 'merchant':
+      return Building;
+    case 'utility':
+      return Building;
+    case 'employer':
+      return Building;
+    case 'financial_institution':
+      return CreditCard;
+    case 'government':
+      return Building;
+    case 'individual':
+      return User;
+    default:
+      return User;
   }
 }
 
 // Get payee type color
 function getPayeeTypeColor(payeeType?: string | null) {
   switch (payeeType) {
-    case 'merchant': return 'text-blue-500';
-    case 'utility': return 'text-green-500';
-    case 'employer': return 'text-purple-500';
-    case 'financial_institution': return 'text-orange-500';
-    case 'government': return 'text-red-500';
-    case 'individual': return 'text-gray-500';
-    default: return 'text-gray-500';
+    case 'merchant':
+      return 'text-blue-500';
+    case 'utility':
+      return 'text-green-500';
+    case 'employer':
+      return 'text-purple-500';
+    case 'financial_institution':
+      return 'text-orange-500';
+    case 'government':
+      return 'text-red-500';
+    case 'individual':
+      return 'text-gray-500';
+    default:
+      return 'text-gray-500';
   }
 }
 
@@ -263,7 +276,7 @@ $effect(() => {
     loadRecentPayees();
 
     // Load stats for visible payees
-    const visiblePayeeIds = filteredPayees().map(p => p.id);
+    const visiblePayeeIds = filteredPayees().map((p) => p.id);
     if (visiblePayeeIds.length > 0) {
       loadPayeeStats(visiblePayeeIds);
     }
@@ -286,15 +299,14 @@ $effect(() => {
         role="combobox"
         aria-expanded={open}
         class="w-full justify-between"
-        {disabled}
-      >
+        {disabled}>
         {#if selectedPayee}
-          <div class="flex items-center gap-2 min-w-0">
+          <div class="flex min-w-0 items-center gap-2">
             {#if selectedPayee.payeeType}
               {@const Icon = getPayeeTypeIcon(selectedPayee.payeeType)}
               <Icon class="h-4 w-4 {getPayeeTypeColor(selectedPayee.payeeType)} flex-shrink-0" />
             {:else}
-              <User class="h-4 w-4 text-gray-500 flex-shrink-0" />
+              <User class="h-4 w-4 flex-shrink-0 text-gray-500" />
             {/if}
             <span class="truncate">{selectedPayee.name}</span>
             {#if selectedPayee.payeeType}
@@ -315,8 +327,7 @@ $effect(() => {
           <Command.Input
             placeholder="Search payees..."
             bind:value={searchValue}
-            class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-          />
+            class="placeholder:text-muted-foreground flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50" />
           {#if isSearching}
             <LoaderCircle class="h-4 w-4 animate-spin" />
           {/if}
@@ -325,7 +336,7 @@ $effect(() => {
         <Command.List class="max-h-[400px] overflow-auto">
           <Command.Empty>
             <div class="py-6 text-center text-sm">
-              <User class="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+              <User class="text-muted-foreground mx-auto mb-2 h-8 w-8" />
               <p>No payees found.</p>
               {#if allowCreate}
                 <Button variant="outline" size="sm" class="mt-2" onclick={handleCreatePayee}>
@@ -340,20 +351,19 @@ $effect(() => {
           {#if mlSuggestions.length > 0 && !searchValue}
             <Command.Group heading="🧠 AI Suggestions">
               {#each mlSuggestions as suggestion}
-                {@const payee = payeeArray.find(p => p.id === suggestion.payeeId)}
+                {@const payee = payeeArray.find((p) => p.id === suggestion.payeeId)}
                 {#if payee}
                   {@const Icon = getPayeeTypeIcon(payee.payeeType)}
                   <Command.Item
                     value={payee.id.toString()}
                     onSelect={() => handlePayeeSelect(payee.id)}
-                    class="cursor-pointer"
-                  >
-                    <div class="flex items-center w-full gap-3">
+                    class="cursor-pointer">
+                    <div class="flex w-full items-center gap-3">
                       <Icon class="h-4 w-4 {getPayeeTypeColor(payee.payeeType)}" />
 
-                      <div class="flex-1 min-w-0">
+                      <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2">
-                          <span class="font-medium truncate">{payee.name}</span>
+                          <span class="truncate font-medium">{payee.name}</span>
                           <Sparkles class="h-3 w-3 text-blue-500" />
                           {#if suggestion.confidence}
                             <Badge variant="secondary" class="text-xs">
@@ -362,7 +372,9 @@ $effect(() => {
                           {/if}
                         </div>
                         {#if suggestion.reasoning}
-                          <p class="text-xs text-muted-foreground truncate">{suggestion.reasoning}</p>
+                          <p class="text-muted-foreground truncate text-xs">
+                            {suggestion.reasoning}
+                          </p>
                         {/if}
                       </div>
 
@@ -385,19 +397,19 @@ $effect(() => {
                 <Command.Item
                   value={payee.id.toString()}
                   onSelect={() => handlePayeeSelect(payee.id)}
-                  class="cursor-pointer"
-                >
-                  <div class="flex items-center w-full gap-3">
+                  class="cursor-pointer">
+                  <div class="flex w-full items-center gap-3">
                     <Icon class="h-4 w-4 {getPayeeTypeColor(payee.payeeType)}" />
 
-                    <div class="flex-1 min-w-0">
+                    <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
-                        <span class="font-medium truncate">{payee.name}</span>
+                        <span class="truncate font-medium">{payee.name}</span>
                         <Clock class="h-3 w-3 text-orange-500" />
                       </div>
-                      <div class="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div class="text-muted-foreground flex items-center gap-4 text-xs">
                         {#if payeeStats[payee.id]}
-                          <span>{currencyFormatter.format(payeeStats[payee.id].avgAmount)} avg</span>
+                          <span
+                            >{currencyFormatter.format(payeeStats[payee.id].avgAmount)} avg</span>
                           <span>{payeeStats[payee.id].transactionCount} transactions</span>
                         {/if}
                         {#if payee.lastTransactionDate}
@@ -427,14 +439,13 @@ $effect(() => {
               <Command.Item
                 value={payee.id.toString()}
                 onSelect={() => handlePayeeSelect(payee.id)}
-                class="cursor-pointer"
-              >
-                <div class="flex items-center w-full gap-3">
+                class="cursor-pointer">
+                <div class="flex w-full items-center gap-3">
                   <Icon class="h-4 w-4 {getPayeeTypeColor(payee.payeeType)}" />
 
-                  <div class="flex-1 min-w-0">
+                  <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2">
-                      <span class="font-medium truncate">{payee.name}</span>
+                      <span class="truncate font-medium">{payee.name}</span>
                       {#if payee.payeeType}
                         <Badge variant="outline" class="text-xs">
                           {payee.payeeType.replace('_', ' ')}
@@ -446,7 +457,7 @@ $effect(() => {
                     </div>
 
                     <!-- Payee details row -->
-                    <div class="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div class="text-muted-foreground flex items-center gap-4 text-xs">
                       {#if payeeStats[payee.id]}
                         <span class="flex items-center gap-1">
                           <DollarSign class="h-3 w-3" />
@@ -475,7 +486,7 @@ $effect(() => {
                     </div>
 
                     {#if payee.notes}
-                      <p class="text-xs text-muted-foreground truncate mt-1">{payee.notes}</p>
+                      <p class="text-muted-foreground mt-1 truncate text-xs">{payee.notes}</p>
                     {/if}
                   </div>
 
@@ -492,8 +503,8 @@ $effect(() => {
             <Separator />
             <Command.Group>
               <Command.Item onSelect={handleCreatePayee} class="cursor-pointer">
-                <div class="flex items-center gap-2 w-full">
-                  <Plus class="h-4 w-4 text-primary" />
+                <div class="flex w-full items-center gap-2">
+                  <Plus class="text-primary h-4 w-4" />
                   <span>Create "<span class="font-medium">{searchValue}</span>"</span>
                 </div>
               </Command.Item>
@@ -507,17 +518,19 @@ $effect(() => {
   <!-- Selected Payee Details -->
   {#if selectedPayee && showDetails && payeeDetails}
     {@const Icon = getPayeeTypeIcon(selectedPayee.payeeType)}
-    <div class="mt-3 p-3 border rounded-lg bg-muted/50">
-      <div class="flex items-start justify-between mb-3">
+    <div class="bg-muted/50 mt-3 rounded-lg border p-3">
+      <div class="mb-3 flex items-start justify-between">
         <div class="flex items-center gap-2">
           <Icon class="h-5 w-5 {getPayeeTypeColor(selectedPayee.payeeType)}" />
           <div>
             <h4 class="font-medium">{selectedPayee.name}</h4>
             {#if selectedPayee.payeeType}
-              <p class="text-sm text-muted-foreground">
-                {selectedPayee.payeeType.replace('_', ' ').split(' ').map((w: string) =>
-                  w.charAt(0).toUpperCase() + w.slice(1)
-                ).join(' ')}
+              <p class="text-muted-foreground text-sm">
+                {selectedPayee.payeeType
+                  .replace('_', ' ')
+                  .split(' ')
+                  .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(' ')}
               </p>
             {/if}
           </div>
@@ -530,39 +543,43 @@ $effect(() => {
 
       <!-- Stats Row -->
       {#if payeeDetails.stats}
-        <div class="grid grid-cols-3 gap-4 mb-3">
+        <div class="mb-3 grid grid-cols-3 gap-4">
           <div class="text-center">
-            <div class="text-sm font-medium">{currencyFormatter.format(payeeDetails.stats.totalSpent || 0)}</div>
-            <div class="text-xs text-muted-foreground">Total Spent</div>
+            <div class="text-sm font-medium">
+              {currencyFormatter.format(payeeDetails.stats.totalSpent || 0)}
+            </div>
+            <div class="text-muted-foreground text-xs">Total Spent</div>
           </div>
           <div class="text-center">
             <div class="text-sm font-medium">{payeeDetails.stats.transactionCount || 0}</div>
-            <div class="text-xs text-muted-foreground">Transactions</div>
+            <div class="text-muted-foreground text-xs">Transactions</div>
           </div>
           <div class="text-center">
-            <div class="text-sm font-medium">{currencyFormatter.format(payeeDetails.stats.avgAmount || 0)}</div>
-            <div class="text-xs text-muted-foreground">Avg Amount</div>
+            <div class="text-sm font-medium">
+              {currencyFormatter.format(payeeDetails.stats.avgAmount || 0)}
+            </div>
+            <div class="text-muted-foreground text-xs">Avg Amount</div>
           </div>
         </div>
       {/if}
 
       <!-- Contact Info -->
-      <div class="flex flex-wrap gap-2 mb-3">
+      <div class="mb-3 flex flex-wrap gap-2">
         {#if selectedPayee.website}
           <Badge variant="outline" class="text-xs">
-            <Globe class="h-3 w-3 mr-1" />
+            <Globe class="mr-1 h-3 w-3" />
             Website
           </Badge>
         {/if}
         {#if selectedPayee.phone}
           <Badge variant="outline" class="text-xs">
-            <Phone class="h-3 w-3 mr-1" />
+            <Phone class="mr-1 h-3 w-3" />
             Phone
           </Badge>
         {/if}
         {#if selectedPayee.email}
           <Badge variant="outline" class="text-xs">
-            <Mail class="h-3 w-3 mr-1" />
+            <Mail class="mr-1 h-3 w-3" />
             Email
           </Badge>
         {/if}
@@ -581,7 +598,8 @@ $effect(() => {
             <div class="flex items-center gap-2 text-xs">
               <Brain class="h-3 w-3 text-blue-500" />
               <span class="text-muted-foreground">Suggested category:</span>
-              <Badge variant="secondary">{payeeDetails.intelligence.categoryRecommendation.name}</Badge>
+              <Badge variant="secondary"
+                >{payeeDetails.intelligence.categoryRecommendation.name}</Badge>
               <span class="text-muted-foreground">
                 ({Math.round(payeeDetails.intelligence.categoryRecommendation.confidence * 100)}%)
               </span>
@@ -590,7 +608,7 @@ $effect(() => {
 
           {#if payeeDetails.suggestions && payeeDetails.suggestions.length > 0}
             <div class="flex items-start gap-2 text-xs">
-              <Sparkles class="h-3 w-3 text-orange-500 mt-0.5" />
+              <Sparkles class="mt-0.5 h-3 w-3 text-orange-500" />
               <div class="flex-1">
                 <span class="text-muted-foreground">Quick tip:</span>
                 <span class="ml-1">{payeeDetails.suggestions[0].description}</span>
@@ -602,7 +620,7 @@ $effect(() => {
 
       {#if selectedPayee.notes}
         <Separator class="my-2" />
-        <p class="text-xs text-muted-foreground">{selectedPayee.notes}</p>
+        <p class="text-muted-foreground text-xs">{selectedPayee.notes}</p>
       {/if}
     </div>
   {/if}
@@ -610,7 +628,7 @@ $effect(() => {
 
 <!-- Create Payee Dialog -->
 <Dialog.Root bind:open={createDialogOpen}>
-  <Dialog.Content class="max-w-4xl max-h-[80vh] overflow-auto">
+  <Dialog.Content class="max-h-[80vh] max-w-4xl overflow-auto">
     <Dialog.Header>
       <Dialog.Title>Create New Payee</Dialog.Title>
       <Dialog.Description>
@@ -618,9 +636,6 @@ $effect(() => {
       </Dialog.Description>
     </Dialog.Header>
 
-    <ManagePayeeForm
-      onSave={handlePayeeCreated}
-      formId="create-payee-form"
-    />
+    <ManagePayeeForm onSave={handlePayeeCreated} formId="create-payee-form" />
   </Dialog.Content>
 </Dialog.Root>

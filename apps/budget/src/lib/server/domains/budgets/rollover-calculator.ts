@@ -1,4 +1,4 @@
-import { budgetPeriodInstances } from "$lib/schema/budgets";
+import {budgetPeriodInstances} from "$lib/schema/budgets";
 import {
   type EnvelopeAllocation,
   type EnvelopeRolloverHistory,
@@ -6,9 +6,9 @@ import {
   envelopeAllocations,
   envelopeRolloverHistory,
 } from "$lib/schema/budgets/envelope-allocations";
-import { db } from "$lib/server/db";
-import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import {db} from "$lib/server/db";
+import {NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
+import {and, asc, desc, eq, inArray, sql} from "drizzle-orm";
 
 export interface RolloverCalculationResult {
   envelopeId: number;
@@ -121,8 +121,8 @@ export class RolloverCalculator {
         break;
 
       case "limited":
-        const maxMonths = policy.maxRolloverMonths ??
-                         (envelope.metadata as any)?.maxRolloverMonths ?? 3;
+        const maxMonths =
+          policy.maxRolloverMonths ?? (envelope.metadata as any)?.maxRolloverMonths ?? 3;
 
         if (rolloverMonthsUsed >= maxMonths) {
           if (policy.resetOnLimitExceeded) {
@@ -176,9 +176,10 @@ export class RolloverCalculator {
       hasDeficit,
       deficitAmount,
       rolloverMonthsUsed,
-      maxRolloverMonths: envelope.rolloverMode === "limited" ?
-        (policy.maxRolloverMonths ?? (envelope.metadata as any)?.maxRolloverMonths ?? 3) :
-        undefined,
+      maxRolloverMonths:
+        envelope.rolloverMode === "limited"
+          ? (policy.maxRolloverMonths ?? (envelope.metadata as any)?.maxRolloverMonths ?? 3)
+          : undefined,
     };
   }
 
@@ -204,12 +205,7 @@ export class RolloverCalculator {
 
       if (rolloverAmount !== 0) {
         // Create or update envelope for new period
-        await this.ensureEnvelopeForNewPeriod(
-          tx,
-          envelopeId,
-          toPeriodId,
-          rolloverAmount
-        );
+        await this.ensureEnvelopeForNewPeriod(tx, envelopeId, toPeriodId, rolloverAmount);
       }
 
       return rolloverRecord!;
@@ -265,7 +261,7 @@ export class RolloverCalculator {
   ): Promise<EnvelopeRolloverHistory[]> {
     // Get all envelopes for this budget
     const envelopes = await db
-      .select({ id: envelopeAllocations.id })
+      .select({id: envelopeAllocations.id})
       .from(envelopeAllocations)
       .where(eq(envelopeAllocations.budgetId, budgetId));
 
@@ -273,7 +269,7 @@ export class RolloverCalculator {
       return [];
     }
 
-    const envelopeIds = envelopes.map(e => e.id);
+    const envelopeIds = envelopes.map((e) => e.id);
 
     // Get rollover history for all these envelopes
     return await db

@@ -38,10 +38,10 @@ import type {DateRange} from 'bits-ui';
  * Date filter value structure supporting multiple operators
  */
 type DateFilterValue =
-  | { operator: 'in'; values: Set<string> }  // Multiple specific dates
-  | { operator: 'before'; date: string }     // Before a date
-  | { operator: 'after'; date: string }      // After a date
-  | { operator: 'between'; from: string; to: string }; // Between two dates
+  | {operator: 'in'; values: Set<string>} // Multiple specific dates
+  | {operator: 'before'; date: string} // Before a date
+  | {operator: 'after'; date: string} // After a date
+  | {operator: 'between'; from: string; to: string}; // Between two dates
 
 /**
  * Component props interface
@@ -144,13 +144,14 @@ const clearFilter = () => {
   }
 
   // Check if filter has any actual values set
-  const hasValues = currentFilter.operator === 'in'
-    ? currentFilter.values.size > 0
-    : currentFilter.operator === 'between'
-    ? currentFilter.from !== '' || currentFilter.to !== ''
-    : currentFilter.operator === 'before' || currentFilter.operator === 'after'
-    ? (currentFilter as any).date !== ''
-    : false;
+  const hasValues =
+    currentFilter.operator === 'in'
+      ? currentFilter.values.size > 0
+      : currentFilter.operator === 'between'
+        ? currentFilter.from !== '' || currentFilter.to !== ''
+        : currentFilter.operator === 'before' || currentFilter.operator === 'after'
+          ? (currentFilter as any).date !== ''
+          : false;
 
   if (hasValues) {
     // First click: reset to default values
@@ -239,7 +240,10 @@ const toggleDateValue = (dateValue: string) => {
 
 // Single date value for before/after operators
 const singleDateValue = $derived.by(() => {
-  if (!currentFilter || (currentFilter.operator !== 'before' && currentFilter.operator !== 'after')) {
+  if (
+    !currentFilter ||
+    (currentFilter.operator !== 'before' && currentFilter.operator !== 'after')
+  ) {
     return currentDate;
   }
   const dateStr = (currentFilter as any).date;
@@ -255,7 +259,7 @@ const rangeDateValue = $derived.by(() => {
   if (currentFilter.from && currentFilter.to) {
     return {
       start: parseDate(currentFilter.from),
-      end: parseDate(currentFilter.to)
+      end: parseDate(currentFilter.to),
     } as DateRange;
   }
 
@@ -278,11 +282,7 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
   <Popover.Root bind:open={operatorOpen}>
     <Popover.Trigger>
       {#snippet child({props})}
-        <Button
-          {...props}
-          variant="outline"
-          size="sm"
-          class="h-8 rounded-none border-l-0">
+        <Button {...props} variant="outline" size="sm" class="h-8 rounded-none border-l-0">
           {activeOperator?.label}
         </Button>
       {/snippet}
@@ -294,12 +294,12 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
             variant="ghost"
             size="sm"
             class={cn(
-              'w-full justify-start flex-col items-start h-auto py-2',
+              'h-auto w-full flex-col items-start justify-start py-2',
               activeOperator?.value === type.value && 'bg-accent'
             )}
             onclick={() => setOperator(type)}>
             <span class="font-medium">{type.label}</span>
-            <span class="text-xs text-muted-foreground">{type.description}</span>
+            <span class="text-muted-foreground text-xs">{type.description}</span>
           </Button>
         {/each}
       </div>
@@ -313,11 +313,7 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
       <Popover.Root bind:open={datePickerOpen}>
         <Popover.Trigger>
           {#snippet child({props})}
-            <Button
-              {...props}
-              variant="outline"
-              size="sm"
-              class="h-8 rounded-none min-w-32">
+            <Button {...props} variant="outline" size="sm" class="h-8 min-w-32 rounded-none">
               <CalendarIcon class="mr-2 h-4 w-4" />
               {formatFilterValue(currentFilter)}
             </Button>
@@ -331,20 +327,27 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
                   <Command.Item
                     value={dateOption.value}
                     onSelect={() => toggleDateValue(dateOption.value)}>
-                    <div class={cn(
-                      'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                      currentFilter.values.has(dateOption.value)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'opacity-50 [&_svg]:invisible'
-                    )}>
+                    <div
+                      class={cn(
+                        'border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
+                        currentFilter.values.has(dateOption.value)
+                          ? 'bg-primary text-primary-foreground'
+                          : 'opacity-50 [&_svg]:invisible'
+                      )}>
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                     {dateOption.label}
                   </Command.Item>
                 {/each}
-                <Command.Item onSelect={() => (advancedDateDialogOpen = true)} class="justify-center text-center">
+                <Command.Item
+                  onSelect={() => (advancedDateDialogOpen = true)}
+                  class="justify-center text-center">
                   Custom date
                 </Command.Item>
               </Command.Group>
@@ -352,7 +355,6 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
           </Command.Root>
         </Popover.Content>
       </Popover.Root>
-
     {:else if currentFilter.operator === 'before' || currentFilter.operator === 'after'}
       <!-- Single date picker using DateInput component -->
       <DateInput
@@ -368,7 +370,6 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
           }
         }}
         buttonClass="h-8 rounded-none border-l-0 w-auto" />
-
     {:else if currentFilter.operator === 'between'}
       <!-- Range date picker using RangeCalendar -->
       <Popover.Root>
@@ -378,7 +379,7 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
               {...props}
               variant="outline"
               size="sm"
-              class="h-8 rounded-none border-l-0 min-w-48">
+              class="h-8 min-w-48 rounded-none border-l-0">
               <CalendarIcon class="mr-2 h-4 w-4" />
               {formatFilterValue(currentFilter)}
             </Button>
@@ -386,13 +387,13 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
         </Popover.Trigger>
         <Popover.Content class="w-auto p-0" align="start">
           <RangeCalendar
-            {...(rangeDateValue ? { value: rangeDateValue } : {})}
+            {...rangeDateValue ? {value: rangeDateValue} : {}}
             onValueChange={(newRange) => {
               if (newRange?.start && newRange?.end) {
                 column.setFilterValue({
                   operator: 'between',
                   from: newRange.start.toString(),
-                  to: newRange.end.toString()
+                  to: newRange.end.toString(),
                 });
               }
             }}
@@ -412,6 +413,4 @@ const handleAdvancedDateSubmit = (newDate: FacetedFilterOption) => {
   {/if}
 </div>
 
-<AdvancedDateDialog
-  bind:dialogOpen={advancedDateDialogOpen}
-  onSubmit={handleAdvancedDateSubmit} />
+<AdvancedDateDialog bind:dialogOpen={advancedDateDialogOpen} onSubmit={handleAdvancedDateSubmit} />

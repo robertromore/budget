@@ -6,17 +6,17 @@ import {
   type Account,
   type Transaction,
 } from "$lib/schema";
-import { serviceFactory } from "$lib/server/shared/container/service-factory";
-import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
-import { getCurrentTimestamp } from "$lib/utils/dates";
-import { isValidIconName } from "$lib/utils/icon-validation";
-import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
-import { getLocalTimeZone, now } from "@internationalized/date";
+import {serviceFactory} from "$lib/server/shared/container/service-factory";
+import {publicProcedure, rateLimitedProcedure, t} from "$lib/trpc";
+import {getCurrentTimestamp} from "$lib/utils/dates";
+import {isValidIconName} from "$lib/utils/icon-validation";
+import {generateUniqueSlugForDB} from "$lib/utils/slug-utils";
+import {getLocalTimeZone, now} from "@internationalized/date";
 import slugify from "@sindresorhus/slugify";
-import { TRPCError } from "@trpc/server";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import {TRPCError} from "@trpc/server";
+import {and, desc, eq, isNull, sql} from "drizzle-orm";
 import validator from "validator";
-import { z } from "zod";
+import {z} from "zod";
 
 const accountService = serviceFactory.getAccountService();
 
@@ -78,9 +78,11 @@ const accountSaveSchema = z
       .nullable(),
     closed: z.boolean().optional(),
     // Enhanced account fields
-    accountType: z.enum(accountTypeEnum, {
-      message: "Please select a valid account type"
-    }).optional(),
+    accountType: z
+      .enum(accountTypeEnum, {
+        message: "Please select a valid account type",
+      })
+      .optional(),
     institution: z
       .string()
       .transform((val) => val?.trim())
@@ -89,10 +91,7 @@ const accountSaveSchema = z
       .nullable(),
     accountIcon: z
       .string()
-      .refine(
-        (val) => !val || isValidIconName(val),
-        "Invalid icon selection"
-      )
+      .refine((val) => !val || isValidIconName(val), "Invalid icon selection")
       .optional()
       .nullable(),
     accountColor: z
@@ -180,7 +179,11 @@ export const accountRoutes = t.router({
   load: publicProcedure.input(z.object({id: z.coerce.number()})).query(async ({ctx, input}) => {
     const account = await ctx.db.query.accounts.findFirst({
       where: (accounts, {eq, and, isNull}) =>
-        and(eq(accounts.id, input.id), eq(accounts.workspaceId, ctx.workspaceId), isNull(accounts.deletedAt)),
+        and(
+          eq(accounts.id, input.id),
+          eq(accounts.workspaceId, ctx.workspaceId),
+          isNull(accounts.deletedAt)
+        ),
       with: {
         transactions: {
           where: isNull(transactions.deletedAt),
@@ -221,7 +224,11 @@ export const accountRoutes = t.router({
   getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(async ({ctx, input}) => {
     const account = await ctx.db.query.accounts.findFirst({
       where: (accounts, {eq, and, isNull}) =>
-        and(eq(accounts.slug, input.slug), eq(accounts.workspaceId, ctx.workspaceId), isNull(accounts.deletedAt)),
+        and(
+          eq(accounts.slug, input.slug),
+          eq(accounts.workspaceId, ctx.workspaceId),
+          isNull(accounts.deletedAt)
+        ),
       with: {
         transactions: {
           where: isNull(transactions.deletedAt),
@@ -255,7 +262,11 @@ export const accountRoutes = t.router({
       // For updates, get existing account first
       const existingAccount = await ctx.db.query.accounts.findFirst({
         where: (accounts, {eq, and, isNull}) =>
-          and(eq(accounts.id, input.id!), eq(accounts.workspaceId, ctx.workspaceId), isNull(accounts.deletedAt)),
+          and(
+            eq(accounts.id, input.id!),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
       });
 
       if (!existingAccount) {
@@ -272,11 +283,17 @@ export const accountRoutes = t.router({
         updateData.name = input.name;
         // If name is being updated, regenerate slug unless one was provided
         const baseSlug = input.slug || slugify(input.name);
-        updateData.slug = await generateUniqueSlugForDB(ctx.db, "accounts", accounts.slug, baseSlug, {
-          excludeId: input.id!,
-          idColumn: accounts.id,
-          deletedAtColumn: accounts.deletedAt,
-        });
+        updateData.slug = await generateUniqueSlugForDB(
+          ctx.db,
+          "accounts",
+          accounts.slug,
+          baseSlug,
+          {
+            excludeId: input.id!,
+            idColumn: accounts.id,
+            deletedAtColumn: accounts.deletedAt,
+          }
+        );
       }
 
       if (input.notes !== undefined) {
@@ -399,14 +416,33 @@ export const accountRoutes = t.router({
 
     // Use AccountService to create account with initial balance transaction
     try {
-      const createdAccount = await accountService.createAccount({
-        name: input.name,
-        ...(input.notes && { notes: input.notes }),
-        initialBalance: input.initialBalance || 0.0,
-      }, ctx.workspaceId);
+      const createdAccount = await accountService.createAccount(
+        {
+          name: input.name,
+          ...(input.notes && {notes: input.notes}),
+          initialBalance: input.initialBalance || 0.0,
+        },
+        ctx.workspaceId
+      );
 
       // Update the created account with additional fields not handled by the service
-      if (input.accountType || input.institution || input.accountIcon || input.accountColor || input.accountNumberLast4 || input.onBudget !== undefined || input.debtLimit !== undefined || input.minimumPayment !== undefined || input.paymentDueDay !== undefined || input.interestRate !== undefined || input.hsaContributionLimit !== undefined || input.hsaType || input.hsaCurrentTaxYear !== undefined || input.hsaAdministrator || input.hsaHighDeductiblePlan) {
+      if (
+        input.accountType ||
+        input.institution ||
+        input.accountIcon ||
+        input.accountColor ||
+        input.accountNumberLast4 ||
+        input.onBudget !== undefined ||
+        input.debtLimit !== undefined ||
+        input.minimumPayment !== undefined ||
+        input.paymentDueDay !== undefined ||
+        input.interestRate !== undefined ||
+        input.hsaContributionLimit !== undefined ||
+        input.hsaType ||
+        input.hsaCurrentTaxYear !== undefined ||
+        input.hsaAdministrator ||
+        input.hsaHighDeductiblePlan
+      ) {
         const updateData: any = {};
 
         if (input.accountType) updateData.accountType = input.accountType;
@@ -418,7 +454,7 @@ export const accountRoutes = t.router({
         // Set onBudget - HSA accounts default to off-budget unless explicitly specified
         if (input.onBudget !== undefined) {
           updateData.onBudget = input.onBudget;
-        } else if (input.accountType === 'hsa') {
+        } else if (input.accountType === "hsa") {
           updateData.onBudget = false;
         }
 
@@ -429,24 +465,33 @@ export const accountRoutes = t.router({
         if (input.interestRate !== undefined) updateData.interestRate = input.interestRate;
 
         // HSA-specific fields
-        if (input.hsaContributionLimit !== undefined) updateData.hsaContributionLimit = input.hsaContributionLimit;
+        if (input.hsaContributionLimit !== undefined)
+          updateData.hsaContributionLimit = input.hsaContributionLimit;
         if (input.hsaType) updateData.hsaType = input.hsaType;
-        if (input.hsaCurrentTaxYear !== undefined) updateData.hsaCurrentTaxYear = input.hsaCurrentTaxYear;
+        if (input.hsaCurrentTaxYear !== undefined)
+          updateData.hsaCurrentTaxYear = input.hsaCurrentTaxYear;
         if (input.hsaAdministrator) updateData.hsaAdministrator = input.hsaAdministrator;
-        if (input.hsaHighDeductiblePlan) updateData.hsaHighDeductiblePlan = input.hsaHighDeductiblePlan;
+        if (input.hsaHighDeductiblePlan)
+          updateData.hsaHighDeductiblePlan = input.hsaHighDeductiblePlan;
 
         updateData.updatedAt = now(getLocalTimeZone()).toDate().toISOString();
 
         await ctx.db
           .update(accounts)
           .set(updateData)
-          .where(and(eq(accounts.id, createdAccount.id), eq(accounts.workspaceId, ctx.workspaceId)));
+          .where(
+            and(eq(accounts.id, createdAccount.id), eq(accounts.workspaceId, ctx.workspaceId))
+          );
 
         // Re-fetch the account with proper balance calculation after update
         // Use the same logic as the load route to get account with calculated balance
         const accountWithBalance = await ctx.db.query.accounts.findFirst({
           where: (accounts, {eq, and, isNull}) =>
-            and(eq(accounts.id, createdAccount.id), eq(accounts.workspaceId, ctx.workspaceId), isNull(accounts.deletedAt)),
+            and(
+              eq(accounts.id, createdAccount.id),
+              eq(accounts.workspaceId, ctx.workspaceId),
+              isNull(accounts.deletedAt)
+            ),
           with: {
             transactions: {
               where: (transactions, {isNull}) => isNull(transactions.deletedAt),
@@ -486,7 +531,11 @@ export const accountRoutes = t.router({
       // Even if no additional fields to update, we still need to return account with calculated balance
       const accountWithBalance = await ctx.db.query.accounts.findFirst({
         where: (accounts, {eq, and, isNull}) =>
-          and(eq(accounts.id, createdAccount.id), eq(accounts.workspaceId, ctx.workspaceId), isNull(accounts.deletedAt)),
+          and(
+            eq(accounts.id, createdAccount.id),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
         with: {
           transactions: {
             where: (transactions, {isNull}) => isNull(transactions.deletedAt),
@@ -560,7 +609,11 @@ export const accountRoutes = t.router({
     .mutation(async ({ctx, input}) => {
       // Validate account exists and is not deleted
       const account = await ctx.db.query.accounts.findFirst({
-        where: and(eq(accounts.id, input.accountId), eq(accounts.workspaceId, ctx.workspaceId), isNull(accounts.deletedAt)),
+        where: and(
+          eq(accounts.id, input.accountId),
+          eq(accounts.workspaceId, ctx.workspaceId),
+          isNull(accounts.deletedAt)
+        ),
       });
 
       if (!account) {
@@ -597,7 +650,10 @@ export const accountRoutes = t.router({
     )
     .mutation(async ({input, ctx}) => {
       try {
-        const createdAccounts = await accountService.seedDefaultAccounts(input.slugs, ctx.workspaceId);
+        const createdAccounts = await accountService.seedDefaultAccounts(
+          input.slugs,
+          ctx.workspaceId
+        );
         return createdAccounts;
       } catch (error) {
         throw new TRPCError({
@@ -625,7 +681,8 @@ export const accountRoutes = t.router({
     } catch (error) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: error instanceof Error ? error.message : "Failed to get available default accounts",
+        message:
+          error instanceof Error ? error.message : "Failed to get available default accounts",
         cause: error,
       });
     }

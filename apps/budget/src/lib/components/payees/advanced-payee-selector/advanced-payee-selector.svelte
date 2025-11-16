@@ -5,7 +5,13 @@ import * as Popover from '$lib/components/ui/popover';
 import {cn} from '$lib/utils';
 import type {Payee} from '$lib/schema/payees';
 import type {AdvancedPayeeSelectorProps, PayeeGroup, QuickAccessSections} from './types';
-import {groupPayees, getRecentPayees, getFrequentPayees, saveToRecentPayees, debounce} from './utils';
+import {
+  groupPayees,
+  getRecentPayees,
+  getFrequentPayees,
+  saveToRecentPayees,
+  debounce,
+} from './utils';
 import SearchHeader from './search-header.svelte';
 import QuickAccessSection from './quick-access-section.svelte';
 import GroupHeader from './group-header.svelte';
@@ -39,14 +45,16 @@ const payeesQuery = $derived(rpc.payees.listPayees().options());
 const allPayees = $derived(payeesQuery.data ?? []);
 
 // Selected payee
-const selectedPayee = $derived(allPayees.find(p => p.id === value));
+const selectedPayee = $derived(allPayees.find((p) => p.id === value));
 
 // Search with Fuse.js
-const fuse = $derived(new Fuse(allPayees, {
-  keys: ['name', 'notes', 'payeeType'],
-  threshold: 0.3,
-  includeScore: true
-}));
+const fuse = $derived(
+  new Fuse(allPayees, {
+    keys: ['name', 'notes', 'payeeType'],
+    threshold: 0.3,
+    includeScore: true,
+  })
+);
 
 // Filter payees based on search
 const filteredPayees = $derived.by(() => {
@@ -55,7 +63,7 @@ const filteredPayees = $derived.by(() => {
   }
 
   const results = fuse.search(searchQuery);
-  return results.map(r => r.item);
+  return results.map((r) => r.item);
 });
 
 // Quick access sections
@@ -71,18 +79,20 @@ const quickAccessSections = $derived.by((): QuickAccessSections => {
 const groupedPayees = $derived.by((): PayeeGroup[] => {
   // Don't group when searching
   if (searchQuery.trim()) {
-    return [{
-      label: 'Search Results',
-      payees: filteredPayees,
-      count: filteredPayees.length,
-      isExpanded: true
-    }];
+    return [
+      {
+        label: 'Search Results',
+        payees: filteredPayees,
+        count: filteredPayees.length,
+        isExpanded: true,
+      },
+    ];
   }
 
   const groups = groupPayees(filteredPayees, groupStrategy);
 
   // Initialize expanded state for new groups
-  groups.forEach(group => {
+  groups.forEach((group) => {
     if (!expandedGroups.has(group.label)) {
       expandedGroups.add(group.label);
     }
@@ -147,38 +157,23 @@ const contentWidth = $derived.by(() => {
           'justify-start overflow-hidden text-left font-normal text-ellipsis whitespace-nowrap',
           !selectedPayee && 'text-muted-foreground',
           buttonClass || 'w-full'
-        )}
-      >
+        )}>
         <HandCoins class="-mt-1 mr-2 inline-block h-4 w-4" />
         {triggerText}
       </Button>
     {/snippet}
   </Popover.Trigger>
 
-  <Popover.Content
-    class="p-0 overflow-hidden"
-    align="start"
-    style="width: {contentWidth}"
-  >
+  <Popover.Content class="overflow-hidden p-0" align="start" style="width: {contentWidth}">
     <Command.Root shouldFilter={false}>
-      <SearchHeader
-        bind:searchQuery
-        {placeholder}
-        {allowCreate}
-        onCreateNew={handleCreateNew}
-      />
+      <SearchHeader bind:searchQuery {placeholder} {allowCreate} onCreateNew={handleCreateNew} />
 
       <Command.List class="max-h-[400px] overflow-auto">
         <Command.Empty>
-          <div class="py-6 text-center text-sm text-muted-foreground">
+          <div class="text-muted-foreground py-6 text-center text-sm">
             <p>No payees found.</p>
             {#if allowCreate && searchQuery.trim()}
-              <Button
-                variant="outline"
-                size="sm"
-                class="mt-2"
-                onclick={handleCreateNew}
-              >
+              <Button variant="outline" size="sm" class="mt-2" onclick={handleCreateNew}>
                 Create "{searchQuery}"
               </Button>
             {/if}
@@ -192,8 +187,7 @@ const contentWidth = $derived.by(() => {
               sections={quickAccessSections}
               selectedPayeeId={value}
               {displayMode}
-              onSelect={handleSelect}
-            />
+              onSelect={handleSelect} />
           {/if}
 
           <!-- Grouped Payees -->
@@ -203,8 +197,7 @@ const contentWidth = $derived.by(() => {
                 label={group.label}
                 count={group.count}
                 isExpanded={isGroupExpanded(group.label)}
-                onToggle={() => toggleGroup(group.label)}
-              />
+                onToggle={() => toggleGroup(group.label)} />
             {/if}
 
             {#if isGroupExpanded(group.label)}
@@ -214,8 +207,7 @@ const contentWidth = $derived.by(() => {
                     {payee}
                     {displayMode}
                     isSelected={payee.id === value}
-                    onSelect={() => handleSelect(payee.id)}
-                  />
+                    onSelect={() => handleSelect(payee.id)} />
                 {/each}
               </div>
             {/if}

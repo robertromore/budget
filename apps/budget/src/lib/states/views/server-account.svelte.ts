@@ -1,7 +1,7 @@
-import type { Category, Payee, Transaction } from "$lib/schema";
-import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
-import { getContext, setContext } from "svelte";
-import { trpc } from "$lib/trpc/client";
+import type {Category, Payee, Transaction} from "$lib/schema";
+import {currencyFormatter, transactionFormatter} from "$lib/utils/formatters";
+import {getContext, setContext} from "svelte";
+import {trpc} from "$lib/trpc/client";
 
 const KEY = Symbol("server_account");
 
@@ -211,7 +211,7 @@ export class ServerAccountState {
 
     // Debounce search by 300ms
     this.searchTimeout = setTimeout(async () => {
-      this.filters.searchQuery = query || '';
+      this.filters.searchQuery = query || "";
       await this.loadTransactions(accountId, true); // Reset to first page
       this.isSearching = false;
     }, 300);
@@ -221,8 +221,8 @@ export class ServerAccountState {
    * Apply date filters
    */
   async setDateFilter(accountId: number, dateFrom?: string, dateTo?: string) {
-    this.filters.dateFrom = dateFrom || '';
-    this.filters.dateTo = dateTo || '';
+    this.filters.dateFrom = dateFrom || "";
+    this.filters.dateTo = dateTo || "";
     await this.loadTransactions(accountId, true); // Reset to first page
   }
 
@@ -326,7 +326,9 @@ export class ServerAccountState {
       };
 
       // Prefetch silently in background
-      trpc().serverAccountsRoutes.loadTransactions.query(transactionParams).catch(() => {});
+      trpc()
+        .serverAccountsRoutes.loadTransactions.query(transactionParams)
+        .catch(() => {});
       console.log("🚀 Prefetching next page:", nextPage + 1);
     } catch (error) {
       // Silently fail prefetching
@@ -354,7 +356,9 @@ export class ServerAccountState {
       };
 
       // Prefetch silently in background
-      trpc().serverAccountsRoutes.loadTransactions.query(transactionParams).catch(() => {});
+      trpc()
+        .serverAccountsRoutes.loadTransactions.query(transactionParams)
+        .catch(() => {});
       console.log("🚀 Prefetching previous page:", previousPage + 1);
     } catch (error) {
       // Silently fail prefetching

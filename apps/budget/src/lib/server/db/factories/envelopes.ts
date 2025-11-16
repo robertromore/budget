@@ -60,8 +60,8 @@ export const envelopeFactory = async (
   options: EnvelopeFactoryOptions = {}
 ): Promise<EnvelopeAllocation> => {
   // Generate realistic amounts
-  const allocatedAmount = options.allocatedAmount ??
-    faker.number.float({min: 50, max: 1000, fractionDigits: 2});
+  const allocatedAmount =
+    options.allocatedAmount ?? faker.number.float({min: 50, max: 1000, fractionDigits: 2});
 
   // Generate spending scenarios
   let spentAmount: number;
@@ -72,9 +72,9 @@ export const envelopeFactory = async (
   } else {
     // Generate realistic spending patterns
     const scenario = faker.helpers.arrayElement([
-      "under",  // 40% - under budget
+      "under", // 40% - under budget
       "on-track", // 40% - on track
-      "over",   // 20% - over budget
+      "over", // 20% - over budget
     ]);
 
     switch (scenario) {
@@ -118,8 +118,8 @@ export const envelopeFactory = async (
   }
 
   // Rollover mode
-  const rolloverMode = options.rolloverMode ??
-    faker.helpers.arrayElement(["unlimited", "reset", "limited"] as const);
+  const rolloverMode =
+    options.rolloverMode ?? faker.helpers.arrayElement(["unlimited", "reset", "limited"] as const);
 
   // Generate metadata
   const metadata: EnvelopeMetadata = {
@@ -218,12 +218,7 @@ export const createEnvelopeSet = async (
         options = {};
     }
 
-    const envelope = await envelopeFactory(
-      budgetId,
-      categoryIds[i]!,
-      periodInstanceId,
-      options
-    );
+    const envelope = await envelopeFactory(budgetId, categoryIds[i]!, periodInstanceId, options);
     envelopes.push(envelope);
   }
 

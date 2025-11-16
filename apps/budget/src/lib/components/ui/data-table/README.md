@@ -1,11 +1,14 @@
 # Data Table Card View System
 
-This directory contains components for displaying tabular data in both table and card formats.
+This directory contains components for displaying tabular data in both table and
+card formats.
 
 ## Components
 
 ### DataDisplay
-The main wrapper component that switches between table and card views based on the `viewMode` setting.
+
+The main wrapper component that switches between table and card views based on
+the `viewMode` setting.
 
 ```svelte
 <DataDisplay
@@ -16,12 +19,14 @@ The main wrapper component that switches between table and card views based on t
   }}
   cardView={(row) => {
     // Your card component for each row
-  }}
-/>
+  }} />
 ```
 
 ### TransactionCard
-A card component specifically designed for displaying transaction data with support for:
+
+A card component specifically designed for displaying transaction data with
+support for:
+
 - Payee information
 - Category with icon and color
 - Status badges
@@ -37,13 +42,13 @@ A card component specifically designed for displaying transaction data with supp
     category: true,
     status: true,
     notes: false,
-    balance: false
+    balance: false,
   }}
-  onclick={(tx) => console.log('Clicked:', tx)}
-/>
+  onclick={(tx) => console.log('Clicked:', tx)} />
 ```
 
 ### DataCardGrid
+
 A responsive grid container for displaying cards with configurable columns:
 
 ```svelte
@@ -62,6 +67,7 @@ A responsive grid container for displaying cards with configurable columns:
 ```
 
 ### AnalyticsCard
+
 An example card for displaying analytics data (top categories, payees, etc.):
 
 ```svelte
@@ -69,21 +75,22 @@ An example card for displaying analytics data (top categories, payees, etc.):
   data={{
     id: 1,
     name: 'Groceries',
-    amount: 450.50,
+    amount: 450.5,
     count: 12,
     percentage: 15.2,
     icon: ShoppingCart,
-    color: '#3b82f6'
+    color: '#3b82f6',
   }}
-  onclick={(data) => console.log('Clicked:', data)}
-/>
+  onclick={(data) => console.log('Clicked:', data)} />
 ```
 
 ## View Mode Integration
 
-The view mode is stored in the view's display state and can be toggled via the DisplayInput component:
+The view mode is stored in the view's display state and can be toggled via the
+DisplayInput component:
 
 1. **View Model** (`src/lib/models/view.svelte.ts`):
+
    ```typescript
    currentView.view.getViewMode(); // 'table' | 'cards'
    currentView.view.setViewMode('cards');
@@ -95,7 +102,7 @@ The view mode is stored in the view's display state and can be toggled via the D
 
 3. **Schema** (`src/lib/schema/views.ts`):
    ```typescript
-   viewMode: z.optional(z.enum(['table', 'cards']).default('table'))
+   viewMode: z.optional(z.enum(['table', 'cards']).default('table'));
    ```
 
 ## Usage Example
@@ -142,28 +149,29 @@ const table = $derived(currentView?.table);
 To create a custom card component for your data:
 
 1. Accept your data type as a prop
-2. Use the shadcn Card components (`Card.Root`, `Card.Header`, `Card.Content`, etc.)
-3. Format data using the utilities from `$lib/utils/formatters` and `$lib/utils/date-formatters`
+2. Use the shadcn Card components (`Card.Root`, `Card.Header`, `Card.Content`,
+   etc.)
+3. Format data using the utilities from `$lib/utils/formatters` and
+   `$lib/utils/date-formatters`
 4. Add hover effects and click handlers as needed
 
 Example:
 
 ```svelte
 <script lang="ts" generics="TData">
-import * as Card from '$lib/components/ui/card';
+  import * as Card from '$lib/components/ui/card';
 
-interface Props {
-  data: TData;
-  onclick?: (data: TData) => void;
-}
+  interface Props {
+    data: TData;
+    onclick?: (data: TData) => void;
+  }
 
-let {data, onclick}: Props = $props();
+  let {data, onclick}: Props = $props();
 </script>
 
 <Card.Root
-  class="transition-all hover:shadow-md cursor-pointer"
-  onclick={() => onclick?.(data)}
->
+  class="cursor-pointer transition-all hover:shadow-md"
+  onclick={() => onclick?.(data)}>
   <Card.Header>
     <Card.Title>{data.title}</Card.Title>
   </Card.Header>
@@ -175,7 +183,8 @@ let {data, onclick}: Props = $props();
 
 ## Responsive Grid Configuration
 
-The DataCardGrid uses Tailwind's responsive grid classes. Configure columns for different breakpoints:
+The DataCardGrid uses Tailwind's responsive grid classes. Configure columns for
+different breakpoints:
 
 ```typescript
 {
@@ -190,6 +199,7 @@ The DataCardGrid uses Tailwind's responsive grid classes. Configure columns for 
 ## Developer Control
 
 The system is designed to give developers control over:
+
 - Which data to display
 - Which features are enabled (sorting, filtering, pagination)
 - Default view mode
@@ -197,4 +207,5 @@ The system is designed to give developers control over:
 - Which fields are visible in cards
 - Card layout and styling
 
-Simply configure the components via props and let users customize within those constraints through the DisplayInput controls.
+Simply configure the components via props and let users customize within those
+constraints through the DisplayInput controls.

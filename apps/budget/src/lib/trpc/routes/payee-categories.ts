@@ -28,47 +28,41 @@ export const payeeCategoriesRoutes = t.router({
     })
   ),
 
-  getById: publicProcedure
-    .input(z.object({id: z.number().positive()}))
-    .query(
-      withErrorHandler(async ({input, ctx}) => {
-        return await payeeCategoryService.getCategoryById(input.id, ctx.workspaceId);
-      })
-    ),
+  getById: publicProcedure.input(z.object({id: z.number().positive()})).query(
+    withErrorHandler(async ({input, ctx}) => {
+      return await payeeCategoryService.getCategoryById(input.id, ctx.workspaceId);
+    })
+  ),
 
-  getBySlug: publicProcedure
-    .input(z.object({slug: z.string()}))
-    .query(
-      withErrorHandler(async ({input, ctx}) => {
-        return await payeeCategoryService.getCategoryBySlug(input.slug, ctx.workspaceId);
-      })
-    ),
+  getBySlug: publicProcedure.input(z.object({slug: z.string()})).query(
+    withErrorHandler(async ({input, ctx}) => {
+      return await payeeCategoryService.getCategoryBySlug(input.slug, ctx.workspaceId);
+    })
+  ),
 
   // ================================================================================
   // Mutation Procedures
   // ================================================================================
 
-  create: rateLimitedProcedure
-    .input(formInsertPayeeCategorySchema)
-    .mutation(
-      withErrorHandler(async ({input, ctx}) => {
-        const {name, description, icon, color, displayOrder, isActive} = input;
+  create: rateLimitedProcedure.input(formInsertPayeeCategorySchema).mutation(
+    withErrorHandler(async ({input, ctx}) => {
+      const {name, description, icon, color, displayOrder, isActive} = input;
 
-        const category = await payeeCategoryService.createCategory(
-          {
-            name: name!,
-            description: description ?? null,
-            icon: icon ?? null,
-            color: color ?? null,
-            displayOrder,
-            isActive,
-          },
-          ctx.workspaceId
-        );
+      const category = await payeeCategoryService.createCategory(
+        {
+          name: name!,
+          description: description ?? null,
+          icon: icon ?? null,
+          color: color ?? null,
+          displayOrder,
+          isActive,
+        },
+        ctx.workspaceId
+      );
 
-        return category;
-      })
-    ),
+      return category;
+    })
+  ),
 
   update: rateLimitedProcedure
     .input(
@@ -140,37 +134,35 @@ export const payeeCategoriesRoutes = t.router({
       })
     ),
 
-  delete: rateLimitedProcedure
-    .input(removePayeeCategorySchema)
-    .mutation(
-      withErrorHandler(async ({input, ctx}) => {
-        await payeeCategoryService.deleteCategory(input.id, ctx.workspaceId);
-        return {success: true};
-      })
-    ),
+  delete: rateLimitedProcedure.input(removePayeeCategorySchema).mutation(
+    withErrorHandler(async ({input, ctx}) => {
+      await payeeCategoryService.deleteCategory(input.id, ctx.workspaceId);
+      return {success: true};
+    })
+  ),
 
-  bulkDelete: bulkOperationProcedure
-    .input(removePayeeCategoriesSchema)
-    .mutation(
-      withErrorHandler(async ({input: {entities}, ctx}) => {
-        let deletedCount = 0;
-        const errors: string[] = [];
+  bulkDelete: bulkOperationProcedure.input(removePayeeCategoriesSchema).mutation(
+    withErrorHandler(async ({input: {entities}, ctx}) => {
+      let deletedCount = 0;
+      const errors: string[] = [];
 
-        for (const id of entities) {
-          try {
-            await payeeCategoryService.deleteCategory(id, ctx.workspaceId);
-            deletedCount++;
-          } catch (error) {
-            errors.push(`Failed to delete category ${id}: ${error instanceof Error ? error.message : "Unknown error"}`);
-          }
+      for (const id of entities) {
+        try {
+          await payeeCategoryService.deleteCategory(id, ctx.workspaceId);
+          deletedCount++;
+        } catch (error) {
+          errors.push(
+            `Failed to delete category ${id}: ${error instanceof Error ? error.message : "Unknown error"}`
+          );
         }
+      }
 
-        return {
-          deletedCount,
-          errors,
-        };
-      })
-    ),
+      return {
+        deletedCount,
+        errors,
+      };
+    })
+  ),
 
   reorder: bulkOperationProcedure
     .input(
@@ -198,9 +190,11 @@ export const payeeCategoriesRoutes = t.router({
 
   seedDefaults: rateLimitedProcedure
     .input(
-      z.object({
-        slugs: z.array(z.string()).optional(),
-      }).optional()
+      z
+        .object({
+          slugs: z.array(z.string()).optional(),
+        })
+        .optional()
     )
     .mutation(
       withErrorHandler(async ({input, ctx}) => {
@@ -224,22 +218,22 @@ export const payeeCategoriesRoutes = t.router({
   // Recommendations
   // ================================================================================
 
-  getRecommendation: publicProcedure
-    .input(z.object({payeeId: z.number().positive()}))
-    .query(
-      withErrorHandler(async ({input, ctx}) => {
-        return await payeeCategoryRecommendationService.getRecommendation(
-          input.payeeId,
-          ctx.workspaceId
-        );
-      })
-    ),
+  getRecommendation: publicProcedure.input(z.object({payeeId: z.number().positive()})).query(
+    withErrorHandler(async ({input, ctx}) => {
+      return await payeeCategoryRecommendationService.getRecommendation(
+        input.payeeId,
+        ctx.workspaceId
+      );
+    })
+  ),
 
   getBulkRecommendations: publicProcedure
     .input(
-      z.object({
-        limit: z.number().positive().optional(),
-      }).optional()
+      z
+        .object({
+          limit: z.number().positive().optional(),
+        })
+        .optional()
     )
     .query(
       withErrorHandler(async ({input, ctx}) => {

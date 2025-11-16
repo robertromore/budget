@@ -108,9 +108,10 @@ export abstract class BaseRepository<
   async create(data: TCreateInput, workspaceId?: number): Promise<TEntity> {
     try {
       // Add workspaceId to data if provided and table has workspaceId column
-      const values = workspaceId !== undefined && (this.table as any).workspaceId
-        ? {...data as any, workspaceId}
-        : data;
+      const values =
+        workspaceId !== undefined && (this.table as any).workspaceId
+          ? {...(data as any), workspaceId}
+          : data;
 
       const result = await this.db.insert(this.table).values(values).returning();
 
@@ -278,7 +279,7 @@ export abstract class BaseRepository<
   async findBySlug(slug: string, workspaceId?: number): Promise<TEntity | null> {
     try {
       // Import isNull dynamically to avoid circular dependency
-      const {isNull} = await import('drizzle-orm');
+      const {isNull} = await import("drizzle-orm");
 
       const conditions = [eq((this.table as any).slug, slug)];
 
@@ -311,7 +312,7 @@ export abstract class BaseRepository<
    */
   async isSlugUnique(slug: string, excludeId?: number): Promise<boolean> {
     try {
-      const {ne} = await import('drizzle-orm');
+      const {ne} = await import("drizzle-orm");
 
       const conditions = [eq((this.table as any).slug, slug)];
 
@@ -327,7 +328,10 @@ export abstract class BaseRepository<
 
       return !result[0]; // true if no entity found (slug is unique)
     } catch (error) {
-      throw new DatabaseError(`Failed to check slug uniqueness for ${this.entityName}`, "isSlugUnique");
+      throw new DatabaseError(
+        `Failed to check slug uniqueness for ${this.entityName}`,
+        "isSlugUnique"
+      );
     }
   }
 
@@ -384,18 +388,13 @@ export abstract class BaseRepository<
         );
       }
 
-      const {inArray, isNull, and} = await import('drizzle-orm');
+      const {inArray, isNull, and} = await import("drizzle-orm");
 
       // Get existing entities to access their slugs
       const entities = await this.db
         .select()
         .from(this.table)
-        .where(
-          and(
-            inArray((this.table as any).id, ids),
-            isNull((this.table as any).deletedAt)
-          )
-        );
+        .where(and(inArray((this.table as any).id, ids), isNull((this.table as any).deletedAt)));
 
       if (entities.length === 0) return 0;
 
@@ -440,10 +439,13 @@ export abstract class BaseRepository<
   ): Promise<TEntity[]> {
     try {
       const {limit = 50, excludeDeleted = true} = options || {};
-      const {isNull} = await import('drizzle-orm');
+      const {isNull} = await import("drizzle-orm");
 
       if (!("name" in (this.table as any))) {
-        throw new DatabaseError(`Search by name not supported for ${this.entityName}`, "searchByName");
+        throw new DatabaseError(
+          `Search by name not supported for ${this.entityName}`,
+          "searchByName"
+        );
       }
 
       const conditions = [like((this.table as any).name, `%${query}%`)];

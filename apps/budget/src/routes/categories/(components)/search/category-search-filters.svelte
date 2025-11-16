@@ -1,19 +1,19 @@
 <script lang="ts">
-  import * as Select from '$lib/components/ui/select';
-  import type {CategorySearchFilters} from '$lib/server/domains/categories/repository';
-  import type {CategoryType} from '$lib/schema/categories';
+import * as Select from '$lib/components/ui/select';
+import type {CategorySearchFilters} from '$lib/server/domains/categories/repository';
+import type {CategoryType} from '$lib/schema/categories';
 
-  interface Props {
-    filters: CategorySearchFilters;
-    onFilterChange: (key: keyof CategorySearchFilters, value: any) => void;
-  }
+interface Props {
+  filters: CategorySearchFilters;
+  onFilterChange: (key: keyof CategorySearchFilters, value: any) => void;
+}
 
-  let {filters, onFilterChange}: Props = $props();
+let {filters, onFilterChange}: Props = $props();
 </script>
 
 <!-- Basic Filters Section -->
 <div class="space-y-3">
-  <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Basic Filters</h5>
+  <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">Basic Filters</h5>
 
   <div class="grid grid-cols-2 gap-3">
     <!-- Hierarchy Filter -->
@@ -23,10 +23,17 @@
         type="single"
         value={filters.hasParent?.toString() || ''}
         onValueChange={(value) => {
-          onFilterChange('hasParent', value === 'true' ? true : value === 'false' ? false : undefined);
+          onFilterChange(
+            'hasParent',
+            value === 'true' ? true : value === 'false' ? false : undefined
+          );
         }}>
         <Select.Trigger id="parent-filter" class="h-9 w-full">
-          {filters.hasParent === true ? 'Subcategories' : filters.hasParent === false ? 'Top-level' : 'All'}
+          {filters.hasParent === true
+            ? 'Subcategories'
+            : filters.hasParent === false
+              ? 'Top-level'
+              : 'All'}
         </Select.Trigger>
         <Select.Content>
           <Select.Item value="">All</Select.Item>
@@ -43,7 +50,10 @@
         type="single"
         value={filters.hasTransactions?.toString() || ''}
         onValueChange={(value) => {
-          onFilterChange('hasTransactions', value === 'true' ? true : value === 'false' ? false : undefined);
+          onFilterChange(
+            'hasTransactions',
+            value === 'true' ? true : value === 'false' ? false : undefined
+          );
         }}>
         <Select.Trigger id="transactions-filter" class="h-9 w-full">
           {filters.hasTransactions === true
@@ -91,7 +101,10 @@
         type="single"
         value={filters.isActive?.toString() || ''}
         onValueChange={(value) => {
-          onFilterChange('isActive', value === 'true' ? true : value === 'false' ? false : undefined);
+          onFilterChange(
+            'isActive',
+            value === 'true' ? true : value === 'false' ? false : undefined
+          );
         }}>
         <Select.Trigger id="active-filter" class="h-9 w-full">
           {filters.isActive === true ? 'Active' : filters.isActive === false ? 'Inactive' : 'All'}
@@ -108,7 +121,9 @@
 
 <!-- Advanced Filters Section -->
 <div class="space-y-3">
-  <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Advanced Filters</h5>
+  <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+    Advanced Filters
+  </h5>
 
   <div class="grid grid-cols-2 gap-3">
     <!-- Tax Deductible Filter -->
@@ -118,7 +133,10 @@
         type="single"
         value={filters.isTaxDeductible?.toString() || ''}
         onValueChange={(value) => {
-          onFilterChange('isTaxDeductible', value === 'true' ? true : value === 'false' ? false : undefined);
+          onFilterChange(
+            'isTaxDeductible',
+            value === 'true' ? true : value === 'false' ? false : undefined
+          );
         }}>
         <Select.Trigger id="tax-filter" class="h-9 w-full">
           {filters.isTaxDeductible === true
@@ -142,10 +160,17 @@
         type="single"
         value={filters.isBudgetTracked?.toString() || ''}
         onValueChange={(value) => {
-          onFilterChange('isBudgetTracked', value === 'true' ? true : value === 'false' ? false : undefined);
+          onFilterChange(
+            'isBudgetTracked',
+            value === 'true' ? true : value === 'false' ? false : undefined
+          );
         }}>
         <Select.Trigger id="budget-filter" class="h-9 w-full">
-          {filters.isBudgetTracked === true ? 'Tracked' : filters.isBudgetTracked === false ? 'Not Tracked' : 'All'}
+          {filters.isBudgetTracked === true
+            ? 'Tracked'
+            : filters.isBudgetTracked === false
+              ? 'Not Tracked'
+              : 'All'}
         </Select.Trigger>
         <Select.Content>
           <Select.Item value="">All</Select.Item>

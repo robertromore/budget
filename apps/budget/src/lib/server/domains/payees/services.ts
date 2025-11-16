@@ -6,20 +6,20 @@ import type {
   LearningMetrics,
   NewPayee,
   Payee,
-  PayeeType
+  PayeeType,
 } from "$lib/schema";
-import { logger } from "$lib/server/shared/logging";
-import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
-import { currentDate, toISOString } from "$lib/utils/dates";
-import { BudgetAllocationService } from "./budget-allocation";
-import { CategoryLearningService } from "./category-learning";
+import {logger} from "$lib/server/shared/logging";
+import {ConflictError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
+import {InputSanitizer} from "$lib/server/shared/validation";
+import {currentDate, toISOString} from "$lib/utils/dates";
+import {BudgetAllocationService} from "./budget-allocation";
+import {CategoryLearningService} from "./category-learning";
 import {
   ContactManagementService,
   type ContactAnalytics,
   type ContactSuggestion,
   type ContactValidationResult,
-  type DuplicateDetection
+  type DuplicateDetection,
 } from "./contact-management";
 import {
   PayeeIntelligenceService,
@@ -29,7 +29,7 @@ import {
   type FrequencyAnalysis,
   type SeasonalPattern,
   type SpendingAnalysis,
-  type TransactionPrediction
+  type TransactionPrediction,
 } from "./intelligence";
 import {
   PayeeMLCoordinator,
@@ -37,7 +37,7 @@ import {
   type BehaviorChangeDetection,
   type CrossSystemLearning,
   type MLPerformanceMetrics,
-  type UnifiedRecommendations
+  type UnifiedRecommendations,
 } from "./ml-coordinator";
 import {
   PayeeRepository,
@@ -45,14 +45,14 @@ import {
   type PayeeSearchFilters,
   type PayeeStats,
   type PayeeSuggestions,
-  type UpdatePayeeData
+  type UpdatePayeeData,
 } from "./repository";
 import type {
   PayeeIntelligenceSummary,
   FieldChange,
   FieldRecommendation,
   AddressData,
-  ContactData
+  ContactData,
 } from "./types";
 import {
   SubscriptionManagementService,
@@ -62,14 +62,9 @@ import {
   type SubscriptionLifecycle,
   type SubscriptionMetadata,
   type SubscriptionRenewalPrediction,
-  type SubscriptionUsageAnalysis
+  type SubscriptionUsageAnalysis,
 } from "./subscription-management";
-import type {
-  PayeeAddress,
-  PayeeTags,
-  PaymentMethodReference,
-  SubscriptionInfo
-} from "./types";
+import type {PayeeAddress, PayeeTags, PaymentMethodReference, SubscriptionInfo} from "./types";
 
 export interface CreatePayeeData {
   name: string;
@@ -120,8 +115,8 @@ export interface PayeeAnalytics {
 /**
  * Service for payee business logic with advanced intelligence capabilities
  */
-import type { CategoryService } from "../categories/services";
-import type { BudgetService } from "../budgets/services";
+import type {CategoryService} from "../categories/services";
+import type {BudgetService} from "../budgets/services";
 
 /**
  * Payee service containing business logic with advanced intelligence capabilities
@@ -158,9 +153,9 @@ export class PayeeService {
   private generateSlug(name: string): string {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
       .trim();
   }
 
@@ -178,9 +173,10 @@ export class PayeeService {
       throw new ValidationError("Invalid payee name");
     }
 
-    const sanitizedNotes = data.notes && typeof data.notes === 'string'
-      ? InputSanitizer.sanitizeDescription(data.notes)
-      : null;
+    const sanitizedNotes =
+      data.notes && typeof data.notes === "string"
+        ? InputSanitizer.sanitizeDescription(data.notes)
+        : null;
 
     // Allow duplicate payee names - users may want multiple entries for same name
 
@@ -320,9 +316,10 @@ export class PayeeService {
 
     // Validate and sanitize notes if provided
     if (data.notes !== undefined) {
-      updateData.notes = data.notes && typeof data.notes === 'string'
-        ? InputSanitizer.sanitizeDescription(data.notes)
-        : null;
+      updateData.notes =
+        data.notes && typeof data.notes === "string"
+          ? InputSanitizer.sanitizeDescription(data.notes)
+          : null;
     }
 
     // Validate related entities
@@ -342,10 +339,23 @@ export class PayeeService {
 
     // Validate and set other fields
     const fieldsToUpdate = [
-      'payeeType', 'avgAmount', 'paymentFrequency', 'lastTransactionDate',
-      'taxRelevant', 'isActive', 'website', 'phone', 'email', 'address',
-      'accountNumber', 'alertThreshold', 'isSeasonal', 'subscriptionInfo',
-      'tags', 'preferredPaymentMethods', 'merchantCategoryCode'
+      "payeeType",
+      "avgAmount",
+      "paymentFrequency",
+      "lastTransactionDate",
+      "taxRelevant",
+      "isActive",
+      "website",
+      "phone",
+      "email",
+      "address",
+      "accountNumber",
+      "alertThreshold",
+      "isSeasonal",
+      "subscriptionInfo",
+      "tags",
+      "preferredPaymentMethods",
+      "merchantCategoryCode",
     ] as const;
 
     for (const field of fieldsToUpdate) {
@@ -355,11 +365,19 @@ export class PayeeService {
     }
 
     // Validate specific field constraints
-    if (updateData.website && typeof updateData.website === 'string' && !this.isValidUrl(updateData.website)) {
+    if (
+      updateData.website &&
+      typeof updateData.website === "string" &&
+      !this.isValidUrl(updateData.website)
+    ) {
       throw new ValidationError("Invalid website URL");
     }
 
-    if (updateData.email && typeof updateData.email === 'string' && !this.isValidEmail(updateData.email)) {
+    if (
+      updateData.email &&
+      typeof updateData.email === "string" &&
+      !this.isValidEmail(updateData.email)
+    ) {
       throw new ValidationError("Invalid email address");
     }
 
@@ -373,7 +391,11 @@ export class PayeeService {
   /**
    * Delete payee (soft delete)
    */
-  async deletePayee(id: number, workspaceId: number, options: {force?: boolean} = {}): Promise<Payee> {
+  async deletePayee(
+    id: number,
+    workspaceId: number,
+    options: {force?: boolean} = {}
+  ): Promise<Payee> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid payee ID");
     }
@@ -406,7 +428,7 @@ export class PayeeService {
       throw new ValidationError("No payee IDs provided");
     }
 
-    const validIds = ids.filter(id => id && id > 0);
+    const validIds = ids.filter((id) => id && id > 0);
     if (validIds.length === 0) {
       throw new ValidationError("No valid payee IDs provided");
     }
@@ -429,7 +451,7 @@ export class PayeeService {
 
         deleteableIds.push(id);
       } catch (error) {
-        errors.push(`Payee ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        errors.push(`Payee ${id}: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     }
 
@@ -444,7 +466,7 @@ export class PayeeService {
    * Search payees
    */
   async searchPayees(query: string, workspaceId: number): Promise<Payee[]> {
-    const sanitizedQuery = query?.trim() || '';
+    const sanitizedQuery = query?.trim() || "";
     return await this.repository.search(sanitizedQuery, workspaceId);
   }
 
@@ -494,7 +516,11 @@ export class PayeeService {
     }
 
     // Reassign all transactions from source to target payee
-    const reassignedCount = await this.repository.reassignTransactions(sourceId, targetId, workspaceId);
+    const reassignedCount = await this.repository.reassignTransactions(
+      sourceId,
+      targetId,
+      workspaceId
+    );
 
     // Soft delete the source payee
     await this.repository.softDelete(sourceId, workspaceId);
@@ -502,7 +528,7 @@ export class PayeeService {
     // Update calculated fields for target payee
     await this.repository.updateCalculatedFields(targetId, workspaceId);
 
-    logger.info('Payee merge completed', {
+    logger.info("Payee merge completed", {
       sourceId,
       sourceName: sourcePayee.name,
       targetId,
@@ -565,7 +591,7 @@ export class PayeeService {
       } catch (error) {
         return {
           successCount: 0,
-          errors: [{id: payeeId, error: error instanceof Error ? error.message : 'Unknown error'}]
+          errors: [{id: payeeId, error: error instanceof Error ? error.message : "Unknown error"}],
         };
       }
     }
@@ -582,7 +608,7 @@ export class PayeeService {
       } catch (error) {
         result.errors.push({
           id: payee.id,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
     }
@@ -596,8 +622,8 @@ export class PayeeService {
   async getPayeeAnalytics(): Promise<PayeeAnalytics> {
     const allPayeesResult = await this.repository.findAll();
     const allPayees = allPayeesResult.data;
-    const activePayees = allPayees.filter(p => p.isActive);
-    const payeesWithDefaults = allPayees.filter(p => p.defaultCategoryId || p.defaultBudgetId);
+    const activePayees = allPayees.filter((p) => p.isActive);
+    const payeesWithDefaults = allPayees.filter((p) => p.defaultCategoryId || p.defaultBudgetId);
     const needingAttention = await this.repository.findNeedingAttention();
 
     // Calculate category distribution
@@ -609,30 +635,35 @@ export class PayeeService {
           existing.count++;
         } else {
           // We'd need to fetch category name from CategoryService
-          categoryMap.set(payee.defaultCategoryId, {name: `Category ${payee.defaultCategoryId}`, count: 1});
+          categoryMap.set(payee.defaultCategoryId, {
+            name: `Category ${payee.defaultCategoryId}`,
+            count: 1,
+          });
         }
       }
     }
 
-    const topCategories = Array.from(categoryMap.entries()).map(([id, data]) => ({
-      categoryId: id,
-      categoryName: data.name,
-      payeeCount: data.count
-    })).sort((a, b) => b.payeeCount - a.payeeCount).slice(0, 5);
+    const topCategories = Array.from(categoryMap.entries())
+      .map(([id, data]) => ({
+        categoryId: id,
+        categoryName: data.name,
+        payeeCount: data.count,
+      }))
+      .sort((a, b) => b.payeeCount - a.payeeCount)
+      .slice(0, 5);
 
     // Calculate recent activity (payees with transactions in last 30 days)
-    const thirtyDaysAgo = currentDate.subtract({ days: 30 });
+    const thirtyDaysAgo = currentDate.subtract({days: 30});
     const cutoffDate = toISOString(thirtyDaysAgo);
 
-    const recentlyActiveCount = allPayees.filter(p =>
-      p.lastTransactionDate && cutoffDate && p.lastTransactionDate >= cutoffDate
+    const recentlyActiveCount = allPayees.filter(
+      (p) => p.lastTransactionDate && cutoffDate && p.lastTransactionDate >= cutoffDate
     ).length;
 
     // Calculate average transactions per payee
     const totalTransactions = await this.repository.getTotalTransactionCount();
-    const averageTransactionsPerPayee = allPayees.length > 0
-      ? Math.round(totalTransactions / allPayees.length)
-      : 0;
+    const averageTransactionsPerPayee =
+      allPayees.length > 0 ? Math.round(totalTransactions / allPayees.length) : 0;
 
     return {
       totalPayees: allPayees.length,
@@ -648,7 +679,11 @@ export class PayeeService {
   /**
    * Apply intelligent defaults to a payee based on suggestions
    */
-  async applyIntelligentDefaults(id: number, applyCategory = true, applyBudget = true): Promise<Payee> {
+  async applyIntelligentDefaults(
+    id: number,
+    applyCategory = true,
+    applyBudget = true
+  ): Promise<Payee> {
     const suggestions = await this.generatePayeeSuggestions(id);
 
     if (suggestions.confidence < 0.5) {
@@ -686,29 +721,37 @@ export class PayeeService {
   private async sanitizePayeeData(data: Partial<CreatePayeeData>): Promise<Partial<NewPayee>> {
     const sanitized: Partial<NewPayee> = {};
 
-    if (data.website && typeof data.website === 'string') {
+    if (data.website && typeof data.website === "string") {
       if (!this.isValidUrl(data.website)) {
         throw new ValidationError("Invalid website URL");
       }
       sanitized.website = data.website;
     }
 
-    if (data.email && typeof data.email === 'string') {
+    if (data.email && typeof data.email === "string") {
       if (!this.isValidEmail(data.email)) {
         throw new ValidationError("Invalid email address");
       }
       sanitized.email = data.email;
     }
 
-    if (data.phone && typeof data.phone === 'string') {
-      sanitized.phone = data.phone.replace(/[^\d\s\-\+\(\)\.]/g, ''); // Remove invalid characters
+    if (data.phone && typeof data.phone === "string") {
+      sanitized.phone = data.phone.replace(/[^\d\s\-\+\(\)\.]/g, ""); // Remove invalid characters
     }
 
     // Copy other fields directly
     const directFields = [
-      'defaultCategoryId', 'defaultBudgetId', 'payeeType', 'address',
-      'accountNumber', 'alertThreshold', 'isSeasonal', 'subscriptionInfo',
-      'tags', 'preferredPaymentMethods', 'merchantCategoryCode'
+      "defaultCategoryId",
+      "defaultBudgetId",
+      "payeeType",
+      "address",
+      "accountNumber",
+      "alertThreshold",
+      "isSeasonal",
+      "subscriptionInfo",
+      "tags",
+      "preferredPaymentMethods",
+      "merchantCategoryCode",
     ] as const;
 
     for (const field of directFields) {
@@ -775,7 +818,6 @@ export class PayeeService {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
-
 
   // ==================== ADVANCED INTELLIGENCE METHODS ====================
 
@@ -858,7 +900,7 @@ export class PayeeService {
       frequencyAnalysis,
       transactionPrediction,
       budgetSuggestion,
-      confidenceMetrics
+      confidenceMetrics,
     ] = await Promise.all([
       this.intelligenceService.analyzeSpendingPatterns(id),
       this.intelligenceService.detectSeasonality(id),
@@ -866,7 +908,7 @@ export class PayeeService {
       this.intelligenceService.analyzeFrequencyPattern(id),
       this.intelligenceService.predictNextTransaction(id),
       this.intelligenceService.suggestBudgetAllocation(id),
-      this.intelligenceService.calculateConfidenceScores(id)
+      this.intelligenceService.calculateConfidenceScores(id),
     ]);
 
     return {
@@ -877,26 +919,29 @@ export class PayeeService {
       frequencyAnalysis,
       transactionPrediction,
       budgetSuggestion,
-      confidenceMetrics
+      confidenceMetrics,
     };
   }
 
   /**
    * Apply machine learning insights to automatically improve payee defaults
    */
-  async applyIntelligentOptimizations(id: number, options: {
-    updateCategory?: boolean;
-    updateBudget?: boolean;
-    updateFrequency?: boolean;
-    updateAmount?: boolean;
-    minConfidence?: number;
-  } = {}): Promise<PayeeIntelligenceSummary & { updated: boolean }> {
+  async applyIntelligentOptimizations(
+    id: number,
+    options: {
+      updateCategory?: boolean;
+      updateBudget?: boolean;
+      updateFrequency?: boolean;
+      updateAmount?: boolean;
+      minConfidence?: number;
+    } = {}
+  ): Promise<PayeeIntelligenceSummary & {updated: boolean}> {
     const {
       updateCategory = true,
       updateBudget = true,
       updateFrequency = true,
       updateAmount = true,
-      minConfidence = 0.7
+      minConfidence = 0.7,
     } = options;
 
     const payee = await this.getPayeeById(id);
@@ -909,45 +954,54 @@ export class PayeeService {
     const updateData: Partial<UpdatePayeeData> = {};
 
     // Update category if confidence is high enough
-    if (updateCategory && budgetSuggestion.budgetCategory.categoryConfidence >= minConfidence &&
-        budgetSuggestion.budgetCategory.primaryCategoryId &&
-        payee.defaultCategoryId !== budgetSuggestion.budgetCategory.primaryCategoryId) {
-
+    if (
+      updateCategory &&
+      budgetSuggestion.budgetCategory.categoryConfidence >= minConfidence &&
+      budgetSuggestion.budgetCategory.primaryCategoryId &&
+      payee.defaultCategoryId !== budgetSuggestion.budgetCategory.primaryCategoryId
+    ) {
       changes.push({
-        field: 'defaultCategoryId',
+        field: "defaultCategoryId",
         oldValue: payee.defaultCategoryId,
         newValue: budgetSuggestion.budgetCategory.primaryCategoryId,
-        confidence: budgetSuggestion.budgetCategory.categoryConfidence
+        confidence: budgetSuggestion.budgetCategory.categoryConfidence,
       });
       updateData.defaultCategoryId = budgetSuggestion.budgetCategory.primaryCategoryId;
-    } else if (budgetSuggestion.budgetCategory.primaryCategoryId &&
-               budgetSuggestion.budgetCategory.categoryConfidence < minConfidence) {
+    } else if (
+      budgetSuggestion.budgetCategory.primaryCategoryId &&
+      budgetSuggestion.budgetCategory.categoryConfidence < minConfidence
+    ) {
       recommendations.push({
-        field: 'defaultCategoryId',
+        field: "defaultCategoryId",
         suggestion: budgetSuggestion.budgetCategory.primaryCategoryId,
         confidence: budgetSuggestion.budgetCategory.categoryConfidence,
-        reason: `Category suggestion confidence (${Math.round(budgetSuggestion.budgetCategory.categoryConfidence * 100)}%) below threshold (${Math.round(minConfidence * 100)}%)`
+        reason: `Category suggestion confidence (${Math.round(budgetSuggestion.budgetCategory.categoryConfidence * 100)}%) below threshold (${Math.round(minConfidence * 100)}%)`,
       });
     }
 
     // Update payment frequency if detected with high confidence
-    if (updateFrequency && frequencyAnalysis.confidence >= minConfidence &&
-        frequencyAnalysis.detectedFrequency &&
-        payee.paymentFrequency !== frequencyAnalysis.detectedFrequency) {
-
+    if (
+      updateFrequency &&
+      frequencyAnalysis.confidence >= minConfidence &&
+      frequencyAnalysis.detectedFrequency &&
+      payee.paymentFrequency !== frequencyAnalysis.detectedFrequency
+    ) {
       changes.push({
-        field: 'paymentFrequency',
+        field: "paymentFrequency",
         oldValue: payee.paymentFrequency,
         newValue: frequencyAnalysis.detectedFrequency,
-        confidence: frequencyAnalysis.confidence
+        confidence: frequencyAnalysis.confidence,
       });
       updateData.paymentFrequency = frequencyAnalysis.detectedFrequency;
-    } else if (frequencyAnalysis.detectedFrequency && frequencyAnalysis.confidence < minConfidence) {
+    } else if (
+      frequencyAnalysis.detectedFrequency &&
+      frequencyAnalysis.confidence < minConfidence
+    ) {
       recommendations.push({
-        field: 'paymentFrequency',
+        field: "paymentFrequency",
         suggestion: frequencyAnalysis.detectedFrequency,
         confidence: frequencyAnalysis.confidence,
-        reason: `Frequency detection confidence (${Math.round(frequencyAnalysis.confidence * 100)}%) below threshold (${Math.round(minConfidence * 100)}%)`
+        reason: `Frequency detection confidence (${Math.round(frequencyAnalysis.confidence * 100)}%) below threshold (${Math.round(minConfidence * 100)}%)`,
       });
     }
 
@@ -958,23 +1012,26 @@ export class PayeeService {
       const difference = Math.abs(currentAvg - suggestedAvg);
       const percentDifference = currentAvg > 0 ? difference / currentAvg : 1;
 
-      if (percentDifference > 0.1) { // 10% difference threshold
-        const confidence = Math.min(1, spendingAnalysis.transactionCount / 10) * (1 - Math.min(1, spendingAnalysis.volatility));
+      if (percentDifference > 0.1) {
+        // 10% difference threshold
+        const confidence =
+          Math.min(1, spendingAnalysis.transactionCount / 10) *
+          (1 - Math.min(1, spendingAnalysis.volatility));
 
         if (confidence >= minConfidence) {
           changes.push({
-            field: 'avgAmount',
+            field: "avgAmount",
             oldValue: payee.avgAmount,
             newValue: suggestedAvg,
-            confidence
+            confidence,
           });
           updateData.avgAmount = suggestedAvg;
         } else {
           recommendations.push({
-            field: 'avgAmount',
+            field: "avgAmount",
             suggestion: suggestedAvg,
             confidence,
-            reason: `Amount analysis confidence (${Math.round(confidence * 100)}%) below threshold due to volatility or limited data`
+            reason: `Amount analysis confidence (${Math.round(confidence * 100)}%) below threshold due to volatility or limited data`,
           });
         }
       }
@@ -991,40 +1048,44 @@ export class PayeeService {
       updated,
       changes,
       recommendations,
-      confidence: changes.length > 0
-        ? changes.reduce((sum, c) => sum + c.confidence, 0) / changes.length
-        : 0,
-      lastUpdated: toISOString(currentDate)
+      confidence:
+        changes.length > 0 ? changes.reduce((sum, c) => sum + c.confidence, 0) / changes.length : 0,
+      lastUpdated: toISOString(currentDate),
     };
   }
 
   /**
    * Bulk intelligence analysis for multiple payees with performance optimization
    */
-  async bulkIntelligenceAnalysis(payeeIds: number[], options: {
-    includeSpendingAnalysis?: boolean;
-    includeSeasonalPatterns?: boolean;
-    includeFrequencyAnalysis?: boolean;
-    includePredictions?: boolean;
-    minTransactionCount?: number;
-  } = {}): Promise<Array<{
-    payeeId: number;
-    payeeName: string;
-    analysis: {
-      spendingAnalysis?: SpendingAnalysis;
-      seasonalPatterns?: SeasonalPattern[];
-      frequencyAnalysis?: FrequencyAnalysis;
-      transactionPrediction?: TransactionPrediction;
-      confidence?: ConfidenceMetrics;
-    };
-    error?: string;
-  }>> {
+  async bulkIntelligenceAnalysis(
+    payeeIds: number[],
+    options: {
+      includeSpendingAnalysis?: boolean;
+      includeSeasonalPatterns?: boolean;
+      includeFrequencyAnalysis?: boolean;
+      includePredictions?: boolean;
+      minTransactionCount?: number;
+    } = {}
+  ): Promise<
+    Array<{
+      payeeId: number;
+      payeeName: string;
+      analysis: {
+        spendingAnalysis?: SpendingAnalysis;
+        seasonalPatterns?: SeasonalPattern[];
+        frequencyAnalysis?: FrequencyAnalysis;
+        transactionPrediction?: TransactionPrediction;
+        confidence?: ConfidenceMetrics;
+      };
+      error?: string;
+    }>
+  > {
     const {
       includeSpendingAnalysis = true,
       includeSeasonalPatterns = false,
       includeFrequencyAnalysis = false,
       includePredictions = false,
-      minTransactionCount = 3
+      minTransactionCount = 3,
     } = options;
 
     const results = [];
@@ -1043,9 +1104,9 @@ export class PayeeService {
           if (stats.transactionCount < minTransactionCount) {
             return {
               payeeId,
-              payeeName: payee.name || 'Unknown',
+              payeeName: payee.name || "Unknown",
               analysis: {},
-              error: `Insufficient transaction history (${stats.transactionCount} transactions, minimum ${minTransactionCount} required)`
+              error: `Insufficient transaction history (${stats.transactionCount} transactions, minimum ${minTransactionCount} required)`,
             };
           }
 
@@ -1059,7 +1120,8 @@ export class PayeeService {
 
           // Run requested analyses
           if (includeSpendingAnalysis) {
-            analysis.spendingAnalysis = await this.intelligenceService.analyzeSpendingPatterns(payeeId);
+            analysis.spendingAnalysis =
+              await this.intelligenceService.analyzeSpendingPatterns(payeeId);
           }
 
           if (includeSeasonalPatterns) {
@@ -1067,11 +1129,13 @@ export class PayeeService {
           }
 
           if (includeFrequencyAnalysis) {
-            analysis.frequencyAnalysis = await this.intelligenceService.analyzeFrequencyPattern(payeeId);
+            analysis.frequencyAnalysis =
+              await this.intelligenceService.analyzeFrequencyPattern(payeeId);
           }
 
           if (includePredictions) {
-            analysis.transactionPrediction = await this.intelligenceService.predictNextTransaction(payeeId);
+            analysis.transactionPrediction =
+              await this.intelligenceService.predictNextTransaction(payeeId);
           }
 
           // Always include confidence metrics for any analysis
@@ -1081,16 +1145,15 @@ export class PayeeService {
 
           return {
             payeeId,
-            payeeName: payee.name || 'Unknown',
-            analysis
+            payeeName: payee.name || "Unknown",
+            analysis,
           };
-
         } catch (error) {
           return {
             payeeId,
-            payeeName: 'Unknown',
+            payeeName: "Unknown",
             analysis: {},
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : "Unknown error",
           };
         }
       });
@@ -1114,8 +1177,21 @@ export class PayeeService {
     transactionId?: number;
     fromCategoryId?: number;
     toCategoryId: number;
-    correctionTrigger: "manual_user_correction" | "transaction_creation" | "bulk_categorization" | "import_correction" | "scheduled_transaction";
-    correctionContext?: "transaction_amount_low" | "transaction_amount_medium" | "transaction_amount_high" | "seasonal_period" | "weekend_transaction" | "weekday_transaction" | "first_time_payee" | "recurring_payee";
+    correctionTrigger:
+      | "manual_user_correction"
+      | "transaction_creation"
+      | "bulk_categorization"
+      | "import_correction"
+      | "scheduled_transaction";
+    correctionContext?:
+      | "transaction_amount_low"
+      | "transaction_amount_medium"
+      | "transaction_amount_high"
+      | "seasonal_period"
+      | "weekend_transaction"
+      | "weekday_transaction"
+      | "first_time_payee"
+      | "recurring_payee";
     transactionAmount?: number;
     transactionDate?: string;
     userConfidence?: number;
@@ -1131,8 +1207,21 @@ export class PayeeService {
       transactionId?: number;
       fromCategoryId?: number;
       toCategoryId: number;
-      correctionTrigger: "manual_user_correction" | "transaction_creation" | "bulk_categorization" | "import_correction" | "scheduled_transaction";
-      correctionContext?: "transaction_amount_low" | "transaction_amount_medium" | "transaction_amount_high" | "seasonal_period" | "weekend_transaction" | "weekday_transaction" | "first_time_payee" | "recurring_payee";
+      correctionTrigger:
+        | "manual_user_correction"
+        | "transaction_creation"
+        | "bulk_categorization"
+        | "import_correction"
+        | "scheduled_transaction";
+      correctionContext?:
+        | "transaction_amount_low"
+        | "transaction_amount_medium"
+        | "transaction_amount_high"
+        | "seasonal_period"
+        | "weekend_transaction"
+        | "weekday_transaction"
+        | "first_time_payee"
+        | "recurring_payee";
       transactionAmount?: number;
       transactionDate?: string;
       userConfidence?: number;
@@ -1144,10 +1233,12 @@ export class PayeeService {
       correctionTrigger: data.correctionTrigger,
     };
 
-    if (data.correctionContext !== undefined) correctionData.correctionContext = data.correctionContext;
+    if (data.correctionContext !== undefined)
+      correctionData.correctionContext = data.correctionContext;
     if (data.transactionId !== undefined) correctionData.transactionId = data.transactionId;
     if (data.fromCategoryId !== undefined) correctionData.fromCategoryId = data.fromCategoryId;
-    if (data.transactionAmount !== undefined) correctionData.transactionAmount = data.transactionAmount;
+    if (data.transactionAmount !== undefined)
+      correctionData.transactionAmount = data.transactionAmount;
     if (data.transactionDate !== undefined) correctionData.transactionDate = data.transactionDate;
     if (data.userConfidence !== undefined) correctionData.userConfidence = data.userConfidence;
     if (data.notes !== undefined) correctionData.notes = data.notes;
@@ -1219,18 +1310,20 @@ export class PayeeService {
   /**
    * Get suggestions for updating payee default categories
    */
-  async getDefaultCategoryUpdateSuggestions(): Promise<Array<{
-    payeeId: number;
-    payeeName: string;
-    currentDefaultCategoryId: number | null;
-    currentDefaultCategoryName: string | null;
-    suggestedCategoryId: number;
-    suggestedCategoryName: string;
-    confidence: number;
-    reasoning: string;
-    correctionCount: number;
-    lastCorrectionDate: string;
-  }>> {
+  async getDefaultCategoryUpdateSuggestions(): Promise<
+    Array<{
+      payeeId: number;
+      payeeName: string;
+      currentDefaultCategoryId: number | null;
+      currentDefaultCategoryName: string | null;
+      suggestedCategoryId: number;
+      suggestedCategoryName: string;
+      confidence: number;
+      reasoning: string;
+      correctionCount: number;
+      lastCorrectionDate: string;
+    }>
+  > {
     return await this.learningService.suggestDefaultCategoryUpdates();
   }
 
@@ -1261,7 +1354,7 @@ export class PayeeService {
       categoryName: string;
       confidence: number;
       reasoning: string;
-      method: 'learning' | 'intelligence' | 'hybrid' | 'default';
+      method: "learning" | "intelligence" | "hybrid" | "default";
     };
   }> {
     // Validate payee exists
@@ -1273,7 +1366,7 @@ export class PayeeService {
     // Get intelligence-based analysis
     const [budgetSuggestion, confidenceMetrics] = await Promise.all([
       this.intelligenceService.suggestBudgetAllocation(payeeId),
-      this.intelligenceService.calculateConfidenceScores(payeeId)
+      this.intelligenceService.calculateConfidenceScores(payeeId),
     ]);
 
     // Combine recommendations using weighted confidence
@@ -1286,42 +1379,49 @@ export class PayeeService {
         categoryName: learningRecommendation.recommendedCategoryName,
         confidence: learningRecommendation.confidence,
         reasoning: `Learning-based: ${learningRecommendation.reasoning}`,
-        method: 'learning' as const,
+        method: "learning" as const,
       };
     } else if (budgetSuggestion.budgetCategory.categoryConfidence >= 0.6) {
       // High intelligence confidence - use intelligence recommendation
       combinedRecommendation = {
         categoryId: budgetSuggestion.budgetCategory.primaryCategoryId || 0,
-        categoryName: budgetSuggestion.budgetCategory.primaryCategoryName || 'Uncategorized',
+        categoryName: budgetSuggestion.budgetCategory.primaryCategoryName || "Uncategorized",
         confidence: budgetSuggestion.budgetCategory.categoryConfidence,
         reasoning: `Intelligence-based: ${budgetSuggestion.reasoning}`,
-        method: 'intelligence' as const,
+        method: "intelligence" as const,
       };
-    } else if (learningRecommendation.confidence > 0.3 && budgetSuggestion.budgetCategory.categoryConfidence > 0.3) {
+    } else if (
+      learningRecommendation.confidence > 0.3 &&
+      budgetSuggestion.budgetCategory.categoryConfidence > 0.3
+    ) {
       // Moderate confidence from both - create hybrid
-      const hybridConfidence = (learningRecommendation.confidence + budgetSuggestion.budgetCategory.categoryConfidence) / 2;
+      const hybridConfidence =
+        (learningRecommendation.confidence + budgetSuggestion.budgetCategory.categoryConfidence) /
+        2;
 
       combinedRecommendation = {
-        categoryId: learningRecommendation.confidence > budgetSuggestion.budgetCategory.categoryConfidence
-          ? learningRecommendation.recommendedCategoryId
-          : (budgetSuggestion.budgetCategory.primaryCategoryId || 0),
-        categoryName: learningRecommendation.confidence > budgetSuggestion.budgetCategory.categoryConfidence
-          ? learningRecommendation.recommendedCategoryName
-          : (budgetSuggestion.budgetCategory.primaryCategoryName || 'Uncategorized'),
+        categoryId:
+          learningRecommendation.confidence > budgetSuggestion.budgetCategory.categoryConfidence
+            ? learningRecommendation.recommendedCategoryId
+            : budgetSuggestion.budgetCategory.primaryCategoryId || 0,
+        categoryName:
+          learningRecommendation.confidence > budgetSuggestion.budgetCategory.categoryConfidence
+            ? learningRecommendation.recommendedCategoryName
+            : budgetSuggestion.budgetCategory.primaryCategoryName || "Uncategorized",
         confidence: hybridConfidence,
         reasoning: `Hybrid approach combining learning and intelligence analysis`,
-        method: 'hybrid' as const,
+        method: "hybrid" as const,
       };
     } else {
       // Low confidence - use payee default or uncategorized
       combinedRecommendation = {
         categoryId: payee.defaultCategoryId || 0,
-        categoryName: payee.defaultCategoryId ? 'Default Category' : 'Uncategorized',
+        categoryName: payee.defaultCategoryId ? "Default Category" : "Uncategorized",
         confidence: payee.defaultCategoryId ? 0.3 : 0.1,
         reasoning: payee.defaultCategoryId
-          ? 'Using payee default category due to insufficient learning data'
-          : 'No sufficient data for recommendation',
-        method: 'default' as const,
+          ? "Using payee default category due to insufficient learning data"
+          : "No sufficient data for recommendation",
+        method: "default" as const,
       };
     }
 
@@ -1338,11 +1438,13 @@ export class PayeeService {
   /**
    * Bulk update payee defaults based on learning patterns
    */
-  async applyLearningBasedUpdates(options: {
-    minConfidence?: number;
-    minCorrectionCount?: number;
-    dryRun?: boolean;
-  } = {}): Promise<{
+  async applyLearningBasedUpdates(
+    options: {
+      minConfidence?: number;
+      minCorrectionCount?: number;
+      dryRun?: boolean;
+    } = {}
+  ): Promise<{
     updatedPayees: Array<{
       payeeId: number;
       payeeName: string;
@@ -1354,16 +1456,12 @@ export class PayeeService {
       reason: string;
     }>;
   }> {
-    const {
-      minConfidence = 0.7,
-      minCorrectionCount = 5,
-      dryRun = false
-    } = options;
+    const {minConfidence = 0.7, minCorrectionCount = 5, dryRun = false} = options;
 
     const suggestions = await this.getDefaultCategoryUpdateSuggestions();
 
-    const filteredSuggestions = suggestions.filter(s =>
-      s.confidence >= minConfidence && s.correctionCount >= minCorrectionCount
+    const filteredSuggestions = suggestions.filter(
+      (s) => s.confidence >= minConfidence && s.correctionCount >= minCorrectionCount
     );
 
     const updatedPayees = [];
@@ -1373,32 +1471,34 @@ export class PayeeService {
       try {
         if (!dryRun) {
           await this.updatePayee(suggestion.payeeId, {
-            defaultCategoryId: suggestion.suggestedCategoryId
+            defaultCategoryId: suggestion.suggestedCategoryId,
           });
         }
 
         updatedPayees.push({
           payeeId: suggestion.payeeId,
           payeeName: suggestion.payeeName,
-          changes: [{
-            field: 'defaultCategoryId',
-            oldValue: suggestion.currentDefaultCategoryId,
-            newValue: suggestion.suggestedCategoryId,
-            confidence: suggestion.confidence,
-          }],
+          changes: [
+            {
+              field: "defaultCategoryId",
+              oldValue: suggestion.currentDefaultCategoryId,
+              newValue: suggestion.suggestedCategoryId,
+              confidence: suggestion.confidence,
+            },
+          ],
         });
       } catch (error) {
         skippedPayees.push({
           payeeId: suggestion.payeeId,
           payeeName: suggestion.payeeName,
-          reason: error instanceof Error ? error.message : 'Unknown error',
+          reason: error instanceof Error ? error.message : "Unknown error",
         });
       }
     }
 
     // Add skipped suggestions that didn't meet criteria
-    const lowConfidenceSuggestions = suggestions.filter(s =>
-      s.confidence < minConfidence || s.correctionCount < minCorrectionCount
+    const lowConfidenceSuggestions = suggestions.filter(
+      (s) => s.confidence < minConfidence || s.correctionCount < minCorrectionCount
     );
 
     for (const suggestion of lowConfidenceSuggestions) {
@@ -1433,7 +1533,7 @@ export class PayeeService {
   async getBudgetAllocationSuggestions(
     accountId?: number,
     options: {
-      strategy?: 'conservative' | 'aggressive' | 'balanced';
+      strategy?: "conservative" | "aggressive" | "balanced";
       riskTolerance?: number;
       timeHorizon?: number;
     } = {}
@@ -1446,11 +1546,15 @@ export class PayeeService {
    */
   async getBudgetForecast(
     payeeId: number,
-    forecastPeriod: 'monthly' | 'quarterly' | 'yearly' = 'monthly',
+    forecastPeriod: "monthly" | "quarterly" | "yearly" = "monthly",
     periodsAhead: number = 12
   ) {
     await this.validatePayeeExists(payeeId);
-    return await this.getBudgetAllocationService().predictFutureBudgetNeeds(payeeId, forecastPeriod, periodsAhead);
+    return await this.getBudgetAllocationService().predictFutureBudgetNeeds(
+      payeeId,
+      forecastPeriod,
+      periodsAhead
+    );
   }
 
   /**
@@ -1466,7 +1570,7 @@ export class PayeeService {
    */
   async getBudgetRebalancingPlan(
     accountId?: number,
-    strategy: 'conservative' | 'aggressive' | 'balanced' = 'balanced'
+    strategy: "conservative" | "aggressive" | "balanced" = "balanced"
   ) {
     return await this.getBudgetAllocationService().generateBudgetRebalancing(accountId, strategy);
   }
@@ -1476,7 +1580,10 @@ export class PayeeService {
    */
   async getBudgetEfficiencyAnalysis(payeeId: number, currentBudget?: number) {
     await this.validatePayeeExists(payeeId);
-    return await this.getBudgetAllocationService().calculateBudgetEfficiency(payeeId, currentBudget);
+    return await this.getBudgetAllocationService().calculateBudgetEfficiency(
+      payeeId,
+      currentBudget
+    );
   }
 
   /**
@@ -1496,7 +1603,11 @@ export class PayeeService {
       await this.validatePayeeExists(payeeId);
     }
 
-    return await this.getBudgetAllocationService().optimizeMultiPayeeBudgets(payeeIds, totalBudgetConstraint, objectives);
+    return await this.getBudgetAllocationService().optimizeMultiPayeeBudgets(
+      payeeIds,
+      totalBudgetConstraint,
+      objectives
+    );
   }
 
   /**
@@ -1507,7 +1618,7 @@ export class PayeeService {
     scenarios: Array<{
       name: string;
       description: string;
-      type: 'conservative' | 'optimistic' | 'realistic' | 'stress_test';
+      type: "conservative" | "optimistic" | "realistic" | "stress_test";
       assumptions: Record<string, any>;
     }>
   ) {
@@ -1527,7 +1638,7 @@ export class PayeeService {
         payeeAllocations: {} as Record<number, number>,
         riskScore: 0,
         confidenceScore: 0,
-        expectedUtilization: 0
+        expectedUtilization: 0,
       };
 
       let totalRisk = 0;
@@ -1541,17 +1652,17 @@ export class PayeeService {
         let adjustedAllocation = optimization.recommendations.optimizedAllocation;
 
         // Apply scenario-specific adjustments
-        if (scenario.type === 'conservative') {
+        if (scenario.type === "conservative") {
           adjustedAllocation *= 0.85;
-        } else if (scenario.type === 'optimistic') {
+        } else if (scenario.type === "optimistic") {
           adjustedAllocation *= 1.15;
-        } else if (scenario.type === 'stress_test') {
+        } else if (scenario.type === "stress_test") {
           adjustedAllocation *= 1.3; // Stress test with higher allocations
         }
 
         // Apply custom assumptions from scenario
-        if (scenario.assumptions['budgetMultiplier']) {
-          adjustedAllocation *= scenario.assumptions['budgetMultiplier'];
+        if (scenario.assumptions["budgetMultiplier"]) {
+          adjustedAllocation *= scenario.assumptions["budgetMultiplier"];
         }
 
         results.payeeAllocations[payeeId] = adjustedAllocation;
@@ -1571,7 +1682,7 @@ export class PayeeService {
         description: scenario.description,
         type: scenario.type,
         assumptions: scenario.assumptions,
-        results
+        results,
       });
     }
 
@@ -1589,11 +1700,7 @@ export class PayeeService {
       includeInactive?: boolean;
     } = {}
   ) {
-    const {
-      minTransactionCount = 5,
-      minSpendingAmount = 100,
-      includeInactive = false
-    } = filters;
+    const {minTransactionCount = 5, minSpendingAmount = 100, includeInactive = false} = filters;
 
     // Get payees that meet the criteria
     const accountPayeesResult = accountId
@@ -1608,11 +1715,11 @@ export class PayeeService {
     const payeesWithStats = await Promise.all(
       accountPayees.map(async (payee) => {
         const stats = await this.repository.getStats(payee.id);
-        return { ...payee, stats };
+        return {...payee, stats};
       })
     );
 
-    const eligiblePayees = payeesWithStats.filter((payee: Payee & { stats: PayeeStats }) => {
+    const eligiblePayees = payeesWithStats.filter((payee: Payee & {stats: PayeeStats}) => {
       if (!includeInactive && !payee.isActive) return false;
 
       const stats = payee.stats;
@@ -1633,8 +1740,8 @@ export class PayeeService {
           totalCurrentBudget: 0,
           totalOptimizedBudget: 0,
           totalSavings: 0,
-          averageEfficiencyImprovement: 0
-        }
+          averageEfficiencyImprovement: 0,
+        },
       };
     }
 
@@ -1652,7 +1759,7 @@ export class PayeeService {
         optimizations.push({
           payeeId: payee.id,
           payeeName: payee.name,
-          optimization
+          optimization,
         });
 
         totalCurrentBudget += optimization.currentBudgetAllocation || 0;
@@ -1660,24 +1767,23 @@ export class PayeeService {
         totalEfficiencyImprovement += optimization.efficiency.score;
       } catch (error) {
         // Skip payees that can't be analyzed
-        logger.warn('Payee analysis failed', {
+        logger.warn("Payee analysis failed", {
           payeeId: payee.id,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
     }
 
     const totalSavings = totalOptimizedBudget - totalCurrentBudget;
-    const averageEfficiencyImprovement = optimizations.length > 0
-      ? totalEfficiencyImprovement / optimizations.length
-      : 0;
+    const averageEfficiencyImprovement =
+      optimizations.length > 0 ? totalEfficiencyImprovement / optimizations.length : 0;
 
     return {
       eligiblePayees: eligiblePayees.map((p) => ({
         id: p.id,
         name: p.name,
         isActive: p.isActive,
-        stats: p.stats
+        stats: p.stats,
       })),
       optimizations,
       summary: {
@@ -1685,8 +1791,8 @@ export class PayeeService {
         totalCurrentBudget,
         totalOptimizedBudget,
         totalSavings,
-        averageEfficiencyImprovement
-      }
+        averageEfficiencyImprovement,
+      },
     };
   }
 
@@ -1765,7 +1871,7 @@ export class PayeeService {
    */
   async getActionableInsights(
     payeeId: number,
-    insightTypes?: Array<'optimization' | 'correction' | 'prediction' | 'automation' | 'alert'>
+    insightTypes?: Array<"optimization" | "correction" | "prediction" | "automation" | "alert">
   ): Promise<ActionableInsight[]> {
     await this.validatePayeeExists(payeeId);
     return await this.mlCoordinator.generateActionableInsights(payeeId, insightTypes);
@@ -1777,7 +1883,7 @@ export class PayeeService {
   async getBulkUnifiedRecommendations(
     payeeIds: number[],
     options: {
-      priorityFilter?: 'critical' | 'high' | 'medium' | 'low';
+      priorityFilter?: "critical" | "high" | "medium" | "low";
       confidenceThreshold?: number;
       maxResults?: number;
     } = {}
@@ -1785,7 +1891,7 @@ export class PayeeService {
     const {priorityFilter, confidenceThreshold = 0.5, maxResults = 50} = options;
 
     // Validate all payee IDs exist
-    await Promise.all(payeeIds.map(id => this.validatePayeeExists(id)));
+    await Promise.all(payeeIds.map((id) => this.validatePayeeExists(id)));
 
     const results = [];
     for (const payeeId of payeeIds.slice(0, maxResults)) {
@@ -1801,9 +1907,9 @@ export class PayeeService {
           results.push({payeeId, recommendations});
         }
       } catch (error) {
-        logger.warn('Recommendation generation failed', {
+        logger.warn("Recommendation generation failed", {
           payeeId,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
     }
@@ -1827,7 +1933,7 @@ export class PayeeService {
     period?: {
       startDate: string;
       endDate: string;
-      periodType: 'daily' | 'weekly' | 'monthly';
+      periodType: "daily" | "weekly" | "monthly";
     }
   ): Promise<MLPerformanceMetrics[]> {
     if (payeeId) {
@@ -1836,59 +1942,63 @@ export class PayeeService {
 
     // For now, return estimated metrics
     // In a full implementation, this would track actual ML performance over time
-    const systems: MLPerformanceMetrics['system'][] = [
-      'intelligence', 'learning', 'budget_allocation', 'coordinator', 'ensemble'
+    const systems: MLPerformanceMetrics["system"][] = [
+      "intelligence",
+      "learning",
+      "budget_allocation",
+      "coordinator",
+      "ensemble",
     ];
 
-    return systems.map(system => ({
+    return systems.map((system) => ({
       system,
       period: period || {
-        startDate: toISOString(currentDate.subtract({ days: 30 })),
+        startDate: toISOString(currentDate.subtract({days: 30})),
         endDate: toISOString(currentDate),
-        periodType: 'monthly'
+        periodType: "monthly",
       },
       accuracy: {
         overall: 0.75 + Math.random() * 0.2, // Simulated: 75-95%
         categoryPrediction: 0.78 + Math.random() * 0.15,
         budgetPrediction: 0.72 + Math.random() * 0.18,
-        behaviorPrediction: 0.68 + Math.random() * 0.22
+        behaviorPrediction: 0.68 + Math.random() * 0.22,
       },
       precision: {
         overall: 0.73 + Math.random() * 0.22,
         byCategory: {},
-        byBudgetRange: {}
+        byBudgetRange: {},
       },
       recall: {
         overall: 0.71 + Math.random() * 0.24,
         byCategory: {},
-        byBudgetRange: {}
+        byBudgetRange: {},
       },
       f1Score: 0.74 + Math.random() * 0.21,
       confidenceCalibration: {
         overconfidenceRate: Math.random() * 0.15,
         underconfidenceRate: Math.random() * 0.12,
-        calibrationScore: 0.82 + Math.random() * 0.15
+        calibrationScore: 0.82 + Math.random() * 0.15,
       },
       adaptationMetrics: {
         learningRate: 0.15 + Math.random() * 0.1,
         forgettingRate: 0.05 + Math.random() * 0.05,
-        adaptationSpeed: 0.8 + Math.random() * 0.15
+        adaptationSpeed: 0.8 + Math.random() * 0.15,
       },
       userFeedback: {
         acceptanceRate: 0.76 + Math.random() * 0.2,
         correctionRate: 0.12 + Math.random() * 0.08,
-        satisfactionScore: 0.81 + Math.random() * 0.15
+        satisfactionScore: 0.81 + Math.random() * 0.15,
       },
       systemLoad: {
         averageResponseTime: 150 + Math.random() * 100,
         throughput: 45 + Math.random() * 25,
-        errorRate: Math.random() * 0.05
+        errorRate: Math.random() * 0.05,
       },
       dataQuality: {
         completeness: 0.88 + Math.random() * 0.1,
         consistency: 0.91 + Math.random() * 0.08,
-        freshness: 0.85 + Math.random() * 0.12
-      }
+        freshness: 0.85 + Math.random() * 0.12,
+      },
     }));
   }
 
@@ -1901,18 +2011,18 @@ export class PayeeService {
       confidenceThreshold?: number;
       maxAutomations?: number;
       dryRun?: boolean;
-      automationTypes?: Array<'category' | 'budget' | 'rules'>;
+      automationTypes?: Array<"category" | "budget" | "rules">;
     } = {}
   ) {
     const {
       confidenceThreshold = 0.8,
       maxAutomations = 20,
       dryRun = false,
-      automationTypes = ['category', 'budget']
+      automationTypes = ["category", "budget"],
     } = options;
 
     // Validate all payee IDs
-    await Promise.all(payeeIds.map(id => this.validatePayeeExists(id)));
+    await Promise.all(payeeIds.map((id) => this.validatePayeeExists(id)));
 
     const results = [];
     let automationsApplied = 0;
@@ -1922,17 +2032,17 @@ export class PayeeService {
 
       try {
         const automationResult = await this.mlCoordinator.executeAdaptiveOptimization(payeeId, {
-          applyCategorizationUpdates: automationTypes.includes('category'),
-          applyBudgetUpdates: automationTypes.includes('budget'),
-          applyAutomationRules: automationTypes.includes('rules'),
+          applyCategorizationUpdates: automationTypes.includes("category"),
+          applyBudgetUpdates: automationTypes.includes("budget"),
+          applyAutomationRules: automationTypes.includes("rules"),
           confidenceThreshold,
-          dryRun
+          dryRun,
         });
 
         if (automationResult.applied.length > 0) {
           results.push({
             payeeId,
-            ...automationResult
+            ...automationResult,
           });
           automationsApplied += automationResult.applied.length;
         }
@@ -1940,16 +2050,18 @@ export class PayeeService {
         results.push({
           payeeId,
           applied: [],
-          skipped: [{
-            type: 'error',
-            reason: error instanceof Error ? error.message : 'Unknown error',
-            recommendation: 'Manual review required'
-          }],
+          skipped: [
+            {
+              type: "error",
+              reason: error instanceof Error ? error.message : "Unknown error",
+              recommendation: "Manual review required",
+            },
+          ],
           performance: {
             processingTime: 0,
             systemsConsulted: [],
-            dataPointsAnalyzed: 0
-          }
+            dataPointsAnalyzed: 0,
+          },
         });
       }
     }
@@ -1959,9 +2071,10 @@ export class PayeeService {
       summary: {
         totalPayeesProcessed: payeeIds.length,
         totalAutomationsApplied: automationsApplied,
-        successRate: results.filter(r => r.applied.length > 0).length / payeeIds.length,
-        averageProcessingTime: results.reduce((sum, r) => sum + r.performance.processingTime, 0) / results.length
-      }
+        successRate: results.filter((r) => r.applied.length > 0).length / payeeIds.length,
+        averageProcessingTime:
+          results.reduce((sum, r) => sum + r.performance.processingTime, 0) / results.length,
+      },
     };
   }
 
@@ -1971,19 +2084,19 @@ export class PayeeService {
   async getMLInsightsDashboard(
     filters: {
       payeeIds?: number[];
-      insightTypes?: Array<'optimization' | 'correction' | 'prediction' | 'automation' | 'alert'>;
-      priorityFilter?: 'critical' | 'high' | 'medium' | 'low';
+      insightTypes?: Array<"optimization" | "correction" | "prediction" | "automation" | "alert">;
+      priorityFilter?: "critical" | "high" | "medium" | "low";
       timeRange?: {startDate: string; endDate: string};
     } = {}
   ) {
     const {payeeIds, insightTypes, priorityFilter, timeRange} = filters;
 
     // Get relevant payees
-    const targetPayeeIds = payeeIds || (await this.repository.findAll()).data.map(p => p.id);
+    const targetPayeeIds = payeeIds || (await this.repository.findAll()).data.map((p) => p.id);
 
     // Validate payee IDs
     if (payeeIds) {
-      await Promise.all(payeeIds.map(id => this.validatePayeeExists(id)));
+      await Promise.all(payeeIds.map((id) => this.validatePayeeExists(id)));
     }
 
     // Generate insights for each payee
@@ -1991,16 +2104,17 @@ export class PayeeService {
     const performanceMetrics = [];
     const behaviorChanges = [];
 
-    for (const payeeId of targetPayeeIds.slice(0, 25)) { // Limit for performance
+    for (const payeeId of targetPayeeIds.slice(0, 25)) {
+      // Limit for performance
       try {
         const [insights, behavior, performance] = await Promise.all([
           this.mlCoordinator.generateActionableInsights(payeeId, insightTypes),
           this.mlCoordinator.detectPayeeBehaviorChanges(payeeId),
-          this.getMLPerformanceMetrics(payeeId)
+          this.getMLPerformanceMetrics(payeeId),
         ]);
 
         // Apply filters
-        const filteredInsights = insights.filter(insight => {
+        const filteredInsights = insights.filter((insight) => {
           if (priorityFilter && insight.priority !== priorityFilter) return false;
           if (timeRange && insight.generatedAt < timeRange.startDate) return false;
           if (timeRange && insight.generatedAt > timeRange.endDate) return false;
@@ -2011,9 +2125,9 @@ export class PayeeService {
         if (behavior.changeDetected) behaviorChanges.push(behavior);
         performanceMetrics.push(...performance);
       } catch (error) {
-        logger.warn('Dashboard data generation failed', {
+        logger.warn("Dashboard data generation failed", {
           payeeId,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
     }
@@ -2029,55 +2143,65 @@ export class PayeeService {
     });
 
     // Calculate summary statistics
-    const insightsByType = allInsights.reduce((acc, insight) => {
-      acc[insight.type] = (acc[insight.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const insightsByType = allInsights.reduce(
+      (acc, insight) => {
+        acc[insight.type] = (acc[insight.type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
-    const insightsByPriority = allInsights.reduce((acc, insight) => {
-      acc[insight.priority] = (acc[insight.priority] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const insightsByPriority = allInsights.reduce(
+      (acc, insight) => {
+        acc[insight.priority] = (acc[insight.priority] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
-    const averageConfidence = allInsights.length > 0
-      ? allInsights.reduce((sum, insight) => sum + insight.confidence, 0) / allInsights.length
-      : 0;
+    const averageConfidence =
+      allInsights.length > 0
+        ? allInsights.reduce((sum, insight) => sum + insight.confidence, 0) / allInsights.length
+        : 0;
 
-    const systemPerformance = performanceMetrics.reduce((acc, metric) => {
-      if (!acc[metric.system]) {
-        acc[metric.system] = {
-          accuracy: metric.accuracy.overall,
-          f1Score: metric.f1Score,
-          userSatisfaction: metric.userFeedback.satisfactionScore
-        };
-      }
-      return acc;
-    }, {} as Record<string, any>);
+    const systemPerformance = performanceMetrics.reduce(
+      (acc, metric) => {
+        if (!acc[metric.system]) {
+          acc[metric.system] = {
+            accuracy: metric.accuracy.overall,
+            f1Score: metric.f1Score,
+            userSatisfaction: metric.userFeedback.satisfactionScore,
+          };
+        }
+        return acc;
+      },
+      {} as Record<string, any>
+    );
 
     return {
       insights: allInsights.slice(0, 50), // Limit returned insights
       behaviorChanges,
       summary: {
         totalInsights: allInsights.length,
-        criticalInsights: insightsByPriority['critical'] || 0,
-        highPriorityInsights: insightsByPriority['high'] || 0,
+        criticalInsights: insightsByPriority["critical"] || 0,
+        highPriorityInsights: insightsByPriority["high"] || 0,
         behaviorChangesDetected: behaviorChanges.length,
         averageConfidence,
         insightsByType,
-        insightsByPriority
+        insightsByPriority,
       },
       systemPerformance,
       recommendations: [
-        ...(allInsights.filter(i => i.priority === 'critical').length > 5
-          ? ['High number of critical insights - prioritize immediate attention']
+        ...(allInsights.filter((i) => i.priority === "critical").length > 5
+          ? ["High number of critical insights - prioritize immediate attention"]
           : []),
         ...(averageConfidence < 0.6
-          ? ['Low average confidence - consider data quality improvements']
+          ? ["Low average confidence - consider data quality improvements"]
           : []),
         ...(behaviorChanges.length > 3
-          ? ['Multiple behavior changes detected - review payee patterns']
-          : [])
-      ]
+          ? ["Multiple behavior changes detected - review payee patterns"]
+          : []),
+      ],
     };
   }
 
@@ -2106,10 +2230,14 @@ export class PayeeService {
 
     // Use provided overrides or payee's existing contact data
     const contactData: ContactData = {};
-    if (contactOverrides?.phone || payee.phone) contactData.phone = contactOverrides?.phone || payee.phone;
-    if (contactOverrides?.email || payee.email) contactData.email = contactOverrides?.email || payee.email;
-    if (contactOverrides?.website || payee.website) contactData.website = contactOverrides?.website || payee.website;
-    if (contactOverrides?.address || payee.address) contactData.address = contactOverrides?.address || (payee.address as AddressData | null);
+    if (contactOverrides?.phone || payee.phone)
+      contactData.phone = contactOverrides?.phone || payee.phone;
+    if (contactOverrides?.email || payee.email)
+      contactData.email = contactOverrides?.email || payee.email;
+    if (contactOverrides?.website || payee.website)
+      contactData.website = contactOverrides?.website || payee.website;
+    if (contactOverrides?.address || payee.address)
+      contactData.address = contactOverrides?.address || (payee.address as AddressData | null);
 
     // Convert ContactData to service-compatible format (strip nulls)
     const serviceContactData: {
@@ -2124,41 +2252,42 @@ export class PayeeService {
     if (contactData.address) serviceContactData.address = contactData.address;
 
     // Validate and enrich contact information
-    const enrichmentResult = await this.contactService.validateAndEnrichContactInfo(serviceContactData);
+    const enrichmentResult =
+      await this.contactService.validateAndEnrichContactInfo(serviceContactData);
 
     // Generate contact analytics
     const payeeAnalytics = await this.getContactAnalytics(payeeId, serviceContactData);
 
     // Generate specific suggestions for this payee
-    const payeeSuggestions = await this.contactService.generateContactSuggestions(
-      payeeId,
-      {
-        ...(payee.name && { name: payee.name }),
-        ...serviceContactData
-      }
-    );
+    const payeeSuggestions = await this.contactService.generateContactSuggestions(payeeId, {
+      ...(payee.name && {name: payee.name}),
+      ...serviceContactData,
+    });
 
     // Merge suggestions
     const allSuggestions = [
-      ...enrichmentResult.enrichmentSuggestions.map(s => ({...s, payeeId})),
-      ...payeeSuggestions
+      ...enrichmentResult.enrichmentSuggestions.map((s) => ({...s, payeeId})),
+      ...payeeSuggestions,
     ];
 
     return {
       ...enrichmentResult,
       enrichmentSuggestions: allSuggestions,
-      payeeAnalytics
+      payeeAnalytics,
     };
   }
 
   /**
    * Standardize phone number for a payee
    */
-  async standardizePayeePhoneNumber(payeeId: number, phone?: string): Promise<{
+  async standardizePayeePhoneNumber(
+    payeeId: number,
+    phone?: string
+  ): Promise<{
     standardized: string;
-    format: 'e164' | 'national' | 'international' | 'local';
+    format: "e164" | "national" | "international" | "local";
     region?: string;
-    type?: 'mobile' | 'landline' | 'toll-free';
+    type?: "mobile" | "landline" | "toll-free";
     valid: boolean;
     updated?: boolean;
   }> {
@@ -2180,17 +2309,20 @@ export class PayeeService {
 
     return {
       ...result,
-      updated
+      updated,
     };
   }
 
   /**
    * Validate email domain for a payee
    */
-  async validatePayeeEmailDomain(payeeId: number, email?: string): Promise<{
+  async validatePayeeEmailDomain(
+    payeeId: number,
+    email?: string
+  ): Promise<{
     isValid: boolean;
     domain: string;
-    domainType: 'business' | 'consumer' | 'educational' | 'government' | 'suspicious' | 'unknown';
+    domainType: "business" | "consumer" | "educational" | "government" | "suspicious" | "unknown";
     reputationScore: number;
     securityFlags: string[];
     suggestions?: string[];
@@ -2206,25 +2338,28 @@ export class PayeeService {
 
     const securityFlags: string[] = [];
     if (validation.disposable) {
-      securityFlags.push('Disposable email address detected');
+      securityFlags.push("Disposable email address detected");
     }
-    if (validation.domainType === 'suspicious') {
-      securityFlags.push('Suspicious email domain');
+    if (validation.domainType === "suspicious") {
+      securityFlags.push("Suspicious email domain");
     }
     if (validation.reputationScore < 0.3) {
-      securityFlags.push('Low domain reputation score');
+      securityFlags.push("Low domain reputation score");
     }
 
     return {
       ...validation,
-      securityFlags
+      securityFlags,
     };
   }
 
   /**
    * Enrich address data for a payee
    */
-  async enrichPayeeAddressData(payeeId: number, address?: AddressData): Promise<{
+  async enrichPayeeAddressData(
+    payeeId: number,
+    address?: AddressData
+  ): Promise<{
     standardized: AddressData;
     confidence: number;
     geocoded: boolean;
@@ -2240,15 +2375,18 @@ export class PayeeService {
 
     // Auto-update payee if enrichment significantly improved the address
     let updated = false;
-    if (!address && enrichment.confidence > 0.7 &&
-        JSON.stringify(enrichment.standardized) !== JSON.stringify(payee.address)) {
+    if (
+      !address &&
+      enrichment.confidence > 0.7 &&
+      JSON.stringify(enrichment.standardized) !== JSON.stringify(payee.address)
+    ) {
       await this.updatePayee(payeeId, {address: enrichment.standardized});
       updated = true;
     }
 
     return {
       ...enrichment,
-      updated
+      updated,
     };
   }
 
@@ -2260,14 +2398,12 @@ export class PayeeService {
     minimumSimilarity = 0.7
   ): Promise<DuplicateDetection[]> {
     const result = await this.repository.findAll();
-    const payees = includeInactive
-      ? result.data
-      : result.data.filter(payee => payee.isActive);
+    const payees = includeInactive ? result.data : result.data.filter((payee) => payee.isActive);
 
     const duplicates = await this.contactService.detectDuplicateContacts(payees);
 
     // Filter by minimum similarity threshold
-    return duplicates.filter(dup => dup.similarityScore >= minimumSimilarity);
+    return duplicates.filter((dup) => dup.similarityScore >= minimumSimilarity);
   }
 
   /**
@@ -2295,7 +2431,10 @@ export class PayeeService {
   /**
    * Validate website accessibility for a payee
    */
-  async validatePayeeWebsiteAccessibility(payeeId: number, website?: string): Promise<{
+  async validatePayeeWebsiteAccessibility(
+    payeeId: number,
+    website?: string
+  ): Promise<{
     isAccessible: boolean;
     isSecure: boolean;
     standardizedUrl?: string;
@@ -2313,20 +2452,23 @@ export class PayeeService {
     const validation = await this.contactService.validateWebsiteAccessibility(websiteToValidate);
 
     const securityFlags: string[] = [];
-    const isSecure = validation.metadata.risk === 'low';
+    const isSecure = validation.metadata.risk === "low";
     const isAccessible = validation.isValid;
 
-    if (validation.metadata.risk === 'high') {
-      securityFlags.push('High-risk website detected');
+    if (validation.metadata.risk === "high") {
+      securityFlags.push("High-risk website detected");
     }
     if (!isSecure) {
-      securityFlags.push('Website security concerns');
+      securityFlags.push("Website security concerns");
     }
 
     // Auto-update payee if standardization improved the URL
     let updated = false;
-    if (!website && validation.standardizedValue &&
-        validation.standardizedValue !== payee.website) {
+    if (
+      !website &&
+      validation.standardizedValue &&
+      validation.standardizedValue !== payee.website
+    ) {
       await this.updatePayee(payeeId, {website: validation.standardizedValue});
       updated = true;
     }
@@ -2342,7 +2484,7 @@ export class PayeeService {
       isAccessible,
       isSecure,
       securityFlags,
-      suggestions: validation.suggestions
+      suggestions: validation.suggestions,
     };
 
     if (validation.standardizedValue) result.standardizedUrl = validation.standardizedValue;
@@ -2359,7 +2501,7 @@ export class PayeeService {
     transactionLimit = 50
   ): Promise<{
     extractedContacts: Array<{
-      field: 'phone' | 'email' | 'website';
+      field: "phone" | "email" | "website";
       value: string;
       confidence: number;
       source: string;
@@ -2375,23 +2517,24 @@ export class PayeeService {
     const mockTransactionData = [
       {
         description: `Payment to ${payee.name} - contact@example.com`,
-        payeeName: payee.name || 'Unknown',
+        payeeName: payee.name || "Unknown",
         amount: 100,
-        metadata: {}
+        metadata: {},
       },
       {
         description: `${payee.name} - call (555) 123-4567 for support`,
-        payeeName: payee.name || 'Unknown',
+        payeeName: payee.name || "Unknown",
         amount: 50,
-        metadata: {}
-      }
+        metadata: {},
+      },
     ];
 
-    const extraction = await this.contactService.extractContactFromTransactionData(mockTransactionData);
+    const extraction =
+      await this.contactService.extractContactFromTransactionData(mockTransactionData);
 
     // Convert extracted contacts to structured format
     const extractedContacts: Array<{
-      field: 'phone' | 'email' | 'website';
+      field: "phone" | "email" | "website";
       value: string;
       confidence: number;
       source: string;
@@ -2401,13 +2544,13 @@ export class PayeeService {
 
     for (const contact of extraction.extractedContacts) {
       for (const [field, value] of Object.entries(contact.extractedFields)) {
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           extractedContacts.push({
-            field: field as 'phone' | 'email' | 'website',
+            field: field as "phone" | "email" | "website",
             value,
             confidence: contact.confidence,
             source: contact.source,
-            transactionCount: 1 // Would aggregate in real implementation
+            transactionCount: 1, // Would aggregate in real implementation
           });
 
           // Create suggestion if payee doesn't have this contact info
@@ -2415,25 +2558,26 @@ export class PayeeService {
           if (!payeeField) {
             suggestions.push({
               payeeId,
-              field: field as 'phone' | 'email' | 'website',
+              field: field as "phone" | "email" | "website",
               suggestedValue: value,
               confidence: contact.confidence,
-              source: 'transaction_data',
-              reasoning: `Extracted from transaction description: "${mockTransactionData[0]?.description.substring(0, 50)}..."`
+              source: "transaction_data",
+              reasoning: `Extracted from transaction description: "${mockTransactionData[0]?.description.substring(0, 50)}..."`,
             });
           }
         }
       }
     }
 
-    const overallConfidence = extractedContacts.length > 0
-      ? extractedContacts.reduce((sum, c) => sum + c.confidence, 0) / extractedContacts.length
-      : 0;
+    const overallConfidence =
+      extractedContacts.length > 0
+        ? extractedContacts.reduce((sum, c) => sum + c.confidence, 0) / extractedContacts.length
+        : 0;
 
     return {
       extractedContacts,
       suggestions,
-      confidence: overallConfidence
+      confidence: overallConfidence,
     };
   }
 
@@ -2456,12 +2600,12 @@ export class PayeeService {
       phone: contactOverrides?.phone || payee.phone,
       email: contactOverrides?.email || payee.email,
       website: contactOverrides?.website || payee.website,
-      address: contactOverrides?.address || payee.address
+      address: contactOverrides?.address || payee.address,
     };
 
     // Calculate completeness score (percentage of filled contact fields)
     const totalFields = 4; // phone, email, website, address
-    const filledFields = Object.values(contactData).filter(v => v != null).length;
+    const filledFields = Object.values(contactData).filter((v) => v != null).length;
     const completenessScore = filledFields / totalFields;
 
     // Validate each field to calculate accuracy
@@ -2473,23 +2617,26 @@ export class PayeeService {
       validationPromises.push(this.contactService.validateEmailDomains(contactData.email));
     }
     if (contactData.website) {
-      validationPromises.push(this.contactService.validateWebsiteAccessibility(contactData.website));
+      validationPromises.push(
+        this.contactService.validateWebsiteAccessibility(contactData.website)
+      );
     }
     if (contactData.address) {
       validationPromises.push(this.contactService.enrichAddressData(contactData.address));
     }
 
     const validationResults = await Promise.allSettled(validationPromises);
-    const validResults = validationResults.filter(r => r.status === 'fulfilled').length;
-    const accuracyScore = validationResults.length > 0 ? validResults / validationResults.length : 0;
+    const validResults = validationResults.filter((r) => r.status === "fulfilled").length;
+    const accuracyScore =
+      validationResults.length > 0 ? validResults / validationResults.length : 0;
 
     // Calculate richness score (depth of information)
     let richnessScore = 0;
     if (contactData.phone) richnessScore += 0.25;
     if (contactData.email) richnessScore += 0.25;
     if (contactData.website) richnessScore += 0.25;
-    if (contactData.address && typeof contactData.address === 'object') {
-      const addressFields = Object.values(contactData.address).filter(v => v != null).length;
+    if (contactData.address && typeof contactData.address === "object") {
+      const addressFields = Object.values(contactData.address).filter((v) => v != null).length;
       richnessScore += Math.min(0.25, addressFields * 0.05); // Up to 0.25 for complete address
     }
 
@@ -2501,32 +2648,36 @@ export class PayeeService {
       contactFields: {
         phone: {
           present: !!contactData.phone,
-          valid: !!contactData.phone && (await this.contactService.standardizePhoneNumbers(contactData.phone)).valid,
+          valid:
+            !!contactData.phone &&
+            (await this.contactService.standardizePhoneNumbers(contactData.phone)).valid,
           standardized: true, // Would check actual standardization
-          type: 'mobile' // Would detect actual type
+          type: "mobile", // Would detect actual type
         },
         email: {
           present: !!contactData.email,
-          valid: !!contactData.email && (await this.contactService.validateEmailDomains(contactData.email)).isValid,
+          valid:
+            !!contactData.email &&
+            (await this.contactService.validateEmailDomains(contactData.email)).isValid,
           verified: false, // Would implement verification
-          domainReputation: 'good' // Would get actual reputation
+          domainReputation: "good", // Would get actual reputation
         },
         website: {
           present: !!contactData.website,
           accessible: true, // Would check actual accessibility
           secure: true, // Would check HTTPS
-          responsive: true // Would check responsiveness
+          responsive: true, // Would check responsiveness
         },
         address: {
           present: !!contactData.address,
           complete: !!contactData.address,
           standardized: true,
           validated: true,
-          geocoded: false
-        }
+          geocoded: false,
+        },
       },
       lastAnalyzed: toISOString(currentDate),
-      trends: [] // Would track historical changes
+      trends: [], // Would track historical changes
     };
   }
 
@@ -2557,10 +2708,7 @@ export class PayeeService {
       totalSuggestions: number;
     };
   }> {
-    const {
-      autoFix = false,
-      minConfidence = 0.8
-    } = options;
+    const {autoFix = false, minConfidence = 0.8} = options;
 
     const results = [];
     let totalValid = 0;
@@ -2588,31 +2736,31 @@ export class PayeeService {
                   const currentValue = payee[suggestion.field as keyof Payee];
                   if (!currentValue) {
                     await this.updatePayee(payeeId, {
-                      [suggestion.field]: suggestion.suggestedValue
+                      [suggestion.field]: suggestion.suggestedValue,
                     });
                     applied.push({
                       field: suggestion.field,
                       oldValue: currentValue,
-                      newValue: suggestion.suggestedValue
+                      newValue: suggestion.suggestedValue,
                     });
                     totalFixed++;
                   }
                 } catch (error) {
                   skipped.push({
                     field: suggestion.field,
-                    reason: error instanceof Error ? error.message : 'Unknown error'
+                    reason: error instanceof Error ? error.message : "Unknown error",
                   });
                 }
               } else {
                 skipped.push({
                   field: suggestion.field,
-                  reason: `Confidence ${Math.round(suggestion.confidence * 100)}% below threshold ${Math.round(minConfidence * 100)}%`
+                  reason: `Confidence ${Math.round(suggestion.confidence * 100)}% below threshold ${Math.round(minConfidence * 100)}%`,
                 });
               }
             }
           }
 
-          const validFields = validation.validationResults.filter(r => r.isValid).length;
+          const validFields = validation.validationResults.filter((r) => r.isValid).length;
           if (validFields === validation.validationResults.length) {
             totalValid++;
           }
@@ -2621,24 +2769,25 @@ export class PayeeService {
 
           return {
             payeeId,
-            payeeName: payee.name || 'Unknown',
+            payeeName: payee.name || "Unknown",
             validationResults: validation.validationResults,
             suggestions: validation.enrichmentSuggestions,
             applied,
-            skipped
+            skipped,
           };
-
         } catch (error) {
           return {
             payeeId,
-            payeeName: 'Unknown',
+            payeeName: "Unknown",
             validationResults: [],
             suggestions: [],
             applied: [],
-            skipped: [{
-              field: 'all',
-              reason: error instanceof Error ? error.message : 'Unknown error'
-            }]
+            skipped: [
+              {
+                field: "all",
+                reason: error instanceof Error ? error.message : "Unknown error",
+              },
+            ],
           };
         }
       });
@@ -2653,8 +2802,8 @@ export class PayeeService {
         totalProcessed: payeeIds.length,
         totalValid,
         totalFixed,
-        totalSuggestions
-      }
+        totalSuggestions,
+      },
     };
   }
 
@@ -2666,28 +2815,34 @@ export class PayeeService {
     options: {
       dryRun?: boolean;
       preserveHistory?: boolean;
-      conflictResolution?: 'primary' | 'duplicate' | 'best' | 'manual';
+      conflictResolution?: "primary" | "duplicate" | "best" | "manual";
     } = {}
   ): Promise<{
     merged: boolean;
     mergedPayee?: Payee;
-    conflicts: Array<{field: string; primaryValue: unknown; duplicateValue: unknown; resolution: string}>;
+    conflicts: Array<{
+      field: string;
+      primaryValue: unknown;
+      duplicateValue: unknown;
+      resolution: string;
+    }>;
     preservedData: Record<string, unknown>;
   }> {
-    const {
-      dryRun = false,
-      preserveHistory = true,
-      conflictResolution = 'best'
-    } = options;
+    const {dryRun = false, preserveHistory = true, conflictResolution = "best"} = options;
 
     const primaryPayee = await this.getPayeeById(duplicateDetection.primaryPayeeId);
     const duplicatePayee = await this.getPayeeById(duplicateDetection.duplicatePayeeId);
 
-    const conflicts: Array<{field: string; primaryValue: unknown; duplicateValue: unknown; resolution: string}> = [];
+    const conflicts: Array<{
+      field: string;
+      primaryValue: unknown;
+      duplicateValue: unknown;
+      resolution: string;
+    }> = [];
     const mergedData: UpdatePayeeData = {};
 
     // Resolve conflicts based on strategy
-    const contactFields = ['phone', 'email', 'website', 'address'] as const;
+    const contactFields = ["phone", "email", "website", "address"] as const;
 
     for (const field of contactFields) {
       const primaryValue = primaryPayee[field];
@@ -2695,39 +2850,47 @@ export class PayeeService {
 
       if (primaryValue && duplicateValue && primaryValue !== duplicateValue) {
         let resolvedValue = primaryValue;
-        let resolution = 'kept_primary';
+        let resolution = "kept_primary";
 
-        if (conflictResolution === 'best') {
+        if (conflictResolution === "best") {
           // Choose the "better" value based on validation
           try {
-            if (field === 'phone') {
-              const primaryValid = (await this.contactService.standardizePhoneNumbers(primaryValue as string)).valid;
-              const duplicateValid = (await this.contactService.standardizePhoneNumbers(duplicateValue as string)).valid;
+            if (field === "phone") {
+              const primaryValid = (
+                await this.contactService.standardizePhoneNumbers(primaryValue as string)
+              ).valid;
+              const duplicateValid = (
+                await this.contactService.standardizePhoneNumbers(duplicateValue as string)
+              ).valid;
               if (duplicateValid && !primaryValid) {
                 resolvedValue = duplicateValue;
-                resolution = 'chose_duplicate_better_quality';
+                resolution = "chose_duplicate_better_quality";
               }
-            } else if (field === 'email') {
-              const primaryValid = (await this.contactService.validateEmailDomains(primaryValue as string)).isValid;
-              const duplicateValid = (await this.contactService.validateEmailDomains(duplicateValue as string)).isValid;
+            } else if (field === "email") {
+              const primaryValid = (
+                await this.contactService.validateEmailDomains(primaryValue as string)
+              ).isValid;
+              const duplicateValid = (
+                await this.contactService.validateEmailDomains(duplicateValue as string)
+              ).isValid;
               if (duplicateValid && !primaryValid) {
                 resolvedValue = duplicateValue;
-                resolution = 'chose_duplicate_better_quality';
+                resolution = "chose_duplicate_better_quality";
               }
             }
           } catch {
             // If validation fails, keep primary
           }
-        } else if (conflictResolution === 'duplicate') {
+        } else if (conflictResolution === "duplicate") {
           resolvedValue = duplicateValue;
-          resolution = 'chose_duplicate';
+          resolution = "chose_duplicate";
         }
 
         conflicts.push({
           field,
           primaryValue,
           duplicateValue,
-          resolution
+          resolution,
         });
 
         (mergedData as Record<string, unknown>)[field] = resolvedValue;
@@ -2738,7 +2901,7 @@ export class PayeeService {
           field,
           primaryValue: null,
           duplicateValue,
-          resolution: 'filled_from_duplicate'
+          resolution: "filled_from_duplicate",
         });
       }
     }
@@ -2751,19 +2914,27 @@ export class PayeeService {
       mergedPayee = await this.updatePayee(duplicateDetection.primaryPayeeId, mergedData);
 
       // Merge the duplicate payee (this would reassign transactions in a full implementation)
-      await this.mergePayees(duplicateDetection.duplicatePayeeId, duplicateDetection.primaryPayeeId);
+      await this.mergePayees(
+        duplicateDetection.duplicatePayeeId,
+        duplicateDetection.primaryPayeeId
+      );
       merged = true;
     }
 
     const result: {
       merged: boolean;
       mergedPayee?: Payee;
-      conflicts: Array<{field: string; primaryValue: unknown; duplicateValue: unknown; resolution: string}>;
+      conflicts: Array<{
+        field: string;
+        primaryValue: unknown;
+        duplicateValue: unknown;
+        resolution: string;
+      }>;
       preservedData: Record<string, unknown>;
     } = {
       merged,
       conflicts,
-      preservedData: preserveHistory ? duplicatePayee : {}
+      preservedData: preserveHistory ? duplicatePayee : {},
     };
 
     if (mergedPayee) result.mergedPayee = mergedPayee;
@@ -2806,13 +2977,13 @@ export class PayeeService {
 
     // Filter inactive payees if required
     if (!includeInactive) {
-      payees = payees.filter(payee => payee.isActive);
+      payees = payees.filter((payee) => payee.isActive);
     }
 
     const detections = await this.subscriptionService.detectSubscriptions(payees);
 
     // Filter by minimum confidence
-    return detections.filter(detection => detection.detectionConfidence >= minConfidence);
+    return detections.filter((detection) => detection.detectionConfidence >= minConfidence);
   }
 
   /**
@@ -2891,7 +3062,9 @@ export class PayeeService {
   /**
    * Get subscription cancellation assistance for a payee
    */
-  async getSubscriptionCancellationAssistance(payeeId: number): Promise<SubscriptionCancellationAssistance> {
+  async getSubscriptionCancellationAssistance(
+    payeeId: number
+  ): Promise<SubscriptionCancellationAssistance> {
     // Verify payee exists
     await this.getPayeeById(payeeId);
 
@@ -2906,23 +3079,25 @@ export class PayeeService {
     optimizationGoals: {
       maximizeSavings?: boolean;
       maintainValueThreshold?: number;
-      riskTolerance?: 'low' | 'medium' | 'high';
+      riskTolerance?: "low" | "medium" | "high";
     } = {}
-  ): Promise<Array<{
-    payeeId: number;
-    currentCost: number;
-    optimizedCost: number;
-    potentialSavings: number;
-    recommendations: Array<{
-      type: 'cancel' | 'downgrade' | 'switch' | 'negotiate' | 'bundle' | 'pause';
-      description: string;
-      savings: number;
-      effort: 'low' | 'medium' | 'high';
-      risk: 'low' | 'medium' | 'high';
-      timeline: string;
-      confidence: number;
-    }>;
-  }>> {
+  ): Promise<
+    Array<{
+      payeeId: number;
+      currentCost: number;
+      optimizedCost: number;
+      potentialSavings: number;
+      recommendations: Array<{
+        type: "cancel" | "downgrade" | "switch" | "negotiate" | "bundle" | "pause";
+        description: string;
+        savings: number;
+        effort: "low" | "medium" | "high";
+        risk: "low" | "medium" | "high";
+        timeline: string;
+        confidence: number;
+      }>;
+    }>
+  > {
     // Verify all payees exist
     for (const id of payeeIds) {
       await this.getPayeeById(id);
@@ -2995,13 +3170,17 @@ export class PayeeService {
       monthlyCost: subscriptionMetadata.baseCost,
       renewalDate: subscriptionMetadata.startDate || new Date().toISOString(),
       isActive: !subscriptionMetadata.endDate,
-      billingCycle: subscriptionMetadata.billingCycle === 'annual' ? 'yearly' :
-                    subscriptionMetadata.billingCycle === 'quarterly' ? 'quarterly' : 'monthly',
+      billingCycle:
+        subscriptionMetadata.billingCycle === "annual"
+          ? "yearly"
+          : subscriptionMetadata.billingCycle === "quarterly"
+            ? "quarterly"
+            : "monthly",
     };
 
     // Update the payee's subscription info
     return await this.updatePayee(payeeId, {
-      subscriptionInfo
+      subscriptionInfo,
     });
   }
 
@@ -3022,7 +3201,7 @@ export class PayeeService {
 
     // Get current subscription metadata
     let subscriptionInfo: SubscriptionMetadata | null = null;
-    if (payee.subscriptionInfo && typeof payee.subscriptionInfo === 'object') {
+    if (payee.subscriptionInfo && typeof payee.subscriptionInfo === "object") {
       subscriptionInfo = payee.subscriptionInfo as SubscriptionMetadata;
     }
 
@@ -3034,7 +3213,7 @@ export class PayeeService {
     const updatedSubscriptionMetadata: SubscriptionMetadata = {
       ...subscriptionInfo,
       endDate: cancellationDate,
-      autoRenewal: false
+      autoRenewal: false,
     };
 
     // Convert to SubscriptionInfo format
@@ -3042,37 +3221,41 @@ export class PayeeService {
       monthlyCost: updatedSubscriptionMetadata.baseCost,
       renewalDate: updatedSubscriptionMetadata.startDate || new Date().toISOString(),
       isActive: false, // Subscription is now cancelled
-      billingCycle: updatedSubscriptionMetadata.billingCycle === 'annual' ? 'yearly' :
-                    updatedSubscriptionMetadata.billingCycle === 'quarterly' ? 'quarterly' : 'monthly',
+      billingCycle:
+        updatedSubscriptionMetadata.billingCycle === "annual"
+          ? "yearly"
+          : updatedSubscriptionMetadata.billingCycle === "quarterly"
+            ? "quarterly"
+            : "monthly",
     };
 
     // Update the payee
     return await this.updatePayee(payeeId, {
       subscriptionInfo: updatedSubscriptionInfo,
       notes: payee.notes
-        ? `${payee.notes}\n\nCancelled on ${cancellationDate}${details.reason ? ` - ${details.reason}` : ''}${details.notes ? `\n${details.notes}` : ''}`
-        : `Cancelled on ${cancellationDate}${details.reason ? ` - ${details.reason}` : ''}${details.notes ? `\n${details.notes}` : ''}`
+        ? `${payee.notes}\n\nCancelled on ${cancellationDate}${details.reason ? ` - ${details.reason}` : ""}${details.notes ? `\n${details.notes}` : ""}`
+        : `Cancelled on ${cancellationDate}${details.reason ? ` - ${details.reason}` : ""}${details.notes ? `\n${details.notes}` : ""}`,
     });
   }
 
   /**
    * Get subscription value optimization analysis
    */
-  async getSubscriptionValueOptimization(
-    payeeIds: number[],
-  ): Promise<Array<{
-    payeeId: number;
-    currentValue: number;
-    optimizedValue: number;
-    valueImprovement: number;
-    recommendations: Array<{
-      type: string;
-      description: string;
-      valueIncrease: number;
-      effort: 'low' | 'medium' | 'high';
-      confidence: number;
-    }>;
-  }>> {
+  async getSubscriptionValueOptimization(payeeIds: number[]): Promise<
+    Array<{
+      payeeId: number;
+      currentValue: number;
+      optimizedValue: number;
+      valueImprovement: number;
+      recommendations: Array<{
+        type: string;
+        description: string;
+        valueIncrease: number;
+        effort: "low" | "medium" | "high";
+        confidence: number;
+      }>;
+    }>
+  > {
     // Verify all payees exist
     for (const id of payeeIds) {
       await this.getPayeeById(id);
@@ -3080,29 +3263,27 @@ export class PayeeService {
 
     // This would typically analyze each subscription for value optimization
     // For now, returning a structured mock response
-    return payeeIds.map(payeeId => ({
+    return payeeIds.map((payeeId) => ({
       payeeId,
       currentValue: 0.7,
       optimizedValue: 0.85,
       valueImprovement: 0.15,
       recommendations: [
         {
-          type: 'usage_tracking',
-          description: 'Implement usage tracking to optimize value',
+          type: "usage_tracking",
+          description: "Implement usage tracking to optimize value",
           valueIncrease: 0.1,
-          effort: 'medium' as const,
-          confidence: 0.8
-        }
-      ]
+          effort: "medium" as const,
+          confidence: 0.8,
+        },
+      ],
     }));
   }
 
   /**
    * Get subscription competitor analysis
    */
-  async getSubscriptionCompetitorAnalysis(
-    payeeId: number,
-  ): Promise<{
+  async getSubscriptionCompetitorAnalysis(payeeId: number): Promise<{
     currentService: {
       name: string;
       cost: number;
@@ -3116,13 +3297,13 @@ export class PayeeService {
       features: string[];
       pros: string[];
       cons: string[];
-      migrationEffort: 'low' | 'medium' | 'high';
+      migrationEffort: "low" | "medium" | "high";
       recommendation: string;
     }>;
     summary: {
       bestAlternative?: string;
       potentialSavings: number;
-      riskAssessment: 'low' | 'medium' | 'high';
+      riskAssessment: "low" | "medium" | "high";
       recommendation: string;
     };
   }> {
@@ -3133,29 +3314,29 @@ export class PayeeService {
     // For now, returning a structured mock response
     return {
       currentService: {
-        name: payee.name || 'Unknown Service',
-        cost: (payee.avgAmount || 0),
-        features: ['Current features'],
-        pros: ['Familiar interface', 'Existing data'],
-        cons: ['Higher cost', 'Limited features']
+        name: payee.name || "Unknown Service",
+        cost: payee.avgAmount || 0,
+        features: ["Current features"],
+        pros: ["Familiar interface", "Existing data"],
+        cons: ["Higher cost", "Limited features"],
       },
       competitors: [
         {
-          name: 'Alternative Service',
+          name: "Alternative Service",
           cost: (payee.avgAmount || 0) * 0.8,
-          features: ['Similar features', 'Better pricing'],
-          pros: ['Lower cost', 'Better features'],
-          cons: ['Migration required', 'Learning curve'],
-          migrationEffort: 'medium' as const,
-          recommendation: 'Consider for cost savings'
-        }
+          features: ["Similar features", "Better pricing"],
+          pros: ["Lower cost", "Better features"],
+          cons: ["Migration required", "Learning curve"],
+          migrationEffort: "medium" as const,
+          recommendation: "Consider for cost savings",
+        },
       ],
       summary: {
-        bestAlternative: 'Alternative Service',
+        bestAlternative: "Alternative Service",
         potentialSavings: (payee.avgAmount || 0) * 0.2,
-        riskAssessment: 'medium' as const,
-        recommendation: 'Evaluate migration based on usage patterns'
-      }
+        riskAssessment: "medium" as const,
+        recommendation: "Evaluate migration based on usage patterns",
+      },
     };
   }
 
@@ -3183,7 +3364,7 @@ export class PayeeService {
 
     // Get current subscription metadata
     let subscriptionInfo: SubscriptionMetadata | null = null;
-    if (payee.subscriptionInfo && typeof payee.subscriptionInfo === 'object') {
+    if (payee.subscriptionInfo && typeof payee.subscriptionInfo === "object") {
       subscriptionInfo = payee.subscriptionInfo as SubscriptionMetadata;
     }
 
@@ -3195,11 +3376,13 @@ export class PayeeService {
     const updatedSubscriptionMetadata: SubscriptionMetadata = {
       ...subscriptionInfo,
       alerts: {
-        renewalReminder: rules.autoRenewalReminders?.enabled ?? subscriptionInfo.alerts?.renewalReminder ?? true,
-        priceChangeAlert: rules.autoDetectPriceChanges ?? subscriptionInfo.alerts?.priceChangeAlert ?? true,
+        renewalReminder:
+          rules.autoRenewalReminders?.enabled ?? subscriptionInfo.alerts?.renewalReminder ?? true,
+        priceChangeAlert:
+          rules.autoDetectPriceChanges ?? subscriptionInfo.alerts?.priceChangeAlert ?? true,
         usageAlert: rules.autoGenerateUsageReports ?? subscriptionInfo.alerts?.usageAlert ?? false,
-        unusedAlert: rules.autoMarkUnused?.enabled ?? subscriptionInfo.alerts?.unusedAlert ?? true
-      }
+        unusedAlert: rules.autoMarkUnused?.enabled ?? subscriptionInfo.alerts?.unusedAlert ?? true,
+      },
     };
 
     // Convert to SubscriptionInfo format
@@ -3207,13 +3390,17 @@ export class PayeeService {
       monthlyCost: updatedSubscriptionMetadata.baseCost,
       renewalDate: updatedSubscriptionMetadata.startDate || new Date().toISOString(),
       isActive: !updatedSubscriptionMetadata.endDate,
-      billingCycle: updatedSubscriptionMetadata.billingCycle === 'annual' ? 'yearly' :
-                    updatedSubscriptionMetadata.billingCycle === 'quarterly' ? 'quarterly' : 'monthly',
+      billingCycle:
+        updatedSubscriptionMetadata.billingCycle === "annual"
+          ? "yearly"
+          : updatedSubscriptionMetadata.billingCycle === "quarterly"
+            ? "quarterly"
+            : "monthly",
     };
 
     // Update the payee
     return await this.updatePayee(payeeId, {
-      subscriptionInfo: updatedSubscriptionInfo
+      subscriptionInfo: updatedSubscriptionInfo,
     });
   }
 }

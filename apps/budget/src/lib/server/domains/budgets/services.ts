@@ -17,21 +17,21 @@ import {
   type NewBudgetGroup,
   type NewBudgetTransaction,
 } from "$lib/schema/budgets";
-import { payees } from "$lib/schema/payees";
-import type { Transaction } from "$lib/schema/transactions";
-import { transactions } from "$lib/schema/transactions";
-import { db } from "$lib/server/db";
-import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
-import { currentDate as defaultCurrentDate, timezone as defaultTimezone } from "$lib/utils/dates";
-import { CalendarDate, type DateValue } from "@internationalized/date";
-import { and, eq, sql } from "drizzle-orm";
-import { BudgetAnalysisService, type AnalysisParams } from "./budget-analysis-service";
-import type { DeficitRecoveryPlan } from "./deficit-recovery";
-import { EnvelopeService, type EnvelopeAllocationRequest } from "./envelope-service";
-import { PeriodManager } from "./period-manager";
-import { RecommendationService, type RecommendationFilters } from "./recommendation-service";
-import { BudgetRepository, type BudgetWithRelations, type DbClient } from "./repository";
+import {payees} from "$lib/schema/payees";
+import type {Transaction} from "$lib/schema/transactions";
+import {transactions} from "$lib/schema/transactions";
+import {db} from "$lib/server/db";
+import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
+import {InputSanitizer} from "$lib/server/shared/validation";
+import {currentDate as defaultCurrentDate, timezone as defaultTimezone} from "$lib/utils/dates";
+import {CalendarDate, type DateValue} from "@internationalized/date";
+import {and, eq, sql} from "drizzle-orm";
+import {BudgetAnalysisService, type AnalysisParams} from "./budget-analysis-service";
+import type {DeficitRecoveryPlan} from "./deficit-recovery";
+import {EnvelopeService, type EnvelopeAllocationRequest} from "./envelope-service";
+import {PeriodManager} from "./period-manager";
+import {RecommendationService, type RecommendationFilters} from "./recommendation-service";
+import {BudgetRepository, type BudgetWithRelations, type DbClient} from "./repository";
 
 /* ------------------------------------------------------------------ */
 /* Budget Service                                                     */
@@ -81,13 +81,16 @@ export class BudgetService {
   private generateSlug(name: string): string {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
       .trim();
   }
 
-  async createBudget(input: CreateBudgetRequest, workspaceId: number): Promise<BudgetWithRelations> {
+  async createBudget(
+    input: CreateBudgetRequest,
+    workspaceId: number
+  ): Promise<BudgetWithRelations> {
     const name = InputSanitizer.sanitizeText(input.name, {
       required: true,
       minLength: 2,
@@ -160,11 +163,15 @@ export class BudgetService {
     return await this.repository.createBudget(createInput, workspaceId);
   }
 
-  async updateBudget(id: number, input: UpdateBudgetRequest, workspaceId: number): Promise<BudgetWithRelations> {
+  async updateBudget(
+    id: number,
+    input: UpdateBudgetRequest,
+    workspaceId: number
+  ): Promise<BudgetWithRelations> {
     const updates: Record<string, unknown> = {};
 
     if (input.name !== undefined) {
-      updates['name'] = InputSanitizer.sanitizeText(input.name, {
+      updates["name"] = InputSanitizer.sanitizeText(input.name, {
         required: true,
         minLength: 2,
         maxLength: 80,
@@ -173,23 +180,23 @@ export class BudgetService {
     }
 
     if (input.description !== undefined) {
-      updates['description'] = input.description
+      updates["description"] = input.description
         ? InputSanitizer.sanitizeDescription(input.description, 500)
         : null;
     }
 
     if (input.status !== undefined) {
       this.validateEnumValue("Budget status", input.status, budgetStatuses);
-      updates['status'] = input.status;
+      updates["status"] = input.status;
     }
 
     if (input.enforcementLevel !== undefined) {
       this.validateEnumValue("Enforcement level", input.enforcementLevel, budgetEnforcementLevels);
-      updates['enforcementLevel'] = input.enforcementLevel;
+      updates["enforcementLevel"] = input.enforcementLevel;
     }
 
     if (input.metadata !== undefined) {
-      updates['metadata'] = input.metadata;
+      updates["metadata"] = input.metadata;
     }
 
     if (
@@ -221,7 +228,10 @@ export class BudgetService {
     return await this.repository.updateBudget(id, updates, workspaceId, relations);
   }
 
-  async listBudgets(workspaceId: number, status?: Budget["status"]): Promise<BudgetWithRelations[]> {
+  async listBudgets(
+    workspaceId: number,
+    status?: Budget["status"]
+  ): Promise<BudgetWithRelations[]> {
     if (status) {
       this.validateEnumValue("Budget status", status, budgetStatuses);
     }
@@ -257,7 +267,11 @@ export class BudgetService {
     await this.repository.deleteBudget(id, workspaceId);
   }
 
-  async duplicateBudget(id: number, workspaceId: number, newName?: string): Promise<BudgetWithRelations> {
+  async duplicateBudget(
+    id: number,
+    workspaceId: number,
+    newName?: string
+  ): Promise<BudgetWithRelations> {
     const originalBudget = await this.getBudget(id, workspaceId);
 
     const duplicatedName = newName || `${originalBudget.name} (Copy)`;
@@ -299,10 +313,10 @@ export class BudgetService {
       },
     };
 
-    const accountIds = originalBudget.accounts?.map(a => a.id);
+    const accountIds = originalBudget.accounts?.map((a) => a.id);
     const categoryIds = originalBudget.categories
-      ?.filter(bc => bc.category !== null)
-      .map(bc => bc.categoryId);
+      ?.filter((bc) => bc.category !== null)
+      .map((bc) => bc.categoryId);
     const groupIds = originalBudget.groupMemberships?.map((gm) => gm.groupId);
 
     if (accountIds !== undefined) {
@@ -318,28 +332,34 @@ export class BudgetService {
     return await this.repository.createBudget(createInput, workspaceId);
   }
 
-  async bulkArchive(ids: number[], workspaceId: number): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
+  async bulkArchive(
+    ids: number[],
+    workspaceId: number
+  ): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
     let success = 0;
     let failed = 0;
     const errors: Array<{id: number; error: string}> = [];
 
     for (const id of ids) {
       try {
-        await this.updateBudget(id, { status: 'archived' }, workspaceId);
+        await this.updateBudget(id, {status: "archived"}, workspaceId);
         success++;
       } catch (error) {
         failed++;
         errors.push({
           id,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
     }
 
-    return { success, failed, errors };
+    return {success, failed, errors};
   }
 
-  async bulkDelete(ids: number[], workspaceId: number): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
+  async bulkDelete(
+    ids: number[],
+    workspaceId: number
+  ): Promise<{success: number; failed: number; errors: Array<{id: number; error: string}>}> {
     let success = 0;
     let failed = 0;
     const errors: Array<{id: number; error: string}> = [];
@@ -352,12 +372,12 @@ export class BudgetService {
         failed++;
         errors.push({
           id,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
     }
 
-    return { success, failed, errors };
+    return {success, failed, errors};
   }
 
   private validateEnumValue<T extends string>(
@@ -379,15 +399,12 @@ export class BudgetService {
 
     // Query the database to check which categories still exist (not deleted)
     const existingCategories = await db.query.categories.findMany({
-      where: (categories, { inArray, isNull }) =>
-        and(
-          inArray(categories.id, categoryIds),
-          isNull(categories.deletedAt)
-        ),
-      columns: { id: true },
+      where: (categories, {inArray, isNull}) =>
+        and(inArray(categories.id, categoryIds), isNull(categories.deletedAt)),
+      columns: {id: true},
     });
 
-    return existingCategories.map(c => c.id);
+    return existingCategories.map((c) => c.id);
   }
 
   async createEnvelopeBudget(
@@ -396,7 +413,10 @@ export class BudgetService {
     workspaceId: number
   ): Promise<BudgetWithRelations> {
     if (budgetData.type !== "category-envelope") {
-      throw new ValidationError("Envelope allocations only supported for category-envelope budgets", "type");
+      throw new ValidationError(
+        "Envelope allocations only supported for category-envelope budgets",
+        "type"
+      );
     }
 
     const budget = await this.createBudget(budgetData, workspaceId);
@@ -424,7 +444,11 @@ export class BudgetService {
     allocatedAmount: number,
     metadata?: Record<string, unknown>
   ) {
-    return await this.envelopeService.updateEnvelopeAllocation(envelopeId, allocatedAmount, metadata);
+    return await this.envelopeService.updateEnvelopeAllocation(
+      envelopeId,
+      allocatedAmount,
+      metadata
+    );
   }
 
   async updateEnvelopeSettings(
@@ -516,7 +540,10 @@ export class BudgetService {
     return await this.envelopeService.detectDeficitRisk(envelopeId);
   }
 
-  async getApplicableBudgets(accountId?: number, categoryId?: number): Promise<BudgetWithRelations[]> {
+  async getApplicableBudgets(
+    accountId?: number,
+    categoryId?: number
+  ): Promise<BudgetWithRelations[]> {
     return await this.repository.findApplicableBudgets(accountId, categoryId);
   }
 
@@ -525,9 +552,14 @@ export class BudgetService {
     accountId?: number,
     categoryId?: number,
     transactionId?: number
-  ): Promise<{allowed: boolean; violations: Array<{budgetId: number; budgetName: string; exceeded: number}>}> {
+  ): Promise<{
+    allowed: boolean;
+    violations: Array<{budgetId: number; budgetName: string; exceeded: number}>;
+  }> {
     const applicableBudgets = await this.repository.findApplicableBudgets(accountId, categoryId);
-    const strictBudgets = applicableBudgets.filter(b => b.enforcementLevel === 'strict' && b.status === 'active');
+    const strictBudgets = applicableBudgets.filter(
+      (b) => b.enforcementLevel === "strict" && b.status === "active"
+    );
 
     if (strictBudgets.length === 0) {
       return {allowed: true, violations: []};
@@ -562,7 +594,7 @@ export class BudgetService {
 
   private getLatestPeriodInstance(budget: BudgetWithRelations): BudgetPeriodInstance | null {
     const templates = budget.periodTemplates ?? [];
-    const periods = templates.flatMap(template => template.periods ?? []);
+    const periods = templates.flatMap((template) => template.periods ?? []);
     if (!periods.length) return null;
 
     return periods.reduce((latest, current) =>
@@ -576,7 +608,7 @@ export class BudgetService {
 
   async createGoalContributionPlan(
     budgetId: number,
-    frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly',
+    frequency: "weekly" | "monthly" | "quarterly" | "yearly",
     customAmount?: number
   ): Promise<ContributionPlan> {
     return await this.goalTrackingService.createContributionPlan(budgetId, frequency, customAmount);
@@ -586,7 +618,10 @@ export class BudgetService {
     return await this.goalTrackingService.linkScheduleToGoal(budgetId, scheduleId);
   }
 
-  async linkScheduleToScheduledExpense(budgetId: number, scheduleId: number): Promise<BudgetWithRelations> {
+  async linkScheduleToScheduledExpense(
+    budgetId: number,
+    scheduleId: number
+  ): Promise<BudgetWithRelations> {
     return await this.goalTrackingService.linkScheduleToScheduledExpense(budgetId, scheduleId);
   }
 
@@ -639,12 +674,15 @@ export class BudgetService {
     return await this.repository.getRootBudgetGroups();
   }
 
-  async updateBudgetGroup(id: number, updates: {
-    name?: string;
-    description?: string | null;
-    parentId?: number | null;
-    spendingLimit?: number | null;
-  }): Promise<BudgetGroup> {
+  async updateBudgetGroup(
+    id: number,
+    updates: {
+      name?: string;
+      description?: string | null;
+      parentId?: number | null;
+      spendingLimit?: number | null;
+    }
+  ): Promise<BudgetGroup> {
     const sanitizedUpdates: Partial<NewBudgetGroup> = {};
 
     if (updates.name !== undefined) {
@@ -724,14 +762,14 @@ export class BudgetService {
     }
 
     try {
-      console.log('[BudgetService] generateRecommendations called with params:', params);
+      console.log("[BudgetService] generateRecommendations called with params:", params);
       const drafts = await this.analysisService.analyzeTransactionHistory(params);
-      console.log('[BudgetService] Analysis complete, got', drafts.length, 'drafts');
+      console.log("[BudgetService] Analysis complete, got", drafts.length, "drafts");
       const recommendations = await this.recommendationService.createRecommendations(drafts);
-      console.log('[BudgetService] Recommendations created:', recommendations.length);
+      console.log("[BudgetService] Recommendations created:", recommendations.length);
       return recommendations;
     } catch (error) {
-      console.error('[BudgetService] Error in generateRecommendations:', error);
+      console.error("[BudgetService] Error in generateRecommendations:", error);
       throw error;
     }
   }
@@ -774,14 +812,14 @@ export class BudgetService {
 
     // Create the budget based on the recommendation
     const metadata = recommendation.metadata as any;
-    const suggestedType = metadata?.suggestedType || 'category-envelope';
+    const suggestedType = metadata?.suggestedType || "category-envelope";
     const suggestedAmount = metadata?.suggestedAmount || 0;
 
     // Build budget name from recommendation
-    let budgetName = '';
+    let budgetName = "";
 
     // For scheduled expenses, use the payee name
-    if (suggestedType === 'scheduled-expense' && metadata?.payeeIds?.[0]) {
+    if (suggestedType === "scheduled-expense" && metadata?.payeeIds?.[0]) {
       const payee = await db.query.payees.findFirst({
         where: eq(payees.id, metadata.payeeIds[0]),
       });
@@ -800,20 +838,20 @@ export class BudgetService {
       budgetName = accountName;
     } else if (!budgetName) {
       // Extract from title as last resort
-      budgetName = recommendation.title.replace(/^Create (scheduled )?budget for /i, '');
+      budgetName = recommendation.title.replace(/^Create (scheduled )?budget for /i, "");
     }
 
     // Clean up description to remove recommendation-specific language
-    let budgetDescription = recommendation.description || '';
+    let budgetDescription = recommendation.description || "";
     // Remove phrases like "We recommend", "Consider setting", "You should", etc.
     budgetDescription = budgetDescription
-      .replace(/^We recommend (setting|creating|allocating) (a|an) /i, '')
-      .replace(/^Consider (setting|creating|allocating) (a|an) /i, '')
-      .replace(/^You should (set|create|allocate) (a|an) /i, '')
-      .replace(/^Set (a|an) /i, '')
-      .replace(/\s+based on your spending patterns\.?$/i, '')
-      .replace(/\s+to help manage this expense\.?$/i, '')
-      .replace(/\s+to track this category\.?$/i, '')
+      .replace(/^We recommend (setting|creating|allocating) (a|an) /i, "")
+      .replace(/^Consider (setting|creating|allocating) (a|an) /i, "")
+      .replace(/^You should (set|create|allocate) (a|an) /i, "")
+      .replace(/^Set (a|an) /i, "")
+      .replace(/\s+based on your spending patterns\.?$/i, "")
+      .replace(/\s+to help manage this expense\.?$/i, "")
+      .replace(/\s+to track this category\.?$/i, "")
       .trim();
 
     // Capitalize first letter if needed
@@ -826,31 +864,35 @@ export class BudgetService {
 
     // Create the budget
     // Don't pass description to avoid validation issues - it's optional anyway
-    const newBudget = await this.createBudget({
-      name: budgetName,
-      type: suggestedType,
-      scope: metadata?.suggestedScope || (recommendation.categoryId ? 'category' : 'account'),
-      status: 'active',
-      enforcementLevel: 'warning',
-      categoryIds: recommendation.categoryId ? [recommendation.categoryId] : [],
-      accountIds: recommendation.accountId ? [recommendation.accountId] : [],
-      metadata: {
-        allocatedAmount: suggestedAmount,
-        ...(suggestedType === 'scheduled-expense' && metadata?.payeeIds?.[0] && {
-          scheduledExpense: {
-            payeeId: metadata.payeeIds[0],
-            expectedAmount: suggestedAmount,
-            frequency: metadata.detectedFrequency,
-            autoTrack: true,
-          }
-        })
-      }
-    }, workspaceId);
+    const newBudget = await this.createBudget(
+      {
+        name: budgetName,
+        type: suggestedType,
+        scope: metadata?.suggestedScope || (recommendation.categoryId ? "category" : "account"),
+        status: "active",
+        enforcementLevel: "warning",
+        categoryIds: recommendation.categoryId ? [recommendation.categoryId] : [],
+        accountIds: recommendation.accountId ? [recommendation.accountId] : [],
+        metadata: {
+          allocatedAmount: suggestedAmount,
+          ...(suggestedType === "scheduled-expense" &&
+            metadata?.payeeIds?.[0] && {
+              scheduledExpense: {
+                payeeId: metadata.payeeIds[0],
+                expectedAmount: suggestedAmount,
+                frequency: metadata.detectedFrequency,
+                autoTrack: true,
+              },
+            }),
+        },
+      },
+      workspaceId
+    );
 
     // Create default monthly period template with the allocated amount
     await this.createPeriodTemplate({
       budgetId: newBudget.id,
-      type: 'monthly',
+      type: "monthly",
       startDayOfMonth: 1,
       allocatedAmount: suggestedAmount,
     });
@@ -870,23 +912,26 @@ export class BudgetService {
 
   async getRecommendationCounts() {
     if (!this.recommendationService) {
-      return { pending: 0, dismissed: 0, applied: 0, expired: 0 };
+      return {pending: 0, dismissed: 0, applied: 0, expired: 0};
     }
     return await this.recommendationService.getRecommendationCounts();
   }
 
   // Period Template Methods
 
-  async createPeriodTemplate(data: {
-    budgetId: number;
-    type: BudgetPeriodTemplate["type"];
-    intervalCount?: number;
-    startDayOfWeek?: number;
-    startDayOfMonth?: number;
-    startMonth?: number;
-    timezone?: string;
-    allocatedAmount?: number;
-  }, workspaceId: number): Promise<BudgetPeriodTemplate> {
+  async createPeriodTemplate(
+    data: {
+      budgetId: number;
+      type: BudgetPeriodTemplate["type"];
+      intervalCount?: number;
+      startDayOfWeek?: number;
+      startDayOfMonth?: number;
+      startMonth?: number;
+      timezone?: string;
+      allocatedAmount?: number;
+    },
+    workspaceId: number
+  ): Promise<BudgetPeriodTemplate> {
     // Validate budget exists
     const budget = await this.repository.findById(data.budgetId, workspaceId);
     if (!budget) {
@@ -1012,8 +1057,10 @@ export class BudgetService {
     const sanitizedUpdates: Partial<typeof existing> = {};
     if (updates.type !== undefined) sanitizedUpdates.type = updates.type;
     if (updates.intervalCount !== undefined) sanitizedUpdates.intervalCount = updates.intervalCount;
-    if (updates.startDayOfWeek !== undefined) sanitizedUpdates.startDayOfWeek = updates.startDayOfWeek;
-    if (updates.startDayOfMonth !== undefined) sanitizedUpdates.startDayOfMonth = updates.startDayOfMonth;
+    if (updates.startDayOfWeek !== undefined)
+      sanitizedUpdates.startDayOfWeek = updates.startDayOfWeek;
+    if (updates.startDayOfMonth !== undefined)
+      sanitizedUpdates.startDayOfMonth = updates.startDayOfMonth;
     if (updates.startMonth !== undefined) sanitizedUpdates.startMonth = updates.startMonth;
     if (updates.timezone !== undefined) sanitizedUpdates.timezone = updates.timezone;
 
@@ -1136,10 +1183,7 @@ export class BudgetPeriodCalculator {
 
     let referenceMonthIndex = this.getMonthIndex(reference);
 
-    if (
-      reference.month === startMonth &&
-      reference.day < startDay
-    ) {
+    if (reference.month === startMonth && reference.day < startDay) {
       referenceMonthIndex -= 1;
     }
 
@@ -1156,7 +1200,7 @@ export class BudgetPeriodCalculator {
   }
 
   private static normalizeIsoDay(day: number): number {
-    const normalized = ((day - 1) % 7 + 7) % 7;
+    const normalized = (((day - 1) % 7) + 7) % 7;
     return normalized + 1;
   }
 
@@ -1182,7 +1226,7 @@ export class BudgetPeriodCalculator {
 
   private static dateFromMonthIndex(monthIndex: number, day: number): CalendarDate {
     const year = Math.floor(monthIndex / 12);
-    const month = (this.mod(monthIndex, 12)) + 1;
+    const month = this.mod(monthIndex, 12) + 1;
 
     const daysInMonth = this.daysInMonth(year, month);
     const clampedDay = Math.min(day, daysInMonth);
@@ -1276,11 +1320,11 @@ export interface GoalProgress {
     monthly: number;
   };
   projectedCompletionDate?: string;
-  status: 'on-track' | 'ahead' | 'behind' | 'at-risk' | 'completed';
+  status: "on-track" | "ahead" | "behind" | "at-risk" | "completed";
 }
 
 export interface ContributionPlan {
-  frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  frequency: "weekly" | "monthly" | "quarterly" | "yearly";
   amount: number;
   numberOfPayments: number;
   totalAmount: number;
@@ -1302,13 +1346,13 @@ export class GoalTrackingService {
       throw new NotFoundError("Budget", budgetId);
     }
 
-    if (budget.type !== 'goal-based') {
-      throw new ValidationError('Budget is not a goal-based budget', 'type');
+    if (budget.type !== "goal-based") {
+      throw new ValidationError("Budget is not a goal-based budget", "type");
     }
 
     const goalMetadata = budget.metadata?.goal;
     if (!goalMetadata) {
-      throw new ValidationError('Budget does not have goal metadata', 'goal');
+      throw new ValidationError("Budget does not have goal metadata", "goal");
     }
 
     const currentAmount = await this.getCurrentGoalAmount(budgetId, budget);
@@ -1318,9 +1362,14 @@ export class GoalTrackingService {
 
     const targetDate = new Date(goalMetadata.targetDate);
     const today = new Date();
-    const daysRemaining = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const daysRemaining = Math.ceil(
+      (targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
-    const requiredContribution = this.calculateRequiredContributions(remainingAmount, daysRemaining);
+    const requiredContribution = this.calculateRequiredContributions(
+      remainingAmount,
+      daysRemaining
+    );
 
     const {status, projectedCompletionDate} = this.calculateGoalStatus(
       currentAmount,
@@ -1338,7 +1387,7 @@ export class GoalTrackingService {
       percentComplete,
       targetDate: goalMetadata.targetDate,
       daysRemaining,
-      isOnTrack: status === 'on-track' || status === 'ahead',
+      isOnTrack: status === "on-track" || status === "ahead",
       requiredContribution,
       status,
     };
@@ -1350,29 +1399,35 @@ export class GoalTrackingService {
     return result;
   }
 
-  private async getCurrentGoalAmount(budgetId: number, budget: BudgetWithRelations): Promise<number> {
+  private async getCurrentGoalAmount(
+    budgetId: number,
+    budget: BudgetWithRelations
+  ): Promise<number> {
     const goalMetadata = budget.metadata?.goal;
     const startDate = goalMetadata?.startDate || budget.createdAt;
 
-    const relevantCategories = budget.categories?.map(c => c.id) || [];
-    const relevantAccounts = budget.accounts?.map(a => a.id) || [];
+    const relevantCategories = budget.categories?.map((c) => c.id) || [];
+    const relevantAccounts = budget.accounts?.map((a) => a.id) || [];
 
     if (relevantAccounts.length === 0 && relevantCategories.length === 0) {
       return 0;
     }
 
-    const accountTotal = relevantAccounts.length > 0
-      ? await this.repository.getAccountsBalance(relevantAccounts)
-      : 0;
+    const accountTotal =
+      relevantAccounts.length > 0 ? await this.repository.getAccountsBalance(relevantAccounts) : 0;
 
-    const categoryTotal = relevantCategories.length > 0
-      ? await this.repository.getCategorySpendingSince(relevantCategories, startDate)
-      : 0;
+    const categoryTotal =
+      relevantCategories.length > 0
+        ? await this.repository.getCategorySpendingSince(relevantCategories, startDate)
+        : 0;
 
     return accountTotal + categoryTotal;
   }
 
-  private calculateRequiredContributions(remainingAmount: number, daysRemaining: number): {
+  private calculateRequiredContributions(
+    remainingAmount: number,
+    daysRemaining: number
+  ): {
     daily: number;
     weekly: number;
     monthly: number;
@@ -1396,14 +1451,14 @@ export class GoalTrackingService {
     currentAmount: number,
     targetAmount: number,
     daysRemaining: number,
-    goalMetadata: NonNullable<BudgetMetadata['goal']>
-  ): {status: GoalProgress['status']; projectedCompletionDate?: string} {
+    goalMetadata: NonNullable<BudgetMetadata["goal"]>
+  ): {status: GoalProgress["status"]; projectedCompletionDate?: string} {
     if (currentAmount >= targetAmount) {
-      return {status: 'completed'};
+      return {status: "completed"};
     }
 
     if (daysRemaining <= 0) {
-      return {status: 'at-risk'};
+      return {status: "at-risk"};
     }
 
     const percentComplete = (currentAmount / targetAmount) * 100;
@@ -1412,13 +1467,15 @@ export class GoalTrackingService {
     const expectedPercent = (elapsedDays / totalDays) * 100;
 
     if (percentComplete >= expectedPercent + 10) {
-      const daysToComplete = Math.ceil((targetAmount - currentAmount) / (currentAmount / elapsedDays));
+      const daysToComplete = Math.ceil(
+        (targetAmount - currentAmount) / (currentAmount / elapsedDays)
+      );
       const projectedDate = new Date();
       projectedDate.setDate(projectedDate.getDate() + daysToComplete);
-      const result: {status: GoalProgress['status']; projectedCompletionDate?: string} = {
-        status: 'ahead',
+      const result: {status: GoalProgress["status"]; projectedCompletionDate?: string} = {
+        status: "ahead",
       };
-      const dateStr = projectedDate.toISOString().split('T')[0];
+      const dateStr = projectedDate.toISOString().split("T")[0];
       if (dateStr) {
         result.projectedCompletionDate = dateStr;
       }
@@ -1426,14 +1483,14 @@ export class GoalTrackingService {
     }
 
     if (percentComplete < expectedPercent - 20) {
-      return {status: 'at-risk'};
+      return {status: "at-risk"};
     }
 
     if (percentComplete < expectedPercent - 10) {
-      return {status: 'behind'};
+      return {status: "behind"};
     }
 
-    return {status: 'on-track'};
+    return {status: "on-track"};
   }
 
   private getElapsedDays(startDate?: string): number {
@@ -1445,32 +1502,32 @@ export class GoalTrackingService {
 
   async createContributionPlan(
     budgetId: number,
-    frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly',
+    frequency: "weekly" | "monthly" | "quarterly" | "yearly",
     customAmount?: number
   ): Promise<ContributionPlan> {
     const progress = await this.calculateGoalProgress(budgetId);
 
-    if (progress.status === 'completed') {
-      throw new ValidationError('Goal is already completed', 'goal');
+    if (progress.status === "completed") {
+      throw new ValidationError("Goal is already completed", "goal");
     }
 
     let amount: number = 0;
     let daysPerPayment: number = 0;
 
     switch (frequency) {
-      case 'weekly':
+      case "weekly":
         amount = customAmount ?? progress.requiredContribution.weekly;
         daysPerPayment = 7;
         break;
-      case 'monthly':
+      case "monthly":
         amount = customAmount ?? progress.requiredContribution.monthly;
         daysPerPayment = 30;
         break;
-      case 'quarterly':
+      case "quarterly":
         amount = customAmount ?? progress.requiredContribution.monthly * 3;
         daysPerPayment = 90;
         break;
-      case 'yearly':
+      case "yearly":
         amount = customAmount ?? progress.requiredContribution.monthly * 12;
         daysPerPayment = 365;
         break;
@@ -1488,7 +1545,7 @@ export class GoalTrackingService {
       amount,
       numberOfPayments,
       totalAmount,
-      projectedCompletionDate: completionDate.toISOString().split('T')[0]!,
+      projectedCompletionDate: completionDate.toISOString().split("T")[0]!,
     };
   }
 
@@ -1498,15 +1555,15 @@ export class GoalTrackingService {
       throw new NotFoundError("Budget", budgetId);
     }
 
-    if (budget.type !== 'goal-based') {
-      throw new ValidationError('Budget is not a goal-based budget', 'type');
+    if (budget.type !== "goal-based") {
+      throw new ValidationError("Budget is not a goal-based budget", "type");
     }
 
     const metadata = budget.metadata || {};
     const goal = metadata.goal;
 
     if (!goal) {
-      throw new ValidationError('Budget does not have goal metadata', 'goal');
+      throw new ValidationError("Budget does not have goal metadata", "goal");
     }
 
     goal.linkedScheduleId = scheduleId;
@@ -1524,10 +1581,10 @@ export class GoalTrackingService {
       throw new NotFoundError("Budget", budgetId);
     }
 
-    if (budget.type !== 'scheduled-expense') {
+    if (budget.type !== "scheduled-expense") {
       throw new ValidationError(
-        'Budget must be of type scheduled-expense to link a schedule',
-        'type'
+        "Budget must be of type scheduled-expense to link a schedule",
+        "type"
       );
     }
 
@@ -1566,7 +1623,7 @@ export interface BudgetForecast {
   projectedScheduledExpenses: number;
   projectedBalance: number;
   scheduledExpenses: ScheduledExpenseForecast[];
-  status: 'sufficient' | 'tight' | 'exceeded';
+  status: "sufficient" | "tight" | "exceeded";
 }
 
 /**
@@ -1588,8 +1645,8 @@ export class BudgetForecastService {
     const periodEnd = new Date(now);
     periodEnd.setDate(periodEnd.getDate() + daysAhead);
 
-    const periodStart = now.toISOString().split('T')[0]!;
-    const periodEndStr = periodEnd.toISOString().split('T')[0]!;
+    const periodStart = now.toISOString().split("T")[0]!;
+    const periodEndStr = periodEnd.toISOString().split("T")[0]!;
 
     const schedules = await this.getSchedulesForBudget(budgetId);
     const scheduledExpenses: ScheduledExpenseForecast[] = [];
@@ -1606,11 +1663,11 @@ export class BudgetForecastService {
     const allocatedAmount = budget.metadata?.allocatedAmount || 0;
     const projectedBalance = allocatedAmount - projectedScheduledExpenses;
 
-    let status: BudgetForecast['status'] = 'sufficient';
+    let status: BudgetForecast["status"] = "sufficient";
     if (projectedBalance < 0) {
-      status = 'exceeded';
+      status = "exceeded";
     } else if (projectedBalance < allocatedAmount * 0.1) {
-      status = 'tight';
+      status = "tight";
     }
 
     return {
@@ -1646,7 +1703,7 @@ export class BudgetForecastService {
     periodStart: string,
     periodEnd: string
   ): Promise<ScheduledExpenseForecast | null> {
-    if (!schedule.dateId || schedule.status !== 'active') {
+    if (!schedule.dateId || schedule.status !== "active") {
       return null;
     }
 
@@ -1661,54 +1718,55 @@ export class BudgetForecastService {
       return null;
     }
 
-    const frequencyConfig: { frequency?: string } = {};
+    const frequencyConfig: {frequency?: string} = {};
     if (dateConfig.frequency) {
       frequencyConfig.frequency = dateConfig.frequency;
     }
 
-    const occurrencesInPeriod = this.calculateOccurrences(
-      frequencyConfig,
-      periodStart,
-      periodEnd
-    );
-    const amount = schedule.amount_type === 'range'
-      ? (schedule.amount + (schedule.amount_2 || 0)) / 2
-      : schedule.amount;
+    const occurrencesInPeriod = this.calculateOccurrences(frequencyConfig, periodStart, periodEnd);
+    const amount =
+      schedule.amount_type === "range"
+        ? (schedule.amount + (schedule.amount_2 || 0)) / 2
+        : schedule.amount;
 
     const totalImpact = Math.abs(amount) * occurrencesInPeriod;
 
     return {
       scheduleId: schedule.id,
       scheduleName: schedule.name,
-      nextOccurrence: this.calculateNextOccurrence({ startDate: dateConfig.start }, periodStart),
+      nextOccurrence: this.calculateNextOccurrence({startDate: dateConfig.start}, periodStart),
       amount,
-      frequency: dateConfig.frequency || 'once',
+      frequency: dateConfig.frequency || "once",
       occurrencesInPeriod,
       totalImpact,
     };
   }
 
-  private calculateOccurrences(dateConfig: { frequency?: string }, periodStart: string, periodEnd: string): number {
+  private calculateOccurrences(
+    dateConfig: {frequency?: string},
+    periodStart: string,
+    periodEnd: string
+  ): number {
     const frequency = dateConfig.frequency;
     const start = new Date(periodStart);
     const end = new Date(periodEnd);
     const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
     switch (frequency) {
-      case 'daily':
+      case "daily":
         return daysDiff;
-      case 'weekly':
+      case "weekly":
         return Math.floor(daysDiff / 7);
-      case 'monthly':
+      case "monthly":
         return Math.floor(daysDiff / 30);
-      case 'yearly':
+      case "yearly":
         return Math.floor(daysDiff / 365);
       default:
         return 1;
     }
   }
 
-  private calculateNextOccurrence(dateConfig: { startDate?: string }, fromDate: string): string {
+  private calculateNextOccurrence(dateConfig: {startDate?: string}, fromDate: string): string {
     const startDate = dateConfig.startDate || fromDate;
     return startDate;
   }
@@ -1834,7 +1892,10 @@ export class BudgetIntelligenceService {
   /**
    * Gets the most commonly used budget for a specific payee and category combination.
    */
-  async getMostUsedBudget(payeeId?: number, categoryId?: number): Promise<BudgetUsagePattern | null> {
+  async getMostUsedBudget(
+    payeeId?: number,
+    categoryId?: number
+  ): Promise<BudgetUsagePattern | null> {
     if (!payeeId && !categoryId) {
       return null;
     }
@@ -1901,7 +1962,7 @@ export class BudgetIntelligenceService {
       .groupBy(budgetTransactions.budgetId, budgets.name)
       .orderBy(sql`COUNT(DISTINCT ${budgetTransactions.transactionId}) DESC`);
 
-    return results.map(r => ({
+    return results.map((r) => ({
       budgetId: r.budgetId,
       budgetName: r.budgetName,
       usageCount: Number(r.usageCount),
@@ -1914,7 +1975,9 @@ export class BudgetIntelligenceService {
   /**
    * Gets budget usage patterns for a specific category.
    */
-  private async getBudgetUsagePatternsForCategory(categoryId: number): Promise<BudgetUsagePattern[]> {
+  private async getBudgetUsagePatternsForCategory(
+    categoryId: number
+  ): Promise<BudgetUsagePattern[]> {
     const results = await db
       .select({
         budgetId: budgetTransactions.budgetId,
@@ -1931,7 +1994,7 @@ export class BudgetIntelligenceService {
       .groupBy(budgetTransactions.budgetId, budgets.name)
       .orderBy(sql`COUNT(DISTINCT ${budgetTransactions.transactionId}) DESC`);
 
-    return results.map(r => ({
+    return results.map((r) => ({
       budgetId: r.budgetId,
       budgetName: r.budgetName,
       usageCount: Number(r.usageCount),
@@ -1952,7 +2015,10 @@ export class BudgetTransactionService {
   async isTransactionFullyAllocated(transactionId: number): Promise<boolean> {
     return await db.transaction(async (tx) => {
       const {allocations, transaction} = await this.fetchTransactionContext(tx, transactionId);
-      const totalAllocated = allocations.reduce((sum, allocation) => sum + Number(allocation.allocatedAmount || 0), 0);
+      const totalAllocated = allocations.reduce(
+        (sum, allocation) => sum + Number(allocation.allocatedAmount || 0),
+        0
+      );
       return Math.abs(totalAllocated - Number(transaction.amount || 0)) < ALLOCATION_PRECISION;
     });
   }
@@ -1970,8 +2036,15 @@ export class BudgetTransactionService {
 
   async createAllocation(allocation: NewBudgetTransaction): Promise<BudgetTransaction> {
     return await db.transaction(async (tx) => {
-      const {allocations, transaction} = await this.fetchTransactionContext(tx, allocation.transactionId);
-      const validation = this.validateWithContext(allocations, transaction, allocation.allocatedAmount);
+      const {allocations, transaction} = await this.fetchTransactionContext(
+        tx,
+        allocation.transactionId
+      );
+      const validation = this.validateWithContext(
+        allocations,
+        transaction,
+        allocation.allocatedAmount
+      );
       if (!validation.isValid) {
         throw new ValidationError(validation.errors[0] || "Allocation is invalid", "allocation");
       }
@@ -1998,7 +2071,10 @@ export class BudgetTransactionService {
         throw new NotFoundError("Budget allocation", allocationId);
       }
 
-      const {allocations, transaction} = await this.fetchTransactionContext(tx, existing.transactionId);
+      const {allocations, transaction} = await this.fetchTransactionContext(
+        tx,
+        existing.transactionId
+      );
       const validation = this.validateWithContext(allocations, transaction, amount, allocationId);
       if (!validation.isValid) {
         throw new ValidationError(validation.errors[0] || "Allocation is invalid", "allocation");
@@ -2033,7 +2109,10 @@ export class BudgetTransactionService {
     client: DbClient,
     transactionId: number
   ): Promise<{allocations: BudgetTransaction[]; transaction: Transaction}> {
-    const allocations = await client.select().from(budgetTransactions).where(eq(budgetTransactions.transactionId, transactionId));
+    const allocations = await client
+      .select()
+      .from(budgetTransactions)
+      .where(eq(budgetTransactions.transactionId, transactionId));
 
     const transactionRecord = await client.query.transactions.findFirst({
       where: eq(transactions.id, transactionId),
@@ -2079,7 +2158,9 @@ export class BudgetTransactionService {
     const wouldExceed = Math.abs(proposedTotal) - Math.abs(sourceAmount) > ALLOCATION_PRECISION;
 
     if (wouldExceed) {
-      errors.push(`Allocation amount ${newAmount} would exceed remaining transaction amount. Remaining: ${remaining}.`);
+      errors.push(
+        `Allocation amount ${newAmount} would exceed remaining transaction amount. Remaining: ${remaining}.`
+      );
     }
 
     const isValid = !wouldExceed && !hasSignMismatch;

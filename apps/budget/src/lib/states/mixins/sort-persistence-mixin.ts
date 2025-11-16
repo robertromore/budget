@@ -5,7 +5,7 @@
  * Sort persistence mixin interface - provides localStorage integration
  * for sort state with reactive getter/setter callbacks
  */
-export interface SortPersistenceMixin<TSortField = string, TSortDirection = 'asc' | 'desc'> {
+export interface SortPersistenceMixin<TSortField = string, TSortDirection = "asc" | "desc"> {
   // State management
   getSortField(): TSortField;
   setSortField(field: TSortField): void;
@@ -13,7 +13,7 @@ export interface SortPersistenceMixin<TSortField = string, TSortDirection = 'asc
   setSortDirection(direction: TSortDirection): void;
 
   // Combined operations
-  getSort(): { field: TSortField; direction: TSortDirection };
+  getSort(): {field: TSortField; direction: TSortDirection};
   setSort(field: TSortField, direction: TSortDirection): void;
   toggleSortDirection(): TSortDirection;
   toggleSortField(field: TSortField): void;
@@ -38,7 +38,7 @@ export interface SortPersistenceMixin<TSortField = string, TSortDirection = 'asc
 /**
  * Sort state stored in localStorage
  */
-export type SortState<TSortField = string, TSortDirection = 'asc' | 'desc'> = {
+export type SortState<TSortField = string, TSortDirection = "asc" | "desc"> = {
   field: TSortField;
   direction: TSortDirection;
   timestamp: number;
@@ -47,7 +47,7 @@ export type SortState<TSortField = string, TSortDirection = 'asc' | 'desc'> = {
 /**
  * Configuration for sort persistence
  */
-export type SortPersistenceConfig<TSortField = string, TSortDirection = 'asc' | 'desc'> = {
+export type SortPersistenceConfig<TSortField = string, TSortDirection = "asc" | "desc"> = {
   /** Valid field values for validation */
   validFields?: TSortField[];
   /** Valid direction values for validation */
@@ -76,7 +76,7 @@ export type SortPersistenceConfig<TSortField = string, TSortDirection = 'asc' | 
  * @param config - Configuration options
  * @returns SortPersistenceMixin interface with persistence operations
  */
-export function createSortPersistence<TSortField = string, TSortDirection = 'asc' | 'desc'>(
+export function createSortPersistence<TSortField = string, TSortDirection = "asc" | "desc">(
   storageKey: string,
   getSortField: () => TSortField,
   setSortField: (value: TSortField) => void,
@@ -88,7 +88,7 @@ export function createSortPersistence<TSortField = string, TSortDirection = 'asc
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
     autoLoad: true,
     autoSave: true,
-    ...config
+    ...config,
   };
 
   const mixin: SortPersistenceMixin<TSortField, TSortDirection> = {
@@ -120,10 +120,10 @@ export function createSortPersistence<TSortField = string, TSortDirection = 'asc
     },
 
     // Combined operations
-    getSort(): { field: TSortField; direction: TSortDirection } {
+    getSort(): {field: TSortField; direction: TSortDirection} {
       return {
         field: getSortField(),
-        direction: getSortDirection()
+        direction: getSortDirection(),
       };
     },
 
@@ -141,10 +141,10 @@ export function createSortPersistence<TSortField = string, TSortDirection = 'asc
       const current = getSortDirection();
       // Default toggle for common string directions
       let newDirection: TSortDirection;
-      if (current === 'asc' as TSortDirection) {
-        newDirection = 'desc' as TSortDirection;
-      } else if (current === 'desc' as TSortDirection) {
-        newDirection = 'asc' as TSortDirection;
+      if (current === ("asc" as TSortDirection)) {
+        newDirection = "desc" as TSortDirection;
+      } else if (current === ("desc" as TSortDirection)) {
+        newDirection = "asc" as TSortDirection;
       } else {
         // For custom directions, use the first valid direction or default
         newDirection = fullConfig.validDirections?.[0] || fullConfig.defaultDirection;
@@ -174,7 +174,7 @@ export function createSortPersistence<TSortField = string, TSortDirection = 'asc
         const sortState: SortState<TSortField, TSortDirection> = {
           field: getSortField(),
           direction: getSortDirection(),
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
         localStorage.setItem(storageKey, JSON.stringify(sortState));
       } catch (error) {
@@ -249,7 +249,7 @@ export function createSortPersistence<TSortField = string, TSortDirection = 'asc
     // Comparison utilities
     createComparator<T>(accessor: (item: T) => any): (a: T, b: T) => number {
       const direction = getSortDirection();
-      const isAscending = direction === 'asc' as TSortDirection;
+      const isAscending = direction === ("asc" as TSortDirection);
 
       return (a: T, b: T): number => {
         const aValue = accessor(a);
@@ -266,8 +266,8 @@ export function createSortPersistence<TSortField = string, TSortDirection = 'asc
 
     createFieldComparator<T extends Record<string, any>>(): (a: T, b: T) => number {
       const field = getSortField() as string;
-      return mixin.createComparator<T>(item => item[field]);
-    }
+      return mixin.createComparator<T>((item) => item[field]);
+    },
   };
 
   // Auto-load on creation if enabled
@@ -292,41 +292,41 @@ export type ExtractSortDirectionType<T> = T extends SortPersistenceMixin<any, in
  * Common sort field types for typical use cases
  */
 export type CommonSortFields =
-  | 'name'
-  | 'date'
-  | 'amount'
-  | 'status'
-  | 'category'
-  | 'createdAt'
-  | 'updatedAt';
+  | "name"
+  | "date"
+  | "amount"
+  | "status"
+  | "category"
+  | "createdAt"
+  | "updatedAt";
 
 /**
  * Common sort direction types
  */
-export type CommonSortDirections = 'asc' | 'desc';
+export type CommonSortDirections = "asc" | "desc";
 
 /**
  * Predefined sort persistence configurations for common scenarios
  */
 export const SORT_CONFIGS = {
   transactions: {
-    validFields: ['date', 'amount', 'payee', 'category', 'status'] as const,
-    validDirections: ['asc', 'desc'] as const,
-    defaultField: 'date' as const,
-    defaultDirection: 'desc' as const
+    validFields: ["date", "amount", "payee", "category", "status"] as const,
+    validDirections: ["asc", "desc"] as const,
+    defaultField: "date" as const,
+    defaultDirection: "desc" as const,
   },
   accounts: {
-    validFields: ['name', 'balance', 'type', 'createdAt'] as const,
-    validDirections: ['asc', 'desc'] as const,
-    defaultField: 'name' as const,
-    defaultDirection: 'asc' as const
+    validFields: ["name", "balance", "type", "createdAt"] as const,
+    validDirections: ["asc", "desc"] as const,
+    defaultField: "name" as const,
+    defaultDirection: "asc" as const,
   },
   categories: {
-    validFields: ['name', 'type', 'createdAt'] as const,
-    validDirections: ['asc', 'desc'] as const,
-    defaultField: 'name' as const,
-    defaultDirection: 'asc' as const
-  }
+    validFields: ["name", "type", "createdAt"] as const,
+    validDirections: ["asc", "desc"] as const,
+    defaultField: "name" as const,
+    defaultDirection: "asc" as const,
+  },
 } as const;
 
 /**
@@ -334,8 +334,8 @@ export const SORT_CONFIGS = {
  */
 export function createPredefinedSortPersistence<
   TConfig extends keyof typeof SORT_CONFIGS,
-  TSortField extends (typeof SORT_CONFIGS)[TConfig]['validFields'][number],
-  TSortDirection extends (typeof SORT_CONFIGS)[TConfig]['validDirections'][number]
+  TSortField extends (typeof SORT_CONFIGS)[TConfig]["validFields"][number],
+  TSortDirection extends (typeof SORT_CONFIGS)[TConfig]["validDirections"][number],
 >(
   configKey: TConfig,
   storageKey: string,
@@ -351,7 +351,7 @@ export function createPredefinedSortPersistence<
     validDirections: baseConfig.validDirections as TSortDirection[],
     defaultField: baseConfig.defaultField as TSortField,
     defaultDirection: baseConfig.defaultDirection as TSortDirection,
-    ...overrides
+    ...overrides,
   };
 
   return createSortPersistence(

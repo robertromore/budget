@@ -1,5 +1,5 @@
 /** @type { import("eslint").Linter.Config } */
-const baseConfig = require("@budget/config/eslint");
+const baseConfig = require('@budget/config/eslint');
 
 module.exports = {
   ...baseConfig,

@@ -1,8 +1,21 @@
-import type { Category, CategoryType, IncomeReliability, NewCategory, SpendingPriority, TaxCategory } from "$lib/schema/categories";
-import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
-import { defaultCategories } from "./default-categories";
-import { CategoryRepository, type CategoryStats, type CategoryWithGroup, type CategoryWithStats, type UpdateCategoryData } from "./repository";
+import type {
+  Category,
+  CategoryType,
+  IncomeReliability,
+  NewCategory,
+  SpendingPriority,
+  TaxCategory,
+} from "$lib/schema/categories";
+import {ConflictError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
+import {InputSanitizer} from "$lib/server/shared/validation";
+import {defaultCategories} from "./default-categories";
+import {
+  CategoryRepository,
+  type CategoryStats,
+  type CategoryWithGroup,
+  type CategoryWithStats,
+  type UpdateCategoryData,
+} from "./repository";
 
 export interface CreateCategoryData {
   name: string;
@@ -39,9 +52,7 @@ export interface CategoryAnalytics {
  * Use ServiceFactory to instantiate in production code.
  */
 export class CategoryService {
-  constructor(
-    private repository: CategoryRepository
-  ) {}
+  constructor(private repository: CategoryRepository) {}
 
   /**
    * Generate a URL-friendly slug from a string
@@ -49,9 +60,9 @@ export class CategoryService {
   private generateSlug(name: string): string {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
       .trim();
   }
 
@@ -69,9 +80,7 @@ export class CategoryService {
       throw new ValidationError("Invalid category name");
     }
 
-    const sanitizedNotes = data.notes
-      ? InputSanitizer.sanitizeDescription(data.notes)
-      : null;
+    const sanitizedNotes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : null;
 
     // Validate parent if provided
     if (data.parentId !== undefined && data.parentId !== null) {
@@ -97,7 +106,7 @@ export class CategoryService {
       slug,
       notes: sanitizedNotes,
       parentId: data.parentId ?? null,
-      categoryType: data.categoryType ?? 'expense',
+      categoryType: data.categoryType ?? "expense",
       categoryIcon: data.categoryIcon ?? null,
       categoryColor: data.categoryColor ?? null,
       isActive: data.isActive ?? true,
@@ -185,7 +194,11 @@ export class CategoryService {
   /**
    * Update category
    */
-  async updateCategory(id: number, data: UpdateCategoryData, workspaceId: number): Promise<Category> {
+  async updateCategory(
+    id: number,
+    data: UpdateCategoryData,
+    workspaceId: number
+  ): Promise<Category> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid category ID");
     }
@@ -213,9 +226,7 @@ export class CategoryService {
 
     // Validate and sanitize notes if provided
     if (data.notes !== undefined) {
-      updateData.notes = data.notes
-        ? InputSanitizer.sanitizeDescription(data.notes)
-        : null;
+      updateData.notes = data.notes ? InputSanitizer.sanitizeDescription(data.notes) : null;
     }
 
     // Validate and handle parentId if provided
@@ -291,7 +302,11 @@ export class CategoryService {
   /**
    * Delete category (soft delete)
    */
-  async deleteCategory(id: number, workspaceId: number, options: {force?: boolean} = {}): Promise<Category> {
+  async deleteCategory(
+    id: number,
+    workspaceId: number,
+    options: {force?: boolean} = {}
+  ): Promise<Category> {
     if (!id || id <= 0) {
       throw new ValidationError("Invalid category ID");
     }
@@ -324,7 +339,7 @@ export class CategoryService {
       throw new ValidationError("No category IDs provided");
     }
 
-    const validIds = ids.filter(id => id && id > 0);
+    const validIds = ids.filter((id) => id && id > 0);
     if (validIds.length === 0) {
       throw new ValidationError("No valid category IDs provided");
     }
@@ -347,13 +362,14 @@ export class CategoryService {
 
         deleteableIds.push(id);
       } catch (error) {
-        errors.push(`Category ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        errors.push(`Category ${id}: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     }
 
-    const deletedCount = deleteableIds.length > 0
-      ? await this.repository.bulkDeleteCategories(deleteableIds, workspaceId)
-      : 0;
+    const deletedCount =
+      deleteableIds.length > 0
+        ? await this.repository.bulkDeleteCategories(deleteableIds, workspaceId)
+        : 0;
 
     return {deletedCount, errors};
   }
@@ -392,7 +408,9 @@ export class CategoryService {
         await this.repository.update(update.id, {displayOrder: update.displayOrder}, workspaceId);
         updatedCount++;
       } catch (error) {
-        errors.push(`Category ${update.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        errors.push(
+          `Category ${update.id}: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
       }
     }
 
@@ -403,7 +421,7 @@ export class CategoryService {
    * Search categories
    */
   async searchCategories(query: string, workspaceId: number): Promise<Category[]> {
-    const sanitizedQuery = query?.trim() || '';
+    const sanitizedQuery = query?.trim() || "";
     return await this.repository.search(sanitizedQuery, workspaceId);
   }
 
@@ -510,7 +528,7 @@ export class CategoryService {
     const categoriesWithStats = await this.repository.findAllWithStats(workspaceId);
 
     const categoriesWithTransactions = categoriesWithStats.filter(
-      cat => cat.stats.transactionCount > 0
+      (cat) => cat.stats.transactionCount > 0
     );
 
     const totalTransactions = categoriesWithStats.reduce(
@@ -518,18 +536,20 @@ export class CategoryService {
       0
     );
 
-    const topCategory = categoriesWithStats.length > 0
-      ? categoriesWithStats.reduce((top, cat) =>
-          Math.abs(cat.stats.totalAmount) > Math.abs(top.stats.totalAmount) ? cat : top
-        )
-      : null;
+    const topCategory =
+      categoriesWithStats.length > 0
+        ? categoriesWithStats.reduce((top, cat) =>
+            Math.abs(cat.stats.totalAmount) > Math.abs(top.stats.totalAmount) ? cat : top
+          )
+        : null;
 
     return {
       totalCategories: allCategories.length,
       categoriesWithTransactions: categoriesWithTransactions.length,
-      averageTransactionsPerCategory: categoriesWithTransactions.length > 0
-        ? totalTransactions / categoriesWithTransactions.length
-        : 0,
+      averageTransactionsPerCategory:
+        categoriesWithTransactions.length > 0
+          ? totalTransactions / categoriesWithTransactions.length
+          : 0,
       topCategory: topCategory && topCategory.stats.transactionCount > 0 ? topCategory : null,
     };
   }
@@ -648,9 +668,7 @@ export class CategoryService {
       // Prevent circular reference
       const descendantIds = await this.repository.getDescendantIds(categoryId, workspaceId);
       if (descendantIds.includes(parentId)) {
-        throw new ValidationError(
-          "Cannot set parent: This would create a circular reference"
-        );
+        throw new ValidationError("Cannot set parent: This would create a circular reference");
       }
     }
 
@@ -703,9 +721,7 @@ export class CategoryService {
 
       const descendantIds = await this.repository.getDescendantIds(categoryId, workspaceId);
       if (descendantIds.includes(parentId)) {
-        throw new ValidationError(
-          "Cannot set parent: This would create a circular reference"
-        );
+        throw new ValidationError("Cannot set parent: This would create a circular reference");
       }
     }
   }
@@ -713,12 +729,15 @@ export class CategoryService {
   /**
    * Private: Validate unique category name
    */
-  private async validateUniqueCategoryName(name: string, workspaceId: number, excludeId?: number): Promise<void> {
+  private async validateUniqueCategoryName(
+    name: string,
+    workspaceId: number,
+    excludeId?: number
+  ): Promise<void> {
     const existingCategories = await this.repository.findAllCategories(workspaceId);
 
-    const duplicate = existingCategories.find(category =>
-      category.name?.toLowerCase() === name.toLowerCase() &&
-      category.id !== excludeId
+    const duplicate = existingCategories.find(
+      (category) => category.name?.toLowerCase() === name.toLowerCase() && category.id !== excludeId
     );
 
     if (duplicate) {
@@ -731,7 +750,10 @@ export class CategoryService {
    * Only creates categories that don't already exist (by slug)
    * @param slugs - Optional array of slugs to seed. If not provided, seeds all default categories.
    */
-  async seedDefaultCategories(workspaceId: number, slugs?: string[]): Promise<{
+  async seedDefaultCategories(
+    workspaceId: number,
+    slugs?: string[]
+  ): Promise<{
     created: number;
     skipped: number;
     errors: string[];
@@ -742,7 +764,7 @@ export class CategoryService {
 
     // Filter categories if specific slugs are provided
     const categoriesToSeed = slugs
-      ? defaultCategories.filter(cat => slugs.includes(cat.slug))
+      ? defaultCategories.filter((cat) => slugs.includes(cat.slug))
       : defaultCategories;
 
     for (const defaultCategory of categoriesToSeed) {
@@ -756,23 +778,26 @@ export class CategoryService {
         }
 
         // Create the category
-        await this.repository.create({
-          ...defaultCategory,
-          // These will be set by the database
-          dateCreated: undefined,
-          createdAt: undefined,
-          updatedAt: undefined,
-          deletedAt: undefined,
-        }, workspaceId);
+        await this.repository.create(
+          {
+            ...defaultCategory,
+            // These will be set by the database
+            dateCreated: undefined,
+            createdAt: undefined,
+            updatedAt: undefined,
+            deletedAt: undefined,
+          },
+          workspaceId
+        );
 
         created++;
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        const message = error instanceof Error ? error.message : "Unknown error";
         errors.push(`Failed to create "${defaultCategory.name}": ${message}`);
       }
     }
 
-    return { created, skipped, errors };
+    return {created, skipped, errors};
   }
 
   /**
@@ -797,16 +822,16 @@ export class CategoryService {
     }>;
   }> {
     const existingCategories = await this.repository.findAllCategories(workspaceId);
-    const existingSlugs = new Set(existingCategories.map(c => c.slug));
+    const existingSlugs = new Set(existingCategories.map((c) => c.slug));
 
-    const categories = defaultCategories.map(dc => ({
-      name: dc.name ?? '',
+    const categories = defaultCategories.map((dc) => ({
+      name: dc.name ?? "",
       slug: dc.slug,
-      categoryType: dc.categoryType ?? 'expense',
+      categoryType: dc.categoryType ?? "expense",
       installed: existingSlugs.has(dc.slug),
     }));
 
-    const installedCount = categories.filter(c => c.installed).length;
+    const installedCount = categories.filter((c) => c.installed).length;
 
     return {
       total: defaultCategories.length,

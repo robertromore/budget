@@ -1,13 +1,13 @@
-import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
-import { cachePatterns } from "./_client";
-import { trpc } from "$lib/trpc/client";
+import {defineQuery, defineMutation, createQueryKeys} from "./_factory";
+import {cachePatterns} from "./_client";
+import {trpc} from "$lib/trpc/client";
 import type {
   CreateTransactionData,
   UpdateTransactionData,
   TransactionFilters,
   PaginationParams,
 } from "$lib/server/domains/transactions";
-import type { Transaction } from "$lib/schema";
+import type {Transaction} from "$lib/schema";
 
 /**
  * Query Keys for transaction operations
@@ -15,15 +15,14 @@ import type { Transaction } from "$lib/schema";
 export const transactionKeys = createQueryKeys("transactions", {
   lists: () => ["transactions", "list"] as const,
   list: (filters?: TransactionFilters, pagination?: PaginationParams) =>
-    ["transactions", "list", { filters, pagination }] as const,
+    ["transactions", "list", {filters, pagination}] as const,
   details: () => ["transactions", "detail"] as const,
   detail: (id: number) => ["transactions", "detail", id] as const,
   byAccount: (accountId: number, params?: any) =>
     ["transactions", "account", accountId, params] as const,
   allByAccount: (accountId: number, params?: any) =>
     ["transactions", "all", accountId, params] as const,
-  summary: (accountId: number) =>
-    ["transactions", "summary", accountId] as const,
+  summary: (accountId: number) => ["transactions", "summary", accountId] as const,
 });
 
 /**
@@ -32,8 +31,8 @@ export const transactionKeys = createQueryKeys("transactions", {
 export const getAllAccountTransactions = (
   accountId: number,
   options?: {
-    sortBy?: 'date' | 'amount' | 'notes';
-    sortOrder?: 'asc' | 'desc';
+    sortBy?: "date" | "amount" | "notes";
+    sortOrder?: "asc" | "desc";
     searchQuery?: string;
     dateFrom?: string;
     dateTo?: string;
@@ -41,11 +40,11 @@ export const getAllAccountTransactions = (
 ) => {
   const params = {
     accountId,
-    sortBy: options?.sortBy ?? 'date',
-    sortOrder: options?.sortOrder ?? 'desc',
-    ...(options?.searchQuery && { searchQuery: options.searchQuery }),
-    ...(options?.dateFrom && { dateFrom: options.dateFrom }),
-    ...(options?.dateTo && { dateTo: options.dateTo }),
+    sortBy: options?.sortBy ?? "date",
+    sortOrder: options?.sortOrder ?? "desc",
+    ...(options?.searchQuery && {searchQuery: options.searchQuery}),
+    ...(options?.dateFrom && {dateFrom: options.dateFrom}),
+    ...(options?.dateTo && {dateTo: options.dateTo}),
   };
 
   return defineQuery({
@@ -63,16 +62,16 @@ export const getAllAccountTransactions = (
 export const getAllAccountTransactionsWithUpcoming = (
   accountId: number,
   options?: {
-    sortBy?: 'date' | 'amount' | 'notes';
-    sortOrder?: 'asc' | 'desc';
+    sortBy?: "date" | "amount" | "notes";
+    sortOrder?: "asc" | "desc";
     searchQuery?: string;
     dateFrom?: string;
     dateTo?: string;
   }
 ) => {
   return defineQuery({
-    queryKey: [...transactionKeys.allByAccount(accountId, options), 'with-upcoming'],
-    queryFn: () => trpc().transactionRoutes.forAccountWithUpcoming.query({ accountId }),
+    queryKey: [...transactionKeys.allByAccount(accountId, options), "with-upcoming"],
+    queryFn: () => trpc().transactionRoutes.forAccountWithUpcoming.query({accountId}),
     options: {
       staleTime: 30 * 1000, // 30 seconds
       select: (data: any[]) => {
@@ -82,50 +81,53 @@ export const getAllAccountTransactionsWithUpcoming = (
         // Apply search filter
         if (options?.searchQuery) {
           const query = options.searchQuery.toLowerCase();
-          filteredData = filteredData.filter(transaction =>
-            transaction.notes?.toLowerCase().includes(query) ||
-            (transaction as any).scheduleName?.toLowerCase().includes(query)
+          filteredData = filteredData.filter(
+            (transaction) =>
+              transaction.notes?.toLowerCase().includes(query) ||
+              (transaction as any).scheduleName?.toLowerCase().includes(query)
           );
         }
 
         // Apply date filters
         if (options?.dateFrom) {
-          filteredData = filteredData.filter(transaction => transaction.date >= options.dateFrom!);
+          filteredData = filteredData.filter(
+            (transaction) => transaction.date >= options.dateFrom!
+          );
         }
         if (options?.dateTo) {
-          filteredData = filteredData.filter(transaction => transaction.date <= options.dateTo!);
+          filteredData = filteredData.filter((transaction) => transaction.date <= options.dateTo!);
         }
 
         // Apply sorting
-        const sortBy = options?.sortBy ?? 'date';
-        const sortOrder = options?.sortOrder ?? 'desc';
+        const sortBy = options?.sortBy ?? "date";
+        const sortOrder = options?.sortOrder ?? "desc";
 
         filteredData.sort((a, b) => {
           let aValue: any, bValue: any;
 
           switch (sortBy) {
-            case 'amount':
+            case "amount":
               aValue = a.amount;
               bValue = b.amount;
               break;
-            case 'notes':
-              aValue = a.notes || '';
-              bValue = b.notes || '';
+            case "notes":
+              aValue = a.notes || "";
+              bValue = b.notes || "";
               break;
-            case 'date':
+            case "date":
             default:
               aValue = a.date;
               bValue = b.date;
               break;
           }
 
-          if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-          if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+          if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+          if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
           return 0;
         });
 
         return filteredData;
-      }
+      },
     },
   });
 };
@@ -138,8 +140,8 @@ export const getAccountTransactions = (
   options?: {
     page?: number;
     pageSize?: number;
-    sortBy?: 'date' | 'amount' | 'notes';
-    sortOrder?: 'asc' | 'desc';
+    sortBy?: "date" | "amount" | "notes";
+    sortOrder?: "asc" | "desc";
     searchQuery?: string;
     dateFrom?: string;
     dateTo?: string;
@@ -149,11 +151,11 @@ export const getAccountTransactions = (
     accountId,
     page: options?.page ?? 0,
     pageSize: options?.pageSize ?? 50,
-    sortBy: options?.sortBy ?? 'date',
-    sortOrder: options?.sortOrder ?? 'desc',
-    ...(options?.searchQuery && { searchQuery: options.searchQuery }),
-    ...(options?.dateFrom && { dateFrom: options.dateFrom }),
-    ...(options?.dateTo && { dateTo: options.dateTo }),
+    sortBy: options?.sortBy ?? "date",
+    sortOrder: options?.sortOrder ?? "desc",
+    ...(options?.searchQuery && {searchQuery: options.searchQuery}),
+    ...(options?.dateFrom && {dateFrom: options.dateFrom}),
+    ...(options?.dateTo && {dateTo: options.dateTo}),
   };
 
   return defineQuery({
@@ -175,7 +177,7 @@ export const getTransactionsList = (
 ) => {
   return defineQuery({
     queryKey: transactionKeys.list(filters, pagination),
-    queryFn: () => trpc().transactionRoutes.list.query({ filters, pagination }),
+    queryFn: () => trpc().transactionRoutes.list.query({filters, pagination}),
     options: {
       staleTime: 30 * 1000,
     },
@@ -188,7 +190,7 @@ export const getTransactionsList = (
 export const getTransactionDetail = (id: number) => {
   return defineQuery({
     queryKey: transactionKeys.detail(id),
-    queryFn: () => trpc().transactionRoutes.byId.query({ id }),
+    queryFn: () => trpc().transactionRoutes.byId.query({id}),
     options: {
       staleTime: 60 * 1000, // 1 minute
     },
@@ -201,7 +203,7 @@ export const getTransactionDetail = (id: number) => {
 export const getAccountSummary = (accountId: number) => {
   return defineQuery({
     queryKey: transactionKeys.summary(accountId),
-    queryFn: () => trpc().transactionRoutes.summary.query({ accountId }),
+    queryFn: () => trpc().transactionRoutes.summary.query({accountId}),
     options: {
       staleTime: 30 * 1000,
     },
@@ -214,7 +216,7 @@ export const getAccountSummary = (accountId: number) => {
 export const getMonthlySpendingAggregates = (accountId: number) => {
   return defineQuery({
     queryKey: ["transactions", "analytics", "monthlySpending", accountId],
-    queryFn: () => trpc().transactionRoutes.monthlySpendingAggregates.query({ accountId }),
+    queryFn: () => trpc().transactionRoutes.monthlySpendingAggregates.query({accountId}),
     options: {
       staleTime: 60 * 1000, // 1 minute cache for analytics data
     },
@@ -241,10 +243,10 @@ export const createTransaction = defineMutation<CreateTransactionData, Transacti
  * Update transaction
  */
 export const updateTransaction = defineMutation<
-  { id: number; data: UpdateTransactionData },
+  {id: number; data: UpdateTransactionData},
   Transaction
 >({
-  mutationFn: ({ id, data }) => trpc().transactionRoutes.update.mutate({ id, data }),
+  mutationFn: ({id, data}) => trpc().transactionRoutes.update.mutate({id, data}),
   onSuccess: (updatedTransaction) => {
     if (updatedTransaction.accountId) {
       // Update the detail query cache
@@ -254,16 +256,8 @@ export const updateTransaction = defineMutation<
       );
 
       // Invalidate all related queries
-      cachePatterns.invalidatePrefix([
-        "transactions",
-        "account",
-        updatedTransaction.accountId
-      ]);
-      cachePatterns.invalidatePrefix([
-        "transactions",
-        "all",
-        updatedTransaction.accountId
-      ]);
+      cachePatterns.invalidatePrefix(["transactions", "account", updatedTransaction.accountId]);
+      cachePatterns.invalidatePrefix(["transactions", "all", updatedTransaction.accountId]);
       cachePatterns.invalidatePrefix(transactionKeys.summary(updatedTransaction.accountId));
       cachePatterns.invalidatePrefix(transactionKeys.lists());
       // Invalidate accounts list to update balances in sidebar
@@ -278,10 +272,10 @@ export const updateTransaction = defineMutation<
  * Update transaction and get all account transactions with recalculated running balances
  */
 export const updateTransactionWithBalance = defineMutation<
-  { id: number; data: UpdateTransactionData },
+  {id: number; data: UpdateTransactionData},
   Transaction[]
 >({
-  mutationFn: ({ id, data }) => trpc().transactionRoutes.updateWithBalance.mutate({ id, data }),
+  mutationFn: ({id, data}) => trpc().transactionRoutes.updateWithBalance.mutate({id, data}),
   onSuccess: (transactionsWithBalance, _variables) => {
     if (!Array.isArray(transactionsWithBalance) || !transactionsWithBalance.length) return;
 
@@ -292,21 +286,21 @@ export const updateTransactionWithBalance = defineMutation<
     cachePatterns.updateQueriesWithCondition(
       (queryKey) => {
         // Match queries for this specific account
-        return JSON.stringify(queryKey).includes(`"account",${accountId}`) &&
-               JSON.stringify(queryKey).includes('"with-upcoming"');
+        return (
+          JSON.stringify(queryKey).includes(`"account",${accountId}`) &&
+          JSON.stringify(queryKey).includes('"with-upcoming"')
+        );
       },
       (oldData: any[]) => {
         if (!Array.isArray(oldData)) return oldData;
 
         // Create a map of updated transactions for quick lookup
-        const updatedTransactionsMap = new Map(
-          transactionsWithBalance.map(tx => [tx.id, tx])
-        );
+        const updatedTransactionsMap = new Map(transactionsWithBalance.map((tx) => [tx.id, tx]));
 
         // Update existing actual transactions, keep scheduled transactions unchanged
-        return oldData.map(item => {
+        return oldData.map((item) => {
           // Only update actual transactions (numeric IDs), leave scheduled ones (string IDs) as is
-          if (typeof item.id === 'number' && updatedTransactionsMap.has(item.id)) {
+          if (typeof item.id === "number" && updatedTransactionsMap.has(item.id)) {
             return updatedTransactionsMap.get(item.id);
           }
           return item;
@@ -317,8 +311,10 @@ export const updateTransactionWithBalance = defineMutation<
     // 2. Update getAllAccountTransactions queries
     cachePatterns.updateQueriesWithCondition(
       (queryKey) => {
-        return JSON.stringify(queryKey).includes(`"all",${accountId}`) &&
-               !JSON.stringify(queryKey).includes('"with-upcoming"');
+        return (
+          JSON.stringify(queryKey).includes(`"all",${accountId}`) &&
+          !JSON.stringify(queryKey).includes('"with-upcoming"')
+        );
       },
       () => transactionsWithBalance
     );
@@ -336,8 +332,8 @@ export const updateTransactionWithBalance = defineMutation<
 /**
  * Delete transaction
  */
-export const deleteTransaction = defineMutation<number, { success: boolean }>({
-  mutationFn: (id) => trpc().transactionRoutes.delete.mutate({ id }),
+export const deleteTransaction = defineMutation<number, {success: boolean}>({
+  mutationFn: (id) => trpc().transactionRoutes.delete.mutate({id}),
   onSuccess: (_, id) => {
     // Remove from cache
     cachePatterns.removeQuery(transactionKeys.detail(id));
@@ -354,8 +350,8 @@ export const deleteTransaction = defineMutation<number, { success: boolean }>({
 /**
  * Bulk delete transactions
  */
-export const bulkDeleteTransactions = defineMutation<number[], { count: number }>({
-  mutationFn: (ids) => trpc().transactionRoutes.bulkDelete.mutate({ ids }),
+export const bulkDeleteTransactions = defineMutation<number[], {count: number}>({
+  mutationFn: (ids) => trpc().transactionRoutes.bulkDelete.mutate({ids}),
   onSuccess: (_result, ids) => {
     // Remove individual transaction queries
     ids.forEach((id) => {
@@ -421,10 +417,10 @@ export const optimisticHelpers = {
         updatedAt: new Date().toISOString(),
         deletedAt: null,
       };
-      cachePatterns.setQueryData(
-        transactionKeys.byAccount(accountId),
-        [...previousData, optimisticTransaction]
-      );
+      cachePatterns.setQueryData(transactionKeys.byAccount(accountId), [
+        ...previousData,
+        optimisticTransaction,
+      ]);
     }
     return previousData;
   },
@@ -502,7 +498,7 @@ export const updateTransfer = defineMutation({
  * Delete a transfer transaction
  */
 export const deleteTransfer = defineMutation({
-  mutationFn: async (params: { transferId: string }) => {
+  mutationFn: async (params: {transferId: string}) => {
     await trpc().transactionRoutes.deleteTransfer.mutate(params);
   },
   onSuccess: () => {
@@ -520,7 +516,7 @@ export const bulkUpdatePayee = defineMutation<
     newPayeeId: number | null;
     originalPayeeName: string;
   },
-  { count: number }
+  {count: number}
 >({
   mutationFn: (params) => trpc().transactionRoutes.bulkUpdatePayee.mutate(params),
   onSuccess: (_result, variables) => {
@@ -550,7 +546,7 @@ export const bulkUpdateCategory = defineMutation<
     matchBy: "payee" | "category";
     matchValue?: string | number;
   },
-  { count: number }
+  {count: number}
 >({
   mutationFn: (params) => trpc().transactionRoutes.bulkUpdateCategory.mutate(params),
   onSuccess: (_result, variables) => {

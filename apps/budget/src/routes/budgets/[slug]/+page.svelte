@@ -93,14 +93,17 @@ const updateBudgetMutation = updateBudget.options();
 const isEnvelopeBudget = $derived(budget?.type === 'category-envelope');
 
 // Fetch linked schedule if this is a scheduled-expense budget
-const linkedScheduleId = $derived(budget?.metadata?.scheduledExpense?.linkedScheduleId as number | undefined);
+const linkedScheduleId = $derived(
+  budget?.metadata?.scheduledExpense?.linkedScheduleId as number | undefined
+);
 let linkedSchedule = $state<Schedule | null>(null);
 
 $effect(() => {
   if (linkedScheduleId) {
-    trpc().scheduleRoutes.load.query({id: linkedScheduleId})
-      .then(schedule => linkedSchedule = schedule)
-      .catch(err => {
+    trpc()
+      .scheduleRoutes.load.query({id: linkedScheduleId})
+      .then((schedule) => (linkedSchedule = schedule))
+      .catch((err) => {
         console.error('Failed to load linked schedule:', err);
         linkedSchedule = null;
       });
@@ -110,7 +113,11 @@ $effect(() => {
 });
 
 // Validation state
-const validation = $derived(budget ? getBudgetValidationIssues(budget) : { hasIssues: false, invalidCategories: 0, invalidAccounts: 0, messages: [] });
+const validation = $derived(
+  budget
+    ? getBudgetValidationIssues(budget)
+    : {hasIssues: false, invalidCategories: 0, invalidAccounts: 0, messages: []}
+);
 
 // Active tab state
 let activeTab = $state<string>('overview');
@@ -121,22 +128,26 @@ let viewMode = $state<ViewMode>('list');
 
 // Period management state
 const firstTemplateId = $derived(budget?.periodTemplates?.[0]?.id);
-let periodsQuery = $derived(firstTemplateId ? listPeriodInstances(firstTemplateId).options() : null);
+let periodsQuery = $derived(
+  firstTemplateId ? listPeriodInstances(firstTemplateId).options() : null
+);
 let periods = $derived(periodsQuery?.data ?? []);
 
 // Find the actual current period (the one that includes today)
 // and the most recent period (which might be in the future)
 const currentPeriod = $derived.by(() => {
-  return periods.find(p => {
-    const start = parseISOString(p.startDate);
-    const end = parseISOString(p.endDate);
-    if (!start || !end) return false;
-    return start.compare(currentDate) <= 0 && end.compare(currentDate) >= 0;
-  }) || periods[periods.length - 1]; // Fallback to newest if none match
+  return (
+    periods.find((p) => {
+      const start = parseISOString(p.startDate);
+      const end = parseISOString(p.endDate);
+      if (!start || !end) return false;
+      return start.compare(currentDate) <= 0 && end.compare(currentDate) >= 0;
+    }) || periods[periods.length - 1]
+  ); // Fallback to newest if none match
 });
 
 const previousPeriod = $derived.by(() => {
-  const currentIndex = periods.findIndex(p => p.id === currentPeriod?.id);
+  const currentIndex = periods.findIndex((p) => p.id === currentPeriod?.id);
   return currentIndex > 0 ? periods[currentIndex - 1] : undefined;
 });
 
@@ -163,7 +174,7 @@ $effect(() => {
 // Get the selected period object
 const selectedPeriod = $derived.by(() => {
   if (!selectedPeriodId) return currentPeriod;
-  return periods.find(p => p.id === selectedPeriodId) || currentPeriod;
+  return periods.find((p) => p.id === selectedPeriodId) || currentPeriod;
 });
 
 // Check if the selected period is in the past
@@ -204,7 +215,7 @@ const canCreateNextPeriod = $derived.by(() => {
   if (periods.length === 0 || !budget?.periodTemplates?.[0]) return false;
 
   // Check if any period starts in the future (after today)
-  const hasFuturePeriod = periods.some(p => {
+  const hasFuturePeriod = periods.some((p) => {
     const start = parseISOString(p.startDate);
     if (!start) return false;
     return start.compare(currentDate) > 0;
@@ -217,7 +228,7 @@ const canCreateNextPeriod = $derived.by(() => {
 // Get the period before the selected one
 const previousToSelectedPeriod = $derived.by(() => {
   if (!selectedPeriod) return undefined;
-  const selectedIndex = periods.findIndex(p => p.id === selectedPeriod.id);
+  const selectedIndex = periods.findIndex((p) => p.id === selectedPeriod.id);
   if (selectedIndex > 0) {
     return periods[selectedIndex - 1];
   }
@@ -227,7 +238,7 @@ const previousToSelectedPeriod = $derived.by(() => {
 // Get the period after the selected one
 const nextToSelectedPeriod = $derived.by(() => {
   if (!selectedPeriod) return undefined;
-  const selectedIndex = periods.findIndex(p => p.id === selectedPeriod.id);
+  const selectedIndex = periods.findIndex((p) => p.id === selectedPeriod.id);
   if (selectedIndex >= 0 && selectedIndex < periods.length - 1) {
     return periods[selectedIndex + 1];
   }
@@ -244,7 +255,7 @@ const allEnvelopes = $derived(envelopesQuery?.data ?? []);
 // Filter envelopes by selected period
 const envelopes = $derived.by(() => {
   if (!selectedPeriodId) return allEnvelopes;
-  return allEnvelopes.filter(env => env.periodInstanceId === selectedPeriodId);
+  return allEnvelopes.filter((env) => env.periodInstanceId === selectedPeriodId);
 });
 
 const categoriesQuery = $derived.by(() => {
@@ -253,14 +264,14 @@ const categoriesQuery = $derived.by(() => {
 });
 const categories = $derived(categoriesQuery?.data ?? []);
 const categoryMap = $derived(
-  new Map(Array.isArray(categories) ? categories.map(cat => [cat.id, cat]) : [])
+  new Map(Array.isArray(categories) ? categories.map((cat) => [cat.id, cat]) : [])
 );
 
 // Get categories that don't already have envelopes
 const availableCategories = $derived.by(() => {
   if (!allEnvelopes || !categories) return [];
-  const usedCategoryIds = new Set(allEnvelopes.map(e => e.categoryId));
-  return categories.filter(cat => !usedCategoryIds.has(cat.id));
+  const usedCategoryIds = new Set(allEnvelopes.map((e) => e.categoryId));
+  return categories.filter((cat) => !usedCategoryIds.has(cat.id));
 });
 
 // Rollover history query - check if rollover already processed
@@ -278,9 +289,7 @@ function isRolloverProcessed(fromPeriodId: number, toPeriodId: number): boolean 
 
   // Then check rollover history from DB
   return rolloverHistory.some(
-    history =>
-      history.fromPeriodId === fromPeriodId &&
-      history.toPeriodId === toPeriodId
+    (history) => history.fromPeriodId === fromPeriodId && history.toPeriodId === toPeriodId
   );
 }
 
@@ -340,17 +349,17 @@ const totalEnvelopeAvailable = $derived.by(() => {
 
 const overspentEnvelopes = $derived.by(() => {
   if (!Array.isArray(envelopes)) return [];
-  return envelopes.filter(e => e.status === 'overspent');
+  return envelopes.filter((e) => e.status === 'overspent');
 });
 
 const depletedEnvelopes = $derived.by(() => {
   if (!Array.isArray(envelopes)) return [];
-  return envelopes.filter(e => e.status === 'depleted');
+  return envelopes.filter((e) => e.status === 'depleted');
 });
 
 const activeEnvelopes = $derived.by(() => {
   if (!Array.isArray(envelopes)) return [];
-  return envelopes.filter(e => e.status === 'active' || e.status === 'depleted');
+  return envelopes.filter((e) => e.status === 'active' || e.status === 'depleted');
 });
 
 // Context-aware primary action
@@ -367,9 +376,19 @@ const primaryAction = $derived.by(() => {
   }
 
   // Check both the rollover history AND the current processing state
-  if (previousPeriod && currentPeriod && !hasRolloverBeenProcessed && !isProcessingRollover && !rolloverMutation.isPending) {
-    const previousPeriodName = monthYearFmt.format(parseDate(previousPeriod.startDate).toDate(getLocalTimeZone()));
-    const currentPeriodName = monthYearFmt.format(parseDate(currentPeriod.startDate).toDate(getLocalTimeZone()));
+  if (
+    previousPeriod &&
+    currentPeriod &&
+    !hasRolloverBeenProcessed &&
+    !isProcessingRollover &&
+    !rolloverMutation.isPending
+  ) {
+    const previousPeriodName = monthYearFmt.format(
+      parseDate(previousPeriod.startDate).toDate(getLocalTimeZone())
+    );
+    const currentPeriodName = monthYearFmt.format(
+      parseDate(currentPeriod.startDate).toDate(getLocalTimeZone())
+    );
 
     return {
       type: 'rollover' as const,
@@ -459,7 +478,7 @@ async function handlePrimaryAction() {
 }
 
 async function handleEnvelopeUpdate(envelopeId: number, newAmount: number) {
-  const envelope = envelopes.find(e => e.id === envelopeId);
+  const envelope = envelopes.find((e) => e.id === envelopeId);
   if (!envelope) return;
 
   await updateEnvelopeMutation.mutateAsync({
@@ -468,12 +487,12 @@ async function handleEnvelopeUpdate(envelopeId: number, newAmount: number) {
   });
 }
 
-function handleEnvelopeSettings(envelope: typeof envelopes[0]) {
+function handleEnvelopeSettings(envelope: (typeof envelopes)[0]) {
   selectedEnvelopeForSettings = envelope;
   envelopeSettingsOpen = true;
 }
 
-async function handleDeficitRecover(envelope: typeof envelopes[0]) {
+async function handleDeficitRecover(envelope: (typeof envelopes)[0]) {
   selectedDeficitEnvelope = envelope;
   deficitAnalysis = null;
   deficitRecoveryPlan = null;
@@ -532,7 +551,7 @@ async function handleExecuteDeficitPlan(plan: any) {
   }
 }
 
-function handleTransferRequest(envelope: typeof envelopes[0]) {
+function handleTransferRequest(envelope: (typeof envelopes)[0]) {
   // TODO: Implement inline transfer UI
   console.log('Transfer from envelope:', envelope.id);
 }
@@ -543,7 +562,7 @@ async function toggleBudgetStatus() {
   const newStatus = budget.status === 'active' ? 'inactive' : 'active';
   await updateBudgetMutation.mutateAsync({
     id: budget.id,
-    data: { status: newStatus }
+    data: {status: newStatus},
   });
 }
 </script>
@@ -556,7 +575,7 @@ async function toggleBudgetStatus() {
 {#if isLoading}
   <div class="container mx-auto py-6">
     <Card.Root>
-      <Card.Content class="py-16 text-center text-sm text-muted-foreground">
+      <Card.Content class="text-muted-foreground py-16 text-center text-sm">
         Loading budget details...
       </Card.Content>
     </Card.Root>
@@ -565,955 +584,1037 @@ async function toggleBudgetStatus() {
   <div class="container mx-auto py-6">
     <Card.Root>
       <Card.Content class="py-16 text-center">
-        <p class="text-lg font-medium mb-2">Budget not found</p>
+        <p class="mb-2 text-lg font-medium">Budget not found</p>
         <Button href="/budgets" variant="outline">Back to Budgets</Button>
       </Card.Content>
     </Card.Root>
   </div>
 {:else}
-<div class="container mx-auto py-6">
-  <!-- 1. Quick Status Hero -->
-  <div class="flex items-start justify-between gap-4 mb-6">
-    <div class="flex items-start gap-4 flex-1 min-w-0">
-      <Button variant="ghost" size="icon" href="/budgets" class="mt-1 shrink-0">
-        <ArrowLeft class="h-4 w-4" />
-        <span class="sr-only">Back to Budgets</span>
-      </Button>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-3 mb-1">
-          <PiggyBank class="h-6 w-6 text-muted-foreground shrink-0" />
-          <h1 class="text-2xl md:text-3xl font-bold tracking-tight truncate">{budget.name}</h1>
-          <Badge variant={budget.status === 'active' ? 'default' : 'secondary'} class="shrink-0">
-            {budget.status}
-          </Badge>
+  <div class="container mx-auto py-6">
+    <!-- 1. Quick Status Hero -->
+    <div class="mb-6 flex items-start justify-between gap-4">
+      <div class="flex min-w-0 flex-1 items-start gap-4">
+        <Button variant="ghost" size="icon" href="/budgets" class="mt-1 shrink-0">
+          <ArrowLeft class="h-4 w-4" />
+          <span class="sr-only">Back to Budgets</span>
+        </Button>
+        <div class="min-w-0 flex-1">
+          <div class="mb-1 flex items-center gap-3">
+            <PiggyBank class="text-muted-foreground h-6 w-6 shrink-0" />
+            <h1 class="truncate text-2xl font-bold tracking-tight md:text-3xl">{budget.name}</h1>
+            <Badge variant={budget.status === 'active' ? 'default' : 'secondary'} class="shrink-0">
+              {budget.status}
+            </Badge>
+          </div>
+          {#if budget.description}
+            <p class="text-muted-foreground text-sm">{budget.description}</p>
+          {/if}
         </div>
-        {#if budget.description}
-          <p class="text-sm text-muted-foreground">{budget.description}</p>
-        {/if}
       </div>
-    </div>
 
-    <div class="flex items-center gap-2 shrink-0">
-      {#if isEnvelopeBudget && periods.length > 0}
-        <div class="flex items-center gap-1">
-          <!-- Previous Period Button -->
-          <Button
-            variant="outline"
-            size="icon"
-            class="h-9 w-9"
-            disabled={!previousToSelectedPeriod}
-            onclick={() => {
-              if (previousToSelectedPeriod) {
-                selectedPeriodId = previousToSelectedPeriod.id;
-              }
-            }}
-          >
-            <ChevronLeft class="h-4 w-4" />
-            <span class="sr-only">Previous Period</span>
-          </Button>
+      <div class="flex shrink-0 items-center gap-2">
+        {#if isEnvelopeBudget && periods.length > 0}
+          <div class="flex items-center gap-1">
+            <!-- Previous Period Button -->
+            <Button
+              variant="outline"
+              size="icon"
+              class="h-9 w-9"
+              disabled={!previousToSelectedPeriod}
+              onclick={() => {
+                if (previousToSelectedPeriod) {
+                  selectedPeriodId = previousToSelectedPeriod.id;
+                }
+              }}>
+              <ChevronLeft class="h-4 w-4" />
+              <span class="sr-only">Previous Period</span>
+            </Button>
 
-          <!-- Period Selector -->
-          <Select.Root
-            type="single"
-            bind:value={selectedPeriodIdString}
-          >
-            <Select.Trigger class="w-[180px]">
-              {#if selectedPeriodId}
-                {@const selectedPeriod = periods.find(p => p.id === selectedPeriodId)}
-                {#if selectedPeriod}
-                  <Calendar class="h-4 w-4 mr-2" />
-                  {monthYearFmt.format(parseDate(selectedPeriod.startDate).toDate(getLocalTimeZone()))}
+            <!-- Period Selector -->
+            <Select.Root type="single" bind:value={selectedPeriodIdString}>
+              <Select.Trigger class="w-[180px]">
+                {#if selectedPeriodId}
+                  {@const selectedPeriod = periods.find((p) => p.id === selectedPeriodId)}
+                  {#if selectedPeriod}
+                    <Calendar class="mr-2 h-4 w-4" />
+                    {monthYearFmt.format(
+                      parseDate(selectedPeriod.startDate).toDate(getLocalTimeZone())
+                    )}
+                  {:else}
+                    Select Period
+                  {/if}
                 {:else}
                   Select Period
                 {/if}
-              {:else}
-                Select Period
-              {/if}
-            </Select.Trigger>
-            <Select.Content>
-              {#each periods.slice().reverse() as period}
-                <Select.Item value={String(period.id)}>
-                  {monthYearFmt.format(parseDate(period.startDate).toDate(getLocalTimeZone()))}
-                </Select.Item>
-              {/each}
-            </Select.Content>
-          </Select.Root>
+              </Select.Trigger>
+              <Select.Content>
+                {#each periods.slice().reverse() as period}
+                  <Select.Item value={String(period.id)}>
+                    {monthYearFmt.format(parseDate(period.startDate).toDate(getLocalTimeZone()))}
+                  </Select.Item>
+                {/each}
+              </Select.Content>
+            </Select.Root>
 
-          <!-- Next Period Button -->
-          <Button
-            variant="outline"
-            size="icon"
-            class="h-9 w-9"
-            disabled={!nextToSelectedPeriod}
-            onclick={() => {
-              if (nextToSelectedPeriod) {
-                selectedPeriodId = nextToSelectedPeriod.id;
-              }
-            }}
-          >
-            <ChevronRight class="h-4 w-4" />
-            <span class="sr-only">Next Period</span>
-          </Button>
-        </div>
-      {/if}
-
-      <Button
-        variant="outline"
-        size="sm"
-        onclick={toggleBudgetStatus}
-        disabled={updateBudgetMutation.isPending}
-      >
-        {#if budget.status === 'active'}
-          <Pause class="h-4 w-4" />
-          <span class="hidden sm:inline ml-2">Pause</span>
-        {:else}
-          <Play class="h-4 w-4" />
-          <span class="hidden sm:inline ml-2">Resume</span>
+            <!-- Next Period Button -->
+            <Button
+              variant="outline"
+              size="icon"
+              class="h-9 w-9"
+              disabled={!nextToSelectedPeriod}
+              onclick={() => {
+                if (nextToSelectedPeriod) {
+                  selectedPeriodId = nextToSelectedPeriod.id;
+                }
+              }}>
+              <ChevronRight class="h-4 w-4" />
+              <span class="sr-only">Next Period</span>
+            </Button>
+          </div>
         {/if}
-      </Button>
 
-      <Button variant="outline" size="sm" href="/budgets/{budget.slug}/edit">
-        <SquarePen class="h-4 w-4" />
-        <span class="hidden sm:inline ml-2">Edit</span>
-      </Button>
-      <Button variant="ghost" size="sm" onclick={() => {
-        deleteBudgetId.current = budget.id;
-        deleteBudgetDialog.setTrue();
-      }}>
-        <Trash2 class="h-4 w-4" />
-        <span class="sr-only">Delete</span>
-      </Button>
-    </div>
-  </div>
-
-  <!-- Validation Warning Banner -->
-  {#if validation.hasIssues}
-    <Alert.Root variant="destructive" class="mb-6">
-      <TriangleAlert class="h-4 w-4" />
-      <Alert.Title>Budget Configuration Issue</Alert.Title>
-      <Alert.Description class="flex flex-col gap-3">
-        <p>
-          This budget has {validation.messages.join(' and ')}. This may affect budget calculations and reporting.
-        </p>
-        <div class="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onclick={() => editTemplateDialogOpen = true}
-            class="bg-background"
-          >
-            <Settings2 class="h-4 w-4 mr-2" />
-            Edit Budget Settings
-          </Button>
-        </div>
-      </Alert.Description>
-    </Alert.Root>
-  {/if}
-
-  <!-- Tabs Navigation -->
-  <Tabs.Root bind:value={activeTab} class="w-full">
-    <Tabs.List class="w-full justify-start mb-6">
-      <Tabs.Trigger value="overview" class="gap-2">
-        <LayoutDashboard class="h-4 w-4" />
-        Overview
-      </Tabs.Trigger>
-      {#if isEnvelopeBudget}
-        <Tabs.Trigger value="envelopes" class="gap-2">
-          <Wallet class="h-4 w-4" />
-          Envelopes
-        </Tabs.Trigger>
-      {/if}
-      <Tabs.Trigger value="analytics" class="gap-2">
-        <TrendingUp class="h-4 w-4" />
-        Analytics
-      </Tabs.Trigger>
-      <Tabs.Trigger value="periods" class="gap-2">
-        <Calendar class="h-4 w-4" />
-        Period Management
-      </Tabs.Trigger>
-      <Tabs.Trigger value="automation" class="gap-2">
-        <Repeat class="h-4 w-4" />
-        Automation
-      </Tabs.Trigger>
-    </Tabs.List>
-
-    <!-- Overview Tab -->
-    <Tabs.Content value="overview">
-  <!-- Two-column layout on larger screens -->
-  <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 overflow-hidden">
-    <!-- Main Content Column -->
-    <div class="space-y-6 min-w-0">
-      <!-- Overall Progress -->
-      <BudgetProgress
-        consumed={actualAmount}
-        allocated={allocatedAmount}
-        status={getStatus()}
-        enforcementLevel={budget.enforcementLevel || 'warning'}
-        label="Overall Budget Progress"
-      />
-
-      <!-- 2. Primary Action Card (Context-Aware) -->
-      <Card.Root class={primaryAction.variant === 'destructive' ? 'border-destructive/50 bg-destructive/5' : ''}>
-        <Card.Content class="py-4">
-          <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3 flex-1">
-              <div class={`p-3 rounded-lg ${
-                primaryAction.variant === 'destructive' ? 'bg-destructive/10' :
-                primaryAction.variant === 'default' ? 'bg-primary/10' :
-                'bg-muted'
-              }`}>
-                <primaryAction.icon class={`h-6 w-6 ${
-                  primaryAction.variant === 'destructive' ? 'text-destructive' :
-                  primaryAction.variant === 'default' ? 'text-primary' :
-                  'text-muted-foreground'
-                }`} />
-              </div>
-              <div>
-                <h3 class="font-semibold text-lg">{primaryAction.title}</h3>
-                <p class="text-sm text-muted-foreground">{primaryAction.description}</p>
-              </div>
-            </div>
-
-            {#if primaryAction.type !== 'healthy'}
-              <Button
-                variant={primaryAction.variant}
-                onclick={handlePrimaryAction}
-                disabled={rolloverMutation.isPending || isProcessingRollover}
-              >
-                {#if (rolloverMutation.isPending || isProcessingRollover) && primaryAction.type === 'rollover'}
-                  <Repeat class="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                {:else}
-                  Take Action
-                {/if}
-              </Button>
-            {/if}
-          </div>
-        </Card.Content>
-      </Card.Root>
-    </div>
-
-    <!-- Sidebar Column (visible on lg+ screens) -->
-    <div class="space-y-6">
-      <!-- Quick Stats Card -->
-      <Card.Root>
-        <Card.Header class="pb-3">
-          <Card.Title class="text-base">Quick Stats</Card.Title>
-        </Card.Header>
-        <Card.Content class="space-y-4">
-          <div>
-            <p class="text-xs text-muted-foreground mb-1">Allocated</p>
-            <p class="text-xl font-bold">{formatCurrency(allocatedAmount)}</p>
-          </div>
-          <Separator />
-          <div>
-            <p class="text-xs text-muted-foreground mb-1">Spent</p>
-            <p class="text-xl font-bold">{formatCurrency(actualAmount)}</p>
-          </div>
-          <Separator />
-          <div>
-            <p class="text-xs text-muted-foreground mb-1">Remaining</p>
-            <p class={`text-xl font-bold ${remainingAmount < 0 ? 'text-destructive' : 'text-emerald-600'}`}>
-              {formatCurrency(remainingAmount)}
-            </p>
-          </div>
-
-          {#if isEnvelopeBudget}
-            <Separator />
-            <div>
-              <p class="text-xs text-muted-foreground mb-1">Total Available</p>
-              <p class="text-xl font-bold text-emerald-600">{formatCurrency(totalEnvelopeAvailable)}</p>
-            </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={toggleBudgetStatus}
+          disabled={updateBudgetMutation.isPending}>
+          {#if budget.status === 'active'}
+            <Pause class="h-4 w-4" />
+            <span class="ml-2 hidden sm:inline">Pause</span>
+          {:else}
+            <Play class="h-4 w-4" />
+            <span class="ml-2 hidden sm:inline">Resume</span>
           {/if}
-        </Card.Content>
-      </Card.Root>
+        </Button>
 
-      <!-- Budget Details Card -->
-      <Card.Root>
-        <Card.Header class="pb-3">
-          <Card.Title class="text-base">Budget Details</Card.Title>
-        </Card.Header>
-        <Card.Content class="space-y-2 text-sm">
-          <div class="flex justify-between">
-            <span class="text-muted-foreground">Type</span>
-            <span class="font-medium capitalize">{budget.type.replace('-', ' ')}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-muted-foreground">Scope</span>
-            <span class="font-medium">{budget.scope}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-muted-foreground">Enforcement</span>
-            <span class="font-medium capitalize">{budget.enforcementLevel || 'warning'}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-muted-foreground">Created</span>
-            <span class="font-medium">
-              {new Date(budget.createdAt).toLocaleDateString()}
-            </span>
-          </div>
-        </Card.Content>
-      </Card.Root>
-
+        <Button variant="outline" size="sm" href="/budgets/{budget.slug}/edit">
+          <SquarePen class="h-4 w-4" />
+          <span class="ml-2 hidden sm:inline">Edit</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onclick={() => {
+            deleteBudgetId.current = budget.id;
+            deleteBudgetDialog.setTrue();
+          }}>
+          <Trash2 class="h-4 w-4" />
+          <span class="sr-only">Delete</span>
+        </Button>
+      </div>
     </div>
-  </div>
-    </Tabs.Content>
 
-    <!-- Envelopes Tab -->
-    {#if isEnvelopeBudget}
-      <Tabs.Content value="envelopes">
-        <div class="space-y-6">
-          <!-- Period Selector -->
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-2xl font-bold">Envelope Management</h2>
-              <p class="text-sm text-muted-foreground mt-1">
-                {envelopes.length} envelope{envelopes.length !== 1 ? 's' : ''} for this period
-                {#if overspentEnvelopes.length > 0}
-                  <span class="text-destructive ml-2">• {overspentEnvelopes.length} overspent</span>
-                {/if}
-              </p>
-            </div>
+    <!-- Validation Warning Banner -->
+    {#if validation.hasIssues}
+      <Alert.Root variant="destructive" class="mb-6">
+        <TriangleAlert class="h-4 w-4" />
+        <Alert.Title>Budget Configuration Issue</Alert.Title>
+        <Alert.Description class="flex flex-col gap-3">
+          <p>
+            This budget has {validation.messages.join(' and ')}. This may affect budget calculations
+            and reporting.
+          </p>
+          <div class="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={() => (editTemplateDialogOpen = true)}
+              class="bg-background">
+              <Settings2 class="mr-2 h-4 w-4" />
+              Edit Budget Settings
+            </Button>
+          </div>
+        </Alert.Description>
+      </Alert.Root>
+    {/if}
 
-            <div class="flex items-center gap-3">
-              <!-- Add Envelope Button -->
-              {#if currentPeriod && availableCategories.length > 0}
-                <Button
-                  variant="default"
-                  size="sm"
-                  onclick={() => envelopeCreateOpen = true}
-                  disabled={!currentPeriod || isSelectedPeriodPast}
-                  title={isSelectedPeriodPast ? 'Cannot add envelopes to past periods' : ''}
-                >
-                  <Plus class="h-4 w-4 mr-2" />
-                  Add Envelope
-                </Button>
-              {/if}
+    <!-- Tabs Navigation -->
+    <Tabs.Root bind:value={activeTab} class="w-full">
+      <Tabs.List class="mb-6 w-full justify-start">
+        <Tabs.Trigger value="overview" class="gap-2">
+          <LayoutDashboard class="h-4 w-4" />
+          Overview
+        </Tabs.Trigger>
+        {#if isEnvelopeBudget}
+          <Tabs.Trigger value="envelopes" class="gap-2">
+            <Wallet class="h-4 w-4" />
+            Envelopes
+          </Tabs.Trigger>
+        {/if}
+        <Tabs.Trigger value="analytics" class="gap-2">
+          <TrendingUp class="h-4 w-4" />
+          Analytics
+        </Tabs.Trigger>
+        <Tabs.Trigger value="periods" class="gap-2">
+          <Calendar class="h-4 w-4" />
+          Period Management
+        </Tabs.Trigger>
+        <Tabs.Trigger value="automation" class="gap-2">
+          <Repeat class="h-4 w-4" />
+          Automation
+        </Tabs.Trigger>
+      </Tabs.List>
 
-              <!-- View Mode Switcher -->
-              <div class="flex items-center gap-1 border rounded-lg p-1">
-                <Button
-                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  class="h-8 px-3"
-                  onclick={() => viewMode = 'list'}
-                >
-                  <List class="h-4 w-4" />
-                  <span class="ml-2 hidden sm:inline">List</span>
-                </Button>
-                <Button
-                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  class="h-8 px-3"
-                  onclick={() => viewMode = 'grid'}
-                >
-                  <LayoutGrid class="h-4 w-4" />
-                  <span class="ml-2 hidden sm:inline">Grid</span>
-                </Button>
-                <Button
-                  variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  class="h-8 px-3"
-                  onclick={() => viewMode = 'kanban'}
-                >
-                  <Columns3 class="h-4 w-4" />
-                  <span class="ml-2 hidden sm:inline">Board</span>
-                </Button>
-              </div>
-            </div>
+      <!-- Overview Tab -->
+      <Tabs.Content value="overview">
+        <!-- Two-column layout on larger screens -->
+        <div class="grid grid-cols-1 gap-6 overflow-hidden lg:grid-cols-[1fr_320px]">
+          <!-- Main Content Column -->
+          <div class="min-w-0 space-y-6">
+            <!-- Overall Progress -->
+            <BudgetProgress
+              consumed={actualAmount}
+              allocated={allocatedAmount}
+              status={getStatus()}
+              enforcementLevel={budget.enforcementLevel || 'warning'}
+              label="Overall Budget Progress" />
+
+            <!-- 2. Primary Action Card (Context-Aware) -->
+            <Card.Root
+              class={primaryAction.variant === 'destructive'
+                ? 'border-destructive/50 bg-destructive/5'
+                : ''}>
+              <Card.Content class="py-4">
+                <div class="flex items-center justify-between gap-4">
+                  <div class="flex flex-1 items-center gap-3">
+                    <div
+                      class={`rounded-lg p-3 ${
+                        primaryAction.variant === 'destructive'
+                          ? 'bg-destructive/10'
+                          : primaryAction.variant === 'default'
+                            ? 'bg-primary/10'
+                            : 'bg-muted'
+                      }`}>
+                      <primaryAction.icon
+                        class={`h-6 w-6 ${
+                          primaryAction.variant === 'destructive'
+                            ? 'text-destructive'
+                            : primaryAction.variant === 'default'
+                              ? 'text-primary'
+                              : 'text-muted-foreground'
+                        }`} />
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-semibold">{primaryAction.title}</h3>
+                      <p class="text-muted-foreground text-sm">{primaryAction.description}</p>
+                    </div>
+                  </div>
+
+                  {#if primaryAction.type !== 'healthy'}
+                    <Button
+                      variant={primaryAction.variant}
+                      onclick={handlePrimaryAction}
+                      disabled={rolloverMutation.isPending || isProcessingRollover}>
+                      {#if (rolloverMutation.isPending || isProcessingRollover) && primaryAction.type === 'rollover'}
+                        <Repeat class="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      {:else}
+                        Take Action
+                      {/if}
+                    </Button>
+                  {/if}
+                </div>
+              </Card.Content>
+            </Card.Root>
           </div>
 
-          {#if envelopes.length === 0}
-            <Card.Root class="border-dashed">
-              <Card.Content class="py-12 text-center">
-                <Wallet class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p class="text-lg font-medium mb-2">No Envelopes Yet</p>
-                {#if !firstTemplateId}
-                  <p class="text-sm text-muted-foreground mb-2">
-                    Before creating envelopes, you need to set up a period template.
+          <!-- Sidebar Column (visible on lg+ screens) -->
+          <div class="space-y-6">
+            <!-- Quick Stats Card -->
+            <Card.Root>
+              <Card.Header class="pb-3">
+                <Card.Title class="text-base">Quick Stats</Card.Title>
+              </Card.Header>
+              <Card.Content class="space-y-4">
+                <div>
+                  <p class="text-muted-foreground mb-1 text-xs">Allocated</p>
+                  <p class="text-xl font-bold">{formatCurrency(allocatedAmount)}</p>
+                </div>
+                <Separator />
+                <div>
+                  <p class="text-muted-foreground mb-1 text-xs">Spent</p>
+                  <p class="text-xl font-bold">{formatCurrency(actualAmount)}</p>
+                </div>
+                <Separator />
+                <div>
+                  <p class="text-muted-foreground mb-1 text-xs">Remaining</p>
+                  <p
+                    class={`text-xl font-bold ${remainingAmount < 0 ? 'text-destructive' : 'text-emerald-600'}`}>
+                    {formatCurrency(remainingAmount)}
                   </p>
-                  <p class="text-sm text-muted-foreground mb-6">
-                    Period templates define how often your budget cycles (weekly, monthly, etc.).
-                  </p>
-                  <Button variant="outline" onclick={() => periodTemplateDialogOpen = true}>
-                    <Calendar class="h-4 w-4 mr-2" />
-                    Create Period Template
-                  </Button>
-                {:else if !currentPeriod}
-                  <p class="text-sm text-muted-foreground mb-4">
-                    No periods have been created yet. Click below to generate periods for your budget.
-                  </p>
-                  <Button
-                    variant="outline"
-                    onclick={async () => {
-                      if (budget?.id) {
-                        await maintenanceMutation.mutateAsync(budget.id);
-                      }
-                    }}
-                    disabled={maintenanceMutation.isPending}
-                  >
-                    {#if maintenanceMutation.isPending}
-                      <Repeat class="h-4 w-4 mr-2 animate-spin" />
-                      Creating Periods...
-                    {:else}
-                      <Calendar class="h-4 w-4 mr-2" />
-                      Create Periods
-                    {/if}
-                  </Button>
-                {:else}
-                  <p class="text-sm text-muted-foreground mb-6">
-                    {#if isSelectedPeriodPast}
-                      Cannot add envelopes to past periods. Please select a current or future period.
-                    {:else}
-                      Create your first envelope to start tracking category budgets.
-                    {/if}
-                  </p>
+                </div>
+
+                {#if isEnvelopeBudget}
+                  <Separator />
+                  <div>
+                    <p class="text-muted-foreground mb-1 text-xs">Total Available</p>
+                    <p class="text-xl font-bold text-emerald-600">
+                      {formatCurrency(totalEnvelopeAvailable)}
+                    </p>
+                  </div>
+                {/if}
+              </Card.Content>
+            </Card.Root>
+
+            <!-- Budget Details Card -->
+            <Card.Root>
+              <Card.Header class="pb-3">
+                <Card.Title class="text-base">Budget Details</Card.Title>
+              </Card.Header>
+              <Card.Content class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-muted-foreground">Type</span>
+                  <span class="font-medium capitalize">{budget.type.replace('-', ' ')}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-muted-foreground">Scope</span>
+                  <span class="font-medium">{budget.scope}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-muted-foreground">Enforcement</span>
+                  <span class="font-medium capitalize">{budget.enforcementLevel || 'warning'}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-muted-foreground">Created</span>
+                  <span class="font-medium">
+                    {new Date(budget.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </Card.Content>
+            </Card.Root>
+          </div>
+        </div>
+      </Tabs.Content>
+
+      <!-- Envelopes Tab -->
+      {#if isEnvelopeBudget}
+        <Tabs.Content value="envelopes">
+          <div class="space-y-6">
+            <!-- Period Selector -->
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-2xl font-bold">Envelope Management</h2>
+                <p class="text-muted-foreground mt-1 text-sm">
+                  {envelopes.length} envelope{envelopes.length !== 1 ? 's' : ''} for this period
+                  {#if overspentEnvelopes.length > 0}
+                    <span class="text-destructive ml-2"
+                      >• {overspentEnvelopes.length} overspent</span>
+                  {/if}
+                </p>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <!-- Add Envelope Button -->
+                {#if currentPeriod && availableCategories.length > 0}
                   <Button
                     variant="default"
-                    onclick={() => envelopeCreateOpen = true}
-                    disabled={isSelectedPeriodPast}
-                  >
-                    <Wallet class="h-4 w-4 mr-2" />
+                    size="sm"
+                    onclick={() => (envelopeCreateOpen = true)}
+                    disabled={!currentPeriod || isSelectedPeriodPast}
+                    title={isSelectedPeriodPast ? 'Cannot add envelopes to past periods' : ''}>
+                    <Plus class="mr-2 h-4 w-4" />
                     Add Envelope
                   </Button>
                 {/if}
-              </Card.Content>
-            </Card.Root>
-          {:else}
-            <!-- List View -->
-            {#if viewMode === 'list'}
-              <div class="space-y-2">
-                {#each envelopes as envelope (envelope.id)}
-                  <div class="flex items-center gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-2 mb-1">
-                        <h3 class="font-medium truncate">{getCategoryName(envelope.categoryId)}</h3>
-                        <Badge variant={
-                          envelope.status === 'overspent' ? 'destructive' :
-                          envelope.status === 'depleted' ? 'secondary' :
-                          envelope.status === 'active' ? 'default' : 'outline'
-                        } class="text-xs">
-                          {envelope.status}
-                        </Badge>
+
+                <!-- View Mode Switcher -->
+                <div class="flex items-center gap-1 rounded-lg border p-1">
+                  <Button
+                    variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    class="h-8 px-3"
+                    onclick={() => (viewMode = 'list')}>
+                    <List class="h-4 w-4" />
+                    <span class="ml-2 hidden sm:inline">List</span>
+                  </Button>
+                  <Button
+                    variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    class="h-8 px-3"
+                    onclick={() => (viewMode = 'grid')}>
+                    <LayoutGrid class="h-4 w-4" />
+                    <span class="ml-2 hidden sm:inline">Grid</span>
+                  </Button>
+                  <Button
+                    variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    class="h-8 px-3"
+                    onclick={() => (viewMode = 'kanban')}>
+                    <Columns3 class="h-4 w-4" />
+                    <span class="ml-2 hidden sm:inline">Board</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {#if envelopes.length === 0}
+              <Card.Root class="border-dashed">
+                <Card.Content class="py-12 text-center">
+                  <Wallet class="text-muted-foreground mx-auto mb-3 h-12 w-12" />
+                  <p class="mb-2 text-lg font-medium">No Envelopes Yet</p>
+                  {#if !firstTemplateId}
+                    <p class="text-muted-foreground mb-2 text-sm">
+                      Before creating envelopes, you need to set up a period template.
+                    </p>
+                    <p class="text-muted-foreground mb-6 text-sm">
+                      Period templates define how often your budget cycles (weekly, monthly, etc.).
+                    </p>
+                    <Button variant="outline" onclick={() => (periodTemplateDialogOpen = true)}>
+                      <Calendar class="mr-2 h-4 w-4" />
+                      Create Period Template
+                    </Button>
+                  {:else if !currentPeriod}
+                    <p class="text-muted-foreground mb-4 text-sm">
+                      No periods have been created yet. Click below to generate periods for your
+                      budget.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onclick={async () => {
+                        if (budget?.id) {
+                          await maintenanceMutation.mutateAsync(budget.id);
+                        }
+                      }}
+                      disabled={maintenanceMutation.isPending}>
+                      {#if maintenanceMutation.isPending}
+                        <Repeat class="mr-2 h-4 w-4 animate-spin" />
+                        Creating Periods...
+                      {:else}
+                        <Calendar class="mr-2 h-4 w-4" />
+                        Create Periods
+                      {/if}
+                    </Button>
+                  {:else}
+                    <p class="text-muted-foreground mb-6 text-sm">
+                      {#if isSelectedPeriodPast}
+                        Cannot add envelopes to past periods. Please select a current or future
+                        period.
+                      {:else}
+                        Create your first envelope to start tracking category budgets.
+                      {/if}
+                    </p>
+                    <Button
+                      variant="default"
+                      onclick={() => (envelopeCreateOpen = true)}
+                      disabled={isSelectedPeriodPast}>
+                      <Wallet class="mr-2 h-4 w-4" />
+                      Add Envelope
+                    </Button>
+                  {/if}
+                </Card.Content>
+              </Card.Root>
+            {:else}
+              <!-- List View -->
+              {#if viewMode === 'list'}
+                <div class="space-y-2">
+                  {#each envelopes as envelope (envelope.id)}
+                    <div
+                      class="hover:bg-accent/50 flex items-center gap-4 rounded-lg border p-4 transition-colors">
+                      <div class="min-w-0 flex-1">
+                        <div class="mb-1 flex items-center gap-2">
+                          <h3 class="truncate font-medium">
+                            {getCategoryName(envelope.categoryId)}
+                          </h3>
+                          <Badge
+                            variant={envelope.status === 'overspent'
+                              ? 'destructive'
+                              : envelope.status === 'depleted'
+                                ? 'secondary'
+                                : envelope.status === 'active'
+                                  ? 'default'
+                                  : 'outline'}
+                            class="text-xs">
+                            {envelope.status}
+                          </Badge>
+                        </div>
+                        <div class="text-muted-foreground flex items-center gap-4 text-sm">
+                          <span
+                            >Allocated: {currencyFormatter.format(envelope.allocatedAmount)}</span>
+                          <span>•</span>
+                          <span>Spent: {currencyFormatter.format(envelope.spentAmount)}</span>
+                          <span>•</span>
+                          <span
+                            class={envelope.availableAmount < 0
+                              ? 'text-destructive font-medium'
+                              : 'font-medium text-emerald-600'}>
+                            {envelope.availableAmount < 0 ? 'Over' : 'Available'}: {currencyFormatter.format(
+                              Math.abs(envelope.availableAmount)
+                            )}
+                          </span>
+                        </div>
                       </div>
-                      <div class="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Allocated: {currencyFormatter.format(envelope.allocatedAmount)}</span>
-                        <span>•</span>
-                        <span>Spent: {currencyFormatter.format(envelope.spentAmount)}</span>
-                        <span>•</span>
-                        <span class={envelope.availableAmount < 0 ? 'text-destructive font-medium' : 'text-emerald-600 font-medium'}>
-                          {envelope.availableAmount < 0 ? 'Over' : 'Available'}: {currencyFormatter.format(Math.abs(envelope.availableAmount))}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onclick={() => handleEnvelopeSettings(envelope)}
-                      >
-                        <Settings2 class="h-4 w-4" />
-                      </Button>
-                      {#if envelope.status === 'overspent'}
+                      <div class="flex shrink-0 items-center gap-2">
                         <Button
                           size="sm"
-                          variant="destructive"
-                          onclick={() => handleDeficitRecover(envelope)}
-                        >
-                          Recover
+                          variant="outline"
+                          onclick={() => handleEnvelopeSettings(envelope)}>
+                          <Settings2 class="h-4 w-4" />
                         </Button>
-                      {/if}
-                    </div>
-                  </div>
-                {/each}
-              </div>
-
-            <!-- Grid View -->
-            {:else if viewMode === 'grid'}
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {#each envelopes as envelope (envelope.id)}
-                  <EnvelopeAllocationCard
-                    {envelope}
-                    categoryName={getCategoryName(envelope.categoryId)}
-                    editable={true}
-                    onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                    onTransferRequest={() => handleTransferRequest(envelope)}
-                    onDeficitRecover={() => handleDeficitRecover(envelope)}
-                    onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                  />
-                {/each}
-              </div>
-
-            <!-- Kanban Board View -->
-            {:else if viewMode === 'kanban'}
-              <div class="overflow-x-auto">
-                <div class="flex gap-4 min-w-max pb-4">
-                  <!-- Overspent Column -->
-                  <div class="space-y-3 w-80 shrink-0">
-                    <div class="flex items-center justify-between px-3 py-2 bg-destructive/5 border border-destructive/20 rounded-lg">
-                      <div class="flex items-center gap-2">
-                        <TriangleAlert class="h-4 w-4 text-destructive" />
-                        <h3 class="font-semibold text-sm text-destructive">Overspent</h3>
+                        {#if envelope.status === 'overspent'}
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onclick={() => handleDeficitRecover(envelope)}>
+                            Recover
+                          </Button>
+                        {/if}
                       </div>
-                      <Badge variant="destructive" class="text-xs">{overspentEnvelopes.length}</Badge>
                     </div>
-                    <div class="space-y-3 min-h-[200px]">
-                      {#each overspentEnvelopes as envelope (envelope.id)}
-                        <EnvelopeAllocationCard
-                          {envelope}
-                          categoryName={getCategoryName(envelope.categoryId)}
-                          editable={true}
-                          onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                          onTransferRequest={() => handleTransferRequest(envelope)}
-                          onDeficitRecover={() => handleDeficitRecover(envelope)}
-                          onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                        />
-                      {/each}
-                      {#if overspentEnvelopes.length === 0}
-                        <div class="flex items-center justify-center h-32 border-2 border-dashed border-muted rounded-lg">
-                          <p class="text-xs text-muted-foreground">No overspent envelopes</p>
-                        </div>
-                      {/if}
-                    </div>
-                  </div>
+                  {/each}
+                </div>
 
-                  <!-- Depleted Column -->
-                  <div class="space-y-3 w-80 shrink-0">
-                    <div class="flex items-center justify-between px-3 py-2 bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg">
-                      <div class="flex items-center gap-2">
-                        <TriangleAlert class="h-4 w-4 text-orange-600" />
-                        <h3 class="font-semibold text-sm text-orange-700 dark:text-orange-400">Depleted</h3>
-                      </div>
-                      <Badge variant="secondary" class="text-xs">{depletedEnvelopes.length}</Badge>
-                    </div>
-                    <div class="space-y-3 min-h-[200px]">
-                      {#each depletedEnvelopes as envelope (envelope.id)}
-                        <EnvelopeAllocationCard
-                          {envelope}
-                          categoryName={getCategoryName(envelope.categoryId)}
-                          editable={true}
-                          onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                          onTransferRequest={() => handleTransferRequest(envelope)}
-                          onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                        />
-                      {/each}
-                      {#if depletedEnvelopes.length === 0}
-                        <div class="flex items-center justify-center h-32 border-2 border-dashed border-muted rounded-lg">
-                          <p class="text-xs text-muted-foreground">No depleted envelopes</p>
-                        </div>
-                      {/if}
-                    </div>
-                  </div>
+                <!-- Grid View -->
+              {:else if viewMode === 'grid'}
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {#each envelopes as envelope (envelope.id)}
+                    <EnvelopeAllocationCard
+                      {envelope}
+                      categoryName={getCategoryName(envelope.categoryId)}
+                      editable={true}
+                      onUpdateAllocation={(newAmount) =>
+                        handleEnvelopeUpdate(envelope.id, newAmount)}
+                      onTransferRequest={() => handleTransferRequest(envelope)}
+                      onDeficitRecover={() => handleDeficitRecover(envelope)}
+                      onSettingsClick={() => handleEnvelopeSettings(envelope)} />
+                  {/each}
+                </div>
 
-                  <!-- Active Column -->
-                  <div class="space-y-3 w-80 shrink-0">
-                    <div class="flex items-center justify-between px-3 py-2 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-                      <div class="flex items-center gap-2">
-                        <CircleCheck class="h-4 w-4 text-emerald-600" />
-                        <h3 class="font-semibold text-sm text-emerald-700 dark:text-emerald-400">Active</h3>
-                      </div>
-                      <Badge variant="secondary" class="text-xs">{envelopes.filter(e => e.status === 'active').length}</Badge>
-                    </div>
-                    <div class="space-y-3 min-h-[200px]">
-                      {#each envelopes.filter(e => e.status === 'active') as envelope (envelope.id)}
-                        <EnvelopeAllocationCard
-                          {envelope}
-                          categoryName={getCategoryName(envelope.categoryId)}
-                          editable={true}
-                          onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                          onTransferRequest={() => handleTransferRequest(envelope)}
-                          onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                        />
-                      {/each}
-                      {#if envelopes.filter(e => e.status === 'active').length === 0}
-                        <div class="flex items-center justify-center h-32 border-2 border-dashed border-muted rounded-lg">
-                          <p class="text-xs text-muted-foreground">No active envelopes</p>
+                <!-- Kanban Board View -->
+              {:else if viewMode === 'kanban'}
+                <div class="overflow-x-auto">
+                  <div class="flex min-w-max gap-4 pb-4">
+                    <!-- Overspent Column -->
+                    <div class="w-80 shrink-0 space-y-3">
+                      <div
+                        class="bg-destructive/5 border-destructive/20 flex items-center justify-between rounded-lg border px-3 py-2">
+                        <div class="flex items-center gap-2">
+                          <TriangleAlert class="text-destructive h-4 w-4" />
+                          <h3 class="text-destructive text-sm font-semibold">Overspent</h3>
                         </div>
-                      {/if}
+                        <Badge variant="destructive" class="text-xs"
+                          >{overspentEnvelopes.length}</Badge>
+                      </div>
+                      <div class="min-h-[200px] space-y-3">
+                        {#each overspentEnvelopes as envelope (envelope.id)}
+                          <EnvelopeAllocationCard
+                            {envelope}
+                            categoryName={getCategoryName(envelope.categoryId)}
+                            editable={true}
+                            onUpdateAllocation={(newAmount) =>
+                              handleEnvelopeUpdate(envelope.id, newAmount)}
+                            onTransferRequest={() => handleTransferRequest(envelope)}
+                            onDeficitRecover={() => handleDeficitRecover(envelope)}
+                            onSettingsClick={() => handleEnvelopeSettings(envelope)} />
+                        {/each}
+                        {#if overspentEnvelopes.length === 0}
+                          <div
+                            class="border-muted flex h-32 items-center justify-center rounded-lg border-2 border-dashed">
+                            <p class="text-muted-foreground text-xs">No overspent envelopes</p>
+                          </div>
+                        {/if}
+                      </div>
                     </div>
-                  </div>
 
-                  <!-- Paused Column -->
-                  <div class="space-y-3 w-80 shrink-0">
-                    <div class="flex items-center justify-between px-3 py-2 bg-muted/50 border border-muted-foreground/20 rounded-lg">
-                      <div class="flex items-center gap-2">
-                        <TrendingUp class="h-4 w-4 text-muted-foreground" />
-                        <h3 class="font-semibold text-sm text-muted-foreground">Paused</h3>
-                      </div>
-                      <Badge variant="outline" class="text-xs">{envelopes.filter(e => e.status === 'paused').length}</Badge>
-                    </div>
-                    <div class="space-y-3 min-h-[200px]">
-                      {#each envelopes.filter(e => e.status === 'paused') as envelope (envelope.id)}
-                        <EnvelopeAllocationCard
-                          {envelope}
-                          categoryName={getCategoryName(envelope.categoryId)}
-                          editable={true}
-                          onUpdateAllocation={(newAmount) => handleEnvelopeUpdate(envelope.id, newAmount)}
-                          onTransferRequest={() => handleTransferRequest(envelope)}
-                          onSettingsClick={() => handleEnvelopeSettings(envelope)}
-                        />
-                      {/each}
-                      {#if envelopes.filter(e => e.status === 'paused').length === 0}
-                        <div class="flex items-center justify-center h-32 border-2 border-dashed border-muted rounded-lg">
-                          <p class="text-xs text-muted-foreground">No paused envelopes</p>
+                    <!-- Depleted Column -->
+                    <div class="w-80 shrink-0 space-y-3">
+                      <div
+                        class="flex items-center justify-between rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 dark:border-orange-800 dark:bg-orange-950">
+                        <div class="flex items-center gap-2">
+                          <TriangleAlert class="h-4 w-4 text-orange-600" />
+                          <h3 class="text-sm font-semibold text-orange-700 dark:text-orange-400">
+                            Depleted
+                          </h3>
                         </div>
-                      {/if}
+                        <Badge variant="secondary" class="text-xs"
+                          >{depletedEnvelopes.length}</Badge>
+                      </div>
+                      <div class="min-h-[200px] space-y-3">
+                        {#each depletedEnvelopes as envelope (envelope.id)}
+                          <EnvelopeAllocationCard
+                            {envelope}
+                            categoryName={getCategoryName(envelope.categoryId)}
+                            editable={true}
+                            onUpdateAllocation={(newAmount) =>
+                              handleEnvelopeUpdate(envelope.id, newAmount)}
+                            onTransferRequest={() => handleTransferRequest(envelope)}
+                            onSettingsClick={() => handleEnvelopeSettings(envelope)} />
+                        {/each}
+                        {#if depletedEnvelopes.length === 0}
+                          <div
+                            class="border-muted flex h-32 items-center justify-center rounded-lg border-2 border-dashed">
+                            <p class="text-muted-foreground text-xs">No depleted envelopes</p>
+                          </div>
+                        {/if}
+                      </div>
+                    </div>
+
+                    <!-- Active Column -->
+                    <div class="w-80 shrink-0 space-y-3">
+                      <div
+                        class="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-800 dark:bg-emerald-950">
+                        <div class="flex items-center gap-2">
+                          <CircleCheck class="h-4 w-4 text-emerald-600" />
+                          <h3 class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                            Active
+                          </h3>
+                        </div>
+                        <Badge variant="secondary" class="text-xs"
+                          >{envelopes.filter((e) => e.status === 'active').length}</Badge>
+                      </div>
+                      <div class="min-h-[200px] space-y-3">
+                        {#each envelopes.filter((e) => e.status === 'active') as envelope (envelope.id)}
+                          <EnvelopeAllocationCard
+                            {envelope}
+                            categoryName={getCategoryName(envelope.categoryId)}
+                            editable={true}
+                            onUpdateAllocation={(newAmount) =>
+                              handleEnvelopeUpdate(envelope.id, newAmount)}
+                            onTransferRequest={() => handleTransferRequest(envelope)}
+                            onSettingsClick={() => handleEnvelopeSettings(envelope)} />
+                        {/each}
+                        {#if envelopes.filter((e) => e.status === 'active').length === 0}
+                          <div
+                            class="border-muted flex h-32 items-center justify-center rounded-lg border-2 border-dashed">
+                            <p class="text-muted-foreground text-xs">No active envelopes</p>
+                          </div>
+                        {/if}
+                      </div>
+                    </div>
+
+                    <!-- Paused Column -->
+                    <div class="w-80 shrink-0 space-y-3">
+                      <div
+                        class="bg-muted/50 border-muted-foreground/20 flex items-center justify-between rounded-lg border px-3 py-2">
+                        <div class="flex items-center gap-2">
+                          <TrendingUp class="text-muted-foreground h-4 w-4" />
+                          <h3 class="text-muted-foreground text-sm font-semibold">Paused</h3>
+                        </div>
+                        <Badge variant="outline" class="text-xs"
+                          >{envelopes.filter((e) => e.status === 'paused').length}</Badge>
+                      </div>
+                      <div class="min-h-[200px] space-y-3">
+                        {#each envelopes.filter((e) => e.status === 'paused') as envelope (envelope.id)}
+                          <EnvelopeAllocationCard
+                            {envelope}
+                            categoryName={getCategoryName(envelope.categoryId)}
+                            editable={true}
+                            onUpdateAllocation={(newAmount) =>
+                              handleEnvelopeUpdate(envelope.id, newAmount)}
+                            onTransferRequest={() => handleTransferRequest(envelope)}
+                            onSettingsClick={() => handleEnvelopeSettings(envelope)} />
+                        {/each}
+                        {#if envelopes.filter((e) => e.status === 'paused').length === 0}
+                          <div
+                            class="border-muted flex h-32 items-center justify-center rounded-lg border-2 border-dashed">
+                            <p class="text-muted-foreground text-xs">No paused envelopes</p>
+                          </div>
+                        {/if}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              {/if}
             {/if}
-          {/if}
-        </div>
-      </Tabs.Content>
-    {/if}
-
-    <!-- Analytics Tab -->
-    <Tabs.Content value="analytics">
-      <Card.Root>
-        <Card.Header>
-          <Card.Title>Analytics</Card.Title>
-          <Card.Description>View spending trends and insights for your budget</Card.Description>
-        </Card.Header>
-        <Card.Content>
-          <div class="py-12 text-center text-muted-foreground">
-            <TrendingUp class="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p class="text-lg font-medium mb-2">Analytics Coming Soon</p>
-            <p class="text-sm">Detailed spending trends and budget insights will be available here.</p>
           </div>
-        </Card.Content>
-      </Card.Root>
-    </Tabs.Content>
+        </Tabs.Content>
+      {/if}
 
-    <!-- Period Management Tab -->
-    <Tabs.Content value="periods">
-      <!-- Two-column layout on larger screens, single column on mobile -->
-      <div class="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
-        <!-- Main Content - Left Column -->
-        <div class="space-y-6">
-          <!-- Selected Period Summary -->
-          {#if selectedPeriod}
-          <Card.Root>
-            <Card.Header>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <Calendar class="h-5 w-5 text-muted-foreground" />
-                  <Card.Title>
-                    {monthYearFmt.format(parseDate(selectedPeriod.startDate).toDate(getLocalTimeZone()))}
-                  </Card.Title>
-                </div>
-                <Badge variant={
-                  selectedPeriodStatus === 'current' ? 'default' :
-                  selectedPeriodStatus === 'future' ? 'outline' :
-                  'secondary'
-                }>
-                  {selectedPeriodStatus === 'current' ? 'Active' :
-                   selectedPeriodStatus === 'future' ? 'Future' :
-                   'Historical'}
-                </Badge>
-              </div>
-              <p class="text-sm text-muted-foreground mt-2">
-                {dayFmt.format(parseDate(selectedPeriod.startDate).toDate(getLocalTimeZone()))} - {dayFmt.format(parseDate(selectedPeriod.endDate).toDate(getLocalTimeZone()))}
+      <!-- Analytics Tab -->
+      <Tabs.Content value="analytics">
+        <Card.Root>
+          <Card.Header>
+            <Card.Title>Analytics</Card.Title>
+            <Card.Description>View spending trends and insights for your budget</Card.Description>
+          </Card.Header>
+          <Card.Content>
+            <div class="text-muted-foreground py-12 text-center">
+              <TrendingUp class="mx-auto mb-4 h-12 w-12 opacity-50" />
+              <p class="mb-2 text-lg font-medium">Analytics Coming Soon</p>
+              <p class="text-sm">
+                Detailed spending trends and budget insights will be available here.
               </p>
-            </Card.Header>
-            <Card.Content class="space-y-4">
-              <div class="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p class="text-sm text-muted-foreground mb-1">Allocated</p>
-                  <p class="text-xl font-bold">{formatCurrency(selectedPeriod.allocatedAmount ?? 0)}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-muted-foreground mb-1">Status</p>
-                  <p class="text-xl font-bold text-emerald-600">On Track</p>
-                </div>
-              </div>
-            </Card.Content>
-          </Card.Root>
-          {/if}
+            </div>
+          </Card.Content>
+        </Card.Root>
+      </Tabs.Content>
 
-          <!-- Navigation Cards -->
-          <div class="space-y-4">
-            <!-- Previous Period Card -->
-            {#if previousToSelectedPeriod}
-            <Card.Root>
-              <Card.Header class="pb-3">
-                <Card.Title class="text-base">Previous Period</Card.Title>
-              </Card.Header>
-              <Card.Content class="space-y-3">
-                <div>
-                  <p class="text-sm font-medium mb-1">
-                    {monthYearFmt.format(parseDate(previousToSelectedPeriod.startDate).toDate(getLocalTimeZone()))}
-                  </p>
-                  <p class="text-xs text-muted-foreground">
-                    {dayFmt.format(parseDate(previousToSelectedPeriod.startDate).toDate(getLocalTimeZone()))} - {dayFmt.format(parseDate(previousToSelectedPeriod.endDate).toDate(getLocalTimeZone()))}
-                  </p>
-                </div>
-                <Separator />
-                <div class="space-y-2 text-sm">
-                  <div class="flex justify-between">
-                    <span class="text-muted-foreground">Allocated</span>
-                    <span class="font-medium">{formatCurrency(previousToSelectedPeriod.allocatedAmount ?? 0)}</span>
+      <!-- Period Management Tab -->
+      <Tabs.Content value="periods">
+        <!-- Two-column layout on larger screens, single column on mobile -->
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
+          <!-- Main Content - Left Column -->
+          <div class="space-y-6">
+            <!-- Selected Period Summary -->
+            {#if selectedPeriod}
+              <Card.Root>
+                <Card.Header>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <Calendar class="text-muted-foreground h-5 w-5" />
+                      <Card.Title>
+                        {monthYearFmt.format(
+                          parseDate(selectedPeriod.startDate).toDate(getLocalTimeZone())
+                        )}
+                      </Card.Title>
+                    </div>
+                    <Badge
+                      variant={selectedPeriodStatus === 'current'
+                        ? 'default'
+                        : selectedPeriodStatus === 'future'
+                          ? 'outline'
+                          : 'secondary'}>
+                      {selectedPeriodStatus === 'current'
+                        ? 'Active'
+                        : selectedPeriodStatus === 'future'
+                          ? 'Future'
+                          : 'Historical'}
+                    </Badge>
                   </div>
-                </div>
-              </Card.Content>
-            </Card.Root>
+                  <p class="text-muted-foreground mt-2 text-sm">
+                    {dayFmt.format(parseDate(selectedPeriod.startDate).toDate(getLocalTimeZone()))} -
+                    {dayFmt.format(parseDate(selectedPeriod.endDate).toDate(getLocalTimeZone()))}
+                  </p>
+                </Card.Header>
+                <Card.Content class="space-y-4">
+                  <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <p class="text-muted-foreground mb-1 text-sm">Allocated</p>
+                      <p class="text-xl font-bold">
+                        {formatCurrency(selectedPeriod.allocatedAmount ?? 0)}
+                      </p>
+                    </div>
+                    <div>
+                      <p class="text-muted-foreground mb-1 text-sm">Status</p>
+                      <p class="text-xl font-bold text-emerald-600">On Track</p>
+                    </div>
+                  </div>
+                </Card.Content>
+              </Card.Root>
             {/if}
 
-            <!-- Next Period Card -->
-            {#if nextToSelectedPeriod}
-            <Card.Root>
-              <Card.Header class="pb-3">
-                <Card.Title class="text-base">Next Period</Card.Title>
-              </Card.Header>
-              <Card.Content class="space-y-3">
-                <div>
-                  <p class="text-sm font-medium mb-1">
-                    {monthYearFmt.format(parseDate(nextToSelectedPeriod.startDate).toDate(getLocalTimeZone()))}
+            <!-- Navigation Cards -->
+            <div class="space-y-4">
+              <!-- Previous Period Card -->
+              {#if previousToSelectedPeriod}
+                <Card.Root>
+                  <Card.Header class="pb-3">
+                    <Card.Title class="text-base">Previous Period</Card.Title>
+                  </Card.Header>
+                  <Card.Content class="space-y-3">
+                    <div>
+                      <p class="mb-1 text-sm font-medium">
+                        {monthYearFmt.format(
+                          parseDate(previousToSelectedPeriod.startDate).toDate(getLocalTimeZone())
+                        )}
+                      </p>
+                      <p class="text-muted-foreground text-xs">
+                        {dayFmt.format(
+                          parseDate(previousToSelectedPeriod.startDate).toDate(getLocalTimeZone())
+                        )} - {dayFmt.format(
+                          parseDate(previousToSelectedPeriod.endDate).toDate(getLocalTimeZone())
+                        )}
+                      </p>
+                    </div>
+                    <Separator />
+                    <div class="space-y-2 text-sm">
+                      <div class="flex justify-between">
+                        <span class="text-muted-foreground">Allocated</span>
+                        <span class="font-medium"
+                          >{formatCurrency(previousToSelectedPeriod.allocatedAmount ?? 0)}</span>
+                      </div>
+                    </div>
+                  </Card.Content>
+                </Card.Root>
+              {/if}
+
+              <!-- Next Period Card -->
+              {#if nextToSelectedPeriod}
+                <Card.Root>
+                  <Card.Header class="pb-3">
+                    <Card.Title class="text-base">Next Period</Card.Title>
+                  </Card.Header>
+                  <Card.Content class="space-y-3">
+                    <div>
+                      <p class="mb-1 text-sm font-medium">
+                        {monthYearFmt.format(
+                          parseDate(nextToSelectedPeriod.startDate).toDate(getLocalTimeZone())
+                        )}
+                      </p>
+                      <p class="text-muted-foreground text-xs">
+                        {dayFmt.format(
+                          parseDate(nextToSelectedPeriod.startDate).toDate(getLocalTimeZone())
+                        )} - {dayFmt.format(
+                          parseDate(nextToSelectedPeriod.endDate).toDate(getLocalTimeZone())
+                        )}
+                      </p>
+                    </div>
+                    <Separator />
+                    <div class="space-y-2 text-sm">
+                      <div class="flex justify-between">
+                        <span class="text-muted-foreground">Allocated</span>
+                        <span class="font-medium"
+                          >{formatCurrency(nextToSelectedPeriod.allocatedAmount ?? 0)}</span>
+                      </div>
+                    </div>
+                  </Card.Content>
+                </Card.Root>
+              {/if}
+            </div>
+
+            <!-- Period Instance Manager -->
+            {#if budget && firstTemplateId}
+              {@const template = budget.periodTemplates?.[0]}
+              <BudgetPeriodInstanceManager
+                budgetId={budget.id}
+                budgetName={budget.name}
+                {...template && {
+                  template: {
+                    id: template.id,
+                    budgetId: template.budgetId,
+                    periodType: template.type as
+                      | 'weekly'
+                      | 'monthly'
+                      | 'quarterly'
+                      | 'yearly'
+                      | 'custom',
+                    interval: template.intervalCount,
+                    ...(template.startDayOfWeek != null && {
+                      startDayOfWeek: template.startDayOfWeek,
+                    }),
+                    ...(template.startDayOfMonth != null && {
+                      startDayOfMonth: template.startDayOfMonth,
+                    }),
+                    ...(template.startMonth != null && {startMonth: template.startMonth}),
+                  },
+                }}
+                hideCurrentPeriod={true}
+                hideConfiguration={true}
+                instances={periods.map((p) => ({
+                  id: p.id,
+                  budgetId: budget.id,
+                  templateId: firstTemplateId,
+                  startDate: p.startDate,
+                  endDate: p.endDate,
+                  allocated: p.allocatedAmount ?? 0,
+                  spent: 0,
+                  remaining: p.allocatedAmount ?? 0,
+                  status:
+                    p.id === currentPeriod?.id
+                      ? 'active'
+                      : new Date(p.startDate) > new Date()
+                        ? 'upcoming'
+                        : 'completed',
+                }))} />
+            {:else}
+              <Card.Root>
+                <Card.Content class="text-muted-foreground py-12 text-center">
+                  <Calendar class="mx-auto mb-4 h-12 w-12 opacity-50" />
+                  <p class="mb-2 text-lg font-medium">No Period Template</p>
+                  <p class="mb-6 text-sm">
+                    Create a period template to manage recurring budget periods.
                   </p>
-                  <p class="text-xs text-muted-foreground">
-                    {dayFmt.format(parseDate(nextToSelectedPeriod.startDate).toDate(getLocalTimeZone()))} - {dayFmt.format(parseDate(nextToSelectedPeriod.endDate).toDate(getLocalTimeZone()))}
-                  </p>
-                </div>
-                <Separator />
-                <div class="space-y-2 text-sm">
-                  <div class="flex justify-between">
-                    <span class="text-muted-foreground">Allocated</span>
-                    <span class="font-medium">{formatCurrency(nextToSelectedPeriod.allocatedAmount ?? 0)}</span>
-                  </div>
-                </div>
-              </Card.Content>
-            </Card.Root>
+                  <Button variant="outline" onclick={() => (periodTemplateDialogOpen = true)}>
+                    <Calendar class="mr-2 h-4 w-4" />
+                    Create Period Template
+                  </Button>
+                </Card.Content>
+              </Card.Root>
             {/if}
           </div>
 
-          <!-- Period Instance Manager -->
-          {#if budget && firstTemplateId}
-            {@const template = budget.periodTemplates?.[0]}
-            <BudgetPeriodInstanceManager
-              budgetId={budget.id}
-              budgetName={budget.name}
-              {...(template && {
-                template: {
-                  id: template.id,
-                  budgetId: template.budgetId,
-                  periodType: template.type as 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom',
-                  interval: template.intervalCount,
-                  ...(template.startDayOfWeek != null && { startDayOfWeek: template.startDayOfWeek }),
-                  ...(template.startDayOfMonth != null && { startDayOfMonth: template.startDayOfMonth }),
-                  ...(template.startMonth != null && { startMonth: template.startMonth }),
-                }
-              })}
-              hideCurrentPeriod={true}
-              hideConfiguration={true}
-              instances={periods.map(p => ({
-                id: p.id,
-                budgetId: budget.id,
-                templateId: firstTemplateId,
-                startDate: p.startDate,
-                endDate: p.endDate,
-                allocated: p.allocatedAmount ?? 0,
-                spent: 0,
-                remaining: p.allocatedAmount ?? 0,
-                status: p.id === currentPeriod?.id ? 'active' : (new Date(p.startDate) > new Date() ? 'upcoming' : 'completed'),
-              }))}
-            />
-          {:else}
+          <!-- Sidebar - Right Column -->
+          <div class="space-y-6">
+            <!-- Quick Actions Card -->
             <Card.Root>
-              <Card.Content class="py-12 text-center text-muted-foreground">
-                <Calendar class="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p class="text-lg font-medium mb-2">No Period Template</p>
-                <p class="text-sm mb-6">Create a period template to manage recurring budget periods.</p>
-                <Button variant="outline" onclick={() => periodTemplateDialogOpen = true}>
-                  <Calendar class="h-4 w-4 mr-2" />
-                  Create Period Template
-                </Button>
-              </Card.Content>
-            </Card.Root>
-          {/if}
-        </div>
-
-        <!-- Sidebar - Right Column -->
-        <div class="space-y-6">
-          <!-- Quick Actions Card -->
-          <Card.Root>
-            <Card.Header class="pb-3">
-              <Card.Title class="text-base">Quick Actions</Card.Title>
-            </Card.Header>
-            <Card.Content class="space-y-3">
-              <!-- Create New Period button removed - the backend generateNextPeriod uses lookAheadMonths
+              <Card.Header class="pb-3">
+                <Card.Title class="text-base">Quick Actions</Card.Title>
+              </Card.Header>
+              <Card.Content class="space-y-3">
+                <!-- Create New Period button removed - the backend generateNextPeriod uses lookAheadMonths
                    which doesn't work correctly for manual period creation. Periods are auto-created. -->
-              <Button
-                variant="outline"
-                class="w-full justify-start"
-                size="sm"
-                disabled={!firstTemplateId}
-                onclick={() => {
-                  const template = budget?.periodTemplates?.[0];
-                  if (template) {
-                    templateForm.intervalCount = template.intervalCount;
-                    templateForm.startDayOfMonth = template.startDayOfMonth ?? 1;
-                  }
-                  editTemplateDialogOpen = true;
-                }}
-              >
-                <Settings2 class="h-4 w-4 mr-2" />
-                Edit Template
-              </Button>
-              <Button
-                variant="outline"
-                class="w-full justify-start text-destructive hover:text-destructive"
-                size="sm"
-                disabled={!firstTemplateId}
-                onclick={() => {
-                  deleteTemplateDialogOpen = true;
-                }}
-              >
-                <Trash2 class="h-4 w-4 mr-2" />
-                Delete Template
-              </Button>
-              {#if previousToSelectedPeriod && selectedPeriod && !isRolloverProcessed(previousToSelectedPeriod.id, selectedPeriod.id)}
-                <Separator />
                 <Button
                   variant="outline"
                   class="w-full justify-start"
                   size="sm"
-                  disabled={selectedPeriod.id !== currentPeriod?.id || rolloverMutation.isPending || isProcessingRollover}
-                  onclick={async () => {
-                    if (isProcessingRollover || rolloverMutation.isPending) return;
-
-                    // Check if already processed (both session and database)
-                    if (isRolloverProcessed(previousToSelectedPeriod.id, selectedPeriod.id)) return;
-
-                    const rolloverKey = `${previousToSelectedPeriod.id}-${selectedPeriod.id}`;
-                    isProcessingRollover = true;
-                    try {
-                      await rolloverMutation.mutateAsync({
-                        fromPeriodId: previousToSelectedPeriod.id,
-                        toPeriodId: selectedPeriod.id,
-                      });
-                      // Mark this rollover as completed in the session
-                      completedRollovers.add(rolloverKey);
-                    } finally {
-                      isProcessingRollover = false;
+                  disabled={!firstTemplateId}
+                  onclick={() => {
+                    const template = budget?.periodTemplates?.[0];
+                    if (template) {
+                      templateForm.intervalCount = template.intervalCount;
+                      templateForm.startDayOfMonth = template.startDayOfMonth ?? 1;
                     }
-                  }}
-                >
-                  <Repeat class={`h-4 w-4 mr-2 ${rolloverMutation.isPending || isProcessingRollover ? 'animate-spin' : ''}`} />
-                  {rolloverMutation.isPending || isProcessingRollover ? 'Processing...' : 'Process Rollover'}
+                    editTemplateDialogOpen = true;
+                  }}>
+                  <Settings2 class="mr-2 h-4 w-4" />
+                  Edit Template
                 </Button>
-              {/if}
-            </Card.Content>
-          </Card.Root>
+                <Button
+                  variant="outline"
+                  class="text-destructive hover:text-destructive w-full justify-start"
+                  size="sm"
+                  disabled={!firstTemplateId}
+                  onclick={() => {
+                    deleteTemplateDialogOpen = true;
+                  }}>
+                  <Trash2 class="mr-2 h-4 w-4" />
+                  Delete Template
+                </Button>
+                {#if previousToSelectedPeriod && selectedPeriod && !isRolloverProcessed(previousToSelectedPeriod.id, selectedPeriod.id)}
+                  <Separator />
+                  <Button
+                    variant="outline"
+                    class="w-full justify-start"
+                    size="sm"
+                    disabled={selectedPeriod.id !== currentPeriod?.id ||
+                      rolloverMutation.isPending ||
+                      isProcessingRollover}
+                    onclick={async () => {
+                      if (isProcessingRollover || rolloverMutation.isPending) return;
 
-          <!-- Period Configuration Card -->
-          {#if budget && budget.periodTemplates?.[0]}
-            {@const template = budget.periodTemplates[0]}
-          <Card.Root>
-            <Card.Header class="pb-3">
-              <div class="flex items-center gap-2">
-                <Calendar class="h-4 w-4 text-muted-foreground" />
-                <Card.Title class="text-base">Period Configuration</Card.Title>
-              </div>
-            </Card.Header>
-            <Card.Content class="space-y-3">
-              <div class="flex justify-between text-sm">
-                <span class="text-muted-foreground">Type</span>
-                <span class="font-medium capitalize">{template.type}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-muted-foreground">Interval</span>
-                <span class="font-medium">
-                  Every {template.intervalCount} {template.intervalCount === 1 ? template.type.slice(0, -2) : template.type}
-                </span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-muted-foreground">Total Periods</span>
-                <span class="font-medium">{periods.length}</span>
-              </div>
-              {#if template.startDayOfMonth}
-              <div class="flex justify-between text-sm">
-                <span class="text-muted-foreground">Starts On</span>
-                <span class="font-medium">Day {template.startDayOfMonth}</span>
-              </div>
-              {/if}
-            </Card.Content>
-          </Card.Root>
-          {/if}
+                      // Check if already processed (both session and database)
+                      if (isRolloverProcessed(previousToSelectedPeriod.id, selectedPeriod.id))
+                        return;
 
-          <!-- Period Context Card -->
-          {#if selectedPeriod && periods.length > 0}
-          <Card.Root>
-            <Card.Header class="pb-3">
-              <Card.Title class="text-base">Period Context</Card.Title>
-            </Card.Header>
-            <Card.Content class="space-y-3">
-              <div class="flex justify-between text-sm">
-                <span class="text-muted-foreground">Position</span>
-                <span class="font-medium">
-                  {periods.findIndex(p => p.id === selectedPeriod.id) + 1} of {periods.length}
-                </span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-muted-foreground">Status</span>
-                <span class="font-medium">
-                  {selectedPeriod.id === currentPeriod?.id ? 'Current' :
-                   new Date(selectedPeriod.startDate) > new Date() ? 'Upcoming' : 'Completed'}
-                </span>
-              </div>
-              <Separator />
-              <div class="text-xs text-muted-foreground">
-                <div class="flex justify-between mb-1">
-                  <span>Total Periods</span>
-                  <span class="font-medium text-foreground">{periods.length}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span>Completed</span>
-                  <span class="font-medium text-foreground">
-                    {periods.filter(p => p.id !== currentPeriod?.id && new Date(p.startDate) <= new Date()).length}
-                  </span>
-                </div>
-              </div>
-            </Card.Content>
-          </Card.Root>
-          {/if}
+                      const rolloverKey = `${previousToSelectedPeriod.id}-${selectedPeriod.id}`;
+                      isProcessingRollover = true;
+                      try {
+                        await rolloverMutation.mutateAsync({
+                          fromPeriodId: previousToSelectedPeriod.id,
+                          toPeriodId: selectedPeriod.id,
+                        });
+                        // Mark this rollover as completed in the session
+                        completedRollovers.add(rolloverKey);
+                      } finally {
+                        isProcessingRollover = false;
+                      }
+                    }}>
+                    <Repeat
+                      class={`mr-2 h-4 w-4 ${rolloverMutation.isPending || isProcessingRollover ? 'animate-spin' : ''}`} />
+                    {rolloverMutation.isPending || isProcessingRollover
+                      ? 'Processing...'
+                      : 'Process Rollover'}
+                  </Button>
+                {/if}
+              </Card.Content>
+            </Card.Root>
+
+            <!-- Period Configuration Card -->
+            {#if budget && budget.periodTemplates?.[0]}
+              {@const template = budget.periodTemplates[0]}
+              <Card.Root>
+                <Card.Header class="pb-3">
+                  <div class="flex items-center gap-2">
+                    <Calendar class="text-muted-foreground h-4 w-4" />
+                    <Card.Title class="text-base">Period Configuration</Card.Title>
+                  </div>
+                </Card.Header>
+                <Card.Content class="space-y-3">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-muted-foreground">Type</span>
+                    <span class="font-medium capitalize">{template.type}</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-muted-foreground">Interval</span>
+                    <span class="font-medium">
+                      Every {template.intervalCount}
+                      {template.intervalCount === 1 ? template.type.slice(0, -2) : template.type}
+                    </span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-muted-foreground">Total Periods</span>
+                    <span class="font-medium">{periods.length}</span>
+                  </div>
+                  {#if template.startDayOfMonth}
+                    <div class="flex justify-between text-sm">
+                      <span class="text-muted-foreground">Starts On</span>
+                      <span class="font-medium">Day {template.startDayOfMonth}</span>
+                    </div>
+                  {/if}
+                </Card.Content>
+              </Card.Root>
+            {/if}
+
+            <!-- Period Context Card -->
+            {#if selectedPeriod && periods.length > 0}
+              <Card.Root>
+                <Card.Header class="pb-3">
+                  <Card.Title class="text-base">Period Context</Card.Title>
+                </Card.Header>
+                <Card.Content class="space-y-3">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-muted-foreground">Position</span>
+                    <span class="font-medium">
+                      {periods.findIndex((p) => p.id === selectedPeriod.id) + 1} of {periods.length}
+                    </span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-muted-foreground">Status</span>
+                    <span class="font-medium">
+                      {selectedPeriod.id === currentPeriod?.id
+                        ? 'Current'
+                        : new Date(selectedPeriod.startDate) > new Date()
+                          ? 'Upcoming'
+                          : 'Completed'}
+                    </span>
+                  </div>
+                  <Separator />
+                  <div class="text-muted-foreground text-xs">
+                    <div class="mb-1 flex justify-between">
+                      <span>Total Periods</span>
+                      <span class="text-foreground font-medium">{periods.length}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>Completed</span>
+                      <span class="text-foreground font-medium">
+                        {periods.filter(
+                          (p) => p.id !== currentPeriod?.id && new Date(p.startDate) <= new Date()
+                        ).length}
+                      </span>
+                    </div>
+                  </div>
+                </Card.Content>
+              </Card.Root>
+            {/if}
+          </div>
         </div>
-      </div>
-    </Tabs.Content>
+      </Tabs.Content>
 
-    <!-- Automation Tab -->
-    <Tabs.Content value="automation">
-      <div class="space-y-6">
-        <!-- Period Automation Component -->
-        {#if budget}
-          <PeriodAutomation {budget} hideStatus={true} />
-        {/if}
+      <!-- Automation Tab -->
+      <Tabs.Content value="automation">
+        <div class="space-y-6">
+          <!-- Period Automation Component -->
+          {#if budget}
+            <PeriodAutomation {budget} hideStatus={true} />
+          {/if}
 
-        <!-- Rollover Manager Component -->
-        {#if budget}
-          <BudgetRolloverManager budgets={[budget]} hidePeriodInfo={true} hideMetrics={true} />
-        {/if}
+          <!-- Rollover Manager Component -->
+          {#if budget}
+            <BudgetRolloverManager budgets={[budget]} hidePeriodInfo={true} hideMetrics={true} />
+          {/if}
 
-        <!-- Budget Alerts - Coming Soon -->
-        <Card.Root>
-          <Card.Header>
-            <div class="flex items-center gap-2">
-              <TriangleAlert class="h-5 w-5 text-muted-foreground" />
-              <Card.Title>Budget Alerts</Card.Title>
-            </div>
-            <Card.Description>Get notified about important budget events</Card.Description>
-          </Card.Header>
-          <Card.Content>
-            <div class="py-8 text-center text-muted-foreground">
-              <Info class="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p class="text-sm font-medium mb-1">Coming Soon</p>
-              <p class="text-sm">Configure alerts for overspending, low balances, and period transitions.</p>
-            </div>
-          </Card.Content>
-        </Card.Root>
-      </div>
-    </Tabs.Content>
-  </Tabs.Root>
-</div>
+          <!-- Budget Alerts - Coming Soon -->
+          <Card.Root>
+            <Card.Header>
+              <div class="flex items-center gap-2">
+                <TriangleAlert class="text-muted-foreground h-5 w-5" />
+                <Card.Title>Budget Alerts</Card.Title>
+              </div>
+              <Card.Description>Get notified about important budget events</Card.Description>
+            </Card.Header>
+            <Card.Content>
+              <div class="text-muted-foreground py-8 text-center">
+                <Info class="mx-auto mb-3 h-10 w-10 opacity-50" />
+                <p class="mb-1 text-sm font-medium">Coming Soon</p>
+                <p class="text-sm">
+                  Configure alerts for overspending, low balances, and period transitions.
+                </p>
+              </div>
+            </Card.Content>
+          </Card.Root>
+        </div>
+      </Tabs.Content>
+    </Tabs.Root>
+  </div>
 {/if}
 
 <!-- Dialogs -->
@@ -1521,8 +1622,7 @@ async function toggleBudgetStatus() {
   <EnvelopeSettingsSheet
     bind:open={envelopeSettingsOpen}
     envelope={selectedEnvelopeForSettings}
-    categoryName={getCategoryName(selectedEnvelopeForSettings.categoryId)}
-  />
+    categoryName={getCategoryName(selectedEnvelopeForSettings.categoryId)} />
 {/if}
 
 {#if budget}
@@ -1532,12 +1632,11 @@ async function toggleBudgetStatus() {
       bind:open={envelopeCreateOpen}
       budgetId={budget.id}
       periodInstance={period}
-      availableCategories={availableCategories}
+      {availableCategories}
       onEnvelopeCreated={async (data) => {
         await createEnvelopeMutation.mutateAsync(data);
         envelopeCreateOpen = false;
-      }}
-    />
+      }} />
   {/if}
 {/if}
 
@@ -1549,8 +1648,7 @@ async function toggleBudgetStatus() {
     onSuccess={() => {
       // TanStack Query will automatically refetch after mutation
       periodTemplateDialogOpen = false;
-    }}
-  />
+    }} />
 {/if}
 
 {#if selectedDeficitEnvelope}
@@ -1565,8 +1663,7 @@ async function toggleBudgetStatus() {
     isExecuting={isExecutingDeficitPlan}
     onAnalyze={handleAnalyzeDeficit}
     onCreatePlan={handleCreateDeficitPlan}
-    onExecutePlan={handleExecuteDeficitPlan}
-  />
+    onExecutePlan={handleExecuteDeficitPlan} />
 {/if}
 
 <!-- Edit Template Dialog -->
@@ -1575,7 +1672,8 @@ async function toggleBudgetStatus() {
     <Dialog.Header>
       <Dialog.Title>Edit Period Template</Dialog.Title>
       <Dialog.Description>
-        Update the settings for your budget period template. Changes will only affect future periods.
+        Update the settings for your budget period template. Changes will only affect future
+        periods.
       </Dialog.Description>
     </Dialog.Header>
     <div class="grid gap-4 py-4">
@@ -1586,11 +1684,8 @@ async function toggleBudgetStatus() {
           type="number"
           min="1"
           bind:value={templateForm.intervalCount}
-          placeholder="1"
-        />
-        <p class="text-sm text-muted-foreground">
-          How many months per period
-        </p>
+          placeholder="1" />
+        <p class="text-muted-foreground text-sm">How many months per period</p>
       </div>
       <div class="grid gap-2">
         <Label for="startDay">Start Day of Month</Label>
@@ -1600,11 +1695,8 @@ async function toggleBudgetStatus() {
           min="1"
           max="28"
           bind:value={templateForm.startDayOfMonth}
-          placeholder="1"
-        />
-        <p class="text-sm text-muted-foreground">
-          Day of month when each period starts (1-28)
-        </p>
+          placeholder="1" />
+        <p class="text-muted-foreground text-sm">Day of month when each period starts (1-28)</p>
       </div>
     </div>
     <Dialog.Footer>
@@ -1612,8 +1704,7 @@ async function toggleBudgetStatus() {
         variant="outline"
         onclick={() => {
           editTemplateDialogOpen = false;
-        }}
-      >
+        }}>
         Cancel
       </Button>
       <Button
@@ -1629,8 +1720,7 @@ async function toggleBudgetStatus() {
           });
 
           editTemplateDialogOpen = false;
-        }}
-      >
+        }}>
         {updateTemplateMutation.isPending ? 'Saving...' : 'Save Changes'}
       </Button>
     </Dialog.Footer>
@@ -1655,8 +1745,7 @@ async function toggleBudgetStatus() {
           await deleteTemplateMutation.mutateAsync(firstTemplateId);
           deleteTemplateDialogOpen = false;
         }}
-        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-      >
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
         {deleteTemplateMutation.isPending ? 'Deleting...' : 'Delete Template'}
       </AlertDialog.Action>
     </AlertDialog.Footer>

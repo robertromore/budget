@@ -1,6 +1,6 @@
-import { default as ViewModel } from "$lib/models/view.svelte";
-import type { View } from "$lib/schema";
-import type { TransactionsFormat, ViewFilter } from "$lib/types";
+import {default as ViewModel} from "$lib/models/view.svelte";
+import type {View} from "$lib/schema";
+import type {TransactionsFormat, ViewFilter} from "$lib/types";
 import type {
   ColumnPinningState,
   ExpandedState,
@@ -10,7 +10,7 @@ import type {
   Table,
   VisibilityState,
 } from "@tanstack/table-core";
-import { Context } from "runed";
+import {Context} from "runed";
 
 /**
  * A state class representing the currently active view.
@@ -111,10 +111,28 @@ export class CurrentViewState<TData> {
         const filterFnName = this.view.getFilterFn(column.id);
 
         // For amount and date filters with operator-based format, check if we have a valid object, not a Set
-        const operatorBasedFilters = ['amountFilter', 'dateIn', 'dateAfter', 'dateBefore', 'dateBetween'];
-        if (operatorBasedFilters.includes(filterFnName || '') && filterValue && typeof filterValue === 'object' && filterValue !== null && !('size' in filterValue)) {
+        const operatorBasedFilters = [
+          "amountFilter",
+          "dateIn",
+          "dateAfter",
+          "dateBefore",
+          "dateBetween",
+        ];
+        if (
+          operatorBasedFilters.includes(filterFnName || "") &&
+          filterValue &&
+          typeof filterValue === "object" &&
+          filterValue !== null &&
+          !("size" in filterValue)
+        ) {
           column.setFilterValue(filterValue);
-        } else if (filterValue && typeof filterValue === 'object' && filterValue !== null && 'size' in filterValue && (filterValue as Set<unknown>).size > 0) {
+        } else if (
+          filterValue &&
+          typeof filterValue === "object" &&
+          filterValue !== null &&
+          "size" in filterValue &&
+          (filterValue as Set<unknown>).size > 0
+        ) {
           // For Set-based filters
           column.setFilterValue(filterValue);
         }
@@ -170,7 +188,7 @@ export class CurrentViewState<TData> {
     this.view.setColumnOrder(currentOrder);
   }
 
-  updateTableDensity(density: 'normal' | 'dense') {
+  updateTableDensity(density: "normal" | "dense") {
     this.view.setDensity(density);
     // Note: Density affects styling only, not TanStack Table state
   }

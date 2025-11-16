@@ -1,151 +1,151 @@
 <script lang="ts">
-  import * as Tabs from "$lib/components/ui/tabs";
-  import { Button } from "$lib/components/ui/button";
-  import { Badge } from "$lib/components/ui/badge";
-  import { FileText, Wand, RotateCcw } from "@lucide/svelte/icons";
-  import WizardProgress from "./wizard-progress.svelte";
-  import { cn } from "$lib/utils";
-  import type { Snippet } from "svelte";
-  import type { WizardStore } from "$lib/stores/wizardStore.svelte";
+import * as Tabs from '$lib/components/ui/tabs';
+import {Button} from '$lib/components/ui/button';
+import {Badge} from '$lib/components/ui/badge';
+import {FileText, Wand, RotateCcw} from '@lucide/svelte/icons';
+import WizardProgress from './wizard-progress.svelte';
+import {cn} from '$lib/utils';
+import type {Snippet} from 'svelte';
+import type {WizardStore} from '$lib/stores/wizardStore.svelte';
 
-  interface Props {
-    title: string;
-    subtitle?: string;
-    wizardStore: WizardStore;
-    formContent: Snippet;
-    wizardContent: Snippet;
-    onComplete?: (formData: Record<string, any>) => Promise<void>;
-    onCancel?: () => void;
-    class?: string;
-    defaultMode?: "manual" | "wizard";
-    persistenceKey?: string;
-    currentFormData?: Record<string, any>;
-    showWizardActions?: boolean;
-    showWizardPrevious?: boolean;
-    currentMode?: "manual" | "wizard";
+interface Props {
+  title: string;
+  subtitle?: string;
+  wizardStore: WizardStore;
+  formContent: Snippet;
+  wizardContent: Snippet;
+  onComplete?: (formData: Record<string, any>) => Promise<void>;
+  onCancel?: () => void;
+  class?: string;
+  defaultMode?: 'manual' | 'wizard';
+  persistenceKey?: string;
+  currentFormData?: Record<string, any>;
+  showWizardActions?: boolean;
+  showWizardPrevious?: boolean;
+  currentMode?: 'manual' | 'wizard';
+}
+
+let {
+  title,
+  subtitle,
+  wizardStore,
+  formContent,
+  wizardContent,
+  onComplete,
+  onCancel,
+  class: className,
+  defaultMode = 'manual',
+  persistenceKey,
+  currentFormData,
+  showWizardActions = true,
+  showWizardPrevious = false,
+  currentMode = $bindable(defaultMode),
+}: Props = $props();
+let isSubmitting = $state(false);
+
+const progress = $derived(wizardStore.progress);
+const isCompleting = $derived(wizardStore.isCompleting);
+const formData = $derived(wizardStore.formData);
+const currentStepIndex = $derived(wizardStore.currentStepIndex);
+
+// Load saved progress if persistence key is provided
+$effect(() => {
+  if (persistenceKey) {
+    wizardStore.loadFromLocalStorage(persistenceKey);
   }
+});
 
-  let {
-    title,
-    subtitle,
-    wizardStore,
-    formContent,
-    wizardContent,
-    onComplete,
-    onCancel,
-    class: className,
-    defaultMode = "manual",
-    persistenceKey,
-    currentFormData,
-    showWizardActions = true,
-    showWizardPrevious = false,
-    currentMode = $bindable(defaultMode),
-  }: Props = $props();
-  let isSubmitting = $state(false);
+// Auto-save wizard progress
+$effect(() => {
+  if (persistenceKey && currentMode === 'wizard') {
+    wizardStore.saveToLocalStorage(persistenceKey);
+  }
+});
 
-  const progress = $derived(wizardStore.progress);
-  const isCompleting = $derived(wizardStore.isCompleting);
-  const formData = $derived(wizardStore.formData);
-  const currentStepIndex = $derived(wizardStore.currentStepIndex);
+// Scroll to top when wizard step changes
+$effect(() => {
+  if (currentMode === 'wizard') {
+    currentStepIndex;
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+});
 
-  // Load saved progress if persistence key is provided
-  $effect(() => {
-    if (persistenceKey) {
-      wizardStore.loadFromLocalStorage(persistenceKey);
-    }
-  });
+function handleModeChange(mode: string) {
+  if (mode === 'manual' || mode === 'wizard') {
+    currentMode = mode;
 
-  // Auto-save wizard progress
-  $effect(() => {
-    if (persistenceKey && currentMode === "wizard") {
-      wizardStore.saveToLocalStorage(persistenceKey);
-    }
-  });
+    // If switching to wizard mode, initialize with current form data
+    if (mode === 'wizard') {
+      const dataToUse = currentFormData || {};
 
-  // Scroll to top when wizard step changes
-  $effect(() => {
-    if (currentMode === "wizard") {
-      currentStepIndex;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  });
-
-  function handleModeChange(mode: string) {
-    if (mode === "manual" || mode === "wizard") {
-      currentMode = mode;
-
-      // If switching to wizard mode, initialize with current form data
-      if (mode === "wizard") {
-        const dataToUse = currentFormData || {};
-
-        // Handle persistence if enabled
-        if (persistenceKey) {
-          const restored = wizardStore.loadFromLocalStorage(persistenceKey);
-          if (!restored) {
-            // Re-initialize the wizard with current form data
-            const currentSteps = wizardStore.steps;
-            wizardStore.initialize(currentSteps, dataToUse);
-          }
-        } else {
-          // No persistence - always use current form data
+      // Handle persistence if enabled
+      if (persistenceKey) {
+        const restored = wizardStore.loadFromLocalStorage(persistenceKey);
+        if (!restored) {
+          // Re-initialize the wizard with current form data
           const currentSteps = wizardStore.steps;
           wizardStore.initialize(currentSteps, dataToUse);
         }
+      } else {
+        // No persistence - always use current form data
+        const currentSteps = wizardStore.steps;
+        wizardStore.initialize(currentSteps, dataToUse);
       }
     }
   }
+}
 
-  function resetWizard() {
-    wizardStore.reset();
+function resetWizard() {
+  wizardStore.reset();
+  if (persistenceKey) {
+    wizardStore.clearFromLocalStorage(persistenceKey);
+  }
+}
+
+async function handleComplete() {
+  if (!onComplete || isSubmitting) return;
+
+  try {
+    isSubmitting = true;
+    wizardStore.startCompleting();
+
+    await onComplete(formData);
+
+    // Clear saved progress on successful completion
     if (persistenceKey) {
       wizardStore.clearFromLocalStorage(persistenceKey);
     }
+  } catch (error) {
+    console.error('Error completing wizard:', error);
+  } finally {
+    isSubmitting = false;
+    wizardStore.stopCompleting();
   }
+}
 
-  async function handleComplete() {
-    if (!onComplete || isSubmitting) return;
-
-    try {
-      isSubmitting = true;
-      wizardStore.startCompleting();
-
-      await onComplete(formData);
-
-      // Clear saved progress on successful completion
-      if (persistenceKey) {
-        wizardStore.clearFromLocalStorage(persistenceKey);
-      }
-    } catch (error) {
-      console.error('Error completing wizard:', error);
-    } finally {
-      isSubmitting = false;
-      wizardStore.stopCompleting();
-    }
+function handleCancel() {
+  if (onCancel) {
+    onCancel();
   }
+  resetWizard();
+}
 
-  function handleCancel() {
-    if (onCancel) {
-      onCancel();
-    }
-    resetWizard();
-  }
+function handlePrevious() {
+  wizardStore.previousStep();
+}
 
-  function handlePrevious() {
-    wizardStore.previousStep();
-  }
-
-  // Get mode-specific classes
-  function getModeClasses(mode: "manual" | "wizard") {
-    const baseClasses = "flex items-center gap-2";
-    const isActive = currentMode === mode;
-    return cn(baseClasses, isActive ? "text-foreground" : "text-muted-foreground");
-  }
+// Get mode-specific classes
+function getModeClasses(mode: 'manual' | 'wizard') {
+  const baseClasses = 'flex items-center gap-2';
+  const isActive = currentMode === mode;
+  return cn(baseClasses, isActive ? 'text-foreground' : 'text-muted-foreground');
+}
 </script>
 
 <div class="space-y-6">
   <div class="space-y-4">
     <div class="space-y-1">
-      <h1 class="text-2xl font-semibold text-foreground">{title}</h1>
+      <h1 class="text-foreground text-2xl font-semibold">{title}</h1>
       {#if subtitle}
         <p class="text-muted-foreground">{subtitle}</p>
       {/if}
@@ -154,12 +154,12 @@
     <!-- Mode Switcher -->
     <Tabs.Root value={currentMode} onValueChange={handleModeChange}>
       <Tabs.List class="grid w-full grid-cols-2">
-        <Tabs.Trigger value="wizard" class={getModeClasses("wizard")}>
+        <Tabs.Trigger value="wizard" class={getModeClasses('wizard')}>
           <Wand class="h-4 w-4" />
           Guided Setup
           <Badge variant="secondary" class="text-xs">Helpful</Badge>
         </Tabs.Trigger>
-        <Tabs.Trigger value="manual" class={getModeClasses("manual")}>
+        <Tabs.Trigger value="manual" class={getModeClasses('manual')}>
           <FileText class="h-4 w-4" />
           Manual Form
           <Badge variant="secondary" class="text-xs">Quick</Badge>
@@ -169,10 +169,10 @@
       <!-- Manual Form Mode -->
       <!-- @ts-ignore - Svelte hydration boundary -->
       <Tabs.Content value="manual" class="mt-6">
-        <div class="bg-muted/20 border border-muted rounded-lg p-4 mb-4">
-          <p class="text-sm text-muted-foreground">
-            Fill out the form directly if you're familiar with the options.
-            Switch to <strong>Guided Setup</strong> for step-by-step help.
+        <div class="bg-muted/20 border-muted mb-4 rounded-lg border p-4">
+          <p class="text-muted-foreground text-sm">
+            Fill out the form directly if you're familiar with the options. Switch to <strong
+              >Guided Setup</strong> for step-by-step help.
           </p>
         </div>
 
@@ -184,12 +184,11 @@
       <!-- Wizard Mode -->
       <Tabs.Content value="wizard" class="mt-6">
         <!-- Wizard Controls -->
-        <div class="flex items-center justify-between bg-muted/20 border border-muted rounded-lg p-4">
+        <div
+          class="bg-muted/20 border-muted flex items-center justify-between rounded-lg border p-4">
           <div class="space-y-1">
-            <p class="text-sm font-medium text-foreground">
-              Step-by-step guided setup
-            </p>
-            <p class="text-xs text-muted-foreground">
+            <p class="text-foreground text-sm font-medium">Step-by-step guided setup</p>
+            <p class="text-muted-foreground text-xs">
               We'll walk you through each option with explanations
             </p>
           </div>
@@ -201,17 +200,14 @@
                 size="sm"
                 onclick={resetWizard}
                 disabled={isSubmitting || isCompleting}
-                class="text-xs"
-              >
-                <RotateCcw class="h-3 w-3 mr-1" />
+                class="text-xs">
+                <RotateCcw class="mr-1 h-3 w-3" />
                 Reset
               </Button>
             {/if}
 
             {#if persistenceKey}
-              <Badge variant="outline" class="text-xs">
-                Auto-saved
-              </Badge>
+              <Badge variant="outline" class="text-xs">Auto-saved</Badge>
             {/if}
           </div>
         </div>
@@ -235,16 +231,14 @@
                   <Button
                     variant="outline"
                     onclick={handlePrevious}
-                    disabled={isSubmitting || isCompleting}
-                  >
+                    disabled={isSubmitting || isCompleting}>
                     Previous
                   </Button>
                 {/if}
                 <Button
                   variant="outline"
                   onclick={handleCancel}
-                  disabled={isSubmitting || isCompleting}
-                >
+                  disabled={isSubmitting || isCompleting}>
                   Cancel
                 </Button>
               </div>
@@ -252,10 +246,11 @@
               <Button
                 onclick={handleComplete}
                 disabled={isSubmitting || isCompleting || !wizardStore.canGoNext}
-                class="min-w-[120px]"
-              >
+                class="min-w-[120px]">
                 {#if isSubmitting}
-                  <div class="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground mr-2"></div>
+                  <div
+                    class="border-background border-t-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2">
+                  </div>
                   Creating...
                 {:else}
                   Complete Setup

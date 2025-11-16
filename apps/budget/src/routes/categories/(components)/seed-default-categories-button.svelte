@@ -1,17 +1,17 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
-import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
-import { Separator } from '$lib/components/ui/separator';
-import { Badge } from '$lib/components/ui/badge';
-import { Checkbox } from '$lib/components/ui/checkbox';
-import { Label } from '$lib/components/ui/label';
-import { Input } from '$lib/components/ui/input';
-import { ScrollArea } from '$lib/components/ui/scroll-area';
+import {Button} from '$lib/components/ui/button';
+import {ResponsiveSheet} from '$lib/components/ui/responsive-sheet';
+import {Separator} from '$lib/components/ui/separator';
+import {Badge} from '$lib/components/ui/badge';
+import {Checkbox} from '$lib/components/ui/checkbox';
+import {Label} from '$lib/components/ui/label';
+import {Input} from '$lib/components/ui/input';
+import {ScrollArea} from '$lib/components/ui/scroll-area';
 import PackagePlus from '@lucide/svelte/icons/package-plus';
 import Search from '@lucide/svelte/icons/search';
-import { seedDefaultCategories } from '$lib/query/categories';
-import { rpc } from '$lib/query';
-import { SvelteSet } from 'svelte/reactivity';
+import {seedDefaultCategories} from '$lib/query/categories';
+import {rpc} from '$lib/query';
+import {SvelteSet} from 'svelte/reactivity';
 
 let sheetOpen = $state(false);
 let searchQuery = $state('');
@@ -26,7 +26,7 @@ const seedMutation = seedDefaultCategories.options();
 
 const handleSeed = async () => {
   const slugsArray = Array.from(selectedSlugs);
-  await seedMutation.mutateAsync({ slugs: slugsArray });
+  await seedMutation.mutateAsync({slugs: slugsArray});
   sheetOpen = false;
   selectedSlugs.clear();
   searchQuery = '';
@@ -53,13 +53,12 @@ const categoryTypeColors: Record<string, string> = {
 const availableCategories = $derived.by(() => {
   if (!status) return [];
 
-  let categories = status.categories.filter(c => !c.installed);
+  let categories = status.categories.filter((c) => !c.installed);
 
   if (searchQuery.trim()) {
     const query = searchQuery.toLowerCase();
-    categories = categories.filter(c =>
-      c.name.toLowerCase().includes(query) ||
-      c.categoryType.toLowerCase().includes(query)
+    categories = categories.filter(
+      (c) => c.name.toLowerCase().includes(query) || c.categoryType.toLowerCase().includes(query)
     );
   }
 
@@ -96,16 +95,16 @@ const toggleGroup = (type: string, checked: boolean) => {
 
   if (checked) {
     // Select all in group
-    groupCategories.forEach(c => selectedSlugs.add(c.slug));
+    groupCategories.forEach((c) => selectedSlugs.add(c.slug));
   } else {
     // Deselect all in group
-    groupCategories.forEach(c => selectedSlugs.delete(c.slug));
+    groupCategories.forEach((c) => selectedSlugs.delete(c.slug));
   }
 };
 
 // Select all available categories
 const selectAll = () => {
-  availableCategories.forEach(c => selectedSlugs.add(c.slug));
+  availableCategories.forEach((c) => selectedSlugs.add(c.slug));
 };
 
 // Deselect all
@@ -120,14 +119,14 @@ const shouldShowButton = $derived((status?.available ?? 0) > 0);
 const isGroupSelected = (type: string) => {
   const groupCategories = groupedCategories[type] || [];
   if (groupCategories.length === 0) return false;
-  return groupCategories.every(c => selectedSlugs.has(c.slug));
+  return groupCategories.every((c) => selectedSlugs.has(c.slug));
 };
 
 // Check if a group is partially selected
 const isGroupPartiallySelected = (type: string) => {
   const groupCategories = groupedCategories[type] || [];
   if (groupCategories.length === 0) return false;
-  const selectedCount = groupCategories.filter(c => selectedSlugs.has(c.slug)).length;
+  const selectedCount = groupCategories.filter((c) => selectedSlugs.has(c.slug)).length;
   return selectedCount > 0 && selectedCount < groupCategories.length;
 };
 
@@ -135,7 +134,7 @@ const selectedCount = $derived(selectedSlugs.size);
 </script>
 
 {#if shouldShowButton}
-  <Button variant="outline" onclick={() => sheetOpen = true}>
+  <Button variant="outline" onclick={() => (sheetOpen = true)}>
     <PackagePlus class="mr-2 h-4 w-4" />
     Add Default Categories
     {#if status && status.available > 0}
@@ -146,13 +145,14 @@ const selectedCount = $derived(selectedSlugs.size);
   </Button>
 
   <ResponsiveSheet bind:open={sheetOpen}>
-
     {#snippet header()}
       <div>
         <h2 class="text-lg font-semibold">Add Default Categories</h2>
-        <p class="text-sm text-muted-foreground">
+        <p class="text-muted-foreground text-sm">
           {#if status}
-            Select from {status.available} popular pre-configured categor{status.available === 1 ? 'y' : 'ies'}.
+            Select from {status.available} popular pre-configured categor{status.available === 1
+              ? 'y'
+              : 'ies'}.
             {#if status.installed > 0}
               ({status.installed} already added)
             {/if}
@@ -162,16 +162,15 @@ const selectedCount = $derived(selectedSlugs.size);
     {/snippet}
 
     {#snippet content()}
-      <div class="flex flex-col gap-4 h-full">
+      <div class="flex h-full flex-col gap-4">
         <!-- Search -->
         <div class="relative">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             type="search"
             placeholder="Search categories..."
             bind:value={searchQuery}
-            class="pl-9"
-          />
+            class="pl-9" />
         </div>
 
         <!-- Selection actions -->
@@ -180,13 +179,9 @@ const selectedCount = $derived(selectedSlugs.size);
             {selectedCount} selected
           </div>
           <div class="flex gap-2">
-            <Button variant="ghost" size="sm" onclick={selectAll}>
-              Select All
-            </Button>
+            <Button variant="ghost" size="sm" onclick={selectAll}>Select All</Button>
             {#if selectedCount > 0}
-              <Button variant="ghost" size="sm" onclick={deselectAll}>
-                Clear
-              </Button>
+              <Button variant="ghost" size="sm" onclick={deselectAll}>Clear</Button>
             {/if}
           </div>
         </div>
@@ -197,7 +192,7 @@ const selectedCount = $derived(selectedSlugs.size);
         <ScrollArea class="flex-1">
           <div class="space-y-6 pb-4">
             {#if availableCategories.length === 0}
-              <div class="text-center py-8 text-muted-foreground">
+              <div class="text-muted-foreground py-8 text-center">
                 {#if searchQuery}
                   No categories found matching "{searchQuery}"
                 {:else}
@@ -208,21 +203,19 @@ const selectedCount = $derived(selectedSlugs.size);
               {#each Object.entries(groupedCategories) as [type, categories]}
                 <div>
                   <!-- Group header -->
-                  <div class="flex items-center gap-2 mb-3 sticky top-0 bg-background py-2 z-10">
+                  <div class="bg-background sticky top-0 z-10 mb-3 flex items-center gap-2 py-2">
                     <Checkbox
                       checked={isGroupSelected(type)}
                       indeterminate={isGroupPartiallySelected(type)}
                       onCheckedChange={(checked) => toggleGroup(type, checked ?? false)}
-                      id={`group-${type}`}
-                    />
+                      id={`group-${type}`} />
                     <Label
                       for={`group-${type}`}
-                      class="flex items-center gap-2 cursor-pointer font-semibold"
-                    >
+                      class="flex cursor-pointer items-center gap-2 font-semibold">
                       <Badge class={categoryTypeColors[type]}>
                         {categoryTypeLabels[type] || type}
                       </Badge>
-                      <span class="text-xs text-muted-foreground font-normal">
+                      <span class="text-muted-foreground text-xs font-normal">
                         ({categories.length})
                       </span>
                     </Label>
@@ -234,13 +227,10 @@ const selectedCount = $derived(selectedSlugs.size);
                       <div class="flex items-center gap-2">
                         <Checkbox
                           checked={selectedSlugs.has(category.slug)}
-                          onCheckedChange={(checked) => toggleCategory(category.slug, checked ?? false)}
-                          id={category.slug}
-                        />
-                        <Label
-                          for={category.slug}
-                          class="flex-1 cursor-pointer text-sm"
-                        >
+                          onCheckedChange={(checked) =>
+                            toggleCategory(category.slug, checked ?? false)}
+                          id={category.slug} />
+                        <Label for={category.slug} class="flex-1 cursor-pointer text-sm">
                           {category.name}
                         </Label>
                       </div>
@@ -255,16 +245,15 @@ const selectedCount = $derived(selectedSlugs.size);
     {/snippet}
 
     {#snippet footer()}
-      <div class="flex gap-2 w-full">
-        <Button variant="outline" onclick={() => sheetOpen = false} class="flex-1">
-          Cancel
-        </Button>
+      <div class="flex w-full gap-2">
+        <Button variant="outline" onclick={() => (sheetOpen = false)} class="flex-1">Cancel</Button>
         <Button
           onclick={handleSeed}
           disabled={seedMutation.isPending || selectedCount === 0}
-          class="flex-1"
-        >
-          {seedMutation.isPending ? 'Adding...' : `Add ${selectedCount} ${selectedCount === 1 ? 'Category' : 'Categories'}`}
+          class="flex-1">
+          {seedMutation.isPending
+            ? 'Adding...'
+            : `Add ${selectedCount} ${selectedCount === 1 ? 'Category' : 'Categories'}`}
         </Button>
       </div>
     {/snippet}

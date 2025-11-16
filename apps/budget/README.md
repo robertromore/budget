@@ -1,10 +1,13 @@
 # Budget App
 
-A modern budget management application built with SvelteKit, tRPC, and contemporary web technologies.
+A modern budget management application built with SvelteKit, tRPC, and
+contemporary web technologies.
 
 ## Overview
 
-This budget application provides a comprehensive solution for personal financial management with a focus on clean architecture, type safety, and excellent user experience.
+This budget application provides a comprehensive solution for personal financial
+management with a focus on clean architecture, type safety, and excellent user
+experience.
 
 ### Key Features
 
@@ -25,11 +28,13 @@ This budget application provides a comprehensive solution for personal financial
 From the repository root:
 
 1. **Install dependencies**:
+
    ```bash
    bun install
    ```
 
 2. **Set up database**:
+
    ```bash
    bun run db:generate --filter=budget
    bun run db:migrate --filter=budget
@@ -37,6 +42,7 @@ From the repository root:
    ```
 
 3. **Start development server**:
+
    ```bash
    bun run dev:budget
    ```
@@ -45,11 +51,15 @@ From the repository root:
 
 ## Documentation
 
-- **[Project Status](docs/project-status.md)** - Current state and technical overview
+- **[Project Status](docs/project-status.md)** - Current state and technical
+  overview
 - **[Tasks & Roadmap](docs/tasks.md)** - Development tasks and priorities
-- **[Development Guide](docs/development-guide.md)** - Guidelines and best practices
-- **[Development Agents](docs/agents.md)** - Specialized agents and responsibilities
-- **[Context7 Cache](docs/context7-cache.md)** - Documentation cache system and management
+- **[Development Guide](docs/development-guide.md)** - Guidelines and best
+  practices
+- **[Development Agents](docs/agents.md)** - Specialized agents and
+  responsibilities
+- **[Context7 Cache](docs/context7-cache.md)** - Documentation cache system and
+  management
 
 ## Development
 
@@ -60,7 +70,8 @@ This project follows modern development practices with:
 - **Component organization** with route-specific structure
 - **Specialized agents** for different development domains
 
-See the [Development Guide](docs/development-guide.md) for detailed guidelines and best practices.
+See the [Development Guide](docs/development-guide.md) for detailed guidelines
+and best practices.
 
 ## Architecture
 
@@ -82,7 +93,8 @@ The application uses a clean 3-layer architecture:
 
 ### Development Workflow
 
-1. **Branch Creation**: Use descriptive names (`feature/add-auth`, `fix/table-bug`)
+1. **Branch Creation**: Use descriptive names (`feature/add-auth`,
+   `fix/table-bug`)
 2. **Focused Changes**: Keep commits small and atomic
 3. **Testing**: Run `bun run build` and test functionality
 4. **Clear Messages**: Write descriptive commit messages with context

@@ -5,16 +5,16 @@
  * using keyword patterns, fuzzy string matching, and confidence scoring.
  */
 
-import type { Category } from '$lib/schema/categories';
-import { calculateStringSimilarity, normalizeText } from '../utils';
+import type {Category} from "$lib/schema/categories";
+import {calculateStringSimilarity, normalizeText} from "../utils";
 
-export type MatchConfidence = 'exact' | 'high' | 'medium' | 'low' | 'none';
+export type MatchConfidence = "exact" | "high" | "medium" | "low" | "none";
 
 export interface CategoryMatch {
   category: Category | null;
   confidence: MatchConfidence;
   score: number;
-  matchedOn: 'name' | 'keyword' | 'payee' | 'description' | 'none';
+  matchedOn: "name" | "keyword" | "payee" | "description" | "none";
 }
 
 export interface CategoryMatcherOptions {
@@ -39,113 +39,96 @@ const DEFAULT_OPTIONS: Required<CategoryMatcherOptions> = {
  */
 const DEFAULT_KEYWORD_PATTERNS: Record<string, string[]> = {
   Groceries: [
-    'walmart',
-    'target',
-    'kroger',
-    'safeway',
-    'whole foods',
-    'trader joe',
-    'costco',
-    'aldi',
-    'publix',
-    'grocery',
-    'supermarket',
-    'market',
+    "walmart",
+    "target",
+    "kroger",
+    "safeway",
+    "whole foods",
+    "trader joe",
+    "costco",
+    "aldi",
+    "publix",
+    "grocery",
+    "supermarket",
+    "market",
   ],
-  'Dining Out': [
-    'restaurant',
-    'cafe',
-    'coffee',
-    'starbucks',
-    'dunkin',
-    'mcdonald',
-    'burger',
-    'pizza',
-    'subway',
-    'chipotle',
-    'panera',
-    'dining',
-    'food',
-    'bar & grill',
+  "Dining Out": [
+    "restaurant",
+    "cafe",
+    "coffee",
+    "starbucks",
+    "dunkin",
+    "mcdonald",
+    "burger",
+    "pizza",
+    "subway",
+    "chipotle",
+    "panera",
+    "dining",
+    "food",
+    "bar & grill",
   ],
   Transportation: [
-    'gas',
-    'fuel',
-    'shell',
-    'exxon',
-    'chevron',
-    'bp',
-    'mobil',
-    'uber',
-    'lyft',
-    'taxi',
-    'parking',
-    'transit',
-    'subway',
-    'metro',
+    "gas",
+    "fuel",
+    "shell",
+    "exxon",
+    "chevron",
+    "bp",
+    "mobil",
+    "uber",
+    "lyft",
+    "taxi",
+    "parking",
+    "transit",
+    "subway",
+    "metro",
   ],
   Utilities: [
-    'electric',
-    'power',
-    'water',
-    'gas company',
-    'utility',
-    'internet',
-    'cable',
-    'phone',
-    'wireless',
-    'verizon',
-    'at&t',
-    't-mobile',
+    "electric",
+    "power",
+    "water",
+    "gas company",
+    "utility",
+    "internet",
+    "cable",
+    "phone",
+    "wireless",
+    "verizon",
+    "at&t",
+    "t-mobile",
   ],
   Healthcare: [
-    'pharmacy',
-    'walgreens',
-    'cvs',
-    'rite aid',
-    'doctor',
-    'hospital',
-    'clinic',
-    'medical',
-    'health',
-    'dental',
-    'vision',
+    "pharmacy",
+    "walgreens",
+    "cvs",
+    "rite aid",
+    "doctor",
+    "hospital",
+    "clinic",
+    "medical",
+    "health",
+    "dental",
+    "vision",
   ],
   Entertainment: [
-    'netflix',
-    'hulu',
-    'spotify',
-    'amazon prime',
-    'disney',
-    'movie',
-    'theater',
-    'cinema',
-    'concert',
-    'tickets',
-    'gaming',
-    'steam',
+    "netflix",
+    "hulu",
+    "spotify",
+    "amazon prime",
+    "disney",
+    "movie",
+    "theater",
+    "cinema",
+    "concert",
+    "tickets",
+    "gaming",
+    "steam",
   ],
-  Shopping: [
-    'amazon',
-    'ebay',
-    'etsy',
-    'mall',
-    'store',
-    'shop',
-    'retail',
-    'clothing',
-    'apparel',
-  ],
-  'Home Improvement': [
-    'home depot',
-    'lowes',
-    'hardware',
-    'repair',
-    'maintenance',
-    'improvement',
-  ],
-  Insurance: ['insurance', 'policy', 'premium', 'coverage'],
-  'Auto & Transport': ['car', 'auto', 'vehicle', 'mechanic', 'repair', 'parts', 'oil change'],
+  Shopping: ["amazon", "ebay", "etsy", "mall", "store", "shop", "retail", "clothing", "apparel"],
+  "Home Improvement": ["home depot", "lowes", "hardware", "repair", "maintenance", "improvement"],
+  Insurance: ["insurance", "policy", "premium", "coverage"],
+  "Auto & Transport": ["car", "auto", "vehicle", "mechanic", "repair", "parts", "oil change"],
 };
 
 export class CategoryMatcher {
@@ -156,8 +139,8 @@ export class CategoryMatcher {
     options: CategoryMatcherOptions = {},
     customKeywordPatterns: Record<string, string[]> = {}
   ) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
-    this.keywordPatterns = { ...DEFAULT_KEYWORD_PATTERNS, ...customKeywordPatterns };
+    this.options = {...DEFAULT_OPTIONS, ...options};
+    this.keywordPatterns = {...DEFAULT_KEYWORD_PATTERNS, ...customKeywordPatterns};
   }
 
   /**
@@ -173,21 +156,18 @@ export class CategoryMatcher {
   ): CategoryMatch {
     let bestMatch: CategoryMatch = {
       category: null,
-      confidence: 'none',
+      confidence: "none",
       score: 0,
-      matchedOn: 'none',
+      matchedOn: "none",
     };
 
     // Try matching by category name if provided
     if (transactionData.categoryName) {
-      const categoryNameMatch = this.matchByName(
-        transactionData.categoryName,
-        existingCategories
-      );
+      const categoryNameMatch = this.matchByName(transactionData.categoryName, existingCategories);
       if (categoryNameMatch.score > bestMatch.score) {
         bestMatch = categoryNameMatch;
       }
-      if (categoryNameMatch.confidence === 'exact') {
+      if (categoryNameMatch.confidence === "exact") {
         return bestMatch;
       }
     }
@@ -198,7 +178,7 @@ export class CategoryMatcher {
       if (keywordMatch.score > bestMatch.score) {
         bestMatch = keywordMatch;
       }
-      if (keywordMatch.confidence === 'exact' || keywordMatch.confidence === 'high') {
+      if (keywordMatch.confidence === "exact" || keywordMatch.confidence === "high") {
         return bestMatch;
       }
     }
@@ -213,9 +193,9 @@ export class CategoryMatcher {
     const normalizedInput = normalizeText(categoryName);
     let bestMatch: CategoryMatch = {
       category: null,
-      confidence: 'none',
+      confidence: "none",
       score: 0,
-      matchedOn: 'name',
+      matchedOn: "name",
     };
 
     for (const category of existingCategories) {
@@ -225,9 +205,9 @@ export class CategoryMatcher {
       if (normalizedInput === normalizedCategoryName) {
         return {
           category,
-          confidence: 'exact',
+          confidence: "exact",
           score: 1.0,
-          matchedOn: 'name',
+          matchedOn: "name",
         };
       }
 
@@ -245,7 +225,7 @@ export class CategoryMatcher {
             category,
             confidence: this.getConfidenceLevel(score),
             score,
-            matchedOn: 'name',
+            matchedOn: "name",
           };
         }
         continue;
@@ -258,7 +238,7 @@ export class CategoryMatcher {
           category,
           confidence: this.getConfidenceLevel(similarityScore),
           score: similarityScore,
-          matchedOn: 'name',
+          matchedOn: "name",
         };
       }
     }
@@ -280,26 +260,26 @@ export class CategoryMatcher {
     // Combine all available text for keyword matching
     const searchText = normalizeText(
       [
-        transactionData.categoryName || '',
-        this.options.usePayeeName ? transactionData.payeeName || '' : '',
-        transactionData.description || '',
-      ].join(' ')
+        transactionData.categoryName || "",
+        this.options.usePayeeName ? transactionData.payeeName || "" : "",
+        transactionData.description || "",
+      ].join(" ")
     );
 
     if (!searchText) {
       return {
         category: null,
-        confidence: 'none',
+        confidence: "none",
         score: 0,
-        matchedOn: 'none',
+        matchedOn: "none",
       };
     }
 
     let bestMatch: CategoryMatch = {
       category: null,
-      confidence: 'none',
+      confidence: "none",
       score: 0,
-      matchedOn: 'keyword',
+      matchedOn: "keyword",
     };
 
     // Check each category's keyword patterns
@@ -324,8 +304,8 @@ export class CategoryMatcher {
               confidence: this.getConfidenceLevel(keywordScore),
               score: keywordScore,
               matchedOn: transactionData.payeeName?.toLowerCase().includes(keyword.toLowerCase())
-                ? 'payee'
-                : 'description',
+                ? "payee"
+                : "description",
             };
           }
         }
@@ -378,15 +358,15 @@ export class CategoryMatcher {
    */
   private getConfidenceLevel(score: number): MatchConfidence {
     if (score >= this.options.exactThreshold) {
-      return 'exact';
+      return "exact";
     } else if (score >= this.options.highThreshold) {
-      return 'high';
+      return "high";
     } else if (score >= this.options.mediumThreshold) {
-      return 'medium';
+      return "medium";
     } else if (score > 0.5) {
-      return 'low';
+      return "low";
     } else {
-      return 'none';
+      return "none";
     }
   }
 
@@ -404,27 +384,24 @@ export class CategoryMatcher {
    * Get all keyword patterns (useful for debugging or user configuration)
    */
   getKeywordPatterns(): Record<string, string[]> {
-    return { ...this.keywordPatterns };
+    return {...this.keywordPatterns};
   }
 
   /**
    * Suggest a category name based on transaction data when no explicit category is provided
    * Returns the best matching category pattern name if confidence is high enough
    */
-  suggestCategoryName(transactionData: {
-    payeeName?: string;
-    description?: string;
-  }): string | null {
+  suggestCategoryName(transactionData: {payeeName?: string; description?: string}): string | null {
     // Combine payee and description for keyword matching
     const searchText = normalizeText(
-      [transactionData.payeeName || '', transactionData.description || ''].join(' ')
+      [transactionData.payeeName || "", transactionData.description || ""].join(" ")
     );
 
     if (!searchText) {
       return null;
     }
 
-    let bestMatch: { categoryName: string; score: number } | null = null;
+    let bestMatch: {categoryName: string; score: number} | null = null;
 
     // Check each category pattern's keywords
     for (const [categoryPattern, keywords] of Object.entries(this.keywordPatterns)) {

@@ -1,10 +1,10 @@
-import {createLocalStorageState} from '$lib/utils/local-storage.svelte';
-import type {Budget, BudgetType, BudgetStatus, BudgetEnforcementLevel} from '$lib/schema/budgets';
+import {createLocalStorageState} from "$lib/utils/local-storage.svelte";
+import type {Budget, BudgetType, BudgetStatus, BudgetEnforcementLevel} from "$lib/schema/budgets";
 
 export interface BudgetSearchFilters {
   type?: BudgetType;
   status?: BudgetStatus;
-  scope?: 'account' | 'category' | 'global' | 'mixed';
+  scope?: "account" | "category" | "global" | "mixed";
   enforcementLevel?: BudgetEnforcementLevel;
 }
 
@@ -15,9 +15,9 @@ interface BudgetSearchState {
   isLoading: boolean;
   totalCount: number;
   hasMore: boolean;
-  sortBy: 'name' | 'created' | 'type' | 'allocated' | 'consumed' | 'remaining';
-  sortOrder: 'asc' | 'desc';
-  viewMode: 'grid' | 'list';
+  sortBy: "name" | "created" | "type" | "allocated" | "consumed" | "remaining";
+  sortOrder: "asc" | "desc";
+  viewMode: "grid" | "list";
 }
 
 /**
@@ -25,12 +25,17 @@ interface BudgetSearchState {
  */
 class BudgetSearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState('budget-search-view-mode', 'list' as const);
-  private sortByState = createLocalStorageState<'name' | 'created' | 'type' | 'allocated' | 'consumed' | 'remaining'>('budget-search-sort-by', 'name');
-  private sortOrderState = createLocalStorageState<'asc' | 'desc'>('budget-search-sort-order', 'asc');
+  private viewModeState = createLocalStorageState("budget-search-view-mode", "list" as const);
+  private sortByState = createLocalStorageState<
+    "name" | "created" | "type" | "allocated" | "consumed" | "remaining"
+  >("budget-search-sort-by", "name");
+  private sortOrderState = createLocalStorageState<"asc" | "desc">(
+    "budget-search-sort-order",
+    "asc"
+  );
 
   // Reactive state
-  query = $state('');
+  query = $state("");
   filters = $state<BudgetSearchFilters>({});
   results = $state<Budget[]>([]);
   isLoading = $state(false);
@@ -38,14 +43,26 @@ class BudgetSearchStateManager {
   hasMore = $state(false);
 
   // Getters for persistent state
-  get viewMode() { return this.viewModeState.value; }
-  set viewMode(value: 'grid' | 'list') { this.viewModeState.value = value; }
+  get viewMode() {
+    return this.viewModeState.value;
+  }
+  set viewMode(value: "grid" | "list") {
+    this.viewModeState.value = value;
+  }
 
-  get sortBy() { return this.sortByState.value; }
-  set sortBy(value: 'name' | 'created' | 'type' | 'allocated' | 'consumed' | 'remaining') { this.sortByState.value = value; }
+  get sortBy() {
+    return this.sortByState.value;
+  }
+  set sortBy(value: "name" | "created" | "type" | "allocated" | "consumed" | "remaining") {
+    this.sortByState.value = value;
+  }
 
-  get sortOrder() { return this.sortOrderState.value; }
-  set sortOrder(value: 'asc' | 'desc') { this.sortOrderState.value = value; }
+  get sortOrder() {
+    return this.sortOrderState.value;
+  }
+  set sortOrder(value: "asc" | "desc") {
+    this.sortOrderState.value = value;
+  }
 
   // Computed properties
   hasActiveFilters = $derived.by(() => {
@@ -71,11 +88,8 @@ class BudgetSearchStateManager {
     this.filters = newFilters;
   }
 
-  updateFilter<K extends keyof BudgetSearchFilters>(
-    key: K,
-    value: BudgetSearchFilters[K]
-  ) {
-    const newFilters = { ...this.filters };
+  updateFilter<K extends keyof BudgetSearchFilters>(key: K, value: BudgetSearchFilters[K]) {
+    const newFilters = {...this.filters};
     if (value === undefined || value === null) {
       delete newFilters[key];
     } else {
@@ -85,16 +99,16 @@ class BudgetSearchStateManager {
   }
 
   clearAllFilters() {
-    this.query = '';
+    this.query = "";
     this.filters = {};
   }
 
   clearQuery() {
-    this.query = '';
+    this.query = "";
   }
 
   clearFilter(key: keyof BudgetSearchFilters) {
-    const newFilters = { ...this.filters };
+    const newFilters = {...this.filters};
     delete newFilters[key];
     this.filters = newFilters;
   }
@@ -116,10 +130,10 @@ class BudgetSearchStateManager {
   }
 
   toggleSortOrder() {
-    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
   }
 
-  setSorting(sortBy: BudgetSearchState['sortBy'], sortOrder?: BudgetSearchState['sortOrder']) {
+  setSorting(sortBy: BudgetSearchState["sortBy"], sortOrder?: BudgetSearchState["sortOrder"]) {
     this.sortBy = sortBy;
     if (sortOrder) {
       this.sortOrder = sortOrder;
@@ -127,7 +141,7 @@ class BudgetSearchStateManager {
   }
 
   toggleViewMode() {
-    this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
+    this.viewMode = this.viewMode === "grid" ? "list" : "grid";
   }
 
   // Get current search parameters for API calls
@@ -136,13 +150,13 @@ class BudgetSearchStateManager {
       query: this.query || undefined,
       ...this.filters,
       sortBy: this.sortBy,
-      sortOrder: this.sortOrder
+      sortOrder: this.sortOrder,
     };
   }
 
   // Reset to initial state
   reset() {
-    this.query = '';
+    this.query = "";
     this.filters = {};
     this.results = [];
     this.isLoading = false;
@@ -157,7 +171,7 @@ class BudgetSearchStateManager {
       filters: this.filters,
       sortBy: this.sortBy,
       sortOrder: this.sortOrder,
-      viewMode: this.viewMode
+      viewMode: this.viewMode,
     };
   }
 

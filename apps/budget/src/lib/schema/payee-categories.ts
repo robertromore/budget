@@ -101,10 +101,7 @@ export const formInsertPayeeCategorySchema = createInsertSchema(payeeCategories,
       .nullable(),
   icon: (schema) =>
     schema
-      .pipe(z.string().refine(
-        (val) => !val || isValidIconName(val),
-        "Invalid icon selection"
-      ))
+      .pipe(z.string().refine((val) => !val || isValidIconName(val), "Invalid icon selection"))
       .optional()
       .nullable(),
   color: (schema) =>
@@ -112,10 +109,8 @@ export const formInsertPayeeCategorySchema = createInsertSchema(payeeCategories,
       .pipe(z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex code"))
       .optional()
       .nullable(),
-  isActive: (schema) =>
-    schema.pipe(z.boolean()).default(true),
-  displayOrder: (schema) =>
-    schema.pipe(z.number()).default(0),
+  isActive: (schema) => schema.pipe(z.boolean()).default(true),
+  displayOrder: (schema) => schema.pipe(z.number()).default(0),
 });
 
 export const removePayeeCategorySchema = z.object({id: z.number().nonnegative()});

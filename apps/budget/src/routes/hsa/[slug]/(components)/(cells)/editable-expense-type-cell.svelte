@@ -20,7 +20,7 @@ let searchQuery = $state('');
 // Flatten all expenses with their categories for search
 const allExpenses = $derived(
   Object.entries(medicalExpenseCategories).flatMap(([category, items]) =>
-    items.map(item => ({
+    items.map((item) => ({
       ...item,
       category,
     }))
@@ -38,7 +38,7 @@ const filteredCategories = $derived.by(() => {
 
   Object.entries(medicalExpenseCategories).forEach(([category, items]) => {
     const matchingItems = items.filter(
-      item =>
+      (item) =>
         item.label.toLowerCase().includes(query) ||
         item.key.toLowerCase().includes(query) ||
         category.toLowerCase().includes(query)
@@ -60,9 +60,7 @@ async function handleSelect(selectedValue: string) {
   searchQuery = '';
 }
 
-const selectedLabel = $derived(
-  allExpenses.find(e => e.key === value)?.label || value
-);
+const selectedLabel = $derived(allExpenses.find((e) => e.key === value)?.label || value);
 </script>
 
 <Popover.Root bind:open>
@@ -74,8 +72,7 @@ const selectedLabel = $derived(
         size="sm"
         role="combobox"
         aria-expanded={open}
-        class="w-full justify-between font-normal"
-      >
+        class="w-full justify-between font-normal">
         <span class="truncate text-left">{selectedLabel}</span>
         <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
@@ -83,25 +80,15 @@ const selectedLabel = $derived(
   </Popover.Trigger>
   <Popover.Content class="w-[500px] p-0" align="start">
     <Command.Root>
-      <Command.Input
-        bind:value={searchQuery}
-        placeholder="Search expense types..."
-      />
+      <Command.Input bind:value={searchQuery} placeholder="Search expense types..." />
       <Command.Empty>No expense type found.</Command.Empty>
       <Command.List class="max-h-[400px]">
         {#each Object.entries(filteredCategories) as [category, items]}
           <Command.Group heading={category}>
             {#each items as item}
-              <Command.Item
-                value={item.key}
-                onSelect={() => handleSelect(item.key)}
-              >
+              <Command.Item value={item.key} onSelect={() => handleSelect(item.key)}>
                 <Check
-                  class={cn(
-                    'mr-2 h-4 w-4',
-                    value === item.key ? 'opacity-100' : 'opacity-0'
-                  )}
-                />
+                  class={cn('mr-2 h-4 w-4', value === item.key ? 'opacity-100' : 'opacity-0')} />
                 <span class="flex-1">{item.label}</span>
               </Command.Item>
             {/each}

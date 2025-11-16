@@ -26,16 +26,17 @@ let selectedTab = $state('pending');
   <div class="flex items-center justify-center py-12">
     <div class="text-center">
       <div
-        class="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      <p class="text-sm text-muted-foreground">Loading patterns...</p>
+        class="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent">
+      </div>
+      <p class="text-muted-foreground text-sm">Loading patterns...</p>
     </div>
   </div>
 {:else if patterns.length === 0}
   <div
     class="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-    <Sparkles class="mb-4 h-12 w-12 text-muted-foreground/50"></Sparkles>
+    <Sparkles class="text-muted-foreground/50 mb-4 h-12 w-12"></Sparkles>
     <h3 class="mb-2 text-lg font-semibold">No patterns detected</h3>
-    <p class="mb-4 max-w-md text-sm text-muted-foreground">
+    <p class="text-muted-foreground mb-4 max-w-md text-sm">
       Run pattern detection to analyze your transaction history and discover recurring patterns.
     </p>
   </div>
@@ -46,7 +47,7 @@ let selectedTab = $state('pending');
         Pending
         {#if pendingPatterns.length > 0}
           <span
-            class="ml-2 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
+            class="bg-primary/20 text-primary ml-2 rounded-full px-2 py-0.5 text-xs font-medium">
             {pendingPatterns.length}
           </span>
         {/if}
@@ -55,7 +56,7 @@ let selectedTab = $state('pending');
         Converted
         {#if convertedPatterns.length > 0}
           <span
-            class="ml-2 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
+            class="bg-primary/20 text-primary ml-2 rounded-full px-2 py-0.5 text-xs font-medium">
             {convertedPatterns.length}
           </span>
         {/if}
@@ -64,7 +65,7 @@ let selectedTab = $state('pending');
         Dismissed
         {#if dismissedPatterns.length > 0}
           <span
-            class="ml-2 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
+            class="bg-primary/20 text-primary ml-2 rounded-full px-2 py-0.5 text-xs font-medium">
             {dismissedPatterns.length}
           </span>
         {/if}
@@ -74,9 +75,9 @@ let selectedTab = $state('pending');
     <TabsContent value="pending" class="mt-6">
       {#if pendingPatterns.length === 0}
         <div class="flex flex-col items-center justify-center py-12 text-center">
-          <CircleAlert class="mb-4 h-12 w-12 text-muted-foreground/50"></CircleAlert>
+          <CircleAlert class="text-muted-foreground/50 mb-4 h-12 w-12"></CircleAlert>
           <h3 class="mb-2 text-lg font-semibold">No pending patterns</h3>
-          <p class="max-w-md text-sm text-muted-foreground">
+          <p class="text-muted-foreground max-w-md text-sm">
             All detected patterns have been reviewed. Run detection again to find new patterns.
           </p>
         </div>
@@ -92,9 +93,9 @@ let selectedTab = $state('pending');
     <TabsContent value="converted" class="mt-6">
       {#if convertedPatterns.length === 0}
         <div class="flex flex-col items-center justify-center py-12 text-center">
-          <CircleAlert class="mb-4 h-12 w-12 text-muted-foreground/50"></CircleAlert>
+          <CircleAlert class="text-muted-foreground/50 mb-4 h-12 w-12"></CircleAlert>
           <h3 class="mb-2 text-lg font-semibold">No converted patterns</h3>
-          <p class="max-w-md text-sm text-muted-foreground">
+          <p class="text-muted-foreground max-w-md text-sm">
             Patterns you convert to schedules will appear here.
           </p>
         </div>
@@ -110,9 +111,9 @@ let selectedTab = $state('pending');
     <TabsContent value="dismissed" class="mt-6">
       {#if dismissedPatterns.length === 0}
         <div class="flex flex-col items-center justify-center py-12 text-center">
-          <CircleAlert class="mb-4 h-12 w-12 text-muted-foreground/50"></CircleAlert>
+          <CircleAlert class="text-muted-foreground/50 mb-4 h-12 w-12"></CircleAlert>
           <h3 class="mb-2 text-lg font-semibold">No dismissed patterns</h3>
-          <p class="max-w-md text-sm text-muted-foreground">
+          <p class="text-muted-foreground max-w-md text-sm">
             Patterns you dismiss will appear here.
           </p>
         </div>

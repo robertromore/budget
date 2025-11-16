@@ -9,14 +9,11 @@ import type {
   BudgetRecommendationWithRelations,
   RecommendationPriority,
   RecommendationStatus,
-  RecommendationType
+  RecommendationType,
 } from "$lib/schema/recommendations";
-import type { BudgetWithRelations } from "$lib/server/domains/budgets";
-import type { BudgetRecommendationDraft } from "$lib/server/domains/budgets/budget-analysis-service";
-import type {
-  PeriodAnalytics,
-  PeriodComparison,
-} from "$lib/server/domains/budgets/period-manager";
+import type {BudgetWithRelations} from "$lib/server/domains/budgets";
+import type {BudgetRecommendationDraft} from "$lib/server/domains/budgets/budget-analysis-service";
+import type {PeriodAnalytics, PeriodComparison} from "$lib/server/domains/budgets/period-manager";
 import type {
   AllocationValidationResult,
   ContributionPlan,
@@ -25,10 +22,10 @@ import type {
   GoalProgress,
   UpdateBudgetRequest,
 } from "$lib/server/domains/budgets/services";
-import { BudgetState } from "$lib/states/budgets.svelte";
-import { trpc } from "$lib/trpc/client";
-import { cachePatterns, queryPresets } from "./_client";
-import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
+import {BudgetState} from "$lib/states/budgets.svelte";
+import {trpc} from "$lib/trpc/client";
+import {cachePatterns, queryPresets} from "./_client";
+import {createQueryKeys, defineMutation, defineQuery} from "./_factory";
 
 export const budgetKeys = createQueryKeys("budgets", {
   lists: () => ["budgets", "list"] as const,
@@ -39,24 +36,29 @@ export const budgetKeys = createQueryKeys("budgets", {
   detailBySlug: (slug: string) => ["budgets", "detail", "slug", slug] as const,
   periodInstances: (templateId: number) => ["budgets", "periods", templateId] as const,
   periodAnalytics: (periodId: number) => ["budgets", "periods", "analytics", periodId] as const,
-  periodComparison: (currentId: number, previousId: number) => ["budgets", "periods", "comparison", currentId, previousId] as const,
-  periodHistory: (budgetId: number, limit: number) => ["budgets", "periods", "history", budgetId, limit] as const,
+  periodComparison: (currentId: number, previousId: number) =>
+    ["budgets", "periods", "comparison", currentId, previousId] as const,
+  periodHistory: (budgetId: number, limit: number) =>
+    ["budgets", "periods", "history", budgetId, limit] as const,
   periodTemplates: () => ["budgets", "period-templates"] as const,
   periodTemplateDetail: (id: number) => ["budgets", "period-templates", "detail", id] as const,
-  periodTemplateList: (budgetId: number) => ["budgets", "period-templates", "list", budgetId] as const,
+  periodTemplateList: (budgetId: number) =>
+    ["budgets", "period-templates", "list", budgetId] as const,
   allocationValidation: (transactionId: number, amount: number, excludeId: number | null) =>
     ["budgets", "allocation", transactionId, amount, excludeId] as const,
   applicableBudgets: (accountId?: number, categoryId?: number) =>
     ["budgets", "applicable", accountId ?? null, categoryId ?? null] as const,
   groups: () => ["budgets", "groups"] as const,
   groupDetail: (id: number) => ["budgets", "groups", "detail", id] as const,
-  groupList: (parentId?: number | null) => ["budgets", "groups", "list", parentId ?? "all"] as const,
+  groupList: (parentId?: number | null) =>
+    ["budgets", "groups", "list", parentId ?? "all"] as const,
   rootGroups: () => ["budgets", "groups", "root"] as const,
   goalProgress: (budgetId: number) => ["budgets", "goal", "progress", budgetId] as const,
   goalContributionPlan: (budgetId: number, frequency: string) =>
     ["budgets", "goal", "contribution-plan", budgetId, frequency] as const,
   templatesAll: () => ["budgets", "templates"] as const,
-  templatesList: (includeSystem: boolean) => ["budgets", "templates", "list", includeSystem] as const,
+  templatesList: (includeSystem: boolean) =>
+    ["budgets", "templates", "list", includeSystem] as const,
   templatesDetail: (id: number) => ["budgets", "templates", "detail", id] as const,
   suggestions: (params: {
     accountId: number;
@@ -66,13 +68,16 @@ export const budgetKeys = createQueryKeys("budgets", {
     date: string;
   }) => ["budgets", "suggestions", params] as const,
   recommendations: () => ["budgets", "recommendations"] as const,
-  recommendationsList: (filters?: Record<string, unknown>) => ["budgets", "recommendations", "list", filters ?? "all"] as const,
+  recommendationsList: (filters?: Record<string, unknown>) =>
+    ["budgets", "recommendations", "list", filters ?? "all"] as const,
   recommendationDetail: (id: number) => ["budgets", "recommendations", "detail", id] as const,
   recommendationsCount: () => ["budgets", "recommendations", "count"] as const,
   recommendationsPendingCount: () => ["budgets", "recommendations", "count", "pending"] as const,
-  analysisHistory: (params?: Record<string, unknown>) => ["budgets", "analysis", "history", params ?? "all"] as const,
+  analysisHistory: (params?: Record<string, unknown>) =>
+    ["budgets", "analysis", "history", params ?? "all"] as const,
   automationSettings: () => ["budgets", "automation", "settings"] as const,
-  automationActivity: (filters?: Record<string, unknown>) => ["budgets", "automation", "activity", filters ?? "all"] as const,
+  automationActivity: (filters?: Record<string, unknown>) =>
+    ["budgets", "automation", "activity", filters ?? "all"] as const,
 });
 
 function getState(): BudgetState | null {
@@ -81,7 +86,7 @@ function getState(): BudgetState | null {
 
 export const getBudgetCount = () =>
   defineQuery<{count: number}>({
-    queryKey: budgetKeys['count'](),
+    queryKey: budgetKeys["count"](),
     queryFn: () => trpc().budgetRoutes.count.query(),
     options: {
       ...queryPresets.static,
@@ -90,7 +95,7 @@ export const getBudgetCount = () =>
 
 export const listBudgets = (status?: Budget["status"]) =>
   defineQuery<BudgetWithRelations[]>({
-    queryKey: budgetKeys['list'](status),
+    queryKey: budgetKeys["list"](status),
     queryFn: () => trpc().budgetRoutes.list.query(status ? {status} : {}),
     options: {
       ...queryPresets.static,
@@ -99,10 +104,14 @@ export const listBudgets = (status?: Budget["status"]) =>
 
 export const getBudgetDetail = (idOrSlug: number | string) =>
   defineQuery<BudgetWithRelations>({
-    queryKey: typeof idOrSlug === "number" ? budgetKeys['detail'](idOrSlug) : budgetKeys['detailBySlug'](idOrSlug),
-    queryFn: () => typeof idOrSlug === "number"
-      ? trpc().budgetRoutes.get.query({id: idOrSlug})
-      : trpc().budgetRoutes.getBySlug.query({slug: idOrSlug}),
+    queryKey:
+      typeof idOrSlug === "number"
+        ? budgetKeys["detail"](idOrSlug)
+        : budgetKeys["detailBySlug"](idOrSlug),
+    queryFn: () =>
+      typeof idOrSlug === "number"
+        ? trpc().budgetRoutes.get.query({id: idOrSlug})
+        : trpc().budgetRoutes.getBySlug.query({slug: idOrSlug}),
     options: {
       staleTime: 60 * 1000,
     },
@@ -110,7 +119,7 @@ export const getBudgetDetail = (idOrSlug: number | string) =>
 
 export const listPeriodInstances = (templateId: number) =>
   defineQuery<BudgetPeriodInstance[]>({
-    queryKey: budgetKeys['periodInstances'](templateId),
+    queryKey: budgetKeys["periodInstances"](templateId),
     queryFn: () => trpc().budgetRoutes.listPeriodInstances.query({templateId}),
     options: {
       staleTime: 30 * 1000, // 30 seconds - periods can change when new months roll over
@@ -123,7 +132,11 @@ export const validateAllocation = (
   excludeAllocationId?: number
 ) =>
   defineQuery<AllocationValidationResult>({
-    queryKey: budgetKeys['allocationValidation'](transactionId, amount, excludeAllocationId ?? null),
+    queryKey: budgetKeys["allocationValidation"](
+      transactionId,
+      amount,
+      excludeAllocationId ?? null
+    ),
     queryFn: () =>
       trpc().budgetRoutes.validateAllocation.query({
         transactionId,
@@ -145,11 +158,11 @@ export const createBudget = defineMutation<CreateBudgetRequest, BudgetWithRelati
 
     // Update cache with new budget optimistically
     cachePatterns.updateQueriesWithCondition<BudgetWithRelations[]>(
-      (queryKey) => queryKey[0] === 'budgets' && queryKey[1] === 'list',
+      (queryKey) => queryKey[0] === "budgets" && queryKey[1] === "list",
       (oldData) => [...oldData, budget]
     );
 
-    cachePatterns.invalidatePrefix(budgetKeys['lists']());
+    cachePatterns.invalidatePrefix(budgetKeys["lists"]());
   },
   successMessage: "Budget created",
   errorMessage: "Failed to create budget",
@@ -180,10 +193,7 @@ export const deleteBudget = defineMutation<number, {success: boolean}>({
   errorMessage: "Failed to delete budget",
 });
 
-export const duplicateBudget = defineMutation<
-  {id: number; newName?: string},
-  BudgetWithRelations
->({
+export const duplicateBudget = defineMutation<{id: number; newName?: string}, BudgetWithRelations>({
   mutationFn: ({id, newName}) => trpc().budgetRoutes.duplicate.mutate({id, newName}),
   onSuccess: (budget) => {
     getState()?.upsertBudget(budget);
@@ -201,9 +211,10 @@ export const bulkArchiveBudgets = defineMutation<
   onSuccess: (_result, ids) => {
     // Invalidate all budgets cache since multiple budgets changed
     cachePatterns.invalidatePrefix(budgetKeys.lists());
-    ids.forEach(id => cachePatterns.invalidatePrefix(budgetKeys.detail(id)));
+    ids.forEach((id) => cachePatterns.invalidatePrefix(budgetKeys.detail(id)));
   },
-  successMessage: (result) => `${result.success} budget(s) archived${result.failed > 0 ? `, ${result.failed} failed` : ''}`,
+  successMessage: (result) =>
+    `${result.success} budget(s) archived${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
   errorMessage: "Failed to archive budgets",
 });
 
@@ -214,13 +225,14 @@ export const bulkDeleteBudgets = defineMutation<
   mutationFn: (ids) => trpc().budgetRoutes.bulkDelete.mutate({ids}),
   onSuccess: (_result, ids) => {
     // Remove deleted budgets from state and cache
-    ids.forEach(id => {
+    ids.forEach((id) => {
       getState()?.removeBudget(id);
       cachePatterns.removeQuery(budgetKeys.detail(id));
     });
     cachePatterns.invalidatePrefix(budgetKeys.lists());
   },
-  successMessage: (result) => `${result.success} budget(s) deleted${result.failed > 0 ? `, ${result.failed} failed` : ''}`,
+  successMessage: (result) =>
+    `${result.success} budget(s) deleted${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
   errorMessage: "Failed to delete budgets",
 });
 
@@ -229,7 +241,7 @@ export const ensurePeriodInstance = defineMutation<
   BudgetPeriodInstance
 >({
   mutationFn: ({templateId, options}) => {
-    const payload = options ? { templateId, ...options } : { templateId };
+    const payload = options ? {templateId, ...options} : {templateId};
     return trpc().budgetRoutes.ensurePeriodInstance.mutate(payload);
   },
   onSuccess: (instance) => {
@@ -307,7 +319,14 @@ export const getEnvelopeAllocations = (budgetId: number) =>
   });
 
 export const createEnvelopeAllocation = defineMutation<
-  {budgetId: number; categoryId: number; periodInstanceId: number; allocatedAmount: number; rolloverMode?: "unlimited" | "reset" | "limited"; metadata?: Record<string, unknown>},
+  {
+    budgetId: number;
+    categoryId: number;
+    periodInstanceId: number;
+    allocatedAmount: number;
+    rolloverMode?: "unlimited" | "reset" | "limited";
+    metadata?: Record<string, unknown>;
+  },
   any
 >({
   mutationFn: (input) => trpc().budgetRoutes.createEnvelopeAllocation.mutate(input),
@@ -335,7 +354,7 @@ export const updateEnvelopeAllocation = defineMutation<
 export const updateEnvelopeSettings = defineMutation<
   {
     envelopeId: number;
-    rolloverMode?: 'unlimited' | 'limited' | 'reset';
+    rolloverMode?: "unlimited" | "limited" | "reset";
     metadata?: Record<string, unknown>;
   },
   any
@@ -350,7 +369,13 @@ export const updateEnvelopeSettings = defineMutation<
 });
 
 export const transferEnvelopeFunds = defineMutation<
-  {fromEnvelopeId: number; toEnvelopeId: number; amount: number; reason?: string; transferredBy?: string},
+  {
+    fromEnvelopeId: number;
+    toEnvelopeId: number;
+    amount: number;
+    reason?: string;
+    transferredBy?: string;
+  },
   any
 >({
   mutationFn: (input) => trpc().budgetRoutes.transferEnvelopeFunds.mutate(input),
@@ -374,15 +399,18 @@ export const processEnvelopeRollover = defineMutation<
   },
   successMessage: (data) => {
     if (data && Array.isArray(data) && data.length > 0) {
-      const totalRolledOver = data.reduce((sum: number, item: any) => sum + (item.rolledAmount || 0), 0);
+      const totalRolledOver = data.reduce(
+        (sum: number, item: any) => sum + (item.rolledAmount || 0),
+        0
+      );
       const resetCount = data.filter((item: any) => item.resetAmount > 0).length;
 
-      let message = `✓ Rollover completed: ${data.length} envelope${data.length !== 1 ? 's' : ''} processed`;
+      let message = `✓ Rollover completed: ${data.length} envelope${data.length !== 1 ? "s" : ""} processed`;
       if (totalRolledOver > 0) {
         message += ` • $${totalRolledOver.toFixed(2)} rolled over`;
       }
       if (resetCount > 0) {
-        message += ` • ${resetCount} envelope${resetCount !== 1 ? 's' : ''} reset`;
+        message += ` • ${resetCount} envelope${resetCount !== 1 ? "s" : ""} reset`;
       }
       return message;
     }
@@ -458,7 +486,7 @@ export const updateRolloverSettings = defineMutation<
       enabled?: boolean;
       maxRolloverPercentage?: number;
       rolloverLimitMonths?: number;
-      deficitRecoveryMode?: 'immediate' | 'gradual' | 'manual';
+      deficitRecoveryMode?: "immediate" | "gradual" | "manual";
       autoTransition?: boolean;
       notificationEnabled?: boolean;
     };
@@ -513,10 +541,7 @@ export const createDeficitRecoveryPlan = (envelopeId: number) =>
     },
   });
 
-export const executeDeficitRecovery = defineMutation<
-  {plan: any; executedBy?: string},
-  any
->({
+export const executeDeficitRecovery = defineMutation<{plan: any; executedBy?: string}, any>({
   mutationFn: (input) => trpc().budgetRoutes.executeDeficitRecovery.mutate(input),
   onSuccess: () => {
     cachePatterns.invalidatePrefix([...budgetKeys.all(), "envelopes"]);
@@ -526,10 +551,7 @@ export const executeDeficitRecovery = defineMutation<
   errorMessage: "Failed to execute deficit recovery",
 });
 
-export const generateBulkDeficitRecovery = defineMutation<
-  {budgetId: number},
-  any
->({
+export const generateBulkDeficitRecovery = defineMutation<{budgetId: number}, any>({
   mutationFn: (input) => trpc().budgetRoutes.generateBulkDeficitRecovery.mutate(input),
   onSuccess: (_, variables) => {
     cachePatterns.invalidatePrefix([...budgetKeys.all(), "envelopes", variables.budgetId]);
@@ -555,14 +577,25 @@ export const validateTransactionStrict = (
   categoryId?: number,
   transactionId?: number
 ) =>
-  defineQuery<{allowed: boolean; violations: Array<{budgetId: number; budgetName: string; exceeded: number}>}>({
-    queryKey: [...budgetKeys.all(), "validate-strict", amount, accountId ?? null, categoryId ?? null, transactionId ?? null],
-    queryFn: () => trpc().budgetRoutes.validateTransactionStrict.query({
+  defineQuery<{
+    allowed: boolean;
+    violations: Array<{budgetId: number; budgetName: string; exceeded: number}>;
+  }>({
+    queryKey: [
+      ...budgetKeys.all(),
+      "validate-strict",
       amount,
-      accountId,
-      categoryId,
-      transactionId,
-    }),
+      accountId ?? null,
+      categoryId ?? null,
+      transactionId ?? null,
+    ],
+    queryFn: () =>
+      trpc().budgetRoutes.validateTransactionStrict.query({
+        amount,
+        accountId,
+        categoryId,
+        transactionId,
+      }),
     options: {
       staleTime: 0,
       enabled: (!!accountId || !!categoryId) && amount !== 0,
@@ -582,7 +615,8 @@ export const getBudgetGroup = (id: number) =>
 export const listBudgetGroups = (parentId?: number | null) =>
   defineQuery({
     queryKey: budgetKeys.groupList(parentId),
-    queryFn: () => trpc().budgetRoutes.listGroups.query(parentId !== undefined ? {parentId} : undefined),
+    queryFn: () =>
+      trpc().budgetRoutes.listGroups.query(parentId !== undefined ? {parentId} : undefined),
     options: {
       staleTime: 60 * 1000,
     },
@@ -598,7 +632,12 @@ export const getRootBudgetGroups = () =>
   });
 
 export const createBudgetGroup = defineMutation<
-  {name: string; description?: string | null; parentId?: number | null; spendingLimit?: number | null},
+  {
+    name: string;
+    description?: string | null;
+    parentId?: number | null;
+    spendingLimit?: number | null;
+  },
   any
 >({
   mutationFn: (input) => trpc().budgetRoutes.createGroup.mutate(input),
@@ -610,7 +649,13 @@ export const createBudgetGroup = defineMutation<
 });
 
 export const updateBudgetGroup = defineMutation<
-  {id: number; name?: string; description?: string | null; parentId?: number | null; spendingLimit?: number | null},
+  {
+    id: number;
+    name?: string;
+    description?: string | null;
+    parentId?: number | null;
+    spendingLimit?: number | null;
+  },
   any
 >({
   mutationFn: (input) => trpc().budgetRoutes.updateGroup.mutate(input),
@@ -733,7 +778,7 @@ export const createPeriodTemplate = defineMutation<
     // Invalidate period template list
     cachePatterns.invalidatePrefix(budgetKeys.periodTemplateList(template.budgetId));
     // Invalidate period instances list
-    cachePatterns.invalidateDomain('budgets');
+    cachePatterns.invalidateDomain("budgets");
   },
   successMessage: "Period template created",
   errorMessage: "Failed to create period template",
@@ -767,7 +812,7 @@ export const deletePeriodTemplate = defineMutation<number, {success: boolean}>({
     cachePatterns.removeQuery(budgetKeys.periodTemplateDetail(id));
     cachePatterns.invalidatePrefix(budgetKeys.periodTemplates());
     // Invalidate all budget queries to refresh the page
-    cachePatterns.invalidateDomain('budgets');
+    cachePatterns.invalidateDomain("budgets");
   },
   successMessage: "Period template deleted",
   errorMessage: "Failed to delete period template",
@@ -786,8 +831,7 @@ export const getPeriodAnalytics = (periodId: number) =>
 export const comparePeriods = (currentPeriodId: number, previousPeriodId: number) =>
   defineQuery<PeriodComparison>({
     queryKey: budgetKeys.periodComparison(currentPeriodId, previousPeriodId),
-    queryFn: () =>
-      trpc().budgetRoutes.comparePeriods.query({currentPeriodId, previousPeriodId}),
+    queryFn: () => trpc().budgetRoutes.comparePeriods.query({currentPeriodId, previousPeriodId}),
     options: {
       staleTime: 5 * 60 * 1000,
       enabled: !!currentPeriodId && !!previousPeriodId,
@@ -842,7 +886,7 @@ export const getGoalProgress = (budgetId: number) =>
 
 export const getGoalContributionPlan = (
   budgetId: number,
-  frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly',
+  frequency: "weekly" | "monthly" | "quarterly" | "yearly",
   customAmount?: number
 ) =>
   defineQuery<ContributionPlan>({
@@ -888,7 +932,7 @@ export const linkScheduleToScheduledExpense = defineMutation<
 
 export const listBudgetTemplates = (includeSystem: boolean = true) =>
   defineQuery<BudgetTemplate[]>({
-    queryKey: budgetKeys['templatesList'](includeSystem),
+    queryKey: budgetKeys["templatesList"](includeSystem),
     queryFn: () => trpc().budgetRoutes.listBudgetTemplates.query({includeSystem}),
     options: {
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -897,7 +941,7 @@ export const listBudgetTemplates = (includeSystem: boolean = true) =>
 
 export const getBudgetTemplate = (id: number) =>
   defineQuery<BudgetTemplate>({
-    queryKey: budgetKeys['templatesDetail'](id),
+    queryKey: budgetKeys["templatesDetail"](id),
     queryFn: () => trpc().budgetRoutes.getBudgetTemplate.query({id}),
     options: {
       staleTime: 5 * 60 * 1000,
@@ -919,7 +963,7 @@ export const createBudgetTemplate = defineMutation<
 >({
   mutationFn: (input) => trpc().budgetRoutes.createBudgetTemplate.mutate(input),
   onSuccess: () => {
-    cachePatterns.invalidatePrefix(budgetKeys['templatesAll']());
+    cachePatterns.invalidatePrefix(budgetKeys["templatesAll"]());
   },
   successMessage: "Budget template created successfully",
   errorMessage: "Failed to create budget template",
@@ -939,8 +983,8 @@ export const updateBudgetTemplate = defineMutation<
 >({
   mutationFn: (input) => trpc().budgetRoutes.updateBudgetTemplate.mutate(input),
   onSuccess: (_result, variables) => {
-    cachePatterns.invalidatePrefix(budgetKeys['templatesAll']());
-    cachePatterns.invalidatePrefix(budgetKeys['templatesDetail'](variables.id));
+    cachePatterns.invalidatePrefix(budgetKeys["templatesAll"]());
+    cachePatterns.invalidatePrefix(budgetKeys["templatesDetail"](variables.id));
   },
   successMessage: "Budget template updated successfully",
   errorMessage: "Failed to update budget template",
@@ -949,8 +993,8 @@ export const updateBudgetTemplate = defineMutation<
 export const deleteBudgetTemplate = defineMutation<number, void>({
   mutationFn: (id) => trpc().budgetRoutes.deleteBudgetTemplate.mutate({id}),
   onSuccess: (_result, id) => {
-    cachePatterns.invalidatePrefix(budgetKeys['templatesAll']());
-    cachePatterns.invalidatePrefix(budgetKeys['templatesDetail'](id));
+    cachePatterns.invalidatePrefix(budgetKeys["templatesAll"]());
+    cachePatterns.invalidatePrefix(budgetKeys["templatesDetail"](id));
   },
   successMessage: "Budget template deleted successfully",
   errorMessage: "Failed to delete budget template",
@@ -960,10 +1004,9 @@ export const duplicateBudgetTemplate = defineMutation<
   {id: number; newName?: string},
   BudgetTemplate
 >({
-  mutationFn: ({id, newName}) =>
-    trpc().budgetRoutes.duplicateBudgetTemplate.mutate({id, newName}),
+  mutationFn: ({id, newName}) => trpc().budgetRoutes.duplicateBudgetTemplate.mutate({id, newName}),
   onSuccess: () => {
-    cachePatterns.invalidatePrefix(budgetKeys['templatesAll']());
+    cachePatterns.invalidatePrefix(budgetKeys["templatesAll"]());
   },
   successMessage: "Budget template duplicated successfully",
   errorMessage: "Failed to duplicate budget template",
@@ -1024,7 +1067,8 @@ export const generateRecommendations = defineMutation<
   onSuccess: () => {
     cachePatterns.invalidatePrefix(budgetKeys.recommendations());
   },
-  successMessage: (result) => `Generated ${result.length} recommendation${result.length !== 1 ? 's' : ''}`,
+  successMessage: (result) =>
+    `Generated ${result.length} recommendation${result.length !== 1 ? "s" : ""}`,
   errorMessage: "Failed to generate recommendations",
 });
 
@@ -1179,8 +1223,8 @@ export const listAutomationActivity = (filters?: {
     },
   });
 
-export const rollbackAutomation = defineMutation<number, { success: boolean }>({
-  mutationFn: (activityId) => trpc().budgetRoutes.rollbackAutomation.mutate({ activityId }),
+export const rollbackAutomation = defineMutation<number, {success: boolean}>({
+  mutationFn: (activityId) => trpc().budgetRoutes.rollbackAutomation.mutate({activityId}),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(budgetKeys.automationActivity());
     cachePatterns.invalidatePrefix(budgetKeys.lists()); // Budgets/groups may have changed
@@ -1192,10 +1236,10 @@ export const rollbackAutomation = defineMutation<number, { success: boolean }>({
 
 export const autoApplyGroupRecommendation = defineMutation<
   number,
-  { success: boolean; activityId?: number }
+  {success: boolean; activityId?: number}
 >({
   mutationFn: (recommendationId) =>
-    trpc().budgetRoutes.autoApplyGroupRecommendation.mutate({ recommendationId }),
+    trpc().budgetRoutes.autoApplyGroupRecommendation.mutate({recommendationId}),
   onSuccess: (_, recommendationId) => {
     cachePatterns.invalidatePrefix(budgetKeys.recommendations());
     cachePatterns.invalidatePrefix(budgetKeys.recommendationDetail(recommendationId));

@@ -1,14 +1,14 @@
 <script lang="ts">
-import type { PageData } from './$types';
-import { Button } from '$lib/components/ui/button';
+import type {PageData} from './$types';
+import {Button} from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import { goto } from '$app/navigation';
+import {goto} from '$app/navigation';
 import {
   createScheduleDetailQuery,
   createToggleScheduleStatusMutation,
   createExecuteAutoAddMutation,
-  createDeleteScheduleMutation
+  createDeleteScheduleMutation,
 } from '$lib/queries/schedules';
 
 // Import extracted components
@@ -17,14 +17,11 @@ import {
   TimelineTab,
   TransactionsTab,
   SettingsTab,
-  ScheduleHeader
+  ScheduleHeader,
 } from './(components)';
 
 // Import data processing functions
-import {
-  generateCumulativeBalanceData,
-  generateFutureProjections
-} from './(data)';
+import {generateCumulativeBalanceData, generateFutureProjections} from './(data)';
 
 // Icons
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -33,10 +30,12 @@ import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Receipt from '@lucide/svelte/icons/receipt';
 import Settings from '@lucide/svelte/icons/settings';
 
-let { data }: { data: PageData } = $props();
+let {data}: {data: PageData} = $props();
 
 // Create reactive query that updates when the data prop changes (route changes)
-const scheduleQuery = $derived(data.schedule?.id ? createScheduleDetailQuery(data.schedule.id) : null);
+const scheduleQuery = $derived(
+  data.schedule?.id ? createScheduleDetailQuery(data.schedule.id) : null
+);
 const toggleStatusMutation = createToggleScheduleStatusMutation();
 const executeAutoAddMutation = createExecuteAutoAddMutation();
 const deleteScheduleMutation = createDeleteScheduleMutation();
@@ -47,7 +46,8 @@ const schedule = $derived(scheduleQuery?.data ?? data.schedule);
 // Calculate statistics reactively based on current schedule data
 const statistics = $derived.by(() => {
   const totalTransactions = schedule.transactions?.length ?? 0;
-  const totalAmount = schedule.transactions?.reduce((sum: number, t: any) => sum + t.amount, 0) ?? 0;
+  const totalAmount =
+    schedule.transactions?.reduce((sum: number, t: any) => sum + t.amount, 0) ?? 0;
   const averageAmount = totalTransactions > 0 ? totalAmount / totalTransactions : 0;
   const lastExecuted = schedule.transactions?.length > 0 ? schedule.transactions[0].date : null;
 
@@ -55,7 +55,7 @@ const statistics = $derived.by(() => {
     totalTransactions,
     totalAmount,
     averageAmount,
-    lastExecuted
+    lastExecuted,
   };
 });
 
@@ -89,16 +89,16 @@ async function executeAutoAdd() {
   autoAddResult = null;
 
   try {
-    const result = await executeAutoAddMutation.mutateAsync(schedule.id) as any;
+    const result = (await executeAutoAddMutation.mutateAsync(schedule.id)) as any;
 
     if (result.transactionsCreated > 0) {
       autoAddResult = `Created ${result.transactionsCreated} transaction${result.transactionsCreated === 1 ? '' : 's'}`;
     } else {
-      autoAddResult = "No new transactions needed";
+      autoAddResult = 'No new transactions needed';
     }
   } catch (error) {
     console.error('Auto-add failed:', error);
-    autoAddResult = "Failed to create transactions";
+    autoAddResult = 'Failed to create transactions';
   } finally {
     isExecutingAutoAdd = false;
     // Clear result after 5 seconds
@@ -130,11 +130,11 @@ function duplicateSchedule() {
 }
 </script>
 
-<div class="container mx-auto p-4 space-y-4">
+<div class="container mx-auto space-y-4 p-4">
   <!-- Navigation -->
-  <div class="flex items-center space-x-2 text-sm text-muted-foreground">
-    <Button variant="ghost" size="sm" href="/schedules" class="p-0 h-auto">
-      <ChevronLeft class="h-4 w-4 mr-1" />
+  <div class="text-muted-foreground flex items-center space-x-2 text-sm">
+    <Button variant="ghost" size="sm" href="/schedules" class="h-auto p-0">
+      <ChevronLeft class="mr-1 h-4 w-4" />
       Schedules
     </Button>
     <span>/</span>
@@ -147,8 +147,7 @@ function duplicateSchedule() {
     {autoAddResult}
     {editSchedule}
     {toggleStatus}
-    deleteSchedule={openDeleteDialog}
-  />
+    deleteSchedule={openDeleteDialog} />
 
   <!-- Tab Navigation -->
   <Tabs.Root bind:value={activeTab}>
@@ -172,23 +171,31 @@ function duplicateSchedule() {
     </Tabs.List>
 
     <!-- Overview Tab -->
-    <Tabs.Content value="overview" class="space-y-4 mt-4">
+    <Tabs.Content value="overview" class="mt-4 space-y-4">
       <OverviewTab {schedule} {statistics} {futureProjections} />
     </Tabs.Content>
 
     <!-- Timeline Tab -->
-    <Tabs.Content value="timeline" class="space-y-4 mt-4">
+    <Tabs.Content value="timeline" class="mt-4 space-y-4">
       <TimelineTab {schedule} {cumulativeBalanceData} {futureProjections} />
     </Tabs.Content>
 
     <!-- Transactions Tab -->
-    <Tabs.Content value="transactions" class="space-y-4 mt-4">
+    <Tabs.Content value="transactions" class="mt-4 space-y-4">
       <TransactionsTab {schedule} />
     </Tabs.Content>
 
     <!-- Settings Tab -->
-    <Tabs.Content value="settings" class="space-y-4 mt-4">
-      <SettingsTab {schedule} {statistics} {isExecutingAutoAdd} {executeAutoAdd} {editSchedule} {toggleStatus} deleteSchedule={openDeleteDialog} {duplicateSchedule} />
+    <Tabs.Content value="settings" class="mt-4 space-y-4">
+      <SettingsTab
+        {schedule}
+        {statistics}
+        {isExecutingAutoAdd}
+        {executeAutoAdd}
+        {editSchedule}
+        {toggleStatus}
+        deleteSchedule={openDeleteDialog}
+        {duplicateSchedule} />
     </Tabs.Content>
   </Tabs.Root>
 </div>
@@ -199,7 +206,8 @@ function duplicateSchedule() {
     <AlertDialog.Header>
       <AlertDialog.Title>Delete Schedule</AlertDialog.Title>
       <AlertDialog.Description>
-        Are you sure you want to delete the schedule "{schedule.name}"? This action cannot be undone.
+        Are you sure you want to delete the schedule "{schedule.name}"? This action cannot be
+        undone.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

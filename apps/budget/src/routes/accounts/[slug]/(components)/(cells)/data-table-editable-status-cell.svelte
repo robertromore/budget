@@ -26,34 +26,32 @@ const handleSubmit = (new_value: string) => {
   <Button
     onclick={() => handleSubmit(value == 'cleared' ? 'pending' : 'cleared')}
     variant="ghost"
-    class="h-10 w-10 p-1 hover:bg-muted-foreground/20 transition-colors [&_svg]:size-auto">
+    class="hover:bg-muted-foreground/20 h-10 w-10 p-1 transition-colors [&_svg]:size-auto">
     {#if value === 'cleared'}
       <SquareCheck
-        class="fill-primary text-primary-foreground hover:fill-primary/90 transition-colors size-2"
+        class="fill-primary text-primary-foreground hover:fill-primary/90 size-2 transition-colors"
         strokeWidth={1.2}
         size={32} />
     {:else}
       <Square
         strokeWidth={1.2}
         size={32}
-        class="text-muted-foreground hover:text-foreground transition-colors size-2" />
+        class="text-muted-foreground hover:text-foreground size-2 transition-colors" />
     {/if}
   </Button>
+{:else if value === 'scheduled' && onScheduleClick}
+  <Button
+    onclick={onScheduleClick}
+    variant="ghost"
+    class="hover:bg-primary/10 h-10 w-10 p-1 transition-colors">
+    <Calendar class="text-primary hover:text-primary/80 size-2 transition-colors" size={22} />
+  </Button>
 {:else}
-  {#if value === 'scheduled' && onScheduleClick}
-    <Button
-      onclick={onScheduleClick}
-      variant="ghost"
-      class="h-10 w-10 p-1 hover:bg-primary/10 transition-colors">
-      <Calendar class="text-primary hover:text-primary/80 transition-colors size-2" size={22} />
-    </Button>
-  {:else}
-    <div class="flex items-center justify-center h-10 w-10">
-      {#if value === 'scheduled'}
-        <Calendar class="text-primary size-2" size={22} />
-      {:else}
-        <CalendarClock class="text-muted-foreground size-2" size={22} />
-      {/if}
-    </div>
-  {/if}
+  <div class="flex h-10 w-10 items-center justify-center">
+    {#if value === 'scheduled'}
+      <Calendar class="text-primary size-2" size={22} />
+    {:else}
+      <CalendarClock class="text-muted-foreground size-2" size={22} />
+    {/if}
+  </div>
 {/if}

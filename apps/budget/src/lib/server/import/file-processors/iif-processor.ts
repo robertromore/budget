@@ -5,29 +5,34 @@
  * Supports transaction imports with split transactions.
  */
 
-import type { FileProcessor, ImportRow, NormalizedTransaction, IIFTransaction } from '$lib/types/import';
-import { FileValidationError, ParseError } from '../errors';
+import type {
+  FileProcessor,
+  ImportRow,
+  NormalizedTransaction,
+  IIFTransaction,
+} from "$lib/types/import";
+import {FileValidationError, ParseError} from "../errors";
 import {
   parseIIFDate,
   parseAmount,
   sanitizeText,
   validateFileType,
   normalizeIIFTransactionType,
-} from '../utils';
+} from "../utils";
 
 export class IIFProcessor implements FileProcessor {
   private readonly maxFileSize = 5 * 1024 * 1024; // 5MB
-  private readonly supportedFormats = ['.iif'];
+  private readonly supportedFormats = [".iif"];
 
   getSupportedFormats(): string[] {
     return this.supportedFormats;
   }
 
-  validateFile(file: File): { valid: boolean; error?: string } {
+  validateFile(file: File): {valid: boolean; error?: string} {
     if (!validateFileType(file.name, this.supportedFormats)) {
       return {
         valid: false,
-        error: `Invalid file type. Supported formats: ${this.supportedFormats.join(', ')}`,
+        error: `Invalid file type. Supported formats: ${this.supportedFormats.join(", ")}`,
       };
     }
 
@@ -41,30 +46,30 @@ export class IIFProcessor implements FileProcessor {
     if (file.size === 0) {
       return {
         valid: false,
-        error: 'File is empty',
+        error: "File is empty",
       };
     }
 
-    return { valid: true };
+    return {valid: true};
   }
 
   async parseFile(file: File): Promise<ImportRow[]> {
     const validation = this.validateFile(file);
     if (!validation.valid) {
-      throw new FileValidationError(validation.error || 'File validation failed', 'iif');
+      throw new FileValidationError(validation.error || "File validation failed", "iif");
     }
 
     try {
       const text = await file.text();
 
       if (!text || text.trim().length === 0) {
-        throw new ParseError('File is empty or contains no data');
+        throw new ParseError("File is empty or contains no data");
       }
 
-      const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+      const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
 
       if (lines.length < 2) {
-        throw new ParseError('IIF file must contain headers and data');
+        throw new ParseError("IIF file must contain headers and data");
       }
 
       const transactions = this.parseIIFContent(lines);
@@ -74,7 +79,9 @@ export class IIFProcessor implements FileProcessor {
       if (error instanceof FileValidationError || error instanceof ParseError) {
         throw error;
       }
-      throw new ParseError(`Failed to parse IIF file: ${error instanceof Error ? error.message : String(error)}`);
+      throw new ParseError(
+        `Failed to parse IIF file: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -86,21 +93,21 @@ export class IIFProcessor implements FileProcessor {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
 
-      if (line.startsWith('!')) {
+      if (line.startsWith("!")) {
         headerMap = this.parseHeader(line);
         continue;
       }
 
-      const fields = line.split('\t');
+      const fields = line.split("\t");
       const recordType = fields[0]?.toUpperCase();
 
-      if (recordType === 'TRNS') {
+      if (recordType === "TRNS") {
         if (currentTransaction && currentTransaction.type) {
           transactions.push(currentTransaction as IIFTransaction);
         }
 
         currentTransaction = this.parseTRNS(fields, headerMap);
-      } else if (recordType === 'SPL' && currentTransaction) {
+      } else if (recordType === "SPL" && currentTransaction) {
         const split = this.parseSPL(fields, headerMap);
         if (split) {
           if (!currentTransaction.splits) {
@@ -108,7 +115,7 @@ export class IIFProcessor implements FileProcessor {
           }
           currentTransaction.splits.push(split);
         }
-      } else if (recordType === 'ENDTRNS') {
+      } else if (recordType === "ENDTRNS") {
         if (currentTransaction && currentTransaction.type) {
           transactions.push(currentTransaction as IIFTransaction);
           currentTransaction = null;
@@ -124,7 +131,7 @@ export class IIFProcessor implements FileProcessor {
   }
 
   private parseHeader(line: string): Map<string, number> {
-    const fields = line.substring(1).split('\t');
+    const fields = line.substring(1).split("\t");
     const map = new Map<string, number>();
 
     fields.forEach((field, index) => {
@@ -134,44 +141,47 @@ export class IIFProcessor implements FileProcessor {
     return map;
   }
 
-  private parseTRNS(fields: string[], headerMap: Map<string, number> | null): Partial<IIFTransaction> {
+  private parseTRNS(
+    fields: string[],
+    headerMap: Map<string, number> | null
+  ): Partial<IIFTransaction> {
     const getField = (name: string): string => {
-      if (!headerMap) return fields[0] || '';
+      if (!headerMap) return fields[0] || "";
       const index = headerMap.get(name.toUpperCase());
-      return index !== undefined ? fields[index] || '' : '';
+      return index !== undefined ? fields[index] || "" : "";
     };
 
-    const dateStr = getField('DATE');
-    const amountStr = getField('AMOUNT');
-    const accnt = getField('ACCNT');
-    const name = getField('NAME');
-    const memo = getField('MEMO');
-    const docnum = getField('DOCNUM');
-    const clear = getField('CLEAR');
+    const dateStr = getField("DATE");
+    const amountStr = getField("AMOUNT");
+    const accnt = getField("ACCNT");
+    const name = getField("NAME");
+    const memo = getField("MEMO");
+    const docnum = getField("DOCNUM");
+    const clear = getField("CLEAR");
 
     return {
-      type: 'TRNS',
+      type: "TRNS",
       date: dateStr,
       account: accnt,
       name: name,
       amount: amountStr ? parseFloat(amountStr) : 0,
       memo: memo || undefined,
       number: docnum || undefined,
-      cleared: clear ? clear.toUpperCase() === 'X' : false,
+      cleared: clear ? clear.toUpperCase() === "X" : false,
       splits: [],
     };
   }
 
   private parseSPL(fields: string[], headerMap: Map<string, number> | null): any {
     const getField = (name: string): string => {
-      if (!headerMap) return '';
+      if (!headerMap) return "";
       const index = headerMap.get(name.toUpperCase());
-      return index !== undefined ? fields[index] || '' : '';
+      return index !== undefined ? fields[index] || "" : "";
     };
 
-    const accnt = getField('ACCNT');
-    const amountStr = getField('AMOUNT');
-    const memo = getField('MEMO');
+    const accnt = getField("ACCNT");
+    const amountStr = getField("AMOUNT");
+    const memo = getField("MEMO");
 
     if (!accnt && !amountStr) {
       return null;
@@ -192,13 +202,13 @@ export class IIFProcessor implements FileProcessor {
 
       try {
         const date = parseIIFDate(txn.date);
-        normalized.date = date.toISOString().split('T')[0];
+        normalized.date = date.toISOString().split("T")[0];
       } catch (error) {
         errors.push({
-          field: 'date',
-          message: error instanceof Error ? error.message : 'Invalid date',
+          field: "date",
+          message: error instanceof Error ? error.message : "Invalid date",
           value: txn.date,
-          severity: 'error',
+          severity: "error",
         });
       }
 
@@ -206,10 +216,10 @@ export class IIFProcessor implements FileProcessor {
         normalized.amount = txn.amount;
       } catch (error) {
         errors.push({
-          field: 'amount',
-          message: error instanceof Error ? error.message : 'Invalid amount',
+          field: "amount",
+          message: error instanceof Error ? error.message : "Invalid amount",
           value: txn.amount,
-          severity: 'error',
+          severity: "error",
         });
       }
 
@@ -232,13 +242,13 @@ export class IIFProcessor implements FileProcessor {
         }
       }
 
-      normalized.status = normalizeIIFTransactionType(txn.type, txn.cleared ? 'X' : '');
+      normalized.status = normalizeIIFTransactionType(txn.type, txn.cleared ? "X" : "");
 
       return {
         rowIndex: index,
-        rawData: { ...txn },
+        rawData: {...txn},
         normalizedData: normalized as Record<string, any>,
-        validationStatus: errors.length > 0 ? 'invalid' : 'valid',
+        validationStatus: errors.length > 0 ? "invalid" : "valid",
         validationErrors: errors.length > 0 ? errors : undefined,
       };
     });

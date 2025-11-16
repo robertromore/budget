@@ -29,7 +29,7 @@ const budgets = $derived(budgetsQuery.data ?? budgetState.all);
 
 <!-- Basic Filters Section -->
 <div class="space-y-3">
-  <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Basic Filters</h5>
+  <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">Basic Filters</h5>
 
   <div class="grid grid-cols-2 gap-3">
     <!-- Status Filter -->
@@ -63,7 +63,10 @@ const budgets = $derived(budgetsQuery.data ?? budgetState.all);
         type="single"
         value={filters.recurring?.toString() || ''}
         onValueChange={(value) => {
-          onFilterChange('recurring', value === 'true' ? true : value === 'false' ? false : undefined);
+          onFilterChange(
+            'recurring',
+            value === 'true' ? true : value === 'false' ? false : undefined
+          );
         }}>
         <Select.Trigger id="recurring-filter" class="h-9 w-full">
           {filters.recurring === true
@@ -87,14 +90,13 @@ const budgets = $derived(budgetsQuery.data ?? budgetState.all);
         type="single"
         value={filters.autoAdd?.toString() || ''}
         onValueChange={(value) => {
-          onFilterChange('autoAdd', value === 'true' ? true : value === 'false' ? false : undefined);
+          onFilterChange(
+            'autoAdd',
+            value === 'true' ? true : value === 'false' ? false : undefined
+          );
         }}>
         <Select.Trigger id="autoadd-filter" class="h-9 w-full">
-          {filters.autoAdd === true
-            ? 'Enabled'
-            : filters.autoAdd === false
-              ? 'Disabled'
-              : 'All'}
+          {filters.autoAdd === true ? 'Enabled' : filters.autoAdd === false ? 'Disabled' : 'All'}
         </Select.Trigger>
         <Select.Content>
           <Select.Item value="">All</Select.Item>
@@ -131,7 +133,9 @@ const budgets = $derived(budgetsQuery.data ?? budgetState.all);
 
 <!-- Related Entities Section -->
 <div class="space-y-3">
-  <h5 class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Related Entities</h5>
+  <h5 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+    Related Entities
+  </h5>
 
   <div class="grid grid-cols-2 gap-3">
     <!-- Account Filter -->
@@ -145,7 +149,7 @@ const budgets = $derived(budgetsQuery.data ?? budgetState.all);
         }}>
         <Select.Trigger id="account-filter" class="h-9 w-full">
           {filters.accountId
-            ? accounts.find(a => a.id === filters.accountId)?.name || 'Unknown'
+            ? accounts.find((a) => a.id === filters.accountId)?.name || 'Unknown'
             : 'All Accounts'}
         </Select.Trigger>
         <Select.Content>
@@ -168,7 +172,7 @@ const budgets = $derived(budgetsQuery.data ?? budgetState.all);
         }}>
         <Select.Trigger id="payee-filter" class="h-9 w-full">
           {filters.payeeId
-            ? payees.find(p => p.id === filters.payeeId)?.name || 'Unknown'
+            ? payees.find((p) => p.id === filters.payeeId)?.name || 'Unknown'
             : 'All Payees'}
         </Select.Trigger>
         <Select.Content>
@@ -191,7 +195,7 @@ const budgets = $derived(budgetsQuery.data ?? budgetState.all);
         }}>
         <Select.Trigger id="category-filter" class="h-9 w-full">
           {filters.categoryId
-            ? categories.find(c => c.id === filters.categoryId)?.name || 'Unknown'
+            ? categories.find((c) => c.id === filters.categoryId)?.name || 'Unknown'
             : 'All Categories'}
         </Select.Trigger>
         <Select.Content>
@@ -214,7 +218,7 @@ const budgets = $derived(budgetsQuery.data ?? budgetState.all);
         }}>
         <Select.Trigger id="budget-filter" class="h-9 w-full">
           {filters.budgetId
-            ? budgets.find(b => b.id === filters.budgetId)?.name || 'Unknown'
+            ? budgets.find((b) => b.id === filters.budgetId)?.name || 'Unknown'
             : 'All Budgets'}
         </Select.Trigger>
         <Select.Content>

@@ -1,5 +1,5 @@
-import type { FacetedFilterOption } from "$lib/types";
-import { getContext, setContext } from "svelte";
+import type {FacetedFilterOption} from "$lib/types";
+import {getContext, setContext} from "svelte";
 
 const KEY = Symbol("date_filters");
 

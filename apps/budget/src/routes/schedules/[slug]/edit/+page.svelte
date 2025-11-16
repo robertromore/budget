@@ -17,7 +17,7 @@ const handleSave = (updatedSchedule?: Schedule) => {
   // Navigate back to the schedule detail page
   if (updatedSchedule?.slug) {
     setTimeout(() => {
-      goto(`/schedules/${updatedSchedule.slug}`, { replaceState: true });
+      goto(`/schedules/${updatedSchedule.slug}`, {replaceState: true});
     }, 100);
   } else if (schedule) {
     goto(`/schedules/${schedule.slug}`);
@@ -32,7 +32,7 @@ const handleSave = (updatedSchedule?: Schedule) => {
   <meta name="description" content="Edit schedule details" />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -41,8 +41,8 @@ const handleSave = (updatedSchedule?: Schedule) => {
         <span class="sr-only">Back to Schedule</span>
       </Button>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Calendar class="h-8 w-8 text-muted-foreground" />
+        <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <Calendar class="text-muted-foreground h-8 w-8" />
           Edit Schedule
         </h1>
         {#if schedule}
@@ -57,23 +57,15 @@ const handleSave = (updatedSchedule?: Schedule) => {
     <Card.Root>
       <Card.Header>
         <Card.Title>Schedule Information</Card.Title>
-        <Card.Description>
-          Update the details for your schedule.
-        </Card.Description>
+        <Card.Description>Update the details for your schedule.</Card.Description>
       </Card.Header>
       <Card.Content>
-        <ManageScheduleForm
-          scheduleId={schedule.id}
-          duplicateMode={false}
-          onSave={handleSave}
-        />
+        <ManageScheduleForm scheduleId={schedule.id} duplicateMode={false} onSave={handleSave} />
       </Card.Content>
     </Card.Root>
   {:else}
     <Card.Root>
-      <Card.Content class="py-8 text-center text-muted-foreground">
-        Schedule not found
-      </Card.Content>
+      <Card.Content class="text-muted-foreground py-8 text-center">Schedule not found</Card.Content>
     </Card.Root>
   {/if}
 </div>

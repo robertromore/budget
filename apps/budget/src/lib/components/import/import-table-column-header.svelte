@@ -19,8 +19,7 @@ const isSorted = $derived(column.getIsSorted());
 <Button
   variant="ghost"
   onclick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-  class="h-8 px-2"
->
+  class="h-8 px-2">
   {label}
   {#if isSorted === 'asc'}
     <ArrowUp class="ml-2 h-4 w-4" />

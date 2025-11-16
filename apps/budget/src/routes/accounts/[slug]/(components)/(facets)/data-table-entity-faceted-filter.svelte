@@ -50,9 +50,12 @@ const entityOptions = $derived.by(() => {
     } else {
       // Find the entity
       const entityId = isNaN(Number(value)) ? value : parseInt(value);
-      const entity = config.entities.find(e => {
+      const entity = config.entities.find((e) => {
         const id = config.getId(e);
-        return (typeof id === 'string' ? id : id.toString()) === (typeof entityId === 'string' ? entityId : entityId.toString());
+        return (
+          (typeof id === 'string' ? id : id.toString()) ===
+          (typeof entityId === 'string' ? entityId : entityId.toString())
+        );
       });
 
       if (entity) {

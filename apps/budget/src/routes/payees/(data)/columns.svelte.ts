@@ -1,9 +1,9 @@
-import { Checkbox } from "$lib/components/ui/checkbox";
-import { renderComponent } from "$lib/components/ui/data-table";
-import type { Payee } from "$lib/schema";
-import type { PayeesState } from "$lib/states/entities/payees.svelte";
-import { compareAlphanumeric } from "$lib/utils";
-import type { ColumnDef, FilterFnOption } from "@tanstack/table-core";
+import {Checkbox} from "$lib/components/ui/checkbox";
+import {renderComponent} from "$lib/components/ui/data-table";
+import type {Payee} from "$lib/schema";
+import type {PayeesState} from "$lib/states/entities/payees.svelte";
+import {compareAlphanumeric} from "$lib/utils";
+import type {ColumnDef, FilterFnOption} from "@tanstack/table-core";
 import PayeeColumnHeader from "../(components)/payee-column-header.svelte";
 import PayeeNameCell from "../(components)/(cells)/payee-name-cell.svelte";
 import PayeeTypeCell from "../(components)/(cells)/payee-type-cell.svelte";
@@ -23,7 +23,7 @@ export function columns(
   return [
     {
       id: "select-col",
-      header: ({ table }) => {
+      header: ({table}) => {
         const allPageRowsSelected = table.getIsAllPageRowsSelected();
         const somePageRowsSelected = table.getIsSomePageRowsSelected();
 
@@ -41,7 +41,7 @@ export function columns(
           "aria-label": "Select all on page",
         });
       },
-      cell: ({ row }) => {
+      cell: ({row}) => {
         return renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
@@ -56,7 +56,7 @@ export function columns(
     },
     {
       accessorKey: "id",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(PayeeColumnHeader<Payee, unknown>, {
           column,
           title: "ID",
@@ -71,16 +71,17 @@ export function columns(
     {
       accessorKey: "name",
       id: "name",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(PayeeColumnHeader<Payee, unknown>, {
           column,
           title: "Name",
         }),
       cell: (info) => {
         const payee = info.row.original;
-        return renderComponent(PayeeNameCell, { payee });
+        return renderComponent(PayeeNameCell, {payee});
       },
-      sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.name || "", rowB.original.name || ""),
+      sortingFn: (rowA, rowB) =>
+        compareAlphanumeric(rowA.original.name || "", rowB.original.name || ""),
       enableColumnFilter: true,
       filterFn: "includesString" as FilterFnOption<Payee>,
       meta: {
@@ -90,16 +91,17 @@ export function columns(
     {
       accessorKey: "payeeType",
       id: "type",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(PayeeColumnHeader<Payee, unknown>, {
           column,
           title: "Type",
         }),
       cell: (info) => {
         const payee = info.row.original;
-        return renderComponent(PayeeTypeCell, { payeeType: payee.payeeType });
+        return renderComponent(PayeeTypeCell, {payeeType: payee.payeeType});
       },
-      sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.payeeType || "", rowB.original.payeeType || ""),
+      sortingFn: (rowA, rowB) =>
+        compareAlphanumeric(rowA.original.payeeType || "", rowB.original.payeeType || ""),
       enableColumnFilter: true,
       filterFn: "equalsString" as FilterFnOption<Payee>,
       meta: {
@@ -109,7 +111,7 @@ export function columns(
     {
       accessorKey: "email",
       id: "contact",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(PayeeColumnHeader<Payee, unknown>, {
           column,
           title: "Contact",
@@ -118,10 +120,11 @@ export function columns(
         const payee = info.row.original;
         return renderComponent(PayeeContactCell, {
           email: payee.email,
-          phone: payee.phone
+          phone: payee.phone,
         });
       },
-      sortingFn: (rowA, rowB) => compareAlphanumeric(rowA.original.email || "", rowB.original.email || ""),
+      sortingFn: (rowA, rowB) =>
+        compareAlphanumeric(rowA.original.email || "", rowB.original.email || ""),
       enableColumnFilter: true,
       filterFn: "includesString" as FilterFnOption<Payee>,
       meta: {
@@ -131,14 +134,14 @@ export function columns(
     {
       accessorKey: "avgAmount",
       id: "avgAmount",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(PayeeColumnHeader<Payee, unknown>, {
           column,
           title: "Avg Amount",
         }),
       cell: (info) => {
         const avgAmount = info.getValue() as number | null;
-        return renderComponent(PayeeAvgAmountCell, { avgAmount });
+        return renderComponent(PayeeAvgAmountCell, {avgAmount});
       },
       enableSorting: true,
       sortingFn: (rowA, rowB) => {
@@ -154,14 +157,14 @@ export function columns(
     {
       accessorKey: "lastTransactionDate",
       id: "lastTransaction",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(PayeeColumnHeader<Payee, unknown>, {
           column,
           title: "Last Transaction",
         }),
       cell: (info) => {
         const lastTransactionDate = info.getValue() as string | null;
-        return renderComponent(PayeeLastTransactionCell, { lastTransactionDate });
+        return renderComponent(PayeeLastTransactionCell, {lastTransactionDate});
       },
       enableSorting: true,
       sortingFn: (rowA, rowB) => {
@@ -177,14 +180,14 @@ export function columns(
     {
       accessorKey: "isActive",
       id: "status",
-      header: ({ column }) =>
+      header: ({column}) =>
         renderComponent(PayeeColumnHeader<Payee, unknown>, {
           column,
           title: "Status",
         }),
       cell: (info) => {
         const isActive = info.getValue() as boolean;
-        return renderComponent(PayeeStatusCell, { isActive });
+        return renderComponent(PayeeStatusCell, {isActive});
       },
       enableSorting: true,
       enableColumnFilter: true,

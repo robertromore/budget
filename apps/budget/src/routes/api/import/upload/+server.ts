@@ -1,38 +1,38 @@
-import { payees as payeeTable } from '$lib/schema/payees';
-import { schedules as scheduleTable } from '$lib/schema/schedules';
-import { transactions as transactionTable } from '$lib/schema/transactions';
-import { db } from '$lib/server/db';
-import { CSVProcessor } from '$lib/server/import/file-processors/csv-processor';
-import { ExcelProcessor } from '$lib/server/import/file-processors/excel-processor';
-import { IIFProcessor } from '$lib/server/import/file-processors/iif-processor';
-import { OFXProcessor } from '$lib/server/import/file-processors/ofx-processor';
-import { QBCSVProcessor } from '$lib/server/import/file-processors/qb-csv-processor';
-import { QBOProcessor } from '$lib/server/import/file-processors/qbo-processor';
-import { QIFProcessor } from '$lib/server/import/file-processors/qif-processor';
-import { PayeeMatcher } from '$lib/server/import/matchers/payee-matcher';
-import { ScheduleMatcher } from '$lib/server/import/matchers/schedule-matcher';
-import { isQuickBooksCSV } from '$lib/server/import/utils';
-import { TransactionValidator } from '$lib/server/import/validators/transaction-validator';
-import type { ParseResult, ScheduleMatch } from '$lib/types/import';
-import { json } from '@sveltejs/kit';
-import { and, eq, isNull } from 'drizzle-orm';
-import type { RequestHandler } from './$types';
+import {payees as payeeTable} from "$lib/schema/payees";
+import {schedules as scheduleTable} from "$lib/schema/schedules";
+import {transactions as transactionTable} from "$lib/schema/transactions";
+import {db} from "$lib/server/db";
+import {CSVProcessor} from "$lib/server/import/file-processors/csv-processor";
+import {ExcelProcessor} from "$lib/server/import/file-processors/excel-processor";
+import {IIFProcessor} from "$lib/server/import/file-processors/iif-processor";
+import {OFXProcessor} from "$lib/server/import/file-processors/ofx-processor";
+import {QBCSVProcessor} from "$lib/server/import/file-processors/qb-csv-processor";
+import {QBOProcessor} from "$lib/server/import/file-processors/qbo-processor";
+import {QIFProcessor} from "$lib/server/import/file-processors/qif-processor";
+import {PayeeMatcher} from "$lib/server/import/matchers/payee-matcher";
+import {ScheduleMatcher} from "$lib/server/import/matchers/schedule-matcher";
+import {isQuickBooksCSV} from "$lib/server/import/utils";
+import {TransactionValidator} from "$lib/server/import/validators/transaction-validator";
+import type {ParseResult, ScheduleMatch} from "$lib/types/import";
+import {json} from "@sveltejs/kit";
+import {and, eq, isNull} from "drizzle-orm";
+import type {RequestHandler} from "./$types";
 
-export const POST: RequestHandler = async ({ request, url }) => {
+export const POST: RequestHandler = async ({request, url}) => {
   try {
     const formData = await request.formData();
-    const file = formData.get('importFile') as File;
-    const accountIdParam = url.searchParams.get('accountId');
-    const reverseAmountSignsParam = url.searchParams.get('reverseAmountSigns');
+    const file = formData.get("importFile") as File;
+    const accountIdParam = url.searchParams.get("accountId");
+    const reverseAmountSignsParam = url.searchParams.get("reverseAmountSigns");
 
     if (!file) {
-      return json({ error: 'No file provided' }, { status: 400 });
+      return json({error: "No file provided"}, {status: 400});
     }
 
     // For CSV and QBO files, read content first to detect the actual format
     let fileContent: string | undefined;
-    const extension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-    if (extension === '.csv' || extension === '.txt' || extension === '.qbo') {
+    const extension = `.${file.name.split(".").pop()?.toLowerCase()}`;
+    if (extension === ".csv" || extension === ".txt" || extension === ".qbo") {
       fileContent = await file.text();
     }
 
@@ -42,16 +42,17 @@ export const POST: RequestHandler = async ({ request, url }) => {
     if (!processor) {
       return json(
         {
-          error: 'Unsupported file type. Supported formats: .csv, .txt, .xlsx, .xls, .qif, .ofx, .qfx, .iif, .qbo',
+          error:
+            "Unsupported file type. Supported formats: .csv, .txt, .xlsx, .xls, .qif, .ofx, .qfx, .iif, .qbo",
         },
-        { status: 400 }
+        {status: 400}
       );
     }
 
     // Validate file
     const validation = processor.validateFile(file);
     if (!validation.valid) {
-      return json({ error: validation.error || 'File validation failed' }, { status: 400 });
+      return json({error: validation.error || "File validation failed"}, {status: 400});
     }
 
     // Parse file
@@ -60,13 +61,23 @@ export const POST: RequestHandler = async ({ request, url }) => {
     // Sort by date (oldest first) - most bank exports are newest first
     // This ensures transactions are imported in chronological order
     rawData = rawData.sort((a, b) => {
-      const dateA = a.normalizedData['date'];
-      const dateB = b.normalizedData['date'];
+      const dateA = a.normalizedData["date"];
+      const dateB = b.normalizedData["date"];
 
       if (!dateA || !dateB) return 0;
 
-      const timeA = typeof dateA === 'string' ? new Date(dateA).getTime() : dateA instanceof Date ? dateA.getTime() : 0;
-      const timeB = typeof dateB === 'string' ? new Date(dateB).getTime() : dateB instanceof Date ? dateB.getTime() : 0;
+      const timeA =
+        typeof dateA === "string"
+          ? new Date(dateA).getTime()
+          : dateA instanceof Date
+            ? dateA.getTime()
+            : 0;
+      const timeB =
+        typeof dateB === "string"
+          ? new Date(dateB).getTime()
+          : dateB instanceof Date
+            ? dateB.getTime()
+            : 0;
 
       return timeA - timeB; // Ascending order (oldest first)
     });
@@ -80,20 +91,23 @@ export const POST: RequestHandler = async ({ request, url }) => {
         const existingTransactions = await db
           .select()
           .from(transactionTable)
-          .where(and(eq(transactionTable.accountId, accountId), isNull(transactionTable.deletedAt)));
+          .where(
+            and(eq(transactionTable.accountId, accountId), isNull(transactionTable.deletedAt))
+          );
 
         // Apply amount reversal before duplicate checking if enabled
         // This ensures we compare "final" amounts (as they will be stored in DB) against existing transactions
         let dataForValidation = rawData;
-        if (reverseAmountSignsParam === 'true') {
-          dataForValidation = rawData.map(row => ({
+        if (reverseAmountSignsParam === "true") {
+          dataForValidation = rawData.map((row) => ({
             ...row,
             normalizedData: {
               ...row.normalizedData,
-              amount: row.normalizedData['amount'] !== undefined && row.normalizedData['amount'] !== null
-                ? -(row.normalizedData['amount'] as number)
-                : row.normalizedData['amount']
-            }
+              amount:
+                row.normalizedData["amount"] !== undefined && row.normalizedData["amount"] !== null
+                  ? -(row.normalizedData["amount"] as number)
+                  : row.normalizedData["amount"],
+            },
           }));
         }
 
@@ -104,23 +118,21 @@ export const POST: RequestHandler = async ({ request, url }) => {
     }
 
     // Extract raw column names from first row (before normalization)
-    const columns = validatedData.length > 0
-      ? Object.keys(validatedData[0]?.rawData || {})
-      : [];
+    const columns = validatedData.length > 0 ? Object.keys(validatedData[0]?.rawData || {}) : [];
 
     // Detect schedule matches if accountId is provided
     let scheduleMatches: ScheduleMatch[] | undefined;
     if (accountIdParam) {
       const accountId = parseInt(accountIdParam);
-      console.log('[Schedule Matching] Account ID:', accountId);
+      console.log("[Schedule Matching] Account ID:", accountId);
       if (!isNaN(accountId)) {
         // Fetch existing schedules and payees for matching
         const existingSchedules = await db
           .select()
           .from(scheduleTable)
-          .where(and(eq(scheduleTable.accountId, accountId), eq(scheduleTable.status, 'active')));
+          .where(and(eq(scheduleTable.accountId, accountId), eq(scheduleTable.status, "active")));
 
-        console.log('[Schedule Matching] Found schedules:', existingSchedules.length);
+        console.log("[Schedule Matching] Found schedules:", existingSchedules.length);
 
         const existingPayees = await db
           .select()
@@ -136,29 +148,31 @@ export const POST: RequestHandler = async ({ request, url }) => {
           validatedData.forEach((row, index) => {
             const normalized = row.normalizedData;
 
-            if (!normalized['date'] || !normalized['amount']) {
+            if (!normalized["date"] || !normalized["amount"]) {
               return; // Skip rows without date or amount
             }
 
             // Normalize the payee name for better matching
             // Transaction payee names are often raw (e.g., "TST*GATEWAY MARKET")
             // Schedule payee names are clean (e.g., "Gateway Market")
-            const rawPayeeName = normalized['payee'];
+            const rawPayeeName = normalized["payee"];
             let normalizedPayeeName = rawPayeeName;
-            if (normalizedPayeeName && typeof normalizedPayeeName === 'string') {
-              const { name } = payeeMatcher.normalizePayeeName(normalizedPayeeName);
+            if (normalizedPayeeName && typeof normalizedPayeeName === "string") {
+              const {name} = payeeMatcher.normalizePayeeName(normalizedPayeeName);
               if (name !== normalizedPayeeName) {
-                console.log(`[Schedule Matching] Normalized payee: "${normalizedPayeeName}" → "${name}"`);
+                console.log(
+                  `[Schedule Matching] Normalized payee: "${normalizedPayeeName}" → "${name}"`
+                );
               }
               normalizedPayeeName = name;
             }
 
             // Prepare matching criteria
             const criteria = {
-              date: normalized['date'],
-              amount: Math.abs(normalized['amount'] as number),
+              date: normalized["date"],
+              amount: Math.abs(normalized["amount"] as number),
               payeeName: normalizedPayeeName,
-              categoryId: normalized['categoryId'],
+              categoryId: normalized["categoryId"],
               accountId,
             };
 
@@ -169,7 +183,11 @@ export const POST: RequestHandler = async ({ request, url }) => {
             });
 
             // Find the best match (only high or exact confidence)
-            const match = scheduleMatcher.findBestMatch(criteria, existingSchedules as any, existingPayees as any);
+            const match = scheduleMatcher.findBestMatch(
+              criteria,
+              existingSchedules as any,
+              existingPayees as any
+            );
 
             console.log(`[Schedule Matching] Row ${index} match result:`, {
               hasSchedule: !!match.schedule,
@@ -180,7 +198,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
               reasons: match.reasons,
             });
 
-            if (match.schedule && match.confidence !== 'none') {
+            if (match.schedule && match.confidence !== "none") {
               scheduleMatches!.push({
                 rowIndex: row.rowIndex, // Use row.rowIndex instead of loop index to preserve original position
                 scheduleId: match.schedule.id,
@@ -189,11 +207,11 @@ export const POST: RequestHandler = async ({ request, url }) => {
                 score: match.score,
                 matchedOn: match.matchedOn,
                 reasons: match.reasons,
-                selected: match.confidence !== 'low', // Auto-select non-low confidence matches
+                selected: match.confidence !== "low", // Auto-select non-low confidence matches
                 transactionData: {
-                  date: normalized['date'],
-                  amount: normalized['amount'] as number,
-                  payee: normalized['payee'],
+                  date: normalized["date"],
+                  amount: normalized["amount"] as number,
+                  payee: normalized["payee"],
                 },
                 scheduleData: {
                   name: match.schedule.name,
@@ -214,58 +232,58 @@ export const POST: RequestHandler = async ({ request, url }) => {
     const result: ParseResult = {
       fileName: file.name,
       fileSize: file.size,
-      fileType: file.type || 'text/csv',
+      fileType: file.type || "text/csv",
       rowCount: validatedData.length,
       columns,
       rows: validatedData,
       parseErrors: [],
-      ...(scheduleMatches ? { scheduleMatches } : {}),
+      ...(scheduleMatches ? {scheduleMatches} : {}),
     };
 
     return json(result);
   } catch (error) {
-    console.error('File upload error:', error);
+    console.error("File upload error:", error);
     return json(
       {
-        error: error instanceof Error ? error.message : 'Failed to process file',
+        error: error instanceof Error ? error.message : "Failed to process file",
       },
-      { status: 500 }
+      {status: 500}
     );
   }
 };
 
 async function getFileProcessor(fileName: string, fileContent?: string) {
-  const extension = `.${fileName.split('.').pop()?.toLowerCase()}`;
+  const extension = `.${fileName.split(".").pop()?.toLowerCase()}`;
 
   switch (extension) {
-    case '.csv':
-    case '.txt':
+    case ".csv":
+    case ".txt":
       if (fileContent) {
-        const lines = fileContent.split('\n');
-        const headers = lines[0]?.split(',') || [];
+        const lines = fileContent.split("\n");
+        const headers = lines[0]?.split(",") || [];
         if (isQuickBooksCSV(headers)) {
           return new QBCSVProcessor();
         }
       }
       return new CSVProcessor();
-    case '.xlsx':
-    case '.xls':
+    case ".xlsx":
+    case ".xls":
       return new ExcelProcessor();
-    case '.qif':
+    case ".qif":
       return new QIFProcessor();
-    case '.ofx':
-    case '.qfx':
+    case ".ofx":
+    case ".qfx":
       return new OFXProcessor();
-    case '.iif':
+    case ".iif":
       return new IIFProcessor();
-    case '.qbo':
+    case ".qbo":
       // QBO files can actually be OFX files with a .qbo extension
       // Check the content to determine the actual format
       if (fileContent) {
         const trimmed = fileContent.trim();
         // Check if it starts with OFX header or contains <OFX> tag
-        if (trimmed.startsWith('OFXHEADER:') || trimmed.includes('<OFX>')) {
-          console.log('[File Detection] .qbo file is actually OFX format, using OFXProcessor');
+        if (trimmed.startsWith("OFXHEADER:") || trimmed.includes("<OFX>")) {
+          console.log("[File Detection] .qbo file is actually OFX format, using OFXProcessor");
           return new OFXProcessor();
         }
       }

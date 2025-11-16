@@ -7,7 +7,7 @@ import {Textarea} from '$lib/components/ui/textarea';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import {createBudgetGroup, updateBudgetGroup, listBudgetGroups} from '$lib/query/budgets';
 import type {BudgetGroup} from '$lib/schema/budgets';
-import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import {createTransformAccessors} from '$lib/utils/bind-helpers';
 
 let {
   budgetGroup,
@@ -32,8 +32,10 @@ const spendingLimit = $derived(spendingLimitValue > 0 ? spendingLimitValue : nul
 
 // Parent ID accessor - transforms between string (for Select) and number|null (for form state)
 const parentIdAccessors = createTransformAccessors(
-  () => parentId === null ? 'none' : String(parentId),
-  (value: string) => { parentId = value === 'none' ? null : Number(value); }
+  () => (parentId === null ? 'none' : String(parentId)),
+  (value: string) => {
+    parentId = value === 'none' ? null : Number(value);
+  }
 );
 
 // Query for available parent groups
@@ -47,7 +49,7 @@ const availableParentGroups = $derived.by(() => {
   // When editing, exclude self and any descendants
   const excludedIds = new Set([budgetGroup!.id]);
   const findDescendants = (gid: number) => {
-    groups.forEach(g => {
+    groups.forEach((g) => {
       if (g.parentId === gid && !excludedIds.has(g.id)) {
         excludedIds.add(g.id);
         findDescendants(g.id);
@@ -56,7 +58,7 @@ const availableParentGroups = $derived.by(() => {
   };
   findDescendants(budgetGroup!.id);
 
-  return groups.filter(g => !excludedIds.has(g.id));
+  return groups.filter((g) => !excludedIds.has(g.id));
 });
 
 const createMutation = createBudgetGroup.options();
@@ -88,10 +90,14 @@ async function handleSubmit() {
     console.error('Failed to save budget group:', error);
   }
 }
-
 </script>
 
-<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">
+<form
+  onsubmit={(e) => {
+    e.preventDefault();
+    handleSubmit();
+  }}
+  class="space-y-4">
   <div class="space-y-2">
     <Label for="name">Group Name</Label>
     <Input
@@ -100,11 +106,8 @@ async function handleSubmit() {
       placeholder="e.g., Housing, Transportation"
       required
       minlength={2}
-      maxlength={80}
-    />
-    <p class="text-sm text-muted-foreground">
-      A descriptive name for organizing your budgets
-    </p>
+      maxlength={80} />
+    <p class="text-muted-foreground text-sm">A descriptive name for organizing your budgets</p>
   </div>
 
   <div class="space-y-2">
@@ -114,8 +117,7 @@ async function handleSubmit() {
       bind:value={description}
       placeholder="Additional details about this budget group"
       rows={3}
-      maxlength={500}
-    />
+      maxlength={500} />
   </div>
 
   <div class="space-y-2">
@@ -126,14 +128,12 @@ async function handleSubmit() {
           {#if parentId === null}
             None (top-level group)
           {:else}
-            {availableParentGroups.find(g => g.id === parentId)?.name || 'Select parent group'}
+            {availableParentGroups.find((g) => g.id === parentId)?.name || 'Select parent group'}
           {/if}
         </span>
       </Select.Trigger>
       <Select.Content>
-        <Select.Item value="none">
-          None (top-level group)
-        </Select.Item>
+        <Select.Item value="none">None (top-level group)</Select.Item>
         {#each availableParentGroups as group}
           <Select.Item value={String(group.id)}>
             {group.name}
@@ -141,32 +141,26 @@ async function handleSubmit() {
         {/each}
       </Select.Content>
     </Select.Root>
-    <p class="text-sm text-muted-foreground">
+    <p class="text-muted-foreground text-sm">
       Organize groups hierarchically for better budget management
     </p>
   </div>
 
   <div class="space-y-2">
     <Label for="spending-limit">Spending Limit (Optional)</Label>
-    <NumericInput
-      id="spending-limit"
-      bind:value={spendingLimitValue}
-    />
-    <p class="text-sm text-muted-foreground">
+    <NumericInput id="spending-limit" bind:value={spendingLimitValue} />
+    <p class="text-muted-foreground text-sm">
       Optional overall spending limit for all budgets in this group (set to 0 for no limit)
     </p>
   </div>
 
-  <div class="flex gap-2 justify-end pt-4">
+  <div class="flex justify-end gap-2 pt-4">
     {#if onCancel}
-      <Button type="button" variant="outline" onclick={onCancel}>
-        Cancel
-      </Button>
+      <Button type="button" variant="outline" onclick={onCancel}>Cancel</Button>
     {/if}
     <Button
       type="submit"
-      disabled={!isFormValid || createMutation.isPending || updateMutation.isPending}
-    >
+      disabled={!isFormValid || createMutation.isPending || updateMutation.isPending}>
       {isUpdate ? 'Update' : 'Create'} Group
     </Button>
   </div>

@@ -6,16 +6,16 @@ export type {
   PayeeWithStats,
   PayeeWithRelations,
   BulkUpdateResult,
-  CreatePayeeData
-} from '$lib/server/domains/payees/services';
+  CreatePayeeData,
+} from "$lib/server/domains/payees/services";
 
 export type {
   PayeeIntelligence,
   PayeeSuggestions,
   PayeeStats,
   PayeeSearchFilters,
-  UpdatePayeeData
-} from '$lib/server/domains/payees/repository';
+  UpdatePayeeData,
+} from "$lib/server/domains/payees/repository";
 
 export interface UnifiedMLRecommendations {
   payeeId: number;
@@ -48,7 +48,7 @@ export interface UnifiedMLRecommendations {
     };
     automation: {
       rules: Array<{
-        ruleType: 'category_assignment' | 'budget_allocation' | 'notification';
+        ruleType: "category_assignment" | "budget_allocation" | "notification";
         description: string;
         confidence: number;
         enabled: boolean;
@@ -56,9 +56,9 @@ export interface UnifiedMLRecommendations {
     };
   };
   insights: {
-    spendingPattern: 'regular' | 'irregular' | 'seasonal' | 'declining' | 'growing';
-    riskLevel: 'low' | 'medium' | 'high';
-    dataQuality: 'excellent' | 'good' | 'fair' | 'poor';
+    spendingPattern: "regular" | "irregular" | "seasonal" | "declining" | "growing";
+    riskLevel: "low" | "medium" | "high";
+    dataQuality: "excellent" | "good" | "fair" | "poor";
     suggestions: string[];
   };
 }
@@ -68,14 +68,14 @@ export interface DuplicateGroup {
   duplicatePayeeIds: number[];
   similarityScore: number;
   similarities: Array<{
-    field: 'name' | 'phone' | 'email' | 'website' | 'address';
+    field: "name" | "phone" | "email" | "website" | "address";
     primaryValue: string;
     duplicateValue: string;
-    matchType: 'exact' | 'fuzzy' | 'normalized' | 'semantic';
+    matchType: "exact" | "fuzzy" | "normalized" | "semantic";
     confidence: number;
   }>;
-  recommendedAction: 'merge' | 'review' | 'ignore';
-  riskLevel: 'low' | 'medium' | 'high';
+  recommendedAction: "merge" | "review" | "ignore";
+  riskLevel: "low" | "medium" | "high";
 }
 
 export interface ContactValidationResult {
@@ -109,19 +109,26 @@ export interface SubscriptionDetectionResult {
   isLikelySubscription: boolean;
   confidence: number;
   detectedPattern: {
-    frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly' | null;
+    frequency: "weekly" | "monthly" | "quarterly" | "yearly" | null;
     averageAmount: number;
     variability: number;
     lastOccurrence: string | null;
     nextExpected: string | null;
   };
-  subscriptionType: 'streaming' | 'software' | 'utility' | 'membership' | 'other' | null;
+  subscriptionType: "streaming" | "software" | "utility" | "membership" | "other" | null;
   recommendations: string[];
 }
 
 export interface BulkOperationResult {
   operationId: string;
-  operationType: 'bulk_delete' | 'bulk_status_change' | 'bulk_category_assignment' | 'bulk_tag_management' | 'bulk_intelligence_application' | 'bulk_cleanup' | 'merge_duplicates';
+  operationType:
+    | "bulk_delete"
+    | "bulk_status_change"
+    | "bulk_category_assignment"
+    | "bulk_tag_management"
+    | "bulk_intelligence_application"
+    | "bulk_cleanup"
+    | "merge_duplicates";
   affectedPayeeIds: number[];
   successCount: number;
   failureCount: number;
@@ -136,7 +143,14 @@ export interface BulkOperationResult {
 export interface OperationHistory {
   operations: Array<{
     operationId: string;
-    operationType: 'bulk_delete' | 'bulk_status_change' | 'bulk_category_assignment' | 'bulk_tag_management' | 'bulk_intelligence_application' | 'bulk_cleanup' | 'merge_duplicates';
+    operationType:
+      | "bulk_delete"
+      | "bulk_status_change"
+      | "bulk_category_assignment"
+      | "bulk_tag_management"
+      | "bulk_intelligence_application"
+      | "bulk_cleanup"
+      | "merge_duplicates";
     timestamp: string;
     affectedCount: number;
     canUndo: boolean;

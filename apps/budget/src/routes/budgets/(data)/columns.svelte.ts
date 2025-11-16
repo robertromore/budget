@@ -29,7 +29,9 @@ function getAllocated(budget: BudgetWithRelations): number {
   );
 
   if (latest) return Math.abs(latest.allocatedAmount ?? 0);
-  return Math.abs((budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number ?? 0);
+  return Math.abs(
+    ((budget.metadata as Record<string, unknown>)?.["allocatedAmount"] as number) ?? 0
+  );
 }
 
 function getConsumed(budget: BudgetWithRelations): number {

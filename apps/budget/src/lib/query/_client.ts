@@ -1,5 +1,5 @@
-import { QueryClient } from "@tanstack/svelte-query";
-import { browser } from "$app/environment";
+import {QueryClient} from "@tanstack/svelte-query";
+import {browser} from "$app/environment";
 
 /**
  * Centralized TanStack Query client with SSR-safe configuration
@@ -17,12 +17,12 @@ export const queryClient = new QueryClient({
       // Disable refetch on reconnect for better UX in offline scenarios
       refetchOnReconnect: true,
       // Network mode for better offline support
-      networkMode: 'online',
+      networkMode: "online",
     },
     mutations: {
       retry: 1,
       // Network mode for mutations
-      networkMode: 'online',
+      networkMode: "online",
     },
   },
 });
@@ -95,7 +95,7 @@ export const cachePatterns = {
   invalidateDomain: (domain: string) => {
     queryClient.invalidateQueries({
       queryKey: [domain],
-      refetchType: 'active',
+      refetchType: "active",
     });
   },
 
@@ -114,7 +114,7 @@ export const cachePatterns = {
           return queryKey[index] === prefixPart;
         });
       },
-      refetchType: 'active',
+      refetchType: "active",
     });
   },
 
@@ -124,7 +124,7 @@ export const cachePatterns = {
   invalidateQueries: (queryKey: readonly unknown[]) => {
     queryClient.invalidateQueries({
       queryKey,
-      refetchType: 'active',
+      refetchType: "active",
     });
   },
 
@@ -168,13 +168,16 @@ export const cachePatterns = {
     condition: (queryKey: readonly unknown[]) => boolean,
     updater: (oldData: T) => T
   ) => {
-    queryClient.getQueryCache().getAll().forEach(query => {
-      if (condition(query.queryKey)) {
-        const oldData = query.state.data;
-        if (oldData !== undefined) {
-          queryClient.setQueryData(query.queryKey, updater(oldData as T));
+    queryClient
+      .getQueryCache()
+      .getAll()
+      .forEach((query) => {
+        if (condition(query.queryKey)) {
+          const oldData = query.state.data;
+          if (oldData !== undefined) {
+            queryClient.setQueryData(query.queryKey, updater(oldData as T));
+          }
         }
-      }
-    });
+      });
   },
 } as const;

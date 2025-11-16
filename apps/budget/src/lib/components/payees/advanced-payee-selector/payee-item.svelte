@@ -12,14 +12,13 @@ let {
   payee,
   displayMode = 'normal',
   isSelected = false,
-  onSelect
+  onSelect,
 }: {
   payee: PayeeWithMetadata;
   displayMode?: DisplayMode;
   isSelected?: boolean;
   onSelect: () => void;
 } = $props();
-
 
 // Format last transaction date
 const lastUsed = $derived.by(() => {
@@ -41,35 +40,29 @@ const lastUsed = $derived.by(() => {
   type="button"
   onclick={onSelect}
   class={cn(
-    'w-full flex items-center gap-2 px-3 py-2 text-left',
+    'flex w-full items-center gap-2 px-3 py-2 text-left',
     'hover:bg-accent transition-colors',
     isSelected && 'bg-muted',
     displayMode === 'compact' && 'py-1.5',
     displayMode === 'detailed' && 'py-3'
-  )}
->
+  )}>
   <!-- Check icon -->
-  <Check
-    class={cn(
-      'h-4 w-4 flex-shrink-0',
-      isSelected ? 'opacity-100' : 'opacity-0'
-    )}
-  />
+  <Check class={cn('h-4 w-4 flex-shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
 
   <!-- Payee info -->
-  <div class="flex-1 min-w-0">
+  <div class="min-w-0 flex-1">
     <div class="flex items-center gap-2">
       <!-- Name -->
-      <span class="font-medium text-sm truncate">{payee.name}</span>
+      <span class="truncate text-sm font-medium">{payee.name}</span>
 
       <!-- ML Suggestion badge -->
       {#if payee._isSuggested}
-        <Sparkles class="h-3 w-3 text-primary flex-shrink-0" />
+        <Sparkles class="text-primary h-3 w-3 flex-shrink-0" />
       {/if}
 
       <!-- Type badge (normal/detailed modes) -->
       {#if displayMode !== 'compact' && payee.payeeType}
-        <Badge variant="outline" class="text-xs px-1.5 py-0 flex-shrink-0">
+        <Badge variant="outline" class="flex-shrink-0 px-1.5 py-0 text-xs">
           {formatPayeeType(payee.payeeType)}
         </Badge>
       {/if}
@@ -77,7 +70,7 @@ const lastUsed = $derived.by(() => {
 
     <!-- Additional info for normal/detailed modes -->
     {#if displayMode !== 'compact'}
-      <div class="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+      <div class="text-muted-foreground mt-0.5 flex items-center gap-2 text-xs">
         <!-- Last used -->
         {#if lastUsed}
           <span>{lastUsed}</span>

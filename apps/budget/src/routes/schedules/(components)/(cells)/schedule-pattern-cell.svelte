@@ -21,7 +21,7 @@ function formatRecurringPattern(schedule: Schedule): string {
 
 <div class="flex items-center gap-2">
   {#if schedule.scheduleDate}
-    <RotateCw class="h-3 w-3 text-muted-foreground" />
+    <RotateCw class="text-muted-foreground h-3 w-3" />
   {/if}
   <span>{formatRecurringPattern(schedule)}</span>
 </div>

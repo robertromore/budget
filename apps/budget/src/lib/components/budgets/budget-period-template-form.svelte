@@ -1,15 +1,22 @@
 <script lang="ts">
 import * as Select from '$lib/components/ui/select';
-import { Button } from '$lib/components/ui/button';
-import { Input } from '$lib/components/ui/input';
-import { Label } from '$lib/components/ui/label';
+import {Button} from '$lib/components/ui/button';
+import {Input} from '$lib/components/ui/input';
+import {Label} from '$lib/components/ui/label';
 import * as Card from '$lib/components/ui/card';
-import { CalendarDays } from '@lucide/svelte/icons';
-import { parseISOString, currentDate, toISOString, getIsoWeekday, getDaysInMonth, formatDateDisplay } from '$lib/utils/dates';
-import type { CalendarDate } from '@internationalized/date';
-import type { BudgetPeriodTemplate } from '$lib/schema/budgets';
-import { createPeriodTemplate } from '$lib/query/budgets';
-import { isoWeekdayOptions, monthStringOptions } from '$lib/utils/date-options';
+import {CalendarDays} from '@lucide/svelte/icons';
+import {
+  parseISOString,
+  currentDate,
+  toISOString,
+  getIsoWeekday,
+  getDaysInMonth,
+  formatDateDisplay,
+} from '$lib/utils/dates';
+import type {CalendarDate} from '@internationalized/date';
+import type {BudgetPeriodTemplate} from '$lib/schema/budgets';
+import {createPeriodTemplate} from '$lib/query/budgets';
+import {isoWeekdayOptions, monthStringOptions} from '$lib/utils/date-options';
 
 interface Props {
   budgetId: number;
@@ -18,7 +25,7 @@ interface Props {
   onCancel?: () => void;
 }
 
-let { budgetId, defaultAllocatedAmount = 0, onSuccess, onCancel }: Props = $props();
+let {budgetId, defaultAllocatedAmount = 0, onSuccess, onCancel}: Props = $props();
 
 // Mutations - must be called during component initialization
 const createMutation = createPeriodTemplate.options();
@@ -46,7 +53,7 @@ $effect(() => {
 
 // Calculate preview periods using form data
 const previewPeriods = $derived.by(() => {
-  const periods: Array<{ start: string; end: string }> = [];
+  const periods: Array<{start: string; end: string}> = [];
   let current: CalendarDate = currentDate;
   const periodType = type;
   const interval = intervalCount || 1;
@@ -60,60 +67,60 @@ const previewPeriods = $derived.by(() => {
         // Adjust to start day of week
         const dayOfWeek = getIsoWeekday(current);
         const daysToAdd = (startDayOfWeek - dayOfWeek + 7) % 7;
-        const periodStart = daysToAdd > 0 ? current.add({ days: daysToAdd }) : current;
-        periodEnd = periodStart.add({ weeks: interval }).subtract({ days: 1 });
+        const periodStart = daysToAdd > 0 ? current.add({days: daysToAdd}) : current;
+        periodEnd = periodStart.add({weeks: interval}).subtract({days: 1});
         periods.push({
           start: toISOString(periodStart),
           end: toISOString(periodEnd),
         });
-        current = periodEnd.add({ days: 1 });
+        current = periodEnd.add({days: 1});
         break;
       }
 
       case 'monthly': {
         // Start on specific day of month
-        const monthStart = current.set({ day: Math.min(startDayOfMonth, getDaysInMonth(current)) });
-        periodEnd = monthStart.add({ months: interval }).subtract({ days: 1 });
+        const monthStart = current.set({day: Math.min(startDayOfMonth, getDaysInMonth(current))});
+        periodEnd = monthStart.add({months: interval}).subtract({days: 1});
         periods.push({
           start: toISOString(monthStart),
           end: toISOString(periodEnd),
         });
-        current = periodEnd.add({ days: 1 });
+        current = periodEnd.add({days: 1});
         break;
       }
 
       case 'quarterly': {
         // 3-month periods
-        const quarterStart = current.set({ day: 1 });
-        periodEnd = quarterStart.add({ months: 3 * interval }).subtract({ days: 1 });
+        const quarterStart = current.set({day: 1});
+        periodEnd = quarterStart.add({months: 3 * interval}).subtract({days: 1});
         periods.push({
           start: toISOString(quarterStart),
           end: toISOString(periodEnd),
         });
-        current = periodEnd.add({ days: 1 });
+        current = periodEnd.add({days: 1});
         break;
       }
 
       case 'yearly': {
         // Start on specific month and day
-        const yearStart = current.set({ month: startMonth, day: startDayOfMonth });
-        periodEnd = yearStart.add({ years: interval }).subtract({ days: 1 });
+        const yearStart = current.set({month: startMonth, day: startDayOfMonth});
+        periodEnd = yearStart.add({years: interval}).subtract({days: 1});
         periods.push({
           start: toISOString(yearStart),
           end: toISOString(periodEnd),
         });
-        current = periodEnd.add({ days: 1 });
+        current = periodEnd.add({days: 1});
         break;
       }
 
       case 'custom': {
         // Custom period - not used in this form but keeping for compatibility
-        periodEnd = current.add({ days: 30 - 1 });
+        periodEnd = current.add({days: 30 - 1});
         periods.push({
           start: toISOString(current),
           end: toISOString(periodEnd),
         });
-        current = periodEnd.add({ days: 1 });
+        current = periodEnd.add({days: 1});
         break;
       }
     }
@@ -154,7 +161,7 @@ async function handleSubmit(e: SubmitEvent) {
 
 <form onsubmit={handleSubmit} class="space-y-4">
   <!-- Configuration -->
-  <div class="grid sm:grid-cols-2 gap-4">
+  <div class="grid gap-4 sm:grid-cols-2">
     <!-- Period Type Selector -->
     <div class="space-y-2">
       <Label>Period Type</Label>
@@ -175,16 +182,15 @@ async function handleSubmit(e: SubmitEvent) {
     <!-- Interval -->
     <div class="space-y-2">
       <Label>Interval</Label>
-      <div class="flex items-center gap-2 w-full">
-        <span class="text-sm text-muted-foreground whitespace-nowrap">Every</span>
+      <div class="flex w-full items-center gap-2">
+        <span class="text-muted-foreground text-sm whitespace-nowrap">Every</span>
         <Input
           type="number"
           bind:value={intervalCount}
           min="1"
           max={type === 'weekly' ? 52 : 12}
-          class="w-16 flex-shrink-0"
-        />
-        <span class="text-sm text-muted-foreground truncate">
+          class="w-16 flex-shrink-0" />
+        <span class="text-muted-foreground truncate text-sm">
           {intervalCount === 1 ? String(type).slice(0, -2) : String(type)}
         </span>
       </div>
@@ -200,9 +206,8 @@ async function handleSubmit(e: SubmitEvent) {
       bind:value={allocatedAmount}
       min="0"
       step="0.01"
-      placeholder="0.00"
-    />
-    <p class="text-sm text-muted-foreground">
+      placeholder="0.00" />
+    <p class="text-muted-foreground text-sm">
       The budget amount for each period. Leave as 0 to set later.
     </p>
   </div>
@@ -213,7 +218,9 @@ async function handleSubmit(e: SubmitEvent) {
       <Label>Week Starts On</Label>
       <Select.Root type="single" bind:value={startDayOfWeekStr}>
         <Select.Trigger>
-          <span>{isoWeekdayOptions.find(d => d.value === startDayOfWeekStr)?.label || 'Select Day'}</span>
+          <span
+            >{isoWeekdayOptions.find((d) => d.value === startDayOfWeekStr)?.label ||
+              'Select Day'}</span>
         </Select.Trigger>
         <Select.Content>
           {#each isoWeekdayOptions as day}
@@ -225,21 +232,17 @@ async function handleSubmit(e: SubmitEvent) {
   {:else if type === 'monthly'}
     <div class="space-y-2">
       <Label>Month Starts On (Day 1-31)</Label>
-      <Input
-        type="number"
-        bind:value={startDayOfMonth}
-        min="1"
-        max="31"
-        class="w-full"
-      />
+      <Input type="number" bind:value={startDayOfMonth} min="1" max="31" class="w-full" />
     </div>
   {:else if type === 'yearly'}
-    <div class="grid sm:grid-cols-2 gap-4">
+    <div class="grid gap-4 sm:grid-cols-2">
       <div class="space-y-2">
         <Label>Start Month</Label>
         <Select.Root type="single" bind:value={startMonthStr}>
           <Select.Trigger>
-            <span>{monthStringOptions.find(m => m.value === startMonthStr)?.label || 'Select Month'}</span>
+            <span
+              >{monthStringOptions.find((m) => m.value === startMonthStr)?.label ||
+                'Select Month'}</span>
           </Select.Trigger>
           <Select.Content>
             {#each monthStringOptions as month}
@@ -250,12 +253,7 @@ async function handleSubmit(e: SubmitEvent) {
       </div>
       <div class="space-y-2">
         <Label>Start Day</Label>
-        <Input
-          type="number"
-          bind:value={startDayOfMonth}
-          min="1"
-          max="31"
-        />
+        <Input type="number" bind:value={startDayOfMonth} min="1" max="31" />
       </div>
     </div>
   {/if}
@@ -271,10 +269,13 @@ async function handleSubmit(e: SubmitEvent) {
     <Card.Content class="pt-0">
       <ul class="space-y-1.5 text-sm">
         {#each previewPeriods as period, index}
-          <li class="flex justify-between py-1.5 px-2 rounded-md bg-muted/30">
+          <li class="bg-muted/30 flex justify-between rounded-md px-2 py-1.5">
             <span class="text-muted-foreground">Period {index + 1}</span>
-            <span class="font-medium text-xs">
-              {formatDateDisplay(parseISOString(period.start)!, 'short')} → {formatDateDisplay(parseISOString(period.end)!, 'short')}
+            <span class="text-xs font-medium">
+              {formatDateDisplay(parseISOString(period.start)!, 'short')} → {formatDateDisplay(
+                parseISOString(period.end)!,
+                'short'
+              )}
             </span>
           </li>
         {/each}

@@ -1,9 +1,9 @@
-export {default as AdvancedPayeeSelector} from './advanced-payee-selector.svelte';
-export {default as SheetPayeeSelector} from './sheet-payee-selector.svelte';
-export {default as PayeeItem} from './payee-item.svelte';
-export {default as SearchHeader} from './search-header.svelte';
-export {default as QuickAccessSection} from './quick-access-section.svelte';
-export {default as GroupHeader} from './group-header.svelte';
+export {default as AdvancedPayeeSelector} from "./advanced-payee-selector.svelte";
+export {default as SheetPayeeSelector} from "./sheet-payee-selector.svelte";
+export {default as PayeeItem} from "./payee-item.svelte";
+export {default as SearchHeader} from "./search-header.svelte";
+export {default as QuickAccessSection} from "./quick-access-section.svelte";
+export {default as GroupHeader} from "./group-header.svelte";
 
 export type {
   GroupStrategy,
@@ -12,8 +12,8 @@ export type {
   PayeeGroup,
   QuickAccessSections,
   AdvancedPayeeSelectorProps,
-  PayeeWithMetadata
-} from './types';
+  PayeeWithMetadata,
+} from "./types";
 
 export {
   groupPayees,
@@ -23,5 +23,5 @@ export {
   getRecentPayees,
   saveToRecentPayees,
   getFrequentPayees,
-  debounce
-} from './utils';
+  debounce,
+} from "./utils";

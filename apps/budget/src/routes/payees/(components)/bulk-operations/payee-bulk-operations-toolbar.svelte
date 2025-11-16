@@ -2,15 +2,15 @@
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import * as Select from '$lib/components/ui/select';
 import * as Dialog from '$lib/components/ui/dialog';
-import { Button } from '$lib/components/ui/button';
-import { Separator } from '$lib/components/ui/separator';
-import { Input } from '$lib/components/ui/input';
-import { Label } from '$lib/components/ui/label';
-import { Checkbox } from '$lib/components/ui/checkbox';
+import {Button} from '$lib/components/ui/button';
+import {Separator} from '$lib/components/ui/separator';
+import {Input} from '$lib/components/ui/input';
+import {Label} from '$lib/components/ui/label';
+import {Checkbox} from '$lib/components/ui/checkbox';
 
-import { PayeeBulkOperationsState } from '$lib/states/ui/payee-bulk-operations.svelte';
-import { CategoriesState } from '$lib/states/entities/categories.svelte';
-import type { Payee } from '$lib/schema/payees';
+import {PayeeBulkOperationsState} from '$lib/states/ui/payee-bulk-operations.svelte';
+import {CategoriesState} from '$lib/states/entities/categories.svelte';
+import type {Payee} from '$lib/schema/payees';
 
 // Icons
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -48,7 +48,11 @@ let {
   onBulkDelete?: (payeeIds: number[]) => Promise<void>;
   onBulkAssignCategory?: (payeeIds: number[], categoryId: number) => Promise<void>;
   onBulkStatusChange?: (payeeIds: number[], status: 'active' | 'inactive') => Promise<void>;
-  onBulkTagManagement?: (payeeIds: number[], tags: string[], operation: 'add' | 'remove' | 'replace') => Promise<void>;
+  onBulkTagManagement?: (
+    payeeIds: number[],
+    tags: string[],
+    operation: 'add' | 'remove' | 'replace'
+  ) => Promise<void>;
   onBulkExport?: (payeeIds: number[], format: 'csv' | 'json') => Promise<void>;
   onBulkImport?: (file: File) => Promise<void>;
   onDuplicateDetection?: () => Promise<void>;
@@ -78,29 +82,28 @@ let intelligenceOptions = $state({
   applyCategory: true,
   applyBudget: true,
   confidenceThreshold: 0.7,
-  overwriteExisting: false
+  overwriteExisting: false,
 });
 
 // Get categories for selection
 const categoryOptions = $derived.by(() => {
   const categories = categoriesState?.categories || new Map();
-  return Array.from(categories.values()).map(cat => ({
+  return Array.from(categories.values()).map((cat) => ({
     label: cat.name,
-    value: cat.id.toString()
+    value: cat.id.toString(),
   }));
 });
 
 // Selection helpers
-const allPayeeIds = $derived(payees.map(p => p.id));
-const filteredPayeeIds = $derived(filteredPayees.map(p => p.id));
+const allPayeeIds = $derived(payees.map((p) => p.id));
+const filteredPayeeIds = $derived(filteredPayees.map((p) => p.id));
 const selectedCount = $derived(bulkOpsState.selectedCount);
 const hasSelection = $derived(bulkOpsState.hasSelection);
 const allSelected = $derived(
-  filteredPayeeIds.length > 0 &&
-  filteredPayeeIds.every(id => bulkOpsState.isSelected(id))
+  filteredPayeeIds.length > 0 && filteredPayeeIds.every((id) => bulkOpsState.isSelected(id))
 );
 const someSelected = $derived(
-  filteredPayeeIds.some(id => bulkOpsState.isSelected(id)) && !allSelected
+  filteredPayeeIds.some((id) => bulkOpsState.isSelected(id)) && !allSelected
 );
 
 // Selection handlers
@@ -154,7 +157,10 @@ async function handleCategoryAssignment() {
 async function handleTagManagement() {
   if (!newTags.trim() || !onBulkTagManagement) return;
 
-  const tags = newTags.split(',').map(tag => tag.trim()).filter(Boolean);
+  const tags = newTags
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
   const selectedIds = bulkOpsState.selectedPayeeIdsArray;
 
   await onBulkTagManagement(selectedIds, tags, tagOperationType);
@@ -169,7 +175,9 @@ async function handleBulkExport() {
 
   const payeeIdsToExport = hasSelection
     ? bulkOpsState.selectedPayeeIdsArray
-    : (includeInactiveInExport ? allPayeeIds : filteredPayeeIds);
+    : includeInactiveInExport
+      ? allPayeeIds
+      : filteredPayeeIds;
 
   await onBulkExport(payeeIdsToExport, exportFormat);
 
@@ -214,17 +222,16 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 <svelte:window on:keydown={handleKeyDown} />
 
-<div class="flex items-center gap-2 p-3 bg-muted/50 border rounded-lg {className}">
+<div class="bg-muted/50 flex items-center gap-2 rounded-lg border p-3 {className}">
   <!-- Selection controls -->
   <div class="flex items-center gap-2">
     <Checkbox
       checked={allSelected}
       indeterminate={someSelected}
       onCheckedChange={handleSelectAll}
-      aria-label="Select all payees"
-    />
+      aria-label="Select all payees" />
 
-    <span class="text-sm text-muted-foreground">
+    <span class="text-muted-foreground text-sm">
       {#if hasSelection}
         {selectedCount} selected
       {:else}
@@ -233,13 +240,8 @@ const handleKeyDown = (e: KeyboardEvent) => {
     </span>
 
     {#if hasSelection}
-      <Button
-        variant="ghost"
-        size="sm"
-        onclick={handleClearSelection}
-        class="h-6 px-2 text-xs"
-      >
-        <X class="h-3 w-3 mr-1" />
+      <Button variant="ghost" size="sm" onclick={handleClearSelection} class="h-6 px-2 text-xs">
+        <X class="mr-1 h-3 w-3" />
         Clear
       </Button>
     {/if}
@@ -256,9 +258,8 @@ const handleKeyDown = (e: KeyboardEvent) => {
         size="sm"
         onclick={handleBulkDelete}
         disabled={!onBulkDelete}
-        class="h-8"
-      >
-        <Trash2 class="h-4 w-4 mr-2" />
+        class="h-8">
+        <Trash2 class="mr-2 h-4 w-4" />
         Delete ({selectedCount})
       </Button>
 
@@ -266,11 +267,10 @@ const handleKeyDown = (e: KeyboardEvent) => {
       <Button
         variant="outline"
         size="sm"
-        onclick={() => categoryAssignmentDialogOpen = true}
+        onclick={() => (categoryAssignmentDialogOpen = true)}
         disabled={!onBulkAssignCategory}
-        class="h-8"
-      >
-        <Tag class="h-4 w-4 mr-2" />
+        class="h-8">
+        <Tag class="mr-2 h-4 w-4" />
         Category
       </Button>
 
@@ -278,18 +278,18 @@ const handleKeyDown = (e: KeyboardEvent) => {
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
           <Button variant="outline" size="sm" class="h-8">
-            <ToggleLeft class="h-4 w-4 mr-2" />
+            <ToggleLeft class="mr-2 h-4 w-4" />
             Status
-            <ChevronDown class="h-3 w-3 ml-1" />
+            <ChevronDown class="ml-1 h-3 w-3" />
           </Button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content align="start">
           <DropdownMenu.Item onclick={() => handleBulkStatusChange('active')}>
-            <UserCheck class="h-4 w-4 mr-2" />
+            <UserCheck class="mr-2 h-4 w-4" />
             Activate
           </DropdownMenu.Item>
           <DropdownMenu.Item onclick={() => handleBulkStatusChange('inactive')}>
-            <UserX class="h-4 w-4 mr-2" />
+            <UserX class="mr-2 h-4 w-4" />
             Deactivate
           </DropdownMenu.Item>
         </DropdownMenu.Content>
@@ -303,34 +303,35 @@ const handleKeyDown = (e: KeyboardEvent) => {
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
           <Button variant="outline" size="sm" class="h-8">
-            <MoreHorizontal class="h-4 w-4 mr-2" />
+            <MoreHorizontal class="mr-2 h-4 w-4" />
             More
-            <ChevronDown class="h-3 w-3 ml-1" />
+            <ChevronDown class="ml-1 h-3 w-3" />
           </Button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content align="start" class="w-48">
           <DropdownMenu.Label>Bulk Operations</DropdownMenu.Label>
           <DropdownMenu.Separator />
 
-          <DropdownMenu.Item onclick={() => tagManagementDialogOpen = true}>
-            <Tag class="h-4 w-4 mr-2" />
+          <DropdownMenu.Item onclick={() => (tagManagementDialogOpen = true)}>
+            <Tag class="mr-2 h-4 w-4" />
             Manage Tags
           </DropdownMenu.Item>
 
-          <DropdownMenu.Item onclick={() => intelligenceDialogOpen = true}>
-            <Brain class="h-4 w-4 mr-2" />
+          <DropdownMenu.Item onclick={() => (intelligenceDialogOpen = true)}>
+            <Brain class="mr-2 h-4 w-4" />
             Apply Intelligence
           </DropdownMenu.Item>
 
           <DropdownMenu.Separator />
 
-          <DropdownMenu.Item onclick={() => exportDialogOpen = true}>
-            <Download class="h-4 w-4 mr-2" />
+          <DropdownMenu.Item onclick={() => (exportDialogOpen = true)}>
+            <Download class="mr-2 h-4 w-4" />
             Export Selected
           </DropdownMenu.Item>
 
-          <DropdownMenu.Item onclick={() => bulkOpsState.copyPayees(bulkOpsState.selectedPayeeIdsArray)}>
-            <Copy class="h-4 w-4 mr-2" />
+          <DropdownMenu.Item
+            onclick={() => bulkOpsState.copyPayees(bulkOpsState.selectedPayeeIdsArray)}>
+            <Copy class="mr-2 h-4 w-4" />
             Copy to Clipboard
           </DropdownMenu.Item>
         </DropdownMenu.Content>
@@ -346,20 +347,18 @@ const handleKeyDown = (e: KeyboardEvent) => {
         size="sm"
         onclick={() => onDuplicateDetection?.()}
         disabled={!onDuplicateDetection}
-        class="h-8"
-      >
-        <Merge class="h-4 w-4 mr-2" />
+        class="h-8">
+        <Merge class="mr-2 h-4 w-4" />
         Find Duplicates
       </Button>
 
       <Button
         variant="outline"
         size="sm"
-        onclick={() => exportDialogOpen = true}
+        onclick={() => (exportDialogOpen = true)}
         disabled={!onBulkExport}
-        class="h-8"
-      >
-        <Download class="h-4 w-4 mr-2" />
+        class="h-8">
+        <Download class="mr-2 h-4 w-4" />
         Export All
       </Button>
 
@@ -374,17 +373,15 @@ const handleKeyDown = (e: KeyboardEvent) => {
             onBulkImport(file);
           }
         }}
-        bind:this={fileInputRef}
-      />
+        bind:this={fileInputRef} />
 
       <Button
         variant="outline"
         size="sm"
         onclick={() => fileInputRef?.click()}
         disabled={!onBulkImport}
-        class="h-8"
-      >
-        <Upload class="h-4 w-4 mr-2" />
+        class="h-8">
+        <Upload class="mr-2 h-4 w-4" />
         Import
       </Button>
     </div>
@@ -393,14 +390,8 @@ const handleKeyDown = (e: KeyboardEvent) => {
   <!-- Undo button -->
   {#if bulkOpsState.getLatestUndoOperation()}
     <Separator orientation="vertical" class="h-6" />
-    <Button
-      variant="outline"
-      size="sm"
-      onclick={() => onUndo?.()}
-      disabled={!onUndo}
-      class="h-8"
-    >
-      <Undo class="h-4 w-4 mr-2" />
+    <Button variant="outline" size="sm" onclick={() => onUndo?.()} disabled={!onUndo} class="h-8">
+      <Undo class="mr-2 h-4 w-4" />
       Undo
     </Button>
   {/if}
@@ -421,7 +412,10 @@ const handleKeyDown = (e: KeyboardEvent) => {
         <Label for="category-select">Category</Label>
         <Select.Root type="single" bind:value={selectedCategoryId}>
           <Select.Trigger>
-            <span>{selectedCategoryId ? categoryOptions.find(opt => opt.value === selectedCategoryId)?.label : "Select a category"}</span>
+            <span
+              >{selectedCategoryId
+                ? categoryOptions.find((opt) => opt.value === selectedCategoryId)?.label
+                : 'Select a category'}</span>
           </Select.Trigger>
           <Select.Content>
             {#each categoryOptions as category}
@@ -433,7 +427,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
     </div>
 
     <Dialog.Footer>
-      <Button variant="outline" onclick={() => categoryAssignmentDialogOpen = false}>
+      <Button variant="outline" onclick={() => (categoryAssignmentDialogOpen = false)}>
         Cancel
       </Button>
       <Button onclick={handleCategoryAssignment} disabled={!selectedCategoryId}>
@@ -458,7 +452,12 @@ const handleKeyDown = (e: KeyboardEvent) => {
         <Label for="tag-operation">Operation</Label>
         <Select.Root type="single" bind:value={tagOperationType}>
           <Select.Trigger>
-            <span>{tagOperationType === 'add' ? 'Add tags' : tagOperationType === 'remove' ? 'Remove tags' : 'Replace all tags'}</span>
+            <span
+              >{tagOperationType === 'add'
+                ? 'Add tags'
+                : tagOperationType === 'remove'
+                  ? 'Remove tags'
+                  : 'Replace all tags'}</span>
           </Select.Trigger>
           <Select.Content>
             <Select.Item value="add">Add tags</Select.Item>
@@ -470,21 +469,13 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
       <div class="space-y-2">
         <Label for="tags-input">Tags (comma-separated)</Label>
-        <Input
-          id="tags-input"
-          bind:value={newTags}
-          placeholder="urgent, business, subscription"
-        />
+        <Input id="tags-input" bind:value={newTags} placeholder="urgent, business, subscription" />
       </div>
     </div>
 
     <Dialog.Footer>
-      <Button variant="outline" onclick={() => tagManagementDialogOpen = false}>
-        Cancel
-      </Button>
-      <Button onclick={handleTagManagement} disabled={!newTags.trim()}>
-        Apply Changes
-      </Button>
+      <Button variant="outline" onclick={() => (tagManagementDialogOpen = false)}>Cancel</Button>
+      <Button onclick={handleTagManagement} disabled={!newTags.trim()}>Apply Changes</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
@@ -522,18 +513,13 @@ const handleKeyDown = (e: KeyboardEvent) => {
           min="0"
           max="1"
           step="0.1"
-          bind:value={intelligenceOptions.confidenceThreshold}
-        />
+          bind:value={intelligenceOptions.confidenceThreshold} />
       </div>
     </div>
 
     <Dialog.Footer>
-      <Button variant="outline" onclick={() => intelligenceDialogOpen = false}>
-        Cancel
-      </Button>
-      <Button onclick={handleIntelligenceApplication}>
-        Apply Intelligence
-      </Button>
+      <Button variant="outline" onclick={() => (intelligenceDialogOpen = false)}>Cancel</Button>
+      <Button onclick={handleIntelligenceApplication}>Apply Intelligence</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
@@ -571,12 +557,8 @@ const handleKeyDown = (e: KeyboardEvent) => {
     </div>
 
     <Dialog.Footer>
-      <Button variant="outline" onclick={() => exportDialogOpen = false}>
-        Cancel
-      </Button>
-      <Button onclick={handleBulkExport}>
-        Export
-      </Button>
+      <Button variant="outline" onclick={() => (exportDialogOpen = false)}>Cancel</Button>
+      <Button onclick={handleBulkExport}>Export</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

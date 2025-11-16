@@ -33,14 +33,12 @@ const topPayees = $derived(analytics?.topPayees?.slice(0, 3) || []);
       <Brain class="h-5 w-5 text-blue-500" />
       Payee Intelligence Summary
     </Card.Title>
-    <Card.Description>
-      ML-powered insights and analytics across all your payees
-    </Card.Description>
+    <Card.Description>ML-powered insights and analytics across all your payees</Card.Description>
   </Card.Header>
   <Card.Content class="space-y-6">
     {#if isLoading}
       <!-- Loading State -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
         {#each Array(4) as _}
           <div class="space-y-2">
             <Skeleton class="h-4 w-full" />
@@ -51,63 +49,53 @@ const topPayees = $derived(analytics?.topPayees?.slice(0, 3) || []);
       </div>
     {:else if hasError}
       <!-- Error State -->
-      <div class="text-center py-4">
-        <p class="text-sm text-muted-foreground mb-2">
-          Failed to load payee analytics
-        </p>
-        <Button
-          variant="outline"
-          size="sm"
-          onclick={() => analyticsQuery.refetch()}
-        >
-          Retry
-        </Button>
+      <div class="py-4 text-center">
+        <p class="text-muted-foreground mb-2 text-sm">Failed to load payee analytics</p>
+        <Button variant="outline" size="sm" onclick={() => analyticsQuery.refetch()}>Retry</Button>
       </div>
     {:else}
       <!-- Analytics Summary Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div class="text-center">
-          <div class="flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-blue-100">
+          <div
+            class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
             <Users class="h-5 w-5 text-blue-600" />
           </div>
           <div class="text-2xl font-bold">{totalPayees}</div>
-          <div class="text-xs text-muted-foreground">Total Payees</div>
-          <div class="text-xs text-green-600 mt-1">
+          <div class="text-muted-foreground text-xs">Total Payees</div>
+          <div class="mt-1 text-xs text-green-600">
             {activePayees} active
           </div>
         </div>
 
         <div class="text-center">
-          <div class="flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-green-100">
+          <div
+            class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
             <DollarSign class="h-5 w-5 text-green-600" />
           </div>
           <div class="text-2xl font-bold">{currencyFormatter.format(totalSpending)}</div>
-          <div class="text-xs text-muted-foreground">Total Spending</div>
-          <div class="text-xs text-blue-600 mt-1">
-            All time
-          </div>
+          <div class="text-muted-foreground text-xs">Total Spending</div>
+          <div class="mt-1 text-xs text-blue-600">All time</div>
         </div>
 
         <div class="text-center">
-          <div class="flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-purple-100">
+          <div
+            class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
             <TrendingUp class="h-5 w-5 text-purple-600" />
           </div>
           <div class="text-2xl font-bold">{currencyFormatter.format(avgTransaction)}</div>
-          <div class="text-xs text-muted-foreground">Avg Transaction</div>
-          <div class="text-xs text-purple-600 mt-1">
-            Per payee
-          </div>
+          <div class="text-muted-foreground text-xs">Avg Transaction</div>
+          <div class="mt-1 text-xs text-purple-600">Per payee</div>
         </div>
 
         <div class="text-center">
-          <div class="flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-orange-100">
+          <div
+            class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
             <Brain class="h-5 w-5 text-orange-600" />
           </div>
           <div class="text-2xl font-bold">{mlAccuracy}%</div>
-          <div class="text-xs text-muted-foreground">ML Accuracy</div>
-          <div class="text-xs text-orange-600 mt-1">
-            Predictions
-          </div>
+          <div class="text-muted-foreground text-xs">ML Accuracy</div>
+          <div class="mt-1 text-xs text-orange-600">Predictions</div>
         </div>
       </div>
 
@@ -122,16 +110,21 @@ const topPayees = $derived(analytics?.topPayees?.slice(0, 3) || []);
           </div>
           <div class="space-y-2">
             {#each topPayees as payee, index}
-              <div class="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+              <div class="bg-muted/50 flex items-center justify-between rounded-lg p-2">
                 <div class="flex items-center gap-2">
-                  <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium">
+                  <div
+                    class="bg-primary/10 flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium">
                     {index + 1}
                   </div>
                   <span class="text-sm font-medium">{payee.name}</span>
                 </div>
                 <div class="text-right">
-                  <div class="text-sm font-medium">{currencyFormatter.format(payee.totalSpent)}</div>
-                  <div class="text-xs text-muted-foreground">{payee.transactionCount} transactions</div>
+                  <div class="text-sm font-medium">
+                    {currencyFormatter.format(payee.totalSpent)}
+                  </div>
+                  <div class="text-muted-foreground text-xs">
+                    {payee.transactionCount} transactions
+                  </div>
                 </div>
               </div>
             {/each}
@@ -140,7 +133,7 @@ const topPayees = $derived(analytics?.topPayees?.slice(0, 3) || []);
       {/if}
 
       <!-- Quick Actions -->
-      <div class="flex flex-col sm:flex-row gap-2 pt-2">
+      <div class="flex flex-col gap-2 pt-2 sm:flex-row">
         <Button variant="outline" size="sm" href="/payees/analytics" class="flex-1">
           <BarChart3 class="mr-2 h-4 w-4" />
           Full Analytics Dashboard

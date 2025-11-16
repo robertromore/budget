@@ -1,4 +1,4 @@
-import { accounts, categories, transactions } from "$lib/schema";
+import {accounts, categories, transactions} from "$lib/schema";
 import {
   budgetAccounts,
   budgetCategories,
@@ -23,10 +23,10 @@ import {
   type NewBudgetPeriodTemplate,
   type NewBudgetTransaction,
 } from "$lib/schema/budgets";
-import { db } from "$lib/server/db";
-import { DatabaseError, NotFoundError } from "$lib/server/shared/types/errors";
-import { getCurrentTimestamp } from "$lib/utils/dates";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import {db} from "$lib/server/db";
+import {DatabaseError, NotFoundError} from "$lib/server/shared/types/errors";
+import {getCurrentTimestamp} from "$lib/utils/dates";
+import {and, eq, inArray, isNull, sql} from "drizzle-orm";
 
 type TransactionClient = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export type DbClient = typeof db | TransactionClient;
@@ -51,7 +51,7 @@ export interface BudgetWithRelations extends Budget {
   categories: Array<BudgetCategory & {category: typeof categories.$inferSelect | null}>;
   transactions: Array<BudgetTransaction & {transaction: typeof transactions.$inferSelect | null}>;
   groupMemberships: Array<
-    (typeof budgetGroupMemberships.$inferSelect) & {
+    typeof budgetGroupMemberships.$inferSelect & {
       group: BudgetGroup | null;
     }
   >;
@@ -169,7 +169,10 @@ export class BudgetRepository {
   /**
    * Retrieve budgets with optional status filtering.
    */
-  async listBudgets(workspaceId: number, options: {status?: Budget["status"]} = {}): Promise<BudgetWithRelations[]> {
+  async listBudgets(
+    workspaceId: number,
+    options: {status?: Budget["status"]} = {}
+  ): Promise<BudgetWithRelations[]> {
     const {status} = options;
 
     const conditions = [eq(budgets.workspaceId, workspaceId)];
@@ -189,7 +192,11 @@ export class BudgetRepository {
   /**
    * Find budget by ID including relations.
    */
-  async findById(id: number, workspaceId: number, client: DbClient = db): Promise<BudgetWithRelations | null> {
+  async findById(
+    id: number,
+    workspaceId: number,
+    client: DbClient = db
+  ): Promise<BudgetWithRelations | null> {
     const result = await client.query.budgets.findFirst({
       where: and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId)),
       with: this.defaultRelations(),
@@ -201,9 +208,17 @@ export class BudgetRepository {
   /**
    * Find budget by slug including relations.
    */
-  async findBySlug(slug: string, workspaceId: number, client: DbClient = db): Promise<BudgetWithRelations | null> {
+  async findBySlug(
+    slug: string,
+    workspaceId: number,
+    client: DbClient = db
+  ): Promise<BudgetWithRelations | null> {
     const result = await client.query.budgets.findFirst({
-      where: and(eq(budgets.slug, slug), eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt)),
+      where: and(
+        eq(budgets.slug, slug),
+        eq(budgets.workspaceId, workspaceId),
+        isNull(budgets.deletedAt)
+      ),
       with: this.defaultRelations(),
     });
 
@@ -229,7 +244,9 @@ export class BudgetRepository {
     const [existingBudget] = await db
       .select()
       .from(budgets)
-      .where(and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt)))
+      .where(
+        and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt))
+      )
       .limit(1);
 
     if (!existingBudget) {
@@ -246,7 +263,9 @@ export class BudgetRepository {
         deletedAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
       })
-      .where(and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt)))
+      .where(
+        and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId), isNull(budgets.deletedAt))
+      )
       .returning();
 
     if (!budget) {
@@ -269,23 +288,19 @@ export class BudgetRepository {
       await tx.delete(budgetTransactions).where(eq(budgetTransactions.budgetId, id));
       await tx.delete(budgetAccounts).where(eq(budgetAccounts.budgetId, id));
       await tx.delete(budgetCategories).where(eq(budgetCategories.budgetId, id));
-      await tx
-        .delete(budgetGroupMemberships)
-        .where(eq(budgetGroupMemberships.budgetId, id));
+      await tx.delete(budgetGroupMemberships).where(eq(budgetGroupMemberships.budgetId, id));
       const templateIds = await tx
         .select({id: budgetPeriodTemplates.id})
         .from(budgetPeriodTemplates)
         .where(eq(budgetPeriodTemplates.budgetId, id));
 
       if (templateIds.length) {
-        await tx
-          .delete(budgetPeriodInstances)
-          .where(
-            inArray(
-              budgetPeriodInstances.templateId,
-              templateIds.map((row) => row.id)
-            )
-          );
+        await tx.delete(budgetPeriodInstances).where(
+          inArray(
+            budgetPeriodInstances.templateId,
+            templateIds.map((row) => row.id)
+          )
+        );
       }
       await tx.delete(budgetPeriodTemplates).where(eq(budgetPeriodTemplates.budgetId, id));
       await tx.delete(budgets).where(and(eq(budgets.id, id), eq(budgets.workspaceId, workspaceId)));
@@ -454,7 +469,10 @@ export class BudgetRepository {
    * Find applicable budgets for a transaction based on account and category.
    * Returns active budgets that match the account OR category OR have global scope.
    */
-  async findApplicableBudgets(accountId?: number, categoryId?: number): Promise<BudgetWithRelations[]> {
+  async findApplicableBudgets(
+    accountId?: number,
+    categoryId?: number
+  ): Promise<BudgetWithRelations[]> {
     // Collect all matching budget IDs
     const budgetIdSet = new Set<number>();
 
@@ -465,7 +483,7 @@ export class BudgetRepository {
         .from(budgetAccounts)
         .where(eq(budgetAccounts.accountId, accountId));
 
-      accountBudgetIds.forEach(b => budgetIdSet.add(b.budgetId));
+      accountBudgetIds.forEach((b) => budgetIdSet.add(b.budgetId));
     }
 
     // Find budgets linked to the category
@@ -475,18 +493,15 @@ export class BudgetRepository {
         .from(budgetCategories)
         .where(eq(budgetCategories.categoryId, categoryId));
 
-      categoryBudgetIds.forEach(b => budgetIdSet.add(b.budgetId));
+      categoryBudgetIds.forEach((b) => budgetIdSet.add(b.budgetId));
     }
 
     // Also include budgets with global scope
     const globalBudgets = await db.query.budgets.findMany({
-      where: and(
-        eq(budgets.status, "active"),
-        eq(budgets.scope, "global")
-      ),
+      where: and(eq(budgets.status, "active"), eq(budgets.scope, "global")),
     });
 
-    globalBudgets.forEach(b => budgetIdSet.add(b.id));
+    globalBudgets.forEach((b) => budgetIdSet.add(b.id));
 
     // If no matching budgets found, return empty array
     if (budgetIdSet.size === 0) {
@@ -495,10 +510,7 @@ export class BudgetRepository {
 
     // Fetch all matching budgets with relations
     const matchingBudgets = await db.query.budgets.findMany({
-      where: and(
-        eq(budgets.status, "active"),
-        inArray(budgets.id, Array.from(budgetIdSet))
-      ),
+      where: and(eq(budgets.status, "active"), inArray(budgets.id, Array.from(budgetIdSet))),
       with: this.defaultRelations(),
     });
 
@@ -605,12 +617,7 @@ export class BudgetRepository {
         totalBalance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
       })
       .from(transactions)
-      .where(
-        and(
-          inArray(transactions.accountId, accountIds),
-          isNull(transactions.deletedAt)
-        )
-      );
+      .where(and(inArray(transactions.accountId, accountIds), isNull(transactions.deletedAt)));
 
     return Number(result[0]?.totalBalance ?? 0);
   }
@@ -622,13 +629,10 @@ export class BudgetRepository {
       .select()
       .from(transactions)
       .where(
-        and(
-          inArray(transactions.categoryId, categoryIds),
-          eq(transactions.status, 'cleared')
-        )
+        and(inArray(transactions.categoryId, categoryIds), eq(transactions.status, "cleared"))
       );
 
-    const filteredTransactions = categoryTransactions.filter(t => {
+    const filteredTransactions = categoryTransactions.filter((t) => {
       if (!t.date) return false;
       return t.date >= startDate;
     });
@@ -693,9 +697,8 @@ export class BudgetRepository {
       });
     }
 
-    const condition = parentId === null
-      ? isNull(budgetGroups.parentId)
-      : eq(budgetGroups.parentId, parentId);
+    const condition =
+      parentId === null ? isNull(budgetGroups.parentId) : eq(budgetGroups.parentId, parentId);
 
     return await db.query.budgetGroups.findMany({
       where: condition,
@@ -766,7 +769,7 @@ export class BudgetRepository {
       limit,
     });
 
-    return periods.reverse().map(period => ({
+    return periods.reverse().map((period) => ({
       periodId: period.id,
       startDate: period.startDate,
       endDate: period.endDate,
@@ -793,9 +796,14 @@ export class BudgetRepository {
       .innerJoin(transactions, eq(budgetTransactions.transactionId, transactions.id))
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
       .where(eq(budgetTransactions.budgetId, budgetId))
-      .groupBy(transactions.categoryId, categories.name, categories.categoryType, categories.categoryColor);
+      .groupBy(
+        transactions.categoryId,
+        categories.name,
+        categories.categoryType,
+        categories.categoryColor
+      );
 
-    return result.map(row => ({
+    return result.map((row) => ({
       categoryId: row.categoryId,
       categoryName: row.categoryName || "Uncategorized",
       categoryType: row.categoryType || "expense",
@@ -826,7 +834,7 @@ export class BudgetRepository {
       .groupBy(transactions.date)
       .orderBy(sql`${transactions.date} ASC`);
 
-    return result.map(row => ({
+    return result.map((row) => ({
       date: row.date,
       amount: Number(row.totalAmount),
     }));

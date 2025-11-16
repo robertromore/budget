@@ -20,27 +20,25 @@ let draggedIndex = $state<number | null>(null);
 // Get all column IDs in the current order, or use the default table order
 // Only include columns that are visible (present in the columns array)
 const orderedColumns = $derived.by(() => {
-  const visibleColumnIds = new Set(columns.map(col => col.id));
+  const visibleColumnIds = new Set(columns.map((col) => col.id));
 
   if (columnOrder.length === 0) {
     // If no custom order, return all visible columns in their default order
-    return columns.map(col => col.id);
+    return columns.map((col) => col.id);
   }
 
   // Start with the custom order, but filter out hidden columns
-  const ordered = columnOrder.filter(id => visibleColumnIds.has(id));
+  const ordered = columnOrder.filter((id) => visibleColumnIds.has(id));
 
   // Add any visible columns that aren't in the custom order yet
-  const missingColumns = columns
-    .map(col => col.id)
-    .filter(id => !ordered.includes(id));
+  const missingColumns = columns.map((col) => col.id).filter((id) => !ordered.includes(id));
 
   return [...ordered, ...missingColumns];
 });
 
 // Get column label from meta
 const getColumnLabel = (columnId: string) => {
-  const column = columns.find(col => col.id === columnId);
+  const column = columns.find((col) => col.id === columnId);
   return column?.columnDef.meta?.label ?? columnId;
 };
 
@@ -125,8 +123,8 @@ const handleDragEnd = () => {
     {#each orderedColumns as columnId, index (columnId)}
       <div
         class={cn(
-          "border-input bg-background flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors",
-          draggedIndex === index && "opacity-50"
+          'border-input bg-background flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors',
+          draggedIndex === index && 'opacity-50'
         )}
         draggable="true"
         ondragstart={(e) => handleDragStart(e, index)}

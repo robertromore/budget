@@ -64,7 +64,7 @@ $effect(() => {
           <Button
             variant="outline"
             size="sm"
-            class="justify-between min-w-[140px]"
+            class="min-w-[140px] justify-between"
             {...props}
             role="combobox"
             aria-expanded={open}>
@@ -99,11 +99,11 @@ $effect(() => {
   {:else if type === 'range'}
     <div class="grid grid-cols-2 gap-3">
       <div class="space-y-1">
-        <label class="text-xs text-muted-foreground" for="min">Minimum</label>
+        <label class="text-muted-foreground text-xs" for="min">Minimum</label>
         <NumericInput bind:value={value[0]} buttonClass="w-full" id="min" />
       </div>
       <div class="space-y-1">
-        <label class="text-xs text-muted-foreground" for="max">Maximum</label>
+        <label class="text-muted-foreground text-xs" for="max">Maximum</label>
         <NumericInput bind:value={value[1]} buttonClass="w-full" id="max" />
       </div>
     </div>

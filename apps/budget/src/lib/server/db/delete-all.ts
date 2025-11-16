@@ -40,11 +40,14 @@ const allTables = await db.all<{name: string}>(sql`
   ORDER BY name
 `);
 
-const tableNames = allTables.map(t => t.name);
+const tableNames = allTables.map((t) => t.name);
 
 // Filter to specific tables if requested
 const tablesToDelete = values.tables
-  ? values.tables.split(',').map(t => t.trim()).filter(t => tableNames.includes(t))
+  ? values.tables
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => tableNames.includes(t))
   : tableNames;
 
 if (tablesToDelete.length === 0) {
@@ -54,7 +57,7 @@ if (tablesToDelete.length === 0) {
 
 // Show what will be deleted
 console.log("\n📋 Tables to delete:");
-tablesToDelete.forEach(t => console.log(`   - ${t}`));
+tablesToDelete.forEach((t) => console.log(`   - ${t}`));
 console.log();
 
 if (values["dry-run"]) {
@@ -95,7 +98,6 @@ try {
 
   console.log("\n✅ Cleanup complete!");
   console.log(`   Tables cleaned: ${tablesToDelete.length}`);
-
 } catch (error) {
   console.error("\n❌ Error during cleanup:", error);
   // Ensure foreign keys are re-enabled even on error

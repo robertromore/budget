@@ -1,4 +1,4 @@
-import { budgetPeriodInstances, budgetTransactions } from "$lib/schema/budgets";
+import {budgetPeriodInstances, budgetTransactions} from "$lib/schema/budgets";
 import {
   envelopeAllocations,
   envelopeRolloverHistory,
@@ -9,14 +9,19 @@ import {
   type EnvelopeTransfer,
   type RolloverMode,
 } from "$lib/schema/budgets/envelope-allocations";
-import { transactions } from "$lib/schema/transactions";
-import { db } from "$lib/server/db";
-import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
-import { and, asc, desc, eq, sum } from "drizzle-orm";
-import { DeficitRecoveryService, type DeficitAnalysis, type DeficitPolicy, type DeficitRecoveryPlan } from "./deficit-recovery";
-import { BudgetRepository, type DbClient } from "./repository";
-import { RolloverCalculator, type RolloverPolicy } from "./rollover-calculator";
+import {transactions} from "$lib/schema/transactions";
+import {db} from "$lib/server/db";
+import {DatabaseError, NotFoundError, ValidationError} from "$lib/server/shared/types/errors";
+import {InputSanitizer} from "$lib/server/shared/validation";
+import {and, asc, desc, eq, sum} from "drizzle-orm";
+import {
+  DeficitRecoveryService,
+  type DeficitAnalysis,
+  type DeficitPolicy,
+  type DeficitRecoveryPlan,
+} from "./deficit-recovery";
+import {BudgetRepository, type DbClient} from "./repository";
+import {RolloverCalculator, type RolloverPolicy} from "./rollover-calculator";
 
 export interface EnvelopeCalculationResult {
   allocatedAmount: number;
@@ -63,9 +68,7 @@ export class EnvelopeService {
     private deficitRecoveryService: DeficitRecoveryService
   ) {}
 
-  async createEnvelopeAllocation(
-    input: EnvelopeAllocationRequest
-  ): Promise<EnvelopeAllocation> {
+  async createEnvelopeAllocation(input: EnvelopeAllocationRequest): Promise<EnvelopeAllocation> {
     const allocatedAmount = this.validateAmount(input.allocatedAmount, "Allocated amount");
 
     const rolloverMode = input.rolloverMode ?? "unlimited";
@@ -187,10 +190,12 @@ export class EnvelopeService {
       throw new ValidationError("Cannot transfer to the same envelope", "transfer");
     }
 
-    const reason = input.reason ? InputSanitizer.sanitizeText(input.reason, {
-      maxLength: 200,
-      fieldName: "Transfer reason",
-    }) : null;
+    const reason = input.reason
+      ? InputSanitizer.sanitizeText(input.reason, {
+          maxLength: 200,
+          fieldName: "Transfer reason",
+        })
+      : null;
 
     const transferredBy = InputSanitizer.sanitizeText(input.transferredBy, {
       required: true,
@@ -213,7 +218,10 @@ export class EnvelopeService {
         .update(envelopeAllocations)
         .set({
           availableAmount: fromEnvelope.availableAmount - amount,
-          status: this.calculateStatus(fromEnvelope.availableAmount - amount, fromEnvelope.deficitAmount),
+          status: this.calculateStatus(
+            fromEnvelope.availableAmount - amount,
+            fromEnvelope.deficitAmount
+          ),
           lastCalculated: new Date().toISOString(),
         })
         .where(eq(envelopeAllocations.id, input.fromEnvelopeId));
@@ -222,7 +230,10 @@ export class EnvelopeService {
         .update(envelopeAllocations)
         .set({
           availableAmount: toEnvelope.availableAmount + amount,
-          status: this.calculateStatus(toEnvelope.availableAmount + amount, toEnvelope.deficitAmount),
+          status: this.calculateStatus(
+            toEnvelope.availableAmount + amount,
+            toEnvelope.deficitAmount
+          ),
           lastCalculated: new Date().toISOString(),
         })
         .where(eq(envelopeAllocations.id, input.toEnvelopeId));
@@ -311,11 +322,7 @@ export class EnvelopeService {
       }).filter(([_, v]) => v !== undefined)
     ) as RolloverPolicy;
 
-    return await this.rolloverCalculator.estimateRolloverImpact(
-      fromPeriodId,
-      toPeriodId,
-      policy
-    );
+    return await this.rolloverCalculator.estimateRolloverImpact(fromPeriodId, toPeriodId, policy);
   }
 
   async analyzeDeficit(envelopeId: number, policy?: DeficitPolicy): Promise<DeficitAnalysis> {
@@ -329,10 +336,7 @@ export class EnvelopeService {
     return await this.deficitRecoveryService.createRecoveryPlan(envelopeId, policy);
   }
 
-  async executeDeficitRecovery(
-    plan: DeficitRecoveryPlan,
-    executedBy: string = "user"
-  ) {
+  async executeDeficitRecovery(plan: DeficitRecoveryPlan, executedBy: string = "user") {
     return await this.deficitRecoveryService.executeRecoveryPlan(plan, executedBy);
   }
 
@@ -340,7 +344,10 @@ export class EnvelopeService {
     return await this.deficitRecoveryService.getDeficitEnvelopes(budgetId);
   }
 
-  async getSurplusEnvelopes(budgetId: number, minimumSurplus?: number): Promise<EnvelopeAllocation[]> {
+  async getSurplusEnvelopes(
+    budgetId: number,
+    minimumSurplus?: number
+  ): Promise<EnvelopeAllocation[]> {
     return await this.deficitRecoveryService.getSurplusEnvelopes(budgetId, minimumSurplus);
   }
 
@@ -372,8 +379,9 @@ export class EnvelopeService {
       riskLevel = envelope.availableAmount < 10 ? "high" : "medium";
       // Estimate days until deficit based on spending rate
       const avgSpending = envelope.spentAmount / 30; // Rough daily spending
-      daysToDeficit = avgSpending > 0 ? Math.floor(envelope.availableAmount / avgSpending) : Infinity;
-      projectedDeficit = Math.max(0, (avgSpending * 30) - envelope.availableAmount);
+      daysToDeficit =
+        avgSpending > 0 ? Math.floor(envelope.availableAmount / avgSpending) : Infinity;
+      projectedDeficit = Math.max(0, avgSpending * 30 - envelope.availableAmount);
 
       if (riskLevel === "high") {
         recommendations.push("Reduce spending in this category");
@@ -480,7 +488,7 @@ export class EnvelopeService {
       .innerJoin(transactions, eq(budgetTransactions.transactionId, transactions.id))
       .where(
         and(
-          eq(budgetTransactions.budgetId, budgetId),
+          eq(budgetTransactions.budgetId, budgetId)
           // Note: We'd need category mapping in budget transactions for full category filtering
           // This is a simplified version
         )

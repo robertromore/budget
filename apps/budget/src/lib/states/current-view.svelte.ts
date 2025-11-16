@@ -1,6 +1,6 @@
-import { default as ViewModel } from "$lib/models/view.svelte";
-import type { View } from "$lib/schema";
-import type { TransactionsFormat, ViewFilter } from "$lib/types";
+import {default as ViewModel} from "$lib/models/view.svelte";
+import type {View} from "$lib/schema";
+import type {TransactionsFormat, ViewFilter} from "$lib/types";
 import type {
   ExpandedState,
   FilterFnOption,
@@ -9,7 +9,7 @@ import type {
   Table,
   VisibilityState,
 } from "@tanstack/table-core";
-import { Context } from "runed";
+import {Context} from "runed";
 
 /**
  * A state class representing the currently active view.
@@ -105,7 +105,13 @@ export class CurrentViewState<TData> {
           column.columnDef.filterFn = filterFn as FilterFnOption<TData>;
         }
         const filterValue = this.view.getFilterValue(column.id);
-        if (filterValue && typeof filterValue === 'object' && 'size' in filterValue && typeof filterValue.size === 'number' && filterValue.size > 0) {
+        if (
+          filterValue &&
+          typeof filterValue === "object" &&
+          "size" in filterValue &&
+          typeof filterValue.size === "number" &&
+          filterValue.size > 0
+        ) {
           column.setFilterValue(filterValue);
         }
       });

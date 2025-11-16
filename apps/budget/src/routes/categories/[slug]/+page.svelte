@@ -46,7 +46,7 @@ const handleDelete = async () => {
   <meta name="description" content="View category details" />
 </svelte:head>
 
-<div class="container mx-auto py-6 space-y-6">
+<div class="container mx-auto space-y-6 py-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -56,8 +56,8 @@ const handleDelete = async () => {
       </Button>
       {#if category}
         <div>
-          <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Tag class="h-8 w-8 text-muted-foreground" />
+          <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
+            <Tag class="text-muted-foreground h-8 w-8" />
             {category.name}
           </h1>
           <p class="text-muted-foreground mt-1">Category details and statistics</p>
@@ -74,7 +74,7 @@ const handleDelete = async () => {
           <SquarePen class="mr-2 h-4 w-4" />
           Edit
         </Button>
-        <Button variant="destructive" onclick={() => deleteDialogOpen = true}>
+        <Button variant="destructive" onclick={() => (deleteDialogOpen = true)}>
           <Trash2 class="mr-2 h-4 w-4" />
           Delete
         </Button>
@@ -94,15 +94,15 @@ const handleDelete = async () => {
         </Card.Header>
         <Card.Content class="space-y-4">
           <div>
-            <div class="text-sm text-muted-foreground">Name</div>
+            <div class="text-muted-foreground text-sm">Name</div>
             <div class="font-medium">{category.name}</div>
           </div>
 
           {#if category.notes}
             <Separator />
             <div>
-              <div class="text-sm text-muted-foreground">Notes</div>
-              <div class="text-sm mt-1">{category.notes}</div>
+              <div class="text-muted-foreground text-sm">Notes</div>
+              <div class="mt-1 text-sm">{category.notes}</div>
             </div>
           {/if}
         </Card.Content>
@@ -118,21 +118,21 @@ const handleDelete = async () => {
         </Card.Header>
         <Card.Content class="space-y-4">
           <div class="flex items-center justify-between">
-            <div class="text-sm text-muted-foreground">Total Transactions</div>
+            <div class="text-muted-foreground text-sm">Total Transactions</div>
             <div class="font-medium">Coming soon</div>
           </div>
 
           <Separator />
 
           <div class="flex items-center justify-between">
-            <div class="text-sm text-muted-foreground">Total Amount</div>
+            <div class="text-muted-foreground text-sm">Total Amount</div>
             <div class="font-medium">Coming soon</div>
           </div>
 
           <Separator />
 
           <div class="flex items-center justify-between">
-            <div class="text-sm text-muted-foreground">Average Transaction</div>
+            <div class="text-muted-foreground text-sm">Average Transaction</div>
             <div class="font-medium">Coming soon</div>
           </div>
         </Card.Content>
@@ -147,22 +147,17 @@ const handleDelete = async () => {
             <Wallet class="h-5 w-5" />
             Budget Allocations
           </Card.Title>
-          <Card.Description>
-            Envelope allocations for this category across budgets
-          </Card.Description>
+          <Card.Description>Envelope allocations for this category across budgets</Card.Description>
         </Card.Header>
         <Card.Content>
           <div class="space-y-4">
             {#each category.budgets as budget}
-              <div class="rounded-lg border p-4 space-y-3">
+              <div class="space-y-3 rounded-lg border p-4">
                 <div class="flex items-center justify-between">
-                  <a
-                    href="/budgets/{budget.budgetSlug}"
-                    class="font-medium hover:underline"
-                  >
+                  <a href="/budgets/{budget.budgetSlug}" class="font-medium hover:underline">
                     {budget.budgetName}
                   </a>
-                  <span class="text-xs px-2 py-1 rounded-full bg-muted">
+                  <span class="bg-muted rounded-full px-2 py-1 text-xs">
                     {budget.status}
                   </span>
                 </div>
@@ -180,7 +175,10 @@ const handleDelete = async () => {
                   </div>
                   <div>
                     <div class="text-muted-foreground">Available</div>
-                    <div class="font-medium" class:text-green-600={budget.availableAmount > 0} class:text-red-600={budget.availableAmount < 0}>
+                    <div
+                      class="font-medium"
+                      class:text-green-600={budget.availableAmount > 0}
+                      class:text-red-600={budget.availableAmount < 0}>
                       {formatCurrency(budget.availableAmount)}
                     </div>
                   </div>
@@ -191,16 +189,17 @@ const handleDelete = async () => {
                 </div>
 
                 {#if budget.deficitAmount !== 0}
-                  <div class="pt-2 border-t">
+                  <div class="border-t pt-2">
                     <div class="flex items-center justify-between text-sm">
                       <span class="text-muted-foreground">Deficit</span>
-                      <span class="font-medium text-red-600">{formatCurrency(budget.deficitAmount)}</span>
+                      <span class="font-medium text-red-600"
+                        >{formatCurrency(budget.deficitAmount)}</span>
                     </div>
                   </div>
                 {/if}
 
                 {#if budget.lastCalculated}
-                  <div class="text-xs text-muted-foreground">
+                  <div class="text-muted-foreground text-xs">
                     Last calculated: {new Date(budget.lastCalculated).toLocaleString()}
                   </div>
                 {/if}
@@ -218,21 +217,17 @@ const handleDelete = async () => {
           <Receipt class="h-5 w-5" />
           Recent Transactions
         </Card.Title>
-        <Card.Description>
-          Transactions using this category
-        </Card.Description>
+        <Card.Description>Transactions using this category</Card.Description>
       </Card.Header>
       <Card.Content>
-        <div class="text-center text-muted-foreground py-8">
+        <div class="text-muted-foreground py-8 text-center">
           Transaction integration coming soon
         </div>
       </Card.Content>
     </Card.Root>
   {:else}
     <Card.Root class="max-w-4xl">
-      <Card.Content class="py-8 text-center text-muted-foreground">
-        Category not found
-      </Card.Content>
+      <Card.Content class="text-muted-foreground py-8 text-center">Category not found</Card.Content>
     </Card.Root>
   {/if}
 </div>
@@ -248,7 +243,10 @@ const handleDelete = async () => {
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action onclick={handleDelete} disabled={isDeleting} class={buttonVariants({variant: 'destructive'})}>
+      <AlertDialog.Action
+        onclick={handleDelete}
+        disabled={isDeleting}
+        class={buttonVariants({variant: 'destructive'})}>
         {isDeleting ? 'Deleting...' : 'Delete'}
       </AlertDialog.Action>
     </AlertDialog.Footer>

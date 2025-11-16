@@ -17,7 +17,7 @@ let {
 </script>
 
 <SheetPayeeSelector
-  value={value}
+  {value}
   onValueChange={onUpdateValue}
   {transactionContext}
   displayMode="compact"
@@ -25,5 +25,4 @@ let {
   showQuickAccess={true}
   allowCreate={false}
   buttonClass="w-full h-8 text-xs"
-  placeholder="Select payee..."
-/>
+  placeholder="Select payee..." />

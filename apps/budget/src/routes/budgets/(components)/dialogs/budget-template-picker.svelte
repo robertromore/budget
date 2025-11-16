@@ -1,106 +1,106 @@
 <script lang="ts">
-  import ResponsiveSheet from "$lib/components/ui/responsive-sheet/responsive-sheet.svelte";
-  import { Button } from "$lib/components/ui/button";
-  import * as Card from "$lib/components/ui/card";
-  import { Badge } from "$lib/components/ui/badge";
-  import { Input } from "$lib/components/ui/input";
-  import * as Tabs from "$lib/components/ui/tabs";
-  import {
-    BUDGET_TEMPLATES,
-    TEMPLATE_CATEGORY_LABELS,
-    getTemplateCategories,
-    type BudgetTemplate,
-    type TemplateCategory
-  } from "$lib/constants/budget-templates";
-  import { Search, Sparkles } from "@lucide/svelte/icons";
-  import * as LucideIcons from "@lucide/svelte/icons";
-  import { currencyFormatter } from "$lib/utils/formatters";
-  import { goto } from "$app/navigation";
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import {Button} from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import {Badge} from '$lib/components/ui/badge';
+import {Input} from '$lib/components/ui/input';
+import * as Tabs from '$lib/components/ui/tabs';
+import {
+  BUDGET_TEMPLATES,
+  TEMPLATE_CATEGORY_LABELS,
+  getTemplateCategories,
+  type BudgetTemplate,
+  type TemplateCategory,
+} from '$lib/constants/budget-templates';
+import {Search, Sparkles} from '@lucide/svelte/icons';
+import * as LucideIcons from '@lucide/svelte/icons';
+import {currencyFormatter} from '$lib/utils/formatters';
+import {goto} from '$app/navigation';
 
-  interface Props {
-    open: boolean;
+interface Props {
+  open: boolean;
+}
+
+let {open = $bindable()}: Props = $props();
+
+// Helper to get Lucide icon component from icon name
+function getIconComponent(iconName: string) {
+  // Convert kebab-case to PascalCase (e.g., "shopping-cart" -> "ShoppingCart")
+  const pascalCase = iconName
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join('');
+
+  // Get the icon from the LucideIcons object
+  const icon = (LucideIcons as any)[pascalCase];
+  return icon || LucideIcons.CircleDashed; // Fallback icon
+}
+
+let searchTerm = $state('');
+let selectedCategory = $state<TemplateCategory | 'all'>('all');
+
+// Use hardcoded templates from constants
+const templates = BUDGET_TEMPLATES;
+const categories = getTemplateCategories();
+
+const filteredTemplates = $derived.by(() => {
+  let result = templates;
+
+  // Filter by category
+  if (selectedCategory !== 'all') {
+    result = result.filter((template) => template.category === selectedCategory);
   }
 
-  let { open = $bindable() }: Props = $props();
-
-  // Helper to get Lucide icon component from icon name
-  function getIconComponent(iconName: string) {
-    // Convert kebab-case to PascalCase (e.g., "shopping-cart" -> "ShoppingCart")
-    const pascalCase = iconName
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join('');
-
-    // Get the icon from the LucideIcons object
-    const icon = (LucideIcons as any)[pascalCase];
-    return icon || LucideIcons.CircleDashed; // Fallback icon
+  // Filter by search term
+  if (searchTerm.trim()) {
+    const term = searchTerm.toLowerCase();
+    result = result.filter(
+      (template) =>
+        template.name.toLowerCase().includes(term) ||
+        template.description.toLowerCase().includes(term)
+    );
   }
 
-  let searchTerm = $state("");
-  let selectedCategory = $state<TemplateCategory | "all">("all");
+  return result;
+});
 
-  // Use hardcoded templates from constants
-  const templates = BUDGET_TEMPLATES;
-  const categories = getTemplateCategories();
-
-  const filteredTemplates = $derived.by(() => {
-    let result = templates;
-
-    // Filter by category
-    if (selectedCategory !== "all") {
-      result = result.filter((template) => template.category === selectedCategory);
-    }
-
-    // Filter by search term
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (template) =>
-          template.name.toLowerCase().includes(term) ||
-          template.description.toLowerCase().includes(term)
-      );
-    }
-
-    return result;
+function selectTemplate(template: BudgetTemplate) {
+  // Navigate to budget creation with template pre-selected
+  const params = new URLSearchParams({
+    templateId: template.id,
   });
+  goto(`/budgets/new?${params.toString()}`);
+  open = false;
+}
 
-  function selectTemplate(template: BudgetTemplate) {
-    // Navigate to budget creation with template pre-selected
-    const params = new URLSearchParams({
-      templateId: template.id,
-    });
-    goto(`/budgets/new?${params.toString()}`);
-    open = false;
+function getTypeBadgeVariant(type: string) {
+  switch (type) {
+    case 'account-monthly':
+      return 'default';
+    case 'category-envelope':
+      return 'secondary';
+    case 'goal-based':
+      return 'outline';
+    case 'scheduled-expense':
+      return 'destructive';
+    default:
+      return 'default';
   }
+}
 
-  function getTypeBadgeVariant(type: string) {
-    switch (type) {
-      case "account-monthly":
-        return "default";
-      case "category-envelope":
-        return "secondary";
-      case "goal-based":
-        return "outline";
-      case "scheduled-expense":
-        return "destructive";
-      default:
-        return "default";
-    }
-  }
-
-  function formatType(type: string) {
-    return type.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase());
-  }
+function formatType(type: string) {
+  return type.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+}
 </script>
 
 <ResponsiveSheet bind:open side="right">
   {#snippet header()}
     <div class="space-y-2">
-      <h2 class="text-lg font-semibold flex items-center gap-2">
-        <Sparkles class="h-5 w-5 text-primary" />
+      <h2 class="flex items-center gap-2 text-lg font-semibold">
+        <Sparkles class="text-primary h-5 w-5" />
         Choose a Budget Template
       </h2>
-      <p class="text-sm text-muted-foreground">
+      <p class="text-muted-foreground text-sm">
         Start with a pre-configured template or create a custom budget from scratch
       </p>
     </div>
@@ -110,13 +110,12 @@
     <div class="space-y-4">
       <!-- Search -->
       <div class="relative">
-        <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
           type="search"
           placeholder="Search templates..."
           bind:value={searchTerm}
-          class="pl-9"
-        />
+          class="pl-9" />
       </div>
 
       <!-- Category Tabs -->
@@ -135,15 +134,15 @@
       {#if filteredTemplates.length === 0}
         <div class="flex flex-col items-center justify-center py-12 text-center">
           <p class="text-muted-foreground">No templates found</p>
-          <p class="text-sm text-muted-foreground mt-2">
-            {searchTerm ? "Try a different search term" : "No templates available yet"}
+          <p class="text-muted-foreground mt-2 text-sm">
+            {searchTerm ? 'Try a different search term' : 'No templates available yet'}
           </p>
         </div>
       {:else}
         <div class="space-y-3">
           {#each filteredTemplates as template (template.id)}
             <Card.Root
-              class="cursor-pointer transition-all hover:shadow-md hover:border-primary"
+              class="hover:border-primary cursor-pointer transition-all hover:shadow-md"
               onclick={() => selectTemplate(template)}
               role="button"
               tabindex={0}
@@ -152,19 +151,18 @@
                   e.preventDefault();
                   selectTemplate(template);
                 }
-              }}
-            >
+              }}>
               {@const IconComponent = getIconComponent(template.icon)}
               <Card.Header class="pb-3">
                 <div class="flex items-start justify-between gap-2">
-                  <div class="p-2 rounded-lg bg-primary/10 text-primary">
+                  <div class="bg-primary/10 text-primary rounded-lg p-2">
                     <IconComponent class="h-6 w-6" aria-hidden="true" />
                   </div>
                   <Badge variant={getTypeBadgeVariant(template.type)} class="text-xs">
                     {formatType(template.type)}
                   </Badge>
                 </div>
-                <Card.Title class="text-lg mt-2">{template.name}</Card.Title>
+                <Card.Title class="mt-2 text-lg">{template.name}</Card.Title>
                 {#if template.description}
                   <Card.Description class="line-clamp-2">
                     {template.description}
@@ -177,10 +175,10 @@
                   <span class="font-semibold">
                     {template.suggestedAmount
                       ? currencyFormatter.format(template.suggestedAmount)
-                      : "Custom"}
+                      : 'Custom'}
                   </span>
                 </div>
-                <div class="flex items-center justify-between text-sm mt-2">
+                <div class="mt-2 flex items-center justify-between text-sm">
                   <span class="text-muted-foreground">Enforcement:</span>
                   <span class="font-medium capitalize">{template.enforcementLevel}</span>
                 </div>

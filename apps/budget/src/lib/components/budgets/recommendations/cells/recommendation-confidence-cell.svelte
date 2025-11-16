@@ -1,18 +1,18 @@
 <script lang="ts">
-  import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
-  import {Badge} from '$lib/components/ui/badge';
+import type {BudgetRecommendationWithRelations} from '$lib/schema/recommendations';
+import {Badge} from '$lib/components/ui/badge';
 
-  interface Props {
-    recommendation: BudgetRecommendationWithRelations;
-  }
+interface Props {
+  recommendation: BudgetRecommendationWithRelations;
+}
 
-  let {recommendation}: Props = $props();
+let {recommendation}: Props = $props();
 
-  const getConfidenceVariant = (confidence: number) => {
-    if (confidence >= 80) return 'default';
-    if (confidence >= 60) return 'secondary';
-    return 'outline';
-  };
+const getConfidenceVariant = (confidence: number) => {
+  if (confidence >= 80) return 'default';
+  if (confidence >= 60) return 'secondary';
+  return 'outline';
+};
 </script>
 
 <Badge variant={getConfidenceVariant(recommendation.confidence)}>

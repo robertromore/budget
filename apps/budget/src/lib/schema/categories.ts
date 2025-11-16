@@ -1,19 +1,26 @@
-import { relations, sql } from "drizzle-orm";
-import { index, integer, real, sqliteTable, text, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import {relations, sql} from "drizzle-orm";
+import {
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+  type AnySQLiteColumn,
+} from "drizzle-orm/sqlite-core";
+import {createInsertSchema, createSelectSchema} from "drizzle-zod";
 import validator from "validator";
-import { z } from "zod/v4";
-import { isValidIconName } from "$lib/utils/icon-validation";
-import { workspaces } from "./workspaces";
+import {z} from "zod/v4";
+import {isValidIconName} from "$lib/utils/icon-validation";
+import {workspaces} from "./workspaces";
 
 export const categoryTypeEnum = [
-  "income",      // Salary, freelance, investments, gifts received
-  "expense",     // Most categories (default)
-  "transfer",    // Between accounts (not counted in income/expense)
-  "savings"      // Goal-based savings categories
+  "income", // Salary, freelance, investments, gifts received
+  "expense", // Most categories (default)
+  "transfer", // Between accounts (not counted in income/expense)
+  "savings", // Goal-based savings categories
 ] as const;
 
-export type CategoryType = typeof categoryTypeEnum[number];
+export type CategoryType = (typeof categoryTypeEnum)[number];
 
 export const taxCategories = [
   "charitable_contributions",
@@ -24,28 +31,28 @@ export const taxCategories = [
   "state_local_taxes",
   "mortgage_interest",
   "investment_expenses",
-  "other"
+  "other",
 ] as const;
 
-export type TaxCategory = typeof taxCategories[number];
+export type TaxCategory = (typeof taxCategories)[number];
 
 export const spendingPriorityEnum = [
-  "essential",      // Rent, utilities, groceries
-  "important",      // Insurance, healthcare
-  "discretionary",  // Entertainment, dining out
-  "luxury"          // Vacations, high-end purchases
+  "essential", // Rent, utilities, groceries
+  "important", // Insurance, healthcare
+  "discretionary", // Entertainment, dining out
+  "luxury", // Vacations, high-end purchases
 ] as const;
 
-export type SpendingPriority = typeof spendingPriorityEnum[number];
+export type SpendingPriority = (typeof spendingPriorityEnum)[number];
 
 export const incomeReliabilityEnum = [
-  "guaranteed",    // Salary, pension, annuities
-  "recurring",     // Regular freelance, rental income
-  "variable",      // Commissions, bonuses, overtime
-  "occasional"     // Gifts, side gigs, one-time payments
+  "guaranteed", // Salary, pension, annuities
+  "recurring", // Regular freelance, rental income
+  "variable", // Commissions, bonuses, overtime
+  "occasional", // Gifts, side gigs, one-time payments
 ] as const;
 
-export type IncomeReliability = typeof incomeReliabilityEnum[number];
+export type IncomeReliability = (typeof incomeReliabilityEnum)[number];
 
 export const categories = sqliteTable(
   "categories",
@@ -60,28 +67,28 @@ export const categories = sqliteTable(
     notes: text("notes"),
 
     // Type classification
-    categoryType: text("category_type", { enum: categoryTypeEnum }).notNull().default("expense"),
+    categoryType: text("category_type", {enum: categoryTypeEnum}).notNull().default("expense"),
 
     // Visual customization
     categoryIcon: text("category_icon"),
     categoryColor: text("category_color"),
-    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    isActive: integer("is_active", {mode: "boolean"}).notNull().default(true),
     displayOrder: integer("display_order").notNull().default(0),
 
     // Tax tracking
-    isTaxDeductible: integer("is_tax_deductible", { mode: "boolean" }).notNull().default(false),
-    taxCategory: text("tax_category", { enum: taxCategories }),
+    isTaxDeductible: integer("is_tax_deductible", {mode: "boolean"}).notNull().default(false),
+    taxCategory: text("tax_category", {enum: taxCategories}),
     deductiblePercentage: integer("deductible_percentage"),
 
     // Spending patterns (for expenses)
-    isSeasonal: integer("is_seasonal", { mode: "boolean" }).notNull().default(false),
-    seasonalMonths: text("seasonal_months", { mode: "json" }).$type<string[]>(),
+    isSeasonal: integer("is_seasonal", {mode: "boolean"}).notNull().default(false),
+    seasonalMonths: text("seasonal_months", {mode: "json"}).$type<string[]>(),
     expectedMonthlyMin: real("expected_monthly_min"),
     expectedMonthlyMax: real("expected_monthly_max"),
-    spendingPriority: text("spending_priority", { enum: spendingPriorityEnum }),
+    spendingPriority: text("spending_priority", {enum: spendingPriorityEnum}),
 
     // Income patterns (for income)
-    incomeReliability: text("income_reliability", { enum: incomeReliabilityEnum }),
+    incomeReliability: text("income_reliability", {enum: incomeReliabilityEnum}),
 
     dateCreated: text("date_created")
       .notNull()
@@ -163,15 +170,16 @@ export const formInsertCategorySchema = createInsertSchema(categories, {
       .optional()
       .nullable(),
   categoryType: (schema) =>
-    schema.pipe(z.enum(categoryTypeEnum, {
-      message: "Please select a valid category type"
-    })).default("expense"),
+    schema
+      .pipe(
+        z.enum(categoryTypeEnum, {
+          message: "Please select a valid category type",
+        })
+      )
+      .default("expense"),
   categoryIcon: (schema) =>
     schema
-      .pipe(z.string().refine(
-        (val) => !val || isValidIconName(val),
-        "Invalid icon selection"
-      ))
+      .pipe(z.string().refine((val) => !val || isValidIconName(val), "Invalid icon selection"))
       .optional()
       .nullable(),
   categoryColor: (schema) =>
@@ -179,49 +187,45 @@ export const formInsertCategorySchema = createInsertSchema(categories, {
       .pipe(z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex code"))
       .optional()
       .nullable(),
-  isActive: (schema) =>
-    schema.pipe(z.boolean()).default(true),
-  displayOrder: (schema) =>
-    schema.pipe(z.number()).default(0),
-  isTaxDeductible: (schema) =>
-    schema.pipe(z.boolean()).default(false),
+  isActive: (schema) => schema.pipe(z.boolean()).default(true),
+  displayOrder: (schema) => schema.pipe(z.number()).default(0),
+  isTaxDeductible: (schema) => schema.pipe(z.boolean()).default(false),
   taxCategory: (schema) =>
-    schema.pipe(z.enum(taxCategories, {
-      message: "Please select a valid tax category"
-    }))
-    .optional()
-    .nullable(),
-  deductiblePercentage: (schema) =>
-    schema.pipe(z.number().min(0).max(100))
-    .optional()
-    .nullable(),
-  isSeasonal: (schema) =>
-    schema.pipe(z.boolean()).default(false),
+    schema
+      .pipe(
+        z.enum(taxCategories, {
+          message: "Please select a valid tax category",
+        })
+      )
+      .optional()
+      .nullable(),
+  deductiblePercentage: (schema) => schema.pipe(z.number().min(0).max(100)).optional().nullable(),
+  isSeasonal: (schema) => schema.pipe(z.boolean()).default(false),
   seasonalMonths: (schema) =>
     schema
       .pipe(z.array(z.string()).max(12, "Cannot have more than 12 months"))
       .optional()
       .nullable(),
-  expectedMonthlyMin: (schema) =>
-    schema.pipe(z.number().nonnegative())
-    .optional()
-    .nullable(),
-  expectedMonthlyMax: (schema) =>
-    schema.pipe(z.number().nonnegative())
-    .optional()
-    .nullable(),
+  expectedMonthlyMin: (schema) => schema.pipe(z.number().nonnegative()).optional().nullable(),
+  expectedMonthlyMax: (schema) => schema.pipe(z.number().nonnegative()).optional().nullable(),
   spendingPriority: (schema) =>
-    schema.pipe(z.enum(spendingPriorityEnum, {
-      message: "Please select a valid spending priority"
-    }))
-    .optional()
-    .nullable(),
+    schema
+      .pipe(
+        z.enum(spendingPriorityEnum, {
+          message: "Please select a valid spending priority",
+        })
+      )
+      .optional()
+      .nullable(),
   incomeReliability: (schema) =>
-    schema.pipe(z.enum(incomeReliabilityEnum, {
-      message: "Please select a valid income reliability"
-    }))
-    .optional()
-    .nullable(),
+    schema
+      .pipe(
+        z.enum(incomeReliabilityEnum, {
+          message: "Please select a valid income reliability",
+        })
+      )
+      .optional()
+      .nullable(),
 });
 export const removeCategorySchema = z.object({id: z.number().nonnegative()});
 export const removeCategoriesSchema = z.object({entities: z.array(z.number().nonnegative())});

@@ -30,20 +30,18 @@ const borderColor = $derived(data.color ? `border-l-[${data.color}]` : '');
 </script>
 
 <Card.Root
-  class={cn('transition-all hover:shadow-md cursor-pointer', colorStyle, className)}
+  class={cn('cursor-pointer transition-all hover:shadow-md', colorStyle, className)}
   style={data.color ? `border-left-color: ${data.color};` : ''}
-  onclick={() => onclick?.(data)}
->
+  onclick={() => onclick?.(data)}>
   <Card.Header class="pb-3">
     <div class="flex items-start justify-between">
-      <div class="flex items-center gap-2 flex-1 min-w-0">
+      <div class="flex min-w-0 flex-1 items-center gap-2">
         {#if data.icon}
           <data.icon
             class="h-5 w-5 flex-shrink-0"
-            style={data.color ? `color: ${data.color};` : ''}
-          />
+            style={data.color ? `color: ${data.color};` : ''} />
         {/if}
-        <Card.Title class="text-base font-semibold truncate">
+        <Card.Title class="truncate text-base font-semibold">
           {data.name}
         </Card.Title>
       </div>
@@ -57,7 +55,7 @@ const borderColor = $derived(data.color ? `border-l-[${data.color}]` : '');
     <div class="flex items-end justify-between">
       <div>
         <p class="text-2xl font-bold">{formatCurrency(data.amount)}</p>
-        <p class="text-muted-foreground text-xs mt-1">
+        <p class="text-muted-foreground mt-1 text-xs">
           {data.count} transaction{data.count !== 1 ? 's' : ''}
         </p>
       </div>

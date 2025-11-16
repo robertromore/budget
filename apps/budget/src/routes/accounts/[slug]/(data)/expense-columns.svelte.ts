@@ -1,14 +1,14 @@
-import { Checkbox } from "$lib/components/ui/checkbox";
-import { renderComponent } from "$lib/components/ui/data-table";
-import { ExpandToggle } from "$lib/components/ui/expand-toggle";
-import { currencyFormatter } from "$lib/utils/formatters";
-import { dateFormatter } from "$lib/utils/date-formatters";
-import { type DateValue, getLocalTimeZone } from "@internationalized/date";
-import type { CellContext, Column, ColumnDef } from "@tanstack/table-core";
-import type { Component } from "svelte";
-import { medicalExpenseTypeEnum, type MedicalExpenseType } from "$lib/schema/medical-expenses";
-import { claimStatusEnum, claimStatusKeys, type ClaimStatus } from "$lib/schema/hsa-claims";
-import { SvelteMap } from "svelte/reactivity";
+import {Checkbox} from "$lib/components/ui/checkbox";
+import {renderComponent} from "$lib/components/ui/data-table";
+import {ExpandToggle} from "$lib/components/ui/expand-toggle";
+import {currencyFormatter} from "$lib/utils/formatters";
+import {dateFormatter} from "$lib/utils/date-formatters";
+import {type DateValue, getLocalTimeZone} from "@internationalized/date";
+import type {CellContext, Column, ColumnDef} from "@tanstack/table-core";
+import type {Component} from "svelte";
+import {medicalExpenseTypeEnum, type MedicalExpenseType} from "$lib/schema/medical-expenses";
+import {claimStatusEnum, claimStatusKeys, type ClaimStatus} from "$lib/schema/hsa-claims";
+import {SvelteMap} from "svelte/reactivity";
 
 // Import cell components
 import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
@@ -67,7 +67,6 @@ export const columns = (
   onManageClaims?: (expense: ExpenseFormat) => void,
   onAddReceipt?: (expenseId: number) => void
 ): ColumnDef<ExpenseFormat>[] => {
-
   const updateHandler = (
     info: CellContext<ExpenseFormat, unknown>,
     columnId: string,
@@ -215,10 +214,10 @@ export const columns = (
           };
         },
         availableFilters: [
-          { id: "dateIn", label: "in" },
-          { id: "dateBefore", label: "before" },
-          { id: "dateAfter", label: "after" },
-          { id: "dateBetween", label: "between" },
+          {id: "dateIn", label: "in"},
+          {id: "dateBefore", label: "before"},
+          {id: "dateAfter", label: "after"},
+          {id: "dateBetween", label: "between"},
         ],
       },
     },
@@ -441,7 +440,10 @@ export const columns = (
       aggregatedCell: ({row}) => {
         const subRows = row.subRows;
         if (subRows && subRows.length > 0) {
-          const total = subRows.reduce((sum, subRow) => sum + (subRow.original.insuranceCovered || 0), 0);
+          const total = subRows.reduce(
+            (sum, subRow) => sum + (subRow.original.insuranceCovered || 0),
+            0
+          );
           return currencyFormatter.format(total);
         }
         return currencyFormatter.format(row.original.insuranceCovered);
@@ -470,7 +472,10 @@ export const columns = (
       aggregatedCell: ({row}) => {
         const subRows = row.subRows;
         if (subRows && subRows.length > 0) {
-          const total = subRows.reduce((sum, subRow) => sum + (subRow.original.outOfPocket || 0), 0);
+          const total = subRows.reduce(
+            (sum, subRow) => sum + (subRow.original.outOfPocket || 0),
+            0
+          );
           return currencyFormatter.format(total);
         }
         return currencyFormatter.format(row.original.outOfPocket);
@@ -504,7 +509,7 @@ export const columns = (
       enableSorting: false,
       aggregatedCell: ({row}) => {
         const expense = row.original;
-        const status = expense.claimStatus || 'not_submitted';
+        const status = expense.claimStatus || "not_submitted";
         return claimStatusEnum[status] || status;
       },
       meta: {

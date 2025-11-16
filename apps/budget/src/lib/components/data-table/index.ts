@@ -1,28 +1,23 @@
 // Core components
-export {
-	DataTable,
-	DataTableColumnHeader,
-	DataTablePagination,
-	SimpleDataTable,
-} from './core';
+export {DataTable, DataTableColumnHeader, DataTablePagination, SimpleDataTable} from "./core";
 
 // State types
 export type {
-	DataTableFeatures,
-	DataTableState,
-	DataTableStateHandlers,
-	ServerPaginationState,
-	SimpleColumnDef,
-	TableDensity,
-	TableUISettings,
-} from './state';
+  DataTableFeatures,
+  DataTableState,
+  DataTableStateHandlers,
+  ServerPaginationState,
+  SimpleColumnDef,
+  TableDensity,
+  TableUISettings,
+} from "./state";
 
 // Utilities
 export {
-	createColumn,
-	createColumns,
-	textColumn,
-	numberColumn,
-	dateColumn,
-	actionColumn,
-} from './utils';
+  createColumn,
+  createColumns,
+  textColumn,
+  numberColumn,
+  dateColumn,
+  actionColumn,
+} from "./utils";
