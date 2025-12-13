@@ -1,17 +1,17 @@
 <script lang="ts">
-import type { DetectedPattern } from '$lib/schema/detected-patterns';
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-import Calendar from '@lucide/svelte/icons/calendar';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
-import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import Check from '@lucide/svelte/icons/check';
-import X from '@lucide/svelte/icons/x';
 import { convertPatternToSchedule, dismissPattern } from '$lib/query/patterns';
+import type { DetectedPattern } from '$lib/schema/detected-patterns';
 import { getConfidenceColor } from '$lib/utils/confidence-colors';
+import { formatDateDisplay, parseISOString } from '$lib/utils/dates';
 import { formatCurrency } from '$lib/utils/formatters';
-import { parseISOString, formatDateDisplay } from '$lib/utils/dates';
+import Calendar from '@lucide/svelte/icons/calendar';
+import Check from '@lucide/svelte/icons/check';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import X from '@lucide/svelte/icons/x';
 
 interface PatternCardProps {
   pattern: DetectedPattern;

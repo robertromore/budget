@@ -1,10 +1,9 @@
 <script lang="ts">
-import type { DetectedPattern } from '$lib/schema/detected-patterns';
-import PatternCard from './pattern-card.svelte';
-import { Button } from '$lib/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
+import type { DetectedPattern } from '$lib/schema/detected-patterns';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import Sparkles from '@lucide/svelte/icons/sparkles';
+import PatternCard from './pattern-card.svelte';
 
 interface PatternListProps {
   patterns: DetectedPattern[];
