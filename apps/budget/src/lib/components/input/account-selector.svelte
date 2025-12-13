@@ -49,18 +49,23 @@ let {
   management,
 }: Props = $props();
 
+// Capture props at mount time to avoid reactivity warnings
+const _defaultValue = (() => defaultValue)();
+const _initialEntities = (() => entities)();
+
+// Set initial value from default
+if (_defaultValue) {
+  const defaultEntity = _initialEntities.find((entity) => entity.id === _defaultValue);
+  if (defaultEntity) {
+    value = defaultEntity;
+  }
+}
+
 let label = $derived(value?.name);
 let selected = $derived.by(() => entities.find((entity) => entity.id == value?.id));
 let open = $state(false);
 let manage = $state(false);
 let managingId: number = $state(0);
-
-if (defaultValue) {
-  const defaultEntity = entities.find((entity) => entity.id === defaultValue);
-  if (defaultEntity) {
-    value = defaultEntity;
-  }
-}
 
 const onSave = (new_entity: EditableEntityItem, is_new: boolean) => {
   management?.onSave(new_entity, is_new);
