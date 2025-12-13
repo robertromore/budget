@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Settings } from '$lib/components/icons';
+import Settings from '@lucide/svelte/icons/settings';
 import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import type { WidgetProps } from '$lib/types/widgets';

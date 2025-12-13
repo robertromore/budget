@@ -1,7 +1,8 @@
 <script lang="ts">
 import type { WidgetProps } from '$lib/types/widgets';
 import { currencyFormatter } from '$lib/utils/formatters';
-import { TrendingDown, TrendingUp } from '$lib/components/icons';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
 import WidgetCard from './widget-card.svelte';
 
 let { config, data, onUpdate, onRemove, editMode = false }: WidgetProps = $props();

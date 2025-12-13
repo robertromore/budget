@@ -4,7 +4,8 @@ import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import { widgetStore } from '$lib/stores/widgets.svelte';
 import type { WidgetConfig } from '$lib/types/widgets';
-import { Plus, Settings } from '$lib/components/icons';
+import Plus from '@lucide/svelte/icons/plus';
+import Settings from '@lucide/svelte/icons/settings';
 import { getWidgetComponent } from './widget-registry';
 
 let {

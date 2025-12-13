@@ -1,5 +1,6 @@
 <script lang="ts">
-import { ArrowDownLeft, ArrowUpRight } from '$lib/components/icons';
+import ArrowDownLeft from '@lucide/svelte/icons/arrow-down-left';
+import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
 import type { WidgetProps } from '$lib/types/widgets';
 import { formatDateDisplay, parseISOString } from '$lib/utils/dates';
 import { currencyFormatter } from '$lib/utils/formatters';

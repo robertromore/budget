@@ -1,7 +1,10 @@
 <script lang="ts">
 import type { WidgetProps } from '$lib/types/widgets';
 import { currencyFormatter } from '$lib/utils/formatters';
-import { Clock, DollarSign, TrendingDown, TrendingUp } from '$lib/components/icons';
+import Clock from '@lucide/svelte/icons/clock';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
 import WidgetCard from './widget-card.svelte';
 
 let { config, data, onUpdate, onRemove, editMode = false }: WidgetProps = $props();
