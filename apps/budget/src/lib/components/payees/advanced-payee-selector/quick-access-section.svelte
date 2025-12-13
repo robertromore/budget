@@ -10,7 +10,7 @@ let {
   onSelect,
 }: {
   sections: QuickAccessSections;
-  selectedPayeeId: number | null;
+  selectedPayeeId?: number | null;
   displayMode?: DisplayMode;
   onSelect: (payeeId: number) => void;
 } = $props();
