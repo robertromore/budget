@@ -10,11 +10,13 @@ import {
   getEnabledMetrics,
   type MetricId,
 } from '$lib/utils/credit-card-metrics';
+import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Calendar from '@lucide/svelte/icons/calendar';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Percent from '@lucide/svelte/icons/percent';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
+import { SvelteSet } from 'svelte/reactivity';
 
 interface Props {
   account: Account;
@@ -26,7 +28,9 @@ interface Props {
 let { account, open = $bindable(false), onOpenChange, onSave }: Props = $props();
 
 // Initialize selected metrics from account or defaults
-let selectedMetrics = $state<Set<MetricId>>(new Set(getEnabledMetrics(account)));
+let selectedMetrics = $state(new SvelteSet<MetricId>(
+  new Set(getEnabledMetrics((() => account)()))
+));
 
 // Group metrics by category
 const metricsByCategory = $derived(() => {
@@ -65,6 +69,11 @@ const categoryInfo = {
     description: 'Understand interest and payoff timeline',
     icon: Percent,
   },
+  analytics: {
+    title: 'Analytics',
+    description: 'Detailed spending analysis and charts',
+    icon: BarChart3,
+  },
 } as const;
 
 function toggleMetric(metricId: MetricId) {
@@ -73,7 +82,7 @@ function toggleMetric(metricId: MetricId) {
   } else {
     selectedMetrics.add(metricId);
   }
-  selectedMetrics = new Set(selectedMetrics); // Trigger reactivity
+  selectedMetrics = new SvelteSet(selectedMetrics); // Trigger reactivity
 }
 
 function handleSave() {
@@ -94,7 +103,7 @@ function isMetricAvailable(metric: (typeof AVAILABLE_METRICS)[number]): boolean 
 
 // Reset to defaults
 function resetToDefaults() {
-  selectedMetrics = new Set(AVAILABLE_METRICS.filter((m) => m.defaultEnabled).map((m) => m.id));
+  selectedMetrics = new SvelteSet(AVAILABLE_METRICS.filter((m) => m.defaultEnabled).map((m) => m.id));
 }
 </script>
 
