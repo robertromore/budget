@@ -2,9 +2,9 @@
 import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
 import { Textarea } from '$lib/components/ui/textarea';
-import type { View } from '$lib/schema/views';
-import type { ViewDisplayState, ViewFilter, TableEntityType } from '$lib/types';
 import { saveView } from '$lib/query/views';
+import type { View } from '$lib/schema/views';
+import type { TableEntityType, ViewDisplayState, ViewFilter } from '$lib/types';
 import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 
 interface Props {
@@ -27,9 +27,11 @@ let { view, entityType, filters = [], display, onCancel, onSave }: Props = $prop
 const isUpdate = $derived(view !== undefined && view.id !== undefined);
 const mutation = saveView.options();
 
+const _view = (() => view)();
+
 // Form state
-let name = $state(view?.name ?? '');
-let description = $state(view?.description ?? '');
+let name = $state(_view?.name ?? '');
+let description = $state(_view?.description ?? '');
 
 // Reset form when view changes
 $effect(() => {

@@ -1,4 +1,4 @@
-import type { Row, FilterFn } from "@tanstack/table-core";
+import type { Row } from "@tanstack/table-core";
 
 /**
  * Generic filter function type that works with any data type

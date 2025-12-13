@@ -1,10 +1,9 @@
-import type { Row } from "@tanstack/table-core";
 import type { TopCategoryData } from "$lib/types";
+import type { Row } from "@tanstack/table-core";
 import type {
-  FilterRegistry,
   AmountFilterValue,
-  RangeFilterValue,
-  TextFilterValue,
+  FilterRegistry,
+  TextFilterValue
 } from "./filter-registry";
 
 /**

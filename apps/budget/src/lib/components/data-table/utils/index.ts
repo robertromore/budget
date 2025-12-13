@@ -1,8 +1,4 @@
 export {
-  createColumn,
-  createColumns,
-  textColumn,
-  numberColumn,
-  dateColumn,
-  actionColumn,
+  actionColumn, createColumn,
+  createColumns, dateColumn, numberColumn, textColumn
 } from "./column-helpers";

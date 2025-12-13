@@ -1,9 +1,9 @@
 <script lang="ts" generics="TData">
-import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import { buttonVariants } from '$lib/components/ui/button';
-import ListFilterPlus from '@lucide/svelte/icons/list-filter-plus';
-import { cn } from '$lib/utils';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import type { FilterInputOption } from '$lib/types';
+import { cn } from '$lib/utils';
+import ListFilterPlus from '@lucide/svelte/icons/list-filter-plus';
 import type { ColumnFiltersState, Table } from '@tanstack/table-core';
 
 interface Props {
@@ -33,6 +33,9 @@ const selectedFilters = $derived(
 const selectableFilters = $derived(
   availableFilters.filter((af) => !activeFilterColumnIds.has(af.column.id))
 );
+
+// Check if there are any filters available at all
+const hasFilters = $derived(availableFilters.length > 0);
 
 // Add a filter
 function addFilter(filter: FilterInputOption<TData>) {
@@ -71,7 +74,9 @@ function updateFilter(columnId: string, value: unknown) {
   {/each}
 
   <DropdownMenu.Root>
-    <DropdownMenu.Trigger class={cn(buttonVariants({ variant: 'outline' }), 'h-8')}>
+    <DropdownMenu.Trigger
+      class={cn(buttonVariants({ variant: 'outline' }), 'h-8')}
+      disabled={!hasFilters}>
       <ListFilterPlus />
       Filter
     </DropdownMenu.Trigger>

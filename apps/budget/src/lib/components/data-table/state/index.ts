@@ -5,5 +5,5 @@ export type {
   ServerPaginationState,
   SimpleColumnDef,
   TableDensity,
-  TableUISettings,
+  TableUISettings
 } from "./types";

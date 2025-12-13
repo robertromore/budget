@@ -1,5 +1,9 @@
 // Core components
-export { DataTable, DataTableColumnHeader, DataTablePagination, SimpleDataTable } from "./core";
+export { AdvancedDataTable, DataTable, DataTableColumnHeader, DataTablePagination } from "./core";
+
+// Toolbar components
+export { GenericDisplayInput, GenericFacetedFilter, GenericFilterInput, GenericToolbar } from "./toolbar";
+export type { FacetedFilterOption, FilterOperator } from "./toolbar";
 
 // State types
 export type {
@@ -9,15 +13,11 @@ export type {
   ServerPaginationState,
   SimpleColumnDef,
   TableDensity,
-  TableUISettings,
+  TableUISettings
 } from "./state";
 
 // Utilities
 export {
-  createColumn,
-  createColumns,
-  textColumn,
-  numberColumn,
-  dateColumn,
-  actionColumn,
+  actionColumn, createColumn,
+  createColumns, dateColumn, numberColumn, textColumn
 } from "./utils";
