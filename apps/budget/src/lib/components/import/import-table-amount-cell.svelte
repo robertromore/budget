@@ -1,7 +1,7 @@
 <script lang="ts">
+import type { ImportRow } from '$lib/types/import';
 import { formatCurrency } from '$lib/utils/formatters';
 import type { Row } from '@tanstack/table-core';
-import type { ImportRow } from '$lib/types/import';
 
 interface Props {
   row: Row<ImportRow>;

@@ -2,10 +2,10 @@
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { cn } from '$lib/utils';
-import Upload from '@lucide/svelte/icons/upload';
-import FileText from '@lucide/svelte/icons/file-text';
-import X from '@lucide/svelte/icons/x';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import FileText from '@lucide/svelte/icons/file-text';
+import Upload from '@lucide/svelte/icons/upload';
+import X from '@lucide/svelte/icons/x';
 
 interface Props {
   acceptedFormats: string[];
@@ -104,7 +104,7 @@ function handleDrop(e: DragEvent) {
   e.preventDefault();
   isDragging = false;
 
-  const files = e.dataTransfer?.files;
+  const files = e.dataTransfer?.files ?? null;
   handleFileSelect(files);
 }
 

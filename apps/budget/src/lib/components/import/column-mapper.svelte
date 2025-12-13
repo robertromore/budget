@@ -1,14 +1,14 @@
 <script lang="ts">
-import * as Select from '$lib/components/ui/select';
-import * as Card from '$lib/components/ui/card';
 import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import * as Select from '$lib/components/ui/select';
 import type { ColumnMapping } from '$lib/types/import';
 import { formatPreviewAmount } from '$lib/utils/import';
 
 interface Props {
   rawColumns: string[];
-  initialMapping?: ColumnMapping;
-  sampleData?: Record<string, any>[];
+  initialMapping?: ColumnMapping | undefined;
+  sampleData?: Record<string, any>[] | undefined;
   onNext: (mapping: ColumnMapping) => void;
   onBack: () => void;
 }
@@ -79,7 +79,27 @@ $effect(() => {
   if (initialized) return;
 
   if (initialMapping) {
-    columnMapping = { ...initialMapping };
+    // Profile stores mappings as { fieldType: columnName } (e.g., { date: "Transaction Date" })
+    // But columnMapping expects { columnName: fieldType } (e.g., { "Transaction Date": "date" })
+    // So we need to invert the mapping
+    const invertedMapping: Record<string, string> = {};
+    Object.entries(initialMapping).forEach(([field, column]) => {
+      if (column && typeof column === 'string') {
+        // Handle field name differences between profile schema and component
+        let mappedField = field;
+        // Profile uses 'memo'/'description', component uses 'notes'
+        if (field === 'memo' || field === 'description') {
+          mappedField = 'notes';
+        }
+        // Profile uses 'inflow'/'outflow' (or legacy 'debit'/'credit'), component uses 'debit/credit'
+        else if (field === 'inflow' || field === 'outflow' || field === 'debit' || field === 'credit') {
+          mappedField = 'debit/credit';
+        }
+        invertedMapping[column] = mappedField;
+      }
+    });
+    columnMapping = invertedMapping;
+    console.log('Inverted profile mapping:', invertedMapping);
   } else {
     // Check if we have both debit and credit columns
     const hasDebitCol = rawColumns.some((col) => col.toLowerCase().includes('debit'));
@@ -125,9 +145,11 @@ $effect(() => {
   // Initialize select values based on column mapping
   Object.entries(columnMapping).forEach(([col, target]) => {
     if (target === 'debit/credit') {
-      if (col.toLowerCase().includes('debit')) {
+      const colLower = col.toLowerCase();
+      // Handle both debit/credit and outflow/inflow naming conventions
+      if (colLower.includes('debit') || colLower.includes('outflow')) {
         debitSelectValue = col;
-      } else if (col.toLowerCase().includes('credit')) {
+      } else if (colLower.includes('credit') || colLower.includes('inflow')) {
         creditSelectValue = col;
       }
     } else if (target) {
@@ -142,45 +164,73 @@ $effect(() => {
 
 // Handler functions for select changes (called directly, not in effects)
 function handleDebitChange(newValue: string) {
-  // Clear any existing debit mapping
-  Object.keys(columnMapping).forEach((col) => {
-    if (columnMapping[col] === 'debit/credit' && col.toLowerCase().includes('debit')) {
-      columnMapping[col] = '';
+  // Create a new mapping, excluding existing debit/outflow mappings
+  let newMapping: Record<string, string> = {};
+
+  Object.entries(columnMapping).forEach(([col, target]) => {
+    const colLower = col.toLowerCase();
+    const isDebitMapping =
+      target === 'debit/credit' && (colLower.includes('debit') || colLower.includes('outflow'));
+    if (!isDebitMapping) {
+      newMapping[col] = target;
     }
   });
+
   // Set new debit mapping
   if (newValue) {
-    columnMapping[newValue] = 'debit/credit';
+    newMapping[newValue] = 'debit/credit';
   }
+
+  columnMapping = newMapping;
   debitSelectValue = newValue;
 }
 
 function handleCreditChange(newValue: string) {
-  // Clear any existing credit mapping
-  Object.keys(columnMapping).forEach((col) => {
-    if (columnMapping[col] === 'debit/credit' && col.toLowerCase().includes('credit')) {
-      columnMapping[col] = '';
+  // Create a new mapping, excluding existing credit/inflow mappings
+  let newMapping: Record<string, string> = {};
+
+  Object.entries(columnMapping).forEach(([col, target]) => {
+    const colLower = col.toLowerCase();
+    const isCreditMapping =
+      target === 'debit/credit' && (colLower.includes('credit') || colLower.includes('inflow'));
+    if (!isCreditMapping) {
+      newMapping[col] = target;
     }
   });
+
   // Set new credit mapping
   if (newValue) {
-    columnMapping[newValue] = 'debit/credit';
+    newMapping[newValue] = 'debit/credit';
   }
+
+  columnMapping = newMapping;
   creditSelectValue = newValue;
 }
 
 function handleFieldChange(field: string, newValue: string) {
-  // Clear any existing mapping to this target field
-  Object.keys(columnMapping).forEach((col) => {
-    if (columnMapping[col] === field) {
-      columnMapping[col] = '';
+  // Create a new mapping object, excluding columns mapped to this target field
+  let newMapping: Record<string, string> = {};
+
+  Object.entries(columnMapping).forEach(([col, target]) => {
+    if (target !== field) {
+      newMapping[col] = target;
     }
   });
+
+  // If the new column was already mapped to another field, clear that field's select value
+  if (newValue && newMapping[newValue] && newMapping[newValue] !== field) {
+    const oldField = newMapping[newValue];
+    fieldSelectValues[oldField] = '';
+    delete newMapping[newValue];
+  }
+
   // Set new mapping
   if (newValue) {
-    columnMapping[newValue] = field;
+    newMapping[newValue] = field;
   }
+
   fieldSelectValues[field] = newValue;
+  columnMapping = newMapping;
 }
 
 // Check if mapping is valid (at minimum needs date and either amount OR debit/credit)
@@ -192,6 +242,31 @@ const isValidMapping = $derived.by(() => {
 
   // Valid if we have date and either amount or debit/credit
   return hasDate && (hasAmount || hasDebitCredit);
+});
+
+// Compute preview mappings reactively
+const previewMappings = $derived.by(() => {
+  return targetFields
+    .filter((f) => f.value !== '')
+    .flatMap((f) => {
+      if (f.value === 'debit/credit') {
+        const cols = Object.entries(columnMapping)
+          .filter(([c, target]) => target === f.value && rawColumns.includes(c))
+          .map(([c]) => c);
+        return cols.map((col) => {
+          const colLower = col.toLowerCase();
+          const isDebit = colLower.includes('debit') || colLower.includes('outflow');
+          return {
+            field: { value: 'debit/credit', label: isDebit ? 'Debit' : 'Credit' },
+            column: col,
+            isDebit
+          };
+        });
+      }
+      const col = Object.entries(columnMapping)
+        .find(([c, target]) => target === f.value && rawColumns.includes(c))?.[0];
+      return col ? [{ field: f, column: col, isDebit: false }] : [];
+    });
 });
 
 function handleNext() {
@@ -208,10 +283,10 @@ function handleNext() {
       // Handle debit/credit combined mapping
       if (targetField === 'debit/credit') {
         const colLower = rawCol.toLowerCase();
-        if (colLower.includes('debit')) {
-          (mapping as any).debit = rawCol;
-        } else if (colLower.includes('credit')) {
-          (mapping as any).credit = rawCol;
+        if (colLower.includes('debit') || colLower.includes('outflow')) {
+          mapping.debit = rawCol;
+        } else if (colLower.includes('credit') || colLower.includes('inflow')) {
+          mapping.credit = rawCol;
         }
       } else {
         mapping[targetField as keyof ColumnMapping] = rawCol;
@@ -340,7 +415,7 @@ function handleNext() {
     </Card.Content>
   </Card.Root>
 
-  {#if filteredSampleData.length > 0}
+  {#if filteredSampleData.length > 0 && previewMappings.length > 0}
     <Card.Root>
       <Card.Header>
         <Card.Title>Preview</Card.Title>
@@ -353,13 +428,9 @@ function handleNext() {
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b">
-                {#each Object.entries(columnMapping).filter(([col, target]) => {
-                  const included = rawColumns.includes(col) && target !== '';
-                  console.log(`Column "${col}" -> "${target}": rawColumns.includes=${rawColumns.includes(col)}, target="${target}", included=${included}`);
-                  return included;
-                }) as [, target]}
+                {#each previewMappings as mapping}
                   <th class="p-2 text-left font-medium">
-                    {targetFields.find((f) => f.value === target)?.label || target}
+                    {mapping.field.label}
                   </th>
                 {/each}
               </tr>
@@ -367,13 +438,16 @@ function handleNext() {
             <tbody>
               {#each filteredSampleData.slice(0, 10) as row}
                 <tr class="border-b">
-                  {#each Object.entries(columnMapping).filter(([col, target]) => rawColumns.includes(col) && target !== '') as [rawCol, target]}
+                  {#each previewMappings as mapping}
                     <td class="p-2">
-                      {#if target === 'debit/credit'}
-                        {@const colLower = rawCol.toLowerCase()}
-                        {formatPreviewAmount(row[rawCol], colLower.includes('debit'))}
+                      {#if mapping.column}
+                        {#if mapping.field.value === 'debit/credit'}
+                          {formatPreviewAmount(row[mapping.column], mapping.isDebit)}
+                        {:else}
+                          {row[mapping.column] || '-'}
+                        {/if}
                       {:else}
-                        {row[rawCol] || '-'}
+                        -
                       {/if}
                     </td>
                   {/each}

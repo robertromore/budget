@@ -1,4 +1,14 @@
 <script lang="ts">
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
+import * as Select from '$lib/components/ui/select';
+import * as Table from '$lib/components/ui/table';
+import type { ImportRow } from '$lib/types/import';
+import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+import ChevronRight from '@lucide/svelte/icons/chevron-right';
+import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
+import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
 import {
   getCoreRowModel,
   getFacetedRowModel,
@@ -7,16 +17,6 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
 } from '@tanstack/table-core';
-import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
-import * as Table from '$lib/components/ui/table';
-import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
-import * as Select from '$lib/components/ui/select';
-import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-import ChevronRight from '@lucide/svelte/icons/chevron-right';
-import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
-import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
-import type { ImportRow } from '$lib/types/import';
 import { createColumns } from './import-data-table-columns';
 
 interface Props {

@@ -1,13 +1,13 @@
-import type { ColumnDef } from "@tanstack/table-core";
-import type { ImportRow } from "$lib/types/import";
-import { renderComponent } from "$lib/components/ui/data-table";
 import { Checkbox } from "$lib/components/ui/checkbox";
-import ImportTableColumnHeader from "./import-table-column-header.svelte";
-import ImportTableStatusCell from "./import-table-status-cell.svelte";
+import { renderComponent } from "$lib/components/ui/data-table";
+import type { ImportRow } from "$lib/types/import";
+import type { ColumnDef } from "@tanstack/table-core";
 import ImportTableAmountCell from "./import-table-amount-cell.svelte";
-import ImportTablePayeeCell from "./import-table-payee-cell.svelte";
 import ImportTableCategoryCell from "./import-table-category-cell.svelte";
+import ImportTableColumnHeader from "./import-table-column-header.svelte";
 import ImportTableDescriptionCell from "./import-table-description-cell.svelte";
+import ImportTablePayeeCell from "./import-table-payee-cell.svelte";
+import ImportTableStatusCell from "./import-table-status-cell.svelte";
 
 export function createColumns(options?: {
   onPayeeUpdate?: (rowIndex: number, payeeId: number | null, payeeName: string | null) => void;

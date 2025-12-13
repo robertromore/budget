@@ -2,15 +2,15 @@
 import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
-import Check from '@lucide/svelte/icons/check';
-import Tag from '@lucide/svelte/icons/tag';
-import Sparkles from '@lucide/svelte/icons/sparkles';
-import X from '@lucide/svelte/icons/x';
-import type { Row } from '@tanstack/table-core';
-import type { ImportRow } from '$lib/types/import';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
+import type { ImportRow } from '$lib/types/import';
 import { cn } from '$lib/utils';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import Check from '@lucide/svelte/icons/check';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import Tag from '@lucide/svelte/icons/tag';
+import X from '@lucide/svelte/icons/x';
+import type { Row } from '@tanstack/table-core';
 import Fuse from 'fuse.js';
 
 interface Props {

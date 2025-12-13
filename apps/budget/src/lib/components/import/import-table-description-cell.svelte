@@ -1,7 +1,7 @@
 <script lang="ts">
-import type { Row } from '@tanstack/table-core';
-import type { ImportRow } from '$lib/types/import';
 import TextAreaInput from '$lib/components/input/text-area-input.svelte';
+import type { ImportRow } from '$lib/types/import';
+import type { Row } from '@tanstack/table-core';
 
 interface Props {
   row: Row<ImportRow>;

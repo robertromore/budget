@@ -1,13 +1,13 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
 import * as Tooltip from '$lib/components/ui/tooltip';
+import type { ImportRow, ValidationError } from '$lib/types/import';
 import { formatDisplayValue } from '$lib/utils/formatters';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Clock from '@lucide/svelte/icons/clock';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import type { Row } from '@tanstack/table-core';
-import type { ImportRow, ValidationError } from '$lib/types/import';
 
 interface Props {
   row: Row<ImportRow>;

@@ -2,14 +2,14 @@
 import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
+import { PayeesState } from '$lib/states/entities/payees.svelte';
+import type { ImportRow } from '$lib/types/import';
+import { cn } from '$lib/utils';
 import Check from '@lucide/svelte/icons/check';
-import User from '@lucide/svelte/icons/user';
 import Sparkles from '@lucide/svelte/icons/sparkles';
+import User from '@lucide/svelte/icons/user';
 import X from '@lucide/svelte/icons/x';
 import type { Row } from '@tanstack/table-core';
-import type { ImportRow } from '$lib/types/import';
-import { PayeesState } from '$lib/states/entities/payees.svelte';
-import { cn } from '$lib/utils';
 import Fuse from 'fuse.js';
 
 interface Props {

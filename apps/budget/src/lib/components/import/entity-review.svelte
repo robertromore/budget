@@ -1,12 +1,12 @@
 <script lang="ts">
-import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
-import { Checkbox } from '$lib/components/ui/checkbox';
 import * as Badge from '$lib/components/ui/badge';
-import CircleCheck from '@lucide/svelte/icons/circle-check';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import type { CategoryPreview, PayeePreview } from '$lib/types/import';
 import Circle from '@lucide/svelte/icons/circle';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Sparkles from '@lucide/svelte/icons/sparkles';
-import type { PayeePreview, CategoryPreview } from '$lib/types/import';
 
 interface Props {
   payees: PayeePreview[];
