@@ -37,28 +37,28 @@
   - Calendar highlighting of recurring dates
 -->
 <script lang="ts">
-import { getLocalTimeZone, type DateValue } from '@internationalized/date';
-import { cn } from '$lib/utils';
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Calendar from '$lib/components/ui/calendar';
-import * as Popover from '$lib/components/ui/popover';
 import * as Card from '$lib/components/ui/card';
-import * as Tabs from '$lib/components/ui/tabs';
-import * as RadioGroup from '$lib/components/ui/radio-group';
 import { Checkbox } from '$lib/components/ui/checkbox';
-import { Switch } from '$lib/components/ui/switch';
-import { Label } from '$lib/components/ui/label';
 import { Input } from '$lib/components/ui/input';
-import { Badge } from '$lib/components/ui/badge';
+import { Label } from '$lib/components/ui/label';
+import * as Popover from '$lib/components/ui/popover';
+import * as RadioGroup from '$lib/components/ui/radio-group';
 import { Separator } from '$lib/components/ui/separator';
+import { Switch } from '$lib/components/ui/switch';
+import * as Tabs from '$lib/components/ui/tabs';
+import { cn } from '$lib/utils';
 import { dateFormatter, pluralRules } from '$lib/utils/date-formatters';
+import { nextDaily, nextMonthly, nextWeekly, nextYearly } from '$lib/utils/date-frequency';
 import { weekOptions, weekdayOptions } from '$lib/utils/date-options';
-import { nextDaily, nextWeekly, nextMonthly, nextYearly } from '$lib/utils/date-frequency';
 import { currentDate } from '$lib/utils/dates';
+import { getLocalTimeZone, type DateValue } from '@internationalized/date';
 
 import CalendarDays from '@lucide/svelte/icons/calendar-days';
-import Repeat from '@lucide/svelte/icons/repeat';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import Repeat from '@lucide/svelte/icons/repeat';
 import X from '@lucide/svelte/icons/x';
 
 import RepeatingDateInputModel from '$lib/models/repeating_date.svelte';
@@ -80,6 +80,7 @@ let {
 
 // Local state
 let hasEndCondition = $state(false);
+let previousFrequency = $state<string | null>(null);
 
 // Auto-enable isRepeating when the toggle is hidden
 $effect(() => {
@@ -150,17 +151,34 @@ const nextOccurrences = $derived.by(() => {
         dates = nextWeekly(startDate, endDate, interval, weekDays, limit);
         break;
       }
-      case 'monthly':
-        dates = nextMonthly(
-          startDate,
-          endDate,
-          interval,
-          value.days || null,
-          value.weeks || [],
-          value.weeks_days || [],
-          limit
-        );
+      case 'monthly': {
+        // Determine which pattern to use (matching model logic)
+        const onDay =
+          value.on && value.on_type === 'day' && value.days && value.days.length > 0;
+        const onThe =
+          value.on &&
+          value.on_type === 'the' &&
+          value.weeks?.length &&
+          value.weeks_days?.length;
+
+        if (onDay) {
+          dates = nextMonthly(startDate, endDate, interval, value.days, [], [], limit);
+        } else if (onThe) {
+          dates = nextMonthly(
+            startDate,
+            endDate,
+            interval,
+            null,
+            value.weeks || [],
+            value.weeks_days || [],
+            limit
+          );
+        } else {
+          // Fallback: same day as start date
+          dates = nextMonthly(startDate, endDate, interval, startDate.day, [], [], limit);
+        }
         break;
+      }
       case 'yearly':
         dates = nextYearly(startDate, startDate, endDate, interval, limit);
         break;
@@ -188,9 +206,10 @@ const nextOccurrences = $derived.by(() => {
   }
 });
 
-// Handle frequency changes
+// Handle frequency changes - only reset settings when user changes frequency, not on initial load
 $effect(() => {
-  if (value.frequency) {
+  const currentFrequency = value.frequency;
+  if (currentFrequency && previousFrequency !== null && previousFrequency !== currentFrequency) {
     // Reset frequency-specific settings when changing frequency
     value.week_days = [];
     value.weeks = [];
@@ -198,6 +217,8 @@ $effect(() => {
     value.days = [];
     value.on = false;
   }
+  // Track the current frequency for next comparison
+  previousFrequency = currentFrequency ?? null;
 });
 
 const handleWeekdayToggle = (weekday: number) => {
@@ -278,7 +299,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
   <div class="space-y-4">
     {#if !hideRecurringToggle}
       <Label
-        class="hover:bg-accent/50 has-[[aria-checked=true]]:border-primary has-[[aria-checked=true]]:bg-primary/5 flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors">
+        class="hover:bg-accent/50 has-aria-checked:border-primary has-aria-checked:bg-primary/5 flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors">
         <Checkbox
           bind:checked={isRepeating}
           {disabled}
@@ -583,7 +604,7 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
           <!-- End Condition -->
           <div class="space-y-4">
             <Label
-              class="hover:bg-accent/50 has-[[aria-checked=true]]:border-primary has-[[aria-checked=true]]:bg-primary/5 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors">
+              class="hover:bg-accent/50 has-aria-checked:border-primary has-aria-checked:bg-primary/5 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors">
               <Checkbox
                 bind:checked={hasEndCondition}
                 onCheckedChange={(checked) => {
@@ -714,8 +735,8 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                     class={cn(
                       isStartDate
                         ? outsideMonth
-                          ? '!bg-white font-semibold !text-green-600/50 ring-2 ring-green-500/40 dark:!bg-transparent dark:!text-green-400/50'
-                          : '!bg-white font-semibold !text-green-600 ring-2 ring-green-500 dark:!bg-transparent dark:!text-green-400'
+                          ? 'bg-white! font-semibold text-green-600/50! ring-2 ring-green-500/40 dark:bg-transparent! dark:text-green-400/50!'
+                          : 'bg-white! font-semibold text-green-600! ring-2 ring-green-500 dark:bg-transparent! dark:text-green-400!'
                         : isSpecific
                           ? outsideMonth
                             ? 'border-2 border-dotted border-amber-500/50 bg-amber-500/30 text-amber-700 hover:bg-amber-500/40'
@@ -726,8 +747,8 @@ const handleRemoveSpecificDate = (dateToRemove: DateValue) => {
                               : 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
                             : isToday
                               ? outsideMonth
-                                ? 'border-2 border-blue-500/40 font-medium !text-blue-600/50 dark:!text-blue-400/50'
-                                : 'border-2 border-blue-500 font-medium !text-blue-600 dark:!text-blue-400'
+                                ? 'border-2 border-blue-500/40 font-medium text-blue-600/50! dark:text-blue-400/50!'
+                                : 'border-2 border-blue-500 font-medium text-blue-600! dark:text-blue-400!'
                               : outsideMonth
                                 ? 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
                                 : '',

@@ -1,13 +1,13 @@
 <script lang="ts">
-import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
-import { CalendarDate, DateFormatter } from '@internationalized/date';
+import { Button } from '$lib/components/ui/button';
 import { Calendar } from '$lib/components/ui/calendar/index.js';
 import { Label } from '$lib/components/ui/label';
-import { SvelteMap } from 'svelte/reactivity';
+import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
 import type { FacetedFilterOption } from '$lib/types';
-import { Button } from '$lib/components/ui/button';
 import { dayFmt } from '$lib/utils/date-formatters';
-import { timezone, currentDate } from '$lib/utils/dates';
+import { currentDate, timezone } from '$lib/utils/dates';
+import { CalendarDate, DateFormatter } from '@internationalized/date';
+import { SvelteMap } from 'svelte/reactivity';
 
 type Props = {
   onSubmit: (new_value: FacetedFilterOption) => void;

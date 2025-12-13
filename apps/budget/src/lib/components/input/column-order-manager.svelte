@@ -1,11 +1,11 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
-import ChevronUp from '@lucide/svelte/icons/chevron-up';
+import { cn } from '$lib/utils';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import ChevronUp from '@lucide/svelte/icons/chevron-up';
 import GripVertical from '@lucide/svelte/icons/grip-vertical';
 import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 import type { Column } from '@tanstack/table-core';
-import { cn } from '$lib/utils';
 
 interface Props {
   columns: Column<any, unknown>[];

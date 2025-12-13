@@ -3,9 +3,9 @@
 import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
 import * as Popover from '$lib/components/ui/popover';
-import { currencyFormatter } from '$lib/utils/formatters';
-import { cn } from '$lib/utils';
 import SuggestionBadge from '$lib/components/ui/suggestion-badge.svelte';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
 import Delete from '@lucide/svelte/icons/delete';
 
 interface AmountSuggestion {

@@ -10,7 +10,7 @@ import { type DateValue } from '@internationalized/date';
 import CalendarDays from '@lucide/svelte/icons/calendar-days';
 
 interface Props {
-  value?: DateValue;
+  value?: DateValue | undefined;
   handleSubmit?: (value: DateValue | undefined) => void;
   buttonClass?: string;
 }

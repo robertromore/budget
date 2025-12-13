@@ -3,8 +3,8 @@
 import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
 import * as Popover from '$lib/components/ui/popover';
-import { currencyFormatter } from '$lib/utils/formatters';
 import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
 import Delete from '@lucide/svelte/icons/delete';
 
 // --- Props ---
@@ -39,6 +39,32 @@ $effect(() => {
 
 // Track if popover has been opened to prevent auto-submit on mount
 let hasBeenOpened = $state(false);
+
+// --- Scrubber State ---
+let isScrubbing = $state(false);
+let scrubStartX = $state(0);
+let scrubStartValue = $state(0);
+let lastX = $state(0);
+let lastTime = $state(0);
+let currentValue = $state(0);
+let scrubMode = $state<'fine' | 'normal' | 'coarse' | 'turbo' | 'velocity'>('normal');
+
+// Scrubber configuration
+const SCRUB_THRESHOLD = 3; // minimum pixels before scrubbing activates
+const BASE_SENSITIVITY = 0.01; // base value change per pixel
+const VELOCITY_SCALE = 0.002; // how much velocity affects the multiplier
+const MIN_MULTIPLIER = 0.5; // minimum velocity multiplier (slow movement)
+const MAX_MULTIPLIER = 5; // maximum velocity multiplier (fast movement)
+const VELOCITY_EXPONENT = 2; // Power for exponential velocity scaling in velocity mode
+
+// Scrub mode display info
+const scrubModes = [
+  { key: 'fine', hotkey: 'shift', label: '0.1x' },
+  { key: 'normal', hotkey: '', label: '1x' },
+  { key: 'coarse', hotkey: 'cmd', label: '10x' },
+  { key: 'turbo', hotkey: 'shift+cmd', label: '100x' },
+  { key: 'velocity', hotkey: 'opt', label: 'velocity' },
+] as const;
 
 // --- Functions: Numeric Input Logic ---
 const select = (num: string) => () => {
@@ -142,6 +168,100 @@ const handlePaste = (event: ClipboardEvent) => {
 
   new_amount = cleaned;
 };
+
+// --- Functions: Scrubber ---
+function handleInputMouseDown(e: MouseEvent) {
+  // Only start tracking on left mouse button
+  if (e.button !== 0) return;
+
+  scrubStartX = e.clientX;
+  lastX = e.clientX;
+  lastTime = performance.now();
+  scrubStartValue = parseFloat(new_amount) || 0;
+  currentValue = scrubStartValue;
+
+  // Add listeners for potential scrubbing
+  window.addEventListener('mousemove', handleInputMouseMove);
+  window.addEventListener('mouseup', handleInputMouseUp);
+}
+
+function handleInputMouseMove(e: MouseEvent) {
+  const totalDeltaX = e.clientX - scrubStartX;
+
+  // Only activate scrubbing after threshold
+  if (!isScrubbing && Math.abs(totalDeltaX) > SCRUB_THRESHOLD) {
+    isScrubbing = true;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'ew-resize';
+    // Blur the input to prevent text selection during scrubbing
+    input?.blur();
+    // Clear any existing selection
+    window.getSelection()?.removeAllRanges();
+    // Reset tracking when scrubbing starts
+    lastX = e.clientX;
+    lastTime = performance.now();
+    currentValue = scrubStartValue;
+  }
+
+  if (isScrubbing) {
+    const now = performance.now();
+    const deltaX = e.clientX - lastX;
+    const deltaTime = now - lastTime;
+
+    // Calculate velocity (pixels per millisecond)
+    const velocity = deltaTime > 0 ? Math.abs(deltaX) / deltaTime : 0;
+
+    // Convert velocity to a multiplier (faster movement = larger changes)
+    // velocity of ~0.5 px/ms is moderate speed, ~2 px/ms is fast
+    const velocityMultiplier = Math.min(
+      MAX_MULTIPLIER,
+      Math.max(MIN_MULTIPLIER, 1 + velocity * VELOCITY_SCALE * 1000)
+    );
+
+    // Apply modifier keys for precision and update mode indicator
+    let keyMultiplier = 1;
+    if (e.altKey) {
+      // Velocity mode: exponential scaling based on movement speed
+      keyMultiplier = Math.pow(velocity * 10 + 1, VELOCITY_EXPONENT);
+      scrubMode = 'velocity';
+    } else if (e.shiftKey && (e.ctrlKey || e.metaKey)) {
+      keyMultiplier = 100; // Turbo control
+      scrubMode = 'turbo';
+    } else if (e.shiftKey) {
+      keyMultiplier = 0.1; // Fine control
+      scrubMode = 'fine';
+    } else if (e.ctrlKey || e.metaKey) {
+      keyMultiplier = 10; // Coarse control
+      scrubMode = 'coarse';
+    } else {
+      scrubMode = 'normal';
+    }
+
+    // Calculate value change based on direction, velocity, and modifiers
+    const direction = deltaX > 0 ? 1 : deltaX < 0 ? -1 : 0;
+    const valueChange = direction * Math.abs(deltaX) * BASE_SENSITIVITY * velocityMultiplier * keyMultiplier;
+
+    currentValue += valueChange;
+    new_amount = currentValue.toFixed(2);
+
+    // Update tracking for next frame
+    lastX = e.clientX;
+    lastTime = now;
+  }
+}
+
+function handleInputMouseUp() {
+  window.removeEventListener('mousemove', handleInputMouseMove);
+  window.removeEventListener('mouseup', handleInputMouseUp);
+
+  if (isScrubbing) {
+    isScrubbing = false;
+    scrubMode = 'normal';
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+    value = parseFloat(new_amount);
+  }
+}
 </script>
 
 <svelte:window on:keydown={handleKeyDown} />
@@ -186,16 +306,45 @@ const handlePaste = (event: ClipboardEvent) => {
       align="start"
       onEscapeKeydown={() => (new_amount = (value || 0).toString())}>
       <div class="p-2">
-        <Input
-          bind:value={new_amount}
-          class="mb-2"
-          bind:ref={input}
-          placeholder="0.00"
-          {id}
-          onpaste={handlePaste} />
+        <div class="relative">
+          <Input
+            bind:value={new_amount}
+            class={cn('mb-2 cursor-ew-resize', isScrubbing && 'select-none')}
+            bind:ref={input}
+            placeholder="0.00"
+            {id}
+            onpaste={handlePaste}
+            onmousedown={handleInputMouseDown} />
+          <!-- Scrub mode indicator tabs -->
+          {#if isScrubbing}
+            <div
+              class="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center rounded-md border bg-background shadow-lg overflow-hidden">
+              {#each scrubModes as mode (mode.key)}
+                <div
+                  class={cn(
+                    'flex items-center gap-1 px-2 py-1 text-xs transition-colors',
+                    scrubMode === mode.key
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground'
+                  )}>
+                  {#if mode.hotkey}
+                    <kbd
+                      class={cn(
+                        'font-mono text-[10px] px-1 rounded',
+                        scrubMode === mode.key
+                          ? 'bg-primary-foreground/20'
+                          : 'bg-muted'
+                      )}>{mode.hotkey}</kbd>
+                  {/if}
+                  <span class="font-medium">{mode.label}</span>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
 
         <div class="keypad grid grid-cols-3 grid-rows-3 gap-2">
-          {#each Array.from({ length: 9 }, (_, i) => i + 1) as i}
+          {#each Array.from({ length: 9 }, (_, i) => i + 1) as i (i)}
             <Button
               variant="outline"
               disabled={valueWellFormatted()}
