@@ -1,2 +1,5 @@
-export { default as DisplayInput } from "../input/display-input.svelte";
-export { default as FilterInput } from "../input/filter-input.svelte";
+// Re-export shared data-table components
+export * from "./data-table";
+
+// Re-export shared search components
+export * from "./search";
