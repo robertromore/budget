@@ -1,14 +1,12 @@
 <script lang="ts">
 // Framework imports
-import type { Component, Snippet } from 'svelte';
 import { browser } from '$app/environment';
-
+import type { Component, Snippet } from 'svelte';
 // UI component imports
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button } from '$lib/components/ui/button';
 import * as Dialog from '$lib/components/ui/dialog';
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Spinner } from '$lib/components/ui/spinner';
-
 // Type imports
 import type { HTMLAttributes } from 'svelte/elements';
 

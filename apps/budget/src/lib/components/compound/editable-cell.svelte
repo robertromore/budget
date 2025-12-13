@@ -1,7 +1,6 @@
 <script lang="ts" generics="T">
 // Framework imports
-import type { Snippet, Component } from 'svelte';
-
+import type { Component, Snippet } from 'svelte';
 // UI component imports
 import { Button } from '$lib/components/ui/button';
 
@@ -9,8 +8,8 @@ import { Button } from '$lib/components/ui/button';
 import { useEditableCell } from '$lib/hooks/ui/use-editable-cell.svelte';
 
 // Type imports
-import type { HTMLAttributes } from 'svelte/elements';
 import { cn } from '$lib/utils';
+import type { HTMLAttributes } from 'svelte/elements';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   // Core data
@@ -63,14 +62,18 @@ let {
   ...restProps
 }: Props = $props();
 
+const opts = (() => {
+  return {
+    initialValue: value,
+    onSave,
+    ...(onCancel && { onCancel }),
+    ...(validator && { validator }),
+    ...(formatter && { formatter }),
+  }
+})();
+
 // Use the editable cell hook
-const cellState = useEditableCell({
-  initialValue: value,
-  onSave,
-  ...(onCancel && { onCancel }),
-  ...(validator && { validator }),
-  ...(formatter && { formatter }),
-});
+const cellState = useEditableCell(opts);
 
 // Handle external value changes
 $effect(() => {
