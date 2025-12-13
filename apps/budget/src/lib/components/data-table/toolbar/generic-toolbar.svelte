@@ -1,26 +1,26 @@
 <script lang="ts" generics="TData">
-import type {
-  Table,
-  SortingState,
-  VisibilityState,
-  ColumnFiltersState,
-  ColumnPinningState,
-  GroupingState,
-  ExpandedState,
-} from '@tanstack/table-core';
-import type { FilterInputOption, TableEntityType } from '$lib/types';
-import type { View } from '$lib/schema/views';
-import type { TableDensity } from '../state/types';
-import GenericFilterInput from './generic-filter-input.svelte';
-import GenericDisplayInput from './generic-display-input.svelte';
-import InlineViewForm from './inline-view-form.svelte';
 import { Button } from '$lib/components/ui/button';
 import { Separator } from '$lib/components/ui/separator';
 import * as Tabs from '$lib/components/ui/tabs';
 import Toggle from '$lib/components/ui/toggle/toggle.svelte';
-import X from '@lucide/svelte/icons/x';
+import type { View } from '$lib/schema/views';
+import type { FilterInputOption, TableEntityType } from '$lib/types';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Plus from '@lucide/svelte/icons/plus';
+import X from '@lucide/svelte/icons/x';
+import type {
+  ColumnFiltersState,
+  ColumnPinningState,
+  ExpandedState,
+  GroupingState,
+  SortingState,
+  Table,
+  VisibilityState,
+} from '@tanstack/table-core';
+import type { TableDensity } from '../state/types';
+import GenericDisplayInput from './generic-display-input.svelte';
+import GenericFilterInput from './generic-filter-input.svelte';
+import InlineViewForm from './inline-view-form.svelte';
 
 interface Props {
   /** The table instance */
@@ -151,7 +151,7 @@ const currentDisplayState = $derived({
   grouping,
   sort: sorting,
   expanded: expanded === true ? {} : expanded,
-  visibility: columnVisibility === true ? {} : columnVisibility,
+  visibility: columnVisibility,
   pinning: columnPinning,
   columnOrder,
   density,
@@ -275,9 +275,7 @@ function handleCancelForm() {
   <!-- Filter Components and Display Options Row -->
   <div class="flex items-center justify-between">
     <div class="flex flex-1 flex-wrap items-center gap-2">
-      {#if availableFilters.length > 0}
-        <GenericFilterInput {table} {availableFilters} {columnFilters} {onColumnFiltersChange} />
-      {/if}
+      <GenericFilterInput {table} {availableFilters} {columnFilters} {onColumnFiltersChange} />
     </div>
 
     <div class="flex items-center gap-1">
