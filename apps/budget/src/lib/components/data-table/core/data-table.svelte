@@ -1,16 +1,18 @@
 <script lang="ts" generics="TData">
-import type { Snippet } from 'svelte';
+import { createSvelteTable } from '$lib/components/ui/data-table';
 import type { ColumnDef, Table } from '@tanstack/table-core';
 import {
   getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
+  getExpandedRowModel,
+  getFacetedMinMaxValues,
   getFacetedRowModel,
   getFacetedUniqueValues,
-  getFacetedMinMaxValues,
+  getFilteredRowModel,
+  getGroupedRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
 } from '@tanstack/table-core';
-import { createSvelteTable } from '$lib/components/ui/data-table';
+import type { Snippet } from 'svelte';
 import type {
   DataTableFeatures,
   DataTableState,
@@ -57,18 +59,19 @@ let {
   filterFns = {},
 }: Props = $props();
 
-// Internal state management (used when no external state is provided)
-let internalSorting = $state(externalState?.sorting ?? []);
-let internalColumnVisibility = $state(externalState?.columnVisibility ?? {});
-let internalColumnFilters = $state(externalState?.columnFilters ?? []);
-let internalPagination = $state(externalState?.pagination ?? { pageIndex: 0, pageSize: 10 });
-let internalRowSelection = $state(externalState?.rowSelection ?? {});
-let internalColumnPinning = $state(externalState?.columnPinning ?? {});
-let internalExpanded = $state(externalState?.expanded ?? {});
-let internalGrouping = $state(externalState?.grouping ?? []);
-let internalGlobalFilter = $state(externalState?.globalFilter ?? '');
-let internalColumnOrder = $state(externalState?.columnOrder ?? []);
+const _externalState = (() => externalState)();
 
+// Internal state management (used when no external state is provided)
+let internalSorting = $state(_externalState?.sorting ?? []);
+let internalColumnVisibility = $state(_externalState?.columnVisibility ?? {});
+let internalColumnFilters = $state(_externalState?.columnFilters ?? []);
+let internalPagination = $state(_externalState?.pagination ?? { pageIndex: 0, pageSize: 10 });
+let internalRowSelection = $state(_externalState?.rowSelection ?? {});
+let internalColumnPinning = $state(_externalState?.columnPinning ?? {});
+let internalExpanded = $state(_externalState?.expanded ?? {});
+let internalGrouping = $state(_externalState?.grouping ?? []);
+let internalGlobalFilter = $state(_externalState?.globalFilter ?? '');
+let internalColumnOrder = $state(_externalState?.columnOrder ?? []);
 // Determine whether to use external or internal state
 const useExternalState = $derived(!!externalState);
 
@@ -192,7 +195,7 @@ function handleColumnOrderChange(updater: any) {
 
 // Create the table instance
 const table = $derived(
-  createSvelteTable({
+  createSvelteTable<TData>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -231,6 +234,9 @@ const table = $derived(
       onExpandedChange: handleExpandedChange,
     }),
     ...(features.grouping && {
+      getGroupedRowModel: getGroupedRowModel(),
+      getExpandedRowModel: getExpandedRowModel(),
+      enableGrouping: true,
       onGroupingChange: handleGroupingChange,
     }),
     ...(features.globalFilter && {
