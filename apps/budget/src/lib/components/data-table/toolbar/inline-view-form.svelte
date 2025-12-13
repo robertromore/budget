@@ -27,11 +27,9 @@ let { view, entityType, filters = [], display, onCancel, onSave }: Props = $prop
 const isUpdate = $derived(view !== undefined && view.id !== undefined);
 const mutation = saveView.options();
 
-const _view = (() => view)();
-
 // Form state
-let name = $state(_view?.name ?? '');
-let description = $state(_view?.description ?? '');
+let name = $state('');
+let description = $state('');
 
 // Reset form when view changes
 $effect(() => {
