@@ -1,12 +1,12 @@
 <script lang="ts">
-import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
-import * as Sheet from '$lib/components/ui/sheet';
 import { Button } from '$lib/components/ui/button';
 import { Label } from '$lib/components/ui/label';
-import { Switch } from '$lib/components/ui/switch';
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import * as Sheet from '$lib/components/ui/sheet';
 import { Slider } from '$lib/components/ui/slider';
-import { Settings, LoaderCircle } from '@lucide/svelte/icons';
+import { Switch } from '$lib/components/ui/switch';
 import { getCategoryGroupSettings, updateCategoryGroupSettings } from '$lib/query/category-groups';
+import { LoaderCircle, Settings } from '@lucide/svelte/icons';
 
 interface Props {
   open?: boolean;

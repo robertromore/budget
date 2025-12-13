@@ -45,8 +45,12 @@ export const getGroupCategories = (groupId: number) =>
     queryFn: () => trpc().categoryGroupsRoutes.getGroupCategories.query({ groupId }),
   });
 
+export type CategoryGroupRecommendationWithName = CategoryGroupRecommendation & {
+  categoryName: string | null;
+};
+
 export const listRecommendations = () =>
-  defineQuery<CategoryGroupRecommendation[]>({
+  defineQuery<CategoryGroupRecommendationWithName[]>({
     queryKey: categoryGroupKeys.recommendations(),
     queryFn: () => trpc().categoryGroupsRoutes.recommendationsList.query(),
   });

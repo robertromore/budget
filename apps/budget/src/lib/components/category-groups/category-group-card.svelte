@@ -1,12 +1,12 @@
 <script lang="ts">
+import { goto } from '$app/navigation';
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import { Badge } from '$lib/components/ui/badge';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import { FolderOpen, EllipsisVertical, Pencil, Trash2, Users } from '@lucide/svelte/icons';
-import type { CategoryGroupWithCounts } from '$lib/schema/category-groups';
-import { goto } from '$app/navigation';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
+import type { CategoryGroupWithCounts } from '$lib/schema/category-groups';
+import { EllipsisVertical, FolderOpen, Pencil, Trash2, Users } from '@lucide/svelte/icons';
 
 interface Props {
   group: CategoryGroupWithCounts;

@@ -85,9 +85,11 @@ export class CategoryGroupRecommendationService {
   // ================================================================================
 
   /**
-   * Get all pending recommendations
+   * Get all pending recommendations with category names
    */
-  async getPendingRecommendations(): Promise<CategoryGroupRecommendation[]> {
+  async getPendingRecommendations(): Promise<
+    (CategoryGroupRecommendation & { categoryName: string | null })[]
+  > {
     return await this.recommendationRepository.findPending();
   }
 
