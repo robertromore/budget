@@ -1,12 +1,12 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
+import ColorPicker from '$lib/components/ui/color-picker/color-picker.svelte';
 import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
 import { ScrollArea } from '$lib/components/ui/scroll-area';
 import { Separator } from '$lib/components/ui/separator';
-import ColorPicker from '$lib/components/ui/color-picker/color-picker.svelte';
-import Check from '@lucide/svelte/icons/check';
 import { THEME_PRESETS, getThemePreviewColor } from '$lib/config/theme-presets';
 import { themePreferences } from '$lib/stores/theme-preferences.svelte';
+import Check from '@lucide/svelte/icons/check';
 
 interface Props {
   open?: boolean;

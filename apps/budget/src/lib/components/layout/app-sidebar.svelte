@@ -35,7 +35,7 @@ const _deleteAccountId = $derived(deleteAccountId);
 </script>
 
 <Sidebar.Root>
-  <Sidebar.Header>
+  <Sidebar.Header class="border-sidebar-border h-16 border-b">
     <WorkspaceSwitcher />
   </Sidebar.Header>
   <Sidebar.Content>
