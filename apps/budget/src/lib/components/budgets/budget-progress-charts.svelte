@@ -390,55 +390,7 @@ const donutChartConfig = $derived.by(() => {
                     class="stroke-2"
                     style="stroke: {colorUtils.getFinancialColor('negative')}; fill: none;" />
 
-                  <Highlight points lines>
-                    {#snippet tooltip({ data })}
-                      <div
-                        class="bg-background/95 pointer-events-none rounded-lg border px-3 py-2 shadow-xl backdrop-blur-sm">
-                        <div class="space-y-1 text-xs">
-                          <div class="flex items-center justify-between gap-4">
-                            <span class="text-muted-foreground">Day {data.day}</span>
-                          </div>
-                          <div class="flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-1.5">
-                              <div
-                                class="h-2 w-2 rounded-full"
-                                style="background-color: {colorUtils.getChartColor(0)}">
-                              </div>
-                              <span class="text-muted-foreground">Allocated</span>
-                            </div>
-                            <span class="font-mono font-medium"
-                              >{currencyFormatter.format(data.allocated)}</span>
-                          </div>
-                          <div class="flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-1.5">
-                              <div
-                                class="h-2 w-2 rounded-full"
-                                style="background-color: {colorUtils.getFinancialColor(
-                                  'negative'
-                                )}">
-                              </div>
-                              <span class="text-muted-foreground">Spent</span>
-                            </div>
-                            <span class="font-mono font-medium"
-                              >{currencyFormatter.format(data.spent)}</span>
-                          </div>
-                          <div class="flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-1.5">
-                              <div
-                                class="h-2 w-2 rounded-full"
-                                style="background-color: {colorUtils.getFinancialColor(
-                                  'positive'
-                                )}">
-                              </div>
-                              <span class="text-muted-foreground">Remaining</span>
-                            </div>
-                            <span class="font-mono font-medium"
-                              >{currencyFormatter.format(data.remaining)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    {/snippet}
-                  </Highlight>
+                  <Highlight points lines />
                 </Svg>
               </Chart>
             </ChartContainer>

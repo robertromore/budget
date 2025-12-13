@@ -1,22 +1,21 @@
 <script lang="ts">
 import { cn } from '$lib/utils';
 import { currencyFormatter } from '$lib/utils/formatters';
-
-type BudgetStatus = 'on_track' | 'approaching' | 'over' | 'paused' | 'setup_needed';
-type BudgetEnforcement = 'none' | 'warning' | 'strict';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import type { BudgetProgressStatus, BudgetEnforcementLevel } from '$lib/schema/budgets';
 
 interface Props {
   consumed?: number;
   allocated?: number;
-  status?: BudgetStatus;
-  enforcementLevel?: BudgetEnforcement;
+  status?: BudgetProgressStatus;
+  enforcementLevel?: BudgetEnforcementLevel;
   formatter?: (value: number) => string;
   label?: string;
   showStatus?: boolean;
   showRemaining?: boolean;
   class?: string;
   size?: 'sm' | 'md' | 'lg';
-  onStatusClick?: (status: BudgetStatus) => void;
+  onStatusClick?: (status: BudgetProgressStatus) => void;
 }
 
 const defaultFormatter = (value: number) => currencyFormatter.format(value ?? 0);
@@ -168,18 +167,37 @@ function handleStatusClick() {
 
     {#if showStatus}
       <div class="flex flex-col gap-1">
-        <button
-          type="button"
-          class={cn(
-            'inline-flex w-max items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-medium capitalize',
-            statusClasses
-          )}
-          onclick={handleStatusClick}>
-          <span class="size-1.5 rounded-full bg-current"></span>
-          {statusLabel}
-        </button>
         {#if statusHelpText}
-          <p class="text-muted-foreground text-xs">{statusHelpText}</p>
+          <Tooltip.Root>
+            <Tooltip.Trigger>
+              <button
+                type="button"
+                class={cn(
+                  'inline-flex w-max items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-medium capitalize',
+                  statusClasses
+                )}
+                onclick={handleStatusClick}>
+                <span class="size-1.5 rounded-full bg-current"></span>
+                {statusLabel}
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content>
+                {statusHelpText}
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        {:else}
+          <button
+            type="button"
+            class={cn(
+              'inline-flex w-max items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-medium capitalize',
+              statusClasses
+            )}
+            onclick={handleStatusClick}>
+            <span class="size-1.5 rounded-full bg-current"></span>
+            {statusLabel}
+          </button>
         {/if}
       </div>
     {/if}

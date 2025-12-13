@@ -1,15 +1,15 @@
 <script lang="ts">
-import { Zap, Target, Shuffle, TrendingUp, TriangleAlert } from '@lucide/svelte/icons';
-import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
-import * as Select from '$lib/components/ui/select';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
-import Label from '$lib/components/ui/label/label.svelte';
 import { Badge } from '$lib/components/ui/badge';
-import { cn } from '$lib/utils';
-import { currencyFormatter } from '$lib/utils/formatters';
-import { createNumericRecordAccessors } from '$lib/utils/bind-helpers';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import Label from '$lib/components/ui/label/label.svelte';
+import * as Select from '$lib/components/ui/select';
 import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
+import { cn } from '$lib/utils';
+import { createNumericRecordAccessors } from '$lib/utils/bind-helpers';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { Shuffle, Target, TrendingUp, TriangleAlert, Zap } from '@lucide/svelte/icons';
 
 interface Props {
   envelopes: EnvelopeAllocation[];

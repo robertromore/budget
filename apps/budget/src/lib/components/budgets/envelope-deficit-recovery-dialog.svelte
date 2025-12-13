@@ -102,7 +102,9 @@ const selectedOptionAccessors = createTransformAccessors(
 );
 let isPerformingQuickAction = $state<boolean>(false);
 let selectedTransferSource = $state<string>('');
-let transferAmount = $state<number>(envelope.deficitAmount);
+
+const _envelope = (() => envelope)();
+let transferAmount = $state<number>(_envelope.deficitAmount);
 let surplusEnvelopes = $state<EnvelopeAllocation[]>([]);
 let isLoadingSurplus = $state<boolean>(false);
 

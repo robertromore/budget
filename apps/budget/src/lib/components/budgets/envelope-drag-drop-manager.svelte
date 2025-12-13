@@ -1,12 +1,12 @@
 <script lang="ts">
-import { ArrowUpDown, Grip, DollarSign } from '@lucide/svelte/icons';
-import * as Card from '$lib/components/ui/card';
-import { Badge } from '$lib/components/ui/badge';
-import { Progress } from '$lib/components/ui/progress';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
+import { Badge } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
+import { Progress } from '$lib/components/ui/progress';
+import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
 import { cn } from '$lib/utils';
 import { currencyFormatter } from '$lib/utils/formatters';
-import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
+import { ArrowUpDown, DollarSign, Grip } from '@lucide/svelte/icons';
 
 interface Props {
   envelopes: EnvelopeAllocation[];
@@ -79,7 +79,8 @@ function handleDragOver(e: DragEvent, targetEnvelope: EnvelopeAllocation) {
 
 function handleDragLeave(e: DragEvent) {
   // Only clear if we're actually leaving the drop zone
-  if (e.relatedTarget && e.currentTarget?.contains(e.relatedTarget as Node)) {
+  const currentTarget = e.currentTarget;
+  if (e.relatedTarget && currentTarget instanceof Element && currentTarget.contains(e.relatedTarget as Node)) {
     return;
   }
   dropTargetId = null;

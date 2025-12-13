@@ -1,13 +1,17 @@
 <script lang="ts">
-import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
-import * as Sheet from '$lib/components/ui/sheet';
-import * as Select from '$lib/components/ui/select';
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
 import Label from '$lib/components/ui/label/label.svelte';
-import { Badge } from '$lib/components/ui/badge';
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import * as Select from '$lib/components/ui/select';
+import * as Sheet from '$lib/components/ui/sheet';
 import { Switch } from '$lib/components/ui/switch';
-import type { EnvelopeAllocation, RolloverMode } from '$lib/schema/budgets/envelope-allocations';
+import {
+  rolloverModeOptions,
+  type EnvelopeAllocation,
+  type RolloverMode,
+} from '$lib/schema/budgets/envelope-allocations';
 import { Settings2 } from '@lucide/svelte/icons';
 
 interface Props {
@@ -26,19 +30,15 @@ let {
   onSettingsUpdated,
 }: Props = $props();
 
-// Initialize state from envelope
-let rolloverMode = $state<RolloverMode>(envelope.rolloverMode);
-let priority = $state(String((envelope.metadata as any)?.priority ?? 5));
-let maxRolloverMonths = $state(String((envelope.metadata as any)?.maxRolloverMonths ?? 3));
-let isEmergencyFund = $state((envelope.metadata as any)?.isEmergencyFund ?? false);
-let autoRefill = $state(!!(envelope.metadata as any)?.autoRefill);
-let autoRefillAmount = $state(String((envelope.metadata as any)?.autoRefill ?? ''));
+const _envelope = (() => envelope)();
 
-const rolloverModeOptions = [
-  { value: 'unlimited', label: 'Unlimited', description: 'Rollover all unused funds indefinitely' },
-  { value: 'limited', label: 'Limited', description: 'Rollover for a specific number of months' },
-  { value: 'reset', label: 'Reset', description: 'Clear unused funds at period end' },
-];
+// Initialize state from envelope
+let rolloverMode = $state<RolloverMode>(_envelope.rolloverMode);
+let priority = $state(String((_envelope.metadata as any)?.priority ?? 5));
+let maxRolloverMonths = $state(String((_envelope.metadata as any)?.maxRolloverMonths ?? 3));
+let isEmergencyFund = $state((_envelope.metadata as any)?.isEmergencyFund ?? false);
+let autoRefill = $state(!!(_envelope.metadata as any)?.autoRefill);
+let autoRefillAmount = $state(String((_envelope.metadata as any)?.autoRefill ?? ''));
 
 // Reset form when envelope changes
 $effect(() => {

@@ -36,7 +36,7 @@ let intervalCount = $state(1);
 let startDayOfWeek = $state(1);
 let startDayOfMonth = $state(1);
 let startMonth = $state(1);
-let allocatedAmount = $state(defaultAllocatedAmount);
+let allocatedAmount = $state((() => defaultAllocatedAmount)());
 
 // String bindings for Select components (which require string values)
 let startDayOfWeekStr = $state<string>('1');

@@ -31,7 +31,8 @@ let {
   class: className,
 }: Props = $props();
 
-let editValue = $state(envelope.allocatedAmount);
+const _envelope = (() => envelope)();
+let editValue = $state(_envelope.allocatedAmount);
 
 const progressPercentage = $derived.by(() => {
   if (envelope.allocatedAmount <= 0) return 0;

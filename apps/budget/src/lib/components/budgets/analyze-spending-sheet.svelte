@@ -3,7 +3,6 @@ import { Button } from '$lib/components/ui/button';
 import { Label } from '$lib/components/ui/label';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Select from '$lib/components/ui/select';
-import { listAccounts } from '$lib/query/accounts';
 import { generateRecommendations } from '$lib/query/budgets';
 import { LoaderCircle, Sparkles, TrendingUp } from '@lucide/svelte/icons';
 
@@ -13,8 +12,6 @@ interface Props {
 }
 
 let { open = $bindable(false), onOpenChange }: Props = $props();
-
-const accountsQuery = listAccounts().options();
 
 // Analysis parameters
 let selectedAccountIds = $state<number[]>([]);

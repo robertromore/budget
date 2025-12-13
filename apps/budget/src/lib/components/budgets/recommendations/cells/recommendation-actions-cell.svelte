@@ -15,13 +15,11 @@ let { recommendation, onApply, onDismiss }: Props = $props();
 
 {#if recommendation.status === 'pending'}
   <div class="flex items-center gap-1">
-    <Button size="sm" variant="default" onclick={() => onApply(recommendation)}>
-      <Check class="mr-1 h-3.5 w-3.5" />
-      Apply
+    <Button size="icon" variant="default" onclick={() => onApply(recommendation)}>
+      <Check class="h-3.5 w-3.5" />
     </Button>
-    <Button size="sm" variant="ghost" onclick={() => onDismiss(recommendation)}>
-      <X class="mr-1 h-3.5 w-3.5" />
-      Dismiss
+    <Button size="icon" variant="destructive" onclick={() => onDismiss(recommendation)}>
+      <X class="h-3.5 w-3.5" />
     </Button>
   </div>
 {:else}

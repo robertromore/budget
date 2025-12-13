@@ -1,15 +1,15 @@
 <script lang="ts">
-import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
-import * as Sheet from '$lib/components/ui/sheet';
-import * as Select from '$lib/components/ui/select';
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import { Input } from '$lib/components/ui/input';
 import Label from '$lib/components/ui/label/label.svelte';
-import { Badge } from '$lib/components/ui/badge';
-import type { EnvelopeAllocationRequest } from '$lib/server/domains/budgets/envelope-service';
-import type { RolloverMode } from '$lib/schema/budgets/envelope-allocations';
-import type { Category } from '$lib/schema/categories';
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import * as Select from '$lib/components/ui/select';
+import * as Sheet from '$lib/components/ui/sheet';
 import type { BudgetPeriodInstance } from '$lib/schema/budgets';
+import { rolloverModeOptions, type RolloverMode } from '$lib/schema/budgets/envelope-allocations';
+import type { Category } from '$lib/schema/categories';
+import type { EnvelopeAllocationRequest } from '$lib/server/domains/budgets/envelope-service';
 
 interface Props {
   open?: boolean;
@@ -37,12 +37,6 @@ let priority = $state('5');
 let maxRolloverMonths = $state('3');
 let autoRefill = $state(false);
 let autoRefillAmount = $state('');
-
-const rolloverModeOptions = [
-  { value: 'unlimited', label: 'Unlimited', description: 'Rollover all unused funds indefinitely' },
-  { value: 'limited', label: 'Limited', description: 'Rollover for a specific number of months' },
-  { value: 'reset', label: 'Reset', description: 'Clear unused funds at period end' },
-];
 
 const isFormValid = $derived(() => {
   return (
@@ -124,8 +118,8 @@ async function handleSubmit(e: Event) {
               <Select.Item value={String(category.id)}>
                 <div class="flex items-center gap-2">
                   <span>{category.name}</span>
-                  {#if category.description}
-                    <span class="text-muted-foreground text-xs">- {category.description}</span>
+                  {#if category.notes}
+                    <span class="text-muted-foreground text-xs">- {category.notes}</span>
                   {/if}
                 </div>
               </Select.Item>

@@ -4,15 +4,13 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import * as Dialog from '$lib/components/ui/dialog';
 import type { BudgetRecommendation } from '$lib/schema/recommendations';
-import {
-  AlertTriangle,
-  CheckCircle2,
-  DollarSign,
-  Sparkles,
-  TrendingUp,
-  Users,
-  XCircle,
-} from '@lucide/svelte/icons';
+import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Users from '@lucide/svelte/icons/users';
+import XCircle from '@lucide/svelte/icons/x-circle';
 
 interface Budget {
   id: number;

@@ -1,18 +1,20 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Select from '$lib/components/ui/select';
-import { Sparkles, Users, Filter } from '@lucide/svelte/icons';
-import AnalyzeSpendingSheet from './analyze-spending-sheet.svelte';
-import GroupRecommendationPreviewModal from './group-recommendation-preview-modal.svelte';
 import {
-  listRecommendations,
   applyRecommendation,
   dismissRecommendation,
+  listRecommendations,
 } from '$lib/query/budgets';
-import RecommendationDataTable from './recommendations/recommendation-data-table.svelte';
-import { columns } from './recommendations/data/columns.svelte';
 import type { BudgetRecommendationWithRelations } from '$lib/schema/recommendations';
+import Filter from '@lucide/svelte/icons/filter';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import Users from '@lucide/svelte/icons/users';
+import AnalyzeSpendingSheet from './analyze-spending-sheet.svelte';
+import GroupRecommendationPreviewModal from './group-recommendation-preview-modal.svelte';
+import { columns } from './recommendations/data/columns.svelte';
+import RecommendationDataTable from './recommendations/recommendation-data-table.svelte';
 
 interface Props {
   budgetId?: number;

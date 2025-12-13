@@ -60,7 +60,7 @@ const budgetImpacts = $derived.by(() => {
         status,
       };
     })
-    .filter(Boolean);
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 });
 
 // Helper to get status color classes
