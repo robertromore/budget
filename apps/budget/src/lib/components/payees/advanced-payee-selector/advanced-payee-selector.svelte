@@ -2,23 +2,22 @@
 import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
-import { cn } from '$lib/utils';
+import { rpc } from '$lib/query';
 import type { Payee } from '$lib/schema/payees';
-import type { AdvancedPayeeSelectorProps, PayeeGroup, QuickAccessSections } from './types';
-import {
-  groupPayees,
-  getRecentPayees,
-  getFrequentPayees,
-  saveToRecentPayees,
-  debounce,
-} from './utils';
-import SearchHeader from './search-header.svelte';
-import QuickAccessSection from './quick-access-section.svelte';
+import { cn } from '$lib/utils';
+import HandCoins from '@lucide/svelte/icons/hand-coins';
+import Fuse from 'fuse.js';
 import GroupHeader from './group-header.svelte';
 import PayeeItem from './payee-item.svelte';
-import Fuse from 'fuse.js';
-import { rpc } from '$lib/query';
-import HandCoins from '@lucide/svelte/icons/hand-coins';
+import QuickAccessSection from './quick-access-section.svelte';
+import SearchHeader from './search-header.svelte';
+import type { AdvancedPayeeSelectorProps, PayeeGroup, QuickAccessSections } from './types';
+import {
+  getFrequentPayees,
+  getRecentPayees,
+  groupPayees,
+  saveToRecentPayees
+} from './utils';
 
 let {
   value = $bindable(),

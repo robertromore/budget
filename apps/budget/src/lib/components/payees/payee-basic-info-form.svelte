@@ -1,24 +1,22 @@
 <script lang="ts">
-import * as Form from '$lib/components/ui/form';
-import * as Card from '$lib/components/ui/card';
-import * as Select from '$lib/components/ui/select';
-import { Input } from '$lib/components/ui/input';
-import { Textarea } from '$lib/components/ui/textarea';
-import { Switch } from '$lib/components/ui/switch';
-import { Label } from '$lib/components/ui/label';
-import { payeeTypes, paymentFrequencies } from '$lib/schema/payees';
-import NumericInput from '$lib/components/input/numeric-input.svelte';
-import EntityInput from '$lib/components/input/entity-input.svelte';
 import ManageCategoryForm from '$lib/components/forms/manage-category-form.svelte';
 import ManagePayeeCategoryForm from '$lib/components/forms/manage-payee-category-form.svelte';
+import EntityInput from '$lib/components/input/entity-input.svelte';
+import NumericInput from '$lib/components/input/numeric-input.svelte';
+import * as Card from '$lib/components/ui/card';
+import * as Form from '$lib/components/ui/form';
+import { Input } from '$lib/components/ui/input';
+import * as Select from '$lib/components/ui/select';
+import { Switch } from '$lib/components/ui/switch';
+import { Textarea } from '$lib/components/ui/textarea';
+import { payeeTypes, paymentFrequencies } from '$lib/schema/payees';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { PayeeCategoriesState } from '$lib/states/entities/payee-categories.svelte';
 import type { EditableEntityItem } from '$lib/types';
-
 // Icons
-import User from '@lucide/svelte/icons/user';
-import Tag from '@lucide/svelte/icons/tag';
 import FolderOpen from '@lucide/svelte/icons/folder-open';
+import Tag from '@lucide/svelte/icons/tag';
+import User from '@lucide/svelte/icons/user';
 
 interface Props {
   formData: any; // Store type from superform

@@ -1,5 +1,18 @@
-import type { Payee } from "$lib/schema/payees";
+import type { Payee, PaymentFrequency } from "$lib/schema/payees";
 import type { GroupStrategy, PayeeGroup, PayeeWithMetadata } from "./types";
+
+// Frequency ranking for sorting (higher = more frequent)
+const frequencyRank: Record<PaymentFrequency, number> = {
+  weekly: 6,
+  bi_weekly: 5,
+  monthly: 4,
+  quarterly: 3,
+  annual: 2,
+  irregular: 1,
+};
+
+// High frequency thresholds (weekly or bi-weekly)
+const highFrequencies: PaymentFrequency[] = ["weekly", "bi_weekly"];
 
 /**
  * Group payees by the specified strategy
@@ -162,8 +175,8 @@ function groupByUsage(payees: Payee[]): PayeeGroup[] {
   for (const payee of payees) {
     const lastUsed = payee.lastTransactionDate ? new Date(payee.lastTransactionDate) : null;
 
-    // Frequent: high payment frequency or used recently with high frequency
-    if (payee.paymentFrequency && payee.paymentFrequency >= 4) {
+    // Frequent: high payment frequency (weekly or bi-weekly)
+    if (payee.paymentFrequency && highFrequencies.includes(payee.paymentFrequency)) {
       frequent.push(payee);
     }
     // Recent: used in last 30 days
@@ -305,8 +318,12 @@ export function saveToRecentPayees(payeeId: number): void {
  */
 export function getFrequentPayees(allPayees: Payee[], limit: number = 10): Payee[] {
   return [...allPayees]
-    .filter((p) => p.paymentFrequency && p.paymentFrequency > 0)
-    .sort((a, b) => (b.paymentFrequency || 0) - (a.paymentFrequency || 0))
+    .filter((p) => p.paymentFrequency)
+    .sort((a, b) => {
+      const rankA = a.paymentFrequency ? frequencyRank[a.paymentFrequency] : 0;
+      const rankB = b.paymentFrequency ? frequencyRank[b.paymentFrequency] : 0;
+      return rankB - rankA;
+    })
     .slice(0, limit);
 }
 

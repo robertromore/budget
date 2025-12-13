@@ -1,8 +1,7 @@
 <script lang="ts">
-import type { Payee } from '$lib/schema/payees';
-import type { DisplayMode, QuickAccessSections } from './types';
-import PayeeItem from './payee-item.svelte';
 import GroupHeader from './group-header.svelte';
+import PayeeItem from './payee-item.svelte';
+import type { DisplayMode, QuickAccessSections } from './types';
 
 let {
   sections,
