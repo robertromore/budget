@@ -29,21 +29,25 @@ let {
   onCancel?: () => void;
 } = $props();
 
-const isUpdate = $derived(id !== undefined && id > 0);
+// Capture props at mount time to avoid reactivity warnings
+const _id = (() => id)();
+const _initialData = (() => initialData)();
+
+const isUpdate = $derived(_id !== undefined && _id > 0);
 const createMutation = createCategoryGroup.options();
 const updateMutation = updateCategoryGroup.options();
 
 // Generate unique form ID based on group ID or a random value for new groups
-const formId = id
-  ? `category-group-form-${id}`
+const formId = _id
+  ? `category-group-form-${_id}`
   : `category-group-form-new-${Math.random().toString(36).slice(2, 9)}`;
 
 const defaults = {
-  name: initialData?.name ?? '',
-  description: (initialData?.description ?? '') as string | null | undefined,
-  groupIcon: (initialData?.groupIcon ?? '') as string | null | undefined,
-  groupColor: (initialData?.groupColor ?? '') as string | null | undefined,
-  sortOrder: initialData?.sortOrder ?? 0,
+  name: _initialData?.name ?? '',
+  description: (_initialData?.description ?? '') as string | null | undefined,
+  groupIcon: (_initialData?.groupIcon ?? '') as string | null | undefined,
+  groupColor: (_initialData?.groupColor ?? '') as string | null | undefined,
+  sortOrder: _initialData?.sortOrder ?? 0,
 };
 
 const form = superForm(defaults, {
@@ -61,8 +65,8 @@ const form = superForm(defaults, {
     };
 
     try {
-      if (isUpdate && id) {
-        await updateMutation.mutateAsync({ id, ...data });
+      if (isUpdate && _id) {
+        await updateMutation.mutateAsync({ id: _id, ...data });
       } else {
         await createMutation.mutateAsync(data);
       }
@@ -101,8 +105,8 @@ const deleteGroup = async (id: number) => {
 </script>
 
 <form method="post" use:enhance class="space-y-6">
-  {#if id}
-    <input type="hidden" name="id" value={id} />
+  {#if _id}
+    <input type="hidden" name="id" value={_id} />
   {/if}
   <input type="hidden" name="sortOrder" value={$formData.sortOrder} />
   <input type="hidden" name="groupIcon" value={$formData.groupIcon ?? ''} />
@@ -192,11 +196,11 @@ const deleteGroup = async (id: number) => {
   <!-- Action Buttons -->
   <div class="flex items-center justify-between gap-4">
     <div class="flex-1">
-      {#if id}
+      {#if _id}
         <AlertDialog.Root bind:open={alertDialogOpen}>
-          <AlertDialog.Trigger asChild>
-            {#snippet child({ builder })}
-              <Button builders={[builder]} variant="destructive" type="button">Delete Group</Button>
+          <AlertDialog.Trigger>
+            {#snippet child({ props })}
+              <Button {...props} variant="destructive" type="button">Delete Group</Button>
             {/snippet}
           </AlertDialog.Trigger>
           <AlertDialog.Content>
@@ -211,7 +215,7 @@ const deleteGroup = async (id: number) => {
               <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
               <AlertDialog.Action
                 class="bg-destructive hover:bg-destructive/90"
-                onclick={() => deleteGroup(id)}>
+                onclick={() => deleteGroup(_id)}>
                 Delete
               </AlertDialog.Action>
             </AlertDialog.Footer>
@@ -230,7 +234,7 @@ const deleteGroup = async (id: number) => {
         {#if isSaving}
           Saving...
         {:else}
-          {id ? 'Update' : 'Create'} Group
+          {_id ? 'Update' : 'Create'} Group
         {/if}
       </Button>
     </div>

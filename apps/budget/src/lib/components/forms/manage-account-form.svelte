@@ -1,25 +1,26 @@
 <script lang="ts">
-import * as Form from '$lib/components/ui/form';
-import * as Select from '$lib/components/ui/select';
-import * as Card from '$lib/components/ui/card';
-import { type Account, accountTypeEnum, type AccountType } from '$lib/schema';
-import { superformInsertAccountSchema } from '$lib/schema/superforms';
-import { Textarea } from '$lib/components/ui/textarea';
+import type { ActionResult } from '@sveltejs/kit';
 import { page } from '$app/state';
+import NumericInput from '$lib/components/input/numeric-input.svelte';
+import * as Card from '$lib/components/ui/card';
+import { ColorPicker } from '$lib/components/ui/color-picker';
+import * as Form from '$lib/components/ui/form';
+import { IconPicker } from '$lib/components/ui/icon-picker';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
 import { Switch } from '$lib/components/ui/switch';
-import { AccountsState } from '$lib/states/entities/accounts.svelte';
-import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
+import { Textarea } from '$lib/components/ui/textarea';
 import { WizardFormWrapper } from '$lib/components/wizard';
 import AccountWizard from '$lib/components/wizard/account-wizard.svelte';
+import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
+import { accountTypeEnum, type Account, type AccountType } from '$lib/schema';
+import { superformInsertAccountSchema } from '$lib/schema/superforms';
+import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { accountWizardStore } from '$lib/stores/wizardStore.svelte';
-import { IconPicker } from '$lib/components/ui/icon-picker';
-import { ColorPicker } from '$lib/components/ui/color-picker';
-import NumericInput from '$lib/components/input/numeric-input.svelte';
 import CreditCard from '@lucide/svelte/icons/credit-card';
-import Palette from '@lucide/svelte/icons/palette';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Palette from '@lucide/svelte/icons/palette';
 import Wallet from '@lucide/svelte/icons/wallet';
 
 let {
@@ -42,21 +43,34 @@ const {
 
 const accounts = AccountsState.get();
 
-const isUpdate = accountId && accountId > 0;
+const _accountId = (() => {
+  // Prefer prop accountId
+  if (accountId !== undefined) return accountId;
+
+  // Fallback to form data accountId
+  if (manageAccountForm && manageAccountForm.id) {
+    return Number(manageAccountForm.id);
+  }
+
+  return undefined;
+})();
+
+const _formId = (() => formId)();
+
+const isUpdate = _accountId && _accountId > 0;
 
 const resolvedFormId =
-  formId ?? (accountId && accountId > 0 ? `account-form-${accountId}` : 'account-form-new');
+  _formId ?? (_accountId && _accountId > 0 ? `account-form-${_accountId}` : 'account-form-new');
 
 // Keep mode as 'manual' during SSR and initial hydration
 let mode = $state<'manual' | 'wizard'>('manual');
 
-import { browser } from '$app/environment';
 
 const entityForm = useEntityForm({
   formData: manageAccountForm,
   schema: superformInsertAccountSchema,
   formId: resolvedFormId,
-  entityId: accountId,
+  entityId: _accountId,
   onSave: (entity: Account) => {
     if (isUpdate) {
       accounts.updateAccount(entity);
@@ -66,7 +80,7 @@ const entityForm = useEntityForm({
     if (onSave) onSave(entity);
   },
   customOptions: {
-    onResult: async ({ result }) => {
+    onResult: async ({ result }: { result: ActionResult }) => {
       if (result.type === 'success') {
         // Call the original useEntityForm logic manually
         if (result.data && result.data.entity) {
@@ -93,15 +107,15 @@ const { form: formData, enhance } = entityForm;
 const initialData: Partial<Account> = {};
 
 // Ensure default values for new accounts
-if (!accountId || accountId === 0) {
+if (!_accountId || _accountId === 0) {
   $formData.onBudget = true;
   $formData.accountColor = $formData.accountColor || '#3b82f6'; // Default blue color
 }
 
-if (accountId && accountId > 0) {
-  const account = accounts.getById(accountId);
+if (_accountId && _accountId > 0) {
+  const account = accounts.getById(_accountId);
   if (account) {
-    $formData.id = accountId;
+    $formData.id = _accountId;
     $formData.name = account.name;
     $formData.notes = account.notes;
     $formData.accountType = account.accountType || 'checking';
@@ -117,7 +131,7 @@ if (accountId && accountId > 0) {
     $formData.interestRate = (account as any).interestRate || null;
 
     // Set initial data for wizard
-    initialData.id = accountId;
+    initialData.id = _accountId;
     initialData.name = account.name;
     initialData.notes = account.notes;
     initialData.accountType = account.accountType;

@@ -7,6 +7,7 @@ import * as Form from '$lib/components/ui/form';
 import * as Select from '$lib/components/ui/select';
 import { Input } from '$lib/components/ui/input';
 import { Textarea } from '$lib/components/ui/textarea';
+import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
 import {
   type Category,
   categoryTypeEnum,
@@ -19,8 +20,6 @@ import {
 import { superformInsertCategorySchema } from '$lib/schema/superforms';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import type { EditableEntityItem } from '$lib/types';
-import { superForm } from 'sveltekit-superforms';
-import { zod4Client } from 'sveltekit-superforms/adapters';
 import { IconPicker } from '$lib/components/ui/icon-picker';
 import { ColorPicker } from '$lib/components/ui/color-picker';
 import { Checkbox } from '$lib/components/ui/checkbox';
@@ -46,20 +45,24 @@ let {
   onSave?: (new_category: EditableEntityItem, is_new: boolean) => void;
 } = $props();
 
+// Capture props at mount time to avoid reactivity warnings
+const _id = (() => id)();
+const _initialParentId = (() => initialParentId)();
+
 // Load all categories for parent selector
 const categoriesState = CategoriesState.get();
 const allCategories = $derived(categoriesState.all);
 
 // Generate unique form ID based on category ID or a random value for new categories
-const formId = id
-  ? `category-form-${id}`
+const formId = _id
+  ? `category-form-${_id}`
   : `category-form-new-${Math.random().toString(36).slice(2, 9)}`;
 
 const defaults = {
   name: '',
   notes: '' as string | null | undefined,
   slug: '',
-  parentId: (initialParentId ?? null) as number | null | undefined,
+  parentId: null as number | null | undefined,
   categoryType: 'expense' as CategoryType | undefined,
   categoryIcon: '' as string | null | undefined,
   categoryColor: '' as string | null | undefined,
@@ -77,8 +80,9 @@ const defaults = {
   deletedAt: null as string | null | undefined,
 };
 
-if (id) {
-  const category: Category = CategoriesState.get().getById(id)!;
+if (_id) {
+  // Editing existing category - load from state
+  const category: Category = CategoriesState.get().getById(_id)!;
   defaults.name = category.name ?? '';
   defaults.notes = category.notes ?? '';
   defaults.parentId = category.parentId;
@@ -96,23 +100,29 @@ if (id) {
   defaults.expectedMonthlyMax = category.expectedMonthlyMax || null;
   defaults.spendingPriority = category.spendingPriority;
   defaults.incomeReliability = category.incomeReliability || null;
+} else {
+  // Creating new category - use initialParentId if provided
+  defaults.parentId = _initialParentId ?? null;
 }
 
-const form = superForm(defaults, {
-  id: formId,
-  validators: zod4Client(superformInsertCategorySchema),
-  onResult: async ({ result }) => {
-    if (onSave) {
-      if (result.type === 'success' && result.data) {
-        onSave(result.data['entity'], (id ?? 0) === 0);
-      }
-    }
+const form = useEntityForm<Category>({
+  formData: defaults,
+  schema: superformInsertCategorySchema,
+  formId,
+  entityId: _id,
+  onSave: (entity) => {
+    onSave?.(entity, true);
   },
-  delayMs: 300,
-  timeoutMs: 8000,
+  onUpdate: (entity) => {
+    onSave?.(entity, false);
+  },
+  customOptions: {
+    delayMs: 300,
+    timeoutMs: 8000,
+  },
 });
 
-const { form: formData, enhance, submitting } = form;
+const { form: formData, enhance, submitting, isUpdate } = form;
 
 // Category type options for the dropdown
 const categoryTypeOptions = categoryTypeEnum.map((type) => ({
@@ -192,8 +202,8 @@ const deleteCategory = async (id: number) => {
 </script>
 
 <form method="post" action="/categories?/save-category" use:enhance class="space-y-6">
-  {#if id}
-    <input type="hidden" name="id" value={id} />
+  {#if _id}
+    <input type="hidden" name="id" value={_id} />
   {/if}
 
   <!-- Basic Information Section -->
@@ -257,7 +267,7 @@ const deleteCategory = async (id: number) => {
             <ParentCategorySelector
               categories={allCategories}
               bind:value={$formData.parentId}
-              currentCategoryId={id ?? undefined} />
+              currentCategoryId={_id ?? undefined} />
             <input type="hidden" name="parentId" value={$formData.parentId || ''} />
             <Form.FieldErrors />
           {/snippet}
@@ -698,7 +708,7 @@ const deleteCategory = async (id: number) => {
     <Form.Button disabled={$submitting}>
       {$submitting ? 'Saving...' : 'Save'}
     </Form.Button>
-    {#if id}
+    {#if _id}
       <Button variant="destructive" onclick={() => (alertDialogOpen = true)}>delete</Button>
     {/if}
   </div>
@@ -715,7 +725,7 @@ const deleteCategory = async (id: number) => {
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
-        onclick={() => deleteCategory(id!)}
+        onclick={() => deleteCategory(_id!)}
         class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>

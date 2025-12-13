@@ -64,6 +64,11 @@ let {
   onSave?: (new_entity: Schedule) => void;
 } = $props();
 
+// Capture props at mount time to avoid reactivity warnings
+const _scheduleId = (() => scheduleId)();
+const _duplicateMode = (() => duplicateMode)();
+const _formId = (() => formId)();
+
 // Page data
 const {
   data: { accounts, payees, categories, manageScheduleForm },
@@ -82,7 +87,7 @@ const EMPTY_CATEGORY: EditableEntityItem = { id: 0, name: '' };
 
 // Generate unique form ID if not provided
 const uniqueFormId =
-  formId || `schedule-form-${scheduleId || 'new'}-${Math.random().toString(36).substring(2, 9)}`;
+  _formId || `schedule-form-${_scheduleId || 'new'}-${Math.random().toString(36).substring(2, 9)}`;
 
 // Create lookup maps for efficient searching
 const payeeLookup = $derived(new Map(payees?.map((p: any) => [p.id, p]) || []));
@@ -100,7 +105,7 @@ const form = useEntityForm({
   formData: manageScheduleForm,
   schema: superformInsertScheduleSchema,
   formId: uniqueFormId,
-  entityId: scheduleId || undefined,
+  entityId: _scheduleId || undefined,
   onSave: (savedSchedule: any) => {
     schedules.addSchedule(savedSchedule);
 
@@ -135,7 +140,7 @@ const categoryValue: EditableEntityItem = $derived.by(() => {
 });
 
 // Determine if this is an update
-const isUpdate = scheduleId && scheduleId > 0;
+const isUpdate = _scheduleId && _scheduleId > 0;
 
 // Handle wizard completion
 async function handleWizardComplete(wizardFormData: Record<string, any>) {
@@ -171,7 +176,7 @@ $formData.recurring = false;
 $formData.auto_add = true;
 
 // Pre-fill accountId from URL query parameter if creating a new schedule
-if (!scheduleId || scheduleId === 0) {
+if (!_scheduleId || _scheduleId === 0) {
   const accountIdParam = page.url.searchParams.get('accountId');
   if (accountIdParam) {
     const accountIdValue = parseInt(accountIdParam, 10);
@@ -184,17 +189,17 @@ if (!scheduleId || scheduleId === 0) {
 
 // Initialize form data if editing or duplicating
 $effect(() => {
-  if (scheduleId && scheduleId > 0) {
-    const schedule = schedules.getById(scheduleId);
+  if (_scheduleId && _scheduleId > 0) {
+    const schedule = schedules.getById(_scheduleId);
     if (schedule) {
       // Set form data without reactive assignments
-      if (duplicateMode) {
+      if (_duplicateMode) {
         // For duplication, clear the ID and modify the name
         $formData.id = 0;
         $formData.name = `${schedule.name} (Copy)`;
       } else {
         // For editing, use the original values
-        $formData.id = scheduleId;
+        $formData.id = _scheduleId;
         $formData.name = schedule.name;
       }
       $formData.payeeId = schedule.payeeId;
@@ -564,9 +569,9 @@ $effect(() => {
       <!-- Save Button -->
       <div class="flex justify-end pt-4">
         <Form.Button class="px-8">
-          {#if duplicateMode}
+          {#if _duplicateMode}
             Duplicate Schedule
-          {:else if scheduleId && scheduleId > 0}
+          {:else if _scheduleId && _scheduleId > 0}
             Update Schedule
           {:else}
             Create Schedule

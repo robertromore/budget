@@ -1,11 +1,11 @@
 <script lang="ts">
+import NumericInput from '$lib/components/input/numeric-input.svelte';
 import { Button } from '$lib/components/ui/button';
-import * as Select from '$lib/components/ui/select';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
 import { Textarea } from '$lib/components/ui/textarea';
-import NumericInput from '$lib/components/input/numeric-input.svelte';
-import { createBudgetGroup, updateBudgetGroup, listBudgetGroups } from '$lib/query/budgets';
+import { createBudgetGroup, listBudgetGroups, updateBudgetGroup } from '$lib/query/budgets';
 import type { BudgetGroup } from '$lib/schema/budgets';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
 
@@ -22,10 +22,20 @@ let {
 const isUpdate = $derived(budgetGroup !== undefined);
 
 // Form state
-let name = $state(budgetGroup?.name || '');
-let description = $state(budgetGroup?.description || '');
-let parentId = $state<number | null>(budgetGroup?.parentId || null);
-let spendingLimitValue = $state<number>(budgetGroup?.spendingLimit || 0);
+let name = $state('');
+let description = $state('');
+let parentId = $state<number | null>(null);
+let spendingLimitValue = $state<number>(0);
+
+// Sync form state when budgetGroup changes (or on mount)
+$effect(() => {
+  if (budgetGroup) {
+    name = budgetGroup.name || '';
+    description = budgetGroup.description || '';
+    parentId = budgetGroup.parentId ?? null;
+    spendingLimitValue = budgetGroup.spendingLimit || 0;
+  }
+});
 
 // Computed spending limit (null when 0)
 const spendingLimit = $derived(spendingLimitValue > 0 ? spendingLimitValue : null);

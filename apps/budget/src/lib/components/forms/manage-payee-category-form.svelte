@@ -29,22 +29,26 @@ let {
   onCancel?: () => void;
 } = $props();
 
-const isUpdate = $derived(id !== undefined && id > 0);
+// Capture props at mount time to avoid reactivity warnings
+const _id = (() => id)();
+const _initialData = (() => initialData)();
+
+const isUpdate = $derived(_id !== undefined && _id > 0);
 const saveMutation = savePayeeCategory.options();
 const deleteMutation = deletePayeeCategory.options();
 
 // Generate unique form ID based on category ID or a random value for new categories
-const formId = id
-  ? `payee-category-form-${id}`
+const formId = _id
+  ? `payee-category-form-${_id}`
   : `payee-category-form-new-${Math.random().toString(36).slice(2, 9)}`;
 
 const defaults = {
-  name: initialData?.name ?? '',
-  description: (initialData?.description ?? '') as string | null | undefined,
-  icon: (initialData?.icon ?? '') as string | null | undefined,
-  color: (initialData?.color ?? '') as string | null | undefined,
-  displayOrder: initialData?.displayOrder ?? 0,
-  isActive: initialData?.isActive ?? true,
+  name: _initialData?.name ?? '',
+  description: (_initialData?.description ?? '') as string | null | undefined,
+  icon: (_initialData?.icon ?? '') as string | null | undefined,
+  color: (_initialData?.color ?? '') as string | null | undefined,
+  displayOrder: _initialData?.displayOrder ?? 0,
+  isActive: _initialData?.isActive ?? true,
 };
 
 const form = superForm(defaults, {
@@ -63,8 +67,8 @@ const form = superForm(defaults, {
     };
 
     try {
-      if (isUpdate && id) {
-        await saveMutation.mutateAsync({ id, ...data });
+      if (isUpdate && _id) {
+        await saveMutation.mutateAsync({ id: _id, ...data });
       } else {
         await saveMutation.mutateAsync(data);
       }
@@ -109,8 +113,8 @@ const handleDelete = async (id: number) => {
 </script>
 
 <form method="post" use:enhance class="space-y-6">
-  {#if id}
-    <input type="hidden" name="id" value={id} />
+  {#if _id}
+    <input type="hidden" name="id" value={_id} />
   {/if}
   <input type="hidden" name="displayOrder" value={$formData.displayOrder} />
   <input type="hidden" name="isActive" value={$formData.isActive} />
@@ -201,11 +205,11 @@ const handleDelete = async (id: number) => {
   <!-- Action Buttons -->
   <div class="flex items-center justify-between gap-4">
     <div class="flex-1">
-      {#if id}
+      {#if _id}
         <AlertDialog.Root bind:open={alertDialogOpen}>
-          <AlertDialog.Trigger asChild>
-            {#snippet child({ builder })}
-              <Button builders={[builder]} variant="destructive" type="button">
+          <AlertDialog.Trigger>
+            {#snippet child({ props })}
+              <Button {...props} variant="destructive" type="button">
                 Delete Category
               </Button>
             {/snippet}
@@ -222,7 +226,7 @@ const handleDelete = async (id: number) => {
               <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
               <AlertDialog.Action
                 class="bg-destructive hover:bg-destructive/90"
-                onclick={() => handleDelete(id)}>
+                onclick={() => handleDelete(_id!)}>
                 Delete
               </AlertDialog.Action>
             </AlertDialog.Footer>
@@ -241,7 +245,7 @@ const handleDelete = async (id: number) => {
         {#if isSaving}
           Saving...
         {:else}
-          {id ? 'Update' : 'Create'} Category
+          {_id ? 'Update' : 'Create'} Category
         {/if}
       </Button>
     </div>

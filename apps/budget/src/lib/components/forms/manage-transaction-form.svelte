@@ -37,6 +37,10 @@ let {
   onSave?: (new_entity: Transaction) => void;
 } = $props();
 
+// Capture props at mount time to avoid reactivity warnings
+const _accountId = (() => accountId)();
+const _onSave = (() => onSave)();
+
 const {
   data: { payees, categories, manageTransactionForm },
 } = page;
@@ -45,7 +49,7 @@ const form = useEntityForm({
   formData: manageTransactionForm,
   schema: superformInsertTransactionSchema,
   formId: 'transaction-form',
-  ...(onSave && { onSave }),
+  ...(_onSave && { onSave: _onSave }),
 });
 
 const { form: formData, enhance } = form;
@@ -53,7 +57,7 @@ const { form: formData, enhance } = form;
 // Initialize account ID
 $effect(() => {
   if ($formData) {
-    $formData.accountId = accountId;
+    $formData.accountId = _accountId;
   }
 });
 
@@ -167,7 +171,7 @@ let selectedBudgetIndex = $state<number>(-1);
 
 // Get applicable budgets based on account and category
 const applicableBudgetsQuery = $derived.by(() => {
-  const accId = accountId;
+  const accId = _accountId;
   const catId = category.id > 0 ? category.id : undefined;
 
   if (!accId && !catId) return null;
@@ -197,7 +201,7 @@ const isOverAllocated = $derived.by(() => {
 
 // Strict budget validation
 const strictValidationQuery = $derived.by(() => {
-  const accId = accountId;
+  const accId = _accountId;
   const catId = category.id > 0 ? category.id : undefined;
 
   if (!accId && !catId) return null;
@@ -323,7 +327,7 @@ $effect(() => {
     action="/accounts?/add-transaction"
     use:enhance
     class="grid grid-cols-2 gap-4">
-    <input hidden value={$formData?.accountId || accountId} name="accountId" />
+    <input hidden value={$formData?.accountId || _accountId} name="accountId" />
     <Form.Field {form} name="date">
       <Form.Control>
         {#snippet children({ props })}

@@ -44,6 +44,10 @@ let {
   formId?: string;
 } = $props();
 
+// Capture props at mount time to avoid reactivity warnings
+const _id = (() => id)();
+const _formId = (() => formId)();
+
 // Page data and states - handle case where page data might not be available
 const pageData = page?.data || {};
 const payees = PayeesState.get();
@@ -53,13 +57,13 @@ const managePayeeForm = pageData['form'] || { name: '', notes: '' };
 const categories = pageData['categories'] || [];
 
 // Form setup
-const isUpdate = Boolean(id && id > 0);
+const isUpdate = Boolean(_id && _id > 0);
 
 const entityForm = useEntityForm({
   formData: managePayeeForm,
   schema: superformInsertPayeeSchema,
-  formId,
-  entityId: id,
+  formId: _formId,
+  entityId: _id,
   onSave: (entity: Payee) => {
     if (isUpdate) {
       payees.updatePayee(entity);
@@ -185,11 +189,11 @@ let subscriptionInfo = $state<any>(null);
 let alertDialogOpen = $state(false);
 
 // Initialize form data for existing or new payee
-if (id && id > 0) {
+if (_id && _id > 0) {
   // Existing payee - load from data
-  const payee = payees.getById(id);
+  const payee = payees.getById(_id);
   if (payee) {
-    $formData.id = id;
+    $formData.id = _id;
     $formData.name = payee.name;
     $formData.notes = payee.notes;
     $formData.payeeType = payee.payeeType;
@@ -231,14 +235,14 @@ if (id && id > 0) {
 
 // ML and intelligence functions
 async function loadRecommendations() {
-  if (!id) return;
+  if (!_id) return;
 
   isLoadingRecommendations = true;
   try {
     const [intelligence, suggestions, stats] = await Promise.all([
-      trpc().payeeRoutes.intelligence.query({ id }),
-      trpc().payeeRoutes.suggestions.query({ id }),
-      trpc().payeeRoutes.stats.query({ id }),
+      trpc().payeeRoutes.intelligence.query({ id: _id }),
+      trpc().payeeRoutes.suggestions.query({ id: _id }),
+      trpc().payeeRoutes.stats.query({ id: _id }),
     ]);
 
     recommendations = { intelligence, suggestions, stats };
@@ -250,12 +254,12 @@ async function loadRecommendations() {
 }
 
 async function validateContact() {
-  if (!id) return;
+  if (!_id) return;
 
   isLoadingContactValidation = true;
   try {
     const result = await trpc().payeeRoutes.validateAndEnrichContact.query({
-      payeeId: id,
+      payeeId: _id,
       contactOverrides: {
         phone: $formData.phone,
         email: $formData.email,
@@ -273,12 +277,12 @@ async function validateContact() {
 }
 
 async function detectSubscription() {
-  if (!id) return;
+  if (!_id) return;
 
   isLoadingSubscriptionDetection = true;
   try {
     const result = await trpc().payeeRoutes.classifySubscription.query({
-      payeeId: id,
+      payeeId: _id,
     });
 
     subscriptionInfo = result;
@@ -290,11 +294,11 @@ async function detectSubscription() {
 }
 
 async function applyIntelligentDefaults() {
-  if (!id) return;
+  if (!_id) return;
 
   try {
     const result = await trpc().payeeRoutes.applyIntelligentDefaults.mutate({
-      id,
+      id: _id,
       applyCategory: true,
       applyBudget: true,
     });
@@ -326,7 +330,7 @@ $effect(() => {
 });
 </script>
 
-<form id={formId} method="post" action="?/save-payee" use:enhance class="space-y-6">
+<form id={_formId} method="post" action="?/save-payee" use:enhance class="space-y-6">
   <input hidden value={$formData.id} name="id" />
 
   <Tabs.Root bind:value={activeTab} class="w-full">
@@ -685,7 +689,7 @@ $effect(() => {
   <!-- Submit Button -->
   <div class="flex justify-between pt-4">
     <div>
-      {#if id}
+      {#if _id}
         <Button variant="destructive" onclick={() => (alertDialogOpen = true)}>Delete Payee</Button>
       {/if}
     </div>
@@ -711,7 +715,7 @@ $effect(() => {
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action
-        onclick={() => deletePayee(id!)}
+        onclick={() => deletePayee(_id!)}
         class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>

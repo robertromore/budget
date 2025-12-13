@@ -1,33 +1,33 @@
 <script lang="ts">
+import { ManageCategoryForm } from '$lib/components/forms';
+import MultiSelectEntityInput from '$lib/components/input/multi-select-entity-input.svelte';
+import NumericInput from '$lib/components/input/numeric-input.svelte';
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import * as Select from '$lib/components/ui/select';
 import * as Form from '$lib/components/ui/form';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
 import { Textarea } from '$lib/components/ui/textarea';
-import { Badge } from '$lib/components/ui/badge';
-import NumericInput from '$lib/components/input/numeric-input.svelte';
-import { superForm } from 'sveltekit-superforms';
-import { zod4Client } from 'sveltekit-superforms/adapters';
-import { superformInsertBudgetSchema } from '$lib/schema/superforms';
-import {
-  budgetTypes,
-  budgetEnforcementLevels,
-  periodTemplateTypes,
-  type BudgetType,
-  type BudgetScope,
-} from '$lib/schema/budgets';
+import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
 import type { Account } from '$lib/schema/accounts';
+import {
+  budgetEnforcementLevels,
+  budgetTypes,
+  periodTemplateTypes,
+  type BudgetScope,
+  type BudgetType,
+} from '$lib/schema/budgets';
 import type { Category } from '$lib/schema/categories';
 import type { Schedule } from '$lib/schema/schedules';
-import { createTransformAccessors } from '$lib/utils/bind-helpers';
-import MultiSelectEntityInput from '$lib/components/input/multi-select-entity-input.svelte';
-import { ManageCategoryForm } from '$lib/components/forms';
+import { superformInsertBudgetSchema } from '$lib/schema/superforms';
+import { BudgetState } from '$lib/states/budgets.svelte';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
-import Tag from '@lucide/svelte/icons/tag';
-import CircleX from '@lucide/svelte/icons/circle-x';
 import type { EditableEntityItem } from '$lib/types';
+import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import CircleX from '@lucide/svelte/icons/circle-x';
+import Tag from '@lucide/svelte/icons/tag';
 
 let {
   formData,
@@ -47,17 +47,28 @@ let {
   formId?: string;
 } = $props();
 
-const isUpdate = $derived(budgetId !== undefined && budgetId > 0);
+// Get budget state (may not exist on all pages)
+const budgetState = BudgetState.safeGet();
 
-const form = superForm(formData, {
-  validators: zod4Client(superformInsertBudgetSchema),
-  dataType: 'json',
-  id: formId,
-  resetForm: false,
-  taintedMessage: null,
+const _formData = (() => formData)();
+const _formId = (() => formId)();
+const _budgetId = (() => budgetId)();
+
+const form = useEntityForm({
+  formData: _formData,
+  schema: superformInsertBudgetSchema,
+  formId: _formId,
+  entityId: _budgetId,
+  onSave: (entity) => budgetState?.upsertBudget(entity),
+  onUpdate: (entity) => budgetState?.upsertBudget(entity),
+  customOptions: {
+    dataType: 'json',
+    resetForm: false,
+    taintedMessage: null,
+  },
 });
 
-const { form: formStore, enhance, submitting } = form;
+const { form: formStore, enhance, submitting, isUpdate } = form;
 
 // Reactive state from form data
 const selectedBudgetType = $derived(($formStore.type || 'account-monthly') as BudgetType);
