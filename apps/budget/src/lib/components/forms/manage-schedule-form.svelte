@@ -170,6 +170,18 @@ $formData.status = 'active';
 $formData.recurring = false;
 $formData.auto_add = true;
 
+// Pre-fill accountId from URL query parameter if creating a new schedule
+if (!scheduleId || scheduleId === 0) {
+  const accountIdParam = page.url.searchParams.get('accountId');
+  if (accountIdParam) {
+    const accountIdValue = parseInt(accountIdParam, 10);
+    if (!isNaN(accountIdValue) && accountIdValue > 0) {
+      $formData.accountId = accountIdValue;
+      defaultAccount = accountIdValue;
+    }
+  }
+}
+
 // Initialize form data if editing or duplicating
 $effect(() => {
   if (scheduleId && scheduleId > 0) {
@@ -577,6 +589,7 @@ $effect(() => {
         categoryId: $formData.categoryId,
         auto_add: $formData.auto_add,
       }}
+      externalRecurringDateModel={repeating_date}
       {accounts}
       {payees}
       {categories} />
