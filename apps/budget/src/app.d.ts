@@ -14,9 +14,11 @@ declare global {
 
 declare module "@tanstack/table-core" {
   interface ColumnMeta<TData extends RowData, TValue> {
-    label: string;
+    label?: string;
     facetedFilter?: FilterInputOption;
     availableFilters?: AvailableFilters;
+    headerClass?: string;
+    cellClass?: string;
   }
 }
 

@@ -1,32 +1,22 @@
 import type {
   ColumnDef,
-  SortingState,
-  VisibilityState,
   ColumnFiltersState,
-  PaginationState,
-  RowSelectionState,
   ColumnPinningState,
   ExpandedState,
   GroupingState,
+  PaginationState,
+  RowSelectionState,
+  SortingState,
+  VisibilityState,
 } from "@tanstack/table-core";
 
 /**
  * Extended column meta with custom properties
+ * Note: ColumnMeta augmentation is consolidated in app.d.ts
  */
 export interface ExtendedColumnMeta {
   headerClass?: string;
   cellClass?: string;
-}
-
-/**
- * Type helper to extend TanStack Table's ColumnDef with our custom meta
- */
-declare module "@tanstack/table-core" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface ColumnMeta<TData, TValue> {
-    headerClass?: string;
-    cellClass?: string;
-  }
 }
 
 /**
