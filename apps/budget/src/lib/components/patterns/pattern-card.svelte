@@ -9,6 +9,7 @@ import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Check from '@lucide/svelte/icons/check';
 import X from '@lucide/svelte/icons/x';
 import { convertPatternToSchedule, dismissPattern } from '$lib/query/patterns';
+import { getConfidenceColor } from '$lib/utils/confidence-colors';
 import { formatCurrency } from '$lib/utils/formatters';
 import { parseISOString, formatDateDisplay } from '$lib/utils/dates';
 
@@ -30,11 +31,7 @@ const patternTypeColors = {
   yearly: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20',
 } as const;
 
-const confidenceColor = $derived.by(() => {
-  if (pattern.confidenceScore >= 80) return 'text-green-600 dark:text-green-400';
-  if (pattern.confidenceScore >= 60) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-orange-600 dark:text-orange-400';
-});
+const confidenceColor = $derived(getConfidenceColor(pattern.confidenceScore));
 
 const isProcessing = $derived(convertMutation.isPending || dismissMutation.isPending);
 

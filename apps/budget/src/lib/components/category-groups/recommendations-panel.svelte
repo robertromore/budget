@@ -9,15 +9,16 @@ import {
   listRecommendations,
   rejectRecommendation,
 } from '$lib/query/category-groups';
-import {
-  Check,
-  CheckCircle2,
-  CircleAlert,
-  LoaderCircle,
-  Sparkles,
-  Users,
-  X,
-} from '@lucide/svelte/icons';
+import { formatConfidence, getConfidenceColor } from '$lib/utils/confidence-colors';
+import Check from '@lucide/svelte/icons/check';
+import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
+import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import Users from '@lucide/svelte/icons/users';
+import X from '@lucide/svelte/icons/x';
+
+const confidenceColorOptions = { fourTier: true, withBackground: true } as const;
 
 const recommendationsQuery = listRecommendations().options();
 const approveMutation = approveRecommendation.options();
@@ -77,18 +78,6 @@ function handleRejectAll(recIds: number[]) {
 
 function handleGenerate() {
   generateMutation.mutate();
-}
-
-function getConfidenceColor(score: number): string {
-  if (score >= 0.9) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-  if (score >= 0.7) return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-  if (score >= 0.5)
-    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-  return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
-}
-
-function formatConfidence(score: number): string {
-  return `${Math.round(score * 100)}%`;
 }
 </script>
 
@@ -156,7 +145,7 @@ function formatConfidence(score: number): string {
                     <span class="text-muted-foreground text-xs">•</span>
                     <Badge
                       variant="secondary"
-                      class={`text-xs ${getConfidenceColor(group.avgConfidence)}`}>
+                      class={`text-xs ${getConfidenceColor(group.avgConfidence, confidenceColorOptions)}`}>
                       {formatConfidence(group.avgConfidence)} confidence
                     </Badge>
                   </div>
@@ -199,7 +188,7 @@ function formatConfidence(score: number): string {
                       </span>
                       <Badge
                         variant="outline"
-                        class={`text-xs ${getConfidenceColor(recommendation.confidenceScore)}`}>
+                        class={`text-xs ${getConfidenceColor(recommendation.confidenceScore, confidenceColorOptions)}`}>
                         {formatConfidence(recommendation.confidenceScore)}
                       </Badge>
                     </div>

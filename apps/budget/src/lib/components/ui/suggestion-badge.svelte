@@ -1,5 +1,6 @@
 <script lang="ts">
 import { cn } from '$lib/utils';
+import { formatConfidence, getConfidenceColor } from '$lib/utils/confidence-colors';
 import Brain from '@lucide/svelte/icons/brain';
 import Check from '@lucide/svelte/icons/check';
 import Info from '@lucide/svelte/icons/info';
@@ -67,16 +68,8 @@ const getVariantStyles = (variant: SuggestionVariant, applied: boolean) => {
   }
 };
 
-const confidenceColor = $derived(() => {
-  if (!confidence) return '';
-  if (confidence >= 0.8) return 'text-green-600 dark:text-green-400';
-  if (confidence >= 0.6) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-red-600 dark:text-red-400';
-});
-
-const confidencePercentage = $derived(() => {
-  return confidence ? Math.round(confidence * 100) : null;
-});
+const confidenceColor = $derived(confidence ? getConfidenceColor(confidence) : '');
+const confidencePercentage = $derived(confidence ? Math.round(confidence * 100) : null);
 </script>
 
 <div
