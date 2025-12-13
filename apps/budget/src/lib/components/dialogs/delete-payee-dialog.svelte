@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { buttonVariants } from '$lib/components/ui/button';
-import { deletePayeeDialog, deletePayeeId } from '$lib/states/ui/payees.svelte';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { deletePayeeDialog, deletePayeeId } from '$lib/states/ui/payees.svelte';
 
 const _deletePayeeDialog = $derived(deletePayeeDialog);
 const _deletePayeeId = $derived(deletePayeeId);

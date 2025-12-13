@@ -18,10 +18,8 @@ let {
 const _currentViews = $derived(currentViews.get());
 let confirmDeleteView = async () => {
   if (views) {
-    const viewStates: CurrentViewState<TransactionsFormat>[] = _currentViews.get(
-      views
-    ) as CurrentViewState<TransactionsFormat>[];
-    if (viewStates) {
+    const viewStates = _currentViews.get(views);
+    if (viewStates && Array.isArray(viewStates)) {
       viewStates.forEach((viewState) => viewState.view.deleteView());
     }
   }

@@ -1,10 +1,10 @@
 <script lang="ts">
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import { buttonVariants } from '$lib/components/ui/button';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { deleteScheduleDialog, deleteScheduleId } from '$lib/states/ui/global.svelte';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import { buttonVariants } from '$lib/components/ui/button';
 import { SchedulesState } from '$lib/states/entities/schedules.svelte';
+import { deleteScheduleDialog, deleteScheduleId } from '$lib/states/ui/global.svelte';
 
 const _deleteScheduleDialog = $derived(deleteScheduleDialog);
 const _deleteScheduleId = $derived(deleteScheduleId);
