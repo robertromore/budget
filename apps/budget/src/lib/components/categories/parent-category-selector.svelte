@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as Select from '$lib/components/ui/select';
 import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
 import type { Category } from '$lib/schema/categories';
 
 let {
