@@ -46,14 +46,19 @@ export interface ValidationError {
 
 // Column mapping for flexible CSV structures
 export interface ColumnMapping {
-  date: string;
-  amount?: string;
-  debit?: string;
-  credit?: string;
-  payee?: string;
-  notes?: string;
-  category?: string;
-  status?: string;
+  date: string | null;
+  amount?: string | null;
+  debit?: string | null;
+  credit?: string | null;
+  payee?: string | null;
+  notes?: string | null;
+  category?: string | null;
+  status?: string | null;
+  // Schema naming convention
+  inflow?: string | null;
+  outflow?: string | null;
+  memo?: string | null;
+  description?: string | null;
 }
 
 // Entity matching results

@@ -1,9 +1,9 @@
 // $lib/types/filter.ts
-import type { Column } from "@tanstack/table-core";
-import type { SvelteSet } from "svelte/reactivity";
-import type { RenderComponentConfig } from "$lib/components/ui/data-table";
-import type { Component } from "svelte";
 import type { TableDensity } from "$lib/components/data-table/state/types";
+import type { RenderComponentConfig } from "$lib/components/ui/data-table";
+import type { Column } from "@tanstack/table-core";
+import type { Component } from "svelte";
+import type { SvelteSet } from "svelte/reactivity";
 
 /**
  * The raw filter applied to a column.
