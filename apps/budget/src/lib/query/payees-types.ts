@@ -2,19 +2,12 @@
 // Re-export server types for use in query layer
 
 export type {
-  PayeeAnalytics,
-  PayeeWithStats,
-  PayeeWithRelations,
   BulkUpdateResult,
-  CreatePayeeData,
+  CreatePayeeData, PayeeAnalytics, PayeeWithRelations, PayeeWithStats
 } from "$lib/server/domains/payees/services";
 
 export type {
-  PayeeIntelligence,
-  PayeeSuggestions,
-  PayeeStats,
-  PayeeSearchFilters,
-  UpdatePayeeData,
+  PayeeIntelligence, PayeeSearchFilters, PayeeStats, PayeeSuggestions, UpdatePayeeData
 } from "$lib/server/domains/payees/repository";
 
 export interface UnifiedMLRecommendations {

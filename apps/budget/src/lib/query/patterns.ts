@@ -1,21 +1,23 @@
-import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
-import { cachePatterns } from "./_client";
-import { trpc } from "$lib/trpc/client";
 import type { DetectedPattern } from "$lib/schema/detected-patterns";
 import type { DetectedPatternData, DetectionCriteria } from "$lib/server/domains/patterns/types";
+import { trpc } from "$lib/trpc/client";
+import { cachePatterns } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
+
+type PatternStatus = "pending" | "accepted" | "dismissed" | "converted";
 
 export const patternKeys = createQueryKeys("patterns", {
   all: () => ["patterns", "all"] as const,
   byAccount: (accountId: number) => ["patterns", "account", accountId] as const,
-  byStatus: (status: string) => ["patterns", "status", status] as const,
-  byAccountAndStatus: (accountId: number, status: string) =>
+  byStatus: (status: PatternStatus) => ["patterns", "status", status] as const,
+  byAccountAndStatus: (accountId: number, status: PatternStatus) =>
     ["patterns", "account", accountId, "status", status] as const,
 });
 
 /**
  * List all detected patterns with optional filtering
  */
-export const listPatterns = (accountId?: number, status?: string) =>
+export const listPatterns = (accountId?: number, status?: PatternStatus) =>
   defineQuery<DetectedPattern[]>({
     queryKey:
       accountId && status
@@ -37,9 +39,10 @@ export const detectPatterns = defineMutation<
 >({
   mutationFn: (input) => trpc().patternRoutes.detect.mutate(input),
   onSuccess: () => {
-    cachePatterns.invalidatePrefix(patternKeys.all());
+    // Invalidate all pattern queries (not just "all" key)
+    cachePatterns.invalidatePrefix(["patterns"]);
   },
-  successMessage: "Pattern detection complete",
+  // No successMessage - the UI handles custom toasts with pattern counts
   errorMessage: "Failed to detect patterns",
 });
 
@@ -49,7 +52,7 @@ export const detectPatterns = defineMutation<
 export const convertPatternToSchedule = defineMutation<{ patternId: number }, number>({
   mutationFn: (input) => trpc().patternRoutes.convertToSchedule.mutate(input),
   onSuccess: () => {
-    cachePatterns.invalidatePrefix(patternKeys.all());
+    cachePatterns.invalidatePrefix(["patterns"]);
     // Also invalidate schedule cache when patterns are converted
     cachePatterns.invalidatePrefix(["schedules"]);
   },
@@ -63,7 +66,7 @@ export const convertPatternToSchedule = defineMutation<{ patternId: number }, nu
 export const dismissPattern = defineMutation<{ patternId: number }, { success: boolean }>({
   mutationFn: (input) => trpc().patternRoutes.dismiss.mutate(input),
   onSuccess: () => {
-    cachePatterns.invalidatePrefix(patternKeys.all());
+    cachePatterns.invalidatePrefix(["patterns"]);
   },
   successMessage: "Pattern dismissed",
   errorMessage: "Failed to dismiss pattern",
@@ -78,7 +81,7 @@ export const expireStalePatterns = defineMutation<
 >({
   mutationFn: (input) => trpc().patternRoutes.expireStale.mutate(input),
   onSuccess: () => {
-    cachePatterns.invalidatePrefix(patternKeys.all());
+    cachePatterns.invalidatePrefix(["patterns"]);
   },
   successMessage: "Stale patterns expired",
   errorMessage: "Failed to expire patterns",
@@ -93,7 +96,7 @@ export const deleteAllPatterns = defineMutation<
 >({
   mutationFn: (input) => trpc().patternRoutes.deleteAll.mutate(input),
   onSuccess: () => {
-    cachePatterns.invalidatePrefix(patternKeys.all());
+    cachePatterns.invalidatePrefix(["patterns"]);
   },
   successMessage: "Patterns deleted",
   errorMessage: "Failed to delete patterns",

@@ -1,4 +1,4 @@
-import type { PayeeCategory, NewPayeeCategory } from "$lib/schema/payee-categories";
+import type { NewPayeeCategory, PayeeCategory } from "$lib/schema/payee-categories";
 import type { PayeeCategoryWithCounts } from "$lib/server/domains/payee-categories/repository";
 import { trpc } from "$lib/trpc/client";
 import { cachePatterns } from "./_client";

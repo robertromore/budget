@@ -1,15 +1,15 @@
-import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
-import { queryPresets, queryClient, cachePatterns } from "./_client";
-import { trpc } from "$lib/trpc/client";
 import type { Payee, PayeeType, PaymentFrequency } from "$lib/schema/payees";
+import { trpc } from "$lib/trpc/client";
+import { cachePatterns, queryClient, queryPresets } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 import type {
-  PayeeAnalytics,
-  PayeeIntelligence,
-  PayeeSuggestions,
-  PayeeStats,
   DuplicateGroup,
   OperationHistory,
-} from "./types/payees";
+  PayeeAnalytics,
+  PayeeIntelligence,
+  PayeeStats,
+  PayeeSuggestions,
+} from "./payees-types";
 
 export const payeeKeys = createQueryKeys("payees", {
   lists: () => ["payees", "list"] as const,

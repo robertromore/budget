@@ -4,18 +4,18 @@
  * Based on Epicenter's RPC pattern for better developer experience
  */
 
-import * as transactions from "./transactions";
-import * as budgets from "./budgets";
 import * as accounts from "./accounts";
-import * as payees from "./payees";
+import * as budgets from "./budgets";
 import * as categories from "./categories";
 import * as categoryGroups from "./category-groups";
-import * as payeeCategories from "./payee-categories";
-import * as patterns from "./patterns";
 import * as medicalExpenses from "./medical-expenses";
-import * as workspaces from "./workspaces";
+import * as patterns from "./patterns";
+import * as payeeCategories from "./payee-categories";
+import * as payees from "./payees";
 import * as schedules from "./schedules";
+import * as transactions from "./transactions";
 import * as views from "./views";
+import * as workspaces from "./workspaces";
 
 /**
  * Centralized RPC interface aggregating all query modules
@@ -40,8 +40,8 @@ export const rpc = {
 /**
  * Re-export commonly used utilities for convenience
  */
-export { queryClient, cachePatterns, queryPresets } from "./_client";
-export { defineQuery, defineMutation, createQueryKeys } from "./_factory";
+export { cachePatterns, queryClient, queryPresets } from "./_client";
+export { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 // Import for internal use in dev tools
 import { queryClient } from "./_client";
@@ -66,18 +66,18 @@ export type ViewQueries = typeof views;
 /**
  * Convenience re-exports for specific domains
  */
-export { transactionKeys } from "./transactions";
-export { budgetKeys } from "./budgets";
 export { accountKeys } from "./accounts";
-export { payeeKeys } from "./payees";
+export { budgetKeys } from "./budgets";
 export { categoryKeys } from "./categories";
 export { categoryGroupKeys } from "./category-groups";
-export { payeeCategoryKeys } from "./payee-categories";
-export { patternKeys } from "./patterns";
 export { medicalExpenseKeys } from "./medical-expenses";
-export { workspaceKeys } from "./workspaces";
+export { patternKeys } from "./patterns";
+export { payeeCategoryKeys } from "./payee-categories";
+export { payeeKeys } from "./payees";
 export { scheduleKeys } from "./schedules";
+export { transactionKeys } from "./transactions";
 export { viewKeys } from "./views";
+export { workspaceKeys } from "./workspaces";
 
 /**
  * Development helpers

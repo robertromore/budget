@@ -3,12 +3,16 @@ import type {
   CategoryGroup,
   CategoryGroupRecommendation,
   CategoryGroupSettings,
-  NewCategoryGroup,
 } from "$lib/schema/category-groups";
+import { formInsertCategoryGroupSchema } from "$lib/schema/category-groups";
 import type { CategoryGroupWithCounts } from "$lib/server/domains/category-groups/repository";
 import { trpc } from "$lib/trpc/client";
+import type { z } from "zod";
 import { cachePatterns } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
+
+type CreateCategoryGroupInput = z.infer<typeof formInsertCategoryGroupSchema>;
+type UpdateCategoryGroupInput = { id: number } & Partial<CreateCategoryGroupInput>;
 
 // ================================================================================
 // Query Keys
@@ -65,7 +69,7 @@ export const getCategoryGroupSettings = () =>
 // Mutations - Category Groups
 // ================================================================================
 
-export const createCategoryGroup = defineMutation<NewCategoryGroup, CategoryGroup>({
+export const createCategoryGroup = defineMutation<CreateCategoryGroupInput, CategoryGroup>({
   mutationFn: (input) => trpc().categoryGroupsRoutes.create.mutate({ ...input }),
   onSuccess: () => {
     cachePatterns.invalidatePrefix(categoryGroupKeys.all());
@@ -74,10 +78,7 @@ export const createCategoryGroup = defineMutation<NewCategoryGroup, CategoryGrou
   errorMessage: "Failed to create category group",
 });
 
-export const updateCategoryGroup = defineMutation<
-  { id: number } & Partial<NewCategoryGroup>,
-  CategoryGroup
->({
+export const updateCategoryGroup = defineMutation<UpdateCategoryGroupInput, CategoryGroup>({
   mutationFn: (input) => trpc().categoryGroupsRoutes.update.mutate(input),
   onSuccess: (_, variables) => {
     cachePatterns.invalidatePrefix(categoryGroupKeys.all());

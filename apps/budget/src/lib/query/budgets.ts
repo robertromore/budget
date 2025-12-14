@@ -31,6 +31,7 @@ export const budgetKeys = createQueryKeys("budgets", {
   lists: () => ["budgets", "list"] as const,
   list: (status?: Budget["status"]) => ["budgets", "list", status ?? "all"] as const,
   count: () => ["budgets", "count"] as const,
+  byAccount: (accountId: number) => ["budgets", "account", accountId] as const,
   details: () => ["budgets", "detail"] as const,
   detail: (id: number) => ["budgets", "detail", id] as const,
   detailBySlug: (slug: string) => ["budgets", "detail", "slug", slug] as const,
@@ -117,6 +118,15 @@ export const getBudgetDetail = (idOrSlug: number | string) =>
     },
   });
 
+export const getByAccount = (accountId: number) =>
+  defineQuery<BudgetWithRelations[]>({
+    queryKey: budgetKeys["byAccount"](accountId),
+    queryFn: () => trpc().budgetRoutes.getByAccount.query({ accountId }),
+    options: {
+      staleTime: 60 * 1000,
+    },
+  });
+
 export const listPeriodInstances = (templateId: number) =>
   defineQuery<BudgetPeriodInstance[]>({
     queryKey: budgetKeys["periodInstances"](templateId),
@@ -187,7 +197,21 @@ export const deleteBudget = defineMutation<number, { success: boolean }>({
   onSuccess: (_, id) => {
     getState()?.removeBudget(id);
     cachePatterns.removeQuery(budgetKeys.detail(id));
+
+    // Optimistically remove the budget from all budget list queries immediately
+    // This includes both list queries ["budgets", "list", ...] and account queries ["budgets", "account", ...]
+    cachePatterns.updateQueriesWithCondition<BudgetWithRelations[]>(
+      (queryKey) =>
+        queryKey[0] === "budgets" && (queryKey[1] === "list" || queryKey[1] === "account"),
+      (oldData) => oldData.filter((budget) => budget.id !== id)
+    );
+
+    // Also invalidate to ensure consistency with server
     cachePatterns.invalidatePrefix(budgetKeys.lists());
+    cachePatterns.invalidatePrefix(["budgets", "account"]);
+
+    // Invalidate recommendations since a budget created from a recommendation may have been deleted
+    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
   },
   successMessage: "Budget deleted",
   errorMessage: "Failed to delete budget",
@@ -232,7 +256,22 @@ export const bulkDeleteBudgets = defineMutation<
       getState()?.removeBudget(id);
       cachePatterns.removeQuery(budgetKeys.detail(id));
     });
+
+    // Optimistically remove budgets from all budget list queries immediately
+    // This includes both list queries and account-specific queries
+    const idSet = new Set(ids);
+    cachePatterns.updateQueriesWithCondition<BudgetWithRelations[]>(
+      (queryKey) =>
+        queryKey[0] === "budgets" && (queryKey[1] === "list" || queryKey[1] === "account"),
+      (oldData) => oldData.filter((budget) => !idSet.has(budget.id))
+    );
+
+    // Also invalidate to ensure consistency with server
     cachePatterns.invalidatePrefix(budgetKeys.lists());
+    cachePatterns.invalidatePrefix(["budgets", "account"]);
+
+    // Invalidate recommendations since budgets created from recommendations may have been deleted
+    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
   },
   successMessage: (result) =>
     `${result.success} budget(s) deleted${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
@@ -1125,13 +1164,55 @@ export const restoreRecommendation = defineMutation<number, BudgetRecommendation
 
 export const applyRecommendation = defineMutation<number, BudgetWithRelations>({
   mutationFn: (id) => trpc().budgetRoutes.applyRecommendation.mutate({ id }),
-  onSuccess: (_, id) => {
+  onSuccess: (budget, id) => {
+    // Update state if available
+    getState()?.upsertBudget(budget);
+
+    // Optimistically add the new budget to all budget queries immediately
+    // This includes both list queries and account-specific queries
+    cachePatterns.updateQueriesWithCondition<BudgetWithRelations[]>(
+      (queryKey) =>
+        queryKey[0] === "budgets" && (queryKey[1] === "list" || queryKey[1] === "account"),
+      (oldData) => {
+        // Check if budget already exists (update case) or needs to be added (create case)
+        const existingIndex = oldData.findIndex((b) => b.id === budget.id);
+        if (existingIndex >= 0) {
+          // Update existing budget
+          const newData = [...oldData];
+          newData[existingIndex] = budget;
+          return newData;
+        }
+        // Add new budget
+        return [...oldData, budget];
+      }
+    );
+
     cachePatterns.invalidatePrefix(budgetKeys.recommendations());
     cachePatterns.invalidatePrefix(budgetKeys.recommendationDetail(id));
-    cachePatterns.invalidatePrefix(budgetKeys.lists()); // Budgets may have changed
+    cachePatterns.invalidatePrefix(budgetKeys.lists());
+    cachePatterns.invalidatePrefix(["budgets", "account"]);
   },
   successMessage: "Recommendation applied successfully",
   errorMessage: "Failed to apply recommendation",
+});
+
+export const deleteRecommendation = defineMutation<number, { success: boolean }>({
+  mutationFn: (id) => trpc().budgetRoutes.deleteRecommendation.mutate({ id }),
+  onSuccess: (_, id) => {
+    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
+    cachePatterns.removeQuery(budgetKeys.recommendationDetail(id));
+  },
+  successMessage: "Recommendation deleted",
+  errorMessage: "Failed to delete recommendation",
+});
+
+export const clearAllRecommendations = defineMutation<void, { deleted: number }>({
+  mutationFn: () => trpc().budgetRoutes.clearAllRecommendations.mutate(),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(budgetKeys.recommendations());
+  },
+  successMessage: (result) => `Cleared ${result.deleted} recommendation(s)`,
+  errorMessage: "Failed to clear recommendations",
 });
 
 export const getPendingRecommendationsCount = () =>

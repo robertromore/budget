@@ -1,13 +1,13 @@
-import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
-import { cachePatterns } from "./_client";
-import { trpc } from "$lib/trpc/client";
+import type { Transaction } from "$lib/schema";
 import type {
   CreateTransactionData,
-  UpdateTransactionData,
-  TransactionFilters,
   PaginationParams,
+  TransactionFilters,
+  UpdateTransactionData,
 } from "$lib/server/domains/transactions";
-import type { Transaction } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
+import { cachePatterns } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 /**
  * Query Keys for transaction operations
@@ -219,6 +219,7 @@ export const getMonthlySpendingAggregates = (accountId: number) => {
     queryFn: () => trpc().transactionRoutes.monthlySpendingAggregates.query({ accountId }),
     options: {
       staleTime: 60 * 1000, // 1 minute cache for analytics data
+      enabled: accountId > 0 && !Number.isNaN(accountId),
     },
   });
 };
@@ -226,8 +227,8 @@ export const getMonthlySpendingAggregates = (accountId: number) => {
 /**
  * Create new transaction
  */
-export const createTransaction = defineMutation<CreateTransactionData, Transaction>({
-  mutationFn: (data) => trpc().transactionRoutes.create.mutate(data),
+export const createTransaction = defineMutation({
+  mutationFn: (data: CreateTransactionData) => trpc().transactionRoutes.create.mutate(data),
   onSuccess: (_newTransaction, variables) => {
     // Invalidate and refetch related queries using prefix matching
     cachePatterns.invalidatePrefix(["transactions", "account", variables.accountId]);
@@ -242,11 +243,9 @@ export const createTransaction = defineMutation<CreateTransactionData, Transacti
 /**
  * Update transaction
  */
-export const updateTransaction = defineMutation<
-  { id: number; data: UpdateTransactionData },
-  Transaction
->({
-  mutationFn: ({ id, data }) => trpc().transactionRoutes.update.mutate({ id, data }),
+export const updateTransaction = defineMutation({
+  mutationFn: ({ id, data }: { id: number; data: UpdateTransactionData }) =>
+    trpc().transactionRoutes.update.mutate({ id, data }),
   onSuccess: (updatedTransaction) => {
     if (updatedTransaction.accountId) {
       // Update the detail query cache
@@ -271,11 +270,9 @@ export const updateTransaction = defineMutation<
 /**
  * Update transaction and get all account transactions with recalculated running balances
  */
-export const updateTransactionWithBalance = defineMutation<
-  { id: number; data: UpdateTransactionData },
-  Transaction[]
->({
-  mutationFn: ({ id, data }) => trpc().transactionRoutes.updateWithBalance.mutate({ id, data }),
+export const updateTransactionWithBalance = defineMutation({
+  mutationFn: ({ id, data }: { id: number; data: UpdateTransactionData }) =>
+    trpc().transactionRoutes.updateWithBalance.mutate({ id, data }),
   onSuccess: (transactionsWithBalance, _variables) => {
     if (!Array.isArray(transactionsWithBalance) || !transactionsWithBalance.length) return;
 
@@ -370,8 +367,8 @@ export const bulkDeleteTransactions = defineMutation<number[], { count: number }
 /**
  * Legacy save transaction mutation for backwards compatibility
  */
-export const saveTransaction = defineMutation<
-  {
+export const saveTransaction = defineMutation({
+  mutationFn: (data: {
     id?: number;
     accountId?: number;
     amount: number;
@@ -382,10 +379,7 @@ export const saveTransaction = defineMutation<
     status?: "cleared" | "pending" | "scheduled" | null;
     budgetId?: number | null;
     budgetAllocation?: number | null;
-  },
-  Transaction
->({
-  mutationFn: (data) => trpc().transactionRoutes.save.mutate(data),
+  }) => trpc().transactionRoutes.save.mutate(data),
   onSuccess: (transaction) => {
     if (transaction.accountId) {
       cachePatterns.invalidatePrefix(["transactions", "account", transaction.accountId]);

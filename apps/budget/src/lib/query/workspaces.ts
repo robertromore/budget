@@ -1,7 +1,7 @@
-import { defineQuery, defineMutation, createQueryKeys } from "./_factory";
-import { queryPresets, queryClient } from "./_client";
-import { trpc } from "$lib/trpc/client";
 import type { Workspace } from "$lib/schema/workspaces";
+import { trpc } from "$lib/trpc/client";
+import { queryClient, queryPresets } from "./_client";
+import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 
 export const workspaceKeys = createQueryKeys("workspaces", {
   lists: () => ["workspaces", "list"] as const,
