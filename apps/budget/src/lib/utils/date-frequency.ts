@@ -1,7 +1,7 @@
 // $lib/utils/frequency.ts
-import { CalendarDate, type DateValue, startOfWeek } from "@internationalized/date";
-import { getDayOfWeek, getNextWeekdayFlexible, getNthWeekdayOfMonth, timezone } from "./dates";
 import { DATABASE_LIMITS } from "$lib/constants/api";
+import { CalendarDate, type DateValue, startOfWeek } from "@internationalized/date";
+import { getDayOfWeek, getNextWeekdayFlexible, getNthWeekdayOfMonth } from "./dates";
 
 /**
  * Configuration options for date generation functions
@@ -118,7 +118,7 @@ export function nextWeekly(
 ): DateValue[] {
   if (interval <= 0) return [];
 
-  const normalizedWeekDays = weekDays.length > 0 ? weekDays : [getDayOfWeek(start, timezone)];
+  const normalizedWeekDays = weekDays.length > 0 ? weekDays : [getDayOfWeek(start)];
   let weekCursor = start;
   let dayIndex = 0;
   let isFirstWeek = true;

@@ -1,3 +1,5 @@
+import { browser } from "$app/environment";
+import { displayPreferences } from "$lib/stores/display-preferences.svelte";
 import {
   CalendarDate,
   type DateValue,
@@ -564,9 +566,9 @@ export function toISOString(dateValue: DateValue): string {
 }
 
 /**
- * Format DateValue for display using consistent patterns
+ * Format DateValue for display using user preferences when in browser
  * @param dateValue - DateValue to format
- * @param format - Format type ('short', 'medium', 'long')
+ * @param format - Format type ('short', 'medium', 'long') - used for fallback/SSR
  * @returns Formatted date string
  */
 export function formatDateDisplay(
@@ -575,6 +577,12 @@ export function formatDateDisplay(
 ): string {
   const jsDate = dateValue.toDate(timezone);
 
+  // Use user preferences when in browser
+  if (browser) {
+    return displayPreferences.formatDate(jsDate);
+  }
+
+  // Fallback for SSR/server-side
   switch (format) {
     case "short":
       return new Intl.DateTimeFormat("en-US", {

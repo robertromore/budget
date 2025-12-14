@@ -1,10 +1,10 @@
 // Example usage of weekday utility functions
-import { CalendarDate, today, getLocalTimeZone, type DateValue } from "@internationalized/date";
+import { CalendarDate, getLocalTimeZone, today, type DateValue } from "@internationalized/date";
 import {
-  getNextWeekday,
-  getNextWeekdayFlexible,
-  getNextWeekdayByLabel,
   getFirstWeekday,
+  getNextWeekday,
+  getNextWeekdayByLabel,
+  getNextWeekdayFlexible,
 } from "./dates";
 
 /**
@@ -89,8 +89,8 @@ export function firstWeekdayExamples() {
 
   // Use with different timezones
   const dateInUTC = new CalendarDate(2024, 5, 15); // Some date in May
-  const firstWeekdayUTC = getFirstWeekday(dateInUTC, "UTC");
-  const firstWeekdayLocal = getFirstWeekday(dateInUTC, getLocalTimeZone());
+  const firstWeekdayUTC = getFirstWeekday(dateInUTC);
+  const firstWeekdayLocal = getFirstWeekday(dateInUTC);
   console.log("First occurrence (UTC):", firstWeekdayUTC.toString());
   console.log("First occurrence (Local):", firstWeekdayLocal.toString());
 }

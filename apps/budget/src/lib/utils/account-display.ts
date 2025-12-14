@@ -1,4 +1,5 @@
 import { isDebtAccount, type Account } from "$lib/schema/accounts";
+import { formatCurrency as formatCurrencyFromFormatters } from "$lib/utils/formatters";
 
 export type BalanceColor = "positive" | "negative" | "neutral";
 
@@ -74,14 +75,10 @@ export function calculateDebtMetrics(account: Account): DebtAccountMetrics | nul
 }
 
 /**
- * Format currency amount for display
+ * Format currency amount for display - uses user preferences
+ * Re-exported from formatters.ts for backward compatibility
  */
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount);
-}
+export const formatCurrency = formatCurrencyFromFormatters;
 
 /**
  * Format percentage for display

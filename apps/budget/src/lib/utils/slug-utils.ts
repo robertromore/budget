@@ -1,4 +1,4 @@
-import { eq, and, isNull, ne } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { generateUniqueSlug as generateUniqueSlugGeneric } from "./generate-unique-slug";
 
 /**
