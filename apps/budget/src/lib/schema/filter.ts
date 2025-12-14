@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const filterSchema = sqliteTable("filter", {
   id: integer("id").primaryKey({ autoIncrement: true }),

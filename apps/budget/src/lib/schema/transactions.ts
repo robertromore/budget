@@ -4,21 +4,21 @@
 
 import { relations, sql } from "drizzle-orm";
 import {
-  sqliteTable,
+  index,
   integer,
   real,
+  sqliteTable,
   text,
   type AnySQLiteColumn,
-  index,
 } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import validator from "validator";
+import { z } from "zod/v4";
+import { accounts } from "./accounts";
+import { budgetTransactions } from "./budgets";
 import { categories, type Category } from "./categories";
 import { payees, type Payee } from "./payees";
-import { accounts } from "./accounts";
-import { z } from "zod/v4";
 import { schedules } from "./schedules";
-import { budgetTransactions } from "./budgets";
-import validator from "validator";
 
 export const transactions = sqliteTable(
   "transaction",

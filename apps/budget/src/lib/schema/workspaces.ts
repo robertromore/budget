@@ -1,18 +1,19 @@
 import { createId } from "@paralleldrive/cuid2";
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, integer, text, index } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { accounts } from "./accounts";
+import { budgetAutomationSettings } from "./budget-automation-settings";
+import { budgets } from "./budgets";
 import { categories } from "./categories";
 import { categoryGroups } from "./category-groups";
+import { detectedPatterns } from "./detected-patterns";
+import { importProfiles } from "./import-profiles";
+import { payeeCategoryCorrections } from "./payee-category-corrections";
 import { payees } from "./payees";
-import { budgets } from "./budgets";
 import { schedules } from "./schedules";
 import { views } from "./views";
-import { budgetAutomationSettings } from "./budget-automation-settings";
-import { detectedPatterns } from "./detected-patterns";
-import { payeeCategoryCorrections } from "./payee-category-corrections";
 
 export const workspaces = sqliteTable(
   "workspace",
@@ -105,6 +106,7 @@ export const workspacesRelations = relations(workspaces, ({ many }) => ({
   budgetAutomationSettings: many(budgetAutomationSettings),
   detectedPatterns: many(detectedPatterns),
   payeeCategoryCorrections: many(payeeCategoryCorrections),
+  importProfiles: many(importProfiles),
 }));
 
 export type Workspace = typeof workspaces.$inferSelect;

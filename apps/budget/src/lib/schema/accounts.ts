@@ -2,15 +2,15 @@
 // resources, with an overall balance, and transactions to and from the account
 // that affect the account's balance.
 
+import { isValidIconName } from "$lib/utils/icon-validation";
 import { createId } from "@paralleldrive/cuid2";
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, integer, text, index, real } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { transactions } from "./transactions";
-import type { Transaction } from "./transactions";
-import { workspaces } from "./workspaces";
 import { z } from "zod/v4";
-import { isValidIconName } from "$lib/utils/icon-validation";
+import type { Transaction } from "./transactions";
+import { transactions } from "./transactions";
+import { workspaces } from "./workspaces";
 
 // Account type enum for type safety
 export const accountTypeEnum = [

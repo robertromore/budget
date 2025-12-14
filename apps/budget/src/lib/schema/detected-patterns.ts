@@ -1,9 +1,9 @@
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, integer, text, real, index } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { accounts } from "./accounts";
-import { payees } from "./payees";
 import { categories } from "./categories";
+import { payees } from "./payees";
 import { schedules } from "./schedules";
 import { workspaces } from "./workspaces";
 

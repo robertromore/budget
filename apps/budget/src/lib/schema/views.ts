@@ -1,8 +1,8 @@
-import type { ViewFilter, ViewDisplayState } from "$lib/types";
-import { integer, text, sqliteTable, index } from "drizzle-orm/sqlite-core";
-import { createSelectSchema, createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import type { ViewDisplayState, ViewFilter } from "$lib/types";
 import { relations } from "drizzle-orm";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod/v4";
 import { workspaces } from "./workspaces";
 
 export const views = sqliteTable(

@@ -5,10 +5,16 @@ import { budgetPeriodInstances, budgets } from "../budgets";
 import { categories } from "../categories";
 
 export const envelopeStatuses = ["active", "paused", "depleted", "overspent"] as const;
-export const rolloverModes = ["unlimited", "reset", "limited"] as const;
+export const rolloverModes = ["unlimited", "limited", "reset"] as const;
 
 export type EnvelopeStatus = (typeof envelopeStatuses)[number];
 export type RolloverMode = (typeof rolloverModes)[number];
+
+export const rolloverModeOptions = [
+  { value: "unlimited", label: "Unlimited", description: "Rollover all unused funds indefinitely" },
+  { value: "limited", label: "Limited", description: "Rollover for a specific number of months" },
+  { value: "reset", label: "Reset", description: "Clear unused funds at period end" },
+] as const satisfies readonly { value: RolloverMode; label: string; description: string }[];
 
 export interface EnvelopeMetadata {
   target?: number;

@@ -1,20 +1,21 @@
 import { relations, sql } from "drizzle-orm";
 import {
-  sqliteTable,
-  integer,
-  text,
-  real,
   index,
+  integer,
+  real,
+  sqliteTable,
+  text,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { transactions } from "./transactions";
 import { z } from "zod/v4";
-import { payees } from "./payees";
-import { categories } from "./categories";
 import { accounts } from "./accounts";
-import { scheduleDates } from "./schedule-dates";
 import { budgets } from "./budgets";
+import { categories } from "./categories";
+import { payees } from "./payees";
+import { scheduleDates } from "./schedule-dates";
+import { scheduleSkips } from "./schedule-skips";
+import { transactions } from "./transactions";
 import { workspaces } from "./workspaces";
 
 export const schedules = sqliteTable(
@@ -69,6 +70,7 @@ export const schedulesRelations = relations(schedules, ({ many, one }) => ({
     references: [workspaces.id],
   }),
   transactions: many(transactions),
+  skips: many(scheduleSkips),
   account: one(accounts, {
     fields: [schedules.accountId],
     references: [accounts.id],

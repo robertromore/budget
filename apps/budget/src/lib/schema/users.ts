@@ -1,18 +1,18 @@
 import { createId } from "@paralleldrive/cuid2";
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, integer, text, index } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { accounts } from "./accounts";
+import { budgetAutomationSettings } from "./budget-automation-settings";
+import { budgets } from "./budgets";
 import { categories } from "./categories";
 import { categoryGroups } from "./category-groups";
-import { payees } from "./payees";
-import { budgets } from "./budgets";
-import { schedules } from "./schedules";
-import { views } from "./views";
-import { budgetAutomationSettings } from "./budget-automation-settings";
 import { detectedPatterns } from "./detected-patterns";
 import { payeeCategoryCorrections } from "./payee-category-corrections";
+import { payees } from "./payees";
+import { schedules } from "./schedules";
+import { views } from "./views";
 
 export const users = sqliteTable(
   "user",

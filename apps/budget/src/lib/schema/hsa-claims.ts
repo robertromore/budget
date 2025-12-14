@@ -1,6 +1,6 @@
-import { sqliteTable, integer, text, real, index } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
+import { sql } from "drizzle-orm";
+import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { medicalExpenses } from "./medical-expenses";

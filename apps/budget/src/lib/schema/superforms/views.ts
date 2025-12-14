@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { ViewFilter, ViewDisplayState } from "$lib/types";
 
 // Superform-compatible schemas for views (not using drizzle-zod)
 export const superformInsertViewSchema = z.object({

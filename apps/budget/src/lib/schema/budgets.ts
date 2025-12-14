@@ -1,10 +1,10 @@
 import { relations, sql } from "drizzle-orm";
 import {
-  sqliteTable,
-  integer,
-  text,
-  real,
   index,
+  integer,
+  real,
+  sqliteTable,
+  text,
   uniqueIndex,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
@@ -27,6 +27,7 @@ export const budgetEnforcementLevels = ["none", "warning", "strict"] as const;
 export const periodTemplateTypes = ["weekly", "monthly", "quarterly", "yearly", "custom"] as const;
 
 export const budgetHealthStatuses = ["excellent", "good", "warning", "danger"] as const;
+export const budgetProgressStatuses = ["on_track", "approaching", "over", "paused", "setup_needed"] as const;
 
 export type BudgetType = (typeof budgetTypes)[number];
 export type BudgetScope = (typeof budgetScopes)[number];
@@ -34,6 +35,7 @@ export type BudgetStatus = (typeof budgetStatuses)[number];
 export type BudgetEnforcementLevel = (typeof budgetEnforcementLevels)[number];
 export type PeriodTemplateType = (typeof periodTemplateTypes)[number];
 export type BudgetHealthStatus = (typeof budgetHealthStatuses)[number];
+export type BudgetProgressStatus = (typeof budgetProgressStatuses)[number];
 
 export interface BudgetMetadata {
   defaultPeriod?: {

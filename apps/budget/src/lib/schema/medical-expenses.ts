@@ -1,10 +1,10 @@
-import { sqliteTable, integer, text, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
+import { sql } from "drizzle-orm";
+import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
-import { transactions } from "./transactions";
 import { accounts } from "./accounts";
+import { transactions } from "./transactions";
 
 // Medical expense categories based on IRS Publication 502
 // Comprehensive list of HSA-qualified medical expenses organized by category

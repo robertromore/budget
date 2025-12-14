@@ -5,20 +5,19 @@
 
 import { relations, sql } from "drizzle-orm";
 import {
-  sqliteTable,
-  integer,
-  text,
-  real,
   index,
-  type AnySQLiteColumn,
+  integer,
+  real,
+  sqliteTable,
+  text
 } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { transactions } from "./transactions";
-import { categories } from "./categories";
-import { budgets } from "./budgets";
-import { workspaces } from "./workspaces";
-import { payeeCategories } from "./payee-categories";
 import { z } from "zod/v4";
+import { budgets } from "./budgets";
+import { categories } from "./categories";
+import { payeeCategories } from "./payee-categories";
+import { transactions } from "./transactions";
+import { workspaces } from "./workspaces";
 
 // Enum definitions for payee fields
 export const payeeTypes = [

@@ -2,14 +2,14 @@
 // This is separate from transaction categories which categorize transactions.
 // Examples: "Utilities", "Subscriptions", "Local Businesses", "Healthcare Providers"
 
+import { isValidIconName } from "$lib/utils/icon-validation";
 import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import validator from "validator";
 import { z } from "zod/v4";
-import { isValidIconName } from "$lib/utils/icon-validation";
-import { workspaces } from "./workspaces";
 import { payees } from "./payees";
+import { workspaces } from "./workspaces";
 
 export const payeeCategories = sqliteTable(
   "payee_categories",

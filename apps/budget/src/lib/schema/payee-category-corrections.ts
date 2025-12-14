@@ -1,11 +1,11 @@
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, integer, text, real, index } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { payees } from "./payees";
+import { z } from "zod/v4";
 import { categories } from "./categories";
+import { payees } from "./payees";
 import { transactions } from "./transactions";
 import { workspaces } from "./workspaces";
-import { z } from "zod/v4";
 
 // Enum definitions for correction context
 export const correctionTriggers = [

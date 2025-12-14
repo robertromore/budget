@@ -1,5 +1,4 @@
 import { z } from "zod";
-import validator from "validator";
 
 // Superform-compatible schemas for transactions (not using drizzle-zod)
 export const superformInsertTransactionSchema = z.object({
@@ -31,5 +30,10 @@ export const superformUpdateTransactionSchema = z.object({
   scheduleId: z.number().nullish(),
 });
 
+export const superformDeleteTransactionSchema = z.object({
+  id: z.number().positive("Transaction ID is required"),
+});
+
 export type SuperformInsertTransactionSchema = typeof superformInsertTransactionSchema;
 export type SuperformUpdateTransactionSchema = typeof superformUpdateTransactionSchema;
+export type SuperformDeleteTransactionSchema = typeof superformDeleteTransactionSchema;
