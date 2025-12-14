@@ -1,6 +1,6 @@
 // $lib/RepeatingDateInput.ts
 import { MoveToWeekday, type RepeatingDate } from "$lib/types";
-import { currentDate, sameMonthAndYear, timezone } from "$lib/utils";
+import { currentDate, timezone } from "$lib/utils";
 import { formatDate, formatDayOfMonth } from "$lib/utils/date-formatters";
 import { nextDaily, nextMonthly, nextWeekly, nextYearly } from "$lib/utils/date-frequency";
 import {
