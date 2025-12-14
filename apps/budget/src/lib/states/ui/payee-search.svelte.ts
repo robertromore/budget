@@ -1,6 +1,6 @@
-import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
-import type { PayeeSearchFilters } from "$lib/server/domains/payees/repository";
 import type { Payee } from "$lib/schema";
+import type { PayeeSearchFilters } from "$lib/server/domains/payees/repository";
+import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
 
 interface PayeeSearchState {
   query: string;

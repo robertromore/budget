@@ -1,5 +1,5 @@
-import { Context } from "runed";
 import type { User, UserPreferences } from "$lib/schema/users";
+import { Context } from "runed";
 
 /**
  * State class representing the currently active user workspace

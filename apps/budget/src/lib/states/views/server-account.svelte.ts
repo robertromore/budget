@@ -1,9 +1,22 @@
 import type { Category, Payee, Transaction } from "$lib/schema";
+import { trpc } from "$lib/trpc/client";
 import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
 import { getContext, setContext } from "svelte";
-import { trpc } from "$lib/trpc/client";
 
 const KEY = Symbol("server_account");
+
+/** Transaction with partial relations from server queries (server returns minimal relation data) */
+type ServerTransaction = {
+  id: number;
+  date: string;
+  amount: number;
+  notes: string | null;
+  status: string | null;
+  balance?: number | null;
+  payee?: { id: number; name: string | null } | null;
+  category?: { id: number; name: string | null } | null;
+  [key: string]: unknown; // Allow additional properties from server
+};
 
 interface PaginationState {
   page: number;
@@ -29,7 +42,7 @@ export class ServerAccountState {
         id: number;
         name: string;
         slug: string;
-        type: string;
+        accountType: string | null;
         notes?: string;
         balance: number;
         transactionCount: number;
@@ -37,7 +50,7 @@ export class ServerAccountState {
     | undefined = $state();
 
   // Transaction pagination
-  currentTransactions: Transaction[] = $state([]);
+  currentTransactions: ServerTransaction[] = $state([]);
   pagination: PaginationState = $state({
     page: 0,
     pageSize: 50,
@@ -84,7 +97,7 @@ export class ServerAccountState {
       id: accountSummary.id,
       name: accountSummary.name,
       slug: accountSummary.slug,
-      type: accountSummary.type,
+      accountType: accountSummary.accountType,
       notes: accountSummary.notes || undefined,
       balance: accountSummary.balance,
       transactionCount: accountSummary.transactionCount,
@@ -114,7 +127,8 @@ export class ServerAccountState {
       return [];
     }
 
-    return transactionFormatter.format(this.currentTransactions) ?? [];
+    // Cast to Transaction[] - formatter only accesses common properties
+    return transactionFormatter.format(this.currentTransactions as Transaction[]) ?? [];
   }
 
   // Categories from current transactions
@@ -148,7 +162,7 @@ export class ServerAccountState {
         id: summary.id,
         name: summary.name,
         slug: summary.slug,
-        type: summary.type,
+        accountType: summary.accountType,
         notes: summary.notes || undefined,
         balance: summary.balance,
         transactionCount: summary.transactionCount,

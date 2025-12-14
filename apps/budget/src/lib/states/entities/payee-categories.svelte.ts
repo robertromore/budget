@@ -1,5 +1,5 @@
-import { type PayeeCategory } from "$lib/schema/payee-categories";
 import { rpc } from "$lib/query";
+import { type PayeeCategory } from "$lib/schema/payee-categories";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 

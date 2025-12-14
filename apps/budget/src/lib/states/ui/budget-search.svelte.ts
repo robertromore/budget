@@ -1,5 +1,5 @@
+import type { Budget, BudgetEnforcementLevel, BudgetStatus, BudgetType } from "$lib/schema/budgets";
 import { createLocalStorageState } from "$lib/utils/local-storage.svelte";
-import type { Budget, BudgetType, BudgetStatus, BudgetEnforcementLevel } from "$lib/schema/budgets";
 
 export interface BudgetSearchFilters {
   type?: BudgetType;
@@ -25,7 +25,7 @@ interface BudgetSearchState {
  */
 class BudgetSearchStateManager {
   // Persistent state
-  private viewModeState = createLocalStorageState("budget-search-view-mode", "list" as const);
+  private viewModeState = createLocalStorageState<"grid" | "list">("budget-search-view-mode", "list");
   private sortByState = createLocalStorageState<
     "name" | "created" | "type" | "allocated" | "consumed" | "remaining"
   >("budget-search-sort-by", "name");

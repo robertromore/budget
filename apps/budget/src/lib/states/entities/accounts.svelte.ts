@@ -1,5 +1,5 @@
+import { accountKeys, cachePatterns, rpc } from "$lib/query";
 import type { Account } from "$lib/schema";
-import { rpc, accountKeys, cachePatterns } from "$lib/query";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 

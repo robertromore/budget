@@ -1,6 +1,6 @@
+import type { TopCategoryData, TransactionsFormat } from "$lib/types";
 import { Context } from "runed";
 import type { CurrentViewsState } from "./current-views.svelte";
-import type { TransactionsFormat, TopCategoryData } from "$lib/types";
 
 /**
  * Factory function to create a view context for a specific table type

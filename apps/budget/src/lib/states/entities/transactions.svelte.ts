@@ -1,12 +1,12 @@
-import type { Transaction } from "$lib/schema/transactions";
-import { getContext, setContext } from "svelte";
 import { rpc } from "$lib/query";
+import type { Transaction } from "$lib/schema/transactions";
 import type {
   CreateTransactionData,
-  UpdateTransactionData,
-  TransactionFilters,
   PaginationParams,
+  TransactionFilters,
+  UpdateTransactionData,
 } from "$lib/server/domains/transactions";
+import { getContext, setContext } from "svelte";
 
 const KEY = Symbol("transactions");
 
@@ -142,11 +142,7 @@ export class TransactionsState {
   }
 
   async updateTransaction(id: number, data: UpdateTransactionData) {
-    return await this.updateMutation.mutateAsync({
-      id,
-      data,
-      accountId: data.accountId || this.accountId!,
-    });
+    return await this.updateMutation.mutateAsync({ id, data });
   }
 
   async deleteTransaction(id: number) {
@@ -159,44 +155,44 @@ export class TransactionsState {
 
   // Helper methods
   getTransactionById(id: number): Transaction | undefined {
-    return this.transactions.find((t) => t.id === id);
+    return this.transactions.find((t: Transaction) => t.id === id);
   }
 
   filterByStatus(status: "cleared" | "pending" | "scheduled"): Transaction[] {
-    return this.transactions.filter((t) => t.status === status);
+    return this.transactions.filter((t: Transaction) => t.status === status);
   }
 
   filterByCategory(categoryId: number): Transaction[] {
-    return this.transactions.filter((t) => t.categoryId === categoryId);
+    return this.transactions.filter((t: Transaction) => t.categoryId === categoryId);
   }
 
   filterByPayee(payeeId: number): Transaction[] {
-    return this.transactions.filter((t) => t.payeeId === payeeId);
+    return this.transactions.filter((t: Transaction) => t.payeeId === payeeId);
   }
 
   getTotalAmount(): number {
-    return this.transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+    return this.transactions.reduce((sum: number, t: Transaction) => sum + (t.amount || 0), 0);
   }
 
   getClearedBalance(): number {
     return this.transactions
-      .filter((t) => t.status === "cleared")
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
+      .filter((t: Transaction) => t.status === "cleared")
+      .reduce((sum: number, t: Transaction) => sum + (t.amount || 0), 0);
   }
 
   getPendingBalance(): number {
     return this.transactions
-      .filter((t) => t.status === "pending")
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
+      .filter((t: Transaction) => t.status === "pending")
+      .reduce((sum: number, t: Transaction) => sum + (t.amount || 0), 0);
   }
 
   // Search functionality
   searchTransactions(query: string): Transaction[] {
     const searchLower = query.toLowerCase();
-    return this.transactions.filter((t) => {
+    return this.transactions.filter((t: Transaction) => {
       const notes = t.notes?.toLowerCase() || "";
-      const payee = t.payee?.name?.toLowerCase() || "";
-      const category = t.category?.name?.toLowerCase() || "";
+      const payee = (t as any).payee?.name?.toLowerCase() || "";
+      const category = (t as any).category?.name?.toLowerCase() || "";
       return (
         notes.includes(searchLower) || payee.includes(searchLower) || category.includes(searchLower)
       );

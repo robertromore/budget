@@ -15,3 +15,29 @@ export const newBudgetDialog = $state(new UseBoolean(false));
 export const managingBudgetId = $state(new UseNumber(0));
 export const deleteBudgetDialog = $state(new UseBoolean(false));
 export const deleteBudgetId = $state(new UseNumber(0));
+
+// Skip occurrence dialog state
+export const skipOccurrenceDialog = $state(new UseBoolean(false));
+export const skipOccurrenceData = $state<{
+  scheduleId: number;
+  scheduleName: string;
+  date: string;
+}>({ scheduleId: 0, scheduleName: "", date: "" });
+
+export function openSkipOccurrenceDialog(
+  scheduleId: number,
+  scheduleName: string,
+  date: string
+) {
+  skipOccurrenceData.scheduleId = scheduleId;
+  skipOccurrenceData.scheduleName = scheduleName;
+  skipOccurrenceData.date = date;
+  skipOccurrenceDialog.setTrue();
+}
+
+export function closeSkipOccurrenceDialog() {
+  skipOccurrenceDialog.setFalse();
+  skipOccurrenceData.scheduleId = 0;
+  skipOccurrenceData.scheduleName = "";
+  skipOccurrenceData.date = "";
+}

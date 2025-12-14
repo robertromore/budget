@@ -1,6 +1,6 @@
+import type { Payee } from "$lib/schema/payees";
 import { getContext, setContext } from "svelte";
 import { SvelteSet } from "svelte/reactivity";
-import type { Payee } from "$lib/schema/payees";
 
 const KEY = Symbol("payee-bulk-operations");
 

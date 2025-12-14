@@ -1,5 +1,5 @@
-import { Context } from "runed";
 import type { Workspace, WorkspacePreferences } from "$lib/schema/workspaces";
+import { Context } from "runed";
 
 /**
  * State class representing the currently active workspace
