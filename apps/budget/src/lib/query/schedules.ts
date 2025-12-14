@@ -119,6 +119,31 @@ export const executeAutoAdd = () =>
   });
 
 /**
+ * Execute auto-add for all eligible schedules
+ */
+export const executeAutoAddAll = defineMutation<
+  void,
+  {
+    totalSchedulesProcessed: number;
+    totalTransactionsCreated: number;
+    results: Array<{
+      scheduleId: number;
+      scheduleName: string;
+      nextDueDate: string | null;
+      transactionsCreated: number;
+      errors: string[];
+    }>;
+    errors: string[];
+  }
+>({
+  mutationFn: () => trpc().scheduleRoutes.executeAutoAddAll.mutate(),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.lists() });
+    queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
+  },
+});
+
+/**
  * Delete a schedule
  */
 export const remove = () =>
@@ -143,3 +168,19 @@ export const duplicate = () =>
       queryClient.setQueryData(scheduleKeys.detail(duplicatedSchedule.id), duplicatedSchedule);
     },
   });
+
+/**
+ * Save (create or update) a schedule
+ */
+export const save = defineMutation({
+  mutationFn: (data: Parameters<ReturnType<typeof trpc>["scheduleRoutes"]["save"]["mutate"]>[0]) =>
+    trpc().scheduleRoutes.save.mutate(data),
+  onSuccess: (savedSchedule) => {
+    queryClient.invalidateQueries({ queryKey: scheduleKeys.lists() });
+    if (savedSchedule?.id) {
+      queryClient.setQueryData(scheduleKeys.detail(savedSchedule.id), savedSchedule);
+    }
+  },
+  successMessage: "Schedule saved",
+  errorMessage: "Failed to save schedule",
+});

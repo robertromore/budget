@@ -1,14 +1,6 @@
 import type { Transaction } from "$lib/schema/transactions";
 import { getContext, setContext } from "svelte";
-import {
-  createAccountTransactionsQuery,
-  createTransactionsListQuery,
-  createAccountSummaryQuery,
-  createTransactionMutation,
-  createUpdateTransactionMutation,
-  createDeleteTransactionMutation,
-  createBulkDeleteTransactionsMutation,
-} from "$lib/queries/transactions";
+import { rpc } from "$lib/query";
 import type {
   CreateTransactionData,
   UpdateTransactionData,
@@ -24,18 +16,22 @@ export class TransactionsState {
   private filters = $state<TransactionFilters>({});
   private pagination = $state<PaginationParams>({ page: 0, pageSize: 50 });
 
-  // Queries
+  // Queries - using ReturnType of factory .options() method
   private accountTransactionsQuery = $state<ReturnType<
-    typeof createAccountTransactionsQuery
+    ReturnType<typeof rpc.transactions.getAccountTransactions>["options"]
   > | null>(null);
-  private listQuery = $state<ReturnType<typeof createTransactionsListQuery> | null>(null);
-  private summaryQuery = $state<ReturnType<typeof createAccountSummaryQuery> | null>(null);
+  private listQuery = $state<ReturnType<
+    ReturnType<typeof rpc.transactions.getTransactionsList>["options"]
+  > | null>(null);
+  private summaryQuery = $state<ReturnType<
+    ReturnType<typeof rpc.transactions.getAccountSummary>["options"]
+  > | null>(null);
 
   // Mutations
-  readonly createMutation = createTransactionMutation();
-  readonly updateMutation = createUpdateTransactionMutation();
-  readonly deleteMutation = createDeleteTransactionMutation();
-  readonly bulkDeleteMutation = createBulkDeleteTransactionsMutation();
+  readonly createMutation = rpc.transactions.createTransaction.options();
+  readonly updateMutation = rpc.transactions.updateTransaction.options();
+  readonly deleteMutation = rpc.transactions.deleteTransaction.options();
+  readonly bulkDeleteMutation = rpc.transactions.bulkDeleteTransactions.options();
 
   constructor(accountId?: number) {
     if (accountId) {
@@ -55,8 +51,8 @@ export class TransactionsState {
   // Account management
   setAccountId(accountId: number) {
     this.accountId = accountId;
-    this.accountTransactionsQuery = createAccountTransactionsQuery(accountId);
-    this.summaryQuery = createAccountSummaryQuery(accountId);
+    this.accountTransactionsQuery = rpc.transactions.getAccountTransactions(accountId).options();
+    this.summaryQuery = rpc.transactions.getAccountSummary(accountId).options();
   }
 
   // Filter management
@@ -99,13 +95,13 @@ export class TransactionsState {
 
   // Data refresh
   private refreshList() {
-    this.listQuery = createTransactionsListQuery(this.filters, this.pagination);
+    this.listQuery = rpc.transactions.getTransactionsList(this.filters, this.pagination).options();
   }
 
   refreshAll() {
     if (this.accountId) {
-      this.accountTransactionsQuery = createAccountTransactionsQuery(this.accountId);
-      this.summaryQuery = createAccountSummaryQuery(this.accountId);
+      this.accountTransactionsQuery = rpc.transactions.getAccountTransactions(this.accountId).options();
+      this.summaryQuery = rpc.transactions.getAccountSummary(this.accountId).options();
     }
     this.refreshList();
   }

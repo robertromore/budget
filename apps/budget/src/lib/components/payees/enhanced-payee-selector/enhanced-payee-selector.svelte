@@ -4,7 +4,7 @@
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
 	import type { Payee } from "$lib/schema/payees";
 	import { PayeesState } from "$lib/states/entities/payees.svelte";
-	import { trpc } from "$lib/trpc/client";
+	import { rpc } from "$lib/query";
 	import { cn } from "$lib/utils";
 	import { MediaQuery } from "svelte/reactivity";
 	import { saveToRecentPayees } from "../advanced-payee-selector/utils";
@@ -139,7 +139,7 @@
 	async function handleSavePayee(data: QuickEditPayeeData): Promise<void> {
 		if (editMode === "create") {
 			// Create new payee
-			const result = await trpc().payeeRoutes.save.mutate({
+			const result = await rpc.payees.createPayee().execute({
 				name: data.name,
 				defaultCategoryId: data.defaultCategoryId,
 				notes: data.notes,
@@ -151,7 +151,7 @@
 			handlePayeeSelect(result.id);
 		} else if (focusedPayee) {
 			// Update existing payee
-			const result = await trpc().payeeRoutes.save.mutate({
+			const result = await rpc.payees.updatePayee().execute({
 				id: focusedPayee.id,
 				name: data.name,
 				defaultCategoryId: data.defaultCategoryId,

@@ -3,7 +3,7 @@
  * Runs automatically when users load the app - no external dependencies required
  */
 
-import { trpc } from "$lib/trpc/client";
+import { rpc } from "$lib/query";
 
 class AutoScheduler {
   private static readonly STORAGE_KEY = "budget-app-last-auto-add-run";
@@ -27,8 +27,7 @@ class AutoScheduler {
       console.log("🔄 Running daily auto-add for scheduled transactions...");
 
       // Execute auto-add for all eligible schedules
-      // @ts-ignore - tRPC router access pattern used throughout codebase
-      const result = await trpc().scheduleRoutes.executeAutoAddAll.mutate();
+      const result = await rpc.schedules.executeAutoAddAll.execute();
 
       // Log results
       if (result.totalTransactionsCreated > 0) {
@@ -98,8 +97,7 @@ class AutoScheduler {
   async forceRun(): Promise<void> {
     console.log("🔄 Manually triggering auto-add...");
     try {
-      // @ts-ignore - tRPC router access pattern used throughout codebase
-      const result = await trpc().scheduleRoutes.executeAutoAddAll.mutate();
+      const result = await rpc.schedules.executeAutoAddAll.execute();
 
       if (result.totalTransactionsCreated > 0) {
         console.log(
@@ -111,7 +109,6 @@ class AutoScheduler {
 
       // Mark as completed for today
       this.setLastRunDate(this.getTodayString());
-      return result;
     } catch (error) {
       console.error("❌ Manual auto-add failed:", error);
       throw error;

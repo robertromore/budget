@@ -1,5 +1,5 @@
 import { type Payee } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
+import { rpc } from "$lib/query";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
@@ -96,19 +96,21 @@ export class PayeesState {
 
   // API operations
   async savePayee(payee: any): Promise<Payee> {
-    const result = await trpc().payeeRoutes.save.mutate(payee);
+    const result = payee.id
+      ? await rpc.payees.updatePayee().execute(payee)
+      : await rpc.payees.createPayee().execute(payee);
     const typedResult = result as Payee;
     this.addPayee(typedResult);
     return typedResult;
   }
 
   async deletePayee(id: number): Promise<void> {
-    await trpc().payeeRoutes.delete.mutate({ entities: [id] });
+    await rpc.payees.bulkDeletePayees.execute([id]);
     this.removePayee(id);
   }
 
   async deletePayees(ids: number[]): Promise<void> {
-    await trpc().payeeRoutes.delete.mutate({ entities: ids });
+    await rpc.payees.bulkDeletePayees.execute(ids);
     this.removePayees(ids);
   }
 

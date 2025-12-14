@@ -1,5 +1,5 @@
 import { type Category } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
+import { rpc } from "$lib/query";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
@@ -104,18 +104,20 @@ export class CategoriesState {
 
   // API operations
   async saveCategory(category: Category): Promise<Category> {
-    const result = await trpc().categoriesRoutes.save.mutate(category);
+    const result = category.id
+      ? await rpc.categories.updateCategory.execute(category)
+      : await rpc.categories.createCategory.execute(category);
     this.addCategory(result);
     return result;
   }
 
   async deleteCategory(id: number): Promise<void> {
-    await trpc().categoriesRoutes.delete.mutate({ entities: [id] });
+    await rpc.categories.bulkDeleteCategories.execute([id]);
     this.removeCategory(id);
   }
 
   async deleteCategories(ids: number[]): Promise<void> {
-    await trpc().categoriesRoutes.delete.mutate({ entities: ids });
+    await rpc.categories.bulkDeleteCategories.execute(ids);
     this.removeCategories(ids);
   }
 

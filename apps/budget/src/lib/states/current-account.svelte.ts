@@ -1,6 +1,6 @@
 import type { Category, Payee, Transaction } from "$lib/schema";
 import type { Account } from "$lib/schema/accounts";
-import { trpc } from "$lib/trpc/client";
+import { rpc } from "$lib/query";
 import type { TransactionsFormat } from "$lib/types";
 import { without } from "$lib/utils";
 import { currencyFormatter, transactionFormatter } from "$lib/utils/formatters";
@@ -89,14 +89,12 @@ export class CurrentAccountState {
         });
     }
     const updatedData = Object.assign({}, original, new_data) as Transaction;
-    await trpc().transactionRoutes.save.mutate(updatedData);
+    await rpc.transactions.saveTransaction.execute(updatedData);
     this.transactions[idx] = updatedData;
   };
 
   async deleteTransactions(transactions: number[], cb?: (id: Transaction[]) => void) {
-    await trpc().transactionRoutes.bulkDelete.mutate({
-      ids: transactions,
-    });
+    await rpc.transactions.bulkDeleteTransactions.execute(transactions);
     const [kept, removed] = without(this.transactions ?? [], (transaction: Transaction) =>
       transactions.includes(transaction.id)
     );

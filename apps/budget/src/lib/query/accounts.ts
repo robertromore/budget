@@ -85,3 +85,19 @@ export const deleteAccount = defineMutation<{ id: number }, any>({
   successMessage: "Account deleted successfully",
   errorMessage: "Failed to delete account",
 });
+
+/**
+ * Save (create or update) an account
+ */
+export const saveAccount = defineMutation({
+  mutationFn: (data: Parameters<ReturnType<typeof trpc>["accountRoutes"]["save"]["mutate"]>[0]) =>
+    trpc().accountRoutes.save.mutate(data),
+  onSuccess: (savedAccount) => {
+    cachePatterns.invalidatePrefix(accountKeys.all());
+    if (savedAccount?.id) {
+      cachePatterns.invalidatePrefix(accountKeys.detail(savedAccount.id));
+    }
+  },
+  successMessage: "Account saved",
+  errorMessage: "Failed to save account",
+});

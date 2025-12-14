@@ -10,7 +10,7 @@ import * as Select from '$lib/components/ui/select';
 import { Separator } from '$lib/components/ui/separator';
 import * as Tabs from '$lib/components/ui/tabs';
 import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
-import { trpc } from '$lib/trpc/client';
+import { rpc } from '$lib/query';
 import { cn } from '$lib/utils';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
 import { currencyFormatter } from '$lib/utils/formatters';
@@ -143,10 +143,7 @@ function handleExecute() {
 async function loadSurplusEnvelopes() {
   isLoadingSurplus = true;
   try {
-    const result = await trpc().budgetRoutes.getSurplusEnvelopes.query({
-      budgetId: envelope.budgetId,
-      minimumSurplus: 10,
-    });
+    const result = await rpc.budgets.getSurplusEnvelopes(envelope.budgetId, 10).execute();
     surplusEnvelopes = result;
   } catch (error) {
     console.error('Failed to load surplus envelopes:', error);
@@ -164,7 +161,7 @@ async function handleTransferFromEnvelope() {
 
   isPerformingQuickAction = true;
   try {
-    await trpc().budgetRoutes.transferEnvelopeFunds.mutate({
+    await rpc.budgets.transferEnvelopeFunds.execute({
       fromEnvelopeId: Number(selectedTransferSource),
       toEnvelopeId: envelope.id,
       amount: transferAmount,
@@ -200,7 +197,7 @@ async function handleUseEmergencyFund() {
 
   isPerformingQuickAction = true;
   try {
-    await trpc().budgetRoutes.transferEnvelopeFunds.mutate({
+    await rpc.budgets.transferEnvelopeFunds.execute({
       fromEnvelopeId: emergencyOption.sourceEnvelopeId,
       toEnvelopeId: envelope.id,
       amount: emergencyOption.amount,
@@ -223,7 +220,7 @@ async function handleReallocateBudget() {
   isPerformingQuickAction = true;
   try {
     // Update the envelope allocation to increase the allocated amount
-    await trpc().budgetRoutes.updateEnvelopeAllocation.mutate({
+    await rpc.budgets.updateEnvelopeAllocation.execute({
       envelopeId: envelope.id,
       allocatedAmount: envelope.allocatedAmount + envelope.deficitAmount,
     });
@@ -243,7 +240,7 @@ async function handleResetEnvelope() {
   isPerformingQuickAction = true;
   try {
     // Reset envelope by setting deficit to 0
-    await trpc().budgetRoutes.updateEnvelopeAllocation.mutate({
+    await rpc.budgets.updateEnvelopeAllocation.execute({
       envelopeId: envelope.id,
       allocatedAmount: envelope.spentAmount, // Set allocated = spent to zero out deficit
     });

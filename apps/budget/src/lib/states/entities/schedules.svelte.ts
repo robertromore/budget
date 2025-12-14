@@ -1,5 +1,5 @@
 import type { Schedule } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
+import { rpc } from "$lib/query";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
@@ -106,13 +106,13 @@ export class SchedulesState {
       recurring: schedule.recurring ?? undefined,
       auto_add: schedule.auto_add ?? undefined,
     };
-    const result = await trpc().scheduleRoutes.save.mutate(scheduleForMutation);
+    const result = await rpc.schedules.save.execute(scheduleForMutation);
     this.addSchedule(result);
     return result;
   }
 
   async deleteSchedule(id: number): Promise<void> {
-    await trpc().scheduleRoutes.remove.mutate({ id });
+    await rpc.schedules.remove().execute(id);
     this.removeSchedule(id);
   }
 

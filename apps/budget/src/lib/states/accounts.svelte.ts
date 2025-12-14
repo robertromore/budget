@@ -1,6 +1,5 @@
-import { page } from "$app/state";
 import type { Account } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
+import { rpc } from "$lib/query";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
@@ -33,6 +32,6 @@ export class AccountsState {
 
   async deleteAccount(id: number) {
     this.accounts.delete(id);
-    await trpc(page).accountRoutes.remove.mutate({ id: id });
+    await rpc.accounts.deleteAccount.execute({ id });
   }
 }

@@ -5,7 +5,7 @@
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
 	import type { Category } from "$lib/schema/categories";
 	import { CategoriesState } from "$lib/states/entities/categories.svelte";
-	import { trpc } from "$lib/trpc/client";
+	import { rpc } from "$lib/query";
 	import { cn } from "$lib/utils";
 	import { MediaQuery } from "svelte/reactivity";
 	import CategoryDetailPanel from "./category-detail-panel.svelte";
@@ -149,7 +149,7 @@
 	): Promise<void> {
 		if (editMode === "create") {
 			// Create new category
-			const result = await trpc().categoriesRoutes.save.mutate({
+			const result = await rpc.categories.createCategory.execute({
 				name: data.name,
 				parentId: data.parentId,
 				categoryType: data.categoryType as any,
@@ -164,7 +164,7 @@
 			handleCategorySelect(result.id);
 		} else if (focusedCategory) {
 			// Update existing category
-			const result = await trpc().categoriesRoutes.save.mutate({
+			const result = await rpc.categories.updateCategory.execute({
 				id: focusedCategory.id,
 				name: data.name,
 				parentId: data.parentId,

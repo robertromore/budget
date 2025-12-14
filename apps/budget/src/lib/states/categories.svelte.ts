@@ -1,5 +1,5 @@
 import { type Category } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
+import { rpc } from "$lib/query";
 import { without } from "$lib/utils";
 import { Context } from "runed";
 
@@ -24,9 +24,7 @@ export class CategoriesState {
   }
 
   async deleteCategories(categories: number[], cb?: (id: Category[]) => void) {
-    await trpc().categoriesRoutes.delete.mutate({
-      entities: categories,
-    });
+    await rpc.categories.bulkDeleteCategories.execute(categories);
     const [, removed] = without(this.categories, (category: Category) =>
       categories.includes(category.id)
     );

@@ -1,6 +1,6 @@
 import type { TableDensity } from "$lib/components/data-table/state/types";
 import type { View as ViewSchema } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
+import { rpc } from "$lib/query";
 import type { ViewFilter, ViewFilterWithSet } from "$lib/types";
 import deeplyEqual, { equalArray } from "$lib/utils";
 import type {
@@ -402,10 +402,10 @@ export default class View {
       return Object.assign({}, filter, { value: Array.from(filter.value) });
     });
     this.initial = $state.snapshot(this.view);
-    await trpc().viewsRoutes.save.mutate(this.view);
+    await rpc.views.saveView.execute(this.view);
   }
 
   async deleteView() {
-    await trpc().viewsRoutes.delete.mutate({ entities: [this.view.id] });
+    await rpc.views.deleteViews.execute([this.view.id]);
   }
 }

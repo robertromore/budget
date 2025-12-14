@@ -3,14 +3,14 @@
  * Provides intelligent suggestions for transaction forms based on payee data
  */
 
-import { trpc } from "$lib/trpc/client";
+import { rpc } from "$lib/query";
 
 export function usePayeeIntelligence() {
   /**
    * Get intelligent suggestions for a specific payee
    */
   function getPayeeSuggestionsFor(payeeId: number) {
-    return trpc().payeeRoutes.suggestions.query({ id: payeeId });
+    return rpc.payees.getPayeeSuggestions(payeeId).execute();
   }
 
   /**

@@ -1,5 +1,5 @@
 import { type PayeeCategory } from "$lib/schema/payee-categories";
-import { trpc } from "$lib/trpc/client";
+import { rpc } from "$lib/query";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
@@ -109,18 +109,18 @@ export class PayeeCategoriesState {
 
   // API operations
   async saveCategory(category: PayeeCategory): Promise<PayeeCategory> {
-    const result = await trpc().payeeCategoriesRoutes.save.mutate(category);
+    const result = await rpc.payeeCategories.savePayeeCategory.execute(category);
     this.addCategory(result);
     return result;
   }
 
   async deleteCategory(id: number): Promise<void> {
-    await trpc().payeeCategoriesRoutes.delete.mutate({ id });
+    await rpc.payeeCategories.deletePayeeCategory.execute(id);
     this.removeCategory(id);
   }
 
   async deleteCategories(ids: number[]): Promise<void> {
-    await trpc().payeeCategoriesRoutes.bulkDelete.mutate({ entities: ids });
+    await rpc.payeeCategories.bulkDeletePayeeCategories.execute(ids);
     this.removeCategories(ids);
   }
 

@@ -1,7 +1,5 @@
 import type { Account } from "$lib/schema";
-import { trpc } from "$lib/trpc/client";
-import { accountKeys } from "$lib/query/accounts";
-import { cachePatterns } from "$lib/query/_client";
+import { rpc, accountKeys, cachePatterns } from "$lib/query";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
@@ -130,7 +128,7 @@ export class AccountsState {
       accountType: account.accountType ?? undefined,
       initialBalance: account.initialBalance ?? undefined,
     };
-    const result = await trpc().accountRoutes.save.mutate(accountForMutation);
+    const result = await rpc.accounts.saveAccount.execute(accountForMutation);
     // The API returns balance but TypeScript doesn't infer the extended type
     const accountWithDefaults: Account = {
       ...(result as any),
@@ -142,7 +140,7 @@ export class AccountsState {
   }
 
   async deleteAccount(id: number): Promise<void> {
-    await trpc().accountRoutes.remove.mutate({ id });
+    await rpc.accounts.deleteAccount.execute({ id });
     this.removeAccount(id);
     // Invalidate caches to update default accounts status
     cachePatterns.invalidatePrefix(accountKeys.all());
