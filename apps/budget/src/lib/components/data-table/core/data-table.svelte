@@ -267,13 +267,7 @@ const table = $derived(
 );
 
 // Apply UI settings
-const densityClass = $derived(
-  uiSettings.density === 'compact'
-    ? 'text-xs'
-    : uiSettings.density === 'comfortable'
-      ? 'text-sm'
-      : ''
-);
+const densityClass = $derived(uiSettings.density === 'dense' ? 'text-xs' : '');
 const borderClass = $derived(uiSettings.bordered ? 'border' : '');
 const stripedClass = $derived(uiSettings.striped ? '[&_tbody_tr:nth-child(even)]:bg-muted/50' : '');
 const hoverableClass = $derived(

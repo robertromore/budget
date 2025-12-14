@@ -131,7 +131,7 @@ export interface SimpleColumnDef<TData> {
 /**
  * Density setting for table rows
  */
-export type TableDensity = "normal" | "comfortable" | "compact";
+export type TableDensity = "normal" | "dense";
 
 /**
  * Table UI settings

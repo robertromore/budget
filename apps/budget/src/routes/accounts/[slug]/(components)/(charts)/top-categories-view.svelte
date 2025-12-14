@@ -1,7 +1,7 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
 import { AnalyticsCard } from '$lib/components/ui/data-table';
-import { SimpleDataTable } from '$lib/components/data-table';
+import { AdvancedDataTable } from '$lib/components/data-table';
 import type {
   DataTableFeatures,
   DataTableState,
@@ -89,7 +89,7 @@ let columnOrder = $state<string[]>([]);
 let globalFilter = $state<string>('');
 let grouping = $state<GroupingState>([]);
 let expanded = $state<ExpandedState>({});
-let density = $state<'normal' | 'comfortable' | 'compact'>('normal');
+let density = $state<'normal' | 'dense'>('normal');
 let stickyHeader = $state<boolean>(false);
 
 // Create reactive state object
@@ -296,7 +296,7 @@ let viewMode = $state<'table' | 'cards'>('cards');
   <Card.Content class="pt-0 pb-4">
     {#if analyticsData.length > 0}
       {#if viewMode === 'table'}
-        <SimpleDataTable
+        <AdvancedDataTable
           data={analyticsData}
           {columns}
           {features}
@@ -388,7 +388,7 @@ let viewMode = $state<'table' | 'cards'>('cards');
               currentViewId={selectedViewId}
               onViewChange={switchView} />
           {/snippet}
-        </SimpleDataTable>
+        </AdvancedDataTable>
       {:else}
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {#each analyticsData as category (category.id)}

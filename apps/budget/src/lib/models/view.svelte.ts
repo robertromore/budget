@@ -1,3 +1,4 @@
+import type { TableDensity } from "$lib/components/data-table/state/types";
 import type { View as ViewSchema } from "$lib/schema";
 import { trpc } from "$lib/trpc/client";
 import type { ViewFilter, ViewFilterWithSet } from "$lib/types";
@@ -186,11 +187,11 @@ export default class View {
     return this;
   }
 
-  getDensity(): "normal" | "dense" {
+  getDensity(): TableDensity {
     return this.view.display?.density || "normal";
   }
 
-  setDensity(density: "normal" | "dense") {
+  setDensity(density: TableDensity) {
     this.view.display!.density = density;
     return this;
   }

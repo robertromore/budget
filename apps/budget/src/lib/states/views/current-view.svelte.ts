@@ -1,3 +1,4 @@
+import type { TableDensity } from "$lib/components/data-table/state/types";
 import { default as ViewModel } from "$lib/models/view.svelte";
 import type { View } from "$lib/schema";
 import type { TransactionsFormat, ViewFilter } from "$lib/types";
@@ -188,7 +189,7 @@ export class CurrentViewState<TData> {
     this.view.setColumnOrder(currentOrder);
   }
 
-  updateTableDensity(density: "normal" | "dense") {
+  updateTableDensity(density: TableDensity) {
     this.view.setDensity(density);
     // Note: Density affects styling only, not TanStack Table state
   }
