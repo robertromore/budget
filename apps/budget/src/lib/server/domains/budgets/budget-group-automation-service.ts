@@ -37,8 +37,10 @@ export class BudgetGroupAutomationService {
   /**
    * Get automation settings (creates default if none exist)
    */
-  async getSettings(): Promise<BudgetAutomationSettings> {
-    const existingSettings = await db.query.budgetAutomationSettings.findFirst();
+  async getSettings(workspaceId: number): Promise<BudgetAutomationSettings> {
+    const existingSettings = await db.query.budgetAutomationSettings.findFirst({
+      where: eq(budgetAutomationSettings.workspaceId, workspaceId),
+    });
 
     if (existingSettings) {
       return existingSettings;
@@ -48,6 +50,7 @@ export class BudgetGroupAutomationService {
     const [newSettings] = await db
       .insert(budgetAutomationSettings)
       .values({
+        workspaceId,
         autoCreateGroups: false,
         autoAssignToGroups: false,
         autoAdjustGroupLimits: false,
@@ -66,9 +69,10 @@ export class BudgetGroupAutomationService {
    * Update automation settings
    */
   async updateSettings(
+    workspaceId: number,
     updates: Partial<BudgetAutomationSettings>
   ): Promise<BudgetAutomationSettings> {
-    const currentSettings = await this.getSettings();
+    const currentSettings = await this.getSettings(workspaceId);
 
     const [updated] = await db
       .update(budgetAutomationSettings)
@@ -91,9 +95,10 @@ export class BudgetGroupAutomationService {
    */
   async shouldAutoApply(
     recommendation: BudgetRecommendation,
+    workspaceId: number,
     settings?: BudgetAutomationSettings
   ): Promise<boolean> {
-    const automationSettings = settings ?? (await this.getSettings());
+    const automationSettings = settings ?? (await this.getSettings(workspaceId));
 
     // Check if this type of automation is enabled
     const typeEnabled = this.isTypeEnabled(recommendation.type, automationSettings);
@@ -541,8 +546,8 @@ export class BudgetGroupAutomationService {
   /**
    * Auto-assign a newly created budget to matching groups
    */
-  async autoAssignBudgetToGroups(budgetId: number): Promise<void> {
-    const settings = await this.getSettings();
+  async autoAssignBudgetToGroups(budgetId: number, workspaceId: number): Promise<void> {
+    const settings = await this.getSettings(workspaceId);
 
     if (!settings.autoAssignToGroups || !settings.enableSmartGrouping) {
       return;

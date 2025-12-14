@@ -5,8 +5,8 @@
  * using payee, amount, date, and account matching with confidence scoring.
  */
 
-import type { Schedule } from "$lib/schema/schedules";
 import type { Payee } from "$lib/schema/payees";
+import type { Schedule } from "$lib/schema/schedules";
 import { PayeeMatcher } from "./payee-matcher";
 
 export type ScheduleMatchConfidence = "exact" | "high" | "medium" | "low" | "none";

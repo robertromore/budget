@@ -6,7 +6,7 @@ import type { NewCategory } from "$lib/schema";
  */
 export const defaultCategories: Omit<
   NewCategory,
-  "id" | "dateCreated" | "createdAt" | "updatedAt" | "deletedAt"
+  "id" | "workspaceId" | "dateCreated" | "createdAt" | "updatedAt" | "deletedAt"
 >[] = [
   // ============ INCOME CATEGORIES ============
   {

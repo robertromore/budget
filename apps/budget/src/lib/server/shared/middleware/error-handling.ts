@@ -1,7 +1,6 @@
-import { TRPCError } from "@trpc/server";
-import { initTRPC } from "@trpc/server";
-import type { Context } from "$lib/trpc/context";
 import { DomainError } from "$lib/server/shared/types";
+import type { Context } from "$lib/trpc/context";
+import { initTRPC, TRPCError } from "@trpc/server";
 
 // Initialize tRPC for middleware creation
 const t = initTRPC.context<Context>().create();

@@ -5,13 +5,13 @@
  * to transaction creation. Provides progress tracking and error handling.
  */
 
+import { accounts as accountTable } from "$lib/schema/accounts";
 import type { Category } from "$lib/schema/categories";
 import { categories as categoryTable } from "$lib/schema/categories";
 import type { Payee } from "$lib/schema/payees";
 import { payees as payeeTable } from "$lib/schema/payees";
 import type { selectTransactionSchema } from "$lib/schema/transactions";
 import { transactions as transactionTable } from "$lib/schema/transactions";
-import { accounts as accountTable } from "$lib/schema/accounts";
 import { db } from "$lib/server/db";
 import type { ImportOptions, ImportResult, ImportRow } from "$lib/types/import";
 import { and, eq, isNull } from "drizzle-orm";

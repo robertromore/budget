@@ -17,8 +17,8 @@
  */
 
 import { sql } from "drizzle-orm";
-import { db } from ".";
 import { parseArgs } from "util";
+import { db } from ".";
 
 const { values } = parseArgs({
   args: Bun.argv,

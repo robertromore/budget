@@ -4,20 +4,19 @@
  * Handles parsing of QBO XML files with support for various transaction types.
  */
 
-import { XMLParser } from "fast-xml-parser";
 import type {
   FileProcessor,
   ImportRow,
   NormalizedTransaction,
   QBOTransaction,
 } from "$lib/types/import";
+import { XMLParser } from "fast-xml-parser";
 import { FileValidationError, ParseError } from "../errors";
 import {
-  parseQBODate,
-  parseAmount,
-  sanitizeText,
-  validateFileType,
   extractQBOTransactions,
+  parseQBODate,
+  sanitizeText,
+  validateFileType
 } from "../utils";
 
 export class QBOProcessor implements FileProcessor {

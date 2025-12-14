@@ -1,9 +1,10 @@
-import type { Category, Payee } from "$lib/schema";
+import type { Category, Payee, ScheduleSkip } from "$lib/schema";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
-import { PayeeService } from "../payees/services";
 import { CategoryService } from "../categories/services";
+import { PayeeService } from "../payees/services";
 import { TransactionService, type CreateTransactionData } from "../transactions/services";
 import { ScheduleRepository, type ScheduleWithDetails } from "./repository";
+import { ScheduleSkipRepository } from "./skip-repository";
 
 export interface AutoAddResult {
   scheduleId: number;
@@ -65,6 +66,7 @@ const FREQUENCY_DISPLAY_LIMITS: Record<string, FrequencyLimits> = {
 export class ScheduleService {
   constructor(
     private repository: ScheduleRepository,
+    private skipRepository: ScheduleSkipRepository,
     private transactionService: TransactionService,
     private payeeService: PayeeService,
     private categoryService: CategoryService
@@ -282,7 +284,10 @@ export class ScheduleService {
       scheduleId: schedule.id,
     };
 
-    const transaction = await this.transactionService.createTransaction(transactionData);
+    const transaction = await this.transactionService.createTransaction(
+      transactionData,
+      schedule.workspaceId.toString()
+    );
     return transaction.id;
   }
 
@@ -361,11 +366,29 @@ export class ScheduleService {
         }
 
         // Get upcoming dates for this schedule within our calculated window
-        const upcomingDates = await this.calculateUpcomingDates(
+        let upcomingDates = await this.calculateUpcomingDates(
           schedule,
           daysAhead,
           maxOccurrences
         );
+
+        // Apply skip logic: filter out single-skipped dates and apply push_forward offset
+        const skippedDatesSet = await this.skipRepository.getSingleSkippedDatesSet(schedule.id);
+        const pushForwardOffset = await this.skipRepository.countPushForwardSkips(schedule.id);
+
+        // Filter out single-skipped dates
+        upcomingDates = upcomingDates.filter((date) => !skippedDatesSet.has(date));
+
+        // Apply push_forward offset: shift all dates forward by (offset × interval)
+        if (pushForwardOffset > 0 && schedule.scheduleDate?.frequency) {
+          upcomingDates = upcomingDates.map((dateStr) => {
+            const date = new Date(dateStr);
+            for (let i = 0; i < pushForwardOffset; i++) {
+              this.addInterval(date, schedule.scheduleDate!.frequency!, schedule.scheduleDate!.interval || 1);
+            }
+            return date.toISOString().split("T")[0]!;
+          });
+        }
 
         for (const date of upcomingDates) {
           // Check if transaction already exists for this date
@@ -382,7 +405,10 @@ export class ScheduleService {
             let payee: Payee | null = null;
             if (schedule.payeeId) {
               try {
-                payee = await this.payeeService.getPayeeById(schedule.payeeId);
+                payee = await this.payeeService.getPayeeById(
+                  schedule.payeeId,
+                  schedule.workspaceId
+                );
               } catch (error) {
                 console.warn(
                   `Failed to load payee ${schedule.payeeId} for schedule ${schedule.id}:`,
@@ -396,7 +422,10 @@ export class ScheduleService {
             let category: Category | null = null;
             if (schedule.categoryId) {
               try {
-                category = await this.categoryService.getCategoryById(schedule.categoryId);
+                category = await this.categoryService.getCategoryById(
+                  schedule.categoryId,
+                  schedule.workspaceId
+                );
               } catch (error) {
                 console.warn(
                   `Failed to load category ${schedule.categoryId} for schedule ${schedule.id}:`,
@@ -616,5 +645,101 @@ export class ScheduleService {
     }
 
     return upcomingDates;
+  }
+
+  // ==========================================
+  // Skip-related methods
+  // ==========================================
+
+  /**
+   * Skip a single occurrence of a scheduled transaction
+   */
+  async skipSingleOccurrence(
+    scheduleId: number,
+    skippedDate: string,
+    workspaceId: number,
+    reason?: string
+  ): Promise<ScheduleSkip> {
+    const schedule = await this.repository.getScheduleById(scheduleId);
+    if (!schedule) {
+      throw new NotFoundError("Schedule not found");
+    }
+
+    // Check if already skipped
+    const isAlreadySkipped = await this.skipRepository.isDateSkipped(scheduleId, skippedDate);
+    if (isAlreadySkipped) {
+      throw new ValidationError("This date is already skipped");
+    }
+
+    return await this.skipRepository.createSkip({
+      workspaceId,
+      scheduleId,
+      skippedDate,
+      skipType: "single",
+      reason: reason || null,
+    });
+  }
+
+  /**
+   * Push all future dates forward by one interval (reversible)
+   * This records a skip with skipType "push_forward" which affects date calculation
+   */
+  async pushDatesForward(
+    scheduleId: number,
+    skippedDate: string,
+    workspaceId: number,
+    reason?: string
+  ): Promise<ScheduleSkip> {
+    const schedule = await this.repository.getScheduleById(scheduleId);
+    if (!schedule) {
+      throw new NotFoundError("Schedule not found");
+    }
+
+    if (!schedule.scheduleDate?.frequency) {
+      throw new ValidationError("Schedule has no frequency configuration");
+    }
+
+    return await this.skipRepository.createSkip({
+      workspaceId,
+      scheduleId,
+      skippedDate,
+      skipType: "push_forward",
+      reason: reason || null,
+    });
+  }
+
+  /**
+   * Remove a skip (un-skip / restore a date)
+   */
+  async removeSkip(skipId: number, workspaceId: number): Promise<void> {
+    const skip = await this.skipRepository.getSkipById(skipId);
+    if (!skip) {
+      throw new NotFoundError("Skip record not found");
+    }
+    if (skip.workspaceId !== workspaceId) {
+      throw new ValidationError("Unauthorized to remove this skip");
+    }
+    await this.skipRepository.removeSkip(skipId);
+  }
+
+  /**
+   * Get skip history for a schedule
+   */
+  async getSkipHistory(scheduleId: number): Promise<ScheduleSkip[]> {
+    return await this.skipRepository.getSkipsForSchedule(scheduleId);
+  }
+
+  /**
+   * Get skipped dates set for a schedule (single skips only, for filtering)
+   */
+  async getSkippedDatesSet(scheduleId: number): Promise<Set<string>> {
+    return await this.skipRepository.getSingleSkippedDatesSet(scheduleId);
+  }
+
+  /**
+   * Count push_forward skips for offset calculation
+   */
+  async getPushForwardOffset(scheduleId: number): Promise<number> {
+    return await this.skipRepository.countPushForwardSkips(scheduleId);
   }
 }

@@ -199,6 +199,7 @@ export class CategoryMatcher {
     };
 
     for (const category of existingCategories) {
+      if (!category.name) continue;
       const normalizedCategoryName = normalizeText(category.name);
 
       // Check for exact match
@@ -286,7 +287,7 @@ export class CategoryMatcher {
     for (const [categoryPattern, keywords] of Object.entries(this.keywordPatterns)) {
       // Find the category that matches this pattern name
       const category = existingCategories.find(
-        (c) => normalizeText(c.name) === normalizeText(categoryPattern)
+        (c) => c.name && normalizeText(c.name) === normalizeText(categoryPattern)
       );
 
       if (!category) continue;

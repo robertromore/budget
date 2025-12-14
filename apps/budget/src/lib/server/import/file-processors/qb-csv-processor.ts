@@ -5,22 +5,22 @@
  * Handles various QB CSV export formats (Transaction List, Register Report, etc.)
  */
 
-import Papa from "papaparse";
 import type {
+  ColumnMapping,
   FileProcessor,
   ImportRow,
   NormalizedTransaction,
-  ColumnMapping,
 } from "$lib/types/import";
+import Papa from "papaparse";
 import { FileValidationError, ParseError } from "../errors";
 import {
-  normalizeHeader,
-  parseDate,
-  parseAmount,
-  sanitizeText,
-  validateFileType,
   detectCSVDelimiter,
   isQuickBooksCSV,
+  normalizeHeader,
+  parseAmount,
+  parseDate,
+  sanitizeText,
+  validateFileType,
 } from "../utils";
 
 export class QBCSVProcessor implements FileProcessor {
@@ -101,7 +101,7 @@ export class QBCSVProcessor implements FileProcessor {
             reject(error);
           }
         },
-        error: (error) => {
+        error: (error: Error) => {
           reject(new ParseError(`CSV parsing error: ${error.message}`));
         },
       });
@@ -148,6 +148,11 @@ export class QBCSVProcessor implements FileProcessor {
 
   private processRows(data: any[], mapping: ColumnMapping): ImportRow[] {
     const rows: ImportRow[] = [];
+    const dateColumn = mapping.date;
+
+    if (!dateColumn) {
+      throw new ParseError("Date column mapping is required");
+    }
 
     for (let i = 0; i < data.length; i++) {
       const rawRow = data[i];
@@ -155,17 +160,16 @@ export class QBCSVProcessor implements FileProcessor {
       const errors: any[] = [];
 
       try {
-        const dateStr = rawRow[mapping.date];
+        const dateStr = rawRow[dateColumn];
         if (!dateStr) {
           throw new Error("Date is required");
         }
-        const date = parseDate(dateStr);
-        normalized.date = date.toISOString().split("T")[0];
+        normalized.date = parseDate(dateStr);
       } catch (error) {
         errors.push({
           field: "date",
           message: error instanceof Error ? error.message : "Invalid date",
-          value: rawRow[mapping.date],
+          value: rawRow[dateColumn],
           severity: "error",
         });
       }
@@ -182,10 +186,15 @@ export class QBCSVProcessor implements FileProcessor {
           normalized.amount = credit - debit;
         }
       } catch (error) {
+        const amountValue = mapping.amount
+          ? rawRow[mapping.amount]
+          : mapping.debit && mapping.credit
+            ? `${rawRow[mapping.debit]}/${rawRow[mapping.credit]}`
+            : undefined;
         errors.push({
           field: "amount",
           message: error instanceof Error ? error.message : "Invalid amount",
-          value: rawRow[mapping.amount] || `${rawRow[mapping.debit]}/${rawRow[mapping.credit]}`,
+          value: amountValue,
           severity: "error",
         });
       }

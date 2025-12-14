@@ -1,19 +1,19 @@
-import { db } from "$lib/server/db";
 import {
+  categories,
   payeeCategoryCorrections,
   payees,
   transactions,
-  categories,
   type CategoryCorrection,
-  type CorrectionPattern,
-  type CategoryRecommendation,
-  type LearningMetrics,
   type CategoryDrift,
-  type CorrectionTrigger,
+  type CategoryRecommendation,
   type CorrectionContext,
+  type CorrectionPattern,
+  type CorrectionTrigger,
+  type LearningMetrics,
 } from "$lib/schema";
-import { eq, and, isNull, sql, desc, gte, lte, count, max, inArray } from "drizzle-orm";
+import { db } from "$lib/server/db";
 import { currentDate, toISOString } from "$lib/utils/dates";
+import { and, count, desc, eq, gte, inArray, isNull, lte, max, sql } from "drizzle-orm";
 
 /**
  * Category Learning Service
@@ -26,19 +26,22 @@ export class CategoryLearningService {
   /**
    * Record a user category correction and extract learning context
    */
-  async learnFromCorrection(correction: {
-    payeeId: number;
-    transactionId?: number;
-    fromCategoryId?: number;
-    toCategoryId: number;
-    correctionTrigger: CorrectionTrigger;
-    correctionContext?: CorrectionContext;
-    transactionAmount?: number;
-    transactionDate?: string;
-    userConfidence?: number;
-    notes?: string;
-    isOverride?: boolean;
-  }): Promise<CategoryCorrection> {
+  async learnFromCorrection(
+    correction: {
+      payeeId: number;
+      transactionId?: number;
+      fromCategoryId?: number;
+      toCategoryId: number;
+      correctionTrigger: CorrectionTrigger;
+      correctionContext?: CorrectionContext;
+      transactionAmount?: number;
+      transactionDate?: string;
+      userConfidence?: number;
+      notes?: string;
+      isOverride?: boolean;
+    },
+    workspaceId: number
+  ): Promise<CategoryCorrection> {
     // Gather contextual information for learning
     const enrichedCorrection = await this.enrichCorrectionWithContext(correction);
 
@@ -46,6 +49,7 @@ export class CategoryLearningService {
     const [insertedCorrection] = await db
       .insert(payeeCategoryCorrections)
       .values({
+        workspaceId,
         payeeId: correction.payeeId,
         transactionId: correction.transactionId || null,
         fromCategoryId: correction.fromCategoryId || null,
@@ -1130,9 +1134,5 @@ export class CategoryLearningService {
 
 // Re-export types for external use
 export type {
-  CategoryCorrection,
-  CorrectionPattern,
-  CategoryRecommendation,
-  LearningMetrics,
-  CategoryDrift,
+  CategoryCorrection, CategoryDrift, CategoryRecommendation, CorrectionPattern, LearningMetrics
 } from "$lib/schema";

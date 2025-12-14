@@ -1,16 +1,14 @@
-import type { Database } from "bun:sqlite";
-import { eq, desc, asc, like, and, or, count } from "drizzle-orm";
-import { DatabaseError, NotFoundError } from "$lib/server/shared/types";
-import type {
-  PaginationOptions,
-  PaginatedResult,
-  SortOptions,
-  FilterOptions,
-  SearchOptions,
-} from "$lib/server/shared/types";
 import { DATABASE_CONFIG } from "$lib/server/config/database";
-import { getCurrentTimestamp } from "$lib/utils/dates";
 import { logger } from "$lib/server/shared/logging";
+import type {
+  FilterOptions,
+  PaginatedResult,
+  PaginationOptions,
+  SortOptions
+} from "$lib/server/shared/types";
+import { DatabaseError, NotFoundError } from "$lib/server/shared/types";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { and, asc, count, desc, eq, like, or } from "drizzle-orm";
 
 /**
  * Base repository class providing common database operations
@@ -192,14 +190,14 @@ export abstract class BaseRepository<
   /**
    * Soft delete entity by ID (if supported)
    */
-  async softDelete(id: number): Promise<TEntity> {
+  async softDelete(id: number, workspaceId?: number): Promise<TEntity> {
     try {
       // Check if table has deletedAt column
       if (!("deletedAt" in (this.table as any))) {
         throw new DatabaseError(`Soft delete not supported for ${this.entityName}`, "softDelete");
       }
 
-      return await this.update(id, { deletedAt: getCurrentTimestamp() } as TUpdateInput);
+      return await this.update(id, { deletedAt: getCurrentTimestamp() } as TUpdateInput, workspaceId);
     } catch (error) {
       if (error instanceof DatabaseError || error instanceof NotFoundError) throw error;
       throw new DatabaseError(`Failed to soft delete ${this.entityName}`, "softDelete");

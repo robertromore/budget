@@ -35,12 +35,17 @@ export class RecommendationService {
   async createRecommendation(
     data: BudgetRecommendationDraft
   ): Promise<BudgetRecommendationWithRelations> {
+    if (!data.workspaceId) {
+      throw new ValidationError("workspaceId is required", "recommendation");
+    }
+
     try {
       const now = getCurrentTimestamp();
 
       const [created] = await db
         .insert(budgetRecommendations)
         .values({
+          workspaceId: data.workspaceId,
           type: data.type,
           priority: data.priority,
           title: data.title,
@@ -75,6 +80,16 @@ export class RecommendationService {
     drafts: BudgetRecommendationDraft[]
   ): Promise<BudgetRecommendationWithRelations[]> {
     if (drafts.length === 0) return [];
+
+    // Filter out drafts without workspaceId
+    const validDrafts = drafts.filter(
+      (d): d is BudgetRecommendationDraft & { workspaceId: number } => d.workspaceId !== undefined
+    );
+
+    if (validDrafts.length === 0) {
+      logger.warn("No valid drafts with workspaceId provided");
+      return [];
+    }
 
     try {
       const now = getCurrentTimestamp();
@@ -133,7 +148,7 @@ export class RecommendationService {
 
       // Step 2: Filter out drafts that match existing recommendations
       // Match by: type, categoryId, accountId, budgetId, and metadata details
-      const filteredDrafts = drafts.filter((draft) => {
+      const filteredDrafts = validDrafts.filter((draft) => {
         const draftMetadata = draft.metadata as Record<string, any> | null;
         const draftSuggestedType = draftMetadata?.["suggestedType"];
         const draftPayeeIds = draftMetadata?.["payeeIds"] as number[] | undefined;
@@ -191,10 +206,10 @@ export class RecommendationService {
         return !isDuplicate;
       });
 
-      if (filteredDrafts.length < drafts.length) {
+      if (filteredDrafts.length < validDrafts.length) {
         logger.info("Filtered out duplicate recommendations", {
-          total: drafts.length,
-          filtered: drafts.length - filteredDrafts.length,
+          total: validDrafts.length,
+          filtered: validDrafts.length - filteredDrafts.length,
           remaining: filteredDrafts.length,
         });
       }
@@ -208,8 +223,8 @@ export class RecommendationService {
       // Find which old pending recommendations should be deleted (don't match any draft)
       const idsToDelete = oldPendingRecommendations
         .filter((existing) => {
-          // Check if this recommendation matches ANY of the original drafts
-          const matchesDraft = drafts.some((draft) => {
+          // Check if this recommendation matches ANY of the valid drafts
+          const matchesDraft = validDrafts.some((draft) => {
             if (existing.type !== draft.type) return false;
 
             // Normalize null/undefined for comparison
@@ -269,6 +284,7 @@ export class RecommendationService {
       // Step 5: Create new recommendations (only ones that weren't duplicates)
 
       const values = filteredDrafts.map((data) => ({
+        workspaceId: data.workspaceId,
         type: data.type,
         priority: data.priority,
         title: data.title,
@@ -296,7 +312,7 @@ export class RecommendationService {
         status: "pending",
       });
     } catch (error) {
-      logger.error("Error creating bulk recommendations", { error, count: drafts.length });
+      logger.error("Error creating bulk recommendations", { error, count: validDrafts.length });
       throw error;
     }
   }
@@ -463,8 +479,13 @@ export class RecommendationService {
   /**
    * Apply a recommendation (mark as applied)
    * Note: Actual budget creation/modification should be handled by caller
+   * @param id - The recommendation ID
+   * @param appliedBudgetId - Optional ID of the budget that was created/modified from this recommendation
    */
-  async applyRecommendation(id: number): Promise<BudgetRecommendationWithRelations> {
+  async applyRecommendation(
+    id: number,
+    appliedBudgetId?: number
+  ): Promise<BudgetRecommendationWithRelations> {
     const now = getCurrentTimestamp();
 
     const [updated] = await db
@@ -473,6 +494,9 @@ export class RecommendationService {
         status: "applied",
         appliedAt: now,
         updatedAt: now,
+        // Link the created/modified budget to this recommendation for later reference
+        // This allows resetRecommendationForBudget to find and reset this recommendation if the budget is deleted
+        ...(appliedBudgetId !== undefined && { budgetId: appliedBudgetId }),
       })
       .where(eq(budgetRecommendations.id, id))
       .returning();
@@ -519,6 +543,17 @@ export class RecommendationService {
     if (!deleted || deleted.length === 0) {
       throw new NotFoundError("Recommendation", id);
     }
+  }
+
+  /**
+   * Clear all recommendations (for regenerating from scratch)
+   */
+  async clearAllRecommendations(): Promise<{ deleted: number }> {
+    const deleted = await db.delete(budgetRecommendations).returning();
+
+    logger.info("Cleared all recommendations", { count: deleted.length });
+
+    return { deleted: deleted.length };
   }
 
   /**

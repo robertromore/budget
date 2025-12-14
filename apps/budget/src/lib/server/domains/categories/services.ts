@@ -102,6 +102,7 @@ export class CategoryService {
     }
 
     const newCategory: NewCategory = {
+      workspaceId,
       name: sanitizedName,
       slug,
       notes: sanitizedNotes,
@@ -781,6 +782,7 @@ export class CategoryService {
         await this.repository.create(
           {
             ...defaultCategory,
+            workspaceId,
             // These will be set by the database
             dateCreated: undefined,
             createdAt: undefined,

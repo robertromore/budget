@@ -7,7 +7,7 @@
 
 import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
 import { FileValidationError, ParseError } from "../errors";
-import { normalizeHeader, parseDate, parseAmount, sanitizeText, validateFileType } from "../utils";
+import { parseDate, sanitizeText, validateFileType } from "../utils";
 
 interface QIFTransaction {
   date?: string;
@@ -213,9 +213,9 @@ export class QIFProcessor implements FileProcessor {
       normalized.payee = sanitizeText(transaction.payee, 200);
     }
 
-    // Description (use memo if available)
+    // Notes (use memo if available)
     if (transaction.memo) {
-      normalized.description = sanitizeText(transaction.memo, 500);
+      normalized.notes = sanitizeText(transaction.memo, 500);
     }
 
     // Category
@@ -234,11 +234,6 @@ export class QIFProcessor implements FileProcessor {
       } else {
         normalized.status = "pending";
       }
-    }
-
-    // Check number
-    if (transaction.checkNumber) {
-      normalized.checkNumber = sanitizeText(transaction.checkNumber, 50);
     }
 
     return normalized;

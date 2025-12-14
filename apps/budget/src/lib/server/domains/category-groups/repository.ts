@@ -115,6 +115,7 @@ export class CategoryGroupRepository extends BaseRepository<
     const memberCategories = await db
       .select({
         id: categories.id,
+        workspaceId: categories.workspaceId,
         name: categories.name,
         slug: categories.slug,
         notes: categories.notes,

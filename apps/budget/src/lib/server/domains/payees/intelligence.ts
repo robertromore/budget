@@ -1,7 +1,7 @@
+import type { PaymentFrequency } from "$lib/schema";
+import { categories, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { payees, transactions, categories, budgets } from "$lib/schema";
-import { eq, and, isNull, sql, desc, asc, gte, lte, count, avg, sum, min, max } from "drizzle-orm";
-import type { PayeeType, PaymentFrequency } from "$lib/schema";
+import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
 
 // Comprehensive analysis interfaces for payee intelligence
 export interface SpendingAnalysis {

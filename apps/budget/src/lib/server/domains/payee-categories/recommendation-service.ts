@@ -1,8 +1,8 @@
 import type { Payee, PayeeCategory } from "$lib/schema";
 import { categories, payeeCategories, payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { and, count, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { logger } from "$lib/server/shared/logging";
+import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
 // ================================================================================
 // Types

@@ -7,17 +7,16 @@
 
 import type {
   FileProcessor,
+  IIFTransaction,
   ImportRow,
   NormalizedTransaction,
-  IIFTransaction,
 } from "$lib/types/import";
 import { FileValidationError, ParseError } from "../errors";
 import {
-  parseIIFDate,
-  parseAmount,
-  sanitizeText,
-  validateFileType,
   normalizeIIFTransactionType,
+  parseIIFDate,
+  sanitizeText,
+  validateFileType
 } from "../utils";
 
 export class IIFProcessor implements FileProcessor {

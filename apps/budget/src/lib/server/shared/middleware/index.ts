@@ -1,12 +1,9 @@
 // Re-export all middleware
+export * from "./auth";
 export * from "./error-handling";
 export * from "./validation";
-export * from "./auth";
 
 // Re-export existing rate limiting middleware
 export {
-  rateLimit,
-  mutationRateLimit,
-  bulkOperationRateLimit,
-  strictRateLimit,
+  bulkOperationRateLimit, mutationRateLimit, rateLimit, strictRateLimit
 } from "$lib/trpc/middleware/rate-limit";

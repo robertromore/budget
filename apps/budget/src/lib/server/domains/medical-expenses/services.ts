@@ -1,13 +1,13 @@
-import { MedicalExpenseRepository } from "./repository";
-import type { MedicalExpense, MedicalExpenseType } from "$lib/schema/medical-expenses";
-import { ConflictError, ValidationError, NotFoundError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
-import { db } from "$lib/server/shared/database";
-import { transactions } from "$lib/schema/transactions";
 import { accounts } from "$lib/schema/accounts";
-import { eq, and, isNull } from "drizzle-orm";
+import type { MedicalExpense, MedicalExpenseType } from "$lib/schema/medical-expenses";
+import { transactions } from "$lib/schema/transactions";
+import { db } from "$lib/server/shared/database";
+import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { and, eq, isNull } from "drizzle-orm";
 import { TransactionService } from "../transactions/services";
 import { ClaimService } from "./claim-service";
+import { MedicalExpenseRepository } from "./repository";
 
 // Service input types
 export interface CreateMedicalExpenseData {
@@ -237,7 +237,8 @@ export class MedicalExpenseService {
    * Create a new medical expense with transaction (all-in-one)
    */
   async createMedicalExpenseWithTransaction(
-    data: CreateMedicalExpenseWithTransactionData
+    data: CreateMedicalExpenseWithTransactionData,
+    workspaceId: number
   ): Promise<MedicalExpense> {
     // Validate HSA account
     await this.validateHsaAccount(data.hsaAccountId);
@@ -292,7 +293,7 @@ export class MedicalExpenseService {
       accountId: number;
       amount: number;
       date: string;
-      status: string;
+      status: "cleared" | "pending" | "scheduled";
       notes?: string;
     } = {
       accountId: data.accountId,
@@ -308,7 +309,10 @@ export class MedicalExpenseService {
       transactionData.notes = `Medical: ${sanitizedProvider}`;
     }
 
-    const transaction = await this.transactionService.createTransaction(transactionData);
+    const transaction = await this.transactionService.createTransaction(
+      transactionData,
+      workspaceId.toString()
+    );
 
     // Create medical expense - build object conditionally for exactOptionalPropertyTypes
     const expenseData: {

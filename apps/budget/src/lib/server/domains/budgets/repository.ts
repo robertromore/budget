@@ -32,7 +32,7 @@ type TransactionClient = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export type DbClient = typeof db | TransactionClient;
 
 export interface CreateBudgetInput {
-  budget: NewBudget;
+  budget: Omit<NewBudget, "workspaceId">;
   accountIds?: number[];
   categoryIds?: number[];
   groupIds?: number[];

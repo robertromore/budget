@@ -1,4 +1,4 @@
-import type { Account } from "$lib/schema/accounts";
+import type { Account, AccountType } from "$lib/schema/accounts";
 import { ConflictError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { generateUniqueSlug } from "$lib/utils/generate-unique-slug";
@@ -7,7 +7,6 @@ import slugify from "@sindresorhus/slugify";
 import { TransactionService } from "../transactions/services";
 import { AccountRepository } from "./repository";
 import type { AccountWithTransactions } from "./types";
-import type { AccountType } from "$lib/schema/accounts";
 
 // Service input types
 export interface CreateAccountData {

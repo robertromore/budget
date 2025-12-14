@@ -1,10 +1,10 @@
-import { db } from "$lib/server/db";
-import { getCurrentTimestamp } from "$lib/utils/dates";
-import { transactions, accounts, categories, payees } from "$lib/schema";
-import { eq, and, isNull, desc, asc, like, between, sql, inArray } from "drizzle-orm";
-import type { Transaction, NewTransaction } from "$lib/schema/transactions";
-import { NotFoundError } from "$lib/server/shared/types/errors";
+import { accounts, transactions } from "$lib/schema";
 import { isDebtAccount } from "$lib/schema/accounts";
+import type { NewTransaction, Transaction } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { NotFoundError } from "$lib/server/shared/types/errors";
+import { getCurrentTimestamp } from "$lib/utils/dates";
+import { and, asc, between, desc, eq, inArray, isNull, like, sql } from "drizzle-orm";
 import type { TransactionDbResult } from "./types";
 
 /**
@@ -70,7 +70,7 @@ export class TransactionRepository {
   /**
    * Verify account ownership
    */
-  private async verifyAccountOwnership(accountId: number, workspaceId: string): Promise<void> {
+  private async verifyAccountOwnership(accountId: number, workspaceId: number): Promise<void> {
     const account = await db.query.accounts.findFirst({
       where: and(
         eq(accounts.id, accountId),
@@ -87,7 +87,7 @@ export class TransactionRepository {
   /**
    * Create a new transaction
    */
-  async create(data: NewTransaction, workspaceId: string): Promise<Transaction> {
+  async create(data: NewTransaction, workspaceId: number): Promise<Transaction> {
     // Verify account belongs to user
     await this.verifyAccountOwnership(data.accountId, workspaceId);
     const [transaction] = await db.insert(transactions).values(data).returning();
@@ -96,7 +96,7 @@ export class TransactionRepository {
       throw new Error("Failed to create transaction");
     }
 
-    return this.findByIdWithRelations(transaction.id);
+    return this.findByIdWithRelations(transaction.id, workspaceId);
   }
 
   /**
@@ -105,7 +105,7 @@ export class TransactionRepository {
   async update(
     id: number,
     data: Partial<NewTransaction>,
-    workspaceId: string
+    workspaceId: number
   ): Promise<Transaction> {
     // Verify transaction belongs to user (through account)
     const existing = await this.findById(id, workspaceId);
@@ -129,7 +129,7 @@ export class TransactionRepository {
   /**
    * Find transaction by ID with relations
    */
-  async findByIdWithRelations(id: number, workspaceId: string): Promise<Transaction> {
+  async findByIdWithRelations(id: number, workspaceId: number): Promise<Transaction> {
     const transaction = await db.query.transactions.findFirst({
       where: and(eq(transactions.id, id), isNull(transactions.deletedAt)),
       with: {
@@ -159,7 +159,7 @@ export class TransactionRepository {
   /**
    * Find transaction by ID
    */
-  async findById(id: number, workspaceId: string): Promise<Transaction | null> {
+  async findById(id: number, workspaceId: number): Promise<Transaction | null> {
     const transaction = await db.query.transactions.findFirst({
       where: and(eq(transactions.id, id), isNull(transactions.deletedAt)),
       with: {
@@ -184,7 +184,7 @@ export class TransactionRepository {
   /**
    * Find transaction by ID or throw
    */
-  async findByIdOrThrow(id: number, workspaceId: string): Promise<Transaction> {
+  async findByIdOrThrow(id: number, workspaceId: number): Promise<Transaction> {
     const transaction = await this.findById(id, workspaceId);
 
     if (!transaction) {
@@ -200,7 +200,7 @@ export class TransactionRepository {
   async findWithFilters(
     filters: TransactionFilters,
     pagination: PaginationParams | undefined,
-    workspaceId: string
+    workspaceId: number
   ): Promise<PaginatedResult<Transaction>> {
     // If accountId is provided, verify ownership
     if (filters.accountId) {
@@ -296,7 +296,7 @@ export class TransactionRepository {
   /**
    * Find all transactions for an account
    */
-  async findByAccountId(accountId: number, workspaceId: string): Promise<Transaction[]> {
+  async findByAccountId(accountId: number, workspaceId: number): Promise<Transaction[]> {
     // Verify account belongs to user
     await this.verifyAccountOwnership(accountId, workspaceId);
 
@@ -320,7 +320,7 @@ export class TransactionRepository {
   /**
    * Get account balance from transactions
    */
-  async getAccountBalance(accountId: number, workspaceId: string): Promise<number> {
+  async getAccountBalance(accountId: number, workspaceId: number): Promise<number> {
     // Verify account belongs to user
     await this.verifyAccountOwnership(accountId, workspaceId);
 
@@ -368,7 +368,7 @@ export class TransactionRepository {
   /**
    * Get pending balance for an account
    */
-  async getPendingBalance(accountId: number, workspaceId: string): Promise<number> {
+  async getPendingBalance(accountId: number, workspaceId: number): Promise<number> {
     // Verify account belongs to user
     await this.verifyAccountOwnership(accountId, workspaceId);
 
@@ -411,7 +411,7 @@ export class TransactionRepository {
   /**
    * Count transactions for an account
    */
-  async countByAccountId(accountId: number, workspaceId: string): Promise<number> {
+  async countByAccountId(accountId: number, workspaceId: number): Promise<number> {
     // Verify account belongs to user
     await this.verifyAccountOwnership(accountId, workspaceId);
 
@@ -426,7 +426,7 @@ export class TransactionRepository {
   /**
    * Soft delete a transaction
    */
-  async softDelete(id: number, workspaceId: string): Promise<void> {
+  async softDelete(id: number, workspaceId: number): Promise<void> {
     // Verify transaction belongs to user (through account)
     const transaction = await this.findById(id, workspaceId);
     if (!transaction) {
@@ -447,7 +447,7 @@ export class TransactionRepository {
   /**
    * Bulk soft delete transactions
    */
-  async bulkSoftDelete(ids: number[], workspaceId: string): Promise<void> {
+  async bulkSoftDelete(ids: number[], workspaceId: number): Promise<void> {
     if (ids.length === 0) return;
 
     // Verify all transactions belong to user
@@ -467,7 +467,7 @@ export class TransactionRepository {
   /**
    * Check if transaction exists
    */
-  async exists(id: number, workspaceId: string): Promise<boolean> {
+  async exists(id: number, workspaceId: number): Promise<boolean> {
     const transaction = await this.findById(id, workspaceId);
     return !!transaction;
   }
@@ -477,7 +477,7 @@ export class TransactionRepository {
    */
   async findWithRunningBalance(
     accountId: number,
-    workspaceId: string,
+    workspaceId: number,
     limit?: number
   ): Promise<Array<Transaction & { balance: number }>> {
     // Verify account belongs to user

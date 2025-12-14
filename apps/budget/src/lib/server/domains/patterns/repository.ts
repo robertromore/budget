@@ -1,7 +1,7 @@
-import { db } from "$lib/server/db";
-import { detectedPatterns, accounts } from "$lib/schema";
-import { eq, and, desc, lt, inArray } from "drizzle-orm";
+import { accounts, detectedPatterns } from "$lib/schema";
 import type { DetectedPattern, NewDetectedPattern } from "$lib/schema/detected-patterns";
+import { db } from "$lib/server/db";
+import { and, desc, eq, inArray, lt } from "drizzle-orm";
 
 export class PatternRepository {
   /**
@@ -9,8 +9,8 @@ export class PatternRepository {
    */
   async findByAccount(
     accountId: number | undefined,
-    workspaceId: string,
-    status?: string
+    workspaceId: number,
+    status?: "pending" | "accepted" | "dismissed" | "converted"
   ): Promise<DetectedPattern[]> {
     // If accountId is provided, verify it belongs to user
     if (accountId !== undefined) {
@@ -40,7 +40,7 @@ export class PatternRepository {
   /**
    * Find a pattern by ID
    */
-  async findById(patternId: number, workspaceId: string): Promise<DetectedPattern | null> {
+  async findById(patternId: number, workspaceId: number): Promise<DetectedPattern | null> {
     const pattern = await db.query.detectedPatterns.findFirst({
       where: eq(detectedPatterns.id, patternId),
     });
@@ -66,14 +66,15 @@ export class PatternRepository {
     payeeId: number | null,
     categoryId: number | null,
     patternType: "daily" | "weekly" | "monthly" | "yearly",
-    workspaceId: string
+    workspaceId: number
   ): Promise<DetectedPattern | null> {
     // Verify account belongs to user
     await this.validateAccountOwnership(accountId, workspaceId);
     const conditions = [
       eq(detectedPatterns.accountId, accountId),
       eq(detectedPatterns.patternType, patternType),
-      eq(detectedPatterns.status, "pending" as const), // Only check pending patterns
+      // Check pending and dismissed patterns to prevent re-creating dismissed ones
+      inArray(detectedPatterns.status, ["pending", "dismissed"]),
     ];
 
     if (payeeId !== null) {
@@ -95,16 +96,21 @@ export class PatternRepository {
    * Create a new detected pattern
    */
   async create(
-    pattern: Omit<NewDetectedPattern, "id" | "createdAt">,
-    workspaceId: string
+    pattern: Omit<NewDetectedPattern, "id" | "createdAt" | "workspaceId">,
+    workspaceId: number
   ): Promise<number> {
     // Verify account belongs to user
     await this.validateAccountOwnership(pattern.accountId, workspaceId);
 
     const [result] = await db
       .insert(detectedPatterns)
-      .values(pattern as NewDetectedPattern)
+      .values({ ...pattern, workspaceId } as NewDetectedPattern)
       .returning({ id: detectedPatterns.id });
+
+    if (!result) {
+      throw new Error("Failed to create pattern");
+    }
+
     return result.id;
   }
 
@@ -114,7 +120,7 @@ export class PatternRepository {
   async update(
     patternId: number,
     pattern: Partial<Omit<DetectedPattern, "id" | "createdAt">>,
-    workspaceId: string
+    workspaceId: number
   ): Promise<void> {
     // Verify pattern belongs to user
     await this.validatePatternOwnership(patternId, workspaceId);
@@ -125,7 +131,11 @@ export class PatternRepository {
   /**
    * Update the status of a pattern
    */
-  async updateStatus(patternId: number, workspaceId: string, status: string): Promise<void> {
+  async updateStatus(
+    patternId: number,
+    workspaceId: number,
+    status: "pending" | "accepted" | "dismissed" | "converted"
+  ): Promise<void> {
     // Verify pattern belongs to user
     await this.validatePatternOwnership(patternId, workspaceId);
 
@@ -135,7 +145,7 @@ export class PatternRepository {
   /**
    * Delete a pattern
    */
-  async delete(patternId: number, workspaceId: string): Promise<void> {
+  async delete(patternId: number, workspaceId: number): Promise<void> {
     // Verify pattern belongs to user
     await this.validatePatternOwnership(patternId, workspaceId);
 
@@ -146,7 +156,7 @@ export class PatternRepository {
    * Delete all patterns (optionally filtered by status)
    */
   async deleteAll(
-    workspaceId: string,
+    workspaceId: number,
     status?: "pending" | "accepted" | "dismissed" | "converted"
   ): Promise<number> {
     // Get all user's account IDs
@@ -157,27 +167,29 @@ export class PatternRepository {
     }
 
     if (status) {
-      const result = await db
+      const deleted = await db
         .delete(detectedPatterns)
         .where(
           and(
             eq(detectedPatterns.status, status),
             inArray(detectedPatterns.accountId, userAccountIds)
           )
-        );
-      return result.changes || 0;
+        )
+        .returning({ id: detectedPatterns.id });
+      return deleted.length;
     } else {
-      const result = await db
+      const deleted = await db
         .delete(detectedPatterns)
-        .where(inArray(detectedPatterns.accountId, userAccountIds));
-      return result.changes || 0;
+        .where(inArray(detectedPatterns.accountId, userAccountIds))
+        .returning({ id: detectedPatterns.id });
+      return deleted.length;
     }
   }
 
   /**
    * Expire patterns that haven't had a match in X days
    */
-  async expireStalePatterns(daysSinceLastMatch: number, workspaceId: string): Promise<number> {
+  async expireStalePatterns(daysSinceLastMatch: number, workspaceId: number): Promise<number> {
     // Get all user's account IDs
     const userAccountIds = await this.findUserAccountIds(workspaceId);
 
@@ -188,22 +200,23 @@ export class PatternRepository {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysSinceLastMatch);
 
-    const result = await db
+    const deleted = await db
       .delete(detectedPatterns)
       .where(
         and(
           lt(detectedPatterns.lastOccurrence, cutoffDate.toISOString()),
           inArray(detectedPatterns.accountId, userAccountIds)
         )
-      );
+      )
+      .returning({ id: detectedPatterns.id });
 
-    return result.changes;
+    return deleted.length;
   }
 
   /**
    * Find user account IDs
    */
-  async findUserAccountIds(workspaceId: string): Promise<number[]> {
+  async findUserAccountIds(workspaceId: number): Promise<number[]> {
     const accountList = await db.query.accounts.findMany({
       where: eq(accounts.workspaceId, workspaceId),
       columns: { id: true },
@@ -214,7 +227,7 @@ export class PatternRepository {
   /**
    * Validate account ownership
    */
-  async validateAccountOwnership(accountId: number, workspaceId: string): Promise<boolean> {
+  async validateAccountOwnership(accountId: number, workspaceId: number): Promise<boolean> {
     const account = await db.query.accounts.findFirst({
       where: and(eq(accounts.id, accountId), eq(accounts.workspaceId, workspaceId)),
     });
@@ -224,7 +237,7 @@ export class PatternRepository {
   /**
    * Validate pattern ownership
    */
-  async validatePatternOwnership(patternId: number, workspaceId: string): Promise<boolean> {
+  async validatePatternOwnership(patternId: number, workspaceId: number): Promise<boolean> {
     const pattern = await db.query.detectedPatterns.findFirst({
       where: eq(detectedPatterns.id, patternId),
     });

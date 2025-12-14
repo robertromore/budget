@@ -1,8 +1,8 @@
-import { db } from "$lib/server/db";
 import { schedules, transactions } from "$lib/schema";
-import { eq, and } from "drizzle-orm";
 import type { Schedule } from "$lib/schema/schedules";
 import type { NewTransaction } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { and, eq } from "drizzle-orm";
 
 export interface ScheduleWithDetails extends Schedule {
   account: { id: number; name: string | null };

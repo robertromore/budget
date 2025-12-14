@@ -5,10 +5,10 @@
  * for bank statement downloads.
  */
 
-import { XMLParser } from "fast-xml-parser";
 import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
+import { XMLParser } from "fast-xml-parser";
 import { FileValidationError, ParseError } from "../errors";
-import { parseDate, parseAmount, sanitizeText, validateFileType } from "../utils";
+import { sanitizeText, validateFileType } from "../utils";
 
 interface OFXTransaction {
   TRNTYPE?: string;
@@ -310,8 +310,8 @@ export class OFXProcessor implements FileProcessor {
           typeof transaction.TRNAMT === "number"
             ? transaction.TRNAMT
             : parseFloat(String(transaction.TRNAMT));
-      } catch (error) {
-        normalized.amount = transaction.TRNAMT;
+      } catch {
+        normalized.amount = undefined;
       }
     }
 
@@ -320,14 +320,9 @@ export class OFXProcessor implements FileProcessor {
       normalized.payee = sanitizeText(String(transaction.NAME), 200);
     }
 
-    // Description (MEMO field in OFX)
+    // Notes (MEMO field in OFX)
     if (transaction.MEMO) {
-      normalized.description = sanitizeText(String(transaction.MEMO), 500);
-    }
-
-    // Check number
-    if (transaction.CHECKNUM) {
-      normalized.checkNumber = sanitizeText(String(transaction.CHECKNUM), 50);
+      normalized.notes = sanitizeText(String(transaction.MEMO), 500);
     }
 
     // OFX transactions are typically cleared by default

@@ -338,7 +338,7 @@ export class CategoryGroupRecommendationService {
   /**
    * Approve a recommendation and apply it
    */
-  async approveRecommendation(recommendationId: number): Promise<void> {
+  async approveRecommendation(recommendationId: number, workspaceId: number): Promise<void> {
     // Get recommendation
     const recommendation = await this.recommendationRepository.findById(recommendationId);
     if (!recommendation) {
@@ -356,9 +356,11 @@ export class CategoryGroupRecommendationService {
     // Apply the recommendation
     if (recommendation.suggestedGroupId) {
       // Add category to existing group
-      await categoryGroupService.addCategoriesToGroup(recommendation.suggestedGroupId, [
-        recommendation.categoryId,
-      ]);
+      await categoryGroupService.addCategoriesToGroup(
+        recommendation.suggestedGroupId,
+        [recommendation.categoryId],
+        workspaceId
+      );
     } else if (recommendation.suggestedGroupName) {
       // Try to create the group - if it already exists, we'll catch the error and find it
       let groupId: number;
@@ -366,11 +368,14 @@ export class CategoryGroupRecommendationService {
         // Get default icon and color for this group
         const appearance = getDefaultGroupAppearance(recommendation.suggestedGroupName);
 
-        const newGroup = await categoryGroupService.createGroup({
-          name: recommendation.suggestedGroupName,
-          groupIcon: appearance.icon,
-          groupColor: appearance.color,
-        });
+        const newGroup = await categoryGroupService.createGroup(
+          {
+            name: recommendation.suggestedGroupName,
+            groupIcon: appearance.icon,
+            groupColor: appearance.color,
+          },
+          workspaceId
+        );
         groupId = newGroup.id;
       } catch (error: any) {
         // Check if it's a UNIQUE constraint error OR the "failed to generate slug" error
@@ -399,7 +404,7 @@ export class CategoryGroupRecommendationService {
         }
       }
 
-      await categoryGroupService.addCategoriesToGroup(groupId, [recommendation.categoryId]);
+      await categoryGroupService.addCategoriesToGroup(groupId, [recommendation.categoryId], workspaceId);
     } else {
       throw new ValidationError("Recommendation has no suggested group");
     }

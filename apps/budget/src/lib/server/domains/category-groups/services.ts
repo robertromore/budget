@@ -162,6 +162,7 @@ export class CategoryGroupService {
     }
 
     const newGroup: NewCategoryGroup = {
+      workspaceId,
       name: uniqueName,
       slug: uniqueSlug,
       description: sanitizedDescription,

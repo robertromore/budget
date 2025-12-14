@@ -1,9 +1,8 @@
+import { categories, payees, transactions } from "$lib/schema";
 import { db } from "$lib/server/db";
-import { payees, transactions, categories, budgets } from "$lib/schema";
-import { eq, and, isNull, sql, desc, asc, gte, lte, count, avg, sum, min, max } from "drizzle-orm";
-import { PayeeIntelligenceService } from "./intelligence";
+import { and, eq, isNull } from "drizzle-orm";
 import { CategoryLearningService } from "./category-learning";
-import type { PaymentFrequency } from "$lib/schema";
+import { PayeeIntelligenceService } from "./intelligence";
 
 // Budget optimization analysis interfaces
 export interface BudgetOptimizationAnalysis {

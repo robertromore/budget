@@ -5,9 +5,9 @@
  * ML intelligence, contact management, subscriptions, and budget allocation.
  */
 
-import type { Payee, PayeeType, PaymentFrequency } from "$lib/schema/payees";
-import type { Category } from "$lib/schema/categories";
 import type { Budget } from "$lib/schema/budgets";
+import type { Category } from "$lib/schema/categories";
+import type { Payee, PayeeType, PaymentFrequency } from "$lib/schema/payees";
 
 /**
  * Subscription information for recurring payees

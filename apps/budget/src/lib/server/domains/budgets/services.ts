@@ -602,35 +602,57 @@ export class BudgetService {
     );
   }
 
-  async getGoalProgress(budgetId: number): Promise<GoalProgress> {
-    return await this.goalTrackingService.calculateGoalProgress(budgetId);
+  async getGoalProgress(budgetId: number, workspaceId: number): Promise<GoalProgress> {
+    return await this.goalTrackingService.calculateGoalProgress(budgetId, workspaceId);
   }
 
   async createGoalContributionPlan(
     budgetId: number,
+    workspaceId: number,
     frequency: "weekly" | "monthly" | "quarterly" | "yearly",
     customAmount?: number
   ): Promise<ContributionPlan> {
-    return await this.goalTrackingService.createContributionPlan(budgetId, frequency, customAmount);
+    return await this.goalTrackingService.createContributionPlan(
+      budgetId,
+      workspaceId,
+      frequency,
+      customAmount
+    );
   }
 
-  async linkScheduleToGoal(budgetId: number, scheduleId: number): Promise<BudgetWithRelations> {
-    return await this.goalTrackingService.linkScheduleToGoal(budgetId, scheduleId);
+  async linkScheduleToGoal(
+    budgetId: number,
+    scheduleId: number,
+    workspaceId: number
+  ): Promise<BudgetWithRelations> {
+    return await this.goalTrackingService.linkScheduleToGoal(budgetId, scheduleId, workspaceId);
   }
 
   async linkScheduleToScheduledExpense(
     budgetId: number,
-    scheduleId: number
+    scheduleId: number,
+    workspaceId: number
   ): Promise<BudgetWithRelations> {
-    return await this.goalTrackingService.linkScheduleToScheduledExpense(budgetId, scheduleId);
+    return await this.goalTrackingService.linkScheduleToScheduledExpense(
+      budgetId,
+      scheduleId,
+      workspaceId
+    );
   }
 
-  async forecastBudgetImpact(budgetId: number, daysAhead?: number): Promise<BudgetForecast> {
-    return await this.forecastService.forecastBudgetImpact(budgetId, daysAhead);
+  async forecastBudgetImpact(
+    budgetId: number,
+    workspaceId: number,
+    daysAhead?: number
+  ): Promise<BudgetForecast> {
+    return await this.forecastService.forecastBudgetImpact(budgetId, workspaceId, daysAhead);
   }
 
-  async autoAllocateScheduledExpenses(budgetId: number): Promise<BudgetWithRelations> {
-    return await this.forecastService.autoAllocateScheduledExpenses(budgetId);
+  async autoAllocateScheduledExpenses(
+    budgetId: number,
+    workspaceId: number
+  ): Promise<BudgetWithRelations> {
+    return await this.forecastService.autoAllocateScheduledExpenses(budgetId, workspaceId);
   }
 
   async createBudgetGroup(data: {
@@ -895,10 +917,10 @@ export class BudgetService {
       type: "monthly",
       startDayOfMonth: 1,
       allocatedAmount: suggestedAmount,
-    });
+    }, workspaceId);
 
-    // Mark recommendation as applied
-    await this.recommendationService.applyRecommendation(id);
+    // Mark recommendation as applied and link the created budget
+    await this.recommendationService.applyRecommendation(id, newBudget.id);
 
     return newBudget;
   }
@@ -915,6 +937,20 @@ export class BudgetService {
       return { pending: 0, dismissed: 0, applied: 0, expired: 0 };
     }
     return await this.recommendationService.getRecommendationCounts();
+  }
+
+  async deleteRecommendation(id: number) {
+    if (!this.recommendationService) {
+      throw new Error("Recommendation service not available");
+    }
+    return await this.recommendationService.deleteRecommendation(id);
+  }
+
+  async clearAllRecommendations() {
+    if (!this.recommendationService) {
+      throw new Error("Recommendation service not available");
+    }
+    return await this.recommendationService.clearAllRecommendations();
   }
 
   // Period Template Methods
@@ -1262,6 +1298,7 @@ export class BudgetPeriodService {
 
   async ensureInstanceForDate(
     templateId: number,
+    workspaceId: number,
     options: EnsurePeriodInstanceOptions = {}
   ): Promise<BudgetPeriodInstance> {
     const template = await this.repository.findTemplateById(templateId);
@@ -1282,7 +1319,7 @@ export class BudgetPeriodService {
       return existing;
     }
 
-    const parentBudget = await this.repository.findById(template.budgetId);
+    const parentBudget = await this.repository.findById(template.budgetId, workspaceId);
     const defaultAllocated = parentBudget?.metadata?.allocatedAmount ?? 0;
 
     return await this.repository.createPeriodInstance({
@@ -1340,8 +1377,8 @@ export interface ContributionPlan {
 export class GoalTrackingService {
   constructor(private repository: BudgetRepository) {}
 
-  async calculateGoalProgress(budgetId: number): Promise<GoalProgress> {
-    const budget = await this.repository.findById(budgetId);
+  async calculateGoalProgress(budgetId: number, workspaceId: number): Promise<GoalProgress> {
+    const budget = await this.repository.findById(budgetId, workspaceId);
     if (!budget) {
       throw new NotFoundError("Budget", budgetId);
     }
@@ -1502,10 +1539,11 @@ export class GoalTrackingService {
 
   async createContributionPlan(
     budgetId: number,
+    workspaceId: number,
     frequency: "weekly" | "monthly" | "quarterly" | "yearly",
     customAmount?: number
   ): Promise<ContributionPlan> {
-    const progress = await this.calculateGoalProgress(budgetId);
+    const progress = await this.calculateGoalProgress(budgetId, workspaceId);
 
     if (progress.status === "completed") {
       throw new ValidationError("Goal is already completed", "goal");
@@ -1549,8 +1587,12 @@ export class GoalTrackingService {
     };
   }
 
-  async linkScheduleToGoal(budgetId: number, scheduleId: number): Promise<BudgetWithRelations> {
-    const budget = await this.repository.findById(budgetId);
+  async linkScheduleToGoal(
+    budgetId: number,
+    scheduleId: number,
+    workspaceId: number
+  ): Promise<BudgetWithRelations> {
+    const budget = await this.repository.findById(budgetId, workspaceId);
     if (!budget) {
       throw new NotFoundError("Budget", budgetId);
     }
@@ -1569,14 +1611,15 @@ export class GoalTrackingService {
     goal.linkedScheduleId = scheduleId;
     goal.autoContribute = true;
 
-    return await this.repository.updateBudget(budgetId, { metadata }, {});
+    return await this.repository.updateBudget(budgetId, { metadata }, workspaceId);
   }
 
   async linkScheduleToScheduledExpense(
     budgetId: number,
-    scheduleId: number
+    scheduleId: number,
+    workspaceId: number
   ): Promise<BudgetWithRelations> {
-    const budget = await this.repository.findById(budgetId);
+    const budget = await this.repository.findById(budgetId, workspaceId);
     if (!budget) {
       throw new NotFoundError("Budget", budgetId);
     }
@@ -1596,7 +1639,7 @@ export class GoalTrackingService {
     metadata.scheduledExpense.linkedScheduleId = scheduleId;
     metadata.scheduledExpense.autoTrack = true;
 
-    return await this.repository.updateBudget(budgetId, { metadata }, {});
+    return await this.repository.updateBudget(budgetId, { metadata }, workspaceId);
   }
 }
 
@@ -1635,8 +1678,12 @@ export interface BudgetForecast {
 export class BudgetForecastService {
   constructor(private repository: BudgetRepository) {}
 
-  async forecastBudgetImpact(budgetId: number, daysAhead: number = 30): Promise<BudgetForecast> {
-    const budget = await this.repository.findById(budgetId);
+  async forecastBudgetImpact(
+    budgetId: number,
+    workspaceId: number,
+    daysAhead: number = 30
+  ): Promise<BudgetForecast> {
+    const budget = await this.repository.findById(budgetId, workspaceId);
     if (!budget) {
       throw new NotFoundError("Budget", budgetId);
     }
@@ -1771,9 +1818,12 @@ export class BudgetForecastService {
     return startDate;
   }
 
-  async autoAllocateScheduledExpenses(budgetId: number): Promise<BudgetWithRelations> {
-    const forecast = await this.forecastBudgetImpact(budgetId, 30);
-    const budget = await this.repository.findById(budgetId);
+  async autoAllocateScheduledExpenses(
+    budgetId: number,
+    workspaceId: number
+  ): Promise<BudgetWithRelations> {
+    const forecast = await this.forecastBudgetImpact(budgetId, workspaceId, 30);
+    const budget = await this.repository.findById(budgetId, workspaceId);
 
     if (!budget) {
       throw new NotFoundError("Budget", budgetId);
@@ -1784,7 +1834,7 @@ export class BudgetForecastService {
       allocatedAmount: forecast.projectedScheduledExpenses,
     };
 
-    return await this.repository.updateBudget(budgetId, { metadata }, {});
+    return await this.repository.updateBudget(budgetId, { metadata }, workspaceId);
   }
 }
 

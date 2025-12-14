@@ -22,11 +22,13 @@ import {
   CategoryGroupRepository,
   CategoryGroupSettingsRepository,
 } from "$lib/server/domains/category-groups/repository";
-import { PayeeCategoryRepository } from "$lib/server/domains/payee-categories/repository";
+import { ImportProfileRepository } from "$lib/server/domains/import-profiles/repository";
 import { MedicalExpenseRepository } from "$lib/server/domains/medical-expenses/repository";
 import { PatternRepository } from "$lib/server/domains/patterns/repository";
+import { PayeeCategoryRepository } from "$lib/server/domains/payee-categories/repository";
 import { PayeeRepository } from "$lib/server/domains/payees/repository";
 import { ScheduleRepository } from "$lib/server/domains/schedules/repository";
+import { ScheduleSkipRepository } from "$lib/server/domains/schedules/skip-repository";
 import { TransactionRepository } from "$lib/server/domains/transactions/repository";
 
 import { AccountService } from "$lib/server/domains/accounts/services";
@@ -52,14 +54,15 @@ import { CategoryService } from "$lib/server/domains/categories/services";
 import { CategoryGroupRecommendationService } from "$lib/server/domains/category-groups/recommendation-service";
 import { CategoryGroupService } from "$lib/server/domains/category-groups/services";
 import { CategoryGroupSettingsService } from "$lib/server/domains/category-groups/settings-service";
-import { PayeeCategoryService } from "$lib/server/domains/payee-categories/services";
-import { PayeeCategoryRecommendationService } from "$lib/server/domains/payee-categories/recommendation-service";
+import { ImportProfileService } from "$lib/server/domains/import-profiles/services";
 import { ClaimRepository } from "$lib/server/domains/medical-expenses/claim-repository";
 import { ClaimService } from "$lib/server/domains/medical-expenses/claim-service";
 import { ReceiptRepository } from "$lib/server/domains/medical-expenses/receipt-repository";
 import { ReceiptService } from "$lib/server/domains/medical-expenses/receipt-service";
 import { MedicalExpenseService } from "$lib/server/domains/medical-expenses/services";
 import { PatternDetectionService } from "$lib/server/domains/patterns/services";
+import { PayeeCategoryRecommendationService } from "$lib/server/domains/payee-categories/recommendation-service";
+import { PayeeCategoryService } from "$lib/server/domains/payee-categories/services";
 import { BudgetAllocationService } from "$lib/server/domains/payees/budget-allocation";
 import { CategoryLearningService } from "$lib/server/domains/payees/category-learning";
 import { ContactManagementService } from "$lib/server/domains/payees/contact-management";
@@ -131,6 +134,14 @@ export class ServiceFactory {
     return this.instances.get(key) as ScheduleRepository;
   }
 
+  getScheduleSkipRepository(): ScheduleSkipRepository {
+    const key = "ScheduleSkipRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new ScheduleSkipRepository());
+    }
+    return this.instances.get(key) as ScheduleSkipRepository;
+  }
+
   getMedicalExpenseRepository(): MedicalExpenseRepository {
     const key = "MedicalExpenseRepository";
     if (!this.instances.has(key)) {
@@ -153,6 +164,14 @@ export class ServiceFactory {
       this.instances.set(key, new ReceiptRepository());
     }
     return this.instances.get(key) as ReceiptRepository;
+  }
+
+  getImportProfileRepository(): ImportProfileRepository {
+    const key = "ImportProfileRepository";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new ImportProfileRepository());
+    }
+    return this.instances.get(key) as ImportProfileRepository;
   }
 
   // ==================== Services ====================
@@ -343,6 +362,7 @@ export class ServiceFactory {
         key,
         new ScheduleService(
           this.getScheduleRepository(),
+          this.getScheduleSkipRepository(),
           this.getTransactionService(),
           this.getPayeeService(),
           this.getCategoryService()
@@ -588,6 +608,15 @@ export class ServiceFactory {
       this.instances.set(key, new PayeeCategoryRecommendationService());
     }
     return this.instances.get(key) as PayeeCategoryRecommendationService;
+  }
+
+  // Import Profile Service
+  getImportProfileService(): ImportProfileService {
+    const key = "ImportProfileService";
+    if (!this.instances.has(key)) {
+      this.instances.set(key, new ImportProfileService(this.getImportProfileRepository()));
+    }
+    return this.instances.get(key) as ImportProfileService;
   }
 
   // ==================== Testing Utilities ====================

@@ -78,7 +78,7 @@ export class PayeeMatcher {
    * Match a single payee against the input
    */
   private matchPayee(normalizedInput: string, payee: Payee): PayeeMatch {
-    const normalizedPayeeName = normalizeText(payee.name);
+    const normalizedPayeeName = normalizeText(payee.name ?? "");
 
     // Check for exact match
     if (normalizedInput === normalizedPayeeName) {
@@ -200,8 +200,8 @@ export class PayeeMatcher {
         /^([A-Z]+(?:\s+[A-Z]+)?)\s*(?:MKTPL?|MARKETPLACE)?\s*[\*]([A-Z0-9*]+)$/i
       );
       if (marketplaceMatch) {
-        text = marketplaceMatch[1]; // Base name (e.g., AMAZON)
-        extractedDetails.push(marketplaceMatch[2]); // Transaction ID
+        text = marketplaceMatch[1] ?? text; // Base name (e.g., AMAZON)
+        if (marketplaceMatch[2]) extractedDetails.push(marketplaceMatch[2]); // Transaction ID
       }
     }
 
@@ -217,7 +217,7 @@ export class PayeeMatcher {
         const potentialId = trailingIdMatch[2];
 
         // Only extract if it looks like an ID (mixed case/numbers or special chars)
-        if (/[0-9]/.test(potentialId) || /\*/.test(potentialId)) {
+        if (potentialName && potentialId && (/[0-9]/.test(potentialId) || /\*/.test(potentialId))) {
           text = potentialName;
           extractedDetails.push(potentialId);
         }
@@ -255,11 +255,6 @@ export class PayeeMatcher {
     text = text.replace(/^[*\s]+|[*\s]+$/g, "");
     text = text.replace(/^[-\s]+|[-\s]+$/g, "");
 
-    // Step 8: Convert to Title Case if all caps or all lowercase
-    if (text === text.toUpperCase() || text === text.toLowerCase()) {
-      text = this.toTitleCase(text);
-    }
-
     return {
       name: text,
       details: extractedDetails.length > 0 ? extractedDetails.join(" ") : null,
@@ -275,6 +270,8 @@ export class PayeeMatcher {
       const part = parts[i];
       const nextPart = parts[i + 1];
 
+      if (!part) continue;
+
       // If this part is a store number pattern (#123, STORE, etc.)
       if (/^#\d+$/.test(part)) {
         return i - 1;
@@ -288,7 +285,8 @@ export class PayeeMatcher {
       // If this is a number at the end (likely store number)
       if (/^\d+$/.test(part) && i === parts.length - 1 && i > 0) {
         // Check if previous part looks like a location name (2+ letters, all caps)
-        if (parts[i - 1] && /^[A-Z]{2,}$/i.test(parts[i - 1])) {
+        const prevPart = parts[i - 1];
+        if (prevPart && /^[A-Z]{2,}$/i.test(prevPart)) {
           return i - 2 >= 0 ? i - 2 : 0;
         }
         return i - 1;
@@ -302,63 +300,5 @@ export class PayeeMatcher {
     }
 
     return parts.length - 1;
-  }
-
-  /**
-   * Convert string to Title Case with smart handling
-   */
-  private toTitleCase(str: string): string {
-    const lowercaseWords = new Set([
-      "a",
-      "an",
-      "and",
-      "as",
-      "at",
-      "but",
-      "by",
-      "for",
-      "in",
-      "of",
-      "on",
-      "or",
-      "the",
-      "to",
-      "with",
-    ]);
-
-    return str
-      .toLowerCase()
-      .split(/\s+/)
-      .map((word, index) => {
-        // Always capitalize first word
-        if (index === 0) {
-          return word.charAt(0).toUpperCase() + word.slice(1);
-        }
-
-        // Keep small words lowercase (unless first word)
-        if (lowercaseWords.has(word)) {
-          return word;
-        }
-
-        // Handle words with apostrophes (e.g., "mcdonald's" -> "McDonald's")
-        if (word.includes("'")) {
-          return word
-            .split("'")
-            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-            .join("'");
-        }
-
-        // Handle hyphenated words (e.g., "hy-vee" -> "Hy-Vee")
-        if (word.includes("-")) {
-          return word
-            .split("-")
-            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-            .join("-");
-        }
-
-        // Default: capitalize first letter
-        return word.charAt(0).toUpperCase() + word.slice(1);
-      })
-      .join(" ");
   }
 }

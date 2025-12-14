@@ -12,13 +12,14 @@ import type {
 import { categoryGroupMemberships, categoryGroups } from "$lib/schema/category-groups";
 import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
-import { NotFoundError } from "$lib/server/shared/types/errors";
+import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import type { CategoryTreeNode } from "$lib/types/categories";
 import { getCurrentTimestamp } from "$lib/utils/dates";
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 export interface UpdateCategoryData {
   name?: string | undefined;
+  slug?: string | undefined;
   notes?: string | null | undefined;
   parentId?: number | null | undefined;
   categoryType?: CategoryType | undefined;
@@ -35,6 +36,7 @@ export interface UpdateCategoryData {
   expectedMonthlyMax?: number | null | undefined;
   spendingPriority?: SpendingPriority | null | undefined;
   incomeReliability?: IncomeReliability | null | undefined;
+  deletedAt?: string | null | undefined;
 }
 
 export interface CategoryStats {
@@ -92,7 +94,11 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Create a new category
    */
-  override async create(data: NewCategory, workspaceId: number): Promise<Category> {
+  override async create(data: NewCategory, workspaceId?: number): Promise<Category> {
+    if (workspaceId === undefined) {
+      throw new ValidationError("workspaceId is required for category creation");
+    }
+
     const [category] = await db
       .insert(categories)
       .values({ ...data, workspaceId })
@@ -108,7 +114,11 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Find category by ID with workspaceId filtering
    */
-  override async findById(id: number, workspaceId: number): Promise<Category | null> {
+  override async findById(id: number, workspaceId?: number): Promise<Category | null> {
+    if (workspaceId === undefined) {
+      throw new ValidationError("workspaceId is required for category lookup");
+    }
+
     const result = await db
       .select()
       .from(categories)
@@ -121,7 +131,11 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Find category by slug with workspaceId filtering
    */
-  override async findBySlug(slug: string, workspaceId: number): Promise<Category | null> {
+  override async findBySlug(slug: string, workspaceId?: number): Promise<Category | null> {
+    if (workspaceId === undefined) {
+      throw new ValidationError("workspaceId is required for category lookup");
+    }
+
     const { isNull } = await import("drizzle-orm");
 
     const result = await db
@@ -170,8 +184,12 @@ export class CategoryRepository extends BaseRepository<
   override async update(
     id: number,
     data: UpdateCategoryData,
-    workspaceId: number
+    workspaceId?: number
   ): Promise<Category> {
+    if (workspaceId === undefined) {
+      throw new ValidationError("workspaceId is required for category update");
+    }
+
     const [category] = await db
       .update(categories)
       .set({
@@ -197,7 +215,7 @@ export class CategoryRepository extends BaseRepository<
   /**
    * Soft delete category with slug archiving
    */
-  override async softDelete(id: number, workspaceId: number): Promise<Category> {
+  override async softDelete(id: number, workspaceId?: number): Promise<Category> {
     // Get existing entity
     const entity = await this.findById(id, workspaceId);
     if (!entity) {

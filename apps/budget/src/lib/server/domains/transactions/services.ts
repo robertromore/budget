@@ -1,22 +1,21 @@
-import { TransactionRepository } from "./repository";
-import type { Transaction, NewTransaction } from "$lib/schema/transactions";
-import { ValidationError, NotFoundError, ConflictError } from "$lib/server/shared/types/errors";
-import { InputSanitizer } from "$lib/server/shared/validation";
-import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
-import type { TransactionFilters, PaginationParams, PaginatedResult } from "./repository";
-import { invalidateAccountCache } from "$lib/utils/cache";
-import { db } from "$lib/server/db";
 import { accounts, transactions } from "$lib/schema";
-import { payees } from "$lib/schema/payees";
-import { categories } from "$lib/schema/categories";
-import { categoryGroups } from "$lib/schema/category-groups";
 import { budgetTransactions } from "$lib/schema/budgets";
-import { eq, and, isNull, sql, gte, lte } from "drizzle-orm";
-import { PayeeService } from "../payees/services";
-import { CategoryService } from "../categories/services";
-import { ScheduleService, type UpcomingScheduledTransaction } from "../schedules/services";
-import { BudgetTransactionService } from "../budgets/services";
+import { categories } from "$lib/schema/categories";
+import { payees } from "$lib/schema/payees";
+import type { NewTransaction, Transaction } from "$lib/schema/transactions";
+import { db } from "$lib/server/db";
+import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
+import { InputSanitizer } from "$lib/server/shared/validation";
+import { invalidateAccountCache } from "$lib/utils/cache";
+import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
+import { and, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { BudgetCalculationService } from "../budgets/calculation-service";
+import { BudgetTransactionService } from "../budgets/services";
+import { CategoryService } from "../categories/services";
+import { PayeeService } from "../payees/services";
+import { ScheduleService, type UpcomingScheduledTransaction } from "../schedules/services";
+import type { PaginatedResult, PaginationParams, TransactionFilters } from "./repository";
+import { TransactionRepository } from "./repository";
 
 // Service input types
 export interface BudgetAllocationData {
@@ -271,7 +270,7 @@ export class TransactionService {
         notes,
         status,
       },
-      workspaceId
+      Number(workspaceId)
     );
 
     // Handle budget allocations
@@ -334,7 +333,7 @@ export class TransactionService {
     workspaceId: string
   ): Promise<Transaction> {
     // Verify transaction exists
-    const existingTransaction = await this.repository.findByIdOrThrow(id, workspaceId);
+    const existingTransaction = await this.repository.findByIdOrThrow(id, Number(workspaceId));
 
     const updateData: Partial<NewTransaction> = {};
 
@@ -401,7 +400,7 @@ export class TransactionService {
     }
 
     // Update transaction
-    const updatedTransaction = await this.repository.update(id, updateData, workspaceId);
+    const updatedTransaction = await this.repository.update(id, updateData, Number(workspaceId));
 
     // Handle budget allocations
     if (data.budgetAllocations !== undefined) {
@@ -538,7 +537,7 @@ export class TransactionService {
     const updatedTransaction = await this.updateTransaction(id, data, workspaceId);
 
     // Then return all account transactions with recalculated running balances
-    return await this.repository.findWithRunningBalance(updatedTransaction.accountId, workspaceId);
+    return await this.repository.findWithRunningBalance(updatedTransaction.accountId, Number(workspaceId));
   }
 
   /**
@@ -686,7 +685,7 @@ export class TransactionService {
    * Get transaction by ID
    */
   async getTransactionById(id: number, workspaceId: string): Promise<Transaction> {
-    return await this.repository.findByIdWithRelations(id, workspaceId);
+    return await this.repository.findByIdWithRelations(id, Number(workspaceId));
   }
 
   /**
@@ -706,14 +705,14 @@ export class TransactionService {
       });
     }
 
-    return await this.repository.findWithFilters(filters, pagination, workspaceId);
+    return await this.repository.findWithFilters(filters, pagination, Number(workspaceId));
   }
 
   /**
    * Get all transactions for an account
    */
   async getAccountTransactions(accountId: number, workspaceId: string): Promise<Transaction[]> {
-    const rawTransactions = await this.repository.findByAccountId(accountId, workspaceId);
+    const rawTransactions = await this.repository.findByAccountId(accountId, Number(workspaceId));
 
     // Transform budget allocations for each transaction
     return rawTransactions.map((t) => ({
@@ -730,7 +729,7 @@ export class TransactionService {
     workspaceId: string
   ): Promise<(Transaction | UpcomingScheduledTransaction)[]> {
     // Get actual transactions with running balance
-    const rawTransactions = await this.repository.findWithRunningBalance(accountId, workspaceId);
+    const rawTransactions = await this.repository.findWithRunningBalance(accountId, Number(workspaceId));
     console.log(`Found ${rawTransactions.length} actual transactions for account ${accountId}`);
 
     // Enrich actual transactions with schedule metadata if they have a scheduleId
@@ -790,7 +789,7 @@ export class TransactionService {
     workspaceId: string,
     limit?: number
   ): Promise<Array<Transaction & { balance: number }>> {
-    return await this.repository.findWithRunningBalance(accountId, workspaceId, limit);
+    return await this.repository.findWithRunningBalance(accountId, Number(workspaceId), limit);
   }
 
   /**
@@ -812,9 +811,9 @@ export class TransactionService {
     }
 
     const [balance, pendingBalance, transactions] = await Promise.all([
-      this.repository.getAccountBalance(accountId, workspaceId),
-      this.repository.getPendingBalance(accountId, workspaceId),
-      this.repository.findByAccountId(accountId, workspaceId),
+      this.repository.getAccountBalance(accountId, Number(workspaceId)),
+      this.repository.getPendingBalance(accountId, Number(workspaceId)),
+      this.repository.findByAccountId(accountId, Number(workspaceId)),
     ]);
 
     const clearedCount = transactions.filter((t) => t.status === "cleared").length;
@@ -843,8 +842,8 @@ export class TransactionService {
    */
   async deleteTransaction(id: number, workspaceId: string): Promise<void> {
     // Soft delete the transaction
-    const transaction = await this.repository.findByIdOrThrow(id, workspaceId);
-    await this.repository.softDelete(id, workspaceId);
+    const transaction = await this.repository.findByIdOrThrow(id, Number(workspaceId));
+    await this.repository.softDelete(id, Number(workspaceId));
 
     // Trigger budget consumption recalculation
     try {
@@ -869,11 +868,11 @@ export class TransactionService {
 
     // Load transactions to validate existence and capture account IDs for cache invalidation
     const transactions = await Promise.all(
-      ids.map((id) => this.repository.findByIdOrThrow(id, workspaceId))
+      ids.map((id) => this.repository.findByIdOrThrow(id, Number(workspaceId)))
     );
 
     // Bulk soft delete
-    await this.repository.bulkSoftDelete(ids, workspaceId);
+    await this.repository.bulkSoftDelete(ids, Number(workspaceId));
 
     // Trigger budget consumption recalculation for each deleted transaction
     for (const id of ids) {
@@ -895,12 +894,12 @@ export class TransactionService {
    * Clear pending transactions for an account
    */
   async clearPendingTransactions(accountId: number, workspaceId: string): Promise<number> {
-    const pendingTransactions = await this.repository.findByAccountId(accountId, workspaceId);
+    const pendingTransactions = await this.repository.findByAccountId(accountId, Number(workspaceId));
     const pendingIds = pendingTransactions.filter((t) => t.status === "pending").map((t) => t.id);
 
     let clearedCount = 0;
     for (const id of pendingIds) {
-      await this.repository.update(id, { status: "cleared" }, workspaceId);
+      await this.repository.update(id, { status: "cleared" }, Number(workspaceId));
 
       // Trigger budget consumption recalculation (status change may affect period calculations)
       try {
@@ -933,7 +932,7 @@ export class TransactionService {
     }>
   > {
     // Verify account belongs to user (through repository)
-    await this.repository.findByAccountId(accountId, workspaceId);
+    await this.repository.findByAccountId(accountId, Number(workspaceId));
 
     const result = await db
       .select({
@@ -969,13 +968,17 @@ export class TransactionService {
    */
   async suggestTransactionDetails(
     payeeId: number,
+    workspaceId: number,
     amount?: number
   ): Promise<TransactionSuggestion> {
     // Get payee with default settings
-    const payee = await this.payeeService.getPayeeById(payeeId);
+    const payee = await this.payeeService.getPayeeById(payeeId, workspaceId);
 
     // Get payee intelligence data
-    const intelligence = await this.getPayeeTransactionIntelligence(payeeId);
+    const intelligence = await this.getPayeeTransactionIntelligence(
+      payeeId,
+      workspaceId.toString()
+    );
 
     let confidence = 0;
     let reasoning = "Based on payee settings";
@@ -1091,7 +1094,10 @@ export class TransactionService {
           // Fetch actual category name
           let categoryName = `Category ${categoryId}`;
           try {
-            const category = await this.categoryService.getCategoryById(categoryId);
+            const category = await this.categoryService.getCategoryById(
+              categoryId,
+              parseInt(workspaceId, 10)
+            );
             categoryName = category.name ?? `Category ${categoryId}`;
           } catch (error) {
             console.warn(`Failed to fetch category ${categoryId}:`, error);
@@ -1127,7 +1133,8 @@ export class TransactionService {
     } else {
       // Fallback for backward compatibility
       const { BudgetIntelligenceService } = await import("$lib/server/domains/budgets/services");
-      const intelligenceService = new BudgetIntelligenceService();
+      const { BudgetRepository } = await import("$lib/server/domains/budgets/repository");
+      const intelligenceService = new BudgetIntelligenceService(new BudgetRepository());
       budgetPattern = await intelligenceService.getMostUsedBudget(
         payeeId,
         mostUsedCategory?.id ?? undefined
@@ -1163,10 +1170,11 @@ export class TransactionService {
     const intelligence = await this.getPayeeTransactionIntelligence(payeeId, workspaceId);
 
     // Prepare update data with proper typing
+    type PaymentFrequencyType = "weekly" | "bi_weekly" | "monthly" | "quarterly" | "annual" | "irregular";
     interface PayeeIntelligenceUpdate {
       lastTransactionDate: string | null;
       avgAmount?: number;
-      paymentFrequency?: string;
+      paymentFrequency?: PaymentFrequencyType;
     }
 
     const updateData: PayeeIntelligenceUpdate = {
@@ -1181,20 +1189,21 @@ export class TransactionService {
     // Update payment frequency if detected
     if (intelligence.typicalFrequency) {
       // Map our internal frequency to payee schema frequency
-      const frequencyMap: Record<string, string> = {
+      const frequencyMap = {
         weekly: "weekly",
         "bi-weekly": "bi_weekly",
         monthly: "monthly",
         quarterly: "quarterly",
         infrequent: "irregular",
-      };
+      } as const;
 
-      updateData.paymentFrequency = frequencyMap[intelligence.typicalFrequency] || "irregular";
+      const mappedFrequency = frequencyMap[intelligence.typicalFrequency as keyof typeof frequencyMap];
+      updateData.paymentFrequency = (mappedFrequency || "irregular") as PaymentFrequencyType;
     }
 
     // Update the payee with calculated fields
     if (Object.keys(updateData).length > 0) {
-      await this.payeeService.updatePayee(payeeId, updateData);
+      await this.payeeService.updatePayee(payeeId, updateData, Number(workspaceId));
     }
   }
 
@@ -1315,7 +1324,7 @@ export class TransactionService {
         isTransfer: true,
         status: "cleared", // Transfers are typically cleared immediately
       },
-      workspaceId
+      Number(workspaceId)
     );
 
     // Create TO transaction (money in - positive amount)
@@ -1332,7 +1341,7 @@ export class TransactionService {
         isTransfer: true,
         status: "cleared",
       },
-      workspaceId
+      Number(workspaceId)
     );
 
     // Link the transactions together
@@ -1341,7 +1350,7 @@ export class TransactionService {
       {
         transferTransactionId: toTransaction.id,
       },
-      workspaceId
+      Number(workspaceId)
     );
 
     await this.repository.update(
@@ -1349,7 +1358,7 @@ export class TransactionService {
       {
         transferTransactionId: fromTransaction.id,
       },
-      workspaceId
+      Number(workspaceId)
     );
 
     // Invalidate both account caches
@@ -1358,8 +1367,8 @@ export class TransactionService {
 
     return {
       transferId,
-      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, workspaceId),
-      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, workspaceId),
+      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, Number(workspaceId)),
+      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, Number(workspaceId)),
     };
   }
 
@@ -1428,22 +1437,22 @@ export class TransactionService {
     if (updates.amount !== undefined) {
       fromUpdateData.amount = -updates.amount; // Negative for outgoing
     }
-    await this.repository.update(fromTransaction.id, fromUpdateData, workspaceId);
+    await this.repository.update(fromTransaction.id, fromUpdateData, Number(workspaceId));
 
     // Update TO transaction
     const toUpdateData = { ...updateData };
     if (updates.amount !== undefined) {
       toUpdateData.amount = updates.amount; // Positive for incoming
     }
-    await this.repository.update(toTransaction.id, toUpdateData, workspaceId);
+    await this.repository.update(toTransaction.id, toUpdateData, Number(workspaceId));
 
     // Invalidate both account caches
     invalidateAccountCache(fromTransaction.accountId);
     invalidateAccountCache(toTransaction.accountId);
 
     return {
-      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, workspaceId),
-      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, workspaceId),
+      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, Number(workspaceId)),
+      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, Number(workspaceId)),
     };
   }
 
@@ -1466,7 +1475,7 @@ export class TransactionService {
     // Soft delete both transactions
     const accountIds = new Set<number>();
     for (const transaction of transferTransactions) {
-      await this.repository.softDelete(transaction.id, workspaceId);
+      await this.repository.softDelete(transaction.id, Number(workspaceId));
       accountIds.add(transaction.accountId);
     }
 

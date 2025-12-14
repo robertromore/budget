@@ -9,13 +9,13 @@
  * Run with: bun run ./src/lib/server/db/seeders
  */
 
+import * as schema from "$lib/schema";
 import type { TableConfig } from "drizzle-orm/mysql-core";
 import { db } from "..";
-import * as schema from "$lib/schema";
 
 import { Glob } from "bun";
-import * as path from "node:path";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
+import * as path from "node:path";
 
 // Define seeding order based on dependencies
 const SEEDING_ORDER = [
@@ -24,13 +24,7 @@ const SEEDING_ORDER = [
 
   // Phase 2: Depends only on workspaces
   "budgetTemplates",
-
-  // Phase 3: Complex dependencies (will be handled if files exist)
   "budgets",
-  "budgetPeriodTemplates",
-  "budgetPeriodInstances",
-  "budgetAccounts",
-  "budgetCategories",
 ];
 
 const glob = new Glob("*.json");

@@ -5,21 +5,21 @@
  * header normalization, and data transformation.
  */
 
-import Papa from "papaparse";
 import type {
+  ColumnMapping,
   FileProcessor,
   ImportRow,
   NormalizedTransaction,
-  ColumnMapping,
 } from "$lib/types/import";
+import Papa from "papaparse";
 import { FileValidationError, ParseError } from "../errors";
 import {
+  detectCSVDelimiter,
   normalizeHeader,
-  parseDate,
   parseAmount,
+  parseDate,
   sanitizeText,
   validateFileType,
-  detectCSVDelimiter,
 } from "../utils";
 
 export class CSVProcessor implements FileProcessor {
@@ -119,7 +119,7 @@ export class CSVProcessor implements FileProcessor {
             }
           }
         },
-        error: (error) => {
+        error: (error: Error) => {
           reject(new ParseError(`CSV parsing error: ${error.message}`));
         },
       });

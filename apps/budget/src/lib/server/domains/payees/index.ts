@@ -1,136 +1,56 @@
+export { BudgetAllocationService } from "./budget-allocation";
+export { CategoryLearningService } from "./category-learning";
+export { PayeeIntelligenceService } from "./intelligence";
+export { PayeeMLCoordinator } from "./ml-coordinator";
 export { PayeeRepository } from "./repository";
 export { PayeeService } from "./services";
-export { PayeeIntelligenceService } from "./intelligence";
-export { CategoryLearningService } from "./category-learning";
-export { BudgetAllocationService } from "./budget-allocation";
-export { PayeeMLCoordinator } from "./ml-coordinator";
 
 export type {
-  UpdatePayeeData,
-  PayeeStats,
-  PayeeSuggestions,
   PayeeIntelligence,
-  PayeeSearchFilters,
+  PayeeSearchFilters, PayeeStats,
+  PayeeSuggestions, UpdatePayeeData
 } from "./repository";
 
 export type {
-  CreatePayeeData,
-  PayeeWithStats,
-  PayeeWithRelations,
-  BulkUpdateResult,
-  PayeeAnalytics,
+  BulkUpdateResult, CreatePayeeData, PayeeAnalytics, PayeeWithRelations, PayeeWithStats
 } from "./services";
 
 export type {
-  SpendingAnalysis,
-  SeasonalPattern,
-  DayOfWeekPattern,
-  FrequencyAnalysis,
-  TransactionPrediction,
   BudgetAllocationSuggestion,
-  ConfidenceMetrics,
+  ConfidenceMetrics, DayOfWeekPattern,
+  FrequencyAnalysis, SeasonalPattern, SpendingAnalysis, TransactionPrediction
 } from "./intelligence";
 
 export type {
-  CategoryCorrection,
-  CorrectionPattern,
-  CategoryRecommendation,
-  LearningMetrics,
-  CategoryDrift,
+  CategoryCorrection, CategoryDrift, CategoryRecommendation, CorrectionPattern, LearningMetrics
 } from "./category-learning";
 
 export type {
-  BudgetOptimizationAnalysis,
   BudgetAllocationSuggestion as BudgetAllocationSuggestionDetailed,
   BudgetForecast,
-  BudgetHealthMetrics,
-  BudgetRebalancingPlan,
-  BudgetScenario,
+  BudgetHealthMetrics, BudgetOptimizationAnalysis, BudgetRebalancingPlan,
+  BudgetScenario
 } from "./budget-allocation";
 
 export type {
-  UnifiedRecommendations,
-  CrossSystemLearning,
-  BehaviorChangeDetection,
-  ActionableInsight,
-  MLPerformanceMetrics,
-  MLSystemStatus,
-  MLEnsembleConfig,
-  MLAutomationRule,
-  MLDataPipeline,
-  MLModelMetadata,
-  MLFeatureImportance,
-  MLPredictionExplanation,
-  MLSystemConfiguration,
-  MLAuditLog,
-  MLSystemHealth,
-  MLTrainingJob,
-  MLExperiment,
-  MLConfidenceLevel,
-  MLPriority,
-  MLSystemType,
-  MLInsightType,
-  MLAutomationType,
-  MLResponse,
-  MLBatchResponse,
-  MLAnalyticsReport,
-  MLDataQualityReport,
+  ActionableInsight, BehaviorChangeDetection, CrossSystemLearning, MLAnalyticsReport, MLAuditLog, MLAutomationRule, MLAutomationType, MLBatchResponse, MLConfidenceLevel, MLDataPipeline, MLDataQualityReport, MLEnsembleConfig, MLExperiment, MLFeatureImportance, MLInsightType, MLModelMetadata, MLPerformanceMetrics, MLPredictionExplanation, MLPriority, MLResponse, MLSystemConfiguration, MLSystemHealth, MLSystemStatus, MLSystemType, MLTrainingJob, UnifiedRecommendations
 } from "./ml-types";
 
-export type { SubscriptionInfo, PayeeAddress, PaymentMethodReference, PayeeTags } from "./types";
+export type { PayeeAddress, PayeeTags, PaymentMethodReference, SubscriptionInfo } from "./types";
 
 export {
-  createPayeeSchema,
-  updatePayeeSchema,
-  deletePayeeSchema,
-  bulkDeletePayeesSchema,
-  searchPayeesSchema,
-  advancedSearchPayeesSchema,
-  getPayeeSchema,
-  getPayeesByAccountSchema,
-  getPayeesByTypeSchema,
-  mergePayeesSchema,
-  payeeIdSchema,
-  applyIntelligentDefaultsSchema,
-  updateCalculatedFieldsSchema,
+  advancedFrequencyAnalysisSchema, advancedSearchPayeesSchema, advancedSpendingAnalysisSchema, applyIntelligentDefaultsSchema, applyIntelligentOptimizationsSchema, budgetAllocationSuggestionSchema, bulkDeletePayeesSchema, bulkIntelligenceAnalysisSchema, comprehensiveIntelligenceSchema, confidenceMetricsSchema, createPayeeSchema, dayOfWeekPatternsSchema, deletePayeeSchema, getPayeesByAccountSchema,
+  getPayeesByTypeSchema, getPayeeSchema,
   // Intelligence validation schemas
-  intelligenceAnalysisSchema,
-  comprehensiveIntelligenceSchema,
-  applyIntelligentOptimizationsSchema,
-  bulkIntelligenceAnalysisSchema,
-  transactionPredictionSchema,
-  budgetAllocationSuggestionSchema,
-  confidenceMetricsSchema,
-  seasonalPatternsSchema,
-  dayOfWeekPatternsSchema,
-  advancedFrequencyAnalysisSchema,
-  advancedSpendingAnalysisSchema,
+  intelligenceAnalysisSchema, mergePayeesSchema,
+  payeeIdSchema, searchPayeesSchema, seasonalPatternsSchema, transactionPredictionSchema, updateCalculatedFieldsSchema, updatePayeeSchema
 } from "./validation";
 
 export type {
-  CreatePayeeInput,
-  UpdatePayeeInput,
-  DeletePayeeInput,
-  BulkDeletePayeesInput,
-  SearchPayeesInput,
-  AdvancedSearchPayeesInput,
-  GetPayeeInput,
+  AdvancedFrequencyAnalysisInput, AdvancedSearchPayeesInput, AdvancedSpendingAnalysisInput, ApplyIntelligentDefaultsInput, ApplyIntelligentOptimizationsInput, BudgetAllocationSuggestionInput, BulkDeletePayeesInput, BulkIntelligenceAnalysisInput, ComprehensiveIntelligenceInput, ConfidenceMetricsInput, CreatePayeeInput, DayOfWeekPatternsInput, DeletePayeeInput, GetPayeeInput,
   GetPayeesByAccountInput,
   GetPayeesByTypeInput,
-  MergePayeesInput,
-  PayeeIdInput,
-  ApplyIntelligentDefaultsInput,
-  UpdateCalculatedFieldsInput,
   // Intelligence validation type exports
-  IntelligenceAnalysisInput,
-  ComprehensiveIntelligenceInput,
-  ApplyIntelligentOptimizationsInput,
-  BulkIntelligenceAnalysisInput,
-  TransactionPredictionInput,
-  BudgetAllocationSuggestionInput,
-  ConfidenceMetricsInput,
-  SeasonalPatternsInput,
-  DayOfWeekPatternsInput,
-  AdvancedFrequencyAnalysisInput,
-  AdvancedSpendingAnalysisInput,
+  IntelligenceAnalysisInput, MergePayeesInput,
+  PayeeIdInput, SearchPayeesInput, SeasonalPatternsInput, TransactionPredictionInput, UpdateCalculatedFieldsInput, UpdatePayeeInput
 } from "./validation";

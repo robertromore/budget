@@ -1,36 +1,35 @@
-import { initTRPC } from "@trpc/server";
-import type { Context } from "$lib/trpc/context";
-import { UnauthorizedError, ForbiddenError } from "$lib/server/shared/types";
 import type { Permission, UserRole } from "$lib/server/config/auth";
+import { ForbiddenError, UnauthorizedError } from "$lib/server/shared/types";
+import type { Context } from "$lib/trpc/context";
+import { initTRPC } from "@trpc/server";
 
 // Initialize tRPC for middleware creation
 const t = initTRPC.context<Context>().create();
 
 /**
- * Authentication middleware - requires valid user session
+ * Authentication middleware - requires valid workspace
+ * Currently uses workspace-based isolation. User authentication to be added later.
  */
 export const requireAuth = t.middleware(async ({ ctx, next }) => {
-  // Skip auth for tests
-  if ((ctx as any).isTest) {
-    return next({
-      ctx: {
-        ...ctx,
-        user: { id: "test-user", role: "admin" as UserRole },
-      },
-    });
+  // For now, we just ensure a workspace is set (which is handled by context creation)
+  // Real user authentication will be added when Better Auth is integrated
+  if (!ctx.workspaceId) {
+    throw new UnauthorizedError("No workspace selected");
   }
 
-  if (!ctx.session?.user) {
-    throw new UnauthorizedError("Authentication required");
-  }
-
+  // Pass through with a placeholder user for compatibility
   return next({
     ctx: {
       ...ctx,
-      user: ctx.session.user,
+      user: { id: ctx.workspaceId.toString(), role: "admin" as UserRole },
     },
   });
 });
+
+// Extended context type after requireAuth adds user
+type AuthenticatedContext = Context & {
+  user: { id: string; role: UserRole };
+};
 
 /**
  * Permission-based authorization middleware
@@ -38,12 +37,13 @@ export const requireAuth = t.middleware(async ({ ctx, next }) => {
 export const requirePermission = (permission: Permission) =>
   t.middleware(async ({ ctx, next }) => {
     // This middleware should be used after requireAuth
-    if (!ctx.user) {
+    const authCtx = ctx as AuthenticatedContext;
+    if (!authCtx.user) {
       throw new UnauthorizedError("Authentication required");
     }
 
     // Check if user has required permission
-    if (!hasPermission(ctx.user, permission)) {
+    if (!hasPermission(authCtx.user, permission)) {
       throw new ForbiddenError(`Permission '${permission}' required`);
     }
 
@@ -56,12 +56,13 @@ export const requirePermission = (permission: Permission) =>
 export const requireRole = (role: UserRole | UserRole[]) =>
   t.middleware(async ({ ctx, next }) => {
     // This middleware should be used after requireAuth
-    if (!ctx.user) {
+    const authCtx = ctx as AuthenticatedContext;
+    if (!authCtx.user) {
       throw new UnauthorizedError("Authentication required");
     }
 
     const requiredRoles = Array.isArray(role) ? role : [role];
-    if (!requiredRoles.includes(ctx.user.role)) {
+    if (!requiredRoles.includes(authCtx.user.role)) {
       throw new ForbiddenError(`Role '${requiredRoles.join(" or ")}' required`);
     }
 

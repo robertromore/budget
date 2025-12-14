@@ -5,7 +5,7 @@ import { db } from "$lib/server/db";
 import { BaseRepository } from "$lib/server/shared/database/base-repository";
 import { logger } from "$lib/server/shared/logging";
 import type { PaginatedResult, PaginationOptions } from "$lib/server/shared/types";
-import { NotFoundError } from "$lib/server/shared/types/errors";
+import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { currentDate, getCurrentTimestamp } from "$lib/utils/dates";
 import { and, count, desc, eq, inArray, isNull, like, sql } from "drizzle-orm";
 import type { PayeeAddress, PayeeTags, PaymentMethodReference, SubscriptionInfo } from "./types";
@@ -152,15 +152,25 @@ export class PayeeRepository extends BaseRepository<
    * Find all active payees with pagination
    */
   override async findAll(
-    workspaceId: number,
+    workspaceId?: number | PaginationOptions,
     options?: PaginationOptions
   ): Promise<PaginatedResult<Payee>> {
+    // Handle overload: first param can be workspaceId or options
+    let actualWorkspaceId: number;
+    let actualOptions: PaginationOptions | undefined;
+
+    if (typeof workspaceId === "number") {
+      actualWorkspaceId = workspaceId;
+      actualOptions = options;
+    } else {
+      throw new ValidationError("workspaceId is required for payee lookup");
+    }
     const {
       page = 1,
       pageSize = DATABASE_CONFIG.LIMITS.DEFAULT_PAGE_SIZE,
       offset,
       limit,
-    } = options || {};
+    } = actualOptions || {};
 
     // Use offset/limit if provided, otherwise calculate from page/pageSize
     const actualLimit = limit || Math.min(pageSize, DATABASE_CONFIG.LIMITS.MAX_PAGE_SIZE);
@@ -170,14 +180,14 @@ export class PayeeRepository extends BaseRepository<
     const result = await db
       .select({ total: count() })
       .from(payees)
-      .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)));
+      .where(and(eq(payees.workspaceId, actualWorkspaceId), isNull(payees.deletedAt)));
     const total = result[0]?.total || 0;
 
     // Get paginated data
     const data = await db
       .select()
       .from(payees)
-      .where(and(eq(payees.workspaceId, workspaceId), isNull(payees.deletedAt)))
+      .where(and(eq(payees.workspaceId, actualWorkspaceId), isNull(payees.deletedAt)))
       .orderBy(payees.name)
       .limit(actualLimit)
       .offset(actualOffset);
@@ -247,18 +257,73 @@ export class PayeeRepository extends BaseRepository<
 
   /**
    * Soft delete payee with slug archiving
-   * Now uses the inherited softDeleteWithSlugArchive() method from BaseRepository
    */
-  override async softDelete(id: number): Promise<Payee> {
-    return await this.softDeleteWithSlugArchive(id);
+  override async softDelete(id: number, workspaceId?: number): Promise<Payee> {
+    // Get existing entity to access its slug
+    const payee = await this.findById(id, workspaceId);
+    if (!payee) {
+      throw new NotFoundError("Payee", id);
+    }
+
+    // Create archived slug
+    const timestamp = Date.now();
+    const archivedSlug = `${payee.slug}-deleted-${timestamp}`;
+
+    // Update with archived slug and deletedAt
+    const [updated] = await db
+      .update(payees)
+      .set({
+        slug: archivedSlug,
+        deletedAt: getCurrentTimestamp(),
+      })
+      .where(
+        workspaceId !== undefined
+          ? and(eq(payees.id, id), eq(payees.workspaceId, workspaceId))
+          : eq(payees.id, id)
+      )
+      .returning();
+
+    if (!updated) {
+      throw new NotFoundError("Payee", id);
+    }
+
+    return updated;
   }
 
   /**
    * Bulk soft delete payees with slug archiving
-   * Now uses the inherited bulkSoftDeleteWithSlugArchive() method from BaseRepository
    */
-  override async bulkDelete(ids: number[]): Promise<void> {
-    await this.bulkSoftDeleteWithSlugArchive(ids);
+  override async bulkDelete(ids: number[], workspaceId?: number): Promise<void> {
+    if (ids.length === 0) return;
+
+    const timestamp = Date.now();
+
+    for (const id of ids) {
+      try {
+        await this.softDelete(id, workspaceId);
+      } catch (error) {
+        // Log error but continue with other entities
+        logger.error(`Failed to delete payee ${id}:`, error);
+      }
+    }
+  }
+
+  /**
+   * Bulk soft delete with slug archive (alias for bulkDelete with workspace support)
+   */
+  override async bulkSoftDeleteWithSlugArchive(ids: number[]): Promise<number> {
+    if (ids.length === 0) return 0;
+
+    let deletedCount = 0;
+    for (const id of ids) {
+      try {
+        await this.softDelete(id);
+        deletedCount++;
+      } catch (error) {
+        logger.error(`Failed to delete payee ${id}:`, error);
+      }
+    }
+    return deletedCount;
   }
 
   /**
@@ -383,7 +448,13 @@ export class PayeeRepository extends BaseRepository<
     };
   }
 
-  // exists() inherited from BaseRepository
+  /**
+   * Check if payee exists with workspace filtering
+   */
+  override async exists(id: number, workspaceId?: number): Promise<boolean> {
+    const payee = await this.findById(id, workspaceId);
+    return payee !== null;
+  }
 
   /**
    * Check if payee has associated transactions
@@ -429,6 +500,7 @@ export class PayeeRepository extends BaseRepository<
         tags: payees.tags,
         preferredPaymentMethods: payees.preferredPaymentMethods,
         merchantCategoryCode: payees.merchantCategoryCode,
+        payeeCategoryId: payees.payeeCategoryId,
         dateCreated: payees.dateCreated,
         createdAt: payees.createdAt,
         updatedAt: payees.updatedAt,
@@ -716,9 +788,9 @@ export class PayeeRepository extends BaseRepository<
     if (this.budgetIntelligenceService) {
       budgetSuggestion = await this.budgetIntelligenceService.suggestBudgetForPayee(id);
     } else {
-      // Fallback for backward compatibility
-      const { BudgetIntelligenceService } = await import("$lib/server/domains/budgets/services");
-      const intelligenceService = new BudgetIntelligenceService();
+      // Fallback for backward compatibility - use serviceFactory
+      const { serviceFactory } = await import("$lib/server/shared/container/service-factory");
+      const intelligenceService = serviceFactory.getBudgetIntelligenceService();
       budgetSuggestion = await intelligenceService.suggestBudgetForPayee(id);
     }
 

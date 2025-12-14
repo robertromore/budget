@@ -1,18 +1,16 @@
+import { transactions } from "$lib/schema";
+import type { DetectedPattern, SuggestedScheduleConfig } from "$lib/schema/detected-patterns";
 import { db } from "$lib/server/db";
-import { transactions, schedules } from "$lib/schema";
-import { and, eq, isNull, gte } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { PatternRepository } from "./repository";
 import type {
-  DetectionCriteria,
   DetectedPatternData,
-  TransactionForDetection,
-  TransactionGroup,
+  DetectionCriteria,
   IntervalData,
-  PatternCandidate,
+  TransactionForDetection,
+  TransactionGroup
 } from "./types";
 import { DEFAULT_DETECTION_CRITERIA } from "./types";
-import type { DetectedPattern } from "$lib/schema/detected-patterns";
-import type { SuggestedScheduleConfig } from "$lib/schema/detected-patterns";
 
 /**
  * Service for detecting transaction patterns
@@ -27,7 +25,7 @@ export class PatternDetectionService {
    */
   async detectPatternsForAccount(
     accountId: number,
-    workspaceId: string,
+    workspaceId: number,
     criteria?: Partial<DetectionCriteria>
   ): Promise<DetectedPatternData[]> {
     const fullCriteria: DetectionCriteria = { ...DEFAULT_DETECTION_CRITERIA, ...criteria };
@@ -55,7 +53,7 @@ export class PatternDetectionService {
    * Detect patterns across all user accounts
    */
   async detectPatternsForUserAccounts(
-    workspaceId: string,
+    workspaceId: number,
     criteria?: Partial<DetectionCriteria>
   ): Promise<DetectedPatternData[]> {
     const fullCriteria: DetectionCriteria = { ...DEFAULT_DETECTION_CRITERIA, ...criteria };
@@ -197,8 +195,8 @@ export class PatternDetectionService {
             // Start new group
             if (currentGroup.length >= 2) {
               result.push({
-                payeeId: currentGroup[0].payeeId,
-                categoryId: currentGroup[0].categoryId,
+                payeeId: currentGroup[0]!.payeeId,
+                categoryId: currentGroup[0]!.categoryId,
                 avgAmount: currentAvg,
                 transactions: currentGroup,
               });
@@ -212,8 +210,8 @@ export class PatternDetectionService {
       // Add final group
       if (currentGroup.length >= 2) {
         result.push({
-          payeeId: currentGroup[0].payeeId,
-          categoryId: currentGroup[0].categoryId,
+          payeeId: currentGroup[0]!.payeeId,
+          categoryId: currentGroup[0]!.categoryId,
           avgAmount: currentAvg,
           transactions: currentGroup,
         });
@@ -234,8 +232,8 @@ export class PatternDetectionService {
     const intervals: IntervalData[] = [];
 
     for (let i = 1; i < sorted.length; i++) {
-      const from = sorted[i - 1];
-      const to = sorted[i];
+      const from = sorted[i - 1]!;
+      const to = sorted[i]!;
 
       const fromDate = new Date(from.date);
       const toDate = new Date(to.date);
@@ -344,7 +342,7 @@ export class PatternDetectionService {
     score += amountScore;
 
     // Factor 4: Recency (max 10 points)
-    const lastTransaction = group.transactions[group.transactions.length - 1];
+    const lastTransaction = group.transactions[group.transactions.length - 1]!;
     const daysSinceLastTransaction = Math.round(
       (Date.now() - new Date(lastTransaction.date).getTime()) / (1000 * 60 * 60 * 24)
     );
@@ -373,7 +371,7 @@ export class PatternDetectionService {
     const amountMax = Math.max(...amounts);
     const amountAvg = amounts.reduce((s, a) => s + a, 0) / amounts.length;
 
-    const lastOccurrence = sorted[sorted.length - 1].date;
+    const lastOccurrence = sorted[sorted.length - 1]!.date;
     const nextExpectedDate = new Date(lastOccurrence);
     nextExpectedDate.setDate(nextExpectedDate.getDate() + Math.round(avgInterval));
 
@@ -389,7 +387,7 @@ export class PatternDetectionService {
     );
 
     return {
-      accountId: group.transactions[0].accountId,
+      accountId: group.transactions[0]!.accountId,
       patternType,
       confidenceScore,
       sampleTransactionIds: group.transactions.map((t) => t.id),
@@ -400,7 +398,7 @@ export class PatternDetectionService {
       amountAvg,
       intervalDays: Math.round(avgInterval),
       lastOccurrence,
-      nextExpected: nextExpectedDate.toISOString().split("T")[0],
+      nextExpected: nextExpectedDate.toISOString().split("T")[0]!,
       suggestedScheduleConfig,
     };
   }
@@ -446,28 +444,32 @@ export class PatternDetectionService {
       name: `Auto-detected ${patternType} pattern`,
       amountType,
       amount: Math.abs(amountAvg),
-      amount2: amountType === "range" ? Math.abs(amountMax) : undefined,
+      ...(amountType === "range" && { amount2: Math.abs(amountMax) }),
       autoAdd: false,
       recurring: true,
       frequency: patternType,
       interval: Math.max(1, interval),
-      startDate: nextDate.toISOString().split("T")[0],
+      startDate: nextDate.toISOString().split("T")[0]!,
     };
   }
 
   /**
    * Save detected pattern to database
    */
-  async saveDetectedPattern(pattern: DetectedPatternData, workspaceId: string): Promise<number> {
+  async saveDetectedPattern(pattern: DetectedPatternData, workspaceId: number): Promise<number> {
     return await this.repository.create(pattern, workspaceId);
   }
 
   /**
    * Save or update detected pattern (with deduplication)
    * If a similar pending pattern exists, update it. Otherwise, create a new one.
+   * Returns { id, skipped } to indicate if pattern was skipped (e.g., dismissed)
    */
-  async saveOrUpdatePattern(pattern: DetectedPatternData, workspaceId: string): Promise<number> {
-    // Check if a similar pending pattern already exists
+  async saveOrUpdatePattern(
+    pattern: DetectedPatternData,
+    workspaceId: number
+  ): Promise<{ id: number; skipped: boolean }> {
+    // Check if a similar pending or dismissed pattern already exists
     const existingPattern = await this.repository.findSimilarPattern(
       pattern.accountId,
       pattern.payeeId || null,
@@ -477,7 +479,12 @@ export class PatternDetectionService {
     );
 
     if (existingPattern) {
-      // Update the existing pattern with new data
+      // Skip dismissed patterns - don't re-create or update them
+      if (existingPattern.status === "dismissed") {
+        return { id: existingPattern.id, skipped: true };
+      }
+
+      // Update pending patterns with new data
       await this.repository.update(
         existingPattern.id,
         {
@@ -493,10 +500,11 @@ export class PatternDetectionService {
         },
         workspaceId
       );
-      return existingPattern.id;
+      return { id: existingPattern.id, skipped: false };
     } else {
       // Create a new pattern
-      return await this.repository.create(pattern, workspaceId);
+      const id = await this.repository.create(pattern, workspaceId);
+      return { id, skipped: false };
     }
   }
 
@@ -504,9 +512,9 @@ export class PatternDetectionService {
    * Get all detected patterns with optional filtering
    */
   async getDetectedPatterns(
-    workspaceId: string,
+    workspaceId: number,
     accountId?: number,
-    status?: string
+    status?: "pending" | "accepted" | "dismissed" | "converted"
   ): Promise<DetectedPattern[]> {
     return await this.repository.findByAccount(accountId, workspaceId, status);
   }
@@ -515,7 +523,7 @@ export class PatternDetectionService {
    * Delete all detected patterns (optionally filtered by status)
    */
   async deleteAllPatterns(
-    workspaceId: string,
+    workspaceId: number,
     status?: "pending" | "accepted" | "dismissed" | "converted"
   ): Promise<number> {
     return await this.repository.deleteAll(workspaceId, status);
@@ -526,7 +534,7 @@ export class PatternDetectionService {
    */
   async updatePatternStatus(
     patternId: number,
-    workspaceId: string,
+    workspaceId: number,
     status: "accepted" | "dismissed" | "converted" = "accepted"
   ): Promise<void> {
     await this.repository.updateStatus(patternId, workspaceId, status);
@@ -581,18 +589,19 @@ export class PatternDetectionService {
     }
 
     // Update transactions to link them to the schedule
-    const result = await db
+    const updated = await db
       .update(transactions)
       .set({ scheduleId })
-      .where(inArray(transactions.id, transactionIds));
+      .where(inArray(transactions.id, transactionIds))
+      .returning({ id: transactions.id });
 
-    return result.changes || 0;
+    return updated.length;
   }
 
   /**
    * Convert pattern to schedule
    */
-  async convertPatternToSchedule(patternId: number, workspaceId: string): Promise<number> {
+  async convertPatternToSchedule(patternId: number, workspaceId: number): Promise<number> {
     const pattern = await this.repository.findById(patternId, workspaceId);
 
     if (!pattern) {
@@ -627,6 +636,7 @@ export class PatternDetectionService {
     const scheduleResult = await db
       .insert(schedules)
       .values({
+        workspaceId,
         name: scheduleName,
         slug,
         accountId: pattern.accountId,
@@ -688,7 +698,7 @@ export class PatternDetectionService {
   /**
    * Dismiss a pattern and optionally delete associated schedule
    */
-  async dismissPattern(patternId: number, workspaceId: string): Promise<void> {
+  async dismissPattern(patternId: number, workspaceId: number): Promise<void> {
     // Get the pattern to check if it has an associated schedule
     const pattern = await this.repository.findById(patternId, workspaceId);
 
@@ -712,7 +722,7 @@ export class PatternDetectionService {
   /**
    * Expire stale patterns
    */
-  async expireStalePatterns(workspaceId: string, daysSinceLastMatch = 90): Promise<number> {
+  async expireStalePatterns(workspaceId: number, daysSinceLastMatch = 90): Promise<number> {
     return await this.repository.expireStalePatterns(daysSinceLastMatch, workspaceId);
   }
 }

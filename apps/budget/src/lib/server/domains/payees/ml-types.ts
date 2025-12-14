@@ -2,11 +2,7 @@
 // This file exports all interfaces and types related to the unified ML system
 
 export type {
-  UnifiedRecommendations,
-  CrossSystemLearning,
-  BehaviorChangeDetection,
-  ActionableInsight,
-  MLPerformanceMetrics,
+  ActionableInsight, BehaviorChangeDetection, CrossSystemLearning, MLPerformanceMetrics, UnifiedRecommendations
 } from "./ml-coordinator";
 
 // Additional helper types for ML coordination

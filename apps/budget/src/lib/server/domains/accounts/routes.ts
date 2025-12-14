@@ -1,16 +1,15 @@
-import { z } from "zod";
-import {
-  publicProcedure,
-  authenticatedProcedure,
-  rateLimitedProcedure,
-  bulkProcedure,
-} from "$lib/server/shared/trpc/procedures";
-import { AccountService } from "./services";
-import { t } from "$lib/trpc/t";
 import { removeAccountSchema } from "$lib/schema/accounts";
+import {
+  authenticatedProcedure,
+  publicProcedure,
+  rateLimitedProcedure
+} from "$lib/server/shared/trpc/procedures";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { t } from "$lib/trpc/t";
+import { z } from "zod";
 
-// Initialize service
-const accountService = new AccountService();
+// Get service from factory (handles dependency injection)
+const accountService = serviceFactory.getAccountService();
 
 // Input schemas
 const createAccountSchema = z.object({
@@ -69,8 +68,8 @@ export const accountRoutes = t.router({
   }),
 
   // Create new account
-  create: rateLimitedProcedure.input(createAccountSchema).mutation(async ({ input }) => {
-    return await accountService.createAccount(input);
+  create: rateLimitedProcedure.input(createAccountSchema).mutation(async ({ input, ctx }) => {
+    return await accountService.createAccount(input, ctx.workspaceId);
   }),
 
   // Update account

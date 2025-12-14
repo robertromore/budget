@@ -5,10 +5,10 @@
  * header normalization, and data transformation.
  */
 
-import * as XLSX from "xlsx";
 import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
+import * as XLSX from "xlsx";
 import { FileValidationError, ParseError } from "../errors";
-import { normalizeHeader, parseDate, parseAmount, sanitizeText, validateFileType } from "../utils";
+import { normalizeHeader, parseAmount, parseDate, sanitizeText, validateFileType } from "../utils";
 
 export class ExcelProcessor implements FileProcessor {
   private readonly maxFileSize = 10 * 1024 * 1024; // 10MB

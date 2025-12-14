@@ -5,11 +5,11 @@
  * All utilities ensure tests remain isolated and don't pollute the main database.
  */
 
+import * as schema from "$lib/schema";
 import { Database } from "bun:sqlite";
+import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
-import { sql } from "drizzle-orm";
-import * as schema from "$lib/schema";
 
 export class TestDatabase {
   private snapshots = new Map<string, Uint8Array>();
