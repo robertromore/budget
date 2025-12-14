@@ -21,7 +21,7 @@ import {
   type WizardStep as WizardStepType,
 } from '$lib/stores/wizardStore.svelte';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
-import { createBudgetValidationEngine } from '$lib/utils/wizardValidation';
+import { createBudgetValidationEngine } from '$lib/utils/wizard-validation';
 import {
   Building2,
   Calendar,

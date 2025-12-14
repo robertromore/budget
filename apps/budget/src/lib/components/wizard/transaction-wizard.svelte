@@ -16,7 +16,7 @@ import {
 import type { EditableEntityItem } from '$lib/types';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
 import { currentDate } from '$lib/utils/dates';
-import { createTransactionValidationEngine } from '$lib/utils/wizardValidation';
+import { createTransactionValidationEngine } from '$lib/utils/wizard-validation';
 import type { DateValue } from '@internationalized/date';
 import {
   Calendar,

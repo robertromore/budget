@@ -13,7 +13,7 @@ import {
   accountWizardStore,
   type WizardStep as WizardStepType,
 } from '$lib/stores/wizardStore.svelte';
-import { createAccountValidationEngine } from '$lib/utils/wizardValidation';
+import { createAccountValidationEngine } from '$lib/utils/wizard-validation';
 import {
   Banknote,
   Building2,
