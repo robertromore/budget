@@ -1,9 +1,8 @@
-import { t, publicProcedure } from "$lib/trpc";
-import { workspaces } from "$lib/schema/workspaces";
-import { formInsertWorkspaceSchema } from "$lib/schema/workspaces";
-import { eq, and, isNull } from "drizzle-orm";
-import { z } from "zod/v4";
+import { formInsertWorkspaceSchema, workspaces } from "$lib/schema/workspaces";
+import { publicProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
+import { and, eq, isNull } from "drizzle-orm";
+import { z } from "zod/v4";
 
 export const workspaceRoutes = t.router({
   /**
@@ -107,7 +106,7 @@ export const workspaceRoutes = t.router({
     .input(
       z.object({
         workspaceId: z.number(),
-        preferences: z.record(z.any()),
+        preferences: z.record(z.string(), z.any()),
       })
     )
     .mutation(async ({ ctx, input }) => {

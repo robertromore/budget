@@ -1,6 +1,5 @@
-import { TRPCError } from "@trpc/server";
-import { initTRPC } from "@trpc/server";
 import type { Context } from "$lib/trpc";
+import { initTRPC, TRPCError } from "@trpc/server";
 
 // Initialize tRPC instance for middleware creation
 const t = initTRPC.context<Context>().create();
@@ -99,7 +98,7 @@ export const requestLimits = (options: RequestLimitOptions = {}) => {
     try {
       // Skip for empty inputs
       if (!input) {
-        return next({ rawInput: input });
+        return next({ input });
       }
 
       // Check total input size
@@ -114,7 +113,7 @@ export const requestLimits = (options: RequestLimitOptions = {}) => {
       // Validate object structure
       validateObjectStructure(input, finalOptions);
 
-      return next({ rawInput: input });
+      return next({ input });
     } catch (error) {
       if (error instanceof TRPCError) {
         throw error;

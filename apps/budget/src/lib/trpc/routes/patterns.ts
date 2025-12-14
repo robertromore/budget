@@ -1,11 +1,17 @@
-import { z } from "zod";
-import { rateLimitedProcedure, t } from "$lib/trpc";
 import { PatternDetectionService, PatternRepository } from "$lib/server/domains/patterns";
-import { withErrorHandler } from "$lib/trpc/shared/errors";
+import type { DetectionCriteria } from "$lib/server/domains/patterns/types";
+import { rateLimitedProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 const patternRepository = new PatternRepository();
 const patternService = new PatternDetectionService(patternRepository);
+
+// Helper to strip undefined values for exactOptionalPropertyTypes compatibility
+function stripUndefined<T extends Record<string, unknown>>(obj: T | undefined): Partial<DetectionCriteria> | undefined {
+  if (!obj) return undefined;
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as Partial<DetectionCriteria>;
+}
 
 const detectionCriteriaSchema = z.object({
   minOccurrences: z.number().min(2).optional(),
@@ -26,27 +32,34 @@ export const patternRoutes = t.router({
     .mutation(async ({ input, ctx }) => {
       try {
         let detectedPatterns;
+        const criteria = stripUndefined(input.criteria);
         if (input.accountId) {
           // Single account detection
           detectedPatterns = await patternService.detectPatternsForAccount(
             input.accountId,
             ctx.workspaceId,
-            input.criteria
+            criteria
           );
         } else {
           // Detect patterns for all accounts
           detectedPatterns = await patternService.detectPatternsForUserAccounts(
             ctx.workspaceId,
-            input.criteria
+            criteria
           );
         }
 
         // Save all detected patterns to database (with deduplication)
+        // Track which ones were actually saved vs skipped (e.g., dismissed patterns)
+        const savedPatterns = [];
         for (const pattern of detectedPatterns) {
-          await patternService.saveOrUpdatePattern(pattern, ctx.workspaceId);
+          const result = await patternService.saveOrUpdatePattern(pattern, ctx.workspaceId);
+          if (!result.skipped) {
+            savedPatterns.push(pattern);
+          }
         }
 
-        return detectedPatterns;
+        // Return only the patterns that were actually saved/updated
+        return savedPatterns;
       } catch (error: any) {
         if (error.statusCode === 403) {
           throw new TRPCError({

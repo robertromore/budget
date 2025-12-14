@@ -311,7 +311,7 @@ export class MedicalExpenseService {
 
     const transaction = await this.transactionService.createTransaction(
       transactionData,
-      workspaceId.toString()
+      workspaceId
     );
 
     // Create medical expense - build object conditionally for exactOptionalPropertyTypes

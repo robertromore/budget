@@ -1,6 +1,5 @@
-import { TRPCError } from "@trpc/server";
-import { initTRPC } from "@trpc/server";
 import type { Context } from "$lib/trpc";
+import { initTRPC, TRPCError } from "@trpc/server";
 
 // Initialize tRPC instance for middleware creation
 const t = initTRPC.context<Context>().create();
@@ -93,7 +92,7 @@ export const inputSanitization = t.middleware(async ({ next, input }) => {
     // Sanitize all string inputs
     const sanitizedInput = sanitizeObject(input);
 
-    return next({ rawInput: sanitizedInput });
+    return next({ input: sanitizedInput });
   } catch (error) {
     if (error instanceof TRPCError) {
       throw error;
@@ -113,7 +112,7 @@ export const inputSanitization = t.middleware(async ({ next, input }) => {
 export const strictInputSanitization = t.middleware(async ({ next, input }) => {
   try {
     if (input === null || input === undefined) {
-      return next({ rawInput: input });
+      return next({ input });
     }
 
     // Apply regular sanitization first
@@ -157,7 +156,7 @@ export const strictInputSanitization = t.middleware(async ({ next, input }) => {
       }
     }
 
-    return next({ rawInput: sanitizedInput });
+    return next({ input: sanitizedInput });
   } catch (error) {
     if (error instanceof TRPCError) {
       throw error;

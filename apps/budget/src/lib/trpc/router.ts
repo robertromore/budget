@@ -13,6 +13,8 @@ import { patternRoutes } from "./routes/patterns";
 import { scheduleRoutes } from "./routes/schedules";
 import { viewsRoutes } from "./routes/views";
 import { workspaceRoutes } from "./routes/workspaces";
+import { importProfileRoutes } from "./routes/import-profiles";
+import { settingsRoutes } from "./routes/settings";
 
 export const router = t.router({
   workspaceRoutes,
@@ -28,6 +30,8 @@ export const router = t.router({
   budgetRoutes,
   patternRoutes,
   medicalExpensesRouter,
+  importProfileRoutes,
+  settingsRoutes,
 });
 
 export const createCaller = t.createCallerFactory(router);

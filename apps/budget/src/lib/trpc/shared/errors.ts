@@ -1,4 +1,3 @@
-import { TRPCError } from "@trpc/server";
 import {
   ConflictError,
   DatabaseError,
@@ -6,6 +5,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "$lib/server/shared/types/errors";
+import { TRPCError } from "@trpc/server";
 
 /**
  * Translates domain-specific errors into tRPC errors with appropriate HTTP status codes.

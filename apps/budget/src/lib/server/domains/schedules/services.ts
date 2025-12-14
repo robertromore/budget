@@ -286,7 +286,7 @@ export class ScheduleService {
 
     const transaction = await this.transactionService.createTransaction(
       transactionData,
-      schedule.workspaceId.toString()
+      schedule.workspaceId
     );
     return transaction.id;
   }

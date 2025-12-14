@@ -1,10 +1,43 @@
 import { accounts, transactions } from "$lib/schema";
+import type { Account } from "$lib/schema/accounts";
 import { publicProcedure, t } from "$lib/trpc";
 import { cacheKeys, queryCache } from "$lib/utils/cache";
 import { trackQuery } from "$lib/utils/performance";
 import { TRPCError } from "@trpc/server";
 import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
+
+/** Account summary with computed balance and transaction count */
+type AccountSummary = Omit<Account, "transactions" | "balance"> & {
+  balance: number;
+  transactionCount: number;
+};
+
+/** Transaction with balance */
+interface TransactionWithBalance {
+  id: number;
+  date: string;
+  amount: number;
+  notes: string | null;
+  status: string | null;
+  balance: number | null;
+  payee?: { id: number; name: string } | null;
+  category?: { id: number; name: string } | null;
+  [key: string]: unknown;
+}
+
+/** Paginated transactions result */
+interface TransactionsResult {
+  transactions: TransactionWithBalance[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
 
 /**
  * Optimized account routes with performance improvements:
@@ -25,7 +58,7 @@ export const serverAccountsRoutes = t.router({
       const cacheKey = cacheKeys.accountSummary(input.id);
 
       // Check cache first
-      const cached = queryCache.get(cacheKey);
+      const cached = queryCache.get<AccountSummary>(cacheKey);
       if (cached) {
         return cached;
       }
@@ -76,7 +109,7 @@ export const serverAccountsRoutes = t.router({
     const cacheKey = cacheKeys.allAccounts();
 
     // Check cache first
-    const cached = queryCache.get(cacheKey);
+    const cached = queryCache.get<AccountSummary[]>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -153,7 +186,7 @@ export const serverAccountsRoutes = t.router({
 
       // Check cache first (skip for searches to get real-time results)
       if (!searchQuery) {
-        const cached = queryCache.get(cacheKey);
+        const cached = queryCache.get<TransactionsResult>(cacheKey);
         if (cached) {
           return cached;
         }
@@ -223,12 +256,13 @@ export const serverAccountsRoutes = t.router({
 
         // Calculate running balance for the visible transactions
         let transactionsWithBalance;
+        const initialBalance = accountCheck.initialBalance || 0;
 
         if (page === 0 && sortBy === "date") {
           // Calculate running balance for first page with date sorting
           if (sortOrder === "asc") {
-            // Ascending order: start from 0 and add each transaction
-            let runningBalance = 0;
+            // Ascending order: start from initial balance and add each transaction
+            let runningBalance = initialBalance;
             transactionsWithBalance = paginatedTransactions.map((transaction) => {
               runningBalance += transaction.amount;
               return {
@@ -237,7 +271,7 @@ export const serverAccountsRoutes = t.router({
               };
             });
           } else {
-            // Descending order: get total account balance and work backwards
+            // Descending order: get total account balance (transactions + initial) and work backwards
             const [totalBalanceResult] = await ctx.db
               .select({
                 balance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
@@ -245,7 +279,7 @@ export const serverAccountsRoutes = t.router({
               .from(transactions)
               .where(and(eq(transactions.accountId, accountId), isNull(transactions.deletedAt)));
 
-            let runningBalance = totalBalanceResult?.balance ?? 0;
+            let runningBalance = (totalBalanceResult?.balance ?? 0) + initialBalance;
             transactionsWithBalance = paginatedTransactions.map((transaction) => {
               const currentBalance = runningBalance;
               runningBalance -= transaction.amount;
@@ -304,7 +338,7 @@ export const serverAccountsRoutes = t.router({
 
       // Check cache first (skip for searches to get real-time results)
       if (!searchQuery) {
-        const cached = queryCache.get(cacheKey);
+        const cached = queryCache.get<TransactionWithBalance[]>(cacheKey);
         if (cached) {
           return cached;
         }
@@ -367,11 +401,12 @@ export const serverAccountsRoutes = t.router({
 
         // Calculate running balance for ALL transactions
         let transactionsWithBalance;
+        const initialBalance = accountCheck.initialBalance || 0;
 
         if (sortBy === "date") {
           if (sortOrder === "asc") {
-            // Ascending order: start from 0 and add each transaction
-            let runningBalance = 0;
+            // Ascending order: start from initial balance and add each transaction
+            let runningBalance = initialBalance;
             transactionsWithBalance = allTransactions.map((transaction) => {
               runningBalance += transaction.amount;
               return {
@@ -380,7 +415,7 @@ export const serverAccountsRoutes = t.router({
               };
             });
           } else {
-            // Descending order: get total account balance and work backwards
+            // Descending order: get total account balance (transactions + initial) and work backwards
             const [totalBalanceResult] = await ctx.db
               .select({
                 balance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
@@ -388,7 +423,7 @@ export const serverAccountsRoutes = t.router({
               .from(transactions)
               .where(and(eq(transactions.accountId, accountId), isNull(transactions.deletedAt)));
 
-            let runningBalance = totalBalanceResult?.balance || 0;
+            let runningBalance = (totalBalanceResult?.balance || 0) + initialBalance;
             transactionsWithBalance = allTransactions.map((transaction) => {
               const currentBalance = runningBalance;
               runningBalance -= transaction.amount;
@@ -431,7 +466,7 @@ export const serverAccountsRoutes = t.router({
       const cacheKey = cacheKeys.recentTransactions(input.accountId, input.limit);
 
       // Check cache first
-      const cached = queryCache.get(cacheKey);
+      const cached = queryCache.get<TransactionWithBalance[]>(cacheKey);
       if (cached) {
         return cached;
       }

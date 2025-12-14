@@ -376,7 +376,7 @@ export const saveTransaction = defineMutation({
     payeeId?: number | null;
     categoryId?: number | null;
     notes?: string | null;
-    status?: "cleared" | "pending" | "scheduled" | null;
+    status?: "cleared" | "pending" | "scheduled";
     budgetId?: number | null;
     budgetAllocation?: number | null;
   }) => trpc().transactionRoutes.save.mutate(data),

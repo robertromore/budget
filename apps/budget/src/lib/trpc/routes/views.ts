@@ -1,8 +1,8 @@
-import { and, eq, inArray } from "drizzle-orm";
-import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "$lib/trpc";
-import { z } from "zod";
+import { insertViewSchema, removeViewSchema, removeViewsSchema, views } from "$lib/schema";
+import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
-import { removeViewSchema, removeViewsSchema, insertViewSchema, views } from "$lib/schema";
+import { and, eq, inArray } from "drizzle-orm";
+import { z } from "zod";
 
 export const viewsRoutes = t.router({
   all: publicProcedure

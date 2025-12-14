@@ -493,296 +493,301 @@ export const recordCategoryCorrection = () =>
     },
   });
 
+// =====================================
 // Bulk Operations Mutations
-export const bulkStatusChange = () =>
-  defineMutation({
-    mutationFn: ({ payeeIds, status }: { payeeIds: number[]; status: "active" | "inactive" }) =>
-      trpc().payeeRoutes.bulkStatusChange.mutate({ payeeIds, status }),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
-      ]);
-    },
-  });
+// NOTE: These tRPC routes are not yet implemented in PayeeService
+// TODO: Implement these methods in PayeeService before uncommenting
+// =====================================
 
-export const bulkCategoryAssignment = () =>
-  defineMutation({
-    mutationFn: ({
-      payeeIds,
-      categoryId,
-      overwriteExisting = false,
-    }: {
-      payeeIds: number[];
-      categoryId: number;
-      overwriteExisting?: boolean;
-    }) =>
-      trpc().payeeRoutes.bulkCategoryAssignment.mutate({
-        payeeIds,
-        categoryId,
-        overwriteExisting,
-      }),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
-      ]);
-    },
-  });
+// export const bulkStatusChange = () =>
+//   defineMutation({
+//     mutationFn: ({ payeeIds, status }: { payeeIds: number[]; status: "active" | "inactive" }) =>
+//       trpc().payeeRoutes.bulkStatusChange.mutate({ payeeIds, status }),
+//     onSuccess: async () => {
+//       await Promise.all([
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
+//       ]);
+//     },
+//   });
 
-export const bulkTagManagement = () =>
-  defineMutation({
-    mutationFn: ({
-      payeeIds,
-      tags,
-      operation,
-    }: {
-      payeeIds: number[];
-      tags: string[];
-      operation: "add" | "remove" | "replace";
-    }) =>
-      trpc().payeeRoutes.bulkTagManagement.mutate({
-        payeeIds,
-        tags,
-        operation,
-      }),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
-      ]);
-    },
-  });
+// export const bulkCategoryAssignment = () =>
+//   defineMutation({
+//     mutationFn: ({
+//       payeeIds,
+//       categoryId,
+//       overwriteExisting = false,
+//     }: {
+//       payeeIds: number[];
+//       categoryId: number;
+//       overwriteExisting?: boolean;
+//     }) =>
+//       trpc().payeeRoutes.bulkCategoryAssignment.mutate({
+//         payeeIds,
+//         categoryId,
+//         overwriteExisting,
+//       }),
+//     onSuccess: async () => {
+//       await Promise.all([
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
+//       ]);
+//     },
+//   });
 
-export const bulkIntelligenceApplication = () =>
-  defineMutation({
-    mutationFn: ({
-      payeeIds,
-      options,
-    }: {
-      payeeIds: number[];
-      options: {
-        applyCategory?: boolean;
-        applyBudget?: boolean;
-        confidenceThreshold?: number;
-        overwriteExisting?: boolean;
-      };
-    }) =>
-      trpc().payeeRoutes.bulkIntelligenceApplication.mutate({
-        payeeIds,
-        options,
-      }),
-    onSuccess: async (_data, variables) => {
-      // Invalidate intelligence data for affected payees
-      const invalidations = variables.payeeIds.flatMap((id) => [
-        queryClient.invalidateQueries({ queryKey: payeeKeys.detail(id) }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.intelligence(id) }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.suggestions(id) }),
-      ]);
+// export const bulkTagManagement = () =>
+//   defineMutation({
+//     mutationFn: ({
+//       payeeIds,
+//       tags,
+//       operation,
+//     }: {
+//       payeeIds: number[];
+//       tags: string[];
+//       operation: "add" | "remove" | "replace";
+//     }) =>
+//       trpc().payeeRoutes.bulkTagManagement.mutate({
+//         payeeIds,
+//         tags,
+//         operation,
+//       }),
+//     onSuccess: async () => {
+//       await Promise.all([
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
+//       ]);
+//     },
+//   });
 
-      await Promise.all([
-        ...invalidations,
-        queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
-      ]);
-    },
-  });
+// export const bulkIntelligenceApplication = () =>
+//   defineMutation({
+//     mutationFn: ({
+//       payeeIds,
+//       options,
+//     }: {
+//       payeeIds: number[];
+//       options: {
+//         applyCategory?: boolean;
+//         applyBudget?: boolean;
+//         confidenceThreshold?: number;
+//         overwriteExisting?: boolean;
+//       };
+//     }) =>
+//       trpc().payeeRoutes.bulkIntelligenceApplication.mutate({
+//         payeeIds,
+//         options,
+//       }),
+//     onSuccess: async (_data, variables) => {
+//       // Invalidate intelligence data for affected payees
+//       const invalidations = variables.payeeIds.flatMap((id) => [
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.detail(id) }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.intelligence(id) }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.suggestions(id) }),
+//       ]);
 
-export const bulkExport = () =>
-  defineMutation({
-    mutationFn: ({
-      payeeIds,
-      format,
-      ...options
-    }: {
-      payeeIds: number[];
-      format: "csv" | "json";
-      includeTransactionStats?: boolean;
-      includeContactInfo?: boolean;
-      includeIntelligenceData?: boolean;
-    }) =>
-      trpc().payeeRoutes.bulkExport.query({
-        payeeIds,
-        format,
-        ...options,
-      }),
-  });
+//       await Promise.all([
+//         ...invalidations,
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
+//       ]);
+//     },
+//   });
 
-export const bulkImport = () =>
-  defineMutation({
-    mutationFn: ({
-      data,
-      format,
-      options,
-    }: {
-      data: string;
-      format: "csv" | "json";
-      options?: {
-        skipDuplicates?: boolean;
-        updateExisting?: boolean;
-        applyIntelligentDefaults?: boolean;
-        validateContactInfo?: boolean;
-      };
-    }) =>
-      trpc().payeeRoutes.bulkImport.mutate({
-        data,
-        format,
-        options: options || {},
-      }),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
-      ]);
-    },
-  });
+// export const bulkExport = () =>
+//   defineMutation({
+//     mutationFn: ({
+//       payeeIds,
+//       format,
+//       ...options
+//     }: {
+//       payeeIds: number[];
+//       format: "csv" | "json";
+//       includeTransactionStats?: boolean;
+//       includeContactInfo?: boolean;
+//       includeIntelligenceData?: boolean;
+//     }) =>
+//       trpc().payeeRoutes.bulkExport.query({
+//         payeeIds,
+//         format,
+//         ...options,
+//       }),
+//   });
 
-export const bulkCleanup = () =>
-  defineMutation({
-    mutationFn: ({
-      operations,
-      dryRun = true,
-      confirmDestructive = false,
-    }: {
-      operations: Array<
-        | "remove_inactive"
-        | "remove_empty_payees"
-        | "normalize_names"
-        | "standardize_contact_info"
-        | "merge_duplicates"
-        | "update_calculated_fields"
-      >;
-      dryRun?: boolean;
-      confirmDestructive?: boolean;
-    }) =>
-      trpc().payeeRoutes.bulkCleanup.mutate({
-        operations,
-        dryRun,
-        confirmDestructive,
-      }),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
-      ]);
-    },
-  });
+// export const bulkImport = () =>
+//   defineMutation({
+//     mutationFn: ({
+//       data,
+//       format,
+//       options,
+//     }: {
+//       data: string;
+//       format: "csv" | "json";
+//       options?: {
+//         skipDuplicates?: boolean;
+//         updateExisting?: boolean;
+//         applyIntelligentDefaults?: boolean;
+//         validateContactInfo?: boolean;
+//       };
+//     }) =>
+//       trpc().payeeRoutes.bulkImport.mutate({
+//         data,
+//         format,
+//         options: options || {},
+//       }),
+//     onSuccess: async () => {
+//       await Promise.all([
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
+//       ]);
+//     },
+//   });
 
-export const getDuplicates = (
-  similarityThreshold = 0.8,
-  includeInactive = false,
-  groupingStrategy: "name" | "contact" | "transaction_pattern" | "comprehensive" = "comprehensive"
-) =>
-  defineQuery<DuplicateGroup[]>({
-    queryKey: ["payees", "duplicates", similarityThreshold, includeInactive, groupingStrategy],
-    queryFn: () =>
-      trpc().payeeRoutes.getDuplicates.query({
-        similarityThreshold,
-        includeInactive,
-        groupingStrategy,
-      }),
-    options: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  });
+// export const bulkCleanup = () =>
+//   defineMutation({
+//     mutationFn: ({
+//       operations,
+//       dryRun = true,
+//       confirmDestructive = false,
+//     }: {
+//       operations: Array<
+//         | "remove_inactive"
+//         | "remove_empty_payees"
+//         | "normalize_names"
+//         | "standardize_contact_info"
+//         | "merge_duplicates"
+//         | "update_calculated_fields"
+//       >;
+//       dryRun?: boolean;
+//       confirmDestructive?: boolean;
+//     }) =>
+//       trpc().payeeRoutes.bulkCleanup.mutate({
+//         operations,
+//         dryRun,
+//         confirmDestructive,
+//       }),
+//     onSuccess: async () => {
+//       await Promise.all([
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
+//       ]);
+//     },
+//   });
 
-export const mergeDuplicates = () =>
-  defineMutation({
-    mutationFn: ({
-      primaryPayeeId,
-      duplicatePayeeIds,
-      mergeStrategy,
-      confirmMerge = false,
-    }: {
-      primaryPayeeId: number;
-      duplicatePayeeIds: number[];
-      mergeStrategy?: {
-        preserveTransactionHistory?: boolean;
-        conflictResolution?: "primary" | "latest" | "best_quality" | "manual";
-        mergeContactInfo?: boolean;
-        mergeIntelligenceData?: boolean;
-      };
-      confirmMerge?: boolean;
-    }) =>
-      trpc().payeeRoutes.mergeDuplicates.mutate({
-        primaryPayeeId,
-        duplicatePayeeIds,
-        mergeStrategy: mergeStrategy || {},
-        confirmMerge,
-      }),
-    onSuccess: async (_data, variables) => {
-      // Invalidate data for all affected payees
-      const allPayeeIds = [variables.primaryPayeeId, ...variables.duplicatePayeeIds];
-      const invalidations = allPayeeIds.flatMap((id) => [
-        queryClient.invalidateQueries({ queryKey: payeeKeys.detail(id) }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.intelligence(id) }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.suggestions(id) }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.stats(id) }),
-      ]);
+// export const getDuplicates = (
+//   similarityThreshold = 0.8,
+//   includeInactive = false,
+//   groupingStrategy: "name" | "contact" | "transaction_pattern" | "comprehensive" = "comprehensive"
+// ) =>
+//   defineQuery<DuplicateGroup[]>({
+//     queryKey: ["payees", "duplicates", similarityThreshold, includeInactive, groupingStrategy],
+//     queryFn: () =>
+//       trpc().payeeRoutes.getDuplicates.query({
+//         similarityThreshold,
+//         includeInactive,
+//         groupingStrategy,
+//       }),
+//     options: {
+//       staleTime: 5 * 60 * 1000, // 5 minutes
+//     },
+//   });
 
-      await Promise.all([
-        ...invalidations,
-        queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
-        queryClient.invalidateQueries({ queryKey: ["payees", "duplicates"] }),
-      ]);
-    },
-  });
+// export const mergeDuplicates = () =>
+//   defineMutation({
+//     mutationFn: ({
+//       primaryPayeeId,
+//       duplicatePayeeIds,
+//       mergeStrategy,
+//       confirmMerge = false,
+//     }: {
+//       primaryPayeeId: number;
+//       duplicatePayeeIds: number[];
+//       mergeStrategy?: {
+//         preserveTransactionHistory?: boolean;
+//         conflictResolution?: "primary" | "latest" | "best_quality" | "manual";
+//         mergeContactInfo?: boolean;
+//         mergeIntelligenceData?: boolean;
+//       };
+//       confirmMerge?: boolean;
+//     }) =>
+//       trpc().payeeRoutes.mergeDuplicates.mutate({
+//         primaryPayeeId,
+//         duplicatePayeeIds,
+//         mergeStrategy: mergeStrategy || {},
+//         confirmMerge,
+//       }),
+//     onSuccess: async (_data, variables) => {
+//       // Invalidate data for all affected payees
+//       const allPayeeIds = [variables.primaryPayeeId, ...variables.duplicatePayeeIds];
+//       const invalidations = allPayeeIds.flatMap((id) => [
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.detail(id) }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.intelligence(id) }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.suggestions(id) }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.stats(id) }),
+//       ]);
 
-export const undoOperation = () =>
-  defineMutation({
-    mutationFn: ({
-      operationId,
-      operationType,
-    }: {
-      operationId: string;
-      operationType:
-        | "bulk_delete"
-        | "bulk_status_change"
-        | "bulk_category_assignment"
-        | "bulk_tag_management"
-        | "bulk_intelligence_application"
-        | "bulk_cleanup"
-        | "merge_duplicates";
-    }) =>
-      trpc().payeeRoutes.undoOperation.mutate({
-        operationId,
-        operationType,
-      }),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
-        queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
-        queryClient.invalidateQueries({ queryKey: ["payees", "operation-history"] }),
-      ]);
-    },
-  });
+//       await Promise.all([
+//         ...invalidations,
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
+//         queryClient.invalidateQueries({ queryKey: ["payees", "duplicates"] }),
+//       ]);
+//     },
+//   });
 
-export const getOperationHistory = (
-  limit = 20,
-  offset = 0,
-  operationType?:
-    | "bulk_delete"
-    | "bulk_status_change"
-    | "bulk_category_assignment"
-    | "bulk_tag_management"
-    | "bulk_intelligence_application"
-    | "bulk_cleanup"
-    | "merge_duplicates",
-  startDate?: string,
-  endDate?: string
-) =>
-  defineQuery<OperationHistory>({
-    queryKey: ["payees", "operation-history", limit, offset, operationType, startDate, endDate],
-    queryFn: () =>
-      trpc().payeeRoutes.getOperationHistory.query({
-        limit,
-        offset,
-        operationType,
-        startDate,
-        endDate,
-      }),
-    options: {
-      staleTime: 30 * 1000, // 30 seconds
-    },
-  });
+// export const undoOperation = () =>
+//   defineMutation({
+//     mutationFn: ({
+//       operationId,
+//       operationType,
+//     }: {
+//       operationId: string;
+//       operationType:
+//         | "bulk_delete"
+//         | "bulk_status_change"
+//         | "bulk_category_assignment"
+//         | "bulk_tag_management"
+//         | "bulk_intelligence_application"
+//         | "bulk_cleanup"
+//         | "merge_duplicates";
+//     }) =>
+//       trpc().payeeRoutes.undoOperation.mutate({
+//         operationId,
+//         operationType,
+//       }),
+//     onSuccess: async () => {
+//       await Promise.all([
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.lists() }),
+//         queryClient.invalidateQueries({ queryKey: payeeKeys.analytics() }),
+//         queryClient.invalidateQueries({ queryKey: ["payees", "operation-history"] }),
+//       ]);
+//     },
+//   });
+
+// export const getOperationHistory = (
+//   limit = 20,
+//   offset = 0,
+//   operationType?:
+//     | "bulk_delete"
+//     | "bulk_status_change"
+//     | "bulk_category_assignment"
+//     | "bulk_tag_management"
+//     | "bulk_intelligence_application"
+//     | "bulk_cleanup"
+//     | "merge_duplicates",
+//   startDate?: string,
+//   endDate?: string
+// ) =>
+//   defineQuery<OperationHistory>({
+//     queryKey: ["payees", "operation-history", limit, offset, operationType, startDate, endDate],
+//     queryFn: () =>
+//       trpc().payeeRoutes.getOperationHistory.query({
+//         limit,
+//         offset,
+//         operationType,
+//         startDate,
+//         endDate,
+//       }),
+//     options: {
+//       staleTime: 30 * 1000, // 30 seconds
+//     },
+//   });

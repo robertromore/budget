@@ -88,7 +88,7 @@ export class AccountService {
           payeeId: null,
           categoryId: null,
         },
-        workspaceId.toString()
+        workspaceId
       );
     }
 

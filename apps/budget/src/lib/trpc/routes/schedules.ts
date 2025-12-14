@@ -3,6 +3,7 @@ import {
   removeScheduleSchema,
   scheduleDates,
   schedules,
+  transactions,
 } from "$lib/schema";
 import { superformInsertScheduleSchema } from "$lib/schema/superforms";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
@@ -121,6 +122,7 @@ export const scheduleRoutes = t.router({
       };
 
       if (input.id) {
+        const scheduleId = input.id;
         // For updates, generate new slug if name changed
         const { repeating_date, ...scheduleData } = input;
 
@@ -131,20 +133,20 @@ export const scheduleRoutes = t.router({
             "schedules",
             schedules.slug,
             slugify(input.name),
-            { excludeId: input.id, idColumn: schedules.id }
+            { excludeId: scheduleId, idColumn: schedules.id }
           ),
         };
 
         // Handle repeating date for updates
         if (repeating_date) {
-          const dateId = await handleRepeatingDate(input.id, repeating_date);
+          const dateId = await handleRepeatingDate(scheduleId, repeating_date);
           if (dateId) {
             updateData.dateId = dateId;
           }
         } else {
           const currentSchedule = await ctx.db.query.schedules.findFirst({
             where: (schedules, { eq, and }) =>
-              and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+              and(eq(schedules.id, scheduleId), eq(schedules.workspaceId, ctx.workspaceId)),
           });
 
           if (currentSchedule?.dateId) {
@@ -157,12 +159,12 @@ export const scheduleRoutes = t.router({
         await ctx.db
           .update(schedules)
           .set(updateData)
-          .where(and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)));
+          .where(and(eq(schedules.id, scheduleId), eq(schedules.workspaceId, ctx.workspaceId)));
 
         // Return the full schedule with relationships
         const updatedSchedule = await ctx.db.query.schedules.findFirst({
           where: (schedules, { eq, and }) =>
-            and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+            and(eq(schedules.id, scheduleId), eq(schedules.workspaceId, ctx.workspaceId)),
           with: {
             scheduleDate: true,
           },
@@ -229,14 +231,52 @@ export const scheduleRoutes = t.router({
         message: "Schedule ID is required for deletion",
       });
     }
+
+    // First, get the schedule to check if it exists and get its dateId
+    const schedule = await ctx.db.query.schedules.findFirst({
+      where: (schedules, { eq, and }) =>
+        and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)),
+    });
+
+    if (!schedule) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Schedule not found",
+      });
+    }
+
+    // Clear scheduleId from any transactions that reference this schedule
+    await ctx.db
+      .update(transactions)
+      .set({ scheduleId: null })
+      .where(eq(transactions.scheduleId, input.id));
+
+    // Clear dateId from the schedule first (breaks the circular reference)
+    const dateIdToDelete = schedule.dateId;
+    if (dateIdToDelete) {
+      await ctx.db
+        .update(schedules)
+        .set({ dateId: null })
+        .where(and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)));
+    }
+
+    // Now delete schedule_dates records
+    if (dateIdToDelete) {
+      await ctx.db.delete(scheduleDates).where(eq(scheduleDates.id, dateIdToDelete));
+    }
+    // Also delete any other schedule_dates that reference this schedule
+    await ctx.db.delete(scheduleDates).where(eq(scheduleDates.scheduleId, input.id));
+
+    // Now delete the schedule
     const result = await ctx.db
       .delete(schedules)
       .where(and(eq(schedules.id, input.id), eq(schedules.workspaceId, ctx.workspaceId)))
       .returning();
+
     if (!result[0]) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Schedule not found or could not be deleted",
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to delete schedule",
       });
     }
     return result[0];
@@ -473,4 +513,44 @@ export const scheduleRoutes = t.router({
         });
       }
     }),
+
+  // Skip occurrence functionality
+  skipOccurrence: rateLimitedProcedure
+    .input(
+      z.object({
+        scheduleId: z.number().int().positive(),
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+        skipType: z.enum(["single", "push_forward"]),
+        reason: z.string().optional(),
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ ctx, input }) => {
+        if (input.skipType === "single") {
+          return scheduleService.skipSingleOccurrence(
+            input.scheduleId,
+            input.date,
+            ctx.workspaceId,
+            input.reason
+          );
+        } else {
+          return scheduleService.pushDatesForward(
+            input.scheduleId,
+            input.date,
+            ctx.workspaceId,
+            input.reason
+          );
+        }
+      })
+    ),
+
+  getSkipHistory: publicProcedure
+    .input(z.object({ scheduleId: z.number().int().positive() }))
+    .query(
+      withErrorHandler(async ({ input }) => scheduleService.getSkipHistory(input.scheduleId))
+    ),
+
+  removeSkip: rateLimitedProcedure
+    .input(z.object({ skipId: z.number().int().positive() }))
+    .mutation(withErrorHandler(async ({ input, ctx }) => scheduleService.removeSkip(input.skipId, ctx.workspaceId))),
 });

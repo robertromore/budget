@@ -1,17 +1,18 @@
-import { z } from "zod";
-import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "$lib/trpc";
 import {
+  bulkDeleteSchema,
   createTransactionSchema,
   createTransactionWithAutoPopulationSchema,
-  updateTransactionSchema,
-  transactionFiltersSchema,
   paginationSchema,
-  bulkDeleteSchema,
-  transactionSuggestionRequestSchema,
   payeeIntelligenceRequestSchema,
+  transactionFiltersSchema,
+  transactionSuggestionRequestSchema,
+  updateTransactionSchema,
 } from "$lib/server/domains/transactions";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 const transactionService = serviceFactory.getTransactionService();
 
@@ -169,7 +170,7 @@ export const transactionRoutes = t.router({
         payeeId: z.number().nullable().optional(),
         categoryId: z.number().nullable().optional(),
         notes: z.string().nullable().optional(),
-        status: z.enum(["cleared", "pending", "scheduled"]).nullable().optional(),
+        status: z.enum(["cleared", "pending", "scheduled"]).optional(),
         budgetId: z.number().nullable().optional(),
         budgetAllocation: z.number().nullable().optional(),
       })
@@ -221,8 +222,8 @@ export const transactionRoutes = t.router({
   getSuggestions: publicProcedure
     .input(transactionSuggestionRequestSchema)
     .query(
-      withErrorHandler(async ({ input }) =>
-        transactionService.suggestTransactionDetails(input.payeeId, input.amount)
+      withErrorHandler(async ({ input, ctx }) =>
+        transactionService.suggestTransactionDetails(input.payeeId, ctx.workspaceId, input.amount)
       )
     ),
 

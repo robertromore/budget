@@ -89,7 +89,10 @@ export class CurrentAccountState {
         });
     }
     const updatedData = Object.assign({}, original, new_data) as Transaction;
-    await rpc.transactions.saveTransaction.execute(updatedData);
+    await rpc.transactions.saveTransaction.execute({
+      ...updatedData,
+      status: updatedData.status ?? undefined,
+    });
     this.transactions[idx] = updatedData;
   };
 

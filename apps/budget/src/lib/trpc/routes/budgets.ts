@@ -284,6 +284,57 @@ export const budgetRoutes = t.router({
       throw translateDomainError(error);
     }
   }),
+  getByAccount: publicProcedure
+    .input(z.object({ accountId: z.number().int().positive() }))
+    .query(async ({ input, ctx }) => {
+      try {
+        // Query budgets through the budget_account junction table
+        const budgetsWithAccount = await db.query.budgetAccounts.findMany({
+          where: (budgetAccounts, { eq }) => eq(budgetAccounts.accountId, input.accountId),
+          with: {
+            budget: {
+              with: {
+                periodTemplates: {
+                  with: {
+                    periods: true,
+                  },
+                },
+                accounts: {
+                  with: {
+                    account: true,
+                  },
+                },
+                categories: {
+                  with: {
+                    category: true,
+                  },
+                },
+                transactions: {
+                  with: {
+                    transaction: true,
+                  },
+                },
+                groupMemberships: {
+                  with: {
+                    group: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        // Filter by workspace and extract budgets
+        const budgets = budgetsWithAccount
+          .map((ba) => ba.budget)
+          .filter((budget) => budget.workspaceId === ctx.workspaceId);
+
+        return budgets;
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        throw translateDomainError(error);
+      }
+    }),
   create: publicProcedure.input(createBudgetSchema).mutation(async ({ input, ctx }) => {
     try {
       return await budgetService.createBudget(input as any, ctx.workspaceId);
@@ -729,9 +780,9 @@ export const budgetRoutes = t.router({
         }),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
-        const budget = await budgetService.getBudget(input.budgetId);
+        const budget = await budgetService.getBudget(input.budgetId, ctx.workspaceId);
         if (!budget) {
           throw new NotFoundError("Budget", input.budgetId);
         }
@@ -746,7 +797,7 @@ export const budgetRoutes = t.router({
 
         return await budgetService.updateBudget(input.budgetId, {
           metadata: updatedMetadata,
-        });
+        }, ctx.workspaceId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -900,9 +951,13 @@ export const budgetRoutes = t.router({
         daysAhead: z.number().positive().optional().default(30),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       try {
-        return await forecastService.forecastBudgetImpact(input.budgetId, input.daysAhead);
+        return await forecastService.forecastBudgetImpact(
+          input.budgetId,
+          ctx.workspaceId,
+          input.daysAhead
+        );
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -910,9 +965,12 @@ export const budgetRoutes = t.router({
 
   autoAllocateBudget: publicProcedure
     .input(z.object({ budgetId: z.number().positive() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
-        return await forecastService.autoAllocateScheduledExpenses(input.budgetId);
+        return await forecastService.autoAllocateScheduledExpenses(
+          input.budgetId,
+          ctx.workspaceId
+        );
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -982,9 +1040,9 @@ export const budgetRoutes = t.router({
   // Goal Tracking Endpoints
   getGoalProgress: publicProcedure
     .input(z.object({ budgetId: z.number().int().positive() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       try {
-        return await budgetService.getGoalProgress(input.budgetId);
+        return await budgetService.getGoalProgress(input.budgetId, ctx.workspaceId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -998,10 +1056,11 @@ export const budgetRoutes = t.router({
         customAmount: z.number().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       try {
         return await budgetService.createGoalContributionPlan(
           input.budgetId,
+          ctx.workspaceId,
           input.frequency,
           input.customAmount
         );
@@ -1017,9 +1076,9 @@ export const budgetRoutes = t.router({
         scheduleId: z.number().int().positive(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
-        return await budgetService.linkScheduleToGoal(input.budgetId, input.scheduleId);
+        return await budgetService.linkScheduleToGoal(input.budgetId, input.scheduleId, ctx.workspaceId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1032,9 +1091,9 @@ export const budgetRoutes = t.router({
         scheduleId: z.number().int().positive(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
-        return await budgetService.linkScheduleToScheduledExpense(input.budgetId, input.scheduleId);
+        return await budgetService.linkScheduleToScheduledExpense(input.budgetId, input.scheduleId, ctx.workspaceId);
       } catch (error) {
         throw translateDomainError(error);
       }
@@ -1392,11 +1451,32 @@ export const budgetRoutes = t.router({
     }
   }),
 
+  deleteRecommendation: publicProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      try {
+        const budgetService = serviceFactory.getBudgetService();
+        await budgetService.deleteRecommendation(input.id);
+        return { success: true };
+      } catch (error) {
+        throw translateDomainError(error);
+      }
+    }),
+
+  clearAllRecommendations: publicProcedure.mutation(async () => {
+    try {
+      const budgetService = serviceFactory.getBudgetService();
+      return await budgetService.clearAllRecommendations();
+    } catch (error) {
+      throw translateDomainError(error);
+    }
+  }),
+
   // Budget Group Automation Routes
 
-  getAutomationSettings: publicProcedure.query(async () => {
+  getAutomationSettings: publicProcedure.query(async ({ ctx }) => {
     try {
-      return await automationService.getSettings();
+      return await automationService.getSettings(ctx.workspaceId);
     } catch (error) {
       throw translateDomainError(error);
     }
@@ -1417,9 +1497,9 @@ export const budgetRoutes = t.router({
         minGroupSize: z.number().int().min(2).max(10).optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
-        return await automationService.updateSettings(input as any);
+        return await automationService.updateSettings(ctx.workspaceId, input as any);
       } catch (error) {
         throw translateDomainError(error);
       }

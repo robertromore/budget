@@ -143,8 +143,8 @@ export const categoryGroupsRoutes = t.router({
   ),
 
   recommendationsApprove: rateLimitedProcedure.input(z.object({ id: z.number() })).mutation(
-    withErrorHandler(async ({ input }) => {
-      await recommendationService.approveRecommendation(input.id);
+    withErrorHandler(async ({ input, ctx }) => {
+      await recommendationService.approveRecommendation(input.id, ctx.workspaceId);
       return { success: true };
     })
   ),

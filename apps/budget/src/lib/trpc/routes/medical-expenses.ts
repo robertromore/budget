@@ -1,15 +1,12 @@
-import { z } from "zod";
-import { publicProcedure, t } from "$lib/trpc";
-import { TRPCError } from "@trpc/server";
 import {
-  medicalExpenseTypeEnum,
-  medicalExpenseTypeKeys,
-  receiptTypeEnum,
-  receiptTypeKeys,
-  claimStatusEnum,
   claimStatusKeys,
+  medicalExpenseTypeKeys,
+  receiptTypeKeys
 } from "$lib/schema";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { publicProcedure, t } from "$lib/trpc";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 // PERFORMANCE: Removed module-level service initialization to prevent eager loading
 // Services are now retrieved on-demand inside each route handler
@@ -169,7 +166,7 @@ export const medicalExpensesRouter = t.router({
   // Create medical expense with transaction (all-in-one)
   createWithTransaction: publicProcedure
     .input(createMedicalExpenseWithTransactionSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
         const medicalExpenseService = serviceFactory.getMedicalExpenseService();
         // Build data object conditionally for exactOptionalPropertyTypes
@@ -193,7 +190,10 @@ export const medicalExpensesRouter = t.router({
         if (input.notes) data.notes = input.notes;
         if (input.transactionNotes) data.transactionNotes = input.transactionNotes;
 
-        const expense = await medicalExpenseService.createMedicalExpenseWithTransaction(data);
+        const expense = await medicalExpenseService.createMedicalExpenseWithTransaction(
+          data,
+          ctx.workspaceId
+        );
         return expense;
       } catch (error: any) {
         throw new TRPCError({

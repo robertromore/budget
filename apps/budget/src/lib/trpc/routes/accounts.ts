@@ -6,6 +6,9 @@ import {
   type Account,
   type Transaction,
 } from "$lib/schema";
+import { detectedPatterns } from "$lib/schema/detected-patterns";
+import { importProfiles } from "$lib/schema/import-profiles";
+import { schedules } from "$lib/schema/schedules";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { getCurrentTimestamp } from "$lib/utils/dates";
@@ -160,7 +163,9 @@ export const accountRoutes = t.router({
 
     // Calculate balance for each account and running balance for each transaction
     return accountsData.map((account) => {
-      let runningBalance = 0;
+      // Start with initial balance as the base
+      const initialBalance = account.initialBalance || 0;
+      let runningBalance = initialBalance;
       const transactionsWithBalance = account.transactions.map((transaction) => {
         runningBalance += transaction.amount;
         return {
@@ -203,8 +208,9 @@ export const accountRoutes = t.router({
       });
     }
 
-    // Calculate running balance for each transaction
-    let runningBalance = 0;
+    // Calculate running balance for each transaction, starting with initial balance
+    const initialBalance = account.initialBalance || 0;
+    let runningBalance = initialBalance;
     const transactionsWithBalance = account.transactions.map((transaction) => {
       runningBalance += transaction.amount;
       return {
@@ -244,8 +250,9 @@ export const accountRoutes = t.router({
       });
     }
 
-    // Calculate running balance from all transactions
-    let runningBalance = 0;
+    // Calculate running balance from all transactions, starting with initial balance
+    const initialBalance = account.initialBalance || 0;
+    let runningBalance = initialBalance;
     account.transactions.forEach((transaction) => {
       runningBalance += transaction.amount;
     });
@@ -392,7 +399,7 @@ export const accountRoutes = t.router({
         });
       }
 
-      // Calculate balance from transactions
+      // Calculate balance from transactions plus initial balance
       const [balanceResult] = await ctx.db
         .select({
           balance: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
@@ -400,9 +407,12 @@ export const accountRoutes = t.router({
         .from(transactions)
         .where(and(eq(transactions.accountId, input.id!), isNull(transactions.deletedAt)));
 
+      const transactionBalance = balanceResult?.balance || 0;
+      const initialBalance = result[0].initialBalance || 0;
+
       return {
         ...result[0],
-        balance: balanceResult?.balance || 0,
+        balance: transactionBalance + initialBalance,
       };
     }
 
@@ -511,8 +521,9 @@ export const accountRoutes = t.router({
           });
         }
 
-        // Calculate running balance for each transaction
-        let runningBalance = 0;
+        // Calculate running balance for each transaction, starting with initial balance
+        const initialBalance = accountWithBalance.initialBalance || 0;
+        let runningBalance = initialBalance;
         const transactionsWithBalance = accountWithBalance.transactions.map((transaction) => {
           runningBalance += transaction.amount;
           return {
@@ -555,8 +566,9 @@ export const accountRoutes = t.router({
         });
       }
 
-      // Calculate running balance for each transaction
-      let runningBalance = 0;
+      // Calculate running balance for each transaction, starting with initial balance
+      const initialBalance = accountWithBalance.initialBalance || 0;
+      let runningBalance = initialBalance;
       const transactionsWithBalance = accountWithBalance.transactions.map((transaction) => {
         runningBalance += transaction.amount;
         return {
@@ -687,4 +699,333 @@ export const accountRoutes = t.router({
       });
     }
   }),
+
+  // Account data counts for settings
+  getAccountDataCounts: publicProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .query(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      // Get transaction count
+      const [transactionCount] = await ctx.db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(transactions)
+        .where(and(eq(transactions.accountId, input.accountId), isNull(transactions.deletedAt)));
+
+      // Get schedule count (schedules table doesn't have deletedAt)
+      const [scheduleCount] = await ctx.db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(schedules)
+        .where(eq(schedules.accountId, input.accountId));
+
+      // Get import profile count
+      const [importProfileCount] = await ctx.db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(importProfiles)
+        .where(eq(importProfiles.accountId, input.accountId));
+
+      // Get detected pattern count
+      const [patternCount] = await ctx.db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(detectedPatterns)
+        .where(eq(detectedPatterns.accountId, input.accountId));
+
+      return {
+        transactions: Number(transactionCount?.count || 0),
+        schedules: Number(scheduleCount?.count || 0),
+        importProfiles: Number(importProfileCount?.count || 0),
+        detectedPatterns: Number(patternCount?.count || 0),
+      };
+    }),
+
+  // Delete all transactions for an account
+  deleteAllTransactions: rateLimitedProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      // Soft delete all transactions for this account
+      const result = await ctx.db
+        .update(transactions)
+        .set({ deletedAt: getCurrentTimestamp() })
+        .where(and(eq(transactions.accountId, input.accountId), isNull(transactions.deletedAt)))
+        .returning({ id: transactions.id });
+
+      return { deletedCount: result.length };
+    }),
+
+  // Delete transactions by date range
+  deleteTransactionsByDateRange: rateLimitedProcedure
+    .input(
+      z.object({
+        accountId: z.number().positive(),
+        startDate: z.string(),
+        endDate: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      // Soft delete transactions in the date range
+      const result = await ctx.db
+        .update(transactions)
+        .set({ deletedAt: getCurrentTimestamp() })
+        .where(
+          and(
+            eq(transactions.accountId, input.accountId),
+            isNull(transactions.deletedAt),
+            sql`${transactions.date} >= ${input.startDate}`,
+            sql`${transactions.date} <= ${input.endDate}`
+          )
+        )
+        .returning({ id: transactions.id });
+
+      return { deletedCount: result.length };
+    }),
+
+  // Clear import profiles for an account
+  clearImportProfiles: rateLimitedProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      // Delete import profiles for this account (hard delete since they're not soft-deletable)
+      const result = await ctx.db
+        .delete(importProfiles)
+        .where(eq(importProfiles.accountId, input.accountId))
+        .returning({ id: importProfiles.id });
+
+      return { deletedCount: result.length };
+    }),
+
+  // Clear schedules for an account
+  clearSchedules: rateLimitedProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      // Hard delete all schedules for this account (schedules table doesn't have deletedAt)
+      const result = await ctx.db
+        .delete(schedules)
+        .where(eq(schedules.accountId, input.accountId))
+        .returning({ id: schedules.id });
+
+      return { deletedCount: result.length };
+    }),
+
+  // Clear detected patterns for an account
+  clearDetectedPatterns: rateLimitedProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      // Delete detected patterns for this account
+      const result = await ctx.db
+        .delete(detectedPatterns)
+        .where(eq(detectedPatterns.accountId, input.accountId))
+        .returning({ id: detectedPatterns.id });
+
+      return { deletedCount: result.length };
+    }),
+
+  // Close account (soft hide from views)
+  closeAccount: rateLimitedProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.db
+        .update(accounts)
+        .set({
+          closed: true,
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          )
+        )
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      return result[0];
+    }),
+
+  // Reopen account
+  reopenAccount: rateLimitedProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.db
+        .update(accounts)
+        .set({
+          closed: false,
+          updatedAt: getCurrentTimestamp(),
+        })
+        .where(
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          )
+        )
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      return result[0];
+    }),
+
+  // Permanently delete account
+  permanentlyDeleteAccount: rateLimitedProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify account exists and belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      // First soft delete all transactions
+      await ctx.db
+        .update(transactions)
+        .set({ deletedAt: getCurrentTimestamp() })
+        .where(and(eq(transactions.accountId, input.accountId), isNull(transactions.deletedAt)));
+
+      // Delete all schedules (hard delete since schedules table doesn't have deletedAt)
+      await ctx.db.delete(schedules).where(eq(schedules.accountId, input.accountId));
+
+      // Delete import profiles
+      await ctx.db.delete(importProfiles).where(eq(importProfiles.accountId, input.accountId));
+
+      // Delete detected patterns
+      await ctx.db.delete(detectedPatterns).where(eq(detectedPatterns.accountId, input.accountId));
+
+      // Finally soft delete the account
+      const result = await ctx.db
+        .update(accounts)
+        .set({ deletedAt: getCurrentTimestamp() })
+        .where(and(eq(accounts.id, input.accountId), eq(accounts.workspaceId, ctx.workspaceId)))
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete account",
+        });
+      }
+
+      return { success: true };
+    }),
 });

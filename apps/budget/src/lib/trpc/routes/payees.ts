@@ -1,27 +1,26 @@
 import {
-  removePayeeSchema,
-  removePayeesSchema,
-  recordCorrectionSchema,
   analyzeCorrectionsSchema,
   learningMetricsSchema,
+  recordCorrectionSchema,
+  removePayeeSchema,
+  removePayeesSchema,
 } from "$lib/schema";
 import { superformInsertPayeeSchema } from "$lib/schema/superforms";
-import { z } from "zod";
-import { publicProcedure, rateLimitedProcedure, bulkOperationProcedure, t } from "$lib/trpc";
 import {
-  PayeeService,
-  payeeIdSchema,
-  searchPayeesSchema,
   advancedSearchPayeesSchema,
+  applyIntelligentDefaultsSchema,
+  createPayeeSchema,
   getPayeesByTypeSchema,
   mergePayeesSchema,
-  applyIntelligentDefaultsSchema,
+  payeeIdSchema,
+  searchPayeesSchema,
   updateCalculatedFieldsSchema,
-  createPayeeSchema,
-  updatePayeeSchema,
+  updatePayeeSchema
 } from "$lib/server/domains/payees";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { bulkOperationProcedure, publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
 import { withErrorHandler } from "$lib/trpc/shared/errors";
+import { z } from "zod";
 
 const payeeService = serviceFactory.getPayeeService();
 
@@ -95,43 +94,55 @@ export const payeeRoutes = t.router({
 
   save: rateLimitedProcedure.input(superformInsertPayeeSchema).mutation(
     withErrorHandler(async ({ input, ctx }) => {
-      const { id, address, ...payeeData } = input;
+      const { id, address, subscriptionInfo, tags, preferredPaymentMethods, ...payeeData } = input;
 
       // Ensure name is properly typed and required
       const name = payeeData.name || "";
 
-      // Transform address from string to PayeeAddress object if provided
-      let parsedAddress: any = null;
-      if (address && typeof address === "string" && address.trim() !== "") {
+      // Helper to parse JSON string fields
+      const parseJson = <T>(value: unknown): T | null => {
+        if (!value) return null;
+        if (typeof value !== "string") return value as T;
+        if (value.trim() === "") return null;
         try {
-          parsedAddress = JSON.parse(address);
+          return JSON.parse(value);
         } catch {
-          // If it's not valid JSON, treat it as null
-          parsedAddress = null;
+          return null;
+        }
+      };
+
+      // Parse JSON fields
+      const parsedAddress = parseJson<any>(address);
+      const parsedSubscriptionInfo = parseJson<any>(subscriptionInfo);
+      const parsedPaymentMethods = parseJson<number[]>(preferredPaymentMethods);
+
+      // Transform tags from string to array if provided
+      let parsedTags: string[] | null = null;
+      if (tags) {
+        if (Array.isArray(tags)) {
+          parsedTags = tags;
+        } else if (typeof tags === "string" && tags.trim() !== "") {
+          try {
+            parsedTags = JSON.parse(tags);
+          } catch {
+            parsedTags = tags.split(",").map((t) => t.trim()).filter(Boolean);
+          }
         }
       }
 
+      const data = {
+        ...payeeData,
+        name: name.trim(),
+        address: parsedAddress,
+        subscriptionInfo: parsedSubscriptionInfo,
+        tags: parsedTags,
+        preferredPaymentMethods: parsedPaymentMethods,
+      };
+
       if (id) {
-        // Update existing payee
-        return await payeeService.updatePayee(
-          id,
-          {
-            ...payeeData,
-            name: name.trim(),
-            address: parsedAddress,
-          },
-          ctx.workspaceId
-        );
+        return await payeeService.updatePayee(id, data, ctx.workspaceId);
       } else {
-        // Create new payee
-        return await payeeService.createPayee(
-          {
-            ...payeeData,
-            name: name.trim(),
-            address: parsedAddress,
-          },
-          ctx.workspaceId
-        );
+        return await payeeService.createPayee(data, ctx.workspaceId);
       }
     })
   ),
@@ -225,20 +236,23 @@ export const payeeRoutes = t.router({
   // =====================================
 
   recordCategoryCorrection: rateLimitedProcedure.input(recordCorrectionSchema).mutation(
-    withErrorHandler(async ({ input }) =>
-      payeeService.recordCategoryCorrection({
-        payeeId: input.payeeId,
-        transactionId: input.transactionId,
-        fromCategoryId: input.fromCategoryId,
-        toCategoryId: input.toCategoryId,
-        correctionTrigger: input.correctionTrigger,
-        correctionContext: input.correctionContext,
-        transactionAmount: input.transactionAmount,
-        transactionDate: input.transactionDate,
-        userConfidence: input.userConfidence,
-        notes: input.notes,
-        isOverride: input.isOverride,
-      })
+    withErrorHandler(async ({ input, ctx }) =>
+      payeeService.recordCategoryCorrection(
+        {
+          payeeId: input.payeeId,
+          transactionId: input.transactionId,
+          fromCategoryId: input.fromCategoryId,
+          toCategoryId: input.toCategoryId,
+          correctionTrigger: input.correctionTrigger,
+          correctionContext: input.correctionContext,
+          transactionAmount: input.transactionAmount,
+          transactionDate: input.transactionDate,
+          userConfidence: input.userConfidence,
+          notes: input.notes,
+          isOverride: input.isOverride,
+        },
+        ctx.workspaceId
+      )
     )
   ),
 
@@ -251,8 +265,8 @@ export const payeeRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.getCategoryRecommendation(input.payeeId, {
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getCategoryRecommendation(input.payeeId, ctx.workspaceId, {
           transactionAmount: input.transactionAmount,
           transactionDate: input.transactionDate,
         })
@@ -268,8 +282,8 @@ export const payeeRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.getEnhancedCategoryRecommendation(input.payeeId, {
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getEnhancedCategoryRecommendation(input.payeeId, ctx.workspaceId, {
           transactionAmount: input.transactionAmount,
           transactionDate: input.transactionDate,
         })
@@ -286,8 +300,8 @@ export const payeeRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.calculateCategoryConfidence(input.payeeId, input.categoryId, {
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.calculateCategoryConfidence(input.payeeId, input.categoryId, ctx.workspaceId, {
           transactionAmount: input.transactionAmount,
           transactionDate: input.transactionDate,
         })
@@ -295,8 +309,8 @@ export const payeeRoutes = t.router({
     ),
 
   analyzeCorrectionPatterns: publicProcedure.input(analyzeCorrectionsSchema).query(
-    withErrorHandler(async ({ input }) =>
-      payeeService.analyzeCorrectionPatterns(input.payeeId, {
+    withErrorHandler(async ({ input, ctx }) =>
+      payeeService.analyzeCorrectionPatterns(input.payeeId, ctx.workspaceId, {
         timeframeMonths: input.timeframeMonths,
         minConfidence: input.minConfidence,
         includeProcessed: input.includeProcessed,
@@ -306,7 +320,7 @@ export const payeeRoutes = t.router({
 
   detectCategoryDrift: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({ input }) => payeeService.detectCategoryDrift(input.id))),
+    .query(withErrorHandler(async ({ input, ctx }) => payeeService.detectCategoryDrift(input.id, ctx.workspaceId))),
 
   getDefaultCategoryUpdateSuggestions: publicProcedure.query(
     withErrorHandler(async () => payeeService.getDefaultCategoryUpdateSuggestions())
@@ -327,8 +341,8 @@ export const payeeRoutes = t.router({
       })
     )
     .mutation(
-      withErrorHandler(async ({ input }) =>
-        payeeService.applyLearningBasedUpdates({
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.applyLearningBasedUpdates(ctx.workspaceId, {
           minConfidence: input.minConfidence,
           minCorrectionCount: input.minCorrectionCount,
           dryRun: input.dryRun,
@@ -343,7 +357,7 @@ export const payeeRoutes = t.router({
   budgetOptimizationAnalysis: publicProcedure
     .input(payeeIdSchema)
     .query(
-      withErrorHandler(async ({ input }) => payeeService.getBudgetOptimizationAnalysis(input.id))
+      withErrorHandler(async ({ input, ctx }) => payeeService.getBudgetOptimizationAnalysis(input.id, ctx.workspaceId))
     ),
 
   budgetAllocationSuggestions: publicProcedure
@@ -374,14 +388,14 @@ export const payeeRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.getBudgetForecast(input.payeeId, input.forecastPeriod, input.periodsAhead)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getBudgetForecast(input.payeeId, ctx.workspaceId, input.forecastPeriod, input.periodsAhead)
       )
     ),
 
   budgetHealthMetrics: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({ input }) => payeeService.getBudgetHealthMetrics(input.id))),
+    .query(withErrorHandler(async ({ input, ctx }) => payeeService.getBudgetHealthMetrics(input.id, ctx.workspaceId))),
 
   budgetRebalancingPlan: publicProcedure
     .input(
@@ -404,8 +418,8 @@ export const payeeRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.getBudgetEfficiencyAnalysis(input.payeeId, input.currentBudget)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getBudgetEfficiencyAnalysis(input.payeeId, ctx.workspaceId, input.currentBudget)
       )
     ),
 
@@ -420,13 +434,18 @@ export const payeeRoutes = t.router({
             maximizeUtilization: z.boolean().default(true),
             balanceAllocations: z.boolean().default(false),
           })
-          .default({}),
+          .default({
+            minimizeRisk: true,
+            maximizeUtilization: true,
+            balanceAllocations: false,
+          }),
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
+      withErrorHandler(async ({ input, ctx }) =>
         payeeService.getMultiPayeeBudgetOptimization(
           input.payeeIds,
+          ctx.workspaceId,
           input.totalBudgetConstraint,
           input.objectives
         )
@@ -442,14 +461,14 @@ export const payeeRoutes = t.router({
             name: z.string(),
             description: z.string(),
             type: z.enum(["conservative", "optimistic", "realistic", "stress_test"]),
-            assumptions: z.record(z.any()),
+            assumptions: z.record(z.string(), z.any()),
           })
         ),
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.getBudgetScenarioAnalysis(input.payeeIds, input.scenarios)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getBudgetScenarioAnalysis(input.payeeIds, ctx.workspaceId, input.scenarios)
       )
     ),
 
@@ -463,12 +482,16 @@ export const payeeRoutes = t.router({
             minSpendingAmount: z.number().positive().default(100),
             includeInactive: z.boolean().default(false),
           })
-          .default({}),
+          .default({
+            minTransactionCount: 5,
+            minSpendingAmount: 100,
+            includeInactive: false,
+          }),
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.getBulkBudgetOptimization(input.accountId, input.filters)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getBulkBudgetOptimization(ctx.workspaceId, input.accountId, input.filters)
       )
     ),
 
@@ -484,21 +507,21 @@ export const payeeRoutes = t.router({
           .object({
             transactionAmount: z.number().optional(),
             transactionDate: z.string().optional(),
-            userPreferences: z.record(z.any()).optional(),
+            userPreferences: z.record(z.string(), z.any()).optional(),
             riskTolerance: z.number().min(0).max(1).optional(),
           })
           .optional(),
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.getUnifiedMLRecommendations(input.payeeId, input.context)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getUnifiedMLRecommendations(input.payeeId, ctx.workspaceId, input.context)
       )
     ),
 
   crossSystemLearning: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({ input }) => payeeService.getCrossSystemLearning(input.id))),
+    .query(withErrorHandler(async ({ input, ctx }) => payeeService.getCrossSystemLearning(input.id, ctx.workspaceId))),
 
   executeAdaptiveOptimization: rateLimitedProcedure
     .input(
@@ -512,18 +535,24 @@ export const payeeRoutes = t.router({
             confidenceThreshold: z.number().min(0).max(1).default(0.8),
             dryRun: z.boolean().default(false),
           })
-          .default({}),
+          .default({
+            applyCategorizationUpdates: true,
+            applyBudgetUpdates: true,
+            applyAutomationRules: false,
+            confidenceThreshold: 0.8,
+            dryRun: false,
+          }),
       })
     )
     .mutation(
-      withErrorHandler(async ({ input }) =>
-        payeeService.executeAdaptiveOptimization(input.payeeId, input.options)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.executeAdaptiveOptimization(input.payeeId, ctx.workspaceId, input.options)
       )
     ),
 
   systemConfidence: publicProcedure
     .input(payeeIdSchema)
-    .query(withErrorHandler(async ({ input }) => payeeService.getSystemConfidence(input.id))),
+    .query(withErrorHandler(async ({ input, ctx }) => payeeService.getSystemConfidence(input.id, ctx.workspaceId))),
 
   detectBehaviorChanges: publicProcedure
     .input(
@@ -533,8 +562,8 @@ export const payeeRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.detectBehaviorChanges(input.payeeId, input.lookbackMonths)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.detectBehaviorChanges(input.payeeId, ctx.workspaceId, input.lookbackMonths)
       )
     ),
 
@@ -548,8 +577,8 @@ export const payeeRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.getActionableInsights(input.payeeId, input.insightTypes)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getActionableInsights(input.payeeId, ctx.workspaceId, input.insightTypes)
       )
     ),
 
@@ -563,12 +592,15 @@ export const payeeRoutes = t.router({
             confidenceThreshold: z.number().min(0).max(1).default(0.5),
             maxResults: z.number().positive().default(50),
           })
-          .default({}),
+          .default({
+            confidenceThreshold: 0.5,
+            maxResults: 50,
+          }),
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.getBulkUnifiedRecommendations(input.payeeIds, input.options)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getBulkUnifiedRecommendations(input.payeeIds, ctx.workspaceId, input.options)
       )
     ),
 
@@ -586,8 +618,8 @@ export const payeeRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({ input }) =>
-        payeeService.getMLPerformanceMetrics(input.payeeId, input.period)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getMLPerformanceMetrics(ctx.workspaceId, input.payeeId, input.period)
       )
     ),
 
@@ -604,12 +636,17 @@ export const payeeRoutes = t.router({
               .array(z.enum(["category", "budget", "rules"]))
               .default(["category", "budget"]),
           })
-          .default({}),
+          .default({
+            confidenceThreshold: 0.8,
+            maxAutomations: 20,
+            dryRun: false,
+            automationTypes: ["category", "budget"],
+          }),
       })
     )
     .mutation(
-      withErrorHandler(async ({ input }) =>
-        payeeService.applyBulkMLAutomation(input.payeeIds, input.options)
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.applyBulkMLAutomation(input.payeeIds, ctx.workspaceId, input.options)
       )
     ),
 
@@ -634,7 +671,7 @@ export const payeeRoutes = t.router({
       })
     )
     .query(
-      withErrorHandler(async ({ input }) => payeeService.getMLInsightsDashboard(input.filters))
+      withErrorHandler(async ({ input, ctx }) => payeeService.getMLInsightsDashboard(ctx.workspaceId, input.filters))
     ),
 
   // =====================================
@@ -647,17 +684,17 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
         contactOverrides: z
           .object({
-            phone: z.string().nullish(),
-            email: z.string().nullish(),
-            website: z.string().nullish(),
-            address: z.any().nullish(),
+            phone: z.string().optional(),
+            email: z.string().optional(),
+            website: z.string().optional(),
+            address: z.any().optional(),
           })
           .optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.validateAndEnrichPayeeContact(input.payeeId, input.contactOverrides)
+        payeeService.validateAndEnrichPayeeContact(input.payeeId, ctx.workspaceId, input.contactOverrides)
       );
     }),
 
@@ -668,9 +705,9 @@ export const payeeRoutes = t.router({
         phone: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.standardizePayeePhoneNumber(input.payeeId, input.phone)
+        payeeService.standardizePayeePhoneNumber(input.payeeId, ctx.workspaceId, input.phone)
       );
     }),
 
@@ -681,9 +718,9 @@ export const payeeRoutes = t.router({
         email: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.validatePayeeEmailDomain(input.payeeId, input.email)
+        payeeService.validatePayeeEmailDomain(input.payeeId, ctx.workspaceId, input.email)
       );
     }),
 
@@ -694,9 +731,9 @@ export const payeeRoutes = t.router({
         address: z.any().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.enrichPayeeAddressData(input.payeeId, input.address)
+        payeeService.enrichPayeeAddressData(input.payeeId, ctx.workspaceId, input.address)
       );
     }),
 
@@ -713,8 +750,8 @@ export const payeeRoutes = t.router({
       );
     }),
 
-  generateContactSuggestions: publicProcedure.input(payeeIdSchema).query(async ({ input }) => {
-    return withErrorHandler(() => payeeService.generatePayeeContactSuggestions(input.id));
+  generateContactSuggestions: publicProcedure.input(payeeIdSchema).query(async ({ input, ctx }) => {
+    return withErrorHandler(() => payeeService.generatePayeeContactSuggestions(input.id, ctx.workspaceId));
   }),
 
   validateWebsiteAccessibility: publicProcedure
@@ -724,9 +761,9 @@ export const payeeRoutes = t.router({
         website: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.validatePayeeWebsiteAccessibility(input.payeeId, input.website)
+        payeeService.validatePayeeWebsiteAccessibility(input.payeeId, ctx.workspaceId, input.website)
       );
     }),
 
@@ -737,9 +774,9 @@ export const payeeRoutes = t.router({
         transactionLimit: z.number().positive().default(50),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.extractContactFromPayeeTransactions(input.payeeId, input.transactionLimit)
+        payeeService.extractContactFromPayeeTransactions(input.payeeId, ctx.workspaceId, input.transactionLimit)
       );
     }),
 
@@ -757,9 +794,9 @@ export const payeeRoutes = t.router({
           .optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.getContactAnalytics(input.payeeId, input.contactOverrides)
+        payeeService.getContactAnalytics(input.payeeId, ctx.workspaceId, input.contactOverrides)
       );
     }),
 
@@ -774,12 +811,17 @@ export const payeeRoutes = t.router({
             skipRecentlyValidated: z.boolean().default(false),
             minConfidence: z.number().min(0).max(1).default(0.8),
           })
-          .default({}),
+          .default({
+            autoFix: false,
+            includeInactive: false,
+            skipRecentlyValidated: false,
+            minConfidence: 0.8,
+          }),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.bulkContactValidation(input.payeeIds, input.options)
+        payeeService.bulkContactValidation(input.payeeIds, ctx.workspaceId, input.options)
       );
     }),
 
@@ -806,10 +848,14 @@ export const payeeRoutes = t.router({
             preserveHistory: z.boolean().default(true),
             conflictResolution: z.enum(["primary", "duplicate", "best", "manual"]).default("best"),
           })
-          .default({}),
+          .default({
+            dryRun: false,
+            preserveHistory: true,
+            conflictResolution: "best",
+          }),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       return withErrorHandler(async () => {
         const duplicateDetection = {
           primaryPayeeId: input.primaryPayeeId,
@@ -820,7 +866,7 @@ export const payeeRoutes = t.router({
           riskLevel: input.riskLevel,
         };
 
-        return await payeeService.smartMergeContactDuplicates(duplicateDetection, input.options);
+        return await payeeService.smartMergeContactDuplicates(duplicateDetection, ctx.workspaceId, input.options);
       });
     }),
 
@@ -836,9 +882,9 @@ export const payeeRoutes = t.router({
         minConfidence: z.number().min(0).max(1).default(0.3),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.detectSubscriptions(input.payeeIds, input.includeInactive, input.minConfidence)
+        payeeService.detectSubscriptions(ctx.workspaceId, input.payeeIds, input.includeInactive, input.minConfidence)
       );
     }),
 
@@ -857,9 +903,9 @@ export const payeeRoutes = t.router({
           .optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.classifySubscription(input.payeeId, input.transactionData)
+        payeeService.classifySubscription(input.payeeId, ctx.workspaceId, input.transactionData)
       );
     }),
 
@@ -869,8 +915,8 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
       })
     )
-    .query(async ({ input }) => {
-      return withErrorHandler(() => payeeService.getSubscriptionLifecycleAnalysis(input.payeeId));
+    .query(async ({ input, ctx }) => {
+      return withErrorHandler(() => payeeService.getSubscriptionLifecycleAnalysis(input.payeeId, ctx.workspaceId));
     }),
 
   subscriptionCostAnalysis: publicProcedure
@@ -880,9 +926,9 @@ export const payeeRoutes = t.router({
         timeframeDays: z.number().positive().default(365),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.getSubscriptionCostAnalysis(input.payeeId, input.timeframeDays)
+        payeeService.getSubscriptionCostAnalysis(input.payeeId, ctx.workspaceId, input.timeframeDays)
       );
     }),
 
@@ -893,9 +939,9 @@ export const payeeRoutes = t.router({
         forecastMonths: z.number().positive().default(12),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.getSubscriptionRenewalPredictions(input.payeeIds, input.forecastMonths)
+        payeeService.getSubscriptionRenewalPredictions(input.payeeIds, ctx.workspaceId, input.forecastMonths)
       );
     }),
 
@@ -905,8 +951,8 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
       })
     )
-    .query(async ({ input }) => {
-      return withErrorHandler(() => payeeService.getSubscriptionUsageAnalysis(input.payeeId));
+    .query(async ({ input, ctx }) => {
+      return withErrorHandler(() => payeeService.getSubscriptionUsageAnalysis(input.payeeId, ctx.workspaceId));
     }),
 
   subscriptionCancellationAssistance: publicProcedure
@@ -915,9 +961,9 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.getSubscriptionCancellationAssistance(input.payeeId)
+        payeeService.getSubscriptionCancellationAssistance(input.payeeId, ctx.workspaceId)
       );
     }),
 
@@ -931,13 +977,18 @@ export const payeeRoutes = t.router({
             maintainValueThreshold: z.number().min(0).max(1).default(0.7),
             riskTolerance: z.enum(["low", "medium", "high"]).default("medium"),
           })
-          .default({}),
+          .default({
+            maximizeSavings: true,
+            maintainValueThreshold: 0.7,
+            riskTolerance: "medium",
+          }),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
         payeeService.getSubscriptionOptimizationRecommendations(
           input.payeeIds,
+          ctx.workspaceId,
           input.optimizationGoals
         )
       );
@@ -954,12 +1005,17 @@ export const payeeRoutes = t.router({
             includeOptimizationSuggestions: z.boolean().default(true),
             timeframeDays: z.number().positive().default(365),
           })
-          .default({}),
+          .default({
+            includeCostBreakdown: true,
+            includeUsageMetrics: true,
+            includeOptimizationSuggestions: true,
+            timeframeDays: 365,
+          }),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.getBulkSubscriptionAnalysis(input.payeeIds, input.analysisOptions)
+        payeeService.getBulkSubscriptionAnalysis(ctx.workspaceId, input.payeeIds, input.analysisOptions)
       );
     }),
 
@@ -1030,9 +1086,9 @@ export const payeeRoutes = t.router({
         }),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.updateSubscriptionMetadata(input.payeeId, input.subscriptionMetadata)
+        payeeService.updateSubscriptionMetadata(input.payeeId, ctx.workspaceId, input.subscriptionMetadata)
       );
     }),
 
@@ -1046,9 +1102,9 @@ export const payeeRoutes = t.router({
         notes: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.markSubscriptionCancelled(input.payeeId, input.cancellationDate, {
+        payeeService.markSubscriptionCancelled(input.payeeId, ctx.workspaceId, input.cancellationDate, {
           reason: input.reason,
           refundAmount: input.refundAmount,
           notes: input.notes,
@@ -1069,16 +1125,16 @@ export const payeeRoutes = t.router({
             minValueScore: z.number().min(0).max(1).default(0.6),
             preserveEssentialServices: z.boolean().default(true),
           })
-          .default({}),
+          .default({
+            maxCostIncrease: 0,
+            minValueScore: 0.6,
+            preserveEssentialServices: true,
+          }),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.getSubscriptionValueOptimization(
-          input.payeeIds,
-          input.optimizationStrategy,
-          input.constraints
-        )
+        payeeService.getSubscriptionValueOptimization(input.payeeIds, ctx.workspaceId)
       );
     }),
 
@@ -1090,13 +1146,9 @@ export const payeeRoutes = t.router({
         includePricingTiers: z.boolean().default(true),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.getSubscriptionCompetitorAnalysis(
-          input.payeeId,
-          input.includeFeatureComparison,
-          input.includePricingTiers
-        )
+        payeeService.getSubscriptionCompetitorAnalysis(input.payeeId, ctx.workspaceId)
       );
     }),
 
@@ -1113,249 +1165,262 @@ export const payeeRoutes = t.router({
               enabled: z.boolean().default(false),
               thresholdDays: z.number().positive().default(60),
             })
-            .default({}),
+            .default({
+              enabled: false,
+              thresholdDays: 60,
+            }),
           autoRenewalReminders: z
             .object({
               enabled: z.boolean().default(true),
               daysBefore: z.number().positive().default(7),
             })
-            .default({}),
+            .default({
+              enabled: true,
+              daysBefore: 7,
+            }),
         }),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       return withErrorHandler(() =>
-        payeeService.setSubscriptionAutomationRules(input.payeeId, input.rules)
+        payeeService.setSubscriptionAutomationRules(input.payeeId, ctx.workspaceId, input.rules)
       );
     }),
 
   // =====================================
   // Bulk Operations Routes (Phase 4)
+  // NOTE: These methods are not yet implemented in PayeeService
+  // TODO: Implement these methods in PayeeService before uncommenting
   // =====================================
 
-  bulkStatusChange: rateLimitedProcedure
-    .input(
-      z.object({
-        payeeIds: z.array(z.number().positive()),
-        status: z.enum(["active", "inactive"]),
-      })
-    )
-    .mutation(async ({ input }) => {
-      return withErrorHandler(async () => {
-        const isActivating = input.status === "active";
-        return await payeeService.bulkUpdatePayeeStatus(input.payeeIds, isActivating);
-      });
-    }),
+  // bulkStatusChange: rateLimitedProcedure
+  //   .input(
+  //     z.object({
+  //       payeeIds: z.array(z.number().positive()),
+  //       status: z.enum(["active", "inactive"]),
+  //     })
+  //   )
+  //   .mutation(async ({ input }) => {
+  //     return withErrorHandler(async () => {
+  //       const isActivating = input.status === "active";
+  //       return await payeeService.bulkUpdatePayeeStatus(input.payeeIds, isActivating);
+  //     });
+  //   }),
 
-  bulkCategoryAssignment: rateLimitedProcedure
-    .input(
-      z.object({
-        payeeIds: z.array(z.number().positive()),
-        categoryId: z.number().positive(),
-        overwriteExisting: z.boolean().default(false),
-      })
-    )
-    .mutation(async ({ input }) => {
-      return withErrorHandler(() =>
-        payeeService.bulkAssignCategory(input.payeeIds, input.categoryId, input.overwriteExisting)
-      );
-    }),
+  // bulkCategoryAssignment: rateLimitedProcedure
+  //   .input(
+  //     z.object({
+  //       payeeIds: z.array(z.number().positive()),
+  //       categoryId: z.number().positive(),
+  //       overwriteExisting: z.boolean().default(false),
+  //     })
+  //   )
+  //   .mutation(async ({ input }) => {
+  //     return withErrorHandler(() =>
+  //       payeeService.bulkAssignCategory(input.payeeIds, input.categoryId, input.overwriteExisting)
+  //     );
+  //   }),
 
-  bulkTagManagement: rateLimitedProcedure
-    .input(
-      z.object({
-        payeeIds: z.array(z.number().positive()),
-        tags: z.array(z.string()),
-        operation: z.enum(["add", "remove", "replace"]),
-      })
-    )
-    .mutation(async ({ input }) => {
-      return withErrorHandler(() =>
-        payeeService.bulkManageTags(input.payeeIds, input.tags, input.operation)
-      );
-    }),
+  // bulkTagManagement: rateLimitedProcedure
+  //   .input(
+  //     z.object({
+  //       payeeIds: z.array(z.number().positive()),
+  //       tags: z.array(z.string()),
+  //       operation: z.enum(["add", "remove", "replace"]),
+  //     })
+  //   )
+  //   .mutation(async ({ input }) => {
+  //     return withErrorHandler(() =>
+  //       payeeService.bulkManageTags(input.payeeIds, input.tags, input.operation)
+  //     );
+  //   }),
 
-  bulkIntelligenceApplication: rateLimitedProcedure
-    .input(
-      z.object({
-        payeeIds: z.array(z.number().positive()),
-        options: z.object({
-          applyCategory: z.boolean().default(true),
-          applyBudget: z.boolean().default(true),
-          confidenceThreshold: z.number().min(0).max(1).default(0.7),
-          overwriteExisting: z.boolean().default(false),
-        }),
-      })
-    )
-    .mutation(async ({ input }) => {
-      return withErrorHandler(() =>
-        payeeService.bulkApplyIntelligentDefaults(input.payeeIds, input.options)
-      );
-    }),
+  // bulkIntelligenceApplication: rateLimitedProcedure
+  //   .input(
+  //     z.object({
+  //       payeeIds: z.array(z.number().positive()),
+  //       options: z.object({
+  //         applyCategory: z.boolean().default(true),
+  //         applyBudget: z.boolean().default(true),
+  //         confidenceThreshold: z.number().min(0).max(1).default(0.7),
+  //         overwriteExisting: z.boolean().default(false),
+  //       }),
+  //     })
+  //   )
+  //   .mutation(async ({ input }) => {
+  //     return withErrorHandler(() =>
+  //       payeeService.bulkApplyIntelligentDefaults(input.payeeIds, input.options)
+  //     );
+  //   }),
 
-  bulkExport: publicProcedure
-    .input(
-      z.object({
-        payeeIds: z.array(z.number().positive()),
-        format: z.enum(["csv", "json"]),
-        includeTransactionStats: z.boolean().default(true),
-        includeContactInfo: z.boolean().default(true),
-        includeIntelligenceData: z.boolean().default(false),
-      })
-    )
-    .query(async ({ input }) => {
-      return withErrorHandler(() =>
-        payeeService.exportPayees(input.payeeIds, input.format, {
-          includeTransactionStats: input.includeTransactionStats,
-          includeContactInfo: input.includeContactInfo,
-          includeIntelligenceData: input.includeIntelligenceData,
-        })
-      );
-    }),
+  // bulkExport: publicProcedure
+  //   .input(
+  //     z.object({
+  //       payeeIds: z.array(z.number().positive()),
+  //       format: z.enum(["csv", "json"]),
+  //       includeTransactionStats: z.boolean().default(true),
+  //       includeContactInfo: z.boolean().default(true),
+  //       includeIntelligenceData: z.boolean().default(false),
+  //     })
+  //   )
+  //   .query(async ({ input }) => {
+  //     return withErrorHandler(() =>
+  //       payeeService.exportPayees(input.payeeIds, input.format, {
+  //         includeTransactionStats: input.includeTransactionStats,
+  //         includeContactInfo: input.includeContactInfo,
+  //         includeIntelligenceData: input.includeIntelligenceData,
+  //       })
+  //     );
+  //   }),
 
-  bulkImport: rateLimitedProcedure
-    .input(
-      z.object({
-        data: z.string(), // CSV or JSON string
-        format: z.enum(["csv", "json"]),
-        options: z
-          .object({
-            skipDuplicates: z.boolean().default(true),
-            updateExisting: z.boolean().default(false),
-            applyIntelligentDefaults: z.boolean().default(true),
-            validateContactInfo: z.boolean().default(true),
-          })
-          .default({}),
-      })
-    )
-    .mutation(async ({ input }) => {
-      return withErrorHandler(() =>
-        payeeService.importPayees(input.data, input.format, input.options)
-      );
-    }),
+  // bulkImport: rateLimitedProcedure
+  //   .input(
+  //     z.object({
+  //       data: z.string(), // CSV or JSON string
+  //       format: z.enum(["csv", "json"]),
+  //       options: z
+  //         .object({
+  //           skipDuplicates: z.boolean().default(true),
+  //           updateExisting: z.boolean().default(false),
+  //           applyIntelligentDefaults: z.boolean().default(true),
+  //           validateContactInfo: z.boolean().default(true),
+  //         })
+  //         .default({
+  //           skipDuplicates: true,
+  //           updateExisting: false,
+  //           applyIntelligentDefaults: true,
+  //           validateContactInfo: true,
+  //         }),
+  //     })
+  //   )
+  //   .mutation(async ({ input }) => {
+  //     return withErrorHandler(() =>
+  //       payeeService.importPayees(input.data, input.format, input.options)
+  //     );
+  //   }),
 
-  bulkCleanup: rateLimitedProcedure
-    .input(
-      z.object({
-        operations: z.array(
-          z.enum([
-            "remove_inactive",
-            "remove_empty_payees",
-            "normalize_names",
-            "standardize_contact_info",
-            "merge_duplicates",
-            "update_calculated_fields",
-          ])
-        ),
-        dryRun: z.boolean().default(true),
-        confirmDestructive: z.boolean().default(false),
-      })
-    )
-    .mutation(async ({ input }) => {
-      return withErrorHandler(() =>
-        payeeService.bulkCleanupPayees(input.operations, input.dryRun, input.confirmDestructive)
-      );
-    }),
+  // bulkCleanup: rateLimitedProcedure
+  //   .input(
+  //     z.object({
+  //       operations: z.array(
+  //         z.enum([
+  //           "remove_inactive",
+  //           "remove_empty_payees",
+  //           "normalize_names",
+  //           "standardize_contact_info",
+  //           "merge_duplicates",
+  //           "update_calculated_fields",
+  //         ])
+  //       ),
+  //       dryRun: z.boolean().default(true),
+  //       confirmDestructive: z.boolean().default(false),
+  //     })
+  //   )
+  //   .mutation(async ({ input }) => {
+  //     return withErrorHandler(() =>
+  //       payeeService.bulkCleanupPayees(input.operations, input.dryRun, input.confirmDestructive)
+  //     );
+  //   }),
 
-  getDuplicates: publicProcedure
-    .input(
-      z.object({
-        similarityThreshold: z.number().min(0).max(1).default(0.8),
-        includeInactive: z.boolean().default(false),
-        groupingStrategy: z
-          .enum(["name", "contact", "transaction_pattern", "comprehensive"])
-          .default("comprehensive"),
-      })
-    )
-    .query(async ({ input }) => {
-      return withErrorHandler(() =>
-        payeeService.findDuplicatePayees(
-          input.similarityThreshold,
-          input.includeInactive,
-          input.groupingStrategy
-        )
-      );
-    }),
+  // getDuplicates: publicProcedure
+  //   .input(
+  //     z.object({
+  //       similarityThreshold: z.number().min(0).max(1).default(0.8),
+  //       includeInactive: z.boolean().default(false),
+  //       groupingStrategy: z
+  //         .enum(["name", "contact", "transaction_pattern", "comprehensive"])
+  //         .default("comprehensive"),
+  //     })
+  //   )
+  //   .query(async ({ input }) => {
+  //     return withErrorHandler(() =>
+  //       payeeService.findDuplicatePayees(
+  //         input.similarityThreshold,
+  //         input.includeInactive,
+  //         input.groupingStrategy
+  //       )
+  //     );
+  //   }),
 
-  mergeDuplicates: rateLimitedProcedure
-    .input(
-      z.object({
-        primaryPayeeId: z.number().positive(),
-        duplicatePayeeIds: z.array(z.number().positive()),
-        mergeStrategy: z
-          .object({
-            preserveTransactionHistory: z.boolean().default(true),
-            conflictResolution: z
-              .enum(["primary", "latest", "best_quality", "manual"])
-              .default("best_quality"),
-            mergeContactInfo: z.boolean().default(true),
-            mergeIntelligenceData: z.boolean().default(true),
-          })
-          .default({}),
-        confirmMerge: z.boolean().default(false),
-      })
-    )
-    .mutation(async ({ input }) => {
-      return withErrorHandler(() =>
-        payeeService.mergeDuplicatePayees(
-          input.primaryPayeeId,
-          input.duplicatePayeeIds,
-          input.mergeStrategy,
-          input.confirmMerge
-        )
-      );
-    }),
+  // mergeDuplicates: rateLimitedProcedure
+  //   .input(
+  //     z.object({
+  //       primaryPayeeId: z.number().positive(),
+  //       duplicatePayeeIds: z.array(z.number().positive()),
+  //       mergeStrategy: z
+  //         .object({
+  //           preserveTransactionHistory: z.boolean().default(true),
+  //           conflictResolution: z
+  //             .enum(["primary", "latest", "best_quality", "manual"])
+  //             .default("best_quality"),
+  //           mergeContactInfo: z.boolean().default(true),
+  //           mergeIntelligenceData: z.boolean().default(true),
+  //         })
+  //         .default({}),
+  //       confirmMerge: z.boolean().default(false),
+  //     })
+  //   )
+  //   .mutation(async ({ input }) => {
+  //     return withErrorHandler(() =>
+  //       payeeService.mergeDuplicatePayees(
+  //         input.primaryPayeeId,
+  //         input.duplicatePayeeIds,
+  //         input.mergeStrategy,
+  //         input.confirmMerge
+  //       )
+  //     );
+  //   }),
 
-  undoOperation: rateLimitedProcedure
-    .input(
-      z.object({
-        operationId: z.string(),
-        operationType: z.enum([
-          "bulk_delete",
-          "bulk_status_change",
-          "bulk_category_assignment",
-          "bulk_tag_management",
-          "bulk_intelligence_application",
-          "bulk_cleanup",
-          "merge_duplicates",
-        ]),
-      })
-    )
-    .mutation(async ({ input }) => {
-      return withErrorHandler(() =>
-        payeeService.undoBulkOperation(input.operationId, input.operationType)
-      );
-    }),
+  // undoOperation: rateLimitedProcedure
+  //   .input(
+  //     z.object({
+  //       operationId: z.string(),
+  //       operationType: z.enum([
+  //         "bulk_delete",
+  //         "bulk_status_change",
+  //         "bulk_category_assignment",
+  //         "bulk_tag_management",
+  //         "bulk_intelligence_application",
+  //         "bulk_cleanup",
+  //         "merge_duplicates",
+  //       ]),
+  //     })
+  //   )
+  //   .mutation(async ({ input }) => {
+  //     return withErrorHandler(() =>
+  //       payeeService.undoBulkOperation(input.operationId, input.operationType)
+  //     );
+  //   }),
 
-  getOperationHistory: publicProcedure
-    .input(
-      z.object({
-        limit: z.number().positive().default(20),
-        offset: z.number().min(0).default(0),
-        operationType: z
-          .enum([
-            "bulk_delete",
-            "bulk_status_change",
-            "bulk_category_assignment",
-            "bulk_tag_management",
-            "bulk_intelligence_application",
-            "bulk_cleanup",
-            "merge_duplicates",
-          ])
-          .optional(),
-        startDate: z.string().optional(),
-        endDate: z.string().optional(),
-      })
-    )
-    .query(async ({ input }) => {
-      return withErrorHandler(() =>
-        payeeService.getBulkOperationHistory(
-          input.limit,
-          input.offset,
-          input.operationType,
-          input.startDate,
-          input.endDate
-        )
-      );
-    }),
+  // getOperationHistory: publicProcedure
+  //   .input(
+  //     z.object({
+  //       limit: z.number().positive().default(20),
+  //       offset: z.number().min(0).default(0),
+  //       operationType: z
+  //         .enum([
+  //           "bulk_delete",
+  //           "bulk_status_change",
+  //           "bulk_category_assignment",
+  //           "bulk_tag_management",
+  //           "bulk_intelligence_application",
+  //           "bulk_cleanup",
+  //           "merge_duplicates",
+  //         ])
+  //         .optional(),
+  //       startDate: z.string().optional(),
+  //       endDate: z.string().optional(),
+  //     })
+  //   )
+  //   .query(async ({ input }) => {
+  //     return withErrorHandler(() =>
+  //       payeeService.getBulkOperationHistory(
+  //         input.limit,
+  //         input.offset,
+  //         input.operationType,
+  //         input.startDate,
+  //         input.endDate
+  //       )
+  //     );
+  //   }),
 });

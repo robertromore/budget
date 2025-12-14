@@ -159,14 +159,14 @@ export class TransactionService {
    */
   async createTransactionWithPayeeDefaults(
     data: CreateTransactionWithAutoPopulationData,
-    workspaceId: string
+    workspaceId: number
   ): Promise<Transaction> {
     // Get payee intelligence if payeeId is provided and auto-population is enabled
     let suggestions: TransactionSuggestion | null = null;
 
     if (data.payeeId && data.autoPopulateFromPayee !== false) {
       try {
-        suggestions = await this.suggestTransactionDetails(data.payeeId, data.amount);
+        suggestions = await this.suggestTransactionDetails(data.payeeId, workspaceId, data.amount);
 
         // Auto-populate missing fields with payee defaults (only if not explicitly provided)
         if (!data.categoryId && suggestions.suggestedCategoryId) {
@@ -204,7 +204,7 @@ export class TransactionService {
   /**
    * Create a new transaction
    */
-  async createTransaction(data: CreateTransactionData, workspaceId: string): Promise<Transaction> {
+  async createTransaction(data: CreateTransactionData, workspaceId: number): Promise<Transaction> {
     // Validate required fields
     if (!data.accountId) {
       throw new ValidationError("Account ID is required");
@@ -241,7 +241,7 @@ export class TransactionService {
     if (data.payeeId) {
       const payeeExists = await this.payeeService.verifyPayeeExists(
         data.payeeId,
-        Number(workspaceId)
+        workspaceId
       );
       if (!payeeExists) {
         throw new NotFoundError("Payee", data.payeeId);
@@ -252,7 +252,7 @@ export class TransactionService {
     if (data.categoryId) {
       const categoryExists = await this.categoryService.verifyCategoryExists(
         data.categoryId,
-        Number(workspaceId)
+        workspaceId
       );
       if (!categoryExists) {
         throw new NotFoundError("Category", data.categoryId);
@@ -270,7 +270,7 @@ export class TransactionService {
         notes,
         status,
       },
-      Number(workspaceId)
+      workspaceId
     );
 
     // Handle budget allocations
@@ -330,10 +330,10 @@ export class TransactionService {
   async updateTransaction(
     id: number,
     data: UpdateTransactionData,
-    workspaceId: string
+    workspaceId: number
   ): Promise<Transaction> {
     // Verify transaction exists
-    const existingTransaction = await this.repository.findByIdOrThrow(id, Number(workspaceId));
+    const existingTransaction = await this.repository.findByIdOrThrow(id, workspaceId);
 
     const updateData: Partial<NewTransaction> = {};
 
@@ -376,7 +376,7 @@ export class TransactionService {
       if (data.payeeId) {
         const payeeExists = await this.payeeService.verifyPayeeExists(
           data.payeeId,
-          Number(workspaceId)
+          workspaceId
         );
         if (!payeeExists) {
           throw new NotFoundError("Payee", data.payeeId);
@@ -390,7 +390,7 @@ export class TransactionService {
       if (data.categoryId) {
         const categoryExists = await this.categoryService.verifyCategoryExists(
           data.categoryId,
-          Number(workspaceId)
+          workspaceId
         );
         if (!categoryExists) {
           throw new NotFoundError("Category", data.categoryId);
@@ -400,7 +400,7 @@ export class TransactionService {
     }
 
     // Update transaction
-    const updatedTransaction = await this.repository.update(id, updateData, Number(workspaceId));
+    const updatedTransaction = await this.repository.update(id, updateData, workspaceId);
 
     // Handle budget allocations
     if (data.budgetAllocations !== undefined) {
@@ -531,13 +531,13 @@ export class TransactionService {
   async updateTransactionWithRecalculatedBalance(
     id: number,
     data: UpdateTransactionData,
-    workspaceId: string
+    workspaceId: number
   ): Promise<Array<Transaction & { balance: number }>> {
     // First update the transaction using the existing method
     const updatedTransaction = await this.updateTransaction(id, data, workspaceId);
 
     // Then return all account transactions with recalculated running balances
-    return await this.repository.findWithRunningBalance(updatedTransaction.accountId, Number(workspaceId));
+    return await this.repository.findWithRunningBalance(updatedTransaction.accountId, workspaceId);
   }
 
   /**
@@ -548,7 +548,7 @@ export class TransactionService {
     transactionId: number,
     newPayeeId: number | null,
     originalPayeeName: string,
-    workspaceId: string
+    workspaceId: number
   ): Promise<{ count: number }> {
     // Verify account exists and belongs to workspace
     const accountExists = await db.query.accounts.findFirst({
@@ -608,7 +608,7 @@ export class TransactionService {
     newCategoryId: number | null,
     matchBy: "payee" | "category",
     matchValue: string | number | undefined,
-    workspaceId: string
+    workspaceId: number
   ): Promise<{ count: number }> {
     // Verify account exists and belongs to workspace
     const accountExists = await db.query.accounts.findFirst({
@@ -684,8 +684,8 @@ export class TransactionService {
   /**
    * Get transaction by ID
    */
-  async getTransactionById(id: number, workspaceId: string): Promise<Transaction> {
-    return await this.repository.findByIdWithRelations(id, Number(workspaceId));
+  async getTransactionById(id: number, workspaceId: number): Promise<Transaction> {
+    return await this.repository.findByIdWithRelations(id, workspaceId);
   }
 
   /**
@@ -694,7 +694,7 @@ export class TransactionService {
   async getTransactions(
     filters: TransactionFilters,
     pagination: PaginationParams | undefined,
-    workspaceId: string
+    workspaceId: number
   ): Promise<PaginatedResult<Transaction>> {
     // Sanitize search query if provided
     if (filters.searchQuery) {
@@ -705,14 +705,14 @@ export class TransactionService {
       });
     }
 
-    return await this.repository.findWithFilters(filters, pagination, Number(workspaceId));
+    return await this.repository.findWithFilters(filters, pagination, workspaceId);
   }
 
   /**
    * Get all transactions for an account
    */
-  async getAccountTransactions(accountId: number, workspaceId: string): Promise<Transaction[]> {
-    const rawTransactions = await this.repository.findByAccountId(accountId, Number(workspaceId));
+  async getAccountTransactions(accountId: number, workspaceId: number): Promise<Transaction[]> {
+    const rawTransactions = await this.repository.findByAccountId(accountId, workspaceId);
 
     // Transform budget allocations for each transaction
     return rawTransactions.map((t) => ({
@@ -726,10 +726,10 @@ export class TransactionService {
    */
   async getAccountTransactionsWithUpcoming(
     accountId: number,
-    workspaceId: string
+    workspaceId: number
   ): Promise<(Transaction | UpcomingScheduledTransaction)[]> {
     // Get actual transactions with running balance
-    const rawTransactions = await this.repository.findWithRunningBalance(accountId, Number(workspaceId));
+    const rawTransactions = await this.repository.findWithRunningBalance(accountId, workspaceId);
     console.log(`Found ${rawTransactions.length} actual transactions for account ${accountId}`);
 
     // Enrich actual transactions with schedule metadata if they have a scheduleId
@@ -786,16 +786,16 @@ export class TransactionService {
    */
   async getTransactionsWithBalance(
     accountId: number,
-    workspaceId: string,
+    workspaceId: number,
     limit?: number
   ): Promise<Array<Transaction & { balance: number }>> {
-    return await this.repository.findWithRunningBalance(accountId, Number(workspaceId), limit);
+    return await this.repository.findWithRunningBalance(accountId, workspaceId, limit);
   }
 
   /**
    * Get account summary
    */
-  async getAccountSummary(accountId: number, workspaceId: string): Promise<TransactionSummary> {
+  async getAccountSummary(accountId: number, workspaceId: number): Promise<TransactionSummary> {
     // Fetch account info and verify it exists
     const account = await db
       .select({
@@ -811,9 +811,9 @@ export class TransactionService {
     }
 
     const [balance, pendingBalance, transactions] = await Promise.all([
-      this.repository.getAccountBalance(accountId, Number(workspaceId)),
-      this.repository.getPendingBalance(accountId, Number(workspaceId)),
-      this.repository.findByAccountId(accountId, Number(workspaceId)),
+      this.repository.getAccountBalance(accountId, workspaceId),
+      this.repository.getPendingBalance(accountId, workspaceId),
+      this.repository.findByAccountId(accountId, workspaceId),
     ]);
 
     const clearedCount = transactions.filter((t) => t.status === "cleared").length;
@@ -840,10 +840,10 @@ export class TransactionService {
   /**
    * Delete transaction (soft delete)
    */
-  async deleteTransaction(id: number, workspaceId: string): Promise<void> {
+  async deleteTransaction(id: number, workspaceId: number): Promise<void> {
     // Soft delete the transaction
-    const transaction = await this.repository.findByIdOrThrow(id, Number(workspaceId));
-    await this.repository.softDelete(id, Number(workspaceId));
+    const transaction = await this.repository.findByIdOrThrow(id, workspaceId);
+    await this.repository.softDelete(id, workspaceId);
 
     // Trigger budget consumption recalculation
     try {
@@ -861,18 +861,18 @@ export class TransactionService {
   /**
    * Bulk delete transactions
    */
-  async deleteTransactions(ids: number[], workspaceId: string): Promise<void> {
+  async deleteTransactions(ids: number[], workspaceId: number): Promise<void> {
     if (ids.length === 0) {
       throw new ValidationError("No transaction IDs provided");
     }
 
     // Load transactions to validate existence and capture account IDs for cache invalidation
     const transactions = await Promise.all(
-      ids.map((id) => this.repository.findByIdOrThrow(id, Number(workspaceId)))
+      ids.map((id) => this.repository.findByIdOrThrow(id, workspaceId))
     );
 
     // Bulk soft delete
-    await this.repository.bulkSoftDelete(ids, Number(workspaceId));
+    await this.repository.bulkSoftDelete(ids, workspaceId);
 
     // Trigger budget consumption recalculation for each deleted transaction
     for (const id of ids) {
@@ -893,13 +893,13 @@ export class TransactionService {
   /**
    * Clear pending transactions for an account
    */
-  async clearPendingTransactions(accountId: number, workspaceId: string): Promise<number> {
-    const pendingTransactions = await this.repository.findByAccountId(accountId, Number(workspaceId));
+  async clearPendingTransactions(accountId: number, workspaceId: number): Promise<number> {
+    const pendingTransactions = await this.repository.findByAccountId(accountId, workspaceId);
     const pendingIds = pendingTransactions.filter((t) => t.status === "pending").map((t) => t.id);
 
     let clearedCount = 0;
     for (const id of pendingIds) {
-      await this.repository.update(id, { status: "cleared" }, Number(workspaceId));
+      await this.repository.update(id, { status: "cleared" }, workspaceId);
 
       // Trigger budget consumption recalculation (status change may affect period calculations)
       try {
@@ -922,7 +922,7 @@ export class TransactionService {
    */
   async getMonthlySpendingAggregates(
     accountId: number,
-    workspaceId: string
+    workspaceId: number
   ): Promise<
     Array<{
       month: string;
@@ -932,7 +932,7 @@ export class TransactionService {
     }>
   > {
     // Verify account belongs to user (through repository)
-    await this.repository.findByAccountId(accountId, Number(workspaceId));
+    await this.repository.findByAccountId(accountId, workspaceId);
 
     const result = await db
       .select({
@@ -977,7 +977,7 @@ export class TransactionService {
     // Get payee intelligence data
     const intelligence = await this.getPayeeTransactionIntelligence(
       payeeId,
-      workspaceId.toString()
+      workspaceId
     );
 
     let confidence = 0;
@@ -1038,7 +1038,7 @@ export class TransactionService {
    */
   async getPayeeTransactionIntelligence(
     payeeId: number,
-    workspaceId: string
+    workspaceId: number
   ): Promise<PayeeTransactionIntelligence> {
     // Get all transactions for this payee
     const payeeTransactions = await db
@@ -1096,7 +1096,7 @@ export class TransactionService {
           try {
             const category = await this.categoryService.getCategoryById(
               categoryId,
-              parseInt(workspaceId, 10)
+              workspaceId
             );
             categoryName = category.name ?? `Category ${categoryId}`;
           } catch (error) {
@@ -1165,7 +1165,7 @@ export class TransactionService {
   /**
    * Update payee calculated fields after transaction creation/update
    */
-  async updatePayeeAfterTransaction(payeeId: number, workspaceId: string): Promise<void> {
+  async updatePayeeAfterTransaction(payeeId: number, workspaceId: number): Promise<void> {
     // Get latest transaction data for this payee
     const intelligence = await this.getPayeeTransactionIntelligence(payeeId, workspaceId);
 
@@ -1203,7 +1203,7 @@ export class TransactionService {
 
     // Update the payee with calculated fields
     if (Object.keys(updateData).length > 0) {
-      await this.payeeService.updatePayee(payeeId, updateData, Number(workspaceId));
+      await this.payeeService.updatePayee(payeeId, updateData, workspaceId);
     }
   }
 
@@ -1262,7 +1262,7 @@ export class TransactionService {
       categoryId?: number | null;
       payeeId?: number | null;
     },
-    workspaceId: string
+    workspaceId: number
   ): Promise<{ transferId: string; fromTransaction: Transaction; toTransaction: Transaction }> {
     const { createId } = await import("@paralleldrive/cuid2");
 
@@ -1324,7 +1324,7 @@ export class TransactionService {
         isTransfer: true,
         status: "cleared", // Transfers are typically cleared immediately
       },
-      Number(workspaceId)
+      workspaceId
     );
 
     // Create TO transaction (money in - positive amount)
@@ -1341,7 +1341,7 @@ export class TransactionService {
         isTransfer: true,
         status: "cleared",
       },
-      Number(workspaceId)
+      workspaceId
     );
 
     // Link the transactions together
@@ -1350,7 +1350,7 @@ export class TransactionService {
       {
         transferTransactionId: toTransaction.id,
       },
-      Number(workspaceId)
+      workspaceId
     );
 
     await this.repository.update(
@@ -1358,7 +1358,7 @@ export class TransactionService {
       {
         transferTransactionId: fromTransaction.id,
       },
-      Number(workspaceId)
+      workspaceId
     );
 
     // Invalidate both account caches
@@ -1367,8 +1367,8 @@ export class TransactionService {
 
     return {
       transferId,
-      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, Number(workspaceId)),
-      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, Number(workspaceId)),
+      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, workspaceId),
+      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, workspaceId),
     };
   }
 
@@ -1384,7 +1384,7 @@ export class TransactionService {
       categoryId?: number | null;
       payeeId?: number | null;
     },
-    workspaceId: string
+    workspaceId: number
   ): Promise<{ fromTransaction: Transaction; toTransaction: Transaction }> {
     // Find both transactions using shared transferId
     const transferTransactions = await db
@@ -1437,29 +1437,29 @@ export class TransactionService {
     if (updates.amount !== undefined) {
       fromUpdateData.amount = -updates.amount; // Negative for outgoing
     }
-    await this.repository.update(fromTransaction.id, fromUpdateData, Number(workspaceId));
+    await this.repository.update(fromTransaction.id, fromUpdateData, workspaceId);
 
     // Update TO transaction
     const toUpdateData = { ...updateData };
     if (updates.amount !== undefined) {
       toUpdateData.amount = updates.amount; // Positive for incoming
     }
-    await this.repository.update(toTransaction.id, toUpdateData, Number(workspaceId));
+    await this.repository.update(toTransaction.id, toUpdateData, workspaceId);
 
     // Invalidate both account caches
     invalidateAccountCache(fromTransaction.accountId);
     invalidateAccountCache(toTransaction.accountId);
 
     return {
-      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, Number(workspaceId)),
-      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, Number(workspaceId)),
+      fromTransaction: await this.repository.findByIdWithRelations(fromTransaction.id, workspaceId),
+      toTransaction: await this.repository.findByIdWithRelations(toTransaction.id, workspaceId),
     };
   }
 
   /**
    * Delete a transfer (soft deletes both transactions)
    */
-  async deleteTransfer(transferId: string, workspaceId: string): Promise<void> {
+  async deleteTransfer(transferId: string, workspaceId: number): Promise<void> {
     // Find both transactions using shared transferId
     const transferTransactions = await db
       .select()
@@ -1475,7 +1475,7 @@ export class TransactionService {
     // Soft delete both transactions
     const accountIds = new Set<number>();
     for (const transaction of transferTransactions) {
-      await this.repository.softDelete(transaction.id, Number(workspaceId));
+      await this.repository.softDelete(transaction.id, workspaceId);
       accountIds.add(transaction.accountId);
     }
 
