@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Check, Circle, CircleDot } from '@lucide/svelte/icons';
-import { cn } from '$lib/utils';
 import type { WizardStore } from '$lib/stores/wizardStore.svelte';
+import { cn } from '$lib/utils';
+import { Check, Circle, CircleDot } from '@lucide/svelte/icons';
 
 interface Props {
   wizardStore: WizardStore;

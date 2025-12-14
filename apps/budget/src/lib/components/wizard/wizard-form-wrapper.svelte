@@ -1,12 +1,12 @@
 <script lang="ts">
-import * as Tabs from '$lib/components/ui/tabs';
-import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
-import { FileText, Wand, RotateCcw } from '@lucide/svelte/icons';
-import WizardProgress from './wizard-progress.svelte';
-import { cn } from '$lib/utils';
-import type { Snippet } from 'svelte';
+import { Button } from '$lib/components/ui/button';
+import * as Tabs from '$lib/components/ui/tabs';
 import type { WizardStore } from '$lib/stores/wizardStore.svelte';
+import { cn } from '$lib/utils';
+import { FileText, RotateCcw, Wand } from '@lucide/svelte/icons';
+import type { Snippet } from 'svelte';
+import WizardProgress from './wizard-progress.svelte';
 
 interface Props {
   title: string;
