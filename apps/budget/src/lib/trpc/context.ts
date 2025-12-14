@@ -1,6 +1,6 @@
-import type { RequestEvent } from "@sveltejs/kit";
-import { db } from "$lib/server/db";
 import { workspaces } from "$lib/schema/workspaces";
+import { db } from "$lib/server/db";
+import type { RequestEvent } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 
 /**

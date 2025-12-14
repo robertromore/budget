@@ -8,13 +8,13 @@ import { transactionRoutes } from "$lib/trpc/routes/transactions";
 import { t } from "$lib/trpc/t";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { budgetRoutes } from "./routes/budgets";
+import { importProfileRoutes } from "./routes/import-profiles";
 import { medicalExpensesRouter } from "./routes/medical-expenses";
 import { patternRoutes } from "./routes/patterns";
 import { scheduleRoutes } from "./routes/schedules";
+import { settingsRoutes } from "./routes/settings";
 import { viewsRoutes } from "./routes/views";
 import { workspaceRoutes } from "./routes/workspaces";
-import { importProfileRoutes } from "./routes/import-profiles";
-import { settingsRoutes } from "./routes/settings";
 
 export const router = t.router({
   workspaceRoutes,
