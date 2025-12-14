@@ -1,44 +1,40 @@
 <script lang="ts">
-import { Input } from '$lib/components/ui/input';
-import { Textarea } from '$lib/components/ui/textarea';
-import { Label } from '$lib/components/ui/label';
-import * as Card from '$lib/components/ui/card';
-import * as Select from '$lib/components/ui/select';
-import { Badge } from '$lib/components/ui/badge';
-import {
-  Target,
-  DollarSign,
-  Building2,
-  Tag,
-  Clock,
-  Shield,
-  CheckCircle2,
-  Info,
-  PiggyBank,
-  Wallet,
-  Calendar,
-  TrendingUp,
-} from '@lucide/svelte/icons';
-import WizardStep from './wizard-step.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
+import { Badge } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import { Textarea } from '$lib/components/ui/textarea';
+import type { Account } from '$lib/schema/accounts';
+import {
+  budgetTypes,
+  periodTemplateTypes,
+  type BudgetEnforcementLevel,
+  type BudgetType,
+  type PeriodTemplateType
+} from '$lib/schema/budgets';
+import type { Category } from '$lib/schema/categories';
+import type { CreateBudgetRequest } from '$lib/server/domains/budgets/services';
 import {
   budgetWizardStore,
   type WizardStep as WizardStepType,
 } from '$lib/stores/wizardStore.svelte';
-import { createBudgetValidationEngine } from '$lib/utils/wizardValidation';
-import type { CreateBudgetRequest } from '$lib/server/domains/budgets/services';
-import type { Account } from '$lib/schema/accounts';
-import type { Category } from '$lib/schema/categories';
-import {
-  budgetTypes,
-  budgetEnforcementLevels,
-  periodTemplateTypes,
-  type BudgetType,
-  type BudgetEnforcementLevel,
-  type PeriodTemplateType,
-  type BudgetMetadata,
-} from '$lib/schema/budgets';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import { createBudgetValidationEngine } from '$lib/utils/wizardValidation';
+import {
+  Building2,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  Info,
+  PiggyBank,
+  Shield,
+  Tag,
+  Target
+} from '@lucide/svelte/icons';
+import WizardStep from './wizard-step.svelte';
 
 interface Props {
   initialData?: Partial<CreateBudgetRequest>;
@@ -50,10 +46,8 @@ interface Props {
 let { initialData = {}, accounts = [], categories = [], onComplete }: Props = $props();
 
 // Local state for form fields that need binding
-let allocatedAmount = $state(initialData?.metadata?.allocatedAmount || 0);
-let periodTypeValue = $state<PeriodTemplateType>(
-  initialData?.metadata?.defaultPeriod?.type || 'monthly'
-);
+let allocatedAmount = $state(0);
+let periodTypeValue = $state<PeriodTemplateType>('monthly');
 const periodTypeAccessors = createTransformAccessors(
   () => periodTypeValue,
   (value: string) => {

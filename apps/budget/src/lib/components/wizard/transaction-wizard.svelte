@@ -1,35 +1,31 @@
 <script lang="ts">
-import { Label } from '$lib/components/ui/label';
-import { Textarea } from '$lib/components/ui/textarea';
-import * as Select from '$lib/components/ui/select';
-import { Badge } from '$lib/components/ui/badge';
-import {
-  Calendar,
-  DollarSign,
-  HandCoins,
-  Tag,
-  FileText,
-  CheckCircle2,
-  Info,
-} from '@lucide/svelte/icons';
-import WizardStep from './wizard-step.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
-import IntelligentNumericInput from '$lib/components/input/intelligent-numeric-input.svelte';
 import IntelligentEntityInput from '$lib/components/input/intelligent-entity-input.svelte';
-import type { DateValue } from '@internationalized/date';
-import { timezone, currentDate } from '$lib/utils/dates';
+import IntelligentNumericInput from '$lib/components/input/intelligent-numeric-input.svelte';
+import { Badge } from '$lib/components/ui/badge';
+import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import { Textarea } from '$lib/components/ui/textarea';
+import { usePayeeIntelligence } from '$lib/hooks/use-payee-intelligence.svelte';
+import type { Transaction } from '$lib/schema';
+import type { Payee } from '$lib/schema/payees';
 import {
   transactionWizardStore,
   type WizardStep as WizardStepType,
 } from '$lib/stores/wizardStore.svelte';
-import { createTransactionValidationEngine } from '$lib/utils/wizardValidation';
-import type { Transaction } from '$lib/schema';
 import type { EditableEntityItem } from '$lib/types';
-import type { Component } from 'svelte';
-import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
-import { usePayeeIntelligence } from '$lib/hooks/use-payee-intelligence.svelte';
-import type { Payee } from '$lib/schema/payees';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
+import { currentDate } from '$lib/utils/dates';
+import { createTransactionValidationEngine } from '$lib/utils/wizardValidation';
+import type { DateValue } from '@internationalized/date';
+import {
+  Calendar,
+  HandCoins,
+  Info
+} from '@lucide/svelte/icons';
+import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
+import type { Component } from 'svelte';
+import WizardStep from './wizard-step.svelte';
 
 interface Props {
   accountId: number;
@@ -89,7 +85,7 @@ const statusAccessors = createTransformAccessors(
 );
 
 // Payee intelligence integration
-const { getPayeeSuggestionsFor, generateBasicSuggestions } = usePayeeIntelligence();
+const { generateBasicSuggestions } = usePayeeIntelligence();
 
 // Get selected payee data for intelligence
 const selectedPayee = $derived.by(() => {
@@ -97,78 +93,51 @@ const selectedPayee = $derived.by(() => {
   return (payees as Payee[]).find((p) => p.id === payee.id) || null;
 });
 
-// Get intelligence query for selected payee
-const intelligenceQuery = $derived.by(() => {
-  const currentPayee = selectedPayee;
-  if (!currentPayee?.id || currentPayee.id === 0) return null;
-
-  return getPayeeSuggestionsFor(currentPayee.id, categories as EditableEntityItem[], {
-    transactionAmount: amount > 0 ? amount : 0,
-    transactionDate: dateValue.toString(),
-  });
-});
-
 // Intelligence suggestions based on selected payee
 const intelligenceSuggestions = $derived.by(() => {
   const currentPayee = selectedPayee;
   if (!currentPayee) return null;
 
-  // Try to get advanced intelligence first
-  const query = intelligenceQuery;
-  if (query) {
-    try {
-      const result = query.execute ? query.execute() : null;
-      if (result) {
-        const processed = query.processSuggestions(result, result);
-        if (processed) return processed;
-      }
-    } catch (error) {
-      console.warn('Intelligence query failed:', error);
-    }
-  }
-
-  // Fallback to basic suggestions from payee data
-  return generateBasicSuggestions(currentPayee, categories as EditableEntityItem[]);
+  // Generate basic suggestions from payee data
+  return generateBasicSuggestions(currentPayee);
 });
 
 // Category suggestion for EntityInput
 const categorySuggestion = $derived.by(() => {
   const suggestions = intelligenceSuggestions;
-  if (!suggestions?.category?.suggestedCategory) return undefined;
+  if (!suggestions?.category?.id) return undefined;
+
+  // Find the category entity by id
+  const suggestedCategory = categories.find((c) => c.id === suggestions.category?.id);
+  if (!suggestedCategory) return undefined;
 
   return {
-    type: suggestions.category.type,
-    reason: suggestions.category.reason,
-    ...(suggestions.category.confidence !== undefined && {
-      confidence: suggestions.category.confidence,
-    }),
-    suggestedValue: suggestions.category.suggestedCategory,
+    type: 'auto' as const,
+    reason: 'Based on payee default category',
+    confidence: suggestions.category.confidence,
+    suggestedValue: suggestedCategory,
     onApply: () => {
-      if (suggestions.category?.suggestedCategory) {
-        category = suggestions.category.suggestedCategory;
-      }
+      category = suggestedCategory;
     },
-  } as const;
+  };
 });
 
 // Amount suggestion for NumericInput
 const amountSuggestion = $derived.by(() => {
   const suggestions = intelligenceSuggestions;
-  if (!suggestions?.amount) return undefined;
+  if (!suggestions?.amount?.value) return undefined;
 
   return {
-    type: suggestions.amount.type,
-    reason: suggestions.amount.reason,
-    ...(suggestions.amount.confidence !== undefined && {
-      confidence: suggestions.amount.confidence,
-    }),
-    suggestedAmount: suggestions.amount.suggestedAmount || 0,
+    type: 'smart' as const,
+    reason: 'Based on average transaction amount',
+    confidence: suggestions.amount.confidence,
+    suggestedAmount: suggestions.amount.value,
     onApply: () => {
-      if (suggestions.amount?.suggestedAmount) {
-        amount = suggestions.amount.suggestedAmount;
+      if (suggestions.amount?.value) {
+        amount = suggestions.amount.value;
       }
     },
-  } as const;
+  };
 });
 
 // Auto-apply suggestions when payee changes
@@ -178,12 +147,15 @@ $effect(() => {
     const shouldApplyCategory = !category.id || category.id === 0;
     const shouldApplyAmount = !amount || amount === 0;
 
-    if (shouldApplyCategory && suggestions.category?.suggestedCategory) {
-      category = suggestions.category.suggestedCategory;
+    if (shouldApplyCategory && suggestions.category?.id) {
+      const suggestedCategory = categories.find((c) => c.id === suggestions.category?.id);
+      if (suggestedCategory) {
+        category = suggestedCategory;
+      }
     }
 
-    if (shouldApplyAmount && suggestions.amount?.suggestedAmount) {
-      amount = suggestions.amount.suggestedAmount;
+    if (shouldApplyAmount && suggestions.amount?.value) {
+      amount = suggestions.amount.value;
     }
   }
 });

@@ -22,7 +22,7 @@ import type { DateValue } from '@internationalized/date';
 import {
   Building2,
   Calendar,
-  CheckCircle2,
+  CircleCheck,
   HandCoins,
   Info,
   RefreshCw,
@@ -31,17 +31,46 @@ import {
 import WizardStep from './wizard-step.svelte';
 
 interface Props {
-  initialData?: Partial<Schedule>;
+  initialData?: Partial<Schedule> & { repeating_date?: any };
   accounts?: EditableEntityItem[];
   payees?: EditableEntityItem[];
   categories?: EditableEntityItem[];
+  /** Optional: pass the model directly for two-way binding */
+  externalRecurringDateModel?: RepeatingDateInputModel;
 }
 
-let { initialData = {}, accounts = [], payees = [], categories = [] }: Props = $props();
+let {
+  initialData = {},
+  accounts = [],
+  payees = [],
+  categories = [],
+  externalRecurringDateModel,
+}: Props = $props();
 
-// Date input variables
-let recurringDateModel = $state(new RepeatingDateInputModel());
+// Date input variables - use external model if provided, otherwise create new
+let internalRecurringDateModel = $state(new RepeatingDateInputModel());
 let oneTimeDate: DateValue | undefined = $state();
+
+// Use external model if provided, otherwise use internal
+const recurringDateModel = $derived(externalRecurringDateModel ?? internalRecurringDateModel);
+
+// Track whether we've initialized from initial data to prevent re-running
+let initializedFromData = $state(false);
+
+// Initialize recurringDateModel with initial data if provided (only when using internal model)
+$effect.pre(() => {
+  // Skip if using external model - it's already populated
+  if (externalRecurringDateModel) return;
+
+  const repeatingData = initialData?.repeating_date;
+
+  // Check for actual saved schedule data by looking for a start date
+  // Only initialize once when data is available
+  if (!initializedFromData && repeatingData?.start) {
+    internalRecurringDateModel.value = { ...repeatingData } as any;
+    initializedFromData = true;
+  }
+});
 
 // Initialize wizard steps
 const steps: WizardStepType[] = [
@@ -74,27 +103,40 @@ let amountValue = $state<[number, number]>([0, 0]);
 let amountType = $state<'exact' | 'approximate' | 'range'>('exact');
 
 // Select state variables
-let payeeSelectValue = $state(initialData?.payeeId?.toString() || '');
+let payeeSelectValue = $state('');
 const payeeSelectAccessors = createTransformAccessors(
   () => payeeSelectValue,
   (value: string) => {
     payeeSelectValue = value;
   }
 );
-let accountSelectValue = $state(initialData?.accountId?.toString() || '');
+let accountSelectValue = $state('');
 const accountSelectAccessors = createTransformAccessors(
   () => accountSelectValue,
   (value: string) => {
     accountSelectValue = value;
   }
 );
-let categorySelectValue = $state(initialData?.categoryId?.toString() || '');
+let categorySelectValue = $state('');
 const categorySelectAccessors = createTransformAccessors(
   () => categorySelectValue,
   (value: string) => {
     categorySelectValue = value;
   }
 );
+
+// Sync select values from initialData on mount
+$effect(() => {
+  if (initialData?.payeeId) {
+    payeeSelectValue = initialData.payeeId.toString();
+  }
+  if (initialData?.accountId) {
+    accountSelectValue = initialData.accountId.toString();
+  }
+  if (initialData?.categoryId) {
+    categorySelectValue = initialData.categoryId.toString();
+  }
+});
 
 // Sync amountValue and amountType with formData
 $effect(() => {
@@ -278,7 +320,7 @@ const scheduleTypes = [
                     <p class="text-muted-foreground text-sm">{scheduleType.description}</p>
                   </div>
                   {#if isSelected}
-                    <CheckCircle2 class="text-primary h-5 w-5" />
+                    <CircleCheck class="text-primary h-5 w-5" />
                   {/if}
                 </div>
 
@@ -307,7 +349,7 @@ const scheduleTypes = [
 
         {#if formData['recurring']}
           <div class="space-y-4">
-            <RepeatingDateInput bind:value={recurringDateModel} hideRecurringToggle={true} />
+            <RepeatingDateInput value={recurringDateModel} hideRecurringToggle={true} />
           </div>
         {:else}
           <div class="space-y-4">
@@ -525,7 +567,7 @@ const scheduleTypes = [
     <Card.Root>
       <Card.Header class="pb-4">
         <Card.Title class="flex items-center gap-2">
-          <CheckCircle2 class="h-5 w-5 text-green-600" />
+          <CircleCheck class="h-5 w-5 text-green-600" />
           Schedule Summary
         </Card.Title>
       </Card.Header>
