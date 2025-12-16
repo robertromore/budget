@@ -65,6 +65,7 @@ const selectedCategoryId = createTransformAccessors(
 );
 
 const rowIndex = $derived(row.original.rowIndex);
+const isInvalid = $derived(row.original.validationStatus === 'invalid');
 let open = $state(false);
 let searchValue = $state('');
 
@@ -167,22 +168,29 @@ function handleClear() {
 </script>
 
 <div class="w-full min-w-[200px]">
-  <Popover.Root bind:open>
-    <Popover.Trigger>
-      {#snippet child({ props })}
-        <Button
-          {...props}
-          variant="outline"
-          class={cn(
-            'h-8 w-full justify-start overflow-hidden text-xs text-ellipsis whitespace-nowrap',
-            !selectedCategory && !selectedCategoryName.get() && 'text-muted-foreground'
-          )}>
-          <Tag class="mr-2 h-3 w-3" />
-          {displayName}
-        </Button>
-      {/snippet}
-    </Popover.Trigger>
-    <Popover.Content class="w-[250px] p-0" align="start">
+  {#if isInvalid}
+    <div
+      class="text-muted-foreground flex h-8 w-full items-center overflow-hidden text-xs text-ellipsis whitespace-nowrap opacity-50">
+      <Tag class="mr-2 h-3 w-3" />
+      {displayName}
+    </div>
+  {:else}
+    <Popover.Root bind:open>
+      <Popover.Trigger>
+        {#snippet child({ props })}
+          <Button
+            {...props}
+            variant="outline"
+            class={cn(
+              'h-8 w-full justify-start overflow-hidden text-xs text-ellipsis whitespace-nowrap',
+              !selectedCategory && !selectedCategoryName.get() && 'text-muted-foreground'
+            )}>
+            <Tag class="mr-2 h-3 w-3" />
+            {displayName}
+          </Button>
+        {/snippet}
+      </Popover.Trigger>
+      <Popover.Content class="w-[250px] p-0" align="start">
       <Command.Root shouldFilter={false}>
         <Command.Input placeholder="Search or create category..." bind:value={searchValue} />
         <Command.List class="max-h-[300px]">
@@ -230,6 +238,7 @@ function handleClear() {
           </Command.Group>
         </Command.List>
       </Command.Root>
-    </Popover.Content>
-  </Popover.Root>
+      </Popover.Content>
+    </Popover.Root>
+  {/if}
 </div>

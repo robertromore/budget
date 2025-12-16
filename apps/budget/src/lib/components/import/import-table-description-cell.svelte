@@ -11,6 +11,7 @@ interface Props {
 let { row, onUpdate }: Props = $props();
 
 const rowIndex = $derived(row.original.rowIndex);
+const isInvalid = $derived(row.original.validationStatus === 'invalid');
 
 // Initialize local state directly from row data
 const initialDescription = (() => {
@@ -26,11 +27,17 @@ function handleUpdate(description: string | null) {
 }
 </script>
 
-<TextAreaInput
-  bind:value={localValue}
-  placeholder="Add description..."
-  label="Description"
-  displayPlaceholder="—"
-  rows={4}
-  onUpdate={handleUpdate}
-  buttonVariant="outline" />
+{#if isInvalid}
+  <div class="text-muted-foreground truncate text-xs opacity-50">
+    {localValue || '—'}
+  </div>
+{:else}
+  <TextAreaInput
+    bind:value={localValue}
+    placeholder="Add description..."
+    label="Description"
+    displayPlaceholder="—"
+    rows={4}
+    onUpdate={handleUpdate}
+    buttonVariant="outline" />
+{/if}

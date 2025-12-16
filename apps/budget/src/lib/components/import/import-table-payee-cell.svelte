@@ -24,6 +24,7 @@ const payeeState = PayeesState.get();
 const payeesArray = $derived(payeeState ? Array.from(payeeState.payees.values()) : []);
 
 const rowIndex = $derived(row.original.rowIndex);
+const isInvalid = $derived(row.original.validationStatus === 'invalid');
 
 // Access row data directly - get payee name from row (which includes overrides)
 const selectedPayeeName = $derived(
@@ -127,21 +128,28 @@ function handleClear() {
 </script>
 
 <div class="w-full min-w-[200px]">
-  <Popover.Root bind:open>
-    <Popover.Trigger>
-      {#snippet child({ props })}
-        <Button
-          {...props}
-          variant="outline"
-          class={cn(
-            'h-8 w-full justify-start overflow-hidden text-xs text-ellipsis whitespace-nowrap',
-            !selectedPayee && !selectedPayeeName && 'text-muted-foreground'
-          )}>
-          <User class="mr-2 h-3 w-3" />
-          {displayName}
-        </Button>
-      {/snippet}
-    </Popover.Trigger>
+  {#if isInvalid}
+    <div
+      class="text-muted-foreground flex h-8 w-full items-center overflow-hidden text-xs text-ellipsis whitespace-nowrap opacity-50">
+      <User class="mr-2 h-3 w-3" />
+      {displayName}
+    </div>
+  {:else}
+    <Popover.Root bind:open>
+      <Popover.Trigger>
+        {#snippet child({ props })}
+          <Button
+            {...props}
+            variant="outline"
+            class={cn(
+              'h-8 w-full justify-start overflow-hidden text-xs text-ellipsis whitespace-nowrap',
+              !selectedPayee && !selectedPayeeName && 'text-muted-foreground'
+            )}>
+            <User class="mr-2 h-3 w-3" />
+            {displayName}
+          </Button>
+        {/snippet}
+      </Popover.Trigger>
     <Popover.Content class="w-[250px] p-0" align="start">
       <Command.Root shouldFilter={false}>
         <Command.Input placeholder="Search or create payee..." bind:value={searchValue} />
@@ -191,5 +199,6 @@ function handleClear() {
         </Command.List>
       </Command.Root>
     </Popover.Content>
-  </Popover.Root>
+    </Popover.Root>
+  {/if}
 </div>
