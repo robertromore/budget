@@ -1,17 +1,21 @@
 <script lang="ts">
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { ManageBudgetForm } from '$lib/components/forms';
 import { Button } from '$lib/components/ui/button';
 import { BudgetWizard, WizardFormWrapper, budgetWizardStore } from '$lib/components/wizard';
-import { ManageBudgetForm } from '$lib/components/forms';
-import { createBudget } from '$lib/query/budgets';
 import { getBudgetTemplateById } from '$lib/constants/budget-templates';
+import { createBudget } from '$lib/query/budgets';
 import type { CreateBudgetRequest } from '$lib/server/domains/budgets/services';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
-import { goto } from '$app/navigation';
 
 import { browser } from '$app/environment';
 
 let { data } = $props();
+
+// Get returnTo parameter from URL
+const returnTo = $derived(page.url.searchParams.get('returnTo') || '/budgets');
 
 // Check for template ID in URL params and get template from constants
 const templateId = $state(
@@ -87,9 +91,9 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="sm" href="/budgets" class="p-2">
+      <Button variant="ghost" size="sm" href={returnTo} class="p-2">
         <ArrowLeft class="h-4 w-4" />
-        <span class="sr-only">Back to Budgets</span>
+        <span class="sr-only">Back</span>
       </Button>
       <div>
         <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">
@@ -109,7 +113,7 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
       : 'Choose between manual form entry or step-by-step wizard'}
     wizardStore={budgetWizardStore}
     onComplete={handleComplete}
-    onCancel={() => goto('/budgets')}
+    onCancel={() => goto(returnTo)}
     defaultMode="wizard">
     {#snippet formContent()}
       <ManageBudgetForm
@@ -117,7 +121,7 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
         accounts={data.accounts}
         categories={data.categories}
         schedules={data.schedules}
-        onCancel={() => goto('/budgets')} />
+        onCancel={() => goto(returnTo)} />
     {/snippet}
 
     {#snippet wizardContent()}
@@ -125,7 +129,6 @@ async function handleComplete(budgetData: CreateBudgetRequest | Record<string, a
         initialData={initialFormData}
         accounts={data.accounts}
         categories={data.categories}
-        schedules={data.schedules}
         onComplete={handleComplete} />
     {/snippet}
   </WizardFormWrapper>

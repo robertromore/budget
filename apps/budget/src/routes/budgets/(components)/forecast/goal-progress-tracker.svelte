@@ -1,20 +1,20 @@
 <script lang="ts">
-import * as Card from '$lib/components/ui/card';
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
 import Progress from '$lib/components/ui/progress/progress.svelte';
-import {
-  Target,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  DollarSign,
-  CircleCheck,
-  CircleAlert,
-} from '@lucide/svelte/icons';
-import { currencyFormatter } from '$lib/utils/formatters';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { getBudgetSummaryStats } from '$lib/query/budgets';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { currencyFormatter } from '$lib/utils/formatters';
+import {
+  Calendar,
+  CircleAlert,
+  CircleCheck,
+  DollarSign,
+  Target,
+  TrendingDown,
+  TrendingUp,
+} from '@lucide/svelte/icons';
 
 interface Props {
   budget: BudgetWithRelations;
@@ -130,7 +130,7 @@ function getStatusBadgeVariant(
 function getStatusIcon(status: string) {
   switch (status) {
     case 'completed':
-      return CheckCircle;
+      return CircleCheck;
     case 'ahead':
       return TrendingUp;
     case 'on-track':
@@ -138,7 +138,7 @@ function getStatusIcon(status: string) {
     case 'behind':
       return TrendingDown;
     case 'at-risk':
-      return AlertCircle;
+      return CircleAlert;
     default:
       return Target;
   }

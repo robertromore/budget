@@ -1,23 +1,23 @@
 <script lang="ts">
-import { SvelteMap } from 'svelte/reactivity';
-import {
-  ArrowRightLeft,
-  DollarSign,
-  Target,
-  Shuffle,
-  CircleAlert,
-  CircleCheck,
-} from '@lucide/svelte/icons';
-import * as Card from '$lib/components/ui/card';
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import * as Dialog from '$lib/components/ui/dialog';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
-import { Badge } from '$lib/components/ui/badge';
-import * as Dialog from '$lib/components/ui/dialog';
-import { cn } from '$lib/utils';
-import { currencyFormatter } from '$lib/utils/formatters';
-import { calculateActualSpent } from '$lib/utils/budget-calculations';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { cn } from '$lib/utils';
+import { calculateActualSpent } from '$lib/utils/budget-calculations';
+import { currencyFormatter } from '$lib/utils/formatters';
+import {
+  ArrowRightLeft,
+  CircleAlert,
+  CircleCheck,
+  DollarSign,
+  Shuffle,
+  Target,
+} from '@lucide/svelte/icons';
+import { SvelteMap } from 'svelte/reactivity';
 
 interface BudgetEnvelope {
   id: number;
@@ -69,9 +69,9 @@ const envelopes = $derived.by(() => {
 });
 
 // Separate envelopes by status for better organization
-const activeEnvelopes = $derived(() => envelopes.filter((e) => e.status === 'active'));
-const overspentEnvelopes = $derived(() => envelopes.filter((e) => e.status === 'overspent'));
-const pausedEnvelopes = $derived(() => envelopes.filter((e) => e.status === 'paused'));
+const activeEnvelopes = $derived(envelopes.filter((e) => e.status === 'active'));
+const overspentEnvelopes = $derived(envelopes.filter((e) => e.status === 'overspent'));
+const pausedEnvelopes = $derived(envelopes.filter((e) => e.status === 'paused'));
 
 // Current transfer context
 let sourceBudget = $state<BudgetEnvelope | null>(null);
@@ -177,7 +177,7 @@ function cancelTransfer() {
 }
 
 // Quick transfer amounts
-const suggestedAmounts = $derived(() => {
+const suggestedAmounts = $derived.by(() => {
   if (!sourceBudget) return [];
   const available = sourceBudget.availableAmount;
   const suggestions = [];
@@ -230,13 +230,13 @@ const typeIconMap = new SvelteMap([
   ['general', DollarSign],
 ]);
 
-const getTypeIcon = $derived((type: string) => typeIconMap.get(type) ?? DollarSign);
+function getTypeIcon(type: string) {
+  return typeIconMap.get(type) ?? DollarSign;
+}
 
-const maxTransferAmount = $derived(() => {
-  return sourceBudget?.availableAmount ?? 0;
-});
+const maxTransferAmount = $derived(sourceBudget?.availableAmount ?? 0);
 
-const isValidTransfer = $derived(() => {
+const isValidTransfer = $derived.by(() => {
   const amount = parseFloat(transferAmount);
   return Number.isFinite(amount) && amount > 0 && amount <= maxTransferAmount;
 });
@@ -413,8 +413,8 @@ const isValidTransfer = $derived(() => {
 </div>
 
 <!-- Transfer Dialog -->
-<Dialog.Root bind:open={showTransferDialog} closeOnOutsideClick={false}>
-  <Dialog.Content class="max-w-md">
+<Dialog.Root bind:open={showTransferDialog}>
+  <Dialog.Content class="max-w-md" interactOutsideBehavior="ignore">
     <Dialog.Header>
       <Dialog.Title>Transfer Funds</Dialog.Title>
       <Dialog.Description>Move money between budget envelopes</Dialog.Description>

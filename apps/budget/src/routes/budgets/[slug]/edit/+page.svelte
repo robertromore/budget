@@ -1,9 +1,9 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
 import { ManageBudgetForm } from '$lib/components/forms';
+import { Button } from '$lib/components/ui/button';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
-import { goto } from '$app/navigation';
 
 let { data } = $props();
 </script>

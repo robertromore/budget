@@ -1,7 +1,7 @@
 <script lang="ts">
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { Badge } from '$lib/components/ui/badge';
 import * as Tooltip from '$lib/components/ui/tooltip';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { getBudgetValidationIssues } from '$lib/utils/budget-validation';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 

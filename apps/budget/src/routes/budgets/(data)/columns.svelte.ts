@@ -1,15 +1,85 @@
+import BudgetProgress from "$lib/components/budgets/budget-progress.svelte";
+import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
 import type { BudgetWithRelations } from "$lib/server/domains/budgets";
-import type { ColumnDef } from "@tanstack/table-core";
+import { calculateActualSpent, calculateAllocated } from "$lib/utils/budget-calculations";
 import { formatCurrency } from "$lib/utils/formatters";
-import { calculateActualSpent } from "$lib/utils/budget-calculations";
-import BudgetProgress from "$lib/components/budgets/budget-progress.svelte";
-import BudgetTypeCell from "../(components)/(cells)/budget-type-cell.svelte";
-import BudgetStatusCell from "../(components)/(cells)/budget-status-cell.svelte";
+import Archive from "@lucide/svelte/icons/archive";
+import Calendar from "@lucide/svelte/icons/calendar";
+import CircleCheck from "@lucide/svelte/icons/circle-check";
+import DollarSign from "@lucide/svelte/icons/dollar-sign";
+import Pause from "@lucide/svelte/icons/pause";
+import Repeat from "@lucide/svelte/icons/repeat";
+import Target from "@lucide/svelte/icons/target";
+import Users from "@lucide/svelte/icons/users";
+import Wallet from "@lucide/svelte/icons/wallet";
+import type { Column, ColumnDef, FilterFnOption } from "@tanstack/table-core";
+import BudgetActionsCell from "../(components)/(cells)/budget-actions-cell.svelte";
 import BudgetNameCell from "../(components)/(cells)/budget-name-cell.svelte";
 import BudgetRemainingCell from "../(components)/(cells)/budget-remaining-cell.svelte";
-import BudgetActionsCell from "../(components)/(cells)/budget-actions-cell.svelte";
+import BudgetStatusCell from "../(components)/(cells)/budget-status-cell.svelte";
+import BudgetTypeCell from "../(components)/(cells)/budget-type-cell.svelte";
+
+// Filter options for budget type
+const budgetTypeOptions: FacetedFilterOption[] = [
+  { label: "Account Monthly", value: "account-monthly", icon: Wallet },
+  { label: "Category Envelope", value: "category-envelope", icon: DollarSign },
+  { label: "Goal Based", value: "goal-based", icon: Target },
+  { label: "Scheduled Expense", value: "scheduled-expense", icon: Repeat },
+];
+
+// Filter options for budget scope
+const budgetScopeOptions: FacetedFilterOption[] = [
+  { label: "Monthly", value: "monthly", icon: Calendar },
+  { label: "Weekly", value: "weekly", icon: Calendar },
+  { label: "Yearly", value: "yearly", icon: Calendar },
+  { label: "Custom", value: "custom", icon: Calendar },
+  { label: "Shared", value: "shared", icon: Users },
+];
+
+// Filter options for budget status
+const budgetStatusOptions: FacetedFilterOption[] = [
+  { label: "Active", value: "active", icon: CircleCheck },
+  { label: "Paused", value: "paused", icon: Pause },
+  { label: "Archived", value: "archived", icon: Archive },
+];
+
+// Filter value type with operator support
+type FacetedFilterValue = {
+  operator: string;
+  values: string[];
+} | string[];
+
+// Custom filter function for array-based multi-select filters with operator support
+const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => {
+  if (!filterValue) return true;
+
+  // Handle new format with operator
+  if (typeof filterValue === 'object' && 'operator' in filterValue && 'values' in filterValue) {
+    const { operator, values } = filterValue as { operator: string; values: string[] };
+    if (!values || values.length === 0) return true;
+
+    const rowValue = row.getValue(columnId);
+    const isIncluded = values.includes(rowValue);
+
+    // "is not one of" operator
+    if (operator === 'arrNotIncludesSome') {
+      return !isIncluded;
+    }
+    // "is one of" operator (default)
+    return isIncluded;
+  }
+
+  // Handle old format (array only) for backwards compatibility
+  if (Array.isArray(filterValue)) {
+    if (filterValue.length === 0) return true;
+    const value = row.getValue(columnId);
+    return filterValue.includes(value);
+  }
+
+  return true;
+};
 
 interface BudgetColumnActions {
   onView: (budget: BudgetWithRelations) => void;
@@ -20,18 +90,7 @@ interface BudgetColumnActions {
 }
 
 function getAllocated(budget: BudgetWithRelations): number {
-  const templates = budget.periodTemplates ?? [];
-  const periods = templates.flatMap((template) => template.periods ?? []);
-  if (!periods.length) return 0;
-
-  const latest = periods.reduce((latest, current) =>
-    latest.endDate > current.endDate ? latest : current
-  );
-
-  if (latest) return Math.abs(latest.allocatedAmount ?? 0);
-  return Math.abs(
-    ((budget.metadata as Record<string, unknown>)?.["allocatedAmount"] as number) ?? 0
-  );
+  return calculateAllocated(budget);
 }
 
 function getConsumed(budget: BudgetWithRelations): number {
@@ -65,7 +124,7 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
         return renderComponent(Checkbox, {
           checked: allPageRowsSelected,
           indeterminate: somePageRowsSelected && !allPageRowsSelected,
-          onCheckedChange: (value) => {
+          onCheckedChange: (value: boolean) => {
             if (value) {
               table.toggleAllPageRowsSelected(true);
             } else {
@@ -80,7 +139,7 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
         return renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
-          onCheckedChange: (value) => row.toggleSelected(!!value),
+          onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
           controlledChecked: true,
           "aria-label": "Select row",
         });
@@ -101,6 +160,10 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       },
       enableColumnFilter: true,
       enableSorting: true,
+      filterFn: "includesString" as FilterFnOption<BudgetWithRelations>,
+      meta: {
+        label: "Name",
+      },
     },
     {
       accessorKey: "type",
@@ -114,6 +177,22 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       },
       enableColumnFilter: true,
       enableSorting: true,
+      filterFn: arrIncludesFilter,
+      meta: {
+        label: "Type",
+        facetedFilter: (column: Column<BudgetWithRelations, unknown>) => ({
+          name: "Type",
+          icon: DollarSign,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(GenericFacetedFilter as any, {
+              column,
+              title: "Type",
+              options: budgetTypeOptions,
+            }),
+        }),
+      },
     },
     {
       accessorKey: "scope",
@@ -125,6 +204,22 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       },
       enableColumnFilter: true,
       enableSorting: true,
+      filterFn: arrIncludesFilter,
+      meta: {
+        label: "Scope",
+        facetedFilter: (column: Column<BudgetWithRelations, unknown>) => ({
+          name: "Scope",
+          icon: Calendar,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(GenericFacetedFilter as any, {
+              column,
+              title: "Scope",
+              options: budgetScopeOptions,
+            }),
+        }),
+      },
     },
     {
       id: "allocated",
@@ -140,6 +235,9 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
         const a = getAllocated(rowA.original);
         const b = getAllocated(rowB.original);
         return a - b;
+      },
+      meta: {
+        label: "Allocated",
       },
     },
     {
@@ -157,6 +255,9 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
         const b = getConsumed(rowB.original);
         return a - b;
       },
+      meta: {
+        label: "Consumed",
+      },
     },
     {
       id: "remaining",
@@ -173,6 +274,9 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
         const aRemaining = getAllocated(rowA.original) - getConsumed(rowA.original);
         const bRemaining = getAllocated(rowB.original) - getConsumed(rowB.original);
         return aRemaining - bRemaining;
+      },
+      meta: {
+        label: "Remaining",
       },
     },
     {
@@ -195,6 +299,9 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       },
       enableColumnFilter: false,
       enableSorting: false,
+      meta: {
+        label: "Progress",
+      },
     },
     {
       accessorKey: "status",
@@ -208,6 +315,22 @@ export function columns(actions: BudgetColumnActions): ColumnDef<BudgetWithRelat
       },
       enableColumnFilter: true,
       enableSorting: true,
+      filterFn: arrIncludesFilter,
+      meta: {
+        label: "Status",
+        facetedFilter: (column: Column<BudgetWithRelations, unknown>) => ({
+          name: "Status",
+          icon: CircleCheck,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(GenericFacetedFilter as any, {
+              column,
+              title: "Status",
+              options: budgetStatusOptions,
+            }),
+        }),
+      },
     },
     {
       id: "actions",

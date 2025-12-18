@@ -10,75 +10,78 @@
  * 5. Inline editing: Reduce modal dialogs
  */
 
-import { SvelteSet } from 'svelte/reactivity';
-import { Button } from '$lib/components/ui/button';
-import * as Card from '$lib/components/ui/card';
-import * as Select from '$lib/components/ui/select';
-import * as Tabs from '$lib/components/ui/tabs';
-import { Badge } from '$lib/components/ui/badge';
-import { Separator } from '$lib/components/ui/separator';
-import * as Dialog from '$lib/components/ui/dialog';
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import { Input } from '$lib/components/ui/input';
-import { Label } from '$lib/components/ui/label';
+import BudgetPeriodInstanceManager from '$lib/components/budgets/budget-period-instance-manager.svelte';
 import BudgetProgress from '$lib/components/budgets/budget-progress.svelte';
 import EnvelopeAllocationCard from '$lib/components/budgets/envelope-allocation-card.svelte';
-import EnvelopeSettingsSheet from '$lib/components/budgets/envelope-settings-sheet.svelte';
 import EnvelopeCreateSheet from '$lib/components/budgets/envelope-create-sheet.svelte';
 import EnvelopeDeficitRecoveryDialog from '$lib/components/budgets/envelope-deficit-recovery-dialog.svelte';
-import BudgetPeriodInstanceManager from '$lib/components/budgets/budget-period-instance-manager.svelte';
-import PeriodAutomation from '../(components)/managers/period-automation.svelte';
-import BudgetRolloverManager from '../(components)/managers/budget-rollover-manager.svelte';
-import PeriodTemplateSheet from '../(components)/sheets/period-template-sheet.svelte';
-import { currencyFormatter } from '$lib/utils/formatters';
-import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
-import { parseDate, getLocalTimeZone } from '@internationalized/date';
-import { parseISOString, currentDate } from '$lib/utils/dates';
-import { monthYearFmt, dayFmt } from '$lib/utils/date-formatters';
-import { getBudgetValidationIssues } from '$lib/utils/budget-validation';
+import EnvelopeSettingsSheet from '$lib/components/budgets/envelope-settings-sheet.svelte';
 import * as Alert from '$lib/components/ui/alert';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import * as Dialog from '$lib/components/ui/dialog';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import * as Select from '$lib/components/ui/select';
+import { Separator } from '$lib/components/ui/separator';
+import * as Tabs from '$lib/components/ui/tabs';
 import {
-  getBudgetDetail,
-  listPeriodInstances,
-  getEnvelopeAllocations,
   createEnvelopeAllocation,
-  updateEnvelopeAllocation,
-  transferEnvelopeFunds,
-  processEnvelopeRollover,
-  executeDeficitRecovery,
-  getBudgetRolloverHistory,
-  generateNextPeriod,
-  updatePeriodTemplate,
-  schedulePeriodMaintenance,
-  updateBudget,
   deletePeriodTemplate,
+  executeDeficitRecovery,
+  generateNextPeriod,
+  getBudgetDetail,
+  getBudgetRolloverHistory,
+  getEnvelopeAllocations,
+  listPeriodInstances,
+  processEnvelopeRollover,
+  schedulePeriodMaintenance,
+  transferEnvelopeFunds,
+  updateBudget,
+  updateEnvelopeAllocation,
+  updatePeriodTemplate,
 } from '$lib/query/budgets';
 import { listCategories } from '$lib/query/categories';
-import { trpc } from '$lib/trpc/client';
-import { deleteBudgetDialog, deleteBudgetId } from '$lib/states/ui/global.svelte';
 import type { EnvelopeAllocation } from '$lib/schema/budgets/envelope-allocations';
 import type { Schedule } from '$lib/schema/schedules';
+import { deleteBudgetDialog, deleteBudgetId } from '$lib/states/ui/global.svelte';
+import { headerActionsMode } from '$lib/stores/header-actions.svelte';
+import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
+import { trpc } from '$lib/trpc/client';
+import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
+import { getBudgetValidationIssues } from '$lib/utils/budget-validation';
+import { dayFmt, monthYearFmt } from '$lib/utils/date-formatters';
+import { currentDate, parseISOString } from '$lib/utils/dates';
+import { formatCurrency } from '$lib/utils/formatters';
+import { getLocalTimeZone, parseDate } from '@internationalized/date';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
-import SquarePen from '@lucide/svelte/icons/square-pen';
-import Trash2 from '@lucide/svelte/icons/trash-2';
-import PiggyBank from '@lucide/svelte/icons/piggy-bank';
-import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
-import CircleCheck from '@lucide/svelte/icons/circle-check';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Calendar from '@lucide/svelte/icons/calendar';
-import Repeat from '@lucide/svelte/icons/repeat';
-import Wallet from '@lucide/svelte/icons/wallet';
-import Info from '@lucide/svelte/icons/info';
-import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
-import Settings2 from '@lucide/svelte/icons/settings-2';
 import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import ChevronRight from '@lucide/svelte/icons/chevron-right';
+import CircleCheck from '@lucide/svelte/icons/circle-check';
+import Columns3 from '@lucide/svelte/icons/columns-3';
+import Info from '@lucide/svelte/icons/info';
+import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 import List from '@lucide/svelte/icons/list';
-import Columns3 from '@lucide/svelte/icons/columns-3';
-import Plus from '@lucide/svelte/icons/plus';
 import Pause from '@lucide/svelte/icons/pause';
+import PiggyBank from '@lucide/svelte/icons/piggy-bank';
 import Play from '@lucide/svelte/icons/play';
+import Plus from '@lucide/svelte/icons/plus';
+import Repeat from '@lucide/svelte/icons/repeat';
+import Settings2 from '@lucide/svelte/icons/settings-2';
+import SquarePen from '@lucide/svelte/icons/square-pen';
+import Trash2 from '@lucide/svelte/icons/trash-2';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+import Wallet from '@lucide/svelte/icons/wallet';
+import { onDestroy } from 'svelte';
+import { SvelteSet } from 'svelte/reactivity';
+import BudgetRolloverManager from '../(components)/managers/budget-rollover-manager.svelte';
+import PeriodAutomation from '../(components)/managers/period-automation.svelte';
+import PeriodTemplateSheet from '../(components)/sheets/period-template-sheet.svelte';
 
 let { data } = $props();
 
@@ -121,6 +124,31 @@ const validation = $derived(
 
 // Active tab state
 let activeTab = $state<string>('overview');
+
+// Register tabs for header display
+const pageTabsContext = getPageTabsContext();
+const showTabsOnPage = $derived(headerActionsMode.tabsMode === 'off');
+
+// Keep tabs context updated reactively
+$effect(() => {
+  if (pageTabsContext) {
+    pageTabsContext.register({
+      tabs: [
+        { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+        { id: 'envelopes', label: 'Envelopes', icon: Wallet, condition: isEnvelopeBudget },
+        { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+        { id: 'periods', label: 'Period Management', icon: Calendar },
+        { id: 'automation', label: 'Automation', icon: Repeat },
+      ],
+      activeTab,
+      onTabChange: (value) => (activeTab = value),
+    });
+  }
+});
+
+onDestroy(() => {
+  pageTabsContext?.clear();
+});
 
 // View mode state for envelope display
 type ViewMode = 'kanban' | 'list' | 'grid';
@@ -429,8 +457,8 @@ const updateTemplateMutation = updatePeriodTemplate.options();
 const maintenanceMutation = schedulePeriodMaintenance.options();
 const deleteTemplateMutation = deletePeriodTemplate.options();
 
-function formatCurrency(value: number) {
-  return currencyFormatter.format(Math.abs(value ?? 0));
+function formatAbsCurrency(value: number) {
+  return formatCurrency(Math.abs(value ?? 0));
 }
 
 function getStatus() {
@@ -729,31 +757,33 @@ async function toggleBudgetStatus() {
     {/if}
 
     <!-- Tabs Navigation -->
-    <Tabs.Root bind:value={activeTab} class="w-full">
-      <Tabs.List class="mb-6 w-full justify-start">
-        <Tabs.Trigger value="overview" class="gap-2">
-          <LayoutDashboard class="h-4 w-4" />
-          Overview
-        </Tabs.Trigger>
-        {#if isEnvelopeBudget}
-          <Tabs.Trigger value="envelopes" class="gap-2">
-            <Wallet class="h-4 w-4" />
-            Envelopes
+    <Tabs.Root value={activeTab} onValueChange={(v) => (activeTab = v ?? 'overview')} class="w-full">
+      {#if showTabsOnPage}
+        <Tabs.List class="mb-6 w-full justify-start">
+          <Tabs.Trigger value="overview" class="gap-2">
+            <LayoutDashboard class="h-4 w-4" />
+            Overview
           </Tabs.Trigger>
-        {/if}
-        <Tabs.Trigger value="analytics" class="gap-2">
-          <TrendingUp class="h-4 w-4" />
-          Analytics
-        </Tabs.Trigger>
-        <Tabs.Trigger value="periods" class="gap-2">
-          <Calendar class="h-4 w-4" />
-          Period Management
-        </Tabs.Trigger>
-        <Tabs.Trigger value="automation" class="gap-2">
-          <Repeat class="h-4 w-4" />
-          Automation
-        </Tabs.Trigger>
-      </Tabs.List>
+          {#if isEnvelopeBudget}
+            <Tabs.Trigger value="envelopes" class="gap-2">
+              <Wallet class="h-4 w-4" />
+              Envelopes
+            </Tabs.Trigger>
+          {/if}
+          <Tabs.Trigger value="analytics" class="gap-2">
+            <TrendingUp class="h-4 w-4" />
+            Analytics
+          </Tabs.Trigger>
+          <Tabs.Trigger value="periods" class="gap-2">
+            <Calendar class="h-4 w-4" />
+            Period Management
+          </Tabs.Trigger>
+          <Tabs.Trigger value="automation" class="gap-2">
+            <Repeat class="h-4 w-4" />
+            Automation
+          </Tabs.Trigger>
+        </Tabs.List>
+      {/if}
 
       <!-- Overview Tab -->
       <Tabs.Content value="overview">
@@ -828,19 +858,19 @@ async function toggleBudgetStatus() {
               <Card.Content class="space-y-4">
                 <div>
                   <p class="text-muted-foreground mb-1 text-xs">Allocated</p>
-                  <p class="text-xl font-bold">{formatCurrency(allocatedAmount)}</p>
+                  <p class="text-xl font-bold">{formatAbsCurrency(allocatedAmount)}</p>
                 </div>
                 <Separator />
                 <div>
                   <p class="text-muted-foreground mb-1 text-xs">Spent</p>
-                  <p class="text-xl font-bold">{formatCurrency(actualAmount)}</p>
+                  <p class="text-xl font-bold">{formatAbsCurrency(actualAmount)}</p>
                 </div>
                 <Separator />
                 <div>
                   <p class="text-muted-foreground mb-1 text-xs">Remaining</p>
                   <p
                     class={`text-xl font-bold ${remainingAmount < 0 ? 'text-destructive' : 'text-emerald-600'}`}>
-                    {formatCurrency(remainingAmount)}
+                    {formatAbsCurrency(remainingAmount)}
                   </p>
                 </div>
 
@@ -849,7 +879,7 @@ async function toggleBudgetStatus() {
                   <div>
                     <p class="text-muted-foreground mb-1 text-xs">Total Available</p>
                     <p class="text-xl font-bold text-emerald-600">
-                      {formatCurrency(totalEnvelopeAvailable)}
+                      {formatAbsCurrency(totalEnvelopeAvailable)}
                     </p>
                   </div>
                 {/if}
@@ -1029,16 +1059,16 @@ async function toggleBudgetStatus() {
                         </div>
                         <div class="text-muted-foreground flex items-center gap-4 text-sm">
                           <span
-                            >Allocated: {currencyFormatter.format(envelope.allocatedAmount)}</span>
+                            >Allocated: {formatCurrency(envelope.allocatedAmount)}</span>
                           <span>•</span>
-                          <span>Spent: {currencyFormatter.format(envelope.spentAmount)}</span>
+                          <span>Spent: {formatCurrency(envelope.spentAmount)}</span>
                           <span>•</span>
                           <span
                             class={envelope.availableAmount < 0
                               ? 'text-destructive font-medium'
                               : 'font-medium text-emerald-600'}>
-                            {envelope.availableAmount < 0 ? 'Over' : 'Available'}: {currencyFormatter.format(
-                              Math.abs(envelope.availableAmount)
+                            {envelope.availableAmount < 0 ? 'Over' : 'Available'}: {formatAbsCurrency(
+                              envelope.availableAmount
                             )}
                           </span>
                         </div>
@@ -1280,7 +1310,7 @@ async function toggleBudgetStatus() {
                     <div>
                       <p class="text-muted-foreground mb-1 text-sm">Allocated</p>
                       <p class="text-xl font-bold">
-                        {formatCurrency(selectedPeriod.allocatedAmount ?? 0)}
+                        {formatAbsCurrency(selectedPeriod.allocatedAmount ?? 0)}
                       </p>
                     </div>
                     <div>
@@ -1320,7 +1350,7 @@ async function toggleBudgetStatus() {
                       <div class="flex justify-between">
                         <span class="text-muted-foreground">Allocated</span>
                         <span class="font-medium"
-                          >{formatCurrency(previousToSelectedPeriod.allocatedAmount ?? 0)}</span>
+                          >{formatAbsCurrency(previousToSelectedPeriod.allocatedAmount ?? 0)}</span>
                       </div>
                     </div>
                   </Card.Content>
@@ -1353,7 +1383,7 @@ async function toggleBudgetStatus() {
                       <div class="flex justify-between">
                         <span class="text-muted-foreground">Allocated</span>
                         <span class="font-medium"
-                          >{formatCurrency(nextToSelectedPeriod.allocatedAmount ?? 0)}</span>
+                          >{formatAbsCurrency(nextToSelectedPeriod.allocatedAmount ?? 0)}</span>
                       </div>
                     </div>
                   </Card.Content>

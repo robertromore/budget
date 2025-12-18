@@ -1,27 +1,27 @@
 <script lang="ts">
-import { SvelteMap } from 'svelte/reactivity';
-import * as Card from '$lib/components/ui/card';
 import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
+import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
 import Progress from '$lib/components/ui/progress/progress.svelte';
 import * as Tabs from '$lib/components/ui/tabs';
-import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
+import { getSpendingTrends, listBudgets } from '$lib/query/budgets';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { cn } from '$lib/utils';
-import { currencyFormatter } from '$lib/utils/formatters';
 import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
-import { listBudgets, getSpendingTrends } from '$lib/query/budgets';
+import { currencyFormatter } from '$lib/utils/formatters';
 import {
-  TrendingUp,
-  TriangleAlert,
-  Target,
-  PiggyBank,
-  CreditCard,
   Calendar,
   ChartBar,
   ChartLine,
   ChartPie,
+  CreditCard,
   DollarSign,
+  PiggyBank,
+  Target,
+  TrendingUp,
+  TriangleAlert,
 } from '@lucide/svelte/icons';
-import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { SvelteMap } from 'svelte/reactivity';
 
 interface Props {
   budgets?: BudgetWithRelations[];

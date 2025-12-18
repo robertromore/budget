@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as Dialog from '$lib/components/ui/dialog';
 import BudgetPeriodTemplateForm from '$lib/components/budgets/budget-period-template-form.svelte';
+import * as Dialog from '$lib/components/ui/dialog';
 import type { BudgetPeriodTemplate } from '$lib/schema/budgets';
 import { toast } from 'svelte-sonner';
 

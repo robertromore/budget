@@ -1,9 +1,9 @@
 <script lang="ts">
 import * as Card from '$lib/components/ui/card';
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
-import { TrendingDown, Target, TriangleAlert } from '@lucide/svelte/icons';
-import { currencyFormatter } from '$lib/utils/formatters';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { Target, TrendingDown, TriangleAlert } from '@lucide/svelte/icons';
 
 interface Props {
   budget: BudgetWithRelations;

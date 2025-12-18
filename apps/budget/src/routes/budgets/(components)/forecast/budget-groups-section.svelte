@@ -1,17 +1,17 @@
 <script lang="ts">
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import { deleteBudgetGroup, listBudgetGroups } from '$lib/query/budgets';
+import type { BudgetGroup } from '$lib/schema/budgets';
 import {
+  ChevronDown,
+  ChevronRight,
   FolderTree,
   Plus,
-  ChevronRight,
-  ChevronDown,
   SquarePen,
   Trash2,
 } from '@lucide/svelte/icons';
-import { listBudgetGroups, deleteBudgetGroup } from '$lib/query/budgets';
-import type { BudgetGroup } from '$lib/schema/budgets';
 
 let {
   onCreateGroup,

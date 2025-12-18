@@ -4,9 +4,10 @@ import { EntityCard, EntitySearchResults } from '$lib/components/shared/search';
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import type { BudgetProgressStatus } from '$lib/schema/budgets';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
 import { cn, currencyFormatter } from '$lib/utils';
-import { calculateActualSpent } from '$lib/utils/budget-calculations';
+import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
 import { highlightMatches } from '$lib/utils/search';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
 import Copy from '@lucide/svelte/icons/copy';
@@ -53,18 +54,7 @@ let {
 let table = $state<any>();
 
 function getAllocated(budget: BudgetWithRelations): number {
-  const templates = budget.periodTemplates ?? [];
-  const periods = templates.flatMap((template) => template.periods ?? []);
-  if (!periods.length) return 0;
-
-  const latest = periods.reduce((latest, current) =>
-    latest.endDate > current.endDate ? latest : current
-  );
-
-  if (latest) return Math.abs(latest.allocatedAmount ?? 0);
-  return Math.abs(
-    ((budget.metadata as Record<string, unknown>)?.['allocatedAmount'] as number) ?? 0
-  );
+  return calculateAllocated(budget);
 }
 
 function getConsumed(budget: BudgetWithRelations): number {
@@ -75,9 +65,7 @@ function getRemaining(budget: BudgetWithRelations): number {
   return getAllocated(budget) - getConsumed(budget);
 }
 
-function getBudgetStatus(
-  budget: BudgetWithRelations
-): 'on_track' | 'approaching' | 'over' | 'paused' {
+function getBudgetStatus(budget: BudgetWithRelations): BudgetProgressStatus {
   if (budget.status !== 'active') return 'paused';
   const allocated = getAllocated(budget);
   const consumed = getConsumed(budget);

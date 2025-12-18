@@ -1,31 +1,29 @@
 <script lang="ts">
-import {
-  Calendar,
-  Clock,
-  Settings,
-  Play,
-  Pause,
-  CircleCheck,
-  TriangleAlert,
-  Info,
-} from '@lucide/svelte/icons';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import { Input } from '$lib/components/ui/input';
+import Label from '$lib/components/ui/label/label.svelte';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Select from '$lib/components/ui/select';
-import { Button } from '$lib/components/ui/button';
-import { Badge } from '$lib/components/ui/badge';
-import { Input } from '$lib/components/ui/input';
 import { Switch } from '$lib/components/ui/switch';
-import Label from '$lib/components/ui/label/label.svelte';
-import { cn } from '$lib/utils';
-import { currencyFormatter } from '$lib/utils/formatters';
 import {
   ensurePeriodInstance,
   listPeriodInstances,
   processEnvelopeRollover,
 } from '$lib/query/budgets';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { cn } from '$lib/utils';
+import { currencyFormatter } from '$lib/utils/formatters';
 import { CalendarDate } from '@internationalized/date';
+import {
+  Calendar,
+  CircleCheck,
+  Clock,
+  Info,
+  Settings,
+  TriangleAlert
+} from '@lucide/svelte/icons';
 
 interface Props {
   budget: BudgetWithRelations;
@@ -44,6 +42,7 @@ interface AutomationSettings {
 
 let { budget, class: className, hideStatus = false }: Props = $props();
 
+// svelte-ignore state_referenced_locally
 const periodsQuery = listPeriodInstances(budget.id).options();
 const ensurePeriodMutation = ensurePeriodInstance.options();
 const processRolloverMutation = processEnvelopeRollover.options();

@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
-import BudgetDataTable from './budget-data-table.svelte';
 import { columns as createColumns } from '../(data)/columns.svelte';
+import BudgetDataTable from './budget-data-table.svelte';
 
 interface Props {
   budgets: BudgetWithRelations[];

@@ -1,9 +1,10 @@
 <script lang="ts">
-import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import { goto } from '$app/navigation';
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import { Badge } from '$lib/components/ui/badge';
 import { Input } from '$lib/components/ui/input';
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Tabs from '$lib/components/ui/tabs';
 import {
   BUDGET_TEMPLATES,
@@ -12,10 +13,9 @@ import {
   type BudgetTemplate,
   type TemplateCategory,
 } from '$lib/constants/budget-templates';
-import { Search, Sparkles } from '@lucide/svelte/icons';
-import * as LucideIcons from '@lucide/svelte/icons';
 import { currencyFormatter } from '$lib/utils/formatters';
-import { goto } from '$app/navigation';
+import * as LucideIcons from '@lucide/svelte/icons';
+import { Search, Sparkles } from '@lucide/svelte/icons';
 
 interface Props {
   open: boolean;

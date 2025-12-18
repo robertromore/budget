@@ -1,16 +1,15 @@
 <script lang="ts">
-import * as Card from '$lib/components/ui/card';
 import * as Alert from '$lib/components/ui/alert';
-import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
 import { Skeleton } from '$lib/components/ui/skeleton';
-import { getBudgetForecast, autoAllocateBudget } from '$lib/query/budgets';
+import { autoAllocateBudget, getBudgetForecast } from '$lib/query/budgets';
 import { currencyFormatter } from '$lib/utils/formatters';
 import CalendarClock from '@lucide/svelte/icons/calendar-clock';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
-import TrendingDown from '@lucide/svelte/icons/trending-down';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
 import Zap from '@lucide/svelte/icons/zap';
 
 interface Props {
@@ -22,7 +21,7 @@ interface Props {
 let { budgetId, daysAhead = 30, showAutoAllocate = false }: Props = $props();
 
 const forecastQuery = $derived(getBudgetForecast(budgetId, daysAhead).options());
-const autoAllocateMutation = $derived(autoAllocateBudget().execute());
+const autoAllocateMutation = $derived(autoAllocateBudget().options());
 
 const forecast = $derived(forecastQuery.data);
 const isLoading = $derived(forecastQuery.isLoading);

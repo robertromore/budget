@@ -4,18 +4,20 @@ import { superformInsertBudgetSchema } from "$lib/schema/superforms";
 import type { CreateBudgetRequest } from "$lib/server/domains/budgets/services";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
-import type { Actions } from "@sveltejs/kit";
+import type { Actions, ServerLoadEvent } from "@sveltejs/kit";
 import { fail, redirect } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms/client";
 
-export const load = async (event) => {
+export const load = async (event: ServerLoadEvent) => {
   const { url } = event;
   const context = await createContext(event);
   const caller = createCaller(context);
 
   // Check for template parameter and prefill form data
   const templateId = url.searchParams.get("template");
+  const accountIdParam = url.searchParams.get("accountId");
+
   let initialData: any = {
     name: "",
     description: null,
@@ -27,6 +29,14 @@ export const load = async (event) => {
     accountIds: [],
     categoryIds: [],
   };
+
+  // Pre-fill accountId from URL query parameter if provided
+  if (accountIdParam) {
+    const accountIdValue = parseInt(accountIdParam, 10);
+    if (!isNaN(accountIdValue) && accountIdValue > 0) {
+      initialData.accountIds = [accountIdValue];
+    }
+  }
 
   if (templateId) {
     const template = getBudgetTemplateById(templateId);
