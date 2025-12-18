@@ -1,10 +1,10 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
-import Tag from '@lucide/svelte/icons/tag';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
-import TrendingDown from '@lucide/svelte/icons/trending-down';
 import ArrowLeftRight from '@lucide/svelte/icons/arrow-left-right';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
+import Tag from '@lucide/svelte/icons/tag';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
 
 interface Props {
   categoryType: string | null;

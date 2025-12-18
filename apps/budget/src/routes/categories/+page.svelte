@@ -6,15 +6,21 @@ import Plus from '@lucide/svelte/icons/plus';
 import Tag from '@lucide/svelte/icons/tag';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import FolderCog from '@lucide/svelte/icons/folder-cog';
+import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { deleteCategoryDialog, deleteCategoryId } from '$lib/states/ui/categories.svelte';
 import { categorySearchState } from '$lib/states/ui/category-search.svelte';
 import EntitySearchToolbar from '$lib/components/shared/search/entity-search-toolbar.svelte';
-import CategorySearchFilters from './(components)/search/category-search-filters.svelte';
 import CategorySearchResults from './(components)/search/category-search-results.svelte';
 import CategoryTreeView from './(components)/tree/category-tree-view.svelte';
 import SeedDefaultCategoriesButton from './(components)/seed-default-categories-button.svelte';
-import GroupManagementSheet from './(components)/group-management-sheet.svelte';
+import { getContext } from 'svelte';
+
+// Get sheet controls from layout
+const sheets = getContext<{
+	openGroupManagement: () => void;
+	openSeedDefaultCategories: () => void;
+}>('categories-sheets');
 import type { CategoryTreeNode } from '$lib/types/categories';
 import { goto } from '$app/navigation';
 import type { Category } from '$lib/schema';
@@ -41,46 +47,14 @@ let searchResults = $state<Category[]>([]);
 let isSearching = $state(false);
 let isReorderMode = $state(false);
 let showHierarchyView = $state(false);
-let groupManagementSheetOpen = $state(false);
 
 // Load hierarchy tree
 const hierarchyTreeQuery = getCategoryHierarchyTree().options();
 const hierarchyTree = $derived(hierarchyTreeQuery.data ?? []);
 
-// Sort categories based on user selection or displayOrder
-const sortedCategoriesArray = $derived.by(() => {
-  // Create a map of category groups for quick lookup
-  const groupsMap = new Map(categoriesWithGroups.map((c) => [c.id, c.groupName || '']));
-
-  return [...categoriesArray].sort((a, b) => {
-    let comparison = 0;
-    const groupA = groupsMap.get(a.id);
-    const groupB = groupsMap.get(b.id);
-
-    switch (search.sortBy) {
-      case 'name':
-        comparison = (a.name || '').localeCompare(b.name || '');
-        break;
-      case 'group':
-        comparison = (groupA || '').localeCompare(groupB || '');
-        break;
-      case 'created':
-        comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
-        break;
-      default:
-        // Default to displayOrder
-        const orderA = a.displayOrder ?? 0;
-        const orderB = b.displayOrder ?? 0;
-        comparison = orderA - orderB;
-    }
-
-    return search.sortOrder === 'asc' ? comparison : -comparison;
-  });
-});
-
 // Computed values - merge group data into categories
 const displayedCategories = $derived.by(() => {
-  const baseCategories = search.isSearchActive ? searchResults : sortedCategoriesArray;
+  const baseCategories = search.query.trim() ? searchResults : categoriesArray;
   const groupsMap = new Map(
     categoriesWithGroups.map((c) => [
       c.id,
@@ -105,17 +79,9 @@ const displayedCategories = $derived.by(() => {
   });
 });
 
-// Sort options for toolbar
-const categorySortOptions = [
-  { value: 'name' as const, label: 'Name', order: 'asc' as const },
-  { value: 'name' as const, label: 'Name', order: 'desc' as const },
-  { value: 'group' as const, label: 'Group', order: 'asc' as const },
-  { value: 'group' as const, label: 'Group', order: 'desc' as const },
-  { value: 'created' as const, label: 'Created', order: 'desc' as const },
-];
 
 const shouldShowNoCategories = $derived.by(() => {
-  return !search.isSearchActive && hasNoCategories;
+  return !search.query.trim() && hasNoCategories;
 });
 
 // Dialog state
@@ -127,9 +93,9 @@ let bulkDeleteDialogOpen = $state(false);
 let categoriesToDelete = $state<Category[]>([]);
 let isDeletingBulk = $state(false);
 
-// Client-side search and filter function
+// Client-side text search function (advanced filters are in the table toolbar)
 const performSearch = () => {
-  if (!search.isSearchActive) {
+  if (!search.query.trim()) {
     searchResults = [];
     isSearching = false;
     return;
@@ -138,82 +104,17 @@ const performSearch = () => {
   isSearching = true;
 
   try {
-    let results = [...categoriesArray];
-
-    // Filter by search query
-    if (search.query.trim()) {
-      const query = search.query.toLowerCase();
-      results = results.filter(
-        (category) =>
-          category.name?.toLowerCase().includes(query) ||
-          category.notes?.toLowerCase().includes(query)
-      );
-    }
-
-    // Filter by hasParent
-    if (search.filters.hasParent !== undefined) {
-      results = results.filter((category) =>
-        search.filters.hasParent ? category.parentId !== null : category.parentId === null
-      );
-    }
-
-    // Filter by categoryType
-    if (search.filters.categoryType) {
-      results = results.filter((category) => category.categoryType === search.filters.categoryType);
-    }
-
-    // Filter by isTaxDeductible
-    if (search.filters.isTaxDeductible !== undefined) {
-      results = results.filter(
-        (category) => category.isTaxDeductible === search.filters.isTaxDeductible
-      );
-    }
-
-    // Filter by spendingPriority
-    if (search.filters.spendingPriority) {
-      results = results.filter(
-        (category) => category.spendingPriority === search.filters.spendingPriority
-      );
-    }
-
-    // Filter by isSeasonal
-    if (search.filters.isSeasonal !== undefined) {
-      results = results.filter((category) => category.isSeasonal === search.filters.isSeasonal);
-    }
-
-    // Filter by isActive
-    if (search.filters.isActive !== undefined) {
-      results = results.filter((category) => category.isActive === search.filters.isActive);
-    }
-
-    // Sort results
-    const groupsMap = new Map(categoriesWithGroups.map((c) => [c.id, c.groupName || '']));
-    results.sort((a, b) => {
-      let comparison = 0;
-      const groupA = groupsMap.get(a.id);
-      const groupB = groupsMap.get(b.id);
-
-      switch (search.sortBy) {
-        case 'name':
-          comparison = (a.name || '').localeCompare(b.name || '');
-          break;
-        case 'group':
-          comparison = (groupA || '').localeCompare(groupB || '');
-          break;
-        case 'created':
-          comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
-          break;
-        default:
-          comparison = (a.name || '').localeCompare(b.name || '');
-      }
-
-      return search.sortOrder === 'asc' ? comparison : -comparison;
-    });
+    const query = search.query.toLowerCase();
+    const results = categoriesArray.filter(
+      (category) =>
+        category.name?.toLowerCase().includes(query) ||
+        category.notes?.toLowerCase().includes(query)
+    );
 
     searchResults = results;
     search.setResults(results);
   } catch (error) {
-    console.error('Error filtering categories:', error);
+    console.error('Error searching categories:', error);
     searchResults = [];
   } finally {
     isSearching = false;
@@ -225,11 +126,8 @@ let isFirstRun = true;
 
 // Debounced search effect
 $effect(() => {
-  // Track search state reactively
+  // Track search query reactively
   search.query;
-  search.filters;
-  search.sortBy;
-  search.sortOrder;
 
   // Don't set loading state on initial mount
   if (!isFirstRun) {
@@ -289,7 +187,7 @@ const confirmBulkDelete = async () => {
   }
 };
 
-const handleReorder = async (reorderedCategories: Category[]) => {
+const handleReorder = async (reorderedCategories: CategoryWithGroup[]) => {
   const updates = reorderedCategories.map((cat) => ({
     id: cat.id,
     displayOrder: cat.displayOrder ?? 0,
@@ -310,7 +208,7 @@ const handleReorder = async (reorderedCategories: Category[]) => {
 const toggleReorderMode = () => {
   isReorderMode = !isReorderMode;
   // Clear search when entering reorder mode
-  if (isReorderMode && search.isSearchActive) {
+  if (isReorderMode && search.query.trim()) {
     search.clearAllFilters();
   }
 };
@@ -318,7 +216,7 @@ const toggleReorderMode = () => {
 const toggleHierarchyView = () => {
   showHierarchyView = !showHierarchyView;
   // Clear search when entering hierarchy view
-  if (showHierarchyView && search.isSearchActive) {
+  if (showHierarchyView && search.query.trim()) {
     search.clearAllFilters();
   }
 };
@@ -326,6 +224,11 @@ const toggleHierarchyView = () => {
 const addSubcategory = (parent: CategoryTreeNode) => {
   goto(`/categories/new?parentId=${parent.id}`);
 };
+
+// Computed: should show secondary buttons on page
+const showSecondaryOnPage = $derived(headerActionsMode.value === 'off');
+// Computed: should show primary button on page
+const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
 </script>
 
 <svelte:head>
@@ -339,7 +242,7 @@ const addSubcategory = (parent: CategoryTreeNode) => {
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Categories</h1>
       <p class="text-muted-foreground">
-        {#if search.isSearchActive}
+        {#if search.query.trim()}
           {searchResults.length} of {categoriesArray.length} categories
         {:else}
           {categoriesArray.length} categories total
@@ -347,19 +250,23 @@ const addSubcategory = (parent: CategoryTreeNode) => {
       </p>
     </div>
     <div class="flex items-center gap-2">
-      <SeedDefaultCategoriesButton />
-      <Button variant="outline" onclick={() => (groupManagementSheetOpen = true)}>
-        <FolderCog class="mr-2 h-4 w-4" />
-        Group Management
-      </Button>
-      <Button variant="outline" href="/categories/analytics">
-        <BarChart3 class="mr-2 h-4 w-4" />
-        Analytics Dashboard
-      </Button>
-      <Button href="/categories/new">
-        <Plus class="mr-2 h-4 w-4" />
-        Add Category
-      </Button>
+      {#if showSecondaryOnPage}
+        <SeedDefaultCategoriesButton />
+        <Button variant="outline" onclick={() => sheets.openGroupManagement()}>
+          <FolderCog class="mr-2 h-4 w-4" />
+          Group Management
+        </Button>
+        <Button variant="outline" href="/categories/analytics">
+          <BarChart3 class="mr-2 h-4 w-4" />
+          Analytics
+        </Button>
+      {/if}
+      {#if showPrimaryOnPage}
+        <Button href="/categories/new">
+          <Plus class="mr-2 h-4 w-4" />
+          Add Category
+        </Button>
+      {/if}
     </div>
   </div>
 
@@ -369,27 +276,11 @@ const addSubcategory = (parent: CategoryTreeNode) => {
       <!-- Search Toolbar -->
       <EntitySearchToolbar
         bind:searchQuery={search.query}
-        bind:filters={search.filters}
         bind:viewMode={search.viewMode}
-        bind:sortBy={search.sortBy}
-        bind:sortOrder={search.sortOrder}
         searchPlaceholder="Search categories..."
-        sortOptions={categorySortOptions}
-        activeFilterCount={Object.keys(search.filters).length}
         onSearchChange={(query) => search.updateQuery(query)}
-        onFiltersChange={(filters) => search.updateFilters(filters)}
         onViewModeChange={(mode) => (search.viewMode = mode)}
-        onSortChange={(sortBy, sortOrder) => {
-          search.sortBy = sortBy;
-          search.sortOrder = sortOrder;
-        }}
-        onClearAll={() => search.clearAllFilters()}>
-        {#snippet filterContent()}
-          <CategorySearchFilters
-            filters={search.filters}
-            onFilterChange={(key, value) => search.updateFilter(key, value)} />
-        {/snippet}
-      </EntitySearchToolbar>
+        onClearAll={() => search.clearAllFilters()} />
     </div>
   {/if}
 
@@ -487,6 +378,3 @@ const addSubcategory = (parent: CategoryTreeNode) => {
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
-
-<!-- Group Management Sheet -->
-<GroupManagementSheet bind:open={groupManagementSheetOpen} />

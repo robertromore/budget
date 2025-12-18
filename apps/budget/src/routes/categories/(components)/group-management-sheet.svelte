@@ -1,34 +1,32 @@
 <script lang="ts">
+import { RecommendationsPanel } from '$lib/components/category-groups';
+import ManageCategoryGroupForm from '$lib/components/forms/manage-category-group-form.svelte';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button } from '$lib/components/ui/button';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Sheet from '$lib/components/ui/sheet';
 import * as Tabs from '$lib/components/ui/tabs';
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import * as Card from '$lib/components/ui/card';
-import { Badge } from '$lib/components/ui/badge';
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  FolderOpen,
-  LoaderCircle,
-  Sparkles,
-  List,
-  X,
-  Tag,
-  GripVertical,
-} from '@lucide/svelte/icons';
-import ManageCategoryGroupForm from '$lib/components/forms/manage-category-group-form.svelte';
-import { RecommendationsPanel } from '$lib/components/category-groups';
+import { rpc } from '$lib/query';
 import {
   deleteCategoryGroup,
-  removeCategoryFromGroup,
   moveCategoryToGroup,
+  removeCategoryFromGroup,
 } from '$lib/query/category-groups';
-import { rpc } from '$lib/query';
-import type { CategoryGroupWithCounts } from '$lib/schema/category-groups';
-import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import type { Category } from '$lib/schema/categories';
+import type { CategoryGroupWithCounts } from '$lib/schema/category-groups';
+import {
+  FolderOpen,
+  GripVertical,
+  List,
+  LoaderCircle,
+  Pencil,
+  Plus,
+  Sparkles,
+  Tag,
+  Trash2,
+  X,
+} from '@lucide/svelte/icons';
 
 interface Props {
   open: boolean;

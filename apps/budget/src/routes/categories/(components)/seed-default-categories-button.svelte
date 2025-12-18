@@ -1,19 +1,35 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
-import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
-import { Separator } from '$lib/components/ui/separator';
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import { Checkbox } from '$lib/components/ui/checkbox';
-import { Label } from '$lib/components/ui/label';
 import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
 import { ScrollArea } from '$lib/components/ui/scroll-area';
+import { Separator } from '$lib/components/ui/separator';
+import { rpc } from '$lib/query';
+import { seedDefaultCategories } from '$lib/query/categories';
 import PackagePlus from '@lucide/svelte/icons/package-plus';
 import Search from '@lucide/svelte/icons/search';
-import { seedDefaultCategories } from '$lib/query/categories';
-import { rpc } from '$lib/query';
 import { SvelteSet } from 'svelte/reactivity';
 
+interface Props {
+  open?: boolean;
+  showButton?: boolean;
+}
+
+let { open = $bindable(false), showButton = true }: Props = $props();
+
 let sheetOpen = $state(false);
+
+// Sync internal state with external prop
+$effect(() => {
+  sheetOpen = open;
+});
+
+$effect(() => {
+  open = sheetOpen;
+});
 let searchQuery = $state('');
 let selectedSlugs = new SvelteSet<string>();
 
@@ -133,7 +149,7 @@ const isGroupPartiallySelected = (type: string) => {
 const selectedCount = $derived(selectedSlugs.size);
 </script>
 
-{#if shouldShowButton}
+{#if shouldShowButton && showButton}
   <Button variant="outline" onclick={() => (sheetOpen = true)}>
     <PackagePlus class="mr-2 h-4 w-4" />
     Add Default Categories
@@ -143,7 +159,9 @@ const selectedCount = $derived(selectedSlugs.size);
       </Badge>
     {/if}
   </Button>
+{/if}
 
+{#if shouldShowButton}
   <ResponsiveSheet bind:open={sheetOpen}>
     {#snippet header()}
       <div>

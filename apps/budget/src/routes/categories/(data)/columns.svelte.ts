@@ -1,10 +1,11 @@
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
+import { GenericFacetedFilter, type FacetedFilterOption } from "$lib/components/data-table";
 import type { Category } from "$lib/schema";
 import type { CategoryWithGroup } from "$lib/server/domains/categories/repository";
 import type { CategoriesState } from "$lib/states/entities/categories.svelte";
 import { compareAlphanumeric } from "$lib/utils";
-import type { ColumnDef, FilterFnOption } from "@tanstack/table-core";
+import type { Column, ColumnDef, FilterFnOption } from "@tanstack/table-core";
 import CategoryActionsCell from "../(components)/(cells)/category-actions-cell.svelte";
 import CategoryExpectedRangeCell from "../(components)/(cells)/category-expected-range-cell.svelte";
 import CategoryGroupCell from "../(components)/(cells)/category-group-cell.svelte";
@@ -14,7 +15,65 @@ import CategoryPriorityCell from "../(components)/(cells)/category-priority-cell
 import CategoryStatusCell from "../(components)/(cells)/category-status-cell.svelte";
 import CategoryTaxDeductibleCell from "../(components)/(cells)/category-tax-deductible-cell.svelte";
 import CategoryTypeCell from "../(components)/(cells)/category-type-cell.svelte";
-import CategoryColumnHeader from "../(components)/category-column-header.svelte";
+import TrendingUp from "@lucide/svelte/icons/trending-up";
+import TrendingDown from "@lucide/svelte/icons/trending-down";
+import ArrowLeftRight from "@lucide/svelte/icons/arrow-left-right";
+import PiggyBank from "@lucide/svelte/icons/piggy-bank";
+import Tag from "@lucide/svelte/icons/tag";
+import ShieldCheck from "@lucide/svelte/icons/shield-check";
+import Star from "@lucide/svelte/icons/star";
+import CircleMinus from "@lucide/svelte/icons/circle-minus";
+import Gem from "@lucide/svelte/icons/gem";
+import CircleCheck from "@lucide/svelte/icons/circle-check";
+import CircleX from "@lucide/svelte/icons/circle-x";
+
+// Filter options for category type
+const categoryTypeOptions: FacetedFilterOption[] = [
+  { label: "Income", value: "income", icon: TrendingUp },
+  { label: "Expense", value: "expense", icon: TrendingDown },
+  { label: "Transfer", value: "transfer", icon: ArrowLeftRight },
+  { label: "Savings", value: "savings", icon: PiggyBank },
+];
+
+// Filter options for spending priority
+const spendingPriorityOptions: FacetedFilterOption[] = [
+  { label: "Essential", value: "essential", icon: ShieldCheck },
+  { label: "Important", value: "important", icon: Star },
+  { label: "Discretionary", value: "discretionary", icon: CircleMinus },
+  { label: "Luxury", value: "luxury", icon: Gem },
+];
+
+// Filter options for status (isActive)
+const statusOptions: FacetedFilterOption[] = [
+  { label: "Active", value: "true", icon: CircleCheck },
+  { label: "Inactive", value: "false", icon: CircleX },
+];
+
+// Custom filter function for array-based multi-select filters
+// Handles both { operator, values } format from GenericFacetedFilter and plain arrays
+const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => {
+  if (!filterValue) return true;
+
+  const value = row.getValue(columnId);
+  // Handle boolean values (convert to string for comparison)
+  const valueStr = typeof value === "boolean" ? String(value) : value;
+
+  // Handle { operator, values } format from GenericFacetedFilter
+  if (typeof filterValue === 'object' && 'values' in filterValue) {
+    const { operator, values } = filterValue as { operator: string; values: string[] };
+    if (!values || values.length === 0) return true;
+    const isIncluded = values.includes(valueStr);
+    return operator === 'arrNotIncludesSome' ? !isIncluded : isIncluded;
+  }
+
+  // Handle array format
+  if (Array.isArray(filterValue)) {
+    if (filterValue.length === 0) return true;
+    return filterValue.includes(valueStr);
+  }
+
+  return true;
+};
 
 export const columns = (
   _categoriesState: CategoriesState,
@@ -33,7 +92,7 @@ export const columns = (
         return renderComponent(Checkbox, {
           checked: allPageRowsSelected,
           indeterminate: somePageRowsSelected && !allPageRowsSelected,
-          onCheckedChange: (value) => {
+          onCheckedChange: (value: boolean) => {
             if (value) {
               table.toggleAllPageRowsSelected(true);
             } else {
@@ -48,7 +107,7 @@ export const columns = (
         return renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
-          onCheckedChange: (value) => row.toggleSelected(!!value),
+          onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
           controlledChecked: true,
           "aria-label": "Select row",
         });
@@ -59,11 +118,7 @@ export const columns = (
     },
     {
       accessorKey: "id",
-      header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
-          column,
-          title: "ID",
-        }),
+      header: "ID",
       cell: (info) => info.getValue(),
       sortingFn: "alphanumeric",
       enableColumnFilter: false,
@@ -74,11 +129,7 @@ export const columns = (
     {
       accessorKey: "name",
       id: "name",
-      header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
-          column,
-          title: "Name",
-        }),
+      header: "Name",
       cell: (info) => {
         const category = info.row.original;
         return renderComponent(CategoryNameCell, { category });
@@ -94,11 +145,7 @@ export const columns = (
     {
       accessorKey: "groupName",
       id: "group",
-      header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
-          column,
-          title: "Group",
-        }),
+      header: "Group",
       cell: (info) => {
         const category = info.row.original;
         return renderComponent(CategoryGroupCell, {
@@ -110,6 +157,7 @@ export const columns = (
       sortingFn: (rowA, rowB) =>
         compareAlphanumeric(rowA.original.groupName || "", rowB.original.groupName || ""),
       enableColumnFilter: true,
+      enableGrouping: true,
       filterFn: "includesString" as FilterFnOption<CategoryWithGroup>,
       meta: {
         label: "Group",
@@ -118,11 +166,7 @@ export const columns = (
     {
       accessorKey: "categoryType",
       id: "type",
-      header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
-          column,
-          title: "Type",
-        }),
+      header: "Type",
       cell: (info) => {
         const category = info.row.original;
         return renderComponent(CategoryTypeCell, { categoryType: category.categoryType });
@@ -130,19 +174,28 @@ export const columns = (
       sortingFn: (rowA, rowB) =>
         compareAlphanumeric(rowA.original.categoryType || "", rowB.original.categoryType || ""),
       enableColumnFilter: true,
-      filterFn: "equalsString" as FilterFnOption<CategoryWithGroup>,
+      enableGrouping: true,
+      filterFn: arrIncludesFilter,
       meta: {
         label: "Type",
+        facetedFilter: (column: Column<CategoryWithGroup, unknown>) => ({
+          name: "Type",
+          icon: Tag,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(GenericFacetedFilter as any, {
+              column,
+              title: "Type",
+              options: categoryTypeOptions,
+            }),
+        }),
       },
     },
     {
       accessorKey: "spendingPriority",
       id: "priority",
-      header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
-          column,
-          title: "Priority",
-        }),
+      header: "Priority",
       cell: (info) => {
         const category = info.row.original;
         return renderComponent(CategoryPriorityCell, { priority: category.spendingPriority });
@@ -153,19 +206,28 @@ export const columns = (
           rowB.original.spendingPriority || ""
         ),
       enableColumnFilter: true,
-      filterFn: "equalsString" as FilterFnOption<CategoryWithGroup>,
+      enableGrouping: true,
+      filterFn: arrIncludesFilter,
       meta: {
         label: "Priority",
+        facetedFilter: (column: Column<CategoryWithGroup, unknown>) => ({
+          name: "Priority",
+          icon: ShieldCheck,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(GenericFacetedFilter as any, {
+              column,
+              title: "Priority",
+              options: spendingPriorityOptions,
+            }),
+        }),
       },
     },
     {
       accessorKey: "isTaxDeductible",
       id: "taxDeductible",
-      header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
-          column,
-          title: "Tax Deductible",
-        }),
+      header: "Tax Deductible",
       cell: (info) => {
         const isTaxDeductible = info.getValue() as boolean;
         return renderComponent(CategoryTaxDeductibleCell, { isTaxDeductible });
@@ -180,11 +242,7 @@ export const columns = (
     {
       accessorKey: "expectedMonthlyMin",
       id: "expectedRange",
-      header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
-          column,
-          title: "Expected Range",
-        }),
+      header: "Expected Range",
       cell: (info) => {
         const category = info.row.original;
         return renderComponent(CategoryExpectedRangeCell, {
@@ -206,11 +264,7 @@ export const columns = (
     {
       accessorKey: "notes",
       id: "notes",
-      header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
-          column,
-          title: "Notes",
-        }),
+      header: "Notes",
       cell: (info) => {
         const notes = info.getValue() as string | null;
         return renderComponent(CategoryNotesCell, { notes });
@@ -222,22 +276,32 @@ export const columns = (
       },
     },
     {
-      accessorKey: "isActive",
+      // Use accessorFn to convert boolean to string for faceted values (counts)
+      accessorFn: (row) => String(row.isActive),
       id: "status",
-      header: ({ column }) =>
-        renderComponent(CategoryColumnHeader<CategoryWithGroup, unknown>, {
-          column,
-          title: "Status",
-        }),
+      header: "Status",
       cell: (info) => {
-        const isActive = info.getValue() as boolean;
+        const isActive = info.row.original.isActive;
         return renderComponent(CategoryStatusCell, { isActive });
       },
       enableSorting: true,
       enableColumnFilter: true,
-      filterFn: "equals" as FilterFnOption<CategoryWithGroup>,
+      enableGrouping: true,
+      filterFn: arrIncludesFilter,
       meta: {
         label: "Status",
+        facetedFilter: (column: Column<CategoryWithGroup, unknown>) => ({
+          name: "Status",
+          icon: CircleCheck,
+          column,
+          value: [],
+          component: () =>
+            renderComponent(GenericFacetedFilter as any, {
+              column,
+              title: "Status",
+              options: statusOptions,
+            }),
+        }),
       },
     },
     {

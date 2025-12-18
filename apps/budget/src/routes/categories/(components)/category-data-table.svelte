@@ -1,20 +1,15 @@
 <script lang="ts">
 import {
-  type ColumnDef,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  type Table as TTable,
-} from '@tanstack/table-core';
-import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
-import * as Table from '$lib/components/ui/table';
+  AdvancedDataTable,
+  GenericDisplayInput,
+  GenericFilterInput
+} from '$lib/components/data-table';
+import EntityBulkActions from '$lib/components/shared/data-table/entity-bulk-actions.svelte';
 import type { Category } from '$lib/schema';
+import type { CategoryWithGroup } from '$lib/server/domains/categories/repository';
 import type { CategoriesState } from '$lib/states/entities/categories.svelte';
-import DataTablePagination from '../../accounts/[slug]/(components)/data-table-pagination.svelte';
-import CategoryBulkActions from './category-bulk-actions.svelte';
+import type { FilterInputOption } from '$lib/types';
+import type { ColumnDef, ColumnFiltersState, Table as TTable } from '@tanstack/table-core';
 
 interface Props {
   columns: (
@@ -23,15 +18,16 @@ interface Props {
     onEdit: (category: Category) => void,
     onDelete: (category: Category) => void,
     onViewAnalytics: (category: Category) => void
-  ) => ColumnDef<Category>[];
-  categories: Category[];
+  ) => ColumnDef<CategoryWithGroup>[];
+  categories: CategoryWithGroup[];
   categoriesState: CategoriesState;
   onView: (category: Category) => void;
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => void;
   onViewAnalytics: (category: Category) => void;
   onBulkDelete: (categories: Category[]) => void;
-  table?: TTable<Category>;
+  loading?: boolean;
+  table?: TTable<CategoryWithGroup>;
 }
 
 let {
@@ -43,112 +39,69 @@ let {
   onDelete,
   onViewAnalytics,
   onBulkDelete,
-  table = $bindable(),
+  loading = false,
+  table = $bindable()
 }: Props = $props();
 
-// Table state
-let sorting = $state<any[]>([]);
-let columnFilters = $state<any[]>([]);
-let columnVisibility = $state<Record<string, boolean>>({});
-let rowSelection = $state<Record<string, boolean>>({});
-let pagination = $state({ pageIndex: 0, pageSize: 50 });
+// Create columns with handlers
+const tableColumns = $derived(columns(categoriesState, onView, onEdit, onDelete, onViewAnalytics));
 
-// Create the table instance
-table = createSvelteTable({
-  get data() {
-    return categories;
-  },
-  get columns() {
-    return columns(categoriesState, onView, onEdit, onDelete, onViewAnalytics);
-  },
-  state: {
-    get sorting() {
-      return sorting;
-    },
-    get columnFilters() {
-      return columnFilters;
-    },
-    get columnVisibility() {
-      return columnVisibility;
-    },
-    get rowSelection() {
-      return rowSelection;
-    },
-    get pagination() {
-      return pagination;
-    },
-  },
-  enableRowSelection: true,
-  onSortingChange: (updater) => {
-    sorting = typeof updater === 'function' ? updater(sorting) : updater;
-  },
-  onColumnFiltersChange: (updater) => {
-    columnFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
-  },
-  onColumnVisibilityChange: (updater) => {
-    columnVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
-  },
-  onRowSelectionChange: (updater) => {
-    rowSelection = typeof updater === 'function' ? updater(rowSelection) : updater;
-  },
-  onPaginationChange: (updater) => {
-    pagination = typeof updater === 'function' ? updater(pagination) : updater;
-  },
-  getCoreRowModel: getCoreRowModel(),
-  getFilteredRowModel: getFilteredRowModel(),
-  getPaginationRowModel: getPaginationRowModel(),
-  getSortedRowModel: getSortedRowModel(),
-  getFacetedRowModel: getFacetedRowModel(),
-  getFacetedUniqueValues: getFacetedUniqueValues(),
-});
+// Column filters state (managed locally)
+let columnFilters = $state<ColumnFiltersState>([]);
+
+// Extract available filters from columns that have facetedFilter meta
+function getAvailableFilters(tableInstance: TTable<CategoryWithGroup>) {
+  return tableInstance
+    .getAllColumns()
+    .filter((column) => column.columnDef.meta?.facetedFilter)
+    .map((column) => column.columnDef.meta?.facetedFilter(column) as FilterInputOption);
+}
 </script>
 
-<div class="space-y-4">
-  <!-- Bulk Actions -->
-  <CategoryBulkActions {table} allCategories={categories} {onBulkDelete}></CategoryBulkActions>
-
-  <!-- Table -->
-  <div class="rounded-md border">
-    <Table.Root>
-      <Table.Header>
-        {#each table.getHeaderGroups() as headerGroup}
-          <Table.Row>
-            {#each headerGroup.headers as header}
-              <Table.Head>
-                {#if !header.isPlaceholder}
-                  <FlexRender content={header.column.columnDef.header} context={header.getContext()}
-                  ></FlexRender>
-                {/if}
-              </Table.Head>
-            {/each}
-          </Table.Row>
-        {/each}
-      </Table.Header>
-      <Table.Body>
-        {#if table.getRowModel().rows?.length}
-          {#each table.getRowModel().rows as row}
-            <Table.Row data-state={row.getIsSelected() && 'selected'}>
-              {#each row.getVisibleCells() as cell}
-                <Table.Cell>
-                  <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()}
-                  ></FlexRender>
-                </Table.Cell>
-              {/each}
-            </Table.Row>
-          {/each}
-        {:else}
-          <Table.Row>
-            <Table.Cell
-              colspan={columns(categoriesState, onView, onEdit, onDelete, onViewAnalytics).length}
-              class="h-24 text-center">
-              No categories found.
-            </Table.Cell>
-          </Table.Row>
-        {/if}
-      </Table.Body>
-    </Table.Root>
-  </div>
-
-  <!-- Pagination -->
-  <DataTablePagination {table}></DataTablePagination>
-</div>
+<AdvancedDataTable
+  data={categories}
+  columns={tableColumns}
+  features={{
+    sorting: true,
+    filtering: true,
+    pagination: true,
+    rowSelection: true,
+    columnVisibility: true
+  }}
+  showPagination={true}
+  pageSizeOptions={[10, 25, 50, 100]}
+  emptyMessage="No categories found."
+  {loading}
+  bind:table>
+  {#snippet toolbar(tableInstance)}
+    {@const availableFilters = getAvailableFilters(tableInstance)}
+    <div class="flex items-center justify-between gap-2">
+      <GenericFilterInput
+        table={tableInstance}
+        {availableFilters}
+        {columnFilters}
+        onColumnFiltersChange={(filters) => {
+          columnFilters = filters;
+          tableInstance.setColumnFilters(filters);
+        }} />
+      <GenericDisplayInput
+        table={tableInstance}
+        sorting={tableInstance.getState().sorting}
+        onSortingChange={(sorting) => tableInstance.setSorting(sorting)}
+        columnVisibility={tableInstance.getState().columnVisibility}
+        onVisibilityChange={(visibility) => tableInstance.setColumnVisibility(visibility)}
+        columnOrder={tableInstance.getState().columnOrder}
+        onColumnOrderChange={(order) => tableInstance.setColumnOrder(order)}
+        pageSize={tableInstance.getState().pagination.pageSize}
+        onPageSizeChange={(size) => tableInstance.setPageSize(size)} />
+    </div>
+  {/snippet}
+  {#snippet footer(tableInstance)}
+    <EntityBulkActions
+      table={tableInstance}
+      allEntities={categories}
+      {onBulkDelete}
+      entityName="category"
+      entityNamePlural="categories" />
+  {/snippet}
+</AdvancedDataTable>

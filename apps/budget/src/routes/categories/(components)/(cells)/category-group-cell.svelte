@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
-import FolderOpen from '@lucide/svelte/icons/folder-open';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
+import FolderOpen from '@lucide/svelte/icons/folder-open';
 
 interface Props {
   groupName: string | null;

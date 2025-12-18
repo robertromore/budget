@@ -1,10 +1,10 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
-import Tag from '@lucide/svelte/icons/tag';
+import type { Category } from '$lib/schema';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Pencil from '@lucide/svelte/icons/pencil';
+import Tag from '@lucide/svelte/icons/tag';
 import Trash2 from '@lucide/svelte/icons/trash-2';
-import type { Category } from '$lib/schema';
 
 interface Props {
   category: Category;

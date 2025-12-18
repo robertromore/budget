@@ -4,11 +4,11 @@ import { Badge } from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import type { Category } from '$lib/schema';
+import type { CategoryWithGroup } from '$lib/server/domains/categories/repository';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { highlightMatches } from '$lib/utils/search';
 import ArrowLeftRight from '@lucide/svelte/icons/arrow-left-right';
 import Calendar from '@lucide/svelte/icons/calendar';
-import Folder from '@lucide/svelte/icons/folder';
 import FolderTree from '@lucide/svelte/icons/folder-tree';
 import PiggyBank from '@lucide/svelte/icons/piggy-bank';
 import Receipt from '@lucide/svelte/icons/receipt';
@@ -22,7 +22,7 @@ import CategoryDataTableContainer from '../category-data-table-container.svelte'
 export type ViewMode = 'list' | 'grid';
 
 interface Props {
-  categories: Category[];
+  categories: CategoryWithGroup[];
   isLoading: boolean;
   searchQuery: string;
   viewMode?: ViewMode;
@@ -32,7 +32,7 @@ interface Props {
   onDelete: (category: Category) => void;
   onBulkDelete: (categories: Category[]) => void;
   onViewAnalytics: (category: Category) => void;
-  onReorder?: (reorderedCategories: Category[]) => void;
+  onReorder?: (reorderedCategories: CategoryWithGroup[]) => void;
 }
 
 let {
@@ -53,7 +53,7 @@ let {
 const categoriesState = $derived(CategoriesState.get());
 
 // Table binding for list view
-let table = $state<TanStackTable<Category>>();
+let table = $state<TanStackTable<CategoryWithGroup>>();
 
 // Get category type icon and label
 const getCategoryTypeInfo = (type: string | null) => {
@@ -132,8 +132,6 @@ const getPriorityColor = (priority: string | null) => {
     {@const typeInfo = getCategoryTypeInfo(category.categoryType)}
     {@const iconData = category.categoryIcon ? getIconByName(category.categoryIcon) : null}
     {@const IconComponent = iconData?.icon || Tag}
-    {@const groupIconData = category.groupIcon ? getIconByName(category.groupIcon) : null}
-    {@const GroupIconComponent = groupIconData?.icon || Folder}
 
     <EntityCard
       entity={category}
@@ -147,14 +145,6 @@ const getPriorityColor = (priority: string | null) => {
       {#snippet header(c)}
         <!-- Name and Icon -->
         <Card.Title class="flex items-start gap-2">
-          {#if c.groupIcon}
-            <div
-              class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded"
-              style:background-color={c.groupColor || '#6b7280'}
-              title={c.groupName || 'Group'}>
-              <GroupIconComponent class="h-3 w-3 text-white" />
-            </div>
-          {/if}
           <div class="relative shrink-0">
             <IconComponent
               class="mt-0.5 h-5 w-5"
