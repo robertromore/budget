@@ -5,6 +5,8 @@ import * as Table from '$lib/components/ui/table';
 import { Badge } from '$lib/components/ui/badge';
 import * as Select from '$lib/components/ui/select';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import { formatCurrency } from '$lib/utils/formatters';
+import { displayPreferences } from '$lib/stores/display-preferences.svelte';
 import FileText from '@lucide/svelte/icons/file-text';
 import Receipt from '@lucide/svelte/icons/receipt';
 import ClipboardList from '@lucide/svelte/icons/clipboard-list';
@@ -115,21 +117,9 @@ async function handleDelete(expense: any) {
   }
 }
 
-function formatCurrency(amount: number | undefined): string {
-  if (amount === undefined) return '$0.00';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount);
-}
-
 function formatDate(dateString: string | undefined): string {
   if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  return displayPreferences.formatDate(new Date(dateString));
 }
 
 const expenseTypeLabels: Record<string, string> = {
@@ -249,19 +239,19 @@ function getClaimStatus(expense: any): {
     <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
       <div class="bg-muted rounded-lg p-4">
         <p class="text-muted-foreground text-sm">Total Expenses</p>
-        <p class="text-2xl font-bold">{formatCurrency(summary.totalExpenses)}</p>
+        <p class="text-2xl font-bold">{formatCurrency(summary.totalExpenses ?? 0)}</p>
       </div>
       <div class="bg-muted rounded-lg p-4">
         <p class="text-muted-foreground text-sm">Out of Pocket</p>
-        <p class="text-2xl font-bold">{formatCurrency(summary.totalOutOfPocket)}</p>
+        <p class="text-2xl font-bold">{formatCurrency(summary.totalOutOfPocket ?? 0)}</p>
       </div>
       <div class="bg-muted rounded-lg p-4">
         <p class="text-muted-foreground text-sm">Insurance Covered</p>
-        <p class="text-2xl font-bold">{formatCurrency(summary.insuranceCovered)}</p>
+        <p class="text-2xl font-bold">{formatCurrency(summary.insuranceCovered ?? 0)}</p>
       </div>
       <div class="bg-muted rounded-lg p-4">
         <p class="text-muted-foreground text-sm">Qualified Expenses</p>
-        <p class="text-2xl font-bold">{formatCurrency(summary.qualifiedExpenses)}</p>
+        <p class="text-2xl font-bold">{formatCurrency(summary.qualifiedExpenses ?? 0)}</p>
       </div>
     </div>
   {/if}
@@ -302,10 +292,10 @@ function getClaimStatus(expense: any): {
               <Table.Cell>{expense.provider || '-'}</Table.Cell>
               <Table.Cell>{expense.patientName || '-'}</Table.Cell>
               <Table.Cell class="text-right font-medium">
-                {formatCurrency(expense.amount)}
+                {formatCurrency(expense.amount ?? 0)}
               </Table.Cell>
               <Table.Cell class="text-right font-medium">
-                {formatCurrency(expense.outOfPocket)}
+                {formatCurrency(expense.outOfPocket ?? 0)}
               </Table.Cell>
               <Table.Cell>
                 {@const claimStatus = getClaimStatus(expense)}

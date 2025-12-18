@@ -2,9 +2,9 @@
 import { rpc } from '$lib/query';
 import { parseDate } from '@internationalized/date';
 import { columns, type ExpenseFormat } from '../(data)/columns.svelte';
+import ClaimManagementSheet from './claim-management-sheet.svelte';
 import ExpenseDataTable from './expense-data-table.svelte';
 import ExpenseSkeleton from './expense-skeleton.svelte';
-import ClaimManagementSheet from './claim-management-sheet.svelte';
 import ReceiptUploadWidget from './receipt-upload-widget.svelte';
 
 interface Props {

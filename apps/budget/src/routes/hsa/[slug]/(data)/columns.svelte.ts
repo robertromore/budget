@@ -1,20 +1,19 @@
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
 import { ExpandToggle } from "$lib/components/ui/expand-toggle";
-import { currencyFormatter } from "$lib/utils/formatters";
-import { dateFormatter } from "$lib/utils/date-formatters";
-import { type DateValue, getLocalTimeZone } from "@internationalized/date";
-import type { CellContext, ColumnDef } from "@tanstack/table-core";
-import type { Component } from "svelte";
-import { medicalExpenseTypeEnum, type MedicalExpenseType } from "$lib/schema/medical-expenses";
 import { claimStatusEnum, type ClaimStatus } from "$lib/schema/hsa-claims";
+import { medicalExpenseTypeEnum, type MedicalExpenseType } from "$lib/schema/medical-expenses";
+import { dateFormatter } from "$lib/utils/date-formatters";
+import { currencyFormatter } from "$lib/utils/formatters";
+import { getLocalTimeZone, type DateValue } from "@internationalized/date";
+import type { CellContext, ColumnDef } from "@tanstack/table-core";
 
 // Import cell components
-import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
-import EditableTextCell from "../(components)/(cells)/editable-text-cell.svelte";
-import EditableNumericCell from "../(components)/(cells)/editable-numeric-cell.svelte";
-import EditableExpenseTypeCell from "../(components)/(cells)/editable-expense-type-cell.svelte";
 import ClaimStatusCell from "../(components)/(cells)/claim-status-cell.svelte";
+import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
+import EditableExpenseTypeCell from "../(components)/(cells)/editable-expense-type-cell.svelte";
+import EditableNumericCell from "../(components)/(cells)/editable-numeric-cell.svelte";
+import EditableTextCell from "../(components)/(cells)/editable-text-cell.svelte";
 import ExpenseActionsCell from "../(components)/(cells)/expense-actions-cell.svelte";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
 
@@ -142,7 +141,7 @@ export const columns = (
       accessorKey: "date",
       id: "date",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Date",
@@ -173,7 +172,7 @@ export const columns = (
       accessorKey: "provider",
       id: "provider",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Provider",
@@ -201,7 +200,7 @@ export const columns = (
       accessorKey: "patientName",
       id: "patientName",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Patient",
@@ -229,7 +228,7 @@ export const columns = (
       accessorKey: "expenseType",
       id: "expenseType",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Type",
@@ -259,7 +258,7 @@ export const columns = (
       accessorKey: "diagnosis",
       id: "diagnosis",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Diagnosis",
@@ -283,7 +282,7 @@ export const columns = (
       accessorKey: "treatmentDescription",
       id: "treatmentDescription",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Treatment",
@@ -307,7 +306,7 @@ export const columns = (
       accessorKey: "amount",
       id: "amount",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Amount",
@@ -338,7 +337,7 @@ export const columns = (
       accessorKey: "insuranceCovered",
       id: "insuranceCovered",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Insurance",
@@ -372,7 +371,7 @@ export const columns = (
       accessorKey: "outOfPocket",
       id: "outOfPocket",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Out of Pocket",
@@ -401,7 +400,7 @@ export const columns = (
       accessorKey: "claimStatus",
       id: "status",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Status",
@@ -433,7 +432,7 @@ export const columns = (
       accessorKey: "notes",
       id: "notes",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Notes",

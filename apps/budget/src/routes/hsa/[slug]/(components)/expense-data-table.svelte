@@ -1,4 +1,6 @@
 <script lang="ts" generics="TValue">
+import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
+import * as Table from '$lib/components/ui/table';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -11,20 +13,18 @@ import {
   getSortedRowModel,
   type Table as TTable,
 } from '@tanstack/table-core';
-import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
-import * as Table from '$lib/components/ui/table';
 import type { ExpenseFormat } from '../(data)/columns.svelte';
-import ExpenseTableToolbar from './expense-table-toolbar.svelte';
-import ExpenseTablePagination from './expense-table-pagination.svelte';
-import ExpenseBulkActions from './expense-bulk-actions.svelte';
+import { expanded, setExpanded } from '../(data)/expanded.svelte';
 import { filtering, filters, setFiltering, setGlobalFilter } from '../(data)/filters.svelte';
+import { grouping, setGrouping } from '../(data)/groups.svelte';
 import { pagination, setPagination } from '../(data)/pagination.svelte';
+import { pinning, setPinning } from '../(data)/pinning.svelte';
 import { selection, setSelection } from '../(data)/selection.svelte';
 import { setSorting, sorting } from '../(data)/sorts.svelte';
-import { visibility, setVisibility } from '../(data)/visibility.svelte';
-import { grouping, setGrouping } from '../(data)/groups.svelte';
-import { expanded, setExpanded } from '../(data)/expanded.svelte';
-import { pinning, setPinning } from '../(data)/pinning.svelte';
+import { setVisibility, visibility } from '../(data)/visibility.svelte';
+import ExpenseBulkActions from './expense-bulk-actions.svelte';
+import ExpenseTablePagination from './expense-table-pagination.svelte';
+import ExpenseTableToolbar from './expense-table-toolbar.svelte';
 
 interface Props {
   columns: ColumnDef<ExpenseFormat, TValue>[];
@@ -34,6 +34,8 @@ interface Props {
 }
 
 let { columns, expenses, table = $bindable(), onBulkDelete }: Props = $props();
+
+const _columns = (() => columns)();
 
 table = createSvelteTable<ExpenseFormat>({
   get data() {
@@ -66,7 +68,7 @@ table = createSvelteTable<ExpenseFormat>({
       return pinning();
     },
   },
-  columns,
+  columns: _columns,
   enableRowSelection: true,
   onRowSelectionChange: setSelection,
   onSortingChange: setSorting,
@@ -141,7 +143,7 @@ const selectedExpenses = $derived(table.getSelectedRowModel().flatRows.map((row)
           {/each}
         {:else}
           <Table.Row>
-            <Table.Cell colSpan={columns.length} class="h-24 text-center">
+            <Table.Cell colspan={columns.length} class="h-24 text-center">
               No expenses found.
             </Table.Cell>
           </Table.Row>
