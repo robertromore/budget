@@ -8,6 +8,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --app-font-size: 16px;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -64,6 +65,10 @@
   --surface-200: oklch(0.959 0.005 240);
   --surface-300: oklch(0.9 0.006 240);
   --surface-content: oklch(0.39 0.014 240);
+}
+
+html {
+  font-size: var(--app-font-size);
 }
 
 .dark {
@@ -168,4 +173,56 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Connected Tabs - Browser/Folder tab style */
+.tabs-connected {
+  @apply flex flex-col;
+}
+
+.tabs-connected-list {
+  /* Override default shadcn Tabs.List styles */
+  background: transparent !important;
+  padding: 0 !important;
+  height: auto !important;
+  border-radius: 0 !important;
+  @apply relative inline-flex w-fit items-end gap-0;
+}
+
+.tabs-connected-trigger {
+  /* Override default shadcn Tabs.Trigger styles */
+  background: transparent !important;
+  box-shadow: none !important;
+  height: auto !important;
+  flex: none !important;
+  @apply px-5 py-2.5;
+  @apply text-muted-foreground font-medium;
+  @apply transition-colors duration-150;
+  @apply hover:text-foreground;
+  /* Rounded top corners only */
+  border-radius: var(--radius) var(--radius) 0 0 !important;
+  /* Border on all sides except bottom */
+  border: 1px solid transparent !important;
+  /* Position to overlap content border */
+  position: relative;
+  margin-bottom: -.5rem;
+  top: 1px;
+}
+
+.tabs-connected-trigger[data-state='active'] {
+  @apply text-foreground;
+  background-color: var(--background) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+  border-bottom: 0 !important;
+  /* Ensure it's above the content border */
+  z-index: 1;
+  /* box-shadow: 0 3px 0 0 var(--background) !important; */
+}
+
+.tabs-connected-content {
+  @apply border rounded-b-lg rounded-tr-lg p-4;
+  border-color: var(--border);
+  background-color: var(--background);
+  position: relative;
 }
