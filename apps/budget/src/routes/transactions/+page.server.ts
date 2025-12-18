@@ -1,31 +1,26 @@
-import { fail } from "@sveltejs/kit";
-import { superValidate } from "sveltekit-superforms";
-import { zod } from "sveltekit-superforms/adapters";
-import { z } from "zod";
-import type { Actions, PageServerLoad } from "./$types";
-import { createContext } from "$lib/trpc/context";
-import { createCaller } from "$lib/trpc/router";
 import {
+  superformDeleteTransactionSchema,
   superformInsertTransactionSchema,
   superformUpdateTransactionSchema,
 } from "$lib/schema/superforms/transactions";
-import { validateAndSanitizeNotes } from "$lib/utils/input-sanitization";
+import { createContext } from "$lib/trpc/context";
+import { createCaller } from "$lib/trpc/router";
 import { currentDate } from "$lib/utils/dates";
-
-// Schema for delete operation
-const deleteTransactionSchema = z.object({
-  id: z.number().positive("Transaction ID is required"),
-});
+import { validateAndSanitizeNotes } from "$lib/utils/input-sanitization";
+import { fail } from "@sveltejs/kit";
+import { superValidate } from "sveltekit-superforms";
+import { zod4 } from "sveltekit-superforms/adapters";
+import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => ({
-  addTransactionForm: await superValidate(zod(superformInsertTransactionSchema)),
-  updateTransactionForm: await superValidate(zod(superformUpdateTransactionSchema)),
-  deleteTransactionForm: await superValidate(zod(deleteTransactionSchema)),
+  addTransactionForm: await superValidate(zod4(superformInsertTransactionSchema)),
+  updateTransactionForm: await superValidate(zod4(superformUpdateTransactionSchema)),
+  deleteTransactionForm: await superValidate(zod4(superformDeleteTransactionSchema)),
 });
 
 export const actions: Actions = {
   "add-transaction": async (event) => {
-    const form = await superValidate(event, zod(superformInsertTransactionSchema));
+    const form = await superValidate(event, zod4(superformInsertTransactionSchema));
 
     if (!form.valid) {
       return fail(400, {
@@ -82,7 +77,7 @@ export const actions: Actions = {
 
   "update-transaction": async (event) => {
     try {
-      const form = await superValidate(event, zod(superformUpdateTransactionSchema));
+      const form = await superValidate(event, zod4(superformUpdateTransactionSchema));
 
       if (!form.valid) {
         return fail(400, {
@@ -143,7 +138,7 @@ export const actions: Actions = {
   },
 
   "delete-transaction": async (event) => {
-    const form = await superValidate(event, zod(deleteTransactionSchema));
+    const form = await superValidate(event, zod4(superformDeleteTransactionSchema));
 
     if (!form.valid) {
       return fail(400, {
@@ -154,7 +149,7 @@ export const actions: Actions = {
     try {
       const caller = createCaller(await createContext(event));
       await caller.transactionRoutes.delete({
-        entities: [form.data["id"] as number],
+        id: form.data["id"] as number,
       });
 
       return {
@@ -169,4 +164,4 @@ export const actions: Actions = {
       });
     }
   },
-} satisfies Actions;
+};
