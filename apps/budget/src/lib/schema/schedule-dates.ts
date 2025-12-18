@@ -21,13 +21,13 @@ export const scheduleDates = sqliteTable(
     move_holidays: text("move_holidays", {
       enum: ["none", "next_weekday", "previous_weekday"],
     }).default("none"),
-    specific_dates: text("specific_dates", { mode: "json" }).default([]),
+    specific_dates: text("specific_dates", { mode: "json" }).$type<string[]>().default([]),
     on: integer("on", { mode: "boolean" }).default(false),
     on_type: text("on_type", { enum: ["day", "the"] }).default("day"),
-    days: text("days", { mode: "json" }).default([]),
-    weeks: text("weeks", { mode: "json" }).default([]),
-    weeks_days: text("weeks_days", { mode: "json" }).default([]),
-    week_days: text("week_days", { mode: "json" }).default([]),
+    days: text("days", { mode: "json" }).$type<number[]>().default([]),
+    weeks: text("weeks", { mode: "json" }).$type<number[]>().default([]),
+    weeks_days: text("weeks_days", { mode: "json" }).$type<number[]>().default([]),
+    week_days: text("week_days", { mode: "json" }).$type<number[]>().default([]),
     scheduleId: integer("schedule_id")
       .notNull()
       .references((): AnySQLiteColumn => schedules.id),

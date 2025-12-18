@@ -176,6 +176,7 @@ export const formInsertCategorySchema = createInsertSchema(categories, {
           message: "Please select a valid category type",
         })
       )
+      .optional()
       .default("expense"),
   categoryIcon: (schema) =>
     schema
@@ -187,9 +188,9 @@ export const formInsertCategorySchema = createInsertSchema(categories, {
       .pipe(z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex code"))
       .optional()
       .nullable(),
-  isActive: (schema) => schema.pipe(z.boolean()).default(true),
-  displayOrder: (schema) => schema.pipe(z.number()).default(0),
-  isTaxDeductible: (schema) => schema.pipe(z.boolean()).default(false),
+  isActive: (schema) => schema.pipe(z.boolean()).optional().default(true),
+  displayOrder: (schema) => schema.pipe(z.number()).optional().default(0),
+  isTaxDeductible: (schema) => schema.pipe(z.boolean()).optional().default(false),
   taxCategory: (schema) =>
     schema
       .pipe(
@@ -200,7 +201,7 @@ export const formInsertCategorySchema = createInsertSchema(categories, {
       .optional()
       .nullable(),
   deductiblePercentage: (schema) => schema.pipe(z.number().min(0).max(100)).optional().nullable(),
-  isSeasonal: (schema) => schema.pipe(z.boolean()).default(false),
+  isSeasonal: (schema) => schema.pipe(z.boolean()).optional().default(false),
   seasonalMonths: (schema) =>
     schema
       .pipe(z.array(z.string()).max(12, "Cannot have more than 12 months"))

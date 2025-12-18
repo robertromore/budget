@@ -197,62 +197,39 @@ const warningSelectedCount = $derived(
 );
 </script>
 
-<div class="space-y-6">
-  <!-- Header -->
-  <div>
-    <h2 class="text-2xl font-bold">Preview Import Data</h2>
-    <p class="text-muted-foreground mt-1">
-      Review the data from <span class="font-medium">{fileName}</span> before importing
-    </p>
+<div class="space-y-4">
+  <!-- Header with Stats -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-bold">Preview Import Data</h2>
+      <p class="text-muted-foreground text-sm">
+        <span class="font-medium">{fileName}</span>
+        <span class="mx-2">·</span>
+        <span class="font-medium">{data.length}</span> rows:
+        <span class="text-green-600">{validRowCount} valid</span>
+        {#if warningRowCount > 0}
+          <span class="mx-1">·</span>
+          <span class="text-yellow-600">{warningRowCount} warnings</span>
+        {/if}
+        {#if invalidRowCount > 0}
+          <span class="mx-1">·</span>
+          <span class="text-destructive">{invalidRowCount} invalid</span>
+        {/if}
+      </p>
+    </div>
+    <div class="flex items-center gap-2 text-sm">
+      <span class="text-primary font-medium">{selectedCount} selected</span>
+    </div>
   </div>
 
-  <!-- Summary Stats -->
-  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-    <Card.Root>
-      <Card.Content class="p-6">
-        <div class="text-center">
-          <div class="text-3xl font-bold">{data.length}</div>
-          <div class="text-muted-foreground mt-1 text-sm">Total Rows</div>
-        </div>
-      </Card.Content>
-    </Card.Root>
-
-    <Card.Root>
-      <Card.Content class="p-6">
-        <div class="text-center">
-          <div class="text-3xl font-bold text-green-600">{validRowCount}</div>
-          <div class="text-muted-foreground mt-1 text-sm">Valid Rows</div>
-        </div>
-      </Card.Content>
-    </Card.Root>
-
-    <Card.Root>
-      <Card.Content class="p-6">
-        <div class="text-center">
-          <div class="text-3xl font-bold text-yellow-600">{warningRowCount}</div>
-          <div class="text-muted-foreground mt-1 text-sm">Warnings</div>
-        </div>
-      </Card.Content>
-    </Card.Root>
-
-    <Card.Root>
-      <Card.Content class="p-6">
-        <div class="text-center">
-          <div class="text-3xl font-bold text-blue-600">{selectedCount}</div>
-          <div class="text-muted-foreground mt-1 text-sm">Selected</div>
-        </div>
-      </Card.Content>
-    </Card.Root>
-  </div>
-
-  <!-- Toolbar -->
-  <Card.Root>
-    <Card.Content class="p-4">
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-medium">Filter by status:</span>
-          <Select.Root type="single" bind:value={statusFilter}>
-            <Select.Trigger class="w-[140px]">
+  <!-- Compact Toolbar -->
+  <div class="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-muted-foreground text-sm">Filter:</span>
+        <Select.Root type="single" bind:value={statusFilter}>
+          <Select.Trigger class="h-8 w-[130px]">
+            <span class="text-sm">
               {statusFilter === 'all'
                 ? 'All'
                 : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} ({statusFilter ===
@@ -263,30 +240,28 @@ const warningSelectedCount = $derived(
                   : statusFilter === 'warning'
                     ? warningRowCount
                     : invalidRowCount})
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="all">All ({data.length})</Select.Item>
-              <Select.Item value="valid">Valid ({validRowCount})</Select.Item>
-              <Select.Item value="warning">Warning ({warningRowCount})</Select.Item>
-              <Select.Item value="invalid">Invalid ({invalidRowCount})</Select.Item>
-            </Select.Content>
-          </Select.Root>
-
-          {#if warningRowCount > 0}
-            <Button variant="outline" size="sm" onclick={toggleWarningSelection}>
-              {warningSelectedCount === warningRowCount ? 'Deselect' : 'Select'} Warnings ({warningSelectedCount}/{warningRowCount})
-            </Button>
-          {/if}
-        </div>
-
-        <div class="flex items-center gap-2">
-          <span class="text-muted-foreground text-sm">
-            Showing {table.getRowModel().rows.length} of {filteredData.length} rows
-          </span>
-        </div>
+            </span>
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="all">All ({data.length})</Select.Item>
+            <Select.Item value="valid">Valid ({validRowCount})</Select.Item>
+            <Select.Item value="warning">Warning ({warningRowCount})</Select.Item>
+            <Select.Item value="invalid">Invalid ({invalidRowCount})</Select.Item>
+          </Select.Content>
+        </Select.Root>
       </div>
-    </Card.Content>
-  </Card.Root>
+
+      {#if warningRowCount > 0}
+        <Button variant="outline" size="sm" class="h-8" onclick={toggleWarningSelection}>
+          {warningSelectedCount === warningRowCount ? 'Deselect' : 'Select'} Warnings ({warningSelectedCount}/{warningRowCount})
+        </Button>
+      {/if}
+    </div>
+
+    <span class="text-muted-foreground text-sm">
+      Showing {table.getRowModel().rows.length} of {filteredData.length}
+    </span>
+  </div>
 
   <!-- Data Table -->
   <div class="rounded-md border">

@@ -29,9 +29,9 @@ let {
   onCancel?: () => void;
 } = $props();
 
-// Capture props at mount time to avoid reactivity warnings
-const _id = (() => id)();
-const _initialData = (() => initialData)();
+// svelte-ignore state_referenced_locally - intentionally capture initial prop values
+const _id = id;
+const _initialData = initialData;
 
 const isUpdate = $derived(_id !== undefined && _id > 0);
 const createMutation = createCategoryGroup.options();

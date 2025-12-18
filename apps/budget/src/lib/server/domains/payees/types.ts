@@ -7,37 +7,16 @@
 
 import type { Budget } from "$lib/schema/budgets";
 import type { Category } from "$lib/schema/categories";
-import type { Payee, PayeeType, PaymentFrequency } from "$lib/schema/payees";
+import type {
+  Payee,
+  PayeeAddress,
+  PayeeType,
+  PaymentFrequency,
+  SubscriptionInfo,
+} from "$lib/schema/payees";
 
-/**
- * Subscription information for recurring payees
- */
-export interface SubscriptionInfo {
-  monthlyCost: number;
-  renewalDate: string; // ISO date string
-  cancellationInfo?: {
-    url?: string;
-    phone?: string;
-    method: "online" | "phone" | "email";
-  };
-  isActive: boolean;
-  billingCycle?: "monthly" | "quarterly" | "yearly";
-  trialEndDate?: string; // ISO date string
-  notes?: string;
-}
-
-/**
- * Structured address information
- */
-export interface PayeeAddress {
-  street?: string;
-  street2?: string;
-  city?: string;
-  state?: string;
-  postalCode?: string;
-  country?: string;
-  formatted?: string;
-}
+// Re-export schema types for external use
+export type { PayeeAddress, SubscriptionInfo };
 
 // Alias for consistency with other domains
 export type AddressData = PayeeAddress;

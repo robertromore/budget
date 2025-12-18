@@ -1193,204 +1193,234 @@ export const payeeRoutes = t.router({
   // TODO: Implement these methods in PayeeService before uncommenting
   // =====================================
 
-  // bulkStatusChange: rateLimitedProcedure
-  //   .input(
-  //     z.object({
-  //       payeeIds: z.array(z.number().positive()),
-  //       status: z.enum(["active", "inactive"]),
-  //     })
-  //   )
-  //   .mutation(async ({ input }) => {
-  //     return withErrorHandler(async () => {
-  //       const isActivating = input.status === "active";
-  //       return await payeeService.bulkUpdatePayeeStatus(input.payeeIds, isActivating);
-  //     });
-  //   }),
+  bulkStatusChange: rateLimitedProcedure
+    .input(
+      z.object({
+        payeeIds: z.array(z.number().positive()),
+        status: z.enum(["active", "inactive"]),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return withErrorHandler(async () => {
+        const isActivating = input.status === "active";
+        return await payeeService.bulkUpdatePayeeStatus(
+          input.payeeIds,
+          isActivating,
+          ctx.workspaceId
+        );
+      });
+    }),
 
-  // bulkCategoryAssignment: rateLimitedProcedure
-  //   .input(
-  //     z.object({
-  //       payeeIds: z.array(z.number().positive()),
-  //       categoryId: z.number().positive(),
-  //       overwriteExisting: z.boolean().default(false),
-  //     })
-  //   )
-  //   .mutation(async ({ input }) => {
-  //     return withErrorHandler(() =>
-  //       payeeService.bulkAssignCategory(input.payeeIds, input.categoryId, input.overwriteExisting)
-  //     );
-  //   }),
+  bulkCategoryAssignment: rateLimitedProcedure
+    .input(
+      z.object({
+        payeeIds: z.array(z.number().positive()),
+        categoryId: z.number().positive(),
+        overwriteExisting: z.boolean().default(false),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return withErrorHandler(() =>
+        payeeService.bulkAssignCategory(
+          input.payeeIds,
+          input.categoryId,
+          input.overwriteExisting,
+          ctx.workspaceId
+        )
+      );
+    }),
 
-  // bulkTagManagement: rateLimitedProcedure
-  //   .input(
-  //     z.object({
-  //       payeeIds: z.array(z.number().positive()),
-  //       tags: z.array(z.string()),
-  //       operation: z.enum(["add", "remove", "replace"]),
-  //     })
-  //   )
-  //   .mutation(async ({ input }) => {
-  //     return withErrorHandler(() =>
-  //       payeeService.bulkManageTags(input.payeeIds, input.tags, input.operation)
-  //     );
-  //   }),
+  bulkTagManagement: rateLimitedProcedure
+    .input(
+      z.object({
+        payeeIds: z.array(z.number().positive()),
+        tags: z.array(z.string()),
+        operation: z.enum(["add", "remove", "replace"]),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return withErrorHandler(() =>
+        payeeService.bulkManageTags(
+          input.payeeIds,
+          input.tags,
+          input.operation,
+          ctx.workspaceId
+        )
+      );
+    }),
 
-  // bulkIntelligenceApplication: rateLimitedProcedure
-  //   .input(
-  //     z.object({
-  //       payeeIds: z.array(z.number().positive()),
-  //       options: z.object({
-  //         applyCategory: z.boolean().default(true),
-  //         applyBudget: z.boolean().default(true),
-  //         confidenceThreshold: z.number().min(0).max(1).default(0.7),
-  //         overwriteExisting: z.boolean().default(false),
-  //       }),
-  //     })
-  //   )
-  //   .mutation(async ({ input }) => {
-  //     return withErrorHandler(() =>
-  //       payeeService.bulkApplyIntelligentDefaults(input.payeeIds, input.options)
-  //     );
-  //   }),
+  bulkIntelligenceApplication: rateLimitedProcedure
+    .input(
+      z.object({
+        payeeIds: z.array(z.number().positive()),
+        options: z
+          .object({
+            applyCategory: z.boolean().default(true),
+            applyBudget: z.boolean().default(true),
+            confidenceThreshold: z.number().min(0).max(1).default(0.7),
+            overwriteExisting: z.boolean().default(false),
+          })
+          .default({
+            applyCategory: true,
+            applyBudget: true,
+            confidenceThreshold: 0.7,
+            overwriteExisting: false,
+          }),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return withErrorHandler(() =>
+        payeeService.bulkApplyIntelligentDefaults(
+          input.payeeIds,
+          input.options,
+          ctx.workspaceId
+        )
+      );
+    }),
 
-  // bulkExport: publicProcedure
-  //   .input(
-  //     z.object({
-  //       payeeIds: z.array(z.number().positive()),
-  //       format: z.enum(["csv", "json"]),
-  //       includeTransactionStats: z.boolean().default(true),
-  //       includeContactInfo: z.boolean().default(true),
-  //       includeIntelligenceData: z.boolean().default(false),
-  //     })
-  //   )
-  //   .query(async ({ input }) => {
-  //     return withErrorHandler(() =>
-  //       payeeService.exportPayees(input.payeeIds, input.format, {
-  //         includeTransactionStats: input.includeTransactionStats,
-  //         includeContactInfo: input.includeContactInfo,
-  //         includeIntelligenceData: input.includeIntelligenceData,
-  //       })
-  //     );
-  //   }),
+  bulkExport: publicProcedure
+    .input(
+      z.object({
+        payeeIds: z.array(z.number().positive()),
+        format: z.enum(["csv", "json"]),
+        includeTransactionStats: z.boolean().default(true),
+        includeContactInfo: z.boolean().default(true),
+        includeIntelligenceData: z.boolean().default(false),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      return withErrorHandler(async () =>
+        payeeService.exportPayees(input.payeeIds, input.format, {
+          includeTransactionStats: input.includeTransactionStats,
+          includeContactInfo: input.includeContactInfo,
+          includeIntelligenceData: input.includeIntelligenceData,
+        }, ctx.workspaceId)
+      );
+    }),
 
-  // bulkImport: rateLimitedProcedure
-  //   .input(
-  //     z.object({
-  //       data: z.string(), // CSV or JSON string
-  //       format: z.enum(["csv", "json"]),
-  //       options: z
-  //         .object({
-  //           skipDuplicates: z.boolean().default(true),
-  //           updateExisting: z.boolean().default(false),
-  //           applyIntelligentDefaults: z.boolean().default(true),
-  //           validateContactInfo: z.boolean().default(true),
-  //         })
-  //         .default({
-  //           skipDuplicates: true,
-  //           updateExisting: false,
-  //           applyIntelligentDefaults: true,
-  //           validateContactInfo: true,
-  //         }),
-  //     })
-  //   )
-  //   .mutation(async ({ input }) => {
-  //     return withErrorHandler(() =>
-  //       payeeService.importPayees(input.data, input.format, input.options)
-  //     );
-  //   }),
+  bulkImport: publicProcedure
+    .input(
+      z.object({
+        data: z.string(), // CSV or JSON string
+        format: z.enum(["csv", "json"]),
+        options: z
+          .object({
+            skipDuplicates: z.boolean().default(true),
+            updateExisting: z.boolean().default(false),
+            applyIntelligentDefaults: z.boolean().default(true),
+            validateContactInfo: z.boolean().default(true),
+          })
+          .default({
+            skipDuplicates: true,
+            updateExisting: false,
+            applyIntelligentDefaults: true,
+            validateContactInfo: true,
+          }),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return withErrorHandler(async () =>
+        payeeService.importPayees(input.data, input.format, input.options, ctx.workspaceId)
+      );
+    }),
 
-  // bulkCleanup: rateLimitedProcedure
-  //   .input(
-  //     z.object({
-  //       operations: z.array(
-  //         z.enum([
-  //           "remove_inactive",
-  //           "remove_empty_payees",
-  //           "normalize_names",
-  //           "standardize_contact_info",
-  //           "merge_duplicates",
-  //           "update_calculated_fields",
-  //         ])
-  //       ),
-  //       dryRun: z.boolean().default(true),
-  //       confirmDestructive: z.boolean().default(false),
-  //     })
-  //   )
-  //   .mutation(async ({ input }) => {
-  //     return withErrorHandler(() =>
-  //       payeeService.bulkCleanupPayees(input.operations, input.dryRun, input.confirmDestructive)
-  //     );
-  //   }),
+  bulkCleanup: rateLimitedProcedure
+    .input(
+      z.object({
+        operations: z.array(
+          z.enum(["remove_inactive", "merge_duplicates", "fix_data", "archive_unused"])
+        ),
+        dryRun: z.boolean().default(true),
+        confirmDestructive: z.boolean().default(false),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return withErrorHandler(() =>
+        payeeService.bulkCleanupPayees(
+          input.operations,
+          input.dryRun,
+          input.confirmDestructive,
+          ctx.workspaceId
+        )
+      );
+    }),
 
-  // getDuplicates: publicProcedure
-  //   .input(
-  //     z.object({
-  //       similarityThreshold: z.number().min(0).max(1).default(0.8),
-  //       includeInactive: z.boolean().default(false),
-  //       groupingStrategy: z
-  //         .enum(["name", "contact", "transaction_pattern", "comprehensive"])
-  //         .default("comprehensive"),
-  //     })
-  //   )
-  //   .query(async ({ input }) => {
-  //     return withErrorHandler(() =>
-  //       payeeService.findDuplicatePayees(
-  //         input.similarityThreshold,
-  //         input.includeInactive,
-  //         input.groupingStrategy
-  //       )
-  //     );
-  //   }),
+  getDuplicates: publicProcedure
+    .input(
+      z.object({
+        similarityThreshold: z.number().min(0).max(1).default(0.8),
+        includeInactive: z.boolean().default(false),
+        groupingStrategy: z
+          .enum(["name", "contact", "transaction_pattern", "comprehensive"])
+          .default("comprehensive"),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      return withErrorHandler(async () =>
+        payeeService.findDuplicatePayees(
+          input.similarityThreshold,
+          input.includeInactive,
+          input.groupingStrategy,
+          ctx.workspaceId
+        )
+      );
+    }),
 
-  // mergeDuplicates: rateLimitedProcedure
-  //   .input(
-  //     z.object({
-  //       primaryPayeeId: z.number().positive(),
-  //       duplicatePayeeIds: z.array(z.number().positive()),
-  //       mergeStrategy: z
-  //         .object({
-  //           preserveTransactionHistory: z.boolean().default(true),
-  //           conflictResolution: z
-  //             .enum(["primary", "latest", "best_quality", "manual"])
-  //             .default("best_quality"),
-  //           mergeContactInfo: z.boolean().default(true),
-  //           mergeIntelligenceData: z.boolean().default(true),
-  //         })
-  //         .default({}),
-  //       confirmMerge: z.boolean().default(false),
-  //     })
-  //   )
-  //   .mutation(async ({ input }) => {
-  //     return withErrorHandler(() =>
-  //       payeeService.mergeDuplicatePayees(
-  //         input.primaryPayeeId,
-  //         input.duplicatePayeeIds,
-  //         input.mergeStrategy,
-  //         input.confirmMerge
-  //       )
-  //     );
-  //   }),
+  mergeDuplicates: publicProcedure
+    .input(
+      z.object({
+        primaryPayeeId: z.number().positive(),
+        duplicatePayeeIds: z.array(z.number().positive()),
+        mergeStrategy: z
+          .object({
+            preserveTransactionHistory: z.boolean().default(true),
+            conflictResolution: z
+              .enum(["primary", "latest", "best_quality", "manual"])
+              .default("best_quality"),
+            mergeContactInfo: z.boolean().default(true),
+            mergeIntelligenceData: z.boolean().default(true),
+          })
+          .default({
+            preserveTransactionHistory: true,
+            conflictResolution: "best_quality",
+            mergeContactInfo: true,
+            mergeIntelligenceData: true,
+          }),
+        confirmMerge: z.boolean().default(false),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return withErrorHandler(async () =>
+        payeeService.mergeDuplicatePayees(
+          input.primaryPayeeId,
+          input.duplicatePayeeIds,
+          input.mergeStrategy,
+          input.confirmMerge,
+          ctx.workspaceId
+        )
+      );
+    }),
 
-  // undoOperation: rateLimitedProcedure
-  //   .input(
-  //     z.object({
-  //       operationId: z.string(),
-  //       operationType: z.enum([
-  //         "bulk_delete",
-  //         "bulk_status_change",
-  //         "bulk_category_assignment",
-  //         "bulk_tag_management",
-  //         "bulk_intelligence_application",
-  //         "bulk_cleanup",
-  //         "merge_duplicates",
-  //       ]),
-  //     })
-  //   )
-  //   .mutation(async ({ input }) => {
-  //     return withErrorHandler(() =>
-  //       payeeService.undoBulkOperation(input.operationId, input.operationType)
-  //     );
-  //   }),
+  undoOperation: rateLimitedProcedure
+    .input(
+      z.object({
+        operationId: z.string(),
+        operationType: z.enum([
+          "bulk_delete",
+          "bulk_status_change",
+          "bulk_category_assignment",
+          "bulk_tag_management",
+          "bulk_intelligence_application",
+          "bulk_cleanup",
+          "merge_duplicates",
+        ]),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return withErrorHandler(() =>
+        payeeService.undoBulkOperation(input.operationId, input.operationType, ctx.workspaceId)
+      );
+    }),
 
   // getOperationHistory: publicProcedure
   //   .input(

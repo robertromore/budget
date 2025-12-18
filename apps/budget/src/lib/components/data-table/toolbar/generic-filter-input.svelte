@@ -10,7 +10,7 @@ interface Props {
   /** The table instance */
   table: Table<TData>;
   /** Available filter options */
-  availableFilters: FilterInputOption<TData>[];
+  availableFilters: FilterInputOption[];
   /** Current column filters state */
   columnFilters?: ColumnFiltersState;
   /** Handler for column filter changes */
@@ -26,7 +26,7 @@ const activeFilterColumnIds = $derived(new Set(columnFilters.map((f) => f.id)));
 const selectedFilters = $derived(
   columnFilters
     .map((filter) => availableFilters.find((af) => af.column.id === filter.id))
-    .filter(Boolean) as FilterInputOption<TData>[]
+    .filter(Boolean) as FilterInputOption[]
 );
 
 // Filters that can still be added (not already active)
@@ -38,7 +38,7 @@ const selectableFilters = $derived(
 const hasFilters = $derived(availableFilters.length > 0);
 
 // Add a filter
-function addFilter(filter: FilterInputOption<TData>) {
+function addFilter(filter: FilterInputOption) {
   const newFilters: ColumnFiltersState = [
     ...columnFilters,
     {

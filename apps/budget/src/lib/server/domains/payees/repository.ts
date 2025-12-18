@@ -149,6 +149,57 @@ export class PayeeRepository extends BaseRepository<
   }
 
   /**
+   * Find payees by array of IDs
+   */
+  async findByIds(ids: number[], workspaceId: number): Promise<Payee[]> {
+    if (ids.length === 0) return [];
+    return await db
+      .select()
+      .from(payees)
+      .where(
+        and(
+          eq(payees.workspaceId, workspaceId),
+          inArray(payees.id, ids),
+          isNull(payees.deletedAt)
+        )
+      )
+      .orderBy(payees.name);
+  }
+
+  /**
+   * Find a payee by exact name match
+   */
+  async findByName(name: string, workspaceId: number): Promise<Payee | null> {
+    const result = await db
+      .select()
+      .from(payees)
+      .where(
+        and(
+          eq(payees.workspaceId, workspaceId),
+          eq(payees.name, name),
+          isNull(payees.deletedAt)
+        )
+      )
+      .limit(1);
+    return result[0] || null;
+  }
+
+  /**
+   * Update transactions from one payee to another (for merging duplicates)
+   * Note: Workspace filtering is implicit since payees are already workspace-scoped
+   */
+  async updateTransactionPayee(
+    fromPayeeId: number,
+    toPayeeId: number
+  ): Promise<number> {
+    const result = await db
+      .update(transactions)
+      .set({ payeeId: toPayeeId })
+      .where(eq(transactions.payeeId, fromPayeeId));
+    return result.rowsAffected ?? 0;
+  }
+
+  /**
    * Find all active payees with pagination
    */
   override async findAll(
@@ -206,35 +257,27 @@ export class PayeeRepository extends BaseRepository<
    * Update payee
    */
   override async update(id: number, data: UpdatePayeeData, workspaceId: number): Promise<Payee> {
-    // Type-safe database update data
+    // Type-safe database update data - Drizzle handles JSON serialization automatically
+    // for columns with { mode: "json" }, so we pass objects directly
     interface PayeeDbUpdate
       extends Omit<
         UpdatePayeeData,
-        "address" | "subscriptionInfo" | "tags" | "preferredPaymentMethods"
+        "tags" | "preferredPaymentMethods"
       > {
-      address?: string | null;
-      subscriptionInfo?: string | null;
       tags?: string | null;
       preferredPaymentMethods?: string | null;
     }
 
-    // Serialize JSON fields to strings
-    // Exclude fields that need JSON serialization from the spread
-    const { address, subscriptionInfo, tags, preferredPaymentMethods, ...rest } = data;
+    // Exclude fields that need string serialization from the spread
+    const { tags, preferredPaymentMethods, ...rest } = data;
 
     const updateData: PayeeDbUpdate = {
       ...rest,
     };
 
-    // Convert complex types to JSON strings for database storage
+    // Only serialize fields that are stored as plain text (not JSON mode columns)
     if (tags !== undefined) {
       updateData.tags = tags ? JSON.stringify(tags) : null;
-    }
-    if (address !== undefined) {
-      updateData.address = address ? JSON.stringify(address) : null;
-    }
-    if (subscriptionInfo !== undefined) {
-      updateData.subscriptionInfo = subscriptionInfo ? JSON.stringify(subscriptionInfo) : null;
     }
     if (preferredPaymentMethods !== undefined) {
       updateData.preferredPaymentMethods = preferredPaymentMethods
@@ -673,23 +716,15 @@ export class PayeeRepository extends BaseRepository<
       updateData.paymentFrequency = frequencyAnalysis.suggestedFrequency;
     }
 
-    // Serialize JSON fields to strings for database storage
+    // Prepare update data - Drizzle handles JSON serialization automatically for { mode: "json" } columns
     const dbUpdateData: any = {
       ...updateData,
       updatedAt: getCurrentTimestamp(),
     };
 
-    // Convert complex types to JSON strings if present
+    // Only serialize fields stored as plain text (not JSON mode columns)
     if (updateData.tags !== undefined) {
       dbUpdateData.tags = updateData.tags ? JSON.stringify(updateData.tags) : null;
-    }
-    if (updateData.address !== undefined) {
-      dbUpdateData.address = updateData.address ? JSON.stringify(updateData.address) : null;
-    }
-    if (updateData.subscriptionInfo !== undefined) {
-      dbUpdateData.subscriptionInfo = updateData.subscriptionInfo
-        ? JSON.stringify(updateData.subscriptionInfo)
-        : null;
     }
     if (updateData.preferredPaymentMethods !== undefined) {
       dbUpdateData.preferredPaymentMethods = updateData.preferredPaymentMethods

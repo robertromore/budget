@@ -465,6 +465,316 @@ export class PayeeService {
   }
 
   /**
+   * Bulk assign category to payees
+   */
+  async bulkAssignCategory(
+    payeeIds: number[],
+    categoryId: number,
+    overwriteExisting: boolean,
+    workspaceId: number
+  ): Promise<{ updatedCount: number; skippedCount: number; errors: string[] }> {
+    if (!Array.isArray(payeeIds) || payeeIds.length === 0) {
+      throw new ValidationError("No payee IDs provided");
+    }
+
+    if (!categoryId || categoryId <= 0) {
+      throw new ValidationError("Invalid category ID");
+    }
+
+    const validIds = payeeIds.filter((id) => id && id > 0);
+    if (validIds.length === 0) {
+      throw new ValidationError("No valid payee IDs provided");
+    }
+
+    const errors: string[] = [];
+    let updatedCount = 0;
+    let skippedCount = 0;
+
+    for (const id of validIds) {
+      try {
+        const payee = await this.getPayeeById(id, workspaceId);
+
+        // Skip if already has category and not overwriting
+        if (payee.defaultCategoryId && !overwriteExisting) {
+          skippedCount++;
+          continue;
+        }
+
+        await this.updatePayee(id, { defaultCategoryId: categoryId }, workspaceId);
+        updatedCount++;
+      } catch (error) {
+        errors.push(`Payee ${id}: ${error instanceof Error ? error.message : "Unknown error"}`);
+      }
+    }
+
+    return { updatedCount, skippedCount, errors };
+  }
+
+  /**
+   * Bulk update payee status (active/inactive)
+   */
+  async bulkUpdatePayeeStatus(
+    payeeIds: number[],
+    isActive: boolean,
+    workspaceId: number
+  ): Promise<{ updatedCount: number; errors: string[] }> {
+    if (!Array.isArray(payeeIds) || payeeIds.length === 0) {
+      throw new ValidationError("No payee IDs provided");
+    }
+
+    const validIds = payeeIds.filter((id) => id && id > 0);
+    if (validIds.length === 0) {
+      throw new ValidationError("No valid payee IDs provided");
+    }
+
+    const errors: string[] = [];
+    let updatedCount = 0;
+
+    for (const id of validIds) {
+      try {
+        await this.updatePayee(id, { isActive }, workspaceId);
+        updatedCount++;
+      } catch (error) {
+        errors.push(`Payee ${id}: ${error instanceof Error ? error.message : "Unknown error"}`);
+      }
+    }
+
+    return { updatedCount, errors };
+  }
+
+  /**
+   * Bulk manage tags on payees
+   */
+  async bulkManageTags(
+    payeeIds: number[],
+    tags: string[],
+    operation: "add" | "remove" | "replace",
+    workspaceId: number
+  ): Promise<{ updatedCount: number; errors: string[] }> {
+    if (!Array.isArray(payeeIds) || payeeIds.length === 0) {
+      throw new ValidationError("No payee IDs provided");
+    }
+
+    const validIds = payeeIds.filter((id) => id && id > 0);
+    if (validIds.length === 0) {
+      throw new ValidationError("No valid payee IDs provided");
+    }
+
+    const errors: string[] = [];
+    let updatedCount = 0;
+
+    for (const id of validIds) {
+      try {
+        const payee = await this.getPayeeById(id, workspaceId);
+        const existingTags = (payee.tags as string[] | null) || [];
+        let newTags: string[];
+
+        switch (operation) {
+          case "add":
+            newTags = [...new Set([...existingTags, ...tags])];
+            break;
+          case "remove":
+            newTags = existingTags.filter((t) => !tags.includes(t));
+            break;
+          case "replace":
+            newTags = tags;
+            break;
+        }
+
+        await this.updatePayee(id, { tags: newTags as any }, workspaceId);
+        updatedCount++;
+      } catch (error) {
+        errors.push(`Payee ${id}: ${error instanceof Error ? error.message : "Unknown error"}`);
+      }
+    }
+
+    return { updatedCount, errors };
+  }
+
+  /**
+   * Bulk apply intelligent defaults to payees
+   */
+  async bulkApplyIntelligentDefaults(
+    payeeIds: number[],
+    options: {
+      applyCategory?: boolean;
+      applyBudget?: boolean;
+      confidenceThreshold?: number;
+      overwriteExisting?: boolean;
+    },
+    workspaceId: number
+  ): Promise<{ updatedCount: number; skippedCount: number; errors: string[] }> {
+    if (!Array.isArray(payeeIds) || payeeIds.length === 0) {
+      throw new ValidationError("No payee IDs provided");
+    }
+
+    const validIds = payeeIds.filter((id) => id && id > 0);
+    if (validIds.length === 0) {
+      throw new ValidationError("No valid payee IDs provided");
+    }
+
+    const {
+      applyCategory = true,
+      applyBudget = true,
+      confidenceThreshold = 0.7,
+      overwriteExisting = false,
+    } = options;
+
+    const errors: string[] = [];
+    let updatedCount = 0;
+    let skippedCount = 0;
+
+    for (const id of validIds) {
+      try {
+        const payee = await this.getPayeeById(id, workspaceId);
+        const suggestions = await this.generatePayeeSuggestions(id, workspaceId);
+
+        if (!suggestions) {
+          skippedCount++;
+          continue;
+        }
+
+        const updateData: UpdatePayeeData = {};
+
+        if (
+          applyCategory &&
+          suggestions.suggestedCategoryId &&
+          suggestions.confidence >= confidenceThreshold
+        ) {
+          if (!payee.defaultCategoryId || overwriteExisting) {
+            updateData.defaultCategoryId = suggestions.suggestedCategoryId;
+          }
+        }
+
+        if (
+          applyBudget &&
+          suggestions.suggestedBudgetId &&
+          suggestions.confidence >= confidenceThreshold
+        ) {
+          if (!payee.defaultBudgetId || overwriteExisting) {
+            updateData.defaultBudgetId = suggestions.suggestedBudgetId;
+          }
+        }
+
+        if (Object.keys(updateData).length > 0) {
+          await this.updatePayee(id, updateData, workspaceId);
+          updatedCount++;
+        } else {
+          skippedCount++;
+        }
+      } catch (error) {
+        errors.push(`Payee ${id}: ${error instanceof Error ? error.message : "Unknown error"}`);
+      }
+    }
+
+    return { updatedCount, skippedCount, errors };
+  }
+
+  /**
+   * Bulk cleanup payees based on specified operations
+   */
+  async bulkCleanupPayees(
+    operations: Array<"remove_inactive" | "merge_duplicates" | "fix_data" | "archive_unused">,
+    dryRun: boolean,
+    confirmDestructive: boolean,
+    workspaceId: number
+  ): Promise<{
+    affectedPayees: number[];
+    operationResults: Array<{
+      operation: string;
+      affectedCount: number;
+      details: string[];
+    }>;
+    canUndo: boolean;
+  }> {
+    const affectedPayees: number[] = [];
+    const operationResults: Array<{
+      operation: string;
+      affectedCount: number;
+      details: string[];
+    }> = [];
+
+    for (const operation of operations) {
+      const result = {
+        operation,
+        affectedCount: 0,
+        details: [] as string[],
+      };
+
+      switch (operation) {
+        case "remove_inactive": {
+          const allPayees = await this.repository.findAllPayees(workspaceId);
+          const inactive = allPayees.filter((p) => !p.isActive);
+
+          if (!dryRun && confirmDestructive) {
+            for (const payee of inactive) {
+              const hasTransactions = await this.repository.hasTransactions(payee.id, workspaceId);
+              if (!hasTransactions) {
+                await this.deletePayee(payee.id, workspaceId);
+                affectedPayees.push(payee.id);
+                result.affectedCount++;
+                result.details.push(`Removed inactive payee: ${payee.name}`);
+              }
+            }
+          } else {
+            result.affectedCount = inactive.length;
+            result.details.push(`Found ${inactive.length} inactive payees`);
+          }
+          break;
+        }
+        case "archive_unused": {
+          const allPayees = await this.repository.findAllPayees(workspaceId);
+          for (const payee of allPayees) {
+            const hasTransactions = await this.repository.hasTransactions(payee.id, workspaceId);
+            if (!hasTransactions && payee.isActive) {
+              if (!dryRun) {
+                await this.updatePayee(payee.id, { isActive: false }, workspaceId);
+                affectedPayees.push(payee.id);
+              }
+              result.affectedCount++;
+              result.details.push(`${dryRun ? "Would archive" : "Archived"}: ${payee.name}`);
+            }
+          }
+          break;
+        }
+        case "fix_data": {
+          // Placeholder - data fixing would be specific to your needs
+          result.details.push("Data fixing not yet implemented");
+          break;
+        }
+        case "merge_duplicates": {
+          // Placeholder - would call findDuplicatePayees and merge
+          result.details.push("Use the dedicated duplicate detection feature");
+          break;
+        }
+      }
+
+      operationResults.push(result);
+    }
+
+    return {
+      affectedPayees,
+      operationResults,
+      canUndo: !dryRun && affectedPayees.length > 0,
+    };
+  }
+
+  /**
+   * Undo a bulk operation (placeholder - requires operation history tracking)
+   */
+  async undoBulkOperation(
+    _operationId: string,
+    _operationType: string,
+    _workspaceId: number
+  ): Promise<{ success: boolean; message: string; restoredCount: number }> {
+    // Note: Full implementation would require persisting operation history
+    // with before/after states for each affected payee
+    throw new ValidationError(
+      "Undo functionality requires operation history tracking which is not yet implemented"
+    );
+  }
+
+  /**
    * Search payees
    */
   async searchPayees(query: string, workspaceId: number): Promise<Payee[]> {
@@ -3248,7 +3558,7 @@ export class PayeeService {
     // Get current subscription metadata
     let subscriptionInfo: SubscriptionMetadata | null = null;
     if (payee.subscriptionInfo && typeof payee.subscriptionInfo === "object") {
-      subscriptionInfo = payee.subscriptionInfo as SubscriptionMetadata;
+      subscriptionInfo = payee.subscriptionInfo as unknown as SubscriptionMetadata;
     }
 
     if (!subscriptionInfo || !subscriptionInfo.isSubscription) {
@@ -3412,7 +3722,7 @@ export class PayeeService {
     // Get current subscription metadata
     let subscriptionInfo: SubscriptionMetadata | null = null;
     if (payee.subscriptionInfo && typeof payee.subscriptionInfo === "object") {
-      subscriptionInfo = payee.subscriptionInfo as SubscriptionMetadata;
+      subscriptionInfo = payee.subscriptionInfo as unknown as SubscriptionMetadata;
     }
 
     if (!subscriptionInfo || !subscriptionInfo.isSubscription) {
@@ -3449,5 +3759,626 @@ export class PayeeService {
     return await this.updatePayee(payeeId, {
       subscriptionInfo: updatedSubscriptionInfo,
     }, workspaceId);
+  }
+
+  // ============================================================================
+  // BULK IMPORT/EXPORT
+  // ============================================================================
+
+  /**
+   * Export payees to CSV or JSON format
+   */
+  async exportPayees(
+    payeeIds: number[],
+    format: "csv" | "json",
+    options: {
+      includeTransactionStats?: boolean;
+      includeContactInfo?: boolean;
+      includeIntelligenceData?: boolean;
+    },
+    workspaceId: number
+  ): Promise<string> {
+    logger.info("Exporting payees", { count: payeeIds.length, format });
+
+    // Fetch payees
+    const payees = await this.repository.findByIds(payeeIds, workspaceId);
+
+    if (payees.length === 0) {
+      throw new ValidationError("No payees found to export");
+    }
+
+    // Build export data
+    const exportData = await Promise.all(
+      payees.map(async (payee) => {
+        const data: Record<string, unknown> = {
+          name: payee.name,
+          payeeType: payee.payeeType,
+          isActive: payee.isActive,
+          notes: payee.notes,
+          taxRelevant: payee.taxRelevant,
+        };
+
+        if (options.includeContactInfo) {
+          data.email = payee.email;
+          data.phone = payee.phone;
+          data.website = payee.website;
+          data.address = payee.address;
+        }
+
+        if (options.includeTransactionStats) {
+          try {
+            const stats = await this.getPayeeStats(payee.id, workspaceId);
+            data.transactionCount = stats.transactionCount;
+            data.totalAmount = stats.totalAmount;
+            data.avgAmount = stats.avgAmount;
+            data.lastTransactionDate = stats.lastTransactionDate;
+          } catch {
+            // Stats not available
+          }
+        }
+
+        if (options.includeIntelligenceData) {
+          data.defaultCategoryId = payee.defaultCategoryId;
+          data.defaultBudgetId = payee.defaultBudgetId;
+          data.avgAmount = payee.avgAmount;
+          data.paymentFrequency = payee.paymentFrequency;
+        }
+
+        return data;
+      })
+    );
+
+    if (format === "json") {
+      return JSON.stringify(exportData, null, 2);
+    }
+
+    // CSV format
+    if (exportData.length === 0) {
+      return "";
+    }
+
+    const headers = Object.keys(exportData[0]);
+    const csvRows = [
+      headers.join(","),
+      ...exportData.map((row) =>
+        headers
+          .map((header) => {
+            const value = row[header];
+            if (value === null || value === undefined) return "";
+            if (typeof value === "object") return JSON.stringify(value);
+            if (typeof value === "string" && (value.includes(",") || value.includes('"'))) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return String(value);
+          })
+          .join(",")
+      ),
+    ];
+
+    return csvRows.join("\n");
+  }
+
+  /**
+   * Import payees from CSV or JSON format
+   */
+  async importPayees(
+    data: string,
+    format: "csv" | "json",
+    options: {
+      skipDuplicates?: boolean;
+      updateExisting?: boolean;
+      applyIntelligentDefaults?: boolean;
+      validateContactInfo?: boolean;
+    },
+    workspaceId: number
+  ): Promise<{
+    imported: number;
+    updated: number;
+    skipped: number;
+    errors: Array<{ row: number; error: string }>;
+  }> {
+    logger.info("Importing payees", { format, options });
+
+    const result = {
+      imported: 0,
+      updated: 0,
+      skipped: 0,
+      errors: [] as Array<{ row: number; error: string }>,
+    };
+
+    let records: Array<Record<string, unknown>>;
+
+    // Parse input data
+    if (format === "json") {
+      try {
+        records = JSON.parse(data);
+        if (!Array.isArray(records)) {
+          throw new ValidationError("JSON data must be an array of payee objects");
+        }
+      } catch (e) {
+        throw new ValidationError(`Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`);
+      }
+    } else {
+      // Parse CSV
+      records = this.parseCSV(data);
+    }
+
+    // Process each record
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      const rowNum = i + 1;
+
+      try {
+        const name = String(record.name || "").trim();
+        if (!name) {
+          result.errors.push({ row: rowNum, error: "Name is required" });
+          continue;
+        }
+
+        // Check for existing payee
+        const existing = await this.repository.findByName(name, workspaceId);
+
+        if (existing) {
+          if (options.skipDuplicates && !options.updateExisting) {
+            result.skipped++;
+            continue;
+          }
+
+          if (options.updateExisting) {
+            // Update existing payee
+            await this.updatePayee(
+              existing.id,
+              this.recordToPayeeData(record),
+              workspaceId
+            );
+            result.updated++;
+            continue;
+          }
+        }
+
+        // Create new payee
+        const payeeData: CreatePayeeData = {
+          name,
+          ...this.recordToPayeeData(record),
+        };
+
+        // Validate contact info if requested
+        if (options.validateContactInfo) {
+          if (record.email && typeof record.email === "string") {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(record.email)) {
+              result.errors.push({ row: rowNum, error: "Invalid email format" });
+              continue;
+            }
+          }
+        }
+
+        await this.createPayee(payeeData, workspaceId);
+        result.imported++;
+      } catch (e) {
+        result.errors.push({
+          row: rowNum,
+          error: e instanceof Error ? e.message : "Unknown error",
+        });
+      }
+    }
+
+    logger.info("Import completed", result);
+    return result;
+  }
+
+  /**
+   * Parse CSV string into records
+   */
+  private parseCSV(data: string): Array<Record<string, unknown>> {
+    const lines = data.split("\n").filter((line) => line.trim());
+    if (lines.length < 2) {
+      return [];
+    }
+
+    const headers = this.parseCSVLine(lines[0]);
+    const records: Array<Record<string, unknown>> = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = this.parseCSVLine(lines[i]);
+      const record: Record<string, unknown> = {};
+
+      for (let j = 0; j < headers.length; j++) {
+        const header = headers[j].trim();
+        let value: unknown = values[j]?.trim() || null;
+
+        // Try to parse boolean and number values
+        if (value === "true") value = true;
+        else if (value === "false") value = false;
+        else if (value !== null && !isNaN(Number(value)) && value !== "") {
+          value = Number(value);
+        }
+
+        record[header] = value;
+      }
+
+      records.push(record);
+    }
+
+    return records;
+  }
+
+  /**
+   * Parse a single CSV line handling quoted fields
+   */
+  private parseCSVLine(line: string): string[] {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === "," && !inQuotes) {
+        result.push(current);
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+
+    result.push(current);
+    return result;
+  }
+
+  /**
+   * Convert a record to payee data
+   */
+  private recordToPayeeData(record: Record<string, unknown>): Partial<CreatePayeeData> {
+    const data: Partial<CreatePayeeData> = {};
+
+    if (record.notes !== undefined) data.notes = record.notes as string | null;
+    if (record.payeeType !== undefined) data.payeeType = record.payeeType as PayeeType | null;
+    if (record.taxRelevant !== undefined) data.taxRelevant = Boolean(record.taxRelevant);
+    if (record.email !== undefined) data.email = record.email as string | null;
+    if (record.phone !== undefined) data.phone = record.phone as string | null;
+    if (record.website !== undefined) data.website = record.website as string | null;
+
+    return data;
+  }
+
+  // ============================================================================
+  // DUPLICATE DETECTION AND MERGING
+  // ============================================================================
+
+  /**
+   * Find duplicate payees based on similarity
+   */
+  async findDuplicatePayees(
+    similarityThreshold: number,
+    includeInactive: boolean,
+    groupingStrategy: "name" | "contact" | "transaction_pattern" | "comprehensive",
+    workspaceId: number
+  ): Promise<Array<{
+    primaryPayeeId: number;
+    duplicatePayeeIds: number[];
+    similarityScore: number;
+    similarities: Array<{
+      field: "name" | "phone" | "email" | "website" | "address";
+      primaryValue: string;
+      duplicateValue: string;
+      matchType: "exact" | "fuzzy" | "normalized" | "semantic";
+      confidence: number;
+    }>;
+    recommendedAction: "merge" | "review" | "ignore";
+    riskLevel: "low" | "medium" | "high";
+  }>> {
+    logger.info("Finding duplicate payees", { similarityThreshold, includeInactive, groupingStrategy });
+
+    // Get all payees
+    let payees = await this.repository.findAllPayees(workspaceId);
+
+    if (!includeInactive) {
+      payees = payees.filter(p => p.isActive);
+    }
+
+    const duplicateGroups: Array<{
+      primaryPayeeId: number;
+      duplicatePayeeIds: number[];
+      similarityScore: number;
+      similarities: Array<{
+        field: "name" | "phone" | "email" | "website" | "address";
+        primaryValue: string;
+        duplicateValue: string;
+        matchType: "exact" | "fuzzy" | "normalized" | "semantic";
+        confidence: number;
+      }>;
+      recommendedAction: "merge" | "review" | "ignore";
+      riskLevel: "low" | "medium" | "high";
+    }> = [];
+
+    const processedPairs = new Set<string>();
+
+    for (let i = 0; i < payees.length; i++) {
+      for (let j = i + 1; j < payees.length; j++) {
+        const payeeA = payees[i];
+        const payeeB = payees[j];
+
+        const pairKey = `${Math.min(payeeA.id, payeeB.id)}-${Math.max(payeeA.id, payeeB.id)}`;
+        if (processedPairs.has(pairKey)) continue;
+        processedPairs.add(pairKey);
+
+        const similarities = this.comparePayers(payeeA, payeeB, groupingStrategy);
+        const avgScore = similarities.length > 0
+          ? similarities.reduce((sum, s) => sum + s.confidence, 0) / similarities.length
+          : 0;
+
+        if (avgScore >= similarityThreshold && similarities.length > 0) {
+          // Determine which is primary (prefer one with more data)
+          const scoreA = this.calculateDataCompleteness(payeeA);
+          const scoreB = this.calculateDataCompleteness(payeeB);
+          const [primary, duplicate] = scoreA >= scoreB ? [payeeA, payeeB] : [payeeB, payeeA];
+
+          // Check if primary already has a group
+          const existingGroup = duplicateGroups.find(g => g.primaryPayeeId === primary.id);
+          if (existingGroup) {
+            existingGroup.duplicatePayeeIds.push(duplicate.id);
+            existingGroup.similarityScore = Math.max(existingGroup.similarityScore, avgScore);
+          } else {
+            duplicateGroups.push({
+              primaryPayeeId: primary.id,
+              duplicatePayeeIds: [duplicate.id],
+              similarityScore: avgScore,
+              similarities,
+              recommendedAction: avgScore >= 0.95 ? "merge" : avgScore >= 0.8 ? "review" : "ignore",
+              riskLevel: avgScore >= 0.95 ? "low" : avgScore >= 0.8 ? "medium" : "high",
+            });
+          }
+        }
+      }
+    }
+
+    logger.info("Found duplicate groups", { count: duplicateGroups.length });
+    return duplicateGroups;
+  }
+
+  /**
+   * Compare two payees for similarity
+   */
+  private comparePayers(
+    payeeA: Payee,
+    payeeB: Payee,
+    strategy: "name" | "contact" | "transaction_pattern" | "comprehensive"
+  ): Array<{
+    field: "name" | "phone" | "email" | "website" | "address";
+    primaryValue: string;
+    duplicateValue: string;
+    matchType: "exact" | "fuzzy" | "normalized" | "semantic";
+    confidence: number;
+  }> {
+    const similarities: Array<{
+      field: "name" | "phone" | "email" | "website" | "address";
+      primaryValue: string;
+      duplicateValue: string;
+      matchType: "exact" | "fuzzy" | "normalized" | "semantic";
+      confidence: number;
+    }> = [];
+
+    // Name comparison (always included)
+    if (strategy === "name" || strategy === "comprehensive") {
+      const nameA = (payeeA.name || "").toLowerCase().trim();
+      const nameB = (payeeB.name || "").toLowerCase().trim();
+
+      if (nameA && nameB) {
+        if (nameA === nameB) {
+          similarities.push({
+            field: "name",
+            primaryValue: payeeA.name || "",
+            duplicateValue: payeeB.name || "",
+            matchType: "exact",
+            confidence: 1.0,
+          });
+        } else {
+          const similarity = this.calculateStringSimilarity(nameA, nameB);
+          if (similarity >= 0.7) {
+            similarities.push({
+              field: "name",
+              primaryValue: payeeA.name || "",
+              duplicateValue: payeeB.name || "",
+              matchType: "fuzzy",
+              confidence: similarity,
+            });
+          }
+        }
+      }
+    }
+
+    // Contact comparison
+    if (strategy === "contact" || strategy === "comprehensive") {
+      // Email
+      if (payeeA.email && payeeB.email) {
+        const emailA = payeeA.email.toLowerCase().trim();
+        const emailB = payeeB.email.toLowerCase().trim();
+        if (emailA === emailB) {
+          similarities.push({
+            field: "email",
+            primaryValue: payeeA.email,
+            duplicateValue: payeeB.email,
+            matchType: "exact",
+            confidence: 1.0,
+          });
+        }
+      }
+
+      // Phone (normalize before comparing)
+      if (payeeA.phone && payeeB.phone) {
+        const phoneA = payeeA.phone.replace(/\D/g, "");
+        const phoneB = payeeB.phone.replace(/\D/g, "");
+        if (phoneA === phoneB && phoneA.length >= 7) {
+          similarities.push({
+            field: "phone",
+            primaryValue: payeeA.phone,
+            duplicateValue: payeeB.phone,
+            matchType: "normalized",
+            confidence: 1.0,
+          });
+        }
+      }
+
+      // Website
+      if (payeeA.website && payeeB.website) {
+        const websiteA = payeeA.website.toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+        const websiteB = payeeB.website.toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+        if (websiteA === websiteB) {
+          similarities.push({
+            field: "website",
+            primaryValue: payeeA.website,
+            duplicateValue: payeeB.website,
+            matchType: "normalized",
+            confidence: 1.0,
+          });
+        }
+      }
+    }
+
+    return similarities;
+  }
+
+  /**
+   * Calculate string similarity using Levenshtein distance
+   */
+  private calculateStringSimilarity(a: string, b: string): number {
+    if (a === b) return 1;
+    if (a.length === 0 || b.length === 0) return 0;
+
+    const matrix: number[][] = [];
+
+    for (let i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+
+    const distance = matrix[b.length][a.length];
+    return 1 - distance / Math.max(a.length, b.length);
+  }
+
+  /**
+   * Calculate data completeness score for a payee
+   */
+  private calculateDataCompleteness(payee: Payee): number {
+    let score = 0;
+    if (payee.name) score += 2;
+    if (payee.email) score += 1;
+    if (payee.phone) score += 1;
+    if (payee.website) score += 1;
+    if (payee.address) score += 1;
+    if (payee.notes) score += 0.5;
+    if (payee.defaultCategoryId) score += 1;
+    if (payee.defaultBudgetId) score += 1;
+    return score;
+  }
+
+  /**
+   * Merge duplicate payees into a primary payee
+   */
+  async mergeDuplicatePayees(
+    primaryPayeeId: number,
+    duplicatePayeeIds: number[],
+    mergeStrategy: {
+      preserveTransactionHistory?: boolean;
+      conflictResolution?: "primary" | "latest" | "best_quality" | "manual";
+      mergeContactInfo?: boolean;
+      mergeIntelligenceData?: boolean;
+    },
+    confirmMerge: boolean,
+    workspaceId: number
+  ): Promise<{
+    success: boolean;
+    mergedPayeeId: number;
+    deletedPayeeIds: number[];
+    transactionsUpdated: number;
+    warnings: string[];
+  }> {
+    logger.info("Merging duplicate payees", { primaryPayeeId, duplicatePayeeIds, confirmMerge });
+
+    if (!confirmMerge) {
+      throw new ValidationError("Merge operation requires confirmation");
+    }
+
+    const warnings: string[] = [];
+    let transactionsUpdated = 0;
+
+    // Get primary payee
+    const primaryPayee = await this.getPayeeById(primaryPayeeId, workspaceId);
+
+    // Get duplicate payees
+    const duplicatePayees = await this.repository.findByIds(duplicatePayeeIds, workspaceId);
+
+    if (duplicatePayees.length !== duplicatePayeeIds.length) {
+      warnings.push("Some duplicate payees were not found");
+    }
+
+    // Merge contact info if requested
+    if (mergeStrategy.mergeContactInfo) {
+      const updateData: Partial<UpdatePayeeData> = {};
+
+      for (const dup of duplicatePayees) {
+        if (!primaryPayee.email && dup.email) updateData.email = dup.email;
+        if (!primaryPayee.phone && dup.phone) updateData.phone = dup.phone;
+        if (!primaryPayee.website && dup.website) updateData.website = dup.website;
+        if (!primaryPayee.notes && dup.notes) updateData.notes = dup.notes;
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await this.updatePayee(primaryPayeeId, updateData, workspaceId);
+      }
+    }
+
+    // Update transactions to point to primary payee (if preserving history)
+    if (mergeStrategy.preserveTransactionHistory) {
+      for (const dupId of duplicatePayeeIds) {
+        const updated = await this.repository.updateTransactionPayee(dupId, primaryPayeeId);
+        transactionsUpdated += updated;
+      }
+    }
+
+    // Soft delete the duplicate payees
+    const deletedIds: number[] = [];
+    for (const dupId of duplicatePayeeIds) {
+      try {
+        await this.deletePayee(dupId, workspaceId);
+        deletedIds.push(dupId);
+      } catch (e) {
+        warnings.push(`Failed to delete payee ${dupId}: ${e instanceof Error ? e.message : "Unknown error"}`);
+      }
+    }
+
+    logger.info("Merge completed", { primaryPayeeId, deletedIds, transactionsUpdated });
+
+    return {
+      success: true,
+      mergedPayeeId: primaryPayeeId,
+      deletedPayeeIds: deletedIds,
+      transactionsUpdated,
+      warnings,
+    };
   }
 }

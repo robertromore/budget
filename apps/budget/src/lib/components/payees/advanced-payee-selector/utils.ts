@@ -9,6 +9,7 @@ const frequencyRank: Record<PaymentFrequency, number> = {
   quarterly: 3,
   annual: 2,
   irregular: 1,
+  one_time: 0,
 };
 
 // High frequency thresholds (weekly or bi-weekly)

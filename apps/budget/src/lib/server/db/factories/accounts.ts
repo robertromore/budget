@@ -1,10 +1,13 @@
 import slugify from "@sindresorhus/slugify";
 import { db } from "..";
-import { accounts, type Account } from "$lib/schema";
+import { accounts } from "$lib/schema";
 import { faker } from "@faker-js/faker";
 import { transactionFactory } from "./transactions";
 
 let accountSequence = 0;
+
+// Base account type without relations
+type BaseAccount = typeof accounts.$inferSelect;
 
 /**
  * Creates account(s) for a specific workspace with transactions
@@ -13,7 +16,7 @@ let accountSequence = 0;
  *
  * @param count - Number of accounts to create (default: random 1-10)
  * @param workspaceId - The workspace ID these accounts belong to (REQUIRED)
- * @returns Promise<Account[]> - Array of created accounts
+ * @returns Promise<BaseAccount[]> - Array of created accounts (without relations)
  *
  * @example
  * ```typescript
@@ -27,8 +30,8 @@ let accountSequence = 0;
 export const accountFactory = async (
   count: number = faker.number.int({ min: 1, max: 10 }),
   workspaceId: number
-): Promise<Account[]> => {
-  const accounts_collection: Account[] = [];
+): Promise<BaseAccount[]> => {
+  const accounts_collection: BaseAccount[] = [];
 
   for (let i = 0; i < count; i++) {
     const name: string = faker.finance.accountName();

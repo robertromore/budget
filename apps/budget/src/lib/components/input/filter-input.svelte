@@ -2,7 +2,7 @@
 import { buttonVariants } from '$lib/components/ui/button/index.js';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 import { currentViews } from '$lib/states/views';
-import type { FilterInputOption, TransactionsFormat, ViewFilter } from '$lib/types';
+import type { FilterInputOption, ViewFilter } from '$lib/types';
 import { cn } from '$lib/utils';
 import ListFilterPlus from '@lucide/svelte/icons/list-filter-plus';
 
@@ -11,7 +11,7 @@ let {
   availableFilters,
 }: {
   value?: ViewFilter[];
-  availableFilters: FilterInputOption<TransactionsFormat>[];
+  availableFilters: FilterInputOption[];
 } = $props();
 
 // Use runed Context API instead of Svelte's getContext

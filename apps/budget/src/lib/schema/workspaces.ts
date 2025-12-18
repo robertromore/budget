@@ -112,4 +112,4 @@ export const workspacesRelations = relations(workspaces, ({ many }) => ({
 export type Workspace = typeof workspaces.$inferSelect;
 export type NewWorkspace = typeof workspaces.$inferInsert;
 export type InsertWorkspaceSchema = typeof insertWorkspaceSchema;
-export type FormInsertWorkspaceSchema = typeof formInsertWorkspaceSchema;
+export type FormInsertWorkspaceSchema = z.infer<typeof formInsertWorkspaceSchema>;

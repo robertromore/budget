@@ -37,7 +37,7 @@ import { SchedulesState } from '$lib/states/entities';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { useQueryClient } from '@tanstack/svelte-query';
-import { scheduleKeys } from '$lib/queries/schedules';
+import { scheduleKeys } from '$lib/query/schedules';
 
 // Type imports
 import type { EditableEntityItem } from '$lib/types';

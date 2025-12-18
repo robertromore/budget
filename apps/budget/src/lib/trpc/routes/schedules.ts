@@ -49,6 +49,7 @@ export const scheduleRoutes = t.router({
       with: {
         account: true,
         payee: true,
+        category: true,
         scheduleDate: true,
         transactions: {
           where: (transactions, { isNull }) => isNull(transactions.deletedAt),

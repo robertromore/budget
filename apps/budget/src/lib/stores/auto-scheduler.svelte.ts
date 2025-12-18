@@ -1,9 +1,12 @@
 /**
  * Browser-based auto-scheduler for creating scheduled transactions
  * Runs automatically when users load the app - no external dependencies required
+ *
+ * Note: This runs outside of Svelte component context, so we use trpc() directly
+ * instead of the query layer (which requires component context for TanStack Query).
  */
 
-import { rpc } from "$lib/query";
+import { trpc } from "$lib/trpc/client";
 
 class AutoScheduler {
   private static readonly STORAGE_KEY = "budget-app-last-auto-add-run";
@@ -27,7 +30,8 @@ class AutoScheduler {
       console.log("🔄 Running daily auto-add for scheduled transactions...");
 
       // Execute auto-add for all eligible schedules
-      const result = await rpc.schedules.executeAutoAddAll.execute();
+      // Using trpc() directly since this runs outside component context
+      const result = await trpc().scheduleRoutes.executeAutoAddAll.mutate();
 
       // Log results
       if (result.totalTransactionsCreated > 0) {
@@ -97,7 +101,8 @@ class AutoScheduler {
   async forceRun(): Promise<void> {
     console.log("🔄 Manually triggering auto-add...");
     try {
-      const result = await rpc.schedules.executeAutoAddAll.execute();
+      // Using trpc() directly since this may run outside component context
+      const result = await trpc().scheduleRoutes.executeAutoAddAll.mutate();
 
       if (result.totalTransactionsCreated > 0) {
         console.log(

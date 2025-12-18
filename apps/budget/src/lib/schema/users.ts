@@ -118,4 +118,4 @@ export const usersRelations = relations(users, ({ many }) => ({
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type InsertUserSchema = typeof insertUserSchema;
-export type FormInsertUserSchema = typeof formInsertUserSchema;
+export type FormInsertUserSchema = z.infer<typeof formInsertUserSchema>;

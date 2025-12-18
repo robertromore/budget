@@ -106,34 +106,46 @@ $effect(() => {
     const hasCreditCol = rawColumns.some((col) => col.toLowerCase().includes('credit'));
     const useDebitCredit = hasDebitCol && hasCreditCol;
 
+    // Track which fields have been assigned (only one column per field)
+    const assignedFields = new Set<string>();
+
     // Auto-detect mappings based on column names
+    // Only assign one column per field (first match wins)
     rawColumns.forEach((col) => {
       const colLower = col.toLowerCase().trim();
 
-      if (colLower.includes('date')) {
+      if (colLower.includes('date') && !assignedFields.has('date')) {
         columnMapping[col] = 'date';
+        assignedFields.add('date');
       } else if (useDebitCredit && (colLower.includes('debit') || colLower.includes('credit'))) {
+        // Special case: debit/credit allows two columns (one for each)
         columnMapping[col] = 'debit/credit';
         console.log(`Auto-mapped "${col}" to debit/credit`);
-      } else if (colLower.includes('amount')) {
+      } else if (colLower.includes('amount') && !assignedFields.has('amount')) {
         columnMapping[col] = 'amount';
+        assignedFields.add('amount');
       } else if (
-        colLower.includes('payee') ||
-        colLower.includes('merchant') ||
-        colLower.includes('name')
+        (colLower.includes('payee') ||
+          colLower.includes('merchant') ||
+          colLower.includes('name')) &&
+        !assignedFields.has('payee')
       ) {
         columnMapping[col] = 'payee';
+        assignedFields.add('payee');
       } else if (
-        colLower.includes('note') ||
-        colLower.includes('memo') ||
-        colLower.includes('description') ||
-        colLower.includes('transaction')
+        (colLower.includes('note') ||
+          colLower.includes('memo') ||
+          colLower.includes('description')) &&
+        !assignedFields.has('notes')
       ) {
         columnMapping[col] = 'notes';
-      } else if (colLower.includes('category')) {
+        assignedFields.add('notes');
+      } else if (colLower.includes('category') && !assignedFields.has('category')) {
         columnMapping[col] = 'category';
-      } else if (colLower.includes('status')) {
+        assignedFields.add('category');
+      } else if (colLower.includes('status') && !assignedFields.has('status')) {
         columnMapping[col] = 'status';
+        assignedFields.add('status');
       } else {
         columnMapping[col] = '';
       }
@@ -217,11 +229,14 @@ function handleFieldChange(field: string, newValue: string) {
     }
   });
 
-  // If the new column was already mapped to another field, clear that field's select value
+  // If the new column was already mapped to another field, update that field's select value
   if (newValue && newMapping[newValue] && newMapping[newValue] !== field) {
     const oldField = newMapping[newValue];
-    fieldSelectValues[oldField] = '';
     delete newMapping[newValue];
+
+    // Find if there's another column still mapped to the old field
+    const remainingColumn = Object.entries(newMapping).find(([, target]) => target === oldField)?.[0];
+    fieldSelectValues[oldField] = remainingColumn || '';
   }
 
   // Set new mapping

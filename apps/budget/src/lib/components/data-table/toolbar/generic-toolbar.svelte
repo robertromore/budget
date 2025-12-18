@@ -26,7 +26,7 @@ interface Props {
   /** The table instance */
   table: Table<TData>;
   /** Available filter options */
-  availableFilters?: FilterInputOption<TData>[];
+  availableFilters?: FilterInputOption[];
   /** Current column filters state */
   columnFilters?: ColumnFiltersState;
   /** Handler for column filter changes */

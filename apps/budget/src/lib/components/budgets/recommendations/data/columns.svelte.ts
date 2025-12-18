@@ -24,7 +24,7 @@ export const columns = (
         return renderComponent(Checkbox, {
           checked: allPageRowsSelected,
           indeterminate: somePageRowsSelected && !allPageRowsSelected,
-          onCheckedChange: (value) => {
+          onCheckedChange: (value: boolean) => {
             if (value) {
               table.toggleAllPageRowsSelected(true);
             } else {
@@ -39,7 +39,7 @@ export const columns = (
         return renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
-          onCheckedChange: (value) => row.toggleSelected(!!value),
+          onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
           controlledChecked: true,
           "aria-label": "Select row",
         });
@@ -53,7 +53,7 @@ export const columns = (
       id: "title",
       size: 200,
       header: ({ column }) =>
-        renderComponent(RecommendationColumnHeader<BudgetRecommendationWithRelations, unknown>, {
+        renderComponent(RecommendationColumnHeader as any, {
           column,
           title: "Recommendation",
         }),
@@ -72,7 +72,7 @@ export const columns = (
       id: "confidence",
       size: 120,
       header: ({ column }) =>
-        renderComponent(RecommendationColumnHeader<BudgetRecommendationWithRelations, unknown>, {
+        renderComponent(RecommendationColumnHeader as any, {
           column,
           title: "Confidence",
         }),
@@ -91,7 +91,7 @@ export const columns = (
       id: "priority",
       size: 110,
       header: ({ column }) =>
-        renderComponent(RecommendationColumnHeader<BudgetRecommendationWithRelations, unknown>, {
+        renderComponent(RecommendationColumnHeader as any, {
           column,
           title: "Priority",
         }),
@@ -110,7 +110,7 @@ export const columns = (
       id: "status",
       size: 110,
       header: ({ column }) =>
-        renderComponent(RecommendationColumnHeader<BudgetRecommendationWithRelations, unknown>, {
+        renderComponent(RecommendationColumnHeader as any, {
           column,
           title: "Status",
         }),

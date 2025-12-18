@@ -1,4 +1,4 @@
-import type { Category } from "$lib/schema/categories";
+import type { Category, CategoryType } from "$lib/schema/categories";
 
 export type LayoutMode = "slide-in" | "side-by-side";
 
@@ -53,7 +53,7 @@ export interface CategoryQuickEditFormProps {
 export interface QuickEditCategoryData {
 	name: string;
 	parentId: number | null;
-	categoryType: string;
+	categoryType: CategoryType;
 	categoryIcon: string | null;
 	categoryColor: string | null;
 	notes: string | null;

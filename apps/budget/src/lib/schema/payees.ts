@@ -19,6 +19,22 @@ import { payeeCategories } from "./payee-categories";
 import { transactions } from "./transactions";
 import { workspaces } from "./workspaces";
 
+// Type definitions for JSON columns
+export interface PayeeAddress {
+  street?: string;
+  street2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  formatted?: string;
+}
+
+// SubscriptionInfo is a flexible type for the JSON column.
+// The actual structure used at runtime is SubscriptionMetadata from subscription-management.ts
+// We use Record<string, unknown> here for schema compatibility with the more complex runtime type.
+export type SubscriptionInfo = Record<string, unknown>;
+
 // Enum definitions for payee fields
 export const payeeTypes = [
   "merchant",
@@ -31,6 +47,7 @@ export const payeeTypes = [
 ] as const;
 
 export const paymentFrequencies = [
+  "one_time",
   "weekly",
   "bi_weekly",
   "monthly",
@@ -78,13 +95,13 @@ export const payees = sqliteTable(
     email: text("email"),
 
     // Organization Fields
-    address: text("address", { mode: "json" }),
+    address: text("address", { mode: "json" }).$type<PayeeAddress | null>().default(null),
     accountNumber: text("account_number"),
 
     // Advanced Features Fields
     alertThreshold: real("alert_threshold"),
     isSeasonal: integer("is_seasonal", { mode: "boolean" }).default(false).notNull(),
-    subscriptionInfo: text("subscription_info", { mode: "json" }),
+    subscriptionInfo: text("subscription_info", { mode: "json" }).$type<SubscriptionInfo | null>().default(null),
     tags: text("tags"),
 
     // Payment Processing Fields

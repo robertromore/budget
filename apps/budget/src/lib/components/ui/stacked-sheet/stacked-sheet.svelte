@@ -98,14 +98,18 @@ function navigateToSheet(sheetId: string) {
   onSheetChange?.(sheetId);
 }
 
+function goBack() {
+  const currentIndex = sheets.findIndex((sheet) => sheet.id === activeSheetId);
+  if (currentIndex > 0) {
+    activeSheetId = sheets[currentIndex - 1].id;
+    onSheetChange?.(activeSheetId);
+  }
+}
+
 function handleKeyDown(event: KeyboardEvent) {
   if (event.key === 'Escape' && activeIndex > 0) {
     event.preventDefault();
-    // Navigate back
-    const currentIndex = sheets.findIndex((sheet) => sheet.id === activeSheetId);
-    if (currentIndex > 0) {
-      activeSheetId = sheets[currentIndex - 1].id;
-    }
+    goBack();
   }
 }
 </script>

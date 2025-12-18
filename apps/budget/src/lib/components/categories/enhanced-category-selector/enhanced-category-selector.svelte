@@ -152,10 +152,14 @@
 			const result = await rpc.categories.createCategory.execute({
 				name: data.name,
 				parentId: data.parentId,
-				categoryType: data.categoryType as any,
+				categoryType: data.categoryType,
 				categoryIcon: data.categoryIcon,
 				categoryColor: data.categoryColor,
 				notes: data.notes,
+				isActive: true,
+				displayOrder: 0,
+				isTaxDeductible: false,
+				isSeasonal: false,
 			});
 			if (categoriesState) {
 				categoriesState.addCategory(result as Category);
@@ -168,10 +172,14 @@
 				id: focusedCategory.id,
 				name: data.name,
 				parentId: data.parentId,
-				categoryType: data.categoryType as any,
+				categoryType: data.categoryType,
 				categoryIcon: data.categoryIcon,
 				categoryColor: data.categoryColor,
 				notes: data.notes,
+				isActive: focusedCategory.isActive,
+				displayOrder: focusedCategory.displayOrder,
+				isTaxDeductible: focusedCategory.isTaxDeductible,
+				isSeasonal: focusedCategory.isSeasonal,
 			});
 			if (categoriesState) {
 				categoriesState.updateCategory(result as Category);

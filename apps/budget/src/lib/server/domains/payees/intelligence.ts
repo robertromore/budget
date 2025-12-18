@@ -920,6 +920,7 @@ export class PayeeIntelligenceService {
 
   private getExpectedInterval(frequency: PaymentFrequency): number | null {
     const frequencyMap: Record<PaymentFrequency, number> = {
+      one_time: 0,
       weekly: 7,
       bi_weekly: 14,
       monthly: 30,

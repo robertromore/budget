@@ -1,9 +1,8 @@
-<script lang="ts" generics="TEntity">
+<script lang="ts" generics="TEntity extends { id: number | string }">
 import * as Table from '$lib/components/ui/table';
 import { Skeleton } from '$lib/components/ui/skeleton';
 import type { ViewMode } from './entity-search-state.svelte';
-import type { Snippet } from 'svelte';
-import type { ComponentType, SvelteComponent } from 'svelte';
+import type { Component, Snippet } from 'svelte';
 
 interface Props {
   entities: TEntity[];
@@ -13,7 +12,7 @@ interface Props {
   isReorderMode?: boolean;
 
   // Empty state configuration
-  emptyIcon?: ComponentType<SvelteComponent>;
+  emptyIcon?: Component<any>;
   emptyTitle?: string;
   emptyDescription?: string;
   emptySearchDescription?: string;

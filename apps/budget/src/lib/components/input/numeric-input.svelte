@@ -9,7 +9,7 @@ import Delete from '@lucide/svelte/icons/delete';
 
 // --- Props ---
 interface Props {
-  value: number;
+  value: number | undefined;
   onSubmit?: () => void;
   open?: boolean;
   buttonClass?: string;

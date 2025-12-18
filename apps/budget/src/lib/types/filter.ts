@@ -40,12 +40,14 @@ export type AmountFilterValue = {
 
 /**
  * A filter that renders a component (date‑picker, multi‑select, …).
+ * Note: column uses `any` to avoid TanStack Table's Column type variance issues.
+ * Only .id and .columnDef properties are accessed.
  */
-export type FilterInputOption<T> = {
+export type FilterInputOption = {
   name: string;
   icon?: Component;
   component: () => RenderComponentConfig<Component<{}, {}, "">>;
-  column: Column<T, unknown>;
+  column: Column<any, unknown>;
   value: unknown[];
 };
 
