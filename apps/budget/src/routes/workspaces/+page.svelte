@@ -1,13 +1,13 @@
 <script lang="ts">
-import CreateWorkspaceForm from './(components)/create-workspace-form.svelte';
-import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
-import { Badge } from '$lib/components/ui/badge';
-import UserCircle from '@lucide/svelte/icons/user-circle';
-import Check from '@lucide/svelte/icons/check';
 import { goto } from '$app/navigation';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import Check from '@lucide/svelte/icons/check';
+import UserCircle from '@lucide/svelte/icons/user-circle';
 import { toast } from 'svelte-sonner';
 import type { PageData } from './$types';
+import CreateWorkspaceForm from './(components)/create-workspace-form.svelte';
 
 interface Props {
   data: PageData;

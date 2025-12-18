@@ -1,13 +1,10 @@
 <script lang="ts">
-import * as Select from '$lib/components/ui/select';
-import { currentWorkspace } from '$lib/states/current-workspace.svelte';
-import { rpc, queryClient } from '$lib/query';
 import { goto } from '$app/navigation';
-import ChevronDown from '@lucide/svelte/icons/chevron-down';
-import UserCircle from '@lucide/svelte/icons/user-circle';
-import Plus from '@lucide/svelte/icons/plus';
+import * as Select from '$lib/components/ui/select';
+import { rpc } from '$lib/query';
+import { currentWorkspace } from '$lib/states/current-workspace.svelte';
 import Settings from '@lucide/svelte/icons/settings';
-import Check from '@lucide/svelte/icons/check';
+import UserCircle from '@lucide/svelte/icons/user-circle';
 
 const currentWorkspaceState = currentWorkspace.get();
 const workspace = $derived(currentWorkspaceState?.workspace);
@@ -15,7 +12,7 @@ const workspace = $derived(currentWorkspaceState?.workspace);
 const workspacesQuery = $derived(rpc.workspaces.list().options());
 const workspaces = $derived(workspacesQuery.data ?? []);
 
-async function handleSelection(value: number | string | undefined) {
+async function handleSelection(value: string | undefined) {
   if (!value) return;
 
   if (value === 'manage') {
@@ -43,7 +40,7 @@ async function handleSelection(value: number | string | undefined) {
 </script>
 
 <div class="w-full px-2 py-2">
-  <Select.Root type="single" value={workspace?.id} onValueChange={handleSelection}>
+  <Select.Root type="single" value={workspace?.id?.toString()} onValueChange={handleSelection}>
     <Select.Trigger class="w-full justify-between">
       <div class="flex min-w-0 items-center gap-2">
         <UserCircle class="h-4 w-4 shrink-0" />
@@ -54,7 +51,7 @@ async function handleSelection(value: number | string | undefined) {
       <Select.Group>
         <Select.Label>Workspaces</Select.Label>
         {#each workspaces as ws (ws.id)}
-          <Select.Item value={ws.id}>
+          <Select.Item value={ws.id.toString()}>
             <div class="flex items-center gap-2">
               <UserCircle class="h-4 w-4" />
               <span class:font-medium={ws.id === workspace?.id}>{ws.displayName}</span>

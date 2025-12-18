@@ -1,14 +1,13 @@
 <script lang="ts">
-import { superForm } from 'sveltekit-superforms';
-import { zod4Client } from 'sveltekit-superforms/adapters';
-import { formInsertWorkspaceSchema, type FormInsertWorkspaceSchema } from '$lib/schema/workspaces';
-import * as Form from '$lib/components/ui/form';
-import { Input } from '$lib/components/ui/input';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import * as Form from '$lib/components/ui/form';
+import { Input } from '$lib/components/ui/input';
+import { formInsertWorkspaceSchema, type FormInsertWorkspaceSchema } from '$lib/schema/workspaces';
 import { toast } from 'svelte-sonner';
-import { goto } from '$app/navigation';
 import type { SuperValidated } from 'sveltekit-superforms';
+import { superForm } from 'sveltekit-superforms';
+import { zod4Client } from 'sveltekit-superforms/adapters';
 
 interface Props {
   data: SuperValidated<FormInsertWorkspaceSchema>;
@@ -17,6 +16,7 @@ interface Props {
 
 let { data, onSuccess }: Props = $props();
 
+// svelte-ignore state_referenced_locally - superForm intentionally captures initial value
 const form = superForm(data, {
   validators: zod4Client(formInsertWorkspaceSchema),
   dataType: 'json',
