@@ -1,9 +1,9 @@
 <script lang="ts">
-import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 import Button from '$lib/components/ui/button/button.svelte';
-import SquareCheck from '@lucide/svelte/icons/square-check';
-import Square from '@lucide/svelte/icons/square';
 import Calendar from '@lucide/svelte/icons/calendar';
+import CalendarClock from '@lucide/svelte/icons/calendar-clock';
+import Square from '@lucide/svelte/icons/square';
+import SquareCheck from '@lucide/svelte/icons/square-check';
 
 let {
   value = $bindable(),

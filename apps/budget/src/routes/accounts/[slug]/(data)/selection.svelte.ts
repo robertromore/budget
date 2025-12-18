@@ -7,3 +7,10 @@ export function setSelection(updater: Updater<RowSelectionState>) {
     _selection = updater(_selection);
   } else _selection = updater;
 }
+
+// Track the last selected row for shift-click range selection
+let _lastSelectedRowId = $state<string | null>(null);
+export let lastSelectedRowId = () => _lastSelectedRowId;
+export function setLastSelectedRowId(rowId: string | null) {
+  _lastSelectedRowId = rowId;
+}

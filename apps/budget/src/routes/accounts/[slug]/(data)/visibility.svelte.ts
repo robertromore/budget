@@ -1,4 +1,4 @@
-import type { VisibilityState, Updater } from "@tanstack/table-core";
+import type { Updater, VisibilityState } from "@tanstack/table-core";
 
 let _visibility = $state<VisibilityState>({});
 export let visibility = () => _visibility;

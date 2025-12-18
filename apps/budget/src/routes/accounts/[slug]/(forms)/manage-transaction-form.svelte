@@ -1,22 +1,20 @@
 <script lang="ts">
+import { page } from '$app/state';
+import { DateInput, EntityInput, NumericInput } from '$lib/components/input';
+import { AdvancedPayeeSelector } from '$lib/components/payees/advanced-payee-selector';
+import { Badge } from '$lib/components/ui/badge';
 import * as Form from '$lib/components/ui/form';
+import { Textarea } from '$lib/components/ui/textarea';
+import { getBudgetSuggestions, type BudgetSuggestion } from '$lib/query/budgets';
 import { type Transaction } from '$lib/schema';
 import { superformInsertTransactionSchema } from '$lib/schema/superforms';
-import { superForm } from 'sveltekit-superforms/client';
-import { currentDate } from '$lib/utils/dates';
 import type { EditableDateItem, EditableEntityItem } from '$lib/types';
-import { Textarea } from '$lib/components/ui/textarea';
-import { zod4Client } from 'sveltekit-superforms/adapters';
-import { DateInput, EntityInput, NumericInput } from '$lib/components/input';
-import { page } from '$app/state';
-import HandCoins from '@lucide/svelte/icons/hand-coins';
-import type { Component } from 'svelte';
+import { currentDate, toISOString } from '$lib/utils/dates';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
 import Wallet from '@lucide/svelte/icons/wallet';
-import { getBudgetSuggestions, type BudgetSuggestion } from '$lib/query/budgets';
-import { Badge } from '$lib/components/ui/badge';
-import { toISOString } from '$lib/utils/dates';
-import { AdvancedPayeeSelector } from '$lib/components/payees/advanced-payee-selector';
+import type { Component } from 'svelte';
+import { zod4Client } from 'sveltekit-superforms/adapters';
+import { superForm } from 'sveltekit-superforms/client';
 
 interface Props {
   accountId: number;
@@ -30,6 +28,7 @@ const {
   data: { payees, categories, manageTransactionForm },
 } = page;
 
+// svelte-ignore state_referenced_locally - superForm intentionally captures initial value
 const form = superForm(manageTransactionForm, {
   id: 'transaction-form',
   validators: zod4Client(superformInsertTransactionSchema),
@@ -44,7 +43,9 @@ const form = superForm(manageTransactionForm, {
 
 const { form: formData, enhance } = form;
 
-$formData.accountId = accountId;
+$effect(() => {
+  $formData.accountId = accountId;
+});
 
 let dateValue: EditableDateItem = $state(currentDate);
 let amount: number = $state<number>(0);
@@ -192,8 +193,7 @@ $effect(() => {
           entities={budgets}
           bind:value={budget}
           icon={Wallet as unknown as Component}
-          buttonClass="w-full"
-          placeholder="Select budget (optional)" />
+          buttonClass="w-full" />
         <Form.FieldErrors />
         <input hidden bind:value={budget.id} name={props.name} />
       {/snippet}

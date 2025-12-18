@@ -19,3 +19,9 @@ export { default as ExpenseList } from "./expense-list.svelte";
 export { default as ExpenseTableContainer } from "./expense-table-container.svelte";
 export { default as ExpenseWizard } from "./expense-wizard.svelte";
 export { default as ExpenseDataTable } from "./expense-data-table.svelte";
+
+// Settings Tab
+export { default as SettingsTab } from "./settings-tab.svelte";
+
+// Import Tab
+export { default as ImportTab } from "./import-tab.svelte";

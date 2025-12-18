@@ -1,6 +1,32 @@
 <script lang="ts" generics="TValue">
+import { page } from '$app/state';
+import { FlexRender, createSvelteTable } from '$lib/components/ui/data-table';
+import * as Table from '$lib/components/ui/table';
+import type { View } from '$lib/schema';
+import { DateFiltersState } from '$lib/states/ui/date-filters.svelte';
+import { CurrentViewState, CurrentViewsState, currentViews } from '$lib/states/views';
+import type { FacetedFilterOption, TransactionsFormat } from '$lib/types';
+import { cn } from '$lib/utils';
+import { dayFmt } from '$lib/utils/date-formatters';
+import { currentDate, timezone } from '$lib/utils/dates';
 import {
-  type ColumnDef,
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  rectIntersection,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit-svelte/core';
+import { restrictToHorizontalAxis } from '@dnd-kit-svelte/modifiers';
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+} from '@dnd-kit-svelte/sortable';
+import { parseDate } from '@internationalized/date';
+import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+import {
   getCoreRowModel,
   getExpandedRowModel,
   getFacetedRowModel,
@@ -9,51 +35,23 @@ import {
   getGroupedRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type ColumnDef,
   type Table as TTable,
 } from '@tanstack/table-core';
-import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
-import * as Table from '$lib/components/ui/table';
-import type { TransactionsFormat } from '$lib/types';
+import { untrack } from 'svelte';
 import { DataTablePagination } from '.';
-import DataTableToolbar from './data-table-toolbar.svelte';
-import TransactionBulkActions from './transaction-bulk-actions.svelte';
+import { columnOrder, setColumnOrder } from '../(data)/column-order.svelte';
+import { expanded, setExpanded } from '../(data)/expanded.svelte';
 import { filtering, filters, setFiltering, setGlobalFilter } from '../(data)/filters.svelte';
+import { grouping, setGrouping } from '../(data)/groups.svelte';
 import { pagination, setPagination } from '../(data)/pagination.svelte';
+import { pinning, setPinning } from '../(data)/pinning.svelte';
 import { selection, setSelection } from '../(data)/selection.svelte';
 import { setSorting, sorting } from '../(data)/sorts.svelte';
-import { visibility, setVisibility } from '../(data)/visibility.svelte';
-import { grouping, setGrouping } from '../(data)/groups.svelte';
-import { expanded, setExpanded } from '../(data)/expanded.svelte';
-import { pinning, setPinning } from '../(data)/pinning.svelte';
-import { columnOrder, setColumnOrder } from '../(data)/column-order.svelte';
-import type { View } from '$lib/schema';
-import { CurrentViewState, CurrentViewsState } from '$lib/states/views';
-import { page } from '$app/state';
-import { untrack } from 'svelte';
-import { currentViews } from '$lib/states/views';
-import { DateFiltersState } from '$lib/states/ui/date-filters.svelte';
-import type { FacetedFilterOption } from '$lib/types';
-import { dayFmt } from '$lib/utils/date-formatters';
-import { parseDate } from '@internationalized/date';
-import { timezone, currentDate } from '$lib/utils/dates';
-import LoaderCircle from '@lucide/svelte/icons/loader-circle';
-import { cn } from '$lib/utils';
+import { setVisibility, visibility } from '../(data)/visibility.svelte';
+import DataTableToolbar from './data-table-toolbar.svelte';
 import SortableHeader from './sortable-header.svelte';
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  rectIntersection,
-  type DragEndEvent,
-} from '@dnd-kit-svelte/core';
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-  arrayMove,
-} from '@dnd-kit-svelte/sortable';
-import { restrictToHorizontalAxis } from '@dnd-kit-svelte/modifiers';
+import TransactionBulkActions from './transaction-bulk-actions.svelte';
 
 interface Props {
   columns: ColumnDef<TransactionsFormat, TValue>[];
@@ -446,7 +444,7 @@ let columnTransforms = $state<Map<string, string>>(new Map());
 function handleDragStart(event: any) {
   activeId = event.active.id;
   // Find the column ID for the active header
-  const headerGroup = table.getHeaderGroups()[0];
+  const headerGroup = table?.getHeaderGroups()[0];
   const activeHeader = headerGroup?.headers.find((h) => h.id === event.active.id);
   activeColumnId = activeHeader?.column.id ?? null;
 }
@@ -523,7 +521,7 @@ const canRender = $derived(isContextReady && isViewsInitialized);
       <TransactionBulkActions {table} allTransactions={transactions || []} {onBulkDelete} />
     {/if}
 
-    <div class="w-full rounded-md border">
+    <div class="max-w-full overflow-x-auto rounded-md border">
       <DndContext
         {sensors}
         modifiers={[restrictToHorizontalAxis]}

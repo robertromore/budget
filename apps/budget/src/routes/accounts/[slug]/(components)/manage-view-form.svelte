@@ -18,7 +18,7 @@ interface Props {
   onCancel?: () => void;
   onDelete?: () => void;
   onSave?: (new_entity: View) => void;
-  availableFilters: FilterInputOption<TransactionsFormat>[];
+  availableFilters: FilterInputOption[];
   viewId?: number;
 }
 
@@ -28,6 +28,7 @@ const {
   data: { manageViewForm },
 } = page;
 
+// svelte-ignore state_referenced_locally - superForm intentionally captures initial value
 const form = superForm(
   manageViewForm || { id: 0, name: '', description: '', filters: {}, display: {} },
   {

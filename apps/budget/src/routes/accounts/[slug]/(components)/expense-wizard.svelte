@@ -150,7 +150,7 @@ function canProceedFromStep(step: number): boolean {
 }
 
 // Clear field error when field is edited
-function clearFieldError(field: string) {
+function clearFieldError(field: keyof typeof fieldErrors) {
   const { [field]: _, ...rest } = fieldErrors;
   fieldErrors = rest;
 }

@@ -1,36 +1,35 @@
 <script lang="ts">
-import * as Card from '$lib/components/ui/card';
-import { AnalyticsCard } from '$lib/components/ui/data-table';
-import { AdvancedDataTable } from '$lib/components/data-table';
 import type {
   DataTableFeatures,
   DataTableState,
   DataTableStateHandlers,
 } from '$lib/components/data-table';
+import { AdvancedDataTable } from '$lib/components/data-table';
+import { categoryFilters } from '$lib/components/data-table/filters';
 import { GenericToolbar } from '$lib/components/data-table/toolbar';
-import * as Tabs from '$lib/components/ui/tabs';
-import type { TransactionsFormat, TopCategoryData } from '$lib/types';
-import { createTopCategoriesProcessor } from '../(analytics)/data-processors.svelte';
+import * as Card from '$lib/components/ui/card';
+import { AnalyticsCard } from '$lib/components/ui/data-table';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
+import * as Tabs from '$lib/components/ui/tabs';
+import { rpc } from '$lib/query';
+import type { View } from '$lib/schema';
+import type { FilterInputOption, TopCategoryData, TransactionsFormat } from '$lib/types';
+import LayoutGrid from '@lucide/svelte/icons/layout-grid';
+import TableIcon from '@lucide/svelte/icons/table';
 import Tag from '@lucide/svelte/icons/tag';
 import TrendingDown from '@lucide/svelte/icons/trending-down';
-import TableIcon from '@lucide/svelte/icons/table';
-import LayoutGrid from '@lucide/svelte/icons/layout-grid';
-import { createCategoryColumns } from '../../(data)/category-columns';
-import { categoryFilters } from '$lib/components/data-table/filters';
-import { rpc } from '$lib/query';
-import { onMount } from 'svelte';
-import type { View } from '$lib/schema';
-import type { FilterInputOption } from '$lib/types';
 import type {
+  ColumnFiltersState,
+  ColumnPinningState,
+  ExpandedState,
+  GroupingState,
+  PaginationState,
   SortingState,
   VisibilityState,
-  ColumnFiltersState,
-  PaginationState,
-  ColumnPinningState,
-  GroupingState,
-  ExpandedState,
 } from '@tanstack/table-core';
+import { onMount } from 'svelte';
+import { createTopCategoriesProcessor } from '../(analytics)/data-processors.svelte';
+import { createCategoryColumns } from '../../(data)/category-columns';
 
 interface Props {
   transactions: TransactionsFormat[];
@@ -321,7 +320,7 @@ let viewMode = $state<'table' | 'cards'>('cards');
               )
               .map((column) =>
                 column.columnDef.meta?.facetedFilter(column)
-              ) as FilterInputOption<TopCategoryData>[]}
+              ) as FilterInputOption[]}
             <GenericToolbar
               {table}
               availableFilters={filterComponents}

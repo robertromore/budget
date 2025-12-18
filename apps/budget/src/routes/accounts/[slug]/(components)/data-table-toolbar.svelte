@@ -29,7 +29,7 @@ let editViewId = $state(0);
 let editViewsMode = $state(false);
 
 const columns = table.getAllColumns();
-let filterComponents: FilterInputOption<TransactionsFormat>[] = $derived.by(() => {
+let filterComponents: FilterInputOption[] = $derived.by(() => {
   return columns
     .filter((column) => column && column.getIsVisible() && column.columnDef.meta?.facetedFilter)
     .map((column) => {

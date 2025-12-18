@@ -1,38 +1,74 @@
 <script lang="ts">
-import Plus from '@lucide/svelte/icons/plus';
-import SquarePen from '@lucide/svelte/icons/square-pen';
-import Upload from '@lucide/svelte/icons/upload';
-import HeartPulse from '@lucide/svelte/icons/heart-pulse';
-import { Button, buttonVariants } from '$lib/components/ui/button';
-import * as Tabs from '$lib/components/ui/tabs';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import * as ResponsiveSheet from '$lib/components/ui/responsive-sheet';
 import { Badge } from '$lib/components/ui/badge';
-import Wand from '@lucide/svelte/icons/wand';
-import FileText from '@lucide/svelte/icons/file-text';
-import { parseDate } from '@internationalized/date';
-import type { Table as TanStackTable } from '@tanstack/table-core';
-import { CategoriesState, PayeesState } from '$lib/states/entities';
+import { Button, buttonVariants } from '$lib/components/ui/button';
+import { Checkbox } from '$lib/components/ui/checkbox';
+import { Label } from '$lib/components/ui/label';
+import * as Tabs from '$lib/components/ui/tabs';
+import type { Transaction } from '$lib/schema';
+import type { Schedule } from '$lib/schema/schedules';
+import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { CategoriesState, PayeesState, SchedulesState } from '$lib/states/entities';
+import { deleteScheduleDialog, deleteScheduleId } from '$lib/states/ui/global.svelte';
 import { ServerAccountState } from '$lib/states/views';
 import type { TransactionsFormat } from '$lib/types';
-import type { Transaction } from '$lib/schema';
-
+import { parseDate } from '@internationalized/date';
+import Calendar from '@lucide/svelte/icons/calendar';
+import ChartLine from '@lucide/svelte/icons/chart-line';
+import FileText from '@lucide/svelte/icons/file-text';
+import HeartPulse from '@lucide/svelte/icons/heart-pulse';
+import List from '@lucide/svelte/icons/list';
+import Plus from '@lucide/svelte/icons/plus';
+import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
+import Sparkles from '@lucide/svelte/icons/sparkles';
+import Upload from '@lucide/svelte/icons/upload';
+import Wallet from '@lucide/svelte/icons/wallet';
+import Wand from '@lucide/svelte/icons/wand';
+import type { Table as TanStackTable } from '@tanstack/table-core';
 // Local component imports
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import DebtAccountMetrics from '$lib/components/accounts/debt-account-metrics.svelte';
+import BudgetRecommendationsPanel from '$lib/components/budgets/budget-recommendations-panel.svelte';
+import ScheduleRecommendationsPanel from '$lib/components/schedules/schedule-recommendations-panel.svelte';
+import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import { rpc } from '$lib/query';
+import { getByAccount as getBudgetsByAccount } from '$lib/query/budgets';
+import { getByAccount as getSchedulesByAccount } from '$lib/query/schedules';
+import { isDebtAccount } from '$lib/schema/accounts';
+import { headerActionsMode } from '$lib/stores/header-actions.svelte';
+import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
+import { arePayeesSimilar } from '$lib/utils/payee-matching';
+import { useQueryClient } from '@tanstack/svelte-query';
+import { onDestroy } from 'svelte';
 import {
   AddTransactionDialog,
-  TransactionTableContainer,
-  HsaDashboard,
   ExpenseTableContainer,
-  MedicalExpenseForm,
   ExpenseWizard,
+  HsaDashboard,
+  ImportTab,
+  MedicalExpenseForm,
+  SettingsTab,
+  TransactionTableContainer,
 } from './(components)';
-import { columns } from './(data)/columns.svelte';
-import { rpc } from '$lib/query';
-import { useQueryClient } from '@tanstack/svelte-query';
+import AccountBudgetsTable from './(components)/account-budgets-table.svelte';
+import AccountSchedulesTable from './(components)/account-schedules-table.svelte';
 import AnalyticsDashboard from './(components)/analytics-dashboard.svelte';
 import SchedulePreviewSheet from './(components)/schedule-preview-sheet.svelte';
-import DebtAccountMetrics from '$lib/components/accounts/debt-account-metrics.svelte';
-import { isDebtAccount } from '$lib/schema/accounts';
+import { columns } from './(data)/columns.svelte';
+
+// Define valid tab values
+const tabValues = [
+  'transactions',
+  'hsa-expenses',
+  'hsa-dashboard',
+  'analytics',
+  'schedules',
+  'budgets',
+  'import',
+  'settings',
+] as const;
+type TabValue = (typeof tabValues)[number];
 
 let { data } = $props();
 
@@ -46,8 +82,55 @@ const accountQuery = $derived(
 const accountData = $derived(accountQuery?.data);
 const accountId = $derived(accountData?.id);
 
-// Tab state management
-let activeTab = $state('transactions');
+// Tab state management - synced with URL query string
+const activeTab = $derived.by(() => {
+  const tabParam = page.url.searchParams.get('tab');
+  if (tabParam && tabValues.includes(tabParam as TabValue)) {
+    return tabParam as TabValue;
+  }
+  return 'transactions';
+});
+
+function setActiveTab(value: TabValue) {
+  const url = new URL(page.url);
+  if (value === 'transactions') {
+    url.searchParams.delete('tab');
+  } else {
+    url.searchParams.set('tab', value);
+  }
+  goto(url.toString(), { replaceState: false, noScroll: true, keepFocus: true });
+}
+
+// Register tabs for header display
+const pageTabsContext = getPageTabsContext();
+const showTabsOnPage = $derived(headerActionsMode.tabsMode === 'off');
+
+// Keep tabs context updated reactively
+$effect(() => {
+  if (pageTabsContext) {
+    pageTabsContext.register({
+      tabs: [
+        { id: 'transactions', label: 'Transactions', icon: List },
+        { id: 'hsa-expenses', label: 'Medical Expenses', condition: isHsaAccount },
+        { id: 'hsa-dashboard', label: 'HSA Dashboard', condition: isHsaAccount },
+        { id: 'analytics', label: 'Analytics', icon: ChartLine },
+        { id: 'schedules', label: 'Schedules', icon: Calendar },
+        { id: 'budgets', label: 'Budgets', icon: Wallet },
+        { id: 'import', label: 'Import', icon: Upload, condition: !isHsaAccount },
+        { id: 'settings', label: 'Settings', icon: SlidersHorizontal },
+      ],
+      activeTab,
+      onTabChange: (value) => setActiveTab(value as TabValue),
+    });
+  }
+});
+
+onDestroy(() => {
+  pageTabsContext?.clear();
+});
+
+// Track previous tab for refetch logic
+let previousTab = $state<TabValue | undefined>(undefined);
 
 // State variables
 let table = $state<TanStackTable<TransactionsFormat> | undefined>();
@@ -75,6 +158,14 @@ const summaryQuery = $derived(
   accountId ? rpc.transactions.getAccountSummary(Number(accountId)).options() : undefined
 );
 const budgetCountQuery = $derived(rpc.budgets.getBudgetCount().options());
+const schedulesQuery = $derived(
+  accountId ? getSchedulesByAccount(Number(accountId)).options() : undefined
+);
+const schedules = $derived(schedulesQuery?.data ?? []);
+const budgetsQuery = $derived(
+  accountId ? getBudgetsByAccount(Number(accountId)).options() : undefined
+);
+const budgets = $derived(budgetsQuery?.data ?? []);
 
 // Create the mutations once
 const updateTransactionMutation = rpc.transactions.updateTransactionWithBalance.options();
@@ -82,6 +173,14 @@ const saveTransactionMutation = rpc.transactions.saveTransaction.options();
 const bulkDeleteTransactionsMutation = rpc.transactions.bulkDeleteTransactions.options();
 const bulkUpdatePayeeMutation = rpc.transactions.bulkUpdatePayee.options();
 const bulkUpdateCategoryMutation = rpc.transactions.bulkUpdateCategory.options();
+
+// Budget mutations
+const duplicateBudgetMutation = rpc.budgets.duplicateBudget.options();
+const updateBudgetMutation = rpc.budgets.updateBudget.options();
+const deleteBudgetMutation = rpc.budgets.deleteBudget.options();
+const bulkDeleteBudgetsMutation = rpc.budgets.bulkDeleteBudgets.options();
+const bulkArchiveBudgetsMutation = rpc.budgets.bulkArchiveBudgets.options();
+
 const queryClient = useQueryClient();
 
 // Derived state from TanStack Query with proper reactivity
@@ -89,6 +188,17 @@ const transactions = $derived.by(() => {
   if (!transactionsQuery) return [];
   return Array.isArray(transactionsQuery?.data) ? transactionsQuery.data : [];
 });
+
+// Refetch transactions when switching from import tab to transactions tab
+$effect(() => {
+  const currentTab = activeTab;
+  if (previousTab === 'import' && currentTab === 'transactions') {
+    // Refetch transactions after import to ensure we have the latest data
+    transactionsQuery?.refetch();
+  }
+  previousTab = currentTab;
+});
+
 const isLoading = $derived.by(() => {
   return (
     (transactionsQuery ? transactionsQuery?.isLoading : false) ||
@@ -118,6 +228,7 @@ const budgetCount = $derived(budgetCountQuery.data?.count ?? 0);
 // Entity states
 const categoriesState = CategoriesState.get();
 const payeesState = PayeesState.get();
+const schedulesState = SchedulesState.get();
 const categories = $derived(categoriesState?.all || []);
 const payees = $derived(payeesState?.all || []);
 
@@ -135,6 +246,10 @@ let bulkPayeeUpdateDialog = $state({
   payeeName: null as string | null,
   originalPayeeName: '',
   matchCount: 0,
+  // Category update option
+  newPayeeDefaultCategoryId: null as number | null,
+  newPayeeDefaultCategoryName: null as string | null,
+  updateCategories: false,
 });
 
 let bulkCategoryUpdateDialog = $state({
@@ -169,6 +284,10 @@ function handleAddExpense() {
 // Schedule preview state
 let schedulePreviewOpen = $state(false);
 let selectedScheduleTransaction = $state<TransactionsFormat | null>(null);
+
+// Recommendations state
+let budgetRecommendationsSheetOpen = $state(false);
+let scheduleRecommendationsSheetOpen = $state(false);
 
 // Transform data for tables
 const formattedTransactions = $derived.by(() => {
@@ -294,13 +413,10 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
       const newPayee = payees.find((p) => p.id === newPayeeId);
 
       if (originalPayee?.name) {
-        // Find other transactions with same payee name (exact case-insensitive match)
+        // Find other transactions with similar payee names (handles amounts in names)
         const similarTransactions = transactions.filter((t: Transaction) => {
-          return (
-            t.id !== id &&
-            t.payee?.name &&
-            t.payee.name.toLowerCase().trim() === originalPayee.name.toLowerCase().trim()
-          );
+          if (t.id === id || !t.payee?.name) return false;
+          return arePayeesSimilar(t.payee.name, originalPayee.name);
         });
 
         if (similarTransactions.length > 0) {
@@ -310,6 +426,12 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
             data: updateData,
           });
 
+          // Get the new payee's default category if it has one
+          const newPayeeDefaultCategoryId = newPayee?.defaultCategoryId ?? null;
+          const newPayeeDefaultCategory = newPayeeDefaultCategoryId
+            ? categories.find((c) => c.id === newPayeeDefaultCategoryId)
+            : null;
+
           // Show bulk update dialog
           bulkPayeeUpdateDialog = {
             open: true,
@@ -318,6 +440,9 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
             payeeName: newPayee?.name || null,
             originalPayeeName: originalPayee.name,
             matchCount: similarTransactions.length,
+            newPayeeDefaultCategoryId,
+            newPayeeDefaultCategoryName: newPayeeDefaultCategory?.name ?? null,
+            updateCategories: false, // Reset checkbox state
           };
           return;
         }
@@ -331,44 +456,41 @@ const updateTransactionData = async (id: number, columnId: string, newValue?: un
       const newCategory = categories.find((c) => c.id === newCategoryId);
       const payeeName = transaction.payee?.name;
 
-      // Only show bulk update dialog if there was an original category
-      if (originalCategory) {
-        // Find matches by payee
-        const matchesByPayee = payeeName
-          ? transactions.filter((t: Transaction) => {
-              return (
-                t.id !== id &&
-                t.payee?.name &&
-                t.payee.name.toLowerCase().trim() === payeeName.toLowerCase().trim()
-              );
-            })
-          : [];
+      // Find matches by payee (always check if there's a payee, handles amounts in names)
+      const matchesByPayee = payeeName
+        ? transactions.filter((t: Transaction) => {
+            if (t.id === id || !t.payee?.name) return false;
+            return arePayeesSimilar(t.payee.name, payeeName);
+          })
+        : [];
 
-        // Find matches by previous category
-        const matchesByCategory = transactions.filter((t: Transaction) => {
-          return t.id !== id && t.category?.id === originalCategory.id;
+      // Find matches by previous category (only if there was an original category)
+      const matchesByCategory = originalCategory
+        ? transactions.filter((t: Transaction) => {
+            return t.id !== id && t.category?.id === originalCategory.id;
+          })
+        : [];
+
+      // Show bulk update dialog if there are any matches
+      if (matchesByPayee.length > 0 || matchesByCategory.length > 0) {
+        // Update the transaction first
+        await updateTransactionMutation.mutateAsync({
+          id: id,
+          data: updateData,
         });
 
-        if (matchesByPayee.length > 0 || matchesByCategory.length > 0) {
-          // Update the transaction first
-          await updateTransactionMutation.mutateAsync({
-            id: id,
-            data: updateData,
-          });
-
-          // Show bulk update dialog
-          bulkCategoryUpdateDialog = {
-            open: true,
-            transactionId: id,
-            categoryId: newCategoryId,
-            categoryName: newCategory?.name || null,
-            originalPayeeName: payeeName || '',
-            matchCountByPayee: matchesByPayee.length,
-            matchCountByCategory: matchesByCategory.length,
-            previousCategoryId: originalCategory.id,
-          };
-          return;
-        }
+        // Show bulk update dialog
+        bulkCategoryUpdateDialog = {
+          open: true,
+          transactionId: id,
+          categoryId: newCategoryId,
+          categoryName: newCategory?.name || null,
+          originalPayeeName: payeeName || '',
+          matchCountByPayee: matchesByPayee.length,
+          matchCountByCategory: matchesByCategory.length,
+          previousCategoryId: originalCategory?.id ?? null,
+        };
+        return;
       }
     }
 
@@ -459,12 +581,34 @@ const confirmBulkPayeeUpdate = async () => {
   if (!bulkPayeeUpdateDialog.transactionId || !accountId) return;
 
   try {
+    // Update payees for similar transactions
     await bulkUpdatePayeeMutation.mutateAsync({
       accountId: Number(accountId),
       transactionId: bulkPayeeUpdateDialog.transactionId,
       newPayeeId: bulkPayeeUpdateDialog.payeeId,
       originalPayeeName: bulkPayeeUpdateDialog.originalPayeeName,
     });
+
+    // Also update categories if the user opted in and there's a default category
+    if (
+      bulkPayeeUpdateDialog.updateCategories &&
+      bulkPayeeUpdateDialog.newPayeeDefaultCategoryId
+    ) {
+      // Update the original transaction's category first
+      await updateTransactionMutation.mutateAsync({
+        id: bulkPayeeUpdateDialog.transactionId,
+        data: { categoryId: bulkPayeeUpdateDialog.newPayeeDefaultCategoryId },
+      });
+
+      // Then update similar transactions' categories via bulk mutation
+      await bulkUpdateCategoryMutation.mutateAsync({
+        accountId: Number(accountId),
+        transactionId: bulkPayeeUpdateDialog.transactionId,
+        newCategoryId: bulkPayeeUpdateDialog.newPayeeDefaultCategoryId,
+        matchBy: 'payee',
+        // matchValue will use the payee from the transaction
+      });
+    }
 
     bulkPayeeUpdateDialog.open = false;
   } catch (error) {
@@ -522,6 +666,79 @@ const cancelBulkCategoryUpdate = () => {
   bulkCategoryUpdateDialog.open = false;
 };
 
+// Schedule action handlers
+const viewSchedule = (schedule: Schedule) => {
+  goto(`/schedules/${schedule.slug}`);
+};
+
+const editSchedule = (schedule: Schedule) => {
+  goto(`/schedules/${schedule.slug}/edit`);
+};
+
+const deleteSchedule = (schedule: Schedule) => {
+  deleteScheduleId.current = schedule.id;
+  deleteScheduleDialog.setTrue();
+};
+
+const bulkDeleteSchedules = async (schedulesList: Schedule[]) => {
+  // For now, handle first schedule using the global delete dialog
+  // Could be enhanced with bulk delete mutation later
+  const firstSchedule = schedulesList[0];
+  if (firstSchedule) {
+    deleteScheduleId.current = firstSchedule.id;
+    deleteScheduleDialog.setTrue();
+  }
+};
+
+// Budget action handlers
+const viewBudget = (budget: BudgetWithRelations) => {
+  goto(`/budgets/${budget.slug}`);
+};
+
+const editBudget = (budget: BudgetWithRelations) => {
+  goto(`/budgets/${budget.slug}/edit`);
+};
+
+const handleDuplicateBudget = async (budget: BudgetWithRelations) => {
+  try {
+    await duplicateBudgetMutation.mutateAsync({ id: budget.id });
+  } catch (error) {
+    console.error('Failed to duplicate budget:', error);
+  }
+};
+
+const archiveBudget = async (budget: BudgetWithRelations) => {
+  try {
+    await updateBudgetMutation.mutateAsync({ id: budget.id, data: { status: 'archived' } });
+  } catch (error) {
+    console.error('Failed to archive budget:', error);
+  }
+};
+
+const handleDeleteBudget = async (budget: BudgetWithRelations) => {
+  try {
+    await deleteBudgetMutation.mutateAsync(budget.id);
+  } catch (error) {
+    console.error('Failed to delete budget:', error);
+  }
+};
+
+const bulkDeleteBudgets = async (budgetsList: BudgetWithRelations[]) => {
+  try {
+    await bulkDeleteBudgetsMutation.mutateAsync(budgetsList.map((b) => b.id));
+  } catch (error) {
+    console.error('Failed to bulk delete budgets:', error);
+  }
+};
+
+const bulkArchiveBudgets = async (budgetsList: BudgetWithRelations[]) => {
+  try {
+    await bulkArchiveBudgetsMutation.mutateAsync(budgetsList.map((b) => b.id));
+  } catch (error) {
+    console.error('Failed to bulk archive budgets:', error);
+  }
+};
+
 let previousAccountId = $state<string | undefined>();
 
 $effect(() => {
@@ -549,20 +766,9 @@ $effect(() => {
       </div>
     </div>
 
-    <!-- Action Buttons (only show if account exists) -->
-    {#if !isAccountNotFound}
+    <!-- Action Buttons (only show on transactions tab) -->
+    {#if !isAccountNotFound && activeTab === 'transactions'}
       <div class="flex items-center space-x-2">
-        <Button variant="outline" href="/accounts/{accountSlug}/edit">
-          <SquarePen class="mr-2 h-4 w-4" />
-          Edit
-        </Button>
-
-        {#if !isHsaAccount}
-          <Button variant="outline" href="/import?accountId={accountId}">
-            <Upload class="mr-2 h-4 w-4" />
-            Import
-          </Button>
-        {/if}
 
         {#if isHsaAccount}
           <Button onclick={handleAddExpense}>
@@ -609,20 +815,50 @@ $effect(() => {
 
   <!-- Main Content (only show if account exists) -->
   {#if !isAccountNotFound}
-    <!-- Tabs Structure -->
-    <Tabs.Root bind:value={activeTab} class="mb-1 w-full">
-      <Tabs.List class="inline-flex h-11">
-        <Tabs.Trigger value="transactions" class="px-6 font-medium">Transactions</Tabs.Trigger>
-        {#if isHsaAccount}
-          <Tabs.Trigger value="hsa-expenses" class="px-6 font-medium"
-            >Medical Expenses</Tabs.Trigger>
-          <Tabs.Trigger value="hsa-dashboard" class="px-6 font-medium">HSA Dashboard</Tabs.Trigger>
-        {/if}
-        <Tabs.Trigger value="analytics" class="px-6 font-medium">Analytics</Tabs.Trigger>
-      </Tabs.List>
+    <!-- Tabs Structure - only show on page if header tabs disabled -->
+    {#if showTabsOnPage}
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as TabValue)}
+        class="tabs-connected w-full"
+      >
+        <Tabs.List class="tabs-connected-list">
+          <Tabs.Trigger value="transactions" class="tabs-connected-trigger px-6 font-medium">
+            <List class="mr-2 h-4 w-4" />
+            Transactions
+          </Tabs.Trigger>
+          {#if isHsaAccount}
+            <Tabs.Trigger value="hsa-expenses" class="tabs-connected-trigger px-6 font-medium"
+              >Medical Expenses</Tabs.Trigger>
+            <Tabs.Trigger value="hsa-dashboard" class="tabs-connected-trigger px-6 font-medium"
+              >HSA Dashboard</Tabs.Trigger>
+          {/if}
+          <Tabs.Trigger value="analytics" class="tabs-connected-trigger px-6 font-medium">
+            <ChartLine class="mr-2 h-4 w-4" />
+            Analytics
+          </Tabs.Trigger>
+          <Tabs.Trigger value="schedules" class="tabs-connected-trigger px-6 font-medium">
+            <Calendar class="mr-2 h-4 w-4" />
+            Schedules
+          </Tabs.Trigger>
+          <Tabs.Trigger value="budgets" class="tabs-connected-trigger px-6 font-medium">
+            <Wallet class="mr-2 h-4 w-4" />
+            Budgets
+          </Tabs.Trigger>
+          {#if !isHsaAccount}
+            <Tabs.Trigger value="import" class="tabs-connected-trigger px-6 font-medium">
+              <Upload class="mr-2 h-4 w-4" />
+              Import
+            </Tabs.Trigger>
+          {/if}
+          <Tabs.Trigger value="settings" class="tabs-connected-trigger px-6 font-medium">
+            <SlidersHorizontal class="mr-2 h-4 w-4" />
+            Settings
+          </Tabs.Trigger>
+        </Tabs.List>
 
-      <!-- Transactions Tab Content -->
-      <Tabs.Content value="transactions" class="space-y-4">
+        <!-- Transactions Tab Content -->
+        <Tabs.Content value="transactions" class="tabs-connected-content space-y-4">
         <TransactionTableContainer
           {isLoading}
           transactions={Array.isArray(transactions) ? transactions : []}
@@ -649,7 +885,7 @@ $effect(() => {
 
       <!-- HSA Medical Expenses Tab Content -->
       {#if isHsaAccount}
-        <Tabs.Content value="hsa-expenses" class="space-y-4">
+        <Tabs.Content value="hsa-expenses" class="tabs-connected-content space-y-4">
           {#if accountData}
             <ExpenseTableContainer
               hsaAccountId={accountData.id}
@@ -659,7 +895,7 @@ $effect(() => {
         </Tabs.Content>
 
         <!-- HSA Dashboard Tab Content -->
-        <Tabs.Content value="hsa-dashboard" class="space-y-4">
+        <Tabs.Content value="hsa-dashboard" class="tabs-connected-content space-y-4">
           {#if accountData}
             <HsaDashboard account={accountData} />
           {/if}
@@ -667,7 +903,7 @@ $effect(() => {
       {/if}
 
       <!-- Analytics Tab Content -->
-      <Tabs.Content value="analytics" class="space-y-4">
+      <Tabs.Content value="analytics" class="tabs-connected-content space-y-4">
         {#if transactions && !isLoading && activeTab === 'analytics'}
           {#if accountData && accountData.accountType && isDebtAccount(accountData.accountType)}
             <!-- Credit Card Metrics Dashboard -->
@@ -686,7 +922,204 @@ $effect(() => {
           </div>
         {/if}
       </Tabs.Content>
-    </Tabs.Root>
+
+      <!-- Schedules Tab Content -->
+      <Tabs.Content value="schedules" class="tabs-connected-content space-y-4">
+        {#if schedules && !isLoading && activeTab === 'schedules'}
+          <div class="flex items-center justify-between">
+            <div></div>
+            <Button variant="outline" onclick={() => (scheduleRecommendationsSheetOpen = true)}>
+              <Sparkles class="mr-2 h-4 w-4" />
+              Recommendations
+            </Button>
+          </div>
+          <AccountSchedulesTable
+            {schedules}
+            accountId={Number(accountId)}
+            accountSlug={accountSlug || ''}
+            onView={viewSchedule}
+            onEdit={editSchedule}
+            onDelete={deleteSchedule}
+            onBulkDelete={bulkDeleteSchedules} />
+        {:else if isLoading}
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
+              <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+            </div>
+            <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+          </div>
+        {/if}
+      </Tabs.Content>
+
+      <!-- Budgets Tab Content -->
+      <Tabs.Content value="budgets" class="tabs-connected-content space-y-4">
+        {#if budgets && !isLoading && activeTab === 'budgets'}
+          <div class="flex items-center justify-between">
+            <div></div>
+            <Button variant="outline" onclick={() => (budgetRecommendationsSheetOpen = true)}>
+              <Sparkles class="mr-2 h-4 w-4" />
+              Recommendations
+            </Button>
+          </div>
+          <AccountBudgetsTable
+            {budgets}
+            accountId={Number(accountId)}
+            accountSlug={accountSlug || ''}
+            onView={viewBudget}
+            onEdit={editBudget}
+            onDuplicate={handleDuplicateBudget}
+            onArchive={archiveBudget}
+            onDelete={handleDeleteBudget}
+            onBulkDelete={bulkDeleteBudgets}
+            onBulkArchive={bulkArchiveBudgets} />
+        {:else if isLoading}
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
+              <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+            </div>
+            <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+          </div>
+        {/if}
+      </Tabs.Content>
+
+      <!-- Import Tab Content -->
+      {#if !isHsaAccount}
+        <Tabs.Content value="import" class="tabs-connected-content">
+          {#if accountData && accountId && activeTab === 'import'}
+            <ImportTab
+              accountId={Number(accountId)}
+              accountSlug={accountSlug || ''}
+              accountName={accountData.name || 'Account'} />
+          {/if}
+        </Tabs.Content>
+      {/if}
+
+      <!-- Settings Tab Content -->
+      <Tabs.Content value="settings" class="tabs-connected-content">
+        {#if accountData && activeTab === 'settings'}
+          <SettingsTab account={accountData} />
+        {/if}
+      </Tabs.Content>
+      </Tabs.Root>
+    {:else}
+      <!-- Content rendered directly when tabs are in header -->
+      <div class="space-y-4">
+        {#if activeTab === 'transactions'}
+          <TransactionTableContainer
+            {isLoading}
+            transactions={Array.isArray(transactions) ? transactions : []}
+            {categoriesState}
+            {payeesState}
+            views={data.views}
+            {columns}
+            {formattedTransactions}
+            {updateTransactionData}
+            {searchTransactions}
+            {budgetCount}
+            onScheduleClick={handleScheduleClick}
+            onBulkDelete={handleBulkDelete}
+            bind:table />
+
+          <AddTransactionDialog
+            bind:open={addTransactionDialogOpen}
+            account={account || null}
+            payees={payees.map((p) => ({ id: p.id, name: p.name || 'Unknown Payee' }))}
+            categories={categories.map((c) => ({ id: c.id, name: c.name || 'Unknown Category' }))}
+            onSubmit={submitTransaction} />
+        {:else if activeTab === 'hsa-expenses' && isHsaAccount && accountData}
+          <ExpenseTableContainer
+            hsaAccountId={accountData.id}
+            views={data.expenseViews || []}
+            onEdit={handleEditExpense} />
+        {:else if activeTab === 'hsa-dashboard' && isHsaAccount && accountData}
+          <HsaDashboard account={accountData} />
+        {:else if activeTab === 'analytics'}
+          {#if transactions && !isLoading}
+            {#if accountData && accountData.accountType && isDebtAccount(accountData.accountType)}
+              <DebtAccountMetrics account={accountData} transactions={formattedTransactions} />
+            {:else}
+              <AnalyticsDashboard transactions={formattedTransactions} accountId={accountId + ''} />
+            {/if}
+          {:else if isLoading}
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
+                <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+              </div>
+              <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+            </div>
+          {/if}
+        {:else if activeTab === 'schedules'}
+          {#if schedules && !isLoading}
+            <div class="flex items-center justify-between">
+              <div></div>
+              <Button variant="outline" onclick={() => (scheduleRecommendationsSheetOpen = true)}>
+                <Sparkles class="mr-2 h-4 w-4" />
+                Recommendations
+              </Button>
+            </div>
+            <AccountSchedulesTable
+              {schedules}
+              accountId={Number(accountId)}
+              accountSlug={accountSlug || ''}
+              onView={viewSchedule}
+              onEdit={editSchedule}
+              onDelete={deleteSchedule}
+              onBulkDelete={bulkDeleteSchedules} />
+          {:else if isLoading}
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
+                <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+              </div>
+              <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+            </div>
+          {/if}
+        {:else if activeTab === 'budgets'}
+          {#if budgets && !isLoading}
+            <div class="flex items-center justify-between">
+              <div></div>
+              <Button variant="outline" onclick={() => (budgetRecommendationsSheetOpen = true)}>
+                <Sparkles class="mr-2 h-4 w-4" />
+                Recommendations
+              </Button>
+            </div>
+            <AccountBudgetsTable
+              {budgets}
+              accountId={Number(accountId)}
+              accountSlug={accountSlug || ''}
+              onView={viewBudget}
+              onEdit={editBudget}
+              onDuplicate={handleDuplicateBudget}
+              onArchive={archiveBudget}
+              onDelete={handleDeleteBudget}
+              onBulkDelete={bulkDeleteBudgets}
+              onBulkArchive={bulkArchiveBudgets} />
+          {:else if isLoading}
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
+                <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
+              </div>
+              <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+            </div>
+          {/if}
+        {:else if activeTab === 'import' && !isHsaAccount}
+          {#if accountData && accountId}
+            <ImportTab
+              accountId={Number(accountId)}
+              accountSlug={accountSlug || ''}
+              accountName={accountData.name || 'Account'} />
+          {/if}
+        {:else if activeTab === 'settings'}
+          {#if accountData}
+            <SettingsTab account={accountData} />
+          {/if}
+        {/if}
+      </div>
+    {/if}
 
     <!-- Bulk Delete Confirmation Dialog -->
     <AlertDialog.Root bind:open={bulkDeleteDialogOpen}>
@@ -724,11 +1157,16 @@ $effect(() => {
       amount={selectedScheduleTransaction?.amount}
       frequency={selectedScheduleTransaction?.scheduleFrequency}
       interval={selectedScheduleTransaction?.scheduleInterval}
-      nextOccurrence={selectedScheduleTransaction?.scheduleNextOccurrence} />
+      nextOccurrence={selectedScheduleTransaction?.scheduleNextOccurrence}
+      occurrenceDate={selectedScheduleTransaction?.date instanceof Date
+        ? selectedScheduleTransaction.date.toISOString().split('T')[0]
+        : typeof selectedScheduleTransaction?.date === 'string'
+          ? selectedScheduleTransaction.date
+          : undefined} />
 
     <!-- HSA Add/Edit Expense Sheet -->
     {#if isHsaAccount && accountData}
-      <ResponsiveSheet.Root bind:open={addExpenseOpen}>
+      <ResponsiveSheet bind:open={addExpenseOpen}>
         {#snippet header()}
           <div class="space-y-2">
             <h2 class="text-lg font-semibold">
@@ -818,7 +1256,7 @@ $effect(() => {
             </div>
           {/if}
         {/snippet}
-      </ResponsiveSheet.Root>
+      </ResponsiveSheet>
     {/if}
 
     <!-- Bulk Payee Update Dialog -->
@@ -836,6 +1274,31 @@ $effect(() => {
             "{bulkPayeeUpdateDialog.payeeName || 'None'}" as well?
           </AlertDialog.Description>
         </AlertDialog.Header>
+
+        <!-- Category update option -->
+        {#if bulkPayeeUpdateDialog.newPayeeDefaultCategoryId}
+          <div class="flex items-start gap-3 rounded-lg border bg-muted/50 p-3">
+            <Checkbox
+              id="update-categories"
+              checked={bulkPayeeUpdateDialog.updateCategories}
+              onCheckedChange={(checked) => {
+                bulkPayeeUpdateDialog.updateCategories = checked === true;
+              }}
+            />
+            <div class="grid gap-1.5 leading-none">
+              <Label
+                for="update-categories"
+                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Also update category to "{bulkPayeeUpdateDialog.newPayeeDefaultCategoryName}"
+              </Label>
+              <p class="text-xs text-muted-foreground">
+                Apply the new payee's default category to these transactions
+              </p>
+            </div>
+          </div>
+        {/if}
+
         <AlertDialog.Footer class="flex-col gap-2 sm:flex-col">
           <AlertDialog.Action onclick={confirmBulkPayeeUpdate} class="w-full">
             Yes, Update All Similar ({bulkPayeeUpdateDialog.matchCount + 1} transactions)
@@ -927,4 +1390,40 @@ $effect(() => {
       </AlertDialog.Content>
     </AlertDialog.Root>
   {/if}
+
+  <!-- Budget Recommendations Sheet -->
+  <ResponsiveSheet bind:open={budgetRecommendationsSheetOpen} defaultWidth={800} minWidth={600} maxWidth={1200}>
+    {#snippet header()}
+      <div>
+        <h2 class="text-lg font-semibold">Budget Recommendations</h2>
+        <p class="text-muted-foreground text-sm">
+          Budget recommendations based on spending patterns in this account
+        </p>
+      </div>
+    {/snippet}
+
+    {#snippet content()}
+      {#if accountId}
+        <BudgetRecommendationsPanel accountId={Number(accountId)} />
+      {/if}
+    {/snippet}
+  </ResponsiveSheet>
+
+  <!-- Schedule Recommendations Sheet -->
+  <ResponsiveSheet bind:open={scheduleRecommendationsSheetOpen} defaultWidth={800} minWidth={600} maxWidth={1200}>
+    {#snippet header()}
+      <div>
+        <h2 class="text-lg font-semibold">Schedule Recommendations</h2>
+        <p class="text-muted-foreground text-sm">
+          Detected recurring transaction patterns that can become scheduled transactions
+        </p>
+      </div>
+    {/snippet}
+
+    {#snippet content()}
+      {#if accountId}
+        <ScheduleRecommendationsPanel accountId={Number(accountId)} />
+      {/if}
+    {/snippet}
+  </ResponsiveSheet>
 </div>

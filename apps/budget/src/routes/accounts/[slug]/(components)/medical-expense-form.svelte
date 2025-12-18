@@ -27,31 +27,48 @@ let { hsaAccountId, accountId, transactionId, existingExpense, onSuccess, onCanc
   $props();
 
 // Form state - Medical Expense fields
-let expenseType = $state(existingExpense?.expenseType || 'doctor_visit');
+let expenseType = $state('doctor_visit');
 let otherExpenseDescription = $state(''); // For "other" expense types
-let isQualified = $state(existingExpense?.isQualified ?? true);
-let provider = $state(existingExpense?.provider || '');
-let patientName = $state(existingExpense?.patientName || '');
-let diagnosis = $state(existingExpense?.diagnosis || '');
-let treatmentDescription = $state(existingExpense?.treatmentDescription || '');
-let amount = $state(existingExpense?.amount || 0);
-let insuranceCovered = $state(existingExpense?.insuranceCovered || 0);
-let outOfPocket = $state(existingExpense?.outOfPocket || 0);
+let isQualified = $state(true);
+let provider = $state('');
+let patientName = $state('');
+let diagnosis = $state('');
+let treatmentDescription = $state('');
+let amount = $state(0);
+let insuranceCovered = $state(0);
+let outOfPocket = $state(0);
 
 // Date handling with @internationalized/date
-let serviceDate = $state(
-  existingExpense?.serviceDate
-    ? parseDate(existingExpense.serviceDate.split('T')[0]!)
-    : parseDate(new Date().toISOString().split('T')[0]!)
-);
+let serviceDate = $state(parseDate(new Date().toISOString().split('T')[0]!));
 // Note: new Date().toISOString() is fine here because we only use the date part
 // and immediately parse it with parseDate, avoiding timezone issues
-let paidDate = $state(
-  existingExpense?.paidDate ? parseDate(existingExpense.paidDate.split('T')[0]!) : undefined
-);
+let paidDate = $state<ReturnType<typeof parseDate> | undefined>(undefined);
 
-let taxYear = $state(existingExpense?.taxYear || new Date().getFullYear());
-let notes = $state(existingExpense?.notes || '');
+let taxYear = $state(new Date().getFullYear());
+let notes = $state('');
+
+// Sync form state when existingExpense is provided
+$effect(() => {
+  if (existingExpense) {
+    expenseType = existingExpense.expenseType || 'doctor_visit';
+    isQualified = existingExpense.isQualified ?? true;
+    provider = existingExpense.provider || '';
+    patientName = existingExpense.patientName || '';
+    diagnosis = existingExpense.diagnosis || '';
+    treatmentDescription = existingExpense.treatmentDescription || '';
+    amount = existingExpense.amount || 0;
+    insuranceCovered = existingExpense.insuranceCovered || 0;
+    outOfPocket = existingExpense.outOfPocket || 0;
+    taxYear = existingExpense.taxYear || new Date().getFullYear();
+    notes = existingExpense.notes || '';
+    if (existingExpense.serviceDate) {
+      serviceDate = parseDate(existingExpense.serviceDate.split('T')[0]!);
+    }
+    if (existingExpense.paidDate) {
+      paidDate = parseDate(existingExpense.paidDate.split('T')[0]!);
+    }
+  }
+});
 
 // Transaction fields (only for new expenses)
 let transactionNotes = $state('');

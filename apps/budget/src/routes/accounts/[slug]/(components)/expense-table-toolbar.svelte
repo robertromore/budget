@@ -15,7 +15,7 @@ let { table }: Props = $props();
 
 // Get filter components from visible columns that have facetedFilter defined
 const columns = table.getAllColumns();
-let filterComponents: FilterInputOption<ExpenseFormat>[] = $derived.by(() => {
+let filterComponents: FilterInputOption[] = $derived.by(() => {
   return columns
     .filter((column) => column && column.getIsVisible() && column.columnDef.meta?.facetedFilter)
     .map((column) => {

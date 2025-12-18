@@ -31,6 +31,8 @@ export const load: PageServerLoad = async (event) => {
       icon: "",
       dirty: false,
       isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
     },
     {
       id: -3,
@@ -55,6 +57,8 @@ export const load: PageServerLoad = async (event) => {
       icon: "",
       dirty: false,
       isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
     },
     {
       id: -2,
@@ -84,6 +88,8 @@ export const load: PageServerLoad = async (event) => {
       icon: "",
       dirty: false,
       isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
     },
     {
       id: -1,
@@ -108,6 +114,8 @@ export const load: PageServerLoad = async (event) => {
       icon: "",
       dirty: false,
       isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
     },
   ] as View[];
 
@@ -137,6 +145,8 @@ export const load: PageServerLoad = async (event) => {
       icon: "",
       dirty: false,
       isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
     },
     {
       id: -11,
@@ -169,6 +179,8 @@ export const load: PageServerLoad = async (event) => {
       icon: "",
       dirty: false,
       isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
     },
     {
       id: -12,
@@ -201,6 +213,8 @@ export const load: PageServerLoad = async (event) => {
       icon: "",
       dirty: false,
       isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
     },
     {
       id: -13,
@@ -233,6 +247,8 @@ export const load: PageServerLoad = async (event) => {
       icon: "",
       dirty: false,
       isDefault: true,
+      workspaceId: 0,
+      entityType: "transactions" as const,
     },
   ] as View[];
 

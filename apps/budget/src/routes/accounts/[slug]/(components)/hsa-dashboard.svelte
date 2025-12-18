@@ -2,6 +2,7 @@
 import { rpc } from '$lib/query';
 import * as Card from '$lib/components/ui/card';
 import * as ResponsiveSheet from '$lib/components/ui/responsive-sheet';
+import { formatCurrency } from '$lib/utils/formatters';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import FileText from '@lucide/svelte/icons/file-text';
@@ -51,13 +52,6 @@ function handleAddReceipt(expenseId: number) {
   showReceiptUpload = true;
 }
 
-function formatCurrency(amount: number | undefined): string {
-  if (amount === undefined) return '$0.00';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount);
-}
 
 // Calculate contribution progress
 const contributionLimit = $derived(hsaAccount?.hsaContributionLimit || 0);
@@ -76,7 +70,7 @@ const contributionProgress = $derived(
         <DollarSign class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
-        <div class="text-2xl font-bold">{formatCurrency(summary?.totalExpenses)}</div>
+        <div class="text-2xl font-bold">{formatCurrency(summary?.totalExpenses ?? 0)}</div>
         <p class="text-muted-foreground text-xs">
           {summary?.expenseCount || 0} expenses in {currentYear}
         </p>
@@ -90,7 +84,7 @@ const contributionProgress = $derived(
         <TrendingUp class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
-        <div class="text-2xl font-bold">{formatCurrency(summary?.totalOutOfPocket)}</div>
+        <div class="text-2xl font-bold">{formatCurrency(summary?.totalOutOfPocket ?? 0)}</div>
         <p class="text-muted-foreground text-xs">Your HSA-eligible expenses</p>
       </Card.Content>
     </Card.Root>
@@ -102,7 +96,7 @@ const contributionProgress = $derived(
         <FileText class="text-muted-foreground h-4 w-4" />
       </Card.Header>
       <Card.Content>
-        <div class="text-2xl font-bold">{formatCurrency(summary?.qualifiedExpenses)}</div>
+        <div class="text-2xl font-bold">{formatCurrency(summary?.qualifiedExpenses ?? 0)}</div>
         <p class="text-muted-foreground text-xs">IRS Publication 502 compliant</p>
       </Card.Content>
     </Card.Root>
@@ -135,7 +129,7 @@ const contributionProgress = $derived(
           <div class="flex justify-between text-sm">
             <span>Contributions</span>
             <span class="font-medium">
-              {formatCurrency(summary?.totalExpenses)} / {formatCurrency(contributionLimit)}
+              {formatCurrency(summary?.totalExpenses ?? 0)} / {formatCurrency(contributionLimit)}
             </span>
           </div>
           <div class="bg-secondary h-2 w-full rounded-full">

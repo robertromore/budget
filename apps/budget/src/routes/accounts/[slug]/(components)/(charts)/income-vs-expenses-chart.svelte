@@ -102,18 +102,6 @@ const summaryStats = $derived.by(() => {
     },
   ];
 });
-
-// Chart configuration for grouped bar chart
-const chartConfig: ChartConfig = {
-  income: {
-    label: 'Income',
-    color: 'hsl(var(--chart-1))',
-  },
-  expenses: {
-    label: 'Expenses',
-    color: 'hsl(var(--chart-2))',
-  },
-};
 </script>
 
 <AnalyticsChartShell

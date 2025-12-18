@@ -1,25 +1,27 @@
 <script lang="ts">
-import { rpc } from '$lib/query';
+import DateInput from '$lib/components/input/date-input.svelte';
+import NumericInput from '$lib/components/input/numeric-input.svelte';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
 import { Input } from '$lib/components/ui/input';
 import { Label } from '$lib/components/ui/label';
-import { Textarea } from '$lib/components/ui/textarea';
-import { Badge } from '$lib/components/ui/badge';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Separator from '$lib/components/ui/separator';
-import * as Card from '$lib/components/ui/card';
-import NumericInput from '$lib/components/input/numeric-input.svelte';
-import DateInput from '$lib/components/input/date-input.svelte';
-import { timezone, currentDate } from '$lib/utils/dates';
+import { Textarea } from '$lib/components/ui/textarea';
+import { rpc } from '$lib/query';
 import { claimStatusEnum, type ClaimStatus } from '$lib/schema/hsa-claims';
-import Plus from '@lucide/svelte/icons/plus';
-import Send from '@lucide/svelte/icons/send';
+import { displayPreferences } from '$lib/stores/display-preferences.svelte';
+import { currentDate, timezone } from '$lib/utils/dates';
+import { formatCurrency } from '$lib/utils/formatters';
 import CheckCircle from '@lucide/svelte/icons/check-circle';
-import XCircle from '@lucide/svelte/icons/x-circle';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Edit from '@lucide/svelte/icons/edit';
+import Plus from '@lucide/svelte/icons/plus';
+import Send from '@lucide/svelte/icons/send';
 import Trash2 from '@lucide/svelte/icons/trash-2';
+import XCircle from '@lucide/svelte/icons/x-circle';
 
 interface Props {
   expense: any;
@@ -37,13 +39,18 @@ const isLoading = $derived(claimsQuery.isLoading);
 // Form state
 let showNewClaimForm = $state(false);
 let editingClaim = $state<any>(null);
-let claimedAmount = $state(expense.outOfPocket || 0);
+let claimedAmount = $state(0);
 let claimNumber = $state('');
 let administratorName = $state('');
 let notes = $state('');
 let internalNotes = $state('');
 let error = $state('');
 let isSubmitting = $state(false);
+
+// Reset form when expense changes
+$effect(() => {
+  claimedAmount = expense.outOfPocket || 0;
+});
 
 // Status update form
 let selectedClaim = $state<any>(null);
@@ -257,21 +264,9 @@ async function confirmDeleteClaim() {
   }
 }
 
-function formatCurrency(amount: number | undefined): string {
-  if (amount === undefined) return '$0.00';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount);
-}
-
 function formatDate(dateString: string | undefined): string {
   if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  return displayPreferences.formatDate(new Date(dateString));
 }
 
 function getStatusBadgeVariant(
@@ -326,15 +321,15 @@ function getStatusBadgeVariant(
           </div>
           <div class="flex justify-between">
             <span class="text-muted-foreground">Total Amount:</span>
-            <span class="font-medium">{formatCurrency(expense.amount)}</span>
+            <span class="font-medium">{formatCurrency(expense.amount ?? 0)}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-muted-foreground">Insurance Covered:</span>
-            <span class="font-medium">{formatCurrency(expense.insuranceCovered)}</span>
+            <span class="font-medium">{formatCurrency(expense.insuranceCovered ?? 0)}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-muted-foreground">Out of Pocket:</span>
-            <span class="text-lg font-semibold">{formatCurrency(expense.outOfPocket)}</span>
+            <span class="text-lg font-semibold">{formatCurrency(expense.outOfPocket ?? 0)}</span>
           </div>
         </Card.Content>
       </Card.Root>

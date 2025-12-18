@@ -1,11 +1,11 @@
 <script lang="ts">
 import * as Dialog from '$lib/components/ui/dialog';
 import * as Tabs from '$lib/components/ui/tabs';
-import ManageTransactionForm from '../(forms)/manage-transaction-form.svelte';
 import TransactionWizard from '$lib/components/wizard/transaction-wizard.svelte';
 import type { Transaction } from '$lib/schema';
-import { CurrentAccountState } from '$lib/states/views/current-account.svelte';
 import { CategoriesState, PayeesState } from '$lib/states/entities';
+import { CurrentAccountState } from '$lib/states/views/current-account.svelte';
+import ManageTransactionForm from '../(forms)/manage-transaction-form.svelte';
 
 let {
   // account,

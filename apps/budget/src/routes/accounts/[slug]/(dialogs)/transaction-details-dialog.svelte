@@ -142,7 +142,7 @@ const hasImportMetadata = $derived(
               <FileText class="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
               <div class="min-w-0 flex-1">
                 <div class="text-muted-foreground text-xs">Notes</div>
-                <div class="text-sm break-words">{transaction.notes}</div>
+                <div class="text-sm wrap-break-word">{transaction.notes}</div>
               </div>
             </div>
           {/if}
@@ -170,7 +170,7 @@ const hasImportMetadata = $derived(
               <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div class="min-w-0">
                   <div class="text-muted-foreground text-xs">Source File</div>
-                  <div class="font-mono text-sm text-xs font-medium break-all">
+                  <div class="font-mono text-xs font-medium break-all">
                     {transaction.importedFrom}
                   </div>
                 </div>
@@ -187,7 +187,7 @@ const hasImportMetadata = $derived(
             {#if transaction.originalPayeeName}
               <div class="space-y-2">
                 <div class="text-muted-foreground text-xs">Original Payee Name</div>
-                <div class="bg-muted rounded-md p-2 font-mono text-sm text-xs break-all">
+                <div class="bg-muted rounded-md p-2 font-mono text-xs break-all">
                   {transaction.originalPayeeName}
                 </div>
                 <div class="text-muted-foreground text-xs">
@@ -334,12 +334,12 @@ const hasImportMetadata = $derived(
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="min-w-0">
               <div class="text-muted-foreground text-xs">Created</div>
-              <div class="text-sm break-words">{formatDate(transaction.createdAt, true)}</div>
+              <div class="text-sm wrap-break-word">{formatDate(transaction.createdAt, true)}</div>
             </div>
 
             <div class="min-w-0">
               <div class="text-muted-foreground text-xs">Last Modified</div>
-              <div class="text-sm break-words">{formatDate(transaction.updatedAt, true)}</div>
+              <div class="text-sm wrap-break-word">{formatDate(transaction.updatedAt, true)}</div>
             </div>
           </div>
         </div>

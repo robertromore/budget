@@ -128,7 +128,7 @@ export const columns = (
       id: "id",
       cell: (info) => info.getValue(),
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "ID",
@@ -174,7 +174,7 @@ export const columns = (
       accessorKey: "date",
       id: "date",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Date",
@@ -207,7 +207,7 @@ export const columns = (
             icon: CalendarDays,
             column,
             component: () =>
-              renderComponent(DataTableFacetedFilterDateWithOperators<ExpenseFormat, unknown>, {
+              renderComponent(DataTableFacetedFilterDateWithOperators as any, {
                 column,
                 title: "Date",
               }),
@@ -227,7 +227,7 @@ export const columns = (
       accessorKey: "provider",
       id: "provider",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Provider",
@@ -258,7 +258,7 @@ export const columns = (
       accessorKey: "patientName",
       id: "patientName",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Patient",
@@ -289,7 +289,7 @@ export const columns = (
       accessorKey: "expenseType",
       id: "expenseType",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Type",
@@ -322,7 +322,7 @@ export const columns = (
       accessorKey: "diagnosis",
       id: "diagnosis",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Diagnosis",
@@ -349,7 +349,7 @@ export const columns = (
       accessorKey: "treatmentDescription",
       id: "treatmentDescription",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Treatment",
@@ -376,7 +376,7 @@ export const columns = (
       accessorKey: "amount",
       id: "amount",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Amount",
@@ -400,7 +400,7 @@ export const columns = (
       },
       aggregationFn: "sum",
       enableGrouping: false,
-      filterFn: "amountFilter",
+      filterFn: "amountFilter" as any,
       meta: {
         label: "Amount",
         facetedFilter: (column: Column<ExpenseFormat, unknown>) => {
@@ -409,7 +409,7 @@ export const columns = (
             icon: DollarSign,
             column,
             component: () =>
-              renderComponent(DataTableFacetedFilterAmount<ExpenseFormat, unknown>, {
+              renderComponent(DataTableFacetedFilterAmount as any, {
                 column,
                 title: "Amount",
               }),
@@ -423,7 +423,7 @@ export const columns = (
       accessorKey: "insuranceCovered",
       id: "insuranceCovered",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Insurance",
@@ -460,7 +460,7 @@ export const columns = (
       accessorKey: "outOfPocket",
       id: "outOfPocket",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Out of Pocket",
@@ -492,7 +492,7 @@ export const columns = (
       accessorKey: "claimStatus",
       id: "status",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Status",
@@ -529,7 +529,7 @@ export const columns = (
             icon: CircleCheckBig,
             column,
             component: () =>
-              renderComponent(DataTableFacetedFilter<ExpenseFormat, unknown>, {
+              renderComponent(DataTableFacetedFilter as any, {
                 column,
                 title: "Status",
                 options: statusOptions,
@@ -554,7 +554,7 @@ export const columns = (
       accessorKey: "notes",
       id: "notes",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Notes",

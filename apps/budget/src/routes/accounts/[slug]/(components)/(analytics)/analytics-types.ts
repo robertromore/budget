@@ -1,13 +1,11 @@
-import {
-  Activity,
-  Calendar,
-  ChartBar,
-  ChartPie,
-  DollarSign,
-  TrendingDown,
-  TrendingUp,
-  Users,
-} from "$lib/components/icons";
+import Activity from "@lucide/svelte/icons/activity";
+import Calendar from "@lucide/svelte/icons/calendar";
+import ChartBar from "@lucide/svelte/icons/chart-bar";
+import ChartPie from "@lucide/svelte/icons/chart-pie";
+import DollarSign from "@lucide/svelte/icons/dollar-sign";
+import TrendingDown from "@lucide/svelte/icons/trending-down";
+import TrendingUp from "@lucide/svelte/icons/trending-up";
+import Users from "@lucide/svelte/icons/users";
 
 // Temporarily isolated for monthly spending trends chart testing
 export const analyticsTypes = [

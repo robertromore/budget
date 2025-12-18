@@ -3,8 +3,8 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import type { TransactionsFormat } from '$lib/types';
 import { analyticsTypes } from './(analytics)/analytics-types';
-import MonthlySpendingChart from './(charts)/monthly-spending-chart.svelte';
 import IncomeVsExpensesChart from './(charts)/income-vs-expenses-chart.svelte';
+import MonthlySpendingChart from './(charts)/monthly-spending-chart.svelte';
 import TopCategoriesView from './(charts)/top-categories-view.svelte';
 
 interface Props {

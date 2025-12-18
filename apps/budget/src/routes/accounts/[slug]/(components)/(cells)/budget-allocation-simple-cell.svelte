@@ -1,13 +1,13 @@
 <script lang="ts">
-import * as Tooltip from '$lib/components/ui/tooltip';
-import { Button } from '$lib/components/ui/button';
-import { CircleDollarSign, Plus, TriangleAlert } from '@lucide/svelte/icons';
-import { currencyFormatter } from '$lib/utils/formatters';
-import { listBudgets } from '$lib/query/budgets';
 import BudgetAllocationDialog from '$lib/components/dialogs/budget-allocation-dialog.svelte';
-import type { TransactionsFormat } from '$lib/types';
+import { Button } from '$lib/components/ui/button';
+import * as Tooltip from '$lib/components/ui/tooltip';
 import { getQueryClient } from '$lib/query/_client';
+import { listBudgets } from '$lib/query/budgets';
 import { transactionKeys } from '$lib/query/transactions';
+import type { TransactionsFormat } from '$lib/types';
+import { currencyFormatter } from '$lib/utils/formatters';
+import { CircleDollarSign, Plus, TriangleAlert } from '@lucide/svelte/icons';
 
 interface Props {
   transaction: TransactionsFormat;
@@ -151,12 +151,12 @@ function handleAllocationChanged() {
       {/if}
 
       <!-- Status indicator -->
-      {#if allocationStatus === 'full'}
+      <!-- {#if allocationStatus === 'full'}
         <div class="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
           <CircleDollarSign class="h-3 w-3" />
           <span>Fully allocated</span>
         </div>
-      {/if}
+      {/if} -->
     {:else if availableBudgets.length > 0}
       <!-- No allocation yet, show add button -->
       <Button

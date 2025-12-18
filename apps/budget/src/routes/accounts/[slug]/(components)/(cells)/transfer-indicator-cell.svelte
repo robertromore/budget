@@ -1,7 +1,7 @@
 <script lang="ts">
-import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 import { Badge } from '$lib/components/ui/badge';
 import type { TransactionsFormat } from '$lib/types';
+import ArrowRightLeft from '@lucide/svelte/icons/arrow-right-left';
 
 let { transaction } = $props<{ transaction: TransactionsFormat }>();
 

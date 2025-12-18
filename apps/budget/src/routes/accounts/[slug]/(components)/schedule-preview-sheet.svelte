@@ -4,8 +4,10 @@ import Button from '$lib/components/ui/button/button.svelte';
 import Badge from '$lib/components/ui/badge/badge.svelte';
 import Calendar from '@lucide/svelte/icons/calendar';
 import ExternalLink from '@lucide/svelte/icons/external-link';
+import CalendarX from '@lucide/svelte/icons/calendar-x';
 import { currencyFormatter } from '$lib/utils/formatters';
 import { goto } from '$app/navigation';
+import { openSkipOccurrenceDialog } from '$lib/states/ui/global.svelte';
 
 interface Props {
   open?: boolean;
@@ -17,6 +19,7 @@ interface Props {
   frequency?: string | undefined;
   interval?: number | undefined;
   nextOccurrence?: string | undefined;
+  occurrenceDate?: string | undefined;
 }
 
 let {
@@ -29,6 +32,7 @@ let {
   frequency,
   interval = 1,
   nextOccurrence,
+  occurrenceDate,
 }: Props = $props();
 
 const formatFrequency = (freq?: string, int: number = 1) => {
@@ -82,6 +86,18 @@ const handleViewFullSchedule = () => {
     goto(`/schedules/${scheduleSlug}`);
   }
 };
+
+const handleSkipOccurrence = () => {
+  const dateToSkip = occurrenceDate || nextOccurrence;
+  if (scheduleId && dateToSkip) {
+    open = false;
+    openSkipOccurrenceDialog(scheduleId, scheduleName, dateToSkip);
+  }
+};
+
+const canSkip = $derived.by(() => {
+  return scheduleId && (occurrenceDate || nextOccurrence);
+});
 </script>
 
 <ResponsiveSheet bind:open {onOpenChange}>
@@ -156,11 +172,17 @@ const handleViewFullSchedule = () => {
   {/snippet}
 
   {#snippet footer()}
-    <div class="flex gap-3 px-3 py-3">
-      <Button variant="outline" onclick={() => (open = false)} class="flex-1">Close</Button>
+    <div class="flex gap-2 px-3 py-3">
+      <Button variant="outline" onclick={() => (open = false)}>Close</Button>
+      {#if canSkip}
+        <Button variant="outline" onclick={handleSkipOccurrence}>
+          <CalendarX class="mr-2 h-4 w-4" />
+          Skip
+        </Button>
+      {/if}
       <Button onclick={handleViewFullSchedule} class="flex-1">
         <ExternalLink class="mr-2 h-4 w-4" />
-        View Full Schedule
+        View Schedule
       </Button>
     </div>
   {/snippet}

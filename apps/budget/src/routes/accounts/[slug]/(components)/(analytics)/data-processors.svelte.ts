@@ -1,6 +1,6 @@
 import type { TransactionsFormat } from "$lib/types";
-import { CalendarDate } from "@internationalized/date";
 import { currentDate, parseDateValue } from "$lib/utils/dates";
+import { CalendarDate } from "@internationalized/date";
 
 export function createMonthlySpendingProcessor(transactions: TransactionsFormat[]) {
   let processMonthlySpending = $state<Array<{ month: CalendarDate; amount: number }>>([]);
@@ -262,7 +262,7 @@ export function createTopCategoriesProcessor(transactions: TransactionsFormat[])
 
         if (!categoryData[categoryId]) {
           categoryData[categoryId] = {
-            name: t.category.name,
+            name: t.category.name ?? "Uncategorized",
             amount: 0,
             count: 0,
             icon: t.category.categoryIcon || undefined,

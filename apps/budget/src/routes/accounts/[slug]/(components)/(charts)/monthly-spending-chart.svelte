@@ -1,7 +1,7 @@
 <script lang="ts">
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
-import { currencyFormatter } from '$lib/utils/formatters';
 import { getMonthlySpendingAggregates } from '$lib/query/transactions';
+import { currencyFormatter } from '$lib/utils/formatters';
 import AnalyticsChartShell from './analytics-chart-shell.svelte';
 
 interface Props {
@@ -48,14 +48,6 @@ const monthlySpendingData = $derived.by(() => {
     }
   );
 });
-
-// Chart configuration
-const chartConfig: ChartConfig = {
-  spending: {
-    label: 'Monthly Spending',
-    color: 'var(--color-primary)',
-  },
-};
 
 // Summary statistics for the shell component
 const summaryStats = $derived.by(() => {

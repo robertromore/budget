@@ -1,28 +1,21 @@
 <script lang="ts">
-import { SheetPayeeSelector } from '$lib/components/payees/advanced-payee-selector';
+	import { EnhancedPayeeSelector } from '$lib/components/payees/enhanced-payee-selector';
 
-let {
-  value,
-  onUpdateValue,
-  transactionContext,
-}: {
-  value: number | null;
-  onUpdateValue: (newValue: number) => void;
-  transactionContext?: {
-    amount?: number;
-    categoryId?: number;
-    accountId?: number;
-  };
-} = $props();
+	let {
+		value,
+		onUpdateValue,
+	}: {
+		value: number | null;
+		onUpdateValue: (newValue: number | null) => void;
+	} = $props();
 </script>
 
-<SheetPayeeSelector
-  {value}
-  onValueChange={onUpdateValue}
-  {transactionContext}
-  displayMode="compact"
-  groupStrategy="usage"
-  showQuickAccess={true}
-  allowCreate={false}
-  buttonClass="w-full h-8 text-xs"
-  placeholder="Select payee..." />
+<EnhancedPayeeSelector
+	{value}
+	onValueChange={onUpdateValue}
+	displayMode="compact"
+	allowCreate={true}
+	allowEdit={true}
+	buttonClass="w-full h-8"
+	placeholder="Select payee..."
+/>

@@ -1,10 +1,8 @@
-import {
-  CalendarDays,
-  DollarSign,
-  HandCoins,
-  SquareCheck,
-  SquareMousePointer,
-} from "$lib/components/icons";
+import CalendarDays from "@lucide/svelte/icons/calendar-days";
+import DollarSign from "@lucide/svelte/icons/dollar-sign";
+import HandCoins from "@lucide/svelte/icons/hand-coins";
+import SquareCheck from "@lucide/svelte/icons/square-check";
+import SquareMousePointer from "@lucide/svelte/icons/square-mouse-pointer";
 import StickyNote from "@lucide/svelte/icons/sticky-note";
 import { Checkbox } from "$lib/components/ui/checkbox";
 import { renderComponent } from "$lib/components/ui/data-table";
@@ -26,6 +24,7 @@ import EditableEntityCell from "../(components)/(cells)/editable-entity-cell.sve
 import EditablePayeeCell from "../(components)/(cells)/editable-payee-cell.svelte";
 import EditableNumericCell from "../(components)/(cells)/editable-numeric-cell.svelte";
 import ReadOnlyCellWithIcon from "../(components)/(cells)/read-only-cell-with-icon.svelte";
+import SelectionCheckboxCell from "../(components)/(cells)/selection-checkbox-cell.svelte";
 import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";
 import DataTableFacetedFilterCategory from "../(components)/(facets)/data-table-faceted-filter-category.svelte";
 import DataTableFacetedFilterDateWithOperators from "../(components)/(facets)/data-table-faceted-filter-date-with-operators.svelte";
@@ -33,7 +32,6 @@ import DataTableFacetedFilterPayee from "../(components)/(facets)/data-table-fac
 import DataTableFacetedFilterStatus from "../(components)/(facets)/data-table-faceted-filter-status.svelte";
 import DataTableActions from "../(components)/data-table-actions.svelte";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
-import ManageCategoryForm from "$lib/components/forms/manage-category-form.svelte";
 import BudgetAllocationSimpleCell from "../(components)/(cells)/budget-allocation-simple-cell.svelte";
 import EditableCategoryCell from "../(components)/(cells)/editable-category-cell.svelte";
 import ReadOnlyCategoryCell from "../(components)/(cells)/read-only-category-cell.svelte";
@@ -93,7 +91,7 @@ export const columns = (
         return renderComponent(Checkbox, {
           checked: allPageRowsSelected,
           indeterminate: somePageRowsSelected && !allPageRowsSelected,
-          onCheckedChange: (value) => {
+          onCheckedChange: (value: boolean) => {
             if (value) {
               // Select all on current page
               table.toggleAllPageRowsSelected(true);
@@ -106,25 +104,21 @@ export const columns = (
           "aria-label": "Select all on page",
         });
       },
-      cell: ({ row }) => {
+      cell: ({ row, table }) => {
         const transaction = row.original;
         const isScheduled = transaction.status === "scheduled";
 
-        return renderComponent(Checkbox, {
-          checked: row.getIsSelected(),
+        return renderComponent(SelectionCheckboxCell, {
+          row,
+          table,
           disabled: !row.getCanSelect() || isScheduled,
-          onCheckedChange: (value) => row.toggleSelected(!!value),
-          controlledChecked: true,
-          "aria-label": "Select row",
         });
       },
-      aggregatedCell: ({ row }) =>
-        renderComponent(Checkbox, {
-          checked: row.getIsSelected(),
+      aggregatedCell: ({ row, table }) =>
+        renderComponent(SelectionCheckboxCell, {
+          row,
+          table,
           disabled: !row.getCanSelect(),
-          onCheckedChange: (value) => row.toggleSelected(!!value),
-          controlledChecked: true,
-          "aria-label": "Select row",
         }),
       enableColumnFilter: false,
       enableGrouping: false,
@@ -176,7 +170,7 @@ export const columns = (
       },
       aggregatedCell: () => {},
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "ID",
@@ -217,7 +211,7 @@ export const columns = (
       },
       aggregatedCell: () => {},
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
+        renderComponent(DataTableColumnHeader as any, {
           title: "Date",
           column,
           table,
@@ -238,7 +232,7 @@ export const columns = (
             column,
             component: () =>
               renderComponent(
-                DataTableFacetedFilterDateWithOperators<TransactionsFormat, unknown>,
+                DataTableFacetedFilterDateWithOperators as any,
                 {
                   column,
                   title: "Date",
@@ -282,7 +276,7 @@ export const columns = (
             component: EditablePayeeCell,
             props: {
               value: info.getValue() as number | null,
-              onUpdateValue: (new_value) => updateHandler(info, "payeeId", new_value),
+              onUpdateValue: (new_value: number | null) => updateHandler(info, "payeeId", new_value),
               transactionContext: {
                 amount: transaction.amount,
                 categoryId: transaction.categoryId,
@@ -294,7 +288,7 @@ export const columns = (
       },
       aggregatedCell: () => {},
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Payee",
@@ -316,7 +310,7 @@ export const columns = (
             column,
             value,
             component: () =>
-              renderComponent(DataTableFacetedFilterPayee<TransactionsFormat, unknown>, {
+              renderComponent(DataTableFacetedFilterPayee as any, {
                 column,
               }),
           };
@@ -360,7 +354,7 @@ export const columns = (
       },
       aggregatedCell: () => {},
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Notes",
@@ -401,30 +395,13 @@ export const columns = (
 
         // Editable for normal transactions
         return renderComponent(EditableCategoryCell, {
-          value: category as EditableEntityItem,
-          entityLabel: "category",
-          onUpdateValue: (new_value) => updateHandler(info, "categoryId", new_value),
-          entities: categories.all as EditableEntityItem[],
-          icon: SquareMousePointer as unknown as Component,
-          management: {
-            enable: true,
-            component: ManageCategoryForm,
-            onSave: (new_value: EditableEntityItem, is_new: boolean) => {
-              if (is_new) {
-                categories.addCategory(new_value as Category);
-              } else {
-                categories.updateCategory(new_value as Category);
-              }
-            },
-            onDelete: (id: number) => {
-              categories.deleteCategory(id);
-            },
-          },
+          value: category,
+          onUpdateValue: (new_value: number | null) => updateHandler(info, "categoryId", new_value),
         });
       },
       aggregatedCell: () => {},
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Category",
@@ -444,7 +421,7 @@ export const columns = (
             icon: SquareMousePointer,
             column,
             component: () =>
-              renderComponent(DataTableFacetedFilterCategory<TransactionsFormat, unknown>, {
+              renderComponent(DataTableFacetedFilterCategory as any, {
                 column,
               }),
           };
@@ -471,7 +448,7 @@ export const columns = (
         });
       },
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Budget",
@@ -498,7 +475,7 @@ export const columns = (
             component: EditableNumericCell,
             props: {
               value: amount,
-              onUpdateValue: (new_value) => updateHandler(info, "amount", new_value),
+              onUpdateValue: (new_value: number) => updateHandler(info, "amount", new_value),
             },
           }),
         });
@@ -508,7 +485,7 @@ export const columns = (
         return currencyFormatter.format(isNaN(value) ? 0 : (value ?? 0));
       },
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Amount",
@@ -526,7 +503,7 @@ export const columns = (
             icon: DollarSign,
             column,
             component: () =>
-              renderComponent(DataTableFacetedFilterAmount<TransactionsFormat, unknown>, {
+              renderComponent(DataTableFacetedFilterAmount as any, {
                 column,
                 title: "Amount",
               }),
@@ -544,7 +521,7 @@ export const columns = (
       accessorKey: "balance",
       id: "balance",
       header: ({ column, table }) =>
-        renderComponent(DataTableColumnHeader<TransactionsFormat, unknown>, {
+        renderComponent(DataTableColumnHeader as any, {
           column,
           table,
           title: "Balance",
@@ -578,7 +555,7 @@ export const columns = (
       cell: (info) =>
         renderComponent(DataTableEditableStatusCell, {
           value: info.getValue() as string,
-          onUpdateValue: (new_value) => updateHandler(info, "status", new_value),
+          onUpdateValue: (new_value: unknown) => updateHandler(info, "status", new_value as string),
           onScheduleClick:
             info.row.original.status === "scheduled" && onScheduleClick
               ? () => onScheduleClick(info.row.original)
@@ -596,7 +573,7 @@ export const columns = (
             column,
             value,
             component: () => {
-              return renderComponent(DataTableFacetedFilterStatus<TransactionsFormat, unknown>, {
+              return renderComponent(DataTableFacetedFilterStatus as any, {
                 column,
               });
             },

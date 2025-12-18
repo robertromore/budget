@@ -5,10 +5,10 @@ import {
 } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
-import { superValidate } from "sveltekit-superforms/client";
-import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
+import { superValidate } from "sveltekit-superforms/client";
+import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => ({
   manageAccountForm: await superValidate(zod4(superformInsertAccountSchema)),
@@ -51,7 +51,10 @@ export const actions: Actions = {
       });
     }
 
-    const entity = await createCaller(await createContext(event)).transactionRoutes.save(form.data);
+    const entity = await createCaller(await createContext(event)).transactionRoutes.save({
+      ...form.data,
+      date: form.data.date || new Date().toISOString().split("T")[0]!,
+    });
     return {
       form,
       entity,

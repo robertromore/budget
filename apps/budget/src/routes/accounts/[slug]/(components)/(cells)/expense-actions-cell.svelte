@@ -2,10 +2,10 @@
 import { Button } from '$lib/components/ui/button';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import Ellipsis from '@lucide/svelte/icons/ellipsis';
-import SquarePen from '@lucide/svelte/icons/square-pen';
-import Trash2 from '@lucide/svelte/icons/trash-2';
 import FileText from '@lucide/svelte/icons/file-text';
 import Receipt from '@lucide/svelte/icons/receipt';
+import SquarePen from '@lucide/svelte/icons/square-pen';
+import Trash2 from '@lucide/svelte/icons/trash-2';
 import type { ExpenseFormat } from '../../(data)/expense-columns.svelte';
 
 interface Props {

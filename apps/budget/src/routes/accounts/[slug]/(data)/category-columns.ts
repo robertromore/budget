@@ -29,7 +29,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
         return renderComponent(Checkbox, {
           checked: allPageRowsSelected,
           indeterminate: somePageRowsSelected && !allPageRowsSelected,
-          onCheckedChange: (value) => {
+          onCheckedChange: (value: boolean) => {
             if (value) {
               table.toggleAllPageRowsSelected(true);
             } else {
@@ -44,7 +44,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
         renderComponent(Checkbox, {
           checked: row.getIsSelected(),
           disabled: !row.getCanSelect(),
-          onCheckedChange: (value) => row.toggleSelected(!!value),
+          onCheckedChange: (value: boolean) => row.toggleSelected(!!value),
           controlledChecked: true,
           "aria-label": "Select row",
         }),
@@ -88,7 +88,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
             column,
             value: [],
             component: () =>
-              renderComponent(DataTableFacetedFilterAmount<TopCategoryData, unknown>, {
+              renderComponent(DataTableFacetedFilterAmount as any, {
                 column,
                 title: "Amount",
               }),
@@ -117,7 +117,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
             column,
             value: [],
             component: () =>
-              renderComponent(DataTableFacetedFilterAmount<TopCategoryData, unknown>, {
+              renderComponent(DataTableFacetedFilterAmount as any, {
                 column,
                 title: "Transaction Count",
                 formatter: countFormatter,
@@ -147,7 +147,7 @@ export function createCategoryColumns(): ColumnDef<TopCategoryData>[] {
             column,
             value: [],
             component: () =>
-              renderComponent(DataTableFacetedFilterAmount<TopCategoryData, unknown>, {
+              renderComponent(DataTableFacetedFilterAmount as any, {
                 column,
                 title: "Percentage",
                 formatter: percentageFormatter,

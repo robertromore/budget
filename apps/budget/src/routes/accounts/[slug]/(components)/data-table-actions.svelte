@@ -1,13 +1,13 @@
 <script lang="ts">
-import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 import { Button } from '$lib/components/ui/button';
-import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import { getTransactionDetail } from '$lib/query/transactions';
+import type { Transaction } from '$lib/schema';
 import Info from '@lucide/svelte/icons/info';
+import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import DeleteTransactionDialog from '../(dialogs)/delete-transaction-dialog.svelte';
 import TransactionDetailsDialog from '../(dialogs)/transaction-details-dialog.svelte';
-import { getTransactionDetail } from '$lib/query/transactions';
-import type { Transaction } from '$lib/schema';
 
 let {
   id,
@@ -21,9 +21,9 @@ let selectedTransaction = $state<Transaction | null>(null);
 
 // Fetch transaction details when opening the details dialog
 const transactionQuery = $derived(
-  getTransactionDetail(id).options({
+  getTransactionDetail(id).options(() => ({
     enabled: detailsOpen,
-  })
+  }))
 );
 
 $effect(() => {
