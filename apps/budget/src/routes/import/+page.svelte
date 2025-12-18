@@ -9,11 +9,15 @@ import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Checkbox } from '$lib/components/ui/checkbox';
 import * as Empty from '$lib/components/ui/empty';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
 import * as Select from '$lib/components/ui/select';
 import { Slider } from '$lib/components/ui/slider';
 import type { Account } from '$lib/schema/accounts';
+import type { ImportProfile } from '$lib/schema/import-profiles';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { trpc } from '$lib/trpc/client';
 import type {
   ColumnMapping,
   ImportPreviewData,
@@ -26,9 +30,13 @@ import {
   countProcessorTransactions,
   detectPaymentProcessor,
 } from '$lib/utils/import/payment-processor-filter';
+import { arePayeesSimilar } from '$lib/utils/payee-matching';
 import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 import Circle from '@lucide/svelte/icons/circle';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
+import Save from '@lucide/svelte/icons/save';
+import Settings from '@lucide/svelte/icons/settings';
+import Sparkles from '@lucide/svelte/icons/sparkles';
 import Wallet from '@lucide/svelte/icons/wallet';
 import { useQueryClient } from '@tanstack/svelte-query';
 import { toast } from 'svelte-sonner';
@@ -36,11 +44,13 @@ import { toast } from 'svelte-sonner';
 let { data } = $props();
 const queryClient = useQueryClient();
 
-// Initialize entity states for the import page
-PayeesState.set(data.payees);
-CategoriesState.set(data.categories);
+const _data = (() => { return data })();
 
-const accounts = $derived(data.accounts);
+// Initialize entity states for the import page
+PayeesState.set(_data.payees);
+CategoriesState.set(_data.categories);
+const accounts = $derived(_data.accounts);
+
 // Filter out HSA accounts since they can't be imported into
 const importableAccounts = $derived(accounts.filter((a: Account) => a.accountType !== 'hsa'));
 const hasImportableAccounts = $derived(importableAccounts.length > 0);
@@ -66,6 +76,19 @@ let error = $state<string | null>(null);
 let selectedRows = $state<Set<number>>(new Set());
 let scheduleMatches = $state<ScheduleMatch[]>([]);
 let scheduleMatchThreshold = $state(0.75); // Default to 75% minimum match (array for Slider component)
+
+// Import profile state
+let matchedProfile = $state<ImportProfile | null>(null);
+let detectedMapping = $state<ColumnMapping | null>(null);
+let csvHeaders = $state<string[]>([]);
+let saveProfileDialog = $state({
+  open: false,
+  profileName: '',
+  saveAsAccountDefault: false,
+  saveFilenamePattern: false,
+  filenamePattern: '',
+  isSaving: false,
+});
 
 // Filter schedule matches based on threshold
 const filteredScheduleMatches = $derived(
@@ -258,18 +281,14 @@ function handlePayeeUpdateWithSimilar(
   const originalPayeeName = selectedRow.normalizedData['payee'];
   if (!originalPayeeName || typeof originalPayeeName !== 'string') return;
 
-  // Use exact matching for payees to avoid false positives
-  // Example: "PayPal - Acme" should not match "PayPal - Chewy"
+  // Use similarity matching to catch payees with different amounts in the name
+  // Example: "Amazon - $25.99" should match "Amazon - $12.50"
   const matchesToUpdate = parseResults.rows
     .filter((row) => {
       if (row.rowIndex === rowIndex) return false;
       const rowPayee = row.normalizedData['payee'];
-      // Exact match (case-insensitive)
-      return (
-        rowPayee &&
-        typeof rowPayee === 'string' &&
-        rowPayee.toLowerCase() === originalPayeeName.toLowerCase()
-      );
+      if (!rowPayee || typeof rowPayee !== 'string') return false;
+      return arePayeesSimilar(rowPayee, originalPayeeName);
     })
     .map((item) => ({ item }));
 
@@ -553,17 +572,13 @@ function handleCategoryUpdateWithSimilar(
   }
 
   // Find matches by payee (for "update all transactions with same payee" option)
-  // Use exact matching to avoid false positives like "PayPal - Acme" matching "PayPal - Chewy"
+  // Use similarity matching to catch payees with different amounts in the name
   const matchesByPayee = parseResults.rows
     .filter((row) => {
       if (row.rowIndex === rowIndex) return false;
       const rowPayee = row.normalizedData['payee'];
-      // Exact match (case-insensitive)
-      return (
-        rowPayee &&
-        typeof rowPayee === 'string' &&
-        rowPayee.toLowerCase() === payeeName.toLowerCase()
-      );
+      if (!rowPayee || typeof rowPayee !== 'string') return false;
+      return arePayeesSimilar(rowPayee, payeeName);
     })
     .map((item) => ({ item }));
 
@@ -762,7 +777,7 @@ async function applySmartCategorization() {
 }
 
 // Pre-select account from query parameter if provided
-let selectedAccountId = $state<string>(data.preselectedAccountId || '');
+let selectedAccountId = $state<string>(_data.preselectedAccountId || '');
 const selectedAccount = $derived(() =>
   importableAccounts.find((a: Account) => a.id.toString() === selectedAccountId)
 );
@@ -775,6 +790,9 @@ async function handleFileSelected(file: File) {
   selectedFile = file;
   isProcessing = true;
   error = null;
+  matchedProfile = null;
+  detectedMapping = null;
+  csvHeaders = [];
 
   try {
     // Convert file to base64 for later re-processing
@@ -823,8 +841,37 @@ async function handleFileSelected(file: File) {
       // Apply smart categorization to rows without explicit categories
       await applySmartCategorization();
 
-      // Skip column mapping for QIF, OFX files (they have fixed formats)
+      // Extract CSV headers for profile matching (only for CSV files)
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      if (fileExtension === 'csv' && rawCSVData && rawCSVData.length > 0 && rawCSVData[0]) {
+        csvHeaders = Object.keys(rawCSVData[0]);
+
+        // Try to find a matching import profile
+        try {
+          const profile = await trpc().importProfileRoutes.findMatch.query({
+            headers: csvHeaders,
+            filename: file.name,
+            accountId: selectedAccountId ? parseInt(selectedAccountId) : undefined,
+          });
+
+          if (profile) {
+            matchedProfile = profile;
+            detectedMapping = profile.mapping;
+            toast.success(`Matched import profile: "${profile.name}"`, {
+              description: 'Column mapping has been auto-filled from your saved profile.',
+              icon: Sparkles,
+            });
+
+            // Record usage of this profile
+            trpc().importProfileRoutes.recordUsage.mutate({ id: profile.id });
+          }
+        } catch (profileErr) {
+          // Profile matching is non-critical, continue without it
+          console.warn('Failed to check for matching import profile:', profileErr);
+        }
+      }
+
+      // Skip column mapping for QIF, OFX files (they have fixed formats)
       if (fileExtension === 'qif' || fileExtension === 'ofx' || fileExtension === 'qfx') {
         currentStep = 'preview';
       } else {
@@ -852,6 +899,9 @@ function goBackToUpload() {
   rawCSVData = null;
   entityPreview = null;
   error = null;
+  matchedProfile = null;
+  detectedMapping = null;
+  csvHeaders = [];
 }
 
 function goBackToMapping() {
@@ -1066,11 +1116,41 @@ async function processImport() {
       importResult = result.result;
       currentStep = 'complete';
 
-      // Invalidate all account-related queries to refresh balances everywhere
-      await queryClient.invalidateQueries({ queryKey: ['accounts'] });
-      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      await queryClient.invalidateQueries({ queryKey: ['payees'] });
-      await queryClient.invalidateQueries({ queryKey: ['categories'] });
+      // Invalidate all relevant queries to ensure the UI updates
+      // Use refetchType: 'all' to force refetch of all matching queries
+      const accountIdNum = selectedAccountId ? parseInt(selectedAccountId) : undefined;
+      await queryClient.invalidateQueries({
+        queryKey: ['accounts'],
+        refetchType: 'all',
+      });
+      // Invalidate account-specific transaction queries if we have an account
+      if (accountIdNum) {
+        await queryClient.invalidateQueries({
+          queryKey: ['transactions', 'all', accountIdNum],
+          refetchType: 'all',
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ['transactions', 'account', accountIdNum],
+          refetchType: 'all',
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ['transactions', 'summary', accountIdNum],
+          refetchType: 'all',
+        });
+      }
+      // Also invalidate general transaction queries
+      await queryClient.invalidateQueries({
+        queryKey: ['transactions'],
+        refetchType: 'all',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['payees'],
+        refetchType: 'all',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['categories'],
+        refetchType: 'all',
+      });
     } else {
       error = result.error || 'Failed to process import';
     }
@@ -1091,6 +1171,77 @@ function startNewImport() {
   selectedRows = new Set();
   scheduleMatches = [];
   error = null;
+  matchedProfile = null;
+  detectedMapping = null;
+  csvHeaders = [];
+  columnMapping = null;
+}
+
+// Save profile dialog helpers
+function openSaveProfileDialog() {
+  // Generate a default name based on filename
+  const defaultName = selectedFile
+    ? selectedFile.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
+    : 'New Import Profile';
+
+  // Generate a default filename pattern
+  const defaultPattern = selectedFile
+    ? selectedFile.name.replace(/\d{4}[-_]?\d{2}[-_]?\d{2}/g, '*').replace(/\d+/g, '*')
+    : '';
+
+  saveProfileDialog = {
+    open: true,
+    profileName: defaultName,
+    saveAsAccountDefault: false,
+    saveFilenamePattern: false,
+    filenamePattern: defaultPattern,
+    isSaving: false,
+  };
+}
+
+async function saveImportProfile() {
+  if (!columnMapping || !saveProfileDialog.profileName.trim()) return;
+
+  saveProfileDialog.isSaving = true;
+
+  try {
+    // Generate column signature from headers
+    let columnSignature: string | null = null;
+    if (csvHeaders.length > 0) {
+      const result = await trpc().importProfileRoutes.generateSignature.query({
+        headers: csvHeaders,
+      });
+      columnSignature = result.signature;
+    }
+
+    await trpc().importProfileRoutes.create.mutate({
+      name: saveProfileDialog.profileName.trim(),
+      columnSignature,
+      filenamePattern: saveProfileDialog.saveFilenamePattern
+        ? saveProfileDialog.filenamePattern.trim() || null
+        : null,
+      accountId: saveProfileDialog.saveAsAccountDefault && selectedAccountId
+        ? parseInt(selectedAccountId)
+        : null,
+      isAccountDefault: saveProfileDialog.saveAsAccountDefault,
+      mapping: columnMapping,
+    });
+
+    toast.success('Import profile saved', {
+      description: `"${saveProfileDialog.profileName}" will be used for future imports with matching columns.`,
+    });
+
+    saveProfileDialog.open = false;
+  } catch (err) {
+    console.error('Failed to save import profile:', err);
+    toast.error('Failed to save import profile');
+  } finally {
+    saveProfileDialog.isSaving = false;
+  }
+}
+
+function closeSaveProfileDialog() {
+  saveProfileDialog.open = false;
 }
 
 const steps = [
@@ -1143,32 +1294,23 @@ $effect(() => {
           {#each steps as step, index}
             {@const isComplete = index < currentStepIndex}
             {@const isCurrent = index === currentStepIndex}
-            <div class="flex flex-col items-center">
-              <div class="flex items-center">
-                <div
-                  class="flex h-12 w-12 items-center justify-center rounded-full text-sm font-medium transition-all {isCurrent
-                    ? 'bg-primary text-primary-foreground shadow-md'
-                    : isComplete
-                      ? 'bg-green-500 text-white'
-                      : 'bg-muted text-muted-foreground'}">
-                  {#if isComplete}
-                    <CircleCheck class="h-6 w-6" />
-                  {:else if isCurrent}
-                    <Circle class="h-6 w-6 fill-current" />
-                  {:else}
-                    <span class="text-sm font-semibold">{index + 1}</span>
-                  {/if}
-                </div>
-                {#if index < steps.length - 1}
-                  <div
-                    class="mx-4 h-1 w-32 rounded-full transition-all {isComplete
-                      ? 'bg-green-500'
-                      : 'bg-muted'}">
-                  </div>
+            <div class="relative">
+              <div
+                class="flex h-12 w-12 items-center justify-center rounded-full text-sm font-medium transition-all {isCurrent
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : isComplete
+                    ? 'bg-green-500 text-white'
+                    : 'bg-muted text-muted-foreground'}">
+                {#if isComplete}
+                  <CircleCheck class="h-6 w-6" />
+                {:else if isCurrent}
+                  <Circle class="h-6 w-6 fill-current" />
+                {:else}
+                  <span class="text-sm font-semibold">{index + 1}</span>
                 {/if}
               </div>
               <div
-                class="mt-3 text-sm font-medium transition-colors {isCurrent
+                class="absolute left-1/2 top-full mt-3 -translate-x-1/2 whitespace-nowrap text-sm font-medium transition-colors {isCurrent
                   ? 'text-primary'
                   : isComplete
                     ? 'text-green-600'
@@ -1176,6 +1318,13 @@ $effect(() => {
                 {step.label}
               </div>
             </div>
+            {#if index < steps.length - 1}
+              <div
+                class="mx-4 h-1 w-32 rounded-full transition-all {isComplete
+                  ? 'bg-green-500'
+                  : 'bg-muted'}">
+              </div>
+            {/if}
           {/each}
         </div>
       </div>
@@ -1200,12 +1349,18 @@ $effect(() => {
       <!-- Step Content -->
       {#if currentStep === 'upload'}
         <div class="space-y-6">
-          <div>
-            <h1 class="text-3xl font-bold">Import Financial Data</h1>
-            <p class="text-muted-foreground mt-2">
-              Upload your financial data from CSV, Excel (.xlsx, .xls), QIF, OFX/QFX, IIF, or QBO
-              files
-            </p>
+          <div class="flex items-start justify-between">
+            <div>
+              <h1 class="text-3xl font-bold">Import Financial Data</h1>
+              <p class="text-muted-foreground mt-2">
+                Upload your financial data from CSV, Excel (.xlsx, .xls), QIF, OFX/QFX, IIF, or QBO
+                files
+              </p>
+            </div>
+            <Button variant="outline" size="sm" href="/settings/import-profiles">
+              <Settings class="mr-2 h-4 w-4" />
+              Manage Profiles
+            </Button>
           </div>
 
           <!-- Account Selection -->
@@ -1265,111 +1420,74 @@ $effect(() => {
           {/if}
         </div>
       {:else if currentStep === 'map-columns' && parseResults && rawCSVData}
+        {#if matchedProfile}
+          <div class="bg-primary/10 border-primary/20 mb-4 flex items-center gap-2 rounded-lg border p-3">
+            <Sparkles class="text-primary h-4 w-4" />
+            <span class="text-sm">
+              Using saved profile: <strong>{matchedProfile.name}</strong>
+            </span>
+          </div>
+        {/if}
         <ColumnMapper
           rawColumns={Object.keys(rawCSVData[0] || {})}
+          initialMapping={detectedMapping ?? undefined}
           sampleData={rawCSVData}
           onNext={handleColumnMappingComplete}
           onBack={goBackToUpload} />
       {:else if currentStep === 'preview' && parseResults}
-        <div class="-mx-8 flex gap-6">
-          <!-- Left Sidebar - Import Options -->
-          <div class="w-80 shrink-0 pl-8">
-            <Card.Root class="sticky top-6">
-              <Card.Header>
-                <Card.Title>Import Options</Card.Title>
-                <Card.Description>
-                  Configure how the import should handle missing entities
-                </Card.Description>
-              </Card.Header>
-              <Card.Content class="space-y-4">
-                <div class="flex items-center justify-between">
-                  <div class="space-y-0.5">
-                    <label for="create-payees" class="text-sm font-medium">
-                      Auto-create payees
-                    </label>
-                    <p class="text-muted-foreground text-sm">
-                      Automatically create new payees that don't exist
-                    </p>
-                  </div>
+        <div class="space-y-6">
+          <!-- Import Options - Horizontal Layout -->
+          <Card.Root>
+            <Card.Header class="pb-3">
+              <Card.Title class="text-base">Import Options</Card.Title>
+            </Card.Header>
+            <Card.Content>
+              <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+                <label class="flex items-center gap-2">
                   <Checkbox id="create-payees" bind:checked={createMissingPayees} />
-                </div>
+                  <span class="text-sm">Auto-create payees</span>
+                </label>
 
-                <div class="flex items-center justify-between">
-                  <div class="space-y-0.5">
-                    <label for="create-categories" class="text-sm font-medium">
-                      Auto-create categories
-                    </label>
-                    <p class="text-muted-foreground text-sm">
-                      Automatically create new categories that don't exist
-                    </p>
-                  </div>
+                <label class="flex items-center gap-2">
                   <Checkbox id="create-categories" bind:checked={createMissingCategories} />
-                </div>
+                  <span class="text-sm">Auto-create categories</span>
+                </label>
 
-                <div class="flex items-center justify-between">
-                  <div class="space-y-0.5">
-                    <label for="partial-import" class="text-sm font-medium">
-                      Allow partial import
-                    </label>
-                    <p class="text-muted-foreground text-sm">
-                      Continue importing even if some rows have warnings
-                    </p>
-                  </div>
+                <label class="flex items-center gap-2">
                   <Checkbox id="partial-import" bind:checked={allowPartialImport} />
-                </div>
+                  <span class="text-sm">Allow partial import</span>
+                </label>
 
-                <div class="flex items-center justify-between">
-                  <div class="space-y-0.5">
-                    <label for="reverse-amounts" class="text-sm font-medium">
-                      Reverse amount signs
-                    </label>
-                    <p class="text-muted-foreground text-sm">
-                      Convert positive amounts to negative and vice versa
-                    </p>
-                  </div>
+                <label class="flex items-center gap-2">
                   <Checkbox id="reverse-amounts" bind:checked={reverseAmountSigns} />
-                </div>
+                  <span class="text-sm">Reverse amount signs</span>
+                </label>
 
                 {#if processorAnalysis.total > 0}
-                  <div class="border-t pt-4">
-                    <div class="space-y-2">
-                      <div class="flex items-center justify-between">
-                        <div class="space-y-0.5">
-                          <div class="text-sm font-medium">Payment Processors</div>
-                          <p class="text-muted-foreground text-sm">
-                            Found {processorAnalysis.total} transaction{processorAnalysis.total !==
-                            1
-                              ? 's'
-                              : ''} with payment processors
-                          </p>
-                        </div>
-                      </div>
-                      <Button variant="outline" class="w-full" onclick={openProcessorFilterDialog}>
-                        Filter Processors
-                      </Button>
-                    </div>
+                  <div class="border-l pl-6">
+                    <Button variant="outline" size="sm" onclick={openProcessorFilterDialog}>
+                      Filter Processors ({processorAnalysis.total})
+                    </Button>
                   </div>
                 {/if}
-              </Card.Content>
-            </Card.Root>
-          </div>
+              </div>
+            </Card.Content>
+          </Card.Root>
 
-          <!-- Right Content - Stats and Preview -->
-          <div class="min-w-0 flex-1 space-y-6 pr-8">
-            {#if previewData}
-              <ImportDataTable
-                data={previewData.rows}
-                fileName={previewData.fileName}
-                onNext={proceedToScheduleReview}
-                onBack={goBackToUpload}
-                bind:selectedRows
-                onPayeeUpdate={handlePayeeUpdateWithSimilar}
-                onCategoryUpdate={handleCategoryUpdateWithSimilar}
-                onDescriptionUpdate={handleDescriptionUpdate}
-                {temporaryCategories}
-                {temporaryPayees} />
-            {/if}
-          </div>
+          <!-- Preview Table -->
+          {#if previewData}
+            <ImportDataTable
+              data={previewData.rows}
+              fileName={previewData.fileName}
+              onNext={proceedToScheduleReview}
+              onBack={goBackToUpload}
+              bind:selectedRows
+              onPayeeUpdate={handlePayeeUpdateWithSimilar}
+              onCategoryUpdate={handleCategoryUpdateWithSimilar}
+              onDescriptionUpdate={handleDescriptionUpdate}
+              {temporaryCategories}
+              {temporaryPayees} />
+          {/if}
         </div>
 
         {#if isProcessing}
@@ -1644,6 +1762,26 @@ $effect(() => {
             </Card.Content>
           </Card.Root>
 
+          <!-- Save Import Profile Card - only show for CSV files without matched profile -->
+          {#if columnMapping && csvHeaders.length > 0 && !matchedProfile}
+            <Card.Root>
+              <Card.Header>
+                <Card.Title class="flex items-center gap-2">
+                  <Save class="h-4 w-4" />
+                  Save Column Mapping
+                </Card.Title>
+                <Card.Description>
+                  Save this column mapping as a profile for future imports with similar files
+                </Card.Description>
+              </Card.Header>
+              <Card.Content>
+                <Button variant="outline" onclick={openSaveProfileDialog}>
+                  Save as Import Profile
+                </Button>
+              </Card.Content>
+            </Card.Root>
+          {/if}
+
           <!-- Actions -->
           <div class="flex items-center gap-4">
             <Button class="flex-1" onclick={startNewImport}>Import Another File</Button>
@@ -1656,6 +1794,79 @@ $effect(() => {
     {/if}
   </div>
 </div>
+
+<!-- Save Import Profile Dialog -->
+<AlertDialog.Root bind:open={saveProfileDialog.open}>
+  <AlertDialog.Content class="max-w-md">
+    <AlertDialog.Header>
+      <AlertDialog.Title>Save Import Profile</AlertDialog.Title>
+      <AlertDialog.Description>
+        Create a profile to automatically use this column mapping for future imports.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <div class="space-y-4 py-4">
+      <div class="space-y-2">
+        <Label for="profile-name">Profile Name</Label>
+        <Input
+          id="profile-name"
+          bind:value={saveProfileDialog.profileName}
+          placeholder="e.g., Chase Credit Card" />
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex items-start gap-2">
+          <Checkbox
+            id="save-filename-pattern"
+            checked={saveProfileDialog.saveFilenamePattern}
+            onCheckedChange={(checked) => (saveProfileDialog.saveFilenamePattern = !!checked)} />
+          <div class="grid gap-1.5 leading-none">
+            <Label for="save-filename-pattern" class="text-sm font-medium">
+              Match by filename pattern
+            </Label>
+            <p class="text-muted-foreground text-xs">
+              Auto-match files with similar names
+            </p>
+          </div>
+        </div>
+        {#if saveProfileDialog.saveFilenamePattern}
+          <Input
+            bind:value={saveProfileDialog.filenamePattern}
+            placeholder="e.g., chase_*.csv"
+            class="ml-6" />
+        {/if}
+      </div>
+
+      {#if selectedAccountId}
+        <div class="flex items-start gap-2">
+          <Checkbox
+            id="save-account-default"
+            checked={saveProfileDialog.saveAsAccountDefault}
+            onCheckedChange={(checked) => (saveProfileDialog.saveAsAccountDefault = !!checked)} />
+          <div class="grid gap-1.5 leading-none">
+            <Label for="save-account-default" class="text-sm font-medium">
+              Set as default for this account
+            </Label>
+            <p class="text-muted-foreground text-xs">
+              Use this profile when importing to {selectedAccount()?.name}
+            </p>
+          </div>
+        </div>
+      {/if}
+    </div>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel onclick={closeSaveProfileDialog}>Cancel</AlertDialog.Cancel>
+      <Button
+        onclick={saveImportProfile}
+        disabled={saveProfileDialog.isSaving || !saveProfileDialog.profileName.trim()}>
+        {#if saveProfileDialog.isSaving}
+          Saving...
+        {:else}
+          Save Profile
+        {/if}
+      </Button>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
 
 <!-- Bulk Update Confirmation Dialog -->
 <AlertDialog.Root bind:open={bulkUpdateDialog.open}>
