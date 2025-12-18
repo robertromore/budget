@@ -8,11 +8,15 @@ import { currencyFormatter } from "$lib/utils/formatters";
 import { getLocalTimeZone, type DateValue } from "@internationalized/date";
 import type { CellContext, ColumnDef } from "@tanstack/table-core";
 
-// Import cell components
+// Import cell components - shared components
+import {
+  EditableDateCell,
+  EditableExpenseTypeCell,
+  EditableNumericCell,
+} from "$lib/components/shared/data-table/cells";
+
+// Import cell components - route-specific
 import ClaimStatusCell from "../(components)/(cells)/claim-status-cell.svelte";
-import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
-import EditableExpenseTypeCell from "../(components)/(cells)/editable-expense-type-cell.svelte";
-import EditableNumericCell from "../(components)/(cells)/editable-numeric-cell.svelte";
 import EditableTextCell from "../(components)/(cells)/editable-text-cell.svelte";
 import ExpenseActionsCell from "../(components)/(cells)/expense-actions-cell.svelte";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";

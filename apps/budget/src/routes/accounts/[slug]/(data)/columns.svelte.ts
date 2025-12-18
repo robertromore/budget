@@ -17,12 +17,17 @@ import { dateFormatter } from "$lib/utils/date-formatters";
 import { type DateValue, getLocalTimeZone } from "@internationalized/date";
 import type { CellContext, Column, ColumnDef, FilterFnOption } from "@tanstack/table-core";
 import type { Component } from "svelte";
+// Import shared cell components
+import {
+  EditableDateCell,
+  EditableNumericCell,
+} from "$lib/components/shared/data-table/cells";
+
+// Import route-specific cell components
 import DataTableEditableCell from "../(components)/(cells)/data-table-editable-cell.svelte";
 import DataTableEditableStatusCell from "../(components)/(cells)/data-table-editable-status-cell.svelte";
-import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
 import EditableEntityCell from "../(components)/(cells)/editable-entity-cell.svelte";
 import EditablePayeeCell from "../(components)/(cells)/editable-payee-cell.svelte";
-import EditableNumericCell from "../(components)/(cells)/editable-numeric-cell.svelte";
 import ReadOnlyCellWithIcon from "../(components)/(cells)/read-only-cell-with-icon.svelte";
 import SelectionCheckboxCell from "../(components)/(cells)/selection-checkbox-cell.svelte";
 import DataTableFacetedFilterAmount from "../(components)/(facets)/data-table-faceted-filter-amount.svelte";

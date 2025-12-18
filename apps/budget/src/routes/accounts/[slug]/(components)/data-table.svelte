@@ -41,14 +41,20 @@ import {
 import { untrack } from 'svelte';
 import { DataTablePagination } from '.';
 import { columnOrder, setColumnOrder } from '../(data)/column-order.svelte';
-import { expanded, setExpanded } from '../(data)/expanded.svelte';
 import { filtering, filters, setFiltering, setGlobalFilter } from '../(data)/filters.svelte';
-import { grouping, setGrouping } from '../(data)/groups.svelte';
 import { pagination, setPagination } from '../(data)/pagination.svelte';
-import { pinning, setPinning } from '../(data)/pinning.svelte';
 import { selection, setSelection } from '../(data)/selection.svelte';
-import { setSorting, sorting } from '../(data)/sorts.svelte';
 import { setVisibility, visibility } from '../(data)/visibility.svelte';
+import {
+  expanded,
+  setExpanded,
+  grouping,
+  setGrouping,
+  pinning,
+  setPinning,
+  sorting,
+  setSorting,
+} from '$lib/components/shared/data-table/state';
 import DataTableToolbar from './data-table-toolbar.svelte';
 import SortableHeader from './sortable-header.svelte';
 import TransactionBulkActions from './transaction-bulk-actions.svelte';

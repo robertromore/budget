@@ -14,16 +14,22 @@ import {
   type Table as TTable,
 } from '@tanstack/table-core';
 import type { ExpenseFormat } from '../(data)/columns.svelte';
-import { expanded, setExpanded } from '../(data)/expanded.svelte';
 import { filtering, filters, setFiltering, setGlobalFilter } from '../(data)/filters.svelte';
-import { grouping, setGrouping } from '../(data)/groups.svelte';
 import { pagination, setPagination } from '../(data)/pagination.svelte';
-import { pinning, setPinning } from '../(data)/pinning.svelte';
 import { selection, setSelection } from '../(data)/selection.svelte';
-import { setSorting, sorting } from '../(data)/sorts.svelte';
 import { setVisibility, visibility } from '../(data)/visibility.svelte';
+import {
+  expanded,
+  setExpanded,
+  grouping,
+  setGrouping,
+  pinning,
+  setPinning,
+  sorting,
+  setSorting,
+} from '$lib/components/shared/data-table/state';
+import { ExpenseTablePagination } from '$lib/components/shared/data-table';
 import ExpenseBulkActions from './expense-bulk-actions.svelte';
-import ExpenseTablePagination from './expense-table-pagination.svelte';
 import ExpenseTableToolbar from './expense-table-toolbar.svelte';
 
 interface Props {

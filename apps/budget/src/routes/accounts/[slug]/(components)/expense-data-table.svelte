@@ -14,8 +14,8 @@ import {
 import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 import * as Table from '$lib/components/ui/table';
 import type { ExpenseFormat } from '../(data)/expense-columns.svelte';
+import { ExpenseTablePagination } from '$lib/components/shared/data-table';
 import ExpenseTableToolbar from './expense-table-toolbar.svelte';
-import ExpenseTablePagination from './expense-table-pagination.svelte';
 import ExpenseBulkActions from './expense-bulk-actions.svelte';
 import {
   filtering,
@@ -25,11 +25,17 @@ import {
 } from '../(data)/expense-filters.svelte';
 import { pagination, setPagination } from '../(data)/pagination.svelte';
 import { selection, setSelection } from '../(data)/selection.svelte';
-import { setSorting, sorting } from '../(data)/sorts.svelte';
 import { visibility, setVisibility } from '../(data)/expense-visibility.svelte';
-import { grouping, setGrouping } from '../(data)/groups.svelte';
-import { expanded, setExpanded } from '../(data)/expanded.svelte';
-import { pinning, setPinning } from '../(data)/pinning.svelte';
+import {
+  expanded,
+  setExpanded,
+  grouping,
+  setGrouping,
+  pinning,
+  setPinning,
+  sorting,
+  setSorting,
+} from '$lib/components/shared/data-table/state';
 import { columnOrder, setColumnOrder } from '../(data)/column-order.svelte';
 import { currentViews, CurrentViewsState, CurrentViewState } from '$lib/states/views';
 import type { View } from '$lib/schema';

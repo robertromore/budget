@@ -10,11 +10,15 @@ import { medicalExpenseTypeEnum, type MedicalExpenseType } from "$lib/schema/med
 import { claimStatusEnum, claimStatusKeys, type ClaimStatus } from "$lib/schema/hsa-claims";
 import { SvelteMap } from "svelte/reactivity";
 
-// Import cell components
-import EditableDateCell from "../(components)/(cells)/editable-date-cell.svelte";
+// Import shared cell components
+import {
+  EditableDateCell,
+  EditableNumericCell,
+  EditableExpenseTypeCell,
+} from "$lib/components/shared/data-table/cells";
+
+// Import route-specific cell components
 import EditableTextCell from "../(components)/(cells)/editable-text-cell.svelte";
-import EditableNumericCell from "../(components)/(cells)/editable-numeric-cell.svelte";
-import EditableExpenseTypeCell from "../(components)/(cells)/editable-expense-type-cell.svelte";
 import ClaimStatusCell from "../(components)/(cells)/claim-status-cell.svelte";
 import ExpenseActionsCell from "../(components)/(cells)/expense-actions-cell.svelte";
 import DataTableColumnHeader from "../(components)/data-table-column-header.svelte";
