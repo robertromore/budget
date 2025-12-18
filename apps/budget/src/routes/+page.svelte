@@ -1,5 +1,4 @@
 <script lang="ts">
-import PayeeAnalyticsSummary from './(components)/payee-analytics-summary.svelte';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
@@ -12,6 +11,7 @@ import CreditCard from '@lucide/svelte/icons/credit-card';
 import Home from '@lucide/svelte/icons/home';
 import Receipt from '@lucide/svelte/icons/receipt';
 import Users from '@lucide/svelte/icons/users';
+import PayeeAnalyticsSummary from './(components)/payee-analytics-summary.svelte';
 
 // Get state data
 const accountsState = $derived(AccountsState.get());
