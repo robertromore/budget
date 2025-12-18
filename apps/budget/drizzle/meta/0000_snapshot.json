@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4f4076cc-088e-411b-83c7-9fbd14f4917a",
+  "id": "147d8bf0-4bc8-4187-bed6-2bd0df1e1727",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -19,6 +19,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
+          "autoincrement": false
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         },
         "name": {
@@ -130,6 +137,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "enabled_metrics": {
+          "name": "enabled_metrics",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "date_opened": {
           "name": "date_opened",
           "type": "text",
@@ -163,6 +177,13 @@
         }
       },
       "indexes": {
+        "account_workspace_id_idx": {
+          "name": "account_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
         "account_name_idx": {
           "name": "account_name_idx",
           "columns": [
@@ -199,7 +220,292 @@
           "isUnique": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "account_workspace_id_workspace_id_fk": {
+          "name": "account_workspace_id_workspace_id_fk",
+          "tableFrom": "account",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "budget_automation_activity": {
+      "name": "budget_automation_activity",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "action_type": {
+          "name": "action_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "recommendation_id": {
+          "name": "recommendation_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "budget_ids": {
+          "name": "budget_ids",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "rolled_back_at": {
+          "name": "rolled_back_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "budget_automation_activity_status_idx": {
+          "name": "budget_automation_activity_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "budget_automation_activity_created_at_idx": {
+          "name": "budget_automation_activity_created_at_idx",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "budget_automation_activity_action_type_idx": {
+          "name": "budget_automation_activity_action_type_idx",
+          "columns": [
+            "action_type"
+          ],
+          "isUnique": false
+        },
+        "budget_automation_activity_recommendation_idx": {
+          "name": "budget_automation_activity_recommendation_idx",
+          "columns": [
+            "recommendation_id"
+          ],
+          "isUnique": false
+        },
+        "budget_automation_activity_group_idx": {
+          "name": "budget_automation_activity_group_idx",
+          "columns": [
+            "group_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "budget_automation_activity_recommendation_id_budget_recommendation_id_fk": {
+          "name": "budget_automation_activity_recommendation_id_budget_recommendation_id_fk",
+          "tableFrom": "budget_automation_activity",
+          "tableTo": "budget_recommendation",
+          "columnsFrom": [
+            "recommendation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "budget_automation_activity_group_id_budget_group_id_fk": {
+          "name": "budget_automation_activity_group_id_budget_group_id_fk",
+          "tableFrom": "budget_automation_activity",
+          "tableTo": "budget_group",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "budget_automation_settings": {
+      "name": "budget_automation_settings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "auto_create_groups": {
+          "name": "auto_create_groups",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "auto_assign_to_groups": {
+          "name": "auto_assign_to_groups",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "auto_adjust_group_limits": {
+          "name": "auto_adjust_group_limits",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "require_confirmation_threshold": {
+          "name": "require_confirmation_threshold",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'medium'"
+        },
+        "enable_smart_grouping": {
+          "name": "enable_smart_grouping",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "grouping_strategy": {
+          "name": "grouping_strategy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'hybrid'"
+        },
+        "min_similarity_score": {
+          "name": "min_similarity_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 70
+        },
+        "min_group_size": {
+          "name": "min_group_size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 2
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "budget_automation_settings_workspace_id_idx": {
+          "name": "budget_automation_settings_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "budget_automation_settings_workspace_id_workspace_id_fk": {
+          "name": "budget_automation_settings_workspace_id_workspace_id_fk",
+          "tableFrom": "budget_automation_settings",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -961,6 +1267,13 @@
           "notNull": true,
           "autoincrement": true
         },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "name": {
           "name": "name",
           "type": "text",
@@ -1052,6 +1365,13 @@
           ],
           "isUnique": true
         },
+        "budget_workspace_id_idx": {
+          "name": "budget_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
         "budget_name_idx": {
           "name": "budget_name_idx",
           "columns": [
@@ -1102,7 +1422,21 @@
           "isUnique": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "budget_workspace_id_workspace_id_fk": {
+          "name": "budget_workspace_id_workspace_id_fk",
+          "tableFrom": "budget",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -1552,6 +1886,13 @@
           "notNull": true,
           "autoincrement": true
         },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "parent_id": {
           "name": "parent_id",
           "type": "integer",
@@ -1723,6 +2064,13 @@
           ],
           "isUnique": true
         },
+        "category_workspace_id_idx": {
+          "name": "category_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
         "category_name_idx": {
           "name": "category_name_idx",
           "columns": [
@@ -1809,6 +2157,19 @@
         }
       },
       "foreignKeys": {
+        "categories_workspace_id_workspace_id_fk": {
+          "name": "categories_workspace_id_workspace_id_fk",
+          "tableFrom": "categories",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "categories_parent_id_categories_id_fk": {
           "name": "categories_parent_id_categories_id_fk",
           "tableFrom": "categories",
@@ -1827,6 +2188,402 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "category_group_memberships": {
+      "name": "category_group_memberships",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "category_group_id": {
+          "name": "category_group_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {
+        "unique_pair": {
+          "name": "unique_pair",
+          "columns": [
+            "category_group_id",
+            "category_id"
+          ],
+          "isUnique": true
+        },
+        "unique_category_single_group": {
+          "name": "unique_category_single_group",
+          "columns": [
+            "category_id"
+          ],
+          "isUnique": true
+        },
+        "idx_cgm_group_id": {
+          "name": "idx_cgm_group_id",
+          "columns": [
+            "category_group_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "category_group_memberships_category_group_id_category_groups_id_fk": {
+          "name": "category_group_memberships_category_group_id_category_groups_id_fk",
+          "tableFrom": "category_group_memberships",
+          "tableTo": "category_groups",
+          "columnsFrom": [
+            "category_group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "category_group_memberships_category_id_categories_id_fk": {
+          "name": "category_group_memberships_category_id_categories_id_fk",
+          "tableFrom": "category_group_memberships",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "category_group_recommendations": {
+      "name": "category_group_recommendations",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "suggested_group_id": {
+          "name": "suggested_group_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "suggested_group_name": {
+          "name": "suggested_group_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "confidence_score": {
+          "name": "confidence_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reasoning": {
+          "name": "reasoning",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {
+        "idx_cgr_category_id": {
+          "name": "idx_cgr_category_id",
+          "columns": [
+            "category_id"
+          ],
+          "isUnique": false
+        },
+        "idx_cgr_status": {
+          "name": "idx_cgr_status",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "idx_cgr_confidence": {
+          "name": "idx_cgr_confidence",
+          "columns": [
+            "confidence_score"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "category_group_recommendations_category_id_categories_id_fk": {
+          "name": "category_group_recommendations_category_id_categories_id_fk",
+          "tableFrom": "category_group_recommendations",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "category_group_recommendations_suggested_group_id_category_groups_id_fk": {
+          "name": "category_group_recommendations_suggested_group_id_category_groups_id_fk",
+          "tableFrom": "category_group_recommendations",
+          "tableTo": "category_groups",
+          "columnsFrom": [
+            "suggested_group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "category_group_settings": {
+      "name": "category_group_settings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "recommendations_enabled": {
+          "name": "recommendations_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "min_confidence_score": {
+          "name": "min_confidence_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0.7
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "category_groups": {
+      "name": "category_groups",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "group_icon": {
+          "name": "group_icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "group_color": {
+          "name": "group_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {
+        "category_groups_name_unique": {
+          "name": "category_groups_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        },
+        "category_groups_slug_unique": {
+          "name": "category_groups_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        },
+        "category_groups_workspace_id_idx": {
+          "name": "category_groups_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
+        "idx_category_groups_slug": {
+          "name": "idx_category_groups_slug",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": false
+        },
+        "idx_category_groups_sort_order": {
+          "name": "idx_category_groups_sort_order",
+          "columns": [
+            "sort_order"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "category_groups_workspace_id_workspace_id_fk": {
+          "name": "category_groups_workspace_id_workspace_id_fk",
+          "tableFrom": "category_groups",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "detected_patterns": {
       "name": "detected_patterns",
       "columns": {
@@ -1836,6 +2593,13 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
         "account_id": {
           "name": "account_id",
@@ -1953,6 +2717,13 @@
         }
       },
       "indexes": {
+        "detected_patterns_workspace_id_idx": {
+          "name": "detected_patterns_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
         "idx_detected_patterns_account": {
           "name": "idx_detected_patterns_account",
           "columns": [
@@ -1976,6 +2747,19 @@
         }
       },
       "foreignKeys": {
+        "detected_patterns_workspace_id_workspace_id_fk": {
+          "name": "detected_patterns_workspace_id_workspace_id_fk",
+          "tableFrom": "detected_patterns",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "detected_patterns_account_id_account_id_fk": {
           "name": "detected_patterns_account_id_account_id_fk",
           "tableFrom": "detected_patterns",
@@ -2439,6 +3223,2199 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "workspace": {
+      "name": "workspace",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "cuid": {
+          "name": "cuid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "preferences": {
+          "name": "preferences",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "workspace_slug_unique": {
+          "name": "workspace_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        },
+        "workspace_slug_idx": {
+          "name": "workspace_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": false
+        },
+        "workspace_deleted_at_idx": {
+          "name": "workspace_deleted_at_idx",
+          "columns": [
+            "deleted_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "payee_category_corrections": {
+      "name": "payee_category_corrections",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "payee_id": {
+          "name": "payee_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "transaction_id": {
+          "name": "transaction_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "from_category_id": {
+          "name": "from_category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "to_category_id": {
+          "name": "to_category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "correction_trigger": {
+          "name": "correction_trigger",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "correction_context": {
+          "name": "correction_context",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "transaction_amount": {
+          "name": "transaction_amount",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "transaction_date": {
+          "name": "transaction_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "user_confidence": {
+          "name": "user_confidence",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "system_confidence": {
+          "name": "system_confidence",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "correction_weight": {
+          "name": "correction_weight",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "amount_range": {
+          "name": "amount_range",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "temporal_context": {
+          "name": "temporal_context",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payee_pattern_context": {
+          "name": "payee_pattern_context",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_processed": {
+          "name": "is_processed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "learning_epoch": {
+          "name": "learning_epoch",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_override": {
+          "name": "is_override",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "payee_corrections_workspace_id_idx": {
+          "name": "payee_corrections_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_payee_idx": {
+          "name": "payee_corrections_payee_idx",
+          "columns": [
+            "payee_id"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_transaction_idx": {
+          "name": "payee_corrections_transaction_idx",
+          "columns": [
+            "transaction_id"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_from_category_idx": {
+          "name": "payee_corrections_from_category_idx",
+          "columns": [
+            "from_category_id"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_to_category_idx": {
+          "name": "payee_corrections_to_category_idx",
+          "columns": [
+            "to_category_id"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_trigger_idx": {
+          "name": "payee_corrections_trigger_idx",
+          "columns": [
+            "correction_trigger"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_context_idx": {
+          "name": "payee_corrections_context_idx",
+          "columns": [
+            "correction_context"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_processed_idx": {
+          "name": "payee_corrections_processed_idx",
+          "columns": [
+            "is_processed"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_learning_epoch_idx": {
+          "name": "payee_corrections_learning_epoch_idx",
+          "columns": [
+            "learning_epoch"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_date_idx": {
+          "name": "payee_corrections_date_idx",
+          "columns": [
+            "transaction_date"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_amount_idx": {
+          "name": "payee_corrections_amount_idx",
+          "columns": [
+            "transaction_amount"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_payee_category_idx": {
+          "name": "payee_corrections_payee_category_idx",
+          "columns": [
+            "payee_id",
+            "to_category_id"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_payee_amount_idx": {
+          "name": "payee_corrections_payee_amount_idx",
+          "columns": [
+            "payee_id",
+            "transaction_amount"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_payee_date_idx": {
+          "name": "payee_corrections_payee_date_idx",
+          "columns": [
+            "payee_id",
+            "transaction_date"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_category_change_idx": {
+          "name": "payee_corrections_category_change_idx",
+          "columns": [
+            "from_category_id",
+            "to_category_id"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_unprocessed_idx": {
+          "name": "payee_corrections_unprocessed_idx",
+          "columns": [
+            "is_processed",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_pattern_analysis_idx": {
+          "name": "payee_corrections_pattern_analysis_idx",
+          "columns": [
+            "payee_id",
+            "is_processed",
+            "learning_epoch"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_deleted_at_idx": {
+          "name": "payee_corrections_deleted_at_idx",
+          "columns": [
+            "deleted_at"
+          ],
+          "isUnique": false
+        },
+        "payee_corrections_override_idx": {
+          "name": "payee_corrections_override_idx",
+          "columns": [
+            "is_override"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "payee_category_corrections_workspace_id_workspace_id_fk": {
+          "name": "payee_category_corrections_workspace_id_workspace_id_fk",
+          "tableFrom": "payee_category_corrections",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "payee_category_corrections_payee_id_payee_id_fk": {
+          "name": "payee_category_corrections_payee_id_payee_id_fk",
+          "tableFrom": "payee_category_corrections",
+          "tableTo": "payee",
+          "columnsFrom": [
+            "payee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payee_category_corrections_transaction_id_transaction_id_fk": {
+          "name": "payee_category_corrections_transaction_id_transaction_id_fk",
+          "tableFrom": "payee_category_corrections",
+          "tableTo": "transaction",
+          "columnsFrom": [
+            "transaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payee_category_corrections_from_category_id_categories_id_fk": {
+          "name": "payee_category_corrections_from_category_id_categories_id_fk",
+          "tableFrom": "payee_category_corrections",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "from_category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payee_category_corrections_to_category_id_categories_id_fk": {
+          "name": "payee_category_corrections_to_category_id_categories_id_fk",
+          "tableFrom": "payee_category_corrections",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "to_category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "payee_categories": {
+      "name": "payee_categories",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "display_order": {
+          "name": "display_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "date_created": {
+          "name": "date_created",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "payee_categories_slug_unique": {
+          "name": "payee_categories_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        },
+        "payee_category_workspace_id_idx": {
+          "name": "payee_category_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
+        "payee_category_name_idx": {
+          "name": "payee_category_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        },
+        "payee_category_slug_idx": {
+          "name": "payee_category_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": false
+        },
+        "payee_category_deleted_at_idx": {
+          "name": "payee_category_deleted_at_idx",
+          "columns": [
+            "deleted_at"
+          ],
+          "isUnique": false
+        },
+        "payee_category_display_order_idx": {
+          "name": "payee_category_display_order_idx",
+          "columns": [
+            "display_order"
+          ],
+          "isUnique": false
+        },
+        "payee_category_is_active_idx": {
+          "name": "payee_category_is_active_idx",
+          "columns": [
+            "is_active"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "payee_categories_workspace_id_workspace_id_fk": {
+          "name": "payee_categories_workspace_id_workspace_id_fk",
+          "tableFrom": "payee_categories",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "payee": {
+      "name": "payee",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "default_category_id": {
+          "name": "default_category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "default_budget_id": {
+          "name": "default_budget_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payee_type": {
+          "name": "payee_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payee_category_id": {
+          "name": "payee_category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "avg_amount": {
+          "name": "avg_amount",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payment_frequency": {
+          "name": "payment_frequency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_transaction_date": {
+          "name": "last_transaction_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tax_relevant": {
+          "name": "tax_relevant",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "website": {
+          "name": "website",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "account_number": {
+          "name": "account_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "alert_threshold": {
+          "name": "alert_threshold",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_seasonal": {
+          "name": "is_seasonal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "subscription_info": {
+          "name": "subscription_info",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "preferred_payment_methods": {
+          "name": "preferred_payment_methods",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "merchant_category_code": {
+          "name": "merchant_category_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date_created": {
+          "name": "date_created",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "payee_slug_unique": {
+          "name": "payee_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        },
+        "payee_workspace_id_idx": {
+          "name": "payee_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
+        "payee_name_idx": {
+          "name": "payee_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        },
+        "payee_slug_idx": {
+          "name": "payee_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": false
+        },
+        "payee_deleted_at_idx": {
+          "name": "payee_deleted_at_idx",
+          "columns": [
+            "deleted_at"
+          ],
+          "isUnique": false
+        },
+        "payee_default_category_idx": {
+          "name": "payee_default_category_idx",
+          "columns": [
+            "default_category_id"
+          ],
+          "isUnique": false
+        },
+        "payee_default_budget_idx": {
+          "name": "payee_default_budget_idx",
+          "columns": [
+            "default_budget_id"
+          ],
+          "isUnique": false
+        },
+        "payee_category_id_idx": {
+          "name": "payee_category_id_idx",
+          "columns": [
+            "payee_category_id"
+          ],
+          "isUnique": false
+        },
+        "payee_type_idx": {
+          "name": "payee_type_idx",
+          "columns": [
+            "payee_type"
+          ],
+          "isUnique": false
+        },
+        "payee_is_active_idx": {
+          "name": "payee_is_active_idx",
+          "columns": [
+            "is_active"
+          ],
+          "isUnique": false
+        },
+        "payee_tax_relevant_idx": {
+          "name": "payee_tax_relevant_idx",
+          "columns": [
+            "tax_relevant"
+          ],
+          "isUnique": false
+        },
+        "payee_payment_frequency_idx": {
+          "name": "payee_payment_frequency_idx",
+          "columns": [
+            "payment_frequency"
+          ],
+          "isUnique": false
+        },
+        "payee_last_transaction_date_idx": {
+          "name": "payee_last_transaction_date_idx",
+          "columns": [
+            "last_transaction_date"
+          ],
+          "isUnique": false
+        },
+        "payee_active_type_idx": {
+          "name": "payee_active_type_idx",
+          "columns": [
+            "is_active",
+            "payee_type"
+          ],
+          "isUnique": false
+        },
+        "payee_category_budget_idx": {
+          "name": "payee_category_budget_idx",
+          "columns": [
+            "default_category_id",
+            "default_budget_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "payee_workspace_id_workspace_id_fk": {
+          "name": "payee_workspace_id_workspace_id_fk",
+          "tableFrom": "payee",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "payee_default_category_id_categories_id_fk": {
+          "name": "payee_default_category_id_categories_id_fk",
+          "tableFrom": "payee",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "default_category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payee_default_budget_id_budget_id_fk": {
+          "name": "payee_default_budget_id_budget_id_fk",
+          "tableFrom": "payee",
+          "tableTo": "budget",
+          "columnsFrom": [
+            "default_budget_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payee_payee_category_id_payee_categories_id_fk": {
+          "name": "payee_payee_category_id_payee_categories_id_fk",
+          "tableFrom": "payee",
+          "tableTo": "payee_categories",
+          "columnsFrom": [
+            "payee_category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "budget_recommendation": {
+      "name": "budget_recommendation",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "priority": {
+          "name": "priority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'medium'"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{}'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "budget_id": {
+          "name": "budget_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "applied_at": {
+          "name": "applied_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "dismissed_at": {
+          "name": "dismissed_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "recommendation_workspace_id_idx": {
+          "name": "recommendation_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
+        "recommendation_type_idx": {
+          "name": "recommendation_type_idx",
+          "columns": [
+            "type"
+          ],
+          "isUnique": false
+        },
+        "recommendation_status_idx": {
+          "name": "recommendation_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "recommendation_priority_idx": {
+          "name": "recommendation_priority_idx",
+          "columns": [
+            "priority"
+          ],
+          "isUnique": false
+        },
+        "recommendation_budget_id_idx": {
+          "name": "recommendation_budget_id_idx",
+          "columns": [
+            "budget_id"
+          ],
+          "isUnique": false
+        },
+        "recommendation_category_id_idx": {
+          "name": "recommendation_category_id_idx",
+          "columns": [
+            "category_id"
+          ],
+          "isUnique": false
+        },
+        "recommendation_account_id_idx": {
+          "name": "recommendation_account_id_idx",
+          "columns": [
+            "account_id"
+          ],
+          "isUnique": false
+        },
+        "recommendation_created_at_idx": {
+          "name": "recommendation_created_at_idx",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "recommendation_expires_at_idx": {
+          "name": "recommendation_expires_at_idx",
+          "columns": [
+            "expires_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "budget_recommendation_workspace_id_workspace_id_fk": {
+          "name": "budget_recommendation_workspace_id_workspace_id_fk",
+          "tableFrom": "budget_recommendation",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "budget_recommendation_budget_id_budget_id_fk": {
+          "name": "budget_recommendation_budget_id_budget_id_fk",
+          "tableFrom": "budget_recommendation",
+          "tableTo": "budget",
+          "columnsFrom": [
+            "budget_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "budget_recommendation_account_id_account_id_fk": {
+          "name": "budget_recommendation_account_id_account_id_fk",
+          "tableFrom": "budget_recommendation",
+          "tableTo": "account",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "budget_recommendation_category_id_categories_id_fk": {
+          "name": "budget_recommendation_category_id_categories_id_fk",
+          "tableFrom": "budget_recommendation",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "schedule_dates": {
+      "name": "schedule_dates",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "frequency": {
+          "name": "frequency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "interval": {
+          "name": "interval",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 1
+        },
+        "limit": {
+          "name": "limit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "move_weekends": {
+          "name": "move_weekends",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'none'"
+        },
+        "move_holidays": {
+          "name": "move_holidays",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'none'"
+        },
+        "specific_dates": {
+          "name": "specific_dates",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "on": {
+          "name": "on",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "on_type": {
+          "name": "on_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'day'"
+        },
+        "days": {
+          "name": "days",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "weeks": {
+          "name": "weeks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "weeks_days": {
+          "name": "weeks_days",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "week_days": {
+          "name": "week_days",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "relations_schedule_date_schedule_idx": {
+          "name": "relations_schedule_date_schedule_idx",
+          "columns": [
+            "schedule_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "schedule_dates_schedule_id_schedules_id_fk": {
+          "name": "schedule_dates_schedule_id_schedules_id_fk",
+          "tableFrom": "schedule_dates",
+          "tableTo": "schedules",
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "schedules": {
+      "name": "schedules",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "amount": {
+          "name": "amount",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "amount_2": {
+          "name": "amount_2",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "amount_type": {
+          "name": "amount_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'exact'"
+        },
+        "recurring": {
+          "name": "recurring",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "auto_add": {
+          "name": "auto_add",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "schedule_date_id": {
+          "name": "schedule_date_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payee_id": {
+          "name": "payee_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "budget_id": {
+          "name": "budget_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "schedules_workspace_id_idx": {
+          "name": "schedules_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
+        "relations_schedule_schedule_date_idx": {
+          "name": "relations_schedule_schedule_date_idx",
+          "columns": [
+            "schedule_date_id"
+          ],
+          "isUnique": false
+        },
+        "relations_schedule_account_idx": {
+          "name": "relations_schedule_account_idx",
+          "columns": [
+            "account_id"
+          ],
+          "isUnique": false
+        },
+        "relations_schedule_payee_idx": {
+          "name": "relations_schedule_payee_idx",
+          "columns": [
+            "payee_id"
+          ],
+          "isUnique": false
+        },
+        "relations_schedule_category_idx": {
+          "name": "relations_schedule_category_idx",
+          "columns": [
+            "category_id"
+          ],
+          "isUnique": false
+        },
+        "relations_schedule_budget_idx": {
+          "name": "relations_schedule_budget_idx",
+          "columns": [
+            "budget_id"
+          ],
+          "isUnique": false
+        },
+        "schedule_status_idx": {
+          "name": "schedule_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "schedule_name_idx": {
+          "name": "schedule_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        },
+        "schedule_slug_idx": {
+          "name": "schedule_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "schedules_workspace_id_workspace_id_fk": {
+          "name": "schedules_workspace_id_workspace_id_fk",
+          "tableFrom": "schedules",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "schedules_schedule_date_id_schedule_dates_id_fk": {
+          "name": "schedules_schedule_date_id_schedule_dates_id_fk",
+          "tableFrom": "schedules",
+          "tableTo": "schedule_dates",
+          "columnsFrom": [
+            "schedule_date_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "schedules_payee_id_payee_id_fk": {
+          "name": "schedules_payee_id_payee_id_fk",
+          "tableFrom": "schedules",
+          "tableTo": "payee",
+          "columnsFrom": [
+            "payee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "schedules_category_id_categories_id_fk": {
+          "name": "schedules_category_id_categories_id_fk",
+          "tableFrom": "schedules",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "schedules_account_id_account_id_fk": {
+          "name": "schedules_account_id_account_id_fk",
+          "tableFrom": "schedules",
+          "tableTo": "account",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "schedules_budget_id_budget_id_fk": {
+          "name": "schedules_budget_id_budget_id_fk",
+          "tableFrom": "schedules",
+          "tableTo": "budget",
+          "columnsFrom": [
+            "budget_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "transaction": {
+      "name": "transaction",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "payee_id": {
+          "name": "payee_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "transfer_id": {
+          "name": "transfer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "transfer_account_id": {
+          "name": "transfer_account_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "transfer_transaction_id": {
+          "name": "transfer_transaction_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_transfer": {
+          "name": "is_transfer",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "imported_from": {
+          "name": "imported_from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "imported_at": {
+          "name": "imported_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "original_payee_name": {
+          "name": "original_payee_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "original_category_name": {
+          "name": "original_category_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "inferred_category": {
+          "name": "inferred_category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "import_details": {
+          "name": "import_details",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "raw_import_data": {
+          "name": "raw_import_data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "relations_transaction_account_idx": {
+          "name": "relations_transaction_account_idx",
+          "columns": [
+            "account_id"
+          ],
+          "isUnique": false
+        },
+        "relations_transaction_payee_idx": {
+          "name": "relations_transaction_payee_idx",
+          "columns": [
+            "payee_id"
+          ],
+          "isUnique": false
+        },
+        "relations_transaction_category_idx": {
+          "name": "relations_transaction_category_idx",
+          "columns": [
+            "category_id"
+          ],
+          "isUnique": false
+        },
+        "relations_transaction_schedule_idx": {
+          "name": "relations_transaction_schedule_idx",
+          "columns": [
+            "schedule_id"
+          ],
+          "isUnique": false
+        },
+        "transaction_account_date_idx": {
+          "name": "transaction_account_date_idx",
+          "columns": [
+            "account_id",
+            "date",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "transaction_date_idx": {
+          "name": "transaction_date_idx",
+          "columns": [
+            "date"
+          ],
+          "isUnique": false
+        },
+        "transaction_status_idx": {
+          "name": "transaction_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "transaction_parent_idx": {
+          "name": "transaction_parent_idx",
+          "columns": [
+            "parent_id"
+          ],
+          "isUnique": false
+        },
+        "transaction_deleted_at_idx": {
+          "name": "transaction_deleted_at_idx",
+          "columns": [
+            "deleted_at"
+          ],
+          "isUnique": false
+        },
+        "transaction_transfer_id_idx": {
+          "name": "transaction_transfer_id_idx",
+          "columns": [
+            "transfer_id"
+          ],
+          "isUnique": false
+        },
+        "transaction_transfer_account_idx": {
+          "name": "transaction_transfer_account_idx",
+          "columns": [
+            "transfer_account_id"
+          ],
+          "isUnique": false
+        },
+        "transaction_is_transfer_idx": {
+          "name": "transaction_is_transfer_idx",
+          "columns": [
+            "is_transfer"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "transaction_account_id_account_id_fk": {
+          "name": "transaction_account_id_account_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "account",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "transaction_parent_id_transaction_id_fk": {
+          "name": "transaction_parent_id_transaction_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "transaction",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_payee_id_payee_id_fk": {
+          "name": "transaction_payee_id_payee_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "payee",
+          "columnsFrom": [
+            "payee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_category_id_categories_id_fk": {
+          "name": "transaction_category_id_categories_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_schedule_id_schedules_id_fk": {
+          "name": "transaction_schedule_id_schedules_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "schedules",
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_transfer_account_id_account_id_fk": {
+          "name": "transaction_transfer_account_id_account_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "account",
+          "columnsFrom": [
+            "transfer_account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_transfer_transaction_id_transaction_id_fk": {
+          "name": "transaction_transfer_transaction_id_transaction_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "transaction",
+          "columnsFrom": [
+            "transfer_transaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "views": {
+      "name": "views",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'transactions'"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "filters": {
+          "name": "filters",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "display": {
+          "name": "display",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "dirty": {
+          "name": "dirty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        }
+      },
+      "indexes": {
+        "views_workspace_id_idx": {
+          "name": "views_workspace_id_idx",
+          "columns": [
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
+        "idx_views_workspace_entity": {
+          "name": "idx_views_workspace_entity",
+          "columns": [
+            "workspace_id",
+            "entity_type"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "views_workspace_id_workspace_id_fk": {
+          "name": "views_workspace_id_workspace_id_fk",
+          "tableFrom": "views",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "medical_expense": {
       "name": "medical_expense",
       "columns": {
@@ -2670,8 +5647,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "payee_category_corrections": {
-      "name": "payee_category_corrections",
+    "user": {
+      "name": "user",
       "columns": {
         "id": {
           "name": "id",
@@ -2680,375 +5657,18 @@
           "notNull": true,
           "autoincrement": true
         },
-        "payee_id": {
-          "name": "payee_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "transaction_id": {
-          "name": "transaction_id",
-          "type": "integer",
+        "cuid": {
+          "name": "cuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "from_category_id": {
-          "name": "from_category_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "to_category_id": {
-          "name": "to_category_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "correction_trigger": {
-          "name": "correction_trigger",
+        "display_name": {
+          "name": "display_name",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "correction_context": {
-          "name": "correction_context",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "transaction_amount": {
-          "name": "transaction_amount",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "transaction_date": {
-          "name": "transaction_date",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "user_confidence": {
-          "name": "user_confidence",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "system_confidence": {
-          "name": "system_confidence",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "correction_weight": {
-          "name": "correction_weight",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 1
-        },
-        "amount_range": {
-          "name": "amount_range",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "temporal_context": {
-          "name": "temporal_context",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "payee_pattern_context": {
-          "name": "payee_pattern_context",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "is_processed": {
-          "name": "is_processed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "processed_at": {
-          "name": "processed_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "learning_epoch": {
-          "name": "learning_epoch",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 1
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "is_override": {
-          "name": "is_override",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "payee_corrections_payee_idx": {
-          "name": "payee_corrections_payee_idx",
-          "columns": [
-            "payee_id"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_transaction_idx": {
-          "name": "payee_corrections_transaction_idx",
-          "columns": [
-            "transaction_id"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_from_category_idx": {
-          "name": "payee_corrections_from_category_idx",
-          "columns": [
-            "from_category_id"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_to_category_idx": {
-          "name": "payee_corrections_to_category_idx",
-          "columns": [
-            "to_category_id"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_trigger_idx": {
-          "name": "payee_corrections_trigger_idx",
-          "columns": [
-            "correction_trigger"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_context_idx": {
-          "name": "payee_corrections_context_idx",
-          "columns": [
-            "correction_context"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_processed_idx": {
-          "name": "payee_corrections_processed_idx",
-          "columns": [
-            "is_processed"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_learning_epoch_idx": {
-          "name": "payee_corrections_learning_epoch_idx",
-          "columns": [
-            "learning_epoch"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_date_idx": {
-          "name": "payee_corrections_date_idx",
-          "columns": [
-            "transaction_date"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_amount_idx": {
-          "name": "payee_corrections_amount_idx",
-          "columns": [
-            "transaction_amount"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_payee_category_idx": {
-          "name": "payee_corrections_payee_category_idx",
-          "columns": [
-            "payee_id",
-            "to_category_id"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_payee_amount_idx": {
-          "name": "payee_corrections_payee_amount_idx",
-          "columns": [
-            "payee_id",
-            "transaction_amount"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_payee_date_idx": {
-          "name": "payee_corrections_payee_date_idx",
-          "columns": [
-            "payee_id",
-            "transaction_date"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_category_change_idx": {
-          "name": "payee_corrections_category_change_idx",
-          "columns": [
-            "from_category_id",
-            "to_category_id"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_unprocessed_idx": {
-          "name": "payee_corrections_unprocessed_idx",
-          "columns": [
-            "is_processed",
-            "created_at"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_pattern_analysis_idx": {
-          "name": "payee_corrections_pattern_analysis_idx",
-          "columns": [
-            "payee_id",
-            "is_processed",
-            "learning_epoch"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_deleted_at_idx": {
-          "name": "payee_corrections_deleted_at_idx",
-          "columns": [
-            "deleted_at"
-          ],
-          "isUnique": false
-        },
-        "payee_corrections_override_idx": {
-          "name": "payee_corrections_override_idx",
-          "columns": [
-            "is_override"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "payee_category_corrections_payee_id_payee_id_fk": {
-          "name": "payee_category_corrections_payee_id_payee_id_fk",
-          "tableFrom": "payee_category_corrections",
-          "tableTo": "payee",
-          "columnsFrom": [
-            "payee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "payee_category_corrections_transaction_id_transaction_id_fk": {
-          "name": "payee_category_corrections_transaction_id_transaction_id_fk",
-          "tableFrom": "payee_category_corrections",
-          "tableTo": "transaction",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "payee_category_corrections_from_category_id_categories_id_fk": {
-          "name": "payee_category_corrections_from_category_id_categories_id_fk",
-          "tableFrom": "payee_category_corrections",
-          "tableTo": "categories",
-          "columnsFrom": [
-            "from_category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "payee_category_corrections_to_category_id_categories_id_fk": {
-          "name": "payee_category_corrections_to_category_id_categories_id_fk",
-          "tableFrom": "payee_category_corrections",
-          "tableTo": "categories",
-          "columnsFrom": [
-            "to_category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "payee": {
-      "name": "payee",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "slug": {
@@ -3056,85 +5676,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "default_category_id": {
-          "name": "default_category_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "default_budget_id": {
-          "name": "default_budget_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "payee_type": {
-          "name": "payee_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "avg_amount": {
-          "name": "avg_amount",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "payment_frequency": {
-          "name": "payment_frequency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_transaction_date": {
-          "name": "last_transaction_date",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "tax_relevant": {
-          "name": "tax_relevant",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "is_active": {
-          "name": "is_active",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": true
-        },
-        "website": {
-          "name": "website",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "phone": {
-          "name": "phone",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "email": {
@@ -3144,70 +5685,12 @@
           "notNull": false,
           "autoincrement": false
         },
-        "address": {
-          "name": "address",
+        "preferences": {
+          "name": "preferences",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "account_number": {
-          "name": "account_number",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "alert_threshold": {
-          "name": "alert_threshold",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "is_seasonal": {
-          "name": "is_seasonal",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "subscription_info": {
-          "name": "subscription_info",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "tags": {
-          "name": "tags",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "preferred_payment_methods": {
-          "name": "preferred_payment_methods",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "merchant_category_code": {
-          "name": "merchant_category_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "date_created": {
-          "name": "date_created",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
         },
         "created_at": {
           "name": "created_at",
@@ -3234,909 +5717,42 @@
         }
       },
       "indexes": {
-        "payee_slug_unique": {
-          "name": "payee_slug_unique",
+        "user_slug_unique": {
+          "name": "user_slug_unique",
           "columns": [
             "slug"
           ],
           "isUnique": true
         },
-        "payee_name_idx": {
-          "name": "payee_name_idx",
+        "user_email_unique": {
+          "name": "user_email_unique",
           "columns": [
-            "name"
+            "email"
           ],
-          "isUnique": false
+          "isUnique": true
         },
-        "payee_slug_idx": {
-          "name": "payee_slug_idx",
-          "columns": [
-            "slug"
-          ],
-          "isUnique": false
-        },
-        "payee_deleted_at_idx": {
-          "name": "payee_deleted_at_idx",
-          "columns": [
-            "deleted_at"
-          ],
-          "isUnique": false
-        },
-        "payee_default_category_idx": {
-          "name": "payee_default_category_idx",
-          "columns": [
-            "default_category_id"
-          ],
-          "isUnique": false
-        },
-        "payee_default_budget_idx": {
-          "name": "payee_default_budget_idx",
-          "columns": [
-            "default_budget_id"
-          ],
-          "isUnique": false
-        },
-        "payee_type_idx": {
-          "name": "payee_type_idx",
-          "columns": [
-            "payee_type"
-          ],
-          "isUnique": false
-        },
-        "payee_is_active_idx": {
-          "name": "payee_is_active_idx",
-          "columns": [
-            "is_active"
-          ],
-          "isUnique": false
-        },
-        "payee_tax_relevant_idx": {
-          "name": "payee_tax_relevant_idx",
-          "columns": [
-            "tax_relevant"
-          ],
-          "isUnique": false
-        },
-        "payee_payment_frequency_idx": {
-          "name": "payee_payment_frequency_idx",
-          "columns": [
-            "payment_frequency"
-          ],
-          "isUnique": false
-        },
-        "payee_last_transaction_date_idx": {
-          "name": "payee_last_transaction_date_idx",
-          "columns": [
-            "last_transaction_date"
-          ],
-          "isUnique": false
-        },
-        "payee_active_type_idx": {
-          "name": "payee_active_type_idx",
-          "columns": [
-            "is_active",
-            "payee_type"
-          ],
-          "isUnique": false
-        },
-        "payee_category_budget_idx": {
-          "name": "payee_category_budget_idx",
-          "columns": [
-            "default_category_id",
-            "default_budget_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "payee_default_category_id_categories_id_fk": {
-          "name": "payee_default_category_id_categories_id_fk",
-          "tableFrom": "payee",
-          "tableTo": "categories",
-          "columnsFrom": [
-            "default_category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "payee_default_budget_id_budget_id_fk": {
-          "name": "payee_default_budget_id_budget_id_fk",
-          "tableFrom": "payee",
-          "tableTo": "budget",
-          "columnsFrom": [
-            "default_budget_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "schedule_dates": {
-      "name": "schedule_dates",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "start_date": {
-          "name": "start_date",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "end_date": {
-          "name": "end_date",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "frequency": {
-          "name": "frequency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "interval": {
-          "name": "interval",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 1
-        },
-        "limit": {
-          "name": "limit",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "move_weekends": {
-          "name": "move_weekends",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'none'"
-        },
-        "move_holidays": {
-          "name": "move_holidays",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'none'"
-        },
-        "specific_dates": {
-          "name": "specific_dates",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
-        },
-        "on": {
-          "name": "on",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": false
-        },
-        "on_type": {
-          "name": "on_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'day'"
-        },
-        "days": {
-          "name": "days",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
-        },
-        "weeks": {
-          "name": "weeks",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
-        },
-        "weeks_days": {
-          "name": "weeks_days",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
-        },
-        "week_days": {
-          "name": "week_days",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
-        },
-        "schedule_id": {
-          "name": "schedule_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "relations_schedule_date_schedule_idx": {
-          "name": "relations_schedule_date_schedule_idx",
-          "columns": [
-            "schedule_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "schedule_dates_schedule_id_schedules_id_fk": {
-          "name": "schedule_dates_schedule_id_schedules_id_fk",
-          "tableFrom": "schedule_dates",
-          "tableTo": "schedules",
-          "columnsFrom": [
-            "schedule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "schedules": {
-      "name": "schedules",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "slug": {
-          "name": "slug",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'active'"
-        },
-        "amount": {
-          "name": "amount",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "amount_2": {
-          "name": "amount_2",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "amount_type": {
-          "name": "amount_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'exact'"
-        },
-        "recurring": {
-          "name": "recurring",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": false
-        },
-        "auto_add": {
-          "name": "auto_add",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": false
-        },
-        "schedule_date_id": {
-          "name": "schedule_date_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "payee_id": {
-          "name": "payee_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "category_id": {
-          "name": "category_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "account_id": {
-          "name": "account_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "budget_id": {
-          "name": "budget_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        }
-      },
-      "indexes": {
-        "relations_schedule_schedule_date_idx": {
-          "name": "relations_schedule_schedule_date_idx",
-          "columns": [
-            "schedule_date_id"
-          ],
-          "isUnique": false
-        },
-        "relations_schedule_account_idx": {
-          "name": "relations_schedule_account_idx",
-          "columns": [
-            "account_id"
-          ],
-          "isUnique": false
-        },
-        "relations_schedule_payee_idx": {
-          "name": "relations_schedule_payee_idx",
-          "columns": [
-            "payee_id"
-          ],
-          "isUnique": false
-        },
-        "relations_schedule_category_idx": {
-          "name": "relations_schedule_category_idx",
-          "columns": [
-            "category_id"
-          ],
-          "isUnique": false
-        },
-        "relations_schedule_budget_idx": {
-          "name": "relations_schedule_budget_idx",
-          "columns": [
-            "budget_id"
-          ],
-          "isUnique": false
-        },
-        "schedule_status_idx": {
-          "name": "schedule_status_idx",
-          "columns": [
-            "status"
-          ],
-          "isUnique": false
-        },
-        "schedule_name_idx": {
-          "name": "schedule_name_idx",
-          "columns": [
-            "name"
-          ],
-          "isUnique": false
-        },
-        "schedule_slug_idx": {
-          "name": "schedule_slug_idx",
+        "user_slug_idx": {
+          "name": "user_slug_idx",
           "columns": [
             "slug"
           ],
           "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "schedules_schedule_date_id_schedule_dates_id_fk": {
-          "name": "schedules_schedule_date_id_schedule_dates_id_fk",
-          "tableFrom": "schedules",
-          "tableTo": "schedule_dates",
-          "columnsFrom": [
-            "schedule_date_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
         },
-        "schedules_payee_id_payee_id_fk": {
-          "name": "schedules_payee_id_payee_id_fk",
-          "tableFrom": "schedules",
-          "tableTo": "payee",
-          "columnsFrom": [
-            "payee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "schedules_category_id_categories_id_fk": {
-          "name": "schedules_category_id_categories_id_fk",
-          "tableFrom": "schedules",
-          "tableTo": "categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "schedules_account_id_account_id_fk": {
-          "name": "schedules_account_id_account_id_fk",
-          "tableFrom": "schedules",
-          "tableTo": "account",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "schedules_budget_id_budget_id_fk": {
-          "name": "schedules_budget_id_budget_id_fk",
-          "tableFrom": "schedules",
-          "tableTo": "budget",
-          "columnsFrom": [
-            "budget_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "transaction": {
-      "name": "transaction",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "account_id": {
-          "name": "account_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "parent_id": {
-          "name": "parent_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'pending'"
-        },
-        "payee_id": {
-          "name": "payee_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "amount": {
-          "name": "amount",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "category_id": {
-          "name": "category_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "date": {
-          "name": "date",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "schedule_id": {
-          "name": "schedule_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "transfer_id": {
-          "name": "transfer_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "transfer_account_id": {
-          "name": "transfer_account_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "transfer_transaction_id": {
-          "name": "transfer_transaction_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "is_transfer": {
-          "name": "is_transfer",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "relations_transaction_account_idx": {
-          "name": "relations_transaction_account_idx",
+        "user_email_idx": {
+          "name": "user_email_idx",
           "columns": [
-            "account_id"
+            "email"
           ],
           "isUnique": false
         },
-        "relations_transaction_payee_idx": {
-          "name": "relations_transaction_payee_idx",
-          "columns": [
-            "payee_id"
-          ],
-          "isUnique": false
-        },
-        "relations_transaction_category_idx": {
-          "name": "relations_transaction_category_idx",
-          "columns": [
-            "category_id"
-          ],
-          "isUnique": false
-        },
-        "relations_transaction_schedule_idx": {
-          "name": "relations_transaction_schedule_idx",
-          "columns": [
-            "schedule_id"
-          ],
-          "isUnique": false
-        },
-        "transaction_account_date_idx": {
-          "name": "transaction_account_date_idx",
-          "columns": [
-            "account_id",
-            "date",
-            "id"
-          ],
-          "isUnique": false
-        },
-        "transaction_date_idx": {
-          "name": "transaction_date_idx",
-          "columns": [
-            "date"
-          ],
-          "isUnique": false
-        },
-        "transaction_status_idx": {
-          "name": "transaction_status_idx",
-          "columns": [
-            "status"
-          ],
-          "isUnique": false
-        },
-        "transaction_parent_idx": {
-          "name": "transaction_parent_idx",
-          "columns": [
-            "parent_id"
-          ],
-          "isUnique": false
-        },
-        "transaction_deleted_at_idx": {
-          "name": "transaction_deleted_at_idx",
+        "user_deleted_at_idx": {
+          "name": "user_deleted_at_idx",
           "columns": [
             "deleted_at"
           ],
           "isUnique": false
-        },
-        "transaction_transfer_id_idx": {
-          "name": "transaction_transfer_id_idx",
-          "columns": [
-            "transfer_id"
-          ],
-          "isUnique": false
-        },
-        "transaction_transfer_account_idx": {
-          "name": "transaction_transfer_account_idx",
-          "columns": [
-            "transfer_account_id"
-          ],
-          "isUnique": false
-        },
-        "transaction_is_transfer_idx": {
-          "name": "transaction_is_transfer_idx",
-          "columns": [
-            "is_transfer"
-          ],
-          "isUnique": false
         }
       },
-      "foreignKeys": {
-        "transaction_account_id_account_id_fk": {
-          "name": "transaction_account_id_account_id_fk",
-          "tableFrom": "transaction",
-          "tableTo": "account",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "transaction_parent_id_transaction_id_fk": {
-          "name": "transaction_parent_id_transaction_id_fk",
-          "tableFrom": "transaction",
-          "tableTo": "transaction",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "transaction_payee_id_payee_id_fk": {
-          "name": "transaction_payee_id_payee_id_fk",
-          "tableFrom": "transaction",
-          "tableTo": "payee",
-          "columnsFrom": [
-            "payee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "transaction_category_id_categories_id_fk": {
-          "name": "transaction_category_id_categories_id_fk",
-          "tableFrom": "transaction",
-          "tableTo": "categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "transaction_schedule_id_schedules_id_fk": {
-          "name": "transaction_schedule_id_schedules_id_fk",
-          "tableFrom": "transaction",
-          "tableTo": "schedules",
-          "columnsFrom": [
-            "schedule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "transaction_transfer_account_id_account_id_fk": {
-          "name": "transaction_transfer_account_id_account_id_fk",
-          "tableFrom": "transaction",
-          "tableTo": "account",
-          "columnsFrom": [
-            "transfer_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "transaction_transfer_transaction_id_transaction_id_fk": {
-          "name": "transaction_transfer_transaction_id_transaction_id_fk",
-          "tableFrom": "transaction",
-          "tableTo": "transaction",
-          "columnsFrom": [
-            "transfer_transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "views": {
-      "name": "views",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "icon": {
-          "name": "icon",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "filters": {
-          "name": "filters",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "display": {
-          "name": "display",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "dirty": {
-          "name": "dirty",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

@@ -1,1 +1,0 @@
-ALTER TABLE `account` ADD `enabled_metrics` text;

@@ -16,6 +16,10 @@
         "@playwright/mcp@latest"
       ],
       "env": {}
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
     }
   }
 }

@@ -1,12 +1,13 @@
 {
   "name": "budget-monorepo",
   "version": "0.0.1",
+  "devDependencies": {
+    "@turbo/gen": "^2.6.1",
+    "prettier": "^3.6.2",
+    "turbo": "^2.6.1"
+  },
+  "packageManager": "bun@1.2.23",
   "private": true,
-  "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -24,13 +25,9 @@
     "build:budget": "turbo run build --filter=budget",
     "test:budget": "turbo run test --filter=budget"
   },
-  "devDependencies": {
-    "@turbo/gen": "^2.5.8",
-    "prettier": "^3.6.2",
-    "turbo": "^2.6.1"
-  },
-  "packageManager": "bun@1.2.23",
-  "dependencies": {
-    "mode-watcher": "^1.1.0"
-  }
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }

@@ -1,1 +1,0 @@
-ALTER TABLE `transaction` ADD `raw_import_data` text;
