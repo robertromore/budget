@@ -1,11 +1,11 @@
-import { fail, redirect } from "@sveltejs/kit";
 import { removePayeeSchema } from "$lib/schema";
 import { superformInsertPayeeSchema } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
-import { superValidate } from "sveltekit-superforms/client";
-import { zod4 } from "sveltekit-superforms/adapters";
 import type { Actions } from "@sveltejs/kit";
+import { fail } from "@sveltejs/kit";
+import { zod4 } from "sveltekit-superforms/adapters";
+import { superValidate } from "sveltekit-superforms/client";
 
 export const load = async (event: any) => {
   const { url } = event;
@@ -40,7 +40,8 @@ export const actions: Actions = {
       entity,
     };
   },
-  "delete-payee": async ({ request }) => {
+  "delete-payee": async (event) => {
+    const { request } = event;
     const form = await superValidate(request, zod4(removePayeeSchema));
     if (!form.valid) {
       return fail(400, {

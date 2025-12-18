@@ -1,101 +1,38 @@
 <script lang="ts">
-import { Button, buttonVariants } from '$lib/components/ui/button';
+import { goto } from '$app/navigation';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as Empty from '$lib/components/ui/empty';
-import Plus from '@lucide/svelte/icons/plus';
-import User from '@lucide/svelte/icons/user';
-import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
-import FolderCog from '@lucide/svelte/icons/folder-cog';
+import { rpc } from '$lib/query';
+import { bulkDeletePayees as bulkDeletePayeesMutation } from '$lib/query/payees';
+import type { Payee } from '$lib/schema';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { deletePayeeDialog, deletePayeeId } from '$lib/states/ui/payees.svelte';
-import { payeeSearchState } from '$lib/states/ui/payee-search.svelte';
-import EntitySearchToolbar from '$lib/components/shared/search/entity-search-toolbar.svelte';
-import PayeeSearchFilters from './(components)/search/payee-search-filters.svelte';
+import { headerActionsMode } from '$lib/stores/header-actions.svelte';
+import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
+import FolderCog from '@lucide/svelte/icons/folder-cog';
+import Plus from '@lucide/svelte/icons/plus';
+import User from '@lucide/svelte/icons/user';
 import PayeeSearchResults from './(components)/search/payee-search-results.svelte';
-import PayeeFacetedFilters from './(components)/bulk-operations/payee-faceted-filters.svelte';
-import {
-  searchPayeesAdvanced,
-  bulkDeletePayees as bulkDeletePayeesMutation,
-  listPayeesWithStats,
-} from '$lib/query/payees';
-import { goto } from '$app/navigation';
-import type { Payee, PayeeType, PaymentFrequency } from '$lib/schema';
-import { rpc } from '$lib/query';
 
 const payeesState = $derived(PayeesState.get());
 const allPayees = $derived(payeesState.payees.values());
 const allPayeesArray = $derived(Array.from(allPayees));
 const hasNoPayees = $derived(allPayeesArray.length === 0);
 
-// Fetch payees with transaction stats for sorting
+// Fetch payees with transaction stats for display
 const payeesWithStatsQuery = rpc.payees.listPayeesWithStats().options();
 const payeesWithStats = $derived(payeesWithStatsQuery.data ?? []);
-
-// Search state
-const search = payeeSearchState;
-let searchResults = $state<Payee[]>([]);
-let isSearching = $state(false);
-
-// Sort payees based on user selection
-const sortedPayeesArray = $derived.by(() => {
-  // Create a map of payee stats for quick lookup
-  const statsMap = new Map(payeesWithStats.map((p) => [p.id, p.stats]));
-
-  return [...allPayeesArray].sort((a, b) => {
-    let comparison = 0;
-    const statsA = statsMap.get(a.id);
-    const statsB = statsMap.get(b.id);
-
-    switch (search.sortBy) {
-      case 'name':
-        comparison = (a.name || '').localeCompare(b.name || '');
-        break;
-      case 'created':
-        comparison = (a.createdAt || '').localeCompare(b.createdAt || '');
-        break;
-      case 'lastTransaction':
-        comparison = (statsA?.lastTransactionDate || '').localeCompare(
-          statsB?.lastTransactionDate || ''
-        );
-        break;
-      case 'avgAmount':
-        comparison = (statsA?.avgAmount || 0) - (statsB?.avgAmount || 0);
-        break;
-      default:
-        comparison = (a.name || '').localeCompare(b.name || '');
-    }
-
-    return search.sortOrder === 'asc' ? comparison : -comparison;
-  });
-});
 
 // Merge stats into payees for display
 const payeesWithStatsData = $derived.by(() => {
   const statsMap = new Map(payeesWithStats.map((p) => [p.id, p.stats]));
 
-  return sortedPayeesArray.map((payee) => ({
+  return allPayeesArray.map((payee) => ({
     ...payee,
     avgAmount: statsMap.get(payee.id)?.avgAmount ?? null,
     lastTransactionDate: statsMap.get(payee.id)?.lastTransactionDate ?? null,
   }));
-});
-
-// Computed values
-const displayedPayees = $derived.by(() => {
-  return search.isSearchActive ? searchResults : payeesWithStatsData;
-});
-
-// Sort options for toolbar
-const payeeSortOptions = [
-  { value: 'name' as const, label: 'Name', order: 'asc' as const },
-  { value: 'name' as const, label: 'Name', order: 'desc' as const },
-  { value: 'lastTransaction' as const, label: 'Last Transaction', order: 'desc' as const },
-  { value: 'avgAmount' as const, label: 'Avg Amount', order: 'desc' as const },
-  { value: 'created' as const, label: 'Created', order: 'desc' as const },
-];
-
-const shouldShowNoPayees = $derived.by(() => {
-  return !search.isSearchActive && hasNoPayees;
 });
 
 // Dialog state
@@ -106,57 +43,6 @@ let deleteDialogOpen = $derived(deletePayeeDialog);
 let bulkDeleteDialogOpen = $state(false);
 let payeesToDelete = $state<Payee[]>([]);
 let isDeletingBulk = $state(false);
-
-// Server-side search function
-const performSearch = async () => {
-  if (!search.isSearchActive) {
-    searchResults = [];
-    isSearching = false;
-    return;
-  }
-
-  isSearching = true;
-  try {
-    const params = search.getSearchParams();
-    const finalParams = {
-      ...params,
-      query: params.query || '',
-      limit: 100,
-    };
-    const searchQuery = searchPayeesAdvanced(finalParams);
-
-    const result = await searchQuery.execute();
-    searchResults = result || [];
-    search.setResults(searchResults);
-  } catch (error) {
-    console.error('Error searching payees:', error);
-    searchResults = [];
-  } finally {
-    isSearching = false;
-  }
-};
-
-// Track if this is the first run
-let isFirstRun = true;
-
-// Debounced search effect
-$effect(() => {
-  // Track search state reactively
-  search.query;
-  search.filters;
-
-  // Don't set loading state on initial mount
-  if (!isFirstRun) {
-    isSearching = true;
-  }
-  isFirstRun = false;
-
-  const timeoutId = setTimeout(() => {
-    performSearch();
-  }, 300);
-
-  return () => clearTimeout(timeoutId);
-});
 
 const deletePayee = (payee: Payee) => {
   deleteDialogId.current = payee.id;
@@ -205,29 +91,10 @@ const viewAnalytics = (payee: Payee) => {
   goto(`/payees/${payee.slug}/analytics`);
 };
 
-const payeeTypeOptions = [
-  { label: 'Merchant', value: 'merchant' },
-  { label: 'Utility', value: 'utility' },
-  { label: 'Employer', value: 'employer' },
-  { label: 'Financial Institution', value: 'financial_institution' },
-  { label: 'Government', value: 'government' },
-  { label: 'Individual', value: 'individual' },
-  { label: 'Other', value: 'other' },
-];
-
-const statusOptions = [
-  { label: 'Active', value: 'true' },
-  { label: 'Inactive', value: 'false' },
-];
-
-const frequencyOptions = [
-  { label: 'Weekly', value: 'weekly' },
-  { label: 'Bi-Weekly', value: 'bi_weekly' },
-  { label: 'Monthly', value: 'monthly' },
-  { label: 'Quarterly', value: 'quarterly' },
-  { label: 'Annual', value: 'annual' },
-  { label: 'Irregular', value: 'irregular' },
-];
+// Computed: should show secondary buttons on page
+const showSecondaryOnPage = $derived(headerActionsMode.value === 'off');
+// Computed: should show primary button on page
+const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
 </script>
 
 <svelte:head>
@@ -240,99 +107,30 @@ const frequencyOptions = [
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Payees</h1>
-      <p class="text-muted-foreground">
-        {#if search.isSearchActive}
-          {searchResults.length} of {allPayeesArray.length} payees
-        {:else}
-          {allPayeesArray.length} payees total
-        {/if}
-      </p>
+      <p class="text-muted-foreground">{allPayeesArray.length} payees total</p>
     </div>
     <div class="flex items-center gap-2">
-      <Button variant="outline" href="/payees/categories">
-        <FolderCog class="mr-2 h-4 w-4" />
-        Manage Categories
-      </Button>
-      <Button variant="outline" href="/payees/analytics">
-        <BarChart3 class="mr-2 h-4 w-4" />
-        Analytics
-      </Button>
-      <Button href="/payees/new">
-        <Plus class="mr-2 h-4 w-4" />
-        Add Payee
-      </Button>
-    </div>
-  </div>
-
-  <!-- Search and Filters -->
-  <div class="space-y-4">
-    <!-- Search Toolbar -->
-    <EntitySearchToolbar
-      bind:searchQuery={search.query}
-      bind:filters={search.filters}
-      bind:viewMode={search.viewMode}
-      bind:sortBy={search.sortBy}
-      bind:sortOrder={search.sortOrder}
-      searchPlaceholder="Search payees..."
-      sortOptions={payeeSortOptions}
-      activeFilterCount={Object.keys(search.filters).length}
-      onSearchChange={(query) => search.updateQuery(query)}
-      onFiltersChange={(filters) => search.updateFilters(filters)}
-      onViewModeChange={(mode) => (search.viewMode = mode)}
-      onSortChange={(sortBy, sortOrder) => {
-        search.sortBy = sortBy;
-        search.sortOrder = sortOrder;
-      }}
-      onClearAll={() => search.clearAllFilters()}>
-      {#snippet filterContent()}
-        <PayeeSearchFilters
-          filters={search.filters}
-          onFilterChange={(key, value) => search.updateFilter(key, value)} />
-      {/snippet}
-    </EntitySearchToolbar>
-
-    <!-- Faceted Filters -->
-    <div class="flex flex-wrap items-center gap-2">
-      <PayeeFacetedFilters
-        title="Type"
-        options={payeeTypeOptions}
-        selectedValues={search.filters.payeeType ? [search.filters.payeeType] : []}
-        payees={allPayeesArray}
-        fieldName="payeeType"
-        onSelectionChange={(values) => {
-          search.updateFilter('payeeType', (values[0] as PayeeType) || undefined);
-        }} />
-
-      <PayeeFacetedFilters
-        title="Status"
-        options={statusOptions}
-        selectedValues={search.filters.isActive !== undefined
-          ? [search.filters.isActive.toString()]
-          : []}
-        payees={allPayeesArray}
-        fieldName="isActive"
-        onSelectionChange={(values) => {
-          const value = values[0];
-          search.updateFilter(
-            'isActive',
-            value === 'true' ? true : value === 'false' ? false : undefined
-          );
-        }} />
-
-      <PayeeFacetedFilters
-        title="Frequency"
-        options={frequencyOptions}
-        selectedValues={search.filters.paymentFrequency ? [search.filters.paymentFrequency] : []}
-        payees={allPayeesArray}
-        fieldName="paymentFrequency"
-        onSelectionChange={(values) => {
-          search.updateFilter('paymentFrequency', (values[0] as PaymentFrequency) || undefined);
-        }} />
+      {#if showSecondaryOnPage}
+        <Button variant="outline" href="/payees/categories">
+          <FolderCog class="mr-2 h-4 w-4" />
+          Manage Categories
+        </Button>
+        <Button variant="outline" href="/payees/analytics">
+          <BarChart3 class="mr-2 h-4 w-4" />
+          Analytics
+        </Button>
+      {/if}
+      {#if showPrimaryOnPage}
+        <Button href="/payees/new">
+          <Plus class="mr-2 h-4 w-4" />
+          Add Payee
+        </Button>
+      {/if}
     </div>
   </div>
 
   <!-- Content -->
-  {#if shouldShowNoPayees}
+  {#if hasNoPayees}
     <!-- Empty State - No Payees -->
     <Empty.Empty>
       <Empty.EmptyMedia variant="icon">
@@ -353,12 +151,12 @@ const frequencyOptions = [
       </Empty.EmptyContent>
     </Empty.Empty>
   {:else}
-    <!-- Search Results -->
+    <!-- Payee Data Table -->
     <PayeeSearchResults
-      payees={displayedPayees}
-      isLoading={isSearching}
-      searchQuery={search.query}
-      viewMode={search.viewMode}
+      payees={payeesWithStatsData}
+      isLoading={false}
+      searchQuery=""
+      viewMode="list"
       onView={viewPayee}
       onEdit={editPayee}
       onDelete={deletePayee}

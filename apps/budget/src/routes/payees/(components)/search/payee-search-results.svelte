@@ -3,7 +3,6 @@ import { EntityCard, EntitySearchResults } from '$lib/components/shared/search';
 import { Badge } from '$lib/components/ui/badge';
 import * as Card from '$lib/components/ui/card';
 import type { Payee } from '$lib/schema';
-import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { cn, currencyFormatter } from '$lib/utils';
 import { highlightMatches } from '$lib/utils/search';
 import Building from '@lucide/svelte/icons/building';
@@ -16,7 +15,6 @@ import Phone from '@lucide/svelte/icons/phone';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 import User from '@lucide/svelte/icons/user';
 import type { Table as TanStackTable } from '@tanstack/table-core';
-import { columns } from '../../(data)/columns.svelte';
 import PayeeDataTableContainer from '../payee-data-table-container.svelte';
 
 export type ViewMode = 'list' | 'grid';
@@ -29,8 +27,8 @@ interface Props {
   onView: (payee: Payee) => void;
   onEdit: (payee: Payee) => void;
   onDelete: (payee: Payee) => void;
-  onBulkDelete: (payees: Payee[]) => void;
   onViewAnalytics: (payee: Payee) => void;
+  onBulkDelete: (payees: Payee[]) => void;
 }
 
 let {
@@ -41,12 +39,9 @@ let {
   onView,
   onEdit,
   onDelete,
-  onBulkDelete,
   onViewAnalytics,
+  onBulkDelete,
 }: Props = $props();
-
-// Get payees state from context
-const payeesState = $derived(PayeesState.get());
 
 // Table binding for list view
 let table = $state<TanStackTable<Payee>>();
@@ -100,8 +95,8 @@ const formatLastTransaction = (date: string | null) => {
   {onView}
   {onEdit}
   {onDelete}
-  {onBulkDelete}
-  {onViewAnalytics}>
+  {onViewAnalytics}
+  {onBulkDelete}>
   {#snippet gridCard(payee)}
     {@const TypeIcon = getPayeeTypeIcon(payee.payeeType)}
     {@const statusDisplay = getStatusDisplay(payee.isActive)}
@@ -224,24 +219,11 @@ const formatLastTransaction = (date: string | null) => {
     <PayeeDataTableContainer
       {isLoading}
       {payees}
-      {columns}
-      {payeesState}
       {onView}
       {onEdit}
       {onDelete}
-      {onBulkDelete}
       {onViewAnalytics}
+      {onBulkDelete}
       bind:table />
   {/snippet}
 </EntitySearchResults>
-
-<style>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  word-break: break-word;
-}
-</style>

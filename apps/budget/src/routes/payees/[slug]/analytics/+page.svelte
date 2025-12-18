@@ -1,17 +1,17 @@
 <script lang="ts">
 import { page } from '$app/state';
-import PayeeAnalyticsDashboard from '../../(components)/analytics/payee-analytics-dashboard.svelte';
-import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { Skeleton } from '$lib/components/ui/skeleton';
+import { getPayeeDetail } from '$lib/query/payees';
+import Activity from '@lucide/svelte/icons/activity';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Brain from '@lucide/svelte/icons/brain';
-import User from '@lucide/svelte/icons/user';
-import Activity from '@lucide/svelte/icons/activity';
 import Target from '@lucide/svelte/icons/target';
 import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
-import { getPayeeDetail } from '$lib/query/payees';
+import User from '@lucide/svelte/icons/user';
+import PayeeAnalyticsDashboard from '../../(components)/analytics/payee-analytics-dashboard.svelte';
 
 // Get payee ID from params
 const payeeId = $derived(() => {

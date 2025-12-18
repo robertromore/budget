@@ -2,10 +2,10 @@ import { removePayeeSchema } from "$lib/schema";
 import { superformInsertPayeeSchema } from "$lib/schema/superforms";
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
-import { superValidate } from "sveltekit-superforms/client";
-import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
 import { zod4 } from "sveltekit-superforms/adapters";
+import { superValidate } from "sveltekit-superforms/client";
+import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => ({
   payees: await createCaller(await createContext(event)).payeeRoutes.all(),

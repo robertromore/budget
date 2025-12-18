@@ -1,10 +1,10 @@
 <script lang="ts">
-import type { Payee } from '$lib/schema';
 import { Button } from '$lib/components/ui/button';
-import User from '@lucide/svelte/icons/user';
+import type { Payee } from '$lib/schema';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Trash2 from '@lucide/svelte/icons/trash-2';
+import User from '@lucide/svelte/icons/user';
 
 interface Props {
   payee: Payee;

@@ -1,13 +1,13 @@
 <script lang="ts">
-import PayeeAnalyticsDashboard from '../(components)/analytics/payee-analytics-dashboard.svelte';
-import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import Brain from '@lucide/svelte/icons/brain';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 import Users from '@lucide/svelte/icons/users';
+import PayeeAnalyticsDashboard from '../(components)/analytics/payee-analytics-dashboard.svelte';
 
 // Page metadata
 const title = 'Payee Analytics Dashboard';

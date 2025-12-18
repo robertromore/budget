@@ -1,35 +1,24 @@
 <script lang="ts">
-import type { Payee } from '$lib/schema';
-import type { PayeesState } from '$lib/states/entities/payees.svelte';
-import type { ColumnDef, Table } from '@tanstack/table-core';
-import PayeeDataTable from './payee-data-table.svelte';
-import { Skeleton } from '$lib/components/ui/skeleton';
 import { browser } from '$app/environment';
+import { Skeleton } from '$lib/components/ui/skeleton';
+import type { Payee } from '$lib/schema';
+import { columns } from '../(data)/columns.svelte';
+import PayeeDataTable from './payee-data-table.svelte';
 
 interface Props {
   isLoading: boolean;
   payees: Payee[];
-  columns: (
-    payeesState: PayeesState,
-    onView: (payee: Payee) => void,
-    onEdit: (payee: Payee) => void,
-    onDelete: (payee: Payee) => void,
-    onViewAnalytics: (payee: Payee) => void
-  ) => ColumnDef<Payee>[];
-  payeesState: PayeesState;
   onView: (payee: Payee) => void;
   onEdit: (payee: Payee) => void;
   onDelete: (payee: Payee) => void;
   onViewAnalytics: (payee: Payee) => void;
   onBulkDelete: (payees: Payee[]) => void;
-  table?: Table<Payee> | undefined;
+  table?: any;
 }
 
 let {
-  isLoading,
-  payees,
-  columns,
-  payeesState,
+  isLoading = false,
+  payees = [],
   onView,
   onEdit,
   onDelete,
@@ -37,23 +26,28 @@ let {
   onBulkDelete,
   table = $bindable(),
 }: Props = $props();
+
+// Create columns with action handlers
+const tableColumns = $derived(columns({ onView, onEdit, onDelete, onViewAnalytics }));
 </script>
 
 {#if isLoading}
-  <div class="space-y-3">
+  <!-- Loading state: Show skeleton while fetching data -->
+  <div class="space-y-4">
     <Skeleton class="h-10 w-full" />
-    <Skeleton class="h-10 w-full" />
-    <Skeleton class="h-10 w-full" />
+    <Skeleton class="h-[500px] w-full" />
   </div>
-{:else if browser && payeesState}
+{:else if browser}
+  <!-- Show the data table -->
   <PayeeDataTable
-    {columns}
+    columns={tableColumns}
     {payees}
-    {payeesState}
-    {onView}
-    {onEdit}
-    {onDelete}
-    {onViewAnalytics}
     {onBulkDelete}
     bind:table />
+{:else}
+  <!-- Fallback loading state -->
+  <div class="space-y-4">
+    <Skeleton class="h-10 w-full" />
+    <Skeleton class="h-[500px] w-full" />
+  </div>
 {/if}

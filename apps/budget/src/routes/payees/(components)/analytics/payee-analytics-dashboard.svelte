@@ -1,35 +1,29 @@
 <script lang="ts">
-import * as Card from '$lib/components/ui/card';
-import * as Tabs from '$lib/components/ui/tabs';
-import * as Select from '$lib/components/ui/select';
-import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
-import { Separator } from '$lib/components/ui/separator';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
 import { Progress } from '$lib/components/ui/progress';
+import * as Select from '$lib/components/ui/select';
+import * as Tabs from '$lib/components/ui/tabs';
 
 import { trpc } from '$lib/trpc/client';
-import { currencyFormatter } from '$lib/utils/formatters';
 import { formatDateDisplay } from '$lib/utils/dates';
-
+import { currencyFormatter } from '$lib/utils/formatters';
 // Icons
-import TrendingUp from '@lucide/svelte/icons/trending-up';
-import TrendingDown from '@lucide/svelte/icons/trending-down';
-import Brain from '@lucide/svelte/icons/brain';
-import Target from '@lucide/svelte/icons/target';
-import Calendar from '@lucide/svelte/icons/calendar';
-import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import Users from '@lucide/svelte/icons/users';
 import Activity from '@lucide/svelte/icons/activity';
+import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
+import Brain from '@lucide/svelte/icons/brain';
+import Calendar from '@lucide/svelte/icons/calendar';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
-import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
-import PieChart from '@lucide/svelte/icons/pie-chart';
-import LineChart from '@lucide/svelte/icons/line-chart';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 import RefreshCw from '@lucide/svelte/icons/refresh-cw';
-import Download from '@lucide/svelte/icons/download';
-import Filter from '@lucide/svelte/icons/filter';
 import Sparkles from '@lucide/svelte/icons/sparkles';
+import Target from '@lucide/svelte/icons/target';
+import TrendingDown from '@lucide/svelte/icons/trending-down';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
+import Users from '@lucide/svelte/icons/users';
 
 let {
   payeeId,

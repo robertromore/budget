@@ -1,11 +1,11 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
+import { ManagePayeeForm } from '$lib/components/forms';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import User from '@lucide/svelte/icons/user';
-import { ManagePayeeForm } from '$lib/components/forms';
 
 // Get duplication data from page data
 const duplicateFromId = $derived(page.data?.['duplicateFromId']);

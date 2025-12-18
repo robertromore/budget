@@ -1,22 +1,22 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
-import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
-import { Separator } from '$lib/components/ui/separator';
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import { Checkbox } from '$lib/components/ui/checkbox';
-import { Label } from '$lib/components/ui/label';
+import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
 import { ScrollArea } from '$lib/components/ui/scroll-area';
-import PackagePlus from '@lucide/svelte/icons/package-plus';
-import Search from '@lucide/svelte/icons/search';
+import { Separator } from '$lib/components/ui/separator';
+import { queryClient } from '$lib/query';
 import {
-  seedDefaultPayeeCategories,
   getDefaultPayeeCategoriesStatus,
   payeeCategoryKeys,
+  seedDefaultPayeeCategories,
 } from '$lib/query/payee-categories';
-import { queryClient } from '$lib/query';
+import PackagePlus from '@lucide/svelte/icons/package-plus';
+import Search from '@lucide/svelte/icons/search';
 import { SvelteSet } from 'svelte/reactivity';
-import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
 
 interface Props {
   onCategoriesAdded?: () => void;

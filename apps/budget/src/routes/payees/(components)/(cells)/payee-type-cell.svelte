@@ -1,9 +1,9 @@
 <script lang="ts">
 import { Badge } from '$lib/components/ui/badge';
-import User from '@lucide/svelte/icons/user';
+import Briefcase from '@lucide/svelte/icons/briefcase';
 import Building from '@lucide/svelte/icons/building';
 import Landmark from '@lucide/svelte/icons/landmark';
-import Briefcase from '@lucide/svelte/icons/briefcase';
+import User from '@lucide/svelte/icons/user';
 
 interface Props {
   payeeType: string | null;
