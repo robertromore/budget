@@ -21,6 +21,7 @@ import { payees } from "$lib/schema/payees";
 import type { Transaction } from "$lib/schema/transactions";
 import { transactions } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
+import { logger } from "$lib/server/shared/logging";
 import { DatabaseError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { currentDate as defaultCurrentDate, timezone as defaultTimezone } from "$lib/utils/dates";
@@ -784,14 +785,14 @@ export class BudgetService {
     }
 
     try {
-      console.log("[BudgetService] generateRecommendations called with params:", params);
+      logger.debug("BudgetService: generateRecommendations called", { params });
       const drafts = await this.analysisService.analyzeTransactionHistory(params);
-      console.log("[BudgetService] Analysis complete, got", drafts.length, "drafts");
+      logger.debug("BudgetService: Analysis complete", { draftCount: drafts.length });
       const recommendations = await this.recommendationService.createRecommendations(drafts);
-      console.log("[BudgetService] Recommendations created:", recommendations.length);
+      logger.debug("BudgetService: Recommendations created", { count: recommendations.length });
       return recommendations;
     } catch (error) {
-      console.error("[BudgetService] Error in generateRecommendations:", error);
+      logger.error("BudgetService: Error in generateRecommendations", { error });
       throw error;
     }
   }

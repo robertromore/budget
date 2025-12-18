@@ -13,6 +13,7 @@ import { payees as payeeTable } from "$lib/schema/payees";
 import type { selectTransactionSchema } from "$lib/schema/transactions";
 import { transactions as transactionTable } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
+import { logger } from "$lib/server/shared/logging";
 import type { ImportOptions, ImportResult, ImportRow } from "$lib/types/import";
 import { and, eq, isNull } from "drizzle-orm";
 import type { z } from "zod/v4";
@@ -75,12 +76,11 @@ export class ImportOrchestrator {
       },
     };
 
-    console.log("=== IMPORT ORCHESTRATOR DEBUG ===");
-    console.log(
-      "Selected entities - categories:",
-      selectedEntities?.categories || "ALL (no filter)"
-    );
-    console.log("Options:", options);
+    logger.debug("Import orchestrator starting", {
+      totalRows: rows.length,
+      selectedCategories: selectedEntities?.categories || "ALL",
+      options,
+    });
 
     try {
       // Get the account's workspaceId first
@@ -292,9 +292,10 @@ export class ImportOrchestrator {
               } else {
                 // If payee doesn't exist in this workspace, log and continue without payee
                 // This can happen if slug is taken by another workspace
-                console.warn(
-                  `Payee slug "${slug}" exists but not in current workspace ${workspaceId}, skipping payee creation`
-                );
+                logger.warn("Payee slug exists but not in current workspace", {
+                  slug,
+                  workspaceId,
+                });
               }
             }
           }
@@ -394,7 +395,7 @@ export class ImportOrchestrator {
                 );
               }
             } catch (error) {
-              console.error(`Failed to create category "${normalized["category"]}":`, error);
+              logger.error("Failed to create category", { error, category: normalized["category"] });
               // If it failed due to unique constraint, check for soft-deleted category
               // Filter by workspaceId to only use categories from the current workspace
               const existing = await db
@@ -430,9 +431,10 @@ export class ImportOrchestrator {
               } else {
                 // If category doesn't exist in this workspace, log and continue without category
                 // This can happen if slug is taken by another workspace
-                console.warn(
-                  `Category slug "${slug}" exists but not in current workspace ${workspaceId}, skipping category creation`
-                );
+                logger.warn("Category slug exists but not in current workspace", {
+                  slug,
+                  workspaceId,
+                });
               }
             }
           }
@@ -500,10 +502,10 @@ export class ImportOrchestrator {
                     if (entitiesCreated) entitiesCreated.categories++;
                   }
                 } catch (error) {
-                  console.error(
-                    `Failed to create inferred category "${suggestedCategoryName}":`,
-                    error
-                  );
+                  logger.error("Failed to create inferred category", {
+                    error,
+                    category: suggestedCategoryName,
+                  });
                   // Check for soft-deleted category
                   // Filter by workspaceId to only use categories from the current workspace
                   const existing = await db
@@ -533,9 +535,10 @@ export class ImportOrchestrator {
                     }
                   } else {
                     // If category doesn't exist in this workspace, log and continue without category
-                    console.warn(
-                      `Inferred category slug "${slug}" exists but not in current workspace ${workspaceId}, skipping category creation`
-                    );
+                    logger.warn("Inferred category slug exists but not in current workspace", {
+                      slug,
+                      workspaceId,
+                    });
                   }
                 }
               }

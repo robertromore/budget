@@ -4,6 +4,7 @@ import { categories } from "$lib/schema/categories";
 import { payees } from "$lib/schema/payees";
 import type { NewTransaction, Transaction } from "$lib/schema/transactions";
 import { db } from "$lib/server/db";
+import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
 import { invalidateAccountCache } from "$lib/utils/cache";
@@ -182,7 +183,7 @@ export class TransactionService {
         }
       } catch (error) {
         // Log the error but continue with transaction creation
-        console.warn(`Failed to get payee suggestions for payee ${data.payeeId}:`, error);
+        logger.warn("Failed to get payee suggestions", { error, payeeId: data.payeeId });
       }
     }
 
@@ -194,7 +195,7 @@ export class TransactionService {
       try {
         await this.updatePayeeAfterTransaction(data.payeeId, workspaceId);
       } catch (error) {
-        console.warn(`Failed to update payee stats for payee ${data.payeeId}:`, error);
+        logger.warn("Failed to update payee stats", { error, payeeId: data.payeeId });
       }
     }
 
@@ -301,10 +302,11 @@ export class TransactionService {
           });
         } catch (budgetError) {
           // If budget allocation fails, log the error but continue with other allocations
-          console.warn(
-            `Failed to create budget allocation for transaction ${transaction.id}, budget ${allocation.budgetId}:`,
-            budgetError
-          );
+          logger.warn("Failed to create budget allocation", {
+            error: budgetError,
+            transactionId: transaction.id,
+            budgetId: allocation.budgetId,
+          });
         }
       }
     }
@@ -313,10 +315,10 @@ export class TransactionService {
     try {
       await this.budgetCalculationService.onTransactionChange(transaction.id);
     } catch (budgetCalcError) {
-      console.warn(
-        `Failed to recalculate budget consumption for transaction ${transaction.id}:`,
-        budgetCalcError
-      );
+      logger.warn("Failed to recalculate budget consumption", {
+        error: budgetCalcError,
+        transactionId: transaction.id,
+      });
     }
 
     invalidateAccountCache(transaction.accountId);
@@ -433,10 +435,10 @@ export class TransactionService {
         }
       } catch (budgetError) {
         // If budget allocation fails, we should still return the updated transaction
-        console.warn(
-          `Failed to update budget allocations for transaction ${updatedTransaction.id}:`,
-          budgetError
-        );
+        logger.warn("Failed to update budget allocations", {
+          error: budgetError,
+          transactionId: updatedTransaction.id,
+        });
       }
     }
     // Support legacy single budget allocation for backward compatibility
@@ -479,10 +481,10 @@ export class TransactionService {
           }
         }
       } catch (budgetError) {
-        console.warn(
-          `Failed to update budget allocation for transaction ${updatedTransaction.id}:`,
-          budgetError
-        );
+        logger.warn("Failed to update budget allocation", {
+          error: budgetError,
+          transactionId: updatedTransaction.id,
+        });
       }
     }
 
@@ -506,7 +508,7 @@ export class TransactionService {
           await this.updatePayeeAfterTransaction(existingTransaction.payeeId, workspaceId);
         }
       } catch (error) {
-        console.warn(`Failed to update payee stats after transaction update:`, error);
+        logger.warn("Failed to update payee stats after transaction update", { error });
       }
     }
 
@@ -514,10 +516,10 @@ export class TransactionService {
     try {
       await this.budgetCalculationService.onTransactionChange(updatedTransaction.id);
     } catch (budgetCalcError) {
-      console.warn(
-        `Failed to recalculate budget consumption for transaction ${updatedTransaction.id}:`,
-        budgetCalcError
-      );
+      logger.warn("Failed to recalculate budget consumption", {
+        error: budgetCalcError,
+        transactionId: updatedTransaction.id,
+      });
     }
 
     invalidateAccountCache(updatedTransaction.accountId);
@@ -730,7 +732,10 @@ export class TransactionService {
   ): Promise<(Transaction | UpcomingScheduledTransaction)[]> {
     // Get actual transactions with running balance
     const rawTransactions = await this.repository.findWithRunningBalance(accountId, workspaceId);
-    console.log(`Found ${rawTransactions.length} actual transactions for account ${accountId}`);
+    logger.debug("Found actual transactions for account", {
+      count: rawTransactions.length,
+      accountId,
+    });
 
     // Enrich actual transactions with schedule metadata if they have a scheduleId
     const actualTransactions = await Promise.all(
@@ -754,7 +759,10 @@ export class TransactionService {
             } as Transaction;
           } catch (error) {
             // If schedule not found, just return transaction as-is
-            console.warn(`Schedule ${t.scheduleId} not found for transaction ${t.id}`);
+            logger.warn("Schedule not found for transaction", {
+              scheduleId: t.scheduleId,
+              transactionId: t.id,
+            });
             return { ...t, budgetAllocations } as Transaction;
           }
         }
@@ -765,9 +773,10 @@ export class TransactionService {
     // Get upcoming scheduled transactions
     const upcomingTransactions =
       await this.scheduleService.getUpcomingScheduledTransactionsForAccount(accountId);
-    console.log(
-      `Found ${upcomingTransactions.length} upcoming scheduled transactions for account ${accountId}`
-    );
+    logger.debug("Found upcoming scheduled transactions for account", {
+      count: upcomingTransactions.length,
+      accountId,
+    });
 
     // Combine and sort by date (newest first)
     const allTransactions: (Transaction | UpcomingScheduledTransaction)[] = [
@@ -849,10 +858,10 @@ export class TransactionService {
     try {
       await this.budgetCalculationService.onTransactionChange(id);
     } catch (budgetCalcError) {
-      console.warn(
-        `Failed to recalculate budget consumption for deleted transaction ${id}:`,
-        budgetCalcError
-      );
+      logger.warn("Failed to recalculate budget consumption for deleted transaction", {
+        error: budgetCalcError,
+        transactionId: id,
+      });
     }
 
     invalidateAccountCache(transaction.accountId);
@@ -879,10 +888,10 @@ export class TransactionService {
       try {
         await this.budgetCalculationService.onTransactionChange(id);
       } catch (budgetCalcError) {
-        console.warn(
-          `Failed to recalculate budget consumption for deleted transaction ${id}:`,
-          budgetCalcError
-        );
+        logger.warn("Failed to recalculate budget consumption for deleted transaction", {
+          error: budgetCalcError,
+          transactionId: id,
+        });
       }
     }
 
@@ -905,10 +914,10 @@ export class TransactionService {
       try {
         await this.budgetCalculationService.onTransactionChange(id);
       } catch (budgetCalcError) {
-        console.warn(
-          `Failed to recalculate budget consumption for cleared transaction ${id}:`,
-          budgetCalcError
-        );
+        logger.warn("Failed to recalculate budget consumption for cleared transaction", {
+          error: budgetCalcError,
+          transactionId: id,
+        });
       }
 
       clearedCount++;
@@ -1100,7 +1109,7 @@ export class TransactionService {
             );
             categoryName = category.name ?? `Category ${categoryId}`;
           } catch (error) {
-            console.warn(`Failed to fetch category ${categoryId}:`, error);
+            logger.warn("Failed to fetch category", { error, categoryId });
           }
 
           mostUsedCategory = {

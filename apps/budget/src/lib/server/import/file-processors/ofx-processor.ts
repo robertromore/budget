@@ -5,6 +5,7 @@
  * for bank statement downloads.
  */
 
+import { logger } from "$lib/server/shared/logging";
 import type { FileProcessor, ImportRow, NormalizedTransaction } from "$lib/types/import";
 import { XMLParser } from "fast-xml-parser";
 import { FileValidationError, ParseError } from "../errors";
@@ -214,7 +215,7 @@ export class OFXProcessor implements FileProcessor {
       // Navigate OFX structure to find transactions
       const ofx = parsed.OFX || parsed.ofx;
       if (!ofx) {
-        console.error("[OFXProcessor] No OFX root found. Top-level keys:", Object.keys(parsed));
+        logger.error("OFXProcessor: No OFX root found", { topLevelKeys: Object.keys(parsed) });
         throw new ParseError("Invalid OFX file structure - no OFX root element");
       }
 
@@ -223,7 +224,7 @@ export class OFXProcessor implements FileProcessor {
       const bankMessages =
         ofx.BANKMSGSRSV1 || ofx.CREDITCARDMSGSRSV1 || ofx.bankmsgsrsv1 || ofx.creditcardmsgsrsv1;
       if (!bankMessages) {
-        console.error("[OFXProcessor] No bank messages found. Available keys:", Object.keys(ofx));
+        logger.error("OFXProcessor: No bank messages found", { availableKeys: Object.keys(ofx) });
         throw new ParseError("No bank messages found in OFX file");
       }
 
@@ -234,10 +235,9 @@ export class OFXProcessor implements FileProcessor {
         bankMessages.stmttrnrs ||
         bankMessages.ccstmttrnrs;
       if (!stmtResponse) {
-        console.error(
-          "[OFXProcessor] No statement response found. Available keys:",
-          Object.keys(bankMessages)
-        );
+        logger.error("OFXProcessor: No statement response found", {
+          availableKeys: Object.keys(bankMessages),
+        });
         throw new ParseError("No statement response found");
       }
 
@@ -248,27 +248,25 @@ export class OFXProcessor implements FileProcessor {
         stmtResponse.stmtrs ||
         stmtResponse.ccstmtrs;
       if (!statement) {
-        console.error(
-          "[OFXProcessor] No statement found. Available keys:",
-          Object.keys(stmtResponse)
-        );
+        logger.error("OFXProcessor: No statement found", {
+          availableKeys: Object.keys(stmtResponse),
+        });
         throw new ParseError("No statement found");
       }
 
       // Try different transaction list variations
       const tranList = statement.BANKTRANLIST || statement.banktranlist;
       if (!tranList) {
-        console.error(
-          "[OFXProcessor] No transaction list found. Available keys:",
-          Object.keys(statement)
-        );
+        logger.error("OFXProcessor: No transaction list found", {
+          availableKeys: Object.keys(statement),
+        });
         throw new ParseError("No transaction list found");
       }
 
       // Try different transaction variations
       let transactions = tranList.STMTTRN || tranList.stmttrn;
       if (!transactions) {
-        console.warn("[OFXProcessor] No STMTTRN found. Available keys:", Object.keys(tranList));
+        logger.warn("OFXProcessor: No STMTTRN found", { availableKeys: Object.keys(tranList) });
         return [];
       }
 
@@ -279,7 +277,7 @@ export class OFXProcessor implements FileProcessor {
 
       return transactions;
     } catch (error) {
-      console.error("[OFXProcessor] Parse error:", error);
+      logger.error("OFXProcessor: Parse error", { error });
       throw new ParseError(
         `Failed to parse OFX XML: ${error instanceof Error ? error.message : "Unknown error"}`
       );

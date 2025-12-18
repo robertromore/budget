@@ -1,4 +1,5 @@
 import type { Category, Payee, ScheduleSkip } from "$lib/schema";
+import { logger } from "$lib/server/shared/logging";
 import { NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { CategoryService } from "../categories/services";
 import { PayeeService } from "../payees/services";
@@ -410,10 +411,11 @@ export class ScheduleService {
                   schedule.workspaceId
                 );
               } catch (error) {
-                console.warn(
-                  `Failed to load payee ${schedule.payeeId} for schedule ${schedule.id}:`,
-                  error
-                );
+                logger.warn("Failed to load payee for schedule", {
+                  error,
+                  payeeId: schedule.payeeId,
+                  scheduleId: schedule.id,
+                });
                 payee = null;
               }
             }
@@ -427,10 +429,11 @@ export class ScheduleService {
                   schedule.workspaceId
                 );
               } catch (error) {
-                console.warn(
-                  `Failed to load category ${schedule.categoryId} for schedule ${schedule.id}:`,
-                  error
-                );
+                logger.warn("Failed to load category for schedule", {
+                  error,
+                  categoryId: schedule.categoryId,
+                  scheduleId: schedule.id,
+                });
                 category = null;
               }
             }
@@ -468,7 +471,7 @@ export class ScheduleService {
         }
       } catch (error) {
         // Skip schedules with errors (e.g., invalid date configuration)
-        console.warn(`Skipping schedule ${schedule.id} due to error:`, error);
+        logger.warn("Skipping schedule due to error", { error, scheduleId: schedule.id });
       }
     }
 

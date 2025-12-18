@@ -5,6 +5,7 @@
  * and normalization during the import process.
  */
 
+import { logger } from "$lib/server/shared/logging";
 import { ValidationError } from "./errors";
 
 /**
@@ -426,15 +427,15 @@ export function extractQBOTransactions(xmlData: any): any[] {
   const transactions: any[] = [];
 
   if (!xmlData || typeof xmlData !== "object") {
-    console.log("[QBO] xmlData is null or not an object");
+    logger.debug("QBO: xmlData is null or not an object");
     return transactions;
   }
 
-  console.log("[QBO] Top-level keys:", Object.keys(xmlData));
+  logger.debug("QBO: Parsing XML data", { topLevelKeys: Object.keys(xmlData) });
 
   // Try to find the QB data at various levels
   const qb = xmlData.QBXML || xmlData.QBXMLMsgsRs || xmlData;
-  console.log("[QBO] QB object keys:", Object.keys(qb));
+  logger.debug("QBO: Found QB object", { keys: Object.keys(qb) });
 
   // Extract various transaction types
   const checkTxns = qb.CheckQueryRs?.CheckRet || qb.CheckRet || [];
@@ -447,7 +448,7 @@ export function extractQBOTransactions(xmlData: any): any[] {
   const salesReceiptTxns = qb.SalesReceiptQueryRs?.SalesReceiptRet || qb.SalesReceiptRet || [];
   const journalEntryTxns = qb.JournalEntryQueryRs?.JournalEntryRet || qb.JournalEntryRet || [];
 
-  console.log("[QBO] Transaction counts:", {
+  logger.debug("QBO: Transaction counts", {
     checks: Array.isArray(checkTxns) ? checkTxns.length : checkTxns ? 1 : 0,
     deposits: Array.isArray(depositTxns) ? depositTxns.length : depositTxns ? 1 : 0,
     payments: Array.isArray(paymentTxns) ? paymentTxns.length : paymentTxns ? 1 : 0,
@@ -477,7 +478,7 @@ export function extractQBOTransactions(xmlData: any): any[] {
     ...(Array.isArray(journalEntryTxns) ? journalEntryTxns : [journalEntryTxns]).filter(Boolean),
   ];
 
-  console.log("[QBO] Total transactions found:", allTxns.length);
+  logger.debug("QBO: Total transactions found", { count: allTxns.length });
 
   return allTxns;
 }
