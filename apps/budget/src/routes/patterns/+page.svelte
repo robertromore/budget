@@ -1,13 +1,13 @@
 <script lang="ts">
+import { PatternList } from '$lib/components/patterns';
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
-import { Badge } from '$lib/components/ui/badge';
-import { PatternList } from '$lib/components/patterns';
-import { detectPatterns, listPatterns, deleteAllPatterns } from '$lib/query/patterns';
-import { trpc } from '$lib/trpc/client';
+import { deleteAllPatterns, detectPatterns, listPatterns } from '$lib/query/patterns';
 import { SchedulesState } from '$lib/states/entities';
-import Sparkles from '@lucide/svelte/icons/sparkles';
+import { trpc } from '$lib/trpc/client';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
+import Sparkles from '@lucide/svelte/icons/sparkles';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
 
 // Pattern detection mutation
