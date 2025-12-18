@@ -1,19 +1,18 @@
 <script lang="ts">
-import * as Card from '$lib/components/ui/card';
 import { Badge } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
 import { Separator } from '$lib/components/ui/separator';
-import { currencyFormatter } from '$lib/utils/formatters';
-import { formatAmount, formatRecurringPattern, calculateNextOccurrence } from '../(data)';
 import type { ScheduleWithDetails } from '$lib/server/domains/schedules';
-
+import { currencyFormatter } from '$lib/utils/formatters';
+import { calculateNextOccurrence, formatAmount, formatRecurringPattern } from '../(data)';
 // Icons
+import Activity from '@lucide/svelte/icons/activity';
+import Building from '@lucide/svelte/icons/building';
 import Calendar from '@lucide/svelte/icons/calendar';
+import CalendarDays from '@lucide/svelte/icons/calendar-days';
 import Clock from '@lucide/svelte/icons/clock';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import TrendingUp from '@lucide/svelte/icons/trending-up';
-import Activity from '@lucide/svelte/icons/activity';
-import CalendarDays from '@lucide/svelte/icons/calendar-days';
-import Building from '@lucide/svelte/icons/building';
 
 let {
   schedule,

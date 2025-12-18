@@ -1,44 +1,50 @@
 <script lang="ts">
-import type { PageData } from './$types';
+import { goto } from '$app/navigation';
+import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button } from '$lib/components/ui/button';
 import * as Tabs from '$lib/components/ui/tabs';
-import * as AlertDialog from '$lib/components/ui/alert-dialog';
-import { goto } from '$app/navigation';
 import {
-  createScheduleDetailQuery,
-  createToggleScheduleStatusMutation,
-  createExecuteAutoAddMutation,
-  createDeleteScheduleMutation,
-} from '$lib/queries/schedules';
-
+  executeAutoAdd,
+  getById,
+  remove,
+  toggleStatus,
+} from '$lib/query/schedules';
+import type { PageData } from './$types';
 // Import extracted components
 import {
   OverviewTab,
+  ScheduleHeader,
+  SettingsTab,
+  SkipsTab,
   TimelineTab,
   TransactionsTab,
-  SettingsTab,
-  ScheduleHeader,
 } from './(components)';
-
 // Import data processing functions
 import { generateCumulativeBalanceData, generateFutureProjections } from './(data)';
 
 // Icons
-import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+import { headerActionsMode } from '$lib/stores/header-actions.svelte';
+import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import Activity from '@lucide/svelte/icons/activity';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
+import CalendarX from '@lucide/svelte/icons/calendar-x';
+import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 import Receipt from '@lucide/svelte/icons/receipt';
 import Settings from '@lucide/svelte/icons/settings';
+import { onDestroy } from 'svelte';
 
 let { data }: { data: PageData } = $props();
 
 // Create reactive query that updates when the data prop changes (route changes)
 const scheduleQuery = $derived(
-  data.schedule?.id ? createScheduleDetailQuery(data.schedule.id) : null
+  data.schedule?.id ? getById(data.schedule.id).options(() => ({
+    enabled: true,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })) : null
 );
-const toggleStatusMutation = createToggleScheduleStatusMutation();
-const executeAutoAddMutation = createExecuteAutoAddMutation();
-const deleteScheduleMutation = createDeleteScheduleMutation();
+const toggleStatusMutation = toggleStatus().options();
+const executeAutoAddMutation = executeAutoAdd().options();
+const deleteScheduleMutation = remove().options();
 
 // Use reactive schedule data when available, fallback to current data from route
 const schedule = $derived(scheduleQuery?.data ?? data.schedule);
@@ -62,6 +68,31 @@ const statistics = $derived.by(() => {
 // Tab state
 let activeTab = $state('overview');
 
+// Register tabs for header display
+const pageTabsContext = getPageTabsContext();
+const showTabsOnPage = $derived(headerActionsMode.tabsMode === 'off');
+
+// Keep tabs context updated reactively
+$effect(() => {
+  if (pageTabsContext) {
+    pageTabsContext.register({
+      tabs: [
+        { id: 'overview', label: 'Overview', icon: Activity },
+        { id: 'timeline', label: 'Timeline', icon: BarChart3 },
+        { id: 'transactions', label: 'Transactions', icon: Receipt },
+        { id: 'skips', label: 'Skips', icon: CalendarX },
+        { id: 'settings', label: 'Settings', icon: Settings },
+      ],
+      activeTab,
+      onTabChange: (value) => (activeTab = value),
+    });
+  }
+});
+
+onDestroy(() => {
+  pageTabsContext?.clear();
+});
+
 // Auto-add state
 let isExecutingAutoAdd = $state(false);
 let autoAddResult = $state<string | null>(null);
@@ -78,11 +109,11 @@ function editSchedule() {
   goto(`/schedules/${schedule.slug}/edit`);
 }
 
-async function toggleStatus() {
+async function handleToggleStatus() {
   toggleStatusMutation.mutate(schedule.id);
 }
 
-async function executeAutoAdd() {
+async function handleExecuteAutoAdd() {
   if (isExecutingAutoAdd) return;
 
   isExecutingAutoAdd = true;
@@ -146,29 +177,35 @@ function duplicateSchedule() {
     {schedule}
     {autoAddResult}
     {editSchedule}
-    {toggleStatus}
+    toggleStatus={handleToggleStatus}
     deleteSchedule={openDeleteDialog} />
 
   <!-- Tab Navigation -->
-  <Tabs.Root bind:value={activeTab}>
-    <Tabs.List class="grid w-full grid-cols-4">
-      <Tabs.Trigger value="overview" class="flex items-center gap-2">
-        <Activity class="h-4 w-4" />
-        Overview
-      </Tabs.Trigger>
-      <Tabs.Trigger value="timeline" class="flex items-center gap-2">
-        <BarChart3 class="h-4 w-4" />
-        Timeline
-      </Tabs.Trigger>
-      <Tabs.Trigger value="transactions" class="flex items-center gap-2">
-        <Receipt class="h-4 w-4" />
-        Transactions
-      </Tabs.Trigger>
-      <Tabs.Trigger value="settings" class="flex items-center gap-2">
-        <Settings class="h-4 w-4" />
-        Settings
-      </Tabs.Trigger>
-    </Tabs.List>
+  <Tabs.Root value={activeTab} onValueChange={(v) => (activeTab = v ?? 'overview')}>
+    {#if showTabsOnPage}
+      <Tabs.List class="grid w-full grid-cols-5">
+        <Tabs.Trigger value="overview" class="flex items-center gap-2">
+          <Activity class="h-4 w-4" />
+          Overview
+        </Tabs.Trigger>
+        <Tabs.Trigger value="timeline" class="flex items-center gap-2">
+          <BarChart3 class="h-4 w-4" />
+          Timeline
+        </Tabs.Trigger>
+        <Tabs.Trigger value="transactions" class="flex items-center gap-2">
+          <Receipt class="h-4 w-4" />
+          Transactions
+        </Tabs.Trigger>
+        <Tabs.Trigger value="skips" class="flex items-center gap-2">
+          <CalendarX class="h-4 w-4" />
+          Skips
+        </Tabs.Trigger>
+        <Tabs.Trigger value="settings" class="flex items-center gap-2">
+          <Settings class="h-4 w-4" />
+          Settings
+        </Tabs.Trigger>
+      </Tabs.List>
+    {/if}
 
     <!-- Overview Tab -->
     <Tabs.Content value="overview" class="mt-4 space-y-4">
@@ -185,15 +222,20 @@ function duplicateSchedule() {
       <TransactionsTab {schedule} />
     </Tabs.Content>
 
+    <!-- Skips Tab -->
+    <Tabs.Content value="skips" class="mt-4 space-y-4">
+      <SkipsTab {schedule} />
+    </Tabs.Content>
+
     <!-- Settings Tab -->
     <Tabs.Content value="settings" class="mt-4 space-y-4">
       <SettingsTab
         {schedule}
         {statistics}
         {isExecutingAutoAdd}
-        {executeAutoAdd}
+        executeAutoAdd={handleExecuteAutoAdd}
         {editSchedule}
-        {toggleStatus}
+        toggleStatus={handleToggleStatus}
         deleteSchedule={openDeleteDialog}
         {duplicateSchedule} />
     </Tabs.Content>

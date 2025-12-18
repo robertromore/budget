@@ -1,20 +1,19 @@
 <script lang="ts">
-import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
 import { Separator } from '$lib/components/ui/separator';
 import type { PageData } from '../$types';
-
 // Icons
-import Settings from '@lucide/svelte/icons/settings';
 import Activity from '@lucide/svelte/icons/activity';
-import SquarePen from '@lucide/svelte/icons/square-pen';
 import Pause from '@lucide/svelte/icons/pause';
 import Play from '@lucide/svelte/icons/play';
-import RotateCw from '@lucide/svelte/icons/rotate-cw';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
-import Trash from '@lucide/svelte/icons/trash';
 import Plus from '@lucide/svelte/icons/plus';
+import RotateCw from '@lucide/svelte/icons/rotate-cw';
+import Settings from '@lucide/svelte/icons/settings';
+import SquarePen from '@lucide/svelte/icons/square-pen';
+import Trash from '@lucide/svelte/icons/trash';
+import TrendingUp from '@lucide/svelte/icons/trending-up';
 
 let {
   schedule,

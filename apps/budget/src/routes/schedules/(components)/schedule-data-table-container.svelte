@@ -1,21 +1,13 @@
 <script lang="ts">
 import { browser } from '$app/environment';
-import type { Schedule } from '$lib/schema/schedules';
-import type { SchedulesState } from '$lib/states/entities/schedules.svelte';
-import type { ColumnDef } from '@tanstack/table-core';
-import ScheduleDataTable from './schedule-data-table.svelte';
 import { Skeleton } from '$lib/components/ui/skeleton';
+import type { Schedule } from '$lib/schema/schedules';
+import { columns } from '../(data)/columns.svelte';
+import ScheduleDataTable from './schedule-data-table.svelte';
 
 interface Props {
   isLoading: boolean;
   schedules: Schedule[];
-  schedulesState: SchedulesState;
-  columns: (
-    schedulesState: SchedulesState,
-    onView: (schedule: Schedule) => void,
-    onEdit: (schedule: Schedule) => void,
-    onDelete: (schedule: Schedule) => void
-  ) => ColumnDef<Schedule>[];
   onView: (schedule: Schedule) => void;
   onEdit: (schedule: Schedule) => void;
   onDelete: (schedule: Schedule) => void;
@@ -26,14 +18,15 @@ interface Props {
 let {
   isLoading = false,
   schedules = [],
-  schedulesState,
-  columns,
   onView,
   onEdit,
   onDelete,
   onBulkDelete,
   table = $bindable(),
 }: Props = $props();
+
+// Create columns with action handlers
+const tableColumns = $derived(columns({ onView, onEdit, onDelete }));
 </script>
 
 {#if isLoading}
@@ -42,16 +35,12 @@ let {
     <Skeleton class="h-10 w-full" />
     <Skeleton class="h-[500px] w-full" />
   </div>
-{:else if browser && schedulesState}
+{:else if browser}
   <!-- Show the data table -->
   <ScheduleDataTable
-    {columns}
+    columns={tableColumns}
     {schedules}
-    {onView}
-    {onEdit}
-    {onDelete}
     {onBulkDelete}
-    {schedulesState}
     bind:table />
 {:else}
   <!-- Fallback loading state -->

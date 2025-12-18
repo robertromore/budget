@@ -1,13 +1,13 @@
 <script lang="ts">
-import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
-import * as Table from '$lib/components/ui/table';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import * as Table from '$lib/components/ui/table';
 import TransactionWizard from '$lib/components/wizard/transaction-wizard.svelte';
-import { currencyFormatter } from '$lib/utils/formatters';
 import { createTransaction } from '$lib/query/transactions';
 import { CategoriesState, PayeesState } from '$lib/states/entities';
+import { currencyFormatter } from '$lib/utils/formatters';
 // Icons
 import Receipt from '@lucide/svelte/icons/receipt';
 
@@ -21,9 +21,9 @@ interface ScheduleWithTransactions {
     id: number;
     date: string;
     amount: number;
-    status: string;
-    payee: { id: number; name: string } | null;
-    category: { id: number; name: string } | null;
+    status: string | null;
+    payee: { id: number; name: string | null } | null;
+    category: { id: number; name: string | null } | null;
   }>;
 }
 

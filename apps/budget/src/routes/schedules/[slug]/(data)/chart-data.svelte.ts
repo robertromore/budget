@@ -1,6 +1,6 @@
+import { nextDaily, nextMonthly, nextWeekly, nextYearly } from "$lib/utils/date-frequency";
+import { currentDate, parseISOString } from "$lib/utils/dates";
 import type { PageData } from "../$types";
-import { nextDaily, nextWeekly, nextMonthly, nextYearly } from "$lib/utils/date-frequency";
-import { parseISOString, currentDate } from "$lib/utils/dates";
 
 export interface ChartDataPoint {
   date: string;
@@ -173,26 +173,47 @@ export function generateFutureProjections(schedule: PageData["schedule"]): Proje
     case "daily":
       futureDates = nextDaily(startDateValue, futureLimit, interval, 100);
       break;
-    case "weekly":
-      futureDates = nextWeekly(
-        startDateValue,
-        futureLimit,
-        interval,
-        schedule.scheduleDate.week_days || [],
-        100
-      );
+    case "weekly": {
+      const weekDays = (schedule.scheduleDate.week_days || []) as number[];
+      futureDates = nextWeekly(startDateValue, futureLimit, interval, weekDays, 100);
       break;
-    case "monthly":
-      futureDates = nextMonthly(
-        startDateValue,
-        futureLimit,
-        interval,
-        schedule.scheduleDate.days || null,
-        schedule.scheduleDate.weeks || [],
-        schedule.scheduleDate.weeks_days || [],
-        100
-      );
+    }
+    case "monthly": {
+      // Determine which pattern to use (matching model logic)
+      const scheduleDate = schedule.scheduleDate;
+      const days = scheduleDate.days as number | number[] | null;
+      const weeks = (scheduleDate.weeks || []) as number[];
+      const weeksDays = (scheduleDate.weeks_days || []) as number[];
+      const onDay =
+        scheduleDate.on &&
+        scheduleDate.on_type === "day" &&
+        days &&
+        Array.isArray(days) &&
+        days.length > 0;
+      const onThe =
+        scheduleDate.on &&
+        scheduleDate.on_type === "the" &&
+        weeks.length &&
+        weeksDays.length;
+
+      if (onDay) {
+        futureDates = nextMonthly(startDateValue, futureLimit, interval, days, [], [], 100);
+      } else if (onThe) {
+        futureDates = nextMonthly(startDateValue, futureLimit, interval, null, weeks, weeksDays, 100);
+      } else {
+        // Fallback: same day as start date
+        futureDates = nextMonthly(
+          startDateValue,
+          futureLimit,
+          interval,
+          startDateValue.day,
+          [],
+          [],
+          100
+        );
+      }
       break;
+    }
     case "yearly":
       futureDates = nextYearly(startDateValue, startDateValue, futureLimit, interval, 20);
       break;

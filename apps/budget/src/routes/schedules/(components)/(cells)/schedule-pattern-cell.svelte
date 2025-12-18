@@ -1,7 +1,7 @@
 <script lang="ts">
+import type { Schedule } from '$lib/schema/schedules';
 import { recurringFormatter } from '$lib/utils/formatters';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
-import type { Schedule } from '$lib/schema/schedules';
 
 interface Props {
   schedule: Schedule;

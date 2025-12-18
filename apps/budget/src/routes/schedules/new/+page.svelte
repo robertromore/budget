@@ -1,11 +1,15 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { ManageScheduleForm } from '$lib/components/forms';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import type { Schedule } from '$lib/schema/schedules';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import Calendar from '@lucide/svelte/icons/calendar';
-import { ManageScheduleForm } from '$lib/components/forms';
-import type { Schedule } from '$lib/schema/schedules';
+
+// Get returnTo parameter from URL
+const returnTo = $derived(page.url.searchParams.get('returnTo') || '/schedules');
 
 const handleSave = (schedule?: Schedule) => {
   if (schedule?.slug) {
@@ -14,8 +18,8 @@ const handleSave = (schedule?: Schedule) => {
       goto(`/schedules/${schedule.slug}`, { replaceState: true });
     }, 100);
   } else {
-    // Navigate back to schedules list
-    goto('/schedules');
+    // Navigate back to where the user came from
+    goto(returnTo);
   }
 };
 </script>
@@ -29,9 +33,9 @@ const handleSave = (schedule?: Schedule) => {
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="sm" href="/schedules" class="p-2">
+      <Button variant="ghost" size="sm" href={returnTo} class="p-2">
         <ArrowLeft class="h-4 w-4" />
-        <span class="sr-only">Back to Schedules</span>
+        <span class="sr-only">Back</span>
       </Button>
       <div>
         <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight">

@@ -1,8 +1,8 @@
-import type { PageServerLoad } from "./$types";
-import { error } from "@sveltejs/kit";
-import { db } from "$lib/server/db";
-import { eq, isNull } from "drizzle-orm";
 import { schedules } from "$lib/schema";
+import { db } from "$lib/server/db";
+import { error } from "@sveltejs/kit";
+import { eq } from "drizzle-orm";
+import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params }) => {
   // Load schedule by slug with all related data
@@ -11,6 +11,7 @@ export const load: PageServerLoad = async ({ params }) => {
     with: {
       account: true,
       payee: true,
+      category: true,
       scheduleDate: true,
       transactions: {
         where: (transactions, { isNull }) => isNull(transactions.deletedAt),

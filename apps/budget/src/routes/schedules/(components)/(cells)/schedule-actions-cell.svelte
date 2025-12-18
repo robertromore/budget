@@ -1,9 +1,9 @@
 <script lang="ts">
 import { Button } from '$lib/components/ui/button';
+import type { Schedule } from '$lib/schema/schedules';
 import Eye from '@lucide/svelte/icons/eye';
 import Pencil from '@lucide/svelte/icons/pencil';
 import Trash2 from '@lucide/svelte/icons/trash-2';
-import type { Schedule } from '$lib/schema/schedules';
 
 interface Props {
   schedule: Schedule;

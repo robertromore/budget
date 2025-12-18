@@ -1,16 +1,15 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
 import type { PageData } from '../$types';
 import { formatAmount, formatRecurringPattern, getStatusVariant } from '../(data)';
-
 // Icons
 import Activity from '@lucide/svelte/icons/activity';
+import Pause from '@lucide/svelte/icons/pause';
+import Play from '@lucide/svelte/icons/play';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash from '@lucide/svelte/icons/trash';
-import Pause from '@lucide/svelte/icons/pause';
-import Play from '@lucide/svelte/icons/play';
 let {
   schedule,
   autoAddResult,

@@ -1,20 +1,18 @@
 <script lang="ts">
 import { EntitySearchResults } from '$lib/components/shared/search';
-import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
 import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
 import { Separator } from '$lib/components/ui/separator';
+import type { Schedule } from '$lib/schema/schedules';
 import { currencyFormatter, recurringFormatter } from '$lib/utils/formatters';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Clock from '@lucide/svelte/icons/clock';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Eye from '@lucide/svelte/icons/eye';
+import RotateCw from '@lucide/svelte/icons/rotate-cw';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash from '@lucide/svelte/icons/trash';
-import RotateCw from '@lucide/svelte/icons/rotate-cw';
-import Eye from '@lucide/svelte/icons/eye';
-import type { Schedule } from '$lib/schema/schedules';
-import type { SchedulesState } from '$lib/states/entities/schedules.svelte';
-import type { ColumnDef } from '@tanstack/table-core';
 import ScheduleDataTableContainer from '../schedule-data-table-container.svelte';
 
 export type ViewMode = 'list' | 'grid';
@@ -24,13 +22,6 @@ interface Props {
   isLoading: boolean;
   searchQuery: string;
   viewMode?: ViewMode;
-  schedulesState: SchedulesState;
-  columns: (
-    schedulesState: SchedulesState,
-    onView: (schedule: Schedule) => void,
-    onEdit: (schedule: Schedule) => void,
-    onDelete: (schedule: Schedule) => void
-  ) => ColumnDef<Schedule>[];
   onView: (schedule: Schedule) => void;
   onEdit: (schedule: Schedule) => void;
   onDelete: (schedule: Schedule) => void;
@@ -43,8 +34,6 @@ let {
   isLoading,
   searchQuery,
   viewMode = 'grid',
-  schedulesState,
-  columns,
   onView,
   onEdit,
   onDelete,
@@ -179,8 +168,6 @@ function getStatusVariant(status: string | null) {
     <ScheduleDataTableContainer
       {isLoading}
       {schedules}
-      {schedulesState}
-      {columns}
       {onView}
       {onEdit}
       {onDelete}

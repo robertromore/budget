@@ -1,11 +1,10 @@
 <script lang="ts">
-import * as Card from '$lib/components/ui/card';
 import { Badge } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
+import type { ChartConfig } from '$lib/components/ui/chart';
 import ChartPlaceholder from '$lib/components/ui/chart-placeholder.svelte';
-import { currencyFormatter } from '$lib/utils/formatters';
 import type { PageData } from '../$types';
 import { formatAmount } from '../(data)';
-
 // Icons
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 
@@ -29,7 +28,7 @@ const timelineChartConfig = {
     label: 'Projected',
     color: 'hsl(var(--chart-2))',
   },
-} satisfies Chart.ChartConfig;
+} satisfies ChartConfig;
 </script>
 
 {#if schedule}
