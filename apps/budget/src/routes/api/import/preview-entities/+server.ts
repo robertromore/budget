@@ -1,17 +1,17 @@
-import { json } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
-import { db } from "$lib/server/db";
-import { payees as payeeTable } from "$lib/schema/payees";
 import { categories as categoryTable } from "$lib/schema/categories";
-import type {
-  ImportRow,
-  PayeePreview,
-  CategoryPreview,
-  ImportPreviewData,
-} from "$lib/types/import";
-import { isNull } from "drizzle-orm";
+import { payees as payeeTable } from "$lib/schema/payees";
+import { db } from "$lib/server/db";
 import { CategoryMatcher } from "$lib/server/import/matchers/category-matcher";
 import { PayeeMatcher } from "$lib/server/import/matchers/payee-matcher";
+import type {
+  CategoryPreview,
+  ImportPreviewData,
+  ImportRow,
+  PayeePreview,
+} from "$lib/types/import";
+import { json } from "@sveltejs/kit";
+import { isNull } from "drizzle-orm";
+import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ request }) => {
   try {

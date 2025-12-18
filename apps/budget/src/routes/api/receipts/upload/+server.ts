@@ -1,9 +1,9 @@
-import { json, error } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
-import { ReceiptService } from "$lib/server/domains/medical-expenses";
 import { ALLOWED_RECEIPT_MIMES, MAX_RECEIPT_SIZE } from "$lib/schema/expense-receipts";
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
+import { error, json } from "@sveltejs/kit";
+import type { RequestHandler } from "./$types";
 
-const receiptService = new ReceiptService();
+const receiptService = serviceFactory.getReceiptService();
 
 export const POST: RequestHandler = async ({ request }) => {
   try {

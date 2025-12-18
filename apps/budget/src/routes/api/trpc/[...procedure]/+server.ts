@@ -1,7 +1,7 @@
-import type { RequestHandler } from "./$types";
-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { router } from "$lib/trpc/router";
 import { createContext } from "$lib/trpc/context";
+import { router } from "$lib/trpc/router";
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import type { RequestHandler } from "./$types";
 
 const handler: RequestHandler = (event) => {
   return fetchRequestHandler({

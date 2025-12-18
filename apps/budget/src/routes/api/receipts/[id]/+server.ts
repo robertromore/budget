@@ -1,10 +1,10 @@
+import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { error } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
-import { ReceiptService } from "$lib/server/domains/medical-expenses";
-import { readFile } from "fs/promises";
 import { existsSync } from "fs";
+import { readFile } from "fs/promises";
+import type { RequestHandler } from "./$types";
 
-const receiptService = new ReceiptService();
+const receiptService = serviceFactory.getReceiptService();
 
 export const GET: RequestHandler = async ({ params }) => {
   try {
@@ -37,7 +37,7 @@ export const GET: RequestHandler = async ({ params }) => {
     const contentType = receipt.mimeType || "application/octet-stream";
 
     // Return file with appropriate headers
-    return new Response(fileBuffer, {
+    return new Response(new Uint8Array(fileBuffer), {
       status: 200,
       headers: {
         "Content-Type": contentType,
