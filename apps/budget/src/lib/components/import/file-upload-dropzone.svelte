@@ -2,6 +2,7 @@
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
 import { cn } from '$lib/utils';
+import { formatFileSize } from '$lib/utils/formatters';
 import CircleAlert from '@lucide/svelte/icons/circle-alert';
 import FileText from '@lucide/svelte/icons/file-text';
 import Upload from '@lucide/svelte/icons/upload';
@@ -31,16 +32,6 @@ let isDragging = $state(false);
 let selectedFile = $state<File | null>(null);
 let error = $state<string | null>(null);
 let fileInputRef = $state<HTMLInputElement | null>(null);
-
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-}
 
 function validateFile(file: File): { valid: boolean; error?: string } {
   // Check file type

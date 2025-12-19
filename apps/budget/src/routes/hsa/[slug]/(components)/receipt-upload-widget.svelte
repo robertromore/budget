@@ -7,6 +7,7 @@ import { ResponsiveSheet } from '$lib/components/ui/responsive-sheet';
 import * as Select from '$lib/components/ui/select';
 import { rpc } from '$lib/query';
 import { receiptTypeEnum, type ReceiptType } from '$lib/schema';
+import { formatFileSize } from '$lib/utils/formatters';
 import Download from '@lucide/svelte/icons/download';
 import FileText from '@lucide/svelte/icons/file-text';
 import Image from '@lucide/svelte/icons/image';
@@ -139,12 +140,6 @@ async function handleDelete(receiptId: number) {
   } catch (err: any) {
     console.error('Failed to delete receipt:', err);
   }
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 function getFileIcon(mimeType: string) {

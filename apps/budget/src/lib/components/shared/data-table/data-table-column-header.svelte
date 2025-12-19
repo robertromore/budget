@@ -20,6 +20,8 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 
 let { column, table, class: className, title, ...restProps }: WithoutChildren<Props> = $props();
 
+const sortState = $derived(column.getIsSorted());
+
 const specialColumns = ['select-col', 'expand-contract-col', 'actions', 'transfer'];
 
 function getNormalizedColumnOrder<T>(table: Table<T>) {
@@ -163,9 +165,9 @@ function moveRight() {
               {title}
             </span>
             {#if column.getCanSort()}
-              {#if column.getIsSorted() === 'desc'}
+              {#if sortState === 'desc'}
                 <ArrowDown class="ml-2 size-4" />
-              {:else if column.getIsSorted() === 'asc'}
+              {:else if sortState === 'asc'}
                 <ArrowUp class="ml-2 size-4" />
               {:else}
                 <ArrowUpDown class="ml-2 size-4" />

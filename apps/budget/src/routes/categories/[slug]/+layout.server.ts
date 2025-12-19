@@ -1,9 +1,9 @@
 import { createContext } from "$lib/trpc/context";
 import { createCaller } from "$lib/trpc/router";
-import type { PageServerLoad } from "./$types";
+import type { LayoutServerLoad } from "./$types";
 import { error } from "@sveltejs/kit";
 
-export const load: PageServerLoad = async (event) => {
+export const load: LayoutServerLoad = async (event) => {
   const { params } = event;
   const slug = params.slug;
 

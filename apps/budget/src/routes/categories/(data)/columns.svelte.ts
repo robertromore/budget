@@ -12,7 +12,7 @@ import CategoryGroupCell from "../(components)/(cells)/category-group-cell.svelt
 import CategoryNameCell from "../(components)/(cells)/category-name-cell.svelte";
 import CategoryNotesCell from "../(components)/(cells)/category-notes-cell.svelte";
 import CategoryPriorityCell from "../(components)/(cells)/category-priority-cell.svelte";
-import CategoryStatusCell from "../(components)/(cells)/category-status-cell.svelte";
+import { EntityStatusCell as CategoryStatusCell } from "$lib/components/shared/data-table/cells";
 import CategoryTaxDeductibleCell from "../(components)/(cells)/category-tax-deductible-cell.svelte";
 import CategoryTypeCell from "../(components)/(cells)/category-type-cell.svelte";
 import TrendingUp from "@lucide/svelte/icons/trending-up";

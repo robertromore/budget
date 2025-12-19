@@ -5,8 +5,12 @@
  * and normalization during the import process.
  */
 
+import { formatFileSize } from "$lib/utils/formatters";
 import { logger } from "$lib/server/shared/logging";
 import { ValidationError } from "./errors";
+
+// Re-export formatFileSize for backward compatibility
+export { formatFileSize };
 
 /**
  * Normalize header names from various CSV formats
@@ -306,18 +310,6 @@ export function validateFileType(fileName: string, acceptedTypes: string[]): boo
   return acceptedTypes.includes(extension);
 }
 
-/**
- * Format file size for display
- */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-}
 
 /**
  * Detect delimiter in CSV text
