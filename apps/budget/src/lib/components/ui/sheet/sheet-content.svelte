@@ -31,20 +31,25 @@ let {
   side = 'right',
   portalProps,
   children,
+  overlayClass,
+  interactOutsideBehavior,
   ...restProps
 }: WithoutChildrenOrChild<SheetPrimitive.ContentProps> & {
   portalProps?: SheetPrimitive.PortalProps;
   side?: Side;
   children: Snippet;
+  overlayClass?: string;
+  interactOutsideBehavior?: 'close' | 'ignore';
 } = $props();
 </script>
 
 <SheetPrimitive.Portal {...portalProps}>
-  <SheetOverlay />
+  <SheetOverlay class={overlayClass} />
   <SheetPrimitive.Content
     bind:ref
     data-slot="sheet-content"
     class={cn(sheetVariants({ side }), className)}
+    {interactOutsideBehavior}
     {...restProps}>
     {@render children?.()}
     <SheetPrimitive.Close
