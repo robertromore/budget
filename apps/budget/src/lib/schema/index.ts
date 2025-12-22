@@ -5,6 +5,7 @@ export * from "./categories";
 export * from "./category-groups";
 export * from "./detected-patterns";
 export * from "./import-profiles";
+export * from "./payee-ai-enhancements";
 export * from "./payee-categories";
 export * from "./payee-category-corrections";
 export * from "./payees";
@@ -20,6 +21,9 @@ export * from "./workspaces";
 export * from "./expense-receipts";
 export * from "./hsa-claims";
 export * from "./medical-expenses";
+
+// ML-related schemas
+export * from "./ml-models";
 
 // Import table definitions for HSA relations
 import { relations } from "drizzle-orm";

@@ -28,14 +28,14 @@
 	<title>Advanced - Settings</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-6" data-help-id="settings-advanced" data-help-title="Advanced Settings">
 	<div>
 		<h2 class="text-xl font-semibold">Advanced</h2>
 		<p class="text-muted-foreground text-sm">Advanced settings and data management</p>
 	</div>
 
 	<!-- Danger Zone -->
-	<Card.Root class="border-destructive/50">
+	<Card.Root class="border-destructive/50" data-help-id="advanced-delete-data" data-help-title="Delete All Data">
 		<Card.Header>
 			<Card.Title class="text-destructive flex items-center gap-2">
 				<TriangleAlert class="h-5 w-5" />

@@ -540,6 +540,7 @@ export class PayeeRepository extends BaseRepository<
         alertThreshold: payees.alertThreshold,
         isSeasonal: payees.isSeasonal,
         subscriptionInfo: payees.subscriptionInfo,
+        aiPreferences: payees.aiPreferences,
         tags: payees.tags,
         preferredPaymentMethods: payees.preferredPaymentMethods,
         merchantCategoryCode: payees.merchantCategoryCode,

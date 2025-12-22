@@ -30,11 +30,11 @@ const deleteAccount = (id: number) => {
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex items-center justify-between">
+  <div class="flex items-center justify-between" data-help-id="accounts-page-header" data-help-title="Accounts Page">
     <h1 class="text-2xl font-bold tracking-tight">Accounts</h1>
     <div class="flex items-center gap-2">
       <SeedDefaultAccountsButton />
-      <Button href="/accounts/new">
+      <Button href="/accounts/new" data-help-id="add-account-button" data-help-title="Add Account">
         <Plus class="mr-2 h-4 w-4" />
         Add Account
       </Button>
@@ -64,7 +64,7 @@ const deleteAccount = (id: number) => {
     </div>
   {:else}
     <!-- Accounts Grid -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" data-help-id="accounts-grid" data-help-title="Accounts Grid">
       {#each accountsArray as { id, slug, name, balance, notes, accountIcon, accountColor, accountType, institution }}
         <Card.Root
           class="border-l-4"

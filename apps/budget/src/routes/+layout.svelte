@@ -6,6 +6,8 @@ import DeleteCategoryDialog from '$lib/components/dialogs/delete-category-dialog
 import DeletePayeeDialog from '$lib/components/dialogs/delete-payee-dialog.svelte';
 import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog.svelte';
 import SkipOccurrenceDialog from '$lib/components/dialogs/skip-occurrence-dialog.svelte';
+import { HelpButton, HelpOverlay } from '$lib/components/help';
+import { IntelligenceInputButton, IntelligenceInputOverlay } from '$lib/components/intelligence-input';
 import AppSidebar from '$lib/components/layout/app-sidebar.svelte';
 import FontSizeToggle from '$lib/components/layout/font-size-toggle.svelte';
 import HeaderPageActions from '$lib/components/layout/header-page-actions.svelte';
@@ -142,6 +144,8 @@ onMount(() => {
               <ThemeToggle />
               <FontSizeToggle />
               <ThemeButton />
+              <IntelligenceInputButton />
+              <HelpButton />
               <SettingsButton />
               <HeaderPageActions />
               <HeaderPageTabs />
@@ -157,3 +161,9 @@ onMount(() => {
     </div>
   </div>
 </NuqsAdapter>
+
+<!-- Help Overlay - placed outside NuqsAdapter for proper z-index stacking -->
+<HelpOverlay />
+
+<!-- Intelligence Input Overlay - placed outside NuqsAdapter for proper z-index stacking -->
+<IntelligenceInputOverlay />

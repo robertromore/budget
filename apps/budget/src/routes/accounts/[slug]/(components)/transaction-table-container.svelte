@@ -44,19 +44,21 @@ let {
   <TransactionSkeleton rows={10} />
 {:else if browser && categoriesState && payeesState}
   <!-- Show the data table (with filtering controls) regardless of data presence -->
-  <DataTable
-    columns={columns(
-      categoriesState,
-      payeesState,
-      updateTransactionData,
-      onScheduleClick,
-      budgetCount
-    )}
-    transactions={formattedTransactions}
-    {views}
-    {budgetCount}
-    {onBulkDelete}
-    bind:table />
+  <div data-help-id="transaction-table" data-help-title="Transaction Table">
+    <DataTable
+      columns={columns(
+        categoriesState,
+        payeesState,
+        updateTransactionData,
+        onScheduleClick,
+        budgetCount
+      )}
+      transactions={formattedTransactions}
+      {views}
+      {budgetCount}
+      {onBulkDelete}
+      bind:table />
+  </div>
 {:else}
   <!-- Fallback loading state: Show skeleton if states aren't ready -->
   <TransactionSkeleton rows={10} />

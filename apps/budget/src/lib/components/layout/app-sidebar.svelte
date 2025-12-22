@@ -13,6 +13,7 @@ import {
   getBalanceColorClass,
 } from '$lib/utils/account-display';
 import { currencyFormatter } from '$lib/utils/formatters';
+import Brain from '@lucide/svelte/icons/brain';
 import CalendarSync from '@lucide/svelte/icons/calendar-sync';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Download from '@lucide/svelte/icons/download';
@@ -34,7 +35,7 @@ const _deleteAccountDialog = $derived(deleteAccountDialog);
 const _deleteAccountId = $derived(deleteAccountId);
 </script>
 
-<Sidebar.Root>
+<Sidebar.Root data-help-id="sidebar" data-help-title="Sidebar Navigation">
   <Sidebar.Header class="border-sidebar-border h-16 border-b">
     <WorkspaceSwitcher />
   </Sidebar.Header>
@@ -102,11 +103,21 @@ const _deleteAccountId = $derived(deleteAccountId);
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({ props })}
+                <a href="/intelligence" {...props} class="flex items-center gap-3">
+                  <Brain class="h-4 w-4"></Brain>
+                  <span class="font-medium">Intelligence</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
         </Sidebar.Menu>
       </Sidebar.GroupContent>
     </Sidebar.Group>
 
-    <Sidebar.Group>
+    <Sidebar.Group data-help-id="accounts-list" data-help-title="Accounts List">
       <Sidebar.GroupLabel>
         <div class="flex w-full flex-col">
           <a href="/accounts">Accounts</a>

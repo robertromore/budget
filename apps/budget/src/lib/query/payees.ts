@@ -3,16 +3,16 @@ import { trpc } from "$lib/trpc/client";
 import { cachePatterns, queryClient, queryPresets } from "./_client";
 import { createQueryKeys, defineMutation, defineQuery } from "./_factory";
 import type {
+  DuplicateDetectionResult,
   DuplicateGroup,
-  OperationHistory,
   PayeeAnalytics,
   PayeeIntelligence,
   PayeeStats,
-  PayeeSuggestions,
+  PayeeSuggestions
 } from "./payees-types";
 
 // Re-export types for consumers
-export type { DuplicateGroup } from "./payees-types";
+export type { DuplicateDetectionResult, DuplicateGroup, PayeeSuggestions } from "./payees-types";
 
 export const payeeKeys = createQueryKeys("payees", {
   lists: () => ["payees", "list"] as const,
@@ -683,15 +683,17 @@ export const bulkCleanup = () =>
 export const getDuplicates = (
   similarityThreshold = 0.8,
   includeInactive = false,
-  groupingStrategy: "name" | "contact" | "transaction_pattern" | "comprehensive" = "comprehensive"
+  groupingStrategy: "name" | "contact" | "transaction_pattern" | "comprehensive" = "comprehensive",
+  detectionMethod: "simple" | "ml" | "llm" | "llm_direct" = "ml"
 ) =>
-  defineQuery<DuplicateGroup[]>({
-    queryKey: ["payees", "duplicates", similarityThreshold, includeInactive, groupingStrategy],
+  defineQuery<DuplicateDetectionResult>({
+    queryKey: ["payees", "duplicates", similarityThreshold, includeInactive, groupingStrategy, detectionMethod],
     queryFn: () =>
       trpc().payeeRoutes.getDuplicates.query({
         similarityThreshold,
         includeInactive,
         groupingStrategy,
+        detectionMethod,
       }),
     options: {
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -772,6 +774,101 @@ export const undoOperation = () =>
         queryClient.invalidateQueries({ queryKey: ["payees", "operation-history"] }),
       ]);
     },
+  });
+
+// AI-powered name enhancement
+export const enhancePayeeName = () =>
+  defineMutation<
+    { name: string; rawDescription?: string },
+    {
+      success: boolean;
+      enhanced: string | null;
+      original: string;
+      message?: string;
+      provider?: string | null;
+    }
+  >({
+    mutationFn: ({ name, rawDescription }) =>
+      trpc().payeeRoutes.enhanceName.mutate({ name, rawDescription }),
+  });
+
+// Infer all payee details using AI
+export interface PayeeDetailsSuggestions {
+  enhancedName: string | null;
+  payeeType: PayeeType | null;
+  paymentFrequency: PaymentFrequency | null;
+  suggestedCategoryId: number | null;
+  suggestedCategoryName: string | null;
+  taxRelevant: boolean | null;
+  isSeasonal: boolean | null;
+  confidence: number | null;
+  // Business tab fields
+  suggestedMCC: string | null;
+  suggestedTags: string[] | null;
+  suggestedPaymentMethods: string[] | null;
+  // Contact tab fields
+  suggestedWebsite: string | null;
+}
+
+export const inferPayeeDetails = () =>
+  defineMutation<
+    { name: string; rawDescription?: string; currentCategoryId?: number },
+    {
+      success: boolean;
+      original: string;
+      provider?: string | null;
+      message?: string;
+      suggestions?: PayeeDetailsSuggestions;
+    }
+  >({
+    mutationFn: ({ name, rawDescription, currentCategoryId }) =>
+      trpc().payeeRoutes.inferPayeeDetails.mutate({ name, rawDescription, currentCategoryId }),
+    successMessage: "AI analysis complete",
+    errorMessage: "Failed to analyze payee",
+  });
+
+// Explain ML insights using LLM
+export const explainInsights = () =>
+  defineMutation<
+    { id: number },
+    {
+      success: boolean;
+      payeeId?: number;
+      payeeName?: string;
+      provider?: string | null;
+      explanation?: string;
+      message?: string;
+    }
+  >({
+    mutationFn: ({ id }) =>
+      trpc().payeeRoutes.explainInsights.mutate({ id }),
+    successMessage: "AI explanation generated",
+    errorMessage: "Failed to generate explanation",
+  });
+
+// Contact enrichment using web search + LLM
+export interface ContactEnrichmentSuggestions {
+  website: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+}
+
+export const enrichPayeeContact = () =>
+  defineMutation<
+    { name: string },
+    {
+      success: boolean;
+      suggestions?: ContactEnrichmentSuggestions;
+      message?: string;
+      provider?: string | null;
+      searchProvider?: string | null;
+    }
+  >({
+    mutationFn: ({ name }) =>
+      trpc().payeeRoutes.enrichContact.mutate({ name }),
+    successMessage: "Contact information enriched",
+    errorMessage: "Failed to enrich contact",
   });
 
 // export const getOperationHistory = (

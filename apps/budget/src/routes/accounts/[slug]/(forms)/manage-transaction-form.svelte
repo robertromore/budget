@@ -1,11 +1,13 @@
 <script lang="ts">
 import { page } from '$app/state';
 import { DateInput, EntityInput, NumericInput } from '$lib/components/input';
+import { TransactionAnomalyIndicator } from '$lib/components/ml';
 import { AdvancedPayeeSelector } from '$lib/components/payees/advanced-payee-selector';
 import { Badge } from '$lib/components/ui/badge';
 import * as Form from '$lib/components/ui/form';
 import { Textarea } from '$lib/components/ui/textarea';
 import { getBudgetSuggestions, type BudgetSuggestion } from '$lib/query/budgets';
+import { ML } from '$lib/query/ml';
 import { type Transaction } from '$lib/schema';
 import { superformInsertTransactionSchema } from '$lib/schema/superforms';
 import type { EditableDateItem, EditableEntityItem } from '$lib/types';
@@ -98,6 +100,33 @@ $effect(() => {
   }
 });
 
+// Anomaly analysis query - analyze transaction as it changes
+// Only run when we have an amount and date
+const anomalyAnalysisQuery = $derived.by(() => {
+  if (!amount || Math.abs(amount) < 0.01) return null;
+  const dateStr = toISOString(dateValue);
+  if (!dateStr) return null;
+
+  return ML.analyzeTransaction({
+    amount,
+    date: dateStr,
+    description: payee.name || '',
+    accountId,
+    payeeId: payee.id || undefined,
+    categoryId: category.id || undefined,
+  }).options();
+});
+
+// Extract anomaly data
+const anomalyData = $derived.by(() => {
+  if (!anomalyAnalysisQuery) return null;
+  const data = anomalyAnalysisQuery.data;
+  if (!data?.anomalyScore) return null;
+  // Only show for medium risk or higher
+  if (data.anomalyScore.overallScore < 0.3) return null;
+  return data.anomalyScore;
+});
+
 $effect(() => {
   $formData.date = toISOString(dateValue);
   $formData.amount = amount;
@@ -121,7 +150,17 @@ $effect(() => {
   <Form.Field {form} name="amount">
     <Form.Control>
       {#snippet children({ props })}
-        <Form.Label>Amount</Form.Label>
+        <div class="flex items-center gap-2">
+          <Form.Label>Amount</Form.Label>
+          {#if anomalyData}
+            <TransactionAnomalyIndicator
+              score={anomalyData.overallScore}
+              riskLevel={anomalyData.riskLevel}
+              explanation={anomalyData.explanation}
+              compact
+            />
+          {/if}
+        </div>
         <NumericInput {...props} bind:value={amount} buttonClass="w-full" />
         <Form.FieldErrors />
         <input hidden bind:value={$formData.amount} name={props.name} />

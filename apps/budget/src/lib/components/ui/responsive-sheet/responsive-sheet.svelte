@@ -19,6 +19,10 @@ interface Props {
   defaultWidth?: number;
   minWidth?: number;
   maxWidth?: number;
+  /** Hide the overlay backdrop (useful when sheet appears alongside another modal) */
+  hideOverlay?: boolean;
+  /** Control behavior when clicking outside the sheet */
+  interactOutsideBehavior?: 'close' | 'ignore';
 }
 
 let {
@@ -36,6 +40,8 @@ let {
   defaultWidth = 640,
   minWidth = 400,
   maxWidth = 1200,
+  hideOverlay = false,
+  interactOutsideBehavior,
 }: Props = $props();
 
 const isDesktop = new MediaQuery('(min-width: 768px)');
@@ -99,7 +105,9 @@ $effect(() => {
     <Sheet.Content
       {side}
       class="flex flex-col {className || ''}"
-      style="width: {sheetWidth}px; max-width: {sheetWidth}px;">
+      style="width: {sheetWidth}px; max-width: {sheetWidth}px;"
+      overlayClass={hideOverlay ? 'hidden' : undefined}
+      {interactOutsideBehavior}>
       {#if resizable}
         <button
           type="button"

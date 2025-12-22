@@ -3,6 +3,7 @@ import { goto } from '$app/navigation';
 import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import { ModalHelpButton, ModalHelpProvider } from '$lib/components/help';
 import { Input } from '$lib/components/ui/input';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
 import * as Tabs from '$lib/components/ui/tabs';
@@ -107,93 +108,121 @@ function formatType(type: string) {
   {/snippet}
 
   {#snippet content()}
-    <div class="space-y-4">
-      <!-- Search -->
-      <div class="relative">
-        <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <Input
-          type="search"
-          placeholder="Search templates..."
-          bind:value={searchTerm}
-          class="pl-9" />
-      </div>
-
-      <!-- Category Tabs -->
-      <Tabs.Root bind:value={selectedCategory}>
-        <Tabs.List class="grid w-full grid-cols-5">
-          <Tabs.Trigger value="all">All</Tabs.Trigger>
-          {#each categories as category}
-            <Tabs.Trigger value={category}>
-              {TEMPLATE_CATEGORY_LABELS[category]}
-            </Tabs.Trigger>
-          {/each}
-        </Tabs.List>
-      </Tabs.Root>
-
-      <!-- Template Grid -->
-      {#if filteredTemplates.length === 0}
-        <div class="flex flex-col items-center justify-center py-12 text-center">
-          <p class="text-muted-foreground">No templates found</p>
-          <p class="text-muted-foreground mt-2 text-sm">
-            {searchTerm ? 'Try a different search term' : 'No templates available yet'}
-          </p>
+    <!-- Help button positioned next to close button -->
+    <ModalHelpButton modalId="budget-template-picker" class="absolute top-4 right-12" />
+    <ModalHelpProvider modalId="budget-template-picker">
+      <div class="space-y-4">
+        <!-- Search -->
+        <div
+          class="relative"
+          data-help-id="template-search"
+          data-help-title="Template Search"
+          data-help-order="1"
+        >
+          <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <Input
+            type="search"
+            placeholder="Search templates..."
+            bind:value={searchTerm}
+            class="pl-9" />
         </div>
-      {:else}
-        <div class="space-y-3">
-          {#each filteredTemplates as template (template.id)}
-            <Card.Root
-              class="hover:border-primary cursor-pointer transition-all hover:shadow-md"
-              onclick={() => selectTemplate(template)}
-              role="button"
-              tabindex={0}
-              onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  selectTemplate(template);
-                }
-              }}>
-              {@const IconComponent = getIconComponent(template.icon)}
-              <Card.Header class="pb-3">
-                <div class="flex items-start justify-between gap-2">
-                  <div class="bg-primary/10 text-primary rounded-lg p-2">
-                    <IconComponent class="h-6 w-6" aria-hidden="true" />
+
+        <!-- Category Tabs -->
+        <div
+          data-help-id="template-category-tabs"
+          data-help-title="Category Filter"
+          data-help-order="2"
+        >
+          <Tabs.Root bind:value={selectedCategory}>
+            <Tabs.List class="grid w-full grid-cols-5">
+              <Tabs.Trigger value="all">All</Tabs.Trigger>
+              {#each categories as category}
+                <Tabs.Trigger value={category}>
+                  {TEMPLATE_CATEGORY_LABELS[category]}
+                </Tabs.Trigger>
+              {/each}
+            </Tabs.List>
+          </Tabs.Root>
+        </div>
+
+        <!-- Template Grid -->
+        {#if filteredTemplates.length === 0}
+          <div class="flex flex-col items-center justify-center py-12 text-center">
+            <p class="text-muted-foreground">No templates found</p>
+            <p class="text-muted-foreground mt-2 text-sm">
+              {searchTerm ? 'Try a different search term' : 'No templates available yet'}
+            </p>
+          </div>
+        {:else}
+          <div
+            class="space-y-3"
+            data-help-id="template-grid"
+            data-help-title="Template Cards"
+            data-help-order="3"
+          >
+            {#each filteredTemplates as template (template.id)}
+              <Card.Root
+                class="hover:border-primary cursor-pointer transition-all hover:shadow-md"
+                onclick={() => selectTemplate(template)}
+                role="button"
+                tabindex={0}
+                onkeydown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectTemplate(template);
+                  }
+                }}>
+                {@const IconComponent = getIconComponent(template.icon)}
+                <Card.Header class="pb-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="bg-primary/10 text-primary rounded-lg p-2">
+                      <IconComponent class="h-6 w-6" aria-hidden="true" />
+                    </div>
+                    <Badge variant={getTypeBadgeVariant(template.type)} class="text-xs">
+                      {formatType(template.type)}
+                    </Badge>
                   </div>
-                  <Badge variant={getTypeBadgeVariant(template.type)} class="text-xs">
-                    {formatType(template.type)}
-                  </Badge>
-                </div>
-                <Card.Title class="mt-2 text-lg">{template.name}</Card.Title>
-                {#if template.description}
-                  <Card.Description class="line-clamp-2">
-                    {template.description}
-                  </Card.Description>
-                {/if}
-              </Card.Header>
-              <Card.Content class="pt-0">
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-muted-foreground">Suggested:</span>
-                  <span class="font-semibold">
-                    {template.suggestedAmount
-                      ? currencyFormatter.format(template.suggestedAmount)
-                      : 'Custom'}
-                  </span>
-                </div>
-                <div class="mt-2 flex items-center justify-between text-sm">
-                  <span class="text-muted-foreground">Enforcement:</span>
-                  <span class="font-medium capitalize">{template.enforcementLevel}</span>
-                </div>
-              </Card.Content>
-            </Card.Root>
-          {/each}
-        </div>
-      {/if}
-    </div>
+                  <Card.Title class="mt-2 text-lg">{template.name}</Card.Title>
+                  {#if template.description}
+                    <Card.Description class="line-clamp-2">
+                      {template.description}
+                    </Card.Description>
+                  {/if}
+                </Card.Header>
+                <Card.Content class="pt-0">
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-muted-foreground">Suggested:</span>
+                    <span class="font-semibold">
+                      {template.suggestedAmount
+                        ? currencyFormatter.format(template.suggestedAmount)
+                        : 'Custom'}
+                    </span>
+                  </div>
+                  <div class="mt-2 flex items-center justify-between text-sm">
+                    <span class="text-muted-foreground">Enforcement:</span>
+                    <span class="font-medium capitalize">{template.enforcementLevel}</span>
+                  </div>
+                </Card.Content>
+              </Card.Root>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    </ModalHelpProvider>
   {/snippet}
 
   {#snippet footer()}
     <div class="flex gap-2">
       <Button class="flex-1" variant="outline" onclick={() => (open = false)}>Cancel</Button>
-      <Button class="flex-1" href="/budgets/new">Create Custom Budget</Button>
+      <Button
+        class="flex-1"
+        href="/budgets/new"
+        data-help-id="create-custom-budget"
+        data-help-title="Create Custom Budget"
+        data-help-order="4"
+      >
+        Create Custom Budget
+      </Button>
     </div>
   {/snippet}
 </ResponsiveSheet>

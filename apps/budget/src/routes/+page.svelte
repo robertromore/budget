@@ -45,7 +45,7 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
   </div>
 
   <!-- Quick Stats Overview -->
-  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-4" data-help-id="dashboard-stats" data-help-title="Quick Stats Overview">
     <Card.Root>
       <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
         <Card.Title class="text-sm font-medium">Total Balance</Card.Title>
@@ -107,7 +107,7 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
     <PayeeAnalyticsSummary />
 
     <!-- Quick Actions Card -->
-    <Card.Root>
+    <Card.Root data-help-id="quick-actions" data-help-title="Quick Actions">
       <Card.Header>
         <Card.Title class="flex items-center gap-2">
           <Receipt class="h-5 w-5 text-green-500" />
@@ -139,7 +139,7 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
   </div>
 
   <!-- Additional Analytics Section -->
-  <div class="space-y-4">
+  <div class="space-y-4" data-help-id="financial-overview" data-help-title="Financial Overview">
     <h2 class="text-xl font-bold tracking-tight">Financial Overview</h2>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
       <Card.Root>

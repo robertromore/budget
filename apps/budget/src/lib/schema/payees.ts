@@ -30,6 +30,13 @@ export interface PayeeAddress {
   formatted?: string;
 }
 
+// AI preferences type for tracking intelligence mode per field
+export interface PayeeAiPreferences {
+  fieldModes?: Record<string, "none" | "ml" | "llm">;
+  enhancedFields?: string[];
+  lastEnhanced?: Record<string, string>; // ISO timestamps
+}
+
 // SubscriptionInfo is a flexible type for the JSON column.
 // The actual structure used at runtime is SubscriptionMetadata from subscription-management.ts
 // We use Record<string, unknown> here for schema compatibility with the more complex runtime type.
@@ -102,6 +109,7 @@ export const payees = sqliteTable(
     alertThreshold: real("alert_threshold"),
     isSeasonal: integer("is_seasonal", { mode: "boolean" }).default(false).notNull(),
     subscriptionInfo: text("subscription_info", { mode: "json" }).$type<SubscriptionInfo | null>().default(null),
+    aiPreferences: text("ai_preferences", { mode: "json" }).$type<PayeeAiPreferences | null>().default(null),
     tags: text("tags"),
 
     // Payment Processing Fields
@@ -222,6 +230,7 @@ export const formInsertPayeeSchema = createInsertSchema(payees, {
   alertThreshold: (schema) => schema.optional().nullable(),
   isSeasonal: (schema) => schema.default(false),
   subscriptionInfo: (schema) => schema.optional().nullable(),
+  aiPreferences: (schema) => schema.optional().nullable(),
   tags: (schema) => schema.optional().nullable(),
 
   // Payment Processing Fields validation

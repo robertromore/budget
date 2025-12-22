@@ -12,6 +12,7 @@ import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import FolderCog from '@lucide/svelte/icons/folder-cog';
 import Plus from '@lucide/svelte/icons/plus';
+import Sparkles from '@lucide/svelte/icons/sparkles';
 import User from '@lucide/svelte/icons/user';
 import PayeeSearchResults from './(components)/search/payee-search-results.svelte';
 
@@ -104,7 +105,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="payees-page-header" data-help-title="Payees Page">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Payees</h1>
       <p class="text-muted-foreground">{allPayeesArray.length} payees total</p>
@@ -118,6 +119,10 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
         <Button variant="outline" href="/payees/analytics">
           <BarChart3 class="mr-2 h-4 w-4" />
           Analytics
+        </Button>
+        <Button variant="outline" href="/payees/cleanup">
+          <Sparkles class="mr-2 h-4 w-4" />
+          Cleanup
         </Button>
       {/if}
       {#if showPrimaryOnPage}
@@ -152,6 +157,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
     </Empty.Empty>
   {:else}
     <!-- Payee Data Table -->
+    <div data-help-id="payees-table" data-help-title="Payees Table">
     <PayeeSearchResults
       payees={payeesWithStatsData}
       isLoading={false}
@@ -162,6 +168,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
       onDelete={deletePayee}
       onBulkDelete={bulkDeletePayees}
       onViewAnalytics={viewAnalytics} />
+    </div>
   {/if}
 </div>
 

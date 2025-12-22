@@ -8,6 +8,8 @@ export interface EntityFormOptions<T = any> {
   onSave?: (entity: T) => void;
   onUpdate?: (entity: T) => void;
   onDelete?: (id: number) => void;
+  /** Called after successful save - use to reset tainted state */
+  onSuccess?: (entity: T) => void;
   entityId?: number | undefined;
   customOptions?: any;
 }
@@ -20,6 +22,7 @@ export function useEntityForm<T = any>(options: EntityFormOptions<T>): any {
     onSave,
     onUpdate,
     onDelete,
+    onSuccess,
     entityId,
     customOptions = {},
   } = options;
@@ -43,6 +46,11 @@ export function useEntityForm<T = any>(options: EntityFormOptions<T>): any {
         } else if (onSave && !onUpdate) {
           // Backward compatibility: only call if not already handled above
           onSave(entity);
+        }
+
+        // Call onSuccess callback for any post-save cleanup (like resetting tainted)
+        if (onSuccess) {
+          onSuccess(entity);
         }
       }
     },

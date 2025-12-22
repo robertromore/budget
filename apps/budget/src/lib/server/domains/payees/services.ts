@@ -8,6 +8,7 @@ import type {
   Payee,
   PayeeType,
 } from "$lib/schema";
+import { extractMerchantName, merchantSimilarity } from "$lib/server/domains/ml/similarity/text-similarity";
 import { logger } from "$lib/server/shared/logging";
 import { ConflictError, NotFoundError, ValidationError } from "$lib/server/shared/types/errors";
 import { InputSanitizer } from "$lib/server/shared/validation";
@@ -4055,27 +4056,47 @@ export class PayeeService {
 
   /**
    * Find duplicate payees based on similarity
+   *
+   * Detection methods:
+   * - simple: Basic Levenshtein distance (fastest)
+   * - ml: Pattern-aware ML matching (recommended)
+   * - llm: ML pre-filter + LLM refinement (smart filter - uses threshold)
+   * - llm_direct: Direct LLM analysis of all pairs (bypasses threshold entirely)
    */
   async findDuplicatePayees(
     similarityThreshold: number,
     includeInactive: boolean,
     groupingStrategy: "name" | "contact" | "transaction_pattern" | "comprehensive",
-    workspaceId: number
-  ): Promise<Array<{
-    primaryPayeeId: number;
-    duplicatePayeeIds: number[];
-    similarityScore: number;
-    similarities: Array<{
-      field: "name" | "phone" | "email" | "website" | "address";
-      primaryValue: string;
-      duplicateValue: string;
-      matchType: "exact" | "fuzzy" | "normalized" | "semantic";
-      confidence: number;
+    workspaceId: number,
+    detectionMethod: "simple" | "ml" | "llm" | "llm_direct" = "ml"
+  ): Promise<{
+    groups: Array<{
+      primaryPayeeId: number;
+      duplicatePayeeIds: number[];
+      similarityScore: number;
+      similarities: Array<{
+        field: "name" | "phone" | "email" | "website" | "address";
+        primaryValue: string;
+        duplicateValue: string;
+        matchType: "exact" | "fuzzy" | "normalized" | "semantic";
+        confidence: number;
+      }>;
+      recommendedAction: "merge" | "review" | "ignore";
+      riskLevel: "low" | "medium" | "high";
     }>;
-    recommendedAction: "merge" | "review" | "ignore";
-    riskLevel: "low" | "medium" | "high";
-  }>> {
-    logger.info("Finding duplicate payees", { similarityThreshold, includeInactive, groupingStrategy });
+    llmLog?: Array<{
+      timestamp: string;
+      batchIndex: number;
+      pairs: Array<{ primaryName: string; duplicateName: string }>;
+      prompt: string;
+      rawResponse: string;
+      parsedResult: { pairs: Array<{ index: number; isMatch: boolean; confidence: number }> } | null;
+      error?: string;
+    }>;
+    detectionMethod: "simple" | "ml" | "llm" | "llm_direct";
+    totalPairsAnalyzed?: number;
+  }> {
+    logger.info("Finding duplicate payees", { similarityThreshold, includeInactive, groupingStrategy, detectionMethod });
 
     // Get all payees
     let payees = await this.repository.findAllPayees(workspaceId);
@@ -4084,6 +4105,48 @@ export class PayeeService {
       payees = payees.filter(p => p.isActive);
     }
 
+    // LLM Direct mode: bypass ML pre-filter entirely, send all pairs directly to LLM
+    if (detectionMethod === "llm_direct") {
+      const totalPairs = (payees.length * (payees.length - 1)) / 2;
+      logger.info("LLM Direct mode: bypassing ML pre-filter", { payeeCount: payees.length, totalPairs });
+
+      try {
+        const { groups, llmLog, totalPairsAnalyzed } = await this.analyzeAllPairsWithLLM(
+          payees,
+          workspaceId
+        );
+        logger.info("LLM direct analysis complete", {
+          totalPairs,
+          groupsFound: groups.length,
+        });
+        return {
+          groups,
+          llmLog,
+          detectionMethod,
+          totalPairsAnalyzed,
+        };
+      } catch (error) {
+        logger.warn("LLM direct analysis failed", { error });
+        return {
+          groups: [],
+          llmLog: [{
+            timestamp: new Date().toISOString(),
+            batchIndex: 0,
+            pairs: [],
+            prompt: "",
+            rawResponse: "",
+            parsedResult: null,
+            error: `LLM analysis failed: ${error instanceof Error ? error.message : String(error)}.`,
+          }],
+          detectionMethod,
+          totalPairsAnalyzed: 0,
+        };
+      }
+    }
+
+    // Simple/ML/LLM mode: use threshold-based pre-filtering
+    // For "llm" mode, we use ML to find candidates, then refine with LLM
+    const mlMethod = detectionMethod === "llm" ? "ml" : detectionMethod;
     const duplicateGroups: Array<{
       primaryPayeeId: number;
       duplicatePayeeIds: number[];
@@ -4110,7 +4173,7 @@ export class PayeeService {
         if (processedPairs.has(pairKey)) continue;
         processedPairs.add(pairKey);
 
-        const similarities = this.comparePayers(payeeA, payeeB, groupingStrategy);
+        const similarities = this.comparePayers(payeeA, payeeB, groupingStrategy, mlMethod);
         const avgScore = similarities.length > 0
           ? similarities.reduce((sum, s) => sum + s.confidence, 0) / similarities.length
           : 0;
@@ -4140,8 +4203,631 @@ export class PayeeService {
       }
     }
 
-    logger.info("Found duplicate groups", { count: duplicateGroups.length });
-    return duplicateGroups;
+    logger.info("Found duplicate groups (pre-LLM)", { count: duplicateGroups.length, detectionMethod });
+
+    // LLM mode: refine ML candidates with LLM
+    if (detectionMethod === "llm") {
+      if (duplicateGroups.length === 0) {
+        // No candidates found by ML pre-filter
+        return {
+          groups: [],
+          llmLog: [{
+            timestamp: new Date().toISOString(),
+            batchIndex: 0,
+            pairs: [],
+            prompt: "",
+            rawResponse: "",
+            parsedResult: null,
+            error: "No duplicate candidates found by ML pre-filter. LLM refinement skipped because there are no potential duplicates to analyze.",
+          }],
+          detectionMethod,
+          totalPairsAnalyzed: 0,
+        };
+      }
+
+      try {
+        const { groups: refinedGroups, llmLog, totalPairsAnalyzed } = await this.refineDuplicatesWithLLM(
+          duplicateGroups,
+          payees,
+          workspaceId
+        );
+        logger.info("LLM refined duplicate groups", {
+          original: duplicateGroups.length,
+          refined: refinedGroups.length,
+        });
+        return {
+          groups: refinedGroups,
+          llmLog,
+          detectionMethod,
+          totalPairsAnalyzed,
+        };
+      } catch (error) {
+        // If LLM fails, fall back to ML results with error log
+        logger.warn("LLM refinement failed, using ML results", { error });
+        return {
+          groups: duplicateGroups,
+          llmLog: [{
+            timestamp: new Date().toISOString(),
+            batchIndex: 0,
+            pairs: [],
+            prompt: "",
+            rawResponse: "",
+            parsedResult: null,
+            error: `LLM refinement failed: ${error instanceof Error ? error.message : String(error)}. Falling back to ML detection results.`,
+          }],
+          detectionMethod,
+          totalPairsAnalyzed: 0,
+        };
+      }
+    }
+
+    return {
+      groups: duplicateGroups,
+      detectionMethod,
+    };
+  }
+
+  /**
+   * Refine duplicate candidates using LLM
+   */
+  private async refineDuplicatesWithLLM(
+    candidates: Array<{
+      primaryPayeeId: number;
+      duplicatePayeeIds: number[];
+      similarityScore: number;
+      similarities: Array<{
+        field: "name" | "phone" | "email" | "website" | "address";
+        primaryValue: string;
+        duplicateValue: string;
+        matchType: "exact" | "fuzzy" | "normalized" | "semantic";
+        confidence: number;
+      }>;
+      recommendedAction: "merge" | "review" | "ignore";
+      riskLevel: "low" | "medium" | "high";
+    }>,
+    payees: Payee[],
+    workspaceId: number
+  ): Promise<{
+    groups: typeof candidates;
+    llmLog: Array<{
+      timestamp: string;
+      batchIndex: number;
+      pairs: Array<{ primaryName: string; duplicateName: string }>;
+      prompt: string;
+      rawResponse: string;
+      parsedResult: { pairs: Array<{ index: number; isMatch: boolean; confidence: number }> } | null;
+      error?: string;
+    }>;
+    totalPairsAnalyzed: number;
+  }> {
+    const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+    const { workspaces } = await import("$lib/schema/workspaces");
+    const { db } = await import("$lib/server/db");
+    const { eq } = await import("drizzle-orm");
+    const { generateText } = await import("ai");
+
+    // Initialize log entries
+    const llmLog: Array<{
+      timestamp: string;
+      batchIndex: number;
+      pairs: Array<{ primaryName: string; duplicateName: string }>;
+      prompt: string;
+      rawResponse: string;
+      parsedResult: { pairs: Array<{ index: number; isMatch: boolean; confidence: number }> } | null;
+      error?: string;
+    }> = [];
+
+    // Get workspace preferences
+    const [workspace] = await db
+      .select({ preferences: workspaces.preferences })
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId))
+      .limit(1);
+
+    const prefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+    const coordinator = createIntelligenceCoordinator(prefs);
+
+    // Use getLLMProvider() for explicit LLM requests (user selected "llm" detection method)
+    // This bypasses the feature mode setting - feature mode only controls automatic ML+LLM coordination
+    const llmResult = coordinator.getLLMProvider("payeeMatching");
+
+    // Debug: Log what the coordinator determined
+    logger.info("LLM provider for explicit payeeMatching request", {
+      available: llmResult.available,
+      hasProvider: !!llmResult.provider,
+      providerType: llmResult.providerType,
+      llmMasterEnabled: prefs.llm?.enabled,
+      defaultProvider: prefs.llm?.defaultProvider,
+    });
+
+    if (!llmResult.available || !llmResult.provider) {
+      logger.warn("LLM not available for payee matching, returning ML results");
+
+      // Build detailed diagnostics message
+      const diagnostics: string[] = [];
+      if (!prefs.llm?.enabled) {
+        diagnostics.push("• LLM master toggle is disabled");
+      }
+      if (!prefs.llm?.defaultProvider) {
+        diagnostics.push("• No default LLM provider selected");
+      } else {
+        const providerConfig = prefs.llm?.providers?.[prefs.llm.defaultProvider];
+        if (!providerConfig?.enabled) {
+          diagnostics.push(`• Provider "${prefs.llm.defaultProvider}" is not enabled`);
+        }
+        if (!providerConfig?.apiKey) {
+          diagnostics.push(`• Provider "${prefs.llm.defaultProvider}" has no API key configured`);
+        }
+      }
+
+      const errorDetails = diagnostics.length > 0
+        ? `Diagnostics:\n${diagnostics.join("\n")}`
+        : "Unknown configuration issue";
+
+      // Return a log entry indicating LLM was not available
+      return {
+        groups: candidates,
+        llmLog: [{
+          timestamp: new Date().toISOString(),
+          batchIndex: 0,
+          pairs: [],
+          prompt: "",
+          rawResponse: "",
+          parsedResult: null,
+          error: `LLM not available. ${errorDetails}\n\nPlease configure in Settings → Intelligence → LLM Settings. Falling back to ML detection results.`,
+        }],
+        totalPairsAnalyzed: 0,
+      };
+    }
+
+    const llmProvider = llmResult.provider;
+
+    const payeesMap = new Map(payees.map((p) => [p.id, p]));
+    const refinedGroups: typeof candidates = [];
+
+    // Build pairs for LLM analysis (batch up to 10 pairs per request)
+    const allPairs: Array<{
+      groupIndex: number;
+      primary: Payee;
+      duplicate: Payee;
+      duplicateId: number;
+      mlScore: number;
+    }> = [];
+
+    for (let i = 0; i < candidates.length; i++) {
+      const group = candidates[i];
+      const primary = payeesMap.get(group.primaryPayeeId);
+      if (!primary) continue;
+
+      for (const dupId of group.duplicatePayeeIds) {
+        const duplicate = payeesMap.get(dupId);
+        if (!duplicate) continue;
+        allPairs.push({
+          groupIndex: i,
+          primary,
+          duplicate,
+          duplicateId: dupId,
+          mlScore: group.similarityScore,
+        });
+      }
+    }
+
+    // Process in batches of 10
+    const BATCH_SIZE = 10;
+    const llmResults = new Map<string, { isMatch: boolean; confidence: number }>();
+
+    for (let i = 0; i < allPairs.length; i += BATCH_SIZE) {
+      const batch = allPairs.slice(i, i + BATCH_SIZE);
+      const batchIndex = Math.floor(i / BATCH_SIZE);
+      const pairsText = batch
+        .map((p, idx) => `${idx + 1}. "${p.primary.name}" vs "${p.duplicate.name}"`)
+        .join("\n");
+
+      const prompt = `You are analyzing payee/merchant names for potential duplicates.
+
+For each pair below, determine if they represent the SAME merchant/payee:
+${pairsText}
+
+Consider:
+- Different formats of the same company (e.g., "Amazon.com" = "AMZN MARKETPLACE")
+- Store numbers, location codes, or transaction IDs don't make them different merchants
+- Different services from same parent may or may not be same (e.g., "UBER" vs "UBER EATS" are different)
+
+Respond in JSON format only:
+{
+  "pairs": [
+    { "index": 1, "isMatch": true, "confidence": 0.95 },
+    { "index": 2, "isMatch": false, "confidence": 0.8 }
+  ]
+}`;
+
+      // Create log entry for this batch
+      const logEntry: typeof llmLog[number] = {
+        timestamp: new Date().toISOString(),
+        batchIndex,
+        pairs: batch.map((p) => ({
+          primaryName: p.primary.name ?? "Unknown",
+          duplicateName: p.duplicate.name ?? "Unknown",
+        })),
+        prompt,
+        rawResponse: "",
+        parsedResult: null,
+      };
+
+      try {
+        let responseText: string;
+
+        // Handle Ollama separately
+        if (llmProvider.isOllama && llmProvider.ollamaClient) {
+          const response = await llmProvider.ollamaClient.chat({
+            model: llmProvider.model,
+            messages: [{ role: "user", content: prompt }],
+            stream: false,
+            options: { temperature: 0.1 },
+          });
+          responseText = response.message?.content || "";
+        } else {
+          const result = await generateText({
+            model: llmProvider.provider(llmProvider.model),
+            prompt,
+            maxOutputTokens: 500,
+            temperature: 0.1,
+          });
+          responseText = result.text;
+        }
+
+        logEntry.rawResponse = responseText;
+
+        // Parse JSON response
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]) as {
+            pairs: Array<{ index: number; isMatch: boolean; confidence: number }>;
+          };
+          logEntry.parsedResult = parsed;
+
+          for (const result of parsed.pairs) {
+            const pair = batch[result.index - 1];
+            if (pair) {
+              const key = `${pair.primary.id}-${pair.duplicateId}`;
+              llmResults.set(key, {
+                isMatch: result.isMatch,
+                confidence: result.confidence,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        logEntry.error = errorMessage;
+        logger.warn("LLM batch processing failed", { batchStart: i, error });
+
+        // Keep ML results for this batch
+        for (const pair of batch) {
+          const key = `${pair.primary.id}-${pair.duplicateId}`;
+          llmResults.set(key, { isMatch: true, confidence: pair.mlScore });
+        }
+      }
+
+      llmLog.push(logEntry);
+    }
+
+    // Rebuild groups based on LLM results
+    for (const group of candidates) {
+      const confirmedDuplicates: number[] = [];
+      let maxConfidence = 0;
+
+      for (const dupId of group.duplicatePayeeIds) {
+        const key = `${group.primaryPayeeId}-${dupId}`;
+        const result = llmResults.get(key);
+
+        if (result?.isMatch) {
+          confirmedDuplicates.push(dupId);
+          maxConfidence = Math.max(maxConfidence, result.confidence);
+        }
+      }
+
+      if (confirmedDuplicates.length > 0) {
+        refinedGroups.push({
+          ...group,
+          duplicatePayeeIds: confirmedDuplicates,
+          similarityScore: maxConfidence,
+          recommendedAction: maxConfidence >= 0.95 ? "merge" : maxConfidence >= 0.8 ? "review" : "ignore",
+          riskLevel: maxConfidence >= 0.95 ? "low" : maxConfidence >= 0.8 ? "medium" : "high",
+          similarities: group.similarities.map((s) => ({
+            ...s,
+            matchType: "semantic" as const,
+            confidence: maxConfidence,
+          })),
+        });
+      }
+    }
+
+    return {
+      groups: refinedGroups,
+      llmLog,
+      totalPairsAnalyzed: allPairs.length,
+    };
+  }
+
+  /**
+   * Analyze ALL payee pairs directly with LLM (bypasses ML pre-filter)
+   * Used when user explicitly selects LLM detection method
+   */
+  private async analyzeAllPairsWithLLM(
+    payees: Payee[],
+    workspaceId: number
+  ): Promise<{
+    groups: Array<{
+      primaryPayeeId: number;
+      duplicatePayeeIds: number[];
+      similarityScore: number;
+      similarities: Array<{
+        field: "name" | "phone" | "email" | "website" | "address";
+        primaryValue: string;
+        duplicateValue: string;
+        matchType: "exact" | "fuzzy" | "normalized" | "semantic";
+        confidence: number;
+      }>;
+      recommendedAction: "merge" | "review" | "ignore";
+      riskLevel: "low" | "medium" | "high";
+    }>;
+    llmLog: Array<{
+      timestamp: string;
+      batchIndex: number;
+      pairs: Array<{ primaryName: string; duplicateName: string }>;
+      prompt: string;
+      rawResponse: string;
+      parsedResult: { pairs: Array<{ index: number; isMatch: boolean; confidence: number }> } | null;
+      error?: string;
+    }>;
+    totalPairsAnalyzed: number;
+  }> {
+    const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+    const { workspaces } = await import("$lib/schema/workspaces");
+    const { db } = await import("$lib/server/db");
+    const { eq } = await import("drizzle-orm");
+    const { generateText } = await import("ai");
+
+    const llmLog: Array<{
+      timestamp: string;
+      batchIndex: number;
+      pairs: Array<{ primaryName: string; duplicateName: string }>;
+      prompt: string;
+      rawResponse: string;
+      parsedResult: { pairs: Array<{ index: number; isMatch: boolean; confidence: number }> } | null;
+      error?: string;
+    }> = [];
+
+    // Get workspace preferences
+    const [workspace] = await db
+      .select({ preferences: workspaces.preferences })
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId))
+      .limit(1);
+
+    const prefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+    const coordinator = createIntelligenceCoordinator(prefs);
+
+    // Get LLM provider
+    const llmResult = coordinator.getLLMProvider("payeeMatching");
+
+    if (!llmResult.available || !llmResult.provider) {
+      const diagnostics: string[] = [];
+      if (!prefs.llm?.enabled) {
+        diagnostics.push("• LLM master toggle is disabled");
+      }
+      if (!prefs.llm?.defaultProvider) {
+        diagnostics.push("• No default LLM provider selected");
+      } else {
+        const providerConfig = prefs.llm?.providers?.[prefs.llm.defaultProvider];
+        if (!providerConfig?.enabled) {
+          diagnostics.push(`• Provider "${prefs.llm.defaultProvider}" is not enabled`);
+        }
+        if (!providerConfig?.apiKey) {
+          diagnostics.push(`• Provider "${prefs.llm.defaultProvider}" has no API key configured`);
+        }
+      }
+
+      const errorDetails = diagnostics.length > 0
+        ? `Diagnostics:\n${diagnostics.join("\n")}`
+        : "Unknown configuration issue";
+
+      return {
+        groups: [],
+        llmLog: [{
+          timestamp: new Date().toISOString(),
+          batchIndex: 0,
+          pairs: [],
+          prompt: "",
+          rawResponse: "",
+          parsedResult: null,
+          error: `LLM not available. ${errorDetails}\n\nPlease configure in Settings → Intelligence → LLM Settings.`,
+        }],
+        totalPairsAnalyzed: 0,
+      };
+    }
+
+    const llmProvider = llmResult.provider;
+
+    // Generate ALL pairs
+    const allPairs: Array<{
+      payeeA: Payee;
+      payeeB: Payee;
+    }> = [];
+
+    for (let i = 0; i < payees.length; i++) {
+      for (let j = i + 1; j < payees.length; j++) {
+        allPairs.push({
+          payeeA: payees[i],
+          payeeB: payees[j],
+        });
+      }
+    }
+
+    logger.info("LLM direct analysis: processing all pairs", {
+      payeeCount: payees.length,
+      totalPairs: allPairs.length,
+    });
+
+    // Process in batches of 15 (slightly larger since we're not pre-filtered)
+    const BATCH_SIZE = 15;
+    const llmResults = new Map<string, { isMatch: boolean; confidence: number }>();
+
+    for (let i = 0; i < allPairs.length; i += BATCH_SIZE) {
+      const batch = allPairs.slice(i, i + BATCH_SIZE);
+      const batchIndex = Math.floor(i / BATCH_SIZE);
+
+      const pairsText = batch
+        .map((p, idx) => `${idx + 1}. "${p.payeeA.name || 'Unknown'}" vs "${p.payeeB.name || 'Unknown'}"`)
+        .join("\n");
+
+      const prompt = `You are analyzing payee/merchant names for potential duplicates.
+
+For each pair below, determine if they represent the SAME merchant/payee:
+${pairsText}
+
+Consider:
+- Different formats of the same company (e.g., "Amazon.com" = "AMZN MARKETPLACE")
+- Store numbers, location codes, or transaction IDs don't make them different merchants
+- Different services from same parent may or may not be same (e.g., "UBER" vs "UBER EATS" are different)
+- Be conservative: only mark as match if you're confident they're the same entity
+
+Respond in JSON format only:
+{
+  "pairs": [
+    { "index": 1, "isMatch": true, "confidence": 0.95 },
+    { "index": 2, "isMatch": false, "confidence": 0.8 }
+  ]
+}`;
+
+      const logEntry: typeof llmLog[number] = {
+        timestamp: new Date().toISOString(),
+        batchIndex,
+        pairs: batch.map((p) => ({
+          primaryName: p.payeeA.name ?? "Unknown",
+          duplicateName: p.payeeB.name ?? "Unknown",
+        })),
+        prompt,
+        rawResponse: "",
+        parsedResult: null,
+      };
+
+      try {
+        let responseText: string;
+
+        if (llmProvider.isOllama && llmProvider.ollamaClient) {
+          const response = await llmProvider.ollamaClient.chat({
+            model: llmProvider.model,
+            messages: [{ role: "user", content: prompt }],
+            stream: false,
+            options: { temperature: 0.1 },
+          });
+          responseText = response.message?.content || "";
+        } else {
+          const result = await generateText({
+            model: llmProvider.provider(llmProvider.model),
+            prompt,
+            maxOutputTokens: 500,
+            temperature: 0.1,
+          });
+          responseText = result.text;
+        }
+
+        logEntry.rawResponse = responseText;
+
+        // Parse JSON response
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]) as {
+            pairs: Array<{ index: number; isMatch: boolean; confidence: number }>;
+          };
+          logEntry.parsedResult = parsed;
+
+          for (const result of parsed.pairs) {
+            const pair = batch[result.index - 1];
+            if (pair && result.isMatch) {
+              const key = `${Math.min(pair.payeeA.id, pair.payeeB.id)}-${Math.max(pair.payeeA.id, pair.payeeB.id)}`;
+              llmResults.set(key, {
+                isMatch: result.isMatch,
+                confidence: result.confidence,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        logEntry.error = errorMessage;
+        logger.warn("LLM batch processing failed", { batchStart: i, error: errorMessage });
+      }
+
+      llmLog.push(logEntry);
+    }
+
+    // Build groups from LLM matches
+    const groupMap = new Map<number, {
+      primaryPayeeId: number;
+      duplicatePayeeIds: number[];
+      maxConfidence: number;
+    }>();
+
+    for (const [key, result] of llmResults.entries()) {
+      if (!result.isMatch) continue;
+
+      const [idA, idB] = key.split("-").map(Number);
+      const payeeA = payees.find(p => p.id === idA);
+      const payeeB = payees.find(p => p.id === idB);
+
+      if (!payeeA || !payeeB) continue;
+
+      // Determine primary (prefer one with more data)
+      const scoreA = this.calculateDataCompleteness(payeeA);
+      const scoreB = this.calculateDataCompleteness(payeeB);
+      const [primaryId, duplicateId] = scoreA >= scoreB
+        ? [payeeA.id, payeeB.id]
+        : [payeeB.id, payeeA.id];
+
+      const existing = groupMap.get(primaryId);
+      if (existing) {
+        if (!existing.duplicatePayeeIds.includes(duplicateId)) {
+          existing.duplicatePayeeIds.push(duplicateId);
+        }
+        existing.maxConfidence = Math.max(existing.maxConfidence, result.confidence);
+      } else {
+        groupMap.set(primaryId, {
+          primaryPayeeId: primaryId,
+          duplicatePayeeIds: [duplicateId],
+          maxConfidence: result.confidence,
+        });
+      }
+    }
+
+    // Convert to output format
+    const groups = Array.from(groupMap.values()).map(g => {
+      const primary = payees.find(p => p.id === g.primaryPayeeId)!;
+      const duplicates = g.duplicatePayeeIds.map(id => payees.find(p => p.id === id)!).filter(Boolean);
+
+      return {
+        primaryPayeeId: g.primaryPayeeId,
+        duplicatePayeeIds: g.duplicatePayeeIds,
+        similarityScore: g.maxConfidence,
+        similarities: duplicates.map(dup => ({
+          field: "name" as const,
+          primaryValue: primary.name || "",
+          duplicateValue: dup.name || "",
+          matchType: "semantic" as const,
+          confidence: g.maxConfidence,
+        })),
+        recommendedAction: (g.maxConfidence >= 0.95 ? "merge" : g.maxConfidence >= 0.8 ? "review" : "ignore") as "merge" | "review" | "ignore",
+        riskLevel: (g.maxConfidence >= 0.95 ? "low" : g.maxConfidence >= 0.8 ? "medium" : "high") as "low" | "medium" | "high",
+      };
+    });
+
+    return {
+      groups,
+      llmLog,
+      totalPairsAnalyzed: allPairs.length,
+    };
   }
 
   /**
@@ -4150,7 +4836,8 @@ export class PayeeService {
   private comparePayers(
     payeeA: Payee,
     payeeB: Payee,
-    strategy: "name" | "contact" | "transaction_pattern" | "comprehensive"
+    strategy: "name" | "contact" | "transaction_pattern" | "comprehensive",
+    detectionMethod: "simple" | "ml" | "llm" = "ml"
   ): Array<{
     field: "name" | "phone" | "email" | "website" | "address";
     primaryValue: string;
@@ -4168,11 +4855,12 @@ export class PayeeService {
 
     // Name comparison (always included)
     if (strategy === "name" || strategy === "comprehensive") {
-      const nameA = (payeeA.name || "").toLowerCase().trim();
-      const nameB = (payeeB.name || "").toLowerCase().trim();
+      const nameA = (payeeA.name || "").trim();
+      const nameB = (payeeB.name || "").trim();
 
       if (nameA && nameB) {
-        if (nameA === nameB) {
+        // First check for exact match (case-insensitive)
+        if (nameA.toLowerCase() === nameB.toLowerCase()) {
           similarities.push({
             field: "name",
             primaryValue: payeeA.name || "",
@@ -4181,15 +4869,40 @@ export class PayeeService {
             confidence: 1.0,
           });
         } else {
-          const similarity = this.calculateStringSimilarity(nameA, nameB);
-          if (similarity >= 0.7) {
-            similarities.push({
-              field: "name",
-              primaryValue: payeeA.name || "",
-              duplicateValue: payeeB.name || "",
-              matchType: "fuzzy",
-              confidence: similarity,
-            });
+          // Branch by detection method
+          if (detectionMethod === "simple") {
+            // Simple: Use basic Levenshtein distance
+            const similarity = this.calculateStringSimilarity(
+              nameA.toLowerCase(),
+              nameB.toLowerCase()
+            );
+            if (similarity >= 0.7) {
+              similarities.push({
+                field: "name",
+                primaryValue: payeeA.name || "",
+                duplicateValue: payeeB.name || "",
+                matchType: "fuzzy",
+                confidence: similarity,
+              });
+            }
+          } else {
+            // ML or LLM: Use merchant similarity which normalizes names (strips order IDs, etc.)
+            // For LLM, this provides candidates that get refined later
+            const similarity = merchantSimilarity(nameA, nameB);
+            if (similarity >= 0.7) {
+              // Check if they normalize to the same merchant name
+              const normalizedA = extractMerchantName(nameA);
+              const normalizedB = extractMerchantName(nameB);
+              const isNormalized = normalizedA === normalizedB;
+
+              similarities.push({
+                field: "name",
+                primaryValue: payeeA.name || "",
+                duplicateValue: payeeB.name || "",
+                matchType: isNormalized ? "normalized" : "fuzzy",
+                confidence: similarity,
+              });
+            }
           }
         }
       }

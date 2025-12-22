@@ -1,5 +1,9 @@
 export { BudgetAllocationService } from "./budget-allocation";
 export { CategoryLearningService } from "./category-learning";
+export {
+  createEnhancementTrackingService,
+  PayeeEnhancementTrackingService
+} from "./enhancement-tracking";
 export { PayeeIntelligenceService } from "./intelligence";
 export { PayeeMLCoordinator } from "./ml-coordinator";
 export { PayeeRepository } from "./repository";
@@ -37,6 +41,13 @@ export type {
 } from "./ml-types";
 
 export type { PayeeAddress, PayeeTags, PaymentMethodReference, SubscriptionInfo } from "./types";
+
+export type {
+  EnhancementStats,
+  FieldEnhancementSummary,
+  RecordEnhancementInput,
+  UpdateFeedbackInput
+} from "./enhancement-tracking";
 
 export {
   advancedFrequencyAnalysisSchema, advancedSearchPayeesSchema, advancedSpendingAnalysisSchema, applyIntelligentDefaultsSchema, applyIntelligentOptimizationsSchema, budgetAllocationSuggestionSchema, bulkDeletePayeesSchema, bulkIntelligenceAnalysisSchema, comprehensiveIntelligenceSchema, confidenceMetricsSchema, createPayeeSchema, dayOfWeekPatternsSchema, deletePayeeSchema, getPayeesByAccountSchema,

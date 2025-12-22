@@ -406,10 +406,23 @@
               <div class="flex-1">
                 <Label for="detect-llm" class="font-medium cursor-pointer flex items-center gap-2">
                   <Sparkles class="h-4 w-4 text-violet-500" />
-                  AI-Powered
+                  AI + ML Filter
                 </Label>
                 <p class="text-muted-foreground text-sm mt-0.5">
-                  Semantic understanding using LLM (requires LLM provider configured)
+                  ML finds candidates above threshold, AI confirms matches
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-start space-x-3 rounded-lg border p-3">
+              <RadioGroup.Item value="llm_direct" id="detect-llm-direct" class="mt-1" />
+              <div class="flex-1">
+                <Label for="detect-llm-direct" class="font-medium cursor-pointer flex items-center gap-2">
+                  <Sparkles class="h-4 w-4 text-violet-500" />
+                  AI Direct
+                </Label>
+                <p class="text-muted-foreground text-sm mt-0.5">
+                  AI analyzes all payee pairs directly (bypasses threshold)
                 </p>
               </div>
             </div>

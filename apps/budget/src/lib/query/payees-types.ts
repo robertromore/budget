@@ -152,3 +152,29 @@ export interface OperationHistory {
   totalCount: number;
   hasMore: boolean;
 }
+
+export interface LLMLogEntry {
+  timestamp: string;
+  batchIndex: number;
+  pairs: Array<{
+    primaryName: string;
+    duplicateName: string;
+  }>;
+  prompt: string;
+  rawResponse: string;
+  parsedResult: {
+    pairs: Array<{
+      index: number;
+      isMatch: boolean;
+      confidence: number;
+    }>;
+  } | null;
+  error?: string;
+}
+
+export interface DuplicateDetectionResult {
+  groups: DuplicateGroup[];
+  llmLog?: LLMLogEntry[];
+  detectionMethod: "simple" | "ml" | "llm" | "llm_direct";
+  totalPairsAnalyzed?: number;
+}

@@ -188,7 +188,7 @@ function getMappedFields(mapping: ColumnMapping | null | undefined): Array<{ fie
   <title>Import Profiles - Settings</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-6" data-help-id="settings-import-profiles" data-help-title="Import Profiles">
   <div>
     <h2 class="text-xl font-semibold">Import Profiles</h2>
     <p class="text-muted-foreground text-sm">

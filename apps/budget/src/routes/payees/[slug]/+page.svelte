@@ -7,6 +7,7 @@ import * as Card from '$lib/components/ui/card';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
+import Brain from '@lucide/svelte/icons/brain';
 import Phone from '@lucide/svelte/icons/phone';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash2 from '@lucide/svelte/icons/trash-2';
@@ -76,7 +77,11 @@ $effect(() => {
       <div class="flex items-center gap-2">
         <Button variant="outline" href="/payees/{payee.slug}/analytics">
           <BarChart3 class="mr-2 h-4 w-4" />
-          View Analytics
+          Analytics
+        </Button>
+        <Button variant="outline" href="/payees/{payee.slug}/intelligence">
+          <Brain class="mr-2 h-4 w-4" />
+          Intelligence
         </Button>
         <Button variant="outline" href="/payees/{payee.slug}/edit">
           <SquarePen class="mr-2 h-4 w-4" />

@@ -29,7 +29,7 @@ function cycleMode() {
 <Tooltip.Root>
   <Tooltip.Trigger>
     {#snippet child({ props })}
-      <Button {...props} onclick={cycleMode} variant="ghost" size="icon" class="h-8 w-8">
+      <Button {...props} onclick={cycleMode} variant="ghost" size="icon" class="h-8 w-8" data-help-id="theme-toggle" data-help-title="Theme Toggle">
         {#if currentMode === 'light'}
           <Sun class="h-4 w-4" />
         {:else if currentMode === 'dark'}

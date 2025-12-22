@@ -49,7 +49,7 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div>
+	<div data-help-id="settings-appearance" data-help-title="Appearance Settings">
 		<h2 class="text-xl font-semibold">Appearance</h2>
 		<p class="text-muted-foreground text-sm">Customize how the app looks</p>
 	</div>

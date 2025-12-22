@@ -43,6 +43,149 @@ export const workspaces = sqliteTable(
   ]
 );
 
+// Detection method for duplicate payee detection
+// - simple: Basic Levenshtein distance
+// - ml: Pattern-aware ML matching (recommended)
+// - llm: ML pre-filter + LLM refinement (smart filter)
+// - llm_direct: Direct LLM analysis of all pairs (bypasses ML pre-filter)
+export type DuplicateDetectionMethod = "simple" | "ml" | "llm" | "llm_direct";
+
+// ML Preferences type
+export interface MLPreferences {
+  enabled: boolean; // Master toggle for all ML features
+  features: {
+    forecasting: boolean; // Time series forecasting
+    anomalyDetection: boolean; // Transaction anomaly scoring
+    similarity: boolean; // Payee matching & canonicalization
+    userBehavior: boolean; // Acceptance prediction
+  };
+  config: {
+    anomalySensitivity: "low" | "medium" | "high";
+    forecastHorizon: number; // days (default: 30)
+    similarityThreshold: number; // 0-1 (default: 0.6)
+  };
+  duplicateDetection: {
+    defaultMethod: DuplicateDetectionMethod; // Default algorithm for duplicate detection
+  };
+}
+
+export const DEFAULT_ML_PREFERENCES: MLPreferences = {
+  enabled: true,
+  features: {
+    forecasting: true,
+    anomalyDetection: true,
+    similarity: true,
+    userBehavior: true,
+  },
+  config: {
+    anomalySensitivity: "medium",
+    forecastHorizon: 30,
+    similarityThreshold: 0.6,
+  },
+  duplicateDetection: {
+    defaultMethod: "ml", // ML provides best balance of speed and accuracy
+  },
+};
+
+// LLM Provider types
+export type LLMProvider = "openai" | "anthropic" | "google" | "ollama";
+
+// LLM Mode for each feature
+export type LLMFeatureMode = "disabled" | "enhance" | "override";
+
+// Provider configuration interface (stored in database)
+export interface LLMProviderConfig {
+  enabled: boolean;
+  encryptedApiKey?: string; // Stored encrypted in database
+  model: string; // Selected model ID
+  endpoint?: string; // Custom endpoint (required for Ollama)
+}
+
+// Provider configuration for client display (includes computed hasApiKey)
+export interface LLMProviderClientConfig extends LLMProviderConfig {
+  hasApiKey: boolean; // Computed field - true if API key is stored
+}
+
+// Per-feature configuration (mode + optional provider override)
+export interface LLMFeatureConfig {
+  mode: LLMFeatureMode;
+  provider: LLMProvider | null; // null = use default provider
+}
+
+// Per-feature LLM settings
+export interface LLMFeatureModes {
+  transactionParsing: LLMFeatureConfig;
+  categorySuggestion: LLMFeatureConfig;
+  anomalyDetection: LLMFeatureConfig;
+  forecasting: LLMFeatureConfig;
+  payeeMatching: LLMFeatureConfig;
+}
+
+// Main LLM preferences interface
+export interface LLMPreferences {
+  enabled: boolean; // Master toggle for LLM features
+  defaultProvider: LLMProvider | null; // Primary provider to use
+  providers: {
+    openai: LLMProviderConfig;
+    anthropic: LLMProviderConfig;
+    google: LLMProviderConfig;
+    ollama: LLMProviderConfig;
+  };
+  featureModes: LLMFeatureModes;
+}
+
+// Default LLM preferences
+export const DEFAULT_LLM_PREFERENCES: LLMPreferences = {
+  enabled: false,
+  defaultProvider: null,
+  providers: {
+    openai: { enabled: false, model: "gpt-4.1-mini" },
+    anthropic: { enabled: false, model: "claude-haiku-4-5-20251015" },
+    google: { enabled: false, model: "gemini-3-flash" },
+    ollama: { enabled: false, model: "llama3.3", endpoint: "http://localhost:11434" },
+  },
+  featureModes: {
+    transactionParsing: { mode: "disabled", provider: null },
+    categorySuggestion: { mode: "disabled", provider: null },
+    anomalyDetection: { mode: "disabled", provider: null },
+    forecasting: { mode: "disabled", provider: null },
+    payeeMatching: { mode: "disabled", provider: null },
+  },
+};
+
+// Web Search Provider types
+export type WebSearchProvider = "duckduckgo" | "brave" | "ollama";
+
+// Web Search preferences interface
+export interface WebSearchPreferences {
+  enabled: boolean;
+  provider: WebSearchProvider;
+  encryptedBraveApiKey?: string; // Brave Search API key (encrypted)
+  encryptedOllamaCloudApiKey?: string; // Ollama cloud API key for web search (encrypted)
+}
+
+// Default Web Search preferences
+export const DEFAULT_WEB_SEARCH_PREFERENCES: WebSearchPreferences = {
+  enabled: true,
+  provider: "duckduckgo",
+};
+
+// Intelligence Input Mode preferences
+export interface IntelligenceInputPreferences {
+  enabled: boolean; // Whether intelligence input mode is available
+  showInHeader: boolean; // Show button in header
+  defaultMode: "ml" | "llm" | "auto"; // Default mode for fields without memory
+  fieldModes: Record<string, "ml" | "llm">; // Per-field mode memory
+}
+
+// Default Intelligence Input preferences
+export const DEFAULT_INTELLIGENCE_INPUT_PREFERENCES: IntelligenceInputPreferences = {
+  enabled: true,
+  showInHeader: true,
+  defaultMode: "auto",
+  fieldModes: {},
+};
+
 // Preferences type
 export interface WorkspacePreferences {
   locale?: string; // 'en-US', 'es-ES', etc.
@@ -50,6 +193,10 @@ export interface WorkspacePreferences {
   currency?: "USD" | "EUR" | "GBP" | "JPY" | string;
   theme?: "light" | "dark" | "system";
   timezone?: string;
+  ml?: MLPreferences; // ML/Intelligence settings
+  llm?: LLMPreferences; // LLM provider settings
+  webSearch?: WebSearchPreferences; // Web search settings for contact enrichment
+  intelligenceInput?: IntelligenceInputPreferences; // Intelligence input mode settings
 }
 
 // Zod schemas

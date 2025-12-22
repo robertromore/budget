@@ -3,6 +3,7 @@
 	import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 	import FolderCog from '@lucide/svelte/icons/folder-cog';
 	import Plus from '@lucide/svelte/icons/plus';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
 
 	let { children } = $props();
 
@@ -21,6 +22,14 @@
 			label: 'Analytics',
 			icon: BarChart3,
 			href: '/payees/analytics',
+			variant: 'outline',
+			isPrimary: false
+		},
+		{
+			id: 'cleanup',
+			label: 'Cleanup',
+			icon: Sparkles,
+			href: '/payees/cleanup',
 			variant: 'outline',
 			isPrimary: false
 		},

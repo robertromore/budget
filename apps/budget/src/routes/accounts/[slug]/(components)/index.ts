@@ -25,3 +25,6 @@ export { default as SettingsTab } from "./settings-tab.svelte";
 
 // Import Tab
 export { default as ImportTab } from "./import-tab.svelte";
+
+// Intelligence Tab
+export { default as IntelligenceTab } from "./intelligence-tab.svelte";

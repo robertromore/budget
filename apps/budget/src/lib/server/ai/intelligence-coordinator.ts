@@ -87,7 +87,13 @@ export class IntelligenceCoordinator {
   }
 
   /**
-   * Get the execution strategy for a feature
+   * Get the execution strategy for a feature (automatic/coordinated mode)
+   *
+   * This determines how ML and LLM should work together based on the feature mode.
+   * Use this for automatic/background operations where the feature mode matters.
+   *
+   * For explicit user requests (e.g., user selecting "llm" detection method),
+   * use getLLMProvider() instead to get the provider directly.
    */
   getStrategy(feature: IntelligenceFeature): StrategyResult {
     const mlEnabled = this.isMLEnabled(feature);
@@ -114,10 +120,10 @@ export class IntelligenceCoordinator {
       strategy = "llm_only";
       useLLM = true;
     } else {
-      // Both available - use mode to determine strategy
+      // Both available - use mode to determine how they coordinate
       switch (featureMode) {
         case "disabled":
-          // LLM disabled for this feature, use ML only
+          // Don't enhance ML with LLM automatically, use ML only
           strategy = "ml_only";
           useML = true;
           break;
@@ -148,6 +154,26 @@ export class IntelligenceCoordinator {
       llmEnabled,
       featureMode,
     };
+  }
+
+  /**
+   * Get the LLM provider for explicit requests (bypasses feature mode)
+   *
+   * Use this when the user explicitly requests LLM usage (e.g., selecting
+   * "llm" detection method). This only checks if LLM is available, not
+   * whether the feature mode allows automatic LLM enhancement.
+   */
+  getLLMProvider(feature: IntelligenceFeature): {
+    provider: ProviderInstance | null;
+    providerType: LLMProvider | null;
+    available: boolean;
+  } {
+    const available = this.isLLMEnabled(feature);
+    if (!available) {
+      return { provider: null, providerType: null, available: false };
+    }
+    const { provider, providerType } = this.getProviderForFeature(feature);
+    return { provider, providerType, available: !!provider };
   }
 
   /**
@@ -201,7 +227,11 @@ export class IntelligenceCoordinator {
   }
 
   /**
-   * Check if LLM is enabled for a feature
+   * Check if LLM is enabled (master toggle + provider configured)
+   *
+   * NOTE: This checks if LLM is AVAILABLE, not whether the feature mode allows it.
+   * Feature mode (disabled/enhance/override) controls how ML and LLM work together,
+   * not whether LLM can be used at all.
    */
   isLLMEnabled(feature: IntelligenceFeature): boolean {
     if (!this.llmPreferences.enabled) {
@@ -213,11 +243,6 @@ export class IntelligenceCoordinator {
       feature,
       DEFAULT_LLM_PREFERENCES.featureModes[feature]
     );
-
-    // Check if the feature mode allows LLM
-    if (featureConfig.mode === "disabled") {
-      return false;
-    }
 
     // Check if feature-specific provider is enabled
     if (featureConfig.provider) {

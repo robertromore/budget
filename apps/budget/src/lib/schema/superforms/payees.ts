@@ -55,7 +55,7 @@ export const superformInsertPayeeSchema = z.object({
   payeeType: z.enum(payeeTypes).optional().nullable(),
 
   // Transaction Automation Fields
-  avgAmount: z.number().nonnegative("Average amount must be positive").optional().nullable(),
+  avgAmount: z.number().optional().nullable(), // Can be negative for expense payees
   paymentFrequency: z.enum(paymentFrequencies).optional().nullable(),
   lastTransactionDate: z.string().optional().nullable(),
 
@@ -169,7 +169,7 @@ export const superformUpdatePayeeSchema = z.object({
   payeeType: z.enum(payeeTypes).optional().nullable(),
 
   // Transaction Automation Fields
-  avgAmount: z.number().nonnegative("Average amount must be positive").optional().nullable(),
+  avgAmount: z.number().optional().nullable(), // Can be negative for expense payees
   paymentFrequency: z.enum(paymentFrequencies).optional().nullable(),
   lastTransactionDate: z.string().optional().nullable(),
 

@@ -1,36 +1,36 @@
 <script lang="ts">
-import * as Form from '$lib/components/ui/form';
-import * as Card from '$lib/components/ui/card';
-import * as Tabs from '$lib/components/ui/tabs';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import { Button, buttonVariants } from '$lib/components/ui/button';
-import { Separator } from '$lib/components/ui/separator';
-import { Textarea } from '$lib/components/ui/textarea';
-import { Badge } from '$lib/components/ui/badge';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as Form from '$lib/components/ui/form';
+import * as Tabs from '$lib/components/ui/tabs';
+import { toast } from 'svelte-sonner';
 
+import { beforeNavigate, goto } from '$app/navigation';
 import { page } from '$app/state';
+import { PayeeBasicInfoForm, PayeeBusinessForm, PayeeContactForm } from '$lib/components/payees';
 import { useEntityForm } from '$lib/hooks/forms/use-entity-form';
+import { getFieldEnhancementSummary, recordEnhancement, type FieldEnhancementSummary } from '$lib/query/payee-enhancements';
+import { enrichPayeeContact, explainInsights, getPayeeSuggestions, inferPayeeDetails, type ContactEnrichmentSuggestions, type PayeeDetailsSuggestions, type PayeeSuggestions } from '$lib/query/payees';
+import type { EnhanceableField } from '$lib/schema';
+import type { Payee, PayeeAiPreferences, PaymentFrequency } from '$lib/schema/payees';
 import { superformInsertPayeeSchema } from '$lib/schema/superforms';
-import type { Payee } from '$lib/schema/payees';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { trpc } from '$lib/trpc/client';
 import type { EditableEntityItem } from '$lib/types';
-import { PayeeBasicInfoForm, PayeeContactForm, PayeeBusinessForm } from '$lib/components/payees';
-
 // Icons
-import User from '@lucide/svelte/icons/user';
-import Phone from '@lucide/svelte/icons/phone';
+import ArrowRight from '@lucide/svelte/icons/arrow-right';
 import Brain from '@lucide/svelte/icons/brain';
-import TrendingUp from '@lucide/svelte/icons/trending-up';
-import Target from '@lucide/svelte/icons/target';
-import Calendar from '@lucide/svelte/icons/calendar';
-import DollarSign from '@lucide/svelte/icons/dollar-sign';
-import Tag from '@lucide/svelte/icons/tag';
 import Building from '@lucide/svelte/icons/building';
+import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import CircleCheck from '@lucide/svelte/icons/circle-check';
-import CircleAlert from '@lucide/svelte/icons/circle-alert';
+import Loader2 from '@lucide/svelte/icons/loader-2';
 import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+import Phone from '@lucide/svelte/icons/phone';
 import Sparkles from '@lucide/svelte/icons/sparkles';
+import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+import User from '@lucide/svelte/icons/user';
+import Wand2 from '@lucide/svelte/icons/wand-2';
 
 let {
   id,
@@ -75,8 +75,14 @@ const entityForm = useEntityForm({
       onSave(entity as EditableEntityItem, !isUpdate);
     }
   },
+  onSuccess: (entity: Payee) => {
+    // Sync form data with saved entity to clear tainted state
+    // This prevents false "unsaved changes" detection after save
+    syncFormWithEntity(entity);
+  },
   customOptions: {
     dataType: 'json',
+    resetForm: false, // Prevent form reset - we'll sync manually
     transformData: (data: any) => {
       // Transform empty strings to null for optional fields
       const transformed = { ...data };
@@ -120,10 +126,102 @@ const entityForm = useEntityForm({
   },
 });
 
-const { form: formData, enhance, submitting, errors } = entityForm;
+const { form: formData, enhance, submitting, errors, tainted } = entityForm;
+
+/**
+ * Sync form data with the saved entity to clear tainted state.
+ * This ensures form values match exactly what was saved to prevent
+ * false "unsaved changes" detection.
+ */
+function syncFormWithEntity(entity: Payee) {
+  $formData.id = entity.id;
+  $formData.name = entity.name;
+  $formData.notes = entity.notes ?? '';
+  $formData.payeeType = entity.payeeType;
+  $formData.defaultCategoryId = entity.defaultCategoryId ?? 0;
+  $formData.taxRelevant = entity.taxRelevant ?? false;
+  $formData.isActive = entity.isActive ?? true;
+  $formData.avgAmount = entity.avgAmount ?? 0;
+  $formData.paymentFrequency = entity.paymentFrequency ?? 'monthly';
+  $formData.website = entity.website ?? '';
+  $formData.phone = entity.phone ?? '';
+  $formData.email = entity.email ?? '';
+  $formData.address = entity.address ?? '';
+  $formData.accountNumber = entity.accountNumber ?? '';
+  $formData.alertThreshold = entity.alertThreshold ?? 0;
+  $formData.isSeasonal = entity.isSeasonal ?? false;
+  $formData.subscriptionInfo = entity.subscriptionInfo ?? '';
+  $formData.tags = entity.tags ?? [];
+  $formData.preferredPaymentMethods = entity.preferredPaymentMethods ?? [];
+  $formData.merchantCategoryCode = entity.merchantCategoryCode ?? '';
+
+  // Reset tainted state after syncing
+  if ($tainted) {
+    for (const key of Object.keys($tainted)) {
+      $tainted[key] = false;
+    }
+  }
+}
 
 // Local state
 let activeTab = $state('basic');
+
+// Unsaved changes navigation guard
+let unsavedChangesDialogOpen = $state(false);
+let pendingNavigation = $state<{ url: URL; cancel: () => void } | null>(null);
+
+// Check if form has unsaved changes
+const hasUnsavedChanges = $derived.by(() => {
+  if (!$tainted) return false;
+  // Check if any field is tainted
+  return Object.values($tainted).some(Boolean);
+});
+
+// Handle SvelteKit navigation
+beforeNavigate(({ cancel, to }) => {
+  if (hasUnsavedChanges && to?.url) {
+    cancel();
+    pendingNavigation = { url: to.url, cancel };
+    unsavedChangesDialogOpen = true;
+  }
+});
+
+// Handle browser navigation (close tab, refresh, etc.)
+$effect(() => {
+  function handleBeforeUnload(e: BeforeUnloadEvent) {
+    if (hasUnsavedChanges) {
+      e.preventDefault();
+      // Modern browsers show a generic message, but we still need to set returnValue
+      e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+      return e.returnValue;
+    }
+  }
+
+  window.addEventListener('beforeunload', handleBeforeUnload);
+  return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+});
+
+// Confirm navigation (discard changes)
+function confirmNavigation() {
+  if (pendingNavigation) {
+    // Mark form as not tainted to prevent recursive dialog
+    if ($tainted) {
+      for (const key of Object.keys($tainted)) {
+        $tainted[key] = false;
+      }
+    }
+    const url = pendingNavigation.url;
+    pendingNavigation = null;
+    unsavedChangesDialogOpen = false;
+    goto(url.pathname + url.search);
+  }
+}
+
+// Cancel navigation (stay on page)
+function cancelNavigation() {
+  pendingNavigation = null;
+  unsavedChangesDialogOpen = false;
+}
 
 // Define which fields belong to which tabs
 const tabFieldMapping = {
@@ -139,9 +237,7 @@ const tabFieldMapping = {
     'isSeasonal',
   ],
   contact: ['phone', 'email', 'website', 'accountNumber', 'address'],
-  business: ['merchantCategoryCode', 'alertThreshold', 'tags', 'preferredPaymentMethods'],
-  intelligence: [], // No form fields, just displays data
-  automation: [], // No form fields, just displays data
+  business: ['merchantCategoryCode', 'alertThreshold', 'tags', 'preferredPaymentMethods', 'subscriptionInfo'],
 };
 
 // Computed: Check which tabs have errors
@@ -150,8 +246,6 @@ const tabErrors = $derived.by(() => {
     basic: false,
     contact: false,
     business: false,
-    intelligence: false,
-    automation: false,
   };
 
   if ($errors) {
@@ -171,8 +265,6 @@ const tabRequiredFields = $derived.by(() => {
     basic: false,
     contact: false,
     business: false,
-    intelligence: false,
-    automation: false,
   };
 
   // Only 'name' is required in basic tab
@@ -180,13 +272,395 @@ const tabRequiredFields = $derived.by(() => {
 
   return result;
 });
-let isLoadingRecommendations = $state(false);
-let isLoadingContactValidation = $state(false);
 let isLoadingSubscriptionDetection = $state(false);
-let recommendations = $state<any>(null);
-let contactValidation = $state<any>(null);
 let subscriptionInfo = $state<any>(null);
 let alertDialogOpen = $state(false);
+
+// LLM explanation state
+let aiExplanation = $state<string | null>(null);
+const explainMutation = explainInsights().options();
+
+// Enhancement tracking state
+let payeeAiPreferences = $state<PayeeAiPreferences | null>(null);
+let enhancementSummary = $state<FieldEnhancementSummary[]>([]);
+
+// Intelligence strategy types
+type IntelligenceStrategy = 'llm-only' | 'ml-only' | 'llm-then-ml' | 'ml-then-llm';
+
+interface StrategyOption {
+  value: IntelligenceStrategy;
+  label: string;
+  description: string;
+  icon: 'sparkles' | 'brain' | 'sparkles-brain' | 'brain-sparkles';
+}
+
+const intelligenceStrategies: StrategyOption[] = [
+  {
+    value: 'llm-only',
+    label: 'LLM Only',
+    description: 'Use AI language models for all fields',
+    icon: 'sparkles',
+  },
+  {
+    value: 'ml-only',
+    label: 'ML Only',
+    description: 'Use machine learning from transaction history',
+    icon: 'brain',
+  },
+  {
+    value: 'llm-then-ml',
+    label: 'LLM → ML',
+    description: 'Try LLM first, then fill gaps with ML',
+    icon: 'sparkles-brain',
+  },
+  {
+    value: 'ml-then-llm',
+    label: 'ML → LLM',
+    description: 'Try ML first, then enhance with LLM',
+    icon: 'brain-sparkles',
+  },
+];
+
+// Apply Intelligence to All state
+let isApplyingAllIntelligence = $state(false);
+let selectedStrategy = $state<IntelligenceStrategy>('llm-then-ml');
+const inferMutation = inferPayeeDetails().options();
+const enrichContactMutation = enrichPayeeContact().options();
+const recordEnhancementMutation = recordEnhancement().options();
+
+// Helper to record an enhancement
+function recordFieldEnhancement(
+  fieldName: EnhanceableField,
+  originalValue: unknown,
+  suggestedValue: unknown,
+  confidence?: number,
+  mode: 'ml' | 'llm' = 'llm'
+) {
+  if (!_id) return;
+  recordEnhancementMutation.mutate({
+    payeeId: _id,
+    fieldName,
+    mode,
+    originalValue,
+    suggestedValue,
+    appliedValue: suggestedValue,
+    confidence: confidence ?? undefined,
+  });
+}
+
+// Apply all suggestions from inferPayeeDetails to form
+function applyDetailsSuggestions(suggestions: PayeeDetailsSuggestions, filledFields: Set<string>) {
+  const confidence = suggestions.confidence ?? undefined;
+
+  // Basic info fields
+  if (suggestions.enhancedName && !filledFields.has('name')) {
+    const originalValue = $formData.name;
+    $formData.name = suggestions.enhancedName;
+    recordFieldEnhancement('name', originalValue, suggestions.enhancedName, confidence);
+    filledFields.add('name');
+  }
+  if (suggestions.payeeType && !filledFields.has('payeeType')) {
+    const originalValue = $formData.payeeType;
+    $formData.payeeType = suggestions.payeeType;
+    recordFieldEnhancement('payeeType', originalValue, suggestions.payeeType, confidence);
+    filledFields.add('payeeType');
+  }
+  if (suggestions.paymentFrequency && !filledFields.has('paymentFrequency')) {
+    const originalValue = $formData.paymentFrequency;
+    $formData.paymentFrequency = suggestions.paymentFrequency;
+    recordFieldEnhancement('paymentFrequency', originalValue, suggestions.paymentFrequency, confidence);
+    filledFields.add('paymentFrequency');
+  }
+  if (suggestions.suggestedCategoryId && !filledFields.has('defaultCategoryId')) {
+    const originalValue = $formData.defaultCategoryId;
+    $formData.defaultCategoryId = suggestions.suggestedCategoryId.toString();
+    recordFieldEnhancement('defaultCategoryId', originalValue, suggestions.suggestedCategoryId, confidence);
+    filledFields.add('defaultCategoryId');
+  }
+  if (suggestions.taxRelevant !== null && !filledFields.has('taxRelevant')) {
+    const originalValue = $formData.taxRelevant;
+    $formData.taxRelevant = suggestions.taxRelevant;
+    recordFieldEnhancement('taxRelevant', originalValue, suggestions.taxRelevant, confidence);
+    filledFields.add('taxRelevant');
+  }
+  if (suggestions.isSeasonal !== null && !filledFields.has('isSeasonal')) {
+    const originalValue = $formData.isSeasonal;
+    $formData.isSeasonal = suggestions.isSeasonal;
+    recordFieldEnhancement('isSeasonal', originalValue, suggestions.isSeasonal, confidence);
+    filledFields.add('isSeasonal');
+  }
+
+  // Business fields
+  if (suggestions.suggestedMCC && !filledFields.has('merchantCategoryCode')) {
+    const originalValue = $formData.merchantCategoryCode;
+    $formData.merchantCategoryCode = suggestions.suggestedMCC;
+    recordFieldEnhancement('merchantCategoryCode', originalValue, suggestions.suggestedMCC, confidence);
+    filledFields.add('merchantCategoryCode');
+  }
+  if (suggestions.suggestedTags?.length && !filledFields.has('tags')) {
+    const originalValue = $formData.tags;
+    $formData.tags = suggestions.suggestedTags;
+    recordFieldEnhancement('tags', originalValue, suggestions.suggestedTags, confidence);
+    filledFields.add('tags');
+  }
+  if (suggestions.suggestedPaymentMethods?.length && !filledFields.has('preferredPaymentMethods')) {
+    const originalValue = $formData.preferredPaymentMethods;
+    $formData.preferredPaymentMethods = suggestions.suggestedPaymentMethods;
+    recordFieldEnhancement('preferredPaymentMethods', originalValue, suggestions.suggestedPaymentMethods, confidence);
+    filledFields.add('preferredPaymentMethods');
+  }
+
+  // Contact field (website from infer)
+  if (suggestions.suggestedWebsite && !filledFields.has('website')) {
+    const originalValue = $formData.website;
+    $formData.website = suggestions.suggestedWebsite;
+    recordFieldEnhancement('website', originalValue, suggestions.suggestedWebsite, confidence);
+    filledFields.add('website');
+  }
+}
+
+// Apply contact enrichment suggestions (LLM-based)
+function applyContactSuggestions(suggestions: ContactEnrichmentSuggestions, filledFields: Set<string>) {
+  if (suggestions.website && !filledFields.has('website')) {
+    const originalValue = $formData.website;
+    $formData.website = suggestions.website;
+    recordFieldEnhancement('website', originalValue, suggestions.website, undefined, 'llm');
+    filledFields.add('website');
+  }
+  if (suggestions.phone && !filledFields.has('phone')) {
+    const originalValue = $formData.phone;
+    $formData.phone = suggestions.phone;
+    recordFieldEnhancement('phone', originalValue, suggestions.phone, undefined, 'llm');
+    filledFields.add('phone');
+  }
+  if (suggestions.email && !filledFields.has('email')) {
+    const originalValue = $formData.email;
+    $formData.email = suggestions.email;
+    recordFieldEnhancement('email', originalValue, suggestions.email, undefined, 'llm');
+    filledFields.add('email');
+  }
+  if (suggestions.address && !filledFields.has('address')) {
+    const originalValue = $formData.address;
+    $formData.address = suggestions.address;
+    recordFieldEnhancement('address', originalValue, suggestions.address, undefined, 'llm');
+    filledFields.add('address');
+  }
+}
+
+// Apply ML-based suggestions (from transaction history)
+function applyMLSuggestions(suggestions: PayeeSuggestions, filledFields: Set<string>) {
+  const confidence = suggestions.confidence ?? undefined;
+
+  if (suggestions.suggestedCategoryId && !filledFields.has('defaultCategoryId')) {
+    const originalValue = $formData.defaultCategoryId;
+    $formData.defaultCategoryId = suggestions.suggestedCategoryId.toString();
+    recordFieldEnhancement('defaultCategoryId', originalValue, suggestions.suggestedCategoryId, confidence, 'ml');
+    filledFields.add('defaultCategoryId');
+  }
+  if (suggestions.suggestedFrequency && !filledFields.has('paymentFrequency')) {
+    const originalValue = $formData.paymentFrequency;
+    $formData.paymentFrequency = suggestions.suggestedFrequency;
+    recordFieldEnhancement('paymentFrequency', originalValue, suggestions.suggestedFrequency, confidence, 'ml');
+    filledFields.add('paymentFrequency');
+  }
+  if (suggestions.suggestedAmount && !filledFields.has('avgAmount')) {
+    const originalValue = $formData.avgAmount;
+    $formData.avgAmount = suggestions.suggestedAmount;
+    // avgAmount is not an EnhanceableField, skip recording
+    filledFields.add('avgAmount');
+  }
+}
+
+// Fetch LLM suggestions
+async function fetchLLMSuggestions(payeeName: string): Promise<{
+  details?: PayeeDetailsSuggestions;
+  contact?: ContactEnrichmentSuggestions;
+}> {
+  const [detailsResult, contactResult] = await Promise.allSettled([
+    new Promise<{ success: boolean; suggestions?: PayeeDetailsSuggestions }>((resolve, reject) => {
+      inferMutation.mutate(
+        { name: payeeName, currentCategoryId: $formData.defaultCategoryId ? Number($formData.defaultCategoryId) : undefined },
+        { onSuccess: resolve, onError: reject }
+      );
+    }),
+    new Promise<{ success: boolean; suggestions?: ContactEnrichmentSuggestions }>((resolve, reject) => {
+      enrichContactMutation.mutate(
+        { name: payeeName },
+        { onSuccess: resolve, onError: reject }
+      );
+    }),
+  ]);
+
+  return {
+    details: detailsResult.status === 'fulfilled' && detailsResult.value.success
+      ? detailsResult.value.suggestions
+      : undefined,
+    contact: contactResult.status === 'fulfilled' && contactResult.value.success
+      ? contactResult.value.suggestions
+      : undefined,
+  };
+}
+
+// Fetch ML suggestions (requires existing payee with transaction history)
+async function fetchMLSuggestions(): Promise<PayeeSuggestions | undefined> {
+  if (!_id) return undefined;
+  try {
+    const suggestions = await getPayeeSuggestions(_id).execute();
+    return suggestions;
+  } catch {
+    return undefined;
+  }
+}
+
+// Apply intelligence to all fields across all tabs
+async function handleApplyAllIntelligence(strategy: IntelligenceStrategy = selectedStrategy) {
+  const payeeName = $formData.name?.trim();
+  if (!payeeName) return;
+
+  isApplyingAllIntelligence = true;
+  const filledFields = new Set<string>();
+
+  // Show loading toast
+  const toastId = toast.loading('Applying intelligence...', {
+    description: `Using ${strategy.replace(/-/g, ' ')} strategy`,
+  });
+
+  try {
+    switch (strategy) {
+      case 'llm-only': {
+        const { details, contact } = await fetchLLMSuggestions(payeeName);
+        if (details) applyDetailsSuggestions(details, filledFields);
+        if (contact) applyContactSuggestions(contact, filledFields);
+        break;
+      }
+
+      case 'ml-only': {
+        const mlSuggestions = await fetchMLSuggestions();
+        if (mlSuggestions) applyMLSuggestions(mlSuggestions, filledFields);
+        break;
+      }
+
+      case 'llm-then-ml': {
+        // First apply LLM
+        const { details, contact } = await fetchLLMSuggestions(payeeName);
+        if (details) applyDetailsSuggestions(details, filledFields);
+        if (contact) applyContactSuggestions(contact, filledFields);
+
+        // Then fill gaps with ML
+        const mlSuggestions = await fetchMLSuggestions();
+        if (mlSuggestions) applyMLSuggestions(mlSuggestions, filledFields);
+        break;
+      }
+
+      case 'ml-then-llm': {
+        // First apply ML
+        const mlSuggestions = await fetchMLSuggestions();
+        if (mlSuggestions) applyMLSuggestions(mlSuggestions, filledFields);
+
+        // Then enhance with LLM for fields ML couldn't fill
+        const { details, contact } = await fetchLLMSuggestions(payeeName);
+        if (details) {
+          // Only apply fields not already filled by ML
+          const confidence = details.confidence ?? undefined;
+          if (details.enhancedName && !filledFields.has('name')) {
+            const originalValue = $formData.name;
+            $formData.name = details.enhancedName;
+            recordFieldEnhancement('name', originalValue, details.enhancedName, confidence, 'llm');
+            filledFields.add('name');
+          }
+          if (details.payeeType && !filledFields.has('payeeType')) {
+            const originalValue = $formData.payeeType;
+            $formData.payeeType = details.payeeType;
+            recordFieldEnhancement('payeeType', originalValue, details.payeeType, confidence, 'llm');
+            filledFields.add('payeeType');
+          }
+          if (details.paymentFrequency && !filledFields.has('paymentFrequency')) {
+            const originalValue = $formData.paymentFrequency;
+            $formData.paymentFrequency = details.paymentFrequency;
+            recordFieldEnhancement('paymentFrequency', originalValue, details.paymentFrequency, confidence, 'llm');
+            filledFields.add('paymentFrequency');
+          }
+          if (details.suggestedCategoryId && !filledFields.has('defaultCategoryId')) {
+            const originalValue = $formData.defaultCategoryId;
+            $formData.defaultCategoryId = details.suggestedCategoryId.toString();
+            recordFieldEnhancement('defaultCategoryId', originalValue, details.suggestedCategoryId, confidence, 'llm');
+            filledFields.add('defaultCategoryId');
+          }
+          if (details.taxRelevant !== null && !filledFields.has('taxRelevant')) {
+            const originalValue = $formData.taxRelevant;
+            $formData.taxRelevant = details.taxRelevant;
+            recordFieldEnhancement('taxRelevant', originalValue, details.taxRelevant, confidence, 'llm');
+            filledFields.add('taxRelevant');
+          }
+          if (details.isSeasonal !== null && !filledFields.has('isSeasonal')) {
+            const originalValue = $formData.isSeasonal;
+            $formData.isSeasonal = details.isSeasonal;
+            recordFieldEnhancement('isSeasonal', originalValue, details.isSeasonal, confidence, 'llm');
+            filledFields.add('isSeasonal');
+          }
+          // Business fields
+          if (details.suggestedMCC && !filledFields.has('merchantCategoryCode')) {
+            const originalValue = $formData.merchantCategoryCode;
+            $formData.merchantCategoryCode = details.suggestedMCC;
+            recordFieldEnhancement('merchantCategoryCode', originalValue, details.suggestedMCC, confidence, 'llm');
+            filledFields.add('merchantCategoryCode');
+          }
+          if (details.suggestedTags?.length && !filledFields.has('tags')) {
+            const originalValue = $formData.tags;
+            $formData.tags = details.suggestedTags;
+            recordFieldEnhancement('tags', originalValue, details.suggestedTags, confidence, 'llm');
+            filledFields.add('tags');
+          }
+          if (details.suggestedPaymentMethods?.length && !filledFields.has('preferredPaymentMethods')) {
+            const originalValue = $formData.preferredPaymentMethods;
+            $formData.preferredPaymentMethods = details.suggestedPaymentMethods;
+            recordFieldEnhancement('preferredPaymentMethods', originalValue, details.suggestedPaymentMethods, confidence, 'llm');
+            filledFields.add('preferredPaymentMethods');
+          }
+          if (details.suggestedWebsite && !filledFields.has('website')) {
+            const originalValue = $formData.website;
+            $formData.website = details.suggestedWebsite;
+            recordFieldEnhancement('website', originalValue, details.suggestedWebsite, confidence, 'llm');
+            filledFields.add('website');
+          }
+        }
+        if (contact) applyContactSuggestions(contact, filledFields);
+        break;
+      }
+    }
+
+    // Reload enhancement summary to update UI indicators
+    if (_id) {
+      getFieldEnhancementSummary(_id)
+        .execute()
+        .then((data) => {
+          enhancementSummary = data ?? [];
+        });
+    }
+
+    // Show success toast
+    const fieldCount = filledFields.size;
+    if (fieldCount > 0) {
+      toast.success('Intelligence applied', {
+        id: toastId,
+        description: `Updated ${fieldCount} field${fieldCount === 1 ? '' : 's'}`,
+      });
+    } else {
+      toast.info('No updates available', {
+        id: toastId,
+        description: 'No suggestions found for this payee',
+      });
+    }
+  } catch (error) {
+    console.error('Failed to apply intelligence:', error);
+    toast.error('Failed to apply intelligence', {
+      id: toastId,
+      description: error instanceof Error ? error.message : 'An unexpected error occurred',
+    });
+  } finally {
+    isApplyingAllIntelligence = false;
+  }
+}
 
 // Initialize form data for existing or new payee
 if (_id && _id > 0) {
@@ -213,6 +687,19 @@ if (_id && _id > 0) {
     $formData.tags = payee.tags ?? [];
     $formData.preferredPaymentMethods = payee.preferredPaymentMethods ?? [];
     $formData.merchantCategoryCode = payee.merchantCategoryCode;
+
+    // Load AI preferences from payee
+    payeeAiPreferences = (payee as any).aiPreferences ?? null;
+
+    // Load enhancement summary in the background
+    getFieldEnhancementSummary(_id)
+      .execute()
+      .then((data) => {
+        enhancementSummary = data ?? [];
+      })
+      .catch((error) => {
+        console.error('Failed to load enhancement summary:', error);
+      });
   }
 } else {
   // New payee - set sensible defaults
@@ -233,47 +720,32 @@ if (_id && _id > 0) {
   $formData.defaultCategoryId = 0;
 }
 
-// ML and intelligence functions
-async function loadRecommendations() {
-  if (!_id) return;
-
-  isLoadingRecommendations = true;
-  try {
-    const [intelligence, suggestions, stats] = await Promise.all([
-      trpc().payeeRoutes.intelligence.query({ id: _id }),
-      trpc().payeeRoutes.suggestions.query({ id: _id }),
-      trpc().payeeRoutes.stats.query({ id: _id }),
-    ]);
-
-    recommendations = { intelligence, suggestions, stats };
-  } catch (error) {
-    console.error('Failed to load ML recommendations:', error);
-  } finally {
-    isLoadingRecommendations = false;
+// Reset tainted state after initial form data load
+// This prevents the "unsaved changes" dialog from appearing immediately
+let initialLoadComplete = $state(false);
+$effect(() => {
+  if (!initialLoadComplete && $tainted) {
+    // Clear tainted state from initial data loading
+    for (const key of Object.keys($tainted)) {
+      $tainted[key] = false;
+    }
+    initialLoadComplete = true;
   }
-}
+});
 
-async function validateContact() {
+function handleExplainInsights() {
   if (!_id) return;
 
-  isLoadingContactValidation = true;
-  try {
-    const result = await trpc().payeeRoutes.validateAndEnrichContact.query({
-      payeeId: _id,
-      contactOverrides: {
-        phone: $formData.phone,
-        email: $formData.email,
-        website: $formData.website,
-        address: $formData.address,
+  explainMutation.mutate(
+    { id: _id },
+    {
+      onSuccess: (result) => {
+        if (result.success && result.explanation) {
+          aiExplanation = result.explanation;
+        }
       },
-    });
-
-    contactValidation = result;
-  } catch (error) {
-    console.error('Failed to validate contact:', error);
-  } finally {
-    isLoadingContactValidation = false;
-  }
+    }
+  );
 }
 
 async function detectSubscription() {
@@ -293,27 +765,6 @@ async function detectSubscription() {
   }
 }
 
-async function applyIntelligentDefaults() {
-  if (!_id) return;
-
-  try {
-    const result = await trpc().payeeRoutes.applyIntelligentDefaults.mutate({
-      id: _id,
-      applyCategory: true,
-      applyBudget: true,
-    });
-
-    if (result.defaultCategoryId) {
-      $formData.defaultCategoryId = result.defaultCategoryId;
-    }
-
-    // Reload recommendations
-    await loadRecommendations();
-  } catch (error) {
-    console.error('Failed to apply intelligent defaults:', error);
-  }
-}
-
 const deletePayee = async (id: number) => {
   alertDialogOpen = false;
   if (onDelete) {
@@ -324,7 +775,6 @@ const deletePayee = async (id: number) => {
 // Load initial data for existing payee
 $effect(() => {
   if (isUpdate) {
-    loadRecommendations();
     detectSubscription();
   }
 });
@@ -333,8 +783,87 @@ $effect(() => {
 <form id={_formId} method="post" action="?/save-payee" use:enhance class="space-y-6">
   <input hidden value={$formData.id} name="id" />
 
+  <!-- Header with Apply Intelligence dropdown -->
+  <div class="flex items-center justify-end gap-2">
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger disabled={isApplyingAllIntelligence || !$formData.name?.trim()}>
+        {#snippet child({ props })}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            class="gap-2"
+            {...props}
+          >
+            {#if isApplyingAllIntelligence}
+              <Loader2 class="h-4 w-4 animate-spin" />
+              Applying...
+            {:else}
+              <Wand2 class="h-4 w-4" />
+              Apply Intelligence
+              <ChevronDown class="h-3 w-3 opacity-50" />
+            {/if}
+          </Button>
+        {/snippet}
+      </DropdownMenu.Trigger>
+
+      <DropdownMenu.Content align="end" class="w-64">
+        <DropdownMenu.Label>Intelligence Strategy</DropdownMenu.Label>
+        <DropdownMenu.Separator />
+
+        {#each intelligenceStrategies as strategy (strategy.value)}
+          {@const isSelected = selectedStrategy === strategy.value}
+          {@const isMlDisabled = !_id && (strategy.value === 'ml-only' || strategy.value === 'ml-then-llm')}
+          <DropdownMenu.Item
+            class="gap-3 {isMlDisabled ? 'opacity-50' : ''}"
+            disabled={isMlDisabled}
+            onclick={() => {
+              if (!isMlDisabled) {
+                selectedStrategy = strategy.value;
+                handleApplyAllIntelligence(strategy.value);
+              }
+            }}
+          >
+            <div class="flex items-center gap-1.5">
+              {#if strategy.icon === 'sparkles'}
+                <Sparkles class="h-4 w-4 text-violet-500" />
+              {:else if strategy.icon === 'brain'}
+                <Brain class="h-4 w-4 text-blue-500" />
+              {:else if strategy.icon === 'sparkles-brain'}
+                <Sparkles class="h-4 w-4 text-violet-500" />
+                <ArrowRight class="h-3 w-3 text-muted-foreground" />
+                <Brain class="h-4 w-4 text-blue-500" />
+              {:else if strategy.icon === 'brain-sparkles'}
+                <Brain class="h-4 w-4 text-blue-500" />
+                <ArrowRight class="h-3 w-3 text-muted-foreground" />
+                <Sparkles class="h-4 w-4 text-violet-500" />
+              {/if}
+            </div>
+            <div class="flex flex-col flex-1">
+              <span class="font-medium">{strategy.label}</span>
+              <span class="text-muted-foreground text-xs">
+                {isMlDisabled ? 'Requires existing payee with history' : strategy.description}
+              </span>
+            </div>
+            {#if isSelected}
+              <CircleCheck class="h-4 w-4 text-primary" />
+            {/if}
+          </DropdownMenu.Item>
+        {/each}
+
+        <DropdownMenu.Separator />
+        <div class="px-2 py-1.5">
+          <p class="text-muted-foreground text-xs">
+            <strong>LLM</strong> uses AI language models for suggestions.
+            <strong>ML</strong> learns from your transaction history.
+          </p>
+        </div>
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+  </div>
+
   <Tabs.Root bind:value={activeTab} class="w-full">
-    <Tabs.List class="grid w-full grid-cols-5">
+    <Tabs.List class="grid w-full grid-cols-3">
       <Tabs.Trigger value="basic" class="relative flex items-center gap-2">
         <User class="h-4 w-4" />
         Basic Info
@@ -380,52 +909,24 @@ $effect(() => {
           </div>
         {/if}
       </Tabs.Trigger>
-      <Tabs.Trigger value="intelligence" class="relative flex items-center gap-2">
-        <Brain class="h-4 w-4" />
-        ML Insights
-        {#if tabErrors.intelligence}
-          <div
-            class="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"
-            title="Has validation errors">
-          </div>
-        {:else if tabRequiredFields.intelligence}
-          <div
-            class="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-amber-500"
-            title="Required fields missing">
-          </div>
-        {/if}
-      </Tabs.Trigger>
-      <Tabs.Trigger value="automation" class="relative flex items-center gap-2">
-        <Target class="h-4 w-4" />
-        Automation
-        {#if tabErrors.automation}
-          <div
-            class="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"
-            title="Has validation errors">
-          </div>
-        {:else if tabRequiredFields.automation}
-          <div
-            class="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-amber-500"
-            title="Required fields missing">
-          </div>
-        {/if}
-      </Tabs.Trigger>
     </Tabs.List>
 
     <!-- Basic Information Tab -->
     <Tabs.Content value="basic" class="space-y-6">
-      <PayeeBasicInfoForm {formData} {entityForm} {categories} />
+      <PayeeBasicInfoForm
+        {formData}
+        {entityForm}
+        {categories}
+        payeeId={_id}
+        aiPreferences={payeeAiPreferences}
+        {enhancementSummary}
+        isGlobalApplying={isApplyingAllIntelligence}
+      />
     </Tabs.Content>
 
     <!-- Contact Information Tab -->
     <Tabs.Content value="contact" class="space-y-6">
-      <PayeeContactForm
-        {formData}
-        {entityForm}
-        {isUpdate}
-        {contactValidation}
-        {isLoadingContactValidation}
-        onValidateContact={validateContact} />
+      <PayeeContactForm {formData} {entityForm} payeeName={$formData.name} {enhancementSummary} isGlobalApplying={isApplyingAllIntelligence} />
     </Tabs.Content>
 
     <!-- Business Information Tab -->
@@ -436,235 +937,12 @@ $effect(() => {
         {isUpdate}
         {subscriptionInfo}
         {isLoadingSubscriptionDetection}
-        onDetectSubscription={detectSubscription} />
+        onDetectSubscription={detectSubscription}
+        payeeName={$formData.name}
+        {enhancementSummary}
+        isGlobalApplying={isApplyingAllIntelligence} />
     </Tabs.Content>
 
-    <!-- ML Insights Tab -->
-    <Tabs.Content value="intelligence" class="space-y-6">
-      {#if isUpdate}
-        <Card.Root>
-          <Card.Header>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <Brain class="text-primary h-5 w-5" />
-                <Card.Title>Machine Learning Insights</Card.Title>
-              </div>
-              <div class="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onclick={loadRecommendations}
-                  disabled={isLoadingRecommendations}>
-                  {#if isLoadingRecommendations}
-                    <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-                  {/if}
-                  Refresh
-                </Button>
-                <Button variant="default" size="sm" onclick={applyIntelligentDefaults}>
-                  <Sparkles class="mr-2 h-4 w-4" />
-                  Apply Defaults
-                </Button>
-              </div>
-            </div>
-            <Card.Description>
-              AI-powered recommendations and insights based on transaction history.
-            </Card.Description>
-          </Card.Header>
-          <Card.Content>
-            {#if isLoadingRecommendations}
-              <div class="flex items-center justify-center py-8">
-                <LoaderCircle class="h-8 w-8 animate-spin" />
-              </div>
-            {:else if recommendations}
-              <div class="space-y-6">
-                <!-- Statistics -->
-                {#if recommendations.stats}
-                  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div class="bg-muted/50 rounded-lg p-4 text-center">
-                      <DollarSign class="mx-auto mb-2 h-6 w-6 text-green-500" />
-                      <div class="text-2xl font-bold">${recommendations.stats.totalSpent || 0}</div>
-                      <div class="text-muted-foreground text-sm">Total Spent</div>
-                    </div>
-                    <div class="bg-muted/50 rounded-lg p-4 text-center">
-                      <TrendingUp class="mx-auto mb-2 h-6 w-6 text-blue-500" />
-                      <div class="text-2xl font-bold">
-                        {recommendations.stats.transactionCount || 0}
-                      </div>
-                      <div class="text-muted-foreground text-sm">Transactions</div>
-                    </div>
-                    <div class="bg-muted/50 rounded-lg p-4 text-center">
-                      <Calendar class="mx-auto mb-2 h-6 w-6 text-purple-500" />
-                      <div class="text-2xl font-bold">
-                        ${Math.round(recommendations.stats.avgAmount || 0)}
-                      </div>
-                      <div class="text-muted-foreground text-sm">Avg Amount</div>
-                    </div>
-                  </div>
-                {/if}
-
-                <!-- Intelligence Insights -->
-                {#if recommendations.intelligence}
-                  <div class="space-y-4">
-                    <h4 class="font-medium">AI Insights</h4>
-                    {#if recommendations.intelligence.categoryRecommendation}
-                      <div class="flex items-center gap-2 rounded-lg bg-blue-50 p-3">
-                        <Tag class="h-4 w-4 text-blue-500" />
-                        <span class="text-sm">
-                          Recommended category: <strong
-                            >{recommendations.intelligence.categoryRecommendation.name}</strong>
-                          ({Math.round(
-                            recommendations.intelligence.categoryRecommendation.confidence * 100
-                          )}% confidence)
-                        </span>
-                      </div>
-                    {/if}
-                    {#if recommendations.intelligence.frequencyPrediction}
-                      <div class="flex items-center gap-2 rounded-lg bg-green-50 p-3">
-                        <Calendar class="h-4 w-4 text-green-500" />
-                        <span class="text-sm">
-                          Predicted frequency: <strong
-                            >{recommendations.intelligence.frequencyPrediction}</strong>
-                        </span>
-                      </div>
-                    {/if}
-                  </div>
-                {/if}
-
-                <!-- Suggestions -->
-                {#if recommendations.suggestions && recommendations.suggestions.length > 0}
-                  <div class="space-y-4">
-                    <h4 class="font-medium">Optimization Suggestions</h4>
-                    <div class="space-y-2">
-                      {#each recommendations.suggestions as suggestion}
-                        <div class="bg-muted/50 flex items-start gap-2 rounded-lg p-3">
-                          <CircleAlert class="mt-0.5 h-4 w-4 text-orange-500" />
-                          <div class="text-sm">
-                            <strong>{suggestion.type}:</strong>
-                            {suggestion.description}
-                            {#if suggestion.impact}
-                              <Badge variant="secondary" class="ml-2">{suggestion.impact}</Badge>
-                            {/if}
-                          </div>
-                        </div>
-                      {/each}
-                    </div>
-                  </div>
-                {/if}
-              </div>
-            {:else}
-              <p class="text-muted-foreground py-8 text-center text-sm">
-                Click "Refresh" to load ML insights for this payee
-              </p>
-            {/if}
-          </Card.Content>
-        </Card.Root>
-      {:else}
-        <Card.Root>
-          <Card.Content class="py-8 text-center">
-            <Brain class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-            <p class="text-muted-foreground text-sm">
-              ML insights will be available after saving this payee and processing transaction
-              history.
-            </p>
-          </Card.Content>
-        </Card.Root>
-      {/if}
-    </Tabs.Content>
-
-    <!-- Automation Tab -->
-    <Tabs.Content value="automation" class="space-y-6">
-      <Card.Root>
-        <Card.Header>
-          <div class="flex items-center gap-2">
-            <Target class="text-primary h-5 w-5" />
-            <Card.Title>Automation & Defaults</Card.Title>
-          </div>
-          <Card.Description>
-            Configure automatic categorization and budget assignment defaults.
-          </Card.Description>
-        </Card.Header>
-        <Card.Content class="space-y-4">
-          <!-- Subscription Information -->
-          <Form.Field form={entityForm} name="subscriptionInfo">
-            <Form.Control>
-              {#snippet children({ props })}
-                <Form.Label>Subscription Metadata</Form.Label>
-                <Textarea
-                  {...props}
-                  bind:value={$formData.subscriptionInfo}
-                  placeholder="JSON metadata for subscription details" />
-                <Form.Description
-                  >Advanced subscription configuration (JSON format)</Form.Description>
-                <Form.FieldErrors />
-              {/snippet}
-            </Form.Control>
-          </Form.Field>
-
-          {#if isUpdate}
-            <Separator />
-
-            <div class="space-y-4">
-              <h4 class="font-medium">Quick Actions</h4>
-              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Button
-                  variant="outline"
-                  class="h-auto p-4 text-left"
-                  onclick={loadRecommendations}>
-                  <div class="flex items-center gap-3">
-                    <Brain class="h-5 w-5 text-blue-500" />
-                    <div>
-                      <div class="font-medium">Update ML Fields</div>
-                      <div class="text-muted-foreground text-sm">
-                        Recalculate averages and predictions
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-
-                <Button variant="outline" class="h-auto p-4 text-left" onclick={validateContact}>
-                  <div class="flex items-center gap-3">
-                    <CircleCheck class="h-5 w-5 text-green-500" />
-                    <div>
-                      <div class="font-medium">Validate Contact</div>
-                      <div class="text-muted-foreground text-sm">
-                        Check and enrich contact information
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-
-                <Button variant="outline" class="h-auto p-4 text-left" onclick={detectSubscription}>
-                  <div class="flex items-center gap-3">
-                    <Calendar class="h-5 w-5 text-purple-500" />
-                    <div>
-                      <div class="font-medium">Detect Subscription</div>
-                      <div class="text-muted-foreground text-sm">
-                        Analyze recurring payment patterns
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  class="h-auto p-4 text-left"
-                  onclick={applyIntelligentDefaults}>
-                  <div class="flex items-center gap-3">
-                    <Sparkles class="h-5 w-5 text-orange-500" />
-                    <div>
-                      <div class="font-medium">Apply AI Defaults</div>
-                      <div class="text-muted-foreground text-sm">
-                        Set category and budget based on ML
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-              </div>
-            </div>
-          {/if}
-        </Card.Content>
-      </Card.Root>
-    </Tabs.Content>
   </Tabs.Root>
 
   <!-- Hidden fields for complex data -->
@@ -717,6 +995,31 @@ $effect(() => {
       <AlertDialog.Action
         onclick={() => deletePayee(_id!)}
         class={buttonVariants({ variant: 'destructive' })}>Continue</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- Unsaved Changes Confirmation Dialog -->
+<AlertDialog.Root bind:open={unsavedChangesDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+          <TriangleAlert class="h-5 w-5 text-amber-600 dark:text-amber-500" />
+        </div>
+        <AlertDialog.Title>Unsaved Changes</AlertDialog.Title>
+      </div>
+      <AlertDialog.Description class="pt-2">
+        You have unsaved changes that will be lost if you leave this page. Are you sure you want to discard your changes?
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel onclick={cancelNavigation}>Stay on Page</AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmNavigation}
+        class={buttonVariants({ variant: 'destructive' })}>
+        Discard Changes
+      </AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

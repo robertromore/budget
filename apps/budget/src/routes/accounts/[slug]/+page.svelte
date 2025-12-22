@@ -13,6 +13,7 @@ import { deleteScheduleDialog, deleteScheduleId } from '$lib/states/ui/global.sv
 import { ServerAccountState } from '$lib/states/views';
 import type { TransactionsFormat } from '$lib/types';
 import { parseDate } from '@internationalized/date';
+import Brain from '@lucide/svelte/icons/brain';
 import Calendar from '@lucide/svelte/icons/calendar';
 import ChartLine from '@lucide/svelte/icons/chart-line';
 import FileText from '@lucide/svelte/icons/file-text';
@@ -47,6 +48,7 @@ import {
   ExpenseWizard,
   HsaDashboard,
   ImportTab,
+  IntelligenceTab,
   MedicalExpenseForm,
   SettingsTab,
   TransactionTableContainer,
@@ -63,6 +65,7 @@ const tabValues = [
   'hsa-expenses',
   'hsa-dashboard',
   'analytics',
+  'intelligence',
   'schedules',
   'budgets',
   'import',
@@ -114,6 +117,7 @@ $effect(() => {
         { id: 'hsa-expenses', label: 'Medical Expenses', condition: isHsaAccount },
         { id: 'hsa-dashboard', label: 'HSA Dashboard', condition: isHsaAccount },
         { id: 'analytics', label: 'Analytics', icon: ChartLine },
+        { id: 'intelligence', label: 'Intelligence', icon: Brain },
         { id: 'schedules', label: 'Schedules', icon: Calendar },
         { id: 'budgets', label: 'Budgets', icon: Wallet },
         { id: 'import', label: 'Import', icon: Upload, condition: !isHsaAccount },
@@ -822,7 +826,7 @@ $effect(() => {
         onValueChange={(value) => setActiveTab(value as TabValue)}
         class="tabs-connected w-full"
       >
-        <Tabs.List class="tabs-connected-list">
+        <Tabs.List class="tabs-connected-list" data-help-id="account-tabs" data-help-title="Account Tabs">
           <Tabs.Trigger value="transactions" class="tabs-connected-trigger px-6 font-medium">
             <List class="mr-2 h-4 w-4" />
             Transactions
@@ -836,6 +840,10 @@ $effect(() => {
           <Tabs.Trigger value="analytics" class="tabs-connected-trigger px-6 font-medium">
             <ChartLine class="mr-2 h-4 w-4" />
             Analytics
+          </Tabs.Trigger>
+          <Tabs.Trigger value="intelligence" class="tabs-connected-trigger px-6 font-medium">
+            <Brain class="mr-2 h-4 w-4" />
+            Intelligence
           </Tabs.Trigger>
           <Tabs.Trigger value="schedules" class="tabs-connected-trigger px-6 font-medium">
             <Calendar class="mr-2 h-4 w-4" />
@@ -996,6 +1004,13 @@ $effect(() => {
         </Tabs.Content>
       {/if}
 
+      <!-- Intelligence Tab Content -->
+      <Tabs.Content value="intelligence" class="tabs-connected-content" data-help-id="intelligence-tab" data-help-title="Intelligence Tab">
+        {#if accountId && accountSlug && activeTab === 'intelligence'}
+          <IntelligenceTab accountId={accountId} {accountSlug} />
+        {/if}
+      </Tabs.Content>
+
       <!-- Settings Tab Content -->
       <Tabs.Content value="settings" class="tabs-connected-content">
         {#if accountData && activeTab === 'settings'}
@@ -1112,6 +1127,10 @@ $effect(() => {
               accountId={Number(accountId)}
               accountSlug={accountSlug || ''}
               accountName={accountData.name || 'Account'} />
+          {/if}
+        {:else if activeTab === 'intelligence'}
+          {#if accountId && accountSlug}
+            <IntelligenceTab {accountId} {accountSlug} />
           {/if}
         {:else if activeTab === 'settings'}
           {#if accountData}

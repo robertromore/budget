@@ -16,7 +16,6 @@
       "options": {
         "parser": "svelte",
         "svelteStrictMode": false,
-        "svelteBracketNewLine": false,
         "svelteAllowShorthand": true,
         "svelteIndentScriptAndStyle": false
       }

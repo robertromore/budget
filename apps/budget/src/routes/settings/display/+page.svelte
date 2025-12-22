@@ -120,14 +120,14 @@
 	<title>Display - Settings</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-6" data-help-id="settings-display" data-help-title="Display Settings">
 	<div>
 		<h2 class="text-xl font-semibold">Display</h2>
 		<p class="text-muted-foreground text-sm">Configure how dates, numbers, and currency are displayed</p>
 	</div>
 
 	<!-- Date Format -->
-	<Card.Root>
+	<Card.Root data-help-id="display-date-format" data-help-title="Date Format">
 		<Card.Header>
 			<Card.Title>Date Format</Card.Title>
 			<Card.Description>Choose how dates are displayed throughout the app</Card.Description>
@@ -150,7 +150,7 @@
 	</Card.Root>
 
 	<!-- Currency Symbol -->
-	<Card.Root>
+	<Card.Root data-help-id="display-currency-symbol" data-help-title="Currency Symbol">
 		<Card.Header>
 			<Card.Title>Currency Symbol</Card.Title>
 			<Card.Description>Set the currency symbol used for monetary values</Card.Description>
@@ -170,7 +170,7 @@
 	</Card.Root>
 
 	<!-- Number Format -->
-	<Card.Root>
+	<Card.Root data-help-id="display-number-format" data-help-title="Number Format">
 		<Card.Header>
 			<Card.Title>Number Format</Card.Title>
 			<Card.Description>Choose how numbers are formatted (thousands separator, decimal)</Card.Description>
@@ -193,7 +193,7 @@
 	</Card.Root>
 
 	<!-- Show Cents -->
-	<Card.Root>
+	<Card.Root data-help-id="display-decimal-places" data-help-title="Decimal Places">
 		<Card.Header>
 			<Card.Title>Decimal Places</Card.Title>
 			<Card.Description>Control whether cents are displayed in currency values</Card.Description>
@@ -212,7 +212,7 @@
 	</Card.Root>
 
 	<!-- Header Actions -->
-	<Card.Root>
+	<Card.Root data-help-id="display-header-actions" data-help-title="Header Actions Mode">
 		<Card.Header>
 			<Card.Title>Header Actions</Card.Title>
 			<Card.Description>Choose where page action buttons are displayed</Card.Description>
@@ -239,7 +239,7 @@
 	</Card.Root>
 
 	<!-- Header Actions Display -->
-	<Card.Root>
+	<Card.Root data-help-id="display-header-actions-display" data-help-title="Header Actions Display">
 		<Card.Header>
 			<Card.Title>Header Actions Display</Card.Title>
 			<Card.Description>Choose how header action buttons are displayed</Card.Description>
@@ -266,7 +266,7 @@
 	</Card.Root>
 
 	<!-- Header Tabs -->
-	<Card.Root>
+	<Card.Root data-help-id="display-header-tabs" data-help-title="Header Tabs Mode">
 		<Card.Header>
 			<Card.Title>Header Tabs</Card.Title>
 			<Card.Description>Move page navigation tabs to the header for a cleaner layout</Card.Description>
@@ -293,7 +293,7 @@
 	</Card.Root>
 
 	<!-- Header Tabs Display -->
-	<Card.Root>
+	<Card.Root data-help-id="display-header-tabs-display" data-help-title="Header Tabs Display">
 		<Card.Header>
 			<Card.Title>Header Tabs Display</Card.Title>
 			<Card.Description>Choose how header tabs are displayed</Card.Description>
@@ -320,7 +320,7 @@
 	</Card.Root>
 
 	<!-- Table Display Options -->
-	<Card.Root>
+	<Card.Root data-help-id="display-table-options" data-help-title="Table Display Options">
 		<Card.Header>
 			<Card.Title>Table Display Options</Card.Title>
 			<Card.Description>Choose how table column and display settings appear</Card.Description>

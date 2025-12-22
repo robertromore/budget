@@ -238,13 +238,19 @@ const summaryMetrics = $derived.by(() => {
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="budgets-page-header" data-help-title="Budgets Page">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Budgets</h1>
       <p class="text-muted-foreground">{budgets.length} budgets total</p>
     </div>
     <div class="flex items-center gap-2">
-      <Button variant="outline" onclick={() => (templatePickerOpen = true)}>
+      <Button
+        variant="outline"
+        onclick={() => (templatePickerOpen = true)}
+        data-help-id="templates-button"
+        data-help-title="Budget Templates"
+        data-help-modal="budget-template-picker"
+      >
         <Sparkles class="mr-2 h-4 w-4" />
         Templates
       </Button>
@@ -260,7 +266,8 @@ const summaryMetrics = $derived.by(() => {
     <div
       class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
       role="region"
-      aria-label="Budget summary statistics">
+      aria-label="Budget summary statistics"
+      data-help-id="budget-summary" data-help-title="Budget Summary">
       <Card.Root>
         <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
           <Card.Title class="text-xs font-medium sm:text-sm">Total Allocated</Card.Title>
@@ -354,7 +361,7 @@ const summaryMetrics = $derived.by(() => {
     <!-- Show tabs even when there are no budgets so users can access Recommendations -->
     {#if showTabsOnPage}
       <Tabs.Root value={activeTab} onValueChange={(v) => (activeTab = v ?? 'overview')} class="space-y-6">
-        <Tabs.List class="grid w-full grid-cols-6">
+        <Tabs.List class="grid w-full grid-cols-6" data-help-id="budget-tabs" data-help-title="Budget Tabs">
           <Tabs.Trigger value="overview" class="flex items-center gap-2">
             <Grid3x3 class="h-4 w-4" />
             Budget Overview

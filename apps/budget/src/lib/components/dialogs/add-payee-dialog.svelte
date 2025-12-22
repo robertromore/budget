@@ -1,5 +1,6 @@
 <script lang="ts">
 import { ManagePayeeDialogForm } from '$lib/components/forms';
+import { ModalIntelligenceProvider } from '$lib/components/intelligence-input';
 import * as Sheet from '$lib/components/ui/sheet';
 import type { UseBoolean } from '$lib/hooks/ui/use-boolean.svelte';
 import type { UseNumber } from '$lib/hooks/ui/use-number.svelte';
@@ -25,11 +26,13 @@ const payeeId: UseNumber = $derived(managingPayeeId);
       </Sheet.Title>
     </Sheet.Header>
 
-    <div class="p-4 pt-0">
-      <ManagePayeeDialogForm
-        payeeId={payeeId.current}
-        formId="add-payee-dialog-form"
-        onSave={() => (dialogOpen.current = false)} />
-    </div>
+    <ModalIntelligenceProvider modalId="add-payee-dialog">
+      <div class="p-4 pt-0">
+        <ManagePayeeDialogForm
+          payeeId={payeeId.current}
+          formId="add-payee-dialog-form"
+          onSave={() => (dialogOpen.current = false)} />
+      </div>
+    </ModalIntelligenceProvider>
   </Sheet.Content>
 </Sheet.Root>

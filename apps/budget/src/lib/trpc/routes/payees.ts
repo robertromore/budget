@@ -1,14 +1,19 @@
 import {
   analyzeCorrectionsSchema,
+  getEnhancementStatsSchema,
+  getPayeeEnhancementsSchema,
   learningMetricsSchema,
   recordCorrectionSchema,
+  recordEnhancementSchema,
   removePayeeSchema,
   removePayeesSchema,
+  updateEnhancementFeedbackSchema,
 } from "$lib/schema";
 import { superformInsertPayeeSchema } from "$lib/schema/superforms";
 import {
   advancedSearchPayeesSchema,
   applyIntelligentDefaultsSchema,
+  createEnhancementTrackingService,
   createPayeeSchema,
   getPayeesByTypeSchema,
   mergePayeesSchema,
@@ -882,11 +887,11 @@ export const payeeRoutes = t.router({
         minConfidence: z.number().min(0).max(1).default(0.3),
       })
     )
-    .query(async ({ input, ctx }) => {
-      return withErrorHandler(() =>
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
         payeeService.detectSubscriptions(ctx.workspaceId, input.payeeIds, input.includeInactive, input.minConfidence)
-      );
-    }),
+      )
+    ),
 
   classifySubscription: publicProcedure
     .input(
@@ -903,11 +908,11 @@ export const payeeRoutes = t.router({
           .optional(),
       })
     )
-    .query(async ({ input, ctx }) => {
-      return withErrorHandler(() =>
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
         payeeService.classifySubscription(input.payeeId, ctx.workspaceId, input.transactionData)
-      );
-    }),
+      )
+    ),
 
   subscriptionLifecycleAnalysis: publicProcedure
     .input(
@@ -915,9 +920,11 @@ export const payeeRoutes = t.router({
         payeeId: z.number().positive(),
       })
     )
-    .query(async ({ input, ctx }) => {
-      return withErrorHandler(() => payeeService.getSubscriptionLifecycleAnalysis(input.payeeId, ctx.workspaceId));
-    }),
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
+        payeeService.getSubscriptionLifecycleAnalysis(input.payeeId, ctx.workspaceId)
+      )
+    ),
 
   subscriptionCostAnalysis: publicProcedure
     .input(
@@ -1353,18 +1360,20 @@ export const payeeRoutes = t.router({
         groupingStrategy: z
           .enum(["name", "contact", "transaction_pattern", "comprehensive"])
           .default("comprehensive"),
+        detectionMethod: z.enum(["simple", "ml", "llm", "llm_direct"]).default("ml"),
       })
     )
-    .query(async ({ input, ctx }) => {
-      return withErrorHandler(async () =>
+    .query(
+      withErrorHandler(async ({ input, ctx }) =>
         payeeService.findDuplicatePayees(
           input.similarityThreshold,
           input.includeInactive,
           input.groupingStrategy,
-          ctx.workspaceId
+          ctx.workspaceId,
+          input.detectionMethod
         )
-      );
-    }),
+      )
+    ),
 
   mergeDuplicates: publicProcedure
     .input(
@@ -1422,6 +1431,544 @@ export const payeeRoutes = t.router({
       );
     }),
 
+  // =====================================
+  // LLM Enhancement Routes
+  // =====================================
+
+  /**
+   * Enhance a payee name using LLM.
+   * Takes raw/messy name and returns a clean, canonical version.
+   */
+  enhanceName: rateLimitedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        rawDescription: z.string().optional(), // Original transaction description if available
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+        const { workspaces } = await import("$lib/schema/workspaces");
+        const { db } = await import("$lib/server/db");
+        const { eq } = await import("drizzle-orm");
+        const { generateText } = await import("ai");
+
+        // Get workspace preferences
+        const [workspace] = await db
+          .select({ preferences: workspaces.preferences })
+          .from(workspaces)
+          .where(eq(workspaces.id, ctx.workspaceId))
+          .limit(1);
+
+        const prefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+        const coordinator = createIntelligenceCoordinator(prefs);
+        const strategy = coordinator.getStrategy("payeeMatching");
+
+        if (!strategy.useLLM || !strategy.llmProvider) {
+          return {
+            success: false,
+            enhanced: null,
+            original: input.name,
+            message: `LLM is not enabled for payee matching. Debug: useLLM=${strategy.useLLM}, hasProvider=${!!strategy.llmProvider}, featureMode=${strategy.featureMode}, llmEnabled=${strategy.llmEnabled}`,
+          };
+        }
+
+        // Build the prompt
+        const prompt = `You are a financial data cleaner. Given a payee name from a bank transaction, return a clean, canonical version of the merchant/payee name.
+
+Rules:
+- Remove transaction codes, reference numbers, and location identifiers
+- Remove prefixes like "SQ *", "TST*", "PAYPAL *", etc.
+- Capitalize properly (Title Case for most names)
+- Keep it concise but recognizable
+- If it's a well-known brand, use their official name
+- Return ONLY the cleaned name, nothing else
+
+Examples:
+"SQ *BLUE BOTTLE COFFEE" → "Blue Bottle Coffee"
+"AMZN MKTP US*ABC123" → "Amazon"
+"PAYPAL *SPOTIFY" → "Spotify"
+"TST* SWEETGREEN #123" → "Sweetgreen"
+"WHOLEFDS MKT 10234" → "Whole Foods Market"
+
+Input: "${input.name}"${input.rawDescription ? `\nOriginal description: "${input.rawDescription}"` : ""}
+
+Cleaned name:`;
+
+        try {
+          let text: string;
+
+          // Handle Ollama separately using native SDK
+          if (strategy.llmProvider.isOllama && strategy.llmProvider.ollamaClient) {
+            const response = await strategy.llmProvider.ollamaClient.chat({
+              model: strategy.llmProvider.model,
+              messages: [{ role: "user", content: prompt }],
+              stream: false,
+              options: {
+                temperature: 0.1,
+                num_predict: 100,
+              },
+            });
+            text = response.message?.content || "";
+          } else {
+            // Use AI SDK for other providers
+            const result = await generateText({
+              model: strategy.llmProvider.provider(strategy.llmProvider.model),
+              prompt,
+              maxOutputTokens: 50,
+              temperature: 0.1,
+            });
+            text = result.text;
+          }
+
+          const enhanced = text.trim().replace(/^["']|["']$/g, ""); // Remove quotes if present
+
+          return {
+            success: true,
+            enhanced,
+            original: input.name,
+            provider: strategy.llmProviderType,
+          };
+        } catch (error) {
+          console.error("LLM enhancement failed:", error);
+          return {
+            success: false,
+            enhanced: null,
+            original: input.name,
+            message: "Failed to enhance name. Please try again.",
+          };
+        }
+      })
+    ),
+
+  /**
+   * Infer all payee details using LLM.
+   * Takes raw name and returns suggested values for all payee fields.
+   */
+  inferPayeeDetails: rateLimitedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        rawDescription: z.string().optional(),
+        currentCategoryId: z.number().optional(), // For context
+      })
+    )
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+        const { workspaces } = await import("$lib/schema/workspaces");
+        const { categories } = await import("$lib/schema/categories");
+        const { db } = await import("$lib/server/db");
+        const { eq } = await import("drizzle-orm");
+        const { generateText } = await import("ai");
+
+        // Get workspace preferences
+        const [workspace] = await db
+          .select({ preferences: workspaces.preferences })
+          .from(workspaces)
+          .where(eq(workspaces.id, ctx.workspaceId))
+          .limit(1);
+
+        const prefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+        const coordinator = createIntelligenceCoordinator(prefs);
+        const strategy = coordinator.getStrategy("payeeMatching");
+
+        if (!strategy.useLLM || !strategy.llmProvider) {
+          return {
+            success: false,
+            original: input.name,
+            message: "LLM is not enabled for payee matching",
+          };
+        }
+
+        // Get available categories for context
+        const availableCategories = await db
+          .select({ id: categories.id, name: categories.name })
+          .from(categories)
+          .where(eq(categories.workspaceId, ctx.workspaceId));
+
+        const categoryList = availableCategories.map((c) => `${c.id}: ${c.name}`).join("\n");
+
+        // Build the prompt for comprehensive payee analysis
+        const prompt = `You are a financial data analyst. Given a payee name from a bank transaction, analyze it and return structured information about the payee.
+
+Input payee name: "${input.name}"${input.rawDescription ? `\nOriginal transaction description: "${input.rawDescription}"` : ""}
+
+Available budget categories:
+${categoryList || "No categories available"}
+
+Analyze this payee and return a JSON object with the following fields:
+
+1. "enhancedName": A clean, canonical version of the merchant name (remove transaction codes, proper capitalization)
+2. "payeeType": One of: "merchant", "utility", "employer", "financial_institution", "government", "individual", "other"
+3. "paymentFrequency": One of: "one_time", "weekly", "bi_weekly", "monthly", "quarterly", "annual", "irregular"
+4. "suggestedCategoryId": The ID number of the most appropriate category from the list above (or null if unsure)
+5. "suggestedCategoryName": The name of the suggested category (for display)
+6. "taxRelevant": true if this payee's expenses are likely tax-deductible or reportable (e.g., business expenses, medical, charitable donations)
+7. "isSeasonal": true if payments typically only occur during certain times of year (e.g., landscaping, heating, holiday services)
+8. "confidence": A number 0-1 indicating overall confidence in these suggestions
+9. "suggestedMCC": 4-digit Merchant Category Code string (e.g., "5812" for restaurants, "5411" for groceries)
+10. "suggestedTags": Array of relevant descriptive tags (e.g., ["subscription", "essential", "entertainment"])
+11. "suggestedPaymentMethods": Array of typical payment methods for this payee (e.g., ["credit_card", "debit_card", "bank_transfer"])
+12. "suggestedWebsite": The most likely official website URL for this business (e.g., "netflix.com", "starbucks.com"). Return null for individuals or if unsure.
+
+Common MCC codes for reference:
+- 5411: Grocery Stores, Supermarkets
+- 5812: Eating Places, Restaurants
+- 5814: Fast Food Restaurants
+- 5541: Service Stations (Gas)
+- 4900: Utilities (Electric, Gas, Water)
+- 4814: Telecommunication Services
+- 5311: Department Stores
+- 5912: Drug Stores, Pharmacies
+- 7299: Miscellaneous Recreation Services
+- 8011: Doctors, Physicians
+- 8062: Hospitals
+- 5942: Book Stores
+- 5732: Electronics Stores
+- 7832: Motion Picture Theaters
+
+Valid payment methods: "credit_card", "debit_card", "bank_transfer", "cash", "check", "paypal", "venmo", "apple_pay", "google_pay", "crypto", "other"
+
+Guidelines:
+- For enhancedName: Remove prefixes like "SQ *", "TST*", "PAYPAL *", location codes, and transaction references
+- For payeeType: "utility" for power/water/gas/internet, "merchant" for stores/restaurants, "employer" for income sources
+- For paymentFrequency: "monthly" for subscriptions/bills, "irregular" for stores, consider the typical payment pattern
+- For suggestedCategoryId: Match to the most specific category, prefer null if unsure rather than guessing wrong
+- For taxRelevant: Usually false unless clearly business, medical, or charitable
+- For isSeasonal: Usually false unless clearly season-dependent
+
+Return ONLY valid JSON, no explanation:`;
+
+        try {
+          let text: string;
+
+          // Handle Ollama separately using native SDK
+          if (strategy.llmProvider.isOllama && strategy.llmProvider.ollamaClient) {
+            const response = await strategy.llmProvider.ollamaClient.chat({
+              model: strategy.llmProvider.model,
+              messages: [{ role: "user", content: prompt }],
+              stream: false,
+              format: "json",
+              options: {
+                temperature: 0.1,
+                num_predict: 500,
+              },
+            });
+            text = response.message?.content || "";
+          } else {
+            // Use AI SDK for other providers
+            const result = await generateText({
+              model: strategy.llmProvider.provider(strategy.llmProvider.model),
+              prompt,
+              maxOutputTokens: 500,
+              temperature: 0.1,
+            });
+            text = result.text;
+          }
+
+          // Parse the JSON response
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) {
+            throw new Error("No valid JSON in response");
+          }
+
+          const parsed = JSON.parse(jsonMatch[0]);
+
+          // Validate and sanitize the response
+          const validPayeeTypes = ["merchant", "utility", "employer", "financial_institution", "government", "individual", "other"];
+          const validFrequencies = ["one_time", "weekly", "bi_weekly", "monthly", "quarterly", "annual", "irregular"];
+          const validPaymentMethods = ["credit_card", "debit_card", "bank_transfer", "cash", "check", "paypal", "venmo", "apple_pay", "google_pay", "crypto", "other"];
+
+          // Validate MCC (should be 4-digit string)
+          const suggestedMCC = typeof parsed.suggestedMCC === "string" && /^\d{4}$/.test(parsed.suggestedMCC)
+            ? parsed.suggestedMCC
+            : null;
+
+          // Validate tags (array of strings)
+          const suggestedTags = Array.isArray(parsed.suggestedTags)
+            ? parsed.suggestedTags.filter((t: unknown) => typeof t === "string" && t.trim().length > 0).map((t: string) => t.trim().toLowerCase())
+            : null;
+
+          // Validate payment methods (array of valid payment method strings)
+          const suggestedPaymentMethods = Array.isArray(parsed.suggestedPaymentMethods)
+            ? parsed.suggestedPaymentMethods.filter((m: unknown) => typeof m === "string" && validPaymentMethods.includes(m))
+            : null;
+
+          return {
+            success: true,
+            original: input.name,
+            provider: strategy.llmProviderType,
+            suggestions: {
+              enhancedName: typeof parsed.enhancedName === "string" ? parsed.enhancedName.trim() : null,
+              payeeType: validPayeeTypes.includes(parsed.payeeType) ? parsed.payeeType : null,
+              paymentFrequency: validFrequencies.includes(parsed.paymentFrequency) ? parsed.paymentFrequency : null,
+              suggestedCategoryId: typeof parsed.suggestedCategoryId === "number" ? parsed.suggestedCategoryId : null,
+              suggestedCategoryName: typeof parsed.suggestedCategoryName === "string" ? parsed.suggestedCategoryName : null,
+              taxRelevant: typeof parsed.taxRelevant === "boolean" ? parsed.taxRelevant : null,
+              isSeasonal: typeof parsed.isSeasonal === "boolean" ? parsed.isSeasonal : null,
+              confidence: typeof parsed.confidence === "number" ? Math.max(0, Math.min(1, parsed.confidence)) : null,
+              suggestedMCC,
+              suggestedTags: suggestedTags && suggestedTags.length > 0 ? suggestedTags : null,
+              suggestedPaymentMethods: suggestedPaymentMethods && suggestedPaymentMethods.length > 0 ? suggestedPaymentMethods : null,
+              suggestedWebsite: typeof parsed.suggestedWebsite === "string" && parsed.suggestedWebsite.trim().length > 0
+                ? (parsed.suggestedWebsite.startsWith("http") ? parsed.suggestedWebsite : `https://${parsed.suggestedWebsite}`)
+                : null,
+            },
+          };
+        } catch (error) {
+          console.error("LLM inference failed:", error);
+          return {
+            success: false,
+            original: input.name,
+            message: "Failed to infer payee details. Please try again.",
+          };
+        }
+      })
+    ),
+
+  // Explain ML insights using LLM
+  explainInsights: rateLimitedProcedure
+    .input(payeeIdSchema)
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+        const { workspaces } = await import("$lib/schema/workspaces");
+        const { db } = await import("$lib/server/db");
+        const { eq } = await import("drizzle-orm");
+        const { generateText } = await import("ai");
+
+        // Get workspace preferences
+        const [workspace] = await db
+          .select({ preferences: workspaces.preferences })
+          .from(workspaces)
+          .where(eq(workspaces.id, ctx.workspaceId))
+          .limit(1);
+
+        const prefs = workspace?.preferences ? JSON.parse(workspace.preferences) : {};
+        const coordinator = createIntelligenceCoordinator(prefs);
+        const strategy = coordinator.getStrategy("payeeMatching");
+
+        if (!strategy.useLLM || !strategy.llmProvider) {
+          return {
+            success: false,
+            message: "LLM features are not enabled. Please configure a provider in Settings > Intelligence > LLM.",
+          };
+        }
+
+        // Fetch existing ML insights
+        const intelligence = await payeeService.getPayeeIntelligence(input.id, ctx.workspaceId);
+
+        // Build prompt with ML data
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        const prompt = `You are a helpful financial advisor analyzing spending patterns. Given the following machine learning analysis for a payee, provide a brief, friendly explanation in plain language.
+
+Payee: "${intelligence.payeeName}"
+
+Transaction Statistics:
+- Total transactions: ${intelligence.stats.transactionCount}
+- Total spent: $${intelligence.stats.totalAmount.toFixed(2)}
+- Average transaction: $${intelligence.stats.avgAmount.toFixed(2)}
+- Range: $${intelligence.stats.minAmount.toFixed(2)} - $${intelligence.stats.maxAmount.toFixed(2)}
+- Monthly average: $${intelligence.stats.monthlyAverage.toFixed(2)}
+${intelligence.stats.firstTransactionDate ? `- First transaction: ${intelligence.stats.firstTransactionDate}` : ""}
+${intelligence.stats.lastTransactionDate ? `- Last transaction: ${intelligence.stats.lastTransactionDate}` : ""}
+
+ML Suggestions:
+- Recommended category: ${intelligence.suggestions.suggestedCategoryName || "None"} (${Math.round(intelligence.suggestions.confidence * 100)}% confidence)
+- Suggested payment frequency: ${intelligence.suggestions.suggestedFrequency?.replace("_", " ") || "Unknown"}
+${intelligence.suggestions.suggestedAmount ? `- Typical amount: $${intelligence.suggestions.suggestedAmount.toFixed(2)}` : ""}
+
+Payment Patterns:
+- Regular/recurring: ${intelligence.patterns.isRegular ? "Yes" : "No"}
+${intelligence.patterns.averageDaysBetween ? `- Average days between payments: ${intelligence.patterns.averageDaysBetween.toFixed(1)}` : ""}
+${intelligence.patterns.mostCommonDay !== null ? `- Most common payment day: ${dayNames[intelligence.patterns.mostCommonDay]}` : ""}
+${intelligence.patterns.seasonalTrends.length > 0 ? `- Seasonal patterns: ${intelligence.patterns.seasonalTrends.map((t) => `${monthNames[t.month - 1]}: $${t.avgAmount.toFixed(0)}`).join(", ")}` : ""}
+
+${intelligence.stats.categoryDistribution.length > 0 ? `Category breakdown: ${intelligence.stats.categoryDistribution.map((c) => `${c.categoryName}: ${c.count} transactions ($${c.totalAmount.toFixed(0)})`).join(", ")}` : ""}
+
+Provide a concise explanation (3-5 sentences) covering:
+1. What the spending pattern tells us about this payee
+2. Why the ML suggested this category (if applicable)
+3. One actionable insight or tip
+
+Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`;
+
+        try {
+          let text: string;
+
+          // Handle Ollama separately using native SDK
+          if (strategy.llmProvider.isOllama && strategy.llmProvider.ollamaClient) {
+            const response = await strategy.llmProvider.ollamaClient.chat({
+              model: strategy.llmProvider.model,
+              messages: [{ role: "user", content: prompt }],
+              stream: false,
+              options: {
+                temperature: 0.7, // Slightly higher for more natural language
+                num_predict: 400,
+              },
+            });
+            text = response.message?.content || "";
+          } else {
+            // Use AI SDK for other providers
+            const result = await generateText({
+              model: strategy.llmProvider.provider(strategy.llmProvider.model),
+              prompt,
+              maxOutputTokens: 400,
+              temperature: 0.7,
+            });
+            text = result.text;
+          }
+
+          return {
+            success: true,
+            payeeId: input.id,
+            payeeName: intelligence.payeeName,
+            provider: strategy.llmProviderType,
+            explanation: text.trim(),
+          };
+        } catch (error) {
+          console.error("LLM explanation failed:", error);
+          return {
+            success: false,
+            message: "Failed to generate explanation. Please try again.",
+          };
+        }
+      })
+    ),
+
+  // Enrich contact information using web search + LLM
+  enrichContact: rateLimitedProcedure
+    .input(z.object({ name: z.string().min(1) }))
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const { createSearchAdapter, WebSearchService } = await import(
+          "$lib/server/domains/web-search"
+        );
+        const { createIntelligenceCoordinator } = await import("$lib/server/ai");
+        const { workspaces } = await import("$lib/schema/workspaces");
+        const { db } = await import("$lib/server/db");
+        const { eq } = await import("drizzle-orm");
+        const { generateText } = await import("ai");
+        const { decryptApiKey } = await import("$lib/server/shared/security/encryption");
+
+        // Get workspace preferences
+        const workspace = await db.query.workspaces.findFirst({
+          where: eq(workspaces.id, ctx.workspaceId),
+        });
+
+        if (!workspace) {
+          return { success: false, message: "Workspace not found" };
+        }
+
+        const prefs = workspace.preferences
+          ? (JSON.parse(workspace.preferences) as import("$lib/schema/workspaces").WorkspacePreferences)
+          : {};
+
+        const webSearchPrefs = prefs.webSearch || { enabled: true, provider: "duckduckgo" as const };
+        const llmPrefs = prefs.llm;
+
+        // Check if LLM is enabled (required for extraction)
+        if (!llmPrefs?.enabled || !llmPrefs?.defaultProvider) {
+          return {
+            success: false,
+            message: "LLM is required for contact enrichment. Please configure an LLM provider in Settings → Intelligence.",
+          };
+        }
+
+        try {
+          // Create search adapter based on user preference
+          const searchProvider = webSearchPrefs.provider || "duckduckgo";
+          let adapterConfig: import("$lib/server/domains/web-search").SearchAdapterConfig = {};
+
+          if (searchProvider === "brave" && webSearchPrefs.encryptedBraveApiKey) {
+            adapterConfig.braveApiKey = decryptApiKey(webSearchPrefs.encryptedBraveApiKey);
+          } else if (searchProvider === "ollama" && webSearchPrefs.encryptedOllamaCloudApiKey) {
+            adapterConfig.ollamaApiKey = decryptApiKey(webSearchPrefs.encryptedOllamaCloudApiKey);
+          }
+
+          let adapter;
+          try {
+            adapter = createSearchAdapter(searchProvider, adapterConfig);
+          } catch (adapterError) {
+            console.error("Failed to create search adapter:", adapterError);
+            return {
+              success: false,
+              message: `Failed to create ${searchProvider} search adapter: ${adapterError instanceof Error ? adapterError.message : "Unknown error"}`,
+            };
+          }
+
+          const searchService = new WebSearchService(adapter);
+
+          // Get LLM provider for extraction
+          const coordinator = createIntelligenceCoordinator(prefs);
+          const strategy = coordinator.getStrategy("categorySuggestion"); // Reuse category suggestion strategy
+
+          if (!strategy.llmProvider) {
+            return {
+              success: false,
+              message: "No LLM provider configured. Please set up an LLM provider in Settings → LLM Providers.",
+            };
+          }
+
+          // Create a text generation function using the user's LLM
+          const generateTextFn = async (prompt: string): Promise<string> => {
+            try {
+              if (strategy.llmProvider?.isOllama && strategy.llmProvider?.ollamaClient) {
+                const response = await strategy.llmProvider.ollamaClient.chat({
+                  model: strategy.llmProvider.model,
+                  messages: [{ role: "user", content: prompt }],
+                  options: { temperature: 0.3, num_predict: 500 },
+                });
+                return response.message?.content || "";
+              } else if (strategy.llmProvider) {
+                const result = await generateText({
+                  model: strategy.llmProvider.provider(strategy.llmProvider.model),
+                  prompt,
+                  maxOutputTokens: 500,
+                  temperature: 0.3,
+                });
+                return result.text;
+              }
+              throw new Error("No LLM provider available");
+            } catch (llmError) {
+              console.error("LLM generation failed:", llmError);
+              throw new Error(`LLM extraction failed: ${llmError instanceof Error ? llmError.message : "Unknown error"}`);
+            }
+          };
+
+          // Perform search and extraction
+          let result;
+          try {
+            result = await searchService.enrichBusinessContact(input.name, generateTextFn);
+          } catch (searchError) {
+            console.error("Web search or extraction failed:", searchError);
+            return {
+              success: false,
+              message: `Search failed: ${searchError instanceof Error ? searchError.message : "Unknown error"}`,
+            };
+          }
+
+          return {
+            success: true,
+            original: input.name,
+            searchProvider,
+            suggestions: result,
+          };
+        } catch (error) {
+          console.error("Contact enrichment failed:", error);
+          const message = error instanceof Error ? error.message : "Failed to enrich contact";
+          return {
+            success: false,
+            message,
+          };
+        }
+      })
+    ),
+
   // getOperationHistory: publicProcedure
   //   .input(
   //     z.object({
@@ -1453,4 +2000,93 @@ export const payeeRoutes = t.router({
   //       )
   //     );
   //   }),
+
+  // ========================================
+  // Enhancement Tracking Routes
+  // ========================================
+
+  /**
+   * Record a new AI/ML enhancement for a payee field
+   */
+  recordEnhancement: rateLimitedProcedure
+    .input(recordEnhancementSchema)
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+        const enhancement = await trackingService.recordEnhancement({
+          ...input,
+          workspaceId: ctx.workspaceId,
+        });
+        return { success: true, enhancement };
+      })
+    ),
+
+  /**
+   * Update feedback for an enhancement (accepted/modified)
+   */
+  updateEnhancementFeedback: publicProcedure
+    .input(updateEnhancementFeedbackSchema)
+    .mutation(
+      withErrorHandler(async ({ input, ctx }) => {
+        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+        const enhancement = await trackingService.updateFeedback(input);
+        return { success: true, enhancement };
+      })
+    ),
+
+  /**
+   * Get enhancement history for a payee
+   */
+  getPayeeEnhancements: publicProcedure
+    .input(getPayeeEnhancementsSchema)
+    .query(
+      withErrorHandler(async ({ input, ctx }) => {
+        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+        const enhancements = await trackingService.getPayeeEnhancements(
+          input.payeeId,
+          input.fieldName,
+          input.limit
+        );
+        return enhancements;
+      })
+    ),
+
+  /**
+   * Get enhancement summary for all fields of a payee
+   */
+  getFieldEnhancementSummary: publicProcedure
+    .input(z.object({ payeeId: z.number().positive() }))
+    .query(
+      withErrorHandler(async ({ input, ctx }) => {
+        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+        const summary = await trackingService.getFieldEnhancementSummary(input.payeeId);
+        return summary;
+      })
+    ),
+
+  /**
+   * Get AI preferences for a payee (field modes and enhanced fields)
+   */
+  getPayeeAiPreferences: publicProcedure
+    .input(z.object({ payeeId: z.number().positive() }))
+    .query(
+      withErrorHandler(async ({ input, ctx }) => {
+        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+        const preferences = await trackingService.getPayeeAiPreferences(input.payeeId);
+        return preferences;
+      })
+    ),
+
+  /**
+   * Get enhancement statistics
+   */
+  getEnhancementStats: publicProcedure
+    .input(getEnhancementStatsSchema)
+    .query(
+      withErrorHandler(async ({ input, ctx }) => {
+        const trackingService = createEnhancementTrackingService(ctx.workspaceId);
+        const stats = await trackingService.getEnhancementStats(input.payeeId);
+        return stats;
+      })
+    ),
 });

@@ -5,3 +5,9 @@ backups/
 .svelte-kit/
 build/
 *.d.ts
+
+# Generated artifacts
+drizzle/
+test-results/
+playwright-report/
+coverage/

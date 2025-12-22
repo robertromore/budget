@@ -27,7 +27,7 @@ const avgTransactionsPerPayee = $derived(analytics?.averageTransactionsPerPayee 
 const topCategories = $derived(analytics?.topCategories?.slice(0, 3) || []);
 </script>
 
-<Card.Root>
+<Card.Root data-help-id="payee-intelligence-summary" data-help-title="Payee Intelligence Summary">
   <Card.Header>
     <Card.Title class="flex items-center gap-2">
       <Brain class="h-5 w-5 text-blue-500" />

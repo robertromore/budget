@@ -3,9 +3,11 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import Brain from '@lucide/svelte/icons/brain';
 	import FileSpreadsheet from '@lucide/svelte/icons/file-spreadsheet';
 	import Monitor from '@lucide/svelte/icons/monitor';
 	import Palette from '@lucide/svelte/icons/palette';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import type { Snippet } from 'svelte';
 
@@ -25,18 +27,21 @@
 			items: [{ href: '/settings/import-profiles', label: 'Import Profiles', icon: FileSpreadsheet }]
 		},
 		{
+			title: 'Intelligence',
+			items: [
+				{ href: '/settings/intelligence', label: 'ML Settings', icon: Brain },
+				{ href: '/settings/intelligence/llm', label: 'LLM Providers', icon: Sparkles }
+			]
+		},
+		{
 			title: 'Advanced',
 			items: [{ href: '/settings/advanced', label: 'Data Management', icon: TriangleAlert }]
 		}
 	];
 
-	// Check if current path matches the nav item
+	// Check if current path matches the nav item (exact match only)
 	function isActive(href: string): boolean {
-		const currentPath = page.url.pathname;
-		if (href === '/settings') {
-			return currentPath === '/settings';
-		}
-		return currentPath.startsWith(href);
+		return page.url.pathname === href;
 	}
 </script>
 

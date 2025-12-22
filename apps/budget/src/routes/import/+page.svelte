@@ -1270,7 +1270,7 @@ $effect(() => {
 </svelte:head>
 
 <div class="container mx-auto py-8">
-  <div>
+  <div data-help-id="import-page" data-help-title="Import Page">
     {#if !hasImportableAccounts}
       <Empty.Empty>
         <Empty.EmptyMedia variant="icon">
