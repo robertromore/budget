@@ -31,6 +31,11 @@
     "packages/*"
   ],
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.0",
+    "@ai-sdk/google": "^3.0.0",
+    "@ai-sdk/openai": "^3.0.0",
+    "@ai-sdk/svelte": "^4.0.2",
+    "ai": "^6.0.2",
     "ollama": "^0.6.3"
   }
 }

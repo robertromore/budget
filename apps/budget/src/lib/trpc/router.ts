@@ -10,6 +10,7 @@ import { smartCategoryRoutes } from "$lib/server/domains/ml/smart-categories";
 import { userBehaviorRoutes } from "$lib/server/domains/ml/user-behavior";
 import { accountRoutes } from "$lib/trpc/routes/accounts";
 import { serverAccountsRoutes } from "$lib/trpc/routes/accounts-server";
+import { aiRoutes } from "$lib/trpc/routes/ai";
 import { categoriesRoutes } from "$lib/trpc/routes/categories";
 import { categoryGroupsRoutes } from "$lib/trpc/routes/category-groups";
 import { payeeCategoriesRoutes } from "$lib/trpc/routes/payee-categories";
@@ -32,6 +33,7 @@ export const router = t.router({
   workspaceRoutes,
   accountRoutes,
   serverAccountsRoutes,
+  aiRoutes,
   categoriesRoutes,
   categoryGroupsRoutes,
   payeeCategoriesRoutes,

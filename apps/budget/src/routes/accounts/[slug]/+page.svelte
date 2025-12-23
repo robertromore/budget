@@ -926,7 +926,7 @@ $effect(() => {
               <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
               <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
             </div>
-            <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+            <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
           </div>
         {/if}
       </Tabs.Content>
@@ -955,7 +955,7 @@ $effect(() => {
               <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
               <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
             </div>
-            <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+            <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
           </div>
         {/if}
       </Tabs.Content>
@@ -987,7 +987,7 @@ $effect(() => {
               <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
               <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
             </div>
-            <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+            <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
           </div>
         {/if}
       </Tabs.Content>
@@ -1063,7 +1063,7 @@ $effect(() => {
                 <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
                 <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
               </div>
-              <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+              <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
             </div>
           {/if}
         {:else if activeTab === 'schedules'}
@@ -1089,7 +1089,7 @@ $effect(() => {
                 <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
                 <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
               </div>
-              <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+              <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
             </div>
           {/if}
         {:else if activeTab === 'budgets'}
@@ -1118,7 +1118,7 @@ $effect(() => {
                 <div class="bg-muted h-8 w-48 animate-pulse rounded"></div>
                 <div class="bg-muted h-10 w-64 animate-pulse rounded"></div>
               </div>
-              <div class="bg-muted h-[400px] animate-pulse rounded-lg"></div>
+              <div class="bg-muted h-100 animate-pulse rounded-lg"></div>
             </div>
           {/if}
         {:else if activeTab === 'import' && !isHsaAccount}

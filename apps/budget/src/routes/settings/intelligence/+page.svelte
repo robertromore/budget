@@ -201,9 +201,9 @@
 
   {#if preferencesQuery.isLoading}
     <div class="space-y-4">
-      <Skeleton class="h-[100px] w-full" />
-      <Skeleton class="h-[300px] w-full" />
-      <Skeleton class="h-[200px] w-full" />
+      <Skeleton class="h-25 w-full" />
+      <Skeleton class="h-75 w-full" />
+      <Skeleton class="h-50 w-full" />
     </div>
   {:else if preferencesQuery.error}
     <Card.Root class="border-destructive">
@@ -456,8 +456,8 @@
 
     {#if webSearchQuery.isLoading}
       <div class="space-y-4">
-        <Skeleton class="h-[100px] w-full" />
-        <Skeleton class="h-[200px] w-full" />
+        <Skeleton class="h-25 w-full" />
+        <Skeleton class="h-50 w-full" />
       </div>
     {:else if webSearchQuery.error}
       <Card.Root class="border-destructive">
@@ -629,8 +629,8 @@
 
     {#if intelligenceInputQuery.isLoading}
       <div class="space-y-4">
-        <Skeleton class="h-[100px] w-full" />
-        <Skeleton class="h-[200px] w-full" />
+        <Skeleton class="h-25 w-full" />
+        <Skeleton class="h-50 w-full" />
       </div>
     {:else if intelligenceInputQuery.error}
       <Card.Root class="border-destructive">

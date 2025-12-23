@@ -129,7 +129,7 @@
               if (v) horizon = parseInt(v);
             }}
           >
-            <Select.Trigger class="w-[140px]">
+            <Select.Trigger class="w-35">
               {horizonOptions.find((o) => o.value === horizon)?.label}
             </Select.Trigger>
             <Select.Content>
@@ -149,7 +149,7 @@
               if (v) granularity = v as typeof granularity;
             }}
           >
-            <Select.Trigger class="w-[140px]">
+            <Select.Trigger class="w-35">
               {granularityOptions.find((o) => o.value === granularity)?.label}
             </Select.Trigger>
             <Select.Content>
@@ -184,8 +184,8 @@
     </Card.Root>
   {:else if forecastQuery.isLoading}
     <div class="grid gap-6 lg:grid-cols-2">
-      <Skeleton class="h-[300px] w-full" />
-      <Skeleton class="h-[300px] w-full" />
+      <Skeleton class="h-75 w-full" />
+      <Skeleton class="h-75 w-full" />
     </div>
   {:else if forecastQuery.error}
     <Card.Root class="border-destructive">

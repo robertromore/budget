@@ -1,4 +1,5 @@
-import { generateObject, jsonSchema } from 'ai';
+import { generateText, Output } from 'ai';
+import { z } from 'zod';
 import { TRANSACTION_PARSER_PROMPT } from './prompts/transaction-parser';
 import { defaultModel, isAIEnabled } from './provider';
 
@@ -40,38 +41,14 @@ export interface ParsedTransaction {
 }
 
 /**
- * JSON Schema for AI SDK structured output.
+ * Zod schema for AI SDK structured output.
  */
-const ParsedTransactionSchema = jsonSchema<ParsedTransaction>({
-	type: 'object',
-	properties: {
-		merchantName: {
-			type: 'string',
-			description: 'Clean merchant/payee name without codes or location suffixes'
-		},
-		merchantCategory: {
-			type: 'string',
-			enum: MERCHANT_CATEGORIES as unknown as string[],
-			description: 'Category of the merchant'
-		},
-		transactionType: {
-			type: 'string',
-			enum: TRANSACTION_TYPES as unknown as string[],
-			description: 'Type of transaction'
-		},
-		isRecurring: {
-			type: 'boolean',
-			description: 'Whether this appears to be a recurring charge'
-		},
-		confidence: {
-			type: 'number',
-			minimum: 0,
-			maximum: 1,
-			description: 'Confidence score from 0.0 to 1.0'
-		}
-	},
-	required: ['merchantName', 'merchantCategory', 'transactionType', 'isRecurring', 'confidence'],
-	additionalProperties: false
+const ParsedTransactionSchema = z.object({
+	merchantName: z.string().describe('Clean merchant/payee name without codes or location suffixes'),
+	merchantCategory: z.enum(MERCHANT_CATEGORIES).describe('Category of the merchant'),
+	transactionType: z.enum(TRANSACTION_TYPES).describe('Type of transaction'),
+	isRecurring: z.boolean().describe('Whether this appears to be a recurring charge'),
+	confidence: z.number().min(0).max(1).describe('Confidence score from 0.0 to 1.0')
 });
 
 /**
@@ -108,14 +85,14 @@ export async function parseTransactionDescription(
 	}
 
 	try {
-		const { object } = await generateObject({
+		const { output } = await generateText({
 			model: defaultModel,
-			schema: ParsedTransactionSchema,
+			output: Output.object({ schema: ParsedTransactionSchema }),
 			system: TRANSACTION_PARSER_PROMPT,
 			prompt: `Parse this bank transaction description: "${description}"`
 		});
 
-		return object;
+		return output;
 	} catch (error) {
 		console.error('Failed to parse transaction description:', error);
 		return null;

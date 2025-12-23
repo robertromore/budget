@@ -1497,30 +1497,14 @@ Input: "${input.name}"${input.rawDescription ? `\nOriginal description: "${input
 Cleaned name:`;
 
         try {
-          let text: string;
-
-          // Handle Ollama separately using native SDK
-          if (strategy.llmProvider.isOllama && strategy.llmProvider.ollamaClient) {
-            const response = await strategy.llmProvider.ollamaClient.chat({
-              model: strategy.llmProvider.model,
-              messages: [{ role: "user", content: prompt }],
-              stream: false,
-              options: {
-                temperature: 0.1,
-                num_predict: 100,
-              },
-            });
-            text = response.message?.content || "";
-          } else {
-            // Use AI SDK for other providers
-            const result = await generateText({
-              model: strategy.llmProvider.provider(strategy.llmProvider.model),
-              prompt,
-              maxOutputTokens: 50,
-              temperature: 0.1,
-            });
-            text = result.text;
-          }
+          // All providers (including Ollama) use OpenAI-compatible API via generateText
+          const result = await generateText({
+            model: strategy.llmProvider.provider(strategy.llmProvider.model),
+            prompt,
+            maxOutputTokens: 50,
+            temperature: 0.1,
+          });
+          const text = result.text;
 
           const enhanced = text.trim().replace(/^["']|["']$/g, ""); // Remove quotes if present
 
@@ -1642,31 +1626,14 @@ Guidelines:
 Return ONLY valid JSON, no explanation:`;
 
         try {
-          let text: string;
-
-          // Handle Ollama separately using native SDK
-          if (strategy.llmProvider.isOllama && strategy.llmProvider.ollamaClient) {
-            const response = await strategy.llmProvider.ollamaClient.chat({
-              model: strategy.llmProvider.model,
-              messages: [{ role: "user", content: prompt }],
-              stream: false,
-              format: "json",
-              options: {
-                temperature: 0.1,
-                num_predict: 500,
-              },
-            });
-            text = response.message?.content || "";
-          } else {
-            // Use AI SDK for other providers
-            const result = await generateText({
-              model: strategy.llmProvider.provider(strategy.llmProvider.model),
-              prompt,
-              maxOutputTokens: 500,
-              temperature: 0.1,
-            });
-            text = result.text;
-          }
+          // All providers (including Ollama) use OpenAI-compatible API via generateText
+          const result = await generateText({
+            model: strategy.llmProvider.provider(strategy.llmProvider.model),
+            prompt,
+            maxOutputTokens: 500,
+            temperature: 0.1,
+          });
+          const text = result.text;
 
           // Parse the JSON response
           const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -1798,30 +1765,14 @@ Provide a concise explanation (3-5 sentences) covering:
 Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`;
 
         try {
-          let text: string;
-
-          // Handle Ollama separately using native SDK
-          if (strategy.llmProvider.isOllama && strategy.llmProvider.ollamaClient) {
-            const response = await strategy.llmProvider.ollamaClient.chat({
-              model: strategy.llmProvider.model,
-              messages: [{ role: "user", content: prompt }],
-              stream: false,
-              options: {
-                temperature: 0.7, // Slightly higher for more natural language
-                num_predict: 400,
-              },
-            });
-            text = response.message?.content || "";
-          } else {
-            // Use AI SDK for other providers
-            const result = await generateText({
-              model: strategy.llmProvider.provider(strategy.llmProvider.model),
-              prompt,
-              maxOutputTokens: 400,
-              temperature: 0.7,
-            });
-            text = result.text;
-          }
+          // All providers (including Ollama) use OpenAI-compatible API via generateText
+          const result = await generateText({
+            model: strategy.llmProvider.provider(strategy.llmProvider.model),
+            prompt,
+            maxOutputTokens: 400,
+            temperature: 0.7,
+          });
+          const text = result.text;
 
           return {
             success: true,
@@ -1915,16 +1866,10 @@ Keep the tone friendly and helpful. Use plain language, avoid technical jargon.`
           }
 
           // Create a text generation function using the user's LLM
+          // All providers (including Ollama) use OpenAI-compatible API via generateText
           const generateTextFn = async (prompt: string): Promise<string> => {
             try {
-              if (strategy.llmProvider?.isOllama && strategy.llmProvider?.ollamaClient) {
-                const response = await strategy.llmProvider.ollamaClient.chat({
-                  model: strategy.llmProvider.model,
-                  messages: [{ role: "user", content: prompt }],
-                  options: { temperature: 0.3, num_predict: 500 },
-                });
-                return response.message?.content || "";
-              } else if (strategy.llmProvider) {
+              if (strategy.llmProvider) {
                 const result = await generateText({
                   model: strategy.llmProvider.provider(strategy.llmProvider.model),
                   prompt,

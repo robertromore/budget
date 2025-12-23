@@ -5,7 +5,7 @@
   import { Skeleton } from "$lib/components/ui/skeleton";
   import { Switch } from "$lib/components/ui/switch";
   import { LLMSettings } from "$lib/query/llm-settings";
-  import { LLM_MODELS } from "$lib/schema/llm-models";
+  import { LLM_MODELS, ollamaModelSupportsTools } from "$lib/schema/llm-models";
   import type { LLMFeatureConfig, LLMProvider } from "$lib/schema/workspaces";
   import AlertTriangle from "@lucide/svelte/icons/alert-triangle";
   import Bot from "@lucide/svelte/icons/bot";
@@ -58,13 +58,36 @@
     enabled: providerConfigs.ollama.enabled,
   })));
 
-  // Combine dynamic Ollama models with fallback to hardcoded list
+  // Combine dynamic Ollama models with recommended models
+  // Always show recommended models, plus any additional installed models
   const ollamaModels = $derived.by(() => {
-    if (ollamaModelsQuery.data?.success && ollamaModelsQuery.data.models.length > 0) {
-      return ollamaModelsQuery.data.models;
+    const recommendedModels = LLM_MODELS.ollama;
+    const installedModels = ollamaModelsQuery.data?.success ? ollamaModelsQuery.data.models : [];
+    const installedIds = new Set(installedModels.map((m) => m.id.split(":")[0].toLowerCase()));
+
+    // Start with recommended models, marking which are installed
+    // Type explicitly to allow dynamic model IDs alongside static recommended ones
+    const result: Array<{ id: string; name: string; description: string; supportsTools: boolean; recommended?: boolean; installed: boolean }> = recommendedModels.map((m) => ({
+      ...m,
+      installed: installedIds.has(m.id.toLowerCase()),
+    }));
+
+    // Add any installed models not in the recommended list
+    for (const installed of installedModels) {
+      const baseId = installed.id.split(":")[0].toLowerCase();
+      const isRecommended = recommendedModels.some((r) => r.id.toLowerCase() === baseId);
+      if (!isRecommended) {
+        result.push({
+          id: installed.id,
+          name: installed.name,
+          description: installed.description || "Installed locally",
+          supportsTools: ollamaModelSupportsTools(installed.id),
+          installed: true,
+        });
+      }
     }
-    // Fallback to hardcoded models if fetch fails or returns empty
-    return LLM_MODELS.ollama;
+
+    return result;
   });
 
   // Sync with query data
@@ -300,9 +323,9 @@
 
   {#if preferencesQuery.isLoading}
     <div class="space-y-4">
-      <Skeleton class="h-[100px] w-full" />
-      <Skeleton class="h-[300px] w-full" />
-      <Skeleton class="h-[300px] w-full" />
+      <Skeleton class="h-25 w-full" />
+      <Skeleton class="h-75 w-full" />
+      <Skeleton class="h-75 w-full" />
     </div>
   {:else if preferencesQuery.error}
     <Card.Root class="border-destructive">

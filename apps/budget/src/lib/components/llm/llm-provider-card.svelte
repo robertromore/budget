@@ -10,12 +10,14 @@
   import type { LLMProvider } from "$lib/schema/workspaces";
   import { cn } from "$lib/utils";
   import Check from "@lucide/svelte/icons/check";
+  import Download from "@lucide/svelte/icons/download";
   import Eye from "@lucide/svelte/icons/eye";
   import EyeOff from "@lucide/svelte/icons/eye-off";
   import Loader2 from "@lucide/svelte/icons/loader-2";
   import Sparkles from "@lucide/svelte/icons/sparkles";
   import Star from "@lucide/svelte/icons/star";
   import Trash2 from "@lucide/svelte/icons/trash-2";
+  import Wrench from "@lucide/svelte/icons/wrench";
   import type { Component } from "svelte";
 
   interface Props {
@@ -203,7 +205,7 @@
       <!-- Model Selection -->
       <div class="space-y-3">
         <Label>Model</Label>
-        <div class="bg-muted/50 max-h-[280px] overflow-y-auto rounded-lg border p-2">
+        <div class="bg-muted/50 max-h-70 overflow-y-auto rounded-lg border p-2">
           <RadioGroup.Root value={model} onValueChange={handleModelSelect} class="space-y-1.5">
             {#each models as modelOption}
               <label
@@ -216,12 +218,24 @@
               >
                 <RadioGroup.Item value={modelOption.id} id={`${provider}-model-${modelOption.id}`} class="mt-0.5" />
                 <div class="flex-1 space-y-0.5">
-                  <div class="flex items-center gap-2">
+                  <div class="flex flex-wrap items-center gap-1.5">
                     <span class="text-sm font-medium">{modelOption.name}</span>
                     {#if modelOption.recommended}
                       <Badge variant="secondary" class="h-5 gap-1 px-1.5 text-[10px]">
                         <Sparkles class="h-3 w-3" />
                         Recommended
+                      </Badge>
+                    {/if}
+                    {#if modelOption.supportsTools}
+                      <Badge variant="outline" class="h-5 gap-1 px-1.5 text-[10px] border-blue-500/30 text-blue-600 dark:text-blue-400">
+                        <Wrench class="h-3 w-3" />
+                        Tools
+                      </Badge>
+                    {/if}
+                    {#if provider === "ollama" && modelOption.installed === false}
+                      <Badge variant="outline" class="h-5 gap-1 px-1.5 text-[10px] border-amber-500/30 text-amber-600 dark:text-amber-400">
+                        <Download class="h-3 w-3" />
+                        Not installed
                       </Badge>
                     {/if}
                   </div>
@@ -233,6 +247,14 @@
             {/each}
           </RadioGroup.Root>
         </div>
+        {#if provider === "ollama"}
+          {@const selectedModel = models.find((m) => m.id === model)}
+          {#if selectedModel?.installed === false}
+            <p class="text-muted-foreground text-xs">
+              To install this model, run: <code class="bg-muted rounded px-1.5 py-0.5 font-mono text-[11px]">ollama pull {model}</code>
+            </p>
+          {/if}
+        {/if}
       </div>
 
       <!-- Actions -->

@@ -4455,26 +4455,14 @@ Respond in JSON format only:
       };
 
       try {
-        let responseText: string;
-
-        // Handle Ollama separately
-        if (llmProvider.isOllama && llmProvider.ollamaClient) {
-          const response = await llmProvider.ollamaClient.chat({
-            model: llmProvider.model,
-            messages: [{ role: "user", content: prompt }],
-            stream: false,
-            options: { temperature: 0.1 },
-          });
-          responseText = response.message?.content || "";
-        } else {
-          const result = await generateText({
-            model: llmProvider.provider(llmProvider.model),
-            prompt,
-            maxOutputTokens: 500,
-            temperature: 0.1,
-          });
-          responseText = result.text;
-        }
+        // All providers (including Ollama) use OpenAI-compatible API via generateText
+        const result = await generateText({
+          model: llmProvider.provider(llmProvider.model),
+          prompt,
+          maxOutputTokens: 500,
+          temperature: 0.1,
+        });
+        const responseText = result.text;
 
         logEntry.rawResponse = responseText;
 
@@ -4714,25 +4702,14 @@ Respond in JSON format only:
       };
 
       try {
-        let responseText: string;
-
-        if (llmProvider.isOllama && llmProvider.ollamaClient) {
-          const response = await llmProvider.ollamaClient.chat({
-            model: llmProvider.model,
-            messages: [{ role: "user", content: prompt }],
-            stream: false,
-            options: { temperature: 0.1 },
-          });
-          responseText = response.message?.content || "";
-        } else {
-          const result = await generateText({
-            model: llmProvider.provider(llmProvider.model),
-            prompt,
-            maxOutputTokens: 500,
-            temperature: 0.1,
-          });
-          responseText = result.text;
-        }
+        // All providers (including Ollama) use OpenAI-compatible API via generateText
+        const result = await generateText({
+          model: llmProvider.provider(llmProvider.model),
+          prompt,
+          maxOutputTokens: 500,
+          temperature: 0.1,
+        });
+        const responseText = result.text;
 
         logEntry.rawResponse = responseText;
 

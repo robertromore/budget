@@ -133,7 +133,7 @@
               if (v) minRiskLevel = v as typeof minRiskLevel;
             }}
           >
-            <Select.Trigger class="w-[180px]">
+            <Select.Trigger class="w-45">
               {riskLevelOptions.find((o) => o.value === minRiskLevel)?.label}
             </Select.Trigger>
             <Select.Content>
@@ -161,7 +161,7 @@
   {#if anomalyAlertsQuery.isLoading}
     <div class="space-y-4">
       {#each Array(5) as _}
-        <Skeleton class="h-[150px] w-full" />
+        <Skeleton class="h-37.5 w-full" />
       {/each}
     </div>
   {:else if anomalyAlertsQuery.error}

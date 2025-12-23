@@ -31,17 +31,8 @@ let {
   selectionLabel = (selected, total) => `${selected} of ${total} row(s) selected.`,
 }: Props = $props();
 
-// Initialize page size from table state
-let pageSizeValue = $state(String(table.getState().pagination.pageSize));
-
-// Sync page size FROM table state TO local state (for display)
-$effect(() => {
-  const currentSize = table.getState().pagination.pageSize;
-  const currentValueStr = String(currentSize);
-  if (pageSizeValue !== currentValueStr) {
-    pageSizeValue = currentValueStr;
-  }
-});
+// Derive page size from table state (auto-syncs when table changes)
+const pageSizeValue = $derived(String(table.getState().pagination.pageSize));
 
 const selectedCount = $derived(table.getFilteredSelectedRowModel().rows.length);
 const totalCount = $derived(table.getFilteredRowModel().rows.length);
@@ -69,7 +60,7 @@ const totalPages = $derived(Math.max(1, table.getPageCount()));
             table.setPageSize(Number(value));
           }
         }}>
-        <Select.Trigger class="h-8 w-[70px]">
+        <Select.Trigger class="h-8 w-17.5">
           {String(table.getState().pagination.pageSize)}
         </Select.Trigger>
         <Select.Content side="top">
@@ -81,7 +72,7 @@ const totalPages = $derived(Math.max(1, table.getPageCount()));
         </Select.Content>
       </Select.Root>
     </div>
-    <div class="flex w-[100px] items-center justify-center text-sm font-medium">
+    <div class="flex w-25 items-center justify-center text-sm font-medium">
       {pageLabel(currentPage, totalPages)}
     </div>
     <div class="flex items-center space-x-2">

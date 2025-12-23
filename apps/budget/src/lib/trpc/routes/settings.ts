@@ -30,7 +30,7 @@ const mlConfigSchema = z.object({
 });
 
 const mlDuplicateDetectionSchema = z.object({
-  defaultMethod: z.enum(["simple", "ml", "llm"]),
+  defaultMethod: z.enum(["simple", "ml", "llm", "llm_direct"]),
 });
 
 const mlPreferencesSchema = z.object({

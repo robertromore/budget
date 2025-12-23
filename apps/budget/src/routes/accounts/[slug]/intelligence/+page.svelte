@@ -112,7 +112,7 @@
   {#if healthQuery.isLoading}
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {#each Array(4) as _}
-        <Skeleton class="h-[100px]" />
+        <Skeleton class="h-25" />
       {/each}
     </div>
   {:else if healthQuery.data}
@@ -152,7 +152,7 @@
 
       {#if forecastQuery}
         {#if forecastQuery.isLoading}
-          <Skeleton class="h-[300px] w-full" />
+          <Skeleton class="h-75 w-full" />
         {:else if forecastQuery.error}
           <Card.Root class="border-destructive">
             <Card.Content class="pt-6">
@@ -196,7 +196,7 @@
       {#if anomalyAlertsQuery.isLoading}
         <div class="space-y-3">
           {#each Array(3) as _}
-            <Skeleton class="h-[120px] w-full" />
+            <Skeleton class="h-30 w-full" />
           {/each}
         </div>
       {:else if anomalyAlertsQuery.error}

@@ -1,4 +1,5 @@
 <script lang="ts">
+import { ChatPanel, ChatTrigger } from '$lib/components/ai';
 import AddPayeeDialog from '$lib/components/dialogs/add-payee-dialog.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
 import DeleteBudgetDialog from '$lib/components/dialogs/delete-budget-dialog.svelte';
@@ -144,6 +145,14 @@ onMount(() => {
               <ThemeToggle />
               <FontSizeToggle />
               <ThemeButton />
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  {#snippet child({ props })}
+                    <ChatTrigger {...props} />
+                  {/snippet}
+                </Tooltip.Trigger>
+                <Tooltip.Content>AI Assistant (Ctrl+Shift+K)</Tooltip.Content>
+              </Tooltip.Root>
               <IntelligenceInputButton />
               <HelpButton />
               <SettingsButton />
@@ -167,3 +176,6 @@ onMount(() => {
 
 <!-- Intelligence Input Overlay - placed outside NuqsAdapter for proper z-index stacking -->
 <IntelligenceInputOverlay />
+
+<!-- AI Chat Panel - global slide-out panel for AI assistant -->
+<ChatPanel />

@@ -15,7 +15,7 @@ import { decryptApiKey } from "$lib/server/shared/security";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
-import { Ollama } from "ollama";
+import { createOllama } from "ai-sdk-ollama";
 
 // Provider instance with model configuration
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,8 +23,6 @@ export interface ProviderInstance {
   provider: any; // Provider type varies between OpenAI, Anthropic, Google, Ollama
   model: string;
   providerType: LLMProvider;
-  isOllama?: boolean; // Flag to indicate Ollama requires special handling
-  ollamaClient?: Ollama; // Native Ollama client for direct API calls
 }
 
 // Feature mode result
@@ -81,18 +79,21 @@ export function createProvider(
           providerType,
         };
 
-      case "ollama":
+      case "ollama": {
         // Ollama is local, no API key needed
-        // Use native Ollama SDK for proper compatibility with AI SDK 5
+        // Use native ai-sdk-ollama provider for reliable tool calling support
+        // Models with tool support: https://ollama.com/search?c=tools
+        // Popular options: llama3.1, llama3.2, llama3.3, qwen2.5, qwen3, mistral, mistral-nemo
+        const ollamaEndpoint = config.endpoint || "http://localhost:11434";
         return {
-          provider: null, // Ollama uses native client, not AI SDK provider
+          // Use native Ollama provider for better tool calling support
+          provider: createOllama({
+            baseURL: ollamaEndpoint,
+          }),
           model: config.model,
           providerType,
-          isOllama: true,
-          ollamaClient: new Ollama({
-            host: config.endpoint || "http://localhost:11434",
-          }),
         };
+      }
 
       default:
         return null;

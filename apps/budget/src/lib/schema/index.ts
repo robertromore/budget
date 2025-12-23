@@ -17,6 +17,9 @@ export * from "./transactions";
 export * from "./views";
 export * from "./workspaces";
 
+// AI-related schemas
+export * from "./ai-conversations";
+
 // HSA-related schemas
 export * from "./expense-receipts";
 export * from "./hsa-claims";

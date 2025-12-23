@@ -121,7 +121,7 @@
                 onValueChange={handleProviderChange}
                 disabled={disabled}
               >
-                <Select.Trigger class="h-8 w-[180px] text-xs">
+                <Select.Trigger class="h-8 w-45 text-xs">
                   {currentProviderLabel()}
                 </Select.Trigger>
                 <Select.Content>

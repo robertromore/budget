@@ -130,7 +130,7 @@
 
   <!-- Health Overview -->
   {#if healthQuery.isLoading}
-    <Skeleton class="h-[280px] w-full" />
+    <Skeleton class="h-70 w-full" />
   {:else if healthQuery.error}
     <Card.Root class="border-destructive">
       <Card.Content class="pt-6">
@@ -153,7 +153,7 @@
   <div class="grid gap-4 md:grid-cols-3" data-help-id="ml-insights" data-help-title="ML Insights">
     <!-- Income vs Expenses -->
     {#if incomeExpenseQuery.isLoading}
-      <Skeleton class="h-[280px] w-full" />
+      <Skeleton class="h-70 w-full" />
     {:else if incomeExpenseQuery.data}
       <IncomeExpenseCard
         thisMonthIncome={incomeExpenseQuery.data.thisMonth.income}
@@ -168,7 +168,7 @@
 
     <!-- Budget Health -->
     {#if budgetHealthQuery.isLoading}
-      <Skeleton class="h-[280px] w-full" />
+      <Skeleton class="h-70 w-full" />
     {:else if budgetHealthQuery.data}
       <BudgetRiskCard
         budgetsAtRisk={budgetHealthQuery.data.budgetsAtRisk}
@@ -182,7 +182,7 @@
 
     <!-- Savings Opportunities -->
     {#if savingsQuery.isLoading}
-      <Skeleton class="h-[280px] w-full" />
+      <Skeleton class="h-70 w-full" />
     {:else if savingsQuery.data}
       <SavingsOpportunityCard
         opportunityCount={savingsQuery.data.opportunityCount}
@@ -208,7 +208,7 @@
       </div>
 
       {#if forecastQuery.isLoading}
-        <Skeleton class="h-[300px] w-full" />
+        <Skeleton class="h-75 w-full" />
       {:else if forecastQuery.error}
         <Card.Root class="border-destructive">
           <Card.Content class="pt-6">
@@ -241,7 +241,7 @@
       {#if anomalyAlertsQuery.isLoading}
         <div class="space-y-3">
           {#each Array(3) as _}
-            <Skeleton class="h-[120px] w-full" />
+            <Skeleton class="h-30 w-full" />
           {/each}
         </div>
       {:else if anomalyAlertsQuery.error}
