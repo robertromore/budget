@@ -1,4 +1,5 @@
 <script lang="ts">
+import { page } from '$app/state';
 import { ChatPanel, ChatTrigger } from '$lib/components/ai';
 import AddPayeeDialog from '$lib/components/dialogs/add-payee-dialog.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
@@ -38,6 +39,10 @@ import '../app.css';
 import type { LayoutData } from './$types';
 
 let { data, children }: { data: LayoutData; children: Snippet } = $props();
+
+// Check if we're on a public/auth route that shouldn't show the full app chrome
+const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password', '/invite'];
+const isPublicRoute = $derived(PUBLIC_ROUTES.some((route) => page.url.pathname.startsWith(route)));
 
 // Set QueryClient context immediately using centralized client
 setQueryClientContext(queryClient);
@@ -116,66 +121,72 @@ onMount(() => {
 <ModeWatcher />
 <Toaster richColors position="top-center" />
 
-<DeleteAccountDialog />
-<DeleteScheduleDialog />
-<DeleteBudgetDialog />
-<AddPayeeDialog />
-<DeletePayeeDialog />
-<DeleteCategoryDialog />
-<SkipOccurrenceDialog />
+{#if isPublicRoute}
+  <!-- Minimal layout for auth/public routes -->
+  {@render children?.()}
+{:else}
+  <!-- Full app layout for authenticated routes -->
+  <DeleteAccountDialog />
+  <DeleteScheduleDialog />
+  <DeleteBudgetDialog />
+  <AddPayeeDialog />
+  <DeletePayeeDialog />
+  <DeleteCategoryDialog />
+  <SkipOccurrenceDialog />
 
-<NuqsAdapter>
-  <div class="bg-background">
-    <div class="grid">
-      <Sidebar.Provider>
-        <AppSidebar />
-        <Sidebar.Inset>
-          <header
-            class="bg-background sticky top-0 z-1 flex h-16 shrink-0 items-center gap-2 border-b p-2"
-          >
-            <div class="flex items-center gap-2 px-4">
-              <Tooltip.Root>
-                <Tooltip.Trigger>
-                  {#snippet child({ props })}
-                    <Sidebar.Trigger {...props} class="-ml-1" data-help-id="sidebar-trigger" data-help-title="Toggle Sidebar" />
-                  {/snippet}
-                </Tooltip.Trigger>
-                <Tooltip.Content>Toggle sidebar</Tooltip.Content>
-              </Tooltip.Root>
-              <ThemeToggle />
-              <FontSizeToggle />
-              <ThemeButton />
-              <Tooltip.Root>
-                <Tooltip.Trigger>
-                  {#snippet child({ props })}
-                    <ChatTrigger {...props} />
-                  {/snippet}
-                </Tooltip.Trigger>
-                <Tooltip.Content>AI Assistant (Ctrl+Shift+K)</Tooltip.Content>
-              </Tooltip.Root>
-              <IntelligenceInputButton />
-              <HelpButton />
-              <SettingsButton />
-              <HeaderPageActions />
-              <HeaderPageTabs />
+  <NuqsAdapter>
+    <div class="bg-background">
+      <div class="grid">
+        <Sidebar.Provider>
+          <AppSidebar />
+          <Sidebar.Inset>
+            <header
+              class="bg-background sticky top-0 z-1 flex h-16 shrink-0 items-center gap-2 border-b p-2"
+            >
+              <div class="flex items-center gap-2 px-4">
+                <Tooltip.Root>
+                  <Tooltip.Trigger>
+                    {#snippet child({ props })}
+                      <Sidebar.Trigger {...props} class="-ml-1" data-help-id="sidebar-trigger" data-help-title="Toggle Sidebar" />
+                    {/snippet}
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Toggle sidebar</Tooltip.Content>
+                </Tooltip.Root>
+                <ThemeToggle />
+                <FontSizeToggle />
+                <ThemeButton />
+                <Tooltip.Root>
+                  <Tooltip.Trigger>
+                    {#snippet child({ props })}
+                      <ChatTrigger {...props} />
+                    {/snippet}
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>AI Assistant (Ctrl+Shift+K)</Tooltip.Content>
+                </Tooltip.Root>
+                <IntelligenceInputButton />
+                <HelpButton />
+                <SettingsButton />
+                <HeaderPageActions />
+                <HeaderPageTabs />
+              </div>
+            </header>
+            <div class="col-span-3 lg:col-span-4">
+              <div class="h-full py-6 pr-4 pl-4 lg:pr-6 lg:pl-6">
+                {@render children?.()}
+              </div>
             </div>
-          </header>
-          <div class="col-span-3 lg:col-span-4">
-            <div class="h-full py-6 pr-4 pl-4 lg:pr-6 lg:pl-6">
-              {@render children?.()}
-            </div>
-          </div>
-        </Sidebar.Inset>
-      </Sidebar.Provider>
+          </Sidebar.Inset>
+        </Sidebar.Provider>
+      </div>
     </div>
-  </div>
-</NuqsAdapter>
+  </NuqsAdapter>
 
-<!-- Help Overlay - placed outside NuqsAdapter for proper z-index stacking -->
-<HelpOverlay />
+  <!-- Help Overlay - placed outside NuqsAdapter for proper z-index stacking -->
+  <HelpOverlay />
 
-<!-- Intelligence Input Overlay - placed outside NuqsAdapter for proper z-index stacking -->
-<IntelligenceInputOverlay />
+  <!-- Intelligence Input Overlay - placed outside NuqsAdapter for proper z-index stacking -->
+  <IntelligenceInputOverlay />
 
-<!-- AI Chat Panel - global slide-out panel for AI assistant -->
-<ChatPanel />
+  <!-- AI Chat Panel - global slide-out panel for AI assistant -->
+  <ChatPanel />
+{/if}

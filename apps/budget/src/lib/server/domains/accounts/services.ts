@@ -194,18 +194,26 @@ export class AccountService {
 
   /**
    * Delete account (soft delete)
+   * @param id - Account ID to delete
+   * @param options.force - If true, allows deletion even with existing transactions
+   *                        (transactions will be cascade deleted by FK constraint)
    */
-  async deleteAccount(id: number): Promise<void> {
+  async deleteAccount(id: number, options: { force?: boolean } = {}): Promise<void> {
     // Verify account exists
     await this.repository.findByIdOrThrow(id);
 
-    // Check if account has transactions
-    const accountWithTransactions = await this.repository.findWithTransactions(id);
-    if (accountWithTransactions && accountWithTransactions.transactions.length > 0) {
-      throw new ConflictError("Cannot delete account with existing transactions", "account");
+    // Check if account has transactions unless force delete
+    if (!options.force) {
+      const accountWithTransactions = await this.repository.findWithTransactions(id);
+      if (accountWithTransactions && accountWithTransactions.transactions.length > 0) {
+        throw new ConflictError(
+          "Cannot delete account with existing transactions. Use force delete to also delete all transactions.",
+          "account"
+        );
+      }
     }
 
-    // Soft delete the account
+    // Soft delete the account (transactions cascade deleted by FK if force)
     await this.repository.softDelete(id);
   }
 

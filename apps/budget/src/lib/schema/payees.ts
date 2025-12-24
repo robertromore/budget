@@ -78,8 +78,12 @@ export const payees = sqliteTable(
     notes: text("notes"),
 
     // Budgeting Integration Fields
-    defaultCategoryId: integer("default_category_id").references(() => categories.id),
-    defaultBudgetId: integer("default_budget_id").references(() => budgets.id),
+    defaultCategoryId: integer("default_category_id").references(() => categories.id, {
+      onDelete: "set null",
+    }),
+    defaultBudgetId: integer("default_budget_id").references(() => budgets.id, {
+      onDelete: "set null",
+    }),
     payeeType: text("payee_type", { enum: payeeTypes }),
 
     // Organization Fields

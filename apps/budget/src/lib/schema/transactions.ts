@@ -27,22 +27,25 @@ export const transactions = sqliteTable(
     accountId: integer("account_id")
       .references(() => accounts.id, { onDelete: "cascade" })
       .notNull(),
-    parentId: integer("parent_id").references((): AnySQLiteColumn => transactions.id),
+    parentId: integer("parent_id").references((): AnySQLiteColumn => transactions.id, {
+      onDelete: "cascade",
+    }),
     status: text("status", { enum: ["cleared", "pending", "scheduled"] }).default("pending"),
-    payeeId: integer("payee_id").references(() => payees.id),
+    payeeId: integer("payee_id").references(() => payees.id, { onDelete: "set null" }),
     amount: real("amount").default(0).notNull(),
-    categoryId: integer("category_id").references(() => categories.id),
+    categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
     notes: text("notes"),
     date: text("date")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
-    scheduleId: integer("schedule_id").references(() => schedules.id),
+    scheduleId: integer("schedule_id").references(() => schedules.id, { onDelete: "set null" }),
 
     // Transfer transaction fields
     transferId: text("transfer_id"), // Shared ID for both transactions in the pair (CUID)
     transferAccountId: integer("transfer_account_id").references(() => accounts.id), // The OTHER account in the transfer
     transferTransactionId: integer("transfer_transaction_id").references(
-      (): AnySQLiteColumn => transactions.id
+      (): AnySQLiteColumn => transactions.id,
+      { onDelete: "set null" }
     ), // The linked transaction
     isTransfer: integer("is_transfer", { mode: "boolean" }).default(false), // Quick check for transfers
 

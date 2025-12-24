@@ -17,25 +17,32 @@ import { views } from "./views";
 export const users = sqliteTable(
   "user",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: text("id").primaryKey(), // Text ID for Better Auth compatibility
     cuid: text("cuid").$defaultFn(() => createId()),
 
     // Basic Info
-    displayName: text("display_name").notNull(),
-    slug: text("slug").notNull().unique(),
+    name: text("name").notNull(), // Required by Better Auth
+    displayName: text("display_name"), // Optional, can be derived from name
+    slug: text("slug").unique(), // Optional, generated from name
     email: text("email").unique(), // Optional for now, required when auth is added
+
+    // Authentication fields (Better Auth)
+    emailVerified: integer("email_verified", { mode: "boolean" }).default(false),
+    passwordHash: text("password_hash"),
+    image: text("image"), // Profile image URL
+    role: text("role").default("user"), // Global app role: "user" | "admin" | "readonly"
 
     // User Preferences (stored as JSON)
     preferences: text("preferences"), // {locale, dateFormat, currency, theme, etc.}
 
-    // Metadata
-    createdAt: text("created_at")
+    // Metadata - Using integer timestamps for Better Auth compatibility
+    createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
-    updatedAt: text("updated_at")
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
       .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
-    deletedAt: text("deleted_at"), // Soft delete support
+      .$defaultFn(() => new Date()),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }), // Soft delete support
   },
   (table) => [
     index("user_slug_idx").on(table.slug),
@@ -44,12 +51,25 @@ export const users = sqliteTable(
   ]
 );
 
-// Preferences type
+// Preferences type - synced to database for cross-device persistence
 export interface UserPreferences {
-  locale?: string; // 'en-US', 'es-ES', etc.
+  // Display preferences
   dateFormat?: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
-  currency?: "USD" | "EUR" | "GBP" | "JPY" | string;
-  theme?: "light" | "dark" | "system";
+  currencySymbol?: string;
+  numberFormat?: "en-US" | "de-DE" | "fr-FR";
+  showCents?: boolean;
+  tableDisplayMode?: "popover" | "sheet";
+
+  // Theme preferences
+  theme?: string; // Preset name or 'custom'
+  customThemeColor?: string;
+
+  // Font size
+  fontSize?: "small" | "normal" | "large";
+
+  // Legacy/future fields
+  locale?: string;
+  currency?: string;
   timezone?: string;
 }
 

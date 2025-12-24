@@ -38,12 +38,12 @@ export const schedules = sqliteTable(
     dateId: integer("schedule_date_id").references((): AnySQLiteColumn => scheduleDates.id),
     payeeId: integer("payee_id")
       .notNull()
-      .references(() => payees.id),
-    categoryId: integer("category_id").references(() => categories.id),
+      .references(() => payees.id, { onDelete: "restrict" }),
+    categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
     accountId: integer("account_id")
       .notNull()
-      .references(() => accounts.id),
-    budgetId: integer("budget_id").references(() => budgets.id),
+      .references(() => accounts.id, { onDelete: "restrict" }),
+    budgetId: integer("budget_id").references(() => budgets.id, { onDelete: "set null" }),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),

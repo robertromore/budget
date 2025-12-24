@@ -4,6 +4,33 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%sveltekit.assets%/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      // Apply user preferences before page renders to prevent flash
+      (function() {
+        try {
+          // Font size
+          var fontSizes = { small: '14px', normal: '16px', large: '18px' };
+          var fontSize = localStorage.getItem('app-font-size');
+          if (fontSize && fontSizes[fontSize]) {
+            document.documentElement.style.setProperty('--app-font-size', fontSizes[fontSize]);
+            document.documentElement.setAttribute('data-font-size', fontSize);
+          }
+
+          // Theme preference
+          var themeData = localStorage.getItem('theme-preference');
+          if (themeData) {
+            var theme = JSON.parse(themeData);
+            // Theme colors are applied by the store after hydration
+            // but we set a data attribute to prevent layout shift
+            if (theme.theme) {
+              document.documentElement.setAttribute('data-theme', theme.theme);
+            }
+          }
+        } catch (e) {
+          // Silently fail - defaults will be used
+        }
+      })();
+    </script>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">

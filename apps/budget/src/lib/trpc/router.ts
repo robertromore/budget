@@ -11,11 +11,14 @@ import { userBehaviorRoutes } from "$lib/server/domains/ml/user-behavior";
 import { accountRoutes } from "$lib/trpc/routes/accounts";
 import { serverAccountsRoutes } from "$lib/trpc/routes/accounts-server";
 import { aiRoutes } from "$lib/trpc/routes/ai";
+import { authRoutes } from "$lib/trpc/routes/auth";
 import { categoriesRoutes } from "$lib/trpc/routes/categories";
 import { categoryGroupsRoutes } from "$lib/trpc/routes/category-groups";
 import { payeeCategoriesRoutes } from "$lib/trpc/routes/payee-categories";
 import { payeeRoutes } from "$lib/trpc/routes/payees";
 import { transactionRoutes } from "$lib/trpc/routes/transactions";
+import { workspaceInvitationsRoutes } from "$lib/trpc/routes/workspace-invitations";
+import { workspaceMembersRoutes } from "$lib/trpc/routes/workspace-members";
 import { t } from "$lib/trpc/t";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { budgetRoutes } from "./routes/budgets";
@@ -30,7 +33,13 @@ import { viewsRoutes } from "./routes/views";
 import { workspaceRoutes } from "./routes/workspaces";
 
 export const router = t.router({
+  // Authentication and workspace management
+  authRoutes,
   workspaceRoutes,
+  workspaceMembersRoutes,
+  workspaceInvitationsRoutes,
+
+  // Core domain routes
   accountRoutes,
   serverAccountsRoutes,
   aiRoutes,
@@ -47,6 +56,8 @@ export const router = t.router({
   importProfileRoutes,
   settingsRoutes,
   forecastingRoutes,
+
+  // ML routes
   anomalyDetectionRoutes,
   recurringDetectionRoutes,
   similarityRoutes,

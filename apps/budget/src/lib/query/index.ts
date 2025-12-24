@@ -5,6 +5,7 @@
  */
 
 import * as accounts from "./accounts";
+import * as auth from "./auth";
 import * as budgets from "./budgets";
 import * as categories from "./categories";
 import * as categoryGroups from "./category-groups";
@@ -17,6 +18,8 @@ import * as schedules from "./schedules";
 import * as settings from "./settings";
 import * as transactions from "./transactions";
 import * as views from "./views";
+import * as workspaceInvitations from "./workspace-invitations";
+import * as workspaceMembers from "./workspace-members";
 import * as workspaces from "./workspaces";
 
 /**
@@ -26,6 +29,7 @@ import * as workspaces from "./workspaces";
  */
 export const rpc = {
   accounts,
+  auth,
   budgets,
   categories,
   categoryGroups,
@@ -38,6 +42,8 @@ export const rpc = {
   settings,
   transactions,
   views,
+  workspaceInvitations,
+  workspaceMembers,
   workspaces,
 } as const;
 
@@ -55,6 +61,7 @@ import { queryClient } from "./_client";
  */
 export type RPC = typeof rpc;
 export type AccountQueries = typeof accounts;
+export type AuthQueries = typeof auth;
 export type BudgetQueries = typeof budgets;
 export type CategoryQueries = typeof categories;
 export type CategoryGroupQueries = typeof categoryGroups;
@@ -67,12 +74,15 @@ export type ScheduleQueries = typeof schedules;
 export type SettingsQueries = typeof settings;
 export type TransactionQueries = typeof transactions;
 export type ViewQueries = typeof views;
+export type WorkspaceInvitationQueries = typeof workspaceInvitations;
+export type WorkspaceMemberQueries = typeof workspaceMembers;
 export type WorkspaceQueries = typeof workspaces;
 
 /**
  * Convenience re-exports for specific domains
  */
 export { accountKeys } from "./accounts";
+export { authKeys } from "./auth";
 export { budgetKeys } from "./budgets";
 export { categoryKeys } from "./categories";
 export { categoryGroupKeys } from "./category-groups";
@@ -84,6 +94,8 @@ export { payeeKeys } from "./payees";
 export { scheduleKeys } from "./schedules";
 export { transactionKeys } from "./transactions";
 export { viewKeys } from "./views";
+export { workspaceInvitationKeys } from "./workspace-invitations";
+export { workspaceMemberKeys } from "./workspace-members";
 export { workspaceKeys } from "./workspaces";
 
 /**

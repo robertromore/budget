@@ -1,5 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import { signOut, useSession } from '$lib/auth-client';
+import * as Avatar from '$lib/components/ui/avatar/index.js';
 import { Badge } from '$lib/components/ui/badge';
 import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 import { getIconByName } from '$lib/components/ui/icon-picker/icon-categories';
@@ -15,16 +17,43 @@ import {
 import { currencyFormatter } from '$lib/utils/formatters';
 import Brain from '@lucide/svelte/icons/brain';
 import CalendarSync from '@lucide/svelte/icons/calendar-sync';
+import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
 import CreditCard from '@lucide/svelte/icons/credit-card';
 import Download from '@lucide/svelte/icons/download';
 import Ellipsis from '@lucide/svelte/icons/ellipsis';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
+import LogOut from '@lucide/svelte/icons/log-out';
 import Plus from '@lucide/svelte/icons/plus';
 import Receipt from '@lucide/svelte/icons/receipt';
+import Settings from '@lucide/svelte/icons/settings';
 import Tags from '@lucide/svelte/icons/tags';
+import User from '@lucide/svelte/icons/user';
 import Wallet from '@lucide/svelte/icons/wallet';
 import WorkspaceSwitcher from '../../../routes/workspaces/(components)/workspace-switcher.svelte';
+
+const session = useSession();
+const user = $derived(session.data?.user);
+
+function getInitials(name: string | null | undefined, email: string | null | undefined): string {
+  if (name) {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }
+  if (email) {
+    return email[0].toUpperCase();
+  }
+  return '?';
+}
+
+async function handleSignOut() {
+  await signOut();
+  goto('/login');
+}
 
 const accountsState = $derived(AccountsState.get());
 const accounts = $derived(accountsState.sorted);
@@ -417,4 +446,73 @@ const _deleteAccountId = $derived(deleteAccountId);
       </Sidebar.GroupAction>
     </Sidebar.Group> -->
   </Sidebar.Content>
+
+  <Sidebar.Footer class="border-sidebar-border border-t">
+    <Sidebar.Menu>
+      <Sidebar.MenuItem>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+              <Sidebar.MenuButton
+                {...props}
+                size="lg"
+                class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                <Avatar.Root class="h-8 w-8 rounded-lg">
+                  {#if user?.image}
+                    <Avatar.Image src={user.image} alt={user.name ?? 'User'} />
+                  {/if}
+                  <Avatar.Fallback class="rounded-lg">
+                    {getInitials(user?.name, user?.email)}
+                  </Avatar.Fallback>
+                </Avatar.Root>
+                <div class="grid flex-1 text-left text-sm leading-tight">
+                  <span class="truncate font-semibold">{user?.name ?? 'User'}</span>
+                  <span class="text-muted-foreground truncate text-xs">{user?.email ?? ''}</span>
+                </div>
+                <ChevronsUpDown class="ml-auto size-4" />
+              </Sidebar.MenuButton>
+            {/snippet}
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content
+            class="w-[--bits-dropdown-menu-anchor-width] min-w-56 rounded-lg"
+            side="bottom"
+            align="end"
+            sideOffset={4}>
+            <DropdownMenu.Label class="p-0 font-normal">
+              <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                <Avatar.Root class="h-8 w-8 rounded-lg">
+                  {#if user?.image}
+                    <Avatar.Image src={user.image} alt={user.name ?? 'User'} />
+                  {/if}
+                  <Avatar.Fallback class="rounded-lg">
+                    {getInitials(user?.name, user?.email)}
+                  </Avatar.Fallback>
+                </Avatar.Root>
+                <div class="grid flex-1 text-left text-sm leading-tight">
+                  <span class="truncate font-semibold">{user?.name ?? 'User'}</span>
+                  <span class="text-muted-foreground truncate text-xs">{user?.email ?? ''}</span>
+                </div>
+              </div>
+            </DropdownMenu.Label>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Group>
+              <DropdownMenu.Item onclick={() => goto('/settings/profile')}>
+                <User class="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onclick={() => goto('/settings')}>
+                <Settings class="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenu.Item>
+            </DropdownMenu.Group>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item onclick={handleSignOut}>
+              <LogOut class="mr-2 h-4 w-4" />
+              Log out
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      </Sidebar.MenuItem>
+    </Sidebar.Menu>
+  </Sidebar.Footer>
 </Sidebar.Root>

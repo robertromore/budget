@@ -14,8 +14,14 @@ export * from "./schedule-dates";
 export * from "./schedule-skips";
 export * from "./schedules";
 export * from "./transactions";
+export * from "./users";
 export * from "./views";
 export * from "./workspaces";
+
+// Authentication schemas
+export * from "./auth";
+export * from "./workspace-members";
+export * from "./workspace-invitations";
 
 // AI-related schemas
 export * from "./ai-conversations";

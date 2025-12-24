@@ -13,6 +13,7 @@ import { importProfiles } from "./import-profiles";
 import { payeeCategoryCorrections } from "./payee-category-corrections";
 import { payees } from "./payees";
 import { schedules } from "./schedules";
+import { users } from "./users";
 import { views } from "./views";
 
 export const workspaces = sqliteTable(
@@ -24,6 +25,9 @@ export const workspaces = sqliteTable(
     // Basic Info
     displayName: text("display_name").notNull(),
     slug: text("slug").notNull().unique(),
+
+    // Ownership - links to workspace_members for full membership
+    ownerId: text("owner_id").references(() => users.id),
 
     // Workspace Preferences (stored as JSON)
     preferences: text("preferences"), // {locale, dateFormat, currency, theme, etc.}
@@ -40,6 +44,7 @@ export const workspaces = sqliteTable(
   (table) => [
     index("workspace_slug_idx").on(table.slug),
     index("workspace_deleted_at_idx").on(table.deletedAt),
+    index("workspace_owner_id_idx").on(table.ownerId),
   ]
 );
 
@@ -241,8 +246,17 @@ export const formInsertWorkspaceSchema = insertWorkspaceSchema.omit({
   deletedAt: true,
 });
 
+// Import workspace member types for relations (avoid circular dependency)
+// Note: workspaceMembers and workspaceInvitations imported dynamically in relations
+
 // Relations
-export const workspacesRelations = relations(workspaces, ({ many }) => ({
+export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
+  // Ownership
+  owner: one(users, {
+    fields: [workspaces.ownerId],
+    references: [users.id],
+  }),
+  // Entity relations
   accounts: many(accounts),
   categories: many(categories),
   categoryGroups: many(categoryGroups),

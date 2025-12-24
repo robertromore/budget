@@ -1,6 +1,7 @@
 import { browser } from "$app/environment";
 import { getThemePreset, type ThemePreset } from "$lib/config/theme-presets";
 import { getLuminance, hexToOKLCH } from "$lib/utils/colors";
+import { queuePreferencesSync, loadPreferencesFromBackend } from "./preferences-sync";
 
 const STORAGE_KEY = "theme-preference";
 
@@ -14,17 +15,20 @@ interface ThemePreference {
  * Theme preferences store using Svelte 5 runes
  * Manages theme selection and persistence
  *
- * TODO: Integrate with user preferences API when multi-user support is added
- * TODO: Sync theme preference to backend user settings
+ * Syncs to:
+ * - localStorage for immediate persistence
+ * - Backend (users.preferences) for cross-device sync when authenticated
  */
 class ThemePreferencesStore {
   private currentTheme = $state<string>("zinc");
   private customColor = $state<string | undefined>(undefined);
+  private initialized = false;
 
   constructor() {
     if (browser) {
       this.loadFromStorage();
       this.applyTheme();
+      this.loadFromBackend();
     }
   }
 
@@ -98,6 +102,7 @@ class ThemePreferencesStore {
     this.customColor = undefined;
     this.saveToStorage();
     this.applyTheme();
+    this.syncToBackend();
   }
 
   /**
@@ -106,6 +111,17 @@ class ThemePreferencesStore {
   setCustom(color: string) {
     this.currentTheme = "custom";
     this.customColor = color;
+    this.saveToStorage();
+    this.applyTheme();
+    this.syncToBackend();
+  }
+
+  /**
+   * Initialize from backend preferences (called when user logs in)
+   */
+  initFromBackend(theme: string, customColor?: string) {
+    this.currentTheme = theme;
+    this.customColor = customColor;
     this.saveToStorage();
     this.applyTheme();
   }
@@ -162,6 +178,25 @@ class ThemePreferencesStore {
     }
   }
 
+  private async loadFromBackend() {
+    if (!browser || this.initialized) return;
+    this.initialized = true;
+
+    try {
+      const backendPrefs = await loadPreferencesFromBackend();
+      if (backendPrefs && backendPrefs.theme) {
+        // Backend takes precedence
+        this.currentTheme = backendPrefs.theme;
+        this.customColor = backendPrefs.customThemeColor;
+        this.saveToStorage();
+        this.applyTheme();
+      }
+    } catch (error) {
+      // Silently fail - localStorage is the fallback
+      console.debug("Failed to load theme preferences from backend:", error);
+    }
+  }
+
   /**
    * Save theme preference to localStorage
    */
@@ -178,6 +213,13 @@ class ThemePreferencesStore {
     } catch (error) {
       console.error("Failed to save theme preference:", error);
     }
+  }
+
+  private syncToBackend() {
+    queuePreferencesSync({
+      theme: this.currentTheme,
+      customThemeColor: this.customColor,
+    });
   }
 }
 

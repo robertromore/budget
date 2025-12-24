@@ -61,7 +61,9 @@ export const categories = sqliteTable(
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    parentId: integer("parent_id").references((): AnySQLiteColumn => categories.id),
+    parentId: integer("parent_id").references((): AnySQLiteColumn => categories.id, {
+      onDelete: "set null",
+    }),
     name: text("name"),
     slug: text("slug").notNull().unique(),
     notes: text("notes"),

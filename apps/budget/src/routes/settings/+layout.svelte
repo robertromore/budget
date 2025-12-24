@@ -9,6 +9,7 @@
 	import Palette from '@lucide/svelte/icons/palette';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+	import Users from '@lucide/svelte/icons/users';
 	import type { Snippet } from 'svelte';
 
 	let { children }: { children: Snippet } = $props();
@@ -21,6 +22,10 @@
 				{ href: '/settings', label: 'Appearance', icon: Palette },
 				{ href: '/settings/display', label: 'Display', icon: Monitor }
 			]
+		},
+		{
+			title: 'Workspace',
+			items: [{ href: '/settings/workspace', label: 'Members & Access', icon: Users }]
 		},
 		{
 			title: 'Data',
@@ -39,9 +44,14 @@
 		}
 	];
 
-	// Check if current path matches the nav item (exact match only)
+	// Check if current path matches the nav item
 	function isActive(href: string): boolean {
-		return page.url.pathname === href;
+		const pathname = page.url.pathname;
+		// Exact match for most items
+		if (pathname === href) return true;
+		// For workspace, match all subpaths
+		if (href === '/settings/workspace' && pathname.startsWith('/settings/workspace')) return true;
+		return false;
 	}
 </script>
 

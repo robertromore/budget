@@ -1,5 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import { page } from '$app/state';
 import * as Select from '$lib/components/ui/select';
 import { rpc } from '$lib/query';
 import { currentWorkspace } from '$lib/states/current-workspace.svelte';
@@ -11,6 +12,13 @@ const workspace = $derived(currentWorkspaceState?.workspace);
 
 const workspacesQuery = $derived(rpc.workspaces.list().options());
 const workspaces = $derived(workspacesQuery.data ?? []);
+
+// Track if we're on the manage workspaces page
+const isOnManageWorkspaces = $derived(page.url.pathname === '/workspaces');
+
+// Show "manage" when on /workspaces, otherwise show current workspace
+// The key block forces re-mount when navigating, ensuring correct selection
+const selectedValue = $derived(isOnManageWorkspaces ? 'manage' : workspace?.id?.toString());
 
 async function handleSelection(value: string | undefined) {
   if (!value) return;
@@ -40,32 +48,34 @@ async function handleSelection(value: string | undefined) {
 </script>
 
 <div class="w-full px-2 py-2" data-help-id="workspace-switcher" data-help-title="Workspace Switcher">
-  <Select.Root type="single" value={workspace?.id?.toString()} onValueChange={handleSelection}>
-    <Select.Trigger class="w-full justify-between">
-      <div class="flex min-w-0 items-center gap-2">
-        <UserCircle class="h-4 w-4 shrink-0" />
-        <span class="truncate font-medium">{workspace?.displayName ?? 'Select Workspace'}</span>
-      </div>
-    </Select.Trigger>
-    <Select.Content>
-      <Select.Group>
-        <Select.Label>Workspaces</Select.Label>
-        {#each workspaces as ws (ws.id)}
-          <Select.Item value={ws.id.toString()}>
-            <div class="flex items-center gap-2">
-              <UserCircle class="h-4 w-4" />
-              <span class:font-medium={ws.id === workspace?.id}>{ws.displayName}</span>
-            </div>
-          </Select.Item>
-        {/each}
-      </Select.Group>
-      <Select.Separator />
-      <Select.Item value="manage">
-        <div class="flex items-center gap-2">
-          <Settings class="h-4 w-4" />
-          <span>Manage Workspaces</span>
+  {#key isOnManageWorkspaces}
+    <Select.Root type="single" value={selectedValue} onValueChange={handleSelection}>
+      <Select.Trigger class="w-full justify-between">
+        <div class="flex min-w-0 items-center gap-2">
+          <UserCircle class="h-4 w-4 shrink-0" />
+          <span class="truncate font-medium">{workspace?.displayName ?? 'Select Workspace'}</span>
         </div>
-      </Select.Item>
-    </Select.Content>
-  </Select.Root>
+      </Select.Trigger>
+      <Select.Content>
+        <Select.Group>
+          <Select.Label>Workspaces</Select.Label>
+          {#each workspaces as ws (ws.id)}
+            <Select.Item value={ws.id.toString()}>
+              <div class="flex items-center gap-2">
+                <UserCircle class="h-4 w-4" />
+                <span class:font-medium={ws.id === workspace?.id}>{ws.displayName}</span>
+              </div>
+            </Select.Item>
+          {/each}
+        </Select.Group>
+        <Select.Separator />
+        <Select.Item value="manage">
+          <div class="flex items-center gap-2">
+            <Settings class="h-4 w-4" />
+            <span>Manage Workspaces</span>
+          </div>
+        </Select.Item>
+      </Select.Content>
+    </Select.Root>
+  {/key}
 </div>

@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { queuePreferencesSync, loadPreferencesFromBackend } from "./preferences-sync";
 
 const STORAGE_KEY = "display-preferences";
 
@@ -26,14 +27,18 @@ const defaults: DisplayPreferencesData = {
  * Display preferences store using Svelte 5 runes
  * Manages display-related settings like date format, currency, and number formatting
  *
- * TODO: Integrate with user preferences API when multi-user support is added
+ * Syncs to:
+ * - localStorage for immediate persistence
+ * - Backend (users.preferences) for cross-device sync when authenticated
  */
 class DisplayPreferencesStore {
 	private preferences = $state<DisplayPreferencesData>({ ...defaults });
+	private initialized = false;
 
 	constructor() {
 		if (browser) {
 			this.loadFromStorage();
+			this.loadFromBackend();
 		}
 	}
 
@@ -60,26 +65,31 @@ class DisplayPreferencesStore {
 	setDateFormat(format: DateFormat) {
 		this.preferences.dateFormat = format;
 		this.saveToStorage();
+		this.syncToBackend({ dateFormat: format });
 	}
 
 	setCurrencySymbol(symbol: string) {
 		this.preferences.currencySymbol = symbol;
 		this.saveToStorage();
+		this.syncToBackend({ currencySymbol: symbol });
 	}
 
 	setNumberFormat(format: NumberFormat) {
 		this.preferences.numberFormat = format;
 		this.saveToStorage();
+		this.syncToBackend({ numberFormat: format });
 	}
 
 	setShowCents(show: boolean) {
 		this.preferences.showCents = show;
 		this.saveToStorage();
+		this.syncToBackend({ showCents: show });
 	}
 
 	setTableDisplayMode(mode: TableDisplayMode) {
 		this.preferences.tableDisplayMode = mode;
 		this.saveToStorage();
+		this.syncToBackend({ tableDisplayMode: mode });
 	}
 
 	/**
@@ -122,6 +132,14 @@ class DisplayPreferencesStore {
 		return `${sign}${this.preferences.currencySymbol}${formatted}`;
 	}
 
+	/**
+	 * Initialize from backend preferences (called when user logs in)
+	 */
+	initFromBackend(prefs: Partial<DisplayPreferencesData>) {
+		this.preferences = { ...this.preferences, ...prefs };
+		this.saveToStorage();
+	}
+
 	private loadFromStorage() {
 		if (!browser) return;
 
@@ -136,6 +154,32 @@ class DisplayPreferencesStore {
 		}
 	}
 
+	private async loadFromBackend() {
+		if (!browser || this.initialized) return;
+		this.initialized = true;
+
+		try {
+			const backendPrefs = await loadPreferencesFromBackend();
+			if (backendPrefs) {
+				// Merge backend preferences with current (backend takes precedence)
+				const displayPrefs: Partial<DisplayPreferencesData> = {};
+				if (backendPrefs.dateFormat) displayPrefs.dateFormat = backendPrefs.dateFormat;
+				if (backendPrefs.currencySymbol) displayPrefs.currencySymbol = backendPrefs.currencySymbol;
+				if (backendPrefs.numberFormat) displayPrefs.numberFormat = backendPrefs.numberFormat;
+				if (backendPrefs.showCents !== undefined) displayPrefs.showCents = backendPrefs.showCents;
+				if (backendPrefs.tableDisplayMode) displayPrefs.tableDisplayMode = backendPrefs.tableDisplayMode;
+
+				if (Object.keys(displayPrefs).length > 0) {
+					this.preferences = { ...this.preferences, ...displayPrefs };
+					this.saveToStorage();
+				}
+			}
+		} catch (error) {
+			// Silently fail - localStorage is the fallback
+			console.debug("Failed to load display preferences from backend:", error);
+		}
+	}
+
 	private saveToStorage() {
 		if (!browser) return;
 
@@ -144,6 +188,10 @@ class DisplayPreferencesStore {
 		} catch (error) {
 			console.error("Failed to save display preferences:", error);
 		}
+	}
+
+	private syncToBackend(prefs: Partial<DisplayPreferencesData>) {
+		queuePreferencesSync(prefs);
 	}
 }
 

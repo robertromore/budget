@@ -5,43 +5,15 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1764182018597,
-      "tag": "0000_hesitant_dorian_gray",
+      "when": 1766602593299,
+      "tag": "0000_amazing_avengers",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "6",
-      "when": 1764551340625,
-      "tag": "0001_nosy_mariko_yashida",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1765125407151,
-      "tag": "0002_big_gwen_stacy",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1766125253061,
-      "tag": "0003_brown_spacker_dave",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1766263371943,
-      "tag": "0004_amazing_wendell_rand",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1766510431971,
-      "tag": "0005_unique_bloodstorm",
+      "when": 1766606141878,
+      "tag": "0001_perpetual_riptide",
       "breakpoints": true
     }
   ]
