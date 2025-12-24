@@ -883,6 +883,32 @@ for complex multi-step tasks ✅ **Ask for specifics** when requests are vague �
 patterns** and remind user when something might break them ✅ **Challenge
 anti-patterns** and suggest better approaches
 
+## Custom Claude Commands
+
+**Custom slash commands are defined in `.claude/commands/` directory.**
+
+### Available Commands
+
+- **/fix** - Analyze and fix issues in the codebase with systematic debugging
+- **/new-domain** - Create a new domain following the established architecture
+  (repository, service, routes)
+- **/new-query** - Create new query/mutation definitions following the query
+  layer patterns
+- **/review** - Conduct comprehensive code review with architecture analysis
+- **/help-docs** - Manage and create help documentation content
+- **/create_plan** - Create implementation plans for project-specific tasks
+- **/create_plan_generic** - Create implementation plans for general tasks
+
+### Command Usage
+
+Invoke commands using the slash prefix:
+
+```bash
+/fix src/lib/components/broken-component.svelte
+/new-domain invoices
+/review src/routes/accounts/
+```
+
 ## Specialized Agents
 
 **Specialized agent definitions are stored in `.claude/agents/` directory.**
@@ -925,24 +951,39 @@ apps/budget/
 ├── src/
 │   ├── lib/
 │   │   ├── components/       # Reusable UI components
-│   │   ├── server/          # Backend domain logic
-│   │   │   ├── domains/     # Domain-driven service modules
-│   │   │   ├── config/      # Server configuration
-│   │   │   └── shared/      # Shared utilities
-│   │   ├── schema/          # Database schema definitions
-│   │   ├── trpc/            # tRPC routers and middleware
-│   │   ├── query/           # Query layer (TanStack Query)
-│   │   ├── states/          # Frontend state management
-│   │   ├── types/           # TypeScript type definitions
-│   │   ├── utils/           # Utility functions
-│   │   └── constants/       # Application constants
-│   ├── routes/              # SvelteKit file-based routing
+│   │   │   ├── ai-elements/  # AI chat interface components
+│   │   │   ├── help/         # Contextual help system
+│   │   │   ├── intelligence-input/  # AI-powered form assistance
+│   │   │   └── ...           # Domain-specific components
+│   │   ├── content/
+│   │   │   └── help/         # Help documentation markdown files
+│   │   ├── server/           # Backend domain logic
+│   │   │   ├── ai/           # AI services and tools
+│   │   │   │   ├── commands/ # Chat command handlers
+│   │   │   │   ├── tools/    # AI tool definitions
+│   │   │   │   ├── prompts/  # System prompts
+│   │   │   │   └── providers/# LLM provider integrations
+│   │   │   ├── domains/      # Domain-driven service modules
+│   │   │   ├── config/       # Server configuration
+│   │   │   └── shared/       # Shared utilities
+│   │   ├── schema/           # Database schema definitions
+│   │   ├── trpc/             # tRPC routers and middleware
+│   │   ├── query/            # Query layer (TanStack Query)
+│   │   ├── states/           # Frontend state management
+│   │   │   └── ui/           # UI state (ai-chat, help, intelligence-input)
+│   │   ├── types/            # TypeScript type definitions
+│   │   ├── utils/            # Utility functions
+│   │   └── constants/        # Application constants
+│   ├── routes/               # SvelteKit file-based routing
+│   │   ├── settings/intelligence/  # AI settings pages
+│   │   └── payees/cleanup/   # Payee cleanup utilities
 │   └── tests/
-│       ├── unit/            # Unit tests
-│       ├── integration/     # Integration tests
-│       └── e2e/             # End-to-end tests
-├── drizzle/                 # Database migrations
-└── static/                  # Static assets
+│       ├── unit/             # Unit tests
+│       ├── integration/      # Integration tests
+│       └── e2e/              # End-to-end tests
+├── drizzle/                  # Database migrations
+├── training-data/            # AI fine-tuning data and scripts
+└── static/                   # Static assets
 ```
 
 ### Key Architectural Patterns
@@ -2048,6 +2089,270 @@ Comprehensive system design documented in `docs/plans/budget-system-design.md`
 - **Junction Tables**: Clean multi-budget transaction tracking
 - **Domain-Driven**: Follows existing patterns
 - **Real-Time Updates**: Configurable calculation refresh
+
+## AI Chat System
+
+**Integrated AI assistant with contextual financial awareness and tool
+capabilities.**
+
+### Architecture Overview
+
+The AI chat system provides conversational assistance with full context of the
+user's financial data. It supports streaming responses, tool execution, and
+conversation persistence.
+
+### Core Components
+
+#### Server-Side AI (`src/lib/server/ai/`)
+
+- **commands/**: Chat command parsing and execution (registry, parser,
+  formatters)
+- **tools/**: AI tool definitions for financial operations
+- **prompts/**: System prompts for the chat assistant
+- **providers/**: LLM provider integrations (OpenAI, Anthropic, local models)
+- **fine-tuning/**: Training data generation for custom models
+- **financial-context.ts**: Builds comprehensive financial context for prompts
+- **intelligence-coordinator.ts**: Coordinates AI features across the app
+
+#### Client-Side State (`src/lib/states/ui/ai-chat.svelte.ts`)
+
+Reactive state management for chat functionality:
+
+- Conversation history and message streaming
+- Tool execution status and results
+- Auto-scroll and UI state management
+- Conversation persistence via tRPC
+
+#### AI Elements Component Library (`src/lib/components/ai-elements/`)
+
+Reusable components for AI interfaces:
+
+- **artifact/**: Code and content artifact display with actions
+- **code/**: Syntax-highlighted code blocks with Shiki
+- **confirmation/**: User confirmation dialogs for AI actions
+- **conversation/**: Chat conversation container with scroll management
+- **copy-button/**: Clipboard copy functionality
+- **loader/**: Loading indicators for AI operations
+- **message/**: Message display with avatar and content
+- **prompt-input/**: Rich text input with attachments and autocomplete
+- **reasoning/**: AI reasoning step visualization
+- **response/**: Structured AI response rendering
+- **suggestion/**: Suggested action chips
+
+### tRPC Integration (`src/lib/trpc/routes/ai.ts`)
+
+- **sendMessage**: Stream chat messages with tool execution
+- **getConversations**: List user conversations
+- **getConversation**: Retrieve conversation history
+- **deleteConversation**: Remove conversation
+
+### Usage Pattern
+
+```svelte
+<script lang="ts">
+  import { getAIChatState } from '$lib/states/ui';
+
+  const chat = getAIChatState();
+</script>
+
+<ChatPanel
+  messages={chat.messages}
+  onSend={(message) => chat.sendMessage(message)}
+  isStreaming={chat.isStreaming}
+></ChatPanel>
+```
+
+## Contextual Help System
+
+**Interactive documentation with element highlighting and searchable help
+content.**
+
+### Architecture Overview
+
+The help system provides contextual documentation tied to specific UI elements.
+Users can enter help mode to explore the interface and access relevant
+documentation.
+
+### Core Components
+
+#### Help Components (`src/lib/components/help/`)
+
+- **help-button.svelte**: Global help mode toggle
+- **help-documentation-sheet.svelte**: Sliding panel for help content display
+- **help-element-highlight.svelte**: Visual highlighting for interactive
+  elements
+- **help-overlay.svelte**: Full-screen overlay for help mode
+- **help-search-results.svelte**: Search results display
+- **modal-help-provider.svelte**: Context provider for modal help integration
+- **modal-help-button.svelte**: Help trigger within modals
+- **modal-help-overlay.svelte**: Help overlay for modal contexts
+
+#### Help State (`src/lib/states/ui/help.svelte.ts`)
+
+Reactive state for help functionality:
+
+- Help mode toggle and active element tracking
+- Search functionality across help content
+- Navigation between help topics
+- Element-to-documentation mapping
+
+#### Help Content (`src/lib/content/help/`)
+
+Markdown documentation files organized by feature:
+
+- Account and transaction documentation
+- Settings and configuration guides
+- Intelligence and AI feature explanations
+- UI component usage instructions
+
+### Help ID Pattern
+
+Components register for help by adding a `data-help-id` attribute:
+
+```svelte
+<Button data-help-id="add-transaction-button">
+  Add Transaction
+</Button>
+```
+
+The corresponding help content is in
+`src/lib/content/help/add-transaction-button.md`.
+
+### Usage Pattern
+
+```svelte
+<script lang="ts">
+  import { ModalHelpProvider, ModalHelpButton } from '$lib/components/help';
+</script>
+
+<ModalHelpProvider>
+  <Dialog>
+    <DialogHeader>
+      <ModalHelpButton></ModalHelpButton>
+    </DialogHeader>
+    <!-- Dialog content with data-help-id attributes -->
+  </Dialog>
+</ModalHelpProvider>
+```
+
+## Intelligence Input System
+
+**AI-powered form field assistance with inline suggestions and field-specific
+intelligence.**
+
+### Architecture Overview
+
+The intelligence input system provides contextual AI assistance for form fields.
+It can suggest values, validate input, and provide explanations based on the
+field context.
+
+### Core Components
+
+#### Intelligence Input Components (`src/lib/components/intelligence-input/`)
+
+- **intelligence-input-button.svelte**: Trigger for AI assistance
+- **intelligence-input-highlight.svelte**: Visual indication of AI-ready fields
+- **intelligence-input-mode-picker.svelte**: Selection between AI modes
+- **intelligence-input-overlay.svelte**: AI suggestion overlay
+- **modal-intelligence-provider.svelte**: Context provider for modal forms
+- **modal-intelligence-overlay.svelte**: Intelligence overlay for modals
+
+#### Intelligence State (`src/lib/states/ui/intelligence-input.svelte.ts`)
+
+Reactive state for intelligence features:
+
+- Active field tracking and context
+- Suggestion generation and display
+- Mode selection (auto, manual, disabled)
+- Provider configuration
+
+### Intelligence Modes
+
+- **Auto**: AI suggestions appear automatically as user types
+- **Manual**: User triggers AI assistance with button click
+- **Disabled**: No AI assistance for the field
+
+### Usage Pattern
+
+```svelte
+<script lang="ts">
+  import { IntelligenceInputButton } from '$lib/components/intelligence-input';
+</script>
+
+<div class="relative">
+  <Input bind:value={payeeName} data-intelligence-field="payee"></Input>
+  <IntelligenceInputButton field="payee"></IntelligenceInputButton>
+</div>
+```
+
+## Payee Cleanup System
+
+**Duplicate detection and payee normalization for data quality management.**
+
+### Features
+
+- **Duplicate Detection**: Fuzzy matching to identify similar payees
+- **Name Normalization**: Standardize payee naming conventions
+- **Bulk Merge**: Combine duplicate payees with transaction reassignment
+- **Preview Mode**: Review changes before applying
+
+### Components (`src/routes/payees/cleanup/`)
+
+- **duplicate-detection-panel.svelte**: Interface for finding duplicates
+- **duplicate-group-card.svelte**: Display grouped duplicate payees
+- **merge-confirmation-dialog.svelte**: Confirm merge operations
+- **name-normalization-panel.svelte**: Standardize payee names
+- **normalization-preview-table.svelte**: Preview normalization changes
+
+### Service Methods (`src/lib/server/domains/payees/services.ts`)
+
+- **findDuplicates()**: Identify potential duplicate payees
+- **mergePayees()**: Combine payees and update transactions
+- **normalizeNames()**: Apply naming conventions
+- **getSimilarityScore()**: Calculate similarity between payee names
+
+### Query Layer (`src/lib/query/similarity.ts`)
+
+- **getSimilarPayees()**: Find similar payees for a given name
+- **getDuplicateGroups()**: Get grouped duplicate candidates
+
+## LLM Provider Configuration
+
+**Configurable AI providers with per-feature settings.**
+
+### Settings Location
+
+`src/routes/settings/intelligence/`
+
+### Provider Options
+
+- **OpenAI**: GPT-4, GPT-3.5-turbo models
+- **Anthropic**: Claude models
+- **Local Models**: Ollama integration for self-hosted models
+
+### Feature Modes
+
+Each AI feature can be configured independently:
+
+- **Master Toggle**: Enable/disable all AI features
+- **LLM Features**: Chat, transaction parsing, categorization
+- **ML Features**: Anomaly detection, forecasting, similarity matching
+- **Web Search**: External search integration
+
+### Configuration Pattern
+
+```typescript
+interface LLMSettings {
+  enabled: boolean;
+  provider: 'openai' | 'anthropic' | 'ollama';
+  model: string;
+  features: {
+    chat: boolean;
+    parsing: boolean;
+    categorization: boolean;
+  };
+}
+```
 
 ---
 
