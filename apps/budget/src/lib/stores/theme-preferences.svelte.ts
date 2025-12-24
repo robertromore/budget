@@ -140,6 +140,7 @@ class ThemePreferencesStore {
       const oklchValues = hexToOKLCH(this.customColor);
       root.style.setProperty("--primary", `oklch(${oklchValues})`);
       root.style.setProperty("--accent", `oklch(${oklchValues})`);
+      root.style.setProperty("--theme-preview-color", this.customColor);
 
       // Calculate appropriate foreground colors based on luminance
       const luminance = getLuminance(this.customColor);
@@ -156,6 +157,7 @@ class ThemePreferencesStore {
         root.style.setProperty("--primary-foreground", `hsl(${preset.colors.primaryForeground})`);
         root.style.setProperty("--accent", `hsl(${preset.colors.accent})`);
         root.style.setProperty("--accent-foreground", `hsl(${preset.colors.accentForeground})`);
+        root.style.setProperty("--theme-preview-color", `hsl(${preset.colors.primary})`);
       }
     }
   }

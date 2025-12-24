@@ -166,6 +166,78 @@ This invitation will expire in ${expiresInDays} days. If you don't want to join 
 }
 
 /**
+ * Email template for email verification
+ */
+export function emailVerificationEmail(options: {
+  verifyUrl: string;
+  userName?: string;
+  expiresInMinutes?: number;
+}): { subject: string; html: string; text: string } {
+  const { verifyUrl, userName, expiresInMinutes = 1440 } = options; // 1440 = 24 hours
+  const greeting = userName ? `Hi ${userName},` : "Hi,";
+  const expiresInHours = Math.round(expiresInMinutes / 60);
+
+  return {
+    subject: "Verify your email address",
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <tr>
+      <td style="background-color: #ffffff; border-radius: 8px; padding: 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h1 style="margin: 0 0 24px; font-size: 24px; font-weight: 600; color: #18181b;">Verify Your Email</h1>
+
+        <p style="margin: 0 0 16px; font-size: 16px; line-height: 24px; color: #3f3f46;">${greeting}</p>
+
+        <p style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #3f3f46;">
+          Please verify your email address by clicking the button below:
+        </p>
+
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding: 0 0 24px;">
+              <a href="${verifyUrl}" style="display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: 500; color: #ffffff; background-color: #18181b; border-radius: 6px; text-decoration: none;">
+                Verify Email
+              </a>
+            </td>
+          </tr>
+        </table>
+
+        <p style="margin: 0 0 16px; font-size: 14px; line-height: 20px; color: #71717a;">
+          This link will expire in ${expiresInHours} hours. If you didn't create an account, you can safely ignore this email.
+        </p>
+
+        <hr style="margin: 24px 0; border: none; border-top: 1px solid #e4e4e7;">
+
+        <p style="margin: 0; font-size: 12px; line-height: 18px; color: #a1a1aa;">
+          If the button doesn't work, copy and paste this link into your browser:<br>
+          <a href="${verifyUrl}" style="color: #3b82f6; word-break: break-all;">${verifyUrl}</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim(),
+    text: `
+${greeting}
+
+Please verify your email address by visiting the link below:
+
+${verifyUrl}
+
+This link will expire in ${expiresInHours} hours. If you didn't create an account, you can safely ignore this email.
+    `.trim(),
+  };
+}
+
+/**
  * Email template for welcome email after signup
  */
 export function welcomeEmail(options: {

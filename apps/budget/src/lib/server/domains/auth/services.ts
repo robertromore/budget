@@ -1,12 +1,14 @@
 import { users, type UserPreferences } from "$lib/schema/users";
-import { sessions, authAccounts } from "$lib/schema/auth";
+import { sessions, authAccounts, type Session } from "$lib/schema/auth";
 import { db } from "$lib/server/shared/database";
 import { AUTH_CONFIG } from "$lib/server/config/auth";
-import { ValidationError, NotFoundError } from "$lib/server/shared/types/errors";
+import { ValidationError, NotFoundError, UnauthorizedError } from "$lib/server/shared/types/errors";
 import { eq, and } from "drizzle-orm";
 import { logger } from "$lib/server/shared/logging";
 import { authRepository } from "./repository";
-import { hashPassword } from "$lib/server/auth/password";
+import { hashPassword, verifyPassword } from "$lib/server/auth/password";
+import { sendEmail } from "$lib/server/email";
+import { emailVerificationEmail } from "$lib/server/email/templates";
 
 /**
  * Default user preferences
@@ -357,5 +359,239 @@ export class AuthService {
     logger.info("User preferences updated:", { userId });
 
     return { ...DEFAULT_USER_PREFERENCES, ...mergedPrefs };
+  }
+
+  /**
+   * Change password (requires current password verification)
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
+    // Validate new password
+    const validation = this.validatePassword(newPassword);
+    if (!validation.valid) {
+      throw new ValidationError(validation.errors.join(". "));
+    }
+
+    // Get user's auth account (credential provider)
+    const [authAccount] = await db
+      .select()
+      .from(authAccounts)
+      .where(
+        and(
+          eq(authAccounts.userId, userId),
+          eq(authAccounts.providerId, "credential")
+        )
+      )
+      .limit(1);
+
+    if (!authAccount || !authAccount.password) {
+      throw new NotFoundError("Auth account", userId);
+    }
+
+    // Verify current password
+    const isValid = await verifyPassword(currentPassword, authAccount.password);
+    if (!isValid) {
+      throw new UnauthorizedError("Current password is incorrect");
+    }
+
+    // Hash and update new password
+    const newPasswordHash = await hashPassword(newPassword);
+    await db
+      .update(authAccounts)
+      .set({
+        password: newPasswordHash,
+        updatedAt: new Date(),
+      })
+      .where(eq(authAccounts.id, authAccount.id));
+
+    logger.info("Password changed:", { userId });
+  }
+
+  /**
+   * Get all active sessions for a user
+   */
+  async getUserSessions(userId: string): Promise<Session[]> {
+    const userSessions = await authRepository.findSessionsByUserId(userId);
+
+    // Filter out expired sessions
+    const now = new Date();
+    return userSessions.filter((session) => session.expiresAt > now);
+  }
+
+  /**
+   * Revoke a specific session
+   */
+  async revokeSession(userId: string, sessionId: string): Promise<void> {
+    // Verify the session belongs to the user
+    const session = await authRepository.findSessionById(sessionId);
+
+    if (!session) {
+      throw new NotFoundError("Session", sessionId);
+    }
+
+    if (session.userId !== userId) {
+      throw new UnauthorizedError("Cannot revoke another user's session");
+    }
+
+    await authRepository.deleteSession(sessionId);
+    logger.info("Session revoked:", { userId, sessionId });
+  }
+
+  /**
+   * Revoke all sessions except the current one
+   */
+  async revokeOtherSessions(
+    userId: string,
+    currentSessionId: string
+  ): Promise<number> {
+    const count = await authRepository.deleteOtherUserSessions(
+      userId,
+      currentSessionId
+    );
+    logger.info("Other sessions revoked:", { userId, count });
+    return count;
+  }
+
+  /**
+   * Request email verification
+   */
+  async requestEmailVerification(userId: string): Promise<void> {
+    const user = await this.getUserById(userId);
+
+    if (!user) {
+      throw new NotFoundError("User", userId);
+    }
+
+    if (!user.email) {
+      throw new ValidationError("No email address on account");
+    }
+
+    if (user.emailVerified) {
+      throw new ValidationError("Email is already verified");
+    }
+
+    // Delete any existing verification tokens
+    await authRepository.deleteVerificationsByIdentifier(user.email);
+
+    // Create new verification token (expires in 24 hours)
+    const verification = await authRepository.createVerification(
+      user.email,
+      "email_verification",
+      24 * 60 // 24 hours
+    );
+
+    const baseUrl =
+      process.env.PUBLIC_APP_URL ||
+      process.env.BETTER_AUTH_URL ||
+      "http://localhost:5173";
+    const verifyUrl = `${baseUrl}/verify-email?token=${verification.token}`;
+
+    // Send verification email
+    const emailContent = emailVerificationEmail({
+      verifyUrl,
+      expiresInMinutes: 24 * 60,
+    });
+
+    await sendEmail({
+      to: user.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.text,
+    });
+
+    logger.info("Email verification requested:", {
+      userId,
+      email: user.email,
+    });
+  }
+
+  /**
+   * Verify email with token
+   */
+  async verifyEmail(token: string): Promise<void> {
+    const verification = await authRepository.findValidVerification(
+      token,
+      "email_verification"
+    );
+
+    if (!verification) {
+      throw new ValidationError("Invalid or expired verification token");
+    }
+
+    // Find user by email
+    const user = await this.getUserByEmail(verification.identifier);
+    if (!user) {
+      await authRepository.deleteVerification(verification.id);
+      throw new ValidationError("User not found");
+    }
+
+    // Mark email as verified
+    await db
+      .update(users)
+      .set({
+        emailVerified: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    // Delete the verification token
+    await authRepository.deleteVerification(verification.id);
+
+    logger.info("Email verified:", { userId: user.id, email: user.email });
+  }
+
+  /**
+   * Delete user account and all associated data
+   * Requires password confirmation for security
+   */
+  async deleteAccount(userId: string, password: string): Promise<void> {
+    // Get user's auth account to verify password
+    const [authAccount] = await db
+      .select()
+      .from(authAccounts)
+      .where(
+        and(
+          eq(authAccounts.userId, userId),
+          eq(authAccounts.providerId, "credential")
+        )
+      )
+      .limit(1);
+
+    if (!authAccount || !authAccount.password) {
+      throw new NotFoundError("Auth account", userId);
+    }
+
+    // Verify password
+    const isValid = await verifyPassword(password, authAccount.password);
+    if (!isValid) {
+      throw new UnauthorizedError("Password is incorrect");
+    }
+
+    // Delete all user sessions first
+    await authRepository.deleteUserSessions(userId);
+
+    // Delete auth accounts
+    await db.delete(authAccounts).where(eq(authAccounts.userId, userId));
+
+    // Delete any verification tokens
+    const user = await this.getUserById(userId);
+    if (user?.email) {
+      await authRepository.deleteVerificationsByIdentifier(user.email);
+    }
+
+    // Finally, soft delete the user
+    await db
+      .update(users)
+      .set({
+        deletedAt: new Date(),
+        email: null, // Clear email to allow re-registration
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    logger.info("Account deleted:", { userId });
   }
 }

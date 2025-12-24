@@ -8,23 +8,111 @@
       // Apply user preferences before page renders to prevent flash
       (function() {
         try {
+          var root = document.documentElement;
+
           // Font size
           var fontSizes = { small: '14px', normal: '16px', large: '18px' };
           var fontSize = localStorage.getItem('app-font-size');
           if (fontSize && fontSizes[fontSize]) {
-            document.documentElement.style.setProperty('--app-font-size', fontSizes[fontSize]);
-            document.documentElement.setAttribute('data-font-size', fontSize);
+            root.style.setProperty('--app-font-size', fontSizes[fontSize]);
+            root.setAttribute('data-font-size', fontSize);
           }
 
-          // Theme preference
-          var themeData = localStorage.getItem('theme-preference');
-          if (themeData) {
-            var theme = JSON.parse(themeData);
-            // Theme colors are applied by the store after hydration
-            // but we set a data attribute to prevent layout shift
-            if (theme.theme) {
-              document.documentElement.setAttribute('data-theme', theme.theme);
+          // Theme presets (matching theme-presets.ts)
+          var themePresets = {
+            zinc: { primary: '240 5.9% 10%', primaryFg: '0 0% 98%', accent: '240 4.8% 95.9%', accentFg: '240 5.9% 10%' },
+            slate: { primary: '215.4 16.3% 46.9%', primaryFg: '210 40% 98%', accent: '210 40% 96.1%', accentFg: '222.2 47.4% 11.2%' },
+            stone: { primary: '25 5.3% 44.7%', primaryFg: '60 9.1% 97.8%', accent: '60 4.8% 95.9%', accentFg: '24 9.8% 10%' },
+            gray: { primary: '220 8.9% 46.1%', primaryFg: '210 20% 98%', accent: '220 14.3% 95.9%', accentFg: '220.9 39.3% 11%' },
+            neutral: { primary: '0 0% 45.1%', primaryFg: '0 0% 98%', accent: '0 0% 96.1%', accentFg: '0 0% 9%' },
+            red: { primary: '0 72.2% 50.6%', primaryFg: '0 85.7% 97.3%', accent: '0 100% 96.5%', accentFg: '0 74% 42%' },
+            rose: { primary: '346.8 77.2% 49.8%', primaryFg: '355.7 100% 97.3%', accent: '355.7 100% 96.7%', accentFg: '343.4 79.7% 34.7%' },
+            orange: { primary: '24.6 95% 53.1%', primaryFg: '33.3 100% 96.5%', accent: '33.3 100% 96.5%', accentFg: '20.5 90.2% 48.2%' },
+            green: { primary: '142.1 76.2% 36.3%', primaryFg: '138.5 76.5% 96.7%', accent: '138.5 76.5% 96.7%', accentFg: '140.6 90.2% 24.7%' },
+            blue: { primary: '221.2 83.2% 53.3%', primaryFg: '210 40% 98%', accent: '210 40% 96.1%', accentFg: '222.2 47.4% 11.2%' },
+            yellow: { primary: '47.9 95.8% 53.1%', primaryFg: '48 96.5% 88.8%', accent: '48 96.5% 88.8%', accentFg: '25.7 90.4% 37.3%' },
+            violet: { primary: '262.1 83.3% 57.8%', primaryFg: '270 91.3% 95.1%', accent: '270 95.2% 95.1%', accentFg: '263.4 70% 50.4%' }
+          };
+
+          // Helper to convert hex to OKLCH (simplified for preload)
+          function hexToOklch(hex) {
+            // Remove # if present
+            hex = hex.replace('#', '');
+            var r = parseInt(hex.substring(0, 2), 16) / 255;
+            var g = parseInt(hex.substring(2, 4), 16) / 255;
+            var b = parseInt(hex.substring(4, 6), 16) / 255;
+
+            // Simplified conversion - convert to linear RGB then approximate OKLCH
+            r = r <= 0.04045 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+            g = g <= 0.04045 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+            b = b <= 0.04045 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+
+            // Approximate L (lightness) using luminance
+            var L = Math.cbrt(0.2126 * r + 0.7152 * g + 0.0722 * b);
+
+            // Approximate C (chroma) and H (hue)
+            var max = Math.max(r, g, b);
+            var min = Math.min(r, g, b);
+            var C = (max - min) * 0.4; // Simplified chroma
+
+            var H = 0;
+            if (max !== min) {
+              if (max === r) H = ((g - b) / (max - min)) % 6;
+              else if (max === g) H = (b - r) / (max - min) + 2;
+              else H = (r - g) / (max - min) + 4;
+              H = H * 60;
+              if (H < 0) H += 360;
             }
+
+            return L.toFixed(3) + ' ' + C.toFixed(3) + ' ' + H.toFixed(1);
+          }
+
+          // Helper to get luminance for foreground color decision
+          function getLuminance(hex) {
+            hex = hex.replace('#', '');
+            var r = parseInt(hex.substring(0, 2), 16) / 255;
+            var g = parseInt(hex.substring(2, 4), 16) / 255;
+            var b = parseInt(hex.substring(4, 6), 16) / 255;
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          }
+
+          // Theme preference - always apply a theme (default to zinc)
+          var themeData = localStorage.getItem('theme-preference');
+          var themeName = 'zinc';
+          var customColor = null;
+
+          if (themeData) {
+            try {
+              var parsed = JSON.parse(themeData);
+              themeName = parsed.theme || 'zinc';
+              customColor = parsed.customColor;
+            } catch (e) {
+              // Invalid JSON, use defaults
+            }
+          }
+
+          root.setAttribute('data-theme', themeName);
+
+          if (themeName === 'custom' && customColor) {
+            // Apply custom color
+            var oklch = hexToOklch(customColor);
+            root.style.setProperty('--primary', 'oklch(' + oklch + ')');
+            root.style.setProperty('--accent', 'oklch(' + oklch + ')');
+            root.style.setProperty('--theme-preview-color', customColor);
+
+            // Calculate foreground based on luminance
+            var lum = getLuminance(customColor);
+            var fg = lum > 0.5 ? 'oklch(0.145 0 0)' : 'oklch(0.985 0 0)';
+            root.style.setProperty('--primary-foreground', fg);
+            root.style.setProperty('--accent-foreground', fg);
+          } else if (themePresets[themeName]) {
+            // Apply preset theme
+            var preset = themePresets[themeName];
+            root.style.setProperty('--primary', 'hsl(' + preset.primary + ')');
+            root.style.setProperty('--primary-foreground', 'hsl(' + preset.primaryFg + ')');
+            root.style.setProperty('--accent', 'hsl(' + preset.accent + ')');
+            root.style.setProperty('--accent-foreground', 'hsl(' + preset.accentFg + ')');
+            root.style.setProperty('--theme-preview-color', 'hsl(' + preset.primary + ')');
           }
         } catch (e) {
           // Silently fail - defaults will be used

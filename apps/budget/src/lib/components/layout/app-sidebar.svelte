@@ -32,7 +32,9 @@ import User from '@lucide/svelte/icons/user';
 import Wallet from '@lucide/svelte/icons/wallet';
 import WorkspaceSwitcher from '../../../routes/workspaces/(components)/workspace-switcher.svelte';
 
-const session = useSession();
+// Session and user data (useSession returns a nanostores atom)
+const sessionStore = useSession();
+const session = $derived($sessionStore);
 const user = $derived(session.data?.user);
 
 function getInitials(name: string | null | undefined, email: string | null | undefined): string {

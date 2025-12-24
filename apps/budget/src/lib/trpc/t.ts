@@ -1,5 +1,5 @@
 import type { Context } from "$lib/trpc/context";
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import { inputSanitization, strictInputSanitization } from "./middleware/input-sanitization";
 import {
   bulkOperationRateLimit,
@@ -10,6 +10,28 @@ import { bulkOperationLimits, standardLimits, strictLimits } from "./middleware/
 import { securityLogging } from "./middleware/security-logging";
 
 export const t = initTRPC.context<Context>().create();
+
+/**
+ * Middleware to enforce authentication.
+ * Throws UNAUTHORIZED if userId or sessionId is not present.
+ * Note: Procedures using this middleware can safely use ctx.userId! and ctx.sessionId!
+ * as the middleware guarantees they are non-null after this point.
+ */
+const isAuthenticated = t.middleware(({ ctx, next }) => {
+  if (!ctx.userId || !ctx.sessionId) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "You must be logged in to perform this action",
+    });
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      userId: ctx.userId,
+      sessionId: ctx.sessionId,
+    },
+  });
+});
 
 // Base procedure with security logging
 const baseProcedure = t.procedure.use(securityLogging);
@@ -37,3 +59,16 @@ export const secureOperationProcedure = baseProcedure
 
 // Legacy export for backward compatibility
 export const secureProcedure = rateLimitedProcedure;
+
+// Protected procedure requiring authentication
+export const protectedProcedure = baseProcedure
+  .use(isAuthenticated)
+  .use(standardLimits)
+  .use(inputSanitization);
+
+// Secure protected procedure for sensitive operations (auth-required + rate limited)
+export const secureProtectedProcedure = baseProcedure
+  .use(isAuthenticated)
+  .use(strictRateLimit)
+  .use(strictLimits)
+  .use(strictInputSanitization);

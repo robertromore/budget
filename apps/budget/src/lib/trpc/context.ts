@@ -6,22 +6,33 @@ import type { RequestEvent } from "@sveltejs/kit";
 import { and, eq, isNull } from "drizzle-orm";
 
 /**
- * Get the current user ID from the Better Auth session
+ * Session info from Better Auth
  */
-async function getCurrentUserId(event: RequestEvent): Promise<string | null> {
+interface SessionInfo {
+  userId: string | null;
+  sessionId: string | null;
+}
+
+/**
+ * Get the current user ID and session ID from the Better Auth session
+ */
+async function getSessionInfo(event: RequestEvent): Promise<SessionInfo> {
   try {
     const session = await auth.api.getSession({
       headers: event.request.headers,
     });
 
-    if (session?.user?.id) {
-      return session.user.id;
+    if (session?.user?.id && session?.session?.id) {
+      return {
+        userId: session.user.id,
+        sessionId: session.session.id,
+      };
     }
   } catch {
     // Session retrieval failed, user is not authenticated
   }
 
-  return null;
+  return { userId: null, sessionId: null };
 }
 
 /**
@@ -192,12 +203,13 @@ async function getOrCreateDefaultWorkspace(userId: string | null): Promise<numbe
  * Create tRPC context with user and workspace isolation
  */
 export async function createContext(event: RequestEvent) {
-  const userId = await getCurrentUserId(event);
+  const { userId, sessionId } = await getSessionInfo(event);
   const workspaceId = await getCurrentWorkspaceId(event, userId);
 
   return {
     db,
     userId,
+    sessionId,
     workspaceId,
     event,
   };
@@ -205,4 +217,13 @@ export async function createContext(event: RequestEvent) {
 
 export type Context = Awaited<ReturnType<typeof createContext>> & {
   isTest?: boolean | undefined;
+};
+
+/**
+ * Context type for authenticated procedures
+ * Used after isAuthenticated middleware narrows the types
+ */
+export type AuthenticatedContext = Omit<Context, "userId" | "sessionId"> & {
+  userId: string;
+  sessionId: string;
 };

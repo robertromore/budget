@@ -9,6 +9,7 @@
 	import Palette from '@lucide/svelte/icons/palette';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+	import User from '@lucide/svelte/icons/user';
 	import Users from '@lucide/svelte/icons/users';
 	import type { Snippet } from 'svelte';
 
@@ -16,6 +17,10 @@
 
 	// Settings navigation items
 	const settingsNav = [
+		{
+			title: 'Account',
+			items: [{ href: '/settings/profile', label: 'Profile', icon: User }]
+		},
 		{
 			title: 'General',
 			items: [

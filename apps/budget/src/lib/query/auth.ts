@@ -8,6 +8,7 @@ export const authKeys = createQueryKeys("auth", {
   me: () => ["auth", "me"] as const,
   emailAvailable: (email: string) => ["auth", "emailAvailable", email] as const,
   preferences: () => ["auth", "preferences"] as const,
+  sessions: () => ["auth", "sessions"] as const,
 });
 
 /**
@@ -103,4 +104,92 @@ export const updatePreferences = defineMutation<Partial<UserPreferences>, UserPr
     cachePatterns.invalidatePrefix(authKeys.preferences());
   },
   // No toast - preferences sync silently in background
+});
+
+/**
+ * Session info returned from the sessions query
+ * Note: dates come as strings from JSON serialization
+ */
+export interface SessionInfo {
+  id: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: Date | string;
+  expiresAt: Date | string;
+  isCurrent: boolean;
+}
+
+/**
+ * Get active sessions
+ */
+export const getSessions = () =>
+  defineQuery<SessionInfo[]>({
+    queryKey: authKeys.sessions(),
+    queryFn: () => trpc().authRoutes.sessions.query(),
+  });
+
+/**
+ * Change password
+ */
+export const changePassword = defineMutation<
+  { currentPassword: string; newPassword: string },
+  { success: boolean }
+>({
+  mutationFn: (input) => trpc().authRoutes.changePassword.mutate(input),
+  successMessage: "Password changed successfully",
+  errorMessage: (error) => error.message || "Failed to change password",
+});
+
+/**
+ * Revoke a specific session
+ */
+export const revokeSession = defineMutation<{ sessionId: string }, { success: boolean }>({
+  mutationFn: (input) => trpc().authRoutes.revokeSession.mutate(input),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(authKeys.sessions());
+  },
+  successMessage: "Session revoked",
+  errorMessage: (error) => error.message || "Failed to revoke session",
+});
+
+/**
+ * Revoke all other sessions
+ */
+export const revokeOtherSessions = defineMutation<void, { success: boolean; count: number }>({
+  mutationFn: () => trpc().authRoutes.revokeOtherSessions.mutate(),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(authKeys.sessions());
+  },
+  successMessage: "All other sessions revoked",
+  errorMessage: (error) => error.message || "Failed to revoke sessions",
+});
+
+/**
+ * Request email verification
+ */
+export const requestEmailVerification = defineMutation<void, { success: boolean }>({
+  mutationFn: () => trpc().authRoutes.requestEmailVerification.mutate(),
+  successMessage: "Verification email sent",
+  errorMessage: (error) => error.message || "Failed to send verification email",
+});
+
+/**
+ * Verify email with token
+ */
+export const verifyEmail = defineMutation<{ token: string }, { success: boolean }>({
+  mutationFn: (input) => trpc().authRoutes.verifyEmail.mutate(input),
+  onSuccess: () => {
+    cachePatterns.invalidatePrefix(authKeys.me());
+  },
+  successMessage: "Email verified successfully",
+  errorMessage: (error) => error.message || "Failed to verify email",
+});
+
+/**
+ * Delete account
+ */
+export const deleteAccount = defineMutation<{ password: string }, { success: boolean }>({
+  mutationFn: (input) => trpc().authRoutes.deleteAccount.mutate(input),
+  successMessage: "Account deleted",
+  errorMessage: (error) => error.message || "Failed to delete account",
 });

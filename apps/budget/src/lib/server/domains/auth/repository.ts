@@ -1,6 +1,6 @@
-import { verifications, sessions } from "$lib/schema/auth";
+import { verifications, sessions, type Session } from "$lib/schema/auth";
 import { db } from "$lib/server/shared/database";
-import { eq, lt, and } from "drizzle-orm";
+import { eq, lt, and, ne, desc } from "drizzle-orm";
 import { randomBytes } from "crypto";
 
 /**
@@ -143,20 +143,67 @@ export class AuthRepository {
   }
 
   /**
+   * Find all sessions for a user
+   */
+  async findSessionsByUserId(userId: string): Promise<Session[]> {
+    return db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.userId, userId))
+      .orderBy(desc(sessions.createdAt));
+  }
+
+  /**
+   * Find a session by ID
+   */
+  async findSessionById(sessionId: string): Promise<Session | null> {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .limit(1);
+
+    return session || null;
+  }
+
+  /**
+   * Find a session by token
+   */
+  async findSessionByToken(token: string): Promise<Session | null> {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.token, token))
+      .limit(1);
+
+    return session || null;
+  }
+
+  /**
+   * Delete a specific session by ID
+   */
+  async deleteSession(sessionId: string): Promise<void> {
+    await db.delete(sessions).where(eq(sessions.id, sessionId));
+  }
+
+  /**
    * Delete all sessions for a user except the current one
    */
   async deleteOtherUserSessions(
     userId: string,
-    currentSessionToken: string
-  ): Promise<void> {
-    await db
+    currentSessionId: string
+  ): Promise<number> {
+    const result = await db
       .delete(sessions)
       .where(
         and(
           eq(sessions.userId, userId),
-          lt(sessions.token, currentSessionToken) // Not equal hack for SQLite
+          ne(sessions.id, currentSessionId)
         )
-      );
+      )
+      .returning();
+
+    return result.length;
   }
 }
 
