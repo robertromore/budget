@@ -39,7 +39,7 @@ async function handleSelection(value: string | undefined) {
 }
 </script>
 
-<div class="w-full px-2 py-2">
+<div class="w-full px-2 py-2" data-help-id="workspace-switcher" data-help-title="Workspace Switcher">
   <Select.Root type="single" value={workspace?.id?.toString()} onValueChange={handleSelection}>
     <Select.Trigger class="w-full justify-between">
       <div class="flex min-w-0 items-center gap-2">

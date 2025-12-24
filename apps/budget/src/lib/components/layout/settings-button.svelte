@@ -7,7 +7,7 @@
 <Tooltip.Root>
 	<Tooltip.Trigger>
 		{#snippet child({ props })}
-			<Button variant="ghost" size="icon" href="/settings" aria-label="Settings" {...props}>
+			<Button variant="ghost" size="icon" href="/settings" aria-label="Settings" data-help-id="settings-button" data-help-title="Settings" {...props}>
 				<Settings class="h-4 w-4" />
 			</Button>
 		{/snippet}

@@ -53,7 +53,7 @@ const editableViewsSize = $derived(editableViews.length);
 const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
 </script>
 
-<div class="flex text-sm">
+<div class="flex text-sm" data-help-id="transaction-toolbar" data-help-title="Transaction Toolbar">
   <Tabs.Root
     bind:value={currentViewValue}
     onValueChange={(value) => {
@@ -206,11 +206,13 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
     bind:viewId={editViewId} />
 {:else}
   <div class="flex">
-    <FilterInput availableFilters={filterComponents} />
+    <div data-help-id="transaction-filters" data-help-title="Filter Transactions">
+      <FilterInput availableFilters={filterComponents} />
+    </div>
 
     <div class="grow"></div>
 
-    <div class="flex gap-1">
+    <div class="flex gap-1" data-help-id="transaction-view-options" data-help-title="View Options">
       <DisplayInput />
       {#if _currentViews?.activeView?.view?.dirty}
         <Button

@@ -13,7 +13,7 @@ const previewColor = $derived(themePreferences.previewColor);
 <Tooltip.Root>
   <Tooltip.Trigger>
     {#snippet child({ props })}
-      <Button {...props} variant="ghost" size="icon" onclick={() => (themeSelectorOpen = true)} class="relative">
+      <Button {...props} variant="ghost" size="icon" onclick={() => (themeSelectorOpen = true)} class="relative" data-help-id="theme-button" data-help-title="Theme Colors">
         <Palette class="h-4 w-4" />
         <div
           class="border-background absolute top-1 left-1 h-2 w-2 rounded-full border"

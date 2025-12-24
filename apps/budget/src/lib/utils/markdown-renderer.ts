@@ -1,208 +1,12 @@
 /**
- * Simple Markdown Renderer
+ * Markdown Renderer using marked library
  *
- * Converts basic markdown to HTML for help documentation.
+ * Converts markdown to HTML for help documentation.
  * Supports: headings, paragraphs, lists, code blocks, inline code,
- * bold, italic, and links.
+ * bold, italic, links, tables, and more.
  */
 
-type MarkdownToken =
-  | { type: "heading"; level: number; content: string }
-  | { type: "paragraph"; content: string }
-  | { type: "list"; ordered: boolean; items: string[] }
-  | { type: "code-block"; language: string; content: string }
-  | { type: "hr" };
-
-/**
- * Parse markdown content into tokens
- */
-function tokenize(markdown: string): MarkdownToken[] {
-  const lines = markdown.split("\n");
-  const tokens: MarkdownToken[] = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Skip empty lines
-    if (line.trim() === "") {
-      i++;
-      continue;
-    }
-
-    // Horizontal rule
-    if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
-      tokens.push({ type: "hr" });
-      i++;
-      continue;
-    }
-
-    // Headings
-    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
-    if (headingMatch) {
-      tokens.push({
-        type: "heading",
-        level: headingMatch[1].length,
-        content: headingMatch[2],
-      });
-      i++;
-      continue;
-    }
-
-    // Code blocks (fenced)
-    if (line.startsWith("```")) {
-      const language = line.slice(3).trim();
-      const codeLines: string[] = [];
-      i++;
-      while (i < lines.length && !lines[i].startsWith("```")) {
-        codeLines.push(lines[i]);
-        i++;
-      }
-      tokens.push({
-        type: "code-block",
-        language,
-        content: codeLines.join("\n"),
-      });
-      i++; // Skip closing ```
-      continue;
-    }
-
-    // Unordered lists
-    if (/^[-*+]\s/.test(line)) {
-      const items: string[] = [];
-      while (i < lines.length && /^[-*+]\s/.test(lines[i])) {
-        items.push(lines[i].replace(/^[-*+]\s/, ""));
-        i++;
-      }
-      tokens.push({ type: "list", ordered: false, items });
-      continue;
-    }
-
-    // Ordered lists
-    if (/^\d+\.\s/.test(line)) {
-      const items: string[] = [];
-      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
-        items.push(lines[i].replace(/^\d+\.\s/, ""));
-        i++;
-      }
-      tokens.push({ type: "list", ordered: true, items });
-      continue;
-    }
-
-    // Paragraph (collect consecutive non-empty lines)
-    const paragraphLines: string[] = [];
-    while (
-      i < lines.length &&
-      lines[i].trim() !== "" &&
-      !lines[i].startsWith("#") &&
-      !lines[i].startsWith("```") &&
-      !/^[-*+]\s/.test(lines[i]) &&
-      !/^\d+\.\s/.test(lines[i]) &&
-      !/^(-{3,}|\*{3,}|_{3,})$/.test(lines[i].trim())
-    ) {
-      paragraphLines.push(lines[i]);
-      i++;
-    }
-    if (paragraphLines.length > 0) {
-      tokens.push({ type: "paragraph", content: paragraphLines.join(" ") });
-    }
-  }
-
-  return tokens;
-}
-
-/**
- * Process inline markdown syntax
- */
-function processInline(text: string): string {
-  let result = text;
-
-  // Escape HTML
-  result = result
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
-  // Links [text](url)
-  result = result.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" class="text-primary underline underline-offset-4 hover:text-primary/80" target="_blank" rel="noopener noreferrer">$1</a>'
-  );
-
-  // Bold **text** or __text__
-  result = result.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-  result = result.replace(/__([^_]+)__/g, "<strong>$1</strong>");
-
-  // Italic *text* or _text_
-  result = result.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-  result = result.replace(/(?<!\w)_([^_]+)_(?!\w)/g, "<em>$1</em>");
-
-  // Inline code `text`
-  result = result.replace(
-    /`([^`]+)`/g,
-    '<code class="bg-muted rounded px-1.5 py-0.5 font-mono text-sm">$1</code>'
-  );
-
-  // Keyboard shortcuts <kbd>
-  result = result.replace(
-    /\[\[([^\]]+)\]\]/g,
-    '<kbd class="bg-muted border-border rounded border px-1.5 py-0.5 font-mono text-xs">$1</kbd>'
-  );
-
-  return result;
-}
-
-/**
- * Render tokens to HTML
- */
-function renderTokens(tokens: MarkdownToken[]): string {
-  return tokens
-    .map((token) => {
-      switch (token.type) {
-        case "heading": {
-          const classes = {
-            1: "text-2xl font-bold tracking-tight",
-            2: "text-xl font-semibold tracking-tight mt-6 mb-3",
-            3: "text-lg font-semibold mt-4 mb-2",
-            4: "text-base font-semibold mt-3 mb-2",
-            5: "text-sm font-semibold mt-2 mb-1",
-            6: "text-sm font-medium mt-2 mb-1",
-          };
-          const cls = classes[token.level as keyof typeof classes] || classes[4];
-          return `<h${token.level} class="${cls}">${processInline(token.content)}</h${token.level}>`;
-        }
-
-        case "paragraph":
-          return `<p class="text-muted-foreground mb-4 leading-relaxed">${processInline(token.content)}</p>`;
-
-        case "list": {
-          const tag = token.ordered ? "ol" : "ul";
-          const listClass = token.ordered
-            ? "list-decimal list-inside space-y-1 mb-4"
-            : "list-disc list-inside space-y-1 mb-4";
-          const items = token.items
-            .map((item) => `<li class="text-muted-foreground">${processInline(item)}</li>`)
-            .join("");
-          return `<${tag} class="${listClass}">${items}</${tag}>`;
-        }
-
-        case "code-block": {
-          const escapedContent = token.content
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-          return `<pre class="bg-muted rounded-md p-4 mb-4 overflow-x-auto"><code class="font-mono text-sm">${escapedContent}</code></pre>`;
-        }
-
-        case "hr":
-          return '<hr class="border-border my-6" />';
-
-        default:
-          return "";
-      }
-    })
-    .join("\n");
-}
+import { marked } from "marked";
 
 /**
  * Parse frontmatter from markdown content
@@ -260,6 +64,55 @@ function parseFrontmatter(content: string): {
 }
 
 /**
+ * Process keyboard shortcut syntax [[key]]
+ */
+function processKeyboardShortcuts(html: string): string {
+  return html.replace(
+    /\[\[([^\]]+)\]\]/g,
+    '<kbd class="bg-muted border-border rounded border px-1.5 py-0.5 font-mono text-xs">$1</kbd>'
+  );
+}
+
+/**
+ * Add Tailwind classes to HTML elements via post-processing
+ */
+function addTailwindClasses(html: string): string {
+  return html
+    // Headings
+    .replace(/<h1>/g, '<h1 class="text-2xl font-bold tracking-tight">')
+    .replace(/<h2>/g, '<h2 class="text-xl font-semibold tracking-tight mt-6 mb-3">')
+    .replace(/<h3>/g, '<h3 class="text-lg font-semibold mt-4 mb-2">')
+    .replace(/<h4>/g, '<h4 class="text-base font-semibold mt-3 mb-2">')
+    .replace(/<h5>/g, '<h5 class="text-sm font-semibold mt-2 mb-1">')
+    .replace(/<h6>/g, '<h6 class="text-sm font-medium mt-2 mb-1">')
+    // Paragraphs
+    .replace(/<p>/g, '<p class="text-muted-foreground mb-4 leading-relaxed">')
+    // Lists
+    .replace(/<ul>/g, '<ul class="list-disc list-inside space-y-1 mb-4 ml-4">')
+    .replace(/<ol>/g, '<ol class="list-decimal list-inside space-y-1 mb-4 ml-4">')
+    .replace(/<li>/g, '<li class="text-muted-foreground">')
+    // Code blocks
+    .replace(/<pre>/g, '<pre class="bg-muted rounded-md p-4 mb-4 overflow-x-auto">')
+    .replace(/<code>/g, '<code class="font-mono text-sm">')
+    // Inline code (not inside pre)
+    .replace(/<code class="font-mono text-sm">(?![^<]*<\/pre>)/g, '<code class="bg-muted rounded px-1.5 py-0.5 font-mono text-sm">')
+    // Links
+    .replace(/<a href="/g, '<a class="text-primary underline underline-offset-4 hover:text-primary/80" target="_blank" rel="noopener noreferrer" href="')
+    // Horizontal rules
+    .replace(/<hr>/g, '<hr class="border-border my-6">')
+    .replace(/<hr\/>/g, '<hr class="border-border my-6" />')
+    // Tables
+    .replace(/<table>/g, '<div class="overflow-x-auto mb-4"><table class="w-full border-collapse text-sm">')
+    .replace(/<\/table>/g, '</table></div>')
+    .replace(/<thead>/g, '<thead class="bg-muted/50">')
+    .replace(/<tr>/g, '<tr class="border-b border-border">')
+    .replace(/<th>/g, '<th class="px-3 py-2 text-left font-medium text-foreground">')
+    .replace(/<td>/g, '<td class="px-3 py-2 text-muted-foreground">')
+    // Blockquotes
+    .replace(/<blockquote>/g, '<blockquote class="border-l-4 border-primary/30 pl-4 italic text-muted-foreground mb-4">');
+}
+
+/**
  * Render markdown content to HTML
  */
 export function renderMarkdown(content: string): {
@@ -267,8 +120,9 @@ export function renderMarkdown(content: string): {
   frontmatter: MarkdownFrontmatter;
 } {
   const { frontmatter, body } = parseFrontmatter(content);
-  const tokens = tokenize(body);
-  const html = renderTokens(tokens);
+  let html = marked.parse(body) as string;
+  html = addTailwindClasses(html);
+  html = processKeyboardShortcuts(html);
   return { html, frontmatter };
 }
 
@@ -276,6 +130,8 @@ export function renderMarkdown(content: string): {
  * Simple markdown to HTML conversion (without frontmatter parsing)
  */
 export function markdownToHtml(content: string): string {
-  const tokens = tokenize(content);
-  return renderTokens(tokens);
+  let html = marked.parse(content) as string;
+  html = addTailwindClasses(html);
+  html = processKeyboardShortcuts(html);
+  return html;
 }

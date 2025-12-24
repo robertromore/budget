@@ -23,6 +23,19 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 
 let { column, table, class: className, title, ...restProps }: WithoutChildren<Props> = $props();
 
+// Map column IDs to help content IDs
+const columnHelpIds: Record<string, string> = {
+  date: 'transaction-date-column',
+  payee: 'transaction-payee-column',
+  category: 'transaction-category-column',
+  amount: 'transaction-amount-column',
+  balance: 'transaction-balance-column',
+  notes: 'transaction-notes-column',
+  status: 'transaction-status-column',
+  budget: 'transaction-budget-column'
+};
+const helpId = $derived(columnHelpIds[column.id]);
+
 const sortState = $derived(column.getIsSorted());
 const isPinned = $derived(column.getIsPinned());
 
@@ -179,11 +192,19 @@ function moveRight() {
 </script>
 
 {#if !column?.getCanSort() && !column?.getCanHide()}
-  <div class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), className)} {...restProps}>
+  <div
+    class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), className)}
+    data-help-id={helpId}
+    data-help-title={helpId ? title : undefined}
+    {...restProps}>
     {title}
   </div>
 {:else}
-  <div class={cn('flex items-center', className)} {...restProps}>
+  <div
+    class={cn('flex items-center', className)}
+    data-help-id={helpId}
+    data-help-title={helpId ? title : undefined}
+    {...restProps}>
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
         {#snippet child({ props })}

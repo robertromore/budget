@@ -135,6 +135,7 @@
     "fuse.js": "^7.1.0",
     "isomorphic-dompurify": "^2.34.0",
     "layerchart": "^2.0.0-next.43",
+    "marked": "^17.0.1",
     "minimatch": "^10.1.1",
     "ml-distance": "^4.0.1",
     "ml-regression": "^6.3.0",

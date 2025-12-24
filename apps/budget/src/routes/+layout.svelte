@@ -137,7 +137,7 @@ onMount(() => {
               <Tooltip.Root>
                 <Tooltip.Trigger>
                   {#snippet child({ props })}
-                    <Sidebar.Trigger {...props} class="-ml-1" />
+                    <Sidebar.Trigger {...props} class="-ml-1" data-help-id="sidebar-trigger" data-help-title="Toggle Sidebar" />
                   {/snippet}
                 </Tooltip.Trigger>
                 <Tooltip.Content>Toggle sidebar</Tooltip.Content>

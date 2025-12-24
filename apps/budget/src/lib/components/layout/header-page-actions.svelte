@@ -23,7 +23,7 @@
 
 {#if hasActions}
 	<Separator orientation="vertical" class="h-6" />
-	<div class="flex items-center gap-2">
+	<div class="flex items-center gap-2" data-help-id="header-page-actions" data-help-title="Page Actions">
 		{#each filteredActions as action (action.id)}
 			{#if showLabels}
 				<Button

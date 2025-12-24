@@ -21,6 +21,8 @@
 	{...restProps}
 	class={cn("relative", className)}
 	onclick={() => aiChat.toggle()}
+	data-help-id="ai-assistant"
+	data-help-title="AI Assistant"
 >
 	{#if aiChat.hasMessages}
 		<span class="bg-primary absolute -top-1 -right-1 flex size-2 rounded-full">

@@ -21,6 +21,8 @@
 		value={config.activeTab}
 		onValueChange={(value) => config.onTabChange(value ?? '')}
 		class="header-tabs"
+		data-help-id="header-page-tabs"
+		data-help-title="Page Tabs"
 	>
 		<Tabs.List class="h-8 gap-1 bg-transparent p-0">
 			{#each visibleTabs as tab (tab.id)}
