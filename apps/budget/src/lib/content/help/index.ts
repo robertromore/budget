@@ -7,8 +7,17 @@
 
 // Import all markdown content
 import sidebar from "./sidebar.md?raw";
+import workspaceSwitcher from "./workspace-switcher.md?raw";
+import sidebarTrigger from "./sidebar-trigger.md?raw";
 import themeToggle from "./theme-toggle.md?raw";
+import fontSizeToggle from "./font-size-toggle.md?raw";
+import themeButton from "./theme-button.md?raw";
+import aiAssistant from "./ai-assistant.md?raw";
+import intelligenceInputButton from "./intelligence-input-button.md?raw";
 import helpButton from "./help-button.md?raw";
+import settingsButton from "./settings-button.md?raw";
+import headerPageActions from "./header-page-actions.md?raw";
+import headerPageTabs from "./header-page-tabs.md?raw";
 import quickAddTransaction from "./quick-add-transaction.md?raw";
 import accountsList from "./accounts-list.md?raw";
 import budgetsList from "./budgets-list.md?raw";
@@ -88,12 +97,70 @@ import templateCategoryTabs from "./template-category-tabs.md?raw";
 import templateGrid from "./template-grid.md?raw";
 import templatesButton from "./templates-button.md?raw";
 import createCustomBudget from "./create-custom-budget.md?raw";
+// Individual account page help content
+import accountPageHeader from "./account-page-header.md?raw";
+import addTransactionButton from "./add-transaction-button.md?raw";
+import addTransactionDialog from "./add-transaction-dialog.md?raw";
+import transactionAmountField from "./transaction-amount-field.md?raw";
+import transactionDateField from "./transaction-date-field.md?raw";
+import transactionPayeeField from "./transaction-payee-field.md?raw";
+import transactionCategoryField from "./transaction-category-field.md?raw";
+import transactionBudgetField from "./transaction-budget-field.md?raw";
+import transactionNotesField from "./transaction-notes-field.md?raw";
+import transactionEntryTabs from "./transaction-entry-tabs.md?raw";
+import transactionWizard from "./transaction-wizard.md?raw";
+import transactionTransferForm from "./transaction-transfer-form.md?raw";
+import analyticsTab from "./analytics-tab.md?raw";
+import schedulesTab from "./schedules-tab.md?raw";
+import budgetsTab from "./budgets-tab.md?raw";
+import accountSettingsTab from "./account-settings-tab.md?raw";
+import transactionToolbar from "./transaction-toolbar.md?raw";
+import transactionFilters from "./transaction-filters.md?raw";
+import transactionViewOptions from "./transaction-view-options.md?raw";
+import addExpenseButton from "./add-expense-button.md?raw";
+// Transaction table columns
+import transactionDateColumn from "./transaction-date-column.md?raw";
+import transactionPayeeColumn from "./transaction-payee-column.md?raw";
+import transactionCategoryColumn from "./transaction-category-column.md?raw";
+import transactionAmountColumn from "./transaction-amount-column.md?raw";
+import transactionBalanceColumn from "./transaction-balance-column.md?raw";
+import transactionNotesColumn from "./transaction-notes-column.md?raw";
+import transactionStatusColumn from "./transaction-status-column.md?raw";
+import transactionBudgetColumn from "./transaction-budget-column.md?raw";
+// Transaction table rows and actions
+import transactionSelection from "./transaction-selection.md?raw";
+import transactionRowActions from "./transaction-row-actions.md?raw";
+import transactionBulkActions from "./transaction-bulk-actions.md?raw";
+import transactionRowExpand from "./transaction-row-expand.md?raw";
+// Individual account page tabs
+import accountTabTransactions from "./account-tab-transactions.md?raw";
+import accountTabAnalytics from "./account-tab-analytics.md?raw";
+import accountTabIntelligence from "./account-tab-intelligence.md?raw";
+import accountTabSchedules from "./account-tab-schedules.md?raw";
+import accountTabBudgets from "./account-tab-budgets.md?raw";
+import accountTabImport from "./account-tab-import.md?raw";
+import accountTabSettings from "./account-tab-settings.md?raw";
+import accountTabHsaExpenses from "./account-tab-hsa-expenses.md?raw";
+import accountTabHsaDashboard from "./account-tab-hsa-dashboard.md?raw";
+// Transaction dialog tabs
+import transactionTabManual from "./transaction-tab-manual.md?raw";
+import transactionTabTransfer from "./transaction-tab-transfer.md?raw";
+import transactionTabGuided from "./transaction-tab-guided.md?raw";
 
 // Content registry mapping help IDs to markdown content
 export const helpContent: Record<string, string> = {
   sidebar,
+  "workspace-switcher": workspaceSwitcher,
+  "sidebar-trigger": sidebarTrigger,
   "theme-toggle": themeToggle,
+  "font-size-toggle": fontSizeToggle,
+  "theme-button": themeButton,
+  "ai-assistant": aiAssistant,
+  "intelligence-input-button": intelligenceInputButton,
   "help-button": helpButton,
+  "settings-button": settingsButton,
+  "header-page-actions": headerPageActions,
+  "header-page-tabs": headerPageTabs,
   "quick-add-transaction": quickAddTransaction,
   "accounts-list": accountsList,
   "budgets-list": budgetsList,
@@ -173,6 +240,55 @@ export const helpContent: Record<string, string> = {
   "template-grid": templateGrid,
   "templates-button": templatesButton,
   "create-custom-budget": createCustomBudget,
+  // Individual account page
+  "account-page-header": accountPageHeader,
+  "add-transaction-button": addTransactionButton,
+  "add-transaction-dialog": addTransactionDialog,
+  "transaction-amount-field": transactionAmountField,
+  "transaction-date-field": transactionDateField,
+  "transaction-payee-field": transactionPayeeField,
+  "transaction-category-field": transactionCategoryField,
+  "transaction-budget-field": transactionBudgetField,
+  "transaction-notes-field": transactionNotesField,
+  "transaction-entry-tabs": transactionEntryTabs,
+  "transaction-wizard": transactionWizard,
+  "transaction-transfer-form": transactionTransferForm,
+  "analytics-tab": analyticsTab,
+  "schedules-tab": schedulesTab,
+  "budgets-tab": budgetsTab,
+  "account-settings-tab": accountSettingsTab,
+  "transaction-toolbar": transactionToolbar,
+  "transaction-filters": transactionFilters,
+  "transaction-view-options": transactionViewOptions,
+  "add-expense-button": addExpenseButton,
+  // Transaction table columns
+  "transaction-date-column": transactionDateColumn,
+  "transaction-payee-column": transactionPayeeColumn,
+  "transaction-category-column": transactionCategoryColumn,
+  "transaction-amount-column": transactionAmountColumn,
+  "transaction-balance-column": transactionBalanceColumn,
+  "transaction-notes-column": transactionNotesColumn,
+  "transaction-status-column": transactionStatusColumn,
+  "transaction-budget-column": transactionBudgetColumn,
+  // Transaction table rows and actions
+  "transaction-selection": transactionSelection,
+  "transaction-row-actions": transactionRowActions,
+  "transaction-bulk-actions": transactionBulkActions,
+  "transaction-row-expand": transactionRowExpand,
+  // Individual account page tabs
+  "account-tab-transactions": accountTabTransactions,
+  "account-tab-analytics": accountTabAnalytics,
+  "account-tab-intelligence": accountTabIntelligence,
+  "account-tab-schedules": accountTabSchedules,
+  "account-tab-budgets": accountTabBudgets,
+  "account-tab-import": accountTabImport,
+  "account-tab-settings": accountTabSettings,
+  "account-tab-hsa-expenses": accountTabHsaExpenses,
+  "account-tab-hsa-dashboard": accountTabHsaDashboard,
+  // Transaction dialog tabs
+  "transaction-tab-manual": transactionTabManual,
+  "transaction-tab-transfer": transactionTabTransfer,
+  "transaction-tab-guided": transactionTabGuided,
 };
 
 /**

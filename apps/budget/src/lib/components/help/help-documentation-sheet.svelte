@@ -14,6 +14,7 @@
   import ChevronRight from "@lucide/svelte/icons/chevron-right";
   import Search from "@lucide/svelte/icons/search";
   import X from "@lucide/svelte/icons/x";
+  import * as Sheet from "$lib/components/ui/sheet";
   import HelpSearchResults from "./help-search-results.svelte";
 
   interface Props {
@@ -170,7 +171,7 @@
   maxWidth={800}
   hideOverlay={hasModalContext}
   interactOutsideBehavior={hasModalContext ? "ignore" : undefined}
-  class="z-120"
+  class="z-120 hide-default-close"
 >
   {#snippet header()}
     {#if isSearchMode}
@@ -219,15 +220,23 @@
             <p class="text-muted-foreground truncate text-sm">{description}</p>
           {/if}
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8 shrink-0"
-          onclick={enterSearchMode}
-          title="Search help topics (Ctrl+K)"
-        >
-          <Search class="h-4 w-4" />
-        </Button>
+        <div class="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8 shrink-0"
+            onclick={enterSearchMode}
+            title="Search help topics (Ctrl+K)"
+          >
+            <Search class="h-4 w-4" />
+          </Button>
+          <Sheet.Close
+            class="ring-offset-background focus-visible:ring-ring h-8 w-8 shrink-0 rounded-md opacity-70 transition-opacity hover:bg-accent hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden inline-flex items-center justify-center"
+          >
+            <X class="h-4 w-4" />
+            <span class="sr-only">Close</span>
+          </Sheet.Close>
+        </div>
       </div>
     {/if}
   {/snippet}
@@ -350,3 +359,10 @@
     {/if}
   {/snippet}
 </ResponsiveSheet>
+
+<style>
+  /* Hide the default absolute-positioned close button from sheet-content */
+  :global(.hide-default-close[data-slot="sheet-content"] > button.absolute) {
+    display: none;
+  }
+</style>

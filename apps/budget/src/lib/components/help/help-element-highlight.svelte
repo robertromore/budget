@@ -54,6 +54,20 @@
       // This element opens a modal - trigger the modal with help
       helpMode.openModalWithHelp(modalId, element);
     } else {
+      // Check if this is a tab element
+      const isTab = element.getAttribute("role") === "tab";
+
+      if (isTab) {
+        // Click the underlying tab to switch it
+        element.click();
+
+        // Re-scan elements after tab content changes
+        requestAnimationFrame(() => {
+          helpMode.scanModalElements();
+        });
+      }
+
+      // Show the documentation
       helpMode.openDocumentation(helpId);
     }
   }

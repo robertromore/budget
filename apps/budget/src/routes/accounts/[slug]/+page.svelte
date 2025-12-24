@@ -758,7 +758,7 @@ $effect(() => {
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex items-center justify-between">
+  <div class="flex items-center justify-between" data-help-id="account-page-header" data-help-title="Account Page">
     <div>
       <div class="flex items-center gap-2">
         <h1 class="text-2xl font-bold tracking-tight">
@@ -775,12 +775,12 @@ $effect(() => {
       <div class="flex items-center space-x-2">
 
         {#if isHsaAccount}
-          <Button onclick={handleAddExpense}>
+          <Button onclick={handleAddExpense} data-help-id="add-expense-button" data-help-title="Add Medical Expense">
             <HeartPulse class="mr-2 h-4 w-4" />
             Add Expense
           </Button>
         {:else}
-          <Button onclick={() => (addTransactionDialogOpen = true)}>
+          <Button onclick={() => (addTransactionDialogOpen = true)} data-help-id="add-transaction-button" data-help-title="Add Transaction" data-help-modal="add-transaction">
             <Plus class="mr-2 h-4 w-4" />
             Add Transaction
           </Button>
@@ -826,40 +826,40 @@ $effect(() => {
         onValueChange={(value) => setActiveTab(value as TabValue)}
         class="tabs-connected w-full"
       >
-        <Tabs.List class="tabs-connected-list" data-help-id="account-tabs" data-help-title="Account Tabs">
-          <Tabs.Trigger value="transactions" class="tabs-connected-trigger px-6 font-medium">
+        <Tabs.List class="tabs-connected-list">
+          <Tabs.Trigger value="transactions" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-transactions" data-help-title="Transactions Tab">
             <List class="mr-2 h-4 w-4" />
             Transactions
           </Tabs.Trigger>
           {#if isHsaAccount}
-            <Tabs.Trigger value="hsa-expenses" class="tabs-connected-trigger px-6 font-medium"
+            <Tabs.Trigger value="hsa-expenses" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-hsa-expenses" data-help-title="Medical Expenses Tab"
               >Medical Expenses</Tabs.Trigger>
-            <Tabs.Trigger value="hsa-dashboard" class="tabs-connected-trigger px-6 font-medium"
+            <Tabs.Trigger value="hsa-dashboard" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-hsa-dashboard" data-help-title="HSA Dashboard Tab"
               >HSA Dashboard</Tabs.Trigger>
           {/if}
-          <Tabs.Trigger value="analytics" class="tabs-connected-trigger px-6 font-medium">
+          <Tabs.Trigger value="analytics" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-analytics" data-help-title="Analytics Tab">
             <ChartLine class="mr-2 h-4 w-4" />
             Analytics
           </Tabs.Trigger>
-          <Tabs.Trigger value="intelligence" class="tabs-connected-trigger px-6 font-medium">
+          <Tabs.Trigger value="intelligence" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-intelligence" data-help-title="Intelligence Tab">
             <Brain class="mr-2 h-4 w-4" />
             Intelligence
           </Tabs.Trigger>
-          <Tabs.Trigger value="schedules" class="tabs-connected-trigger px-6 font-medium">
+          <Tabs.Trigger value="schedules" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-schedules" data-help-title="Schedules Tab">
             <Calendar class="mr-2 h-4 w-4" />
             Schedules
           </Tabs.Trigger>
-          <Tabs.Trigger value="budgets" class="tabs-connected-trigger px-6 font-medium">
+          <Tabs.Trigger value="budgets" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-budgets" data-help-title="Budgets Tab">
             <Wallet class="mr-2 h-4 w-4" />
             Budgets
           </Tabs.Trigger>
           {#if !isHsaAccount}
-            <Tabs.Trigger value="import" class="tabs-connected-trigger px-6 font-medium">
+            <Tabs.Trigger value="import" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-import" data-help-title="Import Tab">
               <Upload class="mr-2 h-4 w-4" />
               Import
             </Tabs.Trigger>
           {/if}
-          <Tabs.Trigger value="settings" class="tabs-connected-trigger px-6 font-medium">
+          <Tabs.Trigger value="settings" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-settings" data-help-title="Settings Tab">
             <SlidersHorizontal class="mr-2 h-4 w-4" />
             Settings
           </Tabs.Trigger>
@@ -911,7 +911,7 @@ $effect(() => {
       {/if}
 
       <!-- Analytics Tab Content -->
-      <Tabs.Content value="analytics" class="tabs-connected-content space-y-4">
+      <Tabs.Content value="analytics" class="tabs-connected-content space-y-4" data-help-id="analytics-tab" data-help-title="Analytics Tab">
         {#if transactions && !isLoading && activeTab === 'analytics'}
           {#if accountData && accountData.accountType && isDebtAccount(accountData.accountType)}
             <!-- Credit Card Metrics Dashboard -->
@@ -932,7 +932,7 @@ $effect(() => {
       </Tabs.Content>
 
       <!-- Schedules Tab Content -->
-      <Tabs.Content value="schedules" class="tabs-connected-content space-y-4">
+      <Tabs.Content value="schedules" class="tabs-connected-content space-y-4" data-help-id="schedules-tab" data-help-title="Schedules Tab">
         {#if schedules && !isLoading && activeTab === 'schedules'}
           <div class="flex items-center justify-between">
             <div></div>
@@ -961,7 +961,7 @@ $effect(() => {
       </Tabs.Content>
 
       <!-- Budgets Tab Content -->
-      <Tabs.Content value="budgets" class="tabs-connected-content space-y-4">
+      <Tabs.Content value="budgets" class="tabs-connected-content space-y-4" data-help-id="budgets-tab" data-help-title="Budgets Tab">
         {#if budgets && !isLoading && activeTab === 'budgets'}
           <div class="flex items-center justify-between">
             <div></div>
@@ -994,7 +994,7 @@ $effect(() => {
 
       <!-- Import Tab Content -->
       {#if !isHsaAccount}
-        <Tabs.Content value="import" class="tabs-connected-content">
+        <Tabs.Content value="import" class="tabs-connected-content" data-help-id="import-tab" data-help-title="Import Tab">
           {#if accountData && accountId && activeTab === 'import'}
             <ImportTab
               accountId={Number(accountId)}
@@ -1012,7 +1012,7 @@ $effect(() => {
       </Tabs.Content>
 
       <!-- Settings Tab Content -->
-      <Tabs.Content value="settings" class="tabs-connected-content">
+      <Tabs.Content value="settings" class="tabs-connected-content" data-help-id="account-settings-tab" data-help-title="Account Settings">
         {#if accountData && activeTab === 'settings'}
           <SettingsTab account={accountData} />
         {/if}

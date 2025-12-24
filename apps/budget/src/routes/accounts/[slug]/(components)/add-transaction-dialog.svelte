@@ -1,20 +1,25 @@
 <script lang="ts">
 import { BudgetSelector } from '$lib/components/budgets';
 import TransferTransactionForm from '$lib/components/forms/transfer-transaction-form.svelte';
+import ModalHelpProvider from '$lib/components/help/modal-help-provider.svelte';
 import DateInput from '$lib/components/input/date-input.svelte';
 import EntityInput from '$lib/components/input/entity-input.svelte';
 import NumericInput from '$lib/components/input/numeric-input.svelte';
 import { Button } from '$lib/components/ui/button';
 import { Label } from '$lib/components/ui/label';
 import ResponsiveSheet from '$lib/components/ui/responsive-sheet/responsive-sheet.svelte';
+import * as Sheet from '$lib/components/ui/sheet';
 import * as Tabs from '$lib/components/ui/tabs';
 import { Textarea } from '$lib/components/ui/textarea';
 import TransactionWizard from '$lib/components/wizard/transaction-wizard.svelte';
+import { helpMode } from '$lib/states/ui/help.svelte';
 import type { EditableDateItem, EditableEntityItem } from '$lib/types';
 import { currentDate } from '$lib/utils/dates';
 import CircleDollarSign from '@lucide/svelte/icons/circle-dollar-sign';
+import CircleHelp from '@lucide/svelte/icons/circle-help';
 import HandCoins from '@lucide/svelte/icons/hand-coins';
 import SquareMousePointer from '@lucide/svelte/icons/square-mouse-pointer';
+import X from '@lucide/svelte/icons/x';
 import type { Component } from 'svelte';
 
 // Currency formatter
@@ -163,39 +168,59 @@ async function handleWizardComplete(data: Record<string, any>) {
 }
 </script>
 
-<ResponsiveSheet bind:open>
+<ResponsiveSheet bind:open class="hide-default-close">
   {#snippet header()}
-    <div>
-      <h2 class="text-lg font-semibold">Add New Transaction</h2>
-      <p class="text-muted-foreground text-sm">
-        Create a new transaction for {account?.name || 'this account'}.
-      </p>
+    <div class="flex items-start justify-between gap-4">
+      <div data-help-id="add-transaction-dialog" data-help-title="Add Transaction Dialog">
+        <h2 class="text-lg font-semibold">Add New Transaction</h2>
+        <p class="text-muted-foreground text-sm">
+          Create a new transaction for {account?.name || 'this account'}.
+        </p>
+      </div>
+      <div class="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8 shrink-0"
+          onclick={() => helpMode.activate()}
+          title="Get help"
+        >
+          <CircleHelp class="h-4 w-4" />
+        </Button>
+        <Sheet.Close
+          class="ring-offset-background focus-visible:ring-ring h-8 w-8 shrink-0 rounded-md opacity-70 transition-opacity hover:bg-accent hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden inline-flex items-center justify-center"
+        >
+          <X class="h-4 w-4" />
+          <span class="sr-only">Close</span>
+        </Sheet.Close>
+      </div>
     </div>
   {/snippet}
 
+  <ModalHelpProvider modalId="add-transaction" defaultHelpId="add-transaction-dialog">
   <Tabs.Root bind:value={activeTab} class="w-full">
     <Tabs.List class="grid w-full grid-cols-3">
-      <Tabs.Trigger value="manual">Manual</Tabs.Trigger>
-      <Tabs.Trigger value="transfer">Transfer</Tabs.Trigger>
-      <Tabs.Trigger value="guided">Guided</Tabs.Trigger>
+      <Tabs.Trigger value="manual" data-help-id="transaction-tab-manual" data-help-title="Manual Entry Tab">Manual</Tabs.Trigger>
+      <Tabs.Trigger value="transfer" data-help-id="transaction-tab-transfer" data-help-title="Transfer Tab">Transfer</Tabs.Trigger>
+      <Tabs.Trigger value="guided" data-help-id="transaction-tab-guided" data-help-title="Guided Entry Tab">Guided</Tabs.Trigger>
     </Tabs.List>
 
     <Tabs.Content value="manual" class="mt-4">
       <div class="space-y-4">
         <!-- Amount -->
-        <div class="space-y-2">
+        <div class="space-y-2" data-help-id="transaction-amount-field" data-help-title="Amount">
           <Label for="amount">Amount</Label>
           <NumericInput bind:value={amount} buttonClass="w-full" />
         </div>
 
         <!-- Date -->
-        <div class="space-y-2">
+        <div class="space-y-2" data-help-id="transaction-date-field" data-help-title="Date">
           <Label for="date">Date</Label>
           <DateInput bind:value={dateValue} />
         </div>
 
         <!-- Payee -->
-        <div class="space-y-2">
+        <div class="space-y-2" data-help-id="transaction-payee-field" data-help-title="Payee">
           <Label for="payee">Payee</Label>
           <EntityInput
             entityLabel="payees"
@@ -206,7 +231,7 @@ async function handleWizardComplete(data: Record<string, any>) {
         </div>
 
         <!-- Category -->
-        <div class="space-y-2">
+        <div class="space-y-2" data-help-id="transaction-category-field" data-help-title="Category">
           <Label for="category">Category</Label>
           <EntityInput
             entityLabel="categories"
@@ -217,7 +242,7 @@ async function handleWizardComplete(data: Record<string, any>) {
         </div>
 
         <!-- Budget -->
-        <div class="space-y-2">
+        <div class="space-y-2" data-help-id="transaction-budget-field" data-help-title="Budget Allocation">
           <Label for="budget">Budget (Optional)</Label>
           <BudgetSelector bind:value={selectedBudgetId} placeholder="Allocate to budget..." />
           {#if selectedBudgetId && transactionForm.budgetAllocation}
@@ -234,7 +259,7 @@ async function handleWizardComplete(data: Record<string, any>) {
         <!-- Status - Hidden, defaults to pending -->
 
         <!-- Notes -->
-        <div class="space-y-2">
+        <div class="space-y-2" data-help-id="transaction-notes-field" data-help-title="Notes">
           <Label for="notes">Notes</Label>
           <Textarea
             id="notes"
@@ -245,14 +270,14 @@ async function handleWizardComplete(data: Record<string, any>) {
       </div>
     </Tabs.Content>
 
-    <Tabs.Content value="transfer" class="mt-4">
+    <Tabs.Content value="transfer" class="mt-4" data-help-id="transaction-transfer-form" data-help-title="Transfer Between Accounts">
       <TransferTransactionForm
         fromAccountId={account?.id || 0}
         onSuccess={handleClose}
         onCancel={handleClose} />
     </Tabs.Content>
 
-    <Tabs.Content value="guided" class="mt-4">
+    <Tabs.Content value="guided" class="mt-4" data-help-id="transaction-wizard" data-help-title="Guided Entry">
       <TransactionWizard
         accountId={account?.id || 0}
         {payees}
@@ -260,6 +285,7 @@ async function handleWizardComplete(data: Record<string, any>) {
         onComplete={handleWizardComplete} />
     </Tabs.Content>
   </Tabs.Root>
+  </ModalHelpProvider>
 
   {#snippet footer()}
     {#if activeTab === 'manual'}
@@ -277,3 +303,10 @@ async function handleWizardComplete(data: Record<string, any>) {
     {/if}
   {/snippet}
 </ResponsiveSheet>
+
+<style>
+  /* Hide the default absolute-positioned close button from sheet-content */
+  :global(.hide-default-close[data-slot="sheet-content"] > button.absolute) {
+    display: none;
+  }
+</style>
