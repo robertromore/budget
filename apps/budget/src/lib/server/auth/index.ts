@@ -4,6 +4,7 @@ import { db } from "$lib/server/db";
 import { AUTH_CONFIG } from "$lib/server/config/auth";
 import { env } from "$env/dynamic/private";
 import * as schema from "$lib/schema";
+import { createDefaultWorkspaceForUser } from "./workspace-setup";
 
 /**
  * Better Auth instance configured for the budget application
@@ -63,6 +64,23 @@ export const auth = betterAuth({
       slug: {
         type: "string",
         required: false,
+      },
+    },
+  },
+
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          // Create a default workspace for new users
+          try {
+            await createDefaultWorkspaceForUser(user.id);
+          } catch (error) {
+            console.error("Failed to create default workspace for user:", error);
+            // Don't throw - user creation should still succeed
+            // Workspace can be created on first access via context fallback
+          }
+        },
       },
     },
   },

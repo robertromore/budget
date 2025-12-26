@@ -238,7 +238,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="categories-page-header" data-help-title="Categories Page">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="categories-page-header" data-help-title="Categories Page" data-tour-id="categories-page">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Categories</h1>
       <p class="text-muted-foreground">

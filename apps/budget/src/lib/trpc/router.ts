@@ -23,8 +23,10 @@ import { t } from "$lib/trpc/t";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { budgetRoutes } from "./routes/budgets";
 import { forecastingRoutes } from "./routes/forecasting";
+import { importCleanupRoutes } from "./routes/import-cleanup";
 import { importProfileRoutes } from "./routes/import-profiles";
 import { llmSettingsRoutes } from "./routes/llm-settings";
+import { onboardingRoutes } from "./routes/onboarding";
 import { medicalExpensesRouter } from "./routes/medical-expenses";
 import { patternRoutes } from "./routes/patterns";
 import { scheduleRoutes } from "./routes/schedules";
@@ -38,6 +40,7 @@ export const router = t.router({
   workspaceRoutes,
   workspaceMembersRoutes,
   workspaceInvitationsRoutes,
+  onboardingRoutes,
 
   // Core domain routes
   accountRoutes,
@@ -54,6 +57,7 @@ export const router = t.router({
   patternRoutes,
   medicalExpensesRouter,
   importProfileRoutes,
+  importCleanupRoutes,
   settingsRoutes,
   forecastingRoutes,
 

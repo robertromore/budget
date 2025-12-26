@@ -238,7 +238,7 @@ const summaryMetrics = $derived.by(() => {
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="budgets-page-header" data-help-title="Budgets Page">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="budgets-page-header" data-help-title="Budgets Page" data-tour-id="budgets-page">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Budgets</h1>
       <p class="text-muted-foreground">{budgets.length} budgets total</p>

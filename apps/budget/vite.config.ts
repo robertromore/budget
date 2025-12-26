@@ -56,7 +56,7 @@ export default defineConfig({
       "@lucide/svelte",
       "lodash-es",
       "lodash-es/get",
-      "layerchart",
+      "layercake",
       "svelte-sonner",
     ],
   },

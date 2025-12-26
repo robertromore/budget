@@ -121,8 +121,23 @@ export abstract class BaseRepository<
     } catch (error: any) {
       if (error instanceof DatabaseError) throw error;
 
-      // Preserve the original error properties for SQLite constraint errors
-      const dbError = new DatabaseError(`Failed to create ${this.entityName}`, "create");
+      // Log full error details for debugging
+      console.error(`[BaseRepository.create] Full error for ${this.entityName}:`, {
+        message: error?.message,
+        code: error?.code,
+        errno: error?.errno,
+        name: error?.name,
+        cause: error?.cause,
+        stack: error?.stack?.split('\n').slice(0, 5).join('\n'),
+        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+      });
+
+      // Preserve the original error message and properties for SQLite constraint errors
+      const originalMessage = error?.message || String(error);
+      const dbError = new DatabaseError(
+        `Failed to create ${this.entityName}: ${originalMessage}`,
+        "create"
+      );
       if (error?.code) (dbError as any).code = error.code;
       if (error?.errno !== undefined) (dbError as any).errno = error.errno;
       throw dbError;

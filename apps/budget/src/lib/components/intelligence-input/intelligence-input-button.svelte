@@ -3,6 +3,7 @@
   import * as Tooltip from "$lib/components/ui/tooltip";
   import { IntelligenceInputSettings } from "$lib/query/intelligence-input-settings";
   import { intelligenceInputMode } from "$lib/states/ui/intelligence-input.svelte";
+  import { Kbd } from "$lib/components/ui/kbd";
   import { cn } from "$lib/utils";
   import Brain from "@lucide/svelte/icons/brain";
 
@@ -53,9 +54,7 @@
     <Tooltip.Content>
       <p>
         {isActive ? "Exit intelligence mode" : "Intelligence mode"}
-        <kbd class="bg-accent-foreground ml-2 rounded px-1.5 py-0.5 font-mono text-xs">
-          {navigator?.platform?.includes("Mac") ? "Cmd" : "Ctrl"}+Shift+I
-        </kbd>
+        <Kbd class="ml-2">{navigator?.platform?.includes("Mac") ? "⌘" : "Ctrl"}⇧I</Kbd>
       </p>
     </Tooltip.Content>
   </Tooltip.Root>

@@ -137,7 +137,7 @@
     "formsnap": "^2.0.1",
     "fuse.js": "^7.1.0",
     "isomorphic-dompurify": "^2.34.0",
-    "layerchart": "^2.0.0-next.43",
+    "layercake": "^10.0.2",
     "marked": "^17.0.1",
     "minimatch": "^10.1.1",
     "ml-distance": "^4.0.1",

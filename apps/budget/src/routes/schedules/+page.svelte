@@ -90,7 +90,7 @@ function cancelDelete() {
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="schedules-page-header" data-help-title="Schedules Page">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="schedules-page-header" data-help-title="Schedules Page" data-tour-id="schedules-page">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Schedules</h1>
       <p class="text-muted-foreground">{allSchedules.length} schedules total</p>

@@ -19,6 +19,7 @@ const PUBLIC_ROUTES = [
   "/reset-password",
   "/invite",
   "/api/auth", // Better Auth API routes
+  "/onboarding", // Onboarding wizard (needs auth but minimal data)
 ];
 
 /**
@@ -26,6 +27,23 @@ const PUBLIC_ROUTES = [
  */
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+}
+
+/**
+ * Check if user needs to complete onboarding
+ */
+function needsOnboarding(workspace: { preferences?: string | null } | null): boolean {
+  if (!workspace?.preferences) return true;
+
+  try {
+    const prefs = typeof workspace.preferences === "string"
+      ? JSON.parse(workspace.preferences)
+      : workspace.preferences;
+
+    return !prefs?.onboarding?.wizardCompleted;
+  } catch {
+    return true;
+  }
 }
 
 const thisday = today(getLocalTimeZone());
@@ -52,6 +70,17 @@ export const load: LayoutServerLoad = async (event) => {
   }
   if (session?.user && url.pathname.startsWith("/signup")) {
     throw redirect(302, "/");
+  }
+
+  // Check if authenticated user needs onboarding (but not if already on onboarding page)
+  if (session?.user && !url.pathname.startsWith("/onboarding")) {
+    const ctx = await createContext(event);
+    const caller = createCaller(ctx);
+    const workspace = await caller.workspaceRoutes.getCurrent();
+
+    if (needsOnboarding(workspace)) {
+      throw redirect(302, "/onboarding");
+    }
   }
 
   // For public routes without auth, return minimal data

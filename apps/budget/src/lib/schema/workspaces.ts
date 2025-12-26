@@ -15,6 +15,7 @@ import { payees } from "./payees";
 import { schedules } from "./schedules";
 import { users } from "./users";
 import { views } from "./views";
+import type { OnboardingFormData, OnboardingStatus } from "$lib/types/onboarding";
 
 export const workspaces = sqliteTable(
   "workspace",
@@ -202,6 +203,8 @@ export interface WorkspacePreferences {
   llm?: LLMPreferences; // LLM provider settings
   webSearch?: WebSearchPreferences; // Web search settings for contact enrichment
   intelligenceInput?: IntelligenceInputPreferences; // Intelligence input mode settings
+  onboarding?: OnboardingStatus; // Onboarding wizard/tour completion status
+  onboardingData?: OnboardingFormData; // Financial profile data from onboarding wizard
 }
 
 // Zod schemas

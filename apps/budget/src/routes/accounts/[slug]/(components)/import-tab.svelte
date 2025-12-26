@@ -2,7 +2,7 @@
 import ColumnMapper from '$lib/components/import/column-mapper.svelte';
 import EntityReview from '$lib/components/import/entity-review.svelte';
 import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svelte';
-import ImportDataTable from '$lib/components/import/import-data-table.svelte';
+import ImportPreviewTable from '$lib/components/import/import-preview-table.svelte';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Badge from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
@@ -14,8 +14,11 @@ import { Slider } from '$lib/components/ui/slider';
 import type { ImportProfile } from '$lib/schema/import-profiles';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { TOUR_TIMING } from '$lib/constants/tour-steps';
+import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { trpc } from '$lib/trpc/client';
 import type {
+	CleanupState,
 	ColumnMapping,
 	ImportPreviewData,
 	ImportResult,
@@ -69,6 +72,8 @@ let error = $state<string | null>(null);
 let selectedRows = $state<Set<number>>(new Set());
 let scheduleMatches = $state<ScheduleMatch[]>([]);
 let scheduleMatchThreshold = $state(0.75);
+let cleanupState = $state<CleanupState | null>(null);
+let cleanupSheetOpen = $state(false);
 
 // Import profile state
 let matchedProfile = $state<ImportProfile | null>(null);
@@ -137,10 +142,22 @@ let entityOverrides = $state<
 >({});
 
 // Import options
-let createMissingPayees = $state(true);
-let createMissingCategories = $state(true);
-let allowPartialImport = $state(true);
-let reverseAmountSigns = $state(false);
+let importOptions = $state({
+	createMissingPayees: true,
+	createMissingCategories: true,
+	allowPartialImport: true,
+	reverseAmountSigns: false
+});
+
+// Compatibility aliases (for existing code that uses individual variables)
+const createMissingPayees = $derived(importOptions.createMissingPayees);
+const createMissingCategories = $derived(importOptions.createMissingCategories);
+const allowPartialImport = $derived(importOptions.allowPartialImport);
+const reverseAmountSigns = $derived(importOptions.reverseAmountSigns);
+
+function handleImportOptionsChange(options: typeof importOptions) {
+	importOptions = options;
+}
 
 // Create reactive preview data
 const previewData = $derived.by(() => {
@@ -794,6 +811,7 @@ function goBackToUpload() {
 	matchedProfile = null;
 	detectedMapping = null;
 	csvHeaders = [];
+	cleanupState = null;
 }
 
 function goBackToMapping() {
@@ -837,6 +855,434 @@ async function handleColumnMappingComplete(mapping: ColumnMapping) {
 		error = err instanceof Error ? err.message : 'Failed to remap CSV';
 	} finally {
 		isProcessing = false;
+	}
+}
+
+// Run cleanup analysis when entering preview step
+async function runCleanupAnalysis() {
+	if (!previewData || cleanupState?.isAnalyzing) return;
+
+	// Initialize cleanup state
+	cleanupState = {
+		payeeGroups: [],
+		categorySuggestions: [],
+		isAnalyzing: true,
+		analysisProgress: 0,
+		analysisPhase: 'grouping_payees'
+	};
+
+	try {
+		// Extract payee data from rows
+		const payeeInputs = previewData.rows
+			.filter((row) => row.normalizedData['payee'])
+			.map((row) => {
+				const data = row.normalizedData as Record<string, any>;
+				return {
+					rowIndex: row.rowIndex,
+					payeeName: data['payee'] as string,
+					amount: data['amount'] as number,
+					date: data['date'] as string,
+					memo: data['description'] || data['notes']
+				};
+			});
+
+		if (payeeInputs.length === 0) {
+			cleanupState = { ...cleanupState, isAnalyzing: false };
+			return;
+		}
+
+		cleanupState = { ...cleanupState, analysisProgress: 20 };
+
+		// Call the combined analysis endpoint
+		const result = await trpc().importCleanupRoutes.analyzeImport.mutate({
+			rows: payeeInputs
+		});
+
+		console.log('[Category Suggestions] Raw result:', {
+			payeeGroups: result.payeeGroups?.length,
+			categorySuggestions: result.categorySuggestions?.length,
+			categoryStats: result.categoryStats
+		});
+
+		cleanupState = {
+			...cleanupState,
+			analysisProgress: 80,
+			analysisPhase: 'suggesting_categories'
+		};
+
+		// Update state with results
+		cleanupState = {
+			payeeGroups: result.payeeGroups,
+			categorySuggestions: result.categorySuggestions,
+			isAnalyzing: false,
+			analysisProgress: 100,
+			analysisPhase: undefined
+		};
+
+		console.log('[Category Suggestions] Updated cleanupState:', {
+			categorySuggestions: cleanupState.categorySuggestions?.length,
+			sampleSuggestion: cleanupState.categorySuggestions?.[0]
+		});
+
+		// Apply high-confidence category suggestions to entityOverrides
+		for (const suggestion of result.categorySuggestions) {
+			if (suggestion.suggestions.length > 0) {
+				const topSuggestion = suggestion.suggestions[0];
+				// Auto-fill if confidence >= 0.7 (70%)
+				if (topSuggestion.confidence >= 0.7) {
+					entityOverrides = {
+						...entityOverrides,
+						[suggestion.rowIndex]: {
+							...entityOverrides[suggestion.rowIndex],
+							categoryId: topSuggestion.categoryId,
+							categoryName: topSuggestion.categoryName
+						}
+					};
+				}
+			}
+		}
+	} catch (err) {
+		console.error('Failed to analyze import data:', err);
+		toast.error('Failed to analyze import data');
+		if (cleanupState) {
+			cleanupState = { ...cleanupState, isAnalyzing: false };
+		}
+	}
+}
+
+// Trigger cleanup analysis when entering preview step
+$effect(() => {
+	if (currentStep === 'preview' && previewData && !cleanupState) {
+		runCleanupAnalysis();
+	}
+});
+
+// Watch for demo mode import trigger
+let lastDemoTrigger = 0;
+$effect(() => {
+	const trigger = demoMode.triggerImportUpload;
+	if (trigger > lastDemoTrigger && demoMode.isActive) {
+		lastDemoTrigger = trigger;
+		loadDemoImportData();
+	}
+});
+
+// Watch for demo mode cleanup sheet trigger
+let lastCleanupTrigger = 0;
+$effect(() => {
+	const trigger = demoMode.triggerCleanupSheet;
+	if (trigger > lastCleanupTrigger && demoMode.isActive) {
+		lastCleanupTrigger = trigger;
+		cleanupSheetOpen = true;
+	}
+});
+
+// Watch for demo mode wizard step trigger
+let lastWizardStepTrigger = 0;
+$effect(() => {
+	const trigger = demoMode.triggerWizardStep;
+	if (trigger.count > lastWizardStepTrigger && demoMode.isActive) {
+		lastWizardStepTrigger = trigger.count;
+		const step = trigger.step as Step;
+		if (step) {
+			currentStep = step;
+			// Sync with demoMode so tour navigation knows the current step
+			demoMode.setImportStep(step as any);
+			// For preview, ensure cleanup state is initialized with demo data
+			if (step === 'preview' && !cleanupState) {
+				cleanupState = {
+					payeeGroups: [
+						{
+							groupId: 'demo-group-1',
+							canonicalName: 'Whole Foods Market',
+							confidence: 0.95,
+							members: [
+								{ rowIndex: 0, originalPayee: 'WHOLE FOODS MKT #123', normalizedPayee: 'Whole Foods Market' }
+							],
+							existingMatch: { id: 1, name: 'Whole Foods', confidence: 0.92 },
+							userDecision: 'pending'
+						},
+						{
+							groupId: 'demo-group-2',
+							canonicalName: 'Shell Gas Station',
+							confidence: 0.88,
+							members: [
+								{ rowIndex: 1, originalPayee: 'SHELL SERVICE STN', normalizedPayee: 'Shell Gas Station' }
+							],
+							existingMatch: { id: 2, name: 'Shell', confidence: 0.85 },
+							userDecision: 'pending'
+						},
+						{
+							groupId: 'demo-group-3',
+							canonicalName: 'Amazon',
+							confidence: 0.78,
+							members: [
+								{ rowIndex: 3, originalPayee: 'AMAZON.COM*AB12CD34', normalizedPayee: 'Amazon' }
+							],
+							userDecision: 'pending'
+						}
+					],
+					categorySuggestions: [],
+					isAnalyzing: false,
+					analysisProgress: 100
+				};
+			}
+			// For schedule review, create mock schedule matches
+			if (step === 'review-schedules' && scheduleMatches.length === 0) {
+				const today = new Date();
+				scheduleMatches = [
+					{
+						rowIndex: 0,
+						scheduleId: 1,
+						scheduleName: 'Monthly Groceries',
+						score: 0.92,
+						confidence: 'high' as const,
+						selected: true,
+						matchedOn: ['payee', 'amount'],
+						reasons: ['Payee matches: Whole Foods Market', 'Amount within 5% tolerance'],
+						transactionData: {
+							date: today.toISOString().split('T')[0],
+							amount: -67.45,
+							payee: 'Whole Foods Market'
+						},
+						scheduleData: {
+							name: 'Monthly Groceries',
+							amount: -70.0,
+							amount_type: 'approximate' as const,
+							recurring: true
+						}
+					},
+					{
+						rowIndex: 1,
+						scheduleId: 2,
+						scheduleName: 'Gas Fill-up',
+						score: 0.85,
+						confidence: 'high' as const,
+						selected: false,
+						matchedOn: ['payee', 'amount'],
+						reasons: ['Payee matches: Shell', 'Amount within 10% tolerance'],
+						transactionData: {
+							date: new Date(today.getTime() - 86400000).toISOString().split('T')[0],
+							amount: -42.50,
+							payee: 'Shell Gas Station'
+						},
+						scheduleData: {
+							name: 'Gas Fill-up',
+							amount: -45.0,
+							amount_type: 'approximate' as const,
+							recurring: true
+						}
+					}
+				];
+			}
+			// For entity review, create mock entity preview data
+			if (step === 'review-entities' && !entityPreview) {
+				entityPreview = {
+					payees: [
+						{
+							name: 'Whole Foods Market',
+							source: 'import' as const,
+							occurrences: 2,
+							selected: false,
+							existing: { id: 1, name: 'Whole Foods' }
+						},
+						{
+							name: 'Shell Gas Station',
+							source: 'import' as const,
+							occurrences: 1,
+							selected: false,
+							existing: { id: 2, name: 'Shell' }
+						},
+						{
+							name: 'Amazon',
+							source: 'import' as const,
+							occurrences: 1,
+							selected: true
+						}
+					],
+					categories: [
+						{
+							name: 'Groceries',
+							source: 'inferred' as const,
+							occurrences: 2,
+							selected: false,
+							existing: { id: 10, name: 'Groceries' }
+						},
+						{
+							name: 'Transportation',
+							source: 'inferred' as const,
+							occurrences: 1,
+							selected: false,
+							existing: { id: 11, name: 'Transportation' }
+						},
+						{
+							name: 'Shopping',
+							source: 'inferred' as const,
+							occurrences: 1,
+							selected: true
+						}
+					],
+					transactions: {
+						total: 6,
+						valid: 6,
+						duplicates: 0,
+						errors: 0
+					}
+				};
+			}
+			// For complete, create mock import result
+			if (step === 'complete' && !importResult) {
+				importResult = {
+					success: true,
+					transactionsCreated: 6,
+					entitiesCreated: { payees: 1, categories: 1 },
+					errors: [],
+					warnings: [],
+					duplicatesDetected: [],
+					summary: {
+						totalRows: 6,
+						validRows: 6,
+						invalidRows: 0,
+						skippedRows: 0
+					}
+				};
+			}
+		}
+	}
+});
+
+// Load demo CSV data for the tour
+async function loadDemoImportData() {
+	console.log('[ImportTab] Loading demo import data');
+	isProcessing = true;
+	error = null;
+
+	try {
+		const csvContent = demoMode.demoImportCSV;
+		if (!csvContent) {
+			throw new Error('Demo CSV not available');
+		}
+
+		// Parse CSV manually
+		const lines = csvContent.trim().split('\n');
+		const headers = lines[0].split(',').map(h => h.trim());
+		csvHeaders = headers;
+
+		const rows = lines.slice(1).map((line, index) => {
+			const values = line.split(',').map(v => v.trim());
+			const rawData: Record<string, string> = {};
+			headers.forEach((header, i) => {
+				rawData[header] = values[i] || '';
+			});
+
+			// Parse amount (remove $ and handle negatives)
+			const amountStr = rawData['Amount'] || '0';
+			const amount = parseFloat(amountStr.replace(/[$,]/g, ''));
+
+			return {
+				rowIndex: index,
+				rawData,
+				normalizedData: {
+					date: rawData['Date'],
+					payee: rawData['Description'],
+					amount: amount,
+					notes: ''
+				},
+				validationStatus: 'valid' as const,
+				validationErrors: []
+			};
+		});
+
+		rawCSVData = rows.map(r => r.rawData);
+
+		// Create parseResults structure matching ParseResult type
+		parseResults = {
+			fileName: 'demo-transactions.csv',
+			fileSize: csvContent.length,
+			fileType: 'text/csv',
+			rowCount: rows.length,
+			columns: headers,
+			rows,
+			parseErrors: []
+		};
+
+		// Set a detected mapping for demo
+		detectedMapping = {
+			date: 'Date',
+			amount: 'Amount',
+			payee: 'Description',
+			notes: null,
+			category: null
+		};
+
+		// Create fake file data for display
+		selectedFile = new File([csvContent], 'demo-transactions.csv', { type: 'text/csv' });
+		fileData = {
+			data: btoa(csvContent),
+			name: 'demo-transactions.csv',
+			type: 'text/csv'
+		};
+
+		// Small delay for visual feedback, then advance to column mapping
+		// This delay is the source of truth - TOUR_TIMING.DEMO_IMPORT_WAIT must exceed this
+		await new Promise(resolve => setTimeout(resolve, TOUR_TIMING.DEMO_IMPORT_INTERNAL_DELAY));
+		currentStep = 'map-columns';
+
+		// Sync with demoMode so tour navigation knows we've loaded data
+		demoMode.setImportStep('map-columns');
+
+		toast.success('Demo file loaded', {
+			description: `${rows.length} transactions ready for import.`
+		});
+
+	} catch (err) {
+		error = err instanceof Error ? err.message : 'Failed to load demo data';
+		console.error('[ImportTab] Demo import error:', err);
+	} finally {
+		isProcessing = false;
+	}
+}
+
+// Handle cleanup state changes from the toolbar component
+function handleCleanupStateChange(state: CleanupState) {
+	cleanupState = state;
+	// Apply cleanup decisions to entityOverrides
+	for (const group of state.payeeGroups) {
+		if (group.userDecision === 'accept' || group.userDecision === 'custom') {
+			const payeeName = group.userDecision === 'custom' && group.customName
+				? group.customName
+				: group.canonicalName;
+			const payeeId = group.existingMatch?.id ?? null;
+
+			for (const member of group.members) {
+				entityOverrides = {
+					...entityOverrides,
+					[member.rowIndex]: {
+						...entityOverrides[member.rowIndex],
+						payeeId,
+						payeeName
+					}
+				};
+			}
+		}
+	}
+	// Apply category suggestions
+	for (const suggestion of state.categorySuggestions) {
+		if (suggestion.selectedCategoryId) {
+			const selectedSuggestion = suggestion.suggestions.find(
+				(s) => s.categoryId === suggestion.selectedCategoryId
+			);
+			if (selectedSuggestion) {
+				entityOverrides = {
+					...entityOverrides,
+					[suggestion.rowIndex]: {
+						...entityOverrides[suggestion.rowIndex],
+						categoryId: suggestion.selectedCategoryId,
+						categoryName: selectedSuggestion.categoryName
+					}
+				};
+			}
+		}
 	}
 }
 
@@ -1052,6 +1498,7 @@ function startNewImport() {
 	detectedMapping = null;
 	csvHeaders = [];
 	columnMapping = null;
+	cleanupState = null;
 }
 
 // Save profile dialog helpers
@@ -1194,7 +1641,7 @@ $effect(() => {
 
 	<!-- Step Content -->
 	{#if currentStep === 'upload'}
-		<div class="space-y-6">
+		<div class="space-y-6" data-tour-id="import-upload-zone">
 			<div>
 				<h2 class="text-xl font-bold">Import Transactions</h2>
 				<p class="text-muted-foreground mt-1 text-sm">
@@ -1218,75 +1665,47 @@ $effect(() => {
 			{/if}
 		</div>
 	{:else if currentStep === 'map-columns' && parseResults && rawCSVData}
-		{#if matchedProfile}
-			<div
-				class="bg-primary/10 border-primary/20 mb-4 flex items-center gap-2 rounded-lg border p-3">
-				<Sparkles class="text-primary h-4 w-4" />
-				<span class="text-sm">
-					Using saved profile: <strong>{matchedProfile.name}</strong>
-				</span>
-			</div>
-		{/if}
-		<ColumnMapper
-			rawColumns={Object.keys(rawCSVData[0] || {})}
-			initialMapping={detectedMapping ?? undefined}
-			sampleData={rawCSVData}
-			onNext={handleColumnMappingComplete}
-			onBack={goBackToUpload} />
-	{:else if currentStep === 'preview' && parseResults}
-		<div class="space-y-6">
-			<!-- Import Options - Horizontal Layout -->
-			<Card.Root>
-				<Card.Header class="pb-3">
-					<Card.Title class="text-base">Import Options</Card.Title>
-				</Card.Header>
-				<Card.Content>
-					<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-						<label class="flex items-center gap-2">
-							<Checkbox id="create-payees" bind:checked={createMissingPayees} />
-							<span class="text-sm">Auto-create payees</span>
-						</label>
-
-						<label class="flex items-center gap-2">
-							<Checkbox id="create-categories" bind:checked={createMissingCategories} />
-							<span class="text-sm">Auto-create categories</span>
-						</label>
-
-						<label class="flex items-center gap-2">
-							<Checkbox id="partial-import" bind:checked={allowPartialImport} />
-							<span class="text-sm">Allow partial import</span>
-						</label>
-
-						<label class="flex items-center gap-2">
-							<Checkbox id="reverse-amounts" bind:checked={reverseAmountSigns} />
-							<span class="text-sm">Reverse amount signs</span>
-						</label>
-
-						{#if processorAnalysis.total > 0}
-							<div class="border-l pl-6">
-								<Button variant="outline" size="sm" onclick={openProcessorFilterDialog}>
-									Filter Processors ({processorAnalysis.total})
-								</Button>
-							</div>
-						{/if}
-					</div>
-				</Card.Content>
-			</Card.Root>
-
-			<!-- Preview Table -->
-			{#if previewData}
-				<ImportDataTable
-					data={previewData.rows}
-					fileName={previewData.fileName}
-					onNext={proceedToScheduleReview}
-					onBack={goBackToUpload}
-					bind:selectedRows
-					onPayeeUpdate={handlePayeeUpdateWithSimilar}
-					onCategoryUpdate={handleCategoryUpdateWithSimilar}
-					onDescriptionUpdate={handleDescriptionUpdate}
-					{temporaryCategories}
-					{temporaryPayees} />
+		<div data-tour-id="import-column-mapping">
+			{#if matchedProfile}
+				<div
+					class="bg-primary/10 border-primary/20 mb-4 flex items-center gap-2 rounded-lg border p-3">
+					<Sparkles class="text-primary h-4 w-4" />
+					<span class="text-sm">
+						Using saved profile: <strong>{matchedProfile.name}</strong>
+					</span>
+				</div>
 			{/if}
+				<ColumnMapper
+				rawColumns={Object.keys(rawCSVData[0] || {})}
+				initialMapping={detectedMapping ?? undefined}
+				sampleData={rawCSVData}
+				onNext={handleColumnMappingComplete}
+				onBack={goBackToUpload} />
+		</div>
+	{:else if currentStep === 'preview' && parseResults && previewData}
+		<div class="space-y-4" data-tour-id="import-preview-table">
+			<!-- Preview Table with integrated toolbar -->
+			<ImportPreviewTable
+				data={previewData.rows}
+				{importOptions}
+				onImportOptionsChange={handleImportOptionsChange}
+				{cleanupState}
+				onCleanupStateChange={handleCleanupStateChange}
+				onPayeeUpdate={handlePayeeUpdateWithSimilar}
+				onCategoryUpdate={handleCategoryUpdateWithSimilar}
+				onDescriptionUpdate={handleDescriptionUpdate}
+				{temporaryCategories}
+				{temporaryPayees}
+				processorCount={processorAnalysis.total}
+				onOpenProcessorFilter={openProcessorFilterDialog}
+				bind:cleanupSheetOpen
+			/>
+
+			<!-- Navigation -->
+			<div class="flex items-center justify-between pt-4">
+				<Button variant="outline" onclick={goBackToUpload}>Back</Button>
+				<Button onclick={proceedToScheduleReview}>Continue</Button>
+			</div>
 		</div>
 
 		{#if isProcessing}
@@ -1306,7 +1725,7 @@ $effect(() => {
 			</div>
 		{/if}
 	{:else if currentStep === 'review-schedules'}
-		<div class="space-y-6">
+		<div class="space-y-6" data-tour-id="import-schedules">
 			<div>
 				<div class="mb-2 flex items-center gap-3">
 					<CalendarClock class="text-primary h-8 w-8" />
@@ -1457,7 +1876,7 @@ $effect(() => {
 			</div>
 		</div>
 	{:else if currentStep === 'review-entities' && entityPreview}
-		<div class="space-y-6">
+		<div class="space-y-6" data-tour-id="import-entities">
 			<div>
 				<h2 class="text-2xl font-bold">Review Entities</h2>
 				<p class="text-muted-foreground mt-2">
@@ -1507,7 +1926,7 @@ $effect(() => {
 			</div>
 		{/if}
 	{:else if currentStep === 'complete' && importResult}
-		<div class="space-y-6">
+		<div class="space-y-6" data-tour-id="import-complete">
 			<div class="text-center">
 				<div
 					class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">

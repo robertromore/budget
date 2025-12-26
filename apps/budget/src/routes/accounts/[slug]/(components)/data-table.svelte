@@ -520,14 +520,16 @@ const canRender = $derived(isContextReady && isViewsInitialized);
 
 {#if canRender}
   <div class="space-y-4">
-    <DataTableToolbar {table} />
+    <div data-tour-id="transactions-filters">
+      <DataTableToolbar {table} />
+    </div>
 
     <!-- Bulk Actions -->
     {#if onBulkDelete}
       <TransactionBulkActions {table} allTransactions={transactions || []} {onBulkDelete} />
     {/if}
 
-    <div class="max-w-full overflow-x-auto rounded-md border">
+    <div class="max-w-full overflow-x-auto rounded-md border" data-tour-id="transactions-table-header">
       <DndContext
         {sensors}
         modifiers={[restrictToHorizontalAxis]}
@@ -575,22 +577,23 @@ const canRender = $derived(isContextReady && isViewsInitialized);
                     isActive ? 'opacity-0' : '',
                     transform ? 'transition-transform duration-200' : ''
                   )}
+                  {@const tourId = cell.column.id === 'status' ? 'transactions-status' : undefined}
                   {#if cell.getIsAggregated() && cell.column.columnDef.aggregatedCell}
-                    <Table.Cell {density} class={cellClass} style={cellStyle}>
+                    <Table.Cell {density} class={cellClass} style={cellStyle} data-tour-id={tourId}>
                       <FlexRender
                         content={cell.column.columnDef.aggregatedCell}
                         context={cell.getContext()} />
                     </Table.Cell>
                   {:else if cell.getIsPlaceholder()}
-                    <Table.Cell {density} class={cellClass} style={cellStyle}></Table.Cell>
+                    <Table.Cell {density} class={cellClass} style={cellStyle} data-tour-id={tourId}></Table.Cell>
                   {:else if cell.column.columnDef.cell}
-                    <Table.Cell {density} class={cellClass} style={cellStyle}>
+                    <Table.Cell {density} class={cellClass} style={cellStyle} data-tour-id={tourId}>
                       <FlexRender
                         content={cell.column.columnDef.cell}
                         context={cell.getContext()} />
                     </Table.Cell>
                   {:else}
-                    <Table.Cell {density} class={cellClass} style={cellStyle}></Table.Cell>
+                    <Table.Cell {density} class={cellClass} style={cellStyle} data-tour-id={tourId}></Table.Cell>
                   {/if}
                 {/each}
               </Table.Row>

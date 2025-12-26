@@ -1,3 +1,4 @@
+import { workspaceMembers } from "$lib/schema/workspace-members";
 import { formInsertWorkspaceSchema, workspaces } from "$lib/schema/workspaces";
 import { publicProcedure, t } from "$lib/trpc";
 import { TRPCError } from "@trpc/server";
@@ -26,9 +27,39 @@ export const workspaceRoutes = t.router({
   }),
 
   /**
-   * List all workspaces
+   * List workspaces the user has access to
+   * For authenticated users: workspaces they're a member of
+   * For unauthenticated users: all workspaces (backward compatibility during migration)
    */
   list: publicProcedure.query(async ({ ctx }) => {
+    // If user is authenticated, only show workspaces they're a member of
+    if (ctx.userId) {
+      const results = await ctx.db
+        .select({
+          id: workspaces.id,
+          cuid: workspaces.cuid,
+          displayName: workspaces.displayName,
+          slug: workspaces.slug,
+          ownerId: workspaces.ownerId,
+          preferences: workspaces.preferences,
+          createdAt: workspaces.createdAt,
+          updatedAt: workspaces.updatedAt,
+          deletedAt: workspaces.deletedAt,
+        })
+        .from(workspaces)
+        .innerJoin(workspaceMembers, eq(workspaceMembers.workspaceId, workspaces.id))
+        .where(
+          and(
+            eq(workspaceMembers.userId, ctx.userId),
+            isNull(workspaces.deletedAt)
+          )
+        )
+        .orderBy(workspaces.displayName);
+
+      return results;
+    }
+
+    // Fallback for unauthenticated access (backward compatibility)
     return await ctx.db
       .select()
       .from(workspaces)
@@ -87,8 +118,29 @@ export const workspaceRoutes = t.router({
         });
       }
 
+      // If user is authenticated, verify they have access to this workspace
+      if (ctx.userId) {
+        const [membership] = await ctx.db
+          .select()
+          .from(workspaceMembers)
+          .where(
+            and(
+              eq(workspaceMembers.userId, ctx.userId),
+              eq(workspaceMembers.workspaceId, input.workspaceId)
+            )
+          )
+          .limit(1);
+
+        if (!membership) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You do not have access to this workspace",
+          });
+        }
+      }
+
       // Set cookie (expires in 1 year)
-      ctx.event.cookies.set("userId", input.workspaceId.toString(), {
+      ctx.event.cookies.set("workspaceId", input.workspaceId.toString(), {
         path: "/",
         maxAge: 60 * 60 * 24 * 365,
         sameSite: "strict",
@@ -124,6 +176,7 @@ export const workspaceRoutes = t.router({
 
   /**
    * Delete workspace (soft delete)
+   * Only workspace owners can delete workspaces
    */
   delete: publicProcedure
     .input(z.object({ workspaceId: z.number() }))
@@ -134,6 +187,28 @@ export const workspaceRoutes = t.router({
           code: "BAD_REQUEST",
           message: "Cannot delete the currently active workspace",
         });
+      }
+
+      // If user is authenticated, verify they own this workspace
+      if (ctx.userId) {
+        const [membership] = await ctx.db
+          .select()
+          .from(workspaceMembers)
+          .where(
+            and(
+              eq(workspaceMembers.userId, ctx.userId),
+              eq(workspaceMembers.workspaceId, input.workspaceId),
+              eq(workspaceMembers.role, "owner")
+            )
+          )
+          .limit(1);
+
+        if (!membership) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Only workspace owners can delete workspaces",
+          });
+        }
       }
 
       // Soft delete

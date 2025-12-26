@@ -23,6 +23,8 @@ interface Props {
   hideOverlay?: boolean;
   /** Control behavior when clicking outside the sheet */
   interactOutsideBehavior?: 'close' | 'ignore';
+  /** Data tour ID for spotlight tour targeting */
+  dataTourId?: string;
 }
 
 let {
@@ -42,6 +44,7 @@ let {
   maxWidth = 1200,
   hideOverlay = false,
   interactOutsideBehavior,
+  dataTourId,
 }: Props = $props();
 
 const isDesktop = new MediaQuery('(min-width: 768px)');
@@ -107,7 +110,8 @@ $effect(() => {
       class="flex flex-col {className || ''}"
       style="width: {sheetWidth}px; max-width: {sheetWidth}px;"
       overlayClass={hideOverlay ? 'hidden' : undefined}
-      {interactOutsideBehavior}>
+      {interactOutsideBehavior}
+      data-tour-id={dataTourId}>
       {#if resizable}
         <button
           type="button"

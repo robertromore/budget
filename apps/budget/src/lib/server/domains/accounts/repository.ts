@@ -20,6 +20,8 @@ export interface CreateAccountInput {
   notes?: string | undefined;
   onBudget?: boolean | undefined;
   accountType?: AccountType | undefined;
+  accountIcon?: string | undefined;
+  accountColor?: string | undefined;
 }
 
 export interface UpdateAccountInput {

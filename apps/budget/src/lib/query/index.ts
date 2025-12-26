@@ -11,6 +11,7 @@ import * as categories from "./categories";
 import * as categoryGroups from "./category-groups";
 import * as importProfiles from "./import-profiles";
 import * as medicalExpenses from "./medical-expenses";
+import * as onboarding from "./onboarding";
 import * as patterns from "./patterns";
 import * as payeeCategories from "./payee-categories";
 import * as payees from "./payees";
@@ -35,6 +36,7 @@ export const rpc = {
   categoryGroups,
   importProfiles,
   medicalExpenses,
+  onboarding,
   patterns,
   payeeCategories,
   payees,
@@ -67,6 +69,7 @@ export type CategoryQueries = typeof categories;
 export type CategoryGroupQueries = typeof categoryGroups;
 export type ImportProfileQueries = typeof importProfiles;
 export type MedicalExpenseQueries = typeof medicalExpenses;
+export type OnboardingQueries = typeof onboarding;
 export type PatternQueries = typeof patterns;
 export type PayeeCategoryQueries = typeof payeeCategories;
 export type PayeeQueries = typeof payees;
@@ -88,6 +91,7 @@ export { categoryKeys } from "./categories";
 export { categoryGroupKeys } from "./category-groups";
 export { importProfileKeys } from "./import-profiles";
 export { medicalExpenseKeys } from "./medical-expenses";
+export { onboardingKeys } from "./onboarding";
 export { patternKeys } from "./patterns";
 export { payeeCategoryKeys } from "./payee-categories";
 export { payeeKeys } from "./payees";

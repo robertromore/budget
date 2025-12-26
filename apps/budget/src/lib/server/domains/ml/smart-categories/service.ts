@@ -75,7 +75,7 @@ export interface SmartCategoryConfig {
 }
 
 const DEFAULT_CONFIG: SmartCategoryConfig = {
-  minConfidenceToSuggest: 0.3,
+  minConfidenceToSuggest: 0.1, // Lowered from 0.3 to allow type-based suggestions for new workspaces
   payeeMatchWeight: 0.4,
   amountPatternWeight: 0.25,
   timePatternWeight: 0.15,
@@ -169,6 +169,75 @@ const DAY_PATTERNS: Array<{
     categoryKeywords: ["lunch", "coffee", "commute", "transportation", "parking"],
     confidence: 0.15,
     reason: "Weekday expense pattern",
+  },
+];
+
+// Payee name to category keyword mappings
+// These map common merchant/payee name patterns to category keywords
+const PAYEE_CATEGORY_MAPPINGS: Array<{
+  payeePatterns: RegExp[];
+  categoryKeywords: string[];
+  confidence: number;
+}> = [
+  // Grocery stores
+  {
+    payeePatterns: [/fareway/i, /hyvee/i, /hy-vee/i, /walmart/i, /target/i, /aldi/i, /costco/i, /kroger/i, /safeway/i, /publix/i, /trader\s*joe/i, /whole\s*foods/i, /grocery/i, /market/i],
+    categoryKeywords: ["groceries", "grocery", "food"],
+    confidence: 0.6,
+  },
+  // Gas stations
+  {
+    payeePatterns: [/kwik/i, /kum.*go/i, /casey/i, /shell/i, /exxon/i, /mobil/i, /chevron/i, /bp\b/i, /gas/i, /fuel/i, /petro/i, /citgo/i, /marathon/i, /phillips/i, /sinclair/i],
+    categoryKeywords: ["gas", "fuel", "transportation"],
+    confidence: 0.7,
+  },
+  // Utilities
+  {
+    payeePatterns: [/midamerican/i, /alliant/i, /interstate\s*power/i, /electric/i, /water/i, /sewer/i, /utility/i, /utilities/i, /power/i, /energy/i, /mediacom/i, /comcast/i, /xfinity/i, /spectrum/i, /att\b/i, /at&t/i, /verizon/i, /t-mobile/i, /sprint/i, /internet/i, /cable/i],
+    categoryKeywords: ["utilities", "electric", "water", "internet", "phone", "cable"],
+    confidence: 0.65,
+  },
+  // Restaurants / Fast food
+  {
+    payeePatterns: [/mcdonald/i, /burger\s*king/i, /wendy/i, /taco\s*bell/i, /chick-fil-a/i, /chipotle/i, /panera/i, /starbucks/i, /dunkin/i, /subway/i, /pizza/i, /doordash/i, /grubhub/i, /uber\s*eats/i, /restaurant/i, /cafe/i, /coffee/i, /diner/i, /grill/i, /kitchen/i],
+    categoryKeywords: ["restaurant", "dining", "food", "fast food", "coffee"],
+    confidence: 0.6,
+  },
+  // Subscriptions / Streaming
+  {
+    payeePatterns: [/netflix/i, /spotify/i, /hulu/i, /disney/i, /amazon\s*prime/i, /apple\s*music/i, /youtube/i, /hbo/i, /paramount/i, /peacock/i, /subscription/i, /monthly/i, /recurring/i],
+    categoryKeywords: ["subscription", "streaming", "entertainment"],
+    confidence: 0.7,
+  },
+  // Insurance
+  {
+    payeePatterns: [/geico/i, /state\s*farm/i, /allstate/i, /progressive/i, /liberty\s*mutual/i, /farmers/i, /nationwide/i, /insurance/i, /usaa/i, /aetna/i, /cigna/i, /united\s*health/i, /anthem/i, /blue\s*cross/i, /humana/i],
+    categoryKeywords: ["insurance", "car insurance", "health insurance"],
+    confidence: 0.7,
+  },
+  // Credit card payments
+  {
+    payeePatterns: [/chase\s*credit/i, /capital\s*one/i, /amex/i, /american\s*express/i, /discover/i, /citi\s*card/i, /bank\s*of\s*america/i, /applecard/i, /apple\s*card/i, /credit\s*card/i, /card\s*payment/i],
+    categoryKeywords: ["transfer", "credit card", "payment"],
+    confidence: 0.5,
+  },
+  // Investment / Brokerage
+  {
+    payeePatterns: [/schwab/i, /fidelity/i, /vanguard/i, /etrade/i, /e-trade/i, /robinhood/i, /td\s*ameritrade/i, /merrill/i, /brokerage/i, /investment/i, /401k/i, /ira/i, /retirement/i],
+    categoryKeywords: ["investment", "savings", "transfer"],
+    confidence: 0.6,
+  },
+  // Healthcare
+  {
+    payeePatterns: [/cvs/i, /walgreens/i, /pharmacy/i, /clinic/i, /hospital/i, /medical/i, /doctor/i, /dental/i, /dentist/i, /optom/i, /vision/i, /health/i, /urgent\s*care/i],
+    categoryKeywords: ["healthcare", "medical", "prescriptions", "dental"],
+    confidence: 0.6,
+  },
+  // Shopping
+  {
+    payeePatterns: [/amazon(?!\s*prime)/i, /ebay/i, /etsy/i, /best\s*buy/i, /home\s*depot/i, /lowes/i, /ikea/i, /wayfair/i, /nordstrom/i, /macy/i, /kohls/i, /marshalls/i, /tjmaxx/i, /ross/i],
+    categoryKeywords: ["shopping", "home", "electronics", "clothing"],
+    confidence: 0.5,
   },
 ];
 
@@ -400,9 +469,11 @@ export function createSmartCategoryService(
       limit: number = 5
     ): Promise<SmartCategorySuggestion[]> {
       const workspaceCategories = await loadCategories(workspaceId);
+      console.log('[SmartCategoryService] Loaded', workspaceCategories.length, 'categories for workspace', workspaceId);
       if (workspaceCategories.length === 0) {
         return [];
       }
+      console.log('[SmartCategoryService] Categories:', workspaceCategories.map(c => c.name));
 
       // Build a map of category scores
       const categoryScores = new Map<number, {
@@ -426,8 +497,10 @@ export function createSmartCategoryService(
 
       // 1. Payee-based suggestions (highest weight)
       const payeeName = context.payeeName || extractMerchantName(context.description);
+      console.log('[SmartCategoryService] Looking up payee:', payeeName);
       const simService = getSimilarityService();
       const payeeSuggestion = await simService.suggestCategoryByPayee(workspaceId, payeeName);
+      console.log('[SmartCategoryService] Payee suggestion:', payeeSuggestion);
 
       if (payeeSuggestion) {
         const entry = categoryScores.get(payeeSuggestion.categoryId);
@@ -443,6 +516,36 @@ export function createSmartCategoryService(
             entry.primaryReason = `Matches payee pattern for "${normalizeMerchantName(payeeName)}"`;
             entry.primaryReasonCode = "payee_match";
           }
+        }
+      }
+
+      // 1b. Payee name pattern matching (for common merchants)
+      // This helps when there's no history but payee name is recognizable
+      for (const mapping of PAYEE_CATEGORY_MAPPINGS) {
+        const matchesPayee = mapping.payeePatterns.some(pattern => pattern.test(payeeName));
+        if (matchesPayee) {
+          console.log('[SmartCategoryService] Payee pattern match:', payeeName, '→', mapping.categoryKeywords);
+          for (const [catId, entry] of categoryScores) {
+            const keywordScore = entry.category.name
+              ? scoreCategory(entry.category.name, mapping.categoryKeywords)
+              : 0;
+
+            if (keywordScore > 0) {
+              const weight = cfg.payeeMatchWeight * mapping.confidence * keywordScore;
+              entry.score += weight;
+              entry.factors.push({
+                type: "payee",
+                description: `Recognized merchant pattern for "${payeeName.substring(0, 20)}"`,
+                weight,
+              });
+
+              if (weight > 0.15 && !entry.primaryReason) {
+                entry.primaryReason = `Recognized as ${mapping.categoryKeywords[0]} merchant`;
+                entry.primaryReasonCode = "payee_match";
+              }
+            }
+          }
+          break; // Only use first matching pattern
         }
       }
 
@@ -571,10 +674,20 @@ export function createSmartCategoryService(
       // Sort and filter results
       const results: SmartCategorySuggestion[] = [];
 
-      const sortedEntries = Array.from(categoryScores.values())
+      // Debug: Log all category scores before filtering
+      const allScores = Array.from(categoryScores.values());
+      console.log('[SmartCategoryService] Category scores before filter:', allScores.map(e => ({
+        name: e.category.name,
+        score: e.score.toFixed(3),
+        factors: e.factors.length
+      })));
+
+      const sortedEntries = allScores
         .filter((e) => e.score >= cfg.minConfidenceToSuggest)
         .sort((a, b) => b.score - a.score)
         .slice(0, limit);
+
+      console.log('[SmartCategoryService] After filter (>= 0.3):', sortedEntries.length, 'categories');
 
       for (const entry of sortedEntries) {
         if (!entry.category.name) continue;

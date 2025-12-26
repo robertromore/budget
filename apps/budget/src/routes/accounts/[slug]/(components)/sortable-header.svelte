@@ -71,6 +71,7 @@ $effect(() => {
   use:refCallback
   colspan={header.colSpan}
   data-slot="table-head"
+  data-tour-id={header.column.id === 'status' ? 'transactions-status' : undefined}
   style={style()}
   class={cn(
     'text-foreground bg-clip-padding px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0',

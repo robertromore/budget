@@ -1,9 +1,10 @@
 <script lang="ts">
+import { Badge } from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Command from '$lib/components/ui/command';
 import * as Popover from '$lib/components/ui/popover';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
-import type { ImportRow } from '$lib/types/import';
+import type { CategorySuggestion, CategorySuggestionReason, ImportRow } from '$lib/types/import';
 import { cn } from '$lib/utils';
 import { createTransformAccessors } from '$lib/utils/bind-helpers';
 import Check from '@lucide/svelte/icons/check';
@@ -17,9 +18,53 @@ interface Props {
   row: Row<ImportRow>;
   onUpdate?: (rowIndex: number, categoryId: number | null, categoryName: string | null) => void;
   temporaryCategories?: string[];
+  suggestion?: CategorySuggestion;
 }
 
-let { row, onUpdate, temporaryCategories = [] }: Props = $props();
+let { row, onUpdate, temporaryCategories = [], suggestion }: Props = $props();
+
+// Debug: Log when we receive a suggestion
+$effect(() => {
+  if (suggestion && suggestion.suggestions.length > 0) {
+    console.log(`[CategoryCell] Row ${row.original.rowIndex} has ${suggestion.suggestions.length} suggestions:`, suggestion.suggestions[0]);
+  }
+});
+
+// Track if user has manually overridden the AI suggestion
+let userOverride = $state(false);
+
+// Format reason for display
+function formatReason(reason: CategorySuggestionReason): string {
+  const labels: Record<CategorySuggestionReason, string> = {
+    'payee_match': 'Payee',
+    'payee_history': 'History',
+    'amount_pattern': 'Amount',
+    'time_pattern': 'Timing',
+    'similar_transaction': 'Similar',
+    'ml_prediction': 'AI'
+  };
+  return labels[reason] || reason;
+}
+
+// Check if the current selection was from AI suggestion
+const isAISuggested = $derived.by(() => {
+  if (!suggestion || userOverride) return false;
+  if (suggestion.suggestions.length === 0) return false;
+  const topSuggestion = suggestion.suggestions[0];
+  // Check if current selection matches top suggestion
+  const currentId = selectedCategoryId.get();
+  const currentName = selectedCategoryName.get();
+  return (
+    (currentId && currentId === topSuggestion.categoryId) ||
+    (currentName && currentName === topSuggestion.categoryName)
+  );
+});
+
+// Get confidence percentage for display
+const suggestionConfidence = $derived.by(() => {
+  if (!suggestion || suggestion.suggestions.length === 0) return 0;
+  return Math.round(suggestion.suggestions[0].confidence * 100);
+});
 
 const categoryState = CategoriesState.get();
 const categoriesArray = $derived(
@@ -116,7 +161,7 @@ const showCreateOption = $derived.by(() => {
   return !hasExactMatch;
 });
 
-function handleSelect(categoryId: number, categoryName: string) {
+function handleSelect(categoryId: number, categoryName: string, fromSuggestion = false) {
   // Only call onUpdate if the value actually changed
   const currentId = selectedCategoryId.get();
   const currentName = selectedCategoryName.get();
@@ -124,6 +169,11 @@ function handleSelect(categoryId: number, categoryName: string) {
 
   selectedCategoryId.set(categoryId);
   selectedCategoryName.set(categoryName);
+
+  // Mark as user override if not from suggestion selection
+  if (!fromSuggestion) {
+    userOverride = true;
+  }
 
   if (hasChanged) {
     onUpdate?.(rowIndex, categoryId, categoryName);
@@ -133,11 +183,16 @@ function handleSelect(categoryId: number, categoryName: string) {
   open = false;
 }
 
+function handleSuggestionSelect(opt: { categoryId: number; categoryName: string }) {
+  handleSelect(opt.categoryId, opt.categoryName, true);
+}
+
 function handleCreateNew() {
   const nameToCreate = searchValue.trim();
   if (nameToCreate) {
     selectedCategoryName.set(nameToCreate);
     selectedCategoryId.set(null);
+    userOverride = true;
     onUpdate?.(rowIndex, null, nameToCreate);
     searchValue = '';
     open = false;
@@ -149,6 +204,7 @@ function handleSelectTemporary(categoryName: string) {
 
   selectedCategoryName.set(categoryName);
   selectedCategoryId.set(null);
+  userOverride = true;
 
   if (hasChanged) {
     onUpdate?.(rowIndex, null, categoryName);
@@ -183,10 +239,20 @@ function handleClear() {
             variant="outline"
             class={cn(
               'h-8 w-full justify-start overflow-hidden text-xs text-ellipsis whitespace-nowrap',
-              !selectedCategory && !selectedCategoryName.get() && 'text-muted-foreground'
+              !selectedCategory && !selectedCategoryName.get() && 'text-muted-foreground',
+              isAISuggested && 'border-amber-500/50'
             )}>
-            <Tag class="mr-2 h-3 w-3" />
-            {displayName}
+            {#if isAISuggested}
+              <Sparkles class="mr-1.5 h-3 w-3 shrink-0 text-amber-500" />
+            {:else}
+              <Tag class="mr-2 h-3 w-3 shrink-0" />
+            {/if}
+            <span class="truncate">{displayName}</span>
+            {#if isAISuggested && suggestionConfidence > 0}
+              <Badge variant="secondary" class="ml-auto shrink-0 text-[10px] px-1 py-0">
+                {suggestionConfidence}%
+              </Badge>
+            {/if}
           </Button>
         {/snippet}
       </Popover.Trigger>
@@ -200,6 +266,30 @@ function handleClear() {
                 <X class="mr-2 h-4 w-4" />
                 Clear category
               </Command.Item>
+              <Command.Separator />
+            {/if}
+            {#if suggestion && suggestion.suggestions.length > 0 && !searchValue}
+              <Command.Group heading="AI Suggestions">
+                {#each suggestion.suggestions.slice(0, 3) as opt, i}
+                  {@const isSelected = selectedCategoryId.get() === opt.categoryId}
+                  <Command.Item
+                    value={`suggestion-${i}`}
+                    onSelect={() => handleSuggestionSelect(opt)}>
+                    <div class="flex w-full items-center">
+                      <Sparkles class={cn('mr-2 h-4 w-4 text-amber-500', isSelected && 'opacity-100', !isSelected && 'opacity-50')} />
+                      <span class="flex-1 truncate">{opt.categoryName}</span>
+                      <div class="ml-2 flex items-center gap-1.5">
+                        <Badge variant="outline" class="text-[10px] px-1 py-0">
+                          {formatReason(opt.reason)}
+                        </Badge>
+                        <span class="text-muted-foreground text-[10px]">
+                          {Math.round(opt.confidence * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                  </Command.Item>
+                {/each}
+              </Command.Group>
               <Command.Separator />
             {/if}
             {#if showCreateOption}

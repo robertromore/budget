@@ -2285,6 +2285,238 @@ Reactive state for intelligence features:
 </div>
 ```
 
+## Spotlight Tour System
+
+**Guided tour system with hierarchical chapters, branching paths, and demo mode
+support.**
+
+### Architecture Overview
+
+The spotlight tour provides step-by-step guided walkthroughs of the application
+with support for nested chapters, drill-down sub-tours, and demo mode
+integration.
+
+### Core Components
+
+#### Tour State (`src/lib/states/ui/spotlight-tour.svelte.ts`)
+
+- **SpotlightTourState**: Main state class managing tour progression
+- **ChapterNode**: Hierarchical chapter tree structure
+- **TourStackEntry**: Stack for nested sub-tour navigation
+
+#### Tour UI (`src/lib/components/onboarding/`)
+
+- **spotlight-overlay.svelte**: Dimmed backdrop with spotlight cutout
+- **spotlight-tooltip.svelte**: Step information and navigation
+- **tour-table-of-contents.svelte**: Hierarchical chapter navigation
+
+### Hierarchical Chapters
+
+Chapter IDs use path-like syntax for nesting:
+
+```typescript
+// Top-level chapters
+chapter: "getting-started"
+chapter: "account-tabs"
+
+// Nested chapters (use "/" delimiter)
+chapter: "account-tabs/import"
+chapter: "account-tabs/import/cleanup"
+```
+
+The TOC automatically builds a tree structure based on these paths, with
+recursive rendering for unlimited nesting depth.
+
+### Tour Timing Configuration
+
+Centralized timing constants in `src/lib/constants/tour-steps.ts`:
+
+```typescript
+export const TOUR_TIMING = {
+  // Internal delay in loadDemoImportData() - source of truth
+  DEMO_IMPORT_INTERNAL_DELAY: 500,
+
+  // Wait after triggering demo import (must exceed internal delay)
+  DEMO_IMPORT_WAIT: 700,
+
+  // Buffer for DOM rendering after state changes
+  DOM_RENDER_BUFFER: 300,
+
+  // Standard wizard step transitions
+  WIZARD_STEP_TRANSITION: 200,
+
+  // Sheet/modal open delay (must exceed animation duration)
+  // See sheet-content.svelte data-[state=open]:duration-500
+  SHEET_OPEN_DELAY: 550,
+} as const;
+```
+
+When adding new timing-sensitive tour steps, use these constants to ensure the
+spotlight calculates element positions after animations complete.
+
+### Tour Step Definition
+
+```typescript
+const step: TourStep = {
+  id: 'import-intro',
+  targetSelector: "[data-tour-id='import-tab']",
+  title: 'Import Transactions',
+  description: 'Import transactions from your bank...',
+  placement: 'bottom',
+  route: '/accounts/demo-checking?tab=import',
+  chapter: 'account-tabs/import',
+  // Setup function ensures prerequisites are met when jumping to this step
+  setup: async () => {
+    await advanceImportWizardTo('preview');
+  },
+  branches: [
+    {
+      id: 'import-deep-dive',
+      label: 'Learn More',
+      subTourSteps: IMPORT_DEEP_DIVE,
+    },
+  ],
+};
+```
+
+### Setup Functions
+
+Steps can define `setup` functions that ensure prerequisites are met when users
+jump directly to that step (skipping previous steps). Setup functions should be
+idempotent—safe to call even if prerequisites already exist.
+
+```typescript
+setup: async () => {
+  // Navigate to required page
+  await goto('/accounts/demo-checking?tab=import');
+
+  // Trigger demo mode actions
+  demoMode.triggerDemoImport();
+  await sleep(TOUR_TIMING.DEMO_IMPORT_WAIT);
+
+  // Open sheets/modals needed for the step
+  demoMode.triggerOpenCleanupSheet();
+  await sleep(TOUR_TIMING.SHEET_OPEN_DELAY);
+};
+```
+
+### Targeting Sheets and Modals
+
+To spotlight sheet/modal content, use the `dataTourId` prop on ResponsiveSheet:
+
+```svelte
+<ResponsiveSheet
+  bind:open={sheetOpen}
+  dataTourId="my-sheet-content"
+  hideOverlay={isTourActive}
+>
+  <!-- Sheet content -->
+</ResponsiveSheet>
+```
+
+The `dataTourId` prop applies `data-tour-id` to the Sheet.Content element,
+allowing the spotlight to correctly calculate the sheet's bounding rectangle.
+
+Important: Set `hideOverlay={isTourActive}` to prevent the sheet's overlay from
+conflicting with the tour's spotlight overlay.
+
+### Tour Branching
+
+Steps can offer drill-down sub-tours via the `branches` property. Users can
+explore detailed content and automatically return to the main tour.
+
+### TOC Drill-Down Navigation
+
+The Table of Contents automatically switches to a "drill-down" view when the
+current step is 3+ levels deep in the chapter hierarchy:
+
+- **Normal view (depth < 3)**: Shows all top-level chapters with expandable
+  children
+- **Drill-down view (depth >= 3)**: Shows only the current sub-section with a
+  "Back to overview" button
+
+This prevents the TOC from becoming cluttered when navigating deep nested steps.
+
+### Demo Mode Integration
+
+The tour integrates with demo mode (`src/lib/states/ui/demo-mode.svelte.ts`) for
+simulating account features during the tour:
+
+```typescript
+// Activate demo mode before starting tour
+demoMode.activate();
+demoMode.startTour();
+
+// Trigger demo actions
+demoMode.triggerDemoImport(); // Load demo CSV data
+demoMode.triggerAdvanceWizard('preview'); // Move to wizard step
+demoMode.triggerOpenCleanupSheet(); // Open cleanup sheet
+
+// Clean up after tour completes
+demoMode.endTour();
+demoMode.deactivate();
+```
+
+Demo mode provides event-driven communication between tour steps and UI
+components, allowing the tour to control wizard progression without tight
+coupling.
+
+## Tooltip Patterns
+
+**Consistent patterns for tooltips across the application.**
+
+### Tooltip with Dropdown Menu
+
+When a button needs both hover tooltip and click dropdown, nest them with
+conditional display:
+
+```svelte
+<DropdownMenu.Root bind:open={dropdownOpen}>
+  <Tooltip.Root
+    disableHoverableContent
+    delayDuration={300}
+    open={dropdownOpen ? false : undefined}
+  >
+    <Tooltip.Trigger>
+      {#snippet child({ props: tooltipProps })}
+        <DropdownMenu.Trigger>
+          {#snippet child({ props: dropdownProps })}
+            <Button {...tooltipProps} {...dropdownProps}>
+              <!-- Button content -->
+            </Button>
+          {/snippet}
+        </DropdownMenu.Trigger>
+      {/snippet}
+    </Tooltip.Trigger>
+    <Tooltip.Content>Tooltip text</Tooltip.Content>
+  </Tooltip.Root>
+  <DropdownMenu.Content>
+    <!-- Menu items -->
+  </DropdownMenu.Content>
+</DropdownMenu.Root>
+```
+
+Key points:
+
+- `open={dropdownOpen ? false : undefined}` hides tooltip when dropdown opens
+- `disableHoverableContent` prevents tooltip interference with dropdown
+- Merge both props onto the Button element
+
+### Keyboard Shortcut in Tooltips
+
+Display keyboard shortcuts with consistent styling:
+
+```svelte
+<Tooltip.Content>
+  <p>
+    Feature Name
+    <kbd class="bg-accent-foreground ml-2 rounded px-1.5 py-0.5 font-mono text-xs">
+      {navigator?.platform?.includes("Mac") ? "Cmd" : "Ctrl"}+Shift+K
+    </kbd>
+  </p>
+</Tooltip.Content>
+```
+
 ## Payee Cleanup System
 
 **Duplicate detection and payee normalization for data quality management.**

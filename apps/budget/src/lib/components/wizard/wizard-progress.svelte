@@ -12,14 +12,25 @@ let { wizardStore, class: className }: Props = $props();
 
 const steps = $derived(wizardStore.steps);
 const currentStepIndex = $derived(wizardStore.currentStepIndex);
-const progress = $derived(wizardStore.progress);
+
+// Calculate progress: only count steps that are both visited AND valid
+const progress = $derived.by(() => {
+  const total = steps.length;
+  if (total === 0) return 0;
+  const completed = steps.filter((step) => step.isVisited && step.isValid).length;
+  return (completed / total) * 100;
+});
 
 function getStepStatus(stepIndex: number) {
   const step = steps[stepIndex];
   if (!step) return 'upcoming';
 
-  if (step.isValid) return 'completed';
-  if (step.isVisited) return 'current';
+  // Step is only completed if user has visited it AND it's valid
+  if (step.isVisited && step.isValid) return 'completed';
+  // Current step is the one being viewed
+  if (stepIndex === currentStepIndex) return 'current';
+  // Visited but not valid - show as in-progress
+  if (step.isVisited) return 'in-progress';
   return 'upcoming';
 }
 
@@ -29,6 +40,7 @@ function getStepIcon(stepIndex: number) {
     case 'completed':
       return Check;
     case 'current':
+    case 'in-progress':
       return CircleDot;
     default:
       return Circle;
@@ -45,7 +57,9 @@ function getStepClasses(stepIndex: number) {
     case 'completed':
       return cn(baseClasses, 'text-green-600 dark:text-green-400');
     case 'current':
-      return cn(baseClasses, isCurrentStep ? 'text-primary' : 'text-muted-foreground');
+      return cn(baseClasses, 'text-primary');
+    case 'in-progress':
+      return cn(baseClasses, 'text-amber-600 dark:text-amber-400');
     default:
       return cn(baseClasses, 'text-muted-foreground');
   }
@@ -60,6 +74,8 @@ function getIconClasses(stepIndex: number) {
       return cn(baseClasses, 'text-green-600 dark:text-green-400');
     case 'current':
       return cn(baseClasses, 'text-primary');
+    case 'in-progress':
+      return cn(baseClasses, 'text-amber-600 dark:text-amber-400');
     default:
       return cn(baseClasses, 'text-muted-foreground');
   }
@@ -73,13 +89,20 @@ function getConnectorClasses(stepIndex: number) {
 
   const baseClasses = 'flex-1 h-px transition-colors';
 
-  if (currentStatus === 'completed' || nextStatus === 'completed') {
+  // Connector is green if current step is completed
+  if (currentStatus === 'completed') {
     return cn(baseClasses, 'bg-green-300 dark:bg-green-600');
-  } else if (currentStatus === 'current' || nextStatus === 'current') {
-    return cn(baseClasses, 'bg-primary/30');
-  } else {
-    return cn(baseClasses, 'bg-muted-foreground/20');
   }
+  // Connector is amber if current step is in-progress
+  if (currentStatus === 'in-progress') {
+    return cn(baseClasses, 'bg-amber-300 dark:bg-amber-600');
+  }
+  // Connector is primary if current step is being viewed
+  if (currentStatus === 'current') {
+    return cn(baseClasses, 'bg-primary/30');
+  }
+  // Default for upcoming steps
+  return cn(baseClasses, 'bg-muted-foreground/20');
 }
 </script>
 

@@ -42,22 +42,24 @@ const budgetColumns = $derived(
 );
 </script>
 
-<AdvancedDataTable
-  data={budgets}
-  columns={budgetColumns}
-  features={{
-    sorting: true,
-    filtering: true,
-    pagination: true,
-    rowSelection: true,
-    columnVisibility: true,
-  }}
-  showPagination={true}
-  pageSizeOptions={[10, 25, 50, 100]}>
-  {#snippet footer(tableInstance)}
-    <BudgetBulkActions table={tableInstance} allBudgets={budgets} {onBulkDelete} {onBulkArchive} />
-  {/snippet}
-  {#snippet empty()}
-    <AccountBudgetsEmptyState {accountId} {accountSlug} />
-  {/snippet}
-</AdvancedDataTable>
+<div data-tour-id="budgets-overview">
+  <AdvancedDataTable
+    data={budgets}
+    columns={budgetColumns}
+    features={{
+      sorting: true,
+      filtering: true,
+      pagination: true,
+      rowSelection: true,
+      columnVisibility: true,
+    }}
+    showPagination={true}
+    pageSizeOptions={[10, 25, 50, 100]}>
+    {#snippet footer(tableInstance)}
+      <BudgetBulkActions table={tableInstance} allBudgets={budgets} {onBulkDelete} {onBulkArchive} />
+    {/snippet}
+    {#snippet empty()}
+      <AccountBudgetsEmptyState {accountId} {accountSlug} />
+    {/snippet}
+  </AdvancedDataTable>
+</div>

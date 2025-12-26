@@ -30,7 +30,7 @@ const currentAnalytic = $derived(analyticsTypes.find((a) => a.id === selectedAna
     </div>
 
     <!-- Analytics Selection Grid -->
-    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5" data-tour-id="analytics-period-selector">
       {#each analyticsTypes as analytic}
         <Button
           variant={selectedAnalytic === analytic.id ? 'default' : 'outline'}
@@ -50,11 +50,15 @@ const currentAnalytic = $derived(analyticsTypes.find((a) => a.id === selectedAna
   <!-- Selected Analytics Chart -->
   {#if currentAnalytic}
     {#if selectedAnalytic === 'monthly-spending'}
-      <MonthlySpendingChart accountId={Number(accountId)} />
+      <div data-tour-id="analytics-trend-chart">
+        <MonthlySpendingChart accountId={Number(accountId)} />
+      </div>
     {:else if selectedAnalytic === 'income-vs-expenses'}
       <IncomeVsExpensesChart {transactions} />
     {:else if selectedAnalytic === 'top-categories'}
-      <TopCategoriesView {transactions} />
+      <div data-tour-id="analytics-category-chart">
+        <TopCategoriesView {transactions} />
+      </div>
     {:else}
       <Card.Root>
         <Card.Header>

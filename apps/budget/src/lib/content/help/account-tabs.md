@@ -1,10 +1,10 @@
 ---
-title: Account Tabs
+title: Account Page
 description: Navigate between account views
 related: [transaction-table, intelligence-tab]
 ---
 
-# Account Tabs
+# Account Page
 
 Tabs provide different views and actions for your account.
 

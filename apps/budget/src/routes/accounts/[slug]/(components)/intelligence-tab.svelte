@@ -60,7 +60,7 @@
   </div>
 
   <!-- Account Insights Grid -->
-  <div class="grid gap-4 md:grid-cols-2">
+  <div class="grid gap-4 md:grid-cols-2" data-tour-id="intelligence-insights">
     <!-- Income vs Expenses Card -->
     {#if incomeExpenseQuery.isLoading}
       <Skeleton class="h-[280px]" />
@@ -129,7 +129,7 @@
   <!-- Main Content Grid -->
   <div class="grid gap-6 lg:grid-cols-2">
     <!-- Forecast Section -->
-    <div class="space-y-4">
+    <div class="space-y-4" data-tour-id="intelligence-suggestions">
       <div class="flex items-center justify-between">
         <h2 class="flex items-center gap-2 text-lg font-semibold">
           <TrendingUp class="h-5 w-5" />
@@ -170,7 +170,7 @@
     </div>
 
     <!-- Anomalies Section -->
-    <div class="space-y-4">
+    <div class="space-y-4" data-tour-id="intelligence-anomalies">
       <div class="flex items-center justify-between">
         <h2 class="flex items-center gap-2 text-lg font-semibold">
           <AlertTriangle class="h-5 w-5" />

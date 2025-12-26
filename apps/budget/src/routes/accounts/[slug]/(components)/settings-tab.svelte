@@ -90,15 +90,21 @@ function isActive(id: string): boolean {
 	<!-- Main Content -->
 	<main class="min-w-0 flex-1">
 		{#if activeSection === 'general'}
-			<GeneralSection {account} {onAccountUpdated} />
+			<div data-tour-id="settings-details">
+				<GeneralSection {account} {onAccountUpdated} />
+			</div>
 		{:else if activeSection === 'financial'}
-			<FinancialSection {account} {onAccountUpdated} />
+			<div data-tour-id="settings-type">
+				<FinancialSection {account} {onAccountUpdated} />
+			</div>
 		{:else if activeSection === 'budget'}
 			<BudgetSection {account} />
 		{:else if activeSection === 'data'}
 			<DataSection {account} />
 		{:else if activeSection === 'danger'}
-			<DangerSection {account} />
+			<div data-tour-id="settings-danger-zone">
+				<DangerSection {account} />
+			</div>
 		{/if}
 	</main>
 </div>

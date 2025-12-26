@@ -2,7 +2,7 @@
 import ColumnMapper from '$lib/components/import/column-mapper.svelte';
 import EntityReview from '$lib/components/import/entity-review.svelte';
 import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svelte';
-import ImportDataTable from '$lib/components/import/import-data-table.svelte';
+import ImportPreviewTable from '$lib/components/import/import-preview-table.svelte';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Badge from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
@@ -19,6 +19,7 @@ import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { trpc } from '$lib/trpc/client';
 import type {
+  CleanupState,
   ColumnMapping,
   ImportPreviewData,
   ImportResult,
@@ -142,10 +143,29 @@ let entityOverrides = $state<
 >({});
 
 // Import options
-let createMissingPayees = $state(true);
-let createMissingCategories = $state(true);
-let allowPartialImport = $state(true);
-let reverseAmountSigns = $state(false);
+let importOptions = $state({
+  createMissingPayees: true,
+  createMissingCategories: true,
+  allowPartialImport: true,
+  reverseAmountSigns: false,
+});
+
+// Compatibility aliases (for existing code that uses individual variables)
+const createMissingPayees = $derived(importOptions.createMissingPayees);
+const createMissingCategories = $derived(importOptions.createMissingCategories);
+const allowPartialImport = $derived(importOptions.allowPartialImport);
+const reverseAmountSigns = $derived(importOptions.reverseAmountSigns);
+
+// Cleanup state for the preview table
+let cleanupState = $state<CleanupState | null>(null);
+
+function handleImportOptionsChange(options: typeof importOptions) {
+  importOptions = options;
+}
+
+function handleCleanupStateChange(state: CleanupState) {
+  cleanupState = state;
+}
 
 // Create reactive preview data that applies amount reversal and entity overrides
 const previewData = $derived.by(() => {
@@ -1270,7 +1290,7 @@ $effect(() => {
 </svelte:head>
 
 <div class="container mx-auto py-8">
-  <div data-help-id="import-page" data-help-title="Import Page">
+  <div data-help-id="import-page" data-help-title="Import Page" data-tour-id="import-page">
     {#if !hasImportableAccounts}
       <Empty.Empty>
         <Empty.EmptyMedia variant="icon">
@@ -1436,57 +1456,37 @@ $effect(() => {
           onBack={goBackToUpload} />
       {:else if currentStep === 'preview' && parseResults}
         <div class="space-y-6">
-          <!-- Import Options - Horizontal Layout -->
-          <Card.Root>
-            <Card.Header class="pb-3">
-              <Card.Title class="text-base">Import Options</Card.Title>
-            </Card.Header>
-            <Card.Content>
-              <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-                <label class="flex items-center gap-2">
-                  <Checkbox id="create-payees" bind:checked={createMissingPayees} />
-                  <span class="text-sm">Auto-create payees</span>
-                </label>
-
-                <label class="flex items-center gap-2">
-                  <Checkbox id="create-categories" bind:checked={createMissingCategories} />
-                  <span class="text-sm">Auto-create categories</span>
-                </label>
-
-                <label class="flex items-center gap-2">
-                  <Checkbox id="partial-import" bind:checked={allowPartialImport} />
-                  <span class="text-sm">Allow partial import</span>
-                </label>
-
-                <label class="flex items-center gap-2">
-                  <Checkbox id="reverse-amounts" bind:checked={reverseAmountSigns} />
-                  <span class="text-sm">Reverse amount signs</span>
-                </label>
-
-                {#if processorAnalysis.total > 0}
-                  <div class="border-l pl-6">
-                    <Button variant="outline" size="sm" onclick={openProcessorFilterDialog}>
-                      Filter Processors ({processorAnalysis.total})
-                    </Button>
-                  </div>
-                {/if}
-              </div>
-            </Card.Content>
-          </Card.Root>
-
           <!-- Preview Table -->
           {#if previewData}
-            <ImportDataTable
+            <ImportPreviewTable
               data={previewData.rows}
-              fileName={previewData.fileName}
-              onNext={proceedToScheduleReview}
-              onBack={goBackToUpload}
-              bind:selectedRows
+              {importOptions}
+              onImportOptionsChange={handleImportOptionsChange}
+              {cleanupState}
+              onCleanupStateChange={handleCleanupStateChange}
               onPayeeUpdate={handlePayeeUpdateWithSimilar}
               onCategoryUpdate={handleCategoryUpdateWithSimilar}
               onDescriptionUpdate={handleDescriptionUpdate}
               {temporaryCategories}
-              {temporaryPayees} />
+              {temporaryPayees}
+              processorCount={processorAnalysis.total}
+              onOpenProcessorFilter={openProcessorFilterDialog}
+            />
+
+            <!-- Navigation Buttons -->
+            <div class="flex items-center justify-between pt-4">
+              <Button variant="outline" onclick={goBackToUpload}>
+                Back
+              </Button>
+              <div class="flex items-center gap-2">
+                <span class="text-muted-foreground text-sm">
+                  {selectedRows.size} of {previewData.rows.length} selected
+                </span>
+                <Button onclick={proceedToScheduleReview} disabled={selectedRows.size === 0}>
+                  Continue
+                </Button>
+              </div>
+            </div>
           {/if}
         </div>
 

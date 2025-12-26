@@ -15,6 +15,8 @@ export interface CreateAccountData {
   initialBalance?: number;
   accountType?: AccountType;
   onBudget?: boolean;
+  accountIcon?: string;
+  accountColor?: string;
 }
 
 export interface UpdateAccountData {
@@ -70,6 +72,8 @@ export class AccountService {
         notes: sanitizedNotes,
         onBudget,
         accountType: data.accountType,
+        accountIcon: data.accountIcon,
+        accountColor: data.accountColor,
       },
       workspaceId
     );

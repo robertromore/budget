@@ -64,7 +64,8 @@ export class WizardStore {
 
   get progress() {
     const total = this.state.steps.length;
-    const completed = this.state.steps.filter((step) => step.isValid).length;
+    // Only count steps that are both visited AND valid as completed
+    const completed = this.state.steps.filter((step) => step.isVisited && step.isValid).length;
     return total > 0 ? (completed / total) * 100 : 0;
   }
 

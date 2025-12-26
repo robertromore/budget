@@ -1,6 +1,9 @@
 <script lang="ts">
 import { page } from '$app/state';
 import { ChatPanel, ChatTrigger } from '$lib/components/ai';
+import { DemoModeBanner } from '$lib/components/demo';
+import { TourContinuationDialog } from '$lib/components/onboarding';
+import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import AddPayeeDialog from '$lib/components/dialogs/add-payee-dialog.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
 import DeleteBudgetDialog from '$lib/components/dialogs/delete-budget-dialog.svelte';
@@ -10,6 +13,7 @@ import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog
 import SkipOccurrenceDialog from '$lib/components/dialogs/skip-occurrence-dialog.svelte';
 import { HelpButton, HelpOverlay } from '$lib/components/help';
 import { IntelligenceInputButton, IntelligenceInputOverlay } from '$lib/components/intelligence-input';
+import { SpotlightOverlay } from '$lib/components/onboarding';
 import AppSidebar from '$lib/components/layout/app-sidebar.svelte';
 import FontSizeToggle from '$lib/components/layout/font-size-toggle.svelte';
 import HeaderPageActions from '$lib/components/layout/header-page-actions.svelte';
@@ -155,14 +159,7 @@ onMount(() => {
                 <ThemeToggle />
                 <FontSizeToggle />
                 <ThemeButton />
-                <Tooltip.Root>
-                  <Tooltip.Trigger>
-                    {#snippet child({ props })}
-                      <ChatTrigger {...props} />
-                    {/snippet}
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>AI Assistant (Ctrl+Shift+K)</Tooltip.Content>
-                </Tooltip.Root>
+                <ChatTrigger />
                 <IntelligenceInputButton />
                 <HelpButton />
                 <SettingsButton />
@@ -186,6 +183,18 @@ onMount(() => {
 
   <!-- Intelligence Input Overlay - placed outside NuqsAdapter for proper z-index stacking -->
   <IntelligenceInputOverlay />
+
+  <!-- Spotlight Tour Overlay - for guided onboarding tour -->
+  <SpotlightOverlay />
+
+  <!-- Demo Mode Banner - shown when demo mode is active -->
+  <DemoModeBanner />
+
+  <!-- Tour Continuation Dialog - shown after main tour completion -->
+  <TourContinuationDialog
+    open={demoMode.showContinuationPrompt}
+    onClose={() => demoMode.hideContinuationDialog()}
+  />
 
   <!-- AI Chat Panel - global slide-out panel for AI assistant -->
   <ChatPanel />

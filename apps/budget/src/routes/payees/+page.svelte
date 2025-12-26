@@ -105,7 +105,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="payees-page-header" data-help-title="Payees Page">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="payees-page-header" data-help-title="Payees Page" data-tour-id="payees-page">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Payees</h1>
       <p class="text-muted-foreground">{allPayeesArray.length} payees total</p>

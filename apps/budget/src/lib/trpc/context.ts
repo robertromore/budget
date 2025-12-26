@@ -1,5 +1,6 @@
 import { workspaces } from "$lib/schema/workspaces";
 import { workspaceMembers } from "$lib/schema/workspace-members";
+import { users } from "$lib/schema/users";
 import { db } from "$lib/server/db";
 import { auth } from "$lib/server/auth";
 import type { RequestEvent } from "@sveltejs/kit";
@@ -14,7 +15,22 @@ interface SessionInfo {
 }
 
 /**
+ * Verify that a user actually exists in the database
+ * This handles cases where session data refers to a deleted user
+ */
+async function verifyUserExists(userId: string): Promise<boolean> {
+  const [user] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return !!user;
+}
+
+/**
  * Get the current user ID and session ID from the Better Auth session
+ * Validates that the user still exists in the database
  */
 async function getSessionInfo(event: RequestEvent): Promise<SessionInfo> {
   try {
@@ -23,6 +39,14 @@ async function getSessionInfo(event: RequestEvent): Promise<SessionInfo> {
     });
 
     if (session?.user?.id && session?.session?.id) {
+      // Verify the user actually exists in the database
+      // This handles cases where the user was deleted but the session cookie still exists
+      const userExists = await verifyUserExists(session.user.id);
+      if (!userExists) {
+        // User was deleted - treat as unauthenticated
+        return { userId: null, sessionId: null };
+      }
+
       return {
         userId: session.user.id,
         sessionId: session.session.id,
@@ -123,6 +147,7 @@ async function getCurrentWorkspaceId(
 /**
  * Get or create a default workspace
  * Used for initial setup or when no workspace is selected
+ * Note: userId is already validated in getSessionInfo, so we can trust it here
  */
 async function getOrCreateDefaultWorkspace(userId: string | null): Promise<number> {
   // Try to find existing default workspace
@@ -170,13 +195,13 @@ async function getOrCreateDefaultWorkspace(userId: string | null): Promise<numbe
     return workspace.id;
   }
 
-  // Create default workspace
+  // Create default workspace (without owner if no user)
   const [newWorkspace] = await db
     .insert(workspaces)
     .values({
       displayName: "Personal",
       slug: "personal",
-      ownerId: userId,
+      ownerId: userId, // Will be null if no user
       preferences: JSON.stringify({
         locale: "en-US",
         currency: "USD",
@@ -186,7 +211,7 @@ async function getOrCreateDefaultWorkspace(userId: string | null): Promise<numbe
     })
     .returning();
 
-  // If user is logged in, add them as owner
+  // If user exists, add them as owner
   if (userId) {
     await db.insert(workspaceMembers).values({
       workspaceId: newWorkspace.id,

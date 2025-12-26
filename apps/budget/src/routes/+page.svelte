@@ -1,6 +1,9 @@
 <script lang="ts">
+import { page } from '$app/stores';
+import { onMount } from 'svelte';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
+import { TourPromptDialog } from '$lib/components/onboarding';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { SchedulesState } from '$lib/states/entities/schedules.svelte';
@@ -23,6 +26,25 @@ const payees = $derived(Array.from(payeesState.payees.values()));
 
 const schedulesState = $derived(SchedulesState.get());
 const schedules = $derived(Array.from(schedulesState.schedules.values()));
+
+// Tour prompt state
+let showTourPrompt = $state(false);
+
+// Check for tour=start query param on mount
+onMount(() => {
+  const tourParam = $page.url.searchParams.get('tour');
+  if (tourParam === 'start') {
+    showTourPrompt = true;
+    // Remove the query param from URL without navigation
+    const url = new URL(window.location.href);
+    url.searchParams.delete('tour');
+    window.history.replaceState({}, '', url.toString());
+  }
+});
+
+function handleTourPromptClose() {
+  showTourPrompt = false;
+}
 </script>
 
 <svelte:head>
@@ -32,7 +54,7 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
     content="Your personal finance dashboard with comprehensive insights and analytics" />
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-6" data-tour-id="dashboard">
   <!-- Page Header -->
   <div class="flex items-center justify-between">
     <div>
@@ -221,3 +243,6 @@ const schedules = $derived(Array.from(schedulesState.schedules.values()));
     </div>
   </div>
 </div>
+
+<!-- Tour Prompt Dialog -->
+<TourPromptDialog bind:open={showTourPrompt} onClose={handleTourPromptClose} />

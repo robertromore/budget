@@ -26,6 +26,7 @@ import Upload from '@lucide/svelte/icons/upload';
 import Wallet from '@lucide/svelte/icons/wallet';
 import Wand from '@lucide/svelte/icons/wand';
 import type { Table as TanStackTable } from '@tanstack/table-core';
+import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 // Local component imports
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
@@ -78,11 +79,24 @@ let { data } = $props();
 // Get account slug from URL parameter
 const accountSlug = $derived(data.accountSlug);
 
-// Fetch account by slug to get ID for queries
+// Check if we're in demo mode viewing the demo account
+const isDemoView = $derived(demoMode.isActive && accountSlug === 'demo-checking');
+
+// Check if the slug is for the demo account (skip query even if demo mode isn't activated yet to avoid race condition)
+const isDemoSlug = $derived(accountSlug === 'demo-checking');
+
+// Fetch account by slug to get ID for queries (skip in demo mode or for demo slug)
 const accountQuery = $derived(
-  accountSlug ? rpc.accounts.getAccountDetail(accountSlug).options() : undefined
+  accountSlug && !isDemoView && !isDemoSlug ? rpc.accounts.getAccountDetail(accountSlug).options() : undefined
 );
-const accountData = $derived(accountQuery?.data);
+
+// Use demo account data when in demo mode, otherwise use real query data
+const accountData = $derived.by(() => {
+  if (isDemoView && demoMode.demoAccount) {
+    return demoMode.demoAccount;
+  }
+  return accountQuery?.data;
+});
 const accountId = $derived(accountData?.id);
 
 // Tab state management - synced with URL query string
@@ -141,7 +155,9 @@ let table = $state<TanStackTable<TransactionsFormat> | undefined>();
 let serverAccountState = $state<ServerAccountState | undefined>();
 
 // TanStack Query state - load ALL transactions including upcoming scheduled for client-side pagination
+// Skip real queries in demo mode
 const transactionsQuery = $derived.by(() => {
+  if (isDemoView) return undefined; // Demo mode uses mock data
   return serverAccountState && accountId
     ? rpc.transactions
         .getAllAccountTransactionsWithUpcoming(Number(accountId), {
@@ -159,15 +175,18 @@ const transactionsQuery = $derived.by(() => {
     : undefined;
 });
 const summaryQuery = $derived(
-  accountId ? rpc.transactions.getAccountSummary(Number(accountId)).options() : undefined
+  accountId && !isDemoView ? rpc.transactions.getAccountSummary(Number(accountId)).options() : undefined
 );
 const budgetCountQuery = $derived(rpc.budgets.getBudgetCount().options());
 const schedulesQuery = $derived(
-  accountId ? getSchedulesByAccount(Number(accountId)).options() : undefined
+  accountId && !isDemoView ? getSchedulesByAccount(Number(accountId)).options() : undefined
 );
-const schedules = $derived(schedulesQuery?.data ?? []);
+const schedules = $derived.by(() => {
+  if (isDemoView) return demoMode.demoSchedules;
+  return schedulesQuery?.data ?? [];
+});
 const budgetsQuery = $derived(
-  accountId ? getBudgetsByAccount(Number(accountId)).options() : undefined
+  accountId && !isDemoView ? getBudgetsByAccount(Number(accountId)).options() : undefined
 );
 const budgets = $derived(budgetsQuery?.data ?? []);
 
@@ -188,7 +207,9 @@ const bulkArchiveBudgetsMutation = rpc.budgets.bulkArchiveBudgets.options();
 const queryClient = useQueryClient();
 
 // Derived state from TanStack Query with proper reactivity
+// Use demo transactions when in demo mode
 const transactions = $derived.by(() => {
+  if (isDemoView) return demoMode.demoTransactions;
   if (!transactionsQuery) return [];
   return Array.isArray(transactionsQuery?.data) ? transactionsQuery.data : [];
 });
@@ -204,6 +225,8 @@ $effect(() => {
 });
 
 const isLoading = $derived.by(() => {
+  // Demo mode data is already loaded
+  if (isDemoView) return false;
   return (
     (transactionsQuery ? transactionsQuery?.isLoading : false) ||
     (summaryQuery ? summaryQuery.isLoading : false)
@@ -216,6 +239,8 @@ const error = $derived.by(() => {
   );
 });
 const isAccountNotFound = $derived.by(() => {
+  // In demo mode, never show "not found" for demo account
+  if (isDemoView) return false;
   const summaryError = summaryQuery ? summaryQuery.error : undefined;
   const transactionsError = transactionsQuery ? transactionsQuery?.error : undefined;
   return (
@@ -223,7 +248,16 @@ const isAccountNotFound = $derived.by(() => {
     transactionsError?.message?.includes('NOT_FOUND')
   );
 });
-const summary = $derived(summaryQuery ? summaryQuery.data : undefined);
+const summary = $derived.by(() => {
+  if (isDemoView && demoMode.demoAccount) {
+    return {
+      accountId: demoMode.demoAccount.id,
+      accountName: demoMode.demoAccount.name,
+      balance: demoMode.demoAccount.balance,
+    };
+  }
+  return summaryQuery ? summaryQuery.data : undefined;
+});
 const account = $derived(
   summary ? { id: summary.accountId, name: summary.accountName } : undefined
 );
@@ -334,9 +368,9 @@ const formattedTransactions = $derived.by(() => {
   });
 });
 
-// Initialize server account state
+// Initialize server account state (skip in demo mode - no real API calls needed)
 $effect(() => {
-  if (accountId) {
+  if (accountId && !isDemoView) {
     // Only create the state for UI management (filters, pagination)
     // TanStack Query handles the actual data loading
     const newState = new ServerAccountState(accountId);
@@ -758,7 +792,7 @@ $effect(() => {
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex items-center justify-between" data-help-id="account-page-header" data-help-title="Account Page">
+  <div class="flex items-center justify-between" data-help-id="account-page-header" data-help-title="Account Page" data-tour-id="account-header">
     <div>
       <div class="flex items-center gap-2">
         <h1 class="text-2xl font-bold tracking-tight">
@@ -766,6 +800,9 @@ $effect(() => {
         </h1>
         {#if !isAccountNotFound}
           <div class="h-3 w-3 rounded-full bg-green-500" title="Active account"></div>
+        {/if}
+        {#if isDemoView}
+          <Badge variant="outline" class="text-amber-600 border-amber-300">Demo</Badge>
         {/if}
       </div>
     </div>
@@ -780,7 +817,7 @@ $effect(() => {
             Add Expense
           </Button>
         {:else}
-          <Button onclick={() => (addTransactionDialogOpen = true)} data-help-id="add-transaction-button" data-help-title="Add Transaction" data-help-modal="add-transaction">
+          <Button onclick={() => (addTransactionDialogOpen = true)} data-help-id="add-transaction-button" data-help-title="Add Transaction" data-help-modal="add-transaction" data-tour-id="add-transaction-button">
             <Plus class="mr-2 h-4 w-4" />
             Add Transaction
           </Button>
@@ -827,7 +864,7 @@ $effect(() => {
         class="tabs-connected w-full"
       >
         <Tabs.List class="tabs-connected-list">
-          <Tabs.Trigger value="transactions" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-transactions" data-help-title="Transactions Tab">
+          <Tabs.Trigger value="transactions" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-transactions" data-help-title="Transactions Tab" data-tour-id="transactions-tab">
             <List class="mr-2 h-4 w-4" />
             Transactions
           </Tabs.Trigger>
@@ -837,29 +874,29 @@ $effect(() => {
             <Tabs.Trigger value="hsa-dashboard" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-hsa-dashboard" data-help-title="HSA Dashboard Tab"
               >HSA Dashboard</Tabs.Trigger>
           {/if}
-          <Tabs.Trigger value="analytics" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-analytics" data-help-title="Analytics Tab">
+          <Tabs.Trigger value="analytics" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-analytics" data-help-title="Analytics Tab" data-tour-id="analytics-tab">
             <ChartLine class="mr-2 h-4 w-4" />
             Analytics
           </Tabs.Trigger>
-          <Tabs.Trigger value="intelligence" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-intelligence" data-help-title="Intelligence Tab">
+          <Tabs.Trigger value="intelligence" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-intelligence" data-help-title="Intelligence Tab" data-tour-id="intelligence-tab">
             <Brain class="mr-2 h-4 w-4" />
             Intelligence
           </Tabs.Trigger>
-          <Tabs.Trigger value="schedules" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-schedules" data-help-title="Schedules Tab">
+          <Tabs.Trigger value="schedules" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-schedules" data-help-title="Schedules Tab" data-tour-id="schedules-tab">
             <Calendar class="mr-2 h-4 w-4" />
             Schedules
           </Tabs.Trigger>
-          <Tabs.Trigger value="budgets" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-budgets" data-help-title="Budgets Tab">
+          <Tabs.Trigger value="budgets" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-budgets" data-help-title="Budgets Tab" data-tour-id="budgets-tab">
             <Wallet class="mr-2 h-4 w-4" />
             Budgets
           </Tabs.Trigger>
           {#if !isHsaAccount}
-            <Tabs.Trigger value="import" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-import" data-help-title="Import Tab">
+            <Tabs.Trigger value="import" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-import" data-help-title="Import Tab" data-tour-id="import-tab">
               <Upload class="mr-2 h-4 w-4" />
               Import
             </Tabs.Trigger>
           {/if}
-          <Tabs.Trigger value="settings" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-settings" data-help-title="Settings Tab">
+          <Tabs.Trigger value="settings" class="tabs-connected-trigger px-6 font-medium" data-help-id="account-tab-settings" data-help-title="Settings Tab" data-tour-id="settings-tab">
             <SlidersHorizontal class="mr-2 h-4 w-4" />
             Settings
           </Tabs.Trigger>
@@ -934,9 +971,9 @@ $effect(() => {
       <!-- Schedules Tab Content -->
       <Tabs.Content value="schedules" class="tabs-connected-content space-y-4" data-help-id="schedules-tab" data-help-title="Schedules Tab">
         {#if schedules && !isLoading && activeTab === 'schedules'}
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between" data-tour-id="schedules-upcoming">
             <div></div>
-            <Button variant="outline" onclick={() => (scheduleRecommendationsSheetOpen = true)}>
+            <Button variant="outline" onclick={() => (scheduleRecommendationsSheetOpen = true)} data-tour-id="schedules-frequency">
               <Sparkles class="mr-2 h-4 w-4" />
               Recommendations
             </Button>
@@ -963,9 +1000,9 @@ $effect(() => {
       <!-- Budgets Tab Content -->
       <Tabs.Content value="budgets" class="tabs-connected-content space-y-4" data-help-id="budgets-tab" data-help-title="Budgets Tab">
         {#if budgets && !isLoading && activeTab === 'budgets'}
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between" data-tour-id="budgets-progress">
             <div></div>
-            <Button variant="outline" onclick={() => (budgetRecommendationsSheetOpen = true)}>
+            <Button variant="outline" onclick={() => (budgetRecommendationsSheetOpen = true)} data-tour-id="budgets-allocation">
               <Sparkles class="mr-2 h-4 w-4" />
               Recommendations
             </Button>

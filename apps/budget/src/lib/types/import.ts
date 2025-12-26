@@ -313,3 +313,107 @@ export interface ScheduleMatch {
     recurring: boolean;
   };
 }
+
+// ============================================================================
+// Payee Cleanup & Category Recommendation Types (Phase 13)
+// ============================================================================
+
+/**
+ * User decision for payee group handling
+ */
+export type PayeeGroupDecision = "accept" | "reject" | "custom" | "pending";
+
+/**
+ * A group of similar payees detected during import cleanup
+ */
+export interface PayeeGroupMember {
+  rowIndex: number;
+  originalPayee: string;
+  normalizedPayee: string;
+}
+
+export interface ExistingPayeeMatch {
+  id: number;
+  name: string;
+  confidence: number;
+}
+
+export interface PayeeGroup {
+  /** Unique identifier for this group */
+  groupId: string;
+  /** The cleaned/normalized name to use for all members */
+  canonicalName: string;
+  /** How confident we are in grouping (0-1) */
+  confidence: number;
+  /** All payee variations that were grouped together */
+  members: PayeeGroupMember[];
+  /** Match to existing payee in database, if found */
+  existingMatch?: ExistingPayeeMatch;
+  /** User's decision for how to handle this group */
+  userDecision: PayeeGroupDecision;
+  /** Custom name if user chose 'custom' decision */
+  customName?: string;
+}
+
+/**
+ * Reason for a category suggestion
+ */
+export type CategorySuggestionReason =
+  | "payee_match" // Payee has a default category
+  | "payee_history" // This payee typically uses this category
+  | "amount_pattern" // Amount pattern matches this category
+  | "time_pattern" // Transaction time pattern matches
+  | "similar_transaction" // Similar transactions use this category
+  | "ml_prediction"; // ML model prediction
+
+export interface CategorySuggestionOption {
+  categoryId: number;
+  categoryName: string;
+  categoryGroupName?: string;
+  /** Confidence score (0-1) */
+  confidence: number;
+  /** Why this category was suggested */
+  reason: CategorySuggestionReason;
+}
+
+export interface CategorySuggestion {
+  rowIndex: number;
+  /** Top suggestions ordered by confidence */
+  suggestions: CategorySuggestionOption[];
+  /** The category ID that was selected (auto or user) */
+  selectedCategoryId?: number;
+  /** Whether user manually overrode the auto-selection */
+  userOverride: boolean;
+}
+
+/**
+ * State for the cleanup step in the import wizard
+ */
+export interface CleanupState {
+  /** Grouped payees with merge suggestions */
+  payeeGroups: PayeeGroup[];
+  /** Category suggestions for each row */
+  categorySuggestions: CategorySuggestion[];
+  /** Whether analysis is currently running */
+  isAnalyzing: boolean;
+  /** Analysis progress (0-100) */
+  analysisProgress: number;
+  /** Current analysis phase */
+  analysisPhase?: "grouping_payees" | "matching_existing" | "suggesting_categories";
+}
+
+/**
+ * Summary statistics for the cleanup step
+ */
+export interface CleanupSummary {
+  /** Number of unique payee groups */
+  payeeGroupCount: number;
+  /** Number of groups matched to existing payees */
+  existingPayeeMatches: number;
+  /** Number of new payees to create */
+  newPayeesToCreate: number;
+  /** Number of rows with high-confidence category suggestions */
+  autoFilledCategories: number;
+  /** Number of rows needing manual category review */
+  manualCategoryReview: number;
+}

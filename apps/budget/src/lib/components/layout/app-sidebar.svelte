@@ -9,6 +9,7 @@ import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import { isDebtAccount } from '$lib/schema/accounts';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { deleteAccountDialog, deleteAccountId } from '$lib/states/ui/global.svelte';
+import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import {
   calculateDebtMetrics,
   formatAccountBalance,
@@ -58,7 +59,15 @@ async function handleSignOut() {
 }
 
 const accountsState = $derived(AccountsState.get());
-const accounts = $derived(accountsState.sorted);
+// Include demo account at the top when demo mode is active
+const accounts = $derived.by(() => {
+  const realAccounts = accountsState.sorted;
+  if (demoMode.isActive && demoMode.demoAccount) {
+    // Cast demo account to match account type and prepend
+    return [demoMode.demoAccount as (typeof realAccounts)[0], ...realAccounts];
+  }
+  return realAccounts;
+});
 const totalBalance = $derived(accountsState.getTotalBalance());
 const onBudgetBalance = $derived(accountsState.getOnBudgetBalance());
 
@@ -66,12 +75,12 @@ const _deleteAccountDialog = $derived(deleteAccountDialog);
 const _deleteAccountId = $derived(deleteAccountId);
 </script>
 
-<Sidebar.Root data-help-id="sidebar" data-help-title="Sidebar Navigation">
+<Sidebar.Root data-help-id="sidebar" data-help-title="Sidebar Navigation" data-tour-id="sidebar">
   <Sidebar.Header class="border-sidebar-border h-16 border-b">
     <WorkspaceSwitcher />
   </Sidebar.Header>
   <Sidebar.Content>
-    <Sidebar.Group>
+    <Sidebar.Group data-tour-id="main-navigation">
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
@@ -172,7 +181,7 @@ const _deleteAccountId = $derived(deleteAccountId);
       <!-- <div class="mt-2 px-2 w-full">
         <AccountSortDropdown variant="outline" />
       </div> -->
-      <Sidebar.GroupAction title="Add Account" onclick={() => goto('/accounts/new')}>
+      <Sidebar.GroupAction title="Add Account" onclick={() => goto('/accounts/new')} data-tour-id="add-account-button">
         <Plus /> <span class="sr-only">Add Account</span>
       </Sidebar.GroupAction>
       <Sidebar.GroupContent>
@@ -221,6 +230,9 @@ const _deleteAccountId = $derived(deleteAccountId);
                             <span data-testid="account-name" class="truncate text-sm font-medium">
                               {account.name}
                             </span>
+                            {#if account.slug === 'demo-checking'}
+                              <Badge variant="outline" class="border-amber-500/50 bg-amber-50 px-1.5 py-0 text-xs text-amber-700 dark:bg-amber-950/20 dark:text-amber-400">Demo</Badge>
+                            {/if}
                             {#if account.closed}
                               <Badge variant="secondary" class="px-1.5 py-0 text-xs">Closed</Badge>
                             {/if}
@@ -297,27 +309,29 @@ const _deleteAccountId = $derived(deleteAccountId);
                   </a>
                 {/snippet}
               </Sidebar.MenuButton>
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger>
-                  {#snippet child({ props })}
-                    <Sidebar.MenuAction {...props}>
-                      <Ellipsis />
-                    </Sidebar.MenuAction>
-                  {/snippet}
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content side="right" align="start">
-                  <DropdownMenu.Item>
-                    <a href="/accounts/{account.slug}/edit" class="w-full">Edit</a>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    onclick={() => {
-                      _deleteAccountId.current = account.id;
-                      _deleteAccountDialog.setTrue();
-                    }}>
-                    <span>Delete</span>
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Root>
+              {#if account.slug !== 'demo-checking'}
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger>
+                    {#snippet child({ props })}
+                      <Sidebar.MenuAction {...props}>
+                        <Ellipsis />
+                      </Sidebar.MenuAction>
+                    {/snippet}
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content side="right" align="start">
+                    <DropdownMenu.Item>
+                      <a href="/accounts/{account.slug}/edit" class="w-full">Edit</a>
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      onclick={() => {
+                        _deleteAccountId.current = account.id;
+                        _deleteAccountDialog.setTrue();
+                      }}>
+                      <span>Delete</span>
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+              {/if}
             </Sidebar.MenuItem>
           {/each}
         </Sidebar.Menu>

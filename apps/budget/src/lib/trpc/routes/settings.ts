@@ -60,9 +60,18 @@ export const settingsRoutes = t.router({
   /**
    * Delete all data from all user tables.
    * This is a destructive operation that cannot be undone.
+   * Preserves auth-related tables (user, session, account, verification).
    */
   deleteAllData: secureOperationProcedure.mutation(async () => {
     try {
+      // Tables to preserve (auth-related tables that should not be deleted)
+      const protectedTables = new Set([
+        "user",           // User accounts
+        "session",        // Auth sessions
+        "account",        // OAuth accounts (Better Auth)
+        "verification",   // Email/password verification tokens
+      ]);
+
       // Get all table names from sqlite_master
       const allTables = await db.all<{ name: string }>(sql`
         SELECT name FROM sqlite_master
@@ -72,7 +81,10 @@ export const settingsRoutes = t.router({
         ORDER BY name
       `);
 
-      const tableNames = allTables.map((t) => t.name);
+      // Filter out protected auth tables
+      const tableNames = allTables
+        .map((t) => t.name)
+        .filter((name) => !protectedTables.has(name));
 
       if (tableNames.length === 0) {
         return { deleted: 0, tables: [] };
@@ -82,7 +94,7 @@ export const settingsRoutes = t.router({
       await db.run(sql`PRAGMA foreign_keys = OFF`);
 
       try {
-        // Delete from all tables
+        // Delete from all tables (except protected ones)
         for (const tableName of tableNames) {
           await db.run(sql.raw(`DELETE FROM "${tableName}"`));
         }
