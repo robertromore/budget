@@ -10,6 +10,8 @@ import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { deleteCategoryDialog, deleteCategoryId } from '$lib/states/ui/categories.svelte';
 import { categorySearchState } from '$lib/states/ui/category-search.svelte';
+import { demoMode } from '$lib/states/ui/demo-mode.svelte';
+import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
 import EntitySearchToolbar from '$lib/components/shared/search/entity-search-toolbar.svelte';
 import CategorySearchResults from './(components)/search/category-search-results.svelte';
 import CategoryTreeView from './(components)/tree/category-tree-view.svelte';
@@ -32,9 +34,24 @@ import {
 import type { CategoryWithGroup } from '$lib/server/domains/categories/repository';
 import { rpc } from '$lib/query';
 
+// Demo mode detection
+const isDemoView = $derived(demoMode.isActive);
+const isTourActive = $derived(spotlightTour.isActive);
+const currentChapter = $derived(spotlightTour.currentChapter);
+
+// Check if we're in categories-page chapter (interactable) vs navigation chapter (view-only)
+const isCategoriesPageChapter = $derived(currentChapter?.startsWith('categories-page') ?? false);
+const isViewOnly = $derived(isDemoView && isTourActive && !isCategoriesPageChapter);
+
 const categoriesState = $derived(CategoriesState.get());
 const categories = $derived(categoriesState.categories.values());
-const categoriesArray = $derived(Array.from(categories));
+
+// Use demo data when in demo mode (no conversion needed - already Category type)
+const categoriesArray = $derived<Category[]>(
+  isDemoView
+    ? demoMode.demoCategories
+    : Array.from(categories)
+);
 const hasNoCategories = $derived(categoriesArray.length === 0);
 
 // Fetch categories with group information
@@ -236,7 +253,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
   <meta name="description" content="Manage your transaction categories" />
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-6" class:pointer-events-none={isViewOnly}>
   <!-- Header -->
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="categories-page-header" data-help-title="Categories Page" data-tour-id="categories-page">
     <div>
@@ -251,18 +268,18 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
     </div>
     <div class="flex items-center gap-2">
       {#if showSecondaryOnPage}
-        <SeedDefaultCategoriesButton />
-        <Button variant="outline" onclick={() => sheets.openGroupManagement()}>
+        <SeedDefaultCategoriesButton data-tour-id="seed-categories-button" />
+        <Button variant="outline" onclick={() => sheets.openGroupManagement()} data-tour-id="categories-groups-button">
           <FolderCog class="mr-2 h-4 w-4" />
           Group Management
         </Button>
-        <Button variant="outline" href="/categories/analytics">
+        <Button variant="outline" href="/categories/analytics" data-tour-id="categories-analytics-button">
           <BarChart3 class="mr-2 h-4 w-4" />
           Analytics
         </Button>
       {/if}
       {#if showPrimaryOnPage}
-        <Button href="/categories/new">
+        <Button href="/categories/new" data-tour-id="create-category-button">
           <Plus class="mr-2 h-4 w-4" />
           Add Category
         </Button>
@@ -325,7 +342,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
     </div>
   {:else}
     <!-- Search Results -->
-    <div data-help-id="categories-list" data-help-title="Categories List">
+    <div data-help-id="categories-list" data-help-title="Categories List" data-tour-id="categories-list">
     <CategorySearchResults
       categories={displayedCategories}
       isLoading={isSearching}

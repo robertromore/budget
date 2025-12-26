@@ -18,6 +18,8 @@ import {
 } from '$lib/query/budgets';
 import type { BudgetGroup } from '$lib/schema/budgets';
 import type { BudgetWithRelations } from '$lib/server/domains/budgets';
+import { demoMode, type DemoBudget } from '$lib/states/ui/demo-mode.svelte';
+import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import { getPageTabsContext } from '$lib/stores/page-tabs.svelte';
 import { calculateActualSpent, calculateAllocated } from '$lib/utils/budget-calculations';
@@ -46,14 +48,73 @@ import BudgetFundTransfer from './(components)/managers/budget-fund-transfer.sve
 import BudgetRolloverManager from './(components)/managers/budget-rollover-manager.svelte';
 import BudgetSearchResults from './(components)/search/budget-search-results.svelte';
 
-// Use reactive client-side query instead of server data
-const budgetsQuery = listBudgets().options();
-const budgets = $derived<BudgetWithRelations[]>(budgetsQuery.data ?? []);
-const budgetsLoading = $derived(budgetsQuery.isLoading);
+// Demo mode detection
+const isDemoView = $derived(demoMode.isActive);
+const isTourActive = $derived(spotlightTour.isActive);
+const currentChapter = $derived(spotlightTour.currentChapter);
 
-// Get pending recommendations count for badge
-const pendingCountQuery = getPendingRecommendationsCount().options();
-const pendingCount = $derived(pendingCountQuery.data ?? 0);
+// Check if we're in budget-page chapter (interactable) vs navigation chapter (view-only)
+const isBudgetPageChapter = $derived(currentChapter?.startsWith('budget-page') ?? false);
+const isViewOnly = $derived(isDemoView && isTourActive && !isBudgetPageChapter);
+
+// Use reactive client-side query instead of server data (skip when in demo mode)
+const budgetsQuery = $derived(!isDemoView ? listBudgets().options() : undefined);
+const budgetsLoading = $derived(isDemoView ? false : (budgetsQuery?.isLoading ?? true));
+
+// Convert demo budgets to BudgetWithRelations-like structure for display
+function demoBudgetToBudgetWithRelations(demoBudget: DemoBudget): BudgetWithRelations {
+  return {
+    id: demoBudget.id,
+    workspaceId: demoBudget.workspaceId,
+    name: demoBudget.name,
+    slug: demoBudget.slug,
+    description: demoBudget.description,
+    type: demoBudget.type,
+    scope: demoBudget.scope,
+    status: demoBudget.status,
+    enforcementLevel: demoBudget.enforcementLevel,
+    metadata: {
+      allocatedAmount: demoBudget.allocatedAmount,
+      goal: demoBudget.goal,
+    },
+    createdAt: demoBudget.createdAt,
+    updatedAt: demoBudget.updatedAt,
+    deletedAt: null,
+    // Relations as expected by BudgetWithRelations
+    accounts: demoBudget.accounts.map(a => ({
+      id: 0,
+      budgetId: demoBudget.id,
+      accountId: a.id,
+      createdAt: demoBudget.createdAt,
+      account: { id: a.id, name: a.name } as any,
+    })),
+    categories: demoBudget.categories.map(c => ({
+      id: 0,
+      budgetId: demoBudget.id,
+      categoryId: c.id,
+      createdAt: demoBudget.createdAt,
+      category: { id: c.id, name: c.name, categoryColor: c.color } as any,
+    })),
+    transactions: [],
+    groupMemberships: [],
+    periodTemplates: [],
+  } as BudgetWithRelations;
+}
+
+// Use demo data when in demo mode, otherwise use query data
+const budgets = $derived<BudgetWithRelations[]>(
+  isDemoView
+    ? demoMode.demoBudgets.map(demoBudgetToBudgetWithRelations)
+    : (budgetsQuery?.data ?? [])
+);
+
+// Get pending recommendations count for badge (skip when in demo mode)
+const pendingCountQuery = $derived(!isDemoView ? getPendingRecommendationsCount().options() : undefined);
+const pendingCount = $derived(
+  isDemoView
+    ? demoMode.demoBudgetRecommendations.length
+    : (pendingCountQuery?.data ?? 0)
+);
 
 let manageDialogOpen = $state(false);
 let selectedBudget = $state<BudgetWithRelations | null>(null);
@@ -196,6 +257,38 @@ function resolveStatus(budget: BudgetWithRelations) {
 }
 
 const summaryMetrics = $derived.by(() => {
+  // Use demo budget data directly when in demo mode (pre-calculated values)
+  if (isDemoView) {
+    const demoBudgets = demoMode.demoBudgets;
+    let totalAllocated = 0;
+    let totalConsumed = 0;
+    let atRiskCount = 0;
+    let approachingCount = 0;
+
+    demoBudgets.forEach((budget) => {
+      totalAllocated += budget.allocatedAmount;
+      totalConsumed += budget.spent;
+
+      if (budget.progressStatus === 'over') atRiskCount++;
+      else if (budget.progressStatus === 'approaching') approachingCount++;
+    });
+
+    const remaining = totalAllocated - totalConsumed;
+    const percentUsed = totalAllocated > 0 ? (totalConsumed / totalAllocated) * 100 : 0;
+
+    return {
+      totalAllocated,
+      totalConsumed,
+      remaining,
+      percentUsed,
+      atRiskCount,
+      approachingCount,
+      totalBudgets: demoBudgets.length,
+      activeBudgets: demoBudgets.filter((b) => b.status === 'active').length,
+    };
+  }
+
+  // Regular calculation for real budgets
   let totalAllocated = 0;
   let totalConsumed = 0;
   let atRiskCount = 0;
@@ -236,7 +329,7 @@ const summaryMetrics = $derived.by(() => {
   <meta name="description" content="Manage your budgets and spending limits" />
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-6" class:pointer-events-none={isViewOnly}>
   <!-- Header -->
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="budgets-page-header" data-help-title="Budgets Page" data-tour-id="budgets-page">
     <div>
@@ -254,7 +347,7 @@ const summaryMetrics = $derived.by(() => {
         <Sparkles class="mr-2 h-4 w-4" />
         Templates
       </Button>
-      <Button href="/budgets/new">
+      <Button href="/budgets/new" data-tour-id="create-budget-button">
         <Plus class="mr-2 h-4 w-4" />
         Create Budget
       </Button>
@@ -267,7 +360,8 @@ const summaryMetrics = $derived.by(() => {
       class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
       role="region"
       aria-label="Budget summary statistics"
-      data-help-id="budget-summary" data-help-title="Budget Summary">
+      data-help-id="budget-summary" data-help-title="Budget Summary"
+      data-tour-id="budget-summary">
       <Card.Root>
         <Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
           <Card.Title class="text-xs font-medium sm:text-sm">Total Allocated</Card.Title>
@@ -361,12 +455,12 @@ const summaryMetrics = $derived.by(() => {
     <!-- Show tabs even when there are no budgets so users can access Recommendations -->
     {#if showTabsOnPage}
       <Tabs.Root value={activeTab} onValueChange={(v) => (activeTab = v ?? 'overview')} class="space-y-6">
-        <Tabs.List class="grid w-full grid-cols-6" data-help-id="budget-tabs" data-help-title="Budget Tabs">
-          <Tabs.Trigger value="overview" class="flex items-center gap-2">
+        <Tabs.List class="grid w-full grid-cols-6" data-help-id="budget-tabs" data-help-title="Budget Tabs" data-tour-id="budget-tabs">
+          <Tabs.Trigger value="overview" class="flex items-center gap-2" data-tour-id="budget-overview-tab">
             <Grid3x3 class="h-4 w-4" />
             Budget Overview
           </Tabs.Trigger>
-          <Tabs.Trigger value="recommendations" class="flex items-center gap-2">
+          <Tabs.Trigger value="recommendations" class="flex items-center gap-2" data-tour-id="budget-recommendations-tab">
             <Sparkles class="h-4 w-4" />
             Recommendations
             {#if pendingCount > 0}
@@ -375,19 +469,19 @@ const summaryMetrics = $derived.by(() => {
               </Badge>
             {/if}
           </Tabs.Trigger>
-          <Tabs.Trigger value="groups" class="flex items-center gap-2">
+          <Tabs.Trigger value="groups" class="flex items-center gap-2" data-tour-id="budget-groups-tab">
             <FolderTree class="h-4 w-4" />
             Groups
           </Tabs.Trigger>
-          <Tabs.Trigger value="transfer" class="flex items-center gap-2">
+          <Tabs.Trigger value="transfer" class="flex items-center gap-2" data-tour-id="budget-fund-transfer-tab">
             <ArrowRightLeft class="h-4 w-4" />
             Fund Transfer
           </Tabs.Trigger>
-          <Tabs.Trigger value="rollover" class="flex items-center gap-2">
+          <Tabs.Trigger value="rollover" class="flex items-center gap-2" data-tour-id="budget-rollover-tab">
             <RotateCcw class="h-4 w-4" />
             Rollover Manager
           </Tabs.Trigger>
-          <Tabs.Trigger value="analytics" class="flex items-center gap-2">
+          <Tabs.Trigger value="analytics" class="flex items-center gap-2" data-tour-id="budget-analytics-tab">
             <ChartBar class="h-4 w-4" />
             Analytics & Insights
           </Tabs.Trigger>
@@ -423,18 +517,20 @@ const summaryMetrics = $derived.by(() => {
           </Empty.Empty>
         {:else}
           <!-- Budget Results -->
-          <BudgetSearchResults
-            {budgets}
-            isLoading={budgetsLoading}
-            searchQuery=""
-            viewMode="list"
-            onView={handleViewBudget}
-            onEdit={handleEditBudget}
-            onDelete={handleDeleteBudget}
-            onDuplicate={handleDuplicateBudget}
-            onArchive={handleArchiveBudget}
-            onBulkDelete={handleBulkDeleteBudgets}
-            onBulkArchive={handleBulkArchiveBudgets} />
+          <div data-tour-id="budget-list">
+            <BudgetSearchResults
+              {budgets}
+              isLoading={budgetsLoading}
+              searchQuery=""
+              viewMode="list"
+              onView={handleViewBudget}
+              onEdit={handleEditBudget}
+              onDelete={handleDeleteBudget}
+              onDuplicate={handleDuplicateBudget}
+              onArchive={handleArchiveBudget}
+              onBulkDelete={handleBulkDeleteBudgets}
+              onBulkArchive={handleBulkArchiveBudgets} />
+          </div>
         {/if}
       </Tabs.Content>
 
@@ -504,18 +600,20 @@ const summaryMetrics = $derived.by(() => {
             </Empty.Empty>
           {:else}
             <!-- Budget Results -->
-            <BudgetSearchResults
-              {budgets}
-              isLoading={budgetsLoading}
-              searchQuery=""
-              viewMode="list"
-              onView={handleViewBudget}
-              onEdit={handleEditBudget}
-              onDelete={handleDeleteBudget}
-              onDuplicate={handleDuplicateBudget}
-              onArchive={handleArchiveBudget}
-              onBulkDelete={handleBulkDeleteBudgets}
-              onBulkArchive={handleBulkArchiveBudgets} />
+            <div data-tour-id="budget-list">
+              <BudgetSearchResults
+                {budgets}
+                isLoading={budgetsLoading}
+                searchQuery=""
+                viewMode="list"
+                onView={handleViewBudget}
+                onEdit={handleEditBudget}
+                onDelete={handleDeleteBudget}
+                onDuplicate={handleDuplicateBudget}
+                onArchive={handleArchiveBudget}
+                onBulkDelete={handleBulkDeleteBudgets}
+                onBulkArchive={handleBulkArchiveBudgets} />
+            </div>
           {/if}
         {:else if activeTab === 'recommendations'}
           <BudgetRecommendationsPanel />

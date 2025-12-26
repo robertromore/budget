@@ -5,14 +5,64 @@ import { Button, buttonVariants } from '$lib/components/ui/button';
 import * as Empty from '$lib/components/ui/empty';
 import type { Schedule } from '$lib/schema/schedules';
 import { SchedulesState } from '$lib/states/entities';
+import { demoMode, type DemoSchedule } from '$lib/states/ui/demo-mode.svelte';
+import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
 import Calendar from '@lucide/svelte/icons/calendar';
 import Plus from '@lucide/svelte/icons/plus';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import ScheduleSearchResults from './(components)/search/schedule-search-results.svelte';
 
+// Demo mode detection
+const isDemoView = $derived(demoMode.isActive);
+const isTourActive = $derived(spotlightTour.isActive);
+const currentChapter = $derived(spotlightTour.currentChapter);
+
+// Check if we're in schedules-page chapter (interactable) vs navigation chapter (view-only)
+const isSchedulesPageChapter = $derived(currentChapter?.startsWith('schedules-page') ?? false);
+const isViewOnly = $derived(isDemoView && isTourActive && !isSchedulesPageChapter);
+
+// Convert demo schedules to Schedule type for display
+function demoScheduleToSchedule(demoSchedule: DemoSchedule): Schedule {
+  const now = new Date().toISOString();
+  return {
+    id: demoSchedule.id,
+    workspaceId: -1,
+    name: demoSchedule.name,
+    slug: demoSchedule.slug,
+    status: 'active',
+    amount: demoSchedule.amount,
+    amount_2: null,
+    amount_type: 'exact',
+    recurring: true,
+    auto_add: false,
+    dateId: null,
+    payeeId: demoSchedule.payee?.id ?? null,
+    categoryId: demoSchedule.category?.id ?? null,
+    accountId: -1,
+    budgetId: null,
+    createdAt: now,
+    updatedAt: now,
+    // Relations
+    payee: demoSchedule.payee ? { id: demoSchedule.payee.id, name: demoSchedule.payee.name } as any : null,
+    category: demoSchedule.category ? { id: demoSchedule.category.id, name: demoSchedule.category.name } as any : null,
+    scheduleDate: {
+      id: demoSchedule.id,
+      frequency: demoSchedule.frequency,
+      interval: demoSchedule.interval,
+      nextOccurrence: demoSchedule.nextOccurrence,
+    } as any,
+  } as Schedule;
+}
+
 // Get existing schedules state from layout context
 const schedulesState = SchedulesState.get();
-const allSchedules: Schedule[] = $derived(schedulesState.all);
+
+// Use demo data when in demo mode, otherwise use real schedules
+const allSchedules = $derived<Schedule[]>(
+  isDemoView
+    ? demoMode.demoSchedules.map(demoScheduleToSchedule)
+    : schedulesState.all
+);
 const hasNoSchedules = $derived(allSchedules.length === 0);
 
 // Delete confirmation dialog state
@@ -88,7 +138,7 @@ function cancelDelete() {
   <meta name="description" content="Manage your scheduled transactions" />
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-6" class:pointer-events-none={isViewOnly}>
   <!-- Header -->
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="schedules-page-header" data-help-title="Schedules Page" data-tour-id="schedules-page">
     <div>
@@ -96,11 +146,11 @@ function cancelDelete() {
       <p class="text-muted-foreground">{allSchedules.length} schedules total</p>
     </div>
     <div class="flex items-center gap-2">
-      <Button variant="outline" href="/patterns">
+      <Button variant="outline" href="/patterns" data-tour-id="schedules-patterns-button">
         <Sparkles class="mr-2 h-4 w-4" />
         Patterns
       </Button>
-      <Button href="/schedules/new">
+      <Button href="/schedules/new" data-tour-id="create-schedule-button">
         <Plus class="mr-2 h-4 w-4" />
         Add Schedule
       </Button>
@@ -130,7 +180,7 @@ function cancelDelete() {
     </Empty.Empty>
   {:else}
     <!-- Schedule Data Table -->
-    <div data-help-id="schedules-table" data-help-title="Schedules Table">
+    <div data-help-id="schedules-table" data-help-title="Schedules Table" data-tour-id="schedules-list">
     <ScheduleSearchResults
       schedules={allSchedules}
       isLoading={false}

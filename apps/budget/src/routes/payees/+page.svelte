@@ -7,7 +7,9 @@ import { rpc } from '$lib/query';
 import { bulkDeletePayees as bulkDeletePayeesMutation } from '$lib/query/payees';
 import type { Payee } from '$lib/schema';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
+import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { deletePayeeDialog, deletePayeeId } from '$lib/states/ui/payees.svelte';
+import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
 import { headerActionsMode } from '$lib/stores/header-actions.svelte';
 import BarChart3 from '@lucide/svelte/icons/bar-chart-3';
 import FolderCog from '@lucide/svelte/icons/folder-cog';
@@ -16,17 +18,41 @@ import Sparkles from '@lucide/svelte/icons/sparkles';
 import User from '@lucide/svelte/icons/user';
 import PayeeSearchResults from './(components)/search/payee-search-results.svelte';
 
+// Demo mode detection
+const isDemoView = $derived(demoMode.isActive);
+const isTourActive = $derived(spotlightTour.isActive);
+const currentChapter = $derived(spotlightTour.currentChapter);
+
+// Check if we're in payees-page chapter (interactable) vs navigation chapter (view-only)
+const isPayeesPageChapter = $derived(currentChapter?.startsWith('payees-page') ?? false);
+const isViewOnly = $derived(isDemoView && isTourActive && !isPayeesPageChapter);
+
 const payeesState = $derived(PayeesState.get());
 const allPayees = $derived(payeesState.payees.values());
-const allPayeesArray = $derived(Array.from(allPayees));
+
+// Use demo data when in demo mode (no conversion needed - already Payee type)
+const allPayeesArray = $derived<Payee[]>(
+  isDemoView
+    ? demoMode.demoPayees
+    : Array.from(allPayees)
+);
 const hasNoPayees = $derived(allPayeesArray.length === 0);
 
 // Fetch payees with transaction stats for display
 const payeesWithStatsQuery = rpc.payees.listPayeesWithStats().options();
 const payeesWithStats = $derived(payeesWithStatsQuery.data ?? []);
 
-// Merge stats into payees for display
+// Merge stats into payees for display (skip stats lookup for demo payees)
 const payeesWithStatsData = $derived.by(() => {
+  if (isDemoView) {
+    // Demo payees don't need stats lookup
+    return allPayeesArray.map((payee) => ({
+      ...payee,
+      avgAmount: null,
+      lastTransactionDate: null,
+    }));
+  }
+
   const statsMap = new Map(payeesWithStats.map((p) => [p.id, p.stats]));
 
   return allPayeesArray.map((payee) => ({
@@ -103,7 +129,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
   <meta name="description" content="Manage your payees and payment contacts" />
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-6" class:pointer-events-none={isViewOnly}>
   <!-- Header -->
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-help-id="payees-page-header" data-help-title="Payees Page" data-tour-id="payees-page">
     <div>
@@ -112,21 +138,21 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
     </div>
     <div class="flex items-center gap-2">
       {#if showSecondaryOnPage}
-        <Button variant="outline" href="/payees/categories">
+        <Button variant="outline" href="/payees/categories" data-tour-id="payees-categories-button">
           <FolderCog class="mr-2 h-4 w-4" />
           Manage Categories
         </Button>
-        <Button variant="outline" href="/payees/analytics">
+        <Button variant="outline" href="/payees/analytics" data-tour-id="payees-analytics-button">
           <BarChart3 class="mr-2 h-4 w-4" />
           Analytics
         </Button>
-        <Button variant="outline" href="/payees/cleanup">
+        <Button variant="outline" href="/payees/cleanup" data-tour-id="payees-cleanup-button">
           <Sparkles class="mr-2 h-4 w-4" />
           Cleanup
         </Button>
       {/if}
       {#if showPrimaryOnPage}
-        <Button href="/payees/new">
+        <Button href="/payees/new" data-tour-id="create-payee-button">
           <Plus class="mr-2 h-4 w-4" />
           Add Payee
         </Button>
@@ -157,7 +183,7 @@ const showPrimaryOnPage = $derived(headerActionsMode.value !== 'all');
     </Empty.Empty>
   {:else}
     <!-- Payee Data Table -->
-    <div data-help-id="payees-table" data-help-title="Payees Table">
+    <div data-help-id="payees-table" data-help-title="Payees Table" data-tour-id="payees-list">
     <PayeeSearchResults
       payees={payeesWithStatsData}
       isLoading={false}

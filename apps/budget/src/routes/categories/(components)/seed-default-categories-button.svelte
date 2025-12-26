@@ -16,9 +16,10 @@ import { SvelteSet } from 'svelte/reactivity';
 interface Props {
   open?: boolean;
   showButton?: boolean;
+  'data-tour-id'?: string;
 }
 
-let { open = $bindable(false), showButton = true }: Props = $props();
+let { open = $bindable(false), showButton = true, 'data-tour-id': dataTourId }: Props = $props();
 
 let sheetOpen = $state(false);
 
@@ -150,7 +151,7 @@ const selectedCount = $derived(selectedSlugs.size);
 </script>
 
 {#if shouldShowButton && showButton}
-  <Button variant="outline" onclick={() => (sheetOpen = true)}>
+  <Button variant="outline" onclick={() => (sheetOpen = true)} data-tour-id={dataTourId}>
     <PackagePlus class="mr-2 h-4 w-4" />
     Add Default Categories
     {#if status && status.available > 0}

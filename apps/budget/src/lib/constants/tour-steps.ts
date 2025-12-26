@@ -373,6 +373,64 @@ export const ACCOUNT_TOUR_STEP_IDS = {
 
 export type AccountTourStepId = (typeof ACCOUNT_TOUR_STEP_IDS)[keyof typeof ACCOUNT_TOUR_STEP_IDS];
 
+/**
+ * Budget Page Tour Step IDs
+ */
+export const BUDGET_TOUR_STEP_IDS = {
+  OVERVIEW: "budget-overview",
+  SUMMARY: "budget-summary",
+  BUDGET_LIST: "budget-list",
+  CREATE_BUDGET: "create-budget",
+  OVERVIEW_TAB: "budget-overview-tab",
+  RECOMMENDATIONS_TAB: "budget-recommendations-tab",
+  GROUPS_TAB: "budget-groups-tab",
+  FUND_TRANSFER_TAB: "budget-fund-transfer-tab",
+  ROLLOVER_TAB: "budget-rollover-tab",
+  ANALYTICS_TAB: "budget-analytics-tab",
+} as const;
+
+export type BudgetTourStepId = (typeof BUDGET_TOUR_STEP_IDS)[keyof typeof BUDGET_TOUR_STEP_IDS];
+
+/**
+ * Schedules Page Tour Step IDs
+ */
+export const SCHEDULE_TOUR_STEP_IDS = {
+  OVERVIEW: "schedules-overview",
+  SCHEDULE_LIST: "schedules-list",
+  CREATE_SCHEDULE: "create-schedule",
+  PATTERNS_BUTTON: "schedules-patterns-button",
+} as const;
+
+export type ScheduleTourStepId = (typeof SCHEDULE_TOUR_STEP_IDS)[keyof typeof SCHEDULE_TOUR_STEP_IDS];
+
+/**
+ * Payees Page Tour Step IDs
+ */
+export const PAYEE_TOUR_STEP_IDS = {
+  OVERVIEW: "payees-overview",
+  PAYEE_LIST: "payees-list",
+  CREATE_PAYEE: "create-payee",
+  CATEGORIES_BUTTON: "payees-categories-button",
+  ANALYTICS_BUTTON: "payees-analytics-button",
+  CLEANUP_BUTTON: "payees-cleanup-button",
+} as const;
+
+export type PayeeTourStepId = (typeof PAYEE_TOUR_STEP_IDS)[keyof typeof PAYEE_TOUR_STEP_IDS];
+
+/**
+ * Categories Page Tour Step IDs
+ */
+export const CATEGORY_TOUR_STEP_IDS = {
+  OVERVIEW: "categories-overview",
+  CATEGORY_LIST: "categories-list",
+  CREATE_CATEGORY: "create-category",
+  SEED_CATEGORIES: "seed-categories",
+  GROUPS_BUTTON: "categories-groups-button",
+  ANALYTICS_BUTTON: "categories-analytics-button",
+} as const;
+
+export type CategoryTourStepId = (typeof CATEGORY_TOUR_STEP_IDS)[keyof typeof CATEGORY_TOUR_STEP_IDS];
+
 // =============================================================================
 // Deep Dive Sub-Tours
 // =============================================================================
@@ -883,6 +941,448 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
 ];
 
 // =============================================================================
+// Budget Page Tour Steps
+// =============================================================================
+
+/**
+ * Budget Page Tour Steps
+ *
+ * A comprehensive tour of the budget page, covering all tabs and features.
+ * Demo budget data is generated to show realistic progress and recommendations.
+ */
+export const BUDGET_PAGE_TOUR_STEPS: TourStep[] = [
+  // Budget Overview
+  {
+    id: BUDGET_TOUR_STEP_IDS.OVERVIEW,
+    targetSelector: "[data-tour-id='budgets-page']",
+    title: "Budget Overview",
+    description:
+      "Welcome to your Budgets page! Here you can track spending limits, manage envelope budgets, and work toward savings goals.",
+    placement: "bottom",
+    route: "/budgets",
+    highlightPadding: 8,
+    chapter: "budget-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/budgets");
+    },
+  },
+
+  // Budget Summary Cards
+  {
+    id: BUDGET_TOUR_STEP_IDS.SUMMARY,
+    targetSelector: "[data-tour-id='budget-summary']",
+    title: "Budget Summary",
+    description:
+      "These cards show your total allocated budget, how much you've spent, what's remaining, and any budgets that need attention.",
+    placement: "bottom",
+    route: "/budgets",
+    chapter: "budget-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/budgets");
+    },
+  },
+
+  // Budget List
+  {
+    id: BUDGET_TOUR_STEP_IDS.BUDGET_LIST,
+    targetSelector: "[data-tour-id='budget-list']",
+    title: "Your Budgets",
+    description:
+      "View all your budgets here. Each budget shows its progress with color-coded indicators: green for on track, yellow for approaching limit, and red for over budget.",
+    placement: "top",
+    route: "/budgets",
+    chapter: "budget-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/budgets");
+    },
+  },
+
+  // Create Budget Button
+  {
+    id: BUDGET_TOUR_STEP_IDS.CREATE_BUDGET,
+    targetSelector: "[data-tour-id='create-budget-button']",
+    title: "Create a Budget",
+    description:
+      "Click here to create a new budget. Choose from account-based spending limits, category envelope budgets, or goal-based savings targets.",
+    placement: "bottom",
+    route: "/budgets",
+    chapter: "budget-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/budgets");
+    },
+  },
+
+  // Budget Tabs Overview
+  {
+    id: BUDGET_TOUR_STEP_IDS.OVERVIEW_TAB,
+    targetSelector: "[data-tour-id='budget-overview-tab']",
+    title: "Budget Overview Tab",
+    description:
+      "The Overview tab displays all your budgets with their current status. Filter, search, and sort to find specific budgets.",
+    placement: "bottom",
+    route: "/budgets",
+    chapter: "budget-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/budgets");
+    },
+  },
+
+  // Recommendations Tab
+  {
+    id: BUDGET_TOUR_STEP_IDS.RECOMMENDATIONS_TAB,
+    targetSelector: "[data-tour-id='budget-recommendations-tab']",
+    title: "Smart Recommendations",
+    description:
+      "Get AI-powered suggestions to optimize your budgets. Recommendations might suggest increasing, decreasing, or reallocating budget amounts based on your spending patterns.",
+    placement: "bottom",
+    route: "/budgets",
+    chapter: "budget-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/budgets");
+    },
+  },
+
+  // Groups Tab
+  {
+    id: BUDGET_TOUR_STEP_IDS.GROUPS_TAB,
+    targetSelector: "[data-tour-id='budget-groups-tab']",
+    title: "Budget Groups",
+    description:
+      "Organize related budgets into groups for easier tracking. For example, group all essential expenses or savings goals together.",
+    placement: "bottom",
+    route: "/budgets",
+    chapter: "budget-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/budgets");
+    },
+  },
+
+  // Fund Transfer Tab
+  {
+    id: BUDGET_TOUR_STEP_IDS.FUND_TRANSFER_TAB,
+    targetSelector: "[data-tour-id='budget-fund-transfer-tab']",
+    title: "Fund Transfer",
+    description:
+      "Move allocated funds between budgets when your spending priorities change. Transfer from a budget with surplus to one that needs more.",
+    placement: "bottom",
+    route: "/budgets",
+    chapter: "budget-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/budgets");
+    },
+  },
+
+  // Rollover Tab
+  {
+    id: BUDGET_TOUR_STEP_IDS.ROLLOVER_TAB,
+    targetSelector: "[data-tour-id='budget-rollover-tab']",
+    title: "Rollover Manager",
+    description:
+      "Control how unused budget amounts carry over to the next period. Choose to roll over, reset to zero, or cap at a maximum amount.",
+    placement: "bottom",
+    route: "/budgets",
+    chapter: "budget-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/budgets");
+    },
+  },
+
+  // Analytics Tab
+  {
+    id: BUDGET_TOUR_STEP_IDS.ANALYTICS_TAB,
+    targetSelector: "[data-tour-id='budget-analytics-tab']",
+    title: "Budget Analytics",
+    description:
+      "Analyze spending trends and forecast future budget performance. See historical comparisons and identify patterns in your budgeting.",
+    placement: "bottom",
+    route: "/budgets",
+    chapter: "budget-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/budgets");
+    },
+  },
+];
+
+// =============================================================================
+// Schedules Page Tour Steps
+// =============================================================================
+
+/**
+ * Schedules Page Tour Steps
+ *
+ * A focused tour of the schedules page, covering the list view and key actions.
+ * Demo schedule data is used to show realistic recurring transactions.
+ */
+export const SCHEDULE_PAGE_TOUR_STEPS: TourStep[] = [
+  // Schedules Overview
+  {
+    id: SCHEDULE_TOUR_STEP_IDS.OVERVIEW,
+    targetSelector: "[data-tour-id='schedules-page']",
+    title: "Scheduled Transactions",
+    description:
+      "Welcome to your Schedules page! Set up recurring transactions for bills, income, and regular expenses. They'll be automatically created when due.",
+    placement: "bottom",
+    route: "/schedules",
+    highlightPadding: 8,
+    chapter: "schedules-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/schedules");
+    },
+  },
+
+  // Schedule List
+  {
+    id: SCHEDULE_TOUR_STEP_IDS.SCHEDULE_LIST,
+    targetSelector: "[data-tour-id='schedules-list']",
+    title: "Your Schedules",
+    description:
+      "View all your recurring transactions here. See the next occurrence date, amount, and linked payee/category for each schedule.",
+    placement: "top",
+    route: "/schedules",
+    chapter: "schedules-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/schedules");
+    },
+  },
+
+  // Create Schedule Button
+  {
+    id: SCHEDULE_TOUR_STEP_IDS.CREATE_SCHEDULE,
+    targetSelector: "[data-tour-id='create-schedule-button']",
+    title: "Add a Schedule",
+    description:
+      "Click here to create a new recurring transaction. Set the frequency, amount, and link it to a payee and category.",
+    placement: "bottom",
+    route: "/schedules",
+    chapter: "schedules-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/schedules");
+    },
+  },
+
+  // Patterns Button
+  {
+    id: SCHEDULE_TOUR_STEP_IDS.PATTERNS_BUTTON,
+    targetSelector: "[data-tour-id='schedules-patterns-button']",
+    title: "Spending Patterns",
+    description:
+      "Analyze your recurring spending patterns. Identify subscriptions and regular expenses you might want to review.",
+    placement: "bottom",
+    route: "/schedules",
+    chapter: "schedules-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/schedules");
+    },
+  },
+];
+
+// =============================================================================
+// Payees Page Tour Steps
+// =============================================================================
+
+/**
+ * Payees Page Tour Steps
+ *
+ * A focused tour of the payees page, covering the list view, actions, and management tools.
+ * Demo payee data is used to show realistic merchant and contact management.
+ */
+export const PAYEE_PAGE_TOUR_STEPS: TourStep[] = [
+  // Payees Overview
+  {
+    id: PAYEE_TOUR_STEP_IDS.OVERVIEW,
+    targetSelector: "[data-tour-id='payees-page']",
+    title: "Your Payees",
+    description:
+      "Welcome to your Payees page! Manage merchants, vendors, and people you transact with. Set default categories for faster transaction entry.",
+    placement: "bottom",
+    route: "/payees",
+    highlightPadding: 8,
+    chapter: "payees-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/payees");
+    },
+  },
+
+  // Payee List
+  {
+    id: PAYEE_TOUR_STEP_IDS.PAYEE_LIST,
+    targetSelector: "[data-tour-id='payees-list']",
+    title: "Payee Directory",
+    description:
+      "View all your payees here. Each payee can have a default category, contact info, and transaction history. Toggle between grid and list views.",
+    placement: "top",
+    route: "/payees",
+    chapter: "payees-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/payees");
+    },
+  },
+
+  // Create Payee Button
+  {
+    id: PAYEE_TOUR_STEP_IDS.CREATE_PAYEE,
+    targetSelector: "[data-tour-id='create-payee-button']",
+    title: "Add a Payee",
+    description:
+      "Click here to manually add a new payee. Set their default category and contact details for easy transaction management.",
+    placement: "bottom",
+    route: "/payees",
+    chapter: "payees-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/payees");
+    },
+  },
+
+  // Manage Categories Button
+  {
+    id: PAYEE_TOUR_STEP_IDS.CATEGORIES_BUTTON,
+    targetSelector: "[data-tour-id='payees-categories-button']",
+    title: "Manage Categories",
+    description:
+      "Organize your payees into custom categories. Group similar merchants together for better reporting and budgeting.",
+    placement: "bottom",
+    route: "/payees",
+    chapter: "payees-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/payees");
+    },
+  },
+
+  // Analytics Button
+  {
+    id: PAYEE_TOUR_STEP_IDS.ANALYTICS_BUTTON,
+    targetSelector: "[data-tour-id='payees-analytics-button']",
+    title: "Payee Analytics",
+    description:
+      "View spending analytics across all payees. See who you spend most with and track trends over time.",
+    placement: "bottom",
+    route: "/payees",
+    chapter: "payees-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/payees");
+    },
+  },
+
+  // Cleanup Button
+  {
+    id: PAYEE_TOUR_STEP_IDS.CLEANUP_BUTTON,
+    targetSelector: "[data-tour-id='payees-cleanup-button']",
+    title: "Payee Cleanup",
+    description:
+      "Use AI-powered cleanup to merge duplicate payees and standardize names. Keep your payee list organized and consistent.",
+    placement: "bottom",
+    route: "/payees",
+    chapter: "payees-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/payees");
+    },
+  },
+];
+
+// =============================================================================
+// Categories Page Tour Steps
+// =============================================================================
+
+/**
+ * Categories Page Tour Steps
+ *
+ * A focused tour of the categories page, covering the list view, actions, and management tools.
+ * Demo category data is used to show realistic category organization.
+ */
+export const CATEGORY_PAGE_TOUR_STEPS: TourStep[] = [
+  // Categories Overview
+  {
+    id: CATEGORY_TOUR_STEP_IDS.OVERVIEW,
+    targetSelector: "[data-tour-id='categories-page']",
+    title: "Your Categories",
+    description:
+      "Welcome to your Categories page! Organize your transactions into meaningful categories for better tracking and budgeting.",
+    placement: "bottom",
+    route: "/categories",
+    highlightPadding: 8,
+    chapter: "categories-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/categories");
+    },
+  },
+
+  // Category List
+  {
+    id: CATEGORY_TOUR_STEP_IDS.CATEGORY_LIST,
+    targetSelector: "[data-tour-id='categories-list']",
+    title: "Category Directory",
+    description:
+      "View all your categories here. Switch between grid, list, and hierarchy views. Each category can have a color, icon, and parent category.",
+    placement: "top",
+    route: "/categories",
+    chapter: "categories-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/categories");
+    },
+  },
+
+  // Create Category Button
+  {
+    id: CATEGORY_TOUR_STEP_IDS.CREATE_CATEGORY,
+    targetSelector: "[data-tour-id='create-category-button']",
+    title: "Add a Category",
+    description:
+      "Click here to create a new category. Set a name, color, icon, and optionally assign it to a parent category for hierarchical organization.",
+    placement: "bottom",
+    route: "/categories",
+    chapter: "categories-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/categories");
+    },
+  },
+
+  // Seed Default Categories Button
+  {
+    id: CATEGORY_TOUR_STEP_IDS.SEED_CATEGORIES,
+    targetSelector: "[data-tour-id='seed-categories-button']",
+    title: "Seed Default Categories",
+    description:
+      "Get started quickly by seeding a set of commonly-used default categories. This creates a ready-to-use category hierarchy.",
+    placement: "bottom",
+    route: "/categories",
+    chapter: "categories-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/categories");
+    },
+  },
+
+  // Group Management Button
+  {
+    id: CATEGORY_TOUR_STEP_IDS.GROUPS_BUTTON,
+    targetSelector: "[data-tour-id='categories-groups-button']",
+    title: "Category Groups",
+    description:
+      "Organize categories into groups for reporting. Create groups like 'Essential Expenses' or 'Discretionary Spending' for better insights.",
+    placement: "bottom",
+    route: "/categories",
+    chapter: "categories-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/categories");
+    },
+  },
+
+  // Analytics Button
+  {
+    id: CATEGORY_TOUR_STEP_IDS.ANALYTICS_BUTTON,
+    targetSelector: "[data-tour-id='categories-analytics-button']",
+    title: "Category Analytics",
+    description:
+      "View spending analytics across all categories. See which categories consume most of your budget and track trends over time.",
+    placement: "bottom",
+    route: "/categories",
+    chapter: "categories-page",
+    setup: async () => {
+      await ensureDemoAccountSetup("/categories");
+    },
+  },
+];
+
+// =============================================================================
 // Unified Tour (combines Main and Account Page tours)
 // =============================================================================
 
@@ -891,10 +1391,14 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
  *
  * A comprehensive tour that covers the entire application:
  * 1. Getting Started - Sidebar navigation and account basics
- * 2. Navigation - Main pages overview
+ * 2. Navigation - Main pages overview (with demo data visible)
  * 3. Help & Settings - Accessing help and preferences
  * 4. Account Page - Detailed account features and import wizard
- * 5. Finish - Tour completion
+ * 5. Budget Page - Budget management, recommendations, and analytics
+ * 6. Schedules Page - Recurring transaction management
+ * 7. Payees Page - Payee management and organization
+ * 8. Categories Page - Category organization and management
+ * 9. Finish - Tour completion
  */
 export const UNIFIED_TOUR_STEPS: TourStep[] = [
   // Getting Started (from Main Tour)
@@ -909,13 +1413,25 @@ export const UNIFIED_TOUR_STEPS: TourStep[] = [
   // Account Page (from Account Page Tour - excluding finish)
   ...ACCOUNT_PAGE_TOUR_STEPS.filter((step) => step.chapter !== "finish"),
 
+  // Budget Page (from Budget Page Tour)
+  ...BUDGET_PAGE_TOUR_STEPS,
+
+  // Schedules Page (from Schedule Page Tour)
+  ...SCHEDULE_PAGE_TOUR_STEPS,
+
+  // Payees Page (from Payee Page Tour)
+  ...PAYEE_PAGE_TOUR_STEPS,
+
+  // Categories Page (from Category Page Tour)
+  ...CATEGORY_PAGE_TOUR_STEPS,
+
   // Unified Finish
   {
     id: "unified-tour-complete",
     targetSelector: "[data-tour-id='sidebar']",
     title: "You're All Set!",
     description:
-      "Congratulations! You've completed the full tour. You now know how to navigate the app, manage accounts, view analytics, and import transactions. Start using the app with your real data or restart this tour anytime from the Help menu.",
+      "Congratulations! You've completed the full tour. You now know how to navigate the app, manage accounts, budgets, view analytics, and import transactions. Start using the app with your real data or restart this tour anytime from the Help menu.",
     placement: "right",
     route: "/",
     highlightPadding: 0,

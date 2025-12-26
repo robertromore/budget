@@ -52,6 +52,65 @@ export interface DemoSchedule {
   nextOccurrence: string;
 }
 
+export type DemoBudgetType = "account-monthly" | "category-envelope" | "goal-based";
+export type DemoBudgetProgressStatus = "on_track" | "approaching" | "over" | "paused";
+
+export interface DemoBudgetEnvelope {
+  categoryId: number;
+  categoryName: string;
+  categoryColor: string | null;
+  allocated: number;
+  spent: number;
+  remaining: number;
+}
+
+export interface DemoBudget {
+  id: number;
+  workspaceId: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  type: DemoBudgetType;
+  scope: "account" | "category" | "global" | "mixed";
+  status: "active" | "inactive" | "archived";
+  enforcementLevel: "none" | "warning" | "strict";
+  allocatedAmount: number;
+  spent: number;
+  remaining: number;
+  progressStatus: DemoBudgetProgressStatus;
+  progressPercent: number;
+  // Type-specific fields
+  goal?: {
+    targetAmount: number;
+    targetDate: string;
+    currentAmount: number;
+  };
+  // Relations
+  accounts: Array<{ id: number; name: string }>;
+  categories: Array<{ id: number; name: string; color: string | null }>;
+  envelopes: DemoBudgetEnvelope[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DemoBudgetGroup {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  budgetIds: number[];
+}
+
+export interface DemoBudgetRecommendation {
+  id: number;
+  budgetId: number;
+  budgetName: string;
+  type: "increase" | "decrease" | "reallocate";
+  message: string;
+  suggestedAmount?: number;
+  confidence: number;
+}
+
 // =============================================================================
 // Demo Data Generators
 // =============================================================================
@@ -240,6 +299,212 @@ function generateDemoImportCSV(): string {
   return lines.join("\n");
 }
 
+function generateDemoBudgets(
+  demoAccount: Account,
+  _demoCategories: Category[], // Categories info is derived from transactions
+  demoTransactions: DemoTransaction[]
+): DemoBudget[] {
+  const now = new Date().toISOString();
+
+  // Calculate spending by category from demo transactions
+  const spendingByCategory = new Map<number, number>();
+  let totalSpending = 0;
+
+  for (const tx of demoTransactions) {
+    if (tx.amount < 0) {
+      totalSpending += Math.abs(tx.amount);
+      if (tx.categoryId) {
+        const current = spendingByCategory.get(tx.categoryId) || 0;
+        spendingByCategory.set(tx.categoryId, current + Math.abs(tx.amount));
+      }
+    }
+  }
+
+  // Get specific category spending
+  const groceriesSpent = spendingByCategory.get(-1) || 0; // Groceries
+  const diningSpent = spendingByCategory.get(-2) || 0; // Dining Out
+
+  // 1. Account-Monthly Budget - tracks all spending on demo account
+  const accountMonthlyAllocated = 3000;
+  const accountMonthlySpent = totalSpending;
+  const accountMonthlyRemaining = accountMonthlyAllocated - accountMonthlySpent;
+  const accountMonthlyPercent = (accountMonthlySpent / accountMonthlyAllocated) * 100;
+
+  // 2. Category-Envelope Budget - Food (Groceries + Dining)
+  const foodAllocated = 800;
+  const groceriesAllocated = 500;
+  const diningAllocated = 300;
+  const foodSpent = groceriesSpent + diningSpent;
+  const foodRemaining = foodAllocated - foodSpent;
+  const foodPercent = (foodSpent / foodAllocated) * 100;
+
+  // 3. Goal-Based Budget - Vacation Fund
+  const vacationTarget = 2000;
+  const vacationCurrent = 650;
+  const vacationTargetDate = new Date();
+  vacationTargetDate.setMonth(vacationTargetDate.getMonth() + 6);
+
+  const budgets: DemoBudget[] = [
+    {
+      id: -1,
+      workspaceId: -1,
+      name: "Monthly Spending Limit",
+      slug: "monthly-spending-limit",
+      description: "Track overall spending on your checking account",
+      type: "account-monthly",
+      scope: "account",
+      status: "active",
+      enforcementLevel: "warning",
+      allocatedAmount: accountMonthlyAllocated,
+      spent: Math.round(accountMonthlySpent * 100) / 100,
+      remaining: Math.round(accountMonthlyRemaining * 100) / 100,
+      progressStatus: accountMonthlyPercent > 90 ? "approaching" : accountMonthlyPercent > 100 ? "over" : "on_track",
+      progressPercent: Math.min(100, Math.round(accountMonthlyPercent)),
+      accounts: [{ id: demoAccount.id, name: demoAccount.name }],
+      categories: [],
+      envelopes: [],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: -2,
+      workspaceId: -1,
+      name: "Food Budget",
+      slug: "food-budget",
+      description: "Envelope budget for groceries and dining out",
+      type: "category-envelope",
+      scope: "category",
+      status: "active",
+      enforcementLevel: "warning",
+      allocatedAmount: foodAllocated,
+      spent: Math.round(foodSpent * 100) / 100,
+      remaining: Math.round(foodRemaining * 100) / 100,
+      progressStatus: foodPercent > 80 ? "approaching" : foodPercent > 100 ? "over" : "on_track",
+      progressPercent: Math.min(100, Math.round(foodPercent)),
+      accounts: [],
+      categories: [
+        { id: -1, name: "Groceries", color: "#22C55E" },
+        { id: -2, name: "Dining Out", color: "#F97316" },
+      ],
+      envelopes: [
+        {
+          categoryId: -1,
+          categoryName: "Groceries",
+          categoryColor: "#22C55E",
+          allocated: groceriesAllocated,
+          spent: Math.round(groceriesSpent * 100) / 100,
+          remaining: Math.round((groceriesAllocated - groceriesSpent) * 100) / 100,
+        },
+        {
+          categoryId: -2,
+          categoryName: "Dining Out",
+          categoryColor: "#F97316",
+          allocated: diningAllocated,
+          spent: Math.round(diningSpent * 100) / 100,
+          remaining: Math.round((diningAllocated - diningSpent) * 100) / 100,
+        },
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: -3,
+      workspaceId: -1,
+      name: "Vacation Fund",
+      slug: "vacation-fund",
+      description: "Saving for summer vacation",
+      type: "goal-based",
+      scope: "global",
+      status: "active",
+      enforcementLevel: "none",
+      allocatedAmount: vacationTarget,
+      spent: 0,
+      remaining: vacationTarget - vacationCurrent,
+      progressStatus: "on_track",
+      progressPercent: Math.round((vacationCurrent / vacationTarget) * 100),
+      goal: {
+        targetAmount: vacationTarget,
+        targetDate: vacationTargetDate.toISOString().split("T")[0],
+        currentAmount: vacationCurrent,
+      },
+      accounts: [],
+      categories: [],
+      envelopes: [],
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
+  return budgets;
+}
+
+function generateDemoBudgetGroups(): DemoBudgetGroup[] {
+  return [
+    {
+      id: -1,
+      name: "Essential Expenses",
+      slug: "essential-expenses",
+      description: "Core monthly spending categories",
+      budgetIds: [-1, -2],
+    },
+    {
+      id: -2,
+      name: "Savings Goals",
+      slug: "savings-goals",
+      description: "Long-term financial goals",
+      budgetIds: [-3],
+    },
+  ];
+}
+
+function generateDemoBudgetRecommendations(budgets: DemoBudget[]): DemoBudgetRecommendation[] {
+  const recommendations: DemoBudgetRecommendation[] = [];
+
+  // Find food budget and check if approaching limit
+  const foodBudget = budgets.find(b => b.slug === "food-budget");
+  if (foodBudget && foodBudget.progressPercent > 60) {
+    recommendations.push({
+      id: -1,
+      budgetId: foodBudget.id,
+      budgetName: foodBudget.name,
+      type: "reallocate",
+      message: `Your ${foodBudget.name} is ${foodBudget.progressPercent}% spent. Consider reallocating from unused dining budget to groceries.`,
+      suggestedAmount: 50,
+      confidence: 85,
+    });
+  }
+
+  // Check monthly spending budget
+  const monthlyBudget = budgets.find(b => b.slug === "monthly-spending-limit");
+  if (monthlyBudget && monthlyBudget.progressPercent > 50) {
+    recommendations.push({
+      id: -2,
+      budgetId: monthlyBudget.id,
+      budgetName: monthlyBudget.name,
+      type: "decrease",
+      message: "Based on your spending patterns, you could reduce entertainment spending by $50/month.",
+      suggestedAmount: 50,
+      confidence: 72,
+    });
+  }
+
+  // Vacation fund recommendation
+  const vacationBudget = budgets.find(b => b.slug === "vacation-fund");
+  if (vacationBudget) {
+    recommendations.push({
+      id: -3,
+      budgetId: vacationBudget.id,
+      budgetName: vacationBudget.name,
+      type: "increase",
+      message: "Increase monthly contribution by $100 to reach your vacation goal on time.",
+      suggestedAmount: 100,
+      confidence: 90,
+    });
+  }
+
+  return recommendations;
+}
+
 // =============================================================================
 // Demo Mode State Class
 // =============================================================================
@@ -261,6 +526,11 @@ class DemoModeState {
   #demoPayees = $state<Payee[]>([]);
   #demoSchedules = $state<DemoSchedule[]>([]);
   #demoImportCSV = $state<string>("");
+
+  // Budget demo data
+  #demoBudgets = $state<DemoBudget[]>([]);
+  #demoBudgetGroups = $state<DemoBudgetGroup[]>([]);
+  #demoBudgetRecommendations = $state<DemoBudgetRecommendation[]>([]);
 
   // ==========================================================================
   // Getters
@@ -302,6 +572,18 @@ class DemoModeState {
     return this.#demoImportCSV;
   }
 
+  get demoBudgets() {
+    return this.#demoBudgets;
+  }
+
+  get demoBudgetGroups() {
+    return this.#demoBudgetGroups;
+  }
+
+  get demoBudgetRecommendations() {
+    return this.#demoBudgetRecommendations;
+  }
+
   get showContinuationPrompt() {
     return this.#showContinuationPrompt;
   }
@@ -336,6 +618,15 @@ class DemoModeState {
     this.#demoSchedules = generateDemoSchedules();
     this.#demoImportCSV = generateDemoImportCSV();
 
+    // Generate budget data linked to transactions
+    this.#demoBudgets = generateDemoBudgets(
+      this.#demoAccount,
+      this.#demoCategories,
+      this.#demoTransactions
+    );
+    this.#demoBudgetGroups = generateDemoBudgetGroups();
+    this.#demoBudgetRecommendations = generateDemoBudgetRecommendations(this.#demoBudgets);
+
     this.#isActive = true;
     this.#importStep = "idle";
 
@@ -355,6 +646,11 @@ class DemoModeState {
     this.#demoPayees = [];
     this.#demoSchedules = [];
     this.#demoImportCSV = "";
+
+    // Clear budget data
+    this.#demoBudgets = [];
+    this.#demoBudgetGroups = [];
+    this.#demoBudgetRecommendations = [];
 
     console.log("[DemoMode] Deactivated");
   }
