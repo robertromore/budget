@@ -1,3 +1,4 @@
+export { default as OnboardingChoice } from './onboarding-choice.svelte';
 export { default as OnboardingWizard } from './onboarding-wizard.svelte';
 export { default as SpotlightOverlay } from './spotlight-overlay.svelte';
 export { default as SpotlightTooltip } from './spotlight-tooltip.svelte';

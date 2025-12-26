@@ -1426,6 +1426,10 @@ export const UNIFIED_TOUR_STEPS: TourStep[] = [
   ...CATEGORY_PAGE_TOUR_STEPS,
 
   // Unified Finish
+  // Note: Cleanup (demoMode.endTour(), demoMode.deactivate()) is handled in
+  // the onComplete callback passed to spotlightTour.start(), not here.
+  // This allows different callers (onboarding choice, help menu) to handle
+  // post-tour navigation differently.
   {
     id: "unified-tour-complete",
     targetSelector: "[data-tour-id='sidebar']",
@@ -1437,8 +1441,8 @@ export const UNIFIED_TOUR_STEPS: TourStep[] = [
     highlightPadding: 0,
     chapter: "finish",
     setup: async () => {
-      demoMode.endTour();
-      demoMode.deactivate();
+      // Navigate to home for the finish step display
+      // Demo mode cleanup happens in onComplete callback
       await goto("/");
     },
   },

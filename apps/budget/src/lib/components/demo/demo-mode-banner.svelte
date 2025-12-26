@@ -6,12 +6,15 @@
  * clearly indicating that the user is viewing demonstration data that won't be saved.
  */
 import { demoMode } from '$lib/states/ui/demo-mode.svelte';
+import { spotlightTour } from '$lib/states/ui/spotlight-tour.svelte';
 import { Button } from '$lib/components/ui/button';
 import { Info, X } from '@lucide/svelte/icons';
 import { goto } from '$app/navigation';
 
-function handleExitDemo() {
-  // Navigate away from demo account first
+function handleExitTourMode() {
+  // End tour and demo mode, then navigate home
+  spotlightTour.skip();
+  demoMode.endTour();
   goto('/').then(() => {
     demoMode.deactivate();
   });
@@ -20,7 +23,7 @@ function handleExitDemo() {
 
 {#if demoMode.isActive}
   <div
-    class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 transform"
+    class="fixed bottom-4 left-1/2 z-10000 -translate-x-1/2 transform"
     role="status"
     aria-live="polite"
   >
@@ -43,10 +46,10 @@ function handleExitDemo() {
         variant="ghost"
         size="sm"
         class="text-amber-700 hover:text-amber-900 hover:bg-amber-100 dark:text-amber-300 dark:hover:text-amber-100 dark:hover:bg-amber-900 ml-2"
-        onclick={handleExitDemo}
+        onclick={handleExitTourMode}
       >
         <X class="mr-1 h-4 w-4" />
-        Exit Demo
+        Exit Tour Mode
       </Button>
     </div>
   </div>

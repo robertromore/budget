@@ -2437,6 +2437,46 @@ current step is 3+ levels deep in the chapter hierarchy:
 
 This prevents the TOC from becoming cluttered when navigating deep nested steps.
 
+### Onboarding Choice Flow
+
+New users are presented with a choice screen before beginning onboarding:
+
+- **Take Tour First** (recommended): Activates demo mode, runs the full unified
+  tour, then redirects to the setup wizard
+- **Set Up My Account**: Skips directly to the setup wizard
+
+The flow is implemented in:
+
+- **OnboardingChoice component** (`src/lib/components/onboarding/onboarding-choice.svelte`):
+  Choice screen with two cards
+- **Onboarding page** (`src/routes/onboarding/+page.svelte`): Conditionally shows
+  choice or wizard based on `showWizard` URL param
+
+Tour completion handling:
+
+```typescript
+// In OnboardingChoice, the onComplete callback handles cleanup
+await spotlightTour.start(UNIFIED_TOUR_STEPS, {
+  onComplete: async (result) => {
+    // Persist completion status
+    if (result.completed) {
+      await trpc().onboardingRoutes.completeTour.mutate();
+    }
+
+    // Clean up demo mode
+    demoMode.endTour();
+    demoMode.deactivate();
+
+    // Redirect to wizard
+    await goto('/onboarding?showWizard=true');
+  },
+});
+```
+
+The unified tour finish step does NOT handle cleanup—this is delegated to the
+`onComplete` callback so different callers (onboarding choice, help menu) can
+handle post-tour navigation differently.
+
 ### Demo Mode Integration
 
 The tour integrates with demo mode (`src/lib/states/ui/demo-mode.svelte.ts`) for
@@ -2456,6 +2496,15 @@ demoMode.triggerOpenCleanupSheet(); // Open cleanup sheet
 demoMode.endTour();
 demoMode.deactivate();
 ```
+
+#### Demo Mode Banner
+
+When demo mode is active, a banner appears at the bottom of the screen
+(`src/lib/components/demo/demo-mode-banner.svelte`):
+
+- **Z-index**: Uses `z-10000` to appear above the spotlight overlay (z-9999)
+- **Exit Tour Mode button**: Calls `spotlightTour.skip()`, `demoMode.endTour()`,
+  navigates home, then calls `demoMode.deactivate()`
 
 Demo mode provides event-driven communication between tour steps and UI
 components, allowing the tour to control wizard progression without tight
