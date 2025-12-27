@@ -574,7 +574,8 @@ function handleCategoryUpdateWithSimilar(
   const selectedRow = parseResults.rows.find((r) => r.rowIndex === rowIndex);
   if (!selectedRow) return;
 
-  const payeeName = selectedRow.normalizedData['payee'];
+  // Use overridden payee name if available (in case user renamed the payee)
+  const payeeName = entityOverrides[rowIndex]?.payeeName ?? selectedRow.normalizedData['payee'];
   if (!payeeName || typeof payeeName !== 'string') {
     // No payee, just update this one transaction
     handleCategoryUpdate(rowIndex, categoryId, categoryName);
@@ -596,10 +597,11 @@ function handleCategoryUpdateWithSimilar(
 
   // Find matches by payee (for "update all transactions with same payee" option)
   // Use similarity matching to catch payees with different amounts in the name
+  // Check entityOverrides first for renamed payees
   const matchesByPayee = parseResults.rows
     .filter((row) => {
       if (row.rowIndex === rowIndex) return false;
-      const rowPayee = row.normalizedData['payee'];
+      const rowPayee = entityOverrides[row.rowIndex]?.payeeName ?? row.normalizedData['payee'];
       if (!rowPayee || typeof rowPayee !== 'string') return false;
       return arePayeesSimilar(rowPayee, payeeName);
     })
