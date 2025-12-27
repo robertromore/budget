@@ -15,6 +15,13 @@
       "when": 1766606141878,
       "tag": "0001_perpetual_riptide",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1766867230529,
+      "tag": "0002_right_gunslinger",
+      "breakpoints": true
     }
   ]
 }

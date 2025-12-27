@@ -6,6 +6,7 @@ export * from "./category-groups";
 export * from "./detected-patterns";
 export * from "./import-profiles";
 export * from "./payee-ai-enhancements";
+export * from "./payee-aliases";
 export * from "./payee-categories";
 export * from "./payee-category-corrections";
 export * from "./payees";
