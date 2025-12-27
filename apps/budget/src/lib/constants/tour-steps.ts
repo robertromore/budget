@@ -448,9 +448,10 @@ export type CategoryTourStepId = (typeof CATEGORY_TOUR_STEP_IDS)[keyof typeof CA
 // =============================================================================
 
 /**
- * Transactions Deep Dive Sub-Tour
+ * Transactions Deep Dive Steps
  *
  * Detailed walkthrough of transaction management features
+ * These steps are integrated directly into the main tour flow
  */
 export const TRANSACTIONS_DEEP_DIVE: TourStep[] = [
   {
@@ -460,6 +461,11 @@ export const TRANSACTIONS_DEEP_DIVE: TourStep[] = [
     description:
       "Each column shows key information: date, payee, category, amount, and running balance. Click column headers to sort.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=transactions",
+    chapter: "account-page/transactions",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=transactions");
+    },
   },
   {
     id: "txn-status-icons",
@@ -468,6 +474,11 @@ export const TRANSACTIONS_DEEP_DIVE: TourStep[] = [
     description:
       "Status icons show if transactions are cleared, reconciled, or pending. Cleared transactions have been confirmed with your bank.",
     placement: "right",
+    route: "/accounts/demo-checking?tab=transactions",
+    chapter: "account-page/transactions",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=transactions");
+    },
   },
   {
     id: "txn-bulk-actions",
@@ -476,6 +487,11 @@ export const TRANSACTIONS_DEEP_DIVE: TourStep[] = [
     description:
       "Select multiple transactions to categorize, tag, or delete them all at once. Great for organizing imported transactions.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=transactions",
+    chapter: "account-page/transactions",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=transactions");
+    },
   },
   {
     id: "txn-filters",
@@ -484,11 +500,16 @@ export const TRANSACTIONS_DEEP_DIVE: TourStep[] = [
     description:
       "Filter by date range, category, payee, or amount. Use the search box for quick text matching.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=transactions",
+    chapter: "account-page/transactions",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=transactions");
+    },
   },
 ];
 
 /**
- * Analytics Deep Dive Sub-Tour
+ * Analytics Deep Dive Steps
  *
  * Detailed walkthrough of analytics and reporting features
  */
@@ -500,6 +521,11 @@ export const ANALYTICS_DEEP_DIVE: TourStep[] = [
     description:
       "View spending patterns over different periods: this month, quarter, year, or custom date ranges.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=analytics",
+    chapter: "account-page/analytics",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=analytics");
+    },
   },
   {
     id: "analytics-category-breakdown",
@@ -508,6 +534,11 @@ export const ANALYTICS_DEEP_DIVE: TourStep[] = [
     description:
       "See where your money goes with category-based charts. Click any segment for detailed transactions.",
     placement: "right",
+    route: "/accounts/demo-checking?tab=analytics",
+    chapter: "account-page/analytics",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=analytics");
+    },
   },
   {
     id: "analytics-trends",
@@ -516,11 +547,16 @@ export const ANALYTICS_DEEP_DIVE: TourStep[] = [
     description:
       "Track how your spending changes over time. Identify patterns and seasonal variations.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=analytics",
+    chapter: "account-page/analytics",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=analytics");
+    },
   },
 ];
 
 /**
- * Intelligence Deep Dive Sub-Tour
+ * Intelligence Deep Dive Steps
  *
  * Detailed walkthrough of AI-powered insights
  */
@@ -532,6 +568,11 @@ export const INTELLIGENCE_DEEP_DIVE: TourStep[] = [
     description:
       "Get intelligent observations about your spending patterns, unusual transactions, and optimization opportunities.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=intelligence",
+    chapter: "account-page/intelligence",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=intelligence");
+    },
   },
   {
     id: "intel-anomalies",
@@ -540,6 +581,11 @@ export const INTELLIGENCE_DEEP_DIVE: TourStep[] = [
     description:
       "AI automatically flags unusual transactions like duplicate charges, price changes, or unexpected fees.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=intelligence",
+    chapter: "account-page/intelligence",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=intelligence");
+    },
   },
   {
     id: "intel-suggestions",
@@ -548,102 +594,152 @@ export const INTELLIGENCE_DEEP_DIVE: TourStep[] = [
     description:
       "Receive personalized recommendations for budgeting, saving, and categorizing your transactions.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=intelligence",
+    chapter: "account-page/intelligence",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=intelligence");
+    },
   },
 ];
 
 /**
- * Schedules Deep Dive Sub-Tour
+ * Schedules Deep Dive Steps (Account-level)
  *
- * Detailed walkthrough of recurring transaction management
+ * Detailed walkthrough of recurring transaction management on account page
  */
 export const SCHEDULES_DEEP_DIVE: TourStep[] = [
   {
-    id: "schedules-list",
-    targetSelector: "[data-tour-id='schedules-list']",
-    title: "Recurring Transactions",
+    id: "acct-schedules-list",
+    targetSelector: "[data-tour-id='account-schedules-list']",
+    title: "Account Schedules",
     description:
       "View all scheduled transactions for this account: bills, subscriptions, income, and regular transfers.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=schedules",
+    chapter: "account-page/schedules",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=schedules");
+    },
   },
   {
-    id: "schedules-frequency",
-    targetSelector: "[data-tour-id='schedules-frequency']",
+    id: "acct-schedules-frequency",
+    targetSelector: "[data-tour-id='account-schedules-frequency']",
     title: "Frequency Options",
     description:
       "Set transactions to repeat weekly, biweekly, monthly, or on custom schedules. Skip holidays or weekends.",
     placement: "right",
+    route: "/accounts/demo-checking?tab=schedules",
+    chapter: "account-page/schedules",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=schedules");
+    },
   },
   {
-    id: "schedules-upcoming",
-    targetSelector: "[data-tour-id='schedules-upcoming']",
+    id: "acct-schedules-upcoming",
+    targetSelector: "[data-tour-id='account-schedules-upcoming']",
     title: "Upcoming Payments",
     description:
       "See what payments are coming up and when. Plan ahead to avoid overdrafts or missed bills.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=schedules",
+    chapter: "account-page/schedules",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=schedules");
+    },
   },
 ];
 
 /**
- * Budgets Deep Dive Sub-Tour
+ * Budgets Deep Dive Steps (Account-level)
  *
- * Detailed walkthrough of budget management features
+ * Detailed walkthrough of budget management features on account page
  */
 export const BUDGETS_DEEP_DIVE: TourStep[] = [
   {
-    id: "budgets-overview",
-    targetSelector: "[data-tour-id='budgets-overview']",
-    title: "Budget Overview",
+    id: "acct-budgets-overview",
+    targetSelector: "[data-tour-id='account-budgets-overview']",
+    title: "Account Budgets",
     description:
       "See all budgets linked to this account. Track progress toward your spending limits in each category.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=budgets",
+    chapter: "account-page/budgets",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=budgets");
+    },
   },
   {
-    id: "budgets-progress",
-    targetSelector: "[data-tour-id='budgets-progress']",
+    id: "acct-budgets-progress",
+    targetSelector: "[data-tour-id='account-budgets-progress']",
     title: "Progress Tracking",
     description:
       "Visual indicators show how much you have spent vs. budgeted. Green is on track, yellow is warning, red is over.",
     placement: "right",
+    route: "/accounts/demo-checking?tab=budgets",
+    chapter: "account-page/budgets",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=budgets");
+    },
   },
   {
-    id: "budgets-allocation",
-    targetSelector: "[data-tour-id='budgets-allocation']",
+    id: "acct-budgets-allocation",
+    targetSelector: "[data-tour-id='account-budgets-allocation']",
     title: "Budget Allocation",
     description:
       "Allocate funds from this account to different spending categories. Move money between budgets as needed.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=budgets",
+    chapter: "account-page/budgets",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=budgets");
+    },
   },
 ];
 
 /**
- * Settings Deep Dive Sub-Tour
+ * Settings Deep Dive Steps (Account-level)
  *
  * Detailed walkthrough of account settings
  */
 export const SETTINGS_DEEP_DIVE: TourStep[] = [
   {
-    id: "settings-details",
-    targetSelector: "[data-tour-id='settings-details']",
+    id: "acct-settings-details",
+    targetSelector: "[data-tour-id='account-settings-details']",
     title: "Account Details",
     description:
       "Edit the account name, icon, and color. Add notes to remember important details about this account.",
     placement: "bottom",
+    route: "/accounts/demo-checking?tab=settings",
+    chapter: "account-page/settings",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=settings");
+    },
   },
   {
-    id: "settings-type",
-    targetSelector: "[data-tour-id='settings-type']",
+    id: "acct-settings-type",
+    targetSelector: "[data-tour-id='account-settings-type']",
     title: "Account Type",
     description:
       "Change the account type (checking, savings, credit card, etc.) to affect how balances are calculated.",
     placement: "right",
+    route: "/accounts/demo-checking?tab=settings",
+    chapter: "account-page/settings",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=settings");
+    },
   },
   {
-    id: "settings-danger",
-    targetSelector: "[data-tour-id='settings-danger-zone']",
+    id: "acct-settings-danger",
+    targetSelector: "[data-tour-id='account-settings-danger-zone']",
     title: "Danger Zone",
     description:
       "Close or delete the account. Closed accounts are hidden but preserved. Deleted accounts are permanently removed.",
     placement: "top",
+    route: "/accounts/demo-checking?tab=settings",
+    chapter: "account-page/settings",
+    setup: async () => {
+      await ensureDemoAccountSetup("/accounts/demo-checking?tab=settings");
+    },
   },
 ];
 
@@ -776,15 +872,10 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=transactions");
     },
-    branches: [
-      {
-        id: "transactions-deep-dive",
-        label: "Learn More",
-        description: "Explore transaction features in detail",
-        subTourSteps: TRANSACTIONS_DEEP_DIVE,
-      },
-    ],
   },
+
+  // Transactions Deep Dive Steps
+  ...TRANSACTIONS_DEEP_DIVE,
 
   // Add Transaction Button
   {
@@ -814,15 +905,10 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=analytics");
     },
-    branches: [
-      {
-        id: "analytics-deep-dive",
-        label: "Learn More",
-        description: "Explore analytics and reporting features",
-        subTourSteps: ANALYTICS_DEEP_DIVE,
-      },
-    ],
   },
+
+  // Analytics Deep Dive Steps
+  ...ANALYTICS_DEEP_DIVE,
 
   // Intelligence Tab
   {
@@ -837,15 +923,10 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=intelligence");
     },
-    branches: [
-      {
-        id: "intelligence-deep-dive",
-        label: "Learn More",
-        description: "Explore AI-powered insights",
-        subTourSteps: INTELLIGENCE_DEEP_DIVE,
-      },
-    ],
   },
+
+  // Intelligence Deep Dive Steps
+  ...INTELLIGENCE_DEEP_DIVE,
 
   // Schedules Tab
   {
@@ -860,15 +941,10 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=schedules");
     },
-    branches: [
-      {
-        id: "schedules-deep-dive",
-        label: "Learn More",
-        description: "Explore recurring transaction features",
-        subTourSteps: SCHEDULES_DEEP_DIVE,
-      },
-    ],
   },
+
+  // Schedules Deep Dive Steps
+  ...SCHEDULES_DEEP_DIVE,
 
   // Budgets Tab
   {
@@ -883,15 +959,10 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=budgets");
     },
-    branches: [
-      {
-        id: "budgets-deep-dive",
-        label: "Learn More",
-        description: "Explore budget management features",
-        subTourSteps: BUDGETS_DEEP_DIVE,
-      },
-    ],
   },
+
+  // Budgets Deep Dive Steps
+  ...BUDGETS_DEEP_DIVE,
 
   // Settings Tab
   {
@@ -906,15 +977,10 @@ export const ACCOUNT_PAGE_TOUR_STEPS: TourStep[] = [
     setup: async () => {
       await ensureDemoAccountSetup("/accounts/demo-checking?tab=settings");
     },
-    branches: [
-      {
-        id: "settings-deep-dive",
-        label: "Learn More",
-        description: "Explore account settings options",
-        subTourSteps: SETTINGS_DEEP_DIVE,
-      },
-    ],
   },
+
+  // Settings Deep Dive Steps
+  ...SETTINGS_DEEP_DIVE,
 
   // Import Tab
   {
