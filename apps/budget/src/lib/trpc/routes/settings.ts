@@ -60,7 +60,7 @@ export const settingsRoutes = t.router({
   /**
    * Delete all data from all user tables.
    * This is a destructive operation that cannot be undone.
-   * Preserves auth-related tables (user, session, account, verification).
+   * Preserves auth-related tables (user, session, auth_account, verification).
    */
   deleteAllData: secureOperationProcedure.mutation(async () => {
     try {
@@ -68,7 +68,7 @@ export const settingsRoutes = t.router({
       const protectedTables = new Set([
         "user",           // User accounts
         "session",        // Auth sessions
-        "account",        // OAuth accounts (Better Auth)
+        "auth_account",   // OAuth accounts (Better Auth)
         "verification",   // Email/password verification tokens
       ]);
 

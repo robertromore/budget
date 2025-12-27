@@ -45,10 +45,10 @@ const displayCount = $derived.by(() => {
 });
 </script>
 
-<div
-  class="bg-muted flex items-center gap-2 rounded-md border px-4 py-2"
-  data-tour-id="transactions-bulk-actions">
-  {#if selectedCount > 0 && displayCount > 0}
+{#if selectedCount > 0 && displayCount > 0}
+  <div
+    class="bg-muted flex items-center gap-2 rounded-md border px-4 py-2"
+    data-tour-id="transactions-bulk-actions">
     <div class="flex items-center gap-2">
       <span class="text-sm font-medium">
         {displayCount}
@@ -86,9 +86,5 @@ const displayCount = $derived.by(() => {
         <X class="h-4 w-4" />
       </Button>
     </div>
-  {:else}
-    <span class="text-muted-foreground text-sm">
-      Select transactions using the checkboxes to perform bulk actions
-    </span>
-  {/if}
-</div>
+  </div>
+{/if}

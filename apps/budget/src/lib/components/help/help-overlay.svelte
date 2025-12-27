@@ -1,10 +1,12 @@
 <script lang="ts">
   import { helpMode } from "$lib/states/ui/help.svelte";
+  import { demoMode } from "$lib/states/ui/demo-mode.svelte";
   import { onMount } from "svelte";
   import HelpDocumentationSheet from "./help-documentation-sheet.svelte";
   import HelpElementHighlight from "./help-element-highlight.svelte";
 
   const isActive = $derived(helpMode.isActive);
+  const isDemoModeActive = $derived(demoMode.isActive);
   const elements = $derived(helpMode.elements);
   const elementCount = $derived(helpMode.elementCount);
   const isSheetOpen = $derived(helpMode.isSheetOpen);
@@ -96,9 +98,11 @@
     {/each}
   {/if}
 
-  <!-- Instructions bar -->
+  <!-- Instructions bar - moves up when demo mode banner is visible -->
   <div
-    class="bg-blue-600 text-white pointer-events-none fixed bottom-4 left-1/2 z-130 -translate-x-1/2 rounded-lg px-4 py-2 text-sm shadow-lg"
+    class="bg-blue-600 text-white pointer-events-none fixed left-1/2 z-130 -translate-x-1/2 rounded-lg px-4 py-2 text-sm shadow-lg transition-[bottom] duration-200"
+    class:bottom-4={!isDemoModeActive}
+    class:bottom-20={isDemoModeActive}
   >
     <span class="font-medium">Help Mode</span>
     <span class="mx-2 opacity-60">|</span>

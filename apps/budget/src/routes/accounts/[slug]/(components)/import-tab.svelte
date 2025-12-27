@@ -1699,6 +1699,7 @@ $effect(() => {
 				processorCount={processorAnalysis.total}
 				onOpenProcessorFilter={openProcessorFilterDialog}
 				bind:cleanupSheetOpen
+				bind:selectedRows
 			/>
 
 			<!-- Navigation -->

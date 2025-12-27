@@ -184,8 +184,6 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
   </Toggle>
 </div>
 
-<Separator />
-
 {#if manageViewForm}
   <ManageViewForm
     availableFilters={filterComponents}
@@ -205,7 +203,7 @@ const nonEditableViews = $derived(_currentViews?.nonEditableViews ?? []);
     }}
     bind:viewId={editViewId} />
 {:else}
-  <div class="flex">
+  <div class="mt-2 flex">
     <div data-help-id="transaction-filters" data-help-title="Filter Transactions">
       <FilterInput availableFilters={filterComponents} />
     </div>
