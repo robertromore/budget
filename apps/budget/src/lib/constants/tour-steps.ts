@@ -1404,12 +1404,12 @@ export const CATEGORY_PAGE_TOUR_STEPS: TourStep[] = [
  * A comprehensive tour that covers the entire application:
  * 1. Getting Started - Sidebar navigation and account basics
  * 2. Navigation - Main pages overview (with demo data visible)
- * 3. Help & Settings - Accessing help and preferences
- * 4. Account Page - Detailed account features and import wizard
- * 5. Budget Page - Budget management, recommendations, and analytics
- * 6. Schedules Page - Recurring transaction management
- * 7. Payees Page - Payee management and organization
- * 8. Categories Page - Category organization and management
+ * 3. Account Page - Detailed account features and import wizard
+ * 4. Budget Page - Budget management, recommendations, and analytics
+ * 5. Schedules Page - Recurring transaction management
+ * 6. Payees Page - Payee management and organization
+ * 7. Categories Page - Category organization and management
+ * 8. Help & Settings - Accessing help and preferences
  * 9. Finish - Tour completion
  */
 export const UNIFIED_TOUR_STEPS: TourStep[] = [
@@ -1418,9 +1418,6 @@ export const UNIFIED_TOUR_STEPS: TourStep[] = [
 
   // Navigation (from Main Tour)
   ...MAIN_TOUR_STEPS.filter((step) => step.chapter === "navigation"),
-
-  // Help & Settings (from Main Tour)
-  ...MAIN_TOUR_STEPS.filter((step) => step.chapter === "help-and-settings"),
 
   // Account Page (from Account Page Tour - excluding finish)
   ...ACCOUNT_PAGE_TOUR_STEPS.filter((step) => step.chapter !== "finish"),
@@ -1436,6 +1433,9 @@ export const UNIFIED_TOUR_STEPS: TourStep[] = [
 
   // Categories Page (from Category Page Tour)
   ...CATEGORY_PAGE_TOUR_STEPS,
+
+  // Help & Settings (from Main Tour) - shown at end before finish
+  ...MAIN_TOUR_STEPS.filter((step) => step.chapter === "help-and-settings"),
 
   // Unified Finish
   // Note: Cleanup (demoMode.endTour(), demoMode.deactivate()) is handled in
