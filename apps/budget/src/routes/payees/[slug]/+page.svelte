@@ -12,6 +12,7 @@ import Phone from '@lucide/svelte/icons/phone';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import Trash2 from '@lucide/svelte/icons/trash-2';
 import User from '@lucide/svelte/icons/user';
+import PayeeAliasesCard from '../(components)/payee-aliases-card.svelte';
 
 // Get payee slug from URL parameter
 const payeeSlug = $derived(page.params['slug'] || '');
@@ -214,6 +215,11 @@ $effect(() => {
           </div>
         </Card.Content>
       </Card.Root>
+    </div>
+
+    <!-- Import Aliases Section -->
+    <div class="max-w-md">
+      <PayeeAliasesCard payeeId={payee.id} payeeName={payee.name ?? 'Unknown'} />
     </div>
 
     <!-- Recent Transactions Section -->

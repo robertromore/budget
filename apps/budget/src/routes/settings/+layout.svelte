@@ -5,6 +5,7 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import Brain from '@lucide/svelte/icons/brain';
 	import FileSpreadsheet from '@lucide/svelte/icons/file-spreadsheet';
+	import Link from '@lucide/svelte/icons/link';
 	import Monitor from '@lucide/svelte/icons/monitor';
 	import Palette from '@lucide/svelte/icons/palette';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
@@ -34,7 +35,10 @@
 		},
 		{
 			title: 'Data',
-			items: [{ href: '/settings/import-profiles', label: 'Import Profiles', icon: FileSpreadsheet }]
+			items: [
+				{ href: '/settings/import-profiles', label: 'Import Profiles', icon: FileSpreadsheet },
+				{ href: '/settings/payee-aliases', label: 'Payee Aliases', icon: Link }
+			]
 		},
 		{
 			title: 'Intelligence',
