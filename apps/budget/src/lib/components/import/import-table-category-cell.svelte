@@ -23,13 +23,6 @@ interface Props {
 
 let { row, onUpdate, temporaryCategories = [], suggestion }: Props = $props();
 
-// Debug: Log when we receive a suggestion
-$effect(() => {
-  if (suggestion && suggestion.suggestions.length > 0) {
-    console.log(`[CategoryCell] Row ${row.original.rowIndex} has ${suggestion.suggestions.length} suggestions:`, suggestion.suggestions[0]);
-  }
-});
-
 // Track if user has manually overridden the AI suggestion
 let userOverride = $state(false);
 
@@ -71,26 +64,27 @@ const categoriesArray = $derived(
   categoryState ? Array.from(categoryState.categories.values()) : []
 );
 
-// Get the current value from the row data
-const initialCategoryName = $derived(row.original.normalizedData['category'] as string | undefined);
+// Get the current value from the row data (includes entityOverrides applied by parent)
+const externalCategoryName = $derived(row.original.normalizedData['category'] as string | undefined);
 
 // Local state for the selected category - using private vars for accessor pattern
 let _selectedCategoryName = $state<string>('');
 let _selectedCategoryId = $state<number | null>(null);
 
-// Initialize from row data only once on mount
+// Sync from external data on initial load
 let hasInitialized = $state(false);
 $effect(() => {
-  if (!hasInitialized) {
-    const initName = initialCategoryName || '';
-    _selectedCategoryName = initName;
-
-    if (initName) {
-      const match = categoriesArray.find((c) => c.name?.toLowerCase() === initName.toLowerCase());
-      _selectedCategoryId = match?.id || null;
-    }
-
+  if (!hasInitialized && externalCategoryName !== undefined) {
     hasInitialized = true;
+    const newName = externalCategoryName || '';
+    _selectedCategoryName = newName;
+
+    if (newName) {
+      const match = categoriesArray.find((c) => c.name?.toLowerCase() === newName.toLowerCase());
+      _selectedCategoryId = match?.id || null;
+    } else {
+      _selectedCategoryId = null;
+    }
   }
 });
 

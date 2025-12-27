@@ -1,4 +1,5 @@
 <script lang="ts">
+import { replaceState } from '$app/navigation';
 import { page } from '$app/stores';
 import { onMount } from 'svelte';
 import { Button } from '$lib/components/ui/button';
@@ -38,7 +39,7 @@ onMount(() => {
     // Remove the query param from URL without navigation
     const url = new URL(window.location.href);
     url.searchParams.delete('tour');
-    window.history.replaceState({}, '', url.toString());
+    replaceState(url, {});
   }
 });
 
