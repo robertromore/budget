@@ -2,8 +2,10 @@
 import ColumnMapper from '$lib/components/import/column-mapper.svelte';
 import EntityReview from '$lib/components/import/entity-review.svelte';
 import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svelte';
+import type { AliasCandidate } from '$lib/components/import/import-preview-columns';
 import ImportPreviewTable from '$lib/components/import/import-preview-table.svelte';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
+import { bulkCreatePayeeAliases } from '$lib/query/payee-aliases';
 import * as Badge from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
 import * as Card from '$lib/components/ui/card';
@@ -74,6 +76,10 @@ let scheduleMatches = $state<ScheduleMatch[]>([]);
 let scheduleMatchThreshold = $state(0.75);
 let cleanupState = $state<CleanupState | null>(null);
 let cleanupSheetOpen = $state(false);
+
+// Payee alias tracking - records mappings from raw CSV strings to selected payees
+let aliasCandidates = $state<Map<number, AliasCandidate>>(new Map());
+const createAliasesMutation = bulkCreatePayeeAliases.options();
 
 // Import profile state
 let matchedProfile = $state<ImportProfile | null>(null);
@@ -167,9 +173,13 @@ const previewData = $derived.by(() => {
 		...parseResults,
 		rows: parseResults.rows.map((row) => {
 			const override = entityOverrides[row.rowIndex];
+			// Store the original payee value from the CSV before any overrides
+			const originalPayee = row.normalizedData['payee'] as string | null;
 
 			return {
 				...row,
+				// Preserve the original payee for alias tracking
+				originalPayee,
 				normalizedData: {
 					...row.normalizedData,
 					amount:
@@ -898,12 +908,6 @@ async function runCleanupAnalysis() {
 			rows: payeeInputs
 		});
 
-		console.log('[Category Suggestions] Raw result:', {
-			payeeGroups: result.payeeGroups?.length,
-			categorySuggestions: result.categorySuggestions?.length,
-			categoryStats: result.categoryStats
-		});
-
 		cleanupState = {
 			...cleanupState,
 			analysisProgress: 80,
@@ -918,11 +922,6 @@ async function runCleanupAnalysis() {
 			analysisProgress: 100,
 			analysisPhase: undefined
 		};
-
-		console.log('[Category Suggestions] Updated cleanupState:', {
-			categorySuggestions: cleanupState.categorySuggestions?.length,
-			sampleSuggestion: cleanupState.categorySuggestions?.[0]
-		});
 
 		// Apply high-confidence category suggestions to entityOverrides
 		for (const suggestion of result.categorySuggestions) {
@@ -1153,7 +1152,6 @@ $effect(() => {
 
 // Load demo CSV data for the tour
 async function loadDemoImportData() {
-	console.log('[ImportTab] Loading demo import data');
 	isProcessing = true;
 	error = null;
 
@@ -1246,7 +1244,7 @@ async function loadDemoImportData() {
 // Handle cleanup state changes from the toolbar component
 function handleCleanupStateChange(state: CleanupState) {
 	cleanupState = state;
-	// Apply cleanup decisions to entityOverrides
+	// Apply cleanup decisions to entityOverrides and create alias candidates
 	for (const group of state.payeeGroups) {
 		if (group.userDecision === 'accept' || group.userDecision === 'custom') {
 			const payeeName = group.userDecision === 'custom' && group.customName
@@ -1263,6 +1261,19 @@ function handleCleanupStateChange(state: CleanupState) {
 						payeeName
 					}
 				};
+
+				// Create alias candidate for both existing and new payees
+				// For existing payees: track payeeId
+				// For new payees: track payeeName (will be resolved to ID after import)
+				if (member.originalPayee && member.originalPayee !== payeeName) {
+					const newCandidates = new Map(aliasCandidates);
+					newCandidates.set(member.rowIndex, {
+						rawString: member.originalPayee,
+						payeeId: payeeId ?? undefined,  // null for new payees
+						payeeName,  // Track name for resolution after import
+					});
+					aliasCandidates = newCandidates;
+				}
 			}
 		}
 	}
@@ -1284,6 +1295,13 @@ function handleCleanupStateChange(state: CleanupState) {
 			}
 		}
 	}
+}
+
+// Handler for alias candidates from payee cell selection
+function handlePayeeAliasCandidate(rowIndex: number, alias: AliasCandidate) {
+	const newCandidates = new Map(aliasCandidates);
+	newCandidates.set(rowIndex, alias);
+	aliasCandidates = newCandidates;
 }
 
 function proceedToScheduleReview() {
@@ -1443,6 +1461,71 @@ async function processImport() {
 			importResult = result.result;
 			currentStep = 'complete';
 
+			// Record payee aliases from user confirmations during import
+			// This handles both existing payees (with payeeId) and newly created payees (resolved by name)
+			if (aliasCandidates.size > 0) {
+				try {
+					// Build lookups from created payee mappings
+					// Priority: user-selected name > normalized name > original import string
+					const nameToIdMap = new Map<string, number>();
+					const originalToIdMap = new Map<string, number>();
+					if (result.result.createdPayeeMappings) {
+						for (const mapping of result.result.createdPayeeMappings) {
+							// Normalized name (what's stored in DB) - lower priority
+							nameToIdMap.set(mapping.normalizedName.toLowerCase(), mapping.payeeId);
+							// Original import string - for fallback matching
+							originalToIdMap.set(mapping.originalName.toLowerCase(), mapping.payeeId);
+						}
+					}
+
+					// Resolve aliases - for existing payees use payeeId, for new payees look up by name
+					const aliasesToCreate = Array.from(aliasCandidates.values())
+						.map((alias) => {
+							// If we already have a payeeId (existing payee), use it
+							if (alias.payeeId) {
+								return {
+									rawString: alias.rawString,
+									payeeId: alias.payeeId,
+									sourceAccountId: accountId,
+								};
+							}
+
+							// Try to resolve by user-selected payee name first (higher priority)
+							if (alias.payeeName) {
+								const payeeId = nameToIdMap.get(alias.payeeName.toLowerCase());
+								if (payeeId) {
+									return {
+										rawString: alias.rawString,
+										payeeId,
+										sourceAccountId: accountId,
+									};
+								}
+							}
+
+							// Fallback: try to match by the original import string
+							if (alias.rawString) {
+								const payeeId = originalToIdMap.get(alias.rawString.toLowerCase());
+								if (payeeId) {
+									return {
+										rawString: alias.rawString,
+										payeeId,
+										sourceAccountId: accountId,
+									};
+								}
+							}
+
+							return null; // Could not resolve
+						})
+						.filter((alias): alias is NonNullable<typeof alias> => alias !== null);
+
+					if (aliasesToCreate.length > 0) {
+						await createAliasesMutation.mutateAsync({ aliases: aliasesToCreate });
+					}
+				} catch (aliasError) {
+					console.warn('Failed to record payee aliases:', aliasError);
+				}
+			}
+
 			// Invalidate all relevant queries to ensure the UI updates
 			// Use refetchType: 'all' to force refetch of all matching queries
 			await queryClient.invalidateQueries({
@@ -1499,6 +1582,7 @@ function startNewImport() {
 	csvHeaders = [];
 	columnMapping = null;
 	cleanupState = null;
+	aliasCandidates = new Map();
 }
 
 // Save profile dialog helpers
@@ -1692,6 +1776,7 @@ $effect(() => {
 				{cleanupState}
 				onCleanupStateChange={handleCleanupStateChange}
 				onPayeeUpdate={handlePayeeUpdateWithSimilar}
+				onPayeeAliasCandidate={handlePayeeAliasCandidate}
 				onCategoryUpdate={handleCategoryUpdateWithSimilar}
 				onDescriptionUpdate={handleDescriptionUpdate}
 				{temporaryCategories}

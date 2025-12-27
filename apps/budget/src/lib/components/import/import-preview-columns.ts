@@ -17,7 +17,7 @@ import type { Column, ColumnDef } from "@tanstack/table-core";
 import ImportTableAmountCell from "./import-table-amount-cell.svelte";
 import ImportTableCategoryCell from "./import-table-category-cell.svelte";
 import ImportTableDescriptionCell from "./import-table-description-cell.svelte";
-import ImportTablePayeeCell from "./import-table-payee-cell.svelte";
+import ImportTablePayeeCell, { type AliasCandidate } from "./import-table-payee-cell.svelte";
 import ImportTableStatusCell from "./import-table-status-cell.svelte";
 import { DataTableColumnHeader } from "$lib/components/data-table/core";
 
@@ -59,6 +59,7 @@ const arrIncludesFilter = (row: any, columnId: string, filterValue: unknown) => 
 
 export interface ImportPreviewColumnActions {
   onPayeeUpdate?: (rowIndex: number, payeeId: number | null, payeeName: string | null) => void;
+  onPayeeAliasCandidate?: (rowIndex: number, alias: AliasCandidate) => void;
   onCategoryUpdate?: (
     rowIndex: number,
     categoryId: number | null,
@@ -70,10 +71,13 @@ export interface ImportPreviewColumnActions {
   categorySuggestions?: CategorySuggestion[];
 }
 
+// Re-export for consumers
+export type { AliasCandidate };
+
 export function createImportPreviewColumns(
   actions: ImportPreviewColumnActions = {}
 ): ColumnDef<ImportRow>[] {
-  const { onPayeeUpdate, onCategoryUpdate, onDescriptionUpdate, temporaryPayees, temporaryCategories, categorySuggestions } =
+  const { onPayeeUpdate, onPayeeAliasCandidate, onCategoryUpdate, onDescriptionUpdate, temporaryPayees, temporaryCategories, categorySuggestions } =
     actions;
 
   return [
@@ -199,6 +203,7 @@ export function createImportPreviewColumns(
         renderComponent(ImportTablePayeeCell, {
           row,
           ...(onPayeeUpdate ? { onUpdate: onPayeeUpdate } : {}),
+          ...(onPayeeAliasCandidate ? { onAliasCandidate: onPayeeAliasCandidate } : {}),
           ...(temporaryPayees ? { temporaryPayees } : {}),
         }),
       accessorFn: (row) => row.normalizedData["payee"],

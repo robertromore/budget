@@ -23,6 +23,8 @@ export interface ImportRow {
   validationStatus: ImportRowStatus;
   validationErrors?: ValidationError[];
   duplicateMatch?: DuplicateMatch;
+  /** Original payee value from CSV before any user overrides - used for alias tracking */
+  originalPayee?: string | null;
 }
 
 // Normalized transaction data after parsing
@@ -148,6 +150,12 @@ export interface ImportResult {
     invalidRows: number;
     skippedRows: number;
   };
+  /** Mapping of created payees: original import string → new payee (for alias tracking) */
+  createdPayeeMappings?: Array<{
+    originalName: string;    // Raw import string (e.g., "WALMART #1234 DALLAS TX")
+    normalizedName: string;  // Cleaned name stored as payee.name (e.g., "Walmart")
+    payeeId: number;         // ID of the newly created payee
+  }>;
 }
 
 // Progress tracking

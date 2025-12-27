@@ -3,6 +3,8 @@ import ColumnMapper from '$lib/components/import/column-mapper.svelte';
 import EntityReview from '$lib/components/import/entity-review.svelte';
 import FileUploadDropzone from '$lib/components/import/file-upload-dropzone.svelte';
 import ImportPreviewTable from '$lib/components/import/import-preview-table.svelte';
+import type { AliasCandidate } from '$lib/components/import/import-preview-columns';
+import { bulkCreatePayeeAliases } from '$lib/query/payee-aliases';
 import * as AlertDialog from '$lib/components/ui/alert-dialog';
 import * as Badge from '$lib/components/ui/badge';
 import { Button } from '$lib/components/ui/button';
@@ -162,12 +164,73 @@ const reverseAmountSigns = $derived(importOptions.reverseAmountSigns);
 // Cleanup state for the preview table
 let cleanupState = $state<CleanupState | null>(null);
 
+// Alias candidates - track payee mappings from user confirmations during import
+// Key is row index, value is the alias candidate
+let aliasCandidates = $state<Map<number, AliasCandidate>>(new Map());
+
+// Initialize the mutation for bulk creating aliases
+const createAliasesMutation = bulkCreatePayeeAliases.options();
+
 function handleImportOptionsChange(options: typeof importOptions) {
   importOptions = options;
 }
 
 function handleCleanupStateChange(state: CleanupState) {
   cleanupState = state;
+
+  // Apply cleanup decisions to entityOverrides and create alias candidates
+  for (const group of state.payeeGroups) {
+    if (group.userDecision === 'accept' || group.userDecision === 'custom') {
+      const payeeName = group.userDecision === 'custom' && group.customName
+        ? group.customName
+        : group.canonicalName;
+      const payeeId = group.existingMatch?.id ?? null;
+
+      for (const member of group.members) {
+        // Apply the cleanup decision to entityOverrides
+        entityOverrides = {
+          ...entityOverrides,
+          [member.rowIndex]: {
+            ...entityOverrides[member.rowIndex],
+            payeeId,
+            payeeName
+          }
+        };
+
+        // Create alias candidate for both existing and new payees
+        // For existing payees: track payeeId
+        // For new payees: track payeeName (will be resolved to ID after import)
+        if (member.originalPayee && member.originalPayee !== payeeName) {
+          const newCandidates = new Map(aliasCandidates);
+          newCandidates.set(member.rowIndex, {
+            rawString: member.originalPayee,
+            payeeId: payeeId ?? undefined,  // null for new payees
+            payeeName,  // Track name for resolution after import
+          });
+          aliasCandidates = newCandidates;
+        }
+      }
+    }
+  }
+
+  // Apply category suggestions
+  for (const suggestion of state.categorySuggestions) {
+    if (suggestion.selectedCategoryId) {
+      const selectedSuggestion = suggestion.suggestions.find(
+        (s) => s.categoryId === suggestion.selectedCategoryId
+      );
+      if (selectedSuggestion) {
+        entityOverrides = {
+          ...entityOverrides,
+          [suggestion.rowIndex]: {
+            ...entityOverrides[suggestion.rowIndex],
+            categoryId: suggestion.selectedCategoryId,
+            categoryName: selectedSuggestion.categoryName
+          }
+        };
+      }
+    }
+  }
 }
 
 // Create reactive preview data that applies amount reversal and entity overrides
@@ -179,9 +242,13 @@ const previewData = $derived.by(() => {
     ...parseResults,
     rows: parseResults.rows.map((row) => {
       const override = entityOverrides[row.rowIndex];
+      // Store the original payee value from the CSV before any overrides
+      const originalPayee = row.normalizedData['payee'] as string | null;
 
       return {
         ...row,
+        // Preserve the original payee for alias tracking
+        originalPayee,
         normalizedData: {
           ...row.normalizedData,
           // Apply amount reversal if enabled
@@ -265,6 +332,15 @@ function handlePayeeUpdate(rowIndex: number, payeeId: number | null, payeeName: 
       payeeName,
     },
   };
+}
+
+// Handler for alias candidates from payee selection during import
+function handlePayeeAliasCandidate(rowIndex: number, alias: AliasCandidate) {
+  // Track the alias candidate for this row
+  // Later rows with the same raw string will overwrite earlier ones (keeping most recent)
+  const newCandidates = new Map(aliasCandidates);
+  newCandidates.set(rowIndex, alias);
+  aliasCandidates = newCandidates;
 }
 
 // State for bulk payee update confirmation dialog
@@ -835,14 +911,8 @@ async function handleFileSelected(file: File) {
 
     // Add accountId and reverseAmountSigns as query parameters for duplicate checking
     const url = new URL('/api/import/upload', window.location.origin);
-    console.log('[Client] File upload - selectedAccountId:', selectedAccountId);
-    console.log(
-      '[Client] Selected account:',
-      importableAccounts.find((a: Account) => a.id.toString() === selectedAccountId)
-    );
     if (selectedAccountId) {
       url.searchParams.set('accountId', selectedAccountId);
-      console.log('[Client] Upload URL:', url.toString());
     }
     // Pass reverseAmountSigns so duplicate detection can compare final amounts
     url.searchParams.set('reverseAmountSigns', reverseAmountSigns.toString());
@@ -1153,6 +1223,76 @@ async function processImport() {
       importResult = result.result;
       currentStep = 'complete';
 
+      // Record payee aliases from user confirmations during import
+      // This handles both existing payees (with payeeId) and newly created payees (resolved by name)
+      if (aliasCandidates.size > 0) {
+        try {
+          // Build lookups from created payee mappings
+          // Priority: user-selected name > normalized name > original import string
+          const nameToIdMap = new Map<string, number>();
+          const originalToIdMap = new Map<string, number>();
+          if (result.result.createdPayeeMappings) {
+            for (const mapping of result.result.createdPayeeMappings) {
+              // Normalized name (what's stored in DB) - lower priority
+              nameToIdMap.set(mapping.normalizedName.toLowerCase(), mapping.payeeId);
+              // Original import string - for fallback matching
+              originalToIdMap.set(mapping.originalName.toLowerCase(), mapping.payeeId);
+            }
+          }
+
+          // Resolve aliases - for existing payees use payeeId, for new payees look up by name
+          const aliasesToCreate = Array.from(aliasCandidates.values())
+            .map((alias) => {
+              // If we already have a payeeId (existing payee), use it
+              if (alias.payeeId) {
+                return {
+                  rawString: alias.rawString,
+                  payeeId: alias.payeeId,
+                  sourceAccountId: selectedAccountId ? parseInt(selectedAccountId) : undefined,
+                };
+              }
+
+              // Try to resolve by user-selected payee name first (higher priority)
+              if (alias.payeeName) {
+                const resolvedId = nameToIdMap.get(alias.payeeName.toLowerCase());
+                if (resolvedId) {
+                  return {
+                    rawString: alias.rawString,
+                    payeeId: resolvedId,
+                    sourceAccountId: selectedAccountId ? parseInt(selectedAccountId) : undefined,
+                  };
+                }
+              }
+
+              // Fallback: try to match by the original import string
+              if (alias.rawString) {
+                const resolvedId = originalToIdMap.get(alias.rawString.toLowerCase());
+                if (resolvedId) {
+                  return {
+                    rawString: alias.rawString,
+                    payeeId: resolvedId,
+                    sourceAccountId: selectedAccountId ? parseInt(selectedAccountId) : undefined,
+                  };
+                }
+              }
+
+              // Could not resolve - skip this alias
+              return null;
+            })
+            .filter(
+              (alias): alias is { rawString: string; payeeId: number; sourceAccountId: number | undefined } =>
+                alias !== null && !!alias.rawString
+            );
+
+          if (aliasesToCreate.length > 0) {
+            await createAliasesMutation.mutateAsync({ aliases: aliasesToCreate });
+          }
+        } catch (aliasError) {
+          // Non-critical - don't fail the import if alias recording fails
+          console.warn('Failed to record payee aliases:', aliasError);
+        }
+      }
+
       // Invalidate all relevant queries to ensure the UI updates
       // Use refetchType: 'all' to force refetch of all matching queries
       const accountIdNum = selectedAccountId ? parseInt(selectedAccountId) : undefined;
@@ -1215,6 +1355,7 @@ function startNewImport() {
   previewTable = undefined;
   entityOverrides = {};
   cleanupState = null;
+  aliasCandidates = new Map();
 }
 
 // Save profile dialog helpers
@@ -1489,6 +1630,7 @@ $effect(() => {
               {cleanupState}
               onCleanupStateChange={handleCleanupStateChange}
               onPayeeUpdate={handlePayeeUpdateWithSimilar}
+              onPayeeAliasCandidate={handlePayeeAliasCandidate}
               onCategoryUpdate={handleCategoryUpdateWithSimilar}
               onDescriptionUpdate={handleDescriptionUpdate}
               {temporaryCategories}

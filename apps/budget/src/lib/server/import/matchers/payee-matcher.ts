@@ -2,10 +2,11 @@
  * Payee Matcher Service
  *
  * Provides intelligent matching of imported payee names to existing payees
- * using fuzzy string matching and confidence scoring.
+ * using alias lookups first, then fuzzy string matching and confidence scoring.
  */
 
 import type { Payee } from "$lib/schema/payees";
+import { getPayeeAliasService } from "$lib/server/domains/payees/alias-service";
 import { calculateStringSimilarity, normalizeText } from "../utils";
 
 export type MatchConfidence = "exact" | "high" | "medium" | "low" | "none";
@@ -15,6 +16,7 @@ export interface PayeeMatch {
   confidence: MatchConfidence;
   score: number;
   matchedOn: string;
+  aliasId?: number; // Present if matched via alias
 }
 
 export interface PayeeMatcherOptions {
@@ -22,24 +24,72 @@ export interface PayeeMatcherOptions {
   highThreshold?: number;
   mediumThreshold?: number;
   createIfNoMatch?: boolean;
+  workspaceId?: number; // Required for alias lookups
+  useAliases?: boolean; // Whether to check aliases first (default: true)
 }
 
-const DEFAULT_OPTIONS: Required<PayeeMatcherOptions> = {
+const DEFAULT_OPTIONS: Required<Omit<PayeeMatcherOptions, "workspaceId">> & { workspaceId?: number } = {
   exactThreshold: 1.0,
   highThreshold: 0.9,
   mediumThreshold: 0.7,
   createIfNoMatch: true,
+  useAliases: true,
 };
 
 export class PayeeMatcher {
-  private options: Required<PayeeMatcherOptions>;
+  private options: typeof DEFAULT_OPTIONS & { workspaceId?: number };
+  private aliasService = getPayeeAliasService();
 
   constructor(options: PayeeMatcherOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
   }
 
   /**
-   * Find the best matching payee for a given name
+   * Find the best matching payee for a given name, checking aliases first.
+   * This is the recommended entry point for import matching.
+   */
+  async findBestMatchWithAliases(
+    payeeName: string,
+    existingPayees: Payee[],
+    workspaceId?: number
+  ): Promise<PayeeMatch> {
+    const wsId = workspaceId ?? this.options.workspaceId;
+
+    if (!payeeName || !payeeName.trim()) {
+      return {
+        payee: null,
+        confidence: "none",
+        score: 0,
+        matchedOn: "",
+      };
+    }
+
+    // Step 1: Check for alias match if enabled and workspace ID is available
+    if (this.options.useAliases && wsId) {
+      const aliasMatch = await this.aliasService.findPayeeByAlias(payeeName, wsId);
+
+      if (aliasMatch) {
+        // Find the payee from existing payees
+        const matchedPayee = existingPayees.find((p) => p.id === aliasMatch.payeeId);
+
+        if (matchedPayee) {
+          return {
+            payee: matchedPayee,
+            confidence: aliasMatch.matchedOn === "exact" ? "exact" : "high",
+            score: aliasMatch.confidence,
+            matchedOn: `alias_${aliasMatch.matchedOn}`,
+            aliasId: aliasMatch.aliasId,
+          };
+        }
+      }
+    }
+
+    // Step 2: Fall back to standard fuzzy matching
+    return this.findBestMatch(payeeName, existingPayees);
+  }
+
+  /**
+   * Find the best matching payee for a given name (synchronous, no alias check)
    */
   findBestMatch(payeeName: string, existingPayees: Payee[]): PayeeMatch {
     if (!payeeName || !payeeName.trim()) {

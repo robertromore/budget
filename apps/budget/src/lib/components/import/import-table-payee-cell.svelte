@@ -12,13 +12,31 @@ import X from '@lucide/svelte/icons/x';
 import type { Row } from '@tanstack/table-core';
 import Fuse from 'fuse.js';
 
+/**
+ * Alias candidate emitted when user confirms a different payee during import.
+ * Used to record the mapping for future imports.
+ *
+ * For existing payees: payeeId is set, payeeName may be set for reference
+ * For new payees: payeeId is null, payeeName is set (resolved to ID after import)
+ */
+export interface AliasCandidate {
+  rawString: string;
+  payeeId?: number | null;  // For existing payees
+  payeeName?: string;       // For new payees (resolved to ID after import)
+}
+
 interface Props {
   row: Row<ImportRow>;
   onUpdate?: (rowIndex: number, payeeId: number | null, payeeName: string | null) => void;
+  onAliasCandidate?: (rowIndex: number, alias: AliasCandidate) => void;
   temporaryPayees?: string[];
 }
 
-let { row, onUpdate, temporaryPayees = [] }: Props = $props();
+let { row, onUpdate, onAliasCandidate, temporaryPayees = [] }: Props = $props();
+
+// Get the original payee string from the import data (before any user overrides)
+// This is set by import/+page.svelte when creating previewData
+const rawPayeeString = $derived(row.original.originalPayee ?? '');
 
 const payeeState = PayeesState.get();
 const payeesArray = $derived(payeeState ? Array.from(payeeState.payees.values()) : []);
@@ -92,6 +110,16 @@ function handleSelect(payeeId: number, payeeName: string) {
 
   if (hasChanged) {
     onUpdate?.(rowIndex, payeeId, payeeName);
+
+    // Emit alias candidate if the raw string differs from the selected payee
+    // This allows us to remember this mapping for future imports
+    if (rawPayeeString && rawPayeeString.trim() !== payeeName) {
+      onAliasCandidate?.(rowIndex, {
+        rawString: rawPayeeString.trim(),
+        payeeId,
+        payeeName,  // Include name for resolution after import if payee is new
+      });
+    }
   }
 
   searchValue = '';
@@ -101,7 +129,6 @@ function handleSelect(payeeId: number, payeeName: string) {
 function handleCreateNew() {
   const nameToCreate = searchValue.trim();
   if (nameToCreate) {
-    console.log('PayeeCell handleCreateNew:', { rowIndex, payeeId: null, payeeName: nameToCreate });
     onUpdate?.(rowIndex, null, nameToCreate);
     searchValue = '';
     open = false;
@@ -112,7 +139,6 @@ function handleSelectTemporary(payeeName: string) {
   const hasChanged = selectedPayeeName !== payeeName;
 
   if (hasChanged) {
-    console.log('PayeeCell handleSelectTemporary:', { rowIndex, payeeId: null, payeeName });
     onUpdate?.(rowIndex, null, payeeName);
   }
 

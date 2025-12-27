@@ -74,7 +74,15 @@ export class ImportOrchestrator {
         invalidRows: 0,
         skippedRows: 0,
       },
+      createdPayeeMappings: [],
     };
+
+    // Track created payee mappings for alias creation
+    const createdPayeeMappings: Array<{
+      originalName: string;
+      normalizedName: string;
+      payeeId: number;
+    }> = [];
 
     logger.debug("Import orchestrator starting", {
       totalRows: rows.length,
@@ -150,7 +158,8 @@ export class ImportOrchestrator {
             options,
             selectedEntities,
             result.entitiesCreated,
-            scheduleId
+            scheduleId,
+            createdPayeeMappings
           );
 
           if (transaction) {
@@ -173,6 +182,9 @@ export class ImportOrchestrator {
         invalidRows: validationSummary.invalid,
         skippedRows: rows.length - rowsToImport.length,
       };
+
+      // Add created payee mappings for alias tracking
+      result.createdPayeeMappings = createdPayeeMappings;
 
       if (result.errors.length > 0) {
         result.success = false;
@@ -202,7 +214,12 @@ export class ImportOrchestrator {
       payees: number;
       categories: number;
     },
-    scheduleId?: number
+    scheduleId?: number,
+    createdPayeeMappings?: Array<{
+      originalName: string;
+      normalizedName: string;
+      payeeId: number;
+    }>
   ): Promise<z.infer<typeof selectTransactionSchema> | null> {
     const normalized = row.normalizedData;
 
@@ -261,6 +278,15 @@ export class ImportOrchestrator {
                 payeeId = newPayee.id;
                 existingPayees.push(newPayee);
                 if (entitiesCreated) entitiesCreated.payees++;
+
+                // Track the mapping for alias creation
+                if (createdPayeeMappings) {
+                  createdPayeeMappings.push({
+                    originalName: normalized["payee"], // The raw import string
+                    normalizedName: cleanedPayeeName,   // What we stored in payee.name
+                    payeeId: newPayee.id,
+                  });
+                }
               }
             } catch (error) {
               // If it failed due to unique constraint, check for existing or soft-deleted payee
@@ -283,6 +309,15 @@ export class ImportOrchestrator {
                     payeeId = restored.id;
                     existingPayees.push(restored);
                     if (entitiesCreated) entitiesCreated.payees++;
+
+                    // Track the mapping for alias creation
+                    if (createdPayeeMappings) {
+                      createdPayeeMappings.push({
+                        originalName: normalized["payee"],
+                        normalizedName: cleanedPayeeName,
+                        payeeId: restored.id,
+                      });
+                    }
                   }
                 } else {
                   // Use existing active payee

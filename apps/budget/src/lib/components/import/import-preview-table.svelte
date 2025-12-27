@@ -12,6 +12,7 @@ import type {
 } from "@tanstack/table-core";
 import {
   createImportPreviewColumns,
+  type AliasCandidate,
   type ImportPreviewColumnActions,
 } from "./import-preview-columns";
 import ImportPreviewToolbar from "./import-preview-toolbar.svelte";
@@ -30,6 +31,7 @@ interface Props {
   cleanupState: CleanupState | null;
   onCleanupStateChange: (state: CleanupState) => void;
   onPayeeUpdate?: (rowIndex: number, payeeId: number | null, payeeName: string | null) => void;
+  onPayeeAliasCandidate?: (rowIndex: number, alias: AliasCandidate) => void;
   onCategoryUpdate?: (
     rowIndex: number,
     categoryId: number | null,
@@ -54,6 +56,7 @@ let {
   cleanupState,
   onCleanupStateChange,
   onPayeeUpdate,
+  onPayeeAliasCandidate,
   onCategoryUpdate,
   onDescriptionUpdate,
   temporaryPayees,
@@ -131,6 +134,7 @@ const tableHandlers: DataTableStateHandlers = {
 // Create column actions object
 const columnActions: ImportPreviewColumnActions = $derived({
   onPayeeUpdate,
+  onPayeeAliasCandidate,
   onCategoryUpdate,
   onDescriptionUpdate,
   temporaryPayees,
