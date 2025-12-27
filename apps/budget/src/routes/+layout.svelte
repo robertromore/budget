@@ -2,8 +2,6 @@
 import { page } from '$app/state';
 import { ChatPanel, ChatTrigger } from '$lib/components/ai';
 import { DemoModeBanner } from '$lib/components/demo';
-import { TourContinuationDialog } from '$lib/components/onboarding';
-import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import AddPayeeDialog from '$lib/components/dialogs/add-payee-dialog.svelte';
 import DeleteAccountDialog from '$lib/components/dialogs/delete-account-dialog.svelte';
 import DeleteBudgetDialog from '$lib/components/dialogs/delete-budget-dialog.svelte';
@@ -13,7 +11,6 @@ import DeleteScheduleDialog from '$lib/components/dialogs/delete-schedule-dialog
 import SkipOccurrenceDialog from '$lib/components/dialogs/skip-occurrence-dialog.svelte';
 import { HelpButton, HelpOverlay } from '$lib/components/help';
 import { IntelligenceInputButton, IntelligenceInputOverlay } from '$lib/components/intelligence-input';
-import { SpotlightOverlay } from '$lib/components/onboarding';
 import AppSidebar from '$lib/components/layout/app-sidebar.svelte';
 import FontSizeToggle from '$lib/components/layout/font-size-toggle.svelte';
 import HeaderPageActions from '$lib/components/layout/header-page-actions.svelte';
@@ -21,14 +18,16 @@ import HeaderPageTabs from '$lib/components/layout/header-page-tabs.svelte';
 import SettingsButton from '$lib/components/layout/settings-button.svelte';
 import ThemeButton from '$lib/components/layout/theme-button.svelte';
 import ThemeToggle from '$lib/components/layout/theme-toggle.svelte';
+import { SpotlightOverlay, TourContinuationDialog } from '$lib/components/onboarding';
 import * as Tooltip from '$lib/components/ui/tooltip';
-import { queryClient, rpc } from '$lib/query';
+import { LLMSettings, queryClient, rpc } from '$lib/query';
 import { BudgetState } from '$lib/states/budgets.svelte';
 import { CurrentWorkspaceState, currentWorkspace } from '$lib/states/current-workspace.svelte';
 import { AccountsState } from '$lib/states/entities/accounts.svelte';
 import { CategoriesState } from '$lib/states/entities/categories.svelte';
 import { PayeesState } from '$lib/states/entities/payees.svelte';
 import { SchedulesState } from '$lib/states/entities/schedules.svelte';
+import { demoMode } from '$lib/states/ui/demo-mode.svelte';
 import { autoScheduler } from '$lib/stores/auto-scheduler.svelte';
 import { setPageActionsContext } from '$lib/stores/page-actions.svelte';
 import { setPageTabsContext } from '$lib/stores/page-tabs.svelte';
@@ -62,6 +61,10 @@ const accountsQuery = rpc.accounts.listAccounts().options();
 const payeesQuery = rpc.payees.listPayees().options();
 const categoriesQuery = rpc.categories.listCategories().options();
 const schedulesQuery = rpc.schedules.getAll().options();
+const llmPreferencesQuery = LLMSettings.getPreferences().options();
+
+// Check if LLM features are enabled
+const isLLMEnabled = $derived(llmPreferencesQuery.data?.enabled ?? false);
 
 // Set up state contexts (populated reactively by effects below)
 const accountsState = AccountsState.set([]);
@@ -159,7 +162,9 @@ onMount(() => {
                 <ThemeToggle />
                 <FontSizeToggle />
                 <ThemeButton />
-                <ChatTrigger />
+                {#if isLLMEnabled}
+                  <ChatTrigger />
+                {/if}
                 <IntelligenceInputButton />
                 <HelpButton />
                 <SettingsButton />
@@ -196,6 +201,8 @@ onMount(() => {
     onClose={() => demoMode.hideContinuationDialog()}
   />
 
-  <!-- AI Chat Panel - global slide-out panel for AI assistant -->
-  <ChatPanel />
+  <!-- AI Chat Panel - global slide-out panel for AI assistant (only when LLM enabled) -->
+  {#if isLLMEnabled}
+    <ChatPanel />
+  {/if}
 {/if}

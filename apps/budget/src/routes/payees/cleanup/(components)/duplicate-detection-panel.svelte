@@ -9,6 +9,7 @@
   import { Switch } from "$lib/components/ui/switch";
   import { ScrollArea } from "$lib/components/ui/scroll-area";
   import { getDuplicates, listPayees, mergeDuplicates } from "$lib/query/payees";
+  import { LLMSettings } from "$lib/query";
   import type { DuplicateGroup, LLMLogEntry } from "$lib/query/payees-types";
   import type { Payee } from "$lib/schema/payees";
   import { toast } from "svelte-sonner";
@@ -53,6 +54,10 @@
   // Queries
   const payeesQuery = listPayees().options();
   const mergeMutation = mergeDuplicates().options();
+  const llmPreferencesQuery = LLMSettings.getPreferences().options();
+
+  // Check if LLM is enabled
+  const isLLMEnabled = $derived(llmPreferencesQuery.data?.enabled ?? false);
 
   const payeesMap = $derived(
     new Map((payeesQuery.data ?? []).map((p) => [p.id, p]))
@@ -69,12 +74,24 @@
     Math.ceil(totalPairsForLLM / 15) // 15 pairs per batch
   );
 
-  const detectionMethodOptions = [
-    { value: "simple", label: "Simple", icon: Zap, description: "Basic text matching (fastest)" },
-    { value: "ml", label: "Machine Learning", icon: Brain, description: "Pattern-aware matching (recommended)" },
-    { value: "llm", label: "AI + ML Filter", icon: Sparkles, description: "ML finds candidates, AI confirms" },
-    { value: "llm_direct", label: "AI Direct", icon: Sparkles, description: "AI analyzes all pairs (no pre-filter)" },
+  const allDetectionMethodOptions = [
+    { value: "simple", label: "Simple", icon: Zap, description: "Basic text matching (fastest)", requiresLLM: false },
+    { value: "ml", label: "Machine Learning", icon: Brain, description: "Pattern-aware matching (recommended)", requiresLLM: false },
+    { value: "llm", label: "AI + ML Filter", icon: Sparkles, description: "ML finds candidates, AI confirms", requiresLLM: true },
+    { value: "llm_direct", label: "AI Direct", icon: Sparkles, description: "AI analyzes all pairs (no pre-filter)", requiresLLM: true },
   ];
+
+  // Filter out LLM options when LLM is disabled
+  const detectionMethodOptions = $derived(
+    allDetectionMethodOptions.filter(option => !option.requiresLLM || isLLMEnabled)
+  );
+
+  // Reset to ML if current method requires LLM but LLM is disabled
+  $effect(() => {
+    if (!isLLMEnabled && (detectionMethod === "llm" || detectionMethod === "llm_direct")) {
+      detectionMethod = "ml";
+    }
+  });
 
   const strategyOptions = [
     { value: "name", label: "Name Only", description: "Match by payee names" },

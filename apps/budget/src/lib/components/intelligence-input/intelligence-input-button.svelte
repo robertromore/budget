@@ -2,6 +2,7 @@
   import { Button } from "$lib/components/ui/button";
   import * as Tooltip from "$lib/components/ui/tooltip";
   import { IntelligenceInputSettings } from "$lib/query/intelligence-input-settings";
+  import { LLMSettings } from "$lib/query";
   import { intelligenceInputMode } from "$lib/states/ui/intelligence-input.svelte";
   import { Kbd } from "$lib/components/ui/kbd";
   import { cn } from "$lib/utils";
@@ -9,6 +10,7 @@
 
   // Fetch preferences from query layer
   const preferencesQuery = IntelligenceInputSettings.getPreferences().options();
+  const llmPreferencesQuery = LLMSettings.getPreferences().options();
 
   // Sync state with preferences
   $effect(() => {
@@ -17,6 +19,11 @@
       intelligenceInputMode.setDefaultMode(preferencesQuery.data.defaultMode);
       intelligenceInputMode.loadFieldModes(preferencesQuery.data.fieldModes);
     }
+  });
+
+  // Sync LLM enabled state
+  $effect(() => {
+    intelligenceInputMode.setLLMEnabled(llmPreferencesQuery.data?.enabled ?? false);
   });
 
   const isActive = $derived(intelligenceInputMode.isActive);

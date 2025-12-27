@@ -16,6 +16,7 @@
   const currentMode = $derived(
     highlightedId ? intelligenceInputMode.getFieldMode(highlightedId) : null
   );
+  const isLLMEnabled = $derived(intelligenceInputMode.isLLMEnabled);
 
   function handleApplyAll() {
     intelligenceInputMode.triggerAllIntelligence();
@@ -43,8 +44,11 @@
   // Announce to screen readers when intelligence mode activates
   $effect(() => {
     if (isActive && elementCount > 0) {
+      const modeHint = isLLMEnabled
+        ? "M for ML mode, L for LLM mode"
+        : "M for ML mode";
       announceToScreenReader(
-        `Intelligence input mode activated. ${elementCount} fields available. Use Tab to navigate, Enter to enhance, M for ML mode, L for LLM mode, Escape to exit.`
+        `Intelligence input mode activated. ${elementCount} fields available. Use Tab to navigate, Enter to enhance, ${modeHint}, Escape to exit.`
       );
     }
   });
@@ -131,7 +135,7 @@
       <span class="mx-1 opacity-40">|</span>
       <kbd class="rounded bg-white/20 px-1">Enter</kbd> enhance
       <span class="mx-1 opacity-40">|</span>
-      <kbd class="rounded bg-white/20 px-1">M</kbd>/<kbd class="rounded bg-white/20 px-1">L</kbd>
+      <kbd class="rounded bg-white/20 px-1">M</kbd>{#if isLLMEnabled}/<kbd class="rounded bg-white/20 px-1">L</kbd>{/if}
       {#if currentMode}
         <span class="ml-0.5 opacity-60">({currentMode.toUpperCase()})</span>
       {/if}

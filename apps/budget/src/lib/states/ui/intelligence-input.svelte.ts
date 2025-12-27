@@ -55,6 +55,9 @@ class IntelligenceInputModeState {
   // Whether the feature is enabled in settings
   #isEnabled = $state(true);
 
+  // Whether LLM features are enabled in settings
+  #isLLMEnabled = $state(false);
+
   // Currently highlighted element's input ID
   #highlightedId = $state<string | null>(null);
 
@@ -104,6 +107,10 @@ class IntelligenceInputModeState {
 
   get isEnabled() {
     return this.#isEnabled;
+  }
+
+  get isLLMEnabled() {
+    return this.#isLLMEnabled;
   }
 
   get highlightedId() {
@@ -173,6 +180,13 @@ class IntelligenceInputModeState {
     if (!enabled && this.#isActive) {
       this.deactivate();
     }
+  }
+
+  /**
+   * Set whether LLM features are enabled
+   */
+  setLLMEnabled(enabled: boolean) {
+    this.#isLLMEnabled = enabled;
   }
 
   /**
@@ -325,12 +339,20 @@ class IntelligenceInputModeState {
   getFieldMode(inputId: string): "ml" | "llm" {
     const fieldState = this.#fieldModes.get(inputId);
     if (fieldState?.lastMode) {
+      // If LLM was selected but LLM is disabled, fall back to ML
+      if (fieldState.lastMode === "llm" && !this.#isLLMEnabled) {
+        return "ml";
+      }
       return fieldState.lastMode;
     }
 
     // Fall back to default mode
     if (this.#defaultMode === "auto") {
       // Auto defaults to ML
+      return "ml";
+    }
+    // If default is LLM but LLM is disabled, use ML
+    if (this.#defaultMode === "llm" && !this.#isLLMEnabled) {
       return "ml";
     }
     return this.#defaultMode;
@@ -715,11 +737,20 @@ class IntelligenceInputModeState {
   getElementModes(inputId: string): ("ml" | "llm")[] {
     const el = this.#elements.get(inputId);
     const modesAttr = el?.getAttribute("data-intelligence-modes");
-    if (!modesAttr) return ["ml", "llm"];
-    return modesAttr.split(",").filter((m) => m === "ml" || m === "llm") as (
-      | "ml"
-      | "llm"
-    )[];
+    let modes: ("ml" | "llm")[];
+    if (!modesAttr) {
+      modes = ["ml", "llm"];
+    } else {
+      modes = modesAttr.split(",").filter((m) => m === "ml" || m === "llm") as (
+        | "ml"
+        | "llm"
+      )[];
+    }
+    // Filter out LLM if it's not enabled
+    if (!this.#isLLMEnabled) {
+      return modes.filter((m) => m !== "llm");
+    }
+    return modes;
   }
 
   // ==========================================================================
@@ -808,8 +839,8 @@ class IntelligenceInputModeState {
 
       case "l":
       case "L":
-        // Switch highlighted field to LLM mode
-        if (this.#highlightedId) {
+        // Switch highlighted field to LLM mode (only if LLM is enabled)
+        if (this.#highlightedId && this.#isLLMEnabled) {
           e.preventDefault();
           this.setFieldMode(this.#highlightedId, "llm");
         }
