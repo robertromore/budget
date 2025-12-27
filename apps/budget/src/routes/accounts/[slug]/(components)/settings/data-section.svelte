@@ -7,6 +7,7 @@ import DateInput from '$lib/components/input/date-input.svelte';
 import { toast } from 'svelte-sonner';
 import { trpc } from '$lib/trpc/client';
 import { useQueryClient } from '@tanstack/svelte-query';
+import { cachePatterns } from '$lib/query/_client';
 import type { Account } from '$lib/schema';
 import { type DateValue } from '@internationalized/date';
 import { timezone } from '$lib/utils/dates';
@@ -16,6 +17,7 @@ import FileSpreadsheet from '@lucide/svelte/icons/file-spreadsheet';
 import CalendarClock from '@lucide/svelte/icons/calendar-clock';
 import Sparkles from '@lucide/svelte/icons/sparkles';
 import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+import PiggyBank from '@lucide/svelte/icons/piggy-bank';
 
 interface Props {
 	account: Account;
@@ -31,6 +33,7 @@ let dataCounts = $state<{
 	schedules: number;
 	importProfiles: number;
 	detectedPatterns: number;
+	budgets: number;
 } | null>(null);
 let isLoadingCounts = $state(true);
 
@@ -63,6 +66,7 @@ let deleteDateRangeDialog = $state({
 let clearSchedulesDialog = $state({ open: false, isDeleting: false });
 let clearImportProfilesDialog = $state({ open: false, isDeleting: false });
 let clearPatternsDialog = $state({ open: false, isDeleting: false });
+let clearBudgetsDialog = $state({ open: false, isDeleting: false });
 
 // Delete all transactions
 async function confirmDeleteAllTransactions() {
@@ -186,6 +190,27 @@ async function confirmClearPatterns() {
 		clearPatternsDialog.isDeleting = false;
 	}
 }
+
+// Clear budgets solely associated with this account
+async function confirmClearBudgets() {
+	clearBudgetsDialog.isDeleting = true;
+	try {
+		const result = await trpc().accountRoutes.clearBudgets.mutate({
+			accountId: account.id
+		});
+
+		toast.success(`${result.deletedCount} budget${result.deletedCount !== 1 ? 's' : ''} removed`);
+		clearBudgetsDialog.open = false;
+
+		await loadDataCounts();
+		cachePatterns.invalidateDomain('budgets');
+	} catch (error) {
+		console.error('Failed to clear budgets:', error);
+		toast.error('Failed to clear budgets');
+	} finally {
+		clearBudgetsDialog.isDeleting = false;
+	}
+}
 </script>
 
 <div class="space-y-6">
@@ -204,13 +229,13 @@ async function confirmClearPatterns() {
 		</Card.Header>
 		<Card.Content>
 			{#if isLoadingCounts}
-				<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-					{#each Array(4) as _}
+				<div class="grid grid-cols-2 gap-4 md:grid-cols-5">
+					{#each Array(5) as _}
 						<div class="bg-muted h-16 animate-pulse rounded-lg"></div>
 					{/each}
 				</div>
 			{:else if dataCounts}
-				<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+				<div class="grid grid-cols-2 gap-4 md:grid-cols-5">
 					<div class="rounded-lg border p-4 text-center">
 						<div class="text-2xl font-bold">{dataCounts.transactions}</div>
 						<div class="text-muted-foreground text-sm">Transactions</div>
@@ -218,6 +243,10 @@ async function confirmClearPatterns() {
 					<div class="rounded-lg border p-4 text-center">
 						<div class="text-2xl font-bold">{dataCounts.schedules}</div>
 						<div class="text-muted-foreground text-sm">Schedules</div>
+					</div>
+					<div class="rounded-lg border p-4 text-center">
+						<div class="text-2xl font-bold">{dataCounts.budgets}</div>
+						<div class="text-muted-foreground text-sm">Budgets</div>
 					</div>
 					<div class="rounded-lg border p-4 text-center">
 						<div class="text-2xl font-bold">{dataCounts.importProfiles}</div>
@@ -299,6 +328,34 @@ async function confirmClearPatterns() {
 					onclick={() => (clearSchedulesDialog.open = true)}
 					disabled={!dataCounts || dataCounts.schedules === 0}>
 					Clear Schedules
+				</Button>
+			</div>
+		</Card.Content>
+	</Card.Root>
+
+	<!-- Budgets -->
+	<Card.Root>
+		<Card.Header>
+			<Card.Title class="flex items-center gap-2">
+				<PiggyBank class="h-5 w-5" />
+				Clear Budgets
+			</Card.Title>
+			<Card.Description>
+				Remove budgets solely associated with this account. Budgets shared with other accounts will
+				not be affected.
+			</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+				<p class="text-muted-foreground text-sm">
+					{dataCounts?.budgets || 0} budget{(dataCounts?.budgets || 0) !== 1 ? 's' : ''}{' '}
+					exclusively linked to this account.
+				</p>
+				<Button
+					variant="destructive"
+					onclick={() => (clearBudgetsDialog.open = true)}
+					disabled={!dataCounts || dataCounts.budgets === 0}>
+					Clear Budgets
 				</Button>
 			</div>
 		</Card.Content>
@@ -496,6 +553,32 @@ async function confirmClearPatterns() {
 				onclick={confirmClearPatterns}
 				disabled={clearPatternsDialog.isDeleting}>
 				{clearPatternsDialog.isDeleting ? 'Clearing...' : 'Reset Patterns'}
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- Clear Budgets Dialog -->
+<AlertDialog.Root bind:open={clearBudgetsDialog.open}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title class="flex items-center gap-2">
+				<AlertTriangle class="text-destructive h-5 w-5" />
+				Clear Account Budgets?
+			</AlertDialog.Title>
+			<AlertDialog.Description>
+				This will remove <strong>{dataCounts?.budgets || 0}</strong>
+				budget{(dataCounts?.budgets || 0) !== 1 ? 's' : ''} that are exclusively linked to "{account.name}".
+				Budgets shared with other accounts will not be affected. This action cannot be undone.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel disabled={clearBudgetsDialog.isDeleting}>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Action
+				class={buttonVariants({ variant: 'destructive' })}
+				onclick={confirmClearBudgets}
+				disabled={clearBudgetsDialog.isDeleting}>
+				{clearBudgetsDialog.isDeleting ? 'Clearing...' : 'Clear Budgets'}
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

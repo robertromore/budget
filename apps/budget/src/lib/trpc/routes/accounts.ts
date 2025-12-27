@@ -6,8 +6,11 @@ import {
   type Account,
   type Transaction,
 } from "$lib/schema";
+import { budgetAccounts, budgets } from "$lib/schema/budgets";
 import { detectedPatterns } from "$lib/schema/detected-patterns";
 import { importProfiles } from "$lib/schema/import-profiles";
+import { scheduleDates } from "$lib/schema/schedule-dates";
+import { scheduleSkips } from "$lib/schema/schedule-skips";
 import { schedules } from "$lib/schema/schedules";
 import { serviceFactory } from "$lib/server/shared/container/service-factory";
 import { publicProcedure, rateLimitedProcedure, t } from "$lib/trpc";
@@ -17,7 +20,7 @@ import { generateUniqueSlugForDB } from "$lib/utils/slug-utils";
 import { getLocalTimeZone, now } from "@internationalized/date";
 import slugify from "@sindresorhus/slugify";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne, notInArray, sql } from "drizzle-orm";
 import validator from "validator";
 import { z } from "zod";
 
@@ -745,11 +748,32 @@ export const accountRoutes = t.router({
         .from(detectedPatterns)
         .where(eq(detectedPatterns.accountId, input.accountId));
 
+      // Get budget count - only budgets SOLELY linked to this account
+      // First find budget IDs linked to other accounts
+      const budgetsLinkedToOtherAccounts = ctx.db
+        .select({ budgetId: budgetAccounts.budgetId })
+        .from(budgetAccounts)
+        .where(ne(budgetAccounts.accountId, input.accountId));
+
+      // Count budgets linked to this account that are NOT linked to other accounts
+      const [budgetCount] = await ctx.db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(budgetAccounts)
+        .innerJoin(budgets, eq(budgetAccounts.budgetId, budgets.id))
+        .where(
+          and(
+            eq(budgetAccounts.accountId, input.accountId),
+            isNull(budgets.deletedAt),
+            notInArray(budgetAccounts.budgetId, budgetsLinkedToOtherAccounts)
+          )
+        );
+
       return {
         transactions: Number(transactionCount?.count || 0),
         schedules: Number(scheduleCount?.count || 0),
         importProfiles: Number(importProfileCount?.count || 0),
         detectedPatterns: Number(patternCount?.count || 0),
+        budgets: Number(budgetCount?.count || 0),
       };
     }),
 
@@ -879,7 +903,33 @@ export const accountRoutes = t.router({
         });
       }
 
-      // Hard delete all schedules for this account (schedules table doesn't have deletedAt)
+      // Get schedule IDs for this account first
+      const accountSchedules = await ctx.db
+        .select({ id: schedules.id })
+        .from(schedules)
+        .where(eq(schedules.accountId, input.accountId));
+
+      const scheduleIds = accountSchedules.map((s) => s.id);
+
+      if (scheduleIds.length > 0) {
+        // First, break the circular reference by setting dateId to null
+        await ctx.db
+          .update(schedules)
+          .set({ dateId: null })
+          .where(inArray(schedules.id, scheduleIds));
+
+        // Delete related scheduleDates (no cascade on FK)
+        await ctx.db
+          .delete(scheduleDates)
+          .where(inArray(scheduleDates.scheduleId, scheduleIds));
+
+        // Delete related scheduleSkips (has cascade but delete explicitly for clarity)
+        await ctx.db
+          .delete(scheduleSkips)
+          .where(inArray(scheduleSkips.scheduleId, scheduleIds));
+      }
+
+      // Now delete the schedules
       const result = await ctx.db
         .delete(schedules)
         .where(eq(schedules.accountId, input.accountId))
@@ -916,6 +966,66 @@ export const accountRoutes = t.router({
         .returning({ id: detectedPatterns.id });
 
       return { deletedCount: result.length };
+    }),
+
+  // Clear budgets solely associated with this account
+  clearBudgets: rateLimitedProcedure
+    .input(z.object({ accountId: z.number().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify account belongs to workspace
+      const account = await ctx.db.query.accounts.findFirst({
+        where: (accounts, { eq, and, isNull }) =>
+          and(
+            eq(accounts.id, input.accountId),
+            eq(accounts.workspaceId, ctx.workspaceId),
+            isNull(accounts.deletedAt)
+          ),
+      });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found",
+        });
+      }
+
+      // Find budget IDs linked to other accounts
+      const budgetsLinkedToOtherAccounts = ctx.db
+        .select({ budgetId: budgetAccounts.budgetId })
+        .from(budgetAccounts)
+        .where(ne(budgetAccounts.accountId, input.accountId));
+
+      // Get budgets linked ONLY to this account (not linked to other accounts)
+      const budgetsToDelete = await ctx.db
+        .select({ budgetId: budgetAccounts.budgetId })
+        .from(budgetAccounts)
+        .innerJoin(budgets, eq(budgetAccounts.budgetId, budgets.id))
+        .where(
+          and(
+            eq(budgetAccounts.accountId, input.accountId),
+            isNull(budgets.deletedAt),
+            notInArray(budgetAccounts.budgetId, budgetsLinkedToOtherAccounts)
+          )
+        );
+
+      const budgetIds = budgetsToDelete.map((b) => b.budgetId);
+
+      if (budgetIds.length > 0) {
+        // Reset any recommendations that were applied to create these budgets
+        // This allows users to reapply the recommendations after deleting the budgets
+        const recommendationService = serviceFactory.getRecommendationService();
+        for (const budgetId of budgetIds) {
+          await recommendationService.resetRecommendationForBudget(budgetId);
+        }
+
+        // Soft delete the budgets (they have deletedAt column)
+        await ctx.db
+          .update(budgets)
+          .set({ deletedAt: getCurrentTimestamp() })
+          .where(inArray(budgets.id, budgetIds));
+      }
+
+      return { deletedCount: budgetIds.length };
     }),
 
   // Close account (soft hide from views)
@@ -1002,6 +1112,32 @@ export const accountRoutes = t.router({
         .update(transactions)
         .set({ deletedAt: getCurrentTimestamp() })
         .where(and(eq(transactions.accountId, input.accountId), isNull(transactions.deletedAt)));
+
+      // Get schedule IDs for this account
+      const accountSchedules = await ctx.db
+        .select({ id: schedules.id })
+        .from(schedules)
+        .where(eq(schedules.accountId, input.accountId));
+
+      const scheduleIds = accountSchedules.map((s) => s.id);
+
+      if (scheduleIds.length > 0) {
+        // First, break the circular reference by setting dateId to null
+        await ctx.db
+          .update(schedules)
+          .set({ dateId: null })
+          .where(inArray(schedules.id, scheduleIds));
+
+        // Delete related scheduleDates (no cascade on FK)
+        await ctx.db
+          .delete(scheduleDates)
+          .where(inArray(scheduleDates.scheduleId, scheduleIds));
+
+        // Delete related scheduleSkips
+        await ctx.db
+          .delete(scheduleSkips)
+          .where(inArray(scheduleSkips.scheduleId, scheduleIds));
+      }
 
       // Delete all schedules (hard delete since schedules table doesn't have deletedAt)
       await ctx.db.delete(schedules).where(eq(schedules.accountId, input.accountId));
