@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { shouldPersistToLocalStorage } from "$lib/utils/local-storage.svelte";
 import { queuePreferencesSync, loadPreferencesFromBackend } from "./preferences-sync";
 
 const FONT_SIZE_KEY = "app-font-size";
@@ -18,15 +19,15 @@ const FONT_SIZE_ORDER: FontSize[] = ["small", "normal", "large"];
  * Manages font size preference
  *
  * Syncs to:
- * - localStorage for immediate persistence
+ * - localStorage for immediate persistence (only when authenticated)
  * - Backend (users.preferences) for cross-device sync when authenticated
  */
 function createFontSizeStore() {
 	let current = $state<FontSize>("normal");
 	let initialized = false;
 
-	// Initialize from localStorage on client
-	if (browser) {
+	// Initialize from localStorage on client (only on authenticated routes)
+	if (shouldPersistToLocalStorage()) {
 		const stored = localStorage.getItem(FONT_SIZE_KEY) as FontSize | null;
 		const initialSize =
 			stored && FONT_SIZE_ORDER.includes(stored) ? stored : "normal";
@@ -45,8 +46,10 @@ function createFontSizeStore() {
 	function set(size: FontSize) {
 		current = size;
 		if (browser) {
-			localStorage.setItem(FONT_SIZE_KEY, size);
 			applyFontSize(size);
+		}
+		if (shouldPersistToLocalStorage()) {
+			localStorage.setItem(FONT_SIZE_KEY, size);
 			queuePreferencesSync({ fontSize: size });
 		}
 	}
@@ -66,7 +69,9 @@ function createFontSizeStore() {
 			if (backendPrefs && backendPrefs.fontSize) {
 				// Backend takes precedence
 				current = backendPrefs.fontSize;
-				localStorage.setItem(FONT_SIZE_KEY, backendPrefs.fontSize);
+				if (shouldPersistToLocalStorage()) {
+					localStorage.setItem(FONT_SIZE_KEY, backendPrefs.fontSize);
+				}
 				applyFontSize(backendPrefs.fontSize);
 			}
 		} catch (error) {
@@ -81,8 +86,10 @@ function createFontSizeStore() {
 	function initFromBackend(size: FontSize) {
 		current = size;
 		if (browser) {
-			localStorage.setItem(FONT_SIZE_KEY, size);
 			applyFontSize(size);
+		}
+		if (shouldPersistToLocalStorage()) {
+			localStorage.setItem(FONT_SIZE_KEY, size);
 		}
 	}
 

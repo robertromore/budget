@@ -1,5 +1,6 @@
 import { accountKeys, cachePatterns, rpc } from "$lib/query";
 import type { Account } from "$lib/schema";
+import { shouldPersistToLocalStorage } from "$lib/utils/local-storage.svelte";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
@@ -165,7 +166,7 @@ export class AccountsState {
 
   // Sort preference persistence
   private loadSortPreferences() {
-    if (typeof window !== "undefined") {
+    if (shouldPersistToLocalStorage()) {
       try {
         const saved = localStorage.getItem("accounts-sort-preferences");
         if (saved) {
@@ -182,7 +183,7 @@ export class AccountsState {
   }
 
   private saveSortPreferences() {
-    if (typeof window !== "undefined") {
+    if (shouldPersistToLocalStorage()) {
       try {
         const preferences = {
           field: this.sortField,

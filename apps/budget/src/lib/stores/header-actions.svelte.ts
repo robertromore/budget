@@ -1,4 +1,4 @@
-import { browser } from '$app/environment';
+import { shouldPersistToLocalStorage } from '$lib/utils/local-storage.svelte';
 
 export type HeaderActionsMode = 'off' | 'secondary' | 'all';
 export type HeaderActionsDisplay = 'icon-only' | 'icon-text';
@@ -25,7 +25,7 @@ class HeaderActionsStore {
 	private tabsDisplay = $state<HeaderTabsDisplay>('icon-text');
 
 	constructor() {
-		if (browser) {
+		if (shouldPersistToLocalStorage()) {
 			const storedMode = localStorage.getItem(STORAGE_KEY);
 			if (storedMode && ['off', 'secondary', 'all'].includes(storedMode)) {
 				this.mode = storedMode as HeaderActionsMode;
@@ -58,14 +58,14 @@ class HeaderActionsStore {
 
 	set(mode: HeaderActionsMode) {
 		this.mode = mode;
-		if (browser) {
+		if (shouldPersistToLocalStorage()) {
 			localStorage.setItem(STORAGE_KEY, mode);
 		}
 	}
 
 	setDisplay(display: HeaderActionsDisplay) {
 		this.display = display;
-		if (browser) {
+		if (shouldPersistToLocalStorage()) {
 			localStorage.setItem(DISPLAY_STORAGE_KEY, display);
 		}
 	}
@@ -76,7 +76,7 @@ class HeaderActionsStore {
 
 	setTabs(mode: HeaderTabsMode) {
 		this.tabs = mode;
-		if (browser) {
+		if (shouldPersistToLocalStorage()) {
 			localStorage.setItem(TABS_STORAGE_KEY, mode);
 		}
 	}
@@ -87,7 +87,7 @@ class HeaderActionsStore {
 
 	setTabsDisplay(display: HeaderTabsDisplay) {
 		this.tabsDisplay = display;
-		if (browser) {
+		if (shouldPersistToLocalStorage()) {
 			localStorage.setItem(TABS_DISPLAY_STORAGE_KEY, display);
 		}
 	}

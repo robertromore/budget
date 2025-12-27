@@ -9,6 +9,7 @@
  */
 
 import { browser } from "$app/environment";
+import { shouldPersistToLocalStorage } from "$lib/utils/local-storage.svelte";
 
 // =============================================================================
 // Types
@@ -528,7 +529,7 @@ class AIChatState {
 	 * Save sent message history to localStorage
 	 */
 	#saveSentHistory() {
-		if (!browser) return;
+		if (!shouldPersistToLocalStorage()) return;
 
 		try {
 			// Keep only the last MAX_SENT_HISTORY messages
@@ -543,7 +544,7 @@ class AIChatState {
 	 * Save current conversation ID to localStorage
 	 */
 	#saveConversationId() {
-		if (!browser) return;
+		if (!shouldPersistToLocalStorage()) return;
 
 		try {
 			if (this.#currentConversationId) {
@@ -560,7 +561,7 @@ class AIChatState {
 	 * Load conversation ID from localStorage
 	 */
 	#loadConversationId() {
-		if (!browser) return;
+		if (!shouldPersistToLocalStorage()) return;
 
 		try {
 			const stored = localStorage.getItem(this.CONVERSATION_ID_KEY);
@@ -579,7 +580,7 @@ class AIChatState {
 	 * Load sent message history from localStorage
 	 */
 	#loadSentHistory() {
-		if (!browser) return;
+		if (!shouldPersistToLocalStorage()) return;
 
 		try {
 			const stored = localStorage.getItem(this.SENT_HISTORY_KEY);
@@ -608,7 +609,7 @@ class AIChatState {
 	 * Save messages to localStorage
 	 */
 	saveToStorage() {
-		if (!browser) return;
+		if (!shouldPersistToLocalStorage()) return;
 
 		try {
 			const data = {
@@ -625,7 +626,7 @@ class AIChatState {
 	 * Load messages from localStorage
 	 */
 	loadFromStorage() {
-		if (!browser) return;
+		if (!shouldPersistToLocalStorage()) return;
 
 		try {
 			const stored = localStorage.getItem("ai-chat-history");

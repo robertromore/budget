@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { shouldPersistToLocalStorage } from "$lib/utils/local-storage.svelte";
 import { queuePreferencesSync, loadPreferencesFromBackend } from "./preferences-sync";
 
 const STORAGE_KEY = "display-preferences";
@@ -36,7 +37,7 @@ class DisplayPreferencesStore {
 	private initialized = false;
 
 	constructor() {
-		if (browser) {
+		if (shouldPersistToLocalStorage()) {
 			this.loadFromStorage();
 			this.loadFromBackend();
 		}
@@ -141,7 +142,7 @@ class DisplayPreferencesStore {
 	}
 
 	private loadFromStorage() {
-		if (!browser) return;
+		if (!shouldPersistToLocalStorage()) return;
 
 		try {
 			const stored = localStorage.getItem(STORAGE_KEY);
@@ -181,7 +182,7 @@ class DisplayPreferencesStore {
 	}
 
 	private saveToStorage() {
-		if (!browser) return;
+		if (!shouldPersistToLocalStorage()) return;
 
 		try {
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(this.preferences));

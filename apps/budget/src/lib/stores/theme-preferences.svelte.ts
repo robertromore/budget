@@ -1,6 +1,7 @@
 import { browser } from "$app/environment";
 import { getThemePreset, type ThemePreset } from "$lib/config/theme-presets";
 import { getLuminance, hexToOKLCH } from "$lib/utils/colors";
+import { shouldPersistToLocalStorage } from "$lib/utils/local-storage.svelte";
 import { queuePreferencesSync, loadPreferencesFromBackend } from "./preferences-sync";
 
 const STORAGE_KEY = "theme-preference";
@@ -26,9 +27,12 @@ class ThemePreferencesStore {
 
   constructor() {
     if (browser) {
-      this.loadFromStorage();
+      // Only load from storage on authenticated routes
+      if (shouldPersistToLocalStorage()) {
+        this.loadFromStorage();
+        this.loadFromBackend();
+      }
       this.applyTheme();
-      this.loadFromBackend();
     }
   }
 
@@ -166,7 +170,7 @@ class ThemePreferencesStore {
    * Load theme preference from localStorage
    */
   private loadFromStorage() {
-    if (!browser) return;
+    if (!shouldPersistToLocalStorage()) return;
 
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -203,7 +207,7 @@ class ThemePreferencesStore {
    * Save theme preference to localStorage
    */
   private saveToStorage() {
-    if (!browser) return;
+    if (!shouldPersistToLocalStorage()) return;
 
     try {
       const preference: ThemePreference = {
